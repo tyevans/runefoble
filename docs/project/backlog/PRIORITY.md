@@ -31,3 +31,8 @@ Order of priority for engineering tasks across the platform.
 27. **TASK-0026 (Proposed)**: [`0026-service-modular-router-decomposition.md`](proposed/0026-service-modular-router-decomposition.md) — Modular APIRouter Decomposition for The Watcher & Game Session Microservices
 28. **TASK-0027 (Proposed)**: [`0027-streaming-whisper-speech-to-intent.md`](proposed/0027-streaming-whisper-speech-to-intent.md) — Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
 29. **TASK-0028 (Proposed)**: [`0028-frontend-component-decomposition.md`](proposed/0028-frontend-component-decomposition.md) — Frontend High-Complexity Component Decomposition & Storybook Sub-Modules
+30. **TASK-0029 (Proposed)**: [`0029-opentelemetry-tracing-and-metrics-pipeline.md`](proposed/0029-opentelemetry-tracing-and-metrics-pipeline.md) — OpenTelemetry Distributed Tracing, Metrics & Collector Helm Integration
+31. **TASK-0030 (Proposed)**: [`0030-zitadel-oidc-jwks-verification-middleware.md`](proposed/0030-zitadel-oidc-jwks-verification-middleware.md) — Zitadel Production OIDC/JWKS Token Verification Middleware
+32. **TASK-0031 (Proposed)**: [`0031-spicedb-live-grpc-client-and-schema-migration.md`](proposed/0031-spicedb-live-grpc-client-and-schema-migration.md) — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
+33. **TASK-0032 (Proposed)**: [`0032-openpanel-analytics-service-and-event-pipeline.md`](proposed/0032-openpanel-analytics-service-and-event-pipeline.md) — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
+34. **TASK-0033 (Proposed)**: [`0033-postgresql-multi-database-init-and-event-store.md`](proposed/0033-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection

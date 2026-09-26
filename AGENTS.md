@@ -58,13 +58,43 @@ Engineering work lives in `docs/project/backlog/`.[^20] An item moves through th
 
 Always pick the highest-priority item from `docs/project/backlog/PRIORITY.md` that is in `refined/`.[^21]
 
-## Diataxis Documentation Framework
+## Documentation Directory & Agent Instructions
 
-Documentation outside project management lives in `docs/` and strictly follows the Diataxis framework:[^22]
-- **Tutorials (`docs/tutorials/`)**: Learning-oriented lessons guiding a newcomer to success (e.g. spinning up Kind, running a first session).
-- **How-To Guides (`docs/how-to/`)**: Goal-oriented recipes solving practical problems (e.g. creating a service BC, defining SpiceDB permissions).
-- **Reference (`docs/reference/`)**: Information-oriented technical descriptions (e.g. architecture overview, events schema, ports, CLI).
-- **Explanation (`docs/explanation/`)**: Understanding-oriented discussions of architecture rationale (e.g. The Watcher AI DM, Zanzibar in TTRPG).
+All system documentation outside project records lives in `docs/` and strictly follows the Diataxis framework:[^22] Agents must consult these guides before writing code or modifying structures:
+
+### Agent Directives on Documentation
+- **Inform work with existing docs**: Always search and use documentation references in `docs/` to guide technical design and implementation. Never invent conventions or structures that contradict existing records.
+- **Fix inaccurate or stale docs**: If an existing document is incorrect, outdated, or incomplete, fix it as part of your change. Leaving known doc errors in place is a defect.
+- **Produce docs for generic / reusable patterns**: If you are implementing capabilities that will be generally or generically applied across services or integrated in multiple places (e.g. auth middleware, tracing, storage pipelines, client SDKs), you must author corresponding Diataxis guides (`docs/how-to/` or `docs/reference/`) when none exist.
+
+### 1. Tutorials (`docs/tutorials/`) — Learning-Oriented
+- [`01-local-development-setup.md`](docs/tutorials/01-local-development-setup.md): Complete setup for local Kind cluster, Helm stack, UV monorepo, and Storybook.
+- [`02-running-your-first-session.md`](docs/tutorials/02-running-your-first-session.md): Walkthrough of running an interactive tabletop session with The Watcher.
+
+### 2. How-To Guides (`docs/how-to/`) — Practical Recipes & Instructions
+- [`create-a-new-service-bc.md`](docs/how-to/create-a-new-service-bc.md): How to scaffold a new bounded context microservice and wire it into Helm and UV.
+- [`define-event-sourced-aggregates.md`](docs/how-to/define-event-sourced-aggregates.md): How to define declarative aggregates and handle domain events with `eventsource-py`.
+- [`define-spicedb-zanzibar-permissions.md`](docs/how-to/define-spicedb-zanzibar-permissions.md): How to define schema relations in `runefoble.zed`, write tuples, and check permissions.
+- [`develop-lit-components-in-storybook.md`](docs/how-to/develop-lit-components-in-storybook.md): How to develop Lit Web Components in Storybook with Bauhaus design tokens.
+- [`add-a-watcher-ai-tool.md`](docs/how-to/add-a-watcher-ai-tool.md): How to expose new FastMCP tabletop tools and session resources to LLM agents.
+- [`curate-backlog-and-roadmap.md`](docs/how-to/curate-backlog-and-roadmap.md): How to triage the backlog, evaluate INVEST criteria, scan file invariants, and perform JIT refinement.
+- [`instrument-services-with-opentelemetry.md`](docs/how-to/instrument-services-with-opentelemetry.md): How to instrument FastAPI services, configure OTel exporters, and propagate trace context over Redis Streams.
+- [`authenticate-with-zitadel-oidc.md`](docs/how-to/authenticate-with-zitadel-oidc.md): How to validate Zitadel JWTs against JWKS discovery, enforce HTTP dependencies, and secure WebSockets.
+- [`track-analytics-events.md`](docs/how-to/track-analytics-events.md): How to record privacy-preserving analytics via OpenPanel SDK and Redis Streams workers.
+
+### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
+- [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
+- [`platform-services.md`](docs/reference/platform-services.md): Directory of external platform services, container images, ports, environment variables, and test fallbacks.
+- [`ports-and-endpoints.md`](docs/reference/ports-and-endpoints.md): Ingress routing table, microservice ports, core HTTP routes, and infrastructure ports.
+- [`events-schema.md`](docs/reference/events-schema.md): CloudEvents domain events catalogue, payload schemas, and Redis Stream topics.
+- [`redis-streams-event-bus.md`](docs/reference/redis-streams-event-bus.md): Redis Streams transport architecture, channel conventions, and consumer groups.
+- [`design-tokens-and-themes.md`](docs/reference/design-tokens-and-themes.md): Bauhaus geometric tokens, typography, CSS custom properties, and UI themes.
+- [`cli-interfaces.md`](docs/reference/cli-interfaces.md): Developer tooling, `Makefile` targets, `uv` commands, and Antigravity slash commands.
+
+### 4. Architecture Explanation (`docs/explanation/`) — Design Rationale & Background
+- [`the-watcher-autonomous-dm.md`](docs/explanation/the-watcher-autonomous-dm.md): Rationale behind The Watcher AI DM, intent extraction, and DM veto authority.
+- [`zanzibar-in-ttrpg.md`](docs/explanation/zanzibar-in-ttrpg.md): Design rationale for using Google Zanzibar / SpiceDB fine-grained authorization in tabletop RPGs.
+- [`realtime-voice-and-board-sync.md`](docs/explanation/realtime-voice-and-board-sync.md): Sub-500ms pipeline architecture, audio streaming, WebSockets, and optimistic client synchronization.
 
 ## Repository Layout
 
@@ -87,16 +117,29 @@ Documentation outside project management lives in `docs/` and strictly follows t
 | `docs/` | Diataxis documentation (tutorials, how-to, reference, explanation) |
 | `Makefile` | Developer interface targets (`cluster-up`, `dev-storybook`, `test`) |
 
-## Definition of Done
+## Definition of Ready (DoR)
+
+A backlog task or feature may only be transitioned to `refined/` and pulled into active development when:
+1. **Documentation Review**: Relevant existing documentation in `docs/` has been reviewed and explicitly considered during planning.
+2. **Reference PRD Cited**: A governing Product Requirement Document in `docs/project/product/accepted/` is linked to establish the user need and business value.[^18]
+3. **User Stories Linked**: Persona-driven user stories in `docs/project/user_stories/accepted/` are linked to anchor acceptance criteria.[^19]
+4. **Architectural Review**: Governing ADRs in `docs/project/adrs/accepted/` are cited and technical impact on existing boundaries evaluated.[^3]
+5. **INVEST Criteria Satisfied**: The task is validated against INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small [<500 lines per file], Testable).[^20]
+6. **Frontdoor Blackbox Test Plan**: Frontdoor test scenarios and setup are clearly specified, interacting strictly via public HTTP endpoints, WebSockets, or CloudEvents.
+
+## Definition of Done (DoD)
 
 Work is complete only when:
-1. Architectural impact review was conducted against governing ADRs.[^3]
-2. All new public APIs and events are documented in `docs/reference/`.[^12]
-3. Frontend components have interactive stories in Storybook with zero console errors.[^13]
-4. Python tests pass via `uv run pytest` and frontend builds pass via `pnpm run build`.[^23]
-5. Helm chart passes linting via `helm lint` and renders cleanly via `helm template`.[^4]
-6. Registries in `docs/project/` are updated to reflect the new state.[^18]
-7. Blackbox TDD suite verified with frontdoor setup: all scenarios exercised through public API/WebSocket/event entrypoints.
+1. **Architectural Alignment**: Verified against governing ADRs without backdoor state manipulation.[^3]
+2. **Documentation Integrity**:
+   - Inaccurate or stale docs discovered during work are corrected.
+   - New Diataxis guides (`docs/how-to/` or `docs/reference/`) are created if introducing generic patterns or cross-service capabilities.
+   - All new public APIs and domain events are documented in `docs/reference/`.[^12]
+3. **Blackbox TDD Suite with Frontdoor Setup**: All scenarios verified through public entrypoints (HTTP routes, WebSockets, standard domain events) rather than private internals or backdoor state manipulation.
+4. **Frontend Storybook Verification**: UI components built with Shadow DOM and Bauhaus design tokens, accompanied by interactive Storybook stories with zero console errors.[^13]
+5. **Automated Verification Gates**: All Python tests pass via `uv run pytest`, frontend builds pass via `pnpm run build`, and `make health-check` passes.[^23]
+6. **Helm & Kubernetes Integrity**: Umbrella Helm chart passes `helm lint` and renders cleanly via `helm template`.[^4]
+7. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs, User Stories, Backlog `complete/`, and `PRIORITY.md`) updated to reflect the new state.[^18]
 
 ## Dispatching Work to Agents & Parallel Worktrees
 
