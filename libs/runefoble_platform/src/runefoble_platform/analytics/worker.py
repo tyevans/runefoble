@@ -1,19 +1,12 @@
-"""OpenPanel Privacy-Preserving Analytics SDK & Redis Streams Consumer Worker.
-
-Provides privacy-first event tracking without storing raw audio, voice transcripts,
-or unhashed personally identifiable information (PII).
-"""
+"""Background Redis Streams consumer worker translating domain events to OpenPanel metrics."""
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
-import hashlib
 import logging
 from typing import Any
-from uuid import UUID
 
-import httpx
 from eventsource.domain.event import DomainEvent
 from pydantic import BaseModel
 from runefoble_events.events import (
@@ -27,164 +20,10 @@ from runefoble_events.events import (
     StandInActionDecided,
 )
 
-from runefoble_platform.config import PlatformSettings
+from runefoble_platform.analytics.client import OpenPanelClient
 from runefoble_platform.consumer_group import RedisConsumerGroup
 
 logger = logging.getLogger(__name__)
-
-FORBIDDEN_PROPERTY_KEYS = {
-    "transcript",
-    "raw_transcript",
-    "audio",
-    "raw_audio",
-    "speech",
-    "dialogue",
-    "password",
-    "token",
-    "secret",
-    "email",
-}
-
-
-def anonymize_profile_id(
-    profile_id: str | UUID | None, salt: str = "runefoble_privacy_salt"
-) -> str | None:
-    """Hash profile identifiers using salted SHA-256 to ensure player privacy."""
-    if not profile_id:
-        return None
-    raw = str(profile_id).strip()
-    if not raw:
-        return None
-    hasher = hashlib.sha256(f"{salt}:{raw}".encode())
-    return hasher.hexdigest()[:32]
-
-
-def sanitize_properties(properties: dict[str, Any] | None) -> dict[str, Any]:
-    """Recursively scrub forbidden PII, audio bytes, and speech transcripts from properties."""
-    if not properties:
-        return {}
-    sanitized: dict[str, Any] = {}
-    for key, val in properties.items():
-        lower_key = str(key).lower()
-        if (
-            lower_key in FORBIDDEN_PROPERTY_KEYS
-            or "audio" in lower_key
-            or "transcript" in lower_key
-        ):
-            continue
-        if isinstance(val, dict):
-            sanitized[key] = sanitize_properties(val)
-        elif isinstance(val, (list, tuple)):
-            sanitized[key] = [
-                sanitize_properties(v) if isinstance(v, dict) else v
-                for v in val
-                if not (isinstance(v, str) and len(v) > 2048)
-            ]
-        elif isinstance(val, (UUID,)):
-            sanitized[key] = str(val)
-        else:
-            sanitized[key] = val
-    return sanitized
-
-
-class OpenPanelClient:
-    """Privacy-preserving OpenPanel client supporting non-blocking HTTP dispatch and mock recording."""
-
-    def __init__(
-        self,
-        endpoint: str | None = None,
-        client_id: str | None = None,
-        salt: str = "runefoble_privacy_salt",
-        mock_mode: bool = False,
-        http_client: httpx.AsyncClient | None = None,
-    ) -> None:
-        settings = PlatformSettings()
-        raw_endpoint = endpoint or settings.openpanel_endpoint
-        self.endpoint = raw_endpoint.rstrip("/") if raw_endpoint else "http://localhost:3000/api"
-        self.client_id = client_id or settings.openpanel_client_id
-        self.salt = salt
-        self.mock_mode = mock_mode
-        self._http_client = http_client
-        self.recorded_events: list[dict[str, Any]] = []
-
-    async def _get_client(self) -> httpx.AsyncClient:
-        if self._http_client is None:
-            self._http_client = httpx.AsyncClient(timeout=3.0)
-        return self._http_client
-
-    async def track(
-        self,
-        event_name: str,
-        properties: dict[str, Any] | None = None,
-        profile_id: str | UUID | None = None,
-    ) -> dict[str, Any]:
-        """Record an anonymized event and dispatch asynchronously to OpenPanel."""
-        anon_profile = anonymize_profile_id(profile_id, salt=self.salt)
-        clean_props = sanitize_properties(properties)
-
-        payload: dict[str, Any] = {
-            "event": event_name,
-            "name": event_name,
-            "properties": clean_props,
-        }
-        if anon_profile:
-            payload["profile_id"] = anon_profile
-        if self.client_id:
-            payload["client_id"] = self.client_id
-
-        self.recorded_events.append(payload)
-
-        if not self.mock_mode and self.endpoint:
-            url = f"{self.endpoint}/event"
-            headers = {"Content-Type": "application/json"}
-            if self.client_id:
-                headers["openpanel-client-id"] = self.client_id
-            try:
-                client = await self._get_client()
-                await client.post(url, json=payload, headers=headers)
-            except Exception as exc:
-                logger.warning("OpenPanel async dispatch failed for '%s': %s", event_name, exc)
-
-        return payload
-
-    async def identify(
-        self,
-        profile_id: str | UUID,
-        traits: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        """Record an anonymized profile identifier with privacy-sanitized traits."""
-        anon_profile = anonymize_profile_id(profile_id, salt=self.salt)
-        clean_traits = sanitize_properties(traits)
-        payload: dict[str, Any] = {
-            "profile_id": anon_profile,
-            "traits": clean_traits,
-        }
-        if self.client_id:
-            payload["client_id"] = self.client_id
-
-        self.recorded_events.append(payload)
-
-        if not self.mock_mode and self.endpoint:
-            url = f"{self.endpoint}/profile"
-            headers = {"Content-Type": "application/json"}
-            if self.client_id:
-                headers["openpanel-client-id"] = self.client_id
-            try:
-                client = await self._get_client()
-                await client.post(url, json=payload, headers=headers)
-            except Exception as exc:
-                logger.warning("OpenPanel profile dispatch failed: %s", exc)
-
-        return payload
-
-    def clear(self) -> None:
-        """Clear recorded events from memory buffer."""
-        self.recorded_events.clear()
-
-    async def close(self) -> None:
-        """Close internal HTTP client session."""
-        if self._http_client and not self._http_client.is_closed:
-            await self._http_client.aclose()
 
 
 class AnalyticsEventWorker:
@@ -422,10 +261,4 @@ class AnalyticsEventWorker:
             await asyncio.sleep(0.01)
 
 
-__all__ = [
-    "FORBIDDEN_PROPERTY_KEYS",
-    "anonymize_profile_id",
-    "sanitize_properties",
-    "OpenPanelClient",
-    "AnalyticsEventWorker",
-]
+__all__ = ["AnalyticsEventWorker"]
