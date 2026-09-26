@@ -19,6 +19,11 @@ from gateway_mcp.tools.character import (
     modify_character_hp,
     register_character_tools,
 )
+from gateway_mcp.tools.compendium import (
+    calculate_encounter_balance,
+    query_monster_stat_block,
+    register_compendium_tools,
+)
 from gateway_mcp.tools.dice import (
     register_dice_tools,
     roll_dice,
@@ -36,6 +41,7 @@ __all__ = [
     "add_condition",
     "apply_absentee_penalty",
     "apply_condition",
+    "calculate_encounter_balance",
     "cast_spell",
     "create_encounter",
     "execute_agent_action_plan",
@@ -46,8 +52,10 @@ __all__ = [
     "move_board_token",
     "narrate_with_the_watcher",
     "query_encounter_state",
+    "query_monster_stat_block",
     "register_board_tools",
     "register_character_tools",
+    "register_compendium_tools",
     "register_dice_tools",
     "register_orchestration_tools",
     "register_tools",
@@ -61,3 +69,4 @@ def register_tools(mcp: "FastMCP") -> None:
     register_board_tools(mcp)
     register_character_tools(mcp)
     register_orchestration_tools(mcp)
+    register_compendium_tools(mcp)

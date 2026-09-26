@@ -33,6 +33,13 @@ from runefoble_events.character import (
     SpellPrepared,
     SpellSlotExpended,
 )
+from runefoble_events.compendium import (
+    ConditionIndexed,
+    EncounterBalanced,
+    HomebrewRuleRegistered,
+    MonsterIndexed,
+    SpellIndexed,
+)
 from runefoble_events.lore import (
     AliasesConsolidated,
     EntitiesExtracted,
@@ -134,4 +141,9 @@ __all__ = [
     "LoreDocumentIngested",
     "EntitiesExtracted",
     "AliasesConsolidated",
+    "MonsterIndexed",
+    "SpellIndexed",
+    "ConditionIndexed",
+    "HomebrewRuleRegistered",
+    "EncounterBalanced",
 ]

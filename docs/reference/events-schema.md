@@ -283,3 +283,54 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `alias_name`: String
   - `reason`: String
 
+### Compendium & Encounter Events (`aggregate_type: Compendium`, `Encounter`)
+
+- **`MonsterIndexed`**: Emitted when a monster stat block is indexed into the rules compendium (`runefoble.events.compendium.monster_indexed`).
+  - `monster_id`: UUID
+  - `name`: String
+  - `challenge_rating`: Float
+  - `creature_type`: String
+  - `size`: String
+  - `armor_class`: Integer
+  - `hit_points`: Integer
+  - `xp`: Integer
+  - `role`: String
+  - `metadata`: Dict[str, Any]
+- **`SpellIndexed`**: Emitted when a spell definition is indexed into the rules compendium (`runefoble.events.compendium.spell_indexed`).
+  - `spell_id`: UUID
+  - `name`: String
+  - `level`: Integer
+  - `school`: String
+  - `casting_time`: String
+  - `range`: String
+  - `components`: String
+  - `duration`: String
+  - `description`: String
+  - `metadata`: Dict[str, Any]
+- **`ConditionIndexed`**: Emitted when a condition rule is indexed into the rules compendium (`runefoble.events.compendium.condition_indexed`).
+  - `condition_id`: UUID
+  - `name`: String
+  - `description`: String
+  - `effects`: List[String]
+  - `metadata`: Dict[str, Any]
+- **`HomebrewRuleRegistered`**: Emitted when a DM or player registers a campaign homebrew rule or custom monster (`runefoble.events.compendium.homebrew_registered`).
+  - `rule_id`: UUID
+  - `campaign_id`: UUID
+  - `author_id`: String
+  - `rule_type`: String ("monster", "spell", "condition", "mechanic")
+  - `title`: String
+  - `content`: Dict[str, Any]
+  - `metadata`: Dict[str, Any]
+- **`EncounterBalanced`**: Emitted when an automated combat encounter calculation is recorded (`runefoble.events.compendium.encounter_balanced`).
+  - `encounter_id`: UUID
+  - `campaign_id`: Optional[UUID]
+  - `party_levels`: List[Integer]
+  - `target_difficulty`: String ("Easy", "Medium", "Hard", "Deadly")
+  - `total_party_xp_threshold`: Dict[str, int]
+  - `selected_monsters`: List[Dict[str, Any]]
+  - `total_xp`: Integer
+  - `adjusted_xp`: Integer
+  - `difficulty_tier`: String
+  - `multiplier`: Float
+
+

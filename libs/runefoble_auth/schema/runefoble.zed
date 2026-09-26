@@ -66,3 +66,14 @@ definition lore_document {
     permission manage = campaign->run_session
 }
 
+definition homebrew_rule {
+    relation campaign: campaign
+    relation author: user
+
+    // Public SRD rules have no campaign restriction; homebrew rules restricted to campaign members or author
+    permission view = campaign->view + author
+    permission manage = author + campaign->manage + campaign->run_session
+    permission edit = manage
+}
+
+

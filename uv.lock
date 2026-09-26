@@ -17,6 +17,7 @@ members = [
     "gateway-api",
     "gateway-mcp",
     "inference-worker",
+    "rules-compendium",
     "runefoble-auth",
     "runefoble-events",
     "runefoble-platform",
@@ -695,6 +696,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "mcp" },
     { name = "pydantic" },
+    { name = "rules-compendium" },
     { name = "uvicorn" },
 ]
 
@@ -703,6 +705,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "mcp", specifier = "<2" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "rules-compendium", editable = "services/rules_compendium" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 
@@ -2472,6 +2475,33 @@ wheels = [
 ]
 
 [[package]]
+name = "rules-compendium"
+version = "0.1.0"
+source = { editable = "services/rules_compendium" }
+dependencies = [
+    { name = "eventsource-py" },
+    { name = "fastapi" },
+    { name = "pydantic" },
+    { name = "redstring", extra = ["llm", "redis"] },
+    { name = "runefoble-auth" },
+    { name = "runefoble-events" },
+    { name = "runefoble-platform" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "eventsource-py", specifier = ">=0.14.0" },
+    { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "redstring", extras = ["redis", "llm"], specifier = ">=0.11.0" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
+    { name = "runefoble-events", editable = "libs/runefoble_events" },
+    { name = "runefoble-platform", editable = "libs/runefoble_platform" },
+    { name = "uvicorn", specifier = ">=0.54.0" },
+]
+
+[[package]]
 name = "runefoble-auth"
 version = "0.1.0"
 source = { editable = "libs/runefoble_auth" }
@@ -2546,6 +2576,7 @@ dependencies = [
     { name = "gateway-mcp" },
     { name = "inference-worker" },
     { name = "redstring", extra = ["llm", "redis"] },
+    { name = "rules-compendium" },
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
@@ -2577,6 +2608,7 @@ requires-dist = [
     { name = "gateway-mcp", editable = "gateway/mcp" },
     { name = "inference-worker", editable = "services/inference_worker" },
     { name = "redstring", extras = ["llm", "redis"], specifier = ">=0.11.0" },
+    { name = "rules-compendium", editable = "services/rules_compendium" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },

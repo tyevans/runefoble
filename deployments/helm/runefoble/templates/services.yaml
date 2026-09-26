@@ -6,6 +6,7 @@
   (dict "name" "game-session" "config" .Values.services.gameSession)
   (dict "name" "voice-agent" "config" .Values.services.voiceAgent)
   (dict "name" "campaign-lore" "config" .Values.services.campaignLore)
+  (dict "name" "rules-compendium" "config" .Values.services.rulesCompendium)
 -}}
 
 {{- range $services }}

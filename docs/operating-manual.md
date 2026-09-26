@@ -86,6 +86,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`configure-appearance-and-themes.md`](how-to/configure-appearance-and-themes.md): How to configure global themes, appearance color modes (Dark/Light/System), and interact with the settings modal.
 - [`interact-with-tactile-board-and-ghost-previews.md`](how-to/interact-with-tactile-board-and-ghost-previews.md): How to use tactile token kinematics, 5-foot distance measuring, difficult terrain/hazards, and spoken ghost previews.
 - [`index-campaign-lore-with-redstring.md`](how-to/index-campaign-lore-with-redstring.md): How to ingest worldbuilding documents with redstring, consolidate entity aliases, and run hybrid RAG queries.
+- [`balance-combat-encounters-and-query-compendium.md`](how-to/balance-combat-encounters-and-query-compendium.md): How to query canonical SRD rules with sub-50ms redstring search, balance combat encounters, and register homebrew rules.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
@@ -115,6 +116,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `services/character_sheet/` | Character stats, HP tracking, session absence penalties & character microfrontends |
 | `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis & voice controls microfrontend |
 | `services/campaign_lore/` | Worldbuilding knowledge graphs, entity alias consolidation & redstring hybrid RAG microservice |
+| `services/rules_compendium/` | TTRPG rules compendium, sub-50ms redstring hybrid retrieval & automated CR encounter builder |
 | `gateway/api/` | Unified API Gateway, WebSockets, OpenAPI aggregator |
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
 | `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |

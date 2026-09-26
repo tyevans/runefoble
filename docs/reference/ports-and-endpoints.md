@@ -21,6 +21,7 @@
 | `game-session` | `8004` | `/openapi.json` |
 | `voice-agent` | `8005` | `/openapi.json` |
 | `campaign-lore` | `8006` | `/openapi.json` |
+| `rules-compendium` | `8007` | `/openapi.json` |
 
 ## Key Microservice Endpoints
 
@@ -72,6 +73,14 @@
 | `campaign-lore` | GET | `/api/v1/lore/aliases/resolve` | Resolves entity titles or aliases to canonical node names |
 | `campaign-lore` | POST | `/api/v1/lore/search` | Sub-50ms hybrid RAG search combining BM25, dense embeddings, and graph walks with secret filtering |
 | `campaign-lore` | GET | `/ui/manifest` | Discovers vendored microfrontend (`runefoble-campaign-codex`) |
+| `rules-compendium` | GET | `/api/v1/compendium/rules/search` | Sub-50ms hybrid BM25 and vector search for SRD monsters, spells, conditions, and homebrew |
+| `rules-compendium` | GET | `/api/v1/compendium/monsters/{name}` | Retrieves full monster stat block by name |
+| `rules-compendium` | GET | `/api/v1/compendium/spells/{name}` | Retrieves full spell definition by name |
+| `rules-compendium` | GET | `/api/v1/compendium/conditions/{name}` | Retrieves condition mechanics and gameplay effects |
+| `rules-compendium` | POST | `/api/v1/compendium/encounters/balance` | Calculates encounter lethality and generates synergistic monster groups for party roster |
+| `rules-compendium` | POST | `/api/v1/compendium/homebrew` | Registers campaign homebrew monster or rule guarded by SpiceDB Zanzibar authorization |
+| `rules-compendium` | GET | `/api/v1/compendium/homebrew/{campaign_id}` | Retrieves campaign homebrew rules under Zanzibar authorization |
+| `rules-compendium` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-rules-lookup`, `runefoble-encounter-builder`) |
 | `gateway-api` | GET | `/api/v1/profile` | Retrieves authenticated Zitadel user claims (`user_id`, `username`, `roles`, `email`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Assigns fine-grained SpiceDB Zanzibar relationship tuples (owner, DM, player, spectator) |
 | `gateway-api` | POST | `/api/v1/auth/sync/user` | Syncs Zitadel user claims into SpiceDB Zanzibar tuples |

@@ -17,6 +17,7 @@ dependencies = [
     "gateway-api",
     "gateway-mcp",
     "campaign-lore",
+    "rules-compendium",
     "eventsource-py>=0.14.0",
     "redstring[llm,redis]>=0.11.0",
 ]
@@ -34,6 +35,7 @@ inference-worker = { workspace = true }
 gateway-api = { workspace = true }
 gateway-mcp = { workspace = true }
 campaign-lore = { workspace = true }
+rules-compendium = { workspace = true }
 
 [tool.uv.workspace]
 members = [
