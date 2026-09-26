@@ -19,5 +19,7 @@ Order of priority for engineering tasks across the platform.
 15. **TASK-0015 (Complete)**: [`0015-redis-streams-consumer-groups-projections.md`](complete/0015-redis-streams-consumer-groups-projections.md) — Distributed Redis Streams Consumer Groups & Event Projection Workers
 16. **TASK-0016 (Complete)**: [`0016-websocket-zanzibar-permission-enforcement.md`](complete/0016-websocket-zanzibar-permission-enforcement.md) — Live SpiceDB Zanzibar Permission Enforcement on WebSockets & Game Mutators
 17. **TASK-0017 (Complete)**: [`0017-bauhaus-dice-roller-component.md`](complete/0017-bauhaus-dice-roller-component.md) — Bauhaus Geometric Dice Physics & Roll Arithmetic Web Component
+18. **TASK-0018 (Refined)**: [`0018-character-level-progression-spellbook.md`](refined/0018-character-level-progression-spellbook.md) — Character Level Progression, Spell Slots & Spellbook Preparation
+19. **TASK-0019 (Refined)**: [`0019-tactical-board-terrain-elevation-hazards.md`](refined/0019-tactical-board-terrain-elevation-hazards.md) — Tactical Board Terrain Elevation, Difficult Terrain & Hazard Grid
 
 
