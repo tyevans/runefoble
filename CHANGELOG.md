@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Speech Intent Parser and Action Grammar Extractors Modular Decomposition (`TASK-0069`, `ADR-0002`, `ADR-0003`)**:
+  - Decomposed `services/the_watcher/src/the_watcher/movement_parser.py` into modular submodules: `grammars.py` (93 lines), `spatial.py` (52 lines), and `movement_parser.py` (178 lines).
+  - Extracted compiled regular expressions and lexical token sets for movement, attacks, spellcasting, skill checks, and dice rolls into `grammars.py`.
+  - Extracted tactical spatial math, vector conversions, step normalization, and bounded grid coordinate clamping into `spatial.py`.
+  - Retained `SpeechIntentParser` coordinator with 100% backward-compatible public methods and class-level pattern access.
+  - Authored comprehensive unit and frontdoor blackbox test suites in `tests/test_movement_parser.py` and `tests/test_blackbox_the_watcher.py`.
+  - Updated Diataxis architecture explanation documentation in `docs/explanation/the-watcher-autonomous-dm.md`.
+
 - **Campaign Analytics Worker and Event Dispatch Modular Decomposition (`TASK-0116`, `ADR-0003`, `ADR-0006`, `ADR-0011`)**:
   - Decomposed `services/campaign_analytics/src/campaign_analytics/worker.py` into asynchronous worker core `worker.py` (171 lines) and event projection dispatcher `event_handlers.py` (222 lines) with `event_helpers.py` (24 lines).
   - Isolated Redis Streams consumer group polling and worker lifecycle loops from domain event translation and spatial tracking state.
