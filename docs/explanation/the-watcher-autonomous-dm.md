@@ -23,3 +23,11 @@ When a human player cannot attend, their character remains active on the board:
   - *"Greed"*: The character prioritizes searching chests, grabbing loose coins, and inspecting ancient relics over optimal combat positioning.
 - **Automated Turn Progression**: In `services/game_session`, when an absent character's turn arrives (`is_stand_in_active=True`), `POST /api/v1/sessions/{session_id}/turns/auto-pilot` invokes The Watcher engine, persists the stand-in action to the event-sourced session aggregate, emits `StandInActionDecided` and `AbsencePenaltyApplied` events to Redis Streams (`runefoble.events.watcher`), and advances the turn order.
 - **Absentee Chronicle & Humorous Recap**: When the absent player returns for the next session, `POST /api/v1/watcher/stand-in/recap` compiles all stand-in decisions and active penalties into a comedic narrative recap with memorable quotes and battle highlights.
+
+### 3. Modular Domain Architecture
+To ensure high maintainability, enforce file size limits (< 500 lines), and enable independent expansion of narrative assets and combat heuristics, the autonomous DM engine (`services/the_watcher/src/the_watcher/`) is decomposed into focused domain submodules coordinated by a lightweight facade:
+- **Scene Presets (`presets.py`)**: Catalogs narrative atmosphere presets (`dungeon`, `crypt`, `tavern`, `forest`, `dragon_lair`) including mood-specific environmental descriptions, dynamic lighting, and ambient soundscape audio prompts (`build_scene_atmosphere`).
+- **Encounter Generation (`encounters.py`)**: Balances Challenge Ratings (CR), party level and size scaling, monster stat blocks, and tactical objectives across easy, medium, hard, and deadly threat tiers (`build_encounter`).
+- **Tactical Action Resolution (`tactics.py`)**: Adjudicates NPC decision trees, spellcaster prioritization, wounded-target finishing strikes, and aggressive round-one opening charges (`adjudicate_npc_turn`).
+- **Engine Facade (`autonomous_dm.py`)**: Exposes the backward-compatible `AutonomousDMEngine` class and top-level helpers, orchestrating the underlying domain submodules without leaking implementation details.
+

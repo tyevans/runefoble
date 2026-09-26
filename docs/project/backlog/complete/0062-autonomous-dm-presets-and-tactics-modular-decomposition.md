@@ -1,7 +1,7 @@
 ---
 id: '0062'
 title: Autonomous DM Presets, Monster Templates, and Combat Tactics Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0013
@@ -10,8 +10,8 @@ governing_adrs:
 - ADR-0006
 - ADR-0011
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/66
 ---
-
 # TASK-0062: Autonomous DM Presets, Monster Templates, and Combat Tactics Modular Decomposition
 
 ## Status
