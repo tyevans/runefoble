@@ -38,11 +38,44 @@ The Watcher heuristic speech-to-intent engine delivers sub-10ms interpretation w
 3. **Token Engagement & Flanking**: Recognizes tactical positioning commands like "move to the goblin archer" and "flank the skeleton".
 4. **Combat Actions**: Identifies melee and ranged attacks ("attack goblin with longsword"), spell invocations ("cast fireball at 4, 6"), and skill checks ("stealth check").
 
+## Streaming Audio Ingestion & VAD Segmentation Pipeline
+
+To achieve true zero-friction interaction, Runefoble transitions from batch speech recording to continuous streaming audio ingestion:
+
+```mermaid
+flowchart TD
+    Mic["Microphone Stream (PCM 16kHz)"] --> Ingest["POST /api/v1/voice/stream/chunk<br/>WS /api/v1/voice/stream/ws"]
+    Ingest --> RingBuf["Participant AudioRingBuffer<br/>(30s Circular Buffer)"]
+    Ingest --> VAD["VADSegmenter (RMS Energy Analysis)"]
+    VAD -->|Active Speech| Acc["Accumulate Utterance Buffer<br/>(+ 100ms Pre-Speech Padding)"]
+    VAD -->|Silence &ge; 200ms| Trigger["Utterance Boundary Triggered<br/>(&lt; 250ms Silence Threshold)"]
+    Trigger --> Whisper["Whisper Acoustic Inference<br/>(faster-whisper / MockTranscriber)"]
+    Whisper --> EmitSpoke["Publish PlayerSpokeEvent<br/>(runefoble.events.session)"]
+    EmitSpoke --> WatcherForward["Forward Transcript to The Watcher<br/>(/api/v1/watcher/transcribe-and-act)"]
+    WatcherForward --> WatcherEvents["Publish SpeechIntentParsed &amp; TokenMoved<br/>(runefoble.events.watcher / board)"]
+```
+
+### 1. Participant Ring Buffers (`AudioRingBuffer`)
+Each active voice participant maintains an isolated, bounded circular ring buffer storing up to 30 seconds of 16-bit 16kHz mono PCM frames (960 kB). Audio frames are appended asynchronously without blocking real-time voice streaming or audio playback pipelines.
+
+### 2. Sub-250ms Voice Activity Detection (`VADSegmenter`)
+- **Subframe Energy Analysis**: Ingested PCM audio is segmented into 20ms analysis windows (320 samples / 640 bytes). Root-mean-square (RMS) amplitude is calculated to detect vocal phonemes against background acoustic silence.
+- **Pre-Speech Buffering**: A 100ms circular pre-speech buffer ensures initial plosives and unvoiced consonants (e.g., /p/, /t/, /k/, /s/) are preserved when transitioning into speech.
+- **Utterance Completion Detection**: When continuous silence exceeds 200ms (strictly within the < 250ms silence detection budget), the VAD marks the utterance boundary as completed, extracts the accumulated speech window, and hands off to acoustic inference.
+
+### 3. Whisper Acoustic Inference & Event Dispatch
+- **Acoustic Transcription**: The completed audio segment is transcribed via `FasterWhisperTranscriber` (CTranslate2 INT8 tiny.en/base.en model) or deterministic `MockWhisperTranscriber` in test environments.
+- **CloudEvent Publication**: An immutable `PlayerSpokeEvent` is dispatched onto Redis Streams (`runefoble.events.session`).
+- **Watcher Orchestration**: The transcript is concurrently delivered to `the_watcher` for spatial intent extraction and board action execution (`SpeechIntentParsed`, `WatcherNarrationGenerated`, and `TokenMoved`).
+
 ## Latency Budgets
 - **Audio Capture & Streaming**: < 100ms
-- **Speech-to-Text Transcription**: < 200ms
+- **VAD Segmentation & Boundary Trigger**: < 200ms (< 250ms silence detection)
+- **Speech-to-Text Transcription**: < 100ms (faster-whisper tiny.en / mock < 15ms)
 - **Intent Parsing & Validation**: < 50ms (local heuristic < 5ms, remote LLM worker < 200ms)
 - **Redis Stream Event Dispatch**: < 10ms
-- **WebSocket Broadcast & Client Render**: < 50ms
-- **Total Roundtrip**: < 500ms
-This sub-second loop allows conversational spontaneity without noticeable lag.
+- **WebSocket Broadcast & Client Render**: < 40ms
+- **Total End-to-End Voice-to-Board Latency**: < 500ms
+
+This sub-500ms loop fulfills the foundational system promise: *Speak and the board obeys*.
+

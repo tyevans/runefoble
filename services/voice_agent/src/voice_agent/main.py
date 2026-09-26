@@ -22,6 +22,8 @@ from voice_agent.dsp import (
 )
 from voice_agent.room import get_voice_room_coordinator
 from voice_agent.room_routes import router as room_router
+from voice_agent.stream_routes import router as stream_router
+from voice_agent.stt import get_streaming_pipeline
 
 logger = logging.getLogger("runefoble.voice_agent")
 WATCHER_URL = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://localhost:8001")
@@ -34,6 +36,7 @@ app = FastAPI(
     description="Real-time Voice Streaming, STT / TTS Pipelines, and Persona Voice Synthesis.",
 )
 app.include_router(room_router)
+app.include_router(stream_router)
 
 platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
@@ -50,6 +53,11 @@ def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
     global _event_bus
     _event_bus = bus
     get_voice_room_coordinator().set_event_bus(bus)
+    get_streaming_pipeline().set_event_bus(bus)
+
+
+def set_watcher_client(client: httpx.AsyncClient | None) -> None:
+    get_streaming_pipeline().set_watcher_client(client)
 
 
 def to_uuid(val: str | UUID | None) -> UUID:
@@ -315,9 +323,10 @@ async def transcribe_speech(req: TranscribeRequest):
     # 2. Forward to The Watcher
     watcher_intent = None
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.post(
-                f"{WATCHER_URL}/api/v1/watcher/transcribe-and-act",
+        watcher_client = get_streaming_pipeline()._watcher_client
+        if watcher_client:
+            resp = await watcher_client.post(
+                "/api/v1/watcher/transcribe-and-act",
                 json={
                     "speaker_id": req.speaker_id,
                     "speaker_name": req.speaker_name,
@@ -328,6 +337,20 @@ async def transcribe_speech(req: TranscribeRequest):
             )
             if resp.status_code == 200:
                 watcher_intent = resp.json()
+        else:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.post(
+                    f"{WATCHER_URL}/api/v1/watcher/transcribe-and-act",
+                    json={
+                        "speaker_id": req.speaker_id,
+                        "speaker_name": req.speaker_name,
+                        "transcript": transcript,
+                        "session_id": req.session_id,
+                        "campaign_id": req.campaign_id,
+                    },
+                )
+                if resp.status_code == 200:
+                    watcher_intent = resp.json()
     except Exception as e:
         logger.warning("Failed to forward transcript to The Watcher: %s", e)
 
