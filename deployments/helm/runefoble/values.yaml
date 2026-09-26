@@ -64,6 +64,7 @@ postgres:
   password: runefoble_dev_password
   port: 5432
   storageSize: 5Gi
+  multipleDatabases: "zitadel,spicedb,openpanel"
 
 # Event Streaming & In-Memory Cache (Redis)
 redis:
