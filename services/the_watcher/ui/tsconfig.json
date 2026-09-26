@@ -4,7 +4,10 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "module": "esnext",
-    "lib": ["ES2023", "DOM"],
+    "lib": [
+      "ES2023",
+      "DOM"
+    ],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -12,5 +15,10 @@
     "moduleDetection": "force",
     "noEmit": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/**/*.stories.ts"
+  ]
 }
