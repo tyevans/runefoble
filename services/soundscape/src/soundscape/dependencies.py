@@ -55,6 +55,12 @@ def get_spicedb_client() -> SpiceDBClient:
     return _spicedb_client
 
 
+def set_spicedb_client(client: SpiceDBClient) -> None:
+    """Override SpiceDB client for testing."""
+    global _spicedb_client
+    _spicedb_client = client
+
+
 def get_event_bus() -> RedisStreamsEventBus | None:
     """Provide RedisStreamsEventBus instance."""
     global _event_bus

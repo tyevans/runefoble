@@ -21,6 +21,7 @@ from soundscape.mixer import STEM_PROFILE_WEIGHTS, TACTICAL_FOLEY_CATALOG
 from soundscape.models import (
     DuckingRequest,
     MoodOverrideRequest,
+    StemVolumeUpdateRequest,
     TensionStatusResponse,
 )
 
@@ -44,9 +45,30 @@ async def list_audio_stems(
         "active_profile": mixer.stem_profile,
         "profile_weights": STEM_PROFILE_WEIGHTS,
         "current_stem_gains": mixer.calculate_active_stem_gains(),
+        "stem_channels": mixer.channel_volumes,
         "is_ducked": mixer.is_ducked,
         "ducking_attenuation_db": -12.0 if mixer.is_ducked else 0.0,
         "foley_presets": list(TACTICAL_FOLEY_CATALOG.keys()),
+    }
+
+
+@router.post(
+    "/stems/volume",
+    status_code=status.HTTP_200_OK,
+    summary="Update multi-channel stem volume sliders (melody, percussion, drone, ambient)",
+)
+async def update_stem_volumes(
+    request: StemVolumeUpdateRequest,
+) -> dict[str, Any]:
+    """Adjust individual volume sliders for multi-channel stem tracks."""
+    mixer = get_or_create_mixer(request.session_id)
+    mixer.update_channel_volumes(request.stem_volumes)
+    return {
+        "session_id": request.session_id,
+        "stem_channels": mixer.channel_volumes,
+        "master_volume": mixer.master_volume,
+        "effective_gain": mixer.get_effective_gain(),
+        "is_ducked": mixer.is_ducked,
     }
 
 
