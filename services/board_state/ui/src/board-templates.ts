@@ -4,9 +4,9 @@ import { calculateVectorLineCoordinates } from './ghost_preview.ts';
 
 export function getHealthBarColor(hp: number, maxHp: number): string {
   const ratio = Math.max(0, Math.min(1, hp / maxHp));
-  if (ratio > 0.5) return 'var(--rf-accent-secondary, #1d3557)';
-  if (ratio > 0.2) return 'var(--rf-accent-tertiary, #ffb703)';
-  return 'var(--rf-accent-primary, #e63946)';
+  if (ratio > 0.5) return 'var(--rf-accent-secondary)';
+  if (ratio > 0.2) return 'var(--rf-accent-tertiary)';
+  return 'var(--rf-accent-primary)';
 }
 
 export function renderVectorOverlay(
@@ -25,7 +25,7 @@ export function renderVectorOverlay(
           markerHeight="6"
           orient="auto-start-reverse"
         >
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rf-accent-primary, #e63946)" />
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rf-accent-primary)" />
         </marker>
       </defs>
       <line
@@ -68,7 +68,7 @@ export function renderGhostBanner(
         <span>${ghost.tokenName || 'Character'} moves to (${ghost.toX}, ${ghost.toY})</span>
         <span>• ${ghost.totalDistanceFt} ft</span>
         ${ghost.hazardTriggered
-          ? html`<span style="color: var(--rf-accent-primary, #e63946)">⚠️ Triggers ${ghost.hazardTriggered} (${ghost.damageDice})</span>`
+          ? html`<span style="color: var(--rf-accent-primary)">⚠️ Triggers ${ghost.hazardTriggered} (${ghost.damageDice})</span>`
           : nothing}
         <span class="ghost-timer">⏱️ ${ghost.remainingSeconds}s</span>
       </div>

@@ -49,8 +49,8 @@ export class RunefobleSpectatorView extends LitElement {
 
   private getDefaultTokenColor(token: SpectatorToken): string {
     if (token.color) return token.color;
-    if (token.isAiControlled) return 'var(--rf-color-yellow, #ffb703)';
-    return 'var(--rf-color-blue, #1d3557)';
+    if (token.isAiControlled) return 'var(--rf-color-yellow)';
+    return 'var(--rf-color-blue)';
   }
 
   render() {
@@ -65,12 +65,12 @@ export class RunefobleSpectatorView extends LitElement {
                   SPECTATOR OVERLAY
                 </span>
               `
-            : html`<span class="live-badge" style="background:#4b5563">ARCHIVED</span>`}
+            : html`<span class="live-badge" style="background:var(--rf-text-muted)">ARCHIVED</span>`}
           <span class="session-title">Runefoble Stream — Session ${this.sessionId}</span>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
           <span class="round-pill">ROUND ${this.round}</span>
-          <span style="font-size:0.75rem; color:var(--rf-text-muted,#4b5563)">READ-ONLY BROADCAST</span>
+          <span style="font-size:0.75rem; color:var(--rf-text-muted)">READ-ONLY BROADCAST</span>
         </div>
       </header>
 
@@ -112,7 +112,7 @@ export class RunefobleSpectatorView extends LitElement {
                     ? html`
                         <div
                           class="token ${token.isActiveTurn ? 'active-turn' : ''}"
-                          style="background: ${this.getDefaultTokenColor(token)}; color: ${token.isAiControlled ? '#121212' : '#ffffff'};"
+                          style="background: ${this.getDefaultTokenColor(token)}; color: ${token.isAiControlled ? 'var(--rf-color-dark)' : 'var(--rf-text-inverse)'};"
                           title="${token.name}"
                         >
                           <span>${token.name.slice(0, 2).toUpperCase()}</span>
@@ -146,7 +146,7 @@ export class RunefobleSpectatorView extends LitElement {
                   </div>
                 `
               )
-            : html`<span style="color:var(--rf-text-muted,#4b5563)">Awaiting party actions...</span>`}
+            : html`<span style="color:var(--rf-text-muted)">Awaiting party actions...</span>`}
         </div>
       </footer>
     `;

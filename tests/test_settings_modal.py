@@ -14,6 +14,7 @@ SETTINGS_MODAL_STYLES_TS = (
     FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.styles.ts"
 )
 SETTINGS_MODAL_TYPES_TS = FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.types.ts"
+HEADER_TS = FRONTEND_DIR / "src" / "components" / "runefoble-header.ts"
 STORIES_TS = FRONTEND_DIR / "src" / "stories" / "runefoble-settings-modal.stories.ts"
 INDEX_TS = FRONTEND_DIR / "src" / "index.ts"
 THEMES_CSS = FRONTEND_DIR / "src" / "styles" / "themes.css"
@@ -129,26 +130,27 @@ def test_extensible_settings_sections():
 
 
 def test_app_header_integration():
-    """Verify inline switcher is replaced with Settings trigger button in runefoble-app.ts."""
+    """Verify inline switcher is replaced with Settings trigger button in header and modal is integrated."""
     app_content = APP_TS.read_text(encoding="utf-8")
+    header_content = HEADER_TS.read_text(encoding="utf-8")
 
     # Inline switcher removed from header actions
     assert "<runefoble-theme-switcher></runefoble-theme-switcher>" not in app_content
+    assert "<runefoble-theme-switcher></runefoble-theme-switcher>" not in header_content
 
-    # Settings trigger button present with ARIA attributes
-    assert 'id="settings-trigger-btn"' in app_content
-    assert 'class="settings-trigger"' in app_content
-    assert 'aria-haspopup="dialog"' in app_content
-    assert 'aria-label="Open settings"' in app_content
-    assert "aria-expanded" in app_content
-    assert "Settings" in app_content
-    assert "⚙️" in app_content
+    # Settings trigger button present with ARIA attributes in runefoble-header
+    assert 'id="settings-trigger-btn"' in header_content
+    assert 'class="settings-trigger"' in header_content
+    assert 'aria-haspopup="dialog"' in header_content
+    assert 'aria-label="Open settings"' in header_content
+    assert "aria-expanded" in header_content
+    assert "Settings" in header_content
+    assert "⚙️" in header_content
 
-    # Embedded settings modal and lifecycle handlers
+    # Header and settings modal integrated into app shell
+    assert "<runefoble-header" in app_content
     assert "<runefoble-settings-modal" in app_content
     assert "@settings-closed=${this.handleSettingsClosed}" in app_content
-    assert "@theme-changed=${this.handleThemeChanged}" in app_content
-    assert "@color-mode-changed=${this.handleColorModeChanged}" in app_content
     assert "initThemeAndColorMode()" in app_content
 
 
@@ -180,8 +182,8 @@ def test_dark_mode_css_tokens():
     # Bauhaus in dark mode
     assert '[data-theme="bauhaus"][data-color-mode="dark"]' in css_content
     assert "--rf-bg-canvas: #121212;" in css_content
-    assert "--rf-border-color: #f8f9fa;" in css_content
-    assert "--rf-shadow: 4px 4px 0px #f8f9fa;" in css_content
+    assert "--rf-shadow-color:" in css_content
+    assert "--rf-shadow: 4px 4px 0px var(--rf-shadow-color);" in css_content
 
     # System media query
     assert "@media (prefers-color-scheme: dark)" in css_content
@@ -191,6 +193,7 @@ def test_all_touched_files_under_500_lines():
     """Verify all files touched by TASK-0073 comply strictly with <500 lines limit."""
     files = [
         APP_TS,
+        HEADER_TS,
         SETTINGS_MODAL_TS,
         SETTINGS_MODAL_STYLES_TS,
         SETTINGS_MODAL_TYPES_TS,

@@ -12,6 +12,18 @@ export interface WaveformMetrics {
   nextSimPhase: number;
 }
 
+function getComputedColor(element: Element, varName: string, fallback: string): string {
+  try {
+    if (typeof window !== 'undefined' && window.getComputedStyle) {
+      const val = window.getComputedStyle(element).getPropertyValue(varName).trim();
+      if (val) return val;
+    }
+  } catch {
+    // fallback
+  }
+  return fallback;
+}
+
 /**
  * Render real-time audio waveform or idle baseline onto HTML5 canvas with Bauhaus styling.
  */
@@ -25,12 +37,17 @@ export function renderAudioWaveform(options: WaveformDrawOptions): WaveformMetri
   const width = canvas.width;
   const height = canvas.height;
 
-  // Clear background with dark ink
-  ctx.fillStyle = '#121212';
-  ctx.fillRect(0, 0, width, height);
+  // Clear background with theme-adaptive canvas/inset color
+  const bgColor = getComputedColor(canvas, '--rf-bg-inset', 'transparent');
+  if (bgColor && bgColor !== 'transparent') {
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, width, height);
+  } else {
+    ctx.clearRect(0, 0, width, height);
+  }
 
   // Center division axis
-  ctx.strokeStyle = '#222222';
+  ctx.strokeStyle = getComputedColor(canvas, '--rf-border-subtle', 'rgba(128, 128, 128, 0.25)');
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, height / 2);
@@ -39,7 +56,7 @@ export function renderAudioWaveform(options: WaveformDrawOptions): WaveformMetri
 
   if (!isListening) {
     // Muted idle dashed baseline
-    ctx.strokeStyle = '#4b5563';
+    ctx.strokeStyle = getComputedColor(canvas, '--rf-text-muted', 'rgba(128, 128, 128, 0.5)');
     ctx.lineWidth = 1.5;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -91,8 +108,8 @@ export function renderAudioWaveform(options: WaveformDrawOptions): WaveformMetri
 
   // Active waveform stroke
   const strokeColor = activeFilters.includes('drunk')
-    ? 'var(--rf-accent-tertiary, #ffb703)'
-    : 'var(--rf-accent-primary, #e63946)';
+    ? getComputedColor(canvas, '--rf-accent-tertiary', 'orange')
+    : getComputedColor(canvas, '--rf-accent-primary', 'red');
 
   ctx.strokeStyle = strokeColor;
   ctx.lineWidth = 2;

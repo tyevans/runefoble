@@ -30,7 +30,6 @@ export * from './kinematics.ts';
 
 @customElement('runefoble-board')
 export class RunefobleBoard extends LitElement {
-  // Adopts Bauhaus design tokens: var(--rf-border-color, #121212)
   static styles = boardStyles;
 
   @property({ type: Number }) cols = 8;
@@ -348,7 +347,7 @@ export class RunefobleBoard extends LitElement {
                       <div class="token-container">
                         <div
                           class="token ${token.isAiControlled ? 'ai' : ''} ${token.isHostile ? 'hostile' : ''} ${isActiveTurn ? 'active-turn' : ''} ${this.dragState?.tokenId === token.id ? 'dragging' : ''}"
-                          style="background: ${token.color || 'var(--rf-accent-secondary, #1d3557)'}; ${this.selectedTokenId === token.id ? 'outline: 3px solid var(--rf-accent-primary, #e63946);' : ''}"
+                          style="background: ${token.color || 'var(--rf-accent-secondary)'}; ${this.selectedTokenId === token.id ? 'outline: 3px solid var(--rf-accent-primary);' : ''}"
                           @pointerdown="${(e: PointerEvent) => this.handleTokenPointerDown(e, token)}"
                           title="${token.name}${token.isAiControlled ? ' (AI Stand-in)' : ''}${token.hp !== undefined ? ` [${token.hp}/${token.maxHp ?? token.hp} HP]` : ''}${isActiveTurn ? ' (Active Turn)' : ''}"
                         >
@@ -372,7 +371,7 @@ export class RunefobleBoard extends LitElement {
                   ? html`
                       <div
                         class="ghost-token"
-                        style="background: ${ghostToken?.color || 'var(--rf-accent-secondary, #1d3557)'};"
+                        style="background: ${ghostToken?.color || 'var(--rf-accent-secondary)'};"
                         @click="${() => this.confirmGhostPreview()}"
                         title="Click to confirm move for ${ghost?.tokenName || 'token'}"
                       >
@@ -397,11 +396,11 @@ export class RunefobleBoard extends LitElement {
       <div class="status-bar">
         <span>Selected: ${this.selectedTokenId ? this.tokens.find((t) => t.id === this.selectedTokenId)?.name : 'None'}</span>
         <div class="legend">
-          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-tertiary, #ffb703)"></span> Turn</span>
-          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-primary, #e63946)"></span> AI</span>
-          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-secondary, #1d3557)"></span> Player</span>
-          <span class="legend-item"><span class="dot" style="background: repeating-linear-gradient(45deg, #ffb703, #ffb703 2px, #fff 2px, #fff 4px)"></span> Difficult</span>
-          <span class="legend-item"><span class="dot" style="background: #e63946"></span> Hazard</span>
+          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-tertiary)"></span> Turn</span>
+          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-primary)"></span> AI</span>
+          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-secondary)"></span> Player</span>
+          <span class="legend-item"><span class="dot" style="background: repeating-linear-gradient(45deg, var(--rf-accent-tertiary), var(--rf-accent-tertiary) 2px, var(--rf-bg-surface) 2px, var(--rf-bg-surface) 4px)"></span> Difficult</span>
+          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-primary)"></span> Hazard</span>
         </div>
         <span>Grid: ${this.cols} x ${this.rows}</span>
       </div>
