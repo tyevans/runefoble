@@ -76,17 +76,20 @@ modal.addEventListener('settings-closed', () => {
 });
 ```
 
-## 5. Testing Themes in Storybook
+## 5. Modular Tab Panels and Sub-Controllers
 
-To visually inspect all modal states and theme permutations:
+The settings dialog uses a modular architecture decomposed into dedicated subcomponents:
+- `<runefoble-settings-appearance>`: Theme cards, color mode radio chips, and palette swatches.
+- `<runefoble-settings-audio>`: Microphone device dropdown, adaptive noise suppression, and status indicators.
+- `<runefoble-settings-dice>`: 3D kinetic dice physics toggles, spatial foley audio switches, and d20 test roll buttons.
+- `ThemeSettingsController`: Lit ReactiveController managing `localStorage` synchronization and OS media query tracking.
+
+## 6. Testing Themes and Tab Panels in Storybook
+
+To visually inspect modal states and individual tab panels:
 
 ```bash
 make dev-storybook
 ```
 
-Navigate to **Settings** → **RunefobleSettingsModal** in the Storybook sidebar to test:
-- `DefaultClosedTrigger`
-- `OpenLightMode`
-- `OpenDarkMode`
-- `OpenSystemMode`
-- `ActiveThemeCyberRune`, `ActiveThemeDarkFantasy`, `ActiveThemeParchment`
+Navigate to **Settings** → **RunefobleSettingsModal** or **Settings** → **TabPanels** to inspect `DefaultClosedTrigger`, `OpenLightMode`, `OpenDarkMode`, `OpenSystemMode`, `AppearanceTabPanel`, `AudioTabPanel`, and `DiceTabPanel`.
