@@ -168,6 +168,8 @@ swaggerUI:
       url: "http://soundscape:8009/openapi.json"
     - name: "Audience Studio Service"
       url: "http://audience-studio:8010/openapi.json"
+    - name: "Campaign Analytics Service"
+      url: "http://campaign-analytics:8011/openapi.json"
 
 # Services
 services:
@@ -215,6 +217,10 @@ services:
     image: runefoble/audience-studio:0.1.0
     replicas: 1
     port: 8010
+  campaignAnalytics:
+    image: runefoble/campaign-analytics:0.1.0
+    replicas: 1
+    port: 8011
 
 # Frontend Application
 frontend:
