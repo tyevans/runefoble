@@ -1,7 +1,7 @@
 ---
-id: '0087'
+id: 0087
 title: PR Conflict Detection and Stale Recovery Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0046
@@ -10,8 +10,8 @@ governing_adrs:
 - ADR-0008
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/58
 ---
-
 # TASK-0087: PR Conflict Detection and Stale Recovery Test Suite Modular Decomposition
 
 ## Status
