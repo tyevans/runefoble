@@ -1,14 +1,17 @@
 """Runefoble API Gateway.
 
 Aggregates downstream microservices, exposes unified OpenAPI documentation,
-and powers real-time WebSockets for the tactical board and voice chronicle.
+enforces fine-grained SpiceDB Zanzibar object authorization, and powers
+real-time WebSockets for the tactical board and voice chronicle.
 """
 
 import contextlib
-from typing import Any
+from typing import Any, Literal
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from gateway_api.auth import get_spicedb_client, require_zanzibar_permission
+from pydantic import BaseModel
 
 app = FastAPI(
     title="Runefoble Platform Unified Gateway",
@@ -51,6 +54,15 @@ class WebSocketConnectionManager:
 ws_manager = WebSocketConnectionManager()
 
 
+class AssignRoleRequest(BaseModel):
+    user_id: str
+    role: Literal["owner", "dungeon_master", "player", "spectator"]
+
+
+class AdvanceTurnRequest(BaseModel):
+    next_character_id: str
+
+
 @app.get("/healthz")
 async def health_check():
     return {
@@ -63,18 +75,56 @@ async def health_check():
             "character_sheet": "operational",
             "voice_agent": "operational",
         },
+        "authorization_engine": "SpiceDB Zanzibar",
     }
 
 
-# Forwarding & Aggregated proxy endpoints for OpenAPI docs discovery
+# ---------------------------------------------------------------------------
+# Campaign Authorization and Role Management (Zanzibar)
+# ---------------------------------------------------------------------------
 
 
-@app.get("/api/v1/sessions/{session_id}")
+@app.post("/api/v1/campaigns/{campaign_id}/roles")
+async def assign_campaign_role(campaign_id: str, req: AssignRoleRequest):
+    """Write fine-grained relationship tuple to SpiceDB Zanzibar."""
+    client = get_spicedb_client()
+    relation_map = {
+        "owner": "owner",
+        "dungeon_master": "dungeon_master",
+        "player": "player",
+        "spectator": "view",
+    }
+    relation = relation_map[req.role]
+    await client.write_relationship(
+        resource_type="campaign",
+        resource_id=campaign_id,
+        relation=relation,
+        subject_type="user",
+        subject_id=req.user_id,
+    )
+    return {
+        "status": "role_assigned",
+        "campaign_id": campaign_id,
+        "user_id": req.user_id,
+        "role": req.role,
+        "zanzibar_relation": f"campaign:{campaign_id}#{relation}@user:{req.user_id}",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Protected Session and Board Endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.get(
+    "/api/v1/sessions/{session_id}",
+    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
+)
 async def get_session_proxy(session_id: str):
-    """Retrieve game session state, participants, and round index."""
+    """Retrieve game session state, participants, and round index (requires 'view')."""
     return {
         "id": session_id,
-        "campaign_id": "camp1",
+        "campaign_id": session_id,
         "status": "active",
         "round": 3,
         "current_turn": "c1",
@@ -91,9 +141,25 @@ async def get_session_proxy(session_id: str):
     }
 
 
-@app.get("/api/v1/boards/{session_id}")
+@app.post(
+    "/api/v1/sessions/{session_id}/turns/advance",
+    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
+)
+async def advance_turn_proxy(session_id: str, req: AdvanceTurnRequest):
+    """Advance session turn (requires 'run_session' DM permission)."""
+    return {
+        "session_id": session_id,
+        "status": "turn_advanced",
+        "active_character_id": req.next_character_id,
+    }
+
+
+@app.get(
+    "/api/v1/boards/{session_id}",
+    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
+)
 async def get_board_proxy(session_id: str):
-    """Retrieve tactical board tokens, coordinates, and grid dimensions."""
+    """Retrieve tactical board tokens, coordinates, and grid dimensions (requires 'view')."""
     return {
         "session_id": session_id,
         "cols": 8,

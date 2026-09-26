@@ -558,6 +558,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "uvicorn" },
 ]
 
@@ -566,6 +567,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 
