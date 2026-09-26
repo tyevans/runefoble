@@ -1,6 +1,7 @@
 """CharacterSheet aggregate events."""
 
 from typing import ClassVar, Literal
+from uuid import UUID
 
 from pydantic import Field
 
@@ -15,6 +16,7 @@ class CharacterCreated(BaseRunefobleEvent):
     max_hp: int
     current_hp: int
     player_id: str | None = None
+    campaign_id: UUID | str = ""
     personality_traits: list[str] = Field(default_factory=list)
 
 

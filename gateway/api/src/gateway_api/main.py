@@ -13,6 +13,7 @@ from fastapi import Depends, FastAPI, Header, Query, WebSocket, WebSocketDisconn
 from fastapi.middleware.cors import CORSMiddleware
 from gateway_api.assets import router as assets_router
 from gateway_api.auth import get_spicedb_client, require_zanzibar_permission
+from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.spectator import (
     SpectatorStateResponse,
     SpectatorViewerInfo,
@@ -20,7 +21,7 @@ from gateway_api.spectator import (
     sanitize_spectator_state,
 )
 from gateway_api.websocket import campaign_websocket_endpoint
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from runefoble_events import SpectatorSessionConnected
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -41,6 +42,7 @@ def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
     global _event_bus
     _event_bus = bus
 
+
 app = FastAPI(
     title="Runefoble Platform Unified Gateway",
     version="0.1.0",
@@ -59,6 +61,7 @@ app.add_middleware(
 )
 
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
+app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 
 
 class WebSocketConnectionManager:
@@ -91,6 +94,25 @@ class AssignRoleRequest(BaseModel):
 
 class AdvanceTurnRequest(BaseModel):
     next_character_id: str
+
+
+class DMOverrideRequest(BaseModel):
+    action: str
+    reason: str | None = None
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class AtmosphereUpdateRequest(BaseModel):
+    location_name: str
+    lighting: str = "Normal"
+    mood: str = "Neutral"
+    description: str = ""
+    ambient_audio_prompt: str | None = None
+
+
+class TokenMoveRequest(BaseModel):
+    to_x: int
+    to_y: int
 
 
 @app.get("/healthz")
@@ -181,6 +203,73 @@ async def advance_turn_proxy(session_id: str, req: AdvanceTurnRequest):
         "session_id": session_id,
         "status": "turn_advanced",
         "active_character_id": req.next_character_id,
+    }
+
+
+@app.post(
+    "/api/v1/sessions/{session_id}/dm-override",
+    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
+)
+async def dm_override_proxy(session_id: str, req: DMOverrideRequest):
+    """Execute DM override on session rules or actions (requires 'run_session')."""
+    return {
+        "session_id": session_id,
+        "status": "override_executed",
+        "action": req.action,
+        "reason": req.reason,
+    }
+
+
+@app.post(
+    "/api/v1/sessions/{session_id}/atmosphere",
+    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
+)
+async def update_atmosphere_proxy(session_id: str, req: AtmosphereUpdateRequest):
+    """Update campaign sensory atmosphere and lighting (requires 'run_session')."""
+    return {
+        "session_id": session_id,
+        "status": "atmosphere_updated",
+        "atmosphere": req.model_dump(),
+    }
+
+
+@app.post(
+    "/api/v1/board/tokens/{token_id}/move",
+    dependencies=[
+        Depends(
+            require_zanzibar_permission(
+                "move", resource_type="board_token", resource_param="token_id"
+            )
+        )
+    ],
+)
+async def move_token_proxy(token_id: str, req: TokenMoveRequest):
+    """Move a tactical token on the board (requires 'move' on board_token)."""
+    return {
+        "token_id": token_id,
+        "status": "token_moved",
+        "to_x": req.to_x,
+        "to_y": req.to_y,
+    }
+
+
+@app.get(
+    "/api/v1/board/tokens/{token_id}",
+    dependencies=[
+        Depends(
+            require_zanzibar_permission(
+                "inspect", resource_type="board_token", resource_param="token_id"
+            )
+        )
+    ],
+)
+async def get_token_proxy(token_id: str):
+    """Inspect tactical token details (requires 'inspect' on board_token)."""
+    return {
+        "token_id": token_id,
+        "status": "active",
+        "x": 2,
+        "y": 3,
     }
 
 

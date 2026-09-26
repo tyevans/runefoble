@@ -6,14 +6,15 @@ definition user {}
 definition campaign {
     relation owner: user
     relation dungeon_master: user
+    relation gm: user
     relation player: user
     relation spectator: user
 
     // Owner has supreme management permissions
     permission manage = owner
 
-    // DMs and Owner can run sessions, mutate world, assign penalties
-    permission run_session = owner + dungeon_master
+    // DMs, GMs, and Owner can run sessions, mutate world, assign penalties
+    permission run_session = owner + dungeon_master + gm
 
     // Active players can interact with their campaign assets
     permission play = run_session + player
@@ -32,6 +33,14 @@ definition character {
 }
 
 definition game_session {
+    relation campaign: campaign
+
+    permission control = campaign->run_session
+    permission participate = campaign->play
+    permission observe = campaign->view
+}
+
+definition session {
     relation campaign: campaign
 
     permission control = campaign->run_session

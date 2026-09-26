@@ -1,8 +1,9 @@
 ---
 id: 0024
 title: SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities
-status: Refined
+status: Complete
 created: 2026-09-25
+completed: 2026-09-25
 dependencies: [TASK-0008, TASK-0016]
 governing_adrs: [ADR-0001, ADR-0005, ADR-0007]
 target_release: 0.2.0
@@ -11,7 +12,7 @@ target_release: 0.2.0
 # TASK-0024: SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement automated relationship tuple synchronization between Zitadel OIDC identities/roles and SpiceDB Zanzibar schema (`libs/runefoble_auth/schema/runefoble.zed`). As the primary foundational enabler for Milestone 2 (Live Collaborative Alpha), this bridge ensures that users authenticated via Zitadel JWT tokens are automatically provisioned with the correct object-level permissions (e.g. campaign GM, campaign player, character owner, session spectator) in SpiceDB without manual administrator intervention.

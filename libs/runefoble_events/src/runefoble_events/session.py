@@ -13,7 +13,19 @@ class SessionCreated(BaseRunefobleEvent):
     aggregate_type: str = "GameSession"
     title: str = "Untitled Session"
     dm_id: str = "the_watcher"
+    campaign_id: UUID | str = ""
+    session_id: UUID | str = ""
     created_by: str = "system"
+
+
+@register_event
+class ParticipantJoined(BaseRunefobleEvent):
+    aggregate_type: str = "GameSession"
+    session_id: UUID | str = ""
+    campaign_id: UUID | str = ""
+    user_id: str
+    role: str = "player"
+    character_id: UUID | str | None = None
 
 
 @register_event
@@ -96,4 +108,3 @@ class CombatEncounterEnded(BaseRunefobleEvent):
     aggregate_type: str = "GameSession"
     session_id: UUID | str | None = None
     total_rounds: int
-

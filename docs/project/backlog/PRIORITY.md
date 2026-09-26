@@ -26,7 +26,7 @@ Order of priority for engineering tasks across the platform.
 22. **TASK-0021 (Complete)**: [`0021-voice-dsp-conditioning-pipeline.md`](complete/0021-voice-dsp-conditioning-pipeline.md) — Real-Time Dynamic DSP Audio Conditioning Pipeline
 23. **TASK-0022 (Complete)**: [`0022-initiative-tracker-turn-order-timer.md`](complete/0022-initiative-tracker-turn-order-timer.md) — Live Multi-User Turn Order, Initiative Tracker & Timer Web Component
 24. **TASK-0023 (Complete)**: [`0023-silo-s3-asset-storage-pipeline.md`](complete/0023-silo-s3-asset-storage-pipeline.md) — Silo S3 Media Asset Bucket Storage & Character Avatar / Map Upload Pipeline
-25. **TASK-0024 (Refined)**: [`0024-spicedb-zitadel-identity-sync.md`](refined/0024-spicedb-zitadel-identity-sync.md) — SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities
+25. **TASK-0024 (Complete)**: [`0024-spicedb-zitadel-identity-sync.md`](complete/0024-spicedb-zitadel-identity-sync.md) — SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities
 26. **TASK-0025 (Refined)**: [`0025-webrtc-voice-room-signaling.md`](refined/0025-webrtc-voice-room-signaling.md) — Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
 27. **TASK-0026 (Proposed)**: [`0026-service-modular-router-decomposition.md`](proposed/0026-service-modular-router-decomposition.md) — Modular APIRouter Decomposition for The Watcher & Game Session Microservices
 28. **TASK-0027 (Proposed)**: [`0027-streaming-whisper-speech-to-intent.md`](proposed/0027-streaming-whisper-speech-to-intent.md) — Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline

@@ -20,6 +20,7 @@ from runefoble_events.events import (
     EncounterSpawned,
     InitiativeRolled,
     InitiativeTurnAdvanced,
+    ParticipantJoined,
     PlayerJoinedSession,
     PlayerLeftSession,
     PlayerSpokeEvent,
@@ -49,6 +50,7 @@ __all__ = [
     "BaseRunefobleEvent",
     "SessionCreated",
     "SessionStarted",
+    "ParticipantJoined",
     "PlayerJoinedSession",
     "PlayerLeftSession",
     "TurnAdvanced",
@@ -82,7 +84,6 @@ __all__ = [
     "SpectatorSessionConnected",
     "AssetUploaded",
     "AssetDeleted",
-
     # Backward-compatible aliases
     "WatcherNarrationEvent",
     "BoardMoveEvent",

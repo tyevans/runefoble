@@ -41,6 +41,15 @@
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/prepare` | Prepares a spell in the character's active spellbook |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/cast` | Expends a spell slot to cast a spell with slot exhaustion validation |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Assigns fine-grained SpiceDB Zanzibar relationship tuples (owner, DM, player, spectator) |
+| `gateway-api` | POST | `/api/v1/auth/sync/user` | Syncs Zitadel user claims into SpiceDB Zanzibar tuples |
+| `gateway-api` | POST | `/api/v1/auth/sync/membership` | Grants or revokes campaign/session membership roles (`gm`, `player`, `spectator`) |
+| `gateway-api` | POST | `/api/v1/auth/sync/character-ownership` | Binds character aggregate to owning user and parent campaign |
+| `gateway-api` | POST | `/api/v1/auth/sync/token-binding` | Binds tactical token to character aggregate and campaign grid |
+| `gateway-api` | GET | `/api/v1/auth/sync/health` | Reports Zanzibar synchronization service health and SpiceDB connectivity |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/dm-override` | Executes DM narrative or encounter rule override (requires `run_session`) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Updates campaign sensory atmosphere, lighting, and ambient audio (requires `run_session`) |
+| `gateway-api` | POST | `/api/v1/board/tokens/{token_id}/move` | Moves a tactical token on the board (requires `move` on `board_token`) |
+| `gateway-api` | GET | `/api/v1/board/tokens/{token_id}` | Inspects tactical token state (requires `inspect` on `board_token`) |
 | `gateway-mcp` | MCP | `12 Tools Registered` | Tabletop tools (`execute_agent_action_plan`, `cast_spell`, `modify_character_hp`, `add_condition`, `roll_dice`, etc.) and dynamic resource `session://{session_id}/state` |
 
 

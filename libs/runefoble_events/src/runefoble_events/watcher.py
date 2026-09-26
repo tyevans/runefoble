@@ -151,4 +151,3 @@ class VoiceAudioConditioned(BaseRunefobleEvent):
 # Legacy backward-compatible aliases
 WatcherNarrationEvent = WatcherNarrationGenerated
 DiceRollEvent = DiceRolled
-

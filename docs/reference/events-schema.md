@@ -33,6 +33,12 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `created_by`: String
 - **`SessionStarted`**: Emitted when the session transitions from lobby to active combat/exploration.
   - `started_at_turn`: Integer (default 1)
+- **`ParticipantJoined`**: Emitted when a user joins the session in a specific role (player, spectator, gm).
+  - `session_id`: UUID | str
+  - `campaign_id`: UUID | str
+  - `user_id`: String
+  - `role`: String (default "player")
+  - `character_id`: Optional[UUID | str]
 - **`PlayerJoinedSession`**: Emitted when a participant connects with an assigned character.
   - `player_id`: String
   - `character_id`: UUID

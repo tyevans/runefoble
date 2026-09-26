@@ -7,13 +7,24 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Relationship:
     resource_type: str
     resource_id: str
     relation: str
     subject_type: str
     subject_id: str
+
+    def to_tuple_key(self) -> str:
+        return f"{self.resource_type}:{self.resource_id}#{self.relation}@{self.subject_type}:{self.subject_id}"
+
+    @classmethod
+    def from_tuple_key(cls, key: str) -> "Relationship":
+        res, rest = key.split("#", 1)
+        res_type, res_id = res.split(":", 1)
+        rel, subj = rest.split("@", 1)
+        subj_type, subj_id = subj.split(":", 1)
+        return cls(res_type, res_id, rel, subj_type, subj_id)
 
 
 class MockSpiceDBClient:
@@ -33,6 +44,22 @@ class MockSpiceDBClient:
         subject_id: str,
     ) -> str:
         return f"{resource_type}:{resource_id}#{relation}@{subject_type}:{subject_id}"
+
+    def _find_subjects(
+        self,
+        resource_type: str,
+        resource_id: str,
+        relation: str,
+    ) -> list[tuple[str, str]]:
+        prefix = f"{resource_type}:{resource_id}#{relation}@"
+        results: list[tuple[str, str]] = []
+        for key in self._tuples:
+            if key.startswith(prefix):
+                subject_part = key[len(prefix) :]
+                if ":" in subject_part:
+                    s_type, s_id = subject_part.split(":", 1)
+                    results.append((s_type, s_id))
+        return results
 
     async def write_relationship(
         self,
@@ -58,6 +85,26 @@ class MockSpiceDBClient:
         """Remove a relationship tuple."""
         key = self._tuple_key(resource_type, resource_id, relation, subject_type, subject_id)
         self._tuples.discard(key)
+        logger.info("SpiceDB tuple deleted: %s", key)
+
+    async def read_relationships(
+        self,
+        resource_type: str | None = None,
+        resource_id: str | None = None,
+        relation: str | None = None,
+    ) -> list[Relationship]:
+        """Query stored relationship tuples matching optional filters."""
+        results: list[Relationship] = []
+        for key in sorted(self._tuples):
+            rel = Relationship.from_tuple_key(key)
+            if resource_type and rel.resource_type != resource_type:
+                continue
+            if resource_id and rel.resource_id != resource_id:
+                continue
+            if relation and rel.relation != relation:
+                continue
+            results.append(rel)
+        return results
 
     async def check_permission(
         self,
@@ -69,61 +116,151 @@ class MockSpiceDBClient:
     ) -> bool:
         """Check whether a subject has a specific permission on a resource.
 
-        Evaluates direct relations, owner bypass, and Zanzibar hierarchy.
+        Evaluates direct relations, owner bypass, and Zanzibar graph hierarchy.
         """
-        # Direct relationship check
+        # 1. Direct relationship check
         direct = self._tuple_key(resource_type, resource_id, permission, subject_type, subject_id)
         if direct in self._tuples:
             return True
 
-        # Owner bypass / supreme hierarchy
-        owner = self._tuple_key(resource_type, resource_id, "owner", subject_type, subject_id)
-        if owner in self._tuples:
-            return True
-
-        # Dungeon Master inheritance hierarchy
-        dm = self._tuple_key(resource_type, resource_id, "dungeon_master", subject_type, subject_id)
-        if dm in self._tuples and permission in (
-            "dungeon_master",
-            "run_session",
-            "play",
-            "view",
-            "read",
-            "edit",
-            "move",
-            "move_token",
-            "modify_hp",
-            "apply_condition",
-            "spawn_monster",
-            "set_scene",
-            "control",
-            "participate",
-            "observe",
-            "inspect",
-        ):
-            return True
-
-        # Player inheritance
-        player = self._tuple_key(resource_type, resource_id, "player", subject_type, subject_id)
-        if player in self._tuples and permission in ("player", "play", "view", "read", "participate", "observe", "inspect"):
-            return True
-
-        # Spectator inheritance
-        spectator = self._tuple_key(resource_type, resource_id, "spectator", subject_type, subject_id)
-        if spectator in self._tuples and permission in ("spectator", "view", "read", "observe", "inspect"):
-            return True
-
-        # Character owner permissions
-        if resource_type == "character":
-            char_owner = self._tuple_key("character", resource_id, "owner", subject_type, subject_id)
-            if char_owner in self._tuples and permission in ("edit", "view", "read"):
+        # 2. Campaign evaluation
+        if resource_type == "campaign":
+            # Owner bypass / supreme hierarchy
+            if (
+                self._tuple_key("campaign", resource_id, "owner", subject_type, subject_id)
+                in self._tuples
+            ):
                 return True
 
-        # Board token move permissions
+            # DM / GM hierarchy
+            is_dm = (
+                self._tuple_key("campaign", resource_id, "dungeon_master", subject_type, subject_id)
+                in self._tuples
+                or self._tuple_key("campaign", resource_id, "gm", subject_type, subject_id)
+                in self._tuples
+            )
+            if is_dm and permission in (
+                "dungeon_master",
+                "gm",
+                "run_session",
+                "play",
+                "view",
+                "read",
+                "edit",
+                "move",
+                "move_token",
+                "modify_hp",
+                "apply_condition",
+                "spawn_monster",
+                "set_scene",
+                "control",
+                "participate",
+                "observe",
+                "inspect",
+            ):
+                return True
+
+            # Player inheritance
+            if self._tuple_key(
+                "campaign", resource_id, "player", subject_type, subject_id
+            ) in self._tuples and permission in (
+                "player",
+                "play",
+                "view",
+                "read",
+                "participate",
+                "observe",
+                "inspect",
+            ):
+                return True
+
+            # Spectator inheritance
+            if self._tuple_key(
+                "campaign", resource_id, "spectator", subject_type, subject_id
+            ) in self._tuples and permission in ("spectator", "view", "read", "observe", "inspect"):
+                return True
+
+            if self._tuple_key(
+                "campaign", resource_id, "view", subject_type, subject_id
+            ) in self._tuples and permission in ("view", "read", "observe", "inspect"):
+                return True
+
+        # 3. Session evaluation (session->campaign)
+        if resource_type in ("session", "game_session"):
+            parents = self._find_subjects(resource_type, resource_id, "campaign")
+            if not parents:
+                parents = [("campaign", resource_id)]
+            for p_type, p_id in parents:
+                if permission in ("control", "run_session") and await self.check_permission(
+                    p_type, p_id, "run_session", subject_type, subject_id
+                ):
+                    return True
+                if permission in ("participate", "play") and await self.check_permission(
+                    p_type, p_id, "play", subject_type, subject_id
+                ):
+                    return True
+                if permission in (
+                    "observe",
+                    "view",
+                    "read",
+                    "inspect",
+                ) and await self.check_permission(p_type, p_id, "view", subject_type, subject_id):
+                    return True
+
+        # 4. Character evaluation (owner + campaign->run_session, view = edit + campaign->view)
+        if resource_type == "character":
+            char_owner = self._tuple_key(
+                "character", resource_id, "owner", subject_type, subject_id
+            )
+            if char_owner in self._tuples and permission in ("owner", "edit", "view", "read"):
+                return True
+
+            parents = self._find_subjects("character", resource_id, "campaign")
+            for p_type, p_id in parents:
+                if permission in ("edit", "view", "read") and await self.check_permission(
+                    p_type, p_id, "run_session", subject_type, subject_id
+                ):
+                    return True
+                if permission in ("view", "read") and await self.check_permission(
+                    p_type, p_id, "view", subject_type, subject_id
+                ):
+                    return True
+
+        # 5. Board token evaluation (character->edit + campaign->run_session)
         if resource_type == "board_token":
-            token_move = self._tuple_key("board_token", resource_id, "move", subject_type, subject_id)
+            token_move = self._tuple_key(
+                "board_token", resource_id, "move", subject_type, subject_id
+            )
             if token_move in self._tuples and permission in ("move", "move_token"):
                 return True
+
+            linked_chars = self._find_subjects("board_token", resource_id, "character")
+            for c_type, c_id in linked_chars:
+                if permission in (
+                    "move",
+                    "move_token",
+                    "inspect",
+                    "view",
+                    "read",
+                ) and await self.check_permission(c_type, c_id, "edit", subject_type, subject_id):
+                    return True
+
+            parents = self._find_subjects("board_token", resource_id, "campaign")
+            for p_type, p_id in parents:
+                if permission in (
+                    "move",
+                    "move_token",
+                    "inspect",
+                    "view",
+                    "read",
+                ) and await self.check_permission(
+                    p_type, p_id, "run_session", subject_type, subject_id
+                ):
+                    return True
+                if permission in ("inspect", "view", "read") and await self.check_permission(
+                    p_type, p_id, "view", subject_type, subject_id
+                ):
+                    return True
 
         return False
 
@@ -153,8 +290,88 @@ class SpiceDBClient(MockSpiceDBClient):
 
             self._grpc_client = Client(self.endpoint, grpc.insecure_channel(self.endpoint))
         except (ImportError, Exception) as exc:
-            logger.debug("SpiceDB gRPC client unavailable (%s); using in-memory mock fallback.", exc)
+            logger.debug(
+                "SpiceDB gRPC client unavailable (%s); using in-memory mock fallback.", exc
+            )
             self._grpc_client = None
+
+    async def write_relationship(
+        self,
+        resource_type: str,
+        resource_id: str,
+        relation: str,
+        subject_type: str,
+        subject_id: str,
+    ) -> None:
+        if self._grpc_client is not None:
+            try:
+                from authzed.api.v1 import (
+                    ObjectReference,
+                    RelationshipUpdate,
+                    SubjectReference,
+                    WriteRelationshipsRequest,
+                )
+                from authzed.api.v1 import (
+                    Relationship as AuthzedRelationship,
+                )
+
+                update = RelationshipUpdate(
+                    operation=RelationshipUpdate.OPERATION_TOUCH,
+                    relationship=AuthzedRelationship(
+                        resource=ObjectReference(object_type=resource_type, object_id=resource_id),
+                        relation=relation,
+                        subject=SubjectReference(
+                            object=ObjectReference(object_type=subject_type, object_id=subject_id)
+                        ),
+                    ),
+                )
+                request = WriteRelationshipsRequest(updates=[update])
+                await self._grpc_client.WriteRelationships(request)
+            except Exception as e:
+                logger.warning("SpiceDB gRPC write failed, falling back to mock: %s", e)
+
+        await super().write_relationship(
+            resource_type, resource_id, relation, subject_type, subject_id
+        )
+
+    async def delete_relationship(
+        self,
+        resource_type: str,
+        resource_id: str,
+        relation: str,
+        subject_type: str,
+        subject_id: str,
+    ) -> None:
+        if self._grpc_client is not None:
+            try:
+                from authzed.api.v1 import (
+                    ObjectReference,
+                    RelationshipUpdate,
+                    SubjectReference,
+                    WriteRelationshipsRequest,
+                )
+                from authzed.api.v1 import (
+                    Relationship as AuthzedRelationship,
+                )
+
+                update = RelationshipUpdate(
+                    operation=RelationshipUpdate.OPERATION_DELETE,
+                    relationship=AuthzedRelationship(
+                        resource=ObjectReference(object_type=resource_type, object_id=resource_id),
+                        relation=relation,
+                        subject=SubjectReference(
+                            object=ObjectReference(object_type=subject_type, object_id=subject_id)
+                        ),
+                    ),
+                )
+                request = WriteRelationshipsRequest(updates=[update])
+                await self._grpc_client.WriteRelationships(request)
+            except Exception as e:
+                logger.warning("SpiceDB gRPC delete failed, falling back to mock: %s", e)
+
+        await super().delete_relationship(
+            resource_type, resource_id, relation, subject_type, subject_id
+        )
 
     async def check_permission(
         self,
@@ -181,7 +398,9 @@ class SpiceDBClient(MockSpiceDBClient):
                     ),
                 )
                 response = await self._grpc_client.CheckPermission(request)
-                return response.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
+                return (
+                    response.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
+                )
             except Exception as e:
                 logger.warning("SpiceDB gRPC check failed, falling back to mock: %s", e)
 
