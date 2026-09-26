@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PRD Creation, Maintenance, and Task Decomposition Pipeline (`tools/prd_pipeline`, `scripts/decompose-prds.sh`, `ADR-0003`, `ADR-0013`)**:
+  - Implemented modular PRD pipeline engine in `tools/prd_pipeline/` with CLI entrypoint `tools.prd_pipeline.cli` and executable shell wrapper `scripts/decompose-prds.sh`.
+  - Added automated auditing command (`audit`) detecting undecomposed and underdecomposed PRDs, buffer exhaustion warnings (<8 items), stale cross-directory task links, and oversized proposed tasks.
+  - Implemented automated PRD creation (`create`) scaffolding standardized PRD records with YAML frontmatter, 6 core questions, and automated registration into `docs/project/product/REGISTRY.md`.
+  - Built decomposition engine (`decomposer.py`) breaking PRDs into granular, single `agy -p` pass tasks:
+    - Automatically identifies architectural novelties and generates Architectural Spike tasks (`SPIKE: Architectural Spike and ADR for ...`).
+    - Produces thin vertical slices across Domain Aggregates, APIRouters with SpiceDB Zanzibar checks, Lit Microfrontends per ADR-0013, and asynchronous Redis Streams workers.
+    - Strictly enforces Hard Invariant 6 (<500 lines per file) and Hard Invariant 7 (Frontdoor Blackbox TDD).
+  - Built bidirectional registry synchronizer (`registry_sync.py`) reconciling PRD, User Story, and Backlog Priority registries, repairing stale task references, and indexing new tasks in `docs/project/backlog/PRIORITY.md`.
+  - Added Antigravity agent decomposition prompt generator (`prompt` and `agent` subcommands) for deep semantic decomposition of narrative PRDs.
+  - Added Makefile targets: `make prd-audit`, `make prd-decompose`, `make prd-create`, `make prd-sync`.
+  - Authored comprehensive blackbox test suite in `tests/test_prd_pipeline.py` and Diataxis how-to guide `docs/how-to/decompose-prds-into-vertical-slices.md`.
+
 - **Universal VTT Importer and Dynamic MCP Tool Registry (`TASK-0057`, `ADR-0007`, `ADR-0008`, `ADR-0010`, `ADR-0013`)**:
   - Implemented Universal VTT (`.dd2vtt`) parser in `services/board_state/src/board_state/parsers/uvtt.py` extracting grid resolution, line-of-sight wall vectors, door portals, ambient lights, and embedded base64 map imagery.
   - Built ingestion endpoint `POST /api/v1/board/{id}/import/uvtt` (alias: `/api/v1/boards/{id}/import/uvtt`) supporting both multipart file uploads and raw JSON payloads.

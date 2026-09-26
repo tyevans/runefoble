@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check backlog-worker docs-build docs-serve
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 CLUSTER_NAME ?= runefoble-local
 KIND_CONFIG ?= deployments/kind/cluster-config.yaml
@@ -12,6 +12,18 @@ help: ## Show this help message
 
 health-check: ## Inspect codebase file length invariants and backlog ready buffer
 	@python3 scripts/health_check.py
+
+prd-audit: ## Audit PRDs, buffer health, and granularity
+	@python3 -m tools.prd_pipeline.cli audit
+
+prd-decompose: ## Decompose PRDs into ADR spikes and vertical slices (ARGS="--prd PRD-0014")
+	@python3 -m tools.prd_pipeline.cli decompose $(ARGS)
+
+prd-create: ## Scaffold a new PRD document (ARGS="--title '...'")
+	@python3 -m tools.prd_pipeline.cli create $(ARGS)
+
+prd-sync: ## Synchronize PRD, User Story, and Backlog registries
+	@python3 -m tools.prd_pipeline.cli sync
 
 backlog-worker: ## Run autonomous backlog execution engine (ARGS="--drain --concurrency 2")
 	@python3 -m tools.backlog_engine.cli $(ARGS)

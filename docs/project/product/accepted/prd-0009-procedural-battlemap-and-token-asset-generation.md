@@ -42,7 +42,7 @@ GPU inference cycles for diffusion and segmentation pipelines; results are aggre
 
 ## Implementing Backlog Tasks
 - [`TASK-0049: Procedural Battlemap & Token Asset Forge Microservice`](../../backlog/complete/0049-procedural-battlemap-and-asset-forge-bc.md)
-- [`TASK-0057: Universal VTT Importer and Dynamic MCP Tool Registry`](../../backlog/refined/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md)
+- [`TASK-0057: Universal VTT Importer and Dynamic MCP Tool Registry`](../../backlog/complete/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md)
 - [`TASK-0067: Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition`](../../backlog/complete/0067-silo-assets-and-battlemap-test-suite-decomposition.md)
 - [`TASK-0078: Battlemap Uploader Subviews and Grid Controller Modular Decomposition`](../../backlog/complete/0078-battlemap-uploader-subviews-and-grid-controller-decomposition.md)
 - [`TASK-0092: Asset Forge Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0092-asset-forge-test-suite-modular-decomposition.md)

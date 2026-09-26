@@ -10,6 +10,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PRD Creation, Maintenance, and Task Decomposition Pipeline (`tools/prd_pipeline`, `scripts/decompose-prds.sh`, `ADR-0003`, `ADR-0013`)**:
+  - Implemented modular PRD pipeline engine in `tools/prd_pipeline/` with CLI entrypoint `tools.prd_pipeline.cli` and executable shell wrapper `scripts/decompose-prds.sh`.
+  - Added automated auditing command (`audit`) detecting undecomposed and underdecomposed PRDs, buffer exhaustion warnings (<8 items), stale cross-directory task links, and oversized proposed tasks.
+  - Implemented automated PRD creation (`create`) scaffolding standardized PRD records with YAML frontmatter, 6 core questions, and automated registration into `docs/project/product/REGISTRY.md`.
+  - Built decomposition engine (`decomposer.py`) breaking PRDs into granular, single `agy -p` pass tasks:
+    - Automatically identifies architectural novelties and generates Architectural Spike tasks (`SPIKE: Architectural Spike and ADR for ...`).
+    - Produces thin vertical slices across Domain Aggregates, APIRouters with SpiceDB Zanzibar checks, Lit Microfrontends per ADR-0013, and asynchronous Redis Streams workers.
+    - Strictly enforces Hard Invariant 6 (<500 lines per file) and Hard Invariant 7 (Frontdoor Blackbox TDD).
+  - Built bidirectional registry synchronizer (`registry_sync.py`) reconciling PRD, User Story, and Backlog Priority registries, repairing stale task references, and indexing new tasks in `docs/project/backlog/PRIORITY.md`.
+  - Added Antigravity agent decomposition prompt generator (`prompt` and `agent` subcommands) for deep semantic decomposition of narrative PRDs.
+  - Added Makefile targets: `make prd-audit`, `make prd-decompose`, `make prd-create`, `make prd-sync`.
+  - Authored comprehensive blackbox test suite in `tests/test_prd_pipeline.py` and Diataxis how-to guide `docs/how-to/decompose-prds-into-vertical-slices.md`.
+
+- **Universal VTT Importer and Dynamic MCP Tool Registry (`TASK-0057`, `ADR-0007`, `ADR-0008`, `ADR-0010`, `ADR-0013`)**:
+  - Implemented Universal VTT (`.dd2vtt`) parser in `services/board_state/src/board_state/parsers/uvtt.py` extracting grid resolution, line-of-sight wall vectors, door portals, ambient lights, and embedded base64 map imagery.
+  - Built ingestion endpoint `POST /api/v1/board/{id}/import/uvtt` (alias: `/api/v1/boards/{id}/import/uvtt`) supporting both multipart file uploads and raw JSON payloads.
+  - Automatically decoded map textures and persisted into Silo S3 (`battlemaps/`), binding `background_image_url` and `background_asset_id` to board aggregates.
+  - Projected line-of-sight wall segments and populated obstacle bounds tokens across tactical boards.
+  - Registered and published `UniversalVTTImported` (`runefoble.events.board.map_imported`) event, handled via eventsource-py `@handles` appliers.
+  - Implemented Dynamic FastMCP Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic_registry.py`) enabling runtime registration, schema validation, and deregistration of custom LLM tools without gateway restarts.
+  - Enforced AST-level execution sandboxing rejecting forbidden system imports (`os`, `subprocess`, `sys`), dangerous builtins (`open`, `eval`, `exec`), and dunder attributes.
+  - Exposed administrative REST endpoints (`/mcp/tools`, `/mcp/tools/{name}`, `/mcp/tools/{name}/execute`) on both `gateway_mcp` and `gateway_api`.
+  - Added comprehensive blackbox TDD test suite in `tests/test_blackbox_uvtt_import.py` asserting multipart file ingestion, wall projection, Silo S3 persistence, and dynamic FastMCP execution.
+  - Published Diataxis how-to guide `docs/how-to/import-universal-vtt-maps-and-register-dynamic-tools.md` and updated technical references.
+
+- **Cinematic Director Auto-Camera and OBS Stream Overlay (`TASK-0056`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
+  - Implemented autonomous Cinematic Director virtual camera (`gateway_api.cinematic_director`) tracking active turn events (`TurnStarted`) and action centers (`TokenMoved`) with smooth cubic-bezier easing (`cubic-bezier(0.25, 0.1, 0.25, 1.0)`) within 300ms.
+  - Exposed OBS transparent stream overlay route `GET /overlay/party-vitals/{session_id}` serving alpha-transparent canvas (`rgba(0, 0, 0, 0)`) with zero DM secret leakage (100% exclusion of hidden traps, unrevealed monster HP numbers, and DM notes).
+  - Built real-time spectator WebSocket feed at `/ws/overlay/{session_id}` streaming sanitized party vitals, roll animations, and camera target updates.
+  - Vendored `<runefoble-spectator-overlay>` Lit Web Component in `services/game_session/ui/src/` with Bauhaus design tokens, interactive Storybook stories, and advertised via `services/game_session/ui/manifest.json`.
+  - Added blackbox TDD test suite in `tests/test_blackbox_cinematic_director.py` and Diataxis How-to guide in `docs/how-to/broadcast-obs-stream-overlay-and-cinematic-camera.md`.
+
 - **Backlog Curation, Invariant Health Protection, and Milestone 4 JIT Buffer Replenishment (`ADR-0009`)**:
   - Audited repository file lengths against Hard Invariant 6 (< 500 lines); verified zero violations across 600+ source files.
   - Preemptively proposed 4 modular decomposition tasks in `docs/project/backlog/proposed/` for files approaching limit:
