@@ -1,6 +1,7 @@
 """Backlog queue parsing, dependency resolution, and state transitions."""
 
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -278,3 +279,69 @@ class BacklogQueue:
         new_content, count = pattern.subn(repl, content)
         if count > 0:
             priority_file.write_text(new_content, encoding="utf-8")
+
+
+def finalize_backlog_completion(
+    repo_root: Path,
+    queue: BacklogQueue,
+    task: Task,
+    push: bool = False,
+) -> Path:
+    """Marks task complete in queue, stages PRIORITY.md and markdown file, commits and optionally pushes."""
+    dest_file = queue.complete_task(task)
+    subprocess.run(
+        ["git", "add", "docs/project/backlog/PRIORITY.md", str(dest_file)],
+        cwd=repo_root,
+        check=False,
+    )
+    for folder in ["refined", "proposed"]:
+        old_candidate = repo_root / "docs" / "project" / "backlog" / folder / task.file_path.name
+        if not old_candidate.exists():
+            subprocess.run(
+                ["git", "rm", "--cached", "--ignore-unmatch", str(old_candidate)],
+                cwd=repo_root,
+                check=False,
+            )
+
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "docs/project/backlog"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if status.stdout.strip():
+        subprocess.run(
+            ["git", "commit", "-m", f"chore(backlog): complete {task.canonical_id}"],
+            cwd=repo_root,
+            check=False,
+        )
+        if push:
+            push_res = subprocess.run(
+                ["git", "push", "origin", "main"],
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if push_res.returncode != 0:
+                print(
+                    f"⚠️ Push rejected, fetching and rebasing origin/main: {push_res.stderr.strip()}"
+                )
+                subprocess.run(
+                    ["git", "pull", "--rebase", "origin", "main"],
+                    cwd=repo_root,
+                    check=False,
+                )
+                push_retry = subprocess.run(
+                    ["git", "push", "origin", "main"],
+                    cwd=repo_root,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if push_retry.returncode != 0:
+                    raise RuntimeError(
+                        f"Failed to push backlog completion on retry: {push_retry.stderr.strip()}"
+                    )
+    return dest_file
