@@ -10,8 +10,21 @@ import pytest
 from tools.prd_pipeline.cli import main
 from tools.prd_pipeline.decomposer import PRDDecomposer
 from tools.prd_pipeline.models import SliceType
+from tools.prd_pipeline.planner import (
+    DecompositionPlanner,
+    requires_architectural_spike,
+    requires_ui_component,
+    requires_worker_slice,
+)
 from tools.prd_pipeline.prd_manager import PRDManager
 from tools.prd_pipeline.registry_sync import RegistrySynchronizer
+from tools.prd_pipeline.templates import (
+    create_user_story_draft,
+    format_task_markdown,
+    format_user_story_markdown,
+    render_acceptance_criteria,
+    serialize_yaml_list,
+)
 from tools.prd_pipeline.writer import PlanWriter
 
 
@@ -235,3 +248,170 @@ def test_shell_script_interface():
     result = subprocess.run([str(script), "audit"], capture_output=True, text=True, cwd=repo_root)
     assert result.returncode == 0
     assert "Runefoble PRD & Backlog Audit" in result.stdout
+
+
+def test_decomposer_execute_and_counters(temp_project: Path):
+    """Verifies execute_decomposition and counter resolution on PRDDecomposer facade."""
+    mgr = PRDManager(temp_project)
+    prd = mgr.create_prd(
+        title="Arcane Telemetry",
+        persona="Lyra",
+        target_bc="campaign_analytics",
+        summary="Telemetry pipeline for dice events.",
+        status="Accepted",
+    )
+    decomposer = PRDDecomposer(temp_project)
+
+    # Initial counters
+    assert decomposer.get_max_task_number() == 1  # 0001-bootstrap exists
+    assert decomposer.get_max_story_number() == 0
+
+    # Execute decomposition via PRD directly
+    res = decomposer.execute_decomposition(prd)
+    assert len(res["tasks"]) >= 2
+    assert len(res["stories"]) == 1
+    for p in res["tasks"] + res["stories"]:
+        assert p.exists()
+
+    # Counter should update
+    new_max = decomposer.get_max_task_number()
+    assert new_max > 1
+
+    # Execute with plan object directly
+    plan = decomposer.plan_decomposition(prd)
+    res_plan = decomposer.execute_decomposition(plan)
+    assert len(res_plan["tasks"]) == len(plan.all_tasks)
+
+
+def test_planner_heuristics_and_dependencies(temp_project: Path):
+    """Directly tests planner heuristics and slice sequencing."""
+    mgr = PRDManager(temp_project)
+
+    # Spike keywords check
+    prd_spike = mgr.create_prd(
+        title="3D Canvas Relic",
+        persona="Artisan",
+        target_bc="campaign_lore",
+        summary="Requires 3D WebGL meshes.",
+        status="Accepted",
+    )
+    assert requires_architectural_spike(prd_spike) is True
+    assert requires_ui_component(prd_spike) is True
+
+    prd_plain = mgr.create_prd(
+        title="Dice Roller Engine",
+        persona="Adventurer",
+        target_bc="game_session",
+        summary="Standard roll logic.",
+        status="Accepted",
+    )
+    assert requires_architectural_spike(prd_plain) is False
+
+    # UI and Worker heuristics
+    prd_worker = mgr.create_prd(
+        title="Stream Listener",
+        persona="Watcher",
+        target_bc="game_session",
+        summary="Redis stream websocket broadcast.",
+        status="Accepted",
+    )
+    assert requires_worker_slice(prd_worker) is True
+
+    # Planner direct execution with offset numbers
+    planner = DecompositionPlanner(current_task_num=50, current_story_num=10)
+    plan = planner.plan(prd_spike)
+    assert plan.spikes[0].number == 51
+    assert plan.stories[0].number == 11
+    # Check dependencies: domain aggregate depends on spike
+    domain_slice = next(s for s in plan.slices if s.slice_type == SliceType.DOMAIN_AGGREGATE)
+    assert domain_slice.dependencies == [plan.spikes[0].canonical_id]
+    # API slice depends on domain slice
+    api_slice = next(s for s in plan.slices if s.slice_type == SliceType.API_AUTH)
+    assert api_slice.dependencies == [domain_slice.canonical_id]
+
+
+def test_templates_formatting_and_helpers(temp_project: Path):
+    """Directly tests template formatting functions and metadata serialization."""
+    # YAML serialization
+    assert serialize_yaml_list([]) == "[]"
+    assert serialize_yaml_list(["ADR-0001", "ADR-0002"]) == "- ADR-0001\n- ADR-0002"
+
+    # Criteria rendering
+    assert render_acceptance_criteria(["First", "Second"]) == "1. First\n2. Second"
+
+    mgr = PRDManager(temp_project)
+    prd = mgr.create_prd(
+        title="Potion Mixing",
+        persona="Alchemist",
+        target_bc="character_sheet",
+        summary="Reagent mixing mechanics.",
+        status="Accepted",
+    )
+
+    story = create_user_story_draft("US-0099", 99, prd)
+    assert story.persona == "Alchemist"
+    story_md = format_user_story_markdown(story)
+    assert "# US-0099 — Potion Mixing Experience" in story_md
+    assert "**As a** Alchemist" in story_md
+
+    decomposer = PRDDecomposer(temp_project)
+    plan = decomposer.plan_decomposition(prd)
+    task_md = format_task_markdown(plan.slices[0])
+    assert f"# {plan.slices[0].canonical_id}:" in task_md
+    assert "## INVEST Criteria Evaluation" in task_md
+    assert "## Definition of Done (Hard Invariant 7" in task_md
+
+
+def test_decomposer_backward_compatibility_delegates(temp_project: Path):
+    """Verifies that private helper delegates remain functional on PRDDecomposer."""
+    mgr = PRDManager(temp_project)
+    prd = mgr.create_prd(
+        title="Interactive Canvas",
+        persona="Player",
+        target_bc="board_state",
+        summary="Canvas UI component.",
+        status="Accepted",
+    )
+    decomposer = PRDDecomposer(temp_project)
+
+    assert decomposer._requires_ui_component(prd) is True
+    assert decomposer._requires_architectural_spike(prd) is False
+
+    from tools.prd_pipeline.models import PRD
+
+    plain_prd = PRD(
+        id="PRD-0999",
+        number=999,
+        title="Static Card Layout",
+        status="Accepted",
+        created="2026-09-26",
+        file_path=Path("/tmp/prd.md"),
+        who_for="Player",
+        problem_statement="",
+        good_looks_like="",
+        does_not_do="",
+        costs_at_scale="",
+        checkable_outcomes=[],
+        linked_stories=[],
+        implementing_tasks=[],
+        raw_frontmatter={},
+        body="Purely static visual layout without background processing.",
+        target_bc="board_state",
+    )
+    assert decomposer._requires_worker_slice(plain_prd) is False
+
+    spike = decomposer._create_spike_draft("TASK-0999", 999, prd, "board_state")
+    assert spike.canonical_id == "TASK-0999"
+    assert spike.is_spike is True
+
+    domain = decomposer._create_domain_slice_draft("TASK-1000", 1000, prd, "board_state", [], [])
+    assert domain.slice_type == SliceType.DOMAIN_AGGREGATE
+
+    api = decomposer._create_api_slice_draft("TASK-1001", 1001, prd, "board_state", [], [])
+    assert api.slice_type == SliceType.API_AUTH
+
+    ui = decomposer._create_ui_slice_draft("TASK-1002", 1002, prd, "board_state", [], [])
+    assert ui.slice_type == SliceType.MICROFRONTEND
+
+    worker = decomposer._create_worker_slice_draft("TASK-1003", 1003, prd, "board_state", [], [])
+    assert worker.slice_type == SliceType.WORKER_INTEGRATION
