@@ -191,3 +191,58 @@ class RedisStreamsEventBus:
         if self._client:
             await self._client.aclose()
             self._client = None
+
+
+class MockAsyncRedis:
+    """In-memory mock async Redis client simulating Redis Streams operations."""
+
+    def __init__(self) -> None:
+        self.streams: dict[str, list[tuple[str, dict[str, Any]]]] = {}
+        self.groups: dict[tuple[str, str], int] = {}
+        self.counter: int = 0
+        self.closed: bool = False
+
+    async def xadd(self, stream: str, fields: dict[str, Any]) -> str:
+        self.counter += 1
+        entry_id = f"1700000000000-{self.counter}"
+        if stream not in self.streams:
+            self.streams[stream] = []
+        self.streams[stream].append((entry_id, fields))
+        return entry_id
+
+    async def xgroup_create(
+        self, stream: str, group_name: str, id: str = "0", mkstream: bool = True
+    ) -> bool:
+        if stream not in self.streams and mkstream:
+            self.streams[stream] = []
+        key = (stream, group_name)
+        if key in self.groups:
+            raise Exception("BUSYGROUP Consumer Group name already exists")
+        self.groups[key] = 0
+        return True
+
+    async def xreadgroup(
+        self,
+        groupname: str,
+        consumername: str,
+        streams: dict[str, str],
+        count: int = 10,
+        block: int | None = None,
+    ) -> list[tuple[str, list[tuple[str, dict[str, Any]]]]]:
+        results: list[tuple[str, list[tuple[str, dict[str, Any]]]]] = []
+        for stream_name, _start_id in streams.items():
+            if stream_name not in self.streams:
+                continue
+            key = (stream_name, groupname)
+            idx = self.groups.get(key, 0)
+            available = self.streams[stream_name][idx : idx + count]
+            self.groups[key] = idx + len(available)
+            if available:
+                results.append((stream_name, available))
+        return results
+
+    async def xack(self, stream: str, group_name: str, *message_ids: str) -> int:
+        return len(message_ids)
+
+    async def aclose(self) -> None:
+        self.closed = True
