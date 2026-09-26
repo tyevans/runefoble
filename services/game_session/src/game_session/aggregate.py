@@ -5,7 +5,13 @@ from uuid import UUID
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
-from pydantic import BaseModel, Field
+from game_session.models import GameSessionState, ParticipantState
+from game_session.rules import (
+    advance_initiative_turn,
+    calculate_next_active_character,
+    resolve_initiative_rolled,
+    sort_initiative_order,
+)
 from runefoble_events.events import (
     CombatEncounterEnded,
     CombatEncounterStarted,
@@ -20,31 +26,11 @@ from runefoble_events.events import (
     TurnAdvanced,
 )
 
-
-class ParticipantState(BaseModel):
-    player_id: str
-    character_id: UUID
-    character_name: str
-    character_class: str
-    is_present: bool = True
-    is_stand_in_active: bool = False
-
-
-class GameSessionState(BaseModel):
-    session_id: UUID
-    campaign_id: UUID
-    title: str
-    dm_id: str
-    status: str = "lobby"  # lobby, active, ended
-    current_turn: int = 1
-    participants: dict[str, ParticipantState] = Field(default_factory=dict)
-    active_character_id: UUID | None = None
-    stand_in_actions: list[dict[str, Any]] = Field(default_factory=list)
-    in_combat: bool = False
-    combat_round: int = 1
-    initiative_order: list[dict[str, Any]] = Field(default_factory=list)
-    combat_active_id: str | None = None
-    combat_turn_started: bool = False
+__all__ = [
+    "GameSessionAggregate",
+    "GameSessionState",
+    "ParticipantState",
+]
 
 
 class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
@@ -110,10 +96,8 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
             raise ValueError("Cannot advance turn in non-active session")
         prev = self.state.current_turn
         next_char_id = active_character_id
-        if next_char_id is None and self.state.participants:
-            part_list = list(self.state.participants.values())
-            next_idx = prev % len(part_list)
-            next_char_id = part_list[next_idx].character_id
+        if next_char_id is None:
+            next_char_id = calculate_next_active_character(self.state.participants, prev)
 
         self.create_event(
             TurnAdvanced,
@@ -189,31 +173,10 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
         """Advance combat turn to next combatant in initiative order, incrementing round on loop."""
         if not self.state.in_combat:
             raise ValueError("Cannot advance initiative: encounter not in combat")
-        if not self.state.initiative_order:
-            raise ValueError("Cannot advance initiative: initiative order is empty")
 
-        sorted_order = sorted(
-            self.state.initiative_order,
-            key=lambda c: (
-                c.get("initiative_score", 0),
-                1 if not c.get("is_npc", False) else 0,
-                c.get("combatant_name", ""),
-            ),
-            reverse=True,
+        next_active_id, next_round = advance_initiative_turn(
+            self.state.initiative_order, self.state.combat_active_id, self.state.combat_round
         )
-
-        curr_id = self.state.combat_active_id
-        ids = [c["combatant_id"] for c in sorted_order]
-
-        if curr_id in ids:
-            curr_idx = ids.index(curr_id)
-            next_idx = (curr_idx + 1) % len(ids)
-            next_round = self.state.combat_round + 1 if next_idx == 0 else self.state.combat_round
-        else:
-            next_idx = 0
-            next_round = self.state.combat_round
-
-        next_active_id = ids[next_idx]
 
         self.create_event(
             InitiativeTurnAdvanced,
@@ -241,13 +204,11 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
 
     @handles(SessionCreated)
     def _on_created(self, event: SessionCreated) -> None:
-        self._state = GameSessionState(
+        self._state = GameSessionState.initial(
             session_id=event.aggregate_id,
             campaign_id=event.campaign_id or event.aggregate_id,
             title=event.title,
             dm_id=event.dm_id,
-            status="lobby",
-            current_turn=1,
         )
 
     @handles(SessionStarted)
@@ -255,139 +216,52 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
         active_id = self.state.active_character_id
         if active_id is None and self.state.participants:
             active_id = next(iter(self.state.participants.values())).character_id
-        self._state = self.state.model_copy(
-            update={
-                "status": "active",
-                "current_turn": event.started_at_turn,
-                "active_character_id": active_id,
-            }
-        )
+        self._state = self.state.with_started(event.started_at_turn, active_id)
 
     @handles(PlayerJoinedSession)
     def _on_player_joined(self, event: PlayerJoinedSession) -> None:
-        participants = dict(self.state.participants)
-        participants[event.player_id] = ParticipantState(
-            player_id=event.player_id,
-            character_id=event.character_id,
-            character_name=event.character_name,
-            character_class=event.character_class,
-            is_present=True,
-            is_stand_in_active=False,
-        )
-        active_id = self.state.active_character_id or event.character_id
-        self._state = self.state.model_copy(
-            update={"participants": participants, "active_character_id": active_id}
-        )
+        self._state = self.state.with_player_joined(event)
 
     @handles(PlayerLeftSession)
     def _on_player_left(self, event: PlayerLeftSession) -> None:
-        participants = dict(self.state.participants)
-        if event.player_id in participants:
-            p = participants[event.player_id]
-            participants[event.player_id] = p.model_copy(
-                update={"is_present": False, "is_stand_in_active": True}
-            )
-        self._state = self.state.model_copy(update={"participants": participants})
+        self._state = self.state.without_player_presence(event.player_id)
 
     @handles(TurnAdvanced)
     def _on_turn_advanced(self, event: TurnAdvanced) -> None:
-        self._state = self.state.model_copy(
-            update={
-                "current_turn": event.new_turn,
-                "active_character_id": event.active_character_id,
-            }
-        )
+        self._state = self.state.with_turn_advanced(event.new_turn, event.active_character_id)
 
     @handles(StandInActionDecided)
     def _on_stand_in_action_decided(self, event: StandInActionDecided) -> None:
-        actions = list(self.state.stand_in_actions)
-        actions.append(
-            {
-                "character_name": event.character_name,
-                "action_type": event.action_type,
-                "dialogue": event.dialogue,
-                "penalties_applied": event.penalties_applied,
-                "flavor_text": event.flavor_text,
-            }
-        )
-        self._state = self.state.model_copy(update={"stand_in_actions": actions})
+        self._state = self.state.with_stand_in_event(event)
 
     @handles(SessionEnded)
     def _on_ended(self, event: SessionEnded) -> None:
-        self._state = self.state.model_copy(update={"status": "ended"})
+        self._state = self.state.with_status("ended")
 
     @handles(CombatEncounterStarted)
     def _on_combat_started(self, event: CombatEncounterStarted) -> None:
-        initial_order: list[dict[str, Any]] = []
-        if event.combatants:
-            initial_order = list(event.combatants)
-            initial_order.sort(
-                key=lambda c: (
-                    c.get("initiative_score", 0),
-                    1 if not c.get("is_npc", False) else 0,
-                    c.get("combatant_name", ""),
-                ),
-                reverse=True,
-            )
-        active_id = initial_order[0]["combatant_id"] if initial_order else None
-        self._state = self.state.model_copy(
-            update={
-                "in_combat": True,
-                "combat_round": event.round_number,
-                "initiative_order": initial_order,
-                "combat_active_id": active_id,
-                "combat_turn_started": False,
-            }
-        )
+        order = sort_initiative_order(list(event.combatants)) if event.combatants else []
+        self._state = self.state.with_combat_started(event.round_number, order)
 
     @handles(InitiativeRolled)
     def _on_initiative_rolled(self, event: InitiativeRolled) -> None:
-        existing_combatants = [
-            c for c in self.state.initiative_order if c["combatant_id"] != event.combatant_id
-        ]
-        new_entry = {
-            "combatant_id": event.combatant_id,
-            "combatant_name": event.combatant_name,
-            "initiative_score": event.initiative_score,
-            "is_npc": event.is_npc,
-        }
-        order = existing_combatants + [new_entry]
-        order.sort(
-            key=lambda c: (
-                c.get("initiative_score", 0),
-                1 if not c.get("is_npc", False) else 0,
-                c.get("combatant_name", ""),
-            ),
-            reverse=True,
+        order, active_id = resolve_initiative_rolled(
+            self.state.initiative_order,
+            self.state.combat_active_id,
+            self.state.combat_turn_started,
+            event.combatant_id,
+            event.combatant_name,
+            event.initiative_score,
+            event.is_npc,
         )
-        active_id = (
-            self.state.combat_active_id
-            if self.state.combat_turn_started
-            else (order[0]["combatant_id"] if order else None)
-        )
-        self._state = self.state.model_copy(
-            update={
-                "initiative_order": order,
-                "combat_active_id": active_id,
-            }
-        )
+        self._state = self.state.with_initiative_rolled(order, active_id)
 
     @handles(InitiativeTurnAdvanced)
     def _on_initiative_turn_advanced(self, event: InitiativeTurnAdvanced) -> None:
-        self._state = self.state.model_copy(
-            update={
-                "combat_round": event.round_number,
-                "combat_active_id": event.active_combatant_id,
-                "combat_turn_started": True,
-            }
+        self._state = self.state.with_initiative_turn_advanced(
+            round_number=event.round_number, active_combatant_id=event.active_combatant_id
         )
 
     @handles(CombatEncounterEnded)
     def _on_combat_ended(self, event: CombatEncounterEnded) -> None:
-        self._state = self.state.model_copy(
-            update={
-                "in_combat": False,
-                "combat_active_id": None,
-                "combat_turn_started": False,
-            }
-        )
+        self._state = self.state.with_combat_ended()

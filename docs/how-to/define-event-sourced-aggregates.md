@@ -127,3 +127,12 @@ repo = create_aggregate_repository(CharacterInventoryAggregate, event_store=stor
 ```
 
 If the PostgreSQL host is offline or unreachable during startup, `get_event_store` gracefully falls back to `InMemoryEventStore`, logging a diagnostic warning without terminating application boot.
+
+## 7. Modular Aggregate Decomposition
+
+To satisfy Hard Invariant 6 (< 500 lines per file) and separate concerns as domain rules grow, event-sourced bounded contexts are decomposed into three focused submodules:
+
+1. **`rules.py`**: Static game balance rules, progression tables (e.g., `SPELL_SLOTS_TABLE`, `CLASS_HIT_DIE`), hazard damage formulas, and pure calculation functions (e.g., initiative tie-breaking, movement path costs).
+2. **`models.py`**: Immutable Pydantic aggregate state schemas (`CharacterState`, `BoardState`, `GameSessionState`) equipped with transition helper methods (e.g., `with_health`, `with_token_moved`), alongside request/response DTOs.
+3. **`aggregate.py`**: The `DeclarativeAggregate` implementation encapsulating command validation, domain event creation, and pure `@handles` projection methods delegating state updates to the models, while maintaining re-export compatibility.
+
