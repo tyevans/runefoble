@@ -1,4 +1,4 @@
-import type { TerrainCell, Waypoint } from './board-types.ts';
+import type { BoardToken, DragKinematicsState, TerrainCell, Waypoint } from './board-types.ts';
 
 export function computeGridTrajectory(
   fromX: number,
@@ -103,4 +103,65 @@ export function springInterpolate(
   factor: number = 0.3
 ): number {
   return current + (target - current) * factor;
+}
+
+export function isCellVisible(
+  cellX: number,
+  cellY: number,
+  fogOfWar: boolean,
+  tokens: BoardToken[]
+): boolean {
+  if (!fogOfWar) return true;
+  const friendlyTokens = tokens.filter((t) => !t.isHostile);
+  if (friendlyTokens.length === 0) return true;
+  return friendlyTokens.some((token) => {
+    const radius = token.visionRadius ?? 2;
+    const dx = Math.abs(token.x - cellX);
+    const dy = Math.abs(token.y - cellY);
+    return Math.max(dx, dy) <= radius;
+  });
+}
+
+export function initDragState(token: BoardToken): DragKinematicsState {
+  return {
+    tokenId: token.id,
+    startX: token.x,
+    startY: token.y,
+    currentX: token.x,
+    currentY: token.y,
+    targetCellX: token.x,
+    targetCellY: token.y,
+    isDragging: true,
+    totalDistanceFt: 0,
+    waypoints: [],
+    difficultCells: [],
+    hazardCells: [],
+  };
+}
+
+export function computeDragUpdate(
+  dragState: DragKinematicsState,
+  cellX: number,
+  cellY: number,
+  terrainCells: TerrainCell[]
+): DragKinematicsState {
+  if (cellX === dragState.targetCellX && cellY === dragState.targetCellY) {
+    return dragState;
+  }
+  const path = computeGridTrajectory(
+    dragState.startX,
+    dragState.startY,
+    cellX,
+    cellY
+  );
+  const metrics = computeRouteMetrics(path, terrainCells);
+  return {
+    ...dragState,
+    targetCellX: cellX,
+    targetCellY: cellY,
+    totalDistanceFt: metrics.totalDistanceFt,
+    waypoints: metrics.waypoints,
+    difficultCells: metrics.difficultCells,
+    hazardCells: metrics.hazardCells,
+  };
 }

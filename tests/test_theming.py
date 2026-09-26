@@ -18,7 +18,13 @@ SWITCHER_TS = FRONTEND_DIR / "src" / "components" / "runefoble-theme-switcher.ts
 BOARD_TS = REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-board.ts"
 CARD_TS = REPO_ROOT / "services" / "character_sheet" / "ui" / "src" / "runefoble-character-card.ts"
 FEED_TS = REPO_ROOT / "services" / "the_watcher" / "ui" / "src" / "runefoble-watcher-feed.ts"
+AUTONOMOUS_DM_STYLES_TS = (
+    REPO_ROOT / "services" / "the_watcher" / "ui" / "src" / "runefoble-autonomous-dm.styles.ts"
+)
 VOICE_TS = REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "runefoble-voice-controls.ts"
+VOICE_STYLES_TS = (
+    REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "runefoble-voice-controls.styles.ts"
+)
 STORIES_TS = FRONTEND_DIR / "src" / "stories" / "theme-switcher.stories.ts"
 PREVIEW_TS = FRONTEND_DIR / ".storybook" / "preview.ts"
 CONTRAST_STORIES_TS = FRONTEND_DIR / "src" / "stories" / "theme-contrast-matrix.stories.ts"
@@ -48,8 +54,8 @@ COMPONENT_FILES = [
     / "runefoble-initiative-tracker.styles.ts",
     REPO_ROOT / "services" / "game_session" / "ui" / "src" / "runefoble-spectator-view.styles.ts",
     FEED_TS,
-    REPO_ROOT / "services" / "the_watcher" / "ui" / "src" / "runefoble-autonomous-dm.ts",
-    VOICE_TS,
+    AUTONOMOUS_DM_STYLES_TS,
+    VOICE_STYLES_TS,
     REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "runefoble-audio-indicator.ts",
 ]
 
@@ -250,7 +256,7 @@ def test_components_adopt_tokens():
     assert "var(--rf-" in feed_content
     assert "var(--rf-shadow" in feed_content
 
-    voice_content = VOICE_TS.read_text(encoding="utf-8")
+    voice_content = VOICE_STYLES_TS.read_text(encoding="utf-8")
     assert "var(--rf-" in voice_content
     assert "var(--rf-border-color" in voice_content
 
