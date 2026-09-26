@@ -1,7 +1,7 @@
 ---
 id: 0038
 title: Generative Procedural Battlemaps and Character Portraits
-status: Accepted
+status: Shipped
 created: 2026-09-25
 ---
 

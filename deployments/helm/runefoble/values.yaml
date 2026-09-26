@@ -162,6 +162,8 @@ swaggerUI:
       url: "http://campaign-lore:8006/openapi.json"
     - name: "Rules Compendium Service"
       url: "http://rules-compendium:8007/openapi.json"
+    - name: "Asset Forge Service"
+      url: "http://asset-forge:8008/openapi.json"
 
 # Services
 services:
@@ -197,6 +199,10 @@ services:
     image: runefoble/rules-compendium:0.1.0
     replicas: 1
     port: 8007
+  assetForge:
+    image: runefoble/asset-forge:0.1.0
+    replicas: 1
+    port: 8008
 
 # Frontend Application
 frontend:

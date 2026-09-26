@@ -259,6 +259,30 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `bucket`: String
   - `object_key`: String
   - `deleted_by`: String
+- **`BattlemapForged`** (alias: `BattlemapCreated`): Emitted when a tactical battlemap is procedurally generated and stored in Silo S3 (`runefoble.events.asset.battlemap_forged`).
+  - `asset_id`: String
+  - `campaign_id`: Optional[UUID]
+  - `session_id`: Optional[String]
+  - `creator_id`: String
+  - `prompt`: String
+  - `image_url`: String
+  - `width_cells`: Integer
+  - `height_cells`: Integer
+  - `cell_size_px`: Integer
+  - `wall_segments_count`: Integer
+  - `hazard_cells_count`: Integer
+  - `doors_count`: Integer
+  - `theme`: String
+- **`TokenAssetForged`** (alias: `AssetGenerated`): Emitted when a character or creature token portrait is procedurally synthesized with alpha transparency (`runefoble.events.asset.token_forged`).
+  - `asset_id`: String
+  - `campaign_id`: Optional[UUID]
+  - `creator_id`: String
+  - `prompt`: String
+  - `token_name`: String
+  - `token_type`: String ("pc", "npc", "monster", "obstacle")
+  - `image_url`: String
+  - `crop_style`: String ("circular", "square", "hex")
+  - `transparent_background`: Boolean
 
 ### LoreDocument Events (`aggregate_type: LoreDocument`)
 

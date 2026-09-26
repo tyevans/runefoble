@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Procedural Battlemap & Token Asset Forge Microservice (`TASK-0049`, `PRD-0009`, `US-0038`)**:
+  - Scaffolded new bounded context microservice `services/asset_forge` with internal port `8008`.
+  - Implemented procedural battlemap grid generator extracting line-of-sight wall segments, doors, and themed hazard pools (lava, acid, necrotic spikes).
+  - Implemented procedural character and monster token portrait synthesizer with circular clipping and alpha transparency.
+  - Integrated automated S3 storage upload with presigned URL generation via Silo (`SiloStorageService`).
+  - Added spatial geometry projection payloads formatted directly for `board_state` mutators (`terrain_mutations`, `obstacle_tokens`).
+  - Implemented `AssetForgeAggregate` powered by `eventsource-py` publishing `BattlemapForged` and `TokenAssetForged` CloudEvents over Redis Streams.
+  - Added `forged_asset` definition to SpiceDB Zanzibar authorization schema (`runefoble.zed`).
+  - Vendored Lit Web Component `<runefoble-asset-forge>` in `services/asset_forge/ui/` with Storybook stories and `/ui/manifest` endpoint.
+  - Added Deployment, Service, and ConfigMap to umbrella Helm chart (`deployments/helm/runefoble/templates/asset-forge.yaml`).
+  - Added Diataxis How-To guide (`docs/how-to/forge-procedural-battlemaps-and-tokens.md`) and reference updates.
 - **Bespoke Antigravity (AGY) Agent Launcher for Project Visualizer (`tools/project_visualizer/`)**:
   - Direct execution of `agy --dangerously-skip-permissions -p <prompt>` via non-blocking background thread manager (`AgyRunnerManager`).
   - Interactive AGY Launcher modal with live-streaming console logs, process termination controls, and routine presets (`Task Spec`, `Curator`, `Health & Invariants`, `TDD Verification`).
