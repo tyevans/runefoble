@@ -12,6 +12,10 @@ from runefoble_platform.event_sourcing import (
 )
 
 from campaign_lore.aggregate import LoreDocumentAggregate
+from campaign_lore.handouts_aggregate import (
+    DiegeticHandoutAggregate,
+    RelicAggregate,
+)
 from campaign_lore.retrieval import LoreRetrievalEngine
 
 settings = PlatformSettings()
@@ -20,6 +24,10 @@ settings = PlatformSettings()
 _repo: AggregateRepository[LoreDocumentAggregate] = create_aggregate_repository(
     LoreDocumentAggregate
 )
+_handout_repo: AggregateRepository[DiegeticHandoutAggregate] = create_aggregate_repository(
+    DiegeticHandoutAggregate
+)
+_relic_repo: AggregateRepository[RelicAggregate] = create_aggregate_repository(RelicAggregate)
 _retrieval_engine: LoreRetrievalEngine = LoreRetrievalEngine()
 _spicedb_client: SpiceDBClient = SpiceDBClient(
     endpoint=settings.spicedb_endpoint or "localhost:50051",
@@ -30,6 +38,16 @@ _spicedb_client: SpiceDBClient = SpiceDBClient(
 def get_repo() -> AggregateRepository[LoreDocumentAggregate]:
     """Provide LoreDocument aggregate repository."""
     return _repo
+
+
+def get_handout_repo() -> AggregateRepository[DiegeticHandoutAggregate]:
+    """Provide DiegeticHandout aggregate repository."""
+    return _handout_repo
+
+
+def get_relic_repo() -> AggregateRepository[RelicAggregate]:
+    """Provide Relic aggregate repository."""
+    return _relic_repo
 
 
 def get_retrieval_engine() -> LoreRetrievalEngine:
@@ -82,3 +100,37 @@ def get_current_user_id(
 ) -> str | None:
     """Extract authenticated caller identity from x-user-id header."""
     return x_user_id
+
+
+async def check_user_can_interact_handout(
+    user_id: str | None,
+    campaign_id: UUID,
+    spicedb: SpiceDBClient,
+) -> bool:
+    """Evaluate SpiceDB Zanzibar permissions to check whether user can break seal or interact with handout."""
+    if not user_id:
+        return True
+    return await spicedb.check_permission(
+        resource_type="campaign",
+        resource_id=str(campaign_id),
+        permission="play",
+        subject_type="user",
+        subject_id=user_id,
+    )
+
+
+async def check_user_can_inspect_relic(
+    user_id: str | None,
+    campaign_id: UUID,
+    spicedb: SpiceDBClient,
+) -> bool:
+    """Evaluate SpiceDB Zanzibar permissions to check whether user can view and inspect relic."""
+    if not user_id:
+        return True
+    return await spicedb.check_permission(
+        resource_type="campaign",
+        resource_id=str(campaign_id),
+        permission="view",
+        subject_type="user",
+        subject_id=user_id,
+    )

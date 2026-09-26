@@ -421,6 +421,7 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `alias_entity_id`: UUID
   - `alias_name`: String
   - `reason`: String
+- For schemas of `HandoutGenerated`, `WaxSealBroken`, and `RelicInspected`, see [`diegetic-handouts-and-relics-events.md`](diegetic-handouts-and-relics-events.md).
 
 ### Compendium & Encounter Events (`aggregate_type: Compendium`, `Encounter`)
 
