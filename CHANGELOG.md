@@ -138,6 +138,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition (`TASK-0071`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0009`)**:
+  - Decomposed monolithic test suite `tests/test_websocket_zanzibar_auth.py` (formerly 330 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 200 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_websocket_zanzibar_connect_auth.py` (110 lines): Handshake authentication, campaign viewer/reader authorization, 4003 rejection frames, dynamic permission revocation disconnecting active sessions, and SpiceDB mock/gRPC initialization.
+    - `tests/test_websocket_zanzibar_mutators.py` (187 lines): Token movement authorization, spectator move denial, DM-only actions (monster spawning, scene alterations), foreign character sheet edit denial, Redis Streams event publishing, and mid-session relation revocations.
+  - Updated bridge module `tests/test_blackbox_websocket_zanzibar.py` to aggregate both test suites for automated regression verification.
+  - Updated Diataxis documentation in `docs/how-to/define-spicedb-zanzibar-permissions.md`.
+
 - **Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition (`TASK-0070`, `ADR-0002`, `ADR-0003`, `ADR-0006`, `ADR-0009`)**:
   - Decomposed monolithic test suite `tests/test_stand_in_engine.py` (formerly 343 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
     - `tests/test_stand_in_tactics_unit.py` (122 lines): Verifies stand-in penalty mechanics (`drunk`, `foolishness`, `cowardice`, `greed`), dice roll formula adjustments (`1d20-2`), slurred dialogue, defensive positioning, distraction effects, looting behavior, and personality trait flavor integration (`scholarly`, `valiant`, `impulsive`).
