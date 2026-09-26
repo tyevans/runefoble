@@ -4,63 +4,47 @@
 
   let sim = null;
 
-  // Fallback simulation engine if graph_physics.js was omitted, delayed, or running on stale assets
   if (typeof window.visualizer.ForceSimulation !== 'function') {
-    window.visualizer.ForceSimulation = class FallbackSimulation {
-      constructor(nodes, edges, opts = {}) {
-        this.nodes = nodes; this.edges = edges;
-        this.w = opts.width || 1200; this.h = opts.height || 800;
-        this.cx = this.w / 2; this.cy = this.h / 2;
-      }
-      start(cb) { this.applyFlowLayout(); if (cb) cb(); }
-      stop() {}
-      reheat() {}
-      applyFlowLayout() {
-        const cols = { persona: 160, story: 560, prd: 1000, task: 1460, adr: 1900 };
-        const c = {};
-        this.nodes.forEach(n => {
-          c[n.type] = (c[n.type] || 0) + 1;
-          n.x = (cols[n.type] || 1000) + (Math.sin(c[n.type] * 2) * 20);
-          n.y = 90 + c[n.type] * 50;
-        });
-      }
-      applyRadialLayout() {
-        this.nodes.forEach((n, i) => {
-          const a = (i / Math.max(this.nodes.length, 1)) * 2 * Math.PI;
-          n.x = this.cx + Math.cos(a) * 450;
-          n.y = this.cy + Math.sin(a) * 450;
-        });
-      }
+    window.visualizer.ForceSimulation = class {
+      constructor(n, e) { this.nodes = n; this.edges = e; }
+      start(cb) { if (cb) cb(); } stop() {} reheat() {} applyFlowLayout() {} applyRadialLayout() {}
     };
   }
 
-  const graphState = {
+  const canvasWidth = 2200;
+  const canvasHeight = 1400;
+
+  const graphState = window.visualizer.graphState = window.visualizer.graphState || {
     nodes: [],
     edges: [],
     selectedId: null,
     zoom: 0.72,
     panX: 0,
     panY: 0,
+    canvasWidth,
+    canvasHeight,
     isDraggingCanvas: false,
+    isDraggingMinimap: false,
     dragNode: null,
+    dragOffsetX: 0,
+    dragOffsetY: 0,
+    dragDistance: 0,
     startX: 0,
     startY: 0,
+    startPanX: 0,
+    startPanY: 0,
     activeTypeFilter: 'all',
     activeLayout: 'network',
     depth: 'lineage',
     physicsRunning: true,
     isFullscreen: false,
+    initialized: false,
   };
-
-  const canvasWidth = 2200;
-  const canvasHeight = 1400;
 
   function renderGraph(container, state) {
     const d = state.data;
     if (!d) return;
-    const esc = window.visualizer.escapeHtml;
 
-    // Collect all nodes
     let rawNodes = [];
     (d.personas || []).forEach(p => rawNodes.push({ id: p.id, label: p.name, type: 'persona', color: '#F59E0B', role: p.role }));
     (d.stories || []).forEach(s => rawNodes.push({ id: s.id, label: s.title, type: 'story', color: '#06B6D4', persona: s.persona }));
@@ -71,7 +55,6 @@
     });
     (d.adrs || []).forEach(a => rawNodes.push({ id: a.id, label: a.title, type: 'adr', color: '#6366F1', domain: a.domain }));
 
-    // Apply Hide Done & filters
     const nodes = rawNodes.filter(n => {
       if (state.filters.hideDone && n.type === 'task' && n.status === 'Complete') return false;
       if (graphState.activeTypeFilter !== 'all' && n.type !== graphState.activeTypeFilter) return false;
@@ -87,10 +70,11 @@
 
     if (sim) sim.stop();
     sim = new window.visualizer.ForceSimulation(nodes, edges, { width: canvasWidth, height: canvasHeight });
+    window.visualizer.sim = sim;
 
     if (graphState.activeLayout === 'flow') sim.applyFlowLayout();
     else if (graphState.activeLayout === 'radial') sim.applyRadialLayout();
-    else sim.start(updatePositions);
+    else if (graphState.physicsRunning) sim.start(updatePositions);
 
     container.innerHTML = `
       <div class="space-y-4">
@@ -103,19 +87,17 @@
                 <span>Interactive Relationship Graph</span>
                 <span id="graph-stat-pill" class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 font-mono border border-indigo-500/20">${nodes.length} Nodes · ${edges.length} Edges</span>
               </h2>
-              <p class="text-xs text-muted">Organic force simulation, tactile drag, and bidirectional lineage illumination.</p>
+              <p class="text-xs text-muted">Organic force simulation, focal zoom, tactile dragging, and live minimap tracking.</p>
             </div>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Layout Switcher -->
             <div class="flex items-center p-0.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-xs">
-              <button onclick="window.visualizer.switchGraphLayout('network')" class="px-2.5 py-1 rounded-md font-medium transition ${graphState.activeLayout === 'network' ? 'bg-indigo-600 text-white shadow-sm' : 'text-muted hover:text-white'}">🪐 Force</button>
-              <button onclick="window.visualizer.switchGraphLayout('flow')" class="px-2.5 py-1 rounded-md font-medium transition ${graphState.activeLayout === 'flow' ? 'bg-indigo-600 text-white shadow-sm' : 'text-muted hover:text-white'}">🌊 Flow DAG</button>
-              <button onclick="window.visualizer.switchGraphLayout('radial')" class="px-2.5 py-1 rounded-md font-medium transition ${graphState.activeLayout === 'radial' ? 'bg-indigo-600 text-white shadow-sm' : 'text-muted hover:text-white'}">🎯 Radar</button>
+              <button id="layout-btn-network" onclick="window.visualizer.switchGraphLayout('network')" class="px-2.5 py-1 rounded-md font-medium transition ${graphState.activeLayout === 'network' ? 'bg-indigo-600 text-white shadow-sm' : 'text-muted hover:text-white'}">🪐 Force</button>
+              <button id="layout-btn-flow" onclick="window.visualizer.switchGraphLayout('flow')" class="px-2.5 py-1 rounded-md font-medium transition ${graphState.activeLayout === 'flow' ? 'bg-indigo-600 text-white shadow-sm' : 'text-muted hover:text-white'}">🌊 Flow DAG</button>
+              <button id="layout-btn-radial" onclick="window.visualizer.switchGraphLayout('radial')" class="px-2.5 py-1 rounded-md font-medium transition ${graphState.activeLayout === 'radial' ? 'bg-indigo-600 text-white shadow-sm' : 'text-muted hover:text-white'}">🎯 Radar</button>
             </div>
 
-            <!-- Physics Play/Pause & Reheat -->
             <button onclick="window.visualizer.toggleGraphPhysics()" id="graph-physics-btn" class="px-2.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-xs text-slate-300 hover:border-strong transition flex items-center gap-1">
               <span>${graphState.physicsRunning ? '⏸️ Freeze' : '▶️ Run'}</span>
             </button>
@@ -123,13 +105,11 @@
               <span>⚡ Shuffle</span>
             </button>
 
-            <!-- Hide Done Filter -->
             <label class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle hover:border-strong cursor-pointer text-xs transition">
               <input type="checkbox" ${state.filters.hideDone ? 'checked' : ''} onchange="window.visualizer.setFilter('hideDone', this.checked, 'graph')">
               <span class="font-medium ${state.filters.hideDone ? 'text-amber-400 font-semibold' : 'text-slate-300'}">Hide Done</span>
             </label>
 
-            <!-- Search Auto-Focus -->
             <div class="relative">
               <input type="text" id="graph-search-input" placeholder="Find node & focus camera..."
                      class="px-3 py-1.5 pl-7 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-xs text-white focus:outline-none focus:border-indigo-500 transition w-44"
@@ -137,10 +117,9 @@
               <svg class="w-3.5 h-3.5 absolute left-2 top-2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
 
-            <!-- Camera & Fullscreen Controls -->
-            <button onclick="window.visualizer.zoomGraph(1.2)" class="p-1.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-slate-300 hover:text-white" title="Zoom In">➕</button>
-            <button onclick="window.visualizer.zoomGraph(0.8)" class="p-1.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-slate-300 hover:text-white" title="Zoom Out">➖</button>
-            <button onclick="window.visualizer.resetGraphView()" class="p-1.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-slate-300 hover:text-white" title="Center Camera">🎯</button>
+            <button onclick="window.visualizer.zoomGraph(1.25)" class="p-1.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-slate-300 hover:text-white" title="Zoom In (Centered)">➕</button>
+            <button onclick="window.visualizer.zoomGraph(0.8)" class="p-1.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-slate-300 hover:text-white" title="Zoom Out (Centered)">➖</button>
+            <button onclick="window.visualizer.resetGraphView()" class="p-1.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-slate-300 hover:text-white" title="Center Entire Graph">🎯</button>
             <button onclick="window.visualizer.toggleGraphFullscreen()" id="graph-fs-btn" class="p-1.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-slate-300 hover:text-white" title="Toggle Fullscreen">⛶</button>
           </div>
         </div>
@@ -148,7 +127,7 @@
         <!-- Interactive SVG Viewport -->
         <div id="graph-viewport-wrapper" class="relative rounded-xl border border-subtle overflow-hidden shadow-2xl bg-[var(--bg-card)]">
           <div id="graph-viewport" class="graph-viewport graph-canvas-bg h-[76vh] w-full">
-            <svg id="graph-svg" class="w-full h-full" viewBox="0 0 ${canvasWidth} ${canvasHeight}">
+            <svg id="graph-svg" class="w-full h-full overflow-hidden">
               <defs>
                 <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4B5563" /></marker>
                 <marker id="arrow-glow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6366F1" /></marker>
@@ -165,14 +144,15 @@
               </g>
             </svg>
 
-            <!-- Floating Tooltip -->
             <div id="graph-tooltip" class="graph-tooltip p-3 rounded-xl border border-strong hidden opacity-0 text-xs w-64"></div>
 
             <!-- Minimap -->
-            <div class="graph-minimap" id="graph-minimap" onclick="window.visualizer.handleMinimapClick(event)">
-              <svg id="minimap-svg" class="w-full h-full" viewBox="0 0 ${canvasWidth} ${canvasHeight}">
-                <g id="minimap-nodes">${nodes.map(n => `<circle cx="${n.x || 0}" cy="${n.y || 0}" r="7" fill="${n.color}" opacity="0.75" />`).join('')}</g>
-                <rect id="minimap-view-rect" class="minimap-rect" x="0" y="0" width="200" height="150" />
+            <div class="graph-minimap" id="graph-minimap" title="Minimap: Click or drag to reposition camera">
+              <svg id="minimap-svg" class="w-full h-full" viewBox="0 0 ${canvasWidth} ${canvasHeight}" preserveAspectRatio="none">
+                <g id="minimap-nodes">
+                  ${nodes.map(n => `<circle id="mm-node-${n.id}" class="mm-node" cx="${n.x || 0}" cy="${n.y || 0}" r="18" fill="${n.color}" opacity="0.85" stroke="#111827" stroke-width="2" />`).join('')}
+                </g>
+                <rect id="minimap-view-rect" class="minimap-rect" x="0" y="0" width="200" height="150" rx="12" />
               </svg>
             </div>
           </div>
@@ -180,7 +160,13 @@
       </div>
     `;
 
-    setupInteractions();
+    if (window.visualizer.setupGraphInteractions) window.visualizer.setupGraphInteractions();
+    if (!graphState.initialized) {
+      if (window.visualizer.resetGraphView) window.visualizer.resetGraphView();
+      graphState.initialized = true;
+    } else {
+      if (window.visualizer.applyTransform) window.visualizer.applyTransform();
+    }
     updatePositions();
   }
 
@@ -221,6 +207,11 @@
       nodeMap.set(n.id, n);
       const el = document.getElementById(`node-${n.id}`);
       if (el) el.setAttribute('transform', `translate(${n.x}, ${n.y})`);
+      const mm = document.getElementById(`mm-node-${n.id}`);
+      if (mm) {
+        mm.setAttribute('cx', n.x);
+        mm.setAttribute('cy', n.y);
+      }
     });
 
     edges.forEach(e => {
@@ -235,121 +226,11 @@
       }
     });
 
-    updateMinimap();
-  }
-
-  function updateMinimap() {
-    const rect = document.getElementById('minimap-view-rect');
-    if (!rect) return;
-    const vW = canvasWidth / graphState.zoom;
-    const vH = canvasHeight / graphState.zoom;
-    const vX = -graphState.panX / graphState.zoom;
-    const vY = -graphState.panY / graphState.zoom;
-    rect.setAttribute('x', Math.max(0, vX));
-    rect.setAttribute('y', Math.max(0, vY));
-    rect.setAttribute('width', Math.min(canvasWidth, vW));
-    rect.setAttribute('height', Math.min(canvasHeight, vH));
-  }
-
-  function setupInteractions() {
-    const viewport = document.getElementById('graph-viewport');
-    if (!viewport) return;
-
-    viewport.onwheel = (e) => {
-      e.preventDefault();
-      zoomGraph(e.deltaY < 0 ? 1.12 : 0.89);
-    };
-
-    viewport.onmousedown = (e) => {
-      const nodeEl = e.target.closest('.graph-node-svg');
-      if (nodeEl) {
-        const nId = nodeEl.id.replace('node-', '');
-        const targetNode = graphState.nodes.find(n => n.id === nId);
-        if (targetNode) {
-          graphState.dragNode = targetNode;
-          targetNode.isFixed = true;
-          if (sim) sim.reheat(0.6);
-        }
-        return;
-      }
-      graphState.isDraggingCanvas = true;
-      graphState.startX = e.clientX - graphState.panX;
-      graphState.startY = e.clientY - graphState.panY;
-    };
-
-    window.onmousemove = (e) => {
-      if (graphState.dragNode) {
-        const rect = viewport.getBoundingClientRect();
-        graphState.dragNode.x = (e.clientX - rect.left - graphState.panX) / graphState.zoom;
-        graphState.dragNode.y = (e.clientY - rect.top - graphState.panY) / graphState.zoom;
-        updatePositions();
-        return;
-      }
-      if (graphState.isDraggingCanvas) {
-        graphState.panX = e.clientX - graphState.startX;
-        graphState.panY = e.clientY - graphState.startY;
-        applyTransform();
-      }
-    };
-
-    window.onmouseup = () => {
-      if (graphState.dragNode) {
-        graphState.dragNode.isFixed = false;
-        graphState.dragNode = null;
-      }
-      graphState.isDraggingCanvas = false;
-    };
-  }
-
-  function applyTransform() {
-    const layer = document.getElementById('graph-pan-layer');
-    if (layer) layer.setAttribute('transform', `translate(${graphState.panX}, ${graphState.panY}) scale(${graphState.zoom})`);
-    updateMinimap();
-  }
-
-  function zoomGraph(factor) {
-    graphState.zoom = Math.max(0.3, Math.min(3.5, graphState.zoom * factor));
-    applyTransform();
-  }
-
-  function resetGraphView() {
-    graphState.zoom = 0.72;
-    graphState.panX = 0;
-    graphState.panY = 0;
-    applyTransform();
-    clearNodeHighlights();
-  }
-
-  function toggleGraphPhysics() {
-    graphState.physicsRunning = !graphState.physicsRunning;
-    const btn = document.getElementById('graph-physics-btn');
-    if (btn) btn.textContent = graphState.physicsRunning ? '⏸️ Freeze' : '▶️ Run';
-    if (sim) {
-      if (graphState.physicsRunning) sim.start(updatePositions);
-      else sim.stop();
-    }
-  }
-
-  function reheatGraphPhysics() {
-    if (sim) {
-      graphState.physicsRunning = true;
-      const btn = document.getElementById('graph-physics-btn');
-      if (btn) btn.textContent = '⏸️ Freeze';
-      sim.reheat(0.9);
-    }
-  }
-
-  function switchGraphLayout(layout) {
-    graphState.activeLayout = layout;
-    if (sim) {
-      if (layout === 'flow') sim.applyFlowLayout();
-      else if (layout === 'radial') sim.applyRadialLayout();
-      else sim.reheat(0.85);
-      updatePositions();
-    }
+    if (window.visualizer.updateMinimap) window.visualizer.updateMinimap();
   }
 
   function handleGraphNodeClick(nodeId) {
+    if (graphState.dragDistance > 6) return;
     if (graphState.selectedId === nodeId) {
       window.visualizer.openDrawer(nodeId);
       return;
@@ -377,10 +258,17 @@
     }
 
     graphState.nodes.forEach(n => {
+      const isConn = connectedNodeIds.has(n.id);
+      const isSelected = n.id === nodeId;
       const el = document.getElementById(`node-${n.id}`);
       if (el) {
-        el.style.opacity = connectedNodeIds.has(n.id) ? '1' : '0.12';
-        el.style.filter = n.id === nodeId ? 'drop-shadow(0 0 16px rgba(99, 102, 241, 1))' : 'none';
+        el.style.opacity = isConn ? '1' : '0.12';
+        el.style.filter = isSelected ? 'drop-shadow(0 0 16px rgba(99, 102, 241, 1))' : 'none';
+      }
+      const mm = document.getElementById(`mm-node-${n.id}`);
+      if (mm) {
+        mm.setAttribute('opacity', isConn ? '1' : '0.18');
+        mm.setAttribute('r', isSelected ? '26' : (isConn ? '20' : '14'));
       }
     });
 
@@ -401,6 +289,8 @@
     graphState.nodes.forEach(n => {
       const el = document.getElementById(`node-${n.id}`);
       if (el) { el.style.opacity = '1'; el.style.filter = 'none'; }
+      const mm = document.getElementById(`mm-node-${n.id}`);
+      if (mm) { mm.setAttribute('opacity', '0.85'); mm.setAttribute('r', '18'); }
     });
     graphState.edges.forEach(e => {
       const el = document.getElementById(`edge-${e.source_id}-${e.target_id}`);
@@ -418,10 +308,14 @@
     const node = graphState.nodes.find(n => n.id.toLowerCase().includes(q) || n.label.toLowerCase().includes(q));
     if (!node) return;
 
-    graphState.zoom = 1.4;
-    graphState.panX = (canvasWidth / 2) - (node.x * graphState.zoom);
-    graphState.panY = (canvasHeight / 2) - (node.y * graphState.zoom);
-    applyTransform();
+    const vp = document.getElementById('graph-viewport');
+    const vw = vp ? vp.clientWidth : 1200;
+    const vh = vp ? vp.clientHeight : 800;
+
+    graphState.zoom = 1.35;
+    graphState.panX = (vw / 2) - (node.x * graphState.zoom);
+    graphState.panY = (vh / 2) - (node.y * graphState.zoom);
+    if (window.visualizer.applyTransform) window.visualizer.applyTransform();
 
     const ping = document.getElementById('graph-focus-ping');
     if (ping) {
@@ -433,64 +327,45 @@
     handleGraphNodeClick(node.id);
   }
 
-  function showGraphTooltip(e, id) {
-    const node = graphState.nodes.find(n => n.id === id);
-    const tooltip = document.getElementById('graph-tooltip');
-    const viewport = document.getElementById('graph-viewport');
-    if (!node || !tooltip || !viewport) return;
-
-    const vpRect = viewport.getBoundingClientRect();
-    tooltip.style.left = `${e.clientX - vpRect.left + 15}px`;
-    tooltip.style.top = `${e.clientY - vpRect.top + 15}px`;
-
-    const esc = window.visualizer.escapeHtml;
-    tooltip.innerHTML = `
-      <div class="space-y-1.5">
-        <div class="flex items-center justify-between">
-          <span class="font-mono font-bold text-white">${node.id}</span>
-          <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase" style="color: ${node.color}; background-color: ${node.color}22;">${node.type}</span>
-        </div>
-        <p class="text-slate-200 font-semibold text-xs leading-tight">${esc(node.label)}</p>
-        ${node.status ? `<div class="text-[10px] text-muted">Status: <span class="text-white font-medium">${node.status}</span></div>` : ''}
-        ${node.prs && node.prs.length ? `<div class="text-[10px] text-cyan-400 font-mono">Linked PR: ${node.prs[0]}</div>` : ''}
-        <div class="pt-1.5 border-t border-subtle flex items-center justify-between text-[10px] text-muted">
-          <span>Click to trace</span>
-          <span class="text-indigo-400">Double-click: reader →</span>
-        </div>
-      </div>
-    `;
-    tooltip.classList.remove('hidden');
-    setTimeout(() => tooltip.classList.remove('opacity-0'), 10);
+  function toggleGraphPhysics() {
+    graphState.physicsRunning = !graphState.physicsRunning;
+    const btn = document.getElementById('graph-physics-btn');
+    if (btn) btn.textContent = graphState.physicsRunning ? '⏸️ Freeze' : '▶️ Run';
+    if (sim) {
+      if (graphState.physicsRunning) sim.start(updatePositions);
+      else sim.stop();
+    }
   }
 
-  function hideGraphTooltip() {
-    const tooltip = document.getElementById('graph-tooltip');
-    if (tooltip) { tooltip.classList.add('opacity-0'); setTimeout(() => tooltip.classList.add('hidden'), 150); }
+  function reheatGraphPhysics() {
+    if (sim) {
+      graphState.physicsRunning = true;
+      const btn = document.getElementById('graph-physics-btn');
+      if (btn) btn.textContent = '⏸️ Freeze';
+      sim.reheat(0.9);
+    }
   }
 
-  function toggleGraphFullscreen() {
-    const wrap = document.getElementById('graph-viewport-wrapper');
-    const btn = document.getElementById('graph-fs-btn');
-    if (!wrap) return;
-    graphState.isFullscreen = !graphState.isFullscreen;
-    wrap.classList.toggle('graph-fullscreen', graphState.isFullscreen);
-    if (btn) btn.textContent = graphState.isFullscreen ? '✖' : '⛶';
-  }
-
-  function handleMinimapClick(e) {
-    const mm = document.getElementById('graph-minimap');
-    if (!mm) return;
-    const rect = mm.getBoundingClientRect();
-    const targetX = ((e.clientX - rect.left) / rect.width) * canvasWidth;
-    const targetY = ((e.clientY - rect.top) / rect.height) * canvasHeight;
-    graphState.panX = (canvasWidth / 2) - (targetX * graphState.zoom);
-    graphState.panY = (canvasHeight / 2) - (targetY * graphState.zoom);
-    applyTransform();
+  function switchGraphLayout(layout) {
+    graphState.activeLayout = layout;
+    ['network', 'flow', 'radial'].forEach(l => {
+      const btn = document.getElementById(`layout-btn-${l}`);
+      if (btn) {
+        btn.className = l === layout
+          ? 'px-2.5 py-1 rounded-md font-medium transition bg-indigo-600 text-white shadow-sm'
+          : 'px-2.5 py-1 rounded-md font-medium transition text-muted hover:text-white';
+      }
+    });
+    if (sim) {
+      if (layout === 'flow') sim.applyFlowLayout();
+      else if (layout === 'radial') sim.applyRadialLayout();
+      else sim.reheat(0.85);
+      updatePositions();
+    }
   }
 
   Object.assign(window.visualizer, {
-    renderGraph, switchGraphLayout, toggleGraphPhysics, reheatGraphPhysics,
-    handleGraphNodeClick, zoomGraph, resetGraphView, focusNodeFromSearch,
-    showGraphTooltip, hideGraphTooltip, toggleGraphFullscreen, handleMinimapClick,
+    renderGraph, updatePositions, handleGraphNodeClick, clearNodeHighlights,
+    focusNodeFromSearch, toggleGraphPhysics, reheatGraphPhysics, switchGraphLayout,
   });
 })();

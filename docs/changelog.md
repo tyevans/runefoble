@@ -22,6 +22,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition (`TASK-0094`, `ADR-0002`, `ADR-0003`, `ADR-0007`, `ADR-0009`)**:
+  - Decomposed `services/the_watcher/src/the_watcher/routers/intent.py` (371 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/intent/`:
+    - `disambiguation.py` (195 lines): Ambiguity detection, clarification prompts, target candidate matching, and `/resolve` route.
+    - `compound.py` (83 lines): Compound action combo decomposition, sequential execution, and rollback handling.
+    - `speech.py` (137 lines): Single speech-to-intent parsing (`/transcribe-and-act` and `/intent`), domain event dispatch, and board token moves.
+    - `__init__.py` (40 lines): Primary APIRouter facade re-exporting existing `/intent` routes with 100% backward compatibility.
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_intent_disambiguation.py` (458 lines) into partitioned test suites:
+    - `tests/test_blackbox_intent_disambiguation_flow.py` (229 lines): Blackbox TDD coverage for multi-target disambiguation, ghost previews, player clarification, and sub-400ms SLA timing.
+    - `tests/test_blackbox_intent_compound_combos.py` (200 lines): Blackbox TDD coverage for compound combo ordering, intermediate disambiguation, and partial failure rollbacks.
+  - Enforced Hard Invariant 6 (< 500 lines limit, all router files strictly < 200 lines, all test files strictly < 250 lines).
+  - Updated Diataxis documentation in `docs/how-to/decompose-microservice-routers.md` and `docs/how-to/resolve-conversational-disambiguation-and-combos.md`.
+
+- **Project Visualizer Interactive Graph Zoom and Live Minimap Navigation (`tools/project_visualizer/`, `ADR-0003`, `ADR-0004`)**:
+  - Implemented mouse-anchored focal zoom in `graph_camera.js`, keeping the world point under the cursor stationary during mouse wheel scrolling and double-click zoom.
+  - Resolved minimap node synchronization: minimap nodes now dynamically update their `cx` and `cy` positions on every simulation tick, layout transformation, and tactile node drag.
+  - Added real-time minimap camera navigation: clicking or dragging anywhere on the bird's-eye minimap smoothly repositions the viewport camera to that world coordinate.
+  - Removed fixed `viewBox` distortion from the main graph SVG viewport, enabling pixel-perfect 1:1 canvas panning and tactile node dragging with grab offset preservation.
+  - Added crisp `vector-effect: non-scaling-stroke` styling to minimap viewport framing rectangles and node dots.
+  - Modularized client graph architecture by decomposing `graph.js` into `graph.js` (371 lines) and `graph_camera.js` (255 lines), strictly satisfying Hard Invariant 6 (< 500 lines per file).
+
+- **Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition (`TASK-0095`, `ADR-0003`, `ADR-0007`, `ADR-0009`, `ADR-0013`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_soundscape.py` (406 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_blackbox_soundscape_transitions.py` (198 lines): Verifies stem mixer weights, background track crossfading, WebAudio -12dB voice ducking attenuation triggered by `PlayerSpokeEvent`, manual mood overrides, and `<runefoble-soundscape-controls>` microfrontend component and token invariants.
+    - `tests/test_blackbox_soundscape_tension.py` (205 lines): Verifies encounter tension scoring heuristics across exploration and combat states, tactical foley cue triggers (`POST /api/v1/soundscape/cue`), autonomous Redis Streams reactivity to `CombatEncounterStarted` and `CombatRoundAdvanced`, and SpiceDB Zanzibar DM authorization enforcement.
+  - Updated Diataxis documentation in `docs/how-to/manage-dynamic-soundscapes-and-audio-ducking.md`.
 - **DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition (`TASK-0093`, `ADR-0001`, `ADR-0002`, `ADR-0003`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed `services/the_watcher/src/the_watcher/routers/copilot.py` (399 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/copilot/`:
     - `actions.py` (223 lines): Action proposal, pause window countdown, approve, modify, and veto override endpoints.

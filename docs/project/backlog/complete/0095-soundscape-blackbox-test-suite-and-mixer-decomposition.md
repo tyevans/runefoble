@@ -1,7 +1,7 @@
 ---
-id: '0095'
+id: 0095
 title: Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0050
@@ -11,8 +11,8 @@ governing_adrs:
 - ADR-0009
 - ADR-0013
 target_release: 0.3.0
+pr_url: https://github.com/tyevans/runefoble/pull/82
 ---
-
 # TASK-0095: Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition
 
 ## Status

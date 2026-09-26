@@ -1,7 +1,7 @@
 ---
-id: '0094'
+id: 0094
 title: Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0054
@@ -11,8 +11,8 @@ governing_adrs:
 - ADR-0007
 - ADR-0009
 target_release: 0.3.0
+pr_url: https://github.com/tyevans/runefoble/pull/83
 ---
-
 # TASK-0094: Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition
 
 ## Status
