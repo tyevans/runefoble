@@ -14,16 +14,21 @@ The Campaign Analytics microservice operates as a CQRS projection engine and chr
    - `runefoble.events.character`: Damage and healing deltas (`CharacterHealthChanged`).
    - `runefoble.events.watcher`: Tabletop actions (`DiceRolled`).
 2. **PostgreSQL Analytical Persistence**: Telemetry points, performance records, and chronicle milestones are stored in relational tables (`campaign_spatial_telemetry`, `combat_performance_records`, `campaign_timeline_milestones`) with SQLite/in-memory fallback for local testing.
-3. **Event-Sourced Milestones**: Domain milestones and MVP snapshots are managed by `CampaignChronicleAggregate` (`eventsource-py`) emitting `ChronicleMilestoneRecorded`, `CombatTelemetrySnapshotCreated`, and `EncounterMvpAwarded`.
+3. **Modular Storage & Query Architecture (`ADR-0003`, `TASK-0118`)**:
+   - `storage.py`: Storage facade (`CampaignAnalyticsStorage`) managing database engine lifecycle and connection pooling while delegating to specialized query modules.
+   - `queries/spatial.py`: Spatial coordinate bucketing, grid binning, and heatmap density matrix serialization.
+   - `queries/mvp.py`: Combatant performance scoring, damage/healing metrics, and MVP awards calculation (`Most Lethal`, `Guardian Angel`, `Nat 20 Master`).
+   - `queries/timeline.py`: Chronological session milestones and milestone event filtering.
+4. **Event-Sourced Milestones**: Domain milestones and MVP snapshots are managed by `CampaignChronicleAggregate` (`eventsource-py`) emitting `ChronicleMilestoneRecorded`, `CombatTelemetrySnapshotCreated`, and `EncounterMvpAwarded`.
 
 ```
 Redis Streams ───► CampaignAnalyticsWorker ───► AnalyticsEventDispatcher ───► PostgreSQL Storage
                                                                                     │
                                                                                     ▼
 Zanzibar Auth ───► FastAPI APIRouters ◄──────────────────────────────────────── Analytics Queries
-                   ├─ /heatmap
-                   ├─ /mvp
-                   └─ /timeline
+                   ├─ /heatmap                                                     ├─ spatial.py
+                   ├─ /mvp                                                         ├─ mvp.py
+                   └─ /timeline                                                    └─ timeline.py
 ```
 
 ---
