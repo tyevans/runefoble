@@ -97,7 +97,10 @@ In production mode (`RUNEFOBLE_AUTH_DEV_MODE=false`), requests lacking a valid B
 
 ## Step 3: Authenticate Real-Time WebSocket Handshakes
 
-For real-time connections (`/ws/campaigns/{campaign_id}`), clients send the token as a query parameter (`?token=...`) or `Authorization: Bearer <token>` header:
+For real-time connections (`/ws/campaigns/{campaign_id}`), clients send the token via one of three supported channels:
+1. Query parameter (`?token=...` or `?access_token=...`)
+2. `Authorization: Bearer <token>` HTTP header
+3. `Sec-WebSocket-Protocol: bearer.<token>` subprotocol header
 
 ```python
 from fastapi import HTTPException, WebSocket
@@ -133,3 +136,13 @@ async def campaign_websocket_endpoint(websocket: WebSocket, campaign_id: str):
 
     await websocket.accept()
 ```
+
+---
+
+## Verification & Blackbox Testing
+
+Zitadel token verification and Zanzibar integration are verified via modular blackbox test suites:
+- **HTTP Bearer & JWKS**: `tests/test_blackbox_zitadel_http_auth.py` verifies RS256 signature verification, JWKS key rotation, token expiration, tampered signatures, audience enforcement, and dev mode bypass.
+- **WebSocket Handshake & Subprotocols**: `tests/test_blackbox_zitadel_websocket_auth.py` verifies query parameter authentication, Authorization header passing, `Sec-WebSocket-Protocol` subprotocol authentication, and RFC 6455 policy violation close frames (`code=4003`).
+- **Shared Auth Fixtures**: `tests/helpers/zitadel_auth.py` provisions test RSA keypairs, mock JWKS clients, and configured `ZitadelAuthService` instances.
+
