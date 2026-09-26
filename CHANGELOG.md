@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blackbox Documentation & Pages Test Suite**: Expanded `tests/test_docs_build_and_pages.py` to assert changelog existence, Keep a Changelog structure, Definition of Done enforcement, and marketing page navigation integrity.
 
 ### Changed
+- **Domain Aggregates and Rule Tables Modular Decomposition (`TASK-0060`)**:
+  - Decomposed monolithic domain aggregate files across `character_sheet`, `board_state`, and `game_session` bounded contexts into focused `rules.py` (game balance tables, hazard formulas, spatial/initiative calculations) and `models.py` (Pydantic state schemas with immutable transition methods and request/response DTOs) submodules.
+  - Maintained 100% backward-compatible re-exports in all `aggregate.py` modules.
+  - Enforced Hard Invariant 6 with all modified and newly created modules strictly under 280 lines.
 - **Campaign Lore Retrieval Modular Decomposition (`TASK-0089`)**: Decomposed monolithic `services/campaign_lore/src/campaign_lore/retrieval.py` into focused submodules `extraction.py` (NER regexes, entity typing heuristics, `WorldbuildingLlmProvider`), `scoring.py` (Okapi BM25 tokenization, term frequency weighting, cosine similarity, Reciprocal Rank Fusion), `models.py` (data models), and a lean coordinator `retrieval.py` (`LoreRetrievalEngine` / `HybridLoreEngine`) preserving Hard Invariant 6 (< 500 lines) and 100% backward compatibility.
 - **Backlog Engine Test Suite Modular Decomposition (`TASK-0087`)**: Decomposed monolithic `tests/test_pr_conflict_detection.py` into three specialized suites (`tests/test_backlog_ci_watcher.py`, `tests/test_backlog_stale_recovery.py`, and `tests/test_backlog_pr_repair.py`), strictly enforcing Hard Invariant 6 (< 500 lines per file) with all suites well under 160 lines.
 - **Documentation Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and the root documentation landing page (`docs/index.md`).
