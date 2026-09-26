@@ -1,7 +1,7 @@
 ---
 id: '0061'
 title: Tactical Board, Autonomous DM, and Voice Controls Microfrontend Styles Decomposition
-status: refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0004
@@ -12,8 +12,8 @@ governing_adrs:
 - ADR-0012
 - ADR-0013
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/57
 ---
-
 # TASK-0061: Tactical Board, Autonomous DM, and Voice Controls Microfrontend Styles Decomposition
 
 ## Status
