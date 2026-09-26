@@ -1,7 +1,7 @@
 ---
-id: '0091'
+id: 0091
 title: Backlog Engine Orchestrator and CI Watcher Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0046
@@ -9,8 +9,8 @@ governing_adrs:
 - ADR-0007
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/76
 ---
-
 # TASK-0091: Backlog Engine Orchestrator and CI Watcher Modular Decomposition
 
 ## Status
