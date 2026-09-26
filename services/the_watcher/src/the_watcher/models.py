@@ -43,3 +43,26 @@ class RecapRequest(BaseModel):
     items_acquired: list[str] = Field(default_factory=list)
     audio_url: str | None = None
 
+
+class SceneGenerateRequest(BaseModel):
+    session_id: str
+    location_type: str = "dungeon"
+    mood: str = "suspenseful"
+
+
+class EncounterSpawnRequest(BaseModel):
+    session_id: str
+    scene_id: str = ""
+    party_level: int = 3
+    party_size: int = 4
+    difficulty: str = "medium"
+
+
+class NpcTurnRequest(BaseModel):
+    session_id: str
+    encounter_id: str
+    actor_name: str
+    targets: list[dict[str, Any]] = Field(default_factory=list)
+    round_number: int = 1
+
+

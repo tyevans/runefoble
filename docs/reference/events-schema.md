@@ -135,4 +135,27 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `audio_url`: Optional[String]
   - `hp_delta`: Integer
   - `items_acquired`: List[String]
+- **`SceneAtmosphereSet`**: Emitted when The Watcher autonomously establishes scene lighting, sensory atmosphere, and background audio prompts (`runefoble.events.scene.atmosphere_set`).
+  - `session_id`: String
+  - `scene_id`: String
+  - `location_name`: String
+  - `lighting`: String
+  - `mood`: String
+  - `description`: String
+  - `ambient_audio_prompt`: String
+- **`EncounterSpawned`**: Emitted when The Watcher calculates CR balance and spawns an encounter with monster tokens (`runefoble.events.encounter.spawned`).
+  - `session_id`: String
+  - `encounter_id`: String
+  - `encounter_name`: String
+  - `threat_level`: String ("easy", "medium", "hard", "deadly")
+  - `monsters`: List[Dict[String, Any]]
+  - `tactical_objective`: String
+- **`AutonomousActionResolved`**: Emitted when an autonomous monster or NPC resolves tactical combat decisions and impacts target HP (`runefoble.events.encounter.action_resolved`).
+  - `session_id`: String
+  - `actor_name`: String
+  - `action_type`: String ("cast_spell", "charge_attack", "melee_strike", "execute_strike", "search")
+  - `target_name`: String
+  - `narrative`: String
+  - `hp_impact`: Integer
+
 

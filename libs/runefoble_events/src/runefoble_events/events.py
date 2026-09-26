@@ -308,6 +308,49 @@ class AbsenteeRecapGenerated(BaseRunefobleEvent):
     items_acquired: list[str] = Field(default_factory=list)
 
 
+@register_event("runefoble.events.scene.atmosphere_set")
+class SceneAtmosphereSet(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Scene"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.scene.atmosphere_set"
+    session_id: str
+    scene_id: str
+    location_name: str
+    lighting: str
+    mood: str
+    description: str
+    ambient_audio_prompt: str
+
+
+@register_event("runefoble.events.encounter.spawned")
+class EncounterSpawned(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Encounter"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.encounter.spawned"
+    session_id: str
+    encounter_id: str
+    encounter_name: str
+    threat_level: str
+    monsters: list[dict[str, Any]] = Field(default_factory=list)
+    tactical_objective: str
+
+
+@register_event("runefoble.events.encounter.action_resolved")
+class AutonomousActionResolved(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Encounter"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.encounter.action_resolved"
+    session_id: str
+    actor_name: str
+    action_type: str
+    target_name: str
+    narrative: str
+    hp_impact: int = 0
+
+
 # Backward-compatible aliases for legacy imports
 WatcherNarrationEvent = WatcherNarrationGenerated
 BoardMoveEvent = TokenMoved
@@ -343,9 +386,13 @@ __all__ = [
     "StandInActionDecided",
     "DiceRolled",
     "AbsenteeRecapGenerated",
+    "SceneAtmosphereSet",
+    "EncounterSpawned",
+    "AutonomousActionResolved",
     "WatcherNarrationEvent",
     "BoardMoveEvent",
     "DiceRollEvent",
     "SessionPenaltyEvent",
 ]
+
 

@@ -5,6 +5,7 @@ import './components/runefoble-board.ts';
 import './components/runefoble-character-card.ts';
 import './components/runefoble-watcher-feed.ts';
 import './components/runefoble-absentee-recap.ts';
+import './components/runefoble-autonomous-dm.ts';
 import './components/runefoble-theme-switcher.ts';
 import type { BoardToken } from './components/runefoble-board.ts';
 import type { WatcherFeedEvent } from './components/runefoble-watcher-feed.ts';

@@ -9,6 +9,9 @@ from pydantic import BaseModel, Field
 from runefoble_events.events import (
     AbsencePenaltyApplied,
     AbsenteeRecapGenerated,
+    AutonomousActionResolved,
+    EncounterSpawned,
+    SceneAtmosphereSet,
     SpeechIntentParsed,
     StandInActionDecided,
     TokenMoved,
@@ -16,8 +19,14 @@ from runefoble_events.events import (
 )
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from the_watcher.autonomous_dm import AutonomousDMEngine
 from the_watcher.chronicle import ChronicleRecapEngine
-from the_watcher.models import RecapRequest
+from the_watcher.models import (
+    EncounterSpawnRequest,
+    NpcTurnRequest,
+    RecapRequest,
+    SceneGenerateRequest,
+)
 from the_watcher.watcher_ai import (
     IntentResult,
     StandInAction,
@@ -39,6 +48,7 @@ app = FastAPI(
 
 engine = TheWatcherEngine()
 chronicle_engine = ChronicleRecapEngine()
+autonomous_dm_engine = AutonomousDMEngine()
 platform_settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
@@ -339,6 +349,70 @@ async def generate_chronicle_recap(req: RecapRequest) -> AbsenteeRecapGenerated:
             e,
         )
     return recap_event
+
+
+@app.post("/api/v1/watcher/scenes/generate", response_model=SceneAtmosphereSet)
+async def generate_scene(req: SceneGenerateRequest) -> SceneAtmosphereSet:
+    """Generate dynamic scene atmosphere, location details, lighting, and ambient audio prompt."""
+    event = autonomous_dm_engine.set_scene(
+        session_id=req.session_id,
+        location_type=req.location_type,
+        mood=req.mood,
+    )
+    bus = get_event_bus()
+    try:
+        await bus.publish_event(STREAM_WATCHER, event)
+    except Exception as e:
+        logger.warning(
+            "Failed to publish SceneAtmosphereSet event to Redis stream '%s': %s",
+            STREAM_WATCHER,
+            e,
+        )
+    return event
+
+
+@app.post("/api/v1/watcher/encounters/spawn", response_model=EncounterSpawned)
+async def spawn_encounter(req: EncounterSpawnRequest) -> EncounterSpawned:
+    """Calculate balanced encounter and spawn tactical monsters with combat objectives."""
+    event = autonomous_dm_engine.spawn_encounter(
+        session_id=req.session_id,
+        scene_id=req.scene_id,
+        party_level=req.party_level,
+        party_size=req.party_size,
+        difficulty=req.difficulty,
+    )
+    bus = get_event_bus()
+    try:
+        await bus.publish_event(STREAM_WATCHER, event)
+    except Exception as e:
+        logger.warning(
+            "Failed to publish EncounterSpawned event to Redis stream '%s': %s",
+            STREAM_WATCHER,
+            e,
+        )
+    return event
+
+
+@app.post("/api/v1/watcher/encounters/npc-turn", response_model=AutonomousActionResolved)
+async def execute_npc_turn(req: NpcTurnRequest) -> AutonomousActionResolved:
+    """Adjudicate tactical combat decision tree for an NPC or monster in an encounter."""
+    event = autonomous_dm_engine.resolve_npc_turn(
+        session_id=req.session_id,
+        encounter_id=req.encounter_id,
+        actor_name=req.actor_name,
+        targets=req.targets,
+        round_number=req.round_number,
+    )
+    bus = get_event_bus()
+    try:
+        await bus.publish_event(STREAM_WATCHER, event)
+    except Exception as e:
+        logger.warning(
+            "Failed to publish AutonomousActionResolved event to Redis stream '%s': %s",
+            STREAM_WATCHER,
+            e,
+        )
+    return event
 
 
 @app.post("/api/v1/watcher/narrate")
