@@ -1,6 +1,6 @@
 """Event-sourced BoardState aggregate using eventsource-py."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from board_state.models import (
     BoardState,
@@ -32,6 +32,7 @@ from runefoble_events.events import (
     TokenMoved,
     TokenPlaced,
     TokenRemoved,
+    UniversalVTTImported,
 )
 
 __all__ = [
@@ -224,6 +225,56 @@ class BoardAggregate(DeclarativeAggregate[BoardState]):
             shrouded_cells=cells,
         )
 
+    def import_uvtt_map(
+        self,
+        cols: int,
+        rows: int,
+        pixels_per_grid: int = 70,
+        background_asset_id: str | None = None,
+        background_image_url: str | None = None,
+        wall_segments: list[dict[str, Any]] | None = None,
+        portals: list[dict[str, Any]] | None = None,
+        lights: list[dict[str, Any]] | None = None,
+    ) -> None:
+        """Import Universal VTT map geometry, background imagery, and wall obstacles."""
+        walls = wall_segments or []
+        ports = portals or []
+        lgts = lights or []
+        self.create_event(
+            UniversalVTTImported,
+            session_id=str(self.state.session_id),
+            aggregate_id=self.aggregate_id,
+            cols=cols,
+            rows=rows,
+            pixels_per_grid=pixels_per_grid,
+            background_asset_id=background_asset_id,
+            background_image_url=background_image_url,
+            wall_segments=walls,
+            portals=ports,
+            lights=lgts,
+        )
+
+        # Place wall obstacle tokens for unique integer grid intersections within bounds
+        obstacle_coords: set[tuple[int, int]] = set()
+        for seg in walls:
+            for pt in [("x1", "y1"), ("x2", "y2")]:
+                px = int(round(seg.get(pt[0], 0)))
+                py = int(round(seg.get(pt[1], 0)))
+                if 0 <= px < cols and 0 <= py < rows:
+                    obstacle_coords.add((px, py))
+
+        for idx, (ox, oy) in enumerate(sorted(obstacle_coords)):
+            token_id = f"wall-obs-{idx + 1}"
+            if token_id not in self.state.tokens:
+                self.place_token(
+                    token_id=token_id,
+                    name=f"Wall Obstacle {idx + 1}",
+                    token_type="obstacle",
+                    x=ox,
+                    y=oy,
+                    is_friendly=False,
+                )
+
     # -----------------------------------------------------------------------
     # Event Handlers (@handles)
     # -----------------------------------------------------------------------
@@ -235,6 +286,19 @@ class BoardAggregate(DeclarativeAggregate[BoardState]):
             event.session_id_str or str(event.aggregate_id),
             event.width,
             event.height,
+        )
+
+    @handles(UniversalVTTImported)
+    def _on_map_imported(self, event: UniversalVTTImported) -> None:
+        self._state = self.state.with_map_imported(
+            cols=event.cols,
+            rows=event.rows,
+            pixels_per_grid=event.pixels_per_grid,
+            background_asset_id=event.background_asset_id,
+            background_image_url=event.background_image_url,
+            wall_segments=event.wall_segments,
+            portals=event.portals,
+            lights=event.lights,
         )
 
     @handles(TerrainCellModified)

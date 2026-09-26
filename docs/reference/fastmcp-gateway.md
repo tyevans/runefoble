@@ -6,9 +6,9 @@ The FastMCP Gateway (`gateway/mcp`) exposes Runefoble tabletop actions, spatial 
 
 The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 80 lines) delegating domain capabilities to modular sub-packages:
 
-```
 gateway/mcp/src/gateway_mcp/
 ├── constants.py           # RPG constants (spell effects, condition descriptions)
+├── dynamic_registry.py    # Runtime tool registration, JSON schema, & sandbox
 ├── main.py                # CLI execution wrapper
 ├── server.py              # FastMCP orchestration shell and module mounting
 ├── tools/                 # MCP tool implementations (< 180 lines each)
@@ -21,6 +21,7 @@ gateway/mcp/src/gateway_mcp/
 └── prompts/               # FastMCP prompt templates (< 120 lines each)
     └── narrative.py       # Narrative DM guidance and tactical action adviser
 ```
+
 
 ## Tools Registry
 
@@ -62,3 +63,28 @@ Prompt templates provide standardized prompts for LLM decision-making and narrat
 |---|---|---|
 | `dm_narrative_guidance` | `scene_context: str`, `mood: str` | Formats Watcher AI DM sensory and environmental narrative cues. |
 | `tactical_action_adviser` | `tactical_situation: str`, `character_role: str` | Provides combat analysis and optimal action recommendations. |
+
+## Dynamic Runtime Tool Registry
+
+The Dynamic Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic_registry.py`) enables tabletop creators, homebrew modders, and external developers to register custom FastMCP tools dynamically at runtime without restarting the FastMCP gateway or dropping active client SSE connections (ADR-0008, TASK-0057).
+
+### Administrative REST Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/mcp/tools` (or `/api/v1/mcp/tools`) | List all dynamically registered tools and JSON Schemas |
+| `POST` | `/mcp/tools` (or `/api/v1/mcp/tools`) | Register a new dynamic tool with parameter validation and sandbox checks |
+| `GET` | `/mcp/tools/{name}` | Retrieve schema and configuration for a specific dynamic tool |
+| `PUT` | `/mcp/tools/{name}` | Update an existing dynamic tool definition |
+| `DELETE` | `/mcp/tools/{name}` | Deregister a dynamic tool and remove it from FastMCP discovery |
+| `POST` | `/mcp/tools/{name}/execute` | Invoke a dynamic tool directly via HTTP frontdoor |
+
+### Security & Sandbox Policies
+
+Dynamic tool definitions containing custom Python logic (`handler_code`) undergo strict AST static analysis and sandboxed execution:
+- **Forbidden Imports**: `os`, `sys`, `subprocess`, `shutil`, `socket`, `urllib`, `requests`, `httpx`, `pathlib`, `builtins`, `importlib`.
+- **Forbidden Functions**: `open`, `eval`, `exec`, `compile`, `__import__`, `globals`, `locals`, `exit`, `quit`.
+- **Attribute Access Restrictions**: Access to dunder attributes (e.g. `__class__`, `__subclasses__`, `__globals__`, `__code__`) is rejected.
+- **Allowed Modules**: Safe modules such as `math`, `json`, `re`, `random`.
+- **Parameter Validation**: Enforced via JSON Schema Draft-07 specifications with type matching across Python signatures.
+
