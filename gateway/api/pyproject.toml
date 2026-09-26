@@ -12,4 +12,5 @@ dependencies = [
     "runefoble-auth",
     "runefoble-platform",
     "runefoble-events",
+    "voice-agent",
 ]

@@ -226,6 +226,24 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `latency_ms`: Float
   - `audio_bytes_length`: Integer
 
+### VoiceRoom Events (`aggregate_type: VoiceRoom`)
+
+- **`VoicePeerJoined`**: Emitted when an audio peer connects and joins the session WebRTC voice room (`runefoble.events.voice.peer_joined`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: String
+  - `role`: String ("player", "dungeon_master", "spectator")
+  - `joined_at`: String (ISO-8601 UTC timestamp)
+- **`VoicePeerLeft`**: Emitted when an audio peer leaves or is kicked/disconnected from the voice room (`runefoble.events.voice.peer_left`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `reason`: String ("disconnected", "user_exit", "kicked_by_dm")
+- **`VoicePeerMuteToggled`**: Emitted when an audio peer toggles microphone mute state (`runefoble.events.voice.mute_toggled`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `is_muted`: Boolean
+
+
 ### Asset Storage Events (`aggregate_type: Asset`)
 
 - **`AssetUploaded`**: Emitted when a media asset (character avatar, tactical battlemap, or audio soundscape) is stored in Silo S3 (`runefoble.events.asset.uploaded`).

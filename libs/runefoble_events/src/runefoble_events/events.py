@@ -45,6 +45,11 @@ from runefoble_events.session import (
     SpectatorSessionConnected,
     TurnAdvanced,
 )
+from runefoble_events.voice import (
+    VoicePeerJoined,
+    VoicePeerLeft,
+    VoicePeerMuteToggled,
+)
 from runefoble_events.watcher import (
     AbsenteeRecapGenerated,
     AutonomousActionResolved,
@@ -108,6 +113,9 @@ __all__ = [
     "EncounterSpawned",
     "AutonomousActionResolved",
     "VoiceAudioConditioned",
+    "VoicePeerJoined",
+    "VoicePeerLeft",
+    "VoicePeerMuteToggled",
     "AssetUploaded",
     "AssetDeleted",
 ]

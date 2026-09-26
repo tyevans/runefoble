@@ -35,7 +35,8 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 31. **TASK-0032 (Complete)**: [`0032-spicedb-zitadel-identity-sync.md`](complete/0032-spicedb-zitadel-identity-sync.md) — SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities
 32. **TASK-0031 (Complete)**: [`0031-silo-s3-battlemap-uploader-microfrontend.md`](complete/0031-silo-s3-battlemap-uploader-microfrontend.md) — Silo S3 Battlemap Asset Uploader & Shroud Masking in Board State Microfrontend
 33. **TASK-0030 (Complete)**: [`0030-webrtc-voice-stream-visualizer-microfrontend.md`](complete/0030-webrtc-voice-stream-visualizer-microfrontend.md) — WebRTC Audio Stream & Real-Time Waveform Visualizer in Voice Agent Microfrontend
-34. **TASK-0033 (Refined)**: [`0033-webrtc-voice-room-signaling.md`](refined/0033-webrtc-voice-room-signaling.md) — Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
+34. **TASK-0033 (Complete)**: [`0033-webrtc-voice-room-signaling.md`](complete/0033-webrtc-voice-room-signaling.md) — Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
+
 35. **TASK-0034 (Refined)**: [`0034-zitadel-oidc-jwks-verification-middleware.md`](refined/0034-zitadel-oidc-jwks-verification-middleware.md) — Zitadel Production OIDC/JWKS Token Verification Middleware
 36. **TASK-0035 (Refined)**: [`0035-spicedb-live-grpc-client-and-schema-migration.md`](refined/0035-spicedb-live-grpc-client-and-schema-migration.md) — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
 37. **TASK-0036 (Refined)**: [`0036-postgresql-multi-database-init-and-event-store.md`](refined/0036-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection
@@ -43,7 +44,6 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 39. **TASK-0038 (Refined)**: [`0038-openpanel-analytics-service-and-event-pipeline.md`](refined/0038-openpanel-analytics-service-and-event-pipeline.md) — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
 40. **TASK-0039 (Refined)**: [`0039-streaming-whisper-speech-to-intent.md`](refined/0039-streaming-whisper-speech-to-intent.md) — Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
 41. **TASK-0040 (Refined)**: [`0040-service-modular-router-decomposition.md`](refined/0040-service-modular-router-decomposition.md) — Modular APIRouter Decomposition for The Watcher & Game Session Microservices
-
 42. **TASK-0041 (Proposed)**: [`0041-fastmcp-gateway-server-modular-decomposition.md`](proposed/0041-fastmcp-gateway-server-modular-decomposition.md) — FastMCP Gateway Server Modular Decomposition
 43. **TASK-0042 (Proposed)**: [`0042-redis-consumer-groups-test-suite-decomposition.md`](proposed/0042-redis-consumer-groups-test-suite-decomposition.md) — Redis Consumer Groups & Projections Test Suite Decomposition
 44. **TASK-0043 (Proposed)**: [`0043-frontend-microfrontend-component-styles-and-subview-decomposition.md`](proposed/0043-frontend-microfrontend-component-styles-and-subview-decomposition.md) — Frontend Microfrontend Component Styles and Subview Decomposition
