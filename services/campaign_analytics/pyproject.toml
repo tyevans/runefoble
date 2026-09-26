@@ -1,0 +1,22 @@
+[project]
+name = "campaign-analytics"
+version = "0.1.0"
+description = "Runefoble - Campaign Analytics & Chronicle Archive Microservice"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.141.1",
+    "pydantic>=2.13.5",
+    "uvicorn>=0.54.0",
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.30.0",
+    "runefoble-platform",
+    "runefoble-auth",
+    "runefoble-events",
+    "eventsource-py>=0.14.0",
+]
+
+[tool.uv.sources]
+runefoble-platform = { workspace = true }
+runefoble-auth = { workspace = true }
+runefoble-events = { workspace = true }

@@ -450,36 +450,11 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 
 ### Soundscape & Adaptive Audio Events (`aggregate_type: Soundscape`)
 
-- **`SoundscapeTrackChanged`**: Emitted when active soundscape track or stem profile transitions (`runefoble.events.soundscape.track_changed`).
-  - `session_id`: String
-  - `track_id`: String
-  - `stem_profile`: String ("exploration", "tension", "combat", "boss")
-  - `tension_score`: Integer (0-100)
-  - `crossfade_duration_ms`: Integer (default 1500)
-  - `active_stems`: List[String]
-- **`SoundscapeCueTriggered`**: Emitted when a tactical sound foley or acoustic cue is fired (`runefoble.events.soundscape.cue_triggered`).
-  - `session_id`: String
-  - `cue_id`: String
-  - `cue_type`: String ("foley", "sfx", "stinger", "ambient", "spell", "melee")
-  - `sound_url`: String
-  - `volume_gain`: Float (default 1.0)
-  - `duck_music`: Boolean (default False)
-- **`SoundscapeTensionUpdated`**: Emitted when encounter tension score is recalculated (`runefoble.events.soundscape.tension_updated`).
-  - `session_id`: String
-  - `tension_score`: Integer (0-100)
-  - `stem_profile`: String
-  - `combat_round`: Integer
-  - `enemy_cr_balance`: Float
-  - `lowest_health_ratio`: Float
-- **`SoundscapeMoodOverridden`**: Emitted when DM forces a manual mood override (`runefoble.events.soundscape.mood_overridden`).
-  - `session_id`: String
-  - `mood`: String ("exploration", "tension", "combat", "boss")
-  - `overridden_by`: String (default "dm")
-- **`SoundscapeDuckingToggled`**: Emitted when WebAudio background music ducking state changes (`runefoble.events.soundscape.ducking_toggled`).
-  - `session_id`: String
-  - `is_ducked`: Boolean
-  - `attenuation_db`: Float (default -12.0)
-  - `reason`: String ("speech", "cue", "vad")
+- **`SoundscapeTrackChanged`**: Emitted when active soundscape track or stem profile transitions (`runefoble.events.soundscape.track_changed`). Fields: `session_id`, `track_id`, `stem_profile`, `tension_score`, `crossfade_duration_ms`, `active_stems`.
+- **`SoundscapeCueTriggered`**: Emitted when a tactical sound foley or acoustic cue is fired (`runefoble.events.soundscape.cue_triggered`). Fields: `session_id`, `cue_id`, `cue_type`, `sound_url`, `volume_gain`, `duck_music`.
+- **`SoundscapeTensionUpdated`**: Emitted when encounter tension score is recalculated (`runefoble.events.soundscape.tension_updated`). Fields: `session_id`, `tension_score`, `stem_profile`, `combat_round`, `enemy_cr_balance`, `lowest_health_ratio`.
+- **`SoundscapeMoodOverridden`**: Emitted when DM forces a manual mood override (`runefoble.events.soundscape.mood_overridden`). Fields: `session_id`, `mood`, `overridden_by`.
+- **`SoundscapeDuckingToggled`**: Emitted when WebAudio background music ducking state changes (`runefoble.events.soundscape.ducking_toggled`). Fields: `session_id`, `is_ducked`, `attenuation_db`, `reason`.
 
 ### Audience Studio Events (`aggregate_type: AudiencePoll`)
 
@@ -488,5 +463,11 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`AudiencePollCompleted`**: Emitted when poll voting concludes (`runefoble.events.audience.poll_completed`). Fields: `poll_id`, `campaign_id`, `winning_option_id`, `total_votes`, `quorum_met`, `proposed_modifier`.
 - **`AudienceModifierProposed`**: Emitted when winning chaos option enters DM moderation queue (`runefoble.events.audience.modifier_proposed`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `modifier_type`, `description`, `parameters`, `status`.
 - **`AudienceModifierApproved`**: Emitted when DM approves modifier into session (`runefoble.events.audience.modifier_approved`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `approved_by`, `approved`, `applied_at`.
+
+### Campaign Analytics & Chronicle Events (`aggregate_type: CampaignChronicle`)
+
+- **`ChronicleMilestoneRecorded`**: Emitted when a campaign or session milestone is committed to the chronicle timeline (`runefoble.events.analytics.milestone_recorded`). Fields: `milestone_id`, `campaign_id`, `session_id`, `title`, `description`, `milestone_type`, `tags`, `timestamp`.
+- **`CombatTelemetrySnapshotCreated`**: Emitted when a combat round telemetry snapshot is finalized (`runefoble.events.analytics.telemetry_snapshot_created`). Fields: `snapshot_id`, `campaign_id`, `session_id`, `encounter_id`, `round_number`, `spatial_points`, `damage_events`, `timestamp`.
+- **`EncounterMvpAwarded`**: Emitted when an MVP award is conferred for encounter performance (`runefoble.events.analytics.mvp_awarded`). Fields: `award_id`, `campaign_id`, `session_id`, `encounter_id`, `combatant_id`, `combatant_name`, `category`, `score`, `rationale`, `timestamp`.
 
 
