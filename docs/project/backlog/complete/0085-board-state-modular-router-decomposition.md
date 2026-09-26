@@ -1,7 +1,7 @@
 ---
-id: '0085'
+id: 0085
 title: Board State API Router and Spatial Handler Modular Decomposition
-status: refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0007
@@ -14,8 +14,8 @@ governing_adrs:
 - ADR-0011
 - ADR-0013
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/51
 ---
-
 # TASK-0085: Board State API Router and Spatial Handler Modular Decomposition
 
 ## Status
