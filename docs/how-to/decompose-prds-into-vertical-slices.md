@@ -116,3 +116,19 @@ The PRD pipeline completes the three-tier autonomous engineering loop:
        ↓
 [Backlog Worker Engine] ./scripts/run-backlog-engine.sh (Parallel worktrees -> single agy -p pass -> main)
 ```
+
+---
+
+## Architecture & Modular Decomposition
+
+The decomposition engine in `tools/prd_pipeline/` is structured to adhere to Hard Invariant 6 (< 500 lines per file):
+
+- **Orchestrator Facade (`tools/prd_pipeline/decomposer.py`)**:
+  - `PRDDecomposer` provides the public API for counting tasks/stories (`get_max_task_number`, `get_max_story_number`), generating plans (`plan_decomposition`), and persisting tasks (`execute_decomposition`).
+- **Planning & Dependency Engine (`tools/prd_pipeline/planner.py`)**:
+  - `DecompositionPlanner` and heuristics (`requires_architectural_spike`, `requires_ui_component`, `requires_worker_slice`) sequence vertical slices and build dependency graphs.
+- **Templating & Metadata Serialization (`tools/prd_pipeline/templates.py` & `slice_templates.json`)**:
+  - `format_task_markdown` and `format_user_story_markdown` render YAML frontmatter, INVEST criteria, and acceptance criteria.
+- **Disk Persistence (`tools/prd_pipeline/writer.py`)**:
+  - `PlanWriter` creates directories and writes task files to `docs/project/backlog/proposed/` and user story files to `docs/project/user_stories/accepted/`.
+
