@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Project Visualizer Parser Modular Decomposition (`TASK-0059`, `ADR-0003`)**:
+  - Decomposed monolithic `tools/project_visualizer/parser.py` (461 lines) into dedicated sub-parsers in `tools/project_visualizer/parsers/`: `adr_parser.py` (75 lines), `product_parser.py` (155 lines), `persona_parser.py` (93 lines), `backlog_parser.py` (158 lines), `graph_builder.py` (20 lines), and `markdown_utils.py` (89 lines).
+  - Maintained 100% backward compatibility via `tools/project_visualizer/parser.py` facade (141 lines) and `tools/project_visualizer/markdown_utils.py` facade (21 lines) with re-exported classes and entrypoints (`ProjectParser`, `scan_project`, `build_traceability_graph`).
+  - Enforced strict file length limits with all modules strictly under 200 lines, protecting Hard Invariant 6 (< 500 lines).
+  - Added modular parser compatibility and line-length invariant tests in `tests/test_project_visualizer.py` and updated Diataxis documentation in `docs/how-to/visualize-project-content.md`.
 - **Backlog Triage and JIT Ready Buffer Replenishment (`TASK-0059`, `TASK-0101`, `TASK-0103`, `TASK-0105`, `TASK-0112`, `TASK-0113`, `TASK-0114`, `TASK-0119`, `TASK-0120`)**:
   - JIT-refined 9 tasks across Milestone 5 feature epics and invariant-prevention modular decompositions, replenishing ready buffer to 10 items.
   - Proposed and refined modular decompositions for `tools/prd_pipeline/decomposer.py` (`TASK-0119`) and `frontend/src/styles/themes.css` (`TASK-0120`).
