@@ -1,7 +1,7 @@
 ---
-id: '0080'
+id: 0080
 title: Gateway WebSocket Hub and Action Validator Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0010
@@ -18,8 +18,8 @@ governing_prds:
 - PRD-0005
 governing_stories:
 - US-0014
+pr_url: https://github.com/tyevans/runefoble/pull/90
 ---
-
 # TASK-0080: Gateway WebSocket Hub and Action Validator Modular Decomposition
 
 ## Status
