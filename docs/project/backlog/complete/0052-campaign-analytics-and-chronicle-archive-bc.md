@@ -1,7 +1,7 @@
 ---
 id: '0052'
 title: Campaign Analytics & Chronicle Archive Microservice
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0011
@@ -19,8 +19,8 @@ governing_prds:
 governing_stories:
 - US-0040
 - US-0054
+pr_url: https://github.com/tyevans/runefoble/pull/97
 ---
-
 # TASK-0052: Campaign Analytics & Chronicle Archive Microservice
 
 ## Status
