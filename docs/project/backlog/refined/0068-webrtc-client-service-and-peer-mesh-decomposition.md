@@ -1,11 +1,16 @@
 ---
 id: '0068'
 title: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
-dependencies: [TASK-0033]
-governing_adrs: [ADR-0002, ADR-0004, ADR-0013]
-target_release: 0.2.0
+dependencies:
+- TASK-0033
+governing_adrs:
+- ADR-0002
+- ADR-0004
+- ADR-0009
+- ADR-0013
+target_release: 0.3.0
 governing_prds:
 - PRD-0004
 governing_stories:
@@ -15,20 +20,26 @@ governing_stories:
 # TASK-0068: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
-Decompose `frontend/src/services/webrtc-voice.ts` (349 lines, 69.8% of limit) into modular TypeScript files (`webrtc-types.ts`, `webrtc-peer-mesh.ts`, and `webrtc-voice.ts`) to maintain clean separation of concerns and prevent breaching Hard Invariant 6 (File length limit < 500 lines) as real-time audio features expand.
+Decompose `frontend/src/services/webrtc-voice.ts` (348 lines, 69.6% of limit) into modular TypeScript files (`webrtc-types.ts`, `webrtc-peer-mesh.ts`, and `webrtc-voice.ts`) to maintain clean separation of concerns and prevent breaching Hard Invariant 6 (File length limit < 500 lines) as real-time audio features expand.
 
 ## Problem Statement
-`frontend/src/services/webrtc-voice.ts` currently spans 349 lines and bundles multiple distinct responsibilities:
+`frontend/src/services/webrtc-voice.ts` currently spans 348 lines and bundles multiple distinct responsibilities:
 1. Type declarations and protocol interfaces (`VoicePeer`, `SignalingMessage`, `WebRTCVoiceOptions`).
 2. WebSocket connection management, auto-reconnect timers, credential parameter encoding, and message serialization.
 3. Peer connection mesh management: RTCPeerConnection instantiation, remote media stream tracking, SDP offer/answer exchanges, ICE candidate buffering/forwarding, and cleanup on disconnect.
 4. Remote audio DOM element creation, muting, volume control, and WebAudio pipeline bridging.
 5. Voice activity detection and speaking level callbacks.
 
-As upcoming voice features (spatial audio positioning, DM whisper channels, multi-codec negotiation, and network quality metrics) are added in Milestone 2 and 3, this file will quickly approach and exceed the 500-line invariant.
+As upcoming voice features (spatial audio positioning, DM whisper channels, multi-codec negotiation, and network quality metrics) are added, this file will quickly approach and exceed the 500-line invariant.
+
+## Governing Architecture & ADRs
+- **ADR-0002: The Watcher Autonomous DM**: Supporting DM private voice whispers and voice routing.
+- **ADR-0004: Lit Web Components and Storybook UI**: Client service consumption in Lit UI components.
+- **ADR-0009: Continuous Backlog Refinement and Technical Debt Management**: Preemptive frontend modularization.
+- **ADR-0013: Microfrontend Architecture and Service Component Vendoring**: Voice service contract boundaries.
 
 ## Proposed Decomposition
 1. **WebRTC Protocol Types & Interfaces (`frontend/src/services/webrtc-types.ts`)**:
@@ -46,8 +57,9 @@ As upcoming voice features (spatial audio positioning, DM whisper channels, mult
 - **Small (S)**: Scope strictly isolated to `frontend/src/services/webrtc-voice.ts`; all resulting files < 170 lines.
 - **Testable (T)**: Verified with `pnpm run build` in `frontend/` and `uv run pytest tests/test_blackbox_webrtc_signaling.py`.
 
-## Acceptance Criteria
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. Full backward compatibility preserved for existing imports in frontend components and Storybook stories.
 2. All modified and newly created TypeScript source files strictly under 200 lines.
 3. Zero TypeScript compiler errors via `pnpm run build`.
 4. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
+5. Passes `uv run pytest tests/test_blackbox_webrtc_signaling.py`.

@@ -39,5 +39,5 @@ In traditional tabletop gaming, an absent player either halts the entire campaig
 - [`TASK-0003: Missing Player AI Stand-In Engine with Absence Penalties`](../../backlog/complete/0003-missing-player-ai-stand-in-engine.md)
 - [`TASK-0011: Absentee Session Chronicle and Audio Recap Engine`](../../backlog/complete/0011-absentee-session-chronicle-recap.md)
 - [`TASK-0055: Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover`](../../backlog/complete/0055-stand-in-policy-guardrails-and-hot-swap-handoff.md)
-- [`TASK-0070: Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition`](../../backlog/proposed/0070-stand-in-engine-and-absentee-recap-test-suite-decomposition.md)
-- [`TASK-0096: Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition`](../../backlog/refined/0096-stand-in-guardrails-blackbox-test-suite-decomposition.md)
+- [`TASK-0070: Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition`](../../backlog/refined/0070-stand-in-engine-and-absentee-recap-test-suite-decomposition.md)
+- [`TASK-0096: Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0096-stand-in-guardrails-blackbox-test-suite-decomposition.md)

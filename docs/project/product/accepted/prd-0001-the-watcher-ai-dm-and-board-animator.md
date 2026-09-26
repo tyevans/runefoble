@@ -64,5 +64,5 @@ Low latency audio transcription and LLM inference require optimized streaming co
 - [`TASK-0062: Autonomous DM Presets, Monster Templates, and Combat Tactics Modular Decomposition`](../../backlog/complete/0062-autonomous-dm-presets-and-tactics-modular-decomposition.md)
 - [`TASK-0069: Speech Intent Parser and Action Grammar Extractors Modular Decomposition`](../../backlog/proposed/0069-speech-intent-parser-and-action-grammar-decomposition.md)
 - [`TASK-0090: Modular Routers Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0090-modular-routers-test-suite-decomposition.md)
-- [`TASK-0093: DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition`](../../backlog/refined/0093-dm-copilot-router-and-blackbox-test-suite-decomposition.md)
-- [`TASK-0094: Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition`](../../backlog/refined/0094-intent-disambiguation-router-and-blackbox-test-suite-decomposition.md)
+- [`TASK-0093: DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0093-dm-copilot-router-and-blackbox-test-suite-decomposition.md)
+- [`TASK-0094: Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0094-intent-disambiguation-router-and-blackbox-test-suite-decomposition.md)
