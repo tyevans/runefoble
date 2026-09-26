@@ -32,6 +32,7 @@ These rules are structural. Do not violate them for convenience.
 4. **All Python packages are managed through the root UV workspace.** Do not use pip, poetry, or virtualenvs directly. Run commands through `uv` or the developer `Makefile`.[^14]
 5. **Services publish OpenAPI specs to the Swagger UI hub.** Every new HTTP service must expose `/openapi.json` and register its URL in `deployments/helm/runefoble/values.yaml`.[^11]
 6. **File length limit (<500 lines).** Source files over ~500 lines are rarely justified. Whenever editing or committing code, inspect file lengths and decompose large files into focused, single-responsibility modules.
+7. **Blackbox TDD with frontdoor setup.** All feature development must be driven by blackbox tests interacting strictly through public frontdoors (e.g. public HTTP routes, WebSockets, or published standard domain events) rather than reaching into private internals or backdoor state manipulation. Test setup must be performed through the frontdoor interfaces, and assertions must verify observable outputs, public query projections, or emitted standard events.
 
 ## Design Principles
 
@@ -95,12 +96,16 @@ Work is complete only when:
 4. Python tests pass via `uv run pytest` and frontend builds pass via `pnpm run build`.[^23]
 5. Helm chart passes linting via `helm lint` and renders cleanly via `helm template`.[^4]
 6. Registries in `docs/project/` are updated to reflect the new state.[^18]
+7. Blackbox TDD suite verified with frontdoor setup: all scenarios exercised through public API/WebSocket/event entrypoints.
 
-## Dispatching Work to Agents
+## Dispatching Work to Agents & Parallel Worktrees
 
 When delegating tasks to subagents:
-1. **Ask each agent for the complete change**: implementation, tests, and documentation.
-2. **Give each agent an isolated workspace** (e.g. `Workspace: 'share'` for worktrees).
+1. **Ask each agent for the complete change**: implementation, frontdoor blackbox tests, and Diataxis documentation.
+2. **Isolate concurrent workstreams using Git worktrees**:
+   - Create an isolated worktree branch: `git worktree add -b <feature-branch> .worktrees/<feature-name> main`.
+   - Direct the subagent to perform all edits and runs within its designated worktree directory.
+   - Upon completion, merge the feature branch back to `main`, verify gates, and clean up the worktree (`git worktree remove .worktrees/<feature-name> && git branch -d <feature-branch>`).
 3. **Spin an agent down when it hands back**: do not reuse agents across disparate workstreams.
 4. **Trust what an agent says it did, but verify what it worked out**: confirm tests run green and build gates pass.
 
