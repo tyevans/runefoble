@@ -1,7 +1,7 @@
 ---
-id: '0090'
+id: 0090
 title: Modular Routers Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0040
@@ -11,8 +11,8 @@ governing_adrs:
 - ADR-0008
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/63
 ---
-
 # TASK-0090: Modular Routers Blackbox Test Suite Modular Decomposition
 
 ## Status
