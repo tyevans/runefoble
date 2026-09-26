@@ -137,3 +137,84 @@ def test_recover_stale_tasks(temp_backlog_dir: Path):
     assert len(recovered) == 2
     assert {t.canonical_id for t in recovered} == {"TASK-0002", "TASK-0003"}
     assert len(queue.get_ready_unblocked_tasks()) == 3
+
+
+def test_list_all_tasks_handles_missing_file_and_broken_symlinks(
+    temp_backlog_dir: Path, monkeypatch
+):
+    """Verifies that list_all_tasks gracefully skips files that disappear concurrently or are broken symlinks."""
+    t2 = temp_backlog_dir / "refined" / "0002-task.md"
+    t2.write_text("---\nid: 0002\ntitle: Task 2\nstatus: Refined\n---\nBody", encoding="utf-8")
+
+    # Create a broken symlink in proposed/
+    import contextlib
+
+    broken_symlink = temp_backlog_dir / "proposed" / "0076-missing-target.md"
+    with contextlib.suppress(OSError):
+        broken_symlink.symlink_to(temp_backlog_dir / "proposed" / "nonexistent.md")
+
+    queue = BacklogQueue(temp_backlog_dir)
+
+    # Also simulate a file being unlinked right between glob and parse_task_file
+    import tools.backlog_engine.queue as queue_mod
+
+    orig_parse = queue_mod.parse_task_file
+
+    def flaky_parse(p: Path, priority_rank: int = 999999):
+        if "simulated_missing" in p.name:
+            raise FileNotFoundError(f"No such file: {p}")
+        return orig_parse(p, priority_rank=priority_rank)
+
+    monkeypatch.setattr(queue_mod, "parse_task_file", flaky_parse)
+
+    fake_file = temp_backlog_dir / "proposed" / "0099-simulated_missing.md"
+    fake_file.write_text(
+        "---\nid: 0099\ntitle: Ghost\nstatus: Proposed\n---\nBody", encoding="utf-8"
+    )
+
+    # list_all_tasks should not raise FileNotFoundError
+    tasks = queue.list_all_tasks()
+    canonical_ids = [t.canonical_id for t in tasks]
+    assert "TASK-0002" in canonical_ids
+    assert "TASK-0099" not in canonical_ids
+
+
+def test_list_all_tasks_deduplicates_across_lifecycle_folders(temp_backlog_dir: Path):
+    """Verifies that tasks appearing in multiple folders are deduplicated, prioritizing higher states."""
+    # Place same task in both refined/ and proposed/
+    t2_refined = temp_backlog_dir / "refined" / "0002-task.md"
+    t2_refined.write_text(
+        "---\nid: 0002\ntitle: Task 2 Refined\nstatus: Refined\n---\nBody", encoding="utf-8"
+    )
+
+    t2_proposed = temp_backlog_dir / "proposed" / "0002-task.md"
+    t2_proposed.write_text(
+        "---\nid: 0002\ntitle: Task 2 Proposed\nstatus: Proposed\n---\nBody", encoding="utf-8"
+    )
+
+    queue = BacklogQueue(temp_backlog_dir)
+    tasks = queue.list_all_tasks()
+
+    matching = [t for t in tasks if t.canonical_id == "TASK-0002"]
+    assert len(matching) == 1
+    assert matching[0].status == TaskStatus.READY
+    assert matching[0].title == "Task 2 Refined"
+
+
+def test_get_completed_and_recover_stale_handles_missing_file(temp_backlog_dir: Path, monkeypatch):
+    """Verifies get_completed_task_ids and recover_stale_tasks ignore disappearing files."""
+    import tools.backlog_engine.queue as queue_mod
+
+    def error_parse(p: Path, priority_rank: int = 999999):
+        raise FileNotFoundError(f"Missing {p}")
+
+    monkeypatch.setattr(queue_mod, "parse_task_file", error_parse)
+
+    dummy = temp_backlog_dir / "complete" / "0001-task.md"
+    dummy.write_text("dummy", encoding="utf-8")
+    dummy_stale = temp_backlog_dir / "refined" / "0002-task.md"
+    dummy_stale.write_text("dummy", encoding="utf-8")
+
+    queue = BacklogQueue(temp_backlog_dir)
+    assert queue.get_completed_task_ids() == set()
+    assert queue.recover_stale_tasks() == []

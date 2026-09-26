@@ -67,6 +67,7 @@ from runefoble_events.lore import (
     LoreDocumentIngested,
 )
 from runefoble_events.session import (
+    CameraTargetUpdated,
     CharacterControlTransferred,
     CombatEncounterEnded,
     CombatEncounterStarted,
@@ -83,6 +84,7 @@ from runefoble_events.session import (
     SessionStarted,
     SpectatorSessionConnected,
     TurnAdvanced,
+    TurnStarted,
 )
 from runefoble_events.soundscape import (
     SoundscapeCueTriggered,
@@ -215,4 +217,6 @@ __all__ = [
     "ChronicleMilestoneRecorded",
     "CombatTelemetrySnapshotCreated",
     "EncounterMvpAwarded",
+    "TurnStarted",
+    "CameraTargetUpdated",
 ]

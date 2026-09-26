@@ -154,6 +154,7 @@ class BacklogQueue:
         """Discovers all tasks across complete, refined, and proposed directories."""
         priority_map = load_priority_map(self.backlog_dir)
         tasks = []
+        seen_canonical_ids: set[str] = set()
 
         for folder in [self.complete_dir, self.refined_dir, self.proposed_dir]:
             if not folder.exists():
@@ -161,11 +162,20 @@ class BacklogQueue:
             for p in sorted(folder.glob("*.md")):
                 if p.name.startswith("."):
                     continue
-                # Determine canonical ID approximation for rank lookup
-                stem_match = re.match(r"^(\d+)", p.stem)
-                cid = f"TASK-{stem_match.group(1).zfill(4)}" if stem_match else p.stem
-                rank = priority_map.get(cid, 999999)
-                tasks.append(parse_task_file(p, priority_rank=rank))
+                if not p.is_file():
+                    continue
+                try:
+                    # Determine canonical ID approximation for rank lookup
+                    stem_match = re.match(r"^(\d+)", p.stem)
+                    cid = f"TASK-{stem_match.group(1).zfill(4)}" if stem_match else p.stem
+                    if cid in seen_canonical_ids:
+                        continue
+                    rank = priority_map.get(cid, 999999)
+                    task = parse_task_file(p, priority_rank=rank)
+                    tasks.append(task)
+                    seen_canonical_ids.add(task.canonical_id)
+                except (FileNotFoundError, OSError):
+                    continue
 
         return tasks
 
@@ -176,8 +186,13 @@ class BacklogQueue:
             return completed
 
         for p in self.complete_dir.glob("*.md"):
-            task = parse_task_file(p)
-            completed.add(task.canonical_id)
+            if p.name.startswith(".") or not p.is_file():
+                continue
+            try:
+                task = parse_task_file(p)
+                completed.add(task.canonical_id)
+            except (FileNotFoundError, OSError):
+                continue
         return completed
 
     def get_ready_unblocked_tasks(self) -> list[Task]:
@@ -220,7 +235,15 @@ class BacklogQueue:
         task.claimed_by = None
         task.branch = None
         task.pr_url = None
-        write_task_file(task)
+        if task.file_path.exists():
+            write_task_file(task)
+        else:
+            for folder in [self.refined_dir, self.proposed_dir, self.complete_dir]:
+                candidate = folder / task.file_path.name
+                if candidate.is_file():
+                    task.file_path = candidate
+                    write_task_file(task)
+                    break
 
     def recover_stale_tasks(self) -> list[Task]:
         """Discovers tasks in refined/ that are marked in-progress, review, or claimed, and releases them."""
@@ -229,9 +252,12 @@ class BacklogQueue:
             return recovered
 
         for p in sorted(self.refined_dir.glob("*.md")):
-            if p.name.startswith("."):
+            if p.name.startswith(".") or not p.is_file():
                 continue
-            task = parse_task_file(p)
+            try:
+                task = parse_task_file(p)
+            except (FileNotFoundError, OSError):
+                continue
             if task.status in (TaskStatus.IN_PROGRESS, TaskStatus.REVIEW) or task.claimed_by:
                 self.release_task(task)
                 recovered.append(task)
@@ -253,7 +279,8 @@ class BacklogQueue:
 
         # Move file if not already in complete
         if task.file_path != dest_file:
-            task.file_path.rename(dest_file)
+            if task.file_path.exists():
+                task.file_path.rename(dest_file)
             task.file_path = dest_file
 
         write_task_file(task)
