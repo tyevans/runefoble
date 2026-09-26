@@ -28,6 +28,9 @@ importers:
       '@runefoble/game-session-ui':
         specifier: workspace:*
         version: link:../services/game_session/ui
+      '@runefoble/rules-compendium-ui':
+        specifier: workspace:*
+        version: link:../services/rules_compendium/ui
       '@runefoble/the-watcher-ui':
         specifier: workspace:*
         version: link:../services/the_watcher/ui
@@ -152,6 +155,16 @@ importers:
         version: 7.0.2
 
   services/game_session/ui:
+    dependencies:
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ~7.0.2
+        version: 7.0.2
+
+  services/rules_compendium/ui:
     dependencies:
       lit:
         specifier: ^3.3.3

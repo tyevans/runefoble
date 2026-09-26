@@ -177,3 +177,43 @@ res = await monster_tool.run({"monster_name": "Bugbear"})
 encounter_tool = mcp.get_tool("calculate_encounter_balance")
 enc = await encounter_tool.run({"party_levels": [4, 4, 4], "target_difficulty": "Hard"})
 ```
+
+---
+
+## 6. Microfrontend Integration (`<runefoble-rules-compendium>`)
+
+Per ADR-0013, `services/rules_compendium/ui/` vendors Lit Web Components that can be embedded into the App Shell or used standalone:
+
+### Manifest Discovery
+```bash
+curl http://localhost:8007/ui/manifest
+```
+
+```json
+{
+  "service": "rules_compendium",
+  "package": "@runefoble/rules-compendium-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-rules-compendium",
+    "runefoble-rules-lookup",
+    "runefoble-encounter-builder"
+  ]
+}
+```
+
+### Embedding in HTML / App Shell
+```html
+<runefoble-rules-compendium
+  apiBaseUrl="http://localhost:8007"
+  campaignId="8a329ef2-5c91-4cf1-83d8-21d4bb67f101"
+  userId="dm-evelyn-1"
+  isDM="true"
+></runefoble-rules-compendium>
+```
+
+### Key Features:
+- **Instant Hybrid Search**: Debounced autocomplete with sub-50ms latency badge and category filter pills (`ALL`, `MONSTER`, `SPELL`, `CONDITION`, `HOMEBREW`).
+- **Interactive CR Encounter Builder**: Dynamic XP threshold computation across party levels/sizes with real-time lethality calculation and 1-click Auto-Balance.
+- **Homebrew Forge**: Form validation against compendium schemas guarded by SpiceDB Zanzibar authorization.
+

@@ -1,9 +1,7 @@
 # Changelog
 
 All notable changes to the Runefoble platform will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
@@ -21,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Exposed service microfrontend manifest at `GET /ui/manifest` and `services/character_sheet/ui/manifest.json`.
   - Added App Shell forwarding export in `frontend/src/components/runefoble-character-sheet.ts` and re-exported in `frontend/src/index.ts`.
   - Authored frontdoor blackbox test suite in `tests/test_blackbox_character_sheet_ui.py` and Diataxis how-to guide `docs/how-to/interact-with-character-sheet-and-inventory.md`.
+
+- **Rules Compendium Search & Encounter Builder Microfrontend (`TASK-0108`, `PRD-0008`, `ADR-0001`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
+  - Vendored `<runefoble-rules-compendium>` Lit Web Component in `services/rules_compendium/ui/` with Bauhaus geometric tokens and strict Shadow DOM encapsulation.
+  - Implemented `<runefoble-rules-lookup>` delivering debounced sub-50ms hybrid BM25 and vector search across SRD monsters, spells, and conditions with category filter pills and interactive stat cards.
+  - Implemented `<runefoble-encounter-builder>` computing dynamic party XP thresholds (Easy, Medium, Hard, Deadly), real-time lethality brackets, monster drafting, and 1-click automated encounter balancing.
+  - Provided Homebrew Forge form modal for registering custom campaign creatures and spells guarded by SpiceDB Zanzibar authorization.
+  - Authored interactive Storybook stories for search results, monster stat cards, CR encounter balance calculator, and homebrew creation.
+  - Exported service discovery manifest at `GET /ui/manifest` and in `services/rules_compendium/ui/manifest.json`.
+  - Added frontdoor blackbox test suite in `tests/test_blackbox_rules_compendium_ui.py` and updated Diataxis guide `docs/how-to/balance-combat-encounters-and-query-compendium.md`.
 
 - **WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition (`TASK-0068`, `ADR-0002`, `ADR-0004`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed `frontend/src/services/webrtc-voice.ts` (formerly 348 lines) into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and task limits (< 200 lines each):
