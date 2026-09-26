@@ -49,7 +49,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 42. **TASK-0046 (Complete)**: [`0046-backlog-engine-test-suite-decomposition.md`](complete/0046-backlog-engine-test-suite-decomposition.md) — Backlog Engine Test Suite Modular Decomposition
 43. **TASK-0040 (Complete)**: [`0040-service-modular-router-decomposition.md`](complete/0040-service-modular-router-decomposition.md) — Modular APIRouter Decomposition for The Watcher & Game Session Microservices
 
-44. **TASK-0073 (Refined)**: [`0073-frontend-settings-modal-and-theme-mode-orchestration.md`](refined/0073-frontend-settings-modal-and-theme-mode-orchestration.md) — Frontend Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher
+44. **TASK-0073 (Complete)**: [`0073-frontend-settings-modal-and-theme-mode-orchestration.md`](complete/0073-frontend-settings-modal-and-theme-mode-orchestration.md) — Frontend Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher
 45. **TASK-0074 (Refined)**: [`0074-dark-light-mode-color-tokens-and-component-contrast.md`](refined/0074-dark-light-mode-color-tokens-and-component-contrast.md) — Design System Dark and Light Mode Color Tokens & Cross-Component Contrast Invariants
 46. **TASK-0084 (Refined)**: [`0084-tactile-board-kinematics-and-spoken-ghost-previews.md`](refined/0084-tactile-board-kinematics-and-spoken-ghost-previews.md) — Tactile Board Kinematics and Spoken Ghost Previews
 

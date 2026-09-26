@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .agent_worker import run_agent_in_worktree
 from .ci_watcher import (
+    CIPipelineError,
     close_pull_request,
     commit_and_push,
     create_pull_request,
@@ -176,12 +177,11 @@ def execute_task_pipeline(
                         print(
                             f"⚠️ Push rejected, fetching and rebasing origin/main: {push_res.stderr.strip()}"
                         )
-                        run_git(["fetch", "origin", "main"], cwd=repo_root)
-                        run_git(["rebase", "origin/main"], cwd=repo_root)
+                        run_git(["pull", "--rebase", "origin", "main"], cwd=repo_root)
                         push_retry = run_git(["push", "origin", "main"], cwd=repo_root)
                         if push_retry.returncode != 0:
-                            print(
-                                f"❌ Failed to push backlog completion on retry: {push_retry.stderr.strip()}"
+                            raise CIPipelineError(
+                                f"Failed to push backlog completion on retry: {push_retry.stderr.strip()}"
                             )
 
                 completed = True
