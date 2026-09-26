@@ -82,3 +82,44 @@ This catalog inventories all speculative and visionary capabilities for Runefobl
 | `FEAT-UI-05` | **Spoken Command Ghost Previews** | Real-time semi-transparent token trajectory and targeting ghost preview before voice mutations commit to the board. | **P1 (Beta)** | `frontend`, `the_watcher` |
 | `FEAT-UI-06` | **Radial Token Action Menu & AoE Templates** | Contextual circular dial for one-tap token actions and rotatable geometric AoE spell templates with live target intersection highlighting. | **P1 (Beta)** | `frontend`, `board_state` |
 
+---
+
+## 7. Worldbuilding, In-World Artifacts & Living Codex Domain
+
+| Feature ID | Feature Name | Description | Release Tier | Governing Systems |
+|---|---|---|---|---|
+| `FEAT-LRE-02` | **Generative In-World Handouts & Forged Letters** | AI synthesis of diegetic in-world artifacts: aged parchment, calligraphy, wax seals with stamp physics, and hidden runes. | **P1 (Beta)** | `campaign_lore`, `frontend` |
+| `FEAT-LRE-03` | **3D Relic & Artifact Inspector** | Interactive WebGL canvas inspector allowing 3D rotation, inspection of engravings, attunement glow, and hidden compartment mechanics. | **P1 (Beta)** | `frontend`, `campaign_lore` |
+| `FEAT-LRE-04` | **Living Campaign Atlas & Multi-Layered Codex** | Interactive world map with chronological timeline breadcrumbs, player secret notes, and collaborative party journal codex. | **P1 (Beta)** | `campaign_lore`, `frontend` |
+
+---
+
+## 8. Downtime Activities, Social Minigames & Base Building Domain
+
+| Feature ID | Feature Name | Description | Release Tier | Governing Systems |
+|---|---|---|---|---|
+| `FEAT-DWN-01` | **Interactive Campfire & Long Rest Downtime Engine** | Campfire rest rituals, companion bonding, campfire storytelling prompts, and collaborative party banter generators. | **P1 (Beta)** | `game_session`, `the_watcher` |
+| `FEAT-DWN-02` | **Alchemical Brewing, Enchanting & Recipe Synthesis** | Drag-and-drop reagent laboratory, volatile concoction risk tables, and custom homebrew crafting progression. | **P1 (Beta)** | `character_sheet`, `rules_compendium` |
+| `FEAT-DWN-03` | **Interactive Tavern Minigames & Merchant Haggling** | Playable Liar's Dice, card tournaments, drinking challenges with DSP speech slurring, and personality-driven bartering. | **P1 (Beta)** | `game_session`, `voice_agent` |
+| `FEAT-DWN-04` | **Party Stronghold, Camp & Base Customization** | Upgradable campsite and guildhall stronghold customization granting persistent party rest boons and defensive buffers. | **P1 (Beta)** | `game_session`, `board_state` |
+
+---
+
+## 9. Expressive Performance, Audio Leitmotifs & Particle VFX Domain
+
+| Feature ID | Feature Name | Description | Release Tier | Governing Systems |
+|---|---|---|---|---|
+| `FEAT-EXP-01` | **Personal Character Leitmotifs & Theme Scoring** | Dynamic musical signatures woven into the adaptive audio soundtrack during heroic criticals, dramatic speeches, and death saves. | **P1 (Beta)** | `voice_agent`, `frontend` |
+| `FEAT-EXP-02` | **Multi-Modal Kinetic Spell VFX & Particle Magic** | Spoken incantations trigger real-time WebGL particle bursts, chromatic fire, spell rings, and elemental trails on the board canvas. | **P1 (Beta)** | `frontend`, `board_state` |
+| `FEAT-EXP-03` | **Generative Wardrobe, Emotion & State Portrait Gallery** | Dynamic character portrait variants adapting to current HP, conditions, disguised personas, and narrative milestones. | **P1 (Beta)** | `character_sheet`, `asset_forge` |
+
+---
+
+## 10. Hybrid Tabletop & Tangible Maker Domain
+
+| Feature ID | Feature Name | Description | Release Tier | Governing Systems |
+|---|---|---|---|---|
+| `FEAT-MAK-01` | **Printable Tabletop Handout & Battlemap Forge** | 1-inch grid calibrated multi-page PDF map exports, printable folding papercraft standees, and diegetic letter printouts. | **P1 (Beta)** | `asset_forge`, `frontend` |
+| `FEAT-MAK-02` | **3D Printable Miniature & Token STL Exporter** | Procedural 3D printable token bases, condition ring clips, and miniature STL generation for tabletop 3D printers. | **P2 (Horizon)** | `asset_forge` |
+
+

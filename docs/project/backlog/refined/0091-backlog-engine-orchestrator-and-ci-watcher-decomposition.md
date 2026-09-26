@@ -1,17 +1,20 @@
 ---
 id: '0091'
 title: Backlog Engine Orchestrator and CI Watcher Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
-dependencies: [TASK-0046]
-governing_adrs: [ADR-0007, ADR-0009]
+dependencies:
+- TASK-0046
+governing_adrs:
+- ADR-0007
+- ADR-0009
 target_release: 0.2.0
 ---
 
 # TASK-0091: Backlog Engine Orchestrator and CI Watcher Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Decompose `tools/backlog_engine/orchestrator.py` (447 lines, 89.4% of limit) and `tools/backlog_engine/ci_watcher.py` (432 lines, 86.4% of limit) into specialized, single-responsibility submodules to prevent breaching Hard Invariant 6 (File length limit < 500 lines).
@@ -22,6 +25,10 @@ Decompose `tools/backlog_engine/orchestrator.py` (447 lines, 89.4% of limit) and
 2. `tools/backlog_engine/ci_watcher.py` (432 lines): Conflates GitHub CLI (`gh`) interaction, check run polling, log retrieval, error classification, and agent repair prompting.
 
 Both files are within 50–70 lines of violating Hard Invariant 6.
+
+## Governing Architecture & ADRs
+- **ADR-0003**: UV Monorepo Workspace for Python Bounded Contexts.
+- **ADR-0009**: Continuous Backlog Refinement and Technical Debt Management.
 
 ## Proposed Decomposition
 1. **GitHub API Client Module (`tools/backlog_engine/github_client.py`)**:
@@ -41,8 +48,13 @@ Both files are within 50–70 lines of violating Hard Invariant 6.
 - **Small (S)**: Scope strictly isolated to `tools/backlog_engine/`; all resulting files < 250 lines.
 - **Testable (T)**: Existing test suites (`tests/test_backlog_*.py` and `tests/test_pr_conflict_detection.py`) verify complete automation flow.
 
-## Acceptance Criteria
-1. `tools/backlog_engine/orchestrator.py` and `tools/backlog_engine/ci_watcher.py` decomposed into modular files strictly under 250 lines each.
-2. 100% test pass rate on all backlog engine tests.
-3. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
-4. Code quality verified with `uv run ruff check` and `uv run ruff format --check`.
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Modular Submodule Creation**:
+   - `github_client.py` and `git_ops.py` created with clean separation of GitHub API operations and git worktree tasks.
+   - `orchestrator.py` and `ci_watcher.py` streamlined into high-level coordinators.
+2. **Strict File Length Compliance (Hard Invariant 6)**:
+   - All modified and newly created source files strictly under 250 lines.
+3. **Frontdoor Blackbox Verification**:
+   - 100% test pass rate across `tests/test_backlog_orchestrator.py`, `tests/test_backlog_ci_watcher.py`, and `tests/test_pr_conflict_detection.py`.
+4. **Quality Gates**:
+   - Passes `uv run ruff check tools/backlog_engine` and `uv run ruff format --check tools/backlog_engine`.

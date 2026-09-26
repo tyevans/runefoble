@@ -47,5 +47,13 @@ User stories document end-to-end user value from the perspective of players, gam
 | US-0041 | Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher | Devon (Streamer) | Accepted | [`us-0041-settings-modal-and-appearance-mode-switching.md`](accepted/us-0041-settings-modal-and-appearance-mode-switching.md) |
 | US-0042 | Accessible Dark and Light Mode Theming Invariants Across Components | Marcus (Adventurer) | Accepted | [`us-0042-accessible-dark-and-light-mode-theming.md`](accepted/us-0042-accessible-dark-and-light-mode-theming.md) |
 | US-0043 | Tactile Kinetic Board Interaction and Spoken Ghost Previews | Evelyn (DM) | Accepted | [`us-0043-tactile-kinetic-board-and-spoken-ghost-previews.md`](accepted/us-0043-tactile-kinetic-board-and-spoken-ghost-previews.md) |
+| US-0044 | Interactive Campfire Downtime and Alchemical Crafting | Bram (Tinkerer) | Accepted | [`us-0044-interactive-campfire-downtime-and-crafting.md`](accepted/us-0044-interactive-campfire-downtime-and-crafting.md) |
+| US-0045 | Generative In-World Handouts, Wax Seals and 3D Relic Inspector | Rowan (Artisan) | Accepted | [`us-0045-generative-in-world-handouts-and-relic-inspector.md`](accepted/us-0045-generative-in-world-handouts-and-relic-inspector.md) |
+| US-0046 | Character Musical Leitmotifs and Dynamic Theme Scoring | Nadia (Performer) | Accepted | [`us-0046-character-musical-leitmotifs-and-dynamic-themes.md`](accepted/us-0046-character-musical-leitmotifs-and-dynamic-themes.md) |
+| US-0047 | Interactive Tavern Minigames, Gambling and Personality-Driven Merchant Haggling | Bram (Tinkerer) | Accepted | [`us-0047-tavern-minigames-and-merchant-haggling.md`](accepted/us-0047-tavern-minigames-and-merchant-haggling.md) |
+| US-0048 | Multi-Modal Kinetic Spell VFX and WebGL Particle Canvas | Nadia (Performer) | Accepted | [`us-0048-kinetic-spell-vfx-and-particle-canvas.md`](accepted/us-0048-kinetic-spell-vfx-and-particle-canvas.md) |
+| US-0049 | Printable Tabletop Forge: Grid-Calibrated PDFs, Standees and 3D STL Tokens | Rowan (Artisan) | Accepted | [`us-0049-printable-tabletop-forge-and-stl-tokens.md`](accepted/us-0049-printable-tabletop-forge-and-stl-tokens.md) |
+| US-0050 | Collaborative Campaign Atlas and Multi-Layered Living Codex | Rowan (Artisan) | Accepted | [`us-0050-collaborative-campaign-atlas-and-living-codex.md`](accepted/us-0050-collaborative-campaign-atlas-and-living-codex.md) |
+
 
 

@@ -10,6 +10,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Roadmap & Creative Feature Pipeline Expansion (`Milestone 5`, `Milestone 6`)**:
+  - Expanded `ROADMAP.md` to introduce Milestone 5 (*Collaborative Creation, Downtime & Tactile Immersion*) and Milestone 6 (*Intelligent Living Worlds & Spatial Multi-Party Universes*).
+  - Expanded User Personas (`docs/project/user_stories/PERSONAS.md`) with three new creative archetypes:
+    - **Rowan — The Chronicler & Worldbuilding Artisan**: Lorecrafter, diegetic artifact collector, and cartographer.
+    - **Bram — The Tinkerer & Downtime Crafter**: Tactician, alchemical brewer, base builder, and tavern game gambler.
+    - **Nadia — The Expressive Thespian & Performer**: Dramatic character roleplayer, musical leitmotif performer, and spell VFX caster.
+  - Expanded Speculative Feature Inventory (`docs/project/product/FEATURE_INVENTORY.md`) across Domains 7-10:
+    - Domain 7: Worldbuilding, In-World Artifacts & Living Codex (`FEAT-LRE-02`, `FEAT-LRE-03`, `FEAT-LRE-04`).
+    - Domain 8: Downtime Activities, Social Minigames & Base Building (`FEAT-DWN-01`, `FEAT-DWN-02`, `FEAT-DWN-03`, `FEAT-DWN-04`).
+    - Domain 9: Expressive Performance, Audio Leitmotifs & Particle VFX (`FEAT-EXP-01`, `FEAT-EXP-02`, `FEAT-EXP-03`).
+    - Domain 10: Hybrid Tabletop & Tangible Maker (`FEAT-MAK-01`, `FEAT-MAK-02`).
+  - Authored and accepted 7 new User Stories (`US-0044` through `US-0050`):
+    - `US-0044`: Interactive Campfire Downtime and Alchemical Crafting.
+    - `US-0045`: Generative In-World Handouts, Wax Seals and 3D Relic Inspector.
+    - `US-0046`: Character Musical Leitmotifs and Dynamic Theme Scoring.
+    - `US-0047`: Interactive Tavern Minigames, Gambling and Personality-Driven Merchant Haggling.
+    - `US-0048`: Multi-Modal Kinetic Spell VFX and WebGL Particle Canvas.
+    - `US-0049`: Printable Tabletop Forge: Grid-Calibrated PDFs, Standees and 3D STL Tokens.
+    - `US-0050`: Collaborative Campaign Atlas and Multi-Layered Living Codex.
+  - Authored and accepted 3 Product Requirement Records (`PRD-0014`, `PRD-0015`, `PRD-0016`):
+    - `PRD-0014`: Downtime Activities, Alchemical Crafting & Party Stronghold Engine.
+    - `PRD-0015`: Generative Diegetic Handouts, 3D Relic Inspector & Printable Tabletop Forge.
+    - `PRD-0016`: Personal Character Leitmotifs, Wardrobe Gallery & Kinetic WebGL Spell VFX.
+  - Integrated full feature pipeline into `docs/project/backlog/` (`TASK-0100` through `TASK-0106` in `proposed/`) and synchronized `PRIORITY.md` with optimal 10-item JIT refinement buffer.
+
 - **Procedural Battlemap & Token Asset Forge Microservice (`TASK-0049`, `PRD-0009`, `US-0038`)**:
   - Scaffolded new bounded context microservice `services/asset_forge` with internal port `8008`.
   - Implemented procedural battlemap grid generator extracting line-of-sight wall segments, doors, and themed hazard pools (lava, acid, necrotic spikes).
