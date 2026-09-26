@@ -1,17 +1,21 @@
 ---
 id: '0062'
 title: Autonomous DM Presets, Monster Templates, and Combat Tactics Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
-dependencies: [TASK-0013]
-governing_adrs: [ADR-0003]
+dependencies:
+- TASK-0013
+governing_adrs:
+- ADR-0003
+- ADR-0006
+- ADR-0011
 target_release: 0.2.0
 ---
 
 # TASK-0062: Autonomous DM Presets, Monster Templates, and Combat Tactics Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Decompose `services/the_watcher/src/the_watcher/autonomous_dm.py` (387 lines, 77.4% of limit) into modular, single-responsibility domain submodules (`presets.py`, `encounters.py`, `tactics.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as narrative scene presets, monster archetypes, and combat heuristics expand.
@@ -23,6 +27,11 @@ Decompose `services/the_watcher/src/the_watcher/autonomous_dm.py` (387 lines, 77
 3. NPC and monster tactical decision trees, spellcaster prioritization, wounded target finishing heuristics, and combat action resolution (`resolve_npc_turn`).
 
 As upcoming Milestone 3 features introduce procedural encounter generation, lore-informed monster rosters, and dynamic tactics, this file will quickly breach the 500-line invariant.
+
+## Governing Architecture & ADRs
+- **ADR-0003**: UV Monorepo Workspace for Python Bounded Contexts.
+- **ADR-0006**: Redis Streams Event Bus Transport (CloudEvents domain event emission).
+- **ADR-0011**: eventsource-py Core Event Sourcing.
 
 ## Proposed Decomposition
 1. **Scene Presets (`services/the_watcher/src/the_watcher/presets.py`)**:
@@ -42,8 +51,15 @@ As upcoming Milestone 3 features introduce procedural encounter generation, lore
 - **Small (S)**: Scope strictly isolated to `services/the_watcher/src/the_watcher/`; all resulting files < 150 lines.
 - **Testable (T)**: Existing test suites (`tests/test_autonomous_dm.py`) verify 100% identical outputs and event structures.
 
-## Acceptance Criteria
-1. Re-exports and facade in `autonomous_dm.py` ensure zero breaking changes to `AutonomousDMEngine` public methods.
-2. All modified and new files strictly under 180 lines.
-3. 100% test pass rate on `uv run pytest tests/test_autonomous_dm.py`.
-4. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Submodule Creation**:
+   - `presets.py`, `encounters.py`, and `tactics.py` created under `services/the_watcher/src/the_watcher/`.
+   - `autonomous_dm.py` refactored as a lightweight facade orchestrating the submodules.
+2. **Re-Export Compatibility**:
+   - Re-exports and facade in `autonomous_dm.py` ensure zero breaking changes to `AutonomousDMEngine` public methods.
+3. **File Length Compliance (Hard Invariant 6)**:
+   - All modified and new files strictly under 180 lines.
+4. **Frontdoor Blackbox Verification**:
+   - 100% test pass rate on `uv run pytest tests/test_autonomous_dm.py`.
+5. **Quality Gates**:
+   - Passes `uv run ruff check services/the_watcher` and `uv run ruff format --check services/the_watcher`.

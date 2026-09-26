@@ -1,20 +1,24 @@
 ---
 id: '0063'
 title: Zanzibar Auth Relationship Sync Service and Event Handlers Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
-dependencies: [TASK-0008, TASK-0032]
-governing_adrs: [ADR-0001, ADR-0003]
+dependencies:
+- TASK-0008
+- TASK-0032
+governing_adrs:
+- ADR-0001
+- ADR-0003
 target_release: 0.2.0
 ---
 
 # TASK-0063: Zanzibar Auth Relationship Sync Service and Event Handlers Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
-Decompose `libs/runefoble_auth/src/runefoble_auth/sync.py` (392 lines, 78.4% of limit) into modular submodules (`sync_tuples.py`, `sync_events.py`, `sync.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new Zanzibar schema relations and domain event integrations are added.
+Decompose `libs/runefoble_auth/src/runefoble_auth/sync.py` (392 lines, 78.4% of limit) into modular submodules (`sync_tuples.py`, `sync_events.py`, and `sync.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new Zanzibar schema relations and domain event integrations are added.
 
 ## Problem Statement
 `libs/runefoble_auth/src/runefoble_auth/sync.py` currently spans 392 lines and combines three distinct layers of responsibility:
@@ -23,6 +27,11 @@ Decompose `libs/runefoble_auth/src/runefoble_auth/sync.py` (392 lines, 78.4% of 
 3. Asynchronous domain event ingestion and event-to-tuple dispatching (`handle_domain_event` routing CloudEvents such as `SessionCreated`, `CharacterCreated`, `TokenPlacedOnBoard`).
 
 As Milestone 2 connects production SpiceDB gRPC clients and schema migrations (TASK-0035), and subsequent milestones introduce encounter, lore, and spectator relationships, this file will rapidly exceed 500 lines unless modularized.
+
+## Governing Architecture & ADRs
+- **ADR-0001**: SpiceDB Zanzibar Object Authorization (`runefoble.zed` schema enforcement).
+- **ADR-0003**: UV Monorepo Workspace for Python Bounded Contexts.
+- **ADR-0006**: Redis Streams Event Bus Transport (CloudEvents domain event consumption).
 
 ## Proposed Decomposition
 1. **Tuple Formatting & Result Models (`libs/runefoble_auth/src/runefoble_auth/sync_tuples.py`)**:
@@ -40,8 +49,15 @@ As Milestone 2 connects production SpiceDB gRPC clients and schema migrations (T
 - **Small (S)**: Scope strictly isolated to `libs/runefoble_auth/src/runefoble_auth/`; all resulting files < 180 lines.
 - **Testable (T)**: Existing blackbox and unit auth tests (`tests/test_blackbox_spicedb_zitadel_sync.py`, `tests/test_spicedb_client.py`) verify 100% identical relationship synchronization.
 
-## Acceptance Criteria
-1. Re-exports in `sync.py` and `__init__.py` ensure zero breaking changes to `ZitadelSpiceDBSyncService` public APIs.
-2. All modified and new files strictly under 200 lines.
-3. 100% test pass rate on `uv run pytest tests/test_blackbox_spicedb*.py`.
-4. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Modular Submodule Creation**:
+   - `sync_tuples.py` and `sync_events.py` created with clean separation of tuple operations and CloudEvent routing.
+   - `sync.py` streamlined into a high-level service coordinator.
+2. **Re-Export Compatibility**:
+   - Re-exports in `sync.py` and `__init__.py` ensure zero breaking changes to `ZitadelSpiceDBSyncService` and public APIs.
+3. **File Length Compliance (Hard Invariant 6)**:
+   - All modified and new files strictly under 200 lines.
+4. **Frontdoor Blackbox Verification**:
+   - 100% pass rate on `uv run pytest tests/test_blackbox_spicedb_zitadel_sync.py tests/test_spicedb_client.py`.
+5. **Quality Gates**:
+   - Passes `uv run ruff check libs/runefoble_auth` and `uv run ruff format --check libs/runefoble_auth`.
