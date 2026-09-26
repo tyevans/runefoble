@@ -99,12 +99,14 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`project-campaign-analytics-and-chronicle-timeline.md`](docs/how-to/project-campaign-analytics-and-chronicle-timeline.md): How to project combat telemetry, query spatial damage heatmaps, calculate encounter MVP awards, and view chronicle timelines.
 - [`interact-with-character-sheet-and-inventory.md`](docs/how-to/interact-with-character-sheet-and-inventory.md): How to interact with character sheet equipment slots, inventory encumbrance, condition tooltips, and spell slot tracking.
 - [`run-campfire-rests-and-alchemical-crafting.md`](docs/how-to/run-campfire-rests-and-alchemical-crafting.md): How to combine reagents with volatile mishap tables, resolve campfire resting boons, and manage party stronghold upgrades.
+- [`inspect-diegetic-handouts-and-3d-relics.md`](docs/how-to/inspect-diegetic-handouts-and-3d-relics.md): How to generate diegetic parchment handouts, break wax seals with acoustic feedback, reveal UV invisible ink runes, and inspect 3D WebGL relics.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
 - [`platform-services.md`](docs/reference/platform-services.md): Directory of external platform services, container images, ports, environment variables, and test fallbacks.
 - [`ports-and-endpoints.md`](docs/reference/ports-and-endpoints.md): Ingress routing table, microservice ports, core HTTP routes, and infrastructure ports.
 - [`events-schema.md`](docs/reference/events-schema.md): CloudEvents domain events catalogue, payload schemas, and Redis Stream topics.
+- [`diegetic-handouts-and-relics-events.md`](docs/reference/diegetic-handouts-and-relics-events.md): CloudEvents schemas and payloads for diegetic handouts, breakable wax seals, and 3D relics.
 - [`downtime-and-crafting-events.md`](docs/reference/downtime-and-crafting-events.md): CloudEvents schemas and event flows for downtime crafting, rests, and stronghold facilities.
 - [`redis-streams-event-bus.md`](docs/reference/redis-streams-event-bus.md): Redis Streams transport architecture, channel conventions, and consumer groups.
 - [`design-tokens-and-themes.md`](docs/reference/design-tokens-and-themes.md): Bauhaus geometric tokens, typography, CSS custom properties, and UI themes.

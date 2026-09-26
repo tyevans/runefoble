@@ -14,6 +14,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Synchronized `PRIORITY.md`, `ROADMAP.md` Milestone 5 completion checkboxes, and PRD acceptance links with zero status drift.
 
 ### Added
+- **Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector (`TASK-0101`, `ADR-0003`, `ADR-0006`, `ADR-0010`, `ADR-0013`)**:
+  - Implemented generative diegetic handout engine (`services/campaign_lore/src/campaign_lore/handouts.py`) synthesizing weathered parchment textures, stylized calligraphy, and breakable wax seals with realistic stamp physics and acoustic audio cues.
+  - Implemented secret UV-reactive invisible ink layer revealed under simulated UV torchlight cursor.
+  - Implemented interactive 3D WebGL relic inspector (`RelicSynthesizer`) with orbit rotation, PBR metallic shaders, and clickable engraved rune hitboxes.
+  - Built event-sourced aggregates `DiegeticHandoutAggregate` and `RelicAggregate` with domain events `HandoutGenerated`, `WaxSealBroken`, `InvisibleInkRevealed`, `RelicForged`, `RelicInspected`, and `RelicRuneTranslated`.
+  - Added public frontdoor HTTP routes `/api/v1/lore/handouts` and `/api/v1/lore/relics` protected by SpiceDB Zanzibar authorization.
+  - Created and vendored Lit Web Components `<runefoble-handout-viewer>` and `<runefoble-relic-inspector>` with Storybook stories in `@runefoble/campaign-lore-ui` and registered in `/ui/manifest`.
+  - Authored Diataxis how-to guide `docs/how-to/inspect-diegetic-handouts-and-3d-relics.md` and reference `docs/reference/diegetic-handouts-and-relics-events.md`.
+
 - **Settings Modal Styles and Sub-Component CSS Modular Decomposition (`TASK-0111`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed monolithic `frontend/src/components/runefoble-settings-modal.styles.ts` into single-responsibility Lit CSS sub-modules in `frontend/src/components/styles/`: `settings-modal-layout.styles.ts` (129 lines), `settings-modal-tabs.styles.ts` (128 lines), and `settings-modal-controls.styles.ts` (74 lines).
   - Maintained 100% backward compatibility via composite export in `runefoble-settings-modal.styles.ts` (28 lines) combining `[layoutStyles, tabsStyles, controlsStyles]`.
@@ -483,12 +492,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Milestone 1: Platform Foundation & Core Loop
 #### Added
-- **Monorepo Workspace Foundation (`TASK-0000`, `ADR-0003`)**:
-  - UV workspace monorepo managing shared libraries (`runefoble_platform`, `runefoble_auth`, `runefoble_events`) and microservices.
-- **Core Microservices & Tabletop Engine**:
-  - `the_watcher` (autonomous DM & intent engine), `game_session` (lifecycle, initiative & dice), `board_state` (grid & tokens), `character_sheet` (stats & inventory), `voice_agent` (WebRTC audio DSP).
-- **Unified API Gateway & FastMCP**:
-  - Gateway aggregating HTTP, WebSockets, and Swagger UI; FastMCP gateway exposing tabletop tools and resources to LLMs.
-- **Infrastructure, Frontend & Diataxis Documentation**:
-  - Kind Kubernetes cluster with Traefik ingress, Helm chart, Lit + Vite frontend with Storybook Bauhaus design system, and complete Diataxis documentation suite.
+- **Monorepo Workspace Foundation (`TASK-0000`, `ADR-0003`)**: UV monorepo managing shared libraries (`runefoble_platform`, `runefoble_auth`, `runefoble_events`) and microservices.
+- **Core Microservices & Tabletop Engine**: `the_watcher` (autonomous DM), `game_session` (lifecycle & dice), `board_state` (grid & tokens), `character_sheet` (stats), `voice_agent` (WebRTC audio DSP).
+- **Unified API Gateway & FastMCP**: Gateway aggregating HTTP, WebSockets, Swagger UI, and FastMCP tabletop tools.
+- **Infrastructure, Frontend & Diataxis Docs**: Kind Kubernetes cluster, Helm chart, Lit + Vite frontend with Storybook Bauhaus design system, and Diataxis documentation suite.
 
