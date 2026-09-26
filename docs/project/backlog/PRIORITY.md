@@ -103,7 +103,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 93. **TASK-0068 (Refined)**: [`0068-webrtc-client-service-and-peer-mesh-decomposition.md`](refined/0068-webrtc-client-service-and-peer-mesh-decomposition.md) — WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition
 94. **TASK-0070 (Refined)**: [`0070-stand-in-engine-and-absentee-recap-test-suite-decomposition.md`](refined/0070-stand-in-engine-and-absentee-recap-test-suite-decomposition.md) — Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition
 
-95. **TASK-0071 (Proposed)**: [`0071-websocket-zanzibar-auth-test-suite-decomposition.md`](proposed/0071-websocket-zanzibar-auth-test-suite-decomposition.md) — WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition
+95. **TASK-0071 (Refined)**: [`0071-websocket-zanzibar-auth-test-suite-decomposition.md`](refined/0071-websocket-zanzibar-auth-test-suite-decomposition.md) — WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition
 96. **TASK-0075 (Proposed)**: [`0075-spectator-view-stream-overlay-test-suite-decomposition.md`](proposed/0075-spectator-view-stream-overlay-test-suite-decomposition.md) — Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition
 97. **TASK-0069 (Proposed)**: [`0069-speech-intent-parser-and-action-grammar-decomposition.md`](proposed/0069-speech-intent-parser-and-action-grammar-decomposition.md) — Speech Intent Parser and Action Grammar Extractors Modular Decomposition
 98. **TASK-0059 (Proposed)**: [`0059-project-visualizer-parser-modular-decomposition.md`](proposed/0059-project-visualizer-parser-modular-decomposition.md) — Project Visualizer Parser Modular Decomposition

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - TASK-0076: Redis Streams Consumer Group Worker and Session Projections Modular Decomposition.
     - TASK-0068: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition.
     - TASK-0070: Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition.
+    - TASK-0071: WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition.
   - Synchronized `ROADMAP.md` Milestone 4 Foundational Platform Enabler (`TASK-0051`).
   - Re-indexed `docs/project/backlog/PRIORITY.md` and repaired traceability cross-links across accepted PRDs.
 - **Character Sheet Modular Router and Schemas Decomposition (`TASK-0077`, `ADR-0003`, `ADR-0009`, `ADR-0011`)**:
