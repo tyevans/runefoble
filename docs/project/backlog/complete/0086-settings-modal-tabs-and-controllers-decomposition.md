@@ -1,7 +1,7 @@
 ---
-id: '0086'
+id: 0086
 title: Settings Modal Tab Panels and Sub-Controllers Modular Decomposition
-status: refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0012
@@ -12,8 +12,8 @@ governing_adrs:
 - ADR-0012
 - ADR-0013
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/50
 ---
-
 # TASK-0086: Settings Modal Tab Panels and Sub-Controllers Modular Decomposition
 
 ## Status

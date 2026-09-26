@@ -7,19 +7,19 @@ icon: lucide/network
 The **Runefoble Project Content Visualizer** provides an interactive web application to explore, query, and trace relationships across all Architectural Decision Records (ADRs), Product Requirements Documents (PRDs), User Stories, and Backlog Tasks in real time.
 
 <div style="margin: 1.5rem 0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-  <a href="../visualizer/" target="_blank" class="md-button md-button--primary">
+  <a href="visualizer/" target="_blank" class="md-button md-button--primary">
     🚀 Launch Fullscreen Visualizer
   </a>
-  <a href="../how-to/visualize-project-content/" class="md-button">
+  <a href="how-to/visualize-project-content/" class="md-button">
     📖 Read Visualizer Guide
   </a>
-  <a href="../project-data.json" target="_blank" class="md-button">
+  <a href="project-data.json" target="_blank" class="md-button">
     📦 Raw JSON Graph Data
   </a>
 </div>
 
 <div style="position: relative; width: 100%; height: 85vh; min-height: 600px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(127, 127, 127, 0.25); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-  <iframe src="../visualizer/" style="width: 100%; height: 100%; border: none;" allowfullscreen title="Runefoble Project Visualizer"></iframe>
+  <iframe src="visualizer/" style="width: 100%; height: 100%; border: none;" allowfullscreen title="Runefoble Project Visualizer"></iframe>
 </div>
 
 ---

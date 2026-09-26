@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from runefoble_events.events import (
     BoardGridInitialized,
     FogOfWarRevealed,
+    FogOfWarShrouded,
     TerrainCellModified,
     TokenHazardTriggered,
     TokenMoved,
@@ -292,6 +293,30 @@ class BoardAggregate(DeclarativeAggregate[BoardState]):
             reason=reason,
         )
 
+    def reveal_cells(self, cells: list[list[int]], revealed_by_token_id: str | None = None) -> None:
+        """Manually reveal specified grid cells."""
+        for c in cells:
+            if len(c) < 2 or not (0 <= c[0] < self.state.cols and 0 <= c[1] < self.state.rows):
+                raise ValueError(f"Reveal coordinates {c} out of grid bounds")
+        self.create_event(
+            FogOfWarRevealed,
+            session_id=self.aggregate_id,
+            revealed_cells=cells,
+            revealed_by_token_id=revealed_by_token_id,
+        )
+
+    def shroud_cells(self, cells: list[list[int]]) -> None:
+        """Manually shroud specified grid cells."""
+        for c in cells:
+            if len(c) < 2 or not (0 <= c[0] < self.state.cols and 0 <= c[1] < self.state.rows):
+                raise ValueError(f"Shroud coordinates {c} out of grid bounds")
+        self.create_event(
+            FogOfWarShrouded,
+            session_id=str(self.state.session_id),
+            aggregate_id=self.aggregate_id,
+            shrouded_cells=cells,
+        )
+
     # -----------------------------------------------------------------------
     # Event Handlers (@handles)
     # -----------------------------------------------------------------------
@@ -386,3 +411,9 @@ class BoardAggregate(DeclarativeAggregate[BoardState]):
             existing.add(tuple(cell))
         ordered = [list(c) for c in sorted(existing)]
         self._state = self.state.model_copy(update={"revealed_cells": ordered})
+
+    @handles(FogOfWarShrouded)
+    def _on_fog_shrouded(self, event: FogOfWarShrouded) -> None:
+        to_remove = {tuple(c) for c in event.shrouded_cells}
+        remaining = [c for c in self.state.revealed_cells if tuple(c) not in to_remove]
+        self._state = self.state.model_copy(update={"revealed_cells": remaining})
