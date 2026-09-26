@@ -100,7 +100,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blackbox Documentation & Pages Test Suite**: Expanded `tests/test_docs_build_and_pages.py` to assert changelog existence, Keep a Changelog structure, Definition of Done enforcement, and marketing page navigation integrity.
 
 ### Changed
-- **Zanzibar Auth Relationship Sync Service and Event Handlers Modular Decomposition (`TASK-0063`)**:
+- **Microfrontends Blackbox Test Suite Modular Decomposition (`TASK-0088`)**:
+  - Decomposed `tests/test_microfrontends.py` (454 lines) into two focused, single-responsibility blackbox test suites:
+    - `tests/test_microfrontend_manifests.py` (191 lines) covering service microfrontend discovery (`GET /ui/manifest`), component tag registries, package integrity, and battlemap uploader frontdoor contracts.
+    - `tests/test_microfrontend_app_shell.py` (212 lines) covering App Shell Lit composition, workspace link declarations, Storybook story indexing, voice controls WebAudio/WebRTC specs, and companion style module decomposition invariants.
+  - Removed original monolith `tests/test_microfrontends.py`.
+  - Strictly enforced Hard Invariant 6 with both test files well under the 250-line ceiling and zero test regression across 450 passing tests.
+
   - Decomposed monolithic `libs/runefoble_auth/src/runefoble_auth/sync.py` into focused submodules:
     - `sync_tuples.py` (179 lines) covering `SyncResult` models, role normalization tables (`CAMPAIGN_ROLE_RELATIONS`, `normalize_campaign_role`), low-level write/delete helpers with retry execution, and batching/reconciliation utilities.
     - `sync_events.py` (127 lines) covering domain event and CloudEvent payload parsing (`extract_event_type`, `get_event_field`), unified dispatching (`handle_domain_event`), and granular entity handlers for `SessionCreated`, `ParticipantJoined`, `CharacterCreated`, and `TokenPlaced`.
