@@ -16,6 +16,12 @@ health-check: ## Inspect codebase file length invariants and backlog ready buffe
 backlog-worker: ## Run autonomous backlog execution engine (ARGS="--drain --concurrency 2")
 	@python3 -m tools.backlog_engine.cli $(ARGS)
 
+visualize-project: ## Launch dynamic docs/project content visualizer web application
+	@python3 -m tools.project_visualizer.cli serve
+
+visualize-project-build: ## Build standalone HTML bundle for docs/project visualizer
+	@python3 -m tools.project_visualizer.cli build --out dist/project-visualizer.html
+
 setup: install-tools ## Install workspace Python dependencies and frontend packages
 	@echo "==> Setting up UV workspace..."
 	uv sync
