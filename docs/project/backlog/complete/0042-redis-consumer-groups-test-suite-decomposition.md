@@ -1,13 +1,18 @@
 ---
 id: '0042'
 title: Redis Consumer Groups & Projections Test Suite Decomposition
-status: Refined
+status: Complete
 created: 2026-09-25
-dependencies: [TASK-0015]
-governing_adrs: [ADR-0006, ADR-0008, ADR-0009, ADR-0011]
+dependencies:
+- TASK-0015
+governing_adrs:
+- ADR-0006
+- ADR-0008
+- ADR-0009
+- ADR-0011
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/31
 ---
-
 # TASK-0042: Redis Consumer Groups & Projections Test Suite Decomposition
 
 ## Status
