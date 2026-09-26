@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import glob
+import hashlib
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
+from tools.project_visualizer.git_metadata import GitMetadataHarvester
+from tools.project_visualizer.markdown_utils import (
+    extract_list_items,
+    extract_section,
+    parse_frontmatter,
+)
 from tools.project_visualizer.models import (
     ADRItem,
     BacklogTaskItem,
@@ -20,63 +26,43 @@ from tools.project_visualizer.models import (
 )
 
 
-def parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:
-    """Extract YAML frontmatter and body from markdown content."""
-    match = re.match(r"^---\s*\n(.*?)\n---\s*\n(.*)$", content, re.DOTALL)
-    if not match:
-        return {}, content
-
-    fm_raw = match.group(1)
-    body = match.group(2)
-    meta: dict[str, Any] = {}
-
-    for line in fm_raw.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" in line:
-            key, val = line.split(":", 1)
-            key = key.strip()
-            val = val.strip().strip("'\"")
-            if val.startswith("[") and val.endswith("]"):
-                items = [
-                    x.strip().strip("'\"") for x in val[1:-1].split(",") if x.strip().strip("'\"")
-                ]
-                meta[key] = items
-            else:
-                meta[key] = val
-    return meta, body
-
-
-def extract_section(markdown: str, header: str) -> str:
-    """Extract markdown content under a specific ## header."""
-    pattern = rf"##\s+{re.escape(header)}.*?\n(.*?)(?=\n##|\Z)"
-    match = re.search(pattern, markdown, re.DOTALL | re.IGNORECASE)
-    return match.group(1).strip() if match else ""
-
-
-def extract_list_items(section_text: str) -> list[str]:
-    """Extract bulleted or numbered items from a markdown snippet."""
-    items: list[str] = []
-    for line in section_text.splitlines():
-        line = line.strip()
-        if re.match(r"^[-*]\s+|\d+\.\s+", line):
-            cleaned = re.sub(r"^[-*]\s+|\d+\.\s+", "", line).strip()
-            if cleaned:
-                items.append(cleaned)
-    return items
-
-
 class ProjectParser:
     """Scans and extracts all project records from docs/project."""
 
     def __init__(self, root_dir: str | Path):
         self.root_dir = Path(root_dir).resolve()
         self.project_dir = self.root_dir / "docs" / "project"
+        self._cached_fingerprint: str | None = None
+        self._cached_data: ProjectData | None = None
 
-    def parse_all(self) -> ProjectData:
+    def compute_fingerprint(self) -> tuple[str, float]:
+        """Compute content hash and max mtime across docs/project."""
+        hasher = hashlib.sha256()
+        max_mtime = 0.0
+        if self.project_dir.exists():
+            for p in sorted(self.project_dir.rglob("*.md")):
+                try:
+                    stat = p.stat()
+                    hasher.update(str(p.relative_to(self.root_dir)).encode("utf-8"))
+                    hasher.update(str(stat.st_mtime_ns).encode("utf-8"))
+                    hasher.update(str(stat.st_size).encode("utf-8"))
+                    if stat.st_mtime > max_mtime:
+                        max_mtime = stat.st_mtime
+                except OSError:
+                    continue
+        return hasher.hexdigest()[:16], max_mtime
+
+    def parse_all(self, force: bool = False) -> ProjectData:
+        fingerprint, max_mtime = self.compute_fingerprint()
+        if not force and self._cached_fingerprint == fingerprint and self._cached_data is not None:
+            return self._cached_data
+
         data = ProjectData()
-        data.last_updated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data.data_hash = fingerprint
+        if max_mtime > 0:
+            data.last_updated = datetime.fromtimestamp(max_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            data.last_updated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         data.personas = self.parse_personas()
         data.adrs = self.parse_adrs()
@@ -86,6 +72,8 @@ class ProjectParser:
         data.milestones = self.parse_milestones()
         data.features = self.parse_features()
 
+        self._cached_fingerprint = fingerprint
+        self._cached_data = data
         return data
 
     def parse_personas(self) -> list[PersonaItem]:
@@ -313,6 +301,7 @@ class ProjectParser:
             ("Proposed", self.project_dir / "backlog" / "proposed"),
         ]
         tasks: list[BacklogTaskItem] = []
+        git_metadata = GitMetadataHarvester(self.root_dir).harvest()
 
         for status_label, b_dir in task_dirs:
             if not b_dir.exists():
@@ -363,6 +352,25 @@ class ProjectParser:
                 # Detect microfrontends
                 mf_elements = re.findall(r"<runefoble-[a-z0-9-]+>", content)
 
+                # Collect Git commits and PRs
+                task_commits, task_prs = git_metadata.get(t_id, ([], []))
+                merged_prs = list(task_prs)
+
+                fm_prs = meta.get("prs", [])
+                if isinstance(fm_prs, str):
+                    fm_prs = [fm_prs]
+                for p in fm_prs:
+                    p_clean = f"#{str(p).lstrip('#')}"
+                    if p_clean not in merged_prs:
+                        merged_prs.append(p_clean)
+
+                pr_section = extract_section(body, "Pull Requests")
+                if pr_section:
+                    for p in re.findall(r"#(\d+)", pr_section):
+                        p_clean = f"#{p}"
+                        if p_clean not in merged_prs:
+                            merged_prs.append(p_clean)
+
                 tasks.append(
                     BacklogTaskItem(
                         id=t_id,
@@ -376,6 +384,8 @@ class ProjectParser:
                         dependencies=list(set(deps)),
                         governing_adrs=list(set(adrs)),
                         microfrontends=list(set(mf_elements)),
+                        commits=task_commits,
+                        prs=merged_prs,
                         summary=summary,
                         raw_markdown=content,
                     )

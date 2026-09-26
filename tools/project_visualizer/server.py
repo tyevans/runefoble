@@ -27,12 +27,30 @@ class ProjectVisualizerHandler(BaseHTTPRequestHandler):
             return
 
         elif path == "/api/data":
+            data = self.generator.get_data()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            if data.data_hash:
+                self.send_header("ETag", f'"{data.data_hash}"')
+            self.end_headers()
+            self.wfile.write(json.dumps(data.to_dict(), default=str).encode("utf-8"))
+            return
+
+        elif path == "/api/version":
+            data = self.generator.get_data()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
-            data = self.generator.get_data()
-            self.wfile.write(json.dumps(data.to_dict(), default=str).encode("utf-8"))
+            self.wfile.write(
+                json.dumps(
+                    {
+                        "data_hash": data.data_hash,
+                        "last_updated": data.last_updated,
+                    }
+                ).encode("utf-8")
+            )
             return
 
         elif path == "/api/health":
