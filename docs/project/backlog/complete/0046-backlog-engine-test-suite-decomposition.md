@@ -1,13 +1,17 @@
 ---
 id: '0046'
 title: Backlog Engine Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
-dependencies: [TASK-0000]
-governing_adrs: [ADR-0007, ADR-0008, ADR-0009]
+dependencies:
+- TASK-0000
+governing_adrs:
+- ADR-0007
+- ADR-0008
+- ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/26
 ---
-
 # TASK-0046: Backlog Engine Test Suite Modular Decomposition
 
 ## Status
