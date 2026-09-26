@@ -1,0 +1,65 @@
+{{- if .Values.services.campaignAnalytics }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: campaign-analytics-config
+  labels:
+    app: campaign-analytics
+data:
+  CAMPAIGN_ANALYTICS_HEATMAP_CELL_SIZE: "5"
+  CAMPAIGN_ANALYTICS_DEFAULT_LIMIT: "50"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: campaign-analytics
+  labels:
+    app: campaign-analytics
+spec:
+  replicas: {{ .Values.services.campaignAnalytics.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: campaign-analytics
+  template:
+    metadata:
+      labels:
+        app: campaign-analytics
+    spec:
+      containers:
+        - name: campaign-analytics
+          image: {{ .Values.services.campaignAnalytics.image }}
+          ports:
+            - containerPort: {{ .Values.services.campaignAnalytics.port }}
+          envFrom:
+            - configMapRef:
+                name: campaign-analytics-config
+          env:
+            - name: RUNEFOBLE_DATABASE_URL
+              value: "postgresql+asyncpg://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}"
+            - name: RUNEFOBLE_ZITADEL_ISSUER
+              value: "http://zitadel:{{ .Values.zitadel.port }}"
+            - name: RUNEFOBLE_SPICEDB_ENDPOINT
+              value: "spicedb:{{ .Values.spicedb.grpcPort }}"
+            - name: REDIS_URL
+              value: "redis://runefoble-redis:{{ .Values.redis.port }}/0"
+            - name: RUNEFOBLE_REDIS_URL
+              value: "redis://runefoble-redis:{{ .Values.redis.port }}/0"
+            - name: RUNEFOBLE_OTEL_ENABLED
+              value: "{{ .Values.observability.enabled }}"
+            - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:{{ .Values.observability.otelCollector.grpcPort }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: campaign-analytics
+  labels:
+    app: campaign-analytics
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.services.campaignAnalytics.port }}
+      targetPort: {{ .Values.services.campaignAnalytics.port }}
+  selector:
+    app: campaign-analytics
+{{- end }}

@@ -96,6 +96,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`orchestrate-audience-chaos-polls.md`](how-to/orchestrate-audience-chaos-polls.md): How to configure and orchestrate live audience chaos polls, ingest spectator votes across streaming channels, and manage DM approval queues.
 - [`import-universal-vtt-maps-and-register-dynamic-tools.md`](how-to/import-universal-vtt-maps-and-register-dynamic-tools.md): How to import community Universal VTT maps (.dd2vtt), extract line-of-sight walls, store battlemap textures in Silo S3, and register dynamic runtime FastMCP tools.
 - [`broadcast-obs-stream-overlay-and-cinematic-camera.md`](how-to/broadcast-obs-stream-overlay-and-cinematic-camera.md): How to embed the alpha-transparent OBS party vitals HUD overlay, configure cubic-bezier cinematic director tracking, and sanitize DM secrets.
+- [`project-campaign-analytics-and-chronicle-timeline.md`](how-to/project-campaign-analytics-and-chronicle-timeline.md): How to project combat telemetry, query spatial damage heatmaps, calculate encounter MVP awards, and view chronicle timelines.
 
 
 
@@ -131,6 +132,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `services/asset_forge/` | Procedural battlemap diffusion synthesis, wall/hazard geometry extraction & token portrait generator |
 | `services/soundscape/` | Dynamic audio stem mixing, tactical foley cues, tension scoring & audio controls microfrontend |
 | `services/audience_studio/` | TypeScript audience interactivity engine, live chaos polls, DM approval queue & microfrontend |
+| `services/campaign_analytics/` | Combat telemetry, tactical heatmaps, MVP turn statistics & chronicle timeline archive |
 | `gateway/api/` | Unified API Gateway, WebSockets, OpenAPI aggregator |
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
 | `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |

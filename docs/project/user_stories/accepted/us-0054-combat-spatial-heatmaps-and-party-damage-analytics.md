@@ -2,7 +2,7 @@
 id: 0054
 title: Post-Session Combat Spatial Heatmaps and Party Damage Analytics
 persona: Devon (Streamer)
-status: Accepted
+status: Shipped
 created: 2026-09-26
 governing_prd: PRD-0012
 ---

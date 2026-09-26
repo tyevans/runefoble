@@ -23,6 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added Makefile targets: `make prd-audit`, `make prd-decompose`, `make prd-create`, `make prd-sync`.
   - Authored comprehensive blackbox test suite in `tests/test_prd_pipeline.py` and Diataxis how-to guide `docs/how-to/decompose-prds-into-vertical-slices.md`.
 
+- **Redis Streams Consumer Group Worker and Session Projections Modular Decomposition (`TASK-0076`, `ADR-0003`, `ADR-0006`, `ADR-0009`, `ADR-0011`)**:
+  - Decomposed `libs/runefoble_platform/src/runefoble_platform/consumer_group.py` into dedicated event deserialization module `event_deserializer.py` (74 lines), in-memory mock client `mock_redis.py` (110 lines), and core consumer group worker `consumer_group.py` (169 lines).
+  - Preserved W3C trace context (`traceparent`, `tracestate`) across payload deserialization and domain event instantiation.
+  - Decomposed `services/game_session/src/game_session/projections.py` into modular sub-package `services/game_session/src/game_session/projections/`:
+    - `models.py` (109 lines): Denormalized read models (`SessionReadModel`, `TokenReadModel`, `AtmosphereReadModel`, `EncounterReadModel`, `InitiativeReadModel`, `PresenceReadModel`).
+    - `initiative.py` (114 lines): `InitiativeProjection` tracking turn order, round cycling, and initiative snapshots with tie-breaking rules.
+    - `presence.py` (111 lines): `PresenceProjection` tracking participant connection status, stand-in flags, and hot-swap handoffs.
+    - `appliers.py` (142 lines): Event appliers for session, token, atmosphere, encounter, and turn state transitions.
+    - `session.py` (157 lines): `SessionReadProjection` integrating sub-projections, background worker loops, and DLQ routing.
+    - `__init__.py` (33 lines): Backward-compatible re-exports maintaining import signatures.
+  - Added unit and blackbox test coverage in `tests/test_game_session_projections.py` and updated technical reference `docs/reference/redis-streams-event-bus.md`.
 - **Universal VTT Importer and Dynamic MCP Tool Registry (`TASK-0057`, `ADR-0007`, `ADR-0008`, `ADR-0010`, `ADR-0013`)**:
   - Implemented Universal VTT (`.dd2vtt`) parser in `services/board_state/src/board_state/parsers/uvtt.py` extracting grid resolution, line-of-sight wall vectors, door portals, ambient lights, and embedded base64 map imagery.
   - Built ingestion endpoint `POST /api/v1/board/{id}/import/uvtt` (alias: `/api/v1/boards/{id}/import/uvtt`) supporting both multipart file uploads and raw JSON payloads.
@@ -35,6 +46,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added comprehensive blackbox TDD test suite in `tests/test_blackbox_uvtt_import.py` asserting multipart file ingestion, wall projection, Silo S3 persistence, and dynamic FastMCP execution.
   - Published Diataxis how-to guide `docs/how-to/import-universal-vtt-maps-and-register-dynamic-tools.md` and updated technical references.
 
+<<<<<<< HEAD
+=======
+- **Campaign Analytics & Chronicle Archive Microservice (`TASK-0052`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
+  - Implemented `services/campaign_analytics` bounded context microservice to project combat telemetry, tactical damage heatmaps, party MVP turn statistics, and interactive campaign milestone timelines from Redis Streams domain events into PostgreSQL.
+  - Built `CampaignAnalyticsWorker` consuming Redis Streams consumer group `campaign_analytics_worker` across `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, and `runefoble.events.watcher`.
+  - Implemented event-sourced `CampaignChronicleAggregate` (`eventsource-py`) handling `ChronicleMilestoneRecorded`, `CombatTelemetrySnapshotCreated`, and `EncounterMvpAwarded`.
+  - Added REST APIRouters guarded by SpiceDB Zanzibar object authorization (`permission="view"` on campaign):
+    - `GET /api/v1/analytics/campaigns/{id}/heatmap`: Aggregated spatial coordinate hit/damage densities and lethality scoring.
+    - `GET /api/v1/analytics/campaigns/{id}/mvp`: Per-encounter and campaign-level MVP awards (damage dealer, lifesaver, crits) with individual combatant stats.
+    - `GET /api/v1/analytics/campaigns/{id}/timeline`: Chronological session milestones, boss defeats, and story recaps.
+  - Exposed service discovery manifest (`GET /ui/manifest`), health check (`GET /healthz`), and OpenAPI aggregation (`GET /openapi.json`).
+  - Added umbrella Helm deployment manifest `campaign-analytics.yaml` on internal port 8011 with Swagger UI aggregation and ingress routing.
+  - Authored Diataxis How-To guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md` and updated technical reference specifications.
+  - Verified full test suite through frontdoor blackbox tests in `tests/test_blackbox_campaign_analytics.py` with zero file invariant violations (< 500 lines per file).
+
+>>>>>>> origin/main
 - **Cinematic Director Auto-Camera and OBS Stream Overlay (`TASK-0056`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
   - Implemented autonomous Cinematic Director virtual camera (`gateway_api.cinematic_director`) tracking active turn events (`TurnStarted`) and action centers (`TokenMoved`) with smooth cubic-bezier easing (`cubic-bezier(0.25, 0.1, 0.25, 1.0)`) within 300ms.
   - Exposed OBS transparent stream overlay route `GET /overlay/party-vitals/{session_id}` serving alpha-transparent canvas (`rgba(0, 0, 0, 0)`) with zero DM secret leakage (100% exclusion of hidden traps, unrevealed monster HP numbers, and DM notes).
@@ -103,6 +130,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **OpenPanel Analytics Blackbox Test Suite Modular Decomposition (`TASK-0097`, `ADR-0003`, `ADR-0006`, `ADR-0009`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_openpanel_analytics.py` (354 lines) into two specialized, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 175 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_blackbox_analytics_client.py` (158 lines): Verifies salted SHA-256 profile anonymization, recursive PII scrubbing (audio bytes, speech transcripts, secret credentials), HTTP transport dispatch via `OpenPanelClient`, profile identification, memory buffer management, and fast failure modes upon network connection error.
+    - `tests/test_blackbox_analytics_worker.py` (169 lines): Verifies background Redis Streams consumer group processing of domain events (`SessionStarted`, `DiceRolled`, `StandInActionDecided`), mapping domain CloudEvents to OpenPanel metrics, dialogue/transcript PII exclusion invariants, and worker lifecycle with dead-letter queue fault isolation.
+  - Updated Diataxis documentation in `docs/how-to/track-analytics-events.md`.
 - **Battlemap Uploader Subviews and Grid Controller Modular Decomposition (`TASK-0078`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed `services/board_state/ui/src/runefoble-map-uploader.ts` (formerly 315 lines) into focused subcomponents strictly adhering to Hard Invariant 6 (< 500 lines limit, all resulting modules < 130 lines):
     - `runefoble-map-dropzone.ts` (124 lines): Encapsulates drag-and-drop file listeners, file input handling, MIME validation, and Silo S3 multipart upload progress dispatch.

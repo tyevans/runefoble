@@ -1,7 +1,7 @@
 ---
-id: '0097'
+id: 0097
 title: OpenPanel Analytics Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0038
@@ -15,8 +15,8 @@ governing_prds:
 - PRD-0012
 governing_stories:
 - US-0040
+pr_url: https://github.com/tyevans/runefoble/pull/96
 ---
-
 # TASK-0097: OpenPanel Analytics Blackbox Test Suite Modular Decomposition
 
 ## Status

@@ -1,7 +1,7 @@
 ---
 id: '0076'
 title: Redis Streams Consumer Group Worker and Session Projections Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0015
@@ -12,8 +12,8 @@ governing_adrs:
 - ADR-0009
 - ADR-0011
 target_release: 0.3.0
+pr_url: https://github.com/tyevans/runefoble/pull/98
 ---
-
 # TASK-0076: Redis Streams Consumer Group Worker and Session Projections Modular Decomposition
 
 ## Status

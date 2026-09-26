@@ -8,7 +8,11 @@ from runefoble_platform.analytics import (
 )
 from runefoble_platform.bus import EventBus, bus
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.consumer_group import MockAsyncRedis, RedisConsumerGroup
+from runefoble_platform.consumer_group import (
+    MockAsyncRedis,
+    RedisConsumerGroup,
+    RedisConsumerGroupWorker,
+)
 from runefoble_platform.dice import DICE_FORMULA_PATTERN, evaluate_dice, parse_and_roll
 from runefoble_platform.errors import (
     AuthorizationError,
@@ -71,6 +75,7 @@ __all__ = [
     "bus",
     "RedisStreamsEventBus",
     "RedisConsumerGroup",
+    "RedisConsumerGroupWorker",
     "MockAsyncRedis",
     "deserialize_event",
     "OpenPanelClient",

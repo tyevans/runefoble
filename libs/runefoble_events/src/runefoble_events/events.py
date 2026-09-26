@@ -4,6 +4,11 @@ All domain events subclass eventsource.domain.event.DomainEvent and are register
 in the global EventRegistry for serialization, stream persistence, and replay.
 """
 
+from runefoble_events.analytics import (
+    ChronicleMilestoneRecorded,
+    CombatTelemetrySnapshotCreated,
+    EncounterMvpAwarded,
+)
 from runefoble_events.asset import (
     AssetDeleted,
     AssetGenerated,
@@ -213,6 +218,9 @@ __all__ = [
     "StandInPolicyUpdated",
     "StandInStabilized",
     "CharacterControlTransferred",
+    "ChronicleMilestoneRecorded",
+    "CombatTelemetrySnapshotCreated",
+    "EncounterMvpAwarded",
     "TurnStarted",
     "CameraTargetUpdated",
 ]
