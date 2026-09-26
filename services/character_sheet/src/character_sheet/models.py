@@ -6,6 +6,19 @@ from typing import Any, Literal
 from uuid import UUID
 
 from character_sheet.rules import SPELL_SLOTS_TABLE
+from character_sheet.schemas import (
+    AddInventoryItemRequest,
+    ApplyConditionRequest,
+    CastSpellRequest,
+    CreateCharacterRequest,
+    EquipItemRequest,
+    HealthChangeRequest,
+    LevelUpRequest,
+    PenaltyRequest,
+    PrepareSpellRequest,
+    RemoveInventoryItemRequest,
+    UpdateGuardrailsRequest,
+)
 from pydantic import BaseModel, Field
 
 
@@ -185,71 +198,21 @@ class CharacterState(BaseModel):
 CharacterSheetState = CharacterState
 
 
-class CreateCharacterRequest(BaseModel):
-    name: str
-    character_class: str
-    max_hp: int = 30
-    player_id: str | None = None
-    personality_traits: list[str] = ["brave", "curious"]
-
-
-class HealthChangeRequest(BaseModel):
-    delta: int
-    source: str = "damage"
-    is_stand_in: bool | None = None
-
-
-class UpdateGuardrailsRequest(BaseModel):
-    preserve_spell_slots: dict[int, int] = Field(default_factory=dict)
-    protect_allies: list[str] = Field(default_factory=list)
-    protect_ally_hp_threshold: float = 0.3
-    risk_threshold: Literal["cautious", "balanced", "reckless"] = "cautious"
-    avoid_melee: bool = True
-    permadeath_safeguard: bool = True
-    custom_priorities: list[str] = Field(default_factory=list)
-
-
-class PenaltyRequest(BaseModel):
-    penalty_type: Literal["drunk", "foolishness", "cowardice", "greed", "curse"]
-    description: str
-    imposed_by: Literal["human_dm", "the_watcher"] = "the_watcher"
-
-
-class AddInventoryItemRequest(BaseModel):
-    item_id: str
-    name: str
-    quantity: int = 1
-    weight_lbs: float = 0.0
-
-
-class RemoveInventoryItemRequest(BaseModel):
-    quantity: int = 1
-
-
-class EquipItemRequest(BaseModel):
-    slot: str
-    item_name: str | None = None
-
-
-class ApplyConditionRequest(BaseModel):
-    condition: str
-    duration_rounds: int | None = None
-    source: str = ""
-
-
-class LevelUpRequest(BaseModel):
-    target_level: int | None = None
-    hp_increase: int | None = None
-    session_id: str = ""
-
-
-class PrepareSpellRequest(BaseModel):
-    spell_name: str
-    spell_level: int | None = None
-    session_id: str = ""
-
-
-class CastSpellRequest(BaseModel):
-    spell_name: str
-    slot_level: int | None = None
-    session_id: str = ""
+__all__ = [
+    "AddInventoryItemRequest",
+    "ApplyConditionRequest",
+    "CastSpellRequest",
+    "CharacterSheetState",
+    "CharacterState",
+    "ConditionState",
+    "CreateCharacterRequest",
+    "EquipItemRequest",
+    "HealthChangeRequest",
+    "InventoryItem",
+    "LevelUpRequest",
+    "PenaltyRequest",
+    "PrepareSpellRequest",
+    "RemoveInventoryItemRequest",
+    "StandInGuardrails",
+    "UpdateGuardrailsRequest",
+]
