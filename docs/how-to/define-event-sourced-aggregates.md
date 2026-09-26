@@ -104,3 +104,26 @@ async def test_inventory_aggregate():
     repo = AggregateRepository(event_store=store, aggregate_factory=CharacterInventoryAggregate)
     ...
 ```
+
+## 6. Persistent Event Store (PostgreSQL)
+
+In staging and production deployments, durable event persistence is enabled via `PlatformSettings` and `PostgreSQLEventStore`:
+
+```python
+from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_sourcing import get_event_store, create_aggregate_repository
+
+settings = PlatformSettings(
+    database_url="postgresql+asyncpg://runefoble_user:secret@postgres:5432/runefoble",
+    use_postgres_event_store=True,
+    postgres_pool_size=10,
+    postgres_max_overflow=20,
+)
+
+# Automatically configures connection pooling, validates TCP reachability,
+# and lazily provisions the events schema upon first access.
+store = get_event_store(settings=settings)
+repo = create_aggregate_repository(CharacterInventoryAggregate, event_store=store)
+```
+
+If the PostgreSQL host is offline or unreachable during startup, `get_event_store` gracefully falls back to `InMemoryEventStore`, logging a diagnostic warning without terminating application boot.

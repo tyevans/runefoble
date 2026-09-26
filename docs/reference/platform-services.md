@@ -26,12 +26,19 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 
 ### 1. PostgreSQL (Relational Datastore & Event Persistence)
 - **Role**: Durable persistence for events (`eventsource-py`), projections, and downstream service databases.
+- **Initialization**: ConfigMap `/docker-entrypoint-initdb.d/init-multidb.sh` automatically provisions dedicated application and platform databases upon container startup with permissions granted to the default user (`runefoble_user`).
 - **Databases**:
-  - `runefoble`: Primary application state and domain event tables (`runefoble_events`).
+  - `runefoble`: Primary application state and domain event tables (`events`, with `runefoble_events` alias/table configuration).
   - `zitadel`: Identity provider database schema.
   - `spicedb`: Zanzibar relationship tuple storage engine.
   - `openpanel`: Telemetry event tables.
-- **Environment Variables**: `RUNEFOBLE_DATABASE_URL` (`postgresql+asyncpg://...`)
+- **Environment Variables**:
+  - `RUNEFOBLE_DATABASE_URL`: Connection string (`postgresql+asyncpg://...` or standard `postgresql://...` auto-normalized to asyncpg).
+  - `RUNEFOBLE_USE_POSTGRES_EVENT_STORE`: Boolean flag (`true` to enable persistent `PostgreSQLEventStore`, default `false`).
+  - `RUNEFOBLE_POSTGRES_POOL_SIZE`: Async connection pool size (default `5`).
+  - `RUNEFOBLE_POSTGRES_MAX_OVERFLOW`: Async connection pool max overflow (default `10`).
+  - `RUNEFOBLE_EVENT_STORE_TABLE_NAME`: Event store table name (default `runefoble_events`).
+- **Graceful Fallback**: If `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` but the database host is unreachable, `get_event_store()` logs a warning and falls back to `InMemoryEventStore`.
 
 ### 2. Redis Streams (Event Streaming & Consumer Groups)
 - **Role**: High-throughput distributed event bus powering pub/sub across bounded contexts.
