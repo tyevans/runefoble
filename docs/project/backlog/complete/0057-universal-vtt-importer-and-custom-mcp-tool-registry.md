@@ -1,7 +1,7 @@
 ---
 id: '0057'
 title: Universal VTT Importer and Dynamic MCP Tool Registry
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0005
@@ -19,8 +19,8 @@ governing_prds:
 governing_stories:
 - US-0033
 - US-0038
+pr_url: https://github.com/tyevans/runefoble/pull/95
 ---
-
 # TASK-0057: Universal VTT Importer and Dynamic MCP Tool Registry
 
 ## Status
