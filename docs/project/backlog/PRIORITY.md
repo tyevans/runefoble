@@ -68,7 +68,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 62. **TASK-0061 (Complete)**: [`0061-board-autonomous-dm-and-voice-controls-ui-styles-decomposition.md`](complete/0061-board-autonomous-dm-and-voice-controls-ui-styles-decomposition.md) — Tactical Board, Autonomous DM, and Voice Controls Microfrontend Styles Decomposition
 63. **TASK-0090 (Complete)**: [`0090-modular-routers-test-suite-decomposition.md`](complete/0090-modular-routers-test-suite-decomposition.md) — Modular Routers Blackbox Test Suite Modular Decomposition
 64. **TASK-0044 (Complete)**: [`0044-spicedb-client-mock-and-auth-sync-test-decomposition.md`](complete/0044-spicedb-client-mock-and-auth-sync-test-decomposition.md) — SpiceDB Client Mock Separation and Auth Sync Test Suite Decomposition
-65. **TASK-0063 (Refined)**: [`0063-auth-zanzibar-sync-service-modular-decomposition.md`](refined/0063-auth-zanzibar-sync-service-modular-decomposition.md) — Zanzibar Auth Relationship Sync Service and Event Handlers Modular Decomposition
+65. **TASK-0063 (Complete)**: [`0063-auth-zanzibar-sync-service-modular-decomposition.md`](complete/0063-auth-zanzibar-sync-service-modular-decomposition.md) — Zanzibar Auth Relationship Sync Service and Event Handlers Modular Decomposition
 66. **TASK-0062 (Complete)**: [`0062-autonomous-dm-presets-and-tactics-modular-decomposition.md`](complete/0062-autonomous-dm-presets-and-tactics-modular-decomposition.md) — Autonomous DM Presets, Monster Templates, and Combat Tactics Modular Decomposition
 
 67. **TASK-0091 (Proposed)**: [`0091-backlog-engine-orchestrator-and-ci-watcher-decomposition.md`](proposed/0091-backlog-engine-orchestrator-and-ci-watcher-decomposition.md) — Backlog Engine Orchestrator and CI Watcher Modular Decomposition
