@@ -3,7 +3,6 @@
 Centralizes configuration settings across bounded contexts.
 """
 
-from typing import Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -18,7 +17,9 @@ class PlatformSettings(BaseSettings):
     )
 
     # Core
-    environment: str = Field(default="development", description="Environment: development, staging, production")
+    environment: str = Field(
+        default="development", description="Environment: development, staging, production"
+    )
     service_name: str = Field(default="runefoble", description="Service identifier")
     debug: bool = Field(default=True, description="Enable debug logging")
 
@@ -60,7 +61,7 @@ class PlatformSettings(BaseSettings):
         default="http://localhost:3000/api",
         description="OpenPanel analytics endpoint",
     )
-    openpanel_client_id: Optional[str] = Field(
+    openpanel_client_id: str | None = Field(
         default=None,
         description="OpenPanel project client ID",
     )

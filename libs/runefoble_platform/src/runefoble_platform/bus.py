@@ -1,8 +1,9 @@
 """Platform In-Memory & Distributed Event Bus interfaces."""
 
 import asyncio
-from typing import Any, Callable, Coroutine, Dict, List, TypeVar
 import logging
+from collections.abc import Callable, Coroutine
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
@@ -13,7 +14,7 @@ class EventBus:
     """Async event bus supporting local and cross-service subscription dispatch."""
 
     def __init__(self):
-        self._handlers: Dict[str, List[Handler]] = {}
+        self._handlers: dict[str, list[Handler]] = {}
 
     def subscribe(self, event_type: str, handler: Handler) -> None:
         """Subscribe a coroutine handler to a specific event topic."""

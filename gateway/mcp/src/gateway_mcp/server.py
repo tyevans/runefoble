@@ -5,14 +5,15 @@ Exposes Runefoble tactical tools, board state, and AI DM controls to MCP-complia
 
 import random
 import re
-from typing import Any, Dict, List
+from typing import Any
+
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("Runefoble MCP Gateway")
 
 
 @mcp.tool()
-def roll_dice(notation: str = "1d20", reason: str = "Action check") -> Dict[str, Any]:
+def roll_dice(notation: str = "1d20", reason: str = "Action check") -> dict[str, Any]:
     """Roll tabletop dice using standard RPG notation (e.g., '1d20', '2d6+3', '3d8-1')."""
     pattern = r"(\d+)d(\d+)(?:([+-])(\d+))?"
     match = re.match(pattern, notation.strip())
@@ -45,21 +46,43 @@ def roll_dice(notation: str = "1d20", reason: str = "Action check") -> Dict[str,
 
 
 @mcp.tool()
-def inspect_tactical_board(session_id: str) -> Dict[str, Any]:
+def inspect_tactical_board(session_id: str) -> dict[str, Any]:
     """Retrieve all tokens, coordinates, and grid dimensions for the active session."""
     return {
         "session_id": session_id,
         "grid_dimensions": {"cols": 8, "rows": 8},
         "tokens": [
-            {"id": "t1", "name": "Valeros", "class": "Fighter", "x": 2, "y": 3, "ai_controlled": False},
-            {"id": "t2", "name": "Kyra", "class": "Cleric", "x": 3, "y": 3, "ai_controlled": True, "penalties": ["drunk"]},
-            {"id": "t3", "name": "Goblin Scout", "type": "Monstrous", "x": 5, "y": 1, "hostile": True},
+            {
+                "id": "t1",
+                "name": "Valeros",
+                "class": "Fighter",
+                "x": 2,
+                "y": 3,
+                "ai_controlled": False,
+            },
+            {
+                "id": "t2",
+                "name": "Kyra",
+                "class": "Cleric",
+                "x": 3,
+                "y": 3,
+                "ai_controlled": True,
+                "penalties": ["drunk"],
+            },
+            {
+                "id": "t3",
+                "name": "Goblin Scout",
+                "type": "Monstrous",
+                "x": 5,
+                "y": 1,
+                "hostile": True,
+            },
         ],
     }
 
 
 @mcp.tool()
-def move_board_token(session_id: str, token_id: str, to_x: int, to_y: int) -> Dict[str, Any]:
+def move_board_token(session_id: str, token_id: str, to_x: int, to_y: int) -> dict[str, Any]:
     """Move a token to target coordinates (x, y) on the tactical map."""
     return {
         "status": "success",
@@ -71,7 +94,9 @@ def move_board_token(session_id: str, token_id: str, to_x: int, to_y: int) -> Di
 
 
 @mcp.tool()
-def apply_absentee_penalty(character_id: str, penalty_type: str, explanation: str) -> Dict[str, Any]:
+def apply_absentee_penalty(
+    character_id: str, penalty_type: str, explanation: str
+) -> dict[str, Any]:
     """Impose a session miss penalty (e.g. 'drunk', 'foolishness', 'cowardice') on an absent player's PC."""
     return {
         "status": "applied",
@@ -83,7 +108,7 @@ def apply_absentee_penalty(character_id: str, penalty_type: str, explanation: st
 
 
 @mcp.tool()
-def narrate_with_the_watcher(scene_prompt: str, player_actions: str) -> Dict[str, Any]:
+def narrate_with_the_watcher(scene_prompt: str, player_actions: str) -> dict[str, Any]:
     """Invoke The Watcher AI Game Master to arbitrate actions and generate immersive narration."""
     return {
         "scene_prompt": scene_prompt,

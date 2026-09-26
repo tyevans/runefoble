@@ -1,13 +1,14 @@
 """Event models for Runefoble reactive gameplay and real-time storytelling."""
 
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal, Optional
 import uuid
+from datetime import UTC, datetime
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
 
 
 def utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class BaseRunefobleEvent(BaseModel):
@@ -28,7 +29,7 @@ class PlayerSpokeEvent(BaseRunefobleEvent):
     speaker_name: str
     transcript: str
     is_whisper: bool = False
-    target_character_id: Optional[str] = None
+    target_character_id: str | None = None
 
 
 class WatcherNarrationEvent(BaseRunefobleEvent):
@@ -37,8 +38,8 @@ class WatcherNarrationEvent(BaseRunefobleEvent):
     event_type: Literal["watcher.narration"] = "watcher.narration"
     narrative_text: str
     tone: str = "mysterious"
-    audio_stream_url: Optional[str] = None
-    applied_board_mutations: List[Dict[str, Any]] = Field(default_factory=list)
+    audio_stream_url: str | None = None
+    applied_board_mutations: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class BoardMoveEvent(BaseRunefobleEvent):
@@ -60,7 +61,7 @@ class DiceRollEvent(BaseRunefobleEvent):
     event_type: Literal["game.dice_roll"] = "game.dice_roll"
     roller_name: str
     dice_notation: str
-    individual_rolls: List[int]
+    individual_rolls: list[int]
     modifier: int = 0
     total: int
     reason: str

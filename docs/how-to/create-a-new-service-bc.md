@@ -36,6 +36,7 @@ from fastapi import FastAPI
 
 app = FastAPI(title="Runefoble - <New Service Name>", version="0.1.0")
 
+
 @app.get("/healthz")
 async def health_check():
     return {"status": "ok", "service": "<new_service_name>"}

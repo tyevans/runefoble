@@ -1,13 +1,14 @@
 """Core domain and platform models."""
 
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
 import uuid
+from datetime import UTC, datetime
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
 def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class BaseEntity(BaseModel):
@@ -16,14 +17,14 @@ class BaseEntity(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class CampaignScopedEntity(BaseEntity):
     """Entity belonging to a specific campaign."""
 
     campaign_id: str
-    tenant_id: Optional[str] = None
+    tenant_id: str | None = None
 
 
 class UserPrincipal(BaseModel):
@@ -32,4 +33,4 @@ class UserPrincipal(BaseModel):
     user_id: str
     email: str
     roles: list[str] = Field(default_factory=list)
-    active_campaign_id: Optional[str] = None
+    active_campaign_id: str | None = None

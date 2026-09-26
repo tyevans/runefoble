@@ -4,7 +4,6 @@ Manages player and NPC character sheets, hit points, inventories,
 and status conditions (such as DM penalties for missed sessions).
 """
 
-from typing import Dict, List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
@@ -35,11 +34,11 @@ class CharacterSheet(BaseModel):
     initiative_bonus: int = 0
     speed: int = 30
     is_ai_stand_in: bool = False
-    conditions: List[CharacterCondition] = Field(default_factory=list)
+    conditions: list[CharacterCondition] = Field(default_factory=list)
 
 
 # In-memory characters store
-characters: Dict[str, CharacterSheet] = {
+characters: dict[str, CharacterSheet] = {
     "c1": CharacterSheet(
         id="c1",
         campaign_id="camp1",
@@ -108,6 +107,7 @@ async def apply_condition(character_id: str, condition: CharacterCondition):
 
 def main():
     import uvicorn
+
     uvicorn.run("character_sheet.main:app", host="0.0.0.0", port=8003, reload=True)
 
 

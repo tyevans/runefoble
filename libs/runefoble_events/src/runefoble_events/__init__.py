@@ -2,11 +2,11 @@
 
 from runefoble_events.events import (
     BaseRunefobleEvent,
-    PlayerSpokeEvent,
-    WatcherNarrationEvent,
     BoardMoveEvent,
     DiceRollEvent,
+    PlayerSpokeEvent,
     SessionPenaltyEvent,
+    WatcherNarrationEvent,
 )
 
 __all__ = [

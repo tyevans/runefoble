@@ -3,7 +3,6 @@
 Manages tactical maps, token coordinates, collision rules, and fog-of-war.
 """
 
-from typing import Dict, List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
@@ -34,19 +33,29 @@ class TacticalBoard(BaseModel):
     session_id: str
     cols: int = 12
     rows: int = 12
-    tokens: Dict[str, BoardToken] = Field(default_factory=dict)
+    tokens: dict[str, BoardToken] = Field(default_factory=dict)
 
 
 # In-memory board state store
-boards: Dict[str, TacticalBoard] = {}
+boards: dict[str, TacticalBoard] = {}
 
 
 def get_or_create_board(session_id: str) -> TacticalBoard:
     if session_id not in boards:
         board = TacticalBoard(session_id=session_id)
         # Prepopulate demo tokens
-        t1 = BoardToken(id="t1", session_id=session_id, character_name="Valeros", x=2, y=3, color="#2563eb")
-        t2 = BoardToken(id="t2", session_id=session_id, character_name="Kyra", x=3, y=3, color="#db2777", is_ai_controlled=True)
+        t1 = BoardToken(
+            id="t1", session_id=session_id, character_name="Valeros", x=2, y=3, color="#2563eb"
+        )
+        t2 = BoardToken(
+            id="t2",
+            session_id=session_id,
+            character_name="Kyra",
+            x=3,
+            y=3,
+            color="#db2777",
+            is_ai_controlled=True,
+        )
         board.tokens[t1.id] = t1
         board.tokens[t2.id] = t2
         boards[session_id] = board
@@ -88,6 +97,7 @@ async def move_token(session_id: str, req: MoveTokenRequest):
 
 def main():
     import uvicorn
+
     uvicorn.run("board_state.main:app", host="0.0.0.0", port=8002, reload=True)
 
 

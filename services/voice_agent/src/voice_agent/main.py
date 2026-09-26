@@ -4,8 +4,7 @@ Handles audio streaming, Speech-To-Text transcription pipelines,
 and Text-To-Speech synthesis with persona voice models (DM, heroic fighter, dwarven cleric).
 """
 
-from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 app = FastAPI(
@@ -34,10 +33,10 @@ class TTSResponse(BaseModel):
     audio_stream_url: str
     duration_ms: int
     persona_used: str
-    effects_applied: List[str] = Field(default_factory=list)
+    effects_applied: list[str] = Field(default_factory=list)
 
 
-AVAILABLE_PERSONAS: Dict[str, VoicePersona] = {
+AVAILABLE_PERSONAS: dict[str, VoicePersona] = {
     "watcher_dm": VoicePersona(
         id="watcher_dm",
         name="The Watcher (Deep Mystical)",
@@ -64,7 +63,7 @@ async def health_check():
     return {"status": "ok", "service": "voice_agent"}
 
 
-@app.get("/api/v1/voice/personas", response_model=List[VoicePersona])
+@app.get("/api/v1/voice/personas", response_model=list[VoicePersona])
 async def list_personas():
     return list(AVAILABLE_PERSONAS.values())
 
@@ -87,6 +86,7 @@ async def synthesize_voice(req: TTSRequest):
 
 def main():
     import uvicorn
+
     uvicorn.run("voice_agent.main:app", host="0.0.0.0", port=8005, reload=True)
 
 

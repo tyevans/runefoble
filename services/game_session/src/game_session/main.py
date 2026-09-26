@@ -3,7 +3,6 @@
 Coordinates active sessions, participant presence, turn order, and campaign timelines.
 """
 
-from typing import Dict, List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
@@ -19,7 +18,7 @@ class SessionParticipant(BaseModel):
     username: str
     role: str  # "dm", "player", "spectator"
     is_present: bool = True
-    assigned_character_id: Optional[str] = None
+    assigned_character_id: str | None = None
     is_ai_stand_in_active: bool = False
 
 
@@ -30,12 +29,12 @@ class GameSession(BaseModel):
     status: str = "active"  # "lobby", "active", "paused", "ended"
     round: int = 1
     current_turn_index: int = 0
-    initiative_order: List[str] = Field(default_factory=list)
-    participants: Dict[str, SessionParticipant] = Field(default_factory=dict)
+    initiative_order: list[str] = Field(default_factory=list)
+    participants: dict[str, SessionParticipant] = Field(default_factory=dict)
 
 
 # In-memory sessions store
-sessions: Dict[str, GameSession] = {
+sessions: dict[str, GameSession] = {
     "sess-001": GameSession(
         id="sess-001",
         campaign_id="camp1",
@@ -45,7 +44,9 @@ sessions: Dict[str, GameSession] = {
         current_turn_index=0,
         initiative_order=["c1", "c2", "goblin-1"],
         participants={
-            "user1": SessionParticipant(user_id="user1", username="Alice", role="player", assigned_character_id="c1"),
+            "user1": SessionParticipant(
+                user_id="user1", username="Alice", role="player", assigned_character_id="c1"
+            ),
             "user2": SessionParticipant(
                 user_id="user2",
                 username="Bob",
@@ -86,6 +87,7 @@ async def advance_turn(session_id: str):
 
 def main():
     import uvicorn
+
     uvicorn.run("game_session.main:app", host="0.0.0.0", port=8004, reload=True)
 
 

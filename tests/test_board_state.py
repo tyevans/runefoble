@@ -1,6 +1,6 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
 from board_state.main import app as board_app
+from httpx import ASGITransport, AsyncClient
 
 
 @pytest.mark.asyncio

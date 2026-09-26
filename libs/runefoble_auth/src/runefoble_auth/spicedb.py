@@ -1,8 +1,7 @@
 """SpiceDB Zanzibar client integration for fine-grained object-level authorization."""
 
-from dataclasses import dataclass
-from typing import Optional, Set
 import logging
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +22,16 @@ class SpiceDBClient:
         self.endpoint = endpoint
         self.token = token
         # In-memory relationship tuple store for local/test execution
-        self._tuples: Set[str] = set()
+        self._tuples: set[str] = set()
 
-    def _tuple_key(self, resource_type: str, resource_id: str, relation: str, subject_type: str, subject_id: str) -> str:
+    def _tuple_key(
+        self,
+        resource_type: str,
+        resource_id: str,
+        relation: str,
+        subject_type: str,
+        subject_id: str,
+    ) -> str:
         return f"{resource_type}:{resource_id}#{relation}@{subject_type}:{subject_id}"
 
     async def write_relationship(
@@ -80,7 +86,4 @@ class SpiceDBClient:
             return True
 
         player = self._tuple_key(resource_type, resource_id, "player", subject_type, subject_id)
-        if player in self._tuples and permission in ("play", "view"):
-            return True
-
-        return False
+        return player in self._tuples and permission in ("play", "view")

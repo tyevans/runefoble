@@ -1,4 +1,4 @@
-.PHONY: help setup cluster-up cluster-down helm-lint helm-template helm-deploy test lint build dev-frontend dev-storybook dev-api
+.PHONY: help setup cluster-up cluster-down helm-lint helm-template helm-deploy test test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api pre-commit
 
 CLUSTER_NAME ?= runefoble-local
 KIND_CONFIG ?= deployments/kind/cluster-config.yaml
@@ -54,17 +54,39 @@ dev-api: ## Run API Gateway locally
 	@echo "==> Starting Runefoble API Gateway..."
 	uv run python gateway/api/src/gateway_api/main.py
 
-test: ## Run test suite (pytest + frontend build verification)
+test: ## Run complete test suite (unit, integration, property tests, frontend build)
 	@echo "==> Running Python test suite..."
 	uv run pytest
 	@echo "==> Verifying frontend build..."
 	cd frontend && pnpm run build
 
-lint: ## Check types and code formatting
+test-property: ## Run generative invariant property tests with Hypothesis
+	@echo "==> Running Hypothesis property tests..."
+	uv run pytest tests/test_properties.py
+
+test-mutation: ## Run mutation testing with mutmut on core domain modules
+	@echo "==> Running mutation tests..."
+	uv run mutmut run || true
+	uv run mutmut results || true
+
+lint: ## Check types, Ruff lint, format, and Helm
+	@echo "==> Checking Ruff lint rules..."
+	uv run ruff check .
+	@echo "==> Checking Ruff formatting..."
+	uv run ruff format --check .
 	@echo "==> Typechecking frontend..."
 	cd frontend && pnpm exec tsc --noEmit
 	@echo "==> Linting Helm charts..."
 	helm lint $(HELM_CHART)
+
+lint-fix: ## Automatically fix Ruff lint errors and format files
+	@echo "==> Fixing lint and formatting with Ruff..."
+	uv run ruff check --fix .
+	uv run ruff format .
+
+pre-commit: ## Run all pre-commit hooks across the repository
+	@echo "==> Running pre-commit hooks..."
+	uv run pre-commit run --all-files
 
 build: ## Build frontend assets and static Storybook
 	@echo "==> Building frontend application..."

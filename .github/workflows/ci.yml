@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python-quality:
+    name: Python Lint, Tests & Properties
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run Ruff Lint Check
+        run: uv run ruff check .
+
+      - name: Run Ruff Format Check
+        run: uv run ruff format --check .
+
+      - name: Run Test Suite
+        run: uv run pytest
+
+  frontend-quality:
+    name: Frontend TypeScript, Build & Storybook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11.22.0
+
+      - name: Install dependencies
+        run: cd frontend && pnpm install
+
+      - name: Typecheck Frontend
+        run: cd frontend && pnpm exec tsc --noEmit
+
+      - name: Build Application
+        run: cd frontend && pnpm run build
+
+      - name: Build Static Storybook
+        run: cd frontend && pnpm exec storybook build --disable-telemetry --quiet
+
+  helm-lint:
+    name: Helm Lint & Manifest Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Helm Lint
+        run: helm lint deployments/helm/runefoble
+
+      - name: Helm Template
+        run: helm template runefoble deployments/helm/runefoble

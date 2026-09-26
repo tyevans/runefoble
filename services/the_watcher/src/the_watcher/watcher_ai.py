@@ -4,15 +4,16 @@ Orchestrates speech-to-intent interpretation, tactical board animations,
 autonomous Dungeon Mastering, and missing player stand-in emulation with penalties.
 """
 
-from typing import Any, Dict, List, Optional
 import re
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel
 
 
 class IntentResult(BaseModel):
     action_type: str  # "move", "attack", "cast_spell", "narrative", "roll_dice"
     confidence: float
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     watcher_reply: str
 
 
@@ -20,8 +21,8 @@ class StandInAction(BaseModel):
     character_name: str
     action_description: str
     dialogue: str
-    penalty_influence: Optional[str] = None
-    dice_roll_required: Optional[str] = None
+    penalty_influence: str | None = None
+    dice_roll_required: str | None = None
 
 
 class TheWatcherEngine:
@@ -81,7 +82,7 @@ class TheWatcherEngine:
         self,
         character_name: str,
         character_class: str,
-        penalties: List[str],
+        penalties: list[str],
         scene_context: str,
     ) -> StandInAction:
         """Simulate an action and dialogue for an absent player's character.
@@ -92,7 +93,7 @@ class TheWatcherEngine:
             return StandInAction(
                 character_name=character_name,
                 action_description=f"{character_name} sways on their heels, hiccuping loudly, before swinging at a shadow.",
-                dialogue=f"\"Hic! Don't you worry, my friends! The ale only sharpens my blade!\"",
+                dialogue='"Hic! Don\'t you worry, my friends! The ale only sharpens my blade!"',
                 penalty_influence="Drunk: Disadvantage on finesse and perception checks.",
                 dice_roll_required="1d20-2",
             )
@@ -101,7 +102,7 @@ class TheWatcherEngine:
             return StandInAction(
                 character_name=character_name,
                 action_description=f"{character_name} recklessly charges headfirst towards the most imposing threat in the room.",
-                dialogue="\"Danger? Ha! I eat danger for breakfast! Follow my glory!\"",
+                dialogue='"Danger? Ha! I eat danger for breakfast! Follow my glory!"',
                 penalty_influence="Foolishness: AI ignores tactical cover and exposes flank.",
                 dice_roll_required="1d20",
             )
@@ -110,7 +111,7 @@ class TheWatcherEngine:
         return StandInAction(
             character_name=character_name,
             action_description=f"{character_name} takes a guarded defensive posture, watching the party's flank.",
-            dialogue="\"Hold the line. We press forward together.\"",
+            dialogue='"Hold the line. We press forward together."',
             penalty_influence=None,
             dice_roll_required="1d20+2",
         )

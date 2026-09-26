@@ -1,4 +1,3 @@
-import pytest
 from the_watcher.watcher_ai import TheWatcherEngine
 
 

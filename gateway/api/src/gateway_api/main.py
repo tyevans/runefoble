@@ -4,11 +4,11 @@ Aggregates downstream microservices, exposes unified OpenAPI documentation,
 and powers real-time WebSockets for the tactical board and voice chronicle.
 """
 
-from typing import Any, Dict, List, Optional
-import asyncio
+import contextlib
+from typing import Any
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
 
 app = FastAPI(
     title="Runefoble Platform Unified Gateway",
@@ -32,7 +32,7 @@ class WebSocketConnectionManager:
     """Manages active live session WebSocket connections."""
 
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: list[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -42,12 +42,10 @@ class WebSocketConnectionManager:
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
 
-    async def broadcast(self, message: Dict[str, Any]):
+    async def broadcast(self, message: dict[str, Any]):
         for connection in self.active_connections:
-            try:
+            with contextlib.suppress(Exception):
                 await connection.send_json(message)
-            except Exception:
-                pass
 
 
 ws_manager = WebSocketConnectionManager()
@@ -70,6 +68,7 @@ async def health_check():
 
 # Forwarding & Aggregated proxy endpoints for OpenAPI docs discovery
 
+
 @app.get("/api/v1/sessions/{session_id}")
 async def get_session_proxy(session_id: str):
     """Retrieve game session state, participants, and round index."""
@@ -81,7 +80,13 @@ async def get_session_proxy(session_id: str):
         "current_turn": "c1",
         "participants": [
             {"username": "Alice", "character": "Valeros", "role": "player", "online": True},
-            {"username": "Bob", "character": "Kyra", "role": "player", "online": False, "ai_stand_in": True},
+            {
+                "username": "Bob",
+                "character": "Kyra",
+                "role": "player",
+                "online": False,
+                "ai_stand_in": True,
+            },
         ],
     }
 
@@ -95,7 +100,14 @@ async def get_board_proxy(session_id: str):
         "rows": 8,
         "tokens": [
             {"id": "t1", "name": "Valeros", "x": 2, "y": 3, "color": "#2563eb"},
-            {"id": "t2", "name": "Kyra", "x": 3, "y": 3, "color": "#db2777", "is_ai_controlled": True},
+            {
+                "id": "t2",
+                "name": "Kyra",
+                "x": 3,
+                "y": 3,
+                "color": "#db2777",
+                "is_ai_controlled": True,
+            },
         ],
     }
 
@@ -119,11 +131,13 @@ async def session_websocket(websocket: WebSocket, session_id: str):
     """Realtime stream connecting board, voice, and Watcher chronicle."""
     await ws_manager.connect(websocket)
     try:
-        await websocket.send_json({
-            "type": "connected",
-            "session_id": session_id,
-            "message": "Connected to Runefoble real-time stream. The Watcher is listening.",
-        })
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "session_id": session_id,
+                "message": "Connected to Runefoble real-time stream. The Watcher is listening.",
+            }
+        )
         while True:
             data = await websocket.receive_json()
             # Broadcast incoming updates to all connected party members
@@ -134,6 +148,7 @@ async def session_websocket(websocket: WebSocket, session_id: str):
 
 def main():
     import uvicorn
+
     uvicorn.run("gateway_api.main:app", host="0.0.0.0", port=8000, reload=True)
 
 

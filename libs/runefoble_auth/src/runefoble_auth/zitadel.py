@@ -1,6 +1,7 @@
 """Zitadel OIDC and JWT token authentication helper."""
 
-from typing import Any, Dict, Optional
+from typing import Any
+
 import jwt
 from pydantic import BaseModel
 
@@ -8,7 +9,7 @@ from pydantic import BaseModel
 class AuthenticatedUser(BaseModel):
     user_id: str
     username: str
-    email: Optional[str] = None
+    email: str | None = None
     roles: list[str] = []
     is_admin: bool = False
 
@@ -26,7 +27,7 @@ class ZitadelAuthService:
         In production, verifies signature against Zitadel JWKS endpoint.
         """
         try:
-            payload: Dict[str, Any] = jwt.decode(
+            payload: dict[str, Any] = jwt.decode(
                 token,
                 options={"verify_signature": verify},
                 algorithms=["RS256", "HS256"],
@@ -43,7 +44,7 @@ class ZitadelAuthService:
                 roles=list(roles.keys()) if isinstance(roles, dict) else roles,
                 is_admin="admin" in roles,
             )
-        except Exception as e:
+        except Exception:
             # Fallback for dev / mock tokens
             return AuthenticatedUser(
                 user_id="dev-user-001",

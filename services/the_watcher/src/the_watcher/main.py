@@ -1,9 +1,8 @@
 """The Watcher AI Microservice API."""
 
-from typing import List, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from the_watcher.watcher_ai import TheWatcherEngine, IntentResult, StandInAction
+from the_watcher.watcher_ai import IntentResult, StandInAction, TheWatcherEngine
 
 app = FastAPI(
     title="Runefoble - The Watcher Service",
@@ -25,7 +24,7 @@ class SpeechInputRequest(BaseModel):
 class StandInRequest(BaseModel):
     character_name: str
     character_class: str
-    penalties: List[str] = Field(default_factory=list)
+    penalties: list[str] = Field(default_factory=list)
     scene_context: str = "In combat with subterranean creatures"
 
 
@@ -68,6 +67,7 @@ async def narrate_scene(req: DMGuidanceRequest):
 
 def main():
     import uvicorn
+
     uvicorn.run("the_watcher.main:app", host="0.0.0.0", port=8001, reload=True)
 
 
