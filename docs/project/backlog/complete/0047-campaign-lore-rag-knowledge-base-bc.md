@@ -1,7 +1,7 @@
 ---
 id: '0047'
 title: Campaign Lore Knowledge Base & redstring RAG Microservice
-status: in-progress
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0001
@@ -15,8 +15,7 @@ governing_adrs:
 - ADR-0009
 - ADR-0011
 target_release: 0.3.0
-claimed_by: worker-0047
-branch: feat/0047-campaign-lore-rag-knowledge-base-bc
+pr_url: https://github.com/tyevans/runefoble/pull/45
 ---
 # TASK-0047: Campaign Lore Knowledge Base & redstring RAG Microservice
 
