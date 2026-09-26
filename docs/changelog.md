@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **TypeScript Audience Studio & Live Stream Interactivity Microservice (`TASK-0051`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0007`, `ADR-0013`)**:
+  - Implemented `services/audience_studio` as a first-class TypeScript microservice (Node.js / Fastify / TypeScript) for live streaming audience interactivity without table gameplay latency.
+  - Built high-concurrency Audience Poll Engine supporting live chaos polls, time window expiration, multi-platform spectator vote ingestion (Twitch, YouTube, web), and quorum calculations.
+  - Implemented SpiceDB Zanzibar-guarded DM moderation approval queue and live bidirectional WebSocket stream (`/ws/audience/{campaign_id}`) for real-time chaos modifier approval/veto.
+  - Registered and published CloudEvents 1.0 specifications: `AudiencePollStarted`, `AudienceVoteCast`, `AudiencePollCompleted`, `AudienceModifierProposed`, and `AudienceModifierApproved`.
+  - Vendored Lit microfrontend `<runefoble-audience-studio>` (`@runefoble/audience-studio-ui`) featuring Bauhaus tokens, Shadow DOM encapsulation, and Storybook stories.
+  - Exposed service discovery manifest (`GET /ui/manifest`) and OpenAPI documentation hub specification (`GET /openapi.json`).
+  - Added umbrella Helm deployment manifest `audience-studio.yaml` with Traefik ingress routing and Swagger UI hub integration.
+  - Authored Diataxis How-To guide `docs/how-to/orchestrate-audience-chaos-polls.md` and updated technical reference specifications.
+  - Verified full test suite through frontdoor blackbox tests in `tests/test_blackbox_audience_studio.py` and `tests/test_blackbox_audience_studio_auth.py` with zero file invariant violations (< 250 lines per file).
 - **Full Traceability Matrix and PRD Story/Task Support Enrichment**:
   - Increased support across under-supported PRDs by authoring dedicated user stories and backlog tasks:
     - US-0051: Character Level Progression, Spellbook Preparation & Spell Slot Scaling (`PRD-0006`).
@@ -36,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition (`TASK-0096`, `ADR-0001`, `ADR-0002`, `ADR-0003`, `ADR-0009`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_stand_in_guardrails.py` (370 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 190 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_blackbox_stand_in_policies.py` (189 lines): Verifies tactical guardrail configuration via `PUT/GET /api/v1/characters/{id}/guardrails`, SpiceDB Zanzibar authorization, `StandInPolicyUpdated` and `StandInStabilized` CloudEvent publications, The Watcher stand-in tactical decision graph evaluation under 'drunk' and 'foolishness' penalties, and zero-HP permadeath stabilization invariants.
+    - `tests/test_blackbox_stand_in_takeover.py` (147 lines): Verifies mid-session hot-swap handoffs via `POST /api/v1/sessions/{id}/hot-swap`, active combat round and initiative continuity, SpiceDB Zanzibar object authorization, and `CharacterControlTransferred` CloudEvent emissions.
+  - Updated Diataxis documentation in `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
+
 - **Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition (`TASK-0094`, `ADR-0002`, `ADR-0003`, `ADR-0007`, `ADR-0009`)**:
   - Decomposed `services/the_watcher/src/the_watcher/routers/intent.py` (371 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/intent/`:
     - `disambiguation.py` (195 lines): Ambiguity detection, clarification prompts, target candidate matching, and `/resolve` route.

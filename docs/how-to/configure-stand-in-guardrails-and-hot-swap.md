@@ -124,3 +124,12 @@ The `<runefoble-stand-in-guardrails>` custom element is vendored in `services/ch
 ### Custom Events
 - `@guardrails-updated`: Dispatched when the player saves modified guardrail sliders and checkboxes.
 - `@request-hot-swap`: Dispatched when clicking the "Take Control" button to initiate mid-session hot-swap.
+
+---
+
+## 5. Modular Blackbox Test Organization & Architecture
+
+The stand-in policy guardrails and hot-swap test suite is partitioned into two focused blackbox test modules strictly adhering to Hard Invariant 6 (< 500 lines per file, strictly < 190 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+- `tests/test_blackbox_stand_in_policies.py`: Verifies tactical guardrail configuration via `PUT/GET /api/v1/characters/{id}/guardrails`, SpiceDB Zanzibar permission checks, `StandInPolicyUpdated` and `StandInStabilized` CloudEvent publications, The Watcher stand-in tactical decision graph evaluation under 'drunk' and 'foolishness' penalties, and zero-HP permadeath stabilization invariants.
+- `tests/test_blackbox_stand_in_takeover.py`: Verifies mid-session hot-swap handoffs via `POST /api/v1/sessions/{id}/hot-swap`, active combat round and initiative continuity, SpiceDB Zanzibar object authorization, and `CharacterControlTransferred` CloudEvent emissions.
+
