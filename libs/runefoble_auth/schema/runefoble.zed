@@ -112,3 +112,24 @@ definition stronghold {
     // Stronghold administration and resets require DM/GM/Owner
     permission manage = campaign->run_session + manager
 }
+
+definition diegetic_handout {
+    relation campaign: campaign
+    relation creator: user
+
+    // Handouts can be viewed by campaign members or creator
+    permission view = campaign->view + creator
+    // Breaking seal or manipulating handout can be performed by active players or DM
+    permission interact = campaign->play + creator
+    permission manage = campaign->run_session + creator
+}
+
+definition relic {
+    relation campaign: campaign
+    relation creator: user
+
+    // Relics can be viewed/inspected by campaign members or creator
+    permission inspect = campaign->view + creator
+    permission manage = campaign->run_session + creator
+}
+

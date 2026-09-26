@@ -74,7 +74,13 @@ from runefoble_events.downtime import (
 from runefoble_events.lore import (
     AliasesConsolidated,
     EntitiesExtracted,
+    HandoutGenerated,
+    InvisibleInkRevealed,
     LoreDocumentIngested,
+    RelicForged,
+    RelicInspected,
+    RelicRuneTranslated,
+    WaxSealBroken,
 )
 from runefoble_events.session import (
     CameraTargetUpdated,
@@ -218,6 +224,12 @@ __all__ = [
     "LoreDocumentIngested",
     "EntitiesExtracted",
     "AliasesConsolidated",
+    "HandoutGenerated",
+    "WaxSealBroken",
+    "InvisibleInkRevealed",
+    "RelicForged",
+    "RelicInspected",
+    "RelicRuneTranslated",
     "MonsterIndexed",
     "SpellIndexed",
     "ConditionIndexed",

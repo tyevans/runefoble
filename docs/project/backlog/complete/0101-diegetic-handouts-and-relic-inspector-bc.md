@@ -1,7 +1,7 @@
 ---
 id: '0101'
 title: Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0023
@@ -17,8 +17,8 @@ governing_prds:
 - PRD-0015
 governing_stories:
 - US-0045
+pr_url: https://github.com/tyevans/runefoble/pull/118
 ---
-
 # TASK-0101: Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector
 
 ## Status
