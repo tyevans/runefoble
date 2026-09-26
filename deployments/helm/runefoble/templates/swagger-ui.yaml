@@ -1,0 +1,42 @@
+{{- if .Values.swaggerUI.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swagger-ui
+  labels:
+    app: swagger-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: swagger-ui
+  template:
+    metadata:
+      labels:
+        app: swagger-ui
+    spec:
+      containers:
+        - name: swagger-ui
+          image: {{ .Values.swaggerUI.image }}
+          ports:
+            - containerPort: {{ .Values.swaggerUI.port }}
+          env:
+            - name: URLS
+              value: {{ toJson .Values.swaggerUI.urls | quote }}
+            - name: URLS_PRIMARY_NAME
+              value: "Unified API Gateway"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swagger-ui
+  labels:
+    app: swagger-ui
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.swaggerUI.port }}
+      targetPort: {{ .Values.swaggerUI.port }}
+  selector:
+    app: swagger-ui
+{{- end }}

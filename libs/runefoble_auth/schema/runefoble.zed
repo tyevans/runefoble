@@ -1,0 +1,49 @@
+// Runefoble Zanzibar Authorization Schema (SpiceDB)
+// Models object-level permissions across campaigns, sessions, characters, and boards.
+
+definition user {}
+
+definition campaign {
+    relation owner: user
+    relation dungeon_master: user
+    relation player: user
+    relation spectator: user
+
+    // Owner has supreme management permissions
+    permission manage = owner
+
+    // DMs and Owner can run sessions, mutate world, assign penalties
+    permission run_session = owner + dungeon_master
+
+    // Active players can interact with their campaign assets
+    permission play = run_session + player
+
+    // Spectators can observe the live game
+    permission view = play + spectator
+}
+
+definition character {
+    relation campaign: campaign
+    relation owner: user
+
+    // Character can be edited by owner, or by DM (for assigning penalties/effects)
+    permission edit = owner + campaign->run_session
+    permission view = edit + campaign->view
+}
+
+definition game_session {
+    relation campaign: campaign
+
+    permission control = campaign->run_session
+    permission participate = campaign->play
+    permission observe = campaign->view
+}
+
+definition board_token {
+    relation campaign: campaign
+    relation character: character
+
+    // Moving a token requires owning the character or being DM
+    permission move = character->edit + campaign->run_session
+    permission inspect = campaign->view
+}

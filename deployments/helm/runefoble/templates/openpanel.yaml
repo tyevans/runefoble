@@ -1,0 +1,40 @@
+{{- if .Values.openpanel.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openpanel
+  labels:
+    app: openpanel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openpanel
+  template:
+    metadata:
+      labels:
+        app: openpanel
+    spec:
+      containers:
+        - name: openpanel
+          image: {{ .Values.openpanel.image }}
+          ports:
+            - containerPort: {{ .Values.openpanel.port }}
+          env:
+            - name: DATABASE_URL
+              value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/openpanel"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openpanel
+  labels:
+    app: openpanel
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.openpanel.port }}
+      targetPort: {{ .Values.openpanel.port }}
+  selector:
+    app: openpanel
+{{- end }}

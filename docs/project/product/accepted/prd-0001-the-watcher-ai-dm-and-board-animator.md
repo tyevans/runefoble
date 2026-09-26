@@ -1,0 +1,32 @@
+---
+id: 0001
+title: The Watcher AI Dungeon Master and Real-Time Board Animator
+status: Accepted
+created: 2026-09-25
+---
+
+# PRD-0001 — The Watcher AI Dungeon Master and Real-Time Board Animator
+
+## Who this is for
+
+Tabletop roleplaying groups who lack a human Dungeon Master, or human DMs who desire an autonomous assistant to handle real-time board manipulation and rule rulings.
+
+## What the person cannot do today
+
+Currently, virtual tabletop platforms require human players to manually click, drag, calculate distances, track line-of-sight, and fiddle with token menus. If no human steps up to spend 10+ hours preparing a campaign as DM, the group cannot play.
+
+## What good looks like
+
+- **Spoken Command Execution**: A player says "I advance 3 squares north and draw my blade," and within 500ms the tactical board animates the token and updates the narrative log.
+- **Autonomous DM Narration**: When no human DM is present, The Watcher narrates atmospheric scene changes, arbitrates player decisions, and triggers monster actions.
+- **Co-Pilot Assistance**: When a human DM is running the table, The Watcher functions as an assistant: resolving distances, managing initiative, and proposing descriptions.
+
+## What this does not do
+
+- It does not replace player free will; players can override any AI action.
+- It does not require a rigid grammar; natural colloquial speech is supported.
+- It does not force combat if players choose diplomacy or stealth.
+
+## What it costs at scale
+
+Low latency audio transcription and LLM inference require optimized streaming connections and token caching.

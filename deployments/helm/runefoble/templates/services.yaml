@@ -1,0 +1,56 @@
+{{- $services := list
+  (dict "name" "gateway-api" "config" .Values.services.gatewayApi)
+  (dict "name" "the-watcher" "config" .Values.services.theWatcher)
+  (dict "name" "board-state" "config" .Values.services.boardState)
+  (dict "name" "character-sheet" "config" .Values.services.characterSheet)
+  (dict "name" "game-session" "config" .Values.services.gameSession)
+  (dict "name" "voice-agent" "config" .Values.services.voiceAgent)
+-}}
+
+{{- range $services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  labels:
+    app: {{ .name }}
+spec:
+  replicas: {{ .config.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .name }}
+    spec:
+      containers:
+        - name: {{ .name }}
+          image: {{ .config.image }}
+          ports:
+            - containerPort: {{ .config.port }}
+          env:
+            - name: RUNEFOBLE_DATABASE_URL
+              value: "postgresql+asyncpg://{{ $.Values.postgres.username }}:{{ $.Values.postgres.password }}@postgres:5432/{{ $.Values.postgres.database }}"
+            - name: RUNEFOBLE_SILO_ENDPOINT
+              value: "silo:{{ $.Values.silo.port }}"
+            - name: RUNEFOBLE_ZITADEL_ISSUER
+              value: "http://zitadel:{{ $.Values.zitadel.port }}"
+            - name: RUNEFOBLE_SPICEDB_ENDPOINT
+              value: "spicedb:{{ $.Values.spicedb.grpcPort }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  labels:
+    app: {{ .name }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .config.port }}
+      targetPort: {{ .config.port }}
+  selector:
+    app: {{ .name }}
+{{- end }}

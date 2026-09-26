@@ -1,0 +1,49 @@
+{{- if .Values.zitadel.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zitadel
+  labels:
+    app: zitadel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zitadel
+  template:
+    metadata:
+      labels:
+        app: zitadel
+    spec:
+      containers:
+        - name: zitadel
+          image: {{ .Values.zitadel.image }}
+          args: ["start-from-init", "--masterkey", {{ .Values.zitadel.masterKey | quote }}]
+          ports:
+            - containerPort: {{ .Values.zitadel.port }}
+          env:
+            - name: ZITADEL_DATABASE_POSTGRES_HOST
+              value: "postgres"
+            - name: ZITADEL_DATABASE_POSTGRES_PORT
+              value: "5432"
+            - name: ZITADEL_DATABASE_POSTGRES_DATABASE
+              value: "zitadel"
+            - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
+              value: {{ .Values.postgres.username | quote }}
+            - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+              value: {{ .Values.postgres.password | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zitadel
+  labels:
+    app: zitadel
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.zitadel.port }}
+      targetPort: {{ .Values.zitadel.port }}
+  selector:
+    app: zitadel
+{{- end }}

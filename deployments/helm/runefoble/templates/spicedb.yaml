@@ -1,0 +1,48 @@
+{{- if .Values.spicedb.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spicedb
+  labels:
+    app: spicedb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spicedb
+  template:
+    metadata:
+      labels:
+        app: spicedb
+    spec:
+      containers:
+        - name: spicedb
+          image: {{ .Values.spicedb.image }}
+          args: ["serve", "--grpc-preshared-key", {{ .Values.spicedb.presharedKey | quote }}, "--datastore-engine", "postgres"]
+          ports:
+            - name: grpc
+              containerPort: {{ .Values.spicedb.grpcPort }}
+            - name: http
+              containerPort: {{ .Values.spicedb.httpPort }}
+          env:
+            - name: SPICEDB_DATASTORE_CONN_URI
+              value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/spicedb?sslmode=disable"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spicedb
+  labels:
+    app: spicedb
+spec:
+  type: ClusterIP
+  ports:
+    - name: grpc
+      port: {{ .Values.spicedb.grpcPort }}
+      targetPort: {{ .Values.spicedb.grpcPort }}
+    - name: http
+      port: {{ .Values.spicedb.httpPort }}
+      targetPort: {{ .Values.spicedb.httpPort }}
+  selector:
+    app: spicedb
+{{- end }}

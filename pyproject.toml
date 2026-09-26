@@ -1,0 +1,44 @@
+[project]
+name = "runefoble-workspace"
+version = "0.1.0"
+description = "Runefoble - Collaborative AI-native TTRPG platform"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "runefoble-platform",
+    "runefoble-auth",
+    "runefoble-events",
+    "the-watcher",
+    "game-session",
+    "board-state",
+    "character-sheet",
+    "voice-agent",
+    "gateway-api",
+    "gateway-mcp",
+]
+
+[tool.uv.sources]
+runefoble-platform = { workspace = true }
+runefoble-auth = { workspace = true }
+runefoble-events = { workspace = true }
+the-watcher = { workspace = true }
+game-session = { workspace = true }
+board-state = { workspace = true }
+character-sheet = { workspace = true }
+voice-agent = { workspace = true }
+gateway-api = { workspace = true }
+gateway-mcp = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    "libs/*",
+    "services/*",
+    "gateway/*",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.28.1",
+]

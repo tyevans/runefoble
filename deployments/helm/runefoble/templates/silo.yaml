@@ -1,0 +1,48 @@
+{{- if .Values.silo.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: silo
+  labels:
+    app: silo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: silo
+  template:
+    metadata:
+      labels:
+        app: silo
+    spec:
+      containers:
+        - name: silo
+          image: {{ .Values.silo.image }}
+          args: ["server", "/data", "--console-address", ":{{ .Values.silo.consolePort }}"]
+          ports:
+            - containerPort: {{ .Values.silo.port }}
+            - containerPort: {{ .Values.silo.consolePort }}
+          env:
+            - name: MINIO_ROOT_USER
+              value: {{ .Values.silo.accessKey }}
+            - name: MINIO_ROOT_PASSWORD
+              value: {{ .Values.silo.secretKey }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: silo
+  labels:
+    app: silo
+spec:
+  type: ClusterIP
+  ports:
+    - name: s3
+      port: {{ .Values.silo.port }}
+      targetPort: {{ .Values.silo.port }}
+    - name: console
+      port: {{ .Values.silo.consolePort }}
+      targetPort: {{ .Values.silo.consolePort }}
+  selector:
+    app: silo
+{{- end }}

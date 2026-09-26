@@ -1,0 +1,16 @@
+apiVersion: v2
+name: runefoble
+description: Helm Chart for the Runefoble AI Tabletop Roleplaying Platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - ttrpg
+  - ai-dm
+  - the-watcher
+  - tabletop
+  - zitadel
+  - spicedb
+maintainers:
+  - name: Runefoble Team
+    email: dev@runefoble.local

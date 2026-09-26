@@ -1,0 +1,146 @@
+# Default values for runefoble Helm chart
+
+global:
+  environment: local
+  domain: runefoble.local
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  hosts:
+    - host: runefoble.local
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: gateway-api
+          port: 8000
+        - path: /docs
+          pathType: Prefix
+          service: swagger-ui
+          port: 8080
+        - path: /swagger-ui
+          pathType: Prefix
+          service: swagger-ui
+          port: 8080
+        - path: /auth
+          pathType: Prefix
+          service: zitadel
+          port: 8080
+        - path: /
+          pathType: Prefix
+          service: frontend
+          port: 80
+
+# Database
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  database: runefoble
+  username: runefoble_user
+  password: runefoble_dev_password
+  port: 5432
+  storageSize: 5Gi
+
+# Object Storage (Silo / MinIO fork)
+silo:
+  enabled: true
+  image: minio/minio:RELEASE.2024-01-01T00-00-00Z
+  accessKey: silo_admin
+  secretKey: silo_secret_pass
+  port: 9000
+  consolePort: 9001
+  buckets:
+    - runefoble-assets
+    - runefoble-recordings
+
+# Identity & Authentication (Zitadel self-hosted)
+zitadel:
+  enabled: true
+  image: ghcr.io/zitadel/zitadel:v2.54.0
+  port: 8080
+  adminEmail: admin@runefoble.local
+  adminPassword: RunefobleAdminPassword123!
+  masterKey: RunefobleMasterKeyMustBe32Bytes!
+
+# Zanzibar Authorization (SpiceDB self-hosted)
+spicedb:
+  enabled: true
+  image: authzed/spicedb:v1.34.0
+  grpcPort: 50051
+  httpPort: 8443
+  presharedKey: runefoble_secret_key
+
+# Analytics (OpenPanel self-hosted)
+openpanel:
+  enabled: true
+  image: openpanel/openpanel:latest
+  port: 3000
+
+# Observability (OpenTelemetry, Grafana, Loki)
+observability:
+  enabled: true
+  otelCollector:
+    image: otel/opentelemetry-collector-contrib:0.100.0
+    grpcPort: 4317
+    httpPort: 4318
+  loki:
+    image: grafana/loki:3.0.0
+    port: 3100
+  grafana:
+    image: grafana/grafana:11.0.0
+    port: 3001
+    adminPassword: admin
+
+# OpenAPI Swagger UI Aggregator
+swaggerUI:
+  enabled: true
+  image: swaggerapi/swagger-ui:v5.17.14
+  port: 8080
+  urls:
+    - name: "Unified API Gateway"
+      url: "http://gateway-api:8000/openapi.json"
+    - name: "The Watcher AI Engine"
+      url: "http://the-watcher:8001/openapi.json"
+    - name: "Board State Engine"
+      url: "http://board-state:8002/openapi.json"
+    - name: "Character Sheet Service"
+      url: "http://character-sheet:8003/openapi.json"
+    - name: "Game Session Service"
+      url: "http://game-session:8004/openapi.json"
+    - name: "Voice Agent Service"
+      url: "http://voice-agent:8005/openapi.json"
+
+# Services
+services:
+  gatewayApi:
+    image: runefoble/gateway-api:0.1.0
+    replicas: 1
+    port: 8000
+  theWatcher:
+    image: runefoble/the-watcher:0.1.0
+    replicas: 1
+    port: 8001
+  boardState:
+    image: runefoble/board-state:0.1.0
+    replicas: 1
+    port: 8002
+  characterSheet:
+    image: runefoble/character-sheet:0.1.0
+    replicas: 1
+    port: 8003
+  gameSession:
+    image: runefoble/game-session:0.1.0
+    replicas: 1
+    port: 8004
+  voiceAgent:
+    image: runefoble/voice-agent:0.1.0
+    replicas: 1
+    port: 8005
+
+# Frontend Application
+frontend:
+  image: runefoble/frontend:0.1.0
+  replicas: 1
+  port: 80
