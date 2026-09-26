@@ -3,6 +3,37 @@
   window.visualizer = window.visualizer || {};
 
   let sim = null;
+
+  // Fallback simulation engine if graph_physics.js was omitted, delayed, or running on stale assets
+  if (typeof window.visualizer.ForceSimulation !== 'function') {
+    window.visualizer.ForceSimulation = class FallbackSimulation {
+      constructor(nodes, edges, opts = {}) {
+        this.nodes = nodes; this.edges = edges;
+        this.w = opts.width || 1200; this.h = opts.height || 800;
+        this.cx = this.w / 2; this.cy = this.h / 2;
+      }
+      start(cb) { this.applyFlowLayout(); if (cb) cb(); }
+      stop() {}
+      reheat() {}
+      applyFlowLayout() {
+        const cols = { persona: 160, prd: 400, story: 640, task: 880, adr: 1080 };
+        const c = {};
+        this.nodes.forEach(n => {
+          c[n.type] = (c[n.type] || 0) + 1;
+          n.x = (cols[n.type] || 600) + (Math.sin(c[n.type] * 2) * 12);
+          n.y = 70 + c[n.type] * 48;
+        });
+      }
+      applyRadialLayout() {
+        this.nodes.forEach((n, i) => {
+          const a = (i / Math.max(this.nodes.length, 1)) * 2 * Math.PI;
+          n.x = this.cx + Math.cos(a) * 320;
+          n.y = this.cy + Math.sin(a) * 320;
+        });
+      }
+    };
+  }
+
   const graphState = {
     nodes: [],
     edges: [],
@@ -355,21 +386,13 @@
 
     edges.forEach(e => {
       const el = document.getElementById(`edge-${e.source_id}-${e.target_id}`);
-      if (el) {
-        if (connectedEdgeIds.has(`${e.source_id}-${e.target_id}`)) {
-          el.setAttribute('stroke', '#818CF8');
-          el.setAttribute('stroke-width', '2.8');
-          el.setAttribute('stroke-opacity', '1');
-          el.setAttribute('marker-end', 'url(#arrow-glow)');
-          el.classList.add('edge-active-flow');
-        } else {
-          el.setAttribute('stroke', '#374151');
-          el.setAttribute('stroke-width', '1');
-          el.setAttribute('stroke-opacity', '0.06');
-          el.setAttribute('marker-end', 'url(#arrow)');
-          el.classList.remove('edge-active-flow');
-        }
-      }
+      if (!el) return;
+      const isConn = connectedEdgeIds.has(`${e.source_id}-${e.target_id}`);
+      el.setAttribute('stroke', isConn ? '#818CF8' : '#374151');
+      el.setAttribute('stroke-width', isConn ? '2.8' : '1');
+      el.setAttribute('stroke-opacity', isConn ? '1' : '0.06');
+      el.setAttribute('marker-end', isConn ? 'url(#arrow-glow)' : 'url(#arrow)');
+      el.classList.toggle('edge-active-flow', isConn);
     });
   }
 
@@ -382,10 +405,8 @@
     graphState.edges.forEach(e => {
       const el = document.getElementById(`edge-${e.source_id}-${e.target_id}`);
       if (el) {
-        el.setAttribute('stroke', '#374151');
-        el.setAttribute('stroke-width', '1.3');
-        el.setAttribute('stroke-opacity', '0.38');
-        el.setAttribute('marker-end', 'url(#arrow)');
+        el.setAttribute('stroke', '#374151'); el.setAttribute('stroke-width', '1.3');
+        el.setAttribute('stroke-opacity', '0.38'); el.setAttribute('marker-end', 'url(#arrow)');
         el.classList.remove('edge-active-flow');
       }
     });
@@ -444,9 +465,7 @@
 
   function hideGraphTooltip() {
     const tooltip = document.getElementById('graph-tooltip');
-    if (!tooltip) return;
-    tooltip.classList.add('opacity-0');
-    setTimeout(() => tooltip.classList.add('hidden'), 150);
+    if (tooltip) { tooltip.classList.add('opacity-0'); setTimeout(() => tooltip.classList.add('hidden'), 150); }
   }
 
   function toggleGraphFullscreen() {
@@ -454,13 +473,8 @@
     const btn = document.getElementById('graph-fs-btn');
     if (!wrap) return;
     graphState.isFullscreen = !graphState.isFullscreen;
-    if (graphState.isFullscreen) {
-      wrap.classList.add('graph-fullscreen');
-      if (btn) btn.textContent = '✖';
-    } else {
-      wrap.classList.remove('graph-fullscreen');
-      if (btn) btn.textContent = '⛶';
-    }
+    wrap.classList.toggle('graph-fullscreen', graphState.isFullscreen);
+    if (btn) btn.textContent = graphState.isFullscreen ? '✖' : '⛶';
   }
 
   function handleMinimapClick(e) {
@@ -474,16 +488,9 @@
     applyTransform();
   }
 
-  window.visualizer.renderGraph = renderGraph;
-  window.visualizer.switchGraphLayout = switchGraphLayout;
-  window.visualizer.toggleGraphPhysics = toggleGraphPhysics;
-  window.visualizer.reheatGraphPhysics = reheatGraphPhysics;
-  window.visualizer.handleGraphNodeClick = handleGraphNodeClick;
-  window.visualizer.zoomGraph = zoomGraph;
-  window.visualizer.resetGraphView = resetGraphView;
-  window.visualizer.focusNodeFromSearch = focusNodeFromSearch;
-  window.visualizer.showGraphTooltip = showGraphTooltip;
-  window.visualizer.hideGraphTooltip = hideGraphTooltip;
-  window.visualizer.toggleGraphFullscreen = toggleGraphFullscreen;
-  window.visualizer.handleMinimapClick = handleMinimapClick;
+  Object.assign(window.visualizer, {
+    renderGraph, switchGraphLayout, toggleGraphPhysics, reheatGraphPhysics,
+    handleGraphNodeClick, zoomGraph, resetGraphView, focusNodeFromSearch,
+    showGraphTooltip, hideGraphTooltip, toggleGraphFullscreen, handleMinimapClick,
+  });
 })();
