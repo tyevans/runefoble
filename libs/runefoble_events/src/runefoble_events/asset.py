@@ -81,6 +81,42 @@ class TokenAssetForged(BaseRunefobleEvent):
     transparent_background: bool = True
 
 
+@register_event("runefoble.events.asset.print_pdf_forged")
+class PrintPdfForged(BaseRunefobleEvent):
+    """Emitted when a multi-page grid-calibrated PDF or standee sheet is forged."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "AssetForge"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.asset.print_pdf_forged"
+    asset_id: str
+    campaign_id: UUID | None = None
+    session_id: str | None = None
+    creator_id: str
+    total_pages: int
+    page_size: str
+    grid_scale: str = "1-inch"
+    download_url: str
+
+
+@register_event("runefoble.events.asset.stl_token_forged")
+class StlTokenForged(BaseRunefobleEvent):
+    """Emitted when a 3D-printable miniature base or condition clip is forged."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "AssetForge"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.asset.stl_token_forged"
+    asset_id: str
+    campaign_id: UUID | None = None
+    creator_id: str
+    diameter_mm: float
+    height_mm: float
+    facet_count: int
+    condition_label: str = "Poisoned"
+    download_url: str
+
+
 # Register under short class names and aliases as well for backward compatibility
 register_event(AssetUploaded, event_type="AssetUploaded")
 register_event(AssetDeleted, event_type="AssetDeleted")
@@ -88,6 +124,8 @@ register_event(BattlemapForged, event_type="BattlemapForged")
 register_event(BattlemapForged, event_type="BattlemapCreated")
 register_event(TokenAssetForged, event_type="TokenAssetForged")
 register_event(TokenAssetForged, event_type="AssetGenerated")
+register_event(PrintPdfForged, event_type="PrintPdfForged")
+register_event(StlTokenForged, event_type="StlTokenForged")
 
 # Legacy aliases
 BattlemapCreated = BattlemapForged

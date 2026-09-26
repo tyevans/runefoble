@@ -398,8 +398,27 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `image_url`: String
   - `crop_style`: String ("circular", "square", "hex")
   - `transparent_background`: Boolean
+- **`PrintPdfForged`**: Emitted when a multi-page grid-calibrated battlemap PDF or standee sheet is exported (`runefoble.events.asset.print_pdf_forged`).
+  - `asset_id`: String
+  - `campaign_id`: Optional[UUID]
+  - `session_id`: Optional[String]
+  - `creator_id`: String
+  - `total_pages`: Integer
+  - `page_size`: String ("letter", "a4")
+  - `grid_scale`: String ("1-inch")
+  - `download_url`: String
+- **`StlTokenForged`**: Emitted when a watertight 3D-printable miniature base or condition clip is forged (`runefoble.events.asset.stl_token_forged`).
+  - `asset_id`: String
+  - `campaign_id`: Optional[UUID]
+  - `creator_id`: String
+  - `diameter_mm`: Float
+  - `height_mm`: Float
+  - `facet_count`: Integer
+  - `condition_label`: String
+  - `download_url`: String
 
 ### LoreDocument Events (`aggregate_type: LoreDocument`)
+
 
 - **`LoreDocumentIngested`**: Emitted when a new worldbuilding document is ingested (`runefoble.events.lore.document_ingested`).
   - `document_id`: UUID
