@@ -324,6 +324,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Build Automation**: Enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- **Backlog Engine Missing & Concurrently Moved Task File Handling**:
+  - Hardened `BacklogQueue` methods (`list_all_tasks`, `get_completed_task_ids`, `recover_stale_tasks`, `release_task`, and `complete_task`) against `FileNotFoundError` and `OSError` caused by race conditions during concurrent git pulls, task completions, and JIT backlog refinements.
+  - Added cross-directory canonical task deduplication in `list_all_tasks` (`complete` > `refined` > `proposed`), preventing duplicate task processing across lifecycle directories.
+  - Added unit test suite in `tests/test_backlog_queue.py` validating resilience against missing files, broken symlinks, and cross-folder transitions.
 - **Project Visualizer Local Script Syntax & Favicon**: Fixed missing closing bracket in `agy_launcher.js` DOM listener causing `Uncaught SyntaxError` on local server, added automated Node.js syntax verification tests for all client scripts and bundles, and eliminated browser 404 console errors by handling `/favicon.ico` with 204 No Content and embedding an inline SVG dice icon.
 
 ---
