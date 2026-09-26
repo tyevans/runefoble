@@ -48,6 +48,13 @@ def voice_client():
     return TestClient(app)
 
 
+@pytest.fixture
+def campaign_client():
+    from campaign_analytics.main import app
+
+    return TestClient(app)
+
+
 def test_board_state_ui_manifest_frontdoor(board_client):
     """Verify board_state service vendors its microfrontend via GET /ui/manifest."""
     response = board_client.get("/ui/manifest")
@@ -103,6 +110,16 @@ def test_voice_agent_ui_manifest_frontdoor(voice_client):
     assert "runefoble-voice-controls" in data["components"]
 
 
+def test_campaign_analytics_ui_manifest_frontdoor(campaign_client):
+    """Verify campaign_analytics service vendors its microfrontend via GET /ui/manifest."""
+    response = campaign_client.get("/ui/manifest")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["service"] == "campaign-analytics"
+    assert data["package"] == "@runefoble/campaign-analytics-ui"
+    assert "runefoble-campaign-analytics" in data["components"]
+
+
 def test_service_ui_package_integrity():
     """Verify that all service UI packages have package.json, tsconfig.json, and Lit elements."""
     expected_packages = [
@@ -122,6 +139,11 @@ def test_service_ui_package_integrity():
             "services/audience_studio/ui",
             "@runefoble/audience-studio-ui",
             "runefoble-audience-studio",
+        ),
+        (
+            "services/campaign_analytics/ui",
+            "@runefoble/campaign-analytics-ui",
+            "runefoble-campaign-analytics",
         ),
     ]
 

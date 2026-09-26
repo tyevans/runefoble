@@ -12,6 +12,7 @@ export * from './components/runefoble-voice-controls.ts';
 export * from './components/runefoble-settings-modal.ts';
 export * from './components/runefoble-header.ts';
 export * from './components/runefoble-campaign-nav.ts';
+export * from './components/runefoble-campaign-analytics.ts';
 export * from './styles/app-shell.styles.ts';
 export * from './utils/dice.ts';
 export * from './runefoble-app.ts';

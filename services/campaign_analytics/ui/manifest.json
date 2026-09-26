@@ -1,0 +1,10 @@
+{
+  "service": "campaign-analytics",
+  "package": "@runefoble/campaign-analytics-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-campaign-analytics",
+    "runefoble-combat-heatmap",
+    "runefoble-chronicle-timeline"
+  ]
+}

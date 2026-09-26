@@ -163,7 +163,7 @@ GET /api/v1/analytics/campaigns/{campaign_id}/timeline
 
 ---
 
-## 6. Microfrontend Discovery
+## 6. Microfrontend Discovery & Usage
 
 The service exports its frontend component manifest at `/ui/manifest`:
 
@@ -171,4 +171,34 @@ The service exports its frontend component manifest at `/ui/manifest`:
 GET /ui/manifest
 ```
 
-Response exposes the `<runefoble-campaign-analytics>` custom element for seamless aggregation into the App Shell.
+### Manifest Response
+```json
+{
+  "service": "campaign-analytics",
+  "package": "@runefoble/campaign-analytics-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-campaign-analytics",
+    "runefoble-combat-heatmap",
+    "runefoble-chronicle-timeline",
+    "runefoble-campaign-telemetry"
+  ]
+}
+```
+
+### Embedding `<runefoble-campaign-analytics>` in the App Shell
+```html
+<script type="module" src="/services/campaign_analytics/ui/src/index.ts"></script>
+
+<runefoble-campaign-analytics
+  campaignId="c-sunken-temple"
+  sessionId="sess-03"
+  encounterId="enc-grotto-clash"
+  apiBaseUrl="http://localhost:8011"
+></runefoble-campaign-analytics>
+```
+
+### Subcomponents & Storybook Verification
+- `<runefoble-combat-heatmap>`: Canvas-based 2D grid overlay visualizing movement corridors, hazard areas, knockouts, and density heatmaps with metric filters (`all`, `damage`, `hit`, `movement`).
+- `<runefoble-chronicle-timeline>`: Interactive scrubber with auto-playback and click-to-play audio recap snippets.
+- Interactive Storybook stories are co-located in `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` with test states for `EmptyState`, `ActiveCombatTelemetry`, `VictoryCelebration`, and `TotalPartyKill`.

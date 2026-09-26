@@ -16,6 +16,9 @@ importers:
       '@runefoble/board-state-ui':
         specifier: workspace:*
         version: link:../services/board_state/ui
+      '@runefoble/campaign-analytics-ui':
+        specifier: workspace:*
+        version: link:../services/campaign_analytics/ui
       '@runefoble/campaign-lore-ui':
         specifier: workspace:*
         version: link:../services/campaign_lore/ui
@@ -109,6 +112,16 @@ importers:
         version: 5.7.3
 
   services/board_state/ui:
+    dependencies:
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ~7.0.2
+        version: 7.0.2
+
+  services/campaign_analytics/ui:
     dependencies:
       lit:
         specifier: ^3.3.3
