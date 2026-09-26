@@ -109,9 +109,10 @@ def get_ui_manifest() -> dict[str, Any]:
         "service": "campaign-analytics",
         "package": "@runefoble/campaign-analytics-ui",
         "components": [
-            "runefoble-campaign-telemetry",
-            "runefoble-chronicle-timeline",
+            "runefoble-campaign-analytics",
             "runefoble-combat-heatmap",
+            "runefoble-chronicle-timeline",
+            "runefoble-campaign-telemetry",
         ],
         "version": "0.1.0",
     }

@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend (`TASK-0110`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0011`, `ADR-0013`)**:
+  - Vendored `<runefoble-campaign-analytics>` Lit Web Component in `services/campaign_analytics/ui/` with Bauhaus geometric tokens, full dark/light contrast, and strict Shadow DOM encapsulation.
+  - Implemented `<runefoble-combat-heatmap>` rendering canvas-based 2D tactical grid overlays with movement corridors, hazard hotspots, knockout markers, and dynamic density metric filters (`all`, `damage`, `hit`, `movement`).
+  - Implemented `<runefoble-chronicle-timeline>` interactive living chronicle scrubber with round stepping, auto-playback, and click-to-play audio recap triggers.
+  - Implemented party performance infographics featuring SVG/CSS token distribution bar charts (damage dealt, damage taken, healing output) and MVP achievement badges.
+  - Created Storybook stories covering empty state, active combat telemetry, victory celebration, and total party kill (TPK) states with zero console errors.
+  - Exported service discovery manifest at `GET /ui/manifest` and in `services/campaign_analytics/ui/manifest.json`.
+  - Added frontdoor blackbox test suite in `tests/test_blackbox_campaign_analytics_ui.py` and updated Diataxis guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md`.
+
 - **PRD Creation, Maintenance, and Task Decomposition Pipeline (`tools/prd_pipeline`, `scripts/decompose-prds.sh`, `ADR-0003`, `ADR-0013`)**:
   - Implemented modular PRD pipeline engine in `tools/prd_pipeline/` with CLI entrypoint `tools.prd_pipeline.cli` and executable shell wrapper `scripts/decompose-prds.sh`.
   - Added automated auditing command (`audit`) detecting undecomposed and underdecomposed PRDs, buffer exhaustion warnings (<8 items), stale cross-directory task links, and oversized proposed tasks.
