@@ -10,7 +10,10 @@
     ".": "./src/index.ts",
     "./runefoble-character-card": "./src/runefoble-character-card.ts",
     "./runefoble-absentee-recap": "./src/runefoble-absentee-recap.ts",
-    "./runefoble-absentee-recap.styles": "./src/runefoble-absentee-recap.styles.ts"
+    "./runefoble-absentee-recap.styles": "./src/runefoble-absentee-recap.styles.ts",
+    "./runefoble-character-sheet": "./src/runefoble-character-sheet.ts",
+    "./runefoble-character-sheet.styles": "./src/runefoble-character-sheet.styles.ts",
+    "./runefoble-character-sheet.types": "./src/runefoble-character-sheet.types.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

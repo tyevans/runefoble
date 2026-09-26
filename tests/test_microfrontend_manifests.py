@@ -82,6 +82,7 @@ def test_character_sheet_ui_manifest_frontdoor(character_client):
     assert data["package"] == "@runefoble/character-sheet-ui"
     assert "runefoble-character-card" in data["components"]
     assert "runefoble-absentee-recap" in data["components"]
+    assert "runefoble-character-sheet" in data["components"]
 
 
 def test_game_session_ui_manifest_frontdoor(session_client):
@@ -148,6 +149,11 @@ def test_service_ui_package_integrity():
             "services/character_sheet/ui",
             "@runefoble/character-sheet-ui",
             "runefoble-character-card",
+        ),
+        (
+            "services/character_sheet/ui",
+            "@runefoble/character-sheet-ui",
+            "runefoble-character-sheet",
         ),
         ("services/game_session/ui", "@runefoble/game-session-ui", "runefoble-initiative-tracker"),
         ("services/the_watcher/ui", "@runefoble/the-watcher-ui", "runefoble-watcher-feed"),
