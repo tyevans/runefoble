@@ -1,0 +1,17 @@
+{
+  "service": "soundscape",
+  "package": "@runefoble/soundscape-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-soundscape-controls"
+  ],
+  "tags": [
+    "runefoble-soundscape-controls"
+  ],
+  "styles": [
+    "./src/runefoble-soundscape-controls.styles.ts"
+  ],
+  "scripts": [
+    "./src/index.ts"
+  ]
+}

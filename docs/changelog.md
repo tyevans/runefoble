@@ -15,6 +15,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Preserved 100% backward-compatible initialization and public contract on `CampaignAnalyticsWorker` (`start()`, `stop()`, `process_event()`, `handle_event()`, and spatial tracking properties).
   - Added modular decomposition verification tests in `tests/test_campaign_analytics_modular_decomposition.py` and updated Diataxis documentation.
 
+- **Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls (`TASK-0109`, `PRD-0010`, `US-0039`, `US-0053`, `ADR-0003`, `ADR-0004`, `ADR-0006`, `ADR-0007`, `ADR-0013`)**:
+  - Vendored `<runefoble-soundscape-controls>` Lit Web Component in `services/soundscape/ui/` with Bauhaus tokens and strict Shadow DOM encapsulation.
+  - Implemented multi-channel stem sliders (`melody`, `percussion`, `drone`, `ambient`) and master volume controls emitting `soundscape-volume` and `soundscape-stem-volume` events.
+  - Implemented tactile soundboard grid with customizable foley preset buttons (`thunder`, `door_slam`, `steel_clash`, `roar`, `fireball`, `shield_block`) and client-side synthesized WebAudio earcon acoustic feedback.
+  - Implemented WebAudio ducking coordinator managing -12dB attenuation triggered by voice activity and tactical cues.
+  - Exposed service microfrontend manifest at `GET /ui/manifest` and `services/soundscape/ui/manifest.json`.
+  - Added App Shell forwarding export in `frontend/src/components/runefoble-soundscape-controls.ts` and re-exported in `frontend/src/index.ts`.
+  - Authored frontdoor blackbox test suite in `tests/test_blackbox_soundscape_ui.py` and updated Diataxis documentation in `docs/how-to/manage-dynamic-soundscapes-and-audio-ducking.md`.
+
 - **Downtime Activities, Alchemical Crafting & Party Stronghold Engine (`TASK-0100`, `PRD-0014`, `US-0044`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
   - Implemented `CraftingAggregate` in `character_sheet` modeling reagent affinity, catalytic stabilization, and volatile mishap risk matrices emitting `CraftingAttempted`, `CraftingSucceeded`, and `CraftingMishapOccurred`.
   - Implemented `StrongholdAggregate` and Campfire Rest sequence in `game_session` supporting multi-tier base upgrades (watchtower, herbal rack, arcane forge), passive campaign resting boons, and collaborative storytelling prompts emitting `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`.
@@ -480,19 +489,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 #### Added
 - **Monorepo Workspace Foundation (`TASK-0000`, `ADR-0003`)**:
-  - UV workspace monorepo managing shared libraries and services.
-  - Shared packages: `runefoble_platform`, `runefoble_auth`, `runefoble_events`.
-- **Core Microservices**:
-  - `the_watcher`: Autonomous DM, speech-to-intent engine, and absentee player stand-in.
-  - `game_session`: Session lifecycles, initiative order, turns, and dice roll mechanics.
-  - `board_state`: Tactical square/hex grid, token positioning, and fog of war.
-  - `character_sheet`: Character stats, HP tracking, inventory, and session miss penalties.
-  - `voice_agent`: WebRTC voice streaming, STT/TTS pipeline, and audio DSP.
+  - UV workspace monorepo managing shared libraries (`runefoble_platform`, `runefoble_auth`, `runefoble_events`) and microservices.
+- **Core Microservices & Tabletop Engine**:
+  - `the_watcher` (autonomous DM & intent engine), `game_session` (lifecycle, initiative & dice), `board_state` (grid & tokens), `character_sheet` (stats & inventory), `voice_agent` (WebRTC audio DSP).
 - **Unified API Gateway & FastMCP**:
-  - API Gateway aggregating HTTP, WebSockets, and OpenAPI specs into Swagger UI.
-  - FastMCP gateway exposing tabletop tools and game resources to LLM agents.
-- **Infrastructure & Frontend**:
-  - Local Kubernetes Kind cluster setup with Traefik ingress and umbrella Helm chart.
-  - Lit + Vite frontend with Storybook design system aggregator and Bauhaus tokens.
-- **Diataxis Documentation System**:
-  - Complete Diataxis documentation suite (tutorials, how-to guides, reference, explanations).
+  - Gateway aggregating HTTP, WebSockets, and Swagger UI; FastMCP gateway exposing tabletop tools and resources to LLMs.
+- **Infrastructure, Frontend & Diataxis Documentation**:
+  - Kind Kubernetes cluster with Traefik ingress, Helm chart, Lit + Vite frontend with Storybook Bauhaus design system, and complete Diataxis documentation suite.
