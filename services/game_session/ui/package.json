@@ -13,6 +13,8 @@
     "./runefoble-dice-roller": "./src/runefoble-dice-roller.ts",
     "./runefoble-spectator-view": "./src/runefoble-spectator-view.ts",
     "./runefoble-spectator-view.styles": "./src/runefoble-spectator-view.styles.ts",
+    "./runefoble-spectator-overlay": "./src/runefoble-spectator-overlay.ts",
+    "./runefoble-spectator-overlay.styles": "./src/runefoble-spectator-overlay.styles.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {

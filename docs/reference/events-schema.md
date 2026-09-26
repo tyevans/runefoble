@@ -51,6 +51,21 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `previous_turn`: Integer
   - `new_turn`: Integer
   - `active_character_id`: Optional[UUID]
+- **`TurnStarted`**: Emitted when a combatant begins their turn, triggering autonomous camera focus.
+  - `session_id`: UUID | str
+  - `turn_number`: Integer
+  - `character_id`: UUID | str
+  - `character_name`: String
+  - `token_id`: Optional[String]
+- **`CameraTargetUpdated`**: Emitted when cinematic director recalculates camera viewport target (`runefoble.events.session.camera_target_updated`).
+  - `session_id`: String
+  - `target_x`: Float
+  - `target_y`: Float
+  - `zoom`: Float (default 1.5)
+  - `duration_ms`: Integer (default 300)
+  - `easing`: String (cubic-bezier)
+  - `active_token_id`: Optional[String]
+  - `reason`: String ("turn_started", "token_moved")
 - **`CombatEncounterStarted`**: Emitted when a combat encounter is initiated.
   - `session_id`: Optional[UUID | str]
   - `round_number`: Integer (default 1)

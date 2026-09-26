@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added comprehensive blackbox TDD test suite in `tests/test_blackbox_uvtt_import.py` asserting multipart file ingestion, wall projection, Silo S3 persistence, and dynamic FastMCP execution.
   - Published Diataxis how-to guide `docs/how-to/import-universal-vtt-maps-and-register-dynamic-tools.md` and updated technical references.
 
+- **Cinematic Director Auto-Camera and OBS Stream Overlay (`TASK-0056`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
+  - Implemented autonomous Cinematic Director virtual camera (`gateway_api.cinematic_director`) tracking active turn events (`TurnStarted`) and action centers (`TokenMoved`) with smooth cubic-bezier easing (`cubic-bezier(0.25, 0.1, 0.25, 1.0)`) within 300ms.
+  - Exposed OBS transparent stream overlay route `GET /overlay/party-vitals/{session_id}` serving alpha-transparent canvas (`rgba(0, 0, 0, 0)`) with zero DM secret leakage (100% exclusion of hidden traps, unrevealed monster HP numbers, and DM notes).
+  - Built real-time spectator WebSocket feed at `/ws/overlay/{session_id}` streaming sanitized party vitals, roll animations, and camera target updates.
+  - Vendored `<runefoble-spectator-overlay>` Lit Web Component in `services/game_session/ui/src/` with Bauhaus design tokens, interactive Storybook stories, and advertised via `services/game_session/ui/manifest.json`.
+  - Added blackbox TDD test suite in `tests/test_blackbox_cinematic_director.py` and Diataxis How-to guide in `docs/how-to/broadcast-obs-stream-overlay-and-cinematic-camera.md`.
+
 - **Backlog Curation, Invariant Health Protection, and Milestone 4 JIT Buffer Replenishment (`ADR-0009`)**:
   - Audited repository file lengths against Hard Invariant 6 (< 500 lines); verified zero violations across 600+ source files.
   - Preemptively proposed 4 modular decomposition tasks in `docs/project/backlog/proposed/` for files approaching limit:
