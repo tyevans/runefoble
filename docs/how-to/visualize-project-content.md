@@ -76,7 +76,15 @@ python3 -m tools.project_visualizer.cli export-json --out dist/project-data.json
 
 ### 🌐 Relationship Graph & Traceability Network
 - **Interactive 2D Relationship Graph**: Real 2D node-link network visualization connecting Personas, User Stories, PRDs, Backlog Tasks, and ADRs with directional relationship edges (`desires`, `specifies`, `implements`, `governed_by`, `deploys_to`, `depends_on`).
-- **Interactive Pan, Zoom, and Drag**: Smooth SVG canvas navigation with mouse drag, wheel zoom, and draggable node exploration.
+- **Multiple Layout Engines**: Switch seamlessly on the fly between:
+  - **Force-Directed Physics**: Coulomb node repulsion, Hooke's Law spring tension, and centering gravity.
+  - **Cyber-Flow DAG**: Layered rank-based columns for top-to-bottom or left-to-right lineage.
+  - **Concentric Radar**: Radial orbits grouping entities by architectural tier (Personas -> Stories -> PRDs -> Tasks -> ADRs).
+- **Live Physics Engine (`ForceSimulation`)**: Smooth 60 FPS particle dynamics with live drag-to-pin, freeze/unfreeze simulation toggle, and dynamic reheat shuffle.
+- **Cyber-Rune Aesthetics & Animated Energy Flow**: Bauhaus geometric node styling with neon halo rings, status badges, linked PR chips, and animated SVG pulse currents flowing along active dependency edges.
+- **Interactive Minimap Navigator**: Real-time bird's-eye canvas minimap with live camera viewport rectangle, click-to-teleport, and instant spatial orientation.
+- **Search Auto-Focus & Concentric Ripple Ping**: Searching or selecting an entity smoothly centers the camera and emits an animated sonar ripple ping to spotlight the target.
+- **Glassmorphism Detail Tooltips & Fullscreen Mode**: Rich floating hover preview cards with node status, linked PRs, and quick actions, plus full-canvas immersion mode.
 - **Bidirectional Lineage Traversal**: Clicking any node illuminates its entire upstream and downstream dependency chain while dimming unrelated entities.
 - **Traceability Multi-Column Flow**: Visual column layout displaying end-to-end lineage across documents with live breadcrumb trails.
 - **Hide Done Toggle**: Instantly filters out completed tasks and their isolated edges from the graph.
