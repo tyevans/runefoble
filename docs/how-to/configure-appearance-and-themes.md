@@ -84,6 +84,14 @@ The settings dialog uses a modular architecture decomposed into dedicated subcom
 - `<runefoble-settings-dice>`: 3D kinetic dice physics toggles, spatial foley audio switches, and d20 test roll buttons.
 - `ThemeSettingsController`: Lit ReactiveController managing `localStorage` synchronization and OS media query tracking.
 
+### Modular Style Architecture
+
+In accordance with Hard Invariant 6 (File length limit < 500 lines), modal styles are decomposed into single-responsibility Lit CSS sub-modules in `frontend/src/components/styles/`:
+- `settings-modal-layout.styles.ts`: Backdrop overlay, dialog container animations, header, responsive breakpoints, and footer action buttons.
+- `settings-modal-tabs.styles.ts`: Tab navigation bar, panel transitions, radio toggle cards, and setting group titles.
+- `settings-modal-controls.styles.ts`: Palette swatches, select menus, range sliders, and checkbox toggles.
+- `runefoble-settings-modal.styles.ts`: Clean composite export aggregating `[layoutStyles, tabsStyles, controlsStyles]`.
+
 ## 6. Testing Themes and Tab Panels in Storybook
 
 To visually inspect modal states and individual tab panels:

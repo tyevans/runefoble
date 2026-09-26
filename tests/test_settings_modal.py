@@ -12,6 +12,9 @@ SETTINGS_MODAL_TS = FRONTEND_DIR / "src" / "components" / "runefoble-settings-mo
 SETTINGS_MODAL_STYLES_TS = (
     FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.styles.ts"
 )
+SETTINGS_LAYOUT_STYLES_TS = (
+    FRONTEND_DIR / "src" / "components" / "styles" / "settings-modal-layout.styles.ts"
+)
 HEADER_TS = FRONTEND_DIR / "src" / "components" / "runefoble-header.ts"
 STORIES_TS = FRONTEND_DIR / "src" / "stories" / "runefoble-settings-modal.stories.ts"
 INDEX_TS = FRONTEND_DIR / "src" / "index.ts"
@@ -33,7 +36,11 @@ def test_settings_modal_registration_and_properties():
 def test_settings_modal_dialog_architecture():
     """Verify modal dialog backdrop overlay, accessibility ARIA attributes, and focus trap."""
     content = SETTINGS_MODAL_TS.read_text(encoding="utf-8")
-    styles_content = SETTINGS_MODAL_STYLES_TS.read_text(encoding="utf-8")
+    styles_content = (
+        SETTINGS_LAYOUT_STYLES_TS.read_text(encoding="utf-8")
+        if SETTINGS_LAYOUT_STYLES_TS.is_file()
+        else SETTINGS_MODAL_STYLES_TS.read_text(encoding="utf-8")
+    )
     assert ".modal-overlay" in styles_content
     assert "backdrop-filter: blur(4px)" in styles_content
     assert 'role="dialog"' in content
