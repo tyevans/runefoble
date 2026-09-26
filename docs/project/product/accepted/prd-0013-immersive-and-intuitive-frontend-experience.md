@@ -1,7 +1,7 @@
 ---
 id: '0013'
 title: Immersive & Intuitive Frontend Experience with Tactile Board Kinematics
-status: Shaped
+status: Accepted
 created: 2026-09-25
 ---
 

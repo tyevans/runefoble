@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
 import './runefoble-board.ts';
-import type { BoardToken } from './runefoble-board.ts';
+import type { BoardToken, GhostPreviewState, TerrainCell } from './runefoble-board.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleBoard',
@@ -19,6 +19,13 @@ const sampleTokens: BoardToken[] = [
   { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, isHostile: true, color: '#dc2626', hp: 52, maxHp: 75 },
 ];
 
+const sampleTerrain: TerrainCell[] = [
+  { x: 3, y: 2, terrainType: 'difficult' },
+  { x: 4, y: 2, terrainType: 'difficult' },
+  { x: 4, y: 3, terrainType: 'difficult' },
+  { x: 5, y: 4, terrainType: 'normal', hazard: 'lava' },
+];
+
 export const Default: Story = {
   render: () => html`
     <runefoble-board
@@ -30,6 +37,97 @@ export const Default: Story = {
   `,
 };
 
+// Story 1: Token kinematics with path measurement and terrain highlight
+export const TokenKinematicsAndMeasurement: Story = {
+  render: () => html`
+    <runefoble-board
+      .cols=${8}
+      .rows=${8}
+      .tokens=${sampleTokens}
+      .terrainCells=${sampleTerrain}
+      watcherStatus="Drag any token to test tactile kinematics, 5-ft waypoint ruler, and terrain penalties."
+    ></runefoble-board>
+  `,
+};
+
+// Story 2: Spoken ghost preview with interactive confirmation tap
+export const SpokenGhostPreviewWithConfirmation: Story = {
+  render: () => {
+    const previewState: GhostPreviewState = {
+      tokenId: '1',
+      tokenName: 'Valeros',
+      fromX: 2,
+      fromY: 3,
+      toX: 5,
+      toY: 3,
+      totalDistanceFt: 20, // 2 normal (10ft) + 1 difficult (10ft) = 20ft
+      baseDistanceFt: 15,
+      terrainPenaltyFt: 5,
+      movementCost: 4,
+      waypoints: [
+        { x: 3, y: 3, step: 1, distanceFt: 5, isDifficult: false },
+        { x: 4, y: 3, step: 2, distanceFt: 15, isDifficult: true },
+        { x: 5, y: 3, step: 3, distanceFt: 20, isDifficult: false },
+      ],
+      difficultCells: [[4, 3]],
+      hazardCells: [],
+      timeoutSeconds: 15,
+      remainingSeconds: 14,
+      speakerName: 'Valeros',
+      rawTranscript: 'Valeros charges 3 squares east toward the goblin flank',
+    };
+
+    return html`
+      <runefoble-board
+        .cols=${8}
+        .rows=${8}
+        .tokens=${sampleTokens}
+        .terrainCells=${sampleTerrain}
+        .activeGhost=${previewState}
+        watcherStatus="Speech Intent Parsed: 'Valeros charges 3 squares east'. Click ghost or Confirm to execute."
+      ></runefoble-board>
+    `;
+  },
+};
+
+// Story 3: Ghost cancellation and timeout rollback
+export const GhostCancellationAndTimeout: Story = {
+  render: () => {
+    const expiringGhost: GhostPreviewState = {
+      tokenId: '2',
+      tokenName: 'Kyra (AI)',
+      fromX: 3,
+      fromY: 3,
+      toX: 5,
+      toY: 4,
+      totalDistanceFt: 15,
+      waypoints: [
+        { x: 4, y: 3, step: 1, distanceFt: 10, isDifficult: true },
+        { x: 5, y: 4, step: 2, distanceFt: 15, isDifficult: false, hazard: 'lava' },
+      ],
+      difficultCells: [[4, 3]],
+      hazardCells: [[5, 4]],
+      hazardTriggered: 'lava',
+      damageDice: '2d10',
+      timeoutSeconds: 15,
+      remainingSeconds: 4,
+      speakerName: 'Kyra',
+      rawTranscript: 'Kyra moves toward the molten altar',
+    };
+
+    return html`
+      <runefoble-board
+        .cols=${8}
+        .rows=${8}
+        .tokens=${sampleTokens}
+        .terrainCells=${sampleTerrain}
+        .activeGhost=${expiringGhost}
+        watcherStatus="Ghost preview expiring in 4s. Tap Cancel to rollback or let timeout discard."
+      ></runefoble-board>
+    `;
+  },
+};
+
 export const ActiveEncounter: Story = {
   render: () => html`
     <runefoble-board
@@ -39,6 +137,7 @@ export const ActiveEncounter: Story = {
         ...sampleTokens,
         { id: '5', name: 'Ezren', x: 1, y: 4, color: '#9333ea', hp: 22, maxHp: 22, visionRadius: 3 },
       ]}
+      .terrainCells=${sampleTerrain}
       watcherStatus="Voice detected: 'Valeros charges 2 squares east!'"
     ></runefoble-board>
   `,

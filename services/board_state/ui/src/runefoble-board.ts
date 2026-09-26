@@ -1,258 +1,175 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import type {
+  BoardToken,
+  DragKinematicsState,
+  GhostPreviewState,
+  TerrainCell,
+} from './board-types.ts';
+import {
+  getHealthBarColor,
+  renderDistanceRuler,
+  renderGhostBanner,
+  renderVectorOverlay,
+} from './board-templates.ts';
+import {
+  calculateVectorLineCoordinates,
+  GhostPreviewEngine,
+  parseIncomingGhostPreview,
+} from './ghost_preview.ts';
+import {
+  computeGridTrajectory,
+  computeRouteMetrics,
+  snapToGrid,
+} from './kinematics.ts';
+import { boardStyles } from './runefoble-board.styles.ts';
 
-export interface BoardToken {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  avatarUrl?: string;
-  isAiControlled?: boolean;
-  color?: string;
-  hp?: number;
-  maxHp?: number;
-  visionRadius?: number;
-  isHostile?: boolean;
-  isActiveTurn?: boolean;
-}
+export type * from './board-types.ts';
+export * from './ghost_preview.ts';
+export * from './kinematics.ts';
 
 @customElement('runefoble-board')
 export class RunefobleBoard extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-      font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
-      color: var(--rf-text-primary, #121212);
-      background: var(--rf-bg-surface, #ffffff);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      border-radius: var(--rf-border-radius, 0px);
-      padding: 16px;
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
-      box-sizing: border-box;
-      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .title {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: var(--rf-text-primary, #121212);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .watcher-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--rf-bg-canvas, #f8f9fa);
-      color: var(--rf-text-primary, #121212);
-      padding: 4px 10px;
-      border-radius: var(--rf-border-radius, 0px);
-      font-size: 0.75rem;
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
-      font-weight: 700;
-    }
-    .fog-toggle {
-      background: var(--rf-bg-surface, #ffffff);
-      color: var(--rf-text-muted, #4b5563);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      border-radius: var(--rf-border-radius, 0px);
-      padding: 4px 8px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
-      transition: all 0.2s;
-    }
-    .fog-toggle.active {
-      background: var(--rf-accent-tertiary, #ffb703);
-      color: var(--rf-color-dark, #121212);
-    }
-    .grid {
-      display: grid;
-      gap: 2px;
-      background: var(--rf-border-color, #121212);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      border-radius: var(--rf-border-radius, 0px);
-      overflow: hidden;
-      width: fit-content;
-      margin: 0 auto;
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
-    }
-    .cell {
-      width: 54px;
-      height: 54px;
-      background: var(--rf-bg-surface, #ffffff);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      cursor: pointer;
-      transition: background 0.15s ease-in-out, filter 0.2s ease-in-out;
-    }
-    .cell:hover:not(.fog) {
-      background: var(--rf-bg-canvas, #f8f9fa);
-    }
-    .cell.fog {
-      background: var(--rf-color-dark, #121212);
-      filter: brightness(0.6);
-      cursor: not-allowed;
-    }
-    .cell.fog::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        45deg,
-        rgba(0, 0, 0, 0.4),
-        rgba(0, 0, 0, 0.4) 4px,
-        rgba(0, 0, 0, 0.6) 4px,
-        rgba(0, 0, 0, 0.6) 8px
-      );
-      pointer-events: none;
-    }
-    .coord-label {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      font-size: 0.6rem;
-      color: var(--rf-text-muted, #4b5563);
-      pointer-events: none;
-      user-select: none;
-      font-weight: 700;
-    }
-    .token-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      z-index: 2;
-    }
-    .token {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 0.75rem;
-      color: #ffffff;
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
-      user-select: none;
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-      position: relative;
-    }
-    .token:hover {
-      transform: scale(1.12);
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
-    }
-    .token.ai {
-      outline: 2px dashed var(--rf-accent-tertiary, #ffb703);
-      outline-offset: 1px;
-    }
-    .token.hostile {
-      outline: 2px solid var(--rf-accent-primary, #e63946);
-      outline-offset: 1px;
-    }
-    .token.active-turn {
-      animation: gold-pulse 1.6s infinite ease-in-out;
-      outline: 3px solid var(--rf-accent-tertiary, #ffb703);
-    }
-    @keyframes gold-pulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(255, 183, 3, 0.8), var(--rf-shadow-sm, 2px 2px 0px #121212);
-      }
-      70% {
-        box-shadow: 0 0 0 8px rgba(255, 183, 3, 0), var(--rf-shadow-sm, 2px 2px 0px #121212);
-      }
-      100% {
-        box-shadow: 0 0 0 0 rgba(255, 183, 3, 0), var(--rf-shadow-sm, 2px 2px 0px #121212);
-      }
-    }
-    .health-bar-container {
-      width: 36px;
-      height: 6px;
-      background: var(--rf-bg-canvas, #f8f9fa);
-      border: 1px solid var(--rf-border-color, #121212);
-      border-radius: var(--rf-border-radius, 0px);
-      margin-top: 2px;
-      overflow: hidden;
-    }
-    .health-bar-fill {
-      height: 100%;
-      transition: width 0.3s ease-in-out, background 0.3s ease-in-out;
-    }
-    .status-bar {
-      margin-top: 12px;
-      font-size: 0.85rem;
-      color: var(--rf-text-muted, #4b5563);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .legend {
-      display: flex;
-      gap: 12px;
-      font-size: 0.75rem;
-      color: var(--rf-text-muted, #4b5563);
-      flex-wrap: wrap;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-weight: 600;
-    }
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      border: 1px solid var(--rf-border-color, #121212);
-    }
-  `;
+  // Adopts Bauhaus design tokens: var(--rf-border-color, #121212)
+  static styles = boardStyles;
 
   @property({ type: Number }) cols = 8;
   @property({ type: Number }) rows = 8;
   @property({ type: Array }) tokens: BoardToken[] = [];
+  @property({ type: Array }) terrainCells: TerrainCell[] = [];
+  @property({ type: Object }) activeGhost: GhostPreviewState | null = null;
   @property({ type: String }) watcherStatus = 'Observing session...';
   @property({ type: Boolean }) fogOfWar = false;
   @property({ type: String }) activeTurnTokenId: string | null = null;
+  @property({ type: String }) websocketUrl: string | null = null;
 
   @state() private selectedTokenId: string | null = null;
+  @state() private dragState: DragKinematicsState | null = null;
+  @state() private localGhost: GhostPreviewState | null = null;
+
+  private ghostEngine: GhostPreviewEngine | null = null;
+  private ws: WebSocket | null = null;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.ghostEngine = new GhostPreviewEngine(
+      (preview) => {
+        this.localGhost = preview;
+        this.requestUpdate();
+      },
+      () => {
+        this.dispatchEvent(
+          new CustomEvent('ghost-timeout', {
+            detail: { tokenId: this.localGhost?.tokenId },
+            bubbles: true,
+            composed: true,
+          })
+        );
+      }
+    );
+
+    if (this.activeGhost) {
+      this.ghostEngine.stage(this.activeGhost);
+    }
+    if (this.websocketUrl) {
+      this.connectWebSocket(this.websocketUrl);
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.ghostEngine?.dispose();
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+
+  updated(changedProperties: Map<string, any>) {
+    if (changedProperties.has('activeGhost') && this.activeGhost !== this.localGhost) {
+      if (this.activeGhost) {
+        this.ghostEngine?.stage(this.activeGhost);
+      } else {
+        this.ghostEngine?.cancel();
+      }
+    }
+  }
+
+  private connectWebSocket(url: string) {
+    try {
+      this.ws = new WebSocket(url);
+      this.ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.handleIncomingSocketMessage(data);
+        } catch {
+          // ignore non-json messages
+        }
+      };
+    } catch {
+      // ignore connection failure in disconnected dev modes
+    }
+  }
+
+  public handleIncomingSocketMessage(data: any) {
+    const action = data.action || data.type;
+    if (action === 'ghost_preview' || action === 'preview_move' || action === 'SpeechIntentParsed') {
+      const parsed = parseIncomingGhostPreview(data, this.tokens, this.terrainCells);
+      if (parsed) {
+        this.ghostEngine?.stage(parsed);
+      }
+    } else if (action === 'token_moved' || action === 'preview_cancelled') {
+      this.ghostEngine?.cancel();
+    }
+  }
+
+  public stageGhostPreview(data: any): GhostPreviewState | null {
+    const parsed = parseIncomingGhostPreview(data, this.tokens, this.terrainCells);
+    if (parsed) {
+      this.ghostEngine?.stage(parsed);
+    }
+    return parsed;
+  }
+
+  public confirmGhostPreview(): GhostPreviewState | null {
+    const ghost = this.ghostEngine?.confirm();
+    if (ghost) {
+      this.dispatchEvent(
+        new CustomEvent('confirm-ghost', {
+          detail: { ghost },
+          bubbles: true,
+          composed: true,
+        })
+      );
+      this.dispatchEvent(
+        new CustomEvent('move-token', {
+          detail: { tokenId: ghost.tokenId, toX: ghost.toX, toY: ghost.toY },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    }
+    return ghost ?? null;
+  }
+
+  public cancelGhostPreview(): void {
+    const ghost = this.localGhost;
+    this.ghostEngine?.cancel();
+    if (ghost) {
+      this.dispatchEvent(
+        new CustomEvent('cancel-ghost', {
+          detail: { ghost },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    }
+  }
 
   private isCellRevealed(cellX: number, cellY: number): boolean {
-    if (!this.fogOfWar) {
-      return true;
-    }
+    if (!this.fogOfWar) return true;
     const friendlyTokens = this.tokens.filter((t) => !t.isHostile);
-    if (friendlyTokens.length === 0) {
-      return true;
-    }
+    if (friendlyTokens.length === 0) return true;
     return friendlyTokens.some((token) => {
       const radius = token.visionRadius ?? 2;
       const dx = Math.abs(token.x - cellX);
@@ -261,8 +178,87 @@ export class RunefobleBoard extends LitElement {
     });
   }
 
+  private handleTokenPointerDown(e: PointerEvent, token: BoardToken) {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+    this.selectedTokenId = token.id;
+    this.dragState = {
+      tokenId: token.id,
+      startX: token.x,
+      startY: token.y,
+      currentX: token.x,
+      currentY: token.y,
+      targetCellX: token.x,
+      targetCellY: token.y,
+      isDragging: true,
+      totalDistanceFt: 0,
+      waypoints: [],
+      difficultCells: [],
+      hazardCells: [],
+    };
+  }
+
+  private handlePointerMove(e: PointerEvent) {
+    if (!this.dragState?.isDragging) return;
+
+    const gridEl = this.shadowRoot?.querySelector('.grid') as HTMLElement;
+    if (!gridEl) return;
+
+    const rect = gridEl.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    const { cellX, cellY } = snapToGrid(offsetX, offsetY, 56, this.cols, this.rows);
+
+    if (cellX !== this.dragState.targetCellX || cellY !== this.dragState.targetCellY) {
+      const path = computeGridTrajectory(
+        this.dragState.startX,
+        this.dragState.startY,
+        cellX,
+        cellY
+      );
+      const metrics = computeRouteMetrics(path, this.terrainCells);
+
+      this.dragState = {
+        ...this.dragState,
+        targetCellX: cellX,
+        targetCellY: cellY,
+        totalDistanceFt: metrics.totalDistanceFt,
+        waypoints: metrics.waypoints,
+        difficultCells: metrics.difficultCells,
+        hazardCells: metrics.hazardCells,
+      };
+    }
+  }
+
+  private handlePointerUp(e: PointerEvent) {
+    if (!this.dragState?.isDragging) return;
+
+    const targetX = this.dragState.targetCellX;
+    const targetY = this.dragState.targetCellY;
+    const tokenId = this.dragState.tokenId;
+
+    if (targetX !== this.dragState.startX || targetY !== this.dragState.startY) {
+      this.dispatchEvent(
+        new CustomEvent('move-token', {
+          detail: { tokenId, toX: targetX, toY: targetY },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    }
+
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+    this.dragState = null;
+  }
+
   private handleCellClick(x: number, y: number) {
-    if (this.selectedTokenId) {
+    if (this.selectedTokenId && !this.dragState?.isDragging) {
       this.dispatchEvent(
         new CustomEvent('move-token', {
           detail: { tokenId: this.selectedTokenId, toX: x, toY: y },
@@ -274,31 +270,24 @@ export class RunefobleBoard extends LitElement {
     }
   }
 
-  private handleTokenClick(e: MouseEvent, token: BoardToken) {
-    e.stopPropagation();
-    this.selectedTokenId = this.selectedTokenId === token.id ? null : token.id;
-    this.dispatchEvent(
-      new CustomEvent('select-token', {
-        detail: { token },
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }
-
   private toggleFog() {
     this.fogOfWar = !this.fogOfWar;
   }
 
-  private getHealthBarColor(hp: number, maxHp: number): string {
-    const ratio = Math.max(0, Math.min(1, hp / maxHp));
-    if (ratio > 0.5) return 'var(--rf-accent-secondary, #1d3557)';
-    if (ratio > 0.2) return 'var(--rf-accent-tertiary, #ffb703)';
-    return 'var(--rf-accent-primary, #e63946)';
-  }
-
   render() {
     const gridStyle = `grid-template-columns: repeat(${this.cols}, 54px); grid-template-rows: repeat(${this.rows}, 54px);`;
+    const ghost = this.localGhost;
+
+    let ghostVector: ReturnType<typeof calculateVectorLineCoordinates> | null = null;
+    if (ghost && (ghost.fromX !== ghost.toX || ghost.fromY !== ghost.toY)) {
+      ghostVector = calculateVectorLineCoordinates(ghost.fromX, ghost.fromY, ghost.toX, ghost.toY, 56);
+    }
+
+    const activeWaypoints = this.dragState?.isDragging
+      ? this.dragState.waypoints
+      : (ghost?.waypoints || []);
+
+    const waypointSet = new Set(activeWaypoints.map((w) => `${w.x},${w.y}`));
 
     return html`
       <div class="header">
@@ -320,50 +309,90 @@ export class RunefobleBoard extends LitElement {
         </div>
       </div>
 
-      <div class="grid" style="${gridStyle}">
-        ${Array.from({ length: this.rows * this.cols }).map((_, index) => {
-          const x = index % this.cols;
-          const y = Math.floor(index / this.cols);
-          const isRevealed = this.isCellRevealed(x, y);
-          const token = this.tokens.find((t) => t.x === x && t.y === y);
-          const isHiddenHostile = token?.isHostile && !isRevealed;
-          const isActiveTurn =
-            token && (token.isActiveTurn || token.id === this.activeTurnTokenId);
+      <div class="grid-wrapper">
+        <div
+          class="grid"
+          style="${gridStyle}"
+          @pointermove="${this.handlePointerMove}"
+          @pointerup="${this.handlePointerUp}"
+        >
+          ${renderVectorOverlay(ghostVector)}
 
-          return html`
-            <div
-              class="cell ${!isRevealed ? 'fog' : ''}"
-              @click="${() => isRevealed && this.handleCellClick(x, y)}"
-            >
-              <span class="coord-label">${x},${y}</span>
-              ${token && !isHiddenHostile
-                ? html`
-                    <div class="token-container">
-                      <div
-                        class="token ${token.isAiControlled ? 'ai' : ''} ${token.isHostile ? 'hostile' : ''} ${isActiveTurn ? 'active-turn' : ''}"
-                        style="background: ${token.color || 'var(--rf-accent-secondary, #1d3557)'}; ${this.selectedTokenId === token.id ? 'outline: 3px solid var(--rf-accent-primary, #e63946);' : ''}"
-                        @click="${(e: MouseEvent) => this.handleTokenClick(e, token)}"
-                        title="${token.name}${token.isAiControlled ? ' (AI Stand-in)' : ''}${token.hp !== undefined ? ` [${token.hp}/${token.maxHp ?? token.hp} HP]` : ''}${isActiveTurn ? ' (Active Turn)' : ''}"
-                      >
-                        ${token.name.slice(0, 2).toUpperCase()}
+          ${Array.from({ length: this.rows * this.cols }).map((_, index) => {
+            const x = index % this.cols;
+            const y = Math.floor(index / this.cols);
+            const isRevealed = this.isCellRevealed(x, y);
+            const terrain = this.terrainCells.find((c) => c.x === x && c.y === y);
+            const isDifficult = terrain?.terrainType === 'difficult';
+            const hazardName = terrain?.hazard;
+            const isWaypoint = waypointSet.has(`${x},${y}`);
+
+            const token = this.tokens.find((t) => t.x === x && t.y === y);
+            const isHiddenHostile = token?.isHostile && !isRevealed;
+            const isActiveTurn = token && (token.isActiveTurn || token.id === this.activeTurnTokenId);
+            const isGhostCell = ghost && ghost.toX === x && ghost.toY === y;
+            const ghostToken = ghost ? this.tokens.find((t) => t.id === ghost.tokenId) : null;
+
+            return html`
+              <div
+                class="cell ${!isRevealed ? 'fog' : ''} ${isDifficult ? 'difficult-terrain' : ''} ${hazardName ? 'hazard-cell' : ''} ${isWaypoint ? 'waypoint-path' : ''}"
+                @click="${() => isRevealed && this.handleCellClick(x, y)}"
+              >
+                <span class="coord-label">${x},${y}</span>
+
+                ${isDifficult ? html`<span class="terrain-badge difficult" title="Difficult terrain: +5ft">▲ +5ft</span>` : nothing}
+                ${hazardName ? html`<span class="terrain-badge hazard" title="Hazard: ${hazardName}">⚠️ ${hazardName}</span>` : nothing}
+
+                ${token && !isHiddenHostile
+                  ? html`
+                      <div class="token-container">
+                        <div
+                          class="token ${token.isAiControlled ? 'ai' : ''} ${token.isHostile ? 'hostile' : ''} ${isActiveTurn ? 'active-turn' : ''} ${this.dragState?.tokenId === token.id ? 'dragging' : ''}"
+                          style="background: ${token.color || 'var(--rf-accent-secondary, #1d3557)'}; ${this.selectedTokenId === token.id ? 'outline: 3px solid var(--rf-accent-primary, #e63946);' : ''}"
+                          @pointerdown="${(e: PointerEvent) => this.handleTokenPointerDown(e, token)}"
+                          title="${token.name}${token.isAiControlled ? ' (AI Stand-in)' : ''}${token.hp !== undefined ? ` [${token.hp}/${token.maxHp ?? token.hp} HP]` : ''}${isActiveTurn ? ' (Active Turn)' : ''}"
+                        >
+                          ${token.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        ${token.hp !== undefined && token.maxHp !== undefined
+                          ? html`
+                              <div class="health-bar-container">
+                                <div
+                                  class="health-bar-fill"
+                                  style="width: ${Math.max(0, Math.min(100, (token.hp / token.maxHp) * 100))}%; background: ${getHealthBarColor(token.hp, token.maxHp)};"
+                                ></div>
+                              </div>
+                            `
+                          : nothing}
                       </div>
-                      ${token.hp !== undefined && token.maxHp !== undefined
-                        ? html`
-                            <div class="health-bar-container">
-                              <div
-                                class="health-bar-fill"
-                                style="width: ${Math.max(0, Math.min(100, (token.hp / token.maxHp) * 100))}%; background: ${this.getHealthBarColor(token.hp, token.maxHp)};"
-                              ></div>
-                            </div>
-                          `
-                        : ''}
-                    </div>
-                  `
-                : ''}
-            </div>
-          `;
-        })}
+                    `
+                  : nothing}
+
+                ${isGhostCell
+                  ? html`
+                      <div
+                        class="ghost-token"
+                        style="background: ${ghostToken?.color || 'var(--rf-accent-secondary, #1d3557)'};"
+                        @click="${() => this.confirmGhostPreview()}"
+                        title="Click to confirm move for ${ghost?.tokenName || 'token'}"
+                      >
+                        ${(ghost?.tokenName || ghostToken?.name || 'GH').slice(0, 2).toUpperCase()}
+                      </div>
+                    `
+                  : nothing}
+              </div>
+            `;
+          })}
+        </div>
+
+        ${renderDistanceRuler(this.dragState)}
       </div>
+
+      ${renderGhostBanner(
+        ghost,
+        () => this.confirmGhostPreview(),
+        () => this.cancelGhostPreview()
+      )}
 
       <div class="status-bar">
         <span>Selected: ${this.selectedTokenId ? this.tokens.find((t) => t.id === this.selectedTokenId)?.name : 'None'}</span>
@@ -371,6 +400,8 @@ export class RunefobleBoard extends LitElement {
           <span class="legend-item"><span class="dot" style="background: var(--rf-accent-tertiary, #ffb703)"></span> Turn</span>
           <span class="legend-item"><span class="dot" style="background: var(--rf-accent-primary, #e63946)"></span> AI</span>
           <span class="legend-item"><span class="dot" style="background: var(--rf-accent-secondary, #1d3557)"></span> Player</span>
+          <span class="legend-item"><span class="dot" style="background: repeating-linear-gradient(45deg, #ffb703, #ffb703 2px, #fff 2px, #fff 4px)"></span> Difficult</span>
+          <span class="legend-item"><span class="dot" style="background: #e63946"></span> Hazard</span>
         </div>
         <span>Grid: ${this.cols} x ${this.rows}</span>
       </div>
