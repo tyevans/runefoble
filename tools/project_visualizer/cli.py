@@ -69,16 +69,22 @@ def main(argv: list[str] | None = None) -> int:
         data = generator.get_data()
         m = data.metrics
         print("=== Runefoble Project Content Statistics ===")
-        print(f"Total Backlog Tasks: {m.total_tasks} ({m.completed_tasks} Complete, {m.refined_tasks} Refined, {m.proposed_tasks} Proposed)")
+        print(
+            f"Total Backlog Tasks: {m.total_tasks} ({m.completed_tasks} Complete, {m.refined_tasks} Refined, {m.proposed_tasks} Proposed)"
+        )
         print(f"Accepted User Stories: {m.total_stories}")
         print(f"Accepted PRDs: {m.total_prds}")
         print(f"Governing ADRs: {m.total_adrs}")
         print(f"Target Personas: {m.total_personas}")
         print(f"Feature Inventory: {m.total_features} ({m.mvp_p0_features} MVP P0)")
         print(f"Traceability Graph Edges: {len(data.edges)}")
-        print(f"Ready Buffer Health: {m.ready_buffer_status.upper()} ({m.ready_buffer_count} items)")
+        print(
+            f"Ready Buffer Health: {m.ready_buffer_status.upper()} ({m.ready_buffer_count} items)"
+        )
         if m.tasks_without_adr:
-            print(f"Tasks without ADRs: {len(m.tasks_without_adr)} ({', '.join(m.tasks_without_adr[:5])}...)")
+            print(
+                f"Tasks without ADRs: {len(m.tasks_without_adr)} ({', '.join(m.tasks_without_adr[:5])}...)"
+            )
         return 0
 
     elif args.command == "export-json":

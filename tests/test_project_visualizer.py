@@ -166,7 +166,9 @@ def test_server_http_endpoints(repo_root: Path):
             assert health["metrics"]["total_tasks"] > 0
 
         # Test GET /api/file
-        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/file?path=docs/project/product/REGISTRY.md") as resp:
+        with urllib.request.urlopen(
+            f"http://127.0.0.1:{port}/api/file?path=docs/project/product/REGISTRY.md"
+        ) as resp:
             assert resp.status == 200
             content = resp.read().decode("utf-8")
             assert "PRD" in content

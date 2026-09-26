@@ -40,9 +40,7 @@ def parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:
             val = val.strip().strip("'\"")
             if val.startswith("[") and val.endswith("]"):
                 items = [
-                    x.strip().strip("'\"")
-                    for x in val[1:-1].split(",")
-                    if x.strip().strip("'\"")
+                    x.strip().strip("'\"") for x in val[1:-1].split(",") if x.strip().strip("'\"")
                 ]
                 meta[key] = items
             else:
@@ -265,9 +263,13 @@ class ProjectParser:
             title = meta.get("title") or (h1.group(2) if h1 else Path(file).stem)
             status = meta.get("status", "Accepted")
 
-            as_a_m = re.search(r"\*\*As an?\*\*\s+(.*?)(?=,\s*\n|\n\*\*I want)", body, re.IGNORECASE)
+            as_a_m = re.search(
+                r"\*\*As an?\*\*\s+(.*?)(?=,\s*\n|\n\*\*I want)", body, re.IGNORECASE
+            )
             want_m = re.search(
-                r"\*\*I want to\*\*\s+(.*?)(?=,\s*\n|\n\*\*So that)", body, re.DOTALL | re.IGNORECASE
+                r"\*\*I want to\*\*\s+(.*?)(?=,\s*\n|\n\*\*So that)",
+                body,
+                re.DOTALL | re.IGNORECASE,
             )
             so_m = re.search(r"\*\*So that\*\*\s+(.*?)(?=\n##|\Z)", body, re.DOTALL | re.IGNORECASE)
 
@@ -395,7 +397,11 @@ class ProjectParser:
             header = lines[0]
             m_id = "M" + header.split(":")[0].strip()
             name = header.split(":", 1)[1].strip() if ":" in header else header
-            status = "Complete" if "Complete" in header else ("Current" if "Current" in header else "Planned")
+            status = (
+                "Complete"
+                if "Complete" in header
+                else ("Current" if "Current" in header else "Planned")
+            )
 
             body = "\n".join(lines[1:])
             tasks_found = re.findall(r"TASK-\d+", body)

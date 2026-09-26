@@ -240,7 +240,7 @@ def render_html_shell(initial_data_json: str, is_live_server: bool = False) -> s
   <!-- EMBEDDED PROJECT DATA -->
   <script>
     window.INITIAL_PROJECT_DATA = {initial_data_json};
-    window.IS_LIVE_SERVER = {'true' if is_live_server else 'false'};
+    window.IS_LIVE_SERVER = {"true" if is_live_server else "false"};
   </script>
 </body>
 </html>

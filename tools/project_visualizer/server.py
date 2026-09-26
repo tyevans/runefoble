@@ -41,7 +41,9 @@ class ProjectVisualizerHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             data = self.generator.get_data()
-            self.wfile.write(json.dumps({"status": "ok", "metrics": data.metrics.__dict__}).encode("utf-8"))
+            self.wfile.write(
+                json.dumps({"status": "ok", "metrics": data.metrics.__dict__}).encode("utf-8")
+            )
             return
 
         elif path == "/api/file":
