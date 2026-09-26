@@ -1,7 +1,7 @@
 ---
 id: '0103'
 title: Interactive Tavern Minigames & Personality-Driven Merchant Haggling
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0010
@@ -17,8 +17,8 @@ governing_prds:
 - PRD-0014
 governing_stories:
 - US-0047
+pr_url: https://github.com/tyevans/runefoble/pull/119
 ---
-
 # TASK-0103: Interactive Tavern Minigames & Personality-Driven Merchant Haggling
 
 ## Status
