@@ -18,6 +18,7 @@ from gateway_api.spectator import (
     get_raw_session_state,
     sanitize_spectator_state,
 )
+from gateway_api.websocket import campaign_websocket_endpoint
 from pydantic import BaseModel
 from runefoble_events import SpectatorSessionConnected
 from runefoble_platform.config import PlatformSettings
@@ -265,6 +266,12 @@ async def get_spectator_state(
 
     raw_state = get_raw_session_state(session_id)
     return sanitize_spectator_state(raw_state, viewer_info=viewer_info)
+
+
+@app.websocket("/ws/campaigns/{campaign_id}")
+async def campaign_websocket(websocket: WebSocket, campaign_id: str):
+    """Zanzibar-protected real-time WebSocket stream for campaign mutations."""
+    await campaign_websocket_endpoint(websocket, campaign_id)
 
 
 @app.websocket("/ws/session/{session_id}")
