@@ -93,6 +93,23 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `imposed_by`: "human_dm" | "the_watcher"
 - **`AbsencePenaltyCleared`**: Emitted when an absence penalty is redeemed.
   - `penalty_type`: String
+- **`CharacterLeveledUp`**: Emitted when a character advances in level, gaining hit points and spell slots (`runefoble.events.character.leveled_up`).
+  - `session_id`: String
+  - `character_id`: String
+  - `new_level`: Integer
+  - `max_hp_increase`: Integer
+  - `spell_slots`: Mapping[Integer, Integer]
+- **`SpellPrepared`**: Emitted when a character prepares a spell into active memory (`runefoble.events.character.spell_prepared`).
+  - `session_id`: String
+  - `character_id`: String
+  - `spell_name`: String
+  - `spell_level`: Integer
+- **`SpellSlotExpended`**: Emitted when a spell is cast and a spell slot is consumed (`runefoble.events.character.spell_slot_expended`).
+  - `session_id`: String
+  - `character_id`: String
+  - `spell_name`: String
+  - `slot_level_used`: Integer
+  - `remaining_slots`: Integer
 
 ### The Watcher & Gameplay Stream Events
 
