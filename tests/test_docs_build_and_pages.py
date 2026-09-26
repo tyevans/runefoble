@@ -102,7 +102,19 @@ def test_docs_site_generation_and_visualizer_integration():
     assert "items" in search_data
     assert len(search_data["items"]) > 100
 
-    # 7. GitHub Pages nojekyll marker
+    # 7. Storybook studio and standalone component catalog
+    sb_studio_index = SITE_DIR / "storybook-studio" / "index.html"
+    assert sb_studio_index.exists()
+    assert "storybook" in sb_studio_index.read_text(encoding="utf-8")
+
+    sb_index = SITE_DIR / "storybook" / "index.html"
+    if (REPO_ROOT / "frontend" / "node_modules").exists() or (
+        REPO_ROOT / "frontend" / "storybook-static"
+    ).exists():
+        assert sb_index.exists()
+        assert (SITE_DIR / "storybook" / "iframe.html").exists()
+
+    # 8. GitHub Pages nojekyll marker
     assert (SITE_DIR / ".nojekyll").exists()
 
 

@@ -10,6 +10,7 @@ edit_uri = "edit/main/docs/"
 nav = [
   { "Overview" = "index.md" },
   { "Project Visualizer" = "project-visualizer.md" },
+  { "Storybook UI Studio" = "storybook-studio.md" },
   { "Tutorials" = [
     { "01. Local Development Setup" = "tutorials/01-local-development-setup.md" },
     { "02. Running Your First Session" = "tutorials/02-running-your-first-session.md" },
