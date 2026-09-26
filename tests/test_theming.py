@@ -9,6 +9,9 @@ INDEX_CSS = FRONTEND_DIR / "src" / "index.css"
 INDEX_HTML = FRONTEND_DIR / "index.html"
 INDEX_TS = FRONTEND_DIR / "src" / "index.ts"
 APP_TS = FRONTEND_DIR / "src" / "runefoble-app.ts"
+HEADER_TS = FRONTEND_DIR / "src" / "components" / "runefoble-header.ts"
+CAMPAIGN_NAV_TS = FRONTEND_DIR / "src" / "components" / "runefoble-campaign-nav.ts"
+APP_SHELL_STYLES_TS = FRONTEND_DIR / "src" / "styles" / "app-shell.styles.ts"
 SWITCHER_TS = FRONTEND_DIR / "src" / "components" / "runefoble-theme-switcher.ts"
 BOARD_TS = REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-board.ts"
 CARD_TS = REPO_ROOT / "services" / "character_sheet" / "ui" / "src" / "runefoble-character-card.ts"
@@ -132,12 +135,14 @@ def test_theme_switcher_component():
 def test_components_adopt_tokens():
     """Verify components consume --rf-* tokens."""
     app_content = APP_TS.read_text(encoding="utf-8")
+    header_content = HEADER_TS.read_text(encoding="utf-8")
+    styles_content = APP_SHELL_STYLES_TS.read_text(encoding="utf-8")
     assert "import './styles/themes.css';" in app_content
     assert "<runefoble-settings-modal" in app_content
-    assert "settings-trigger" in app_content
-    assert "var(--rf-bg-canvas" in app_content
-    assert "var(--rf-text-primary" in app_content
-    assert "var(--rf-border-color" in app_content
+    assert "settings-trigger" in header_content
+    assert "var(--rf-bg-canvas" in styles_content
+    assert "var(--rf-text-primary" in styles_content
+    assert "var(--rf-border-color" in header_content
 
     board_content = BOARD_TS.read_text(encoding="utf-8")
     assert "var(--rf-" in board_content
@@ -183,6 +188,9 @@ def test_file_lengths_under_500_lines():
         INDEX_CSS,
         INDEX_TS,
         APP_TS,
+        HEADER_TS,
+        CAMPAIGN_NAV_TS,
+        APP_SHELL_STYLES_TS,
         SWITCHER_TS,
         settings_modal_ts,
         settings_modal_styles_ts,

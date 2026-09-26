@@ -7,14 +7,14 @@ As bounded context microservices evolve and accumulate capabilities, monolithic 
 
 ## Architecture Pattern
 
-A modular microservice bounded context is organized into:
-1. `routers/`: Distinct, single-responsibility `APIRouter` modules grouped by domain capability.
+A modular microservice bounded context (or unified API Gateway) is organized into:
+1. `routers/`: Distinct, single-responsibility `APIRouter` modules grouped by domain capability (e.g. `campaigns.py`, `spectator.py`, `health.py`).
 2. `dependencies.py`: Shared runtime state, event bus instances, aggregate repositories, and clients.
 3. `models.py`: Pydantic request and response schemas.
 4. `main.py`: Thin orchestration shell (< 100 lines) instantiating FastAPI, mounting routers, exposing `/healthz` and `/ui/manifest`, and re-exporting core symbols.
 
 ```
-services/<service_name>/src/<service_name>/
+services/<service_name>/src/<service_name>/  (or gateway/api/src/gateway_api/)
 ├── __init__.py
 ├── main.py              # Thin orchestration shell (< 100 lines)
 ├── dependencies.py      # Runtime state, event bus, repository
