@@ -79,6 +79,19 @@ def sync_operating_manual() -> None:
     print(f"📖 Synchronized {target_path.relative_to(ROOT_DIR)} from AGENTS.md")
 
 
+def sync_changelog() -> None:
+    """Synchronize docs/changelog.md from root CHANGELOG.md."""
+    changelog_path = ROOT_DIR / "CHANGELOG.md"
+    target_path = DOCS_DIR / "changelog.md"
+
+    if not changelog_path.exists():
+        return
+
+    content = changelog_path.read_text(encoding="utf-8")
+    target_path.write_text(content, encoding="utf-8")
+    print(f"📖 Synchronized {target_path.relative_to(ROOT_DIR)} from CHANGELOG.md")
+
+
 def build_visualizer(env: dict[str, str]) -> Path:
     """Build standalone single-file HTML bundle for docs/project visualizer."""
     DIST_DIR.mkdir(parents=True, exist_ok=True)
@@ -205,6 +218,7 @@ def main() -> None:
     env = os.environ.copy()
     check_and_prepare_inotify_env(env)
     sync_operating_manual()
+    sync_changelog()
     visualizer_bundle = build_visualizer(env)
     storybook_bundle = build_storybook(env)
     build_zensical_site(env)

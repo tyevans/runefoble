@@ -151,7 +151,8 @@ Work is complete only when:
 6. **Automated Verification Gates**: All Python tests pass via `uv run pytest`, frontend builds pass via `pnpm run build` and `make build`, and `make health-check` passes.[^23]
 7. **Helm & Kubernetes Integrity**: Umbrella Helm chart passes `helm lint` and renders cleanly via `helm template`.[^4]
 8. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs and User Stories) updated to reflect the new state.[^18] For Backlog items (`complete/` and `PRIORITY.md`), updates are applied atomically upon integration into `main` by the integration orchestrator (never directly on feature branches or in worker worktrees to prevent merge conflicts).
-9. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
+9. **Changelog Maintenance**: User-facing capabilities, architectural shifts, and public API/schema changes are recorded in `CHANGELOG.md` under `[Unreleased]` following the Keep a Changelog standard.
+10. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
 
 ## Dispatching Work to Agents & Parallel Worktrees
 

@@ -183,3 +183,60 @@ def test_no_escaping_links_in_generated_site():
                 bad_links.append((str(rel), target, depth, dot_count))
 
     assert not bad_links, f"Found links escaping repository root: {bad_links}"
+
+
+def test_changelog_conforms_to_keep_a_changelog():
+    """Verify CHANGELOG.md exists at repo root and adheres to Keep a Changelog standard."""
+    changelog_path = REPO_ROOT / "CHANGELOG.md"
+    assert changelog_path.exists(), "CHANGELOG.md must exist at repo root"
+    content = changelog_path.read_text(encoding="utf-8")
+    assert "# Changelog" in content
+    assert "Keep a Changelog" in content
+    assert "Semantic Versioning" in content
+    assert "## [Unreleased]" in content
+    assert "## [0.2.0]" in content
+    assert "### Added" in content
+
+
+def test_definition_of_done_includes_changelog_maintenance():
+    """Verify Definition of Done in AGENTS.md and operating-manual.md includes changelog maintenance."""
+    agents_md = REPO_ROOT / "AGENTS.md"
+    assert agents_md.exists()
+    content = agents_md.read_text(encoding="utf-8")
+    assert "Changelog Maintenance" in content
+    assert "CHANGELOG.md" in content
+
+    op_manual = DOCS_DIR / "operating-manual.md"
+    if op_manual.exists():
+        op_content = op_manual.read_text(encoding="utf-8")
+        assert "Changelog Maintenance" in op_content
+        assert "CHANGELOG.md" in op_content
+
+
+def test_marketing_showcase_page_and_navigation():
+    """Verify docs/marketing.md exists, is in nav, and compiles to rich HTML."""
+    marketing_md = DOCS_DIR / "marketing.md"
+    assert marketing_md.exists(), "docs/marketing.md must exist"
+    md_content = marketing_md.read_text(encoding="utf-8")
+    assert "Speak and the Board Obeys" in md_content
+    assert "The Watcher" in md_content
+    assert "Milestone 2" in md_content
+    assert "Milestone 3" in md_content
+    assert "Milestone 4" in md_content
+
+    # Verify marketing and changelog are in zensical.toml
+    with open(ZENSICAL_TOML, "rb") as f:
+        config = tomllib.load(f)
+    nav_str = str(config.get("project", {}).get("nav", []))
+    assert "marketing.md" in nav_str
+    assert "changelog.md" in nav_str
+
+    # Verify site contains compiled HTML
+    marketing_html = SITE_DIR / "marketing" / "index.html"
+    assert marketing_html.exists()
+    html_content = marketing_html.read_text(encoding="utf-8")
+    assert "Speak and the Board Obeys" in html_content
+    assert "The Watcher" in html_content
+
+    changelog_html = SITE_DIR / "changelog" / "index.html"
+    assert changelog_html.exists()
