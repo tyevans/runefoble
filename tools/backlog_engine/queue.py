@@ -91,19 +91,34 @@ def write_task_file(task: Task) -> None:
     fm = dict(task.raw_frontmatter)
     fm["id"] = task.id
     fm["title"] = task.title
-    fm["status"] = task.status.value
+    if task.status == TaskStatus.READY:
+        fm["status"] = "Refined"
+    elif task.status == TaskStatus.COMPLETE:
+        fm["status"] = "Complete"
+    elif task.status == TaskStatus.PROPOSED:
+        fm["status"] = "Proposed"
+    else:
+        fm["status"] = task.status.value
+
     if task.dependencies:
         fm["dependencies"] = task.dependencies
     if task.governing_adrs:
         fm["governing_adrs"] = task.governing_adrs
+
     if task.claimed_by:
         fm["claimed_by"] = task.claimed_by
     elif "claimed_by" in fm:
         del fm["claimed_by"]
-    if task.branch:
+
+    if task.branch and task.status == TaskStatus.IN_PROGRESS:
         fm["branch"] = task.branch
-    if task.pr_url:
+    elif "branch" in fm and task.status in (TaskStatus.READY, TaskStatus.COMPLETE):
+        del fm["branch"]
+
+    if task.pr_url and task.status in (TaskStatus.REVIEW, TaskStatus.COMPLETE):
         fm["pr_url"] = task.pr_url
+    elif "pr_url" in fm and task.status == TaskStatus.READY:
+        del fm["pr_url"]
 
     yaml_str = yaml.dump(fm, sort_keys=False).strip()
     new_content = f"---\n{yaml_str}\n---\n{task.body.lstrip()}"
@@ -191,6 +206,34 @@ class BacklogQueue:
         task.claimed_by = worker_id
         task.branch = branch
         write_task_file(task)
+
+    def release_task(self, task: Task) -> None:
+        """Releases a claimed task back to ready status."""
+        parent = task.file_path.parent.name
+        if parent == "refined":
+            task.status = TaskStatus.READY
+        elif parent == "complete":
+            task.status = TaskStatus.COMPLETE
+        else:
+            task.status = TaskStatus.PROPOSED
+        task.claimed_by = None
+        task.branch = None
+        write_task_file(task)
+
+    def recover_stale_tasks(self) -> list[Task]:
+        """Discovers tasks in refined/ that are marked in-progress or claimed, and releases them."""
+        recovered = []
+        if not self.refined_dir.exists():
+            return recovered
+
+        for p in sorted(self.refined_dir.glob("*.md")):
+            if p.name.startswith("."):
+                continue
+            task = parse_task_file(p)
+            if task.status == TaskStatus.IN_PROGRESS or task.claimed_by:
+                self.release_task(task)
+                recovered.append(task)
+        return recovered
 
     def mark_review(self, task: Task, pr_url: str) -> None:
         """Marks a task as under review with an active PR."""
