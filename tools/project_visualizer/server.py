@@ -146,6 +146,11 @@ class ProjectVisualizerHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(payload, default=str).encode("utf-8"))
             return
 
+        elif path == "/favicon.ico":
+            self.send_response(204)
+            self.end_headers()
+            return
+
         self.send_error(404, "Not Found")
 
     def do_POST(self) -> None:

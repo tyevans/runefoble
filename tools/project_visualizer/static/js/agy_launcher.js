@@ -328,6 +328,8 @@ Follow the Runefoble Definition of Done in AGENTS.md:
     if (continueCheck) {
       continueCheck.addEventListener('change', updateAgyCommandPreview);
     }
+  });
+
   function renderTaskDrawerActions(entity) {
     const esc = window.visualizer.escapeHtml || (s => s);
     return `
