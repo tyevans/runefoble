@@ -14,8 +14,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Synchronized `PRIORITY.md`, `ROADMAP.md` Milestone 5 completion checkboxes, and PRD acceptance links with zero status drift.
 
 ### Added
+- **Interactive Tavern Minigames & Personality-Driven Merchant Haggling (`TASK-0103`, `PRD-0014`, `US-0047`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
+  - Implemented turn-based Liar's Dice wagering, card tournaments, and drinking contests in `services/game_session/src/game_session/minigames.py` and `minigame_rules.py`.
+  - Added drinking contest progressive intoxication stages (`sober`, `tipsy`, `drunk`, `smashed`, `blackout`) with dynamic voice DSP slurred speech filters (`VoiceDSPPipeline`).
+  - Implemented personality-driven NPC merchant haggling in `services/game_session/src/game_session/merchants.py` featuring dynamic temperament state machines (`stubborn_greedy`, `shrewd`, `generous`, `hostile`, `gullible`), mood meters, price curves, counter-offers, and in-character reactive voice lines.
+  - Published CloudEvents 1.0 domain events on Redis Streams (`MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `IntoxicationLevelChanged`, `HagglingNegotiated`) in `libs/runefoble_events/src/runefoble_events/tavern.py`.
+  - Built and vendored `<runefoble-tavern-parlor>` Lit microfrontend in `services/game_session/ui/src/` with interactive 3D cup and dice shaker animations, Bauhaus tokens, and Storybook stories.
+  - Exposed REST endpoints on `game_session` and `gateway_api` enforced by SpiceDB Zanzibar authorization (`session` / `campaign` `play` / `participate`).
+  - Authored comprehensive blackbox test suite in `tests/test_blackbox_tavern_and_haggling.py` and Diataxis how-to and reference guides in `docs/how-to/run-tavern-minigames-and-merchant-haggling.md` and `docs/reference/tavern-and-merchants-events.md`.
+
 - **Settings Modal Styles and Sub-Component CSS Modular Decomposition (`TASK-0111`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
-  - Decomposed monolithic `frontend/src/components/runefoble-settings-modal.styles.ts` into single-responsibility Lit CSS sub-modules in `frontend/src/components/styles/`: `settings-modal-layout.styles.ts` (129 lines), `settings-modal-tabs.styles.ts` (128 lines), and `settings-modal-controls.styles.ts` (74 lines).
+  - Decomposed monolithic `frontend/src/components/runefoble-settings-modal.styles.ts` into single-responsibility Lit CSS sub-modules in `frontend/src/components/styles/`: `settings-modal-layout.styles.ts`, `settings-modal-tabs.styles.ts`, and `settings-modal-controls.styles.ts`.
   - Maintained 100% backward compatibility via composite export in `runefoble-settings-modal.styles.ts` (28 lines) combining `[layoutStyles, tabsStyles, controlsStyles]`.
   - Preserved 100% visual consistency and WCAG 2.1 AA tokenized styling across all settings tab panels in Storybook.
   - Added modular decomposition and strict line budget verification tests in `tests/test_theming.py` and updated `tests/test_settings_modal.py` and `tests/test_settings_subcomponents.py`.
@@ -474,21 +483,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Autonomous Backlog Execution Engine (`TASK-0046`)**: Parallel worktree orchestrator (`scripts/run-backlog-engine.sh`), conflict detection, and interactive Project Visualizer web application.
 
 #### Changed
-- **Modular Router Refactoring (`TASK-0040`, `TASK-0041`, `TASK-0045`, `TASK-0085`)**:
-  - Decomposed monolithic FastAPI entrypoints into modular sub-routers across all bounded contexts.
-  - Decomposed FastMCP tabletop gateway tools and resources into modular registries.
+- **Modular Router Refactoring (`TASK-0040`, `TASK-0041`, `TASK-0045`, `TASK-0085`)**: Decomposed monolithic FastAPI entrypoints into modular sub-routers across all bounded contexts and FastMCP tools into modular registries.
 
 ---
 ## [0.1.0] - 2026-09-20
 
 ### Milestone 1: Platform Foundation & Core Loop
 #### Added
-- **Monorepo Workspace Foundation (`TASK-0000`, `ADR-0003`)**:
-  - UV workspace monorepo managing shared libraries (`runefoble_platform`, `runefoble_auth`, `runefoble_events`) and microservices.
-- **Core Microservices & Tabletop Engine**:
-  - `the_watcher` (autonomous DM & intent engine), `game_session` (lifecycle, initiative & dice), `board_state` (grid & tokens), `character_sheet` (stats & inventory), `voice_agent` (WebRTC audio DSP).
-- **Unified API Gateway & FastMCP**:
-  - Gateway aggregating HTTP, WebSockets, and Swagger UI; FastMCP gateway exposing tabletop tools and resources to LLMs.
-- **Infrastructure, Frontend & Diataxis Documentation**:
-  - Kind Kubernetes cluster with Traefik ingress, Helm chart, Lit + Vite frontend with Storybook Bauhaus design system, and complete Diataxis documentation suite.
+- **Monorepo Workspace Foundation (`TASK-0000`, `ADR-0003`)**: UV workspace monorepo managing shared libraries (`runefoble_platform`, `runefoble_auth`, `runefoble_events`) and microservices.
+- **Core Microservices & Tabletop Engine**: `the_watcher` (autonomous DM), `game_session` (lifecycle & dice), `board_state` (grid & tokens), `character_sheet` (stats & inventory), `voice_agent` (WebRTC audio DSP).
+- **Unified API Gateway & FastMCP**: Gateway aggregating HTTP, WebSockets, and Swagger UI; FastMCP gateway exposing tabletop tools and resources to LLMs.
+- **Infrastructure, Frontend & Diataxis Documentation**: Kind Kubernetes cluster with Traefik ingress, Helm chart, Lit + Vite frontend with Storybook Bauhaus design system, and Diataxis documentation suite.
 

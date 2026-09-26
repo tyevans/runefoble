@@ -99,6 +99,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`project-campaign-analytics-and-chronicle-timeline.md`](docs/how-to/project-campaign-analytics-and-chronicle-timeline.md): How to project combat telemetry, query spatial damage heatmaps, calculate encounter MVP awards, and view chronicle timelines.
 - [`interact-with-character-sheet-and-inventory.md`](docs/how-to/interact-with-character-sheet-and-inventory.md): How to interact with character sheet equipment slots, inventory encumbrance, condition tooltips, and spell slot tracking.
 - [`run-campfire-rests-and-alchemical-crafting.md`](docs/how-to/run-campfire-rests-and-alchemical-crafting.md): How to combine reagents with volatile mishap tables, resolve campfire resting boons, and manage party stronghold upgrades.
+- [`run-tavern-minigames-and-merchant-haggling.md`](docs/how-to/run-tavern-minigames-and-merchant-haggling.md): How to run interactive Liar's Dice wagering, drinking contests with DSP voice filters, and negotiate with personality-driven merchants.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
@@ -106,6 +107,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`ports-and-endpoints.md`](docs/reference/ports-and-endpoints.md): Ingress routing table, microservice ports, core HTTP routes, and infrastructure ports.
 - [`events-schema.md`](docs/reference/events-schema.md): CloudEvents domain events catalogue, payload schemas, and Redis Stream topics.
 - [`downtime-and-crafting-events.md`](docs/reference/downtime-and-crafting-events.md): CloudEvents schemas and event flows for downtime crafting, rests, and stronghold facilities.
+- [`tavern-and-merchants-events.md`](docs/reference/tavern-and-merchants-events.md): CloudEvents schemas and event flows for tavern minigames, drinking contests, and merchant haggling.
 - [`redis-streams-event-bus.md`](docs/reference/redis-streams-event-bus.md): Redis Streams transport architecture, channel conventions, and consumer groups.
 - [`design-tokens-and-themes.md`](docs/reference/design-tokens-and-themes.md): Bauhaus geometric tokens, typography, CSS custom properties, and UI themes.
 - [`fastmcp-gateway.md`](docs/reference/fastmcp-gateway.md): Model Context Protocol gateway architecture, tool inventory, resources, and prompt templates.

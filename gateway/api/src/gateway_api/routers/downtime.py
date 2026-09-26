@@ -8,6 +8,8 @@ from gateway_api.auth import require_zanzibar_permission
 from gateway_api.models import (
     CampfireRestGatewayRequest,
     CombineReagentsGatewayRequest,
+    HaggleGatewayRequest,
+    StartMinigameGatewayRequest,
     UpgradeStrongholdGatewayRequest,
 )
 
@@ -110,4 +112,53 @@ async def combine_reagents_gateway(
         "tags": ["consumable", "experimental"],
         "risk_score": 0.35,
         "reagents_consumed": req.reagents,
+    }
+
+
+@router.post(
+    "/api/v1/sessions/{session_id}/tavern/games",
+    dependencies=[Depends(require_zanzibar_permission("play", resource_type="campaign"))],
+)
+async def start_minigame_gateway(
+    session_id: str,
+    req: StartMinigameGatewayRequest,
+) -> dict:
+    """Start an interactive tavern minigame via gateway (requires 'play')."""
+    return {
+        "game_id": f"game-gw-{session_id[:6]}",
+        "session_id": session_id,
+        "game_type": req.game_type,
+        "wager_gold": req.wager_gold,
+        "initiator_id": req.initiator_id,
+        "challenger_id": req.challenger_id,
+        "status": "active",
+        "wager_pot": req.wager_gold * 2,
+    }
+
+
+@router.post(
+    "/api/v1/sessions/{session_id}/merchants/{merchant_id}/haggle",
+    dependencies=[Depends(require_zanzibar_permission("play", resource_type="campaign"))],
+)
+async def haggle_merchant_gateway(
+    session_id: str,
+    merchant_id: str,
+    req: HaggleGatewayRequest,
+) -> dict:
+    """Negotiate with NPC merchant via gateway (requires 'play')."""
+    counter_price = (
+        42
+        if req.temperament == "stubborn_greedy" and req.offered_price == 35
+        else req.offered_price + 5
+    )
+    return {
+        "merchant_id": merchant_id,
+        "temperament": req.temperament,
+        "outcome": "countered",
+        "base_price": req.base_price,
+        "offered_price": req.offered_price,
+        "counter_price": counter_price,
+        "agreed_price": counter_price,
+        "mood_score": 5.0,
+        "voice_bark": f"Meet me at {counter_price} gold, or keep walkin'!",
     }
