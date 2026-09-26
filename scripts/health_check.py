@@ -82,11 +82,11 @@ def inspect_backlog_state():
     print(f"Proposed Tasks (Unrefined pool): {len(proposed_tasks)}")
     print()
 
-    if len(refined_tasks) < 2:
+    if len(refined_tasks) < 8:
         print(
-            f"👉 Action Needed: Ready buffer is low ({len(refined_tasks)} < 2). JIT refinement recommended."
+            f"👉 Action Needed: Ready buffer is low ({len(refined_tasks)} < 8). JIT refinement recommended."
         )
-    elif len(refined_tasks) > 3:
+    elif len(refined_tasks) > 12:
         print(
             f"⚠️ Notice: Ready buffer has {len(refined_tasks)} items. Avoid over-refining to prevent specification drift."
         )

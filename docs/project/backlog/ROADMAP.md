@@ -21,9 +21,9 @@
 - [ ] OpenPanel privacy-preserving analytics SDK & event pipeline (TASK-0038)
 
 ### Collaborative Feature Epics
-- [ ] WebRTC audio stream & real-time waveform visualizer microfrontend (ADR-0013, TASK-0030)
-- [ ] Silo S3 battlemap asset uploader & shroud masking microfrontend (ADR-0013, TASK-0031)
-- [ ] Live WebRTC bidirectional voice room with WebAudio processing (ADR-0002, TASK-0033)
+- [x] WebRTC audio stream & real-time waveform visualizer microfrontend (ADR-0013, TASK-0030)
+- [x] Silo S3 battlemap asset uploader & shroud masking microfrontend (ADR-0013, TASK-0031)
+- [x] Live WebRTC bidirectional voice room with WebAudio processing (ADR-0002, TASK-0033)
 - [ ] Sub-500ms Whisper speech-to-intent pipeline (TASK-0039)
 
 ## Milestone 3: AI DM & Ecosystem Expansion
