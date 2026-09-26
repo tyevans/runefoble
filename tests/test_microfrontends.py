@@ -286,4 +286,3 @@ def test_battlemap_uploader_microfrontend_frontdoor(board_client):
     assert "UploadingProgress" in stories_code
     assert "AlignedMapPreview" in stories_code
     assert "FogOfWarMasked" in stories_code
-
