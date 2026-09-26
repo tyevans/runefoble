@@ -6,11 +6,14 @@ and AI DM controls to MCP-compliant agents and LLMs.
 
 import random
 import re
+import time
 from typing import Any
 
+from gateway_mcp.constants import CONDITION_RULES, SPELL_EFFECTS
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("Runefoble MCP Gateway")
+mcp.get_tool = mcp._tool_manager.get_tool
 
 
 @mcp.tool()
@@ -91,6 +94,11 @@ def inspect_tactical_board(session_id: str) -> dict[str, Any]:
 @mcp.tool()
 def move_board_token(session_id: str, token_id: str, to_x: int, to_y: int) -> dict[str, Any]:
     """Move a token to target coordinates (x, y) on the tactical map."""
+    grid_cols, grid_rows = 8, 8
+    if not (0 <= to_x < grid_cols and 0 <= to_y < grid_rows):
+        raise ValueError(
+            f"Coordinates ({to_x}, {to_y}) out of grid bounds ({grid_cols}x{grid_rows})"
+        )
     return {
         "status": "success",
         "session_id": session_id,
@@ -138,11 +146,11 @@ def cast_spell(
     remaining_slots = 3 if is_cantrip else max(0, 4 - spell_level)
 
     effects = {
-        "fireball": "Deals 8d6 fire damage in a 20-foot radius sphere. Dexterity saving throw (DC 15) for half.",
-        "cure wounds": f"Heals target for {spell_level}d8 + 3 hit points on physical touch.",
-        "magic missile": f"Fires {spell_level + 2} unerring darts of magical force dealing 1d4+1 force damage each.",
-        "shield": "Adds +5 to AC until the start of your next turn and nullifies Magic Missile.",
-        "healing word": f"Heals target for {spell_level}d4 + 3 as a bonus action up to 60 feet.",
+        "fireball": SPELL_EFFECTS["fireball"],
+        "cure wounds": SPELL_EFFECTS["cure wounds"].format(level=spell_level),
+        "magic missile": SPELL_EFFECTS["magic missile"].format(darts=spell_level + 2),
+        "shield": SPELL_EFFECTS["shield"],
+        "healing word": SPELL_EFFECTS["healing word"].format(level=spell_level),
     }
     default_effect = (
         f"Evokes arcane power of {spell_name} (Level {spell_level}) affecting {target or 'area'}."
@@ -207,16 +215,7 @@ def add_condition(
 ) -> dict[str, Any]:
     """Impose an active status condition or DM penalty on a character (e.g. 'blinded', 'prone', 'drunk', 'frightened')."""
     condition_clean = condition.lower().strip()
-    rule_effects = {
-        "blinded": "Automatically fails ability checks requiring sight. Attack rolls against have advantage, attacks have disadvantage.",
-        "prone": "Movement costs extra. Attack rolls made with disadvantage. Melee attacks against have advantage.",
-        "frightened": "Disadvantage on ability checks and attack rolls while source of fear is in sight. Cannot willingly move closer.",
-        "drunk": "Disadvantage on finesse and perception checks. Unpredictable tactical decisions.",
-        "foolishness": "Ignores cover and tactical defense. Draws enemy threat.",
-        "stunned": "Incapacitated, cannot move, can speak only falteringly. Fails Strength and Dexterity saving throws.",
-        "poisoned": "Disadvantage on attack rolls and ability checks.",
-    }
-    effect_rule = rule_effects.get(
+    effect_rule = CONDITION_RULES.get(
         condition_clean, f"Active condition '{condition}' applied to {character_id}."
     )
 
@@ -295,6 +294,128 @@ def create_encounter(
         "enemies_spawned": enemy_list,
         "initial_round": 1,
         "watcher_commentary": f"A new encounter '{encounter_name}' begins in {terrain} terrain. Roll initiative!",
+    }
+
+
+@mcp.resource("session://{session_id}/state", mime_type="application/json")
+def get_session_state(session_id: str) -> dict[str, Any]:
+    """Aggregate tactical board tokens, active scene atmosphere, and encounter state."""
+    board = inspect_tactical_board(session_id)
+    encounter = query_encounter_state(f"enc-{session_id}")
+    return {
+        "session_id": session_id,
+        "tokens": board["tokens"],
+        "active_tokens": board["tokens"],
+        "grid_dimensions": board["grid_dimensions"],
+        "threat_level": "medium",
+        "scene_atmosphere": {
+            "mood": "ominous tension",
+            "lighting": "dim flickering torches",
+            "ambient_audio_prompt": "distant dripping water and echoing chanting",
+            "threat_level": "medium",
+        },
+        "encounter_state": encounter,
+    }
+
+
+@mcp.tool()
+async def execute_agent_action_plan(
+    session_id: str, actions: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Sequentially validate and execute a multi-turn agent action plan, collecting step results and timings."""
+    step_results: list[dict[str, Any]] = []
+    total_duration_ms: float = 0.0
+
+    def _fail(
+        err: str, idx: int, tool_name: str, duration: float = 0.0, output: Any = None
+    ) -> dict[str, Any]:
+        entry: dict[str, Any] = {
+            "step": idx + 1,
+            "tool": tool_name,
+            "status": "error",
+            "error": err,
+            "duration_ms": duration,
+        }
+        if output is not None:
+            entry["output"] = output
+        step_results.append(entry)
+        return {
+            "status": "error",
+            "success": False,
+            "session_id": session_id,
+            "error": err,
+            "failed_step": idx + 1,
+            "total_steps": len(actions),
+            "completed_steps": idx,
+            "steps": step_results,
+            "total_duration_ms": round(total_duration_ms + duration, 2),
+        }
+
+    for idx, action in enumerate(actions):
+        tool_name = action.get("tool") or action.get("name") or action.get("tool_name")
+        if not tool_name:
+            return _fail("Action missing 'tool' specification", idx, "unknown")
+
+        tool = mcp._tool_manager.get_tool(tool_name)
+        if tool is None:
+            return _fail(f"Invalid tool: '{tool_name}' not found", idx, tool_name)
+
+        raw = action.get("parameters") or action.get("arguments") or action.get("args")
+        params = dict(raw) if isinstance(raw, dict) else {
+            k: v
+            for k, v in action.items()
+            if k not in {"tool", "name", "tool_name", "step_id", "description"}
+        }
+
+        if "session_id" not in params and tool_name in {
+            "move_board_token",
+            "inspect_tactical_board",
+        }:
+            params["session_id"] = session_id
+
+        if tool_name == "move_board_token":
+            to_x, to_y = params.get("to_x"), params.get("to_y")
+            if to_x is not None and to_y is not None and not (0 <= to_x < 8 and 0 <= to_y < 8):
+                return _fail(
+                    f"Coordinates ({to_x}, {to_y}) out of grid bounds (8x8)",
+                    idx,
+                    tool_name,
+                )
+
+        t0 = time.perf_counter()
+        try:
+            output = await tool.run(params)
+            duration_ms = round((time.perf_counter() - t0) * 1000, 2)
+            total_duration_ms += duration_ms
+
+            if isinstance(output, dict) and output.get("status") == "error":
+                return _fail(
+                    output.get("error", "Step returned error status"),
+                    idx,
+                    tool_name,
+                    duration_ms,
+                    output,
+                )
+
+            step_results.append({
+                "step": idx + 1,
+                "tool": tool_name,
+                "status": "success",
+                "output": output,
+                "duration_ms": duration_ms,
+            })
+        except Exception as exc:
+            duration_ms = round((time.perf_counter() - t0) * 1000, 2)
+            return _fail(str(exc), idx, tool_name, duration_ms)
+
+    return {
+        "status": "success",
+        "success": True,
+        "session_id": session_id,
+        "total_steps": len(actions),
+        "completed_steps": len(actions),
+        "steps": step_results,
+        "total_duration_ms": round(total_duration_ms, 2),
     }
 
 

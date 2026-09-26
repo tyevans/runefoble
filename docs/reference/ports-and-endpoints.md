@@ -41,8 +41,7 @@
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/prepare` | Prepares a spell in the character's active spellbook |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/cast` | Expends a spell slot to cast a spell with slot exhaustion validation |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Assigns fine-grained SpiceDB Zanzibar relationship tuples (owner, DM, player, spectator) |
-| `gateway-api` | POST | `/api/v1/sessions/{session_id}/turns/advance` | Advances session turn, enforcing Zanzibar `run_session` permission |
-| `gateway-mcp` | MCP | `11 Tools Registered` | Tabletop tools (`cast_spell`, `modify_character_hp`, `add_condition`, `roll_dice`, etc.) |
+| `gateway-mcp` | MCP | `12 Tools Registered` | Tabletop tools (`execute_agent_action_plan`, `cast_spell`, `modify_character_hp`, `add_condition`, `roll_dice`, etc.) and dynamic resource `session://{session_id}/state` |
 
 
 ## Infrastructure Ports

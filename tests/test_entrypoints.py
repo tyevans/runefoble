@@ -100,6 +100,7 @@ def test_mcp_gateway_tool_registry():
         "query_encounter_state",
         "inspect_inventory",
         "create_encounter",
+        "execute_agent_action_plan",
     ]
 
     for tool in expected_tools:
