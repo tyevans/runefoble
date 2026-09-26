@@ -60,7 +60,11 @@ def get_ui_manifest() -> dict[str, Any]:
     return {
         "service": "rules_compendium",
         "package": "@runefoble/rules-compendium-ui",
-        "components": ["runefoble-rules-lookup", "runefoble-encounter-builder"],
+        "components": [
+            "runefoble-rules-compendium",
+            "runefoble-rules-lookup",
+            "runefoble-encounter-builder",
+        ],
         "version": "0.1.0",
     }
 
