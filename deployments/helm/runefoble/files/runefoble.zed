@@ -56,3 +56,23 @@ definition board_token {
     permission move = character->edit + campaign->run_session
     permission inspect = campaign->view
 }
+
+definition lore_document {
+    relation campaign: campaign
+
+    // Public lore visible to campaign viewers; secret lore restricted to DMs/GMs
+    permission read_public = campaign->view
+    permission read_secret = campaign->run_session
+    permission manage = campaign->run_session
+}
+
+definition homebrew_rule {
+    relation campaign: campaign
+    relation author: user
+
+    // Public SRD rules have no campaign restriction; homebrew rules restricted to campaign members or author
+    permission view = campaign->view + author
+    permission manage = author + campaign->manage + campaign->run_session
+    permission edit = manage
+}
+

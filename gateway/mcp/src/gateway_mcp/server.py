@@ -19,6 +19,7 @@ from gateway_mcp.tools import (
     add_condition,
     apply_absentee_penalty,
     apply_condition,
+    calculate_encounter_balance,
     cast_spell,
     create_encounter,
     execute_agent_action_plan,
@@ -29,6 +30,7 @@ from gateway_mcp.tools import (
     move_board_token,
     narrate_with_the_watcher,
     query_encounter_state,
+    query_monster_stat_block,
     register_tools,
     roll_dice,
 )
@@ -46,6 +48,7 @@ __all__ = [
     "add_condition",
     "apply_absentee_penalty",
     "apply_condition",
+    "calculate_encounter_balance",
     "cast_spell",
     "create_encounter",
     "dm_narrative_guidance",
@@ -62,6 +65,7 @@ __all__ = [
     "move_board_token",
     "narrate_with_the_watcher",
     "query_encounter_state",
+    "query_monster_stat_block",
     "roll_dice",
     "tactical_action_adviser",
 ]

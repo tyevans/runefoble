@@ -9,4 +9,9 @@ dependencies = [
     "mcp<2",
     "pydantic>=2.13.5",
     "uvicorn>=0.54.0",
+    "rules-compendium",
 ]
+
+[tool.uv.sources]
+rules-compendium = { workspace = true }
+
