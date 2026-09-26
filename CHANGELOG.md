@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition (`TASK-0068`, `ADR-0002`, `ADR-0004`, `ADR-0009`, `ADR-0013`)**:
+  - Decomposed `frontend/src/services/webrtc-voice.ts` (formerly 348 lines) into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and task limits (< 200 lines each):
+    - `webrtc-types.ts` (67 lines): Defines wire protocol signaling interfaces (`SignalingMessage`, `VoicePeer`, `WebRTCVoiceOptions`, `PeerMeshOptions`) and connection state types (`WebRTCConnectionState`, `WebRTCConnectionStates`).
+    - `webrtc-peer-mesh.ts` (159 lines): `PeerConnectionMesh` coordinating full-mesh `RTCPeerConnection` lifecycles, early ICE candidate queuing prior to remote description resolution, remote stream tracking, and DOM `<audio>` element attachment with volume/mute controls.
+    - `webrtc-voice.ts` (150 lines): `WebRTCVoiceService` client facade managing WebSocket signaling transport to `gateway-api`, auto-reconnect timers, credential parameter encoding, WebAudio pipeline local microphone conditioning, and audio telemetry broadcasting.
+  - Preserved full backward compatibility for all imports and public service contracts via re-exports.
+  - Added comprehensive blackbox test suite in `tests/test_blackbox_webrtc_client.py` and updated architecture documentation in `docs/explanation/realtime-voice-and-board-sync.md`.
+
 - **Spectator Stream Overlay and Broadcast Test Suite Modular Decomposition (`TASK-0075`, `ADR-0001`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed monolithic `tests/test_spectator_view.py` (330 lines) into two specialized test modules strictly under 200 lines each.
   - Authored `tests/test_spectator_events_and_schema.py` (186 lines) validating `SpectatorSessionConnected` event registry, CloudEvents 1.0 schema compliance, and audience-safe state sanitization.
