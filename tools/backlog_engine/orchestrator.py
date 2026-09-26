@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .agent_worker import run_agent_in_worktree
 from .ci_watcher import (
+    close_pull_request,
     commit_and_push,
     create_pull_request,
     merge_local_branch,
@@ -15,7 +16,7 @@ from .ci_watcher import (
 )
 from .models import Task
 from .queue import BacklogQueue
-from .worktree import cleanup_worktree, create_worktree, run_preflight_checks
+from .worktree import cleanup_worktree, create_worktree, run_git, run_preflight_checks
 
 MERGE_LOCK = threading.Lock()
 
@@ -93,28 +94,89 @@ def execute_task_pipeline(
         print(f"✅ [Stream {worker_id}] Pre-flight verification passed.")
 
         # 5. Delivery & Integration Gate
-        with MERGE_LOCK:
-            if local_mode:
+        if local_mode:
+            with MERGE_LOCK:
                 print(f"🏠 [Stream {worker_id}] Running in local merge mode...")
                 merge_local_branch(repo_root, branch, task)
-            else:
-                print(f"🌐 [Stream {worker_id}] Committing and pushing to origin...")
-                commit_and_push(worktree_dir, task, branch)
 
-                pr_url = create_pull_request(worktree_dir, task, branch)
-                queue.mark_review(task, pr_url)
-                print(f"📋 [Stream {worker_id}] Pull Request created: {pr_url}")
+                dest_file = queue.complete_task(task)
 
-                ci_ok = wait_for_ci_checks(worktree_dir, pr_url)
-                if not ci_ok:
-                    return TaskExecutionResult(task, False, f"CI checks failed for PR {pr_url}")
+                # Stage and commit the backlog completion locally
+                run_git(["add", "docs/project/backlog/PRIORITY.md", str(dest_file)], cwd=repo_root)
+                for folder in ["refined", "proposed"]:
+                    old_candidate = (
+                        repo_root / "docs" / "project" / "backlog" / folder / task.file_path.name
+                    )
+                    if not old_candidate.exists():
+                        run_git(
+                            ["rm", "--cached", "--ignore-unmatch", str(old_candidate)],
+                            cwd=repo_root,
+                        )
 
+                status = run_git(["status", "--porcelain", "docs/project/backlog"], cwd=repo_root)
+                if status.stdout.strip():
+                    run_git(
+                        ["commit", "-m", f"chore(backlog): complete {task.canonical_id}"],
+                        cwd=repo_root,
+                    )
+                completed = True
+                print(f"🎉 [Stream {worker_id}] {task.canonical_id} completed and merged locally")
+        else:
+            print(f"🌐 [Stream {worker_id}] Committing and pushing to origin...")
+            commit_and_push(worktree_dir, task, branch)
+
+            pr_url = create_pull_request(worktree_dir, task, branch)
+            queue.mark_review(task, pr_url)
+            print(f"📋 [Stream {worker_id}] Pull Request created: {pr_url}")
+
+            ci_ok = wait_for_ci_checks(worktree_dir, pr_url)
+            if not ci_ok:
+                close_pull_request(
+                    worktree_dir,
+                    pr_url,
+                    reason=f"Task {task.canonical_id} failed CI checks or encountered merge conflicts. Releasing back to ready queue.",
+                )
+                return TaskExecutionResult(
+                    task, False, f"CI checks failed or PR conflicted for {pr_url}"
+                )
+
+            with MERGE_LOCK:
+                print(f"🔀 [Stream {worker_id}] Merging PR {pr_url} into main...")
                 merge_pull_request(worktree_dir, pr_url)
 
-            # 6. Finalize in Backlog Queue
-            queue.complete_task(task)
-            completed = True
-            print(f"🎉 [Stream {worker_id}] {task.canonical_id} completed and moved to complete/")
+                print(f"📥 [Stream {worker_id}] Pulling latest main into repository root...")
+                pull_res = run_git(["pull", "--ff-only", "origin", "main"], cwd=repo_root)
+                if pull_res.returncode != 0:
+                    run_git(["fetch", "origin", "main"], cwd=repo_root)
+                    run_git(["reset", "--hard", "origin/main"], cwd=repo_root)
+
+                # Finalize in Backlog Queue on repo_root
+                dest_file = queue.complete_task(task)
+
+                # Stage and commit the backlog completion to origin/main
+                run_git(["add", "docs/project/backlog/PRIORITY.md", str(dest_file)], cwd=repo_root)
+                for folder in ["refined", "proposed"]:
+                    old_candidate = (
+                        repo_root / "docs" / "project" / "backlog" / folder / task.file_path.name
+                    )
+                    if not old_candidate.exists():
+                        run_git(
+                            ["rm", "--cached", "--ignore-unmatch", str(old_candidate)],
+                            cwd=repo_root,
+                        )
+
+                status = run_git(["status", "--porcelain", "docs/project/backlog"], cwd=repo_root)
+                if status.stdout.strip():
+                    run_git(
+                        ["commit", "-m", f"chore(backlog): complete {task.canonical_id}"],
+                        cwd=repo_root,
+                    )
+                    push_res = run_git(["push", "origin", "main"], cwd=repo_root)
+                    if push_res.returncode != 0:
+                        print(f"⚠️ Failed to push backlog completion: {push_res.stderr.strip()}")
+
+                completed = True
+                print(f"🎉 [Stream {worker_id}] {task.canonical_id} completed and pushed to main")
 
         return TaskExecutionResult(task, True, "Task completed and integrated successfully.")
 
@@ -193,12 +255,17 @@ def run_orchestrator(
 
             if len(batch) == 1 or concurrency == 1:
                 task = batch[0]
-                res = execute_task_pipeline(task, repo_root, queue, local_mode=local_mode)
-                if res.success:
-                    completed_count += 1
-                else:
-                    print(f"❌ Pipeline failed for {task.canonical_id}: {res.message}")
-                    break
+                try:
+                    res = execute_task_pipeline(task, repo_root, queue, local_mode=local_mode)
+                    if res.success:
+                        completed_count += 1
+                    else:
+                        print(f"❌ Pipeline failed for {task.canonical_id}: {res.message}")
+                        break
+                except KeyboardInterrupt:
+                    print(f"\n🛑 Interrupted while executing {task.canonical_id}.")
+                    queue.release_task(task)
+                    raise
             else:
                 print(f"\n⚡ Dispatching {len(batch)} parallel task streams...")
                 with ThreadPoolExecutor(max_workers=concurrency) as executor:
@@ -224,6 +291,8 @@ def run_orchestrator(
                     except KeyboardInterrupt:
                         print("\n🛑 Cancelling pending parallel worker streams...")
                         executor.shutdown(wait=False, cancel_futures=True)
+                        for t in batch:
+                            queue.release_task(t)
                         raise
 
             if not drain:
@@ -233,6 +302,7 @@ def run_orchestrator(
         return 0
 
     except KeyboardInterrupt:
+        queue.recover_stale_tasks()
         print(
             "\n🛑 Orchestrator stopped by user (Ctrl+C). All active tasks released back to ready queue."
         )

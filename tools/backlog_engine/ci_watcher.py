@@ -16,8 +16,60 @@ def run_cmd(cmd: list[str], cwd: Path, check: bool = False) -> subprocess.Comple
     return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=check)
 
 
+def check_pr_conflict_status(worktree_dir: Path, pr_url: str) -> tuple[bool, str]:
+    """Inspects pull request mergeability and conflict status via gh pr view.
+
+    Returns (is_conflict_or_closed, reason_message).
+    """
+    res = run_cmd(
+        ["gh", "pr", "view", pr_url, "--json", "state,mergeable,mergeStateStatus"],
+        cwd=worktree_dir,
+    )
+    if res.returncode != 0:
+        return False, ""
+    try:
+        data = json.loads(res.stdout)
+    except json.JSONDecodeError:
+        return False, ""
+
+    if not isinstance(data, dict):
+        return False, ""
+
+    state = str(data.get("state", "")).upper()
+    if state == "CLOSED":
+        return True, f"Pull Request {pr_url} was closed."
+
+    mergeable = str(data.get("mergeable", "")).upper()
+    merge_status = str(data.get("mergeStateStatus", "")).upper()
+
+    if mergeable == "CONFLICTING" or merge_status == "DIRTY":
+        return (
+            True,
+            f"Pull Request {pr_url} has merge conflicts with base branch (mergeable: {mergeable}, mergeStateStatus: {merge_status}).",
+        )
+
+    return False, ""
+
+
+def close_pull_request(worktree_dir: Path, pr_url: str, reason: str = "") -> None:
+    """Closes pull request if it failed or conflicted."""
+    cmd = ["gh", "pr", "close", pr_url]
+    if reason:
+        cmd.extend(["--comment", reason])
+    run_cmd(cmd, cwd=worktree_dir)
+
+
 def commit_and_push(worktree_dir: Path, task: Task, branch: str) -> None:
     """Stages all changes, commits if needed, and pushes to origin."""
+    # Fetch latest origin/main
+    run_cmd(["git", "fetch", "origin", "main"], cwd=worktree_dir)
+    chk = run_cmd(["git", "rev-parse", "--verify", "origin/main"], cwd=worktree_dir)
+    base_ref = "origin/main" if chk.returncode == 0 else "main"
+
+    # Enforce backlog isolation: feature branches must never contain changes to docs/project/backlog
+    run_cmd(["git", "checkout", base_ref, "--", "docs/project/backlog"], cwd=worktree_dir)
+    run_cmd(["git", "clean", "-fd", "docs/project/backlog"], cwd=worktree_dir)
+
     run_cmd(["git", "add", "-A"], cwd=worktree_dir, check=True)
 
     status = run_cmd(["git", "status", "--porcelain"], cwd=worktree_dir)
@@ -30,6 +82,31 @@ def commit_and_push(worktree_dir: Path, task: Task, branch: str) -> None:
         res = run_cmd(["git", "commit", "-m", commit_msg], cwd=worktree_dir)
         if res.returncode != 0:
             raise CIPipelineError(f"Git commit failed: {res.stderr}")
+
+    # Proactively detect and sync with latest base branch before pushing
+    if chk.returncode == 0:
+        behind_res = run_cmd(["git", "rev-list", f"HEAD..{base_ref}", "--count"], cwd=worktree_dir)
+        behind_count = behind_res.stdout.strip()
+        if behind_count.isdigit() and int(behind_count) > 0:
+            # Check if merging base_ref would cause merge conflicts
+            merge_test = run_cmd(
+                ["git", "merge-tree", "--write-tree", "HEAD", base_ref],
+                cwd=worktree_dir,
+            )
+            if merge_test.returncode != 0:
+                raise CIPipelineError(
+                    f"Branch {branch} has merge conflicts with {base_ref}. Releasing task back to queue."
+                )
+            # Merge base_ref so the feature branch is cleanly up to date with origin/main
+            merge_res = run_cmd(
+                ["git", "merge", base_ref, "-m", f"chore: sync with {base_ref}"],
+                cwd=worktree_dir,
+            )
+            if merge_res.returncode != 0:
+                run_cmd(["git", "merge", "--abort"], cwd=worktree_dir)
+                raise CIPipelineError(
+                    f"Branch {branch} failed to merge {base_ref}: {merge_res.stderr.strip()}"
+                )
 
     push_res = run_cmd(["git", "push", "-u", "origin", branch, "--force"], cwd=worktree_dir)
     if push_res.returncode != 0:
@@ -95,6 +172,12 @@ def wait_for_ci_checks(
     start_time = time.time()
 
     while time.time() - start_time < timeout_seconds:
+        # Check if GitHub reports PR as conflicting or closed
+        is_bad, reason = check_pr_conflict_status(worktree_dir, pr_url)
+        if is_bad:
+            print(f"❌ {reason}")
+            return False
+
         res = run_cmd(
             [
                 "gh",
@@ -112,6 +195,11 @@ def wait_for_ci_checks(
 
         # Check if GitHub Actions hasn't reported/registered any checks yet
         if "no checks reported" in combined or not output:
+            is_bad, reason = check_pr_conflict_status(worktree_dir, pr_url)
+            if is_bad:
+                print(f"❌ {reason}")
+                return False
+
             print("⏳ Waiting for CI checks to be registered by GitHub Actions...")
             time.sleep(poll_interval)
             continue
@@ -120,6 +208,11 @@ def wait_for_ci_checks(
             checks = json.loads(output)
         except json.JSONDecodeError:
             if "no checks reported" in combined:
+                is_bad, reason = check_pr_conflict_status(worktree_dir, pr_url)
+                if is_bad:
+                    print(f"❌ {reason}")
+                    return False
+
                 print("⏳ Waiting for CI checks to be registered by GitHub Actions...")
                 time.sleep(poll_interval)
                 continue
@@ -128,6 +221,11 @@ def wait_for_ci_checks(
             continue
 
         if not checks or not isinstance(checks, list):
+            is_bad, reason = check_pr_conflict_status(worktree_dir, pr_url)
+            if is_bad:
+                print(f"❌ {reason}")
+                return False
+
             print("⏳ Waiting for CI checks to be registered by GitHub Actions...")
             time.sleep(poll_interval)
             continue

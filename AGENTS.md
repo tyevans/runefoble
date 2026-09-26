@@ -81,6 +81,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`instrument-services-with-opentelemetry.md`](docs/how-to/instrument-services-with-opentelemetry.md): How to instrument FastAPI services, configure OTel exporters, and propagate trace context over Redis Streams.
 - [`authenticate-with-zitadel-oidc.md`](docs/how-to/authenticate-with-zitadel-oidc.md): How to validate Zitadel JWTs against JWKS discovery, enforce HTTP dependencies, and secure WebSockets.
 - [`track-analytics-events.md`](docs/how-to/track-analytics-events.md): How to record privacy-preserving analytics via OpenPanel SDK and Redis Streams workers.
+- [`visualize-project-content.md`](docs/how-to/visualize-project-content.md): How to launch the dynamic project content visualizer, trace Redstring dependencies, and export standalone HTML bundles.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
@@ -141,7 +142,7 @@ Work is complete only when:
 5. **Blackbox TDD Suite with Frontdoor Setup**: All scenarios verified through public entrypoints (HTTP routes, WebSockets, standard domain events) rather than private internals or backdoor state manipulation.
 6. **Automated Verification Gates**: All Python tests pass via `uv run pytest`, frontend builds pass via `pnpm run build` and `make build`, and `make health-check` passes.[^23]
 7. **Helm & Kubernetes Integrity**: Umbrella Helm chart passes `helm lint` and renders cleanly via `helm template`.[^4]
-8. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs, User Stories, Backlog `complete/`, and `PRIORITY.md`) updated to reflect the new state.[^18]
+8. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs and User Stories) updated to reflect the new state.[^18] For Backlog items (`complete/` and `PRIORITY.md`), updates are applied atomically upon integration into `main` by the integration orchestrator (never directly on feature branches or in worker worktrees to prevent merge conflicts).
 9. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
 
 ## Dispatching Work to Agents & Parallel Worktrees
@@ -154,7 +155,7 @@ When delegating tasks to subagents:
    - Upon completion, merge the feature branch back to `main`, verify gates, and clean up the worktree (`git worktree remove .worktrees/<feature-name> && git branch -d <feature-branch>`).
 3. **Spin an agent down when it hands back**: do not reuse agents across disparate workstreams.
 4. **Trust what an agent says it did, but verify what it worked out**: confirm tests run green and build gates pass.
-5. **Maintain PRDs and backlog items**: Subagents must proactively maintain relevant PRDs (in `docs/project/product/`) and backlog items (in `docs/project/backlog/` including refinement, status progression, prioritization in `PRIORITY.md`, and registry synchronization).
+5. **Maintain PRDs and user stories**: Subagents must proactively maintain relevant PRDs (in `docs/project/product/`) and user stories. Backlog progression (moving from `refined/` to `complete/` and marking `(Complete)` in `PRIORITY.md`) is handled exclusively by the orchestrator upon merge to `main` to ensure zero merge conflicts across parallel worktrees.
 
 ## References
 

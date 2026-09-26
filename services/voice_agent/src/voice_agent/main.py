@@ -20,6 +20,8 @@ from voice_agent.dsp import (
     VoiceDSPPipeline,
     apply_audio_filters,
 )
+from voice_agent.room import get_voice_room_coordinator
+from voice_agent.room_routes import router as room_router
 
 logger = logging.getLogger("runefoble.voice_agent")
 WATCHER_URL = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://localhost:8001")
@@ -31,6 +33,7 @@ app = FastAPI(
     version="0.1.0",
     description="Real-time Voice Streaming, STT / TTS Pipelines, and Persona Voice Synthesis.",
 )
+app.include_router(room_router)
 
 platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
@@ -46,6 +49,7 @@ def get_event_bus() -> RedisStreamsEventBus:
 def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
     global _event_bus
     _event_bus = bus
+    get_voice_room_coordinator().set_event_bus(bus)
 
 
 def to_uuid(val: str | UUID | None) -> UUID:
@@ -342,7 +346,7 @@ def get_ui_manifest():
     return {
         "service": "voice_agent",
         "package": "@runefoble/voice-agent-ui",
-        "components": ["runefoble-voice-controls"],
+        "components": ["runefoble-voice-controls", "runefoble-audio-indicator"],
         "version": "0.1.0",
     }
 

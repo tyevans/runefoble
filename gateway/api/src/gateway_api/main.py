@@ -6,26 +6,33 @@ real-time WebSockets for the tactical board and voice chronicle.
 """
 
 import contextlib
-from datetime import UTC, datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Header, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from gateway_api.assets import router as assets_router
 from gateway_api.auth import get_current_user, get_spicedb_client, require_zanzibar_permission
 from gateway_api.auth_sync import router as auth_sync_router
+from gateway_api.models import (
+    AdvanceTurnRequest,
+    AssignRoleRequest,
+    AtmosphereUpdateRequest,
+    DMOverrideRequest,
+    TokenMoveRequest,
+)
 from gateway_api.spectator import (
     SpectatorStateResponse,
     SpectatorViewerInfo,
     get_raw_session_state,
     sanitize_spectator_state,
 )
+from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
 from gateway_api.websocket import campaign_websocket_endpoint
-from pydantic import BaseModel, Field
 from runefoble_auth.zitadel import AuthenticatedUser
 from runefoble_events import SpectatorSessionConnected
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from voice_agent.room_routes import router as voice_rooms_router
 
 platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
@@ -63,6 +70,7 @@ app.add_middleware(
 
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
+app.include_router(voice_rooms_router)
 
 
 class WebSocketConnectionManager:
@@ -86,34 +94,6 @@ class WebSocketConnectionManager:
 
 
 ws_manager = WebSocketConnectionManager()
-
-
-class AssignRoleRequest(BaseModel):
-    user_id: str
-    role: Literal["owner", "dungeon_master", "player", "spectator"]
-
-
-class AdvanceTurnRequest(BaseModel):
-    next_character_id: str
-
-
-class DMOverrideRequest(BaseModel):
-    action: str
-    reason: str | None = None
-    payload: dict[str, Any] = Field(default_factory=dict)
-
-
-class AtmosphereUpdateRequest(BaseModel):
-    location_name: str
-    lighting: str = "Normal"
-    mood: str = "Neutral"
-    description: str = ""
-    ambient_audio_prompt: str | None = None
-
-
-class TokenMoveRequest(BaseModel):
-    to_x: int
-    to_y: int
 
 
 @app.get("/healthz")
@@ -397,6 +377,12 @@ async def session_websocket(websocket: WebSocket, session_id: str):
             await ws_manager.broadcast(data)
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
+
+
+@app.websocket("/ws/voice/{session_id}")
+async def voice_websocket(websocket: WebSocket, session_id: str):
+    """Zanzibar-protected WebRTC live voice room signaling stream."""
+    await voice_signaling_websocket_endpoint(websocket, session_id)
 
 
 def main():

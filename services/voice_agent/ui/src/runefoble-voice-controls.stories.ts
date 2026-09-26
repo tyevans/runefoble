@@ -19,10 +19,58 @@ export const DefaultMuted: Story = {
   `,
 };
 
-export const StreamingActive: Story = {
+export const Inactive: Story = {
   render: () => html`
     <div style="padding: 24px; max-width: 800px; background: var(--rf-bg-canvas, #f8f9fa);">
-      <runefoble-voice-controls .isListening=${true}></runefoble-voice-controls>
+      <runefoble-voice-controls
+        .isListening=${false}
+        connectionState="disconnected"
+      ></runefoble-voice-controls>
+    </div>
+  `,
+};
+
+export const WaveformActive: Story = {
+  render: () => html`
+    <div style="padding: 24px; max-width: 800px; background: var(--rf-bg-canvas, #f8f9fa);">
+      <runefoble-voice-controls
+        .isListening=${true}
+        .simulated=${true}
+        connectionState="connected"
+        .bitrateKbps=${64}
+        .latencyMs=${22}
+      ></runefoble-voice-controls>
+    </div>
+  `,
+};
+
+export const LowBandwidthWarning: Story = {
+  render: () => html`
+    <div style="padding: 24px; max-width: 800px; background: var(--rf-bg-canvas, #f8f9fa);">
+      <runefoble-voice-controls
+        .isListening=${true}
+        .simulated=${true}
+        connectionState="connected"
+        bandwidthQuality="low"
+        .bitrateKbps=${16}
+        .packetsLost=${14}
+        .latencyMs=${195}
+      ></runefoble-voice-controls>
+    </div>
+  `,
+};
+
+export const AfflictionDspActive: Story = {
+  render: () => html`
+    <div style="padding: 24px; max-width: 800px; background: var(--rf-bg-canvas, #f8f9fa);">
+      <runefoble-voice-controls
+        .isListening=${true}
+        .simulated=${true}
+        connectionState="connected"
+        .activeFilters=${['drunk', 'slur_articulation']}
+        .bitrateKbps=${64}
+        .latencyMs=${28}
+      ></runefoble-voice-controls>
     </div>
   `,
 };

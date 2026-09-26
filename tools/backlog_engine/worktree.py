@@ -73,8 +73,31 @@ def cleanup_worktree(
         run_git(["branch", "-D", branch_name], cwd=repo_root)
 
 
+def enforce_backlog_isolation(worktree_dir: Path) -> tuple[bool, str]:
+    """Ensures feature branch does not contain changes to docs/project/backlog."""
+    chk = run_git(["rev-parse", "--verify", "origin/main"], cwd=worktree_dir)
+    base_ref = "origin/main" if chk.returncode == 0 else "main"
+
+    status_res = run_git(["status", "--porcelain", "docs/project/backlog"], cwd=worktree_dir)
+    diff_res = run_git(
+        ["diff", f"{base_ref}...HEAD", "--", "docs/project/backlog"], cwd=worktree_dir
+    )
+
+    if status_res.stdout.strip() or diff_res.stdout.strip():
+        run_git(["checkout", base_ref, "--", "docs/project/backlog"], cwd=worktree_dir)
+        run_git(["clean", "-fd", "docs/project/backlog"], cwd=worktree_dir)
+        return (
+            True,
+            "Reverted branch modifications to docs/project/backlog/ (backlog progression is handled by the orchestrator).",
+        )
+    return True, ""
+
+
 def run_preflight_checks(worktree_dir: Path) -> tuple[bool, str]:
     """Runs automated verification suite (ruff lint/format, pytest, health check) in the worktree."""
+    # Ensure backlog isolation before running verification
+    _, isolation_msg = enforce_backlog_isolation(worktree_dir)
+
     checks = [
         ("Ruff Lint", ["uv", "run", "ruff", "check", "."]),
         ("Ruff Format", ["uv", "run", "ruff", "format", "--check", "."]),
@@ -86,6 +109,8 @@ def run_preflight_checks(worktree_dir: Path) -> tuple[bool, str]:
         checks.append(("Health Check", ["python3", str(health_check_script.resolve())]))
 
     output_log = []
+    if isolation_msg:
+        output_log.append(f"ℹ️ {isolation_msg}")
     all_passed = True
     for name, cmd in checks:
         res = subprocess.run(

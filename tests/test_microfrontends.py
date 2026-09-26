@@ -174,6 +174,67 @@ def test_storybook_aggregates_service_stories():
     assert "services/*/ui/src/**/*.stories" in content
 
 
+def test_voice_controls_visualizer_and_webrtc_spec():
+    """Verify runefoble-voice-controls implements WebAudio AnalyserNode visualizer & WebRTC monitor."""
+    ui_src = REPO_ROOT / "services" / "voice_agent" / "ui" / "src"
+    voice_ctrl_file = ui_src / "runefoble-voice-controls.ts"
+    assert voice_ctrl_file.is_file()
+    content = voice_ctrl_file.read_text(encoding="utf-8")
+
+    # Custom element registration
+    assert "@customElement('runefoble-voice-controls')" in content
+
+    # Component properties
+    assert "isListening" in content
+    assert "connectionState" in content
+    assert "bandwidthQuality" in content
+    assert "bitrateKbps" in content
+    assert "packetsLost" in content
+    assert "latencyMs" in content
+    assert "activeFilters" in content
+
+    # CustomEvents dispatched
+    assert "'voice-toggle'" in content
+    assert "'voice-state'" in content
+    assert "'voice-level'" in content
+
+    # WebAudio & Canvas visualizer
+    assert "waveform-canvas" in content
+    assert "AnalyserNode" in content
+    assert "AudioContext" in content
+    assert "renderWaveform" in content
+
+    # WebRTC monitor UI elements
+    assert "badge-webrtc" in content
+    assert "badge-warning" in content
+    assert "badge-dsp" in content
+
+    # Bauhaus styling tokens
+    assert "--rf-accent-primary" in content
+    assert "--rf-shadow" in content
+    assert "--rf-border-color" in content
+
+
+def test_voice_controls_storybook_stories_coverage():
+    """Verify Storybook stories cover inactive, active waveform, low bandwidth, and DSP afflictions."""
+    stories_file = (
+        REPO_ROOT
+        / "services"
+        / "voice_agent"
+        / "ui"
+        / "src"
+        / "runefoble-voice-controls.stories.ts"
+    )
+    assert stories_file.is_file()
+    content = stories_file.read_text(encoding="utf-8")
+
+    assert "DefaultMuted" in content
+    assert "Inactive" in content
+    assert "WaveformActive" in content
+    assert "LowBandwidthWarning" in content
+    assert "AfflictionDspActive" in content
+
+
 def test_battlemap_uploader_microfrontend_frontdoor(board_client):
     """Verify battlemap asset uploader component integrity and Silo S3 upload frontdoor."""
     from gateway_api.main import app as gateway_app

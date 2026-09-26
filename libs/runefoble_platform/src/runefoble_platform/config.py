@@ -23,11 +23,39 @@ class PlatformSettings(BaseSettings):
     service_name: str = Field(default="runefoble", description="Service identifier")
     debug: bool = Field(default=True, description="Enable debug logging")
 
-    # Database (PostgreSQL)
+    # Database (PostgreSQL) & Event Store
     database_url: str = Field(
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/runefoble",
+        validation_alias=AliasChoices("RUNEFOBLE_DATABASE_URL", "DATABASE_URL"),
         description="Postgres async connection string",
     )
+    use_postgres_event_store: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "RUNEFOBLE_USE_POSTGRES_EVENT_STORE", "USE_POSTGRES_EVENT_STORE"
+        ),
+        description="Enable persistent PostgreSQL event store",
+    )
+    postgres_pool_size: int = Field(
+        default=5,
+        validation_alias=AliasChoices("RUNEFOBLE_POSTGRES_POOL_SIZE", "POSTGRES_POOL_SIZE"),
+        description="PostgreSQL connection pool size",
+    )
+    postgres_max_overflow: int = Field(
+        default=10,
+        validation_alias=AliasChoices("RUNEFOBLE_POSTGRES_MAX_OVERFLOW", "POSTGRES_MAX_OVERFLOW"),
+        description="PostgreSQL connection pool max overflow",
+    )
+    event_store_table_name: str = Field(
+        default="runefoble_events",
+        validation_alias=AliasChoices("RUNEFOBLE_EVENT_STORE_TABLE_NAME", "EVENT_STORE_TABLE_NAME"),
+        description="Table name for event store events",
+    )
+
+    @property
+    def postgres_dsn(self) -> str:
+        """Alias for database_url for backward compatibility."""
+        return self.database_url
 
     # Cache & Event Streaming (Redis)
     redis_url: str = Field(
