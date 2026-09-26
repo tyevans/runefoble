@@ -1,5 +1,6 @@
 """Event-sourced GameSession aggregate using eventsource-py."""
 
+from typing import Any
 from uuid import UUID
 
 from eventsource.domain.aggregate import DeclarativeAggregate
@@ -11,6 +12,7 @@ from runefoble_events.events import (
     SessionCreated,
     SessionEnded,
     SessionStarted,
+    StandInActionDecided,
     TurnAdvanced,
 )
 
@@ -33,6 +35,7 @@ class GameSessionState(BaseModel):
     current_turn: int = 1
     participants: dict[str, ParticipantState] = Field(default_factory=dict)
     active_character_id: UUID | None = None
+    stand_in_actions: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
@@ -97,13 +100,39 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
         if self.state.status != "active":
             raise ValueError("Cannot advance turn in non-active session")
         prev = self.state.current_turn
+        next_char_id = active_character_id
+        if next_char_id is None and self.state.participants:
+            part_list = list(self.state.participants.values())
+            next_idx = prev % len(part_list)
+            next_char_id = part_list[next_idx].character_id
+
         self.create_event(
             TurnAdvanced,
             campaign_id=self.state.campaign_id,
             session_id=self.aggregate_id,
             previous_turn=prev,
             new_turn=prev + 1,
-            active_character_id=active_character_id,
+            active_character_id=next_char_id,
+        )
+
+    def record_stand_in_action(
+        self,
+        character_name: str,
+        action_type: str,
+        dialogue: str,
+        penalties_applied: list[str],
+        flavor_text: str = "",
+    ) -> None:
+        """Record an autonomous stand-in action taken on behalf of an absent player."""
+        self.create_event(
+            StandInActionDecided,
+            campaign_id=self.state.campaign_id,
+            session_id=self.aggregate_id,
+            character_name=character_name,
+            action_type=action_type,
+            dialogue=dialogue,
+            penalties_applied=penalties_applied,
+            flavor_text=flavor_text,
         )
 
     def end(self, summary: str = "Session completed") -> None:
@@ -132,8 +161,15 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
 
     @handles(SessionStarted)
     def _on_started(self, event: SessionStarted) -> None:
+        active_id = self.state.active_character_id
+        if active_id is None and self.state.participants:
+            active_id = next(iter(self.state.participants.values())).character_id
         self._state = self.state.model_copy(
-            update={"status": "active", "current_turn": event.started_at_turn}
+            update={
+                "status": "active",
+                "current_turn": event.started_at_turn,
+                "active_character_id": active_id,
+            }
         )
 
     @handles(PlayerJoinedSession)
@@ -147,7 +183,10 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
             is_present=True,
             is_stand_in_active=False,
         )
-        self._state = self.state.model_copy(update={"participants": participants})
+        active_id = self.state.active_character_id or event.character_id
+        self._state = self.state.model_copy(
+            update={"participants": participants, "active_character_id": active_id}
+        )
 
     @handles(PlayerLeftSession)
     def _on_player_left(self, event: PlayerLeftSession) -> None:
@@ -167,6 +206,20 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
                 "active_character_id": event.active_character_id,
             }
         )
+
+    @handles(StandInActionDecided)
+    def _on_stand_in_action_decided(self, event: StandInActionDecided) -> None:
+        actions = list(self.state.stand_in_actions)
+        actions.append(
+            {
+                "character_name": event.character_name,
+                "action_type": event.action_type,
+                "dialogue": event.dialogue,
+                "penalties_applied": event.penalties_applied,
+                "flavor_text": event.flavor_text,
+            }
+        )
+        self._state = self.state.model_copy(update={"stand_in_actions": actions})
 
     @handles(SessionEnded)
     def _on_ended(self, event: SessionEnded) -> None:

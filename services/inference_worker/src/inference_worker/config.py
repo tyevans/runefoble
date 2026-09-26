@@ -31,7 +31,7 @@ class WorkerSettings(BaseSettings):
         description="Base URL for OpenAI-compatible endpoint",
     )
     openai_model: str = Field(
-        default="granite-4.2-3b",
+        default="qwen3.8-27b-txt",
         description="Target model name on OpenAI-compatible endpoint",
     )
     openai_api_key: SecretStr = Field(

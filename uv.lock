@@ -530,9 +530,11 @@ source = { editable = "services/game_session" }
 dependencies = [
     { name = "eventsource-py" },
     { name = "fastapi" },
+    { name = "httpx" },
     { name = "pydantic" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
+    { name = "the-watcher" },
     { name = "uvicorn" },
 ]
 
@@ -540,9 +542,11 @@ dependencies = [
 requires-dist = [
     { name = "eventsource-py", specifier = ">=0.14.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
+    { name = "the-watcher", editable = "services/the_watcher" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 

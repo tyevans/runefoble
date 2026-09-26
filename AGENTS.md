@@ -31,6 +31,7 @@ These rules are structural. Do not violate them for convenience.
 3. **Frontend components are built and tested in Storybook first.** Build new UI elements as Lit Web Components in `frontend/src/components/` and verify them in `frontend/src/stories/` before embedding them into application views.[^13]
 4. **All Python packages are managed through the root UV workspace.** Do not use pip, poetry, or virtualenvs directly. Run commands through `uv` or the developer `Makefile`.[^14]
 5. **Services publish OpenAPI specs to the Swagger UI hub.** Every new HTTP service must expose `/openapi.json` and register its URL in `deployments/helm/runefoble/values.yaml`.[^11]
+6. **File length limit (<500 lines).** Source files over ~500 lines are rarely justified. Whenever editing or committing code, inspect file lengths and decompose large files into focused, single-responsibility modules.
 
 ## Design Principles
 
