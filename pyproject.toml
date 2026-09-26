@@ -13,8 +13,10 @@ dependencies = [
     "board-state",
     "character-sheet",
     "voice-agent",
+    "inference-worker",
     "gateway-api",
     "gateway-mcp",
+    "eventsource-py>=0.14.0",
 ]
 
 [tool.uv.sources]
@@ -26,6 +28,7 @@ game-session = { workspace = true }
 board-state = { workspace = true }
 character-sheet = { workspace = true }
 voice-agent = { workspace = true }
+inference-worker = { workspace = true }
 gateway-api = { workspace = true }
 gateway-mcp = { workspace = true }
 

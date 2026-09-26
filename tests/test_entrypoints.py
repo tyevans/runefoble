@@ -52,12 +52,14 @@ def test_microservice_entrypoint_initialization():
     from character_sheet.main import app as character_app
     from game_session.main import app as session_app
     from gateway_api.main import app as gateway_app
+    from inference_worker.api import app as inference_app
     from the_watcher.main import app as watcher_app
     from voice_agent.main import app as voice_app
 
     apps = [
         ("gateway-api", gateway_app),
         ("the-watcher", watcher_app),
+        ("inference-worker", inference_app),
         ("board-state", board_app),
         ("character-sheet", character_app),
         ("game-session", session_app),

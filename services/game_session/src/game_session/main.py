@@ -1,88 +1,127 @@
-"""Game Session Microservice.
+"""Game Session Microservice - Powered by eventsource-py.
 
 Coordinates active sessions, participant presence, turn order, and campaign timelines.
 """
 
+from uuid import UUID, uuid4
+
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from game_session.aggregate import GameSessionAggregate, GameSessionState
+from pydantic import BaseModel
+from runefoble_platform.event_sourcing import (
+    AggregateRepository,
+    create_aggregate_repository,
+    get_event_store,
+)
 
 app = FastAPI(
     title="Runefoble - Game Session Service",
     version="0.1.0",
-    description="Session Lifecycle, Turn / Initiative Order, and Live Participation.",
+    description="Session Lifecycle, Turn / Initiative Order, and Live Participation backed by eventsource-py.",
 )
 
-
-class SessionParticipant(BaseModel):
-    user_id: str
-    username: str
-    role: str  # "dm", "player", "spectator"
-    is_present: bool = True
-    assigned_character_id: str | None = None
-    is_ai_stand_in_active: bool = False
+# Global aggregate repository
+repo: AggregateRepository[GameSessionAggregate] = create_aggregate_repository(GameSessionAggregate)
 
 
-class GameSession(BaseModel):
-    id: str
-    campaign_id: str
-    title: str
-    status: str = "active"  # "lobby", "active", "paused", "ended"
-    round: int = 1
-    current_turn_index: int = 0
-    initiative_order: list[str] = Field(default_factory=list)
-    participants: dict[str, SessionParticipant] = Field(default_factory=dict)
+class CreateSessionRequest(BaseModel):
+    campaign_id: UUID
+    title: str = "Tomb of the Star-Eater - Session 1"
+    dm_id: str = "the_watcher"
 
 
-# In-memory sessions store
-sessions: dict[str, GameSession] = {
-    "sess-001": GameSession(
-        id="sess-001",
-        campaign_id="camp1",
-        title="Tomb of the Star-Eater - Session 14",
-        status="active",
-        round=3,
-        current_turn_index=0,
-        initiative_order=["c1", "c2", "goblin-1"],
-        participants={
-            "user1": SessionParticipant(
-                user_id="user1", username="Alice", role="player", assigned_character_id="c1"
-            ),
-            "user2": SessionParticipant(
-                user_id="user2",
-                username="Bob",
-                role="player",
-                is_present=False,
-                assigned_character_id="c2",
-                is_ai_stand_in_active=True,
-            ),
-        },
-    )
-}
+class JoinSessionRequest(BaseModel):
+    player_id: str
+    character_id: UUID
+    character_name: str
+    character_class: str
+
+
+class LeaveSessionRequest(BaseModel):
+    player_id: str
+    reason: str = "disconnected"
 
 
 @app.get("/healthz")
 async def health_check():
-    return {"status": "ok", "service": "game_session"}
+    return {
+        "status": "ok",
+        "service": "game_session",
+        "event_store": type(get_event_store()).__name__,
+    }
 
 
-@app.get("/api/v1/sessions/{session_id}", response_model=GameSession)
-async def get_session(session_id: str):
-    if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
-    return sessions[session_id]
+@app.post("/api/v1/sessions/create", response_model=GameSessionState)
+async def create_session(req: CreateSessionRequest):
+    """Create a new event-sourced game session."""
+    session_id = uuid4()
+    session = GameSessionAggregate(session_id)
+    session.create(campaign_id=req.campaign_id, title=req.title, dm_id=req.dm_id)
+    await repo.save(session)
+    return session.state
 
 
-@app.post("/api/v1/sessions/{session_id}/next-turn", response_model=GameSession)
-async def advance_turn(session_id: str):
-    """Advance to the next participant in the initiative order."""
-    if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
-    sess = sessions[session_id]
-    if sess.initiative_order:
-        sess.current_turn_index = (sess.current_turn_index + 1) % len(sess.initiative_order)
-        if sess.current_turn_index == 0:
-            sess.round += 1
-    return sess
+@app.get("/api/v1/sessions/{session_id}", response_model=GameSessionState)
+async def get_session(session_id: UUID):
+    """Load session state reconstituted from the event stream."""
+    try:
+        session = await repo.load(session_id)
+        return session.state
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
+
+
+@app.post("/api/v1/sessions/{session_id}/start", response_model=GameSessionState)
+async def start_session(session_id: UUID):
+    """Transition session from lobby to active."""
+    try:
+        session = await repo.load(session_id)
+        session.start()
+        await repo.save(session)
+        return session.state
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/api/v1/sessions/{session_id}/join", response_model=GameSessionState)
+async def join_session(session_id: UUID, req: JoinSessionRequest):
+    """Record player entering session."""
+    try:
+        session = await repo.load(session_id)
+        session.join_player(
+            player_id=req.player_id,
+            character_id=req.character_id,
+            character_name=req.character_name,
+            character_class=req.character_class,
+        )
+        await repo.save(session)
+        return session.state
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/api/v1/sessions/{session_id}/leave", response_model=GameSessionState)
+async def leave_session(session_id: UUID, req: LeaveSessionRequest):
+    """Record player absence, marking character for AI stand-in."""
+    try:
+        session = await repo.load(session_id)
+        session.leave_player(player_id=req.player_id, reason=req.reason)
+        await repo.save(session)
+        return session.state
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/api/v1/sessions/{session_id}/next-turn", response_model=GameSessionState)
+async def advance_turn(session_id: UUID):
+    """Advance to the next turn in the session."""
+    try:
+        session = await repo.load(session_id)
+        session.advance_turn()
+        await repo.save(session)
+        return session.state
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 def main():

@@ -27,7 +27,7 @@ Development runs locally in **Kind (Kubernetes IN Docker)** with Traefik ingress
 These rules are structural. Do not violate them for convenience.
 
 1. **Object-level authorization runs through SpiceDB Zanzibar schema.** Never hardcode role checks (e.g. `user.role == 'admin'`) in business logic. Check permissions against `libs/runefoble_auth/schema/runefoble.zed`.[^6]
-2. **Every platform event conforms to the CloudEvents schema.** Events must inherit from `BaseRunefobleEvent` in `libs/runefoble_events` and contain an immutable ID, timestamp, campaign ID, and session ID.[^12]
+2. **All domain state transitions and events are powered by eventsource-py.** Domain events inherit from `DomainEvent` (via `BaseRunefobleEvent` in `libs/runefoble_events`) and are registered with `@register_event`. Domain state changes flow strictly through `DeclarativeAggregate` subclasses with `@handles` methods and are saved/loaded via `AggregateRepository`.[^24]
 3. **Frontend components are built and tested in Storybook first.** Build new UI elements as Lit Web Components in `frontend/src/components/` and verify them in `frontend/src/stories/` before embedding them into application views.[^13]
 4. **All Python packages are managed through the root UV workspace.** Do not use pip, poetry, or virtualenvs directly. Run commands through `uv` or the developer `Makefile`.[^14]
 5. **Services publish OpenAPI specs to the Swagger UI hub.** Every new HTTP service must expose `/openapi.json` and register its URL in `deployments/helm/runefoble/values.yaml`.[^11]
@@ -128,3 +128,4 @@ When delegating tasks to subagents:
 [^21]: Backlog priority index. `docs/project/backlog/PRIORITY.md`
 [^22]: Diataxis documentation framework. `https://diataxis.fr/`
 [^23]: Developer Makefile interfaces. `Makefile`
+[^24]: eventsource-py architecture ADR. `docs/project/adrs/accepted/adr-0011-eventsource-py-core-event-sourcing.md`

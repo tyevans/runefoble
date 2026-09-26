@@ -8,4 +8,7 @@ dependencies = [
     "fastapi>=0.141.1",
     "pydantic>=2.13.5",
     "uvicorn>=0.54.0",
+    "runefoble-platform",
+    "runefoble-events",
+    "eventsource-py>=0.14.0",
 ]

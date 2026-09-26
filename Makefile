@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api pre-commit
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit
 
 CLUSTER_NAME ?= runefoble-local
 KIND_CONFIG ?= deployments/kind/cluster-config.yaml
@@ -65,6 +65,17 @@ dev-storybook: ## Run Storybook component studio with watcher protection
 dev-api: ## Run API Gateway locally
 	@echo "==> Starting Runefoble API Gateway..."
 	uv run python gateway/api/src/gateway_api/main.py
+
+dev-worker: ## Run AI inference worker locally
+	@echo "==> Starting Runefoble AI Inference Worker..."
+	uv run runefoble-inference-worker
+
+deploy-remote-worker: ## Sync and set up inference worker on remote GPU host
+	@echo "==> Syncing workspace to remote GPU host (debian@192.168.1.14)..."
+	ssh debian@192.168.1.14 "mkdir -p ~/runefoble"
+	rsync -avz --exclude '.git' --exclude '.venv' --exclude 'node_modules' --exclude '__pycache__' . debian@192.168.1.14:~/runefoble/
+	ssh debian@192.168.1.14 "cd ~/runefoble && ~/.local/bin/uv sync"
+	@echo "==> Remote worker synced. To run: ssh debian@192.168.1.14 'cd ~/runefoble && ~/.local/bin/uv run runefoble-inference-worker'"
 
 test: ## Run complete test suite (unit, entrypoints, properties, frontend build)
 	@echo "==> Running Python test suite..."

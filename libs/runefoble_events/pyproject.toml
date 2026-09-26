@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "pydantic>=2.13.5",
+    "eventsource-py>=0.14.0",
 ]
 
 [build-system]
