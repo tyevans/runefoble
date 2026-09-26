@@ -1,7 +1,7 @@
 ---
 id: '0055'
 title: Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0003
@@ -13,8 +13,8 @@ governing_adrs:
 - ADR-0011
 - ADR-0013
 target_release: 0.2.1
+pr_url: https://github.com/tyevans/runefoble/pull/73
 ---
-
 # TASK-0055: Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover
 
 ## Status
