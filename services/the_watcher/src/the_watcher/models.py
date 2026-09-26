@@ -102,6 +102,93 @@ class DMGuidanceRequest(BaseModel):
     prompt: str
 
 
+class WhisperSuggestion(BaseModel):
+    whisper_id: str
+    session_id: str
+    campaign_id: str = ""
+    whisper_type: str = "atmospheric_hint"
+    content: str
+    recipient_role: str = "dungeon_master"
+    timestamp: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class WhisperListResponse(BaseModel):
+    whispers: list[WhisperSuggestion] = Field(default_factory=list)
+    total: int = 0
+    page: int = 1
+    limit: int = 20
+
+
+class WhisperCreateRequest(BaseModel):
+    session_id: str
+    campaign_id: str = ""
+    whisper_type: str = "atmospheric_hint"
+    content: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class WhisperGenerateRequest(BaseModel):
+    session_id: str
+    campaign_id: str = ""
+    scene_context: str = ""
+    location_type: str = "dungeon"
+    threat_level: str = "medium"
+
+
+class PendingAction(BaseModel):
+    action_id: str
+    session_id: str
+    campaign_id: str = ""
+    actor_name: str
+    action_type: str
+    description: str
+    target: str | None = None
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    status: str = "pending"
+    pause_window_ms: int = 2000
+    created_at: float = 0.0
+    expires_at: float = 0.0
+    vetoed_by: str | None = None
+    veto_reason: str | None = None
+    approved_by: str | None = None
+    modified_by: str | None = None
+
+
+class ProposeActionRequest(BaseModel):
+    session_id: str
+    campaign_id: str = ""
+    actor_name: str
+    action_type: str
+    description: str
+    target: str | None = None
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    pause_window_ms: int = 2000
+
+
+class VetoActionRequest(BaseModel):
+    action_id: str
+    session_id: str | None = None
+    campaign_id: str | None = None
+    reason: str = "DM vetoed action"
+
+
+class ApproveActionRequest(BaseModel):
+    action_id: str
+    session_id: str | None = None
+    campaign_id: str | None = None
+
+
+class ModifyActionRequest(BaseModel):
+    action_id: str
+    session_id: str | None = None
+    campaign_id: str | None = None
+    description: str | None = None
+    target: str | None = None
+    parameters: dict[str, Any] | None = None
+    auto_approve: bool = True
+
+
 class EntityTarget(BaseModel):
     id: str
     name: str

@@ -1,7 +1,7 @@
 ---
 id: '0053'
 title: DM Co-Pilot Whisper Prompts and Veto Override Engine
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0002
@@ -14,8 +14,8 @@ governing_adrs:
 - ADR-0007
 - ADR-0013
 target_release: 0.2.1
+pr_url: https://github.com/tyevans/runefoble/pull/72
 ---
-
 # TASK-0053: DM Co-Pilot Whisper Prompts and Veto Override Engine
 
 ## Status

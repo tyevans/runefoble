@@ -36,6 +36,11 @@ def test_watcher_openapi_routes_completeness(watcher_client):
         "/api/v1/watcher/stand-in/act",
         "/api/v1/watcher/stand-in/recap",
         "/api/v1/watcher/chronicle/recap",
+        "/api/v1/watcher/veto",
+        "/api/v1/watcher/approve",
+        "/api/v1/watcher/modify",
+        "/api/v1/watcher/propose",
+        "/api/v1/watcher/whispers",
     ]
 
     for route in expected_routes:
