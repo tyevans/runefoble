@@ -1,7 +1,7 @@
 ---
-id: '0079'
+id: 0079
 title: Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0034
@@ -11,8 +11,8 @@ governing_adrs:
 - ADR-0007
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/77
 ---
-
 # TASK-0079: Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition
 
 ## Status

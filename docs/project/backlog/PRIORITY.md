@@ -79,7 +79,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 71. **TASK-0088 (Complete)**: [`0088-microfrontends-test-suite-decomposition.md`](complete/0088-microfrontends-test-suite-decomposition.md) — Microfrontends Blackbox Test Suite Modular Decomposition
 72. **TASK-0092 (Complete)**: [`0092-asset-forge-test-suite-modular-decomposition.md`](complete/0092-asset-forge-test-suite-modular-decomposition.md) — Asset Forge Blackbox Test Suite Modular Decomposition
 73. **TASK-0091 (Complete)**: [`0091-backlog-engine-orchestrator-and-ci-watcher-decomposition.md`](complete/0091-backlog-engine-orchestrator-and-ci-watcher-decomposition.md) — Backlog Engine Orchestrator and CI Watcher Modular Decomposition
-74. **TASK-0079 (Refined)**: [`0079-zitadel-oidc-auth-test-suite-decomposition.md`](refined/0079-zitadel-oidc-auth-test-suite-decomposition.md) — Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition
+74. **TASK-0079 (Complete)**: [`0079-zitadel-oidc-auth-test-suite-decomposition.md`](complete/0079-zitadel-oidc-auth-test-suite-decomposition.md) — Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition
 75. **TASK-0065 (Refined)**: [`0065-voice-agent-dsp-pipeline-and-router-decomposition.md`](refined/0065-voice-agent-dsp-pipeline-and-router-decomposition.md) — Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition
 76. **TASK-0064 (Refined)**: [`0064-webrtc-voice-signaling-and-test-suite-decomposition.md`](refined/0064-webrtc-voice-signaling-and-test-suite-decomposition.md) — WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition
 
