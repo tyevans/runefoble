@@ -138,8 +138,8 @@ def test_server_http_endpoints(repo_root: Path):
         {"generator": generator},
     )
 
-    port = 8999
-    server = HTTPServer(("127.0.0.1", port), handler_class)
+    server = HTTPServer(("127.0.0.1", 0), handler_class)
+    port = server.server_port
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
     time.sleep(0.1)
