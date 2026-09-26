@@ -166,6 +166,8 @@ swaggerUI:
       url: "http://asset-forge:8008/openapi.json"
     - name: "Soundscape Service"
       url: "http://soundscape:8009/openapi.json"
+    - name: "Audience Studio Service"
+      url: "http://audience-studio:8010/openapi.json"
 
 # Services
 services:
@@ -209,6 +211,10 @@ services:
     image: runefoble/soundscape:0.1.0
     replicas: 1
     port: 8009
+  audienceStudio:
+    image: runefoble/audience-studio:0.1.0
+    replicas: 1
+    port: 8010
 
 # Frontend Application
 frontend:

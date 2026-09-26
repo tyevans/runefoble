@@ -47,6 +47,9 @@ members = [
     "services/*",
     "gateway/*",
 ]
+exclude = [
+    "services/audience_studio",
+]
 
 [dependency-groups]
 dev = [

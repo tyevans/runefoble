@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **TypeScript Audience Studio & Live Stream Interactivity Microservice (`TASK-0051`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0007`, `ADR-0013`)**:
+  - Implemented `services/audience_studio` as a first-class TypeScript microservice (Node.js / Fastify / TypeScript) for live streaming audience interactivity without table gameplay latency.
+  - Built high-concurrency Audience Poll Engine supporting live chaos polls, time window expiration, multi-platform spectator vote ingestion (Twitch, YouTube, web), and quorum calculations.
+  - Implemented SpiceDB Zanzibar-guarded DM moderation approval queue and live bidirectional WebSocket stream (`/ws/audience/{campaign_id}`) for real-time chaos modifier approval/veto.
+  - Registered and published CloudEvents 1.0 specifications: `AudiencePollStarted`, `AudienceVoteCast`, `AudiencePollCompleted`, `AudienceModifierProposed`, and `AudienceModifierApproved`.
+  - Vendored Lit microfrontend `<runefoble-audience-studio>` (`@runefoble/audience-studio-ui`) featuring Bauhaus tokens, Shadow DOM encapsulation, and Storybook stories.
+  - Exposed service discovery manifest (`GET /ui/manifest`) and OpenAPI documentation hub specification (`GET /openapi.json`).
+  - Added umbrella Helm deployment manifest `audience-studio.yaml` with Traefik ingress routing and Swagger UI hub integration.
+  - Authored Diataxis How-To guide `docs/how-to/orchestrate-audience-chaos-polls.md` and updated technical reference specifications.
+  - Verified full test suite through frontdoor blackbox tests in `tests/test_blackbox_audience_studio.py` and `tests/test_blackbox_audience_studio_auth.py` with zero file invariant violations (< 250 lines per file).
 - **Full Traceability Matrix and PRD Story/Task Support Enrichment**:
   - Increased support across under-supported PRDs by authoring dedicated user stories and backlog tasks:
     - US-0051: Character Level Progression, Spellbook Preparation & Spell Slot Scaling (`PRD-0006`).

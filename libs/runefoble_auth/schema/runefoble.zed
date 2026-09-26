@@ -87,5 +87,19 @@ definition forged_asset {
     permission edit = manage
 }
 
+definition audience_poll {
+    relation campaign: campaign
+    relation creator: user
+
+    // Viewing and voting is open to campaign viewers (spectators, players, DMs)
+    permission view = campaign->view
+    permission vote = campaign->view
+
+    // Approving, vetoing, and managing audience chaos proposals requires DM/GM/Owner
+    permission moderate = campaign->run_session
+    permission approve = campaign->run_session
+    permission veto = campaign->run_session
+}
+
 
 

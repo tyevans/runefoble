@@ -11,6 +11,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@runefoble/audience-studio-ui": "workspace:*",
     "@runefoble/board-state-ui": "workspace:*",
     "@runefoble/campaign-lore-ui": "workspace:*",
     "@runefoble/character-sheet-ui": "workspace:*",

@@ -12,6 +12,13 @@ from runefoble_events.asset import (
     BattlemapForged,
     TokenAssetForged,
 )
+from runefoble_events.audience import (
+    AudienceModifierApproved,
+    AudienceModifierProposed,
+    AudiencePollCompleted,
+    AudiencePollStarted,
+    AudienceVoteCast,
+)
 from runefoble_events.base import BaseRunefobleEvent, register_event
 from runefoble_events.board import (
     BoardGridInitialized,
@@ -173,6 +180,11 @@ __all__ = [
     "VoicePeerMuteToggled",
     "AssetUploaded",
     "AssetDeleted",
+    "AudiencePollStarted",
+    "AudienceVoteCast",
+    "AudiencePollCompleted",
+    "AudienceModifierProposed",
+    "AudienceModifierApproved",
     "BattlemapForged",
     "TokenAssetForged",
     "BattlemapCreated",
