@@ -9,7 +9,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./runefoble-character-card": "./src/runefoble-character-card.ts",
-    "./runefoble-absentee-recap": "./src/runefoble-absentee-recap.ts"
+    "./runefoble-absentee-recap": "./src/runefoble-absentee-recap.ts",
+    "./runefoble-absentee-recap.styles": "./src/runefoble-absentee-recap.styles.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

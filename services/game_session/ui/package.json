@@ -9,8 +9,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./runefoble-initiative-tracker": "./src/runefoble-initiative-tracker.ts",
+    "./runefoble-initiative-tracker.styles": "./src/runefoble-initiative-tracker.styles.ts",
     "./runefoble-dice-roller": "./src/runefoble-dice-roller.ts",
     "./runefoble-spectator-view": "./src/runefoble-spectator-view.ts",
+    "./runefoble-spectator-view.styles": "./src/runefoble-spectator-view.styles.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {

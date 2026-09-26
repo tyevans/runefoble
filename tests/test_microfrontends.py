@@ -286,3 +286,101 @@ def test_battlemap_uploader_microfrontend_frontdoor(board_client):
     assert "UploadingProgress" in stories_code
     assert "AlignedMapPreview" in stories_code
     assert "FogOfWarMasked" in stories_code
+
+
+def test_microfrontend_component_styles_and_subview_decomposition_integrity():
+    """Verify TASK-0043: CSS styles extracted to *.styles.ts companion modules and file length limits."""
+    decomposed_targets = [
+        {
+            "component": REPO_ROOT
+            / "services"
+            / "game_session"
+            / "ui"
+            / "src"
+            / "runefoble-initiative-tracker.ts",
+            "styles": REPO_ROOT
+            / "services"
+            / "game_session"
+            / "ui"
+            / "src"
+            / "runefoble-initiative-tracker.styles.ts",
+            "style_export": "initiativeTrackerStyles",
+            "tag": "runefoble-initiative-tracker",
+            "max_style_lines": 150,
+            "max_comp_lines": 250,
+            "events": ["turn-timer-expired", "initiative-turn-advanced"],
+        },
+        {
+            "component": REPO_ROOT
+            / "services"
+            / "character_sheet"
+            / "ui"
+            / "src"
+            / "runefoble-absentee-recap.ts",
+            "styles": REPO_ROOT
+            / "services"
+            / "character_sheet"
+            / "ui"
+            / "src"
+            / "runefoble-absentee-recap.styles.ts",
+            "style_export": "absenteeRecapStyles",
+            "tag": "runefoble-absentee-recap",
+            "max_style_lines": 140,
+            "max_comp_lines": 240,
+            "events": ["audio-toggle"],
+        },
+        {
+            "component": REPO_ROOT
+            / "services"
+            / "game_session"
+            / "ui"
+            / "src"
+            / "runefoble-spectator-view.ts",
+            "styles": REPO_ROOT
+            / "services"
+            / "game_session"
+            / "ui"
+            / "src"
+            / "runefoble-spectator-view.styles.ts",
+            "style_export": "spectatorViewStyles",
+            "tag": "runefoble-spectator-view",
+            "max_style_lines": 130,
+            "max_comp_lines": 250,
+            "events": [],
+        },
+    ]
+
+    for item in decomposed_targets:
+        comp_file = item["component"]
+        styles_file = item["styles"]
+
+        assert comp_file.is_file(), f"{comp_file} must exist"
+        assert styles_file.is_file(), f"{styles_file} must exist"
+
+        comp_content = comp_file.read_text(encoding="utf-8")
+        styles_content = styles_file.read_text(encoding="utf-8")
+
+        comp_lines = len(comp_content.splitlines())
+        style_lines = len(styles_content.splitlines())
+
+        # Enforce strict line count ceilings (Hard Invariant 6 & TASK-0043 spec)
+        assert comp_lines < item["max_comp_lines"], (
+            f"{comp_file.name} has {comp_lines} lines (expected < {item['max_comp_lines']})"
+        )
+        assert style_lines < item["max_style_lines"], (
+            f"{styles_file.name} has {style_lines} lines (expected < {item['max_style_lines']})"
+        )
+        assert comp_lines < 250, f"{comp_file.name} must be < 250 lines"
+        assert style_lines < 250, f"{styles_file.name} must be < 250 lines"
+
+        # Style module exports the css template
+        assert f"export const {item['style_export']} = css`" in styles_content
+        # Component module imports and uses the style export
+        assert item["style_export"] in comp_content
+        assert f"@customElement('{item['tag']}')" in comp_content
+
+        # Contract preservation: custom events
+        for event_name in item["events"]:
+            assert f"'{event_name}'" in comp_content, (
+                f"Event {event_name} missing in {comp_file.name}"
+            )
