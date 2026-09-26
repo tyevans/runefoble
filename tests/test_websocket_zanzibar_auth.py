@@ -315,9 +315,9 @@ def test_spicedb_client_mock_and_grpc_handling():
     assert client.use_mock is True
     assert client._grpc_client is None
 
-    # Instantiate default client without authzed installed falls back gracefully
+    # Instantiate default client: with authzed installed, live gRPC client is initialized
     default_client = SpiceDBClient()
-    assert default_client._grpc_client is None
+    assert default_client._grpc_client is not None
 
     # In-memory relations work as expected
     import asyncio

@@ -1,5 +1,6 @@
 """Runefoble Auth Library."""
 
+from runefoble_auth.bootstrap_schema import bootstrap_schema
 from runefoble_auth.listener import SpiceDBEventListener
 from runefoble_auth.spicedb import MockSpiceDBClient, Relationship, SpiceDBClient
 from runefoble_auth.sync import SyncResult, ZitadelSpiceDBSyncService
@@ -15,4 +16,5 @@ __all__ = [
     "ZitadelSpiceDBSyncService",
     "SyncResult",
     "SpiceDBEventListener",
+    "bootstrap_schema",
 ]

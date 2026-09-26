@@ -1,7 +1,7 @@
 ---
 id: '0035'
 title: Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies: [TASK-0008, TASK-0016]
 governing_adrs: [ADR-0001, ADR-0005, ADR-0007]
@@ -11,7 +11,7 @@ target_release: 0.1.0
 # TASK-0035: Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Connect `SpiceDBClient` in `libs/runefoble_auth` to the live self-hosted SpiceDB gRPC service using the official `authzed` SDK. Implement live relationship creation, deletion, and checks against the Zanzibar engine while preserving seamless fallback to in-memory mock tuples for disconnected unit tests. Provide a Helm pre-install/upgrade job that compiles and applies `libs/runefoble_auth/schema/runefoble.zed` to SpiceDB during cluster deployment.

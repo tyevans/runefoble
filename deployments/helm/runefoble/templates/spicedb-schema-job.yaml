@@ -1,0 +1,55 @@
+{{- if and .Values.spicedb.enabled .Values.spicedb.schemaJob.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spicedb-schema
+  labels:
+    app: spicedb-schema
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  runefoble.zed: |-
+{{ .Files.Get "files/runefoble.zed" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: spicedb-schema-migration
+  labels:
+    app: spicedb-schema-migration
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: {{ .Values.spicedb.schemaJob.backoffLimit | default 10 }}
+  template:
+    metadata:
+      labels:
+        app: spicedb-schema-migration
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: schema-writer
+          image: {{ .Values.spicedb.schemaJob.image | quote }}
+          command:
+            - zed
+            - schema
+            - write
+            - /etc/spicedb/schema/runefoble.zed
+            - --endpoint
+            - "spicedb:{{ .Values.spicedb.grpcPort }}"
+            - --token
+            - {{ .Values.spicedb.presharedKey | quote }}
+            - --insecure
+          volumeMounts:
+            - name: schema-volume
+              mountPath: /etc/spicedb/schema
+              readOnly: true
+      volumes:
+        - name: schema-volume
+          configMap:
+            name: spicedb-schema
+{{- end }}

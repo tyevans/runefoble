@@ -64,7 +64,6 @@ postgres:
   password: runefoble_dev_password
   port: 5432
   storageSize: 5Gi
-  multipleDatabases: "zitadel,spicedb,openpanel"
 
 # Event Streaming & In-Memory Cache (Redis)
 redis:
@@ -107,6 +106,10 @@ spicedb:
   grpcPort: 50051
   httpPort: 8443
   presharedKey: runefoble_secret_key
+  schemaJob:
+    enabled: true
+    image: authzed/zed:latest
+    backoffLimit: 10
 
 # Analytics (OpenPanel self-hosted)
 openpanel:
