@@ -1,4 +1,4 @@
-"""DM Co-Pilot router: whispers, pre-execution pause window, and veto override endpoints."""
+"""Action interceptor sub-router: propose, pause window countdown, approve, modify, and veto."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Header, HTTPException, Query
 from runefoble_events.events import (
-    DMNarrativeWhispered,
     WatcherActionApproved,
     WatcherActionModified,
     WatcherActionProposed,
@@ -27,10 +26,6 @@ from the_watcher.models import (
     PendingAction,
     ProposeActionRequest,
     VetoActionRequest,
-    WhisperCreateRequest,
-    WhisperGenerateRequest,
-    WhisperListResponse,
-    WhisperSuggestion,
 )
 
 router = APIRouter(tags=["copilot"])
@@ -40,9 +35,20 @@ def _extract_caller_id(x_user_id: str | None, user_id: str | None) -> str | None
     return x_user_id or user_id
 
 
-# -----------------------------------------------------------------------------
-# Action Interceptor (Propose, Veto, Approve, Modify)
-# -----------------------------------------------------------------------------
+async def _assert_dm_permission(
+    caller: str | None, campaign_id: str | None, session_id: str | None
+) -> None:
+    is_dm = await check_dm_authorization(
+        caller,
+        campaign_id=campaign_id,
+        session_id=session_id,
+        spicedb=get_spicedb_client(),
+    )
+    if not is_dm:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
+        )
 
 
 @router.post("/api/v1/watcher/actions/propose", response_model=PendingAction)
@@ -86,18 +92,7 @@ async def veto_action(
 
     target_campaign = req.campaign_id or (pending.campaign_id if pending else None)
     target_session = req.session_id or (pending.session_id if pending else None)
-
-    is_dm = await check_dm_authorization(
-        caller,
-        campaign_id=target_campaign,
-        session_id=target_session,
-        spicedb=get_spicedb_client(),
-    )
-    if not is_dm:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
-        )
+    await _assert_dm_permission(caller, target_campaign, target_session)
 
     action = engine.veto_action(req.action_id, vetoed_by=caller or "unknown", reason=req.reason)
 
@@ -137,18 +132,7 @@ async def approve_action(
 
     target_campaign = req.campaign_id or (pending.campaign_id if pending else None)
     target_session = req.session_id or (pending.session_id if pending else None)
-
-    is_dm = await check_dm_authorization(
-        caller,
-        campaign_id=target_campaign,
-        session_id=target_session,
-        spicedb=get_spicedb_client(),
-    )
-    if not is_dm:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
-        )
+    await _assert_dm_permission(caller, target_campaign, target_session)
 
     action = await engine.approve_action(req.action_id, approved_by=caller or "unknown")
 
@@ -187,18 +171,7 @@ async def modify_action(
 
     target_campaign = req.campaign_id or (pending.campaign_id if pending else None)
     target_session = req.session_id or (pending.session_id if pending else None)
-
-    is_dm = await check_dm_authorization(
-        caller,
-        campaign_id=target_campaign,
-        session_id=target_session,
-        spicedb=get_spicedb_client(),
-    )
-    if not is_dm:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
-        )
+    await _assert_dm_permission(caller, target_campaign, target_session)
 
     action = await engine.modify_action(
         req.action_id,
@@ -244,156 +217,7 @@ async def list_pending_actions(
 ) -> list[PendingAction]:
     """Retrieve all pending actions. Requires DM permission."""
     caller = _extract_caller_id(x_user_id, user_id)
-    is_dm = await check_dm_authorization(
-        caller,
-        campaign_id=campaign_id,
-        session_id=session_id,
-        spicedb=get_spicedb_client(),
-    )
-    if not is_dm:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
-        )
+    await _assert_dm_permission(caller, campaign_id, session_id)
 
     engine = get_copilot_engine()
     return engine.list_pending_actions(session_id=session_id, campaign_id=campaign_id)
-
-
-# -----------------------------------------------------------------------------
-# Private DM Whispers Channel
-# -----------------------------------------------------------------------------
-
-
-@router.get("/api/v1/watcher/whispers", response_model=WhisperListResponse)
-async def get_whispers(
-    session_id: str,
-    campaign_id: str | None = None,
-    page: int = Query(default=1, ge=1),
-    limit: int = Query(default=20, ge=1, le=100),
-    whisper_type: str | None = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
-) -> WhisperListResponse:
-    """Return paginated DM private narrative suggestions. Restricted to dungeon_master relation."""
-    caller = _extract_caller_id(x_user_id, user_id)
-    is_dm = await check_dm_authorization(
-        caller,
-        campaign_id=campaign_id,
-        session_id=session_id,
-        spicedb=get_spicedb_client(),
-    )
-    if not is_dm:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
-        )
-
-    engine = get_copilot_engine()
-    items, total = engine.list_whispers(
-        session_id=session_id,
-        campaign_id=campaign_id,
-        page=page,
-        limit=limit,
-        whisper_type=whisper_type,
-    )
-    return WhisperListResponse(whispers=items, total=total, page=page, limit=limit)
-
-
-@router.post("/api/v1/watcher/whispers", response_model=WhisperSuggestion)
-async def create_whisper(
-    req: WhisperCreateRequest,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
-) -> WhisperSuggestion:
-    """Add a private narrative suggestion to the DM channel. Restricted to dungeon_master."""
-    caller = _extract_caller_id(x_user_id, user_id)
-    is_dm = await check_dm_authorization(
-        caller,
-        campaign_id=req.campaign_id,
-        session_id=req.session_id,
-        spicedb=get_spicedb_client(),
-    )
-    if not is_dm:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
-        )
-
-    engine = get_copilot_engine()
-    whisper = WhisperSuggestion(
-        whisper_id="",
-        session_id=req.session_id,
-        campaign_id=req.campaign_id,
-        whisper_type=req.whisper_type,
-        content=req.content,
-        metadata=req.metadata,
-    )
-    created = engine.add_whisper(whisper)
-
-    bus = get_event_bus()
-    event = DMNarrativeWhispered(
-        aggregate_id=to_uuid(created.session_id),
-        whisper_id=created.whisper_id,
-        session_id=str(created.session_id),
-        campaign_id=str(created.campaign_id) if created.campaign_id else "",
-        whisper_type=created.whisper_type,
-        content=created.content,
-        recipient_role=created.recipient_role,
-        metadata=created.metadata,
-    )
-    try:
-        await bus.publish_event(STREAM_WATCHER, event)
-    except Exception as e:
-        logger.warning("Failed to publish DMNarrativeWhispered event: %s", e)
-
-    return created
-
-
-@router.post("/api/v1/watcher/whispers/generate", response_model=list[WhisperSuggestion])
-async def generate_whispers(
-    req: WhisperGenerateRequest,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
-) -> list[WhisperSuggestion]:
-    """Generate dynamic narrative suggestions, monster tactics, and passive perception cues."""
-    caller = _extract_caller_id(x_user_id, user_id)
-    is_dm = await check_dm_authorization(
-        caller,
-        campaign_id=req.campaign_id,
-        session_id=req.session_id,
-        spicedb=get_spicedb_client(),
-    )
-    if not is_dm:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
-        )
-
-    engine = get_copilot_engine()
-    whispers = engine.generate_default_whispers(
-        session_id=req.session_id,
-        campaign_id=req.campaign_id,
-        scene_context=req.scene_context,
-        location_type=req.location_type,
-        threat_level=req.threat_level,
-    )
-
-    bus = get_event_bus()
-    for w in whispers:
-        event = DMNarrativeWhispered(
-            aggregate_id=to_uuid(w.session_id),
-            whisper_id=w.whisper_id,
-            session_id=str(w.session_id),
-            campaign_id=str(w.campaign_id) if w.campaign_id else "",
-            whisper_type=w.whisper_type,
-            content=w.content,
-            recipient_role=w.recipient_role,
-            metadata=w.metadata,
-        )
-        try:
-            await bus.publish_event(STREAM_WATCHER, event)
-        except Exception as e:
-            logger.warning("Failed to publish DMNarrativeWhispered event: %s", e)
-
-    return whispers
