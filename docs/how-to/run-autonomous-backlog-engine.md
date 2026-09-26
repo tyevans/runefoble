@@ -69,3 +69,15 @@ flowchart TD
 - **Max Retry Limits (3 Attempts)**: If a task encounters unresolvable pre-flight failures or persistent conflicts, it is retried up to 3 times before being safely skipped for the current session, allowing the orchestrator to continue draining the backlog without hanging or crashing.
 - **Thread-Safe Worktree Lifecycle & Rebase Retries**: Worktree creation, cleanup, and git index mutations are protected by threading locks to eliminate lock collisions during concurrent execution. Non-fast-forward push rejections during completion commits are automatically recovered with atomic rebase retries.
 
+## Verifying the Engine Test Suites
+
+The autonomous backlog execution engine is verified via modular frontdoor test suites conforming to Hard Invariant 6 (< 500 lines per file):
+- [`test_backlog_parser.py`](file:///home/ty/workspace/runefoble/.worktrees/task-0046/tests/test_backlog_parser.py): Validates task markdown syntax, YAML frontmatter schemas, octal safety, title fallback, and Definition of Done parsing.
+- [`test_backlog_queue.py`](file:///home/ty/workspace/runefoble/.worktrees/task-0046/tests/test_backlog_queue.py): Validates priority ranking, topological dependency resolution, circular dependency detection, and stale task recovery.
+- [`test_backlog_execution.py`](file:///home/ty/workspace/runefoble/.worktrees/task-0046/tests/test_backlog_execution.py): Validates atomic state progression (`claim` -> `review` -> `complete`), preflight quality gate aggregation, self-healing repair loops, interrupt rollbacks, and mechanical CI check polling.
+
+Run the test suite via pytest:
+```bash
+uv run pytest tests/test_backlog_parser.py tests/test_backlog_queue.py tests/test_backlog_execution.py
+```
+
