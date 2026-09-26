@@ -1,7 +1,7 @@
 ---
-id: '0088'
+id: 0088
 title: Microfrontends Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0024
@@ -14,8 +14,8 @@ governing_adrs:
 - ADR-0009
 - ADR-0013
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/75
 ---
-
 # TASK-0088: Microfrontends Blackbox Test Suite Modular Decomposition
 
 ## Status

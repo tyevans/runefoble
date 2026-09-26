@@ -76,7 +76,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 69. **TASK-0054 (Complete)**: [`0054-conversational-disambiguation-and-compound-intents.md`](complete/0054-conversational-disambiguation-and-compound-intents.md) — Conversational Disambiguation and Compound Action Intents
 70. **TASK-0055 (Complete)**: [`0055-stand-in-policy-guardrails-and-hot-swap-handoff.md`](complete/0055-stand-in-policy-guardrails-and-hot-swap-handoff.md) — Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover
 
-71. **TASK-0088 (Refined)**: [`0088-microfrontends-test-suite-decomposition.md`](refined/0088-microfrontends-test-suite-decomposition.md) — Microfrontends Blackbox Test Suite Modular Decomposition
+71. **TASK-0088 (Complete)**: [`0088-microfrontends-test-suite-decomposition.md`](complete/0088-microfrontends-test-suite-decomposition.md) — Microfrontends Blackbox Test Suite Modular Decomposition
 72. **TASK-0092 (Refined)**: [`0092-asset-forge-test-suite-modular-decomposition.md`](refined/0092-asset-forge-test-suite-modular-decomposition.md) — Asset Forge Blackbox Test Suite Modular Decomposition
 73. **TASK-0091 (Refined)**: [`0091-backlog-engine-orchestrator-and-ci-watcher-decomposition.md`](refined/0091-backlog-engine-orchestrator-and-ci-watcher-decomposition.md) — Backlog Engine Orchestrator and CI Watcher Modular Decomposition
 74. **TASK-0079 (Refined)**: [`0079-zitadel-oidc-auth-test-suite-decomposition.md`](refined/0079-zitadel-oidc-auth-test-suite-decomposition.md) — Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition
