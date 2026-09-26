@@ -129,6 +129,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition (`TASK-0070`, `ADR-0002`, `ADR-0003`, `ADR-0006`, `ADR-0009`)**:
+  - Decomposed monolithic test suite `tests/test_stand_in_engine.py` (formerly 343 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_stand_in_tactics_unit.py` (122 lines): Verifies stand-in penalty mechanics (`drunk`, `foolishness`, `cowardice`, `greed`), dice roll formula adjustments (`1d20-2`), slurred dialogue, defensive positioning, distraction effects, looting behavior, and personality trait flavor integration (`scholarly`, `valiant`, `impulsive`).
+    - `tests/test_blackbox_stand_in_service.py` (216 lines): Verifies The Watcher stand-in action endpoint (`POST /api/v1/watcher/stand-in/act`), Redis Streams domain event publication (`StandInActionDecided`, `AbsencePenaltyApplied`), Game Session automated turn progression (`POST /api/v1/sessions/{id}/turns/auto-pilot`), and absentee chronicle recap generation (`POST /api/v1/watcher/stand-in/recap`).
+  - Updated Diataxis documentation in `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
+
 - **OpenPanel Analytics Blackbox Test Suite Modular Decomposition (`TASK-0097`, `ADR-0003`, `ADR-0006`, `ADR-0009`)**:
   - Decomposed monolithic blackbox test suite `tests/test_blackbox_openpanel_analytics.py` (354 lines) into two specialized, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 175 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
     - `tests/test_blackbox_analytics_client.py` (158 lines): Verifies salted SHA-256 profile anonymization, recursive PII scrubbing (audio bytes, speech transcripts, secret credentials), HTTP transport dispatch via `OpenPanelClient`, profile identification, memory buffer management, and fast failure modes upon network connection error.
