@@ -1,7 +1,7 @@
 """Character Sheet Microservice - Powered by eventsource-py.
 
 Manages player and NPC character sheets, hit points, inventories,
-and status conditions (such as DM penalties for missed sessions).
+equipment, and status conditions (such as DM penalties for missed sessions).
 """
 
 from typing import Literal
@@ -19,7 +19,7 @@ from runefoble_platform.event_sourcing import (
 app = FastAPI(
     title="Runefoble - Character Sheet Service",
     version="0.1.0",
-    description="Character Stats, HP Tracking, Inventory, and DM Absence Penalties backed by eventsource-py.",
+    description="Character Stats, HP Tracking, Inventory, Equipment, and DM Penalties backed by eventsource-py.",
 )
 
 # Global aggregate repository
@@ -43,6 +43,28 @@ class PenaltyRequest(BaseModel):
     penalty_type: Literal["drunk", "foolishness", "cowardice", "greed", "curse"]
     description: str
     imposed_by: Literal["human_dm", "the_watcher"] = "the_watcher"
+
+
+class AddInventoryItemRequest(BaseModel):
+    item_id: str
+    name: str
+    quantity: int = 1
+    weight_lbs: float = 0.0
+
+
+class RemoveInventoryItemRequest(BaseModel):
+    quantity: int = 1
+
+
+class EquipItemRequest(BaseModel):
+    slot: str
+    item_name: str | None = None
+
+
+class ApplyConditionRequest(BaseModel):
+    condition: str
+    duration_rounds: int | None = None
+    source: str = ""
 
 
 @app.get("/healthz")
@@ -113,6 +135,74 @@ async def clear_penalty(character_id: UUID, penalty_type: str):
     try:
         char = await repo.load(character_id)
         char.clear_penalty(penalty_type=penalty_type)
+        await repo.save(char)
+        return char.state
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/api/v1/characters/{character_id}/inventory/add", response_model=CharacterState)
+async def add_inventory_item(character_id: UUID, req: AddInventoryItemRequest):
+    try:
+        char = await repo.load(character_id)
+        char.add_inventory_item(
+            item_id=req.item_id,
+            name=req.name,
+            quantity=req.quantity,
+            weight_lbs=req.weight_lbs,
+        )
+        await repo.save(char)
+        return char.state
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post(
+    "/api/v1/characters/{character_id}/inventory/{item_id}/remove", response_model=CharacterState
+)
+async def remove_inventory_item(character_id: UUID, item_id: str, req: RemoveInventoryItemRequest):
+    try:
+        char = await repo.load(character_id)
+        char.remove_inventory_item(item_id=item_id, quantity=req.quantity)
+        await repo.save(char)
+        return char.state
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/api/v1/characters/{character_id}/equipment", response_model=CharacterState)
+async def equip_item(character_id: UUID, req: EquipItemRequest):
+    try:
+        char = await repo.load(character_id)
+        char.equip_item(slot=req.slot, item_name=req.item_name)
+        await repo.save(char)
+        return char.state
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/api/v1/characters/{character_id}/conditions", response_model=CharacterState)
+async def apply_condition(character_id: UUID, req: ApplyConditionRequest):
+    try:
+        char = await repo.load(character_id)
+        char.apply_condition(
+            condition=req.condition,
+            duration_rounds=req.duration_rounds,
+            source=req.source,
+        )
+        await repo.save(char)
+        return char.state
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.delete(
+    "/api/v1/characters/{character_id}/conditions/{condition}", response_model=CharacterState
+)
+async def remove_condition(character_id: UUID, condition: str):
+    try:
+        char = await repo.load(character_id)
+        char.remove_condition(condition=condition)
         await repo.save(char)
         return char.state
     except Exception as e:

@@ -11,7 +11,25 @@ from runefoble_events.events import (
     AbsencePenaltyCleared,
     CharacterCreated,
     CharacterHealthChanged,
+    ConditionApplied,
+    ConditionRemoved,
+    EquipmentSlotUpdated,
+    ItemAddedToInventory,
+    ItemRemovedFromInventory,
 )
+
+
+class InventoryItem(BaseModel):
+    item_id: str
+    name: str
+    quantity: int = 1
+    weight_lbs: float = 0.0
+
+
+class ConditionState(BaseModel):
+    condition: str
+    duration_rounds: int | None = None
+    source: str = ""
 
 
 class CharacterState(BaseModel):
@@ -23,10 +41,13 @@ class CharacterState(BaseModel):
     player_id: str | None = None
     personality_traits: list[str] = Field(default_factory=list)
     penalties: dict[str, str] = Field(default_factory=dict)
+    inventory: dict[str, InventoryItem] = Field(default_factory=dict)
+    equipment: dict[str, str] = Field(default_factory=dict)
+    conditions: dict[str, ConditionState] = Field(default_factory=dict)
 
 
 class CharacterAggregate(DeclarativeAggregate[CharacterState]):
-    """Event-sourced aggregate managing character stats, hit points, and session miss penalties."""
+    """Event-sourced aggregate managing character stats, equipment, inventory, and conditions."""
 
     aggregate_type = "CharacterSheet"
     requires_creation_event = True
@@ -85,6 +106,58 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
             penalty_type=penalty_type.lower(),
         )
 
+    def add_inventory_item(
+        self, item_id: str, name: str, quantity: int = 1, weight_lbs: float = 0.0
+    ) -> None:
+        """Add an item or currency stack into character inventory."""
+        self.create_event(
+            ItemAddedToInventory,
+            item_id=str(item_id),
+            name=name,
+            quantity=quantity,
+            weight_lbs=weight_lbs,
+        )
+
+    def remove_inventory_item(self, item_id: str, quantity: int = 1) -> None:
+        """Remove or consume an item from inventory."""
+        iid = str(item_id)
+        if iid not in self.state.inventory:
+            raise ValueError(f"Item '{item_id}' not found in inventory")
+        self.create_event(
+            ItemRemovedFromInventory,
+            item_id=iid,
+            quantity=quantity,
+        )
+
+    def equip_item(self, slot: str, item_name: str | None = None) -> None:
+        """Equip or unequip an item into a designated equipment slot (e.g. 'main_hand', 'armor')."""
+        self.create_event(
+            EquipmentSlotUpdated,
+            slot=slot.lower(),
+            item_name=item_name,
+        )
+
+    def apply_condition(
+        self, condition: str, duration_rounds: int | None = None, source: str = ""
+    ) -> None:
+        """Inflict an active gameplay condition (e.g. 'blinded', 'prone', 'poisoned')."""
+        self.create_event(
+            ConditionApplied,
+            condition=condition.lower(),
+            duration_rounds=duration_rounds,
+            source=source,
+        )
+
+    def remove_condition(self, condition: str) -> None:
+        """Remove a status condition from the character."""
+        cond = condition.lower()
+        if cond not in self.state.conditions:
+            raise ValueError(f"Condition '{condition}' is not active on this character")
+        self.create_event(
+            ConditionRemoved,
+            condition=cond,
+        )
+
     # -----------------------------------------------------------------------
     # Event Handlers (@handles)
     # -----------------------------------------------------------------------
@@ -116,3 +189,58 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
         pens = dict(self.state.penalties)
         pens.pop(event.penalty_type.lower(), None)
         self._state = self.state.model_copy(update={"penalties": pens})
+
+    @handles(ItemAddedToInventory)
+    def _on_item_added(self, event: ItemAddedToInventory) -> None:
+        inv = dict(self.state.inventory)
+        iid = str(event.item_id)
+        if iid in inv:
+            existing = inv[iid]
+            inv[iid] = existing.model_copy(update={"quantity": existing.quantity + event.quantity})
+        else:
+            inv[iid] = InventoryItem(
+                item_id=iid,
+                name=event.name,
+                quantity=event.quantity,
+                weight_lbs=event.weight_lbs,
+            )
+        self._state = self.state.model_copy(update={"inventory": inv})
+
+    @handles(ItemRemovedFromInventory)
+    def _on_item_removed(self, event: ItemRemovedFromInventory) -> None:
+        inv = dict(self.state.inventory)
+        iid = str(event.item_id)
+        if iid in inv:
+            existing = inv[iid]
+            if existing.quantity <= event.quantity:
+                inv.pop(iid, None)
+            else:
+                inv[iid] = existing.model_copy(
+                    update={"quantity": existing.quantity - event.quantity}
+                )
+        self._state = self.state.model_copy(update={"inventory": inv})
+
+    @handles(EquipmentSlotUpdated)
+    def _on_equipment_updated(self, event: EquipmentSlotUpdated) -> None:
+        eq = dict(self.state.equipment)
+        if event.item_name is None:
+            eq.pop(event.slot, None)
+        else:
+            eq[event.slot] = event.item_name
+        self._state = self.state.model_copy(update={"equipment": eq})
+
+    @handles(ConditionApplied)
+    def _on_condition_applied(self, event: ConditionApplied) -> None:
+        conds = dict(self.state.conditions)
+        conds[event.condition] = ConditionState(
+            condition=event.condition,
+            duration_rounds=event.duration_rounds,
+            source=event.source,
+        )
+        self._state = self.state.model_copy(update={"conditions": conds})
+
+    @handles(ConditionRemoved)
+    def _on_condition_removed(self, event: ConditionRemoved) -> None:
+        conds = dict(self.state.conditions)
+        conds.pop(event.condition, None)
+        self._state = self.state.model_copy(update={"conditions": conds})

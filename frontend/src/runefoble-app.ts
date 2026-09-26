@@ -57,6 +57,22 @@ export class RunefobleApp extends LitElement {
       border-radius: 9999px;
       font-weight: 600;
     }
+    .badge-socket {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      border: 1px solid #334155;
+    }
+    .badge-socket.connected {
+      color: #38bdf8;
+      border-color: #0284c7;
+      background: rgba(2, 132, 199, 0.15);
+    }
+    .badge-socket.disconnected {
+      color: #fb7185;
+      border-color: #e11d48;
+      background: rgba(225, 29, 72, 0.15);
+    }
     .layout-grid {
       display: grid;
       grid-template-columns: 1fr 340px 420px;
@@ -106,11 +122,12 @@ export class RunefobleApp extends LitElement {
   `;
 
   @state() private isListening = false;
+  @state() private socketConnected = false;
   @state() private tokens: BoardToken[] = [
-    { id: '1', name: 'Valeros', x: 2, y: 3, color: '#2563eb' },
-    { id: '2', name: 'Kyra (AI Stand-in)', x: 3, y: 3, isAiControlled: true, color: '#db2777' },
-    { id: '3', name: 'Goblin Scout', x: 5, y: 1, color: '#16a34a' },
-    { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, color: '#dc2626' },
+    { id: '1', name: 'Valeros', x: 2, y: 3, color: '#2563eb', hp: 38, maxHp: 45, visionRadius: 2 },
+    { id: '2', name: 'Kyra (AI)', x: 3, y: 3, isAiControlled: true, color: '#db2777', hp: 28, maxHp: 32, visionRadius: 2 },
+    { id: '3', name: 'Goblin Scout', x: 5, y: 1, isHostile: true, color: '#16a34a', hp: 7, maxHp: 12 },
+    { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, isHostile: true, color: '#dc2626', hp: 52, maxHp: 75 },
   ];
 
   @state() private events: WatcherFeedEvent[] = [
@@ -140,9 +157,91 @@ export class RunefobleApp extends LitElement {
     },
   ];
 
+  private socket: WebSocket | null = null;
+  private sessionId = 'session-tomb-14';
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.initWebSocket();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.socket) {
+      this.socket.close();
+    }
+  }
+
+  private initWebSocket() {
+    try {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host || 'localhost:8000';
+      const wsUrl = `${protocol}//${host}/ws/session/${this.sessionId}`;
+
+      this.socket = new WebSocket(wsUrl);
+
+      this.socket.onopen = () => {
+        this.socketConnected = true;
+      };
+
+      this.socket.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          this.handleIncomingSocketMessage(msg);
+        } catch {
+          // Ignore invalid frames
+        }
+      };
+
+      this.socket.onclose = () => {
+        this.socketConnected = false;
+        // Attempt reconnect after backoff
+        setTimeout(() => this.initWebSocket(), 4000);
+      };
+
+      this.socket.onerror = () => {
+        this.socketConnected = false;
+      };
+    } catch {
+      this.socketConnected = false;
+    }
+  }
+
+  private handleIncomingSocketMessage(msg: Record<string, any>) {
+    if (msg.type === 'board_move') {
+      const { tokenId, toX, toY } = msg;
+      this.tokens = this.tokens.map((t) => (t.id === tokenId ? { ...t, x: toX, y: toY } : t));
+      const tokenName = this.tokens.find((t) => t.id === tokenId)?.name || 'Token';
+      this.events = [
+        ...this.events,
+        {
+          id: String(Date.now()),
+          timestamp: new Date().toLocaleTimeString(),
+          source: 'system',
+          speaker: 'The Watcher',
+          text: `${tokenName} moved to (${toX}, ${toY}).`,
+          actionType: 'board_move',
+        },
+      ];
+    } else if (msg.type === 'speech_action') {
+      this.events = [
+        ...this.events,
+        {
+          id: String(Date.now()),
+          timestamp: new Date().toLocaleTimeString(),
+          source: 'player',
+          speaker: msg.speaker || 'Party Member',
+          text: msg.transcript || '',
+          actionType: 'speech',
+        },
+      ];
+    }
+  }
+
   private toggleListening() {
     this.isListening = !this.isListening;
     if (this.isListening) {
+      const speechText = '"Speak and the board obeys! Moving to engage the Goblin Scout."';
       this.events = [
         ...this.events,
         {
@@ -150,10 +249,19 @@ export class RunefobleApp extends LitElement {
           timestamp: new Date().toLocaleTimeString(),
           source: 'player',
           speaker: 'You (Voice Input)',
-          text: '"Speak and the board obeys! Moving to engage the Goblin Scout."',
+          text: speechText,
           actionType: 'speech',
         },
       ];
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        this.socket.send(
+          JSON.stringify({
+            type: 'speech_action',
+            speaker: 'You (Voice Input)',
+            transcript: speechText,
+          })
+        );
+      }
     }
   }
 
@@ -172,6 +280,17 @@ export class RunefobleApp extends LitElement {
         actionType: 'board_move',
       },
     ];
+
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(
+        JSON.stringify({
+          type: 'board_move',
+          tokenId,
+          toX,
+          toY,
+        })
+      );
+    }
   }
 
   render() {
@@ -183,8 +302,11 @@ export class RunefobleApp extends LitElement {
         </div>
         <div class="session-info">
           <span class="badge-live">● Campaign #4: Tomb of the Star-Eater</span>
+          <span class="badge-socket ${this.socketConnected ? 'connected' : 'disconnected'}">
+            ${this.socketConnected ? '⚡ WebSocket Live' : '○ Standalone'}
+          </span>
           <span>Session 14</span>
-          <span>DM: The Watcher (Voice AI)</span>
+          <span>DM: The Watcher</span>
         </div>
       </header>
 
@@ -193,6 +315,7 @@ export class RunefobleApp extends LitElement {
           .cols=${8}
           .rows=${8}
           .tokens=${this.tokens}
+          .fogOfWar=${true}
           watcherStatus="${this.isListening ? 'Streaming voice & resolving actions in realtime...' : 'Observing session. Speak to command the board.'}"
           @move-token=${this.handleMoveToken}
         ></runefoble-board>
@@ -202,7 +325,7 @@ export class RunefobleApp extends LitElement {
             characterName="Kyra the Sun Maiden"
             characterClass="Cleric Lvl 4"
             .isAiStandIn=${true}
-            .currentHp=${26}
+            .currentHp=${28}
             .maxHp=${32}
             .armorClass=${16}
             .initiative=${0}

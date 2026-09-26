@@ -10,3 +10,5 @@ Order of priority for engineering tasks across the platform.
 6. **TASK-0006 (Complete)**: [`0006-voice-dsp-conditioning-filters.md`](complete/0006-voice-dsp-conditioning-filters.md) — Voice DSP Audio Conditioning and Slurred Speech Synthesis
 7. **TASK-0007 (Complete)**: [`0007-board-fog-of-war-spatial-visibility.md`](complete/0007-board-fog-of-war-spatial-visibility.md) — Board Fog-of-War Spatial Visibility and Shroud Synchronization
 8. **TASK-0008 (Complete)**: [`0008-gateway-zanzibar-authorization-middleware.md`](complete/0008-gateway-zanzibar-authorization-middleware.md) — Gateway SpiceDB Zanzibar Authorization Middleware
+9. **TASK-0009 (Complete)**: [`0009-character-inventory-equipment-conditions.md`](complete/0009-character-inventory-equipment-conditions.md) — Character Sheet Equipment, Inventory & Conditions Aggregate
+10. **TASK-0010 (Complete)**: [`0010-realtime-websocket-client-board-sync.md`](complete/0010-realtime-websocket-client-board-sync.md) — Real-time WebSocket Protocol & Client Board Sync

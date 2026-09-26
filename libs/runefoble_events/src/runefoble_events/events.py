@@ -180,6 +180,43 @@ class AbsencePenaltyCleared(BaseRunefobleEvent):
     penalty_type: str
 
 
+@register_event
+class ItemAddedToInventory(BaseRunefobleEvent):
+    aggregate_type: str = "CharacterSheet"
+    item_id: str
+    name: str
+    quantity: int = 1
+    weight_lbs: float = 0.0
+
+
+@register_event
+class ItemRemovedFromInventory(BaseRunefobleEvent):
+    aggregate_type: str = "CharacterSheet"
+    item_id: str
+    quantity: int = 1
+
+
+@register_event
+class EquipmentSlotUpdated(BaseRunefobleEvent):
+    aggregate_type: str = "CharacterSheet"
+    slot: str
+    item_name: str | None = None
+
+
+@register_event
+class ConditionApplied(BaseRunefobleEvent):
+    aggregate_type: str = "CharacterSheet"
+    condition: str
+    duration_rounds: int | None = None
+    source: str = ""
+
+
+@register_event
+class ConditionRemoved(BaseRunefobleEvent):
+    aggregate_type: str = "CharacterSheet"
+    condition: str
+
+
 # ---------------------------------------------------------------------------
 # The Watcher, Voice, and Gameplay Stream Events
 # ---------------------------------------------------------------------------
