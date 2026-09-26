@@ -1,7 +1,7 @@
 ---
 id: '0075'
 title: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0014
@@ -19,8 +19,8 @@ governing_prds:
 governing_stories:
 - US-0029
 - US-0030
+pr_url: https://github.com/tyevans/runefoble/pull/103
 ---
-
 # TASK-0075: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition
 
 ## Status
