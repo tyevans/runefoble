@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `tests/test_blackbox_webrtc_routing.py` (218 lines): Multi-peer SDP offer/answer relay, trickle ICE routing, mute broadcasts, telemetry reporting, and DM kick moderation.
   - Enforced Hard Invariant 6 (< 500 lines limit, all modified/new files < 250 lines).
 
+- **Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition (`TASK-0079`, `ADR-0001`, `ADR-0005`, `ADR-0007`, `ADR-0009`)**:
+  - Decomposed monolithic `tests/test_blackbox_zitadel_auth.py` (386 lines) into specialized, single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file, all resulting files < 175 lines):
+    - `tests/test_blackbox_zitadel_http_auth.py` (172 lines) covering HTTP Bearer token verification, RS256 signature verification, JWKS key rotation, token expiration, signature tampering, audience enforcement, and dev mode bypass.
+    - `tests/test_blackbox_zitadel_websocket_auth.py` (156 lines) covering WebSocket query parameter authentication, Authorization header passing, `Sec-WebSocket-Protocol` subprotocol authentication, and RFC 6455 policy violation close frames (`code=4003`).
+    - `tests/helpers/zitadel_auth.py` (115 lines) isolating shared RSA test key generation, JWK formatting, signed token generation, and the `auth_environment` fixture registered via `tests/conftest.py`.
+  - Updated Diataxis guide `docs/how-to/authenticate-with-zitadel-oidc.md` detailing multi-channel token extraction and modular blackbox verification.
+
+- **Backlog Engine Orchestrator and CI Watcher Modular Decomposition (`TASK-0091`, `ADR-0003`, `ADR-0009`)**:
   - Decomposed monolithic `tools/backlog_engine/orchestrator.py` and `tools/backlog_engine/ci_watcher.py` into specialized, single-responsibility submodules strictly adhering to Hard Invariant 6 (< 500 lines per file, all files < 250 lines).
   - Created `tools/backlog_engine/github_client.py` (152 lines) extracting subprocess wrappers for GitHub CLI (`gh pr view`, `gh pr checks`, `gh pr create`, `gh pr close`, `gh pr merge`, and failed log retrieval).
   - Created `tools/backlog_engine/git_ops.py` (190 lines) isolating branch checkout, worktree synchronization, pre-push `git merge-tree` conflict checks, conflict resolution prompt dispatching, and atomic merge execution.
