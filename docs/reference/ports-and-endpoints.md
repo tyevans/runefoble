@@ -36,6 +36,7 @@
 | `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states |
 | `board-state` | GET | `/api/v1/boards/{session_id}/visibility` | Computes Chebyshev fog-of-war masks and filters shrouded hostile tokens |
 | `board-state` | POST | `/api/v1/boards/{session_id}/move` | Mutates token coordinates with spatial boundary enforcement |
+| `board-state` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-board`, `runefoble-map-uploader`) |
 | `character-sheet` | POST | `/api/v1/characters` | Creates a new character with initial level and spell slots |
 | `character-sheet` | POST | `/api/v1/characters/{id}/level-up` | Levels up character, increasing HP and unlocking class spell slots |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/prepare` | Prepares a spell in the character's active spellbook |
@@ -50,6 +51,8 @@
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Updates campaign sensory atmosphere, lighting, and ambient audio (requires `run_session`) |
 | `gateway-api` | POST | `/api/v1/board/tokens/{token_id}/move` | Moves a tactical token on the board (requires `move` on `board_token`) |
 | `gateway-api` | GET | `/api/v1/board/tokens/{token_id}` | Inspects tactical token state (requires `inspect` on `board_token`) |
+| `gateway-api` | POST | `/api/v1/assets/upload` | Uploads binary or base64 assets (battlemap, avatar, audio) to Silo S3 |
+| `gateway-api` | GET | `/api/v1/assets/{asset_id}` | Retrieves or streams stored asset files from Silo S3 storage |
 | `gateway-mcp` | MCP | `12 Tools Registered` | Tabletop tools (`execute_agent_action_plan`, `cast_spell`, `modify_character_hp`, `add_condition`, `roll_dice`, etc.) and dynamic resource `session://{session_id}/state` |
 
 

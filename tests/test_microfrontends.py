@@ -56,6 +56,7 @@ def test_board_state_ui_manifest_frontdoor(board_client):
     assert data["service"] == "board_state"
     assert data["package"] == "@runefoble/board-state-ui"
     assert "runefoble-board" in data["components"]
+    assert "runefoble-map-uploader" in data["components"]
 
 
 def test_character_sheet_ui_manifest_frontdoor(character_client):
@@ -106,6 +107,7 @@ def test_service_ui_package_integrity():
     """Verify that all service UI packages have package.json, tsconfig.json, and Lit elements."""
     expected_packages = [
         ("services/board_state/ui", "@runefoble/board-state-ui", "runefoble-board"),
+        ("services/board_state/ui", "@runefoble/board-state-ui", "runefoble-map-uploader"),
         (
             "services/character_sheet/ui",
             "@runefoble/character-sheet-ui",
@@ -231,3 +233,57 @@ def test_voice_controls_storybook_stories_coverage():
     assert "WaveformActive" in content
     assert "LowBandwidthWarning" in content
     assert "AfflictionDspActive" in content
+
+
+def test_battlemap_uploader_microfrontend_frontdoor(board_client):
+    """Verify battlemap asset uploader component integrity and Silo S3 upload frontdoor."""
+    from gateway_api.main import app as gateway_app
+
+    # 1. Manifest discovery frontdoor
+    response = board_client.get("/ui/manifest")
+    assert response.status_code == 200
+    manifest = response.json()
+    assert manifest["service"] == "board_state"
+    assert manifest["package"] == "@runefoble/board-state-ui"
+    assert "runefoble-map-uploader" in manifest["components"]
+
+    # 2. Silo S3 asset upload frontdoor integration
+    gateway_client = TestClient(gateway_app)
+    sample_png = (
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06"
+        b"\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01"
+        b"\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+    upload_res = gateway_client.post(
+        "/api/v1/assets/upload",
+        files={"file": ("crypt_dungeon_grid.png", sample_png, "image/png")},
+        data={"owner_id": "gm-alex", "asset_type": "battlemap"},
+    )
+    assert upload_res.status_code == 200
+    upload_data = upload_res.json()
+    assert "asset_id" in upload_data
+    assert "battlemaps/" in upload_data["object_key"]
+    assert upload_data["content_type"] == "image/png"
+    assert upload_data["owner_id"] == "gm-alex"
+    assert "download_url" in upload_data
+
+    # 3. Component code and event contract verification
+    comp_file = REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-map-uploader.ts"
+    assert comp_file.is_file()
+    code = comp_file.read_text(encoding="utf-8")
+    assert "@customElement('runefoble-map-uploader')" in code
+    assert "map-uploaded" in code
+    assert "shroud-overlay" in code
+    assert "uploadEndpoint" in code
+
+    # 4. Interactive Storybook stories contract
+    stories_file = (
+        REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-map-uploader.stories.ts"
+    )
+    assert stories_file.is_file()
+    stories_code = stories_file.read_text(encoding="utf-8")
+    assert "EmptyDropzone" in stories_code
+    assert "UploadingProgress" in stories_code
+    assert "AlignedMapPreview" in stories_code
+    assert "FogOfWarMasked" in stories_code
+
