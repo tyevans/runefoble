@@ -233,3 +233,57 @@ def test_static_build_strict_github_pages_isolation(repo_root: Path, tmp_path: P
     assert "dangerously-skip-permissions" in live_html
     assert "Launch AGY" in live_html
     assert "window.IS_LIVE_SERVER = true;" in live_html
+
+
+def test_client_javascript_syntax_validity(repo_root: Path):
+    """Verify all static JavaScript modules and concatenated bundles are 100% valid syntax."""
+    import shutil
+    import subprocess
+
+    from tools.project_visualizer.assets_js import get_client_js
+
+    node_bin = shutil.which("node")
+    if not node_bin:
+        pytest.skip("Node.js binary not found for syntax checking")
+
+    # 1. Test every individual static JS module
+    static_js_dir = repo_root / "tools" / "project_visualizer" / "static" / "js"
+    for js_file in static_js_dir.glob("*.js"):
+        proc = subprocess.run([node_bin, "-c", str(js_file)], capture_output=True, text=True)
+        assert proc.returncode == 0, f"Syntax error in {js_file.name}: {proc.stderr}"
+
+    # 2. Test live server bundled JS
+    live_bundle = get_client_js(is_live_server=True)
+    proc_live = subprocess.run([node_bin, "-c"], input=live_bundle, capture_output=True, text=True)
+    assert proc_live.returncode == 0, f"Syntax error in live bundle: {proc_live.stderr}"
+
+    # 3. Test static distribution bundled JS
+    static_bundle = get_client_js(is_live_server=False)
+    proc_static = subprocess.run(
+        [node_bin, "-c"], input=static_bundle, capture_output=True, text=True
+    )
+    assert proc_static.returncode == 0, f"Syntax error in static bundle: {proc_static.stderr}"
+
+
+def test_server_favicon_endpoint(repo_root: Path):
+    """Verify /favicon.ico returns 204 No Content instead of 404 console error."""
+    generator = ProjectVisualizerGenerator(repo_root)
+    handler_class = type(
+        "TestFaviconConfiguredHandler",
+        (ProjectVisualizerHandler,),
+        {"generator": generator},
+    )
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler_class)
+    port = server.server_port
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+    time.sleep(0.1)
+
+    try:
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/favicon.ico")
+        with urllib.request.urlopen(req) as resp:
+            assert resp.status == 204
+    finally:
+        server.shutdown()
+        server.server_close()
