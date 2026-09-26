@@ -24,7 +24,12 @@ runefoble/
 │   │       ├── runefoble-board-tokens.styles.ts
 │   │       ├── runefoble-board.stories.ts
 │   │       ├── runefoble-map-uploader.ts
-│   │       └── runefoble-map-uploader.stories.ts
+│   │       ├── runefoble-map-uploader.styles.ts
+│   │       ├── runefoble-map-uploader.stories.ts
+│   │       ├── runefoble-map-dropzone.ts
+│   │       ├── runefoble-map-dropzone.stories.ts
+│   │       ├── runefoble-map-grid-config.ts
+│   │       └── runefoble-map-grid-config.stories.ts
 │   ├── character_sheet/ui/       # @runefoble/character-sheet-ui
 │   │   └── src/
 │   │       ├── runefoble-character-card.ts
@@ -54,7 +59,7 @@ runefoble/
 
 | Service Bounded Context | NPM Package Name | Vendored Custom Elements | Storybook Story Path |
 |---|---|---|---|
-| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>`, `<runefoble-map-uploader>` | `services/board_state/ui/src/*.stories.ts` |
+| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>`, `<runefoble-map-uploader>` (subviews: `<runefoble-map-dropzone>`, `<runefoble-map-grid-config>`) | `services/board_state/ui/src/*.stories.ts` |
 | `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-absentee-recap>` | `services/character_sheet/ui/src/*.stories.ts` |
 | `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>` | `services/game_session/ui/src/*.stories.ts` |
 | `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>` | `services/the_watcher/ui/src/*.stories.ts` |
