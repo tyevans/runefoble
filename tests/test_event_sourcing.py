@@ -13,6 +13,10 @@ from runefoble_events.events import (
     AbsencePenaltyApplied,
     BoardGridInitialized,
     CharacterCreated,
+    CombatEncounterEnded,
+    CombatEncounterStarted,
+    InitiativeRolled,
+    InitiativeTurnAdvanced,
     SessionCreated,
     TokenMoved,
     TokenPlaced,
@@ -30,6 +34,10 @@ def test_domain_events_registered_in_eventsource_registry():
         TokenMoved,
         CharacterCreated,
         AbsencePenaltyApplied,
+        CombatEncounterStarted,
+        InitiativeRolled,
+        InitiativeTurnAdvanced,
+        CombatEncounterEnded,
     ]
     for evt_cls in core_events:
         assert is_event_registered(evt_cls.__name__), (

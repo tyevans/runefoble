@@ -31,6 +31,10 @@ from runefoble_events.character import (
     SpellSlotExpended,
 )
 from runefoble_events.session import (
+    CombatEncounterEnded,
+    CombatEncounterStarted,
+    InitiativeRolled,
+    InitiativeTurnAdvanced,
     PlayerJoinedSession,
     PlayerLeftSession,
     SessionCreated,
@@ -63,6 +67,10 @@ __all__ = [
     "PlayerLeftSession",
     "TurnAdvanced",
     "SessionEnded",
+    "CombatEncounterStarted",
+    "InitiativeRolled",
+    "InitiativeTurnAdvanced",
+    "CombatEncounterEnded",
     "SpectatorSessionConnected",
     "BoardGridInitialized",
     "TokenPlaced",

@@ -45,6 +45,24 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `previous_turn`: Integer
   - `new_turn`: Integer
   - `active_character_id`: Optional[UUID]
+- **`CombatEncounterStarted`**: Emitted when a combat encounter is initiated.
+  - `session_id`: Optional[UUID | str]
+  - `round_number`: Integer (default 1)
+  - `combatants`: List[Dict[str, Any]]
+- **`InitiativeRolled`**: Emitted when a participant or NPC submits an initiative score.
+  - `session_id`: Optional[UUID | str]
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `initiative_score`: Float / Integer
+  - `is_npc`: Boolean (default False)
+- **`InitiativeTurnAdvanced`**: Emitted when the combat turn cycles to the next combatant.
+  - `session_id`: Optional[UUID | str]
+  - `round_number`: Integer
+  - `active_combatant_id`: String
+  - `turn_seconds_remaining`: Integer (default 60)
+- **`CombatEncounterEnded`**: Emitted when combat concludes.
+  - `session_id`: Optional[UUID | str]
+  - `total_rounds`: Integer
 - **`SessionEnded`**: Emitted when the session concludes.
   - `summary`: String
 

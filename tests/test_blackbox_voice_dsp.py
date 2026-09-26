@@ -188,7 +188,7 @@ def test_tts_multiple_filters_audio_payload_and_metadata(client: TestClient):
 # ---------------------------------------------------------------------------
 
 
-def test_benchmark_dsp_latency_sub_50ms(client: TestClient):
+def test_benchmark_dsp_latency_sub_50ms(client: TestClient, mock_event_bus):
     """Benchmark latency: verify DSP filter processing runs strictly under 50ms."""
     payload = {
         "filters": ["drunk", "underwater", "ethereal"],

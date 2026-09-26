@@ -1,6 +1,6 @@
 """GameSession aggregate and spectator stream events."""
 
-from typing import ClassVar
+from typing import Any, ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -62,3 +62,38 @@ class SpectatorSessionConnected(BaseRunefobleEvent):
     viewer_id: str
     viewer_name: str
     connected_at: str
+
+
+@register_event
+class CombatEncounterStarted(BaseRunefobleEvent):
+    aggregate_type: str = "GameSession"
+    session_id: UUID | str | None = None
+    round_number: int = 1
+    combatants: list[dict[str, Any]] = Field(default_factory=list)
+
+
+@register_event
+class InitiativeRolled(BaseRunefobleEvent):
+    aggregate_type: str = "GameSession"
+    session_id: UUID | str | None = None
+    combatant_id: str
+    combatant_name: str
+    initiative_score: float | int
+    is_npc: bool = False
+
+
+@register_event
+class InitiativeTurnAdvanced(BaseRunefobleEvent):
+    aggregate_type: str = "GameSession"
+    session_id: UUID | str | None = None
+    round_number: int
+    active_combatant_id: str
+    turn_seconds_remaining: int = 60
+
+
+@register_event
+class CombatEncounterEnded(BaseRunefobleEvent):
+    aggregate_type: str = "GameSession"
+    session_id: UUID | str | None = None
+    total_rounds: int
+
