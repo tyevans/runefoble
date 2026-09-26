@@ -25,16 +25,19 @@
 - [x] Silo S3 battlemap asset uploader & shroud masking microfrontend (ADR-0013, TASK-0031)
 - [x] Live WebRTC bidirectional voice room with WebAudio processing (ADR-0002, TASK-0033)
 - [x] Immersive frontend experience vision PRD (ADR-0004, TASK-0072)
-- [ ] Frontend settings modal and theme mode orchestration (ADR-0004, TASK-0073)
+- [x] Frontend settings modal and theme mode orchestration (ADR-0004, TASK-0073)
 - [ ] Dark/light mode color tokens and component contrast invariants (ADR-0012, TASK-0074)
 - [x] Sub-500ms Whisper speech-to-intent pipeline (TASK-0039)
-- [ ] Tactile kinetic board interaction and spoken ghost previews (PRD-0013, US-0043, TASK-0084)
+- [x] Tactile kinetic board interaction and spoken ghost previews (PRD-0013, US-0043, TASK-0084)
 
 ## Milestone 3: AI DM & Ecosystem Expansion
-- [ ] Procedural battlemap and token generation saved to Silo S3 (TASK-0049)
-- [ ] Dynamic musical score & ambient foley driven by encounter tension (TASK-0050)
+### Foundational Platform Enablers
 - [ ] Campaign Lore Knowledge Base & redstring RAG Microservice (TASK-0047)
 - [ ] TTRPG Rules Compendium & Automated Encounter Builder (TASK-0048)
+
+### Autonomous DM & Content Expansion Epics
+- [ ] Procedural battlemap and token generation saved to Silo S3 (TASK-0049)
+- [ ] Dynamic musical score & ambient foley driven by encounter tension (TASK-0050)
 - [ ] DM Co-Pilot Whispers & Veto Override Engine (TASK-0053)
 - [ ] Conversational Disambiguation & Compound Action Intents (TASK-0054)
 - [ ] Stand-In Policy Guardrails & Mid-Session Hot-Swap Takeover (TASK-0055)

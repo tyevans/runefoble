@@ -1,13 +1,16 @@
 ---
-id: '0082'
+id: 0082
 title: OpenPanel Analytics SDK & Worker Modular Decomposition
 status: Refined
 created: 2026-09-26
-dependencies: [TASK-0038]
-governing_adrs: [ADR-0003, ADR-0006, ADR-0009]
+dependencies:
+- TASK-0038
+governing_adrs:
+- ADR-0003
+- ADR-0006
+- ADR-0009
 target_release: 0.2.0
 ---
-
 # TASK-0082: OpenPanel Analytics SDK & Worker Modular Decomposition
 
 ## Status
