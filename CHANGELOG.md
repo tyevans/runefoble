@@ -51,6 +51,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **Battlemap Uploader Subviews and Grid Controller Modular Decomposition (`TASK-0078`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed `services/board_state/ui/src/runefoble-map-uploader.ts` (formerly 315 lines) into focused subcomponents strictly adhering to Hard Invariant 6 (< 500 lines limit, all resulting modules < 130 lines):
+    - `runefoble-map-dropzone.ts` (124 lines): Encapsulates drag-and-drop file listeners, file input handling, MIME validation, and Silo S3 multipart upload progress dispatch.
+    - `runefoble-map-grid-config.ts` (123 lines): Encapsulates grid column/row sliders, shroud opacity sliders, cell-by-cell fog-of-war masking toggles, and reveal all/shroud all actions.
+    - `runefoble-map-uploader.ts` (117 lines): Lean coordinator orchestrating subviews, managing high-level state, and dispatching the standard `map-uploaded` CustomEvent.
+  - Added dedicated Storybook stories for decomposed subcomponents (`runefoble-map-dropzone.stories.ts`, `runefoble-map-grid-config.stories.ts`) with zero console errors.
+  - Added blackbox frontdoor verification suite in `tests/test_microfrontends.py` verifying component line invariants, custom element registration, and Silo S3 asset upload frontdoors.
 - **Gateway WebSocket Hub and Action Validator Modular Decomposition (`TASK-0080`, `ADR-0001`, `ADR-0005`, `ADR-0007`, `ADR-0009`)**:
   - Decomposed monolithic `gateway/api/src/gateway_api/websocket.py` (351 lines) into modular single-responsibility components strictly complying with Hard Invariant 6 (< 500 lines limit, all resulting modules strictly < 150 lines):
     - `websocket_validator.py` (136 lines): Encapsulates `WebSocketActionValidator` evaluating fine-grained SpiceDB Zanzibar schema checks for connection admission, DM bypass privileges, token moves, character edits, and DM-only encounter mutations.
