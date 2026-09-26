@@ -1,5 +1,11 @@
 """Runefoble Platform Library."""
 
+from runefoble_platform.analytics import (
+    AnalyticsEventWorker,
+    OpenPanelClient,
+    anonymize_profile_id,
+    sanitize_properties,
+)
 from runefoble_platform.bus import EventBus, bus
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.consumer_group import MockAsyncRedis, RedisConsumerGroup
@@ -57,6 +63,10 @@ __all__ = [
     "RedisConsumerGroup",
     "MockAsyncRedis",
     "deserialize_event",
+    "OpenPanelClient",
+    "AnalyticsEventWorker",
+    "anonymize_profile_id",
+    "sanitize_properties",
     "DeclarativeAggregate",
     "DomainEvent",
     "AggregateRepository",

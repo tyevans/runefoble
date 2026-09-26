@@ -31,7 +31,7 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `title`: String
   - `dm_id`: String
   - `created_by`: String
-- **`SessionStarted`**: Emitted when the session transitions from lobby to active combat/exploration.
+- **`SessionStarted`** (alias: `GameSessionStarted`): Emitted when the session transitions from lobby to active combat/exploration.
   - `started_at_turn`: Integer (default 1)
 - **`ParticipantJoined`**: Emitted when a user joins the session in a specific role (player, spectator, gm).
   - `session_id`: UUID | str
@@ -124,7 +124,7 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `delta`: Integer
   - `current_hp`: Integer, `max_hp`: Integer
   - `source`: String
-- **`AbsencePenaltyApplied`**: Emitted when an absent player's character is inflicted with a session miss penalty.
+- **`AbsencePenaltyApplied`** (alias: `PlayerAbsenteePenalized`): Emitted when an absent player's character is inflicted with a session miss penalty.
   - `penalty_type`: "drunk" | "foolishness" | "cowardice" | "greed" | "curse"
   - `description`: String
   - `imposed_by`: "human_dm" | "the_watcher"
@@ -166,7 +166,7 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `tone`: String
   - `sensory_details`: List[String]
   - `suggested_prompts`: List[String]
-- **`StandInActionDecided`**: Emitted when the AI stand-in acts on behalf of an absent player.
+- **`StandInActionDecided`** (alias: `StandInTurnExecuted`): Emitted when the AI stand-in acts on behalf of an absent player.
   - `character_name`: String
   - `action_type`: String
   - `dialogue`: String

@@ -63,3 +63,22 @@ class CombatStateResponse(BaseModel):
     combat_active_id: str | None
     initiative_order: list[dict[str, Any]]
     turn_seconds_remaining: int = 60
+
+
+class RollDiceRequest(BaseModel):
+    formula: str = "1d20"
+    roller_id: str = "player"
+    roller_name: str = "Player"
+    roll_type: str = "general"
+
+
+class RollDiceResponse(BaseModel):
+    session_id: UUID
+    roller_id: str
+    roller_name: str
+    formula: str
+    total: int
+    rolls: list[int] = Field(default_factory=list)
+    is_crit: bool = False
+    is_fumble: bool = False
+    roll_type: str = "general"

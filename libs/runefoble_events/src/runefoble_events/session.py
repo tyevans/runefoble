@@ -34,6 +34,9 @@ class SessionStarted(BaseRunefobleEvent):
     started_at_turn: int = 1
 
 
+GameSessionStarted = SessionStarted
+
+
 @register_event
 class PlayerJoinedSession(BaseRunefobleEvent):
     aggregate_type: str = "GameSession"
