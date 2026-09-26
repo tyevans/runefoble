@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import tomllib
 from pathlib import Path
 
@@ -150,3 +151,23 @@ def test_ci_workflow_includes_docs_verification():
     steps = docs_job.get("steps", [])
     step_commands = [s.get("run", "") for s in steps]
     assert any("make docs-build" in cmd for cmd in step_commands)
+
+
+def test_no_escaping_links_in_generated_site():
+    """Verify no relative link in any generated HTML file escapes above the repository base path."""
+    assert SITE_DIR.exists()
+    bad_links = []
+    for html_file in SITE_DIR.glob("**/*.html"):
+        content = html_file.read_text(encoding="utf-8")
+        rel = html_file.relative_to(SITE_DIR)
+        depth = len(rel.parts) - 1
+
+        for m in re.finditer(r'(?:href|src)=["\']([^"\']+)["\']', content):
+            target = m.group(1)
+            if target.startswith(("http://", "https://", "mailto:", "#", "data:")):
+                continue
+            dot_count = len(target.split("../")) - 1 if target.startswith("../") else 0
+            if dot_count > depth:
+                bad_links.append((str(rel), target, depth, dot_count))
+
+    assert not bad_links, f"Found links escaping repository root: {bad_links}"
