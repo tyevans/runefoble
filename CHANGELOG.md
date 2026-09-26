@@ -90,6 +90,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **OpenPanel Analytics Blackbox Test Suite Modular Decomposition (`TASK-0097`, `ADR-0003`, `ADR-0006`, `ADR-0009`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_openpanel_analytics.py` (354 lines) into two specialized, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 175 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_blackbox_analytics_client.py` (158 lines): Verifies salted SHA-256 profile anonymization, recursive PII scrubbing (audio bytes, speech transcripts, secret credentials), HTTP transport dispatch via `OpenPanelClient`, profile identification, memory buffer management, and fast failure modes upon network connection error.
+    - `tests/test_blackbox_analytics_worker.py` (169 lines): Verifies background Redis Streams consumer group processing of domain events (`SessionStarted`, `DiceRolled`, `StandInActionDecided`), mapping domain CloudEvents to OpenPanel metrics, dialogue/transcript PII exclusion invariants, and worker lifecycle with dead-letter queue fault isolation.
+  - Updated Diataxis documentation in `docs/how-to/track-analytics-events.md`.
 - **Battlemap Uploader Subviews and Grid Controller Modular Decomposition (`TASK-0078`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed `services/board_state/ui/src/runefoble-map-uploader.ts` (formerly 315 lines) into focused subcomponents strictly adhering to Hard Invariant 6 (< 500 lines limit, all resulting modules < 130 lines):
     - `runefoble-map-dropzone.ts` (124 lines): Encapsulates drag-and-drop file listeners, file input handling, MIME validation, and Silo S3 multipart upload progress dispatch.
