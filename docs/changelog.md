@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Stand-In AI Persona Decision Engine and Tactical Policy Modular Decomposition (`TASK-0112`, `ADR-0002`, `ADR-0003`, `ADR-0006`)**:
+  - Decomposed monolithic `services/the_watcher/src/the_watcher/stand_in_ai.py` (344 lines) into specialized, single-responsibility sub-modules: `stand_in_guardrails.py` (127 lines) for tactical policy evaluation, `stand_in_persona.py` (138 lines) for humorous penalty and personality simulation, `stand_in_recap.py` (94 lines) for absentee chronicle recap generation, and `stand_in_ai.py` (64 lines) lightweight facade.
+  - Preserved 100% backward compatibility for all public methods on `StandInAIEngine` and public entrypoints.
+  - Enforced strict file length limits with all sub-modules under 140 lines and well below the 200 lines limit, protecting Hard Invariant 6 (< 500 lines).
+  - Added comprehensive blackbox TDD test suite `tests/test_blackbox_stand_in_guardrails.py` validating frontdoor HTTP endpoints, tactical guardrails, and structural invariants.
+  - Updated Diataxis how-to guide `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
 - **Project Visualizer Parser Modular Decomposition (`TASK-0059`, `ADR-0003`)**:
   - Decomposed monolithic `tools/project_visualizer/parser.py` (461 lines) into dedicated sub-parsers in `tools/project_visualizer/parsers/`: `adr_parser.py` (75 lines), `product_parser.py` (155 lines), `persona_parser.py` (93 lines), `backlog_parser.py` (158 lines), `graph_builder.py` (20 lines), and `markdown_utils.py` (89 lines).
   - Maintained 100% backward compatibility via `tools/project_visualizer/parser.py` facade (141 lines) and `tools/project_visualizer/markdown_utils.py` facade (21 lines) with re-exported classes and entrypoints (`ProjectParser`, `scan_project`, `build_traceability_graph`).
@@ -19,7 +25,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Synchronized `PRIORITY.md`, `ROADMAP.md` Milestone 5 completion checkboxes, and PRD acceptance links with zero status drift.
 
 ### Added
-- **Interactive Tavern Minigames & Personality-Driven Merchant Haggling (`TASK-0103`, `PRD-0014`, `US-0047`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
+- **Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens (`TASK-0105`, `PRD-0015`, `US-0049`, `ADR-0003`, `ADR-0005`, `ADR-0010`, `ADR-0013`)**:
+  - Implemented multi-page vector/raster PDF battlemap generator (`pdf_tiler.py`) calibrated to exact 1-inch physical tabletop grids (72pt) across Letter/A4 pages with alignment crosshairs and margin cut guides at 300 DPI.
+  - Implemented papercraft standee sheet formatter (`standees.py`) generating print-ready folding paper miniatures with mirrored front/back artwork, character nameplates, HP tracking slots, and foldable base tabs.
+  - Implemented procedural 3D STL mesh generator (`stl_generator.py`) producing mathematically watertight (2-manifold, $V - E + F = 2$) binary and ASCII STL miniature bases (28mm and 50mm) featuring snap-in status condition clips (Poisoned, Stunned, Blessed, Blinded).
+  - Built and vendored `<runefoble-print-forge>` Lit microfrontend in `services/asset_forge/ui/src/` with interactive previews, paper size selectors, Bauhaus design tokens, and Storybook stories; registered in `/ui/manifest`.
+  - Added public frontdoor HTTP routes `POST /assets/print-pdf` (alias: `/api/v1/forge/print-pdf`), `POST /assets/standees` (alias: `/api/v1/forge/standees`), and `POST /assets/stl-token` (alias: `/api/v1/forge/stl-token`) backed by Silo S3 storage and SpiceDB Zanzibar authorization.
+  - Emitted CloudEvents 1.0 domain events `PrintPdfForged` and `StlTokenForged` and recorded state updates in `AssetForgeAggregate`.
+  - Authored comprehensive blackbox test suite in `tests/test_blackbox_print_forge.py` and Diataxis how-to guide `docs/how-to/forge-print-ready-maps-standees-and-stl-tokens.md`.
+
   - Implemented turn-based Liar's Dice wagering, card tournaments, and drinking contests with progressive intoxication stages and dynamic voice DSP slurred speech filters (`VoiceDSPPipeline`).
   - Implemented personality-driven NPC merchant haggling featuring dynamic temperament state machines, mood meters, price curves, counter-offers, and reactive voice lines.
   - Published CloudEvents 1.0 domain events on Redis Streams (`MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `IntoxicationLevelChanged`, `HagglingNegotiated`).

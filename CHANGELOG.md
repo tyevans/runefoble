@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Stand-In AI Persona Decision Engine and Tactical Policy Modular Decomposition (`TASK-0112`, `ADR-0002`, `ADR-0003`, `ADR-0006`)**:
+  - Decomposed monolithic `services/the_watcher/src/the_watcher/stand_in_ai.py` (344 lines) into specialized, single-responsibility sub-modules: `stand_in_guardrails.py` (127 lines) for tactical policy evaluation, `stand_in_persona.py` (138 lines) for humorous penalty and personality simulation, `stand_in_recap.py` (94 lines) for absentee chronicle recap generation, and `stand_in_ai.py` (64 lines) lightweight facade.
+  - Preserved 100% backward compatibility for all public methods on `StandInAIEngine` and public entrypoints.
+  - Enforced strict file length limits with all sub-modules under 140 lines and well below the 200 lines limit, protecting Hard Invariant 6 (< 500 lines).
+  - Added comprehensive blackbox TDD test suite `tests/test_blackbox_stand_in_guardrails.py` validating frontdoor HTTP endpoints, tactical guardrails, and structural invariants.
+  - Updated Diataxis how-to guide `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
 - **Project Visualizer Parser Modular Decomposition (`TASK-0059`, `ADR-0003`)**:
   - Decomposed monolithic `tools/project_visualizer/parser.py` (461 lines) into dedicated sub-parsers in `tools/project_visualizer/parsers/`: `adr_parser.py` (75 lines), `product_parser.py` (155 lines), `persona_parser.py` (93 lines), `backlog_parser.py` (158 lines), `graph_builder.py` (20 lines), and `markdown_utils.py` (89 lines).
   - Maintained 100% backward compatibility via `tools/project_visualizer/parser.py` facade (141 lines) and `tools/project_visualizer/markdown_utils.py` facade (21 lines) with re-exported classes and entrypoints (`ProjectParser`, `scan_project`, `build_traceability_graph`).
