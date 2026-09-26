@@ -20,6 +20,8 @@ runefoble/
 │   ├── board_state/ui/           # @runefoble/board-state-ui
 │   │   └── src/
 │   │       ├── runefoble-board.ts
+│   │       ├── runefoble-board.styles.ts
+│   │       ├── runefoble-board-tokens.styles.ts
 │   │       ├── runefoble-board.stories.ts
 │   │       ├── runefoble-map-uploader.ts
 │   │       └── runefoble-map-uploader.stories.ts
@@ -39,10 +41,12 @@ runefoble/
 │   ├── the_watcher/ui/           # @runefoble/the-watcher-ui
 │   │   └── src/
 │   │       ├── runefoble-watcher-feed.ts
-│   │       └── runefoble-autonomous-dm.ts
+│   │       ├── runefoble-autonomous-dm.ts
+│   │       └── runefoble-autonomous-dm.styles.ts
 │   └── voice_agent/ui/           # @runefoble/voice-agent-ui
 │       └── src/
 │           ├── runefoble-voice-controls.ts
+│           ├── runefoble-voice-controls.styles.ts
 │           └── runefoble-voice-controls.stories.ts
 ```
 

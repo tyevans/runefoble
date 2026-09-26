@@ -209,10 +209,13 @@ def test_voice_controls_visualizer_and_webrtc_spec():
     assert "badge-warning" in content
     assert "badge-dsp" in content
 
-    # Bauhaus styling tokens
-    assert "--rf-accent-primary" in content
-    assert "--rf-shadow" in content
-    assert "--rf-border-color" in content
+    # Bauhaus styling tokens (checked in component and its companion styles)
+    styles_file = ui_src / "runefoble-voice-controls.styles.ts"
+    styles_content = styles_file.read_text(encoding="utf-8") if styles_file.is_file() else ""
+    full_content = content + "\n" + styles_content
+    assert "--rf-accent-primary" in full_content
+    assert "--rf-shadow" in full_content
+    assert "--rf-border-color" in full_content
 
 
 def test_voice_controls_storybook_stories_coverage():
@@ -380,6 +383,70 @@ def test_microfrontend_component_styles_and_subview_decomposition_integrity():
         assert f"@customElement('{item['tag']}')" in comp_content
 
         # Contract preservation: custom events
+        for event_name in item["events"]:
+            assert f"'{event_name}'" in comp_content, (
+                f"Event {event_name} missing in {comp_file.name}"
+            )
+
+
+def test_task_0061_tactical_board_dm_and_voice_styles_decomposition():
+    """Verify TASK-0061: CSS styles extracted to companion *.styles.ts modules and Hard Invariant 6."""
+    targets = [
+        {
+            "component": REPO_ROOT / "services/board_state/ui/src/runefoble-board.ts",
+            "styles": REPO_ROOT / "services/board_state/ui/src/runefoble-board.styles.ts",
+            "style_export": "boardStyles",
+            "tag": "runefoble-board",
+            "max_style_lines": 220,
+            "max_comp_lines": 250,
+            "events": ["move-token", "confirm-ghost", "cancel-ghost", "ghost-timeout"],
+        },
+        {
+            "component": REPO_ROOT / "services/the_watcher/ui/src/runefoble-autonomous-dm.ts",
+            "styles": REPO_ROOT / "services/the_watcher/ui/src/runefoble-autonomous-dm.styles.ts",
+            "style_export": "autonomousDmStyles",
+            "tag": "runefoble-autonomous-dm",
+            "max_style_lines": 230,
+            "max_comp_lines": 200,
+            "events": ["generate-scene", "spawn-encounter"],
+        },
+        {
+            "component": REPO_ROOT / "services/voice_agent/ui/src/runefoble-voice-controls.ts",
+            "styles": REPO_ROOT / "services/voice_agent/ui/src/runefoble-voice-controls.styles.ts",
+            "style_export": "voiceControlsStyles",
+            "tag": "runefoble-voice-controls",
+            "max_style_lines": 160,
+            "max_comp_lines": 240,
+            "events": ["voice-toggle", "voice-state", "voice-level"],
+        },
+    ]
+
+    for item in targets:
+        comp_file = item["component"]
+        styles_file = item["styles"]
+
+        assert comp_file.is_file(), f"{comp_file} must exist"
+        assert styles_file.is_file(), f"{styles_file} must exist"
+
+        comp_content = comp_file.read_text(encoding="utf-8")
+        styles_content = styles_file.read_text(encoding="utf-8")
+
+        comp_lines = len(comp_content.splitlines())
+        style_lines = len(styles_content.splitlines())
+
+        assert comp_lines < item["max_comp_lines"], (
+            f"{comp_file.name} has {comp_lines} lines (expected < {item['max_comp_lines']})"
+        )
+        assert style_lines < item["max_style_lines"], (
+            f"{styles_file.name} has {style_lines} lines (expected < {item['max_style_lines']})"
+        )
+        assert comp_lines < 250, f"{comp_file.name} must be < 250 lines"
+        assert style_lines < 250, f"{styles_file.name} must be < 250 lines"
+
+        assert item["style_export"] in styles_content
+        assert item["style_export"] in comp_content
+        assert f"@customElement('{item['tag']}')" in comp_content
+
         for event_name in item["events"]:
             assert f"'{event_name}'" in comp_content, (
                 f"Event {event_name} missing in {comp_file.name}"
