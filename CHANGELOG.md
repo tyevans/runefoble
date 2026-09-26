@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blackbox Documentation & Pages Test Suite**: Expanded `tests/test_docs_build_and_pages.py` to assert changelog existence, Keep a Changelog structure, Definition of Done enforcement, and marketing page navigation integrity.
 
 ### Changed
+- **Autonomous DM Presets, Monster Templates, and Combat Tactics Modular Decomposition (`TASK-0062`)**:
+  - Decomposed `services/the_watcher/src/the_watcher/autonomous_dm.py` into focused, single-responsibility submodules: `presets.py` (scene catalogs & atmosphere builders), `encounters.py` (CR balancing & monster templates), and `tactics.py` (tactical combat decision heuristics).
+  - Maintained 100% backward-compatible facade `AutonomousDMEngine` and public re-exports in `autonomous_dm.py`.
+  - Strictly enforced Hard Invariant 6 with all submodules and test files well under 170 lines.
 - **Domain Aggregates and Rule Tables Modular Decomposition (`TASK-0060`)**:
   - Decomposed monolithic domain aggregate files across `character_sheet`, `board_state`, and `game_session` bounded contexts into focused `rules.py` (game balance tables, hazard formulas, spatial/initiative calculations) and `models.py` (Pydantic state schemas with immutable transition methods and request/response DTOs) submodules.
   - Maintained 100% backward-compatible re-exports in all `aggregate.py` modules.
