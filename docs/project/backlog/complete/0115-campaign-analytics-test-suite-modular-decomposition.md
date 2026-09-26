@@ -1,7 +1,7 @@
 ---
 id: '0115'
 title: Campaign Analytics Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0052
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0040
 - US-0054
+pr_url: https://github.com/tyevans/runefoble/pull/109
 ---
-
 # TASK-0115: Campaign Analytics Test Suite Modular Decomposition
 
 ## Status

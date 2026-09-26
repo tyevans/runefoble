@@ -166,24 +166,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **Campaign Analytics Test Suite Modular Decomposition (`TASK-0115`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0011`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_campaign_analytics.py` (443 lines) into three focused, single-responsibility blackbox test modules strictly under 200 lines each adhering to Hard Invariants 6 and 7:
+    - `tests/test_blackbox_campaign_analytics_api.py` (176 lines): REST endpoints (`/healthz`, `/metrics`, `/ui/manifest`, `/heatmap`, `/mvp`, `/timeline`) and SpiceDB Zanzibar authorization.
+    - `tests/test_blackbox_campaign_analytics_worker.py` (194 lines): `CampaignAnalyticsWorker` multi-stream consumer group routing, message acknowledgment, sub-200ms latency budget, and event projections.
+    - `tests/test_blackbox_campaign_analytics_storage.py` (142 lines): `CampaignAnalyticsStorage` spatial bucketing, cumulative combat metrics, MVP ranking algorithms, and chronological milestone ordering.
+
 - **WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition (`TASK-0071`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0009`)**:
-  - Decomposed monolithic test suite `tests/test_websocket_zanzibar_auth.py` (formerly 330 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 200 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
-    - `tests/test_websocket_zanzibar_connect_auth.py` (110 lines): Handshake authentication, campaign viewer/reader authorization, 4003 rejection frames, dynamic permission revocation disconnecting active sessions, and SpiceDB mock/gRPC initialization.
-    - `tests/test_websocket_zanzibar_mutators.py` (187 lines): Token movement authorization, spectator move denial, DM-only actions (monster spawning, scene alterations), foreign character sheet edit denial, Redis Streams event publishing, and mid-session relation revocations.
-  - Updated bridge module `tests/test_blackbox_websocket_zanzibar.py` to aggregate both test suites for automated regression verification.
-  - Updated Diataxis documentation in `docs/how-to/define-spicedb-zanzibar-permissions.md`.
+  - Decomposed monolithic test suite `tests/test_websocket_zanzibar_auth.py` into `tests/test_websocket_zanzibar_connect_auth.py` (connection admission, revocation) and `tests/test_websocket_zanzibar_mutators.py` (token moves, DM actions, event publishing).
+  - Updated bridge module `tests/test_blackbox_websocket_zanzibar.py` and Diataxis guide `docs/how-to/define-spicedb-zanzibar-permissions.md`.
 
 - **Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition (`TASK-0070`, `ADR-0002`, `ADR-0003`, `ADR-0006`, `ADR-0009`)**:
-  - Decomposed monolithic test suite `tests/test_stand_in_engine.py` (formerly 343 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
-    - `tests/test_stand_in_tactics_unit.py` (122 lines): Verifies stand-in penalty mechanics (`drunk`, `foolishness`, `cowardice`, `greed`), dice roll formula adjustments (`1d20-2`), slurred dialogue, defensive positioning, distraction effects, looting behavior, and personality trait flavor integration (`scholarly`, `valiant`, `impulsive`).
-    - `tests/test_blackbox_stand_in_service.py` (216 lines): Verifies The Watcher stand-in action endpoint (`POST /api/v1/watcher/stand-in/act`), Redis Streams domain event publication (`StandInActionDecided`, `AbsencePenaltyApplied`), Game Session automated turn progression (`POST /api/v1/sessions/{id}/turns/auto-pilot`), and absentee chronicle recap generation (`POST /api/v1/watcher/stand-in/recap`).
-  - Updated Diataxis documentation in `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
+  - Decomposed `tests/test_stand_in_engine.py` into `tests/test_stand_in_tactics_unit.py` (stand-in penalties, personality traits) and `tests/test_blackbox_stand_in_service.py` (stand-in actions, event publishing, recap generation).
+  - Updated Diataxis guide `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
 
 - **OpenPanel Analytics Blackbox Test Suite Modular Decomposition (`TASK-0097`, `ADR-0003`, `ADR-0006`, `ADR-0009`)**:
-  - Decomposed monolithic blackbox test suite `tests/test_blackbox_openpanel_analytics.py` (354 lines) into two specialized, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 175 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
-    - `tests/test_blackbox_analytics_client.py` (158 lines): Verifies salted SHA-256 profile anonymization, recursive PII scrubbing (audio bytes, speech transcripts, secret credentials), HTTP transport dispatch via `OpenPanelClient`, profile identification, memory buffer management, and fast failure modes upon network connection error.
-    - `tests/test_blackbox_analytics_worker.py` (169 lines): Verifies background Redis Streams consumer group processing of domain events (`SessionStarted`, `DiceRolled`, `StandInActionDecided`), mapping domain CloudEvents to OpenPanel metrics, dialogue/transcript PII exclusion invariants, and worker lifecycle with dead-letter queue fault isolation.
-  - Updated Diataxis documentation in `docs/how-to/track-analytics-events.md`.
+  - Decomposed `tests/test_blackbox_openpanel_analytics.py` into `tests/test_blackbox_analytics_client.py` (anonymization, scrubbing, transport) and `tests/test_blackbox_analytics_worker.py` (Redis Streams consumer group, metric mapping, DLQ).
+  - Updated Diataxis guide `docs/how-to/track-analytics-events.md`.
 - **Battlemap Uploader Subviews and Grid Controller Modular Decomposition (`TASK-0078`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed `services/board_state/ui/src/runefoble-map-uploader.ts` (formerly 315 lines) into focused subcomponents strictly adhering to Hard Invariant 6 (< 500 lines limit, all resulting modules < 130 lines):
     - `runefoble-map-dropzone.ts` (124 lines): Encapsulates drag-and-drop file listeners, file input handling, MIME validation, and Silo S3 multipart upload progress dispatch.
