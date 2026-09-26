@@ -51,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition (`TASK-0096`, `ADR-0001`, `ADR-0002`, `ADR-0003`, `ADR-0009`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_stand_in_guardrails.py` (370 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 190 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_blackbox_stand_in_policies.py` (189 lines): Verifies tactical guardrail configuration via `PUT/GET /api/v1/characters/{id}/guardrails`, SpiceDB Zanzibar authorization, `StandInPolicyUpdated` and `StandInStabilized` CloudEvent publications, The Watcher stand-in tactical decision graph evaluation under 'drunk' and 'foolishness' penalties, and zero-HP permadeath stabilization invariants.
+    - `tests/test_blackbox_stand_in_takeover.py` (147 lines): Verifies mid-session hot-swap handoffs via `POST /api/v1/sessions/{id}/hot-swap`, active combat round and initiative continuity, SpiceDB Zanzibar object authorization, and `CharacterControlTransferred` CloudEvent emissions.
+  - Updated Diataxis documentation in `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
 - **Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition (`TASK-0067`, `ADR-0003`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed monolithic blackbox test suite `tests/test_blackbox_silo_assets.py` (362 lines) into two specialized, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all resulting files strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
     - `tests/test_blackbox_silo_asset_lifecycle.py` (202 lines): Verifies multipart/form-data and JSON base64 uploads for avatar images, tactical battlemaps, and audio soundscapes, direct binary streaming (`/stream`), attachment download headers (`/download`), MIME type validation, maximum payload limits (10MB), and deletion lifecycle with subsequent 404 responses.
