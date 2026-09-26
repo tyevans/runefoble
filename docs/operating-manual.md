@@ -160,7 +160,8 @@ Work is complete only when:
 7. **Helm & Kubernetes Integrity**: Umbrella Helm chart passes `helm lint` and renders cleanly via `helm template`.[^4]
 8. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs and User Stories) updated to reflect the new state.[^18] For Backlog items (`complete/` and `PRIORITY.md`), updates are applied atomically upon integration into `main` by the integration orchestrator (never directly on feature branches or in worker worktrees to prevent merge conflicts).
 9. **Changelog Maintenance**: User-facing capabilities, architectural shifts, and public API/schema changes are recorded in `CHANGELOG.md` under `[Unreleased]` following the Keep a Changelog standard.
-10. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
+10. **Platform Showcase Maintenance**: The marketing and platform showcase page (`docs/marketing.md`) is maintained and updated as progress is made, keeping live core capabilities, architectural highlights, and roadmap milestone statuses aligned with the current state of the platform.
+11. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
 
 ## Dispatching Work to Agents & Parallel Worktrees
 

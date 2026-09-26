@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **Definition of Done Platform Showcase Maintenance Requirement**:
+  - Updated the repository Definition of Done in `AGENTS.md`, `docs/operating-manual.md`, and `docs/project/backlog/README.md` to mandate ongoing maintenance of the Platform Showcase marketing page (`docs/marketing.md`) as capabilities, architecture, and milestones progress.
+  - Added automated test validation in `tests/test_docs_build_and_pages.py` (`test_definition_of_done_includes_marketing_page_maintenance`) to ensure the Definition of Done in `AGENTS.md` and `docs/operating-manual.md` enforces marketing page maintenance.
+
 - **Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition (`TASK-0094`, `ADR-0002`, `ADR-0003`, `ADR-0007`, `ADR-0009`)**:
   - Decomposed `services/the_watcher/src/the_watcher/routers/intent.py` (371 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/intent/`:
     - `disambiguation.py` (195 lines): Ambiguity detection, clarification prompts, target candidate matching, and `/resolve` route.

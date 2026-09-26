@@ -213,6 +213,21 @@ def test_definition_of_done_includes_changelog_maintenance():
         assert "CHANGELOG.md" in op_content
 
 
+def test_definition_of_done_includes_marketing_page_maintenance():
+    """Verify Definition of Done in AGENTS.md and operating-manual.md includes marketing showcase maintenance."""
+    agents_md = REPO_ROOT / "AGENTS.md"
+    assert agents_md.exists()
+    content = agents_md.read_text(encoding="utf-8")
+    assert "Platform Showcase Maintenance" in content
+    assert "docs/marketing.md" in content
+
+    op_manual = DOCS_DIR / "operating-manual.md"
+    if op_manual.exists():
+        op_content = op_manual.read_text(encoding="utf-8")
+        assert "Platform Showcase Maintenance" in op_content
+        assert "docs/marketing.md" in op_content
+
+
 def test_marketing_showcase_page_and_navigation():
     """Verify docs/marketing.md exists, is in nav, and compiles to rich HTML."""
     marketing_md = DOCS_DIR / "marketing.md"
