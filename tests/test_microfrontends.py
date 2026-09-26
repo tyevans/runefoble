@@ -154,7 +154,7 @@ def test_app_shell_microfrontend_composition():
     assert "<runefoble-character-card" in content
     assert "<runefoble-watcher-feed" in content
     assert "<runefoble-voice-controls" in content
-    assert "<runefoble-theme-switcher" in content
+    assert "<runefoble-settings-modal" in content
 
 
 def test_monorepo_pnpm_workspace_declaration():

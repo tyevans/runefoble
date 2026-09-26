@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import './styles/themes.css';
-import './components/runefoble-theme-switcher.ts';
+import './components/runefoble-settings-modal.ts';
 import '@runefoble/board-state-ui';
 import '@runefoble/character-sheet-ui';
 import '@runefoble/game-session-ui';
@@ -13,6 +13,10 @@ import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 @customElement('runefoble-app')
 export class RunefobleApp extends LitElement {
   @state() private viewMode: 'party' | 'spectator' = 'party';
+  @state() private isSettingsOpen = false;
+  @state() private currentTheme: string = 'bauhaus';
+  @state() private currentColorMode: 'light' | 'dark' | 'system' = 'system';
+
   static styles = css`
     :host {
       display: block;
@@ -55,6 +59,34 @@ export class RunefobleApp extends LitElement {
       align-items: center;
       gap: 16px;
       flex-wrap: wrap;
+    }
+    .settings-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--rf-bg-surface, #ffffff);
+      color: var(--rf-text-primary, #121212);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      cursor: pointer;
+      border-radius: var(--rf-border-radius, 0px);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+    }
+    .settings-trigger:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+    }
+    .settings-trigger:active {
+      transform: translate(1px, 1px);
+      box-shadow: 0px 0px 0px #121212;
+    }
+    @media (max-width: 640px) {
+      .settings-label {
+        display: none;
+      }
     }
     .session-info {
       display: flex;
@@ -109,30 +141,9 @@ export class RunefobleApp extends LitElement {
   ];
 
   @state() private events: WatcherFeedEvent[] = [
-    {
-      id: '1',
-      timestamp: '19:45:00',
-      source: 'watcher_dm',
-      speaker: 'The Watcher (AI DM)',
-      text: 'Welcome back, adventurers. The gloom of the Whispering Crypt hangs thick. Ahead, two glowing eyes appear in the corridor.',
-      actionType: 'dm_ruling',
-    },
-    {
-      id: '2',
-      timestamp: '19:45:20',
-      source: 'player',
-      speaker: 'Valeros (Player Voice)',
-      text: '"I ready my shield and move two steps forward to protect Kyra."',
-      actionType: 'speech',
-    },
-    {
-      id: '3',
-      timestamp: '19:45:30',
-      source: 'stand_in',
-      speaker: 'Kyra (AI Stand-in, Drunk)',
-      text: '"Hah! No dragon can outwit Sarenrae\'s finest vintner! *stumbles forward*"',
-      actionType: 'speech',
-    },
+    { id: '1', timestamp: '19:45:00', source: 'watcher_dm', speaker: 'The Watcher (AI DM)', text: 'Welcome back, adventurers. The gloom of the Whispering Crypt hangs thick. Ahead, two glowing eyes appear in the corridor.', actionType: 'dm_ruling' },
+    { id: '2', timestamp: '19:45:20', source: 'player', speaker: 'Valeros (Player Voice)', text: '"I ready my shield and move two steps forward to protect Kyra."', actionType: 'speech' },
+    { id: '3', timestamp: '19:45:30', source: 'stand_in', speaker: 'Kyra (AI Stand-in, Drunk)', text: '"Hah! No dragon can outwit Sarenrae\'s finest vintner! *stumbles forward*"', actionType: 'speech' },
   ];
 
   private socket: WebSocket | null = null;
@@ -140,8 +151,53 @@ export class RunefobleApp extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    this.initThemeAndColorMode();
     this.initWebSocket();
   }
+
+  private initThemeAndColorMode() {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const storedTheme = window.localStorage.getItem('runefoble-theme');
+        if (storedTheme) {
+          this.currentTheme = storedTheme;
+        }
+        const storedMode = window.localStorage.getItem('runefoble-color-mode');
+        if (storedMode && ['light', 'dark', 'system'].includes(storedMode)) {
+          this.currentColorMode = storedMode as 'light' | 'dark' | 'system';
+        }
+      }
+    } catch {
+      // Storage access may be restricted
+    }
+    if (typeof document !== 'undefined' && document.documentElement) {
+      document.documentElement.setAttribute('data-theme', this.currentTheme);
+      document.documentElement.setAttribute('data-color-mode', this.currentColorMode);
+    }
+  }
+
+  private openSettings() {
+    this.isSettingsOpen = true;
+  }
+
+  private handleSettingsClosed() {
+    this.isSettingsOpen = false;
+    const trigger = this.shadowRoot?.querySelector('#settings-trigger-btn') as HTMLElement;
+    trigger?.focus();
+  }
+
+  private handleThemeChanged(e: CustomEvent) {
+    if (e.detail?.theme) {
+      this.currentTheme = e.detail.theme;
+    }
+  }
+
+  private handleColorModeChanged(e: CustomEvent) {
+    if (e.detail?.mode) {
+      this.currentColorMode = e.detail.mode;
+    }
+  }
+
 
   disconnectedCallback() {
     super.disconnectedCallback();
@@ -278,7 +334,17 @@ export class RunefobleApp extends LitElement {
           <span class="tagline">Imaginative Gaming for Storytellers</span>
         </div>
         <div class="header-actions">
-          <runefoble-theme-switcher></runefoble-theme-switcher>
+          <button
+            id="settings-trigger-btn"
+            class="settings-trigger"
+            aria-haspopup="dialog"
+            aria-expanded="${this.isSettingsOpen ? 'true' : 'false'}"
+            aria-label="Open settings"
+            @click=${this.openSettings}
+          >
+            <span class="settings-icon" aria-hidden="true">⚙️</span>
+            <span class="settings-label">Settings</span>
+          </button>
           <button
             style="background:var(--rf-bg-surface); color:var(--rf-text-primary); border:var(--rf-border-width,2px) solid var(--rf-border-color,#121212); box-shadow:var(--rf-shadow-sm,2px 2px 0px #121212); font-weight:700; font-size:0.8rem; padding:4px 10px; cursor:pointer;"
             @click=${() => { this.viewMode = this.viewMode === 'party' ? 'spectator' : 'party'; }}
@@ -385,6 +451,15 @@ export class RunefobleApp extends LitElement {
         ></runefoble-voice-controls>
       </div>
       `}
+
+      <runefoble-settings-modal
+        .open=${this.isSettingsOpen}
+        .currentTheme=${this.currentTheme}
+        .currentColorMode=${this.currentColorMode}
+        @settings-closed=${this.handleSettingsClosed}
+        @theme-changed=${this.handleThemeChanged}
+        @color-mode-changed=${this.handleColorModeChanged}
+      ></runefoble-settings-modal>
     `;
   }
 }
