@@ -115,19 +115,21 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 104. **TASK-0118 (Complete)**: [`0118-campaign-analytics-storage-and-query-decomposition.md`](complete/0118-campaign-analytics-storage-and-query-decomposition.md) — Campaign Analytics Storage and Query Modular Decomposition
 105. **TASK-0069 (Complete)**: [`0069-speech-intent-parser-and-action-grammar-decomposition.md`](complete/0069-speech-intent-parser-and-action-grammar-decomposition.md) — Speech Intent Parser and Action Grammar Extractors Modular Decomposition
 106. **TASK-0111 (Refined)**: [`0111-settings-modal-styles-and-sub-components-decomposition.md`](refined/0111-settings-modal-styles-and-sub-components-decomposition.md) — Settings Modal Styles and Sub-Component CSS Modular Decomposition
+107. **TASK-0101 (Refined)**: [`0101-diegetic-handouts-and-relic-inspector-bc.md`](refined/0101-diegetic-handouts-and-relic-inspector-bc.md) — Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector
+108. **TASK-0103 (Refined)**: [`0103-tavern-minigames-and-merchant-haggling.md`](refined/0103-tavern-minigames-and-merchant-haggling.md) — Interactive Tavern Minigames, Gambling & Personality-Driven Merchant Haggling
+109. **TASK-0105 (Refined)**: [`0105-printable-tabletop-forge-and-stl-tokens.md`](refined/0105-printable-tabletop-forge-and-stl-tokens.md) — Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens
+110. **TASK-0059 (Refined)**: [`0059-project-visualizer-parser-modular-decomposition.md`](refined/0059-project-visualizer-parser-modular-decomposition.md) — Project Visualizer Parser Modular Decomposition
+111. **TASK-0119 (Refined)**: [`0119-prd-decomposer-planning-and-slice-generation-decomposition.md`](refined/0119-prd-decomposer-planning-and-slice-generation-decomposition.md) — PRD Decomposer Planning and Slice Generation Modular Decomposition
+112. **TASK-0120 (Refined)**: [`0120-theme-token-styles-modular-decomposition.md`](refined/0120-theme-token-styles-modular-decomposition.md) — CSS Design Tokens and Theme Variables Modular Decomposition
+113. **TASK-0112 (Refined)**: [`0112-stand-in-ai-guardrails-and-persona-modular-decomposition.md`](refined/0112-stand-in-ai-guardrails-and-persona-modular-decomposition.md) — Stand-In AI Persona Decision Engine and Tactical Policy Modular Decomposition
+114. **TASK-0113 (Refined)**: [`0113-character-sheet-aggregate-and-event-handlers-decomposition.md`](refined/0113-character-sheet-aggregate-and-event-handlers-decomposition.md) — Character Sheet Aggregate Mutation Handlers and Event Appliers Decomposition
+115. **TASK-0114 (Refined)**: [`0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md`](refined/0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md) — Theming Tokens and Contrast Invariants Test Suite Modular Decomposition
 
-107. **TASK-0112 (Proposed)**: [`0112-stand-in-ai-guardrails-and-persona-modular-decomposition.md`](proposed/0112-stand-in-ai-guardrails-and-persona-modular-decomposition.md) — Stand-In AI Persona Decision Engine and Tactical Policy Modular Decomposition
-108. **TASK-0113 (Proposed)**: [`0113-character-sheet-aggregate-and-event-handlers-decomposition.md`](proposed/0113-character-sheet-aggregate-and-event-handlers-decomposition.md) — Character Sheet Aggregate Mutation Handlers and Event Appliers Decomposition
-109. **TASK-0114 (Proposed)**: [`0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md`](proposed/0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md) — Theming Tokens and Contrast Invariants Test Suite Modular Decomposition
-110. **TASK-0059 (Proposed)**: [`0059-project-visualizer-parser-modular-decomposition.md`](proposed/0059-project-visualizer-parser-modular-decomposition.md) — Project Visualizer Parser Modular Decomposition
-111. **TASK-0066 (Proposed)**: [`0066-project-visualizer-client-assets-and-template-decomposition.md`](proposed/0066-project-visualizer-client-assets-and-template-decomposition.md) — Project Visualizer Client Assets and Standalone HTML Template Modular Decomposition
+116. **TASK-0106 (Proposed)**: [`0106-collaborative-campaign-atlas-and-codex-bc.md`](proposed/0106-collaborative-campaign-atlas-and-codex-bc.md) — Collaborative Multi-Layered Campaign Atlas & Living Interactive Codex
+117. **TASK-0102 (Proposed)**: [`0102-character-leitmotifs-and-adaptive-themes.md`](proposed/0102-character-leitmotifs-and-adaptive-themes.md) — Character Musical Leitmotifs & Dynamic Dramatic Themes
+118. **TASK-0104 (Proposed)**: [`0104-kinetic-spell-vfx-and-particle-canvas.md`](proposed/0104-kinetic-spell-vfx-and-particle-canvas.md) — Multi-Modal Kinetic Spell VFX & WebGL Particle Canvas
+119. **TASK-0066 (Proposed)**: [`0066-project-visualizer-client-assets-and-template-decomposition.md`](proposed/0066-project-visualizer-client-assets-and-template-decomposition.md) — Project Visualizer Client Assets and Standalone HTML Template Modular Decomposition
 
-112. **TASK-0101 (Proposed)**: [`0101-diegetic-handouts-and-relic-inspector-bc.md`](proposed/0101-diegetic-handouts-and-relic-inspector-bc.md) — Diegetic In-World Handouts, Wax Seals & 3D Relic Inspector Microservice
-113. **TASK-0102 (Proposed)**: [`0102-character-leitmotifs-and-adaptive-themes.md`](proposed/0102-character-leitmotifs-and-adaptive-themes.md) — Character Musical Leitmotifs & Dynamic Dramatic Themes
-114. **TASK-0103 (Proposed)**: [`0103-tavern-minigames-and-merchant-haggling.md`](proposed/0103-tavern-minigames-and-merchant-haggling.md) — Interactive Tavern Minigames, Gambling & Personality-Driven Merchant Haggling
-115. **TASK-0104 (Proposed)**: [`0104-kinetic-spell-vfx-and-particle-canvas.md`](proposed/0104-kinetic-spell-vfx-and-particle-canvas.md) — Multi-Modal Kinetic Spell VFX & WebGL Particle Canvas
-116. **TASK-0105 (Proposed)**: [`0105-printable-tabletop-forge-and-stl-tokens.md`](proposed/0105-printable-tabletop-forge-and-stl-tokens.md) — Printable Tabletop Forge: Grid-Calibrated PDFs, Paper Standees & 3D Printable STL Tokens
-117. **TASK-0106 (Proposed)**: [`0106-collaborative-campaign-atlas-and-codex-bc.md`](proposed/0106-collaborative-campaign-atlas-and-codex-bc.md) — Collaborative Multi-Layered Campaign Atlas & Living Interactive Codex
 
 
 
