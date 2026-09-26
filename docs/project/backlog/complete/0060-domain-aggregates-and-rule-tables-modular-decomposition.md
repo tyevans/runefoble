@@ -1,7 +1,7 @@
 ---
 id: '0060'
 title: Domain Aggregates and Rule Tables Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0018
@@ -11,8 +11,8 @@ governing_adrs:
 - ADR-0003
 - ADR-0011
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/64
 ---
-
 # TASK-0060: Domain Aggregates and Rule Tables Modular Decomposition
 
 ## Status
