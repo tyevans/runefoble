@@ -1,7 +1,7 @@
 # PRD-0004: Dynamic Vocal Audio Conditioning and DSP Filters
 
 ## Status
-Accepted
+Shipped
 
 ## Purpose
 Voice immersion is paramount in collaborative tabletop roleplaying. When characters are afflicted by magical curses, excessive tavern drinking, fear, or environmental immersion (e.g. underwater, cathedral echo), their audio speech should organically reflect their state without breaking session flow. The `voice_agent` service will provide DSP audio filtering and speech cadence transformation for synthesized AI personas and streamed audio.
@@ -12,7 +12,8 @@ Voice immersion is paramount in collaborative tabletop roleplaying. When charact
 - **Evelyn (Human DM)**: Auditory cues instantly signal to the whole table what status effects are active on any speaking character.
 
 ## Checkable Outcomes
-1. The `voice_agent` service provides DSP audio parameter transforms: pitch modulation, cadence warble, low-pass underwater muffling, and cathedral reverb.
-2. The `/api/v1/voice/tts` endpoint applies DSP filter pipelines according to active character penalties (`drunk`, `fear`, `ghostly`, `underwater`).
-3. Audio chunk metadata indicates active filter presets.
-4. Python unit tests verify filter pipeline output and parameter scaling.
+1. The `voice_agent` service provides real-time DSP audio transforms: whisper (reduced dynamic range, high-pass shimmer), underwater (muffled low-pass, sub-bass resonance), ethereal (ghostly echo modulation, delay tail), and drunk (slurred formant modulation, pitch sway).
+2. The `POST /api/v1/voice/dsp/apply` endpoint applies filter chains to raw audio streams or generates conditioned synthetic carriers under 50ms latency.
+3. The `POST /api/v1/voice/tts` endpoint synthesizes persona audio streams applying active affliction filters, returning audio payloads, duration, and DSP metadata.
+4. Each DSP conditioning cycle dispatches `VoiceAudioConditioned` CloudEvents-compliant domain events to Redis Streams.
+5. Blackbox TDD test suite verifies filter presets, execution latency benchmarks (<50ms), and event dispatch via public frontdoors.

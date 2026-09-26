@@ -49,6 +49,7 @@ from runefoble_events.watcher import (
     SceneAtmosphereSet,
     SpeechIntentParsed,
     StandInActionDecided,
+    VoiceAudioConditioned,
     WatcherNarrationEvent,
     WatcherNarrationGenerated,
 )
@@ -95,4 +96,5 @@ __all__ = [
     "SceneAtmosphereSet",
     "EncounterSpawned",
     "AutonomousActionResolved",
+    "VoiceAudioConditioned",
 ]

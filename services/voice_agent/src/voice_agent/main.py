@@ -1,9 +1,10 @@
 """Voice Agent Microservice.
 
 Handles audio streaming, Speech-To-Text transcription pipelines,
-and Text-To-Speech synthesis with persona voice models (DM, heroic fighter, dwarven cleric).
+Text-To-Speech synthesis with persona voice models, and dynamic DSP audio conditioning.
 """
 
+import base64
 import logging
 import os
 from typing import Any
@@ -12,14 +13,18 @@ from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 import httpx
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from runefoble_events.events import PlayerSpokeEvent
+from runefoble_events.events import PlayerSpokeEvent, VoiceAudioConditioned
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-from voice_agent.dsp import VoiceDSPPipeline
+from voice_agent.dsp import (
+    VoiceDSPPipeline,
+    apply_audio_filters,
+)
 
 logger = logging.getLogger("runefoble.voice_agent")
 WATCHER_URL = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://localhost:8001")
 STREAM_SESSION = "runefoble.events.session"
+STREAM_VOICE = "runefoble.events.voice"
 
 app = FastAPI(
     title="Runefoble - Voice Agent Service",
@@ -67,11 +72,35 @@ class VoicePersona(BaseModel):
 dsp_pipeline = VoiceDSPPipeline()
 
 
+class DSPApplyRequest(BaseModel):
+    filter: str | None = None
+    filters: list[str] = Field(default_factory=list)
+    audio_base64: str | None = None
+    sample_rate: int = 16000
+    session_id: str = "session_default"
+    speaker_id: str = "speaker_default"
+    speaker_name: str = "Unknown"
+
+
+class DSPApplyResponse(BaseModel):
+    audio_base64: str
+    audio_payload: str
+    audio_bytes_length: int
+    audio_stream_url: str = ""
+    filters_applied: list[str] = Field(default_factory=list)
+    latency_ms: float = 0.0
+    dsp_metadata: dict[str, Any] = Field(default_factory=dict)
+    dsp_parameters: dict[str, Any] = Field(default_factory=dict)
+
+
 class TTSRequest(BaseModel):
     text: str
     persona_id: str = "watcher_dm"
     apply_drunk_filter: bool = False
     filters: list[str] = Field(default_factory=list)
+    session_id: str = "session_default"
+    speaker_id: str = "speaker_default"
+    speaker_name: str = "The Watcher"
 
 
 class TTSResponse(BaseModel):
@@ -82,6 +111,10 @@ class TTSResponse(BaseModel):
     conditioned_text: str = ""
     effects_applied: list[str] = Field(default_factory=list)
     dsp_parameters: dict[str, Any] = Field(default_factory=dict)
+    dsp_metadata: dict[str, Any] = Field(default_factory=dict)
+    audio_payload: str = ""
+    audio_base64: str = ""
+    latency_ms: float = 0.0
 
 
 class TranscribeRequest(BaseModel):
@@ -125,6 +158,30 @@ AVAILABLE_PERSONAS: dict[str, VoicePersona] = {
 }
 
 
+async def _dispatch_voice_audio_conditioned(
+    session_id: str,
+    speaker_id: str,
+    speaker_name: str,
+    filters_applied: list[str],
+    latency_ms: float,
+    audio_bytes_length: int,
+) -> None:
+    event = VoiceAudioConditioned(
+        session_id=session_id,
+        speaker_id=speaker_id,
+        speaker_name=speaker_name,
+        filters_applied=filters_applied,
+        latency_ms=latency_ms,
+        audio_bytes_length=audio_bytes_length,
+    )
+    bus = get_event_bus()
+    for stream in (STREAM_SESSION, STREAM_VOICE):
+        try:
+            await bus.publish_event(stream, event)
+        except Exception as e:
+            logger.warning("Failed to publish VoiceAudioConditioned to '%s': %s", stream, e)
+
+
 @app.get("/healthz")
 async def health_check():
     return {"status": "ok", "service": "voice_agent"}
@@ -133,6 +190,46 @@ async def health_check():
 @app.get("/api/v1/voice/personas", response_model=list[VoicePersona])
 async def list_personas():
     return list(AVAILABLE_PERSONAS.values())
+
+
+@app.post("/api/v1/voice/dsp/apply", response_model=DSPApplyResponse)
+async def apply_dsp(req: DSPApplyRequest):
+    """Apply dynamic DSP filters to an audio stream or synthesize conditioned audio."""
+    filters = list(req.filters)
+    if req.filter and req.filter not in filters:
+        filters.append(req.filter)
+
+    input_bytes = None
+    if req.audio_base64:
+        try:
+            input_bytes = base64.b64decode(req.audio_base64)
+        except Exception:
+            input_bytes = None
+
+    out_bytes, meta, latency_ms = apply_audio_filters(
+        input_bytes, filters=filters, sample_rate=req.sample_rate
+    )
+    audio_b64 = base64.b64encode(out_bytes).decode("ascii")
+
+    await _dispatch_voice_audio_conditioned(
+        session_id=req.session_id,
+        speaker_id=req.speaker_id,
+        speaker_name=req.speaker_name,
+        filters_applied=filters,
+        latency_ms=round(latency_ms, 2),
+        audio_bytes_length=len(out_bytes),
+    )
+
+    return DSPApplyResponse(
+        audio_base64=audio_b64,
+        audio_payload=audio_b64,
+        audio_bytes_length=len(out_bytes),
+        audio_stream_url=f"/streams/dsp/{abs(hash(audio_b64)) % 10000}.wav",
+        filters_applied=filters,
+        latency_ms=round(latency_ms, 2),
+        dsp_metadata=meta,
+        dsp_parameters=meta,
+    )
 
 
 @app.post("/api/v1/voice/synthesize", response_model=TTSResponse)
@@ -148,9 +245,26 @@ async def synthesize_voice(req: TTSRequest):
 
     processed = dsp_pipeline.process(req.text, filters=filters, persona_pitch=pitch)
 
+    raw_audio, audio_meta, filter_latency = apply_audio_filters(None, filters)
+    audio_b64 = base64.b64encode(raw_audio).decode("ascii")
+
     effects = list(filters)
     if "drunk" in filters:
         effects.extend(["slur_articulation", "pitch_wobble"])
+
+    dsp_params = processed.dsp_config.model_dump()
+    dsp_params.update(audio_meta)
+
+    total_latency = round(filter_latency + processed.latency_ms, 2)
+
+    await _dispatch_voice_audio_conditioned(
+        session_id=req.session_id,
+        speaker_id=req.speaker_id,
+        speaker_name=req.speaker_name,
+        filters_applied=filters,
+        latency_ms=total_latency,
+        audio_bytes_length=len(raw_audio),
+    )
 
     return TTSResponse(
         audio_stream_url=f"/streams/audio/{req.persona_id}_{abs(hash(processed.conditioned_text)) % 10000}.wav",
@@ -159,7 +273,11 @@ async def synthesize_voice(req: TTSRequest):
         original_text=req.text,
         conditioned_text=processed.conditioned_text,
         effects_applied=sorted(set(effects)),
-        dsp_parameters=processed.dsp_config.model_dump(),
+        dsp_parameters=dsp_params,
+        dsp_metadata=dsp_params,
+        audio_payload=audio_b64,
+        audio_base64=audio_b64,
+        latency_ms=total_latency,
     )
 
 

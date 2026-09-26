@@ -134,6 +134,21 @@ class AutonomousActionResolved(BaseRunefobleEvent):
     hp_impact: int = 0
 
 
+@register_event("runefoble.events.voice.audio_conditioned")
+class VoiceAudioConditioned(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "VoiceSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.voice.audio_conditioned"
+    session_id: str
+    speaker_id: str
+    speaker_name: str
+    filters_applied: list[str] = Field(default_factory=list)
+    latency_ms: float = 0.0
+    audio_bytes_length: int = 0
+
+
 # Legacy backward-compatible aliases
 WatcherNarrationEvent = WatcherNarrationGenerated
 DiceRollEvent = DiceRolled
+

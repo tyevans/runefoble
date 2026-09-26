@@ -22,6 +22,6 @@ Order of priority for engineering tasks across the platform.
 18. **TASK-0018 (Complete)**: [`0018-character-level-progression-spellbook.md`](complete/0018-character-level-progression-spellbook.md) — Character Level Progression, Spell Slots & Spellbook Preparation
 19. **TASK-0019 (Complete)**: [`0019-tactical-board-terrain-elevation-hazards.md`](complete/0019-tactical-board-terrain-elevation-hazards.md) — Tactical Board Terrain Elevation, Difficult Terrain & Hazard Grid
 20. **TASK-0020 (Refined)**: [`0020-mcp-agent-tool-loop-context.md`](refined/0020-mcp-agent-tool-loop-context.md) — FastMCP Agent Tool Loop & Session State Context Server
-21. **TASK-0021 (Refined)**: [`0021-voice-dsp-conditioning-pipeline.md`](refined/0021-voice-dsp-conditioning-pipeline.md) — Real-Time Dynamic DSP Audio Conditioning Pipeline
+21. **TASK-0021 (Complete)**: [`0021-voice-dsp-conditioning-pipeline.md`](complete/0021-voice-dsp-conditioning-pipeline.md) — Real-Time Dynamic DSP Audio Conditioning Pipeline
 
 

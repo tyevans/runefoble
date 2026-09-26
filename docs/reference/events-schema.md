@@ -194,6 +194,14 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `viewer_id`: String
   - `viewer_name`: String
   - `connected_at`: String (ISO-8601 UTC timestamp)
+- **`VoiceAudioConditioned`**: Emitted when real-time dynamic DSP audio conditioning or filter presets are applied to speech (`runefoble.events.voice.audio_conditioned`).
+  - `session_id`: String
+  - `speaker_id`: String
+  - `speaker_name`: String
+  - `filters_applied`: List[String]
+  - `latency_ms`: Float
+  - `audio_bytes_length`: Integer
+
 
 
 
