@@ -78,6 +78,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`develop-lit-components-in-storybook.md`](how-to/develop-lit-components-in-storybook.md): How to develop Lit Web Components in Storybook with Bauhaus design tokens.
 - [`add-a-watcher-ai-tool.md`](how-to/add-a-watcher-ai-tool.md): How to expose new FastMCP tabletop tools and session resources to LLM agents.
 - [`curate-backlog-and-roadmap.md`](how-to/curate-backlog-and-roadmap.md): How to triage the backlog, evaluate INVEST criteria, scan file invariants, and perform JIT refinement.
+- [`decompose-prds-into-vertical-slices.md`](how-to/decompose-prds-into-vertical-slices.md): How to scaffold PRDs, audit backlog buffers, and decompose requirements into single-pass vertical slices and ADR spikes.
 - [`instrument-services-with-opentelemetry.md`](how-to/instrument-services-with-opentelemetry.md): How to instrument FastAPI services, configure OTel exporters, and propagate trace context over Redis Streams.
 - [`authenticate-with-zitadel-oidc.md`](how-to/authenticate-with-zitadel-oidc.md): How to validate Zitadel JWTs against JWKS discovery, enforce HTTP dependencies, and secure WebSockets.
 - [`track-analytics-events.md`](how-to/track-analytics-events.md): How to record privacy-preserving analytics via OpenPanel SDK and Redis Streams workers.
