@@ -1,7 +1,7 @@
 ---
-id: '0092'
+id: 0092
 title: Asset Forge Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0049
@@ -13,8 +13,8 @@ governing_adrs:
 - ADR-0011
 - ADR-0013
 target_release: 0.3.0
+pr_url: https://github.com/tyevans/runefoble/pull/74
 ---
-
 # TASK-0092: Asset Forge Blackbox Test Suite Modular Decomposition
 
 ## Status
