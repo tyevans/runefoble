@@ -8,6 +8,7 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from character_sheet.aggregate import CharacterAggregate
+from character_sheet.crafting import CraftingAggregate
 from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
 from fastapi import Depends, Header, HTTPException
@@ -21,17 +22,25 @@ from runefoble_platform.event_sourcing import (
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 STREAM_CHARACTER = "runefoble.events.character"
+STREAM_CRAFTING = "runefoble.events.crafting"
 platform_settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient = SpiceDBClient()
 
-# Global aggregate repository
+# Global aggregate repositories
 repo: AggregateRepository[CharacterAggregate] = create_aggregate_repository(CharacterAggregate)
+crafting_repo: AggregateRepository[CraftingAggregate] = create_aggregate_repository(
+    CraftingAggregate
+)
 
 
 def get_repository() -> AggregateRepository[CharacterAggregate]:
     return repo
+
+
+def get_crafting_repository() -> AggregateRepository[CraftingAggregate]:
+    return crafting_repo
 
 
 def get_event_bus() -> RedisStreamsEventBus | None:
@@ -57,6 +66,9 @@ def set_spicedb_client(client: SpiceDBClient) -> None:
 
 
 RepoDep = Annotated[AggregateRepository[CharacterAggregate], Depends(get_repository)]
+CraftingRepoDep = Annotated[
+    AggregateRepository[CraftingAggregate], Depends(get_crafting_repository)
+]
 SpiceDep = Annotated[SpiceDBClient, Depends(get_spicedb_client)]
 UserHeader = Annotated[str | None, Header(alias="x-user-id")]
 
@@ -66,6 +78,13 @@ async def publish_character_event(event: Any) -> None:
     if bus:
         with contextlib.suppress(Exception):
             await bus.publish_event(STREAM_CHARACTER, event)
+
+
+async def publish_crafting_event(event: Any) -> None:
+    bus = get_event_bus()
+    if bus:
+        with contextlib.suppress(Exception):
+            await bus.publish_event(STREAM_CRAFTING, event)
 
 
 async def load_character(

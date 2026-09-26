@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Downtime Activities, Alchemical Crafting & Party Stronghold Engine (`TASK-0100`, `PRD-0014`, `US-0044`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
+  - Implemented `CraftingAggregate` in `character_sheet` modeling reagent affinity, catalytic stabilization, and volatile mishap risk matrices emitting `CraftingAttempted`, `CraftingSucceeded`, and `CraftingMishapOccurred`.
+  - Implemented `StrongholdAggregate` and Campfire Rest sequence in `game_session` supporting multi-tier base upgrades (watchtower, herbal rack, arcane forge), passive campaign resting boons, and collaborative storytelling prompts emitting `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`.
+  - Added SpiceDB Zanzibar permissions for `definition stronghold` in `runefoble.zed` and protected REST routes via API Gateway.
+  - Vendored Lit Web Component `<runefoble-campfire-crafting>` in `services/game_session/ui/src/` with interactive Storybook stories, Bauhaus tokens, and `/ui/manifest` discovery.
+  - Added comprehensive blackbox test suite in `tests/test_blackbox_campfire_crafting.py` and Diataxis how-to guide `docs/how-to/run-campfire-rests-and-alchemical-crafting.md`.
+
 - **WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition (`TASK-0068`, `ADR-0002`, `ADR-0004`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed `frontend/src/services/webrtc-voice.ts` (formerly 348 lines) into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and task limits (< 200 lines each):
     - `webrtc-types.ts` (67 lines): Defines wire protocol signaling interfaces (`SignalingMessage`, `VoicePeer`, `WebRTCVoiceOptions`, `PeerMeshOptions`) and connection state types (`WebRTCConnectionState`, `WebRTCConnectionStates`).
@@ -37,10 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented modular PRD pipeline engine in `tools/prd_pipeline/` with CLI entrypoint `tools.prd_pipeline.cli` and executable shell wrapper `scripts/decompose-prds.sh`.
   - Added automated auditing command (`audit`) detecting undecomposed and underdecomposed PRDs, buffer exhaustion warnings (<8 items), stale cross-directory task links, and oversized proposed tasks.
   - Implemented automated PRD creation (`create`) scaffolding standardized PRD records with YAML frontmatter, 6 core questions, and automated registration into `docs/project/product/REGISTRY.md`.
-  - Built decomposition engine (`decomposer.py`) breaking PRDs into granular, single `agy -p` pass tasks:
-    - Automatically identifies architectural novelties and generates Architectural Spike tasks (`SPIKE: Architectural Spike and ADR for ...`).
-    - Produces thin vertical slices across Domain Aggregates, APIRouters with SpiceDB Zanzibar checks, Lit Microfrontends per ADR-0013, and asynchronous Redis Streams workers.
-    - Strictly enforces Hard Invariant 6 (<500 lines per file) and Hard Invariant 7 (Frontdoor Blackbox TDD).
+  - Built decomposition engine (`decomposer.py`) breaking PRDs into granular, single-pass tasks (architectural spikes, domain aggregates, APIRouters with SpiceDB Zanzibar checks, Lit microfrontends, and asynchronous Redis Streams workers).
   - Built bidirectional registry synchronizer (`registry_sync.py`) reconciling PRD, User Story, and Backlog Priority registries, repairing stale task references, and indexing new tasks in `docs/project/backlog/PRIORITY.md`.
   - Added Antigravity agent decomposition prompt generator (`prompt` and `agent` subcommands) for deep semantic decomposition of narrative PRDs.
   - Added Makefile targets: `make prd-audit`, `make prd-decompose`, `make prd-create`, `make prd-sync`.

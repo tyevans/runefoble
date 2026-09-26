@@ -6,6 +6,7 @@ equipment, and status conditions (such as DM penalties for missed sessions).
 
 from __future__ import annotations
 
+from character_sheet.crafting_router import router as crafting_router
 from character_sheet.dependencies import (
     STREAM_CHARACTER,
     get_event_bus,
@@ -26,6 +27,7 @@ app = FastAPI(
 )
 
 app.include_router(router)
+app.include_router(crafting_router)
 
 
 @app.get("/healthz")

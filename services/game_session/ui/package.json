@@ -15,6 +15,8 @@
     "./runefoble-spectator-view.styles": "./src/runefoble-spectator-view.styles.ts",
     "./runefoble-spectator-overlay": "./src/runefoble-spectator-overlay.ts",
     "./runefoble-spectator-overlay.styles": "./src/runefoble-spectator-overlay.styles.ts",
+    "./runefoble-campfire-crafting": "./src/runefoble-campfire-crafting.ts",
+    "./runefoble-campfire-crafting.styles": "./src/runefoble-campfire-crafting.styles.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {

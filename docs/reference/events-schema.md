@@ -154,7 +154,6 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `portals`: List[Dict[str, Any]]
   - `lights`: List[Dict[str, Any]]
 
-
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
 
 - **`CharacterCreated`**: Emitted when a new character is forged.
@@ -360,7 +359,6 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `peer_id`: String
   - `is_muted`: Boolean
 
-
 ### Asset Storage Events (`aggregate_type: Asset`)
 
 - **`AssetUploaded`**: Emitted when a media asset (character avatar, tactical battlemap, or audio soundscape) is stored in Silo S3 (`runefoble.events.asset.uploaded`).
@@ -496,4 +494,5 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`CombatTelemetrySnapshotCreated`**: Emitted when a combat round telemetry snapshot is finalized (`runefoble.events.analytics.telemetry_snapshot_created`). Fields: `snapshot_id`, `campaign_id`, `session_id`, `encounter_id`, `round_number`, `spatial_points`, `damage_events`, `timestamp`.
 - **`EncounterMvpAwarded`**: Emitted when an MVP award is conferred for encounter performance (`runefoble.events.analytics.mvp_awarded`). Fields: `award_id`, `campaign_id`, `session_id`, `encounter_id`, `combatant_id`, `combatant_name`, `category`, `score`, `rationale`, `timestamp`.
 
-
+### Downtime, Crafting & Stronghold Events (`aggregate_type: Crafting`, `Stronghold`)
+For full schemas of `CraftingAttempted`, `CraftingSucceeded`, `CraftingMishapOccurred`, `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`, see [`downtime-and-crafting-events.md`](downtime-and-crafting-events.md).

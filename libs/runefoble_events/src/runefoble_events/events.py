@@ -63,6 +63,14 @@ from runefoble_events.compendium import (
     MonsterIndexed,
     SpellIndexed,
 )
+from runefoble_events.downtime import (
+    CampfireRestCompleted,
+    CraftingAttempted,
+    CraftingMishapOccurred,
+    CraftingSucceeded,
+    StrongholdCreated,
+    StrongholdUpgraded,
+)
 from runefoble_events.lore import (
     AliasesConsolidated,
     EntitiesExtracted,
@@ -223,4 +231,10 @@ __all__ = [
     "EncounterMvpAwarded",
     "TurnStarted",
     "CameraTargetUpdated",
+    "CraftingAttempted",
+    "CraftingSucceeded",
+    "CraftingMishapOccurred",
+    "CampfireRestCompleted",
+    "StrongholdCreated",
+    "StrongholdUpgraded",
 ]
