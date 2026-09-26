@@ -82,6 +82,33 @@ from <service>.routers.capability_b import router as capability_b_router
 __all__ = ["capability_a_router", "capability_b_router"]
 ```
 
+When a single router accumulates multiple distinct sub-domains or exceeds ~250 lines (e.g. `copilot.py` splitting into `actions.py` and `whispers.py`), promote it to a sub-router package:
+
+```
+routers/
+├── __init__.py
+├── capability_a.py
+└── copilot/
+    ├── __init__.py      # Re-exports combined router and sub-routers
+    ├── actions.py       # Action interceptor and pause window endpoints
+    └── whispers.py      # Private narrative whisper endpoints
+```
+
+The package `__init__.py` mounts each sub-router on a master router to preserve 100% backward compatibility for callers importing `copilot_router`:
+
+```python
+from fastapi import APIRouter
+from <service>.routers.copilot.actions import router as actions_router
+from <service>.routers.copilot.whispers import router as whispers_router
+
+router = APIRouter()
+router.include_router(actions_router)
+router.include_router(whispers_router)
+
+__all__ = ["actions_router", "router", "whispers_router"]
+```
+
+
 ### 3. Maintain Thin Orchestration Shell in main.py
 Keep `main.py` concise and declarative:
 

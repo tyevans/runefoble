@@ -9,7 +9,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Backlog Curation, Invariant Invariant Protection, and Milestone 4 JIT Triage (`ADR-0009`)**:
+  - Identified source files approaching Hard Invariant 6 limits (>400 lines) and created preemptive modular decomposition proposals:
+    - TASK-0093: DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition (`tests/test_blackbox_dm_copilot.py` [474 lines], `copilot.py` [399 lines]).
+    - TASK-0094: Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition (`tests/test_blackbox_intent_disambiguation.py` [457 lines], `intent.py` [371 lines]).
+    - TASK-0095: Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition (`tests/test_blackbox_soundscape.py` [405 lines]).
+    - TASK-0096: Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition (`tests/test_blackbox_stand_in_guardrails.py` [369 lines]).
+    - TASK-0097: OpenPanel Analytics Blackbox Test Suite Modular Decomposition (`tests/test_blackbox_openpanel_analytics.py` [354 lines]).
+  - Synchronized `ROADMAP.md`: marked Milestone 3 (AI DM & Ecosystem Expansion) as Complete with all epics delivered, and transitioned Milestone 4 (Broadcast Studio & Community Platform) to Current with TASK-0051 as foundational platform enabler.
+  - Replenished ready buffer in `docs/project/backlog/refined/` to 10 items (JIT queue health) with rigorous blackbox TDD Definitions of Done, governing ADR citations, and INVEST alignment.
+  - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
+
 ### Changed
+- **DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition (`TASK-0093`, `ADR-0001`, `ADR-0002`, `ADR-0003`, `ADR-0009`, `ADR-0013`)**:
+  - Decomposed `services/the_watcher/src/the_watcher/routers/copilot.py` (399 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/copilot/`:
+    - `actions.py` (223 lines): Action proposal, pause window countdown, approve, modify, and veto override endpoints.
+    - `whispers.py` (149 lines): Private narrative whisper creation, list, and unread status endpoints.
+    - `__init__.py` (41 lines): Combined APIRouter re-exporting `/copilot` routes with 100% backward compatibility.
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_dm_copilot.py` (474 lines) into partitioned test suites:
+    - `tests/test_blackbox_dm_copilot_whispers.py` (209 lines): Blackbox TDD coverage for whisper generation, unread listing, and Zanzibar DM authorization.
+    - `tests/test_blackbox_dm_copilot_actions.py` (238 lines): Blackbox TDD coverage for action proposal, pause window lifecycle, veto/approval CloudEvents, and parameter modification.
+  - Enforced Hard Invariant 6 (< 500 lines limit, all modified and newly created files strictly < 250 lines).
+  - Updated Diataxis documentation in `docs/how-to/decompose-microservice-routers.md` and `docs/how-to/manage-dm-copilot-whispers-and-veto-overrides.md`.
+
+- **Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition (`TASK-0065`, `ADR-0002`, `ADR-0003`, `ADR-0007`, `ADR-0009`)**:
+  - Decomposed `services/voice_agent/src/voice_agent/dsp.py`, `services/voice_agent/src/voice_agent/main.py`, and `services/voice_agent/src/voice_agent/room.py` into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file, all modified and newly created modules strictly < 200 lines).
+  - Created `services/voice_agent/src/voice_agent/phonetics.py` extracting regex-based phonetic transforms (`apply_slurred_speech`, sibilants slurring, vowel elongation, and hiccup insertions).
+  - Created `services/voice_agent/src/voice_agent/audio_utils.py` isolating PCM array normalization and harmonic synthetic speech waveform generation.
+  - Created `services/voice_agent/src/voice_agent/filters.py` isolating whisper, underwater, ethereal, and drunk audio DSP filter convolutions.
+  - Refactored `services/voice_agent/src/voice_agent/dsp.py` into a thin pipeline orchestrator with full backward-compatible re-exports.
+  - Decomposed room management into `room_aggregate.py` (event-sourced aggregate and peer state models) and `coordinator.py` (multi-session room orchestration and WebRTC telemetry), maintaining backward-compatible re-exports in `room.py`.
+  - Extracted shared runtime state and event dispatchers into `dependencies.py` and schemas into `models.py`.
+  - Created modular FastAPI sub-routers under `services/voice_agent/src/voice_agent/routers/` (`audio.py` for DSP conditioning and `synthesis.py` for STT/TTS synthesis).
+  - Reduced `services/voice_agent/src/voice_agent/main.py` to a clean application bootstrap (< 125 lines).
+  - Updated documentation in `docs/how-to/decompose-microservice-routers.md`.
+
+- **WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition (`TASK-0064`, `ADR-0001`, `ADR-0002`, `ADR-0003`, `ADR-0007`, `ADR-0009`)**:
+  - Decomposed monolithic `gateway/api/src/gateway_api/webrtc_signaling.py` (382 lines) into focused submodules in `gateway_api/signaling/`:
+    - `gateway_api/signaling/manager.py` (119 lines): `WebRTCSignalingManager` managing active room WebSockets, peer lookups, disconnects, and broadcasts.
+    - `gateway_api/signaling/auth.py` (66 lines): Credential extraction from query params/headers (`extract_signaling_auth`) and SpiceDB Zanzibar permission checks (`validate_voice_connection`).
+    - `gateway_api/signaling/handlers.py` (206 lines): Dispatchers for SDP offer/answer, trickle ICE candidates, mute toggles, telemetry, and room departures.
+    - `gateway_api/signaling/endpoint.py` (116 lines): WebSocket connection lifecycle endpoint `voice_signaling_websocket_endpoint`.
+    - `gateway_api/signaling/__init__.py` (41 lines): Re-exports all core signaling symbols.
+    - `gateway_api/webrtc_signaling.py` (28 lines): Backward-compatible facade re-exporting all primary interfaces with zero breaking changes.
+  - Decomposed monolithic test suite `tests/test_blackbox_webrtc_signaling.py` (350 lines) into two focused, single-responsibility suites:
+    - `tests/test_blackbox_webrtc_auth.py` (171 lines): Zanzibar permission rejection, authorized connection handshakes, header/bearer credential variants, and lifecycle CloudEvents.
+    - `tests/test_blackbox_webrtc_routing.py` (218 lines): Multi-peer SDP offer/answer relay, trickle ICE routing, mute broadcasts, telemetry reporting, and DM kick moderation.
+  - Enforced Hard Invariant 6 (< 500 lines limit, all modified/new files < 250 lines).
+
+- **Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition (`TASK-0079`, `ADR-0001`, `ADR-0005`, `ADR-0007`, `ADR-0009`)**:
+  - Decomposed monolithic `tests/test_blackbox_zitadel_auth.py` (386 lines) into specialized, single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file, all resulting files < 175 lines):
+    - `tests/test_blackbox_zitadel_http_auth.py` (172 lines) covering HTTP Bearer token verification, RS256 signature verification, JWKS key rotation, token expiration, signature tampering, audience enforcement, and dev mode bypass.
+    - `tests/test_blackbox_zitadel_websocket_auth.py` (156 lines) covering WebSocket query parameter authentication, Authorization header passing, `Sec-WebSocket-Protocol` subprotocol authentication, and RFC 6455 policy violation close frames (`code=4003`).
+    - `tests/helpers/zitadel_auth.py` (115 lines) isolating shared RSA test key generation, JWK formatting, signed token generation, and the `auth_environment` fixture registered via `tests/conftest.py`.
+  - Updated Diataxis guide `docs/how-to/authenticate-with-zitadel-oidc.md` detailing multi-channel token extraction and modular blackbox verification.
+
 - **Backlog Engine Orchestrator and CI Watcher Modular Decomposition (`TASK-0091`, `ADR-0003`, `ADR-0009`)**:
   - Decomposed monolithic `tools/backlog_engine/orchestrator.py` and `tools/backlog_engine/ci_watcher.py` into specialized, single-responsibility submodules strictly adhering to Hard Invariant 6 (< 500 lines per file, all files < 250 lines).
   - Created `tools/backlog_engine/github_client.py` (152 lines) extracting subprocess wrappers for GitHub CLI (`gh pr view`, `gh pr checks`, `gh pr create`, `gh pr close`, `gh pr merge`, and failed log retrieval).

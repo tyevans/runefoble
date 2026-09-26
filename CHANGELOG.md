@@ -22,6 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition (`TASK-0093`, `ADR-0001`, `ADR-0002`, `ADR-0003`, `ADR-0009`, `ADR-0013`)**:
+  - Decomposed `services/the_watcher/src/the_watcher/routers/copilot.py` (399 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/copilot/`:
+    - `actions.py` (223 lines): Action proposal, pause window countdown, approve, modify, and veto override endpoints.
+    - `whispers.py` (149 lines): Private narrative whisper creation, list, and unread status endpoints.
+    - `__init__.py` (41 lines): Combined APIRouter re-exporting `/copilot` routes with 100% backward compatibility.
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_dm_copilot.py` (474 lines) into partitioned test suites:
+    - `tests/test_blackbox_dm_copilot_whispers.py` (209 lines): Blackbox TDD coverage for whisper generation, unread listing, and Zanzibar DM authorization.
+    - `tests/test_blackbox_dm_copilot_actions.py` (238 lines): Blackbox TDD coverage for action proposal, pause window lifecycle, veto/approval CloudEvents, and parameter modification.
+  - Enforced Hard Invariant 6 (< 500 lines limit, all modified and newly created files strictly < 250 lines).
+  - Updated Diataxis documentation in `docs/how-to/decompose-microservice-routers.md` and `docs/how-to/manage-dm-copilot-whispers-and-veto-overrides.md`.
+
 - **Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition (`TASK-0065`, `ADR-0002`, `ADR-0003`, `ADR-0007`, `ADR-0009`)**:
   - Decomposed `services/voice_agent/src/voice_agent/dsp.py`, `services/voice_agent/src/voice_agent/main.py`, and `services/voice_agent/src/voice_agent/room.py` into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file, all modified and newly created modules strictly < 200 lines).
   - Created `services/voice_agent/src/voice_agent/phonetics.py` extracting regex-based phonetic transforms (`apply_slurred_speech`, sibilants slurring, vowel elongation, and hiccup insertions).
