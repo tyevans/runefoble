@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blackbox Documentation & Pages Test Suite**: Expanded `tests/test_docs_build_and_pages.py` to assert changelog existence, Keep a Changelog structure, Definition of Done enforcement, and marketing page navigation integrity.
 
 ### Changed
+- **Modular Routers Blackbox Test Suite Modular Decomposition (`TASK-0090`)**: Decomposed monolithic `tests/test_blackbox_modular_routers.py` into three specialized bounded-context test suites (`tests/test_blackbox_watcher_routers.py`, `tests/test_blackbox_session_routers.py`, and `tests/test_blackbox_board_routers.py`), strictly enforcing Hard Invariant 6 (< 500 lines per file) with all suites well under 150 lines and preserving 100% test coverage across all 15 frontdoor routes and OpenAPI contracts.
 - **PostgreSQL Event Store & Provisioning Test Suite Modular Decomposition (`TASK-0058`)**:
   - Decomposed `tests/test_blackbox_postgres_event_store.py` (419 lines) into two focused, modular test suites:
     - `tests/test_blackbox_postgres_provisioning.py` (133 lines) covering multi-database container initialization (`init-multidb.sh`), DSN normalization, asyncpg dialect reconciliation, and reachability probe fallbacks.
