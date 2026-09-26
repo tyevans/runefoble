@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Stream Overlay Router and HUD Templates Modular Decomposition (`TASK-0117`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
+  - Decomposed monolithic `gateway/api/src/gateway_api/routers/overlay.py` into single-responsibility modules strictly under 200 lines (`overlay.py`, `overlay_models.py`, and `overlay_templates.py`).
+  - Extracted Pydantic wire models (`PartyMemberVitals`, `RollAnimationData`, `PartyVitalsData`) and `sanitize_party_vitals` helper into `gateway_api/overlay_models.py`.
+  - Extracted alpha-transparent HTML/CSS HUD template generator and client-side WebSocket synchronization logic into `render_overlay_html` and `render_obs_overlay_html` in `gateway_api/overlay_templates.py`.
+  - Maintained complete backward compatibility and public route contracts for `GET /overlay/party-vitals/{session_id}` and `WS /ws/overlay/{session_id}` while exposing `/overlay/ws/{session_id}` endpoint alias.
+  - Added comprehensive frontdoor blackbox test suite in `tests/test_overlay_modular_decomposition.py` and updated Diataxis documentation.
+
 - **Speech Intent Parser and Action Grammar Extractors Modular Decomposition (`TASK-0069`, `ADR-0002`, `ADR-0003`)**:
   - Decomposed `services/the_watcher/src/the_watcher/movement_parser.py` into modular submodules: `grammars.py` (93 lines), `spatial.py` (52 lines), and `movement_parser.py` (178 lines).
   - Extracted compiled regular expressions and lexical token sets for movement, attacks, spellcasting, skill checks, and dice rolls into `grammars.py`.
@@ -181,18 +188,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Synchronized `ROADMAP.md`: marked Milestone 3 (AI DM & Ecosystem Expansion) as Complete with all epics delivered, and transitioned Milestone 4 (Broadcast Studio & Community Platform) to Current with TASK-0051 as foundational platform enabler.
   - Replenished ready buffer in `docs/project/backlog/refined/` to 10 items (JIT queue health) with rigorous blackbox TDD Definitions of Done, governing ADR citations, and INVEST alignment.
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
-
 ### Changed
 - **Campaign Analytics Test Suite Modular Decomposition (`TASK-0115`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0011`)**:
-  - Decomposed monolithic blackbox test suite `tests/test_blackbox_campaign_analytics.py` (443 lines) into three focused, single-responsibility blackbox test modules strictly under 200 lines each adhering to Hard Invariants 6 and 7:
-    - `tests/test_blackbox_campaign_analytics_api.py` (176 lines): REST endpoints (`/healthz`, `/metrics`, `/ui/manifest`, `/heatmap`, `/mvp`, `/timeline`) and SpiceDB Zanzibar authorization.
-    - `tests/test_blackbox_campaign_analytics_worker.py` (194 lines): `CampaignAnalyticsWorker` multi-stream consumer group routing, message acknowledgment, sub-200ms latency budget, and event projections.
-    - `tests/test_blackbox_campaign_analytics_storage.py` (142 lines): `CampaignAnalyticsStorage` spatial bucketing, cumulative combat metrics, MVP ranking algorithms, and chronological milestone ordering.
-
+  - Decomposed monolithic `tests/test_blackbox_campaign_analytics.py` into three focused blackbox test modules strictly under 200 lines each: `tests/test_blackbox_campaign_analytics_api.py` (REST endpoints, SpiceDB auth), `tests/test_blackbox_campaign_analytics_worker.py` (consumer group routing, event projections), and `tests/test_blackbox_campaign_analytics_storage.py` (spatial metrics, MVP ranking, chronicle timeline).
 - **WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition (`TASK-0071`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0009`)**:
   - Decomposed monolithic test suite `tests/test_websocket_zanzibar_auth.py` into `tests/test_websocket_zanzibar_connect_auth.py` (connection admission, revocation) and `tests/test_websocket_zanzibar_mutators.py` (token moves, DM actions, event publishing).
   - Updated bridge module `tests/test_blackbox_websocket_zanzibar.py` and Diataxis guide `docs/how-to/define-spicedb-zanzibar-permissions.md`.
-
 - **Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition (`TASK-0070`, `ADR-0002`, `ADR-0003`, `ADR-0006`, `ADR-0009`)**:
   - Decomposed `tests/test_stand_in_engine.py` into `tests/test_stand_in_tactics_unit.py` (stand-in penalties, personality traits) and `tests/test_blackbox_stand_in_service.py` (stand-in actions, event publishing, recap generation).
   - Updated Diataxis guide `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
@@ -435,16 +436,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Maintained 100% backward-compatible re-exports in all `aggregate.py` modules.
   - Enforced Hard Invariant 6 with all modified and newly created modules strictly under 280 lines.
 - **Modular Routers Blackbox Test Suite Modular Decomposition (`TASK-0090`)**: Decomposed monolithic `tests/test_blackbox_modular_routers.py` into three specialized bounded-context test suites (`tests/test_blackbox_watcher_routers.py`, `tests/test_blackbox_session_routers.py`, and `tests/test_blackbox_board_routers.py`), strictly enforcing Hard Invariant 6 (< 500 lines per file) with all suites well under 150 lines and preserving 100% test coverage across all 15 frontdoor routes and OpenAPI contracts.
-- **PostgreSQL Event Store & Provisioning Test Suite Modular Decomposition (`TASK-0058`)**:
-  - Decomposed `tests/test_blackbox_postgres_event_store.py` (419 lines) into two focused, modular test suites:
-    - `tests/test_blackbox_postgres_provisioning.py` (133 lines) covering multi-database container initialization (`init-multidb.sh`), DSN normalization, asyncpg dialect reconciliation, and reachability probe fallbacks.
-    - `tests/test_blackbox_postgres_event_store.py` (184 lines) covering schema auto-creation, cross-bounded-context aggregate persistence roundtrips (`GameSessionAggregate`, `CharacterAggregate`, `BoardAggregate`), optimistic concurrency control, and raw event stream inspection.
-  - Extracted shared container fixtures and network helpers into `tests/helpers/postgres.py` (149 lines), registered globally via `tests/conftest.py` plugin architecture.
-  - Strictly enforced Hard Invariant 6 with all files remaining well under the 500-line ceiling and zero test coverage loss.
+- **PostgreSQL Event Store & Provisioning Test Suite Modular Decomposition (`TASK-0058`)**: Decomposed `tests/test_blackbox_postgres_event_store.py` into modular test suites (`tests/test_blackbox_postgres_provisioning.py` for multidb initialization and `tests/test_blackbox_postgres_event_store.py` for aggregate persistence roundtrips) and extracted shared helpers into `tests/helpers/postgres.py`, strictly enforcing Hard Invariant 6 with all files under 185 lines.
 - **Campaign Lore Retrieval Modular Decomposition (`TASK-0089`)**: Decomposed monolithic `services/campaign_lore/src/campaign_lore/retrieval.py` into focused submodules `extraction.py` (NER regexes, entity typing heuristics, `WorldbuildingLlmProvider`), `scoring.py` (Okapi BM25 tokenization, term frequency weighting, cosine similarity, Reciprocal Rank Fusion), `models.py` (data models), and a lean coordinator `retrieval.py` (`LoreRetrievalEngine` / `HybridLoreEngine`) preserving Hard Invariant 6 (< 500 lines) and 100% backward compatibility.
 - **Backlog Engine Test Suite Modular Decomposition (`TASK-0087`)**: Decomposed monolithic `tests/test_pr_conflict_detection.py` into three specialized suites (`tests/test_backlog_ci_watcher.py`, `tests/test_backlog_stale_recovery.py`, and `tests/test_backlog_pr_repair.py`), strictly enforcing Hard Invariant 6 (< 500 lines per file) with all suites well under 160 lines.
-- **Documentation Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and the root documentation landing page (`docs/index.md`).
-- **Build Automation**: Enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
+- **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
 - **Backlog Engine Missing & Concurrently Moved Task File Handling**:
@@ -454,11 +449,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Project Visualizer Local Script Syntax & Favicon**: Fixed missing closing bracket in `agy_launcher.js` DOM listener causing `Uncaught SyntaxError` on local server, added automated Node.js syntax verification tests for all client scripts and bundles, and eliminated browser 404 console errors by handling `/favicon.ico` with 204 No Content and embedding an inline SVG dice icon.
 
 ---
-
 ## [0.2.0] - 2026-09-26
 
 ### Milestone 2: Live Collaborative Alpha
-
 #### Added
 - **Tactile Board Kinematics & Ghost Previews (`TASK-0084`, `PRD-0013`, `US-0043`)**:
   - Drag-and-drop token physics with spring damping, velocity, 5ft step counting, and live waypoint route measurement.
@@ -490,11 +483,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Decomposed FastMCP tabletop gateway tools and resources into modular registries.
 
 ---
-
 ## [0.1.0] - 2026-09-20
 
 ### Milestone 1: Platform Foundation & Core Loop
-
 #### Added
 - **Monorepo Workspace Foundation (`TASK-0000`, `ADR-0003`)**:
   - UV workspace monorepo managing shared libraries (`runefoble_platform`, `runefoble_auth`, `runefoble_events`) and microservices.
@@ -504,3 +495,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Gateway aggregating HTTP, WebSockets, and Swagger UI; FastMCP gateway exposing tabletop tools and resources to LLMs.
 - **Infrastructure, Frontend & Diataxis Documentation**:
   - Kind Kubernetes cluster with Traefik ingress, Helm chart, Lit + Vite frontend with Storybook Bauhaus design system, and complete Diataxis documentation suite.
+
