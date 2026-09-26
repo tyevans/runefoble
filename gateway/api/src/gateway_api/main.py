@@ -16,7 +16,12 @@ from gateway_api.dependencies import (
     set_event_bus,
     ws_manager,
 )
-from gateway_api.routers import campaigns_router, health_router, spectator_router
+from gateway_api.routers import (
+    campaigns_router,
+    health_router,
+    overlay_router,
+    spectator_router,
+)
 from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
 from gateway_api.websocket import campaign_websocket_endpoint
 from runefoble_platform.telemetry import init_telemetry
@@ -42,6 +47,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(campaigns_router)
 app.include_router(spectator_router)
+app.include_router(overlay_router)
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 app.include_router(voice_rooms_router)

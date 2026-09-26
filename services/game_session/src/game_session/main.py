@@ -59,6 +59,7 @@ def get_ui_manifest():
             "runefoble-initiative-tracker",
             "runefoble-dice-roller",
             "runefoble-spectator-view",
+            "runefoble-spectator-overlay",
         ],
         "version": "0.1.0",
     }
