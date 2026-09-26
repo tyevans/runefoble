@@ -1,13 +1,18 @@
 ---
-id: '0038'
+id: 0038
 title: OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
-status: Refined
+status: Complete
 created: 2026-09-25
-dependencies: [TASK-0001, TASK-0015]
-governing_adrs: [ADR-0005, ADR-0006, ADR-0007]
+dependencies:
+- TASK-0001
+- TASK-0015
+governing_adrs:
+- ADR-0005
+- ADR-0006
+- ADR-0007
 target_release: 0.1.0
+pr_url: https://github.com/tyevans/runefoble/pull/23
 ---
-
 # TASK-0038: OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
 
 ## Status
