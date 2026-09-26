@@ -6,20 +6,21 @@
     constructor(nodes, edges, options = {}) {
       this.nodes = nodes;
       this.edges = edges;
-      this.width = options.width || 1200;
-      this.height = options.height || 800;
+      this.width = options.width || 2200;
+      this.height = options.height || 1400;
       this.centerX = this.width / 2;
       this.centerY = this.height / 2;
 
-      this.springLength = options.springLength || 120;
-      this.springStrength = options.springStrength || 0.035;
-      this.repulsion = options.repulsion || 3800;
-      this.centering = options.centering || 0.012;
-      this.damping = options.damping || 0.86;
+      this.springLength = options.springLength || 170;
+      this.springStrength = options.springStrength || 0.015;
+      this.repulsion = options.repulsion || 7500;
+      this.centering = options.centering || 0.006;
+      this.damping = options.damping || 0.72;
+      this.maxSpeed = options.maxSpeed || 10;
 
       this.alpha = 1.0;
-      this.alphaDecay = 0.008;
-      this.alphaMin = 0.005;
+      this.alphaDecay = 0.016;
+      this.alphaMin = 0.003;
       this.isRunning = false;
       this.animId = null;
       this.onTick = null;
@@ -29,12 +30,22 @@
 
     initNodes() {
       const nodeMap = new Map();
-      this.nodes.forEach((n, i) => {
+      const colX = {
+        persona: this.centerX - 720,
+        story: this.centerX - 380,
+        prd: this.centerX - 40,
+        task: this.centerX + 340,
+        adr: this.centerX + 720,
+      };
+      const typeCounts = {};
+
+      this.nodes.forEach(n => {
+        typeCounts[n.type] = (typeCounts[n.type] || 0) + 1;
         if (n.x === undefined) {
-          const angle = (i / Math.max(this.nodes.length, 1)) * 2 * Math.PI;
-          const radius = 150 + (i % 5) * 40;
-          n.x = this.centerX + Math.cos(angle) * radius;
-          n.y = this.centerY + Math.sin(angle) * radius;
+          const baseCol = colX[n.type] || this.centerX;
+          const idx = typeCounts[n.type];
+          n.x = baseCol + (Math.sin(idx * 3) * 70);
+          n.y = 120 + ((idx * 60) % (this.height - 240));
         }
         n.vx = 0;
         n.vy = 0;
@@ -60,19 +71,19 @@
       const nodes = this.nodes;
       const nLen = nodes.length;
 
-      // 1. Repulsion between all node pairs (Coulomb's Law with cutoff)
+      // 1. Soft-core Coulomb repulsion between all node pairs
       for (let i = 0; i < nLen; i++) {
         const n1 = nodes[i];
         for (let j = i + 1; j < nLen; j++) {
           const n2 = nodes[j];
-          let dx = n1.x - n2.x;
-          let dy = n1.y - n2.y;
-          let distSq = dx * dx + dy * dy;
-          if (distSq < 1) distSq = 1;
-          const dist = Math.sqrt(distSq);
+          const dx = n1.x - n2.x;
+          const dy = n1.y - n2.y;
+          const distSq = dx * dx + dy * dy;
 
-          if (dist < 450) {
-            const force = (this.repulsion / distSq) * this.alpha;
+          if (distSq < 360000) { // 600px cutoff
+            const dist = Math.sqrt(distSq) || 1;
+            const softDistSq = distSq + 2000; // Soft-core prevents violent repulsion spikes
+            const force = (this.repulsion / softDistSq) * this.alpha;
             const fx = (dx / dist) * force;
             const fy = (dy / dist) * force;
             if (!n1.isFixed) { n1.vx += fx; n1.vy += fy; }
@@ -81,16 +92,16 @@
         }
       }
 
-      // 2. Spring Attraction along Edges (Hooke's Law)
+      // 2. Bounded Hooke's Law spring attraction along edges
       this.edgePairs.forEach(pair => {
         const s = pair.source;
         const t = pair.target;
-        let dx = t.x - s.x;
-        let dy = t.y - s.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 1) dist = 1;
+        const dx = t.x - s.x;
+        const dy = t.y - s.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-        const displacement = dist - this.springLength;
+        // Smooth clamp on displacement prevents slingshotting
+        const displacement = Math.max(-130, Math.min(130, dist - this.springLength));
         const force = displacement * this.springStrength * this.alpha;
         const fx = (dx / dist) * force;
         const fy = (dy / dist) * force;
@@ -99,7 +110,7 @@
         if (!t.isFixed) { t.vx -= fx; t.vy -= fy; }
       });
 
-      // 3. Centering Gravitational Pull
+      // 3. Gentle Centering Gravity
       nodes.forEach(n => {
         if (!n.isFixed) {
           n.vx += (this.centerX - n.x) * this.centering * this.alpha;
@@ -107,16 +118,20 @@
         }
       });
 
-      // 4. Update Velocities and Positions with Damping
+      // 4. Velocity Clamping, Damping, and Position Integration
+      const pad = 60;
       nodes.forEach(n => {
         if (!n.isFixed) {
+          const speed = Math.hypot(n.vx, n.vy);
+          if (speed > this.maxSpeed) {
+            n.vx = (n.vx / speed) * this.maxSpeed;
+            n.vy = (n.vy / speed) * this.maxSpeed;
+          }
           n.vx *= this.damping;
           n.vy *= this.damping;
           n.x += n.vx;
           n.y += n.vy;
 
-          // Soft boundary clamping
-          const pad = 40;
           if (n.x < pad) { n.x = pad; n.vx = 0; }
           if (n.x > this.width - pad) { n.x = this.width - pad; n.vx = 0; }
           if (n.y < pad) { n.y = pad; n.vy = 0; }
@@ -149,7 +164,7 @@
       }
     }
 
-    reheat(targetAlpha = 0.8) {
+    reheat(targetAlpha = 0.7) {
       this.alpha = targetAlpha;
       if (!this.isRunning) {
         this.start(this.onTick);
@@ -158,7 +173,7 @@
 
     applyFlowLayout() {
       this.stop();
-      const cols = { persona: 100, story: 340, prd: 600, task: 870, adr: 1120 };
+      const cols = { persona: 160, story: 560, prd: 1000, task: 1460, adr: 1900 };
       const buckets = { persona: [], story: [], prd: [], task: [], adr: [] };
       this.nodes.forEach(n => {
         if (buckets[n.type]) buckets[n.type].push(n);
@@ -166,10 +181,10 @@
 
       Object.keys(buckets).forEach(type => {
         const arr = buckets[type];
-        const step = (this.height - 120) / Math.max(arr.length, 1);
+        const step = (this.height - 180) / Math.max(arr.length, 1);
         arr.forEach((n, idx) => {
-          n.x = (cols[type] || 600) + (Math.sin(idx * 2) * 12);
-          n.y = 70 + idx * step;
+          n.x = (cols[type] || 1000) + (Math.sin(idx * 2) * 20);
+          n.y = 90 + idx * step;
           n.vx = 0;
           n.vy = 0;
         });
@@ -179,7 +194,7 @@
 
     applyRadialLayout() {
       this.stop();
-      const ringRadii = { persona: 110, prd: 220, story: 330, task: 450, adr: 560 };
+      const ringRadii = { persona: 180, prd: 360, story: 520, task: 720, adr: 920 };
       const buckets = { persona: [], prd: [], story: [], task: [], adr: [] };
       this.nodes.forEach(n => {
         if (buckets[n.type]) buckets[n.type].push(n);
@@ -187,7 +202,7 @@
 
       Object.keys(buckets).forEach(type => {
         const arr = buckets[type];
-        const radius = ringRadii[type] || 300;
+        const radius = ringRadii[type] || 450;
         arr.forEach((n, i) => {
           const angle = (i / Math.max(arr.length, 1)) * 2 * Math.PI;
           n.x = this.centerX + Math.cos(angle) * radius;
