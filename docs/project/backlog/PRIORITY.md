@@ -51,7 +51,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 
 44. **TASK-0073 (Complete)**: [`0073-frontend-settings-modal-and-theme-mode-orchestration.md`](complete/0073-frontend-settings-modal-and-theme-mode-orchestration.md) — Frontend Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher
 45. **TASK-0074 (Refined)**: [`0074-dark-light-mode-color-tokens-and-component-contrast.md`](refined/0074-dark-light-mode-color-tokens-and-component-contrast.md) — Design System Dark and Light Mode Color Tokens & Cross-Component Contrast Invariants
-46. **TASK-0084 (Refined)**: [`0084-tactile-board-kinematics-and-spoken-ghost-previews.md`](refined/0084-tactile-board-kinematics-and-spoken-ghost-previews.md) — Tactile Board Kinematics and Spoken Ghost Previews
+46. **TASK-0084 (Complete)**: [`0084-tactile-board-kinematics-and-spoken-ghost-previews.md`](complete/0084-tactile-board-kinematics-and-spoken-ghost-previews.md) — Tactile Board Kinematics and Spoken Ghost Previews
 
 47. **TASK-0041 (Complete)**: [`0041-fastmcp-gateway-server-modular-decomposition.md`](complete/0041-fastmcp-gateway-server-modular-decomposition.md) — FastMCP Gateway Server Modular Decomposition
 48. **TASK-0042 (Complete)**: [`0042-redis-consumer-groups-test-suite-decomposition.md`](complete/0042-redis-consumer-groups-test-suite-decomposition.md) — Redis Consumer Groups & Projections Test Suite Decomposition

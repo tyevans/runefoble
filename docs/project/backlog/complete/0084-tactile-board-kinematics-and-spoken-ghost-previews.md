@@ -1,13 +1,20 @@
 ---
-id: '0084'
+id: 0084
 title: Tactile Board Kinematics and Spoken Ghost Previews
-status: Refined
+status: Complete
 created: 2026-09-26
-dependencies: [TASK-0004, TASK-0010, TASK-0039, TASK-0072]
-governing_adrs: [ADR-0004, ADR-0012, ADR-0013]
+dependencies:
+- TASK-0004
+- TASK-0010
+- TASK-0039
+- TASK-0072
+governing_adrs:
+- ADR-0004
+- ADR-0012
+- ADR-0013
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/34
 ---
-
 # TASK-0084: Tactile Board Kinematics and Spoken Ghost Previews
 
 ## Status
