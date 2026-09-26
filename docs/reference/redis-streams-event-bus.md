@@ -33,17 +33,21 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
    - Publishes domain events, Pydantic models, or structured dictionaries to Redis Streams using `XADD`.
    - Serializes events into `event_type`, `event_id`, and JSON payload fields.
 
-2. **`RedisConsumerGroup` (`libs/runefoble_platform/consumer_group.py`)**:
-   - Manages consumer group lifecycles (`create_group`, `read_group`, `ack`, `auto_claim_pending`, `route_to_dead_letter`).
+2. **`RedisConsumerGroup` & `deserialize_event` (`libs/runefoble_platform/consumer_group.py`, `event_deserializer.py`)**:
+   - `RedisConsumerGroup` (aliased as `RedisConsumerGroupWorker`) manages consumer group lifecycles (`create_group`, `read_group`, `ack`, `auto_claim_pending`, `route_to_dead_letter`).
+   - `deserialize_event` (`event_deserializer.py`) provides isolated deserialization and CloudEvents/DomainEvent registry resolution with W3C trace context preservation (`traceparent`, `tracestate`).
+   - `MockAsyncRedis` (`mock_redis.py`) provides in-memory mock Redis Streams and Consumer Group operations for hermetic testing.
    - Implements competing consumer distribution across horizontally scaled service replicas.
-   - Automatically deserializes stream entries into registered `DomainEvent` classes via `deserialize_event`.
    - Recovers unacknowledged/stuck messages from failed or stalled workers using `XAUTOCLAIM`.
    - Isolates poison pill messages to Dead Letter Queues (`{stream}.dlq`) with failure metadata.
 
-3. **`SessionReadProjection` (`services/game_session/projections.py`)**:
-   - Background event projection worker subscribing to session event streams.
-   - Maintained in-memory / cache-accelerated denormalized read models (`SessionReadModel`, `TokenReadModel`, `AtmosphereReadModel`, `EncounterReadModel`).
-   - Supports graceful shutdown and poison pill fault isolation.
+3. **`SessionReadProjection` & Sub-Projections (`services/game_session/projections/`)**:
+   - Sub-packaged projection workers subscribing to session event streams.
+   - `InitiativeProjection` (`projections/initiative.py`): tracks turn order, round cycling, and initiative snapshots.
+   - `PresenceProjection` (`projections/presence.py`): tracks participant presence, standby flags, and hot-swap handoffs.
+   - `apply_session_event` (`projections/appliers.py`): applies token, atmosphere, encounter, and turn state changes.
+   - `SessionReadProjection` (`projections/session.py`): composes projections into comprehensive session read models (`SessionReadModel`, `TokenReadModel`, `AtmosphereReadModel`, `EncounterReadModel`).
+   - Re-exported via `services/game_session/projections/__init__.py` for backward compatibility.
 
 ---
 
@@ -166,4 +170,5 @@ The Redis Streams event bus, consumer groups, and read projections are verified 
 
 - **`tests/test_redis_consumer_groups.py`**: Low-level distributed consumer group mechanics, competing consumers, PEL acknowledgements, `XAUTOCLAIM` recovery, and DLQ dispatching.
 - **`tests/test_session_projections.py`**: High-level `SessionReadProjection` worker event processing, read model state transitions, and poison pill DLQ isolation.
+- **`tests/test_game_session_projections.py`**: Modular projection lifecycle tests covering `InitiativeProjection`, `PresenceProjection`, tie-breaking rules, and participant presence tracking.
 
