@@ -133,7 +133,8 @@ def test_components_adopt_tokens():
     """Verify components consume --rf-* tokens."""
     app_content = APP_TS.read_text(encoding="utf-8")
     assert "import './styles/themes.css';" in app_content
-    assert "<runefoble-theme-switcher></runefoble-theme-switcher>" in app_content
+    assert "<runefoble-settings-modal" in app_content
+    assert "settings-trigger" in app_content
     assert "var(--rf-bg-canvas" in app_content
     assert "var(--rf-text-primary" in app_content
     assert "var(--rf-border-color" in app_content
@@ -168,12 +169,25 @@ def test_storybook_stories_exist():
 
 def test_file_lengths_under_500_lines():
     """Verify all touched frontend files comply with the <500 lines limit."""
+    settings_modal_ts = FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.ts"
+    settings_modal_styles_ts = (
+        FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.styles.ts"
+    )
+    settings_modal_types_ts = (
+        FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.types.ts"
+    )
+    settings_stories_ts = FRONTEND_DIR / "src" / "stories" / "runefoble-settings-modal.stories.ts"
+
     files_to_check = [
         THEMES_CSS,
         INDEX_CSS,
         INDEX_TS,
         APP_TS,
         SWITCHER_TS,
+        settings_modal_ts,
+        settings_modal_styles_ts,
+        settings_modal_types_ts,
+        settings_stories_ts,
         BOARD_TS,
         CARD_TS,
         FEED_TS,
