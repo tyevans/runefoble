@@ -122,3 +122,12 @@ export async function trackEvent(name: string, props: Record<string, unknown> = 
 ## Step 4: Verify in OpenPanel Dashboard
 
 In local Kind development, navigate to `http://runefoble.local/analytics` (or port-forward `kubectl port-forward svc/openpanel 3000:3000`) to inspect real-time events, funnels, and retention charts.
+
+---
+
+## 5. Modular Blackbox Test Organization & Architecture
+
+The OpenPanel analytics test suite is partitioned into two focused blackbox test modules strictly adhering to Hard Invariant 6 (< 500 lines per file, strictly < 180 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+- `tests/test_blackbox_analytics_client.py`: Verifies salted SHA-256 profile anonymization, recursive PII property scrubbing (audio bytes, speech transcripts, secret credentials), HTTP transport dispatch via `OpenPanelClient`, and fast failure modes.
+- `tests/test_blackbox_analytics_worker.py`: Verifies background Redis Streams consumer group processing (`SessionStarted`, `DiceRolled`, `StandInActionDecided`), mapping domain CloudEvents to OpenPanel metrics, and worker lifecycle with dead-letter queue fault isolation.
+
