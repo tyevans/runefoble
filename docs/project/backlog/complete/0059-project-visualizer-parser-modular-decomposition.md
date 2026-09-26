@@ -1,14 +1,14 @@
 ---
-id: '0059'
+id: 0059
 title: Project Visualizer Parser Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies: []
 governing_adrs:
 - ADR-0003
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/120
 ---
-
 # TASK-0059: Project Visualizer Parser Modular Decomposition
 
 ## Status
