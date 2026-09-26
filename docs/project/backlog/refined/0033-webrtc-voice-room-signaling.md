@@ -3,11 +3,15 @@ id: '0033'
 title: Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
 status: Refined
 created: 2026-09-25
-dependencies: [TASK-0010, TASK-0021]
-governing_adrs: [ADR-0002, ADR-0006, ADR-0007]
+dependencies:
+- TASK-0010
+- TASK-0021
+governing_adrs:
+- ADR-0002
+- ADR-0006
+- ADR-0007
 target_release: 0.2.0
 ---
-
 # TASK-0033: Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
 
 ## Status

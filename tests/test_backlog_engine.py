@@ -261,4 +261,114 @@ def test_orchestrator_repair_loop_exhaustion(tmp_path: Path, monkeypatch: pytest
     assert "Pre-flight checks failed after 3 repair attempt(s)" in res.message
     assert "Persistent Test Failure" in res.message
     mock_queue.complete_task.assert_not_called()
+    mock_queue.release_task.assert_called_once_with(task)
+    mock_cleanup.assert_called_once()
+
+
+def test_task_release_lifecycle(temp_backlog_dir: Path):
+    """Verifies that release_task cleanly resets frontmatter on disk and re-enables queue readiness."""
+    t2_file = temp_backlog_dir / "refined" / "0002-task.md"
+    t2_file.write_text(
+        "---\nid: 0002\ntitle: Task 2\nstatus: Refined\n---\nBody",
+        encoding="utf-8",
+    )
+
+    queue = BacklogQueue(temp_backlog_dir)
+    tasks = queue.get_ready_unblocked_tasks()
+    assert len(tasks) == 1
+    task = tasks[0]
+
+    # Claim task
+    queue.claim_task(task, worker_id="worker-release", branch="feat/task-0002")
+    assert task.status == TaskStatus.IN_PROGRESS
+    assert task.claimed_by == "worker-release"
+    assert len(queue.get_ready_unblocked_tasks()) == 0
+
+    # Release task
+    queue.release_task(task)
+    assert task.status == TaskStatus.READY
+    assert task.claimed_by is None
+    assert task.branch is None
+
+    # Disk content should reflect removal of claimed_by and branch
+    disk_content = t2_file.read_text(encoding="utf-8")
+    assert "claimed_by" not in disk_content
+    assert "branch" not in disk_content
+    assert "status: Refined" in disk_content
+
+    # Now it should be back in the ready queue
+    ready_tasks = queue.get_ready_unblocked_tasks()
+    assert len(ready_tasks) == 1
+    assert ready_tasks[0].canonical_id == "TASK-0002"
+
+
+def test_recover_stale_tasks(temp_backlog_dir: Path):
+    """Verifies that recover_stale_tasks finds and releases orphaned in-progress tasks."""
+    # Create two stranded tasks and one normal task in refined/
+    t2_file = temp_backlog_dir / "refined" / "0002-task.md"
+    t2_file.write_text(
+        "---\nid: 0002\ntitle: Task 2\nstatus: in-progress\nclaimed_by: worker-old\nbranch: feat/old\n---\nBody",
+        encoding="utf-8",
+    )
+
+    t3_file = temp_backlog_dir / "refined" / "0003-task.md"
+    t3_file.write_text(
+        "---\nid: 0003\ntitle: Task 3\nstatus: in-progress\nclaimed_by: worker-old2\n---\nBody",
+        encoding="utf-8",
+    )
+
+    t4_file = temp_backlog_dir / "refined" / "0004-task.md"
+    t4_file.write_text(
+        "---\nid: 0004\ntitle: Task 4\nstatus: Refined\n---\nBody",
+        encoding="utf-8",
+    )
+
+    queue = BacklogQueue(temp_backlog_dir)
+
+    # Before recovery, only task 4 is ready
+    assert len(queue.get_ready_unblocked_tasks()) == 1
+
+    # Recover stale tasks
+    recovered = queue.recover_stale_tasks()
+    assert len(recovered) == 2
+    recovered_ids = {t.canonical_id for t in recovered}
+    assert recovered_ids == {"TASK-0002", "TASK-0003"}
+
+    # All 3 tasks should now be ready
+    ready = queue.get_ready_unblocked_tasks()
+    assert len(ready) == 3
+
+
+def test_orchestrator_releases_task_on_keyboard_interrupt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Verifies that execute_task_pipeline catches KeyboardInterrupt and releases the task."""
+    from unittest.mock import MagicMock
+
+    from tools.backlog_engine import orchestrator
+    from tools.backlog_engine.models import Task, TaskStatus
+
+    task = Task(
+        id="0099",
+        title="Interrupted Task",
+        status=TaskStatus.READY,
+        file_path=tmp_path / "0099-task.md",
+    )
+
+    mock_queue = MagicMock()
+    mock_create_worktree = MagicMock(return_value=tmp_path / "worktree")
+    mock_cleanup = MagicMock()
+
+    def mock_agent_interrupt(wt, t, feedback=None):
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr(orchestrator, "create_worktree", mock_create_worktree)
+    monkeypatch.setattr(orchestrator, "cleanup_worktree", mock_cleanup)
+    monkeypatch.setattr(orchestrator, "run_agent_in_worktree", mock_agent_interrupt)
+
+    with pytest.raises(KeyboardInterrupt):
+        orchestrator.execute_task_pipeline(task, tmp_path, mock_queue, local_mode=True)
+
+    mock_queue.claim_task.assert_called_once()
+    mock_queue.release_task.assert_called_once_with(task)
     mock_cleanup.assert_called_once()
