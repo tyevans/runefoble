@@ -110,3 +110,36 @@ stories: [
 ```
 
 This enforces **Hard Invariant 3**: components are developed and visually verified in Storybook isolation before being mounted into the App Shell.
+
+## Component Specification: `<runefoble-voice-controls>`
+
+The `@runefoble/voice-agent-ui` package vendors `<runefoble-voice-controls>` for collaborative WebRTC audio streaming, live microphone input levels, and real-time waveform visualization.
+
+### Properties & Attributes
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `isListening` | `boolean` | `false` | Microphone streaming / push-to-talk active state. |
+| `disabled` | `boolean` | `false` | Disables mic controls. |
+| `channelName` | `string` | `'Collaborative Voice Channel'` | Display name of the active audio room. |
+| `connectionState` | `'disconnected' \| 'connecting' \| 'connected' \| 'reconnecting' \| 'failed'` | `'disconnected'` | WebRTC peer connection status. |
+| `bandwidthQuality` | `'good' \| 'low' \| 'degraded'` | `'good'` | Network transmission condition. |
+| `bitrateKbps` | `number` | `64` | Current streaming bitrate in kbps. |
+| `packetsLost` | `number` | `0` | Cumulative WebRTC packet loss count. |
+| `latencyMs` | `number` | `24` | Round-trip transmission latency. |
+| `activeFilters` | `string[]` | `[]` | Active audio DSP afflictions (e.g. `'drunk'`, `'whisper'`). |
+| `simulated` | `boolean` | `false` | Enable simulated harmonic waveform generation (for Storybook / testing). |
+
+### Dispatched CustomEvents
+
+| Event Name | Detail Payload | Description |
+|---|---|---|
+| `voice-toggle` | `{ isListening: boolean }` | Dispatched when the user clicks the mic button. |
+| `voice-state` | `{ isListening: boolean, connectionState: string, bandwidthQuality: string, activeFilters: string[] }` | Dispatched when streaming, connection state, or DSP filters change. |
+| `voice-level` | `{ level: number, peak: number }` | Emitted per animation frame with normalized audio input RMS (0.0 - 1.0) and peak. |
+
+### Visualizer & WebRTC Monitor
+- **WebAudio `AnalyserNode` Loop**: Renders 60fps reactive waveforms to an HTML5 `<canvas>` element using time-domain data (or simulated harmonic synthesis during tests / absence of physical mic).
+- **Affliction DSP Styling**: Adapts waveform stroke color to Canary Yellow (`var(--rf-accent-tertiary, #ffb703)`) and introduces drunken phase wobbles when inebriation filters are active.
+- **Low Bandwidth Warning**: Highlights degraded WebRTC channels (`bandwidthQuality === 'low'` or `packetsLost > 5`) with a pulsing warning badge.
+
