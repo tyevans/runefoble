@@ -64,3 +64,37 @@ class NpcTurnRequest(BaseModel):
     actor_name: str
     targets: list[dict[str, Any]] = Field(default_factory=list)
     round_number: int = 1
+
+
+class SpeechInputRequest(BaseModel):
+    speaker_id: str
+    speaker_name: str
+    transcript: str
+    session_id: str
+    campaign_id: str
+    token_id: str | None = None
+    from_x: int | None = None
+    from_y: int | None = None
+    grid_cols: int = 12
+    grid_rows: int = 12
+
+
+class StandInRequest(BaseModel):
+    character_name: str
+    character_class: str
+    penalties: list[str] = Field(default_factory=list)
+    scene_context: str = "In combat with subterranean creatures"
+    personality_traits: list[str] = Field(default_factory=list)
+    session_id: str | None = None
+    campaign_id: str | None = None
+
+
+class StandInRecapRequest(BaseModel):
+    character_name: str
+    actions: list[Any] = Field(default_factory=list)
+    penalties: list[str] = Field(default_factory=list)
+
+
+class DMGuidanceRequest(BaseModel):
+    session_id: str
+    prompt: str
