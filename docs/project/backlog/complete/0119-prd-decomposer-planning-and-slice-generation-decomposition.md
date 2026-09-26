@@ -1,14 +1,14 @@
 ---
-id: '0119'
+id: 0119
 title: PRD Decomposer Planning and Slice Generation Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies: []
 governing_adrs:
 - ADR-0003
 target_release: 0.3.0
+pr_url: https://github.com/tyevans/runefoble/pull/121
 ---
-
 # TASK-0119: PRD Decomposer Planning and Slice Generation Modular Decomposition
 
 ## Status
