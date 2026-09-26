@@ -1,7 +1,7 @@
 ---
-id: '0089'
+id: 0089
 title: Campaign Lore Extraction, Embeddings, and Hybrid Retrieval Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0047
@@ -10,8 +10,8 @@ governing_adrs:
 - ADR-0008
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/60
 ---
-
 # TASK-0089: Campaign Lore Extraction, Embeddings, and Hybrid Retrieval Modular Decomposition
 
 ## Status
