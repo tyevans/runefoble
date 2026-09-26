@@ -5,7 +5,7 @@
 | PRD-0001 | The Watcher AI Dungeon Master and Real-Time Board Animator | Accepted | 2026-09-25 | [`prd-0001-the-watcher-ai-dm-and-board-animator.md`](accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md) |
 | PRD-0002 | Missing Player AI Stand-In with Mimicry and Absence Costs | Accepted | 2026-09-25 | [`prd-0002-missing-player-ai-stand-in-with-penalties.md`](accepted/prd-0002-missing-player-ai-stand-in-with-penalties.md) |
 | PRD-0003 | Spatial Fog-of-War and Line-of-Sight Visibility Engine | Accepted | 2026-09-25 | [`prd-0003-spatial-fog-of-war-and-visibility-engine.md`](accepted/prd-0003-spatial-fog-of-war-and-visibility-engine.md) |
-| PRD-0004 | Dynamic Vocal Audio Conditioning and DSP Filters | Shipped | 2026-09-25 | [`prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md`](accepted/prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md) |
+| PRD-0004 | Dynamic Vocal Audio Conditioning and DSP Filters | Accepted | 2026-09-25 | [`prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md`](accepted/prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md) |
 | PRD-0005 | Real-Time WebSocket Board & Chronicle Synchronization | Accepted | 2026-09-25 | [`prd-0005-realtime-websocket-board-sync.md`](accepted/prd-0005-realtime-websocket-board-sync.md) |
 | PRD-0006 | Character Sheet Inventory, Equipment & Condition Aggregation | Accepted | 2026-09-25 | [`prd-0006-digital-character-sheet-inventory-and-conditions.md`](accepted/prd-0006-digital-character-sheet-inventory-and-conditions.md) |
 | PRD-0007 | Campaign Worldbuilding Lore & redstring RAG Engine | Accepted | 2026-09-25 | [`prd-0007-campaign-worldbuilding-lore-and-rag-engine.md`](accepted/prd-0007-campaign-worldbuilding-lore-and-rag-engine.md) |
@@ -18,6 +18,3 @@
 | PRD-0014 | Downtime Activities, Alchemical Crafting & Party Stronghold Engine | Accepted | 2026-09-26 | [`prd-0014-downtime-crafting-and-stronghold-engine.md`](accepted/prd-0014-downtime-crafting-and-stronghold-engine.md) |
 | PRD-0015 | Generative Diegetic Handouts, 3D Relic Inspector & Printable Tabletop Forge | Accepted | 2026-09-26 | [`prd-0015-generative-handouts-relic-inspector-and-printable-forge.md`](accepted/prd-0015-generative-handouts-relic-inspector-and-printable-forge.md) |
 | PRD-0016 | Personal Character Leitmotifs, Wardrobe Gallery & Kinetic WebGL Spell VFX | Accepted | 2026-09-26 | [`prd-0016-character-leitmotifs-and-kinetic-spell-vfx.md`](accepted/prd-0016-character-leitmotifs-and-kinetic-spell-vfx.md) |
-
-
-
