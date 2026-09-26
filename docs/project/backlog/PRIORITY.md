@@ -62,7 +62,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 
 57. **TASK-0049 (Refined)**: [`0049-procedural-battlemap-and-asset-forge-bc.md`](refined/0049-procedural-battlemap-and-asset-forge-bc.md) — Procedural Battlemap & Token Asset Forge Microservice
 58. **TASK-0087 (Complete)**: [`0087-pr-conflict-detection-test-suite-decomposition.md`](complete/0087-pr-conflict-detection-test-suite-decomposition.md) — PR Conflict Detection and Stale Recovery Test Suite Modular Decomposition
-59. **TASK-0089 (Refined)**: [`0089-campaign-lore-retrieval-and-extractor-modular-decomposition.md`](refined/0089-campaign-lore-retrieval-and-extractor-modular-decomposition.md) — Campaign Lore Extraction, Embeddings, and Hybrid Retrieval Modular Decomposition
+59. **TASK-0089 (Complete)**: [`0089-campaign-lore-retrieval-and-extractor-modular-decomposition.md`](complete/0089-campaign-lore-retrieval-and-extractor-modular-decomposition.md) — Campaign Lore Extraction, Embeddings, and Hybrid Retrieval Modular Decomposition
 60. **TASK-0060 (Refined)**: [`0060-domain-aggregates-and-rule-tables-modular-decomposition.md`](refined/0060-domain-aggregates-and-rule-tables-modular-decomposition.md) — Domain Aggregates and Rule Tables Modular Decomposition
 61. **TASK-0058 (Refined)**: [`0058-postgres-event-store-test-suite-decomposition.md`](refined/0058-postgres-event-store-test-suite-decomposition.md) — PostgreSQL Event Store and Provisioning Test Suite Modular Decomposition
 62. **TASK-0061 (Complete)**: [`0061-board-autonomous-dm-and-voice-controls-ui-styles-decomposition.md`](complete/0061-board-autonomous-dm-and-voice-controls-ui-styles-decomposition.md) — Tactical Board, Autonomous DM, and Voice Controls Microfrontend Styles Decomposition
