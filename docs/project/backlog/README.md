@@ -9,7 +9,7 @@ Tasks move through three lifecycle stages:
 ## Core Principles
 
 ### 1. Just-In-Time (JIT) Refinement
-To avoid specification drift and inventory waste, maintain a lean ready buffer of **2–3 tasks** in `refined/`. Unrefined items remain lightweight problem statements in `proposed/` until they approach the top of the queue.
+To avoid specification drift and inventory waste, maintain a lean ready buffer of **~10 tasks** in `refined/`. Unrefined items remain lightweight problem statements in `proposed/` until they approach the top of the queue.
 
 ### 2. Roadmap & Enabler Alignment
 Priority ordering in [`PRIORITY.md`](PRIORITY.md) is derived from:
