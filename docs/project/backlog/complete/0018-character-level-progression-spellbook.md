@@ -1,14 +1,18 @@
 ---
 id: 0018
 title: Character Level Progression, Spell Slots & Spellbook Preparation
-status: Refined
+status: Complete
 created: 2026-09-25
+completed: 2026-09-26
 dependencies: [TASK-0009]
 governing_adrs: [ADR-0007, ADR-0011]
 target_release: 0.1.0
 ---
 
 # TASK-0018 — Character Level Progression, Spell Slots & Spellbook Preparation
+
+## Status
+Complete
 
 ## Summary
 Implement character level progression, class-based spell slot scaling, spell preparation, and casting tracking within the `character_sheet` aggregate (US-0015, PRD-0001). Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup), all tests must interact strictly through the public HTTP frontdoor API (`POST /api/v1/characters/...`) to create characters, advance levels, prepare spells, and cast them with spell slot exhaustion checks.

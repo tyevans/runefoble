@@ -67,6 +67,24 @@ class ApplyConditionRequest(BaseModel):
     source: str = ""
 
 
+class LevelUpRequest(BaseModel):
+    target_level: int | None = None
+    hp_increase: int | None = None
+    session_id: str = ""
+
+
+class PrepareSpellRequest(BaseModel):
+    spell_name: str
+    spell_level: int | None = None
+    session_id: str = ""
+
+
+class CastSpellRequest(BaseModel):
+    spell_name: str
+    slot_level: int | None = None
+    session_id: str = ""
+
+
 @app.get("/healthz")
 async def health_check():
     return {
@@ -76,6 +94,7 @@ async def health_check():
     }
 
 
+@app.post("/api/v1/characters", response_model=CharacterState)
 @app.post("/api/v1/characters/create", response_model=CharacterState)
 async def create_character(req: CreateCharacterRequest):
     cid = uuid4()
@@ -89,6 +108,59 @@ async def create_character(req: CreateCharacterRequest):
     )
     await repo.save(char)
     return char.state
+
+
+@app.post("/api/v1/characters/{character_id}/level-up", response_model=CharacterState)
+async def level_up(character_id: UUID, req: LevelUpRequest | None = None):
+    try:
+        char = await repo.load(character_id)
+        r = req or LevelUpRequest()
+        char.level_up(
+            target_level=r.target_level,
+            hp_increase=r.hp_increase,
+            session_id=r.session_id,
+        )
+        await repo.save(char)
+        return char.state
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/api/v1/characters/{character_id}/spells/prepare", response_model=CharacterState)
+async def prepare_spell(character_id: UUID, req: PrepareSpellRequest):
+    try:
+        char = await repo.load(character_id)
+        char.prepare_spell(
+            spell_name=req.spell_name,
+            spell_level=req.spell_level,
+            session_id=req.session_id,
+        )
+        await repo.save(char)
+        return char.state
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/api/v1/characters/{character_id}/spells/cast", response_model=CharacterState)
+async def cast_spell(character_id: UUID, req: CastSpellRequest):
+    try:
+        char = await repo.load(character_id)
+        char.cast_spell(
+            spell_name=req.spell_name,
+            slot_level=req.slot_level,
+            session_id=req.session_id,
+        )
+        await repo.save(char)
+        return char.state
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
 
 
 @app.get("/api/v1/characters/{character_id}", response_model=CharacterState)

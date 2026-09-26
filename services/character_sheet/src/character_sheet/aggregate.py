@@ -11,12 +11,61 @@ from runefoble_events.events import (
     AbsencePenaltyCleared,
     CharacterCreated,
     CharacterHealthChanged,
+    CharacterLeveledUp,
     ConditionApplied,
     ConditionRemoved,
     EquipmentSlotUpdated,
     ItemAddedToInventory,
     ItemRemovedFromInventory,
+    SpellPrepared,
+    SpellSlotExpended,
 )
+
+SPELL_SLOTS_TABLE: dict[int, dict[int, int]] = {
+    1: {1: 2},
+    2: {1: 3},
+    3: {1: 4, 2: 2},
+    4: {1: 4, 2: 3},
+    5: {1: 4, 2: 3, 3: 2},
+    6: {1: 4, 2: 3, 3: 3},
+    7: {1: 4, 2: 3, 3: 3, 4: 1},
+    8: {1: 4, 2: 3, 3: 3, 4: 2},
+    9: {1: 4, 2: 3, 3: 3, 4: 3, 5: 1},
+    10: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2},
+}
+
+CLASS_HIT_DIE: dict[str, int] = {
+    "barbarian": 12,
+    "fighter": 10,
+    "paladin": 10,
+    "ranger": 10,
+    "cleric": 8,
+    "druid": 8,
+    "monk": 8,
+    "rogue": 8,
+    "bard": 8,
+    "warlock": 8,
+    "wizard": 6,
+    "sorcerer": 6,
+}
+
+KNOWN_SPELL_LEVELS: dict[str, int] = {
+    "magic missile": 1,
+    "shield": 1,
+    "mage armor": 1,
+    "cure wounds": 1,
+    "guiding bolt": 1,
+    "misty step": 2,
+    "scorching ray": 2,
+    "invisibility": 2,
+    "hold person": 2,
+    "mirror image": 2,
+    "fireball": 3,
+    "fly": 3,
+    "counterspell": 3,
+    "lightning bolt": 3,
+    "haste": 3,
+}
 
 
 class InventoryItem(BaseModel):
@@ -44,6 +93,12 @@ class CharacterState(BaseModel):
     inventory: dict[str, InventoryItem] = Field(default_factory=dict)
     equipment: dict[str, str] = Field(default_factory=dict)
     conditions: dict[str, ConditionState] = Field(default_factory=dict)
+    level: int = 1
+    xp: int = 0
+    spellbook: list[str] = Field(default_factory=list)
+    prepared_spells: list[str] = Field(default_factory=list)
+    spell_slots: dict[int, int] = Field(default_factory=lambda: {1: 2})
+
 
 
 class CharacterAggregate(DeclarativeAggregate[CharacterState]):
@@ -158,6 +213,60 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
             condition=cond,
         )
 
+    def level_up(
+        self,
+        target_level: int | None = None,
+        hp_increase: int | None = None,
+        session_id: str = "",
+    ) -> None:
+        """Advance character level, increase hit points, and scale spell slots."""
+        new_level = target_level if target_level is not None else self.state.level + 1
+        if hp_increase is None:
+            hp_increase = CLASS_HIT_DIE.get(self.state.character_class.lower(), 8)
+        spell_slots = dict(SPELL_SLOTS_TABLE.get(new_level, self.state.spell_slots))
+        self.create_event(
+            CharacterLeveledUp,
+            session_id=session_id,
+            character_id=str(self.aggregate_id),
+            new_level=new_level,
+            max_hp_increase=hp_increase,
+            spell_slots=spell_slots,
+        )
+
+    def prepare_spell(
+        self, spell_name: str, spell_level: int | None = None, session_id: str = ""
+    ) -> None:
+        """Prepare a spell in the character's active spellbook."""
+        if spell_level is None or spell_level <= 0:
+            spell_level = KNOWN_SPELL_LEVELS.get(spell_name.lower(), 1)
+        self.create_event(
+            SpellPrepared,
+            session_id=session_id,
+            character_id=str(self.aggregate_id),
+            spell_name=spell_name,
+            spell_level=spell_level,
+        )
+
+    def cast_spell(
+        self, spell_name: str, slot_level: int | None = None, session_id: str = ""
+    ) -> None:
+        """Cast a prepared spell, expending an appropriate level spell slot."""
+        if slot_level is None or slot_level <= 0:
+            slot_level = KNOWN_SPELL_LEVELS.get(spell_name.lower(), 1)
+        available_slots = self.state.spell_slots.get(slot_level, 0)
+        if available_slots <= 0:
+            raise ValueError(
+                f"INSUFFICIENT_SPELL_SLOTS: Character '{self.aggregate_id}' has 0 level {slot_level} spell slots remaining to cast '{spell_name}'"
+            )
+        self.create_event(
+            SpellSlotExpended,
+            session_id=session_id,
+            character_id=str(self.aggregate_id),
+            spell_name=spell_name,
+            slot_level_used=slot_level,
+            remaining_slots=available_slots - 1,
+        )
+
     # -----------------------------------------------------------------------
     # Event Handlers (@handles)
     # -----------------------------------------------------------------------
@@ -172,6 +281,11 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
             current_hp=event.current_hp,
             player_id=event.player_id,
             personality_traits=event.personality_traits,
+            level=1,
+            xp=0,
+            spellbook=[],
+            prepared_spells=[],
+            spell_slots=dict(SPELL_SLOTS_TABLE.get(1, {1: 2})),
         )
 
     @handles(CharacterHealthChanged)
@@ -244,3 +358,33 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
         conds = dict(self.state.conditions)
         conds.pop(event.condition, None)
         self._state = self.state.model_copy(update={"conditions": conds})
+
+    @handles(CharacterLeveledUp)
+    def _on_leveled_up(self, event: CharacterLeveledUp) -> None:
+        self._state = self.state.model_copy(
+            update={
+                "level": event.new_level,
+                "max_hp": self.state.max_hp + event.max_hp_increase,
+                "current_hp": self.state.current_hp + event.max_hp_increase,
+                "spell_slots": event.spell_slots,
+            }
+        )
+
+    @handles(SpellPrepared)
+    def _on_spell_prepared(self, event: SpellPrepared) -> None:
+        prep = list(self.state.prepared_spells)
+        if event.spell_name not in prep:
+            prep.append(event.spell_name)
+        book = list(self.state.spellbook)
+        if event.spell_name not in book:
+            book.append(event.spell_name)
+        self._state = self.state.model_copy(
+            update={"prepared_spells": prep, "spellbook": book}
+        )
+
+    @handles(SpellSlotExpended)
+    def _on_spell_slot_expended(self, event: SpellSlotExpended) -> None:
+        slots = dict(self.state.spell_slots)
+        slots[event.slot_level_used] = event.remaining_slots
+        self._state = self.state.model_copy(update={"spell_slots": slots})
+

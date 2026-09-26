@@ -233,6 +233,42 @@ class ConditionRemoved(BaseRunefobleEvent):
     condition: str
 
 
+@register_event("runefoble.events.character.leveled_up")
+class CharacterLeveledUp(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    event_type: str = "runefoble.events.character.leveled_up"
+    session_id: str = ""
+    character_id: str
+    new_level: int
+    max_hp_increase: int
+    spell_slots: dict[int, int] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.character.spell_prepared")
+class SpellPrepared(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    event_type: str = "runefoble.events.character.spell_prepared"
+    session_id: str = ""
+    character_id: str
+    spell_name: str
+    spell_level: int
+
+
+@register_event("runefoble.events.character.spell_slot_expended")
+class SpellSlotExpended(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    event_type: str = "runefoble.events.character.spell_slot_expended"
+    session_id: str = ""
+    character_id: str
+    spell_name: str
+    slot_level_used: int
+    remaining_slots: int
+
+
+
 # ---------------------------------------------------------------------------
 # The Watcher, Voice, and Gameplay Stream Events
 # ---------------------------------------------------------------------------
@@ -406,6 +442,9 @@ __all__ = [
     "EquipmentSlotUpdated",
     "ConditionApplied",
     "ConditionRemoved",
+    "CharacterLeveledUp",
+    "SpellPrepared",
+    "SpellSlotExpended",
     "PlayerSpokeEvent",
     "SpeechIntentParsed",
     "WatcherNarrationGenerated",
