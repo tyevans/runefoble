@@ -32,6 +32,11 @@ from runefoble_events.character import (
     SpellPrepared,
     SpellSlotExpended,
 )
+from runefoble_events.lore import (
+    AliasesConsolidated,
+    EntitiesExtracted,
+    LoreDocumentIngested,
+)
 from runefoble_events.session import (
     CombatEncounterEnded,
     CombatEncounterStarted,
@@ -124,4 +129,7 @@ __all__ = [
     "VoicePeerMuteToggled",
     "AssetUploaded",
     "AssetDeleted",
+    "LoreDocumentIngested",
+    "EntitiesExtracted",
+    "AliasesConsolidated",
 ]

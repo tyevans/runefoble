@@ -16,7 +16,9 @@ dependencies = [
     "inference-worker",
     "gateway-api",
     "gateway-mcp",
+    "campaign-lore",
     "eventsource-py>=0.14.0",
+    "redstring[llm,redis]>=0.11.0",
 ]
 
 [tool.uv.sources]
@@ -31,6 +33,7 @@ voice-agent = { workspace = true }
 inference-worker = { workspace = true }
 gateway-api = { workspace = true }
 gateway-mcp = { workspace = true }
+campaign-lore = { workspace = true }
 
 [tool.uv.workspace]
 members = [

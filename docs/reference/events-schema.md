@@ -259,3 +259,27 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `bucket`: String
   - `object_key`: String
   - `deleted_by`: String
+
+### LoreDocument Events (`aggregate_type: LoreDocument`)
+
+- **`LoreDocumentIngested`**: Emitted when a new worldbuilding document is ingested (`runefoble.events.lore.document_ingested`).
+  - `document_id`: UUID
+  - `campaign_id`: UUID
+  - `title`: String
+  - `content`: String
+  - `is_secret`: Boolean (default False)
+  - `author_id`: Optional[String]
+  - `metadata`: Dict[str, Any]
+- **`EntitiesExtracted`**: Emitted when entities and relationships are extracted via redstring (`runefoble.events.lore.entities_extracted`).
+  - `document_id`: UUID
+  - `campaign_id`: UUID
+  - `entities`: List[Dict[str, Any]]
+  - `relationships`: List[Dict[str, Any]]
+- **`AliasesConsolidated`**: Emitted when synonymous entity titles and aliases are consolidated into canonical nodes (`runefoble.events.lore.aliases_consolidated`).
+  - `campaign_id`: UUID
+  - `canonical_entity_id`: UUID
+  - `canonical_name`: String
+  - `alias_entity_id`: UUID
+  - `alias_name`: String
+  - `reason`: String
+

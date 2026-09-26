@@ -85,6 +85,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`decompose-microservice-routers.md`](how-to/decompose-microservice-routers.md): How to decompose monolithic FastAPI microservices into modular APIRouters.
 - [`configure-appearance-and-themes.md`](how-to/configure-appearance-and-themes.md): How to configure global themes, appearance color modes (Dark/Light/System), and interact with the settings modal.
 - [`interact-with-tactile-board-and-ghost-previews.md`](how-to/interact-with-tactile-board-and-ghost-previews.md): How to use tactile token kinematics, 5-foot distance measuring, difficult terrain/hazards, and spoken ghost previews.
+- [`index-campaign-lore-with-redstring.md`](how-to/index-campaign-lore-with-redstring.md): How to ingest worldbuilding documents with redstring, consolidate entity aliases, and run hybrid RAG queries.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
@@ -113,6 +114,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `services/board_state/` | Tactical grid, token coordinates, spatial movement rules & board microfrontend |
 | `services/character_sheet/` | Character stats, HP tracking, session absence penalties & character microfrontends |
 | `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis & voice controls microfrontend |
+| `services/campaign_lore/` | Worldbuilding knowledge graphs, entity alias consolidation & redstring hybrid RAG microservice |
 | `gateway/api/` | Unified API Gateway, WebSockets, OpenAPI aggregator |
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
 | `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |

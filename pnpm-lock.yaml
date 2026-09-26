@@ -13,6 +13,9 @@ importers:
       '@runefoble/board-state-ui':
         specifier: workspace:*
         version: link:../services/board_state/ui
+      '@runefoble/campaign-lore-ui':
+        specifier: workspace:*
+        version: link:../services/campaign_lore/ui
       '@runefoble/character-sheet-ui':
         specifier: workspace:*
         version: link:../services/character_sheet/ui
@@ -49,6 +52,16 @@ importers:
         version: 8.3.1(esbuild@0.25.12)
 
   services/board_state/ui:
+    dependencies:
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+
+  services/campaign_lore/ui:
     dependencies:
       lit:
         specifier: ^3.3.3
