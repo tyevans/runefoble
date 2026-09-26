@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@runefoble/board-state-ui": "workspace:*",
+    "@runefoble/campaign-lore-ui": "workspace:*",
     "@runefoble/character-sheet-ui": "workspace:*",
     "@runefoble/game-session-ui": "workspace:*",
     "@runefoble/the-watcher-ui": "workspace:*",

@@ -158,6 +158,8 @@ swaggerUI:
       url: "http://game-session:8004/openapi.json"
     - name: "Voice Agent Service"
       url: "http://voice-agent:8005/openapi.json"
+    - name: "Campaign Lore Service"
+      url: "http://campaign-lore:8006/openapi.json"
 
 # Services
 services:
@@ -185,6 +187,10 @@ services:
     image: runefoble/voice-agent:0.1.0
     replicas: 1
     port: 8005
+  campaignLore:
+    image: runefoble/campaign-lore:0.1.0
+    replicas: 1
+    port: 8006
 
 # Frontend Application
 frontend:
