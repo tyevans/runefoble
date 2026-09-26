@@ -14,9 +14,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Synchronized `PRIORITY.md`, `ROADMAP.md` Milestone 5 completion checkboxes, and PRD acceptance links with zero status drift.
 
 ### Added
+- **Interactive Tavern Minigames & Personality-Driven Merchant Haggling (`TASK-0103`, `PRD-0014`, `US-0047`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
+  - Implemented turn-based Liar's Dice wagering, card tournaments, and drinking contests with progressive intoxication stages and dynamic voice DSP slurred speech filters (`VoiceDSPPipeline`).
+  - Implemented personality-driven NPC merchant haggling featuring dynamic temperament state machines, mood meters, price curves, counter-offers, and reactive voice lines.
+  - Published CloudEvents 1.0 domain events on Redis Streams (`MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `IntoxicationLevelChanged`, `HagglingNegotiated`).
+  - Built and vendored `<runefoble-tavern-parlor>` Lit microfrontend in `services/game_session/ui/src/` with interactive 3D cup/dice shaker animations, Bauhaus tokens, and Storybook stories.
+  - Exposed REST endpoints on `game_session` and `gateway_api` enforced by SpiceDB Zanzibar authorization (`session` / `campaign` `play` / `participate`).
+  - Authored comprehensive blackbox test suite in `tests/test_blackbox_tavern_and_haggling.py` and Diataxis guides in `docs/how-to/` and `docs/reference/`.
+
 - **Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector (`TASK-0101`, `ADR-0003`, `ADR-0006`, `ADR-0010`, `ADR-0013`)**:
-  - Implemented generative diegetic handout engine (`services/campaign_lore/src/campaign_lore/handouts.py`) synthesizing weathered parchment textures, stylized calligraphy, and breakable wax seals with realistic stamp physics and acoustic audio cues.
-  - Implemented secret UV-reactive invisible ink layer revealed under simulated UV torchlight cursor.
+  - Implemented generative diegetic handout engine synthesizing weathered parchment textures, stylized calligraphy, breakable wax seals with acoustic audio cues, and secret UV-reactive invisible ink layer.
   - Implemented interactive 3D WebGL relic inspector (`RelicSynthesizer`) with orbit rotation, PBR metallic shaders, and clickable engraved rune hitboxes.
   - Built event-sourced aggregates `DiegeticHandoutAggregate` and `RelicAggregate` with domain events `HandoutGenerated`, `WaxSealBroken`, `InvisibleInkRevealed`, `RelicForged`, `RelicInspected`, and `RelicRuneTranslated`.
   - Added public frontdoor HTTP routes `/api/v1/lore/handouts` and `/api/v1/lore/relics` protected by SpiceDB Zanzibar authorization.
@@ -24,16 +31,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis how-to guide `docs/how-to/inspect-diegetic-handouts-and-3d-relics.md` and reference `docs/reference/diegetic-handouts-and-relics-events.md`.
 
 - **Settings Modal Styles and Sub-Component CSS Modular Decomposition (`TASK-0111`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
-  - Decomposed monolithic `frontend/src/components/runefoble-settings-modal.styles.ts` into single-responsibility Lit CSS sub-modules in `frontend/src/components/styles/`: `settings-modal-layout.styles.ts` (129 lines), `settings-modal-tabs.styles.ts` (128 lines), and `settings-modal-controls.styles.ts` (74 lines).
+  - Decomposed monolithic `frontend/src/components/runefoble-settings-modal.styles.ts` into single-responsibility Lit CSS sub-modules in `frontend/src/components/styles/`: `settings-modal-layout.styles.ts`, `settings-modal-tabs.styles.ts`, and `settings-modal-controls.styles.ts`.
   - Maintained 100% backward compatibility via composite export in `runefoble-settings-modal.styles.ts` (28 lines) combining `[layoutStyles, tabsStyles, controlsStyles]`.
   - Preserved 100% visual consistency and WCAG 2.1 AA tokenized styling across all settings tab panels in Storybook.
-  - Added modular decomposition and strict line budget verification tests in `tests/test_theming.py` and updated `tests/test_settings_modal.py` and `tests/test_settings_subcomponents.py`.
+  - Added modular decomposition and strict line budget verification tests in `tests/test_theming.py`, `tests/test_settings_modal.py`, and `tests/test_settings_subcomponents.py`.
   - Updated Diataxis how-to and reference guides in `docs/how-to/configure-appearance-and-themes.md` and `docs/reference/design-tokens-and-themes.md`.
 
 - **Campaign Analytics Storage and Query Modular Decomposition (`TASK-0118`, `ADR-0003`, `ADR-0005`, `ADR-0011`)**:
-  - Decomposed `services/campaign_analytics/src/campaign_analytics/storage.py` into storage facade `storage.py` (165 lines) and specialized query modules `queries/spatial.py` (117 lines), `queries/mvp.py` (112 lines), and `queries/timeline.py` (97 lines).
-  - Maintained 100% backward compatibility for all public methods and aliases on `CampaignAnalyticsStorage` (`record_spatial_position()`, `get_campaign_heatmaps()`, `get_campaign_mvp()`, `get_campaign_timeline()`).
-  - Added modular decomposition and line budget tests in `tests/test_campaign_analytics_storage_modular_decomposition.py` and updated `test_blackbox_campaign_analytics_storage.py`.
+  - Decomposed `storage.py` into storage facade (165 lines) and specialized query modules (`spatial.py`, `mvp.py`, `timeline.py`).
+  - Maintained 100% backward compatibility for all public methods and aliases on `CampaignAnalyticsStorage`.
+  - Added modular decomposition and line budget tests in `tests/test_campaign_analytics_storage_modular_decomposition.py`.
 
 - **Stream Overlay Router and HUD Templates Modular Decomposition (`TASK-0117`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
   - Decomposed monolithic `gateway/api/src/gateway_api/routers/overlay.py` into single-responsibility modules strictly under 200 lines (`overlay.py`, `overlay_models.py`, and `overlay_templates.py`).
@@ -43,19 +50,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added comprehensive frontdoor blackbox test suite in `tests/test_overlay_modular_decomposition.py` and updated Diataxis documentation.
 
 - **Speech Intent Parser and Action Grammar Extractors Modular Decomposition (`TASK-0069`, `ADR-0002`, `ADR-0003`)**:
-  - Decomposed `services/the_watcher/src/the_watcher/movement_parser.py` into modular submodules: `grammars.py` (93 lines), `spatial.py` (52 lines), and `movement_parser.py` (178 lines).
-  - Extracted compiled regular expressions and lexical token sets for movement, attacks, spellcasting, skill checks, and dice rolls into `grammars.py`.
-  - Extracted tactical spatial math, vector conversions, step normalization, and bounded grid coordinate clamping into `spatial.py`.
+  - Decomposed `services/the_watcher/src/the_watcher/movement_parser.py` into `grammars.py` (93 lines), `spatial.py` (52 lines), and `movement_parser.py` (178 lines).
+  - Extracted compiled regular expressions and lexical token sets into `grammars.py`, and tactical spatial math, vector conversions, and grid coordinate clamping into `spatial.py`.
   - Retained `SpeechIntentParser` coordinator with 100% backward-compatible public methods and class-level pattern access.
-  - Authored comprehensive unit and frontdoor blackbox test suites in `tests/test_movement_parser.py` and `tests/test_blackbox_the_watcher.py`.
-  - Updated Diataxis architecture explanation documentation in `docs/explanation/the-watcher-autonomous-dm.md`.
+  - Authored comprehensive test suites in `tests/test_movement_parser.py` and `tests/test_blackbox_the_watcher.py`, and updated Diataxis documentation.
 
 - **Campaign Analytics Worker and Event Dispatch Modular Decomposition (`TASK-0116`, `ADR-0003`, `ADR-0006`, `ADR-0011`)**:
   - Decomposed `services/campaign_analytics/src/campaign_analytics/worker.py` into asynchronous worker core `worker.py` (171 lines) and event projection dispatcher `event_handlers.py` (222 lines) with `event_helpers.py` (24 lines).
   - Isolated Redis Streams consumer group polling and worker lifecycle loops from domain event translation and spatial tracking state.
-  - Extracted event projection handlers for spatial movements (`TokenPlaced`, `TokenMoved`), combat rounds (`CombatRoundAdvanced`), damage and healing (`CharacterHealthChanged`), dice rolls (`DiceRolled`), and chronicle recaps (`AbsenteeRecapGenerated`).
-  - Preserved 100% backward-compatible initialization and public contract on `CampaignAnalyticsWorker` (`start()`, `stop()`, `process_event()`, `handle_event()`, and spatial tracking properties).
-  - Added modular decomposition verification tests in `tests/test_campaign_analytics_modular_decomposition.py` and updated Diataxis documentation.
+  - Extracted event projection handlers for spatial movements, combat rounds, health changes, dice rolls, and chronicle recaps.
+  - Preserved 100% backward-compatible public contract on `CampaignAnalyticsWorker`, added tests in `tests/test_campaign_analytics_modular_decomposition.py`, and updated Diataxis documentation.
 
 - **Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls (`TASK-0109`, `PRD-0010`, `US-0039`, `US-0053`, `ADR-0003`, `ADR-0004`, `ADR-0006`, `ADR-0007`, `ADR-0013`)**:
   - Vendored `<runefoble-soundscape-controls>` Lit Web Component in `services/soundscape/ui/` with Bauhaus tokens and strict Shadow DOM encapsulation.
@@ -67,25 +71,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored frontdoor blackbox test suite in `tests/test_blackbox_soundscape_ui.py` and updated Diataxis documentation in `docs/how-to/manage-dynamic-soundscapes-and-audio-ducking.md`.
 
 - **Downtime Activities, Alchemical Crafting & Party Stronghold Engine (`TASK-0100`, `PRD-0014`, `US-0044`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
-  - Implemented `CraftingAggregate` in `character_sheet` modeling reagent affinity, catalytic stabilization, and volatile mishap risk matrices emitting `CraftingAttempted`, `CraftingSucceeded`, and `CraftingMishapOccurred`.
-  - Implemented `StrongholdAggregate` and Campfire Rest sequence in `game_session` supporting multi-tier base upgrades, passive campaign resting boons, and collaborative storytelling prompts.
-  - Added SpiceDB Zanzibar permissions for `definition stronghold` in `runefoble.zed` and protected REST routes via API Gateway.
+  - Implemented `CraftingAggregate` modeling reagent affinity, catalytic stabilization, and volatile mishap risk matrices emitting `CraftingAttempted`, `CraftingSucceeded`, and `CraftingMishapOccurred`.
+  - Implemented `StrongholdAggregate` and Campfire Rest sequence supporting multi-tier base upgrades, passive campaign resting boons, and collaborative storytelling prompts.
+  - Added SpiceDB Zanzibar permissions in `runefoble.zed` and protected REST routes via API Gateway.
   - Vendored Lit Web Component `<runefoble-campfire-crafting>` in `services/game_session/ui/src/` with interactive Storybook stories, Bauhaus tokens, `/ui/manifest` discovery, blackbox tests, and Diataxis guide.
 
 - **Character Sheet UI Inventory Grid and Condition Indicator Microfrontend (`TASK-0107`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
-  - Developed and vendored `<runefoble-character-sheet>` Lit Web Component in `services/character_sheet/ui/` with Bauhaus geometric tokens and strict Shadow DOM encapsulation.
-  - Implemented interactive paper doll slots (`main_hand`, `off_hand`, `armor`, `accessory`) emitting `equip-item` and `unequip-item` CustomEvents.
-  - Implemented dynamic encumbrance capacity progress bar color-coded by load thresholds computed dynamically from carried item weights and character Strength.
+  - Developed and vendored `<runefoble-character-sheet>` Lit Web Component in `services/character_sheet/ui/` with Bauhaus geometric tokens and Shadow DOM encapsulation.
+  - Implemented interactive paper doll slots emitting `equip-item`/`unequip-item` events and dynamic encumbrance capacity progress bar color-coded by load thresholds.
   - Implemented condition indicator badges distinguishing 5e rules conditions and absence penalties (`drunk`, `foolishness`) with interactive mechanics tooltips.
   - Implemented spellbook and spell slot tracker with clickable pips across tiers 1–9, daily prepared spell list, and known spellbook management.
   - Exposed service microfrontend manifest at `GET /ui/manifest`, forward export in App Shell, blackbox tests in `tests/test_blackbox_character_sheet_ui.py`, and Diataxis how-to guide.
 
 - **Rules Compendium Search & Encounter Builder Microfrontend (`TASK-0108`, `PRD-0008`, `ADR-0001`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
-  - Vendored `<runefoble-rules-compendium>` Lit Web Component in `services/rules_compendium/ui/` with Bauhaus geometric tokens and strict Shadow DOM encapsulation.
-  - Implemented `<runefoble-rules-lookup>` delivering debounced sub-50ms hybrid BM25 and vector search across SRD monsters, spells, and conditions with category filter pills and interactive stat cards.
-  - Implemented `<runefoble-encounter-builder>` computing dynamic party XP thresholds, real-time lethality brackets, monster drafting, and 1-click automated encounter balancing.
-  - Provided Homebrew Forge form modal for registering custom campaign creatures and spells guarded by SpiceDB Zanzibar authorization.
-  - Exported service discovery manifest at `GET /ui/manifest`, added blackbox test suite in `tests/test_blackbox_rules_compendium_ui.py`, and updated Diataxis guide `docs/how-to/balance-combat-encounters-and-query-compendium.md`.
+  - Vendored `<runefoble-rules-compendium>` Lit Web Component in `services/rules_compendium/ui/` with Bauhaus geometric tokens and Shadow DOM encapsulation.
+  - Implemented `<runefoble-rules-lookup>` delivering debounced sub-50ms hybrid BM25 and vector search across SRD monsters, spells, and conditions with category filter pills.
+  - Implemented `<runefoble-encounter-builder>` computing dynamic party XP thresholds, real-time lethality brackets, and 1-click automated encounter balancing.
+  - Provided Homebrew Forge form modal for custom creatures and spells, exported manifest at `GET /ui/manifest`, added tests, and updated Diataxis guide.
 
 - **WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition (`TASK-0068`, `ADR-0002`, `ADR-0004`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed `frontend/src/services/webrtc-voice.ts` into single-responsibility modules strictly under 200 lines (`webrtc-types.ts`, `webrtc-peer-mesh.ts`, and `webrtc-voice.ts`).
@@ -483,9 +485,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Autonomous Backlog Execution Engine (`TASK-0046`)**: Parallel worktree orchestrator (`scripts/run-backlog-engine.sh`), conflict detection, and interactive Project Visualizer web application.
 
 #### Changed
-- **Modular Router Refactoring (`TASK-0040`, `TASK-0041`, `TASK-0045`, `TASK-0085`)**:
-  - Decomposed monolithic FastAPI entrypoints into modular sub-routers across all bounded contexts.
-  - Decomposed FastMCP tabletop gateway tools and resources into modular registries.
+- **Modular Router Refactoring (`TASK-0040`, `TASK-0041`, `TASK-0045`, `TASK-0085`)**: Decomposed monolithic FastAPI entrypoints into modular sub-routers across all bounded contexts and FastMCP tools into modular registries.
 
 ---
 ## [0.1.0] - 2026-09-20

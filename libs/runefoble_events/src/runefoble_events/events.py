@@ -109,6 +109,13 @@ from runefoble_events.soundscape import (
     SoundscapeTensionUpdated,
     SoundscapeTrackChanged,
 )
+from runefoble_events.tavern import (
+    HagglingNegotiated,
+    IntoxicationLevelChanged,
+    MinigameEnded,
+    MinigameStarted,
+    MinigameTurnTaken,
+)
 from runefoble_events.voice import (
     VoicePeerJoined,
     VoicePeerLeft,
@@ -249,4 +256,9 @@ __all__ = [
     "CampfireRestCompleted",
     "StrongholdCreated",
     "StrongholdUpgraded",
+    "MinigameStarted",
+    "MinigameTurnTaken",
+    "MinigameEnded",
+    "IntoxicationLevelChanged",
+    "HagglingNegotiated",
 ]

@@ -495,5 +495,6 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`CombatTelemetrySnapshotCreated`**: Emitted when a combat round telemetry snapshot is finalized (`runefoble.events.analytics.telemetry_snapshot_created`). Fields: `snapshot_id`, `campaign_id`, `session_id`, `encounter_id`, `round_number`, `spatial_points`, `damage_events`, `timestamp`.
 - **`EncounterMvpAwarded`**: Emitted when an MVP award is conferred for encounter performance (`runefoble.events.analytics.mvp_awarded`). Fields: `award_id`, `campaign_id`, `session_id`, `encounter_id`, `combatant_id`, `combatant_name`, `category`, `score`, `rationale`, `timestamp`.
 
-### Downtime, Crafting & Stronghold Events (`aggregate_type: Crafting`, `Stronghold`)
+### Downtime, Crafting, Tavern Minigames & Merchant Haggling Events
 For full schemas of `CraftingAttempted`, `CraftingSucceeded`, `CraftingMishapOccurred`, `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`, see [`downtime-and-crafting-events.md`](downtime-and-crafting-events.md).
+For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `IntoxicationLevelChanged`, and `HagglingNegotiated`, see [`tavern-and-merchants-events.md`](tavern-and-merchants-events.md).

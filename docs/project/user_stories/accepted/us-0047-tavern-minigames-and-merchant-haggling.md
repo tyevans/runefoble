@@ -1,7 +1,7 @@
 ---
 id: '0047'
 title: Interactive Tavern Minigames, Gambling and Personality-Driven Merchant Haggling
-status: Accepted
+status: Shipped
 created: 2026-09-26
 persona: Bram (The Tinkerer & Downtime Crafter)
 feature: FEAT-DWN-03
