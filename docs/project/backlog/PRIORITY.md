@@ -35,7 +35,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 31. **TASK-0030 (Refined)**: [`0030-webrtc-voice-stream-visualizer-microfrontend.md`](refined/0030-webrtc-voice-stream-visualizer-microfrontend.md) — WebRTC Audio Stream & Real-Time Waveform Visualizer in Voice Agent Microfrontend
 32. **TASK-0031 (Refined)**: [`0031-silo-s3-battlemap-uploader-microfrontend.md`](refined/0031-silo-s3-battlemap-uploader-microfrontend.md) — Silo S3 Battlemap Asset Uploader & Shroud Masking in Board State Microfrontend
 33. **TASK-0032 (Complete)**: [`0032-spicedb-zitadel-identity-sync.md`](complete/0032-spicedb-zitadel-identity-sync.md) — SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities
-34. **TASK-0033 (Refined)**: [`0033-webrtc-voice-room-signaling.md`](refined/0033-webrtc-voice-room-signaling.md) — Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
+34. **TASK-0033 (Complete)**: [`0033-webrtc-voice-room-signaling.md`](complete/0033-webrtc-voice-room-signaling.md) — Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
 35. **TASK-0034 (Proposed)**: [`0034-zitadel-oidc-jwks-verification-middleware.md`](proposed/0034-zitadel-oidc-jwks-verification-middleware.md) — Zitadel Production OIDC/JWKS Token Verification Middleware
 36. **TASK-0035 (Proposed)**: [`0035-spicedb-live-grpc-client-and-schema-migration.md`](proposed/0035-spicedb-live-grpc-client-and-schema-migration.md) — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
 37. **TASK-0036 (Proposed)**: [`0036-postgresql-multi-database-init-and-event-store.md`](proposed/0036-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection

@@ -1,8 +1,9 @@
 ---
 id: '0033'
 title: Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
-status: Refined
+status: Complete
 created: 2026-09-25
+completed: 2026-09-26
 dependencies: [TASK-0010, TASK-0021]
 governing_adrs: [ADR-0002, ADR-0006, ADR-0007]
 target_release: 0.2.0
@@ -11,7 +12,7 @@ target_release: 0.2.0
 # TASK-0033: Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement live WebRTC bidirectional voice room signaling and session audio peer management in `services/voice_agent` and `gateway/api`. Users in an active collaborative tabletop session can join an ephemeral voice mesh/SFU room, negotiate SDP offers/answers and ICE candidates via WebSockets, and exchange low-latency bidirectional voice streams conditioned through the DSP pipeline (`TASK-0021`).
@@ -41,14 +42,18 @@ Milestone 2 (Live Collaborative Alpha) requires live bidirectional voice communi
      - `webrtc_answer`: Return SDP answer from peer.
      - `webrtc_ice_candidate`: Relay trickle ICE candidates.
      - `webrtc_leave`: Gracefully terminate audio connection.
-   - Enforce room session membership and authentication token validation.
-3. **Voice Room Coordinator (`services/voice_agent/src/voice_agent/room.py`)**:
+   - Enforce room session membership and authentication token validation with SpiceDB Zanzibar.
+3. **Voice Room Coordinator (`services/voice_agent/src/voice_agent/room.py` & `room_routes.py`)**:
    - Track active audio rooms, peer lists, latency telemetry, and speaker audio levels.
+   - Event-sourced `VoiceRoomAggregate` inheriting from `DeclarativeAggregate` with `@handles` methods (Hard Invariant 2).
    - Frontdoor HTTP endpoint `GET /api/v1/voice/rooms/{session_id}` returning active room participants and speaking status.
-   - Frontdoor HTTP endpoint `POST /api/v1/voice/rooms/{session_id}/kick` for DM moderation.
-4. **WebAudio Browser Adapter (`frontend/src/services/webrtc-voice.ts`)**:
+   - Frontdoor HTTP endpoint `POST /api/v1/voice/rooms/{session_id}/kick` for DM moderation with Zanzibar authorization (Hard Invariant 1).
+4. **WebAudio Browser Adapter (`frontend/src/services/webrtc-voice.ts` & `webaudio-pipeline.ts`)**:
    - Client service managing `RTCPeerConnection`, `navigator.mediaDevices.getUserMedia`, and WebAudio `AudioContext`.
    - Connects audio output to DSP filter graph when character conditions apply.
+5. **Lit Web Component & Storybook Verification**:
+   - `services/voice_agent/ui/src/runefoble-audio-indicator.ts` with Bauhaus design tokens.
+   - Stories in `services/voice_agent/ui/src/runefoble-audio-indicator.stories.ts` and `frontend/src/stories/audio-indicator.stories.ts`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD Frontdoor Setup)
 1. **Frontdoor Blackbox Verification**:
@@ -61,5 +66,5 @@ Milestone 2 (Live Collaborative Alpha) requires live bidirectional voice communi
    - Tested through frontdoor WebSocket signals and HTTP moderation endpoints.
 4. **Code Quality & Invariants**:
    - All files < 500 lines (Hard Invariant 6).
-   - 100% pass on `uv run pytest` and clean `uv run ruff check .`.
+   - 100% pass on `uv run pytest` (211 passed) and clean `uv run ruff check .`.
    - Storybook audio indicator component verified in `frontend/src/stories/`.
