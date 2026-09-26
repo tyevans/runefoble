@@ -1,4 +1,15 @@
+---
+id: 0012
+title: Spatial Line-of-Sight and Fog-of-War Server Synchronization
+status: Accepted
+created: 2026-09-25
+governing_prd: PRD-0003
+---
+
 # US-0012: Spatial Line-of-Sight and Fog-of-War Server Synchronization
+
+## Governing PRD
+- [`PRD-0003: Spatial Fog-of-War and Line-of-Sight Visibility Engine`](../../product/accepted/prd-0003-spatial-fog-of-war-and-visibility-engine.md)
 
 ## Persona
 Evelyn (Human DM) / Marcus (Adventurer)

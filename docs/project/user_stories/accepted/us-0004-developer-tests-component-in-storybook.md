@@ -3,9 +3,13 @@ id: 0004
 title: Isolated Component Development in Storybook
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0013
 ---
 
 # US-0004 — Isolated Component Development in Storybook
+
+## Governing PRD
+- [`PRD-0013: Immersive & Intuitive Frontend Experience with Tactile Board Kinematics`](../../product/accepted/prd-0013-immersive-and-intuitive-frontend-experience.md)
 
 ## User Story
 

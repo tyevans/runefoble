@@ -3,9 +3,13 @@ id: 0029
 title: Spectator Dynamic Cinematic Auto-Camera and Safe View Redaction
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0011
 ---
 
 # US-0029 — Spectator Dynamic Cinematic Auto-Camera and Safe View Redaction
+
+## Governing PRD
+- [`PRD-0011: Live Spectator Studio & Two-Way Audience Interactivity`](../../product/accepted/prd-0011-live-spectator-studio-and-audience-interactivity.md)
 
 ## User Story
 

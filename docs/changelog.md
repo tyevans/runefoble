@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Full Traceability Matrix and PRD Story/Task Support Enrichment**:
+  - Increased support across under-supported PRDs by authoring dedicated user stories and backlog tasks:
+    - US-0051: Character Level Progression, Spellbook Preparation & Spell Slot Scaling (`PRD-0006`).
+    - US-0052: Homebrew Spell, Monster & Rule Template Authoring (`PRD-0008`).
+    - US-0053: DM Manual Soundboard Triggers and Tactical Foley Overrides (`PRD-0010`).
+    - US-0054: Post-Session Combat Spatial Heatmaps and Party Damage Analytics (`PRD-0012`).
+    - TASK-0107: Character Sheet UI Inventory Grid and Condition Indicator Microfrontend (`PRD-0006`, `<runefoble-character-sheet>`).
+    - TASK-0108: Rules Compendium Search & Encounter Builder Microfrontend (`PRD-0008`, `<runefoble-rules-compendium>`).
+    - TASK-0109: Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls (`PRD-0010`, `<runefoble-soundscape-controls>`).
+    - TASK-0110: Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend (`PRD-0012`, `<runefoble-campaign-analytics>`).
+  - Added `Governing PRD` column to `docs/project/user_stories/REGISTRY.md` mapping all 54 user stories to their parent PRD.
+  - Enriched all 16 PRD records in `docs/project/product/accepted/` with explicit `## Linked User Stories` and `## Implementing Backlog Tasks` markdown sections.
+  - Enhanced `tools/project_visualizer/parser.py` and `graph.py` to support case-insensitive entity linking, frontmatter-declared relationships (`governing_prds`, `governing_stories`), and bidirectional PRD-to-task synchronization, boosting total traceability graph edges to 786 with zero orphaned stories or unlinked PRDs.
+  - Added verification invariant test `test_all_prds_have_stories_and_tasks_support` in `tests/test_project_visualizer.py`.
 - **Backlog Curation, Invariant Invariant Protection, and Milestone 4 JIT Triage (`ADR-0009`)**:
   - Identified source files approaching Hard Invariant 6 limits (>400 lines) and created preemptive modular decomposition proposals:
     - TASK-0093: DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition (`tests/test_blackbox_dm_copilot.py` [474 lines], `copilot.py` [399 lines]).

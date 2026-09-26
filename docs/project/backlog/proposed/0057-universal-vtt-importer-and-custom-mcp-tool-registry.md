@@ -6,6 +6,10 @@ created: 2026-09-25
 dependencies: [TASK-0005, TASK-0007, TASK-0020]
 governing_adrs: [ADR-0007, ADR-0008]
 target_release: 0.2.1
+governing_prds:
+- PRD-0009
+governing_stories:
+- US-0033
 ---
 
 # TASK-0057: Universal VTT Importer and Dynamic MCP Tool Registry

@@ -13,6 +13,11 @@ governing_adrs:
 - ADR-0013
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/57
+governing_prds:
+- PRD-0013
+governing_stories:
+- US-0016
+- US-0043
 ---
 # TASK-0061: Tactical Board, Autonomous DM, and Voice Controls Microfrontend Styles Decomposition
 

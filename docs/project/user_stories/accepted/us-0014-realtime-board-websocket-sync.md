@@ -1,4 +1,15 @@
+---
+id: 0014
+title: Realtime Live Board WebSocket Synchronization
+status: Accepted
+created: 2026-09-25
+governing_prd: PRD-0005
+---
+
 # US-0014: Realtime Live Board WebSocket Synchronization
+
+## Governing PRD
+- [`PRD-0005: Real-Time WebSocket Board & Chronicle Synchronization`](../../product/accepted/prd-0005-realtime-websocket-board-sync.md)
 
 ## Persona
 Marcus (Adventurer) / Devon (Streamer)

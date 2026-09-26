@@ -1,3 +1,15 @@
+---
+id: '0009'
+title: Character Sheet Equipment, Inventory & Conditions Aggregate
+status: Complete
+created: 2026-09-25
+governing_prds:
+- PRD-0006
+governing_stories:
+- US-0015
+- US-0024
+---
+
 # TASK-0009: Character Sheet Equipment, Inventory & Conditions Aggregate
 
 ## Status

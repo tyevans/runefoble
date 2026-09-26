@@ -11,6 +11,10 @@ governing_adrs:
 - ADR-0009
 - ADR-0011
 target_release: 0.2.0
+governing_prds:
+- PRD-0006
+governing_stories:
+- US-0015
 ---
 
 # TASK-0077: Character Sheet API Router and Schemas Modular Decomposition

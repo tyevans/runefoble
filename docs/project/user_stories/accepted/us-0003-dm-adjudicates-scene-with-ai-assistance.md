@@ -3,9 +3,13 @@ id: 0003
 title: AI-Assisted Narrative Adjudication for Game Masters
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0001
 ---
 
 # US-0003 — AI-Assisted Narrative Adjudication for Game Masters
+
+## Governing PRD
+- [`PRD-0001: The Watcher AI Dungeon Master and Real-Time Board Animator`](../../product/accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md)
 
 ## User Story
 

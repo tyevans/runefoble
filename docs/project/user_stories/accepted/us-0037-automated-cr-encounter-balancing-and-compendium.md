@@ -3,9 +3,13 @@ id: 0037
 title: Automated CR Encounter Balancing & redstring Rules Indexing
 status: Shipped
 created: 2026-09-25
+governing_prd: PRD-0008
 ---
 
 # US-0037 — Automated CR Encounter Balancing & redstring Rules Indexing
+
+## Governing PRD
+- [`PRD-0008: TTRPG Rules Compendium & Automated Encounter Builder`](../../product/accepted/prd-0008-ttrpg-rules-compendium-and-encounter-builder.md)
 
 ## User Story
 

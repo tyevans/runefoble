@@ -12,6 +12,10 @@ governing_adrs:
 - ADR-0007
 target_release: 0.1.0
 pr_url: https://github.com/tyevans/runefoble/pull/23
+governing_prds:
+- PRD-0012
+governing_stories:
+- US-0040
 ---
 # TASK-0038: OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
 

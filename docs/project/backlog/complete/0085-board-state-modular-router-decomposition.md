@@ -15,6 +15,10 @@ governing_adrs:
 - ADR-0013
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/51
+governing_prds:
+- PRD-0003
+governing_stories:
+- US-0012
 ---
 # TASK-0085: Board State API Router and Spatial Handler Modular Decomposition
 

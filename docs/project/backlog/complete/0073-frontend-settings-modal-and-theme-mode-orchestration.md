@@ -10,6 +10,11 @@ governing_adrs:
 - ADR-0004
 - ADR-0012
 target_release: 0.1.0
+governing_prds:
+- PRD-0013
+governing_stories:
+- US-0041
+- US-0042
 ---
 # TASK-0073 — Frontend Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher
 

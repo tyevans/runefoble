@@ -12,6 +12,12 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/30
+governing_prds:
+- PRD-0001
+- PRD-0006
+governing_stories:
+- US-0008
+- US-0015
 ---
 # TASK-0041: FastMCP Gateway Server Modular Decomposition
 

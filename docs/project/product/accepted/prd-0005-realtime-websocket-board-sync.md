@@ -16,3 +16,14 @@ Tabletop roleplaying requires sub-second synchronization between player actions,
 2. The Lit application in `frontend/src/runefoble-app.ts` initiates a WebSocket connection to the gateway and handles incoming events to dynamically update reactive board tokens and the Watcher feed.
 3. If disconnected, the frontend gracefully exhibits a reconnecting state without crashing.
 4. Storybook and unit tests verify event serialization and reception.
+
+## Linked User Stories
+- [`US-0010: Redis Streams Distributed Domain Event Subscription`](../../user_stories/accepted/us-0010-redis-streams-domain-event-subscription.md)
+- [`US-0014: Realtime Live Board WebSocket Synchronization`](../../user_stories/accepted/us-0014-realtime-board-websocket-sync.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0010: Real-time WebSocket Protocol & Client Board Sync`](../../backlog/complete/0010-realtime-websocket-client-board-sync.md)
+- [`TASK-0014: Real-Time Spectator Stream & Chronicle Clean Overlay`](../../backlog/complete/0014-realtime-spectator-stream-clean-overlay.md)
+- [`TASK-0015: Distributed Redis Streams Consumer Groups & Event Projection Workers`](../../backlog/complete/0015-redis-streams-consumer-groups-projections.md)
+- [`TASK-0071: WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition`](../../backlog/proposed/0071-websocket-zanzibar-auth-test-suite-decomposition.md)
+- [`TASK-0080: Gateway WebSocket Hub and Action Validator Modular Decomposition`](../../backlog/refined/0080-gateway-websocket-hub-and-action-validator-decomposition.md)

@@ -3,9 +3,13 @@ id: 0020
 title: DM Vocal Modulator with Real-Time NPC Formant Filtering
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0004
 ---
 
 # US-0020 — DM Vocal Modulator with Real-Time NPC Formant Filtering
+
+## Governing PRD
+- [`PRD-0004: Dynamic Vocal Audio Conditioning and DSP Filters`](../../product/accepted/prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md)
 
 ## User Story
 

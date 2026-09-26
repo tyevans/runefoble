@@ -3,9 +3,13 @@ id: 0038
 title: Generative Procedural Battlemaps and Character Portraits
 status: Shipped
 created: 2026-09-25
+governing_prd: PRD-0009
 ---
 
 # US-0038 — Generative Procedural Battlemaps and Character Portraits
+
+## Governing PRD
+- [`PRD-0009: Procedural Battlemap & Token Asset Generation Engine`](../../product/accepted/prd-0009-procedural-battlemap-and-token-asset-generation.md)
 
 ## User Story
 

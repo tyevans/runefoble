@@ -5,9 +5,13 @@ status: Accepted
 created: 2026-09-26
 persona: Rowan (The Chronicler & Worldbuilding Artisan)
 feature: FEAT-MAK-01
+governing_prd: PRD-0015
 ---
 
 # US-0049 — Printable Tabletop Forge: Grid-Calibrated PDFs, Standees and 3D STL Tokens
+
+## Governing PRD
+- [`PRD-0015: Generative Diegetic Handouts, 3D Relic Inspector & Printable Tabletop Forge`](../../product/accepted/prd-0015-generative-handouts-relic-inspector-and-printable-forge.md)
 
 ## User Story
 

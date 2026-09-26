@@ -115,4 +115,9 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 103. **TASK-0104 (Proposed)**: [`0104-kinetic-spell-vfx-and-particle-canvas.md`](proposed/0104-kinetic-spell-vfx-and-particle-canvas.md) — Multi-Modal Kinetic Spell VFX & WebGL Particle Canvas
 104. **TASK-0105 (Proposed)**: [`0105-printable-tabletop-forge-and-stl-tokens.md`](proposed/0105-printable-tabletop-forge-and-stl-tokens.md) — Printable Tabletop Forge: Grid-Calibrated PDFs, Paper Standees & 3D Printable STL Tokens
 105. **TASK-0106 (Proposed)**: [`0106-collaborative-campaign-atlas-and-codex-bc.md`](proposed/0106-collaborative-campaign-atlas-and-codex-bc.md) — Collaborative Multi-Layered Campaign Atlas & Living Interactive Codex
+106. **TASK-0107 (Proposed)**: [`0107-character-sheet-ui-inventory-and-conditions-microfrontend.md`](proposed/0107-character-sheet-ui-inventory-and-conditions-microfrontend.md) — Character Sheet UI Inventory Grid and Condition Indicator Microfrontend
+107. **TASK-0108 (Proposed)**: [`0108-rules-compendium-search-and-encounter-builder-microfrontend.md`](proposed/0108-rules-compendium-search-and-encounter-builder-microfrontend.md) — Rules Compendium Search & Encounter Builder Microfrontend
+108. **TASK-0109 (Proposed)**: [`0109-dynamic-soundscape-mixing-panel-microfrontend.md`](proposed/0109-dynamic-soundscape-mixing-panel-microfrontend.md) — Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls
+109. **TASK-0110 (Proposed)**: [`0110-campaign-telemetry-dashboard-and-chronicle-timeline-microfrontend.md`](proposed/0110-campaign-telemetry-dashboard-and-chronicle-timeline-microfrontend.md) — Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend
+
 

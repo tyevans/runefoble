@@ -36,3 +36,14 @@ High-concurrency read-only WebSocket connections; handled via edge Redis fanout 
 1. TypeScript backend service handles thousands of concurrent Twitch/YouTube chat events and OBS WebSocket commands.
 2. OBS browser source renders a transparent party HUD that updates with zero latency over WebSockets.
 3. Spectator poll results trigger structured in-game events delivered via Redis Streams.
+
+## Linked User Stories
+- [`US-0006: Real-Time Spectator Stream and Chronicle`](../../user_stories/accepted/us-0006-realtime-spectator-stream-and-chronicle.md)
+- [`US-0029: Spectator Dynamic Cinematic Auto-Camera and Safe View Redaction`](../../user_stories/accepted/us-0029-spectator-dynamic-cinematic-auto-camera.md)
+- [`US-0030: OBS Transparent Party Vitals Overlay and Multi-Track Audio Output`](../../user_stories/accepted/us-0030-obs-transparent-party-vitals-and-multi-track-audio.md)
+- [`US-0031: Live Stream Audience Chaos Polls via TypeScript Backend`](../../user_stories/accepted/us-0031-live-stream-audience-chaos-polls-and-rumors.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0051: TypeScript Audience Studio & Live Stream Interactivity Microservice`](../../backlog/refined/0051-audience-studio-and-live-stream-interactivity-bc.md)
+- [`TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay`](../../backlog/proposed/0056-cinematic-director-auto-camera-and-obs-overlay.md)
+- [`TASK-0075: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition`](../../backlog/proposed/0075-spectator-view-stream-overlay-test-suite-decomposition.md)

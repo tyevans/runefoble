@@ -55,3 +55,22 @@ Existing virtual tabletops (Roll20, Foundry, Owlbear Rodeo) suffer from clunky, 
 3. Radial action wheel opens on token interaction in <50ms with touch targets measuring at least 44x44px for tablet accessibility.
 4. AoE spell targeting templates accurately compute and visually highlight intersecting token coordinates in real time.
 5. Canvas rendering performance remains smooth with zero console errors across all themes (Bauhaus, Dark Fantasy, Parchment, Cyber Rune) and color modes.
+
+## Linked User Stories
+- [`US-0004: Isolated Component Development in Storybook`](../../user_stories/accepted/us-0004-developer-tests-component-in-storybook.md)
+- [`US-0013: Zanzibar Campaign Role Authorization Gateway Enforcement`](../../user_stories/accepted/us-0013-gateway-zanzibar-authorization.md)
+- [`US-0016: Themable Frontend Design System with Bauhaus Modernist Default`](../../user_stories/accepted/us-0016-themable-frontend-with-bauhaus-default.md)
+- [`US-0041: Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher`](../../user_stories/accepted/us-0041-settings-modal-and-appearance-mode-switching.md)
+- [`US-0042: Accessible Dark and Light Mode Theming Invariants Across Components`](../../user_stories/accepted/us-0042-accessible-dark-and-light-mode-theming.md)
+- [`US-0043: Tactile Kinetic Board Interaction and Spoken Ghost Previews`](../../user_stories/accepted/us-0043-tactile-kinetic-board-and-spoken-ghost-previews.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0006: Voice DSP Audio Conditioning and Slurred Speech Synthesis`](../../backlog/complete/0006-voice-dsp-conditioning-filters.md)
+- [`TASK-0043: Frontend Microfrontend Component Styles and Subview Decomposition`](../../backlog/complete/0043-frontend-microfrontend-component-styles-and-subview-decomposition.md)
+- [`TASK-0061: Tactical Board, Autonomous DM, and Voice Controls Microfrontend Styles Decomposition`](../../backlog/complete/0061-board-autonomous-dm-and-voice-controls-ui-styles-decomposition.md)
+- [`TASK-0072: Immersive & Intuitive Frontend Experience Product Requirements Definition (PRD)`](../../backlog/complete/0072-frontend-experience-vision-prd.md)
+- [`TASK-0073: Frontend Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher`](../../backlog/complete/0073-frontend-settings-modal-and-theme-mode-orchestration.md)
+- [`TASK-0074: Design System Dark and Light Mode Color Tokens & Cross-Component Contrast Invariants`](../../backlog/complete/0074-dark-light-mode-color-tokens-and-component-contrast.md)
+- [`TASK-0084: Tactile Board Kinematics and Spoken Ghost Previews`](../../backlog/complete/0084-tactile-board-kinematics-and-spoken-ghost-previews.md)
+- [`TASK-0086: Settings Modal Tab Panels and Sub-Controllers Modular Decomposition`](../../backlog/complete/0086-settings-modal-tabs-and-controllers-decomposition.md)
+- [`TASK-0088: Microfrontends Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0088-microfrontends-test-suite-decomposition.md)

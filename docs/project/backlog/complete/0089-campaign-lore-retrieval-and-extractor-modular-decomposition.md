@@ -11,6 +11,10 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/60
+governing_prds:
+- PRD-0007
+governing_stories:
+- US-0036
 ---
 # TASK-0089: Campaign Lore Extraction, Embeddings, and Hybrid Retrieval Modular Decomposition
 

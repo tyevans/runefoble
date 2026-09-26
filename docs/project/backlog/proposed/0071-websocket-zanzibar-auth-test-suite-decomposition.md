@@ -6,6 +6,10 @@ created: 2026-09-26
 dependencies: [TASK-0008, TASK-0010, TASK-0016]
 governing_adrs: [ADR-0001, ADR-0003, ADR-0005]
 target_release: 0.2.0
+governing_prds:
+- PRD-0005
+governing_stories:
+- US-0014
 ---
 
 # TASK-0071: WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition

@@ -51,3 +51,48 @@ def extract_list_items(section_text: str) -> list[str]:
             if cleaned:
                 items.append(cleaned)
     return items
+
+
+KNOWN_BOUNDED_CONTEXTS = [
+    "the_watcher",
+    "board_state",
+    "game_session",
+    "character_sheet",
+    "voice_agent",
+    "gateway_api",
+    "gateway_mcp",
+    "campaign_lore",
+    "rules_compendium",
+    "battlemap_forge",
+    "soundscape",
+    "audience_studio",
+    "campaign_analytics",
+]
+
+
+def detect_target_bc(content: str) -> str:
+    """Detect target bounded context from content strings."""
+    for bc in KNOWN_BOUNDED_CONTEXTS:
+        if bc in content:
+            return bc
+    return "platform"
+
+
+def extract_prefixed_ids(
+    prefix: str, content: str, declared_items: list[Any] | None = None
+) -> list[str]:
+    """Extract and normalize IDs matching a prefix (e.g. 'PRD', 'US', 'TASK', 'ADR')."""
+    ids: list[str] = []
+    if declared_items:
+        if isinstance(declared_items, str):
+            declared_items = [declared_items]
+        for item in declared_items:
+            norm = f"{prefix.upper()}-{str(item).split('-')[-1].zfill(4)}"
+            if norm not in ids:
+                ids.append(norm)
+
+    for m in re.findall(rf"{re.escape(prefix)}-\d+", content, re.IGNORECASE):
+        norm = f"{prefix.upper()}-{m.split('-')[-1].zfill(4)}"
+        if norm not in ids:
+            ids.append(norm)
+    return ids

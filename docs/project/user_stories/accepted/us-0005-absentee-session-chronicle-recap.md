@@ -5,9 +5,13 @@ status: Accepted
 created: 2026-09-25
 persona: Sarah (The Absent Player)
 feature: FEAT-WAT-05
+governing_prd: PRD-0002
 ---
 
 # US-0005 — Absentee Session Chronicle and Audio Recap
+
+## Governing PRD
+- [`PRD-0002: Missing Player AI Stand-In with Mimicry and Absence Costs`](../../product/accepted/prd-0002-missing-player-ai-stand-in-with-penalties.md)
 
 ## User Story
 

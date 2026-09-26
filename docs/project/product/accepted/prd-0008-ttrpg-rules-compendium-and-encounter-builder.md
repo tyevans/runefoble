@@ -36,3 +36,12 @@ Low-latency index caching in Redis is required to keep compendium searches sub-5
 1. Compendium API powered by `redstring` returns structured stat blocks, spell definitions, and condition mechanics under 50ms.
 2. Encounter builder calculates CR difficulty thresholds for arbitrary party sizes and levels.
 3. Custom homebrew rules can be registered and surfaced through FastMCP tools and The Watcher intent validator.
+
+## Linked User Stories
+- [`US-0034: Agnostic TTRPG Ruleset Schemas and System Expansion`](../../user_stories/accepted/us-0034-agnostic-ttrpg-ruleset-schemas-and-system-expansion.md)
+- [`US-0037: Automated CR Encounter Balancing & redstring Rules Indexing`](../../user_stories/accepted/us-0037-automated-cr-encounter-balancing-and-compendium.md)
+- [`US-0052: Homebrew Spell, Monster & Rule Template Authoring`](../../user_stories/accepted/us-0052-homebrew-spell-monster-and-rule-authoring.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0048: TTRPG Rules Compendium & Automated Encounter Builder Microservice`](../../backlog/complete/0048-rules-compendium-and-encounter-builder-bc.md)
+- [`TASK-0108: Rules Compendium Search & Encounter Builder Microfrontend`](../../backlog/proposed/0108-rules-compendium-search-and-encounter-builder-microfrontend.md)

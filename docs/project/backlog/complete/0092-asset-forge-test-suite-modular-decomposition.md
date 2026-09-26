@@ -14,6 +14,10 @@ governing_adrs:
 - ADR-0013
 target_release: 0.3.0
 pr_url: https://github.com/tyevans/runefoble/pull/74
+governing_prds:
+- PRD-0009
+governing_stories:
+- US-0038
 ---
 # TASK-0092: Asset Forge Blackbox Test Suite Modular Decomposition
 

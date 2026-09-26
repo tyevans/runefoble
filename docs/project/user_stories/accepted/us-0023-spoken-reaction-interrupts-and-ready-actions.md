@@ -3,9 +3,13 @@ id: 0023
 title: Spoken Reaction Interrupts and Ready-Action Triggers
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0001
 ---
 
 # US-0023 — Spoken Reaction Interrupts and Ready-Action Triggers
+
+## Governing PRD
+- [`PRD-0001: The Watcher AI Dungeon Master and Real-Time Board Animator`](../../product/accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md)
 
 ## User Story
 

@@ -3,9 +3,13 @@ id: 0017
 title: Human DM Veto and Private Narrative Co-Pilot Whispers
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0001
 ---
 
 # US-0017 — Human DM Veto and Private Narrative Co-Pilot Whispers
+
+## Governing PRD
+- [`PRD-0001: The Watcher AI Dungeon Master and Real-Time Board Animator`](../../product/accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md)
 
 ## User Story
 

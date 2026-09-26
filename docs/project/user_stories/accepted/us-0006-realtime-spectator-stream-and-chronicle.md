@@ -5,9 +5,13 @@ status: Accepted
 created: 2026-09-25
 persona: Devon (The Live Streamer / Spectator)
 feature: FEAT-BRD-01, FEAT-VOX-01
+governing_prd: PRD-0011
 ---
 
 # US-0006 — Real-Time Spectator Stream and Chronicle
+
+## Governing PRD
+- [`PRD-0011: Live Spectator Studio & Two-Way Audience Interactivity`](../../product/accepted/prd-0011-live-spectator-studio-and-audience-interactivity.md)
 
 ## User Story
 

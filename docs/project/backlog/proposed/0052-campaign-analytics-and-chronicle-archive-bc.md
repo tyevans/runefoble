@@ -6,6 +6,11 @@ created: 2026-09-25
 dependencies: [TASK-0011, TASK-0015, TASK-0032]
 governing_adrs: [ADR-0006, ADR-0007]
 target_release: 0.3.0
+governing_prds:
+- PRD-0012
+governing_stories:
+- US-0040
+- US-0054
 ---
 
 # TASK-0052: Campaign Analytics & Chronicle Archive Microservice

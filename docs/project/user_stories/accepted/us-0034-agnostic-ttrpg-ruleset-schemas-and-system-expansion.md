@@ -3,9 +3,13 @@ id: 0034
 title: Agnostic TTRPG Ruleset Schemas and System Expansion
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0008
 ---
 
 # US-0034 — Agnostic TTRPG Ruleset Schemas and System Expansion
+
+## Governing PRD
+- [`PRD-0008: TTRPG Rules Compendium & Automated Encounter Builder`](../../product/accepted/prd-0008-ttrpg-rules-compendium-and-encounter-builder.md)
 
 ## User Story
 

@@ -5,9 +5,13 @@ status: Accepted
 created: 2026-09-25
 persona: Alex (The Developer / Plugin Modder)
 feature: FEAT-DEV-01
+governing_prd: PRD-0001
 ---
 
 # US-0008 — MCP Tool Invocation for Autonomous AI Agents
+
+## Governing PRD
+- [`PRD-0001: The Watcher AI Dungeon Master and Real-Time Board Animator`](../../product/accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md)
 
 ## User Story
 

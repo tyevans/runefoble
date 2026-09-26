@@ -3,9 +3,13 @@ id: 0039
 title: Encounter Tension-Driven Adaptive Musical Scoring and Foley
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0010
 ---
 
 # US-0039 — Encounter Tension-Driven Adaptive Musical Scoring and Foley
+
+## Governing PRD
+- [`PRD-0010: Adaptive Soundscape, Environmental Foley & Combat Scoring`](../../product/accepted/prd-0010-adaptive-soundscape-foley-and-tension-scoring.md)
 
 ## User Story
 

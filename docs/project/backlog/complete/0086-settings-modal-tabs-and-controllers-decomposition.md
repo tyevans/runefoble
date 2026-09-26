@@ -13,6 +13,10 @@ governing_adrs:
 - ADR-0013
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/50
+governing_prds:
+- PRD-0013
+governing_stories:
+- US-0041
 ---
 # TASK-0086: Settings Modal Tab Panels and Sub-Controllers Modular Decomposition
 

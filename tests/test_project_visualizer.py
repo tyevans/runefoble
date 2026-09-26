@@ -95,6 +95,24 @@ def test_graph_builder_and_traceability_edges(repo_root: Path):
     assert m.ready_buffer_status in ["optimal", "over_buffered", "under_buffered"]
 
 
+def test_all_prds_have_stories_and_tasks_support(repo_root: Path):
+    parser = ProjectParser(repo_root)
+    data = parser.parse_all(force=True)
+    builder = ProjectGraphBuilder(data)
+    builder.build()
+
+    assert len(data.prds) >= 16
+    for prd in data.prds:
+        assert len(prd.linked_stories) >= 1, f"PRD {prd.id} ({prd.title}) has 0 linked user stories"
+        assert len(prd.implementing_tasks) >= 1, (
+            f"PRD {prd.id} ({prd.title}) has 0 implementing tasks"
+        )
+
+    assert len(data.metrics.orphaned_stories) == 0, (
+        f"Found orphaned stories: {data.metrics.orphaned_stories}"
+    )
+
+
 def test_html_generator_produces_valid_bundle(repo_root: Path, tmp_path: Path):
     generator = ProjectVisualizerGenerator(repo_root)
     out_file = tmp_path / "test-visualizer.html"

@@ -1,3 +1,15 @@
+---
+id: '0006'
+title: Voice DSP Audio Conditioning and Slurred Speech Synthesis
+status: Complete
+created: 2026-09-25
+governing_prds:
+- PRD-0013
+governing_stories:
+- US-0004
+- US-0016
+---
+
 # TASK-0006: Voice DSP Audio Conditioning and Slurred Speech Synthesis
 
 ## Status

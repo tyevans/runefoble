@@ -1,3 +1,14 @@
+---
+id: '0004'
+title: Tactical Board Fog-of-War and Token Web Component
+status: Complete
+created: 2026-09-25
+governing_prds:
+- PRD-0003
+governing_stories:
+- US-0012
+---
+
 # TASK-0004: Tactical Board Fog-of-War and Token Web Component
 
 ## Status

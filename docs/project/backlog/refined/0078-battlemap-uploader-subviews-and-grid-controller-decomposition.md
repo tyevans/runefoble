@@ -12,6 +12,10 @@ governing_adrs:
 - ADR-0012
 - ADR-0013
 target_release: 0.2.0
+governing_prds:
+- PRD-0009
+governing_stories:
+- US-0038
 ---
 
 # TASK-0078: Battlemap Uploader Subviews and Grid Controller Modular Decomposition

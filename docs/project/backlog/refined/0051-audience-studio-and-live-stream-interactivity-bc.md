@@ -15,6 +15,11 @@ governing_adrs:
 - ADR-0007
 - ADR-0013
 target_release: 0.3.0
+governing_prds:
+- PRD-0011
+governing_stories:
+- US-0006
+- US-0031
 ---
 
 # TASK-0051: TypeScript Audience Studio & Live Stream Interactivity Microservice

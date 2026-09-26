@@ -17,3 +17,16 @@ Voice immersion is paramount in collaborative tabletop roleplaying. When charact
 3. The `POST /api/v1/voice/tts` endpoint synthesizes persona audio streams applying active affliction filters, returning audio payloads, duration, and DSP metadata.
 4. Each DSP conditioning cycle dispatches `VoiceAudioConditioned` CloudEvents-compliant domain events to Redis Streams.
 5. Blackbox TDD test suite verifies filter presets, execution latency benchmarks (<50ms), and event dispatch via public frontdoors.
+
+## Linked User Stories
+- [`US-0011: Real-Time Dynamic Voice Filters for Afflicted Characters`](../../user_stories/accepted/us-0011-dynamic-voice-filters-for-afflicted-characters.md)
+- [`US-0020: DM Vocal Modulator with Real-Time NPC Formant Filtering`](../../user_stories/accepted/us-0020-dm-vocal-modulator-with-realtime-npc-filtering.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0005: Model Context Protocol (MCP) RPG Tools Expansion`](../../backlog/complete/0005-fastmcp-rpg-tools-expansion.md)
+- [`TASK-0021: Real-Time Dynamic DSP Audio Conditioning Pipeline`](../../backlog/complete/0021-voice-dsp-conditioning-pipeline.md)
+- [`TASK-0033: Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline`](../../backlog/complete/0033-webrtc-voice-room-signaling.md)
+- [`TASK-0064: WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0064-webrtc-voice-signaling-and-test-suite-decomposition.md)
+- [`TASK-0065: Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition`](../../backlog/complete/0065-voice-agent-dsp-pipeline-and-router-decomposition.md)
+- [`TASK-0068: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition`](../../backlog/proposed/0068-webrtc-client-service-and-peer-mesh-decomposition.md)
+- [`TASK-0083: Streaming Whisper Audio Transcription Test Suite Modular Decomposition`](../../backlog/complete/0083-streaming-whisper-test-suite-modular-decomposition.md)

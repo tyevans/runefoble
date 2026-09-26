@@ -7,6 +7,11 @@ completed: 2026-09-26
 dependencies: [TASK-0009]
 governing_adrs: [ADR-0007, ADR-0011]
 target_release: 0.1.0
+governing_prds:
+- PRD-0006
+governing_stories:
+- US-0015
+- US-0051
 ---
 
 # TASK-0018 — Character Level Progression, Spell Slots & Spellbook Preparation

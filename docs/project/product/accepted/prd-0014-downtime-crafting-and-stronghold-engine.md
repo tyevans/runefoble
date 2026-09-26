@@ -45,3 +45,11 @@ Players (like Bram the Tinkerer) and Game Masters (like Evelyn) who desire deep,
 2. Tavern minigames (such as Liar's Dice) execute multi-round turns with real-time state synchronization over WebSockets.
 3. Merchant negotiation engine dynamically adjusts price offers based on character persuasion rolls and merchant temperaments.
 4. Campfire rest boons successfully apply condition and stat modifiers to resting characters upon dawn event trigger.
+
+## Linked User Stories
+- [`US-0044: Interactive Campfire Downtime and Alchemical Crafting`](../../user_stories/accepted/us-0044-interactive-campfire-downtime-and-crafting.md)
+- [`US-0047: Interactive Tavern Minigames, Gambling and Personality-Driven Merchant Haggling`](../../user_stories/accepted/us-0047-tavern-minigames-and-merchant-haggling.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0100: Downtime Activities, Alchemical Crafting & Party Stronghold Engine`](../../backlog/proposed/0100-downtime-activities-and-crafting-engine-bc.md)
+- [`TASK-0103: Interactive Tavern Minigames & Personality-Driven Merchant Haggling`](../../backlog/proposed/0103-tavern-minigames-and-merchant-haggling.md)

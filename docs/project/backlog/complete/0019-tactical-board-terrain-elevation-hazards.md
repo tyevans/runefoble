@@ -7,6 +7,11 @@ completed: 2026-09-26
 dependencies: [TASK-0004, TASK-0007]
 governing_adrs: [ADR-0007, ADR-0011]
 target_release: 0.1.0
+governing_prds:
+- PRD-0003
+governing_stories:
+- US-0012
+- US-0022
 ---
 
 # TASK-0019: Tactical Board Terrain Elevation, Difficult Terrain & Hazard Grid
@@ -35,7 +40,7 @@ Implemented tactical cell elevation levels, difficult terrain movement cost mult
   - Updated `GET /api/v1/boards/{id}` to project terrain grid and active hazards.
 - `docs/reference/events-schema.md`:
   - Documented `TerrainCellModified` and `TokenHazardTriggered` in the Diataxis reference documentation.
-- `docs/project/product/accepted/prd-0003-spatial-fog-of-war-and-visibility-engine.md`:
+- `docs/project/product/accepted/PRD-0003-spatial-fog-of-war-and-visibility-engine.md`:
   - Updated checkable outcomes to include terrain elevation, difficult terrain movement budget penalties, and hazard events.
 
 ## Verification

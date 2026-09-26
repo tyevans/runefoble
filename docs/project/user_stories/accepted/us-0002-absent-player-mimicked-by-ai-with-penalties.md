@@ -3,9 +3,13 @@ id: 0002
 title: Autonomous Stand-In for Absent Player with DM Penalties
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0002
 ---
 
 # US-0002 — Autonomous Stand-In for Absent Player with DM Penalties
+
+## Governing PRD
+- [`PRD-0002: Missing Player AI Stand-In with Mimicry and Absence Costs`](../../product/accepted/prd-0002-missing-player-ai-stand-in-with-penalties.md)
 
 ## User Story
 

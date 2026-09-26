@@ -3,9 +3,13 @@ id: 0035
 title: Runtime MCP Tool Hot-Reloading and Web Component Extension Slots
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0001
 ---
 
 # US-0035 — Runtime MCP Tool Hot-Reloading and Web Component Extension Slots
+
+## Governing PRD
+- [`PRD-0001: The Watcher AI Dungeon Master and Real-Time Board Animator`](../../product/accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md)
 
 ## User Story
 
