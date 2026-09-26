@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Created Storybook stories covering empty state, active combat telemetry, victory celebration, and total party kill (TPK) states with zero console errors.
   - Exported service discovery manifest at `GET /ui/manifest` and in `services/campaign_analytics/ui/manifest.json`.
   - Added frontdoor blackbox test suite in `tests/test_blackbox_campaign_analytics_ui.py` and updated Diataxis guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md`.
+
 - **PRD Creation, Maintenance, and Task Decomposition Pipeline (`tools/prd_pipeline`, `scripts/decompose-prds.sh`, `ADR-0003`, `ADR-0013`)**:
   - Implemented modular PRD pipeline engine in `tools/prd_pipeline/` with CLI entrypoint `tools.prd_pipeline.cli` and executable shell wrapper `scripts/decompose-prds.sh`.
   - Added automated auditing command (`audit`) detecting undecomposed and underdecomposed PRDs, buffer exhaustion warnings (<8 items), stale cross-directory task links, and oversized proposed tasks.
@@ -42,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `session.py` (157 lines): `SessionReadProjection` integrating sub-projections, background worker loops, and DLQ routing.
     - `__init__.py` (33 lines): Backward-compatible re-exports maintaining import signatures.
   - Added unit and blackbox test coverage in `tests/test_game_session_projections.py` and updated technical reference `docs/reference/redis-streams-event-bus.md`.
+
 - **Universal VTT Importer and Dynamic MCP Tool Registry (`TASK-0057`, `ADR-0007`, `ADR-0008`, `ADR-0010`, `ADR-0013`)**:
   - Implemented Universal VTT (`.dd2vtt`) parser in `services/board_state/src/board_state/parsers/uvtt.py` extracting grid resolution, line-of-sight wall vectors, door portals, ambient lights, and embedded base64 map imagery.
   - Built ingestion endpoint `POST /api/v1/board/{id}/import/uvtt` (alias: `/api/v1/boards/{id}/import/uvtt`) supporting both multipart file uploads and raw JSON payloads.
@@ -66,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added umbrella Helm deployment manifest `campaign-analytics.yaml` on internal port 8011 with Swagger UI aggregation and ingress routing.
   - Authored Diataxis How-To guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md` and updated technical reference specifications.
   - Verified full test suite through frontdoor blackbox tests in `tests/test_blackbox_campaign_analytics.py` with zero file invariant violations (< 500 lines per file).
+
 
 - **Cinematic Director Auto-Camera and OBS Stream Overlay (`TASK-0056`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
   - Implemented autonomous Cinematic Director virtual camera (`gateway_api.cinematic_director`) tracking active turn events (`TurnStarted`) and action centers (`TokenMoved`) with smooth cubic-bezier easing (`cubic-bezier(0.25, 0.1, 0.25, 1.0)`) within 300ms.
