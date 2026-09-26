@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Spectator Stream Overlay and Broadcast Test Suite Modular Decomposition (`TASK-0075`, `ADR-0001`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0009`, `ADR-0013`)**:
+  - Decomposed monolithic `tests/test_spectator_view.py` (330 lines) into two specialized test modules strictly under 200 lines each.
+  - Authored `tests/test_spectator_events_and_schema.py` (186 lines) validating `SpectatorSessionConnected` event registry, CloudEvents 1.0 schema compliance, and audience-safe state sanitization.
+  - Authored `tests/test_spectator_stream_overlay.py` (189 lines) validating public HTTP spectator endpoints (`/api/v1/spectate/{id}` and `/api/v1/spectator/sessions/{id}`), token query and header authentication, Redis event bus dispatch, and real-time live WebSocket `/ws/spectator/{id}` broadcast updates.
+  - Added endpoint aliases `/api/v1/spectator/sessions/{session_id}` and `/ws/spectator/{session_id}` in `gateway_api/routers/spectator.py`.
+
 - **Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend (`TASK-0110`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0011`, `ADR-0013`)**:
   - Vendored `<runefoble-campaign-analytics>` Lit Web Component in `services/campaign_analytics/ui/` with Bauhaus geometric tokens, full dark/light contrast, and strict Shadow DOM encapsulation.
   - Implemented `<runefoble-combat-heatmap>` rendering canvas-based 2D tactical grid overlays with movement corridors, hazard hotspots, knockout markers, and dynamic density metric filters (`all`, `damage`, `hit`, `movement`).
