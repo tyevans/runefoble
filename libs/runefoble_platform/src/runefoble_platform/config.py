@@ -3,7 +3,7 @@
 Centralizes configuration settings across bounded contexts.
 """
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +27,13 @@ class PlatformSettings(BaseSettings):
     database_url: str = Field(
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/runefoble",
         description="Postgres async connection string",
+    )
+
+    # Cache & Event Streaming (Redis)
+    redis_url: str = Field(
+        default="redis://localhost:6379/0",
+        validation_alias=AliasChoices("RUNEFOBLE_REDIS_URL", "REDIS_URL"),
+        description="Redis connection string",
     )
 
     # Object Storage (Silo / MinIO fork)

@@ -25,6 +25,7 @@
 | Infrastructure | Service Name | Port | Description |
 |---|---|---|---|
 | PostgreSQL | `postgres` | `5432` | Relational database |
+| Redis | `runefoble-redis` | `6379` | In-memory datastore and event streaming via Redis Streams |
 | Silo (MinIO fork) | `silo` | `9000` (S3), `9001` (Console) | S3 Object Storage |
 | SpiceDB | `spicedb` | `50051` (gRPC), `8443` (HTTP) | Zanzibar graph authorization |
 | OpenPanel | `openpanel` | `3000` | Self-hosted analytics |

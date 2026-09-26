@@ -39,6 +39,10 @@ spec:
               value: "http://zitadel:{{ $.Values.zitadel.port }}"
             - name: RUNEFOBLE_SPICEDB_ENDPOINT
               value: "spicedb:{{ $.Values.spicedb.grpcPort }}"
+            - name: REDIS_URL
+              value: "redis://runefoble-redis:{{ $.Values.redis.port }}/0"
+            - name: RUNEFOBLE_REDIS_URL
+              value: "redis://runefoble-redis:{{ $.Values.redis.port }}/0"
 ---
 apiVersion: v1
 kind: Service

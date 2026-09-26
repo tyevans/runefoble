@@ -24,7 +24,7 @@ from runefoble_platform.event_sourcing import (
     register_event,
 )
 from runefoble_platform.models import BaseEntity, CampaignScopedEntity, UserPrincipal, utc_now
-from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 
 __all__ = [
     "PlatformSettings",
@@ -39,6 +39,7 @@ __all__ = [
     "EventBus",
     "bus",
     "RedisStreamsEventBus",
+    "deserialize_event",
     "DeclarativeAggregate",
     "DomainEvent",
     "AggregateRepository",

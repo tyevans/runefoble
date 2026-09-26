@@ -43,6 +43,19 @@ postgres:
   port: 5432
   storageSize: 5Gi
 
+# Event Streaming & In-Memory Cache (Redis)
+redis:
+  enabled: true
+  image: redis:7.2-alpine
+  port: 6379
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
 # Object Storage (Silo / MinIO fork)
 silo:
   enabled: true

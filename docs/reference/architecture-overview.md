@@ -20,6 +20,10 @@ graph TD
     BoardState -.->|Check Permissions| SpiceDB
     GameSession -.->|Persist State| Postgres[(PostgreSQL)]
     VoiceAgent -.->|Store Audio Chunks| Silo[(Silo S3)]
+    TheWatcher -.->|Publish/Consume Events| Redis[(Redis Streams)]
+    BoardState -.->|Stream Board Updates| Redis
+    GameSession -.->|Stream Lifecycle Events| Redis
+    GatewayAPI -.->|Fanout Events| Redis
 
     OpenPanel[(OpenPanel Analytics)] -.-> Ingress
     Grafana[(Grafana & Loki)] -.-> OpenTelemetry[OTel Collector]
