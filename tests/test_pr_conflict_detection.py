@@ -325,3 +325,141 @@ def test_orchestrator_retry_limits_and_continuous_drain(
     assert exit_code == 0
     # Must have attempted exactly 3 times before hitting the failure limit
     assert len(pipeline_calls) == 3
+
+
+def test_fetch_failed_ci_logs_extracts_run_logs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Verifies that fetch_failed_ci_logs extracts action run id and invokes gh run view --log-failed."""
+    captured_cmd = None
+
+    def mock_run(cmd, *a, **k):
+        nonlocal captured_cmd
+        captured_cmd = cmd
+        mock_p = MagicMock(spec=subprocess.CompletedProcess)
+        mock_p.returncode = 0
+        mock_p.stdout = "FAILED tests/test_foo.py::test_bar - AssertionError"
+        mock_p.stderr = ""
+        return mock_p
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+    failed = [
+        {
+            "name": "Python Lint, Tests & Properties",
+            "state": "FAILURE",
+            "link": "https://github.com/tyevans/runefoble/actions/runs/36256607306/job/108444460615",
+        }
+    ]
+    log = ci_watcher.fetch_failed_ci_logs(tmp_path, failed)
+    assert "AssertionError" in log
+    assert captured_cmd == [
+        "gh",
+        "run",
+        "view",
+        "36256607306",
+        "--log-failed",
+        "--job",
+        "108444460615",
+    ]
+
+
+def test_watch_and_repair_pull_request_heals_ci_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Verifies that watch_and_repair_pull_request invokes agent repair on CI failure and succeeds on retry."""
+    from tools.backlog_engine import orchestrator
+
+    task = Task(
+        id="0082", title="OpenPanel", status=TaskStatus.REVIEW, file_path=tmp_path / "82.md"
+    )
+    agent_prompts = []
+    pushed = []
+    poll_count = 0
+
+    def mock_wait(wt, pr_url, *a, **k):
+        nonlocal poll_count
+        poll_count += 1
+        return poll_count > 1  # False on first call (CI failure), True on second call (repaired)
+
+    monkeypatch.setattr(orchestrator, "wait_for_ci_checks", mock_wait)
+    monkeypatch.setattr(
+        orchestrator,
+        "get_ci_failure_diagnostics",
+        lambda wt, url: ("ci_failed", "Test failure in analytics.py"),
+    )
+    monkeypatch.setattr(
+        orchestrator,
+        "sync_and_resolve_base_ref",
+        lambda *a, **k: (True, "synced"),
+    )
+    monkeypatch.setattr(
+        orchestrator,
+        "run_agent_in_worktree",
+        lambda wt, t, custom_prompt=None, **k: (
+            agent_prompts.append(custom_prompt) or (True, "fixed")
+        ),
+    )
+    monkeypatch.setattr(
+        orchestrator,
+        "run_preflight_checks",
+        lambda wt: (True, "preflight ok"),
+    )
+    monkeypatch.setattr(
+        orchestrator,
+        "commit_and_push",
+        lambda wt, t, b: pushed.append(b),
+    )
+
+    success = orchestrator.watch_and_repair_pull_request(
+        tmp_path, task, "feat/0082-openpanel", "https://github.com/example/pr/36", "worker-0082"
+    )
+    assert success is True
+    assert poll_count == 2
+    assert len(agent_prompts) == 1
+    assert "Test failure in analytics.py" in agent_prompts[0]
+    assert pushed == ["feat/0082-openpanel"]
+
+
+def test_watch_and_repair_pull_request_heals_merge_conflict(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Verifies that watch_and_repair_pull_request handles mid-flight merge conflicts on PR."""
+    from tools.backlog_engine import orchestrator
+
+    task = Task(
+        id="0074", title="Theme Contrast", status=TaskStatus.REVIEW, file_path=tmp_path / "74.md"
+    )
+    poll_count = 0
+    sync_called = []
+
+    def mock_wait(wt, pr_url, *a, **k):
+        nonlocal poll_count
+        poll_count += 1
+        return poll_count > 1
+
+    monkeypatch.setattr(orchestrator, "wait_for_ci_checks", mock_wait)
+    monkeypatch.setattr(
+        orchestrator,
+        "get_ci_failure_diagnostics",
+        lambda wt, url: ("conflict", "PR has merge conflicts with base branch"),
+    )
+    monkeypatch.setattr(
+        orchestrator,
+        "sync_and_resolve_base_ref",
+        lambda wt, t, **k: sync_called.append(t.id) or (True, "conflict resolved"),
+    )
+    monkeypatch.setattr(
+        orchestrator,
+        "run_preflight_checks",
+        lambda wt: (True, "preflight ok"),
+    )
+    monkeypatch.setattr(
+        orchestrator,
+        "commit_and_push",
+        lambda wt, t, b: None,
+    )
+
+    success = orchestrator.watch_and_repair_pull_request(
+        tmp_path, task, "feat/0074-theme", "https://github.com/example/pr/37", "worker-0074"
+    )
+    assert success is True
+    assert poll_count == 2
+    assert len(sync_called) == 1

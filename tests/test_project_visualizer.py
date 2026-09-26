@@ -229,6 +229,11 @@ def test_html_bundle_contains_graph_and_gantt(repo_root: Path, tmp_path: Path):
     assert "Gantt & Timeline" in content
     assert "Hide Done" in content
     assert "Git Commits & Pull Requests" in content
+    assert "ForceSimulation" in content
+    assert "graph-minimap" in content
+    assert "edge-active-flow" in content
+    assert "focus-ripple" in content
+    assert "switchGraphLayout" in content
 
 
 def test_file_length_invariant_strictly_enforced(repo_root: Path):
