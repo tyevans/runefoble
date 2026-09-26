@@ -98,6 +98,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`project-campaign-analytics-and-chronicle-timeline.md`](how-to/project-campaign-analytics-and-chronicle-timeline.md): How to project combat telemetry, query spatial damage heatmaps, calculate encounter MVP awards, and view chronicle timelines.
 
 
+
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
 - [`platform-services.md`](reference/platform-services.md): Directory of external platform services, container images, ports, environment variables, and test fallbacks.
