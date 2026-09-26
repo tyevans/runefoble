@@ -1,0 +1,70 @@
+{{- if .Values.services.soundscape }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: soundscape-config
+  labels:
+    app: soundscape
+data:
+  SOUNDSCAPE_DEFAULT_MOOD: "exploration"
+  SOUNDSCAPE_DEFAULT_VOLUME: "1.0"
+  SOUNDSCAPE_CROSSFADE_MS: "1500"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soundscape
+  labels:
+    app: soundscape
+spec:
+  replicas: {{ .Values.services.soundscape.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: soundscape
+  template:
+    metadata:
+      labels:
+        app: soundscape
+    spec:
+      containers:
+        - name: soundscape
+          image: {{ .Values.services.soundscape.image }}
+          ports:
+            - containerPort: {{ .Values.services.soundscape.port }}
+          envFrom:
+            - configMapRef:
+                name: soundscape-config
+          env:
+            - name: RUNEFOBLE_SILO_ENDPOINT
+              value: "silo:{{ .Values.silo.port }}"
+            - name: RUNEFOBLE_SILO_ACCESS_KEY
+              value: {{ .Values.silo.accessKey | quote }}
+            - name: RUNEFOBLE_SILO_SECRET_KEY
+              value: {{ .Values.silo.secretKey | quote }}
+            - name: RUNEFOBLE_ZITADEL_ISSUER
+              value: "http://zitadel:{{ .Values.zitadel.port }}"
+            - name: RUNEFOBLE_SPICEDB_ENDPOINT
+              value: "spicedb:{{ .Values.spicedb.grpcPort }}"
+            - name: REDIS_URL
+              value: "redis://runefoble-redis:{{ .Values.redis.port }}/0"
+            - name: RUNEFOBLE_REDIS_URL
+              value: "redis://runefoble-redis:{{ .Values.redis.port }}/0"
+            - name: RUNEFOBLE_OTEL_ENABLED
+              value: "{{ .Values.observability.enabled }}"
+            - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:{{ .Values.observability.otelCollector.grpcPort }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soundscape
+  labels:
+    app: soundscape
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.services.soundscape.port }}
+      targetPort: {{ .Values.services.soundscape.port }}
+  selector:
+    app: soundscape
+{{- end }}

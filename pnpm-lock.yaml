@@ -98,6 +98,16 @@ importers:
         specifier: ~7.0.2
         version: 7.0.2
 
+  services/soundscape/ui:
+    dependencies:
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ~7.0.2
+        version: 7.0.2
+
   services/the_watcher/ui:
     dependencies:
       lit:

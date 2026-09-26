@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Dynamic Soundscape & Adaptive Audio Microservice (`TASK-0050`, `PRD-0010`, `US-0039`)**:
+  - Scaffolded new bounded context microservice `services/soundscape` with internal port `8009` and registered in UV monorepo workspace.
+  - Implemented Encounter Tension Scoring Engine dynamically computing real-time tension (0–100) from combat rounds, enemy CR threat, and party health ratios.
+  - Implemented Adaptive Audio Stem Mixer crossfading multi-track stems (`ambient`, `tension`, `combat`, `boss`) with smooth gain matrices.
+  - Implemented WebAudio Ducking Coordinator muting/attenuating music layers by -12dB upon speech events (`PlayerSpokeEvent`) and tactical foley stingers.
+  - Added tactical sound foley catalog and REST frontdoor (`POST /api/v1/soundscape/cue`) with preset audio URLs and volume gain controls.
+  - Implemented event-sourced `SoundscapeAggregate` powered by `eventsource-py` handling `SoundscapeTrackChanged`, `SoundscapeCueTriggered`, `SoundscapeTensionUpdated`, `SoundscapeMoodOverridden`, and `SoundscapeDuckingToggled`.
+  - Subscribed to `CombatStarted` and `CombatRoundAdvanced` over Redis Streams for autonomous encounter tension scoring and track transition.
+  - Enforced SpiceDB Zanzibar authorization on manual DM mood overrides (`POST /api/v1/soundscape/override`).
+  - Vendored Lit Web Component `<runefoble-soundscape-controls>` in `services/soundscape/ui/` with Bauhaus styling tokens, custom event contracts, Storybook stories, and `/ui/manifest` discovery.
+  - Added Deployment, Service, and ConfigMap to umbrella Helm chart (`deployments/helm/runefoble/templates/soundscape.yaml`) and registered OpenAPI endpoint in Swagger UI.
+  - Added Diataxis How-To guide (`docs/how-to/manage-dynamic-soundscapes-and-audio-ducking.md`) and updated technical reference docs.
+  - Added comprehensive blackbox TDD test suite (`tests/test_blackbox_soundscape.py`).
 - **Roadmap & Creative Feature Pipeline Expansion (`Milestone 5`, `Milestone 6`)**:
   - Expanded `ROADMAP.md` to introduce Milestone 5 (*Collaborative Creation, Downtime & Tactile Immersion*) and Milestone 6 (*Intelligent Living Worlds & Spatial Multi-Party Universes*).
   - Expanded User Personas (`docs/project/user_stories/PERSONAS.md`) with three new creative archetypes:

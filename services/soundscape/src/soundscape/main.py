@@ -1,0 +1,64 @@
+"""Runefoble Dynamic Soundscape & Adaptive Audio Microservice.
+
+Powered by eventsource-py, Redis Streams, and WebAudio stem mixing.
+Manages encounter tension scoring, tactical foley sound effects, and -12dB audio ducking.
+"""
+
+from typing import Any
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from soundscape.routers.cue import router as cue_router
+from soundscape.routers.stems import router as stems_router
+from soundscape.routers.tension import router as tension_router
+
+app = FastAPI(
+    title="Runefoble - Dynamic Soundscape & Adaptive Audio Service",
+    version="0.1.0",
+    description="Dynamic soundscape, tension scoring, foley cues, and WebAudio ducking microservice.",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(cue_router)
+app.include_router(tension_router)
+app.include_router(stems_router)
+
+
+@app.get("/healthz", tags=["Health"])
+@app.get("/health", tags=["Health"])
+def health_check() -> dict[str, str]:
+    """Health check endpoint."""
+    return {"status": "ok", "service": "soundscape"}
+
+
+@app.get("/ui/manifest", tags=["Microfrontends"])
+def get_ui_manifest() -> dict[str, Any]:
+    """Advertise vendored microfrontend components for soundscape controls."""
+    return {
+        "service": "soundscape",
+        "package": "@runefoble/soundscape-ui",
+        "components": ["runefoble-soundscape-controls"],
+        "version": "0.1.0",
+    }
+
+
+def main() -> None:
+    """Run uvicorn server for Soundscape microservice."""
+    import uvicorn
+
+    uvicorn.run("soundscape.main:app", host="0.0.0.0", port=8009, reload=True)
+
+
+if __name__ == "__main__":
+    main()

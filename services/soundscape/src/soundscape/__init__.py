@@ -1,0 +1,12 @@
+"""Runefoble Soundscape & Adaptive Audio Microservice."""
+
+from soundscape.aggregate import SoundscapeAggregate
+from soundscape.mixer import AudioStemMixer
+from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
+
+__all__ = [
+    "SoundscapeAggregate",
+    "AudioStemMixer",
+    "calculate_encounter_tension",
+    "derive_stem_profile",
+]

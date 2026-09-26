@@ -23,6 +23,7 @@ members = [
     "runefoble-events",
     "runefoble-platform",
     "runefoble-workspace",
+    "soundscape",
     "the-watcher",
     "voice-agent",
 ]
@@ -2607,6 +2608,7 @@ dependencies = [
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
+    { name = "soundscape" },
     { name = "the-watcher" },
     { name = "voice-agent" },
 ]
@@ -2640,6 +2642,7 @@ requires-dist = [
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
+    { name = "soundscape", editable = "services/soundscape" },
     { name = "the-watcher", editable = "services/the_watcher" },
     { name = "voice-agent", editable = "services/voice_agent" },
 ]
@@ -2730,6 +2733,31 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88", size = 30594, upload-time = "2021-05-16T22:03:42.897Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575, upload-time = "2021-05-16T22:03:41.177Z" },
+]
+
+[[package]]
+name = "soundscape"
+version = "0.1.0"
+source = { editable = "services/soundscape" }
+dependencies = [
+    { name = "eventsource-py" },
+    { name = "fastapi" },
+    { name = "pydantic" },
+    { name = "runefoble-auth" },
+    { name = "runefoble-events" },
+    { name = "runefoble-platform" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "eventsource-py", specifier = ">=0.14.0" },
+    { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
+    { name = "runefoble-events", editable = "libs/runefoble_events" },
+    { name = "runefoble-platform", editable = "libs/runefoble_platform" },
+    { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 
 [[package]]

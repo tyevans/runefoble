@@ -164,6 +164,8 @@ swaggerUI:
       url: "http://rules-compendium:8007/openapi.json"
     - name: "Asset Forge Service"
       url: "http://asset-forge:8008/openapi.json"
+    - name: "Soundscape Service"
+      url: "http://soundscape:8009/openapi.json"
 
 # Services
 services:
@@ -203,6 +205,10 @@ services:
     image: runefoble/asset-forge:0.1.0
     replicas: 1
     port: 8008
+  soundscape:
+    image: runefoble/soundscape:0.1.0
+    replicas: 1
+    port: 8009
 
 # Frontend Application
 frontend:
