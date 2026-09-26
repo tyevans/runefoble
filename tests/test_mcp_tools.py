@@ -4,9 +4,11 @@ import pytest
 from gateway_mcp.server import (
     add_condition,
     apply_absentee_penalty,
+    apply_condition,
     cast_spell,
     create_encounter,
     execute_agent_action_plan,
+    get_character_sheet,
     inspect_inventory,
     inspect_tactical_board,
     mcp,
@@ -30,6 +32,8 @@ def test_mcp_registered_tools():
         "cast_spell",
         "modify_character_hp",
         "add_condition",
+        "apply_condition",
+        "get_character_sheet",
         "query_encounter_state",
         "inspect_inventory",
         "create_encounter",
@@ -168,3 +172,22 @@ async def test_execute_agent_action_plan():
     assert res["success"] is True
     assert res["completed_steps"] == 2
     assert len(res["steps"]) == 2
+
+
+def test_get_character_sheet():
+    """Test retrieving complete character sheet data."""
+    sheet = get_character_sheet("char-1")
+    assert sheet["character_id"] == "char-1"
+    assert sheet["name"] == "Valeros"
+    assert sheet["class"] == "Fighter"
+    assert sheet["hp"]["current"] == 38
+    assert sheet["attributes"]["strength"] == 16
+    assert "inventory" in sheet
+
+
+def test_apply_condition():
+    """Test imposing condition via apply_condition alias."""
+    res = apply_condition("char-2", "poisoned", duration_rounds=3, source="Venom trap")
+    assert res["status"] == "condition_applied"
+    assert res["condition"] == "poisoned"
+    assert res["duration_rounds"] == 3

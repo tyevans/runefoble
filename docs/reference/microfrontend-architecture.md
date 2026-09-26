@@ -10,6 +10,7 @@ runefoble/
 │   ├── src/
 │   │   ├── runefoble-app.ts      # Top-level shell layout, header & WebSocket orchestration
 │   │   ├── components/           # Shell components & backward-compatible re-exports
+│   │   │   ├── runefoble-settings-modal.ts  # Bauhaus settings modal with color mode & themes
 │   │   │   └── runefoble-theme-switcher.ts  # Bauhaus modernist theme switcher
 │   │   └── styles/
 │   │       └── themes.css        # Bauhaus default tokens & alternative palettes
@@ -51,7 +52,8 @@ runefoble/
 | `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>` | `services/game_session/ui/src/*.stories.ts` |
 | `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>` | `services/the_watcher/ui/src/*.stories.ts` |
 | `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>` | `services/voice_agent/ui/src/runefoble-voice-controls.stories.ts` |
-| `frontend` (App Shell) | `frontend` | `<runefoble-app>`, `<runefoble-theme-switcher>` | `frontend/src/stories/theme-switcher.stories.ts` |
+| `frontend` (App Shell) | `frontend` | `<runefoble-app>`, `<runefoble-settings-modal>`, `<runefoble-theme-switcher>` | `frontend/src/stories/runefoble-settings-modal.stories.ts` |
+
 
 ## Pnpm Monorepo Workspace
 
