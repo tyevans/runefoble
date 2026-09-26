@@ -26,7 +26,7 @@ def mock_redis() -> MockAsyncRedis:
     return MockAsyncRedis()
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_event_bus(mock_redis: MockAsyncRedis):
     bus = RedisStreamsEventBus(client=mock_redis)
     set_event_bus(bus)
