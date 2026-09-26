@@ -1,7 +1,7 @@
 ---
 id: 0093
 title: DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition
-status: in-progress
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0053
@@ -12,8 +12,7 @@ governing_adrs:
 - ADR-0009
 - ADR-0013
 target_release: 0.3.0
-claimed_by: worker-0093
-branch: feat/0093-dm-copilot-router-and-blackbox-test-suite-decomposition
+pr_url: https://github.com/tyevans/runefoble/pull/81
 ---
 # TASK-0093: DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition
 
