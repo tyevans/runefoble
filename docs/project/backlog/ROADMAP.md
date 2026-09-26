@@ -42,17 +42,17 @@
 - [x] Conversational Disambiguation & Compound Action Intents (TASK-0054)
 - [x] Stand-In Policy Guardrails & Mid-Session Hot-Swap Takeover (TASK-0055)
 
-## Milestone 4: Broadcast Studio & Community Platform (Current)
+## Milestone 4: Broadcast Studio & Community Platform (Complete)
 ### Foundational Platform Enablers
 - [x] TypeScript Live Audience Studio & Spectator Interactivity (ADR-0001, ADR-0006, ADR-0007, TASK-0051)
 
 ### Broadcast & Interactivity Epics
-- [ ] Cinematic Director Auto-Camera & OBS Transparent Overlay (TASK-0056)
-- [ ] Campaign Telemetry, Analytics & Chronicle Archive (TASK-0052)
-- [ ] Campaign Telemetry Dashboard & Chronicle Timeline Microfrontend (PRD-0012, US-0040, US-0054, TASK-0110)
-- [ ] Universal VTT Importer & Dynamic MCP Tool Registry (TASK-0057)
+- [x] Cinematic Director Auto-Camera & OBS Transparent Overlay (TASK-0056)
+- [x] Campaign Telemetry, Analytics & Chronicle Archive (TASK-0052)
+- [x] Campaign Telemetry Dashboard & Chronicle Timeline Microfrontend (PRD-0012, US-0040, US-0054, TASK-0110)
+- [x] Universal VTT Importer & Dynamic MCP Tool Registry (TASK-0057)
 
-## Milestone 5: Collaborative Creation, Downtime & Tactile Immersion
+## Milestone 5: Collaborative Creation, Downtime & Tactile Immersion (Current)
 ### Downtime, Social Minigames & Base Building
 - [ ] Downtime Activities, Alchemical Crafting & Party Stronghold Engine (PRD-0014, US-0044, TASK-0100)
 - [ ] Interactive Tavern Minigames & Personality-Driven Merchant Haggling (PRD-0014, US-0047, TASK-0103)

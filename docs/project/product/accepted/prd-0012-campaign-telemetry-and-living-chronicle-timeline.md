@@ -42,7 +42,7 @@ Asynchronous projection workers consuming Redis Streams events and populating pa
 
 ## Implementing Backlog Tasks
 - [`TASK-0038: OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline`](../../backlog/complete/0038-openpanel-analytics-service-and-event-pipeline.md)
-- [`TASK-0052: Campaign Analytics & Chronicle Archive Microservice`](../../backlog/refined/0052-campaign-analytics-and-chronicle-archive-bc.md)
+- [`TASK-0052: Campaign Analytics & Chronicle Archive Microservice`](../../backlog/complete/0052-campaign-analytics-and-chronicle-archive-bc.md)
 - [`TASK-0082: OpenPanel Analytics SDK & Worker Modular Decomposition`](../../backlog/complete/0082-analytics-sdk-and-worker-modular-decomposition.md)
-- [`TASK-0097: OpenPanel Analytics Blackbox Test Suite Modular Decomposition`](../../backlog/refined/0097-openpanel-analytics-blackbox-test-suite-decomposition.md)
-- [`TASK-0110: Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend`](../../backlog/refined/0110-campaign-telemetry-dashboard-and-chronicle-timeline-microfrontend.md)
+- [`TASK-0097: OpenPanel Analytics Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0097-openpanel-analytics-blackbox-test-suite-decomposition.md)
+- [`TASK-0110: Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend`](../../backlog/complete/0110-campaign-telemetry-dashboard-and-chronicle-timeline-microfrontend.md)
