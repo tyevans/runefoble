@@ -1,13 +1,18 @@
 ---
 id: '0040'
 title: Modular APIRouter Decomposition for The Watcher & Game Session Microservices
-status: Refined
+status: Complete
 created: 2026-09-25
-dependencies: [TASK-0002, TASK-0013, TASK-0022]
-governing_adrs: [ADR-0007, ADR-0009]
+dependencies:
+- TASK-0002
+- TASK-0013
+- TASK-0022
+governing_adrs:
+- ADR-0007
+- ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/25
 ---
-
 # TASK-0040: Modular APIRouter Decomposition for The Watcher & Game Session Microservices
 
 ## Status
