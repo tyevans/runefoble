@@ -1,0 +1,38 @@
+---
+id: 0011
+title: Live Spectator Studio & Two-Way Audience Interactivity
+status: Accepted
+created: 2026-09-25
+---
+
+# PRD-0011 — Live Spectator Studio & Two-Way Audience Interactivity
+
+## Who this is for
+
+Content creators (Devon) streaming tabletop roleplaying sessions on Twitch/YouTube and thousands of live audience spectators.
+
+## What the person cannot do today
+
+Currently, virtual tabletop stream setups rely on screen capture with cluttered UI elements, manual scene switching, and zero direct audience participation in game mechanics.
+
+## What good looks like
+
+- **High-Concurrency TypeScript Backend**: Implemented as a dedicated TypeScript backend microservice (`services/audience_studio` in Node.js/Fastify) leveraging the native TypeScript streaming ecosystem: Twitch IRC/EventSub, YouTube Live Chat APIs, `obs-websocket-js`, and Stream Deck SDKs.
+- **Broadcast Studio Overlay Mode**: Transparent, clean, responsive UI layer showing party health bars, active afflictions, and dynamic dice roll animations designed for OBS/Streamlabs browser sources.
+- **Cinematic Director Auto-Camera**: Autonomous virtual camera tracking the active character token, zooming into critical encounters and panning smoothly without manual DM interaction.
+- **Audience Chaos Polls & Channel Point Interactivity**: Viewers can vote or spend channel points on minor environmental effects (e.g. weather changes, minor potion drops, tavern brawls) vetted by The Watcher.
+
+## What this does not do
+
+- It does not permit spectators to break game balance; audience actions are strictly governed by DM approval thresholds.
+- It does not leak secret DM notes, hidden traps, or private monster HP values to the broadcast feed.
+
+## What it costs at scale
+
+High-concurrency read-only WebSocket connections; handled via edge Redis fanout and CDN caching.
+
+## Checkable Outcomes
+
+1. TypeScript backend service handles thousands of concurrent Twitch/YouTube chat events and OBS WebSocket commands.
+2. OBS browser source renders a transparent party HUD that updates with zero latency over WebSockets.
+3. Spectator poll results trigger structured in-game events delivered via Redis Streams.

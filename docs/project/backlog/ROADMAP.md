@@ -27,6 +27,16 @@
 - [ ] Sub-500ms Whisper speech-to-intent pipeline (TASK-0039)
 
 ## Milestone 3: AI DM & Ecosystem Expansion
-- [ ] Procedural battlemap generation saved to Silo S3
-- [ ] Dynamic musical score & ambient foley driven by encounter tension
-- [ ] Third-party MCP agent plugins (e.g. D&D Beyond / Pathfinder 2e rule compendiums)
+- [ ] Procedural battlemap and token generation saved to Silo S3 (TASK-0049)
+- [ ] Dynamic musical score & ambient foley driven by encounter tension (TASK-0050)
+- [ ] Campaign Lore Knowledge Base & redstring RAG Microservice (TASK-0047)
+- [ ] TTRPG Rules Compendium & Automated Encounter Builder (TASK-0048)
+- [ ] DM Co-Pilot Whispers & Veto Override Engine (TASK-0053)
+- [ ] Conversational Disambiguation & Compound Action Intents (TASK-0054)
+- [ ] Stand-In Policy Guardrails & Mid-Session Hot-Swap Takeover (TASK-0055)
+
+## Milestone 4: Broadcast Studio & Community Platform
+- [ ] TypeScript Live Audience Studio & Spectator Interactivity (TASK-0051)
+- [ ] Cinematic Director Auto-Camera & OBS Transparent Overlay (TASK-0056)
+- [ ] Campaign Telemetry, Analytics & Chronicle Archive (TASK-0052)
+- [ ] Universal VTT Importer & Dynamic MCP Tool Registry (TASK-0057)
