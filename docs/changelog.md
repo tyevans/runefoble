@@ -17,9 +17,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - JIT-refined 9 tasks across Milestone 5 feature epics and invariant-prevention modular decompositions, replenishing ready buffer to 10 items.
   - Proposed and refined modular decompositions for `tools/prd_pipeline/decomposer.py` (`TASK-0119`) and `frontend/src/styles/themes.css` (`TASK-0120`).
   - Synchronized `PRIORITY.md`, `ROADMAP.md` Milestone 5 completion checkboxes, and PRD acceptance links with zero status drift.
+- **CSS Design Tokens and Theme Variables Modular Decomposition (`TASK-0120`, `ADR-0004`, `ADR-0009`, `ADR-0012`)**:
+  - Decomposed monolithic `frontend/src/styles/themes.css` (424 lines) into modular CSS sub-modules under `frontend/src/styles/themes/`: `base.css` (universal radii, typography, spacing, transitions, and z-indexes), `bauhaus.css` (Bauhaus Modernist light/dark tokens and contrast borders), `dark-fantasy.css` (gothic stone and obsidian shadow palettes), `parchment.css` (weathered manuscript, warm sepia, and iron gall ink tokens), and `cyber-rune.css` (neon cyan, grid wireframe, and ultraviolet tokens).
+  - Maintained 100% backward compatibility via `frontend/src/styles/themes.css` root bundle (12 lines) importing sub-modules via standard CSS `@import` rules with zero breaking changes to existing `--rf-*` tokens.
+  - Enforced strict line limit invariants with all resulting stylesheets strictly under 150 lines (< 90 lines for base, < 150 lines for themes, < 40 lines for root bundle), protecting Hard Invariant 6 (< 500 lines).
+  - Extended frontdoor test suite in `tests/test_theming.py` and `tests/test_settings_modal.py` with recursive `@import` resolution and modular decomposition verification.
+  - Updated design tokens documentation in `docs/reference/design-tokens-and-themes.md`.
+
 
 ### Added
-- **Interactive Tavern Minigames & Personality-Driven Merchant Haggling (`TASK-0103`, `PRD-0014`, `US-0047`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
+- **Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens (`TASK-0105`, `PRD-0015`, `US-0049`, `ADR-0003`, `ADR-0005`, `ADR-0010`, `ADR-0013`)**:
+  - Implemented multi-page vector/raster PDF battlemap generator (`pdf_tiler.py`) calibrated to exact 1-inch physical tabletop grids (72pt) across Letter/A4 pages with alignment crosshairs and margin cut guides at 300 DPI.
+  - Implemented papercraft standee sheet formatter (`standees.py`) generating print-ready folding paper miniatures with mirrored front/back artwork, character nameplates, HP tracking slots, and foldable base tabs.
+  - Implemented procedural 3D STL mesh generator (`stl_generator.py`) producing mathematically watertight (2-manifold, $V - E + F = 2$) binary and ASCII STL miniature bases (28mm and 50mm) featuring snap-in status condition clips (Poisoned, Stunned, Blessed, Blinded).
+  - Built and vendored `<runefoble-print-forge>` Lit microfrontend in `services/asset_forge/ui/src/` with interactive previews, paper size selectors, Bauhaus design tokens, and Storybook stories; registered in `/ui/manifest`.
+  - Added public frontdoor HTTP routes `POST /assets/print-pdf` (alias: `/api/v1/forge/print-pdf`), `POST /assets/standees` (alias: `/api/v1/forge/standees`), and `POST /assets/stl-token` (alias: `/api/v1/forge/stl-token`) backed by Silo S3 storage and SpiceDB Zanzibar authorization.
+  - Emitted CloudEvents 1.0 domain events `PrintPdfForged` and `StlTokenForged` and recorded state updates in `AssetForgeAggregate`.
+  - Authored comprehensive blackbox test suite in `tests/test_blackbox_print_forge.py` and Diataxis how-to guide `docs/how-to/forge-print-ready-maps-standees-and-stl-tokens.md`.
+
   - Implemented turn-based Liar's Dice wagering, card tournaments, and drinking contests with progressive intoxication stages and dynamic voice DSP slurred speech filters (`VoiceDSPPipeline`).
   - Implemented personality-driven NPC merchant haggling featuring dynamic temperament state machines, mood meters, price curves, counter-offers, and reactive voice lines.
   - Published CloudEvents 1.0 domain events on Redis Streams (`MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `IntoxicationLevelChanged`, `HagglingNegotiated`).

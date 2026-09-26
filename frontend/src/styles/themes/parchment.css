@@ -1,0 +1,113 @@
+/**
+ * Parchment Theme (Default Light & Dark Mode)
+ * ADR-0012: Dark/Light Mode Theming System
+ */
+
+/* ==========================================================================
+   Parchment (Default: Light)
+   ========================================================================== */
+[data-theme="parchment"],
+[data-theme="parchment"][data-color-mode="light"],
+:root[data-color-mode="light"][data-theme="parchment"] {
+  --rf-color-red: #9b2226;
+  --rf-color-blue: #2c4c64;
+  --rf-color-yellow: #bb8524;
+  --rf-color-dark: #2e1b0f;
+  --rf-color-light: #fff9eb;
+
+  --rf-bg-canvas: #f4ecd8;
+  --rf-bg-surface: #fff9eb;
+  --rf-bg-surface-elevated: #ffffff;
+  --rf-bg-card: #fff9eb;
+  --rf-bg-inset: #e8dfc8;
+
+  --rf-text-primary: #2e1b0f;
+  --rf-text-secondary: #5c3a21;
+  --rf-text-muted: #78593d;
+  --rf-text-inverse: #fff9eb;
+  --rf-font-family: "Georgia", serif, system-ui;
+
+  --rf-border-color: #5c3a21;
+  --rf-border-subtle: #d4b896;
+  --rf-border-focus: #9b2226;
+  --rf-border-width: 2px;
+  --rf-border-radius: 4px;
+  --rf-border-style: solid;
+
+  --rf-shadow-color: #5c3a21;
+  --rf-shadow: 3px 3px 0px var(--rf-shadow-color);
+  --rf-shadow-sm: 1px 1px 0px var(--rf-shadow-color);
+
+  --rf-accent-primary: #9b2226;
+  --rf-accent-secondary: #bb8524;
+  --rf-accent-tertiary: #5c3a21;
+}
+
+/* ==========================================================================
+   Parchment Dark Mode
+   ========================================================================== */
+[data-theme="parchment"][data-color-mode="dark"],
+:root[data-color-mode="dark"][data-theme="parchment"] {
+  --rf-color-red: #e05353;
+  --rf-color-blue: #4a7a96;
+  --rf-color-yellow: #f3ba4f;
+  --rf-color-dark: #1a140e;
+  --rf-color-light: #fff9eb;
+
+  --rf-bg-canvas: #1a140e;
+  --rf-bg-surface: #261d15;
+  --rf-bg-surface-elevated: #33271c;
+  --rf-bg-card: #30251b;
+  --rf-bg-inset: #120d09;
+
+  --rf-text-primary: #fff9eb;
+  --rf-text-secondary: #e2ceb5;
+  --rf-text-muted: #d4b896;
+  --rf-text-inverse: #1a140e;
+  --rf-font-family: "Georgia", serif, system-ui;
+
+  --rf-border-color: #bb8524;
+  --rf-border-subtle: #5c3a21;
+  --rf-border-focus: #f3ba4f;
+  --rf-border-width: 2px;
+  --rf-border-radius: 4px;
+  --rf-border-style: solid;
+
+  --rf-shadow-color: #bb8524;
+  --rf-shadow: 3px 3px 0px var(--rf-shadow-color);
+  --rf-shadow-sm: 1px 1px 0px var(--rf-shadow-color);
+
+  --rf-accent-primary: #e05353;
+  --rf-accent-secondary: #f3ba4f;
+  --rf-accent-tertiary: #bb8524;
+}
+
+/* ==========================================================================
+   System Preference Media Queries (prefers-color-scheme: dark)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root[data-color-mode="system"][data-theme="parchment"],
+  :root:not([data-color-mode="light"])[data-theme="parchment"] {
+    --rf-color-red: #e05353;
+    --rf-color-blue: #4a7a96;
+    --rf-color-yellow: #f3ba4f;
+    --rf-bg-canvas: #1a140e;
+    --rf-bg-surface: #261d15;
+    --rf-bg-surface-elevated: #33271c;
+    --rf-bg-card: #30251b;
+    --rf-bg-inset: #120d09;
+    --rf-text-primary: #fff9eb;
+    --rf-text-secondary: #e2ceb5;
+    --rf-text-muted: #d4b896;
+    --rf-text-inverse: #1a140e;
+    --rf-border-color: #bb8524;
+    --rf-border-subtle: #5c3a21;
+    --rf-border-focus: #f3ba4f;
+    --rf-shadow-color: #bb8524;
+    --rf-shadow: 3px 3px 0px var(--rf-shadow-color);
+    --rf-shadow-sm: 1px 1px 0px var(--rf-shadow-color);
+    --rf-accent-primary: #e05353;
+    --rf-accent-secondary: #f3ba4f;
+    --rf-accent-tertiary: #bb8524;
+  }
+}

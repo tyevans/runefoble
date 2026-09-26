@@ -1,0 +1,120 @@
+/**
+ * Bauhaus Modernist Theme (Light Mode Default & Dark Mode)
+ * ADR-0009: Bauhaus Modernist Design System
+ * ADR-0012: Dark/Light Mode Theming System
+ */
+
+/* ==========================================================================
+   Bauhaus Modernist (Light Mode Default)
+   ========================================================================== */
+:root,
+[data-theme="bauhaus"],
+[data-theme="bauhaus"][data-color-mode="light"],
+:root[data-color-mode="light"][data-theme="bauhaus"],
+:root[data-color-mode="light"]:not([data-theme]) {
+  --rf-color-red: #e63946;
+  --rf-color-blue: #1d3557;
+  --rf-color-yellow: #ffb703;
+  --rf-color-dark: #121212;
+  --rf-color-light: #ffffff;
+
+  --rf-bg-canvas: #f8f9fa;
+  --rf-bg-surface: #ffffff;
+  --rf-bg-surface-elevated: #ffffff;
+  --rf-bg-card: #ffffff;
+  --rf-bg-inset: #f1f3f5;
+
+  --rf-text-primary: #121212;
+  --rf-text-secondary: #2b2d42;
+  --rf-text-muted: #4b5563;
+  --rf-text-inverse: #ffffff;
+  --rf-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --rf-border-color: #121212;
+  --rf-border-subtle: #d1d5db;
+  --rf-border-focus: #1d3557;
+  --rf-border-width: 2px;
+  --rf-border-radius: 0px;
+  --rf-border-style: solid;
+
+  --rf-shadow-color: #121212;
+  --rf-shadow: 4px 4px 0px var(--rf-shadow-color);
+  --rf-shadow-sm: 2px 2px 0px var(--rf-shadow-color);
+
+  --rf-accent-primary: var(--rf-color-red);
+  --rf-accent-secondary: var(--rf-color-blue);
+  --rf-accent-tertiary: var(--rf-color-yellow);
+}
+
+/* ==========================================================================
+   Bauhaus Modernist Dark Mode
+   ========================================================================== */
+[data-theme="bauhaus"][data-color-mode="dark"],
+:root[data-color-mode="dark"] [data-theme="bauhaus"],
+:root[data-color-mode="dark"]:not([data-theme]),
+:root[data-color-mode="dark"][data-theme="bauhaus"] {
+  --rf-color-red: #ff4d5e;
+  --rf-color-blue: #457b9d;
+  --rf-color-yellow: #ffc300;
+  --rf-color-dark: #121212;
+  --rf-color-light: #ffffff;
+
+  --rf-bg-canvas: #121212;
+  --rf-bg-surface: #1e1e1e;
+  --rf-bg-surface-elevated: #282828;
+  --rf-bg-card: #252525;
+  --rf-bg-inset: #0a0a0a;
+
+  --rf-text-primary: #f8f9fa;
+  --rf-text-secondary: #e2e8f0;
+  --rf-text-muted: #9ca3af;
+  --rf-text-inverse: #121212;
+  --rf-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --rf-border-color: #f8f9fa;
+  --rf-border-subtle: #3f3f46;
+  --rf-border-focus: #457b9d;
+  --rf-border-width: 2px;
+  --rf-border-radius: 0px;
+  --rf-border-style: solid;
+
+  --rf-shadow-color: #f8f9fa;
+  --rf-shadow: 4px 4px 0px var(--rf-shadow-color);
+  --rf-shadow-sm: 2px 2px 0px var(--rf-shadow-color);
+
+  --rf-accent-primary: var(--rf-color-red);
+  --rf-accent-secondary: var(--rf-color-blue);
+  --rf-accent-tertiary: var(--rf-color-yellow);
+}
+
+/* ==========================================================================
+   System Preference Media Queries (prefers-color-scheme: dark)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-color-mode="light"]):not([data-theme]),
+  :root[data-color-mode="system"]:not([data-theme]),
+  :root[data-color-mode="system"][data-theme="bauhaus"],
+  :root:not([data-color-mode="light"])[data-theme="bauhaus"] {
+    --rf-color-red: #ff4d5e;
+    --rf-color-blue: #457b9d;
+    --rf-color-yellow: #ffc300;
+    --rf-bg-canvas: #121212;
+    --rf-bg-surface: #1e1e1e;
+    --rf-bg-surface-elevated: #282828;
+    --rf-bg-card: #252525;
+    --rf-bg-inset: #0a0a0a;
+    --rf-text-primary: #f8f9fa;
+    --rf-text-secondary: #e2e8f0;
+    --rf-text-muted: #9ca3af;
+    --rf-text-inverse: #121212;
+    --rf-border-color: #f8f9fa;
+    --rf-border-subtle: #3f3f46;
+    --rf-border-focus: #457b9d;
+    --rf-shadow-color: #f8f9fa;
+    --rf-shadow: 4px 4px 0px var(--rf-shadow-color);
+    --rf-shadow-sm: 2px 2px 0px var(--rf-shadow-color);
+    --rf-accent-primary: var(--rf-color-red);
+    --rf-accent-secondary: var(--rf-color-blue);
+    --rf-accent-tertiary: var(--rf-color-yellow);
+  }
+}

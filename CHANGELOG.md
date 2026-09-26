@@ -17,6 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - JIT-refined 9 tasks across Milestone 5 feature epics and invariant-prevention modular decompositions, replenishing ready buffer to 10 items.
   - Proposed and refined modular decompositions for `tools/prd_pipeline/decomposer.py` (`TASK-0119`) and `frontend/src/styles/themes.css` (`TASK-0120`).
   - Synchronized `PRIORITY.md`, `ROADMAP.md` Milestone 5 completion checkboxes, and PRD acceptance links with zero status drift.
+- **CSS Design Tokens and Theme Variables Modular Decomposition (`TASK-0120`, `ADR-0004`, `ADR-0009`, `ADR-0012`)**:
+  - Decomposed monolithic `frontend/src/styles/themes.css` (424 lines) into modular CSS sub-modules under `frontend/src/styles/themes/`: `base.css` (universal radii, typography, spacing, transitions, and z-indexes), `bauhaus.css` (Bauhaus Modernist light/dark tokens and contrast borders), `dark-fantasy.css` (gothic stone and obsidian shadow palettes), `parchment.css` (weathered manuscript, warm sepia, and iron gall ink tokens), and `cyber-rune.css` (neon cyan, grid wireframe, and ultraviolet tokens).
+  - Maintained 100% backward compatibility via `frontend/src/styles/themes.css` root bundle (12 lines) importing sub-modules via standard CSS `@import` rules with zero breaking changes to existing `--rf-*` tokens.
+  - Enforced strict line limit invariants with all resulting stylesheets strictly under 150 lines (< 90 lines for base, < 150 lines for themes, < 40 lines for root bundle), protecting Hard Invariant 6 (< 500 lines).
+  - Extended frontdoor test suite in `tests/test_theming.py` and `tests/test_settings_modal.py` with recursive `@import` resolution and modular decomposition verification.
+  - Updated design tokens documentation in `docs/reference/design-tokens-and-themes.md`.
+
 
 ### Added
 - **Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens (`TASK-0105`, `PRD-0015`, `US-0049`, `ADR-0003`, `ADR-0005`, `ADR-0010`, `ADR-0013`)**:
