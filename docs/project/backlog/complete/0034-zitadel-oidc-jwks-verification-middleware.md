@@ -1,7 +1,7 @@
 ---
 id: '0034'
 title: Zitadel Production OIDC/JWKS Token Verification Middleware
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies: [TASK-0008, TASK-0016]
 governing_adrs: [ADR-0001, ADR-0005, ADR-0007]
@@ -11,7 +11,7 @@ target_release: 0.1.0
 # TASK-0034: Zitadel Production OIDC/JWKS Token Verification Middleware
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Upgrade `ZitadelAuthService` in `libs/runefoble_auth` from an offline stub into a production OIDC JWT verification client. Fetch and cache JSON Web Key Sets (JWKS) from Zitadel's discovery endpoint (`/.well-known/jwks.json`), cryptographically verify RS256 token signatures, validate expiration and audience claims, and inject the authenticated subject into Gateway HTTP endpoints and WebSocket handshakes.

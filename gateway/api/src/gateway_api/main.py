@@ -7,12 +7,12 @@ real-time WebSockets for the tactical board and voice chronicle.
 
 import contextlib
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, Header, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from gateway_api.assets import router as assets_router
-from gateway_api.auth import get_spicedb_client, require_zanzibar_permission
+from gateway_api.auth import get_current_user, get_spicedb_client, require_zanzibar_permission
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.models import (
     AdvanceTurnRequest,
@@ -29,6 +29,7 @@ from gateway_api.spectator import (
 )
 from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
 from gateway_api.websocket import campaign_websocket_endpoint
+from runefoble_auth.zitadel import AuthenticatedUser
 from runefoble_events import SpectatorSessionConnected
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -109,6 +110,18 @@ async def health_check():
             "voice_agent": "operational",
         },
         "authorization_engine": "SpiceDB Zanzibar",
+    }
+
+
+@app.get("/api/v1/profile")
+async def get_profile(user: Annotated[AuthenticatedUser, Depends(get_current_user)]):
+    """Retrieve authenticated Zitadel user profile claims."""
+    return {
+        "user_id": user.user_id,
+        "username": user.username,
+        "email": user.email,
+        "roles": user.roles,
+        "is_admin": user.is_admin,
     }
 
 

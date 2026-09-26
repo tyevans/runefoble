@@ -12,7 +12,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 | **PostgreSQL** | `postgres:16-alpine` | `postgres:5432` | None (Internal) | ADR-0005, ADR-0011 | `InMemoryEventStore` |
 | **Redis Streams** | `redis:7.2-alpine` | `runefoble-redis:6379` | None (Internal) | ADR-0006 | `InMemoryEventBus` |
 | **SpiceDB (Zanzibar)** | `authzed/spicedb:v1.34.0` | `spicedb:50051` (gRPC), `8443` (HTTP) | None (Internal) | ADR-0001 | `MockSpiceDBClient` (In-Memory) |
-| **Zitadel (OIDC/AuthN)** | `ghcr.io/zitadel/zitadel:v2.54.0` | `zitadel:8080` | `/auth` | ADR-0005 | Stub `ZitadelAuthService` (`dev-user-001`) |
+| **Zitadel (OIDC/AuthN)** | `ghcr.io/zitadel/zitadel:v2.54.0` | `zitadel:8080` | `/auth` | ADR-0005 | `ZitadelAuthService` (PyJWKClient RS256 token verification with dev bypass) |
 | **Silo (S3 Storage)** | `minio/minio:RELEASE.2024-01-01...` | `silo:9000` (S3), `9001` (UI) | None (Proxy via Gateway) | ADR-0005 | In-Memory Object Store Mock |
 | **OpenTelemetry Collector** | `otel/opentelemetry-collector-contrib` | `otel-collector:4317` (gRPC), `4318` (HTTP) | None (Internal) | ADR-0005 | Null Tracer / No-op Span Processor |
 | **Loki** | `grafana/loki:3.0.0` | `loki:3100` | None (Internal) | ADR-0005 | Standard Python logging stdout |
@@ -53,8 +53,8 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **How-To Guide**: [Define and Check SpiceDB Zanzibar Permissions](../how-to/define-spicedb-zanzibar-permissions.md).
 
 ### 4. Zitadel (OIDC Identity & JWT Authentication)
-- **Role**: Single Sign-On (SSO), PKCE login flows, user profile management, and JWT signing.
-- **Environment Variables**: `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_CLIENT_ID`.
+- **Role**: Single Sign-On (SSO), PKCE login flows, user profile management, RS256 token issuance, and JWKS public key discovery (`/.well-known/jwks.json`).
+- **Environment Variables**: `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_CLIENT_ID`, `RUNEFOBLE_ZITADEL_JWKS_URL`, `RUNEFOBLE_AUTH_DEV_MODE`.
 - **How-To Guide**: [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md).
 
 ### 5. Silo S3 (Object Storage)
