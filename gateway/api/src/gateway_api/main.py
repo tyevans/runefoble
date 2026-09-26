@@ -11,6 +11,7 @@ from typing import Any, Literal
 
 from fastapi import Depends, FastAPI, Header, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from gateway_api.assets import router as assets_router
 from gateway_api.auth import get_spicedb_client, require_zanzibar_permission
 from gateway_api.spectator import (
     SpectatorStateResponse,
@@ -56,6 +57,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 
 
 class WebSocketConnectionManager:
