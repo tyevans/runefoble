@@ -145,9 +145,9 @@ def execute_task_pipeline(
                 merge_pull_request(worktree_dir, pr_url)
 
                 print(f"📥 [Stream {worker_id}] Pulling latest main into repository root...")
+                run_git(["fetch", "origin", "main"], cwd=repo_root)
                 pull_res = run_git(["pull", "--ff-only", "origin", "main"], cwd=repo_root)
                 if pull_res.returncode != 0:
-                    run_git(["fetch", "origin", "main"], cwd=repo_root)
                     run_git(["reset", "--hard", "origin/main"], cwd=repo_root)
 
                 # Finalize in Backlog Queue on repo_root
@@ -173,7 +173,16 @@ def execute_task_pipeline(
                     )
                     push_res = run_git(["push", "origin", "main"], cwd=repo_root)
                     if push_res.returncode != 0:
-                        print(f"⚠️ Failed to push backlog completion: {push_res.stderr.strip()}")
+                        print(
+                            f"⚠️ Push rejected, fetching and rebasing origin/main: {push_res.stderr.strip()}"
+                        )
+                        run_git(["fetch", "origin", "main"], cwd=repo_root)
+                        run_git(["rebase", "origin/main"], cwd=repo_root)
+                        push_retry = run_git(["push", "origin", "main"], cwd=repo_root)
+                        if push_retry.returncode != 0:
+                            print(
+                                f"❌ Failed to push backlog completion on retry: {push_retry.stderr.strip()}"
+                            )
 
                 completed = True
                 print(f"🎉 [Stream {worker_id}] {task.canonical_id} completed and pushed to main")
@@ -230,20 +239,28 @@ def run_orchestrator(
         print()
 
     completed_count = 0
+    failed_attempts: dict[str, int] = {}
 
     try:
         while True:
             ready_tasks = queue.get_ready_unblocked_tasks()
+            active_ready_tasks = [t for t in ready_tasks if failed_attempts.get(t.id, 0) < 3]
 
-            if not ready_tasks:
-                print("💤 No ready unblocked tasks found in queue.")
+            if not active_ready_tasks:
+                if ready_tasks:
+                    print(
+                        f"⚠️ All {len(ready_tasks)} ready unblocked task(s) exceeded maximum retry limits (3). Stopping orchestrator."
+                    )
+                    break
+                else:
+                    print("💤 No ready unblocked tasks found in queue.")
                 if not drain:
                     break
                 time.sleep(poll_idle_seconds)
                 continue
 
-            print(f"📋 Found {len(ready_tasks)} ready unblocked task(s):")
-            for t in ready_tasks:
+            print(f"📋 Found {len(active_ready_tasks)} ready unblocked task(s):")
+            for t in active_ready_tasks:
                 print(f"  - [{t.canonical_id}] {t.title} (Priority: {t.priority_rank})")
 
             if dry_run:
@@ -251,7 +268,7 @@ def run_orchestrator(
                 return 0
 
             # Batch up to concurrency tasks
-            batch = ready_tasks[:concurrency]
+            batch = active_ready_tasks[:concurrency]
 
             if len(batch) == 1 or concurrency == 1:
                 task = batch[0]
@@ -259,9 +276,12 @@ def run_orchestrator(
                     res = execute_task_pipeline(task, repo_root, queue, local_mode=local_mode)
                     if res.success:
                         completed_count += 1
+                        failed_attempts.pop(task.id, None)
                     else:
-                        print(f"❌ Pipeline failed for {task.canonical_id}: {res.message}")
-                        break
+                        failed_attempts[task.id] = failed_attempts.get(task.id, 0) + 1
+                        print(
+                            f"❌ Pipeline failed for {task.canonical_id} (attempt {failed_attempts[task.id]}/3): {res.message}"
+                        )
                 except KeyboardInterrupt:
                     print(f"\n🛑 Interrupted while executing {task.canonical_id}.")
                     queue.release_task(task)
@@ -284,9 +304,13 @@ def run_orchestrator(
                             res = fut.result()
                             if res.success:
                                 completed_count += 1
+                                failed_attempts.pop(res.task.id, None)
                             else:
+                                failed_attempts[res.task.id] = (
+                                    failed_attempts.get(res.task.id, 0) + 1
+                                )
                                 print(
-                                    f"❌ Stream failed for {res.task.canonical_id}: {res.message}"
+                                    f"❌ Stream failed for {res.task.canonical_id} (attempt {failed_attempts[res.task.id]}/3): {res.message}"
                                 )
                     except KeyboardInterrupt:
                         print("\n🛑 Cancelling pending parallel worker streams...")

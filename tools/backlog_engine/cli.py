@@ -11,8 +11,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Autonomous Backlog Execution Engine")
     parser.add_argument(
         "--drain",
+        dest="drain",
         action="store_true",
-        help="Continuously drain the queue until no unblocked ready tasks remain",
+        default=True,
+        help="Continuously drain the queue until no unblocked ready tasks remain (default: True)",
+    )
+    parser.add_argument(
+        "--once",
+        dest="drain",
+        action="store_false",
+        help="Execute only a single batch/pass of tasks without draining",
     )
     parser.add_argument(
         "--concurrency",

@@ -12,22 +12,23 @@ make backlog-worker ARGS="--dry-run"
 # or: ./scripts/run-backlog-engine.sh --dry-run
 ```
 
-### 2. Single-Task Execution (Default)
-Picks the highest-priority ready, unblocked task, runs it in an isolated worktree, creates a PR, verifies CI, merges it to `main`, and marks the task Complete:
+### 2. Autonomous Queue Draining (Default)
+By default, the engine continuously drains the queue, executing ready unblocked tasks and advancing through the backlog:
 ```bash
 ./scripts/run-backlog-engine.sh
 ```
 
-### 3. Queue Draining Mode
-Keeps looping and processing tasks until no unblocked ready tasks remain in the queue:
+### 3. Parallel Execution Streams
+Run multiple concurrent worker streams in parallel isolated worktrees (with thread-safe worktree isolation and resilient CI conflict recovery):
 ```bash
-./scripts/run-backlog-engine.sh --drain
+./scripts/run-backlog-engine.sh --concurrency 3
 ```
 
-### 4. Parallel Execution Streams
-Run multiple concurrent worker streams in parallel isolated worktrees:
+### 4. Single-Batch Execution (`--once`)
+To execute only a single batch of tasks up to concurrency and exit without continuous draining:
 ```bash
-./scripts/run-backlog-engine.sh --concurrency 2 --drain
+./scripts/run-backlog-engine.sh --once
+# or: ./scripts/run-backlog-engine.sh --concurrency 3 --once
 ```
 
 ### 5. Local Offline Merge Mode
@@ -65,4 +66,6 @@ flowchart TD
 
 - **Graceful Cancellation (`Ctrl+C`)**: When interrupted with `Ctrl+C`, the engine terminates running agent processes, removes active git worktrees, and immediately releases all claimed tasks back to `Refined` so they remain ready for execution.
 - **Startup Stale Task Recovery**: In case of a hard termination (e.g. machine restart or SIGKILL), the orchestrator scans `docs/project/backlog/refined/` upon launch and automatically resets any orphaned `in-progress` or `review` tasks back to `Refined` (clearing `claimed_by` and `pr_url`), ensuring no task is ever lost.
+- **Max Retry Limits (3 Attempts)**: If a task encounters unresolvable pre-flight failures or persistent conflicts, it is retried up to 3 times before being safely skipped for the current session, allowing the orchestrator to continue draining the backlog without hanging or crashing.
+- **Thread-Safe Worktree Lifecycle & Rebase Retries**: Worktree creation, cleanup, and git index mutations are protected by threading locks to eliminate lock collisions during concurrent execution. Non-fast-forward push rejections during completion commits are automatically recovered with atomic rebase retries.
 

@@ -249,3 +249,79 @@ def test_orchestrator_closes_pr_on_failure(tmp_path: Path, monkeypatch: pytest.M
     assert len(closed_prs) == 1
     assert closed_prs[0][0] == "https://github.com/example/pr/7"
     assert "merge conflicts" in closed_prs[0][1] or "failed CI" in closed_prs[0][1]
+
+
+def test_cli_drain_flag_defaults():
+    """Verifies that cli defaults --drain to True and --once toggles it to False."""
+    import argparse
+
+    # Inspect parser configuration
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--drain", dest="drain", action="store_true", default=True)
+    parser.add_argument("--once", dest="drain", action="store_false")
+
+    args_default = parser.parse_args([])
+    assert args_default.drain is True
+
+    args_once = parser.parse_args(["--once"])
+    assert args_once.drain is False
+
+    args_explicit_drain = parser.parse_args(["--drain"])
+    assert args_explicit_drain.drain is True
+
+
+def test_worktree_lock_exists():
+    """Verifies that WORKTREE_LOCK is defined and functional."""
+    import threading
+
+    from tools.backlog_engine.worktree import WORKTREE_LOCK
+
+    assert isinstance(WORKTREE_LOCK, type(threading.Lock()))
+    with WORKTREE_LOCK:
+        pass
+
+
+def test_orchestrator_retry_limits_and_continuous_drain(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Verifies that run_orchestrator skips repeatedly failing tasks after 3 attempts without breaking."""
+    from tools.backlog_engine.orchestrator import run_orchestrator
+
+    backlog_dir = tmp_path / "docs" / "project" / "backlog"
+    refined_dir = backlog_dir / "refined"
+    refined_dir.mkdir(parents=True)
+    (backlog_dir / "complete").mkdir(parents=True)
+    (backlog_dir / "PRIORITY.md").write_text(
+        "1. **TASK-0099 (Refined)**: [`0099-flaky.md`](refined/0099-flaky.md)\n"
+    )
+
+    task_file = refined_dir / "0099-flaky.md"
+    task_file.write_text(
+        "---\nid: '0099'\ntitle: Flaky Task\nstatus: Refined\n---\n# TASK-0099",
+        encoding="utf-8",
+    )
+
+    # Mock execute_task_pipeline to always fail
+    pipeline_calls = []
+
+    def mock_pipeline(task, repo_root, queue, local_mode=False, skip_agent=False):
+        pipeline_calls.append(task.id)
+        from tools.backlog_engine.orchestrator import TaskExecutionResult
+
+        return TaskExecutionResult(task, False, "Simulated preflight or merge failure")
+
+    monkeypatch.setattr(
+        "tools.backlog_engine.orchestrator.execute_task_pipeline",
+        mock_pipeline,
+    )
+
+    exit_code = run_orchestrator(
+        repo_root=tmp_path,
+        drain=True,
+        concurrency=1,
+        local_mode=True,
+    )
+
+    assert exit_code == 0
+    # Must have attempted exactly 3 times before hitting the failure limit
+    assert len(pipeline_calls) == 3

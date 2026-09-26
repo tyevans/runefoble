@@ -1,7 +1,10 @@
 """Git worktree lifecycle management and pre-flight verification."""
 
 import subprocess
+import threading
 from pathlib import Path
+
+WORKTREE_LOCK = threading.Lock()
 
 
 class WorktreeError(RuntimeError):
@@ -26,34 +29,35 @@ def create_worktree(
     base_ref: str = "main",
 ) -> Path:
     """Creates an isolated git worktree branch under .worktrees/."""
-    worktrees_parent = repo_root / ".worktrees"
-    worktrees_parent.mkdir(parents=True, exist_ok=True)
-    worktree_path = worktrees_parent / worktree_name
+    with WORKTREE_LOCK:
+        worktrees_parent = repo_root / ".worktrees"
+        worktrees_parent.mkdir(parents=True, exist_ok=True)
+        worktree_path = worktrees_parent / worktree_name
 
-    # Check if worktree or branch already exists
-    if worktree_path.exists():
-        # Clean up stale worktree
-        run_git(["worktree", "remove", "--force", str(worktree_path)], cwd=repo_root)
+        # Check if worktree or branch already exists
+        if worktree_path.exists():
+            # Clean up stale worktree
+            run_git(["worktree", "remove", "--force", str(worktree_path)], cwd=repo_root)
 
-    # Check if branch exists
-    chk = run_git(["rev-parse", "--verify", branch_name], cwd=repo_root)
-    if chk.returncode == 0:
-        # Use existing branch
-        res = run_git(
-            ["worktree", "add", str(worktree_path), branch_name],
-            cwd=repo_root,
-        )
-    else:
-        # Create new branch from base_ref
-        res = run_git(
-            ["worktree", "add", "-b", branch_name, str(worktree_path), base_ref],
-            cwd=repo_root,
-        )
+        # Check if branch exists
+        chk = run_git(["rev-parse", "--verify", branch_name], cwd=repo_root)
+        if chk.returncode == 0:
+            # Use existing branch
+            res = run_git(
+                ["worktree", "add", str(worktree_path), branch_name],
+                cwd=repo_root,
+            )
+        else:
+            # Create new branch from base_ref
+            res = run_git(
+                ["worktree", "add", "-b", branch_name, str(worktree_path), base_ref],
+                cwd=repo_root,
+            )
 
-    if res.returncode != 0:
-        raise WorktreeError(f"Failed to create worktree: {res.stderr.strip()}")
+        if res.returncode != 0:
+            raise WorktreeError(f"Failed to create worktree: {res.stderr.strip()}")
 
-    return worktree_path
+        return worktree_path
 
 
 def cleanup_worktree(
@@ -63,14 +67,15 @@ def cleanup_worktree(
     delete_branch: bool = False,
 ) -> None:
     """Removes a worktree and optionally deletes the associated branch."""
-    if worktree_path.exists():
-        run_git(["worktree", "remove", "--force", str(worktree_path)], cwd=repo_root)
+    with WORKTREE_LOCK:
+        if worktree_path.exists():
+            run_git(["worktree", "remove", "--force", str(worktree_path)], cwd=repo_root)
 
-    # Prune worktree records
-    run_git(["worktree", "prune"], cwd=repo_root)
+        # Prune worktree records
+        run_git(["worktree", "prune"], cwd=repo_root)
 
-    if delete_branch and branch_name:
-        run_git(["branch", "-D", branch_name], cwd=repo_root)
+        if delete_branch and branch_name:
+            run_git(["branch", "-D", branch_name], cwd=repo_root)
 
 
 def enforce_backlog_isolation(worktree_dir: Path) -> tuple[bool, str]:
