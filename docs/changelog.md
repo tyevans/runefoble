@@ -19,6 +19,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Synchronized `PRIORITY.md`, `ROADMAP.md` Milestone 5 completion checkboxes, and PRD acceptance links with zero status drift.
 
 ### Added
+- **PRD Decomposer Planning and Slice Generation Modular Decomposition (`TASK-0119`, `ADR-0003`)**:
+  - Decomposed monolithic `tools/prd_pipeline/decomposer.py` into an orchestrator facade (`decomposer.py`, 78 lines), planning engine (`planner.py`, 157 lines), markdown templating module (`templates.py`, 137 lines), and slice templates (`slice_templates.json`), preventing violations of Hard Invariant 6 (< 500 lines).
+  - Maintained 100% backward compatibility for all `PRDDecomposer` methods (`plan_decomposition`, `execute_decomposition`, `get_max_task_number`, `get_max_story_number`) and private creation/heuristic delegates.
+  - Refactored `PlanWriter` in `tools/prd_pipeline/writer.py` (39 lines) to delegate frontmatter and body formatting to `templates.py`.
+  - Added comprehensive blackbox and unit test coverage in `tests/test_prd_pipeline.py` and updated Diataxis guide `docs/how-to/decompose-prds-into-vertical-slices.md`.
+
+- **Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens (`TASK-0105`, `PRD-0015`, `US-0049`, `ADR-0003`, `ADR-0005`, `ADR-0010`, `ADR-0013`)**:
+  - Implemented multi-page vector/raster PDF battlemap generator (`pdf_tiler.py`) calibrated to exact 1-inch physical tabletop grids (72pt) across Letter/A4 pages with alignment crosshairs and margin cut guides at 300 DPI.
+  - Implemented papercraft standee sheet formatter (`standees.py`) generating print-ready folding paper miniatures with mirrored front/back artwork, character nameplates, HP tracking slots, and foldable base tabs.
+  - Implemented procedural 3D STL mesh generator (`stl_generator.py`) producing mathematically watertight (2-manifold, $V - E + F = 2$) binary and ASCII STL miniature bases (28mm and 50mm) featuring snap-in status condition clips (Poisoned, Stunned, Blessed, Blinded).
+  - Built and vendored `<runefoble-print-forge>` Lit microfrontend in `services/asset_forge/ui/src/` with interactive previews, paper size selectors, Bauhaus design tokens, and Storybook stories; registered in `/ui/manifest`.
+  - Added public frontdoor HTTP routes `POST /assets/print-pdf` (alias: `/api/v1/forge/print-pdf`), `POST /assets/standees` (alias: `/api/v1/forge/standees`), and `POST /assets/stl-token` (alias: `/api/v1/forge/stl-token`) backed by Silo S3 storage and SpiceDB Zanzibar authorization.
+  - Emitted CloudEvents 1.0 domain events `PrintPdfForged` and `StlTokenForged` and recorded state updates in `AssetForgeAggregate`.
+  - Authored comprehensive blackbox test suite in `tests/test_blackbox_print_forge.py` and Diataxis how-to guide `docs/how-to/forge-print-ready-maps-standees-and-stl-tokens.md`.
+
 - **Interactive Tavern Minigames & Personality-Driven Merchant Haggling (`TASK-0103`, `PRD-0014`, `US-0047`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
   - Implemented turn-based Liar's Dice wagering, card tournaments, and drinking contests with progressive intoxication stages and dynamic voice DSP slurred speech filters (`VoiceDSPPipeline`).
   - Implemented personality-driven NPC merchant haggling featuring dynamic temperament state machines, mood meters, price curves, counter-offers, and reactive voice lines.
