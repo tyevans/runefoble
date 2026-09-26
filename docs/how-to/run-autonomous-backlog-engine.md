@@ -69,6 +69,16 @@ flowchart TD
 - **Max Retry Limits (3 Attempts)**: If a task encounters unresolvable pre-flight failures or persistent conflicts, it is retried up to 3 times before being safely skipped for the current session, allowing the orchestrator to continue draining the backlog without hanging or crashing.
 - **Thread-Safe Worktree Lifecycle & Rebase Retries**: Worktree creation, cleanup, and git index mutations are protected by threading locks to eliminate lock collisions during concurrent execution. Non-fast-forward push rejections during completion commits are automatically recovered with atomic rebase retries.
 
+## Modular Engine Architecture
+
+The backlog engine is decomposed into specialized, single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file, target < 250 lines):
+- **GitHub Client (`tools/backlog_engine/github_client.py`)**: Subprocess wrappers for `gh pr view`, `gh pr checks`, `gh pr close`, `gh pr create`, `gh run view --log-failed`, and PR squash merging.
+- **Git Operations (`tools/backlog_engine/git_ops.py`)**: Branch checkout, worktree synchronization, conflict rebasing (`sync_branch_with_base`, `sync_and_resolve_base_ref`), pre-push `git merge-tree` conflict checks, and local squash merge integration.
+- **CI Watcher & Diagnostic Repair (`tools/backlog_engine/ci_watcher.py`)**: Polling loops (`wait_for_ci_checks`), failure diagnostics classification (`get_ci_failure_diagnostics`), and automated PR repair dispatching (`watch_and_repair_pull_request`).
+- **Orchestrator Coordinator (`tools/backlog_engine/orchestrator.py`)**: Task queue monitoring, worker pool concurrency management, and drain loops (`run_orchestrator`, `execute_task_pipeline`).
+- **Worktree Management (`tools/backlog_engine/worktree.py`)**: Git worktree creation, cleanup, and preflight verification gates (`run_preflight_checks`).
+- **Queue Solver (`tools/backlog_engine/queue.py`)**: Topological dependency resolution and task lifecycle state transitions.
+
 ## Verifying the Engine Test Suites
 
 The autonomous backlog execution engine is verified via modular frontdoor test suites conforming to Hard Invariant 6 (< 500 lines per file):
@@ -78,9 +88,11 @@ The autonomous backlog execution engine is verified via modular frontdoor test s
 - [`test_backlog_ci_watcher.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_ci_watcher.py): Validates PR mergeability, dirty conflict status checks, immediate conflict abortion, and failed CI log extractions.
 - [`test_backlog_stale_recovery.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_stale_recovery.py): Validates orphaned in-progress/review task recovery, requeuing mechanics, worktree threading locks, and failure retry circuit breakers.
 - [`test_backlog_pr_repair.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_pr_repair.py): Validates pre-push git merge-tree conflict detection, orchestrator PR teardown on CI failure, and automated worktree AI agent PR healing.
+- [`test_backlog_orchestrator.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_orchestrator.py): Validates orchestrator lifecycle coordination, dry-run mode, and threadpool worker concurrency.
+- [`test_pr_conflict_detection.py`](file:///home/ty/workspace/runefoble/tests/test_pr_conflict_detection.py): Validates PR conflict detection across GitHub CLI, branch sync, and CI diagnostic reporting.
 
 Run the test suite via pytest:
 ```bash
-uv run pytest tests/test_backlog_*.py
+uv run pytest tests/test_backlog_*.py tests/test_pr_conflict_detection.py
 ```
 
