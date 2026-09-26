@@ -1,13 +1,18 @@
 ---
-id: '0039'
+id: 0039
 title: Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
-status: Refined
+status: Complete
 created: 2026-09-25
-dependencies: [TASK-0002, TASK-0033]
-governing_adrs: [ADR-0002, ADR-0006, ADR-0007]
+dependencies:
+- TASK-0002
+- TASK-0033
+governing_adrs:
+- ADR-0002
+- ADR-0006
+- ADR-0007
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/22
 ---
-
 # TASK-0039: Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
 
 ## Status
