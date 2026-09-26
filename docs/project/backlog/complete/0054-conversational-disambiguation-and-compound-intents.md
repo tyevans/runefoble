@@ -1,7 +1,7 @@
 ---
 id: '0054'
 title: Conversational Disambiguation and Compound Action Intents
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0002
@@ -12,8 +12,8 @@ governing_adrs:
 - ADR-0007
 - ADR-0011
 target_release: 0.2.1
+pr_url: https://github.com/tyevans/runefoble/pull/71
 ---
-
 # TASK-0054: Conversational Disambiguation and Compound Action Intents
 
 ## Status

@@ -11,7 +11,9 @@ from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.autonomous_dm import AutonomousDMEngine
 from the_watcher.chronicle import ChronicleRecapEngine
+from the_watcher.compound_actions import CompoundActionEngine
 from the_watcher.copilot import CopilotEngine
+from the_watcher.disambiguation import DisambiguationEngine
 from the_watcher.watcher_ai import TheWatcherEngine
 
 logger = logging.getLogger("runefoble.the_watcher")
@@ -24,6 +26,9 @@ engine = TheWatcherEngine()
 chronicle_engine = ChronicleRecapEngine()
 autonomous_dm_engine = AutonomousDMEngine()
 copilot_engine = CopilotEngine()
+disambiguation_engine = DisambiguationEngine()
+compound_action_engine = CompoundActionEngine()
+
 platform_settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
