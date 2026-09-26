@@ -17,10 +17,10 @@ The Campaign Analytics microservice operates as a CQRS projection engine and chr
 3. **Event-Sourced Milestones**: Domain milestones and MVP snapshots are managed by `CampaignChronicleAggregate` (`eventsource-py`) emitting `ChronicleMilestoneRecorded`, `CombatTelemetrySnapshotCreated`, and `EncounterMvpAwarded`.
 
 ```
-Redis Streams ───► CampaignAnalyticsWorker ───► PostgreSQL Storage
-                                                     │
-                                                     ▼
-Zanzibar Auth ───► FastAPI APIRouters ◄────────── Analytics Queries
+Redis Streams ───► CampaignAnalyticsWorker ───► AnalyticsEventDispatcher ───► PostgreSQL Storage
+                                                                                    │
+                                                                                    ▼
+Zanzibar Auth ───► FastAPI APIRouters ◄──────────────────────────────────────── Analytics Queries
                    ├─ /heatmap
                    ├─ /mvp
                    └─ /timeline
