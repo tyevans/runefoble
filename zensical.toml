@@ -9,6 +9,7 @@ edit_uri = "edit/main/docs/"
 
 nav = [
   { "Overview" = "index.md" },
+  { "Platform Showcase" = "marketing.md" },
   { "Project Visualizer" = "project-visualizer.md" },
   { "Storybook UI Studio" = "storybook-studio.md" },
   { "Tutorials" = [
@@ -59,6 +60,7 @@ nav = [
     { "Backlog Priority Index" = "project/backlog/PRIORITY.md" },
     { "Roadmap & Horizons" = "project/backlog/ROADMAP.md" },
     { "Backlog Guide" = "project/backlog/README.md" },
+    { "Changelog" = "changelog.md" },
   ]},
   { "Agent Operating Manual" = "operating-manual.md" },
 ]

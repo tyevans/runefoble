@@ -14,6 +14,12 @@ Speak and the board obeys: natural speech is parsed into game actions and applie
 
 <div class="grid cards" markdown>
 
+-   :material-bullhorn: **[Platform Showcase & Vision](marketing.md)**
+
+    ---
+
+    Explore Runefoble's core capabilities, tactical board innovations, voice-driven AI DM, and the forward-looking product roadmap.
+
 -   :material-graph: **[Interactive Project Visualizer](project-visualizer.md)**
 
     ---
@@ -98,3 +104,4 @@ Formal project management records and specifications live under `docs/project/`:
 * **[Product Requirements Documents (PRDs)](project/product/REGISTRY.md)**: Core capabilities, feature matrices, and capability inventories.
 * **[User Stories & Personas](project/user_stories/REGISTRY.md)**: Persona-driven scenarios and acceptance criteria.
 * **[Engineering Backlog & Priorities](project/backlog/PRIORITY.md)**: Backlog items, milestone roadmap horizons, and autonomous backlog engine tasks.
+* **[Platform Changelog](changelog.md)**: Historical release notes and unreleased capabilities following Keep a Changelog.
