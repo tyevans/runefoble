@@ -33,10 +33,15 @@ def start_audience_studio_server() -> Generator[str]:
     dist_index = REPO_ROOT / "services" / "audience_studio" / "dist" / "index.js"
     src_index = REPO_ROOT / "services" / "audience_studio" / "src" / "index.ts"
 
-    if dist_index.is_file():
-        cmd = ["node", str(dist_index)]
-    else:
-        cmd = ["node", "--experimental-strip-types", str(src_index)]
+    if not dist_index.is_file():
+        subprocess.run(
+            ["pnpm", "--filter", "@runefoble/audience-studio", "run", "build"],
+            cwd=str(REPO_ROOT),
+            check=False,
+            capture_output=True,
+        )
+
+    cmd = ["node", str(dist_index)] if dist_index.is_file() else ["npx", "tsx", str(src_index)]
 
     proc = subprocess.Popen(
         cmd,
