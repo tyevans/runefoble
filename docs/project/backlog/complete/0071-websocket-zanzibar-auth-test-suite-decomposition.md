@@ -1,7 +1,7 @@
 ---
 id: '0071'
 title: WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0008
@@ -18,8 +18,8 @@ governing_prds:
 - PRD-0005
 governing_stories:
 - US-0014
+pr_url: https://github.com/tyevans/runefoble/pull/102
 ---
-
 # TASK-0071: WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition
 
 ## Status
