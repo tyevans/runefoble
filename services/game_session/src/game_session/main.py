@@ -15,8 +15,10 @@ from game_session.dependencies import (
 )
 from game_session.routers import (
     autopilot_router,
+    campfire_router,
     combat_router,
     session_router,
+    stronghold_router,
 )
 from runefoble_platform.event_sourcing import get_event_store
 
@@ -38,6 +40,8 @@ app = FastAPI(
 app.include_router(session_router)
 app.include_router(combat_router)
 app.include_router(autopilot_router)
+app.include_router(campfire_router)
+app.include_router(stronghold_router)
 
 
 @app.get("/healthz")
@@ -60,6 +64,7 @@ def get_ui_manifest():
             "runefoble-dice-roller",
             "runefoble-spectator-view",
             "runefoble-spectator-overlay",
+            "runefoble-campfire-crafting",
         ],
         "version": "0.1.0",
     }

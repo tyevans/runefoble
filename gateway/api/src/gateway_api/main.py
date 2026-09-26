@@ -18,6 +18,7 @@ from gateway_api.dependencies import (
 )
 from gateway_api.routers import (
     campaigns_router,
+    downtime_router,
     health_router,
     overlay_router,
     spectator_router,
@@ -47,6 +48,7 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(campaigns_router)
+app.include_router(downtime_router)
 app.include_router(spectator_router)
 app.include_router(overlay_router)
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])

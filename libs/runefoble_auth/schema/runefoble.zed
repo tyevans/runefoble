@@ -101,5 +101,14 @@ definition audience_poll {
     permission veto = campaign->run_session
 }
 
+definition stronghold {
+    relation campaign: campaign
+    relation manager: user
 
-
+    // Campsite/stronghold can be viewed by campaign members
+    permission view = campaign->view
+    // Upgrading facilities can be performed by active players or designated managers
+    permission upgrade = campaign->play + manager
+    // Stronghold administration and resets require DM/GM/Owner
+    permission manage = campaign->run_session + manager
+}

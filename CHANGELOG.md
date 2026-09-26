@@ -8,14 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Downtime Activities, Alchemical Crafting & Party Stronghold Engine (`TASK-0100`, `PRD-0014`, `US-0044`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
+  - Implemented `CraftingAggregate` in `character_sheet` modeling reagent affinity, catalytic stabilization, and volatile mishap risk matrices emitting `CraftingAttempted`, `CraftingSucceeded`, and `CraftingMishapOccurred`.
+  - Implemented `StrongholdAggregate` and Campfire Rest sequence in `game_session` supporting multi-tier base upgrades (watchtower, herbal rack, arcane forge), passive campaign resting boons, and collaborative storytelling prompts emitting `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`.
+  - Added SpiceDB Zanzibar permissions for `definition stronghold` in `runefoble.zed` and protected REST routes via API Gateway.
+  - Vendored Lit Web Component `<runefoble-campfire-crafting>` in `services/game_session/ui/src/` with interactive Storybook stories, Bauhaus tokens, and `/ui/manifest` discovery.
+  - Added comprehensive blackbox test suite in `tests/test_blackbox_campfire_crafting.py` and Diataxis how-to guide `docs/how-to/run-campfire-rests-and-alchemical-crafting.md`.
+
 - **Character Sheet UI Inventory Grid and Condition Indicator Microfrontend (`TASK-0107`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
   - Developed and vendored `<runefoble-character-sheet>` Lit Web Component microfrontend within `services/character_sheet/ui/` with Bauhaus geometric tokens, full theme and dark/light contrast support, and strict Shadow DOM encapsulation.
   - Implemented visual interactive paper doll slots (`main_hand`, `off_hand`, `armor`, `accessory`) with click-to-equip and unequip actions, emitting standard `equip-item` and `unequip-item` CustomEvents.
   - Implemented dynamic encumbrance capacity progress bar color-coded by load thresholds (Light, Medium, Heavy, Overburdened) computed dynamically from carried item weights and character Strength capacity.
   - Implemented condition indicator badges distinguishing 5e/d20 rules conditions (`blinded`, `prone`, `stunned`, `poisoned`, `frightened`, `unconscious`) and Runefoble absence penalties (`drunk`, `foolishness`, `greed`, `cowardice`), accompanied by interactive tooltips detailing mechanics and saving throw modifiers.
   - Implemented spellbook and spell slot tracker with clickable pips for expenditure and recovery across spell tiers 1–9, daily prepared spell list with click-to-cast action, and known spellbook management.
-  - Decomposed microfrontend code into single-responsibility modules (`runefoble-character-sheet.ts`, `runefoble-character-sheet.templates.ts`, `runefoble-character-sheet.styles.ts`, `runefoble-character-sheet.types.ts`, and `runefoble-character-sheet.stories.ts`), strictly adhering to Hard Invariant 6 (< 500 lines per file).
-  - Authored interactive Storybook stories (`Healthy`, `Encumbered`, `Afflicted`, `LeveledUpSpellcaster`) building cleanly with zero console errors.
+  - Decomposed microfrontend code into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file) with interactive Storybook stories building cleanly with zero console errors.
   - Exposed service microfrontend manifest at `GET /ui/manifest` and `services/character_sheet/ui/manifest.json`.
   - Added App Shell forwarding export in `frontend/src/components/runefoble-character-sheet.ts` and re-exported in `frontend/src/index.ts`.
   - Authored frontdoor blackbox test suite in `tests/test_blackbox_character_sheet_ui.py` and Diataxis how-to guide `docs/how-to/interact-with-character-sheet-and-inventory.md`.
@@ -25,22 +31,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Implemented `<runefoble-rules-lookup>` delivering debounced sub-50ms hybrid BM25 and vector search across SRD monsters, spells, and conditions with category filter pills and interactive stat cards.
   - Implemented `<runefoble-encounter-builder>` computing dynamic party XP thresholds (Easy, Medium, Hard, Deadly), real-time lethality brackets, monster drafting, and 1-click automated encounter balancing.
   - Provided Homebrew Forge form modal for registering custom campaign creatures and spells guarded by SpiceDB Zanzibar authorization.
-  - Authored interactive Storybook stories for search results, monster stat cards, CR encounter balance calculator, and homebrew creation.
-  - Exported service discovery manifest at `GET /ui/manifest` and in `services/rules_compendium/ui/manifest.json`.
+  - Authored interactive Storybook stories and exported service discovery manifest at `GET /ui/manifest` and `services/rules_compendium/ui/manifest.json`.
   - Added frontdoor blackbox test suite in `tests/test_blackbox_rules_compendium_ui.py` and updated Diataxis guide `docs/how-to/balance-combat-encounters-and-query-compendium.md`.
 
 - **WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition (`TASK-0068`, `ADR-0002`, `ADR-0004`, `ADR-0009`, `ADR-0013`)**:
-  - Decomposed `frontend/src/services/webrtc-voice.ts` (formerly 348 lines) into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and task limits (< 200 lines each):
-    - `webrtc-types.ts` (67 lines): Defines wire protocol signaling interfaces (`SignalingMessage`, `VoicePeer`, `WebRTCVoiceOptions`, `PeerMeshOptions`) and connection state types (`WebRTCConnectionState`, `WebRTCConnectionStates`).
-    - `webrtc-peer-mesh.ts` (159 lines): `PeerConnectionMesh` coordinating full-mesh `RTCPeerConnection` lifecycles, early ICE candidate queuing prior to remote description resolution, remote stream tracking, and DOM `<audio>` element attachment with volume/mute controls.
-    - `webrtc-voice.ts` (150 lines): `WebRTCVoiceService` client facade managing WebSocket signaling transport to `gateway-api`, auto-reconnect timers, credential parameter encoding, WebAudio pipeline local microphone conditioning, and audio telemetry broadcasting.
+  - Decomposed `frontend/src/services/webrtc-voice.ts` into single-responsibility modules strictly under 200 lines (`webrtc-types.ts`, `webrtc-peer-mesh.ts`, and `webrtc-voice.ts`).
   - Preserved full backward compatibility for all imports and public service contracts via re-exports.
   - Added comprehensive blackbox test suite in `tests/test_blackbox_webrtc_client.py` and updated architecture documentation in `docs/explanation/realtime-voice-and-board-sync.md`.
 
 - **Spectator Stream Overlay and Broadcast Test Suite Modular Decomposition (`TASK-0075`, `ADR-0001`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0009`, `ADR-0013`)**:
-  - Decomposed monolithic `tests/test_spectator_view.py` (330 lines) into two specialized test modules strictly under 200 lines each.
-  - Authored `tests/test_spectator_events_and_schema.py` (186 lines) validating `SpectatorSessionConnected` event registry, CloudEvents 1.0 schema compliance, and audience-safe state sanitization.
-  - Authored `tests/test_spectator_stream_overlay.py` (189 lines) validating public HTTP spectator endpoints (`/api/v1/spectate/{id}` and `/api/v1/spectator/sessions/{id}`), token query and header authentication, Redis event bus dispatch, and real-time live WebSocket `/ws/spectator/{id}` broadcast updates.
+  - Decomposed monolithic `tests/test_spectator_view.py` into `test_spectator_events_and_schema.py` and `test_spectator_stream_overlay.py` validating spectator endpoints, tokens, and WebSockets.
   - Added endpoint aliases `/api/v1/spectator/sessions/{session_id}` and `/ws/spectator/{session_id}` in `gateway_api/routers/spectator.py`.
 
 - **Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend (`TASK-0110`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0011`, `ADR-0013`)**:
@@ -54,27 +54,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - **PRD Creation, Maintenance, and Task Decomposition Pipeline (`tools/prd_pipeline`, `scripts/decompose-prds.sh`, `ADR-0003`, `ADR-0013`)**:
   - Implemented modular PRD pipeline engine in `tools/prd_pipeline/` with CLI entrypoint `tools.prd_pipeline.cli` and executable shell wrapper `scripts/decompose-prds.sh`.
-  - Added automated auditing command (`audit`) detecting undecomposed and underdecomposed PRDs, buffer exhaustion warnings (<8 items), stale cross-directory task links, and oversized proposed tasks.
-  - Implemented automated PRD creation (`create`) scaffolding standardized PRD records with YAML frontmatter, 6 core questions, and automated registration into `docs/project/product/REGISTRY.md`.
-  - Built decomposition engine (`decomposer.py`) breaking PRDs into granular, single `agy -p` pass tasks:
-    - Automatically identifies architectural novelties and generates Architectural Spike tasks (`SPIKE: Architectural Spike and ADR for ...`).
-    - Produces thin vertical slices across Domain Aggregates, APIRouters with SpiceDB Zanzibar checks, Lit Microfrontends per ADR-0013, and asynchronous Redis Streams workers.
-    - Strictly enforces Hard Invariant 6 (<500 lines per file) and Hard Invariant 7 (Frontdoor Blackbox TDD).
+  - Added automated auditing (`audit`) and standardized PRD scaffolding (`create`) with automatic registration into `docs/project/product/REGISTRY.md`.
+  - Built decomposition engine (`decomposer.py`) breaking PRDs into granular, single-pass tasks (architectural spikes, domain aggregates, APIRouters with SpiceDB Zanzibar checks, Lit microfrontends, and asynchronous Redis Streams workers).
   - Built bidirectional registry synchronizer (`registry_sync.py`) reconciling PRD, User Story, and Backlog Priority registries, repairing stale task references, and indexing new tasks in `docs/project/backlog/PRIORITY.md`.
-  - Added Antigravity agent decomposition prompt generator (`prompt` and `agent` subcommands) for deep semantic decomposition of narrative PRDs.
-  - Added Makefile targets: `make prd-audit`, `make prd-decompose`, `make prd-create`, `make prd-sync`.
+  - Added Antigravity agent decomposition prompt generator and Makefile targets (`make prd-audit`, `make prd-decompose`, `make prd-create`, `make prd-sync`).
   - Authored comprehensive blackbox test suite in `tests/test_prd_pipeline.py` and Diataxis how-to guide `docs/how-to/decompose-prds-into-vertical-slices.md`.
 
 - **Redis Streams Consumer Group Worker and Session Projections Modular Decomposition (`TASK-0076`, `ADR-0003`, `ADR-0006`, `ADR-0009`, `ADR-0011`)**:
-  - Decomposed `libs/runefoble_platform/src/runefoble_platform/consumer_group.py` into dedicated event deserialization module `event_deserializer.py` (74 lines), in-memory mock client `mock_redis.py` (110 lines), and core consumer group worker `consumer_group.py` (169 lines).
+  - Decomposed `libs/runefoble_platform/src/runefoble_platform/consumer_group.py` into dedicated event deserialization module `event_deserializer.py`, in-memory mock client `mock_redis.py`, and core worker `consumer_group.py`.
   - Preserved W3C trace context (`traceparent`, `tracestate`) across payload deserialization and domain event instantiation.
-  - Decomposed `services/game_session/src/game_session/projections.py` into modular sub-package `services/game_session/src/game_session/projections/`:
-    - `models.py` (109 lines): Denormalized read models (`SessionReadModel`, `TokenReadModel`, `AtmosphereReadModel`, `EncounterReadModel`, `InitiativeReadModel`, `PresenceReadModel`).
-    - `initiative.py` (114 lines): `InitiativeProjection` tracking turn order, round cycling, and initiative snapshots with tie-breaking rules.
-    - `presence.py` (111 lines): `PresenceProjection` tracking participant connection status, stand-in flags, and hot-swap handoffs.
-    - `appliers.py` (142 lines): Event appliers for session, token, atmosphere, encounter, and turn state transitions.
-    - `session.py` (157 lines): `SessionReadProjection` integrating sub-projections, background worker loops, and DLQ routing.
-    - `__init__.py` (33 lines): Backward-compatible re-exports maintaining import signatures.
+  - Decomposed `services/game_session/src/game_session/projections.py` into modular sub-package (`models.py`, `initiative.py`, `presence.py`, `appliers.py`, `session.py`).
   - Added unit and blackbox test coverage in `tests/test_game_session_projections.py` and updated technical reference `docs/reference/redis-streams-event-bus.md`.
 
 - **Universal VTT Importer and Dynamic MCP Tool Registry (`TASK-0057`, `ADR-0007`, `ADR-0008`, `ADR-0010`, `ADR-0013`)**:
@@ -101,7 +90,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added umbrella Helm deployment manifest `campaign-analytics.yaml` on internal port 8011 with Swagger UI aggregation and ingress routing.
   - Authored Diataxis How-To guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md` and updated technical reference specifications.
   - Verified full test suite through frontdoor blackbox tests in `tests/test_blackbox_campaign_analytics.py` with zero file invariant violations (< 500 lines per file).
-
 
 - **Cinematic Director Auto-Camera and OBS Stream Overlay (`TASK-0056`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
   - Implemented autonomous Cinematic Director virtual camera (`gateway_api.cinematic_director`) tracking active turn events (`TurnStarted`) and action centers (`TokenMoved`) with smooth cubic-bezier easing (`cubic-bezier(0.25, 0.1, 0.25, 1.0)`) within 300ms.
