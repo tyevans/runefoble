@@ -22,6 +22,7 @@ class StandInAction(BaseModel):
     penalty_influence: str | None = None
     dice_roll_required: str | None = None
     penalties_applied: list[str] = Field(default_factory=list)
+    guardrails_applied: list[str] = Field(default_factory=list)
     flavor_text: str = ""
 
 
@@ -85,6 +86,7 @@ class StandInRequest(BaseModel):
     penalties: list[str] = Field(default_factory=list)
     scene_context: str = "In combat with subterranean creatures"
     personality_traits: list[str] = Field(default_factory=list)
+    guardrails: dict[str, Any] | None = None
     session_id: str | None = None
     campaign_id: str | None = None
 

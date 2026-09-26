@@ -1,7 +1,7 @@
 ---
 id: 0025
 title: Personalized AI Stand-In Tactical Policies and Playstyle Guardrails
-status: Accepted
+status: Shipped
 created: 2026-09-25
 ---
 

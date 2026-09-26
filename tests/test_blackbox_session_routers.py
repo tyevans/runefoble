@@ -27,6 +27,7 @@ def test_game_session_openapi_routes_completeness(session_client):
         "/api/v1/sessions/{session_id}/start",
         "/api/v1/sessions/{session_id}/join",
         "/api/v1/sessions/{session_id}/leave",
+        "/api/v1/sessions/{session_id}/hot-swap",
         "/api/v1/sessions/{session_id}/next-turn",
         "/api/v1/sessions/{session_id}/roll",
         "/api/v1/sessions/{session_id}/combat/start",

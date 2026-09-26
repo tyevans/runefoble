@@ -39,6 +39,8 @@ from runefoble_events.character import (
     SessionPenaltyEvent,
     SpellPrepared,
     SpellSlotExpended,
+    StandInPolicyUpdated,
+    StandInStabilized,
 )
 from runefoble_events.compendium import (
     ConditionIndexed,
@@ -53,6 +55,7 @@ from runefoble_events.lore import (
     LoreDocumentIngested,
 )
 from runefoble_events.session import (
+    CharacterControlTransferred,
     CombatEncounterEnded,
     CombatEncounterStarted,
     CombatRoundAdvanced,
@@ -173,4 +176,7 @@ __all__ = [
     "SoundscapeTensionUpdated",
     "SoundscapeMoodOverridden",
     "SoundscapeDuckingToggled",
+    "StandInPolicyUpdated",
+    "StandInStabilized",
+    "CharacterControlTransferred",
 ]

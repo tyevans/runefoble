@@ -52,12 +52,27 @@ async def generate_stand_in_decision_node(
     penalty_effects = state.get("penalty_effects", [])
     scene_context = req.get("scene_context", "In combat")
     enemies = req.get("visible_enemies", [])
+    guardrails = req.get("guardrails", {})
+
+    guardrail_notes = []
+    if guardrails:
+        if guardrails.get("preserve_spell_slots"):
+            guardrail_notes.append(f"Preserve spell slots: {guardrails['preserve_spell_slots']}")
+        if guardrails.get("protect_allies"):
+            guardrail_notes.append(f"Protect allies: {', '.join(guardrails['protect_allies'])}")
+        if guardrails.get("avoid_melee"):
+            guardrail_notes.append("Avoid frontline melee engagement")
+        if guardrails.get("custom_priorities"):
+            guardrail_notes.append(
+                f"Custom priorities: {'; '.join(guardrails['custom_priorities'])}"
+            )
 
     system_prompt = (
         "You are Runefoble's Absent Player Stand-in AI. "
         "A player is missing from game night, so you autonomously pilot their character. "
         "Faithfully reflect their class and personality, BUT you MUST comically and mechanically "
-        "incorporate any DM-inflicted penalties (like 'drunk' or 'foolishness').\n"
+        "incorporate any DM-inflicted penalties (like 'drunk' or 'foolishness') and MUST respect "
+        "any player-configured tactical guardrails (e.g. preserving high level slots, protecting allies).\n"
         "Return a JSON object with: action_type, target, dialogue, narrative_flavor, mechanics."
     )
     user_prompt = (
@@ -65,6 +80,7 @@ async def generate_stand_in_decision_node(
         f"Traits: {', '.join(traits)}\n"
         f"DM Penalties: {', '.join(penalties) if penalties else 'None'}\n"
         f"Penalty Manifestation: {'; '.join(penalty_effects)}\n"
+        f"Tactical Guardrails: {'; '.join(guardrail_notes) if guardrail_notes else 'None'}\n"
         f"Scene: {scene_context}\n"
         f"Enemies: {', '.join(enemies) if enemies else 'Unknown threats'}\n"
         "Generate their turn action and in-character spoken dialogue."
@@ -84,7 +100,40 @@ async def generate_stand_in_decision_node(
     # Heuristic fallback if LLM returned empty or mock
     if not decision or not decision.get("action_type"):
         target = enemies[0] if enemies else "nearest foe"
-        if "drunk" in [p.lower() for p in penalties]:
+        protect_allies = guardrails.get("protect_allies", []) if guardrails else []
+        avoid_melee = guardrails.get("avoid_melee", False) if guardrails else False
+
+        if protect_allies and (
+            any(a.lower() in scene_context.lower() for a in protect_allies)
+            or "heal" in scene_context.lower()
+        ):
+            target_ally = protect_allies[0]
+            action_type = "cast_spell"
+            if "drunk" in [p.lower() for p in penalties]:
+                dialogue = f"*Hic* 'Hold on {target_ally}! Healing light incoming!' *burp*"
+                flavor = f"{char_name} sways wildly while channeling healing magic on {target_ally} per guardrails."
+                mechanics = {
+                    "action": "heal",
+                    "target": target_ally,
+                    "penalty": "drunk",
+                    "guardrail": "protect_allies",
+                }
+            else:
+                dialogue = f"'Protecting {target_ally}! Stand fast!'"
+                flavor = f"{char_name} casts protective healing on {target_ally} obeying tactical guardrails."
+                mechanics = {"action": "heal", "target": target_ally, "guardrail": "protect_allies"}
+        elif avoid_melee and char_class.lower() in [
+            "cleric",
+            "wizard",
+            "sorcerer",
+            "ranger",
+            "druid",
+        ]:
+            action_type = "cast_spell" if char_class.lower() != "ranger" else "ranged_attack"
+            dialogue = "'Keeping distance from frontline melee as planned!'"
+            flavor = f"{char_name} maintains safe distance, deploying ranged attacks per tactical guardrails."
+            mechanics = {"action": action_type, "target": target, "guardrail": "avoid_melee"}
+        elif "drunk" in [p.lower() for p in penalties]:
             action_type = "attack"
             dialogue = (
                 "*Hic* 'Stand shtill, ya six-eyed fiend! I got two blades and one of 'em'sh real!'"

@@ -1,7 +1,7 @@
 ---
 id: 0026
 title: Mid-Session Hot-Swap Takeover and Permadeath Safety Safeguards
-status: Accepted
+status: Shipped
 created: 2026-09-25
 ---
 

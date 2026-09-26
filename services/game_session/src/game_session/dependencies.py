@@ -7,6 +7,7 @@ import logging
 import os
 
 from game_session.aggregate import GameSessionAggregate
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -21,8 +22,18 @@ STREAM_SESSION = "runefoble.events.session"
 
 platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
+_spicedb_client: SpiceDBClient = SpiceDBClient()
 
 repo: AggregateRepository[GameSessionAggregate] = create_aggregate_repository(GameSessionAggregate)
+
+
+def get_spicedb_client() -> SpiceDBClient:
+    return _spicedb_client
+
+
+def set_spicedb_client(client: SpiceDBClient) -> None:
+    global _spicedb_client
+    _spicedb_client = client
 
 
 def get_event_bus() -> RedisStreamsEventBus | None:

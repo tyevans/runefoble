@@ -8,8 +8,10 @@ from __future__ import annotations
 from fastapi import FastAPI
 from game_session.dependencies import (
     get_event_bus,
+    get_spicedb_client,
     repo,
     set_event_bus,
+    set_spicedb_client,
 )
 from game_session.routers import (
     autopilot_router,
@@ -17,6 +19,15 @@ from game_session.routers import (
     session_router,
 )
 from runefoble_platform.event_sourcing import get_event_store
+
+__all__ = [
+    "app",
+    "get_event_bus",
+    "get_spicedb_client",
+    "repo",
+    "set_event_bus",
+    "set_spicedb_client",
+]
 
 app = FastAPI(
     title="Runefoble - Game Session Service",

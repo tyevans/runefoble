@@ -95,3 +95,19 @@ def test_character_endpoints():
     res_del_cond = client.delete(f"/api/v1/characters/{char_id}/conditions/prone")
     assert res_del_cond.status_code == 200
     assert "prone" not in res_del_cond.json()["conditions"]
+
+
+def test_character_aggregate_stand_in_guardrails_spell_preservation():
+    """Verify that Stand-in AI is blocked from expending reserved spell slots."""
+    char_id = uuid4()
+    char = CharacterAggregate(char_id)
+    char.create(name="Kyra", character_class="Cleric", max_hp=30)
+    # Prepared spells and slots
+    char.prepare_spell("Cure Wounds", spell_level=1)
+    # Set stand in guardrail: preserve 2 level-1 slots
+    char.update_stand_in_guardrails({"preserve_spell_slots": {1: 2}})
+    char.set_stand_in_active(True)
+
+    # Attempting to cast spell when available_slots (2) <= preserve_count (2) raises ValueError
+    with pytest.raises(ValueError, match="STAND_IN_GUARDRAIL_VIOLATION"):
+        char.cast_spell("Cure Wounds", slot_level=1)

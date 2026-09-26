@@ -13,6 +13,7 @@ from game_session.rules import (
     sort_initiative_order,
 )
 from runefoble_events.events import (
+    CharacterControlTransferred,
     CombatEncounterEnded,
     CombatEncounterStarted,
     InitiativeRolled,
@@ -88,6 +89,28 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
             session_id=self.aggregate_id,
             player_id=player_id,
             reason=reason,
+        )
+
+    def hot_swap_character(self, player_id: str, character_id: UUID) -> None:
+        """Transfer active token and turn control from AI stand-in back to player."""
+        if self.state.status != "active":
+            raise ValueError(f"Cannot hot-swap character in session status '{self.state.status}'")
+        matching = None
+        for pid, p in self.state.participants.items():
+            if p.character_id == character_id or pid == player_id:
+                matching = p
+                break
+        if matching is None:
+            raise ValueError(f"Character '{character_id}' is not in session")
+
+        self.create_event(
+            CharacterControlTransferred,
+            campaign_id=self.state.campaign_id,
+            session_id=self.aggregate_id,
+            character_id=character_id,
+            player_id=player_id,
+            previous_controller="ai_stand_in",
+            new_controller="player",
         )
 
     def advance_turn(self, active_character_id: UUID | None = None) -> None:
@@ -225,6 +248,18 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
     @handles(PlayerLeftSession)
     def _on_player_left(self, event: PlayerLeftSession) -> None:
         self._state = self.state.without_player_presence(event.player_id)
+
+    @handles(CharacterControlTransferred)
+    def _on_control_transferred(self, event: CharacterControlTransferred) -> None:
+        char_uuid = (
+            UUID(str(event.character_id))
+            if not isinstance(event.character_id, UUID)
+            else event.character_id
+        )
+        self._state = self.state.with_character_control_transferred(
+            player_id=event.player_id,
+            character_id=char_uuid,
+        )
 
     @handles(TurnAdvanced)
     def _on_turn_advanced(self, event: TurnAdvanced) -> None:

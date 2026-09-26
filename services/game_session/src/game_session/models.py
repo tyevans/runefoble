@@ -89,6 +89,28 @@ class GameSessionState(BaseModel):
             )
         return self.model_copy(update={"participants": participants})
 
+    def with_character_control_transferred(
+        self, player_id: str, character_id: UUID
+    ) -> "GameSessionState":
+        participants = dict(self.participants)
+        if player_id in participants:
+            p = participants[player_id]
+            participants[player_id] = p.model_copy(
+                update={"is_present": True, "is_stand_in_active": False}
+            )
+        else:
+            for pid, p in list(participants.items()):
+                if p.character_id == character_id:
+                    participants[pid] = p.model_copy(
+                        update={
+                            "is_present": True,
+                            "is_stand_in_active": False,
+                            "player_id": player_id,
+                        }
+                    )
+                    break
+        return self.model_copy(update={"participants": participants})
+
     def with_turn_advanced(
         self, new_turn: int, active_character_id: UUID | None
     ) -> "GameSessionState":
@@ -183,6 +205,7 @@ class AutoPilotRequest(BaseModel):
     penalties: list[str] = Field(default_factory=list)
     scene_context: str = "In active encounter"
     personality_traits: list[str] = Field(default_factory=list)
+    guardrails: dict[str, Any] | None = None
 
 
 class AutoPilotResponse(BaseModel):
@@ -234,3 +257,21 @@ class RollDiceResponse(BaseModel):
     is_crit: bool = False
     is_fumble: bool = False
     roll_type: str = "general"
+
+
+class HotSwapRequest(BaseModel):
+    player_id: str
+    character_id: UUID
+
+
+class HotSwapResponse(BaseModel):
+    session_id: UUID
+    character_id: UUID
+    player_id: str
+    previous_controller: str = "ai_stand_in"
+    new_controller: str = "player"
+    current_turn: int
+    in_combat: bool
+    combat_round: int
+    combat_active_id: str | None
+    session_state: GameSessionState

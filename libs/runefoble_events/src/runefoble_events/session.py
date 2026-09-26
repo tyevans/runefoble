@@ -122,3 +122,15 @@ class CombatEncounterEnded(BaseRunefobleEvent):
     aggregate_type: str = "GameSession"
     session_id: UUID | str | None = None
     total_rounds: int
+
+
+@register_event("runefoble.events.session.character_control_transferred")
+class CharacterControlTransferred(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    event_type: str = "runefoble.events.session.character_control_transferred"
+    session_id: UUID | str
+    character_id: UUID | str
+    player_id: str
+    previous_controller: str = "ai_stand_in"
+    new_controller: str = "player"

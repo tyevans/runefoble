@@ -1,6 +1,6 @@
 """CharacterSheet aggregate events."""
 
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 from uuid import UUID
 
 from pydantic import Field
@@ -116,6 +116,25 @@ class SpellSlotExpended(BaseRunefobleEvent):
     spell_name: str
     slot_level_used: int
     remaining_slots: int
+
+
+@register_event("runefoble.events.character.stand_in_policy_updated")
+class StandInPolicyUpdated(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    event_type: str = "runefoble.events.character.stand_in_policy_updated"
+    character_id: UUID | str
+    guardrails: dict[str, Any] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.character.stand_in_stabilized")
+class StandInStabilized(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    event_type: str = "runefoble.events.character.stand_in_stabilized"
+    character_id: UUID | str
+    current_hp: int = 0
+    condition: str = "unconscious_stabilized"
 
 
 # Legacy backward-compatible alias
