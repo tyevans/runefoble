@@ -14,8 +14,8 @@
 ### Foundational Platform Enablers
 - [x] Redis Streams event streaming across distributed nodes (ADR-0006, TASK-0015)
 - [x] SpiceDB production cluster syncing with Zitadel OIDC identities (ADR-0001, TASK-0032)
-- [ ] Zitadel production OIDC/JWKS token verification middleware (ADR-0005, TASK-0034)
-- [ ] Live SpiceDB gRPC client integration & schema migration bootstrapper (ADR-0001, TASK-0035)
+- [x] Zitadel production OIDC/JWKS token verification middleware (ADR-0005, TASK-0034)
+- [x] Live SpiceDB gRPC client integration & schema migration bootstrapper (ADR-0001, TASK-0035)
 - [x] PostgreSQL multi-database initialization & persistent event store connection (ADR-0011, TASK-0036)
 - [ ] OpenTelemetry distributed tracing, metrics & collector Helm integration (TASK-0037)
 - [ ] OpenPanel privacy-preserving analytics SDK & event pipeline (TASK-0038)
@@ -24,6 +24,9 @@
 - [x] WebRTC audio stream & real-time waveform visualizer microfrontend (ADR-0013, TASK-0030)
 - [x] Silo S3 battlemap asset uploader & shroud masking microfrontend (ADR-0013, TASK-0031)
 - [x] Live WebRTC bidirectional voice room with WebAudio processing (ADR-0002, TASK-0033)
+- [x] Immersive frontend experience vision PRD (ADR-0004, TASK-0072)
+- [ ] Frontend settings modal and theme mode orchestration (ADR-0004, TASK-0073)
+- [ ] Dark/light mode color tokens and component contrast invariants (ADR-0012, TASK-0074)
 - [ ] Sub-500ms Whisper speech-to-intent pipeline (TASK-0039)
 
 ## Milestone 3: AI DM & Ecosystem Expansion

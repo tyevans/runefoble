@@ -13,3 +13,7 @@
 11. **US-0006**: Real-Time Spectator Stream and Chronicle
 12. **US-0007**: Autonomous DM Session Execution
 13. **US-0009**: Fine-Grained Zanzibar Access Control for Campaign Roles
+14. **US-0041**: Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher (Ready)
+15. **US-0042**: Accessible Dark and Light Mode Theming Invariants Across Components (Ready)
+16. **US-0043**: Tactile Kinetic Board Interaction and Spoken Ghost Previews (Ready)
+

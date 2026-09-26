@@ -44,4 +44,8 @@ User stories document end-to-end user value from the perspective of players, gam
 | US-0038 | Generative Procedural Battlemaps and Character Portraits | Evelyn (DM) | Accepted | [`us-0038-generative-procedural-battlemaps-and-tokens.md`](accepted/us-0038-generative-procedural-battlemaps-and-tokens.md) |
 | US-0039 | Encounter Tension-Driven Adaptive Musical Scoring and Foley | Marcus (Adventurer) | Accepted | [`us-0039-encounter-tension-adaptive-scoring-and-foley.md`](accepted/us-0039-encounter-tension-adaptive-scoring-and-foley.md) |
 | US-0040 | Campaign Combat Telemetry and Living Interactive Timeline | Sarah (Absent Player) | Accepted | [`us-0040-campaign-combat-telemetry-and-living-timeline.md`](accepted/us-0040-campaign-combat-telemetry-and-living-timeline.md) |
+| US-0041 | Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher | Devon (Streamer) | Accepted | [`us-0041-settings-modal-and-appearance-mode-switching.md`](accepted/us-0041-settings-modal-and-appearance-mode-switching.md) |
+| US-0042 | Accessible Dark and Light Mode Theming Invariants Across Components | Marcus (Adventurer) | Accepted | [`us-0042-accessible-dark-and-light-mode-theming.md`](accepted/us-0042-accessible-dark-and-light-mode-theming.md) |
+| US-0043 | Tactile Kinetic Board Interaction and Spoken Ghost Previews | Evelyn (DM) | Accepted | [`us-0043-tactile-kinetic-board-and-spoken-ghost-previews.md`](accepted/us-0043-tactile-kinetic-board-and-spoken-ghost-previews.md) |
+
 

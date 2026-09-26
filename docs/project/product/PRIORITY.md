@@ -6,3 +6,5 @@
 4. **PRD-0004**: Dynamic Vocal Audio Conditioning and DSP Filters (Complete)
 5. **PRD-0005**: Real-Time WebSocket Board & Chronicle Synchronization (Accepted - Next)
 6. **PRD-0006**: Character Sheet Inventory, Equipment & Condition Aggregation (Accepted - Next)
+7. **PRD-0013**: Immersive & Intuitive Frontend Experience with Tactile Board Kinematics (Shaped)
+

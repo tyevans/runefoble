@@ -68,3 +68,17 @@ This catalog inventories all speculative and visionary capabilities for Runefobl
 | `FEAT-DEV-01` | **Model Context Protocol (MCP) Server** | Tool and resource endpoints exposing dice rolls, board states, token movements, and DM prompts to external LLMs. | **P0 (MVP)** | `gateway_mcp` |
 | `FEAT-DEV-02` | **Aggregated Swagger UI Hub** | Unified Swagger interface aggregating OpenAPI documentation across all microservices. | **P0 (MVP)** | `gateway_api`, `helm` |
 | `FEAT-DEV-03` | **Redis Streams Event Fanout** | High-throughput, distributed event streaming across microservice bounded contexts. | **P0 (MVP)** | `runefoble_platform` |
+
+---
+
+## 6. Frontend, Design System & Player Immersion Domain
+
+| Feature ID | Feature Name | Description | Release Tier | Governing Systems |
+|---|---|---|---|---|
+| `FEAT-UI-01` | **Bauhaus Modernist Theming System** | CSS custom property token system with Bauhaus modernist default aesthetic and multi-theme runtime switching. | **P0 (MVP)** | `frontend` |
+| `FEAT-UI-02` | **Global Settings Modal & Mode Switcher** | Centralized settings modal with Dark / Light / System appearance mode toggle, moving theme controls out of the header. | **P1 (Beta)** | `frontend` |
+| `FEAT-UI-03` | **Cross-Component Semantic Dark/Light Invariants** | Unified semantic tokens ensuring high-contrast, WCAG 2.1 AA compliant rendering in all components across dark and light modes. | **P1 (Beta)** | `frontend` |
+| `FEAT-UI-04` | **Tactile Token Kinematics & Momentum** | Drag-and-drop token physics with momentum, spring dampening, step counters, and live waypoint route measurement. | **P1 (Beta)** | `frontend`, `board_state` |
+| `FEAT-UI-05` | **Spoken Command Ghost Previews** | Real-time semi-transparent token trajectory and targeting ghost preview before voice mutations commit to the board. | **P1 (Beta)** | `frontend`, `the_watcher` |
+| `FEAT-UI-06` | **Radial Token Action Menu & AoE Templates** | Contextual circular dial for one-tap token actions and rotatable geometric AoE spell templates with live target intersection highlighting. | **P1 (Beta)** | `frontend`, `board_state` |
+
