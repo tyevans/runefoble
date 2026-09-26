@@ -1,6 +1,6 @@
 """BoardState aggregate and spatial grid events."""
 
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -93,6 +93,30 @@ class TokenHazardTriggered(BaseRunefobleEvent):
     hazard_type: str
     damage_dice: str
 
+
+@register_event("runefoble.events.board.map_imported")
+class UniversalVTTImported(BaseRunefobleEvent):
+    """Emitted when a Universal VTT (.dd2vtt) battlemap is imported onto the board."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "BoardState"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.board.map_imported"
+    session_id: str = ""
+    cols: int
+    rows: int
+    pixels_per_grid: int = 70
+    background_asset_id: str | None = None
+    background_image_url: str | None = None
+    wall_segments: list[dict[str, Any]] = Field(default_factory=list)
+    portals: list[dict[str, Any]] = Field(default_factory=list)
+    lights: list[dict[str, Any]] = Field(default_factory=list)
+
+
+# Register backward-compatible aliases
+BoardMapImported = UniversalVTTImported
+register_event(UniversalVTTImported, event_type="BoardMapImported")
+register_event(UniversalVTTImported, event_type="UniversalVTTImported")
 
 # Legacy backward-compatible alias
 BoardMoveEvent = TokenMoved

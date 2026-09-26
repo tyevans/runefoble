@@ -143,6 +143,17 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `target_x`: Integer, `target_y`: Integer
   - `descriptor`: String
   - `path`: List[List[Integer]]
+- **`UniversalVTTImported`** (alias: `BoardMapImported`): Emitted when a Universal VTT (`.dd2vtt`) map is imported onto the board (`runefoble.events.board.map_imported`).
+  - `session_id`: String
+  - `cols`: Integer
+  - `rows`: Integer
+  - `pixels_per_grid`: Integer
+  - `background_asset_id`: Optional[String]
+  - `background_image_url`: Optional[String]
+  - `wall_segments`: List[Dict[str, Any]]
+  - `portals`: List[Dict[str, Any]]
+  - `lights`: List[Dict[str, Any]]
+
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
 

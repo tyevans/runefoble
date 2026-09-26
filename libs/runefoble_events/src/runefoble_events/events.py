@@ -22,6 +22,7 @@ from runefoble_events.audience import (
 from runefoble_events.base import BaseRunefobleEvent, register_event
 from runefoble_events.board import (
     BoardGridInitialized,
+    BoardMapImported,
     BoardMoveEvent,
     FogOfWarRevealed,
     FogOfWarShrouded,
@@ -30,6 +31,7 @@ from runefoble_events.board import (
     TokenMoved,
     TokenPlaced,
     TokenRemoved,
+    UniversalVTTImported,
 )
 from runefoble_events.character import (
     AbsencePenaltyApplied,
@@ -140,6 +142,8 @@ __all__ = [
     "FogOfWarRevealed",
     "FogOfWarShrouded",
     "TerrainCellModified",
+    "UniversalVTTImported",
+    "BoardMapImported",
     "TokenHazardTriggered",
     "BoardMoveEvent",
     "CharacterCreated",

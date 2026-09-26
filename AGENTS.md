@@ -93,7 +93,9 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`manage-dm-copilot-whispers-and-veto-overrides.md`](docs/how-to/manage-dm-copilot-whispers-and-veto-overrides.md): How to manage private DM narrative whisper channels, intercept AI mutations, and exercise one-click veto/edit overrides.
 - [`resolve-conversational-disambiguation-and-combos.md`](docs/how-to/resolve-conversational-disambiguation-and-combos.md): How to detect ambiguous targets, generate clarification prompts, chain compound action combos, and coordinate rollback.
 - [`orchestrate-audience-chaos-polls.md`](docs/how-to/orchestrate-audience-chaos-polls.md): How to configure and orchestrate live audience chaos polls, ingest spectator votes across streaming channels, and manage DM approval queues.
+- [`import-universal-vtt-maps-and-register-dynamic-tools.md`](docs/how-to/import-universal-vtt-maps-and-register-dynamic-tools.md): How to import community Universal VTT maps (.dd2vtt), extract line-of-sight walls, store battlemap textures in Silo S3, and register dynamic runtime FastMCP tools.
 - [`broadcast-obs-stream-overlay-and-cinematic-camera.md`](docs/how-to/broadcast-obs-stream-overlay-and-cinematic-camera.md): How to embed the alpha-transparent OBS party vitals HUD overlay, configure cubic-bezier cinematic director tracking, and sanitize DM secrets.
+
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
