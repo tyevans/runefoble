@@ -9,8 +9,14 @@ from fastapi.testclient import TestClient
 
 def test_required_developer_cli_tools_installed():
     """Verify that all prerequisite developer CLI tools are accessible in PATH."""
+    import os
+
+    if os.environ.get("RUNEFOBLE_WORKER_HOST") or os.environ.get("RUNEFOBLE_SKIP_DEV_TOOLS"):
+        pytest.skip("Skipping developer CLI tool check on worker-only host")
+
+    path = f"{os.path.expanduser('~/.local/bin')}:{os.environ.get('PATH', '')}"
     tools = ["uv", "pnpm", "docker", "helm", "kind", "kubectl"]
-    missing = [tool for tool in tools if shutil.which(tool) is None]
+    missing = [tool for tool in tools if shutil.which(tool, path=path) is None]
     assert not missing, (
         f"Missing required developer CLI tools: {missing}. Run 'make install-tools'."
     )
