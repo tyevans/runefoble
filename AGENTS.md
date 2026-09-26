@@ -108,6 +108,7 @@ When delegating tasks to subagents:
    - Upon completion, merge the feature branch back to `main`, verify gates, and clean up the worktree (`git worktree remove .worktrees/<feature-name> && git branch -d <feature-branch>`).
 3. **Spin an agent down when it hands back**: do not reuse agents across disparate workstreams.
 4. **Trust what an agent says it did, but verify what it worked out**: confirm tests run green and build gates pass.
+5. **Maintain PRDs and backlog items**: Subagents must proactively maintain relevant PRDs (in `docs/project/product/`) and backlog items (in `docs/project/backlog/` including refinement, status progression, prioritization in `PRIORITY.md`, and registry synchronization).
 
 ## References
 
