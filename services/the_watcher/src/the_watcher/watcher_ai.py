@@ -6,6 +6,8 @@ autonomous Dungeon Mastering, and missing player stand-in emulation with penalti
 
 from typing import Any
 
+from the_watcher.compound_actions import CompoundActionEngine
+from the_watcher.disambiguation import DisambiguationEngine
 from the_watcher.models import IntentResult, StandInAction, StandInRecapResponse
 from the_watcher.movement_parser import SpeechIntentParser
 from the_watcher.stand_in_ai import StandInAIEngine
@@ -24,6 +26,16 @@ class TheWatcherEngine:
     def __init__(self) -> None:
         self._movement_parser = SpeechIntentParser()
         self._stand_in_ai = StandInAIEngine()
+        self._disambiguation = DisambiguationEngine()
+        self._compound_actions = CompoundActionEngine(self._movement_parser)
+
+    @property
+    def disambiguation(self) -> DisambiguationEngine:
+        return self._disambiguation
+
+    @property
+    def compound_actions(self) -> CompoundActionEngine:
+        return self._compound_actions
 
     def calculate_bounded_destination(
         self,

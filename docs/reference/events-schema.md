@@ -111,6 +111,14 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `token_id`: String
   - `hazard_type`: String
   - `damage_dice`: String (e.g. "2d10", "1d6")
+- **`CandidateGhostPreviewEmitted`**: Emitted when a candidate target is highlighted on the tactical board during intent disambiguation (`runefoble.events.board.ghost_preview_candidate`).
+  - `session_id`: String
+  - `disambiguation_id`: String
+  - `candidate_id`: String
+  - `token_id`: String
+  - `target_x`: Integer, `target_y`: Integer
+  - `descriptor`: String
+  - `path`: List[List[Integer]]
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
 
@@ -161,6 +169,26 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `target`: Optional[String]
   - `confidence`: Float
   - `flavor_text`: String
+- **`IntentDisambiguationRequested`**: Emitted when a spoken intent contains ambiguous entity references requiring player clarification (`runefoble.events.watcher.disambiguation_requested`).
+  - `session_id`: String
+  - `campaign_id`: Optional[String]
+  - `speaker_id`: String, `speaker_name`: String
+  - `original_transcript`: String
+  - `disambiguation_id`: String
+  - `action_type`: String
+  - `ambiguous_target`: String
+  - `candidates`: List[Dict[String, Any]]
+  - `clarification_prompt`: String
+- **`CompoundActionResolved`**: Emitted when a multi-part tactical combo or disambiguated action graph is resolved for execution (`runefoble.events.watcher.compound_action_resolved`).
+  - `session_id`: String
+  - `campaign_id`: Optional[String]
+  - `speaker_id`: String, `speaker_name`: String
+  - `original_transcript`: String
+  - `disambiguation_id`: Optional[String]
+  - `resolved_target`: Optional[String]
+  - `actions`: List[Dict[String, Any]]
+  - `status`: String ("ready", "executing", "completed", "partial_failure", "rolled_back")
+  - `narrative_summary`: String
 - **`WatcherNarrationGenerated`**: Emitted when The Watcher provides scene description.
   - `narrative_text`: String
   - `tone`: String
