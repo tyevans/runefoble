@@ -1,5 +1,6 @@
 """Mechanical CI watcher, GitHub PR management, and merge dispatcher."""
 
+import json
 import subprocess
 import time
 from pathlib import Path
@@ -94,7 +95,6 @@ def wait_for_ci_checks(
     start_time = time.time()
 
     while time.time() - start_time < timeout_seconds:
-        # Check overall PR check status
         res = run_cmd(
             [
                 "gh",
@@ -102,22 +102,64 @@ def wait_for_ci_checks(
                 "checks",
                 pr_url,
                 "--json",
-                "name,state,bucket",
+                "name,state,bucket,link",
             ],
             cwd=worktree_dir,
         )
 
-        # gh pr checks returns 0 if all checks succeed, 1 if any fail, 8 if pending
-        if res.returncode == 0:
-            print("✅ All CI checks passed successfully.")
-            return True
-        elif res.returncode == 1:
-            # Check failed
-            print(f"❌ CI checks reported failure:\n{res.stdout}\n{res.stderr}")
+        output = res.stdout.strip()
+        combined = f"{res.stdout}\n{res.stderr}".lower()
+
+        # Check if GitHub Actions hasn't reported/registered any checks yet
+        if "no checks reported" in combined or not output:
+            print("⏳ Waiting for CI checks to be registered by GitHub Actions...")
+            time.sleep(poll_interval)
+            continue
+
+        try:
+            checks = json.loads(output)
+        except json.JSONDecodeError:
+            if "no checks reported" in combined:
+                print("⏳ Waiting for CI checks to be registered by GitHub Actions...")
+                time.sleep(poll_interval)
+                continue
+            print(f"⚠️ Unexpected output while polling checks: {res.stderr or res.stdout}")
+            time.sleep(poll_interval)
+            continue
+
+        if not checks or not isinstance(checks, list):
+            print("⏳ Waiting for CI checks to be registered by GitHub Actions...")
+            time.sleep(poll_interval)
+            continue
+
+        pending = [
+            c
+            for c in checks
+            if c.get("bucket") == "pending"
+            or c.get("state") in ("PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED")
+        ]
+        failed = [
+            c
+            for c in checks
+            if c.get("bucket") == "fail"
+            or c.get("state") in ("FAILURE", "CANCELLED", "TIMED_OUT", "STARTUP_FAILURE")
+        ]
+
+        if pending:
+            names = ", ".join(c.get("name", "unknown") for c in pending)
+            print(f"⏳ CI checks in progress ({len(pending)} pending): {names}...")
+            time.sleep(poll_interval)
+            continue
+
+        if failed:
+            print("❌ CI checks reported failure:")
+            for f in failed:
+                print(f"  - {f.get('name')}: {f.get('state')} ({f.get('link', '')})")
             return False
 
-        # Check pending or running
-        time.sleep(poll_interval)
+        # If checks list is non-empty, none pending, and none failed
+        print("✅ All CI checks passed successfully.")
+        return True
 
     print(f"⚠️ CI check timeout after {timeout_seconds}s.")
     return False

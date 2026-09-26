@@ -57,3 +57,9 @@ flowchart TD
    - If any verification check fails, the orchestrator does not discard work. Instead, it aggregates all failure logs into a diagnostic prompt and feeds it back to the agent using session continuation (`agy -c -p`), allowing the agent to diagnose errors, reformat code, resolve failing tests, or decompose oversized files.
 4. **Mechanical CI Watcher**: Zero tokens are spent polling CI. GitHub checks are watched mechanically via `gh pr checks`.
 5. **Queue Reconciliation**: Upon merge, the task is moved from `refined/` to `complete/`, updating `docs/project/backlog/PRIORITY.md` and `ROADMAP.md` automatically.
+
+## Fault Tolerance & Graceful Interrupts
+
+- **Graceful Cancellation (`Ctrl+C`)**: When interrupted with `Ctrl+C`, the engine terminates running agent processes, removes active git worktrees, and immediately releases all claimed tasks back to `Refined` so they remain ready for execution.
+- **Startup Stale Task Recovery**: In case of a hard termination (e.g. machine restart or SIGKILL), the orchestrator scans `docs/project/backlog/refined/` upon launch and automatically resets any orphaned `in-progress` tasks back to `Refined`, ensuring no task is ever lost.
+
