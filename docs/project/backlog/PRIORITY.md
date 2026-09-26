@@ -60,15 +60,18 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 54. **TASK-0064 (Proposed)**: [`0064-webrtc-voice-signaling-and-test-suite-decomposition.md`](proposed/0064-webrtc-voice-signaling-and-test-suite-decomposition.md) — WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition
 55. **TASK-0065 (Proposed)**: [`0065-voice-agent-dsp-pipeline-and-router-decomposition.md`](proposed/0065-voice-agent-dsp-pipeline-and-router-decomposition.md) — Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition
 56. **TASK-0066 (Proposed)**: [`0066-project-visualizer-client-assets-and-template-decomposition.md`](proposed/0066-project-visualizer-client-assets-and-template-decomposition.md) — Project Visualizer Client Assets and Standalone HTML Template Modular Decomposition
-57. **TASK-0047 (Proposed)**: [`0047-campaign-lore-rag-knowledge-base-bc.md`](proposed/0047-campaign-lore-rag-knowledge-base-bc.md) — Campaign Lore Knowledge Base & redstring RAG Microservice
-58. **TASK-0048 (Proposed)**: [`0048-rules-compendium-and-encounter-builder-bc.md`](proposed/0048-rules-compendium-and-encounter-builder-bc.md) — TTRPG Rules Compendium & Automated Encounter Builder Microservice
-59. **TASK-0049 (Proposed)**: [`0049-procedural-battlemap-and-asset-forge-bc.md`](proposed/0049-procedural-battlemap-and-asset-forge-bc.md) — Procedural Battlemap & Token Asset Forge Microservice
-60. **TASK-0050 (Proposed)**: [`0050-dynamic-soundscape-and-adaptive-audio-bc.md`](proposed/0050-dynamic-soundscape-and-adaptive-audio-bc.md) — Dynamic Soundscape & Adaptive Audio Microservice
-61. **TASK-0051 (Proposed)**: [`0051-audience-studio-and-live-stream-interactivity-bc.md`](proposed/0051-audience-studio-and-live-stream-interactivity-bc.md) — TypeScript Audience Studio & Live Stream Interactivity Microservice
-62. **TASK-0052 (Proposed)**: [`0052-campaign-analytics-and-chronicle-archive-bc.md`](proposed/0052-campaign-analytics-and-chronicle-archive-bc.md) — Campaign Analytics & Chronicle Archive Microservice
-63. **TASK-0053 (Proposed)**: [`0053-dm-copilot-whisper-and-veto-override-engine.md`](proposed/0053-dm-copilot-whisper-and-veto-override-engine.md) — DM Co-Pilot Whisper Prompts and Veto Override Engine
-64. **TASK-0054 (Proposed)**: [`0054-conversational-disambiguation-and-compound-intents.md`](proposed/0054-conversational-disambiguation-and-compound-intents.md) — Conversational Disambiguation and Compound Action Intents
-65. **TASK-0055 (Proposed)**: [`0055-stand-in-policy-guardrails-and-hot-swap-handoff.md`](proposed/0055-stand-in-policy-guardrails-and-hot-swap-handoff.md) — Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover
-66. **TASK-0056 (Proposed)**: [`0056-cinematic-director-auto-camera-and-obs-overlay.md`](proposed/0056-cinematic-director-auto-camera-and-obs-overlay.md) — Cinematic Director Auto-Camera and OBS Stream Overlay
-67. **TASK-0057 (Proposed)**: [`0057-universal-vtt-importer-and-custom-mcp-tool-registry.md`](proposed/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md) — Universal VTT Importer and Dynamic MCP Tool Registry
+57. **TASK-0067 (Proposed)**: [`0067-silo-assets-and-battlemap-test-suite-decomposition.md`](proposed/0067-silo-assets-and-battlemap-test-suite-decomposition.md) — Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition
+58. **TASK-0068 (Proposed)**: [`0068-webrtc-client-service-and-peer-mesh-decomposition.md`](proposed/0068-webrtc-client-service-and-peer-mesh-decomposition.md) — WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition
+59. **TASK-0047 (Proposed)**: [`0047-campaign-lore-rag-knowledge-base-bc.md`](proposed/0047-campaign-lore-rag-knowledge-base-bc.md) — Campaign Lore Knowledge Base & redstring RAG Microservice
+60. **TASK-0048 (Proposed)**: [`0048-rules-compendium-and-encounter-builder-bc.md`](proposed/0048-rules-compendium-and-encounter-builder-bc.md) — TTRPG Rules Compendium & Automated Encounter Builder Microservice
+61. **TASK-0049 (Proposed)**: [`0049-procedural-battlemap-and-asset-forge-bc.md`](proposed/0049-procedural-battlemap-and-asset-forge-bc.md) — Procedural Battlemap & Token Asset Forge Microservice
+62. **TASK-0050 (Proposed)**: [`0050-dynamic-soundscape-and-adaptive-audio-bc.md`](proposed/0050-dynamic-soundscape-and-adaptive-audio-bc.md) — Dynamic Soundscape & Adaptive Audio Microservice
+63. **TASK-0051 (Proposed)**: [`0051-audience-studio-and-live-stream-interactivity-bc.md`](proposed/0051-audience-studio-and-live-stream-interactivity-bc.md) — TypeScript Audience Studio & Live Stream Interactivity Microservice
+64. **TASK-0052 (Proposed)**: [`0052-campaign-analytics-and-chronicle-archive-bc.md`](proposed/0052-campaign-analytics-and-chronicle-archive-bc.md) — Campaign Analytics & Chronicle Archive Microservice
+65. **TASK-0053 (Proposed)**: [`0053-dm-copilot-whisper-and-veto-override-engine.md`](proposed/0053-dm-copilot-whisper-and-veto-override-engine.md) — DM Co-Pilot Whisper Prompts and Veto Override Engine
+66. **TASK-0054 (Proposed)**: [`0054-conversational-disambiguation-and-compound-intents.md`](proposed/0054-conversational-disambiguation-and-compound-intents.md) — Conversational Disambiguation and Compound Action Intents
+67. **TASK-0055 (Proposed)**: [`0055-stand-in-policy-guardrails-and-hot-swap-handoff.md`](proposed/0055-stand-in-policy-guardrails-and-hot-swap-handoff.md) — Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover
+68. **TASK-0056 (Proposed)**: [`0056-cinematic-director-auto-camera-and-obs-overlay.md`](proposed/0056-cinematic-director-auto-camera-and-obs-overlay.md) — Cinematic Director Auto-Camera and OBS Stream Overlay
+69. **TASK-0057 (Proposed)**: [`0057-universal-vtt-importer-and-custom-mcp-tool-registry.md`](proposed/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md) — Universal VTT Importer and Dynamic MCP Tool Registry
+
 
