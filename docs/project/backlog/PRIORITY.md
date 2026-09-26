@@ -92,7 +92,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 83. **TASK-0077 (Complete)**: [`0077-character-sheet-api-router-and-schemas-decomposition.md`](complete/0077-character-sheet-api-router-and-schemas-decomposition.md) — Character Sheet API Router and Schemas Modular Decomposition
 84. **TASK-0080 (Complete)**: [`0080-gateway-websocket-hub-and-action-validator-decomposition.md`](complete/0080-gateway-websocket-hub-and-action-validator-decomposition.md) — Gateway WebSocket Hub and Action Validator Modular Decomposition
 85. **TASK-0081 (Complete)**: [`0081-spicedb-live-grpc-and-schema-bootstrapper-test-decomposition.md`](complete/0081-spicedb-live-grpc-and-schema-bootstrapper-test-decomposition.md) — SpiceDB Live gRPC Client and Schema Bootstrapper Test Suite Modular Decomposition
-86. **TASK-0078 (Refined)**: [`0078-battlemap-uploader-subviews-and-grid-controller-decomposition.md`](refined/0078-battlemap-uploader-subviews-and-grid-controller-decomposition.md) — Battlemap Uploader Subviews and Grid Controller Modular Decomposition
+86. **TASK-0078 (Complete)**: [`0078-battlemap-uploader-subviews-and-grid-controller-decomposition.md`](complete/0078-battlemap-uploader-subviews-and-grid-controller-decomposition.md) — Battlemap Uploader Subviews and Grid Controller Modular Decomposition
 
 87. **TASK-0056 (Proposed)**: [`0056-cinematic-director-auto-camera-and-obs-overlay.md`](proposed/0056-cinematic-director-auto-camera-and-obs-overlay.md) — Cinematic Director Auto-Camera and OBS Stream Overlay
 88. **TASK-0052 (Proposed)**: [`0052-campaign-analytics-and-chronicle-archive-bc.md`](proposed/0052-campaign-analytics-and-chronicle-archive-bc.md) — Campaign Analytics & Chronicle Archive Microservice

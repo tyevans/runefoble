@@ -1,7 +1,7 @@
 ---
-id: '0078'
+id: 0078
 title: Battlemap Uploader Subviews and Grid Controller Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0023
@@ -16,8 +16,8 @@ governing_prds:
 - PRD-0009
 governing_stories:
 - US-0038
+pr_url: https://github.com/tyevans/runefoble/pull/91
 ---
-
 # TASK-0078: Battlemap Uploader Subviews and Grid Controller Modular Decomposition
 
 ## Status
