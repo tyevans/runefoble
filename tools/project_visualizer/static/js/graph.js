@@ -16,19 +16,19 @@
       stop() {}
       reheat() {}
       applyFlowLayout() {
-        const cols = { persona: 160, prd: 400, story: 640, task: 880, adr: 1080 };
+        const cols = { persona: 160, story: 560, prd: 1000, task: 1460, adr: 1900 };
         const c = {};
         this.nodes.forEach(n => {
           c[n.type] = (c[n.type] || 0) + 1;
-          n.x = (cols[n.type] || 600) + (Math.sin(c[n.type] * 2) * 12);
-          n.y = 70 + c[n.type] * 48;
+          n.x = (cols[n.type] || 1000) + (Math.sin(c[n.type] * 2) * 20);
+          n.y = 90 + c[n.type] * 50;
         });
       }
       applyRadialLayout() {
         this.nodes.forEach((n, i) => {
           const a = (i / Math.max(this.nodes.length, 1)) * 2 * Math.PI;
-          n.x = this.cx + Math.cos(a) * 320;
-          n.y = this.cy + Math.sin(a) * 320;
+          n.x = this.cx + Math.cos(a) * 450;
+          n.y = this.cy + Math.sin(a) * 450;
         });
       }
     };
@@ -38,7 +38,7 @@
     nodes: [],
     edges: [],
     selectedId: null,
-    zoom: 1,
+    zoom: 0.72,
     panX: 0,
     panY: 0,
     isDraggingCanvas: false,
@@ -52,8 +52,8 @@
     isFullscreen: false,
   };
 
-  const canvasWidth = 1400;
-  const canvasHeight = 900;
+  const canvasWidth = 2200;
+  const canvasHeight = 1400;
 
   function renderGraph(container, state) {
     const d = state.data;
@@ -313,7 +313,7 @@
   }
 
   function resetGraphView() {
-    graphState.zoom = 1;
+    graphState.zoom = 0.72;
     graphState.panX = 0;
     graphState.panY = 0;
     applyTransform();
