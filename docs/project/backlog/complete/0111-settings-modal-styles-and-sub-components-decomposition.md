@@ -1,7 +1,7 @@
 ---
 id: '0111'
 title: Settings Modal Styles and Sub-Component CSS Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0073
@@ -17,8 +17,8 @@ governing_prds:
 - PRD-0012
 governing_stories:
 - US-0012
+pr_url: https://github.com/tyevans/runefoble/pull/117
 ---
-
 # TASK-0111: Settings Modal Styles and Sub-Component CSS Modular Decomposition
 
 ## Status

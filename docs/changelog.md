@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored comprehensive blackbox test suite in `tests/test_blackbox_tavern_and_haggling.py` and Diataxis how-to and reference guides in `docs/how-to/run-tavern-minigames-and-merchant-haggling.md` and `docs/reference/tavern-and-merchants-events.md`.
 
 - **Settings Modal Styles and Sub-Component CSS Modular Decomposition (`TASK-0111`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
-  - Decomposed monolithic `frontend/src/components/runefoble-settings-modal.styles.ts` into single-responsibility Lit CSS sub-modules in `frontend/src/components/styles/`: `settings-modal-layout.styles.ts`, `settings-modal-tabs.styles.ts`, and `settings-modal-controls.styles.ts`.
+  - Decomposed monolithic `frontend/src/components/runefoble-settings-modal.styles.ts` into single-responsibility Lit CSS sub-modules in `frontend/src/components/styles/`: `settings-modal-layout.styles.ts` (129 lines), `settings-modal-tabs.styles.ts` (128 lines), and `settings-modal-controls.styles.ts` (74 lines).
   - Maintained 100% backward compatibility via composite export in `runefoble-settings-modal.styles.ts` (28 lines) combining `[layoutStyles, tabsStyles, controlsStyles]`.
   - Preserved 100% visual consistency and WCAG 2.1 AA tokenized styling across all settings tab panels in Storybook.
   - Added modular decomposition and strict line budget verification tests in `tests/test_theming.py` and updated `tests/test_settings_modal.py` and `tests/test_settings_subcomponents.py`.
