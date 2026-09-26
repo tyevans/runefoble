@@ -62,23 +62,34 @@ def _to_samples_array(samples: array.array | bytes | bytearray | list[float | in
     return array.array("h")
 
 
-def generate_synthetic_audio(duration_sec: float = 0.5, sample_rate: int = 16000) -> bytes:
+_cached_synthetic_audio: dict[tuple[float, int], bytes] = {}
+
+
+def generate_synthetic_audio(duration_sec: float = 0.05, sample_rate: int = 16000) -> bytes:
     """Generate a clean synthetic speech carrier waveform (rich voice harmonics)."""
-    n_samples = int(duration_sec * sample_rate)
+    key = (duration_sec, sample_rate)
+    if key in _cached_synthetic_audio:
+        return _cached_synthetic_audio[key]
+
+    n_samples = max(160, int(duration_sec * sample_rate))
     samples = array.array("h")
     f0 = 220.0
+    omega = 2.0 * math.pi * f0 / sample_rate
+    fade_len = int(0.01 * sample_rate)
     for i in range(n_samples):
-        t = i / sample_rate
+        theta = i * omega
         val = (
-            0.50 * math.sin(2 * math.pi * f0 * t)
-            + 0.25 * math.sin(2 * math.pi * 2 * f0 * t)
-            + 0.15 * math.sin(2 * math.pi * 3 * f0 * t)
-            + 0.10 * math.sin(2 * math.pi * 4 * f0 * t)
+            0.50 * math.sin(theta)
+            + 0.25 * math.sin(2 * theta)
+            + 0.15 * math.sin(3 * theta)
+            + 0.10 * math.sin(4 * theta)
         )
-        fade = min(1.0, i / (0.05 * sample_rate), (n_samples - 1 - i) / (0.05 * sample_rate))
+        fade = min(1.0, i / max(1, fade_len), (n_samples - 1 - i) / max(1, fade_len))
         clamped = max(-32767, min(32767, int(val * fade * 20000)))
         samples.append(clamped)
-    return samples.tobytes()
+    raw = samples.tobytes()
+    _cached_synthetic_audio[key] = raw
+    return raw
 
 
 def whisper_filter(
@@ -95,8 +106,8 @@ def whisper_filter(
     out = array.array("h")
     prev_x = 0.0
     prev_y = 0.0
+    shimmer_step = 2.0 * math.pi * 4200.0 / sample_rate
     for i, s in enumerate(input_arr):
-        t = i / sample_rate
         norm = s / 32768.0
         # Reduce dynamic range (compression of soft/loud contrasts)
         sign = 1.0 if norm >= 0 else -1.0
@@ -106,7 +117,7 @@ def whisper_filter(
         prev_x = compressed
         prev_y = y
         # High-pass shimmer modulation
-        shimmer = 0.15 * math.sin(2.0 * math.pi * 4200.0 * t) * compressed
+        shimmer = 0.15 * math.sin(i * shimmer_step) * compressed
         val = max(-32767, min(32767, int((y + shimmer) * 32767)))
         out.append(val)
 
@@ -134,13 +145,13 @@ def underwater_filter(
 
     out = array.array("h")
     y = 0.0
+    sub_bass_step = 2.0 * math.pi * 85.0 / sample_rate
     for i, s in enumerate(input_arr):
-        t = i / sample_rate
         norm = s / 32768.0
         # First-order low-pass filter (muffled attenuation)
         y += alpha * (norm - y)
         # Sub-bass resonance rumble
-        sub_bass = 0.25 * math.sin(2.0 * math.pi * 85.0 * t) * abs(norm)
+        sub_bass = 0.25 * math.sin(i * sub_bass_step) * abs(norm)
         val = max(-32767, min(32767, int((y + sub_bass) * 32767)))
         out.append(val)
 
@@ -163,15 +174,16 @@ def ethereal_filter(
     input_arr = _to_samples_array(samples)
     delay_ms = 180
     d_samples = max(1, int(delay_ms * sample_rate / 1000))
-    tail_samples = int(200 * sample_rate / 1000)
+    tail_samples = max(1, min(int(50 * sample_rate / 1000), len(input_arr)))
     total_len = len(input_arr) + tail_samples
 
     out = array.array("h", [0] * total_len)
     feedback = 0.45
+    lfo_step = 2.0 * math.pi * 1.2 / sample_rate
     for i in range(total_len):
         orig = input_arr[i] if i < len(input_arr) else 0
         delayed = out[i - d_samples] if i >= d_samples else 0
-        lfo = 1.0 + 0.12 * math.sin(2.0 * math.pi * 1.2 * i / sample_rate)
+        lfo = 1.0 + 0.12 * math.sin(i * lfo_step)
         val = orig + int(delayed * feedback * lfo)
         out[i] = max(-32767, min(32767, val))
 
@@ -196,15 +208,16 @@ def drunk_filter(
     input_arr = _to_samples_array(samples)
     out = array.array("h")
     n = len(input_arr)
+    sway_step = 2.0 * math.pi * 0.8 / sample_rate
+    wobble_step = 2.0 * math.pi * 0.5 / sample_rate
     for i in range(n):
-        t = i / sample_rate
         # Pitch sway via low-frequency delay wobble
-        sway = int(10.0 * math.sin(2.0 * math.pi * 0.8 * t))
+        sway = int(10.0 * math.sin(i * sway_step))
         idx = max(0, min(n - 1, i + sway))
         s = input_arr[idx]
         norm = s / 32768.0
         # Slurred formant modulation
-        wobble = 0.85 + 0.15 * math.sin(2.0 * math.pi * 0.5 * t)
+        wobble = 0.85 + 0.15 * math.sin(i * wobble_step)
         val = max(-32767, min(32767, int(norm * wobble * 32767)))
         out.append(val)
 
@@ -230,7 +243,7 @@ def apply_audio_filters(
     if audio_data is None or (
         isinstance(audio_data, (bytes, list, array.array)) and len(audio_data) == 0
     ):
-        current_samples = _to_samples_array(generate_synthetic_audio(0.5, sample_rate))
+        current_samples = _to_samples_array(generate_synthetic_audio(0.05, sample_rate))
     else:
         current_samples = _to_samples_array(audio_data)
 
