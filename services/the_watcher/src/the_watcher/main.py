@@ -30,6 +30,7 @@ from the_watcher.models import (
 from the_watcher.routers import (
     autonomous_dm_router,
     chronicle_router,
+    copilot_router,
     intent_router,
     stand_in_router,
 )
@@ -44,6 +45,7 @@ app.include_router(intent_router)
 app.include_router(autonomous_dm_router)
 app.include_router(stand_in_router)
 app.include_router(chronicle_router)
+app.include_router(copilot_router)
 
 
 @app.get("/healthz")
@@ -61,7 +63,11 @@ def get_ui_manifest():
     return {
         "service": "the_watcher",
         "package": "@runefoble/the-watcher-ui",
-        "components": ["runefoble-watcher-feed", "runefoble-autonomous-dm"],
+        "components": [
+            "runefoble-watcher-feed",
+            "runefoble-autonomous-dm",
+            "runefoble-dm-whisper-bar",
+        ],
         "version": "0.1.0",
     }
 

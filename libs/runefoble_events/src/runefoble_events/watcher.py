@@ -154,3 +154,78 @@ class VoiceAudioConditioned(BaseRunefobleEvent):
 # Legacy backward-compatible aliases
 WatcherNarrationEvent = WatcherNarrationGenerated
 DiceRollEvent = DiceRolled
+
+
+@register_event("runefoble.events.watcher.action_proposed")
+class WatcherActionProposed(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.action_proposed"
+    action_id: str
+    session_id: str
+    campaign_id: str = ""
+    actor_name: str
+    action_type: str
+    description: str
+    target: str | None = None
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    pause_window_ms: int = 2000
+
+
+@register_event("runefoble.events.watcher.action_vetoed")
+class WatcherActionVetoed(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.action_vetoed"
+    action_id: str
+    session_id: str
+    campaign_id: str = ""
+    vetoed_by: str
+    reason: str = ""
+    original_action: dict[str, Any] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.watcher.action_approved")
+class WatcherActionApproved(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.action_approved"
+    action_id: str
+    session_id: str
+    campaign_id: str = ""
+    approved_by: str
+    action_type: str = ""
+    parameters: dict[str, Any] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.watcher.action_modified")
+class WatcherActionModified(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.action_modified"
+    action_id: str
+    session_id: str
+    campaign_id: str = ""
+    modified_by: str
+    description: str = ""
+    target: str | None = None
+    parameters: dict[str, Any] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.watcher.narrative_whispered")
+class DMNarrativeWhispered(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.narrative_whispered"
+    whisper_id: str
+    session_id: str
+    campaign_id: str = ""
+    whisper_type: str = "atmospheric_hint"
+    content: str
+    recipient_role: str = "dungeon_master"
+    metadata: dict[str, Any] = Field(default_factory=dict)
