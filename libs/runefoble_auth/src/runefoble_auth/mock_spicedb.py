@@ -273,4 +273,19 @@ class MockSpiceDBClient:
                 ):
                     return True
 
+        # 6. Lore document evaluation (read_public = campaign->view, read_secret/manage = campaign->run_session)
+        if resource_type == "lore_document":
+            parents = self._find_subjects("lore_document", resource_id, "campaign")
+            if not parents:
+                parents = [("campaign", resource_id)]
+            for p_type, p_id in parents:
+                if permission in ("read_secret", "manage") and await self.check_permission(
+                    p_type, p_id, "run_session", subject_type, subject_id
+                ):
+                    return True
+                if permission in ("read_public", "view", "read") and await self.check_permission(
+                    p_type, p_id, "view", subject_type, subject_id
+                ):
+                    return True
+
         return False

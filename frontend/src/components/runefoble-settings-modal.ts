@@ -1,15 +1,19 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { settingsModalStyles } from './runefoble-settings-modal.styles.ts';
-import {
-  type ColorMode,
-  type ThemeOption,
-  SETTINGS_THEME_OPTIONS,
-} from './runefoble-settings-modal.types.ts';
+import { type ColorMode, type ThemeOption, SETTINGS_THEME_OPTIONS } from './runefoble-settings-modal.types.ts';
 import type { ThemeMode } from './runefoble-theme-switcher.ts';
+import { ThemeSettingsController } from './settings/settings-theme-controller.ts';
+import './settings/runefoble-settings-appearance.ts';
+import './settings/runefoble-settings-audio.ts';
+import './settings/runefoble-settings-dice.ts';
 
 export type { ColorMode, ThemeOption };
 export { SETTINGS_THEME_OPTIONS };
+export * from './settings/settings-theme-controller.ts';
+export * from './settings/runefoble-settings-appearance.ts';
+export * from './settings/runefoble-settings-audio.ts';
+export * from './settings/runefoble-settings-dice.ts';
 
 @customElement('runefoble-settings-modal')
 export class RunefobleSettingsModal extends LitElement {
@@ -20,394 +24,105 @@ export class RunefobleSettingsModal extends LitElement {
   @property({ type: String }) currentColorMode: ColorMode = 'system';
 
   @state() private activeTab: 'appearance' | 'audio' | 'dice' = 'appearance';
-  @state() private resolvedColorMode: 'light' | 'dark' = 'light';
-  @state() private audioInputDevice: string = 'default';
-  @state() private noiseSuppression: boolean = true;
-  @state() private dicePhysics: boolean = true;
-  @state() private diceSound: boolean = true;
+  @state() private audioInputDevice = 'default';
+  @state() private noiseSuppression = true;
+  @state() private dicePhysics = true;
+  @state() private diceSound = true;
 
+  private themeCtrl = new ThemeSettingsController(this);
   private triggerElement: HTMLElement | null = null;
-  private mediaQuery: MediaQueryList | null = null;
-  private boundMediaHandler: ((e: MediaQueryListEvent) => void) | null = null;
 
-  connectedCallback() {
+  connectedCallback(): void {
     super.connectedCallback();
-    this.initStoredSettings();
-    this.setupMediaQuery();
+    if (this.currentTheme !== 'bauhaus') this.themeCtrl.currentTheme = this.currentTheme;
+    if (this.currentColorMode !== 'system') this.themeCtrl.currentColorMode = this.currentColorMode;
     window.addEventListener('keydown', this.handleKeyDown);
   }
-
-  disconnectedCallback() {
+  disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener('keydown', this.handleKeyDown);
-    if (this.mediaQuery && this.boundMediaHandler) {
-      if (this.mediaQuery.removeEventListener) {
-        this.mediaQuery.removeEventListener('change', this.boundMediaHandler);
-      } else if ('removeListener' in this.mediaQuery) {
-        (this.mediaQuery as any).removeListener(this.boundMediaHandler);
-      }
-    }
   }
 
-  updated(changedProps: Map<string, any>) {
-    if (changedProps.has('open')) {
+  updated(changed: Map<string, any>): void {
+    if (changed.has('open')) {
       if (this.open) {
         this.triggerElement = document.activeElement as HTMLElement | null;
-        this.updateComplete.then(() => {
-          const closeBtn = this.shadowRoot?.querySelector('.close-btn') as HTMLElement;
-          closeBtn?.focus();
-        });
-      } else if (changedProps.get('open') === true) {
-        this.triggerElement?.focus();
-      }
+        this.updateComplete.then(() => (this.shadowRoot?.querySelector('.close-btn') as HTMLElement)?.focus());
+      } else if (changed.get('open') === true) { this.triggerElement?.focus(); }
     }
+    if (changed.has('currentTheme')) this.themeCtrl.currentTheme = this.currentTheme;
+    if (changed.has('currentColorMode')) this.themeCtrl.currentColorMode = this.currentColorMode;
   }
 
-  private initStoredSettings() {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const storedTheme = window.localStorage.getItem('runefoble-theme');
-        if (storedTheme && ['bauhaus', 'dark-fantasy', 'parchment', 'cyber-rune'].includes(storedTheme)) {
-          this.currentTheme = storedTheme as ThemeMode;
-        }
-        const storedMode = window.localStorage.getItem('runefoble-color-mode');
-        if (storedMode && ['light', 'dark', 'system'].includes(storedMode)) {
-          this.currentColorMode = storedMode as ColorMode;
-        }
-      }
-    } catch {
-      // Storage access may be restricted
-    }
-    this.updateResolvedMode();
-  }
-
-  private setupMediaQuery() {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    this.boundMediaHandler = (e: MediaQueryListEvent) => {
-      if (this.currentColorMode === 'system') {
-        const resolved = e.matches ? 'dark' : 'light';
-        this.resolvedColorMode = resolved;
-        this.dispatchColorModeEvent('system', resolved);
-      }
-    };
-    if (this.mediaQuery.addEventListener) {
-      this.mediaQuery.addEventListener('change', this.boundMediaHandler);
-    } else if ('addListener' in this.mediaQuery) {
-      (this.mediaQuery as any).addListener(this.boundMediaHandler);
-    }
-  }
-
-  private updateResolvedMode() {
-    if (this.currentColorMode === 'system') {
-      const prefersDark =
-        typeof window !== 'undefined' &&
-        window.matchMedia &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches;
-      this.resolvedColorMode = prefersDark ? 'dark' : 'light';
-    } else {
-      this.resolvedColorMode = this.currentColorMode;
-    }
-  }
-
-  public openModal() {
-    this.open = true;
-  }
-
-  public closeModal() {
+  public openModal(): void { this.open = true; }
+  public closeModal(): void {
     this.open = false;
-    this.dispatchEvent(
-      new CustomEvent('settings-closed', {
-        bubbles: true,
-        composed: true,
-      })
-    );
+    this.dispatchEvent(new CustomEvent('settings-closed', { bubbles: true, composed: true }));
   }
 
-  public setColorMode(mode: ColorMode) {
-    this.currentColorMode = mode;
-    this.updateResolvedMode();
-    if (typeof document !== 'undefined' && document.documentElement) {
-      document.documentElement.setAttribute('data-color-mode', mode);
-    }
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('runefoble-color-mode', mode);
-      }
-    } catch {
-      // Ignore storage errors
-    }
-    this.dispatchColorModeEvent(mode, this.resolvedColorMode);
-  }
+  public setColorMode(mode: ColorMode): void { this.currentColorMode = mode; this.themeCtrl.setColorMode(mode); }
+  public setTheme(theme: ThemeMode): void { this.currentTheme = theme; this.themeCtrl.setTheme(theme); }
 
-  public setTheme(theme: ThemeMode) {
-    this.currentTheme = theme;
-    if (typeof document !== 'undefined' && document.documentElement) {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('runefoble-theme', theme);
-      }
-    } catch {
-      // Ignore storage errors
-    }
-    this.dispatchEvent(
-      new CustomEvent('theme-changed', {
-        detail: { theme },
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }
-
-  private dispatchColorModeEvent(mode: ColorMode, resolvedMode: 'light' | 'dark') {
-    this.dispatchEvent(
-      new CustomEvent('color-mode-changed', {
-        detail: { mode, resolvedMode },
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }
-
-  private handleKeyDown = (e: KeyboardEvent) => {
+  private handleKeyDown = (e: KeyboardEvent): void => {
     if (!this.open) return;
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      this.closeModal();
-    } else if (e.key === 'Tab') {
-      this.handleFocusTrap(e);
-    }
+    if (e.key === 'Escape') { e.preventDefault(); this.closeModal(); }
+    else if (e.key === 'Tab') { this.handleFocusTrap(e); }
   };
 
-  private handleFocusTrap(e: KeyboardEvent) {
-    const focusable = this.shadowRoot?.querySelectorAll(
-      'button:not([disabled]), [tabindex="0"], select, input'
-    );
-    if (!focusable || focusable.length === 0) return;
-
-    const first = focusable[0] as HTMLElement;
-    const last = focusable[focusable.length - 1] as HTMLElement;
-
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
+  private handleFocusTrap(e: KeyboardEvent): void {
+    const focusable = this.shadowRoot?.querySelectorAll<HTMLElement>('button:not([disabled]), [tabindex="0"], select, input');
+    if (!focusable?.length) return;
+    const [first, last] = [focusable[0], focusable[focusable.length - 1]];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }
 
-  private handleBackdropClick(e: MouseEvent) {
-    if (e.target === e.currentTarget) {
-      this.closeModal();
+  private renderTabContent() {
+    if (this.activeTab === 'appearance') {
+      return html`<runefoble-settings-appearance .currentTheme=${this.currentTheme} .currentColorMode=${this.currentColorMode}
+        @theme-change=${(e: CustomEvent) => this.setTheme(e.detail.theme)}
+        @color-mode-change=${(e: CustomEvent) => this.setColorMode(e.detail.mode)}></runefoble-settings-appearance>`;
     }
+    if (this.activeTab === 'audio') {
+      return html`<runefoble-settings-audio .audioInputDevice=${this.audioInputDevice} .noiseSuppression=${this.noiseSuppression}
+        @device-change=${(e: CustomEvent) => { this.audioInputDevice = e.detail.device; }}
+        @noise-suppression-change=${(e: CustomEvent) => { this.noiseSuppression = e.detail.noiseSuppression; }}></runefoble-settings-audio>`;
+    }
+    return html`<runefoble-settings-dice .dicePhysics=${this.dicePhysics} .diceSound=${this.diceSound}
+      @dice-physics-change=${(e: CustomEvent) => { this.dicePhysics = e.detail.dicePhysics; }}
+      @dice-sound-change=${(e: CustomEvent) => { this.diceSound = e.detail.diceSound; }}></runefoble-settings-dice>`;
+  }
+
+  private handleBackdropClick(e: MouseEvent): void {
+    if (e.target === e.currentTarget) this.closeModal();
   }
 
   render() {
-    if (!this.open) {
-      return html``;
-    }
-
+    if (!this.open) return html``;
     return html`
-      <div
-        class="modal-overlay"
-        @click=${this.handleBackdropClick}
-        aria-hidden="${!this.open}"
-      >
-        <div
-          class="modal-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="settings-modal-title"
-        >
+      <div class="modal-overlay" @click=${this.handleBackdropClick} aria-hidden="${!this.open}">
+        <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
           <header class="modal-header">
             <div class="modal-title-group">
               <span class="modal-icon-badge" aria-hidden="true">⚙️</span>
               <h2 id="settings-modal-title" class="modal-title">Settings</h2>
             </div>
-            <button
-              class="close-btn"
-              aria-label="Close settings"
-              @click=${this.closeModal}
-            >
-              ✖
-            </button>
+            <button class="close-btn" aria-label="Close settings" @click=${this.closeModal}>✖</button>
           </header>
-
           <nav class="nav-tabs" role="tablist" aria-label="Settings categories">
-            <button
-              role="tab"
-              class="tab-btn ${this.activeTab === 'appearance' ? 'active' : ''}"
-              aria-selected="${this.activeTab === 'appearance'}"
-              @click=${() => { this.activeTab = 'appearance'; }}
-            >
-              <span>🎨</span> Appearance & Theme
-            </button>
-            <button
-              role="tab"
-              class="tab-btn ${this.activeTab === 'audio' ? 'active' : ''}"
-              aria-selected="${this.activeTab === 'audio'}"
-              @click=${() => { this.activeTab = 'audio'; }}
-            >
-              <span>🎙️</span> Audio & Voice Input
-            </button>
-            <button
-              role="tab"
-              class="tab-btn ${this.activeTab === 'dice' ? 'active' : ''}"
-              aria-selected="${this.activeTab === 'dice'}"
-              @click=${() => { this.activeTab = 'dice'; }}
-            >
-              <span>🎲</span> Dice & Physics
-            </button>
+            <button role="tab" class="tab-btn ${this.activeTab === 'appearance' ? 'active' : ''}"
+              aria-selected="${this.activeTab === 'appearance'}" @click=${() => { this.activeTab = 'appearance'; }}><span>🎨</span> Appearance & Theme</button>
+            <button role="tab" class="tab-btn ${this.activeTab === 'audio' ? 'active' : ''}"
+              aria-selected="${this.activeTab === 'audio'}" @click=${() => { this.activeTab = 'audio'; }}><span>🎙️</span> Audio & Voice Input</button>
+            <button role="tab" class="tab-btn ${this.activeTab === 'dice' ? 'active' : ''}"
+              aria-selected="${this.activeTab === 'dice'}" @click=${() => { this.activeTab = 'dice'; }}><span>🎲</span> Dice & Physics</button>
           </nav>
-
-          <div class="modal-body">
-            ${this.activeTab === 'appearance' ? this.renderAppearanceTab() : ''}
-            ${this.activeTab === 'audio' ? this.renderAudioTab() : ''}
-            ${this.activeTab === 'dice' ? this.renderDiceTab() : ''}
-          </div>
-
+          <div class="modal-body">${this.renderTabContent()}</div>
           <footer class="modal-footer">
-            <span class="status-text">
-              Theme: <strong>${this.currentTheme}</strong> • Mode: <strong>${this.currentColorMode}</strong>
-            </span>
-            <button class="done-btn" @click=${this.closeModal}>
-              Done
-            </button>
+            <span class="status-text">Theme: <strong>${this.currentTheme}</strong> • Mode: <strong>${this.currentColorMode}</strong></span>
+            <button class="done-btn" @click=${this.closeModal}>Done</button>
           </footer>
         </div>
-      </div>
-    `;
-  }
-
-  private renderAppearanceTab() {
-    return html`
-      <div>
-        <h3 class="section-title"><span>☀️</span> Color Mode</h3>
-        <div class="segmented-group" role="radiogroup" aria-label="Appearance color mode">
-          <button
-            type="button"
-            class="segment-btn ${this.currentColorMode === 'light' ? 'active' : ''}"
-            aria-pressed="${this.currentColorMode === 'light'}"
-            @click=${() => this.setColorMode('light')}
-          >
-            <span>☀️</span> Light
-          </button>
-          <button
-            type="button"
-            class="segment-btn ${this.currentColorMode === 'dark' ? 'active' : ''}"
-            aria-pressed="${this.currentColorMode === 'dark'}"
-            @click=${() => this.setColorMode('dark')}
-          >
-            <span>🌙</span> Dark
-          </button>
-          <button
-            type="button"
-            class="segment-btn ${this.currentColorMode === 'system' ? 'active' : ''}"
-            aria-pressed="${this.currentColorMode === 'system'}"
-            @click=${() => this.setColorMode('system')}
-          >
-            <span>💻</span> System
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <h3 class="section-title"><span>🎨</span> Theme & Aesthetic</h3>
-        <div class="theme-grid">
-          ${SETTINGS_THEME_OPTIONS.map(
-            (opt) => html`
-              <button
-                type="button"
-                class="theme-card ${this.currentTheme === opt.id ? 'active' : ''}"
-                aria-pressed="${this.currentTheme === opt.id}"
-                @click=${() => this.setTheme(opt.id)}
-              >
-                <div class="theme-card-header">
-                  <span class="theme-card-title">
-                    <span>${opt.badge}</span> ${opt.name}
-                  </span>
-                  ${this.currentTheme === opt.id
-                    ? html`<span class="active-tag">Active</span>`
-                    : ''}
-                </div>
-                <p class="theme-desc">${opt.description}</p>
-                <div class="swatch-group" aria-label="Palette colors for ${opt.name}">
-                  ${opt.swatches.map(
-                    (color) => html`
-                      <span class="swatch-chip" style="background-color: ${color};"></span>
-                    `
-                  )}
-                </div>
-              </button>
-            `
-          )}
-        </div>
-      </div>
-    `;
-  }
-
-  private renderAudioTab() {
-    return html`
-      <div class="form-group">
-        <label class="form-label" for="audio-input-device">Microphone Input Device</label>
-        <select
-          id="audio-input-device"
-          class="form-select"
-          .value=${this.audioInputDevice}
-          @change=${(e: Event) => {
-            this.audioInputDevice = (e.target as HTMLSelectElement).value;
-          }}
-        >
-          <option value="default">Default System Microphone</option>
-          <option value="studio-mic">Studio Condenser Mic (USB Audio)</option>
-          <option value="headset">Gaming Headset Microphone</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="checkbox-row">
-          <input
-            type="checkbox"
-            .checked=${this.noiseSuppression}
-            @change=${(e: Event) => {
-              this.noiseSuppression = (e.target as HTMLInputElement).checked;
-            }}
-          />
-          Adaptive Noise Suppression & Echo Cancellation
-        </label>
-      </div>
-    `;
-  }
-
-  private renderDiceTab() {
-    return html`
-      <div class="form-group">
-        <label class="checkbox-row">
-          <input
-            type="checkbox"
-            .checked=${this.dicePhysics}
-            @change=${(e: Event) => {
-              this.dicePhysics = (e.target as HTMLInputElement).checked;
-            }}
-          />
-          Enable 3D Kinetic Dice Physics Simulation
-        </label>
-      </div>
-
-      <div class="form-group">
-        <label class="checkbox-row">
-          <input
-            type="checkbox"
-            .checked=${this.diceSound}
-            @change=${(e: Event) => {
-              this.diceSound = (e.target as HTMLInputElement).checked;
-            }}
-          />
-          Dice Rolling Spatial Foley Audio
-        </label>
       </div>
     `;
   }

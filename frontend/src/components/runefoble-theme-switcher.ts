@@ -31,10 +31,10 @@ export class RunefobleThemeSwitcher extends LitElement {
       align-items: center;
       gap: 6px;
       padding: 4px;
-      background: var(--rf-bg-surface, #ffffff);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      background: var(--rf-bg-surface);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: var(--rf-border-radius, 0px);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      box-shadow: var(--rf-shadow-sm);
     }
 
     .switcher-label {
@@ -42,7 +42,7 @@ export class RunefobleThemeSwitcher extends LitElement {
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: var(--rf-text-muted, #4b5563);
+      color: var(--rf-text-muted);
       padding: 0 4px;
     }
 
@@ -59,48 +59,50 @@ export class RunefobleThemeSwitcher extends LitElement {
       font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: var(--rf-border-radius, 0px);
-      background: var(--rf-bg-surface, #ffffff);
-      color: var(--rf-text-primary, #121212);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      background: var(--rf-bg-surface);
+      color: var(--rf-text-primary);
+      box-shadow: var(--rf-shadow-sm);
       transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
     }
 
     .theme-button:hover:not(.active) {
       transform: translate(-1px, -1px);
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      box-shadow: var(--rf-shadow);
     }
 
     .theme-button.active {
-      background: var(--rf-color-yellow, #ffb703);
-      color: #121212;
+      background: var(--rf-accent-tertiary);
+      color: var(--rf-text-primary);
       font-weight: 800;
-      border-color: var(--rf-border-color, #121212);
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      border-color: var(--rf-border-color);
+      box-shadow: var(--rf-shadow);
     }
 
     .theme-button.active.bauhaus {
-      background: var(--rf-color-yellow, #ffb703);
+      background: var(--rf-accent-tertiary);
+      color: var(--rf-text-primary);
     }
 
     .theme-button.active.dark-fantasy {
-      background: var(--rf-accent-primary, #f59e0b);
+      background: var(--rf-accent-primary);
+      color: var(--rf-text-inverse);
     }
 
     .theme-button.active.parchment {
-      background: var(--rf-accent-secondary, #bb8524);
-      color: #2e1b0f;
+      background: var(--rf-accent-secondary);
+      color: var(--rf-text-primary);
     }
 
     .theme-button.active.cyber-rune {
-      background: var(--rf-accent-primary, #06b6d4);
-      color: #09090b;
+      background: var(--rf-accent-primary);
+      color: var(--rf-text-inverse);
     }
 
     .theme-button:active {
       transform: translate(2px, 2px);
-      box-shadow: 0px 0px 0px #121212;
+      box-shadow: none;
     }
 
     .theme-icon {

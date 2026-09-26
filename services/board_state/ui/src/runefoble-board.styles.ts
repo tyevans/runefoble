@@ -5,12 +5,12 @@ const baseBoardStyles = css`
   :host {
     display: block;
     font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
-    color: var(--rf-text-primary, #121212);
-    background: var(--rf-bg-surface, #ffffff);
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+    color: var(--rf-text-primary);
+    background: var(--rf-bg-surface);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
     border-radius: var(--rf-border-radius, 0px);
     padding: 16px;
-    box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+    box-shadow: var(--rf-shadow);
     box-sizing: border-box;
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     user-select: none;
@@ -23,7 +23,7 @@ const baseBoardStyles = css`
     align-items: center;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+    border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color);
     flex-wrap: wrap;
     gap: 12px;
   }
@@ -31,7 +31,7 @@ const baseBoardStyles = css`
   .title {
     font-size: 1.25rem;
     font-weight: 800;
-    color: var(--rf-text-primary, #121212);
+    color: var(--rf-text-primary);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -48,20 +48,20 @@ const baseBoardStyles = css`
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--rf-bg-canvas, #f8f9fa);
-    color: var(--rf-text-primary, #121212);
+    background: var(--rf-bg-canvas);
+    color: var(--rf-text-primary);
     padding: 4px 10px;
     border-radius: var(--rf-border-radius, 0px);
     font-size: 0.75rem;
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-    box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    box-shadow: var(--rf-shadow-sm);
     font-weight: 700;
   }
 
   .fog-toggle {
-    background: var(--rf-bg-surface, #ffffff);
-    color: var(--rf-text-muted, #4b5563);
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+    background: var(--rf-bg-surface);
+    color: var(--rf-text-muted);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
     border-radius: var(--rf-border-radius, 0px);
     padding: 4px 8px;
     font-size: 0.75rem;
@@ -70,13 +70,13 @@ const baseBoardStyles = css`
     display: flex;
     align-items: center;
     gap: 4px;
-    box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+    box-shadow: var(--rf-shadow-sm);
     transition: all 0.2s;
   }
 
   .fog-toggle.active {
-    background: var(--rf-accent-tertiary, #ffb703);
-    color: var(--rf-color-dark, #121212);
+    background: var(--rf-accent-tertiary);
+    color: var(--rf-color-dark);
   }
 
   .grid-wrapper {
@@ -88,19 +88,19 @@ const baseBoardStyles = css`
   .grid {
     display: grid;
     gap: 2px;
-    background: var(--rf-border-color, #121212);
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+    background: var(--rf-border-color);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
     border-radius: var(--rf-border-radius, 0px);
     overflow: hidden;
     position: relative;
-    box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+    box-shadow: var(--rf-shadow-sm);
     touch-action: none;
   }
 
   .cell {
     width: 54px;
     height: 54px;
-    background: var(--rf-bg-surface, #ffffff);
+    background: var(--rf-bg-surface);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -112,11 +112,11 @@ const baseBoardStyles = css`
   }
 
   .cell:hover:not(.fog) {
-    background: var(--rf-bg-canvas, #f8f9fa);
+    background: var(--rf-bg-canvas);
   }
 
   .cell.fog {
-    background: var(--rf-color-dark, #121212);
+    background: var(--rf-color-dark);
     filter: brightness(0.6);
     cursor: not-allowed;
   }
@@ -148,7 +148,7 @@ const baseBoardStyles = css`
 
   .cell.hazard-cell {
     background: rgba(230, 57, 70, 0.18);
-    border: 1.5px dashed var(--rf-accent-primary, #e63946);
+    border: 1.5px dashed var(--rf-accent-primary);
   }
 
   .cell.waypoint-path {
@@ -186,13 +186,13 @@ const baseBoardStyles = css`
   }
 
   .terrain-badge.difficult {
-    background: var(--rf-accent-tertiary, #ffb703);
-    color: #121212;
+    background: var(--rf-accent-tertiary);
+    color: var(--rf-color-dark);
   }
 
   .terrain-badge.hazard {
-    background: var(--rf-accent-primary, #e63946);
-    color: #ffffff;
+    background: var(--rf-accent-primary);
+    color: var(--rf-text-inverse);
   }
 
   .coord-label {
@@ -200,7 +200,7 @@ const baseBoardStyles = css`
     top: 2px;
     left: 2px;
     font-size: 0.6rem;
-    color: var(--rf-text-muted, #4b5563);
+    color: var(--rf-text-muted);
     pointer-events: none;
     user-select: none;
     font-weight: 700;
@@ -224,9 +224,9 @@ const baseBoardStyles = css`
     justify-content: center;
     font-weight: 800;
     font-size: 0.75rem;
-    color: #ffffff;
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-    box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+    color: var(--rf-text-inverse);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    box-shadow: var(--rf-shadow-sm);
     user-select: none;
     transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
@@ -247,41 +247,41 @@ const baseBoardStyles = css`
 
   .token:hover:not(.dragging) {
     transform: scale(1.12);
-    box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+    box-shadow: var(--rf-shadow);
   }
 
   .token.ai {
-    outline: 2px dashed var(--rf-accent-tertiary, #ffb703);
+    outline: 2px dashed var(--rf-accent-tertiary);
     outline-offset: 1px;
   }
 
   .token.hostile {
-    outline: 2px solid var(--rf-accent-primary, #e63946);
+    outline: 2px solid var(--rf-accent-primary);
     outline-offset: 1px;
   }
 
   .token.active-turn {
     animation: gold-pulse 1.6s infinite ease-in-out;
-    outline: 3px solid var(--rf-accent-tertiary, #ffb703);
+    outline: 3px solid var(--rf-accent-tertiary);
   }
 
   @keyframes gold-pulse {
     0% {
-      box-shadow: 0 0 0 0 rgba(255, 183, 3, 0.8), var(--rf-shadow-sm, 2px 2px 0px #121212);
+      box-shadow: 0 0 0 0 rgba(255, 183, 3, 0.8), var(--rf-shadow-sm);
     }
     70% {
-      box-shadow: 0 0 0 8px rgba(255, 183, 3, 0), var(--rf-shadow-sm, 2px 2px 0px #121212);
+      box-shadow: 0 0 0 8px rgba(255, 183, 3, 0), var(--rf-shadow-sm);
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(255, 183, 3, 0), var(--rf-shadow-sm, 2px 2px 0px #121212);
+      box-shadow: 0 0 0 0 rgba(255, 183, 3, 0), var(--rf-shadow-sm);
     }
   }
 
   .health-bar-container {
     width: 36px;
     height: 6px;
-    background: var(--rf-bg-canvas, #f8f9fa);
-    border: 1px solid var(--rf-border-color, #121212);
+    background: var(--rf-bg-canvas);
+    border: 1px solid var(--rf-border-color);
     border-radius: var(--rf-border-radius, 0px);
     margin-top: 2px;
     overflow: hidden;
@@ -295,7 +295,7 @@ const baseBoardStyles = css`
   .status-bar {
     margin-top: 12px;
     font-size: 0.85rem;
-    color: var(--rf-text-muted, #4b5563);
+    color: var(--rf-text-muted);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -307,7 +307,7 @@ const baseBoardStyles = css`
     display: flex;
     gap: 12px;
     font-size: 0.75rem;
-    color: var(--rf-text-muted, #4b5563);
+    color: var(--rf-text-muted);
     flex-wrap: wrap;
   }
 
@@ -322,7 +322,7 @@ const baseBoardStyles = css`
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    border: 1px solid var(--rf-border-color, #121212);
+    border: 1px solid var(--rf-border-color);
   }
 `;
 

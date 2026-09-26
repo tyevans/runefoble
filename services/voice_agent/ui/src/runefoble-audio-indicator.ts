@@ -14,13 +14,13 @@ export class RunefobleAudioIndicator extends LitElement {
     :host {
       display: inline-block;
       font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
     }
     .indicator-card {
-      background: var(--rf-bg-surface, #ffffff);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      background: var(--rf-bg-surface);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: var(--rf-border-radius, 0px);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      box-shadow: var(--rf-shadow-sm);
       padding: 10px 14px;
       display: flex;
       align-items: center;
@@ -30,14 +30,14 @@ export class RunefobleAudioIndicator extends LitElement {
       box-sizing: border-box;
     }
     .indicator-card.speaking {
-      border-color: var(--rf-accent-tertiary, #ffb703);
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      border-color: var(--rf-accent-tertiary);
+      box-shadow: var(--rf-shadow);
     }
     .avatar-badge {
       width: 36px;
       height: 36px;
-      background: var(--rf-bg-canvas, #e5e5e5);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      background: var(--rf-bg-canvas);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -47,7 +47,7 @@ export class RunefobleAudioIndicator extends LitElement {
       position: relative;
     }
     .avatar-badge.speaking {
-      background: var(--rf-accent-tertiary, #ffb703);
+      background: var(--rf-accent-tertiary);
       animation: pulse 1.2s infinite ease-in-out;
     }
     .avatar-badge.muted {
@@ -58,7 +58,7 @@ export class RunefobleAudioIndicator extends LitElement {
       bottom: -4px;
       right: -4px;
       font-size: 0.75rem;
-      background: var(--rf-bg-surface, #ffffff);
+      background: var(--rf-bg-surface);
       border-radius: 50%;
       line-height: 1;
     }
@@ -76,35 +76,35 @@ export class RunefobleAudioIndicator extends LitElement {
     .peer-name {
       font-weight: 700;
       font-size: 0.9rem;
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
     }
     .role-tag {
       font-size: 0.65rem;
       font-weight: 800;
       text-transform: uppercase;
       padding: 1px 5px;
-      border: 1px solid var(--rf-border-color, #121212);
-      background: var(--rf-bg-canvas, #f1faee);
+      border: 1px solid var(--rf-border-color);
+      background: var(--rf-bg-canvas);
     }
     .role-tag.dm {
-      background: var(--rf-accent-primary, #e63946);
-      color: #ffffff;
+      background: var(--rf-accent-primary);
+      color: var(--rf-text-inverse);
     }
     .meter-container {
       width: 100%;
       height: 6px;
-      background: var(--rf-bg-canvas, #e5e5e5);
-      border: 1px solid var(--rf-border-color, #121212);
+      background: var(--rf-bg-inset, var(--rf-bg-canvas));
+      border: 1px solid var(--rf-border-color);
       margin-top: 4px;
       overflow: hidden;
     }
     .meter-fill {
       height: 100%;
-      background: var(--rf-accent-primary, #2a9d8f);
+      background: var(--rf-accent-secondary);
       transition: width 0.1s ease;
     }
     .meter-fill.hot {
-      background: var(--rf-accent-primary, #e63946);
+      background: var(--rf-accent-primary);
     }
     .filters-row {
       display: flex;
@@ -114,10 +114,10 @@ export class RunefobleAudioIndicator extends LitElement {
     }
     .filter-badge {
       font-size: 0.65rem;
-      background: var(--rf-bg-surface, #f8f9fa);
-      border: 1px dashed var(--rf-border-color, #121212);
+      background: var(--rf-bg-surface);
+      border: 1px dashed var(--rf-border-subtle, var(--rf-border-color));
       padding: 0 4px;
-      color: var(--rf-text-muted, #4b5563);
+      color: var(--rf-text-muted);
     }
     @keyframes pulse {
       0% {

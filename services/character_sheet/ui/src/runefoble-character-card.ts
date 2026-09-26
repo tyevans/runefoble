@@ -15,13 +15,13 @@ export class RunefobleCharacterCard extends LitElement {
     :host {
       display: block;
       font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
-      background: var(--rf-bg-card, #ffffff);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      background: var(--rf-bg-card);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: var(--rf-border-radius, 0px);
       padding: 16px;
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
       width: 320px;
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      box-shadow: var(--rf-shadow);
       box-sizing: border-box;
       transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
@@ -30,27 +30,27 @@ export class RunefobleCharacterCard extends LitElement {
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
-      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color);
       padding-bottom: 8px;
     }
     .name-title {
       font-size: 1.15rem;
       font-weight: 800;
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
     }
     .class-level {
       font-size: 0.85rem;
-      color: var(--rf-text-muted, #4b5563);
+      color: var(--rf-text-muted);
       font-weight: 600;
     }
     .ai-badge {
-      background: var(--rf-accent-tertiary, #ffb703);
-      color: var(--rf-color-dark, #121212);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      background: var(--rf-accent-tertiary);
+      color: var(--rf-color-dark);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       font-size: 0.7rem;
       padding: 2px 8px;
       border-radius: var(--rf-border-radius, 0px);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      box-shadow: var(--rf-shadow-sm);
       font-weight: 700;
     }
     .hp-container {
@@ -62,22 +62,22 @@ export class RunefobleCharacterCard extends LitElement {
       font-size: 0.8rem;
       margin-bottom: 4px;
       font-weight: 700;
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
     }
     .hp-bar-bg {
       height: 10px;
-      background: var(--rf-bg-canvas, #f8f9fa);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      background: var(--rf-bg-canvas);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: var(--rf-border-radius, 0px);
       overflow: hidden;
     }
     .hp-bar-fill {
       height: 100%;
-      background: var(--rf-accent-secondary, #1d3557);
+      background: var(--rf-accent-secondary);
       transition: width 0.3s ease;
     }
     .hp-bar-fill.low {
-      background: var(--rf-accent-primary, #e63946);
+      background: var(--rf-accent-primary);
     }
     .conditions-container {
       margin-top: 12px;
@@ -89,20 +89,20 @@ export class RunefobleCharacterCard extends LitElement {
       font-size: 0.72rem;
       padding: 3px 8px;
       border-radius: var(--rf-border-radius, 0px);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       display: inline-flex;
       align-items: center;
       gap: 4px;
       font-weight: 600;
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      box-shadow: var(--rf-shadow-sm);
     }
     .condition-penalty {
-      background: var(--rf-accent-tertiary, #ffb703);
-      color: var(--rf-color-dark, #121212);
+      background: var(--rf-accent-tertiary);
+      color: var(--rf-color-dark);
     }
     .condition-normal {
-      background: var(--rf-accent-secondary, #1d3557);
-      color: var(--rf-color-light, #ffffff);
+      background: var(--rf-accent-secondary);
+      color: var(--rf-text-inverse);
     }
     .stats-row {
       display: grid;
@@ -110,22 +110,22 @@ export class RunefobleCharacterCard extends LitElement {
       gap: 8px;
       margin-top: 12px;
       text-align: center;
-      background: var(--rf-bg-canvas, #f8f9fa);
+      background: var(--rf-bg-canvas);
       padding: 8px;
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: var(--rf-border-radius, 0px);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      box-shadow: var(--rf-shadow-sm);
     }
     .stat-label {
       font-size: 0.7rem;
-      color: var(--rf-text-muted, #4b5563);
+      color: var(--rf-text-muted);
       text-transform: uppercase;
       font-weight: 700;
     }
     .stat-value {
       font-size: 1.05rem;
       font-weight: 800;
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
     }
   `;
 

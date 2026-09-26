@@ -8,6 +8,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from the_watcher.main import app as watcher_app
@@ -21,6 +22,11 @@ def watcher_client():
 @pytest.fixture
 def session_client():
     return TestClient(session_app)
+
+
+@pytest.fixture
+def board_client():
+    return TestClient(board_app)
 
 
 def test_watcher_openapi_routes_completeness(watcher_client):
@@ -271,6 +277,94 @@ def test_game_session_frontdoor_endpoints(session_client):
     assert autopilot_alias_res.json()["action"]["character_name"] == "Valeros"
 
 
+def test_board_state_openapi_routes_completeness(board_client):
+    """Verify that all decomposed APIRouter routes are registered in board_state OpenAPI schema."""
+    openapi = board_client.app.openapi()
+    paths = openapi["paths"]
+
+    expected_routes = [
+        "/healthz",
+        "/ui/manifest",
+        "/api/v1/boards",
+        "/api/v1/boards/{session_id}",
+        "/api/v1/boards/{session_id}/tokens",
+        "/api/v1/boards/{session_id}/tokens/{token_id}/move",
+        "/api/v1/boards/{session_id}/move",
+        "/api/v1/boards/{session_id}/tokens/{token_id}",
+        "/api/v1/boards/{session_id}/visibility",
+        "/api/v1/boards/{session_id}/terrain",
+        "/api/v1/boards/{session_id}/fog-of-war/reveal",
+        "/api/v1/boards/{session_id}/fog-of-war/shroud",
+        "/api/v1/boards/{session_id}/tokens/{token_id}/preview",
+        "/api/v1/boards/{session_id}/preview",
+        "/api/v1/boards/{session_id}/preview-move",
+    ]
+
+    for route in expected_routes:
+        assert route in paths, f"Route '{route}' missing from Board State OpenAPI schema"
+
+
+def test_board_state_frontdoor_endpoints(board_client):
+    """Verify all Board State sub-routers respond correctly through public HTTP frontdoors."""
+    # 1. Health & manifest
+    assert board_client.get("/healthz").status_code == 200
+    assert board_client.get("/ui/manifest").status_code == 200
+
+    # 2. Boards router
+    board_id = f"board-{uuid4().hex[:8]}"
+    create_res = board_client.post(
+        "/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12}
+    )
+    assert create_res.status_code == 200
+    get_res = board_client.get(f"/api/v1/boards/{board_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["cols"] == 12
+
+    # 3. Tokens router
+    tok_res = board_client.post(
+        f"/api/v1/boards/{board_id}/tokens",
+        json={"token_id": "tok-1", "name": "Valeros", "x": 1, "y": 1, "is_friendly": True},
+    )
+    assert tok_res.status_code == 200
+    move_res = board_client.post(
+        f"/api/v1/boards/{board_id}/tokens/tok-1/move",
+        json={"to_x": 2, "to_y": 2},
+    )
+    assert move_res.status_code == 200
+    assert move_res.json()["x"] == 2
+
+    # 4. Terrain & Visibility router
+    terrain_res = board_client.post(
+        f"/api/v1/boards/{board_id}/terrain",
+        json={"x": 3, "y": 3, "elevation": 1, "terrain_type": "difficult"},
+    )
+    assert terrain_res.status_code == 200
+    vis_res = board_client.get(f"/api/v1/boards/{board_id}/visibility?is_dm=true")
+    assert vis_res.status_code == 200
+    rev_res = board_client.post(
+        f"/api/v1/boards/{board_id}/fog-of-war/reveal",
+        json={"cells": [[5, 5]]},
+    )
+    assert rev_res.status_code == 200
+    shroud_res = board_client.post(
+        f"/api/v1/boards/{board_id}/fog-of-war/shroud",
+        json={"cells": [[5, 5]]},
+    )
+    assert shroud_res.status_code == 200
+
+    # 5. Previews router
+    prev_res = board_client.post(
+        f"/api/v1/boards/{board_id}/tokens/tok-1/preview",
+        json={"to_x": 3, "to_y": 3},
+    )
+    assert prev_res.status_code == 200
+    assert prev_res.json()["total_distance_ft"] > 0
+
+    # Token removal
+    del_res = board_client.delete(f"/api/v1/boards/{board_id}/tokens/tok-1")
+    assert del_res.status_code == 200
+
+
 def test_source_files_line_length_limits():
     """Verify Hard Invariant 6: source files must strictly not exceed 500 lines,
 
@@ -290,6 +384,13 @@ def test_source_files_line_length_limits():
         "services/game_session/src/game_session/routers/session.py",
         "services/game_session/src/game_session/routers/combat.py",
         "services/game_session/src/game_session/routers/autopilot.py",
+        "services/board_state/src/board_state/main.py",
+        "services/board_state/src/board_state/dependencies.py",
+        "services/board_state/src/board_state/models.py",
+        "services/board_state/src/board_state/routers/boards.py",
+        "services/board_state/src/board_state/routers/tokens.py",
+        "services/board_state/src/board_state/routers/terrain.py",
+        "services/board_state/src/board_state/routers/previews.py",
     ]
 
     for path_str in targets:
@@ -300,8 +401,8 @@ def test_source_files_line_length_limits():
             f"File {path_str} has {lines} lines, exceeding the 250 line modular refactor limit"
         )
 
-    # Verify all Python files across both services are < 500 lines
-    for bc in ["the_watcher", "game_session"]:
+    # Verify all Python files across all refactored services are < 500 lines
+    for bc in ["the_watcher", "game_session", "board_state"]:
         for py_file in Path(f"services/{bc}").rglob("*.py"):
             lines = len(py_file.read_text().splitlines())
             assert lines < 500, (

@@ -1,7 +1,7 @@
 ---
 id: 0037
 title: Automated CR Encounter Balancing & redstring Rules Indexing
-status: Accepted
+status: Shipped
 created: 2026-09-25
 ---
 

@@ -48,12 +48,14 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 
 ### 3. SpiceDB (Fine-Grained Zanzibar Authorization)
 - **Role**: Object-level access control enforcing who can view, run, mutate, or roll within campaigns, characters, and boards.
+- **Datastore Migrations**: Uses `spicedb datastore migrate head` executed via initContainers in the deployment and Helm schema job before serving or writing schemas.
 - **Schema**: `libs/runefoble_auth/schema/runefoble.zed`.
 - **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`.
 - **How-To Guide**: [Define and Check SpiceDB Zanzibar Permissions](../how-to/define-spicedb-zanzibar-permissions.md).
 
 ### 4. Zitadel (OIDC Identity & JWT Authentication)
 - **Role**: Single Sign-On (SSO), PKCE login flows, user profile management, RS256 token issuance, and JWKS public key discovery (`/.well-known/jwks.json`).
+- **Database Connection**: Configured with PostgreSQL admin credentials and `ZITADEL_DATABASE_POSTGRES_*_SSL_MODE=disable` for local Kind environments.
 - **Environment Variables**: `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_CLIENT_ID`, `RUNEFOBLE_ZITADEL_JWKS_URL`, `RUNEFOBLE_AUTH_DEV_MODE`.
 - **How-To Guide**: [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md).
 

@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check backlog-worker
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check backlog-worker docs-build docs-serve
 
 CLUSTER_NAME ?= runefoble-local
 KIND_CONFIG ?= deployments/kind/cluster-config.yaml
@@ -21,6 +21,13 @@ visualize-project: ## Launch dynamic docs/project content visualizer web applica
 
 visualize-project-build: ## Build standalone HTML bundle for docs/project visualizer
 	@python3 -m tools.project_visualizer.cli build --out dist/project-visualizer.html
+
+docs-build: ## Build static documentation site with Zensical and integrated project visualizer
+	@python3 scripts/build_docs.py
+
+docs-serve: ## Serve documentation site locally with live preview
+	@python3 scripts/build_docs.py
+	@uv run zensical serve
 
 setup: install-tools ## Install workspace Python dependencies and frontend packages
 	@echo "==> Setting up UV workspace..."

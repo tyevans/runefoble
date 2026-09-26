@@ -31,6 +31,13 @@ spec:
         app: spicedb-schema-migration
     spec:
       restartPolicy: OnFailure
+      initContainers:
+        - name: datastore-migrate
+          image: {{ .Values.spicedb.image }}
+          args: ["datastore", "migrate", "head", "--datastore-engine", "postgres"]
+          env:
+            - name: SPICEDB_DATASTORE_CONN_URI
+              value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/spicedb?sslmode=disable"
       containers:
         - name: schema-writer
           image: {{ .Values.spicedb.schemaJob.image | quote }}

@@ -1,67 +1,116 @@
 # Design Tokens & Themes Reference
 
-This document describes the CSS custom properties, color palette tokens, and theme system for the Runefoble Lit Web Component frontend.
+This document describes the CSS custom properties, semantic token hierarchy, color palette tokens, and theme system for the Runefoble Lit Web Component frontend.
 
-## Themes
+## Overview & Architecture
 
-Themes are controlled by setting the `data-theme` attribute on the root `<html>` element (`document.documentElement`).
+Runefoble decouples **visual genre themes** (`data-theme`) from **lighting preferences / color modes** (`data-color-mode`). Both attributes are attached to the root `<html>` element (`document.documentElement`), parameterizing a unified semantic CSS token layer.
 
-Supported theme identifiers:
-- `bauhaus` (Default)
-- `dark-fantasy`
-- `parchment`
-- `cyber-rune`
+Shadow DOM encapsulation in Lit components inherits these tokens transparently, ensuring accessible contrast (WCAG 2.1 AA) and tactile neobrutalist elevation across all permutations without hardcoded hex literals.
 
-## Token Definitions
+```
+document.documentElement
+ ├── [data-theme="bauhaus | dark-fantasy | parchment | cyber-rune"]
+ └── [data-color-mode="light | dark | system"]
+```
 
-### Bauhaus Modernism (`bauhaus` — Default)
-- **Philosophy**: Form follows function, geometric clarity, bold primary blocks, crisp ink borders, and solid offset drop-shadows.
-- **Palette**:
-  - `--rf-color-red`: `#e63946` (Cadmium Red)
-  - `--rf-color-blue`: `#1d3557` (Cobalt Blue)
-  - `--rf-color-yellow`: `#ffb703` (Canary Yellow)
-  - `--rf-color-dark`: `#121212` (Ink Black)
-  - `--rf-color-light`: `#ffffff` (White)
-  - `--rf-bg-canvas`: `#f8f9fa` (Off-white Canvas)
-  - `--rf-bg-surface`: `#ffffff` (Surface)
-  - `--rf-bg-card`: `#ffffff` (Card Surface)
-  - `--rf-border-color`: `#121212`
-  - `--rf-border-width`: `2px`
-  - `--rf-border-radius`: `0px`
-  - `--rf-shadow`: `4px 4px 0px #121212`
-  - `--rf-shadow-sm`: `2px 2px 0px #121212`
-  - `--rf-text-primary`: `#121212`
-  - `--rf-text-muted`: `#4b5563`
-  - `--rf-accent-primary`: `var(--rf-color-red)`
-  - `--rf-accent-secondary`: `var(--rf-color-blue)`
-  - `--rf-accent-tertiary`: `var(--rf-color-yellow)`
+## Semantic Token Hierarchy
 
-### Dark Fantasy (`dark-fantasy`)
+All Web Components consume semantic design tokens rather than raw hex or primitive palette tokens directly.
+
+### 1. Surfaces & Elevation
+| Token | Description | Light Default | Dark Default |
+|---|---|---|---|
+| `--rf-bg-canvas` | Base viewport / body background | `#f8f9fa` | `#121212` |
+| `--rf-bg-surface` | Structural panel / container background | `#ffffff` | `#1e1e1e` |
+| `--rf-bg-surface-elevated` | Modals, flyouts, tooltips, and floating menus | `#ffffff` | `#252525` |
+| `--rf-bg-card` | Tactical cards, feed items, and token panels | `#ffffff` | `#1e1e1e` |
+| `--rf-bg-inset` | Recessed areas (input fields, dice tray wells) | `#f1faee` | `#161616` |
+
+### 2. Text & Contrast Hierarchy
+| Token | Description | Minimum Contrast |
+|---|---|---|
+| `--rf-text-primary` | High-emphasis headings, titles, active labels | 7:1 (AAA) |
+| `--rf-text-secondary` | Body copy, combatant details, section headers | 4.5:1 (AA) |
+| `--rf-text-muted` | Timestamps, placeholder hints, disabled states | 3:1 (AA Large) |
+| `--rf-text-inverse` | Text on opposite accent fills | 4.5:1 (AA) |
+
+### 3. Borders & Focus
+| Token | Description | Typical Value |
+|---|---|---|
+| `--rf-border-color` | Primary structural border (ink black or crisp light) | `#121212` / `#f8f9fa` |
+| `--rf-border-subtle` | Dividers, grid cell borders, table rows | `rgba(18, 18, 18, 0.15)` |
+| `--rf-border-focus` | High-visibility keyboard focus outline | `#e63946` / `#ffb703` |
+| `--rf-border-width` | Geometric structural border thickness | `2px` |
+| `--rf-border-radius` | Corner radius (Bauhaus 0px, subtle in others) | `0px` |
+
+### 4. Shadows & Tactile Elevation
+Hard drop-shadows provide tactile neobrutalist depth. In dark mode, `--rf-shadow-color` dynamically shifts to a translucent luminous or dark edge, preventing invisible black-on-black shadows.
+| Token | Formula / Value |
+|---|---|
+| `--rf-shadow-color` | Dynamic shadow tone (`rgba(18, 18, 18, 1)` or ambient glow) |
+| `--rf-shadow` | `4px 4px 0px var(--rf-shadow-color)` |
+| `--rf-shadow-sm` | `2px 2px 0px var(--rf-shadow-color)` |
+
+---
+
+## Full Theme Matrix (Theme × Color Mode)
+
+Runefoble defines explicit token sets for both light and dark variations across all 4 themes:
+
+### 1. Bauhaus Modernism (`bauhaus` — Default)
+- **Philosophy**: Form follows function, primary colors (cadmium red, cobalt blue, canary yellow), crisp ink borders, and solid offset drop-shadows.
+- **Light Mode**:
+  - Canvas: `#f8f9fa` | Surface: `#ffffff` | Elevated: `#ffffff`
+  - Text: Primary `#121212`, Secondary `#2d3748`, Muted `#4b5563`
+  - Borders: `#121212` | Shadow: `4px 4px 0px rgba(18, 18, 18, 1)`
+  - Accents: Red `#e63946`, Blue `#1d3557`, Yellow `#ffb703`
+- **Dark Mode**:
+  - Canvas: `#121212` | Surface: `#1e1e1e` | Elevated: `#252525`
+  - Text: Primary `#f8f9fa`, Secondary `#e2e8f0`, Muted `#94a3b8`
+  - Borders: `#f8f9fa` | Shadow: `4px 4px 0px rgba(255, 183, 3, 0.5)`
+  - Accents: Brightened Red `#f87171`, Sky Blue `#38bdf8`, Amber `#facc15`
+
+### 2. Dark Fantasy (`dark-fantasy`)
 - **Philosophy**: Deep slate and obsidian atmosphere with gold and runic violet accents.
-- **Tokens**:
-  - Canvas: `#0f172a`
-  - Surface / Card: `#1e293b`
-  - Border: `#334155` (1px, 8px radius)
-  - Accents: Gold (`#f59e0b`) & Runic Purple (`#8b5cf6`)
-  - Shadow: `0 4px 12px rgba(0, 0, 0, 0.5)`
+- **Dark Mode**:
+  - Canvas: `#0f172a` | Surface: `#1e293b` | Inset: `#0b1120`
+  - Text: Primary `#f8fafc`, Secondary `#cbd5e1`, Muted `#94a3b8`
+  - Borders: `#334155` | Shadow: `4px 4px 0px rgba(0, 0, 0, 0.7)`
+  - Accents: Gold `#f59e0b`, Runic Violet `#8b5cf6`, Cyan `#06b6d4`
+- **Light Mode**:
+  - Canvas: `#f1f5f9` | Surface: `#ffffff` | Inset: `#e2e8f0`
+  - Text: Primary `#0f172a`, Secondary `#334155`, Muted `#64748b`
+  - Borders: `#475569` | Shadow: `4px 4px 0px rgba(15, 23, 42, 0.6)`
+  - Accents: Dark Gold `#d97706`, Royal Violet `#7c3aed`, Deep Cyan `#0891b2`
 
-### Parchment (`parchment`)
+### 3. Parchment (`parchment`)
 - **Philosophy**: Aged paper manuscript aesthetic with antique crimson ink and warm brass accents.
-- **Tokens**:
-  - Canvas: `#f4ecd8`
-  - Surface / Card: `#fff9eb`
-  - Border: `#5c3a21` (2px, 4px radius)
-  - Accents: Antique Crimson (`#9b2226`) & Brass (`#bb8524`)
-  - Shadow: `3px 3px 0px #5c3a21`
+- **Light Mode**:
+  - Canvas: `#f4ecd8` | Surface: `#fff9eb` | Inset: `#ebe1c8`
+  - Text: Primary `#2e1b0f`, Secondary `#4a301c`, Muted `#6d4c33`
+  - Borders: `#5c3a21` | Shadow: `3px 3px 0px rgba(92, 58, 33, 0.8)`
+  - Accents: Antique Crimson `#9b2226`, Brass `#bb8524`, Warm Brown `#5c3a21`
+- **Dark Mode**:
+  - Canvas: `#2b1d14` | Surface: `#3a281c` | Inset: `#21150e`
+  - Text: Primary `#f4ecd8`, Secondary `#e2d5bd`, Muted `#a89279`
+  - Borders: `#bb8524` | Shadow: `3px 3px 0px rgba(187, 133, 36, 0.4)`
+  - Accents: Rose Crimson `#ef4444`, Bright Brass `#fbbf24`, Warm Cream `#f4ecd8`
 
-### Cyber Rune (`cyber-rune`)
-- **Philosophy**: Neon dark synthwave terminal with high-contrast glowing cyan and pink highlights.
-- **Tokens**:
-  - Canvas: `#09090b`
-  - Surface / Card: `#18181b`
-  - Border: `#27272a` (1px, 2px radius)
-  - Accents: Neon Cyan (`#06b6d4`), Neon Pink (`#ec4899`), Neon Yellow (`#eab308`)
-  - Shadow: `0 0 10px rgba(6, 182, 212, 0.3)`
+### 4. Cyber Rune (`cyber-rune`)
+- **Philosophy**: Neon dark terminal synthwave with glowing cyan, pink, and yellow.
+- **Dark Mode**:
+  - Canvas: `#09090b` | Surface: `#18181b` | Inset: `#050507`
+  - Text: Primary `#fafafa`, Secondary `#e4e4e7`, Muted `#a1a1aa`
+  - Borders: `#27272a` | Shadow: `4px 4px 0px rgba(6, 182, 212, 0.6)`
+  - Accents: Neon Cyan `#06b6d4`, Neon Pink `#ec4899`, Neon Yellow `#eab308`
+- **Light Mode**:
+  - Canvas: `#f0f9ff` | Surface: `#ffffff` | Inset: `#e0f2fe`
+  - Text: Primary `#09090b`, Secondary `#1e293b`, Muted `#64748b`
+  - Borders: `#0284c7` | Shadow: `4px 4px 0px rgba(2, 132, 199, 0.5)`
+  - Accents: Cyan `#0284c7`, Magenta `#db2777`, Amber `#d97706`
+
+---
 
 ## Appearance & Color Modes
 
@@ -75,11 +124,13 @@ Color modes allow the user to select between **Light**, **Dark**, and **System**
 
 Persistence is tracked in `localStorage.getItem('runefoble-color-mode')` (defaulting to `system`).
 
+---
+
 ## Web Components
 
 ### `<runefoble-settings-modal>`
 - **Tag**: `runefoble-settings-modal`
-- **Description**: Centralized Bauhaus modernist configuration dialog containing appearance mode toggles, visual theme selection cards with color swatches, audio input preferences, and kinetic dice physics settings.
+- **Description**: Centralized configuration dialog containing appearance mode toggles (Light / Dark / System), visual theme selection cards with color swatches, audio input preferences, and kinetic dice physics settings.
 - **Properties**:
   - `open: boolean` (reflected attribute)
   - `currentTheme: 'bauhaus' | 'dark-fantasy' | 'parchment' | 'cyber-rune'`
@@ -88,14 +139,9 @@ Persistence is tracked in `localStorage.getItem('runefoble-color-mode')` (defaul
   - `color-mode-changed`: `{ detail: { mode: 'light' | 'dark' | 'system', resolvedMode: 'light' | 'dark' } }`
   - `theme-changed`: `{ detail: { theme: string } }`
   - `settings-closed`: `{}`
-- **Accessibility & Focus**:
-  - Encapsulated backdrop overlay (`backdrop-filter: blur(4px)`).
-  - ARIA attributes: `role="dialog"`, `aria-modal="true"`, `aria-labelledby="settings-modal-title"`.
-  - Dismissible via backdrop click, `Escape` key, or close button. Focus is trapped while open and restored to trigger on close.
 
 ### `<runefoble-theme-switcher>`
 - **Tag**: `runefoble-theme-switcher`
 - **Properties**: `currentTheme: 'bauhaus' | 'dark-fantasy' | 'parchment' | 'cyber-rune'`
 - **Events**: `theme-changed` with `detail: { theme: string }`
 - **Persistence**: Reads and writes `runefoble-theme` in `localStorage`.
-

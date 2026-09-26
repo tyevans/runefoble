@@ -16,16 +16,16 @@ export class RunefobleWatcherFeed extends LitElement {
     :host {
       display: block;
       font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
-      background: var(--rf-bg-surface, #ffffff);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      background: var(--rf-bg-surface);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: var(--rf-border-radius, 0px);
       padding: 16px;
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
       width: 420px;
       height: 380px;
       display: flex;
       flex-direction: column;
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      box-shadow: var(--rf-shadow);
       box-sizing: border-box;
       transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
@@ -34,25 +34,25 @@ export class RunefobleWatcherFeed extends LitElement {
       justify-content: space-between;
       align-items: center;
       padding-bottom: 8px;
-      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color);
       margin-bottom: 8px;
     }
     .feed-title {
       font-size: 0.95rem;
       font-weight: 800;
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
       display: flex;
       align-items: center;
       gap: 6px;
     }
     .live-pill {
       font-size: 0.7rem;
-      background: var(--rf-accent-tertiary, #ffb703);
-      color: var(--rf-color-dark, #121212);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      background: var(--rf-accent-tertiary);
+      color: var(--rf-color-dark);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       padding: 2px 6px;
       border-radius: var(--rf-border-radius, 0px);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      box-shadow: var(--rf-shadow-sm);
       font-weight: 700;
     }
     .event-list {
@@ -68,30 +68,30 @@ export class RunefobleWatcherFeed extends LitElement {
       border-radius: var(--rf-border-radius, 0px);
       font-size: 0.85rem;
       line-height: 1.4;
-      background: var(--rf-bg-canvas, #f8f9fa);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      border-left: calc(var(--rf-border-width, 2px) * 2 + 2px) solid var(--rf-accent-secondary, #1d3557);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      background: var(--rf-bg-card);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+      border-left: calc(var(--rf-border-width, 2px) * 2 + 2px) solid var(--rf-accent-secondary);
+      box-shadow: var(--rf-shadow-sm);
     }
     .event-watcher {
-      border-left-color: var(--rf-accent-primary, #e63946);
+      border-left-color: var(--rf-accent-primary);
     }
     .event-stand-in {
-      border-left-color: var(--rf-accent-tertiary, #ffb703);
+      border-left-color: var(--rf-accent-tertiary);
     }
     .event-player {
-      border-left-color: var(--rf-accent-secondary, #1d3557);
+      border-left-color: var(--rf-accent-secondary);
     }
     .event-meta {
       display: flex;
       justify-content: space-between;
       font-size: 0.72rem;
-      color: var(--rf-text-muted, #4b5563);
+      color: var(--rf-text-muted);
       margin-bottom: 4px;
     }
     .speaker-name {
       font-weight: 800;
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
     }
   `;
 
