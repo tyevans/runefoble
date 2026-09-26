@@ -84,6 +84,21 @@ Bidirectional voice streams and audio mesh coordination are negotiated via the W
 - **Backward-Compatible Facade (`gateway_api.webrtc_signaling`)**:
   Re-exports all signaling components to guarantee zero contract regressions across legacy imports.
 
+## Campaign WebSocket Hub and Action Validator Gateway Architecture
+
+Real-time campaign mutations, token movement broadcasts, health modifications, and Watcher notifications stream through `/ws/campaigns/{campaign_id}`. In accordance with Hard Invariant 6 (File length limit < 500 lines) and ADR-0001 / ADR-0007 / ADR-0009, the WebSocket infrastructure in `gateway_api` is partitioned into modular, single-responsibility submodules:
+
+- **Zanzibar Action Validator (`gateway_api.websocket_validator`)**:
+  `WebSocketActionValidator` executes fine-grained SpiceDB Zanzibar permission checks (`campaign:view`, `campaign:read`, `board_token:move`, `character:edit`, `dungeon_master`). It enforces DM bypass privileges, movement authorization, and blocks non-DM encounter mutations.
+- **Connection Hub Manager (`gateway_api.websocket_manager`)**:
+  `CampaignConnectionManager` (and backward-compatible alias `CampaignWebSocketManager`) tracks active client connections per campaign and handles JSON broadcast dispatching across connected party members.
+- **Credential & Handshake Auth (`gateway_api.websocket_auth`)**:
+  `extract_token_from_websocket` and `extract_subject_id` extract JWT credentials across query parameters, `Authorization: Bearer` headers, and `Sec-WebSocket-Protocol` subprotocol headers, validating signatures via `ZitadelAuthService` in production.
+- **WebSocket Routing Endpoint (`gateway_api.websocket_endpoint`)**:
+  `campaign_websocket_endpoint` manages the WebSocket handshake lifecycle, validates viewer connection permissions, dispatches incoming actions to Redis Streams (`runefoble.events.board`, `runefoble.events.session`, `runefoble.events.watcher`), and coordinates disconnect cleanup.
+- **Backward-Compatible Facade (`gateway_api.websocket`)**:
+  Re-exports all validator, manager, auth, and endpoint symbols ensuring zero contract regressions for existing callers and tests.
+
 ## Latency Budgets
 - **Audio Capture & Streaming**: < 100ms
 - **VAD Segmentation & Boundary Trigger**: < 200ms (< 250ms silence detection)
