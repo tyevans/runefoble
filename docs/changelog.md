@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Decomposed monolithic `services/character_sheet/src/character_sheet/main.py` into dedicated Pydantic request schema module `schemas.py` (77 lines), modular endpoint router `router.py` (162 lines), shared dependencies and mutation helpers `dependencies.py` (155 lines), and lean application entrypoint `main.py` (75 lines).
   - Maintained 100% backward compatibility for all REST endpoints (`/api/v1/characters`, `/api/v1/characters/{id}/level-up`, `/api/v1/characters/{id}/spells/prepare`, `/api/v1/characters/{id}/spells/cast`, `/api/v1/characters/{id}/health`, `/api/v1/characters/{id}/penalties`, `/api/v1/characters/{id}/inventory/add`, `/api/v1/characters/{id}/equipment`, `/api/v1/characters/{id}/conditions`, `/api/v1/characters/{id}/guardrails`, `/healthz`, `/ui/manifest`).
   - Added comprehensive blackbox router verification suite in `tests/test_blackbox_character_routers.py` verifying public frontdoors, OpenAPI registration, and Hard Invariant 6 / task line limits (< 180 lines per module).
+
 - **TypeScript Audience Studio & Live Stream Interactivity Microservice (`TASK-0051`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0007`, `ADR-0013`)**:
   - Implemented `services/audience_studio` as a first-class TypeScript microservice (Node.js / Fastify / TypeScript) for live streaming audience interactivity without table gameplay latency.
   - Built high-concurrency Audience Poll Engine supporting live chaos polls, time window expiration, multi-platform spectator vote ingestion (Twitch, YouTube, web), and quorum calculations.
@@ -50,6 +51,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **SpiceDB Live gRPC Client and Schema Bootstrapper Test Suite Modular Decomposition (`TASK-0081`, `ADR-0001`, `ADR-0005`, `ADR-0007`, `ADR-0009`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_spicedb_live.py` (306 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all resulting files strictly < 180 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_spicedb_schema_bootstrap.py` (101 lines): Verifies `runefoble.zed` Zanzibar schema existence and definition syntax, error handling for empty schema files, schema bootstrapping against mock and live clients, and resilient in-memory fallback behavior when SpiceDB endpoints are unreachable.
+    - `tests/test_blackbox_spicedb_live_grpc.py` (178 lines): Verifies live SpiceDB container gRPC connections, frontdoor campaign role assignment (`POST /api/v1/campaigns/{id}/roles`), fine-grained Zanzibar permission evaluations (`view`, `run_session`), and immediate permission revocation upon relationship tuple deletion.
+  - Extracted shared SpiceDB container lifecycle and port allocation fixtures to `tests/helpers/spicedb.py` (76 lines) and registered the plugin globally in `tests/conftest.py`.
+
+- **Gateway WebSocket Hub and Action Validator Modular Decomposition (`TASK-0080`, `ADR-0001`, `ADR-0005`, `ADR-0007`, `ADR-0009`)**:
+  - Decomposed monolithic `gateway/api/src/gateway_api/websocket.py` (351 lines) into modular single-responsibility components strictly complying with Hard Invariant 6 (< 500 lines limit, all resulting modules strictly < 150 lines):
+    - `websocket_validator.py` (136 lines): Encapsulates `WebSocketActionValidator` evaluating fine-grained SpiceDB Zanzibar schema checks for connection admission, DM bypass privileges, token moves, character edits, and DM-only encounter mutations.
+    - `websocket_manager.py` (51 lines): Encapsulates `CampaignConnectionManager` (with alias `CampaignWebSocketManager` and singleton `ws_campaign_manager`) tracking active campaign connection pools and broadcasting state frames.
+    - `websocket_auth.py` (74 lines): Encapsulates credential extraction (`extract_token_from_websocket`, `extract_subject_id`) and handshake authentication (`authenticate_websocket`) validating Zitadel RS256 JWTs across query parameters, Bearer headers, and subprotocols.
+    - `websocket_endpoint.py` (139 lines): Encapsulates `campaign_websocket_endpoint` handling the WebSocket lifecycle, Zanzibar admission verification, Redis event stream publishing, and disconnect handling.
+    - `websocket.py` (50 lines): Acts as a backward-compatible facade re-exporting all validator, manager, auth, and endpoint symbols to ensure zero breaking changes across existing callers and tests.
+  - Added comprehensive modular and frontdoor test coverage in `tests/test_websocket_modular_decomposition.py` verifying module line invariants (< 150 lines), re-export parity, direct policy validation, and WebSocket broadcasting.
+  - Updated Diataxis reference documentation in `docs/reference/ports-and-endpoints.md` and explanation in `docs/explanation/realtime-voice-and-board-sync.md`.
+
 - **Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition (`TASK-0096`, `ADR-0001`, `ADR-0002`, `ADR-0003`, `ADR-0009`)**:
   - Decomposed monolithic blackbox test suite `tests/test_blackbox_stand_in_guardrails.py` (370 lines) into two focused, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all files strictly < 190 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
     - `tests/test_blackbox_stand_in_policies.py` (189 lines): Verifies tactical guardrail configuration via `PUT/GET /api/v1/characters/{id}/guardrails`, SpiceDB Zanzibar authorization, `StandInPolicyUpdated` and `StandInStabilized` CloudEvent publications, The Watcher stand-in tactical decision graph evaluation under 'drunk' and 'foolishness' penalties, and zero-HP permadeath stabilization invariants.
