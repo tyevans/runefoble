@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Redis Streams Consumer Group Worker and Session Projections Modular Decomposition (`TASK-0076`, `ADR-0003`, `ADR-0006`, `ADR-0009`, `ADR-0011`)**:
+  - Decomposed `libs/runefoble_platform/src/runefoble_platform/consumer_group.py` into dedicated event deserialization module `event_deserializer.py` (74 lines), in-memory mock client `mock_redis.py` (110 lines), and core consumer group worker `consumer_group.py` (169 lines).
+  - Preserved W3C trace context (`traceparent`, `tracestate`) across payload deserialization and domain event instantiation.
+  - Decomposed `services/game_session/src/game_session/projections.py` into modular sub-package `services/game_session/src/game_session/projections/`:
+    - `models.py` (109 lines): Denormalized read models (`SessionReadModel`, `TokenReadModel`, `AtmosphereReadModel`, `EncounterReadModel`, `InitiativeReadModel`, `PresenceReadModel`).
+    - `initiative.py` (114 lines): `InitiativeProjection` tracking turn order, round cycling, and initiative snapshots with tie-breaking rules.
+    - `presence.py` (111 lines): `PresenceProjection` tracking participant connection status, stand-in flags, and hot-swap handoffs.
+    - `appliers.py` (142 lines): Event appliers for session, token, atmosphere, encounter, and turn state transitions.
+    - `session.py` (157 lines): `SessionReadProjection` integrating sub-projections, background worker loops, and DLQ routing.
+    - `__init__.py` (33 lines): Backward-compatible re-exports maintaining import signatures.
+  - Added unit and blackbox test coverage in `tests/test_game_session_projections.py` and updated technical reference `docs/reference/redis-streams-event-bus.md`.
 - **Universal VTT Importer and Dynamic MCP Tool Registry (`TASK-0057`, `ADR-0007`, `ADR-0008`, `ADR-0010`, `ADR-0013`)**:
   - Implemented Universal VTT (`.dd2vtt`) parser in `services/board_state/src/board_state/parsers/uvtt.py` extracting grid resolution, line-of-sight wall vectors, door portals, ambient lights, and embedded base64 map imagery.
   - Built ingestion endpoint `POST /api/v1/board/{id}/import/uvtt` (alias: `/api/v1/boards/{id}/import/uvtt`) supporting both multipart file uploads and raw JSON payloads.
