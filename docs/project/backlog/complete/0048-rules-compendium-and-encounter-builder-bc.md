@@ -1,7 +1,7 @@
 ---
-id: '0048'
+id: 0048
 title: TTRPG Rules Compendium & Automated Encounter Builder Microservice
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0001
@@ -16,8 +16,8 @@ governing_adrs:
 - ADR-0009
 - ADR-0011
 target_release: 0.3.0
+pr_url: https://github.com/tyevans/runefoble/pull/52
 ---
-
 # TASK-0048: TTRPG Rules Compendium & Automated Encounter Builder Microservice
 
 ## Status

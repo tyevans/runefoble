@@ -54,7 +54,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 
 50. **TASK-0074 (Complete)**: [`0074-dark-light-mode-color-tokens-and-component-contrast.md`](complete/0074-dark-light-mode-color-tokens-and-component-contrast.md) — Design System Dark and Light Mode Color Tokens & Cross-Component Contrast Invariants
 51. **TASK-0047 (Complete)**: [`0047-campaign-lore-rag-knowledge-base-bc.md`](complete/0047-campaign-lore-rag-knowledge-base-bc.md) — Campaign Lore Knowledge Base & redstring RAG Microservice
-52. **TASK-0048 (Refined)**: [`0048-rules-compendium-and-encounter-builder-bc.md`](refined/0048-rules-compendium-and-encounter-builder-bc.md) — TTRPG Rules Compendium & Automated Encounter Builder Microservice
+52. **TASK-0048 (Complete)**: [`0048-rules-compendium-and-encounter-builder-bc.md`](complete/0048-rules-compendium-and-encounter-builder-bc.md) — TTRPG Rules Compendium & Automated Encounter Builder Microservice
 53. **TASK-0085 (Complete)**: [`0085-board-state-modular-router-decomposition.md`](complete/0085-board-state-modular-router-decomposition.md) — Board State API Router and Spatial Handler Modular Decomposition
 54. **TASK-0086 (Complete)**: [`0086-settings-modal-tabs-and-controllers-decomposition.md`](complete/0086-settings-modal-tabs-and-controllers-decomposition.md) — Settings Modal Tab Panels and Sub-Controllers Modular Decomposition
 55. **TASK-0061 (Refined)**: [`0061-board-autonomous-dm-and-voice-controls-ui-styles-decomposition.md`](refined/0061-board-autonomous-dm-and-voice-controls-ui-styles-decomposition.md) — Tactical Board, Autonomous DM, and Voice Controls Microfrontend Styles Decomposition
