@@ -72,12 +72,15 @@ flowchart TD
 ## Verifying the Engine Test Suites
 
 The autonomous backlog execution engine is verified via modular frontdoor test suites conforming to Hard Invariant 6 (< 500 lines per file):
-- [`test_backlog_parser.py`](file:///home/ty/workspace/runefoble/.worktrees/task-0046/tests/test_backlog_parser.py): Validates task markdown syntax, YAML frontmatter schemas, octal safety, title fallback, and Definition of Done parsing.
-- [`test_backlog_queue.py`](file:///home/ty/workspace/runefoble/.worktrees/task-0046/tests/test_backlog_queue.py): Validates priority ranking, topological dependency resolution, circular dependency detection, and stale task recovery.
-- [`test_backlog_execution.py`](file:///home/ty/workspace/runefoble/.worktrees/task-0046/tests/test_backlog_execution.py): Validates atomic state progression (`claim` -> `review` -> `complete`), preflight quality gate aggregation, self-healing repair loops, interrupt rollbacks, and mechanical CI check polling.
+- [`test_backlog_parser.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_parser.py): Validates task markdown syntax, YAML frontmatter schemas, octal safety, title fallback, and Definition of Done parsing.
+- [`test_backlog_queue.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_queue.py): Validates priority ranking, topological dependency resolution, circular dependency detection, and queue transitions.
+- [`test_backlog_execution.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_execution.py): Validates atomic state progression (`claim` -> `review` -> `complete`), preflight quality gate aggregation, self-healing repair loops, and interrupt rollbacks.
+- [`test_backlog_ci_watcher.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_ci_watcher.py): Validates PR mergeability, dirty conflict status checks, immediate conflict abortion, and failed CI log extractions.
+- [`test_backlog_stale_recovery.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_stale_recovery.py): Validates orphaned in-progress/review task recovery, requeuing mechanics, worktree threading locks, and failure retry circuit breakers.
+- [`test_backlog_pr_repair.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_pr_repair.py): Validates pre-push git merge-tree conflict detection, orchestrator PR teardown on CI failure, and automated worktree AI agent PR healing.
 
 Run the test suite via pytest:
 ```bash
-uv run pytest tests/test_backlog_parser.py tests/test_backlog_queue.py tests/test_backlog_execution.py
+uv run pytest tests/test_backlog_*.py
 ```
 
