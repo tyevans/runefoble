@@ -68,6 +68,22 @@ Each active voice participant maintains an isolated, bounded circular ring buffe
 - **CloudEvent Publication**: An immutable `PlayerSpokeEvent` is dispatched onto Redis Streams (`runefoble.events.session`).
 - **Watcher Orchestration**: The transcript is concurrently delivered to `the_watcher` for spatial intent extraction and board action execution (`SpeechIntentParsed`, `WatcherNarrationGenerated`, and `TokenMoved`).
 
+
+## WebRTC Voice Room Signaling Gateway Architecture
+
+Bidirectional voice streams and audio mesh coordination are negotiated via the WebSocket endpoint at `/ws/voice/{session_id}`. In accordance with Hard Invariant 6 (File length limit < 500 lines) and ADR-0003 / ADR-0007, the signaling infrastructure in `gateway_api` is partitioned into modular, single-responsibility submodules under `gateway_api/signaling/`:
+
+- **Signaling Connection Manager (`gateway_api.signaling.manager`)**:
+  `WebRTCSignalingManager` tracks active room WebSockets, peer lookups, disconnect cleanup, and directed or broadcast JSON frame transmission.
+- **Signaling Zanzibar Auth (`gateway_api.signaling.auth`)**:
+  `extract_signaling_auth` extracts credentials across query parameters (`user_id`, `token`) and headers (`X-User-Id`, `Authorization: Bearer`), while `validate_voice_connection` queries SpiceDB Zanzibar to enforce session participation or campaign access before granting room admission.
+- **Signaling Message Handlers (`gateway_api.signaling.handlers`)**:
+  Dedicated dispatchers handle `webrtc_offer`, `webrtc_answer`, and `webrtc_ice_candidate` routing, `webrtc_mute` state toggles, `webrtc_telemetry` broadcasts, and graceful `webrtc_leave` teardowns.
+- **WebSocket Endpoint (`gateway_api.signaling.endpoint`)**:
+  `voice_signaling_websocket_endpoint` coordinates the connection lifecycle, sends initial `connected` and `webrtc_joined` frames, runs the dispatch loop, and handles unexpected disconnects.
+- **Backward-Compatible Facade (`gateway_api.webrtc_signaling`)**:
+  Re-exports all signaling components to guarantee zero contract regressions across legacy imports.
+
 ## Latency Budgets
 - **Audio Capture & Streaming**: < 100ms
 - **VAD Segmentation & Boundary Trigger**: < 200ms (< 250ms silence detection)
@@ -78,4 +94,5 @@ Each active voice participant maintains an isolated, bounded circular ring buffe
 - **Total End-to-End Voice-to-Board Latency**: < 500ms
 
 This sub-500ms loop fulfills the foundational system promise: *Speak and the board obeys*.
+
 
