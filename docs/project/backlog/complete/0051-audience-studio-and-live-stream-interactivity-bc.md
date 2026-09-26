@@ -1,7 +1,7 @@
 ---
 id: '0051'
 title: TypeScript Audience Studio & Live Stream Interactivity Microservice
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0010
@@ -15,13 +15,8 @@ governing_adrs:
 - ADR-0007
 - ADR-0013
 target_release: 0.3.0
-governing_prds:
-- PRD-0011
-governing_stories:
-- US-0006
-- US-0031
+pr_url: https://github.com/tyevans/runefoble/pull/84
 ---
-
 # TASK-0051: TypeScript Audience Studio & Live Stream Interactivity Microservice
 
 ## Status
