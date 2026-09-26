@@ -17,6 +17,7 @@
     "@runefoble/campaign-lore-ui": "workspace:*",
     "@runefoble/character-sheet-ui": "workspace:*",
     "@runefoble/game-session-ui": "workspace:*",
+    "@runefoble/rules-compendium-ui": "workspace:*",
     "@runefoble/the-watcher-ui": "workspace:*",
     "@runefoble/voice-agent-ui": "workspace:*",
     "lit": "^3.3.3"
