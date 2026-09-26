@@ -267,7 +267,7 @@ def get_ui_manifest():
     return {
         "service": "board_state",
         "package": "@runefoble/board-state-ui",
-        "components": ["runefoble-board"],
+        "components": ["runefoble-board", "runefoble-map-uploader"],
         "version": "0.1.0",
     }
 

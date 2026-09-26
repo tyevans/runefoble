@@ -45,6 +45,7 @@ def execute_task_pipeline(
     queue.claim_task(task, worker_id=worker_id, branch=branch)
 
     worktree_dir = None
+    completed = False
     try:
         # 2. Create worktree
         worktree_dir = create_worktree(repo_root, branch, worktree_name)
@@ -112,14 +113,23 @@ def execute_task_pipeline(
 
             # 6. Finalize in Backlog Queue
             queue.complete_task(task)
+            completed = True
             print(f"🎉 [Stream {worker_id}] {task.canonical_id} completed and moved to complete/")
 
         return TaskExecutionResult(task, True, "Task completed and integrated successfully.")
 
+    except (KeyboardInterrupt, SystemExit):
+        print(f"\n⚠️ [Stream {worker_id}] Execution interrupted by user for {task.canonical_id}.")
+        raise
     except Exception as e:
         return TaskExecutionResult(task, False, f"Unhandled pipeline exception: {e}")
 
     finally:
+        # If task was not completed successfully, release it back to the ready queue!
+        if not completed:
+            print(f"🔄 [Stream {worker_id}] Releasing {task.canonical_id} back to ready queue...")
+            queue.release_task(task)
+
         # 7. Cleanup worktree
         if worktree_dir:
             print(f"🧹 [Stream {worker_id}] Cleaning up worktree {worktree_name}...")
@@ -149,59 +159,81 @@ def run_orchestrator(
     print(f"Mode: {'Dry-run' if dry_run else ('Local Merge' if local_mode else 'GitHub PR + CI')}")
     print(f"Drain Queue: {drain}\n")
 
+    # 0. Recover any stale in-progress tasks from interrupted previous runs
+    stale_tasks = queue.recover_stale_tasks()
+    if stale_tasks:
+        print(f"🔄 Recovered {len(stale_tasks)} stale in-progress task(s) from previous run:")
+        for st in stale_tasks:
+            print(f"  - [{st.canonical_id}] {st.title}")
+        print()
+
     completed_count = 0
 
-    while True:
-        ready_tasks = queue.get_ready_unblocked_tasks()
+    try:
+        while True:
+            ready_tasks = queue.get_ready_unblocked_tasks()
 
-        if not ready_tasks:
-            print("💤 No ready unblocked tasks found in queue.")
+            if not ready_tasks:
+                print("💤 No ready unblocked tasks found in queue.")
+                if not drain:
+                    break
+                time.sleep(poll_idle_seconds)
+                continue
+
+            print(f"📋 Found {len(ready_tasks)} ready unblocked task(s):")
+            for t in ready_tasks:
+                print(f"  - [{t.canonical_id}] {t.title} (Priority: {t.priority_rank})")
+
+            if dry_run:
+                print("\nDry-run complete. Exiting without execution.")
+                return 0
+
+            # Batch up to concurrency tasks
+            batch = ready_tasks[:concurrency]
+
+            if len(batch) == 1 or concurrency == 1:
+                task = batch[0]
+                res = execute_task_pipeline(task, repo_root, queue, local_mode=local_mode)
+                if res.success:
+                    completed_count += 1
+                else:
+                    print(f"❌ Pipeline failed for {task.canonical_id}: {res.message}")
+                    break
+            else:
+                print(f"\n⚡ Dispatching {len(batch)} parallel task streams...")
+                with ThreadPoolExecutor(max_workers=concurrency) as executor:
+                    futures = {
+                        executor.submit(
+                            execute_task_pipeline,
+                            task,
+                            repo_root,
+                            queue,
+                            local_mode,
+                        ): task
+                        for task in batch
+                    }
+                    try:
+                        for fut in as_completed(futures):
+                            res = fut.result()
+                            if res.success:
+                                completed_count += 1
+                            else:
+                                print(
+                                    f"❌ Stream failed for {res.task.canonical_id}: {res.message}"
+                                )
+                    except KeyboardInterrupt:
+                        print("\n🛑 Cancelling pending parallel worker streams...")
+                        executor.shutdown(wait=False, cancel_futures=True)
+                        raise
+
             if not drain:
                 break
-            time.sleep(poll_idle_seconds)
-            continue
 
-        print(f"📋 Found {len(ready_tasks)} ready unblocked task(s):")
-        for t in ready_tasks:
-            print(f"  - [{t.canonical_id}] {t.title} (Priority: {t.priority_rank})")
+        print(f"\n=== Orchestrator Finished: {completed_count} task(s) delivered ===")
+        return 0
 
-        if dry_run:
-            print("\nDry-run complete. Exiting without execution.")
-            return 0
-
-        # Batch up to concurrency tasks
-        batch = ready_tasks[:concurrency]
-
-        if len(batch) == 1 or concurrency == 1:
-            task = batch[0]
-            res = execute_task_pipeline(task, repo_root, queue, local_mode=local_mode)
-            if res.success:
-                completed_count += 1
-            else:
-                print(f"❌ Pipeline failed for {task.canonical_id}: {res.message}")
-                break
-        else:
-            print(f"\n⚡ Dispatching {len(batch)} parallel task streams...")
-            with ThreadPoolExecutor(max_workers=concurrency) as executor:
-                futures = {
-                    executor.submit(
-                        execute_task_pipeline,
-                        task,
-                        repo_root,
-                        queue,
-                        local_mode,
-                    ): task
-                    for task in batch
-                }
-                for fut in as_completed(futures):
-                    res = fut.result()
-                    if res.success:
-                        completed_count += 1
-                    else:
-                        print(f"❌ Stream failed for {res.task.canonical_id}: {res.message}")
-
-        if not drain:
-            break
-
-    print(f"\n=== Orchestrator Finished: {completed_count} task(s) delivered ===")
-    return 0
+    except KeyboardInterrupt:
+        print(
+            "\n🛑 Orchestrator stopped by user (Ctrl+C). All active tasks released back to ready queue."
+        )
+        return 130

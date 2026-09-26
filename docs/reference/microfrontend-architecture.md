@@ -19,7 +19,9 @@ runefoble/
 │   ├── board_state/ui/           # @runefoble/board-state-ui
 │   │   └── src/
 │   │       ├── runefoble-board.ts
-│   │       └── runefoble-board.stories.ts
+│   │       ├── runefoble-board.stories.ts
+│   │       ├── runefoble-map-uploader.ts
+│   │       └── runefoble-map-uploader.stories.ts
 │   ├── character_sheet/ui/       # @runefoble/character-sheet-ui
 │   │   └── src/
 │   │       ├── runefoble-character-card.ts
@@ -44,7 +46,7 @@ runefoble/
 
 | Service Bounded Context | NPM Package Name | Vendored Custom Elements | Storybook Story Path |
 |---|---|---|---|
-| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>` | `services/board_state/ui/src/runefoble-board.stories.ts` |
+| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>`, `<runefoble-map-uploader>` | `services/board_state/ui/src/*.stories.ts` |
 | `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-absentee-recap>` | `services/character_sheet/ui/src/*.stories.ts` |
 | `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>` | `services/game_session/ui/src/*.stories.ts` |
 | `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>` | `services/the_watcher/ui/src/*.stories.ts` |
@@ -93,7 +95,7 @@ Response:
 {
   "service": "board_state",
   "package": "@runefoble/board-state-ui",
-  "components": ["runefoble-board"],
+  "components": ["runefoble-board", "runefoble-map-uploader"],
   "version": "0.1.0"
 }
 ```

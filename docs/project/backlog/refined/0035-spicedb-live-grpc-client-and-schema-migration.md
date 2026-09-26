@@ -1,14 +1,17 @@
 ---
 id: '0035'
 title: Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
-status: Proposed
+status: Refined
 created: 2026-09-25
 dependencies: [TASK-0008, TASK-0016]
 governing_adrs: [ADR-0001, ADR-0005, ADR-0007]
 target_release: 0.1.0
 ---
 
-# TASK-0031 — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
+# TASK-0035: Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
+
+## Status
+Refined
 
 ## Summary
 Connect `SpiceDBClient` in `libs/runefoble_auth` to the live self-hosted SpiceDB gRPC service using the official `authzed` SDK. Implement live relationship creation, deletion, and checks against the Zanzibar engine while preserving seamless fallback to in-memory mock tuples for disconnected unit tests. Provide a Helm pre-install/upgrade job that compiles and applies `libs/runefoble_auth/schema/runefoble.zed` to SpiceDB during cluster deployment.
@@ -35,5 +38,7 @@ Connect `SpiceDBClient` in `libs/runefoble_auth` to the live self-hosted SpiceDB
    - Create schema migration script / Helm job (`deployments/helm/runefoble/templates/spicedb-schema-job.yaml`) that executes `zed schema write` using `libs/runefoble_auth/schema/runefoble.zed`.
 4. **Blackbox TDD Suite (`tests/test_blackbox_spicedb_live.py`)**:
    - Frontdoor tests assigning campaign roles via Gateway API (`POST /api/v1/campaigns/{id}/roles`), verifying SpiceDB relationship tuples persist and correctly govern permission checks.
-5. **File Invariant Check**:
+5. **Diataxis Documentation**:
+   - Author `docs/how-to/define-spicedb-zanzibar-permissions.md` or update with live gRPC deployment guides.
+6. **File Invariant Check**:
    - All touched files remain strictly under 500 lines.

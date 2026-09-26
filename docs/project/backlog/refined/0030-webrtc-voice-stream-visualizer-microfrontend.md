@@ -1,13 +1,17 @@
 ---
-id: 0030
+id: '0030'
 title: WebRTC Audio Stream & Real-Time Waveform Visualizer in Voice Agent Microfrontend
 status: Refined
 created: 2026-09-25
-dependencies: [TASK-0026, TASK-0027]
-governing_adrs: [ADR-0004, ADR-0012, ADR-0013]
+dependencies:
+- TASK-0026
+- TASK-0027
+governing_adrs:
+- ADR-0004
+- ADR-0012
+- ADR-0013
 target_release: 0.1.0
 ---
-
 # TASK-0030: WebRTC Audio Stream & Real-Time Waveform Visualizer in Voice Agent Microfrontend
 
 ## Status

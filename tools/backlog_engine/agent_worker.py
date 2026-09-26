@@ -96,14 +96,16 @@ def run_agent_in_worktree(
         ]
 
     start_time = time.time()
+    proc = None
     try:
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             cmd,
             cwd=worktree_dir,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout_seconds,
         )
+        stdout, stderr = proc.communicate(timeout=timeout_seconds)
         elapsed = time.time() - start_time
 
         # If continuing failed, fallback to fresh prompt invocation
@@ -114,31 +116,42 @@ def run_agent_in_worktree(
                 "-p",
                 prompt,
             ]
-            fallback_proc = subprocess.run(
+            fallback_proc = subprocess.Popen(
                 fallback_cmd,
                 cwd=worktree_dir,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
-                timeout=timeout_seconds,
             )
+            fallback_stdout, fallback_stderr = fallback_proc.communicate(timeout=timeout_seconds)
             if fallback_proc.returncode == 0:
                 elapsed = time.time() - start_time
                 return (
                     True,
-                    f"Agent repair completed successfully in {elapsed:.1f}s:\n{fallback_proc.stdout}",
+                    f"Agent repair completed successfully in {elapsed:.1f}s:\n{fallback_stdout}",
                 )
 
         if proc.returncode != 0:
             err = (
                 f"Agent run failed (code {proc.returncode}) after {elapsed:.1f}s:\n"
-                f"{proc.stdout}\n{proc.stderr}"
+                f"{stdout}\n{stderr}"
             )
             return False, err
 
-        output = f"Agent completed successfully in {elapsed:.1f}s:\n{proc.stdout}"
+        output = f"Agent completed successfully in {elapsed:.1f}s:\n{stdout}"
         return True, output
 
+    except KeyboardInterrupt:
+        if proc and proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+        raise
     except subprocess.TimeoutExpired:
+        if proc and proc.poll() is None:
+            proc.kill()
         return (
             False,
             f"Agent timed out after {timeout_seconds} seconds in {worktree_dir}",
