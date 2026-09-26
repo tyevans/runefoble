@@ -1,7 +1,7 @@
 ---
 id: '0045'
 title: Gateway API Router and App Shell Modular Decomposition
-status: in-progress
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0008
@@ -14,8 +14,7 @@ governing_adrs:
 - ADR-0009
 - ADR-0013
 target_release: 0.2.0
-claimed_by: worker-0045
-branch: feat/0045-gateway-api-and-app-shell-modular-decomposition
+pr_url: https://github.com/tyevans/runefoble/pull/42
 ---
 # TASK-0045: Gateway API Router and App Shell Modular Decomposition
 
