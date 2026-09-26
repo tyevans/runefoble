@@ -15,7 +15,7 @@ To avoid specification drift and inventory waste, maintain a lean ready buffer o
 Priority ordering in [`PRIORITY.md`](PRIORITY.md) is derived from:
 1. **Foundational Enablers**: Horizontal architecture, database/event schemas, or authorization capabilities that unblock downstream features.
 2. **Current Milestone Goals**: Active deliverables defined in [`ROADMAP.md`](ROADMAP.md).
-3. **Refactoring & Technical Debt**: Proactive modularization to preserve repository invariants (e.g. file size <500 lines per [AGENTS.md](../../AGENTS.md)).
+3. **Refactoring & Technical Debt**: Proactive modularization to preserve repository invariants (e.g. file size <500 lines per [AGENTS.md](../../operating-manual.md)).
 
 ### 3. INVEST Criteria for Backlog Items
 Every task—from initial submission in `proposed/` to formal qualification in `refined/`—must satisfy the **INVEST** criteria:
@@ -28,7 +28,7 @@ Every task—from initial submission in `proposed/` to formal qualification in `
 
 ## Definition of Ready (DoR)
 
-Before any task moves from `proposed/` to `refined/`, it must satisfy the Definition of Ready in [`AGENTS.md`](../../AGENTS.md):
+Before any task moves from `proposed/` to `refined/`, it must satisfy the Definition of Ready in [`AGENTS.md`](../../operating-manual.md):
 1. **Bounded Context Identified**: Target service bounded context (`services/<bc>`) explicitly designated.
 2. **Microfrontend Slice Declared**: For user-facing features, the owning UI package (`services/<bc>/ui/`) and Custom Element tag (`<runefoble-...>`) are defined per [ADR-0013](../adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md).
 3. **Storybook Isolation Planned**: Mock property states and visual acceptance criteria specified for Storybook isolation testing prior to App Shell composition.

@@ -44,7 +44,43 @@ dist/project-visualizer.html
 
 ---
 
-## 3. Inspecting Project Statistics via CLI
+## 3. Building and Publishing via Zensical & GitHub Pages
+
+Runefoble integrates the standalone visualizer bundle with the **Zensical static documentation portal** (the high-performance Material for MkDocs successor). The entire documentation library—including all Diataxis guides, ADRs, PRDs, and user stories—is compiled, rendered, and indexed into client-side search alongside the interactive visualizer.
+
+### Local Compilation
+
+To build the static distribution:
+```bash
+make docs-build
+```
+
+This automates:
+1. Generating `dist/project-visualizer.html` from repository specifications.
+2. Compiling all Markdown documentation in `docs/` using `zensical build`.
+3. Integrating the standalone visualizer into `site/visualizer/index.html` and `site/project-visualizer.html`.
+4. Exporting structured relational data to `site/project-data.json`.
+5. Generating client-side search index in `site/search.json`.
+
+### Local Live Preview
+
+To preview the combined documentation site and visualizer:
+```bash
+make docs-serve
+```
+
+The portal runs on `http://localhost:8000/`:
+- **Documentation Hub**: `http://localhost:8000/`
+- **Embedded Visualizer Page**: `http://localhost:8000/project-visualizer/`
+- **Fullscreen Visualizer**: `http://localhost:8000/visualizer/`
+
+### Automated Deployment to GitHub Pages
+
+On every merge to `main`, `.github/workflows/deploy-pages.yml` executes `make docs-build` and deploys the generated distribution to GitHub Pages (`https://tyevans.github.io/runefoble/`). Pull requests automatically validate doc compilation integrity via `ci.yml`.
+
+---
+
+## 4. Inspecting Project Statistics via CLI
 
 To inspect high-level coverage, health invariants, and graph edge counts directly from the command line:
 
