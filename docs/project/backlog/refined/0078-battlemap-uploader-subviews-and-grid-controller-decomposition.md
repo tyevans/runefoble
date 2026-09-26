@@ -1,17 +1,23 @@
 ---
 id: '0078'
 title: Battlemap Uploader Subviews and Grid Controller Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
-dependencies: [TASK-0023, TASK-0031]
-governing_adrs: [ADR-0004, ADR-0012, ADR-0013]
+dependencies:
+- TASK-0023
+- TASK-0031
+governing_adrs:
+- ADR-0004
+- ADR-0009
+- ADR-0012
+- ADR-0013
 target_release: 0.2.0
 ---
 
 # TASK-0078: Battlemap Uploader Subviews and Grid Controller Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Decompose `services/board_state/ui/src/runefoble-map-uploader.ts` (315 lines, 63.0% of limit) into focused subcomponents for drag-and-drop file ingestion and interactive tactical grid/shroud masking configuration to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as procedural battlemap generation (TASK-0049) and universal VTT imports (TASK-0057) land.
@@ -21,7 +27,13 @@ Decompose `services/board_state/ui/src/runefoble-map-uploader.ts` (315 lines, 63
 1. Drag-and-drop file dropzone, MIME validation, multipart Silo S3 HTTP uploading, progress bar animation, and error alerting.
 2. Tactical grid calibration, dynamic canvas overlay rendering, coordinate resolution calculation, and cell-by-cell fog-of-war shroud masking controls.
 
-As upcoming roadmap features introduce procedural battlemap generation from AI prompts (TASK-0049) and Universal VTT file importing with light/wall metadata (TASK-0057), this component will grow beyond 500 lines unless decomposed into modular, reusable subcomponents.
+As roadmap features introduce procedural battlemap generation from AI prompts (TASK-0049) and Universal VTT file importing with light/wall metadata (TASK-0057), this component will grow beyond 500 lines unless decomposed into modular, reusable subcomponents.
+
+## Governing Architecture & ADRs
+- **ADR-0004: Lit Web Components and Storybook UI**: Component development and Storybook verification.
+- **ADR-0009: Continuous Backlog Refinement and Technical Debt Management**: Preemptive UI decomposition.
+- **ADR-0012: CSS Custom Properties and Bauhaus Design Tokens**: Visual styling tokens.
+- **ADR-0013: Microfrontend Architecture and Service Component Vendoring**: Service component boundary.
 
 ## Proposed Decomposition
 1. **Dropzone & Upload Sub-controller (`services/board_state/ui/src/runefoble-map-dropzone.ts`)**:
@@ -39,8 +51,9 @@ As upcoming roadmap features introduce procedural battlemap generation from AI p
 - **Small (S)**: Scope strictly isolated to `services/board_state/ui/src/runefoble-map-uploader.ts`; all resulting files < 150 lines.
 - **Testable (T)**: Verified via Storybook stories, `pnpm run build` TypeScript compilation, and `uv run pytest tests/test_microfrontends.py tests/test_blackbox_silo_assets.py`.
 
-## Acceptance Criteria
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `runefoble-map-uploader.ts` decomposed into focused subcomponents strictly under 150 lines each.
 2. 100% Storybook verification with zero console errors.
 3. Preserves identical `<runefoble-map-uploader>` element contract, properties, and `map-uploaded` event payload.
 4. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
+5. Passes `pnpm run build` and `uv run pytest tests/test_microfrontends.py`.

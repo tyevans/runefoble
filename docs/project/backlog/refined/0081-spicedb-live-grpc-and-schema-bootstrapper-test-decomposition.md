@@ -1,17 +1,22 @@
 ---
 id: '0081'
 title: SpiceDB Live gRPC Client and Schema Bootstrapper Test Suite Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
-dependencies: [TASK-0035]
-governing_adrs: [ADR-0001, ADR-0005, ADR-0007]
+dependencies:
+- TASK-0035
+governing_adrs:
+- ADR-0001
+- ADR-0005
+- ADR-0007
+- ADR-0009
 target_release: 0.2.0
 ---
 
 # TASK-0081: SpiceDB Live gRPC Client and Schema Bootstrapper Test Suite Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Decompose `tests/test_blackbox_spicedb_live.py` (306 lines, 61.2% of limit) into two specialized test modules (`tests/test_spicedb_schema_bootstrap.py` and `tests/test_blackbox_spicedb_live_grpc.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new schema relations (e.g. spectator cheer permissions, VTT asset access) are added.
@@ -21,7 +26,13 @@ Decompose `tests/test_blackbox_spicedb_live.py` (306 lines, 61.2% of limit) into
 1. Schema bootstrapping and migration: Loading `runefoble.zed`, compiling schema definitions, writing schema to SpiceDB, and validating fallback behavior when disconnected.
 2. Live Zanzibar gRPC interactions: Dockerized SpiceDB testcontainer setup, relationship tuple writing, graph permission checking, dynamic relation revocations, and campaign role assignment REST endpoints (`POST /api/v1/campaigns/{id}/roles`).
 
-As new permissions are added to `runefoble.zed` for Milestone 3 (lore knowledge base access, encounter builder permissions) and Milestone 4 (stream overlays, spectator participation), this test suite will expand and risk violating Hard Invariant 6.
+As new permissions are added to `runefoble.zed` for upcoming milestones (lore knowledge base access, stream overlays, spectator participation), this test suite will expand and risk violating Hard Invariant 6.
+
+## Governing Architecture & ADRs
+- **ADR-0001: SpiceDB Zanzibar Object Authorization**: Live gRPC authorization evaluation.
+- **ADR-0005: Kubernetes-First Infrastructure with Helm and Kind**: SpiceDB container configuration.
+- **ADR-0007: Real-Time Voice and Board Synchronization**: Real-time permission checking.
+- **ADR-0009: Continuous Backlog Refinement and Technical Debt Management**: Preemptive test splitting.
 
 ## Proposed Decomposition
 1. **Schema Migration & Fallback Unit Suite (`tests/test_spicedb_schema_bootstrap.py`)**:
@@ -41,8 +52,9 @@ As new permissions are added to `runefoble.zed` for Milestone 3 (lore knowledge 
 - **Small (S)**: Scope strictly isolated to `tests/test_blackbox_spicedb_live.py`; all resulting files < 190 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_spicedb_schema_bootstrap.py tests/test_blackbox_spicedb_live_grpc.py`.
 
-## Acceptance Criteria
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `tests/test_blackbox_spicedb_live.py` decomposed into focused test suites strictly under 200 lines each.
 2. 100% test pass rate across all existing schema bootstrapping and live gRPC permission tests.
 3. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
 4. Maintains blackbox frontdoor interactions via public HTTP endpoints and live SpiceDB gRPC client.
+5. Passes `uv run ruff check` and `uv run ruff format --check`.
