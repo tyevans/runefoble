@@ -22,4 +22,3 @@ Implement the natural speech-to-intent interpretation engine inside `services/th
 - [x] Added Hypothesis property-based tests in `tests/test_properties.py` verifying arbitrary feet-to-squares conversion (5ft->1, 10ft->2, 15ft->3) and grid boundary clamping invariants.
 - [x] Added unit and integration tests in `tests/test_speech_to_intent.py` verifying cardinal movement, attacks, spells, skill checks, sub-200ms latency budgets, and Redis stream event emission.
 - [x] Verified full test suite passes (51/51) and Ruff check/format are 100% clean.
-

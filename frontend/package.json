@@ -11,6 +11,11 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@runefoble/board-state-ui": "workspace:*",
+    "@runefoble/character-sheet-ui": "workspace:*",
+    "@runefoble/game-session-ui": "workspace:*",
+    "@runefoble/the-watcher-ui": "workspace:*",
+    "@runefoble/voice-agent-ui": "workspace:*",
     "lit": "^3.3.3"
   },
   "devDependencies": {

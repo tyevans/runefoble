@@ -11,8 +11,8 @@ feature: FEAT-WAT-05
 
 ## User Story
 
-**As an** absent player returning for the subsequent gaming session,  
-**I want** The Watcher to generate an audio and text recap of everything my character did while piloted by the AI stand-in (including the effects of any penalties like "drunk" or "foolishness"),  
+**As an** absent player returning for the subsequent gaming session,
+**I want** The Watcher to generate an audio and text recap of everything my character did while piloted by the AI stand-in (including the effects of any penalties like "drunk" or "foolishness"),
 **So that** I am immediately brought up to speed on party progress and can laugh along with my friends at my character's unintended shenanigans.
 
 ## Scenario: Listening to Session Recap

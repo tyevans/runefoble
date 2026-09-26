@@ -280,6 +280,17 @@ async def remove_condition(character_id: UUID, condition: str):
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
+@app.get("/ui/manifest")
+def get_ui_manifest():
+    """Advertise vendored microfrontend components for character sheet."""
+    return {
+        "service": "character_sheet",
+        "package": "@runefoble/character-sheet-ui",
+        "components": ["runefoble-character-card", "runefoble-absentee-recap"],
+        "version": "0.1.0",
+    }
+
+
 def main():
     import uvicorn
 

@@ -9,8 +9,8 @@ created: 2026-09-25
 
 ## User Story
 
-**As a** tabletop player in an active encounter,  
-**I want to** speak naturally to move my character token across the tactical map ("Valeros strides three squares forward"),  
+**As a** tabletop player in an active encounter,
+**I want to** speak naturally to move my character token across the tactical map ("Valeros strides three squares forward"),
 **So that** I stay immersed in the collaborative story without breaking eye contact or fumbling with map coordinates.
 
 ## Acceptance Criteria

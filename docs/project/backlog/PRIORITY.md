@@ -1,6 +1,6 @@
 # Backlog Priority Index
 
-Order of priority for engineering tasks across the platform.
+Order of priority for engineering tasks across the platform. Tasks strictly adhere to: **Foundational Enablers → Current Milestone Epics → Identified Refactorings → Future Milestones**.
 
 1. **TASK-0000 (Complete)**: [`0000-bootstrap-repository-and-foundations.md`](complete/0000-bootstrap-repository-and-foundations.md) — Bootstrap Repository and Platform Foundations
 2. **TASK-0001 (Complete)**: [`0001-redis-streams-event-bus-infrastructure.md`](complete/0001-redis-streams-event-bus-infrastructure.md) — Redis Streams Event Bus Infrastructure and Helm Integration
@@ -26,15 +26,22 @@ Order of priority for engineering tasks across the platform.
 22. **TASK-0021 (Complete)**: [`0021-voice-dsp-conditioning-pipeline.md`](complete/0021-voice-dsp-conditioning-pipeline.md) — Real-Time Dynamic DSP Audio Conditioning Pipeline
 23. **TASK-0022 (Complete)**: [`0022-initiative-tracker-turn-order-timer.md`](complete/0022-initiative-tracker-turn-order-timer.md) — Live Multi-User Turn Order, Initiative Tracker & Timer Web Component
 24. **TASK-0023 (Complete)**: [`0023-silo-s3-asset-storage-pipeline.md`](complete/0023-silo-s3-asset-storage-pipeline.md) — Silo S3 Media Asset Bucket Storage & Character Avatar / Map Upload Pipeline
-25. **TASK-0024 (Complete)**: [`0024-spicedb-zitadel-identity-sync.md`](complete/0024-spicedb-zitadel-identity-sync.md) — SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities
-26. **TASK-0025 (Refined)**: [`0025-webrtc-voice-room-signaling.md`](refined/0025-webrtc-voice-room-signaling.md) — Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
-27. **TASK-0030 (Proposed)**: [`0030-zitadel-oidc-jwks-verification-middleware.md`](proposed/0030-zitadel-oidc-jwks-verification-middleware.md) — Zitadel Production OIDC/JWKS Token Verification Middleware
-28. **TASK-0031 (Proposed)**: [`0031-spicedb-live-grpc-client-and-schema-migration.md`](proposed/0031-spicedb-live-grpc-client-and-schema-migration.md) — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
-29. **TASK-0033 (Proposed)**: [`0033-postgresql-multi-database-init-and-event-store.md`](proposed/0033-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection
-30. **TASK-0029 (Proposed)**: [`0029-opentelemetry-tracing-and-metrics-pipeline.md`](proposed/0029-opentelemetry-tracing-and-metrics-pipeline.md) — OpenTelemetry Distributed Tracing, Metrics & Collector Helm Integration
-31. **TASK-0032 (Proposed)**: [`0032-openpanel-analytics-service-and-event-pipeline.md`](proposed/0032-openpanel-analytics-service-and-event-pipeline.md) — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
-32. **TASK-0027 (Proposed)**: [`0027-streaming-whisper-speech-to-intent.md`](proposed/0027-streaming-whisper-speech-to-intent.md) — Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
-33. **TASK-0026 (Proposed)**: [`0026-service-modular-router-decomposition.md`](proposed/0026-service-modular-router-decomposition.md) — Modular APIRouter Decomposition for The Watcher & Game Session Microservices
-34. **TASK-0028 (Proposed)**: [`0028-frontend-component-decomposition.md`](proposed/0028-frontend-component-decomposition.md) — Frontend High-Complexity Component Decomposition & Storybook Sub-Modules
-35. **TASK-0034 (Proposed)**: [`0034-fastmcp-gateway-server-modular-decomposition.md`](proposed/0034-fastmcp-gateway-server-modular-decomposition.md) — FastMCP Gateway Server Modular Decomposition
-36. **TASK-0035 (Proposed)**: [`0035-redis-consumer-groups-test-suite-decomposition.md`](proposed/0035-redis-consumer-groups-test-suite-decomposition.md) — Redis Consumer Groups & Projections Test Suite Decomposition
+25. **TASK-0024 (Complete)**: [`0024-update-definition-of-ready-and-done-for-microfrontends.md`](complete/0024-update-definition-of-ready-and-done-for-microfrontends.md) — Update Definition of Ready and Definition of Done for Microfrontends
+26. **TASK-0025 (Complete)**: [`0025-microfrontend-architecture-adr-and-workspace-vendoring.md`](complete/0025-microfrontend-architecture-adr-and-workspace-vendoring.md) — Microfrontend Architectural Governance and Workspace Configuration (ADR-0013)
+27. **TASK-0026 (Complete)**: [`0026-service-bounded-context-component-extraction-and-manifests.md`](complete/0026-service-bounded-context-component-extraction-and-manifests.md) — Service Bounded Context Component Extraction and HTTP Manifests
+28. **TASK-0027 (Complete)**: [`0027-app-shell-decoupling-voice-controls-and-storybook-aggregation.md`](complete/0027-app-shell-decoupling-voice-controls-and-storybook-aggregation.md) — App Shell Decoupling, Voice Controls Microfrontend, and Storybook Aggregation
+29. **TASK-0028 (Complete)**: [`0028-microfrontend-diataxis-documentation-synchronization.md`](complete/0028-microfrontend-diataxis-documentation-synchronization.md) — Microfrontend Diataxis Documentation Synchronization
+30. **TASK-0029 (Complete)**: [`0029-frontdoor-blackbox-tests-and-quality-gate-verification.md`](complete/0029-frontdoor-blackbox-tests-and-quality-gate-verification.md) — Frontdoor Blackbox Test Suite and Quality Gate Verification
+31. **TASK-0030 (Refined)**: [`0030-webrtc-voice-stream-visualizer-microfrontend.md`](refined/0030-webrtc-voice-stream-visualizer-microfrontend.md) — WebRTC Audio Stream & Real-Time Waveform Visualizer in Voice Agent Microfrontend
+32. **TASK-0031 (Refined)**: [`0031-silo-s3-battlemap-uploader-microfrontend.md`](refined/0031-silo-s3-battlemap-uploader-microfrontend.md) — Silo S3 Battlemap Asset Uploader & Shroud Masking in Board State Microfrontend
+33. **TASK-0032 (Complete)**: [`0032-spicedb-zitadel-identity-sync.md`](complete/0032-spicedb-zitadel-identity-sync.md) — SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities
+34. **TASK-0033 (Refined)**: [`0033-webrtc-voice-room-signaling.md`](refined/0033-webrtc-voice-room-signaling.md) — Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
+35. **TASK-0034 (Proposed)**: [`0034-zitadel-oidc-jwks-verification-middleware.md`](proposed/0034-zitadel-oidc-jwks-verification-middleware.md) — Zitadel Production OIDC/JWKS Token Verification Middleware
+36. **TASK-0035 (Proposed)**: [`0035-spicedb-live-grpc-client-and-schema-migration.md`](proposed/0035-spicedb-live-grpc-client-and-schema-migration.md) — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
+37. **TASK-0036 (Proposed)**: [`0036-postgresql-multi-database-init-and-event-store.md`](proposed/0036-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection
+38. **TASK-0037 (Proposed)**: [`0037-opentelemetry-tracing-and-metrics-pipeline.md`](proposed/0037-opentelemetry-tracing-and-metrics-pipeline.md) — OpenTelemetry Distributed Tracing, Metrics & Collector Helm Integration
+39. **TASK-0038 (Proposed)**: [`0038-openpanel-analytics-service-and-event-pipeline.md`](proposed/0038-openpanel-analytics-service-and-event-pipeline.md) — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
+40. **TASK-0039 (Proposed)**: [`0039-streaming-whisper-speech-to-intent.md`](proposed/0039-streaming-whisper-speech-to-intent.md) — Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
+41. **TASK-0040 (Proposed)**: [`0040-service-modular-router-decomposition.md`](proposed/0040-service-modular-router-decomposition.md) — Modular APIRouter Decomposition for The Watcher & Game Session Microservices
+42. **TASK-0041 (Proposed)**: [`0041-fastmcp-gateway-server-modular-decomposition.md`](proposed/0041-fastmcp-gateway-server-modular-decomposition.md) — FastMCP Gateway Server Modular Decomposition
+43. **TASK-0042 (Proposed)**: [`0042-redis-consumer-groups-test-suite-decomposition.md`](proposed/0042-redis-consumer-groups-test-suite-decomposition.md) — Redis Consumer Groups & Projections Test Suite Decomposition

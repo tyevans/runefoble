@@ -28,7 +28,7 @@ These rules are structural. Do not violate them for convenience.
 
 1. **Object-level authorization runs through SpiceDB Zanzibar schema.** Never hardcode role checks (e.g. `user.role == 'admin'`) in business logic. Check permissions against `libs/runefoble_auth/schema/runefoble.zed`.[^6]
 2. **All domain state transitions and events are powered by eventsource-py.** Domain events inherit from `DomainEvent` (via `BaseRunefobleEvent` in `libs/runefoble_events`) and are registered with `@register_event`. Domain state changes flow strictly through `DeclarativeAggregate` subclasses with `@handles` methods and are saved/loaded via `AggregateRepository`.[^24]
-3. **Frontend components are built and tested in Storybook first.** Build new UI elements as Lit Web Components in `frontend/src/components/` and verify them in `frontend/src/stories/` before embedding them into application views.[^13]
+3. **Frontend microfrontends are built and tested in Storybook first.** Build UI elements as Lit Web Components within their owning service bounded context (`services/<bc>/ui/src/`) and verify them in Storybook before composition into the lightweight `frontend/` App Shell.[^13][^25]
 4. **All Python packages are managed through the root UV workspace.** Do not use pip, poetry, or virtualenvs directly. Run commands through `uv` or the developer `Makefile`.[^14]
 5. **Services publish OpenAPI specs to the Swagger UI hub.** Every new HTTP service must expose `/openapi.json` and register its URL in `deployments/helm/runefoble/values.yaml`.[^11]
 6. **File length limit (<500 lines).** Source files over ~500 lines are rarely justified. Whenever editing or committing code, inspect file lengths and decompose large files into focused, single-responsibility modules.
@@ -103,14 +103,14 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `libs/runefoble_platform/` | Common models, config, error hierarchy, event bus |
 | `libs/runefoble_auth/` | Zitadel JWT decoding, SpiceDB Zanzibar client, `runefoble.zed` schema |
 | `libs/runefoble_events/` | CloudEvents-compliant domain event definitions |
-| `services/the_watcher/` | The Watcher AI gameplay engine (speech-to-intent, DM, AI stand-ins) |
-| `services/game_session/` | Active session lifecycle, turns, player presence |
-| `services/board_state/` | Tactical grid, token coordinates, spatial movement rules |
-| `services/character_sheet/` | Character stats, HP tracking, session absence penalties |
-| `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis |
+| `services/the_watcher/` | The Watcher AI gameplay engine (speech-to-intent, DM, AI stand-ins) & microfrontend |
+| `services/game_session/` | Active session lifecycle, turns, player presence, dice & microfrontends |
+| `services/board_state/` | Tactical grid, token coordinates, spatial movement rules & board microfrontend |
+| `services/character_sheet/` | Character stats, HP tracking, session absence penalties & character microfrontends |
+| `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis & voice controls microfrontend |
 | `gateway/api/` | Unified API Gateway, WebSockets, OpenAPI aggregator |
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
-| `frontend/` | Lit Web Components, Vite application, Storybook design system |
+| `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |
 | `deployments/helm/` | Umbrella Helm chart for Kubernetes deployment |
 | `deployments/kind/` | Kind Kubernetes cluster configuration for local development |
 | `docs/project/` | ADRs, PRDs, User Stories, and Backlog records |
@@ -121,25 +121,28 @@ All system documentation outside project records lives in `docs/` and strictly f
 
 A backlog task or feature may only be transitioned to `refined/` and pulled into active development when:
 1. **Documentation Review**: Relevant existing documentation in `docs/` has been reviewed and explicitly considered during planning.
-2. **Reference PRD Cited**: A governing Product Requirement Document in `docs/project/product/accepted/` is linked to establish the user need and business value.[^18]
-3. **User Stories Linked**: Persona-driven user stories in `docs/project/user_stories/accepted/` are linked to anchor acceptance criteria.[^19]
-4. **Architectural Review**: Governing ADRs in `docs/project/adrs/accepted/` are cited and technical impact on existing boundaries evaluated.[^3]
-5. **INVEST Criteria Satisfied**: The task is validated against INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small [<500 lines per file], Testable).[^20]
-6. **Frontdoor Blackbox Test Plan**: Frontdoor test scenarios and setup are clearly specified, interacting strictly via public HTTP endpoints, WebSockets, or CloudEvents.
+2. **Bounded Context & Microfrontends**: Target service bounded context (`services/<bc>`) is designated, and for any user-facing feature, the owning UI package (`services/<bc>/ui/`) and Custom Element tags (`<runefoble-...>`) are defined.[^25]
+3. **Reference PRD Cited**: A governing Product Requirement Document in `docs/project/product/accepted/` is linked to establish the user need and business value.[^18]
+4. **User Stories Linked**: Persona-driven user stories in `docs/project/user_stories/accepted/` are linked to anchor acceptance criteria.[^19]
+5. **Architectural Review**: Governing ADRs in `docs/project/adrs/accepted/` (e.g. ADR-0004, ADR-0012, ADR-0013) are cited and technical impact on existing boundaries evaluated.[^3][^25]
+6. **INVEST Criteria Satisfied**: The task is validated against INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small [<500 lines per file], Testable).[^20]
+7. **Frontdoor Blackbox Test Plan**: Frontdoor test scenarios and setup are clearly specified, interacting strictly via public HTTP endpoints, WebSockets, or CloudEvents.
 
 ## Definition of Done (DoD)
 
 Work is complete only when:
-1. **Architectural Alignment**: Verified against governing ADRs without backdoor state manipulation.[^3]
-2. **Documentation Integrity**:
+1. **Architectural Alignment**: Verified against governing ADRs (including ADR-0013 for microfrontends) without backdoor state manipulation.[^3][^25]
+2. **Microfrontend Vendoring**: Any user-facing components are built and vendored inside their owning service bounded context (`services/<bc>/ui/`), exposed via `/ui/manifest`, with the App Shell (`frontend/`) remaining strictly decoupled.[^25]
+3. **Frontend Storybook Verification**: UI components built with Shadow DOM and Bauhaus design tokens, accompanied by interactive Storybook stories with zero console errors.[^13]
+4. **Documentation Integrity**:
    - Inaccurate or stale docs discovered during work are corrected.
-   - New Diataxis guides (`docs/how-to/` or `docs/reference/`) are created if introducing generic patterns or cross-service capabilities.
-   - All new public APIs and domain events are documented in `docs/reference/`.[^12]
-3. **Blackbox TDD Suite with Frontdoor Setup**: All scenarios verified through public entrypoints (HTTP routes, WebSockets, standard domain events) rather than private internals or backdoor state manipulation.
-4. **Frontend Storybook Verification**: UI components built with Shadow DOM and Bauhaus design tokens, accompanied by interactive Storybook stories with zero console errors.[^13]
-5. **Automated Verification Gates**: All Python tests pass via `uv run pytest`, frontend builds pass via `pnpm run build`, and `make health-check` passes.[^23]
-6. **Helm & Kubernetes Integrity**: Umbrella Helm chart passes `helm lint` and renders cleanly via `helm template`.[^4]
-7. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs, User Stories, Backlog `complete/`, and `PRIORITY.md`) updated to reflect the new state.[^18]
+   - New Diataxis guides (`docs/how-to/` or `docs/reference/`) are created if introducing generic patterns, microfrontends, or cross-service capabilities.
+   - All new public APIs, events, and microfrontend custom elements are documented in `docs/reference/`.[^12]
+5. **Blackbox TDD Suite with Frontdoor Setup**: All scenarios verified through public entrypoints (HTTP routes, WebSockets, standard domain events) rather than private internals or backdoor state manipulation.
+6. **Automated Verification Gates**: All Python tests pass via `uv run pytest`, frontend builds pass via `pnpm run build` and `make build`, and `make health-check` passes.[^23]
+7. **Helm & Kubernetes Integrity**: Umbrella Helm chart passes `helm lint` and renders cleanly via `helm template`.[^4]
+8. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs, User Stories, Backlog `complete/`, and `PRIORITY.md`) updated to reflect the new state.[^18]
+9. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
 
 ## Dispatching Work to Agents & Parallel Worktrees
 
@@ -179,3 +182,4 @@ When delegating tasks to subagents:
 [^22]: Diataxis documentation framework. `https://diataxis.fr/`
 [^23]: Developer Makefile interfaces. `Makefile`
 [^24]: eventsource-py architecture ADR. `docs/project/adrs/accepted/adr-0011-eventsource-py-core-event-sourcing.md`
+[^25]: Microfrontend Architecture and Service Component Vendoring ADR. `docs/project/adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md`

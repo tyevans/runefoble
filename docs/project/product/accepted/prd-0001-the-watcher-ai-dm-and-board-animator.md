@@ -37,4 +37,3 @@ Low latency audio transcription and LLM inference require optimized streaming co
 2. The Watcher generates atmospheric narration, ambient sound prompts, and monster actions during combat encounters.
 3. FastMCP gateway exposes dynamic session state resource (`session://{session_id}/state`) aggregating active tokens, scene atmosphere, and encounter threat level.
 4. FastMCP tool `execute_agent_action_plan` sequentially validates and executes multi-turn action plans with per-step timing and error handling for out-of-bounds coordinates and invalid tools.
-

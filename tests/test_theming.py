@@ -10,9 +10,10 @@ INDEX_HTML = FRONTEND_DIR / "index.html"
 INDEX_TS = FRONTEND_DIR / "src" / "index.ts"
 APP_TS = FRONTEND_DIR / "src" / "runefoble-app.ts"
 SWITCHER_TS = FRONTEND_DIR / "src" / "components" / "runefoble-theme-switcher.ts"
-BOARD_TS = FRONTEND_DIR / "src" / "components" / "runefoble-board.ts"
-CARD_TS = FRONTEND_DIR / "src" / "components" / "runefoble-character-card.ts"
-FEED_TS = FRONTEND_DIR / "src" / "components" / "runefoble-watcher-feed.ts"
+BOARD_TS = REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-board.ts"
+CARD_TS = REPO_ROOT / "services" / "character_sheet" / "ui" / "src" / "runefoble-character-card.ts"
+FEED_TS = REPO_ROOT / "services" / "the_watcher" / "ui" / "src" / "runefoble-watcher-feed.ts"
+VOICE_TS = REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "runefoble-voice-controls.ts"
 STORIES_TS = FRONTEND_DIR / "src" / "stories" / "theme-switcher.stories.ts"
 
 
@@ -149,6 +150,10 @@ def test_components_adopt_tokens():
     assert "var(--rf-" in feed_content
     assert "var(--rf-shadow" in feed_content
 
+    voice_content = VOICE_TS.read_text(encoding="utf-8")
+    assert "var(--rf-" in voice_content
+    assert "var(--rf-border-color" in voice_content
+
 
 def test_storybook_stories_exist():
     """Verify Storybook stories exist and contain theme variations."""
@@ -172,6 +177,7 @@ def test_file_lengths_under_500_lines():
         BOARD_TS,
         CARD_TS,
         FEED_TS,
+        VOICE_TS,
         STORIES_TS,
     ]
     for file_path in files_to_check:

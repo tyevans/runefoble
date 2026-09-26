@@ -11,8 +11,8 @@ feature: FEAT-UI-01
 
 ## User Story
 
-**As a** tabletop player, GM, or live streamer,  
-**I want** the Runefoble user interface to be fully themable using CSS custom property design tokens, with a bold Bauhaus modernist visual identity as the default,  
+**As a** tabletop player, GM, or live streamer,
+**I want** the Runefoble user interface to be fully themable using CSS custom property design tokens, with a bold Bauhaus modernist visual identity as the default,
 **So that** the board, cards, controls, and chronicles feature clean geometric typography, primary color blocks (cadmium red, cobalt blue, warm yellow), crisp black structural borders, and offset hard drop-shadows, while allowing easy switching between themes (e.g. Bauhaus, Dark Fantasy, Parchment, Cyber Rune).
 
 ## Scenario 1: Default Bauhaus Visual Appearance
