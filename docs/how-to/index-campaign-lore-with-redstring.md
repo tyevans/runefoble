@@ -116,3 +116,17 @@ html`
   ></runefoble-campaign-codex>
 `;
 ```
+
+---
+
+## 5. Modular Retrieval Architecture
+
+To comply with Hard Invariant 6 (File length limit < 500 lines) and enable independent optimization of worldbuilding heuristics and search algorithms, campaign lore retrieval is partitioned into dedicated submodules:
+
+- **Entity & Alias Extraction (`extraction.py`)**: Implements `WorldbuildingLlmProvider`, heuristic NER pattern scanning, entity classification (`npc`, `location`, `faction`), and alias detection.
+- **Scoring Primitives (`scoring.py`)**: Implements Okapi BM25 tokenization (`tokenize`), BM25 term weighting (`bm25_term_score`), inverse document frequency (`compute_idf`), dense vector similarity (`cosine_similarity`), and Reciprocal Rank Fusion (`reciprocal_rank_fusion`).
+- **Data Models (`models.py`)**: Defines `DocumentMetadata` and `LoreSearchResultItem` data classes.
+- **Engine Coordinator (`retrieval.py`)**: Exposes `LoreRetrievalEngine` (aliased as `HybridLoreEngine`), managing document ingestion, knowledge graph neighbor traversal, alias consolidation, and hybrid search query execution.
+
+All submodules re-export their public symbols through `campaign_lore` and `campaign_lore.retrieval` to guarantee full backward compatibility.
+
