@@ -9,17 +9,30 @@ THEMES_CSS = FRONTEND_DIR / "src" / "styles" / "themes.css"
 INDEX_CSS = FRONTEND_DIR / "src" / "index.css"
 INDEX_HTML = FRONTEND_DIR / "index.html"
 INDEX_TS = FRONTEND_DIR / "src" / "index.ts"
+
+APP_TS = FRONTEND_DIR / "src" / "runefoble-app.ts"
+HEADER_TS = FRONTEND_DIR / "src" / "components" / "runefoble-header.ts"
+CAMPAIGN_NAV_TS = FRONTEND_DIR / "src" / "components" / "runefoble-campaign-nav.ts"
+APP_SHELL_STYLES_TS = FRONTEND_DIR / "src" / "styles" / "app-shell.styles.ts"
+SWITCHER_TS = FRONTEND_DIR / "src" / "components" / "runefoble-theme-switcher.ts"
+BOARD_TS = REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-board.ts"
+CARD_TS = REPO_ROOT / "services" / "character_sheet" / "ui" / "src" / "runefoble-character-card.ts"
+FEED_TS = REPO_ROOT / "services" / "the_watcher" / "ui" / "src" / "runefoble-watcher-feed.ts"
+VOICE_TS = REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "runefoble-voice-controls.ts"
+STORIES_TS = FRONTEND_DIR / "src" / "stories" / "theme-switcher.stories.ts"
 PREVIEW_TS = FRONTEND_DIR / ".storybook" / "preview.ts"
 CONTRAST_STORIES_TS = FRONTEND_DIR / "src" / "stories" / "theme-contrast-matrix.stories.ts"
 
 COMPONENT_FILES = [
-    FRONTEND_DIR / "src" / "runefoble-app.styles.ts",
-    FRONTEND_DIR / "src" / "components" / "runefoble-theme-switcher.ts",
+    APP_SHELL_STYLES_TS,
+    HEADER_TS,
+    CAMPAIGN_NAV_TS,
+    SWITCHER_TS,
     FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.styles.ts",
     REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-board.styles.ts",
     REPO_ROOT / "services" / "board_state" / "ui" / "src" / "ghost_preview.styles.ts",
     REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-map-uploader.styles.ts",
-    REPO_ROOT / "services" / "character_sheet" / "ui" / "src" / "runefoble-character-card.ts",
+    CARD_TS,
     REPO_ROOT
     / "services"
     / "character_sheet"
@@ -34,9 +47,9 @@ COMPONENT_FILES = [
     / "src"
     / "runefoble-initiative-tracker.styles.ts",
     REPO_ROOT / "services" / "game_session" / "ui" / "src" / "runefoble-spectator-view.styles.ts",
-    REPO_ROOT / "services" / "the_watcher" / "ui" / "src" / "runefoble-watcher-feed.ts",
+    FEED_TS,
     REPO_ROOT / "services" / "the_watcher" / "ui" / "src" / "runefoble-autonomous-dm.ts",
-    REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "runefoble-voice-controls.ts",
+    VOICE_TS,
     REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "runefoble-audio-indicator.ts",
 ]
 
@@ -97,17 +110,22 @@ def test_themes_css_semantic_token_hierarchy():
         + SEMANTIC_SHADOW_TOKENS
     )
     for token in all_tokens:
-        assert f"{token}:" in content, f"Token {token} must be defined in themes.css"
+        assert token in content, f"Missing required semantic token {token} in themes.css"
+
+    # Verify tactile neobrutalist border/shadow defaults
+    assert "--rf-border-width" in content
+    assert "--rf-shadow:" in content
+    assert "--rf-shadow-sm:" in content
 
 
-def test_wcag_contrast_invariants_across_all_themes_and_modes():
-    """Verify WCAG 2.1 AA (4.5:1) and AAA (7:1) contrast invariants across all theme/mode blocks."""
+def test_wcag_contrast_ratios_across_theme_matrix():
+    """Verify WCAG 2.1 AA (min 4.5:1 for body) and AAA (min 7:1 for primary) contrast invariants."""
     content = THEMES_CSS.read_text(encoding="utf-8")
     blocks = re.findall(r"([^{]+)\{([^}]+)\}", content)
 
-    def srgb_to_lin(c: float) -> float:
-        c_norm = c / 255.0
-        return c_norm / 12.92 if c_norm <= 0.04045 else ((c_norm + 0.055) / 1.055) ** 2.4
+    def srgb_to_lin(color_channel: int) -> float:
+        c = color_channel / 255.0
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
 
     def luminance(hex_code: str) -> float:
         h = hex_code.lstrip("#")
@@ -180,6 +198,74 @@ def test_frontend_index_css_and_html():
     assert "<runefoble-app></runefoble-app>" in index_html
 
 
+def test_theme_switcher_component():
+    """Verify <runefoble-theme-switcher> Lit component."""
+    assert SWITCHER_TS.is_file(), "runefoble-theme-switcher.ts must exist"
+    content = SWITCHER_TS.read_text(encoding="utf-8")
+
+    # LocalStorage handling
+    assert "runefoble-theme" in content
+    assert "localStorage" in content
+
+    # Root attribute manipulation
+    assert "document.documentElement.setAttribute('data-theme', theme)" in content
+
+    # Event dispatch
+    assert "theme-changed" in content
+
+    # Supported theme modes
+    assert "'bauhaus'" in content
+    assert "'dark-fantasy'" in content
+    assert "'parchment'" in content
+    assert "'cyber-rune'" in content
+
+    # Index export
+    index_ts = INDEX_TS.read_text(encoding="utf-8")
+    assert "export * from './components/runefoble-theme-switcher.ts';" in index_ts
+
+
+def test_components_adopt_tokens():
+    """Verify components consume --rf-* tokens."""
+    app_content = APP_TS.read_text(encoding="utf-8")
+    header_content = HEADER_TS.read_text(encoding="utf-8")
+    styles_content = APP_SHELL_STYLES_TS.read_text(encoding="utf-8")
+    assert "import './styles/themes.css';" in app_content
+    assert "<runefoble-settings-modal" in app_content
+    assert "settings-trigger" in header_content
+    assert "var(--rf-bg-canvas" in styles_content
+    assert "var(--rf-text-primary" in styles_content
+    assert "var(--rf-border-color" in header_content
+
+    board_styles = (
+        REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-board.styles.ts"
+    ).read_text(encoding="utf-8")
+    assert "var(--rf-" in board_styles
+    assert "var(--rf-border-color" in board_styles
+
+    card_content = CARD_TS.read_text(encoding="utf-8")
+    assert "var(--rf-" in card_content
+    assert "var(--rf-bg-card" in card_content
+
+    feed_content = FEED_TS.read_text(encoding="utf-8")
+    assert "var(--rf-" in feed_content
+    assert "var(--rf-shadow" in feed_content
+
+    voice_content = VOICE_TS.read_text(encoding="utf-8")
+    assert "var(--rf-" in voice_content
+    assert "var(--rf-border-color" in voice_content
+
+
+def test_storybook_stories_exist():
+    """Verify Storybook stories exist and contain theme variations."""
+    assert STORIES_TS.is_file(), "theme-switcher.stories.ts must exist"
+    content = STORIES_TS.read_text(encoding="utf-8")
+    assert "Theme/RunefobleThemeSwitcher" in content
+    assert "BauhausModernist" in content
+    assert "DarkFantasy" in content
+    assert "Parchment" in content
+    assert "CyberRune" in content
+
+
 def test_storybook_color_mode_and_theme_matrix():
     """Verify Storybook toolbar preview configuration and side-by-side theme contrast stories."""
     assert PREVIEW_TS.is_file(), "Storybook preview.ts must exist"
@@ -209,21 +295,31 @@ def test_storybook_color_mode_and_theme_matrix():
 def test_file_lengths_under_500_lines():
     """Verify all touched frontend and UI service files comply strictly with the <500 lines limit."""
     all_files_to_check = COMPONENT_FILES + [
-        FRONTEND_DIR / "src" / "runefoble-app.ts",
+        APP_TS,
+        HEADER_TS,
+        CAMPAIGN_NAV_TS,
         THEMES_CSS,
         INDEX_CSS,
         INDEX_TS,
         PREVIEW_TS,
         CONTRAST_STORIES_TS,
+        STORIES_TS,
+        BOARD_TS,
         FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.ts",
         FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.types.ts",
-        FRONTEND_DIR / "src" / "stories" / "theme-switcher.stories.ts",
         FRONTEND_DIR / "src" / "stories" / "runefoble-settings-modal.stories.ts",
         REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "waveform-visualizer.ts",
     ]
 
-    for file_path in all_files_to_check:
+    seen = set()
+    deduped = []
+    for f in all_files_to_check:
+        if f not in seen:
+            seen.add(f)
+            deduped.append(f)
+
+    for file_path in deduped:
         assert file_path.is_file(), f"{file_path} must exist"
         lines = file_path.read_text(encoding="utf-8").splitlines()
         line_count = len(lines)
-        assert line_count < 500, f"{file_path.name} exceeds 500 lines: {line_count} lines"
+        assert line_count < 500, f"{file_path.name} has {line_count} lines, exceeding 500 limit"

@@ -48,8 +48,9 @@ docker run --rm -v $(pwd)/libs/runefoble_auth/schema/runefoble.zed:/schema.zed a
 ## 2. Bootstrapping and Schema Migrations
 
 ### Automated Helm Migration Job
-During cluster deployment (`helm install` or `helm upgrade`), the `spicedb-schema-migration` Kubernetes Job applies the schema automatically using a Helm post-install/post-upgrade hook:
-- **Template**: `deployments/helm/runefoble/templates/spicedb-schema-job.yaml`
+During cluster deployment (`helm install` or `helm upgrade`), SpiceDB datastore schema and Zanzibar definitions are bootstrapped automatically:
+- **Datastore Migrations**: An `initContainer` (`datastore-migrate` / `spicedb-migrate`) runs `spicedb datastore migrate head` against PostgreSQL prior to starting `spicedb serve` and before applying schema definitions.
+- **Template**: `deployments/helm/runefoble/templates/spicedb-schema-job.yaml` and `deployments/helm/runefoble/templates/spicedb.yaml`
 - **ConfigMap**: Mounts `runefoble.zed` from the chart files.
 - **Job**: Executes `zed schema write /etc/spicedb/schema/runefoble.zed --endpoint spicedb:50051 --token <key> --insecure`.
 
