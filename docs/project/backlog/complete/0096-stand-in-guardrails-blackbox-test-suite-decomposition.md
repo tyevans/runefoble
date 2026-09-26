@@ -1,7 +1,7 @@
 ---
-id: '0096'
+id: 0096
 title: Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0055
@@ -11,8 +11,8 @@ governing_adrs:
 - ADR-0003
 - ADR-0009
 target_release: 0.3.0
+pr_url: https://github.com/tyevans/runefoble/pull/87
 ---
-
 # TASK-0096: Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition
 
 ## Status
