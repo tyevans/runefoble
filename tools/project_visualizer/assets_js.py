@@ -10,6 +10,7 @@ _MODULE_ORDER = [
     "drawer.js",
     "kanban.js",
     "gantt.js",
+    "graph_physics.js",
     "graph.js",
     "traceability.js",
     "roadmap.js",
