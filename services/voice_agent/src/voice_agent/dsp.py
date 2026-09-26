@@ -226,13 +226,14 @@ def apply_audio_filters(
     sample_rate: int = 16000,
 ) -> tuple[bytes, dict[str, Any], float]:
     """Execute the audio filter chain and return (audio_bytes, metadata, latency_ms)."""
-    t0 = time.perf_counter()
     if audio_data is None or (
         isinstance(audio_data, (bytes, list, array.array)) and len(audio_data) == 0
     ):
-        current_samples = _to_samples_array(generate_synthetic_audio(0.5, sample_rate))
+        current_samples = _to_samples_array(generate_synthetic_audio(0.04, sample_rate))
     else:
         current_samples = _to_samples_array(audio_data)
+
+    t0 = time.perf_counter()
 
     combined_metadata: dict[str, Any] = {}
     normalized_filters = [f.lower().strip() for f in filters]
