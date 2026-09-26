@@ -17,8 +17,8 @@
 - [x] Zitadel production OIDC/JWKS token verification middleware (ADR-0005, TASK-0034)
 - [x] Live SpiceDB gRPC client integration & schema migration bootstrapper (ADR-0001, TASK-0035)
 - [x] PostgreSQL multi-database initialization & persistent event store connection (ADR-0011, TASK-0036)
-- [ ] OpenTelemetry distributed tracing, metrics & collector Helm integration (TASK-0037)
-- [ ] OpenPanel privacy-preserving analytics SDK & event pipeline (TASK-0038)
+- [x] OpenTelemetry distributed tracing, metrics & collector Helm integration (TASK-0037)
+- [x] OpenPanel privacy-preserving analytics SDK & event pipeline (TASK-0038)
 
 ### Collaborative Feature Epics
 - [x] WebRTC audio stream & real-time waveform visualizer microfrontend (ADR-0013, TASK-0030)
@@ -27,7 +27,8 @@
 - [x] Immersive frontend experience vision PRD (ADR-0004, TASK-0072)
 - [ ] Frontend settings modal and theme mode orchestration (ADR-0004, TASK-0073)
 - [ ] Dark/light mode color tokens and component contrast invariants (ADR-0012, TASK-0074)
-- [ ] Sub-500ms Whisper speech-to-intent pipeline (TASK-0039)
+- [x] Sub-500ms Whisper speech-to-intent pipeline (TASK-0039)
+- [ ] Tactile kinetic board interaction and spoken ghost previews (PRD-0013, US-0043, TASK-0084)
 
 ## Milestone 3: AI DM & Ecosystem Expansion
 - [ ] Procedural battlemap and token generation saved to Silo S3 (TASK-0049)
