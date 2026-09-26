@@ -157,3 +157,13 @@ await projection.stop()
 - `AutonomousActionResolved`: Append-only combat action log.
 - `TurnAdvanced`: Active turn index.
 - `SessionStarted`, `SessionEnded`: Session lifecycle status (`lobby`, `active`, `ended`).
+
+---
+
+## Testing & Verification
+
+The Redis Streams event bus, consumer groups, and read projections are verified by dedicated integration test suites:
+
+- **`tests/test_redis_consumer_groups.py`**: Low-level distributed consumer group mechanics, competing consumers, PEL acknowledgements, `XAUTOCLAIM` recovery, and DLQ dispatching.
+- **`tests/test_session_projections.py`**: High-level `SessionReadProjection` worker event processing, read model state transitions, and poison pill DLQ isolation.
+
