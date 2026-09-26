@@ -54,7 +54,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 46. **TASK-0084 (Refined)**: [`0084-tactile-board-kinematics-and-spoken-ghost-previews.md`](refined/0084-tactile-board-kinematics-and-spoken-ghost-previews.md) — Tactile Board Kinematics and Spoken Ghost Previews
 
 47. **TASK-0041 (Complete)**: [`0041-fastmcp-gateway-server-modular-decomposition.md`](complete/0041-fastmcp-gateway-server-modular-decomposition.md) — FastMCP Gateway Server Modular Decomposition
-48. **TASK-0042 (Refined)**: [`0042-redis-consumer-groups-test-suite-decomposition.md`](refined/0042-redis-consumer-groups-test-suite-decomposition.md) — Redis Consumer Groups & Projections Test Suite Decomposition
+48. **TASK-0042 (Complete)**: [`0042-redis-consumer-groups-test-suite-decomposition.md`](complete/0042-redis-consumer-groups-test-suite-decomposition.md) — Redis Consumer Groups & Projections Test Suite Decomposition
 49. **TASK-0043 (Refined)**: [`0043-frontend-microfrontend-component-styles-and-subview-decomposition.md`](refined/0043-frontend-microfrontend-component-styles-and-subview-decomposition.md) — Frontend Microfrontend Component Styles and Subview Decomposition
 50. **TASK-0082 (Refined)**: [`0082-analytics-sdk-and-worker-modular-decomposition.md`](refined/0082-analytics-sdk-and-worker-modular-decomposition.md) — OpenPanel Analytics SDK & Worker Modular Decomposition
 51. **TASK-0083 (Refined)**: [`0083-streaming-whisper-test-suite-modular-decomposition.md`](refined/0083-streaming-whisper-test-suite-modular-decomposition.md) — Streaming Whisper Audio Transcription Test Suite Modular Decomposition
