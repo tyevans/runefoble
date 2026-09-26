@@ -7,3 +7,6 @@ Order of priority for engineering tasks across the platform.
 3. **TASK-0003 (Complete)**: [`0003-missing-player-ai-stand-in-engine.md`](complete/0003-missing-player-ai-stand-in-engine.md) — Missing Player AI Stand-In Engine with Absence Penalties
 4. **TASK-0004 (Complete)**: [`0004-tactical-board-fog-of-war-web-component.md`](complete/0004-tactical-board-fog-of-war-web-component.md) — Tactical Board Fog-of-War and Token Web Component
 5. **TASK-0005 (Complete)**: [`0005-fastmcp-rpg-tools-expansion.md`](complete/0005-fastmcp-rpg-tools-expansion.md) — Model Context Protocol (MCP) RPG Tools Expansion
+6. **TASK-0006 (Complete)**: [`0006-voice-dsp-conditioning-filters.md`](complete/0006-voice-dsp-conditioning-filters.md) — Voice DSP Audio Conditioning and Slurred Speech Synthesis
+7. **TASK-0007 (Refined)**: [`0007-board-fog-of-war-spatial-visibility.md`](refined/0007-board-fog-of-war-spatial-visibility.md) — Board Fog-of-War Spatial Visibility and Shroud Synchronization (Next)
+8. **TASK-0008 (Refined)**: [`0008-gateway-zanzibar-authorization-middleware.md`](refined/0008-gateway-zanzibar-authorization-middleware.md) — Gateway SpiceDB Zanzibar Authorization Middleware

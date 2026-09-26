@@ -14,3 +14,6 @@ User stories document end-to-end user value from the perspective of players, gam
 | US-0008 | MCP Tool Invocation for Autonomous AI Agents | Alex (Developer) | Accepted | [`us-0008-mcp-tool-invocation-for-agents.md`](accepted/us-0008-mcp-tool-invocation-for-agents.md) |
 | US-0009 | Fine-Grained Zanzibar Access Control for Campaign Roles | Evelyn (DM) | Accepted | [`us-0009-zanzibar-campaign-access-control.md`](accepted/us-0009-zanzibar-campaign-access-control.md) |
 | US-0010 | Redis Streams Distributed Domain Event Subscription | Alex (Developer) | Accepted | [`us-0010-redis-streams-domain-event-subscription.md`](accepted/us-0010-redis-streams-domain-event-subscription.md) |
+| US-0011 | Real-Time Dynamic Voice Filters for Afflicted Characters | Sarah (Absent Player) | Accepted | [`us-0011-dynamic-voice-filters-for-afflicted-characters.md`](accepted/us-0011-dynamic-voice-filters-for-afflicted-characters.md) |
+| US-0012 | Spatial Line-of-Sight and Fog-of-War Server Synchronization | Evelyn (DM) | Accepted | [`us-0012-spatial-line-of-sight-and-fog-of-war.md`](accepted/us-0012-spatial-line-of-sight-and-fog-of-war.md) |
+| US-0013 | Zanzibar Campaign Role Authorization Gateway Enforcement | Evelyn (DM) | Accepted | [`us-0013-gateway-zanzibar-authorization.md`](accepted/us-0013-gateway-zanzibar-authorization.md) |

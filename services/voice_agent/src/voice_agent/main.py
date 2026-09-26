@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from runefoble_events.events import PlayerSpokeEvent
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from voice_agent.dsp import VoiceDSPPipeline
 
 logger = logging.getLogger("runefoble.voice_agent")
 WATCHER_URL = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://localhost:8001")
@@ -63,17 +64,24 @@ class VoicePersona(BaseModel):
     accent: str = "neutral"
 
 
+dsp_pipeline = VoiceDSPPipeline()
+
+
 class TTSRequest(BaseModel):
     text: str
     persona_id: str = "watcher_dm"
     apply_drunk_filter: bool = False
+    filters: list[str] = Field(default_factory=list)
 
 
 class TTSResponse(BaseModel):
     audio_stream_url: str
     duration_ms: int
     persona_used: str
+    original_text: str = ""
+    conditioned_text: str = ""
     effects_applied: list[str] = Field(default_factory=list)
+    dsp_parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class TranscribeRequest(BaseModel):
@@ -128,18 +136,30 @@ async def list_personas():
 
 
 @app.post("/api/v1/voice/synthesize", response_model=TTSResponse)
+@app.post("/api/v1/voice/tts", response_model=TTSResponse)
 async def synthesize_voice(req: TTSRequest):
-    """Synthesize speech audio stream for DM narration or AI stand-in dialogue."""
-    effects = []
-    if req.apply_drunk_filter:
-        effects.append("slur_articulation")
-        effects.append("pitch_wobble")
+    """Synthesize speech audio stream with DSP audio conditioning and phonetic slurs."""
+    filters = list(req.filters)
+    if req.apply_drunk_filter and "drunk" not in filters:
+        filters.append("drunk")
+
+    persona = AVAILABLE_PERSONAS.get(req.persona_id)
+    pitch = persona.pitch_modifier if persona else 1.0
+
+    processed = dsp_pipeline.process(req.text, filters=filters, persona_pitch=pitch)
+
+    effects = list(filters)
+    if "drunk" in filters:
+        effects.extend(["slur_articulation", "pitch_wobble"])
 
     return TTSResponse(
-        audio_stream_url=f"/streams/audio/{req.persona_id}_{abs(hash(req.text)) % 10000}.wav",
-        duration_ms=max(1200, len(req.text) * 65),
+        audio_stream_url=f"/streams/audio/{req.persona_id}_{abs(hash(processed.conditioned_text)) % 10000}.wav",
+        duration_ms=max(1200, len(processed.conditioned_text) * 65),
         persona_used=req.persona_id,
-        effects_applied=effects,
+        original_text=req.text,
+        conditioned_text=processed.conditioned_text,
+        effects_applied=sorted(set(effects)),
+        dsp_parameters=processed.dsp_config.model_dump(),
     )
 
 

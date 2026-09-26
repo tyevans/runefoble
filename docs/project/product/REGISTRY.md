@@ -4,3 +4,5 @@
 |---|---|---|---|---|
 | PRD-0001 | The Watcher AI Dungeon Master and Real-Time Board Animator | Accepted | 2026-09-25 | [`prd-0001-the-watcher-ai-dm-and-board-animator.md`](accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md) |
 | PRD-0002 | Missing Player AI Stand-In with Mimicry and Absence Costs | Accepted | 2026-09-25 | [`prd-0002-missing-player-ai-stand-in-with-penalties.md`](accepted/prd-0002-missing-player-ai-stand-in-with-penalties.md) |
+| PRD-0003 | Spatial Fog-of-War and Line-of-Sight Visibility Engine | Accepted | 2026-09-25 | [`prd-0003-spatial-fog-of-war-and-visibility-engine.md`](accepted/prd-0003-spatial-fog-of-war-and-visibility-engine.md) |
+| PRD-0004 | Dynamic Vocal Audio Conditioning and DSP Filters | Accepted | 2026-09-25 | [`prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md`](accepted/prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md) |
