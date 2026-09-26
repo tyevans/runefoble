@@ -1,7 +1,7 @@
 ---
 id: '0117'
 title: Stream Overlay Router and HUD Templates Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0056
@@ -18,8 +18,8 @@ governing_prds:
 governing_stories:
 - US-0029
 - US-0030
+pr_url: https://github.com/tyevans/runefoble/pull/113
 ---
-
 # TASK-0117: Stream Overlay Router and HUD Templates Modular Decomposition
 
 ## Status
