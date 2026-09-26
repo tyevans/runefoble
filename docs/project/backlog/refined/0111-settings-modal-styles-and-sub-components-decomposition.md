@@ -1,7 +1,7 @@
 ---
 id: '0111'
 title: Settings Modal Styles and Sub-Component CSS Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
 dependencies:
 - TASK-0073
@@ -22,7 +22,7 @@ governing_stories:
 # TASK-0111: Settings Modal Styles and Sub-Component CSS Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Decompose `frontend/src/components/runefoble-settings-modal.styles.ts` (356 lines, 71.2% of limit) into modular CSS sub-modules (`settings-modal-dialog.styles.ts`, `settings-modal-tabs.styles.ts`, `settings-modal-controls.styles.ts`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new streaming, broadcast overlay, and accessibility settings tabs are introduced.
@@ -35,6 +35,19 @@ Decompose `frontend/src/components/runefoble-settings-modal.styles.ts` (356 line
 4. Action footer, save/close buttons, and keybinding cheat sheet tables.
 
 As Milestone 4 introduces spectator broadcast overlay settings (TASK-0056) and campaign telemetry preference controls (TASK-0110), this style module will grow beyond 500 lines unless partitioned into modular CSS partials.
+
+## Governing Architecture & ADRs
+- **ADR-0004: Lit Web Components and Storybook UI**: Strict Shadow DOM encapsulation and Bauhaus geometric design tokens.
+- **ADR-0009: Frontend State and Design System Architecture**: Modular styles and CSS custom properties.
+- **ADR-0012: CSS Custom Properties and Dark/Light Mode Theming**: Color mode token encapsulation and contrast ratios.
+- **ADR-0013: Microfrontend Architecture and Service Component Vendoring**: Component boundary isolation.
+
+## Product & User Story References
+- **Product Requirements**:
+  - [`prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md`](../../product/accepted/prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md)
+  - [`prd-0012-campaign-telemetry-and-living-chronicle-timeline.md`](../../product/accepted/prd-0012-campaign-telemetry-and-living-chronicle-timeline.md)
+- **User Story**:
+  - [`us-0012-spatial-line-of-sight-and-fog-of-war.md`](../../user_stories/accepted/us-0012-spatial-line-of-sight-and-fog-of-war.md)
 
 ## Proposed Decomposition
 1. **Modal Layout & Overlay Styles (`frontend/src/components/styles/settings-modal-layout.styles.ts`)**:
@@ -54,8 +67,12 @@ As Milestone 4 introduces spectator broadcast overlay settings (TASK-0056) and c
 - **Small (S)**: Scope strictly isolated to `frontend/src/components/runefoble-settings-modal.styles.ts`; all resulting files < 140 lines.
 - **Testable (T)**: Verified with `pnpm run build` and Storybook visual tests via `tests/test_theming.py`.
 
-## Acceptance Criteria
-1. `runefoble-settings-modal.styles.ts` decomposed into focused style modules strictly under 150 lines each.
-2. 100% visual consistency preserved across all settings tabs in Storybook.
-3. Passes `pnpm run build` with zero TypeScript or Lit compilation errors.
-4. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Style Decomposition**:
+   - `runefoble-settings-modal.styles.ts` decomposed into focused style modules strictly under 150 lines each.
+2. **Visual Invariant Preservation**:
+   - 100% visual consistency preserved across all settings tabs in Storybook with zero console errors.
+3. **Strict Line Limit Enforced**:
+   - Every file strictly under 150 lines in compliance with Hard Invariant 6.
+4. **Quality Gates**:
+   - Passes `pnpm run build` with zero TypeScript or Lit compilation errors and `uv run pytest tests/test_theming.py`.
