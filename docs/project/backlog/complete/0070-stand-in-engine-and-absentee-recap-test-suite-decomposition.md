@@ -1,7 +1,7 @@
 ---
 id: '0070'
 title: Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0003
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0004
 - US-0005
+pr_url: https://github.com/tyevans/runefoble/pull/100
 ---
-
 # TASK-0070: Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition
 
 ## Status
