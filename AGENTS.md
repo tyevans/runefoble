@@ -89,7 +89,9 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`balance-combat-encounters-and-query-compendium.md`](docs/how-to/balance-combat-encounters-and-query-compendium.md): How to query canonical SRD rules with sub-50ms redstring search, balance combat encounters, and register homebrew rules.
 - [`forge-procedural-battlemaps-and-tokens.md`](docs/how-to/forge-procedural-battlemaps-and-tokens.md): How to forge procedural battlemaps and tokens with natural language prompts, extract line-of-sight walls and hazards, and project geometry to board_state.
 - [`manage-dynamic-soundscapes-and-audio-ducking.md`](docs/how-to/manage-dynamic-soundscapes-and-audio-ducking.md): How to calculate encounter tension, crossfade audio stems, trigger tactical foley cues, and coordinate -12dB WebAudio ducking.
+- [`manage-dm-copilot-whispers-and-veto-overrides.md`](docs/how-to/manage-dm-copilot-whispers-and-veto-overrides.md): How to manage private DM narrative whisper channels, intercept AI mutations, and exercise one-click veto/edit overrides.
 - [`resolve-conversational-disambiguation-and-combos.md`](docs/how-to/resolve-conversational-disambiguation-and-combos.md): How to detect ambiguous targets, generate clarification prompts, chain compound action combos, and coordinate rollback.
+
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.

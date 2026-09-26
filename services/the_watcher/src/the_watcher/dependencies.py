@@ -6,11 +6,13 @@ import logging
 import os
 from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.autonomous_dm import AutonomousDMEngine
 from the_watcher.chronicle import ChronicleRecapEngine
 from the_watcher.compound_actions import CompoundActionEngine
+from the_watcher.copilot import CopilotEngine
 from the_watcher.disambiguation import DisambiguationEngine
 from the_watcher.watcher_ai import TheWatcherEngine
 
@@ -23,11 +25,77 @@ STREAM_BOARD = "runefoble.events.board"
 engine = TheWatcherEngine()
 chronicle_engine = ChronicleRecapEngine()
 autonomous_dm_engine = AutonomousDMEngine()
+copilot_engine = CopilotEngine()
 disambiguation_engine = DisambiguationEngine()
 compound_action_engine = CompoundActionEngine()
+
 platform_settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
+_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
+
+
+def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
+    global _spicedb_client
+    if _spicedb_client is None:
+        _spicedb_client = SpiceDBClient(
+            endpoint=platform_settings.spicedb_endpoint,
+            token=platform_settings.spicedb_token,
+        )
+    return _spicedb_client
+
+
+def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
+    global _spicedb_client
+    _spicedb_client = client
+
+
+def get_copilot_engine() -> CopilotEngine:
+    return copilot_engine
+
+
+async def check_dm_authorization(
+    user_id: str | None,
+    campaign_id: str | None = None,
+    session_id: str | None = None,
+    spicedb: SpiceDBClient | MockSpiceDBClient | None = None,
+) -> bool:
+    """Check Zanzibar authorization for DM actions (veto, approve, modify, whispers)."""
+    if not user_id:
+        return False
+    client = spicedb or get_spicedb_client()
+
+    target_campaign = campaign_id
+    if not target_campaign and session_id:
+        target_campaign = session_id
+
+    if target_campaign:
+        if await client.check_permission(
+            "campaign", str(target_campaign), "dungeon_master", "user", user_id
+        ):
+            return True
+        if await client.check_permission(
+            "campaign", str(target_campaign), "run_session", "user", user_id
+        ):
+            return True
+        if await client.check_permission(
+            "campaign", str(target_campaign), "owner", "user", user_id
+        ):
+            return True
+
+    if session_id:
+        if await client.check_permission("session", str(session_id), "control", "user", user_id):
+            return True
+        if await client.check_permission(
+            "session", str(session_id), "run_session", "user", user_id
+        ):
+            return True
+        if await client.check_permission(
+            "session", str(session_id), "dungeon_master", "user", user_id
+        ):
+            return True
+
+    return False
 
 
 def get_event_bus() -> RedisStreamsEventBus:

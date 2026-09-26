@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **DM Co-Pilot Whisper Prompts and Veto Override Engine (`TASK-0053`, `PRD-0001`, `US-0017`)**:
+  - Implemented secure DM narrative suggestion stream in `the_watcher` providing atmospheric hints, monster tactics, and passive perception cues (`GET /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers/generate`).
+  - Enforced SpiceDB Zanzibar authorization (`dungeon_master` relation, `run_session` permission) on all whisper queries, action vetoes, and approvals with 403 Forbidden rejection for unauthorized users.
+  - Implemented pre-execution veto interceptor engine in `services/the_watcher` with configurable pause window (default 2000ms) for AI-proposed game actions (`POST /api/v1/watcher/actions/propose`).
+  - Added one-click action veto endpoint (`POST /api/v1/watcher/veto`), immediate action approval (`POST /api/v1/watcher/approve`), and intent modification (`POST /api/v1/watcher/modify`).
+  - Registered CloudEvents domain events: `WatcherActionProposed`, `WatcherActionVetoed`, `WatcherActionApproved`, `WatcherActionModified`, and `DMNarrativeWhispered`.
+  - Implemented and vendored Lit Web Component `<runefoble-dm-whisper-bar>` in `@runefoble/the-watcher-ui` with Bauhaus tokens, action interceptor countdown banner, one-click veto/approve/edit controls, and Storybook stories.
+  - Advertised `runefoble-dm-whisper-bar` in `the_watcher` `/ui/manifest`.
+  - Added Diataxis How-To guide (`docs/how-to/manage-dm-copilot-whispers-and-veto-overrides.md`) and updated technical reference docs (`docs/reference/events-schema.md`, `docs/reference/ports-and-endpoints.md`).
+  - Added comprehensive blackbox TDD test suite (`tests/test_blackbox_dm_copilot.py`).
 - **Dynamic Soundscape & Adaptive Audio Microservice (`TASK-0050`, `PRD-0010`, `US-0039`)**:
   - Scaffolded new bounded context microservice `services/soundscape` with internal port `8009` and registered in UV monorepo workspace.
   - Implemented Encounter Tension Scoring Engine dynamically computing real-time tension (0–100) from combat rounds, enemy CR threat, and party health ratios.

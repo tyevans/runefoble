@@ -241,6 +241,46 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `target_name`: String
   - `narrative`: String
   - `hp_impact`: Integer
+- **`WatcherActionProposed`**: Emitted when The Watcher proposes an AI game action intercepted by the pre-execution pause window (`runefoble.events.watcher.action_proposed`).
+  - `action_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `actor_name`: String
+  - `action_type`: String ("move", "attack", "cast_spell", "spawn_monster", "narrate")
+  - `description`: String
+  - `target`: Optional[String]
+  - `parameters`: Dict[String, Any]
+  - `pause_window_ms`: Integer (default 2000)
+- **`WatcherActionVetoed`**: Emitted when a human Dungeon Master vetoes an AI-proposed game action (`runefoble.events.watcher.action_vetoed`).
+  - `action_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `vetoed_by`: String (DM user ID)
+  - `reason`: String
+  - `original_action`: Dict[String, Any]
+- **`WatcherActionApproved`**: Emitted when a Dungeon Master immediately commits an AI-proposed game action (`runefoble.events.watcher.action_approved`).
+  - `action_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `approved_by`: String (DM user ID)
+  - `action_type`: String
+  - `parameters`: Dict[String, Any]
+- **`WatcherActionModified`**: Emitted when a Dungeon Master edits the intent or parameters of an AI-proposed action before committing (`runefoble.events.watcher.action_modified`).
+  - `action_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `modified_by`: String (DM user ID)
+  - `description`: String
+  - `target`: Optional[String]
+  - `parameters`: Dict[String, Any]
+- **`DMNarrativeWhispered`**: Emitted when a private narrative suggestion, tactical hint, or passive perception cue is generated for the DM (`runefoble.events.watcher.narrative_whispered`).
+  - `whisper_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `whisper_type`: String ("atmospheric_hint", "monster_tactics", "passive_perception", "narrative_secret")
+  - `content`: String
+  - `recipient_role`: String ("dungeon_master")
+  - `metadata`: Dict[String, Any]
 - **`SpectatorSessionConnected`**: Emitted when a live stream spectator or OBS overlay source connects to a campaign session (`runefoble.events.spectator.connected`).
   - `session_id`: String
   - `viewer_id`: String
