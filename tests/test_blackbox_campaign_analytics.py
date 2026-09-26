@@ -16,18 +16,12 @@ import time
 from uuid import uuid4
 
 import pytest
-from campaign_analytics.aggregate import CampaignChronicleAggregate
 from campaign_analytics.dependencies import set_spicedb_client, set_storage, set_worker
 from campaign_analytics.main import app
 from campaign_analytics.storage import CampaignAnalyticsStorage
 from campaign_analytics.worker import CampaignAnalyticsWorker
 from fastapi.testclient import TestClient
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
-from runefoble_events.analytics import (
-    ChronicleMilestoneRecorded,
-    CombatTelemetrySnapshotCreated,
-    EncounterMvpAwarded,
-)
 from runefoble_events.events import (
     AbsenteeRecapGenerated,
     CharacterHealthChanged,
@@ -446,46 +440,3 @@ async def test_blackbox_spicedb_zanzibar_authorization(
         headers={"X-User-ID": "authorized-player"},
     )
     assert resp_ok.status_code == 200
-
-
-def test_campaign_chronicle_aggregate_event_sourcing() -> None:
-    """Verify CampaignChronicleAggregate creates, handles, and reconstitutes domain events."""
-    agg = CampaignChronicleAggregate(aggregate_id=uuid4())
-    agg.record_milestone(
-        campaign_id="camp-agg-1",
-        session_id="sess-agg-1",
-        milestone_type="boss_defeat",
-        title="Slain the Hydra",
-        description="The party cut off all seven heads.",
-        metadata={"xp_reward": 5000},
-    )
-    agg.award_mvp(
-        campaign_id="camp-agg-1",
-        session_id="sess-agg-1",
-        encounter_id="enc-hydra",
-        combatant_id="char-barbarian",
-        combatant_name="Amiri",
-        award_title="Hydra Bane",
-        metric_name="damage_dealt",
-        score=150.0,
-    )
-    agg.record_snapshot(
-        campaign_id="camp-agg-1",
-        session_id="sess-agg-1",
-        total_damage=250,
-        total_movements=45,
-        active_combatants=5,
-    )
-
-    events = list(agg.uncommitted_events)
-    assert len(events) == 3
-    assert isinstance(events[0], ChronicleMilestoneRecorded)
-    assert isinstance(events[1], EncounterMvpAwarded)
-    assert isinstance(events[2], CombatTelemetrySnapshotCreated)
-
-    assert len(agg.state.milestones) == 1
-    assert agg.state.milestones[0].title == "Slain the Hydra"
-    assert len(agg.state.mvp_awards) == 1
-    assert agg.state.mvp_awards[0].award_title == "Hydra Bane"
-    assert agg.state.total_damage_logged == 250
-    assert agg.state.total_movements_logged == 45

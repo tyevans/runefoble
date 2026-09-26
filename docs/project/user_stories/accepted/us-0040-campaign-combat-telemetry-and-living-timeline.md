@@ -1,7 +1,7 @@
 ---
 id: 0040
 title: Campaign Combat Telemetry and Living Interactive Timeline
-status: Accepted
+status: Shipped
 created: 2026-09-25
 governing_prd: PRD-0012
 ---

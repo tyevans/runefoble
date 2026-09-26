@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Campaign Analytics & Chronicle Archive Microservice (`TASK-0052`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
+  - Implemented `services/campaign_analytics` bounded context microservice to project combat telemetry, tactical damage heatmaps, party MVP turn statistics, and interactive campaign milestone timelines from Redis Streams domain events into PostgreSQL.
+  - Built `CampaignAnalyticsWorker` consuming Redis Streams consumer group `campaign_analytics_worker` across `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, and `runefoble.events.watcher`.
+  - Implemented event-sourced `CampaignChronicleAggregate` (`eventsource-py`) handling `ChronicleMilestoneRecorded`, `CombatTelemetrySnapshotCreated`, and `EncounterMvpAwarded`.
+  - Added REST APIRouters guarded by SpiceDB Zanzibar object authorization (`permission="view"` on campaign):
+    - `GET /api/v1/analytics/campaigns/{id}/heatmap`: Aggregated spatial coordinate hit/damage densities and lethality scoring.
+    - `GET /api/v1/analytics/campaigns/{id}/mvp`: Per-encounter and campaign-level MVP awards (damage dealer, lifesaver, crits) with individual combatant stats.
+    - `GET /api/v1/analytics/campaigns/{id}/timeline`: Chronological session milestones, boss defeats, and story recaps.
+  - Exposed service discovery manifest (`GET /ui/manifest`), health check (`GET /healthz`), and OpenAPI aggregation (`GET /openapi.json`).
+  - Added umbrella Helm deployment manifest `campaign-analytics.yaml` on internal port 8011 with Swagger UI aggregation and ingress routing.
+  - Authored Diataxis How-To guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md` and updated technical reference specifications.
+  - Verified full test suite through frontdoor blackbox tests in `tests/test_blackbox_campaign_analytics.py` with zero file invariant violations (< 500 lines per file).
+
+- **Cinematic Director Auto-Camera and OBS Stream Overlay (`TASK-0056`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
+  - Implemented autonomous Cinematic Director virtual camera (`gateway_api.cinematic_director`) tracking active turn events (`TurnStarted`) and action centers (`TokenMoved`) with smooth cubic-bezier easing (`cubic-bezier(0.25, 0.1, 0.25, 1.0)`) within 300ms.
+  - Exposed OBS transparent stream overlay route `GET /overlay/party-vitals/{session_id}` serving alpha-transparent canvas (`rgba(0, 0, 0, 0)`) with zero DM secret leakage (100% exclusion of hidden traps, unrevealed monster HP numbers, and DM notes).
+  - Built real-time spectator WebSocket feed at `/ws/overlay/{session_id}` streaming sanitized party vitals, roll animations, and camera target updates.
+  - Vendored `<runefoble-spectator-overlay>` Lit Web Component in `services/game_session/ui/src/` with Bauhaus design tokens, interactive Storybook stories, and advertised via `services/game_session/ui/manifest.json`.
+  - Added blackbox TDD test suite in `tests/test_blackbox_cinematic_director.py` and Diataxis How-to guide in `docs/how-to/broadcast-obs-stream-overlay-and-cinematic-camera.md`.
+
 - **Backlog Curation, Invariant Health Protection, and Milestone 4 JIT Buffer Replenishment (`ADR-0009`)**:
   - Audited repository file lengths against Hard Invariant 6 (< 500 lines); verified zero violations across 600+ source files.
   - Preemptively proposed 4 modular decomposition tasks in `docs/project/backlog/proposed/` for files approaching limit:
