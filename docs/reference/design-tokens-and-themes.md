@@ -63,10 +63,39 @@ Supported theme identifiers:
   - Accents: Neon Cyan (`#06b6d4`), Neon Pink (`#ec4899`), Neon Yellow (`#eab308`)
   - Shadow: `0 0 10px rgba(6, 182, 212, 0.3)`
 
+## Appearance & Color Modes
+
+Color modes allow the user to select between **Light**, **Dark**, and **System** appearance preferences regardless of the chosen aesthetic theme. This is controlled via the `data-color-mode` attribute on `document.documentElement`:
+
+| Mode | `data-color-mode` | Behavior |
+|---|---|---|
+| Light | `light` | Forces high-contrast light canvas surfaces. |
+| Dark | `dark` | Forces dark canvas, surfaces, and inverted structural borders. |
+| System | `system` | Reactively mirrors OS preference via `@media (prefers-color-scheme: dark)`. |
+
+Persistence is tracked in `localStorage.getItem('runefoble-color-mode')` (defaulting to `system`).
+
 ## Web Components
+
+### `<runefoble-settings-modal>`
+- **Tag**: `runefoble-settings-modal`
+- **Description**: Centralized Bauhaus modernist configuration dialog containing appearance mode toggles, visual theme selection cards with color swatches, audio input preferences, and kinetic dice physics settings.
+- **Properties**:
+  - `open: boolean` (reflected attribute)
+  - `currentTheme: 'bauhaus' | 'dark-fantasy' | 'parchment' | 'cyber-rune'`
+  - `currentColorMode: 'light' | 'dark' | 'system'`
+- **Dispatched CustomEvents**:
+  - `color-mode-changed`: `{ detail: { mode: 'light' | 'dark' | 'system', resolvedMode: 'light' | 'dark' } }`
+  - `theme-changed`: `{ detail: { theme: string } }`
+  - `settings-closed`: `{}`
+- **Accessibility & Focus**:
+  - Encapsulated backdrop overlay (`backdrop-filter: blur(4px)`).
+  - ARIA attributes: `role="dialog"`, `aria-modal="true"`, `aria-labelledby="settings-modal-title"`.
+  - Dismissible via backdrop click, `Escape` key, or close button. Focus is trapped while open and restored to trigger on close.
 
 ### `<runefoble-theme-switcher>`
 - **Tag**: `runefoble-theme-switcher`
 - **Properties**: `currentTheme: 'bauhaus' | 'dark-fantasy' | 'parchment' | 'cyber-rune'`
 - **Events**: `theme-changed` with `detail: { theme: string }`
 - **Persistence**: Reads and writes `runefoble-theme` in `localStorage`.
+
