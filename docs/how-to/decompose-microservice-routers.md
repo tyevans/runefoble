@@ -82,16 +82,21 @@ from <service>.routers.capability_b import router as capability_b_router
 __all__ = ["capability_a_router", "capability_b_router"]
 ```
 
-When a single router accumulates multiple distinct sub-domains or exceeds ~250 lines (e.g. `copilot.py` splitting into `actions.py` and `whispers.py`), promote it to a sub-router package:
+When a single router accumulates multiple distinct sub-domains or exceeds ~250 lines (e.g. `copilot.py` splitting into `actions.py` and `whispers.py`, or `intent.py` splitting into `disambiguation.py`, `compound.py`, and `speech.py`), promote it to a sub-router package:
 
 ```
 routers/
 ├── __init__.py
 ├── capability_a.py
-└── copilot/
-    ├── __init__.py      # Re-exports combined router and sub-routers
-    ├── actions.py       # Action interceptor and pause window endpoints
-    └── whispers.py      # Private narrative whisper endpoints
+├── copilot/
+│   ├── __init__.py      # Re-exports combined router and sub-routers
+│   ├── actions.py       # Action interceptor and pause window endpoints
+│   └── whispers.py      # Private narrative whisper endpoints
+└── intent/
+    ├── __init__.py      # Re-exports combined intent router and sub-routers
+    ├── disambiguation.py# Ambiguity detection, clarification prompts, and target matching
+    ├── compound.py      # Compound action combo parsing and rollback handling
+    └── speech.py        # Single speech-to-intent parsing and event dispatch
 ```
 
 The package `__init__.py` mounts each sub-router on a master router to preserve 100% backward compatibility for callers importing `copilot_router`:

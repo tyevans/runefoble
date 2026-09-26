@@ -201,3 +201,18 @@ curl -X POST http://localhost:8001/api/v1/watcher/intent/execute \
   - The failing node is marked `failed`.
   - Subsequent steps are marked `aborted`.
   - The overall combo status is `partial_failure`.
+
+---
+
+## 5. Verification and Testing
+
+The intent parsing, target disambiguation, and combo execution pipelines are verified using frontdoor blackbox tests interacting strictly with public HTTP routes and Redis Streams event contracts:
+
+```bash
+# Run disambiguation flow and SLA compliance tests (< 230 lines)
+uv run pytest tests/test_blackbox_intent_disambiguation_flow.py
+
+# Run compound combo ordering and rollback coordination tests (< 200 lines)
+uv run pytest tests/test_blackbox_intent_compound_combos.py
+```
+
