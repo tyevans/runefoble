@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Campaign Analytics Worker and Event Dispatch Modular Decomposition (`TASK-0116`, `ADR-0003`, `ADR-0006`, `ADR-0011`)**:
+  - Decomposed `services/campaign_analytics/src/campaign_analytics/worker.py` into asynchronous worker core `worker.py` (171 lines) and event projection dispatcher `event_handlers.py` (222 lines) with `event_helpers.py` (24 lines).
+  - Isolated Redis Streams consumer group polling and worker lifecycle loops from domain event translation and spatial tracking state.
+  - Extracted event projection handlers for spatial movements (`TokenPlaced`, `TokenMoved`), combat rounds (`CombatRoundAdvanced`), damage and healing (`CharacterHealthChanged`), dice rolls (`DiceRolled`), and chronicle recaps (`AbsenteeRecapGenerated`).
+  - Preserved 100% backward-compatible initialization and public contract on `CampaignAnalyticsWorker` (`start()`, `stop()`, `process_event()`, `handle_event()`, and spatial tracking properties).
+  - Added modular decomposition verification tests in `tests/test_campaign_analytics_modular_decomposition.py` and updated Diataxis documentation.
+
 - **Downtime Activities, Alchemical Crafting & Party Stronghold Engine (`TASK-0100`, `PRD-0014`, `US-0044`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
   - Implemented `CraftingAggregate` in `character_sheet` modeling reagent affinity, catalytic stabilization, and volatile mishap risk matrices emitting `CraftingAttempted`, `CraftingSucceeded`, and `CraftingMishapOccurred`.
   - Implemented `StrongholdAggregate` and Campfire Rest sequence in `game_session` supporting multi-tier base upgrades (watchtower, herbal rack, arcane forge), passive campaign resting boons, and collaborative storytelling prompts emitting `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`.
@@ -453,19 +460,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Centralized settings modal with Dark, Light, and System preference mode orchestration.
   - High-contrast Bauhaus modernist design tokens ensuring WCAG 2.1 AA compliance.
 - **Live WebRTC Audio & S3 Asset Uploaders (`TASK-0030`, `TASK-0031`, `TASK-0033`)**:
-  - WebRTC bidirectional voice room with real-time audio waveform visualizer microfrontend.
-  - Silo S3 battlemap uploader with dynamic shroud masking and asset persistence.
+  - WebRTC voice room with audio waveform visualizer and Silo S3 battlemap uploader with shroud masking.
 - **Enterprise Security & Event Store (`TASK-0032`, `TASK-0034`, `TASK-0035`, `TASK-0036`)**:
-  - Google Zanzibar fine-grained object-level authorization powered by SpiceDB (`runefoble.zed`).
-  - Zitadel OIDC identity authentication with JWT/JWKS verification middleware.
-  - PostgreSQL multi-database persistent event store powered by `eventsource-py` declarative aggregates.
-  - High-throughput Redis Streams event bus across distributed microservice nodes (`TASK-0015`, `TASK-0042`).
+  - Google Zanzibar authorization (SpiceDB), Zitadel OIDC authentication, PostgreSQL event store (`eventsource-py`), and Redis Streams bus (`TASK-0015`, `TASK-0042`).
 - **Observability & Analytics (`TASK-0037`, `TASK-0038`, `TASK-0082`)**:
-  - OpenTelemetry distributed tracing and metrics with Collector, Loki, and Grafana integration.
-  - Privacy-preserving OpenPanel analytics SDK and Redis Streams event worker.
+  - OpenTelemetry distributed tracing with Collector/Loki/Grafana and privacy-preserving OpenPanel analytics SDK.
 - **Autonomous Backlog Execution Engine (`TASK-0046`)**:
-  - Parallel worktree orchestrator (`scripts/run-backlog-engine.sh`) with conflict detection, CI healing, and non-blocking merge locks.
-  - Interactive Project Visualizer web application and standalone HTML graph generator.
+  - Parallel worktree orchestrator (`scripts/run-backlog-engine.sh`), conflict detection, and interactive Project Visualizer web application.
 
 #### Changed
 - **Modular Router Refactoring (`TASK-0040`, `TASK-0041`, `TASK-0045`, `TASK-0085`)**:
