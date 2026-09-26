@@ -10,7 +10,7 @@
 - [x] Swagger UI OpenAPI aggregation
 - [x] Zanzibar authorization schema with SpiceDB
 
-## Milestone 2: Live Collaborative Alpha (Current)
+## Milestone 2: Live Collaborative Alpha (Complete)
 ### Foundational Platform Enablers
 - [x] Redis Streams event streaming across distributed nodes (ADR-0006, TASK-0015)
 - [x] SpiceDB production cluster syncing with Zitadel OIDC identities (ADR-0001, TASK-0032)
@@ -26,14 +26,14 @@
 - [x] Live WebRTC bidirectional voice room with WebAudio processing (ADR-0002, TASK-0033)
 - [x] Immersive frontend experience vision PRD (ADR-0004, TASK-0072)
 - [x] Frontend settings modal and theme mode orchestration (ADR-0004, TASK-0073)
-- [ ] Dark/light mode color tokens and component contrast invariants (ADR-0012, TASK-0074)
+- [x] Dark/light mode color tokens and component contrast invariants (ADR-0012, TASK-0074)
 - [x] Sub-500ms Whisper speech-to-intent pipeline (TASK-0039)
 - [x] Tactile kinetic board interaction and spoken ghost previews (PRD-0013, US-0043, TASK-0084)
 
-## Milestone 3: AI DM & Ecosystem Expansion
+## Milestone 3: AI DM & Ecosystem Expansion (Current)
 ### Foundational Platform Enablers
-- [ ] Campaign Lore Knowledge Base & redstring RAG Microservice (TASK-0047)
-- [ ] TTRPG Rules Compendium & Automated Encounter Builder (TASK-0048)
+- [x] Campaign Lore Knowledge Base & redstring RAG Microservice (TASK-0047)
+- [x] TTRPG Rules Compendium & Automated Encounter Builder (TASK-0048)
 
 ### Autonomous DM & Content Expansion Epics
 - [ ] Procedural battlemap and token generation saved to Silo S3 (TASK-0049)
