@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - TASK-0068: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition.
     - TASK-0070: Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition.
     - TASK-0071: WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition.
+    - TASK-0075: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition.
   - Synchronized `ROADMAP.md` Milestone 4 Foundational Platform Enabler (`TASK-0051`).
   - Re-indexed `docs/project/backlog/PRIORITY.md` and repaired traceability cross-links across accepted PRDs.
 - **Character Sheet Modular Router and Schemas Decomposition (`TASK-0077`, `ADR-0003`, `ADR-0009`, `ADR-0011`)**:
@@ -82,7 +83,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `tests/test_spicedb_schema_bootstrap.py` (101 lines): Verifies `runefoble.zed` Zanzibar schema existence and definition syntax, error handling for empty schema files, schema bootstrapping against mock and live clients, and resilient in-memory fallback behavior when SpiceDB endpoints are unreachable.
     - `tests/test_blackbox_spicedb_live_grpc.py` (178 lines): Verifies live SpiceDB container gRPC connections, frontdoor campaign role assignment (`POST /api/v1/campaigns/{id}/roles`), fine-grained Zanzibar permission evaluations (`view`, `run_session`), and immediate permission revocation upon relationship tuple deletion.
   - Extracted shared SpiceDB container lifecycle and port allocation fixtures to `tests/helpers/spicedb.py` (76 lines) and registered the plugin globally in `tests/conftest.py`.
-
 - **Gateway WebSocket Hub and Action Validator Modular Decomposition (`TASK-0080`, `ADR-0001`, `ADR-0005`, `ADR-0007`, `ADR-0009`)**:
   - Decomposed monolithic `gateway/api/src/gateway_api/websocket.py` (351 lines) into modular single-responsibility components strictly complying with Hard Invariant 6 (< 500 lines limit, all resulting modules strictly < 150 lines):
     - `websocket_validator.py` (136 lines): Encapsulates `WebSocketActionValidator` evaluating fine-grained SpiceDB Zanzibar schema checks for connection admission, DM bypass privileges, token moves, character edits, and DM-only encounter mutations.
