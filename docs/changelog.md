@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added frontdoor blackbox test suites `tests/test_backlog_orchestrator.py` and `tests/test_pr_conflict_detection.py` verifying end-to-end automation flow.
   - Updated Diataxis guide `docs/how-to/run-autonomous-backlog-engine.md`.
 
+- **Asset Forge Blackbox Test Suite Modular Decomposition (`TASK-0092`)**:
+  - Decomposed monolithic `tests/test_blackbox_asset_forge.py` (421 lines) into two focused, single-responsibility suites:
+    - `tests/test_blackbox_asset_forge_generation.py` (133 lines) covering battlemap and token procedural synthesis, spatial wall geometry extraction, transparency, and Silo S3 storage.
+    - `tests/test_blackbox_asset_forge_auth_and_events.py` (231 lines) covering CloudEvents registry compliance, Redis Streams publication, SpiceDB Zanzibar authorization, asset metadata queries, and request bounds validation.
+  - Enforced Hard Invariant 6 (< 500 lines limit) ensuring all asset forge test suites stay strictly under 250 lines.
+
 ### Added
 - **Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover (`TASK-0055`, `PRD-0002`, `US-0025`, `US-0026`)**:
   - Implemented configurable tactical guardrail profiles on character aggregates (`StandInGuardrails`) supporting spell slot reservation limits, ally protection affinities, melee avoidance, and risk threshold flags.
@@ -110,7 +116,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blackbox Documentation & Pages Test Suite**: Expanded `tests/test_docs_build_and_pages.py` to assert changelog existence, Keep a Changelog structure, Definition of Done enforcement, and marketing page navigation integrity.
 
 ### Changed
-- **Zanzibar Auth Relationship Sync Service and Event Handlers Modular Decomposition (`TASK-0063`)**:
+- **Microfrontends Blackbox Test Suite Modular Decomposition (`TASK-0088`)**:
+  - Decomposed `tests/test_microfrontends.py` (454 lines) into two focused, single-responsibility blackbox test suites:
+    - `tests/test_microfrontend_manifests.py` (191 lines) covering service microfrontend discovery (`GET /ui/manifest`), component tag registries, package integrity, and battlemap uploader frontdoor contracts.
+    - `tests/test_microfrontend_app_shell.py` (212 lines) covering App Shell Lit composition, workspace link declarations, Storybook story indexing, voice controls WebAudio/WebRTC specs, and companion style module decomposition invariants.
+  - Removed original monolith `tests/test_microfrontends.py`.
+  - Strictly enforced Hard Invariant 6 with both test files well under the 250-line ceiling and zero test regression across 450 passing tests.
+
   - Decomposed monolithic `libs/runefoble_auth/src/runefoble_auth/sync.py` into focused submodules:
     - `sync_tuples.py` (179 lines) covering `SyncResult` models, role normalization tables (`CAMPAIGN_ROLE_RELATIONS`, `normalize_campaign_role`), low-level write/delete helpers with retry execution, and batching/reconciliation utilities.
     - `sync_events.py` (127 lines) covering domain event and CloudEvent payload parsing (`extract_event_type`, `get_event_field`), unified dispatching (`handle_domain_event`), and granular entity handlers for `SessionCreated`, `ParticipantJoined`, `CharacterCreated`, and `TokenPlaced`.
