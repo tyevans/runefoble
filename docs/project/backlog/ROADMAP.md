@@ -11,10 +11,10 @@
 - [x] Zanzibar authorization schema with SpiceDB
 
 ## Milestone 2: Live Collaborative Alpha
-- [ ] Live WebRTC bidirectional voice room with WebAudio processing
-- [ ] Sub-500ms Whisper speech-to-intent pipeline
-- [ ] NATS JetStream event streaming across distributed nodes
-- [ ] SpiceDB production cluster syncing with Zitadel OIDC identities
+- [ ] SpiceDB production cluster syncing with Zitadel OIDC identities (TASK-0024, Enabler)
+- [ ] Live WebRTC bidirectional voice room with WebAudio processing (TASK-0025)
+- [ ] Sub-500ms Whisper speech-to-intent pipeline (TASK-0027)
+- [x] Redis Streams event streaming across distributed nodes (ADR-0006, TASK-0015)
 
 ## Milestone 3: AI DM & Ecosystem Expansion
 - [ ] Procedural battlemap generation saved to Silo S3
