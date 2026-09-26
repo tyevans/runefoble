@@ -1,6 +1,7 @@
 packages:
   - 'frontend'
   - 'services/*/ui'
+  - 'services/audience_studio'
 
 allowBuilds:
   esbuild: true

@@ -92,6 +92,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`configure-stand-in-guardrails-and-hot-swap.md`](docs/how-to/configure-stand-in-guardrails-and-hot-swap.md): How to configure tactical guardrails for absent player stand-ins, zero-HP stabilization, and execute mid-session hot-swap takeover.
 - [`manage-dm-copilot-whispers-and-veto-overrides.md`](docs/how-to/manage-dm-copilot-whispers-and-veto-overrides.md): How to manage private DM narrative whisper channels, intercept AI mutations, and exercise one-click veto/edit overrides.
 - [`resolve-conversational-disambiguation-and-combos.md`](docs/how-to/resolve-conversational-disambiguation-and-combos.md): How to detect ambiguous targets, generate clarification prompts, chain compound action combos, and coordinate rollback.
+- [`orchestrate-audience-chaos-polls.md`](docs/how-to/orchestrate-audience-chaos-polls.md): How to configure and orchestrate live audience chaos polls, ingest spectator votes across streaming channels, and manage DM approval queues.
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
@@ -125,6 +126,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `services/rules_compendium/` | TTRPG rules compendium, sub-50ms redstring hybrid retrieval & automated CR encounter builder |
 | `services/asset_forge/` | Procedural battlemap diffusion synthesis, wall/hazard geometry extraction & token portrait generator |
 | `services/soundscape/` | Dynamic audio stem mixing, tactical foley cues, tension scoring & audio controls microfrontend |
+| `services/audience_studio/` | TypeScript audience interactivity engine, live chaos polls, DM approval queue & microfrontend |
 | `gateway/api/` | Unified API Gateway, WebSockets, OpenAPI aggregator |
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
 | `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |

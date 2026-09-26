@@ -1,7 +1,7 @@
 ---
 id: 0031
 title: Live Stream Audience Chaos Polls via TypeScript Backend
-status: Accepted
+status: Shipped
 created: 2026-09-25
 ---
 

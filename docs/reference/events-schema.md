@@ -481,4 +481,12 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `attenuation_db`: Float (default -12.0)
   - `reason`: String ("speech", "cue", "vad")
 
+### Audience Studio Events (`aggregate_type: AudiencePoll`)
+
+- **`AudiencePollStarted`**: Emitted when a live spectator chaos poll starts (`runefoble.events.audience.poll_started`). Fields: `poll_id`, `campaign_id`, `session_id`, `title`, `prompt`, `options`, `duration_seconds`, `quorum`, `expires_at`.
+- **`AudienceVoteCast`**: Emitted when a spectator casts a vote (`runefoble.events.audience.vote_cast`). Fields: `poll_id`, `campaign_id`, `voter_id`, `option_id`, `channel`, `timestamp`.
+- **`AudiencePollCompleted`**: Emitted when poll voting concludes (`runefoble.events.audience.poll_completed`). Fields: `poll_id`, `campaign_id`, `winning_option_id`, `total_votes`, `quorum_met`, `proposed_modifier`.
+- **`AudienceModifierProposed`**: Emitted when winning chaos option enters DM moderation queue (`runefoble.events.audience.modifier_proposed`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `modifier_type`, `description`, `parameters`, `status`.
+- **`AudienceModifierApproved`**: Emitted when DM approves modifier into session (`runefoble.events.audience.modifier_approved`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `approved_by`, `approved`, `applied_at`.
+
 

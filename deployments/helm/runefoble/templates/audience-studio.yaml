@@ -1,0 +1,78 @@
+{{- if .Values.services.audienceStudio }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: audience-studio-config
+  labels:
+    app: audience-studio
+data:
+  PORT: "{{ .Values.services.audienceStudio.port | default 8010 }}"
+  HOST: "0.0.0.0"
+  NODE_ENV: "production"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audience-studio
+  labels:
+    app: audience-studio
+spec:
+  replicas: {{ .Values.services.audienceStudio.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: audience-studio
+  template:
+    metadata:
+      labels:
+        app: audience-studio
+    spec:
+      containers:
+        - name: audience-studio
+          image: {{ .Values.services.audienceStudio.image }}
+          ports:
+            - containerPort: {{ .Values.services.audienceStudio.port | default 8010 }}
+          envFrom:
+            - configMapRef:
+                name: audience-studio-config
+          env:
+            - name: RUNEFOBLE_ZITADEL_ISSUER
+              value: "http://zitadel:{{ .Values.zitadel.port }}"
+            - name: RUNEFOBLE_SPICEDB_ENDPOINT
+              value: "spicedb:{{ .Values.spicedb.grpcPort }}"
+            - name: SPICEDB_PRESHARED_KEY
+              value: {{ .Values.spicedb.presharedKey | quote }}
+            - name: REDIS_URL
+              value: "redis://runefoble-redis:{{ .Values.redis.port }}/0"
+            - name: RUNEFOBLE_REDIS_URL
+              value: "redis://runefoble-redis:{{ .Values.redis.port }}/0"
+            - name: RUNEFOBLE_OTEL_ENABLED
+              value: "{{ .Values.observability.enabled }}"
+            - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:{{ .Values.observability.otelCollector.grpcPort }}"
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.services.audienceStudio.port | default 8010 }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.services.audienceStudio.port | default 8010 }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audience-studio
+  labels:
+    app: audience-studio
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.services.audienceStudio.port | default 8010 }}
+      targetPort: {{ .Values.services.audienceStudio.port | default 8010 }}
+  selector:
+    app: audience-studio
+{{- end }}

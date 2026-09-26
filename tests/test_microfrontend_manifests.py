@@ -118,6 +118,11 @@ def test_service_ui_package_integrity():
         ("services/voice_agent/ui", "@runefoble/voice-agent-ui", "runefoble-voice-controls"),
         ("services/asset_forge/ui", "@runefoble/asset-forge-ui", "runefoble-asset-forge"),
         ("services/soundscape/ui", "@runefoble/soundscape-ui", "runefoble-soundscape-controls"),
+        (
+            "services/audience_studio/ui",
+            "@runefoble/audience-studio-ui",
+            "runefoble-audience-studio",
+        ),
     ]
 
     for rel_dir, pkg_name, elem_tag in expected_packages:

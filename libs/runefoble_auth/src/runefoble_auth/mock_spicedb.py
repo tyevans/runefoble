@@ -288,4 +288,19 @@ class MockSpiceDBClient:
                 ):
                     return True
 
+        # 7. Audience poll evaluation
+        if resource_type == "audience_poll":
+            parents = self._find_subjects("audience_poll", resource_id, "campaign")
+            if not parents:
+                parents = [("campaign", resource_id)]
+            for p_type, p_id in parents:
+                if permission in ("moderate", "approve", "veto") and await self.check_permission(
+                    p_type, p_id, "run_session", subject_type, subject_id
+                ):
+                    return True
+                if permission in ("vote", "view", "read") and await self.check_permission(
+                    p_type, p_id, "view", subject_type, subject_id
+                ):
+                    return True
+
         return False
