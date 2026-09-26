@@ -1,7 +1,7 @@
 ---
 id: 0009
 title: Procedural Battlemap & Token Asset Generation Engine
-status: Accepted
+status: Shipped
 created: 2026-09-25
 ---
 

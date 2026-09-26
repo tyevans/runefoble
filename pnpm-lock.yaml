@@ -48,6 +48,16 @@ importers:
         specifier: ^8.3.1
         version: 8.3.1
 
+  services/asset_forge/ui:
+    dependencies:
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ~7.0.2
+        version: 7.0.2
+
   services/board_state/ui:
     dependencies:
       lit:

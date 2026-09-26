@@ -4,7 +4,14 @@ All domain events subclass eventsource.domain.event.DomainEvent and are register
 in the global EventRegistry for serialization, stream persistence, and replay.
 """
 
-from runefoble_events.asset import AssetDeleted, AssetUploaded
+from runefoble_events.asset import (
+    AssetDeleted,
+    AssetGenerated,
+    AssetUploaded,
+    BattlemapCreated,
+    BattlemapForged,
+    TokenAssetForged,
+)
 from runefoble_events.base import BaseRunefobleEvent, register_event
 from runefoble_events.board import (
     BoardGridInitialized,
@@ -138,6 +145,10 @@ __all__ = [
     "VoicePeerMuteToggled",
     "AssetUploaded",
     "AssetDeleted",
+    "BattlemapForged",
+    "TokenAssetForged",
+    "BattlemapCreated",
+    "AssetGenerated",
     "LoreDocumentIngested",
     "EntitiesExtracted",
     "AliasesConsolidated",

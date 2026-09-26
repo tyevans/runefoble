@@ -54,6 +54,7 @@ def test_frontend_storybook_watcher_protection():
 
 def test_microservice_entrypoint_initialization():
     """Verify all microservice FastAPI entrypoints initialize and generate OpenAPI schemas."""
+    from asset_forge.main import app as forge_app
     from board_state.main import app as board_app
     from character_sheet.main import app as character_app
     from game_session.main import app as session_app
@@ -70,6 +71,7 @@ def test_microservice_entrypoint_initialization():
         ("character-sheet", character_app),
         ("game-session", session_app),
         ("voice-agent", voice_app),
+        ("asset-forge", forge_app),
     ]
 
     for name, app in apps:

@@ -1,0 +1,71 @@
+{{- if .Values.services.assetForge }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: asset-forge-config
+  labels:
+    app: asset-forge
+data:
+  FORGE_DEFAULT_THEME: "dungeon"
+  FORGE_MAX_GRID_DIMENSION: "50"
+  FORGE_MIN_GRID_DIMENSION: "5"
+  FORGE_DEFAULT_STORAGE_BUCKET: "runefoble-assets"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asset-forge
+  labels:
+    app: asset-forge
+spec:
+  replicas: {{ .Values.services.assetForge.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: asset-forge
+  template:
+    metadata:
+      labels:
+        app: asset-forge
+    spec:
+      containers:
+        - name: asset-forge
+          image: {{ .Values.services.assetForge.image }}
+          ports:
+            - containerPort: {{ .Values.services.assetForge.port }}
+          envFrom:
+            - configMapRef:
+                name: asset-forge-config
+          env:
+            - name: RUNEFOBLE_SILO_ENDPOINT
+              value: "silo:{{ .Values.silo.port }}"
+            - name: RUNEFOBLE_SILO_ACCESS_KEY
+              value: {{ .Values.silo.accessKey | quote }}
+            - name: RUNEFOBLE_SILO_SECRET_KEY
+              value: {{ .Values.silo.secretKey | quote }}
+            - name: RUNEFOBLE_ZITADEL_ISSUER
+              value: "http://zitadel:{{ .Values.zitadel.port }}"
+            - name: RUNEFOBLE_SPICEDB_ENDPOINT
+              value: "spicedb:{{ .Values.spicedb.grpcPort }}"
+            - name: REDIS_URL
+              value: "redis://runefoble-redis:{{ .Values.redis.port }}/0"
+            - name: RUNEFOBLE_REDIS_URL
+              value: "redis://runefoble-redis:{{ .Values.redis.port }}/0"
+            - name: RUNEFOBLE_OTEL_ENABLED
+              value: "{{ .Values.observability.enabled }}"
+            - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:{{ .Values.observability.otelCollector.grpcPort }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: asset-forge
+  labels:
+    app: asset-forge
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.services.assetForge.port }}
+      targetPort: {{ .Values.services.assetForge.port }}
+  selector:
+    app: asset-forge
+{{- end }}

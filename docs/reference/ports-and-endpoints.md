@@ -22,6 +22,7 @@
 | `voice-agent` | `8005` | `/openapi.json` |
 | `campaign-lore` | `8006` | `/openapi.json` |
 | `rules-compendium` | `8007` | `/openapi.json` |
+| `asset-forge` | `8008` | `/openapi.json` |
 
 ## Key Microservice Endpoints
 
@@ -81,6 +82,9 @@
 | `rules-compendium` | POST | `/api/v1/compendium/homebrew` | Registers campaign homebrew monster or rule guarded by SpiceDB Zanzibar authorization |
 | `rules-compendium` | GET | `/api/v1/compendium/homebrew/{campaign_id}` | Retrieves campaign homebrew rules under Zanzibar authorization |
 | `rules-compendium` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-rules-lookup`, `runefoble-encounter-builder`) |
+| `asset-forge` | POST | `/api/v1/forge/battlemap` | Procedurally generates battlemap texture, extracts wall & hazard geometry, and uploads to Silo S3 |
+| `asset-forge` | POST | `/api/v1/forge/token` | Synthesizes circular transparent character/monster token portrait and stores in Silo S3 |
+| `asset-forge` | GET | `/ui/manifest` | Discovers vendored microfrontend (`runefoble-asset-forge`) |
 | `gateway-api` | GET | `/api/v1/profile` | Retrieves authenticated Zitadel user claims (`user_id`, `username`, `roles`, `email`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Assigns fine-grained SpiceDB Zanzibar relationship tuples (owner, DM, player, spectator) |
 | `gateway-api` | POST | `/api/v1/auth/sync/user` | Syncs Zitadel user claims into SpiceDB Zanzibar tuples |

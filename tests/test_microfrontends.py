@@ -116,6 +116,7 @@ def test_service_ui_package_integrity():
         ("services/game_session/ui", "@runefoble/game-session-ui", "runefoble-initiative-tracker"),
         ("services/the_watcher/ui", "@runefoble/the-watcher-ui", "runefoble-watcher-feed"),
         ("services/voice_agent/ui", "@runefoble/voice-agent-ui", "runefoble-voice-controls"),
+        ("services/asset_forge/ui", "@runefoble/asset-forge-ui", "runefoble-asset-forge"),
     ]
 
     for rel_dir, pkg_name, elem_tag in expected_packages:

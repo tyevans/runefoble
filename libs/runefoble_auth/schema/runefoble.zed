@@ -76,4 +76,16 @@ definition homebrew_rule {
     permission edit = manage
 }
 
+definition forged_asset {
+    relation campaign: campaign
+    relation creator: user
+
+    // Assets can be viewed by campaign viewers or the creator
+    permission view = campaign->view + creator
+    // Editing/managing forged assets requires creator, DM, or campaign owner
+    permission manage = creator + campaign->manage + campaign->run_session
+    permission edit = manage
+}
+
+
 
