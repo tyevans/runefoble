@@ -1,7 +1,7 @@
 ---
 id: '0107'
 title: Character Sheet UI Inventory Grid and Condition Indicator Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0009
@@ -19,8 +19,8 @@ governing_stories:
 - US-0024
 - US-0051
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/107
 ---
-
 # TASK-0107: Character Sheet UI Inventory Grid and Condition Indicator Microfrontend
 
 ## Status
