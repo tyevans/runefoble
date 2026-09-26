@@ -32,6 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blackbox Documentation & Pages Test Suite**: Expanded `tests/test_docs_build_and_pages.py` to assert changelog existence, Keep a Changelog structure, Definition of Done enforcement, and marketing page navigation integrity.
 
 ### Changed
+- **Zanzibar Auth Relationship Sync Service and Event Handlers Modular Decomposition (`TASK-0063`)**:
+  - Decomposed monolithic `libs/runefoble_auth/src/runefoble_auth/sync.py` into focused submodules:
+    - `sync_tuples.py` (179 lines) covering `SyncResult` models, role normalization tables (`CAMPAIGN_ROLE_RELATIONS`, `normalize_campaign_role`), low-level write/delete helpers with retry execution, and batching/reconciliation utilities.
+    - `sync_events.py` (127 lines) covering domain event and CloudEvent payload parsing (`extract_event_type`, `get_event_field`), unified dispatching (`handle_domain_event`), and granular entity handlers for `SessionCreated`, `ParticipantJoined`, `CharacterCreated`, and `TokenPlaced`.
+    - `sync.py` (190 lines) retaining the `ZitadelSpiceDBSyncService` coordinator with 100% backward-compatible public methods and re-exports.
+  - Added comprehensive test coverage in `tests/test_spicedb_client.py` (180 lines) covering client CRUD, tuple formatting, claims resolution, and event dispatching.
+  - Strictly enforced Hard Invariant 6 (< 200 lines per file) across all modified and newly created modules.
 - **Domain Aggregates and Rule Tables Modular Decomposition (`TASK-0060`)**:
   - Decomposed monolithic domain aggregate files across `character_sheet`, `board_state`, and `game_session` bounded contexts into focused `rules.py` (game balance tables, hazard formulas, spatial/initiative calculations) and `models.py` (Pydantic state schemas with immutable transition methods and request/response DTOs) submodules.
   - Maintained 100% backward-compatible re-exports in all `aggregate.py` modules.

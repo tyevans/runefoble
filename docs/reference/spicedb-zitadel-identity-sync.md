@@ -208,6 +208,26 @@ Health probe reporting SpiceDB connectivity and synchronization backend (`mock` 
 - **`CharacterCreated`**: Provisions `character:<id>#owner@user:<player_id>` and `character:<id>#campaign@campaign:<id>`.
 - **`TokenPlaced`**: Provisions `board_token:<id>#character@character:<character_id>` and `board_token:<id>#campaign@campaign:<id>`.
 
+## Modular Architecture & Submodules
+
+To adhere to Hard Invariant 6 (file length < 500 lines) and separate operational concerns, the Zanzibar synchronization service is decomposed into three focused submodules:
+
+1. **Tuple Formatting & Operations (`sync_tuples.py`)**:
+   - `SyncResult` model and `format_tuple` formatting utility.
+   - `CAMPAIGN_ROLE_RELATIONS` mapping and `normalize_campaign_role` normalization tables.
+   - `write_relationship_tuple` and `delete_relationship_tuple` with retry execution.
+   - `batch_write_tuples` and `reconcile_tuples` idempotency helpers.
+   - `resolve_user_claims` utility supporting `AuthenticatedUser`, dict claims, or JWT tokens.
+
+2. **Domain Event Handlers (`sync_events.py`)**:
+   - `extract_event_type` and `get_event_field` parsing domain event models and CloudEvent JSON dictionaries.
+   - `handle_domain_event` unified dispatcher routing `SessionCreated`, `ParticipantJoined`, `PlayerJoinedSession`, `CharacterCreated`, and `TokenPlaced`.
+   - Granular event handlers (`handle_session_created`, `handle_participant_joined`, `handle_character_created`, `handle_token_placed`).
+
+3. **Service Coordinator (`sync.py`)**:
+   - `ZitadelSpiceDBSyncService` coordinator delegating to `sync_tuples` and `sync_events`.
+   - Re-exports `SyncResult` and key utilities preserving 100% backward compatibility.
+
 ## Resilience & Retry Policy
 
 `ZitadelSpiceDBSyncService` executes all SpiceDB writes and deletes with exponential backoff retry:
