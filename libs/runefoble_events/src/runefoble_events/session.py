@@ -87,6 +87,9 @@ class CombatEncounterStarted(BaseRunefobleEvent):
     combatants: list[dict[str, Any]] = Field(default_factory=list)
 
 
+CombatStarted = CombatEncounterStarted
+
+
 @register_event
 class InitiativeRolled(BaseRunefobleEvent):
     aggregate_type: str = "GameSession"
@@ -104,6 +107,14 @@ class InitiativeTurnAdvanced(BaseRunefobleEvent):
     round_number: int
     active_combatant_id: str
     turn_seconds_remaining: int = 60
+
+
+@register_event
+class CombatRoundAdvanced(BaseRunefobleEvent):
+    aggregate_type: str = "GameSession"
+    session_id: UUID | str | None = None
+    round_number: int
+    active_combatant_id: str = ""
 
 
 @register_event

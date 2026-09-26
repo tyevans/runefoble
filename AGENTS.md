@@ -88,6 +88,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`index-campaign-lore-with-redstring.md`](docs/how-to/index-campaign-lore-with-redstring.md): How to ingest worldbuilding documents with redstring, consolidate entity aliases, and run hybrid RAG queries.
 - [`balance-combat-encounters-and-query-compendium.md`](docs/how-to/balance-combat-encounters-and-query-compendium.md): How to query canonical SRD rules with sub-50ms redstring search, balance combat encounters, and register homebrew rules.
 - [`forge-procedural-battlemaps-and-tokens.md`](docs/how-to/forge-procedural-battlemaps-and-tokens.md): How to forge procedural battlemaps and tokens with natural language prompts, extract line-of-sight walls and hazards, and project geometry to board_state.
+- [`manage-dynamic-soundscapes-and-audio-ducking.md`](docs/how-to/manage-dynamic-soundscapes-and-audio-ducking.md): How to calculate encounter tension, crossfade audio stems, trigger tactical foley cues, and coordinate -12dB WebAudio ducking.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
@@ -119,6 +120,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `services/campaign_lore/` | Worldbuilding knowledge graphs, entity alias consolidation & redstring hybrid RAG microservice |
 | `services/rules_compendium/` | TTRPG rules compendium, sub-50ms redstring hybrid retrieval & automated CR encounter builder |
 | `services/asset_forge/` | Procedural battlemap diffusion synthesis, wall/hazard geometry extraction & token portrait generator |
+| `services/soundscape/` | Dynamic audio stem mixing, tactical foley cues, tension scoring & audio controls microfrontend |
 | `gateway/api/` | Unified API Gateway, WebSockets, OpenAPI aggregator |
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
 | `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |

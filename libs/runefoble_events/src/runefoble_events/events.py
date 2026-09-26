@@ -55,6 +55,8 @@ from runefoble_events.lore import (
 from runefoble_events.session import (
     CombatEncounterEnded,
     CombatEncounterStarted,
+    CombatRoundAdvanced,
+    CombatStarted,
     GameSessionStarted,
     InitiativeRolled,
     InitiativeTurnAdvanced,
@@ -66,6 +68,13 @@ from runefoble_events.session import (
     SessionStarted,
     SpectatorSessionConnected,
     TurnAdvanced,
+)
+from runefoble_events.soundscape import (
+    SoundscapeCueTriggered,
+    SoundscapeDuckingToggled,
+    SoundscapeMoodOverridden,
+    SoundscapeTensionUpdated,
+    SoundscapeTrackChanged,
 )
 from runefoble_events.voice import (
     VoicePeerJoined,
@@ -157,4 +166,11 @@ __all__ = [
     "ConditionIndexed",
     "HomebrewRuleRegistered",
     "EncounterBalanced",
+    "CombatStarted",
+    "CombatRoundAdvanced",
+    "SoundscapeTrackChanged",
+    "SoundscapeCueTriggered",
+    "SoundscapeTensionUpdated",
+    "SoundscapeMoodOverridden",
+    "SoundscapeDuckingToggled",
 ]

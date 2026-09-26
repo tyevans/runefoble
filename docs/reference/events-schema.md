@@ -357,4 +357,37 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `difficulty_tier`: String
   - `multiplier`: Float
 
+### Soundscape & Adaptive Audio Events (`aggregate_type: Soundscape`)
+
+- **`SoundscapeTrackChanged`**: Emitted when active soundscape track or stem profile transitions (`runefoble.events.soundscape.track_changed`).
+  - `session_id`: String
+  - `track_id`: String
+  - `stem_profile`: String ("exploration", "tension", "combat", "boss")
+  - `tension_score`: Integer (0-100)
+  - `crossfade_duration_ms`: Integer (default 1500)
+  - `active_stems`: List[String]
+- **`SoundscapeCueTriggered`**: Emitted when a tactical sound foley or acoustic cue is fired (`runefoble.events.soundscape.cue_triggered`).
+  - `session_id`: String
+  - `cue_id`: String
+  - `cue_type`: String ("foley", "sfx", "stinger", "ambient", "spell", "melee")
+  - `sound_url`: String
+  - `volume_gain`: Float (default 1.0)
+  - `duck_music`: Boolean (default False)
+- **`SoundscapeTensionUpdated`**: Emitted when encounter tension score is recalculated (`runefoble.events.soundscape.tension_updated`).
+  - `session_id`: String
+  - `tension_score`: Integer (0-100)
+  - `stem_profile`: String
+  - `combat_round`: Integer
+  - `enemy_cr_balance`: Float
+  - `lowest_health_ratio`: Float
+- **`SoundscapeMoodOverridden`**: Emitted when DM forces a manual mood override (`runefoble.events.soundscape.mood_overridden`).
+  - `session_id`: String
+  - `mood`: String ("exploration", "tension", "combat", "boss")
+  - `overridden_by`: String (default "dm")
+- **`SoundscapeDuckingToggled`**: Emitted when WebAudio background music ducking state changes (`runefoble.events.soundscape.ducking_toggled`).
+  - `session_id`: String
+  - `is_ducked`: Boolean
+  - `attenuation_db`: Float (default -12.0)
+  - `reason`: String ("speech", "cue", "vad")
+
 

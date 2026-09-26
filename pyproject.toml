@@ -19,6 +19,7 @@ dependencies = [
     "campaign-lore",
     "rules-compendium",
     "asset-forge",
+    "soundscape",
     "eventsource-py>=0.14.0",
     "redstring[llm,redis]>=0.11.0",
 ]
@@ -38,6 +39,7 @@ gateway-mcp = { workspace = true }
 campaign-lore = { workspace = true }
 rules-compendium = { workspace = true }
 asset-forge = { workspace = true }
+soundscape = { workspace = true }
 
 [tool.uv.workspace]
 members = [
