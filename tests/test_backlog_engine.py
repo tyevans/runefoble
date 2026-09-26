@@ -385,9 +385,17 @@ def test_wait_for_ci_checks_success_after_pending(tmp_path: Path, monkeypatch: p
     call_count = 0
 
     def mock_run(cmd, *args, **kwargs):
+        mock_proc = MagicMock(spec=subprocess.CompletedProcess)
+        if "view" in cmd:
+            mock_proc.returncode = 0
+            mock_proc.stdout = json.dumps(
+                {"state": "OPEN", "mergeable": "MERGEABLE", "mergeStateStatus": "BLOCKED"}
+            )
+            mock_proc.stderr = ""
+            return mock_proc
+
         nonlocal call_count
         call_count += 1
-        mock_proc = MagicMock(spec=subprocess.CompletedProcess)
         if call_count == 1:
             # Initial poll: no checks registered yet
             mock_proc.returncode = 1

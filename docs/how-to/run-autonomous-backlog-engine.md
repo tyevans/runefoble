@@ -55,11 +55,14 @@ flowchart TD
    - The worker runs non-interactively via `agy -p`.
    - Comprehensive pre-flight verification executes `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest`, and codebase health invariants.
    - If any verification check fails, the orchestrator does not discard work. Instead, it aggregates all failure logs into a diagnostic prompt and feeds it back to the agent using session continuation (`agy -c -p`), allowing the agent to diagnose errors, reformat code, resolve failing tests, or decompose oversized files.
-4. **Mechanical CI Watcher**: Zero tokens are spent polling CI. GitHub checks are watched mechanically via `gh pr checks`.
+4. **Mechanical CI Watcher & Conflict Detection**:
+   - Zero tokens are spent polling CI. GitHub checks are watched mechanically via `gh pr checks`.
+   - Pull request mergeability and conflict status (`mergeable: CONFLICTING`, `mergeStateStatus: DIRTY`) are checked via `gh pr view`. If a PR encounters merge conflicts with the base branch or is closed, the watcher fails immediately rather than treating missing checks as a pending queue job, closes the conflicting PR, and releases the task back to the ready queue.
+   - Pre-push sync inspects whether `origin/main` moved forward while the worker was implementing, testing clean mergeability with `git merge-tree` to prevent conflicting PRs from reaching GitHub.
 5. **Queue Reconciliation**: Upon merge, the task is moved from `refined/` to `complete/`, updating `docs/project/backlog/PRIORITY.md` and `ROADMAP.md` automatically.
 
 ## Fault Tolerance & Graceful Interrupts
 
 - **Graceful Cancellation (`Ctrl+C`)**: When interrupted with `Ctrl+C`, the engine terminates running agent processes, removes active git worktrees, and immediately releases all claimed tasks back to `Refined` so they remain ready for execution.
-- **Startup Stale Task Recovery**: In case of a hard termination (e.g. machine restart or SIGKILL), the orchestrator scans `docs/project/backlog/refined/` upon launch and automatically resets any orphaned `in-progress` tasks back to `Refined`, ensuring no task is ever lost.
+- **Startup Stale Task Recovery**: In case of a hard termination (e.g. machine restart or SIGKILL), the orchestrator scans `docs/project/backlog/refined/` upon launch and automatically resets any orphaned `in-progress` or `review` tasks back to `Refined` (clearing `claimed_by` and `pr_url`), ensuring no task is ever lost.
 
