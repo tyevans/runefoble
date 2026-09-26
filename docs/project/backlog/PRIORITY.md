@@ -105,7 +105,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 95. **TASK-0071 (Complete)**: [`0071-websocket-zanzibar-auth-test-suite-decomposition.md`](complete/0071-websocket-zanzibar-auth-test-suite-decomposition.md) — WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition
 96. **TASK-0075 (Complete)**: [`0075-spectator-view-stream-overlay-test-suite-decomposition.md`](complete/0075-spectator-view-stream-overlay-test-suite-decomposition.md) — Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition
 
-97. **TASK-0100 (Refined)**: [`0100-downtime-activities-and-crafting-engine-bc.md`](refined/0100-downtime-activities-and-crafting-engine-bc.md) — Downtime Activities, Alchemical Crafting & Party Stronghold Engine
+97. **TASK-0100 (Complete)**: [`0100-downtime-activities-and-crafting-engine-bc.md`](complete/0100-downtime-activities-and-crafting-engine-bc.md) — Downtime Activities, Alchemical Crafting & Party Stronghold Engine
 98. **TASK-0107 (Complete)**: [`0107-character-sheet-ui-inventory-and-conditions-microfrontend.md`](complete/0107-character-sheet-ui-inventory-and-conditions-microfrontend.md) — Character Sheet UI Inventory Grid and Condition Indicator Microfrontend
 99. **TASK-0108 (Complete)**: [`0108-rules-compendium-search-and-encounter-builder-microfrontend.md`](complete/0108-rules-compendium-search-and-encounter-builder-microfrontend.md) — Rules Compendium Search & Encounter Builder Microfrontend
 100. **TASK-0109 (Refined)**: [`0109-dynamic-soundscape-mixing-panel-microfrontend.md`](refined/0109-dynamic-soundscape-mixing-panel-microfrontend.md) — Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls

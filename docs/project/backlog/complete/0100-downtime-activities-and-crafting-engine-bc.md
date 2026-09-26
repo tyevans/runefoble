@@ -1,7 +1,7 @@
 ---
 id: '0100'
 title: Downtime Activities, Alchemical Crafting & Party Stronghold Engine
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0009
@@ -15,8 +15,8 @@ governing_adrs:
 target_release: 0.4.0
 prd_url: docs/project/product/accepted/prd-0014-downtime-crafting-and-stronghold-engine.md
 user_story: US-0044
+pr_url: https://github.com/tyevans/runefoble/pull/108
 ---
-
 # TASK-0100: Downtime Activities, Alchemical Crafting & Party Stronghold Engine
 
 ## Status
