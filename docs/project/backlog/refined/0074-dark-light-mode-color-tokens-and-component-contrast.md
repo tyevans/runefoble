@@ -3,11 +3,14 @@ id: '0074'
 title: Design System Dark and Light Mode Color Tokens & Cross-Component Contrast Invariants
 status: Refined
 created: 2026-09-25
-dependencies: [TASK-0012, TASK-0073]
-governing_adrs: [ADR-0004, ADR-0012]
+dependencies:
+- TASK-0012
+- TASK-0073
+governing_adrs:
+- ADR-0004
+- ADR-0012
 target_release: 0.1.0
 ---
-
 # TASK-0074 — Design System Dark and Light Mode Color Tokens & Cross-Component Contrast Invariants
 
 ## Summary

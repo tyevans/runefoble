@@ -1,13 +1,17 @@
 ---
-id: '0083'
+id: 0083
 title: Streaming Whisper Audio Transcription Test Suite Modular Decomposition
 status: Refined
 created: 2026-09-26
-dependencies: [TASK-0039]
-governing_adrs: [ADR-0002, ADR-0007, ADR-0008, ADR-0009]
+dependencies:
+- TASK-0039
+governing_adrs:
+- ADR-0002
+- ADR-0007
+- ADR-0008
+- ADR-0009
 target_release: 0.2.0
 ---
-
 # TASK-0083: Streaming Whisper Audio Transcription Test Suite Modular Decomposition
 
 ## Status
