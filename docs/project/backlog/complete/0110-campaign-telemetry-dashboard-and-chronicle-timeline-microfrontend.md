@@ -1,7 +1,7 @@
 ---
 id: '0110'
 title: Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0038
@@ -19,8 +19,8 @@ governing_stories:
 - US-0040
 - US-0054
 target_release: 0.3.0
+pr_url: https://github.com/tyevans/runefoble/pull/101
 ---
-
 # TASK-0110: Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend
 
 ## Status
