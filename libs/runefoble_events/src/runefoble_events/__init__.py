@@ -4,6 +4,8 @@ from runefoble_events.events import (
     AbsencePenaltyApplied,
     AbsencePenaltyCleared,
     AbsenteeRecapGenerated,
+    AssetDeleted,
+    AssetUploaded,
     AutonomousActionResolved,
     BaseRunefobleEvent,
     BoardGridInitialized,
@@ -70,6 +72,8 @@ __all__ = [
     "EncounterSpawned",
     "AutonomousActionResolved",
     "SpectatorSessionConnected",
+    "AssetUploaded",
+    "AssetDeleted",
 
     # Backward-compatible aliases
     "WatcherNarrationEvent",

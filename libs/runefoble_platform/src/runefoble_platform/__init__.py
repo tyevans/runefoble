@@ -27,6 +27,16 @@ from runefoble_platform.event_sourcing import (
 )
 from runefoble_platform.models import BaseEntity, CampaignScopedEntity, UserPrincipal, utc_now
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.storage import (
+    ALLOWED_MIME_TYPES,
+    MAX_ASSET_SIZE_BYTES,
+    AssetNotFoundError,
+    AssetStorageError,
+    AssetValidationError,
+    SiloStorageService,
+    get_storage_service,
+    set_storage_service,
+)
 
 __all__ = [
     "evaluate_dice",
@@ -60,4 +70,12 @@ __all__ = [
     "get_event_store",
     "get_event_bus",
     "create_aggregate_repository",
+    "SiloStorageService",
+    "get_storage_service",
+    "set_storage_service",
+    "AssetStorageError",
+    "AssetValidationError",
+    "AssetNotFoundError",
+    "ALLOWED_MIME_TYPES",
+    "MAX_ASSET_SIZE_BYTES",
 ]

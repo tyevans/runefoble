@@ -559,6 +559,8 @@ dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "runefoble-auth" },
+    { name = "runefoble-events" },
+    { name = "runefoble-platform" },
     { name = "uvicorn" },
 ]
 
@@ -568,6 +570,8 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
+    { name = "runefoble-events", editable = "libs/runefoble_events" },
+    { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 

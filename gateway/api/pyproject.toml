@@ -10,4 +10,6 @@ dependencies = [
     "pydantic>=2.13.5",
     "uvicorn>=0.54.0",
     "runefoble-auth",
+    "runefoble-platform",
+    "runefoble-events",
 ]

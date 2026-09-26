@@ -23,6 +23,6 @@ Order of priority for engineering tasks across the platform.
 19. **TASK-0019 (Complete)**: [`0019-tactical-board-terrain-elevation-hazards.md`](complete/0019-tactical-board-terrain-elevation-hazards.md) — Tactical Board Terrain Elevation, Difficult Terrain & Hazard Grid
 20. **TASK-0020 (Complete)**: [`0020-mcp-agent-tool-loop-context.md`](complete/0020-mcp-agent-tool-loop-context.md) — FastMCP Agent Tool Loop & Session State Context Server
 22. **TASK-0022 (Refined)**: [`0022-initiative-tracker-turn-order-timer.md`](refined/0022-initiative-tracker-turn-order-timer.md) — Live Multi-User Turn Order, Initiative Tracker & Timer Web Component
-23. **TASK-0023 (Refined)**: [`0023-silo-s3-asset-storage-pipeline.md`](refined/0023-silo-s3-asset-storage-pipeline.md) — Silo S3 Media Asset Bucket Storage & Character Avatar Upload Pipeline
+23. **TASK-0023 (Complete)**: [`0023-silo-s3-asset-storage-pipeline.md`](complete/0023-silo-s3-asset-storage-pipeline.md) — Silo S3 Media Asset Bucket Storage & Character Avatar / Map Upload Pipeline
 
 

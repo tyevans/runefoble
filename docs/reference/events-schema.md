@@ -202,6 +202,18 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `latency_ms`: Float
   - `audio_bytes_length`: Integer
 
+### Asset Storage Events (`aggregate_type: Asset`)
 
-
-
+- **`AssetUploaded`**: Emitted when a media asset (character avatar, tactical battlemap, or audio soundscape) is stored in Silo S3 (`runefoble.events.asset.uploaded`).
+  - `asset_id`: String
+  - `bucket`: String
+  - `object_key`: String
+  - `content_type`: String
+  - `byte_size`: Integer
+  - `owner_id`: String
+  - `url`: String
+- **`AssetDeleted`**: Emitted when an asset is deleted from object storage (`runefoble.events.asset.deleted`).
+  - `asset_id`: String
+  - `bucket`: String
+  - `object_key`: String
+  - `deleted_by`: String
