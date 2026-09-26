@@ -16,7 +16,7 @@
 - [x] SpiceDB production cluster syncing with Zitadel OIDC identities (ADR-0001, TASK-0032)
 - [ ] Zitadel production OIDC/JWKS token verification middleware (ADR-0005, TASK-0034)
 - [ ] Live SpiceDB gRPC client integration & schema migration bootstrapper (ADR-0001, TASK-0035)
-- [ ] PostgreSQL multi-database initialization & persistent event store connection (ADR-0011, TASK-0036)
+- [x] PostgreSQL multi-database initialization & persistent event store connection (ADR-0011, TASK-0036)
 - [ ] OpenTelemetry distributed tracing, metrics & collector Helm integration (TASK-0037)
 - [ ] OpenPanel privacy-preserving analytics SDK & event pipeline (TASK-0038)
 

@@ -39,7 +39,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 
 35. **TASK-0034 (Refined)**: [`0034-zitadel-oidc-jwks-verification-middleware.md`](refined/0034-zitadel-oidc-jwks-verification-middleware.md) — Zitadel Production OIDC/JWKS Token Verification Middleware
 36. **TASK-0035 (Refined)**: [`0035-spicedb-live-grpc-client-and-schema-migration.md`](refined/0035-spicedb-live-grpc-client-and-schema-migration.md) — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
-37. **TASK-0036 (Refined)**: [`0036-postgresql-multi-database-init-and-event-store.md`](refined/0036-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection
+37. **TASK-0036 (Complete)**: [`0036-postgresql-multi-database-init-and-event-store.md`](complete/0036-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection
 38. **TASK-0037 (Refined)**: [`0037-opentelemetry-tracing-and-metrics-pipeline.md`](refined/0037-opentelemetry-tracing-and-metrics-pipeline.md) — OpenTelemetry Distributed Tracing, Metrics & Collector Helm Integration
 39. **TASK-0038 (Refined)**: [`0038-openpanel-analytics-service-and-event-pipeline.md`](refined/0038-openpanel-analytics-service-and-event-pipeline.md) — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
 40. **TASK-0039 (Refined)**: [`0039-streaming-whisper-speech-to-intent.md`](refined/0039-streaming-whisper-speech-to-intent.md) — Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
