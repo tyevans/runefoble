@@ -1,7 +1,7 @@
 ---
 id: '0056'
 title: Cinematic Director Auto-Camera and OBS Stream Overlay
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0012
@@ -19,8 +19,8 @@ governing_prds:
 governing_stories:
 - US-0029
 - US-0030
+pr_url: https://github.com/tyevans/runefoble/pull/93
 ---
-
 # TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay
 
 ## Status
