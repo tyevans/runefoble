@@ -1,7 +1,7 @@
 ---
 id: 0083
 title: Streaming Whisper Audio Transcription Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0039
@@ -11,6 +11,7 @@ governing_adrs:
 - ADR-0008
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/54
 ---
 # TASK-0083: Streaming Whisper Audio Transcription Test Suite Modular Decomposition
 
