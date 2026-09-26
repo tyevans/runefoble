@@ -42,6 +42,22 @@ def deserialize_event(fields: dict[str, Any] | str) -> Any:
         elif isinstance(raw_payload, dict):
             event_dict = raw_payload
 
+    if isinstance(event_dict, dict) and isinstance(fields, dict):
+        if (
+            "traceparent" in fields
+            and "metadata" in event_dict
+            and isinstance(event_dict["metadata"], dict)
+            and "traceparent" not in event_dict["metadata"]
+        ):
+            event_dict["metadata"]["traceparent"] = fields["traceparent"]
+        if (
+            "tracestate" in fields
+            and "metadata" in event_dict
+            and isinstance(event_dict["metadata"], dict)
+            and "tracestate" not in event_dict["metadata"]
+        ):
+            event_dict["metadata"]["tracestate"] = fields["tracestate"]
+
     if not event_type and isinstance(event_dict, dict):
         event_type = event_dict.get("event_type") or event_dict.get("type")
 
@@ -52,9 +68,32 @@ def deserialize_event(fields: dict[str, Any] | str) -> Any:
 
         if event_cls is not None:
             try:
-                return event_cls.model_validate(event_dict)
+                event_obj = event_cls.model_validate(event_dict)
+                if (
+                    isinstance(fields, dict)
+                    and "traceparent" in fields
+                    and hasattr(event_obj, "metadata")
+                    and isinstance(event_obj.metadata, dict)
+                    and "traceparent" not in event_obj.metadata
+                ):
+                    event_obj.metadata["traceparent"] = fields["traceparent"]
+                if (
+                    isinstance(fields, dict)
+                    and "tracestate" in fields
+                    and hasattr(event_obj, "metadata")
+                    and isinstance(event_obj.metadata, dict)
+                    and "tracestate" not in event_obj.metadata
+                ):
+                    event_obj.metadata["tracestate"] = fields["tracestate"]
+                return event_obj
             except Exception as e:
                 logger.warning("Event validation failed for '%s': %s", event_type, e)
+        else:
+            if isinstance(fields, dict):
+                if "traceparent" in fields and "traceparent" not in event_dict:
+                    event_dict["traceparent"] = fields["traceparent"]
+                if "tracestate" in fields and "tracestate" not in event_dict:
+                    event_dict["tracestate"] = fields["tracestate"]
 
     return event_dict
 

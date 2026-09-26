@@ -112,11 +112,20 @@ class PlatformSettings(BaseSettings):
     )
 
     # Observability (OpenTelemetry / Grafana / Loki)
+    otel_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("RUNEFOBLE_OTEL_ENABLED", "OTEL_ENABLED"),
+        description="Enable OpenTelemetry tracing and metrics export",
+    )
     otel_exporter_otlp_endpoint: str = Field(
         default="http://localhost:4317",
+        validation_alias=AliasChoices(
+            "RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_ENDPOINT"
+        ),
         description="OTel collector / Loki gRPC endpoint",
     )
     loki_endpoint: str = Field(
         default="http://localhost:3100",
+        validation_alias=AliasChoices("RUNEFOBLE_LOKI_ENDPOINT", "LOKI_ENDPOINT"),
         description="Grafana Loki endpoint",
     )

@@ -43,7 +43,12 @@ spec:
               value: "redis://runefoble-redis:{{ $.Values.redis.port }}/0"
             - name: RUNEFOBLE_REDIS_URL
               value: "redis://runefoble-redis:{{ $.Values.redis.port }}/0"
+            - name: RUNEFOBLE_OTEL_ENABLED
+              value: "{{ $.Values.observability.enabled }}"
+            - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:{{ $.Values.observability.otelCollector.grpcPort }}"
 ---
+
 apiVersion: v1
 kind: Service
 metadata:

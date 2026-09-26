@@ -1,4 +1,92 @@
 {{- if .Values.observability.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  labels:
+    app: otel-collector
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:{{ .Values.observability.otelCollector.grpcPort }}
+          http:
+            endpoint: 0.0.0.0:{{ .Values.observability.otelCollector.httpPort }}
+    processors:
+      batch:
+    exporters:
+      debug:
+        verbosity: basic
+      loki:
+        endpoint: http://loki:{{ .Values.observability.loki.port }}/loki/api/v1/push
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [debug]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [debug]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [loki, debug]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  labels:
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: {{ .Values.observability.otelCollector.image }}
+          args: ["--config=/etc/otelcol-contrib/config.yaml"]
+          ports:
+            - name: grpc
+              containerPort: {{ .Values.observability.otelCollector.grpcPort }}
+            - name: http
+              containerPort: {{ .Values.observability.otelCollector.httpPort }}
+          volumeMounts:
+            - name: otel-collector-config
+              mountPath: /etc/otelcol-contrib
+      volumes:
+        - name: otel-collector-config
+          configMap:
+            name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  labels:
+    app: otel-collector
+spec:
+  type: ClusterIP
+  ports:
+    - name: grpc
+      port: {{ .Values.observability.otelCollector.grpcPort }}
+      targetPort: {{ .Values.observability.otelCollector.grpcPort }}
+    - name: http
+      port: {{ .Values.observability.otelCollector.httpPort }}
+      targetPort: {{ .Values.observability.otelCollector.httpPort }}
+  selector:
+    app: otel-collector
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,6 +123,29 @@ spec:
   selector:
     app: loki
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  labels:
+    app: grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki:{{ .Values.observability.loki.port }}
+        isDefault: false
+        jsonData:
+          maxLines: 1000
+      - name: OpenTelemetry
+        type: prometheus
+        access: proxy
+        url: http://otel-collector:{{ .Values.observability.otelCollector.httpPort }}
+        isDefault: true
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -59,6 +170,13 @@ spec:
           env:
             - name: GF_SECURITY_ADMIN_PASSWORD
               value: {{ .Values.observability.grafana.adminPassword | quote }}
+          volumeMounts:
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+      volumes:
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
 ---
 apiVersion: v1
 kind: Service

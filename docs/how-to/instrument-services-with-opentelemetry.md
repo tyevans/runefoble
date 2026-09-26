@@ -19,79 +19,86 @@ The OTel Collector runs locally via Helm at `http://otel-collector:4317` (gRPC) 
 In your service startup module (e.g. `main.py`):
 
 ```python
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
+from fastapi import FastAPI
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.telemetry import init_telemetry
 
+app = FastAPI(title="The Watcher Service")
 
-def configure_telemetry(service_name: str, settings: PlatformSettings | None = None) -> None:
-    settings = settings or PlatformSettings()
+# Standard middleware and routes registration
+...
 
-    resource = Resource.create(
-        {
-            "service.name": service_name,
-            "deployment.environment": settings.environment,
-        }
-    )
-
-    provider = TracerProvider(resource=resource)
-
-    # Export spans to OTel Collector via OTLP gRPC
-    exporter = OTLPSpanExporter(endpoint=settings.otel_exporter_otlp_endpoint, insecure=True)
-    provider.add_span_processor(BatchSpanProcessor(exporter))
-    trace.set_tracer_provider(provider)
+# Initialize OpenTelemetry and instrument the FastAPI app
+init_telemetry("the-watcher", app=app)
 ```
+
+`init_telemetry` automatically configures:
+- A `TracerProvider` with `service.name` and deployment environment attributes.
+- The `OTLPSpanExporter` pointing to the collector endpoint (`RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT` or `http://otel-collector:4317`).
+- Auto-instrumentation of incoming HTTP requests via `FastAPIInstrumentor`.
 
 ---
 
-## Step 2: Instrument FastAPI Application
+## Step 2: Instrument FastAPI Application Manually (Optional)
 
-Auto-instrument incoming HTTP requests to produce spans with status codes and route templates:
+If you need fine-grained control over when the application is instrumented:
 
 ```python
 from fastapi import FastAPI
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from runefoble_platform.telemetry import init_telemetry, instrument_fastapi
 
 app = FastAPI(title="The Watcher Service")
-configure_telemetry("the-watcher")
+provider = init_telemetry("the-watcher")
 
-# Instrument the FastAPI app instance
-FastAPIInstrumentor.instrument_app(app)
+# Instrument the FastAPI app instance explicitly
+instrument_fastapi(app, tracer_provider=provider)
+```
+
+To clean up instrumentation during testing:
+
+```python
+from runefoble_platform.telemetry import uninstrument_fastapi, reset_tracer_provider
+
+uninstrument_fastapi(app)
+reset_tracer_provider()
 ```
 
 ---
 
 ## Step 3: Propagate Trace Context over Redis Streams
 
-When emitting domain events to Redis Streams, inject the active W3C trace context into the event metadata:
+When emitting domain events to Redis Streams via `RedisStreamsEventBus.publish_event`, active W3C trace context (`traceparent`, `tracestate`) is automatically injected into both the Redis stream entry fields and domain event metadata:
 
 ```python
-from opentelemetry import trace
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from runefoble_events.events import TokenMoved
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-tracer = trace.get_tracer("runefoble.events")
-propagator = TraceContextTextMapPropagator()
+event_bus = RedisStreamsEventBus()
 
-
-def publish_traced_event(event_bus, topic: str, event_data: dict) -> None:
-    carrier: dict[str, str] = {}
-    propagator.inject(carrier)
-
-    # Attach carrier to CloudEvent extension headers
-    event_data["traceparent"] = carrier.get("traceparent")
-    event_bus.publish(topic, event_data)
+# When executed inside an active trace, traceparent is automatically attached:
+event = TokenMoved(
+    aggregate_id=session_id,
+    token_id="token-42",
+    name="Valeros",
+    from_x=0,
+    from_y=0,
+    to_x=2,
+    to_y=3,
+)
+await event_bus.publish_event("runefoble.events.board", event)
 ```
 
-When consuming events in a consumer group worker, extract the carrier to maintain the span tree:
+When consuming events in a consumer group worker, extract the carrier to maintain the span tree across the distributed boundary:
 
 ```python
+from runefoble_platform.telemetry import extract_trace_context, get_tracer
+
+tracer = get_tracer("runefoble.workers")
+
+
 def process_traced_event(event_data: dict) -> None:
-    carrier = {"traceparent": event_data.get("traceparent", "")}
-    extracted_ctx = propagator.extract(carrier)
-    
+    extracted_ctx = extract_trace_context(event_data)
+
     with tracer.start_as_current_span("consume_domain_event", context=extracted_ctx):
         # Process domain state mutation within parent trace context
         ...
@@ -102,5 +109,5 @@ def process_traced_event(event_data: dict) -> None:
 ## Step 4: Verify in Grafana Dashboards
 
 1. Open Grafana at `http://localhost:3001` (default admin credentials: `admin` / `admin`).
-2. Navigate to **Explore** -> **Loki / Jaeger / OTLP**.
+2. Navigate to **Explore** -> **OpenTelemetry / Loki**.
 3. Search for trace ID or service name `the-watcher` or `gateway-api` to inspect waterfall spans and execution latencies.

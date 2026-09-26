@@ -33,6 +33,7 @@ from runefoble_auth.zitadel import AuthenticatedUser
 from runefoble_events import SpectatorSessionConnected
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.telemetry import init_telemetry
 from voice_agent.room_routes import router as voice_rooms_router
 
 platform_settings = PlatformSettings()
@@ -72,6 +73,8 @@ app.add_middleware(
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 app.include_router(voice_rooms_router)
+
+init_telemetry("gateway-api", settings=platform_settings, app=app)
 
 
 class WebSocketConnectionManager:

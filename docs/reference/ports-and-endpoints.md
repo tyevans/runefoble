@@ -74,6 +74,8 @@
 | Silo (MinIO fork) | `silo` | `9000` (S3), `9001` (Console) | S3 Object Storage |
 | SpiceDB | `spicedb` | `50051` (gRPC), `8443` (HTTP) | Zanzibar graph authorization |
 | OpenPanel | `openpanel` | `3000` | Self-hosted analytics |
+| OpenTelemetry Collector | `otel-collector` | `4317` (gRPC), `4318` (HTTP) | OpenTelemetry metrics and distributed trace collector |
 | Loki | `loki` | `3100` | Log aggregation |
 | Grafana | `grafana` | `3001` | Metrics and observability dashboards |
 | Storybook (Dev) | Local | `6006` | Component development studio |
+

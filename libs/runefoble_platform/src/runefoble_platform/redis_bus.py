@@ -15,6 +15,7 @@ from runefoble_platform.consumer_group import (
     RedisConsumerGroup,
     deserialize_event,
 )
+from runefoble_platform.telemetry import inject_trace_context
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,15 @@ class RedisStreamsEventBus:
         event_id: str | None = None
         payload: str
 
+        carrier = inject_trace_context()
+        traceparent = carrier.get("traceparent")
+        tracestate = carrier.get("tracestate")
+
         if isinstance(event, DomainEvent):
+            if traceparent and "traceparent" not in event.metadata:
+                event.metadata["traceparent"] = traceparent
+            if tracestate and "tracestate" not in event.metadata:
+                event.metadata["tracestate"] = tracestate
             event_type = event.event_type or event.__class__.__name__
             event_id = str(event.event_id)
             payload = event.model_dump_json()
@@ -58,6 +67,12 @@ class RedisStreamsEventBus:
             event_type = str(event.get("event_type") or event.get("type") or "GenericEvent")
             raw_id = event.get("event_id") or event.get("id")
             event_id = str(raw_id) if raw_id is not None else None
+            if traceparent and "traceparent" not in event:
+                event["traceparent"] = traceparent
+            if tracestate and "tracestate" not in event:
+                event["tracestate"] = tracestate
+            if traceparent and "metadata" in event and isinstance(event["metadata"], dict):
+                event["metadata"].setdefault("traceparent", traceparent)
             payload = json_dumps(to_jsonable_python(event))
         else:
             event_type = getattr(event, "event_type", event.__class__.__name__)
@@ -74,8 +89,13 @@ class RedisStreamsEventBus:
         }
         if event_id is not None:
             entry_data["event_id"] = event_id
+        if traceparent:
+            entry_data["traceparent"] = traceparent
+        if tracestate:
+            entry_data["tracestate"] = tracestate
 
         entry_id = await client.xadd(stream, entry_data)
+
         logger.debug(
             "Published event %s (%s) to %s as %s",
             event_id or "unspecified",

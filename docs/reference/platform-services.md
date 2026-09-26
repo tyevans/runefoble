@@ -64,8 +64,9 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 
 ### 6. Observability (OpenTelemetry, Loki, Grafana)
 - **Role**: Unified distributed tracing, structured log aggregation, and real-time operational metrics.
-- **Environment Variables**: `RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT`, `RUNEFOBLE_LOKI_ENDPOINT`.
+- **Environment Variables**: `RUNEFOBLE_OTEL_ENABLED`, `RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT`, `RUNEFOBLE_LOKI_ENDPOINT`.
 - **How-To Guide**: [Instrument Services with OpenTelemetry](../how-to/instrument-services-with-opentelemetry.md).
+
 
 ### 7. OpenPanel (Privacy-Preserving Analytics)
 - **Role**: Event tracking and funnels measuring session starts, turn times, and stand-in AI activation rates.
