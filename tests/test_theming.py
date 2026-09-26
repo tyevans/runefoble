@@ -29,12 +29,24 @@ STORIES_TS = FRONTEND_DIR / "src" / "stories" / "theme-switcher.stories.ts"
 PREVIEW_TS = FRONTEND_DIR / ".storybook" / "preview.ts"
 CONTRAST_STORIES_TS = FRONTEND_DIR / "src" / "stories" / "theme-contrast-matrix.stories.ts"
 
+SETTINGS_MODAL_LAYOUT_STYLES_TS = (
+    FRONTEND_DIR / "src" / "components" / "styles" / "settings-modal-layout.styles.ts"
+)
+SETTINGS_MODAL_TABS_STYLES_TS = (
+    FRONTEND_DIR / "src" / "components" / "styles" / "settings-modal-tabs.styles.ts"
+)
+SETTINGS_MODAL_CONTROLS_STYLES_TS = (
+    FRONTEND_DIR / "src" / "components" / "styles" / "settings-modal-controls.styles.ts"
+)
+
 COMPONENT_FILES = [
     APP_SHELL_STYLES_TS,
     HEADER_TS,
     CAMPAIGN_NAV_TS,
     SWITCHER_TS,
-    FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.styles.ts",
+    SETTINGS_MODAL_LAYOUT_STYLES_TS,
+    SETTINGS_MODAL_TABS_STYLES_TS,
+    SETTINGS_MODAL_CONTROLS_STYLES_TS,
     REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-board.styles.ts",
     REPO_ROOT / "services" / "board_state" / "ui" / "src" / "ghost_preview.styles.ts",
     REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-map-uploader.styles.ts",
@@ -312,6 +324,7 @@ def test_file_lengths_under_500_lines():
         STORIES_TS,
         BOARD_TS,
         FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.ts",
+        FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.styles.ts",
         FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.types.ts",
         FRONTEND_DIR / "src" / "stories" / "runefoble-settings-modal.stories.ts",
         REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "waveform-visualizer.ts",
@@ -329,3 +342,50 @@ def test_file_lengths_under_500_lines():
         lines = file_path.read_text(encoding="utf-8").splitlines()
         line_count = len(lines)
         assert line_count < 500, f"{file_path.name} has {line_count} lines, exceeding 500 limit"
+
+
+def test_settings_modal_styles_modular_decomposition():
+    """Verify settings modal CSS modular sub-modules, clean composite export, and line limits (TASK-0111)."""
+    composite_file = FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.styles.ts"
+    layout_file = FRONTEND_DIR / "src" / "components" / "styles" / "settings-modal-layout.styles.ts"
+    tabs_file = FRONTEND_DIR / "src" / "components" / "styles" / "settings-modal-tabs.styles.ts"
+    controls_file = (
+        FRONTEND_DIR / "src" / "components" / "styles" / "settings-modal-controls.styles.ts"
+    )
+    dialog_alias_file = (
+        FRONTEND_DIR / "src" / "components" / "styles" / "settings-modal-dialog.styles.ts"
+    )
+
+    assert composite_file.is_file(), "Composite styles file must exist"
+    assert layout_file.is_file(), "Layout styles file must exist"
+    assert tabs_file.is_file(), "Tabs styles file must exist"
+    assert controls_file.is_file(), "Controls styles file must exist"
+    assert dialog_alias_file.is_file(), "Dialog alias styles file must exist"
+
+    # Line limits strictly under 150 lines per DoD
+    for f in [composite_file, layout_file, tabs_file, controls_file, dialog_alias_file]:
+        lines = len(f.read_text(encoding="utf-8").splitlines())
+        assert lines < 150, f"{f.name} has {lines} lines, exceeding 150 limit"
+
+    comp_content = composite_file.read_text(encoding="utf-8")
+    assert "settingsModalStyles" in comp_content
+    assert "layoutStyles" in comp_content
+    assert "tabsStyles" in comp_content
+    assert "controlsStyles" in comp_content
+
+    layout_content = layout_file.read_text(encoding="utf-8")
+    assert ".modal-overlay" in layout_content
+    assert ".modal-dialog" in layout_content
+    assert ".close-btn" in layout_content
+    assert ".modal-footer" in layout_content
+
+    tabs_content = tabs_file.read_text(encoding="utf-8")
+    assert ".nav-tabs" in tabs_content
+    assert ".tab-btn" in tabs_content
+    assert ".theme-grid" in tabs_content
+    assert ".theme-card" in tabs_content
+
+    controls_content = controls_file.read_text(encoding="utf-8")
+    assert ".swatch-group" in controls_content
+    assert ".form-select" in controls_content
+    assert ".checkbox-row" in controls_content

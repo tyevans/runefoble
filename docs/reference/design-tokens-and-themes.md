@@ -131,6 +131,11 @@ Persistence is tracked in `localStorage.getItem('runefoble-color-mode')` (defaul
 ### `<runefoble-settings-modal>`
 - **Tag**: `runefoble-settings-modal`
 - **Description**: Centralized configuration dialog containing appearance mode toggles (Light / Dark / System), visual theme selection cards with color swatches, audio input preferences, and kinetic dice physics settings.
+- **Style Modules** (`frontend/src/components/styles/`):
+  - `settings-modal-layout.styles.ts`: Overlay backdrop, dialog container, header, footer actions, and responsive breakpoints.
+  - `settings-modal-tabs.styles.ts`: Tab navigation bars, tab panel transitions, radio toggle cards, and setting group titles.
+  - `settings-modal-controls.styles.ts`: Swatch chips, selects, checkbox rows, and slider controls.
+  - `runefoble-settings-modal.styles.ts`: Composite style export array.
 - **Properties**:
   - `open: boolean` (reflected attribute)
   - `currentTheme: 'bauhaus' | 'dark-fantasy' | 'parchment' | 'cyber-rune'`
