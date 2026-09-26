@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **Project Visualizer Interactive Graph Zoom and Live Minimap Navigation (`tools/project_visualizer/`, `ADR-0003`, `ADR-0004`)**:
+  - Implemented mouse-anchored focal zoom in `graph_camera.js`, keeping the world point under the cursor stationary during mouse wheel scrolling and double-click zoom.
+  - Resolved minimap node synchronization: minimap nodes now dynamically update their `cx` and `cy` positions on every simulation tick, layout transformation, and tactile node drag.
+  - Added real-time minimap camera navigation: clicking or dragging anywhere on the bird's-eye minimap smoothly repositions the viewport camera to that world coordinate.
+  - Removed fixed `viewBox` distortion from the main graph SVG viewport, enabling pixel-perfect 1:1 canvas panning and tactile node dragging with grab offset preservation.
+  - Added crisp `vector-effect: non-scaling-stroke` styling to minimap viewport framing rectangles and node dots.
+  - Modularized client graph architecture by decomposing `graph.js` into `graph.js` (371 lines) and `graph_camera.js` (255 lines), strictly satisfying Hard Invariant 6 (< 500 lines per file).
 - **DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition (`TASK-0093`, `ADR-0001`, `ADR-0002`, `ADR-0003`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed `services/the_watcher/src/the_watcher/routers/copilot.py` (399 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/copilot/`:
     - `actions.py` (223 lines): Action proposal, pause window countdown, approve, modify, and veto override endpoints.

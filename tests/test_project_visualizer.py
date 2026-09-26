@@ -278,3 +278,22 @@ def test_file_length_invariant_strictly_enforced(repo_root: Path):
             assert line_count < 500, (
                 f"File {f.name} has {line_count} lines, exceeding 500 lines limit"
             )
+
+
+def test_graph_visualizer_zoom_and_minimap_bundle(repo_root: Path, tmp_path: Path):
+    generator = ProjectVisualizerGenerator(repo_root)
+    out_file = tmp_path / "test-zoom-minimap.html"
+    result = generator.build_file(out_file)
+
+    content = result.read_text(encoding="utf-8")
+    # Verify focal mouse zoom anchoring
+    assert "zoomGraph(factor, focalX, focalY)" in content or "zoomGraph" in content
+    assert "focalX" in content
+    assert "focalY" in content
+    # Verify minimap real-time node updates and interaction
+    assert "mm-node-" in content
+    assert "updateMinimap" in content
+    assert "moveCameraToMinimapPoint" in content
+    assert "minimap-view-rect" in content
+    assert "isDraggingMinimap" in content
+
