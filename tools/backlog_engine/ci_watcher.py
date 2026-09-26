@@ -1,9 +1,11 @@
 """Mechanical CI watcher, GitHub PR management, and merge dispatcher."""
 
 import json
+import re
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
 from .models import Task
 
@@ -111,6 +113,64 @@ def commit_and_push(worktree_dir: Path, task: Task, branch: str) -> None:
     push_res = run_cmd(["git", "push", "-u", "origin", branch, "--force"], cwd=worktree_dir)
     if push_res.returncode != 0:
         raise CIPipelineError(f"Git push to origin/{branch} failed: {push_res.stderr}")
+
+
+def sync_branch_with_base(
+    worktree_dir: Path,
+    base_ref: str = "origin/main",
+) -> tuple[bool, str]:
+    """Syncs the current branch with base_ref via git merge.
+
+    Returns (success, message_or_conflict_details).
+    If merge succeeds cleanly: returns (True, message).
+    If conflicts occur: leaves conflict markers in the worktree and returns (False, conflict_details).
+    """
+    if not worktree_dir.exists():
+        return True, f"Worktree directory {worktree_dir} does not exist (mocked)."
+    git_dir = worktree_dir / ".git"
+    if not git_dir.exists() and not (worktree_dir / ".git").is_file():
+        return True, "Not a git repository (mocked/testing)."
+
+    if base_ref.startswith("origin/"):
+        remote_branch = base_ref.replace("origin/", "")
+        run_cmd(["git", "fetch", "origin", remote_branch], cwd=worktree_dir)
+
+    chk = run_cmd(["git", "rev-parse", "--verify", base_ref], cwd=worktree_dir)
+    effective_base = base_ref if chk.returncode == 0 else "main"
+
+    behind_res = run_cmd(
+        ["git", "rev-list", f"HEAD..{effective_base}", "--count"], cwd=worktree_dir
+    )
+    behind_count = behind_res.stdout.strip()
+    if behind_count.isdigit() and int(behind_count) == 0:
+        return True, f"Branch is already up to date with {effective_base}."
+
+    # Attempt to merge effective_base
+    merge_res = run_cmd(
+        ["git", "merge", effective_base, "-m", f"chore: sync with {effective_base}"],
+        cwd=worktree_dir,
+    )
+    if merge_res.returncode == 0:
+        return (
+            True,
+            f"Successfully merged {effective_base} into branch ({behind_count} commit(s) synced).",
+        )
+
+    # Merge conflict occurred
+    status_res = run_cmd(["git", "status", "--porcelain"], cwd=worktree_dir)
+    conflicted_files = [
+        line[3:].strip()
+        for line in status_res.stdout.splitlines()
+        if any(line.startswith(prefix) for prefix in ("UU", "AA", "DD", "DU", "UD"))
+    ]
+    diff_res = run_cmd(["git", "diff"], cwd=worktree_dir)
+    diff_snippet = diff_res.stdout[:2500] if diff_res.stdout else "No diff output available."
+    details = (
+        f"Git merge of {effective_base} produced conflicts in:\n"
+        + "\n".join(f"  - {f}" for f in conflicted_files)
+        + f"\n\nConflict diff summary:\n{diff_snippet}"
+    )
+    return False, details
 
 
 def create_pull_request(worktree_dir: Path, task: Task, branch: str) -> str:
@@ -261,6 +321,83 @@ def wait_for_ci_checks(
 
     print(f"⚠️ CI check timeout after {timeout_seconds}s.")
     return False
+
+
+def fetch_failed_ci_logs(
+    worktree_dir: Path,
+    failed_checks: list[dict[str, Any]],
+    max_lines: int = 150,
+) -> str:
+    """Retrieves detailed error logs for failed CI jobs using gh run view --log-failed."""
+    collected_logs = []
+    seen_runs = set()
+
+    for check in failed_checks:
+        link = str(check.get("link", ""))
+        name = str(check.get("name", "Unknown Check"))
+        run_match = re.search(r"/actions/runs/(\d+)", link)
+        if not run_match:
+            collected_logs.append(f"❌ Check '{name}' failed ({link or 'no link'})")
+            continue
+
+        run_id = run_match.group(1)
+        if run_id in seen_runs:
+            continue
+        seen_runs.add(run_id)
+
+        job_match = re.search(r"/job/(\d+)", link)
+        job_arg = ["--job", job_match.group(1)] if job_match else []
+
+        cmd = ["gh", "run", "view", run_id, "--log-failed"] + job_arg
+        res = run_cmd(cmd, cwd=worktree_dir)
+
+        if res.returncode == 0 and res.stdout.strip():
+            log_lines = res.stdout.strip().splitlines()
+            if len(log_lines) > max_lines:
+                tail = "\n".join(log_lines[-max_lines:])
+                collected_logs.append(f"❌ Check '{name}' failed (Run {run_id}):\n...\n{tail}")
+            else:
+                collected_logs.append(
+                    f"❌ Check '{name}' failed (Run {run_id}):\n{res.stdout.strip()}"
+                )
+        else:
+            collected_logs.append(f"❌ Check '{name}' failed: {check.get('state')} ({link})")
+
+    return "\n\n".join(collected_logs)
+
+
+def get_ci_failure_diagnostics(worktree_dir: Path, pr_url: str) -> tuple[str, str]:
+    """Inspects why CI or mergeability failed and returns (category, details).
+
+    Category is one of: 'conflict', 'ci_failed', 'closed', 'timeout', 'unknown'.
+    """
+    is_conflict_or_closed, reason = check_pr_conflict_status(worktree_dir, pr_url)
+    if is_conflict_or_closed:
+        if "closed" in reason.lower():
+            return "closed", reason
+        return "conflict", reason
+
+    res = run_cmd(
+        ["gh", "pr", "checks", pr_url, "--json", "name,state,bucket,link"],
+        cwd=worktree_dir,
+    )
+    if res.returncode == 0 and res.stdout.strip():
+        try:
+            checks = json.loads(res.stdout)
+            if isinstance(checks, list):
+                failed = [
+                    c
+                    for c in checks
+                    if c.get("bucket") == "fail"
+                    or c.get("state") in ("FAILURE", "CANCELLED", "TIMED_OUT", "STARTUP_FAILURE")
+                ]
+                if failed:
+                    logs = fetch_failed_ci_logs(worktree_dir, failed)
+                    return "ci_failed", logs
+        except json.JSONDecodeError:
+            pass
+
+    return "unknown", f"CI checks failed or timed out for {pr_url}."
 
 
 def merge_pull_request(worktree_dir: Path, pr_url: str) -> None:

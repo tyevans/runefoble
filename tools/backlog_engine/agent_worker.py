@@ -67,17 +67,80 @@ Fix all failures now so that pre-flight verification passes.
     return prompt.strip()
 
 
+def build_ci_repair_prompt(task: Task, pr_url: str, ci_log: str) -> str:
+    """Builds a diagnostic and repair prompt when GitHub Actions CI checks fail for a PR."""
+    prompt = f"""Remote CI verification failed on GitHub Actions for {task.canonical_id}: '{task.title}'.
+Pull Request: {pr_url}
+
+================ GITHUB ACTIONS CI FAILURE LOG ================
+{ci_log.strip()}
+==============================================================
+
+Your task is to inspect the above CI check failure(s), diagnose the root cause, and fix it directly in the worktree.
+
+Common CI failure patterns and how to resolve them:
+1. Linter / Formatter failures ('Ruff Lint', 'Ruff Format'):
+   Run `uv run ruff format .` and `uv run ruff check --fix .`.
+2. Test failures in CI ('Python Lint, Tests & Properties'):
+   Inspect the test tracebacks above, identify why the test failed in the CI environment (e.g. environment assumptions, missing mocks, shallow git clone, or regressions), and fix the code or tests.
+3. Frontend TypeScript or Build failures ('Frontend TypeScript, Build & Storybook'):
+   Run `cd frontend && pnpm exec tsc --noEmit` and `cd frontend && pnpm run build` locally to diagnose and fix TypeScript and bundling errors.
+4. Helm linting failures ('Helm Lint & Manifest Validation'):
+   Run `helm lint deployments/helm/runefoble` and fix Helm chart syntax or template errors.
+
+Before reporting done:
+1. Verify locally in the worktree by running:
+   uv run ruff check .
+   uv run ruff format --check .
+   uv run pytest
+2. If frontend changes were made:
+   cd frontend && pnpm run build
+3. Do NOT edit files in docs/project/backlog/.
+
+Fix all issues now so that when the branch is pushed, all GitHub CI checks will pass.
+"""
+    return prompt.strip()
+
+
+def build_conflict_repair_prompt(task: Task, conflict_info: str) -> str:
+    """Builds a repair prompt when git merge conflicts arise against the base branch."""
+    prompt = f"""Merge conflicts were detected when synchronizing {task.canonical_id} with the latest base branch (origin/main).
+
+================ MERGE CONFLICT STATUS & DETAILS ================
+{conflict_info.strip()}
+=================================================================
+
+Your task is to resolve all merge conflicts in the worktree:
+1. Inspect the conflicted files containing conflict markers (<<<<<<<, =======, >>>>>>>).
+2. Resolve the conflicts by preserving ALL incoming changes from the base branch while retaining your implementation of {task.canonical_id}.
+3. Remove all conflict markers.
+4. Ensure the resulting code is syntactically valid and passes tests:
+   uv run ruff check .
+   uv run ruff format --check .
+   uv run pytest
+5. Stage the resolved files using `git add <file>`. Do not abort the merge.
+6. Do NOT touch files in docs/project/backlog/.
+
+Resolve the conflicts and verify the worktree now.
+"""
+    return prompt.strip()
+
+
 def run_agent_in_worktree(
     worktree_dir: Path,
     task: Task,
     feedback: str | None = None,
     timeout_seconds: int = 1800,
+    custom_prompt: str | None = None,
 ) -> tuple[bool, str]:
     """Invokes agy CLI non-interactively within the worktree directory.
 
-    If feedback is provided, sends a repair prompt continuing the session.
+    If custom_prompt or feedback is provided, sends a repair prompt continuing the session.
     """
-    if feedback:
+    if custom_prompt:
+        prompt = custom_prompt
+        cmd = ["agy", "--dangerously-skip-permissions", "-c", "-p", prompt]
+    elif feedback:
         prompt = build_repair_prompt(task, feedback)
         # Continue previous conversation session
         cmd = [
