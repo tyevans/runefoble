@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from asset_forge.routers.battlemap import router as battlemap_router
+from asset_forge.routers.print_forge import router as print_forge_router
 from asset_forge.routers.token import router as token_router
 
 app = FastAPI(
@@ -32,6 +33,7 @@ app.add_middleware(
 
 app.include_router(battlemap_router)
 app.include_router(token_router)
+app.include_router(print_forge_router)
 
 
 @app.get("/healthz", tags=["Health"])
@@ -47,7 +49,7 @@ def get_ui_manifest() -> dict[str, Any]:
     return {
         "service": "asset_forge",
         "package": "@runefoble/asset-forge-ui",
-        "components": ["runefoble-asset-forge"],
+        "components": ["runefoble-asset-forge", "runefoble-print-forge"],
         "version": "0.1.0",
     }
 
