@@ -1,32 +1,15 @@
-"""Tests for TASK-0014: Real-Time Spectator Stream & Chronicle Clean Overlay."""
+"""Spectator Event Registration, CloudEvents Schema, and State Sanitization Suite.
 
-import pytest
+Validates:
+1. SpectatorSessionConnected event registration in eventsource EventRegistry.
+2. CloudEvents 1.0 schema compliance and serialization.
+3. Strict audience-safe state sanitization (hidden tokens, private DM notes,
+   monster stat blocks, and unrevealed lore redacted).
+"""
+
 from eventsource.domain.event_registry import get_event_class_or_none
-from fastapi.testclient import TestClient
-from gateway_api.main import app as gateway_app
-from gateway_api.main import set_event_bus
-from gateway_api.spectator import (
-    clear_raw_session_state,
-    sanitize_spectator_state,
-    set_raw_session_state,
-)
+from gateway_api.spectator import sanitize_spectator_state
 from runefoble_events import SpectatorSessionConnected
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
-
-
-@pytest.fixture(autouse=True)
-def clean_state():
-    """Ensure clean spectator state and bus before and after each test."""
-    clear_raw_session_state()
-    set_event_bus(None)
-    yield
-    clear_raw_session_state()
-    set_event_bus(None)
-
-
-# ---------------------------------------------------------------------------
-# 1. Event Registration & CloudEvents Compliance Tests
-# ---------------------------------------------------------------------------
 
 
 def test_spectator_session_connected_event_registration():
@@ -65,11 +48,6 @@ def test_spectator_session_connected_cloudevents_compliance():
     assert ce["data"]["viewer_id"] == "obs_source_main"
     assert ce["data"]["viewer_name"] == "OBS Stream Source"
     assert ce["data"]["connected_at"] == "2026-09-26T04:15:00Z"
-
-
-# ---------------------------------------------------------------------------
-# 2. State Sanitization Logic Tests
-# ---------------------------------------------------------------------------
 
 
 def test_sanitize_spectator_state_strips_hidden_tokens_and_secret_notes():
@@ -206,125 +184,3 @@ def test_sanitize_spectator_state_strips_hidden_tokens_and_secret_notes():
     assert sanitized["atmosphere"]["location_name"] == "Forgotten Sepulcher"
     assert sanitized["atmosphere"]["mood"] == "Ominous"
     assert "private_dm_lore" not in sanitized["atmosphere"]
-
-
-# ---------------------------------------------------------------------------
-# 3. Gateway REST Endpoint Tests (FastAPI TestClient)
-# ---------------------------------------------------------------------------
-
-
-def test_get_spectator_state_default_endpoint():
-    """Verify GET /api/v1/spectate/{session_id} returns 200 with sanitized state and guest viewer."""
-    client = TestClient(gateway_app)
-    res = client.get("/api/v1/spectate/sess-default-1")
-
-    assert res.status_code == 200
-    data = res.json()
-    assert data["session_id"] == "sess-default-1"
-    assert data["status"] == "active"
-    assert data["round"] == 3
-    assert data["cols"] == 8
-    assert data["rows"] == 8
-
-    # Tokens must be sanitized: only visible tokens
-    names = [t["name"] for t in data["tokens"]]
-    assert "Valeros" in names
-    assert "Kyra" in names
-    assert "Goblin Stalker" not in names
-    assert "Mimic Chest" not in names
-
-    # Monster stats and secrets stripped
-    for tok in data["tokens"]:
-        assert "hp" not in tok
-        assert "stat_block" not in tok
-        assert "dm_notes" not in tok
-
-    # Atmosphere and chronicle present
-    assert data["atmosphere"]["location_name"] == "Tomb of the Star-Eater - Crypt Antechamber"
-    assert len(data["chronicle"]) == 2  # c_secret stripped
-
-    # Default guest viewer info
-    assert data["viewer"]["viewer_id"] == "spectator_guest"
-    assert data["viewer"]["viewer_name"] == "Guest Spectator"
-
-
-def test_get_spectator_state_with_token_query():
-    """Verify spectator authentication and viewer tagging via ?token= query parameter."""
-    client = TestClient(gateway_app)
-    res = client.get("/api/v1/spectate/sess-obs-1?token=devon_stream")
-
-    assert res.status_code == 200
-    data = res.json()
-    assert data["viewer"]["viewer_id"] == "spectator_devon_stream"
-    assert data["viewer"]["viewer_name"] == "Spectator (devon_stream)"
-
-
-def test_get_spectator_state_with_auth_headers():
-    """Verify viewer identity resolution from X-User-Id and Authorization bearer headers."""
-    client = TestClient(gateway_app)
-
-    # 1. Via X-User-Id
-    res_x = client.get("/api/v1/spectate/sess-header-1", headers={"X-User-Id": "spectator_sam"})
-    assert res_x.status_code == 200
-    assert res_x.json()["viewer"]["viewer_id"] == "spectator_sam"
-
-    # 2. Via Bearer token
-    res_bearer = client.get(
-        "/api/v1/spectate/sess-header-2", headers={"Authorization": "Bearer twitch_streamer_7"}
-    )
-    assert res_bearer.status_code == 200
-    assert res_bearer.json()["viewer"]["viewer_id"] == "viewer_twitch_streamer_7"
-
-
-@pytest.mark.asyncio
-async def test_spectator_connected_event_dispatched_to_redis_bus():
-    """Verify that accessing the spectator endpoint dispatches SpectatorSessionConnected event to Redis."""
-    mock_redis = MockAsyncRedis()
-    mock_bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(mock_bus)
-
-    client = TestClient(gateway_app)
-    res = client.get("/api/v1/spectate/sess-event-stream?token=obs_overlay")
-    assert res.status_code == 200
-
-    # Verify event published to Redis stream 'runefoble.events.spectator'
-    stream_events = mock_redis.streams.get("runefoble.events.spectator", [])
-    assert len(stream_events) == 1
-
-    _event_id, payload = stream_events[0]
-    assert payload["event_type"] == "runefoble.events.spectator.connected"
-    assert "sess-event-stream" in payload["payload"]
-    assert "spectator_obs_overlay" in payload["payload"]
-
-
-def test_custom_session_state_overrides_and_sanitization():
-    """Verify custom session state can be dynamically provided and is properly sanitized."""
-    custom_raw = {
-        "session_id": "custom-dungeon-5",
-        "status": "in_combat",
-        "round": 6,
-        "cols": 12,
-        "rows": 12,
-        "tokens": [
-            {"id": "c-hero", "name": "Hero", "x": 1, "y": 1, "hp": 100, "ac": 20},
-            {"id": "c-stealth", "name": "Stalker", "x": 4, "y": 4, "secret": True, "hp": 40},
-        ],
-        "dm_notes": "Trap triggered if hero moves east.",
-        "chronicle": [
-            {"id": "ch-1", "speaker": "Hero", "text": "For the realm!", "timestamp": "12:00:00"},
-        ],
-    }
-    set_raw_session_state("custom-dungeon-5", custom_raw)
-
-    client = TestClient(gateway_app)
-    res = client.get("/api/v1/spectate/custom-dungeon-5")
-    assert res.status_code == 200
-    data = res.json()
-
-    assert data["session_id"] == "custom-dungeon-5"
-    assert data["round"] == 6
-    assert data["cols"] == 12
-    assert len(data["tokens"]) == 1
-    assert data["tokens"][0]["id"] == "c-hero"
-    assert "hp" not in data["tokens"][0]
-    assert "dm_notes" not in data

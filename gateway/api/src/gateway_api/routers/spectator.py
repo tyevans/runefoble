@@ -3,7 +3,7 @@
 import contextlib
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Header, Query
+from fastapi import APIRouter, Header, Query, WebSocket
 from gateway_api.dependencies import get_event_bus
 from gateway_api.spectator import (
     SpectatorStateResponse,
@@ -17,6 +17,10 @@ router = APIRouter(tags=["Spectator"])
 
 
 @router.get("/api/v1/spectate/{session_id}", response_model=SpectatorStateResponse)
+@router.get(
+    "/api/v1/spectator/sessions/{session_id}",
+    response_model=SpectatorStateResponse,
+)
 async def get_spectator_state(
     session_id: str,
     token: str | None = Query(None, description="Optional spectator access token"),
@@ -58,3 +62,11 @@ async def get_spectator_state(
 
     raw_state = get_raw_session_state(session_id)
     return sanitize_spectator_state(raw_state, viewer_info=viewer_info)
+
+
+@router.websocket("/ws/spectator/{session_id}")
+async def spectator_websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
+    """Real-time spectator WebSocket feed delivering sanitized party and broadcast updates."""
+    from gateway_api.routers.overlay import overlay_websocket_endpoint
+
+    await overlay_websocket_endpoint(websocket, session_id)
