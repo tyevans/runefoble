@@ -1,7 +1,7 @@
 ---
 id: '0116'
 title: Campaign Analytics Worker and Event Dispatch Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0052
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0040
 - US-0054
+pr_url: https://github.com/tyevans/runefoble/pull/111
 ---
-
 # TASK-0116: Campaign Analytics Worker and Event Dispatch Modular Decomposition
 
 ## Status
