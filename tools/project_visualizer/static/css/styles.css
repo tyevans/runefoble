@@ -144,11 +144,21 @@ html.light .graph-canvas-bg {
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   z-index: 30;
+  cursor: crosshair;
 }
 .minimap-rect {
   fill: rgba(99, 102, 241, 0.18);
   stroke: var(--accent-indigo);
-  stroke-width: 1.5;
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+  cursor: grab;
+}
+.minimap-rect:active {
+  cursor: grabbing;
+}
+.mm-node {
+  vector-effect: non-scaling-stroke;
+  transition: r 0.2s ease, opacity 0.2s ease;
 }
 
 /* Interactive Floating Tooltip */

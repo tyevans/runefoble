@@ -12,6 +12,7 @@ _MODULE_ORDER = [
     "gantt.js",
     "graph_physics.js",
     "graph.js",
+    "graph_camera.js",
     "traceability.js",
     "roadmap.js",
     "entities.js",

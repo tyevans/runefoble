@@ -142,7 +142,8 @@ To prevent exposing local execution tooling in published public documentation:
   - **Concentric Radar**: Radial orbits grouping entities by architectural tier (Personas -> Stories -> PRDs -> Tasks -> ADRs).
 - **Live Physics Engine (`ForceSimulation`)**: Smooth 60 FPS particle dynamics with live drag-to-pin, freeze/unfreeze simulation toggle, and dynamic reheat shuffle.
 - **Cyber-Rune Aesthetics & Animated Energy Flow**: Bauhaus geometric node styling with neon halo rings, status badges, linked PR chips, and animated SVG pulse currents flowing along active dependency edges.
-- **Interactive Minimap Navigator**: Real-time bird's-eye canvas minimap with live camera viewport rectangle, click-to-teleport, and instant spatial orientation.
+- **Mouse-Anchored Focal Zoom & Tactile Panning**: Smooth exponential wheel zoom and double-click zoom anchored strictly to the cursor position without drift, 1:1 pixel canvas panning, and zero-jump tactile node dragging with grab offset preservation.
+- **Dynamic Minimap with Real-Time Node Tracking**: Synchronized bird's-eye radar view rendering colored node positions that update continuously during physics simulations, layout switches, and node drags, featuring an interactive viewport camera window supporting click-to-center and drag-to-pan camera navigation.
 - **Search Auto-Focus & Concentric Ripple Ping**: Searching or selecting an entity smoothly centers the camera and emits an animated sonar ripple ping to spotlight the target.
 - **Glassmorphism Detail Tooltips & Fullscreen Mode**: Rich floating hover preview cards with node status, linked PRs, and quick actions, plus full-canvas immersion mode.
 - **Bidirectional Lineage Traversal**: Clicking any node illuminates its entire upstream and downstream dependency chain while dimming unrelated entities.
