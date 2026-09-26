@@ -391,5 +391,3 @@ class GameSessionAggregate(DeclarativeAggregate[GameSessionState]):
                 "combat_turn_started": False,
             }
         )
-
-

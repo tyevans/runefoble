@@ -168,4 +168,3 @@ async def test_execute_agent_action_plan():
     assert res["success"] is True
     assert res["completed_steps"] == 2
     assert len(res["steps"]) == 2
-

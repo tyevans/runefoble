@@ -420,7 +420,10 @@ async def test_session_read_projection_worker_process_loop(
     dlq_stream = f"{stream}.dlq"
     assert dlq_stream in mock_redis.streams
     assert len(mock_redis.streams[dlq_stream]) == 1
-    assert "Unrecoverable deserialization fault" in mock_redis.streams[dlq_stream][0][1]["error_reason"]
+    assert (
+        "Unrecoverable deserialization fault"
+        in mock_redis.streams[dlq_stream][0][1]["error_reason"]
+    )
 
     # Pending list is still 0 because poison message was ACKed after DLQ routing
     assert len(mock_redis.get_pending(stream, group)) == 0

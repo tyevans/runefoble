@@ -49,6 +49,7 @@ from eventsource.domain.event import DomainEvent
 from runefoble_events.session import GameSessionStarted, PlayerJoinedSession
 from runefoble_platform.analytics import OpenPanelClient
 
+
 async def handle_domain_event_analytics(event: DomainEvent, client: OpenPanelClient):
     if isinstance(event, GameSessionStarted):
         await client.track(

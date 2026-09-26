@@ -44,9 +44,7 @@ def test_dice_keep_highest_bounds_property(
     count: int, sides: int, modifier: int, keep_highest: int
 ) -> None:
     """Property: Keep highest rolls bounds invariant."""
-    result = evaluate_dice(
-        count=count, sides=sides, modifier=modifier, keep_highest=keep_highest
-    )
+    result = evaluate_dice(count=count, sides=sides, modifier=modifier, keep_highest=keep_highest)
     effective_count = min(count, keep_highest)
     min_possible = effective_count * 1 + modifier
     max_possible = effective_count * sides + modifier
@@ -55,9 +53,10 @@ def test_dice_keep_highest_bounds_property(
     assert len(result["rolls"]) == count
     assert len(result["kept_rolls"]) == effective_count
     # Kept rolls must match the highest values in rolls
-    assert sorted(result["kept_rolls"], reverse=True) == sorted(result["rolls"], reverse=True)[
-        :effective_count
-    ]
+    assert (
+        sorted(result["kept_rolls"], reverse=True)
+        == sorted(result["rolls"], reverse=True)[:effective_count]
+    )
 
 
 @given(

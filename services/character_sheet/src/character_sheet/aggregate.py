@@ -100,7 +100,6 @@ class CharacterState(BaseModel):
     spell_slots: dict[int, int] = Field(default_factory=lambda: {1: 2})
 
 
-
 class CharacterAggregate(DeclarativeAggregate[CharacterState]):
     """Event-sourced aggregate managing character stats, equipment, inventory, and conditions."""
 
@@ -378,13 +377,10 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
         book = list(self.state.spellbook)
         if event.spell_name not in book:
             book.append(event.spell_name)
-        self._state = self.state.model_copy(
-            update={"prepared_spells": prep, "spellbook": book}
-        )
+        self._state = self.state.model_copy(update={"prepared_spells": prep, "spellbook": book})
 
     @handles(SpellSlotExpended)
     def _on_spell_slot_expended(self, event: SpellSlotExpended) -> None:
         slots = dict(self.state.spell_slots)
         slots[event.slot_level_used] = event.remaining_slots
         self._state = self.state.model_copy(update={"spell_slots": slots})
-

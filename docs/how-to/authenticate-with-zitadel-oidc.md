@@ -46,15 +46,17 @@ from runefoble_auth.zitadel import AuthenticatedUser, ZitadelAuthService
 router = APIRouter()
 auth_service = ZitadelAuthService()
 
+
 async def get_current_user(authorization: str | None = Header(None)) -> AuthenticatedUser:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Bearer token")
-    
+
     token = authorization.split(" ")[1]
     try:
         return auth_service.decode_token(token, verify=True)
     except Exception as exc:
         raise HTTPException(status_code=401, detail=f"Token verification failed: {exc}")
+
 
 @router.get("/api/v1/profile")
 async def get_profile(user: AuthenticatedUser = Depends(get_current_user)):
@@ -75,12 +77,13 @@ For real-time connections (`/ws/campaigns/{campaign_id}`), clients send the toke
 from fastapi import WebSocket, WebSocketDisconnect
 from runefoble_auth.zitadel import ZitadelAuthService
 
+
 async def campaign_websocket_endpoint(websocket: WebSocket, campaign_id: str):
     token = websocket.query_params.get("token")
     if not token:
         await websocket.close(code=4401, reason="Authentication token required")
         return
-        
+
     try:
         user = auth_service.decode_token(token, verify=True)
     except Exception:

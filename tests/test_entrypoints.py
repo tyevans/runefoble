@@ -124,5 +124,7 @@ def test_frontend_container_and_ingress_configuration():
     values_path = Path("deployments/helm/runefoble/values.yaml")
     values = yaml.safe_load(values_path.read_text())
     hosts = [h["host"] for h in values.get("ingress", {}).get("hosts", [])]
-    assert "localhost" in hosts, "Ingress must route 'localhost' to support local curl and browser access"
+    assert "localhost" in hosts, (
+        "Ingress must route 'localhost' to support local curl and browser access"
+    )
     assert "runefoble.local" in hosts, "Ingress must route 'runefoble.local'"

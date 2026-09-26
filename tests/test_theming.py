@@ -22,7 +22,7 @@ def test_themes_css_bauhaus_tokens():
     content = THEMES_CSS.read_text(encoding="utf-8")
 
     # Verify root / bauhaus selector
-    assert ':root' in content
+    assert ":root" in content
     assert '[data-theme="bauhaus"]' in content
 
     # Verify primary colors

@@ -92,7 +92,9 @@ class AutonomousDMEngine:
             location_name = f"{clean_name} Environs"
             lighting = f"moody illumination highlighting the {mood_key} atmosphere"
             description = f"The party stands within the {clean_name}. A palpable {mood_key} tension pervades every shadow."
-            ambient_prompt = f"atmospheric fantasy soundscape, {clean_name} ambience, {mood_key} tension"
+            ambient_prompt = (
+                f"atmospheric fantasy soundscape, {clean_name} ambience, {mood_key} tension"
+            )
 
         return SceneAtmosphereSet(
             session_id=session_id,
@@ -123,52 +125,170 @@ class AutonomousDMEngine:
                 encounter_name = "Goblin Scout Ambush"
                 tactical_objective = "Disperse the scout vanguard before they blow the alarm horn."
                 monsters = [
-                    {"id": f"{encounter_id}-mon-1", "name": "Goblin Skirmisher", "cr": "1/4", "hp": 7, "max_hp": 7, "ac": 15, "role": "skirmisher", "position": {"x": 8, "y": 3}},
-                    {"id": f"{encounter_id}-mon-2", "name": "Goblin Archer", "cr": "1/4", "hp": 7, "max_hp": 7, "ac": 13, "role": "ranged", "position": {"x": 10, "y": 2}},
+                    {
+                        "id": f"{encounter_id}-mon-1",
+                        "name": "Goblin Skirmisher",
+                        "cr": "1/4",
+                        "hp": 7,
+                        "max_hp": 7,
+                        "ac": 15,
+                        "role": "skirmisher",
+                        "position": {"x": 8, "y": 3},
+                    },
+                    {
+                        "id": f"{encounter_id}-mon-2",
+                        "name": "Goblin Archer",
+                        "cr": "1/4",
+                        "hp": 7,
+                        "max_hp": 7,
+                        "ac": 13,
+                        "role": "ranged",
+                        "position": {"x": 10, "y": 2},
+                    },
                 ]
             elif threat_level == "hard":
                 encounter_name = "Crypt Guardian Vanguard"
-                tactical_objective = "Defeat the Bugbear Chieftain before the archers pin the frontline down."
+                tactical_objective = (
+                    "Defeat the Bugbear Chieftain before the archers pin the frontline down."
+                )
                 monsters = [
-                    {"id": f"{encounter_id}-mon-1", "name": "Bugbear Chieftain", "cr": "3", "hp": 65, "max_hp": 65, "ac": 17, "role": "bruiser", "position": {"x": 6, "y": 5}},
-                    {"id": f"{encounter_id}-mon-2", "name": "Skeleton Archer Alpha", "cr": "1/4", "hp": 13, "max_hp": 13, "ac": 13, "role": "ranged", "position": {"x": 9, "y": 2}},
-                    {"id": f"{encounter_id}-mon-3", "name": "Skeleton Archer Beta", "cr": "1/4", "hp": 13, "max_hp": 13, "ac": 13, "role": "ranged", "position": {"x": 9, "y": 8}},
+                    {
+                        "id": f"{encounter_id}-mon-1",
+                        "name": "Bugbear Chieftain",
+                        "cr": "3",
+                        "hp": 65,
+                        "max_hp": 65,
+                        "ac": 17,
+                        "role": "bruiser",
+                        "position": {"x": 6, "y": 5},
+                    },
+                    {
+                        "id": f"{encounter_id}-mon-2",
+                        "name": "Skeleton Archer Alpha",
+                        "cr": "1/4",
+                        "hp": 13,
+                        "max_hp": 13,
+                        "ac": 13,
+                        "role": "ranged",
+                        "position": {"x": 9, "y": 2},
+                    },
+                    {
+                        "id": f"{encounter_id}-mon-3",
+                        "name": "Skeleton Archer Beta",
+                        "cr": "1/4",
+                        "hp": 13,
+                        "max_hp": 13,
+                        "ac": 13,
+                        "role": "ranged",
+                        "position": {"x": 9, "y": 8},
+                    },
                 ]
             elif threat_level == "deadly":
                 encounter_name = "Shadow Wraith Stalker"
-                tactical_objective = "Neutralize the Wraith before life-drain reduces party constitution to zero."
+                tactical_objective = (
+                    "Neutralize the Wraith before life-drain reduces party constitution to zero."
+                )
                 monsters = [
-                    {"id": f"{encounter_id}-mon-1", "name": "Grave Wraith", "cr": "5", "hp": 67, "max_hp": 67, "ac": 13, "role": "caster", "position": {"x": 7, "y": 6}},
-                    {"id": f"{encounter_id}-mon-2", "name": "Crawling Shadow", "cr": "1/2", "hp": 16, "max_hp": 16, "ac": 12, "role": "skirmisher", "position": {"x": 5, "y": 4}},
+                    {
+                        "id": f"{encounter_id}-mon-1",
+                        "name": "Grave Wraith",
+                        "cr": "5",
+                        "hp": 67,
+                        "max_hp": 67,
+                        "ac": 13,
+                        "role": "caster",
+                        "position": {"x": 7, "y": 6},
+                    },
+                    {
+                        "id": f"{encounter_id}-mon-2",
+                        "name": "Crawling Shadow",
+                        "cr": "1/2",
+                        "hp": 16,
+                        "max_hp": 16,
+                        "ac": 12,
+                        "role": "skirmisher",
+                        "position": {"x": 5, "y": 4},
+                    },
                 ]
             else:  # medium
                 encounter_name = "Cavern Skirmish Squad"
-                tactical_objective = "Eliminate the frontline warriors and isolate the goblin shaman."
+                tactical_objective = (
+                    "Eliminate the frontline warriors and isolate the goblin shaman."
+                )
                 monsters = [
-                    {"id": f"{encounter_id}-mon-1", "name": "Goblin Boss", "cr": "1", "hp": 21, "max_hp": 21, "ac": 17, "role": "boss", "position": {"x": 7, "y": 5}},
-                    {"id": f"{encounter_id}-mon-2", "name": "Goblin Shaman", "cr": "1", "hp": 18, "max_hp": 18, "ac": 12, "role": "caster", "position": {"x": 10, "y": 5}},
-                    {"id": f"{encounter_id}-mon-3", "name": "Goblin Cutthroat", "cr": "1/4", "hp": 9, "max_hp": 9, "ac": 14, "role": "skirmisher", "position": {"x": 6, "y": 4}},
+                    {
+                        "id": f"{encounter_id}-mon-1",
+                        "name": "Goblin Boss",
+                        "cr": "1",
+                        "hp": 21,
+                        "max_hp": 21,
+                        "ac": 17,
+                        "role": "boss",
+                        "position": {"x": 7, "y": 5},
+                    },
+                    {
+                        "id": f"{encounter_id}-mon-2",
+                        "name": "Goblin Shaman",
+                        "cr": "1",
+                        "hp": 18,
+                        "max_hp": 18,
+                        "ac": 12,
+                        "role": "caster",
+                        "position": {"x": 10, "y": 5},
+                    },
+                    {
+                        "id": f"{encounter_id}-mon-3",
+                        "name": "Goblin Cutthroat",
+                        "cr": "1/4",
+                        "hp": 9,
+                        "max_hp": 9,
+                        "ac": 14,
+                        "role": "skirmisher",
+                        "position": {"x": 6, "y": 4},
+                    },
                 ]
         else:
             encounter_name = "Infernal Drake Reckoning"
-            tactical_objective = "Sever the drake's fire breath rhythm by disrupting its grounding stance."
+            tactical_objective = (
+                "Sever the drake's fire breath rhythm by disrupting its grounding stance."
+            )
             monsters = [
-                {"id": f"{encounter_id}-mon-1", "name": "Young Red Dragon", "cr": "10", "hp": 178, "max_hp": 178, "ac": 18, "role": "boss", "position": {"x": 8, "y": 8}},
-                {"id": f"{encounter_id}-mon-2", "name": "Fire Cultist Zealot", "cr": "2", "hp": 45, "max_hp": 45, "ac": 15, "role": "caster", "position": {"x": 11, "y": 6}},
+                {
+                    "id": f"{encounter_id}-mon-1",
+                    "name": "Young Red Dragon",
+                    "cr": "10",
+                    "hp": 178,
+                    "max_hp": 178,
+                    "ac": 18,
+                    "role": "boss",
+                    "position": {"x": 8, "y": 8},
+                },
+                {
+                    "id": f"{encounter_id}-mon-2",
+                    "name": "Fire Cultist Zealot",
+                    "cr": "2",
+                    "hp": 45,
+                    "max_hp": 45,
+                    "ac": 15,
+                    "role": "caster",
+                    "position": {"x": 11, "y": 6},
+                },
             ]
 
         if party_size >= 5 and len(monsters) < 4:
             extra_idx = len(monsters) + 1
-            monsters.append({
-                "id": f"{encounter_id}-mon-{extra_idx}",
-                "name": "Reinforcement Minion",
-                "cr": "1/4",
-                "hp": 11,
-                "max_hp": 11,
-                "ac": 13,
-                "role": "minion",
-                "position": {"x": 5, "y": 7},
-            })
+            monsters.append(
+                {
+                    "id": f"{encounter_id}-mon-{extra_idx}",
+                    "name": "Reinforcement Minion",
+                    "cr": "1/4",
+                    "hp": 11,
+                    "max_hp": 11,
+                    "ac": 13,
+                    "role": "minion",
+                    "position": {"x": 5, "y": 7},
+                }
+            )
 
         return EncounterSpawned(
             session_id=session_id,
@@ -205,11 +325,29 @@ class AutonomousDMEngine:
         target_hp = chosen_target.get("current_hp", chosen_target.get("hp", 20))
 
         actor_lower = actor_name.lower()
-        is_caster = any(kw in actor_lower for kw in ["shaman", "mage", "caster", "wraith", "cultist", "priest", "lich", "witch", "wizard"])
+        is_caster = any(
+            kw in actor_lower
+            for kw in [
+                "shaman",
+                "mage",
+                "caster",
+                "wraith",
+                "cultist",
+                "priest",
+                "lich",
+                "witch",
+                "wizard",
+            ]
+        )
 
         if is_caster:
             action_type = "cast_spell"
-            spell_names = ["Ray of Enfeeblement", "Shadow Bolt", "Misty Step & Fire Bolt", "Chaos Spark"]
+            spell_names = [
+                "Ray of Enfeeblement",
+                "Shadow Bolt",
+                "Misty Step & Fire Bolt",
+                "Chaos Spark",
+            ]
             chosen_spell = spell_names[(round_number - 1) % len(spell_names)]
             hp_impact = -8
             narrative = (

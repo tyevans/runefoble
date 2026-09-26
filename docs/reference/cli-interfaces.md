@@ -6,6 +6,8 @@
 |---|---|
 | `make help` | Displays all available developer commands |
 | `make setup` | Installs Python UV workspace dependencies and frontend packages |
+| `make health-check` | Audits codebase line counts (<500 lines) and backlog ready buffer |
+| `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`) |
 | `make cluster-up` | Launches local Kind Kubernetes cluster with port mapping and Traefik |
 | `make cluster-down` | Deletes the local Kind cluster |
 | `make helm-lint` | Validates Helm chart syntax |
@@ -17,3 +19,11 @@
 | `make test` | Executes the Python test suite and builds the frontend |
 | `make lint` | Runs typechecking and Helm chart linter |
 | `make build` | Produces production frontend bundle and static Storybook documentation |
+
+## Automation Runner Scripts
+
+| Script | Purpose |
+|---|---|
+| `./scripts/health_check.py` | Standalone Python health inspection auditing line count invariants and buffer drift |
+| `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |
+| `./scripts/run-backlog-engine.sh` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching |

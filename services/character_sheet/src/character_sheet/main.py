@@ -162,7 +162,6 @@ async def cast_spell(character_id: UUID, req: CastSpellRequest):
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-
 @app.get("/api/v1/characters/{character_id}", response_model=CharacterState)
 async def get_character(character_id: UUID):
     try:

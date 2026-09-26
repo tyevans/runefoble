@@ -6,7 +6,6 @@ Verifies:
 3. The Watcher REST endpoint POST /api/v1/watcher/chronicle/recap with FastAPI TestClient.
 """
 
-
 import pytest
 from eventsource.domain.event_registry import default_registry
 from fastapi.testclient import TestClient

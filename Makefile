@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check backlog-worker
 
 CLUSTER_NAME ?= runefoble-local
 KIND_CONFIG ?= deployments/kind/cluster-config.yaml
@@ -12,6 +12,9 @@ help: ## Show this help message
 
 health-check: ## Inspect codebase file length invariants and backlog ready buffer
 	@python3 scripts/health_check.py
+
+backlog-worker: ## Run autonomous backlog execution engine (ARGS="--drain --concurrency 2")
+	@python3 -m tools.backlog_engine.cli $(ARGS)
 
 setup: install-tools ## Install workspace Python dependencies and frontend packages
 	@echo "==> Setting up UV workspace..."

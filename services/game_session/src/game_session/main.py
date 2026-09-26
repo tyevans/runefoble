@@ -309,7 +309,6 @@ async def get_combat_state(session_id: UUID):
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
 
 
-
 @app.post(
     "/api/v1/sessions/{session_id}/turns/auto-pilot",
     response_model=AutoPilotResponse,

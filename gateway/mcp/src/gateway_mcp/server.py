@@ -361,11 +361,15 @@ async def execute_agent_action_plan(
             return _fail(f"Invalid tool: '{tool_name}' not found", idx, tool_name)
 
         raw = action.get("parameters") or action.get("arguments") or action.get("args")
-        params = dict(raw) if isinstance(raw, dict) else {
-            k: v
-            for k, v in action.items()
-            if k not in {"tool", "name", "tool_name", "step_id", "description"}
-        }
+        params = (
+            dict(raw)
+            if isinstance(raw, dict)
+            else {
+                k: v
+                for k, v in action.items()
+                if k not in {"tool", "name", "tool_name", "step_id", "description"}
+            }
+        )
 
         if "session_id" not in params and tool_name in {
             "move_board_token",
@@ -397,13 +401,15 @@ async def execute_agent_action_plan(
                     output,
                 )
 
-            step_results.append({
-                "step": idx + 1,
-                "tool": tool_name,
-                "status": "success",
-                "output": output,
-                "duration_ms": duration_ms,
-            })
+            step_results.append(
+                {
+                    "step": idx + 1,
+                    "tool": tool_name,
+                    "status": "success",
+                    "output": output,
+                    "duration_ms": duration_ms,
+                }
+            )
         except Exception as exc:
             duration_ms = round((time.perf_counter() - t0) * 1000, 2)
             return _fail(str(exc), idx, tool_name, duration_ms)

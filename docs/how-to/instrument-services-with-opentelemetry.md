@@ -26,16 +26,19 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk.resources import Resource
 from runefoble_platform.config import PlatformSettings
 
+
 def configure_telemetry(service_name: str, settings: PlatformSettings | None = None) -> None:
     settings = settings or PlatformSettings()
-    
-    resource = Resource.create({
-        "service.name": service_name,
-        "deployment.environment": settings.environment,
-    })
-    
+
+    resource = Resource.create(
+        {
+            "service.name": service_name,
+            "deployment.environment": settings.environment,
+        }
+    )
+
     provider = TracerProvider(resource=resource)
-    
+
     # Export spans to OTel Collector via OTLP gRPC
     exporter = OTLPSpanExporter(endpoint=settings.otel_exporter_otlp_endpoint, insecure=True)
     provider.add_span_processor(BatchSpanProcessor(exporter))
@@ -72,10 +75,11 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 tracer = trace.get_tracer("runefoble.events")
 propagator = TraceContextTextMapPropagator()
 
+
 def publish_traced_event(event_bus, topic: str, event_data: dict) -> None:
     carrier: dict[str, str] = {}
     propagator.inject(carrier)
-    
+
     # Attach carrier to CloudEvent extension headers
     event_data["traceparent"] = carrier.get("traceparent")
     event_bus.publish(topic, event_data)
