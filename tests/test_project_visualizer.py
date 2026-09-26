@@ -188,6 +188,10 @@ def test_server_http_endpoints(repo_root: Path):
 def test_git_metadata_harvester_and_task_tagging(repo_root: Path):
     from tools.project_visualizer.git_metadata import GitMetadataHarvester
 
+    shallow_file = repo_root / ".git" / "shallow"
+    if shallow_file.exists():
+        pytest.skip("Git repository is a shallow clone without commit history")
+
     harvester = GitMetadataHarvester(repo_root)
     harvested = harvester.harvest()
     assert len(harvested) > 0
@@ -206,6 +210,33 @@ def test_git_metadata_harvester_and_task_tagging(repo_root: Path):
     assert t41 is not None
     assert any("#30" in pr for pr in t41.prs)
     assert any("744383e" in c.hash or "c40d7aa" in c.hash for c in t41.commits)
+
+
+def test_git_metadata_harvester_parsing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    import subprocess
+
+    from tools.project_visualizer.git_metadata import GitMetadataHarvester
+
+    (tmp_path / ".git").mkdir()
+
+    fake_log = (
+        "c40d7aa\tTyler Evans\t2026-09-26\tfeat(task-0041): FastMCP Gateway Server Modular Decomposition (#30)\n"
+        "744383e\tTy Evans\t2026-09-26\tchore(backlog): complete TASK-0041\n"
+    )
+    monkeypatch.setattr(
+        subprocess,
+        "check_output",
+        lambda *args, **kwargs: fake_log,
+    )
+
+    harvester = GitMetadataHarvester(tmp_path)
+    harvested = harvester.harvest()
+    assert "TASK-0041" in harvested
+    commits, prs = harvested["TASK-0041"]
+    assert len(commits) == 2
+    assert "#30" in prs
+    assert any(c.hash == "c40d7aa" for c in commits)
+    assert any(c.hash == "744383e" for c in commits)
 
 
 def test_caching_and_deterministic_fingerprint(repo_root: Path):
