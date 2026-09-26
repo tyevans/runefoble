@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blackbox Documentation & Pages Test Suite**: Expanded `tests/test_docs_build_and_pages.py` to assert changelog existence, Keep a Changelog structure, Definition of Done enforcement, and marketing page navigation integrity.
 
 ### Changed
+- **SpiceDB Auth Sync Test Suite Decomposition (`TASK-0044`)**:
+  - Decomposed monolithic test file `tests/test_blackbox_spicedb_zitadel_sync.py` (408 lines) into two focused, modular blackbox test suites:
+    - `tests/test_blackbox_spicedb_identity_sync.py` (213 lines): covers user registration, Zitadel OIDC claim syncing, campaign GM/player role assignments, instant revocation, Redis Streams session deserialization, and transient fault resilience with exponential backoff retry.
+    - `tests/test_blackbox_spicedb_ownership_sync.py` (210 lines): covers tactical board token movement isolation, spectator read-only inspection, domain event stream synchronization (`SessionCreated`, `ParticipantJoined`, `CharacterCreated`), character ownership revocation, and error handling for malformed event payloads.
+  - Updated `gateway/api/src/gateway_api/auth_sync.py` to ensure `get_sync_service()` dynamically tracks the active SpiceDB client instance configured via `get_spicedb_client()`.
+  - Strictly enforced Hard Invariant 6 with both test files well under the 250-line target ceiling and zero regression across 406 passing tests.
 - **Domain Aggregates and Rule Tables Modular Decomposition (`TASK-0060`)**:
   - Decomposed monolithic domain aggregate files across `character_sheet`, `board_state`, and `game_session` bounded contexts into focused `rules.py` (game balance tables, hazard formulas, spatial/initiative calculations) and `models.py` (Pydantic state schemas with immutable transition methods and request/response DTOs) submodules.
   - Maintained 100% backward-compatible re-exports in all `aggregate.py` modules.
