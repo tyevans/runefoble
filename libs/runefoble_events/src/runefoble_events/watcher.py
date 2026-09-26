@@ -154,3 +154,55 @@ class VoiceAudioConditioned(BaseRunefobleEvent):
 # Legacy backward-compatible aliases
 WatcherNarrationEvent = WatcherNarrationGenerated
 DiceRollEvent = DiceRolled
+
+
+@register_event("runefoble.events.watcher.disambiguation_requested")
+class IntentDisambiguationRequested(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.disambiguation_requested"
+    session_id: str
+    campaign_id: str | None = None
+    speaker_id: str
+    speaker_name: str
+    original_transcript: str
+    disambiguation_id: str
+    action_type: str
+    ambiguous_target: str
+    candidates: list[dict[str, Any]] = Field(default_factory=list)
+    clarification_prompt: str
+
+
+@register_event("runefoble.events.watcher.compound_action_resolved")
+class CompoundActionResolved(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.compound_action_resolved"
+    session_id: str
+    campaign_id: str | None = None
+    speaker_id: str
+    speaker_name: str
+    original_transcript: str
+    disambiguation_id: str | None = None
+    resolved_target: str | None = None
+    actions: list[dict[str, Any]] = Field(default_factory=list)
+    status: str = "ready"
+    narrative_summary: str = ""
+
+
+@register_event("runefoble.events.board.ghost_preview_candidate")
+class CandidateGhostPreviewEmitted(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "BoardState"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.board.ghost_preview_candidate"
+    session_id: str
+    disambiguation_id: str
+    candidate_id: str
+    token_id: str
+    target_x: int
+    target_y: int
+    descriptor: str
+    path: list[list[int]] = Field(default_factory=list)
