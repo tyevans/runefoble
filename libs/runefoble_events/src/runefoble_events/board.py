@@ -56,6 +56,16 @@ class FogOfWarRevealed(BaseRunefobleEvent):
     revealed_by_token_id: str | None = None
 
 
+@register_event("runefoble.events.board.fog_of_war_shrouded")
+class FogOfWarShrouded(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "BoardState"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.board.fog_of_war_shrouded"
+    session_id: str = ""
+    shrouded_cells: list[list[int]] = Field(default_factory=list)
+
+
 @register_event("runefoble.events.board.terrain_modified")
 class TerrainCellModified(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True

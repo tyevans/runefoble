@@ -10,6 +10,7 @@ from runefoble_events.board import (
     BoardGridInitialized,
     BoardMoveEvent,
     FogOfWarRevealed,
+    FogOfWarShrouded,
     TerrainCellModified,
     TokenHazardTriggered,
     TokenMoved,
@@ -31,6 +32,18 @@ from runefoble_events.character import (
     SessionPenaltyEvent,
     SpellPrepared,
     SpellSlotExpended,
+)
+from runefoble_events.compendium import (
+    ConditionIndexed,
+    EncounterBalanced,
+    HomebrewRuleRegistered,
+    MonsterIndexed,
+    SpellIndexed,
+)
+from runefoble_events.lore import (
+    AliasesConsolidated,
+    EntitiesExtracted,
+    LoreDocumentIngested,
 )
 from runefoble_events.session import (
     CombatEncounterEnded,
@@ -89,6 +102,7 @@ __all__ = [
     "TokenMoved",
     "TokenRemoved",
     "FogOfWarRevealed",
+    "FogOfWarShrouded",
     "TerrainCellModified",
     "TokenHazardTriggered",
     "BoardMoveEvent",
@@ -124,4 +138,12 @@ __all__ = [
     "VoicePeerMuteToggled",
     "AssetUploaded",
     "AssetDeleted",
+    "LoreDocumentIngested",
+    "EntitiesExtracted",
+    "AliasesConsolidated",
+    "MonsterIndexed",
+    "SpellIndexed",
+    "ConditionIndexed",
+    "HomebrewRuleRegistered",
+    "EncounterBalanced",
 ]

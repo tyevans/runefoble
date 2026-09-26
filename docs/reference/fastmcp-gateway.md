@@ -41,6 +41,8 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | `create_encounter` | `encounter_name: str`, `terrain: str`, `enemies: list` | Initialize a new combat encounter with enemy grid placements. |
 | `narrate_with_the_watcher` | `scene_prompt: str`, `player_actions: str` | Invoke The Watcher AI GM for immersive narration and environmental cues. |
 | `execute_agent_action_plan` | `session_id: str`, `actions: list` | Sequentially execute multi-turn action plan with step validation and timing. |
+| `query_monster_stat_block` | `monster_name: str` | Retrieve full canonical monster stat block, AC, HP, CR, actions, and traits. |
+| `calculate_encounter_balance` | `party_levels: list[int]`, `target_difficulty: str` | Compute accurate CR XP thresholds and recommend synergistic monster group with role diversity. |
 
 ## Resources Registry
 

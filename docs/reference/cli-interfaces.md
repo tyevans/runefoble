@@ -10,6 +10,8 @@
 | `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`) |
 | `make visualize-project` | Launches dynamic docs/project content visualizer web application on port 8787 |
 | `make visualize-project-build` | Builds standalone HTML bundle (`dist/project-visualizer.html`) |
+| `make docs-build` | Compiles documentation static site via Zensical with integrated project visualizer |
+| `make docs-serve` | Serves documentation site locally with live preview on port 8000 |
 | `make cluster-up` | Launches local Kind Kubernetes cluster with port mapping and Traefik |
 | `make cluster-down` | Deletes the local Kind cluster |
 | `make helm-lint` | Validates Helm chart syntax |

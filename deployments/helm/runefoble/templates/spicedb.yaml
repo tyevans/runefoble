@@ -15,6 +15,13 @@ spec:
       labels:
         app: spicedb
     spec:
+      initContainers:
+        - name: spicedb-migrate
+          image: {{ .Values.spicedb.image }}
+          args: ["datastore", "migrate", "head", "--datastore-engine", "postgres"]
+          env:
+            - name: SPICEDB_DATASTORE_CONN_URI
+              value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/spicedb?sslmode=disable"
       containers:
         - name: spicedb
           image: {{ .Values.spicedb.image }}

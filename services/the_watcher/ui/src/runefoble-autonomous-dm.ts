@@ -48,11 +48,11 @@ export class RunefobleAutonomousDm extends LitElement {
     :host {
       display: block;
       font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
-      color: var(--rf-text-primary, #121212);
-      background: var(--rf-bg-surface, #ffffff);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      color: var(--rf-text-primary);
+      background: var(--rf-bg-surface);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: var(--rf-border-radius, 0px);
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      box-shadow: var(--rf-shadow);
       padding: 20px;
       box-sizing: border-box;
       max-width: 640px;
@@ -62,7 +62,7 @@ export class RunefobleAutonomousDm extends LitElement {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color);
       padding-bottom: 12px;
       margin-bottom: 16px;
     }
@@ -87,43 +87,43 @@ export class RunefobleAutonomousDm extends LitElement {
       font-weight: 800;
       text-transform: uppercase;
       padding: 3px 8px;
-      border: 1px solid var(--rf-border-color, #121212);
+      border: 1px solid var(--rf-border-color);
       letter-spacing: 0.05em;
     }
 
     .badge-lighting {
-      background: var(--rf-color-yellow, #fcd34d);
-      color: #121212;
+      background: var(--rf-accent-tertiary);
+      color: var(--rf-text-primary);
     }
 
     .badge-threat {
-      background: var(--rf-color-red, #ef4444);
-      color: #ffffff;
+      background: var(--rf-accent-primary);
+      color: var(--rf-text-inverse);
     }
 
     .badge-threat.easy {
-      background: #10b981;
-      color: #ffffff;
+      background: var(--rf-success, var(--rf-accent-secondary));
+      color: var(--rf-text-inverse);
     }
 
     .badge-threat.medium {
-      background: var(--rf-color-yellow, #f59e0b);
-      color: #121212;
+      background: var(--rf-warning, var(--rf-accent-tertiary));
+      color: var(--rf-text-primary);
     }
 
     .badge-threat.hard {
-      background: #f97316;
-      color: #ffffff;
+      background: var(--rf-accent-primary);
+      color: var(--rf-text-inverse);
     }
 
     .badge-threat.deadly {
-      background: var(--rf-color-red, #dc2626);
-      color: #ffffff;
+      background: var(--rf-accent-primary);
+      color: var(--rf-text-inverse);
     }
 
     .scene-box {
-      background: var(--rf-bg-canvas, #f8f9fa);
-      border: 1px solid var(--rf-border-color, #121212);
+      background: var(--rf-bg-canvas);
+      border: 1px solid var(--rf-border-color);
       padding: 12px;
       margin-bottom: 14px;
     }
@@ -141,12 +141,12 @@ export class RunefobleAutonomousDm extends LitElement {
       font-size: 0.88rem;
       line-height: 1.45;
       margin: 6px 0;
-      color: var(--rf-text-primary, #121212);
+      color: var(--rf-text-primary);
     }
 
     .ambient-audio {
       font-size: 0.78rem;
-      color: var(--rf-text-muted, #555555);
+      color: var(--rf-text-muted);
       font-style: italic;
       margin-top: 4px;
     }
@@ -169,9 +169,9 @@ export class RunefobleAutonomousDm extends LitElement {
     .tactical-obj {
       font-size: 0.82rem;
       padding: 6px 10px;
-      background: #e0f2fe;
-      border: 1px solid #0284c7;
-      color: #0369a1;
+      background: var(--rf-bg-inset, var(--rf-bg-canvas));
+      border: 1px solid var(--rf-border-subtle, var(--rf-border-color));
+      color: var(--rf-text-secondary, var(--rf-text-primary));
       font-weight: 600;
       margin-bottom: 10px;
     }
@@ -188,8 +188,8 @@ export class RunefobleAutonomousDm extends LitElement {
       justify-content: space-between;
       align-items: center;
       padding: 6px 10px;
-      border: 1px solid var(--rf-border-color, #121212);
-      background: var(--rf-bg-surface, #ffffff);
+      border: 1px solid var(--rf-border-subtle, var(--rf-border-color));
+      background: var(--rf-bg-surface);
       font-size: 0.82rem;
     }
 
@@ -200,15 +200,15 @@ export class RunefobleAutonomousDm extends LitElement {
     .monster-stats {
       font-family: monospace;
       font-size: 0.78rem;
-      color: var(--rf-text-muted, #444);
+      color: var(--rf-text-muted);
     }
 
     .action-resolved-box {
       margin-top: 12px;
       padding: 10px;
-      border: 2px solid var(--rf-color-red, #dc2626);
-      background: #fff1f2;
-      color: #881337;
+      border: 2px solid var(--rf-accent-primary);
+      background: var(--rf-bg-inset, var(--rf-bg-canvas));
+      color: var(--rf-accent-primary);
       font-size: 0.82rem;
     }
 
@@ -224,7 +224,7 @@ export class RunefobleAutonomousDm extends LitElement {
       gap: 8px;
       margin-top: 16px;
       padding-top: 14px;
-      border-top: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-top: var(--rf-border-width, 2px) solid var(--rf-border-color);
     }
 
     button.rf-btn {
@@ -234,35 +234,35 @@ export class RunefobleAutonomousDm extends LitElement {
       text-transform: uppercase;
       padding: 10px 8px;
       cursor: pointer;
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
       border-radius: var(--rf-border-radius, 0px);
-      box-shadow: 2px 2px 0px #121212;
+      box-shadow: var(--rf-shadow-sm);
       transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
 
     button.rf-btn:hover {
       transform: translate(-1px, -1px);
-      box-shadow: 3px 3px 0px #121212;
+      box-shadow: var(--rf-shadow);
     }
 
     button.rf-btn:active {
       transform: translate(1px, 1px);
-      box-shadow: 1px 1px 0px #121212;
+      box-shadow: none;
     }
 
     .btn-scene {
-      background: var(--rf-color-blue, #2563eb);
-      color: #ffffff;
+      background: var(--rf-accent-secondary);
+      color: var(--rf-text-inverse);
     }
 
     .btn-encounter {
-      background: var(--rf-color-yellow, #f59e0b);
-      color: #121212;
+      background: var(--rf-accent-tertiary);
+      color: var(--rf-text-primary);
     }
 
     .btn-turn {
-      background: var(--rf-color-red, #dc2626);
-      color: #ffffff;
+      background: var(--rf-accent-primary);
+      color: var(--rf-text-inverse);
     }
   `;
 
@@ -329,7 +329,7 @@ export class RunefobleAutonomousDm extends LitElement {
       <div class="encounter-section">
         <div class="section-title">
           <span>⚔️ Encounter: ${this.encounterName}</span>
-          <span style="font-size: 0.75rem; color: var(--rf-text-muted, #555);">${this.monsters.length} Active Tokens</span>
+          <span style="font-size: 0.75rem; color: var(--rf-text-muted);">${this.monsters.length} Active Tokens</span>
         </div>
 
         ${this.tacticalObjective

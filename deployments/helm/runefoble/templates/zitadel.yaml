@@ -18,7 +18,7 @@ spec:
       containers:
         - name: zitadel
           image: {{ .Values.zitadel.image }}
-          args: ["start-from-init", "--masterkey", {{ .Values.zitadel.masterKey | quote }}]
+          args: ["start-from-init", "--masterkey", {{ .Values.zitadel.masterKey | quote }}, "--tlsMode", "disabled"]
           ports:
             - containerPort: {{ .Values.zitadel.port }}
           env:
@@ -28,10 +28,18 @@ spec:
               value: "5432"
             - name: ZITADEL_DATABASE_POSTGRES_DATABASE
               value: "zitadel"
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME
+              value: {{ .Values.postgres.username | quote }}
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+              value: {{ .Values.postgres.password | quote }}
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
+              value: "disable"
             - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
               value: {{ .Values.postgres.username | quote }}
             - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
               value: {{ .Values.postgres.password | quote }}
+            - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
+              value: "disable"
 ---
 apiVersion: v1
 kind: Service
