@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover (`TASK-0055`, `PRD-0002`, `US-0025`, `US-0026`)**:
+  - Implemented configurable tactical guardrail profiles on character aggregates (`StandInGuardrails`) supporting spell slot reservation limits, ally protection affinities, melee avoidance, and risk threshold flags.
+  - Added REST endpoints `PUT /api/v1/characters/{id}/guardrails` and `GET /api/v1/characters/{id}/guardrails` in `services/character_sheet` secured via SpiceDB Zanzibar object authorization.
+  - Implemented zero-HP permadeath safeguard aggregate invariant automatically stabilizing absent player characters at 0 HP without death save failures, emitting `StandInStabilized` over Redis Streams.
+  - Added mid-session hot-swap takeover endpoint `POST /api/v1/sessions/{id}/hot-swap` in `services/game_session` transferring active token and turn control from AI stand-in to authenticating player in < 100ms with SpiceDB authorization while preserving combat round and initiative continuity.
+  - Integrated tactical guardrails evaluation into The Watcher decision engine (`the_watcher` and `inference_worker`) with ally protection, spell slot conservation, melee disengagement, and humorous DM penalty flavor adaptation under "drunk" and "foolishness".
+  - Defined and registered `StandInPolicyUpdated`, `StandInStabilized`, and `CharacterControlTransferred` CloudEvents across domain events packages.
+  - Vendored Lit Web Component `<runefoble-stand-in-guardrails>` in `services/character_sheet/ui/` with interactive Storybook stories and `/ui/manifest` discovery.
+  - Added Diataxis How-To guide (`docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`) and updated technical reference docs.
+  - Added comprehensive blackbox TDD test suite (`tests/test_blackbox_stand_in_guardrails.py`).
+
 - **DM Co-Pilot Whisper Prompts and Veto Override Engine (`TASK-0053`, `PRD-0001`, `US-0017`)**:
   - Implemented secure DM narrative suggestion stream in `the_watcher` providing atmospheric hints, monster tactics, and passive perception cues (`GET /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers/generate`).
   - Enforced SpiceDB Zanzibar authorization (`dungeon_master` relation, `run_session` permission) on all whisper queries, action vetoes, and approvals with 403 Forbidden rejection for unauthorized users.
@@ -20,6 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Advertised `runefoble-dm-whisper-bar` in `the_watcher` `/ui/manifest`.
   - Added Diataxis How-To guide (`docs/how-to/manage-dm-copilot-whispers-and-veto-overrides.md`) and updated technical reference docs (`docs/reference/events-schema.md`, `docs/reference/ports-and-endpoints.md`).
   - Added comprehensive blackbox TDD test suite (`tests/test_blackbox_dm_copilot.py`).
+- **Conversational Target Disambiguation & Compound Action Intents (`TASK-0054`, `PRD-0001`, `US-0021`)**:
+  - Implemented `DisambiguationEngine` in `services/the_watcher` detecting ambiguous entity references from spatial coordinates and entity tags with sub-400ms evaluation latency.
+  - Implemented automated clarification prompt synthesis generating immersive audible and textual choices (e.g., *"Which goblin? The archer by the pillar or the shaman on the altar?"*).
+  - Implemented `CompoundActionEngine` decomposing multi-clause spoken commands into ordered capability checks, movement, and attack nodes.
+  - Added partial failure coordination with configurable rollback or partial success status handling if an intermediate check fails.
+  - Added public HTTP frontdoor endpoints `POST /api/v1/watcher/intent/parse`, `POST /api/v1/watcher/intent/resolve`, and `POST /api/v1/watcher/intent/execute`.
+  - Registered and published `IntentDisambiguationRequested`, `CandidateGhostPreviewEmitted`, and `CompoundActionResolved` CloudEvents over Redis Streams.
+  - Added comprehensive blackbox TDD test suite (`tests/test_blackbox_intent_disambiguation.py`) verifying multi-target clarification, combo ordering, partial failure handling, and < 400ms SLA compliance.
+
 - **Dynamic Soundscape & Adaptive Audio Microservice (`TASK-0050`, `PRD-0010`, `US-0039`)**:
   - Scaffolded new bounded context microservice `services/soundscape` with internal port `8009` and registered in UV monorepo workspace.
   - Implemented Encounter Tension Scoring Engine dynamically computing real-time tension (0–100) from combat rounds, enemy CR threat, and party health ratios.
@@ -80,7 +100,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blackbox Documentation & Pages Test Suite**: Expanded `tests/test_docs_build_and_pages.py` to assert changelog existence, Keep a Changelog structure, Definition of Done enforcement, and marketing page navigation integrity.
 
 ### Changed
-- **Zanzibar Auth Relationship Sync Service and Event Handlers Modular Decomposition (`TASK-0063`)**:
+- **Microfrontends Blackbox Test Suite Modular Decomposition (`TASK-0088`)**:
+  - Decomposed `tests/test_microfrontends.py` (454 lines) into two focused, single-responsibility blackbox test suites:
+    - `tests/test_microfrontend_manifests.py` (191 lines) covering service microfrontend discovery (`GET /ui/manifest`), component tag registries, package integrity, and battlemap uploader frontdoor contracts.
+    - `tests/test_microfrontend_app_shell.py` (212 lines) covering App Shell Lit composition, workspace link declarations, Storybook story indexing, voice controls WebAudio/WebRTC specs, and companion style module decomposition invariants.
+  - Removed original monolith `tests/test_microfrontends.py`.
+  - Strictly enforced Hard Invariant 6 with both test files well under the 250-line ceiling and zero test regression across 450 passing tests.
+
   - Decomposed monolithic `libs/runefoble_auth/src/runefoble_auth/sync.py` into focused submodules:
     - `sync_tuples.py` (179 lines) covering `SyncResult` models, role normalization tables (`CAMPAIGN_ROLE_RELATIONS`, `normalize_campaign_role`), low-level write/delete helpers with retry execution, and batching/reconciliation utilities.
     - `sync_events.py` (127 lines) covering domain event and CloudEvent payload parsing (`extract_event_type`, `get_event_field`), unified dispatching (`handle_domain_event`), and granular entity handlers for `SessionCreated`, `ParticipantJoined`, `CharacterCreated`, and `TokenPlaced`.
