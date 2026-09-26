@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Backlog Curation, Invariant Invariant Protection, and Milestone 4 JIT Triage (`ADR-0009`)**:
+  - Identified source files approaching Hard Invariant 6 limits (>400 lines) and created preemptive modular decomposition proposals:
+    - TASK-0093: DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition (`tests/test_blackbox_dm_copilot.py` [474 lines], `copilot.py` [399 lines]).
+    - TASK-0094: Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition (`tests/test_blackbox_intent_disambiguation.py` [457 lines], `intent.py` [371 lines]).
+    - TASK-0095: Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition (`tests/test_blackbox_soundscape.py` [405 lines]).
+    - TASK-0096: Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition (`tests/test_blackbox_stand_in_guardrails.py` [369 lines]).
+    - TASK-0097: OpenPanel Analytics Blackbox Test Suite Modular Decomposition (`tests/test_blackbox_openpanel_analytics.py` [354 lines]).
+  - Synchronized `ROADMAP.md`: marked Milestone 3 (AI DM & Ecosystem Expansion) as Complete with all epics delivered, and transitioned Milestone 4 (Broadcast Studio & Community Platform) to Current with TASK-0051 as foundational platform enabler.
+  - Replenished ready buffer in `docs/project/backlog/refined/` to 10 items (JIT queue health) with rigorous blackbox TDD Definitions of Done, governing ADR citations, and INVEST alignment.
+  - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
+
 ### Changed
 - **DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition (`TASK-0093`, `ADR-0001`, `ADR-0002`, `ADR-0003`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed `services/the_watcher/src/the_watcher/routers/copilot.py` (399 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/copilot/`:

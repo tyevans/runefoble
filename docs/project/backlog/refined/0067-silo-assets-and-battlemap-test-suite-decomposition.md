@@ -1,17 +1,22 @@
 ---
 id: '0067'
 title: Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
-dependencies: [TASK-0023, TASK-0031]
-governing_adrs: [ADR-0003, ADR-0013]
+dependencies:
+- TASK-0023
+- TASK-0031
+governing_adrs:
+- ADR-0003
+- ADR-0009
+- ADR-0013
 target_release: 0.2.0
 ---
 
 # TASK-0067: Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Decompose `tests/test_blackbox_silo_assets.py` (362 lines, 72.4% of limit) into two specialized test suites (`tests/test_blackbox_silo_asset_lifecycle.py` and `tests/test_blackbox_silo_asset_events.py`) to prevent breaching Hard Invariant 6 (File length limit < 500 lines) as new media asset formats and storage capabilities are added.
@@ -27,6 +32,11 @@ Decompose `tests/test_blackbox_silo_assets.py` (362 lines, 72.4% of limit) into 
 7. OpenAPI documentation hub route inspection (`test_openapi_documentation_includes_asset_routes`).
 
 As campaign handouts, audio clips, token frames, and upload chunking are introduced in upcoming milestones, this file is poised to surpass the 500-line ceiling.
+
+## Governing Architecture & ADRs
+- **ADR-0003: UV Monorepo Workspace for Python Bounded Contexts**: Standard repository structure.
+- **ADR-0009: Continuous Backlog Refinement and Technical Debt Management**: Preemptive file invariant protection.
+- **ADR-0013: Microfrontend Architecture and Service Component Vendoring**: Asset uploader component contracts.
 
 ## Proposed Decomposition
 1. **Asset Lifecycle & Validation Suite (`tests/test_blackbox_silo_asset_lifecycle.py`)**:
@@ -49,8 +59,9 @@ As campaign handouts, audio clips, token frames, and upload chunking are introdu
 - **Small (S)**: Scope isolated strictly to `tests/test_blackbox_silo_assets.py`; all resulting files < 200 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_blackbox_silo_*.py`.
 
-## Acceptance Criteria
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `tests/test_blackbox_silo_assets.py` decomposed into focused modules strictly under 220 lines each.
 2. 100% test pass rate on all 11 existing asset test scenarios with zero regressions.
 3. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
 4. Maintains blackbox frontdoor interactions via public HTTP endpoints and published domain events.
+5. Passes `uv run ruff check` and `uv run ruff format --check`.

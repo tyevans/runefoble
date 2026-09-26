@@ -1,20 +1,25 @@
 ---
 id: '0077'
 title: Character Sheet API Router and Schemas Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
-dependencies: [TASK-0009, TASK-0018]
-governing_adrs: [ADR-0003, ADR-0011]
+dependencies:
+- TASK-0009
+- TASK-0018
+governing_adrs:
+- ADR-0003
+- ADR-0009
+- ADR-0011
 target_release: 0.2.0
 ---
 
 # TASK-0077: Character Sheet API Router and Schemas Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
-Decompose `services/character_sheet/src/character_sheet/main.py` (302 lines, 60.4% of limit) into dedicated Pydantic request schema modules (`schemas.py`), endpoint routing controllers (`router.py`), and a lean application entrypoint (`main.py`) adhering to the modular pattern established in TASK-0040.
+Decompose `services/character_sheet/src/character_sheet/main.py` (354 lines, 70.8% of limit) into dedicated Pydantic request schema modules (`schemas.py`), endpoint routing controllers (`router.py`), and a lean application entrypoint (`main.py`) adhering to the modular pattern established in TASK-0040.
 
 ## Problem Statement
 `services/character_sheet/src/character_sheet/main.py` currently embeds:
@@ -22,7 +27,12 @@ Decompose `services/character_sheet/src/character_sheet/main.py` (302 lines, 60.
 2. 12+ HTTP endpoints handling character lifecycle, HP adjustments, inventory operations, and spellbook preparation.
 3. FastAPI application creation, lifespan event bus initialization, and aggregate repository wiring.
 
-As upcoming Milestone 3 features introduce TTRPG Rules Compendiums (TASK-0048) and Campaign Lore RAG (TASK-0047), character sheet endpoints will expand with feat selection, skill proficiencies, and multiclassing, quickly pushing `main.py` beyond the 500-line invariant.
+As upcoming Milestone features introduce TTRPG Rules Compendiums (TASK-0048) and Campaign Lore RAG (TASK-0047), character sheet endpoints will expand with feat selection, skill proficiencies, and multiclassing, quickly pushing `main.py` beyond the 500-line invariant.
+
+## Governing Architecture & ADRs
+- **ADR-0003: UV Monorepo Workspace for Python Bounded Contexts**: Preserves package structure.
+- **ADR-0009: Continuous Backlog Refinement and Technical Debt Management**: Preemptive decomposition.
+- **ADR-0011: eventsource-py Core Event Sourcing**: Event-sourced aggregates and repository wiring.
 
 ## Proposed Decomposition
 1. **Pydantic Schemas (`services/character_sheet/src/character_sheet/schemas.py`)**:
@@ -40,8 +50,9 @@ As upcoming Milestone 3 features introduce TTRPG Rules Compendiums (TASK-0048) a
 - **Small (S)**: Scope strictly isolated to `services/character_sheet/src/character_sheet/main.py`; all resulting files < 180 lines.
 - **Testable (T)**: Verified with `uv run pytest tests/test_character_aggregate.py tests/test_blackbox_character_progression.py`.
 
-## Acceptance Criteria
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `services/character_sheet/src/character_sheet/main.py` decomposed into `schemas.py`, `router.py`, and a lean `main.py` strictly under 180 lines each.
 2. 100% test pass rate across all character sheet unit and blackbox progression tests.
 3. Conforms strictly to Hard Invariant 6 (< 500 lines per file).
 4. Zero breaking changes to REST route signatures or OpenAPI schemas.
+5. Passes `uv run ruff check` and `uv run ruff format --check`.
