@@ -1,7 +1,7 @@
 ---
-id: '0118'
+id: 0118
 title: Campaign Analytics Storage and Query Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0052
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0040
 - US-0054
+pr_url: https://github.com/tyevans/runefoble/pull/114
 ---
-
 # TASK-0118: Campaign Analytics Storage and Query Modular Decomposition
 
 ## Status

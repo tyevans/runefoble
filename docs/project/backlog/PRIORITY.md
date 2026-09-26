@@ -112,7 +112,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 101. **TASK-0115 (Complete)**: [`0115-campaign-analytics-test-suite-modular-decomposition.md`](complete/0115-campaign-analytics-test-suite-modular-decomposition.md) — Campaign Analytics Test Suite Modular Decomposition
 102. **TASK-0116 (Complete)**: [`0116-campaign-analytics-worker-and-event-dispatch-decomposition.md`](complete/0116-campaign-analytics-worker-and-event-dispatch-decomposition.md) — Campaign Analytics Worker and Event Dispatch Modular Decomposition
 103. **TASK-0117 (Complete)**: [`0117-stream-overlay-router-and-hud-templates-decomposition.md`](complete/0117-stream-overlay-router-and-hud-templates-decomposition.md) — Stream Overlay Router and HUD Templates Modular Decomposition
-104. **TASK-0118 (Refined)**: [`0118-campaign-analytics-storage-and-query-decomposition.md`](refined/0118-campaign-analytics-storage-and-query-decomposition.md) — Campaign Analytics Storage and Query Modular Decomposition
+104. **TASK-0118 (Complete)**: [`0118-campaign-analytics-storage-and-query-decomposition.md`](complete/0118-campaign-analytics-storage-and-query-decomposition.md) — Campaign Analytics Storage and Query Modular Decomposition
 105. **TASK-0069 (Complete)**: [`0069-speech-intent-parser-and-action-grammar-decomposition.md`](complete/0069-speech-intent-parser-and-action-grammar-decomposition.md) — Speech Intent Parser and Action Grammar Extractors Modular Decomposition
 106. **TASK-0111 (Refined)**: [`0111-settings-modal-styles-and-sub-components-decomposition.md`](refined/0111-settings-modal-styles-and-sub-components-decomposition.md) — Settings Modal Styles and Sub-Component CSS Modular Decomposition
 
