@@ -1,7 +1,8 @@
 ---
 id: '0067'
-title: Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition
-status: Refined
+title: Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular
+  Decomposition
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0023
@@ -15,8 +16,8 @@ governing_prds:
 - PRD-0009
 governing_stories:
 - US-0038
+pr_url: https://github.com/tyevans/runefoble/pull/86
 ---
-
 # TASK-0067: Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition
 
 ## Status

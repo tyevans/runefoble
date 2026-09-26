@@ -51,6 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 
 ### Changed
+- **Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition (`TASK-0067`, `ADR-0003`, `ADR-0009`, `ADR-0013`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_silo_assets.py` (362 lines) into two specialized, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all resulting files strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_blackbox_silo_asset_lifecycle.py` (202 lines): Verifies multipart/form-data and JSON base64 uploads for avatar images, tactical battlemaps, and audio soundscapes, direct binary streaming (`/stream`), attachment download headers (`/download`), MIME type validation, maximum payload limits (10MB), and deletion lifecycle with subsequent 404 responses.
+    - `tests/test_blackbox_silo_asset_events.py` (143 lines): Verifies CloudEvents 1.0 schema compliance and EventRegistry registration for `AssetUploaded` and `AssetDeleted`, Redis Streams stream publishing (`runefoble.events.asset`), in-memory platform bus delivery, and Swagger UI / OpenAPI route declarations (`/openapi.json`).
+  - Extracted shared test fixtures and constants to `tests/helpers/silo_fixtures.py` (39 lines) including `PNG_SAMPLE_BYTES`, `WAV_SAMPLE_BYTES`, and `clean_storage_and_bus` isolation fixture, registered via `tests/conftest.py`.
+
 - **Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition (`TASK-0094`, `ADR-0002`, `ADR-0003`, `ADR-0007`, `ADR-0009`)**:
   - Decomposed `services/the_watcher/src/the_watcher/routers/intent.py` (371 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/intent/`:
     - `disambiguation.py` (195 lines): Ambiguity detection, clarification prompts, target candidate matching, and `/resolve` route.
