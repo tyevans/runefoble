@@ -6,6 +6,9 @@ equipment, and status conditions (such as DM penalties for missed sessions).
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from character_sheet.dependencies import (
     STREAM_CHARACTER,
     get_event_bus,
@@ -40,15 +43,35 @@ async def health_check():
 @app.get("/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for character sheet."""
+    manifest_path = Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
+    if manifest_path.is_file():
+        try:
+            return json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
     return {
         "service": "character_sheet",
         "package": "@runefoble/character-sheet-ui",
+        "version": "0.1.0",
         "components": [
             "runefoble-character-card",
             "runefoble-absentee-recap",
             "runefoble-stand-in-guardrails",
+            "runefoble-character-sheet",
         ],
-        "version": "0.1.0",
+        "tags": [
+            "runefoble-character-card",
+            "runefoble-absentee-recap",
+            "runefoble-stand-in-guardrails",
+            "runefoble-character-sheet",
+        ],
+        "styles": [
+            "./src/runefoble-absentee-recap.styles.ts",
+            "./src/runefoble-character-sheet.styles.ts",
+        ],
+        "scripts": [
+            "./src/index.ts",
+        ],
     }
 
 

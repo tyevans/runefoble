@@ -33,6 +33,11 @@ runefoble/
 │   ├── character_sheet/ui/       # @runefoble/character-sheet-ui
 │   │   └── src/
 │   │       ├── runefoble-character-card.ts
+│   │       ├── runefoble-character-sheet.ts
+│   │       ├── runefoble-character-sheet.styles.ts
+│   │       ├── runefoble-character-sheet.templates.ts
+│   │       ├── runefoble-character-sheet.types.ts
+│   │       ├── runefoble-character-sheet.stories.ts
 │   │       ├── runefoble-absentee-recap.ts
 │   │       └── runefoble-absentee-recap.styles.ts
 │   ├── game_session/ui/          # @runefoble/game-session-ui
@@ -60,7 +65,7 @@ runefoble/
 | Service Bounded Context | NPM Package Name | Vendored Custom Elements | Storybook Story Path |
 |---|---|---|---|
 | `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>`, `<runefoble-map-uploader>` (subviews: `<runefoble-map-dropzone>`, `<runefoble-map-grid-config>`) | `services/board_state/ui/src/*.stories.ts` |
-| `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-absentee-recap>` | `services/character_sheet/ui/src/*.stories.ts` |
+| `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-character-sheet>`, `<runefoble-absentee-recap>`, `<runefoble-stand-in-guardrails>` | `services/character_sheet/ui/src/*.stories.ts` |
 | `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>` | `services/game_session/ui/src/*.stories.ts` |
 | `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>` | `services/the_watcher/ui/src/*.stories.ts` |
 | `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>` | `services/voice_agent/ui/src/runefoble-voice-controls.stories.ts` |

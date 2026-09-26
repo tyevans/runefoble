@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Character Sheet UI Inventory Grid and Condition Indicator Microfrontend (`TASK-0107`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
+  - Developed and vendored `<runefoble-character-sheet>` Lit Web Component microfrontend within `services/character_sheet/ui/` with Bauhaus geometric tokens, full theme and dark/light contrast support, and strict Shadow DOM encapsulation.
+  - Implemented visual interactive paper doll slots (`main_hand`, `off_hand`, `armor`, `accessory`) with click-to-equip and unequip actions, emitting standard `equip-item` and `unequip-item` CustomEvents.
+  - Implemented dynamic encumbrance capacity progress bar color-coded by load thresholds (Light, Medium, Heavy, Overburdened) computed dynamically from carried item weights and character Strength capacity.
+  - Implemented condition indicator badges distinguishing 5e/d20 rules conditions (`blinded`, `prone`, `stunned`, `poisoned`, `frightened`, `unconscious`) and Runefoble absence penalties (`drunk`, `foolishness`, `greed`, `cowardice`), accompanied by interactive tooltips detailing mechanics and saving throw modifiers.
+  - Implemented spellbook and spell slot tracker with clickable pips for expenditure and recovery across spell tiers 1–9, daily prepared spell list with click-to-cast action, and known spellbook management.
+  - Decomposed microfrontend code into single-responsibility modules (`runefoble-character-sheet.ts`, `runefoble-character-sheet.templates.ts`, `runefoble-character-sheet.styles.ts`, `runefoble-character-sheet.types.ts`, and `runefoble-character-sheet.stories.ts`), strictly adhering to Hard Invariant 6 (< 500 lines per file).
+  - Authored interactive Storybook stories (`Healthy`, `Encumbered`, `Afflicted`, `LeveledUpSpellcaster`) building cleanly with zero console errors.
+  - Exposed service microfrontend manifest at `GET /ui/manifest` and `services/character_sheet/ui/manifest.json`.
+  - Added App Shell forwarding export in `frontend/src/components/runefoble-character-sheet.ts` and re-exported in `frontend/src/index.ts`.
+  - Authored frontdoor blackbox test suite in `tests/test_blackbox_character_sheet_ui.py` and Diataxis how-to guide `docs/how-to/interact-with-character-sheet-and-inventory.md`.
+
 - **WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition (`TASK-0068`, `ADR-0002`, `ADR-0004`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed `frontend/src/services/webrtc-voice.ts` (formerly 348 lines) into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and task limits (< 200 lines each):
     - `webrtc-types.ts` (67 lines): Defines wire protocol signaling interfaces (`SignalingMessage`, `VoicePeer`, `WebRTCVoiceOptions`, `PeerMeshOptions`) and connection state types (`WebRTCConnectionState`, `WebRTCConnectionStates`).

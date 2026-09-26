@@ -1,0 +1,24 @@
+{
+  "service": "character_sheet",
+  "package": "@runefoble/character-sheet-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-character-card",
+    "runefoble-absentee-recap",
+    "runefoble-stand-in-guardrails",
+    "runefoble-character-sheet"
+  ],
+  "tags": [
+    "runefoble-character-card",
+    "runefoble-absentee-recap",
+    "runefoble-stand-in-guardrails",
+    "runefoble-character-sheet"
+  ],
+  "styles": [
+    "./src/runefoble-absentee-recap.styles.ts",
+    "./src/runefoble-character-sheet.styles.ts"
+  ],
+  "scripts": [
+    "./src/index.ts"
+  ]
+}
