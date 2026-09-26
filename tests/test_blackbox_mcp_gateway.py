@@ -173,3 +173,71 @@ async def test_blackbox_mcp_tool_discovery():
     plan_tool = tool_map["execute_agent_action_plan"]
     assert "actions" in plan_tool.parameters["properties"]
     assert "session_id" in plan_tool.parameters["properties"]
+
+
+@pytest.mark.asyncio
+async def test_blackbox_read_active_session_resource():
+    """Verify reading dynamic resource session://active returns active session state."""
+    contents = await mcp.read_resource("session://active")
+    assert contents is not None
+    content_list = list(contents)
+    assert len(content_list) > 0
+
+    data = json.loads(content_list[0].content)
+    assert data["session_id"] == "camp1"
+    assert "tokens" in data
+    assert "scene_atmosphere" in data
+
+
+@pytest.mark.asyncio
+async def test_blackbox_read_encounter_current_resource():
+    """Verify reading dynamic resource encounter://current returns encounter state."""
+    contents = await mcp.read_resource("encounter://current")
+    assert contents is not None
+    content_list = list(contents)
+    assert len(content_list) > 0
+
+    data = json.loads(content_list[0].content)
+    assert data["encounter_id"] == "enc-camp1"
+    assert "initiative_order" in data
+    assert "active_turn" in data
+
+
+@pytest.mark.asyncio
+async def test_blackbox_prompt_templates():
+    """Verify prompt templates dm_narrative_guidance and tactical_action_adviser."""
+    prompts = await mcp.list_prompts()
+    prompt_names = [p.name for p in prompts]
+    assert "dm_narrative_guidance" in prompt_names
+    assert "tactical_action_adviser" in prompt_names
+
+    p1 = await mcp.get_prompt(
+        "dm_narrative_guidance", arguments={"scene_context": "Ruined cathedral"}
+    )
+    assert "The Watcher" in p1.messages[0].content.text
+    assert "Ruined cathedral" in p1.messages[0].content.text
+
+    p2 = await mcp.get_prompt(
+        "tactical_action_adviser", arguments={"tactical_situation": "Surrounded by goblins"}
+    )
+    assert "Tactical Action Adviser" in p2.messages[0].content.text
+    assert "Surrounded by goblins" in p2.messages[0].content.text
+
+
+@pytest.mark.asyncio
+async def test_blackbox_character_tools():
+    """Verify get_character_sheet and apply_condition through public FastMCP tool interface."""
+    sheet_tool = mcp.get_tool("get_character_sheet")
+    assert sheet_tool is not None
+    sheet_res = await sheet_tool.run({"character_id": "char-1"})
+    assert sheet_res["name"] == "Valeros"
+    assert sheet_res["class"] == "Fighter"
+    assert sheet_res["attributes"]["strength"] == 16
+
+    cond_tool = mcp.get_tool("apply_condition")
+    assert cond_tool is not None
+    cond_res = await cond_tool.run(
+        {"character_id": "char-1", "condition": "prone", "duration_rounds": 1}
+    )
+    assert cond_res["status"] == "condition_applied"
+    assert cond_res["condition"] == "prone"
