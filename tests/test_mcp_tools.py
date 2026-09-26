@@ -1,10 +1,12 @@
 """Unit tests for Model Context Protocol (MCP) RPG tools."""
 
+import pytest
 from gateway_mcp.server import (
     add_condition,
     apply_absentee_penalty,
     cast_spell,
     create_encounter,
+    execute_agent_action_plan,
     inspect_inventory,
     inspect_tactical_board,
     mcp,
@@ -31,6 +33,7 @@ def test_mcp_registered_tools():
         "query_encounter_state",
         "inspect_inventory",
         "create_encounter",
+        "execute_agent_action_plan",
     ]
     for name in expected:
         assert name in tool_names, f"Tool '{name}' not registered in FastMCP"
@@ -149,3 +152,20 @@ def test_create_encounter():
     assert res["name"] == "Ambush at Crossroads"
     assert res["terrain"] == "forest"
     assert len(res["enemies_spawned"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_execute_agent_action_plan():
+    """Test sequential multi-turn action plan execution."""
+    res = await execute_agent_action_plan(
+        session_id="test-plan-sess",
+        actions=[
+            {"tool": "roll_dice", "parameters": {"notation": "1d20+1"}},
+            {"tool": "move_board_token", "parameters": {"token_id": "t1", "to_x": 2, "to_y": 2}},
+        ],
+    )
+    assert res["status"] == "success"
+    assert res["success"] is True
+    assert res["completed_steps"] == 2
+    assert len(res["steps"]) == 2
+
