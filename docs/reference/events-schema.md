@@ -124,3 +124,15 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `modifier`: Integer
   - `total`: Integer
   - `reason`: String
+- **`AbsenteeRecapGenerated`**: Emitted when The Watcher generates a session chronicle and audio-ready recap for a returning absent player (`runefoble.events.recap.generated`).
+  - `session_id`: String
+  - `character_id`: String
+  - `character_name`: String
+  - `stand_in_persona`: String
+  - `penalties`: List[String]
+  - `narrative_summary`: String
+  - `highlights`: List[String]
+  - `audio_url`: Optional[String]
+  - `hp_delta`: Integer
+  - `items_acquired`: List[String]
+

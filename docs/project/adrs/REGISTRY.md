@@ -15,3 +15,4 @@ This registry records every architectural decision in Runefoble. Numbers are all
 | ADR-0009 | Code Quality, Static Analysis, and Linting via Ruff and Pre-commit | Accepted | 2026-09-25 | [`adr-0009-code-quality-and-linting-with-ruff-and-pre-commit.md`](accepted/adr-0009-code-quality-and-linting-with-ruff-and-pre-commit.md) |
 | ADR-0010 | Continuous Integration and Deployment Gates via GitHub Actions | Accepted | 2026-09-25 | [`adr-0010-continuous-integration-pipeline.md`](accepted/adr-0010-continuous-integration-pipeline.md) |
 | ADR-0011 | eventsource-py as Core Event Sourcing and Aggregate Engine | Accepted | 2026-09-25 | [`adr-0011-eventsource-py-core-event-sourcing.md`](accepted/adr-0011-eventsource-py-core-event-sourcing.md) |
+| ADR-0012 | Design System Theming Tokens and Bauhaus Modernist Aesthetic | Accepted | 2026-09-25 | [`adr-0012-design-system-theming-and-bauhaus-modernism.md`](accepted/adr-0012-design-system-theming-and-bauhaus-modernism.md) |

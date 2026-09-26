@@ -19,3 +19,4 @@ User stories document end-to-end user value from the perspective of players, gam
 | US-0013 | Zanzibar Campaign Role Authorization Gateway Enforcement | Evelyn (DM) | Accepted | [`us-0013-gateway-zanzibar-authorization.md`](accepted/us-0013-gateway-zanzibar-authorization.md) |
 | US-0014 | Realtime Live Board WebSocket Synchronization | Marcus (Adventurer) | Accepted | [`us-0014-realtime-board-websocket-sync.md`](accepted/us-0014-realtime-board-websocket-sync.md) |
 | US-0015 | Event-Sourced Character Inventory, Equipment & Condition Tracking | Sarah (Absent Player) | Accepted | [`us-0015-character-inventory-equipment-tracking.md`](accepted/us-0015-character-inventory-equipment-tracking.md) |
+| US-0016 | Themable Frontend Design System with Bauhaus Modernist Default | Devon (Streamer) | Accepted | [`us-0016-themable-frontend-with-bauhaus-default.md`](accepted/us-0016-themable-frontend-with-bauhaus-default.md) |

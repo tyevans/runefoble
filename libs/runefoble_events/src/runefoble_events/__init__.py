@@ -3,6 +3,7 @@
 from runefoble_events.events import (
     AbsencePenaltyApplied,
     AbsencePenaltyCleared,
+    AbsenteeRecapGenerated,
     BaseRunefobleEvent,
     BoardGridInitialized,
     BoardMoveEvent,
@@ -25,9 +26,11 @@ from runefoble_events.events import (
     TurnAdvanced,
     WatcherNarrationEvent,
     WatcherNarrationGenerated,
+    register_event,
 )
 
 __all__ = [
+    "register_event",
     "BaseRunefobleEvent",
     "SessionCreated",
     "SessionStarted",
@@ -48,6 +51,8 @@ __all__ = [
     "WatcherNarrationGenerated",
     "StandInActionDecided",
     "DiceRolled",
+    "AbsenteeRecapGenerated",
+
     # Backward-compatible aliases
     "WatcherNarrationEvent",
     "BoardMoveEvent",

@@ -30,3 +30,16 @@ class StandInRecapResponse(BaseModel):
     recap: str
     highlights: list[str] = Field(default_factory=list)
     penalties_active: list[str] = Field(default_factory=list)
+
+
+class RecapRequest(BaseModel):
+    session_id: str
+    character_id: str
+    character_name: str
+    stand_in_persona: str = "valiant"
+    penalties: list[str] = Field(default_factory=list)
+    actions: list[dict[str, Any]] = Field(default_factory=list)
+    hp_delta: int = 0
+    items_acquired: list[str] = Field(default_factory=list)
+    audio_url: str | None = None
+

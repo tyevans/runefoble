@@ -4,12 +4,25 @@ All domain events subclass eventsource.domain.event.DomainEvent and are register
 in the global EventRegistry for serialization, stream persistence, and replay.
 """
 
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 from uuid import UUID, uuid4
 
 from eventsource.domain.event import DomainEvent
-from eventsource.domain.event_registry import register_event
+from eventsource.domain.event_registry import register_event as _orig_register_event
 from pydantic import Field
+
+
+def register_event(
+    event_class: Any = None,
+    *,
+    event_type: str | None = None,
+    registry: Any = None,
+) -> Any:
+    """Register event decorator supporting both class and positional event_type string."""
+    if isinstance(event_class, str):
+        return _orig_register_event(event_type=event_class, registry=registry)
+    return _orig_register_event(event_class=event_class, event_type=event_type, registry=registry)
+
 
 # ---------------------------------------------------------------------------
 # Base Runefoble Domain Event
@@ -28,11 +41,14 @@ class BaseRunefobleEvent(DomainEvent):
 
     def to_cloudevent_dict(self) -> dict[str, Any]:
         """Convert domain event to standard CloudEvents 1.0 JSON format."""
+        ce_type = self.event_type.lower()
+        if not ce_type.startswith("runefoble."):
+            ce_type = f"runefoble.{ce_type}"
         return {
             "specversion": "1.0",
             "id": str(self.event_id),
             "source": f"/runefoble/{self.aggregate_type.lower()}/{self.aggregate_id}",
-            "type": f"runefoble.{self.event_type.lower()}",
+            "type": ce_type,
             "time": self.occurred_at.isoformat(),
             "datacontenttype": "application/json",
             "data": self.model_dump(mode="json"),
@@ -274,8 +290,62 @@ class DiceRolled(BaseRunefobleEvent):
     reason: str = "Skill check"
 
 
+@register_event("runefoble.events.recap.generated")
+class AbsenteeRecapGenerated(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Chronicle"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.recap.generated"
+    session_id: str
+    character_id: str
+    character_name: str
+    stand_in_persona: str
+    penalties: list[str] = Field(default_factory=list)
+    narrative_summary: str
+    highlights: list[str] = Field(default_factory=list)
+    audio_url: str | None = None
+    hp_delta: int = 0
+    items_acquired: list[str] = Field(default_factory=list)
+
+
 # Backward-compatible aliases for legacy imports
 WatcherNarrationEvent = WatcherNarrationGenerated
 BoardMoveEvent = TokenMoved
 DiceRollEvent = DiceRolled
 SessionPenaltyEvent = AbsencePenaltyApplied
+
+__all__ = [
+    "register_event",
+    "BaseRunefobleEvent",
+    "SessionCreated",
+    "SessionStarted",
+    "PlayerJoinedSession",
+    "PlayerLeftSession",
+    "TurnAdvanced",
+    "SessionEnded",
+    "BoardGridInitialized",
+    "TokenPlaced",
+    "TokenMoved",
+    "TokenRemoved",
+    "FogOfWarRevealed",
+    "CharacterCreated",
+    "CharacterHealthChanged",
+    "AbsencePenaltyApplied",
+    "AbsencePenaltyCleared",
+    "ItemAddedToInventory",
+    "ItemRemovedFromInventory",
+    "EquipmentSlotUpdated",
+    "ConditionApplied",
+    "ConditionRemoved",
+    "PlayerSpokeEvent",
+    "SpeechIntentParsed",
+    "WatcherNarrationGenerated",
+    "StandInActionDecided",
+    "DiceRolled",
+    "AbsenteeRecapGenerated",
+    "WatcherNarrationEvent",
+    "BoardMoveEvent",
+    "DiceRollEvent",
+    "SessionPenaltyEvent",
+]
+

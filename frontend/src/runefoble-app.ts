@@ -3,6 +3,7 @@ import { customElement, state } from 'lit/decorators.js';
 import './components/runefoble-board.ts';
 import './components/runefoble-character-card.ts';
 import './components/runefoble-watcher-feed.ts';
+import './components/runefoble-absentee-recap.ts';
 import type { BoardToken } from './components/runefoble-board.ts';
 import type { WatcherFeedEvent } from './components/runefoble-watcher-feed.ts';
 
