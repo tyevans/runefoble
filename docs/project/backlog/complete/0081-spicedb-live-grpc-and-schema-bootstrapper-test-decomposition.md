@@ -1,7 +1,7 @@
 ---
-id: '0081'
+id: 0081
 title: SpiceDB Live gRPC Client and Schema Bootstrapper Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0035
@@ -11,8 +11,8 @@ governing_adrs:
 - ADR-0007
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/89
 ---
-
 # TASK-0081: SpiceDB Live gRPC Client and Schema Bootstrapper Test Suite Modular Decomposition
 
 ## Status
