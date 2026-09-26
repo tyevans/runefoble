@@ -14,6 +14,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Synchronized `PRIORITY.md`, `ROADMAP.md` Milestone 5 completion checkboxes, and PRD acceptance links with zero status drift.
 
 ### Added
+- **Settings Modal Styles and Sub-Component CSS Modular Decomposition (`TASK-0111`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed monolithic `frontend/src/components/runefoble-settings-modal.styles.ts` into single-responsibility Lit CSS sub-modules in `frontend/src/components/styles/`: `settings-modal-layout.styles.ts` (129 lines), `settings-modal-tabs.styles.ts` (128 lines), and `settings-modal-controls.styles.ts` (74 lines).
+  - Maintained 100% backward compatibility via composite export in `runefoble-settings-modal.styles.ts` (28 lines) combining `[layoutStyles, tabsStyles, controlsStyles]`.
+  - Preserved 100% visual consistency and WCAG 2.1 AA tokenized styling across all settings tab panels in Storybook.
+  - Added modular decomposition and strict line budget verification tests in `tests/test_theming.py` and updated `tests/test_settings_modal.py` and `tests/test_settings_subcomponents.py`.
+  - Updated Diataxis how-to and reference guides in `docs/how-to/configure-appearance-and-themes.md` and `docs/reference/design-tokens-and-themes.md`.
+
 - **Campaign Analytics Storage and Query Modular Decomposition (`TASK-0118`, `ADR-0003`, `ADR-0005`, `ADR-0011`)**:
   - Decomposed `services/campaign_analytics/src/campaign_analytics/storage.py` into storage facade `storage.py` (165 lines) and specialized query modules `queries/spatial.py` (117 lines), `queries/mvp.py` (112 lines), and `queries/timeline.py` (97 lines).
   - Maintained 100% backward compatibility for all public methods and aliases on `CampaignAnalyticsStorage` (`record_spatial_position()`, `get_campaign_heatmaps()`, `get_campaign_mvp()`, `get_campaign_timeline()`).
@@ -457,29 +464,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Milestone 2: Live Collaborative Alpha
 #### Added
-- **Tactile Board Kinematics & Ghost Previews (`TASK-0084`, `PRD-0013`, `US-0043`)**:
-  - Drag-and-drop token physics with spring damping, velocity, 5ft step counting, and live waypoint route measurement.
-  - Semi-transparent ghost preview trajectories for spoken movement commands before state commits.
-  - Movement path validation against difficult terrain, hazards, and spatial boundary walls.
-- **Streaming Whisper Speech-to-Intent Pipeline (`TASK-0039`, `TASK-0083`)**:
-  - Sub-500ms streaming Whisper audio transcription and intent classification.
-  - Real-time voice intent extraction for movement, attacks, spells, and narrative statements.
-  - Multi-condition DSP voice filters for drunkenness slurs, ghost echoes, and underwater muffling.
-- **Microfrontend Component Architecture (`ADR-0013`, `TASK-0024`, `TASK-0043`)**:
-  - Service bounded context component vendoring in `services/<bc>/ui/` with Shadow DOM encapsulation.
-  - Runtime dynamic microfrontend discovery via `/ui/manifest` endpoints.
-  - Decoupled Lit Web Component App Shell (`frontend/`) and Storybook component studio integration.
-- **Frontend Settings Modal & Theme Modes (`TASK-0073`, `TASK-0086`)**:
-  - Centralized settings modal with Dark, Light, and System preference mode orchestration.
-  - High-contrast Bauhaus modernist design tokens ensuring WCAG 2.1 AA compliance.
-- **Live WebRTC Audio & S3 Asset Uploaders (`TASK-0030`, `TASK-0031`, `TASK-0033`)**:
-  - WebRTC voice room with audio waveform visualizer and Silo S3 battlemap uploader with shroud masking.
-- **Enterprise Security & Event Store (`TASK-0032`, `TASK-0034`, `TASK-0035`, `TASK-0036`)**:
-  - Google Zanzibar authorization (SpiceDB), Zitadel OIDC authentication, PostgreSQL event store (`eventsource-py`), and Redis Streams bus (`TASK-0015`, `TASK-0042`).
-- **Observability & Analytics (`TASK-0037`, `TASK-0038`, `TASK-0082`)**:
-  - OpenTelemetry distributed tracing with Collector/Loki/Grafana and privacy-preserving OpenPanel analytics SDK.
-- **Autonomous Backlog Execution Engine (`TASK-0046`)**:
-  - Parallel worktree orchestrator (`scripts/run-backlog-engine.sh`), conflict detection, and interactive Project Visualizer web application.
+- **Tactile Board Kinematics & Ghost Previews (`TASK-0084`, `PRD-0013`, `US-0043`)**: Drag-and-drop token physics with spring damping, velocity, 5ft step counting, and semi-transparent ghost preview trajectories for spoken movement commands validated against difficult terrain and hazards.
+- **Streaming Whisper Speech-to-Intent Pipeline (`TASK-0039`, `TASK-0083`)**: Sub-500ms streaming Whisper audio transcription and intent classification with real-time voice intent extraction and multi-condition DSP voice filters.
+- **Microfrontend Component Architecture (`ADR-0013`, `TASK-0024`, `TASK-0043`)**: Service bounded context component vendoring in `services/<bc>/ui/` with Shadow DOM encapsulation, runtime discovery via `/ui/manifest`, and decoupled App Shell.
+- **Frontend Settings Modal & Theme Modes (`TASK-0073`, `TASK-0086`)**: Centralized settings modal with Dark, Light, and System preference mode orchestration and high-contrast Bauhaus modernist design tokens.
+- **Live WebRTC Audio & S3 Asset Uploaders (`TASK-0030`, `TASK-0031`, `TASK-0033`)**: WebRTC voice room with audio waveform visualizer and Silo S3 battlemap uploader with shroud masking.
+- **Enterprise Security & Event Store (`TASK-0032`, `TASK-0034`, `TASK-0035`, `TASK-0036`)**: Google Zanzibar authorization (SpiceDB), Zitadel OIDC authentication, PostgreSQL event store (`eventsource-py`), and Redis Streams bus (`TASK-0015`, `TASK-0042`).
+- **Observability & Analytics (`TASK-0037`, `TASK-0038`, `TASK-0082`)**: OpenTelemetry distributed tracing with Collector/Loki/Grafana and privacy-preserving OpenPanel analytics SDK.
+- **Autonomous Backlog Execution Engine (`TASK-0046`)**: Parallel worktree orchestrator (`scripts/run-backlog-engine.sh`), conflict detection, and interactive Project Visualizer web application.
 
 #### Changed
 - **Modular Router Refactoring (`TASK-0040`, `TASK-0041`, `TASK-0045`, `TASK-0085`)**:
