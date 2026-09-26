@@ -1,346 +1,147 @@
 /**
- * Live WebRTC Voice Client & Room Signaling Adapter (TASK-0033).
+ * Live WebRTC Voice Client & Room Signaling Adapter (TASK-0033, TASK-0068).
  *
- * Manages RTCPeerConnection mesh connections, WebAudio pipeline integration,
- * and real-time WebSocket signaling.
+ * Facade coordinating WebSocket signaling transport, PeerConnectionMesh,
+ * and WebAudio pipeline integration.
  */
 
 import { WebAudioPipeline } from './webaudio-pipeline.ts';
+import { PeerConnectionMesh } from './webrtc-peer-mesh.ts';
+import type { SignalingMessage, WebRTCVoiceOptions, WebRTCConnectionState } from './webrtc-types.ts';
 
-export interface VoicePeer {
-  peer_id: string;
-  user_id: string;
-  role: string;
-  joined_at?: string;
-  is_muted?: boolean;
-  audio_level?: number;
-  latency_ms?: number;
-  is_speaking?: boolean;
-}
-
-export interface SignalingMessage {
-  type: string;
-  session_id?: string;
-  peer_id?: string;
-  from_peer?: string;
-  to_peer?: string;
-  user_id?: string;
-  role?: string;
-  sdp?: RTCSessionDescriptionInit;
-  candidate?: RTCIceCandidateInit;
-  is_muted?: boolean;
-  audio_level?: number;
-  latency_ms?: number;
-  is_speaking?: boolean;
-  reason?: string;
-  peers?: VoicePeer[];
-}
-
-export interface WebRTCVoiceOptions {
-  wsBaseUrl?: string;
-  iceServers?: RTCIceServer[];
-  onPeerJoined?: (peer: VoicePeer) => void;
-  onPeerLeft?: (peerId: string, reason?: string) => void;
-  onPeerMuted?: (peerId: string, isMuted: boolean) => void;
-  onAudioLevel?: (level: number, isSpeaking: boolean) => void;
-  onKicked?: (reason: string) => void;
-  onError?: (error: Error | string) => void;
-}
+export * from './webrtc-types.ts';
+export * from './webrtc-peer-mesh.ts';
 
 export class WebRTCVoiceService {
   private sessionId: string | null = null;
   private userId: string | null = null;
   private peerId: string | null = null;
   private role: string = 'player';
-
+  private token?: string;
   private socket: WebSocket | null = null;
-  private peerConnections = new Map<string, RTCPeerConnection>();
-  private remoteStreams = new Map<string, MediaStream>();
-
-  private audioPipeline: WebAudioPipeline = new WebAudioPipeline();
+  private mesh: PeerConnectionMesh;
+  private audioPipeline = new WebAudioPipeline();
   private telemetryInterval: number | null = null;
+  private reconnectTimer: number | null = null;
+  private connectionState: WebRTCConnectionState = 'disconnected';
   private options: WebRTCVoiceOptions;
 
   constructor(options: WebRTCVoiceOptions = {}) {
-    this.options = {
-      wsBaseUrl:
-        typeof window !== 'undefined' && window.location
-          ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
-          : 'ws://localhost:8000',
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-      ],
-      ...options,
-    };
+    const ws = typeof window !== 'undefined' && window.location
+      ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+      : 'ws://localhost:8000';
+    this.options = { wsBaseUrl: ws, iceServers: [{ urls: 'stun:stun.l.google.com:19302' }], autoReconnect: false, reconnectIntervalMs: 3000, ...options };
+    this.mesh = new PeerConnectionMesh({ iceServers: this.options.iceServers, onSignal: (m) => this.sendSignalingMessage(m) });
   }
 
   public async connect(
-    sessionId: string,
-    userId: string,
-    peerId?: string,
-    role: string = 'player',
-    token?: string
+    sessionId: string, userId: string, peerId?: string, role: string = 'player', token?: string
   ): Promise<void> {
     this.sessionId = sessionId;
     this.userId = userId;
     this.peerId = peerId || `peer_${userId}_${Math.random().toString(36).substring(2, 7)}`;
     this.role = role;
+    this.token = token;
+    this.setConnectionState('connecting');
 
-    const query = new URLSearchParams({
-      session_id: sessionId,
-      user_id: userId,
-      peer_id: this.peerId,
-      role: this.role,
-    });
-    if (token) query.set('token', token);
-
-    const wsUrl = `${this.options.wsBaseUrl}/ws/voice/${sessionId}?${query.toString()}`;
+    const q = new URLSearchParams({ session_id: sessionId, user_id: userId, peer_id: this.peerId, role: this.role });
+    if (token) q.set('token', token);
 
     return new Promise((resolve, reject) => {
       try {
-        this.socket = new WebSocket(wsUrl);
-
-        this.socket.onopen = () => {
-          this.startTelemetryLoop();
-          resolve();
+        this.socket = new WebSocket(`${this.options.wsBaseUrl}/ws/voice/${sessionId}?${q.toString()}`);
+        this.socket.onopen = () => { this.setConnectionState('connected'); this.startTelemetryLoop(); resolve(); };
+        this.socket.onmessage = async (e) => {
+          try { await this.handleSignalingMessage(JSON.parse(e.data)); } catch (err) { this.options.onError?.(err as Error); }
         };
-
-        this.socket.onmessage = async (event) => {
-          try {
-            const data: SignalingMessage = JSON.parse(event.data);
-            await this.handleSignalingMessage(data);
-          } catch (err) {
-            this.options.onError?.(err as Error);
-          }
-        };
-
-        this.socket.onerror = (err) => {
-          this.options.onError?.('WebSocket voice signaling error');
-          reject(err);
-        };
-
-        this.socket.onclose = (event) => {
-          if (event.code === 4003) {
-            this.options.onError?.('Zanzibar permission denied: unable to connect to voice room');
-          }
+        this.socket.onerror = (err) => { this.setConnectionState('failed'); this.options.onError?.('Signaling error'); reject(err); };
+        this.socket.onclose = (e) => {
+          if (e.code === 4003) this.options.onError?.('Zanzibar permission denied: unable to connect to voice room');
+          const prev = this.connectionState;
           this.cleanup();
+          if (this.options.autoReconnect && prev === 'connected' && e.code !== 1000 && e.code !== 4003) this.scheduleReconnect();
         };
-      } catch (e) {
-        reject(e);
-      }
+      } catch (err) { this.setConnectionState('failed'); reject(err); }
     });
   }
 
   public async startMicrophone(): Promise<MediaStream> {
     const stream = await this.audioPipeline.startMicrophone();
-    for (const pc of this.peerConnections.values()) {
-      for (const track of stream.getAudioTracks()) {
-        pc.addTrack(track, stream);
-      }
-    }
+    for (const track of stream.getAudioTracks()) this.mesh.addLocalTrack(track, stream);
     return stream;
   }
-
-  public applyDspFilters(filters: string[]): void {
-    this.audioPipeline.applyDspFilters(filters);
-  }
-
+  public applyDspFilters(filters: string[]): void { this.audioPipeline.applyDspFilters(filters); }
   public setMute(isMuted: boolean): void {
     this.audioPipeline.setMute(isMuted);
-    this.sendSignalingMessage({
-      type: 'webrtc_mute',
-      peer_id: this.peerId || '',
-      is_muted: isMuted,
-    });
+    this.sendSignalingMessage({ type: 'webrtc_mute', peer_id: this.peerId || '', is_muted: isMuted });
   }
 
-  public getPeerId(): string | null {
-    return this.peerId;
-  }
-
-  public getSessionId(): string | null {
-    return this.sessionId;
-  }
-
-  public getUserId(): string | null {
-    return this.userId;
-  }
-
-
+  public getPeerId(): string | null { return this.peerId; }
+  public getSessionId(): string | null { return this.sessionId; }
+  public getUserId(): string | null { return this.userId; }
+  public getConnectionState(): WebRTCConnectionState { return this.connectionState; }
+  public getPeerMesh(): PeerConnectionMesh { return this.mesh; }
   public disconnect(): void {
+    if (this.reconnectTimer !== null) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.sendSignalingMessage({
-        type: 'webrtc_leave',
-        peer_id: this.peerId || '',
-        reason: 'user_exit',
-      });
+      this.sendSignalingMessage({ type: 'webrtc_leave', peer_id: this.peerId || '', reason: 'user_exit' });
       this.socket.close();
     }
     this.cleanup();
   }
 
   private cleanup(): void {
-    if (this.telemetryInterval !== null) {
-      clearInterval(this.telemetryInterval);
-      this.telemetryInterval = null;
-    }
-    for (const pc of this.peerConnections.values()) {
-      pc.close();
-    }
-    this.peerConnections.clear();
-    this.remoteStreams.clear();
+    if (this.telemetryInterval !== null) { clearInterval(this.telemetryInterval); this.telemetryInterval = null; }
+    this.mesh.closeAll();
     this.audioPipeline.close();
+    this.setConnectionState('disconnected');
   }
 
-  private sendSignalingMessage(message: SignalingMessage): void {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(message));
-    }
+  private setConnectionState(state: WebRTCConnectionState): void {
+    this.connectionState = state;
+    this.options.onConnectionStateChange?.(state);
+  }
+
+  private scheduleReconnect(): void {
+    this.setConnectionState('reconnecting');
+    this.reconnectTimer = window.setTimeout(() => {
+      if (this.sessionId && this.userId) this.connect(this.sessionId, this.userId, this.peerId || undefined, this.role, this.token).catch(() => {});
+    }, this.options.reconnectIntervalMs || 3000);
+  }
+
+  private sendSignalingMessage(msg: SignalingMessage): void {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify(msg));
   }
 
   private async handleSignalingMessage(msg: SignalingMessage): Promise<void> {
-    switch (msg.type) {
-      case 'webrtc_joined':
-        if (msg.peers) {
-          for (const peer of msg.peers) {
-            if (peer.peer_id !== this.peerId) {
-              this.options.onPeerJoined?.(peer);
-              await this.createPeerConnection(peer.peer_id, true);
-            }
-          }
+    await this.mesh.handleSignal(msg, this.audioPipeline.getLocalStream(), this.peerId || '');
+    if (msg.type === 'webrtc_joined' && msg.peers) {
+      for (const p of msg.peers) {
+        if (p.peer_id !== this.peerId) {
+          this.options.onPeerJoined?.(p);
+          await this.mesh.createPeerConnection(p.peer_id, true, this.audioPipeline.getLocalStream(), this.peerId || '');
         }
-        break;
-
-      case 'webrtc_peer_joined':
-        if (msg.peer_id && msg.peer_id !== this.peerId) {
-          this.options.onPeerJoined?.({
-            peer_id: msg.peer_id,
-            user_id: msg.user_id || 'unknown',
-            role: msg.role || 'player',
-          });
-        }
-        break;
-
-      case 'webrtc_offer':
-        if (msg.from_peer && msg.sdp) {
-          const pc = await this.createPeerConnection(msg.from_peer, false);
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          this.sendSignalingMessage({
-            type: 'webrtc_answer',
-            from_peer: this.peerId || '',
-            to_peer: msg.from_peer,
-            sdp: answer,
-          });
-        }
-        break;
-
-      case 'webrtc_answer':
-        if (msg.from_peer && msg.sdp) {
-          const pc = this.peerConnections.get(msg.from_peer);
-          if (pc) {
-            await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-          }
-        }
-        break;
-
-      case 'webrtc_ice_candidate':
-        if (msg.from_peer && msg.candidate) {
-          const pc = this.peerConnections.get(msg.from_peer);
-          if (pc) {
-            await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
-          }
-        }
-        break;
-
-      case 'webrtc_peer_muted':
-        if (msg.peer_id) {
-          this.options.onPeerMuted?.(msg.peer_id, Boolean(msg.is_muted));
-        }
-        break;
-
-      case 'webrtc_peer_left':
-        if (msg.peer_id) {
-          const pc = this.peerConnections.get(msg.peer_id);
-          if (pc) {
-            pc.close();
-            this.peerConnections.delete(msg.peer_id);
-          }
-          this.remoteStreams.delete(msg.peer_id);
-          this.options.onPeerLeft?.(msg.peer_id, msg.reason);
-        }
-        break;
-
-      case 'webrtc_kicked':
-        this.options.onKicked?.(msg.reason || 'Kicked by DM');
-        this.cleanup();
-        break;
-    }
-  }
-
-  private async createPeerConnection(remotePeerId: string, isInitiator: boolean): Promise<RTCPeerConnection> {
-    if (this.peerConnections.has(remotePeerId)) {
-      return this.peerConnections.get(remotePeerId)!;
-    }
-
-    const pc = new RTCPeerConnection({ iceServers: this.options.iceServers });
-    this.peerConnections.set(remotePeerId, pc);
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.sendSignalingMessage({
-          type: 'webrtc_ice_candidate',
-          from_peer: this.peerId || '',
-          to_peer: remotePeerId,
-          candidate: event.candidate.toJSON(),
-        });
       }
-    };
-
-    pc.ontrack = (event) => {
-      if (event.streams && event.streams[0]) {
-        this.remoteStreams.set(remotePeerId, event.streams[0]);
-      }
-    };
-
-    const localStream = this.audioPipeline.getLocalStream();
-    if (localStream) {
-      for (const track of localStream.getAudioTracks()) {
-        pc.addTrack(track, localStream);
-      }
+    } else if (msg.type === 'webrtc_peer_joined' && msg.peer_id && msg.peer_id !== this.peerId) {
+      this.options.onPeerJoined?.({ peer_id: msg.peer_id, user_id: msg.user_id || 'unknown', role: msg.role || 'player' });
+    } else if (msg.type === 'webrtc_peer_muted' && msg.peer_id) {
+      this.options.onPeerMuted?.(msg.peer_id, Boolean(msg.is_muted));
+    } else if (msg.type === 'webrtc_peer_left' && msg.peer_id) {
+      this.options.onPeerLeft?.(msg.peer_id, msg.reason);
+    } else if (msg.type === 'webrtc_kicked') {
+      this.options.onKicked?.(msg.reason || 'Kicked by DM');
+      this.cleanup();
     }
-
-    if (isInitiator) {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      this.sendSignalingMessage({
-        type: 'webrtc_offer',
-        from_peer: this.peerId || '',
-        to_peer: remotePeerId,
-        sdp: offer,
-      });
-    }
-
-    return pc;
   }
 
   private startTelemetryLoop(): void {
     if (this.telemetryInterval !== null) return;
-
     this.telemetryInterval = window.setInterval(() => {
       const { level, isSpeaking } = this.audioPipeline.getAudioLevel();
-
       this.options.onAudioLevel?.(level, isSpeaking);
-
       if (this.socket && this.socket.readyState === WebSocket.OPEN && this.peerId) {
         this.sendSignalingMessage({
-          type: 'webrtc_telemetry',
-          peer_id: this.peerId,
-          audio_level: level,
-          latency_ms: 15.0,
-          is_speaking: isSpeaking,
+          type: 'webrtc_telemetry', peer_id: this.peerId, audio_level: level, latency_ms: 15.0, is_speaking: isSpeaking,
         });
       }
     }, 250);

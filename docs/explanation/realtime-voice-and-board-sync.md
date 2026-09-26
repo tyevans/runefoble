@@ -84,6 +84,19 @@ Bidirectional voice streams and audio mesh coordination are negotiated via the W
 - **Backward-Compatible Facade (`gateway_api.webrtc_signaling`)**:
   Re-exports all signaling components to guarantee zero contract regressions across legacy imports.
 
+## WebRTC Client Voice Service and Peer Connection Mesh Architecture
+
+On the browser client, real-time voice streaming and peer mesh topology are managed by modular TypeScript services in `frontend/src/services/` (TASK-0068, ADR-0002, ADR-0004, ADR-0009, ADR-0013):
+
+- **WebRTC Protocol Types & Interfaces (`frontend/src/services/webrtc-types.ts`)**:
+  Defines strongly typed wire signaling contracts (`SignalingMessage`), active voice participant snapshots (`VoicePeer`), client configuration options (`WebRTCVoiceOptions`, `PeerMeshOptions`), and connection state enums (`WebRTCConnectionState`, `WebRTCConnectionStates`).
+- **Peer Connection Mesh Coordinator (`frontend/src/services/webrtc-peer-mesh.ts`)**:
+  `PeerConnectionMesh` manages the lifecycle of `RTCPeerConnection` instances across party peers. It implements early ICE candidate queuing prior to remote description resolution, tracks remote audio MediaStreams, bridges local audio tracks, and attaches remote streams to managed DOM `<audio>` elements with per-peer volume and mute controls.
+- **Voice Client Service Facade (`frontend/src/services/webrtc-voice.ts`)**:
+  `WebRTCVoiceService` provides the public client interface. It establishes Zanzibar-authorized WebSocket signaling sessions with `gateway-api`, orchestrates auto-reconnect timers, coordinates the local `WebAudioPipeline` (hardware microphone capture, DSP vocal conditioning filters, and VAD audio levels), and periodically broadcasts speaking telemetry.
+- **Backward Compatibility**:
+  `webrtc-voice.ts` re-exports all protocol types and `PeerConnectionMesh`, ensuring seamless compatibility with existing frontend components, Storybook stories, and microfrontend consumers.
+
 ## Campaign WebSocket Hub and Action Validator Gateway Architecture
 
 Real-time campaign mutations, token movement broadcasts, health modifications, and Watcher notifications stream through `/ws/campaigns/{campaign_id}`. In accordance with Hard Invariant 6 (File length limit < 500 lines) and ADR-0001 / ADR-0007 / ADR-0009, the WebSocket infrastructure in `gateway_api` is partitioned into modular, single-responsibility submodules:
