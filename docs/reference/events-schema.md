@@ -71,6 +71,9 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`TokenRemoved`**: Emitted when a token leaves the board.
   - `token_id`: String
   - `reason`: String ("defeated", "retreated", "teleported")
+- **`FogOfWarRevealed`**: Emitted when a token's vision reveals uncharted grid cells.
+  - `revealed_cells`: List[List[Integer]]
+  - `revealed_by_token_id`: Optional[String]
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
 

@@ -30,10 +30,15 @@
 | `the-watcher` | POST | `/api/v1/watcher/narrate` | Generates atmospheric narration and DM rulings |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/turns/auto-pilot` | Executes automated stand-in turn for absent player, records action, dispatches events, and advances turn |
 | `voice-agent` | POST | `/api/v1/voice/transcribe` | Transcribes player speech, emits `PlayerSpokeEvent` to Redis Streams, and forwards to The Watcher |
-| `voice-agent` | POST | `/api/v1/voice/synthesize` | Generates TTS audio streams using persona voice models with filters |
+| `voice-agent` | POST | `/api/v1/voice/tts` | Synthesizes TTS audio stream with DSP audio conditioning (drunk slurs, underwater, whisper, ghostly) |
+| `voice-agent` | POST | `/api/v1/voice/synthesize` | Backward-compatible TTS synthesis endpoint |
 | `voice-agent` | GET | `/api/v1/voice/personas` | Lists available voice persona models |
 | `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states |
+| `board-state` | GET | `/api/v1/boards/{session_id}/visibility` | Computes Chebyshev fog-of-war masks and filters shrouded hostile tokens |
 | `board-state` | POST | `/api/v1/boards/{session_id}/move` | Mutates token coordinates with spatial boundary enforcement |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Assigns fine-grained SpiceDB Zanzibar relationship tuples (owner, DM, player, spectator) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/turns/advance` | Advances session turn, enforcing Zanzibar `run_session` permission |
+| `gateway-mcp` | MCP | `11 Tools Registered` | Tabletop tools (`cast_spell`, `modify_character_hp`, `add_condition`, `roll_dice`, etc.) |
 
 
 ## Infrastructure Ports
