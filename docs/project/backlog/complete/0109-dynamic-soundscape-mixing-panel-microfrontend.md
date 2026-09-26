@@ -1,7 +1,7 @@
 ---
-id: '0109'
+id: 0109
 title: Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0050
@@ -18,8 +18,8 @@ governing_stories:
 - US-0039
 - US-0053
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/110
 ---
-
 # TASK-0109: Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls
 
 ## Status
