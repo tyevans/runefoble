@@ -51,6 +51,6 @@ dist/
 .env.*.local
 
 # Agent state & isolated worktrees
-.agents/last-docs-run
+.agents/
 .claude/last-docs-run
 .worktrees/

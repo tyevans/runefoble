@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check
 
 CLUSTER_NAME ?= runefoble-local
 KIND_CONFIG ?= deployments/kind/cluster-config.yaml
@@ -9,6 +9,9 @@ help: ## Show this help message
 	@echo "Runefoble Developer Interface"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
+
+health-check: ## Inspect codebase file length invariants and backlog ready buffer
+	@python3 scripts/health_check.py
 
 setup: install-tools ## Install workspace Python dependencies and frontend packages
 	@echo "==> Setting up UV workspace..."
