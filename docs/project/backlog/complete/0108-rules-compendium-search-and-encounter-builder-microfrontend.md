@@ -1,7 +1,7 @@
 ---
-id: '0108'
+id: 0108
 title: Rules Compendium Search & Encounter Builder Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0048
@@ -18,8 +18,8 @@ governing_stories:
 - US-0037
 - US-0052
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/106
 ---
-
 # TASK-0108: Rules Compendium Search & Encounter Builder Microfrontend
 
 ## Status
