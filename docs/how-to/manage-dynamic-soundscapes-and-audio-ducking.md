@@ -130,3 +130,12 @@ The component dispatches custom DOM events:
 - `soundscape-mood`: Triggered when DM clicks a mood override button.
 - `soundscape-cue`: Triggered when tactical foley buttons are clicked.
 - `soundscape-duck`: Triggered when voice ducking engages or disengages.
+
+---
+
+## 6. Modular Blackbox Test Organization & Architecture
+
+The soundscape blackbox verification suite is partitioned into two focused test modules strictly adhering to Hard Invariant 6 (< 500 lines per file, strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+- `tests/test_blackbox_soundscape_transitions.py`: Verifies multi-track stem layer mixing, ambient/combat crossfading, WebAudio -12dB voice ducking coordination triggered by `PlayerSpokeEvent`, manual mood overrides, and `<runefoble-soundscape-controls>` microfrontend component and token invariants.
+- `tests/test_blackbox_soundscape_tension.py`: Verifies encounter tension scoring heuristics across exploration and combat states, tactical foley cue triggers (`POST /api/v1/soundscape/cue`), autonomous Redis Streams reactivity to `CombatEncounterStarted` and `CombatRoundAdvanced`, and SpiceDB Zanzibar DM authorization enforcement.
+
