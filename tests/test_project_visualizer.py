@@ -296,4 +296,3 @@ def test_graph_visualizer_zoom_and_minimap_bundle(repo_root: Path, tmp_path: Pat
     assert "moveCameraToMinimapPoint" in content
     assert "minimap-view-rect" in content
     assert "isDraggingMinimap" in content
-
