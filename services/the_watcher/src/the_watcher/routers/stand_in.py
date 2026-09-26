@@ -40,6 +40,7 @@ async def stand_in_act(req: StandInRequest) -> StandInAction:
                         "penalties": req.penalties,
                         "scene_context": req.scene_context,
                         "personality_traits": req.personality_traits,
+                        "guardrails": req.guardrails,
                     },
                 )
                 if res.status_code == 200:
@@ -50,6 +51,7 @@ async def stand_in_act(req: StandInRequest) -> StandInAction:
                         action_description=data.get("narrative_flavor", ""),
                         dialogue=data.get("dialogue", "..."),
                         penalties_applied=data.get("penalties_applied", req.penalties),
+                        guardrails_applied=data.get("guardrails_applied", []),
                         flavor_text=data.get("narrative_flavor", ""),
                     )
         except Exception as e:
@@ -62,6 +64,7 @@ async def stand_in_act(req: StandInRequest) -> StandInAction:
             penalties=req.penalties,
             scene_context=req.scene_context,
             personality_traits=req.personality_traits,
+            guardrails=req.guardrails,
         )
 
     # Publish events to Redis Streams

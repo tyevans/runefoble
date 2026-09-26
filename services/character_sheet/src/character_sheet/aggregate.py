@@ -1,12 +1,13 @@
 """Event-sourced CharacterSheet aggregate using eventsource-py."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from character_sheet.models import (
     CharacterSheetState,
     CharacterState,
     ConditionState,
     InventoryItem,
+    StandInGuardrails,
 )
 from character_sheet.rules import (
     CLASS_HIT_DIE,
@@ -31,6 +32,8 @@ from runefoble_events.events import (
     ItemRemovedFromInventory,
     SpellPrepared,
     SpellSlotExpended,
+    StandInPolicyUpdated,
+    StandInStabilized,
 )
 
 __all__ = [
@@ -74,8 +77,40 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
             personality_traits=personality_traits or ["brave", "curious"],
         )
 
-    def modify_health(self, delta: int, source: str = "damage") -> None:
-        """Apply damage or healing."""
+    def modify_health(
+        self, delta: int, source: str = "damage", is_stand_in: bool | None = None
+    ) -> None:
+        """Apply damage or healing with zero-HP permadeath safeguard for stand-ins."""
+        effective_stand_in = (
+            is_stand_in if is_stand_in is not None else self.state.is_stand_in_active
+        )
+        if (
+            delta < 0
+            and (self.state.current_hp + delta <= 0)
+            and effective_stand_in
+            and self.state.stand_in_guardrails.permadeath_safeguard
+        ):
+            self.create_event(
+                CharacterHealthChanged,
+                delta=delta,
+                current_hp=0,
+                max_hp=self.state.max_hp,
+                source=source,
+            )
+            self.create_event(
+                StandInStabilized,
+                character_id=str(self.aggregate_id),
+                current_hp=0,
+                condition="unconscious_stabilized",
+            )
+            self.create_event(
+                ConditionApplied,
+                condition="unconscious_stabilized",
+                duration_rounds=None,
+                source="permadeath_safeguard",
+            )
+            return
+
         new_hp = max(0, min(self.state.max_hp, self.state.current_hp + delta))
         self.create_event(
             CharacterHealthChanged,
@@ -84,6 +119,22 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
             max_hp=self.state.max_hp,
             source=source,
         )
+
+    def update_stand_in_guardrails(self, guardrails: StandInGuardrails | dict[str, Any]) -> None:
+        """Configure tactical constraints for stand-in AI."""
+        if isinstance(guardrails, StandInGuardrails):
+            gr_dict = guardrails.model_dump()
+        else:
+            gr_dict = dict(guardrails)
+        self.create_event(
+            StandInPolicyUpdated,
+            character_id=str(self.aggregate_id),
+            guardrails=gr_dict,
+        )
+
+    def set_stand_in_active(self, active: bool) -> None:
+        """Set whether the character is currently piloted by the stand-in AI."""
+        self._state = self.state.with_stand_in_active(active)
 
     def apply_penalty(
         self,
@@ -191,6 +242,12 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
             raise ValueError(
                 f"INSUFFICIENT_SPELL_SLOTS: Character '{self.aggregate_id}' has 0 level {slot_level} spell slots remaining to cast '{spell_name}'"
             )
+        if self.state.is_stand_in_active:
+            preserve_count = self.state.stand_in_guardrails.preserve_spell_slots.get(slot_level, 0)
+            if available_slots <= preserve_count:
+                raise ValueError(
+                    f"STAND_IN_GUARDRAIL_VIOLATION: Character '{self.aggregate_id}' has {available_slots} level {slot_level} spell slots, but stand-in tactical policy reserves {preserve_count} slot(s)."
+                )
         self.create_event(
             SpellSlotExpended,
             session_id=session_id,
@@ -274,3 +331,11 @@ class CharacterAggregate(DeclarativeAggregate[CharacterState]):
         self._state = self.state.with_expended_spell_slot(
             slot_level=event.slot_level_used, remaining=event.remaining_slots
         )
+
+    @handles(StandInPolicyUpdated)
+    def _on_guardrails_updated(self, event: StandInPolicyUpdated) -> None:
+        self._state = self.state.with_stand_in_guardrails(event.guardrails)
+
+    @handles(StandInStabilized)
+    def _on_stand_in_stabilized(self, event: StandInStabilized) -> None:
+        self._state = self.state.with_stabilized()

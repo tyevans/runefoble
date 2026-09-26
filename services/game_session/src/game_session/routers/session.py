@@ -5,17 +5,28 @@ from __future__ import annotations
 import contextlib
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState
-from game_session.dependencies import STREAM_SESSION, get_event_bus, repo
+from game_session.dependencies import (
+    STREAM_SESSION,
+    get_event_bus,
+    get_spicedb_client,
+    repo,
+)
 from game_session.models import (
     CreateSessionRequest,
+    HotSwapRequest,
+    HotSwapResponse,
     JoinSessionRequest,
     LeaveSessionRequest,
     RollDiceRequest,
     RollDiceResponse,
 )
-from runefoble_events.events import DiceRolled, SessionStarted
+from runefoble_events.events import (
+    CharacterControlTransferred,
+    DiceRolled,
+    SessionStarted,
+)
 from runefoble_platform.dice import parse_and_roll
 
 router = APIRouter(tags=["session"])
@@ -92,6 +103,70 @@ async def leave_session(session_id: UUID, req: LeaveSessionRequest) -> GameSessi
         return session.state
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/api/v1/sessions/{session_id}/hot-swap", response_model=HotSwapResponse)
+async def hot_swap_session(
+    session_id: UUID,
+    req: HotSwapRequest,
+    x_user_id: str | None = Header(None, alias="x-user-id"),
+) -> HotSwapResponse:
+    """Hands off active turn control from AI stand-in to authenticating player mid-session."""
+    spicedb = get_spicedb_client()
+    if x_user_id:
+        allowed = await spicedb.check_permission(
+            resource_type="character",
+            resource_id=str(req.character_id),
+            permission="edit",
+            subject_type="user",
+            subject_id=x_user_id,
+        )
+        if not allowed:
+            allowed = await spicedb.check_permission(
+                resource_type="game_session",
+                resource_id=str(session_id),
+                permission="participate",
+                subject_type="user",
+                subject_id=x_user_id,
+            )
+        if not allowed:
+            raise HTTPException(
+                status_code=403,
+                detail=f"User '{x_user_id}' does not have permission to take control of character '{req.character_id}'",
+            )
+
+    try:
+        session = await repo.load(session_id)
+        session.hot_swap_character(player_id=req.player_id, character_id=req.character_id)
+        await repo.save(session)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    event = CharacterControlTransferred(
+        aggregate_id=session_id,
+        session_id=str(session_id),
+        character_id=str(req.character_id),
+        player_id=req.player_id,
+        previous_controller="ai_stand_in",
+        new_controller="player",
+    )
+    bus = get_event_bus()
+    if bus:
+        with contextlib.suppress(Exception):
+            await bus.publish_event(STREAM_SESSION, event)
+
+    return HotSwapResponse(
+        session_id=session_id,
+        character_id=req.character_id,
+        player_id=req.player_id,
+        previous_controller="ai_stand_in",
+        new_controller="player",
+        current_turn=session.state.current_turn,
+        in_combat=session.state.in_combat,
+        combat_round=session.state.combat_round,
+        combat_active_id=session.state.combat_active_id,
+        session_state=session.state,
+    )
 
 
 @router.post("/api/v1/sessions/{session_id}/next-turn", response_model=GameSessionState)

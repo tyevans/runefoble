@@ -67,6 +67,7 @@ class TheWatcherEngine:
         penalties: list[str],
         scene_context: str,
         personality_traits: list[str] | None = None,
+        guardrails: dict[str, Any] | None = None,
     ) -> StandInAction:
         """Simulate an action and dialogue for an absent player's character."""
         return self._stand_in_ai.generate_stand_in_action(
@@ -75,6 +76,7 @@ class TheWatcherEngine:
             penalties=penalties,
             scene_context=scene_context,
             personality_traits=personality_traits,
+            guardrails=guardrails,
         )
 
     def generate_stand_in_recap(

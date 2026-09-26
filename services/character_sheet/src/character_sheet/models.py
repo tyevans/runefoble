@@ -1,6 +1,8 @@
 """Pydantic state schemas and API request models for character sheets."""
 
-from typing import Literal
+from __future__ import annotations
+
+from typing import Any, Literal
 from uuid import UUID
 
 from character_sheet.rules import SPELL_SLOTS_TABLE
@@ -20,6 +22,16 @@ class ConditionState(BaseModel):
     source: str = ""
 
 
+class StandInGuardrails(BaseModel):
+    preserve_spell_slots: dict[int, int] = Field(default_factory=dict)
+    protect_allies: list[str] = Field(default_factory=list)
+    protect_ally_hp_threshold: float = 0.3
+    risk_threshold: Literal["cautious", "balanced", "reckless"] = "cautious"
+    avoid_melee: bool = True
+    permadeath_safeguard: bool = True
+    custom_priorities: list[str] = Field(default_factory=list)
+
+
 class CharacterState(BaseModel):
     character_id: UUID
     name: str
@@ -37,6 +49,9 @@ class CharacterState(BaseModel):
     spellbook: list[str] = Field(default_factory=list)
     prepared_spells: list[str] = Field(default_factory=list)
     spell_slots: dict[int, int] = Field(default_factory=lambda: {1: 2})
+    stand_in_guardrails: StandInGuardrails = Field(default_factory=StandInGuardrails)
+    is_stand_in_active: bool = False
+    is_stabilized: bool = False
 
     @classmethod
     def initial(
@@ -48,7 +63,7 @@ class CharacterState(BaseModel):
         current_hp: int,
         player_id: str | None = None,
         personality_traits: list[str] | None = None,
-    ) -> "CharacterState":
+    ) -> CharacterState:
         return cls(
             character_id=character_id,
             name=name,
@@ -60,22 +75,22 @@ class CharacterState(BaseModel):
             spell_slots=dict(SPELL_SLOTS_TABLE.get(1, {1: 2})),
         )
 
-    def with_health(self, current_hp: int) -> "CharacterState":
+    def with_health(self, current_hp: int) -> CharacterState:
         return self.model_copy(update={"current_hp": current_hp})
 
-    def with_penalty(self, penalty_type: str, description: str) -> "CharacterState":
+    def with_penalty(self, penalty_type: str, description: str) -> CharacterState:
         pens = dict(self.penalties)
         pens[penalty_type.lower()] = description
         return self.model_copy(update={"penalties": pens})
 
-    def without_penalty(self, penalty_type: str) -> "CharacterState":
+    def without_penalty(self, penalty_type: str) -> CharacterState:
         pens = dict(self.penalties)
         pens.pop(penalty_type.lower(), None)
         return self.model_copy(update={"penalties": pens})
 
     def with_inventory_item(
         self, item_id: str, name: str, quantity: int, weight_lbs: float
-    ) -> "CharacterState":
+    ) -> CharacterState:
         inv = dict(self.inventory)
         iid = str(item_id)
         if iid in inv:
@@ -86,7 +101,7 @@ class CharacterState(BaseModel):
             )
         return self.model_copy(update={"inventory": inv})
 
-    def without_inventory_item(self, item_id: str, quantity: int) -> "CharacterState":
+    def without_inventory_item(self, item_id: str, quantity: int) -> CharacterState:
         inv = dict(self.inventory)
         iid = str(item_id)
         if iid in inv:
@@ -96,7 +111,7 @@ class CharacterState(BaseModel):
                 inv[iid] = inv[iid].model_copy(update={"quantity": inv[iid].quantity - quantity})
         return self.model_copy(update={"inventory": inv})
 
-    def with_equipment_slot(self, slot: str, item_name: str | None) -> "CharacterState":
+    def with_equipment_slot(self, slot: str, item_name: str | None) -> CharacterState:
         eq = dict(self.equipment)
         if item_name is None:
             eq.pop(slot, None)
@@ -106,21 +121,21 @@ class CharacterState(BaseModel):
 
     def with_condition(
         self, condition: str, duration_rounds: int | None, source: str
-    ) -> "CharacterState":
+    ) -> CharacterState:
         conds = dict(self.conditions)
         conds[condition] = ConditionState(
             condition=condition, duration_rounds=duration_rounds, source=source
         )
         return self.model_copy(update={"conditions": conds})
 
-    def without_condition(self, condition: str) -> "CharacterState":
+    def without_condition(self, condition: str) -> CharacterState:
         conds = dict(self.conditions)
         conds.pop(condition, None)
         return self.model_copy(update={"conditions": conds})
 
     def with_level_up(
         self, new_level: int, max_hp_increase: int, spell_slots: dict[int, int]
-    ) -> "CharacterState":
+    ) -> CharacterState:
         return self.model_copy(
             update={
                 "level": new_level,
@@ -130,7 +145,7 @@ class CharacterState(BaseModel):
             }
         )
 
-    def with_prepared_spell(self, spell_name: str) -> "CharacterState":
+    def with_prepared_spell(self, spell_name: str) -> CharacterState:
         prep = list(self.prepared_spells)
         if spell_name not in prep:
             prep.append(spell_name)
@@ -139,10 +154,31 @@ class CharacterState(BaseModel):
             book.append(spell_name)
         return self.model_copy(update={"prepared_spells": prep, "spellbook": book})
 
-    def with_expended_spell_slot(self, slot_level: int, remaining: int) -> "CharacterState":
+    def with_expended_spell_slot(self, slot_level: int, remaining: int) -> CharacterState:
         slots = dict(self.spell_slots)
         slots[slot_level] = remaining
         return self.model_copy(update={"spell_slots": slots})
+
+    def with_stand_in_guardrails(
+        self, guardrails: StandInGuardrails | dict[str, Any]
+    ) -> CharacterState:
+        if isinstance(guardrails, dict):
+            gr = StandInGuardrails.model_validate(guardrails)
+        else:
+            gr = guardrails
+        return self.model_copy(update={"stand_in_guardrails": gr})
+
+    def with_stand_in_active(self, active: bool) -> CharacterState:
+        return self.model_copy(update={"is_stand_in_active": active})
+
+    def with_stabilized(self) -> CharacterState:
+        conds = dict(self.conditions)
+        conds["unconscious_stabilized"] = ConditionState(
+            condition="unconscious_stabilized",
+            duration_rounds=None,
+            source="permadeath_safeguard",
+        )
+        return self.model_copy(update={"current_hp": 0, "is_stabilized": True, "conditions": conds})
 
 
 # Alias for explicit domain nomenclature
@@ -160,6 +196,17 @@ class CreateCharacterRequest(BaseModel):
 class HealthChangeRequest(BaseModel):
     delta: int
     source: str = "damage"
+    is_stand_in: bool | None = None
+
+
+class UpdateGuardrailsRequest(BaseModel):
+    preserve_spell_slots: dict[int, int] = Field(default_factory=dict)
+    protect_allies: list[str] = Field(default_factory=list)
+    protect_ally_hp_threshold: float = 0.3
+    risk_threshold: Literal["cautious", "balanced", "reckless"] = "cautious"
+    avoid_melee: bool = True
+    permadeath_safeguard: bool = True
+    custom_priorities: list[str] = Field(default_factory=list)
 
 
 class PenaltyRequest(BaseModel):

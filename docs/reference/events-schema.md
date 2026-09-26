@@ -69,6 +69,15 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`CombatEncounterEnded`**: Emitted when combat concludes.
   - `session_id`: Optional[UUID | str]
   - `total_rounds`: Integer
+- **`CharacterControlTransferred`**: Emitted when active token and turn control is transferred mid-session between an AI stand-in and a player (`runefoble.events.session.character_control_transferred`).
+  - `session_id`: UUID | str
+  - `character_id`: UUID | str
+  - `character_name`: String
+  - `previous_controller_id`: String
+  - `new_controller_id`: String
+  - `transferred_to_player`: Boolean (default True)
+  - `active_turn`: Optional[Integer]
+  - `round_number`: Optional[Integer]
 - **`SessionEnded`**: Emitted when the session concludes.
   - `summary`: String
 
@@ -155,6 +164,20 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `spell_name`: String
   - `slot_level_used`: Integer
   - `remaining_slots`: Integer
+- **`StandInPolicyUpdated`**: Emitted when tactical guardrail constraints and preferences are configured for a character's AI stand-in (`runefoble.events.character.stand_in_policy_updated`).
+  - `session_id`: Optional[UUID | str]
+  - `character_id`: UUID | str
+  - `spell_slot_reserve_level`: Optional[Integer]
+  - `ally_protection_target`: Optional[String]
+  - `avoid_melee`: Boolean
+  - `risk_threshold`: String
+  - `custom_priorities`: List[String]
+- **`StandInStabilized`**: Emitted when zero-HP permadeath safeguard stabilizes a stand-in character at 0 HP without death save failures (`runefoble.events.character.stand_in_stabilized`).
+  - `session_id`: Optional[UUID | str]
+  - `character_id`: UUID | str
+  - `character_name`: String
+  - `current_hp`: Integer (0)
+  - `stabilized_by`: String (default "permadeath_safeguard")
 
 ### The Watcher & Gameplay Stream Events
 

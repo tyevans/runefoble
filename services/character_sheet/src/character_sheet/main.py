@@ -4,6 +4,7 @@ Manages player and NPC character sheets, hit points, inventories,
 equipment, and status conditions (such as DM penalties for missed sessions).
 """
 
+import contextlib
 from uuid import UUID, uuid4
 
 from character_sheet.aggregate import CharacterAggregate
@@ -19,8 +20,12 @@ from character_sheet.models import (
     PenaltyRequest,
     PrepareSpellRequest,
     RemoveInventoryItemRequest,
+    StandInGuardrails,
+    UpdateGuardrailsRequest,
 )
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
+from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_events.events import StandInPolicyUpdated, StandInStabilized
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
@@ -32,6 +37,29 @@ app = FastAPI(
     version="0.1.0",
     description="Character Stats, HP Tracking, Inventory, Equipment, and DM Penalties backed by eventsource-py.",
 )
+
+STREAM_CHARACTER = "runefoble.events.character"
+_event_bus = None
+_spicedb_client = SpiceDBClient()
+
+
+def set_event_bus(bus) -> None:
+    global _event_bus
+    _event_bus = bus
+
+
+def get_event_bus():
+    return _event_bus
+
+
+def set_spicedb_client(client: SpiceDBClient) -> None:
+    global _spicedb_client
+    _spicedb_client = client
+
+
+def get_spicedb_client() -> SpiceDBClient:
+    return _spicedb_client
+
 
 # Global aggregate repository
 repo: AggregateRepository[CharacterAggregate] = create_aggregate_repository(CharacterAggregate)
@@ -127,8 +155,24 @@ async def get_character(character_id: UUID):
 async def modify_health(character_id: UUID, req: HealthChangeRequest):
     try:
         char = await repo.load(character_id)
-        char.modify_health(delta=req.delta, source=req.source)
+        was_stabilized = char.state.is_stabilized
+        char.modify_health(delta=req.delta, source=req.source, is_stand_in=req.is_stand_in)
         await repo.save(char)
+
+        if not was_stabilized and char.state.is_stabilized:
+            bus = get_event_bus()
+            if bus:
+                with contextlib.suppress(Exception):
+                    await bus.publish_event(
+                        STREAM_CHARACTER,
+                        StandInStabilized(
+                            aggregate_id=character_id,
+                            character_id=str(character_id),
+                            current_hp=0,
+                            condition="unconscious_stabilized",
+                        ),
+                    )
+
         return char.state
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -232,13 +276,70 @@ async def remove_condition(character_id: UUID, condition: str):
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
+@app.put("/api/v1/characters/{character_id}/guardrails", response_model=CharacterState)
+async def update_guardrails(
+    character_id: UUID,
+    req: UpdateGuardrailsRequest,
+    x_user_id: str | None = Header(None, alias="x-user-id"),
+):
+    """Configure tactical constraints and guardrails for stand-in AI."""
+    spicedb = get_spicedb_client()
+    if x_user_id:
+        allowed = await spicedb.check_permission(
+            resource_type="character",
+            resource_id=str(character_id),
+            permission="edit",
+            subject_type="user",
+            subject_id=x_user_id,
+        )
+        if not allowed:
+            raise HTTPException(
+                status_code=403,
+                detail=f"User '{x_user_id}' does not have edit permission on character '{character_id}'",
+            )
+    try:
+        char = await repo.load(character_id)
+        char.update_stand_in_guardrails(req)
+        await repo.save(char)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    bus = get_event_bus()
+    if bus:
+        with contextlib.suppress(Exception):
+            await bus.publish_event(
+                STREAM_CHARACTER,
+                StandInPolicyUpdated(
+                    aggregate_id=character_id,
+                    character_id=str(character_id),
+                    guardrails=char.state.stand_in_guardrails.model_dump(),
+                ),
+            )
+
+    return char.state
+
+
+@app.get("/api/v1/characters/{character_id}/guardrails", response_model=StandInGuardrails)
+async def get_guardrails(character_id: UUID):
+    """Retrieve tactical constraints configured for stand-in AI."""
+    try:
+        char = await repo.load(character_id)
+        return char.state.stand_in_guardrails
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Character not found: {e}") from e
+
+
 @app.get("/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for character sheet."""
     return {
         "service": "character_sheet",
         "package": "@runefoble/character-sheet-ui",
-        "components": ["runefoble-character-card", "runefoble-absentee-recap"],
+        "components": [
+            "runefoble-character-card",
+            "runefoble-absentee-recap",
+            "runefoble-stand-in-guardrails",
+        ],
         "version": "0.1.0",
     }
 

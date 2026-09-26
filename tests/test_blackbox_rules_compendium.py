@@ -18,8 +18,9 @@ from rules_compendium.main import app
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
+def client():
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.mark.asyncio
@@ -27,6 +28,7 @@ async def test_blackbox_canonical_rule_search_sub_50ms(client: TestClient):
     """Verify hybrid BM25 and semantic rule search returns canonical results under 50ms."""
     # Warm up / verify initialization
     client.get("/healthz")
+    client.get("/api/v1/compendium/rules/search?query=warmup")
 
     t0 = time.perf_counter()
     resp = client.get("/api/v1/compendium/rules/search?query=fire+damage+explosion")
