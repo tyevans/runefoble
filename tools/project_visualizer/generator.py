@@ -33,7 +33,9 @@ class ProjectVisualizerGenerator:
         shell = render_html_shell(data_json, is_live_server=is_live_server)
 
         # Inject client script before </body>
-        client_script = f"<script>\n{assets_js.get_client_js()}\n</script>"
+        client_script = (
+            f"<script>\n{assets_js.get_client_js(is_live_server=is_live_server)}\n</script>"
+        )
         return shell.replace("</body>", f"{client_script}\n</body>")
 
     def build_file(self, output_path: str | Path, is_live_server: bool = False) -> Path:

@@ -106,9 +106,33 @@ To export the raw structured relational graph as JSON:
 python3 -m tools.project_visualizer.cli export-json --out dist/project-data.json
 ```
 
+## 5. Bespoke Antigravity (AGY) Agent Launcher (Live Server Only)
+
+When running the visualizer locally with `make visualize-project`, developers can dispatch bespoke Antigravity (`agy`) coding agents directly from the visualizer header or from any backlog task detail drawer.
+
+### Capabilities
+- **Direct CLI Execution**: Spawns non-blocking background processes executing:
+  ```bash
+  agy --dangerously-skip-permissions -p "<prompt>"
+  ```
+  with optional session continuation (`-c`).
+- **Context-Aware Task Dispatch**: Clicking **Launch AGY** inside any task card automatically compiles a bespoke prompt containing the task ID, title, specification path, target bounded context, governing ADRs, and the Runefoble Definition of Done.
+- **Workflow Presets**: Quick-fill buttons for routine engineering tasks:
+  - **Task Spec**: Direct implementation prompt aligned with blackbox TDD and file length invariants.
+  - **Curator**: Autonomous JIT backlog curation and ready buffer maintenance (`scripts/curate-backlog.sh`).
+  - **Health & Invariants**: Codebase file length audit (<500 lines limit) and modularization proposals.
+  - **TDD Verification**: End-to-end verification gate execution (`pytest`, entrypoints, Helm lint).
+- **Live Agent Console**: Monospace terminal viewer streaming real-time `stdout`/`stderr` logs, process exit status, elapsed time counter, and termination controls.
+
+### Strict GitHub Pages Build Isolation
+To prevent exposing local execution tooling in published public documentation:
+- In static compilation mode (`make docs-build`, `make visualize-project-build`, and GitHub Pages deployment workflow), the AGY modal HTML and `agy_launcher.js` script are completely omitted from generated HTML bundles.
+- Task drawers and navigation headers in static documentation render without any launcher buttons or references.
+- Backend execution endpoints (`/api/agy/*`) are only registered on the local dynamic development server.
+
 ---
 
-## 4. Key Interactive Capabilities
+## 6. Key Interactive Capabilities
 
 ### 🌐 Relationship Graph & Traceability Network
 - **Interactive 2D Relationship Graph**: Real 2D node-link network visualization connecting Personas, User Stories, PRDs, Backlog Tasks, and ADRs with directional relationship edges (`desires`, `specifies`, `implements`, `governed_by`, `deploys_to`, `depends_on`).
