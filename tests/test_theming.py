@@ -89,6 +89,56 @@ def test_themes_css_semantic_token_hierarchy():
         assert f"{token}:" in content, f"Token {token} must be defined in themes.css"
 
 
+def test_wcag_contrast_invariants_across_all_themes_and_modes():
+    """Verify WCAG 2.1 AA (4.5:1) and AAA (7:1) contrast invariants across all theme/mode blocks."""
+    content = THEMES_CSS.read_text(encoding="utf-8")
+    blocks = re.findall(r"([^{]+)\{([^}]+)\}", content)
+
+    def srgb_to_lin(c: float) -> float:
+        c_norm = c / 255.0
+        return c_norm / 12.92 if c_norm <= 0.04045 else ((c_norm + 0.055) / 1.055) ** 2.4
+
+    def luminance(hex_code: str) -> float:
+        h = hex_code.lstrip("#")
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        return 0.2126 * srgb_to_lin(r) + 0.7152 * srgb_to_lin(g) + 0.0722 * srgb_to_lin(b)
+
+    def contrast(c1: str, c2: str) -> float:
+        l1, l2 = luminance(c1), luminance(c2)
+        lighter, darker = max(l1, l2), min(l1, l2)
+        return (lighter + 0.05) / (darker + 0.05)
+
+    checked_blocks = 0
+    for selector, body in blocks:
+        if "data-theme" in selector:
+            vars_dict = dict(re.findall(r"(--rf-[a-z0-9\-]+):\s*([^;]+);", body))
+            tp = vars_dict.get("--rf-text-primary", "").strip()
+            ts = vars_dict.get("--rf-text-secondary", "").strip()
+            bg_c = vars_dict.get("--rf-bg-canvas", "").strip()
+            bg_s = vars_dict.get("--rf-bg-surface", "").strip()
+
+            if tp.startswith("#") and bg_c.startswith("#"):
+                ratio_primary = contrast(tp, bg_c)
+                assert ratio_primary >= 7.0, (
+                    f"Primary text contrast failure in {selector.strip()}: {ratio_primary:.2f} < 7.0"
+                )
+                checked_blocks += 1
+
+            if ts.startswith("#") and bg_c.startswith("#"):
+                ratio_secondary = contrast(ts, bg_c)
+                assert ratio_secondary >= 4.5, (
+                    f"Secondary text contrast failure in {selector.strip()}: {ratio_secondary:.2f} < 4.5"
+                )
+
+            if tp.startswith("#") and bg_s.startswith("#"):
+                ratio_surface = contrast(tp, bg_s)
+                assert ratio_surface >= 7.0, (
+                    f"Surface primary text contrast failure in {selector.strip()}: {ratio_surface:.2f} < 7.0"
+                )
+
+    assert checked_blocks >= 8, f"Expected at least 8 theme/mode variations, found {checked_blocks}"
+
+
 def test_zero_hardcoded_hexes_in_web_components_static_styles():
     """Verify zero hardcoded hex color literals in Web Component static styles blocks."""
     hex_pattern = re.compile(r"#[0-9a-fA-F]{3,8}")
