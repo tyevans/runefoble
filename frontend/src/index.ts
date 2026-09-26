@@ -15,6 +15,7 @@ export * from './components/runefoble-header.ts';
 export * from './components/runefoble-campaign-nav.ts';
 export * from './components/runefoble-campaign-analytics.ts';
 export * from './components/runefoble-rules-compendium.ts';
+export * from './components/runefoble-soundscape-controls.ts';
 export * from './styles/app-shell.styles.ts';
 export * from './utils/dice.ts';
 export * from './runefoble-app.ts';

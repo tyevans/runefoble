@@ -31,6 +31,9 @@ importers:
       '@runefoble/rules-compendium-ui':
         specifier: workspace:*
         version: link:../services/rules_compendium/ui
+      '@runefoble/soundscape-ui':
+        specifier: workspace:*
+        version: link:../services/soundscape/ui
       '@runefoble/the-watcher-ui':
         specifier: workspace:*
         version: link:../services/the_watcher/ui

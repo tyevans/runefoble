@@ -118,24 +118,29 @@ The `<runefoble-soundscape-controls>` Web Component is vendored inside `services
 
 ```html
 <runefoble-soundscape-controls
-  sessionid="session-tomb-14"
-  tensionscore="65"
-  stemprofile="combat"
-  mastervolume="80">
+  sessionId="session-tomb-14"
+  tensionScore="65"
+  stemProfile="combat"
+  masterVolume="80">
 </runefoble-soundscape-controls>
 ```
 
 The component dispatches custom DOM events:
 - `soundscape-volume`: Triggered when master volume slider moves.
+- `soundscape-stem-volume`: Triggered when individual multi-channel stem sliders (melody, percussion, drone, ambient) move.
 - `soundscape-mood`: Triggered when DM clicks a mood override button.
-- `soundscape-cue`: Triggered when tactical foley buttons are clicked.
-- `soundscape-duck`: Triggered when voice ducking engages or disengages.
+- `soundscape-cue`: Triggered when tactile foley buttons (thunder, door slam, steel clash, roar) are clicked.
+- `soundscape-duck`: Triggered when voice ducking engages (-12dB attenuation) or disengages.
+
+Auditory earcon feedback is synthesized client-side using WebAudio `AudioContext`, providing instant tactile acoustics without extra network latency.
 
 ---
 
 ## 6. Modular Blackbox Test Organization & Architecture
 
-The soundscape blackbox verification suite is partitioned into two focused test modules strictly adhering to Hard Invariant 6 (< 500 lines per file, strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+The soundscape blackbox verification suite is partitioned into focused test modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+- `tests/test_blackbox_soundscape_ui.py`: Verifies microfrontend manifest advertising, package metadata integrity, TypeScript element exports, Storybook coverage, REST stem and cue data binding, and Zanzibar authorization.
 - `tests/test_blackbox_soundscape_transitions.py`: Verifies multi-track stem layer mixing, ambient/combat crossfading, WebAudio -12dB voice ducking coordination triggered by `PlayerSpokeEvent`, manual mood overrides, and `<runefoble-soundscape-controls>` microfrontend component and token invariants.
 - `tests/test_blackbox_soundscape_tension.py`: Verifies encounter tension scoring heuristics across exploration and combat states, tactical foley cue triggers (`POST /api/v1/soundscape/cue`), autonomous Redis Streams reactivity to `CombatEncounterStarted` and `CombatRoundAdvanced`, and SpiceDB Zanzibar DM authorization enforcement.
+
 

@@ -87,6 +87,19 @@ class DuckingRequest(BaseModel):
     reason: str = Field(default="speech", description="Triggering source (speech, cue, vad)")
 
 
+class StemVolumeUpdateRequest(BaseModel):
+    """Request model to update multi-channel stem volumes."""
+
+    session_id: str = Field(default="default", description="Associated game session ID")
+    stem_volumes: dict[str, float] = Field(
+        ...,
+        description="Mapping of stem names (melody, percussion, drone, ambient) to volume (0.0 to 1.0)",
+    )
+    campaign_id: UUID | None = Field(
+        default=None, description="Optional campaign ID for Zanzibar check"
+    )
+
+
 class TensionStatusResponse(BaseModel):
     """Current session tension status and audio stem weights."""
 

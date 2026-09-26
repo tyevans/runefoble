@@ -4,6 +4,8 @@ Powered by eventsource-py, Redis Streams, and WebAudio stem mixing.
 Manages encounter tension scoring, tactical foley sound effects, and -12dB audio ducking.
 """
 
+import json
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
@@ -45,10 +47,19 @@ def health_check() -> dict[str, str]:
 @app.get("/ui/manifest", tags=["Microfrontends"])
 def get_ui_manifest() -> dict[str, Any]:
     """Advertise vendored microfrontend components for soundscape controls."""
+    manifest_path = Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
+    if manifest_path.is_file():
+        try:
+            return json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
     return {
         "service": "soundscape",
         "package": "@runefoble/soundscape-ui",
         "components": ["runefoble-soundscape-controls"],
+        "tags": ["runefoble-soundscape-controls"],
+        "styles": ["./src/runefoble-soundscape-controls.styles.ts"],
+        "scripts": ["./src/index.ts"],
         "version": "0.1.0",
     }
 
