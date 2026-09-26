@@ -1,0 +1,103 @@
+:root {
+  --bg-canvas: #0B0F17;
+  --bg-card: #111827;
+  --bg-elevated: #1F2937;
+  --border-subtle: #1F2937;
+  --border-strong: #374151;
+  --text-main: #F9FAFB;
+  --text-muted: #9CA3AF;
+  --accent-indigo: #6366F1;
+  --accent-amber: #F59E0B;
+  --accent-emerald: #10B981;
+  --accent-violet: #8B5CF6;
+  --accent-cyan: #06B6D4;
+  --accent-rose: #F43F5E;
+}
+
+html.light {
+  --bg-canvas: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F1F5F9;
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --accent-indigo: #4F46E5;
+  --accent-amber: #D97706;
+  --accent-emerald: #059669;
+  --accent-violet: #7C3AED;
+  --accent-cyan: #0891B2;
+  --accent-rose: #E11D48;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.bg-card { background-color: var(--bg-card); }
+.bg-elevated { background-color: var(--bg-elevated); }
+.border-subtle { border-color: var(--border-subtle); }
+.border-strong { border-color: var(--border-strong); }
+.text-muted { color: var(--text-muted); }
+
+/* Custom scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-indigo); }
+
+/* Node highlight transitions */
+.node-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.node-card.dimmed {
+  opacity: 0.22;
+  filter: grayscale(85%);
+  transform: scale(0.98);
+}
+.node-card.highlighted {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--accent-indigo), 0 8px 24px -4px rgba(99, 102, 241, 0.35);
+  transform: scale(1.02);
+  z-index: 10;
+}
+.connection-line {
+  transition: stroke 0.3s ease, stroke-width 0.3s ease, opacity 0.3s ease;
+}
+
+/* Gantt Chart Custom Styles */
+.gantt-grid {
+  background-size: 80px 100%;
+  background-image: linear-gradient(to right, var(--border-subtle) 1px, transparent 1px);
+}
+
+.gantt-bar {
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+.gantt-bar:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+/* Graph Canvas Styles */
+.graph-viewport {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  cursor: grab;
+}
+.graph-viewport:active {
+  cursor: grabbing;
+}
+.graph-node-svg {
+  cursor: pointer;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+.graph-node-svg:hover {
+  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+}

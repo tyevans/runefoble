@@ -158,6 +158,13 @@ def test_server_http_endpoints(repo_root: Path):
             data = json.loads(resp.read().decode("utf-8"))
             assert len(data["tasks"]) > 0
 
+        # Test GET /api/version
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/version") as resp:
+            assert resp.status == 200
+            ver = json.loads(resp.read().decode("utf-8"))
+            assert "data_hash" in ver
+            assert "last_updated" in ver
+
         # Test GET /api/health
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/health") as resp:
             assert resp.status == 200
@@ -176,3 +183,62 @@ def test_server_http_endpoints(repo_root: Path):
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_git_metadata_harvester_and_task_tagging(repo_root: Path):
+    from tools.project_visualizer.git_metadata import GitMetadataHarvester
+
+    harvester = GitMetadataHarvester(repo_root)
+    harvested = harvester.harvest()
+    assert len(harvested) > 0
+
+    parser = ProjectParser(repo_root)
+    data = parser.parse_all()
+
+    # Verify tasks have commits and prs fields populated
+    tasks_with_commits = [t for t in data.tasks if len(t.commits) > 0]
+    tasks_with_prs = [t for t in data.tasks if len(t.prs) > 0]
+    assert len(tasks_with_commits) > 0
+    assert len(tasks_with_prs) > 0
+
+    # Specifically check TASK-0041 which has PR #30 in git history
+    t41 = next((t for t in data.tasks if t.id == "TASK-0041"), None)
+    assert t41 is not None
+    assert any("#30" in pr for pr in t41.prs)
+    assert any("744383e" in c.hash or "c40d7aa" in c.hash for c in t41.commits)
+
+
+def test_caching_and_deterministic_fingerprint(repo_root: Path):
+    parser = ProjectParser(repo_root)
+    data1 = parser.parse_all()
+    data2 = parser.parse_all()
+
+    assert data1.data_hash != ""
+    assert data1.data_hash == data2.data_hash
+    assert data1.last_updated == data2.last_updated
+    assert data1 is data2  # Cached instance returned
+
+
+def test_html_bundle_contains_graph_and_gantt(repo_root: Path, tmp_path: Path):
+    generator = ProjectVisualizerGenerator(repo_root)
+    out_file = tmp_path / "test-full-visualizer.html"
+    result = generator.build_file(out_file)
+
+    content = result.read_text(encoding="utf-8")
+    assert "Relationship Graph" in content
+    assert "Gantt & Timeline" in content
+    assert "Hide Done" in content
+    assert "Git Commits & Pull Requests" in content
+
+
+def test_file_length_invariant_strictly_enforced(repo_root: Path):
+    vis_dir = repo_root / "tools" / "project_visualizer"
+    assert vis_dir.exists()
+
+    all_files = list(vis_dir.glob("*.py")) + list(vis_dir.glob("static/**/*.*"))
+    for f in all_files:
+        if f.is_file():
+            line_count = len(f.read_text(encoding="utf-8").splitlines())
+            assert line_count < 500, (
+                f"File {f.name} has {line_count} lines, exceeding 500 lines limit"
+            )
