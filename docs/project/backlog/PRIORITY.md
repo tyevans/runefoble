@@ -22,7 +22,13 @@ Order of priority for engineering tasks across the platform.
 18. **TASK-0018 (Complete)**: [`0018-character-level-progression-spellbook.md`](complete/0018-character-level-progression-spellbook.md) — Character Level Progression, Spell Slots & Spellbook Preparation
 19. **TASK-0019 (Complete)**: [`0019-tactical-board-terrain-elevation-hazards.md`](complete/0019-tactical-board-terrain-elevation-hazards.md) — Tactical Board Terrain Elevation, Difficult Terrain & Hazard Grid
 20. **TASK-0020 (Complete)**: [`0020-mcp-agent-tool-loop-context.md`](complete/0020-mcp-agent-tool-loop-context.md) — FastMCP Agent Tool Loop & Session State Context Server
+21. **TASK-0021 (Complete)**: [`0021-voice-dsp-conditioning-pipeline.md`](complete/0021-voice-dsp-conditioning-pipeline.md) — Voice DSP Conditioning Pipeline with Dynamic Filters
 22. **TASK-0022 (Refined)**: [`0022-initiative-tracker-turn-order-timer.md`](refined/0022-initiative-tracker-turn-order-timer.md) — Live Multi-User Turn Order, Initiative Tracker & Timer Web Component
 23. **TASK-0023 (Refined)**: [`0023-silo-s3-asset-storage-pipeline.md`](refined/0023-silo-s3-asset-storage-pipeline.md) — Silo S3 Media Asset Bucket Storage & Character Avatar Upload Pipeline
+24. **TASK-0024 (Proposed)**: [`0024-opentelemetry-tracing-and-metrics-pipeline.md`](proposed/0024-opentelemetry-tracing-and-metrics-pipeline.md) — OpenTelemetry Distributed Tracing, Metrics & Collector Helm Integration
+25. **TASK-0025 (Proposed)**: [`0025-zitadel-oidc-jwks-verification-middleware.md`](proposed/0025-zitadel-oidc-jwks-verification-middleware.md) — Zitadel Production OIDC/JWKS Token Verification Middleware
+26. **TASK-0026 (Proposed)**: [`0026-spicedb-live-grpc-client-and-schema-migration.md`](proposed/0026-spicedb-live-grpc-client-and-schema-migration.md) — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
+27. **TASK-0027 (Proposed)**: [`0027-openpanel-analytics-service-and-event-pipeline.md`](proposed/0027-openpanel-analytics-service-and-event-pipeline.md) — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
+28. **TASK-0028 (Proposed)**: [`0028-postgresql-multi-database-init-and-event-store.md`](proposed/0028-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection
 
 
