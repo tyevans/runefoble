@@ -18,6 +18,12 @@ def run_cmd(cmd: list[str], cwd: Path, check: bool = False) -> subprocess.Comple
 
 def commit_and_push(worktree_dir: Path, task: Task, branch: str) -> None:
     """Stages all changes, commits if needed, and pushes to origin."""
+    # Enforce backlog isolation: feature branches must never contain changes to docs/project/backlog
+    chk = run_cmd(["git", "rev-parse", "--verify", "origin/main"], cwd=worktree_dir)
+    base_ref = "origin/main" if chk.returncode == 0 else "main"
+    run_cmd(["git", "checkout", base_ref, "--", "docs/project/backlog"], cwd=worktree_dir)
+    run_cmd(["git", "clean", "-fd", "docs/project/backlog"], cwd=worktree_dir)
+
     run_cmd(["git", "add", "-A"], cwd=worktree_dir, check=True)
 
     status = run_cmd(["git", "status", "--porcelain"], cwd=worktree_dir)
