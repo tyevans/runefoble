@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
-import '../components/runefoble-watcher-feed.ts';
-import type { WatcherFeedEvent } from '../components/runefoble-watcher-feed.ts';
+import './runefoble-watcher-feed.ts';
+import type { WatcherFeedEvent } from './runefoble-watcher-feed.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleWatcherFeed',

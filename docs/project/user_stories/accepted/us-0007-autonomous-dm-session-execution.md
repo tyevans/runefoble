@@ -11,8 +11,8 @@ feature: FEAT-WAT-01
 
 ## User Story
 
-**As a** group of tabletop players without a human Dungeon Master,  
-**I want** The Watcher to autonomously set scene atmospheres, dictate enemy tactics, resolve skill challenges, and advance encounters,  
+**As a** group of tabletop players without a human Dungeon Master,
+**I want** The Watcher to autonomously set scene atmospheres, dictate enemy tactics, resolve skill challenges, and advance encounters,
 **So that** we can enjoy rich, low-friction roleplaying without any human needing to prepare for 10 hours in advance.
 
 ## Scenario: The Watcher Arbitrates an Ambush

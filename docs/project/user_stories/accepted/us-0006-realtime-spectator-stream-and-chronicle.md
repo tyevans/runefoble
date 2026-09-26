@@ -11,8 +11,8 @@ feature: FEAT-BRD-01, FEAT-VOX-01
 
 ## User Story
 
-**As a** tabletop streamer or online spectator,  
-**I want** a dedicated clean-overlay web view of the tactical board and live Watcher Chronicle feed,  
+**As a** tabletop streamer or online spectator,
+**I want** a dedicated clean-overlay web view of the tactical board and live Watcher Chronicle feed,
 **So that** my stream audience can follow token animations, dice rolls, and atmospheric story narration in real time without seeing private DM controls.
 
 ## Scenario: Connecting as Spectator

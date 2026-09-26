@@ -9,8 +9,8 @@ created: 2026-09-25
 
 ## User Story
 
-**As a** Dungeon Master running a homebrew campaign,  
-**I want** The Watcher to handle arithmetic, line-of-sight, monster stat blocks, and descriptive prompts,  
+**As a** Dungeon Master running a homebrew campaign,
+**I want** The Watcher to handle arithmetic, line-of-sight, monster stat blocks, and descriptive prompts,
 **So that** I can focus entirely on storytelling, player engagement, and high-level plot decisions.
 
 ## Acceptance Criteria

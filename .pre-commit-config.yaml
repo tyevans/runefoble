@@ -13,6 +13,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
         args: [--unsafe]
+        exclude: deployments/helm/.*
       - id: check-added-large-files
         args: ['--maxkb=2048']
       - id: check-merge-conflict

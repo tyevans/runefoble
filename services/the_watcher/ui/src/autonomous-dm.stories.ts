@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
-import '../components/runefoble-autonomous-dm.ts';
+import './runefoble-autonomous-dm.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleAutonomousDM',

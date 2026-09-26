@@ -64,5 +64,3 @@ class NpcTurnRequest(BaseModel):
     actor_name: str
     targets: list[dict[str, Any]] = Field(default_factory=list)
     round_number: int = 1
-
-

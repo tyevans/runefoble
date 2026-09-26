@@ -30,15 +30,23 @@ class WebSocketActionValidator:
         """Verify viewer/subject has campaign:view or campaign:read permission in SpiceDB."""
         if await self.spicedb.check_permission("campaign", campaign_id, "view", "user", subject_id):
             return True
-        return await self.spicedb.check_permission("campaign", campaign_id, "read", "user", subject_id)
+        return await self.spicedb.check_permission(
+            "campaign", campaign_id, "read", "user", subject_id
+        )
 
     async def is_dungeon_master(self, campaign_id: str, subject_id: str) -> bool:
         """Check if subject holds DM or campaign management permissions."""
-        if await self.spicedb.check_permission("campaign", campaign_id, "dungeon_master", "user", subject_id):
+        if await self.spicedb.check_permission(
+            "campaign", campaign_id, "dungeon_master", "user", subject_id
+        ):
             return True
-        if await self.spicedb.check_permission("campaign", campaign_id, "run_session", "user", subject_id):
+        if await self.spicedb.check_permission(
+            "campaign", campaign_id, "run_session", "user", subject_id
+        ):
             return True
-        return await self.spicedb.check_permission("campaign", campaign_id, "owner", "user", subject_id)
+        return await self.spicedb.check_permission(
+            "campaign", campaign_id, "owner", "user", subject_id
+        )
 
     async def validate_action(
         self,
@@ -55,46 +63,76 @@ class WebSocketActionValidator:
         # 2. Token movement authorization
         if action in ("move_token", "board_move"):
             # Check campaign-level token movement rights
-            if await self.spicedb.check_permission("campaign", campaign_id, "move_token", "user", subject_id):
+            if await self.spicedb.check_permission(
+                "campaign", campaign_id, "move_token", "user", subject_id
+            ):
                 return True
-            if await self.spicedb.check_permission("campaign", campaign_id, "move", "user", subject_id):
+            if await self.spicedb.check_permission(
+                "campaign", campaign_id, "move", "user", subject_id
+            ):
                 return True
 
             # Check individual board token ownership/move permission
             token_id = data.get("token_id") or data.get("tokenId")
-            if token_id and await self.spicedb.check_permission("board_token", str(token_id), "move", "user", subject_id):
+            if token_id and await self.spicedb.check_permission(
+                "board_token", str(token_id), "move", "user", subject_id
+            ):
                 return True
 
             # Check character owner permission if associated
             character_id = data.get("character_id") or data.get("characterId")
             if character_id:
-                if await self.spicedb.check_permission("character", str(character_id), "edit", "user", subject_id):
+                if await self.spicedb.check_permission(
+                    "character", str(character_id), "edit", "user", subject_id
+                ):
                     return True
-                if await self.spicedb.check_permission("character", str(character_id), "owner", "user", subject_id):
+                if await self.spicedb.check_permission(
+                    "character", str(character_id), "owner", "user", subject_id
+                ):
                     return True
             return False
 
         # 3. Health modification and condition application authorization
         if action in ("modify_hp", "apply_condition", "clear_condition"):
-            character_id = data.get("character_id") or data.get("characterId") or data.get("character")
+            character_id = (
+                data.get("character_id") or data.get("characterId") or data.get("character")
+            )
             if character_id:
-                if await self.spicedb.check_permission("character", str(character_id), "edit", "user", subject_id):
+                if await self.spicedb.check_permission(
+                    "character", str(character_id), "edit", "user", subject_id
+                ):
                     return True
-                if await self.spicedb.check_permission("character", str(character_id), "owner", "user", subject_id):
+                if await self.spicedb.check_permission(
+                    "character", str(character_id), "owner", "user", subject_id
+                ):
                     return True
-            if await self.spicedb.check_permission("campaign", campaign_id, "edit", "user", subject_id):
+            if await self.spicedb.check_permission(
+                "campaign", campaign_id, "edit", "user", subject_id
+            ):
                 return True
-            if await self.spicedb.check_permission("campaign", campaign_id, "edit_character", "user", subject_id):
+            if await self.spicedb.check_permission(
+                "campaign", campaign_id, "edit_character", "user", subject_id
+            ):
                 return True
-            return await self.spicedb.check_permission("campaign", campaign_id, action, "user", subject_id)
+            return await self.spicedb.check_permission(
+                "campaign", campaign_id, action, "user", subject_id
+            )
 
         # 4. DM-restricted encounter and scene mutations
-        if action in ("spawn_monster", "set_scene", "spawn_encounter", "advance_turn", "end_session"):
+        if action in (
+            "spawn_monster",
+            "set_scene",
+            "spawn_encounter",
+            "advance_turn",
+            "end_session",
+        ):
             # Non-DM rejected (DM check above already passed if authorized)
             return False
 
         # 5. Default permission check against campaign resource
-        return await self.spicedb.check_permission("campaign", campaign_id, action, "user", subject_id)
+        return await self.spicedb.check_permission(
+            "campaign", campaign_id, action, "user", subject_id
+        )
 
 
 class CampaignWebSocketManager:
@@ -164,12 +202,14 @@ async def campaign_websocket_endpoint(
             campaign_id,
         )
         await websocket.accept()
-        await websocket.send_json({
-            "type": "error",
-            "code": "PERMISSION_DENIED",
-            "message": f"Zanzibar authorization denied: insufficient permissions to view campaign '{campaign_id}'",
-            "action": "connect",
-        })
+        await websocket.send_json(
+            {
+                "type": "error",
+                "code": "PERMISSION_DENIED",
+                "message": f"Zanzibar authorization denied: insufficient permissions to view campaign '{campaign_id}'",
+                "action": "connect",
+            }
+        )
         await websocket.close(code=4003, reason="Forbidden: insufficient permissions for campaign")
         return
 
@@ -177,12 +217,14 @@ async def campaign_websocket_endpoint(
     await ws_campaign_manager.connect(campaign_id, websocket, subject_id)
 
     try:
-        await websocket.send_json({
-            "type": "connected",
-            "campaign_id": campaign_id,
-            "user_id": subject_id,
-            "message": "Connected to Runefoble real-time campaign stream. The Watcher is listening.",
-        })
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "campaign_id": campaign_id,
+                "user_id": subject_id,
+                "message": "Connected to Runefoble real-time campaign stream. The Watcher is listening.",
+            }
+        )
 
         while True:
             data = await websocket.receive_json()
@@ -199,18 +241,25 @@ async def campaign_websocket_endpoint(
                 )
                 # Immediately respond with PERMISSION_DENIED error frame
                 # Do NOT publish the rejected action to Redis or broadcast to other clients
-                await websocket.send_json({
-                    "type": "error",
-                    "code": "PERMISSION_DENIED",
-                    "message": f"Zanzibar authorization denied: insufficient permissions for action '{action}'",
-                    "action": action,
-                })
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "code": "PERMISSION_DENIED",
+                        "message": f"Zanzibar authorization denied: insufficient permissions for action '{action}'",
+                        "action": action,
+                    }
+                )
                 continue
 
             # 3. Publish authorized event to Redis stream
-            stream = "runefoble.events.board" if action in ("move_token", "board_move") else (
-                "runefoble.events.session" if action in ("modify_hp", "apply_condition", "clear_condition") else
-                "runefoble.events.watcher"
+            stream = (
+                "runefoble.events.board"
+                if action in ("move_token", "board_move")
+                else (
+                    "runefoble.events.session"
+                    if action in ("modify_hp", "apply_condition", "clear_condition")
+                    else "runefoble.events.watcher"
+                )
             )
             event_payload = {
                 "event_type": f"runefoble.events.{action}",

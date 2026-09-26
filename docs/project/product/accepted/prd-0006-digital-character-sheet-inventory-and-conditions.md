@@ -16,4 +16,3 @@ Character sheets in Runefoble must track active equipment, inventory capacity, c
 2. Domain events `ItemAddedToInventory`, `ItemRemovedFromInventory`, `EquipmentSlotUpdated`, `ConditionApplied`, `ConditionRemoved`, `CharacterLeveledUp`, `SpellPrepared`, `SpellSlotExpended` inherit from `BaseRunefobleEvent` and are registered in `EventRegistry`.
 3. REST endpoints in `character_sheet` support adding items, equipping weapons/armor, toggling conditions, advancing character level, preparing spells, and casting spells with slot exhaustion checks.
 4. Python tests verify event replay, aggregate reconstitution, and frontdoor blackbox workflows.
-

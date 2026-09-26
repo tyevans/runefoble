@@ -20,7 +20,22 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* Microfrontend path aliases */
+    "paths": {
+      "@runefoble/board-state-ui": ["../services/board_state/ui/src/index.ts"],
+      "@runefoble/board-state-ui/*": ["../services/board_state/ui/src/*"],
+      "@runefoble/character-sheet-ui": ["../services/character_sheet/ui/src/index.ts"],
+      "@runefoble/character-sheet-ui/*": ["../services/character_sheet/ui/src/*"],
+      "@runefoble/game-session-ui": ["../services/game_session/ui/src/index.ts"],
+      "@runefoble/game-session-ui/*": ["../services/game_session/ui/src/*"],
+      "@runefoble/the-watcher-ui": ["../services/the_watcher/ui/src/index.ts"],
+      "@runefoble/the-watcher-ui/*": ["../services/the_watcher/ui/src/*"],
+      "@runefoble/voice-agent-ui": ["../services/voice_agent/ui/src/index.ts"],
+      "@runefoble/voice-agent-ui/*": ["../services/voice_agent/ui/src/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "../services/*/ui/src"],
+  "exclude": ["**/*.stories.ts", "**/stories/**", "../services/**/*.stories.ts", "../services/**/stories/**"]
 }

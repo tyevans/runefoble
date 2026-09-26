@@ -450,6 +450,17 @@ async def narrate_scene(req: DMGuidanceRequest):
     }
 
 
+@app.get("/ui/manifest")
+def get_ui_manifest():
+    """Advertise vendored microfrontend components for The Watcher."""
+    return {
+        "service": "the_watcher",
+        "package": "@runefoble/the-watcher-ui",
+        "components": ["runefoble-watcher-feed", "runefoble-autonomous-dm"],
+        "version": "0.1.0",
+    }
+
+
 def main():
     import uvicorn
 

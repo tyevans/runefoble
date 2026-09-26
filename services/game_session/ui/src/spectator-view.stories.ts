@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
-import '../components/runefoble-spectator-view.ts';
+import './runefoble-spectator-view.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleSpectatorView',

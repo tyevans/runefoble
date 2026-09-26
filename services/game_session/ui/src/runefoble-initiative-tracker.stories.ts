@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
-import '../components/runefoble-initiative-tracker.ts';
+import './runefoble-initiative-tracker.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleInitiativeTracker',

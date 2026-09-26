@@ -261,6 +261,17 @@ async def move_token(session_id: str, req: MoveTokenRequest):
     return await move_token_by_id(session_id, req.token_id, req)
 
 
+@app.get("/ui/manifest")
+def get_ui_manifest():
+    """Advertise vendored microfrontend components for board state."""
+    return {
+        "service": "board_state",
+        "package": "@runefoble/board-state-ui",
+        "components": ["runefoble-board"],
+        "version": "0.1.0",
+    }
+
+
 def main():
     import uvicorn
 

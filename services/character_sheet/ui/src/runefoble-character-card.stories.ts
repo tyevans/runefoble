@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
-import '../components/runefoble-character-card.ts';
+import './runefoble-character-card.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleCharacterCard',

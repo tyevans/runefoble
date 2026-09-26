@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
-import '../components/runefoble-board.ts';
-import type { BoardToken } from '../components/runefoble-board.ts';
+import './runefoble-board.ts';
+import type { BoardToken } from './runefoble-board.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleBoard',

@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
-import '../styles/themes.css';
-import '../components/runefoble-dice-roller.ts';
+import './runefoble-dice-roller.ts';
 
 const meta: Meta = {
   title: 'Gameplay/RunefobleDiceRoller',
