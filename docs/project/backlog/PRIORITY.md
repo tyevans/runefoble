@@ -8,5 +8,5 @@ Order of priority for engineering tasks across the platform.
 4. **TASK-0004 (Complete)**: [`0004-tactical-board-fog-of-war-web-component.md`](complete/0004-tactical-board-fog-of-war-web-component.md) — Tactical Board Fog-of-War and Token Web Component
 5. **TASK-0005 (Complete)**: [`0005-fastmcp-rpg-tools-expansion.md`](complete/0005-fastmcp-rpg-tools-expansion.md) — Model Context Protocol (MCP) RPG Tools Expansion
 6. **TASK-0006 (Complete)**: [`0006-voice-dsp-conditioning-filters.md`](complete/0006-voice-dsp-conditioning-filters.md) — Voice DSP Audio Conditioning and Slurred Speech Synthesis
-7. **TASK-0007 (Refined)**: [`0007-board-fog-of-war-spatial-visibility.md`](refined/0007-board-fog-of-war-spatial-visibility.md) — Board Fog-of-War Spatial Visibility and Shroud Synchronization (Next)
-8. **TASK-0008 (Refined)**: [`0008-gateway-zanzibar-authorization-middleware.md`](refined/0008-gateway-zanzibar-authorization-middleware.md) — Gateway SpiceDB Zanzibar Authorization Middleware
+7. **TASK-0007 (Complete)**: [`0007-board-fog-of-war-spatial-visibility.md`](complete/0007-board-fog-of-war-spatial-visibility.md) — Board Fog-of-War Spatial Visibility and Shroud Synchronization
+8. **TASK-0008 (Refined)**: [`0008-gateway-zanzibar-authorization-middleware.md`](refined/0008-gateway-zanzibar-authorization-middleware.md) — Gateway SpiceDB Zanzibar Authorization Middleware (Next)

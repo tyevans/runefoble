@@ -134,6 +134,13 @@ class TokenRemoved(BaseRunefobleEvent):
     reason: str = "defeated"
 
 
+@register_event
+class FogOfWarRevealed(BaseRunefobleEvent):
+    aggregate_type: str = "BoardState"
+    revealed_cells: list[list[int]] = Field(default_factory=list)
+    revealed_by_token_id: str | None = None
+
+
 # ---------------------------------------------------------------------------
 # CharacterSheet Aggregate Events
 # ---------------------------------------------------------------------------

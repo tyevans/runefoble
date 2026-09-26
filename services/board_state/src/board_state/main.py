@@ -7,7 +7,7 @@ from typing import Literal
 from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
 from board_state.aggregate import BoardAggregate, BoardState, PlacedTokenState
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -41,6 +41,7 @@ class PlaceTokenRequest(BaseModel):
     y: int
     hp: int | None = None
     is_friendly: bool = True
+    vision_radius: int = 2
 
 
 class MoveTokenRequest(BaseModel):
@@ -48,6 +49,16 @@ class MoveTokenRequest(BaseModel):
     to_x: int
     to_y: int
     initiated_by: Literal["player", "the_watcher", "stand_in"] = "player"
+
+
+class VisibilityResponse(BaseModel):
+    session_id: str
+    cols: int
+    rows: int
+    fog_of_war_enabled: bool
+    revealed_cells: list[list[int]]
+    currently_visible_cells: list[list[int]]
+    tokens: list[PlacedTokenState]
 
 
 async def get_or_create_board(session_id: str) -> BoardAggregate:
@@ -59,8 +70,15 @@ async def get_or_create_board(session_id: str) -> BoardAggregate:
         board = BoardAggregate(board_id)
         board.initialize_grid(cols=12, rows=12, session_id=session_id)
         # Place standard tokens
-        board.place_token("t1", name="Valeros", token_type="pc", x=2, y=3, is_friendly=True)
-        board.place_token("t2", name="Kyra", token_type="pc", x=3, y=3, is_friendly=True)
+        board.place_token(
+            "t1", name="Valeros", token_type="pc", x=2, y=3, is_friendly=True, vision_radius=2
+        )
+        board.place_token(
+            "t2", name="Kyra", token_type="pc", x=3, y=3, is_friendly=True, vision_radius=2
+        )
+        board.place_token(
+            "t3", name="Goblin Scout", token_type="monster", x=8, y=8, is_friendly=False
+        )
         await repo.save(board)
         return board
 
@@ -80,6 +98,37 @@ async def get_board(session_id: str):
     return board.state
 
 
+@app.get("/api/v1/boards/{session_id}/visibility", response_model=VisibilityResponse)
+async def get_visibility(
+    session_id: str, is_dm: bool = Query(False, description="Whether caller is Dungeon Master")
+):
+    """Compute fog-of-war visibility masks and filter hidden enemies."""
+    board = await get_or_create_board(session_id)
+    party_visible = board.compute_party_visibility()
+    revealed_set = {tuple(c) for c in board.state.revealed_cells}
+
+    # Filter tokens for player view if fog-of-war is active
+    filtered_tokens: list[PlacedTokenState] = []
+    for token in board.state.tokens.values():
+        if (
+            is_dm
+            or token.is_friendly
+            or not board.state.fog_of_war_enabled
+            or (token.x, token.y) in revealed_set
+        ):
+            filtered_tokens.append(token)
+
+    return VisibilityResponse(
+        session_id=session_id,
+        cols=board.state.cols,
+        rows=board.state.rows,
+        fog_of_war_enabled=board.state.fog_of_war_enabled,
+        revealed_cells=board.state.revealed_cells,
+        currently_visible_cells=party_visible,
+        tokens=filtered_tokens,
+    )
+
+
 @app.post("/api/v1/boards/{session_id}/tokens", response_model=PlacedTokenState)
 async def place_token(session_id: str, req: PlaceTokenRequest):
     board = await get_or_create_board(session_id)
@@ -93,6 +142,7 @@ async def place_token(session_id: str, req: PlaceTokenRequest):
             y=req.y,
             hp=req.hp,
             is_friendly=req.is_friendly,
+            vision_radius=req.vision_radius,
         )
         await repo.save(board)
         return board.state.tokens[token_id]
