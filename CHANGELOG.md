@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Stream Overlay Router and HUD Templates Modular Decomposition (`TASK-0117`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
+  - Decomposed monolithic `gateway/api/src/gateway_api/routers/overlay.py` into single-responsibility modules strictly under 200 lines (`overlay.py`, `overlay_models.py`, and `overlay_templates.py`).
+  - Extracted Pydantic wire models (`PartyMemberVitals`, `RollAnimationData`, `PartyVitalsData`) and `sanitize_party_vitals` helper into `gateway_api/overlay_models.py`.
+  - Extracted alpha-transparent HTML/CSS HUD template generator and client-side WebSocket synchronization logic into `render_overlay_html` and `render_obs_overlay_html` in `gateway_api/overlay_templates.py`.
+  - Maintained complete backward compatibility and public route contracts for `GET /overlay/party-vitals/{session_id}` and `WS /ws/overlay/{session_id}` while exposing `/overlay/ws/{session_id}` endpoint alias.
+  - Added comprehensive frontdoor blackbox test suite in `tests/test_overlay_modular_decomposition.py` and updated Diataxis documentation.
+
 - **Campaign Analytics Worker and Event Dispatch Modular Decomposition (`TASK-0116`, `ADR-0003`, `ADR-0006`, `ADR-0011`)**:
   - Decomposed `services/campaign_analytics/src/campaign_analytics/worker.py` into asynchronous worker core `worker.py` (171 lines) and event projection dispatcher `event_handlers.py` (222 lines) with `event_helpers.py` (24 lines).
   - Isolated Redis Streams consumer group polling and worker lifecycle loops from domain event translation and spatial tracking state.
@@ -173,18 +180,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Synchronized `ROADMAP.md`: marked Milestone 3 (AI DM & Ecosystem Expansion) as Complete with all epics delivered, and transitioned Milestone 4 (Broadcast Studio & Community Platform) to Current with TASK-0051 as foundational platform enabler.
   - Replenished ready buffer in `docs/project/backlog/refined/` to 10 items (JIT queue health) with rigorous blackbox TDD Definitions of Done, governing ADR citations, and INVEST alignment.
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
-
 ### Changed
 - **Campaign Analytics Test Suite Modular Decomposition (`TASK-0115`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0011`)**:
   - Decomposed monolithic blackbox test suite `tests/test_blackbox_campaign_analytics.py` (443 lines) into three focused, single-responsibility blackbox test modules strictly under 200 lines each adhering to Hard Invariants 6 and 7:
     - `tests/test_blackbox_campaign_analytics_api.py` (176 lines): REST endpoints (`/healthz`, `/metrics`, `/ui/manifest`, `/heatmap`, `/mvp`, `/timeline`) and SpiceDB Zanzibar authorization.
     - `tests/test_blackbox_campaign_analytics_worker.py` (194 lines): `CampaignAnalyticsWorker` multi-stream consumer group routing, message acknowledgment, sub-200ms latency budget, and event projections.
     - `tests/test_blackbox_campaign_analytics_storage.py` (142 lines): `CampaignAnalyticsStorage` spatial bucketing, cumulative combat metrics, MVP ranking algorithms, and chronological milestone ordering.
-
 - **WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition (`TASK-0071`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0009`)**:
   - Decomposed monolithic test suite `tests/test_websocket_zanzibar_auth.py` into `tests/test_websocket_zanzibar_connect_auth.py` (connection admission, revocation) and `tests/test_websocket_zanzibar_mutators.py` (token moves, DM actions, event publishing).
   - Updated bridge module `tests/test_blackbox_websocket_zanzibar.py` and Diataxis guide `docs/how-to/define-spicedb-zanzibar-permissions.md`.
-
 - **Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition (`TASK-0070`, `ADR-0002`, `ADR-0003`, `ADR-0006`, `ADR-0009`)**:
   - Decomposed `tests/test_stand_in_engine.py` into `tests/test_stand_in_tactics_unit.py` (stand-in penalties, personality traits) and `tests/test_blackbox_stand_in_service.py` (stand-in actions, event publishing, recap generation).
   - Updated Diataxis guide `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
@@ -446,11 +450,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Project Visualizer Local Script Syntax & Favicon**: Fixed missing closing bracket in `agy_launcher.js` DOM listener causing `Uncaught SyntaxError` on local server, added automated Node.js syntax verification tests for all client scripts and bundles, and eliminated browser 404 console errors by handling `/favicon.ico` with 204 No Content and embedding an inline SVG dice icon.
 
 ---
-
 ## [0.2.0] - 2026-09-26
 
 ### Milestone 2: Live Collaborative Alpha
-
 #### Added
 - **Tactile Board Kinematics & Ghost Previews (`TASK-0084`, `PRD-0013`, `US-0043`)**:
   - Drag-and-drop token physics with spring damping, velocity, 5ft step counting, and live waypoint route measurement.
@@ -482,11 +484,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Decomposed FastMCP tabletop gateway tools and resources into modular registries.
 
 ---
-
 ## [0.1.0] - 2026-09-20
 
 ### Milestone 1: Platform Foundation & Core Loop
-
 #### Added
 - **Monorepo Workspace Foundation (`TASK-0000`, `ADR-0003`)**:
   - UV workspace monorepo managing shared libraries (`runefoble_platform`, `runefoble_auth`, `runefoble_events`) and microservices.
@@ -496,3 +496,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Gateway aggregating HTTP, WebSockets, and Swagger UI; FastMCP gateway exposing tabletop tools and resources to LLMs.
 - **Infrastructure, Frontend & Diataxis Documentation**:
   - Kind Kubernetes cluster with Traefik ingress, Helm chart, Lit + Vite frontend with Storybook Bauhaus design system, and complete Diataxis documentation suite.
+

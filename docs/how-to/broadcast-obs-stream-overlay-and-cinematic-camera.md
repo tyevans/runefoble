@@ -48,10 +48,10 @@ The cinematic director automatically tracks live gameplay events:
 
 ### WebSockets Integration
 
-Connect to the dedicated spectator WebSocket feed:
+Connect to the dedicated spectator WebSocket feed (available at `ws://localhost:8000/ws/overlay/${sessionId}` or alias `ws://localhost:8000/overlay/ws/${sessionId}`):
 
 ```javascript
-const ws = new WebSocket(`ws://localhost:8000/ws/overlay/${sessionId}`);
+const ws = new WebSocket(`ws://localhost:8000/overlay/ws/${sessionId}`);
 
 ws.onmessage = (event) => {
   const msg = JSON.parse(event.data);
