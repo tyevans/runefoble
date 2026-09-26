@@ -28,5 +28,5 @@ Voice immersion is paramount in collaborative tabletop roleplaying. When charact
 - [`TASK-0033: Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline`](../../backlog/complete/0033-webrtc-voice-room-signaling.md)
 - [`TASK-0064: WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0064-webrtc-voice-signaling-and-test-suite-decomposition.md)
 - [`TASK-0065: Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition`](../../backlog/complete/0065-voice-agent-dsp-pipeline-and-router-decomposition.md)
-- [`TASK-0068: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition`](../../backlog/proposed/0068-webrtc-client-service-and-peer-mesh-decomposition.md)
+- [`TASK-0068: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition`](../../backlog/refined/0068-webrtc-client-service-and-peer-mesh-decomposition.md)
 - [`TASK-0083: Streaming Whisper Audio Transcription Test Suite Modular Decomposition`](../../backlog/complete/0083-streaming-whisper-test-suite-modular-decomposition.md)

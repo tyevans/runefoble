@@ -26,5 +26,5 @@ Character sheets in Runefoble must track active equipment, inventory capacity, c
 - [`TASK-0009: Character Sheet Equipment, Inventory & Conditions Aggregate`](../../backlog/complete/0009-character-inventory-equipment-conditions.md)
 - [`TASK-0018: Character Level Progression, Spell Slots & Spellbook Preparation`](../../backlog/complete/0018-character-level-progression-spellbook.md)
 - [`TASK-0041: FastMCP Gateway Server Modular Decomposition`](../../backlog/complete/0041-fastmcp-gateway-server-modular-decomposition.md)
-- [`TASK-0077: Character Sheet API Router and Schemas Modular Decomposition`](../../backlog/refined/0077-character-sheet-api-router-and-schemas-decomposition.md)
+- [`TASK-0077: Character Sheet API Router and Schemas Modular Decomposition`](../../backlog/complete/0077-character-sheet-api-router-and-schemas-decomposition.md)
 - [`TASK-0107: Character Sheet UI Inventory Grid and Condition Indicator Microfrontend`](../../backlog/proposed/0107-character-sheet-ui-inventory-and-conditions-microfrontend.md)

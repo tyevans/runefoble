@@ -26,4 +26,4 @@ Tabletop roleplaying requires sub-second synchronization between player actions,
 - [`TASK-0014: Real-Time Spectator Stream & Chronicle Clean Overlay`](../../backlog/complete/0014-realtime-spectator-stream-clean-overlay.md)
 - [`TASK-0015: Distributed Redis Streams Consumer Groups & Event Projection Workers`](../../backlog/complete/0015-redis-streams-consumer-groups-projections.md)
 - [`TASK-0071: WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition`](../../backlog/proposed/0071-websocket-zanzibar-auth-test-suite-decomposition.md)
-- [`TASK-0080: Gateway WebSocket Hub and Action Validator Modular Decomposition`](../../backlog/refined/0080-gateway-websocket-hub-and-action-validator-decomposition.md)
+- [`TASK-0080: Gateway WebSocket Hub and Action Validator Modular Decomposition`](../../backlog/complete/0080-gateway-websocket-hub-and-action-validator-decomposition.md)

@@ -10,6 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Backlog Curation, Invariant Health Protection, and Milestone 4 JIT Buffer Replenishment (`ADR-0009`)**:
+  - Audited repository file lengths against Hard Invariant 6 (< 500 lines); verified zero violations across 600+ source files.
+  - Preemptively proposed 4 modular decomposition tasks in `docs/project/backlog/proposed/` for files approaching limit:
+    - TASK-0111: Settings Modal Styles and Sub-Component CSS Modular Decomposition (`frontend/src/components/runefoble-settings-modal.styles.ts` [356 lines]).
+    - TASK-0112: Stand-In AI Persona Decision Engine and Tactical Policy Modular Decomposition (`services/the_watcher/src/the_watcher/stand_in_ai.py` [344 lines]).
+    - TASK-0113: Character Sheet Aggregate Mutation Handlers and Event Appliers Decomposition (`services/character_sheet/src/character_sheet/aggregate.py` [342 lines]).
+    - TASK-0114: Theming Tokens and Contrast Invariants Test Suite Modular Decomposition (`tests/test_theming.py` [332 lines]).
+  - Replenished ready buffer in `docs/project/backlog/refined/` from 2 to exactly 10 items (JIT queue health) with rigorous blackbox TDD Definitions of Done, governing ADR citations, and INVEST validation:
+    - TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay.
+    - TASK-0052: Campaign Analytics & Chronicle Archive Microservice.
+    - TASK-0057: Universal VTT Importer and Dynamic MCP Tool Registry.
+    - TASK-0110: Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend.
+    - TASK-0097: OpenPanel Analytics Blackbox Test Suite Modular Decomposition.
+    - TASK-0076: Redis Streams Consumer Group Worker and Session Projections Modular Decomposition.
+    - TASK-0068: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition.
+    - TASK-0070: Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition.
+  - Synchronized `ROADMAP.md` Milestone 4 Foundational Platform Enabler (`TASK-0051`).
+  - Re-indexed `docs/project/backlog/PRIORITY.md` and repaired traceability cross-links across accepted PRDs.
 - **Character Sheet Modular Router and Schemas Decomposition (`TASK-0077`, `ADR-0003`, `ADR-0009`, `ADR-0011`)**:
   - Decomposed monolithic `services/character_sheet/src/character_sheet/main.py` into dedicated Pydantic request schema module `schemas.py` (77 lines), modular endpoint router `router.py` (162 lines), shared dependencies and mutation helpers `dependencies.py` (155 lines), and lean application entrypoint `main.py` (75 lines).
   - Maintained 100% backward compatibility for all REST endpoints (`/api/v1/characters`, `/api/v1/characters/{id}/level-up`, `/api/v1/characters/{id}/spells/prepare`, `/api/v1/characters/{id}/spells/cast`, `/api/v1/characters/{id}/health`, `/api/v1/characters/{id}/penalties`, `/api/v1/characters/{id}/inventory/add`, `/api/v1/characters/{id}/equipment`, `/api/v1/characters/{id}/conditions`, `/api/v1/characters/{id}/guardrails`, `/healthz`, `/ui/manifest`).
