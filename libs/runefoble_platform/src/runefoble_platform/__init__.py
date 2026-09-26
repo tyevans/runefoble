@@ -2,6 +2,7 @@
 
 from runefoble_platform.bus import EventBus, bus
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.consumer_group import MockAsyncRedis, RedisConsumerGroup
 from runefoble_platform.errors import (
     AuthorizationError,
     EntityNotFoundError,
@@ -39,6 +40,8 @@ __all__ = [
     "EventBus",
     "bus",
     "RedisStreamsEventBus",
+    "RedisConsumerGroup",
+    "MockAsyncRedis",
     "deserialize_event",
     "DeclarativeAggregate",
     "DomainEvent",
