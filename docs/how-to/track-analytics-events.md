@@ -11,6 +11,17 @@ Runefoble integrates with self-hosted OpenPanel (`openpanel/openpanel`) to recor
 
 ---
 
+## Modular Subpackage Architecture
+
+To comply with Hard Invariant 6 (File length limit < 500 lines) and support clean separation of concerns, the analytics package is structured into single-responsibility submodules:
+
+- `runefoble_platform.analytics.privacy`: PII scrubbing (`sanitize_properties`), salted SHA-256 ID anonymization (`anonymize_profile_id`), and forbidden property keys (`FORBIDDEN_PROPERTY_KEYS`).
+- `runefoble_platform.analytics.client`: Asynchronous OpenPanel HTTP client (`OpenPanelClient`) with event buffering and mock mode.
+- `runefoble_platform.analytics.worker`: Background Redis Streams consumer worker (`AnalyticsEventWorker`) translating CloudEvents to OpenPanel metrics.
+- `runefoble_platform.analytics`: Unified re-export facade providing 100% backward compatibility for top-level imports.
+
+---
+
 ## Step 1: Use `OpenPanelClient` in Platform Code
 
 The platform client provides non-blocking event recording and automated PII sanitization:
