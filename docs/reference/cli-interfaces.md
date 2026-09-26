@@ -8,6 +8,8 @@
 | `make setup` | Installs Python UV workspace dependencies and frontend packages |
 | `make health-check` | Audits codebase line counts (<500 lines) and backlog ready buffer |
 | `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`) |
+| `make visualize-project` | Launches dynamic docs/project content visualizer web application on port 8787 |
+| `make visualize-project-build` | Builds standalone HTML bundle (`dist/project-visualizer.html`) |
 | `make cluster-up` | Launches local Kind Kubernetes cluster with port mapping and Traefik |
 | `make cluster-down` | Deletes the local Kind cluster |
 | `make helm-lint` | Validates Helm chart syntax |
@@ -27,3 +29,4 @@
 | `./scripts/health_check.py` | Standalone Python health inspection auditing line count invariants and buffer drift |
 | `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |
 | `./scripts/run-backlog-engine.sh` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching |
+| `./scripts/visualize-project.sh` | Starts dynamic project content visualizer web application on port 8787 |
