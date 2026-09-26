@@ -100,12 +100,14 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`interact-with-character-sheet-and-inventory.md`](how-to/interact-with-character-sheet-and-inventory.md): How to interact with character sheet equipment slots, inventory encumbrance, condition tooltips, and spell slot tracking.
 - [`run-campfire-rests-and-alchemical-crafting.md`](how-to/run-campfire-rests-and-alchemical-crafting.md): How to combine reagents with volatile mishap tables, resolve campfire resting boons, and manage party stronghold upgrades.
 - [`run-tavern-minigames-and-merchant-haggling.md`](how-to/run-tavern-minigames-and-merchant-haggling.md): How to run interactive Liar's Dice wagering, drinking contests with DSP voice filters, and negotiate with personality-driven merchants.
+- [`inspect-diegetic-handouts-and-3d-relics.md`](how-to/inspect-diegetic-handouts-and-3d-relics.md): How to generate diegetic parchment handouts, break wax seals with acoustic feedback, reveal UV invisible ink runes, and inspect 3D WebGL relics.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
 - [`platform-services.md`](reference/platform-services.md): Directory of external platform services, container images, ports, environment variables, and test fallbacks.
 - [`ports-and-endpoints.md`](reference/ports-and-endpoints.md): Ingress routing table, microservice ports, core HTTP routes, and infrastructure ports.
 - [`events-schema.md`](reference/events-schema.md): CloudEvents domain events catalogue, payload schemas, and Redis Stream topics.
+- [`diegetic-handouts-and-relics-events.md`](reference/diegetic-handouts-and-relics-events.md): CloudEvents schemas and payloads for diegetic handouts, breakable wax seals, and 3D relics.
 - [`downtime-and-crafting-events.md`](reference/downtime-and-crafting-events.md): CloudEvents schemas and event flows for downtime crafting, rests, and stronghold facilities.
 - [`tavern-and-merchants-events.md`](reference/tavern-and-merchants-events.md): CloudEvents schemas and event flows for tavern minigames, drinking contests, and merchant haggling.
 - [`redis-streams-event-bus.md`](reference/redis-streams-event-bus.md): Redis Streams transport architecture, channel conventions, and consumer groups.
