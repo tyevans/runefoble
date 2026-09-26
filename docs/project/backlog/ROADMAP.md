@@ -36,7 +36,7 @@
 - [x] TTRPG Rules Compendium & Automated Encounter Builder (TASK-0048)
 
 ### Autonomous DM & Content Expansion Epics
-- [ ] Procedural battlemap and token generation saved to Silo S3 (TASK-0049)
+- [x] Procedural battlemap and token generation saved to Silo S3 (TASK-0049)
 - [ ] Dynamic musical score & ambient foley driven by encounter tension (TASK-0050)
 - [ ] DM Co-Pilot Whispers & Veto Override Engine (TASK-0053)
 - [ ] Conversational Disambiguation & Compound Action Intents (TASK-0054)
@@ -47,3 +47,23 @@
 - [ ] Cinematic Director Auto-Camera & OBS Transparent Overlay (TASK-0056)
 - [ ] Campaign Telemetry, Analytics & Chronicle Archive (TASK-0052)
 - [ ] Universal VTT Importer & Dynamic MCP Tool Registry (TASK-0057)
+
+## Milestone 5: Collaborative Creation, Downtime & Tactile Immersion
+### Downtime, Social Minigames & Base Building
+- [ ] Downtime Activities, Alchemical Crafting & Party Stronghold Engine (PRD-0014, US-0044, TASK-0100)
+- [ ] Interactive Tavern Minigames & Personality-Driven Merchant Haggling (PRD-0014, US-0047, TASK-0103)
+
+### Tactile Artifacts, Living Codex & Hybrid Maker
+- [ ] Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector (PRD-0015, US-0045, TASK-0101)
+- [ ] Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens (PRD-0015, US-0049, TASK-0105)
+- [ ] Collaborative Campaign World Atlas & Living Party Codex (PRD-0015, US-0050, TASK-0106)
+
+### Expressive Performance, Audio Leitmotifs & Particle VFX
+- [ ] Personal Character Leitmotifs & Adaptive Musical Signatures (PRD-0016, US-0046, TASK-0102)
+- [ ] Multi-Modal Kinetic Spell VFX & WebGL Particle Magic (PRD-0016, US-0048, TASK-0104)
+
+## Milestone 6: Intelligent Living Worlds & Spatial Multi-Party Universes
+- [ ] Autonomous NPC Faction Agendas & Background Simulation Engine (`FEAT-WAT-07`)
+- [ ] Multi-Party West Marches Shared Persistent World State & Cross-Campaign Trade
+- [ ] Spatial Companion Mobile App, Haptic Secret Pings & Physical Dice Tray Integration
+

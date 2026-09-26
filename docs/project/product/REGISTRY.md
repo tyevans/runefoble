@@ -15,5 +15,9 @@
 | PRD-0011 | Live Spectator Studio & Two-Way Audience Interactivity | Accepted | 2026-09-25 | [`prd-0011-live-spectator-studio-and-audience-interactivity.md`](accepted/prd-0011-live-spectator-studio-and-audience-interactivity.md) |
 | PRD-0012 | Campaign Telemetry, Analytics & Historical Memory Archive | Accepted | 2026-09-25 | [`prd-0012-campaign-telemetry-and-living-chronicle-timeline.md`](accepted/prd-0012-campaign-telemetry-and-living-chronicle-timeline.md) |
 | PRD-0013 | Immersive & Intuitive Frontend Experience with Tactile Board Kinematics | Accepted | 2026-09-25 | [`prd-0013-immersive-and-intuitive-frontend-experience.md`](accepted/prd-0013-immersive-and-intuitive-frontend-experience.md) |
+| PRD-0014 | Downtime Activities, Alchemical Crafting & Party Stronghold Engine | Accepted | 2026-09-26 | [`prd-0014-downtime-crafting-and-stronghold-engine.md`](accepted/prd-0014-downtime-crafting-and-stronghold-engine.md) |
+| PRD-0015 | Generative Diegetic Handouts, 3D Relic Inspector & Printable Tabletop Forge | Accepted | 2026-09-26 | [`prd-0015-generative-handouts-relic-inspector-and-printable-forge.md`](accepted/prd-0015-generative-handouts-relic-inspector-and-printable-forge.md) |
+| PRD-0016 | Personal Character Leitmotifs, Wardrobe Gallery & Kinetic WebGL Spell VFX | Accepted | 2026-09-26 | [`prd-0016-character-leitmotifs-and-kinetic-spell-vfx.md`](accepted/prd-0016-character-leitmotifs-and-kinetic-spell-vfx.md) |
+
 
 
