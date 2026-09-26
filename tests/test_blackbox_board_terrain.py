@@ -123,7 +123,8 @@ def test_board_terrain_elevation_difficult_movement_and_hazard_flow():
     # Verify TokenHazardTriggered event in event store stream
     store = get_event_store()
     stream_events = [
-        env.event for env in store._events
+        env.event
+        for env in store._events
         if isinstance(env.event, TokenHazardTriggered)
         and getattr(env.event, "token_id", None) == "fighter-1"
     ]

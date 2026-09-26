@@ -1,16 +1,14 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import './styles/themes.css';
-import './components/runefoble-board.ts';
-import './components/runefoble-character-card.ts';
-import './components/runefoble-watcher-feed.ts';
-import './components/runefoble-absentee-recap.ts';
-import './components/runefoble-autonomous-dm.ts';
 import './components/runefoble-theme-switcher.ts';
-import './components/runefoble-spectator-view.ts';
-import './components/runefoble-dice-roller.ts';
-import type { BoardToken } from './components/runefoble-board.ts';
-import type { WatcherFeedEvent } from './components/runefoble-watcher-feed.ts';
+import '@runefoble/board-state-ui';
+import '@runefoble/character-sheet-ui';
+import '@runefoble/game-session-ui';
+import '@runefoble/the-watcher-ui';
+import '@runefoble/voice-agent-ui';
+import type { BoardToken } from '@runefoble/board-state-ui';
+import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 
 @customElement('runefoble-app')
 export class RunefobleApp extends LitElement {
@@ -98,52 +96,6 @@ export class RunefobleApp extends LitElement {
       .layout-grid {
         grid-template-columns: 1fr;
       }
-    }
-    .voice-control-panel {
-      margin-top: 24px;
-      background: var(--rf-bg-surface, #ffffff);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      border-radius: var(--rf-border-radius, 0px);
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
-      padding: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-    .panel-instruction {
-      font-size: 0.85rem;
-      color: var(--rf-text-muted, #4b5563);
-      margin-top: 4px;
-    }
-    .mic-button {
-      background: var(--rf-accent-primary, #e63946);
-      color: var(--rf-color-light, #ffffff);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      border-radius: var(--rf-border-radius, 0px);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
-      padding: 10px 20px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
-    }
-    .mic-button:hover {
-      transform: translate(-1px, -1px);
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
-    }
-    .mic-button.listening {
-      background: var(--rf-accent-tertiary, #ffb703);
-      color: #121212;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(230, 57, 70, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
     }
   `;
 
@@ -426,19 +378,11 @@ export class RunefobleApp extends LitElement {
         <runefoble-watcher-feed .events=${this.events}></runefoble-watcher-feed>
       </div>
 
-      <div class="voice-control-panel">
-        <div>
-          <strong>Collaborative Voice Channel</strong>
-          <div class="panel-instruction">
-            Speak naturally: "Move my warrior to the chest", "Cast cure wounds on Valeros", "What does the altar look like?"
-          </div>
-        </div>
-        <button
-          class="mic-button ${this.isListening ? 'listening' : ''}"
-          @click=${this.toggleListening}
-        >
-          🎙️ ${this.isListening ? 'Streaming Audio (Click to Mute)' : 'Push to Talk'}
-        </button>
+      <div style="margin-top: 24px;">
+        <runefoble-voice-controls
+          .isListening=${this.isListening}
+          @voice-toggle=${this.toggleListening}
+        ></runefoble-voice-controls>
       </div>
       `}
     `;

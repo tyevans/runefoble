@@ -28,7 +28,7 @@ These rules are structural. Do not violate them for convenience.
 
 1. **Object-level authorization runs through SpiceDB Zanzibar schema.** Never hardcode role checks (e.g. `user.role == 'admin'`) in business logic. Check permissions against `libs/runefoble_auth/schema/runefoble.zed`.[^6]
 2. **All domain state transitions and events are powered by eventsource-py.** Domain events inherit from `DomainEvent` (via `BaseRunefobleEvent` in `libs/runefoble_events`) and are registered with `@register_event`. Domain state changes flow strictly through `DeclarativeAggregate` subclasses with `@handles` methods and are saved/loaded via `AggregateRepository`.[^24]
-3. **Frontend components are built and tested in Storybook first.** Build new UI elements as Lit Web Components in `frontend/src/components/` and verify them in `frontend/src/stories/` before embedding them into application views.[^13]
+3. **Frontend microfrontends are built and tested in Storybook first.** Build UI elements as Lit Web Components within their owning service bounded context (`services/<bc>/ui/src/`) and verify them in Storybook before composition into the lightweight `frontend/` App Shell.[^13][^25]
 4. **All Python packages are managed through the root UV workspace.** Do not use pip, poetry, or virtualenvs directly. Run commands through `uv` or the developer `Makefile`.[^14]
 5. **Services publish OpenAPI specs to the Swagger UI hub.** Every new HTTP service must expose `/openapi.json` and register its URL in `deployments/helm/runefoble/values.yaml`.[^11]
 6. **File length limit (<500 lines).** Source files over ~500 lines are rarely justified. Whenever editing or committing code, inspect file lengths and decompose large files into focused, single-responsibility modules.
@@ -73,30 +73,42 @@ Documentation outside project management lives in `docs/` and strictly follows t
 | `libs/runefoble_platform/` | Common models, config, error hierarchy, event bus |
 | `libs/runefoble_auth/` | Zitadel JWT decoding, SpiceDB Zanzibar client, `runefoble.zed` schema |
 | `libs/runefoble_events/` | CloudEvents-compliant domain event definitions |
-| `services/the_watcher/` | The Watcher AI gameplay engine (speech-to-intent, DM, AI stand-ins) |
-| `services/game_session/` | Active session lifecycle, turns, player presence |
-| `services/board_state/` | Tactical grid, token coordinates, spatial movement rules |
-| `services/character_sheet/` | Character stats, HP tracking, session absence penalties |
-| `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis |
+| `services/the_watcher/` | The Watcher AI gameplay engine (speech-to-intent, DM, AI stand-ins) & microfrontend |
+| `services/game_session/` | Active session lifecycle, turns, player presence, dice & microfrontends |
+| `services/board_state/` | Tactical grid, token coordinates, spatial movement rules & board microfrontend |
+| `services/character_sheet/` | Character stats, HP tracking, session absence penalties & character microfrontends |
+| `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis & voice controls microfrontend |
 | `gateway/api/` | Unified API Gateway, WebSockets, OpenAPI aggregator |
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
-| `frontend/` | Lit Web Components, Vite application, Storybook design system |
+| `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |
 | `deployments/helm/` | Umbrella Helm chart for Kubernetes deployment |
 | `deployments/kind/` | Kind Kubernetes cluster configuration for local development |
 | `docs/project/` | ADRs, PRDs, User Stories, and Backlog records |
 | `docs/` | Diataxis documentation (tutorials, how-to, reference, explanation) |
 | `Makefile` | Developer interface targets (`cluster-up`, `dev-storybook`, `test`) |
 
+## Definition of Ready
+
+A work item is refined and ready for implementation only when:
+1. **Bounded Context Identified**: Target service bounded context (`services/<bc>`) is explicitly designated.
+2. **Microfrontend Slice Declared**: For any user-facing feature, the owning UI package (`services/<bc>/ui/`) and Custom Element tags (`<runefoble-...>`) are defined.[^25]
+3. **Storybook Isolation Planned**: Mock property states and visual acceptance criteria are specified for Storybook verification prior to App Shell composition.[^13]
+4. **Governing ADRs & PRDs Cited**: Architectural impact assessed against governing ADRs (e.g. ADR-0004, ADR-0012, ADR-0013) and accepted PRDs.[^3][^18]
+5. **Frontdoor Blackbox Acceptance Criteria**: Testable scenarios specified exclusively through public APIs, WebSockets, or published standard events (Hard Invariant 7).
+6. **File Length Pre-check**: Target module decompositions designed to remain strictly within the <500 lines invariant.
+
 ## Definition of Done
 
 Work is complete only when:
-1. Architectural impact review was conducted against governing ADRs.[^3]
-2. All new public APIs and events are documented in `docs/reference/`.[^12]
-3. Frontend components have interactive stories in Storybook with zero console errors.[^13]
-4. Python tests pass via `uv run pytest` and frontend builds pass via `pnpm run build`.[^23]
-5. Helm chart passes linting via `helm lint` and renders cleanly via `helm template`.[^4]
-6. Registries in `docs/project/` are updated to reflect the new state.[^18]
-7. Blackbox TDD suite verified with frontdoor setup: all scenarios exercised through public API/WebSocket/event entrypoints.
+1. Architectural impact review was conducted against governing ADRs (including ADR-0013 for microfrontends).[^3][^25]
+2. **Microfrontend Vendoring**: Any user-facing components are built and vendored inside their owning service bounded context (`services/<bc>/ui/`), exposed via `/ui/manifest`, with the App Shell (`frontend/`) remaining strictly decoupled.[^25]
+3. **Storybook Isolation Verified**: All new and modified components have interactive stories in Storybook with zero console errors.[^13]
+4. All new public APIs, events, and microfrontend custom elements are documented in `docs/reference/` and Diataxis guides.[^12]
+5. Python tests pass via `uv run pytest` and frontend builds pass via `pnpm run build` and `make build`.[^23]
+6. Helm chart passes linting via `helm lint` and renders cleanly via `helm template`.[^4]
+7. Registries in `docs/project/` are updated to reflect the new state.[^18]
+8. Blackbox TDD suite verified with frontdoor setup: all scenarios exercised through public API/WebSocket/event entrypoints.
+9. File length limit strictly enforced: zero source files exceed ~500 lines.
 
 ## Dispatching Work to Agents & Parallel Worktrees
 
@@ -136,3 +148,4 @@ When delegating tasks to subagents:
 [^22]: Diataxis documentation framework. `https://diataxis.fr/`
 [^23]: Developer Makefile interfaces. `Makefile`
 [^24]: eventsource-py architecture ADR. `docs/project/adrs/accepted/adr-0011-eventsource-py-core-event-sourcing.md`
+[^25]: Microfrontend Architecture and Service Component Vendoring ADR. `docs/project/adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md`

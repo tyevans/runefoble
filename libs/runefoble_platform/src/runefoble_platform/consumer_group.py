@@ -154,7 +154,9 @@ class RedisConsumerGroup:
         if not raw_res:
             return []
 
-        messages = raw_res[1] if isinstance(raw_res, (list, tuple)) and len(raw_res) >= 2 else raw_res
+        messages = (
+            raw_res[1] if isinstance(raw_res, (list, tuple)) and len(raw_res) >= 2 else raw_res
+        )
         results: list[tuple[str, Any]] = []
         for item in messages:
             if isinstance(item, (list, tuple)) and len(item) == 2:

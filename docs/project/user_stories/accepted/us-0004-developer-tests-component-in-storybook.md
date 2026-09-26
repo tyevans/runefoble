@@ -9,8 +9,8 @@ created: 2026-09-25
 
 ## User Story
 
-**As a** frontend engineer building UI widgets for Runefoble,  
-**I want to** build and test Lit web components in Storybook with hot reloading and configurable mock properties,  
+**As a** frontend engineer building UI widgets for Runefoble,
+**I want to** build and test Lit web components in Storybook with hot reloading and configurable mock properties,
 **So that** I verify edge cases (e.g. low HP states, complex condition lists, varying grid dimensions) before mounting them into the main application.
 
 ## Acceptance Criteria

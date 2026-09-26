@@ -96,4 +96,3 @@ class CombatEncounterEnded(BaseRunefobleEvent):
     aggregate_type: str = "GameSession"
     session_id: UUID | str | None = None
     total_rounds: int
-

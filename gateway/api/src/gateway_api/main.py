@@ -41,6 +41,7 @@ def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
     global _event_bus
     _event_bus = bus
 
+
 app = FastAPI(
     title="Runefoble Platform Unified Gateway",
     version="0.1.0",

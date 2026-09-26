@@ -1,0 +1,12 @@
+{
+  "name": "runefoble-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "storybook": "pnpm --filter frontend run storybook",
+    "build-storybook": "pnpm --filter frontend run build-storybook",
+    "typecheck": "pnpm -r run typecheck"
+  }
+}

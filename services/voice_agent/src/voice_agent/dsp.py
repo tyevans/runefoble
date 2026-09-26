@@ -43,7 +43,10 @@ def _to_samples_array(samples: array.array | bytes | bytearray | list[float | in
             return array.array("h", samples)
         return array.array(
             "h",
-            [max(-32767, min(32767, int(s * 32767 if isinstance(s, float) else s))) for s in samples],
+            [
+                max(-32767, min(32767, int(s * 32767 if isinstance(s, float) else s)))
+                for s in samples
+            ],
         )
     if isinstance(samples, (bytes, bytearray)):
         pcm_bytes = samples[44:] if samples.startswith(b"RIFF") else bytes(samples)
@@ -224,7 +227,9 @@ def apply_audio_filters(
 ) -> tuple[bytes, dict[str, Any], float]:
     """Execute the audio filter chain and return (audio_bytes, metadata, latency_ms)."""
     t0 = time.perf_counter()
-    if audio_data is None or (isinstance(audio_data, (bytes, list, array.array)) and len(audio_data) == 0):
+    if audio_data is None or (
+        isinstance(audio_data, (bytes, list, array.array)) and len(audio_data) == 0
+    ):
         current_samples = _to_samples_array(generate_synthetic_audio(0.5, sample_rate))
     else:
         current_samples = _to_samples_array(audio_data)

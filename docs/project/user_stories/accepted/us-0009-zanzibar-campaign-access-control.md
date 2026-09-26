@@ -11,8 +11,8 @@ feature: FEAT-SEC-01
 
 ## User Story
 
-**As a** Dungeon Master managing a campaign,  
-**I want** object-scoped authorization enforced via SpiceDB Zanzibar rules,  
+**As a** Dungeon Master managing a campaign,
+**I want** object-scoped authorization enforced via SpiceDB Zanzibar rules,
 **So that** players can only manipulate their assigned characters, spectators can only observe, and I retain full control over secret notes and monster tokens without security leaks.
 
 ## Scenario: Preventing Unauthorized Token Dragging

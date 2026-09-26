@@ -9,8 +9,8 @@ created: 2026-09-25
 
 ## User Story
 
-**As a** gaming group with one missing member,  
-**I want** The Watcher AI to pilot their character with personality mimicry and DM-inflicted penalties (e.g. "Drunk", "Foolishness"),  
+**As a** gaming group with one missing member,
+**I want** The Watcher AI to pilot their character with personality mimicry and DM-inflicted penalties (e.g. "Drunk", "Foolishness"),
 **So that** our scheduled session is not canceled and the absence adds memorable humor and narrative flavor to the adventure.
 
 ## Acceptance Criteria

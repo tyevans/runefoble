@@ -11,8 +11,8 @@ feature: FEAT-DEV-01
 
 ## User Story
 
-**As a** platform developer integrating third-party AI models (e.g. Claude, Gemini, local models),  
-**I want** Runefoble to expose its tactical board, dice roller, character sheets, and DM controls via the Model Context Protocol (MCP),  
+**As a** platform developer integrating third-party AI models (e.g. Claude, Gemini, local models),
+**I want** Runefoble to expose its tactical board, dice roller, character sheets, and DM controls via the Model Context Protocol (MCP),
 **So that** any MCP-compatible agent can inspect session state, make tactical decisions, and act directly in game encounters.
 
 ## Scenario: LLM Agent Moves Token via MCP

@@ -200,7 +200,6 @@ async def test_blackbox_combat_initiative_encounter_lifecycle_and_turn_cycling(c
     assert CombatEncounterEnded in event_types
 
 
-
 def test_blackbox_start_combat_with_initial_combatants_and_tiebreaking(client: TestClient):
     """Verify starting combat with pre-defined combatants and PC vs NPC tie-breaking."""
     campaign_id = str(uuid4())

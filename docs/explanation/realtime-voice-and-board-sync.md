@@ -46,4 +46,3 @@ The Watcher heuristic speech-to-intent engine delivers sub-10ms interpretation w
 - **WebSocket Broadcast & Client Render**: < 50ms
 - **Total Roundtrip**: < 500ms
 This sub-second loop allows conversational spontaneity without noticeable lag.
-

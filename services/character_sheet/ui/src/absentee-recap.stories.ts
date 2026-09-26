@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
-import '../components/runefoble-absentee-recap.ts';
+import './runefoble-absentee-recap.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleAbsenteeRecap',

@@ -336,6 +336,17 @@ async def transcribe_speech(req: TranscribeRequest):
     )
 
 
+@app.get("/ui/manifest")
+def get_ui_manifest():
+    """Advertise vendored microfrontend components for voice agent."""
+    return {
+        "service": "voice_agent",
+        "package": "@runefoble/voice-agent-ui",
+        "components": ["runefoble-voice-controls"],
+        "version": "0.1.0",
+    }
+
+
 def main():
     import uvicorn
 

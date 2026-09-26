@@ -162,7 +162,6 @@ async def cast_spell(character_id: UUID, req: CastSpellRequest):
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-
 @app.get("/api/v1/characters/{character_id}", response_model=CharacterState)
 async def get_character(character_id: UUID):
     try:
@@ -279,6 +278,17 @@ async def remove_condition(character_id: UUID, condition: str):
         return char.state
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.get("/ui/manifest")
+def get_ui_manifest():
+    """Advertise vendored microfrontend components for character sheet."""
+    return {
+        "service": "character_sheet",
+        "package": "@runefoble/character-sheet-ui",
+        "components": ["runefoble-character-card", "runefoble-absentee-recap"],
+        "version": "0.1.0",
+    }
 
 
 def main():

@@ -96,9 +96,7 @@ class SiloStorageService:
                 f"limit of {MAX_ASSET_SIZE_BYTES} bytes (10MB)."
             )
 
-    def generate_presigned_url(
-        self, bucket: str, object_key: str, expires_in: int = 3600
-    ) -> str:
+    def generate_presigned_url(self, bucket: str, object_key: str, expires_in: int = 3600) -> str:
         """Generate a public or presigned access URL for an object."""
         return f"{self.base_url}/{bucket}/{object_key}?expires={expires_in}"
 

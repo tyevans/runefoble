@@ -309,7 +309,6 @@ async def get_combat_state(session_id: UUID):
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
 
 
-
 @app.post(
     "/api/v1/sessions/{session_id}/turns/auto-pilot",
     response_model=AutoPilotResponse,
@@ -441,6 +440,21 @@ async def auto_pilot_turn(
         stand_in_action=stand_in_action,
         session_state=session.state,
     )
+
+
+@app.get("/ui/manifest")
+def get_ui_manifest():
+    """Advertise vendored microfrontend components for game session."""
+    return {
+        "service": "game_session",
+        "package": "@runefoble/game-session-ui",
+        "components": [
+            "runefoble-initiative-tracker",
+            "runefoble-dice-roller",
+            "runefoble-spectator-view",
+        ],
+        "version": "0.1.0",
+    }
 
 
 def main():

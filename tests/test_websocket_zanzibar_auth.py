@@ -83,12 +83,14 @@ def test_player_moving_token_with_valid_zanzibar_relation():
         assert welcome["type"] == "connected"
 
         # Send token move action
-        ws.send_json({
-            "action": "move_token",
-            "token_id": token_id,
-            "to_x": 4,
-            "to_y": 6,
-        })
+        ws.send_json(
+            {
+                "action": "move_token",
+                "token_id": token_id,
+                "to_x": 4,
+                "to_y": 6,
+            }
+        )
 
         broadcast = ws.receive_json()
         assert broadcast["type"] == "move_token"
@@ -111,7 +113,9 @@ def test_spectator_attempting_to_move_token():
     import asyncio
 
     # Grant spectator relation
-    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "spectator", "user", spectator_id))
+    asyncio.run(
+        spicedb.write_relationship("campaign", campaign_id, "spectator", "user", spectator_id)
+    )
 
     client = TestClient(app)
     with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={spectator_id}") as ws:
@@ -119,18 +123,23 @@ def test_spectator_attempting_to_move_token():
         assert welcome["type"] == "connected"
 
         # Spectator attempts to move token
-        ws.send_json({
-            "action": "move_token",
-            "token_id": token_id,
-            "to_x": 1,
-            "to_y": 1,
-        })
+        ws.send_json(
+            {
+                "action": "move_token",
+                "token_id": token_id,
+                "to_x": 1,
+                "to_y": 1,
+            }
+        )
 
         err = ws.receive_json()
         assert err["type"] == "error"
         assert err["code"] == "PERMISSION_DENIED"
         assert err["action"] == "move_token"
-        assert "Zanzibar authorization denied: insufficient permissions for action 'move_token'" in err["message"]
+        assert (
+            "Zanzibar authorization denied: insufficient permissions for action 'move_token'"
+            in err["message"]
+        )
 
 
 def test_player_attempting_to_trigger_dm_only_encounter_or_scene():
@@ -149,12 +158,14 @@ def test_player_attempting_to_trigger_dm_only_encounter_or_scene():
         assert welcome["type"] == "connected"
 
         # 1. Attempt spawn_monster
-        ws.send_json({
-            "action": "spawn_monster",
-            "monster_name": "Ancient Red Dragon",
-            "x": 5,
-            "y": 5,
-        })
+        ws.send_json(
+            {
+                "action": "spawn_monster",
+                "monster_name": "Ancient Red Dragon",
+                "x": 5,
+                "y": 5,
+            }
+        )
         err1 = ws.receive_json()
         assert err1["type"] == "error"
         assert err1["code"] == "PERMISSION_DENIED"
@@ -162,11 +173,13 @@ def test_player_attempting_to_trigger_dm_only_encounter_or_scene():
         assert "insufficient permissions for action 'spawn_monster'" in err1["message"]
 
         # 2. Attempt set_scene
-        ws.send_json({
-            "action": "set_scene",
-            "scene_id": "dragon_lair",
-            "mood": "blazing_inferno",
-        })
+        ws.send_json(
+            {
+                "action": "set_scene",
+                "scene_id": "dragon_lair",
+                "mood": "blazing_inferno",
+            }
+        )
         err2 = ws.receive_json()
         assert err2["type"] == "error"
         assert err2["code"] == "PERMISSION_DENIED"
@@ -182,7 +195,9 @@ def test_dungeon_master_executing_all_actions():
 
     import asyncio
 
-    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id))
+    asyncio.run(
+        spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id)
+    )
 
     client = TestClient(app)
     with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={dm_id}") as ws:
@@ -204,7 +219,9 @@ def test_dungeon_master_executing_all_actions():
         assert res2["delta"] == -5
 
         # 3. apply_condition
-        ws.send_json({"action": "apply_condition", "character_id": "char_valeros", "condition": "drunk"})
+        ws.send_json(
+            {"action": "apply_condition", "character_id": "char_valeros", "condition": "drunk"}
+        )
         res3 = ws.receive_json()
         assert res3["action"] == "apply_condition"
         assert res3["status"] == "applied"
@@ -267,7 +284,9 @@ def test_redis_publishing_on_authorized_and_rejection_suppression():
 
     import asyncio
 
-    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id))
+    asyncio.run(
+        spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id)
+    )
 
     # Mock Redis bus
     mock_redis = MockAsyncRedis()
@@ -305,4 +324,6 @@ def test_spicedb_client_mock_and_grpc_handling():
 
     asyncio.run(default_client.write_relationship("campaign", "c1", "player", "user", "u1"))
     assert asyncio.run(default_client.check_permission("campaign", "c1", "view", "user", "u1"))
-    assert not asyncio.run(default_client.check_permission("campaign", "c1", "run_session", "user", "u1"))
+    assert not asyncio.run(
+        default_client.check_permission("campaign", "c1", "run_session", "user", "u1")
+    )

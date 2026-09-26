@@ -105,23 +105,43 @@ class MockSpiceDBClient:
 
         # Player inheritance
         player = self._tuple_key(resource_type, resource_id, "player", subject_type, subject_id)
-        if player in self._tuples and permission in ("player", "play", "view", "read", "participate", "observe", "inspect"):
+        if player in self._tuples and permission in (
+            "player",
+            "play",
+            "view",
+            "read",
+            "participate",
+            "observe",
+            "inspect",
+        ):
             return True
 
         # Spectator inheritance
-        spectator = self._tuple_key(resource_type, resource_id, "spectator", subject_type, subject_id)
-        if spectator in self._tuples and permission in ("spectator", "view", "read", "observe", "inspect"):
+        spectator = self._tuple_key(
+            resource_type, resource_id, "spectator", subject_type, subject_id
+        )
+        if spectator in self._tuples and permission in (
+            "spectator",
+            "view",
+            "read",
+            "observe",
+            "inspect",
+        ):
             return True
 
         # Character owner permissions
         if resource_type == "character":
-            char_owner = self._tuple_key("character", resource_id, "owner", subject_type, subject_id)
+            char_owner = self._tuple_key(
+                "character", resource_id, "owner", subject_type, subject_id
+            )
             if char_owner in self._tuples and permission in ("edit", "view", "read"):
                 return True
 
         # Board token move permissions
         if resource_type == "board_token":
-            token_move = self._tuple_key("board_token", resource_id, "move", subject_type, subject_id)
+            token_move = self._tuple_key(
+                "board_token", resource_id, "move", subject_type, subject_id
+            )
             if token_move in self._tuples and permission in ("move", "move_token"):
                 return True
 
@@ -153,7 +173,9 @@ class SpiceDBClient(MockSpiceDBClient):
 
             self._grpc_client = Client(self.endpoint, grpc.insecure_channel(self.endpoint))
         except (ImportError, Exception) as exc:
-            logger.debug("SpiceDB gRPC client unavailable (%s); using in-memory mock fallback.", exc)
+            logger.debug(
+                "SpiceDB gRPC client unavailable (%s); using in-memory mock fallback.", exc
+            )
             self._grpc_client = None
 
     async def check_permission(
@@ -181,7 +203,9 @@ class SpiceDBClient(MockSpiceDBClient):
                     ),
                 )
                 response = await self._grpc_client.CheckPermission(request)
-                return response.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
+                return (
+                    response.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
+                )
             except Exception as e:
                 logger.warning("SpiceDB gRPC check failed, falling back to mock: %s", e)
 

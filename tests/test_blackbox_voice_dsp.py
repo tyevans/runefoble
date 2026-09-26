@@ -255,4 +255,6 @@ def test_dsp_apply_dispatches_voice_audio_conditioned_event(
                 event_model = VoiceAudioConditioned.model_validate(payload_data)
                 assert event_model.session_id == "session-conditioned-99"
 
-    assert found_event, f"VoiceAudioConditioned event not found in Redis streams: {list(streams.keys())}"
+    assert found_event, (
+        f"VoiceAudioConditioned event not found in Redis streams: {list(streams.keys())}"
+    )

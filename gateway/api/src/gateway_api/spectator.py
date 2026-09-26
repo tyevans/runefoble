@@ -223,7 +223,9 @@ def sanitize_spectator_state(
         # 2. Extract visible spectator fields only (strip hp, stat_block, dm_notes, ac, cr)
         conditions = tok_dict.get("conditions", [])
         if isinstance(conditions, list):
-            clean_conditions = [str(c) if not isinstance(c, dict) else str(c.get("name", "")) for c in conditions]
+            clean_conditions = [
+                str(c) if not isinstance(c, dict) else str(c.get("name", "")) for c in conditions
+            ]
         else:
             clean_conditions = []
 

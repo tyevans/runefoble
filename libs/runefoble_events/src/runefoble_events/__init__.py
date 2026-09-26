@@ -82,7 +82,6 @@ __all__ = [
     "SpectatorSessionConnected",
     "AssetUploaded",
     "AssetDeleted",
-
     # Backward-compatible aliases
     "WatcherNarrationEvent",
     "BoardMoveEvent",

@@ -11,8 +11,8 @@ feature: FEAT-DEV-03
 
 ## User Story
 
-**As a** backend service or external plugin developer,  
-**I want** to consume platform domain events (speech transcripts, token movements, dice rolls, penalties) asynchronously via Redis Streams consumer groups,  
+**As a** backend service or external plugin developer,
+**I want** to consume platform domain events (speech transcripts, token movements, dice rolls, penalties) asynchronously via Redis Streams consumer groups,
 **So that** my microservices react to gameplay changes with guaranteed delivery and zero inter-service tight coupling.
 
 ## Scenario: Consuming Board Move Events

@@ -101,7 +101,9 @@ def test_encounter_generation_tier1_medium(dm_engine: AutonomousDMEngine):
 
 def test_encounter_generation_tier1_deadly_and_scaling(dm_engine: AutonomousDMEngine):
     """Deadly encounter spawns high-threat monsters; large party receives reinforcements."""
-    enc = dm_engine.spawn_encounter("sess-203", scene_id="sc-3", party_level=4, party_size=5, difficulty="deadly")
+    enc = dm_engine.spawn_encounter(
+        "sess-203", scene_id="sc-3", party_level=4, party_size=5, difficulty="deadly"
+    )
     assert enc.threat_level == "deadly"
     assert any(m["cr"] == "5" for m in enc.monsters)
     # Party size 5 triggers extra reinforcement minion
@@ -204,7 +206,12 @@ def test_cloudevents_compliance(dm_engine: AutonomousDMEngine):
     assert ce_enc["type"] == "runefoble.events.encounter.spawned"
     assert "/runefoble/encounter/" in ce_enc["source"]
 
-    action = dm_engine.resolve_npc_turn("sess-ce", encounter_id=enc.encounter_id, actor_name="Ghoul", targets=[{"name": "Kyra", "hp": 15}])
+    action = dm_engine.resolve_npc_turn(
+        "sess-ce",
+        encounter_id=enc.encounter_id,
+        actor_name="Ghoul",
+        targets=[{"name": "Kyra", "hp": 15}],
+    )
     ce_action = action.to_cloudevent_dict()
     assert ce_action["specversion"] == "1.0"
     assert ce_action["type"] == "runefoble.events.encounter.action_resolved"
@@ -214,7 +221,10 @@ def test_events_registered_in_default_registry():
     """Events must be registered in default_registry with their exact event types."""
     assert default_registry.get("runefoble.events.scene.atmosphere_set") is SceneAtmosphereSet
     assert default_registry.get("runefoble.events.encounter.spawned") is EncounterSpawned
-    assert default_registry.get("runefoble.events.encounter.action_resolved") is AutonomousActionResolved
+    assert (
+        default_registry.get("runefoble.events.encounter.action_resolved")
+        is AutonomousActionResolved
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -246,7 +256,13 @@ def test_api_spawn_encounter(test_client: TestClient):
 
     res = test_client.post(
         "/api/v1/watcher/encounters/spawn",
-        json={"session_id": "sess-api-2", "scene_id": "sc-9", "party_level": 3, "party_size": 4, "difficulty": "medium"},
+        json={
+            "session_id": "sess-api-2",
+            "scene_id": "sc-9",
+            "party_level": 3,
+            "party_size": 4,
+            "difficulty": "medium",
+        },
     )
     assert res.status_code == 200, res.text
     data = res.json()
