@@ -82,6 +82,8 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`authenticate-with-zitadel-oidc.md`](docs/how-to/authenticate-with-zitadel-oidc.md): How to validate Zitadel JWTs against JWKS discovery, enforce HTTP dependencies, and secure WebSockets.
 - [`track-analytics-events.md`](docs/how-to/track-analytics-events.md): How to record privacy-preserving analytics via OpenPanel SDK and Redis Streams workers.
 - [`visualize-project-content.md`](docs/how-to/visualize-project-content.md): How to launch the dynamic project content visualizer, trace Redstring dependencies, and export standalone HTML bundles.
+- [`decompose-microservice-routers.md`](docs/how-to/decompose-microservice-routers.md): How to decompose monolithic FastAPI microservices into modular APIRouters.
+
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
