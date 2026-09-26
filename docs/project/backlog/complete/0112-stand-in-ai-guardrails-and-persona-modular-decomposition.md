@@ -1,7 +1,7 @@
 ---
 id: '0112'
 title: Stand-In AI Persona Decision Engine and Tactical Policy Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0003
@@ -17,8 +17,8 @@ governing_stories:
 - US-0002
 - US-0005
 - US-0025
+pr_url: https://github.com/tyevans/runefoble/pull/124
 ---
-
 # TASK-0112: Stand-In AI Persona Decision Engine and Tactical Policy Modular Decomposition
 
 ## Status
