@@ -24,5 +24,5 @@ agy --dangerously-skip-permissions -p \
   "Activate the 'backlog-curator' skill in .agents/skills/backlog-curator/SKILL.md:
 1. Review files approaching 500 lines and propose refactoring tasks in docs/project/backlog/proposed/ if needed.
 2. Inspect docs/project/backlog/ROADMAP.md Milestone 2 and ensure foundational enablers are prioritized.
-3. Check the ready buffer in docs/project/backlog/refined/. If < 2 items, JIT-refine the top proposed/enabler item (citing ADRs, testable blackbox DoD). Keep buffer to 2-3 items.
+3. Check the ready buffer in docs/project/backlog/refined/. If < 10 items, JIT-refine the top proposed/enabler item (citing ADRs, testable blackbox DoD). Keep buffer to ~10 items.
 4. Synchronize docs/project/backlog/PRIORITY.md."

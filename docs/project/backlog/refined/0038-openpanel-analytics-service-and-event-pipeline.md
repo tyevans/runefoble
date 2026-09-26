@@ -1,14 +1,17 @@
 ---
 id: '0038'
 title: OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
-status: Proposed
+status: Refined
 created: 2026-09-25
 dependencies: [TASK-0001, TASK-0015]
 governing_adrs: [ADR-0005, ADR-0006, ADR-0007]
 target_release: 0.1.0
 ---
 
-# TASK-0032 — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
+# TASK-0038: OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
+
+## Status
+Refined
 
 ## Summary
 Implement a privacy-preserving analytics client (`OpenPanelClient`) in `libs/runefoble_platform/analytics.py` integrating with self-hosted OpenPanel (`http://openpanel:3000`). Deploy an asynchronous analytics event worker consuming key domain events from Redis Streams (e.g. `GameSessionStarted`, `DiceRolled`, `StandInTurnExecuted`, `PlayerAbsenteePenalized`) to measure gameplay engagement, session duration, and feature adoption without logging personally identifiable audio or speech content.

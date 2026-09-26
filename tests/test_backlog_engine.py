@@ -372,3 +372,97 @@ def test_orchestrator_releases_task_on_keyboard_interrupt(
     mock_queue.claim_task.assert_called_once()
     mock_queue.release_task.assert_called_once_with(task)
     mock_cleanup.assert_called_once()
+
+
+def test_wait_for_ci_checks_success_after_pending(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Verifies that wait_for_ci_checks waits through unregistered and pending checks to success."""
+    import json
+    import subprocess
+    from unittest.mock import MagicMock
+
+    from tools.backlog_engine import ci_watcher
+
+    call_count = 0
+
+    def mock_run(cmd, *args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        mock_proc = MagicMock(spec=subprocess.CompletedProcess)
+        if call_count == 1:
+            # Initial poll: no checks registered yet
+            mock_proc.returncode = 1
+            mock_proc.stdout = ""
+            mock_proc.stderr = "no checks reported on the 'feat/test' branch"
+        elif call_count == 2:
+            # Second poll: checks in progress
+            mock_proc.returncode = 8
+            mock_proc.stdout = json.dumps(
+                [{"name": "Python Lint", "state": "IN_PROGRESS", "bucket": "pending"}]
+            )
+            mock_proc.stderr = ""
+        else:
+            # Third poll: all passed
+            mock_proc.returncode = 0
+            mock_proc.stdout = json.dumps(
+                [{"name": "Python Lint", "state": "SUCCESS", "bucket": "pass"}]
+            )
+            mock_proc.stderr = ""
+        return mock_proc
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+
+    passed = ci_watcher.wait_for_ci_checks(
+        tmp_path, "https://github.com/example/pr/1", poll_interval=0, timeout_seconds=10
+    )
+    assert passed is True
+    assert call_count == 3
+
+
+def test_wait_for_ci_checks_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Verifies that wait_for_ci_checks detects failed check runs."""
+    import json
+    import subprocess
+    from unittest.mock import MagicMock
+
+    from tools.backlog_engine import ci_watcher
+
+    mock_proc = MagicMock(spec=subprocess.CompletedProcess)
+    mock_proc.returncode = 1
+    mock_proc.stdout = json.dumps(
+        [
+            {
+                "name": "Python Lint",
+                "state": "FAILURE",
+                "bucket": "fail",
+                "link": "https://example.com/log",
+            }
+        ]
+    )
+    mock_proc.stderr = ""
+
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_proc)
+
+    passed = ci_watcher.wait_for_ci_checks(
+        tmp_path, "https://github.com/example/pr/1", poll_interval=0, timeout_seconds=10
+    )
+    assert passed is False
+
+
+def test_wait_for_ci_checks_timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Verifies that wait_for_ci_checks times out cleanly if checks remain pending."""
+    import subprocess
+    from unittest.mock import MagicMock
+
+    from tools.backlog_engine import ci_watcher
+
+    mock_proc = MagicMock(spec=subprocess.CompletedProcess)
+    mock_proc.returncode = 1
+    mock_proc.stdout = ""
+    mock_proc.stderr = "no checks reported"
+
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_proc)
+
+    passed = ci_watcher.wait_for_ci_checks(
+        tmp_path, "https://github.com/example/pr/1", poll_interval=0.01, timeout_seconds=0.03
+    )
+    assert passed is False
