@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition (`TASK-0065`, `ADR-0002`, `ADR-0003`, `ADR-0007`, `ADR-0009`)**:
+  - Decomposed `services/voice_agent/src/voice_agent/dsp.py`, `services/voice_agent/src/voice_agent/main.py`, and `services/voice_agent/src/voice_agent/room.py` into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file, all modified and newly created modules strictly < 200 lines).
+  - Created `services/voice_agent/src/voice_agent/phonetics.py` extracting regex-based phonetic transforms (`apply_slurred_speech`, sibilants slurring, vowel elongation, and hiccup insertions).
+  - Created `services/voice_agent/src/voice_agent/audio_utils.py` isolating PCM array normalization and harmonic synthetic speech waveform generation.
+  - Created `services/voice_agent/src/voice_agent/filters.py` isolating whisper, underwater, ethereal, and drunk audio DSP filter convolutions.
+  - Refactored `services/voice_agent/src/voice_agent/dsp.py` into a thin pipeline orchestrator with full backward-compatible re-exports.
+  - Decomposed room management into `room_aggregate.py` (event-sourced aggregate and peer state models) and `coordinator.py` (multi-session room orchestration and WebRTC telemetry), maintaining backward-compatible re-exports in `room.py`.
+  - Extracted shared runtime state and event dispatchers into `dependencies.py` and schemas into `models.py`.
+  - Created modular FastAPI sub-routers under `services/voice_agent/src/voice_agent/routers/` (`audio.py` for DSP conditioning and `synthesis.py` for STT/TTS synthesis).
+  - Reduced `services/voice_agent/src/voice_agent/main.py` to a clean application bootstrap (< 125 lines).
+  - Updated documentation in `docs/how-to/decompose-microservice-routers.md`.
+
 - **Backlog Engine Orchestrator and CI Watcher Modular Decomposition (`TASK-0091`, `ADR-0003`, `ADR-0009`)**:
   - Decomposed monolithic `tools/backlog_engine/orchestrator.py` and `tools/backlog_engine/ci_watcher.py` into specialized, single-responsibility submodules strictly adhering to Hard Invariant 6 (< 500 lines per file, all files < 250 lines).
   - Created `tools/backlog_engine/github_client.py` (152 lines) extracting subprocess wrappers for GitHub CLI (`gh pr view`, `gh pr checks`, `gh pr create`, `gh pr close`, `gh pr merge`, and failed log retrieval).
