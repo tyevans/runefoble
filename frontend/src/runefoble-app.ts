@@ -7,11 +7,13 @@ import './components/runefoble-watcher-feed.ts';
 import './components/runefoble-absentee-recap.ts';
 import './components/runefoble-autonomous-dm.ts';
 import './components/runefoble-theme-switcher.ts';
+import './components/runefoble-spectator-view.ts';
 import type { BoardToken } from './components/runefoble-board.ts';
 import type { WatcherFeedEvent } from './components/runefoble-watcher-feed.ts';
 
 @customElement('runefoble-app')
 export class RunefobleApp extends LitElement {
+  @state() private viewMode: 'party' | 'spectator' = 'party';
   static styles = css`
     :host {
       display: block;
@@ -324,6 +326,12 @@ export class RunefobleApp extends LitElement {
         </div>
         <div class="header-actions">
           <runefoble-theme-switcher></runefoble-theme-switcher>
+          <button
+            style="background:var(--rf-bg-surface); color:var(--rf-text-primary); border:var(--rf-border-width,2px) solid var(--rf-border-color,#121212); box-shadow:var(--rf-shadow-sm,2px 2px 0px #121212); font-weight:700; font-size:0.8rem; padding:4px 10px; cursor:pointer;"
+            @click=${() => { this.viewMode = this.viewMode === 'party' ? 'spectator' : 'party'; }}
+          >
+            ${this.viewMode === 'party' ? '📺 Spectator Mode' : '🎮 Party Mode'}
+          </button>
           <div class="session-info">
             <span class="badge-live">● Campaign #4</span>
             <span class="badge-socket ${this.socketConnected ? 'connected' : 'disconnected'}">
@@ -335,15 +343,47 @@ export class RunefobleApp extends LitElement {
         </div>
       </header>
 
-      <div class="layout-grid">
-        <runefoble-board
-          .cols=${8}
-          .rows=${8}
-          .tokens=${this.tokens}
-          .fogOfWar=${true}
-          watcherStatus="${this.isListening ? 'Streaming voice & resolving actions in realtime...' : 'Observing session. Speak to command the board.'}"
-          @move-token=${this.handleMoveToken}
-        ></runefoble-board>
+      ${this.viewMode === 'spectator'
+        ? html`
+            <runefoble-spectator-view
+              sessionId="14"
+              .cols=${8}
+              .rows=${8}
+              .tokens=${this.tokens.map((t) => ({
+                id: t.id,
+                name: t.name,
+                x: t.x,
+                y: t.y,
+                color: t.color,
+                isAiControlled: t.isAiControlled,
+              }))}
+              .atmosphere=${{
+                location_name: 'Ancient Crypt of the Star-Eater',
+                lighting: 'Cold flickering torches',
+                mood: 'Suspenseful',
+                description: 'Ancient shadows crawl across granite sarcophagi.',
+                ambient_audio_prompt: 'dripping water, hollow whispers',
+              }}
+              .chronicle=${this.events.map((e) => ({
+                id: e.id,
+                speaker: e.speaker,
+                text: e.text,
+                timestamp: e.timestamp,
+                action_type: e.actionType,
+              }))}
+              .round=${3}
+            ></runefoble-spectator-view>
+          `
+        : html`
+            <div class="layout-grid">
+              <runefoble-board
+                .cols=${8}
+                .rows=${8}
+                .tokens=${this.tokens}
+                .fogOfWar=${true}
+                watcherStatus="${this.isListening ? 'Streaming voice & resolving actions in realtime...' : 'Observing session. Speak to command the board.'}"
+                @move-token=${this.handleMoveToken}
+              ></runefoble-board>
 
         <div>
           <runefoble-character-card
@@ -391,6 +431,7 @@ export class RunefobleApp extends LitElement {
           🎙️ ${this.isListening ? 'Streaming Audio (Click to Mute)' : 'Push to Talk'}
         </button>
       </div>
+      `}
     `;
   }
 }

@@ -351,6 +351,18 @@ class AutonomousActionResolved(BaseRunefobleEvent):
     hp_impact: int = 0
 
 
+@register_event("runefoble.events.spectator.connected")
+class SpectatorSessionConnected(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Spectator"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.spectator.connected"
+    session_id: str
+    viewer_id: str
+    viewer_name: str
+    connected_at: str
+
+
 # Backward-compatible aliases for legacy imports
 WatcherNarrationEvent = WatcherNarrationGenerated
 BoardMoveEvent = TokenMoved
@@ -389,6 +401,7 @@ __all__ = [
     "SceneAtmosphereSet",
     "EncounterSpawned",
     "AutonomousActionResolved",
+    "SpectatorSessionConnected",
     "WatcherNarrationEvent",
     "BoardMoveEvent",
     "DiceRollEvent",

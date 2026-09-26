@@ -6,12 +6,38 @@ real-time WebSockets for the tactical board and voice chronicle.
 """
 
 import contextlib
+from datetime import UTC, datetime
 from typing import Any, Literal
 
-from fastapi import Depends, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Header, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from gateway_api.auth import get_spicedb_client, require_zanzibar_permission
+from gateway_api.spectator import (
+    SpectatorStateResponse,
+    SpectatorViewerInfo,
+    get_raw_session_state,
+    sanitize_spectator_state,
+)
 from pydantic import BaseModel
+from runefoble_events import SpectatorSessionConnected
+from runefoble_platform.config import PlatformSettings
+from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+platform_settings = PlatformSettings()
+_event_bus: RedisStreamsEventBus | None = None
+
+
+def get_event_bus() -> RedisStreamsEventBus | None:
+    global _event_bus
+    if _event_bus is None and platform_settings.redis_url:
+        with contextlib.suppress(Exception):
+            _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
+    return _event_bus
+
+
+def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
+    global _event_bus
+    _event_bus = bus
 
 app = FastAPI(
     title="Runefoble Platform Unified Gateway",
@@ -190,6 +216,55 @@ async def speak_and_act(transcript: str, speaker_name: str, session_id: str):
     }
     await ws_manager.broadcast(event)
     return event
+
+
+# ---------------------------------------------------------------------------
+# Spectator Stream Endpoint
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/v1/spectate/{session_id}", response_model=SpectatorStateResponse)
+async def get_spectator_state(
+    session_id: str,
+    token: str | None = Query(None, description="Optional spectator access token"),
+    x_user_id: str | None = Header(None, alias="X-User-Id"),
+    authorization: str | None = Header(None, alias="Authorization"),
+):
+    """Retrieve audience-safe spectator view of the session, board, and chronicle.
+
+    Redacts hidden tokens, monster stat blocks, and private DM notes.
+    Dispatches SpectatorSessionConnected event to the Redis event bus.
+    """
+    if token:
+        viewer_id = f"spectator_{token}"
+        viewer_name = f"Spectator ({token})"
+    elif x_user_id:
+        viewer_id = x_user_id
+        viewer_name = f"Viewer {x_user_id}"
+    elif authorization and authorization.startswith("Bearer "):
+        bearer = authorization[7:].strip()
+        viewer_id = f"viewer_{bearer}"
+        viewer_name = f"Spectator ({bearer})"
+    else:
+        viewer_id = "spectator_guest"
+        viewer_name = "Guest Spectator"
+
+    viewer_info = SpectatorViewerInfo(viewer_id=viewer_id, viewer_name=viewer_name)
+
+    # Dispatch SpectatorSessionConnected event to Redis bus
+    event = SpectatorSessionConnected(
+        session_id=session_id,
+        viewer_id=viewer_id,
+        viewer_name=viewer_name,
+        connected_at=datetime.now(UTC).isoformat(),
+    )
+    bus = get_event_bus()
+    if bus is not None:
+        with contextlib.suppress(Exception):
+            await bus.publish_event("runefoble.events.spectator", event)
+
+    raw_state = get_raw_session_state(session_id)
+    return sanitize_spectator_state(raw_state, viewer_info=viewer_info)
 
 
 @app.websocket("/ws/session/{session_id}")

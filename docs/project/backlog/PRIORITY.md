@@ -15,5 +15,6 @@ Order of priority for engineering tasks across the platform.
 11. **TASK-0011 (Complete)**: [`0011-absentee-session-chronicle-recap.md`](complete/0011-absentee-session-chronicle-recap.md) — Absentee Session Chronicle and Audio Recap Engine
 12. **TASK-0012 (Complete)**: [`0012-frontend-theming-system-and-bauhaus-theme.md`](complete/0012-frontend-theming-system-and-bauhaus-theme.md) — Frontend Theming System with Bauhaus Modernist Default
 13. **TASK-0013 (Complete)**: [`0013-autonomous-dm-scene-orchestration.md`](complete/0013-autonomous-dm-scene-orchestration.md) — Autonomous DM Session & Scene Orchestration Engine
+14. **TASK-0014 (Complete)**: [`0014-realtime-spectator-stream-clean-overlay.md`](complete/0014-realtime-spectator-stream-clean-overlay.md) — Real-Time Spectator Stream & Chronicle Clean Overlay
 
 

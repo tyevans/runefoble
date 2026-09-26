@@ -157,5 +157,11 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `target_name`: String
   - `narrative`: String
   - `hp_impact`: Integer
+- **`SpectatorSessionConnected`**: Emitted when a live stream spectator or OBS overlay source connects to a campaign session (`runefoble.events.spectator.connected`).
+  - `session_id`: String
+  - `viewer_id`: String
+  - `viewer_name`: String
+  - `connected_at`: String (ISO-8601 UTC timestamp)
+
 
 

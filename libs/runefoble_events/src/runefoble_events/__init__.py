@@ -21,6 +21,7 @@ from runefoble_events.events import (
     SessionEnded,
     SessionPenaltyEvent,
     SessionStarted,
+    SpectatorSessionConnected,
     SpeechIntentParsed,
     StandInActionDecided,
     TokenMoved,
@@ -58,6 +59,7 @@ __all__ = [
     "SceneAtmosphereSet",
     "EncounterSpawned",
     "AutonomousActionResolved",
+    "SpectatorSessionConnected",
 
     # Backward-compatible aliases
     "WatcherNarrationEvent",
