@@ -5,19 +5,31 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from .agent_worker import run_agent_in_worktree
+from .agent_worker import (
+    build_ci_repair_prompt,
+    build_conflict_repair_prompt,
+    run_agent_in_worktree,
+)
 from .ci_watcher import (
     CIPipelineError,
     close_pull_request,
     commit_and_push,
     create_pull_request,
+    get_ci_failure_diagnostics,
     merge_local_branch,
     merge_pull_request,
+    sync_branch_with_base,
     wait_for_ci_checks,
 )
 from .models import Task
-from .queue import BacklogQueue
-from .worktree import cleanup_worktree, create_worktree, run_git, run_preflight_checks
+from .queue import BacklogQueue, finalize_backlog_completion
+from .worktree import (
+    cleanup_worktree,
+    create_worktree,
+    enforce_backlog_isolation,
+    run_git,
+    run_preflight_checks,
+)
 
 MERGE_LOCK = threading.Lock()
 
@@ -27,6 +39,130 @@ class TaskExecutionResult:
         self.task = task
         self.success = success
         self.message = message
+
+
+def sync_and_resolve_base_ref(
+    worktree_dir: Path,
+    task: Task,
+    base_ref: str = "origin/main",
+    skip_agent: bool = False,
+) -> tuple[bool, str]:
+    """Syncs worktree branch with base_ref and invokes agent to resolve conflicts if needed."""
+    sync_ok, sync_msg = sync_branch_with_base(worktree_dir, base_ref=base_ref)
+    if sync_ok:
+        return True, sync_msg
+
+    # Merge conflict occurred
+    if skip_agent:
+        run_git(["merge", "--abort"], cwd=worktree_dir)
+        return False, f"Merge conflicts detected against {base_ref} (skip_agent=True): {sync_msg}"
+
+    worker_id = f"worker-{task.id}"
+    print(
+        f"⚠️ [Stream {worker_id}] Merge conflicts detected when syncing with {base_ref}.\n"
+        f"🤖 [Stream {worker_id}] Invoking agent in worktree to resolve merge conflicts..."
+    )
+    prompt = build_conflict_repair_prompt(task, sync_msg)
+    agent_ok, agent_log = run_agent_in_worktree(worktree_dir, task, custom_prompt=prompt)
+    if not agent_ok:
+        run_git(["merge", "--abort"], cwd=worktree_dir)
+        return False, f"Agent failed to resolve merge conflicts: {agent_log}"
+
+    # Check if any unresolved conflict markers remain
+    status_res = run_git(["status", "--porcelain"], cwd=worktree_dir)
+    unmerged = [
+        line[3:].strip()
+        for line in status_res.stdout.splitlines()
+        if any(line.startswith(p) for p in ("UU", "AA", "DD", "DU", "UD"))
+    ]
+    if unmerged:
+        run_git(["merge", "--abort"], cwd=worktree_dir)
+        return False, f"Unmerged conflict files remained after agent repair: {', '.join(unmerged)}"
+
+    # Enforce backlog isolation before committing merge resolution
+    enforce_backlog_isolation(worktree_dir)
+
+    # Stage all resolved files and commit the merge
+    run_git(["add", "-A"], cwd=worktree_dir)
+    commit_res = run_git(
+        ["commit", "-m", f"chore: resolve merge conflicts with {base_ref}"],
+        cwd=worktree_dir,
+    )
+    if commit_res.returncode != 0:
+        merge_head = run_git(["rev-parse", "-q", "--verify", "MERGE_HEAD"], cwd=worktree_dir)
+        if merge_head.returncode == 0:
+            run_git(["merge", "--abort"], cwd=worktree_dir)
+            return False, f"Failed to commit merge resolution: {commit_res.stderr.strip()}"
+
+    print(f"✅ [Stream {worker_id}] Merge conflicts with {base_ref} successfully resolved.")
+    return True, "Merge conflicts resolved."
+
+
+def watch_and_repair_pull_request(
+    worktree_dir: Path,
+    task: Task,
+    branch: str,
+    pr_url: str,
+    worker_id: str,
+    skip_agent: bool = False,
+    max_ci_repairs: int = 3,
+) -> bool:
+    """Watches CI checks on PR and runs an in-worktree agent repair loop on failure or conflicts."""
+    ci_repair_attempt = 0
+
+    while ci_repair_attempt <= max_ci_repairs:
+        ci_ok = wait_for_ci_checks(worktree_dir, pr_url)
+        if ci_ok:
+            return True
+
+        ci_repair_attempt += 1
+        if ci_repair_attempt > max_ci_repairs or skip_agent:
+            break
+
+        category, failure_details = get_ci_failure_diagnostics(worktree_dir, pr_url)
+        print(
+            f"\n⚠️ [Stream {worker_id}] CI check failure or conflict detected on PR (repair attempt {ci_repair_attempt}/{max_ci_repairs}):\n"
+            f"Category: {category}\n{failure_details}\n"
+        )
+
+        # 1. Sync with latest origin/main
+        print(f"🔄 [Stream {worker_id}] Syncing branch with latest origin/main...")
+        sync_ok, sync_msg = sync_and_resolve_base_ref(
+            worktree_dir, task, base_ref="origin/main", skip_agent=skip_agent
+        )
+        if not sync_ok:
+            print(f"⚠️ [Stream {worker_id}] Merge conflict resolution failed: {sync_msg}")
+
+        # 2. If CI checks failed, invoke agent to repair the failure
+        if category == "ci_failed" or not sync_ok:
+            print(f"🤖 [Stream {worker_id}] Invoking agent to repair CI failure...")
+            ci_prompt = build_ci_repair_prompt(task, pr_url, failure_details)
+            agent_ok, agent_log = run_agent_in_worktree(worktree_dir, task, custom_prompt=ci_prompt)
+            if not agent_ok:
+                print(f"⚠️ [Stream {worker_id}] Agent repair attempt failed: {agent_log}")
+                continue
+
+        # 3. Re-run pre-flight verification locally
+        print(f"🔍 [Stream {worker_id}] Running pre-flight verification after CI repair...")
+        preflight_ok, preflight_log = run_preflight_checks(worktree_dir)
+        if not preflight_ok:
+            print(f"⚠️ [Stream {worker_id}] Pre-flight verification failed, running repair loop...")
+            agent_ok, agent_log = run_agent_in_worktree(worktree_dir, task, feedback=preflight_log)
+            preflight_ok, preflight_log = run_preflight_checks(worktree_dir)
+            if not preflight_ok:
+                print(f"⚠️ [Stream {worker_id}] Pre-flight verification still failing.")
+                continue
+
+        # 4. Commit and push the fix to remote to update the PR!
+        print(f"🌐 [Stream {worker_id}] Pushing CI fixes to origin/{branch}...")
+        try:
+            commit_and_push(worktree_dir, task, branch)
+            print(f"⏳ [Stream {worker_id}] Pushed update to {pr_url}. Waiting for CI checks...")
+        except Exception as e:
+            print(f"⚠️ [Stream {worker_id}] Failed to push fix: {e}")
+            continue
+
+    return False
 
 
 def execute_task_pipeline(
@@ -59,6 +195,22 @@ def execute_task_pipeline(
             agent_ok, agent_log = run_agent_in_worktree(worktree_dir, task)
             if not agent_ok:
                 return TaskExecutionResult(task, False, f"Agent execution failed: {agent_log}")
+
+        # 3.5 Back-merge latest base branch before pre-flight and PR creation
+        base_ref = "main" if local_mode else "origin/main"
+        print(f"🔄 [Stream {worker_id}] Syncing branch with latest {base_ref} before pre-flight...")
+        sync_ok, sync_msg = sync_and_resolve_base_ref(
+            worktree_dir,
+            task,
+            base_ref=base_ref,
+            skip_agent=skip_agent,
+        )
+        if not sync_ok:
+            return TaskExecutionResult(
+                task,
+                False,
+                f"Failed to synchronize with {base_ref}: {sync_msg}",
+            )
 
         # 4. Pre-flight verification with agent repair loop
         print(f"🔍 [Stream {worker_id}] Running pre-flight verification...")
@@ -99,38 +251,32 @@ def execute_task_pipeline(
             with MERGE_LOCK:
                 print(f"🏠 [Stream {worker_id}] Running in local merge mode...")
                 merge_local_branch(repo_root, branch, task)
-
-                dest_file = queue.complete_task(task)
-
-                # Stage and commit the backlog completion locally
-                run_git(["add", "docs/project/backlog/PRIORITY.md", str(dest_file)], cwd=repo_root)
-                for folder in ["refined", "proposed"]:
-                    old_candidate = (
-                        repo_root / "docs" / "project" / "backlog" / folder / task.file_path.name
-                    )
-                    if not old_candidate.exists():
-                        run_git(
-                            ["rm", "--cached", "--ignore-unmatch", str(old_candidate)],
-                            cwd=repo_root,
-                        )
-
-                status = run_git(["status", "--porcelain", "docs/project/backlog"], cwd=repo_root)
-                if status.stdout.strip():
-                    run_git(
-                        ["commit", "-m", f"chore(backlog): complete {task.canonical_id}"],
-                        cwd=repo_root,
-                    )
+                finalize_backlog_completion(repo_root, queue, task, push=False)
                 completed = True
                 print(f"🎉 [Stream {worker_id}] {task.canonical_id} completed and merged locally")
         else:
             print(f"🌐 [Stream {worker_id}] Committing and pushing to origin...")
-            commit_and_push(worktree_dir, task, branch)
+            try:
+                commit_and_push(worktree_dir, task, branch)
+            except CIPipelineError as e:
+                if "merge conflicts" in str(e).lower() and not skip_agent:
+                    print(f"⚠️ [Stream {worker_id}] Late merge conflicts in push: {e}. Resolving...")
+                    sync_ok, sync_msg = sync_and_resolve_base_ref(
+                        worktree_dir, task, base_ref="origin/main", skip_agent=skip_agent
+                    )
+                    if not sync_ok:
+                        raise
+                    commit_and_push(worktree_dir, task, branch)
+                else:
+                    raise
 
             pr_url = create_pull_request(worktree_dir, task, branch)
             queue.mark_review(task, pr_url)
             print(f"📋 [Stream {worker_id}] Pull Request created: {pr_url}")
 
-            ci_ok = wait_for_ci_checks(worktree_dir, pr_url)
+            ci_ok = watch_and_repair_pull_request(
+                worktree_dir, task, branch, pr_url, worker_id, skip_agent=skip_agent
+            )
             if not ci_ok:
                 close_pull_request(
                     worktree_dir,
@@ -151,39 +297,7 @@ def execute_task_pipeline(
                 if pull_res.returncode != 0:
                     run_git(["reset", "--hard", "origin/main"], cwd=repo_root)
 
-                # Finalize in Backlog Queue on repo_root
-                dest_file = queue.complete_task(task)
-
-                # Stage and commit the backlog completion to origin/main
-                run_git(["add", "docs/project/backlog/PRIORITY.md", str(dest_file)], cwd=repo_root)
-                for folder in ["refined", "proposed"]:
-                    old_candidate = (
-                        repo_root / "docs" / "project" / "backlog" / folder / task.file_path.name
-                    )
-                    if not old_candidate.exists():
-                        run_git(
-                            ["rm", "--cached", "--ignore-unmatch", str(old_candidate)],
-                            cwd=repo_root,
-                        )
-
-                status = run_git(["status", "--porcelain", "docs/project/backlog"], cwd=repo_root)
-                if status.stdout.strip():
-                    run_git(
-                        ["commit", "-m", f"chore(backlog): complete {task.canonical_id}"],
-                        cwd=repo_root,
-                    )
-                    push_res = run_git(["push", "origin", "main"], cwd=repo_root)
-                    if push_res.returncode != 0:
-                        print(
-                            f"⚠️ Push rejected, fetching and rebasing origin/main: {push_res.stderr.strip()}"
-                        )
-                        run_git(["pull", "--rebase", "origin", "main"], cwd=repo_root)
-                        push_retry = run_git(["push", "origin", "main"], cwd=repo_root)
-                        if push_retry.returncode != 0:
-                            raise CIPipelineError(
-                                f"Failed to push backlog completion on retry: {push_retry.stderr.strip()}"
-                            )
-
+                finalize_backlog_completion(repo_root, queue, task, push=True)
                 completed = True
                 print(f"🎉 [Stream {worker_id}] {task.canonical_id} completed and pushed to main")
 

@@ -84,6 +84,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`visualize-project-content.md`](docs/how-to/visualize-project-content.md): How to launch the dynamic project content visualizer, trace Redstring dependencies, and export standalone HTML bundles.
 - [`decompose-microservice-routers.md`](docs/how-to/decompose-microservice-routers.md): How to decompose monolithic FastAPI microservices into modular APIRouters.
 - [`configure-appearance-and-themes.md`](docs/how-to/configure-appearance-and-themes.md): How to configure global themes, appearance color modes (Dark/Light/System), and interact with the settings modal.
+- [`interact-with-tactile-board-and-ghost-previews.md`](docs/how-to/interact-with-tactile-board-and-ghost-previews.md): How to use tactile token kinematics, 5-foot distance measuring, difficult terrain/hazards, and spoken ghost previews.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.

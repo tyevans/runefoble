@@ -68,6 +68,15 @@ class UserStoryItem:
 
 
 @dataclass
+class CommitInfo:
+    hash: str
+    author: str
+    date: str
+    subject: str
+    prs: list[str] = field(default_factory=list)
+
+
+@dataclass
 class BacklogTaskItem:
     id: str
     title: str
@@ -82,6 +91,8 @@ class BacklogTaskItem:
     governing_prds: list[str] = field(default_factory=list)
     governing_stories: list[str] = field(default_factory=list)
     microfrontends: list[str] = field(default_factory=list)
+    commits: list[CommitInfo] = field(default_factory=list)
+    prs: list[str] = field(default_factory=list)
     summary: str = ""
     milestone: str = ""
     raw_markdown: str = ""
@@ -147,6 +158,7 @@ class ProjectData:
     features: list[FeatureItem] = field(default_factory=list)
     edges: list[TraceabilityEdge] = field(default_factory=list)
     metrics: ProjectHealthMetrics = field(default_factory=ProjectHealthMetrics)
+    data_hash: str = ""
     last_updated: str = ""
 
     def to_dict(self) -> dict[str, Any]:

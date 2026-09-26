@@ -26,12 +26,15 @@ runefoble/
 │   ├── character_sheet/ui/       # @runefoble/character-sheet-ui
 │   │   └── src/
 │   │       ├── runefoble-character-card.ts
-│   │       └── runefoble-absentee-recap.ts
+│   │       ├── runefoble-absentee-recap.ts
+│   │       └── runefoble-absentee-recap.styles.ts
 │   ├── game_session/ui/          # @runefoble/game-session-ui
 │   │   └── src/
 │   │       ├── runefoble-initiative-tracker.ts
+│   │       ├── runefoble-initiative-tracker.styles.ts
 │   │       ├── runefoble-dice-roller.ts
 │   │       ├── runefoble-spectator-view.ts
+│   │       ├── runefoble-spectator-view.styles.ts
 │   │       └── utils/dice.ts
 │   ├── the_watcher/ui/           # @runefoble/the-watcher-ui
 │   │   └── src/
@@ -146,4 +149,34 @@ The `@runefoble/voice-agent-ui` package vendors `<runefoble-voice-controls>` for
 - **WebAudio `AnalyserNode` Loop**: Renders 60fps reactive waveforms to an HTML5 `<canvas>` element using time-domain data (or simulated harmonic synthesis during tests / absence of physical mic).
 - **Affliction DSP Styling**: Adapts waveform stroke color to Canary Yellow (`var(--rf-accent-tertiary, #ffb703)`) and introduces drunken phase wobbles when inebriation filters are active.
 - **Low Bandwidth Warning**: Highlights degraded WebRTC channels (`bandwidthQuality === 'low'` or `packetsLost > 5`) with a pulsing warning badge.
+
+## Component Style Modularization (`*.styles.ts` Pattern)
+
+To enforce **Hard Invariant 6** (source file length limit < 500 lines) and promote Bauhaus design token reuse, microfrontend Lit components extract extensive CSS style sheets into dedicated companion `.styles.ts` modules.
+
+### Pattern Conventions
+1. **Module Naming**: Companion styles reside adjacent to the component file (e.g. `runefoble-initiative-tracker.styles.ts` alongside `runefoble-initiative-tracker.ts`).
+2. **Export Binding**: The styles file exports a `CSSResult` created via Lit's `css` template tag:
+   ```typescript
+   import { css } from 'lit';
+
+   export const initiativeTrackerStyles = css`
+     :host {
+       display: block;
+       /* ... */
+     }
+   `;
+   ```
+3. **Component Binding**: The component imports the style object and assigns it to `static styles`:
+   ```typescript
+   import { LitElement, html } from 'lit';
+   import { customElement } from 'lit/decorators.js';
+   import { initiativeTrackerStyles } from './runefoble-initiative-tracker.styles.ts';
+
+   @customElement('runefoble-initiative-tracker')
+   export class RunefobleInitiativeTracker extends LitElement {
+     static styles = [initiativeTrackerStyles];
+   }
+   ```
+4. **Contract Preservation**: Style extraction maintains 100% API contract stability (identical custom element tag name, properties, attributes, and emitted `CustomEvent` signatures).
 

@@ -1,13 +1,20 @@
 ---
 id: '0043'
 title: Frontend Microfrontend Component Styles and Subview Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
-dependencies: [TASK-0011, TASK-0014, TASK-0022, TASK-0026]
-governing_adrs: [ADR-0004, ADR-0012, ADR-0013]
+dependencies:
+- TASK-0011
+- TASK-0014
+- TASK-0022
+- TASK-0026
+governing_adrs:
+- ADR-0004
+- ADR-0012
+- ADR-0013
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/33
 ---
-
 # TASK-0043: Frontend Microfrontend Component Styles and Subview Decomposition
 
 ## Status

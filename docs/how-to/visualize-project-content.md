@@ -74,24 +74,42 @@ python3 -m tools.project_visualizer.cli export-json --out dist/project-data.json
 
 ## 4. Key Interactive Capabilities
 
-### 🌐 Traceability Network & Redstring Lineage
-- Visual multi-column layout showing the flow: **Personas ➔ User Stories ➔ PRDs ➔ Backlog Tasks ➔ ADRs**.
-- **Interactive Click to Trace**: Clicking any node illuminates its entire upstream and downstream lineage thread while dimming unrelated records.
-- Live breadcrumb trail showing the active dependency path.
-- Filters by Persona, Task Status, and Bounded Context.
+### 🌐 Relationship Graph & Traceability Network
+- **Interactive 2D Relationship Graph**: Real 2D node-link network visualization connecting Personas, User Stories, PRDs, Backlog Tasks, and ADRs with directional relationship edges (`desires`, `specifies`, `implements`, `governed_by`, `deploys_to`, `depends_on`).
+- **Multiple Layout Engines**: Switch seamlessly on the fly between:
+  - **Force-Directed Physics**: Coulomb node repulsion, Hooke's Law spring tension, and centering gravity.
+  - **Cyber-Flow DAG**: Layered rank-based columns for top-to-bottom or left-to-right lineage.
+  - **Concentric Radar**: Radial orbits grouping entities by architectural tier (Personas -> Stories -> PRDs -> Tasks -> ADRs).
+- **Live Physics Engine (`ForceSimulation`)**: Smooth 60 FPS particle dynamics with live drag-to-pin, freeze/unfreeze simulation toggle, and dynamic reheat shuffle.
+- **Cyber-Rune Aesthetics & Animated Energy Flow**: Bauhaus geometric node styling with neon halo rings, status badges, linked PR chips, and animated SVG pulse currents flowing along active dependency edges.
+- **Interactive Minimap Navigator**: Real-time bird's-eye canvas minimap with live camera viewport rectangle, click-to-teleport, and instant spatial orientation.
+- **Search Auto-Focus & Concentric Ripple Ping**: Searching or selecting an entity smoothly centers the camera and emits an animated sonar ripple ping to spotlight the target.
+- **Glassmorphism Detail Tooltips & Fullscreen Mode**: Rich floating hover preview cards with node status, linked PRs, and quick actions, plus full-canvas immersion mode.
+- **Bidirectional Lineage Traversal**: Clicking any node illuminates its entire upstream and downstream dependency chain while dimming unrelated entities.
+- **Traceability Multi-Column Flow**: Visual column layout displaying end-to-end lineage across documents with live breadcrumb trails.
+- **Hide Done Toggle**: Instantly filters out completed tasks and their isolated edges from the graph.
 
-### 🗺️ Milestones & Roadmap Horizon
-- Tracks progress across Milestones 1 to 4:
-  - **Milestone 1**: Platform Foundation & Core Loop (100% Complete)
-  - **Milestone 2**: Live Collaborative Alpha (Current)
-  - **Milestone 3**: AI DM & Ecosystem Expansion (Planned)
-  - **Milestone 4**: Broadcast Studio & Community Platform (Planned)
-- Circular progress gauges, task burn-up numbers, and interactive enabler checklists.
+### 📊 Roadmap Gantt & Delivery Timeline
+- **Milestone Delivery Horizons**: Chronological timeline tracking phases from Milestone 1 (Foundations) and Milestone 2 (Live Collaborative Alpha) to Milestone 3 (AI DM) and Milestone 4 (Studio).
+- **Interactive Gantt Bars**: Color-coded by status (Emerald for Complete, Amber for Refined/In-Flight, Indigo for Proposed) with progress fill, duration markers, and dependency indicators (`⛓️`).
+- **Group By Toggle**: Switch between grouping by Milestone (M1 - M4) or by Target Bounded Context (`the_watcher`, `board_state`, `game_session`, etc.).
+- **Hide Done Toggle**: Filter out completed work to focus strictly on active sprint deliverables.
 
 ### 📋 Kanban Backlog Pipeline
-- 3-column workflow board: **Complete (Shipped)**, **Refined (JIT Ready Buffer)**, and **Proposed (Candidate Pool)**.
-- Filter by target bounded context (`the_watcher`, `board_state`, `game_session`, `character_sheet`, `voice_agent`, `gateway_api`, `gateway_mcp`).
-- Displays microfrontend tags (`<runefoble-...>`), target releases, and governing ADR references.
+- **3-Column Workflow Board**: **Complete (Shipped)**, **Refined (JIT Ready Buffer)**, and **Proposed (Candidate Pool)**.
+- **Hide Done Filter**: Toggle checkbox to hide the Complete column and focus directly on active and candidate work.
+- **Git Commits & PR Badges**: Displays tagged Pull Requests (`PR #30`) and commit counts directly on task cards.
+- **Context & Search Filters**: Filter by target bounded context, target release, or live keyword search.
+
+### 🔗 Git Commits & Pull Request Tracking
+- **Automated Git Harvesting**: The visualizer automatically inspects git commit history (`git log`) and parses conventional task references (e.g. `feat(task-0041): ... (#30)`) to link commits and PR numbers to backlog tasks.
+- **Frontmatter & Markdown Support**: Tasks can also declare explicit PRs and commits in YAML frontmatter (`prs: ["#30"]`) or a `## Pull Requests` section.
+- **Detail Drawer Git History**: Inspect full commit hashes, authors, timestamps, and commit messages with one-click copy.
+
+### 🔄 Scroll-Preserving Dynamic Live Sync
+- **Intelligent Fingerprint Caching**: Uses SHA256 content hashing (`data_hash`) across `docs/project/`. Polling occurs without re-rendering or flickering if files have not changed.
+- **Zero Scroll Disruption**: When changes do occur, the visualizer preserves `window.scrollY` and viewport container scroll positions, keeping your place intact.
+- **Pause/Resume Toggle**: Click the Dynamic Sync pill in the header at any time to pause or resume automatic background reloads.
 
 ### 🎯 Product Requirements & Speculative Feature Inventory
 - Browse PRD problem statements and checkable user outcomes.
@@ -107,6 +125,6 @@ python3 -m tools.project_visualizer.cli export-json --out dist/project-data.json
 - Direct traceability from ADRs to the implementing backlog tasks.
 
 ### 📖 Slide-Over Detail Drawer & Omnibar Search
-- Press `⌘K` or `/` (or click the search button) to open the global Omnibar and search across all 120+ entities.
+- Press `⌘K` or `/` (or click the search button) to open the global Omnibar and search across all tasks, PR numbers, commit hashes, stories, PRDs, and ADRs.
 - Click any card or node anywhere in the interface to slide out the reader drawer, displaying full rendered Markdown, metadata chips, and the exact local file path with one-click copy.
-- Seamless Dark / Light theme toggle.
+- Seamless Dark / Light theme toggle with local storage persistence.

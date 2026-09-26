@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 from pathlib import Path
 
-from tools.project_visualizer.assets_js import get_client_js
+import tools.project_visualizer.assets_js as assets_js
 from tools.project_visualizer.graph import ProjectGraphBuilder
 from tools.project_visualizer.models import ProjectData
 from tools.project_visualizer.parser import ProjectParser
@@ -25,12 +26,14 @@ class ProjectVisualizerGenerator:
         return builder.build()
 
     def generate_html(self, is_live_server: bool = False) -> str:
+        if is_live_server:
+            importlib.reload(assets_js)
         data = self.get_data()
         data_json = json.dumps(data.to_dict(), default=str)
         shell = render_html_shell(data_json, is_live_server=is_live_server)
 
         # Inject client script before </body>
-        client_script = f"<script>\n{get_client_js()}\n</script>"
+        client_script = f"<script>\n{assets_js.get_client_js()}\n</script>"
         return shell.replace("</body>", f"{client_script}\n</body>")
 
     def build_file(self, output_path: str | Path, is_live_server: bool = False) -> Path:

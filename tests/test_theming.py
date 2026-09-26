@@ -16,13 +16,24 @@ COMPONENT_FILES = [
     FRONTEND_DIR / "src" / "runefoble-app.styles.ts",
     FRONTEND_DIR / "src" / "components" / "runefoble-theme-switcher.ts",
     FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.styles.ts",
-    REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-board.ts",
+    REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-board.styles.ts",
+    REPO_ROOT / "services" / "board_state" / "ui" / "src" / "ghost_preview.styles.ts",
     REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-map-uploader.styles.ts",
     REPO_ROOT / "services" / "character_sheet" / "ui" / "src" / "runefoble-character-card.ts",
-    REPO_ROOT / "services" / "character_sheet" / "ui" / "src" / "runefoble-absentee-recap.ts",
+    REPO_ROOT
+    / "services"
+    / "character_sheet"
+    / "ui"
+    / "src"
+    / "runefoble-absentee-recap.styles.ts",
     REPO_ROOT / "services" / "game_session" / "ui" / "src" / "runefoble-dice-roller.ts",
-    REPO_ROOT / "services" / "game_session" / "ui" / "src" / "runefoble-initiative-tracker.ts",
-    REPO_ROOT / "services" / "game_session" / "ui" / "src" / "runefoble-spectator-view.ts",
+    REPO_ROOT
+    / "services"
+    / "game_session"
+    / "ui"
+    / "src"
+    / "runefoble-initiative-tracker.styles.ts",
+    REPO_ROOT / "services" / "game_session" / "ui" / "src" / "runefoble-spectator-view.styles.ts",
     REPO_ROOT / "services" / "the_watcher" / "ui" / "src" / "runefoble-watcher-feed.ts",
     REPO_ROOT / "services" / "the_watcher" / "ui" / "src" / "runefoble-autonomous-dm.ts",
     REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "runefoble-voice-controls.ts",

@@ -1,0 +1,176 @@
+:root {
+  --bg-canvas: #0B0F17;
+  --bg-card: #111827;
+  --bg-elevated: #1F2937;
+  --border-subtle: #1F2937;
+  --border-strong: #374151;
+  --text-main: #F9FAFB;
+  --text-muted: #9CA3AF;
+  --accent-indigo: #6366F1;
+  --accent-amber: #F59E0B;
+  --accent-emerald: #10B981;
+  --accent-violet: #8B5CF6;
+  --accent-cyan: #06B6D4;
+  --accent-rose: #F43F5E;
+}
+
+html.light {
+  --bg-canvas: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F1F5F9;
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --accent-indigo: #4F46E5;
+  --accent-amber: #D97706;
+  --accent-emerald: #059669;
+  --accent-violet: #7C3AED;
+  --accent-cyan: #0891B2;
+  --accent-rose: #E11D48;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.bg-card { background-color: var(--bg-card); }
+.bg-elevated { background-color: var(--bg-elevated); }
+.border-subtle { border-color: var(--border-subtle); }
+.border-strong { border-color: var(--border-strong); }
+.text-muted { color: var(--text-muted); }
+
+/* Custom scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-indigo); }
+
+/* Node highlight transitions */
+.node-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.node-card.dimmed {
+  opacity: 0.22;
+  filter: grayscale(85%);
+  transform: scale(0.98);
+}
+.node-card.highlighted {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--accent-indigo), 0 8px 24px -4px rgba(99, 102, 241, 0.35);
+  transform: scale(1.02);
+  z-index: 10;
+}
+.connection-line {
+  transition: stroke 0.3s ease, stroke-width 0.3s ease, opacity 0.3s ease;
+}
+
+/* Gantt Chart Custom Styles */
+.gantt-grid {
+  background-size: 80px 100%;
+  background-image: linear-gradient(to right, var(--border-subtle) 1px, transparent 1px);
+}
+
+.gantt-bar {
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+.gantt-bar:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+/* Graph Canvas & Viewport */
+.graph-viewport {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  cursor: grab;
+}
+.graph-viewport:active {
+  cursor: grabbing;
+}
+.graph-canvas-bg {
+  background-image: radial-gradient(circle, rgba(99, 102, 241, 0.12) 1.2px, transparent 1.2px);
+  background-size: 32px 32px;
+}
+html.light .graph-canvas-bg {
+  background-image: radial-gradient(circle, rgba(99, 102, 241, 0.22) 1.2px, transparent 1.2px);
+}
+
+/* Node Elements */
+.graph-node-svg {
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.2s ease, opacity 0.2s ease;
+}
+.graph-node-svg:hover {
+  filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.85));
+}
+
+/* Edge Energy Flow Animation */
+@keyframes edgePulse {
+  0% { stroke-dashoffset: 24; }
+  100% { stroke-dashoffset: 0; }
+}
+.edge-active-flow {
+  stroke-dasharray: 6, 6;
+  animation: edgePulse 0.9s linear infinite;
+}
+
+/* Search Focus Ripple Ring */
+@keyframes ripplePulse {
+  0% { r: 12px; opacity: 1; stroke-width: 3px; }
+  100% { r: 42px; opacity: 0; stroke-width: 1px; }
+}
+.focus-ripple {
+  animation: ripplePulse 1.6s cubic-bezier(0.1, 0.8, 0.2, 1) infinite;
+}
+
+/* Minimap */
+.graph-minimap {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 190px;
+  height: 125px;
+  background: rgba(17, 24, 39, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 30;
+}
+.minimap-rect {
+  fill: rgba(99, 102, 241, 0.18);
+  stroke: var(--accent-indigo);
+  stroke-width: 1.5;
+}
+
+/* Interactive Floating Tooltip */
+.graph-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 40;
+  transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  background: rgba(17, 24, 39, 0.92);
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.6);
+}
+
+/* Fullscreen Mode */
+.graph-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  z-index: 100 !important;
+  margin: 0 !important;
+}
