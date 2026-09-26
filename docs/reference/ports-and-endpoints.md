@@ -8,6 +8,7 @@
 | `/api` | `gateway-api:8000` | REST and WebSocket API gateway |
 | `/docs`, `/swagger-ui` | `swagger-ui:8080` | Unified Swagger UI aggregating all OpenAPI specs |
 | `/auth` | `zitadel:8080` | Self-hosted Zitadel identity provider |
+| `/analytics` | `openpanel:3000` | Self-hosted OpenPanel privacy-preserving analytics |
 
 ## Microservice Internal Ports
 

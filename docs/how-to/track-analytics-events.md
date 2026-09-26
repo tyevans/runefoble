@@ -1,18 +1,19 @@
 # How-To: Track Privacy-Preserving Analytics with OpenPanel
 
 ## Overview
-Runefoble integrates with self-hosted OpenPanel (`openpanel/openpanel`) to record operational and gameplay metrics (such as session counts, turn durations, and absentee stand-in activations) without tracking personally identifiable information (PII) or recording audio transcripts.
+Runefoble integrates with self-hosted OpenPanel (`openpanel/openpanel`) to record operational and gameplay metrics (such as session starts, dice rolls, turn durations, and absentee stand-in activations) without tracking personally identifiable information (PII) or recording audio transcripts.
 
 ## Core Rules for Event Tracking
-1. **Never log raw audio or transcripts**: Audio data belongs strictly in the ephemeral voice pipeline or user-consented session recordings.
-2. **Anonymize user identifiers**: Profile IDs must be hashed or pseudonymized before reporting to OpenPanel.
-3. **Asynchronous dispatch**: Analytics calls must never block user interactions, audio streaming, or game turn adjudication.
+1. **Never log raw audio or transcripts**: Audio data belongs strictly in the ephemeral voice pipeline. Property keys matching `audio`, `transcript`, `speech`, or `dialogue` are stripped automatically.
+2. **Anonymize user identifiers**: Profile IDs are automatically hashed using salted SHA-256 before reporting to OpenPanel.
+3. **Asynchronous dispatch**: Analytics calls never block user interactions, audio streaming, or game turn adjudication.
+4. **Decoupled domain pipeline**: Domain services publish domain events to Redis Streams; the background `AnalyticsEventWorker` maps them to privacy-preserving telemetry metrics.
 
 ---
 
 ## Step 1: Use `OpenPanelClient` in Platform Code
 
-The platform client provides non-blocking event recording:
+The platform client provides non-blocking event recording and automated PII sanitization:
 
 ```python
 from runefoble_platform.analytics import OpenPanelClient
@@ -22,55 +23,70 @@ settings = PlatformSettings()
 client = OpenPanelClient(
     endpoint=settings.openpanel_endpoint,
     client_id=settings.openpanel_client_id,
+    salt="runefoble_privacy_salt",
+    mock_mode=False,
 )
 
 # Track a high-level game event
 await client.track(
-    event_name="session_started",
+    event_name="session.started",
     properties={
         "campaign_type": "fantasy_5e",
         "num_players": 4,
         "is_ai_dm": True,
     },
-    profile_id="anon_user_sha256",
+    profile_id="user_player_123",  # Automatically hashed via SHA-256 with salt
 )
 ```
 
-In offline development or unit tests, `OpenPanelClient` queues events in memory and avoids remote network calls.
+In offline development or unit tests, pass `mock_mode=True` to buffer events in `client.recorded_events` without remote network requests.
 
 ---
 
-## Step 2: Stream Domain Events to OpenPanel
+## Step 2: Stream Domain Events with `AnalyticsEventWorker`
 
-Rather than scattering manual analytics calls across domain services, use an asynchronous Redis Streams consumer group worker:
+Rather than scattering manual analytics calls across domain aggregates, deploy the background `AnalyticsEventWorker` consuming domain events from Redis Streams (`runefoble.events.session`, `runefoble.events.watcher`):
 
 ```python
-from eventsource.domain.event import DomainEvent
-from runefoble_events.session import GameSessionStarted, PlayerJoinedSession
-from runefoble_platform.analytics import OpenPanelClient
+from runefoble_platform.analytics import AnalyticsEventWorker, OpenPanelClient
+from runefoble_platform.consumer_group import RedisConsumerGroup
 
+consumer_group = RedisConsumerGroup(redis_url="redis://localhost:6379/0")
+client = OpenPanelClient()
 
-async def handle_domain_event_analytics(event: DomainEvent, client: OpenPanelClient):
-    if isinstance(event, GameSessionStarted):
-        await client.track(
-            event_name="game_session_started",
-            properties={"session_id": event.session_id},
-        )
-    elif isinstance(event, PlayerJoinedSession):
-        await client.track(
-            event_name="player_joined",
-            properties={
-                "session_id": event.session_id,
-                "role": event.role,
-            },
-        )
+worker = AnalyticsEventWorker(
+    client=client,
+    consumer_group=consumer_group,
+    streams=["runefoble.events.session", "runefoble.events.watcher"],
+    group_name="runefoble_analytics_workers",
+    consumer_name="analytics_worker_1",
+)
+
+# Start background async consumer loop
+await worker.start()
+
+# When shutting down
+await worker.stop()
 ```
+
+### Event Mapping Taxonomy
+
+| Domain Event | OpenPanel Metric | Tracked Properties (Anonymized) |
+|---|---|---|
+| `SessionStarted` / `GameSessionStarted` | `session.started` | `session_id`, `started_at_turn` |
+| `SessionCreated` | `session.created` | `session_id`, `dm_id` |
+| `SessionEnded` | `session.ended` | `session_id`, `summary` |
+| `DiceRolled` / `DiceRollEvent` | `dice.rolled` | `session_id`, `formula`, `total`, `is_crit`, `is_fumble`, `roll_type` |
+| `StandInActionDecided` / `StandInTurnExecuted` | `stand_in.turn_taken` | `character_name`, `action_type`, `penalties_applied` (no dialogue/transcripts) |
+| `AbsencePenaltyApplied` / `PlayerAbsenteePenalized` | `stand_in.penalty_applied` | `penalty_type`, `imposed_by` |
+| `PlayerJoinedSession` | `player.joined` | `session_id`, `character_class` |
+| `PlayerLeftSession` | `player.left` | `session_id`, `reason` |
 
 ---
 
 ## Step 3: Frontend Event Tracking
 
-Frontend Lit components emit analytics via the gateway proxy route (`/analytics/event`):
+Frontend Lit components emit client-side UI telemetry via the Traefik ingress route (`/analytics/event`):
 
 ```typescript
 export async function trackEvent(name: string, props: Record<string, unknown> = {}) {
@@ -94,4 +110,4 @@ export async function trackEvent(name: string, props: Record<string, unknown> = 
 
 ## Step 4: Verify in OpenPanel Dashboard
 
-Open the OpenPanel dashboard at `http://localhost:3000` to inspect live events, funnels, and retention charts.
+In local Kind development, navigate to `http://runefoble.local/analytics` (or port-forward `kubectl port-forward svc/openpanel 3000:3000`) to inspect real-time events, funnels, and retention charts.

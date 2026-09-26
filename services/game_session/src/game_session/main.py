@@ -11,26 +11,29 @@ from uuid import UUID, uuid4
 import httpx
 from fastapi import FastAPI, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState, ParticipantState
+from game_session.combat_routes import (
+    init_combat_routes,
+)
+from game_session.combat_routes import (
+    router as combat_router,
+)
 from game_session.models import (
     AutoPilotRequest,
     AutoPilotResponse,
-    CombatStateResponse,
     CreateSessionRequest,
-    InitiativeRollRequest,
     JoinSessionRequest,
     LeaveSessionRequest,
-    NextTurnRequest,
-    StartCombatRequest,
+    RollDiceRequest,
+    RollDiceResponse,
 )
 from runefoble_events.events import (
     AbsencePenaltyApplied,
-    CombatEncounterEnded,
-    CombatEncounterStarted,
-    InitiativeRolled,
-    InitiativeTurnAdvanced,
+    DiceRolled,
+    SessionStarted,
     StandInActionDecided,
 )
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.dice import parse_and_roll
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
@@ -69,6 +72,8 @@ app = FastAPI(
 
 # Global aggregate repository
 repo: AggregateRepository[GameSessionAggregate] = create_aggregate_repository(GameSessionAggregate)
+init_combat_routes(repo, get_event_bus)
+app.include_router(combat_router)
 
 
 @app.get("/healthz")
@@ -107,9 +112,21 @@ async def start_session(session_id: UUID):
         session = await repo.load(session_id)
         session.start()
         await repo.save(session)
-        return session.state
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+    bus = get_event_bus()
+    if bus:
+        with contextlib.suppress(Exception):
+            await bus.publish_event(
+                STREAM_SESSION,
+                SessionStarted(
+                    aggregate_id=session_id,
+                    started_at_turn=session.state.current_turn,
+                ),
+            )
+
+    return session.state
 
 
 @app.post("/api/v1/sessions/{session_id}/join", response_model=GameSessionState)
@@ -153,160 +170,42 @@ async def advance_turn(session_id: UUID):
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-def _build_combat_response(
-    session: GameSessionAggregate, turn_seconds: int = 60
-) -> CombatStateResponse:
-    return CombatStateResponse(
-        session_id=session.aggregate_id,
-        in_combat=session.state.in_combat,
-        combat_round=session.state.combat_round,
-        combat_active_id=session.state.combat_active_id,
-        initiative_order=session.state.initiative_order,
-        turn_seconds_remaining=turn_seconds,
+@app.post("/api/v1/sessions/{session_id}/roll", response_model=RollDiceResponse)
+async def roll_dice_session(
+    session_id: UUID, req: RollDiceRequest | None = None
+) -> RollDiceResponse:
+    """Evaluate a dice roll, emit a DiceRolled domain event, and record to the session."""
+    req_data = req or RollDiceRequest()
+    result = parse_and_roll(req_data.formula)
+
+    event = DiceRolled(
+        aggregate_id=session_id,
+        session_id=str(session_id),
+        roller_id=req_data.roller_id,
+        roller_name=req_data.roller_name,
+        formula=req_data.formula,
+        total=result["total"],
+        rolls=result["rolls"],
+        is_crit=result.get("is_crit", False),
+        is_fumble=result.get("is_fumble", False),
     )
 
-
-@app.post("/api/v1/sessions/{session_id}/combat/start", response_model=CombatStateResponse)
-async def start_combat_encounter(session_id: UUID, req: StartCombatRequest | None = None):
-    """Start combat encounter and initiate turn/round tracking."""
-    combatants = req.combatants if req else []
-    try:
-        session = await repo.load(session_id)
-        session.start_combat(combatants=combatants)
-        await repo.save(session)
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
-
     bus = get_event_bus()
     if bus:
         with contextlib.suppress(Exception):
-            await bus.publish_event(
-                STREAM_SESSION,
-                CombatEncounterStarted(
-                    aggregate_id=session_id,
-                    session_id=session_id,
-                    campaign_id=session.state.campaign_id,
-                    round_number=session.state.combat_round,
-                    combatants=session.state.initiative_order,
-                ),
-            )
+            await bus.publish_event(STREAM_SESSION, event)
 
-    return _build_combat_response(session)
-
-
-@app.post("/api/v1/sessions/{session_id}/combat/initiative", response_model=CombatStateResponse)
-async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest):
-    """Submit or update initiative roll for a combatant."""
-    try:
-        session = await repo.load(session_id)
-        session.roll_initiative(
-            combatant_id=req.combatant_id,
-            combatant_name=req.combatant_name,
-            initiative_score=req.initiative_score,
-            is_npc=req.is_npc,
-        )
-        await repo.save(session)
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
-
-    bus = get_event_bus()
-    if bus:
-        with contextlib.suppress(Exception):
-            await bus.publish_event(
-                STREAM_SESSION,
-                InitiativeRolled(
-                    aggregate_id=session_id,
-                    session_id=session_id,
-                    campaign_id=session.state.campaign_id,
-                    combatant_id=req.combatant_id,
-                    combatant_name=req.combatant_name,
-                    initiative_score=req.initiative_score,
-                    is_npc=req.is_npc,
-                ),
-            )
-
-    return _build_combat_response(session)
-
-
-@app.post("/api/v1/sessions/{session_id}/combat/next-turn", response_model=CombatStateResponse)
-async def advance_combat_turn(session_id: UUID, req: NextTurnRequest | None = None):
-    """Advance turn to next combatant in initiative order, cycling rounds."""
-    turn_secs = req.turn_seconds if req else 60
-    try:
-        session = await repo.load(session_id)
-        session.advance_initiative(turn_seconds_remaining=turn_secs)
-        await repo.save(session)
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
-
-    bus = get_event_bus()
-    if bus:
-        with contextlib.suppress(Exception):
-            await bus.publish_event(
-                STREAM_SESSION,
-                InitiativeTurnAdvanced(
-                    aggregate_id=session_id,
-                    session_id=session_id,
-                    campaign_id=session.state.campaign_id,
-                    round_number=session.state.combat_round,
-                    active_combatant_id=session.state.combat_active_id or "",
-                    turn_seconds_remaining=turn_secs,
-                ),
-            )
-
-    return _build_combat_response(session, turn_seconds=turn_secs)
-
-
-@app.post("/api/v1/sessions/{session_id}/combat/end", response_model=CombatStateResponse)
-async def end_combat_encounter(session_id: UUID):
-    """Conclude active combat encounter."""
-    try:
-        session = await repo.load(session_id)
-        session.end_combat()
-        await repo.save(session)
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
-
-    bus = get_event_bus()
-    if bus:
-        with contextlib.suppress(Exception):
-            await bus.publish_event(
-                STREAM_SESSION,
-                CombatEncounterEnded(
-                    aggregate_id=session_id,
-                    session_id=session_id,
-                    campaign_id=session.state.campaign_id,
-                    total_rounds=session.state.combat_round,
-                ),
-            )
-
-    return _build_combat_response(session)
-
-
-@app.get("/api/v1/sessions/{session_id}/combat", response_model=CombatStateResponse)
-async def get_combat_state(session_id: UUID):
-    """Retrieve current combat encounter state, initiative order, active turn, and timer."""
-    try:
-        session = await repo.load(session_id)
-        return _build_combat_response(session)
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
+    return RollDiceResponse(
+        session_id=session_id,
+        roller_id=req_data.roller_id,
+        roller_name=req_data.roller_name,
+        formula=req_data.formula,
+        total=result["total"],
+        rolls=result["rolls"],
+        is_crit=result.get("is_crit", False),
+        is_fumble=result.get("is_fumble", False),
+        roll_type=req_data.roll_type,
+    )
 
 
 @app.post(

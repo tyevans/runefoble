@@ -49,6 +49,9 @@ class StandInActionDecided(BaseRunefobleEvent):
     flavor_text: str = ""
 
 
+StandInTurnExecuted = StandInActionDecided
+
+
 @register_event("runefoble.events.dice.rolled")
 class DiceRolled(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True

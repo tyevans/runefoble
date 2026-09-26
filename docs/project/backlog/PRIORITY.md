@@ -45,7 +45,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 
 39. **TASK-0037 (Refined)**: [`0037-opentelemetry-tracing-and-metrics-pipeline.md`](refined/0037-opentelemetry-tracing-and-metrics-pipeline.md) — OpenTelemetry Distributed Tracing, Metrics & Collector Helm Integration
 40. **TASK-0038 (Refined)**: [`0038-openpanel-analytics-service-and-event-pipeline.md`](refined/0038-openpanel-analytics-service-and-event-pipeline.md) — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
-41. **TASK-0039 (Refined)**: [`0039-streaming-whisper-speech-to-intent.md`](refined/0039-streaming-whisper-speech-to-intent.md) — Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
+41. **TASK-0039 (Complete)**: [`0039-streaming-whisper-speech-to-intent.md`](complete/0039-streaming-whisper-speech-to-intent.md) — Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
 42. **TASK-0073 (Refined)**: [`0073-frontend-settings-modal-and-theme-mode-orchestration.md`](refined/0073-frontend-settings-modal-and-theme-mode-orchestration.md) — Frontend Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher
 43. **TASK-0074 (Refined)**: [`0074-dark-light-mode-color-tokens-and-component-contrast.md`](refined/0074-dark-light-mode-color-tokens-and-component-contrast.md) — Design System Dark and Light Mode Color Tokens & Cross-Component Contrast Invariants
 44. **TASK-0046 (Refined)**: [`0046-backlog-engine-test-suite-decomposition.md`](refined/0046-backlog-engine-test-suite-decomposition.md) — Backlog Engine Test Suite Modular Decomposition

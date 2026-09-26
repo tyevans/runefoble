@@ -37,6 +37,9 @@ class AbsencePenaltyApplied(BaseRunefobleEvent):
     imposed_by: Literal["human_dm", "the_watcher"] = "the_watcher"
 
 
+PlayerAbsenteePenalized = AbsencePenaltyApplied
+
+
 @register_event
 class AbsencePenaltyCleared(BaseRunefobleEvent):
     aggregate_type: str = "CharacterSheet"
