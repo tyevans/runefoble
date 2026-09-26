@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from typing import Any
+from uuid import uuid4
+
 from sqlalchemy import (
     Column,
     Integer,
@@ -58,3 +62,46 @@ timeline_table = Table(
     Column("timestamp", String(64), nullable=False),
     Column("metadata_json", Text, default="{}"),
 )
+
+COMBAT_METRIC_FIELDS = (
+    "damage_dealt",
+    "damage_taken",
+    "healing_provided",
+    "critical_hits",
+    "fumbles",
+    "turns_taken",
+)
+
+
+def apply_combatant_metrics(
+    combatants: dict[str, dict[str, Any]],
+    campaign_id: str,
+    session_id: str,
+    encounter_id: str,
+    combatant_id: str,
+    combatant_name: str,
+    *args: int,
+    **kwargs: int,
+) -> None:
+    """Initialize or accumulate combatant performance metric deltas."""
+    cid, key = str(combatant_id), f"{campaign_id}:{session_id}:{combatant_id}"
+    entry = combatants.setdefault(
+        key,
+        {
+            "id": str(uuid4()),
+            "campaign_id": str(campaign_id),
+            "session_id": str(session_id),
+            "encounter_id": encounter_id or "default",
+            "combatant_id": cid,
+            "combatant_name": combatant_name,
+            **dict.fromkeys(COMBAT_METRIC_FIELDS, 0),
+        },
+    )
+    if combatant_name:
+        entry["combatant_name"] = combatant_name
+    for f, v in zip(COMBAT_METRIC_FIELDS, args, strict=False):
+        entry[f] += v
+    for f, v in kwargs.items():
+        if f in entry:
+            entry[f] += v
+    entry["updated_at"] = datetime.now(UTC).isoformat()

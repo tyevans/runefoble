@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Campaign Analytics Storage and Query Modular Decomposition (`TASK-0118`, `ADR-0003`, `ADR-0005`, `ADR-0011`)**:
+  - Decomposed `services/campaign_analytics/src/campaign_analytics/storage.py` into storage facade `storage.py` (165 lines) and specialized query modules `queries/spatial.py` (117 lines), `queries/mvp.py` (112 lines), and `queries/timeline.py` (97 lines).
+  - Maintained 100% backward compatibility for all public methods and aliases on `CampaignAnalyticsStorage` (`record_spatial_position()`, `get_campaign_heatmaps()`, `get_campaign_mvp()`, `get_campaign_timeline()`).
+  - Added modular decomposition and line budget tests in `tests/test_campaign_analytics_storage_modular_decomposition.py` and updated `test_blackbox_campaign_analytics_storage.py`.
+
 - **Stream Overlay Router and HUD Templates Modular Decomposition (`TASK-0117`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
   - Decomposed monolithic `gateway/api/src/gateway_api/routers/overlay.py` into single-responsibility modules strictly under 200 lines (`overlay.py`, `overlay_models.py`, and `overlay_templates.py`).
   - Extracted Pydantic wire models (`PartyMemberVitals`, `RollAnimationData`, `PartyVitalsData`) and `sanitize_party_vitals` helper into `gateway_api/overlay_models.py`.
@@ -41,29 +46,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - **Downtime Activities, Alchemical Crafting & Party Stronghold Engine (`TASK-0100`, `PRD-0014`, `US-0044`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
   - Implemented `CraftingAggregate` in `character_sheet` modeling reagent affinity, catalytic stabilization, and volatile mishap risk matrices emitting `CraftingAttempted`, `CraftingSucceeded`, and `CraftingMishapOccurred`.
-  - Implemented `StrongholdAggregate` and Campfire Rest sequence in `game_session` supporting multi-tier base upgrades (watchtower, herbal rack, arcane forge), passive campaign resting boons, and collaborative storytelling prompts emitting `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`.
+  - Implemented `StrongholdAggregate` and Campfire Rest sequence in `game_session` supporting multi-tier base upgrades, passive campaign resting boons, and collaborative storytelling prompts.
   - Added SpiceDB Zanzibar permissions for `definition stronghold` in `runefoble.zed` and protected REST routes via API Gateway.
-  - Vendored Lit Web Component `<runefoble-campfire-crafting>` in `services/game_session/ui/src/` with interactive Storybook stories, Bauhaus tokens, and `/ui/manifest` discovery.
-  - Added comprehensive blackbox test suite in `tests/test_blackbox_campfire_crafting.py` and Diataxis how-to guide `docs/how-to/run-campfire-rests-and-alchemical-crafting.md`.
+  - Vendored Lit Web Component `<runefoble-campfire-crafting>` in `services/game_session/ui/src/` with interactive Storybook stories, Bauhaus tokens, `/ui/manifest` discovery, blackbox tests, and Diataxis guide.
 
 - **Character Sheet UI Inventory Grid and Condition Indicator Microfrontend (`TASK-0107`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
-  - Developed and vendored `<runefoble-character-sheet>` Lit Web Component microfrontend within `services/character_sheet/ui/` with Bauhaus geometric tokens, full theme and dark/light contrast support, and strict Shadow DOM encapsulation.
-  - Implemented visual interactive paper doll slots (`main_hand`, `off_hand`, `armor`, `accessory`) with click-to-equip and unequip actions, emitting standard `equip-item` and `unequip-item` CustomEvents.
-  - Implemented dynamic encumbrance capacity progress bar color-coded by load thresholds (Light, Medium, Heavy, Overburdened) computed dynamically from carried item weights and character Strength capacity.
-  - Implemented condition indicator badges distinguishing 5e/d20 rules conditions (`blinded`, `prone`, `stunned`, `poisoned`, `frightened`, `unconscious`) and Runefoble absence penalties (`drunk`, `foolishness`, `greed`, `cowardice`), accompanied by interactive tooltips detailing mechanics and saving throw modifiers.
-  - Implemented spellbook and spell slot tracker with clickable pips for expenditure and recovery across spell tiers 1–9, daily prepared spell list with click-to-cast action, and known spellbook management.
-  - Decomposed microfrontend code into single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file) with interactive Storybook stories building cleanly with zero console errors.
-  - Exposed service microfrontend manifest at `GET /ui/manifest` and `services/character_sheet/ui/manifest.json`.
-  - Added App Shell forwarding export in `frontend/src/components/runefoble-character-sheet.ts` and re-exported in `frontend/src/index.ts`.
-  - Authored frontdoor blackbox test suite in `tests/test_blackbox_character_sheet_ui.py` and Diataxis how-to guide `docs/how-to/interact-with-character-sheet-and-inventory.md`.
+  - Developed and vendored `<runefoble-character-sheet>` Lit Web Component in `services/character_sheet/ui/` with Bauhaus geometric tokens and strict Shadow DOM encapsulation.
+  - Implemented interactive paper doll slots (`main_hand`, `off_hand`, `armor`, `accessory`) emitting `equip-item` and `unequip-item` CustomEvents.
+  - Implemented dynamic encumbrance capacity progress bar color-coded by load thresholds computed dynamically from carried item weights and character Strength.
+  - Implemented condition indicator badges distinguishing 5e rules conditions and absence penalties (`drunk`, `foolishness`) with interactive mechanics tooltips.
+  - Implemented spellbook and spell slot tracker with clickable pips across tiers 1–9, daily prepared spell list, and known spellbook management.
+  - Exposed service microfrontend manifest at `GET /ui/manifest`, forward export in App Shell, blackbox tests in `tests/test_blackbox_character_sheet_ui.py`, and Diataxis how-to guide.
 
 - **Rules Compendium Search & Encounter Builder Microfrontend (`TASK-0108`, `PRD-0008`, `ADR-0001`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
   - Vendored `<runefoble-rules-compendium>` Lit Web Component in `services/rules_compendium/ui/` with Bauhaus geometric tokens and strict Shadow DOM encapsulation.
   - Implemented `<runefoble-rules-lookup>` delivering debounced sub-50ms hybrid BM25 and vector search across SRD monsters, spells, and conditions with category filter pills and interactive stat cards.
-  - Implemented `<runefoble-encounter-builder>` computing dynamic party XP thresholds (Easy, Medium, Hard, Deadly), real-time lethality brackets, monster drafting, and 1-click automated encounter balancing.
+  - Implemented `<runefoble-encounter-builder>` computing dynamic party XP thresholds, real-time lethality brackets, monster drafting, and 1-click automated encounter balancing.
   - Provided Homebrew Forge form modal for registering custom campaign creatures and spells guarded by SpiceDB Zanzibar authorization.
-  - Authored interactive Storybook stories and exported service discovery manifest at `GET /ui/manifest` and `services/rules_compendium/ui/manifest.json`.
-  - Added frontdoor blackbox test suite in `tests/test_blackbox_rules_compendium_ui.py` and updated Diataxis guide `docs/how-to/balance-combat-encounters-and-query-compendium.md`.
+  - Exported service discovery manifest at `GET /ui/manifest`, added blackbox test suite in `tests/test_blackbox_rules_compendium_ui.py`, and updated Diataxis guide `docs/how-to/balance-combat-encounters-and-query-compendium.md`.
 
 - **WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition (`TASK-0068`, `ADR-0002`, `ADR-0004`, `ADR-0009`, `ADR-0013`)**:
   - Decomposed `frontend/src/services/webrtc-voice.ts` into single-responsibility modules strictly under 200 lines (`webrtc-types.ts`, `webrtc-peer-mesh.ts`, and `webrtc-voice.ts`).
@@ -75,13 +75,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added endpoint aliases `/api/v1/spectator/sessions/{session_id}` and `/ws/spectator/{session_id}` in `gateway_api/routers/spectator.py`.
 
 - **Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend (`TASK-0110`, `ADR-0003`, `ADR-0004`, `ADR-0007`, `ADR-0011`, `ADR-0013`)**:
-  - Vendored `<runefoble-campaign-analytics>` Lit Web Component in `services/campaign_analytics/ui/` with Bauhaus geometric tokens, full dark/light contrast, and strict Shadow DOM encapsulation.
-  - Implemented `<runefoble-combat-heatmap>` rendering canvas-based 2D tactical grid overlays with movement corridors, hazard hotspots, knockout markers, and dynamic density metric filters (`all`, `damage`, `hit`, `movement`).
-  - Implemented `<runefoble-chronicle-timeline>` interactive living chronicle scrubber with round stepping, auto-playback, and click-to-play audio recap triggers.
-  - Implemented party performance infographics featuring SVG/CSS token distribution bar charts (damage dealt, damage taken, healing output) and MVP achievement badges.
-  - Created Storybook stories covering empty state, active combat telemetry, victory celebration, and total party kill (TPK) states with zero console errors.
-  - Exported service discovery manifest at `GET /ui/manifest` and in `services/campaign_analytics/ui/manifest.json`.
-  - Added frontdoor blackbox test suite in `tests/test_blackbox_campaign_analytics_ui.py` and updated Diataxis guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md`.
+  - Vendored `<runefoble-campaign-analytics>` Lit Web Component in `services/campaign_analytics/ui/` with Bauhaus geometric tokens and Shadow DOM encapsulation.
+  - Implemented `<runefoble-combat-heatmap>` rendering canvas-based 2D tactical grid overlays with movement corridors and density metric filters.
+  - Implemented `<runefoble-chronicle-timeline>` living chronicle scrubber with round stepping, auto-playback, and audio recap triggers.
+  - Implemented party performance infographics featuring SVG/CSS token distribution bar charts and MVP achievement badges.
+  - Exported service discovery manifest at `GET /ui/manifest`, added blackbox test suite in `tests/test_blackbox_campaign_analytics_ui.py`, and updated Diataxis guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md`.
 
 - **PRD Creation, Maintenance, and Task Decomposition Pipeline (`tools/prd_pipeline`, `scripts/decompose-prds.sh`, `ADR-0003`, `ADR-0013`)**:
   - Implemented modular PRD pipeline engine in `tools/prd_pipeline/` with CLI entrypoint `tools.prd_pipeline.cli` and executable shell wrapper `scripts/decompose-prds.sh`.

@@ -140,3 +140,24 @@ async def test_storage_milestones_and_timeline_ordering(storage: CampaignAnalyti
     assert timeline.milestones[0].type == "session_start"
     assert timeline.milestones[1].type == "boss_encounter"
     assert timeline.milestones[1].metadata == {"cr": 14}
+
+
+@pytest.mark.asyncio
+async def test_storage_backward_compatible_aliases(storage: CampaignAnalyticsStorage) -> None:
+    """Verify 100% backward compatibility for all public method aliases."""
+    cid, sid = str(uuid4()), str(uuid4())
+    await storage.record_spatial_position(cid, sid, "t1", "Valeros", 10, 15, "damage", damage=20)
+    await storage.record_combatant_stat(cid, sid, "enc1", "p1", "Valeros", damage_dealt=50)
+    await storage.record_milestone(cid, sid, "quest_complete", "Trophy", "Won battle")
+
+    heatmaps = await storage.get_campaign_heatmaps(campaign_id=cid)
+    assert heatmaps.total_points == 1
+    assert heatmaps.cells[0].damage_total == 20
+
+    mvp = await storage.get_campaign_mvp(campaign_id=cid)
+    assert mvp.overall_mvp is not None
+    assert mvp.overall_mvp.recipient_id == "p1"
+
+    timeline = await storage.get_campaign_timeline(campaign_id=cid)
+    assert timeline.total_milestones == 1
+    assert timeline.milestones[0].title == "Trophy"
