@@ -20,6 +20,12 @@ Speak and the board obeys: natural speech is parsed into game actions and applie
 
     Explore the live 2D force-directed dependency graph, cyber-flow DAG, concentric radar, Kanban delivery pipeline, and milestone Gantt timeline.
 
+-   :material-palette: **[Storybook UI Studio](storybook-studio.md)**
+
+    ---
+
+    Interactive component studio for all Lit Web Components across service microfrontends, Bauhaus design tokens, and theme matrices.
+
 -   :material-robot: **[Operating Manual for AI Agents](operating-manual.md)**
 
     ---

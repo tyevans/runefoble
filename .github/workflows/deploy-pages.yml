@@ -41,10 +41,23 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install dependencies
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11.22.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Python dependencies
         run: uv sync --group dev
 
-      - name: Build Documentation & Visualizer
+      - name: Install frontend dependencies
+        run: cd frontend && pnpm install
+
+      - name: Build Documentation, Visualizer & Storybook
         run: make docs-build
 
       - name: Upload GitHub Pages artifact
