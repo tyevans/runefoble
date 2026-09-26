@@ -1,7 +1,7 @@
 ---
 id: '0077'
 title: Character Sheet API Router and Schemas Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0009
@@ -15,8 +15,8 @@ governing_prds:
 - PRD-0006
 governing_stories:
 - US-0015
+pr_url: https://github.com/tyevans/runefoble/pull/88
 ---
-
 # TASK-0077: Character Sheet API Router and Schemas Modular Decomposition
 
 ## Status

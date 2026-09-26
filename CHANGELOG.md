@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Character Sheet Modular Router and Schemas Decomposition (`TASK-0077`, `ADR-0003`, `ADR-0009`, `ADR-0011`)**:
+  - Decomposed monolithic `services/character_sheet/src/character_sheet/main.py` into dedicated Pydantic request schema module `schemas.py` (77 lines), modular endpoint router `router.py` (162 lines), shared dependencies and mutation helpers `dependencies.py` (155 lines), and lean application entrypoint `main.py` (75 lines).
+  - Maintained 100% backward compatibility for all REST endpoints (`/api/v1/characters`, `/api/v1/characters/{id}/level-up`, `/api/v1/characters/{id}/spells/prepare`, `/api/v1/characters/{id}/spells/cast`, `/api/v1/characters/{id}/health`, `/api/v1/characters/{id}/penalties`, `/api/v1/characters/{id}/inventory/add`, `/api/v1/characters/{id}/equipment`, `/api/v1/characters/{id}/conditions`, `/api/v1/characters/{id}/guardrails`, `/healthz`, `/ui/manifest`).
+  - Added comprehensive blackbox router verification suite in `tests/test_blackbox_character_routers.py` verifying public frontdoors, OpenAPI registration, and Hard Invariant 6 / task line limits (< 180 lines per module).
+
 - **TypeScript Audience Studio & Live Stream Interactivity Microservice (`TASK-0051`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0007`, `ADR-0013`)**:
   - Implemented `services/audience_studio` as a first-class TypeScript microservice (Node.js / Fastify / TypeScript) for live streaming audience interactivity without table gameplay latency.
   - Built high-concurrency Audience Poll Engine supporting live chaos polls, time window expiration, multi-platform spectator vote ingestion (Twitch, YouTube, web), and quorum calculations.
@@ -51,6 +56,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `tests/test_blackbox_stand_in_policies.py` (189 lines): Verifies tactical guardrail configuration via `PUT/GET /api/v1/characters/{id}/guardrails`, SpiceDB Zanzibar authorization, `StandInPolicyUpdated` and `StandInStabilized` CloudEvent publications, The Watcher stand-in tactical decision graph evaluation under 'drunk' and 'foolishness' penalties, and zero-HP permadeath stabilization invariants.
     - `tests/test_blackbox_stand_in_takeover.py` (147 lines): Verifies mid-session hot-swap handoffs via `POST /api/v1/sessions/{id}/hot-swap`, active combat round and initiative continuity, SpiceDB Zanzibar object authorization, and `CharacterControlTransferred` CloudEvent emissions.
   - Updated Diataxis documentation in `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
+- **Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition (`TASK-0067`, `ADR-0003`, `ADR-0009`, `ADR-0013`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_silo_assets.py` (362 lines) into two specialized, single-responsibility test suites strictly adhering to Hard Invariant 6 (< 500 lines limit, all resulting files strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+    - `tests/test_blackbox_silo_asset_lifecycle.py` (202 lines): Verifies multipart/form-data and JSON base64 uploads for avatar images, tactical battlemaps, and audio soundscapes, direct binary streaming (`/stream`), attachment download headers (`/download`), MIME type validation, maximum payload limits (10MB), and deletion lifecycle with subsequent 404 responses.
+    - `tests/test_blackbox_silo_asset_events.py` (143 lines): Verifies CloudEvents 1.0 schema compliance and EventRegistry registration for `AssetUploaded` and `AssetDeleted`, Redis Streams stream publishing (`runefoble.events.asset`), in-memory platform bus delivery, and Swagger UI / OpenAPI route declarations (`/openapi.json`).
+  - Extracted shared test fixtures and constants to `tests/helpers/silo_fixtures.py` (39 lines) including `PNG_SAMPLE_BYTES`, `WAV_SAMPLE_BYTES`, and `clean_storage_and_bus` isolation fixture, registered via `tests/conftest.py`.
 
 - **Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition (`TASK-0094`, `ADR-0002`, `ADR-0003`, `ADR-0007`, `ADR-0009`)**:
   - Decomposed `services/the_watcher/src/the_watcher/routers/intent.py` (371 lines) into modular sub-routers in `services/the_watcher/src/the_watcher/routers/intent/`:
