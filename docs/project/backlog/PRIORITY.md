@@ -60,7 +60,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 55. **TASK-0082 (Complete)**: [`0082-analytics-sdk-and-worker-modular-decomposition.md`](complete/0082-analytics-sdk-and-worker-modular-decomposition.md) — OpenPanel Analytics SDK & Worker Modular Decomposition
 56. **TASK-0083 (Complete)**: [`0083-streaming-whisper-test-suite-modular-decomposition.md`](complete/0083-streaming-whisper-test-suite-modular-decomposition.md) — Streaming Whisper Audio Transcription Test Suite Modular Decomposition
 
-57. **TASK-0049 (Refined)**: [`0049-procedural-battlemap-and-asset-forge-bc.md`](refined/0049-procedural-battlemap-and-asset-forge-bc.md) — Procedural Battlemap & Token Asset Forge Microservice
+57. **TASK-0049 (Complete)**: [`0049-procedural-battlemap-and-asset-forge-bc.md`](complete/0049-procedural-battlemap-and-asset-forge-bc.md) — Procedural Battlemap & Token Asset Forge Microservice
 58. **TASK-0087 (Complete)**: [`0087-pr-conflict-detection-test-suite-decomposition.md`](complete/0087-pr-conflict-detection-test-suite-decomposition.md) — PR Conflict Detection and Stale Recovery Test Suite Modular Decomposition
 59. **TASK-0089 (Complete)**: [`0089-campaign-lore-retrieval-and-extractor-modular-decomposition.md`](complete/0089-campaign-lore-retrieval-and-extractor-modular-decomposition.md) — Campaign Lore Extraction, Embeddings, and Hybrid Retrieval Modular Decomposition
 60. **TASK-0060 (Refined)**: [`0060-domain-aggregates-and-rule-tables-modular-decomposition.md`](refined/0060-domain-aggregates-and-rule-tables-modular-decomposition.md) — Domain Aggregates and Rule Tables Modular Decomposition

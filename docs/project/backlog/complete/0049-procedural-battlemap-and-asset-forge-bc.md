@@ -1,7 +1,7 @@
 ---
-id: '0049'
+id: 0049
 title: Procedural Battlemap & Token Asset Forge Microservice
-status: Refined
+status: Complete
 created: 2026-09-25
 dependencies:
 - TASK-0004
@@ -17,8 +17,8 @@ governing_adrs:
 - ADR-0011
 - ADR-0013
 target_release: 0.3.0
+pr_url: https://github.com/tyevans/runefoble/pull/61
 ---
-
 # TASK-0049: Procedural Battlemap & Token Asset Forge Microservice
 
 ## Status
