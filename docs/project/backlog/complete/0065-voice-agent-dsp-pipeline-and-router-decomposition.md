@@ -1,7 +1,7 @@
 ---
 id: '0065'
 title: Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0006
@@ -13,8 +13,8 @@ governing_adrs:
 - ADR-0007
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/79
 ---
-
 # TASK-0065: Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition
 
 ## Status
