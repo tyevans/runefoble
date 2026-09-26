@@ -1,13 +1,18 @@
 ---
 id: '0041'
 title: FastMCP Gateway Server Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-25
-dependencies: [TASK-0005, TASK-0020]
-governing_adrs: [ADR-0002, ADR-0007, ADR-0009]
+dependencies:
+- TASK-0005
+- TASK-0020
+governing_adrs:
+- ADR-0002
+- ADR-0007
+- ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/30
 ---
-
 # TASK-0041: FastMCP Gateway Server Modular Decomposition
 
 ## Status
