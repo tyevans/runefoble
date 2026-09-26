@@ -13,6 +13,113 @@ def render_html_shell(initial_data_json: str, is_live_server: bool = False) -> s
         _STYLES_PATH.read_text(encoding="utf-8") if _STYLES_PATH.exists() else "/* styles */"
     )
 
+    agy_header_btn = ""
+    agy_modal_html = ""
+
+    if is_live_server:
+        agy_header_btn = """
+      <!-- AGY Launcher Trigger (Live Dev Only) -->
+      <button id="agy-header-btn" onclick="window.visualizer.openAgyModal()" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-gradient-to-r from-amber-500/15 to-indigo-500/15 text-amber-300 border border-amber-500/30 hover:border-amber-400 hover:text-white cursor-pointer shadow-sm transition" title="Launch bespoke Antigravity AGY Agent">
+        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        <span class="hidden sm:inline">Launch AGY</span>
+      </button>
+"""
+        agy_modal_html = """
+  <!-- AGY LAUNCHER MODAL (Live Dev Only) -->
+  <div id="agy-modal-backdrop" onclick="window.visualizer.closeAgyModal()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-200"></div>
+  <div id="agy-modal" class="fixed top-12 left-1/2 transform -translate-x-1/2 w-full max-w-3xl bg-[var(--bg-card)] border border-amber-500/30 rounded-2xl shadow-2xl z-50 hidden p-6 flex flex-col max-h-[88vh]">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between pb-4 border-b border-subtle">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-md text-sm">
+          ⚡
+        </div>
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>Antigravity (AGY) Agent Launcher</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">Live Dev Server</span>
+          </h2>
+          <p class="text-xs text-muted">Execute bespoke <code class="text-amber-300">agy --dangerously-skip-permissions -p &lt;prompt&gt;</code> commands</p>
+        </div>
+      </div>
+      <button onclick="window.visualizer.closeAgyModal()" class="p-1.5 rounded-md hover:bg-subtle text-muted hover:text-white transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <!-- Target Entity & Quick Presets -->
+    <div class="py-3 flex flex-wrap items-center justify-between gap-2 border-b border-subtle text-xs">
+      <div class="flex items-center space-x-2">
+        <span class="text-muted">Target Context:</span>
+        <span id="agy-target-badge" class="px-2 py-0.5 rounded font-mono font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">General Workspace</span>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <span class="text-muted mr-1">Presets:</span>
+        <button type="button" onclick="window.visualizer.setAgyPreset('feature_process')" class="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 text-[11px] font-semibold transition" title="Move a new feature through the Runefoble development process">🚀 Add Feature</button>
+        <button type="button" onclick="window.visualizer.setAgyPreset('task')" class="px-2 py-1 rounded bg-[var(--bg-elevated)] hover:bg-indigo-500/20 border border-subtle hover:border-indigo-500/30 text-slate-300 text-[11px] transition">Task Spec</button>
+        <button type="button" onclick="window.visualizer.setAgyPreset('backlog_curator')" class="px-2 py-1 rounded bg-[var(--bg-elevated)] hover:bg-amber-500/20 border border-subtle hover:border-amber-500/30 text-slate-300 text-[11px] transition">Curator</button>
+        <button type="button" onclick="window.visualizer.setAgyPreset('health_check')" class="px-2 py-1 rounded bg-[var(--bg-elevated)] hover:bg-emerald-500/20 border border-subtle hover:border-emerald-500/30 text-slate-300 text-[11px] transition">Health & Invariants</button>
+        <button type="button" onclick="window.visualizer.setAgyPreset('test_suite')" class="px-2 py-1 rounded bg-[var(--bg-elevated)] hover:bg-purple-500/20 border border-subtle hover:border-purple-500/30 text-slate-300 text-[11px] transition">TDD Verification</button>
+      </div>
+    </div>
+
+    <!-- Body Scroll Area -->
+    <div class="flex-1 overflow-y-auto py-3 space-y-4 pr-1">
+      <!-- Prompt Textarea -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-semibold text-slate-300">Bespoke Prompt (-p):</label>
+        <textarea id="agy-prompt-input" rows="5" placeholder="Enter instructions for the Antigravity agent..." class="w-full bg-[var(--bg-elevated)] border border-subtle rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-amber-500 transition resize-y"></textarea>
+      </div>
+
+      <!-- Execution Options & Command Preview -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <label class="flex items-center space-x-2 cursor-pointer text-slate-300">
+            <input type="checkbox" id="agy-continue-session" class="rounded border-subtle bg-[var(--bg-elevated)] text-amber-500 focus:ring-amber-500">
+            <span>Continue prior session (<code class="text-amber-400 font-mono">-c</code>)</span>
+          </label>
+          <button type="button" onclick="window.visualizer.copyAgyCommand()" class="text-muted hover:text-white transition flex items-center gap-1 font-mono text-[11px]">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            <span id="agy-copy-label">Copy Command</span>
+          </button>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-[11px] font-mono text-slate-400 overflow-x-auto whitespace-pre-wrap break-all" id="agy-command-preview">
+          agy --dangerously-skip-permissions -p "..."
+        </div>
+      </div>
+
+      <!-- Live Terminal Output -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center space-x-2">
+            <span class="font-semibold text-slate-300">Live Agent Console:</span>
+            <span id="agy-status-chip" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700">IDLE</span>
+            <span id="agy-timer" class="text-[10px] font-mono text-muted hidden">00:00</span>
+          </div>
+          <button type="button" onclick="window.visualizer.clearAgyOutput()" class="text-[11px] text-muted hover:text-white transition">Clear Logs</button>
+        </div>
+        <pre id="agy-terminal-output" class="bg-black/85 text-emerald-400 border border-slate-800 rounded-xl p-3.5 text-[11px] font-mono leading-relaxed h-44 overflow-y-auto whitespace-pre-wrap selection:bg-emerald-800 selection:text-white">Ready to dispatch agent command...</pre>
+      </div>
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div class="pt-4 border-t border-subtle flex items-center justify-between">
+      <button type="button" id="agy-cancel-btn" onclick="window.visualizer.terminateAgyJob()" class="hidden px-3.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-semibold transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        Cancel Execution
+      </button>
+      <div class="flex items-center space-x-2 ml-auto">
+        <button type="button" onclick="window.visualizer.closeAgyModal()" class="px-3.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] hover:bg-subtle text-slate-300 text-xs font-medium transition">Close</button>
+        <button type="button" id="agy-launch-btn" onclick="window.visualizer.launchAgyJob()" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-semibold text-xs transition shadow-md flex items-center gap-1.5">
+          <svg id="agy-btn-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          <span id="agy-btn-label">Launch AGY</span>
+        </button>
+      </div>
+    </div>
+  </div>
+"""
+
     return f"""<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -80,6 +187,8 @@ def render_html_shell(initial_data_json: str, is_live_server: bool = False) -> s
         <span class="hidden sm:inline">Search docs/project...</span>
         <kbd class="px-1.5 py-0.5 rounded bg-[var(--bg-card)] border border-subtle text-[10px] font-mono">⌘K</kbd>
       </button>
+
+      {agy_header_btn}
 
       <!-- Live Sync Status & Toggle -->
       <button id="sync-status" onclick="window.visualizer.toggleSyncPause()" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-pointer" title="Click to pause or resume dynamic sync">
@@ -187,6 +296,8 @@ def render_html_shell(initial_data_json: str, is_live_server: bool = False) -> s
       <!-- Search results -->
     </div>
   </div>
+
+  {agy_modal_html}
 
   <!-- EMBEDDED PROJECT DATA -->
   <script>

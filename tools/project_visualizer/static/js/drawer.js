@@ -82,6 +82,7 @@
               }">${entity.status}</span>
               ${entity.target_bc ? `<span class="px-2 py-0.5 rounded text-xs bg-slate-800 text-cyan-300 font-mono border border-slate-700">${entity.target_bc}</span>` : ''}
               ${entity.target_release ? `<span class="px-2 py-0.5 rounded text-xs bg-slate-800 text-purple-300 font-mono border border-slate-700">Release ${entity.target_release}</span>` : ''}
+              ${window.visualizer.renderTaskDrawerActions ? window.visualizer.renderTaskDrawerActions(entity) : ''}
             </div>
           </div>
 
