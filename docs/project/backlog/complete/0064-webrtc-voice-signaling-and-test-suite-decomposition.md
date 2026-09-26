@@ -1,7 +1,7 @@
 ---
 id: '0064'
 title: WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0033
@@ -12,8 +12,8 @@ governing_adrs:
 - ADR-0007
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/78
 ---
-
 # TASK-0064: WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition
 
 ## Status

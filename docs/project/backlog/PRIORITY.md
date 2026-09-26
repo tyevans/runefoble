@@ -81,7 +81,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 73. **TASK-0091 (Complete)**: [`0091-backlog-engine-orchestrator-and-ci-watcher-decomposition.md`](complete/0091-backlog-engine-orchestrator-and-ci-watcher-decomposition.md) — Backlog Engine Orchestrator and CI Watcher Modular Decomposition
 74. **TASK-0079 (Complete)**: [`0079-zitadel-oidc-auth-test-suite-decomposition.md`](complete/0079-zitadel-oidc-auth-test-suite-decomposition.md) — Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition
 75. **TASK-0065 (Refined)**: [`0065-voice-agent-dsp-pipeline-and-router-decomposition.md`](refined/0065-voice-agent-dsp-pipeline-and-router-decomposition.md) — Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition
-76. **TASK-0064 (Refined)**: [`0064-webrtc-voice-signaling-and-test-suite-decomposition.md`](refined/0064-webrtc-voice-signaling-and-test-suite-decomposition.md) — WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition
+76. **TASK-0064 (Complete)**: [`0064-webrtc-voice-signaling-and-test-suite-decomposition.md`](complete/0064-webrtc-voice-signaling-and-test-suite-decomposition.md) — WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition
 
 77. **TASK-0067 (Proposed)**: [`0067-silo-assets-and-battlemap-test-suite-decomposition.md`](proposed/0067-silo-assets-and-battlemap-test-suite-decomposition.md) — Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition
 78. **TASK-0080 (Proposed)**: [`0080-gateway-websocket-hub-and-action-validator-decomposition.md`](proposed/0080-gateway-websocket-hub-and-action-validator-decomposition.md) — Gateway WebSocket Hub and Action Validator Modular Decomposition
