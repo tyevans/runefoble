@@ -9,7 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+- **Universal VTT Importer and Dynamic MCP Tool Registry (`TASK-0057`, `ADR-0007`, `ADR-0008`, `ADR-0010`, `ADR-0013`)**:
+  - Implemented Universal VTT (`.dd2vtt`) parser in `services/board_state/src/board_state/parsers/uvtt.py` extracting grid resolution, line-of-sight wall vectors, door portals, ambient lights, and embedded base64 map imagery.
+  - Built ingestion endpoint `POST /api/v1/board/{id}/import/uvtt` (alias: `/api/v1/boards/{id}/import/uvtt`) supporting both multipart file uploads and raw JSON payloads.
+  - Automatically decoded map textures and persisted into Silo S3 (`battlemaps/`), binding `background_image_url` and `background_asset_id` to board aggregates.
+  - Projected line-of-sight wall segments and populated obstacle bounds tokens across tactical boards.
+  - Registered and published `UniversalVTTImported` (`runefoble.events.board.map_imported`) event, handled via eventsource-py `@handles` appliers.
+  - Implemented Dynamic FastMCP Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic_registry.py`) enabling runtime registration, schema validation, and deregistration of custom LLM tools without gateway restarts.
+  - Enforced AST-level execution sandboxing rejecting forbidden system imports (`os`, `subprocess`, `sys`), dangerous builtins (`open`, `eval`, `exec`), and dunder attributes.
+  - Exposed administrative REST endpoints (`/mcp/tools`, `/mcp/tools/{name}`, `/mcp/tools/{name}/execute`) on both `gateway_mcp` and `gateway_api`.
+  - Added comprehensive blackbox TDD test suite in `tests/test_blackbox_uvtt_import.py` asserting multipart file ingestion, wall projection, Silo S3 persistence, and dynamic FastMCP execution.
+  - Published Diataxis how-to guide `docs/how-to/import-universal-vtt-maps-and-register-dynamic-tools.md` and updated technical references.
+
 - **Campaign Analytics & Chronicle Archive Microservice (`TASK-0052`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
   - Implemented `services/campaign_analytics` bounded context microservice to project combat telemetry, tactical damage heatmaps, party MVP turn statistics, and interactive campaign milestone timelines from Redis Streams domain events into PostgreSQL.
   - Built `CampaignAnalyticsWorker` consuming Redis Streams consumer group `campaign_analytics_worker` across `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, and `runefoble.events.watcher`.

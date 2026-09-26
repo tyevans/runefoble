@@ -79,10 +79,40 @@ class BoardState(BaseModel):
     active_hazards: list[str] = Field(default_factory=list)
     fog_of_war_enabled: bool = True
     revealed_cells: list[list[int]] = Field(default_factory=list)
+    background_asset_id: str | None = None
+    background_image_url: str | None = None
+    wall_segments: list[dict[str, Any]] = Field(default_factory=list)
+    portals: list[dict[str, Any]] = Field(default_factory=list)
+    lights: list[dict[str, Any]] = Field(default_factory=list)
+    pixels_per_grid: int = 70
 
     @classmethod
     def initial(cls, board_id: UUID, session_id: str, cols: int, rows: int) -> BoardState:
         return cls(board_id=board_id, session_id=session_id, cols=cols, rows=rows)
+
+    def with_map_imported(
+        self,
+        cols: int,
+        rows: int,
+        pixels_per_grid: int = 70,
+        background_asset_id: str | None = None,
+        background_image_url: str | None = None,
+        wall_segments: list[dict[str, Any]] | None = None,
+        portals: list[dict[str, Any]] | None = None,
+        lights: list[dict[str, Any]] | None = None,
+    ) -> BoardState:
+        return self.model_copy(
+            update={
+                "cols": cols,
+                "rows": rows,
+                "pixels_per_grid": pixels_per_grid,
+                "background_asset_id": background_asset_id,
+                "background_image_url": background_image_url,
+                "wall_segments": wall_segments if wall_segments is not None else self.wall_segments,
+                "portals": portals if portals is not None else self.portals,
+                "lights": lights if lights is not None else self.lights,
+            }
+        )
 
     def with_terrain_modified_from_event(self, event: Any) -> BoardState:
         return self.with_terrain_modified(
@@ -224,3 +254,18 @@ class VisibilityResponse(BaseModel):
 class FogOfWarUpdateRequest(BaseModel):
     cells: list[list[int]]
     token_id: str | None = None
+
+
+class UVTTImportResponse(BaseModel):
+    board_id: UUID
+    session_id: str = ""
+    cols: int
+    rows: int
+    pixels_per_grid: int = 70
+    wall_segments: list[dict[str, Any]] = Field(default_factory=list)
+    portals: list[dict[str, Any]] = Field(default_factory=list)
+    lights: list[dict[str, Any]] = Field(default_factory=list)
+    background_image_url: str | None = None
+    background_asset_id: str | None = None
+    tokens: dict[str, PlacedTokenState] = Field(default_factory=dict)
+    status: str = "imported"

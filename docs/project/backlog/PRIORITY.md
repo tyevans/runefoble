@@ -96,7 +96,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 
 87. **TASK-0056 (Complete)**: [`0056-cinematic-director-auto-camera-and-obs-overlay.md`](complete/0056-cinematic-director-auto-camera-and-obs-overlay.md) — Cinematic Director Auto-Camera and OBS Stream Overlay
 88. **TASK-0052 (Refined)**: [`0052-campaign-analytics-and-chronicle-archive-bc.md`](refined/0052-campaign-analytics-and-chronicle-archive-bc.md) — Campaign Analytics & Chronicle Archive Microservice
-89. **TASK-0057 (Refined)**: [`0057-universal-vtt-importer-and-custom-mcp-tool-registry.md`](refined/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md) — Universal VTT Importer and Dynamic MCP Tool Registry
+89. **TASK-0057 (Complete)**: [`0057-universal-vtt-importer-and-custom-mcp-tool-registry.md`](complete/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md) — Universal VTT Importer and Dynamic MCP Tool Registry
 90. **TASK-0110 (Refined)**: [`0110-campaign-telemetry-dashboard-and-chronicle-timeline-microfrontend.md`](refined/0110-campaign-telemetry-dashboard-and-chronicle-timeline-microfrontend.md) — Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend
 91. **TASK-0097 (Refined)**: [`0097-openpanel-analytics-blackbox-test-suite-decomposition.md`](refined/0097-openpanel-analytics-blackbox-test-suite-decomposition.md) — OpenPanel Analytics Blackbox Test Suite Modular Decomposition
 92. **TASK-0076 (Refined)**: [`0076-redis-consumer-group-and-session-projections-decomposition.md`](refined/0076-redis-consumer-group-and-session-projections-decomposition.md) — Redis Streams Consumer Group Worker and Session Projections Modular Decomposition

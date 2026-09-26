@@ -19,6 +19,7 @@ from board_state.models import (
     MoveTokenRequest,
     MoveTokenResponse,
     PlaceTokenRequest,
+    UVTTImportResponse,
     VisibilityResponse,
 )
 from board_state.routers import (
@@ -68,6 +69,7 @@ __all__ = [
     "MoveTokenRequest",
     "MoveTokenResponse",
     "PlaceTokenRequest",
+    "UVTTImportResponse",
     "VisibilityResponse",
     "app",
     "get_event_bus",
