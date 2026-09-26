@@ -1,4 +1,15 @@
+---
+id: 0015
+title: Event-Sourced Character Inventory, Equipment & Condition Tracking
+status: Accepted
+created: 2026-09-25
+governing_prd: PRD-0006
+---
+
 # US-0015: Event-Sourced Character Inventory, Equipment & Condition Tracking
+
+## Governing PRD
+- [`PRD-0006: Character Sheet Inventory, Equipment & Condition Aggregation`](../../product/accepted/prd-0006-digital-character-sheet-inventory-and-conditions.md)
 
 ## Persona
 Sarah (Absent Player) / Marcus (Adventurer)

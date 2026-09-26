@@ -5,9 +5,13 @@ status: Accepted
 created: 2026-09-25
 persona: Devon (The Live Streamer / Modder)
 feature: FEAT-UI-02
+governing_prd: PRD-0013
 ---
 
 # US-0041 — Settings Modal with Dark/Light/System Mode & Integrated Theme Switcher
+
+## Governing PRD
+- [`PRD-0013: Immersive & Intuitive Frontend Experience with Tactile Board Kinematics`](../../product/accepted/prd-0013-immersive-and-intuitive-frontend-experience.md)
 
 ## User Story
 

@@ -45,3 +45,13 @@ Chroniclers, worldbuilders, and hybrid tabletop crafters (like Rowan) and Game M
 2. 3D relic inspector renders interactive GLTF/WebGL meshes maintaining 60fps on modern web browsers.
 3. Tiled PDF generator produces correctly scaled 1-inch grid printable documents matching battlemap pixel dimensions without scaling distortion.
 4. Procedural STL generator outputs valid watertight triangle meshes ready for 3D slicing software without manifold errors.
+
+## Linked User Stories
+- [`US-0045: Generative In-World Handouts, Wax Seals and 3D Relic Inspector`](../../user_stories/accepted/us-0045-generative-in-world-handouts-and-relic-inspector.md)
+- [`US-0049: Printable Tabletop Forge: Grid-Calibrated PDFs, Standees and 3D STL Tokens`](../../user_stories/accepted/us-0049-printable-tabletop-forge-and-stl-tokens.md)
+- [`US-0050: Collaborative Campaign Atlas and Multi-Layered Living Codex`](../../user_stories/accepted/us-0050-collaborative-campaign-atlas-and-living-codex.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0101: Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector`](../../backlog/proposed/0101-diegetic-handouts-and-relic-inspector-bc.md)
+- [`TASK-0105: Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens`](../../backlog/proposed/0105-printable-tabletop-forge-and-stl-tokens.md)
+- [`TASK-0106: Collaborative Campaign World Atlas & Living Party Codex`](../../backlog/proposed/0106-collaborative-campaign-atlas-and-codex-bc.md)

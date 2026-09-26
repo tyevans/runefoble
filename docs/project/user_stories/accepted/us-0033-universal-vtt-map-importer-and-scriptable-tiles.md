@@ -3,9 +3,13 @@ id: 0033
 title: Universal VTT Map Importer and Scriptable Grid Tiles
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0009
 ---
 
 # US-0033 — Universal VTT Map Importer and Scriptable Grid Tiles
+
+## Governing PRD
+- [`PRD-0009: Procedural Battlemap & Token Asset Generation Engine`](../../product/accepted/prd-0009-procedural-battlemap-and-token-asset-generation.md)
 
 ## User Story
 

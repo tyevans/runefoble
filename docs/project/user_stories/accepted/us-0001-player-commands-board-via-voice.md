@@ -3,9 +3,13 @@ id: 0001
 title: Spoken Tactical Board Manipulation
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0001
 ---
 
 # US-0001 — Spoken Tactical Board Manipulation
+
+## Governing PRD
+- [`PRD-0001: The Watcher AI Dungeon Master and Real-Time Board Animator`](../../product/accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md)
 
 ## User Story
 

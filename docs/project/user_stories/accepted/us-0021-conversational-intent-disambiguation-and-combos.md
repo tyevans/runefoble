@@ -3,9 +3,13 @@ id: 0021
 title: Conversational Intent Disambiguation and Multi-Action Combos
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0001
 ---
 
 # US-0021 — Conversational Intent Disambiguation and Multi-Action Combos
+
+## Governing PRD
+- [`PRD-0001: The Watcher AI Dungeon Master and Real-Time Board Animator`](../../product/accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md)
 
 ## User Story
 

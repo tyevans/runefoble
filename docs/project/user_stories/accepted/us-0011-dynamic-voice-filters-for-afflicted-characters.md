@@ -1,4 +1,15 @@
+---
+id: 0011
+title: Real-Time Dynamic Voice Filters for Afflicted Characters
+status: Accepted
+created: 2026-09-25
+governing_prd: PRD-0004
+---
+
 # US-0011: Real-Time Dynamic Voice Filters for Afflicted Characters
+
+## Governing PRD
+- [`PRD-0004: Dynamic Vocal Audio Conditioning and DSP Filters`](../../product/accepted/prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md)
 
 ## Persona
 Sarah (Absent Player) / Marcus (Adventurer)

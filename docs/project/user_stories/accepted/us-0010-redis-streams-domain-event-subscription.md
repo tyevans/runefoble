@@ -5,9 +5,13 @@ status: Accepted
 created: 2026-09-25
 persona: Alex (The Developer / Plugin Modder)
 feature: FEAT-DEV-03
+governing_prd: PRD-0005
 ---
 
 # US-0010 — Redis Streams Distributed Domain Event Subscription
+
+## Governing PRD
+- [`PRD-0005: Real-Time WebSocket Board & Chronicle Synchronization`](../../product/accepted/prd-0005-realtime-websocket-board-sync.md)
 
 ## User Story
 

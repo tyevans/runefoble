@@ -3,9 +3,13 @@ id: 0025
 title: Personalized AI Stand-In Tactical Policies and Playstyle Guardrails
 status: Shipped
 created: 2026-09-25
+governing_prd: PRD-0002
 ---
 
 # US-0025 — Personalized AI Stand-In Tactical Policies and Playstyle Guardrails
+
+## Governing PRD
+- [`PRD-0002: Missing Player AI Stand-In with Mimicry and Absence Costs`](../../product/accepted/prd-0002-missing-player-ai-stand-in-with-penalties.md)
 
 ## User Story
 

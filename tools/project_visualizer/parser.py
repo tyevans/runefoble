@@ -10,7 +10,9 @@ from pathlib import Path
 
 from tools.project_visualizer.git_metadata import GitMetadataHarvester
 from tools.project_visualizer.markdown_utils import (
+    detect_target_bc,
     extract_list_items,
+    extract_prefixed_ids,
     extract_section,
     parse_frontmatter,
 )
@@ -91,15 +93,13 @@ class ProjectParser:
             "alex": "#EC4899",
         }
 
-        sections = re.split(r"\n##\s+\d+\.\s+", content)
-        for s in sections[1:]:
+        for s in re.split(r"\n##\s+\d+\.\s+", content)[1:]:
             lines = s.strip().splitlines()
             if not lines:
                 continue
             title_line = lines[0]
             name = title_line.split("—")[0].strip() if "—" in title_line else title_line
             role = title_line.split("—")[1].strip() if "—" in title_line else ""
-
             body = "\n".join(lines[1:])
             pain_text = extract_section("## Pain Points\n" + body, "Pain Points")
             goals_text = extract_section("## Goals with Runefoble\n" + body, "Goals with Runefoble")
@@ -109,9 +109,7 @@ class ProjectParser:
                 if feat_match
                 else []
             )
-
             p_id = name.lower().split()[0]
-            avatar_color = palette.get(p_id, "#6366F1")
             quote_match = re.search(r"-\s+\*\*Role\*\*:\s*(.*)", body)
             quote = quote_match.group(1).strip() if quote_match else role
 
@@ -120,7 +118,7 @@ class ProjectParser:
                     id=p_id,
                     name=name,
                     role=role,
-                    avatar_color=avatar_color,
+                    avatar_color=palette.get(p_id, "#6366F1"),
                     quote=quote,
                     pain_points=extract_list_items(pain_text),
                     goals=extract_list_items(goals_text),
@@ -134,7 +132,6 @@ class ProjectParser:
         adrs_dir = self.project_dir / "adrs" / "accepted"
         registry_file = self.project_dir / "adrs" / "REGISTRY.md"
         registry_map: dict[str, tuple[str, str, str]] = {}
-
         if registry_file.exists():
             for line in registry_file.read_text(encoding="utf-8").splitlines():
                 cols = [c.strip() for c in line.split("|") if c.strip()]
@@ -147,24 +144,19 @@ class ProjectParser:
             h1 = re.search(r"^#\s+(ADR-\d+):\s*(.*)", content, re.MULTILINE)
             adr_id = h1.group(1) if h1 else Path(file).stem.split("-")[0].upper()
             title = h1.group(2) if h1 else Path(file).stem
-
-            context = extract_section(content, "Context")
-            decision = extract_section(content, "Decision")
-            consequences = extract_section(content, "Consequences")
-
             reg_info = registry_map.get(adr_id, (title, "Accepted", "2026-09-25"))
 
-            domain = "Architecture"
-            if any(k in title.lower() for k in ["auth", "zanzibar", "spicedb", "zitadel"]):
-                domain = "Security & Auth"
-            elif any(k in title.lower() for k in ["stream", "event", "eventsource"]):
-                domain = "Event Sourcing"
-            elif any(k in title.lower() for k in ["lit", "theme", "frontend", "microfrontend"]):
-                domain = "Frontend & UI"
-            elif any(k in title.lower() for k in ["helm", "kind", "kubernetes", "ci"]):
-                domain = "Infrastructure"
-            elif any(k in title.lower() for k in ["test", "hypothesis", "mutmut"]):
-                domain = "Quality & Verification"
+            domain_map = [
+                (["auth", "zanzibar", "spicedb", "zitadel"], "Security & Auth"),
+                (["stream", "event", "eventsource"], "Event Sourcing"),
+                (["lit", "theme", "frontend", "microfrontend"], "Frontend & UI"),
+                (["helm", "kind", "kubernetes", "ci"], "Infrastructure"),
+                (["test", "hypothesis", "mutmut"], "Quality & Verification"),
+            ]
+            domain = next(
+                (d for keys, d in domain_map if any(k in title.lower() for k in keys)),
+                "Architecture",
+            )
 
             adrs.append(
                 ADRItem(
@@ -173,9 +165,9 @@ class ProjectParser:
                     status=reg_info[1] if reg_info else "Accepted",
                     date=reg_info[2] if reg_info else "2026-09-25",
                     file_path=str(Path(file).relative_to(self.root_dir)),
-                    context=context,
-                    decision=decision,
-                    consequences=consequences,
+                    context=extract_section(content, "Context"),
+                    decision=extract_section(content, "Decision"),
+                    consequences=extract_section(content, "Consequences"),
                     domain=domain,
                     raw_markdown=content,
                 )
@@ -211,6 +203,13 @@ class ProjectParser:
             if not personas:
                 personas = ["All Personas"]
 
+            linked_stories = extract_prefixed_ids(
+                "US", content, meta.get("linked_stories") or meta.get("stories")
+            )
+            impl_tasks = extract_prefixed_ids(
+                "TASK", content, meta.get("implementing_tasks") or meta.get("tasks")
+            )
+
             prds.append(
                 PRDItem(
                     id=p_id,
@@ -222,6 +221,8 @@ class ProjectParser:
                     problem_statement=problem or who_for,
                     outcomes=extract_list_items(outcomes_text),
                     raw_markdown=content,
+                    linked_stories=linked_stories,
+                    implementing_tasks=impl_tasks,
                 )
             )
         return prds
@@ -232,11 +233,14 @@ class ProjectParser:
 
         registry_file = self.project_dir / "user_stories" / "REGISTRY.md"
         persona_map: dict[str, str] = {}
+        prd_map: dict[str, str] = {}
         if registry_file.exists():
             for line in registry_file.read_text(encoding="utf-8").splitlines():
                 cols = [c.strip() for c in line.split("|") if c.strip()]
                 if len(cols) >= 3 and cols[0].startswith("US-"):
                     persona_map[cols[0]] = cols[2]
+                if len(cols) >= 4 and cols[0].startswith("US-") and cols[3].startswith("PRD-"):
+                    prd_map[cols[0]] = cols[3]
 
         for file in sorted(glob.glob(str(stories_dir / "*.md"))):
             content = Path(file).read_text(encoding="utf-8")
@@ -278,6 +282,14 @@ class ProjectParser:
             if not persona_name:
                 persona_name = "Player"
 
+            gov_prd = meta.get("governing_prd") or meta.get("prd") or prd_map.get(s_id, "")
+            if gov_prd:
+                gov_prd = f"PRD-{str(gov_prd).split('-')[-1].zfill(4)}"
+            if not gov_prd:
+                m_prd = re.search(r"PRD-\d+", content, re.IGNORECASE)
+                if m_prd:
+                    gov_prd = f"PRD-{m_prd.group(0).split('-')[-1].zfill(4)}"
+
             stories.append(
                 UserStoryItem(
                     id=s_id,
@@ -290,6 +302,7 @@ class ProjectParser:
                     so_that=so_that,
                     acceptance_criteria=extract_list_items(criteria_text),
                     raw_markdown=content,
+                    governing_prd=gov_prd,
                 )
             )
         return stories
@@ -319,35 +332,17 @@ class ProjectParser:
                 deps = meta.get("dependencies", [])
                 if isinstance(deps, str):
                     deps = [deps]
-                adrs = meta.get("governing_adrs", [])
-                if isinstance(adrs, str):
-                    adrs = [adrs]
-                if not adrs:
-                    adrs = re.findall(r"ADR-\d+", content)
+                adrs = extract_prefixed_ids("ADR", content, meta.get("governing_adrs"))
+                prds = extract_prefixed_ids(
+                    "PRD", content, meta.get("governing_prds") or meta.get("prds")
+                )
+                stories = extract_prefixed_ids(
+                    "US", content, meta.get("governing_stories") or meta.get("stories")
+                )
 
                 summary = extract_section(body, "Summary")
                 target_rel = meta.get("target_release", "")
-
-                # Detect target bounded context
-                target_bc = "platform"
-                for bc in [
-                    "the_watcher",
-                    "board_state",
-                    "game_session",
-                    "character_sheet",
-                    "voice_agent",
-                    "gateway_api",
-                    "gateway_mcp",
-                    "campaign_lore",
-                    "rules_compendium",
-                    "battlemap_forge",
-                    "soundscape",
-                    "audience_studio",
-                    "campaign_analytics",
-                ]:
-                    if bc in content:
-                        target_bc = bc
-                        break
+                target_bc = detect_target_bc(content)
 
                 # Detect microfrontends
                 mf_elements = re.findall(r"<runefoble-[a-z0-9-]+>", content)
@@ -383,6 +378,8 @@ class ProjectParser:
                         target_release=target_rel,
                         dependencies=list(set(deps)),
                         governing_adrs=list(set(adrs)),
+                        governing_prds=list(set(prds)),
+                        governing_stories=list(set(stories)),
                         microfrontends=list(set(mf_elements)),
                         commits=task_commits,
                         prs=merged_prs,

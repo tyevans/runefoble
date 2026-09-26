@@ -5,9 +5,13 @@ status: Accepted
 created: 2026-09-26
 persona: Bram (The Tinkerer & Downtime Crafter)
 feature: FEAT-DWN-03
+governing_prd: PRD-0014
 ---
 
 # US-0047 — Interactive Tavern Minigames, Gambling and Personality-Driven Merchant Haggling
+
+## Governing PRD
+- [`PRD-0014: Downtime Activities, Alchemical Crafting & Party Stronghold Engine`](../../product/accepted/prd-0014-downtime-crafting-and-stronghold-engine.md)
 
 ## User Story
 

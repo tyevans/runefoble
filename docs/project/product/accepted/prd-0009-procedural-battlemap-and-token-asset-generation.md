@@ -35,3 +35,14 @@ GPU inference cycles for diffusion and segmentation pipelines; results are aggre
 1. Battlemap prompt generates a 2K textured map and uploads it to Silo S3 within 15 seconds.
 2. Wall segments, doors, and hazard boundaries are automatically extracted and pushed to `board_state`.
 3. Character portrait generation produces cropped circular tokens formatted for frontend canvas rendering.
+
+## Linked User Stories
+- [`US-0033: Universal VTT Map Importer and Scriptable Grid Tiles`](../../user_stories/accepted/us-0033-universal-vtt-map-importer-and-scriptable-tiles.md)
+- [`US-0038: Generative Procedural Battlemaps and Character Portraits`](../../user_stories/accepted/us-0038-generative-procedural-battlemaps-and-tokens.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0049: Procedural Battlemap & Token Asset Forge Microservice`](../../backlog/complete/0049-procedural-battlemap-and-asset-forge-bc.md)
+- [`TASK-0057: Universal VTT Importer and Dynamic MCP Tool Registry`](../../backlog/proposed/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md)
+- [`TASK-0067: Silo S3 Media Asset Bucket Storage and Battlemap Pipeline Test Suite Modular Decomposition`](../../backlog/refined/0067-silo-assets-and-battlemap-test-suite-decomposition.md)
+- [`TASK-0078: Battlemap Uploader Subviews and Grid Controller Modular Decomposition`](../../backlog/refined/0078-battlemap-uploader-subviews-and-grid-controller-decomposition.md)
+- [`TASK-0092: Asset Forge Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0092-asset-forge-test-suite-modular-decomposition.md)

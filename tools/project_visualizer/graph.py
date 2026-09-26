@@ -47,25 +47,50 @@ class ProjectGraphBuilder:
         adr_by_id = {adr.id: adr for adr in self.data.adrs}
         prd_by_id = {prd.id: prd for prd in self.data.prds}
         story_by_id = {s.id: s for s in self.data.stories}
+        task_by_id = {t.id: t for t in self.data.tasks}
+
+        # Sync PRD-declared tasks
+        for prd in self.data.prds:
+            for t_id in prd.implementing_tasks:
+                if t_id in task_by_id and prd.id not in task_by_id[t_id].governing_prds:
+                    task_by_id[t_id].governing_prds.append(prd.id)
 
         for task in self.data.tasks:
-            # Extract PRD links from markdown body or frontmatter
-            prds_found = list(set(re.findall(r"PRD-\d+", task.raw_markdown)))
+            # Extract PRD links from markdown body or frontmatter (case-insensitive)
+            prds_found = [
+                f"PRD-{p.split('-')[-1].zfill(4)}"
+                for p in re.findall(r"PRD-\d+", task.raw_markdown, re.IGNORECASE)
+            ]
             for prd_id in prds_found:
                 if prd_id not in task.governing_prds:
                     task.governing_prds.append(prd_id)
+
+            for prd_id in task.governing_prds:
                 if prd_id in prd_by_id and task.id not in prd_by_id[prd_id].implementing_tasks:
                     prd_by_id[prd_id].implementing_tasks.append(task.id)
 
-            # Extract User Story links from markdown body
-            stories_found = list(set(re.findall(r"US-\d+", task.raw_markdown)))
+            # Extract User Story links from markdown body (case-insensitive)
+            stories_found = [
+                f"US-{s.split('-')[-1].zfill(4)}"
+                for s in re.findall(r"US-\d+", task.raw_markdown, re.IGNORECASE)
+            ]
             for s_id in stories_found:
                 if s_id not in task.governing_stories:
                     task.governing_stories.append(s_id)
+
+            for s_id in task.governing_stories:
                 if s_id in story_by_id and task.id not in story_by_id[s_id].implementing_tasks:
                     story_by_id[s_id].implementing_tasks.append(task.id)
 
-            # Link governing ADRs to task
+            # Link governing ADRs to task (case-insensitive)
+            adrs_found = [
+                f"ADR-{a.split('-')[-1].zfill(4)}"
+                for a in re.findall(r"ADR-\d+", task.raw_markdown, re.IGNORECASE)
+            ]
+            for adr_id in adrs_found:
+                if adr_id not in task.governing_adrs:
+                    task.governing_adrs.append(adr_id)
+
             for adr_id in task.governing_adrs:
                 if adr_id in adr_by_id and task.id not in adr_by_id[adr_id].implementing_tasks:
                     adr_by_id[adr_id].implementing_tasks.append(task.id)
@@ -73,17 +98,37 @@ class ProjectGraphBuilder:
     def _link_stories_to_prds(self) -> None:
         prd_by_id = {prd.id: prd for prd in self.data.prds}
         task_by_id = {t.id: t for t in self.data.tasks}
+        story_by_id = {s.id: s for s in self.data.stories}
 
-        # 1. Direct mention in story markdown
+        # 0. Sync PRD-declared stories
+        for prd in self.data.prds:
+            for s_id in prd.linked_stories:
+                if s_id in story_by_id and not story_by_id[s_id].governing_prd:
+                    story_by_id[s_id].governing_prd = prd.id
+
+        # 1. Direct mention in story markdown or frontmatter
         for story in self.data.stories:
-            prds_in_story = re.findall(r"PRD-\d+", story.raw_markdown)
-            adrs_in_story = re.findall(r"ADR-\d+", story.raw_markdown)
+            prds_in_story = [
+                f"PRD-{p.split('-')[-1].zfill(4)}"
+                for p in re.findall(r"PRD-\d+", story.raw_markdown, re.IGNORECASE)
+            ]
+            adrs_in_story = [
+                f"ADR-{a.split('-')[-1].zfill(4)}"
+                for a in re.findall(r"ADR-\d+", story.raw_markdown, re.IGNORECASE)
+            ]
 
             for p_id in prds_in_story:
                 if not story.governing_prd:
                     story.governing_prd = p_id
                 if p_id in prd_by_id and story.id not in prd_by_id[p_id].linked_stories:
                     prd_by_id[p_id].linked_stories.append(story.id)
+
+            if (
+                story.governing_prd
+                and story.governing_prd in prd_by_id
+                and story.id not in prd_by_id[story.governing_prd].linked_stories
+            ):
+                prd_by_id[story.governing_prd].linked_stories.append(story.id)
 
             for a_id in adrs_in_story:
                 if a_id not in story.governing_adrs:

@@ -3,9 +3,13 @@ id: 0018
 title: Secret DM Traps, Map Switching, and Stage Triggers
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0007
 ---
 
 # US-0018 — Secret DM Traps, Map Switching, and Stage Triggers
+
+## Governing PRD
+- [`PRD-0007: Campaign Worldbuilding Lore & redstring RAG Engine`](../../product/accepted/prd-0007-campaign-worldbuilding-lore-and-rag-engine.md)
 
 ## User Story
 

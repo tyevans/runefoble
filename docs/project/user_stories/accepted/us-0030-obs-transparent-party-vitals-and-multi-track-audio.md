@@ -3,9 +3,13 @@ id: 0030
 title: OBS Transparent Party Vitals Overlay and Multi-Track Audio Output
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0011
 ---
 
 # US-0030 — OBS Transparent Party Vitals Overlay and Multi-Track Audio Output
+
+## Governing PRD
+- [`PRD-0011: Live Spectator Studio & Two-Way Audience Interactivity`](../../product/accepted/prd-0011-live-spectator-studio-and-audience-interactivity.md)
 
 ## User Story
 

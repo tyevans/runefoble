@@ -3,9 +3,13 @@ id: 0024
 title: Natural Speech Equipment Swapping and Hands-Free Wake-Word
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0006
 ---
 
 # US-0024 — Natural Speech Equipment Swapping and Hands-Free Wake-Word
+
+## Governing PRD
+- [`PRD-0006: Character Sheet Inventory, Equipment & Condition Aggregation`](../../product/accepted/prd-0006-digital-character-sheet-inventory-and-conditions.md)
 
 ## User Story
 

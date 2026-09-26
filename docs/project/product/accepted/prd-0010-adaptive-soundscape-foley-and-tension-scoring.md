@@ -35,3 +35,12 @@ Audio stem streaming requires lightweight WebAudio node mixing on the client and
 1. Background music seamlessly transitions between exploration and combat stems based on `game_session` combat state changes.
 2. WebAudio client mixes environmental foley with automatic ducking during player speech.
 3. Tactical sound effects trigger within 100ms of domain events broadcast over WebSockets.
+
+## Linked User Stories
+- [`US-0039: Encounter Tension-Driven Adaptive Musical Scoring and Foley`](../../user_stories/accepted/us-0039-encounter-tension-adaptive-scoring-and-foley.md)
+- [`US-0053: DM Manual Soundboard Triggers and Tactical Foley Overrides`](../../user_stories/accepted/us-0053-dm-manual-soundboard-and-foley-triggers.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0050: Dynamic Soundscape & Adaptive Audio Microservice`](../../backlog/complete/0050-dynamic-soundscape-and-adaptive-audio-bc.md)
+- [`TASK-0095: Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition`](../../backlog/refined/0095-soundscape-blackbox-test-suite-and-mixer-decomposition.md)
+- [`TASK-0109: Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls`](../../backlog/proposed/0109-dynamic-soundscape-mixing-panel-microfrontend.md)

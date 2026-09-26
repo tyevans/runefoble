@@ -37,3 +37,12 @@ Vector embeddings and text chunk indexing require asynchronous worker processing
 1. Lore documents ingested through `redstring` extract entities, relationships, and alias consolidation clusters.
 2. The Watcher queries `redstring` hybrid search (BM25 + vector embeddings + graph traversal) during dialogue and intent generation.
 3. Players can inspect discovered lore entries in an interactive in-game codex without seeing DM-only secrets.
+
+## Linked User Stories
+- [`US-0018: Secret DM Traps, Map Switching, and Stage Triggers`](../../user_stories/accepted/us-0018-secret-dm-traps-map-switching-and-stage-triggers.md)
+- [`US-0019: Ad-Hoc Ephemeral NPC Spawning and Scene-Wide Conditions`](../../user_stories/accepted/us-0019-ad-hoc-ephemeral-npc-spawning-and-scene-conditions.md)
+- [`US-0036: Campaign Worldbuilding Knowledge Graphs & redstring RAG Retrieval`](../../user_stories/accepted/us-0036-rag-indexed-campaign-worldbuilding-lore.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0047: Campaign Lore Knowledge Base & redstring RAG Microservice`](../../backlog/complete/0047-campaign-lore-rag-knowledge-base-bc.md)
+- [`TASK-0089: Campaign Lore Extraction, Embeddings, and Hybrid Retrieval Modular Decomposition`](../../backlog/complete/0089-campaign-lore-retrieval-and-extractor-modular-decomposition.md)

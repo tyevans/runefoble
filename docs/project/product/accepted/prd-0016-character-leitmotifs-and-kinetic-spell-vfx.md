@@ -40,3 +40,11 @@ Expressive performers (like Nadia the Bard), casual adventurers (like Marcus), a
 2. WebGL particle canvas executes 60fps spell animations across square and hex grids with zero frame drops or GPU memory leaks.
 3. Spoken spell recognition triggers corresponding particle projectile animations accurately aligned with board coordinates.
 4. Dynamic portrait condition overlays update instantaneously upon character sheet HP or condition state mutations.
+
+## Linked User Stories
+- [`US-0046: Character Musical Leitmotifs and Dynamic Theme Scoring`](../../user_stories/accepted/us-0046-character-musical-leitmotifs-and-dynamic-themes.md)
+- [`US-0048: Multi-Modal Kinetic Spell VFX and WebGL Particle Canvas`](../../user_stories/accepted/us-0048-kinetic-spell-vfx-and-particle-canvas.md)
+
+## Implementing Backlog Tasks
+- [`TASK-0102: Personal Character Leitmotifs & Adaptive Musical Signatures`](../../backlog/proposed/0102-character-leitmotifs-and-adaptive-themes.md)
+- [`TASK-0104: Multi-Modal Kinetic Spell VFX & WebGL Particle Magic`](../../backlog/proposed/0104-kinetic-spell-vfx-and-particle-canvas.md)

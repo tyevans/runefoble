@@ -5,9 +5,13 @@ status: Accepted
 created: 2026-09-25
 persona: Evelyn (The Dungeon Master / Storyteller)
 feature: FEAT-UI-04
+governing_prd: PRD-0013
 ---
 
 # US-0043 — Tactile Kinetic Board Interaction and Spoken Ghost Previews
+
+## Governing PRD
+- [`PRD-0013: Immersive & Intuitive Frontend Experience with Tactile Board Kinematics`](../../product/accepted/prd-0013-immersive-and-intuitive-frontend-experience.md)
 
 ## User Story
 

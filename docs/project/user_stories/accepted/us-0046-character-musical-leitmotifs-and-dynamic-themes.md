@@ -5,9 +5,13 @@ status: Accepted
 created: 2026-09-26
 persona: Nadia (The Expressive Thespian & Performer)
 feature: FEAT-EXP-01
+governing_prd: PRD-0016
 ---
 
 # US-0046 — Character Musical Leitmotifs and Dynamic Theme Scoring
+
+## Governing PRD
+- [`PRD-0016: Personal Character Leitmotifs, Wardrobe Gallery & Kinetic WebGL Spell VFX`](../../product/accepted/prd-0016-character-leitmotifs-and-kinetic-spell-vfx.md)
 
 ## User Story
 

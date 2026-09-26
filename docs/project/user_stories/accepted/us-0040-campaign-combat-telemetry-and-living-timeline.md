@@ -3,9 +3,13 @@ id: 0040
 title: Campaign Combat Telemetry and Living Interactive Timeline
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0012
 ---
 
 # US-0040 — Campaign Combat Telemetry and Living Interactive Timeline
+
+## Governing PRD
+- [`PRD-0012: Campaign Telemetry, Analytics & Historical Memory Archive`](../../product/accepted/prd-0012-campaign-telemetry-and-living-chronicle-timeline.md)
 
 ## User Story
 

@@ -3,9 +3,13 @@ id: 0036
 title: Campaign Worldbuilding Knowledge Graphs & redstring RAG Retrieval
 status: Accepted
 created: 2026-09-25
+governing_prd: PRD-0007
 ---
 
 # US-0036 — Campaign Worldbuilding Knowledge Graphs & redstring RAG Retrieval
+
+## Governing PRD
+- [`PRD-0007: Campaign Worldbuilding Lore & redstring RAG Engine`](../../product/accepted/prd-0007-campaign-worldbuilding-lore-and-rag-engine.md)
 
 ## User Story
 
