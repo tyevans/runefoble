@@ -43,6 +43,16 @@ from runefoble_platform.storage import (
     get_storage_service,
     set_storage_service,
 )
+from runefoble_platform.telemetry import (
+    extract_trace_context,
+    get_tracer,
+    init_telemetry,
+    inject_trace_context,
+    instrument_fastapi,
+    reset_tracer_provider,
+    trace_span,
+    uninstrument_fastapi,
+)
 
 __all__ = [
     "evaluate_dice",
@@ -88,4 +98,12 @@ __all__ = [
     "AssetNotFoundError",
     "ALLOWED_MIME_TYPES",
     "MAX_ASSET_SIZE_BYTES",
+    "init_telemetry",
+    "instrument_fastapi",
+    "uninstrument_fastapi",
+    "reset_tracer_provider",
+    "get_tracer",
+    "inject_trace_context",
+    "extract_trace_context",
+    "trace_span",
 ]
