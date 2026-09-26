@@ -32,7 +32,7 @@ cluster-up: install-tools ## Create local Kind Kubernetes cluster with port mapp
 	kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml 2>/dev/null || true
 	helm repo add traefik https://traefik.github.io/charts 2>/dev/null || true
 	helm repo update 2>/dev/null || true
-	helm upgrade --install traefik traefik/traefik --namespace kube-system --set ports.web.nodePort=30080 2>/dev/null || true
+	helm upgrade --install traefik traefik/traefik --namespace kube-system --set ports.web.nodePort=30080 --set ports.web.hostPort=80 --set ports.websecure.hostPort=443 2>/dev/null || true
 	@echo "==> Cluster is ready! Ingress on localhost:80"
 
 cluster-down: ## Delete local Kind Kubernetes cluster

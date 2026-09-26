@@ -32,6 +32,28 @@ ingress:
           pathType: Prefix
           service: frontend
           port: 80
+    - host: localhost
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: gateway-api
+          port: 8000
+        - path: /docs
+          pathType: Prefix
+          service: swagger-ui
+          port: 8080
+        - path: /swagger-ui
+          pathType: Prefix
+          service: swagger-ui
+          port: 8080
+        - path: /auth
+          pathType: Prefix
+          service: zitadel
+          port: 8080
+        - path: /
+          pathType: Prefix
+          service: frontend
+          port: 80
 
 # Database
 postgres:

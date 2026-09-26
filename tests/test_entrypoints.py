@@ -104,3 +104,24 @@ def test_mcp_gateway_tool_registry():
 
     for tool in expected_tools:
         assert tool in registered_tools, f"MCP tool '{tool}' not registered on FastMCP server"
+
+
+def test_frontend_container_and_ingress_configuration():
+    """Verify frontend Dockerfile, nginx SPA config, and Helm ingress localhost routing."""
+    from pathlib import Path
+
+    import yaml
+
+    dockerfile = Path("frontend/Dockerfile")
+    assert dockerfile.exists(), "frontend/Dockerfile must exist for cluster deployment"
+    assert "nginx:alpine" in dockerfile.read_text()
+
+    nginx_conf = Path("frontend/nginx.conf")
+    assert nginx_conf.exists(), "frontend/nginx.conf must exist for SPA routing"
+    assert "try_files $uri $uri/ /index.html;" in nginx_conf.read_text()
+
+    values_path = Path("deployments/helm/runefoble/values.yaml")
+    values = yaml.safe_load(values_path.read_text())
+    hosts = [h["host"] for h in values.get("ingress", {}).get("hosts", [])]
+    assert "localhost" in hosts, "Ingress must route 'localhost' to support local curl and browser access"
+    assert "runefoble.local" in hosts, "Ingress must route 'runefoble.local'"
