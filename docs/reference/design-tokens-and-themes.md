@@ -52,6 +52,39 @@ Hard drop-shadows provide tactile neobrutalist depth. In dark mode, `--rf-shadow
 | `--rf-shadow` | `4px 4px 0px var(--rf-shadow-color)` |
 | `--rf-shadow-sm` | `2px 2px 0px var(--rf-shadow-color)` |
 
+### 5. Universal Base Tokens
+Universal root CSS custom properties (`frontend/src/styles/themes/base.css`) define foundational geometry, typography scales, spacing, transitions, and z-index layers across all themes:
+
+| Category | Token | Value |
+|---|---|---|
+| Typography | `--rf-font-family` | System sans-serif font stack |
+| Typography | `--rf-font-mono` | `"Courier New", Courier, monospace` |
+| Typography | `--rf-font-serif` | `"Georgia", serif, system-ui` |
+| Font Size | `--rf-font-size-xs` ... `--rf-font-size-3xl` | `0.75rem` (12px) to `2rem` (32px) |
+| Spacing | `--rf-space-1` ... `--rf-space-12` | `0.25rem` (4px) to `3rem` (48px) |
+| Radii | `--rf-radius-none` ... `--rf-radius-full` | `0px`, `2px`, `4px`, `8px`, `9999px` |
+| Transitions | `--rf-transition-fast` ... `--rf-transition-slow` | `150ms`, `250ms`, `350ms` (cubic-bezier) |
+| Z-Index | `--rf-z-canvas` ... `--rf-z-tooltip` | `0`, `10`, `100`, `500`, `1000`, `2000` |
+
+---
+
+## Modular Stylesheet Architecture
+
+In compliance with Hard Invariant 6 (File length limit < 500 lines), `frontend/src/styles/themes.css` is decomposed into modular CSS sub-modules in `frontend/src/styles/themes/`:
+
+```
+frontend/src/styles/
+├── themes.css               # Root bundle importing modular sub-modules (< 40 lines)
+└── themes/
+    ├── base.css             # Universal radii, typography, spacing, transitions, and z-indexes (< 90 lines)
+    ├── bauhaus.css          # Bauhaus Modernist light & dark mode palettes, borders, and shadows (< 150 lines)
+    ├── dark-fantasy.css     # Dark Fantasy gothic stone and shadow palettes (< 150 lines)
+    ├── parchment.css        # Parchment aged paper, sepia, and manuscript tokens (< 150 lines)
+    └── cyber-rune.css       # Cyber-Rune neon cyan, grid, and circuitry tokens (< 150 lines)
+```
+
+Each sub-module encapsulates both light and dark variations as well as `@media (prefers-color-scheme)` queries for its respective theme.
+
 ---
 
 ## Full Theme Matrix (Theme × Color Mode)

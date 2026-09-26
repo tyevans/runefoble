@@ -105,7 +105,12 @@ def test_storybook_stories_completeness():
 
 def test_dark_mode_css_tokens():
     """Verify themes.css defines dark mode overrides and system media query rules."""
-    css_content = THEMES_CSS.read_text(encoding="utf-8")
+    bauhaus_css = FRONTEND_DIR / "src" / "styles" / "themes" / "bauhaus.css"
+    css_content = (
+        bauhaus_css.read_text(encoding="utf-8")
+        if bauhaus_css.is_file()
+        else THEMES_CSS.read_text(encoding="utf-8")
+    )
     assert '[data-theme="bauhaus"][data-color-mode="dark"]' in css_content
     assert "--rf-bg-canvas: #121212;" in css_content
     assert "@media (prefers-color-scheme: dark)" in css_content

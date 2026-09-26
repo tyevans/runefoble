@@ -6,6 +6,18 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 THEMES_CSS = FRONTEND_DIR / "src" / "styles" / "themes.css"
+THEMES_BASE_CSS = FRONTEND_DIR / "src" / "styles" / "themes" / "base.css"
+THEMES_BAUHAUS_CSS = FRONTEND_DIR / "src" / "styles" / "themes" / "bauhaus.css"
+THEMES_DARK_FANTASY_CSS = FRONTEND_DIR / "src" / "styles" / "themes" / "dark-fantasy.css"
+THEMES_PARCHMENT_CSS = FRONTEND_DIR / "src" / "styles" / "themes" / "parchment.css"
+THEMES_CYBER_RUNE_CSS = FRONTEND_DIR / "src" / "styles" / "themes" / "cyber-rune.css"
+THEME_SUBMODULES = [
+    THEMES_BASE_CSS,
+    THEMES_BAUHAUS_CSS,
+    THEMES_DARK_FANTASY_CSS,
+    THEMES_PARCHMENT_CSS,
+    THEMES_CYBER_RUNE_CSS,
+]
 INDEX_CSS = FRONTEND_DIR / "src" / "index.css"
 INDEX_HTML = FRONTEND_DIR / "index.html"
 INDEX_TS = FRONTEND_DIR / "src" / "index.ts"
@@ -99,10 +111,25 @@ SEMANTIC_SHADOW_TOKENS = [
 ]
 
 
+def resolve_css_imports(file_path: Path) -> str:
+    """Recursively resolve CSS @import statements from the given stylesheet."""
+    content = file_path.read_text(encoding="utf-8")
+    base_dir = file_path.parent
+
+    def replace_import(match: re.Match) -> str:
+        rel_path = match.group(1)
+        imported_file = (base_dir / rel_path).resolve()
+        if imported_file.is_file():
+            return resolve_css_imports(imported_file)
+        return match.group(0)
+
+    return re.sub(r"""@import\s+['"]([^'"]+)['"]\s*;""", replace_import, content)
+
+
 def test_themes_css_semantic_token_hierarchy():
     """Verify themes.css defines the full semantic token hierarchy across all themes and color modes."""
     assert THEMES_CSS.is_file(), "themes.css must exist"
-    content = THEMES_CSS.read_text(encoding="utf-8")
+    content = resolve_css_imports(THEMES_CSS)
 
     # Verify root / base selectors exist
     assert ":root" in content
@@ -138,7 +165,7 @@ def test_themes_css_semantic_token_hierarchy():
 
 def test_wcag_contrast_ratios_across_theme_matrix():
     """Verify WCAG 2.1 AA (min 4.5:1 for body) and AAA (min 7:1 for primary) contrast invariants."""
-    content = THEMES_CSS.read_text(encoding="utf-8")
+    content = resolve_css_imports(THEMES_CSS)
     blocks = re.findall(r"([^{]+)\{([^}]+)\}", content)
 
     def srgb_to_lin(color_channel: int) -> float:
@@ -328,6 +355,7 @@ def test_file_lengths_under_500_lines():
         FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.types.ts",
         FRONTEND_DIR / "src" / "stories" / "runefoble-settings-modal.stories.ts",
         REPO_ROOT / "services" / "voice_agent" / "ui" / "src" / "waveform-visualizer.ts",
+        *THEME_SUBMODULES,
     ]
 
     seen = set()
@@ -389,3 +417,26 @@ def test_settings_modal_styles_modular_decomposition():
     assert ".swatch-group" in controls_content
     assert ".form-select" in controls_content
     assert ".checkbox-row" in controls_content
+
+
+def test_themes_css_modular_decomposition():
+    """Verify themes.css modular sub-modules, clean composite import, and line limits (TASK-0120)."""
+    assert THEMES_CSS.is_file(), "themes.css root bundle must exist"
+    content = THEMES_CSS.read_text(encoding="utf-8")
+
+    # Verify standard CSS @import rules
+    assert "@import './themes/base.css';" in content
+    assert "@import './themes/bauhaus.css';" in content
+    assert "@import './themes/dark-fantasy.css';" in content
+    assert "@import './themes/parchment.css';" in content
+    assert "@import './themes/cyber-rune.css';" in content
+
+    # Verify root bundle line limit (< 40 lines per spec)
+    root_lines = len(content.splitlines())
+    assert root_lines < 40, f"themes.css has {root_lines} lines, exceeding 40 line limit"
+
+    # Verify all modular sub-modules exist and are strictly under 150 lines
+    for submodule in THEME_SUBMODULES:
+        assert submodule.is_file(), f"{submodule.name} must exist"
+        sub_lines = len(submodule.read_text(encoding="utf-8").splitlines())
+        assert sub_lines < 150, f"{submodule.name} has {sub_lines} lines, exceeding 150 line limit"

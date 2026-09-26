@@ -1,0 +1,112 @@
+/**
+ * Dark Fantasy Theme (Default Dark & Light Mode)
+ * ADR-0012: Dark/Light Mode Theming System
+ */
+
+/* ==========================================================================
+   Dark Fantasy (Default: Dark)
+   ========================================================================== */
+[data-theme="dark-fantasy"],
+[data-theme="dark-fantasy"][data-color-mode="dark"],
+:root[data-color-mode="dark"][data-theme="dark-fantasy"] {
+  --rf-color-red: #ef4444;
+  --rf-color-blue: #3b82f6;
+  --rf-color-yellow: #f59e0b;
+  --rf-color-dark: #0f172a;
+  --rf-color-light: #f8fafc;
+
+  --rf-bg-canvas: #0f172a;
+  --rf-bg-surface: #1e293b;
+  --rf-bg-surface-elevated: #334155;
+  --rf-bg-card: #1e293b;
+  --rf-bg-inset: #090d16;
+
+  --rf-text-primary: #f8fafc;
+  --rf-text-secondary: #cbd5e1;
+  --rf-text-muted: #94a3b8;
+  --rf-text-inverse: #0f172a;
+  --rf-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --rf-border-color: #334155;
+  --rf-border-subtle: #1e293b;
+  --rf-border-focus: #8b5cf6;
+  --rf-border-width: 1px;
+  --rf-border-radius: 8px;
+  --rf-border-style: solid;
+
+  --rf-shadow-color: rgba(0, 0, 0, 0.5);
+  --rf-shadow: 0 4px 12px var(--rf-shadow-color);
+  --rf-shadow-sm: 0 2px 6px var(--rf-shadow-color);
+
+  --rf-accent-primary: #f59e0b;
+  --rf-accent-secondary: #8b5cf6;
+  --rf-accent-tertiary: #06b6d4;
+}
+
+/* ==========================================================================
+   Dark Fantasy Light Mode
+   ========================================================================== */
+[data-theme="dark-fantasy"][data-color-mode="light"],
+:root[data-color-mode="light"][data-theme="dark-fantasy"] {
+  --rf-color-red: #dc2626;
+  --rf-color-blue: #2563eb;
+  --rf-color-yellow: #d97706;
+  --rf-color-dark: #0f172a;
+  --rf-color-light: #ffffff;
+
+  --rf-bg-canvas: #f1f5f9;
+  --rf-bg-surface: #ffffff;
+  --rf-bg-surface-elevated: #f8fafc;
+  --rf-bg-card: #ffffff;
+  --rf-bg-inset: #e2e8f0;
+
+  --rf-text-primary: #0f172a;
+  --rf-text-secondary: #334155;
+  --rf-text-muted: #475569;
+  --rf-text-inverse: #ffffff;
+  --rf-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --rf-border-color: #64748b;
+  --rf-border-subtle: #cbd5e1;
+  --rf-border-focus: #7c3aed;
+  --rf-border-width: 1px;
+  --rf-border-radius: 8px;
+  --rf-border-style: solid;
+
+  --rf-shadow-color: rgba(15, 23, 42, 0.15);
+  --rf-shadow: 0 4px 12px var(--rf-shadow-color);
+  --rf-shadow-sm: 0 2px 6px var(--rf-shadow-color);
+
+  --rf-accent-primary: #d97706;
+  --rf-accent-secondary: #7c3aed;
+  --rf-accent-tertiary: #0284c7;
+}
+
+/* ==========================================================================
+   System Preference Media Queries (prefers-color-scheme: light)
+   ========================================================================== */
+@media (prefers-color-scheme: light) {
+  :root[data-color-mode="system"][data-theme="dark-fantasy"] {
+    --rf-color-red: #dc2626;
+    --rf-color-blue: #2563eb;
+    --rf-color-yellow: #d97706;
+    --rf-bg-canvas: #f1f5f9;
+    --rf-bg-surface: #ffffff;
+    --rf-bg-surface-elevated: #f8fafc;
+    --rf-bg-card: #ffffff;
+    --rf-bg-inset: #e2e8f0;
+    --rf-text-primary: #0f172a;
+    --rf-text-secondary: #334155;
+    --rf-text-muted: #475569;
+    --rf-text-inverse: #ffffff;
+    --rf-border-color: #64748b;
+    --rf-border-subtle: #cbd5e1;
+    --rf-border-focus: #7c3aed;
+    --rf-shadow-color: rgba(15, 23, 42, 0.15);
+    --rf-shadow: 0 4px 12px var(--rf-shadow-color);
+    --rf-shadow-sm: 0 2px 6px var(--rf-shadow-color);
+    --rf-accent-primary: #d97706;
+    --rf-accent-secondary: #7c3aed;
+    --rf-accent-tertiary: #0284c7;
+  }
+}
