@@ -1,9 +1,11 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import './styles/themes.css';
 import './components/runefoble-board.ts';
 import './components/runefoble-character-card.ts';
 import './components/runefoble-watcher-feed.ts';
 import './components/runefoble-absentee-recap.ts';
+import './components/runefoble-theme-switcher.ts';
 import type { BoardToken } from './components/runefoble-board.ts';
 import type { WatcherFeedEvent } from './components/runefoble-watcher-feed.ts';
 
@@ -13,19 +15,22 @@ export class RunefobleApp extends LitElement {
     :host {
       display: block;
       min-height: 100vh;
-      background-color: #0b0f19;
-      color: #f8fafc;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--rf-bg-canvas, #f8f9fa);
+      color: var(--rf-text-primary, #121212);
+      font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
       padding: 24px;
       box-sizing: border-box;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding-bottom: 20px;
-      border-bottom: 1px solid #1e293b;
+      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
       margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
     }
     .brand {
       display: flex;
@@ -33,46 +38,51 @@ export class RunefobleApp extends LitElement {
       gap: 12px;
     }
     .brand h1 {
-      font-size: 1.8rem;
+      font-size: 1.9rem;
       margin: 0;
-      background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--rf-text-primary, #121212);
+      font-weight: 900;
       letter-spacing: -0.5px;
     }
     .tagline {
       font-size: 0.9rem;
-      color: #94a3b8;
+      color: var(--rf-text-muted, #4b5563);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
     }
     .session-info {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       font-size: 0.85rem;
     }
     .badge-live {
-      background: rgba(16, 185, 129, 0.15);
-      color: #34d399;
-      border: 1px solid #059669;
+      background: var(--rf-bg-surface, #ffffff);
+      color: var(--rf-accent-primary, #e63946);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
       padding: 4px 12px;
-      border-radius: 9999px;
-      font-weight: 600;
+      font-weight: 700;
     }
     .badge-socket {
       font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 9999px;
-      border: 1px solid #334155;
+      padding: 4px 10px;
+      border-radius: var(--rf-border-radius, 0px);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      background: var(--rf-bg-surface, #ffffff);
+      font-weight: 700;
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
     }
     .badge-socket.connected {
-      color: #38bdf8;
-      border-color: #0284c7;
-      background: rgba(2, 132, 199, 0.15);
+      color: var(--rf-color-blue, #1d3557);
     }
     .badge-socket.disconnected {
-      color: #fb7185;
-      border-color: #e11d48;
-      background: rgba(225, 29, 72, 0.15);
+      color: var(--rf-color-red, #e63946);
     }
     .layout-grid {
       display: grid;
@@ -87,48 +97,59 @@ export class RunefobleApp extends LitElement {
     }
     .voice-control-panel {
       margin-top: 24px;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
+      background: var(--rf-bg-surface, #ffffff);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
+      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
       padding: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .panel-instruction {
+      font-size: 0.85rem;
+      color: var(--rf-text-muted, #4b5563);
+      margin-top: 4px;
     }
     .mic-button {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: white;
-      border: none;
-      border-radius: 8px;
+      background: var(--rf-accent-primary, #e63946);
+      color: var(--rf-color-light, #ffffff);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
       padding: 10px 20px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: opacity 0.2s;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
     .mic-button:hover {
-      opacity: 0.9;
+      transform: translate(-1px, -1px);
+      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
     }
     .mic-button.listening {
-      background: linear-gradient(135deg, #10b981, #059669);
+      background: var(--rf-accent-tertiary, #ffb703);
+      color: #121212;
       animation: pulse 1.5s infinite;
     }
     @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(230, 57, 70, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
     }
   `;
 
   @state() private isListening = false;
   @state() private socketConnected = false;
   @state() private tokens: BoardToken[] = [
-    { id: '1', name: 'Valeros', x: 2, y: 3, color: '#2563eb', hp: 38, maxHp: 45, visionRadius: 2 },
-    { id: '2', name: 'Kyra (AI)', x: 3, y: 3, isAiControlled: true, color: '#db2777', hp: 28, maxHp: 32, visionRadius: 2 },
-    { id: '3', name: 'Goblin Scout', x: 5, y: 1, isHostile: true, color: '#16a34a', hp: 7, maxHp: 12 },
-    { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, isHostile: true, color: '#dc2626', hp: 52, maxHp: 75 },
+    { id: '1', name: 'Valeros', x: 2, y: 3, color: '#1d3557', hp: 38, maxHp: 45, visionRadius: 2 },
+    { id: '2', name: 'Kyra (AI)', x: 3, y: 3, isAiControlled: true, color: '#e63946', hp: 28, maxHp: 32, visionRadius: 2 },
+    { id: '3', name: 'Goblin Scout', x: 5, y: 1, isHostile: true, color: '#ffb703', hp: 7, maxHp: 12 },
+    { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, isHostile: true, color: '#121212', hp: 52, maxHp: 75 },
   ];
 
   @state() private events: WatcherFeedEvent[] = [
@@ -196,7 +217,6 @@ export class RunefobleApp extends LitElement {
 
       this.socket.onclose = () => {
         this.socketConnected = false;
-        // Attempt reconnect after backoff
         setTimeout(() => this.initWebSocket(), 4000);
       };
 
@@ -301,13 +321,16 @@ export class RunefobleApp extends LitElement {
           <h1>Runefoble</h1>
           <span class="tagline">Imaginative Gaming for Storytellers</span>
         </div>
-        <div class="session-info">
-          <span class="badge-live">● Campaign #4: Tomb of the Star-Eater</span>
-          <span class="badge-socket ${this.socketConnected ? 'connected' : 'disconnected'}">
-            ${this.socketConnected ? '⚡ WebSocket Live' : '○ Standalone'}
-          </span>
-          <span>Session 14</span>
-          <span>DM: The Watcher</span>
+        <div class="header-actions">
+          <runefoble-theme-switcher></runefoble-theme-switcher>
+          <div class="session-info">
+            <span class="badge-live">● Campaign #4</span>
+            <span class="badge-socket ${this.socketConnected ? 'connected' : 'disconnected'}">
+              ${this.socketConnected ? '⚡ WebSocket Live' : '○ Standalone'}
+            </span>
+            <span>Session 14</span>
+            <span>DM: The Watcher</span>
+          </div>
         </div>
       </header>
 
@@ -356,7 +379,7 @@ export class RunefobleApp extends LitElement {
       <div class="voice-control-panel">
         <div>
           <strong>Collaborative Voice Channel</strong>
-          <div style="font-size: 0.85rem; color: #94a3b8;">
+          <div class="panel-instruction">
             Speak naturally: "Move my warrior to the chest", "Cast cure wounds on Valeros", "What does the altar look like?"
           </div>
         </div>

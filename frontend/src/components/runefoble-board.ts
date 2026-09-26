@@ -21,13 +21,15 @@ export class RunefobleBoard extends LitElement {
   static styles = css`
     :host {
       display: block;
-      font-family: system-ui, -apple-system, sans-serif;
-      color: #e2e8f0;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
+      font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
+      color: var(--rf-text-primary, #121212);
+      background: var(--rf-bg-surface, #ffffff);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
       padding: 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      box-sizing: border-box;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
     .header {
       display: flex;
@@ -35,12 +37,14 @@ export class RunefobleBoard extends LitElement {
       align-items: center;
       margin-bottom: 12px;
       padding-bottom: 8px;
-      border-bottom: 1px solid #1e293b;
+      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      flex-wrap: wrap;
+      gap: 12px;
     }
     .title {
       font-size: 1.25rem;
-      font-weight: 700;
-      color: #38bdf8;
+      font-weight: 800;
+      color: var(--rf-text-primary, #121212);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -49,50 +53,55 @@ export class RunefobleBoard extends LitElement {
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
     .watcher-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #1e1b4b;
-      color: #a78bfa;
+      background: var(--rf-bg-canvas, #f8f9fa);
+      color: var(--rf-text-primary, #121212);
       padding: 4px 10px;
-      border-radius: 9999px;
+      border-radius: var(--rf-border-radius, 0px);
       font-size: 0.75rem;
-      border: 1px solid #4338ca;
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      font-weight: 700;
     }
     .fog-toggle {
-      background: #1e293b;
-      color: #94a3b8;
-      border: 1px solid #475569;
-      border-radius: 6px;
+      background: var(--rf-bg-surface, #ffffff);
+      color: var(--rf-text-muted, #4b5563);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
       padding: 4px 8px;
       font-size: 0.75rem;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 4px;
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
       transition: all 0.2s;
     }
     .fog-toggle.active {
-      background: #0284c7;
-      color: #ffffff;
-      border-color: #38bdf8;
+      background: var(--rf-accent-tertiary, #ffb703);
+      color: var(--rf-color-dark, #121212);
     }
     .grid {
       display: grid;
       gap: 2px;
-      background: #1e293b;
-      border: 2px solid #475569;
-      border-radius: 8px;
+      background: var(--rf-border-color, #121212);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
       overflow: hidden;
       width: fit-content;
       margin: 0 auto;
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
     }
     .cell {
       width: 54px;
       height: 54px;
-      background: #0f172a;
+      background: var(--rf-bg-surface, #ffffff);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -102,18 +111,24 @@ export class RunefobleBoard extends LitElement {
       transition: background 0.15s ease-in-out, filter 0.2s ease-in-out;
     }
     .cell:hover:not(.fog) {
-      background: #1e293b;
+      background: var(--rf-bg-canvas, #f8f9fa);
     }
     .cell.fog {
-      background: #050811;
-      filter: brightness(0.35);
+      background: var(--rf-color-dark, #121212);
+      filter: brightness(0.6);
       cursor: not-allowed;
     }
     .cell.fog::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle, rgba(15, 23, 42, 0.4) 0%, rgba(2, 6, 23, 0.95) 100%);
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(0, 0, 0, 0.4),
+        rgba(0, 0, 0, 0.4) 4px,
+        rgba(0, 0, 0, 0.6) 4px,
+        rgba(0, 0, 0, 0.6) 8px
+      );
       pointer-events: none;
     }
     .coord-label {
@@ -121,9 +136,10 @@ export class RunefobleBoard extends LitElement {
       top: 2px;
       left: 2px;
       font-size: 0.6rem;
-      color: #475569;
+      color: var(--rf-text-muted, #4b5563);
       pointer-events: none;
       user-select: none;
+      font-weight: 700;
     }
     .token-container {
       display: flex;
@@ -140,46 +156,50 @@ export class RunefobleBoard extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
+      font-weight: 800;
       font-size: 0.75rem;
       color: #ffffff;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
       user-select: none;
       transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
     }
     .token:hover {
       transform: scale(1.12);
+      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
     }
     .token.ai {
-      border: 2px dashed #ec4899;
+      outline: 2px dashed var(--rf-accent-tertiary, #ffb703);
+      outline-offset: 1px;
     }
     .token.hostile {
-      border: 2px solid #ef4444;
+      outline: 2px solid var(--rf-accent-primary, #e63946);
+      outline-offset: 1px;
     }
     .token.active-turn {
       animation: gold-pulse 1.6s infinite ease-in-out;
-      outline: 3px solid #facc15;
+      outline: 3px solid var(--rf-accent-tertiary, #ffb703);
     }
     @keyframes gold-pulse {
       0% {
-        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.8), 0 4px 6px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 0 0 0 rgba(255, 183, 3, 0.8), var(--rf-shadow-sm, 2px 2px 0px #121212);
       }
       70% {
-        box-shadow: 0 0 0 8px rgba(250, 204, 21, 0), 0 4px 6px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 0 0 8px rgba(255, 183, 3, 0), var(--rf-shadow-sm, 2px 2px 0px #121212);
       }
       100% {
-        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0), 0 4px 6px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 0 0 0 rgba(255, 183, 3, 0), var(--rf-shadow-sm, 2px 2px 0px #121212);
       }
     }
     .health-bar-container {
       width: 36px;
-      height: 4px;
-      background: #334155;
-      border-radius: 2px;
+      height: 6px;
+      background: var(--rf-bg-canvas, #f8f9fa);
+      border: 1px solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
       margin-top: 2px;
       overflow: hidden;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     }
     .health-bar-fill {
       height: 100%;
@@ -188,26 +208,31 @@ export class RunefobleBoard extends LitElement {
     .status-bar {
       margin-top: 12px;
       font-size: 0.85rem;
-      color: #94a3b8;
+      color: var(--rf-text-muted, #4b5563);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .legend {
       display: flex;
       gap: 12px;
       font-size: 0.75rem;
-      color: #64748b;
+      color: var(--rf-text-muted, #4b5563);
+      flex-wrap: wrap;
     }
     .legend-item {
       display: flex;
       align-items: center;
       gap: 4px;
+      font-weight: 600;
     }
     .dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
+      border: 1px solid var(--rf-border-color, #121212);
     }
   `;
 
@@ -224,7 +249,6 @@ export class RunefobleBoard extends LitElement {
     if (!this.fogOfWar) {
       return true;
     }
-    // Check if any friendly (non-hostile) token can see this cell
     const friendlyTokens = this.tokens.filter((t) => !t.isHostile);
     if (friendlyTokens.length === 0) {
       return true;
@@ -268,9 +292,9 @@ export class RunefobleBoard extends LitElement {
 
   private getHealthBarColor(hp: number, maxHp: number): string {
     const ratio = Math.max(0, Math.min(1, hp / maxHp));
-    if (ratio > 0.5) return '#22c55e'; // Green
-    if (ratio > 0.2) return '#eab308'; // Yellow
-    return '#ef4444'; // Red
+    if (ratio > 0.5) return 'var(--rf-accent-secondary, #1d3557)';
+    if (ratio > 0.2) return 'var(--rf-accent-tertiary, #ffb703)';
+    return 'var(--rf-accent-primary, #e63946)';
   }
 
   render() {
@@ -317,7 +341,7 @@ export class RunefobleBoard extends LitElement {
                     <div class="token-container">
                       <div
                         class="token ${token.isAiControlled ? 'ai' : ''} ${token.isHostile ? 'hostile' : ''} ${isActiveTurn ? 'active-turn' : ''}"
-                        style="background: ${token.color || '#3b82f6'}; ${this.selectedTokenId === token.id ? 'outline: 3px solid #38bdf8;' : ''}"
+                        style="background: ${token.color || 'var(--rf-accent-secondary, #1d3557)'}; ${this.selectedTokenId === token.id ? 'outline: 3px solid var(--rf-accent-primary, #e63946);' : ''}"
                         @click="${(e: MouseEvent) => this.handleTokenClick(e, token)}"
                         title="${token.name}${token.isAiControlled ? ' (AI Stand-in)' : ''}${token.hp !== undefined ? ` [${token.hp}/${token.maxHp ?? token.hp} HP]` : ''}${isActiveTurn ? ' (Active Turn)' : ''}"
                       >
@@ -344,10 +368,9 @@ export class RunefobleBoard extends LitElement {
       <div class="status-bar">
         <span>Selected: ${this.selectedTokenId ? this.tokens.find((t) => t.id === this.selectedTokenId)?.name : 'None'}</span>
         <div class="legend">
-          <span class="legend-item"><span class="dot" style="background: #facc15"></span> Turn Glow</span>
-          <span class="legend-item"><span class="dot" style="background: #ec4899"></span> AI Stand-in</span>
-          <span class="legend-item"><span class="dot" style="background: #22c55e"></span> HP Bar</span>
-          <span class="legend-item"><span class="dot" style="background: #0284c7"></span> Player</span>
+          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-tertiary, #ffb703)"></span> Turn</span>
+          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-primary, #e63946)"></span> AI</span>
+          <span class="legend-item"><span class="dot" style="background: var(--rf-accent-secondary, #1d3557)"></span> Player</span>
         </div>
         <span>Grid: ${this.cols} x ${this.rows}</span>
       </div>

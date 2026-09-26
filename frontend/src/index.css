@@ -1,19 +1,14 @@
+@import './styles/themes.css';
+
 :root {
   color-scheme: light dark;
-  background-color: #ffffff;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    background-color: #16171d;
-  }
 }
 
 body {
   margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background-color: var(--rf-bg-canvas, #f8f9fa);
+  color: var(--rf-text-primary, #121212);
+  font-family: var(--rf-font-family, system-ui, sans-serif);
   min-width: 320px;
   min-height: 100svh;
   font-synthesis: none;

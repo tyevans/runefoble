@@ -14,38 +14,44 @@ export class RunefobleCharacterCard extends LitElement {
   static styles = css`
     :host {
       display: block;
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
+      font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
+      background: var(--rf-bg-card, #ffffff);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
       padding: 16px;
-      color: #f8fafc;
+      color: var(--rf-text-primary, #121212);
       width: 320px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      box-sizing: border-box;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
+      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      padding-bottom: 8px;
     }
     .name-title {
       font-size: 1.15rem;
-      font-weight: 700;
-      color: #f1f5f9;
+      font-weight: 800;
+      color: var(--rf-text-primary, #121212);
     }
     .class-level {
       font-size: 0.85rem;
-      color: #94a3b8;
+      color: var(--rf-text-muted, #4b5563);
+      font-weight: 600;
     }
     .ai-badge {
-      background: #831843;
-      color: #f472b6;
-      border: 1px solid #be185d;
+      background: var(--rf-accent-tertiary, #ffb703);
+      color: var(--rf-color-dark, #121212);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
       font-size: 0.7rem;
       padding: 2px 8px;
-      border-radius: 9999px;
-      font-weight: 600;
+      border-radius: var(--rf-border-radius, 0px);
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      font-weight: 700;
     }
     .hp-container {
       margin-bottom: 12px;
@@ -55,21 +61,23 @@ export class RunefobleCharacterCard extends LitElement {
       justify-content: space-between;
       font-size: 0.8rem;
       margin-bottom: 4px;
-      font-weight: 600;
+      font-weight: 700;
+      color: var(--rf-text-primary, #121212);
     }
     .hp-bar-bg {
-      height: 8px;
-      background: #0f172a;
-      border-radius: 4px;
+      height: 10px;
+      background: var(--rf-bg-canvas, #f8f9fa);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
       overflow: hidden;
     }
     .hp-bar-fill {
       height: 100%;
-      background: #22c55e;
+      background: var(--rf-accent-secondary, #1d3557);
       transition: width 0.3s ease;
     }
     .hp-bar-fill.low {
-      background: #ef4444;
+      background: var(--rf-accent-primary, #e63946);
     }
     .conditions-container {
       margin-top: 12px;
@@ -80,21 +88,21 @@ export class RunefobleCharacterCard extends LitElement {
     .condition-tag {
       font-size: 0.72rem;
       padding: 3px 8px;
-      border-radius: 6px;
+      border-radius: var(--rf-border-radius, 0px);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      font-weight: 500;
+      font-weight: 600;
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
     }
     .condition-penalty {
-      background: #451a03;
-      color: #fb923c;
-      border: 1px solid #9a3412;
+      background: var(--rf-accent-tertiary, #ffb703);
+      color: var(--rf-color-dark, #121212);
     }
     .condition-normal {
-      background: #172554;
-      color: #60a5fa;
-      border: 1px solid #1e40af;
+      background: var(--rf-accent-secondary, #1d3557);
+      color: var(--rf-color-light, #ffffff);
     }
     .stats-row {
       display: grid;
@@ -102,19 +110,22 @@ export class RunefobleCharacterCard extends LitElement {
       gap: 8px;
       margin-top: 12px;
       text-align: center;
-      background: #0f172a;
+      background: var(--rf-bg-canvas, #f8f9fa);
       padding: 8px;
-      border-radius: 8px;
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
     }
     .stat-label {
       font-size: 0.7rem;
-      color: #64748b;
+      color: var(--rf-text-muted, #4b5563);
       text-transform: uppercase;
+      font-weight: 700;
     }
     .stat-value {
-      font-size: 1rem;
-      font-weight: bold;
-      color: #cbd5e1;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--rf-text-primary, #121212);
     }
   `;
 

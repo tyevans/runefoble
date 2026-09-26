@@ -1,0 +1,121 @@
+/**
+ * Runefoble Design System Tokens & Themes
+ * ADR-0012: Design System Theming Tokens and Bauhaus Modernist Aesthetic
+ */
+
+:root,
+[data-theme="bauhaus"] {
+  /* Bold primary color palette (Bauhaus) */
+  --rf-color-red: #e63946;
+  --rf-color-blue: #1d3557;
+  --rf-color-yellow: #ffb703;
+  --rf-color-dark: #121212;
+  --rf-color-light: #ffffff;
+
+  /* Surfaces & Canvas */
+  --rf-bg-canvas: #f8f9fa;
+  --rf-bg-surface: #ffffff;
+  --rf-bg-card: #ffffff;
+
+  /* Borders & Shadows */
+  --rf-border-color: #121212;
+  --rf-border-width: 2px;
+  --rf-border-radius: 0px;
+  --rf-border-style: solid;
+  --rf-shadow: 4px 4px 0px #121212;
+  --rf-shadow-sm: 2px 2px 0px #121212;
+
+  /* Typography */
+  --rf-text-primary: #121212;
+  --rf-text-muted: #4b5563;
+  --rf-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Accents */
+  --rf-accent-primary: var(--rf-color-red);
+  --rf-accent-secondary: var(--rf-color-blue);
+  --rf-accent-tertiary: var(--rf-color-yellow);
+}
+
+/* Dark Fantasy: Obsidian, Runic Purple, Gold */
+[data-theme="dark-fantasy"] {
+  --rf-color-red: #ef4444;
+  --rf-color-blue: #3b82f6;
+  --rf-color-yellow: #f59e0b;
+  --rf-color-dark: #0f172a;
+  --rf-color-light: #f8fafc;
+
+  --rf-bg-canvas: #0f172a;
+  --rf-bg-surface: #1e293b;
+  --rf-bg-card: #1e293b;
+
+  --rf-border-color: #334155;
+  --rf-border-width: 1px;
+  --rf-border-radius: 8px;
+  --rf-border-style: solid;
+  --rf-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --rf-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+
+  --rf-text-primary: #f8fafc;
+  --rf-text-muted: #94a3b8;
+  --rf-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --rf-accent-primary: #f59e0b;
+  --rf-accent-secondary: #8b5cf6;
+  --rf-accent-tertiary: #06b6d4;
+}
+
+/* Parchment: Aged Paper, Antique Crimson, Brass */
+[data-theme="parchment"] {
+  --rf-color-red: #9b2226;
+  --rf-color-blue: #2c4c64;
+  --rf-color-yellow: #bb8524;
+  --rf-color-dark: #2e1b0f;
+  --rf-color-light: #fff9eb;
+
+  --rf-bg-canvas: #f4ecd8;
+  --rf-bg-surface: #fff9eb;
+  --rf-bg-card: #fff9eb;
+
+  --rf-border-color: #5c3a21;
+  --rf-border-width: 2px;
+  --rf-border-radius: 4px;
+  --rf-border-style: solid;
+  --rf-shadow: 3px 3px 0px #5c3a21;
+  --rf-shadow-sm: 1px 1px 0px #5c3a21;
+
+  --rf-text-primary: #2e1b0f;
+  --rf-text-muted: #78593d;
+  --rf-font-family: "Georgia", serif, system-ui;
+
+  --rf-accent-primary: #9b2226;
+  --rf-accent-secondary: #bb8524;
+  --rf-accent-tertiary: #5c3a21;
+}
+
+/* Cyber Rune: Neon Dark, Cyan, Pink, Yellow */
+[data-theme="cyber-rune"] {
+  --rf-color-red: #ec4899;
+  --rf-color-blue: #06b6d4;
+  --rf-color-yellow: #eab308;
+  --rf-color-dark: #09090b;
+  --rf-color-light: #fafafa;
+
+  --rf-bg-canvas: #09090b;
+  --rf-bg-surface: #18181b;
+  --rf-bg-card: #18181b;
+
+  --rf-border-color: #27272a;
+  --rf-border-width: 1px;
+  --rf-border-radius: 2px;
+  --rf-border-style: solid;
+  --rf-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+  --rf-shadow-sm: 0 0 5px rgba(6, 182, 212, 0.2);
+
+  --rf-text-primary: #fafafa;
+  --rf-text-muted: #a1a1aa;
+  --rf-font-family: "Courier New", Courier, monospace, system-ui;
+
+  --rf-accent-primary: #06b6d4;
+  --rf-accent-secondary: #ec4899;
+  --rf-accent-tertiary: #eab308;
+}

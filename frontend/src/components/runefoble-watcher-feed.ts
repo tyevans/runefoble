@@ -15,40 +15,45 @@ export class RunefobleWatcherFeed extends LitElement {
   static styles = css`
     :host {
       display: block;
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #090d16;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
+      font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
+      background: var(--rf-bg-surface, #ffffff);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-radius: var(--rf-border-radius, 0px);
       padding: 16px;
-      color: #f1f5f9;
+      color: var(--rf-text-primary, #121212);
       width: 420px;
       height: 380px;
       display: flex;
       flex-direction: column;
+      box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      box-sizing: border-box;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
     .feed-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding-bottom: 8px;
-      border-bottom: 1px solid #1e293b;
+      border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
       margin-bottom: 8px;
     }
     .feed-title {
       font-size: 0.95rem;
-      font-weight: 700;
-      color: #a855f7;
+      font-weight: 800;
+      color: var(--rf-text-primary, #121212);
       display: flex;
       align-items: center;
       gap: 6px;
     }
     .live-pill {
       font-size: 0.7rem;
-      background: #14532d;
-      color: #86efac;
+      background: var(--rf-accent-tertiary, #ffb703);
+      color: var(--rf-color-dark, #121212);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
       padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 600;
+      border-radius: var(--rf-border-radius, 0px);
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      font-weight: 700;
     }
     .event-list {
       flex: 1;
@@ -60,34 +65,33 @@ export class RunefobleWatcherFeed extends LitElement {
     }
     .event-item {
       padding: 8px 10px;
-      border-radius: 8px;
+      border-radius: var(--rf-border-radius, 0px);
       font-size: 0.85rem;
       line-height: 1.4;
-      background: #0f172a;
-      border-left: 3px solid #64748b;
+      background: var(--rf-bg-canvas, #f8f9fa);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      border-left: calc(var(--rf-border-width, 2px) * 2 + 2px) solid var(--rf-accent-secondary, #1d3557);
+      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
     }
     .event-watcher {
-      background: #1e1b4b;
-      border-left-color: #8b5cf6;
+      border-left-color: var(--rf-accent-primary, #e63946);
     }
     .event-stand-in {
-      background: #2e1065;
-      border-left-color: #ec4899;
+      border-left-color: var(--rf-accent-tertiary, #ffb703);
     }
     .event-player {
-      background: #0f172a;
-      border-left-color: #38bdf8;
+      border-left-color: var(--rf-accent-secondary, #1d3557);
     }
     .event-meta {
       display: flex;
       justify-content: space-between;
       font-size: 0.72rem;
-      color: #94a3b8;
+      color: var(--rf-text-muted, #4b5563);
       margin-bottom: 4px;
     }
     .speaker-name {
-      font-weight: 700;
-      color: #e2e8f0;
+      font-weight: 800;
+      color: var(--rf-text-primary, #121212);
     }
   `;
 

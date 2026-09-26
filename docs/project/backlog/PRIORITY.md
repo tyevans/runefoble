@@ -13,5 +13,5 @@ Order of priority for engineering tasks across the platform.
 9. **TASK-0009 (Complete)**: [`0009-character-inventory-equipment-conditions.md`](complete/0009-character-inventory-equipment-conditions.md) — Character Sheet Equipment, Inventory & Conditions Aggregate
 10. **TASK-0010 (Complete)**: [`0010-realtime-websocket-client-board-sync.md`](complete/0010-realtime-websocket-client-board-sync.md) — Real-time WebSocket Protocol & Client Board Sync
 11. **TASK-0011 (Complete)**: [`0011-absentee-session-chronicle-recap.md`](complete/0011-absentee-session-chronicle-recap.md) — Absentee Session Chronicle and Audio Recap Engine
-12. **TASK-0012 (Refined)**: [`0012-frontend-theming-system-and-bauhaus-theme.md`](refined/0012-frontend-theming-system-and-bauhaus-theme.md) — Frontend Theming System with Bauhaus Modernist Default
+12. **TASK-0012 (Complete)**: [`0012-frontend-theming-system-and-bauhaus-theme.md`](complete/0012-frontend-theming-system-and-bauhaus-theme.md) — Frontend Theming System with Bauhaus Modernist Default
 
