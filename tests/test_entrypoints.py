@@ -94,6 +94,12 @@ def test_mcp_gateway_tool_registry():
         "move_board_token",
         "apply_absentee_penalty",
         "narrate_with_the_watcher",
+        "cast_spell",
+        "modify_character_hp",
+        "add_condition",
+        "query_encounter_state",
+        "inspect_inventory",
+        "create_encounter",
     ]
 
     for tool in expected_tools:
