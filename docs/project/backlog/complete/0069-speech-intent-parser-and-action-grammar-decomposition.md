@@ -1,7 +1,7 @@
 ---
-id: '0069'
+id: 0069
 title: Speech Intent Parser and Action Grammar Extractors Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0002
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0001
 - US-0021
+pr_url: https://github.com/tyevans/runefoble/pull/112
 ---
-
 # TASK-0069: Speech Intent Parser and Action Grammar Extractors Modular Decomposition
 
 ## Status

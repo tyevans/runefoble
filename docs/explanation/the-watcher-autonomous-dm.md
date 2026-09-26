@@ -31,3 +31,10 @@ To ensure high maintainability, enforce file size limits (< 500 lines), and enab
 - **Tactical Action Resolution (`tactics.py`)**: Adjudicates NPC decision trees, spellcaster prioritization, wounded-target finishing strikes, and aggressive round-one opening charges (`adjudicate_npc_turn`).
 - **Engine Facade (`autonomous_dm.py`)**: Exposes the backward-compatible `AutonomousDMEngine` class and top-level helpers, orchestrating the underlying domain submodules without leaking implementation details.
 
+### 4. Modular Speech-to-Intent Parsing Architecture
+To maintain file size invariants (< 500 lines) and support streaming transcription and compound intent processing, speech parsing in `services/the_watcher/src/the_watcher/` is structured into:
+- **Action Grammar Patterns (`grammars.py`)**: Action regular expressions and lexical token sets covering coordinates, cardinal directions, flanking, spells, token targeting, weapon attacks, skill checks, and dice rolls (< 100 lines).
+- **Tactical Spatial Math (`spatial.py`)**: Vector math, step normalization (feet-to-squares conversion), and bounded grid coordinate clamping (< 80 lines).
+- **Speech Intent Coordinator (`movement_parser.py`)**: Orchestrates lexical pattern matching and spatial calculation to synthesize validated `IntentResult` instances while retaining 100% backward-compatible public methods (< 180 lines).
+
+
