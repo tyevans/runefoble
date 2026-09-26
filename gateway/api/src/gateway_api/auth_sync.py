@@ -19,8 +19,9 @@ _sync_service: ZitadelSpiceDBSyncService | None = None
 
 def get_sync_service() -> ZitadelSpiceDBSyncService:
     global _sync_service
-    if _sync_service is None:
-        _sync_service = ZitadelSpiceDBSyncService(spicedb_client=get_spicedb_client())
+    current_spicedb = get_spicedb_client()
+    if _sync_service is None or _sync_service.spicedb is not current_spicedb:
+        _sync_service = ZitadelSpiceDBSyncService(spicedb_client=current_spicedb)
     return _sync_service
 
 
