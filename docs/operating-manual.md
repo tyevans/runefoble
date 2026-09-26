@@ -78,6 +78,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`develop-lit-components-in-storybook.md`](how-to/develop-lit-components-in-storybook.md): How to develop Lit Web Components in Storybook with Bauhaus design tokens.
 - [`add-a-watcher-ai-tool.md`](how-to/add-a-watcher-ai-tool.md): How to expose new FastMCP tabletop tools and session resources to LLM agents.
 - [`curate-backlog-and-roadmap.md`](how-to/curate-backlog-and-roadmap.md): How to triage the backlog, evaluate INVEST criteria, scan file invariants, and perform JIT refinement.
+- [`decompose-prds-into-vertical-slices.md`](how-to/decompose-prds-into-vertical-slices.md): How to scaffold PRDs, audit backlog buffers, and decompose requirements into single-pass vertical slices and ADR spikes.
 - [`instrument-services-with-opentelemetry.md`](how-to/instrument-services-with-opentelemetry.md): How to instrument FastAPI services, configure OTel exporters, and propagate trace context over Redis Streams.
 - [`authenticate-with-zitadel-oidc.md`](how-to/authenticate-with-zitadel-oidc.md): How to validate Zitadel JWTs against JWKS discovery, enforce HTTP dependencies, and secure WebSockets.
 - [`track-analytics-events.md`](how-to/track-analytics-events.md): How to record privacy-preserving analytics via OpenPanel SDK and Redis Streams workers.
@@ -96,6 +97,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`import-universal-vtt-maps-and-register-dynamic-tools.md`](how-to/import-universal-vtt-maps-and-register-dynamic-tools.md): How to import community Universal VTT maps (.dd2vtt), extract line-of-sight walls, store battlemap textures in Silo S3, and register dynamic runtime FastMCP tools.
 - [`broadcast-obs-stream-overlay-and-cinematic-camera.md`](how-to/broadcast-obs-stream-overlay-and-cinematic-camera.md): How to embed the alpha-transparent OBS party vitals HUD overlay, configure cubic-bezier cinematic director tracking, and sanitize DM secrets.
 - [`project-campaign-analytics-and-chronicle-timeline.md`](how-to/project-campaign-analytics-and-chronicle-timeline.md): How to project combat telemetry, query spatial damage heatmaps, calculate encounter MVP awards, and view chronicle timelines.
+
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture

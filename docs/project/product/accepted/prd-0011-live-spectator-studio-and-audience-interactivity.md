@@ -45,5 +45,5 @@ High-concurrency read-only WebSocket connections; handled via edge Redis fanout 
 
 ## Implementing Backlog Tasks
 - [`TASK-0051: TypeScript Audience Studio & Live Stream Interactivity Microservice`](../../backlog/complete/0051-audience-studio-and-live-stream-interactivity-bc.md)
-- [`TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay`](../../backlog/refined/0056-cinematic-director-auto-camera-and-obs-overlay.md)
+- [`TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay`](../../backlog/complete/0056-cinematic-director-auto-camera-and-obs-overlay.md)
 - [`TASK-0075: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition`](../../backlog/refined/0075-spectator-view-stream-overlay-test-suite-decomposition.md)

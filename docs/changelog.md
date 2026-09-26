@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PRD Creation, Maintenance, and Task Decomposition Pipeline (`tools/prd_pipeline`, `scripts/decompose-prds.sh`, `ADR-0003`, `ADR-0013`)**:
+  - Implemented modular PRD pipeline engine in `tools/prd_pipeline/` with CLI entrypoint `tools.prd_pipeline.cli` and executable shell wrapper `scripts/decompose-prds.sh`.
+  - Added automated auditing command (`audit`) detecting undecomposed and underdecomposed PRDs, buffer exhaustion warnings (<8 items), stale cross-directory task links, and oversized proposed tasks.
+  - Implemented automated PRD creation (`create`) scaffolding standardized PRD records with YAML frontmatter, 6 core questions, and automated registration into `docs/project/product/REGISTRY.md`.
+  - Built decomposition engine (`decomposer.py`) breaking PRDs into granular, single `agy -p` pass tasks:
+    - Automatically identifies architectural novelties and generates Architectural Spike tasks (`SPIKE: Architectural Spike and ADR for ...`).
+    - Produces thin vertical slices across Domain Aggregates, APIRouters with SpiceDB Zanzibar checks, Lit Microfrontends per ADR-0013, and asynchronous Redis Streams workers.
+    - Strictly enforces Hard Invariant 6 (<500 lines per file) and Hard Invariant 7 (Frontdoor Blackbox TDD).
+  - Built bidirectional registry synchronizer (`registry_sync.py`) reconciling PRD, User Story, and Backlog Priority registries, repairing stale task references, and indexing new tasks in `docs/project/backlog/PRIORITY.md`.
+  - Added Antigravity agent decomposition prompt generator (`prompt` and `agent` subcommands) for deep semantic decomposition of narrative PRDs.
+  - Added Makefile targets: `make prd-audit`, `make prd-decompose`, `make prd-create`, `make prd-sync`.
+  - Authored comprehensive blackbox test suite in `tests/test_prd_pipeline.py` and Diataxis how-to guide `docs/how-to/decompose-prds-into-vertical-slices.md`.
+
 - **Redis Streams Consumer Group Worker and Session Projections Modular Decomposition (`TASK-0076`, `ADR-0003`, `ADR-0006`, `ADR-0009`, `ADR-0011`)**:
   - Decomposed `libs/runefoble_platform/src/runefoble_platform/consumer_group.py` into dedicated event deserialization module `event_deserializer.py` (74 lines), in-memory mock client `mock_redis.py` (110 lines), and core consumer group worker `consumer_group.py` (169 lines).
   - Preserved W3C trace context (`traceparent`, `tracestate`) across payload deserialization and domain event instantiation.
@@ -33,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added comprehensive blackbox TDD test suite in `tests/test_blackbox_uvtt_import.py` asserting multipart file ingestion, wall projection, Silo S3 persistence, and dynamic FastMCP execution.
   - Published Diataxis how-to guide `docs/how-to/import-universal-vtt-maps-and-register-dynamic-tools.md` and updated technical references.
 
+<<<<<<< HEAD
+=======
 - **Campaign Analytics & Chronicle Archive Microservice (`TASK-0052`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
   - Implemented `services/campaign_analytics` bounded context microservice to project combat telemetry, tactical damage heatmaps, party MVP turn statistics, and interactive campaign milestone timelines from Redis Streams domain events into PostgreSQL.
   - Built `CampaignAnalyticsWorker` consuming Redis Streams consumer group `campaign_analytics_worker` across `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, and `runefoble.events.watcher`.
@@ -46,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Authored Diataxis How-To guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md` and updated technical reference specifications.
   - Verified full test suite through frontdoor blackbox tests in `tests/test_blackbox_campaign_analytics.py` with zero file invariant violations (< 500 lines per file).
 
+>>>>>>> origin/main
 - **Cinematic Director Auto-Camera and OBS Stream Overlay (`TASK-0056`, `ADR-0001`, `ADR-0004`, `ADR-0007`, `ADR-0013`)**:
   - Implemented autonomous Cinematic Director virtual camera (`gateway_api.cinematic_director`) tracking active turn events (`TurnStarted`) and action centers (`TokenMoved`) with smooth cubic-bezier easing (`cubic-bezier(0.25, 0.1, 0.25, 1.0)`) within 300ms.
   - Exposed OBS transparent stream overlay route `GET /overlay/party-vitals/{session_id}` serving alpha-transparent canvas (`rgba(0, 0, 0, 0)`) with zero DM secret leakage (100% exclusion of hidden traps, unrevealed monster HP numbers, and DM notes).
