@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .agent_worker import run_agent_in_worktree
 from .ci_watcher import (
+    close_pull_request,
     commit_and_push,
     create_pull_request,
     merge_local_branch,
@@ -130,7 +131,14 @@ def execute_task_pipeline(
 
             ci_ok = wait_for_ci_checks(worktree_dir, pr_url)
             if not ci_ok:
-                return TaskExecutionResult(task, False, f"CI checks failed for PR {pr_url}")
+                close_pull_request(
+                    worktree_dir,
+                    pr_url,
+                    reason=f"Task {task.canonical_id} failed CI checks or encountered merge conflicts. Releasing back to ready queue.",
+                )
+                return TaskExecutionResult(
+                    task, False, f"CI checks failed or PR conflicted for {pr_url}"
+                )
 
             with MERGE_LOCK:
                 print(f"🔀 [Stream {worker_id}] Merging PR {pr_url} into main...")
@@ -247,12 +255,17 @@ def run_orchestrator(
 
             if len(batch) == 1 or concurrency == 1:
                 task = batch[0]
-                res = execute_task_pipeline(task, repo_root, queue, local_mode=local_mode)
-                if res.success:
-                    completed_count += 1
-                else:
-                    print(f"❌ Pipeline failed for {task.canonical_id}: {res.message}")
-                    break
+                try:
+                    res = execute_task_pipeline(task, repo_root, queue, local_mode=local_mode)
+                    if res.success:
+                        completed_count += 1
+                    else:
+                        print(f"❌ Pipeline failed for {task.canonical_id}: {res.message}")
+                        break
+                except KeyboardInterrupt:
+                    print(f"\n🛑 Interrupted while executing {task.canonical_id}.")
+                    queue.release_task(task)
+                    raise
             else:
                 print(f"\n⚡ Dispatching {len(batch)} parallel task streams...")
                 with ThreadPoolExecutor(max_workers=concurrency) as executor:
@@ -278,6 +291,8 @@ def run_orchestrator(
                     except KeyboardInterrupt:
                         print("\n🛑 Cancelling pending parallel worker streams...")
                         executor.shutdown(wait=False, cancel_futures=True)
+                        for t in batch:
+                            queue.release_task(t)
                         raise
 
             if not drain:
@@ -287,6 +302,7 @@ def run_orchestrator(
         return 0
 
     except KeyboardInterrupt:
+        queue.recover_stale_tasks()
         print(
             "\n🛑 Orchestrator stopped by user (Ctrl+C). All active tasks released back to ready queue."
         )

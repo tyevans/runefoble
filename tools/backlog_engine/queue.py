@@ -218,10 +218,11 @@ class BacklogQueue:
             task.status = TaskStatus.PROPOSED
         task.claimed_by = None
         task.branch = None
+        task.pr_url = None
         write_task_file(task)
 
     def recover_stale_tasks(self) -> list[Task]:
-        """Discovers tasks in refined/ that are marked in-progress or claimed, and releases them."""
+        """Discovers tasks in refined/ that are marked in-progress, review, or claimed, and releases them."""
         recovered = []
         if not self.refined_dir.exists():
             return recovered
@@ -230,7 +231,7 @@ class BacklogQueue:
             if p.name.startswith("."):
                 continue
             task = parse_task_file(p)
-            if task.status == TaskStatus.IN_PROGRESS or task.claimed_by:
+            if task.status in (TaskStatus.IN_PROGRESS, TaskStatus.REVIEW) or task.claimed_by:
                 self.release_task(task)
                 recovered.append(task)
         return recovered
