@@ -279,15 +279,29 @@ class StandInActionDecided(BaseRunefobleEvent):
     flavor_text: str = ""
 
 
-@register_event
+@register_event("runefoble.events.dice.rolled")
 class DiceRolled(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.dice.rolled"
+    session_id: str
+    roller_id: str
     roller_name: str
-    dice_notation: str
-    individual_rolls: list[int]
-    modifier: int = 0
+    formula: str
     total: int
-    reason: str = "Skill check"
+    rolls: list[int] = Field(default_factory=list)
+    is_crit: bool = False
+    is_fumble: bool = False
+
+    @property
+    def dice_notation(self) -> str:
+        return self.formula
+
+    @property
+    def individual_rolls(self) -> list[int]:
+        return self.rolls
+
 
 
 @register_event("runefoble.events.recap.generated")

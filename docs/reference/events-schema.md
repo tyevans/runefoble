@@ -117,13 +117,15 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `action_type`: String
   - `dialogue`: String
   - `penalties_applied`: List[String]
-- **`DiceRolled`**: Emitted when dice are rolled.
+- **`DiceRolled`**: Emitted when dice are rolled (`runefoble.events.dice.rolled`).
+  - `session_id`: String
+  - `roller_id`: String
   - `roller_name`: String
-  - `dice_notation`: String
-  - `individual_rolls`: List[Integer]
-  - `modifier`: Integer
+  - `formula`: String
   - `total`: Integer
-  - `reason`: String
+  - `rolls`: List[Integer]
+  - `is_crit`: Boolean (default False)
+  - `is_fumble`: Boolean (default False)
 - **`AbsenteeRecapGenerated`**: Emitted when The Watcher generates a session chronicle and audio-ready recap for a returning absent player (`runefoble.events.recap.generated`).
   - `session_id`: String
   - `character_id`: String

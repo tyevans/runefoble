@@ -5,5 +5,6 @@ export * from './components/runefoble-absentee-recap.ts';
 export * from './components/runefoble-autonomous-dm.ts';
 export * from './components/runefoble-theme-switcher.ts';
 export * from './components/runefoble-spectator-view.ts';
+export * from './components/runefoble-dice-roller.ts';
+export * from './utils/dice.ts';
 export * from './runefoble-app.ts';
-

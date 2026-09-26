@@ -8,6 +8,7 @@ import './components/runefoble-absentee-recap.ts';
 import './components/runefoble-autonomous-dm.ts';
 import './components/runefoble-theme-switcher.ts';
 import './components/runefoble-spectator-view.ts';
+import './components/runefoble-dice-roller.ts';
 import type { BoardToken } from './components/runefoble-board.ts';
 import type { WatcherFeedEvent } from './components/runefoble-watcher-feed.ts';
 
@@ -412,6 +413,14 @@ export class RunefobleApp extends LitElement {
               },
             ]}
           ></runefoble-character-card>
+          <div style="margin-top: 16px;">
+            <runefoble-dice-roller
+              sessionId="14"
+              rollerId="char-kyra"
+              rollerName="Kyra the Sun Maiden"
+              formula="1d20+4"
+            ></runefoble-dice-roller>
+          </div>
         </div>
 
         <runefoble-watcher-feed .events=${this.events}></runefoble-watcher-feed>

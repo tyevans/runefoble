@@ -3,6 +3,7 @@
 from runefoble_platform.bus import EventBus, bus
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.consumer_group import MockAsyncRedis, RedisConsumerGroup
+from runefoble_platform.dice import DICE_FORMULA_PATTERN, evaluate_dice, parse_and_roll
 from runefoble_platform.errors import (
     AuthorizationError,
     EntityNotFoundError,
@@ -28,6 +29,9 @@ from runefoble_platform.models import BaseEntity, CampaignScopedEntity, UserPrin
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 
 __all__ = [
+    "evaluate_dice",
+    "parse_and_roll",
+    "DICE_FORMULA_PATTERN",
     "PlatformSettings",
     "BaseEntity",
     "CampaignScopedEntity",
