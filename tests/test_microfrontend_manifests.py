@@ -55,6 +55,13 @@ def campaign_client():
     return TestClient(app)
 
 
+@pytest.fixture
+def rules_client():
+    from rules_compendium.main import app
+
+    return TestClient(app)
+
+
 def test_board_state_ui_manifest_frontdoor(board_client):
     """Verify board_state service vendors its microfrontend via GET /ui/manifest."""
     response = board_client.get("/ui/manifest")
@@ -75,6 +82,7 @@ def test_character_sheet_ui_manifest_frontdoor(character_client):
     assert data["package"] == "@runefoble/character-sheet-ui"
     assert "runefoble-character-card" in data["components"]
     assert "runefoble-absentee-recap" in data["components"]
+    assert "runefoble-character-sheet" in data["components"]
 
 
 def test_game_session_ui_manifest_frontdoor(session_client):
@@ -120,6 +128,18 @@ def test_campaign_analytics_ui_manifest_frontdoor(campaign_client):
     assert "runefoble-campaign-analytics" in data["components"]
 
 
+def test_rules_compendium_ui_manifest_frontdoor(rules_client):
+    """Verify rules_compendium service vendors its microfrontend via GET /ui/manifest."""
+    response = rules_client.get("/ui/manifest")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["service"] == "rules_compendium"
+    assert data["package"] == "@runefoble/rules-compendium-ui"
+    assert "runefoble-rules-compendium" in data["components"]
+    assert "runefoble-rules-lookup" in data["components"]
+    assert "runefoble-encounter-builder" in data["components"]
+
+
 def test_service_ui_package_integrity():
     """Verify that all service UI packages have package.json, tsconfig.json, and Lit elements."""
     expected_packages = [
@@ -129,6 +149,11 @@ def test_service_ui_package_integrity():
             "services/character_sheet/ui",
             "@runefoble/character-sheet-ui",
             "runefoble-character-card",
+        ),
+        (
+            "services/character_sheet/ui",
+            "@runefoble/character-sheet-ui",
+            "runefoble-character-sheet",
         ),
         ("services/game_session/ui", "@runefoble/game-session-ui", "runefoble-initiative-tracker"),
         ("services/the_watcher/ui", "@runefoble/the-watcher-ui", "runefoble-watcher-feed"),
@@ -144,6 +169,11 @@ def test_service_ui_package_integrity():
             "services/campaign_analytics/ui",
             "@runefoble/campaign-analytics-ui",
             "runefoble-campaign-analytics",
+        ),
+        (
+            "services/rules_compendium/ui",
+            "@runefoble/rules-compendium-ui",
+            "runefoble-rules-compendium",
         ),
     ]
 

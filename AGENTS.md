@@ -97,6 +97,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`import-universal-vtt-maps-and-register-dynamic-tools.md`](docs/how-to/import-universal-vtt-maps-and-register-dynamic-tools.md): How to import community Universal VTT maps (.dd2vtt), extract line-of-sight walls, store battlemap textures in Silo S3, and register dynamic runtime FastMCP tools.
 - [`broadcast-obs-stream-overlay-and-cinematic-camera.md`](docs/how-to/broadcast-obs-stream-overlay-and-cinematic-camera.md): How to embed the alpha-transparent OBS party vitals HUD overlay, configure cubic-bezier cinematic director tracking, and sanitize DM secrets.
 - [`project-campaign-analytics-and-chronicle-timeline.md`](docs/how-to/project-campaign-analytics-and-chronicle-timeline.md): How to project combat telemetry, query spatial damage heatmaps, calculate encounter MVP awards, and view chronicle timelines.
+- [`interact-with-character-sheet-and-inventory.md`](docs/how-to/interact-with-character-sheet-and-inventory.md): How to interact with character sheet equipment slots, inventory encumbrance, condition tooltips, and spell slot tracking.
 - [`run-campfire-rests-and-alchemical-crafting.md`](docs/how-to/run-campfire-rests-and-alchemical-crafting.md): How to combine reagents with volatile mishap tables, resolve campfire resting boons, and manage party stronghold upgrades.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture

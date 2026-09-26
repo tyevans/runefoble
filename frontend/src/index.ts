@@ -1,6 +1,7 @@
 export * from './components/runefoble-board.ts';
 export * from './components/runefoble-map-uploader.ts';
 export * from './components/runefoble-character-card.ts';
+export * from './components/runefoble-character-sheet.ts';
 export * from './components/runefoble-watcher-feed.ts';
 export * from './components/runefoble-absentee-recap.ts';
 export * from './components/runefoble-autonomous-dm.ts';
@@ -13,6 +14,7 @@ export * from './components/runefoble-settings-modal.ts';
 export * from './components/runefoble-header.ts';
 export * from './components/runefoble-campaign-nav.ts';
 export * from './components/runefoble-campaign-analytics.ts';
+export * from './components/runefoble-rules-compendium.ts';
 export * from './styles/app-shell.styles.ts';
 export * from './utils/dice.ts';
 export * from './runefoble-app.ts';
