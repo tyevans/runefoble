@@ -14,5 +14,6 @@ Tabletop encounters rely heavily on tactical uncertainty, surprise, and explorat
 ## Checkable Outcomes
 1. The `board_state` service calculates cell visibility maps (Chebyshev / Euclidean) given token positions, vision radii, and terrain obstructions.
 2. The `<runefoble-board>` Lit component renders obscured shroud layers and hides unrevealed hostile tokens.
-3. Domain events `FogOfWarRevealedEvent` and `CellShroudUpdatedEvent` stream across Redis Streams.
-4. API endpoints allow toggling fog-of-war state, setting vision radius per token, and querying visibility masks for a given party.
+3. Domain events `FogOfWarRevealed`, `TerrainCellModified`, and `TokenHazardTriggered` stream across the event sourcing layer.
+4. API endpoints allow configuring cell elevation, difficult terrain (2x movement budget penalty), and environmental hazards (e.g. lava triggering 2d10 damage).
+5. API endpoints allow toggling fog-of-war state, setting vision radius per token, and querying visibility masks for a given party.

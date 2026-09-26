@@ -6,7 +6,12 @@ Manages tactical maps, token coordinates, collision rules, and fog-of-war.
 from typing import Literal
 from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
-from board_state.aggregate import BoardAggregate, BoardState, PlacedTokenState
+from board_state.aggregate import (
+    BoardAggregate,
+    BoardState,
+    PlacedTokenState,
+    TerrainCellState,
+)
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from runefoble_platform.event_sourcing import (
@@ -33,6 +38,23 @@ def to_board_uuid(session_id: str) -> UUID:
         return uuid5(NAMESPACE_DNS, session_id)
 
 
+class CreateBoardRequest(BaseModel):
+    session_id: str | None = None
+    board_id: str | None = None
+    cols: int | None = None
+    rows: int | None = None
+    width: int | None = None
+    height: int | None = None
+
+
+class ConfigureTerrainRequest(BaseModel):
+    x: int
+    y: int
+    elevation: int = 0
+    terrain_type: str = "normal"
+    hazard: str | None = None
+
+
 class PlaceTokenRequest(BaseModel):
     token_id: str | None = None
     name: str
@@ -45,10 +67,27 @@ class PlaceTokenRequest(BaseModel):
 
 
 class MoveTokenRequest(BaseModel):
-    token_id: str
+    token_id: str | None = None
     to_x: int
     to_y: int
     initiated_by: Literal["player", "the_watcher", "stand_in"] = "player"
+    movement_budget: int | None = None
+
+
+class MoveTokenResponse(BaseModel):
+    token_id: str
+    name: str
+    token_type: Literal["pc", "monster", "npc", "obstacle"] = "pc"
+    x: int
+    y: int
+    hp: int | None = None
+    is_friendly: bool = False
+    vision_radius: int = 2
+    active_hazard: str | None = None
+    hazard_status: str | None = None
+    movement_cost: int = 1
+    hazard_triggered: str | None = None
+    damage_dice: str | None = None
 
 
 class VisibilityResponse(BaseModel):
@@ -150,22 +189,76 @@ async def place_token(session_id: str, req: PlaceTokenRequest):
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-@app.post("/api/v1/boards/{session_id}/move", response_model=PlacedTokenState)
-async def move_token(session_id: str, req: MoveTokenRequest):
+@app.post("/api/v1/boards", response_model=BoardState)
+async def create_board(req: CreateBoardRequest):
+    cols = req.cols or req.width or 10
+    rows = req.rows or req.height or 10
+    sess_id = req.session_id or req.board_id or str(uuid4())
+    board_id = to_board_uuid(sess_id)
+    board = BoardAggregate(board_id)
+    board.initialize_grid(cols=cols, rows=rows, session_id=sess_id)
+    await repo.save(board)
+    return board.state
+
+
+@app.post("/api/v1/boards/{session_id}/terrain", response_model=TerrainCellState)
+async def configure_terrain(session_id: str, req: ConfigureTerrainRequest):
     board = await get_or_create_board(session_id)
     try:
-        board.move_token(
-            token_id=req.token_id,
-            to_x=req.to_x,
-            to_y=req.to_y,
-            initiated_by=req.initiated_by,
+        board.configure_terrain(
+            x=req.x,
+            y=req.y,
+            elevation=req.elevation,
+            terrain_type=req.terrain_type,
+            hazard=req.hazard,
         )
         await repo.save(board)
-        return board.state.tokens[req.token_id]
+        return board.get_terrain(req.x, req.y)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/api/v1/boards/{session_id}/tokens/{token_id}/move", response_model=MoveTokenResponse)
+async def move_token_by_id(session_id: str, token_id: str, req: MoveTokenRequest):
+    board = await get_or_create_board(session_id)
+    try:
+        cost, hazard_trig, dmg_dice = board.move_token(
+            token_id=token_id,
+            to_x=req.to_x,
+            to_y=req.to_y,
+            initiated_by=req.initiated_by,
+            movement_budget=req.movement_budget,
+        )
+        await repo.save(board)
+        tok = board.state.tokens[token_id]
+        return MoveTokenResponse(
+            token_id=tok.token_id,
+            name=tok.name,
+            token_type=tok.token_type,
+            x=tok.x,
+            y=tok.y,
+            hp=tok.hp,
+            is_friendly=tok.is_friendly,
+            vision_radius=tok.vision_radius,
+            active_hazard=tok.active_hazard,
+            hazard_status=tok.hazard_status,
+            movement_cost=cost,
+            hazard_triggered=hazard_trig,
+            damage_dice=dmg_dice,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/api/v1/boards/{session_id}/move", response_model=MoveTokenResponse)
+async def move_token(session_id: str, req: MoveTokenRequest):
+    if not req.token_id:
+        raise HTTPException(status_code=400, detail="token_id is required")
+    return await move_token_by_id(session_id, req.token_id, req)
 
 
 def main():

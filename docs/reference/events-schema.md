@@ -74,6 +74,19 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`FogOfWarRevealed`**: Emitted when a token's vision reveals uncharted grid cells.
   - `revealed_cells`: List[List[Integer]]
   - `revealed_by_token_id`: Optional[String]
+- **`TerrainCellModified`**: Emitted when a tactical grid cell's elevation, terrain difficulty, or hazard is modified (`runefoble.events.board.terrain_modified`).
+  - `session_id`: String
+  - `board_id`: String
+  - `x`: Integer, `y`: Integer
+  - `elevation`: Integer (default 0)
+  - `terrain_type`: String ("normal", "difficult")
+  - `hazard`: Optional[String] (e.g. "lava", "fire", "acid", "spikes", "poison")
+- **`TokenHazardTriggered`**: Emitted when a token enters or traverses an environmental hazard cell (`runefoble.events.board.hazard_triggered`).
+  - `session_id`: String
+  - `board_id`: String
+  - `token_id`: String
+  - `hazard_type`: String
+  - `damage_dice`: String (e.g. "2d10", "1d6")
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
 

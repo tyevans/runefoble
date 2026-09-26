@@ -20,6 +20,6 @@ Order of priority for engineering tasks across the platform.
 16. **TASK-0016 (Complete)**: [`0016-websocket-zanzibar-permission-enforcement.md`](complete/0016-websocket-zanzibar-permission-enforcement.md) — Live SpiceDB Zanzibar Permission Enforcement on WebSockets & Game Mutators
 17. **TASK-0017 (Complete)**: [`0017-bauhaus-dice-roller-component.md`](complete/0017-bauhaus-dice-roller-component.md) — Bauhaus Geometric Dice Physics & Roll Arithmetic Web Component
 18. **TASK-0018 (Complete)**: [`0018-character-level-progression-spellbook.md`](complete/0018-character-level-progression-spellbook.md) — Character Level Progression, Spell Slots & Spellbook Preparation
-19. **TASK-0019 (Refined)**: [`0019-tactical-board-terrain-elevation-hazards.md`](refined/0019-tactical-board-terrain-elevation-hazards.md) — Tactical Board Terrain Elevation, Difficult Terrain & Hazard Grid
+19. **TASK-0019 (Complete)**: [`0019-tactical-board-terrain-elevation-hazards.md`](complete/0019-tactical-board-terrain-elevation-hazards.md) — Tactical Board Terrain Elevation, Difficult Terrain & Hazard Grid
 
 
