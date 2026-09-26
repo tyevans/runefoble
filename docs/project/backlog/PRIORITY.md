@@ -74,17 +74,20 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 66. **TASK-0076 (Proposed)**: [`0076-redis-consumer-group-and-session-projections-decomposition.md`](proposed/0076-redis-consumer-group-and-session-projections-decomposition.md) — Redis Streams Consumer Group Worker and Session Projections Modular Decomposition
 67. **TASK-0077 (Proposed)**: [`0077-character-sheet-api-router-and-schemas-decomposition.md`](proposed/0077-character-sheet-api-router-and-schemas-decomposition.md) — Character Sheet API Router and Schemas Modular Decomposition
 68. **TASK-0078 (Proposed)**: [`0078-battlemap-uploader-subviews-and-grid-controller-decomposition.md`](proposed/0078-battlemap-uploader-subviews-and-grid-controller-decomposition.md) — Battlemap Uploader Subviews and Grid Controller Modular Decomposition
+69. **TASK-0079 (Proposed)**: [`0079-zitadel-oidc-auth-test-suite-decomposition.md`](proposed/0079-zitadel-oidc-auth-test-suite-decomposition.md) — Zitadel OIDC Token Verification and JWKS Blackbox Test Suite Modular Decomposition
+70. **TASK-0080 (Proposed)**: [`0080-gateway-websocket-hub-and-action-validator-decomposition.md`](proposed/0080-gateway-websocket-hub-and-action-validator-decomposition.md) — Gateway WebSocket Hub and Action Validator Modular Decomposition
+71. **TASK-0081 (Proposed)**: [`0081-spicedb-live-grpc-and-schema-bootstrapper-test-decomposition.md`](proposed/0081-spicedb-live-grpc-and-schema-bootstrapper-test-decomposition.md) — SpiceDB Live gRPC Client and Schema Bootstrapper Test Suite Modular Decomposition
 
-69. **TASK-0047 (Proposed)**: [`0047-campaign-lore-rag-knowledge-base-bc.md`](proposed/0047-campaign-lore-rag-knowledge-base-bc.md) — Campaign Lore Knowledge Base & redstring RAG Microservice
-70. **TASK-0048 (Proposed)**: [`0048-rules-compendium-and-encounter-builder-bc.md`](proposed/0048-rules-compendium-and-encounter-builder-bc.md) — TTRPG Rules Compendium & Automated Encounter Builder Microservice
-71. **TASK-0049 (Proposed)**: [`0049-procedural-battlemap-and-asset-forge-bc.md`](proposed/0049-procedural-battlemap-and-asset-forge-bc.md) — Procedural Battlemap & Token Asset Forge Microservice
-72. **TASK-0050 (Proposed)**: [`0050-dynamic-soundscape-and-adaptive-audio-bc.md`](proposed/0050-dynamic-soundscape-and-adaptive-audio-bc.md) — Dynamic Soundscape & Adaptive Audio Microservice
-73. **TASK-0051 (Proposed)**: [`0051-audience-studio-and-live-stream-interactivity-bc.md`](proposed/0051-audience-studio-and-live-stream-interactivity-bc.md) — TypeScript Audience Studio & Live Stream Interactivity Microservice
-74. **TASK-0052 (Proposed)**: [`0052-campaign-analytics-and-chronicle-archive-bc.md`](proposed/0052-campaign-analytics-and-chronicle-archive-bc.md) — Campaign Analytics & Chronicle Archive Microservice
-75. **TASK-0053 (Proposed)**: [`0053-dm-copilot-whisper-and-veto-override-engine.md`](proposed/0053-dm-copilot-whisper-and-veto-override-engine.md) — DM Co-Pilot Whisper Prompts and Veto Override Engine
-76. **TASK-0054 (Proposed)**: [`0054-conversational-disambiguation-and-compound-intents.md`](proposed/0054-conversational-disambiguation-and-compound-intents.md) — Conversational Disambiguation and Compound Action Intents
-77. **TASK-0055 (Proposed)**: [`0055-stand-in-policy-guardrails-and-hot-swap-handoff.md`](proposed/0055-stand-in-policy-guardrails-and-hot-swap-handoff.md) — Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover
-78. **TASK-0056 (Proposed)**: [`0056-cinematic-director-auto-camera-and-obs-overlay.md`](proposed/0056-cinematic-director-auto-camera-and-obs-overlay.md) — Cinematic Director Auto-Camera and OBS Stream Overlay
-79. **TASK-0057 (Proposed)**: [`0057-universal-vtt-importer-and-custom-mcp-tool-registry.md`](proposed/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md) — Universal VTT Importer and Dynamic MCP Tool Registry
+72. **TASK-0047 (Proposed)**: [`0047-campaign-lore-rag-knowledge-base-bc.md`](proposed/0047-campaign-lore-rag-knowledge-base-bc.md) — Campaign Lore Knowledge Base & redstring RAG Microservice
+73. **TASK-0048 (Proposed)**: [`0048-rules-compendium-and-encounter-builder-bc.md`](proposed/0048-rules-compendium-and-encounter-builder-bc.md) — TTRPG Rules Compendium & Automated Encounter Builder Microservice
+74. **TASK-0049 (Proposed)**: [`0049-procedural-battlemap-and-asset-forge-bc.md`](proposed/0049-procedural-battlemap-and-asset-forge-bc.md) — Procedural Battlemap & Token Asset Forge Microservice
+75. **TASK-0050 (Proposed)**: [`0050-dynamic-soundscape-and-adaptive-audio-bc.md`](proposed/0050-dynamic-soundscape-and-adaptive-audio-bc.md) — Dynamic Soundscape & Adaptive Audio Microservice
+76. **TASK-0051 (Proposed)**: [`0051-audience-studio-and-live-stream-interactivity-bc.md`](proposed/0051-audience-studio-and-live-stream-interactivity-bc.md) — TypeScript Audience Studio & Live Stream Interactivity Microservice
+77. **TASK-0052 (Proposed)**: [`0052-campaign-analytics-and-chronicle-archive-bc.md`](proposed/0052-campaign-analytics-and-chronicle-archive-bc.md) — Campaign Analytics & Chronicle Archive Microservice
+78. **TASK-0053 (Proposed)**: [`0053-dm-copilot-whisper-and-veto-override-engine.md`](proposed/0053-dm-copilot-whisper-and-veto-override-engine.md) — DM Co-Pilot Whisper Prompts and Veto Override Engine
+79. **TASK-0054 (Proposed)**: [`0054-conversational-disambiguation-and-compound-intents.md`](proposed/0054-conversational-disambiguation-and-compound-intents.md) — Conversational Disambiguation and Compound Action Intents
+80. **TASK-0055 (Proposed)**: [`0055-stand-in-policy-guardrails-and-hot-swap-handoff.md`](proposed/0055-stand-in-policy-guardrails-and-hot-swap-handoff.md) — Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover
+81. **TASK-0056 (Proposed)**: [`0056-cinematic-director-auto-camera-and-obs-overlay.md`](proposed/0056-cinematic-director-auto-camera-and-obs-overlay.md) — Cinematic Director Auto-Camera and OBS Stream Overlay
+82. **TASK-0057 (Proposed)**: [`0057-universal-vtt-importer-and-custom-mcp-tool-registry.md`](proposed/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md) — Universal VTT Importer and Dynamic MCP Tool Registry
 
 
