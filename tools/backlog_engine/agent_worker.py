@@ -30,6 +30,7 @@ CRITICAL RULES & HARD INVARIANTS (From AGENTS.md):
 5. Blackbox TDD with frontdoor setup: Drive all development through public entrypoints (HTTP routes, WebSockets, CloudEvents). Do NOT use backdoor internal manipulation.
 6. Documentation integrity: Update docs/reference/ or docs/how-to/ if introducing new public APIs or generic patterns.
 7. Verification: Run 'uv run ruff check .', 'uv run ruff format .', and 'uv run pytest' to ensure clean passing tests.
+8. Backlog Isolation: DO NOT edit, rename, or move any files under docs/project/backlog/ (including PRIORITY.md, refined/, or complete/). Task completion and PRIORITY.md updates are handled exclusively by the integration orchestrator upon merge to main.
 
 Implement the full feature, frontdoor blackbox tests, and any required documentation updates now.
 """
