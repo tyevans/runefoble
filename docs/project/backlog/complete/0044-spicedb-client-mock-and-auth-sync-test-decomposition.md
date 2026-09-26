@@ -1,13 +1,21 @@
 ---
 id: '0044'
 title: SpiceDB Client Mock Separation and Auth Sync Test Suite Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
-dependencies: [TASK-0008, TASK-0016, TASK-0032]
-governing_adrs: [ADR-0001, ADR-0005, ADR-0007, ADR-0008, ADR-0009]
+dependencies:
+- TASK-0008
+- TASK-0016
+- TASK-0032
+governing_adrs:
+- ADR-0001
+- ADR-0005
+- ADR-0007
+- ADR-0008
+- ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/67
 ---
-
 # TASK-0044: SpiceDB Client Mock Separation and Auth Sync Test Suite Decomposition
 
 ## Status
