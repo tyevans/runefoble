@@ -11,6 +11,11 @@ governing_adrs:
 - ADR-0012
 target_release: 0.1.0
 pr_url: https://github.com/tyevans/runefoble/pull/44
+governing_prds:
+- PRD-0013
+governing_stories:
+- US-0016
+- US-0042
 ---
 # TASK-0074 — Design System Dark and Light Mode Color Tokens & Cross-Component Contrast Invariants
 

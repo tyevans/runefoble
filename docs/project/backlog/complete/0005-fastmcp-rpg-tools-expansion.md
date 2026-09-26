@@ -1,3 +1,14 @@
+---
+id: '0005'
+title: Model Context Protocol (MCP) RPG Tools Expansion
+status: Complete
+created: 2026-09-25
+governing_prds:
+- PRD-0004
+governing_stories:
+- US-0011
+---
+
 # TASK-0005: Model Context Protocol (MCP) RPG Tools Expansion
 
 ## Status

@@ -14,6 +14,10 @@ governing_adrs:
 - ADR-0007
 - ADR-0009
 target_release: 0.2.0
+governing_prds:
+- PRD-0005
+governing_stories:
+- US-0014
 ---
 
 # TASK-0080: Gateway WebSocket Hub and Action Validator Modular Decomposition

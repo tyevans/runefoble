@@ -6,6 +6,11 @@ created: 2026-09-25
 dependencies: [TASK-0012, TASK-0014, TASK-0016]
 governing_adrs: [ADR-0004, ADR-0007]
 target_release: 0.2.1
+governing_prds:
+- PRD-0011
+governing_stories:
+- US-0029
+- US-0030
 ---
 
 # TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay

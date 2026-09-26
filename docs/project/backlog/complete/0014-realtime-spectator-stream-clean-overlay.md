@@ -7,6 +7,10 @@ completed: 2026-09-26
 dependencies: [TASK-0004, TASK-0010, TASK-0012]
 governing_adrs: [ADR-0001, ADR-0004, ADR-0006, ADR-0012]
 target_release: 0.1.0
+governing_prds:
+- PRD-0005
+governing_stories:
+- US-0014
 ---
 
 # TASK-0014 — Real-Time Spectator Stream & Chronicle Clean Overlay

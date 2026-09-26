@@ -15,6 +15,10 @@ governing_adrs:
 - ADR-0013
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/75
+governing_prds:
+- PRD-0013
+governing_stories:
+- US-0004
 ---
 # TASK-0088: Microfrontends Blackbox Test Suite Modular Decomposition
 

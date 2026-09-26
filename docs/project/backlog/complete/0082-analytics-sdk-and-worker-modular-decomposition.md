@@ -11,6 +11,10 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/53
+governing_prds:
+- PRD-0012
+governing_stories:
+- US-0040
 ---
 # TASK-0082: OpenPanel Analytics SDK & Worker Modular Decomposition
 

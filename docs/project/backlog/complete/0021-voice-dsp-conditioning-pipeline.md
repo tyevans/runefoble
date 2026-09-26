@@ -7,6 +7,11 @@ completed: 2026-09-25
 dependencies: [TASK-0006]
 governing_adrs: [ADR-0002, ADR-0007]
 target_release: 0.1.0
+governing_prds:
+- PRD-0004
+governing_stories:
+- US-0011
+- US-0020
 ---
 
 # TASK-0021 — Real-Time Dynamic DSP Audio Conditioning Pipeline
@@ -29,5 +34,5 @@ Implemented a high-performance dynamic DSP audio conditioning chain in `voice_ag
 4. **Blackbox TDD Suite (`tests/test_blackbox_voice_dsp.py`)**:
    - Strict frontdoor API test client interactions verifying each filter preset, combined filter TTS, latency benchmarks (<50ms), and Redis stream event emission.
 5. **PRD & Backlog Maintenance**:
-   - Updated `docs/project/product/accepted/prd-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md` to Shipped.
+   - Updated `docs/project/product/accepted/PRD-0004-dynamic-vocal-audio-conditioning-and-dsp-filters.md` to Shipped.
    - Updated `docs/project/product/REGISTRY.md` and `docs/project/backlog/PRIORITY.md`.

@@ -17,6 +17,10 @@ governing_adrs:
 - ADR-0013
 target_release: 0.3.0
 pr_url: https://github.com/tyevans/runefoble/pull/70
+governing_prds:
+- PRD-0010
+governing_stories:
+- US-0039
 ---
 # TASK-0050: Dynamic Soundscape & Adaptive Audio Microservice
 
@@ -39,8 +43,8 @@ Tabletop audio immersion currently suffers because `voice_agent` only handles sp
 - **ADR-0013**: Microfrontend Architecture and Service Component Vendoring (`/ui/manifest` and `<runefoble-soundscape-controls>`).
 
 ## Product & User Story References
-- **Product Requirement**: [`prd-0010-adaptive-soundscape-foley-and-tension-scoring.md`](../../product/accepted/prd-0010-adaptive-soundscape-foley-and-tension-scoring.md)
-- **User Story**: [`us-0039-encounter-tension-adaptive-scoring-and-foley.md`](../../user_stories/accepted/us-0039-encounter-tension-adaptive-scoring-and-foley.md)
+- **Product Requirement**: [`PRD-0010-adaptive-soundscape-foley-and-tension-scoring.md`](../../product/accepted/PRD-0010-adaptive-soundscape-foley-and-tension-scoring.md)
+- **User Story**: [`US-0039-encounter-tension-adaptive-scoring-and-foley.md`](../../user_stories/accepted/US-0039-encounter-tension-adaptive-scoring-and-foley.md)
 
 ## Scope of Work
 1. **Bounded Context Package Scaffolding (`services/soundscape`)**:

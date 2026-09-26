@@ -16,6 +16,11 @@ governing_adrs:
 - ADR-0011
 target_release: 0.3.0
 pr_url: https://github.com/tyevans/runefoble/pull/45
+governing_prds:
+- PRD-0007
+governing_stories:
+- US-0018
+- US-0036
 ---
 # TASK-0047: Campaign Lore Knowledge Base & redstring RAG Microservice
 
@@ -29,8 +34,8 @@ Scaffold a new bounded context microservice `services/campaign_lore` powered by 
 DMs spend 8+ hours preparing lore, but in-session AI intent parsing and dialogue have no grounding in the DM's custom world history and faction relationships, resulting in hallucinations or requiring constant manual DM correction.
 
 ## PRD & User Story Alignment
-- **Governing PRD**: [`prd-0007-campaign-worldbuilding-lore-and-rag-engine.md`](../../product/accepted/prd-0007-campaign-worldbuilding-lore-and-rag-engine.md)
-- **User Story**: [`us-0036-rag-indexed-campaign-worldbuilding-lore.md`](../../user_stories/accepted/us-0036-rag-indexed-campaign-worldbuilding-lore.md)
+- **Governing PRD**: [`PRD-0007-campaign-worldbuilding-lore-and-rag-engine.md`](../../product/accepted/PRD-0007-campaign-worldbuilding-lore-and-rag-engine.md)
+- **User Story**: [`US-0036-rag-indexed-campaign-worldbuilding-lore.md`](../../user_stories/accepted/US-0036-rag-indexed-campaign-worldbuilding-lore.md)
 
 ## Governing Architecture & ADRs
 - **ADR-0001**: SpiceDB Zanzibar Object-Level Authorization (DM-only secret lore vs player-visible codex filtering).

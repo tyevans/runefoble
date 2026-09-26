@@ -12,6 +12,12 @@ governing_adrs:
 - ADR-0011
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/64
+governing_prds:
+- PRD-0003
+- PRD-0006
+governing_stories:
+- US-0012
+- US-0015
 ---
 # TASK-0060: Domain Aggregates and Rule Tables Modular Decomposition
 

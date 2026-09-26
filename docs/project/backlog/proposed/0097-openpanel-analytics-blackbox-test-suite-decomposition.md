@@ -6,6 +6,10 @@ created: 2026-09-26
 dependencies: [TASK-0038, TASK-0082]
 governing_adrs: [ADR-0003, ADR-0006, ADR-0009]
 target_release: 0.3.0
+governing_prds:
+- PRD-0012
+governing_stories:
+- US-0040
 ---
 
 # TASK-0097: OpenPanel Analytics Blackbox Test Suite Modular Decomposition

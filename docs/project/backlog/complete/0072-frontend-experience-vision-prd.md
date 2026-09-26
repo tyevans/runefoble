@@ -6,6 +6,11 @@ created: 2026-09-25
 dependencies: [TASK-0012, TASK-0014, TASK-0017, TASK-0022]
 governing_adrs: [ADR-0004, ADR-0012]
 target_release: 0.1.0
+governing_prds:
+- PRD-0013
+governing_stories:
+- US-0016
+- US-0043
 ---
 
 # TASK-0072 — Immersive & Intuitive Frontend Experience Product Requirements Definition (PRD)

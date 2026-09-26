@@ -13,6 +13,10 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/78
+governing_prds:
+- PRD-0004
+governing_stories:
+- US-0011
 ---
 # TASK-0064: WebRTC Voice Room Signaling and Blackbox Test Suite Modular Decomposition
 

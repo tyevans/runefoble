@@ -1,3 +1,14 @@
+---
+id: '0010'
+title: Real-time WebSocket Protocol & Client Board Sync
+status: Complete
+created: 2026-09-25
+governing_prds:
+- PRD-0005
+governing_stories:
+- US-0010
+---
+
 # TASK-0010: Real-time WebSocket Protocol & Client Board Sync
 
 ## Status

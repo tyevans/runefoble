@@ -14,6 +14,11 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/79
+governing_prds:
+- PRD-0004
+governing_stories:
+- US-0011
+- US-0020
 ---
 # TASK-0065: Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition
 

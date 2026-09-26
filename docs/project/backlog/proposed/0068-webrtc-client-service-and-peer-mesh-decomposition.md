@@ -6,6 +6,10 @@ created: 2026-09-26
 dependencies: [TASK-0033]
 governing_adrs: [ADR-0002, ADR-0004, ADR-0013]
 target_release: 0.2.0
+governing_prds:
+- PRD-0004
+governing_stories:
+- US-0011
 ---
 
 # TASK-0068: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition

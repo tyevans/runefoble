@@ -6,6 +6,11 @@ created: 2026-09-26
 dependencies: [TASK-0014]
 governing_adrs: [ADR-0003, ADR-0004, ADR-0013]
 target_release: 0.2.0
+governing_prds:
+- PRD-0011
+governing_stories:
+- US-0029
+- US-0030
 ---
 
 # TASK-0075: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition

@@ -12,6 +12,10 @@ governing_adrs:
 - ADR-0009
 target_release: 0.2.0
 pr_url: https://github.com/tyevans/runefoble/pull/54
+governing_prds:
+- PRD-0004
+governing_stories:
+- US-0011
 ---
 # TASK-0083: Streaming Whisper Audio Transcription Test Suite Modular Decomposition
 

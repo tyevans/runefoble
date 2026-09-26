@@ -12,6 +12,10 @@ governing_adrs:
 - ADR-0013
 target_release: 0.3.0
 pr_url: https://github.com/tyevans/runefoble/pull/82
+governing_prds:
+- PRD-0010
+governing_stories:
+- US-0039
 ---
 # TASK-0095: Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition
 
