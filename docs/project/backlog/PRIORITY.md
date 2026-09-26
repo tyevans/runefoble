@@ -73,7 +73,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 
 67. **TASK-0050 (Complete)**: [`0050-dynamic-soundscape-and-adaptive-audio-bc.md`](complete/0050-dynamic-soundscape-and-adaptive-audio-bc.md) — Dynamic Soundscape & Adaptive Audio Microservice
 68. **TASK-0053 (Refined)**: [`0053-dm-copilot-whisper-and-veto-override-engine.md`](refined/0053-dm-copilot-whisper-and-veto-override-engine.md) — DM Co-Pilot Whisper Prompts and Veto Override Engine
-69. **TASK-0054 (Refined)**: [`0054-conversational-disambiguation-and-compound-intents.md`](refined/0054-conversational-disambiguation-and-compound-intents.md) — Conversational Disambiguation and Compound Action Intents
+69. **TASK-0054 (Complete)**: [`0054-conversational-disambiguation-and-compound-intents.md`](complete/0054-conversational-disambiguation-and-compound-intents.md) — Conversational Disambiguation and Compound Action Intents
 70. **TASK-0055 (Refined)**: [`0055-stand-in-policy-guardrails-and-hot-swap-handoff.md`](refined/0055-stand-in-policy-guardrails-and-hot-swap-handoff.md) — Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover
 
 71. **TASK-0088 (Refined)**: [`0088-microfrontends-test-suite-decomposition.md`](refined/0088-microfrontends-test-suite-decomposition.md) — Microfrontends Blackbox Test Suite Modular Decomposition
