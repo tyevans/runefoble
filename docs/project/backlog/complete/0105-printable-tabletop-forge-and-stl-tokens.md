@@ -1,7 +1,7 @@
 ---
 id: '0105'
-title: "Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens"
-status: Refined
+title: 'Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens'
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0023
@@ -16,8 +16,8 @@ governing_prds:
 - PRD-0015
 governing_stories:
 - US-0049
+pr_url: https://github.com/tyevans/runefoble/pull/122
 ---
-
 # TASK-0105: Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens
 
 ## Status
