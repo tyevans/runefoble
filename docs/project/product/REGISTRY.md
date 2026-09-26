@@ -14,6 +14,6 @@
 | PRD-0010 | Adaptive Soundscape, Environmental Foley & Combat Scoring | Accepted | 2026-09-25 | [`prd-0010-adaptive-soundscape-foley-and-tension-scoring.md`](accepted/prd-0010-adaptive-soundscape-foley-and-tension-scoring.md) |
 | PRD-0011 | Live Spectator Studio & Two-Way Audience Interactivity | Accepted | 2026-09-25 | [`prd-0011-live-spectator-studio-and-audience-interactivity.md`](accepted/prd-0011-live-spectator-studio-and-audience-interactivity.md) |
 | PRD-0012 | Campaign Telemetry, Analytics & Historical Memory Archive | Accepted | 2026-09-25 | [`prd-0012-campaign-telemetry-and-living-chronicle-timeline.md`](accepted/prd-0012-campaign-telemetry-and-living-chronicle-timeline.md) |
-| PRD-0013 | Immersive & Intuitive Frontend Experience with Tactile Board Kinematics | Shaped | 2026-09-25 | [`prd-0013-immersive-and-intuitive-frontend-experience.md`](shaped/prd-0013-immersive-and-intuitive-frontend-experience.md) |
+| PRD-0013 | Immersive & Intuitive Frontend Experience with Tactile Board Kinematics | Accepted | 2026-09-25 | [`prd-0013-immersive-and-intuitive-frontend-experience.md`](accepted/prd-0013-immersive-and-intuitive-frontend-experience.md) |
 
 

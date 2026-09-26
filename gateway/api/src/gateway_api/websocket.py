@@ -62,7 +62,14 @@ class WebSocketActionValidator:
             return True
 
         # 2. Token movement authorization
-        if action in ("move_token", "board_move"):
+        if action in (
+            "move_token",
+            "board_move",
+            "ghost_preview",
+            "preview_intent",
+            "confirm_intent",
+            "cancel_preview",
+        ):
             # Check campaign-level token movement rights
             if await self.spicedb.check_permission(
                 "campaign", campaign_id, "move_token", "user", subject_id
@@ -297,7 +304,15 @@ async def campaign_websocket_endpoint(
             # 3. Publish authorized event to Redis stream
             stream = (
                 "runefoble.events.board"
-                if action in ("move_token", "board_move")
+                if action
+                in (
+                    "move_token",
+                    "board_move",
+                    "ghost_preview",
+                    "preview_intent",
+                    "confirm_intent",
+                    "cancel_preview",
+                )
                 else (
                     "runefoble.events.session"
                     if action in ("modify_hp", "apply_condition", "clear_condition")
