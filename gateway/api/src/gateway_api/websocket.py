@@ -9,9 +9,10 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import WebSocket, WebSocketDisconnect
-from gateway_api.auth import get_spicedb_client
+from fastapi import HTTPException, WebSocket, WebSocketDisconnect
+from gateway_api.auth import get_spicedb_client, get_zitadel_auth_service
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.zitadel import ZitadelAuthService
 
 logger = logging.getLogger("runefoble.gateway.websocket")
 
@@ -164,10 +165,33 @@ ws_campaign_manager = CampaignWebSocketManager()
 default_action_validator = WebSocketActionValidator()
 
 
+def extract_token_from_websocket(websocket: WebSocket) -> str | None:
+    """Extract JWT token from WebSocket query parameters or headers."""
+    # 1. Query parameters (?token=... or ?access_token=...)
+    token = websocket.query_params.get("token") or websocket.query_params.get("access_token")
+    if token:
+        return token
+
+    # 2. HTTP Authorization header (Bearer ...)
+    auth = websocket.headers.get("authorization")
+    if auth and auth.startswith("Bearer "):
+        return auth[7:].strip()
+
+    # 3. Sec-WebSocket-Protocol header (e.g. bearer.<token>)
+    protocols = websocket.headers.get("sec-websocket-protocol")
+    if protocols:
+        for proto in protocols.split(","):
+            p = proto.strip()
+            if p.startswith("bearer."):
+                return p[7:]
+
+    return None
+
+
 def extract_subject_id(websocket: WebSocket) -> str:
-    """Extract authenticated subject identifier from WebSocket query parameters or headers."""
+    """Extract authenticated subject identifier from WebSocket query parameters or headers (dev mode fallback)."""
     # 1. Query parameters
-    for param in ("user_id", "x_user_id", "subject_id", "token"):
+    for param in ("user_id", "x_user_id", "subject_id"):
         val = websocket.query_params.get(param)
         if val:
             return val
@@ -177,10 +201,6 @@ def extract_subject_id(websocket: WebSocket) -> str:
     if x_user:
         return x_user
 
-    auth = websocket.headers.get("authorization")
-    if auth and auth.startswith("Bearer "):
-        return auth[7:].strip()
-
     return "guest"
 
 
@@ -188,10 +208,33 @@ async def campaign_websocket_endpoint(
     websocket: WebSocket,
     campaign_id: str,
     validator: WebSocketActionValidator | None = None,
+    auth_service: ZitadelAuthService | None = None,
 ) -> None:
     """Handle Zanzibar-protected WebSocket connections at /ws/campaigns/{campaign_id}."""
     action_validator = validator or default_action_validator
-    subject_id = extract_subject_id(websocket)
+    service = auth_service or get_zitadel_auth_service()
+
+    token = extract_token_from_websocket(websocket)
+    subject_id: str | None = None
+
+    if token:
+        try:
+            user = service.verify_token(token)
+            subject_id = user.user_id
+        except Exception as exc:
+            logger.warning("WebSocket token verification failed: %s", exc)
+            raise HTTPException(
+                status_code=401,
+                detail=f"Token verification failed: {exc}",
+            ) from exc
+    elif service.dev_mode:
+        subject_id = extract_subject_id(websocket)
+    else:
+        logger.warning("WebSocket connection rejected: missing token in production mode")
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required: missing token",
+        )
 
     # 1. On connect: verify viewer/subject has campaign:view or campaign:read permission
     can_connect = await action_validator.validate_connect(campaign_id, subject_id)

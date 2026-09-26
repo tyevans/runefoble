@@ -1,8 +1,9 @@
 ---
 id: '0034'
 title: Zitadel Production OIDC/JWKS Token Verification Middleware
-status: Refined
+status: Complete
 created: 2026-09-25
+completed: 2026-09-26
 dependencies: [TASK-0008, TASK-0016]
 governing_adrs: [ADR-0001, ADR-0005, ADR-0007]
 target_release: 0.1.0
@@ -11,10 +12,10 @@ target_release: 0.1.0
 # TASK-0034: Zitadel Production OIDC/JWKS Token Verification Middleware
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Upgrade `ZitadelAuthService` in `libs/runefoble_auth` from an offline stub into a production OIDC JWT verification client. Fetch and cache JSON Web Key Sets (JWKS) from Zitadel's discovery endpoint (`/.well-known/jwks.json`), cryptographically verify RS256 token signatures, validate expiration and audience claims, and inject the authenticated subject into Gateway HTTP endpoints and WebSocket handshakes.
+Upgraded `ZitadelAuthService` in `libs/runefoble_auth` from an offline stub into a production OIDC JWT verification client. Fetches and caches JSON Web Key Sets (JWKS) from Zitadel's discovery endpoint (`/.well-known/jwks.json`) via `jwt.PyJWKClient`, cryptographically verifies RS256 token signatures, validates expiration and audience claims, and injects the authenticated subject into Gateway HTTP endpoints and WebSocket handshakes.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Operates at the gateway ingress/authentication boundary. Upgrades the authentication layer without altering SpiceDB Zanzibar authorization schema or downstream domain aggregates.
@@ -34,14 +35,16 @@ Upgrade `ZitadelAuthService` in `libs/runefoble_auth` from an offline stub into 
    - `ZitadelAuthService.verify_token(token: str) -> AuthenticatedUser` utilizing `jwt.PyJWKClient` with configurable JWKS URL, caching, and signature verification.
    - Preserves offline/dev mock bypass when `verify=False` or `RUNEFOBLE_AUTH_DEV_MODE=true`.
 2. **Gateway HTTP & WebSocket Auth Middleware Integration**:
-   - Update `gateway/api/src/gateway_api/auth.py` dependency to decode Zitadel bearer token and set verified user context.
-   - Update `gateway/api/src/gateway_api/websocket.py` to validate query token / Bearer token via `ZitadelAuthService` before accepting or authorizing connection.
+   - Updated `gateway/api/src/gateway_api/auth.py` dependencies (`require_zanzibar_permission` and `get_current_user`) to decode Zitadel bearer token and set verified user context.
+   - Updated `gateway/api/src/gateway_api/websocket.py` to validate query token / Bearer token via `ZitadelAuthService` before accepting or authorizing connection.
 3. **Blackbox TDD Suite (`tests/test_blackbox_zitadel_auth.py`)**:
    - Tests public `/api/v1/...` and `/ws/campaigns/...` routes using RSA keypair:
      - Valid signed token succeeds and extracts subject.
      - Forged/tampered signature rejected with 401 Unauthorized.
      - Expired token rejected with 401 Unauthorized.
+     - Missing token rejected in production mode with 401 Unauthorized.
 4. **Diataxis Documentation**:
-   - Author `docs/how-to/authenticate-with-zitadel-oidc.md`.
+   - Authored `docs/how-to/authenticate-with-zitadel-oidc.md`.
+   - Updated `docs/reference/platform-services.md` and `docs/reference/ports-and-endpoints.md`.
 5. **File Invariant Check**:
    - All modified files remain strictly under 500 lines.

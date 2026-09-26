@@ -52,6 +52,16 @@ class PlatformSettings(BaseSettings):
         default="runefoble-api",
         description="Zitadel OAuth client ID",
     )
+    auth_dev_mode: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("RUNEFOBLE_AUTH_DEV_MODE", "AUTH_DEV_MODE"),
+        description="Enable offline development auth bypass",
+    )
+    zitadel_jwks_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_JWKS_URL", "ZITADEL_JWKS_URL"),
+        description="Zitadel JWKS keys endpoint URL",
+    )
 
     # Authorization & Zanzibar (SpiceDB)
     spicedb_endpoint: str = Field(
