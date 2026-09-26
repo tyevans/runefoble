@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- **Backlog Triage and JIT Ready Buffer Replenishment (`TASK-0059`, `TASK-0101`, `TASK-0103`, `TASK-0105`, `TASK-0112`, `TASK-0113`, `TASK-0114`, `TASK-0119`, `TASK-0120`)**:
+  - JIT-refined 9 tasks across Milestone 5 feature epics and invariant-prevention modular decompositions, replenishing ready buffer to 10 items.
+  - Proposed and refined modular decompositions for `tools/prd_pipeline/decomposer.py` (`TASK-0119`) and `frontend/src/styles/themes.css` (`TASK-0120`).
+  - Synchronized `PRIORITY.md`, `ROADMAP.md` Milestone 5 completion checkboxes, and PRD acceptance links with zero status drift.
+
 ### Added
 - **Campaign Analytics Storage and Query Modular Decomposition (`TASK-0118`, `ADR-0003`, `ADR-0005`, `ADR-0011`)**:
   - Decomposed `services/campaign_analytics/src/campaign_analytics/storage.py` into storage facade `storage.py` (165 lines) and specialized query modules `queries/spatial.py` (117 lines), `queries/mvp.py` (112 lines), and `queries/timeline.py` (97 lines).

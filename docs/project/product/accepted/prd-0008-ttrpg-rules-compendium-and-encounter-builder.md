@@ -44,4 +44,4 @@ Low-latency index caching in Redis is required to keep compendium searches sub-5
 
 ## Implementing Backlog Tasks
 - [`TASK-0048: TTRPG Rules Compendium & Automated Encounter Builder Microservice`](../../backlog/complete/0048-rules-compendium-and-encounter-builder-bc.md)
-- [`TASK-0108: Rules Compendium Search & Encounter Builder Microfrontend`](../../backlog/refined/0108-rules-compendium-search-and-encounter-builder-microfrontend.md)
+- [`TASK-0108: Rules Compendium Search & Encounter Builder Microfrontend`](../../backlog/complete/0108-rules-compendium-search-and-encounter-builder-microfrontend.md)
