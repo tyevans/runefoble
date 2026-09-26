@@ -182,8 +182,8 @@ def test_dark_mode_css_tokens():
     # Bauhaus in dark mode
     assert '[data-theme="bauhaus"][data-color-mode="dark"]' in css_content
     assert "--rf-bg-canvas: #121212;" in css_content
-    assert "--rf-border-color: #f8f9fa;" in css_content
-    assert "--rf-shadow: 4px 4px 0px #f8f9fa;" in css_content
+    assert "--rf-shadow-color:" in css_content
+    assert "--rf-shadow: 4px 4px 0px var(--rf-shadow-color);" in css_content
 
     # System media query
     assert "@media (prefers-color-scheme: dark)" in css_content

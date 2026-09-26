@@ -22,33 +22,33 @@ export class RunefobleCampaignNav extends LitElement {
     :host { display: inline-flex; align-items: center; position: relative; }
     .session-info { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; flex-wrap: wrap; }
     .badge-live {
-      background: var(--rf-bg-surface, #fff); color: var(--rf-accent-primary, #e63946);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212); padding: 4px 10px; font-weight: 700; cursor: pointer;
+      background: var(--rf-bg-surface); color: var(--rf-accent-primary);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+      box-shadow: var(--rf-shadow-sm); padding: 4px 10px; font-weight: 700; cursor: pointer;
     }
-    .badge-live:hover { transform: translate(-1px, -1px); box-shadow: var(--rf-shadow, 4px 4px 0px #121212); }
+    .badge-live:hover { transform: translate(-1px, -1px); box-shadow: var(--rf-shadow); }
     .badge-role {
-      background: var(--rf-bg-surface, #fff); color: var(--rf-color-blue, #1d3557);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212); padding: 2px 8px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase;
+      background: var(--rf-bg-surface); color: var(--rf-accent-secondary);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+      box-shadow: var(--rf-shadow-sm); padding: 2px 8px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase;
     }
     .badge-socket {
-      font-size: 0.75rem; padding: 4px 10px; border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      background: var(--rf-bg-surface, #fff); font-weight: 700; box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      font-size: 0.75rem; padding: 4px 10px; border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+      background: var(--rf-bg-surface); font-weight: 700; box-shadow: var(--rf-shadow-sm);
     }
-    .badge-socket.connected { color: var(--rf-color-blue, #1d3557); }
-    .badge-socket.disconnected { color: var(--rf-color-red, #e63946); }
+    .badge-socket.connected { color: var(--rf-accent-secondary); }
+    .badge-socket.disconnected { color: var(--rf-accent-primary); }
     .selector-modal {
-      position: absolute; top: calc(100% + 8px); left: 0; background: var(--rf-bg-surface, #fff);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      box-shadow: var(--rf-shadow, 4px 4px 0px #121212); padding: 12px; z-index: 100; min-width: 220px;
+      position: absolute; top: calc(100% + 8px); left: 0; background: var(--rf-bg-surface);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+      box-shadow: var(--rf-shadow); padding: 12px; z-index: 100; min-width: 220px;
       display: flex; flex-direction: column; gap: 6px;
     }
     .campaign-item {
       padding: 6px 10px; border: 1px solid transparent; background: none; text-align: left;
-      cursor: pointer; font-weight: 600; color: var(--rf-text-primary, #121212);
+      cursor: pointer; font-weight: 600; color: var(--rf-text-primary);
     }
-    .campaign-item:hover { background: var(--rf-bg-canvas, #f8f9fa); border-color: var(--rf-border-color, #121212); }
+    .campaign-item:hover { background: var(--rf-bg-canvas); border-color: var(--rf-border-color); }
   `;
 
   private selectCampaign(camp: CampaignOption) {

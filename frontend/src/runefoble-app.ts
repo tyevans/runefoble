@@ -13,10 +13,10 @@ import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 
 const DEFAULT_TOKENS: BoardToken[] = [
-  { id: '1', name: 'Valeros', x: 2, y: 3, color: '#1d3557', hp: 38, maxHp: 45, visionRadius: 2 },
-  { id: '2', name: 'Kyra (AI)', x: 3, y: 3, isAiControlled: true, color: '#e63946', hp: 28, maxHp: 32, visionRadius: 2 },
-  { id: '3', name: 'Goblin Scout', x: 5, y: 1, isHostile: true, color: '#ffb703', hp: 7, maxHp: 12 },
-  { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, isHostile: true, color: '#121212', hp: 52, maxHp: 75 },
+  { id: '1', name: 'Valeros', x: 2, y: 3, color: 'var(--rf-accent-secondary)', hp: 38, maxHp: 45, visionRadius: 2 },
+  { id: '2', name: 'Kyra (AI)', x: 3, y: 3, isAiControlled: true, color: 'var(--rf-accent-primary)', hp: 28, maxHp: 32, visionRadius: 2 },
+  { id: '3', name: 'Goblin Scout', x: 5, y: 1, isHostile: true, color: 'var(--rf-accent-tertiary)', hp: 7, maxHp: 12 },
+  { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, isHostile: true, color: 'var(--rf-border-color)', hp: 52, maxHp: 75 },
 ];
 
 const DEFAULT_EVENTS: WatcherFeedEvent[] = [

@@ -16,26 +16,26 @@ export class RunefobleHeader extends LitElement {
     :host { display: block; }
     header {
       display: flex; justify-content: space-between; align-items: center;
-      padding-bottom: 20px; border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      padding-bottom: 20px; border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color);
       margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
     }
     .brand { display: flex; align-items: center; gap: 12px; }
-    .brand h1 { font-size: 1.9rem; margin: 0; color: var(--rf-text-primary, #121212); font-weight: 900; letter-spacing: -0.5px; }
-    .tagline { font-size: 0.9rem; color: var(--rf-text-muted, #4b5563); }
+    .brand h1 { font-size: 1.9rem; margin: 0; color: var(--rf-text-primary); font-weight: 900; letter-spacing: -0.5px; }
+    .tagline { font-size: 0.9rem; color: var(--rf-text-muted); }
     .header-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .settings-trigger, .view-mode-btn {
       display: inline-flex; align-items: center; gap: 6px;
-      background: var(--rf-bg-surface, #ffffff); color: var(--rf-text-primary, #121212);
-      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+      background: var(--rf-bg-surface); color: var(--rf-text-primary);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+      box-shadow: var(--rf-shadow-sm);
       font-weight: 700; font-size: 0.8rem; padding: 4px 10px; cursor: pointer;
       transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
     .settings-trigger:hover, .view-mode-btn:hover {
-      transform: translate(-1px, -1px); box-shadow: var(--rf-shadow, 4px 4px 0px #121212);
+      transform: translate(-1px, -1px); box-shadow: var(--rf-shadow);
     }
     .settings-trigger:active, .view-mode-btn:active {
-      transform: translate(1px, 1px); box-shadow: 0px 0px 0px #121212;
+      transform: translate(1px, 1px); box-shadow: none;
     }
     @media (max-width: 640px) {
       .settings-label { display: none; }

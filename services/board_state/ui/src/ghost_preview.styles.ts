@@ -9,7 +9,7 @@ export const ghostStyles = css`
   }
 
   .vector-line {
-    stroke: var(--rf-accent-primary, #e63946);
+    stroke: var(--rf-accent-primary);
     stroke-width: 3.5px;
     stroke-linecap: round;
     stroke-dasharray: 8 6;
@@ -34,10 +34,10 @@ export const ghostStyles = css`
     justify-content: center;
     font-weight: 800;
     font-size: 0.75rem;
-    color: #ffffff;
+    color: var(--rf-text-inverse);
     opacity: 0.55;
-    background: var(--rf-accent-secondary, #1d3557);
-    border: 2px dashed var(--rf-accent-tertiary, #ffb703);
+    background: var(--rf-accent-secondary);
+    border: 2px dashed var(--rf-accent-tertiary);
     box-shadow: 0 0 10px rgba(255, 183, 3, 0.6);
     animation: ghost-pulse 1.4s infinite ease-in-out;
     cursor: pointer;
@@ -65,13 +65,13 @@ export const ghostStyles = css`
     bottom: -36px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--rf-color-dark, #121212);
-    color: #ffffff;
-    border: var(--rf-border-width, 2px) solid var(--rf-accent-tertiary, #ffb703);
+    background: var(--rf-color-dark);
+    color: var(--rf-text-inverse);
+    border: var(--rf-border-width, 2px) solid var(--rf-accent-tertiary);
     padding: 4px 10px;
     font-size: 0.8rem;
     font-weight: 800;
-    box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+    box-shadow: var(--rf-shadow-sm);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -82,10 +82,10 @@ export const ghostStyles = css`
 
   .ghost-banner {
     margin-top: 14px;
-    background: var(--rf-bg-canvas, #f8f9fa);
-    border: var(--rf-border-width, 2px) solid var(--rf-accent-tertiary, #ffb703);
+    background: var(--rf-bg-canvas);
+    border: var(--rf-border-width, 2px) solid var(--rf-accent-tertiary);
     padding: 10px 14px;
-    box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+    box-shadow: var(--rf-shadow-sm);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -102,8 +102,8 @@ export const ghostStyles = css`
   }
 
   .ghost-timer {
-    background: var(--rf-accent-tertiary, #ffb703);
-    color: #121212;
+    background: var(--rf-accent-tertiary);
+    color: var(--rf-color-dark);
     padding: 2px 6px;
     font-size: 0.75rem;
     font-weight: 800;
@@ -116,13 +116,13 @@ export const ghostStyles = css`
   }
 
   .btn {
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
     border-radius: var(--rf-border-radius, 0px);
     padding: 5px 12px;
     font-weight: 800;
     font-size: 0.8rem;
     cursor: pointer;
-    box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
+    box-shadow: var(--rf-shadow-sm);
     transition: transform 0.1s, box-shadow 0.1s;
   }
 
@@ -132,12 +132,12 @@ export const ghostStyles = css`
   }
 
   .btn-confirm {
-    background: var(--rf-accent-tertiary, #ffb703);
-    color: #121212;
+    background: var(--rf-accent-tertiary);
+    color: var(--rf-color-dark);
   }
 
   .btn-cancel {
-    background: var(--rf-bg-surface, #ffffff);
-    color: var(--rf-text-primary, #121212);
+    background: var(--rf-bg-surface);
+    color: var(--rf-text-primary);
   }
 `;

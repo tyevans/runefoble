@@ -89,7 +89,7 @@ export class RunefobleAbsenteeRecap extends LitElement {
           ? html`
               <div class="status-item">
                 <span>🎒 Loot:</span>
-                <span style="color: #fbbf24;">${this.itemsAcquired.join(', ')}</span>
+                <span style="color: var(--rf-accent-tertiary);">${this.itemsAcquired.join(', ')}</span>
               </div>
             `
           : ''}

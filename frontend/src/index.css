@@ -6,8 +6,8 @@
 
 body {
   margin: 0;
-  background-color: var(--rf-bg-canvas, #f8f9fa);
-  color: var(--rf-text-primary, #121212);
+  background-color: var(--rf-bg-canvas);
+  color: var(--rf-text-primary);
   font-family: var(--rf-font-family, system-ui, sans-serif);
   min-width: 320px;
   min-height: 100svh;

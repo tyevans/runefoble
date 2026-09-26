@@ -4,8 +4,8 @@ export const appShellStyles = css`
   :host {
     display: block;
     min-height: 100vh;
-    background-color: var(--rf-bg-canvas, #f8f9fa);
-    color: var(--rf-text-primary, #121212);
+    background-color: var(--rf-bg-canvas);
+    color: var(--rf-text-primary);
     font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
     padding: 24px;
     box-sizing: border-box;
