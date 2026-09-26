@@ -157,6 +157,34 @@ class FogOfWarRevealed(BaseRunefobleEvent):
     revealed_by_token_id: str | None = None
 
 
+@register_event("runefoble.events.board.terrain_modified")
+class TerrainCellModified(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "BoardState"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.board.terrain_modified"
+    session_id: str
+    board_id: str
+    x: int
+    y: int
+    elevation: int = 0
+    terrain_type: str = "normal"
+    hazard: str | None = None
+
+
+@register_event("runefoble.events.board.hazard_triggered")
+class TokenHazardTriggered(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "BoardState"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.board.hazard_triggered"
+    session_id: str
+    board_id: str
+    token_id: str
+    hazard_type: str
+    damage_dice: str
+
+
 # ---------------------------------------------------------------------------
 # CharacterSheet Aggregate Events
 # ---------------------------------------------------------------------------
@@ -397,6 +425,8 @@ __all__ = [
     "TokenMoved",
     "TokenRemoved",
     "FogOfWarRevealed",
+    "TerrainCellModified",
+    "TokenHazardTriggered",
     "CharacterCreated",
     "CharacterHealthChanged",
     "AbsencePenaltyApplied",
