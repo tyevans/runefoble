@@ -67,3 +67,47 @@ Derived from our speculative feature inventory, these five archetypes represent 
   - Clean OpenAPI specifications aggregated in a single Swagger UI.
   - High-throughput Redis Streams event broker allowing external microservices to consume domain events in real time.
 - **Key Features Used**: `FEAT-DEV-01`, `FEAT-DEV-02`, `FEAT-DEV-03`, `FEAT-SEC-01`.
+
+---
+
+## 6. Rowan — The Chronicler & Worldbuilding Artisan
+- **Role**: Lorecrafter, cartographer, and narrative co-creator (Bard/Wizard player, or co-DM).
+- **Pain Points**:
+  - Virtual handouts feel like plain text windows instead of tactile, diegetic fantasy artifacts.
+  - Worldbuilding lore is fragmented in personal notes; the group lacks a shared living atlas or collaborative memory codex.
+  - Zero connection between digital session lore and real-world physical props (papercraft, printable handouts, 3D tokens).
+- **Goals with Runefoble**:
+  - Generate and inspect diegetic in-world artifacts: ancient letters with broken wax seals, illuminated manuscripts, weathered parchment with hidden runes, and interactive 3D rotating relics.
+  - Annotate a shared living campaign atlas with timeline pins, faction rumor webs, and collaborative codex entries.
+  - Export calibrated 1-inch printable battlemaps, papercraft character standees, and 3D printable STL token rings for hybrid game nights.
+- **Key Features Used**: `FEAT-LRE-02`, `FEAT-LRE-03`, `FEAT-LRE-04`, `FEAT-MAK-01`, `FEAT-MAK-02`.
+
+---
+
+## 7. Bram — The Tinkerer & Downtime Crafter
+- **Role**: Tactician, artisan, and social roleplayer (Artificer/Rogue/Druid player).
+- **Pain Points**:
+  - VTT sessions frequently reduce non-combat downtime to quick hand-waving or tedious accounting.
+  - Crafting, potion brewing, and enchanting feel like static spreadsheet lookups rather than creative, experimental game loops.
+  - Gold and loot accumulate with little expressive outlet—no base-building, camp customization, or social tavern minigames.
+- **Goals with Runefoble**:
+  - Engage in rich campfire downtime activities during rests: experimenting with alchemical catalysts, forging custom item infusions, and training animal companions.
+  - Challenge NPCs and party members to interactive tavern minigames (Liar's Dice, card wagering, drinking contests with dynamic voice DSP slurring).
+  - Build and customize a persistent party campsite, wagon caravan, or stronghold that grants unique rest boons.
+  - Haggle with shopkeepers possessing dynamic personality temperaments and reactive regional inventories.
+- **Key Features Used**: `FEAT-DWN-01`, `FEAT-DWN-02`, `FEAT-DWN-03`, `FEAT-DWN-04`.
+
+---
+
+## 8. Nadia — The Expressive Thespian & Performer
+- **Role**: Dramatic roleplayer and sensory creative (Bard/Sorcerer/Warlock player).
+- **Pain Points**:
+  - Combat boards feel purely mechanical; spells lack visual and emotional weight beyond numbers in a chat box.
+  - Lack of distinct auditory identity—no personalized musical theme or dramatic sound triggers for signature character moments.
+  - Character appearance is frozen in a single static token portrait, ignoring story progression, wounds, or disguise spells.
+- **Goals with Runefoble**:
+  - Define character musical leitmotifs that weave dynamically into the encounter soundtrack during clutch criticals, inspiration turns, or death saves.
+  - Trigger kinetic WebGL spell visual effects and particle animations across the board canvas when speaking spell incantations.
+  - Maintain an evolving generative wardrobe and emotional portrait gallery (battle-worn, masked, festive, shadow-infused) reflecting current game state.
+- **Key Features Used**: `FEAT-EXP-01`, `FEAT-EXP-02`, `FEAT-EXP-03`, `FEAT-VOX-05`.
+
