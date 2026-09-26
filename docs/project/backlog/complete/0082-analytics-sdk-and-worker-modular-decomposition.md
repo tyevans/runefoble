@@ -1,7 +1,7 @@
 ---
 id: 0082
 title: OpenPanel Analytics SDK & Worker Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0038
@@ -10,6 +10,7 @@ governing_adrs:
 - ADR-0006
 - ADR-0009
 target_release: 0.2.0
+pr_url: https://github.com/tyevans/runefoble/pull/53
 ---
 # TASK-0082: OpenPanel Analytics SDK & Worker Modular Decomposition
 
