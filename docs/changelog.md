@@ -7,6 +7,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- **Board State Models and Pydantic Schemas Modular Decomposition (`TASK-0138`, `ADR-0003`, `ADR-0011`, `PRD-0003`, `PRD-0013`, `US-0012`, `US-0043`)**:
+  - Decomposed `services/board_state/src/board_state/models.py` (433 lines) into focused, single-responsibility modules under `services/board_state/src/board_state/models/`:
+    - `terrain.py`: Extracted `TerrainCellState`, `TerrainDict`, `ConfigureTerrainRequest`, and `VisibilityResponse` (< 70 lines).
+    - `tokens.py`: Extracted `PlacedTokenState`, `PlaceTokenRequest`, `MoveTokenRequest`, and `MoveTokenResponse` (< 75 lines).
+    - `vfx.py`: Extracted `BoardDecalState`, `CastSpellRequest`, `CastSpellResponse`, `FinishVFXRequest`, `FinishVFXResponse`, and `DecayDecalsRequest` (< 80 lines).
+    - `actions.py`: Extracted token radial action and AoE template request/response schemas (< 25 lines).
+    - `transitions.py`: Extracted `BoardTransitionsMixin` encapsulating all pure state mutation helpers (< 175 lines).
+    - `board.py`: Extracted `BoardState`, `CreateBoardRequest`, `FogOfWarUpdateRequest`, and `UVTTImportResponse` (< 70 lines).
+  - Maintained 100% backward compatibility with a lean facade re-export in `services/board_state/src/board_state/models.py` (< 70 lines) and `services/board_state/src/board_state/models/__init__.py`.
+  - Added frontdoor blackbox test suite `tests/test_blackbox_board_state.py` verifying line length invariants (< 200 lines per file), backward-compatible facade re-exports, modular submodule imports, and BoardState transitions.
+
 ### Added
 - **Wardrobe Gallery Blackbox Test Suite Modular Decomposition (`TASK-0139`, `ADR-0013`)**:
   - Decomposed monolithic blackbox test suite `tests/test_blackbox_wardrobe_gallery.py` (415 lines) into modular frontdoor test suites under `tests/test_blackbox_wardrobe_gallery/` strictly conforming to Hard Invariant 6 (< 500 lines per file, with all test files < 200 lines).
