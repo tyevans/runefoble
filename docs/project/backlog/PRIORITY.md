@@ -123,7 +123,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 112. **TASK-0120 (Complete)**: [`0120-theme-token-styles-modular-decomposition.md`](complete/0120-theme-token-styles-modular-decomposition.md) — CSS Design Tokens and Theme Variables Modular Decomposition
 113. **TASK-0112 (Complete)**: [`0112-stand-in-ai-guardrails-and-persona-modular-decomposition.md`](complete/0112-stand-in-ai-guardrails-and-persona-modular-decomposition.md) — Stand-In AI Persona Decision Engine and Tactical Policy Modular Decomposition
 114. **TASK-0113 (Refined)**: [`0113-character-sheet-aggregate-and-event-handlers-decomposition.md`](refined/0113-character-sheet-aggregate-and-event-handlers-decomposition.md) — Character Sheet Aggregate Mutation Handlers and Event Appliers Decomposition
-115. **TASK-0114 (Refined)**: [`0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md`](refined/0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md) — Theming Tokens and Contrast Invariants Test Suite Modular Decomposition
+115. **TASK-0114 (Complete)**: [`0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md`](complete/0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md) — Theming Tokens and Contrast Invariants Test Suite Modular Decomposition
 
 116. **TASK-0106 (Proposed)**: [`0106-collaborative-campaign-atlas-and-codex-bc.md`](proposed/0106-collaborative-campaign-atlas-and-codex-bc.md) — Collaborative Multi-Layered Campaign Atlas & Living Interactive Codex
 117. **TASK-0102 (Proposed)**: [`0102-character-leitmotifs-and-adaptive-themes.md`](proposed/0102-character-leitmotifs-and-adaptive-themes.md) — Character Musical Leitmotifs & Dynamic Dramatic Themes
