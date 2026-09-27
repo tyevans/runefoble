@@ -176,3 +176,123 @@ class RelicRuneTranslated(BaseRunefobleEvent):
     translated_by: str = Field(description="User ID or character translating")
     original_inscription: str = Field(description="Original rune glyph or text")
     translation: str = Field(description="Deciphered meaning or spell incantation")
+
+
+@register_event
+class AtlasPinCreated(BaseRunefobleEvent):
+    """Emitted when a geographical milestone pin is placed on the campaign world atlas."""
+
+    aggregate_type: str = "Atlas"
+    event_type: str = "AtlasPinCreated"
+    pin_id: UUID = Field(description="Unique identifier for the atlas pin")
+    campaign_id: UUID = Field(description="Campaign to which the atlas belongs")
+    title: str = Field(description="Title or label of the milestone pin")
+    layer: str = Field(
+        default="continental", description="Map layer (continental, regional, municipal)"
+    )
+    coordinates: dict[str, float] = Field(description="Projected spatial coordinates {x, y}")
+    description: str = Field(default="", description="Detailed narrative description or recap")
+    era: str | None = Field(default=None, description="Campaign era or chronological milestone tag")
+    session_id: str | None = Field(default=None, description="Linked session identifier")
+    linked_entity_ids: list[str] = Field(
+        default_factory=list, description="Linked redstring lore entity IDs"
+    )
+    created_by: str | None = Field(default=None, description="User or character who placed the pin")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Arbitrary visual or thematic metadata"
+    )
+
+
+@register_event
+class AtlasPinUpdated(BaseRunefobleEvent):
+    """Emitted when an atlas milestone pin properties are updated."""
+
+    aggregate_type: str = "Atlas"
+    event_type: str = "AtlasPinUpdated"
+    pin_id: UUID = Field(description="Unique identifier for the atlas pin")
+    campaign_id: UUID = Field(description="Campaign to which the atlas belongs")
+    title: str | None = None
+    coordinates: dict[str, float] | None = None
+    description: str | None = None
+    era: str | None = None
+    linked_entity_ids: list[str] | None = None
+    metadata: dict[str, Any] | None = None
+
+
+@register_event
+class AtlasLayerToggled(BaseRunefobleEvent):
+    """Emitted when an atlas map layer visibility or active level is toggled."""
+
+    aggregate_type: str = "Atlas"
+    event_type: str = "AtlasLayerToggled"
+    campaign_id: UUID = Field(description="Campaign to which the atlas belongs")
+    layer: str = Field(
+        description="Layer toggled (continental, regional, municipal, contested_boundaries)"
+    )
+    is_visible: bool = Field(description="Whether the layer is enabled/visible")
+    toggled_by: str | None = Field(default=None, description="User who toggled the layer")
+
+
+@register_event
+class AtlasTerritoryUpdated(BaseRunefobleEvent):
+    """Emitted when a geopolitical territory boundary polygon or ownership is created or updated."""
+
+    aggregate_type: str = "Atlas"
+    event_type: str = "AtlasTerritoryUpdated"
+    territory_id: UUID = Field(description="Unique territory identifier")
+    campaign_id: UUID = Field(description="Campaign to which the territory belongs")
+    name: str = Field(description="Territory or realm name")
+    layer: str = Field(default="continental", description="Layer scope")
+    polygon_coordinates: list[list[float]] = Field(
+        description="List of [x, y] coordinates defining the polygon"
+    )
+    owner_faction: str = Field(default="Neutral", description="Ruling faction or entity")
+    is_contested: bool = Field(default=False, description="Whether border is contested / disputed")
+    era: str | None = Field(
+        default=None, description="Era or chronological epoch for this boundary"
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Visual styling and banner attributes"
+    )
+
+
+@register_event
+class CodexEntryPublished(BaseRunefobleEvent):
+    """Emitted when a collaborative party codex entry is drafted, published, or revised."""
+
+    aggregate_type: str = "Codex"
+    event_type: str = "CodexEntryPublished"
+    entry_id: UUID = Field(description="Unique codex entry aggregate identifier")
+    campaign_id: UUID = Field(description="Campaign to which the codex entry belongs")
+    title: str = Field(description="Codex entry title")
+    content: str = Field(description="Markdown body of the journal or lore note")
+    privacy: str = Field(
+        default="private", description="Privacy level: private, party_shared, or public"
+    )
+    author_id: str = Field(description="Author user identifier")
+    era: str | None = Field(default=None, description="Campaign era or chronological tag")
+    tags: list[str] = Field(default_factory=list, description="Categorization tags")
+    linked_entity_ids: list[str] = Field(
+        default_factory=list, description="Cross-referenced redstring entities"
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Arbitrary metadata attributes"
+    )
+
+
+@register_event
+class CodexEntryUpdated(BaseRunefobleEvent):
+    """Emitted when an existing codex entry content or privacy status is updated."""
+
+    aggregate_type: str = "Codex"
+    event_type: str = "CodexEntryUpdated"
+    entry_id: UUID = Field(description="Unique codex entry aggregate identifier")
+    campaign_id: UUID = Field(description="Campaign to which the codex entry belongs")
+    title: str | None = None
+    content: str | None = None
+    privacy: str | None = None
+    era: str | None = None
+    tags: list[str] | None = None
+    linked_entity_ids: list[str] | None = None
+    updated_by: str | None = None
+    metadata: dict[str, Any] | None = None

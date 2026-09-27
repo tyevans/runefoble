@@ -442,6 +442,49 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `reason`: String
 - For schemas of `HandoutGenerated`, `WaxSealBroken`, and `RelicInspected`, see [`diegetic-handouts-and-relics-events.md`](diegetic-handouts-and-relics-events.md).
 
+### Atlas & Party Codex Events (`aggregate_type: Atlas`, `Codex`)
+
+- **`AtlasPinCreated`**: Emitted when a milestone pin is placed on the campaign world atlas (`runefoble.events.atlas.pin_created`).
+  - `pin_id`: UUID
+  - `campaign_id`: UUID
+  - `title`: String
+  - `layer`: String (continental, regional, municipal)
+  - `coordinates`: Dict[str, float]
+  - `description`: String
+  - `era`: Optional[String]
+  - `session_id`: Optional[String]
+  - `linked_entity_ids`: List[String]
+  - `created_by`: Optional[String]
+  - `metadata`: Dict[str, Any]
+- **`AtlasLayerToggled`**: Emitted when map layer visibility is toggled (`runefoble.events.atlas.layer_toggled`).
+  - `campaign_id`: UUID
+  - `layer`: String
+  - `is_visible`: Boolean
+  - `toggled_by`: Optional[String]
+- **`AtlasTerritoryUpdated`**: Emitted when territory polygon boundaries or ownership is defined (`runefoble.events.atlas.territory_updated`).
+  - `territory_id`: UUID
+  - `campaign_id`: UUID
+  - `name`: String
+  - `layer`: String
+  - `polygon_coordinates`: List[List[Float]]
+  - `owner_faction`: String
+  - `is_contested`: Boolean
+  - `era`: Optional[String]
+  - `metadata`: Dict[str, Any]
+- **`CodexEntryPublished`**: Emitted when a collaborative party codex note is published with redstring links (`runefoble.events.codex.entry_published`).
+  - `entry_id`: UUID
+  - `campaign_id`: UUID
+  - `title`: String
+  - `content`: String
+  - `privacy`: String (private, party_shared, public)
+  - `author_id`: String
+  - `era`: Optional[String]
+  - `tags`: List[String]
+  - `linked_entity_ids`: List[String]
+  - `metadata`: Dict[str, Any]
+- **`CodexEntryUpdated`**: Emitted when codex content, tags, or privacy status are updated (`runefoble.events.codex.entry_updated`).
+
+
 ### Compendium & Encounter Events (`aggregate_type: Compendium`, `Encounter`)
 
 - **`MonsterIndexed`**: Emitted when a monster stat block is indexed into the rules compendium (`runefoble.events.compendium.monster_indexed`).

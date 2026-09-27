@@ -43,6 +43,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 
 ### Added
+- **Collaborative Campaign World Atlas & Living Party Codex (`TASK-0106`, `PRD-0015`, `US-0050`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
+  - Implemented interactive multi-layered world atlas engine (`atlas.py`) with deep-zoom coordinate projections across continental, regional, and municipal layers, ray-casting territory polygon containment, and contested boundary detection.
+  - Implemented event-sourced `AtlasAggregate` and `CodexAggregate` tracking geographical markers, geopolitical boundary shifts, and journal entry revisions with CloudEvents domain events (`AtlasPinCreated`, `AtlasPinUpdated`, `AtlasLayerToggled`, `AtlasTerritoryUpdated`, `CodexEntryPublished`, `CodexEntryUpdated`).
+  - Implemented automated entity cross-referencing against the `campaign_lore` redstring knowledge graph (`codex.py`), generating illuminated markdown bodies with inline hyperlinking to NPC and location nodes.
+  - Enforced fine-grained SpiceDB Zanzibar object authorization (`codex_entry#author`, `codex_entry#editor`, `party_shared`, `public`) ensuring private player notes remain strictly protected from unauthorized party members.
+  - Built and vendored `<runefoble-campaign-atlas>` Lit microfrontend in `services/campaign_lore/ui/src/` with canvas pan/zoom viewport, Bauhaus pin markers, filter drawer, and codex sidebar; accompanied by Storybook stories and registered in `/ui/manifest`.
+  - Authored comprehensive blackbox test suite in `tests/test_blackbox_campaign_atlas.py` and Diataxis how-to guide `docs/how-to/interact-with-campaign-atlas-and-codex.md`.
+
 - **PRD Decomposer Planning and Slice Generation Modular Decomposition (`TASK-0119`, `ADR-0003`)**:
   - Decomposed monolithic `tools/prd_pipeline/decomposer.py` into an orchestrator facade (`decomposer.py`, 78 lines), planning engine (`planner.py`, 157 lines), markdown templating module (`templates.py`, 137 lines), and slice templates (`slice_templates.json`), preventing violations of Hard Invariant 6 (< 500 lines).
   - Maintained 100% backward compatibility for all `PRDDecomposer` methods (`plan_decomposition`, `execute_decomposition`, `get_max_task_number`, `get_max_story_number`) and private creation/heuristic delegates.
