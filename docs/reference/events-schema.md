@@ -38,6 +38,12 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `character_events.py`: Character progression, inventory slots, conditions, alchemical crafting mishaps, and tavern minigames.
   - `media_events.py`: Low-latency voice duplex, audio DSP modulation, dynamic soundscapes, procedural asset forge, and audience polls.
   - `platform_events.py`: Core event base models, privacy-preserving combat analytics, compendium indexing, mercenary contracts, and dynamic MCP tools.
+- **The Watcher Domain Events (`runefoble_events.watcher_events.*` and `runefoble_events.watcher` facade)**:
+  - `watcher.py`: Re-export facade (< 80 lines) maintaining 100% backward-compatible imports for consuming services.
+  - `watcher_events/narrative.py`: Speech transcription (`PlayerSpokeEvent`), parsed intent (`SpeechIntentParsed`), narration (`WatcherNarrationGenerated`), absentee recaps, and private DM whispers (< 120 lines).
+  - `watcher_events/combat.py`: Dice roll telemetry (`DiceRolled`), autonomous combat encounters, candidate ghost previews, combat reaction interrupts, and trap triggers (< 150 lines).
+  - `watcher_events/actions.py`: The Watcher DM copilot proposal, veto, approval, modification, and compound action disambiguation (< 150 lines).
+  - `watcher_events/factions.py`: Autonomous NPC faction agendas, progress advances, geopolitical territory shifts, and world ticks (< 150 lines).
 
 ---
 
