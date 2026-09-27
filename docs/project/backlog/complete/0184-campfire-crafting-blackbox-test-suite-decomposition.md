@@ -1,7 +1,7 @@
 ---
-id: '0184'
+id: 0184
 title: Campfire Crafting Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0100
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0044
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/244
 ---
-
 # TASK-0184: Campfire Crafting Blackbox Test Suite Modular Decomposition
 
 ## Status
