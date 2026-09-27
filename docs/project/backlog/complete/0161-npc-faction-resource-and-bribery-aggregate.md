@@ -1,7 +1,7 @@
 ---
 id: '0161'
 title: NPC Faction Resource Operations and Bribery Mechanics Aggregate
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0126
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0057
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/184
 ---
-
 # TASK-0161: NPC Faction Resource Operations and Bribery Mechanics Aggregate
 
 ## Status
