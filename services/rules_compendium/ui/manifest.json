@@ -5,6 +5,7 @@
   "components": [
     "runefoble-rules-compendium",
     "runefoble-rules-lookup",
-    "runefoble-encounter-builder"
+    "runefoble-encounter-builder",
+    "runefoble-homebrew-creator"
   ]
 }

@@ -3,6 +3,7 @@ import { html } from 'lit';
 import './runefoble-rules-compendium.ts';
 import './runefoble-rules-lookup.ts';
 import './runefoble-encounter-builder.ts';
+import './runefoble-homebrew-creator.ts';
 import type { DraftMonsterEntry, RuleSearchResultItem } from './types.ts';
 
 const meta: Meta = {
@@ -146,3 +147,14 @@ export const HomebrewCreator: Story = {
     ></runefoble-rules-compendium>
   `,
 };
+
+export const DedicatedHomebrewCreator: Story = {
+  render: () => html`
+    <runefoble-homebrew-creator
+      .campaignId=${'campaign-homebrew-lab'}
+      .userId=${'dm-evelyn'}
+      .isDM=${true}
+    ></runefoble-homebrew-creator>
+  `,
+};
+
