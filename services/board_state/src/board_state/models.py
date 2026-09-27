@@ -5,7 +5,42 @@ from __future__ import annotations
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
+from board_state.aoe_models import (
+    AoEEvaluateRequest,
+    AoETemplatePlaceRequest,
+    AoETemplateResponse,
+    AoETemplateState,
+    TokenActionRequest,
+    TokenActionResponse,
+)
 from pydantic import BaseModel, Field
+
+__all__ = [
+    "AoEEvaluateRequest",
+    "AoETemplatePlaceRequest",
+    "AoETemplateResponse",
+    "AoETemplateState",
+    "BoardDecalState",
+    "BoardState",
+    "CastSpellRequest",
+    "CastSpellResponse",
+    "ConfigureTerrainRequest",
+    "CreateBoardRequest",
+    "DecayDecalsRequest",
+    "FinishVFXRequest",
+    "FinishVFXResponse",
+    "FogOfWarUpdateRequest",
+    "MoveTokenRequest",
+    "MoveTokenResponse",
+    "PlaceTokenRequest",
+    "PlacedTokenState",
+    "TerrainCellState",
+    "TerrainDict",
+    "TokenActionRequest",
+    "TokenActionResponse",
+    "UVTTImportResponse",
+    "VisibilityResponse",
+]
 
 
 class TerrainCellState(BaseModel):
@@ -53,6 +88,7 @@ class PlacedTokenState(BaseModel):
     vision_radius: int = 2
     active_hazard: str | None = None
     hazard_status: str | None = None
+    active_action: str | None = None
 
     @classmethod
     def from_placed_event(cls, event: Any, hazard: str | None = None) -> PlacedTokenState:
@@ -96,6 +132,7 @@ class BoardState(BaseModel):
     portals: list[dict[str, Any]] = Field(default_factory=list)
     lights: list[dict[str, Any]] = Field(default_factory=list)
     pixels_per_grid: int = 70
+    active_aoe_templates: list[AoETemplateState] = Field(default_factory=list)
 
     @classmethod
     def initial(cls, board_id: UUID, session_id: str, cols: int, rows: int) -> BoardState:
@@ -198,6 +235,22 @@ class BoardState(BaseModel):
         to_remove = {tuple(c) for c in shrouded_cells}
         remaining = [c for c in self.revealed_cells if tuple(c) not in to_remove]
         return self.model_copy(update={"revealed_cells": remaining})
+
+    def with_token_action(self, token_id: str, action: str) -> BoardState:
+        tokens = dict(self.tokens)
+        tid_str = str(token_id)
+        if tid_str in tokens:
+            tokens[tid_str] = tokens[tid_str].model_copy(update={"active_action": action})
+        return self.model_copy(update={"tokens": tokens})
+
+    def with_aoe_template_placed(self, template: AoETemplateState) -> BoardState:
+        templates = [t for t in self.active_aoe_templates if t.template_id != template.template_id]
+        templates.append(template)
+        return self.model_copy(update={"active_aoe_templates": templates})
+
+    def without_aoe_template(self, template_id: str) -> BoardState:
+        templates = [t for t in self.active_aoe_templates if t.template_id != template_id]
+        return self.model_copy(update={"active_aoe_templates": templates})
 
     def with_area_effect(
         self,

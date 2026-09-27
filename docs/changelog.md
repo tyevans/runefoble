@@ -94,6 +94,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 
 ### Added
+- **Radial Token Action Menu & Rotatable AoE Spell Templates (`TASK-0125`, `PRD-0013`, `US-0056`, `ADR-0004`, `ADR-0006`, `ADR-0013`)**:
+  - Implemented interactive contextual radial action dial `<runefoble-radial-menu>` blooming in under 120ms with Bauhaus geometric icons for Attack, Dash, Disengage, Dodge, and Cast.
+  - Implemented rotatable geometric AoE spell engine `<runefoble-aoe-template>` supporting 15ft/30ft cones (53.13° spread angle), spheres (10ft, 20ft radius), and lines (5ft x 30ft/60ft) with tactile 15-degree angular snapping.
+  - Implemented live target intersection calculations highlighting affected tokens with glowing red/amber halos (`.target-halo`) and tinted grid cells at 60fps across square and hex grids.
+  - Added event-sourced CloudEvents domain events: `TokenActionExecuted`, `AoETemplatePlaced`, and `AoETemplateRemoved` on `BoardAggregate`.
+  - Added REST endpoints (`/tokens/{token_id}/action`, `/aoe/evaluate`, `/aoe/place`, `/aoe/{template_id}`) and real-time WebSocket stream handling for live AoE dragging and radial actions.
+  - Registered `<runefoble-radial-menu>` and `<runefoble-aoe-template>` in `services/board_state/ui/` and `/ui/manifest`.
+  - Added Storybook stories showcasing radial menu blooming and rotatable cone/sphere spell template placement.
+  - Authored comprehensive blackbox test suite `tests/test_blackbox_radial_menu_and_aoe.py` and Diataxis how-to guide `docs/how-to/interact-with-radial-action-menu-and-aoe-templates.md`.
+
 - **Personal Character Leitmotifs & Adaptive Musical Signatures (`TASK-0102`, `PRD-0016`, `US-0046`, `ADR-0002`, `ADR-0006`, `ADR-0010`, `ADR-0013`)**:
   - Implemented personalized character leitmotif profile modeling (`leitmotif.py`) supporting five instrument timbres (`lute`, `brass`, `woodwind`, `strings`, `synth`), tempo multiplier scaling, and triumphant/somber audio stem URLs.
   - Implemented adaptive audio layering engine with sub-250ms dynamic stinger triggering on clutch criticals (`CriticalHitScored`, `DiceRolled(is_crit=True)`) and near-death saves (`DeathSaveStarted`).

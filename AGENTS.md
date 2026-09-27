@@ -105,6 +105,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`interact-with-campaign-atlas-and-codex.md`](docs/how-to/interact-with-campaign-atlas-and-codex.md): How to navigate the multi-layered world atlas, define geopolitical boundaries, place milestone pins with era filtering, and manage private/shared party codex notes.
 - [`manage-generative-wardrobe-and-condition-portraits.md`](docs/how-to/manage-generative-wardrobe-and-condition-portraits.md): How to synthesize narrative wardrobe variants, apply real-time condition overlays (bloodied, poisoned, stunned), and synchronize board tokens.
 - [`trigger-kinetic-spell-vfx-and-particles.md`](docs/how-to/trigger-kinetic-spell-vfx-and-particles.md): How to trigger multi-modal kinetic spell VFX, WebGL particle blooms, elemental archetypes, and ephemeral decals.
+- [`interact-with-radial-action-menu-and-aoe-templates.md`](docs/how-to/interact-with-radial-action-menu-and-aoe-templates.md): How to trigger one-tap token actions with the contextual radial menu, rotate geometric AoE spell templates with 15-degree snapping, and highlight targets with glowing halos.
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture

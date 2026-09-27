@@ -313,3 +313,66 @@ export const AbjurationShieldBarrierVFX: Story = {
   },
 };
 
+// Story 10: Contextual radial action menu blooming
+export const RadialActionMenuBlooming: Story = {
+  render: () => {
+    return html`
+      <runefoble-board
+        id="radial-board"
+        .cols=${8}
+        .rows=${8}
+        .tokens=${sampleTokens}
+        .terrainCells=${sampleTerrain}
+        watcherStatus="Click on Valeros at (2,3) to bloom the contextual Bauhaus radial action menu."
+      ></runefoble-board>
+    `;
+  },
+};
+
+// Story 11: Rotatable 15-foot Burning Hands cone with live token targeting halo
+export const RotatableConeSpellTemplate: Story = {
+  render: () => {
+    return html`
+      <runefoble-board
+        .cols=${8}
+        .rows=${8}
+        .tokens=${sampleTokens}
+        .terrainCells=${sampleTerrain}
+        .activeAoE=${{
+          shape: 'cone',
+          originX: 2.5,
+          originY: 3.5,
+          directionDeg: 45,
+          radiusFt: 15,
+          spellName: 'Burning Hands (15-foot Cone)',
+          casterTokenId: '1',
+        }}
+        watcherStatus="Drag the rotation handle to sweep the 15ft Burning Hands cone and target hostile monsters."
+      ></runefoble-board>
+    `;
+  },
+};
+
+// Story 12: Rotatable 20-foot Sphere (Fireball) with target intersection halos
+export const RotatableSphereSpellTemplate: Story = {
+  render: () => {
+    return html`
+      <runefoble-board
+        .cols=${8}
+        .rows=${8}
+        .tokens=${sampleTokens}
+        .terrainCells=${sampleTerrain}
+        .activeAoE=${{
+          shape: 'sphere',
+          originX: 5.5,
+          originY: 2.5,
+          directionDeg: 0,
+          radiusFt: 20,
+          spellName: 'Fireball (20-foot Radius)',
+        }}
+        watcherStatus="20ft Fireball sphere centered over goblin ranks with live target halos."
+      ></runefoble-board>
+    `;
+  },
+};
+

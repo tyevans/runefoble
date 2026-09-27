@@ -157,4 +157,44 @@ export const boardTokenStyles = css`
     height: 100%;
     transition: width 0.3s ease-in-out, background 0.3s ease-in-out;
   }
+
+  /* Targeting Halo for AoE target intersections */
+  .token.target-halo {
+    animation: target-halo-pulse 0.8s infinite alternate ease-in-out;
+    outline: 3px solid var(--rf-accent-primary, #e63946);
+    outline-offset: 3px;
+  }
+
+  @keyframes target-halo-pulse {
+    0% {
+      box-shadow: 0 0 6px 2px rgba(230, 57, 70, 0.6), var(--rf-shadow-sm);
+      transform: scale(1.02);
+    }
+    100% {
+      box-shadow: 0 0 16px 6px rgba(230, 57, 70, 0.95), var(--rf-shadow);
+      transform: scale(1.10);
+    }
+  }
+
+  .cell.aoe-affected-cell {
+    background: rgba(230, 57, 70, 0.16);
+  }
+
+  .token-action-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: var(--rf-accent-tertiary, #ffb703);
+    color: #121212;
+    border: 1px solid var(--rf-border-color, #121212);
+    border-radius: 2px;
+    padding: 0 3px;
+    pointer-events: none;
+    box-shadow: 1px 1px 0px var(--rf-shadow-color, #121212);
+    z-index: 10;
+  }
 `;
+
