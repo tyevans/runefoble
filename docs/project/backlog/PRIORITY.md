@@ -164,7 +164,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 160. **TASK-0160 (Complete)**: [`0160-dm-vocal-modulator-controls-microfrontend.md`](complete/0160-dm-vocal-modulator-controls-microfrontend.md) — DM Vocal Modulator Controls & Preset Selector Microfrontend
 161. **TASK-0161 (Complete)**: [`0161-npc-faction-resource-and-bribery-aggregate.md`](complete/0161-npc-faction-resource-and-bribery-aggregate.md) — NPC Faction Resource Operations and Bribery Mechanics Aggregate
 162. **TASK-0162 (Complete)**: [`0162-faction-turf-war-and-unrest-event-pipeline.md`](complete/0162-faction-turf-war-and-unrest-event-pipeline.md) — Faction Turf War and Regional Unrest Event Pipeline
-163. **TASK-0206 (Refined)**: [`0206-frontend-spa-client-router-and-navigation-chrome.md`](refined/0206-frontend-spa-client-router-and-navigation-chrome.md) — Frontend SPA Client Router and Navigation Chrome
+163. **TASK-0206 (Complete)**: [`0206-frontend-spa-client-router-and-navigation-chrome.md`](complete/0206-frontend-spa-client-router-and-navigation-chrome.md) — Frontend SPA Client Router and Navigation Chrome
 164. **TASK-0207 (Refined)**: [`0207-zitadel-auth-client-and-login-modal-component.md`](refined/0207-zitadel-auth-client-and-login-modal-component.md) — Zitadel Auth Client and Login Modal Component
 165. **TASK-0208 (Refined)**: [`0208-gateway-campaign-lifecycle-and-membership-api.md`](refined/0208-gateway-campaign-lifecycle-and-membership-api.md) — Gateway Campaign Lifecycle and Membership API
 166. **TASK-0209 (Refined)**: [`0209-campaign-dashboard-and-creation-microfrontend.md`](refined/0209-campaign-dashboard-and-creation-microfrontend.md) — Campaign Dashboard and Creation Microfrontend

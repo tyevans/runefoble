@@ -1,7 +1,7 @@
 ---
 id: '0206'
 title: Frontend SPA Client Router and Navigation Chrome
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -13,8 +13,8 @@ governing_prds:
 governing_stories:
 - US-0066
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/195
 ---
-
 # TASK-0206: Frontend SPA Client Router and Navigation Chrome
 
 ## Status
