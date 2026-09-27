@@ -21,6 +21,7 @@ from game_session.routers import (
     combat_router,
     reactions_router,
     session_router,
+    settlements_router,
     stronghold_router,
     tavern_router,
     west_marches_router,
@@ -52,6 +53,8 @@ app.include_router(tavern_router)
 app.include_router(west_marches_router)
 app.include_router(caravan_trade_router)
 app.include_router(caravan_contracts_router)
+app.include_router(settlements_router)
+app.include_router(settlements_router, prefix="/api/v1")
 
 
 @app.get("/healthz")

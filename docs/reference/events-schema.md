@@ -933,3 +933,9 @@ For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `Intoxic
 - **`CaravanTradeCompleted`**: Emitted when a caravan arrives at its destination outpost, unlocking regional merchant stock. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `unlocked_stock`, `completed_at`.
 - **`RegionalMerchantStockUpdated`**: Emitted when outpost merchant inventory adjusts due to trade or expeditions. Fields: `shared_world_id`, `outpost_name`, `inventory_updates`.
 
+### Cross-Campaign Settlement & Haven Events (`aggregate_type: Settlement`)
+
+- **`SettlementCharteredEvent`** (`runefoble.events.game_session.settlement_chartered`): Emitted when a new frontier outpost, communal haven, or fortress is chartered. Fields: `settlement_id`, `shared_world_id`, `name`, `settlement_type`, `region`, `coordinates`, `founded_by_campaign_id`, `chartered_by`, `level`, `defense_rating`, `facilities`, `metadata`.
+- **`SettlementUpgradedEvent`** (`runefoble.events.game_session.settlement_upgraded`): Emitted when a settlement facility (workshop, sanctum, fortifications, watchtower) or defense rating is upgraded. Fields: `settlement_id`, `shared_world_id`, `facility_id`, `new_tier`, `tier_name`, `contributing_campaign_id`, `gold_spent`, `materials_spent`, `defense_rating`, `metadata`.
+- **`SettlementRestBoonClaimedEvent`** (`runefoble.events.game_session.settlement_rest_boon_claimed`): Emitted when an adventuring party or character claims a sanctum rest boon or workshop crafting perk. Fields: `settlement_id`, `shared_world_id`, `campaign_id`, `character_id`, `claimed_by`, `facility_id`, `boon`, `metadata`.
+
