@@ -18,6 +18,7 @@ from the_watcher.grammars import (
     SPELL_PATTERN,
     SPELL_TARGET_COORD_PATTERN,
 )
+from the_watcher.intent.reactions import parse_reaction_intent
 from the_watcher.models import IntentResult
 from the_watcher.spatial import (
     calculate_bounded_destination,
@@ -77,6 +78,12 @@ class SpeechIntentParser:
     def parse_speech_intent(self, transcript: str, speaker_name: str) -> IntentResult:
         """Parse natural spoken language into game actions and board mutations."""
         text = transcript.strip()
+
+        if r := parse_reaction_intent(text, speaker_name):
+            reply = f"{speaker_name} reacts: {r.trigger_phrase}!"
+            return _intent(
+                r.action_type, r.confidence, r.parameters, r.target, r.trigger_phrase, reply
+            )
 
         # 1. Coordinate movement: "move to 5, 8"
         if m := self._coord_pattern.search(text):
