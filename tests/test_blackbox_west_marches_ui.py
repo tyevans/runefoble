@@ -304,3 +304,76 @@ async def test_blackbox_tavern_notice_board(
     ).json()
     assert len(overview["tavern_board"]) == 1
     assert overview["tavern_board"][0]["author_name"] == "Ranger Laura"
+
+
+# ---------------------------------------------------------------------------
+# 3. TASK-0152: Modular Sub-components & File Length Invariant Verification
+# ---------------------------------------------------------------------------
+
+
+def test_west_marches_decomposed_subcomponents_integrity() -> None:
+    """Verify TASK-0152 decomposed sub-components, custom elements, and line limits."""
+    wm_dir = REPO_ROOT / "services/campaign_lore/ui/src/west_marches"
+    assert wm_dir.is_dir()
+
+    # 1. Verify existence of sub-components and aliases
+    pin_layer = wm_dir / "discovery_pin_layer.ts"
+    pin_alias = wm_dir / "pin_layer.ts"
+    stronghold_panel = wm_dir / "stronghold_dashboard_panel.ts"
+    stronghold_alias = wm_dir / "stronghold_panel.ts"
+    hex_overlay = wm_dir / "frontier_hex_overlay.ts"
+    hex_alias = wm_dir / "hex_overlay.ts"
+
+    for file_path in (
+        pin_layer,
+        pin_alias,
+        stronghold_panel,
+        stronghold_alias,
+        hex_overlay,
+        hex_alias,
+    ):
+        assert file_path.is_file(), f"{file_path} must exist"
+
+    # 2. Verify Custom Element registrations
+    pin_src = pin_layer.read_text(encoding="utf-8")
+    assert "@customElement('runefoble-discovery-pin-layer')" in pin_src
+    assert "class RunefobleDiscoveryPinLayer" in pin_src
+
+    stronghold_src = stronghold_panel.read_text(encoding="utf-8")
+    assert "@customElement('runefoble-stronghold-dashboard-panel')" in stronghold_src
+    assert "class RunefobleStrongholdDashboardPanel" in stronghold_src
+
+    hex_src = hex_overlay.read_text(encoding="utf-8")
+    assert "@customElement('runefoble-frontier-hex-overlay')" in hex_src
+    assert "class RunefobleFrontierHexOverlay" in hex_src
+    assert "snapToHexGrid" in hex_src
+
+    # 3. Verify styles decomposition
+    styles_dir = wm_dir / "styles"
+    for style_name in ("map.styles.ts", "pin.styles.ts", "stronghold.styles.ts"):
+        style_path = styles_dir / style_name
+        assert style_path.is_file(), f"{style_path} must exist"
+        lines = len(style_path.read_text(encoding="utf-8").splitlines())
+        assert lines < 110, f"{style_name} has {lines} lines (must be < 110)"
+
+    # 4. Verify file length invariants (< 150 lines for modules, < 120 lines for atlas root)
+    atlas_root = REPO_ROOT / "services/campaign_lore/ui/src/runefoble-west-marches-atlas.ts"
+    atlas_lines = len(atlas_root.read_text(encoding="utf-8").splitlines())
+    assert atlas_lines < 120, (
+        f"runefoble-west-marches-atlas.ts has {atlas_lines} lines (must be < 120)"
+    )
+
+    for mod in (pin_layer, stronghold_panel, hex_overlay):
+        mod_lines = len(mod.read_text(encoding="utf-8").splitlines())
+        assert mod_lines < 150, f"{mod.name} has {mod_lines} lines (must be < 150)"
+
+
+def test_storybook_sublayer_stories_contract() -> None:
+    """Verify Storybook stories contain decomposed sub-layer states."""
+    stories_file = (
+        REPO_ROOT / "services/campaign_lore/ui/src/runefoble-west-marches-atlas.stories.ts"
+    )
+    stories_code = stories_file.read_text(encoding="utf-8")
+    assert "DiscoveryPinLayerSubView" in stories_code
+    assert "FrontierHexOverlaySubView" in stories_code
+    assert "StrongholdDashboardPanelSubView" in stories_code

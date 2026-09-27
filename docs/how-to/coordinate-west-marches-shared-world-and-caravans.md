@@ -244,6 +244,13 @@ curl http://localhost:8006/ui/manifest
 ></runefoble-west-marches-atlas>
 ```
 
+### Decomposed Sub-components & Layer Architecture
+
+Following TASK-0152 and ADR-0004/ADR-0013, the atlas is decomposed into modular sub-elements under `@runefoble/campaign-lore-ui/west-marches`:
+- `<runefoble-frontier-hex-overlay>`: Renders coordinate grid snapping (`snapToHexGrid`) and unexplored wilderness fog boundary layers.
+- `<runefoble-discovery-pin-layer>`: Renders milestone pin icons, danger badges, party attribution tags, and SpiceDB Zanzibar secret pin popovers.
+- `<runefoble-stronghold-dashboard-panel>`: Displays communal outpost treasuries, defense buffers, facility upgrade cards, and shared boons.
+
 ### Event Contracts
 
 - `pin-selected`: Emitted when clicking a frontier milestone pin (`detail: { discovery, sharedWorldId }`).
