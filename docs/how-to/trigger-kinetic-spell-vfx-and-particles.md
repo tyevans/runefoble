@@ -6,10 +6,13 @@ This guide explains how to use the high-performance WebGL particle visual effect
 
 ## 1. WebGL Particle Engine Architecture
 
-The visual effects overlay (`particle_canvas.ts`) runs an instanced GPU particle system at 60fps directly above the tactical grid canvas with zero layout shift:
+The visual effects overlay runs an instanced GPU particle system at 60fps directly above the tactical grid canvas with zero layout shift, decomposed into single-responsibility modules:
+- **Core Canvas Engine (`particle_canvas.ts`)**: Coordinates WebGL context, animation loop, buffer management, and viewport resizing (< 260 lines).
+- **Projectile Physics (`particle_projectiles.ts`)**: Calculates ballistic arcs, parabolic trajectories, trail particle generation, and impact collision checks (`ProjectileManager`).
+- **Combat Grid Decals (`particle_decals.ts`)**: Manages ephemeral ground scorch marks, rune wards, and round-by-round opacity decay curves (`DecalManager`).
 - **Billboard Instancing**: GPU draws up to 800 active particles per frame using `drawArraysInstancedANGLE`.
 - **Zero Layout Shift**: Canvas is absolutely positioned within the grid wrapper, matching the tactical grid dimensions dynamically via `ResizeObserver`.
-- **Graceful Fallback**: If WebGL is unavailable or unaccelerated in headless/test environments, the engine seamlessly falls back to 2D canvas rendering.
+- **Graceful Fallback**: If WebGL is unavailable or unaccelerated in headless/test environments, the engine seamlessly falls back to 2D canvas rendering with decal overlays.
 
 ---
 

@@ -3,7 +3,7 @@
  * Provides Evocation (firestorm, lightning, frost), Abjuration (runic ward), and Conjuration (portal).
  */
 
-import type { Particle, SpellArchetype } from './particle_types.ts';
+import type { DecalType, Particle, SpellArchetype } from './particle_types.ts';
 
 export function getArchetypeColor(
   archetype: SpellArchetype,
@@ -148,4 +148,28 @@ export function createFrostBloomParticles(cx: number, cy: number, count = 60): P
     });
   }
   return result;
+}
+
+export function createArchetypeParticles(
+  archetype: SpellArchetype,
+  cx: number,
+  cy: number,
+  spellName = '',
+  damageType = ''
+): { particles: Particle[]; decalType: DecalType } {
+  const sp = spellName.toLowerCase();
+  const dt = damageType.toLowerCase();
+  if (archetype === 'abjuration' || sp.includes('shield')) {
+    return { particles: createAbjurationShieldParticles(cx, cy), decalType: 'abjuration_glyph' };
+  }
+  if (archetype === 'conjuration' || sp.includes('portal') || sp.includes('mist')) {
+    return { particles: createConjurationPortalParticles(cx, cy), decalType: 'portal_residue' };
+  }
+  if (sp.includes('lightning') || dt.includes('lightning')) {
+    return { particles: createLightningArcParticles(cx, cy), decalType: 'lightning_scorch' };
+  }
+  if (sp.includes('frost') || sp.includes('cold') || dt.includes('cold')) {
+    return { particles: createFrostBloomParticles(cx, cy), decalType: 'frost' };
+  }
+  return { particles: createFirestormParticles(cx, cy), decalType: 'scorched_earth' };
 }
