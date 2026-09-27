@@ -1,7 +1,7 @@
 ---
 id: '0221'
 title: Gateway Campaign Store Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -10,8 +10,8 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/239
 ---
-
 # TASK-0221: Gateway Campaign Store Modular Decomposition
 
 ## Status

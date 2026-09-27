@@ -195,7 +195,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 191. **TASK-0180 (Complete)**: [`0180-board-state-stories-modular-decomposition.md`](complete/0180-board-state-stories-modular-decomposition.md) — Board State Stories Modular Decomposition
 192. **TASK-0216 (Complete)**: [`0216-faction-turf-war-test-suite-modular-decomposition.md`](complete/0216-faction-turf-war-test-suite-modular-decomposition.md) — Faction Turf War Test Suite Modular Decomposition
 193. **TASK-0179 (Complete)**: [`0179-rules-compendium-homebrew-form-decomposition.md`](complete/0179-rules-compendium-homebrew-form-decomposition.md) — Rules Compendium Homebrew Subview Modular Decomposition
-194. **TASK-0221 (Refined)**: [`0221-gateway-campaign-store-modular-decomposition.md`](refined/0221-gateway-campaign-store-modular-decomposition.md) — Gateway Campaign Store Modular Decomposition
+194. **TASK-0221 (Complete)**: [`0221-gateway-campaign-store-modular-decomposition.md`](complete/0221-gateway-campaign-store-modular-decomposition.md) — Gateway Campaign Store Modular Decomposition
 195. **TASK-0181 (Refined)**: [`0181-soundscape-event-handlers-and-dependencies-decomposition.md`](refined/0181-soundscape-event-handlers-and-dependencies-decomposition.md) — Soundscape Event Handlers and Dependencies Modular Decomposition
 196. **TASK-0182 (Refined)**: [`0182-watcher-domain-events-modular-decomposition.md`](refined/0182-watcher-domain-events-modular-decomposition.md) — Watcher Domain Events Modular Decomposition
 197. **TASK-0183 (Refined)**: [`0183-faction-resources-blackbox-test-suite-decomposition.md`](refined/0183-faction-resources-blackbox-test-suite-decomposition.md) — Faction Resources Blackbox Test Suite Modular Decomposition
