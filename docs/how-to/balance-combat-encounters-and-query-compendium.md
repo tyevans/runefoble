@@ -225,5 +225,6 @@ curl http://localhost:8007/ui/manifest
 - **Instant Hybrid Search**: Debounced autocomplete with sub-50ms latency badge and category filter pills (`ALL`, `MONSTER`, `SPELL`, `CONDITION`, `HOMEBREW`).
 - **Interactive CR Encounter Builder**: Dynamic XP threshold computation across party levels/sizes with real-time lethality calculation and 1-click Auto-Balance.
 - **Homebrew Forge Subview**: Dedicated `<runefoble-homebrew-creator>` component with form validation against compendium schemas guarded by SpiceDB Zanzibar authorization.
+- **Modular Sub-Stylesheets**: Tokenized CSS modules under `src/styles/` (`compendium-base.styles.ts`, `encounter-builder.styles.ts`, `homebrew-form.styles.ts`) strictly < 150 lines per Hard Invariant 6 and ADR-0013.
 
 

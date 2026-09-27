@@ -115,6 +115,64 @@ def test_typescript_elements_source_and_custom_elements() -> None:
     assert "class RunefobleEncounterBuilder" in enc_src
 
 
+def test_modular_compendium_styles_architecture() -> None:
+    """Verify modular styles decomposition under services/rules_compendium/ui/src/styles/ per TASK-0185.
+
+    Governed by:
+    - ADR-0012: Design System Theming and Bauhaus Modernism
+    - ADR-0013: Microfrontend Architecture and Service Component Vendoring
+    - Hard Invariant 6: File length limit (< 500 lines, sub-stylesheets strictly < 150 lines)
+    """
+    ui_dir = REPO_ROOT / "services/rules_compendium/ui"
+    styles_dir = ui_dir / "src/styles"
+    assert styles_dir.is_dir(), f"{styles_dir} directory must exist"
+
+    # 1. Base & Layout Styles (< 100 lines, strictly < 150 lines)
+    base_file = styles_dir / "compendium-base.styles.ts"
+    assert base_file.is_file()
+    base_lines = len(base_file.read_text(encoding="utf-8").splitlines())
+    assert base_lines < 100, f"compendium-base.styles.ts must be < 100 lines, got {base_lines}"
+    assert "export const compendiumBaseStyles" in base_file.read_text(encoding="utf-8")
+
+    # 2. Encounter Builder Styles (< 120 lines, strictly < 150 lines)
+    enc_styles_file = styles_dir / "encounter-builder.styles.ts"
+    assert enc_styles_file.is_file()
+    enc_lines = len(enc_styles_file.read_text(encoding="utf-8").splitlines())
+    assert enc_lines < 120, f"encounter-builder.styles.ts must be < 120 lines, got {enc_lines}"
+    assert "export const encounterBuilderStyles" in enc_styles_file.read_text(encoding="utf-8")
+
+    # 3. Homebrew Form Styles (< 110 lines, strictly < 150 lines)
+    hb_styles_file = styles_dir / "homebrew-form.styles.ts"
+    assert hb_styles_file.is_file()
+    hb_lines = len(hb_styles_file.read_text(encoding="utf-8").splitlines())
+    assert hb_lines < 110, f"homebrew-form.styles.ts must be < 110 lines, got {hb_lines}"
+    assert "export const homebrewFormStyles" in hb_styles_file.read_text(encoding="utf-8")
+
+    # 4. Styles barrel index.ts
+    styles_index = styles_dir / "index.ts"
+    assert styles_index.is_file()
+    styles_index_content = styles_index.read_text(encoding="utf-8")
+    assert "compendium-base.styles.ts" in styles_index_content
+    assert "encounter-builder.styles.ts" in styles_index_content
+    assert "homebrew-form.styles.ts" in styles_index_content
+
+    # 5. Aggregator Facade (< 80 lines, < 60 lines)
+    facade_file = ui_dir / "src/runefoble-rules-compendium.styles.ts"
+    assert facade_file.is_file()
+    facade_lines = len(facade_file.read_text(encoding="utf-8").splitlines())
+    assert facade_lines < 80, (
+        f"runefoble-rules-compendium.styles.ts must be strictly < 80 lines, got {facade_lines}"
+    )
+    assert facade_lines < 60, (
+        f"runefoble-rules-compendium.styles.ts must be < 60 lines, got {facade_lines}"
+    )
+    facade_content = facade_file.read_text(encoding="utf-8")
+    assert "export const compendiumStyles" in facade_content
+    assert "compendiumBaseStyles" in facade_content
+    assert "encounterBuilderStyles" in facade_content
+    assert "homebrewFormStyles" in facade_content
+
+
 def test_storybook_stories_definition() -> None:
     """Verify Storybook stories include Search, Monster stat cards, CR Encounter balance, and Homebrew."""
     stories_file = (

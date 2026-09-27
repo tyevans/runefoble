@@ -251,3 +251,12 @@ To enforce **Hard Invariant 6** (source file length limit < 500 lines) and promo
    ```
 4. **Contract Preservation**: Style extraction maintains 100% API contract stability (identical custom element tag name, properties, attributes, and emitted `CustomEvent` signatures).
 
+### Sub-Stylesheet Modular Decomposition Pattern
+
+When companion `.styles.ts` files approach modular size thresholds (> 300 lines), they are decomposed into focused single-responsibility sub-stylesheets under a `styles/` subfolder (e.g. `services/rules_compendium/ui/src/styles/`):
+- `compendium-base.styles.ts`: Host container, search bar, navigation tabs, filter pills, and results cards (< 100 lines).
+- `encounter-builder.styles.ts`: Difficulty meters, monster tags, party thresholds, and draft roster controls (< 120 lines).
+- `homebrew-form.styles.ts`: Form inputs, stat block preview grids, and action button groups (< 110 lines).
+- **Aggregator Facade (`runefoble-rules-compendium.styles.ts`)**: Re-exports all sub-stylesheets and combines them into an exported `compendiumStyles: CSSResult[]` array (< 60 lines), guaranteeing backward compatibility across all importing components.
+
+
