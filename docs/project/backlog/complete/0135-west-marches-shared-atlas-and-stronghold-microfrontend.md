@@ -1,7 +1,7 @@
 ---
 id: '0135'
 title: West Marches Shared World Atlas Pins & Communal Stronghold Dashboard Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0008
@@ -19,8 +19,8 @@ governing_stories:
 - US-0050
 - US-0058
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/145
 ---
-
 # TASK-0135: West Marches Shared World Atlas Pins & Communal Stronghold Dashboard Microfrontend
 
 ## Status
