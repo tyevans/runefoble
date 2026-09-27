@@ -1,7 +1,7 @@
 ---
-id: '0183'
+id: 0183
 title: Faction Resources Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0161
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0057
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/242
 ---
-
 # TASK-0183: Faction Resources Blackbox Test Suite Modular Decomposition
 
 ## Status
