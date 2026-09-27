@@ -86,3 +86,44 @@ The character sheet's visual styling is modularized into discrete CSS blocks adh
 - **Conditions Styles** (`runefoble-character-sheet.conditions.styles.ts`): Tactical condition badges, absence penalty tags, interactive tooltips, spell slot pips, and responsive mobile breakpoints.
 - **Aggregator** (`runefoble-character-sheet.styles.ts`): Re-exports modular style blocks as a combined `CSSResultGroup` for Lit element consumption.
 
+---
+
+## 7. Character Roster & Campaign Party Assignment
+
+The Character Roster microfrontend (`<runefoble-character-roster>`) and builder modal (`<runefoble-character-builder-modal>`) allow players to maintain a persistent library of adventurers across campaigns.
+
+### Character Roster View (`<runefoble-character-roster>`)
+The roster displays a responsive grid of owned adventurers with:
+- **Portrait & Identity**: Avatar thumbnail, character name, class/subclass, and level badge.
+- **Vitals Display**: Dynamic health bar (with warning state for low HP $\le 30\%$), Armor Class shield, and movement speed.
+- **Campaign Assignment Badge**: Indicates whether the character is actively attached to a campaign party (`🏰 Tomb of the Star-Eater`) or available as an unassigned free agent (`○ Unassigned`).
+- **Search & Filter Controls**: Text filtering across name, class, subclass, and campaign, plus quick status filter pills (**All**, **Assigned**, **Unassigned**).
+
+### Quick Actions & CustomEvents
+| Button | Event Dispatched | Detail Payload | Description |
+|---|---|---|---|
+| **"Inspect Sheet"** | `@inspect-character` | `{ characterId, character }` | Navigates to full character sheet view or opens character details. |
+| **"Assign to Campaign"** | `@assign-campaign` | `{ characterId, campaignId, campaignTitle }` | Opens party assignment dialog to link character to an active campaign or unassign. |
+| **"Delete"** | `@delete-character` | `{ characterId }` | Opens confirmation dialog and dispatches deletion event upon approval. |
+| **"+ Create Character"** | `@create-character` | `CreateCharacterPayload` | Opens builder modal and emits character creation payload upon submission. |
+
+### Character Builder Modal (`<runefoble-character-builder-modal>`)
+Provides a validated form for creating new adventurers:
+1. **Identity**: Character Name (required), Class (SRD 5e standard classes), and optional Subclass.
+2. **Combat Vitals**: Level (1–20), Max HP ($> 0$), Armor Class, and Movement Speed (5-ft increments).
+3. **Ability Scores**: STR, DEX, CON, INT, WIS, CHA scores with real-time automatic modifier calculations ($\lfloor(\text{score} - 10) / 2\rfloor$).
+4. **Token Portrait**: Predefined geometric portrait presets or custom avatar URLs.
+
+### Example Embedding
+```html
+<runefoble-character-roster
+  .characters="${playerCharacters}"
+  .campaigns="${activeCampaigns}"
+  current-user-id="usr-marcus"
+  @create-character="${(e) => saveCharacter(e.detail)}"
+  @assign-campaign="${(e) => updatePartyAssignment(e.detail)}"
+  @inspect-character="${(e) => openSheet(e.detail.characterId)}"
+  @delete-character="${(e) => deleteCharacter(e.detail.characterId)}"
+></runefoble-character-roster>
+```
+

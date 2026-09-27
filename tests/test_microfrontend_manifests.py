@@ -90,6 +90,8 @@ def test_character_sheet_ui_manifest_frontdoor(character_client):
     assert "runefoble-character-card" in data["components"]
     assert "runefoble-absentee-recap" in data["components"]
     assert "runefoble-character-sheet" in data["components"]
+    assert "runefoble-character-roster" in data["components"]
+    assert "runefoble-character-builder-modal" in data["components"]
 
 
 def test_game_session_ui_manifest_frontdoor(session_client):
@@ -178,6 +180,16 @@ def test_service_ui_package_integrity():
             "@runefoble/character-sheet-ui",
             "runefoble-character-sheet",
         ),
+        (
+            "services/character_sheet/ui",
+            "@runefoble/character-sheet-ui",
+            "runefoble-character-roster",
+        ),
+        (
+            "services/character_sheet/ui",
+            "@runefoble/character-sheet-ui",
+            "runefoble-character-builder-modal",
+        ),
         ("services/game_session/ui", "@runefoble/game-session-ui", "runefoble-initiative-tracker"),
         ("services/the_watcher/ui", "@runefoble/the-watcher-ui", "runefoble-watcher-feed"),
         ("services/voice_agent/ui", "@runefoble/voice-agent-ui", "runefoble-voice-controls"),
@@ -217,7 +229,7 @@ def test_service_ui_package_integrity():
         index_file = REPO_ROOT / rel_dir / "src" / "index.ts"
         assert index_file.is_file(), f"{index_file} must exist"
 
-        src_files = list((REPO_ROOT / rel_dir / "src").glob("*.ts"))
+        src_files = list((REPO_ROOT / rel_dir / "src").rglob("*.ts"))
         assert any(
             f"@customElement('{elem_tag}')" in f.read_text(encoding="utf-8") for f in src_files
         ), f"Custom element '{elem_tag}' not found in {rel_dir}/src"
