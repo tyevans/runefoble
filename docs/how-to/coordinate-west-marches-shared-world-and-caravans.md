@@ -394,3 +394,21 @@ curl http://localhost:8004/ui/manifest
 3. **Active Transit Route Status Pill**: Caravans in transit display a live progress bar tracking completed stages vs. remaining distance, alongside ambush encounter warning badges.
 4. **Real-Time Notifications**: Bauhaus toast banners display immediate visual confirmation upon claiming, dispatching, or delivering trade convoys.
 
+---
+
+## 7. Modular Blackbox Test Organization & Architecture
+
+Per **ADR-0013** and **Hard Invariant 6** (< 500 lines per file), the blackbox test suite for cross-campaign caravan trading ledgers, escort contracts, and settlement economy fulfillment is partitioned into focused, single-responsibility frontdoor modules under `tests/test_blackbox_caravan_contracts/` (with all test files < 150 lines):
+
+- **`tests/test_blackbox_caravan_contracts/conftest.py`**: Shared test harness, mock Redis event bus, mock SpiceDB Zanzibar client, TestClient setup, and stream event verification helpers (< 50 lines).
+- **`tests/test_blackbox_caravan_contracts/test_board_posting.py`**: Verifies mercenary contract creation, risk metadata, collateral deposits, and tavern notice board filtering queries (< 130 lines).
+- **`tests/test_blackbox_caravan_contracts/test_cross_campaign_auth.py`**: Verifies external party contract acceptance, SpiceDB Zanzibar high-tier officer authorization, and 403 denial enforcement (< 120 lines).
+- **`tests/test_blackbox_caravan_contracts/test_caravan_lifecycle.py`**: Verifies caravan dispatch, waypoint advancement, tactical ambushes, cargo damage tracking, and destination settlement economy payout (< 140 lines).
+- **`tests/test_blackbox_caravan_contracts/test_caravan_destruction_and_ui.py`**: Verifies fatal ambushes, contract loss states, forfeit of deposits, and `<runefoble-caravan-board>` microfrontend manifest registration (< 110 lines).
+
+Run the modular test suite:
+```bash
+uv run pytest tests/test_blackbox_caravan_contracts/
+```
+
+
