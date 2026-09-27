@@ -11,6 +11,7 @@ from game_session.caravan import CaravanContractAggregate
 from game_session.caravan_ledger import CaravanLedgerAggregate
 from game_session.merchants import MerchantAggregate
 from game_session.minigames import TavernGameAggregate
+from game_session.settlements.aggregate import SettlementAggregate
 from game_session.stronghold import StrongholdAggregate
 from game_session.west_marches import SharedWorldAggregate
 from runefoble_auth.spicedb import SpiceDBClient
@@ -53,6 +54,9 @@ caravan_ledger_repo: AggregateRepository[CaravanLedgerAggregate] = create_aggreg
 caravan_contract_repo: AggregateRepository[CaravanContractAggregate] = create_aggregate_repository(
     CaravanContractAggregate
 )
+settlement_repo: AggregateRepository[SettlementAggregate] = create_aggregate_repository(
+    SettlementAggregate
+)
 
 
 def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
@@ -77,6 +81,10 @@ def get_caravan_ledger_repository() -> AggregateRepository[CaravanLedgerAggregat
 
 def get_caravan_contract_repository() -> AggregateRepository[CaravanContractAggregate]:
     return caravan_contract_repo
+
+
+def get_settlement_repository() -> AggregateRepository[SettlementAggregate]:
+    return settlement_repo
 
 
 _world_contracts_index: dict[str, list[str]] = {}

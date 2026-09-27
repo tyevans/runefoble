@@ -114,6 +114,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`manage-spoken-reactions-and-ready-actions.md`](docs/how-to/manage-spoken-reactions-and-ready-actions.md): How to halt active combat turns with spoken reaction interrupts within 500ms, prompt reacting players, and evaluate conditional ready-action triggers.
 - [`manage-secret-dm-traps-and-map-triggers.md`](docs/how-to/manage-secret-dm-traps-and-map-triggers.md): How to configure DM-only secret spatial traps, handle movement-pause breach detection, and execute seamless battlemap switching with party token teleportation.
 - [`modulate-dm-vocal-npc-presets.md`](docs/how-to/modulate-dm-vocal-npc-presets.md): How to apply real-time DSP pitch and formant shift filters, creature archetype presets, and live stream audio modulation.
+- [`charter-frontier-settlements-and-havens.md`](docs/how-to/charter-frontier-settlements-and-havens.md): How to charter persistent communal havens, co-upgrade workshops and fortresses across West Marches campaigns, claim rest boons, and enforce SpiceDB Zanzibar isolation.
 
 
 

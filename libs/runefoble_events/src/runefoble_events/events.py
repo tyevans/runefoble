@@ -153,6 +153,14 @@ from runefoble_events.session import (
     TurnAdvanced,
     TurnStarted,
 )
+from runefoble_events.settlements import (
+    SettlementChartered,
+    SettlementCharteredEvent,
+    SettlementRestBoonClaimed,
+    SettlementRestBoonClaimedEvent,
+    SettlementUpgraded,
+    SettlementUpgradedEvent,
+)
 from runefoble_events.soundscape import (
     LeitmotifProfileConfigured,
     LeitmotifTriggered,
@@ -417,4 +425,10 @@ __all__ = [
     "FactionMercenaryRecruited",
     "FactionBriberyAttemptedEvent",
     "FactionBriberyAttempted",
+    "SettlementCharteredEvent",
+    "SettlementChartered",
+    "SettlementUpgradedEvent",
+    "SettlementUpgraded",
+    "SettlementRestBoonClaimedEvent",
+    "SettlementRestBoonClaimed",
 ]

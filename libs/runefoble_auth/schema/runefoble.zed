@@ -208,3 +208,22 @@ definition board {
     permission view = dungeon_master + campaign->view
 }
 
+definition settlement {
+    relation shared_world: shared_world
+    relation founder: user
+    relation discovering_campaign: campaign
+    relation guild_officer: user
+
+    // Viewing settlement requires founder, discovering campaign member, guild officer, or shared_world viewer
+    permission view = founder + guild_officer + discovering_campaign->view + shared_world->view
+
+    // Upgrading facilities in a haven requires founder, discovering campaign player, guild officer, or shared_world trade
+    permission upgrade = founder + guild_officer + discovering_campaign->play + shared_world->trade
+
+    // Claiming rest boons / utilizing sanctums
+    permission use = founder + guild_officer + discovering_campaign->play + shared_world->discover
+
+    // Managing or defending settlement
+    permission manage = founder + guild_officer + shared_world->manage
+}
+
