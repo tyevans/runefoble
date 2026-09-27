@@ -181,10 +181,10 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 177. **TASK-0169 (Refined)**: [`0169-hardware-aec-filter-and-erle-validation.md`](refined/0169-hardware-aec-filter-and-erle-validation.md) — Hardware Acoustic Echo Cancellation and ERLE Validation
 178. **TASK-0172 (Refined)**: [`0172-dynamic-fastmcp-tool-hot-reloading-registry.md`](refined/0172-dynamic-fastmcp-tool-hot-reloading-registry.md) — Dynamic FastMCP Tool Hot-Reloading Registry
 179. **TASK-0173 (Refined)**: [`0173-universal-vtt-door-and-lighting-parser.md`](refined/0173-universal-vtt-door-and-lighting-parser.md) — Universal VTT Door and Dynamic Lighting Parser
-180. **TASK-0163 (Proposed)**: [`0163-faction-espionage-radar-alerts-microfrontend.md`](proposed/0163-faction-espionage-radar-alerts-microfrontend.md) — Faction Espionage and Alert Feeds Microfrontend
-181. **TASK-0167 (Proposed)**: [`0167-absentee-mobile-directive-voting-microfrontend.md`](proposed/0167-absentee-mobile-directive-voting-microfrontend.md) — Absentee Mobile Directive and Remote Voting Microfrontend
-182. **TASK-0170 (Proposed)**: [`0170-kinetic-3d-dice-physics-and-tray-audio.md`](proposed/0170-kinetic-3d-dice-physics-and-tray-audio.md) — Kinetic 3D Dice Physics and Tray Audio Integration
-183. **TASK-0171 (Proposed)**: [`0171-miniature-knockback-and-elevation-fall-physics.md`](proposed/0171-miniature-knockback-and-elevation-fall-physics.md) — Miniature Knockback Impulse and Elevation Physics
+180. **TASK-0163 (Refined)**: [`0163-faction-espionage-radar-alerts-microfrontend.md`](refined/0163-faction-espionage-radar-alerts-microfrontend.md) — Faction Espionage and Alert Feeds Microfrontend
+181. **TASK-0167 (Refined)**: [`0167-absentee-mobile-directive-voting-microfrontend.md`](refined/0167-absentee-mobile-directive-voting-microfrontend.md) — Absentee Mobile Directive and Remote Voting Microfrontend
+182. **TASK-0170 (Refined)**: [`0170-kinetic-3d-dice-physics-and-tray-audio.md`](refined/0170-kinetic-3d-dice-physics-and-tray-audio.md) — Kinetic 3D Dice Physics and Tray Audio Integration
+183. **TASK-0171 (Refined)**: [`0171-miniature-knockback-and-elevation-fall-physics.md`](refined/0171-miniature-knockback-and-elevation-fall-physics.md) — Miniature Knockback Impulse and Elevation Physics
 184. **TASK-0174 (Proposed)**: [`0174-community-plugin-ui-extension-slots-microfrontend.md`](proposed/0174-community-plugin-ui-extension-slots-microfrontend.md) — Community Plugin UI Extension Slots Microfrontend
 185. **TASK-0176 (Proposed)**: [`0176-west-marches-ui-blackbox-test-suite-decomposition.md`](proposed/0176-west-marches-ui-blackbox-test-suite-decomposition.md) — West Marches UI Blackbox Test Suite Modular Decomposition
 186. **TASK-0177 (Proposed)**: [`0177-runefoble-events-aggregator-modular-decomposition.md`](proposed/0177-runefoble-events-aggregator-modular-decomposition.md) — Runefoble Events Aggregator Modular Decomposition
@@ -223,3 +223,4 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 219. **TASK-0220 (Proposed)**: [`0220-campaign-members-styles-modular-decomposition.md`](proposed/0220-campaign-members-styles-modular-decomposition.md) — Campaign Members Styles Modular Decomposition
 220. **TASK-0221 (Proposed)**: [`0221-gateway-campaign-store-modular-decomposition.md`](proposed/0221-gateway-campaign-store-modular-decomposition.md) — Gateway Campaign Store Modular Decomposition
 221. **TASK-0222 (Proposed)**: [`0222-character-roster-styles-modular-decomposition.md`](proposed/0222-character-roster-styles-modular-decomposition.md) — Character Roster Styles Modular Decomposition
+222. **TASK-0223 (Proposed)**: [`0223-session-lobby-styles-modular-decomposition.md`](proposed/0223-session-lobby-styles-modular-decomposition.md) — Session Lobby Styles Modular Decomposition
