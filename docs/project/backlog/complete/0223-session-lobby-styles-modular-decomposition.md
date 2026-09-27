@@ -1,7 +1,7 @@
 ---
 id: '0223'
 title: Session Lobby Styles Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -11,8 +11,8 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/231
 ---
-
 # TASK-0223: Session Lobby Styles Modular Decomposition
 
 ## Status
