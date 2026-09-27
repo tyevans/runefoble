@@ -172,11 +172,20 @@ el.addEventListener('reagents-combined', (e) => {
   console.log('Crafting outcome:', e.detail.outcome);
 });
 
-el.addEventListener('campfire-rest-requested', (e) => {
-  console.log('Rest sequence initiated:', e.detail);
-});
-
 el.addEventListener('stronghold-upgrade-requested', (e) => {
   console.log('Upgrading facility:', e.detail.facility);
 });
 ```
+
+---
+
+## 5. Modular Alchemical Domain Architecture
+
+Under TASK-0153 (ADR-0003, ADR-0007, ADR-0011), the crafting engine is organized into focused submodules under `services/character_sheet/src/character_sheet/crafting/`:
+
+- **`recipes.py`**: Reagents, catalysts, canonical recipes, `Recipe` schema, `CraftingState`, and DC calculation (`calculate_crafting_dc`).
+- **`mishaps.py`**: Volatile mishap d100 tables, risk calculation (`calculate_volatile_risk`), and `MishapResolver` consequence generator.
+- **`engine.py`**: `CraftingEngine` (proficiency application and recipe evaluation) and `CraftingAggregate` event-sourced state transitions.
+- **`__init__.py`**: Re-exports all core domain types (`CraftingEngine`, `Recipe`, `MishapResolver`, `CraftingAggregate`).
+- **`crafting.py`**: Backward-compatible facade preserving all top-level module imports.
+

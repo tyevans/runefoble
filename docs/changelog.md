@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Campfire Crafting Engine Recipe Registry and Mishap Table Modular Decomposition (`TASK-0153`, `ADR-0003`, `ADR-0007`, `ADR-0011`, `PRD-0014`, `US-0044`)**:
+  - Decomposed `services/character_sheet/src/character_sheet/crafting.py` (375 lines) into modular domain submodules under `services/character_sheet/src/character_sheet/crafting/`, with all modules strictly < 130 lines per Hard Invariant 6:
+    - `recipes.py` (102 lines): Reagents catalogue, catalysts catalogue, known recipes, `Recipe` schema model, `CraftingState`, and DC difficulty check calculations (`calculate_crafting_dc`, `find_matching_recipe`).
+    - `mishaps.py` (128 lines): Volatile d100 mishap consequence tables, volatility risk scoring (`calculate_volatile_risk`), and `MishapResolver` consequence generators.
+    - `engine.py` (129 lines): `CraftingEngine` orchestration (proficiency bonuses, recipe evaluation, attempt resolution) and `CraftingAggregate` event-sourced state transitions via `eventsource-py`.
+    - `__init__.py` (27 lines): Re-exports all core domain types (`CraftingEngine`, `Recipe`, `MishapResolver`, `CraftingAggregate`, `CraftingState`).
+    - `crafting.py` (17 lines): Preserved backward-compatible facade re-exporting all top-level module symbols for existing callers.
+  - Added comprehensive frontdoor blackbox test suite `tests/test_blackbox_crafting/` verifying modular decomposition, file size invariants (< 180 lines), domain models, and public HTTP frontdoors (`/api/v1/crafting/recipes`, `/api/v1/crafting/reagents`, `/api/v1/crafting/recipes/combine`, `/api/v1/crafting/{char_id}/history`).
+  - Updated Diataxis guide `docs/how-to/run-campfire-rests-and-alchemical-crafting.md` and reference specification `docs/reference/downtime-and-crafting-events.md`.
 - **Caravan Board Microfrontend Styles and Component Decomposition (`TASK-0148`, `ADR-0004`, `ADR-0012`, `ADR-0013`, `PRD-0018`, `US-0058`)**:
   - Decomposed `services/game_session/ui/src/runefoble-caravan-board.ts` (399 lines) and `runefoble-caravan-board.styles.ts` (398 lines) into modular sub-components and scoped Bauhaus styles under `services/game_session/ui/src/caravan/`, with all files strictly < 150 lines:
     - `contract_card.ts` (83 lines): `<runefoble-caravan-contract-card>` rendering individual notice board contract cards, route risk badges, itemized bounty rewards, live transit progress tracks, ambush alerts, and contextual role action buttons.
