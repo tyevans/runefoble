@@ -42,35 +42,113 @@
 - [x] Conversational Disambiguation & Compound Action Intents (TASK-0054)
 - [x] Stand-In Policy Guardrails & Mid-Session Hot-Swap Takeover (TASK-0055)
 
-## Milestone 4: Broadcast Studio & Community Platform (Current)
+## Milestone 4: Broadcast Studio & Community Platform (Complete)
 ### Foundational Platform Enablers
-- [ ] TypeScript Live Audience Studio & Spectator Interactivity (ADR-0001, ADR-0006, ADR-0007, TASK-0051)
+- [x] TypeScript Live Audience Studio & Spectator Interactivity (ADR-0001, ADR-0006, ADR-0007, TASK-0051)
 
 ### Broadcast & Interactivity Epics
-- [ ] Cinematic Director Auto-Camera & OBS Transparent Overlay (TASK-0056)
-- [ ] Campaign Telemetry, Analytics & Chronicle Archive (TASK-0052)
-- [ ] Campaign Telemetry Dashboard & Chronicle Timeline Microfrontend (PRD-0012, US-0040, US-0054, TASK-0110)
-- [ ] Universal VTT Importer & Dynamic MCP Tool Registry (TASK-0057)
+- [x] Cinematic Director Auto-Camera & OBS Transparent Overlay (TASK-0056)
+- [x] Campaign Telemetry, Analytics & Chronicle Archive (TASK-0052)
+- [x] Campaign Telemetry Dashboard & Chronicle Timeline Microfrontend (PRD-0012, US-0040, US-0054, TASK-0110)
+- [x] Universal VTT Importer & Dynamic MCP Tool Registry (TASK-0057)
 
-## Milestone 5: Collaborative Creation, Downtime & Tactile Immersion
+## Milestone 5: Collaborative Creation, Downtime & Tactile Immersion (Complete)
 ### Downtime, Social Minigames & Base Building
-- [ ] Downtime Activities, Alchemical Crafting & Party Stronghold Engine (PRD-0014, US-0044, TASK-0100)
-- [ ] Interactive Tavern Minigames & Personality-Driven Merchant Haggling (PRD-0014, US-0047, TASK-0103)
-- [ ] Character Sheet UI Inventory Grid & Condition Indicators (PRD-0006, US-0015, US-0051, TASK-0107)
+- [x] Downtime Activities, Alchemical Crafting & Party Stronghold Engine (PRD-0014, US-0044, TASK-0100)
+- [x] Interactive Tavern Minigames & Personality-Driven Merchant Haggling (PRD-0014, US-0047, TASK-0103)
+- [x] Character Sheet UI Inventory Grid & Condition Indicators (PRD-0006, US-0015, US-0051, TASK-0107)
 
 ### Tactile Artifacts, Living Codex & Hybrid Maker
-- [ ] Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector (PRD-0015, US-0045, TASK-0101)
-- [ ] Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens (PRD-0015, US-0049, TASK-0105)
-- [ ] Collaborative Campaign World Atlas & Living Party Codex (PRD-0015, US-0050, TASK-0106)
-- [ ] Rules Compendium Search & Encounter Builder Microfrontend (PRD-0008, US-0037, US-0052, TASK-0108)
+- [x] Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector (PRD-0015, US-0045, TASK-0101)
+- [x] Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens (PRD-0015, US-0049, TASK-0105)
+- [x] Collaborative Campaign World Atlas & Living Party Codex (PRD-0015, US-0050, TASK-0106)
+- [x] Rules Compendium Search & Encounter Builder Microfrontend (PRD-0008, US-0037, US-0052, TASK-0108)
 
 ### Expressive Performance, Audio Leitmotifs & Particle VFX
-- [ ] Personal Character Leitmotifs & Adaptive Musical Signatures (PRD-0016, US-0046, TASK-0102)
-- [ ] Multi-Modal Kinetic Spell VFX & WebGL Particle Magic (PRD-0016, US-0048, TASK-0104)
-- [ ] Dynamic Soundscape Mixing Panel & Foley Soundboard Microfrontend (PRD-0010, US-0039, US-0053, TASK-0109)
+- [x] Personal Character Leitmotifs & Adaptive Musical Signatures (PRD-0016, US-0046, TASK-0102)
+- [x] Multi-Modal Kinetic Spell VFX & WebGL Particle Magic (PRD-0016, US-0048, TASK-0104)
+- [x] Generative Wardrobe, Emotion & State Portrait Gallery (PRD-0016, US-0055, TASK-0124)
+- [x] Radial Token Action Menu & Rotatable AoE Spell Templates (PRD-0013, US-0056, TASK-0125)
+- [x] Dynamic Soundscape Mixing Panel & Foley Soundboard Microfrontend (PRD-0010, US-0039, US-0053, TASK-0109)
 
-## Milestone 6: Intelligent Living Worlds & Spatial Multi-Party Universes
-- [ ] Autonomous NPC Faction Agendas & Background Simulation Engine (`FEAT-WAT-07`)
-- [ ] Multi-Party West Marches Shared Persistent World State & Cross-Campaign Trade
-- [ ] Spatial Companion Mobile App, Haptic Secret Pings & Physical Dice Tray Integration
+## Milestone 6: Intelligent Living Worlds & Spatial Multi-Party Universes (Complete)
+- [x] Autonomous NPC Faction Agendas & Background Simulation Engine (`FEAT-WAT-07`, US-0057, TASK-0126)
+- [x] Multi-Party West Marches Shared Persistent World State & Cross-Campaign Trade (US-0058, TASK-0127)
+- [x] Spatial Companion Mobile App, Haptic Secret Pings & WebRTC Gateway (US-0059, TASK-0128)
+- [x] Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts (US-0058, TASK-0129)
+- [x] Spatial Companion Mobile WebRTC Audio & Haptic Controller Microfrontend (US-0059, TASK-0134)
+- [x] West Marches Shared World Atlas Pins & Communal Stronghold Dashboard Microfrontend (US-0050, US-0058, TASK-0135)
+- [x] Cross-Campaign Caravan Trading & Frontier Bounty Board Microfrontend (US-0058, TASK-0136)
+- [x] Autonomous NPC Faction Agendas Radar & Intelligence Bulletin Microfrontend (US-0057, TASK-0137)
 
+## Milestone 7: Neural Audio Duplex & Tangible 3D Tabletop (Complete)
+### Foundational Platform & Physics Enablers
+- [x] Zero-Latency Neural Voice Duplex & Speech Interruption Handling (`FEAT-VOX-06`, US-0060, TASK-0141)
+- [x] Tabletop 3D Physics Engine & Mesh Collision Integration (`FEAT-BRD-06`, US-0061, TASK-0150)
+
+### Interactive Audio & 3D Tabletop Epics
+- [x] 3D Miniature Tokens & WebGL Tabletop Physics (`FEAT-BRD-06`, US-0061, TASK-0142)
+- [x] Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend (`FEAT-VOX-06`, US-0060, TASK-0149)
+
+## Milestone 8: Reactive Tactical Environments & In-World DM Tools (Complete)
+### Foundational Platform & Audio Enablers
+- [x] Spoken Reaction Interrupts & Ready-Action Combat Triggers (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0155)
+- [x] Secret DM Spatial Traps, Map Switching & Hidden Cell Triggers (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0156)
+- [x] DM Live Vocal Modulator & Real-Time NPC Formant DSP Engine (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0157)
+- [x] GameSession Aggregate and Reaction Handlers Modular Decomposition (TASK-0175)
+
+### Tactical Reactions & DM Tooling Epics
+- [x] Reactive Combat Reactions & Interrupt Prompt Microfrontend (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0158)
+- [x] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
+- [x] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
+
+## Milestone 9: Persona Immersion & Community Ecosystem (Current)
+### Living Worlds, Mobile & Voice Enablers
+- [x] NPC Faction Resource Operations and Bribery Mechanics Aggregate (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0161)
+- [ ] Faction Turf War and Regional Unrest Event Pipeline (`FEAT-WAT-07`, US-0057, US-0019, PRD-0017, TASK-0162)
+- [ ] Cross-Campaign Settlement and Haven Registry (`FEAT-LRE-04`, US-0058, PRD-0018, TASK-0164)
+- [ ] Frontier Mercenary Contract and Bounty Board Router (`FEAT-DWN-04`, US-0058, PRD-0018, TASK-0165)
+- [ ] Mobile Low-Bandwidth Opus Adaptive Stream Adapter (`FEAT-VOX-01`, US-0059, PRD-0019, TASK-0166)
+- [ ] Neural Speech Barge-In and Soft Crossfade Audio Filter (`FEAT-VOX-06`, US-0060, PRD-0020, TASK-0168)
+- [ ] Hardware Acoustic Echo Cancellation and ERLE Validation (`FEAT-VOX-06`, US-0060, PRD-0020, TASK-0169)
+- [ ] Dynamic FastMCP Tool Hot-Reloading Registry (`FEAT-DEV-01`, US-0008, US-0035, PRD-0022, TASK-0172)
+- [ ] Universal VTT Door and Dynamic Lighting Parser (`FEAT-BRD-05`, US-0033, PRD-0022, TASK-0173)
+
+### Multi-Party, Physics & Extensible UI Epics
+- [ ] Faction Espionage and Alert Feeds Microfrontend (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0163)
+- [ ] Absentee Mobile Directive and Remote Voting Microfrontend (`FEAT-WAT-05`, US-0059, US-0027, PRD-0019, TASK-0167)
+- [ ] Kinetic 3D Dice Physics and Tray Audio Integration (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0170)
+- [ ] Miniature Knockback Impulse and Elevation Physics (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0171)
+- [ ] Community Plugin UI Extension Slots Microfrontend (`FEAT-DEV-01`, US-0035, PRD-0022, TASK-0174)
+
+### Continuous Architecture & Modular Refactorings
+- [ ] West Marches UI Blackbox Test Suite Modular Decomposition (TASK-0176)
+- [ ] Runefoble Events Aggregator Modular Decomposition (TASK-0177)
+- [ ] GameSession Models Modular Decomposition (TASK-0178)
+- [ ] Rules Compendium Homebrew Subview Modular Decomposition (TASK-0179)
+- [ ] Board State Stories Modular Decomposition (TASK-0180)
+- [ ] Soundscape Event Handlers and Dependencies Modular Decomposition (TASK-0181)
+- [ ] Watcher Domain Events Modular Decomposition (TASK-0182)
+- [ ] Faction Resources Blackbox Test Suite Modular Decomposition (TASK-0183)
+- [ ] Campfire Crafting Blackbox Test Suite Modular Decomposition (TASK-0184)
+- [ ] Rules Compendium Styles Modular Decomposition (TASK-0185)
+- [ ] Caravan Aggregate and Contract Models Modular Decomposition (TASK-0186)
+- [ ] Campaign Atlas Blackbox Test Suite Modular Decomposition (TASK-0187)
+- [ ] Board State Previews Router Modular Decomposition (TASK-0188)
+- [ ] Character Sheet UI Templates Modular Decomposition (TASK-0189)
+- [ ] Cinematic Director Blackbox Test Suite Modular Decomposition (TASK-0190)
+- [ ] Kinetic Spell VFX Blackbox Test Suite Modular Decomposition (TASK-0191)
+- [ ] Board Templates Rendering and Subviews Modular Decomposition (TASK-0192)
+- [ ] Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition (TASK-0193)
+- [ ] Combat Heatmap Canvas Rendering and Subviews Modular Decomposition (TASK-0194)
+- [ ] Faction Radar SVG and Drawer Subviews Modular Decomposition (TASK-0195)
+- [ ] Campaign Atlas Layers and Pins Subviews Modular Decomposition (TASK-0196)
+- [ ] Asset Forge Raster Generator Modular Decomposition (TASK-0197)
+- [ ] Campaign Lore Codex Router Modular Decomposition (TASK-0198)
+- [ ] Campfire Crafting Subviews Modular Decomposition (TASK-0199)
+- [ ] Campaign Analytics Stories Fixtures Modular Decomposition (TASK-0200)
+- [ ] Board State Radial Menu Glyphs and Styles Modular Decomposition (TASK-0201)
+- [ ] Backlog Queue Parser and Serializer Modular Decomposition (TASK-0202)
+- [ ] Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (TASK-0203)
+- [ ] Character Sheet Component Action Handlers and State Modular Decomposition (TASK-0204)
+- [ ] West Marches Aggregate Discovery and Territory Handlers Modular Decomposition (TASK-0205)

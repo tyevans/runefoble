@@ -48,6 +48,27 @@ def voice_client():
     return TestClient(app)
 
 
+@pytest.fixture
+def campaign_client():
+    from campaign_analytics.main import app
+
+    return TestClient(app)
+
+
+@pytest.fixture
+def rules_client():
+    from rules_compendium.main import app
+
+    return TestClient(app)
+
+
+@pytest.fixture
+def lore_client():
+    from campaign_lore.main import app
+
+    return TestClient(app)
+
+
 def test_board_state_ui_manifest_frontdoor(board_client):
     """Verify board_state service vendors its microfrontend via GET /ui/manifest."""
     response = board_client.get("/ui/manifest")
@@ -68,6 +89,7 @@ def test_character_sheet_ui_manifest_frontdoor(character_client):
     assert data["package"] == "@runefoble/character-sheet-ui"
     assert "runefoble-character-card" in data["components"]
     assert "runefoble-absentee-recap" in data["components"]
+    assert "runefoble-character-sheet" in data["components"]
 
 
 def test_game_session_ui_manifest_frontdoor(session_client):
@@ -80,6 +102,8 @@ def test_game_session_ui_manifest_frontdoor(session_client):
     assert "runefoble-initiative-tracker" in data["components"]
     assert "runefoble-dice-roller" in data["components"]
     assert "runefoble-spectator-view" in data["components"]
+    assert "runefoble-combat-reaction-prompt" in data["components"]
+    assert "runefoble-ready-action-card" in data["components"]
 
 
 def test_the_watcher_ui_manifest_frontdoor(watcher_client):
@@ -103,6 +127,39 @@ def test_voice_agent_ui_manifest_frontdoor(voice_client):
     assert "runefoble-voice-controls" in data["components"]
 
 
+def test_campaign_analytics_ui_manifest_frontdoor(campaign_client):
+    """Verify campaign_analytics service vendors its microfrontend via GET /ui/manifest."""
+    response = campaign_client.get("/ui/manifest")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["service"] == "campaign-analytics"
+    assert data["package"] == "@runefoble/campaign-analytics-ui"
+    assert "runefoble-campaign-analytics" in data["components"]
+
+
+def test_rules_compendium_ui_manifest_frontdoor(rules_client):
+    """Verify rules_compendium service vendors its microfrontend via GET /ui/manifest."""
+    response = rules_client.get("/ui/manifest")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["service"] == "rules_compendium"
+    assert data["package"] == "@runefoble/rules-compendium-ui"
+    assert "runefoble-rules-compendium" in data["components"]
+    assert "runefoble-rules-lookup" in data["components"]
+    assert "runefoble-encounter-builder" in data["components"]
+
+
+def test_campaign_lore_ui_manifest_frontdoor(lore_client):
+    """Verify campaign_lore service vendors its microfrontends via GET /ui/manifest."""
+    response = lore_client.get("/ui/manifest")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["service"] == "campaign_lore"
+    assert data["package"] == "@runefoble/campaign-lore-ui"
+    assert "runefoble-west-marches-atlas" in data["components"]
+    assert "runefoble-campaign-atlas" in data["components"]
+
+
 def test_service_ui_package_integrity():
     """Verify that all service UI packages have package.json, tsconfig.json, and Lit elements."""
     expected_packages = [
@@ -113,11 +170,36 @@ def test_service_ui_package_integrity():
             "@runefoble/character-sheet-ui",
             "runefoble-character-card",
         ),
+        (
+            "services/character_sheet/ui",
+            "@runefoble/character-sheet-ui",
+            "runefoble-character-sheet",
+        ),
         ("services/game_session/ui", "@runefoble/game-session-ui", "runefoble-initiative-tracker"),
         ("services/the_watcher/ui", "@runefoble/the-watcher-ui", "runefoble-watcher-feed"),
         ("services/voice_agent/ui", "@runefoble/voice-agent-ui", "runefoble-voice-controls"),
         ("services/asset_forge/ui", "@runefoble/asset-forge-ui", "runefoble-asset-forge"),
         ("services/soundscape/ui", "@runefoble/soundscape-ui", "runefoble-soundscape-controls"),
+        (
+            "services/audience_studio/ui",
+            "@runefoble/audience-studio-ui",
+            "runefoble-audience-studio",
+        ),
+        (
+            "services/campaign_analytics/ui",
+            "@runefoble/campaign-analytics-ui",
+            "runefoble-campaign-analytics",
+        ),
+        (
+            "services/rules_compendium/ui",
+            "@runefoble/rules-compendium-ui",
+            "runefoble-rules-compendium",
+        ),
+        (
+            "services/campaign_lore/ui",
+            "@runefoble/campaign-lore-ui",
+            "runefoble-west-marches-atlas",
+        ),
     ]
 
     for rel_dir, pkg_name, elem_tag in expected_packages:

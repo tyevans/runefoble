@@ -118,8 +118,86 @@ def detect_path_hazards(
     return hazards
 
 
+def compute_spell_vfx_impact(
+    target_x: int,
+    target_y: int,
+    cols: int,
+    rows: int,
+    tokens: dict[str, Any],
+    radius_ft: int,
+    spell_name: str,
+    spell_archetype: str,
+    damage_type: str | None,
+) -> tuple[list[list[int]], list[str], str | None]:
+    """Compute cells and tokens enclosed in spell radius bloom, plus ephemeral decal type."""
+    radius_cells = max(0, radius_ft // 5)
+    affected_cells: list[list[int]] = []
+    affected_token_ids: list[str] = []
+    decal_type: str | None = None
+
+    if radius_cells > 0:
+        for x in range(max(0, target_x - radius_cells), min(cols, target_x + radius_cells + 1)):
+            for y in range(max(0, target_y - radius_cells), min(rows, target_y + radius_cells + 1)):
+                if (x - target_x) ** 2 + (y - target_y) ** 2 <= (radius_cells + 0.5) ** 2:
+                    affected_cells.append([x, y])
+
+        for tok_id, tok in tokens.items():
+            if [tok.x, tok.y] in affected_cells:
+                affected_token_ids.append(tok_id)
+
+        sp_lower = spell_name.lower()
+        dt_lower = (damage_type or "").lower()
+        if spell_archetype == "evocation":
+            if "lightning" in sp_lower or "lightning" in dt_lower:
+                decal_type = "lightning_scorch"
+            elif "cold" in sp_lower or "frost" in sp_lower or "cold" in dt_lower:
+                decal_type = "frost"
+            else:
+                decal_type = "scorched_earth"
+        elif spell_archetype == "conjuration":
+            decal_type = "portal_residue"
+        elif spell_archetype == "abjuration":
+            decal_type = "abjuration_glyph"
+
+    return affected_cells, affected_token_ids, decal_type
+
+
+def extract_wall_obstacles(
+    wall_segments: list[dict[str, Any]], cols: int, rows: int
+) -> list[tuple[int, int]]:
+    """Extract unique in-bounds grid intersections from wall segments."""
+    obstacle_coords: set[tuple[int, int]] = set()
+    for seg in wall_segments:
+        for pt in [("x1", "y1"), ("x2", "y2")]:
+            px = int(round(seg.get(pt[0], 0)))
+            py = int(round(seg.get(pt[1], 0)))
+            if 0 <= px < cols and 0 <= py < rows:
+                obstacle_coords.add((px, py))
+    return sorted(obstacle_coords)
+
+
 # Convenient aliases for internal modules
 calc_chebyshev = calculate_chebyshev_cells
 calc_move_cost = calculate_movement_cost
 calc_move_path = calculate_movement_path
 calc_party_vis = compute_party_visibility
+
+
+def validate_and_compute_move(
+    cur_x: int,
+    cur_y: int,
+    to_x: int,
+    to_y: int,
+    cols: int,
+    rows: int,
+    get_terrain_fn: Callable[[int, int], Any],
+    movement_budget: int | None = None,
+) -> tuple[list[tuple[int, int]], int]:
+    """Validate spatial bounds and movement budget, returning path and movement cost."""
+    if not is_within_bounds(to_x, to_y, cols, rows):
+        raise ValueError(f"Target coordinates ({to_x}, {to_y}) out of bounds")
+    path = calculate_movement_path(cur_x, cur_y, to_x, to_y)
+    cost = calculate_movement_cost(path, get_terrain_fn)
+    if movement_budget is not None and cost > movement_budget:
+        raise ValueError(f"Movement cost {cost} exceeds movement budget {movement_budget}")
+    return path, cost

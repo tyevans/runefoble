@@ -10,7 +10,18 @@
     ".": "./src/index.ts",
     "./runefoble-character-card": "./src/runefoble-character-card.ts",
     "./runefoble-absentee-recap": "./src/runefoble-absentee-recap.ts",
-    "./runefoble-absentee-recap.styles": "./src/runefoble-absentee-recap.styles.ts"
+    "./runefoble-absentee-recap.styles": "./src/runefoble-absentee-recap.styles.ts",
+    "./runefoble-character-sheet": "./src/runefoble-character-sheet.ts",
+    "./runefoble-character-sheet.styles": "./src/runefoble-character-sheet.styles.ts",
+    "./runefoble-character-sheet.core.styles": "./src/runefoble-character-sheet.core.styles.ts",
+    "./runefoble-character-sheet.inventory.styles": "./src/runefoble-character-sheet.inventory.styles.ts",
+    "./runefoble-character-sheet.conditions.styles": "./src/runefoble-character-sheet.conditions.styles.ts",
+    "./core.styles": "./src/core.styles.ts",
+    "./inventory.styles": "./src/inventory.styles.ts",
+    "./conditions.styles": "./src/conditions.styles.ts",
+    "./runefoble-character-sheet.types": "./src/runefoble-character-sheet.types.ts",
+    "./runefoble-wardrobe-gallery": "./src/runefoble-wardrobe-gallery.ts",
+    "./runefoble-wardrobe-gallery.styles": "./src/runefoble-wardrobe-gallery.styles.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

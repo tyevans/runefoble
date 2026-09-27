@@ -12,6 +12,13 @@ APPEARANCE_TS = SETTINGS_DIR / "runefoble-settings-appearance.ts"
 AUDIO_TS = SETTINGS_DIR / "runefoble-settings-audio.ts"
 DICE_TS = SETTINGS_DIR / "runefoble-settings-dice.ts"
 CONTROLLER_TS = SETTINGS_DIR / "settings-theme-controller.ts"
+STYLES_DIR = REPO_ROOT / "frontend" / "src" / "components" / "styles"
+LAYOUT_STYLES_TS = STYLES_DIR / "settings-modal-layout.styles.ts"
+TABS_STYLES_TS = STYLES_DIR / "settings-modal-tabs.styles.ts"
+CONTROLS_STYLES_TS = STYLES_DIR / "settings-modal-controls.styles.ts"
+MODAL_STYLES_TS = (
+    REPO_ROOT / "frontend" / "src" / "components" / "runefoble-settings-modal.styles.ts"
+)
 
 
 def test_appearance_subcomponent_and_controller():
@@ -58,8 +65,19 @@ def test_dice_subcomponent():
 
 
 def test_all_settings_files_under_150_lines():
-    """Verify all settings components, controllers, and tests comply with <150 lines limit."""
-    files = [MODAL_TS, APPEARANCE_TS, AUDIO_TS, DICE_TS, CONTROLLER_TS, Path(__file__)]
+    """Verify all settings components, controllers, styles, and tests comply with <150 lines limit."""
+    files = [
+        MODAL_TS,
+        APPEARANCE_TS,
+        AUDIO_TS,
+        DICE_TS,
+        CONTROLLER_TS,
+        LAYOUT_STYLES_TS,
+        TABS_STYLES_TS,
+        CONTROLS_STYLES_TS,
+        MODAL_STYLES_TS,
+        Path(__file__),
+    ]
     for f in files:
         assert f.is_file(), f"{f} must exist"
         line_count = len(f.read_text(encoding="utf-8").splitlines())

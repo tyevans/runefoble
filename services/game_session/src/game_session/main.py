@@ -15,8 +15,15 @@ from game_session.dependencies import (
 )
 from game_session.routers import (
     autopilot_router,
+    campfire_router,
+    caravan_contracts_router,
+    caravan_trade_router,
     combat_router,
+    reactions_router,
     session_router,
+    stronghold_router,
+    tavern_router,
+    west_marches_router,
 )
 from runefoble_platform.event_sourcing import get_event_store
 
@@ -37,7 +44,14 @@ app = FastAPI(
 
 app.include_router(session_router)
 app.include_router(combat_router)
+app.include_router(reactions_router)
 app.include_router(autopilot_router)
+app.include_router(campfire_router)
+app.include_router(stronghold_router)
+app.include_router(tavern_router)
+app.include_router(west_marches_router)
+app.include_router(caravan_trade_router)
+app.include_router(caravan_contracts_router)
 
 
 @app.get("/healthz")
@@ -50,6 +64,7 @@ async def health_check():
 
 
 @app.get("/ui/manifest")
+@app.get("/game_session/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for game session."""
     return {
@@ -59,6 +74,12 @@ def get_ui_manifest():
             "runefoble-initiative-tracker",
             "runefoble-dice-roller",
             "runefoble-spectator-view",
+            "runefoble-spectator-overlay",
+            "runefoble-campfire-crafting",
+            "runefoble-tavern-parlor",
+            "runefoble-caravan-board",
+            "runefoble-combat-reaction-prompt",
+            "runefoble-ready-action-card",
         ],
         "version": "0.1.0",
     }

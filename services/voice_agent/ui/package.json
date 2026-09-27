@@ -8,7 +8,11 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./runefoble-voice-controls": "./src/runefoble-voice-controls.ts"
+    "./runefoble-voice-controls": "./src/runefoble-voice-controls.ts",
+    "./runefoble-mobile-companion": "./src/runefoble-mobile-companion.ts",
+    "./runefoble-voice-duplex-controls": "./src/runefoble-voice-duplex-controls.ts",
+    "./runefoble-vocal-modulator": "./src/runefoble-vocal-modulator.ts",
+    "./runefoble-vocal-sliders": "./src/runefoble-vocal-sliders.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

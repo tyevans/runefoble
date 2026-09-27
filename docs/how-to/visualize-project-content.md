@@ -106,7 +106,40 @@ To export the raw structured relational graph as JSON:
 python3 -m tools.project_visualizer.cli export-json --out dist/project-data.json
 ```
 
-## 5. Bespoke Antigravity (AGY) Agent Launcher (Live Server Only)
+---
+
+## 5. Programmatic Parser & Traceability Graph API
+
+The visualizer exposes modular, single-responsibility sub-parsers under `tools.project_visualizer.parsers` alongside backward-compatible entrypoints in `tools.project_visualizer.parser`:
+
+```python
+from tools.project_visualizer.parser import (
+    ProjectParser,
+    build_traceability_graph,
+    scan_project,
+)
+from tools.project_visualizer.parsers import (
+    ADRParser,
+    BacklogParser,
+    GraphBuilder,
+    ProductParser,
+)
+
+# 1. Scan all documentation entities across docs/project/
+data = scan_project(repo_root)
+
+# 2. Build directional lineage edges and health metrics
+data = build_traceability_graph(data)
+
+# 3. Or invoke isolated domain parsers directly
+adrs = ADRParser(project_dir, repo_root).parse()
+prds = ProductParser(project_dir, repo_root).parse_prds()
+tasks = BacklogParser(project_dir, repo_root).parse_tasks()
+```
+
+---
+
+## 6. Bespoke Antigravity (AGY) Agent Launcher (Live Server Only)
 
 When running the visualizer locally with `make visualize-project`, developers can dispatch bespoke Antigravity (`agy`) coding agents directly from the visualizer header or from any backlog task detail drawer.
 
@@ -132,7 +165,7 @@ To prevent exposing local execution tooling in published public documentation:
 
 ---
 
-## 6. Key Interactive Capabilities
+## 7. Key Interactive Capabilities
 
 ### 🌐 Relationship Graph & Traceability Network
 - **Interactive 2D Relationship Graph**: Real 2D node-link network visualization connecting Personas, User Stories, PRDs, Backlog Tasks, and ADRs with directional relationship edges (`desires`, `specifies`, `implements`, `governed_by`, `deploys_to`, `depends_on`).

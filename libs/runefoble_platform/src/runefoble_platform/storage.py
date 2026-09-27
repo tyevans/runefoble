@@ -22,8 +22,12 @@ ALLOWED_MIME_TYPES: frozenset[str] = frozenset(
         "image/svg+xml",
         "audio/wav",
         "audio/mpeg",
+        "application/pdf",
+        "model/stl",
+        "application/sla",
     }
 )
+
 
 MAX_ASSET_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 

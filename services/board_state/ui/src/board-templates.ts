@@ -1,11 +1,15 @@
 import { html, nothing } from 'lit';
 import type {
+  AoETemplateConfig,
   BoardToken,
   DragKinematicsState,
   GhostPreviewState,
   TerrainCell,
 } from './board-types.ts';
 import { calculateVectorLineCoordinates } from './ghost_preview.ts';
+import './radial_menu.ts';
+import './aoe_templates.ts';
+
 
 export function getHealthBarColor(hp: number, maxHp: number): string {
   const ratio = Math.max(0, Math.min(1, hp / maxHp));
@@ -103,6 +107,8 @@ export interface BoardCellProps {
   isRevealed: boolean;
   terrain?: TerrainCell;
   isWaypoint: boolean;
+  isAoECell?: boolean;
+  isTargeted?: boolean;
   token?: BoardToken;
   isActiveTurn: boolean;
   isGhostCell: boolean;
@@ -122,6 +128,8 @@ export function renderBoardCell(props: BoardCellProps) {
     isRevealed,
     terrain,
     isWaypoint,
+    isAoECell,
+    isTargeted,
     token,
     isActiveTurn,
     isGhostCell,
@@ -137,10 +145,11 @@ export function renderBoardCell(props: BoardCellProps) {
   const isDifficult = terrain?.terrainType === 'difficult';
   const hazardName = terrain?.hazard;
   const isHiddenHostile = token?.isHostile && !isRevealed;
+  const targeted = Boolean(isTargeted || token?.isTargeted);
 
   return html`
     <div
-      class="cell ${!isRevealed ? 'fog' : ''} ${isDifficult ? 'difficult-terrain' : ''} ${hazardName ? 'hazard-cell' : ''} ${isWaypoint ? 'waypoint-path' : ''}"
+      class="cell ${!isRevealed ? 'fog' : ''} ${isDifficult ? 'difficult-terrain' : ''} ${hazardName ? 'hazard-cell' : ''} ${isWaypoint ? 'waypoint-path' : ''} ${isAoECell ? 'aoe-affected-cell' : ''}"
       @click="${() => isRevealed && onCellClick()}"
     >
       <span class="coord-label">${x},${y}</span>
@@ -152,12 +161,13 @@ export function renderBoardCell(props: BoardCellProps) {
         ? html`
             <div class="token-container">
               <div
-                class="token ${token.isAiControlled ? 'ai' : ''} ${token.isHostile ? 'hostile' : ''} ${isActiveTurn ? 'active-turn' : ''} ${draggingTokenId === token.id ? 'dragging' : ''}"
+                class="token ${token.isAiControlled ? 'ai' : ''} ${token.isHostile ? 'hostile' : ''} ${isActiveTurn ? 'active-turn' : ''} ${targeted ? 'target-halo' : ''} ${draggingTokenId === token.id ? 'dragging' : ''}"
                 style="background: ${token.color || 'var(--rf-accent-secondary)'}; ${selectedTokenId === token.id ? 'outline: 3px solid var(--rf-accent-primary);' : ''}"
                 @pointerdown="${(e: PointerEvent) => onTokenPointerDown(e, token)}"
-                title="${token.name}${token.isAiControlled ? ' (AI Stand-in)' : ''}${token.hp !== undefined ? ` [${token.hp}/${token.maxHp ?? token.hp} HP]` : ''}${isActiveTurn ? ' (Active Turn)' : ''}"
+                title="${token.name}${token.isAiControlled ? ' (AI Stand-in)' : ''}${token.hp !== undefined ? ` [${token.hp}/${token.maxHp ?? token.hp} HP]` : ''}${isActiveTurn ? ' (Active Turn)' : ''}${targeted ? ' (Targeted by AoE)' : ''}"
               >
                 ${token.name.slice(0, 2).toUpperCase()}
+                ${token.activeAction ? html`<span class="token-action-badge">${token.activeAction}</span>` : nothing}
               </div>
               ${token.hp !== undefined && token.maxHp !== undefined
                 ? html`
@@ -192,7 +202,9 @@ export function renderBoardCell(props: BoardCellProps) {
 export function renderBoardHeader(
   fogOfWar: boolean,
   onToggleFog: () => void,
-  watcherStatus: string
+  watcherStatus: string,
+  enable3D?: boolean,
+  onToggle3D?: () => void
 ) {
   return html`
     <div class="header">
@@ -207,6 +219,15 @@ export function renderBoardHeader(
         >
           🌫️ Fog of War: ${fogOfWar ? 'ON' : 'OFF'}
         </button>
+        ${onToggle3D ? html`
+          <button
+            class="mode-3d-toggle ${enable3D ? 'active' : ''}"
+            @click="${onToggle3D}"
+            title="Toggle 3D Miniature Tabletop Physics"
+          >
+            🎲 3D Mode: ${enable3D ? 'ON' : 'OFF'}
+          </button>
+        ` : nothing}
         <div class="watcher-badge">
           <span>👁️ The Watcher:</span>
           <span>${watcherStatus}</span>
@@ -235,3 +256,82 @@ export function renderStatusBar(
     </div>
   `;
 }
+
+export function renderRadialMenuOverlay(
+  radialToken: BoardToken | null,
+  onSelect: (e: CustomEvent) => void,
+  onClose: () => void
+) {
+  if (!radialToken) return nothing;
+  return html`
+    <runefoble-radial-menu
+      style="position: absolute; left: ${(radialToken.x + 0.5) * 56}px; top: ${(radialToken.y + 0.5) * 56}px;"
+      .tokenId=${radialToken.id}
+      .tokenName=${radialToken.name}
+      @action-select=${onSelect}
+      @menu-close=${onClose}
+    ></runefoble-radial-menu>
+  `;
+}
+
+export function renderAoEOverlay(
+  activeAoE: AoETemplateConfig | null,
+  tokens: BoardToken[],
+  cols: number,
+  rows: number,
+  onChange: (e: CustomEvent) => void
+) {
+  if (!activeAoE) return nothing;
+  return html`
+    <runefoble-aoe-template
+      .shape=${activeAoE.shape}
+      .originX=${activeAoE.originX}
+      .originY=${activeAoE.originY}
+      .directionDeg=${activeAoE.directionDeg}
+      .radiusFt=${activeAoE.radiusFt ?? 15}
+      .lengthFt=${activeAoE.lengthFt ?? 30}
+      .widthFt=${activeAoE.widthFt ?? 5}
+      .cellSizePx=${56}
+      .spellName=${activeAoE.spellName ?? 'Spell Template'}
+      .tokens=${tokens}
+      .cols=${cols}
+      .rows=${rows}
+      @aoe-change=${onChange}
+    ></runefoble-aoe-template>
+  `;
+}
+
+export function renderAoEBanner(
+  activeAoE: AoETemplateConfig | null,
+  affectedCount: number,
+  onConfirm: () => void,
+  onCancel: () => void
+) {
+  if (!activeAoE) return nothing;
+  return html`
+    <div class="ghost-banner" style="border-left: 4px solid var(--rf-accent-primary, #e63946);">
+      <div class="ghost-info">
+        <span>✨ <strong>${activeAoE.spellName || 'Spell'}</strong>:</span>
+        <span>${activeAoE.shape.toUpperCase()} (${activeAoE.radiusFt || activeAoE.lengthFt}ft, ${Math.round(activeAoE.directionDeg)}°)</span>
+        <span>• ${affectedCount} Target(s) Enclosed</span>
+      </div>
+      <div class="ghost-actions">
+        <button
+          class="btn btn-confirm"
+          @click="${onConfirm}"
+          title="Cast spell affecting enclosed targets"
+        >
+          ✓ Confirm Cast
+        </button>
+        <button
+          class="btn btn-cancel"
+          @click="${onCancel}"
+          title="Cancel template placement"
+        >
+          ✕ Cancel
+        </button>
+      </div>
+    </div>
+  `;
+}
+

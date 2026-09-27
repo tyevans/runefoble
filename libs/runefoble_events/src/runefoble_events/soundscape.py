@@ -83,3 +83,47 @@ class SoundscapeDuckingToggled(BaseRunefobleEvent):
     is_ducked: bool
     attenuation_db: float = -12.0
     reason: str = "speech"
+
+
+@register_event("runefoble.events.soundscape.leitmotif_configured")
+class LeitmotifProfileConfigured(BaseRunefobleEvent):
+    """Emitted when a character's musical leitmotif profile is registered or updated."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Soundscape"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.soundscape.leitmotif_configured"
+    session_id: str
+    character_id: str
+    character_name: str
+    instrument_timbre: str  # lute, brass, woodwind, strings, synth
+    tempo_multiplier: float = 1.0
+    triumphant_stem_url: str
+    somber_stem_url: str
+    volume_gain: float = 1.0
+    attack_ms: int = 150
+    release_ms: int = 350
+    duration_ms: int = 4000
+
+
+@register_event("runefoble.events.soundscape.leitmotif_triggered")
+class LeitmotifTriggered(BaseRunefobleEvent):
+    """Emitted when a character leitmotif stinger is triggered (clutch critical, death save)."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Soundscape"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.soundscape.leitmotif_triggered"
+    session_id: str
+    character_id: str
+    character_name: str = ""
+    motif_type: str = "triumphant"  # triumphant, somber, clutch, fanfare
+    instrument_timbre: str = "lute"
+    stem_url: str
+    tempo_multiplier: float = 1.0
+    volume_gain: float = 1.0
+    attack_ms: int = 150
+    release_ms: int = 350
+    duration_ms: int = 4000
+    duck_music: bool = False
+    trigger_reason: str = "critical_hit"  # critical_hit, death_save, audition, manual

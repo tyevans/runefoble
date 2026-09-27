@@ -119,10 +119,123 @@ class ForgedAssetMetadata(BaseModel):
     """Stored metadata record for forged assets."""
 
     asset_id: str
-    asset_type: Literal["battlemap", "token"]
+    asset_type: Literal["battlemap", "token", "print_pdf", "standees", "stl_token"]
     prompt: str
     image_url: str
     campaign_id: UUID | None = None
     creator_id: str
     created_at: str
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class PrintPdfRequest(BaseModel):
+    """Request model for generating multi-page grid-calibrated battlemap PDFs."""
+
+    prompt: str | None = Field(default=None, description="Prompt or name of the map")
+    campaign_id: UUID | None = None
+    session_id: str | None = None
+    width_cells: int = Field(default=16, ge=4, le=100)
+    height_cells: int = Field(default=16, ge=4, le=100)
+    page_size: Literal["letter", "a4"] = "letter"
+    theme: str = "dwarven_forge"
+    grid: list[list[int]] | None = None
+    format: Literal["binary", "json"] = "binary"
+    title: str = "Tactical Battlemap"
+
+
+class PrintPdfResponse(BaseModel):
+    """Metadata response for generated multi-page tiled PDF."""
+
+    asset_id: str
+    download_url: str
+    total_pages: int
+    rows: int
+    cols: int
+    page_size: str
+    grid_calibration: str = "1-inch (72pt)"
+    status: str = "forged"
+
+
+class StandeeItem(BaseModel):
+    """Configuration for a single papercraft standee miniature."""
+
+    name: str
+    type: Literal["pc", "npc", "monster", "obstacle"] = "pc"
+    hp: int = 10
+    color: str = "#2a9d8f"
+
+
+class StandeesRequest(BaseModel):
+    """Request model for generating folding papercraft miniature sheets."""
+
+    standees: list[StandeeItem] = Field(default_factory=list)
+    page_size: Literal["letter", "a4"] = "letter"
+    sheet_title: str = "Runefoble Tabletop Standees"
+    campaign_id: UUID | None = None
+    format: Literal["binary", "json"] = "binary"
+
+
+class StandeesResponse(BaseModel):
+    """Metadata response for generated papercraft standees sheet."""
+
+    asset_id: str
+    download_url: str
+    standee_count: int
+    pages: int
+    page_size: str
+    status: str = "forged"
+
+
+class StlTokenRequest(BaseModel):
+    """Request model for generating 3D printable STL miniature bases and condition clips."""
+
+    diameter_mm: float = Field(default=28.0, ge=15.0, le=100.0)
+    height_mm: float = Field(default=3.5, ge=2.0, le=20.0)
+    num_slots: int = Field(default=4, ge=0, le=12)
+    slot_depth_mm: float = Field(default=1.5, ge=0.5, le=5.0)
+    condition_label: str = "Poisoned"
+    binary: bool = True
+    campaign_id: UUID | None = None
+    format: Literal["binary", "json"] = "binary"
+
+
+class StlTokenResponse(BaseModel):
+    """Metadata response for generated 3D printable STL token base."""
+
+    asset_id: str
+    download_url: str
+    diameter_mm: float
+    height_mm: float
+    facet_count: int
+    is_watertight: bool = True
+    condition_label: str
+    status: str = "forged"
+
+
+class WardrobeForgeRequest(BaseModel):
+    """Prompt and configuration parameters for generative character wardrobe synthesis."""
+
+    character_id: UUID | str = Field(..., description="ID of character receiving wardrobe variant")
+    character_name: str = Field(..., min_length=1, description="Name of character")
+    attire_type: str = Field(
+        default="ballroom_masquerade",
+        description="Thematic attire style: ballroom_masquerade, arctic_tundra, tavern_casual, battle_damaged, ceremonial",
+    )
+    prompt: str | None = Field(default=None, description="Optional custom prompt additions")
+    campaign_id: UUID | None = None
+    face_embedding_seed: str | None = None
+    border_color: str = Field(default="#e63946", description="Border ring hex color")
+    size_px: int = Field(default=256, ge=64, le=512, description="Square pixel dimensions")
+
+
+class WardrobeForgeResponse(BaseModel):
+    """Result of generative wardrobe synthesis and Silo S3 storage."""
+
+    variant_id: str
+    character_id: str
+    variant_name: str
+    attire_type: str
+    image_url: str
+    download_url: str
+    prompt: str
+    status: str = "forged"

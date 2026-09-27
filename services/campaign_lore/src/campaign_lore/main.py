@@ -11,8 +11,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from campaign_lore.routers.aliases import router as aliases_router
+from campaign_lore.routers.atlas import router as atlas_router
+from campaign_lore.routers.codex import router as codex_router
 from campaign_lore.routers.documents import router as documents_router
+from campaign_lore.routers.handouts import router as handouts_router
+from campaign_lore.routers.relics import router as relics_router
 from campaign_lore.routers.search import router as search_router
+from campaign_lore.routers.west_marches import router as west_marches_router
 
 app = FastAPI(
     title="Runefoble - Campaign Lore Service",
@@ -34,6 +39,11 @@ app.add_middleware(
 app.include_router(documents_router)
 app.include_router(aliases_router)
 app.include_router(search_router)
+app.include_router(handouts_router)
+app.include_router(relics_router)
+app.include_router(atlas_router)
+app.include_router(codex_router)
+app.include_router(west_marches_router)
 
 
 @app.get("/healthz", tags=["Health"])
@@ -49,7 +59,13 @@ def get_ui_manifest() -> dict[str, Any]:
     return {
         "service": "campaign_lore",
         "package": "@runefoble/campaign-lore-ui",
-        "components": ["runefoble-campaign-codex"],
+        "components": [
+            "runefoble-campaign-atlas",
+            "runefoble-campaign-codex",
+            "runefoble-handout-viewer",
+            "runefoble-relic-inspector",
+            "runefoble-west-marches-atlas",
+        ],
         "version": "0.1.0",
     }
 

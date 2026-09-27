@@ -87,5 +87,124 @@ definition forged_asset {
     permission edit = manage
 }
 
+definition audience_poll {
+    relation campaign: campaign
+    relation creator: user
 
+    // Viewing and voting is open to campaign viewers (spectators, players, DMs)
+    permission view = campaign->view
+    permission vote = campaign->view
+
+    // Approving, vetoing, and managing audience chaos proposals requires DM/GM/Owner
+    permission moderate = campaign->run_session
+    permission approve = campaign->run_session
+    permission veto = campaign->run_session
+}
+
+definition stronghold {
+    relation campaign: campaign
+    relation manager: user
+
+    // Campsite/stronghold can be viewed by campaign members
+    permission view = campaign->view
+    // Upgrading facilities can be performed by active players or designated managers
+    permission upgrade = campaign->play + manager
+    // Stronghold administration and resets require DM/GM/Owner
+    permission manage = campaign->run_session + manager
+}
+
+definition diegetic_handout {
+    relation campaign: campaign
+    relation creator: user
+
+    // Handouts can be viewed by campaign members or creator
+    permission view = campaign->view + creator
+    // Breaking seal or manipulating handout can be performed by active players or DM
+    permission interact = campaign->play + creator
+    permission manage = campaign->run_session + creator
+}
+
+definition relic {
+    relation campaign: campaign
+    relation creator: user
+
+    // Relics can be viewed/inspected by campaign members or creator
+    permission inspect = campaign->view + creator
+    permission manage = campaign->run_session + creator
+}
+
+definition faction {
+    relation campaign: campaign
+
+    permission view = campaign->view
+    permission manage = campaign->run_session
+}
+
+definition atlas {
+    relation campaign: campaign
+
+    permission view = campaign->view
+    permission edit = campaign->run_session
+    permission place_pin = campaign->play + campaign->run_session
+}
+
+definition codex_entry {
+    relation campaign: campaign
+    relation author: user
+    relation editor: user
+    relation reader: user
+
+    // Private codex entries are accessible only to author and direct readers/editors
+    permission view = author + editor + reader
+    permission edit = author + editor + campaign->run_session
+    permission manage = author + campaign->run_session
+}
+
+definition shared_world {
+    relation guild_officer: user
+    relation participant: user
+    relation campaign: campaign
+
+    // Guild officers have management authority over the frontier and trade routes
+    permission manage = guild_officer
+
+    // Viewing discoveries, outposts, and caravan logs
+    permission view = guild_officer + participant + campaign->view
+
+    // Exploring and registering new geographical discoveries
+    permission discover = guild_officer + participant + campaign->play
+
+    // Dispatching caravans and trading regional resources
+    permission trade = guild_officer + participant + campaign->play
+}
+
+definition caravan_contract {
+    relation shared_world: shared_world
+    relation poster: user
+    relation contractor: user
+    relation guild_officer: user
+
+    // Viewing contracts available on the notice board
+    permission view = poster + contractor + guild_officer + shared_world->view
+
+    // Claiming / accepting a contract requires contractor, guild officer, or shared_world trade authority
+    permission claim = contractor + guild_officer + shared_world->trade
+
+    // Fulfilling contract transit or claiming rewards
+    permission fulfill = contractor + poster + guild_officer
+
+    // Managing or canceling contracts
+    permission manage = poster + guild_officer
+}
+
+definition board {
+    relation campaign: campaign
+    relation dungeon_master: user
+
+    // Secret traps and stage triggers management restricted to DM/GM/Owner
+    permission manage_traps = dungeon_master + campaign->run_session
+    permission view_secret_layer = dungeon_master + campaign->run_session
+    permission switch_map = dungeon_master + campaign->run_session
+    permission view = dungeon_master + campaign->view
+}
 

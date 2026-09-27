@@ -51,6 +51,21 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `previous_turn`: Integer
   - `new_turn`: Integer
   - `active_character_id`: Optional[UUID]
+- **`TurnStarted`**: Emitted when a combatant begins their turn, triggering autonomous camera focus.
+  - `session_id`: UUID | str
+  - `turn_number`: Integer
+  - `character_id`: UUID | str
+  - `character_name`: String
+  - `token_id`: Optional[String]
+- **`CameraTargetUpdated`**: Emitted when cinematic director recalculates camera viewport target (`runefoble.events.session.camera_target_updated`).
+  - `session_id`: String
+  - `target_x`: Float
+  - `target_y`: Float
+  - `zoom`: Float (default 1.5)
+  - `duration_ms`: Integer (default 300)
+  - `easing`: String (cubic-bezier)
+  - `active_token_id`: Optional[String]
+  - `reason`: String ("turn_started", "token_moved")
 - **`CombatEncounterStarted`**: Emitted when a combat encounter is initiated.
   - `session_id`: Optional[UUID | str]
   - `round_number`: Integer (default 1)
@@ -69,6 +84,40 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`CombatEncounterEnded`**: Emitted when combat concludes.
   - `session_id`: Optional[UUID | str]
   - `total_rounds`: Integer
+- **`CombatTurnPausedForReactionEvent`** (alias: `CombatTurnPausedForReaction`): Emitted when active combat turn is halted within 500ms for a spoken reaction interrupt (`combat.turn.paused_for_reaction` / `runefoble.events.combat.turn_paused_for_reaction`).
+  - `session_id`: UUID | str
+  - `reaction_id`: String
+  - `reacting_combatant_id`: String
+  - `reacting_combatant_name`: String
+  - `trigger_phrase`: String
+  - `reaction_type`: String ("shield", "counterspell", "opportunity_attack", etc.)
+  - `paused_turn_combatant_id`: String
+  - `timeout_seconds`: Float (default 15.0)
+- **`ReactionResolvedEvent`** (alias: `ReactionResolved`): Emitted when a declared combat reaction interrupt is resolved or dismissed, resuming the active combat turn (`combat.reaction.resolved` / `runefoble.events.combat.reaction_resolved`).
+  - `session_id`: UUID | str
+  - `reaction_id`: String
+  - `reacting_combatant_id`: String
+  - `action_taken`: String ("executed", "dismissed", "timeout")
+  - `resumed`: Boolean (default True)
+- **`ReadyActionRegisteredEvent`** (alias: `ReadyActionRegistered`): Emitted when a combatant registers a conditional ready-action trigger evaluated against incoming combat events (`combat.ready_action.registered` / `runefoble.events.combat.ready_action_registered`).
+  - `session_id`: UUID | str
+  - `ready_action_id`: String
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `trigger_type`: String ("enemy_enters_range", "spell_cast", "movement", "spatial", "attack")
+  - `trigger_condition`: String
+  - `readied_action`: String
+  - `target_id`: Optional[String]
+  - `range_cells`: Optional[Integer]
+- **`ReadyActionTriggeredEvent`** (alias: `ReadyActionTriggered`): Emitted when an incoming combat or board event fulfills a ready-action trigger condition (`combat.ready_action.triggered` / `runefoble.events.combat.ready_action_triggered`).
+  - `session_id`: UUID | str
+  - `ready_action_id`: String
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `triggering_entity_id`: String
+  - `trigger_type`: String
+  - `readied_action`: String
+
 - **`CharacterControlTransferred`**: Emitted when active token and turn control is transferred mid-session between an AI stand-in and a player (`runefoble.events.session.character_control_transferred`).
   - `session_id`: UUID | str
   - `character_id`: UUID | str
@@ -128,6 +177,133 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `target_x`: Integer, `target_y`: Integer
   - `descriptor`: String
   - `path`: List[List[Integer]]
+- **`UniversalVTTImported`** (alias: `BoardMapImported`): Emitted when a Universal VTT (`.dd2vtt`) map is imported onto the board (`runefoble.events.board.map_imported`).
+  - `session_id`: String
+  - `cols`: Integer
+  - `rows`: Integer
+  - `pixels_per_grid`: Integer
+  - `background_asset_id`: Optional[String]
+  - `background_image_url`: Optional[String]
+  - `wall_segments`: List[Dict[str, Any]]
+  - `portals`: List[Dict[str, Any]]
+  - `lights`: List[Dict[str, Any]]
+- **`TokenActionExecuted`**: Emitted when a tactical token executes a combat maneuver via the radial action dial (`runefoble.events.board.token_action_executed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `token_id`: String
+  - `action`: String ("attack", "dodge", "dash", "disengage", "cast")
+  - `target_token_id`: Optional[String]
+  - `target_token_ids`: List[String]
+  - `details`: Dict[str, Any]
+  - `initiated_by`: String ("player", "the_watcher", "stand_in")
+- **`AoETemplatePlaced`**: Emitted when a geometric AoE spell template is positioned on the board (`runefoble.events.board.aoe_template_placed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `template_id`: String
+  - `caster_token_id`: Optional[String]
+  - `shape`: String ("cone", "sphere", "line", "cube")
+  - `origin_x`: Float, `origin_y`: Float
+  - `direction_deg`: Float (0-360, snapped in 15° increments)
+  - `radius_ft`: Optional[Float]
+  - `length_ft`: Optional[Float]
+  - `width_ft`: Optional[Float]
+  - `spell_name`: Optional[String]
+  - `affected_token_ids`: List[String]
+  - `affected_cells`: List[List[Integer]]
+- **`AoETemplateRemoved`**: Emitted when an active AoE spell template is dismissed (`runefoble.events.board.aoe_template_removed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `template_id`: String
+- **`SpellCast`**: Emitted when a kinetic spell is launched across the tactical canvas (`runefoble.events.board.spell_cast`).
+  - `session_id`: String
+  - `board_id`: String
+  - `caster_token_id`: Optional[String]
+  - `spell_name`: String
+  - `spell_archetype`: String ("evocation", "abjuration", "conjuration", etc.)
+  - `target_x`: Integer, `target_y`: Integer
+  - `origin_x`: Optional[Integer], `origin_y`: Optional[Integer]
+  - `radius_ft`: Integer (default 20)
+  - `damage_dice`: Optional[String]
+  - `damage_type`: Optional[String]
+  - `theme_palette`: Optional[String]
+- **`AreaEffectExploded`**: Emitted when an area-of-effect spell detonates, impacting tokens and creating ephemeral grid decals (`runefoble.events.board.area_effect_exploded`).
+  - `session_id`: String
+  - `board_id`: String
+  - `spell_name`: String
+  - `center_x`: Integer, `center_y`: Integer
+  - `radius_ft`: Integer
+  - `affected_token_ids`: List[String]
+  - `affected_cells`: List[List[Integer]]
+  - `decal_type`: Optional[String] ("scorched_earth", "frost", "lightning_scorch", "abjuration_glyph", "portal_residue")
+  - `decal_duration_rounds`: Integer (default 2)
+- **`VFXAnimationFinished`**: Emitted when a WebGL particle effect finishes visual rendering (`runefoble.events.board.vfx_animation_finished`).
+  - `session_id`: String
+  - `board_id`: String
+  - `animation_id`: String
+  - `spell_name`: String
+  - `target_x`: Integer, `target_y`: Integer
+  - `duration_ms`: Integer (default 500)
+- **`EphemeralDecalsDecayed`**: Emitted when terrain decals fade over active combat rounds (`runefoble.events.board.decals_decayed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `rounds`: Integer (default 1)
+- **`PhysicsCollisionOccurred`**: Emitted when a physical rigid-body collision occurs on the board (`runefoble.events.board.physics.collision`).
+  - `session_id`: String
+  - `board_id`: String
+  - `entity_id`: String
+  - `entity_type`: String ("token", "dice")
+  - `collision_type`: String ("wall", "token", "boundary", "floor", "terrain_step")
+  - `x`: Float, `y`: Float, `z`: Float
+  - `impact_velocity`: Float
+  - `impact_energy`: Float
+  - `normal_x`: Float, `normal_y`: Float, `normal_z`: Float
+  - `details`: Dict[str, Any]
+- **`DiceSettled`**: Emitted when physical tumbling dice come to rest on the tactical board (`runefoble.events.board.dice.settled`).
+  - `session_id`: String
+  - `board_id`: String
+  - `dice_id`: String
+  - `dice_type`: String ("d4", "d6", "d8", "d10", "d12", "d20", "d100")
+  - `face_value`: Integer
+  - `settled_x`: Float, `settled_y`: Float, `settled_z`: Float
+  - `bounces`: Integer
+  - `trajectory`: List[Dict[str, Float]]
+- **`TrapPlacedEvent`** (alias: `TrapPlaced`): Emitted when a secret DM spatial trap or trigger is placed on the board (`runefoble.events.board.trap_placed`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `name`: String
+  - `x`: Integer, `y`: Integer
+  - `trigger_type`: "step" | "proximity" | "touch"
+  - `proximity_radius`: Integer (default 1)
+  - `dc_detection`: Integer (default 15)
+  - `trap_type`: String ("pit_trap", "spear_trap", etc.)
+  - `is_secret`: Boolean (default True)
+  - `damage_dice`: Optional[String]
+  - `description`: String
+  - `effect_payload`: Dict[str, Any]
+- **`TrapSprungEvent`** (alias: `TrapSprung`): Emitted when a moving token breaches an armed trap cell or proximity zone, pausing movement (`runefoble.events.board.trap_sprung`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `token_id`: String
+  - `trigger_type`: "step" | "proximity" | "touch"
+  - `x`: Integer, `y`: Integer
+  - `damage_dice`: Optional[String]
+  - `effect_payload`: Dict[str, Any]
+  - `movement_paused`: Boolean (default True)
+- **`TrapDisarmedEvent`** (alias: `TrapDisarmed`): Emitted when a secret trap is disarmed or disabled (`runefoble.events.board.trap_disarmed`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `disarmed_by`: Optional[String]
+- **`BattlemapSwitchedEvent`** (alias: `BattlemapSwitched`): Emitted when the DM transitions the stage to a new battlemap and teleports party tokens in a single transaction (`runefoble.events.board.battlemap_switched`).
+  - `board_id`: String
+  - `previous_map_id`: Optional[String]
+  - `new_map_id`: String
+  - `cols`: Integer, `rows`: Integer
+  - `background_asset_id`: Optional[String]
+  - `background_image_url`: Optional[String]
+  - `teleported_tokens`: Dict[str, List[Integer]]
+  - `initiated_by`: Optional[String]
+
+
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
 
@@ -178,6 +354,36 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `character_name`: String
   - `current_hp`: Integer (0)
   - `stabilized_by`: String (default "permadeath_safeguard")
+- **`CriticalHitScored`** (alias: `CriticalHitRolled`): Emitted when a character rolls a natural 20 or scores a clutch critical hit (`runefoble.events.character.critical_hit_scored`).
+  - `session_id`: String
+  - `character_id`: String
+  - `character_name`: String
+  - `target_id`: Optional[String]
+  - `target_name`: Optional[String]
+  - `roll_total`: Integer (20)
+- **`DeathSaveStarted`**: Emitted when a character drops to 0 HP and begins life-or-death death saving throws (`runefoble.events.character.death_save_started`).
+  - `session_id`: String
+  - `character_id`: String
+  - `character_name`: String
+  - `current_hp`: Integer (0)
+- **`CharacterDamaged`**: Emitted when a character takes damage, reducing hit points (`runefoble.events.character.damaged`).
+  - `character_id`: UUID | str
+  - `delta`: Integer (negative delta)
+  - `current_hp`: Integer
+  - `max_hp`: Integer
+  - `source`: String
+- **`PortraitVariantGenerated`**: Emitted when a generative wardrobe attire variant is forged or registered (`runefoble.events.character.portrait_variant_generated`).
+  - `character_id`: UUID | str
+  - `variant_id`: String
+  - `variant_name`: String
+  - `attire_type`: String (e.g. "ballroom_masquerade", "arctic_tundra", "tavern_casual")
+  - `image_url`: String
+  - `prompt`: String
+  - `is_active`: Boolean
+- **`CharacterPortraitUpdated`** (alias: `PortraitAssigned`): Emitted when a character's active portrait or board token avatar is assigned (`runefoble.events.character.portrait_updated`).
+  - `character_id`: UUID | str
+  - `active_portrait_url`: String
+  - `variant_id`: Optional[String]
 
 ### The Watcher & Gameplay Stream Events
 
@@ -316,6 +522,84 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `filters_applied`: List[String]
   - `latency_ms`: Float
   - `audio_bytes_length`: Integer
+- **`FactionCreated`**: Emitted when a new autonomous NPC faction aggregate is registered (`runefoble.events.watcher.faction_created`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `name`: String
+  - `influence`: Integer (1-100)
+  - `resources`: Integer
+  - `disposition`: String ("hostile", "unfriendly", "neutral", "friendly", "allied")
+  - `active_goal`: String
+  - `rival_faction_ids`: List[String]
+  - `territory`: String
+  - `metadata`: Dict[String, Any]
+- **`FactionAgendaSet`**: Emitted when a faction updates or shifts their active agenda goal (`runefoble.events.watcher.faction_agenda_set`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `active_goal`: String
+  - `target_progress`: Integer (default 100)
+  - `current_progress`: Integer
+  - `target_faction_or_location`: Optional[String]
+- **`FactionAgendaAdvanced`**: Emitted when a background simulation check resolves and mutates faction goal progress (`runefoble.events.watcher.faction_agenda_advanced`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `faction_name`: String
+  - `agenda_name`: String
+  - `roll`: Integer (1-20)
+  - `modifier`: Integer
+  - `dc`: Integer
+  - `outcome`: String ("success", "partial_success", "countered", "failure")
+  - `progress_delta`: Integer
+  - `current_progress`: Integer
+  - `target_progress`: Integer
+  - `narrative`: String
+- **`GeopoliticalShiftOccurred`**: Emitted when faction agenda completion alters territorial control, creates shortages, or sparks conflicts (`runefoble.events.watcher.geopolitical_shift_occurred`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `territory`: String
+  - `shift_type`: String ("trade_shortage", "territory_captured", "martial_law", "open_conflict")
+  - `description`: String
+  - `severity`: String ("minor", "moderate", "critical")
+  - `ripple_effects`: List[String]
+- **`WorldTickExecuted`**: Emitted when a downtime world progression tick completes across all campaign factions (`runefoble.events.watcher.world_tick_executed`).
+  - `campaign_id`: String
+  - `tick_number`: Integer
+  - `intelligence_bulletin`: String (Markdown formatted DM briefing)
+  - `factions_simulated`: List[String] (faction IDs)
+  - `shifts`: List[Dict[String, Any]]
+  - `rumors`: List[String]
+- **`FactionResourceUpdatedEvent`** (alias: `FactionResourceUpdated`): Emitted when faction treasury or contraband assets mutate (`runefoble.events.watcher.faction_resource_updated`).
+  - `faction_id`: String
+  - `campaign_id`: String
+  - `treasury`: Integer
+  - `contraband`: Integer
+  - `mercenaries_count`: Integer
+  - `delta_treasury`: Integer
+  - `delta_contraband`: Integer
+  - `reason`: String
+  - `metadata`: Dict[String, Any]
+- **`FactionMercenaryRecruitedEvent`** (alias: `FactionMercenaryRecruited`): Emitted when a faction hires a mercenary detachment (`runefoble.events.watcher.faction_mercenary_recruited`).
+  - `faction_id`: String
+  - `campaign_id`: String
+  - `unit_name`: String
+  - `count`: Integer
+  - `cost`: Integer
+  - `unit_type`: String
+  - `total_mercenaries`: Integer
+  - `upkeep_per_tick`: Integer
+- **`FactionBriberyAttemptedEvent`** (alias: `FactionBriberyAttempted`): Emitted when a bribery check is executed against an NPC (`runefoble.events.watcher.faction_bribery_attempted`).
+  - `faction_id`: String
+  - `campaign_id`: String
+  - `target_name`: String
+  - `bribe_amount`: Integer
+  - `dc`: Integer
+  - `roll`: Integer
+  - `modifier`: Integer
+  - `counter_bribe`: Integer
+  - `success`: Boolean
+  - `outcome`: String ("success", "critical_success", "countered", "failure", "critical_failure")
+  - `narrative`: String
+  - `remaining_treasury`: Integer
 
 ### VoiceRoom Events (`aggregate_type: VoiceRoom`)
 
@@ -333,6 +617,66 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `session_id`: String
   - `peer_id`: String
   - `is_muted`: Boolean
+- **`MobileCompanionConnected`**: Emitted when a mobile companion connects via the low-bandwidth gateway (`runefoble.events.voice.mobile_connected`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: String
+  - `device_type`: String ("mobile")
+  - `audio_profile_tier`: String ("mobile_optimized")
+  - `haptic_supported`: Boolean
+  - `connected_at`: String (ISO-8601 UTC timestamp)
+- **`MobileAudioProfileAdapted`**: Emitted when mobile companion audio adapts due to cellular network conditions (`runefoble.events.voice.profile_adapted`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: String
+  - `previous_tier`: String
+  - `current_tier`: String
+  - `sample_rate`: Integer (16000)
+  - `bitrate_kbps`: Integer
+  - `packet_loss`: Float
+  - `reason`: String
+- **`MobileHapticPingDispatched`**: Emitted when a haptic vibration pulse or lockscreen alert is dispatched to mobile (`runefoble.events.voice.haptic_ping`).
+  - `session_id`: String
+  - `recipient_id`: String
+  - `alert_type`: String ("secret_whisper", "turn_alert", "critical_alert")
+  - `vibration_pattern`: List[Integer] (e.g. `[200, 100, 200]`)
+  - `whisper_content`: Optional[String]
+  - `notification_title`: Optional[String]
+  - `notification_body`: Optional[String]
+  - `diegetic`: Boolean
+  - `dispatched_at`: String (ISO-8601 UTC timestamp)
+- **`VoiceSpeechInterrupted`**: Emitted when active TTS narration is interrupted by player speech / barge-in (`voice.speech.interrupted` / `runefoble.events.voice.speech_interrupted`).
+  - `session_id`: String
+  - `speaker_id`: String
+  - `speaker_name`: String
+  - `timestamp`: Float (epoch timestamp)
+  - `interrupted_at`: String (ISO-8601 UTC timestamp)
+  - `remaining_narration_text`: Optional[String] (unspoken narration tail)
+  - `original_text`: Optional[String]
+  - `playback_duration_ms`: Float
+  - `cutoff_position_ms`: Float
+  - `reason`: String ("player_barge_in")
+- **`VocalModulatorPresetAppliedEvent`**: Emitted when a DM applies an NPC vocal archetype preset or modulates live stream parameters (`runefoble.events.voice.modulator_preset_applied`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `preset_name`: String ("Ancient Dragon", "Goblin Skulker", "Celestial Spirit", "Robotic Construct", etc.)
+  - `pitch_shift_semitones`: Float
+  - `formant_shift`: Float
+  - `resonance_hz`: Float
+  - `octave_offset`: Float
+  - `reverb_wet`: Float
+  - `active_filters`: List[String]
+  - `user_id`: String
+  - `applied_at`: Float (epoch timestamp)
+- **`VoiceFilterToggledEvent`**: Emitted when a live voice filter parameter or DSP node is toggled on/off (`runefoble.events.voice.filter_toggled`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `filter_name`: String
+  - `enabled`: Boolean
+  - `parameters`: Dict[String, Float]
+  - `user_id`: String
+  - `toggled_at`: Float (epoch timestamp)
+
 
 
 ### Asset Storage Events (`aggregate_type: Asset`)
@@ -374,8 +718,27 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `image_url`: String
   - `crop_style`: String ("circular", "square", "hex")
   - `transparent_background`: Boolean
+- **`PrintPdfForged`**: Emitted when a multi-page grid-calibrated battlemap PDF or standee sheet is exported (`runefoble.events.asset.print_pdf_forged`).
+  - `asset_id`: String
+  - `campaign_id`: Optional[UUID]
+  - `session_id`: Optional[String]
+  - `creator_id`: String
+  - `total_pages`: Integer
+  - `page_size`: String ("letter", "a4")
+  - `grid_scale`: String ("1-inch")
+  - `download_url`: String
+- **`StlTokenForged`**: Emitted when a watertight 3D-printable miniature base or condition clip is forged (`runefoble.events.asset.stl_token_forged`).
+  - `asset_id`: String
+  - `campaign_id`: Optional[UUID]
+  - `creator_id`: String
+  - `diameter_mm`: Float
+  - `height_mm`: Float
+  - `facet_count`: Integer
+  - `condition_label`: String
+  - `download_url`: String
 
 ### LoreDocument Events (`aggregate_type: LoreDocument`)
+
 
 - **`LoreDocumentIngested`**: Emitted when a new worldbuilding document is ingested (`runefoble.events.lore.document_ingested`).
   - `document_id`: UUID
@@ -397,6 +760,50 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `alias_entity_id`: UUID
   - `alias_name`: String
   - `reason`: String
+- For schemas of `HandoutGenerated`, `WaxSealBroken`, and `RelicInspected`, see [`diegetic-handouts-and-relics-events.md`](diegetic-handouts-and-relics-events.md).
+
+### Atlas & Party Codex Events (`aggregate_type: Atlas`, `Codex`)
+
+- **`AtlasPinCreated`**: Emitted when a milestone pin is placed on the campaign world atlas (`runefoble.events.atlas.pin_created`).
+  - `pin_id`: UUID
+  - `campaign_id`: UUID
+  - `title`: String
+  - `layer`: String (continental, regional, municipal)
+  - `coordinates`: Dict[str, float]
+  - `description`: String
+  - `era`: Optional[String]
+  - `session_id`: Optional[String]
+  - `linked_entity_ids`: List[String]
+  - `created_by`: Optional[String]
+  - `metadata`: Dict[str, Any]
+- **`AtlasLayerToggled`**: Emitted when map layer visibility is toggled (`runefoble.events.atlas.layer_toggled`).
+  - `campaign_id`: UUID
+  - `layer`: String
+  - `is_visible`: Boolean
+  - `toggled_by`: Optional[String]
+- **`AtlasTerritoryUpdated`**: Emitted when territory polygon boundaries or ownership is defined (`runefoble.events.atlas.territory_updated`).
+  - `territory_id`: UUID
+  - `campaign_id`: UUID
+  - `name`: String
+  - `layer`: String
+  - `polygon_coordinates`: List[List[Float]]
+  - `owner_faction`: String
+  - `is_contested`: Boolean
+  - `era`: Optional[String]
+  - `metadata`: Dict[str, Any]
+- **`CodexEntryPublished`**: Emitted when a collaborative party codex note is published with redstring links (`runefoble.events.codex.entry_published`).
+  - `entry_id`: UUID
+  - `campaign_id`: UUID
+  - `title`: String
+  - `content`: String
+  - `privacy`: String (private, party_shared, public)
+  - `author_id`: String
+  - `era`: Optional[String]
+  - `tags`: List[String]
+  - `linked_entity_ids`: List[String]
+  - `metadata`: Dict[str, Any]
+- **`CodexEntryUpdated`**: Emitted when codex content, tags, or privacy status are updated (`runefoble.events.codex.entry_updated`).
+
 
 ### Compendium & Encounter Events (`aggregate_type: Compendium`, `Encounter`)
 
@@ -450,35 +857,45 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 
 ### Soundscape & Adaptive Audio Events (`aggregate_type: Soundscape`)
 
-- **`SoundscapeTrackChanged`**: Emitted when active soundscape track or stem profile transitions (`runefoble.events.soundscape.track_changed`).
-  - `session_id`: String
-  - `track_id`: String
-  - `stem_profile`: String ("exploration", "tension", "combat", "boss")
-  - `tension_score`: Integer (0-100)
-  - `crossfade_duration_ms`: Integer (default 1500)
-  - `active_stems`: List[String]
-- **`SoundscapeCueTriggered`**: Emitted when a tactical sound foley or acoustic cue is fired (`runefoble.events.soundscape.cue_triggered`).
-  - `session_id`: String
-  - `cue_id`: String
-  - `cue_type`: String ("foley", "sfx", "stinger", "ambient", "spell", "melee")
-  - `sound_url`: String
-  - `volume_gain`: Float (default 1.0)
-  - `duck_music`: Boolean (default False)
-- **`SoundscapeTensionUpdated`**: Emitted when encounter tension score is recalculated (`runefoble.events.soundscape.tension_updated`).
-  - `session_id`: String
-  - `tension_score`: Integer (0-100)
-  - `stem_profile`: String
-  - `combat_round`: Integer
-  - `enemy_cr_balance`: Float
-  - `lowest_health_ratio`: Float
-- **`SoundscapeMoodOverridden`**: Emitted when DM forces a manual mood override (`runefoble.events.soundscape.mood_overridden`).
-  - `session_id`: String
-  - `mood`: String ("exploration", "tension", "combat", "boss")
-  - `overridden_by`: String (default "dm")
-- **`SoundscapeDuckingToggled`**: Emitted when WebAudio background music ducking state changes (`runefoble.events.soundscape.ducking_toggled`).
-  - `session_id`: String
-  - `is_ducked`: Boolean
-  - `attenuation_db`: Float (default -12.0)
-  - `reason`: String ("speech", "cue", "vad")
+- **`SoundscapeTrackChanged`**: Emitted when active soundscape track or stem profile transitions (`runefoble.events.soundscape.track_changed`). Fields: `session_id`, `track_id`, `stem_profile`, `tension_score`, `crossfade_duration_ms`, `active_stems`.
+- **`SoundscapeCueTriggered`**: Emitted when a tactical sound foley or acoustic cue is fired (`runefoble.events.soundscape.cue_triggered`). Fields: `session_id`, `cue_id`, `cue_type`, `sound_url`, `volume_gain`, `duck_music`.
+- **`SoundscapeTensionUpdated`**: Emitted when encounter tension score is recalculated (`runefoble.events.soundscape.tension_updated`). Fields: `session_id`, `tension_score`, `stem_profile`, `combat_round`, `enemy_cr_balance`, `lowest_health_ratio`.
+- **`SoundscapeMoodOverridden`**: Emitted when DM forces a manual mood override (`runefoble.events.soundscape.mood_overridden`). Fields: `session_id`, `mood`, `overridden_by`.
+- **`SoundscapeDuckingToggled`**: Emitted when WebAudio background music ducking state changes (`runefoble.events.soundscape.ducking_toggled`). Fields: `session_id`, `is_ducked`, `attenuation_db`, `reason`.
+- **`LeitmotifProfileConfigured`**: Emitted when a character's musical leitmotif and instrument signature profile is configured (`runefoble.events.soundscape.leitmotif_configured`). Fields: `session_id`, `character_id`, `character_name`, `instrument_timbre`, `tempo_multiplier`, `triumphant_stem_url`, `somber_stem_url`, `volume_gain`, `attack_ms`, `release_ms`, `duration_ms`.
+- **`LeitmotifTriggered`**: Emitted when a character's triumphant or somber musical stinger is dynamically triggered (`runefoble.events.soundscape.leitmotif_triggered`). Fields: `session_id`, `character_id`, `character_name`, `motif_type`, `instrument_timbre`, `stem_url`, `tempo_multiplier`, `volume_gain`, `attack_ms`, `release_ms`, `duration_ms`, `duck_music`, `trigger_reason`.
 
+### Audience Studio Events (`aggregate_type: AudiencePoll`)
+
+- **`AudiencePollStarted`**: Emitted when a live spectator chaos poll starts (`runefoble.events.audience.poll_started`). Fields: `poll_id`, `campaign_id`, `session_id`, `title`, `prompt`, `options`, `duration_seconds`, `quorum`, `expires_at`.
+- **`AudienceVoteCast`**: Emitted when a spectator casts a vote (`runefoble.events.audience.vote_cast`). Fields: `poll_id`, `campaign_id`, `voter_id`, `option_id`, `channel`, `timestamp`.
+- **`AudiencePollCompleted`**: Emitted when poll voting concludes (`runefoble.events.audience.poll_completed`). Fields: `poll_id`, `campaign_id`, `winning_option_id`, `total_votes`, `quorum_met`, `proposed_modifier`.
+- **`AudienceModifierProposed`**: Emitted when winning chaos option enters DM moderation queue (`runefoble.events.audience.modifier_proposed`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `modifier_type`, `description`, `parameters`, `status`.
+- **`AudienceModifierApproved`**: Emitted when DM approves modifier into session (`runefoble.events.audience.modifier_approved`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `approved_by`, `approved`, `applied_at`.
+
+### Campaign Analytics & Chronicle Events (`aggregate_type: CampaignChronicle`)
+
+- **`ChronicleMilestoneRecorded`**: Emitted when a campaign or session milestone is committed to the chronicle timeline (`runefoble.events.analytics.milestone_recorded`). Fields: `milestone_id`, `campaign_id`, `session_id`, `title`, `description`, `milestone_type`, `tags`, `timestamp`.
+- **`CombatTelemetrySnapshotCreated`**: Emitted when a combat round telemetry snapshot is finalized (`runefoble.events.analytics.telemetry_snapshot_created`). Fields: `snapshot_id`, `campaign_id`, `session_id`, `encounter_id`, `round_number`, `spatial_points`, `damage_events`, `timestamp`.
+- **`EncounterMvpAwarded`**: Emitted when an MVP award is conferred for encounter performance (`runefoble.events.analytics.mvp_awarded`). Fields: `award_id`, `campaign_id`, `session_id`, `encounter_id`, `combatant_id`, `combatant_name`, `category`, `score`, `rationale`, `timestamp`.
+
+### Downtime, Crafting, Tavern Minigames & Merchant Haggling Events
+For full schemas of `CraftingAttempted`, `CraftingSucceeded`, `CraftingMishapOccurred`, `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`, see [`downtime-and-crafting-events.md`](downtime-and-crafting-events.md).
+For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `IntoxicationLevelChanged`, and `HagglingNegotiated`, see [`tavern-and-merchants-events.md`](tavern-and-merchants-events.md).
+
+### West Marches & Cross-Campaign Trade Events (`aggregate_type: SharedWorld`, `CaravanLedger`)
+
+- **`SharedWorldCreated`**: Emitted when a persistent West Marches shared frontier is established. Fields: `shared_world_id`, `name`, `frontier_region`, `description`, `created_by`.
+- **`CampaignRegisteredToSharedWorld`**: Emitted when an adventuring campaign links into a shared world frontier. Fields: `shared_world_id`, `campaign_id`, `party_name`, `registered_by`.
+- **`CrossCampaignDiscoveryShared`**: Emitted when an adventuring party maps a point of interest, dungeon, or waypoint. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `discovery_id`, `name`, `discovery_type`, `coordinates`, `discovered_by_campaign_id`, `discovered_by_party_name`, `description`, `danger_level`, `metadata`.
+- **`OutpostEstablished`**: Emitted when a regional settlement or base camp is established. Fields: `shared_world_id`, `outpost_id`, `name`, `region`, `level`, `facilities`, `contributing_campaign_id`, `resources_contributed`.
+- **`SharedStrongholdUpgraded`**: Emitted when communal outpost facilities are upgraded. Fields: `shared_world_id`, `outpost_id`, `facility_id`, `new_tier`, `contributing_campaign_id`, `gold_spent`, `materials_spent`.
+- **`CommunalNoticePosted`**: Emitted when a cross-campaign notice or bounty is posted to the tavern board. Fields: `shared_world_id`, `notice_id`, `campaign_id`, `author_name`, `title`, `content`, `notice_type`, `bounty_reward`.
+- **`CaravanContractPosted`**: Emitted when an asynchronous mercenary caravan escort contract is posted to the frontier board (`runefoble.events.west_marches.caravan_contract_posted`). Fields: `contract_id`, `shared_world_id`, `origin_outpost`, `destination_outpost`, `cargo`, `cargo_value`, `route_risk_level`, `transit_stages`, `escort_collateral`, `reward_gold`, `reward_reputation`, `posted_by_campaign_id`, `poster_user_id`, `expires_in_turns`, `status`, `created_at`.
+- **`CaravanContractAccepted`**: Emitted when an adventuring party claims or accepts an escort contract (`runefoble.events.west_marches.caravan_contract_accepted`). Fields: `contract_id`, `shared_world_id`, `contractor_campaign_id`, `contractor_party_name`, `accepted_by_user_id`, `status`, `accepted_at`.
+- **`CaravanDispatched`**: Emitted when a resource caravan sets off across the frontier. Fields: `contract_id`, `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo`, `dispatched_by_campaign_id`, `transit_turns`, `status`.
+- **`CaravanAmbushed`**: Emitted when a caravan encounters a wilderness hazard or ambush during transit stages (`runefoble.events.west_marches.caravan_ambushed`). Fields: `contract_id`, `shared_world_id`, `caravan_id`, `stage_index`, `ambush_type`, `danger_level`, `outcome`, `cargo_loss_percentage`, `reported_by_campaign_id`, `notes`.
+- **`CaravanTradeFulfilled`**: Emitted when a caravan successfully reaches destination, delivering cargo, unlocking settlement stock, and paying out rewards (`runefoble.events.west_marches.caravan_trade_fulfilled`). Fields: `contract_id`, `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `cargo_value_delivered`, `reward_gold_paid`, `reputation_awarded`, `contractor_campaign_id`, `fulfilled_at`, `status`.
+- **`CaravanTradeCompleted`**: Emitted when a caravan arrives at its destination outpost, unlocking regional merchant stock. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `unlocked_stock`, `completed_at`.
+- **`RegionalMerchantStockUpdated`**: Emitted when outpost merchant inventory adjusts due to trade or expeditions. Fields: `shared_world_id`, `outpost_name`, `inventory_updates`.
 

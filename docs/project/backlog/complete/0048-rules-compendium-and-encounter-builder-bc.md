@@ -35,8 +35,8 @@ Scaffold a new bounded context microservice `services/rules_compendium` in the U
 DMs (Evelyn) spend hours manually looking up monster stats, verifying spell descriptions, and computing Challenge Rating (CR) XP thresholds for combat encounters. During live gameplay, adjudicating rules disputes or improvising enemy reinforcement groups stalls combat for minutes, degrading session momentum. A structured, low-latency compendium and mathematically grounded encounter builder eliminates manual prep time and enables instant in-session arbitration by The Watcher.
 
 ## PRD & User Story Alignment
-- **Governing PRD**: [`PRD-0008-ttrpg-rules-compendium-and-encounter-builder.md`](../../product/accepted/PRD-0008-ttrpg-rules-compendium-and-encounter-builder.md)
-- **User Story**: [`US-0037-automated-cr-encounter-balancing-and-compendium.md`](../../user_stories/accepted/US-0037-automated-cr-encounter-balancing-and-compendium.md)
+- **Governing PRD**: [`prd-0008-ttrpg-rules-compendium-and-encounter-builder.md`](../../product/accepted/prd-0008-ttrpg-rules-compendium-and-encounter-builder.md)
+- **User Story**: [`us-0037-automated-cr-encounter-balancing-and-compendium.md`](../../user_stories/accepted/us-0037-automated-cr-encounter-balancing-and-compendium.md)
 
 ## Governing Architecture & ADRs
 - **ADR-0001**: SpiceDB Zanzibar Object-Level Authorization (public SRD rules accessible to all; user homebrew entries restricted by campaign ownership).

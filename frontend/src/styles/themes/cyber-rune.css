@@ -1,0 +1,112 @@
+/**
+ * Cyber Rune Theme (Default Dark & Light Mode)
+ * ADR-0012: Dark/Light Mode Theming System
+ */
+
+/* ==========================================================================
+   Cyber Rune (Default: Dark)
+   ========================================================================== */
+[data-theme="cyber-rune"],
+[data-theme="cyber-rune"][data-color-mode="dark"],
+:root[data-color-mode="dark"][data-theme="cyber-rune"] {
+  --rf-color-red: #ec4899;
+  --rf-color-blue: #06b6d4;
+  --rf-color-yellow: #eab308;
+  --rf-color-dark: #09090b;
+  --rf-color-light: #fafafa;
+
+  --rf-bg-canvas: #09090b;
+  --rf-bg-surface: #18181b;
+  --rf-bg-surface-elevated: #27272a;
+  --rf-bg-card: #18181b;
+  --rf-bg-inset: #040405;
+
+  --rf-text-primary: #fafafa;
+  --rf-text-secondary: #d4d4d8;
+  --rf-text-muted: #a1a1aa;
+  --rf-text-inverse: #09090b;
+  --rf-font-family: "Courier New", Courier, monospace, system-ui;
+
+  --rf-border-color: #27272a;
+  --rf-border-subtle: #3f3f46;
+  --rf-border-focus: #06b6d4;
+  --rf-border-width: 1px;
+  --rf-border-radius: 2px;
+  --rf-border-style: solid;
+
+  --rf-shadow-color: rgba(6, 182, 212, 0.3);
+  --rf-shadow: 0 0 10px var(--rf-shadow-color);
+  --rf-shadow-sm: 0 0 5px var(--rf-shadow-color);
+
+  --rf-accent-primary: #06b6d4;
+  --rf-accent-secondary: #ec4899;
+  --rf-accent-tertiary: #eab308;
+}
+
+/* ==========================================================================
+   Cyber Rune Light Mode
+   ========================================================================== */
+[data-theme="cyber-rune"][data-color-mode="light"],
+:root[data-color-mode="light"][data-theme="cyber-rune"] {
+  --rf-color-red: #db2777;
+  --rf-color-blue: #0284c7;
+  --rf-color-yellow: #d97706;
+  --rf-color-dark: #09090b;
+  --rf-color-light: #ffffff;
+
+  --rf-bg-canvas: #f0f9ff;
+  --rf-bg-surface: #ffffff;
+  --rf-bg-surface-elevated: #f8fafc;
+  --rf-bg-card: #ffffff;
+  --rf-bg-inset: #e0f2fe;
+
+  --rf-text-primary: #09090b;
+  --rf-text-secondary: #1e293b;
+  --rf-text-muted: #64748b;
+  --rf-text-inverse: #ffffff;
+  --rf-font-family: "Courier New", Courier, monospace, system-ui;
+
+  --rf-border-color: #06b6d4;
+  --rf-border-subtle: #bae6fd;
+  --rf-border-focus: #0284c7;
+  --rf-border-width: 1px;
+  --rf-border-radius: 2px;
+  --rf-border-style: solid;
+
+  --rf-shadow-color: rgba(6, 182, 212, 0.2);
+  --rf-shadow: 0 0 10px var(--rf-shadow-color);
+  --rf-shadow-sm: 0 0 5px var(--rf-shadow-color);
+
+  --rf-accent-primary: #0284c7;
+  --rf-accent-secondary: #db2777;
+  --rf-accent-tertiary: #d97706;
+}
+
+/* ==========================================================================
+   System Preference Media Queries (prefers-color-scheme: light)
+   ========================================================================== */
+@media (prefers-color-scheme: light) {
+  :root[data-color-mode="system"][data-theme="cyber-rune"] {
+    --rf-color-red: #db2777;
+    --rf-color-blue: #0284c7;
+    --rf-color-yellow: #d97706;
+    --rf-bg-canvas: #f0f9ff;
+    --rf-bg-surface: #ffffff;
+    --rf-bg-surface-elevated: #f8fafc;
+    --rf-bg-card: #ffffff;
+    --rf-bg-inset: #e0f2fe;
+    --rf-text-primary: #09090b;
+    --rf-text-secondary: #1e293b;
+    --rf-text-muted: #64748b;
+    --rf-text-inverse: #ffffff;
+    --rf-border-color: #06b6d4;
+    --rf-border-subtle: #bae6fd;
+    --rf-border-focus: #0284c7;
+    --rf-shadow-color: rgba(6, 182, 212, 0.2);
+    --rf-shadow: 0 0 10px var(--rf-shadow-color);
+    --rf-shadow-sm: 0 0 5px var(--rf-shadow-color);
+    --rf-accent-primary: #0284c7;
+    --rf-accent-secondary: #db2777;
+    --rf-accent-tertiary: #d97706;
+  }
+}

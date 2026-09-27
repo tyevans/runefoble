@@ -124,3 +124,26 @@ The `<runefoble-stand-in-guardrails>` custom element is vendored in `services/ch
 ### Custom Events
 - `@guardrails-updated`: Dispatched when the player saves modified guardrail sliders and checkboxes.
 - `@request-hot-swap`: Dispatched when clicking the "Take Control" button to initiate mid-session hot-swap.
+
+---
+
+## 5. Modular Stand-In Test Organization & Architecture
+
+The AI stand-in and absentee recap test infrastructure is partitioned into modular, focused test suites strictly adhering to Hard Invariant 6 (< 500 lines per file) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+- `tests/test_stand_in_tactics_unit.py` (TASK-0070): Pure unit tests verifying stand-in penalty mechanics (`drunk`, `foolishness`, `cowardice`, `greed`), dice roll formula adjustments (`1d20-2`), slurred dialogue, defensive positioning, looting behavior, and personality trait flavor integration (`scholarly`, `valiant`, `impulsive`).
+- `tests/test_blackbox_stand_in_service.py` (TASK-0070): Blackbox integration tests verifying The Watcher stand-in action endpoint (`POST /api/v1/watcher/stand-in/act`), Redis Streams event publication (`StandInActionDecided`, `AbsencePenaltyApplied`), Game Session automated turn progression (`POST /api/v1/sessions/{id}/turns/auto-pilot`), and absentee chronicle recap generation (`POST /api/v1/watcher/stand-in/recap`).
+- `tests/test_blackbox_stand_in_policies.py` (TASK-0096): Verifies tactical guardrail configuration via `PUT/GET /api/v1/characters/{id}/guardrails`, SpiceDB Zanzibar permission checks, `StandInPolicyUpdated` and `StandInStabilized` CloudEvent publications, The Watcher stand-in tactical decision graph evaluation under 'drunk' and 'foolishness' penalties, and zero-HP permadeath stabilization invariants.
+- `tests/test_blackbox_stand_in_takeover.py` (TASK-0096): Verifies mid-session hot-swap handoffs via `POST /api/v1/sessions/{id}/hot-swap`, active combat round and initiative continuity, SpiceDB Zanzibar object authorization, and `CharacterControlTransferred` CloudEvent emissions.
+- `tests/test_blackbox_stand_in_guardrails.py` (TASK-0112): Blackbox TDD test suite validating the modular decomposition of `StandInAIEngine` across `stand_in_guardrails.py`, `stand_in_persona.py`, and `stand_in_recap.py`, ensuring 100% backward compatibility and file length invariants (< 150 lines).
+
+---
+
+## 6. Stand-In Decision Engine Architecture (TASK-0112)
+
+The stand-in decision logic within `services/the_watcher` is decoupled into focused sub-modules to preserve Hard Invariant 6 (< 500 lines limit):
+- `the_watcher.stand_in_guardrails`: Implements `evaluate_tactical_guardrails` for ally protection priority matching, melee distance heuristics, spell slot preservation checks, and emergency triage.
+- `the_watcher.stand_in_persona`: Implements `apply_penalty_modifiers` for humorous DM penalties (`drunk`, `foolishness`, `cowardice`, `greed`), disadvantage formulas, and personality trait weighting (`scholarly`, `valiant`, `impulsive`).
+- `the_watcher.stand_in_recap`: Implements `generate_absentee_recap` for humorous chronicle paragraphs, highlight summaries, and absentee excuse generation.
+- `the_watcher.stand_in_ai`: Lightweight `StandInAIEngine` facade orchestrating guardrail evaluation, penalty simulation, and chronicle recap delegation.
+
+

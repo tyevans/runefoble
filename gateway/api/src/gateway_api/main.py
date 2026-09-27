@@ -16,9 +16,22 @@ from gateway_api.dependencies import (
     set_event_bus,
     ws_manager,
 )
-from gateway_api.routers import campaigns_router, health_router, spectator_router
+from gateway_api.mobile_companion import (
+    mobile_companion_websocket_endpoint,
+)
+from gateway_api.mobile_companion import (
+    router as companion_router,
+)
+from gateway_api.routers import (
+    campaigns_router,
+    downtime_router,
+    health_router,
+    overlay_router,
+    spectator_router,
+)
 from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
 from gateway_api.websocket import campaign_websocket_endpoint
+from gateway_mcp.dynamic_registry import router as mcp_tools_router
 from runefoble_platform.telemetry import init_telemetry
 from voice_agent.room_routes import router as voice_rooms_router
 
@@ -41,10 +54,16 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(campaigns_router)
+app.include_router(downtime_router)
 app.include_router(spectator_router)
+app.include_router(overlay_router)
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 app.include_router(voice_rooms_router)
+app.include_router(companion_router)
+app.include_router(mcp_tools_router)
+app.include_router(mcp_tools_router, prefix="/api/v1")
+
 
 init_telemetry("gateway-api", settings=platform_settings, app=app)
 
@@ -79,6 +98,12 @@ async def session_websocket(websocket: WebSocket, session_id: str) -> None:
 async def voice_websocket(websocket: WebSocket, session_id: str) -> None:
     """Zanzibar-protected WebRTC live voice room signaling stream."""
     await voice_signaling_websocket_endpoint(websocket, session_id)
+
+
+@app.websocket("/ws/mobile-companion/{session_id}")
+async def mobile_companion_websocket(websocket: WebSocket, session_id: str) -> None:
+    """Zanzibar-protected low-bandwidth mobile WebRTC companion and haptic gateway."""
+    await mobile_companion_websocket_endpoint(websocket, session_id)
 
 
 def main() -> None:

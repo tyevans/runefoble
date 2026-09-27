@@ -4,6 +4,14 @@ Exposes Runefoble tactical tools, board state, spells, conditions,
 and AI DM controls to MCP-compliant agents and LLMs.
 """
 
+from gateway_mcp.dynamic_registry import (
+    DynamicToolDefinition,
+    DynamicToolRegistry,
+    dynamic_registry,
+)
+from gateway_mcp.dynamic_registry import (
+    router as dynamic_tool_router,
+)
 from gateway_mcp.prompts import (
     dm_narrative_guidance,
     register_prompts,
@@ -44,7 +52,14 @@ register_tools(mcp)
 register_resources(mcp)
 register_prompts(mcp)
 
+# Wire dynamic tool registry
+dynamic_registry.set_mcp_server(mcp)
+
 __all__ = [
+    "DynamicToolDefinition",
+    "DynamicToolRegistry",
+    "dynamic_registry",
+    "dynamic_tool_router",
     "add_condition",
     "apply_absentee_penalty",
     "apply_condition",

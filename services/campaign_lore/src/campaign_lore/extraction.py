@@ -15,7 +15,7 @@ ALIAS_PATTERNS = [
     r"([A-Z][a-zA-Z\s]+?)\s+\(also\s+called\s+([A-Z][a-zA-Z\s]+?)\)",
 ]
 PROPER_NOUN_REGEX = re.compile(
-    r"\b(?:The\s+)?(?:Sir\s+|Lady\s+|Lord\s+|Archmage\s+|King\s+|Queen\s+)?[A-Z][a-z]+(?:\s+(?:of\s+)?[A-Z][a-z]+)*\b"
+    r"\b(?:The\s+)?(?:Sir\s+|Lady\s+|Lord\s+|Archmage\s+|King\s+|Queen\s+)?[A-Z][a-z]+(?:\s+(?:of\s+(?:the\s+)?)?[A-Z][a-z]+)*\b"
 )
 RELATIONSHIP_REGEX = re.compile(
     r"([A-Z][a-zA-Z\s]+?)\s+(guards|rules|located in|allied with|serves)\s+([A-Z][a-zA-Z\s]+?)(?:\.|\,|$)"
@@ -55,6 +55,11 @@ def extract_proper_nouns(text: str) -> list[str]:
         if len(clean) >= 3 and clean not in seen:
             seen.add(clean)
             found.append(clean)
+        if clean.startswith("The ") and len(clean) > 6:
+            without_the = clean[4:].strip()
+            if without_the not in seen:
+                seen.add(without_the)
+                found.append(without_the)
     return found
 
 

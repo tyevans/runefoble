@@ -1,0 +1,17 @@
+{
+  "service": "game_session",
+  "package": "@runefoble/game-session-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-initiative-tracker",
+    "runefoble-dice-roller",
+    "runefoble-spectator-view",
+    "runefoble-spectator-overlay",
+    "runefoble-campfire-crafting",
+    "runefoble-tavern-parlor",
+    "runefoble-caravan-board",
+    "runefoble-combat-reaction-prompt",
+    "runefoble-ready-action-card"
+  ]
+}
+

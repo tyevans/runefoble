@@ -4,12 +4,15 @@ Powered by eventsource-py, Redis Streams, and WebAudio stem mixing.
 Manages encounter tension scoring, tactical foley sound effects, and -12dB audio ducking.
 """
 
+import json
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from soundscape.routers.cue import router as cue_router
+from soundscape.routers.leitmotif import router as leitmotif_router
 from soundscape.routers.stems import router as stems_router
 from soundscape.routers.tension import router as tension_router
 
@@ -33,6 +36,7 @@ app.add_middleware(
 app.include_router(cue_router)
 app.include_router(tension_router)
 app.include_router(stems_router)
+app.include_router(leitmotif_router)
 
 
 @app.get("/healthz", tags=["Health"])
@@ -45,10 +49,28 @@ def health_check() -> dict[str, str]:
 @app.get("/ui/manifest", tags=["Microfrontends"])
 def get_ui_manifest() -> dict[str, Any]:
     """Advertise vendored microfrontend components for soundscape controls."""
+    manifest_path = Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
+    if manifest_path.is_file():
+        try:
+            return json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
     return {
         "service": "soundscape",
         "package": "@runefoble/soundscape-ui",
-        "components": ["runefoble-soundscape-controls"],
+        "components": [
+            "runefoble-soundscape-controls",
+            "runefoble-leitmotif-config",
+        ],
+        "tags": [
+            "runefoble-soundscape-controls",
+            "runefoble-leitmotif-config",
+        ],
+        "styles": [
+            "./src/runefoble-soundscape-controls.styles.ts",
+            "./src/runefoble-leitmotif-config.styles.ts",
+        ],
+        "scripts": ["./src/index.ts"],
         "version": "0.1.0",
     }
 

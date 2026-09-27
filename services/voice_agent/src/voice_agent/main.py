@@ -39,9 +39,11 @@ from voice_agent.models import (
 )
 from voice_agent.routers import (
     audio_router,
+    duplex_router,
     room_router,
     stream_router,
     synthesis_router,
+    vocal_effects_router,
 )
 
 app = FastAPI(
@@ -53,6 +55,8 @@ app.include_router(room_router)
 app.include_router(stream_router)
 app.include_router(audio_router)
 app.include_router(synthesis_router)
+app.include_router(duplex_router)
+app.include_router(vocal_effects_router)
 
 _event_bus: RedisStreamsEventBus | None = None
 
@@ -85,7 +89,36 @@ def get_ui_manifest():
     return {
         "service": "voice_agent",
         "package": "@runefoble/voice-agent-ui",
-        "components": ["runefoble-voice-controls", "runefoble-audio-indicator"],
+        "components": [
+            "runefoble-voice-controls",
+            "runefoble-audio-indicator",
+            "runefoble-mobile-companion",
+            "runefoble-voice-duplex-controls",
+            "audio-stream-controller",
+            "haptic-ping-panel",
+            "connection-status-badge",
+            "runefoble-vocal-modulator",
+            "runefoble-vocal-sliders",
+        ],
+        "tags": [
+            "runefoble-voice-controls",
+            "runefoble-audio-indicator",
+            "runefoble-mobile-companion",
+            "runefoble-voice-duplex-controls",
+            "audio-stream-controller",
+            "haptic-ping-panel",
+            "connection-status-badge",
+            "runefoble-vocal-modulator",
+            "runefoble-vocal-sliders",
+        ],
+        "styles": [
+            "./src/runefoble-voice-controls.styles.ts",
+            "./src/runefoble-mobile-companion.styles.ts",
+            "./src/duplex/styles/index.ts",
+            "./src/mobile_companion/styles/index.ts",
+            "./src/runefoble-vocal-modulator.styles.ts",
+        ],
+        "scripts": ["./src/index.ts"],
         "version": "0.1.0",
     }
 

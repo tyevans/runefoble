@@ -9,7 +9,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./runefoble-watcher-feed": "./src/runefoble-watcher-feed.ts",
-    "./runefoble-autonomous-dm": "./src/runefoble-autonomous-dm.ts"
+    "./runefoble-autonomous-dm": "./src/runefoble-autonomous-dm.ts",
+    "./runefoble-dm-whisper-bar": "./src/runefoble-dm-whisper-bar.ts",
+    "./runefoble-faction-radar": "./src/runefoble-faction-radar.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -112,30 +112,75 @@ This operation checks Zanzibar permissions (`run_session` or `control` on `sessi
 
 ---
 
-## 5. Microfrontend Integration
+## 5. Personal Character Leitmotifs & Adaptive Musical Signatures
 
-The `<runefoble-soundscape-controls>` Web Component is vendored inside `services/soundscape/ui/` and discovered via `GET /ui/manifest`:
+Players can configure distinct instrument signatures and melodic leitmotifs (TASK-0102, PRD-0016, US-0046). The soundscape engine blends character motifs dynamically into active combat scores during clutch moments:
 
-```html
-<runefoble-soundscape-controls
-  sessionid="session-tomb-14"
-  tensionscore="65"
-  stemprofile="combat"
-  mastervolume="80">
-</runefoble-soundscape-controls>
+### Configuring a Character Profile
+```bash
+curl -X POST http://localhost:8009/api/v1/soundscape/leitmotif/profile \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: player-nadia" \
+  -d '{
+    "session_id": "session-tomb-14",
+    "character_id": "char-nadia",
+    "character_name": "Nadia",
+    "instrument_timbre": "lute",
+    "tempo_multiplier": 1.05,
+    "volume_gain": 1.0,
+    "attack_ms": 120,
+    "release_ms": 300,
+    "duration_ms": 4000
+  }'
 ```
 
-The component dispatches custom DOM events:
-- `soundscape-volume`: Triggered when master volume slider moves.
-- `soundscape-mood`: Triggered when DM clicks a mood override button.
-- `soundscape-cue`: Triggered when tactical foley buttons are clicked.
-- `soundscape-duck`: Triggered when voice ducking engages or disengages.
+Available instrument timbre presets:
+- `lute`: Lute & Celtic Flute (acoustic strings, folk woodwinds)
+- `brass`: Heroic Brass & Fanfare (horns, noble trumpets)
+- `woodwind`: Haunting Woodwind & Flute (panpipes, ethereal clarinets)
+- `strings`: Somber Cello & Virtuoso Violins (melancholic cello, driving strings)
+- `synth`: Arcane Synthesizer & Astral Chime (crystal chords, ethereal synth)
+
+### Reactive Tabletop Triggering
+- **Clutch Criticals**: When a player rolls a natural 20 (`CriticalHitScored` or `DiceRolled(is_crit=True)`), the audio mixer triggers their triumphant stinger within 250ms, blending seamlessly into active combat stems.
+- **Death Saves**: When a character drops to 0 HP (`DeathSaveStarted`), the audio soundtrack smoothly transitions to introduce their somber theme variant (e.g. solitary cello), amplifying dramatic tension.
+- **Voice Sidechain Ducking**: Whenever voice activity is detected (`PlayerSpokeEvent`), leitmotif stems are attenuated by -12dB alongside background music.
 
 ---
 
-## 6. Modular Blackbox Test Organization & Architecture
+## 6. Microfrontend Integration
 
-The soundscape blackbox verification suite is partitioned into two focused test modules strictly adhering to Hard Invariant 6 (< 500 lines per file, strictly < 220 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+The soundscape microfrontends are vendored inside `services/soundscape/ui/` and advertised via `GET /ui/manifest`:
+- `<runefoble-soundscape-controls>`: Real-time tension bar, mood override buttons, stem sliders, and tactical foley trigger grid.
+- `<runefoble-leitmotif-config>`: Character instrument signature selector, tempo/volume sliders, and triumphant/somber auditioning buttons with immediate WebAudio earcon feedback.
+
+```html
+<runefoble-leitmotif-config
+  sessionId="session-tomb-14"
+  characterId="char-nadia"
+  characterName="Nadia"
+  instrumentTimbre="lute"
+  tempoMultiplier="1.05"
+  volumeGain="100">
+</runefoble-leitmotif-config>
+```
+
+The component dispatches custom DOM events:
+- `leitmotif-configured`: Emitted when character profile is saved.
+- `leitmotif-audition`: Emitted when triumphant or somber audition buttons are clicked.
+- `leitmotif-timbre-selected`: Emitted when an instrument timbre is selected.
+
+---
+
+## 7. Modular Blackbox Test Organization & Architecture
+
+The soundscape blackbox verification suite is partitioned into focused test modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
+- `tests/test_blackbox_soundscape_ui/`: Modular blackbox test suite (`test_manifest.py`, `test_stem_mixing.py`, `test_foley_ducking.py`, `conftest.py`) verifying microfrontend manifest advertising, package metadata integrity, TypeScript element exports, Storybook coverage, multi-channel stem mixing, tension scoring, WebAudio -12dB audio ducking, and Zanzibar authorization.
 - `tests/test_blackbox_soundscape_transitions.py`: Verifies multi-track stem layer mixing, ambient/combat crossfading, WebAudio -12dB voice ducking coordination triggered by `PlayerSpokeEvent`, manual mood overrides, and `<runefoble-soundscape-controls>` microfrontend component and token invariants.
 - `tests/test_blackbox_soundscape_tension.py`: Verifies encounter tension scoring heuristics across exploration and combat states, tactical foley cue triggers (`POST /api/v1/soundscape/cue`), autonomous Redis Streams reactivity to `CombatEncounterStarted` and `CombatRoundAdvanced`, and SpiceDB Zanzibar DM authorization enforcement.
+- `tests/test_blackbox_leitmotif_events.py`: Verifies CloudEvents domain event class mapping (`LeitmotifProfileConfigured`, `LeitmotifTriggered`, `CriticalHitScored`, `DeathSaveStarted`) and payload serialization roundtrips.
+- `tests/test_blackbox_leitmotif_api.py`: Verifies REST API routes (`/api/v1/soundscape/leitmotif/timbres`, `profile`, `trigger`, `active`), SpiceDB Zanzibar character owner authorization enforcement, and `<runefoble-leitmotif-config>` microfrontend manifest and component invariants.
+- `tests/test_blackbox_leitmotif_triggers.py`: Verifies multi-modal combat and reactive triggers (critical hits, near-death cello themes, WebAudio sidechain -12dB voice ducking) and volume envelope stage calculations.
+
+
 

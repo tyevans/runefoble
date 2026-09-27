@@ -42,5 +42,5 @@ Audio stem streaming requires lightweight WebAudio node mixing on the client and
 
 ## Implementing Backlog Tasks
 - [`TASK-0050: Dynamic Soundscape & Adaptive Audio Microservice`](../../backlog/complete/0050-dynamic-soundscape-and-adaptive-audio-bc.md)
-- [`TASK-0095: Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition`](../../backlog/refined/0095-soundscape-blackbox-test-suite-and-mixer-decomposition.md)
-- [`TASK-0109: Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls`](../../backlog/proposed/0109-dynamic-soundscape-mixing-panel-microfrontend.md)
+- [`TASK-0095: Soundscape Blackbox Test Suite and Adaptive Mixer Modular Decomposition`](../../backlog/complete/0095-soundscape-blackbox-test-suite-and-mixer-decomposition.md)
+- [`TASK-0109: Dynamic Soundscape Mixing Panel Microfrontend and WebAudio Ducking Controls`](../../backlog/complete/0109-dynamic-soundscape-mixing-panel-microfrontend.md)

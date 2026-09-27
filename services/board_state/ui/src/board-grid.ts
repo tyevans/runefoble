@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { html, nothing } from 'lit';
 import type {
   BoardToken,
   DragKinematicsState,
@@ -23,6 +23,11 @@ export interface BoardGridRenderOptions {
   dragState: DragKinematicsState | null;
   localGhost: GhostPreviewState | null;
   fogOfWar: boolean;
+  enable3D?: boolean;
+  aoeAffectedTokens?: string[];
+  aoeAffectedCells?: [number, number][];
+  aoeOverlay?: unknown;
+  radialMenu?: unknown;
   isCellRevealed?: (x: number, y: number) => boolean;
   onCellClick: (x: number, y: number) => void;
   onTokenPointerDown: (e: PointerEvent, token: BoardToken) => void;
@@ -42,6 +47,11 @@ export function renderBoardGrid(options: BoardGridRenderOptions) {
     dragState,
     localGhost,
     fogOfWar,
+    enable3D = false,
+    aoeAffectedTokens = [],
+    aoeAffectedCells = [],
+    aoeOverlay,
+    radialMenu,
     isCellRevealed: checkRevealed,
     onCellClick,
     onTokenPointerDown,
@@ -68,6 +78,8 @@ export function renderBoardGrid(options: BoardGridRenderOptions) {
     : (localGhost?.waypoints || []);
 
   const waypointSet = new Set(activeWaypoints.map((w) => `${w.x},${w.y}`));
+  const aoeCellSet = new Set(aoeAffectedCells.map(([cx, cy]) => `${cx},${cy}`));
+  const aoeTokenSet = new Set(aoeAffectedTokens);
 
   return html`
     <div class="grid-wrapper">
@@ -89,6 +101,8 @@ export function renderBoardGrid(options: BoardGridRenderOptions) {
           );
           const isGhostCell = Boolean(localGhost && localGhost.toX === x && localGhost.toY === y);
           const ghostToken = localGhost ? tokens.find((t) => t.id === localGhost.tokenId) : null;
+          const isAoECell = aoeCellSet.has(`${x},${y}`);
+          const isTargeted = Boolean(token && (aoeTokenSet.has(token.id) || token.isTargeted));
 
           return renderBoardCell({
             x,
@@ -96,6 +110,8 @@ export function renderBoardGrid(options: BoardGridRenderOptions) {
             isRevealed,
             terrain: terrainCells.find((c) => c.x === x && c.y === y),
             isWaypoint: waypointSet.has(`${x},${y}`),
+            isAoECell,
+            isTargeted,
             token,
             isActiveTurn,
             isGhostCell,
@@ -110,7 +126,12 @@ export function renderBoardGrid(options: BoardGridRenderOptions) {
         })}
       </div>
 
+      <canvas class="vfx-particle-canvas" aria-hidden="true"></canvas>
+      <canvas class="tabletop-3d-canvas ${enable3D ? 'active' : ''}" aria-hidden="true"></canvas>
+      ${aoeOverlay ? aoeOverlay : nothing}
+      ${radialMenu ? radialMenu : nothing}
       ${renderDistanceRuler(dragState)}
     </div>
+
   `;
 }

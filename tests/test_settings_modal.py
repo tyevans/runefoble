@@ -12,6 +12,9 @@ SETTINGS_MODAL_TS = FRONTEND_DIR / "src" / "components" / "runefoble-settings-mo
 SETTINGS_MODAL_STYLES_TS = (
     FRONTEND_DIR / "src" / "components" / "runefoble-settings-modal.styles.ts"
 )
+SETTINGS_LAYOUT_STYLES_TS = (
+    FRONTEND_DIR / "src" / "components" / "styles" / "settings-modal-layout.styles.ts"
+)
 HEADER_TS = FRONTEND_DIR / "src" / "components" / "runefoble-header.ts"
 STORIES_TS = FRONTEND_DIR / "src" / "stories" / "runefoble-settings-modal.stories.ts"
 INDEX_TS = FRONTEND_DIR / "src" / "index.ts"
@@ -33,7 +36,11 @@ def test_settings_modal_registration_and_properties():
 def test_settings_modal_dialog_architecture():
     """Verify modal dialog backdrop overlay, accessibility ARIA attributes, and focus trap."""
     content = SETTINGS_MODAL_TS.read_text(encoding="utf-8")
-    styles_content = SETTINGS_MODAL_STYLES_TS.read_text(encoding="utf-8")
+    styles_content = (
+        SETTINGS_LAYOUT_STYLES_TS.read_text(encoding="utf-8")
+        if SETTINGS_LAYOUT_STYLES_TS.is_file()
+        else SETTINGS_MODAL_STYLES_TS.read_text(encoding="utf-8")
+    )
     assert ".modal-overlay" in styles_content
     assert "backdrop-filter: blur(4px)" in styles_content
     assert 'role="dialog"' in content
@@ -98,7 +105,12 @@ def test_storybook_stories_completeness():
 
 def test_dark_mode_css_tokens():
     """Verify themes.css defines dark mode overrides and system media query rules."""
-    css_content = THEMES_CSS.read_text(encoding="utf-8")
+    bauhaus_css = FRONTEND_DIR / "src" / "styles" / "themes" / "bauhaus.css"
+    css_content = (
+        bauhaus_css.read_text(encoding="utf-8")
+        if bauhaus_css.is_file()
+        else THEMES_CSS.read_text(encoding="utf-8")
+    )
     assert '[data-theme="bauhaus"][data-color-mode="dark"]' in css_content
     assert "--rf-bg-canvas: #121212;" in css_content
     assert "@media (prefers-color-scheme: dark)" in css_content

@@ -52,6 +52,6 @@ Chroniclers, worldbuilders, and hybrid tabletop crafters (like Rowan) and Game M
 - [`US-0050: Collaborative Campaign Atlas and Multi-Layered Living Codex`](../../user_stories/accepted/us-0050-collaborative-campaign-atlas-and-living-codex.md)
 
 ## Implementing Backlog Tasks
-- [`TASK-0101: Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector`](../../backlog/proposed/0101-diegetic-handouts-and-relic-inspector-bc.md)
-- [`TASK-0105: Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens`](../../backlog/proposed/0105-printable-tabletop-forge-and-stl-tokens.md)
-- [`TASK-0106: Collaborative Campaign World Atlas & Living Party Codex`](../../backlog/proposed/0106-collaborative-campaign-atlas-and-codex-bc.md)
+- [`TASK-0101: Generative Diegetic Handouts, Wax Seals & 3D Relic Inspector`](../../backlog/complete/0101-diegetic-handouts-and-relic-inspector-bc.md)
+- [`TASK-0105: Printable Tabletop Forge: Grid-Calibrated PDFs, Standees & 3D STL Tokens`](../../backlog/complete/0105-printable-tabletop-forge-and-stl-tokens.md)
+- [`TASK-0106: Collaborative Campaign World Atlas & Living Party Codex`](../../backlog/complete/0106-collaborative-campaign-atlas-and-codex-bc.md)

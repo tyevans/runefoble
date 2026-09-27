@@ -1,0 +1,53 @@
+/**
+ * Runefoble Design System - Universal Base Tokens
+ * ADR-0012: Design System Theming Tokens and Bauhaus Modernist Aesthetic
+ * TASK-0120: Modular CSS Theme Sub-Modules
+ */
+
+:root {
+  /* Typography scale */
+  --rf-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --rf-font-mono: "Courier New", Courier, monospace, monospace;
+  --rf-font-serif: "Georgia", serif, system-ui;
+  --rf-font-size-xs: 0.75rem;
+  --rf-font-size-sm: 0.875rem;
+  --rf-font-size-md: 1rem;
+  --rf-font-size-lg: 1.125rem;
+  --rf-font-size-xl: 1.25rem;
+  --rf-font-size-2xl: 1.5rem;
+  --rf-font-size-3xl: 2rem;
+
+  /* Spacing scale */
+  --rf-space-1: 0.25rem;
+  --rf-space-2: 0.5rem;
+  --rf-space-3: 0.75rem;
+  --rf-space-4: 1rem;
+  --rf-space-6: 1.5rem;
+  --rf-space-8: 2rem;
+  --rf-space-12: 3rem;
+
+  /* Corner radii scale */
+  --rf-radius-none: 0px;
+  --rf-radius-sm: 2px;
+  --rf-radius-md: 4px;
+  --rf-radius-lg: 8px;
+  --rf-radius-full: 9999px;
+
+  /* Tactile neobrutalist border defaults */
+  --rf-border-width: 2px;
+  --rf-border-radius: 0px;
+  --rf-border-style: solid;
+
+  /* Transition curves */
+  --rf-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --rf-transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --rf-transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Z-index layers */
+  --rf-z-canvas: 0;
+  --rf-z-tokens: 10;
+  --rf-z-nav: 100;
+  --rf-z-dropdown: 500;
+  --rf-z-modal: 1000;
+  --rf-z-tooltip: 2000;
+}

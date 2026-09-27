@@ -8,7 +8,13 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./runefoble-campaign-codex": "./src/runefoble-campaign-codex.ts"
+    "./runefoble-campaign-atlas": "./src/runefoble-campaign-atlas.ts",
+    "./runefoble-campaign-codex": "./src/runefoble-campaign-codex.ts",
+    "./runefoble-handout-viewer": "./src/runefoble-handout-viewer.ts",
+    "./runefoble-relic-inspector": "./src/runefoble-relic-inspector.ts",
+    "./runefoble-west-marches-atlas": "./src/runefoble-west-marches-atlas.ts",
+    "./runefoble-west-marches-atlas.styles": "./src/runefoble-west-marches-atlas.styles.ts",
+    "./west-marches": "./src/west_marches/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

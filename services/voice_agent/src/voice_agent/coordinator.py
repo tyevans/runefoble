@@ -11,6 +11,10 @@ from collections.abc import Callable
 from typing import Any
 
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_events.vocal_dsp import (
+    VocalModulatorPresetAppliedEvent,
+    VoiceFilterToggledEvent,
+)
 from runefoble_events.voice import VoicePeerJoined, VoicePeerLeft, VoicePeerMuteToggled
 from runefoble_platform.event_sourcing import create_aggregate_repository
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -29,8 +33,7 @@ class VoiceRoomCoordinator:
         event_bus: RedisStreamsEventBus | None = None,
         spicedb_client: SpiceDBClient | None = None,
     ):
-        self._event_bus = event_bus
-        self._spicedb = spicedb_client
+        self._event_bus, self._spicedb = event_bus, spicedb_client
         self._repository = create_aggregate_repository(VoiceRoomAggregate)
         self._telemetry: dict[str, dict[str, dict[str, Any]]] = {}
         self._aggregates: dict[str, VoiceRoomAggregate] = {}
@@ -52,15 +55,13 @@ class VoiceRoomCoordinator:
         self._kick_callbacks.append(cb)
 
     async def get_or_load_room(self, session_id: str) -> VoiceRoomAggregate:
-        if session_id in self._aggregates:
-            return self._aggregates[session_id]
-        room_uuid = to_uuid(session_id)
-        try:
-            agg = await self._repository.load(room_uuid)
-        except Exception:
-            agg = VoiceRoomAggregate(room_uuid)
-        self._aggregates[session_id] = agg
-        return agg
+        if session_id not in self._aggregates:
+            room_uuid = to_uuid(session_id)
+            try:
+                self._aggregates[session_id] = await self._repository.load(room_uuid)
+            except Exception:
+                self._aggregates[session_id] = VoiceRoomAggregate(room_uuid)
+        return self._aggregates[session_id]
 
     async def peer_joined(
         self,
@@ -81,8 +82,7 @@ class VoiceRoomCoordinator:
         agg = await self.get_or_load_room(session_id)
         event = agg.leave_peer(session_id, peer_id, reason)
         await self._publish_event(event)
-        if session_id in self._telemetry:
-            self._telemetry[session_id].pop(peer_id, None)
+        self._telemetry.get(session_id, {}).pop(peer_id, None)
         return event
 
     async def mute_toggled(
@@ -93,39 +93,36 @@ class VoiceRoomCoordinator:
         await self._publish_event(event)
         return event
 
-    def update_telemetry(
-        self,
-        session_id: str,
-        peer_id: str,
-        audio_level: float | None = None,
-        latency_ms: float | None = None,
-        is_speaking: bool | None = None,
-    ) -> None:
+    async def apply_vocal_preset(
+        self, session_id: str, peer_id: str, preset_name: str, **kwargs: Any
+    ) -> VocalModulatorPresetAppliedEvent:
+        agg = await self.get_or_load_room(session_id)
+        event = agg.apply_vocal_preset(session_id, peer_id, preset_name, **kwargs)
+        await self._publish_event(event)
+        return event
+
+    async def toggle_voice_filter(
+        self, session_id: str, peer_id: str, filter_name: str, **kwargs: Any
+    ) -> VoiceFilterToggledEvent:
+        agg = await self.get_or_load_room(session_id)
+        event = agg.toggle_voice_filter(session_id, peer_id, filter_name, **kwargs)
+        await self._publish_event(event)
+        return event
+
+    def update_telemetry(self, session_id: str, peer_id: str, **metrics: Any) -> None:
         t = self._telemetry.setdefault(session_id, {}).setdefault(peer_id, {})
-        if audio_level is not None:
-            t["audio_level"] = audio_level
-        if latency_ms is not None:
-            t["latency_ms"] = latency_ms
-        if is_speaking is not None:
-            t["is_speaking"] = is_speaking
+        t.update({k: v for k, v in metrics.items() if v is not None})
 
     async def get_room_summary(self, session_id: str) -> dict[str, Any]:
         agg = await self.get_or_load_room(session_id)
         peers = agg.state.peers if agg.state else {}
         room_t = self._telemetry.get(session_id, {})
-        participants = [
-            {
-                "peer_id": p.peer_id,
-                "user_id": p.user_id,
-                "role": p.role,
-                "joined_at": p.joined_at,
-                "is_muted": p.is_muted,
-                "audio_level": room_t.get(pid, {}).get("audio_level", p.audio_level),
-                "latency_ms": room_t.get(pid, {}).get("latency_ms", p.latency_ms),
-                "is_speaking": room_t.get(pid, {}).get("is_speaking", p.is_speaking),
-            }
-            for pid, p in peers.items()
-        ]
+        participants = []
+        for pid, p in peers.items():
+            item = p.model_dump()
+            t = room_t.get(pid, {})
+            item.update({k: t[k] for k in ("audio_level", "latency_ms", "is_speaking") if k in t})
+            participants.append(item)
         return {
             "session_id": session_id,
             "active": True,
@@ -155,26 +152,18 @@ class VoiceRoomCoordinator:
     async def _publish_event(self, event: Any) -> None:
         bus = self._event_bus
         if bus is None:
-            for mod_name, attr in [
-                ("gateway_api.main", "get_event_bus"),
-                ("voice_agent.main", "_event_bus"),
-            ]:
+            try:
+                from voice_agent.dependencies import get_event_bus
+
+                bus = get_event_bus()
+            except Exception:
+                bus = None
+        if bus:
+            for s in (STREAM_SESSION, STREAM_VOICE):
                 try:
-                    mod = __import__(mod_name, fromlist=[attr])
-                    val = getattr(mod, attr, None)
-                    bus = val() if callable(val) else val
-                    if bus:
-                        break
-                except Exception:
-                    continue
-        if bus is not None:
-            for stream in (STREAM_SESSION, STREAM_VOICE):
-                try:
-                    await bus.publish_event(stream, event)
+                    await bus.publish_event(s, event)
                 except Exception as e:
-                    logger.warning(
-                        "Failed to publish %s to %s: %s", type(event).__name__, stream, e
-                    )
+                    logger.warning("Failed to publish %s to %s: %s", type(event).__name__, s, e)
 
 
 _default_coordinator: VoiceRoomCoordinator | None = None

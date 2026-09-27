@@ -172,3 +172,24 @@ To test live gRPC against SpiceDB without running PostgreSQL:
 docker run -d --rm -p 50051:50051 authzed/spicedb:v1.34.0 serve-testing
 ```
 The `serve-testing` mode provides an in-memory, fully-isolated Zanzibar engine where every client-supplied token isolates its own graph.
+
+### Automated Test Suites & Fixtures
+Automated testing uses the `live_spicedb_endpoint` fixture defined in `tests/helpers/spicedb.py` and registered globally via `tests/conftest.py`:
+- **`tests/test_spicedb_schema_bootstrap.py`**: Fast-running unit suite validating `runefoble.zed` existence, definition syntax, error handling for empty schemas, and graceful offline fallback behavior when endpoints are unreachable.
+- **`tests/test_blackbox_spicedb_live_grpc.py`**: Integration blackbox suite evaluating live Zanzibar graph permissions, frontdoor role assignment (`POST /api/v1/campaigns/{id}/roles`), and immediate permission revocation upon relationship tuple deletion.
+- **`tests/test_websocket_zanzibar_connect_auth.py`**: Verifies handshake authentication, campaign viewer/reader authorization, 4003 rejection for unauthorized subjects, and dynamic permission revocation disconnecting active sessions.
+- **`tests/test_websocket_zanzibar_mutators.py`**: Verifies fine-grained Zanzibar object-level permissions on token movement, DM-only monster spawning/scenes, character sheet mutations, Redis stream publishing, and mid-session relation revocations.
+- **`tests/test_blackbox_spicedb_auth_sync.py`**: Blackbox frontdoor suite testing Zitadel-to-SpiceDB relationship synchronization, claim translations, and domain event dispatch.
+- **`tests/test_blackbox_spicedb_live.py`**: Blackbox frontdoor suite evaluating `SpiceDBClient` operations and fallback handling.
+
+---
+
+## 7. Modular Mock SpiceDB Engine Architecture
+
+For lightweight unit and offline testing, `runefoble_auth` provides an in-memory mock engine decomposed into single-responsibility submodules under `runefoble_auth.mock`:
+- **`runefoble_auth.mock.schema_parser`**: Parses Zed schema definitions into `SchemaGraph`, extracting relations, permissions, and target types.
+- **`runefoble_auth.mock.evaluator`**: Recursively evaluates Zanzibar graph reachability, schema arrow expressions (`relation->permission`), domain entity relations, and caveats.
+- **`runefoble_auth.mock.client`**: Provides `MockSpiceDBClient` tuple storage, relationship CRUD, touch updates, and permission checks.
+- **`runefoble_auth.mock_spicedb`**: Facade module re-exporting `MockSpiceDBClient` and `Relationship` for complete backward compatibility.
+
+

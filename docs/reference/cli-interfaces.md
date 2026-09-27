@@ -23,6 +23,10 @@
 | `make test` | Executes the Python test suite and builds the frontend |
 | `make lint` | Runs typechecking and Helm chart linter |
 | `make build` | Produces production frontend bundle and static Storybook documentation |
+| `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks |
+| `make prd-decompose` | Decomposes PRDs into ADR spikes and vertical slices (`ARGS="--prd PRD-0014"`) |
+| `make prd-create` | Scaffolds a new PRD document with frontmatter and registers it |
+| `make prd-sync` | Synchronizes PRD, User Story, and Backlog Priority registries |
 
 ## Automation Runner Scripts
 
@@ -32,3 +36,4 @@
 | `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |
 | `./scripts/run-backlog-engine.sh` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching |
 | `./scripts/visualize-project.sh` | Starts dynamic project content visualizer web application on port 8787 |
+| `./scripts/decompose-prds.sh` | PRD pipeline runner to audit, scaffold, decompose into vertical slices/spikes, and sync |

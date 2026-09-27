@@ -59,7 +59,7 @@ const baseBoardStyles = css`
     font-weight: 700;
   }
 
-  .fog-toggle {
+  .fog-toggle, .mode-3d-toggle {
     background: var(--rf-bg-surface);
     color: var(--rf-text-muted);
     border: var(--rf-border-width, 2px) solid var(--rf-border-color);
@@ -80,11 +80,36 @@ const baseBoardStyles = css`
     color: var(--rf-color-dark);
   }
 
+  .mode-3d-toggle.active {
+    background: var(--rf-accent-secondary);
+    color: var(--rf-color-light);
+  }
+
   .grid-wrapper {
     position: relative;
     width: fit-content;
     margin: 0 auto;
   }
+
+  .vfx-particle-canvas, .tabletop-3d-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .tabletop-3d-canvas {
+    z-index: 12;
+    display: none;
+  }
+
+  .tabletop-3d-canvas.active {
+    display: block;
+  }
+
 
   .grid {
     display: grid;

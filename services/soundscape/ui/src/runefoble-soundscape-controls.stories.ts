@@ -22,6 +22,8 @@ export const ExplorationDefault: Story = {
   `,
 };
 
+export const QuietAmbient: Story = ExplorationDefault;
+
 export const TensionRising: Story = {
   render: () => html`
     <runefoble-soundscape-controls
@@ -44,6 +46,8 @@ export const CombatActive: Story = {
   `,
 };
 
+export const HighTensionCombat: Story = CombatActive;
+
 export const BossClimax: Story = {
   render: () => html`
     <runefoble-soundscape-controls
@@ -63,6 +67,17 @@ export const VoiceDuckingActive: Story = {
       stemProfile="combat"
       masterVolume="85"
       .isDucked=${true}
+    ></runefoble-soundscape-controls>
+  `,
+};
+
+export const ActiveFoleyPlayback: Story = {
+  render: () => html`
+    <runefoble-soundscape-controls
+      sessionId="session-tomb-14"
+      tensionScore="60"
+      stemProfile="combat"
+      masterVolume="85"
     ></runefoble-soundscape-controls>
   `,
 };

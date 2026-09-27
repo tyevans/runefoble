@@ -1,0 +1,10 @@
+{
+  "service": "rules_compendium",
+  "package": "@runefoble/rules-compendium-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-rules-compendium",
+    "runefoble-rules-lookup",
+    "runefoble-encounter-builder"
+  ]
+}

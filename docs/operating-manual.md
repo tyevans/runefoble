@@ -78,6 +78,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`develop-lit-components-in-storybook.md`](how-to/develop-lit-components-in-storybook.md): How to develop Lit Web Components in Storybook with Bauhaus design tokens.
 - [`add-a-watcher-ai-tool.md`](how-to/add-a-watcher-ai-tool.md): How to expose new FastMCP tabletop tools and session resources to LLM agents.
 - [`curate-backlog-and-roadmap.md`](how-to/curate-backlog-and-roadmap.md): How to triage the backlog, evaluate INVEST criteria, scan file invariants, and perform JIT refinement.
+- [`decompose-prds-into-vertical-slices.md`](how-to/decompose-prds-into-vertical-slices.md): How to scaffold PRDs, audit backlog buffers, and decompose requirements into single-pass vertical slices and ADR spikes.
 - [`instrument-services-with-opentelemetry.md`](how-to/instrument-services-with-opentelemetry.md): How to instrument FastAPI services, configure OTel exporters, and propagate trace context over Redis Streams.
 - [`authenticate-with-zitadel-oidc.md`](how-to/authenticate-with-zitadel-oidc.md): How to validate Zitadel JWTs against JWKS discovery, enforce HTTP dependencies, and secure WebSockets.
 - [`track-analytics-events.md`](how-to/track-analytics-events.md): How to record privacy-preserving analytics via OpenPanel SDK and Redis Streams workers.
@@ -92,6 +93,30 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`configure-stand-in-guardrails-and-hot-swap.md`](how-to/configure-stand-in-guardrails-and-hot-swap.md): How to configure tactical guardrails for absent player stand-ins, zero-HP stabilization, and execute mid-session hot-swap takeover.
 - [`manage-dm-copilot-whispers-and-veto-overrides.md`](how-to/manage-dm-copilot-whispers-and-veto-overrides.md): How to manage private DM narrative whisper channels, intercept AI mutations, and exercise one-click veto/edit overrides.
 - [`resolve-conversational-disambiguation-and-combos.md`](how-to/resolve-conversational-disambiguation-and-combos.md): How to detect ambiguous targets, generate clarification prompts, chain compound action combos, and coordinate rollback.
+- [`orchestrate-audience-chaos-polls.md`](how-to/orchestrate-audience-chaos-polls.md): How to configure and orchestrate live audience chaos polls, ingest spectator votes across streaming channels, and manage DM approval queues.
+- [`import-universal-vtt-maps-and-register-dynamic-tools.md`](how-to/import-universal-vtt-maps-and-register-dynamic-tools.md): How to import community Universal VTT maps (.dd2vtt), extract line-of-sight walls, store battlemap textures in Silo S3, and register dynamic runtime FastMCP tools.
+- [`broadcast-obs-stream-overlay-and-cinematic-camera.md`](how-to/broadcast-obs-stream-overlay-and-cinematic-camera.md): How to embed the alpha-transparent OBS party vitals HUD overlay, configure cubic-bezier cinematic director tracking, and sanitize DM secrets.
+- [`project-campaign-analytics-and-chronicle-timeline.md`](how-to/project-campaign-analytics-and-chronicle-timeline.md): How to project combat telemetry, query spatial damage heatmaps, calculate encounter MVP awards, and view chronicle timelines.
+- [`interact-with-character-sheet-and-inventory.md`](how-to/interact-with-character-sheet-and-inventory.md): How to interact with character sheet equipment slots, inventory encumbrance, condition tooltips, and spell slot tracking.
+- [`run-campfire-rests-and-alchemical-crafting.md`](how-to/run-campfire-rests-and-alchemical-crafting.md): How to combine reagents with volatile mishap tables, resolve campfire resting boons, and manage party stronghold upgrades.
+- [`run-tavern-minigames-and-merchant-haggling.md`](how-to/run-tavern-minigames-and-merchant-haggling.md): How to run interactive Liar's Dice wagering, drinking contests with DSP voice filters, and negotiate with personality-driven merchants.
+- [`inspect-diegetic-handouts-and-3d-relics.md`](how-to/inspect-diegetic-handouts-and-3d-relics.md): How to generate diegetic parchment handouts, break wax seals with acoustic feedback, reveal UV invisible ink runes, and inspect 3D WebGL relics.
+- [`forge-print-ready-maps-standees-and-stl-tokens.md`](how-to/forge-print-ready-maps-standees-and-stl-tokens.md): How to forge multi-page 1-inch grid PDFs, foldable papercraft standees, and watertight 3D STL token rings with status clips.
+- [`interact-with-campaign-atlas-and-codex.md`](how-to/interact-with-campaign-atlas-and-codex.md): How to navigate the multi-layered world atlas, define geopolitical boundaries, place milestone pins with era filtering, and manage private/shared party codex notes.
+- [`manage-generative-wardrobe-and-condition-portraits.md`](how-to/manage-generative-wardrobe-and-condition-portraits.md): How to synthesize narrative wardrobe variants, apply real-time condition overlays (bloodied, poisoned, stunned), and synchronize board tokens.
+- [`trigger-kinetic-spell-vfx-and-particles.md`](how-to/trigger-kinetic-spell-vfx-and-particles.md): How to trigger multi-modal kinetic spell VFX, WebGL particle blooms, elemental archetypes, and ephemeral decals.
+- [`interact-with-radial-action-menu-and-aoe-templates.md`](how-to/interact-with-radial-action-menu-and-aoe-templates.md): How to trigger one-tap token actions with the contextual radial menu, rotate geometric AoE spell templates with 15-degree snapping, and highlight targets with glowing halos.
+- [`simulate-npc-faction-agendas-and-world-ticks.md`](how-to/simulate-npc-faction-agendas-and-world-ticks.md): How to execute autonomous NPC faction agenda simulation ticks, resolve rival clashes, and generate DM intelligence bulletins.
+- [`connect-mobile-companion-and-haptic-gateway.md`](how-to/connect-mobile-companion-and-haptic-gateway.md): How to connect mobile companions to low-bandwidth adaptive Opus WebRTC audio and haptic vibration pings for secret DM whispers.
+- [`coordinate-west-marches-shared-world-and-caravans.md`](how-to/coordinate-west-marches-shared-world-and-caravans.md): How to coordinate West Marches multi-party shared persistent frontiers, synchronize discovery logs across campaigns, dispatch trade caravans, and enforce SpiceDB Zanzibar party isolation.
+- [`handle-neural-voice-duplex-and-speech-interruption.md`](how-to/handle-neural-voice-duplex-and-speech-interruption.md): How to handle zero-latency neural voice duplex, speech barge-in detection within 80ms, 20ms soft audio crossfade cancellation, and acoustic echo cancellation.
+- [`simulate-tabletop-3d-physics-and-collisions.md`](how-to/simulate-tabletop-3d-physics-and-collisions.md): How to simulate 3D tumbling physical dice rolls, calculate ballistic trajectories and restitution bounces, apply token knockback impulses, and halt on elevation cliff steps.
+- [`manage-spoken-reactions-and-ready-actions.md`](how-to/manage-spoken-reactions-and-ready-actions.md): How to halt active combat turns with spoken reaction interrupts within 500ms, prompt reacting players, and evaluate conditional ready-action triggers.
+- [`manage-secret-dm-traps-and-map-triggers.md`](how-to/manage-secret-dm-traps-and-map-triggers.md): How to configure DM-only secret spatial traps, handle movement-pause breach detection, and execute seamless battlemap switching with party token teleportation.
+- [`modulate-dm-vocal-npc-presets.md`](how-to/modulate-dm-vocal-npc-presets.md): How to apply real-time DSP pitch and formant shift filters, creature archetype presets, and live stream audio modulation.
+
+
+
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
@@ -99,6 +124,9 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`platform-services.md`](reference/platform-services.md): Directory of external platform services, container images, ports, environment variables, and test fallbacks.
 - [`ports-and-endpoints.md`](reference/ports-and-endpoints.md): Ingress routing table, microservice ports, core HTTP routes, and infrastructure ports.
 - [`events-schema.md`](reference/events-schema.md): CloudEvents domain events catalogue, payload schemas, and Redis Stream topics.
+- [`diegetic-handouts-and-relics-events.md`](reference/diegetic-handouts-and-relics-events.md): CloudEvents schemas and payloads for diegetic handouts, breakable wax seals, and 3D relics.
+- [`downtime-and-crafting-events.md`](reference/downtime-and-crafting-events.md): CloudEvents schemas and event flows for downtime crafting, rests, and stronghold facilities.
+- [`tavern-and-merchants-events.md`](reference/tavern-and-merchants-events.md): CloudEvents schemas and event flows for tavern minigames, drinking contests, and merchant haggling.
 - [`redis-streams-event-bus.md`](reference/redis-streams-event-bus.md): Redis Streams transport architecture, channel conventions, and consumer groups.
 - [`design-tokens-and-themes.md`](reference/design-tokens-and-themes.md): Bauhaus geometric tokens, typography, CSS custom properties, and UI themes.
 - [`fastmcp-gateway.md`](reference/fastmcp-gateway.md): Model Context Protocol gateway architecture, tool inventory, resources, and prompt templates.
@@ -125,6 +153,8 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `services/rules_compendium/` | TTRPG rules compendium, sub-50ms redstring hybrid retrieval & automated CR encounter builder |
 | `services/asset_forge/` | Procedural battlemap diffusion synthesis, wall/hazard geometry extraction & token portrait generator |
 | `services/soundscape/` | Dynamic audio stem mixing, tactical foley cues, tension scoring & audio controls microfrontend |
+| `services/audience_studio/` | TypeScript audience interactivity engine, live chaos polls, DM approval queue & microfrontend |
+| `services/campaign_analytics/` | Combat telemetry, tactical heatmaps, MVP turn statistics & chronicle timeline archive |
 | `gateway/api/` | Unified API Gateway, WebSockets, OpenAPI aggregator |
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
 | `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |

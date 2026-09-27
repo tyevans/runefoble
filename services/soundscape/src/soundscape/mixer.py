@@ -79,6 +79,30 @@ TACTICAL_FOLEY_CATALOG: dict[str, dict[str, Any]] = {
         "volume_gain": 1.1,
         "duck_music": True,
     },
+    "thunder": {
+        "sound_url": "http://silo:9000/runefoble-assets/audio/foley/thunder.ogg",
+        "cue_type": "foley",
+        "volume_gain": 1.1,
+        "duck_music": True,
+    },
+    "door_slam": {
+        "sound_url": "http://silo:9000/runefoble-assets/audio/foley/door_slam.ogg",
+        "cue_type": "foley",
+        "volume_gain": 1.0,
+        "duck_music": False,
+    },
+    "steel_clash": {
+        "sound_url": "http://silo:9000/runefoble-assets/audio/foley/steel_clash.ogg",
+        "cue_type": "melee",
+        "volume_gain": 1.0,
+        "duck_music": False,
+    },
+    "roar": {
+        "sound_url": "http://silo:9000/runefoble-assets/audio/foley/roar.ogg",
+        "cue_type": "monster",
+        "volume_gain": 1.2,
+        "duck_music": True,
+    },
 }
 
 
@@ -94,6 +118,17 @@ class AudioStemMixer:
         self.master_volume = master_volume
         self.is_ducked = False
         self.ducking_reason: str = "none"
+        self.channel_volumes: dict[str, float] = {
+            "melody": 0.8,
+            "percussion": 0.7,
+            "drone": 0.6,
+            "ambient": 0.9,
+        }
+
+    def update_channel_volumes(self, updates: dict[str, float]) -> None:
+        """Update multi-channel stem volume sliders (melody, percussion, drone, ambient)."""
+        for ch, vol in updates.items():
+            self.channel_volumes[ch] = round(max(0.0, min(1.0, float(vol))), 4)
 
     def get_stem_weights(self, profile: str | None = None) -> dict[str, float]:
         """Return raw stem weight matrix for given or current profile."""

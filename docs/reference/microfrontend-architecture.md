@@ -24,10 +24,23 @@ runefoble/
 │   │       ├── runefoble-board-tokens.styles.ts
 │   │       ├── runefoble-board.stories.ts
 │   │       ├── runefoble-map-uploader.ts
-│   │       └── runefoble-map-uploader.stories.ts
+│   │       ├── runefoble-map-uploader.styles.ts
+│   │       ├── runefoble-map-uploader.stories.ts
+│   │       ├── runefoble-map-dropzone.ts
+│   │       ├── runefoble-map-dropzone.stories.ts
+│   │       ├── runefoble-map-grid-config.ts
+│   │       └── runefoble-map-grid-config.stories.ts
 │   ├── character_sheet/ui/       # @runefoble/character-sheet-ui
 │   │   └── src/
 │   │       ├── runefoble-character-card.ts
+│   │       ├── runefoble-character-sheet.ts
+│   │       ├── runefoble-character-sheet.styles.ts
+│   │       ├── runefoble-character-sheet.core.styles.ts
+│   │       ├── runefoble-character-sheet.inventory.styles.ts
+│   │       ├── runefoble-character-sheet.conditions.styles.ts
+│   │       ├── runefoble-character-sheet.templates.ts
+│   │       ├── runefoble-character-sheet.types.ts
+│   │       ├── runefoble-character-sheet.stories.ts
 │   │       ├── runefoble-absentee-recap.ts
 │   │       └── runefoble-absentee-recap.styles.ts
 │   ├── game_session/ui/          # @runefoble/game-session-ui
@@ -42,23 +55,35 @@ runefoble/
 │   │   └── src/
 │   │       ├── runefoble-watcher-feed.ts
 │   │       ├── runefoble-autonomous-dm.ts
-│   │       └── runefoble-autonomous-dm.styles.ts
+│   │       ├── runefoble-autonomous-dm.styles.ts
+│   │       ├── runefoble-dm-whisper-bar.ts
+│   │       ├── runefoble-faction-radar.ts
+│   │       ├── runefoble-faction-radar.styles.ts
+│   │       └── runefoble-faction-radar.stories.ts
 │   └── voice_agent/ui/           # @runefoble/voice-agent-ui
 │       └── src/
 │           ├── runefoble-voice-controls.ts
 │           ├── runefoble-voice-controls.styles.ts
-│           └── runefoble-voice-controls.stories.ts
+│           ├── runefoble-voice-controls.stories.ts
+│           ├── runefoble-mobile-companion.ts
+│           ├── runefoble-mobile-companion.styles.ts
+│           ├── runefoble-mobile-companion.stories.ts
+│           └── mobile_companion/
+│               ├── audio_stream_controller.ts
+│               ├── haptic_ping_panel.ts
+│               ├── connection_status_badge.ts
+│               └── styles/
 ```
 
 ## Service Microfrontend Catalog
 
 | Service Bounded Context | NPM Package Name | Vendored Custom Elements | Storybook Story Path |
 |---|---|---|---|
-| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>`, `<runefoble-map-uploader>` | `services/board_state/ui/src/*.stories.ts` |
-| `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-absentee-recap>` | `services/character_sheet/ui/src/*.stories.ts` |
-| `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>` | `services/game_session/ui/src/*.stories.ts` |
-| `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>` | `services/the_watcher/ui/src/*.stories.ts` |
-| `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>` | `services/voice_agent/ui/src/runefoble-voice-controls.stories.ts` |
+| `board_state` | `@runefoble/board-state-ui` | `<runefoble-board>`, `<runefoble-map-uploader>` (subviews: `<runefoble-map-dropzone>`, `<runefoble-map-grid-config>`) | `services/board_state/ui/src/*.stories.ts` |
+| `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-character-sheet>`, `<runefoble-absentee-recap>`, `<runefoble-stand-in-guardrails>` | `services/character_sheet/ui/src/*.stories.ts` |
+| `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>`, `<runefoble-combat-reaction-prompt>`, `<runefoble-ready-action-card>` | `services/game_session/ui/src/*.stories.ts` |
+| `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>`, `<runefoble-dm-whisper-bar>`, `<runefoble-faction-radar>` | `services/the_watcher/ui/src/*.stories.ts` |
+| `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>`, `<runefoble-audio-indicator>`, `<runefoble-mobile-companion>` (subviews: `<audio-stream-controller>`, `<haptic-ping-panel>`, `<connection-status-badge>`), `<runefoble-voice-duplex-controls>` | `services/voice_agent/ui/src/*.stories.ts` |
 | `frontend` (App Shell) | `frontend` | `<runefoble-app>`, `<runefoble-settings-modal>`, `<runefoble-theme-switcher>` | `frontend/src/stories/runefoble-settings-modal.stories.ts` |
 
 
@@ -153,6 +178,44 @@ The `@runefoble/voice-agent-ui` package vendors `<runefoble-voice-controls>` for
 - **WebAudio `AnalyserNode` Loop**: Renders 60fps reactive waveforms to an HTML5 `<canvas>` element using time-domain data (or simulated harmonic synthesis during tests / absence of physical mic).
 - **Affliction DSP Styling**: Adapts waveform stroke color to Canary Yellow (`var(--rf-accent-tertiary, #ffb703)`) and introduces drunken phase wobbles when inebriation filters are active.
 - **Low Bandwidth Warning**: Highlights degraded WebRTC channels (`bandwidthQuality === 'low'` or `packetsLost > 5`) with a pulsing warning badge.
+
+## Component Specification: `<runefoble-mobile-companion>`
+
+The `@runefoble/voice-agent-ui` package vendors `<runefoble-mobile-companion>` for tactile mobile participation, low-bandwidth WebRTC Opus voice streaming, haptic whisper vibration alerts, and privacy-shielded secret DM overlays.
+
+### Properties & Attributes
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `sessionId` | `string` | `''` | Current game session identifier. |
+| `userId` | `string` | `''` | Authenticated mobile player identifier. |
+| `channelName` | `string` | `'Mobile Audio Companion'` | Active cellular voice room name. |
+| `connected` | `boolean` | `false` | Gateway WebSocket and audio connection status. |
+| `audioTier` | `'mobile_optimized' \| 'cellular_constrained' \| 'ultra_low'` | `'mobile_optimized'` | Adaptive cellular Opus streaming tier. |
+| `sampleRate` | `number` | `16000` | Voice Opus sample rate in Hz. |
+| `bitrateKbps` | `number` | `16` | Current streaming bitrate in kbps. |
+| `bufferHealthMs` | `number` | `45` | Real-time audio buffer health in milliseconds. |
+| `privacyBlur` | `boolean` | `true` | When true, obscures secret DM whispers with CSS backdrop blur. |
+| `packetLoss` | `number` | `0` | Packet loss ratio (0.0 to 1.0). |
+| `bandwidthKbps` | `number` | `100` | Estimated downlink bandwidth in kbps. |
+| `isTransmitting` | `boolean` | `false` | Active push-to-talk transmission state. |
+
+### Dispatched CustomEvents
+
+| Event Name | Detail Payload | Description |
+|---|---|---|
+| `ptt-start` | `{ timestamp: number, channel: string }` | Dispatched when the user presses and holds the push-to-talk button. |
+| `ptt-end` | `{ timestamp: number, channel: string }` | Dispatched when the push-to-talk button is released. |
+| `haptic-pulse` | `{ pattern: number[], type: string }` | Dispatched whenever a tactile vibration is triggered via `navigator.vibrate`. |
+| `whisper-received` | `{ whisper: WhisperMessage }` | Dispatched when a secret DM whisper frame arrives over the WebSocket. |
+| `whisper-dismissed` | `{ id: string }` | Dispatched when the user dismisses the active secret whisper banner. |
+| `whisper-blur-toggled` | `{ blurred: boolean }` | Dispatched when privacy blur is toggled on/off to reveal/conceal text. |
+| `connection-changed` | `{ connected: boolean, sessionId: string }` | Dispatched on WebSocket connect/disconnect lifecycle changes. |
+
+### Tactile Feedback & Privacy Controls
+- **Vibration API Dispatcher**: Gracefully invokes `navigator.vibrate(pattern)` with acoustic synth fallback on non-vibrating platforms.
+- **Privacy Shield**: Blurs secret text (`filter: blur(8px)`) until the user explicitly taps the reveal toggle, preventing shoulder surfing during live game sessions.
+- **Buffer & Tier Monitoring**: Visual progress bar tracking buffer health around the nominal 45ms target, warning players when cellular jitter degrades transmission.
 
 ## Component Style Modularization (`*.styles.ts` Pattern)
 

@@ -44,6 +44,6 @@ High-concurrency read-only WebSocket connections; handled via edge Redis fanout 
 - [`US-0031: Live Stream Audience Chaos Polls via TypeScript Backend`](../../user_stories/accepted/us-0031-live-stream-audience-chaos-polls-and-rumors.md)
 
 ## Implementing Backlog Tasks
-- [`TASK-0051: TypeScript Audience Studio & Live Stream Interactivity Microservice`](../../backlog/refined/0051-audience-studio-and-live-stream-interactivity-bc.md)
-- [`TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay`](../../backlog/proposed/0056-cinematic-director-auto-camera-and-obs-overlay.md)
-- [`TASK-0075: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition`](../../backlog/proposed/0075-spectator-view-stream-overlay-test-suite-decomposition.md)
+- [`TASK-0051: TypeScript Audience Studio & Live Stream Interactivity Microservice`](../../backlog/complete/0051-audience-studio-and-live-stream-interactivity-bc.md)
+- [`TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay`](../../backlog/complete/0056-cinematic-director-auto-camera-and-obs-overlay.md)
+- [`TASK-0075: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition`](../../backlog/complete/0075-spectator-view-stream-overlay-test-suite-decomposition.md)
