@@ -26,4 +26,6 @@ export * from './auth/index.ts';
 export * from './router/index.ts';
 export * from './styles/app-shell.styles.ts';
 export * from './utils/dice.ts';
+export * from './components/plugins/index.ts';
 export * from './runefoble-app.ts';
+

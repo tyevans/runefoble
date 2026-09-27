@@ -2,15 +2,13 @@ import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import './styles/themes.css';
 import { appShellStyles } from './styles/app-shell.styles.ts';
-import './components/runefoble-header.ts';
-import './components/runefoble-settings-modal.ts';
-import './components/runefoble-auth-modal.ts';
-import './components/runefoble-session-list.ts';
-import '@runefoble/board-state-ui';
-import '@runefoble/character-sheet-ui';
-import '@runefoble/game-session-ui';
-import '@runefoble/the-watcher-ui';
-import '@runefoble/voice-agent-ui';
+import './components/runefoble-header.ts'; import './components/runefoble-settings-modal.ts';
+import './components/runefoble-auth-modal.ts'; import './components/runefoble-session-list.ts';
+import './components/plugins/runefoble-plugin-slot.ts';
+
+import '@runefoble/board-state-ui'; import '@runefoble/character-sheet-ui'; import '@runefoble/game-session-ui';
+import '@runefoble/the-watcher-ui'; import '@runefoble/voice-agent-ui';
+
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignItem, CampaignMember, CreateCampaignPayload, LobbyParticipant, LobbyCharacterOption } from '@runefoble/game-session-ui';
@@ -43,10 +41,7 @@ export class RunefobleApp extends LitElement {
   @state() public routeParams: RouteParams = {};
   @state() private isAuthModalOpen = false;
   @state() private authInitialTab: 'login' | 'register' = 'login';
-  @state() private currentUserId = 'user-valeros';
-  @state() private userRole = 'Player';
-  @state() private isDM = false;
-
+  @state() private currentUserId = 'user-valeros'; @state() private userRole = 'Player'; @state() private isDM = false;
   @state() private campaigns: CampaignItem[] = [];
   @state() private campaignMembers: CampaignMember[] = [];
   @state() private campaignSessions: CampaignSessionItem[] = [];
@@ -55,13 +50,11 @@ export class RunefobleApp extends LitElement {
   @state() private lobbyParticipants: LobbyParticipant[] = [];
   @state() private lobbyAvailableCharacters: LobbyCharacterOption[] = [];
 
-  private socket: WebSocket | null = null;
-  private activeSocketSessionId: string | null = null;
+  private socket: WebSocket | null = null; private activeSocketSessionId: string | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private unlistenRouter: (() => void) | null = null;
-  private unlistenAuth: (() => void) | null = null;
-  private unlistenTeardown: (() => void) | null = null;
-  private unlistenGuard: (() => void) | null = null;
+
+  private unlistenRouter: (() => void) | null = null; private unlistenAuth: (() => void) | null = null;
+  private unlistenTeardown: (() => void) | null = null; private unlistenGuard: (() => void) | null = null;
 
   connectedCallback() {
     super.connectedCallback();
@@ -229,8 +222,15 @@ export class RunefobleApp extends LitElement {
     if (v === 'session-active') {
       return this.viewMode === 'spectator' ? html`<runefoble-spectator-view .sessionId=${this.sessionId} .cols=${8} .rows=${8} .tokens=${this.tokens} .atmosphere=${{ location_name: 'Ancient Crypt' }} .chronicle=${this.events}></runefoble-spectator-view>` : html`
         <div class="layout-grid">
-          <runefoble-board .cols=${8} .rows=${8} .tokens=${this.tokens} .fogOfWar=${true} @move-token=${(e: CustomEvent) => { if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify({ type: 'board_move', ...e.detail })); }}></runefoble-board>
-          <div class="character-column"><runefoble-character-card characterName="Kyra the Sun Maiden" characterClass="Cleric Lvl 4" .isAiStandIn=${true} .currentHp=${28} .maxHp=${32}></runefoble-character-card></div>
+          <div class="board-column">
+            <runefoble-plugin-slot slot-id="hud-widget" .showFallback=${false}></runefoble-plugin-slot>
+            <runefoble-board .cols=${8} .rows=${8} .tokens=${this.tokens} .fogOfWar=${true} @move-token=${(e: CustomEvent) => { if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify({ type: 'board_move', ...e.detail })); }}></runefoble-board>
+          </div>
+          <div class="character-column">
+            <runefoble-character-card characterName="Kyra the Sun Maiden" characterClass="Cleric Lvl 4" .isAiStandIn=${true} .currentHp=${28} .maxHp=${32}></runefoble-character-card>
+            <runefoble-plugin-slot slot-id="sidebar-tool" .showFallback=${false}></runefoble-plugin-slot>
+            <runefoble-plugin-slot slot-id="dice-panel" .showFallback=${false}></runefoble-plugin-slot>
+          </div>
           <runefoble-watcher-feed .events=${this.events}></runefoble-watcher-feed>
         </div>
         <div class="voice-container"><runefoble-voice-controls .isListening=${this.isListening} @voice-toggle=${() => { this.isListening = !this.isListening; }}></runefoble-voice-controls></div>
