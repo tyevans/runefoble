@@ -9,13 +9,14 @@ from board_state.aoe_models import AoETemplateState
 from board_state.models.physics import BoardPhysicsTransitionsMixin
 from board_state.models.terrain import TerrainCellState, TerrainDict
 from board_state.models.tokens import PlacedTokenState
+from board_state.models.traps_transitions import BoardTrapsTransitionsMixin
 from board_state.models.vfx import BoardDecalState
 
 if TYPE_CHECKING:
     from board_state.models.board import BoardState
 
 
-class BoardTransitionsMixin(BoardPhysicsTransitionsMixin):
+class BoardTransitionsMixin(BoardTrapsTransitionsMixin, BoardPhysicsTransitionsMixin):
     """Provides pure state mutation helpers for BoardState."""
 
     def with_map_imported(
@@ -169,49 +170,3 @@ class BoardTransitionsMixin(BoardPhysicsTransitionsMixin):
                     )
                 )
         return self.model_copy(update={"active_decals": updated})
-
-    def with_trap_placed(self: BoardState, trap: Any) -> BoardState:
-        traps = dict(self.traps)
-        traps[str(trap.trap_id)] = trap
-        return self.model_copy(update={"traps": traps})
-
-    def with_trap_sprung(self: BoardState, trap_id: str, event: Any) -> BoardState:
-        traps = dict(self.traps)
-        tid = str(trap_id)
-        if tid in traps:
-            t = traps[tid]
-            traps[tid] = t.model_copy(update={"is_sprung": True, "is_armed": False})
-        return self.model_copy(update={"traps": traps, "last_trap_sprung": event})
-
-    def with_trap_disarmed(self: BoardState, trap_id: str) -> BoardState:
-        traps = dict(self.traps)
-        tid = str(trap_id)
-        if tid in traps:
-            t = traps[tid]
-            traps[tid] = t.model_copy(update={"is_disarmed": True, "is_armed": False})
-        return self.model_copy(update={"traps": traps})
-
-    def with_battlemap_switched(
-        self: BoardState,
-        new_map_id: str,
-        cols: int,
-        rows: int,
-        background_asset_id: str | None = None,
-        background_image_url: str | None = None,
-        teleported_tokens: dict[str, list[int]] | None = None,
-    ) -> BoardState:
-        tokens = dict(self.tokens)
-        if teleported_tokens:
-            for tid, coords in teleported_tokens.items():
-                if tid in tokens and len(coords) >= 2:
-                    tokens[tid] = tokens[tid].model_copy(update={"x": coords[0], "y": coords[1]})
-        return self.model_copy(
-            update={
-                "current_map_id": new_map_id,
-                "cols": cols,
-                "rows": rows,
-                "background_asset_id": background_asset_id,
-                "background_image_url": background_image_url,
-                "tokens": tokens,
-            }
-        )
