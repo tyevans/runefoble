@@ -34,4 +34,32 @@ export const appShellStyles = css`
   .voice-container {
     margin-top: 24px;
   }
+
+  .campaign-detail-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .auth-fallback-view {
+    padding: 48px;
+    text-align: center;
+    background: var(--rf-bg-surface);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    box-shadow: var(--rf-shadow);
+    max-width: 600px;
+    margin: 40px auto;
+  }
+
+  .auth-fallback-view h2 {
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: var(--rf-text-primary);
+  }
+
+  .auth-fallback-view p {
+    color: var(--rf-text-muted);
+    margin-bottom: 24px;
+  }
 `;
