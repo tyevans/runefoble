@@ -1,7 +1,7 @@
 ---
-id: '0179'
+id: 0179
 title: Rules Compendium Homebrew Subview Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -14,8 +14,8 @@ governing_stories:
 - US-0037
 - US-0052
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/238
 ---
-
 # TASK-0179: Rules Compendium Homebrew Subview Modular Decomposition
 
 ## Status
