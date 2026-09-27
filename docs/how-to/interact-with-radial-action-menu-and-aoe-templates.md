@@ -68,6 +68,7 @@ Selecting the **Cast** action on the radial menu (or triggering spell casting mo
 | **Cone** | 15 ft, 30 ft | 53.13° spread angle | Distance $\le$ radius, angular delta $\le$ 26.565° |
 | **Sphere** | 10 ft, 20 ft radius | Full 360° circle | Euclidean distance $\le$ radius |
 | **Line** | 5 ft $\times$ 30 ft, 5 ft $\times$ 60 ft | 5 ft width | Projection along vector $\le$ length, perpendicular $\le$ width/2 |
+| **Cube** | 10 ft, 20 ft, 30 ft side | Rotatable square | Projection along oriented axes $\le$ size/2 |
 
 ### 2.2 Tactile 15-Degree Angle Snapping
 
@@ -89,6 +90,14 @@ import { computeAffectedTokens, computeAffectedCells } from '@runefoble/board-st
 const affectedTokenIds = computeAffectedTokens(tokens, aoeConfig);
 const affectedCells = computeAffectedCells(cols, rows, aoeConfig);
 ```
+
+### 2.4 Modular Architecture (ADR-0013)
+
+Under ADR-0013 and Hard Invariant 6, the AoE template engine is organized into focused, decoupled TypeScript modules under `services/board_state/ui/src/`:
+- `aoe_types.ts`: Type contracts, shape enums, handle event signatures, and design system color tokens (< 80 lines).
+- `aoe_geometry.ts`: Pure mathematical intersection algorithms for cones, spheres, lines, and cubes (< 150 lines).
+- `aoe_canvas.ts`: SVG path builders, dashed outlines, pulse keyframes, and rotational handles (< 150 lines).
+- `aoe_templates.ts`: Coordinator facade and `<runefoble-aoe-template>` Custom Element lifecycle (< 100 lines).
 
 ---
 

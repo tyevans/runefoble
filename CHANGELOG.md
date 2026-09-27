@@ -107,6 +107,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **Board State AoE Templates Geometry and Rendering Modular Decomposition (`TASK-0140`, `ADR-0013`)**:
+  - Decomposed `services/board_state/ui/src/aoe_templates.ts` (411 lines) into modular, single-responsibility TypeScript modules adhering strictly to ADR-0013 and Hard Invariant 6 (< 200 lines per module).
+  - Extracted type contracts, AoE shape definitions, event payloads, and color design tokens into `services/board_state/ui/src/aoe_types.ts` (41 lines).
+  - Extracted pure mathematical intersection algorithms for cones, spheres, lines, and cubes into `services/board_state/ui/src/aoe_geometry.ts` (94 lines).
+  - Extracted CSS styles, SVG template shape generation, and interactive rotation/origin handles into `services/board_state/ui/src/aoe_canvas.ts` (132 lines).
+  - Maintained backward-compatible coordinator facade `<runefoble-aoe-template>` in `services/board_state/ui/src/aoe_templates.ts` (99 lines), re-exporting all types, geometry math, and rendering utilities.
+  - Updated Diataxis guide `docs/how-to/interact-with-radial-action-menu-and-aoe-templates.md`.
 - **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0134`, `TASK-0135`, `TASK-0136`, `TASK-0137`, `TASK-0138`, `TASK-0139`, `TASK-0140`, `TASK-0141`, `TASK-0142`, `TASK-0143`, `TASK-0144`, `TASK-0145`)**:
   - Audited repository health and file length invariants, identifying refactoring candidates in `services/board_state/src/board_state/models.py` (433 lines), `tests/test_blackbox_wardrobe_gallery.py` (415 lines), `services/board_state/ui/src/aoe_templates.ts` (411 lines), `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (410 lines), and `tests/test_blackbox_west_marches.py` (402 lines).
   - Proactively proposed and refined modular decomposition tasks `TASK-0138`, `TASK-0139`, `TASK-0140`, `TASK-0143`, `TASK-0144`, and `TASK-0145` to prevent breaching Hard Invariant 6 (< 500 lines).
