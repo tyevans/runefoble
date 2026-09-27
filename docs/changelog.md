@@ -8,6 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Spatial Companion Mobile WebRTC Audio & Haptic Ping Gateway (`TASK-0128`, `ADR-0002`, `ADR-0005`, `ADR-0013`)**:
+  - Implemented low-bandwidth adaptive Opus mono 16kHz audio stream profile in `services/voice_agent/src/voice_agent/mobile.py` optimizing cellular transmission over constrained network links.
+  - Implemented automatic network degradation fallback across profile tiers (`mobile_optimized` at 16 kbps, `cellular_constrained` at 12 kbps, and `ultra_low` at 8 kbps) with Forward Error Correction (FEC) and Discontinuous Transmission (DTX).
+  - Built dedicated WebSocket companion gateway at `/ws/mobile-companion/{session_id}` in `gateway_api.companion` enforcing SpiceDB Zanzibar authorization on connection.
+  - Implemented haptic vibration framing protocols (triple-pulse `[200, 100, 200]` for secret DM whispers and double-pulse `[300, 150, 300]` for combat turn prompts) leveraging Web Vibration API.
+  - Built diegetic lockscreen and app overlay notification formatters with recipient isolation ensuring private clues are withheld from other party members.
+  - Added CloudEvents-compliant domain events `MobileCompanionConnected`, `MobileAudioProfileAdapted`, and `MobileHapticPingDispatched` registered in `libs/runefoble_events`.
+  - Added REST frontdoor routes in `gateway_api/companion/router.py`: `POST /api/v1/mobile/companion/{session_id}/whisper`, `POST /api/v1/mobile/companion/{session_id}/turn-alert`, and `GET /api/v1/mobile/companion/profiles`.
+  - Implemented `<runefoble-mobile-companion>` Lit Web Component in `services/voice_agent/ui/src/runefoble-mobile-companion.ts` with Bauhaus styling and interactive Storybook stories (`runefoble-mobile-companion.stories.ts`).
+  - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_mobile_companion.py` and Diataxis guide `docs/how-to/connect-mobile-companion-and-haptic-gateway.md`.
+- **West Marches Shared Persistent World State & Cross-Campaign Registry (`TASK-0127`, `ADR-0001`, `ADR-0006`, `ADR-0011`, `PRD-0007`, `US-0058`)**:
+  - Implemented event-sourced `SharedWorldAggregate` in `services/game_session/src/game_session/west_marches.py` managing common geographical map pins, shared outpost levels, and communal tavern notice boards.
+  - Implemented `CaravanLedgerAggregate` in `services/game_session/src/game_session/caravan_ledger.py` managing scheduled resource caravan transit and regional settlement merchant stock ledgers.
+  - Added CloudEvents domain events `SharedWorldCreated`, `CampaignRegisteredToSharedWorld`, `CrossCampaignDiscoveryShared`, `OutpostEstablished`, `SharedStrongholdUpgraded`, `CommunalNoticePosted`, `CaravanDispatched`, `CaravanTradeCompleted`, and `RegionalMerchantStockUpdated` registered in `libs/runefoble_events`.
+  - Added public REST frontdoor endpoints in `services/game_session/src/game_session/routers/west_marches.py` and `caravan_trade.py`: `POST /api/v1/shared-worlds`, `GET /api/v1/shared-worlds/{id}`, `POST /api/v1/shared-worlds/{id}/campaigns`, `POST /api/v1/shared-worlds/{id}/discoveries`, `GET /api/v1/shared-worlds/{id}/discoveries`, `POST /api/v1/shared-worlds/{id}/outposts`, `POST /api/v1/shared-worlds/{id}/tavern-board/notices`, `GET /api/v1/shared-worlds/{id}/tavern-board/notices`, `POST /api/v1/shared-worlds/{id}/caravans/dispatch`, `POST /api/v1/shared-worlds/{id}/caravans/{id}/complete`, and `GET /api/v1/shared-worlds/{id}/outposts/{name}/merchant-stock`.
+  - Updated SpiceDB Zanzibar authorization schema (`libs/runefoble_auth/schema/runefoble.zed`) and `MockSpiceDBClient` (`libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py`) defining `shared_world` object permissions (`guild_officer`, `participant`, `campaign->view/play`) while strictly isolating private character sheets and party whisper notes.
+  - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_west_marches.py` verifying multi-campaign discovery synchronization, caravan trade unlocks, communal tavern boards, and Zanzibar isolation.
+  - Authored Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md` and updated `docs/reference/events-schema.md` and `AGENTS.md`.
+
 - **Autonomous NPC Faction Agendas & Background Simulation Engine (`TASK-0126`, `ADR-0002`, `ADR-0006`, `ADR-0011`)**:
   - Implemented event-sourced `FactionAggregate` in `services/the_watcher/src/the_watcher/factions.py` tracking faction assets, influence (1-100), operational resources, disposition, and goal progress via `eventsource-py` (Hard Invariant 2).
   - Built `FactionSimulationEngine` in `services/the_watcher/src/the_watcher/simulation_engine.py` simulating probabilistic agenda checks based on rival counter-measures and regional stability modifiers.
