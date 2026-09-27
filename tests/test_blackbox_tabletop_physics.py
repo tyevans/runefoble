@@ -5,10 +5,10 @@ All setup and verification are performed strictly through public HTTP API endpoi
 using TestClient(app) from board_state.main and checking emitted domain events.
 """
 
+from board_state.dependencies import repo
 from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_events.events import DiceSettled, PhysicsCollisionOccurred
-from runefoble_platform.event_sourcing import get_event_store
 
 
 def test_tabletop_physics_dice_throw_and_wall_collision_knockback():
@@ -80,7 +80,7 @@ def test_tabletop_physics_dice_throw_and_wall_collision_knockback():
     assert 0 <= settled_cell[1] < 12
 
     # Verify domain event board.dice.settled emitted into event store
-    store = get_event_store()
+    store = repo.event_store
     dice_events = [
         env.event
         for env in store._events
