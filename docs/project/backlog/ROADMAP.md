@@ -102,7 +102,7 @@
 - [x] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
 - [x] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
 
-## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Active / Immediate Priority)
+## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Complete)
 ### Core Identity, Gateway & Shell Routing Enablers
 - [x] Frontend SPA Client Router and Navigation Chrome (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0206)
 - [x] Zitadel Auth Client and Login Modal Component (`FEAT-UI-07`, `FEAT-SEC-02`, US-0062, PRD-0023, TASK-0207)
@@ -112,12 +112,12 @@
 - [x] Campaign Dashboard and Creation Microfrontend (`FEAT-UI-08`, US-0063, PRD-0023, TASK-0209)
 - [x] Campaign Members and Zanzibar Role Manager UI (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0210)
 - [x] Character Roster and Party Assignment Microfrontend (`FEAT-UI-09`, US-0064, PRD-0023, TASK-0211)
-- [ ] Game Session Lobby and Readiness Microfrontend (`FEAT-UI-10`, US-0065, PRD-0023, TASK-0212)
-- [ ] App Shell View Orchestration and Session Transition (`FEAT-UI-11`, US-0065, US-0066, PRD-0023, TASK-0213)
+- [x] Game Session Lobby and Readiness Microfrontend (`FEAT-UI-10`, US-0065, PRD-0023, TASK-0212)
+- [x] App Shell View Orchestration and Session Transition (`FEAT-UI-11`, US-0065, US-0066, PRD-0023, TASK-0213)
 
 ### Frontdoor Blackbox Verification Suites
-- [ ] Frontend Routing and Auth Blackbox Test Suite (US-0062, US-0066, PRD-0023, TASK-0214)
-- [ ] Campaign Management and Lobby Blackbox Test Suite (US-0063, US-0064, US-0065, PRD-0023, TASK-0215)
+- [x] Frontend Routing and Auth Blackbox Test Suite (US-0062, US-0066, PRD-0023, TASK-0214)
+- [x] Campaign Management and Lobby Blackbox Test Suite (US-0063, US-0064, US-0065, PRD-0023, TASK-0215)
 
 ## Milestone 9: Persona Immersion & Community Ecosystem
 ### Living Worlds, Mobile & Voice Enablers
@@ -140,13 +140,13 @@
 - [x] Community Plugin UI Extension Slots Microfrontend (`FEAT-DEV-01`, US-0035, PRD-0022, TASK-0174)
 
 ### Continuous Architecture & Modular Refactorings
-- [ ] West Marches UI Blackbox Test Suite Modular Decomposition (TASK-0176)
+- [x] West Marches UI Blackbox Test Suite Modular Decomposition (TASK-0176)
 - [x] Runefoble Events Aggregator Modular Decomposition (TASK-0177)
-- [ ] GameSession Models Modular Decomposition (TASK-0178)
-- [ ] Rules Compendium Homebrew Subview Modular Decomposition (TASK-0179)
-- [ ] Board State Stories Modular Decomposition (TASK-0180)
-- [ ] Soundscape Event Handlers and Dependencies Modular Decomposition (TASK-0181)
-- [ ] Watcher Domain Events Modular Decomposition (TASK-0182)
+- [x] GameSession Models Modular Decomposition (TASK-0178)
+- [x] Rules Compendium Homebrew Subview Modular Decomposition (TASK-0179)
+- [x] Board State Stories Modular Decomposition (TASK-0180)
+- [x] Soundscape Event Handlers and Dependencies Modular Decomposition (TASK-0181)
+- [x] Watcher Domain Events Modular Decomposition (TASK-0182)
 - [ ] Faction Resources Blackbox Test Suite Modular Decomposition (TASK-0183)
 - [ ] Campfire Crafting Blackbox Test Suite Modular Decomposition (TASK-0184)
 - [ ] Rules Compendium Styles Modular Decomposition (TASK-0185)
@@ -170,12 +170,12 @@
 - [ ] Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (TASK-0203)
 - [ ] Character Sheet Component Action Handlers and State Modular Decomposition (TASK-0204)
 - [ ] West Marches Aggregate Discovery and Territory Handlers Modular Decomposition (TASK-0205)
-- [ ] Faction Turf War Test Suite Modular Decomposition (TASK-0216)
+- [x] Faction Turf War Test Suite Modular Decomposition (TASK-0216)
 - [ ] Project Visualizer Graph Rendering Modular Decomposition (TASK-0217)
 - [x] Project Visualizer AGY Test Suite Modular Decomposition (TASK-0218)
 - [ ] Project Visualizer Drawer Subviews Modular Decomposition (TASK-0219)
 - [x] Campaign Members Styles Modular Decomposition (TASK-0220)
-- [ ] Gateway Campaign Store Modular Decomposition (TASK-0221)
+- [x] Gateway Campaign Store Modular Decomposition (TASK-0221)
 - [ ] Character Roster Styles Modular Decomposition (TASK-0222)
 - [x] Session Lobby Styles Modular Decomposition (TASK-0223)
 - [ ] Project Visualizer AGY Launcher Modular Decomposition (TASK-0224)
@@ -189,3 +189,6 @@
 - [ ] Rules Compendium UI Blackbox Test Suite Modular Decomposition (TASK-0232)
 - [ ] Character Leitmotif Generator Modular Decomposition (TASK-0233)
 - [ ] Campfire Crafting Styles Modular Decomposition (TASK-0234)
+- [ ] Project Visualizer Gantt Chart Modular Decomposition (TASK-0235)
+- [ ] Character Sheet UI Blackbox Test Suite Modular Decomposition (TASK-0236)
+- [ ] Caravan Board UI Blackbox Test Suite Modular Decomposition (TASK-0237)
