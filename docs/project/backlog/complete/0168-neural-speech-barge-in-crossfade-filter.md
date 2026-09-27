@@ -1,7 +1,7 @@
 ---
-id: '0168'
+id: 0168
 title: Neural Speech Barge-In and Soft Crossfade Audio Filter
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0141
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0060
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/211
 ---
-
 # TASK-0168: Neural Speech Barge-In and Soft Crossfade Audio Filter
 
 ## Status
