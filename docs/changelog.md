@@ -20,6 +20,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added frontdoor blackbox test suite `tests/test_blackbox_board_state.py` verifying line length invariants (< 200 lines per file), backward-compatible facade re-exports, modular submodule imports, and BoardState transitions.
 
 ### Added
+- **Campaign Analytics UI Blackbox Test Suite Modular Decomposition (`TASK-0143`, `ADR-0013`, `PRD-0012`, `US-0040`, `US-0054`)**:
+  - Decomposed monolithic `tests/test_blackbox_campaign_analytics_ui.py` (383 lines) into focused, single-responsibility frontdoor blackbox test modules under `tests/test_blackbox_campaign_analytics_ui/` strictly adhering to Hard Invariant 6 (< 500 lines per file) with all resulting test files strictly under 160 lines.
+  - Added `tests/test_blackbox_campaign_analytics_ui/conftest.py` (72 lines) isolating mock Redis, consumer group, event bus, storage, mock SpiceDB client, and worker fixtures.
+  - Added `tests/test_blackbox_campaign_analytics_ui/test_analytics_dashboard_ui.py` (134 lines) verifying microfrontend manifest advertising, package metadata integrity, Storybook story coverage, and REST frontdoor MVP turn metrics delivery.
+  - Added `tests/test_blackbox_campaign_analytics_ui/test_chronicle_timeline_ui.py` (135 lines) verifying `<runefoble-chronicle-timeline>` Custom Element decorator integrity, living chronicle milestone frontdoor binding, absentee recap metadata, milestone pagination limits, and session filtering.
+  - Added `tests/test_blackbox_campaign_analytics_ui/test_spatial_heatmaps_ui.py` (155 lines) verifying `<runefoble-combat-heatmap>` Custom Element decorator, 2D canvas damage density calculations, coordinate cell overlays, metric filter parameters, and SpiceDB Zanzibar campaign object authorization.
+  - Updated Diataxis guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md` to document the modular blackbox test architecture.
+- **Backlog Curation, JIT Refinement & Milestone 7 Roadmap Activation**:
+  - Identified refactoring candidates approaching 500 lines (`tests/test_blackbox_caravan_contracts.py`, `services/game_session/src/game_session/routers/caravan_contracts.py`, `runefoble-caravan-board.ts`) and proposed decomposition tasks (`TASK-0146`, `TASK-0147`, `TASK-0148`).
+  - Completed and closed Milestone 6 (Intelligent Living Worlds & Spatial Multi-Party Universes) across all 8 feature epics and microfrontends.
+  - Activated Milestone 7 (Neural Audio Duplex & Tangible 3D Tabletop) with foundational platform and physics enablers (`TASK-0141`, `TASK-0150`) prioritized ahead of dependent UI epics (`TASK-0142`, `TASK-0149`).
+  - JIT-refined 6 tasks (`TASK-0141`, `TASK-0144`, `TASK-0145`, `TASK-0146`, `TASK-0147`, `TASK-0150`) to maintain an optimal 10-item ready buffer in `docs/project/backlog/refined/` with zero specification drift.
 - **Wardrobe Gallery Blackbox Test Suite Modular Decomposition (`TASK-0139`, `ADR-0013`)**:
   - Decomposed monolithic blackbox test suite `tests/test_blackbox_wardrobe_gallery.py` (415 lines) into modular frontdoor test suites under `tests/test_blackbox_wardrobe_gallery/` strictly conforming to Hard Invariant 6 (< 500 lines per file, with all test files < 200 lines).
   - Added `tests/test_blackbox_wardrobe_gallery/test_wardrobe_api.py` (125 lines) verifying REST endpoints (`/api/v1/characters/{id}/portrait/active`, `/wardrobe`), object-level SpiceDB Zanzibar authorization checks, and microfrontend manifest advertisement.
@@ -126,6 +138,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **Board State AoE Templates Geometry and Rendering Modular Decomposition (`TASK-0140`, `ADR-0013`)**:
+  - Decomposed `services/board_state/ui/src/aoe_templates.ts` (411 lines) into modular, single-responsibility TypeScript modules adhering strictly to ADR-0013 and Hard Invariant 6 (< 200 lines per module).
+  - Extracted type contracts, AoE shape definitions, event payloads, and color design tokens into `services/board_state/ui/src/aoe_types.ts` (41 lines).
+  - Extracted pure mathematical intersection algorithms for cones, spheres, lines, and cubes into `services/board_state/ui/src/aoe_geometry.ts` (94 lines).
+  - Extracted CSS styles, SVG template shape generation, and interactive rotation/origin handles into `services/board_state/ui/src/aoe_canvas.ts` (132 lines).
+  - Maintained backward-compatible coordinator facade `<runefoble-aoe-template>` in `services/board_state/ui/src/aoe_templates.ts` (99 lines), re-exporting all types, geometry math, and rendering utilities.
+  - Updated Diataxis guide `docs/how-to/interact-with-radial-action-menu-and-aoe-templates.md`.
 - **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0134`, `TASK-0135`, `TASK-0136`, `TASK-0137`, `TASK-0138`, `TASK-0139`, `TASK-0140`, `TASK-0141`, `TASK-0142`, `TASK-0143`, `TASK-0144`, `TASK-0145`)**:
   - Audited repository health and file length invariants, identifying refactoring candidates in `services/board_state/src/board_state/models.py` (433 lines), `tests/test_blackbox_wardrobe_gallery.py` (415 lines), `services/board_state/ui/src/aoe_templates.ts` (411 lines), `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (410 lines), and `tests/test_blackbox_west_marches.py` (402 lines).
   - Proactively proposed and refined modular decomposition tasks `TASK-0138`, `TASK-0139`, `TASK-0140`, `TASK-0143`, `TASK-0144`, and `TASK-0145` to prevent breaching Hard Invariant 6 (< 500 lines).

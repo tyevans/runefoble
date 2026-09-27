@@ -7,11 +7,14 @@ dependencies:
 - TASK-0004
 - TASK-0017
 - TASK-0104
+- TASK-0150
 governing_adrs:
 - ADR-0013
+governing_prds:
+- PRD-0013
+governing_stories:
+- US-0061
 target_release: 0.6.0
-prd_url: docs/project/product/accepted/prd-0013-immersive-and-intuitive-frontend-experience.md
-user_story: US-0061
 ---
 
 # TASK-0142: 3D Miniature Tokens & WebGL Tabletop Physics
@@ -30,10 +33,10 @@ While 2D board kinematics (TASK-0084) and WebGL particle VFX (TASK-0104) provide
 
 ## Scope of Work
 1. **3D Miniature Token Mesh Generator**:
-   - Extrude 2D circular tokens into stylized 3D miniature bases with character portraits and status rings.
+   - Extrude 2D circular tokens into stylized 3D miniature bases with character portraits and status rings (< 180 lines).
 2. **Tabletop Physics Simulation**:
-   - Cannon.js or Rapier physics engine calculating dice bounces and miniature knockback collisions.
+   - Connect client-side rendering with backend physics engine (TASK-0150) calculating dice bounces and miniature knockback collisions (< 180 lines).
 3. **Terrain Elevation Integration**:
-   - Dynamic 3D meshes generated from grid elevation and hazard parameters.
+   - Dynamic 3D meshes generated from grid elevation and hazard parameters (< 160 lines).
 4. **Frontdoor Verification**:
    - Blackbox tests and Storybook stories demonstrating physical dice tray collisions and 3D token positioning.
