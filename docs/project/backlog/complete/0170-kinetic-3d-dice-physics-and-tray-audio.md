@@ -1,7 +1,7 @@
 ---
 id: '0170'
 title: Kinetic 3D Dice Physics and Tray Audio Integration
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0150
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0061
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/223
 ---
-
 # TASK-0170: Kinetic 3D Dice Physics and Tray Audio Integration
 
 ## Status
