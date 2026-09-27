@@ -1,7 +1,7 @@
 ---
-id: '0181'
+id: 0181
 title: Soundscape Event Handlers and Dependencies Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0050
@@ -17,8 +17,8 @@ governing_stories:
 - US-0039
 - US-0046
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/240
 ---
-
 # TASK-0181: Soundscape Event Handlers and Dependencies Modular Decomposition
 
 ## Status
