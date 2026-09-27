@@ -153,6 +153,40 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `wall_segments`: List[Dict[str, Any]]
   - `portals`: List[Dict[str, Any]]
   - `lights`: List[Dict[str, Any]]
+- **`SpellCast`**: Emitted when a kinetic spell is launched across the tactical canvas (`runefoble.events.board.spell_cast`).
+  - `session_id`: String
+  - `board_id`: String
+  - `caster_token_id`: Optional[String]
+  - `spell_name`: String
+  - `spell_archetype`: String ("evocation", "abjuration", "conjuration", etc.)
+  - `target_x`: Integer, `target_y`: Integer
+  - `origin_x`: Optional[Integer], `origin_y`: Optional[Integer]
+  - `radius_ft`: Integer (default 20)
+  - `damage_dice`: Optional[String]
+  - `damage_type`: Optional[String]
+  - `theme_palette`: Optional[String]
+- **`AreaEffectExploded`**: Emitted when an area-of-effect spell detonates, impacting tokens and creating ephemeral grid decals (`runefoble.events.board.area_effect_exploded`).
+  - `session_id`: String
+  - `board_id`: String
+  - `spell_name`: String
+  - `center_x`: Integer, `center_y`: Integer
+  - `radius_ft`: Integer
+  - `affected_token_ids`: List[String]
+  - `affected_cells`: List[List[Integer]]
+  - `decal_type`: Optional[String] ("scorched_earth", "frost", "lightning_scorch", "abjuration_glyph", "portal_residue")
+  - `decal_duration_rounds`: Integer (default 2)
+- **`VFXAnimationFinished`**: Emitted when a WebGL particle effect finishes visual rendering (`runefoble.events.board.vfx_animation_finished`).
+  - `session_id`: String
+  - `board_id`: String
+  - `animation_id`: String
+  - `spell_name`: String
+  - `target_x`: Integer, `target_y`: Integer
+  - `duration_ms`: Integer (default 500)
+- **`EphemeralDecalsDecayed`**: Emitted when terrain decals fade over active combat rounds (`runefoble.events.board.decals_decayed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `rounds`: Integer (default 1)
+
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
 

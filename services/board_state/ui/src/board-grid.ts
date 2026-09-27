@@ -110,7 +110,10 @@ export function renderBoardGrid(options: BoardGridRenderOptions) {
         })}
       </div>
 
+      <canvas class="vfx-particle-canvas" aria-hidden="true"></canvas>
+
       ${renderDistanceRuler(dragState)}
     </div>
+
   `;
 }

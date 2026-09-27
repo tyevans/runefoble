@@ -186,3 +186,130 @@ export const MultiplayerTokens: Story = {
     ></runefoble-board>
   `,
 };
+
+// Story 7: Evocation Firestorm with interactive spellcast button
+export const EvocationFirestormVFX: Story = {
+  render: () => {
+    const castFireball = (e: Event) => {
+      const board = (e.target as HTMLElement).parentElement?.querySelector('runefoble-board') as any;
+      if (board) {
+        board.triggerSpellVFX({
+          spellName: 'Fireball',
+          spellArchetype: 'evocation',
+          fromX: 2,
+          fromY: 3,
+          toX: 6,
+          toY: 5,
+          radiusFt: 20,
+          damageType: 'fire',
+        });
+      }
+    };
+
+    const advanceRounds = (e: Event) => {
+      const board = (e.target as HTMLElement).parentElement?.querySelector('runefoble-board') as any;
+      if (board?.particleEngine) {
+        board.particleEngine.decayDecals(1);
+        board.requestUpdate();
+      }
+    };
+
+    return html`
+      <div style="display: flex; flex-direction: column; gap: 12px; align-items: center;">
+        <div style="display: flex; gap: 8px;">
+          <button
+            style="background: #dc2626; color: white; border: none; padding: 8px 16px; font-weight: 700; border-radius: 4px; cursor: pointer;"
+            @click=${castFireball}
+          >
+            🔥 Cast Fireball (Valeros -> Red Dragon)
+          </button>
+          <button
+            style="background: #4b5563; color: white; border: none; padding: 8px 16px; font-weight: 700; border-radius: 4px; cursor: pointer;"
+            @click=${advanceRounds}
+          >
+            ⏳ Advance Round (Decay Scorched Decals)
+          </button>
+        </div>
+        <runefoble-board
+          .cols=${8}
+          .rows=${8}
+          .tokens=${sampleTokens}
+          watcherStatus="Nadia: 'I cast Fireball centered on the Red Dragon at (6, 5)!'"
+        ></runefoble-board>
+      </div>
+    `;
+  },
+};
+
+// Story 8: Evocation Lightning Arc with interactive chain trigger
+export const EvocationLightningArcVFX: Story = {
+  render: () => {
+    const castLightning = (e: Event) => {
+      const board = (e.target as HTMLElement).parentElement?.querySelector('runefoble-board') as any;
+      if (board) {
+        board.triggerSpellVFX({
+          spellName: 'Lightning Bolt',
+          spellArchetype: 'evocation',
+          fromX: 2,
+          fromY: 3,
+          toX: 5,
+          toY: 1,
+          radiusFt: 10,
+          damageType: 'lightning',
+        });
+      }
+    };
+
+    return html`
+      <div style="display: flex; flex-direction: column; gap: 12px; align-items: center;">
+        <button
+          style="background: #0284c7; color: white; border: none; padding: 8px 16px; font-weight: 700; border-radius: 4px; cursor: pointer;"
+          @click=${castLightning}
+        >
+          ⚡ Cast Lightning Arc (Valeros -> Goblin Scout)
+        </button>
+        <runefoble-board
+          .cols=${8}
+          .rows=${8}
+          .tokens=${sampleTokens}
+          watcherStatus="Arcane lightning arcs across grid coordinates with sharp ionizing sparks."
+        ></runefoble-board>
+      </div>
+    `;
+  },
+};
+
+// Story 9: Abjuration Hexagonal Arcane Shield Barrier
+export const AbjurationShieldBarrierVFX: Story = {
+  render: () => {
+    const castShield = (e: Event) => {
+      const board = (e.target as HTMLElement).parentElement?.querySelector('runefoble-board') as any;
+      if (board) {
+        board.triggerSpellVFX({
+          spellName: 'Shield',
+          spellArchetype: 'abjuration',
+          toX: 2,
+          toY: 3,
+        });
+      }
+    };
+
+    return html`
+      <div style="display: flex; flex-direction: column; gap: 12px; align-items: center;">
+        <button
+          style="background: #2563eb; color: white; border: none; padding: 8px 16px; font-weight: 700; border-radius: 4px; cursor: pointer;"
+          @click=${castShield}
+        >
+          🛡️ Cast Shield Reaction (Valeros)
+        </button>
+        <runefoble-board
+          .cols=${8}
+          .rows=${8}
+          .tokens=${sampleTokens}
+          watcherStatus="Valeros invokes 'Shield'! A translucent hexagonal runic ward deflects the incoming attack."
+        ></runefoble-board>
+      </div>
+    `;
+  },
+};
+

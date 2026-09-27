@@ -26,17 +26,21 @@ from runefoble_events.audience import (
 )
 from runefoble_events.base import BaseRunefobleEvent, register_event
 from runefoble_events.board import (
+    AreaEffectExploded,
     BoardGridInitialized,
     BoardMapImported,
     BoardMoveEvent,
+    EphemeralDecalsDecayed,
     FogOfWarRevealed,
     FogOfWarShrouded,
+    SpellCast,
     TerrainCellModified,
     TokenHazardTriggered,
     TokenMoved,
     TokenPlaced,
     TokenRemoved,
     UniversalVTTImported,
+    VFXAnimationFinished,
 )
 from runefoble_events.character import (
     AbsencePenaltyApplied,
@@ -188,6 +192,10 @@ __all__ = [
     "BoardMapImported",
     "TokenHazardTriggered",
     "BoardMoveEvent",
+    "SpellCast",
+    "AreaEffectExploded",
+    "VFXAnimationFinished",
+    "EphemeralDecalsDecayed",
     "CharacterCreated",
     "CharacterHealthChanged",
     "AbsencePenaltyApplied",

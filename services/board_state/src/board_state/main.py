@@ -27,6 +27,7 @@ from board_state.routers import (
     previews_router,
     terrain_router,
     tokens_router,
+    vfx_router,
 )
 from board_state.routers.boards import get_ui_manifest
 from fastapi import FastAPI
@@ -42,6 +43,7 @@ app.include_router(boards_router)
 app.include_router(tokens_router)
 app.include_router(terrain_router)
 app.include_router(previews_router)
+app.include_router(vfx_router)
 
 
 @app.get("/healthz")
