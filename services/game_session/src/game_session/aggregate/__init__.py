@@ -1,4 +1,4 @@
-"""Backward compatibility facade re-exporting GameSessionAggregate."""
+"""GameSession aggregate and modular domain handler mixins."""
 
 from __future__ import annotations
 
