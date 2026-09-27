@@ -166,7 +166,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 162. **TASK-0162 (Complete)**: [`0162-faction-turf-war-and-unrest-event-pipeline.md`](complete/0162-faction-turf-war-and-unrest-event-pipeline.md) — Faction Turf War and Regional Unrest Event Pipeline
 163. **TASK-0164 (Complete)**: [`0164-cross-campaign-settlement-haven-registry.md`](complete/0164-cross-campaign-settlement-haven-registry.md) — Cross-Campaign Settlement and Haven Registry
 164. **TASK-0206 (Complete)**: [`0206-frontend-spa-client-router-and-navigation-chrome.md`](complete/0206-frontend-spa-client-router-and-navigation-chrome.md) — Frontend SPA Client Router and Navigation Chrome
-165. **TASK-0207 (Refined)**: [`0207-zitadel-auth-client-and-login-modal-component.md`](refined/0207-zitadel-auth-client-and-login-modal-component.md) — Zitadel Auth Client and Login Modal Component
+165. **TASK-0207 (Complete)**: [`0207-zitadel-auth-client-and-login-modal-component.md`](complete/0207-zitadel-auth-client-and-login-modal-component.md) — Zitadel Auth Client and Login Modal Component
 166. **TASK-0208 (Refined)**: [`0208-gateway-campaign-lifecycle-and-membership-api.md`](refined/0208-gateway-campaign-lifecycle-and-membership-api.md) — Gateway Campaign Lifecycle and Membership API
 167. **TASK-0209 (Refined)**: [`0209-campaign-dashboard-and-creation-microfrontend.md`](refined/0209-campaign-dashboard-and-creation-microfrontend.md) — Campaign Dashboard and Creation Microfrontend
 168. **TASK-0210 (Refined)**: [`0210-campaign-members-and-zanzibar-role-manager-ui.md`](refined/0210-campaign-members-and-zanzibar-role-manager-ui.md) — Campaign Members and Zanzibar Role Manager UI

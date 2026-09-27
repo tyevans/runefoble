@@ -1,7 +1,7 @@
 ---
 id: '0207'
 title: Zitadel Auth Client and Login Modal Component
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0206
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/197
 ---
-
 # TASK-0207: Zitadel Auth Client and Login Modal Component
 
 ## Status
