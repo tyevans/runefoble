@@ -100,3 +100,10 @@ class TranscribeResponse(BaseModel):
     speaker_name: str
     event_id: str | None = None
     watcher_intent: dict[str, Any] | None = None
+
+
+class PlaybackStartRequest(BaseModel):
+    session_id: str
+    playback_id: str
+    text: str
+    duration_ms: float = 10000.0

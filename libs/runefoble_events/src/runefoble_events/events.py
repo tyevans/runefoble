@@ -146,6 +146,7 @@ from runefoble_events.voice import (
     VoicePeerJoined,
     VoicePeerLeft,
     VoicePeerMuteToggled,
+    VoiceSpeechInterrupted,
 )
 from runefoble_events.watcher import (
     AbsenteeRecapGenerated,
@@ -268,6 +269,7 @@ __all__ = [
     "VoicePeerJoined",
     "VoicePeerLeft",
     "VoicePeerMuteToggled",
+    "VoiceSpeechInterrupted",
     "MobileCompanionConnected",
     "MobileAudioProfileAdapted",
     "MobileHapticPingDispatched",
