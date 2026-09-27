@@ -29,6 +29,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0129`, `TASK-0130`, `TASK-0131`, `TASK-0132`, `TASK-0133`)**:
+  - Audited codebase health and file length invariants, identifying `tests/test_blackbox_character_leitmotifs.py` (437 lines), `tests/test_project_visualizer.py` (415 lines), `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` (401 lines), `services/board_state/src/board_state/aggregate.py` (488 lines), and `services/board_state/ui/src/particle_canvas.ts` (492 lines) as refactoring candidates approaching the 500-line invariant limit.
+  - Proactively proposed and refined modular decomposition tasks `TASK-0132` (particle canvas projectiles and decals extraction) and `TASK-0133` (board state aggregate mutation handlers and event appliers decomposition) to prevent breaches of Hard Invariant 6 (< 500 lines).
+  - Verified `docs/project/backlog/ROADMAP.md` Milestone 2 (confirming all foundational enablers complete) and updated Milestone 5 completed status for `TASK-0102`, `TASK-0104`, and `TASK-0124`.
+  - Added `TASK-0129` to Milestone 6 in `ROADMAP.md`.
+  - JIT-refined `TASK-0129` (Cross-Campaign Caravan Trading Ledgers), `TASK-0130` (Character Leitmotifs Test Suite Decomposition), `TASK-0131` (Wardrobe Gallery Styles Decomposition), `TASK-0132` (Particle Canvas Physics Decomposition), and `TASK-0133` (Board State Aggregate Handlers Decomposition) into `docs/project/backlog/refined/`, establishing complete Definitions of Ready with governing ADRs, PRDs, user stories, and testable blackbox DoDs.
+  - Replenished ready buffer in `docs/project/backlog/refined/` to the optimal target buffer of 10 items.
+  - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict prioritization: Enablers → Current Milestone Epics → Identified Refactorings → Future Milestones.
 - **PRD Pipeline Test Suite Modular Decomposition (`TASK-0121`, `ADR-0003`, `ADR-0009`)**:
   - Decomposed monolithic `tests/test_prd_pipeline.py` (418 lines) into discrete, single-responsibility test modules with shared fixture helpers in `tests/helpers/prd_fixtures.py`.
   - Added `tests/test_prd_pipeline_manager.py` (81 lines) covering `PRDManager` lifecycle, directory structures, buffer audits, and registry index synchronization.
