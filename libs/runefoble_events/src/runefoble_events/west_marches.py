@@ -95,10 +95,48 @@ class CommunalNoticePosted(BaseRunefobleEvent):
 
 
 @register_event
+class CaravanContractPosted(BaseRunefobleEvent):
+    """Fired when an asynchronous mercenary caravan contract is posted."""
+
+    aggregate_type: str = "CaravanContract"
+    contract_id: str = ""
+    shared_world_id: UUID | str = ""
+    origin_outpost: str = ""
+    destination_outpost: str = ""
+    cargo: dict[str, int] = Field(default_factory=dict)
+    cargo_value: int = 0
+    route_risk_level: str = "medium"
+    transit_stages: int = 2
+    escort_collateral: int = 0
+    reward_gold: int = 0
+    reward_reputation: int = 0
+    posted_by_campaign_id: UUID | str = ""
+    poster_user_id: str | None = None
+    expires_in_turns: int = 10
+    status: str = "open"
+    created_at: str | None = None
+
+
+@register_event
+class CaravanContractAccepted(BaseRunefobleEvent):
+    """Fired when an adventuring party claims or accepts an escort contract."""
+
+    aggregate_type: str = "CaravanContract"
+    contract_id: str = ""
+    shared_world_id: UUID | str = ""
+    contractor_campaign_id: UUID | str = ""
+    contractor_party_name: str = ""
+    accepted_by_user_id: str | None = None
+    status: str = "accepted"
+    accepted_at: str | None = None
+
+
+@register_event
 class CaravanDispatched(BaseRunefobleEvent):
     """Fired when a resource caravan sets off across the frontier."""
 
-    aggregate_type: str = "CaravanLedger"
+    aggregate_type: str = ""
+    contract_id: str | None = None
     shared_world_id: UUID | str = ""
     caravan_id: str = ""
     origin_outpost: str = ""
@@ -107,6 +145,42 @@ class CaravanDispatched(BaseRunefobleEvent):
     dispatched_by_campaign_id: UUID | str = ""
     transit_turns: int = 1
     status: str = "in_transit"
+
+
+@register_event
+class CaravanAmbushed(BaseRunefobleEvent):
+    """Fired when a caravan encounters a wilderness hazard or ambush during transit."""
+
+    aggregate_type: str = "CaravanContract"
+    contract_id: str = ""
+    shared_world_id: UUID | str = ""
+    caravan_id: str = ""
+    stage_index: int = 1
+    ambush_type: str = "bandit_raid"
+    danger_level: int = 1
+    outcome: str = "repelled"
+    cargo_loss_percentage: float = 0.0
+    reported_by_campaign_id: UUID | str = ""
+    notes: str = ""
+
+
+@register_event
+class CaravanTradeFulfilled(BaseRunefobleEvent):
+    """Fired when a caravan reaches destination, delivering cargo and completing the contract."""
+
+    aggregate_type: str = "CaravanContract"
+    contract_id: str = ""
+    shared_world_id: UUID | str = ""
+    caravan_id: str = ""
+    origin_outpost: str = ""
+    destination_outpost: str = ""
+    cargo_delivered: dict[str, int] = Field(default_factory=dict)
+    cargo_value_delivered: int = 0
+    reward_gold_paid: int = 0
+    reputation_awarded: int = 0
+    contractor_campaign_id: UUID | str = ""
+    fulfilled_at: str | None = None
+    status: str = "fulfilled"
 
 
 @register_event
@@ -135,8 +209,12 @@ class RegionalMerchantStockUpdated(BaseRunefobleEvent):
 
 __all__ = [
     "CampaignRegisteredToSharedWorld",
+    "CaravanAmbushed",
+    "CaravanContractAccepted",
+    "CaravanContractPosted",
     "CaravanDispatched",
     "CaravanTradeCompleted",
+    "CaravanTradeFulfilled",
     "CommunalNoticePosted",
     "CrossCampaignDiscoveryShared",
     "OutpostEstablished",

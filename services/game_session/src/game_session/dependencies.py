@@ -7,6 +7,7 @@ import logging
 import os
 
 from game_session.aggregate import GameSessionAggregate
+from game_session.caravan import CaravanContractAggregate
 from game_session.caravan_ledger import CaravanLedgerAggregate
 from game_session.merchants import MerchantAggregate
 from game_session.minigames import TavernGameAggregate
@@ -49,6 +50,9 @@ shared_world_repo: AggregateRepository[SharedWorldAggregate] = create_aggregate_
 caravan_ledger_repo: AggregateRepository[CaravanLedgerAggregate] = create_aggregate_repository(
     CaravanLedgerAggregate
 )
+caravan_contract_repo: AggregateRepository[CaravanContractAggregate] = create_aggregate_repository(
+    CaravanContractAggregate
+)
 
 
 def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
@@ -69,6 +73,17 @@ def get_shared_world_repository() -> AggregateRepository[SharedWorldAggregate]:
 
 def get_caravan_ledger_repository() -> AggregateRepository[CaravanLedgerAggregate]:
     return caravan_ledger_repo
+
+
+def get_caravan_contract_repository() -> AggregateRepository[CaravanContractAggregate]:
+    return caravan_contract_repo
+
+
+_world_contracts_index: dict[str, list[str]] = {}
+
+
+def get_world_contracts_index() -> dict[str, list[str]]:
+    return _world_contracts_index
 
 
 def get_spicedb_client() -> SpiceDBClient:

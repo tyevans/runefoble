@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts (`TASK-0129`, `ADR-0001`, `ADR-0006`, `ADR-0011`, `ADR-0013`, `PRD-0007`, `US-0058`)**:
+  - Implemented event-sourced `CaravanContractAggregate` in `services/game_session/src/game_session/caravan.py` modeling cargo inventory, route risk level, transit stages, escort collateral, and reward gold/reputation with `@handles` methods for `CaravanContractPosted`, `CaravanContractAccepted`, `CaravanDispatched`, `CaravanAmbushed`, and `CaravanTradeFulfilled`.
+  - Added public REST frontdoor notice board endpoints in `services/game_session/src/game_session/routers/caravan_contracts.py`: `POST /api/v1/shared-worlds/{id}/caravans/contracts`, `GET /api/v1/shared-worlds/{id}/caravans/contracts`, `GET /api/v1/shared-worlds/{id}/caravans/contracts/{cid}`, `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/accept`, `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/dispatch`, `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/ambush`, and `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/fulfill`.
+  - Implemented dynamic settlement economy and merchant stock sync in `CaravanLedgerAggregate` updating workshop reagents, finished inventory, delivery statistics, and calculating dynamic price modifiers based on route delivery success rates.
+  - Added SpiceDB Zanzibar schema definitions for `caravan_contract` in `libs/runefoble_auth/schema/runefoble.zed` and `MockSpiceDBClient`, enforcing that high-tier mercenary contracts require guild officer or party leader authorization.
+  - Registered CloudEvents domain events `CaravanContractPosted`, `CaravanContractAccepted`, `CaravanAmbushed`, and `CaravanTradeFulfilled` in `libs/runefoble_events`.
+  - Built vendored Lit Web Component microfrontend `<runefoble-caravan-board>` in `services/game_session/ui/src/runefoble-caravan-board.ts` with Bauhaus design tokens, interactive Storybook stories, and advertised via `/ui/manifest`.
+  - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_caravan_contracts.py` with 100% frontdoor verification.
+  - Updated Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md` and `docs/reference/events-schema.md`.
 - **Spatial Companion Mobile WebRTC Audio & Haptic Ping Gateway (`TASK-0128`, `ADR-0002`, `ADR-0005`, `ADR-0013`)**:
   - Implemented low-bandwidth adaptive Opus mono 16kHz audio stream profile in `services/voice_agent/src/voice_agent/mobile.py` optimizing cellular transmission over constrained network links.
   - Implemented automatic network degradation fallback across profile tiers (`mobile_optimized` at 16 kbps, `cellular_constrained` at 12 kbps, and `ultra_low` at 8 kbps) with Forward Error Correction (FEC) and Discontinuous Transmission (DTX).
