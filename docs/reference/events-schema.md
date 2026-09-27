@@ -302,7 +302,27 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `background_image_url`: Optional[String]
   - `teleported_tokens`: Dict[str, List[Integer]]
   - `initiated_by`: Optional[String]
-
+- **`BoardDoorToggledEvent`** (alias: `BoardDoorToggled`): Emitted when an interactive door or portal changes state (`runefoble.events.board.door_toggled`).
+  - `board_id`: String
+  - `session_id`: String
+  - `door_id`: String
+  - `status`: "open" | "closed" | "locked"
+  - `is_open`: Boolean
+  - `toggled_by`: Optional[String]
+  - `metadata`: Dict[str, Any]
+- **`BoardLightSourcePlacedEvent`** (alias: `BoardLightSourcePlaced`): Emitted when a point light source or radiance emitter is placed on the board (`runefoble.events.board.light_source_placed`).
+  - `board_id`: String
+  - `session_id`: String
+  - `light_id`: String
+  - `x`: Float, `y`: Float
+  - `color_hex`: String
+  - `bright_radius`: Float
+  - `dim_radius`: Float
+  - `flicker_intensity`: Float
+  - `intensity`: Float
+  - `shadows`: Boolean
+  - `placed_by`: Optional[String]
+  - `metadata`: Dict[str, Any]
 
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
