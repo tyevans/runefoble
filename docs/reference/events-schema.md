@@ -213,6 +213,27 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `session_id`: String
   - `board_id`: String
   - `rounds`: Integer (default 1)
+- **`PhysicsCollisionOccurred`**: Emitted when a physical rigid-body collision occurs on the board (`runefoble.events.board.physics.collision`).
+  - `session_id`: String
+  - `board_id`: String
+  - `entity_id`: String
+  - `entity_type`: String ("token", "dice")
+  - `collision_type`: String ("wall", "token", "boundary", "floor", "terrain_step")
+  - `x`: Float, `y`: Float, `z`: Float
+  - `impact_velocity`: Float
+  - `impact_energy`: Float
+  - `normal_x`: Float, `normal_y`: Float, `normal_z`: Float
+  - `details`: Dict[str, Any]
+- **`DiceSettled`**: Emitted when physical tumbling dice come to rest on the tactical board (`runefoble.events.board.dice.settled`).
+  - `session_id`: String
+  - `board_id`: String
+  - `dice_id`: String
+  - `dice_type`: String ("d4", "d6", "d8", "d10", "d12", "d20", "d100")
+  - `face_value`: Integer
+  - `settled_x`: Float, `settled_y`: Float, `settled_z`: Float
+  - `bounces`: Integer
+  - `trajectory`: List[Dict[str, Float]]
+
 
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)

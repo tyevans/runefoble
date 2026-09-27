@@ -110,6 +110,9 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`connect-mobile-companion-and-haptic-gateway.md`](docs/how-to/connect-mobile-companion-and-haptic-gateway.md): How to connect mobile companions to low-bandwidth adaptive Opus WebRTC audio and haptic vibration pings for secret DM whispers.
 - [`coordinate-west-marches-shared-world-and-caravans.md`](docs/how-to/coordinate-west-marches-shared-world-and-caravans.md): How to coordinate West Marches multi-party shared persistent frontiers, synchronize discovery logs across campaigns, dispatch trade caravans, and enforce SpiceDB Zanzibar party isolation.
 - [`handle-neural-voice-duplex-and-speech-interruption.md`](docs/how-to/handle-neural-voice-duplex-and-speech-interruption.md): How to handle zero-latency neural voice duplex, speech barge-in detection within 80ms, 20ms soft audio crossfade cancellation, and acoustic echo cancellation.
+- [`simulate-tabletop-3d-physics-and-collisions.md`](docs/how-to/simulate-tabletop-3d-physics-and-collisions.md): How to simulate 3D tumbling physical dice rolls, calculate ballistic trajectories and restitution bounces, apply token knockback impulses, and halt on elevation cliff steps.
+
+
 
 
 
