@@ -1,7 +1,7 @@
 ---
 id: '0140'
 title: Board State AoE Templates Geometry and Rendering Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0125
@@ -13,8 +13,8 @@ governing_prds:
 governing_stories:
 - US-0056
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/156
 ---
-
 # TASK-0140: Board State AoE Templates Geometry and Rendering Modular Decomposition
 
 ## Status
