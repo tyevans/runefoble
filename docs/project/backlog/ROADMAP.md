@@ -136,6 +136,10 @@
 - [ ] Campaign Atlas Blackbox Test Suite Modular Decomposition (TASK-0187)
 - [ ] Board State Previews Router Modular Decomposition (TASK-0188)
 - [ ] Character Sheet UI Templates Modular Decomposition (TASK-0189)
+- [ ] Cinematic Director Blackbox Test Suite Modular Decomposition (TASK-0190)
+- [ ] Kinetic Spell VFX Blackbox Test Suite Modular Decomposition (TASK-0191)
+- [ ] Board Templates Rendering and Subviews Modular Decomposition (TASK-0192)
+- [ ] Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition (TASK-0193)
 
 
 
