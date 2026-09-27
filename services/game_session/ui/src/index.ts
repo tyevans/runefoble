@@ -13,5 +13,5 @@ export * from './runefoble-caravan-board.ts';
 export * from './runefoble-caravan-board.styles.ts';
 export * from './runefoble-caravan-types.ts';
 export * from './runefoble-caravan-modal.ts';
+export * from './caravan/index.ts';
 export * from './utils/dice.ts';
-

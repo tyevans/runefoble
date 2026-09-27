@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Caravan Board Microfrontend Styles and Component Decomposition (`TASK-0148`, `ADR-0004`, `ADR-0012`, `ADR-0013`, `PRD-0018`, `US-0058`)**:
+  - Decomposed `services/game_session/ui/src/runefoble-caravan-board.ts` (399 lines) and `runefoble-caravan-board.styles.ts` (398 lines) into modular sub-components and scoped Bauhaus styles under `services/game_session/ui/src/caravan/`, with all files strictly < 150 lines:
+    - `contract_card.ts` (83 lines): `<runefoble-caravan-contract-card>` rendering individual notice board contract cards, route risk badges, itemized bounty rewards, live transit progress tracks, ambush alerts, and contextual role action buttons.
+    - `dispatch_modal.ts` (123 lines): `<runefoble-caravan-dispatch-modal>` modal dialog providing detailed route breakdowns, escrow collateral summaries, itemized cargo manifests, and caravan dispatch controls.
+    - `board_filters.ts` (109 lines): `<runefoble-caravan-board-filters>` handling real-time search queries, route hazard risk dropdowns, destination filters, and contract transit status selectors.
+    - `caravan_api.ts` (82 lines): Isolated HTTP client helpers (`apiAcceptContract`, `apiDispatchCaravan`, `apiFulfillContract`) for REST operations.
+    - `styles/` (< 85 lines each): Scoped styles split into `layout.styles.ts`, `card.styles.ts`, and `modal.styles.ts`, aggregated by `runefoble-caravan-board.styles.ts`.
+    - `runefoble-caravan-board.ts` (139 lines): Reduced root element to lightweight container orchestrating state and sub-components.
+  - Re-exported new sub-components in `services/game_session/ui/package.json` and `services/game_session/ui/src/index.ts`.
+  - Updated frontdoor blackbox test suite `tests/test_blackbox_caravan_board_ui.py` to verify modular sub-components, custom element decorators, and file size invariants (< 150 lines).
+  - Updated Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md`.
 - **West Marches Shared Atlas Microfrontend Subviews and Pin Layer Decomposition (`TASK-0152`, `ADR-0004`, `ADR-0012`, `ADR-0013`, `PRD-0018`, `US-0050`, `US-0058`)**:
   - Decomposed `services/campaign_lore/ui/src/runefoble-west-marches-atlas.ts` (386 lines) into modular Lit sub-components and decomposed style sheets under `services/campaign_lore/ui/src/west_marches/` strictly complying with Hard Invariant 6 (< 150 lines per component, with root atlas element < 120 lines):
     - `discovery_pin_layer.ts` / `pin_layer.ts` (111 lines): `<runefoble-discovery-pin-layer>` rendering milestone pin markers, danger level indicators, party attribution badges, and SpiceDB Zanzibar secret pin masking popovers.

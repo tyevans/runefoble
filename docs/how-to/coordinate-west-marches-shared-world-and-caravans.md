@@ -447,4 +447,16 @@ Per **ADR-0001**, **ADR-0003**, and **Hard Invariant 6** (< 500 lines per file),
 - **`__init__.py`** (< 50 lines): Re-exports unified `router` combining notice board and lifecycle routes with identical URL paths, tags, and dependencies.
 - **`caravan_contracts.py`** (< 15 lines): Backward-compatibility facade re-exporting `router` from the package.
 
+## 9. Modular Caravan Board Microfrontend Architecture
+
+Per **ADR-0004**, **ADR-0012**, **ADR-0013**, and **Hard Invariant 6** (< 500 lines per file, with all UI files strictly < 150 lines), the `<runefoble-caravan-board>` microfrontend is decomposed into atomic sub-components and modular Bauhaus styles under `services/game_session/ui/src/caravan/`:
+
+- **`contract_card.ts`** (< 90 lines): `<runefoble-caravan-contract-card>` rendering individual notice board contract cards, route risk badges, itemized bounty rewards, live transit progress tracks, ambush alerts, and contextual role action buttons.
+- **`dispatch_modal.ts`** (< 130 lines): `<runefoble-caravan-dispatch-modal>` modal dialog providing detailed route breakdowns, escrow collateral summaries, cargo manifests, and caravan dispatch controls.
+- **`board_filters.ts`** (< 110 lines): `<runefoble-caravan-board-filters>` handling real-time search inputs, route hazard risk dropdowns, destination filters, and contract transit status selectors.
+- **`caravan_api.ts`** (< 90 lines): Isolated HTTP client helpers (`apiAcceptContract`, `apiDispatchCaravan`, `apiFulfillContract`) communicating with `game_session` endpoints.
+- **`styles/`** (< 100 lines each): Scoped CSS split into `layout.styles.ts`, `card.styles.ts`, and `modal.styles.ts`, aggregated by `runefoble-caravan-board.styles.ts`.
+- **`runefoble-caravan-board.ts`** (< 140 lines): Lightweight container orchestrating state, sub-components, and custom event dispatches.
+
+
 

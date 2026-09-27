@@ -21,6 +21,11 @@
     "./runefoble-tavern-parlor.styles": "./src/runefoble-tavern-parlor.styles.ts",
     "./runefoble-caravan-board": "./src/runefoble-caravan-board.ts",
     "./runefoble-caravan-board.styles": "./src/runefoble-caravan-board.styles.ts",
+    "./caravan": "./src/caravan/index.ts",
+    "./caravan/contract_card": "./src/caravan/contract_card.ts",
+    "./caravan/dispatch_modal": "./src/caravan/dispatch_modal.ts",
+    "./caravan/board_filters": "./src/caravan/board_filters.ts",
+    "./caravan/styles": "./src/caravan/styles/index.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {
