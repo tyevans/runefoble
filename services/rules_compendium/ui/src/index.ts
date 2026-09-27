@@ -7,4 +7,5 @@ export * from './types.ts';
 export * from './runefoble-rules-compendium.styles.ts';
 export * from './runefoble-rules-lookup.ts';
 export * from './runefoble-encounter-builder.ts';
+export * from './runefoble-homebrew-creator.ts';
 export * from './runefoble-rules-compendium.ts';

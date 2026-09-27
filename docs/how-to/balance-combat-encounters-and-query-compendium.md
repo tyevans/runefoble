@@ -197,7 +197,8 @@ curl http://localhost:8007/ui/manifest
   "components": [
     "runefoble-rules-compendium",
     "runefoble-rules-lookup",
-    "runefoble-encounter-builder"
+    "runefoble-encounter-builder",
+    "runefoble-homebrew-creator"
   ]
 }
 ```
@@ -210,10 +211,19 @@ curl http://localhost:8007/ui/manifest
   userId="dm-evelyn-1"
   isDM="true"
 ></runefoble-rules-compendium>
+
+<!-- Or embed modular subviews directly: -->
+<runefoble-homebrew-creator
+  apiBaseUrl="http://localhost:8007"
+  campaignId="8a329ef2-5c91-4cf1-83d8-21d4bb67f101"
+  userId="dm-evelyn-1"
+  isDM="true"
+></runefoble-homebrew-creator>
 ```
 
 ### Key Features:
 - **Instant Hybrid Search**: Debounced autocomplete with sub-50ms latency badge and category filter pills (`ALL`, `MONSTER`, `SPELL`, `CONDITION`, `HOMEBREW`).
 - **Interactive CR Encounter Builder**: Dynamic XP threshold computation across party levels/sizes with real-time lethality calculation and 1-click Auto-Balance.
-- **Homebrew Forge**: Form validation against compendium schemas guarded by SpiceDB Zanzibar authorization.
+- **Homebrew Forge Subview**: Dedicated `<runefoble-homebrew-creator>` component with form validation against compendium schemas guarded by SpiceDB Zanzibar authorization.
+
 

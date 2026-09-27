@@ -64,6 +64,7 @@ def get_ui_manifest() -> dict[str, Any]:
             "runefoble-rules-compendium",
             "runefoble-rules-lookup",
             "runefoble-encounter-builder",
+            "runefoble-homebrew-creator",
         ],
         "version": "0.1.0",
     }

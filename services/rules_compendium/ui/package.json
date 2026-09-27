@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./runefoble-rules-compendium": "./src/runefoble-rules-compendium.ts",
     "./runefoble-rules-lookup": "./src/runefoble-rules-lookup.ts",
-    "./runefoble-encounter-builder": "./src/runefoble-encounter-builder.ts"
+    "./runefoble-encounter-builder": "./src/runefoble-encounter-builder.ts",
+    "./runefoble-homebrew-creator": "./src/runefoble-homebrew-creator.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

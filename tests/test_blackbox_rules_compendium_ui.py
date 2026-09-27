@@ -47,6 +47,7 @@ def test_compendium_manifest_endpoint(client: TestClient) -> None:
     assert "runefoble-rules-compendium" in data["components"]
     assert "runefoble-rules-lookup" in data["components"]
     assert "runefoble-encounter-builder" in data["components"]
+    assert "runefoble-homebrew-creator" in data["components"]
 
 
 def test_manifest_file_matches_advertised_manifest() -> None:
@@ -61,6 +62,7 @@ def test_manifest_file_matches_advertised_manifest() -> None:
     assert "runefoble-rules-compendium" in manifest_data["components"]
     assert "runefoble-rules-lookup" in manifest_data["components"]
     assert "runefoble-encounter-builder" in manifest_data["components"]
+    assert "runefoble-homebrew-creator" in manifest_data["components"]
 
 
 def test_typescript_elements_source_and_custom_elements() -> None:
@@ -73,18 +75,30 @@ def test_typescript_elements_source_and_custom_elements() -> None:
     assert "./runefoble-rules-compendium" in pkg_json["exports"]
     assert "./runefoble-rules-lookup" in pkg_json["exports"]
     assert "./runefoble-encounter-builder" in pkg_json["exports"]
+    assert "./runefoble-homebrew-creator" in pkg_json["exports"]
 
     assert (ui_dir / "tsconfig.json").is_file()
     assert (ui_dir / "src/index.ts").is_file()
     assert (ui_dir / "src/types.ts").is_file()
     assert (ui_dir / "src/runefoble-rules-compendium.styles.ts").is_file()
 
-    # Check runefoble-rules-compendium root component
+    # Check runefoble-rules-compendium root component (< 180 lines)
     comp_file = ui_dir / "src/runefoble-rules-compendium.ts"
     assert comp_file.is_file()
     comp_src = comp_file.read_text(encoding="utf-8")
     assert "@customElement('runefoble-rules-compendium')" in comp_src
     assert "class RunefobleRulesCompendium" in comp_src
+    assert len(comp_src.splitlines()) < 180, "runefoble-rules-compendium.ts must be < 180 lines"
+
+    # Check runefoble-homebrew-creator component (< 200 lines)
+    hb_file = ui_dir / "src/runefoble-homebrew-creator.ts"
+    assert hb_file.is_file()
+    hb_src = hb_file.read_text(encoding="utf-8")
+    assert "@customElement('runefoble-homebrew-creator')" in hb_src
+    assert "class RunefobleHomebrewCreator" in hb_src
+    assert len(hb_src.splitlines()) < 200, (
+        "runefoble-homebrew-creator.ts must be strictly < 200 lines"
+    )
 
     # Check runefoble-rules-lookup component
     lookup_file = ui_dir / "src/runefoble-rules-lookup.ts"
@@ -113,7 +127,9 @@ def test_storybook_stories_definition() -> None:
     assert "MonsterStatCards" in content
     assert "CREncounterBalanceCalculator" in content
     assert "HomebrewCreator" in content
+    assert "DedicatedHomebrewCreator" in content
     assert "runefoble-rules-compendium" in content
+    assert "runefoble-homebrew-creator" in content
 
 
 def test_frontend_app_shell_forwarding_export() -> None:
