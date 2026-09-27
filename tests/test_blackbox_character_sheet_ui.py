@@ -85,7 +85,21 @@ def test_typescript_element_source_and_custom_elements() -> None:
     assert styles_file.is_file()
     styles_src = styles_file.read_text(encoding="utf-8")
     assert "characterSheetStyles" in styles_src
-    assert "--rf-border-width" in styles_src
+    assert "characterSheetCoreStyles" in styles_src
+    assert "characterSheetInventoryStyles" in styles_src
+    assert "characterSheetConditionsStyles" in styles_src
+
+    core_styles_file = ui_dir / "src/runefoble-character-sheet.core.styles.ts"
+    assert core_styles_file.is_file()
+    assert "--rf-border-width" in core_styles_file.read_text(encoding="utf-8")
+
+    inv_styles_file = ui_dir / "src/runefoble-character-sheet.inventory.styles.ts"
+    assert inv_styles_file.is_file()
+    assert "encumbrance-bar" in inv_styles_file.read_text(encoding="utf-8")
+
+    cond_styles_file = ui_dir / "src/runefoble-character-sheet.conditions.styles.ts"
+    assert cond_styles_file.is_file()
+    assert "condition-badge" in cond_styles_file.read_text(encoding="utf-8")
 
     types_file = ui_dir / "src/runefoble-character-sheet.types.ts"
     assert types_file.is_file()
@@ -261,6 +275,13 @@ def test_file_length_invariants() -> None:
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.ts",
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.templates.ts",
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.styles.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.core.styles.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.inventory.styles.ts",
+        REPO_ROOT
+        / "services/character_sheet/ui/src/runefoble-character-sheet.conditions.styles.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/core.styles.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/inventory.styles.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/conditions.styles.ts",
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.types.ts",
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.stories.ts",
         REPO_ROOT / "tests/test_blackbox_character_sheet_ui.py",
@@ -272,3 +293,26 @@ def test_file_length_invariants() -> None:
         assert line_count < 500, (
             f"File {file_path.name} has {line_count} lines, exceeding the 500 line limit!"
         )
+
+
+def test_modular_styles_line_length_limits() -> None:
+    """Verify TASK-0123 style modularization: all style modules < 180 lines, aggregator < 40 lines."""
+    ui_src = REPO_ROOT / "services/character_sheet/ui/src"
+
+    aggregator = ui_src / "runefoble-character-sheet.styles.ts"
+    assert len(aggregator.read_text(encoding="utf-8").splitlines()) < 40
+
+    modular_modules = [
+        ui_src / "runefoble-character-sheet.core.styles.ts",
+        ui_src / "runefoble-character-sheet.inventory.styles.ts",
+        ui_src / "runefoble-character-sheet.conditions.styles.ts",
+        ui_src / "core.styles.ts",
+        ui_src / "inventory.styles.ts",
+        ui_src / "conditions.styles.ts",
+    ]
+
+    for mod in modular_modules:
+        assert mod.is_file(), f"{mod.name} must exist"
+        lines = len(mod.read_text(encoding="utf-8").splitlines())
+        assert lines < 180, f"{mod.name} has {lines} lines, exceeding the 180 line threshold!"
+        assert lines < 200, f"{mod.name} has {lines} lines, exceeding the 200 line threshold!"

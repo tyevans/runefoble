@@ -75,3 +75,14 @@ Spellcasters can manage their magical reserves without manual pen-and-paper trac
   @cast-spell="${(e) => handleCast(e.detail)}"
 ></runefoble-character-sheet>
 ```
+
+---
+
+## 6. Modular CSS Architecture & Theming
+
+The character sheet's visual styling is modularized into discrete CSS blocks adhering to Bauhaus geometric tokens (`ADR-0004`, `ADR-0012`):
+- **Core Styles** (`runefoble-character-sheet.core.styles.ts`): Host layout, typography, character identity banner, and vitals grid.
+- **Inventory Styles** (`runefoble-character-sheet.inventory.styles.ts`): Equipment paper doll slots, slot rarity borders, action buttons, and dynamic encumbrance capacity gauge.
+- **Conditions Styles** (`runefoble-character-sheet.conditions.styles.ts`): Tactical condition badges, absence penalty tags, interactive tooltips, spell slot pips, and responsive mobile breakpoints.
+- **Aggregator** (`runefoble-character-sheet.styles.ts`): Re-exports modular style blocks as a combined `CSSResultGroup` for Lit element consumption.
+

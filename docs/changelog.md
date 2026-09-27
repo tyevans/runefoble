@@ -29,6 +29,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **Character Sheet Microfrontend Styles Modular Decomposition (`TASK-0123`, `ADR-0004`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` (394 lines) into discrete CSS modules: `runefoble-character-sheet.core.styles.ts` (132 lines), `runefoble-character-sheet.inventory.styles.ts` (125 lines), and `runefoble-character-sheet.conditions.styles.ts` (150 lines), with companion alias modules (`core.styles.ts`, `inventory.styles.ts`, `conditions.styles.ts`).
+  - Reduced `runefoble-character-sheet.styles.ts` to a 28-line aggregator combining the modular CSS blocks into a typed `CSSResultGroup`.
+  - Exposed modular style subpaths in `@runefoble/character-sheet-ui` package manifest and FastAPI `/ui/manifest` frontdoor.
+  - Verified visual rendering and Storybook builds with zero errors across light and dark modes.
+  - Updated blackbox TDD test suite `tests/test_blackbox_character_sheet_ui.py` to enforce style module thresholds (<180 lines per module, <40 lines aggregator, strictly obeying Hard Invariant 6).
 - **Particle Canvas Decals and Projectile Physics Modular Decomposition (`TASK-0132`, `ADR-0004`, `ADR-0006`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed `services/board_state/ui/src/particle_canvas.ts` from 492 lines down to 254 lines by extracting ballistic projectile physics and trail calculation into `particle_projectiles.ts` (121 lines) and ephemeral combat grid decal lifecycle and opacity decay into `particle_decals.ts` (100 lines).
   - Streamlined `WebGLParticleEngine` to focus exclusively on WebGL program initialization, buffer management, and the 60fps main animation loop, strictly adhering to Hard Invariant 6 (< 500 lines per file; all files < 260 lines).
