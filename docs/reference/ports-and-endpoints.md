@@ -198,6 +198,13 @@
 | `campaign-analytics` | GET | `/api/v1/analytics/campaigns/{id}/timeline` | Chronological event milestones linking session recaps and boss encounters |
 | `campaign-analytics` | GET | `/ui/manifest` | Discovers vendored microfrontend (`runefoble-campaign-analytics`) |
 | `gateway-api` | GET | `/api/v1/profile` | Retrieves authenticated Zitadel user claims (`user_id`, `username`, `roles`, `email`) |
+| `gateway-api` | GET | `/api/v1/campaigns` | Lists all campaigns where authenticated user has Zanzibar `view` permission |
+| `gateway-api` | POST | `/api/v1/campaigns` | Creates new campaign, registers owner in SpiceDB Zanzibar (`owner`), returns campaign summary |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}` | Retrieves campaign overview details (requires `view`) |
+| `gateway-api` | PATCH | `/api/v1/campaigns/{campaign_id}` | Updates campaign title, description, and settings (requires `manage`) |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/invites` | Generates shareable invite token for player or spectator (requires `run_session`) |
+| `gateway-api` | POST | `/api/v1/campaigns/join` | Accepts invite token and registers membership relation in SpiceDB Zanzibar |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/members` | Lists campaign members and active Zanzibar roles (requires `view`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Assigns fine-grained SpiceDB Zanzibar relationship tuples (owner, DM, player, spectator) |
 | `gateway-api` | POST | `/api/v1/auth/sync/user` | Syncs Zitadel user claims into SpiceDB Zanzibar tuples |
 | `gateway-api` | POST | `/api/v1/auth/sync/membership` | Grants or revokes campaign/session membership roles (`gm`, `player`, `spectator`) |

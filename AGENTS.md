@@ -116,6 +116,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`modulate-dm-vocal-npc-presets.md`](docs/how-to/modulate-dm-vocal-npc-presets.md): How to apply real-time DSP pitch and formant shift filters, creature archetype presets, and live stream audio modulation.
 - [`charter-frontier-settlements-and-havens.md`](docs/how-to/charter-frontier-settlements-and-havens.md): How to charter persistent communal havens, co-upgrade workshops and fortresses across West Marches campaigns, claim rest boons, and enforce SpiceDB Zanzibar isolation.
 - [`navigate-client-spa-routes-and-breadcrumbs.md`](docs/how-to/navigate-client-spa-routes-and-breadcrumbs.md): How to navigate deep-linkable client SPA routes, configure authentication guards, manage route lifecycle teardown, and render dynamic breadcrumbs.
+- [`manage-campaign-lifecycle-and-invites.md`](docs/how-to/manage-campaign-lifecycle-and-invites.md): How to create campaigns, generate shareable invite tokens, join existing campaigns, and inspect active party membership with SpiceDB Zanzibar object authorization.
 
 
 
