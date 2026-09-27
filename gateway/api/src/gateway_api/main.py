@@ -34,6 +34,7 @@ from gateway_api.websocket import campaign_websocket_endpoint
 from gateway_mcp.dynamic_registry import router as mcp_tools_router
 from runefoble_platform.telemetry import init_telemetry
 from voice_agent.room_routes import router as voice_rooms_router
+from voice_agent.routers.stream_diagnostics import router as stream_diagnostics_router
 
 app = FastAPI(
     title="Runefoble Platform Unified Gateway",
@@ -61,6 +62,7 @@ app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 app.include_router(voice_rooms_router)
 app.include_router(companion_router)
+app.include_router(stream_diagnostics_router)
 app.include_router(mcp_tools_router)
 app.include_router(mcp_tools_router, prefix="/api/v1")
 

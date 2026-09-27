@@ -710,6 +710,29 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `parameters`: Dict[String, Float]
   - `user_id`: String
   - `toggled_at`: Float (epoch timestamp)
+- **`VoiceStreamQualityDegradedEvent`**: Emitted when RTCP receiver reports detect packet loss (>5%) or round-trip delay spikes (`runefoble.events.voice.stream_quality_degraded`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: Optional[String]
+  - `packet_loss`: Float (0.0 to 1.0)
+  - `round_trip_time_ms`: Float
+  - `jitter_ms`: Float
+  - `severity`: String ("nominal", "degraded", "severe")
+  - `detected_at`: String (ISO-8601 UTC timestamp)
+- **`VoiceStreamCodecAdaptedEvent`**: Emitted when stream bitrate or Opus codec parameters are dynamically adjusted (<50 kbps 16kHz mono) (`runefoble.events.voice.stream_codec_adapted`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: Optional[String]
+  - `previous_bitrate_kbps`: Integer
+  - `new_bitrate_kbps`: Integer
+  - `sample_rate`: Integer (16000)
+  - `channels`: Integer (1)
+  - `complexity`: Integer (0 to 10)
+  - `fec_enabled`: Boolean
+  - `dtx_enabled`: Boolean
+  - `codec_mode`: String ("standard", "mobile_optimized", "cellular_constrained", "ultra_low")
+  - `reason`: String
+  - `adapted_at`: String (ISO-8601 UTC timestamp)
 
 
 
