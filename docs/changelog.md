@@ -29,6 +29,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0129`, `TASK-0130`, `TASK-0131`, `TASK-0132`, `TASK-0133`)**:
+  - Audited codebase health and file length invariants, identifying `tests/test_blackbox_character_leitmotifs.py` (437 lines), `tests/test_project_visualizer.py` (415 lines), `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` (401 lines), `services/board_state/src/board_state/aggregate.py` (488 lines), and `services/board_state/ui/src/particle_canvas.ts` (492 lines) as refactoring candidates approaching the 500-line invariant limit.
+  - Proactively proposed and refined modular decomposition tasks `TASK-0132` (particle canvas projectiles and decals extraction) and `TASK-0133` (board state aggregate mutation handlers and event appliers decomposition) to prevent breaches of Hard Invariant 6 (< 500 lines).
+  - Verified `docs/project/backlog/ROADMAP.md` Milestone 2 (confirming all foundational enablers complete) and updated Milestone 5 completed status for `TASK-0102`, `TASK-0104`, and `TASK-0124`.
+  - Added `TASK-0129` to Milestone 6 in `ROADMAP.md`.
+  - JIT-refined `TASK-0129` (Cross-Campaign Caravan Trading Ledgers), `TASK-0130` (Character Leitmotifs Test Suite Decomposition), `TASK-0131` (Wardrobe Gallery Styles Decomposition), `TASK-0132` (Particle Canvas Physics Decomposition), and `TASK-0133` (Board State Aggregate Handlers Decomposition) into `docs/project/backlog/refined/`, establishing complete Definitions of Ready with governing ADRs, PRDs, user stories, and testable blackbox DoDs.
+  - Replenished ready buffer in `docs/project/backlog/refined/` to the optimal target buffer of 10 items.
+  - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict prioritization: Enablers → Current Milestone Epics → Identified Refactorings → Future Milestones.
+- **PRD Pipeline Test Suite Modular Decomposition (`TASK-0121`, `ADR-0003`, `ADR-0009`)**:
+  - Decomposed monolithic `tests/test_prd_pipeline.py` (418 lines) into discrete, single-responsibility test modules with shared fixture helpers in `tests/helpers/prd_fixtures.py`.
+  - Added `tests/test_prd_pipeline_manager.py` (81 lines) covering `PRDManager` lifecycle, directory structures, buffer audits, and registry index synchronization.
+  - Added `tests/test_prd_pipeline_planner.py` (137 lines) covering `DecompositionPlanner`, architectural spike keyword detection, UI/worker heuristics, and dependency graph sequencing.
+  - Added `tests/test_prd_pipeline_decomposer.py` (141 lines) covering `PRDDecomposer` execution facade, counter resolution, `PlanWriter` file persistence, and task template formatting.
+  - Added `tests/test_prd_pipeline_cli.py` (92 lines) covering CLI subcommands, error exits on missing PRD IDs, and shell script interface wrappers.
+  - Kept all decomposed test modules strictly below 150 lines (and < 250 lines), upholding Hard Invariant 6 with zero regressions across 13 passing test cases.
+  - Updated Diataxis guide `docs/how-to/decompose-prds-into-vertical-slices.md`.
+
+- **Project Visualizer Test Suite Modular Decomposition (`TASK-0122`, `ADR-0003`, `ADR-0009`)**:
+  - Decomposed monolithic `tests/test_project_visualizer.py` (416 lines) into three focused, single-responsibility test suites: `tests/test_visualizer_parser.py` (210 lines), `tests/test_visualizer_graph.py` (110 lines), and `tests/test_visualizer_server.py` (123 lines).
+  - Maintained 100% test coverage and backwards compatibility across all visualizer capabilities, verifying entity extraction across personas/ADRs/PRDs/stories/tasks, git commit & PR harvesting, deterministic cache fingerprinting, graph edge construction, buffer metrics, PRD-story-task traceability support, zoom & minimap bundles, HTTP endpoints, static asset resolution, CLI subcommands, and codebase line-length invariants.
+  - Enforced strict line limit invariants with all decomposed test suites strictly under 250 lines and well below Hard Invariant 6 (< 500 lines per file).
 
 - **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0102`, `TASK-0104`, `TASK-0121`, `TASK-0122`, `TASK-0123`, `TASK-0124`, `TASK-0125`, `TASK-0126`, `TASK-0127`, `TASK-0128`)**:
   - Audited repository health and file length invariants, identifying refactoring candidates in `tests/test_prd_pipeline.py` (417 lines), `tests/test_project_visualizer.py` (415 lines), and `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` (394 lines).
