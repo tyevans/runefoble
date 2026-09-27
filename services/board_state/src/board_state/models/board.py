@@ -6,6 +6,7 @@ from typing import Any
 from uuid import UUID
 
 from board_state.aoe_models import AoETemplateState
+from board_state.models.physics import DiceSettledState, PhysicsCollisionState
 from board_state.models.terrain import TerrainCellState, TerrainDict
 from board_state.models.tokens import PlacedTokenState
 from board_state.models.transitions import BoardTransitionsMixin
@@ -31,6 +32,9 @@ class BoardState(BaseModel, BoardTransitionsMixin):
     lights: list[dict[str, Any]] = Field(default_factory=list)
     pixels_per_grid: int = 70
     active_aoe_templates: list[AoETemplateState] = Field(default_factory=list)
+    recent_collisions: list[PhysicsCollisionState] = Field(default_factory=list)
+    last_collision: PhysicsCollisionState | None = None
+    last_dice_settled: DiceSettledState | None = None
 
     @classmethod
     def initial(cls, board_id: UUID, session_id: str, cols: int, rows: int) -> BoardState:

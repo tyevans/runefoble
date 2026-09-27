@@ -26,6 +26,7 @@ from board_state.routers import (
     actions_router,
     aoe_router,
     boards_router,
+    physics_router,
     previews_router,
     terrain_router,
     tokens_router,
@@ -48,6 +49,7 @@ app.include_router(previews_router)
 app.include_router(actions_router)
 app.include_router(aoe_router)
 app.include_router(vfx_router)
+app.include_router(physics_router)
 
 
 @app.get("/healthz")

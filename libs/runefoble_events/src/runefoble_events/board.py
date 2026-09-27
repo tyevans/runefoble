@@ -259,3 +259,54 @@ register_event(SpellCast, event_type="SpellCast")
 register_event(AreaEffectExploded, event_type="AreaEffectExploded")
 register_event(VFXAnimationFinished, event_type="VFXAnimationFinished")
 register_event(EphemeralDecalsDecayed, event_type="EphemeralDecalsDecayed")
+
+
+@register_event("runefoble.events.board.physics.collision")
+class PhysicsCollisionOccurred(BaseRunefobleEvent):
+    """Emitted when a physical rigid-body collision occurs on the tactical board."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "BoardState"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.board.physics.collision"
+    session_id: str = ""
+    board_id: str = ""
+    entity_id: str
+    entity_type: str = "token"  # "token" | "dice"
+    collision_type: str = "wall"  # "wall" | "token" | "boundary" | "terrain_step"
+    x: float
+    y: float
+    z: float = 0.0
+    impact_velocity: float = 0.0
+    impact_energy: float = 0.0
+    normal_x: float = 0.0
+    normal_y: float = 0.0
+    normal_z: float = 0.0
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.board.dice.settled")
+class DiceSettled(BaseRunefobleEvent):
+    """Emitted when physical tumbling dice come to rest on the tactical board."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "BoardState"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.board.dice.settled"
+    session_id: str = ""
+    board_id: str = ""
+    dice_id: str
+    dice_type: str = "d20"
+    face_value: int
+    settled_x: float
+    settled_y: float
+    settled_z: float = 0.0
+    rotation: list[float] = Field(default_factory=lambda: [0.0, 0.0, 0.0])
+    bounces: int = 0
+    trajectory: list[dict[str, float]] = Field(default_factory=list)
+
+
+register_event(PhysicsCollisionOccurred, event_type="board.physics.collision")
+register_event(PhysicsCollisionOccurred, event_type="PhysicsCollisionOccurred")
+register_event(DiceSettled, event_type="board.dice.settled")
+register_event(DiceSettled, event_type="DiceSettled")

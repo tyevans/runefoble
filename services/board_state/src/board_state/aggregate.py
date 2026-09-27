@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from board_state.handlers import FogHandlerMixin, TokensHandlerMixin, VFXHandlerMixin
+from board_state.handlers import (
+    FogHandlerMixin,
+    PhysicsHandlerMixin,
+    TokensHandlerMixin,
+    VFXHandlerMixin,
+)
 from board_state.models import BoardState, PlacedTokenState, TerrainCellState, TerrainDict
 from board_state.rules import (
     DEFAULT_HAZARD_DAMAGE,
@@ -25,6 +30,7 @@ __all__ = [
     "BoardAggregate",
     "BoardState",
     "FogHandlerMixin",
+    "PhysicsHandlerMixin",
     "PlacedTokenState",
     "TerrainCellState",
     "TerrainDict",
@@ -38,6 +44,7 @@ class BoardAggregate(
     TokensHandlerMixin,
     FogHandlerMixin,
     VFXHandlerMixin,
+    PhysicsHandlerMixin,
     DeclarativeAggregate[BoardState],
 ):
     """Event-sourced aggregate managing tactical combat grid, spatial tokens, and fog-of-war."""

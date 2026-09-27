@@ -20,6 +20,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added frontdoor blackbox test suite `tests/test_blackbox_board_state.py` verifying line length invariants (< 200 lines per file), backward-compatible facade re-exports, modular submodule imports, and BoardState transitions.
 
 ### Added
+- **Tabletop 3D Physics Engine & Mesh Collision Integration (`TASK-0150`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `PRD-0013`, `US-0061`)**:
+  - Implemented foundational 3D tabletop physics and mesh collision simulation backend in `services/board_state/src/board_state/physics/`:
+    - `bounds.py`: Axis-aligned 3D bounding boxes (`BoundingBox3D`), upright cylindrical collision meshes for miniature tokens (`BoundingCylinder`), and elevation grid step collision evaluator (`HeightfieldTerrain`) (< 130 lines).
+    - `simulator.py`: Tumbling 3D ballistic trajectory simulation, air drag, restitution floor/wall bounces, surface friction damping, and token knockback trajectory solver (< 165 lines).
+    - `applier.py`: Orchestrates token knockback impulse application, high-elevation cliff/wall collision halting, grid snapping, and domain event dispatching (< 160 lines).
+    - `physics/__init__.py`: Clean public API facade exposing collision primitives, throw simulation, and knockback solvers.
+  - Implemented modular physics APIRouter `services/board_state/src/board_state/routers/physics.py` exposing:
+    - `POST /api/v1/boards/{board_id}/physics/simulate-throw`: Simulates tumbling 3D physical dice rolls across terrain, reporting bounces, trajectory, and final settled face.
+    - `POST /api/v1/boards/{board_id}/physics/knockback`: Applies physical impulse to miniature tokens, calculating drag and halting on high walls with impact energy.
+  - Registered and dispatched CloudEvents-compliant domain events in `libs/runefoble_events`:
+    - `PhysicsCollisionOccurred` (`runefoble.events.board.physics.collision`): Dispatched on rigid-body collisions with wall, obstacle, boundary, or floor.
+    - `DiceSettled` (`runefoble.events.board.dice.settled`): Dispatched when tumbling dice come to rest on the board.
+  - Added `PhysicsHandlerMixin` in `services/board_state/src/board_state/handlers/physics.py` handling collision impulses and dice settling in `BoardAggregate`.
+  - Added frontdoor blackbox test suite `tests/test_blackbox_tabletop_physics.py` verifying dice toss calculation, final face settling, high-elevation wall knockback halting, and `board.physics.collision` domain event emission with impact energy.
+  - Authored Diataxis guide `docs/how-to/simulate-tabletop-3d-physics-and-collisions.md` and updated `docs/reference/events-schema.md` and `docs/reference/ports-and-endpoints.md`.
+
 - **Campaign Analytics UI Blackbox Test Suite Modular Decomposition (`TASK-0143`, `ADR-0013`, `PRD-0012`, `US-0040`, `US-0054`)**:
   - Decomposed monolithic `tests/test_blackbox_campaign_analytics_ui.py` (383 lines) into focused, single-responsibility frontdoor blackbox test modules under `tests/test_blackbox_campaign_analytics_ui/` strictly adhering to Hard Invariant 6 (< 500 lines per file) with all resulting test files strictly under 160 lines.
   - Added `tests/test_blackbox_campaign_analytics_ui/conftest.py` (72 lines) isolating mock Redis, consumer group, event bus, storage, mock SpiceDB client, and worker fixtures.
