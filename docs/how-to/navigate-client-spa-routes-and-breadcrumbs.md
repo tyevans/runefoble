@@ -39,16 +39,33 @@ await router.navigate('#/campaigns?filter=active&sort=recent');
 
 ## 3. Configuring Authentication Route Guards
 
-Register route guards with `router.beforeEach()` to intercept navigation before view transitions occur. Guards can return:
+Register route guards with `registerAuthGuard(router, authService)` or manually via `router.beforeEach()` to intercept navigation before view transitions occur. Guards can return:
 - `true`: Allow navigation.
 - `false`: Abort navigation and stay on the current route.
 - A `string`: Redirect navigation to another route (e.g. `#/login`).
+
+### Using `registerAuthGuard` (Recommended)
+
+The `registerAuthGuard` utility registers a `beforeEach` navigation guard and listens for auth session changes (such as logout or token expiry) to automatically redirect protected routes to `#/login`:
+
+```typescript
+import { router, registerAuthGuard } from './router/index.ts';
+import { authService } from './auth/auth-service.ts';
+
+// Register auth guard with default public routes (['#/login', '#/register'])
+const unregisterGuard = registerAuthGuard(router, authService);
+
+// Unregister when tearing down component
+unregisterGuard();
+```
+
+### Custom `beforeEach` Route Guards
 
 ```typescript
 import { router } from './router/index.ts';
 
 router.beforeEach((to, from) => {
-  const token = localStorage.getItem('runefoble-token');
+  const token = localStorage.getItem('rf_auth_session');
   const isPublic = to.path === '#/login' || to.path === '#/register';
 
   if (!token && !isPublic) {
