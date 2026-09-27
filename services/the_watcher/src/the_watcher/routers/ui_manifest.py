@@ -18,6 +18,8 @@ UI_MANIFEST: dict[str, Any] = {
         "runefoble-dm-whisper-bar",
         "runefoble-faction-radar",
         "runefoble-faction-espionage",
+        "runefoble-absentee-directive",
+        "runefoble-absentee-vote-card",
     ],
     "tags": [
         "runefoble-watcher-feed",
@@ -25,6 +27,8 @@ UI_MANIFEST: dict[str, Any] = {
         "runefoble-dm-whisper-bar",
         "runefoble-faction-radar",
         "runefoble-faction-espionage",
+        "runefoble-absentee-directive",
+        "runefoble-absentee-vote-card",
     ],
 }
 
