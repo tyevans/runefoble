@@ -1,7 +1,7 @@
 ---
 id: '0133'
 title: Board State Aggregate Mutation Handlers and Event Appliers Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0008
@@ -20,8 +20,8 @@ governing_stories:
 - US-0012
 - US-0043
 - US-0048
+pr_url: https://github.com/tyevans/runefoble/pull/142
 ---
-
 # TASK-0133: Board State Aggregate Mutation Handlers and Event Appliers Modular Decomposition
 
 ## Status
