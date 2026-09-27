@@ -35,6 +35,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Exposed modular style subpaths in `@runefoble/character-sheet-ui` package manifest and FastAPI `/ui/manifest` frontdoor.
   - Verified visual rendering and Storybook builds with zero errors across light and dark modes.
   - Updated blackbox TDD test suite `tests/test_blackbox_character_sheet_ui.py` to enforce style module thresholds (<180 lines per module, <40 lines aggregator, strictly obeying Hard Invariant 6).
+- **Wardrobe Gallery Styles and Sub-Components Modular Decomposition (`TASK-0131`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` from 401 lines down to 185 lines by extracting its extensive CSS stylesheet block into dedicated module `services/character_sheet/ui/src/runefoble-wardrobe-gallery.styles.ts` (246 lines), maintaining strict compliance with Hard Invariant 6 (< 500 lines per file; both modules < 250 lines).
+  - Isolated condition badge, variant card, active section, and attire forging sub-renderers in `RunefobleWardrobeGallery` component.
+  - Advertised companion styles module via `@runefoble/character-sheet-ui/runefoble-wardrobe-gallery.styles`, exported in `src/index.ts`, and declared in `/ui/manifest`.
+  - Updated blackbox test suite `tests/test_blackbox_wardrobe_gallery.py` and `tests/test_microfrontend_app_shell.py` to verify modular styles extraction and file length invariants.
+  - Updated Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` with modular architecture details.
 - **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0129`, `TASK-0130`, `TASK-0131`, `TASK-0132`, `TASK-0133`)**:
   - Audited codebase health and file length invariants, identifying `tests/test_blackbox_character_leitmotifs.py` (437 lines), `tests/test_project_visualizer.py` (415 lines), `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` (401 lines), `services/board_state/src/board_state/aggregate.py` (488 lines), and `services/board_state/ui/src/particle_canvas.ts` (492 lines) as refactoring candidates approaching the 500-line invariant limit.
   - Proactively proposed and refined modular decomposition tasks `TASK-0132` (particle canvas projectiles and decals extraction) and `TASK-0133` (board state aggregate mutation handlers and event appliers decomposition) to prevent breaches of Hard Invariant 6 (< 500 lines).

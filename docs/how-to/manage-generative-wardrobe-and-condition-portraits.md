@@ -132,7 +132,16 @@ Embed the wardrobe gallery component into the character sheet or tabletop sideba
 </script>
 ```
 
+### Modular Styles & Sub-Component Architecture
+
+Per **ADR-0004** and **ADR-0013**, the wardrobe gallery is decomposed into modular files under `services/character_sheet/ui/src/` to strictly uphold Hard Invariant 6 (< 500 lines per file, with each module < 250 lines):
+
+- **`runefoble-wardrobe-gallery.styles.ts`**: Dedicated stylesheet module exporting `wardrobeGalleryStyles` with Bauhaus geometric tokens, condition badge pill highlights, avatar border state glows, and outfit selection cards.
+- **`runefoble-wardrobe-gallery.ts`**: Lightweight Lit component orchestrating reactive properties, event dispatching, and isolated sub-renderers (`renderConditionBadge`, `renderConditionBadges`, `renderVariantCard`, `renderActiveSection`, `renderForgePanel`).
+- **Export Packaging**: Re-exported via `services/character_sheet/ui/src/index.ts`, advertised in `package.json` under `./runefoble-wardrobe-gallery.styles`, and declared in `/ui/manifest`.
+
 ---
+
 
 ## 5. Domain Event Catalog
 

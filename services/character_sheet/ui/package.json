@@ -20,7 +20,8 @@
     "./inventory.styles": "./src/inventory.styles.ts",
     "./conditions.styles": "./src/conditions.styles.ts",
     "./runefoble-character-sheet.types": "./src/runefoble-character-sheet.types.ts",
-    "./runefoble-wardrobe-gallery": "./src/runefoble-wardrobe-gallery.ts"
+    "./runefoble-wardrobe-gallery": "./src/runefoble-wardrobe-gallery.ts",
+    "./runefoble-wardrobe-gallery.styles": "./src/runefoble-wardrobe-gallery.styles.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

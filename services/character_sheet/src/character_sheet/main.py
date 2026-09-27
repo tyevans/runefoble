@@ -77,6 +77,7 @@ def get_ui_manifest():
             "./src/runefoble-character-sheet.core.styles.ts",
             "./src/runefoble-character-sheet.inventory.styles.ts",
             "./src/runefoble-character-sheet.conditions.styles.ts",
+            "./src/runefoble-wardrobe-gallery.styles.ts",
         ],
         "scripts": [
             "./src/index.ts",

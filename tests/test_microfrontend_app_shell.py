@@ -210,3 +210,21 @@ def test_task_0061_tactical_board_dm_and_voice_styles_decomposition():
         },
     ]
     _assert_decomposed_targets(targets)
+
+
+def test_task_0131_wardrobe_gallery_styles_modular_decomposition():
+    """Verify TASK-0131: Wardrobe gallery styles extracted to companion *.styles.ts module and Hard Invariant 6."""
+    targets = [
+        {
+            "component": REPO_ROOT
+            / "services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts",
+            "styles": REPO_ROOT
+            / "services/character_sheet/ui/src/runefoble-wardrobe-gallery.styles.ts",
+            "style_export": "wardrobeGalleryStyles",
+            "tag": "runefoble-wardrobe-gallery",
+            "max_style_lines": 250,
+            "max_comp_lines": 250,
+            "events": ["portrait-selected", "generate-wardrobe"],
+        },
+    ]
+    _assert_decomposed_targets(targets)
