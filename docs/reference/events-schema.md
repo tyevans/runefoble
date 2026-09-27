@@ -495,6 +495,35 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `session_id`: String
   - `peer_id`: String
   - `is_muted`: Boolean
+- **`MobileCompanionConnected`**: Emitted when a mobile companion connects via the low-bandwidth gateway (`runefoble.events.voice.mobile_connected`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: String
+  - `device_type`: String ("mobile")
+  - `audio_profile_tier`: String ("mobile_optimized")
+  - `haptic_supported`: Boolean
+  - `connected_at`: String (ISO-8601 UTC timestamp)
+- **`MobileAudioProfileAdapted`**: Emitted when mobile companion audio adapts due to cellular network conditions (`runefoble.events.voice.profile_adapted`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: String
+  - `previous_tier`: String
+  - `current_tier`: String
+  - `sample_rate`: Integer (16000)
+  - `bitrate_kbps`: Integer
+  - `packet_loss`: Float
+  - `reason`: String
+- **`MobileHapticPingDispatched`**: Emitted when a haptic vibration pulse or lockscreen alert is dispatched to mobile (`runefoble.events.voice.haptic_ping`).
+  - `session_id`: String
+  - `recipient_id`: String
+  - `alert_type`: String ("secret_whisper", "turn_alert", "critical_alert")
+  - `vibration_pattern`: List[Integer] (e.g. `[200, 100, 200]`)
+  - `whisper_content`: Optional[String]
+  - `notification_title`: Optional[String]
+  - `notification_body`: Optional[String]
+  - `diegetic`: Boolean
+  - `dispatched_at`: String (ISO-8601 UTC timestamp)
+
 
 ### Asset Storage Events (`aggregate_type: Asset`)
 

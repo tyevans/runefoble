@@ -140,6 +140,9 @@ from runefoble_events.tavern import (
     MinigameTurnTaken,
 )
 from runefoble_events.voice import (
+    MobileAudioProfileAdapted,
+    MobileCompanionConnected,
+    MobileHapticPingDispatched,
     VoicePeerJoined,
     VoicePeerLeft,
     VoicePeerMuteToggled,
@@ -261,6 +264,9 @@ __all__ = [
     "VoicePeerJoined",
     "VoicePeerLeft",
     "VoicePeerMuteToggled",
+    "MobileCompanionConnected",
+    "MobileAudioProfileAdapted",
+    "MobileHapticPingDispatched",
     "AssetUploaded",
     "AssetDeleted",
     "AudiencePollStarted",
