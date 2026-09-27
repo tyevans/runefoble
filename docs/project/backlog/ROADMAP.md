@@ -148,3 +148,7 @@
 - [ ] Campfire Crafting Subviews Modular Decomposition (TASK-0199)
 - [ ] Campaign Analytics Stories Fixtures Modular Decomposition (TASK-0200)
 - [ ] Board State Radial Menu Glyphs and Styles Modular Decomposition (TASK-0201)
+- [ ] Backlog Queue Parser and Serializer Modular Decomposition (TASK-0202)
+- [ ] Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (TASK-0203)
+- [ ] Character Sheet Component Action Handlers and State Modular Decomposition (TASK-0204)
+- [ ] West Marches Aggregate Discovery and Territory Handlers Modular Decomposition (TASK-0205)
