@@ -16,7 +16,7 @@ import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignItem, CampaignMember, CreateCampaignPayload, LobbyParticipant, LobbyCharacterOption } from '@runefoble/game-session-ui';
 import type { CharacterItem, RosterCampaignOption } from '@runefoble/character-sheet-ui';
 import type { CampaignSessionItem } from './components/runefoble-session-list.ts';
-import { router, type BreadcrumbItem, type MatchedRoute, type RouteParams } from './router/router.ts';
+import { router, registerAuthGuard, type BreadcrumbItem, type MatchedRoute, type RouteParams } from './router/index.ts';
 import { authService, type AuthState } from './auth/auth-service.ts';
 import { appDataService } from './services/app-data-service.ts';
 
@@ -61,6 +61,7 @@ export class RunefobleApp extends LitElement {
   private unlistenRouter: (() => void) | null = null;
   private unlistenAuth: (() => void) | null = null;
   private unlistenTeardown: (() => void) | null = null;
+  private unlistenGuard: (() => void) | null = null;
 
   connectedCallback() {
     super.connectedCallback();
@@ -72,7 +73,7 @@ export class RunefobleApp extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.unlistenRouter?.(); this.unlistenAuth?.(); this.unlistenTeardown?.();
+    this.unlistenRouter?.(); this.unlistenAuth?.(); this.unlistenTeardown?.(); this.unlistenGuard?.();
     this.disconnectWebSocket();
     router.stop();
   }
@@ -103,6 +104,7 @@ export class RunefobleApp extends LitElement {
   }
 
   private initRouter() {
+    this.unlistenGuard = registerAuthGuard(router, authService);
     router.setTitleResolver((type, id) => {
       if (type === 'campaign' && id === '4') return 'Tomb of the Star-Eater';
       if (type === 'campaign' && id === '5') return 'Whispering Depths';
