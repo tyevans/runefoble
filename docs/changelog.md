@@ -30,6 +30,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **Project Visualizer Test Suite Modular Decomposition (`TASK-0122`, `ADR-0003`, `ADR-0009`)**:
+  - Decomposed monolithic `tests/test_project_visualizer.py` (416 lines) into three focused, single-responsibility test suites: `tests/test_visualizer_parser.py` (210 lines), `tests/test_visualizer_graph.py` (110 lines), and `tests/test_visualizer_server.py` (123 lines).
+  - Maintained 100% test coverage and backwards compatibility across all visualizer capabilities, verifying entity extraction across personas/ADRs/PRDs/stories/tasks, git commit & PR harvesting, deterministic cache fingerprinting, graph edge construction, buffer metrics, PRD-story-task traceability support, zoom & minimap bundles, HTTP endpoints, static asset resolution, CLI subcommands, and codebase line-length invariants.
+  - Enforced strict line limit invariants with all decomposed test suites strictly under 250 lines and well below Hard Invariant 6 (< 500 lines per file).
+
 - **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0102`, `TASK-0104`, `TASK-0121`, `TASK-0122`, `TASK-0123`, `TASK-0124`, `TASK-0125`, `TASK-0126`, `TASK-0127`, `TASK-0128`)**:
   - Audited repository health and file length invariants, identifying refactoring candidates in `tests/test_prd_pipeline.py` (417 lines), `tests/test_project_visualizer.py` (415 lines), and `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` (394 lines).
   - Proactively proposed and refined modular decomposition tasks `TASK-0121`, `TASK-0122`, and `TASK-0123` to prevent breaching Hard Invariant 6 (< 500 lines).
