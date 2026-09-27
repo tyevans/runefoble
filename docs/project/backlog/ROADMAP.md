@@ -90,23 +90,24 @@
 - [x] 3D Miniature Tokens & WebGL Tabletop Physics (`FEAT-BRD-06`, US-0061, TASK-0142)
 - [x] Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend (`FEAT-VOX-06`, US-0060, TASK-0149)
 
-## Milestone 8: Reactive Tactical Environments & In-World DM Tools (Current)
+## Milestone 8: Reactive Tactical Environments & In-World DM Tools (Complete)
 ### Foundational Platform & Audio Enablers
 - [x] Spoken Reaction Interrupts & Ready-Action Combat Triggers (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0155)
 - [x] Secret DM Spatial Traps, Map Switching & Hidden Cell Triggers (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0156)
-- [ ] DM Live Vocal Modulator & Real-Time NPC Formant DSP Engine (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0157)
-- [ ] GameSession Aggregate and Reaction Handlers Modular Decomposition (TASK-0175)
+- [x] DM Live Vocal Modulator & Real-Time NPC Formant DSP Engine (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0157)
+- [x] GameSession Aggregate and Reaction Handlers Modular Decomposition (TASK-0175)
 
 ### Tactical Reactions & DM Tooling Epics
-- [ ] Reactive Combat Reactions & Interrupt Prompt Microfrontend (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0158)
-- [ ] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
-- [ ] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
+- [x] Reactive Combat Reactions & Interrupt Prompt Microfrontend (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0158)
+- [x] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
+- [x] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
 
-## Milestone 9: Persona Immersion & Community Ecosystem (Upcoming)
+## Milestone 9: Persona Immersion & Community Ecosystem (Current)
 ### Living Worlds, Mobile & Voice Enablers
-- [ ] NPC Faction Resource Operations and Bribery Mechanics Aggregate (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0161)
+- [x] NPC Faction Resource Operations and Bribery Mechanics Aggregate (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0161)
 - [ ] Faction Turf War and Regional Unrest Event Pipeline (`FEAT-WAT-07`, US-0057, US-0019, PRD-0017, TASK-0162)
 - [ ] Cross-Campaign Settlement and Haven Registry (`FEAT-LRE-04`, US-0058, PRD-0018, TASK-0164)
+- [ ] Frontier Mercenary Contract and Bounty Board Router (`FEAT-DWN-04`, US-0058, PRD-0018, TASK-0165)
 - [ ] Mobile Low-Bandwidth Opus Adaptive Stream Adapter (`FEAT-VOX-01`, US-0059, PRD-0019, TASK-0166)
 - [ ] Neural Speech Barge-In and Soft Crossfade Audio Filter (`FEAT-VOX-06`, US-0060, PRD-0020, TASK-0168)
 - [ ] Hardware Acoustic Echo Cancellation and ERLE Validation (`FEAT-VOX-06`, US-0060, PRD-0020, TASK-0169)
@@ -115,12 +116,15 @@
 
 ### Multi-Party, Physics & Extensible UI Epics
 - [ ] Faction Espionage and Alert Feeds Microfrontend (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0163)
-- [ ] Frontier Mercenary Contract and Bounty Board Router (`FEAT-DWN-04`, US-0058, PRD-0018, TASK-0165)
 - [ ] Absentee Mobile Directive and Remote Voting Microfrontend (`FEAT-WAT-05`, US-0059, US-0027, PRD-0019, TASK-0167)
 - [ ] Kinetic 3D Dice Physics and Tray Audio Integration (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0170)
 - [ ] Miniature Knockback Impulse and Elevation Physics (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0171)
 - [ ] Community Plugin UI Extension Slots Microfrontend (`FEAT-DEV-01`, US-0035, PRD-0022, TASK-0174)
+
+### Continuous Architecture & Modular Refactorings
 - [ ] West Marches UI Blackbox Test Suite Modular Decomposition (TASK-0176)
+- [ ] Runefoble Events Aggregator Modular Decomposition (TASK-0177)
+- [ ] GameSession Models Modular Decomposition (TASK-0178)
 
 
 

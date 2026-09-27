@@ -163,18 +163,20 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 159. **TASK-0159 (Complete)**: [`0159-dm-traps-and-map-switcher-microfrontend.md`](complete/0159-dm-traps-and-map-switcher-microfrontend.md) — DM Hidden Layers & Multi-Map Switcher Microfrontend
 160. **TASK-0160 (Complete)**: [`0160-dm-vocal-modulator-controls-microfrontend.md`](complete/0160-dm-vocal-modulator-controls-microfrontend.md) — DM Vocal Modulator Controls & Preset Selector Microfrontend
 161. **TASK-0161 (Complete)**: [`0161-npc-faction-resource-and-bribery-aggregate.md`](complete/0161-npc-faction-resource-and-bribery-aggregate.md) — NPC Faction Resource Operations and Bribery Mechanics Aggregate
-162. **TASK-0164 (Refined)**: [`0164-cross-campaign-settlement-haven-registry.md`](refined/0164-cross-campaign-settlement-haven-registry.md) — Cross-Campaign Settlement and Haven Registry
-163. **TASK-0166 (Refined)**: [`0166-mobile-low-bandwidth-opus-stream-adapter.md`](refined/0166-mobile-low-bandwidth-opus-stream-adapter.md) — Mobile Low-Bandwidth Opus Adaptive Stream Adapter
-164. **TASK-0168 (Refined)**: [`0168-neural-speech-barge-in-crossfade-filter.md`](refined/0168-neural-speech-barge-in-crossfade-filter.md) — Neural Speech Barge-In and Soft Crossfade Audio Filter
-165. **TASK-0162 (Proposed)**: [`0162-faction-turf-war-and-unrest-event-pipeline.md`](proposed/0162-faction-turf-war-and-unrest-event-pipeline.md) — Faction Turf War and Regional Unrest Event Pipeline
-166. **TASK-0163 (Proposed)**: [`0163-faction-espionage-radar-alerts-microfrontend.md`](proposed/0163-faction-espionage-radar-alerts-microfrontend.md) — Faction Espionage and Alert Feeds Microfrontend
-167. **TASK-0165 (Proposed)**: [`0165-frontier-mercenary-contract-bounty-board-router.md`](proposed/0165-frontier-mercenary-contract-bounty-board-router.md) — Frontier Mercenary Contract and Bounty Board Router
-168. **TASK-0167 (Proposed)**: [`0167-absentee-mobile-directive-voting-microfrontend.md`](proposed/0167-absentee-mobile-directive-voting-microfrontend.md) — Absentee Mobile Directive and Remote Voting Microfrontend
-169. **TASK-0169 (Proposed)**: [`0169-hardware-aec-filter-and-erle-validation.md`](proposed/0169-hardware-aec-filter-and-erle-validation.md) — Hardware Acoustic Echo Cancellation and ERLE Validation
-170. **TASK-0170 (Proposed)**: [`0170-kinetic-3d-dice-physics-and-tray-audio.md`](proposed/0170-kinetic-3d-dice-physics-and-tray-audio.md) — Kinetic 3D Dice Physics and Tray Audio Integration
-171. **TASK-0171 (Proposed)**: [`0171-miniature-knockback-and-elevation-fall-physics.md`](proposed/0171-miniature-knockback-and-elevation-fall-physics.md) — Miniature Knockback Impulse and Elevation Physics
-172. **TASK-0172 (Proposed)**: [`0172-dynamic-fastmcp-tool-hot-reloading-registry.md`](proposed/0172-dynamic-fastmcp-tool-hot-reloading-registry.md) — Dynamic FastMCP Tool Hot-Reloading Registry
-173. **TASK-0173 (Proposed)**: [`0173-universal-vtt-door-and-lighting-parser.md`](proposed/0173-universal-vtt-door-and-lighting-parser.md) — Universal VTT Door and Dynamic Lighting Parser
+162. **TASK-0162 (Refined)**: [`0162-faction-turf-war-and-unrest-event-pipeline.md`](refined/0162-faction-turf-war-and-unrest-event-pipeline.md) — Faction Turf War and Regional Unrest Event Pipeline
+163. **TASK-0164 (Refined)**: [`0164-cross-campaign-settlement-haven-registry.md`](refined/0164-cross-campaign-settlement-haven-registry.md) — Cross-Campaign Settlement and Haven Registry
+164. **TASK-0165 (Refined)**: [`0165-frontier-mercenary-contract-bounty-board-router.md`](refined/0165-frontier-mercenary-contract-bounty-board-router.md) — Frontier Mercenary Contract and Bounty Board Router
+165. **TASK-0166 (Refined)**: [`0166-mobile-low-bandwidth-opus-stream-adapter.md`](refined/0166-mobile-low-bandwidth-opus-stream-adapter.md) — Mobile Low-Bandwidth Opus Adaptive Stream Adapter
+166. **TASK-0168 (Refined)**: [`0168-neural-speech-barge-in-crossfade-filter.md`](refined/0168-neural-speech-barge-in-crossfade-filter.md) — Neural Speech Barge-In and Soft Crossfade Audio Filter
+167. **TASK-0169 (Refined)**: [`0169-hardware-aec-filter-and-erle-validation.md`](refined/0169-hardware-aec-filter-and-erle-validation.md) — Hardware Acoustic Echo Cancellation and ERLE Validation
+168. **TASK-0172 (Refined)**: [`0172-dynamic-fastmcp-tool-hot-reloading-registry.md`](refined/0172-dynamic-fastmcp-tool-hot-reloading-registry.md) — Dynamic FastMCP Tool Hot-Reloading Registry
+169. **TASK-0173 (Refined)**: [`0173-universal-vtt-door-and-lighting-parser.md`](refined/0173-universal-vtt-door-and-lighting-parser.md) — Universal VTT Door and Dynamic Lighting Parser
+170. **TASK-0163 (Refined)**: [`0163-faction-espionage-radar-alerts-microfrontend.md`](refined/0163-faction-espionage-radar-alerts-microfrontend.md) — Faction Espionage and Alert Feeds Microfrontend
+171. **TASK-0167 (Refined)**: [`0167-absentee-mobile-directive-voting-microfrontend.md`](refined/0167-absentee-mobile-directive-voting-microfrontend.md) — Absentee Mobile Directive and Remote Voting Microfrontend
+172. **TASK-0170 (Proposed)**: [`0170-kinetic-3d-dice-physics-and-tray-audio.md`](proposed/0170-kinetic-3d-dice-physics-and-tray-audio.md) — Kinetic 3D Dice Physics and Tray Audio Integration
+173. **TASK-0171 (Proposed)**: [`0171-miniature-knockback-and-elevation-fall-physics.md`](proposed/0171-miniature-knockback-and-elevation-fall-physics.md) — Miniature Knockback Impulse and Elevation Physics
 174. **TASK-0174 (Proposed)**: [`0174-community-plugin-ui-extension-slots-microfrontend.md`](proposed/0174-community-plugin-ui-extension-slots-microfrontend.md) — Community Plugin UI Extension Slots Microfrontend
 175. **TASK-0176 (Proposed)**: [`0176-west-marches-ui-blackbox-test-suite-decomposition.md`](proposed/0176-west-marches-ui-blackbox-test-suite-decomposition.md) — West Marches UI Blackbox Test Suite Modular Decomposition
+176. **TASK-0177 (Proposed)**: [`0177-runefoble-events-aggregator-modular-decomposition.md`](proposed/0177-runefoble-events-aggregator-modular-decomposition.md) — Runefoble Events Aggregator Modular Decomposition
+177. **TASK-0178 (Proposed)**: [`0178-game-session-models-modular-decomposition.md`](proposed/0178-game-session-models-modular-decomposition.md) — GameSession Models Modular Decomposition
 
