@@ -6,3 +6,4 @@ export * from './runefoble-mobile-companion.styles.ts';
 export * from './runefoble-voice-duplex-controls.ts';
 export * from './duplex/settings_panel.ts';
 export * from './duplex/styles/index.ts';
+export * from './mobile_companion/index.ts';

@@ -67,7 +67,12 @@ runefoble/
 │           ├── runefoble-voice-controls.stories.ts
 │           ├── runefoble-mobile-companion.ts
 │           ├── runefoble-mobile-companion.styles.ts
-│           └── runefoble-mobile-companion.stories.ts
+│           ├── runefoble-mobile-companion.stories.ts
+│           └── mobile_companion/
+│               ├── audio_stream_controller.ts
+│               ├── haptic_ping_panel.ts
+│               ├── connection_status_badge.ts
+│               └── styles/
 ```
 
 ## Service Microfrontend Catalog
@@ -78,7 +83,7 @@ runefoble/
 | `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-character-sheet>`, `<runefoble-absentee-recap>`, `<runefoble-stand-in-guardrails>` | `services/character_sheet/ui/src/*.stories.ts` |
 | `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>` | `services/game_session/ui/src/*.stories.ts` |
 | `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>`, `<runefoble-dm-whisper-bar>`, `<runefoble-faction-radar>` | `services/the_watcher/ui/src/*.stories.ts` |
-| `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>`, `<runefoble-audio-indicator>`, `<runefoble-mobile-companion>` | `services/voice_agent/ui/src/*.stories.ts` |
+| `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>`, `<runefoble-audio-indicator>`, `<runefoble-mobile-companion>` (subviews: `<audio-stream-controller>`, `<haptic-ping-panel>`, `<connection-status-badge>`), `<runefoble-voice-duplex-controls>` | `services/voice_agent/ui/src/*.stories.ts` |
 | `frontend` (App Shell) | `frontend` | `<runefoble-app>`, `<runefoble-settings-modal>`, `<runefoble-theme-switcher>` | `frontend/src/stories/runefoble-settings-modal.stories.ts` |
 
 
