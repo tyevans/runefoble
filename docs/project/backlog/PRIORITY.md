@@ -190,6 +190,10 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 186. **TASK-0187 (Proposed)**: [`0187-campaign-atlas-blackbox-test-suite-decomposition.md`](proposed/0187-campaign-atlas-blackbox-test-suite-decomposition.md) — Campaign Atlas Blackbox Test Suite Modular Decomposition
 187. **TASK-0188 (Proposed)**: [`0188-board-state-previews-router-modular-decomposition.md`](proposed/0188-board-state-previews-router-modular-decomposition.md) — Board State Previews Router Modular Decomposition
 188. **TASK-0189 (Proposed)**: [`0189-character-sheet-ui-templates-modular-decomposition.md`](proposed/0189-character-sheet-ui-templates-modular-decomposition.md) — Character Sheet UI Templates Modular Decomposition
+189. **TASK-0190 (Proposed)**: [`0190-cinematic-director-test-suite-decomposition.md`](proposed/0190-cinematic-director-test-suite-decomposition.md) — Cinematic Director Blackbox Test Suite Modular Decomposition
+190. **TASK-0191 (Proposed)**: [`0191-spell-vfx-test-suite-decomposition.md`](proposed/0191-spell-vfx-test-suite-decomposition.md) — Kinetic Spell VFX Blackbox Test Suite Modular Decomposition
+191. **TASK-0192 (Proposed)**: [`0192-board-templates-rendering-decomposition.md`](proposed/0192-board-templates-rendering-decomposition.md) — Board Templates Rendering and Subviews Modular Decomposition
+192. **TASK-0193 (Proposed)**: [`0193-uvtt-importer-and-dynamic-mcp-test-suite-decomposition.md`](proposed/0193-uvtt-importer-and-dynamic-mcp-test-suite-decomposition.md) — Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition
 
 
 
