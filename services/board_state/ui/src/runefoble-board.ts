@@ -9,8 +9,10 @@ import { computeDragUpdate, initDragState, isCellVisible, snapToGrid } from './k
 import { boardStyles } from './runefoble-board.styles.ts';
 import { WebGLParticleEngine } from './particle_canvas.ts';
 import { parseIncomingSpellVFX, type EphemeralDecal, type SpellVFXParams } from './particle_types.ts';
+import { TabletopPhysicsVisualizer, PhysicsBridge } from './physics_3d/index.ts';
 import './radial_menu.ts';
 import './aoe_templates.ts';
+import './physics_3d/runefoble-tabletop-3d.ts';
 
 export type * from './board-types.ts';
 export * from './ghost_preview.ts';
@@ -19,6 +21,7 @@ export * from './radial_menu.ts';
 export * from './aoe_templates.ts';
 export * from './board-actions.ts';
 export * from './particle_canvas.ts';
+export * from './physics_3d/index.ts';
 
 @customElement('runefoble-board')
 export class RunefobleBoard extends LitElement {
@@ -32,6 +35,7 @@ export class RunefobleBoard extends LitElement {
   @property({ type: Object }) activeAoE: AoETemplateConfig | null = null;
   @property({ type: String }) watcherStatus = 'Observing session...';
   @property({ type: Boolean }) fogOfWar = false;
+  @property({ type: Boolean }) enable3D = false;
   @property({ type: String }) activeTurnTokenId: string | null = null;
   @property({ type: String }) websocketUrl: string | null = null;
 
@@ -44,6 +48,8 @@ export class RunefobleBoard extends LitElement {
 
   ghostEngine: GhostPreviewEngine | null = null;
   private particleEngine: WebGLParticleEngine | null = null;
+  public visualizer3D: TabletopPhysicsVisualizer | null = null;
+  public physicsBridge: PhysicsBridge | null = null;
   private resizeObserver: ResizeObserver | null = null;
   ws: WebSocket | null = null;
 
@@ -62,58 +68,79 @@ export class RunefobleBoard extends LitElement {
     if (canvas) {
       this.particleEngine = new WebGLParticleEngine(canvas, { cellSizePx: 56, cols: this.cols, rows: this.rows, themeMode: 'dark' });
       this.resizeParticleCanvas();
-      if (typeof ResizeObserver !== 'undefined') {
-        this.resizeObserver = new ResizeObserver(() => this.resizeParticleCanvas());
-        const grid = this.shadowRoot?.querySelector('.grid');
-        if (grid) this.resizeObserver.observe(grid);
-      }
+    }
+    const canvas3D = this.shadowRoot?.querySelector('.tabletop-3d-canvas') as HTMLCanvasElement | null;
+    if (canvas3D) {
+      this.visualizer3D = new TabletopPhysicsVisualizer(canvas3D, { cellSizePx: 56, cols: this.cols, rows: this.rows, theme: 'dark' });
+      this.physicsBridge = new PhysicsBridge(this, this.visualizer3D);
+      this.visualizer3D.updateTokens(this.tokens as any);
+      this.visualizer3D.updateTerrain(this.terrainCells as any);
+      this.resize3DCanvas();
+    }
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => { this.resizeParticleCanvas(); this.resize3DCanvas(); });
+      const grid = this.shadowRoot?.querySelector('.grid');
+      if (grid) this.resizeObserver.observe(grid);
     }
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.ghostEngine?.dispose();
-    this.particleEngine?.dispose();
-    this.resizeObserver?.disconnect();
+    this.ghostEngine?.dispose(); this.particleEngine?.dispose();
+    this.visualizer3D?.dispose(); this.resizeObserver?.disconnect();
     if (this.ws) { this.ws.close(); this.ws = null; }
   }
 
   updated(changedProperties: Map<string, any>) {
     if (changedProperties.has('activeGhost') && this.activeGhost !== this.localGhost) {
-      if (this.activeGhost) this.ghostEngine?.stage(this.activeGhost);
-      else this.ghostEngine?.cancel();
+      if (this.activeGhost) this.ghostEngine?.stage(this.activeGhost); else this.ghostEngine?.cancel();
     }
-    if (changedProperties.has('cols') || changedProperties.has('rows')) this.resizeParticleCanvas();
+    if (changedProperties.has('cols') || changedProperties.has('rows')) {
+      this.resizeParticleCanvas(); this.resize3DCanvas();
+    }
+    if (changedProperties.has('tokens') && this.visualizer3D) this.visualizer3D.updateTokens(this.tokens as any);
+    if (changedProperties.has('terrainCells') && this.visualizer3D) this.visualizer3D.updateTerrain(this.terrainCells as any);
   }
 
   private resizeParticleCanvas(): void {
-    const gridEl = this.shadowRoot?.querySelector('.grid') as HTMLElement | null;
-    if (gridEl && this.particleEngine) {
-      const rect = gridEl.getBoundingClientRect();
-      this.particleEngine.resize(rect.width || this.cols * 56, rect.height || this.rows * 56);
+    const g = this.shadowRoot?.querySelector('.grid') as HTMLElement | null;
+    if (g && this.particleEngine) {
+      const r = g.getBoundingClientRect();
+      this.particleEngine.resize(r.width || this.cols * 56, r.height || this.rows * 56);
+    }
+  }
+
+  private resize3DCanvas(): void {
+    const c = this.shadowRoot?.querySelector('.tabletop-3d-canvas') as HTMLCanvasElement | null;
+    const g = this.shadowRoot?.querySelector('.grid') as HTMLElement | null;
+    if (g && c) {
+      const r = g.getBoundingClientRect();
+      c.width = r.width || this.cols * 56;
+      c.height = r.height || this.rows * 56;
     }
   }
 
   private connectWebSocket(url: string) {
     try {
       this.ws = new WebSocket(url);
-      this.ws.onmessage = (event) => {
-        try { this.handleIncomingSocketMessage(JSON.parse(event.data)); } catch {}
-      };
+      this.ws.onmessage = (event) => { try { this.handleIncomingSocketMessage(JSON.parse(event.data)); } catch {} };
     } catch {}
   }
 
   public handleIncomingSocketMessage(data: any) {
+    if (this.physicsBridge?.handleWebSocketMessage(data)) return;
     const vfx = parseIncomingSpellVFX(data);
     if (vfx) { this.triggerSpellVFX(vfx); return; }
     handleBoardSocketMessage(this, data);
   }
 
+  public roll3DDice(dice: any): void { this.visualizer3D?.rollDice(dice); }
+  public knockbackToken(kb: any): void { this.visualizer3D?.knockbackToken(kb); }
+  public toggle3D(): void { this.enable3D = !this.enable3D; this.requestUpdate(); }
   public triggerSpellVFX(params: SpellVFXParams): void {
     this.particleEngine?.triggerSpellVFX(params);
     this.dispatchEvent(new CustomEvent('spell-vfx-triggered', { detail: params, bubbles: true, composed: true }));
   }
-
   public getDecals(): EphemeralDecal[] { return this.particleEngine?.getDecals() ?? []; }
   public getActiveParticlesCount(): number { return this.particleEngine?.getActiveParticlesCount() ?? 0; }
   public setThemeMode(mode: 'dark' | 'light' | 'system' | 'high-contrast'): void { this.particleEngine?.setThemeMode(mode); }
@@ -123,7 +150,6 @@ export class RunefobleBoard extends LitElement {
     if (parsed) this.ghostEngine?.stage(parsed);
     return parsed;
   }
-
   public confirmGhostPreview(): GhostPreviewState | null {
     const ghost = this.ghostEngine?.confirm();
     if (ghost) {
@@ -132,7 +158,6 @@ export class RunefobleBoard extends LitElement {
     }
     return ghost ?? null;
   }
-
   public cancelGhostPreview(): void {
     const ghost = this.localGhost;
     this.ghostEngine?.cancel();
@@ -146,14 +171,12 @@ export class RunefobleBoard extends LitElement {
     this.radialTokenId = null;
     executeRadialAction(this, e.detail.action, e.detail.tokenId);
   }
-
   public handleAoEChange(e: CustomEvent) {
     this.activeAoE = e.detail.config;
     this.aoeAffectedTokenIds = e.detail.affectedTokenIds;
     this.aoeAffectedCells = e.detail.affectedCells;
     this.requestUpdate();
   }
-
   public confirmAoETemplate() { confirmAoEPlacement(this); }
   public cancelAoETemplate() { cancelAoEPlacement(this); }
 
@@ -164,15 +187,13 @@ export class RunefobleBoard extends LitElement {
     this.selectedTokenId = token.id;
     this.dragState = initDragState(token);
   }
-
   private handlePointerMove(e: PointerEvent) {
     if (!this.dragState?.isDragging) return;
-    const gridEl = this.shadowRoot?.querySelector('.grid') as HTMLElement | null;
-    if (!gridEl) return;
-    const { cellX, cellY } = snapToGrid(e.clientX - gridEl.getBoundingClientRect().left, e.clientY - gridEl.getBoundingClientRect().top, 56, this.cols, this.rows);
+    const g = this.shadowRoot?.querySelector('.grid') as HTMLElement | null;
+    if (!g) return;
+    const { cellX, cellY } = snapToGrid(e.clientX - g.getBoundingClientRect().left, e.clientY - g.getBoundingClientRect().top, 56, this.cols, this.rows);
     this.dragState = computeDragUpdate(this.dragState, cellX, cellY, this.terrainCells);
   }
-
   private handlePointerUp(e: PointerEvent) {
     if (!this.dragState?.isDragging) return;
     const { targetCellX: toX, targetCellY: toY, startX, startY, tokenId } = this.dragState;
@@ -184,7 +205,6 @@ export class RunefobleBoard extends LitElement {
     try { (e.target as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
     this.dragState = null;
   }
-
   private handleCellClick(x: number, y: number) {
     if (this.radialTokenId) { this.radialTokenId = null; return; }
     if (this.selectedTokenId && !this.dragState?.isDragging) {
@@ -196,11 +216,11 @@ export class RunefobleBoard extends LitElement {
   render() {
     const radialToken = this.radialTokenId ? this.tokens.find((t) => t.id === this.radialTokenId) ?? null : null;
     return html`
-      ${renderBoardHeader(this.fogOfWar, () => { this.fogOfWar = !this.fogOfWar; }, this.watcherStatus)}
+      ${renderBoardHeader(this.fogOfWar, () => { this.fogOfWar = !this.fogOfWar; }, this.watcherStatus, this.enable3D, () => this.toggle3D())}
       ${renderBoardGrid({
         cols: this.cols, rows: this.rows, tokens: this.tokens, terrainCells: this.terrainCells,
         activeTurnTokenId: this.activeTurnTokenId, selectedTokenId: this.selectedTokenId,
-        dragState: this.dragState, localGhost: this.localGhost, fogOfWar: this.fogOfWar,
+        dragState: this.dragState, localGhost: this.localGhost, fogOfWar: this.fogOfWar, enable3D: this.enable3D,
         aoeAffectedTokens: this.aoeAffectedTokenIds, aoeAffectedCells: this.aoeAffectedCells,
         aoeOverlay: renderAoEOverlay(this.activeAoE, this.tokens, this.cols, this.rows, (e) => this.handleAoEChange(e)),
         radialMenu: renderRadialMenuOverlay(radialToken, (e) => this.handleRadialActionSelect(e), () => { this.radialTokenId = null; }),

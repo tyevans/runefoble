@@ -116,3 +116,41 @@ Clients connected to `/ws/boards/{session_id}` receive real-time physics telemet
   }
 }
 ```
+
+---
+
+## 5. Client-Side 3D Miniature Tokens & Tabletop WebGL Canvas
+
+The frontend microfrontend in `@runefoble/board-state-ui` provides client-side WebGL rendering for 3D miniature figurines, tumbling dice, and elevation cliffs:
+
+### Embedding `<runefoble-tabletop-3d>`
+
+```html
+<runefoble-tabletop-3d
+  .cols="${8}"
+  .rows="${8}"
+  .tokens="${tokens}"
+  .terrainCells="${terrain}"
+  theme="dark"
+></runefoble-tabletop-3d>
+```
+
+### Enabling 3D in `<runefoble-board>`
+
+`<runefoble-board>` features an integrated 3D toggle layer:
+
+```typescript
+// Enable 3D mode programmatically or tap the '🎲 3D Mode: ON' header toggle
+board.enable3D = true;
+
+// Trigger client-side dice roll or knockback animation
+board.roll3DDice({ faceValue: 20, settledCell: [3, 3] });
+board.knockbackToken({ tokenId: 'fighter-1', fromX: 2, fromY: 3, toX: 4, toY: 3 });
+```
+
+### Components and Architecture
+
+- **`miniature_mesh.ts`**: Extrudes circular 2D tokens into stylized 3D miniature bases with character portraits, health pips, and snap-on condition rings (e.g., stunned, on fire, blessed).
+- **`tabletop_canvas.ts`**: WebGL/Canvas visualizer driving 60fps polyhedral dice tumbling, wall collisions, and ragdoll tilt balance recovery.
+- **`physics_bridge.ts`**: Handles bidirectional WebSocket events (`dice_settled`, `token_knockback`) and triggers backend simulation endpoints.
+
