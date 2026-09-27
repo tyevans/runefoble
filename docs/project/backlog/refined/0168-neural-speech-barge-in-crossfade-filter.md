@@ -1,7 +1,7 @@
 ---
 id: '0168'
 title: Neural Speech Barge-In and Soft Crossfade Audio Filter
-status: Proposed
+status: Refined
 created: 2026-09-26
 dependencies:
 - TASK-0141

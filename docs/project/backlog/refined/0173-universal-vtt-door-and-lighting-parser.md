@@ -1,7 +1,7 @@
 ---
 id: '0173'
 title: Universal VTT Door and Dynamic Lighting Parser
-status: Proposed
+status: Refined
 created: 2026-09-26
 dependencies:
 - TASK-0057

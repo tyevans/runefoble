@@ -105,13 +105,13 @@
 ## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Active / Immediate Priority)
 ### Core Identity, Gateway & Shell Routing Enablers
 - [x] Frontend SPA Client Router and Navigation Chrome (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0206)
-- [ ] Zitadel Auth Client and Login Modal Component (`FEAT-UI-07`, `FEAT-SEC-02`, US-0062, PRD-0023, TASK-0207)
-- [ ] Gateway Campaign Lifecycle and Membership API (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0208)
+- [x] Zitadel Auth Client and Login Modal Component (`FEAT-UI-07`, `FEAT-SEC-02`, US-0062, PRD-0023, TASK-0207)
+- [x] Gateway Campaign Lifecycle and Membership API (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0208)
 
 ### Campaign Hub, Character Roster & Pre-Game Lobby Epics
-- [ ] Campaign Dashboard and Creation Microfrontend (`FEAT-UI-08`, US-0063, PRD-0023, TASK-0209)
-- [ ] Campaign Members and Zanzibar Role Manager UI (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0210)
-- [ ] Character Roster and Party Assignment Microfrontend (`FEAT-UI-09`, US-0064, PRD-0023, TASK-0211)
+- [x] Campaign Dashboard and Creation Microfrontend (`FEAT-UI-08`, US-0063, PRD-0023, TASK-0209)
+- [x] Campaign Members and Zanzibar Role Manager UI (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0210)
+- [x] Character Roster and Party Assignment Microfrontend (`FEAT-UI-09`, US-0064, PRD-0023, TASK-0211)
 - [ ] Game Session Lobby and Readiness Microfrontend (`FEAT-UI-10`, US-0065, PRD-0023, TASK-0212)
 - [ ] App Shell View Orchestration and Session Transition (`FEAT-UI-11`, US-0065, US-0066, PRD-0023, TASK-0213)
 
@@ -170,3 +170,10 @@
 - [ ] Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (TASK-0203)
 - [ ] Character Sheet Component Action Handlers and State Modular Decomposition (TASK-0204)
 - [ ] West Marches Aggregate Discovery and Territory Handlers Modular Decomposition (TASK-0205)
+- [ ] Faction Turf War Test Suite Modular Decomposition (TASK-0216)
+- [ ] Project Visualizer Graph Rendering Modular Decomposition (TASK-0217)
+- [ ] Project Visualizer AGY Test Suite Modular Decomposition (TASK-0218)
+- [ ] Project Visualizer Drawer Subviews Modular Decomposition (TASK-0219)
+- [ ] Campaign Members Styles Modular Decomposition (TASK-0220)
+- [ ] Gateway Campaign Store Modular Decomposition (TASK-0221)
+- [ ] Character Roster Styles Modular Decomposition (TASK-0222)
