@@ -28,13 +28,16 @@ FLANK_PATTERN: re.Pattern[str] = re.compile(
     re.IGNORECASE,
 )
 
-# 4. Spellcasting: e.g. "cast fireball at 4, 6", "cast magic missile at goblin archer"
+# 4. Spellcasting: e.g. "cast fireball at 4, 6", "cast magic missile at goblin archer", "cast fireball centered at coordinate D7"
 SPELL_PATTERN: re.Pattern[str] = re.compile(
-    r"\b(?:cast|invoke|channel)\s+([a-zA-Z0-9_\-\s]+?)(?:\s+(?:at|on|towards)\s+(?:the\s+)?([a-zA-Z0-9_\-,\s()]+))?(?:[.!?,]|$)",
+    r"\b(?:cast|invoke|channel)\s+([a-zA-Z0-9_\-\s]+?)(?:\s+(?:at|on|towards|centered at|centered on)\s+(?:the\s+|coordinate\s+)?([a-zA-Z0-9_\-,\s()]+))?(?:[.!?,]|$)",
     re.IGNORECASE,
 )
 
-SPELL_TARGET_COORD_PATTERN: re.Pattern[str] = re.compile(r"\(?\s*(\d+)\s*,\s*(\d+)\s*\)?")
+SPELL_TARGET_COORD_PATTERN: re.Pattern[str] = re.compile(
+    r"(?:\(?\s*(\d+)\s*,\s*(\d+)\s*\)?)|(?:([A-Za-z])\s*(\d+))"
+)
+
 
 # 5. Move to target token: e.g. "move to the goblin archer", "advance towards the orc"
 MOVE_TO_TOKEN_PATTERN: re.Pattern[str] = re.compile(

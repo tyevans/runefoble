@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
@@ -69,6 +69,16 @@ class PlacedTokenState(BaseModel):
         )
 
 
+class BoardDecalState(BaseModel):
+    decal_id: str
+    x: int
+    y: int
+    decal_type: str = "scorched_earth"
+    duration_rounds: int = 2
+    rounds_remaining: int = 2
+    opacity: float = 1.0
+
+
 class BoardState(BaseModel):
     board_id: UUID
     session_id: str = ""
@@ -77,6 +87,7 @@ class BoardState(BaseModel):
     tokens: dict[str, PlacedTokenState] = Field(default_factory=dict)
     terrain_cells: dict[str, TerrainCellState] = Field(default_factory=TerrainDict)
     active_hazards: list[str] = Field(default_factory=list)
+    active_decals: list[BoardDecalState] = Field(default_factory=list)
     fog_of_war_enabled: bool = True
     revealed_cells: list[list[int]] = Field(default_factory=list)
     background_asset_id: str | None = None
@@ -188,6 +199,44 @@ class BoardState(BaseModel):
         remaining = [c for c in self.revealed_cells if tuple(c) not in to_remove]
         return self.model_copy(update={"revealed_cells": remaining})
 
+    def with_area_effect(
+        self,
+        affected_cells: list[list[int]],
+        decal_type: str | None = "scorched_earth",
+        decal_duration_rounds: int = 2,
+    ) -> BoardState:
+        decals = list(self.active_decals)
+        if decal_type:
+            for cell in affected_cells:
+                cx, cy = cell[0], cell[1]
+                decals.append(
+                    BoardDecalState(
+                        decal_id=f"decal-{uuid4().hex[:8]}",
+                        x=cx,
+                        y=cy,
+                        decal_type=decal_type,
+                        duration_rounds=decal_duration_rounds,
+                        rounds_remaining=decal_duration_rounds,
+                        opacity=1.0,
+                    )
+                )
+        return self.model_copy(update={"active_decals": decals})
+
+    def with_decals_decayed(self, rounds: int = 1) -> BoardState:
+        updated = []
+        for d in self.active_decals:
+            rem = d.rounds_remaining - rounds
+            if rem > 0:
+                updated.append(
+                    d.model_copy(
+                        update={
+                            "rounds_remaining": rem,
+                            "opacity": max(0.2, rem / d.duration_rounds),
+                        }
+                    )
+                )
+        return self.model_copy(update={"active_decals": updated})
+
 
 class CreateBoardRequest(BaseModel):
     session_id: str | None = None
@@ -269,3 +318,63 @@ class UVTTImportResponse(BaseModel):
     background_asset_id: str | None = None
     tokens: dict[str, PlacedTokenState] = Field(default_factory=dict)
     status: str = "imported"
+
+
+class CastSpellRequest(BaseModel):
+    caster_token_id: str | None = None
+    spell_name: str
+    spell_archetype: Literal[
+        "evocation",
+        "abjuration",
+        "conjuration",
+        "transmutation",
+        "necromancy",
+        "enchantment",
+        "illusion",
+        "divination",
+    ] = "evocation"
+    target_x: int
+    target_y: int
+    origin_x: int | None = None
+    origin_y: int | None = None
+    radius_ft: int = 20
+    damage_dice: str | None = None
+    damage_type: str | None = None
+    theme_palette: str | None = None
+
+
+class CastSpellResponse(BaseModel):
+    animation_id: str
+    session_id: str
+    spell_name: str
+    spell_archetype: str
+    caster_token_id: str | None = None
+    origin_x: int | None = None
+    origin_y: int | None = None
+    target_x: int
+    target_y: int
+    radius_ft: int = 20
+    trajectory: list[list[float]] = Field(default_factory=list)
+    affected_token_ids: list[str] = Field(default_factory=list)
+    affected_cells: list[list[int]] = Field(default_factory=list)
+    decal_type: str | None = None
+    status: str = "launched"
+    audio_stinger: str = "evocation_fireball_stinger"
+    duration_ms: int = 500
+
+
+class FinishVFXRequest(BaseModel):
+    animation_id: str
+    spell_name: str
+    target_x: int
+    target_y: int
+    duration_ms: int = 500
+
+
+class FinishVFXResponse(BaseModel):
+    animation_id: str
+    status: str = "finished"
+
+
+class DecayDecalsRequest(BaseModel):
+    rounds: int = 1

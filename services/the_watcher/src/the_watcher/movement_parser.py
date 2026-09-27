@@ -122,7 +122,14 @@ class SpeechIntentParser:
             if raw_tgt:
                 p["target"] = raw_tgt
                 if cm := SPELL_TARGET_COORD_PATTERN.search(raw_tgt):
-                    p["target_x"], p["target_y"] = int(cm.group(1)), int(cm.group(2))
+                    if cm.group(1) is not None and cm.group(2) is not None:
+                        p["target_x"], p["target_y"] = int(cm.group(1)), int(cm.group(2))
+                    elif cm.group(3) is not None and cm.group(4) is not None:
+                        p["target_x"], p["target_y"] = (
+                            ord(cm.group(3).upper()) - ord("A"),
+                            int(cm.group(4)) - 1,
+                        )
+
             reply = (
                 f"{speaker_name} casts {spell}"
                 + (f" at {raw_tgt}" if raw_tgt else "")
