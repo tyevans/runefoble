@@ -375,4 +375,36 @@ class MockSpiceDBClient:
                     ):
                         return True
 
+        # 10. Shared world evaluation (guild_officer + participant + campaign->...)
+        if resource_type == "shared_world":
+            if (
+                self._tuple_key(
+                    "shared_world", resource_id, "guild_officer", subject_type, subject_id
+                )
+                in self._tuples
+            ):
+                return True
+            if (
+                permission in ("participant", "view", "read", "discover", "trade")
+                and self._tuple_key(
+                    "shared_world", resource_id, "participant", subject_type, subject_id
+                )
+                in self._tuples
+            ):
+                return True
+
+            parents = self._find_subjects("shared_world", resource_id, "campaign")
+            for p_type, p_id in parents:
+                if permission in ("discover", "trade", "view", "read") and (
+                    await self.check_permission(p_type, p_id, "play", subject_type, subject_id)
+                    or await self.check_permission(
+                        p_type, p_id, "run_session", subject_type, subject_id
+                    )
+                ):
+                    return True
+                if permission in ("view", "read") and await self.check_permission(
+                    p_type, p_id, "view", subject_type, subject_id
+                ):
+                    return True
+
         return False

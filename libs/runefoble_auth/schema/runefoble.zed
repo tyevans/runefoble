@@ -159,3 +159,22 @@ definition codex_entry {
     permission edit = author + editor + campaign->run_session
     permission manage = author + campaign->run_session
 }
+
+definition shared_world {
+    relation guild_officer: user
+    relation participant: user
+    relation campaign: campaign
+
+    // Guild officers have management authority over the frontier and trade routes
+    permission manage = guild_officer
+
+    // Viewing discoveries, outposts, and caravan logs
+    permission view = guild_officer + participant + campaign->view
+
+    // Exploring and registering new geographical discoveries
+    permission discover = guild_officer + participant + campaign->play
+
+    // Dispatching caravans and trading regional resources
+    permission trade = guild_officer + participant + campaign->play
+}
+

@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **West Marches Shared Persistent World State & Cross-Campaign Registry (`TASK-0127`, `ADR-0001`, `ADR-0006`, `ADR-0011`, `PRD-0007`, `US-0058`)**:
+  - Implemented event-sourced `SharedWorldAggregate` in `services/game_session/src/game_session/west_marches.py` managing common geographical map pins, shared outpost levels, and communal tavern notice boards.
+  - Implemented `CaravanLedgerAggregate` in `services/game_session/src/game_session/caravan_ledger.py` managing scheduled resource caravan transit and regional settlement merchant stock ledgers.
+  - Added CloudEvents domain events `SharedWorldCreated`, `CampaignRegisteredToSharedWorld`, `CrossCampaignDiscoveryShared`, `OutpostEstablished`, `SharedStrongholdUpgraded`, `CommunalNoticePosted`, `CaravanDispatched`, `CaravanTradeCompleted`, and `RegionalMerchantStockUpdated` registered in `libs/runefoble_events`.
+  - Added public REST frontdoor endpoints in `services/game_session/src/game_session/routers/west_marches.py` and `caravan_trade.py`: `POST /api/v1/shared-worlds`, `GET /api/v1/shared-worlds/{id}`, `POST /api/v1/shared-worlds/{id}/campaigns`, `POST /api/v1/shared-worlds/{id}/discoveries`, `GET /api/v1/shared-worlds/{id}/discoveries`, `POST /api/v1/shared-worlds/{id}/outposts`, `POST /api/v1/shared-worlds/{id}/tavern-board/notices`, `GET /api/v1/shared-worlds/{id}/tavern-board/notices`, `POST /api/v1/shared-worlds/{id}/caravans/dispatch`, `POST /api/v1/shared-worlds/{id}/caravans/{id}/complete`, and `GET /api/v1/shared-worlds/{id}/outposts/{name}/merchant-stock`.
+  - Updated SpiceDB Zanzibar authorization schema (`libs/runefoble_auth/schema/runefoble.zed`) and `MockSpiceDBClient` (`libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py`) defining `shared_world` object permissions (`guild_officer`, `participant`, `campaign->view/play`) while strictly isolating private character sheets and party whisper notes.
+  - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_west_marches.py` verifying multi-campaign discovery synchronization, caravan trade unlocks, communal tavern boards, and Zanzibar isolation.
+  - Authored Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md` and updated `docs/reference/events-schema.md` and `AGENTS.md`.
 - **Autonomous NPC Faction Agendas & Background Simulation Engine (`TASK-0126`, `ADR-0002`, `ADR-0006`, `ADR-0011`)**:
   - Implemented event-sourced `FactionAggregate` in `services/the_watcher/src/the_watcher/factions.py` tracking faction assets, influence (1-100), operational resources, disposition, and goal progress via `eventsource-py` (Hard Invariant 2).
   - Built `FactionSimulationEngine` in `services/the_watcher/src/the_watcher/simulation_engine.py` simulating probabilistic agenda checks based on rival counter-measures and regional stability modifiers.

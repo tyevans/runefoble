@@ -16,10 +16,12 @@ from game_session.dependencies import (
 from game_session.routers import (
     autopilot_router,
     campfire_router,
+    caravan_trade_router,
     combat_router,
     session_router,
     stronghold_router,
     tavern_router,
+    west_marches_router,
 )
 from runefoble_platform.event_sourcing import get_event_store
 
@@ -44,6 +46,8 @@ app.include_router(autopilot_router)
 app.include_router(campfire_router)
 app.include_router(stronghold_router)
 app.include_router(tavern_router)
+app.include_router(west_marches_router)
+app.include_router(caravan_trade_router)
 
 
 @app.get("/healthz")
