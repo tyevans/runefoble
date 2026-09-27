@@ -1,7 +1,7 @@
 ---
-id: '0178'
+id: 0178
 title: GameSession Models Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0175
@@ -11,8 +11,8 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/235
 ---
-
 # TASK-0178: GameSession Models Modular Decomposition
 
 ## Status
