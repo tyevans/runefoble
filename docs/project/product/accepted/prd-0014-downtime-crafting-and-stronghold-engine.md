@@ -52,4 +52,4 @@ Players (like Bram the Tinkerer) and Game Masters (like Evelyn) who desire deep,
 
 ## Implementing Backlog Tasks
 - [`TASK-0100: Downtime Activities, Alchemical Crafting & Party Stronghold Engine`](../../backlog/complete/0100-downtime-activities-and-crafting-engine-bc.md)
-- [`TASK-0103: Interactive Tavern Minigames & Personality-Driven Merchant Haggling`](../../backlog/refined/0103-tavern-minigames-and-merchant-haggling.md)
+- [`TASK-0103: Interactive Tavern Minigames & Personality-Driven Merchant Haggling`](../../backlog/complete/0103-tavern-minigames-and-merchant-haggling.md)

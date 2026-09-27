@@ -126,9 +126,18 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 115. **TASK-0114 (Complete)**: [`0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md`](complete/0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md) — Theming Tokens and Contrast Invariants Test Suite Modular Decomposition
 
 116. **TASK-0106 (Complete)**: [`0106-collaborative-campaign-atlas-and-codex-bc.md`](complete/0106-collaborative-campaign-atlas-and-codex-bc.md) — Collaborative Multi-Layered Campaign Atlas & Living Interactive Codex
-117. **TASK-0102 (Proposed)**: [`0102-character-leitmotifs-and-adaptive-themes.md`](proposed/0102-character-leitmotifs-and-adaptive-themes.md) — Character Musical Leitmotifs & Dynamic Dramatic Themes
-118. **TASK-0104 (Proposed)**: [`0104-kinetic-spell-vfx-and-particle-canvas.md`](proposed/0104-kinetic-spell-vfx-and-particle-canvas.md) — Multi-Modal Kinetic Spell VFX & WebGL Particle Canvas
-119. **TASK-0066 (Proposed)**: [`0066-project-visualizer-client-assets-and-template-decomposition.md`](proposed/0066-project-visualizer-client-assets-and-template-decomposition.md) — Project Visualizer Client Assets and Standalone HTML Template Modular Decomposition
+117. **TASK-0066 (Complete)**: [`0066-project-visualizer-client-assets-and-template-decomposition.md`](complete/0066-project-visualizer-client-assets-and-template-decomposition.md) — Project Visualizer Client Assets and Standalone HTML Template Modular Decomposition
+118. **TASK-0102 (Refined)**: [`0102-character-leitmotifs-and-adaptive-themes.md`](refined/0102-character-leitmotifs-and-adaptive-themes.md) — Personal Character Leitmotifs & Adaptive Musical Signatures
+119. **TASK-0104 (Refined)**: [`0104-kinetic-spell-vfx-and-particle-canvas.md`](refined/0104-kinetic-spell-vfx-and-particle-canvas.md) — Multi-Modal Kinetic Spell VFX & WebGL Particle Magic
+120. **TASK-0124 (Refined)**: [`0124-generative-wardrobe-and-portrait-gallery.md`](refined/0124-generative-wardrobe-and-portrait-gallery.md) — Generative Character Wardrobe, Emotion & State Portrait Gallery
+121. **TASK-0125 (Refined)**: [`0125-radial-token-action-menu-and-aoe-templates.md`](refined/0125-radial-token-action-menu-and-aoe-templates.md) — Radial Token Action Menu & Rotatable AoE Spell Templates
+122. **TASK-0121 (Refined)**: [`0121-prd-pipeline-test-suite-modular-decomposition.md`](refined/0121-prd-pipeline-test-suite-modular-decomposition.md) — PRD Pipeline Test Suite Modular Decomposition
+123. **TASK-0122 (Refined)**: [`0122-project-visualizer-test-suite-modular-decomposition.md`](refined/0122-project-visualizer-test-suite-modular-decomposition.md) — Project Visualizer Test Suite Modular Decomposition
+124. **TASK-0123 (Refined)**: [`0123-character-sheet-microfrontend-styles-modular-decomposition.md`](refined/0123-character-sheet-microfrontend-styles-modular-decomposition.md) — Character Sheet Microfrontend Styles Modular Decomposition
+125. **TASK-0126 (Refined)**: [`0126-autonomous-npc-faction-agendas-and-world-simulation.md`](refined/0126-autonomous-npc-faction-agendas-and-world-simulation.md) — Autonomous NPC Faction Agendas & Background Simulation Engine
+126. **TASK-0127 (Refined)**: [`0127-west-marches-shared-world-state-and-cross-campaign-registry.md`](refined/0127-west-marches-shared-world-state-and-cross-campaign-registry.md) — West Marches Shared Persistent World State & Cross-Campaign Registry
+127. **TASK-0128 (Refined)**: [`0128-spatial-companion-mobile-and-haptic-gateway.md`](refined/0128-spatial-companion-mobile-and-haptic-gateway.md) — Spatial Companion Mobile WebRTC Audio & Haptic Ping Gateway
+128. **TASK-0129 (Proposed)**: [`0129-cross-campaign-caravan-trading-and-frontier-contracts.md`](proposed/0129-cross-campaign-caravan-trading-and-frontier-contracts.md) — Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts
 
 
 
