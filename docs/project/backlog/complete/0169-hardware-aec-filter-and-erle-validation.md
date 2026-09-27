@@ -1,7 +1,7 @@
 ---
-id: '0169'
+id: 0169
 title: Hardware Acoustic Echo Cancellation and ERLE Validation
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0141
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0060
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/212
 ---
-
 # TASK-0169: Hardware Acoustic Echo Cancellation and ERLE Validation
 
 ## Status
