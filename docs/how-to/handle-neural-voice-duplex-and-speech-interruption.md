@@ -9,6 +9,7 @@ Governed by:
 - **US-0060**: Zero-Latency Neural Voice Duplex & Speech Interruption Handling
 - **TASK-0141**: Zero-Latency Neural Voice Duplex & Speech Interruption Handling
 - **TASK-0168**: Neural Speech Barge-In and Soft Crossfade Audio Filter
+- **TASK-0169**: Hardware Acoustic Echo Cancellation and ERLE Validation
 
 ---
 
@@ -211,5 +212,60 @@ Response includes:
   "status": "success"
 }
 ```
+
+---
+
+## 8. Hardware Acoustic Echo Cancellation & ERLE Validation (TASK-0169)
+
+To ensure tabletop players can converse through open room speakers without headphones, `voice_agent.aec` provides adaptive echo cancellation with > 35dB Echo Return Loss Enhancement (ERLE) and zero voice distortion:
+
+### Architecture Components
+- **`NLMSAECFilter` (`voice_agent.aec.nlms_filter`)**: Adaptive Normalized Least Mean Squares transversal filter computing loudspeaker room impulse responses and subtracting acoustic reflections.
+- **`DoubleTalkDetector` (`voice_agent.aec.double_talk`)**: Finite state machine detecting simultaneous human speech (`DoubleTalkState.DOUBLE_TALK`) via Geigel ratio, freezing filter adaptation to eliminate weight divergence.
+- **`ResidualEchoSuppressor` (`voice_agent.aec.double_talk`)**: Post-filter applying up to 28dB attenuation to residual echo during `FAR_END_ONLY` state while passing near-end speech transparently with 1.0 gain.
+- **`AECPipeline` (`voice_agent.aec.pipeline`)**: High-performance coordinator running frame-by-frame cancellation, metric computation, and ERLE validation.
+- **CloudEvents**: Automatically publishes `runefoble.events.voice.aec_benchmark_completed` and `runefoble.events.voice.echo_suppression_engaged` over Redis Streams.
+
+### Diagnostic Benchmark Frontdoor API
+
+The diagnostic endpoint evaluates paired loudspeaker and microphone PCM streams to benchmark ERLE:
+
+```bash
+curl -X POST http://voice-agent.runefoble.svc.cluster.local:8005/voice/aec/benchmark \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "session-campaign-12",
+    "speaker_id": "spk-marcus",
+    "reference_audio_base64": "<base64-pcm-speaker>",
+    "microphone_audio_base64": "<base64-pcm-mic>",
+    "filter_length": 512,
+    "step_size": 0.25,
+    "erle_target_db": 35.0
+  }'
+```
+
+Response includes:
+```json
+{
+  "session_id": "session-campaign-12",
+  "speaker_id": "spk-marcus",
+  "erle_db": 59.59,
+  "erle_target_db": 35.0,
+  "passed": true,
+  "double_talk_detected": false,
+  "echo_detected": true,
+  "attenuation_applied": true,
+  "cleaned_audio_base64": "...",
+  "initial_rms": 4469.31,
+  "residual_rms": 4.69,
+  "status": "success",
+  "diagnostics": {
+    "filter_length": 512,
+    "step_size": 0.25,
+    "sample_rate": 16000
+  }
+}
+```
+
 
 

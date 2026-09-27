@@ -1,5 +1,11 @@
 """Runefoble Events Library - Built on eventsource-py."""
 
+from runefoble_events.aec import (
+    AECBenchmarkCompleted,
+    AECBenchmarkCompletedEvent,
+    EchoSuppressionEngaged,
+    EchoSuppressionEngagedEvent,
+)
 from runefoble_events.contracts import (
     MercenaryBountyClaimed,
     MercenaryBountyClaimedEvent,
@@ -400,6 +406,10 @@ __all__ = [
     "NeuralSpeechBargeInDetectedEvent",
     "TTSStreamAttenuated",
     "TTSStreamAttenuatedEvent",
+    "EchoSuppressionEngaged",
+    "EchoSuppressionEngagedEvent",
+    "AECBenchmarkCompleted",
+    "AECBenchmarkCompletedEvent",
     # Backward-compatible aliases
     "WatcherNarrationEvent",
     "BoardMoveEvent",

@@ -751,6 +751,21 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `cutoff_position_ms`: Float
   - `remaining_text`: Optional[String]
   - `attenuated_at`: Float (epoch timestamp)
+- **`EchoSuppressionEngagedEvent`**: Emitted when acoustic echo suppression is engaged on microphone stream (`runefoble.events.voice.echo_suppression_engaged` / `voice.echo_suppression_engaged`).
+  - `session_id`: String
+  - `speaker_id`: String
+  - `erle_db`: Float
+  - `attenuation_db`: Float
+  - `engaged_at`: Float (epoch timestamp)
+  - `is_double_talk`: Boolean
+- **`AECBenchmarkCompletedEvent`**: Emitted when hardware AEC benchmark finishes validating ERLE > 35dB (`runefoble.events.voice.aec_benchmark_completed` / `voice.aec_benchmark_completed`).
+  - `session_id`: String
+  - `erle_db`: Float
+  - `target_erle_db`: Float (default 35.0)
+  - `passed`: Boolean
+  - `double_talk_detected`: Boolean
+  - `filter_length`: Integer
+  - `completed_at`: Float (epoch timestamp)
 
 
 
