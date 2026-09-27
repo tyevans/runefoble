@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
 import './runefoble-west-marches-atlas.ts';
+import './west_marches/index.ts';
 import type {
   WestMarchesDiscovery,
   WestMarchesNotice,
@@ -210,5 +211,42 @@ export const GuildOfficerAdminView: Story = {
       .outposts=${sampleOutposts}
       .notices=${sampleNotices}
     ></runefoble-west-marches-atlas>
+  `,
+};
+
+export const DiscoveryPinLayerSubView: Story = {
+  render: () => html`
+    <div style="position: relative; width: 800px; height: 500px; background: #f4f6f8; border: 2px solid #121212;">
+      <runefoble-discovery-pin-layer
+        .discoveries=${sampleDiscoveries}
+        .outposts=${sampleOutposts}
+        .selectedDiscovery=${sampleDiscoveries[0]}
+        userRole="player"
+        currentPartyId="camp-blue"
+        currentPartyName="Party Blue"
+      ></runefoble-discovery-pin-layer>
+    </div>
+  `,
+};
+
+export const FrontierHexOverlaySubView: Story = {
+  render: () => html`
+    <div style="position: relative; width: 800px; height: 500px; background: #f4f6f8; border: 2px solid #121212;">
+      <runefoble-frontier-hex-overlay
+        .gridSize=${50}
+        .showFog=${true}
+      ></runefoble-frontier-hex-overlay>
+    </div>
+  `,
+};
+
+export const StrongholdDashboardPanelSubView: Story = {
+  render: () => html`
+    <div style="width: 800px; background: #ffffff; border: 2px solid #121212;">
+      <runefoble-stronghold-dashboard-panel
+        .outpost=${sampleOutposts[0]}
+        frontierRegion="The Shadowed Fenlands"
+      ></runefoble-stronghold-dashboard-panel>
+    </div>
   `,
 };

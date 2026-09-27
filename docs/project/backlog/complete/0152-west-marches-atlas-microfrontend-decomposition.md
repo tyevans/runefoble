@@ -1,7 +1,7 @@
 ---
 id: '0152'
 title: West Marches Shared Atlas Microfrontend Subviews and Pin Layer Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0127
@@ -16,8 +16,8 @@ governing_stories:
 - US-0050
 - US-0058
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/174
 ---
-
 # TASK-0152: West Marches Shared Atlas Microfrontend Subviews and Pin Layer Decomposition
 
 ## Status

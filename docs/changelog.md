@@ -19,6 +19,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Re-exported new sub-components in `services/game_session/ui/package.json` and `services/game_session/ui/src/index.ts`.
   - Updated frontdoor blackbox test suite `tests/test_blackbox_caravan_board_ui.py` to verify modular sub-components, custom element decorators, and file size invariants (< 150 lines).
   - Updated Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md`.
+- **West Marches Shared Atlas Microfrontend Subviews and Pin Layer Decomposition (`TASK-0152`, `ADR-0004`, `ADR-0012`, `ADR-0013`, `PRD-0018`, `US-0050`, `US-0058`)**:
+  - Decomposed `services/campaign_lore/ui/src/runefoble-west-marches-atlas.ts` (386 lines) into modular Lit sub-components and decomposed style sheets under `services/campaign_lore/ui/src/west_marches/` strictly complying with Hard Invariant 6 (< 150 lines per component, with root atlas element < 120 lines):
+    - `discovery_pin_layer.ts` / `pin_layer.ts` (111 lines): `<runefoble-discovery-pin-layer>` rendering milestone pin markers, danger level indicators, party attribution badges, and SpiceDB Zanzibar secret pin masking popovers.
+    - `stronghold_dashboard_panel.ts` / `stronghold_panel.ts` (91 lines): `<runefoble-stronghold-dashboard-panel>` rendering communal outpost treasury resources, defense AC tier buffers, facility upgrade triggers, and shared boons.
+    - `frontier_hex_overlay.ts` / `hex_overlay.ts` (55 lines): `<runefoble-frontier-hex-overlay>` rendering coordinate grid snapping (`snapToHexGrid`) and unexplored wilderness fog-of-war boundary layers.
+    - `tavern_notice_board.ts` (40 lines): `<runefoble-tavern-notice-board>` communal bounty, rumor, and request card grid.
+    - `expedition_chronicle.ts` (39 lines): `<runefoble-expedition-chronicle>` cross-campaign discovery expedition log table.
+    - `styles/` (`map.styles.ts`, `pin.styles.ts`, `stronghold.styles.ts`) (< 110 lines each): Modular CSS styling for viewport controls, pin popovers, and stronghold dashboards.
+  - Refactored root `<runefoble-west-marches-atlas>` container into a lightweight component (119 lines) managing viewport zoom/pan and sub-layer coordination.
+  - Expanded Storybook stories in `runefoble-west-marches-atlas.stories.ts` with dedicated sub-layer state stories (`DiscoveryPinLayerSubView`, `FrontierHexOverlaySubView`, `StrongholdDashboardPanelSubView`).
+  - Added blackbox TDD tests in `tests/test_blackbox_west_marches_ui.py` validating sub-component integrity, custom elements, and file line limits.
 - **Caravan Contracts API Router Modular Decomposition (`TASK-0147`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `PRD-0007`, `US-0058`)**:
   - Decomposed monolithic API router `services/game_session/src/game_session/routers/caravan_contracts.py` (433 lines) into focused, single-responsibility sub-routers under `services/game_session/src/game_session/routers/caravan_contracts/` strictly complying with Hard Invariant 6 (< 500 lines per file, with all submodules < 180 lines):
     - `auth.py` (84 lines): Extracted SpiceDB Zanzibar authorization checks (`_check_perm`, `_check_high_tier_auth`), aggregate loader (`_load_contract`), event bus publishing (`_publish`), contractor association, and validation helpers.

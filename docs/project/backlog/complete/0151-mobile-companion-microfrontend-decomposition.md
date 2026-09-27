@@ -1,7 +1,7 @@
 ---
 id: '0151'
 title: Mobile Companion Microfrontend Component and Audio Visualizer Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0128
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0059
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/173
 ---
-
 # TASK-0151: Mobile Companion Microfrontend Component and Audio Visualizer Decomposition
 
 ## Status

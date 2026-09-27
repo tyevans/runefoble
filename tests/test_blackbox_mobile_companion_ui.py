@@ -152,46 +152,51 @@ def test_storybook_stories_coverage() -> None:
 
 def test_component_haptic_and_webaudio_contracts() -> None:
     """Verify component implements haptic dispatcher, acoustic cues, and buffer monitor."""
-    comp_file = REPO_ROOT / "services/voice_agent/ui/src/runefoble-mobile-companion.ts"
+    ui_src = REPO_ROOT / "services/voice_agent/ui/src"
+    comp_file = ui_src / "runefoble-mobile-companion.ts"
     code = comp_file.read_text(encoding="utf-8")
+    sub_code = "\n".join(
+        f.read_text(encoding="utf-8") for f in (ui_src / "mobile_companion").glob("*.ts")
+    )
+    combined = code + "\n" + sub_code
 
     # Haptic feedback contract
-    assert "triggerHaptic" in code
-    assert "navigator.vibrate" in code
-    assert "haptic-pulse" in code
+    assert "triggerHaptic" in combined
+    assert "navigator.vibrate" in combined
+    assert "haptic-pulse" in combined
 
     # Acoustic cue contract (AudioContext synthesizer)
-    assert "playAcousticCue" in code
-    assert "AudioContext" in code
-    assert "createOscillator" in code
+    assert "playAcousticCue" in combined
+    assert "AudioContext" in combined
+    assert "createOscillator" in combined
 
     # Diegetic secret whisper overlay & privacy blur
-    assert "receiveWhisper" in code
-    assert "dismissWhisper" in code
-    assert "toggleWhisperBlur" in code
-    assert "whisper-received" in code
-    assert "whisper-dismissed" in code
-    assert "whisper-blur-toggled" in code
-    assert "isWhisperBlurred" in code
+    assert "receiveWhisper" in combined
+    assert "dismissWhisper" in combined
+    assert "toggleWhisperBlur" in combined
+    assert "whisper-received" in combined
+    assert "whisper-dismissed" in combined
+    assert "whisper-blur-toggled" in combined
+    assert "isWhisperBlurred" in combined
 
     # Audio buffer monitor & adaptive sample rate indicator
-    assert "bufferHealthMs" in code
-    assert "buffer-bar" in code
-    assert "bitrateKbps" in code
-    assert "packetLoss" in code
-    assert "sampleRate" in code
+    assert "bufferHealthMs" in combined
+    assert "buffer-bar" in combined
+    assert "bitrateKbps" in combined
+    assert "packetLoss" in combined
+    assert "sampleRate" in combined
 
     # Large thumb-friendly PTT button & channel indicator
-    assert "handlePttStart" in code
-    assert "handlePttEnd" in code
-    assert "ptt-start" in code
-    assert "ptt-end" in code
-    assert "channelName" in code
+    assert "handlePttStart" in combined
+    assert "handlePttEnd" in combined
+    assert "ptt-start" in combined
+    assert "ptt-end" in combined
+    assert "channelName" in combined
 
     # WebSocket dispatcher
-    assert "handleWebSocketMessage" in code
-    assert "connectWebSocket" in code
-    assert "disconnectWebSocket" in code
+    assert "handleWebSocketMessage" in combined
+    assert "connectWebSocket" in combined
+    assert "disconnectWebSocket" in combined
 
 
 # ---------------------------------------------------------------------------
