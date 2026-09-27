@@ -134,10 +134,10 @@
 
 ### Multi-Party, Physics & Extensible UI Epics
 - [x] Faction Espionage and Alert Feeds Microfrontend (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0163)
-- [ ] Absentee Mobile Directive and Remote Voting Microfrontend (`FEAT-WAT-05`, US-0059, US-0027, PRD-0019, TASK-0167)
-- [ ] Kinetic 3D Dice Physics and Tray Audio Integration (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0170)
-- [ ] Miniature Knockback Impulse and Elevation Physics (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0171)
-- [ ] Community Plugin UI Extension Slots Microfrontend (`FEAT-DEV-01`, US-0035, PRD-0022, TASK-0174)
+- [x] Absentee Mobile Directive and Remote Voting Microfrontend (`FEAT-WAT-05`, US-0059, US-0027, PRD-0019, TASK-0167)
+- [x] Kinetic 3D Dice Physics and Tray Audio Integration (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0170)
+- [x] Miniature Knockback Impulse and Elevation Physics (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0171)
+- [x] Community Plugin UI Extension Slots Microfrontend (`FEAT-DEV-01`, US-0035, PRD-0022, TASK-0174)
 
 ### Continuous Architecture & Modular Refactorings
 - [ ] West Marches UI Blackbox Test Suite Modular Decomposition (TASK-0176)
@@ -178,3 +178,8 @@
 - [ ] Gateway Campaign Store Modular Decomposition (TASK-0221)
 - [ ] Character Roster Styles Modular Decomposition (TASK-0222)
 - [ ] Session Lobby Styles Modular Decomposition (TASK-0223)
+- [ ] Project Visualizer AGY Launcher Modular Decomposition (TASK-0224)
+- [ ] Campaign and Lobby Blackbox Test Suite Modular Decomposition (TASK-0225)
+- [ ] Campaign Dashboard Styles Modular Decomposition (TASK-0226)
+- [ ] Project Visualizer Graph Builder Modular Decomposition (TASK-0227)
+- [ ] PRD Pipeline Manager Modular Decomposition (TASK-0228)
