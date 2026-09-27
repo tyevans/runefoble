@@ -1,7 +1,7 @@
 ---
 id: '0174'
 title: Community Plugin UI Extension Slots Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0057
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0035
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/225
 ---
-
 # TASK-0174: Community Plugin UI Extension Slots Microfrontend
 
 ## Status
