@@ -19,3 +19,4 @@ export * from './runefoble-combat-reaction-prompt.ts';
 export * from './runefoble-combat-reaction-prompt.styles.ts';
 export * from './runefoble-ready-action-card.ts';
 export * from './campaigns/index.ts';
+export * from './lobby/index.ts';

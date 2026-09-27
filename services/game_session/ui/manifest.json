@@ -14,7 +14,8 @@
     "runefoble-ready-action-card",
     "runefoble-campaign-dashboard",
     "runefoble-campaign-creator",
-    "runefoble-campaign-members"
+    "runefoble-campaign-members",
+    "runefoble-session-lobby"
   ]
 }
 
