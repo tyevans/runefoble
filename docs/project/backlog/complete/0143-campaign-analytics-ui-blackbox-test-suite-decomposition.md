@@ -1,7 +1,7 @@
 ---
 id: '0143'
 title: Campaign Analytics UI Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0052
@@ -14,8 +14,8 @@ governing_stories:
 - US-0040
 - US-0054
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/157
 ---
-
 # TASK-0143: Campaign Analytics UI Blackbox Test Suite Modular Decomposition
 
 ## Status
