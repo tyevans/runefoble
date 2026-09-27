@@ -253,3 +253,14 @@ Key features of `<runefoble-campaign-members>`:
 - **View-Only Mode**: Regular players (`canManage=false`) see clean read-only role badges without destructive controls.
 - **Modular Styles Architecture**: Scoped styles are decomposed into focused submodules under `services/game_session/ui/src/campaigns/styles/` (`base.styles.ts`, `roster.styles.ts`, `modal.styles.ts`, `badge.styles.ts`), composed via `campaignMembersStyles` in `runefoble-campaign-members.styles.ts` (keeping all style modules strictly < 150 lines per Hard Invariant 6).
 
+---
+
+## 8. Gateway Campaign Store Modular Architecture
+
+The campaign and invite storage layer in the Gateway API is decomposed into focused modular subpackages under `gateway/api/src/gateway_api/campaign_store/` (keeping all submodules strictly < 160 lines per Hard Invariant 6):
+- **Record Models (`models.py`)**: Defines `CampaignRecord`, `CampaignMemberRecord`, and `InviteTokenRecord` (aliased as `InviteRecord`) dataclasses with dictionary serialization and default participant constants (`DEFAULT_SESSION_PARTICIPANTS`, `DEFAULT_BOARD_TOKENS`).
+- **Invite Management (`invites.py`)**: Provides secure token generation (`generate_invite_token`), expiration tracking (`calculate_invite_expiry`), `InviteManager` state storage, response formatting (`format_invite_response`), and Zanzibar redemption (`join_from_invite`).
+- **SpiceDB Zanzibar Queries (`queries.py`)**: Encapsulates fine-grained Zanzibar authorization queries, including `get_user_campaign_role`, `build_campaign_summary`, `get_all_viewable_campaigns`, and `get_campaign_members`.
+- **Store Repository (`store.py`)**: Implements thread-safe in-memory campaign lifecycle mutations (`create_campaign`, `update_campaign`, `create_from_request`, `update_from_request`), delegating invite tracking to `InviteManager`.
+- **Package Facade (`__init__.py`)**: Re-exports all core classes, helpers, and default constants for complete backward compatibility across existing Gateway API routers and test suites.
+
