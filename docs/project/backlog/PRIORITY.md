@@ -193,7 +193,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 189. **TASK-0178 (Complete)**: [`0178-game-session-models-modular-decomposition.md`](complete/0178-game-session-models-modular-decomposition.md) — GameSession Models Modular Decomposition
 190. **TASK-0176 (Complete)**: [`0176-west-marches-ui-blackbox-test-suite-decomposition.md`](complete/0176-west-marches-ui-blackbox-test-suite-decomposition.md) — West Marches UI Blackbox Test Suite Modular Decomposition
 191. **TASK-0180 (Complete)**: [`0180-board-state-stories-modular-decomposition.md`](complete/0180-board-state-stories-modular-decomposition.md) — Board State Stories Modular Decomposition
-192. **TASK-0216 (Refined)**: [`0216-faction-turf-war-test-suite-modular-decomposition.md`](refined/0216-faction-turf-war-test-suite-modular-decomposition.md) — Faction Turf War Test Suite Modular Decomposition
+192. **TASK-0216 (Complete)**: [`0216-faction-turf-war-test-suite-modular-decomposition.md`](complete/0216-faction-turf-war-test-suite-modular-decomposition.md) — Faction Turf War Test Suite Modular Decomposition
 193. **TASK-0179 (Refined)**: [`0179-rules-compendium-homebrew-form-decomposition.md`](refined/0179-rules-compendium-homebrew-form-decomposition.md) — Rules Compendium Homebrew Subview Modular Decomposition
 194. **TASK-0221 (Refined)**: [`0221-gateway-campaign-store-modular-decomposition.md`](refined/0221-gateway-campaign-store-modular-decomposition.md) — Gateway Campaign Store Modular Decomposition
 195. **TASK-0181 (Refined)**: [`0181-soundscape-event-handlers-and-dependencies-decomposition.md`](refined/0181-soundscape-event-handlers-and-dependencies-decomposition.md) — Soundscape Event Handlers and Dependencies Modular Decomposition

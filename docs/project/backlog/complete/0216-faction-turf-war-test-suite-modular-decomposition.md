@@ -1,7 +1,7 @@
 ---
 id: '0216'
 title: Faction Turf War Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -16,8 +16,8 @@ governing_stories:
 - US-0057
 - US-0019
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/237
 ---
-
 # TASK-0216: Faction Turf War Test Suite Modular Decomposition
 
 ## Status
