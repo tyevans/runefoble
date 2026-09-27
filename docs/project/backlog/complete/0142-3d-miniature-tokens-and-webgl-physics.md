@@ -1,7 +1,7 @@
 ---
 id: '0142'
 title: 3D Miniature Tokens & WebGL Tabletop Physics
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0004
@@ -18,8 +18,8 @@ governing_prds:
 governing_stories:
 - US-0061
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/172
 ---
-
 # TASK-0142: 3D Miniature Tokens & WebGL Tabletop Physics
 
 ## Status

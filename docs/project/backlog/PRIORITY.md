@@ -151,7 +151,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 147. **TASK-0156 (Complete)**: [`0156-secret-dm-traps-and-map-switching-triggers.md`](complete/0156-secret-dm-traps-and-map-switching-triggers.md) — Secret DM Spatial Traps, Map Switching and Stage Triggers
 148. **TASK-0157 (Proposed)**: [`0157-dm-vocal-modulator-formant-dsp-engine.md`](proposed/0157-dm-vocal-modulator-formant-dsp-engine.md) — DM Live Vocal Modulator and Real-Time NPC Formant DSP Engine
 149. **TASK-0149 (Complete)**: [`0149-voice-duplex-barge-in-visualizer-microfrontend.md`](complete/0149-voice-duplex-barge-in-visualizer-microfrontend.md) — Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend
-150. **TASK-0142 (Refined)**: [`0142-3d-miniature-tokens-and-webgl-physics.md`](refined/0142-3d-miniature-tokens-and-webgl-physics.md) — 3D Miniature Tokens & WebGL Tabletop Physics
+150. **TASK-0142 (Complete)**: [`0142-3d-miniature-tokens-and-webgl-physics.md`](complete/0142-3d-miniature-tokens-and-webgl-physics.md) — 3D Miniature Tokens & WebGL Tabletop Physics
 151. **TASK-0147 (Complete)**: [`0147-caravan-contracts-router-modular-decomposition.md`](complete/0147-caravan-contracts-router-modular-decomposition.md) — Caravan Contracts API Router Modular Decomposition
 152. **TASK-0148 (Refined)**: [`0148-caravan-board-microfrontend-decomposition.md`](refined/0148-caravan-board-microfrontend-decomposition.md) — Caravan Board Microfrontend Styles and Component Decomposition
 153. **TASK-0151 (Refined)**: [`0151-mobile-companion-microfrontend-decomposition.md`](refined/0151-mobile-companion-microfrontend-decomposition.md) — Mobile Companion Microfrontend Component and Audio Visualizer Decomposition
