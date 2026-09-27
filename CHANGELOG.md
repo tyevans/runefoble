@@ -20,6 +20,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added frontdoor blackbox test suite `tests/test_blackbox_board_state.py` verifying line length invariants (< 200 lines per file), backward-compatible facade re-exports, modular submodule imports, and BoardState transitions.
 
 ### Added
+- **Campaign Analytics UI Blackbox Test Suite Modular Decomposition (`TASK-0143`, `ADR-0013`, `PRD-0012`, `US-0040`, `US-0054`)**:
+  - Decomposed monolithic `tests/test_blackbox_campaign_analytics_ui.py` (383 lines) into focused, single-responsibility frontdoor blackbox test modules under `tests/test_blackbox_campaign_analytics_ui/` strictly adhering to Hard Invariant 6 (< 500 lines per file) with all resulting test files strictly under 160 lines.
+  - Added `tests/test_blackbox_campaign_analytics_ui/conftest.py` (72 lines) isolating mock Redis, consumer group, event bus, storage, mock SpiceDB client, and worker fixtures.
+  - Added `tests/test_blackbox_campaign_analytics_ui/test_analytics_dashboard_ui.py` (134 lines) verifying microfrontend manifest advertising, package metadata integrity, Storybook story coverage, and REST frontdoor MVP turn metrics delivery.
+  - Added `tests/test_blackbox_campaign_analytics_ui/test_chronicle_timeline_ui.py` (135 lines) verifying `<runefoble-chronicle-timeline>` Custom Element decorator integrity, living chronicle milestone frontdoor binding, absentee recap metadata, milestone pagination limits, and session filtering.
+  - Added `tests/test_blackbox_campaign_analytics_ui/test_spatial_heatmaps_ui.py` (155 lines) verifying `<runefoble-combat-heatmap>` Custom Element decorator, 2D canvas damage density calculations, coordinate cell overlays, metric filter parameters, and SpiceDB Zanzibar campaign object authorization.
+  - Updated Diataxis guide `docs/how-to/project-campaign-analytics-and-chronicle-timeline.md` to document the modular blackbox test architecture.
 - **Backlog Curation, JIT Refinement & Milestone 7 Roadmap Activation**:
   - Identified refactoring candidates approaching 500 lines (`tests/test_blackbox_caravan_contracts.py`, `services/game_session/src/game_session/routers/caravan_contracts.py`, `runefoble-caravan-board.ts`) and proposed decomposition tasks (`TASK-0146`, `TASK-0147`, `TASK-0148`).
   - Completed and closed Milestone 6 (Intelligent Living Worlds & Spatial Multi-Party Universes) across all 8 feature epics and microfrontends.
