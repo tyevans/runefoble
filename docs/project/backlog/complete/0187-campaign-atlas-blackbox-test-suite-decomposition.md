@@ -1,7 +1,7 @@
 ---
-id: '0187'
+id: 0187
 title: Campaign Atlas Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0106
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0050
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/247
 ---
-
 # TASK-0187: Campaign Atlas Blackbox Test Suite Modular Decomposition
 
 ## Status
