@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Soundscape UI Blackbox Test Suite Modular Decomposition (`TASK-0154`, `ADR-0003`, `ADR-0008`, `ADR-0010`, `PRD-0010`, `US-0039`, `US-0053`)**:
+  - Decomposed monolithic blackbox test file `tests/test_blackbox_soundscape_ui.py` (369 lines) into modular test modules under `tests/test_blackbox_soundscape_ui/` strictly complying with Hard Invariant 6 (< 500 lines per file, with all modules < 120 lines):
+    - `conftest.py` (88 lines): Shared fixtures (`clean_environment`, `client`, `gateway_client`) and audio test presets (`sample_stem_volumes`, `sample_foley_cue`, `sample_tension_payload`).
+    - `test_manifest.py` (109 lines): Microfrontend manifest advertising, package metadata integrity, TypeScript element exports, Storybook story definitions, and App Shell re-export forwarding.
+    - `test_stem_mixing.py` (118 lines): Multi-channel stem volume sliders, catalog presets, encounter tension calculation, and SpiceDB Zanzibar DM authorization enforcement on mood overrides.
+    - `test_foley_ducking.py` (96 lines): DM foley cue triggers, WebAudio -12dB dynamic audio ducking coordination, and gateway WebSocket acoustic cue fanning.
+  - Updated Diataxis guide `docs/how-to/manage-dynamic-soundscapes-and-audio-ducking.md` to reference the modular test package.
 - **Caravan Board Microfrontend Styles and Component Decomposition (`TASK-0148`, `ADR-0004`, `ADR-0012`, `ADR-0013`, `PRD-0018`, `US-0058`)**:
   - Decomposed `services/game_session/ui/src/runefoble-caravan-board.ts` (399 lines) and `runefoble-caravan-board.styles.ts` (398 lines) into modular sub-components and scoped Bauhaus styles under `services/game_session/ui/src/caravan/`, with all files strictly < 150 lines:
     - `contract_card.ts` (83 lines): `<runefoble-caravan-contract-card>` rendering individual notice board contract cards, route risk badges, itemized bounty rewards, live transit progress tracks, ambush alerts, and contextual role action buttons.
