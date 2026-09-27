@@ -26,6 +26,9 @@
     "./caravan/dispatch_modal": "./src/caravan/dispatch_modal.ts",
     "./caravan/board_filters": "./src/caravan/board_filters.ts",
     "./caravan/styles": "./src/caravan/styles/index.ts",
+    "./runefoble-combat-reaction-prompt": "./src/runefoble-combat-reaction-prompt.ts",
+    "./runefoble-combat-reaction-prompt.styles": "./src/runefoble-combat-reaction-prompt.styles.ts",
+    "./runefoble-ready-action-card": "./src/runefoble-ready-action-card.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {
