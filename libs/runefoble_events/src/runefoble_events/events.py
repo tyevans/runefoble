@@ -153,6 +153,10 @@ from runefoble_events.watcher import (
     DiceRollEvent,
     DMNarrativeWhispered,
     EncounterSpawned,
+    FactionAgendaAdvanced,
+    FactionAgendaSet,
+    FactionCreated,
+    GeopoliticalShiftOccurred,
     IntentDisambiguationRequested,
     PlayerSpokeEvent,
     SceneAtmosphereSet,
@@ -166,11 +170,17 @@ from runefoble_events.watcher import (
     WatcherActionVetoed,
     WatcherNarrationEvent,
     WatcherNarrationGenerated,
+    WorldTickExecuted,
 )
 
 __all__ = [
     "register_event",
     "BaseRunefobleEvent",
+    "FactionCreated",
+    "FactionAgendaSet",
+    "FactionAgendaAdvanced",
+    "GeopoliticalShiftOccurred",
+    "WorldTickExecuted",
     "SessionCreated",
     "SessionStarted",
     "GameSessionStarted",

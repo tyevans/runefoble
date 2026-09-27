@@ -12,6 +12,7 @@ from the_watcher.dependencies import (
     compound_action_engine,
     disambiguation_engine,
     engine,
+    faction_simulation_engine,
     get_event_bus,
     set_event_bus,
     to_uuid,
@@ -42,6 +43,7 @@ from the_watcher.routers import (
     autonomous_dm_router,
     chronicle_router,
     copilot_router,
+    factions_router,
     intent_router,
     stand_in_router,
 )
@@ -57,6 +59,7 @@ app.include_router(autonomous_dm_router)
 app.include_router(stand_in_router)
 app.include_router(chronicle_router)
 app.include_router(copilot_router)
+app.include_router(factions_router)
 
 
 @app.get("/healthz")
@@ -122,6 +125,7 @@ __all__ = [
     "compound_action_engine",
     "disambiguation_engine",
     "engine",
+    "faction_simulation_engine",
     "get_event_bus",
     "main",
     "set_event_bus",

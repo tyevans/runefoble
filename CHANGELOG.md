@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Autonomous NPC Faction Agendas & Background Simulation Engine (`TASK-0126`, `ADR-0002`, `ADR-0006`, `ADR-0011`)**:
+  - Implemented event-sourced `FactionAggregate` in `services/the_watcher/src/the_watcher/factions.py` tracking faction assets, influence (1-100), operational resources, disposition, and goal progress via `eventsource-py` (Hard Invariant 2).
+  - Built `FactionSimulationEngine` in `services/the_watcher/src/the_watcher/simulation_engine.py` simulating probabilistic agenda checks based on rival counter-measures and regional stability modifiers.
+  - Added DM Intelligence Bulletin generator in `bulletin.py` producing concise geopolitical briefings, territorial shifts, trade shortages, and evolving tavern rumors.
+  - Added CloudEvents domain events `FactionCreated`, `FactionAgendaSet`, `FactionAgendaAdvanced`, `GeopoliticalShiftOccurred`, and `WorldTickExecuted` in `libs/runefoble_events`.
+  - Added public REST frontdoor endpoints in `services/the_watcher/src/the_watcher/routers/factions.py`: `POST /api/v1/campaigns/{id}/world-tick` (alias: `POST /api/v1/campaigns/{id}/factions/tick`), `POST /api/v1/campaigns/{id}/factions`, `GET /api/v1/campaigns/{id}/factions`, `GET /api/v1/campaigns/{id}/factions/{id}`, and `GET /api/v1/campaigns/{id}/world-ticks/latest` with SpiceDB Zanzibar object authorization checks.
+  - Updated SpiceDB authorization schema in `libs/runefoble_auth/schema/runefoble.zed` defining `faction` object permissions and fixing schema closing delimiter.
+  - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_faction_simulation.py` with frontdoor setup.
+  - Authored Diataxis guide `docs/how-to/simulate-npc-faction-agendas-and-world-ticks.md` and updated `docs/reference/ports-and-endpoints.md` and `docs/reference/events-schema.md`.
 - **Multi-Modal Kinetic Spell VFX & WebGL Particle Magic (`TASK-0104`, `ADR-0004`, `ADR-0006`, `ADR-0012`, `ADR-0013`)**:
   - Implemented 60fps lightweight WebGL particle visual effects engine (`services/board_state/ui/src/particle_canvas.ts`) with GPU billboard instancing and graceful 2D canvas fallback.
   - Implemented spell archetype shaders and particle generators in `particle_archetypes.ts` and `particle_shaders.ts` for Evocation (firestorm, lightning chain arcs, frost bloom), Abjuration (rotating hexagonal arcane shield barrier), and Conjuration (dimensional portal swirl).
