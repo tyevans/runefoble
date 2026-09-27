@@ -29,6 +29,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **Board State Aggregate Mutation Handlers and Event Appliers Modular Decomposition (`TASK-0133`, `ADR-0003`, `ADR-0006`, `ADR-0011`)**:
+  - Decomposed `services/board_state/src/board_state/aggregate.py` from 488 lines down to 140 lines by extracting domain command mutation handlers and `@handles` event state appliers into modular mixins under `services/board_state/src/board_state/handlers/`.
+  - Extracted token placement, movement kinematics, difficult terrain traversal, and path hazard triggers into `TokensHandlerMixin` (`services/board_state/src/board_state/handlers/tokens.py`, 145 lines).
+  - Extracted Chebyshev visibility, party-wide sight union, and fog-of-war revelation/shrouding into `FogHandlerMixin` (`services/board_state/src/board_state/handlers/fog.py`, 75 lines).
+  - Extracted rotatable AoE spell templates, WebGL kinetic VFX animations, and ephemeral combat decals into `VFXHandlerMixin` (`services/board_state/src/board_state/handlers/vfx.py`, 118 lines).
+  - Extracted tactical radial token actions into `ActionsHandlerMixin` (`services/board_state/src/board_state/handlers/actions.py`, 57 lines).
+  - Preserved 100% backward compatibility for all public methods, properties, and `@handles` registrations on `BoardAggregate`, strictly enforcing Hard Invariant 6 with all handler submodules strictly under 160 lines and coordinator facade at 140 lines.
+  - Added comprehensive frontdoor blackbox test suite `tests/test_blackbox_tactile_board.py` validating token lifecycle, movement, hazards, radial actions, and event-sourced aggregate reload.
+  - Updated Diataxis guide `docs/how-to/define-event-sourced-aggregates.md` documenting modular aggregate decomposition patterns for `BoardAggregate`.
 - **Character Sheet Microfrontend Styles Modular Decomposition (`TASK-0123`, `ADR-0004`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` (394 lines) into discrete CSS modules: `runefoble-character-sheet.core.styles.ts` (132 lines), `runefoble-character-sheet.inventory.styles.ts` (125 lines), and `runefoble-character-sheet.conditions.styles.ts` (150 lines), with companion alias modules (`core.styles.ts`, `inventory.styles.ts`, `conditions.styles.ts`).
   - Reduced `runefoble-character-sheet.styles.ts` to a 28-line aggregator combining the modular CSS blocks into a typed `CSSResultGroup`.
