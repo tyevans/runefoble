@@ -20,7 +20,6 @@ from runefoble_auth.sync_tuples import (
     batch_write_tuples,
     delete_relationship_tuple,
     execute_with_retry,
-    format_tuple,
     normalize_campaign_role,
     reconcile_tuples,
     resolve_user_claims,
@@ -103,31 +102,27 @@ class ZitadelSpiceDBSyncService:
     async def sync_character_ownership(
         self, character_id: str | UUID, user_id: str, campaign_id: str | None = None
     ) -> list[str]:
-        """Bind character aggregate to owning user and parent campaign."""
-        cid = str(character_id)
-        tuples = [("character", cid, "owner", "user", user_id)]
+        t = [("character", str(character_id), "owner", "user", user_id)]
         if campaign_id:
-            tuples.append(("character", cid, "campaign", "campaign", campaign_id))
-        return [await self._write_tuple(*t) for t in tuples]
+            t.append(("character", str(character_id), "campaign", "campaign", campaign_id))
+        return [await self._write_tuple(*x) for x in t]
 
     async def sync_session_campaign(self, session_id: str | UUID, campaign_id: str) -> list[str]:
-        """Bind session to parent campaign in Zanzibar schema."""
-        sid = str(session_id)
-        return [
-            await self._write_tuple("session", sid, "campaign", "campaign", campaign_id),
-            await self._write_tuple("game_session", sid, "campaign", "campaign", campaign_id),
+        t = [
+            ("session", str(session_id), "campaign", "campaign", campaign_id),
+            ("game_session", str(session_id), "campaign", "campaign", campaign_id),
         ]
+        return [await self._write_tuple(*x) for x in t]
 
     async def sync_board_token(
         self, token_id: str, character_id: str | UUID | None = None, campaign_id: str | None = None
     ) -> list[str]:
-        """Bind board token to character aggregate and campaign grid."""
-        tuples: list[tuple[str, str, str, str, str]] = []
+        t: list[tuple[str, str, str, str, str]] = []
         if character_id:
-            tuples.append(("board_token", token_id, "character", "character", str(character_id)))
+            t.append(("board_token", token_id, "character", "character", str(character_id)))
         if campaign_id:
-            tuples.append(("board_token", token_id, "campaign", "campaign", campaign_id))
-        return [await self._write_tuple(*t) for t in tuples]
+            t.append(("board_token", token_id, "campaign", "campaign", campaign_id))
+        return [await self._write_tuple(*x) for x in t]
 
     async def batch_write_relationships(
         self, relationships: list[tuple[str, str, str, str, str] | Relationship]
@@ -143,17 +138,14 @@ class ZitadelSpiceDBSyncService:
         """Report synchronization health and SpiceDB connectivity."""
         try:
             await self.spicedb.read_relationships()
-            backend = (
-                "mock"
-                if isinstance(self.spicedb, MockSpiceDBClient)
-                and not getattr(self.spicedb, "_grpc_client", None)
-                else "grpc"
+            is_mock = isinstance(self.spicedb, MockSpiceDBClient) and not getattr(
+                self.spicedb, "_grpc_client", None
             )
             return {
                 "status": "healthy",
                 "spicedb_connected": True,
                 "sync_service": "operational",
-                "backend": backend,
+                "backend": "mock" if is_mock else "grpc",
             }
         except Exception as exc:
             return {"status": "unhealthy", "spicedb_connected": False, "error": str(exc)}
@@ -178,13 +170,4 @@ __all__ = [
     "CAMPAIGN_ROLE_RELATIONS",
     "SyncResult",
     "ZitadelSpiceDBSyncService",
-    "delete_relationship_tuple",
-    "format_tuple",
-    "handle_character_created",
-    "handle_domain_event",
-    "handle_participant_joined",
-    "handle_session_created",
-    "handle_token_placed",
-    "normalize_campaign_role",
-    "write_relationship_tuple",
 ]
