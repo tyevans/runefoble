@@ -47,6 +47,7 @@ from the_watcher.routers import (
     factions_router,
     intent_router,
     stand_in_router,
+    turf_war_router,
 )
 
 app = FastAPI(
@@ -62,6 +63,7 @@ app.include_router(chronicle_router)
 app.include_router(copilot_router)
 app.include_router(factions_router)
 app.include_router(faction_resources_router)
+app.include_router(turf_war_router)
 
 
 @app.get("/healthz")

@@ -7,6 +7,7 @@ from the_watcher.routers.faction_resources import router as faction_resources_ro
 from the_watcher.routers.factions import router as factions_router
 from the_watcher.routers.intent import router as intent_router
 from the_watcher.routers.stand_in import router as stand_in_router
+from the_watcher.routers.turf_war import router as turf_war_router
 
 __all__ = [
     "autonomous_dm_router",
@@ -16,4 +17,5 @@ __all__ = [
     "faction_resources_router",
     "intent_router",
     "stand_in_router",
+    "turf_war_router",
 ]

@@ -21,6 +21,7 @@ from the_watcher.disambiguation import DisambiguationEngine
 from the_watcher.factions import FactionAggregate
 from the_watcher.factions.resources import FactionResourceAggregate
 from the_watcher.simulation_engine import FactionSimulationEngine
+from the_watcher.turf_war.aggregate import RegionalUnrestAggregate
 from the_watcher.watcher_ai import TheWatcherEngine
 
 logger = logging.getLogger("runefoble.the_watcher")
@@ -28,6 +29,7 @@ INFERENCE_URL = os.environ.get("RUNEFOBLE_INFERENCE_URL")
 
 STREAM_WATCHER = "runefoble.events.watcher"
 STREAM_BOARD = "runefoble.events.board"
+STREAM_WORLD = "runefoble:events:world"
 
 engine = TheWatcherEngine()
 chronicle_engine = ChronicleRecapEngine()
@@ -43,6 +45,7 @@ _event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _faction_repo: AggregateRepository[FactionAggregate] | None = None
 _faction_resource_repo: AggregateRepository[FactionResourceAggregate] | None = None
+_regional_unrest_repo: AggregateRepository[RegionalUnrestAggregate] | None = None
 
 
 def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
@@ -90,6 +93,18 @@ def get_faction_resource_repo() -> AggregateRepository[FactionResourceAggregate]
 def set_faction_resource_repo(repo: AggregateRepository[FactionResourceAggregate] | None) -> None:
     global _faction_resource_repo
     _faction_resource_repo = repo
+
+
+def get_regional_unrest_repo() -> AggregateRepository[RegionalUnrestAggregate]:
+    global _regional_unrest_repo
+    if _regional_unrest_repo is None:
+        _regional_unrest_repo = create_aggregate_repository(RegionalUnrestAggregate)
+    return _regional_unrest_repo
+
+
+def set_regional_unrest_repo(repo: AggregateRepository[RegionalUnrestAggregate] | None) -> None:
+    global _regional_unrest_repo
+    _regional_unrest_repo = repo
 
 
 async def check_dm_authorization(
