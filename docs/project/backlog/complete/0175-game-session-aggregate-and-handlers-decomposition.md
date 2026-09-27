@@ -1,7 +1,7 @@
 ---
 id: '0175'
 title: GameSession Aggregate and Reaction Handlers Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0004
@@ -16,8 +16,8 @@ governing_stories:
 - US-0001
 - US-0023
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/180
 ---
-
 # TASK-0175: GameSession Aggregate and Reaction Handlers Modular Decomposition
 
 ## Status
