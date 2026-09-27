@@ -1,7 +1,7 @@
 ---
 id: '0137'
 title: Autonomous NPC Faction Agendas Radar & Intelligence Bulletin Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0008
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0057
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/150
 ---
-
 # TASK-0137: Autonomous NPC Faction Agendas Radar & Intelligence Bulletin Microfrontend
 
 ## Status

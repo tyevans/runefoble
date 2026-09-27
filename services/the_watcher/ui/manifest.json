@@ -1,0 +1,11 @@
+{
+  "service": "the_watcher",
+  "package": "@runefoble/the-watcher-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-watcher-feed",
+    "runefoble-autonomous-dm",
+    "runefoble-dm-whisper-bar",
+    "runefoble-faction-radar"
+  ]
+}
