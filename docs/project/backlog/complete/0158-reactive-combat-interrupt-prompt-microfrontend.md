@@ -1,7 +1,7 @@
 ---
-id: '0158'
+id: 0158
 title: Reactive Combat Reactions & Interrupt Prompt Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0155
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0023
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/179
 ---
-
 # TASK-0158: Reactive Combat Reactions & Interrupt Prompt Microfrontend
 
 ## Status

@@ -78,6 +78,8 @@ def get_ui_manifest():
             "runefoble-campfire-crafting",
             "runefoble-tavern-parlor",
             "runefoble-caravan-board",
+            "runefoble-combat-reaction-prompt",
+            "runefoble-ready-action-card",
         ],
         "version": "0.1.0",
     }

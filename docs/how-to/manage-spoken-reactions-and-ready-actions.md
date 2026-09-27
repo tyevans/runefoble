@@ -110,3 +110,44 @@ Content-Type: application/json
 ```http
 GET /sessions/{session_id}/reactions/active
 ```
+
+---
+
+## 5. Microfrontend Components (`@runefoble/game-session-ui`)
+
+Players interact with reaction interrupts and ready actions via two Lit Web Components vendored inside `services/game_session/ui/`:
+
+### `<runefoble-combat-reaction-prompt>`
+An urgent modal overlay rendered when combat pauses for a spoken reaction:
+- **Countdown Timer**: High-contrast progress bar reflecting remaining decision window (default 15s) with pulse animation under 5s.
+- **Reaction Options**: Tactile action buttons corresponding to available reaction triggers (e.g., *Cast Shield [+5 AC]*, *Counterspell*, *Opportunity Attack*), plus a *Decline / Pass* button.
+- **Resolution State**: Emits `reaction-resolved` or `reaction-timeout` CustomEvents and transitions to confirmation toast states.
+
+```html
+<runefoble-combat-reaction-prompt
+  sessionId="session-ambush-101"
+  reactionId="rx-shield-001"
+  reactingCombatantId="char-marcus"
+  reactingCombatantName="Marcus (Abjurer)"
+  triggerPhrase="I cast Shield!"
+  reactionType="shield"
+  .timeoutSeconds=${15}
+  .secondsRemaining=${12}
+></runefoble-combat-reaction-prompt>
+```
+
+### `<runefoble-ready-action-card>`
+A tactile panel for configuring conditional ready-action triggers on a combatant's turn:
+- **Trigger Configuration**: Form inputs for trigger type (*enemy_enters_range*, *spell_cast*, *hostile_attack*), natural condition phrase, readied reaction action, and grid range.
+- **Armed Status**: Visual Bauhaus badge toggling between `ARMED` and `STANDBY`. Emits `ready-action-registered` and `ready-action-cancelled` CustomEvents.
+
+```html
+<runefoble-ready-action-card
+  sessionId="session-ambush-101"
+  combatantId="char-merisiel"
+  combatantName="Merisiel (Rogue)"
+  triggerCondition="if the goblin steps into the hallway"
+  readiedAction="Shoot Heavy Crossbow"
+  .rangeCells=${6}
+></runefoble-ready-action-card>
+```
