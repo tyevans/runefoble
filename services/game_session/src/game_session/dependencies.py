@@ -7,9 +7,11 @@ import logging
 import os
 
 from game_session.aggregate import GameSessionAggregate
+from game_session.caravan_ledger import CaravanLedgerAggregate
 from game_session.merchants import MerchantAggregate
 from game_session.minigames import TavernGameAggregate
 from game_session.stronghold import StrongholdAggregate
+from game_session.west_marches import SharedWorldAggregate
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
@@ -24,6 +26,7 @@ STREAM_WATCHER = "runefoble.events.watcher"
 STREAM_SESSION = "runefoble.events.session"
 STREAM_STRONGHOLD = "runefoble.events.stronghold"
 STREAM_TAVERN = "runefoble.events.tavern"
+STREAM_WEST_MARCHES = "runefoble.events.west_marches"
 
 platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
@@ -40,6 +43,13 @@ merchant_repo: AggregateRepository[MerchantAggregate] = create_aggregate_reposit
     MerchantAggregate
 )
 
+shared_world_repo: AggregateRepository[SharedWorldAggregate] = create_aggregate_repository(
+    SharedWorldAggregate
+)
+caravan_ledger_repo: AggregateRepository[CaravanLedgerAggregate] = create_aggregate_repository(
+    CaravanLedgerAggregate
+)
+
 
 def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
     return tavern_repo
@@ -51,6 +61,14 @@ def get_merchant_repository() -> AggregateRepository[MerchantAggregate]:
 
 def get_stronghold_repository() -> AggregateRepository[StrongholdAggregate]:
     return stronghold_repo
+
+
+def get_shared_world_repository() -> AggregateRepository[SharedWorldAggregate]:
+    return shared_world_repo
+
+
+def get_caravan_ledger_repository() -> AggregateRepository[CaravanLedgerAggregate]:
+    return caravan_ledger_repo
 
 
 def get_spicedb_client() -> SpiceDBClient:
