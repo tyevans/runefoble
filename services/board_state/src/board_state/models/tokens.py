@@ -68,3 +68,23 @@ class MoveTokenResponse(BaseModel):
     movement_cost: int = 1
     hazard_triggered: str | None = None
     damage_dice: str | None = None
+    trap_triggered: str | None = None
+    movement_paused: bool = False
+
+
+class MoveResult(tuple):
+    def __new__(
+        cls,
+        cost: int,
+        hazard_triggered: str | None,
+        damage_dice: str | None,
+        trap_triggered: str | None = None,
+        movement_paused: bool = False,
+    ):
+        inst = super().__new__(cls, (cost, hazard_triggered, damage_dice))
+        inst.cost = cost
+        inst.hazard_triggered = hazard_triggered
+        inst.damage_dice = damage_dice
+        inst.trap_triggered = trap_triggered
+        inst.movement_paused = movement_paused
+        return inst

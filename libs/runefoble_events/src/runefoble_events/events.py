@@ -47,6 +47,16 @@ from runefoble_events.board import (
     UniversalVTTImported,
     VFXAnimationFinished,
 )
+from runefoble_events.board_traps import (
+    BattlemapSwitched,
+    BattlemapSwitchedEvent,
+    TrapDisarmed,
+    TrapDisarmedEvent,
+    TrapPlaced,
+    TrapPlacedEvent,
+    TrapSprung,
+    TrapSprungEvent,
+)
 from runefoble_events.character import (
     AbsencePenaltyApplied,
     AbsencePenaltyCleared,
@@ -357,4 +367,12 @@ __all__ = [
     "RegionalMerchantStockUpdated",
     "SharedStrongholdUpgraded",
     "SharedWorldCreated",
+    "BattlemapSwitched",
+    "BattlemapSwitchedEvent",
+    "TrapDisarmed",
+    "TrapDisarmedEvent",
+    "TrapPlaced",
+    "TrapPlacedEvent",
+    "TrapSprung",
+    "TrapSprungEvent",
 ]
