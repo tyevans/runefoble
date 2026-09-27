@@ -67,3 +67,74 @@ class HaggleGatewayRequest(BaseModel):
     charisma_modifier: int = 0
     dialogue: str = ""
     temperament: str = "stubborn_greedy"
+
+
+class CreateCampaignRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=100)
+    description: str = ""
+    setting: str = ""
+    system: str = "5e"
+    cover_image_url: str | None = None
+    settings: dict[str, Any] = Field(default_factory=dict)
+
+
+class UpdateCampaignRequest(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    setting: str | None = None
+    system: str | None = None
+    cover_image_url: str | None = None
+    status: str | None = None
+    settings: dict[str, Any] | None = None
+
+
+class CampaignSummaryResponse(BaseModel):
+    id: str
+    title: str
+    description: str = ""
+    setting: str = ""
+    system: str = "5e"
+    status: str = "active"
+    owner_id: str = ""
+    role: str | None = None
+    member_count: int = 1
+    cover_image_url: str | None = None
+    settings: dict[str, Any] = Field(default_factory=dict)
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class InviteRequest(BaseModel):
+    role: Literal["player", "spectator"] = "player"
+    expires_in_hours: int | None = 72
+    max_uses: int | None = None
+
+
+class InviteResponse(BaseModel):
+    token: str
+    campaign_id: str
+    role: str
+    invite_url: str
+    expires_at: str | None = None
+    created_at: str
+    max_uses: int | None = None
+    uses: int = 0
+
+
+class JoinCampaignRequest(BaseModel):
+    invite_token: str
+
+
+class JoinCampaignResponse(BaseModel):
+    status: str = "joined"
+    campaign_id: str
+    user_id: str
+    role: str
+    zanzibar_relation: str
+
+
+class CampaignMemberResponse(BaseModel):
+    user_id: str
+    role: str
+    subject_type: str = "user"
+    zanzibar_relation: str
