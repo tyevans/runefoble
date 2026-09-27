@@ -601,6 +601,40 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `narrative`: String
   - `remaining_treasury`: Integer
 
+### RegionalUnrest & Turf War Events (`aggregate_type: RegionalUnrest`)
+
+- **`FactionSkirmishResolvedEvent`** (alias: `FactionSkirmishResolved`): Emitted when a tactical boundary clash between two factions resolves (`runefoble.events.watcher.faction_skirmish_resolved`).
+  - `skirmish_id`: String
+  - `campaign_id`: String
+  - `region_id`: String
+  - `contested_node`: String
+  - `attacker_faction_id`: String
+  - `defender_faction_id`: String
+  - `winning_faction_id`: String
+  - `is_stalemate`: Boolean
+  - `attacker_casualties`: Integer
+  - `defender_casualties`: Integer
+  - `territory_captured`: Boolean
+  - `unrest_delta`: Integer
+  - `narrative`: String
+- **`FactionTerritoryCapturedEvent`** (alias: `FactionTerritoryCaptured`): Emitted when contested territory or an outpost changes faction ownership (`runefoble.events.watcher.faction_territory_captured`).
+  - `campaign_id`: String
+  - `region_id`: String
+  - `previous_controlling_faction_id`: Optional[String]
+  - `new_controlling_faction_id`: String
+  - `territory_node`: String
+  - `unrest_delta`: Integer
+- **`RegionalUnrestEscalatedEvent`** (alias: `RegionalUnrestEscalated`): Emitted when regional instability, guard alert levels, or economic friction escalate (`runefoble.events.watcher.regional_unrest_escalated`).
+  - `campaign_id`: String
+  - `region_id`: String
+  - `previous_unrest`: Integer
+  - `current_unrest`: Integer
+  - `unrest_delta`: Integer
+  - `alert_level`: String ("calm", "guarded", "elevated", "high", "critical")
+  - `security_level`: String ("standard", "patrolled", "heightened", "curfew", "martial_law")
+  - `economic_friction`: Float (0.0 to 1.0)
+  - `cause`: String
+
 ### VoiceRoom Events (`aggregate_type: VoiceRoom`)
 
 - **`VoicePeerJoined`**: Emitted when an audio peer connects and joins the session WebRTC voice room (`runefoble.events.voice.peer_joined`).
@@ -676,6 +710,29 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `parameters`: Dict[String, Float]
   - `user_id`: String
   - `toggled_at`: Float (epoch timestamp)
+- **`VoiceStreamQualityDegradedEvent`**: Emitted when RTCP receiver reports detect packet loss (>5%) or round-trip delay spikes (`runefoble.events.voice.stream_quality_degraded`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: Optional[String]
+  - `packet_loss`: Float (0.0 to 1.0)
+  - `round_trip_time_ms`: Float
+  - `jitter_ms`: Float
+  - `severity`: String ("nominal", "degraded", "severe")
+  - `detected_at`: String (ISO-8601 UTC timestamp)
+- **`VoiceStreamCodecAdaptedEvent`**: Emitted when stream bitrate or Opus codec parameters are dynamically adjusted (<50 kbps 16kHz mono) (`runefoble.events.voice.stream_codec_adapted`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: Optional[String]
+  - `previous_bitrate_kbps`: Integer
+  - `new_bitrate_kbps`: Integer
+  - `sample_rate`: Integer (16000)
+  - `channels`: Integer (1)
+  - `complexity`: Integer (0 to 10)
+  - `fec_enabled`: Boolean
+  - `dtx_enabled`: Boolean
+  - `codec_mode`: String ("standard", "mobile_optimized", "cellular_constrained", "ultra_low")
+  - `reason`: String
+  - `adapted_at`: String (ISO-8601 UTC timestamp)
 - **`NeuralSpeechBargeInDetectedEvent`**: Emitted when high-precision neural VAD detects vocalization onset during active TTS playback (`runefoble.events.voice.barge_in_detected` / `voice.barge_in_detected`).
   - `session_id`: String
   - `speaker_id`: String
@@ -916,4 +973,16 @@ For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `Intoxic
 - **`CaravanTradeFulfilled`**: Emitted when a caravan successfully reaches destination, delivering cargo, unlocking settlement stock, and paying out rewards (`runefoble.events.west_marches.caravan_trade_fulfilled`). Fields: `contract_id`, `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `cargo_value_delivered`, `reward_gold_paid`, `reputation_awarded`, `contractor_campaign_id`, `fulfilled_at`, `status`.
 - **`CaravanTradeCompleted`**: Emitted when a caravan arrives at its destination outpost, unlocking regional merchant stock. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `unlocked_stock`, `completed_at`.
 - **`RegionalMerchantStockUpdated`**: Emitted when outpost merchant inventory adjusts due to trade or expeditions. Fields: `shared_world_id`, `outpost_name`, `inventory_updates`.
+
+### Cross-Campaign Settlement & Haven Events (`aggregate_type: Settlement`)
+
+- **`SettlementCharteredEvent`** (`runefoble.events.game_session.settlement_chartered`): Emitted when a new frontier outpost, communal haven, or fortress is chartered. Fields: `settlement_id`, `shared_world_id`, `name`, `settlement_type`, `region`, `coordinates`, `founded_by_campaign_id`, `chartered_by`, `level`, `defense_rating`, `facilities`, `metadata`.
+- **`SettlementUpgradedEvent`** (`runefoble.events.game_session.settlement_upgraded`): Emitted when a settlement facility (workshop, sanctum, fortifications, watchtower) or defense rating is upgraded. Fields: `settlement_id`, `shared_world_id`, `facility_id`, `new_tier`, `tier_name`, `contributing_campaign_id`, `gold_spent`, `materials_spent`, `defense_rating`, `metadata`.
+- **`SettlementRestBoonClaimedEvent`** (`runefoble.events.game_session.settlement_rest_boon_claimed`): Emitted when an adventuring party or character claims a sanctum rest boon or workshop crafting perk. Fields: `settlement_id`, `shared_world_id`, `campaign_id`, `character_id`, `claimed_by`, `facility_id`, `boon`, `metadata`.
+
+### Frontier Mercenary Bounty & Retrieval Contract Events (`aggregate_type: MercenaryBounty`)
+
+- **`MercenaryBountyPostedEvent`** (`runefoble.events.game_session.mercenary_bounty_posted` / `MercenaryBountyPosted`): Emitted when a new mercenary bounty or retrieval contract is posted to the notice board with locked escrow. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `campaign_id`, `title`, `description`, `target_type`, `target_name`, `target_quantity`, `escrow_gold`, `escrow_items`, `poster_user_id`, `created_at`.
+- **`MercenaryBountyClaimedEvent`** (`runefoble.events.game_session.mercenary_bounty_claimed` / `MercenaryBountyClaimed`): Emitted when an adventuring party claims an active bounty. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `claimant_user_id`, `claimant_campaign_id`, `claimant_party_name`, `claimed_at`.
+- **`MercenaryBountyFulfilledEvent`** (`runefoble.events.game_session.mercenary_bounty_fulfilled` / `MercenaryBountyFulfilled`): Emitted when fulfillment proof is submitted, disputed, or completed with released escrow payout. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `proof`, `status`, `payout_gold`, `payout_items`, `fulfilled_by`, `fulfilled_at`.
 

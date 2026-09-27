@@ -588,6 +588,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Replenished ready buffer in `docs/project/backlog/refined/` to 10 items (JIT queue health) with rigorous blackbox TDD Definitions of Done, governing ADR citations, and INVEST alignment.
   - Re-indexed `docs/project/backlog/PRIORITY.md` maintaining strict priority hierarchy: Foundational Enablers → Milestone 4 Epics → Identified Invariant Refactorings → Future Milestones.
 ### Changed
+- **Definition of Done Platform Showcase Maintenance Requirement**:
+  - Updated the repository Definition of Done in `AGENTS.md`, `docs/operating-manual.md`, and `docs/project/backlog/README.md` to mandate ongoing maintenance of the Platform Showcase marketing page (`docs/marketing.md`) as capabilities, architecture, and milestones progress.
+  - Added automated test validation in `tests/test_docs_build_and_pages.py` (`test_definition_of_done_includes_marketing_page_maintenance`) to ensure the Definition of Done in `AGENTS.md` and `docs/operating-manual.md` enforces marketing page maintenance.
+
 - **Campaign Analytics Test Suite Modular Decomposition (`TASK-0115`, `ADR-0003`, `ADR-0005`, `ADR-0006`, `ADR-0011`)**:
   - Decomposed monolithic `tests/test_blackbox_campaign_analytics.py` into three focused blackbox test modules strictly under 200 lines each: `tests/test_blackbox_campaign_analytics_api.py` (REST endpoints, SpiceDB auth), `tests/test_blackbox_campaign_analytics_worker.py` (consumer group routing, event projections), and `tests/test_blackbox_campaign_analytics_storage.py` (spatial metrics, MVP ranking, chronicle timeline).
 - **WebSocket Zanzibar Authorization and Mutator Test Suite Modular Decomposition (`TASK-0071`, `ADR-0001`, `ADR-0003`, `ADR-0005`, `ADR-0009`)**:

@@ -9,7 +9,6 @@ for deployment to GitHub Pages.
 
 from __future__ import annotations
 
-import ctypes
 import os
 import re
 import shutil
@@ -29,20 +28,7 @@ def check_and_prepare_inotify_env(env: dict[str, str]) -> None:
     if sys.platform != "linux":
         return
 
-    # Test if inotify is currently operational
-    try:
-        libc = ctypes.CDLL(None)
-        if hasattr(libc, "inotify_init") and hasattr(libc, "inotify_add_watch"):
-            fd = libc.inotify_init()
-            if fd >= 0:
-                wd = libc.inotify_add_watch(fd, b"/tmp", 1)
-                libc.close(fd)
-                if wd >= 0:
-                    return  # Inotify watches are healthy
-    except Exception:
-        pass
-
-    # Inotify watch limit reached. Compile and preload lightweight shim.
+    # Ensure inotify watch exhaustion on Linux workstations does not silently abort static site builds.
     shim_c = ROOT_DIR / "scripts" / "fake_inotify.c"
     if not shim_c.exists():
         return

@@ -29,6 +29,14 @@
     "./runefoble-combat-reaction-prompt": "./src/runefoble-combat-reaction-prompt.ts",
     "./runefoble-combat-reaction-prompt.styles": "./src/runefoble-combat-reaction-prompt.styles.ts",
     "./runefoble-ready-action-card": "./src/runefoble-ready-action-card.ts",
+    "./campaigns": "./src/campaigns/index.ts",
+    "./campaigns/dashboard": "./src/campaigns/runefoble-campaign-dashboard.ts",
+    "./campaigns/creator": "./src/campaigns/runefoble-campaign-creator.ts",
+    "./campaigns/members": "./src/campaigns/runefoble-campaign-members.ts",
+    "./campaigns/members.styles": "./src/campaigns/runefoble-campaign-members.styles.ts",
+    "./lobby": "./src/lobby/index.ts",
+    "./lobby/session-lobby": "./src/lobby/runefoble-session-lobby.ts",
+    "./lobby/styles": "./src/lobby/runefoble-session-lobby.styles.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {

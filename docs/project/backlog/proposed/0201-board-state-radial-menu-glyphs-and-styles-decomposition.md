@@ -1,0 +1,50 @@
+---
+id: '0201'
+title: Board State Radial Menu Glyphs and Styles Modular Decomposition
+status: Proposed
+created: 2026-09-27
+dependencies:
+- TASK-0125
+governing_adrs:
+- ADR-0004
+- ADR-0012
+- ADR-0013
+governing_prds:
+- PRD-0013
+governing_stories:
+- US-0056
+target_release: 0.7.0
+---
+
+# TASK-0201: Board State Radial Menu Glyphs and Styles Modular Decomposition
+
+## Status
+Proposed
+
+## Summary
+Decompose `services/board_state/ui/src/radial_menu.ts` (321 lines, 64.2% of limit) into modular submodules under `services/board_state/ui/src/radial/` (`radial_menu.styles.ts`, `radial_glyphs.ts`, and `radial_wedge.ts`), keeping each module strictly < 110 lines per Hard Invariant 6.
+
+## Problem Statement
+`services/board_state/ui/src/radial_menu.ts` spans 321 lines combining Bauhaus CSS styles (`static styles`), SVG geometric glyph generators (`renderBauhausGlyph`), polar trigonometry calculations for arc wedges (`renderWedge`), and the Lit component lifecycle. As additional quick actions (such as shove, hide, help, or grapple) are added, this file will rapidly approach the 400-line threshold unless modularized.
+
+## Governing Architecture & ADRs
+- **ADR-0004: Frontend Visualizer & Lit Component Architecture**: Separation of presentation templates, SVG glyphs, and component controllers.
+- **ADR-0012: Theming Tokens & Bauhaus Design System**: Bauhaus geometric iconography and styling token isolation.
+- **ADR-0013: Microfrontend Bounded Context Architecture**: UI encapsulation within `services/board_state/ui/`.
+
+## Scope of Work
+1. **Modular Submodules (`services/board_state/ui/src/radial/`)**:
+   - `radial_menu.styles.ts`: Lit CSS styles for circular radial overlay, wedge transitions, and action badges (< 90 lines).
+   - `radial_glyphs.ts`: Bauhaus SVG glyph rendering functions for attack, dash, disengage, dodge, cast, etc. (< 100 lines).
+   - `radial_wedge.ts`: Polar coordinate math, SVG path generator (`polarToCartesian`, `describeArc`), and wedge click handlers (< 90 lines).
+2. **Component Controller Refactoring (`services/board_state/ui/src/radial_menu.ts`)**:
+   - Component controller importing styles, glyphs, and wedge rendering (< 100 lines).
+3. **Verification**:
+   - Verify Storybook stories for `<runefoble-radial-menu>` render and respond to wedge clicks.
+   - Run existing board state tests to verify zero regressions.
+
+## Definition of Done
+- `radial_menu.ts` reduced to < 110 lines.
+- Submodules in `services/board_state/ui/src/radial/` strictly < 110 lines each.
+- Storybook stories render without errors.
+- All relevant tests pass via `uv run pytest`.

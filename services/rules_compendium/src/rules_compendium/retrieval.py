@@ -22,8 +22,8 @@ CANONICAL_TENANT_ID = UUID("00000000-0000-0000-0000-000000000001")
 class CompendiumRetrievalEngine:
     """Hybrid BM25 and semantic vector search engine over canonical SRD and homebrew rules."""
 
-    def __init__(self) -> None:
-        self.embeddings = redstring.FakeEmbeddingProvider()
+    def __init__(self, dimension: int = 32) -> None:
+        self.embeddings = redstring.FakeEmbeddingProvider(dimension=dimension)
         dim = self.embeddings.dimension
         self.chunks = redstring.InMemoryChunkStore(dimension=dim)
         self.chunk_retriever = redstring.ChunkRetriever(
@@ -71,7 +71,7 @@ class CompendiumRetrievalEngine:
                     metadata={
                         "category": "monster",
                         "name": m["name"],
-                        "details": m,
+                        "details": {},
                         "is_homebrew": False,
                         "campaign_id": None,
                     },
@@ -102,7 +102,7 @@ class CompendiumRetrievalEngine:
                     metadata={
                         "category": "spell",
                         "name": s["name"],
-                        "details": s,
+                        "details": {},
                         "is_homebrew": False,
                         "campaign_id": None,
                     },
@@ -129,7 +129,7 @@ class CompendiumRetrievalEngine:
                     metadata={
                         "category": "condition",
                         "name": c["name"],
-                        "details": c,
+                        "details": {},
                         "is_homebrew": False,
                         "campaign_id": None,
                     },
@@ -265,7 +265,7 @@ class CompendiumRetrievalEngine:
                     name=item_name,
                     score=float(scored_chunk.score),
                     summary=c.text[:200] + ("..." if len(c.text) > 200 else ""),
-                    details=meta.get("details", {}),
+                    details=self._resolve_details(item_cat, item_name, meta),
                     is_homebrew=meta.get("is_homebrew", False),
                     campaign_id=UUID(meta["campaign_id"]) if meta.get("campaign_id") else None,
                 )
@@ -276,6 +276,18 @@ class CompendiumRetrievalEngine:
 
         took_ms = (time.perf_counter() - t0) * 1000
         return results, took_ms
+
+    def _resolve_details(self, category: str, name: str, meta: dict[str, Any]) -> dict[str, Any]:
+        """Resolve full details from in-memory lookups to avoid deepcopy overhead during chunk retrieval."""
+        key = name.lower().strip()
+        cat = category.lower()
+        if cat == "monster":
+            return self._monsters.get(key, {})
+        if cat == "spell":
+            return self._spells.get(key, {})
+        if cat == "condition":
+            return self._conditions.get(key, {})
+        return meta.get("details", {})
 
     def get_monster(self, name: str) -> dict[str, Any] | None:
         """Find monster by name (case-insensitive)."""

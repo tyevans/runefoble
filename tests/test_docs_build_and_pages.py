@@ -52,7 +52,11 @@ def test_zensical_configuration():
 
 def test_docs_site_generation_and_visualizer_integration():
     """Verify build generates full HTML documentation, search index, and embedded visualizer."""
-    if not SITE_DIR.exists() or not (SITE_DIR / "visualizer" / "index.html").exists():
+    if (
+        not SITE_DIR.exists()
+        or not (SITE_DIR / "index.html").exists()
+        or not (SITE_DIR / "visualizer" / "index.html").exists()
+    ):
         import subprocess
         import sys
 
@@ -213,6 +217,21 @@ def test_definition_of_done_includes_changelog_maintenance():
         assert "CHANGELOG.md" in op_content
 
 
+def test_definition_of_done_includes_marketing_page_maintenance():
+    """Verify Definition of Done in AGENTS.md and operating-manual.md includes marketing showcase maintenance."""
+    agents_md = REPO_ROOT / "AGENTS.md"
+    assert agents_md.exists()
+    content = agents_md.read_text(encoding="utf-8")
+    assert "Platform Showcase Maintenance" in content
+    assert "docs/marketing.md" in content
+
+    op_manual = DOCS_DIR / "operating-manual.md"
+    if op_manual.exists():
+        op_content = op_manual.read_text(encoding="utf-8")
+        assert "Platform Showcase Maintenance" in op_content
+        assert "docs/marketing.md" in op_content
+
+
 def test_marketing_showcase_page_and_navigation():
     """Verify docs/marketing.md exists, is in nav, and compiles to rich HTML."""
     marketing_md = DOCS_DIR / "marketing.md"
@@ -233,6 +252,11 @@ def test_marketing_showcase_page_and_navigation():
 
     # Verify site contains compiled HTML
     marketing_html = SITE_DIR / "marketing" / "index.html"
+    if not marketing_html.exists():
+        import subprocess
+        import sys
+
+        subprocess.run([sys.executable, "scripts/build_docs.py"], cwd=str(REPO_ROOT), check=True)
     assert marketing_html.exists()
     html_content = marketing_html.read_text(encoding="utf-8")
     assert "Speak and the Board Obeys" in html_content

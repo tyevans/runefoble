@@ -22,6 +22,7 @@ class ProjectGraphBuilder:
         self._link_tasks_to_entities()
         self._link_stories_to_prds()
         self._link_features_to_prds()
+        self._link_tasks_to_milestones()
         self._generate_traceability_edges()
         self._compute_health_metrics()
         return self.data
@@ -94,6 +95,47 @@ class ProjectGraphBuilder:
             for adr_id in task.governing_adrs:
                 if adr_id in adr_by_id and task.id not in adr_by_id[adr_id].implementing_tasks:
                     adr_by_id[adr_id].implementing_tasks.append(task.id)
+
+    def _link_tasks_to_milestones(self) -> None:
+        task_milestone_map: dict[str, str] = {}
+        for m in self.data.milestones:
+            for tid in m.task_ids:
+                task_milestone_map[tid] = m.id
+
+        for task in self.data.tasks:
+            if not task.milestone:
+                if task.id in task_milestone_map:
+                    task.milestone = task_milestone_map[task.id]
+                elif task.target_release:
+                    rel_match = re.match(r"0\.(\d+)", task.target_release)
+                    if rel_match:
+                        task.milestone = f"M{int(rel_match.group(1))}"
+                    elif task.target_release.startswith("1."):
+                        task.milestone = "M10"
+                if not task.milestone:
+                    num_match = re.search(r"\d+", task.id)
+                    if num_match:
+                        t_num = int(num_match.group())
+                        if t_num <= 14:
+                            task.milestone = "M1"
+                        elif t_num <= 46:
+                            task.milestone = "M2"
+                        elif t_num <= 74:
+                            task.milestone = "M3"
+                        elif t_num <= 99:
+                            task.milestone = "M4"
+                        elif t_num <= 125:
+                            task.milestone = "M5"
+                        elif t_num <= 140:
+                            task.milestone = "M6"
+                        elif t_num <= 154:
+                            task.milestone = "M7"
+                        elif t_num <= 160:
+                            task.milestone = "M8"
+                        elif t_num <= 205:
+                            task.milestone = "M9"
+                        else:
+                            task.milestone = "M10"
 
     def _link_stories_to_prds(self) -> None:
         prd_by_id = {prd.id: prd for prd in self.data.prds}
