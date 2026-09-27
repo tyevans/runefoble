@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Theming Tokens and Contrast Invariants Test Suite Modular Decomposition (`TASK-0114`, `ADR-0004`, `ADR-0009`, `ADR-0012`)**:
+  - Decomposed monolithic `tests/test_theming.py` (443 lines) into two focused, specialized test modules: `tests/test_theming_tokens.py` (174 lines) and `tests/test_theming_contrast.py` (178 lines), preventing breaches of Hard Invariant 6 (< 500 lines).
+  - Maintained 100% backward compatibility and test coverage across semantic token hierarchies, themes.css modular `@import` resolution, index.css and index.html loads, `<runefoble-theme-switcher>`, Storybook preview matrix, WCAG 2.1 AA/AAA contrast ratios, zero-hardcoded-hex invariants in Web Component styles, and settings modal style modular decomposition.
+  - Enforced strict line limit invariants with both resulting test files strictly under 180 lines (< 200 lines limit).
+  - Updated design tokens and themes documentation in `docs/reference/design-tokens-and-themes.md`.
 - **Stand-In AI Persona Decision Engine and Tactical Policy Modular Decomposition (`TASK-0112`, `ADR-0002`, `ADR-0003`, `ADR-0006`)**:
   - Decomposed monolithic `services/the_watcher/src/the_watcher/stand_in_ai.py` (344 lines) into specialized, single-responsibility sub-modules: `stand_in_guardrails.py` (127 lines) for tactical policy evaluation, `stand_in_persona.py` (138 lines) for humorous penalty and personality simulation, `stand_in_recap.py` (94 lines) for absentee chronicle recap generation, and `stand_in_ai.py` (64 lines) lightweight facade.
   - Preserved 100% backward compatibility for all public methods on `StandInAIEngine` and public entrypoints.
