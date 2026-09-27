@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0102`, `TASK-0104`, `TASK-0121`, `TASK-0122`, `TASK-0123`, `TASK-0124`, `TASK-0125`, `TASK-0126`, `TASK-0127`, `TASK-0128`)**:
+  - Audited repository health and file length invariants, identifying refactoring candidates in `tests/test_prd_pipeline.py` (417 lines), `tests/test_project_visualizer.py` (415 lines), and `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` (394 lines).
+  - Proactively proposed and refined modular decomposition tasks `TASK-0121`, `TASK-0122`, and `TASK-0123` to prevent breaching Hard Invariant 6 (< 500 lines).
+  - Synchronized `docs/project/backlog/ROADMAP.md` Milestone 2 (confirming all foundational enablers complete) and Milestone 5 (updating completed checkboxes for `TASK-0101`, `TASK-0103`, `TASK-0105`, `TASK-0106`).
+  - Replenished ready buffer in `docs/project/backlog/refined/` to optimal buffer of 10 items (`TASK-0102`, `TASK-0104`, `TASK-0121`, `TASK-0122`, `TASK-0123`, `TASK-0124`, `TASK-0125`, `TASK-0126`, `TASK-0127`, `TASK-0128`), citing governing ADRs, PRDs, and testable frontdoor blackbox definitions of done.
+  - Added new persona-driven user stories `US-0055` through `US-0059` and registered them in `docs/project/user_stories/REGISTRY.md`.
+  - Re-indexed `docs/project/backlog/PRIORITY.md` following lean engineering hierarchy: Enablers → Current Milestone Epics → Identified Refactorings → Future Milestones.
+  - Moved completed `TASK-0066` to `complete/` with status Complete.
 - **Theming Tokens and Contrast Invariants Test Suite Modular Decomposition (`TASK-0114`, `ADR-0004`, `ADR-0009`, `ADR-0012`)**:
   - Decomposed monolithic `tests/test_theming.py` (443 lines) into two focused, specialized test modules: `tests/test_theming_tokens.py` (174 lines) and `tests/test_theming_contrast.py` (178 lines), preventing breaches of Hard Invariant 6 (< 500 lines).
   - Maintained 100% backward compatibility and test coverage across semantic token hierarchies, themes.css modular `@import` resolution, index.css and index.html loads, `<runefoble-theme-switcher>`, Storybook preview matrix, WCAG 2.1 AA/AAA contrast ratios, zero-hardcoded-hex invariants in Web Component styles, and settings modal style modular decomposition.
