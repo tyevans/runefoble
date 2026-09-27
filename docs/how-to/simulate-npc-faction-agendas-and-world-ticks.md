@@ -242,3 +242,91 @@ When queried through `GET /api/v1/campaigns/{id}/world-ticks/latest`:
 - **Dungeon Masters (`dungeon_master` relation)** receive the full unredacted markdown briefing and tactical advisory.
 - **Players (`player` / `view` relation)** receive a redacted payload where `intelligence_bulletin` is cleared to prevent spoiling secret faction moves, while public tavern rumors, territory control chips, and influence scores remain visible.
 - **Unauthorized users** without view permission receive HTTP `403 Forbidden`.
+
+---
+
+## Faction Turf Wars & Regional Unrest Pipeline (TASK-0162)
+
+When rival factions clash over territory nodes, trade outposts, or control points, the skirmish adjudication engine computes battle outcomes, casualty distributions, and unrest escalation without manual DM intervention.
+
+### 1. Simulating an Ad-Hoc Skirmish
+
+DMs can trigger ad-hoc boundary skirmishes between rival factions via:
+```http
+POST /the-watcher/factions/skirmish/simulate
+X-User-Id: dm_evelyn
+Content-Type: application/json
+
+{
+  "campaign_id": "camp-101",
+  "region_id": "region-valen",
+  "contested_node": "North River Gate",
+  "attacker": {
+    "faction_id": "ironfang_syndicate",
+    "military_strength": 40,
+    "morale_modifier": 2
+  },
+  "defender": {
+    "faction_id": "city_watch",
+    "military_strength": 30,
+    "defense_rating": 3
+  },
+  "terrain": "urban"
+}
+```
+
+#### Terrain Defensive Advantages
+Terrain grants defensive rating bonuses to the defending faction:
+- **Plains**: +0
+- **Forest**: +2
+- **Hills / Swamp**: +3
+- **Urban**: +4
+- **Mountain**: +5
+- **Fortress**: +7
+
+#### Territory Capture Criteria
+- If attacker score exceeds defender score by a margin of 3 or more (`margin >= 3`), territorial ownership flips to the attacker and `FactionTerritoryCapturedEvent` is emitted.
+- If margin < 3 or defender wins/stalemates, the node remains defended or contested.
+
+### 2. Regional Unrest & Economic Friction Metrics
+
+Each skirmish escalates regional unrest (`RegionalUnrestEscalatedEvent`) based on casualties and territory loss:
+- **0–20 (Calm)**: Standard guard patrol, baseline 1.0x market pricing (0.0 economic friction).
+- **21–45 (Guarded)**: Patrolled gates, cautious merchants (up to 0.4 friction).
+- **46–70 (Elevated)**: Heightened guards, tavern gossip and tavern rumors active (0.4–0.6 friction).
+- **71–85 (High)**: Night curfew enforced, supply lines disrupted (0.6–0.75 friction).
+- **86–100 (Critical)**: Martial law, riots, barricades, trade routes closed (up to 0.9 friction).
+
+### 3. Querying Regional Unrest Projections
+
+Campaign participants can query regional stability and contested boundary history:
+```http
+GET /the-watcher/regions/region-valen/unrest?campaign_id=camp-101
+X-User-Id: player_valeros
+```
+
+Returns:
+```json
+{
+  "region_id": "region-valen",
+  "campaign_id": "camp-101",
+  "controlling_faction_id": "ironfang_syndicate",
+  "unrest_score": 48,
+  "alert_level": "elevated",
+  "security_level": "heightened",
+  "economic_friction": 0.43,
+  "contested_nodes": ["North River Gate"],
+  "recent_skirmishes": [
+    {
+      "skirmish_id": "skm-a1b2c3d4",
+      "winner": "ironfang_syndicate",
+      "contested_node": "North River Gate",
+      "territory_captured": true,
+      "casualties": 11,
+      "narrative": "ironfang_syndicate launched an assault on North River Gate (urban) and overran city_watch's defenses..."
+    }
+  ]
+}
+```
+
+Events are streamed across Redis Streams topic `runefoble:events:world` for automated session and chronicle synchronization.

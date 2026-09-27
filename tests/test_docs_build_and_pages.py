@@ -52,7 +52,11 @@ def test_zensical_configuration():
 
 def test_docs_site_generation_and_visualizer_integration():
     """Verify build generates full HTML documentation, search index, and embedded visualizer."""
-    if not SITE_DIR.exists() or not (SITE_DIR / "visualizer" / "index.html").exists():
+    if (
+        not SITE_DIR.exists()
+        or not (SITE_DIR / "index.html").exists()
+        or not (SITE_DIR / "visualizer" / "index.html").exists()
+    ):
         import subprocess
         import sys
 
@@ -233,6 +237,11 @@ def test_marketing_showcase_page_and_navigation():
 
     # Verify site contains compiled HTML
     marketing_html = SITE_DIR / "marketing" / "index.html"
+    if not marketing_html.exists():
+        import subprocess
+        import sys
+
+        subprocess.run([sys.executable, "scripts/build_docs.py"], cwd=str(REPO_ROOT), check=True)
     assert marketing_html.exists()
     html_content = marketing_html.read_text(encoding="utf-8")
     assert "Speak and the Board Obeys" in html_content
