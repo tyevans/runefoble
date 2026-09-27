@@ -6,18 +6,25 @@
     "runefoble-voice-controls",
     "runefoble-audio-indicator",
     "runefoble-mobile-companion",
-    "runefoble-voice-duplex-controls"
+    "runefoble-voice-duplex-controls",
+    "audio-stream-controller",
+    "haptic-ping-panel",
+    "connection-status-badge"
   ],
   "tags": [
     "runefoble-voice-controls",
     "runefoble-audio-indicator",
     "runefoble-mobile-companion",
-    "runefoble-voice-duplex-controls"
+    "runefoble-voice-duplex-controls",
+    "audio-stream-controller",
+    "haptic-ping-panel",
+    "connection-status-badge"
   ],
   "styles": [
     "./src/runefoble-voice-controls.styles.ts",
     "./src/runefoble-mobile-companion.styles.ts",
-    "./src/duplex/styles/index.ts"
+    "./src/duplex/styles/index.ts",
+    "./src/mobile_companion/styles/index.ts"
   ],
   "scripts": [
     "./src/index.ts"

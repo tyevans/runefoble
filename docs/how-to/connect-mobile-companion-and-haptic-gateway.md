@@ -131,3 +131,22 @@ The mobile companion component is vendored in `@runefoble/voice-agent-ui` and ad
 - **WebSocket Protocol Dispatcher**: Direct client-side connection support via `.connectWebSocket(url)` and message handler for `haptic_vibration`, `haptic_ping`, and `audio_profile_adapted` frames.
 - **Custom Event Contracts**: Dispatches `haptic-pulse`, `whisper-received`, `whisper-dismissed`, `whisper-blur-toggled`, and `connection-changed`.
 
+---
+
+## 5. Decomposed Sub-Components
+
+Per ADR-0004 and Hard Invariant 6, the mobile companion is decomposed into focused subcomponents under `@runefoble/voice-agent-ui`:
+
+1. **Audio Stream Controller (`<audio-stream-controller>`)**:
+   - Manages WebRTC Opus mono stream indicators, cellular bitrate selection (12, 16, 24 kbps), audio buffer health bars, and stream muting.
+   - Emits: `bitrate-change`, `mute-toggle`.
+
+2. **Haptic Ping Panel (`<haptic-ping-panel>`)**:
+   - Handles secret DM whisper cards, privacy blur reveal/conceal toggling, acoustic chime synthesis (`AudioContext`), combat turn alert banners, and Web Vibration API feedback.
+   - Emits: `haptic-pulse`, `whisper-received`, `whisper-dismissed`, `whisper-blur-toggled`, `turn-alert-dismissed`.
+
+3. **Connection Status Badge (`<connection-status-badge>`)**:
+   - Renders online/offline badges, cellular tier tags, live haptic pulse animations, round-trip latency readouts, and reconnection trigger buttons.
+   - Emits: `reconnect`.
+
+
