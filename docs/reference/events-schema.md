@@ -544,6 +544,17 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `notification_body`: Optional[String]
   - `diegetic`: Boolean
   - `dispatched_at`: String (ISO-8601 UTC timestamp)
+- **`VoiceSpeechInterrupted`**: Emitted when active TTS narration is interrupted by player speech / barge-in (`voice.speech.interrupted` / `runefoble.events.voice.speech_interrupted`).
+  - `session_id`: String
+  - `speaker_id`: String
+  - `speaker_name`: String
+  - `timestamp`: Float (epoch timestamp)
+  - `interrupted_at`: String (ISO-8601 UTC timestamp)
+  - `remaining_narration_text`: Optional[String] (unspoken narration tail)
+  - `original_text`: Optional[String]
+  - `playback_duration_ms`: Float
+  - `cutoff_position_ms`: Float
+  - `reason`: String ("player_barge_in")
 
 
 ### Asset Storage Events (`aggregate_type: Asset`)

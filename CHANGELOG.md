@@ -35,6 +35,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added `PhysicsHandlerMixin` in `services/board_state/src/board_state/handlers/physics.py` handling collision impulses and dice settling in `BoardAggregate`.
   - Added frontdoor blackbox test suite `tests/test_blackbox_tabletop_physics.py` verifying dice toss calculation, final face settling, high-elevation wall knockback halting, and `board.physics.collision` domain event emission with impact energy.
   - Authored Diataxis guide `docs/how-to/simulate-tabletop-3d-physics-and-collisions.md` and updated `docs/reference/events-schema.md` and `docs/reference/ports-and-endpoints.md`.
+- **Zero-Latency Neural Voice Duplex & Speech Interruption Handling (`TASK-0141`, `ADR-0002`, `ADR-0006`, `PRD-0004`, `US-0060`)**:
+  - Implemented low-latency neural VAD stream analyzer in `services/voice_agent/src/voice_agent/barge_in.py` (< 140 lines) detecting human speech interruptions within <= 80ms of onset.
+  - Implemented TTS audio stream cancellation coordinator in `services/voice_agent/src/voice_agent/interruption.py` (< 135 lines) executing smooth 20ms cosine crossfades to silence without audio pops or clipping and calculating remaining unspoken narration text.
+  - Implemented adaptive Acoustic Echo Cancellation (AEC) filter in `services/voice_agent/src/voice_agent/echo_canceller.py` (< 100 lines) using Normalized LMS to subtract speaker output from microphone input buffers and prevent false-positive barge-in triggers from loudspeaker feedback.
+  - Implemented WebSocket voice duplex signaling router in `services/voice_agent/src/voice_agent/routers/duplex.py` (< 140 lines) broadcasting `barge_in_detected`, `webrtc_stream_mute`, and `playback_canceled` control frames.
+  - Registered and published `VoiceSpeechInterrupted` (`voice.speech.interrupted` / `runefoble.events.voice.speech_interrupted`) domain events over Redis Streams (`runefoble.events.voice` and `runefoble.events.session`) to immediately pause narration aggregates and capture interjections.
+  - Added frontdoor blackbox test suite `tests/test_blackbox_voice_duplex.py` verifying sub-100ms cancellation latency, WebRTC mute signaling, acoustic echo suppression, smooth 20ms crossfade, and strict file length invariants (< 180 lines).
+  - Authored Diataxis How-To guide `docs/how-to/handle-neural-voice-duplex-and-speech-interruption.md` and updated `docs/reference/events-schema.md`.
 
 - **Campaign Analytics UI Blackbox Test Suite Modular Decomposition (`TASK-0143`, `ADR-0013`, `PRD-0012`, `US-0040`, `US-0054`)**:
   - Decomposed monolithic `tests/test_blackbox_campaign_analytics_ui.py` (383 lines) into focused, single-responsibility frontdoor blackbox test modules under `tests/test_blackbox_campaign_analytics_ui/` strictly adhering to Hard Invariant 6 (< 500 lines per file) with all resulting test files strictly under 160 lines.

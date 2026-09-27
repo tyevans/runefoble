@@ -1,7 +1,7 @@
 ---
 id: '0141'
 title: Zero-Latency Neural Voice Duplex & Speech Interruption Handling
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0002
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0060
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/159
 ---
-
 # TASK-0141: Zero-Latency Neural Voice Duplex & Speech Interruption Handling
 
 ## Status

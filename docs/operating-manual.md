@@ -109,6 +109,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`simulate-npc-faction-agendas-and-world-ticks.md`](how-to/simulate-npc-faction-agendas-and-world-ticks.md): How to execute autonomous NPC faction agenda simulation ticks, resolve rival clashes, and generate DM intelligence bulletins.
 - [`connect-mobile-companion-and-haptic-gateway.md`](how-to/connect-mobile-companion-and-haptic-gateway.md): How to connect mobile companions to low-bandwidth adaptive Opus WebRTC audio and haptic vibration pings for secret DM whispers.
 - [`coordinate-west-marches-shared-world-and-caravans.md`](how-to/coordinate-west-marches-shared-world-and-caravans.md): How to coordinate West Marches multi-party shared persistent frontiers, synchronize discovery logs across campaigns, dispatch trade caravans, and enforce SpiceDB Zanzibar party isolation.
+- [`handle-neural-voice-duplex-and-speech-interruption.md`](how-to/handle-neural-voice-duplex-and-speech-interruption.md): How to handle zero-latency neural voice duplex, speech barge-in detection within 80ms, 20ms soft audio crossfade cancellation, and acoustic echo cancellation.
 
 
 
