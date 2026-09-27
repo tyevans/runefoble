@@ -1,7 +1,7 @@
 ---
 id: '0177'
 title: Runefoble Events Aggregator Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies: []
 governing_adrs:
@@ -10,8 +10,8 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/228
 ---
-
 # TASK-0177: Runefoble Events Aggregator Modular Decomposition
 
 ## Status
