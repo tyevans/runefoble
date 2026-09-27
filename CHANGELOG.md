@@ -16,6 +16,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
     - `__init__.py` (47 lines): Re-exports aggregated `router` combining notice board and lifecycle routes with identical URL routes, tags, and dependencies.
   - Maintained 100% backward compatibility via a lightweight facade in `services/game_session/src/game_session/routers/caravan_contracts.py` (7 lines) re-exporting `router` from the package.
   - Updated Diataxis guides `docs/how-to/decompose-microservice-routers.md` and `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md`.
+- **Mock SpiceDB Client and Auth Schema Modular Decomposition (`TASK-0144`, `ADR-0001`, `PRD-0001`, `US-0009`, `US-0013`)**:
+  - Decomposed `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (457 lines) into single-responsibility submodules under `libs/runefoble_auth/src/runefoble_auth/mock/`:
+    - `schema_parser.py`: Extracted Zed schema definition parsing, object relation parsing, and relation graph construction (`SchemaGraph`) (< 95 lines).
+    - `evaluator.py`: Extracted recursive Zanzibar permission resolution, schema arrow expressions (`relation->permission`), domain relation rules, and caveat evaluation (`PermissionEvaluator`) (< 150 lines).
+    - `client.py`: Extracted in-memory relationship tuple store, CRUD operations, touch updates, and permission checking (`MockSpiceDBClient`, `Relationship`) (< 140 lines).
+    - `mock/__init__.py`: Clean package exports for mock SpiceDB components (< 25 lines).
+  - Reduced `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` to a lean facade re-export (< 25 lines) preserving 100% backward compatibility for all callers and test suites.
+  - Decomposed live SpiceDB gRPC integration from `spicedb.py` into `grpc_adapter.py` (< 160 lines), keeping `spicedb.py` (< 165 lines) and `sync.py` (< 175 lines) strictly under the 180-line ceiling.
+  - Added unit test suite `libs/runefoble_auth/tests/test_mock_spicedb.py` and frontdoor blackbox test suites `tests/test_blackbox_spicedb_auth_sync.py` and `tests/test_blackbox_spicedb_live.py`.
 - **West Marches Blackbox Test Suite Modular Decomposition (`TASK-0145`, `ADR-0001`, `ADR-0006`, `ADR-0011`, `PRD-0007`, `US-0058`)**:
   - Decomposed monolithic blackbox test suite `tests/test_blackbox_west_marches.py` (402 lines) into focused, domain-specific modules under `tests/test_blackbox_west_marches/` strictly conforming to Hard Invariant 6 (< 500 lines per file, with zero files exceeding 130 lines):
     - `conftest.py` (46 lines): Shared test harness isolating `mock_bus`, `spicedb_client`, `client`, and standard party credential fixtures.

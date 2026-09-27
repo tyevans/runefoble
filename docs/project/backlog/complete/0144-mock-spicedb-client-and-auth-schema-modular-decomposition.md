@@ -1,7 +1,7 @@
 ---
 id: '0144'
 title: Mock SpiceDB Client and Auth Schema Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0008
@@ -15,8 +15,8 @@ governing_stories:
 - US-0009
 - US-0013
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/163
 ---
-
 # TASK-0144: Mock SpiceDB Client and Auth Schema Modular Decomposition
 
 ## Status
