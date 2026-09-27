@@ -158,7 +158,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 146. **TASK-0155 (Refined)**: [`0155-spoken-reaction-interrupts-and-ready-actions-engine.md`](refined/0155-spoken-reaction-interrupts-and-ready-actions-engine.md) — Spoken Reaction Interrupts and Ready-Action Combat Triggers
 147. **TASK-0156 (Refined)**: [`0156-secret-dm-traps-and-map-switching-triggers.md`](refined/0156-secret-dm-traps-and-map-switching-triggers.md) — Secret DM Spatial Traps, Map Switching and Stage Triggers
 148. **TASK-0157 (Proposed)**: [`0157-dm-vocal-modulator-formant-dsp-engine.md`](proposed/0157-dm-vocal-modulator-formant-dsp-engine.md) — DM Live Vocal Modulator and Real-Time NPC Formant DSP Engine
-149. **TASK-0149 (Refined)**: [`0149-voice-duplex-barge-in-visualizer-microfrontend.md`](refined/0149-voice-duplex-barge-in-visualizer-microfrontend.md) — Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend
+149. **TASK-0149 (Complete)**: [`0149-voice-duplex-barge-in-visualizer-microfrontend.md`](complete/0149-voice-duplex-barge-in-visualizer-microfrontend.md) — Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend
 150. **TASK-0142 (Refined)**: [`0142-3d-miniature-tokens-and-webgl-physics.md`](refined/0142-3d-miniature-tokens-and-webgl-physics.md) — 3D Miniature Tokens & WebGL Tabletop Physics
 151. **TASK-0147 (Refined)**: [`0147-caravan-contracts-router-modular-decomposition.md`](refined/0147-caravan-contracts-router-modular-decomposition.md) — Caravan Contracts API Router Modular Decomposition
 152. **TASK-0148 (Refined)**: [`0148-caravan-board-microfrontend-decomposition.md`](refined/0148-caravan-board-microfrontend-decomposition.md) — Caravan Board Microfrontend Styles and Component Decomposition
