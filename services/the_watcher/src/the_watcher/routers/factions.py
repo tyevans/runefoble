@@ -210,4 +210,11 @@ async def get_latest_bulletin(
             status_code=404,
             detail="No world tick has been executed for this campaign yet",
         )
+    if x_user_id:
+        client = get_spicedb_client()
+        is_dm = await check_dm_authorization(x_user_id, campaign_id=campaign_id, spicedb=client)
+        if not is_dm:
+            redacted = bulletin.model_copy()
+            redacted.intelligence_bulletin = ""
+            return redacted
     return bulletin

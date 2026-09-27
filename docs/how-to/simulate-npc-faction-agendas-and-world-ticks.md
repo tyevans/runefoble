@@ -143,3 +143,56 @@ X-User-Id: dm_evelyn
 - **Merchant Cues**: Adjust goods availability and markups based on regional trade flow.
 - **NPC Dialogue**: Spoken interactions should mirror current tavern gossip and suspicion.
 ```
+
+---
+
+## 6. Faction Radar & Intelligence Bulletin Microfrontend (`<runefoble-faction-radar>`)
+
+The `<runefoble-faction-radar>` Lit Web Component (ADR-0013) is vendored within `services/the_watcher/ui/src/` and provides a tactile Bauhaus visualization of campaign factions, territory control, public rumors, and confidential DM intelligence briefings.
+
+### Component Manifest & Advertising
+The component is registered in `@runefoble/the-watcher-ui` and advertised via the public frontdoor:
+```http
+GET /ui/manifest
+```
+Returning:
+```json
+{
+  "service": "the_watcher",
+  "package": "@runefoble/the-watcher-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-watcher-feed",
+    "runefoble-autonomous-dm",
+    "runefoble-dm-whisper-bar",
+    "runefoble-faction-radar"
+  ]
+}
+```
+
+### Component Usage & Properties
+```html
+<runefoble-faction-radar
+  campaignId="camp-101"
+  .factions=${factionsList}
+  .bulletin=${latestWorldTick}
+  .isDm=${currentUserIsDm}
+  selectedFactionId="faction-ironfang"
+></runefoble-faction-radar>
+```
+
+| Property | Type | Description |
+|---|---|---|
+| `campaignId` | `string` | Unique campaign resource identifier. |
+| `factions` | `FactionData[]` | Array of simulated campaign factions with influence, resources, and agenda. |
+| `bulletin` | `WorldTickData \| null` | Most recent world tick result with intelligence briefing and shifts. |
+| `isDm` | `boolean` | Flag controlling secret DM briefing drawer visibility vs player redaction. |
+| `selectedFactionId` | `string` | ID of the active/selected faction highlighted on radar and list. |
+| `isDrawerOpen` | `boolean` | State toggle for the secret DM briefing drawer panel. |
+| `tavernRumors` | `string[]` | Optional direct override for public tavern gossip feed. |
+
+### SpiceDB Zanzibar Object-Level Redaction (ADR-0001)
+When queried through `GET /api/v1/campaigns/{id}/world-ticks/latest`:
+- **Dungeon Masters (`dungeon_master` relation)** receive the full unredacted markdown briefing and tactical advisory.
+- **Players (`player` / `view` relation)** receive a redacted payload where `intelligence_bulletin` is cleared to prevent spoiling secret faction moves, while public tavern rumors, territory control chips, and influence scores remain visible.
+- **Unauthorized users** without view permission receive HTTP `403 Forbidden`.
