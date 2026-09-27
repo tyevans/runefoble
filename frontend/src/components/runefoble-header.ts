@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import './runefoble-campaign-nav.ts';
 import './runefoble-breadcrumbs.ts';
+import './runefoble-user-menu.ts';
 import type { BreadcrumbItem } from '../router/router.ts';
 
 @customElement('runefoble-header')
@@ -95,6 +96,7 @@ export class RunefobleHeader extends LitElement {
             .userRole=${this.userRole}
             .socketConnected=${this.socketConnected}
           ></runefoble-campaign-nav>
+          <runefoble-user-menu></runefoble-user-menu>
         </div>
       </header>
     `;

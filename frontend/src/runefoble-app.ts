@@ -4,6 +4,7 @@ import './styles/themes.css';
 import { appShellStyles } from './styles/app-shell.styles.ts';
 import './components/runefoble-header.ts';
 import './components/runefoble-settings-modal.ts';
+import './components/runefoble-auth-modal.ts';
 import '@runefoble/board-state-ui';
 import '@runefoble/character-sheet-ui';
 import '@runefoble/game-session-ui';
@@ -42,6 +43,8 @@ export class RunefobleApp extends LitElement {
   @state() private events: WatcherFeedEvent[] = DEFAULT_EVENTS;
   @state() private breadcrumbs: BreadcrumbItem[] = [];
   @state() private currentRoute: MatchedRoute | null = null;
+  @state() private isAuthModalOpen = false;
+  @state() private authInitialTab: 'login' | 'register' = 'login';
 
   private socket: WebSocket | null = null;
   private unlistenRouter: (() => void) | null = null;
@@ -76,6 +79,13 @@ export class RunefobleApp extends LitElement {
     this.breadcrumbs = route.breadcrumbs;
     if (route.params.campaignId) this.campaignId = route.params.campaignId;
     if (route.params.sessionId) this.sessionId = route.params.sessionId;
+    if (route.pattern === '#/login') {
+      this.authInitialTab = 'login';
+      this.isAuthModalOpen = true;
+    } else if (route.pattern === '#/register') {
+      this.authInitialTab = 'register';
+      this.isAuthModalOpen = true;
+    }
   }
 
   private initThemeAndColorMode() {
@@ -155,6 +165,7 @@ export class RunefobleApp extends LitElement {
         .socketConnected=${this.socketConnected} .campaignId=${this.campaignId} .sessionId=${'14'}
         .breadcrumbs=${this.breadcrumbs}
         @open-settings=${() => { this.isSettingsOpen = true; }}
+        @open-login=${() => { this.authInitialTab = 'login'; this.isAuthModalOpen = true; }}
         @toggle-view-mode=${(e: CustomEvent) => { this.viewMode = e.detail.viewMode; }}
         @campaign-changed=${(e: CustomEvent) => { this.campaignId = e.detail.campaignId; }}
       ></runefoble-header>
@@ -196,6 +207,16 @@ export class RunefobleApp extends LitElement {
         @theme-changed=${(e: CustomEvent) => { if (e.detail?.theme) this.currentTheme = e.detail.theme; }}
         @color-mode-changed=${(e: CustomEvent) => { if (e.detail?.mode) this.currentColorMode = e.detail.mode; }}
       ></runefoble-settings-modal>
+      <runefoble-auth-modal
+        .open=${this.isAuthModalOpen}
+        .initialTab=${this.authInitialTab}
+        @auth-modal-closed=${() => {
+          this.isAuthModalOpen = false;
+          if (this.currentRoute?.pattern === '#/login' || this.currentRoute?.pattern === '#/register') {
+            router.navigate('#/campaigns');
+          }
+        }}
+      ></runefoble-auth-modal>
     `;
   }
 }
