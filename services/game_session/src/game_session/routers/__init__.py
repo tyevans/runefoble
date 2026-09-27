@@ -1,6 +1,7 @@
 """APIRouters for Game Session microservice."""
 
 from game_session.routers.autopilot import router as autopilot_router
+from game_session.routers.bounties import router as bounties_router
 from game_session.routers.campfire import router as campfire_router
 from game_session.routers.caravan_contracts import router as caravan_contracts_router
 from game_session.routers.caravan_trade import router as caravan_trade_router
@@ -14,6 +15,7 @@ from game_session.routers.west_marches import router as west_marches_router
 
 __all__ = [
     "autopilot_router",
+    "bounties_router",
     "campfire_router",
     "caravan_contracts_router",
     "caravan_trade_router",

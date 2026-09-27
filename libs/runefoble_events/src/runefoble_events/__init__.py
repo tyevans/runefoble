@@ -1,5 +1,13 @@
 """Runefoble Events Library - Built on eventsource-py."""
 
+from runefoble_events.contracts import (
+    MercenaryBountyClaimed,
+    MercenaryBountyClaimedEvent,
+    MercenaryBountyFulfilled,
+    MercenaryBountyFulfilledEvent,
+    MercenaryBountyPosted,
+    MercenaryBountyPostedEvent,
+)
 from runefoble_events.events import (
     AbsencePenaltyApplied,
     AbsencePenaltyCleared,
@@ -325,6 +333,12 @@ __all__ = [
     "MinigameStarted",
     "MinigameTurnTaken",
     "MinigameEnded",
+    "MercenaryBountyClaimed",
+    "MercenaryBountyClaimedEvent",
+    "MercenaryBountyFulfilled",
+    "MercenaryBountyFulfilledEvent",
+    "MercenaryBountyPosted",
+    "MercenaryBountyPostedEvent",
     "IntoxicationLevelChanged",
     "HagglingNegotiated",
     "CharacterDamaged",

@@ -45,7 +45,7 @@ definition session {
 
     permission control = campaign->run_session
     permission participate = campaign->play
-    permission observe = campaign->view
+    permission observe = campaign->view + participate + control
 }
 
 definition board_token {
@@ -225,5 +225,38 @@ definition settlement {
 
     // Managing or defending settlement
     permission manage = founder + guild_officer + shared_world->manage
+}
+
+definition bounty_contract {
+    relation session: session
+    relation campaign: campaign
+    relation creator: user
+    relation claimant: user
+
+    // Viewing open or active bounties
+    permission view = creator + claimant + campaign->view + session->observe
+
+    // Claiming an open bounty requires session/campaign play participation
+    permission claim = claimant + campaign->play + session->participate
+
+    // Submitting proof and fulfilling contract
+    permission fulfill = claimant + creator
+
+    // Managing contract, resolving disputes, and releasing escrow payout
+    permission manage = creator + campaign->run_session + session->control
+    permission disburse = creator + campaign->run_session + session->control
+}
+
+definition mercenary_bounty {
+    relation session: session
+    relation campaign: campaign
+    relation creator: user
+    relation claimant: user
+
+    permission view = creator + claimant + campaign->view + session->observe
+    permission claim = claimant + campaign->play + session->participate
+    permission fulfill = claimant + creator
+    permission manage = creator + campaign->run_session + session->control
+    permission disburse = creator + campaign->run_session + session->control
 }
 

@@ -15,6 +15,7 @@ from game_session.dependencies import (
 )
 from game_session.routers import (
     autopilot_router,
+    bounties_router,
     campfire_router,
     caravan_contracts_router,
     caravan_trade_router,
@@ -55,6 +56,8 @@ app.include_router(caravan_trade_router)
 app.include_router(caravan_contracts_router)
 app.include_router(settlements_router)
 app.include_router(settlements_router, prefix="/api/v1")
+app.include_router(bounties_router)
+app.include_router(bounties_router, prefix="/api/v1")
 
 
 @app.get("/healthz")
