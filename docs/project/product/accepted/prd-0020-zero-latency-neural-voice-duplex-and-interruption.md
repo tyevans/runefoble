@@ -49,5 +49,7 @@ Voice-first tabletop roleplayers (like Marcus), expressive dramatic performers (
 - [`US-0023: Spoken Reaction Interrupts and Ready Actions`](../../user_stories/accepted/us-0023-spoken-reaction-interrupts-and-ready-actions.md)
 
 ## Implementing Backlog Tasks
-- [`TASK-0141: Zero-Latency Neural Voice Duplex & Speech Interruption Handling`](../../backlog/refined/0141-zero-latency-neural-voice-duplex-and-interruption.md)
-- [`TASK-0149: Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend`](../../backlog/proposed/0149-voice-duplex-barge-in-visualizer-microfrontend.md)
+- [`TASK-0141: Zero-Latency Neural Voice Duplex & Speech Interruption Handling`](../../backlog/complete/0141-zero-latency-neural-voice-duplex-and-interruption.md)
+- [`TASK-0149: Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend`](../../backlog/complete/0149-voice-duplex-barge-in-visualizer-microfrontend.md)
+- [`TASK-0168: Neural Speech Barge-In and Soft Crossfade Audio Filter`](../../backlog/proposed/0168-neural-speech-barge-in-crossfade-filter.md)
+- [`TASK-0169: Hardware Acoustic Echo Cancellation and ERLE Validation`](../../backlog/proposed/0169-hardware-aec-filter-and-erle-validation.md)

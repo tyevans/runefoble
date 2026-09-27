@@ -84,6 +84,40 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`CombatEncounterEnded`**: Emitted when combat concludes.
   - `session_id`: Optional[UUID | str]
   - `total_rounds`: Integer
+- **`CombatTurnPausedForReactionEvent`** (alias: `CombatTurnPausedForReaction`): Emitted when active combat turn is halted within 500ms for a spoken reaction interrupt (`combat.turn.paused_for_reaction` / `runefoble.events.combat.turn_paused_for_reaction`).
+  - `session_id`: UUID | str
+  - `reaction_id`: String
+  - `reacting_combatant_id`: String
+  - `reacting_combatant_name`: String
+  - `trigger_phrase`: String
+  - `reaction_type`: String ("shield", "counterspell", "opportunity_attack", etc.)
+  - `paused_turn_combatant_id`: String
+  - `timeout_seconds`: Float (default 15.0)
+- **`ReactionResolvedEvent`** (alias: `ReactionResolved`): Emitted when a declared combat reaction interrupt is resolved or dismissed, resuming the active combat turn (`combat.reaction.resolved` / `runefoble.events.combat.reaction_resolved`).
+  - `session_id`: UUID | str
+  - `reaction_id`: String
+  - `reacting_combatant_id`: String
+  - `action_taken`: String ("executed", "dismissed", "timeout")
+  - `resumed`: Boolean (default True)
+- **`ReadyActionRegisteredEvent`** (alias: `ReadyActionRegistered`): Emitted when a combatant registers a conditional ready-action trigger evaluated against incoming combat events (`combat.ready_action.registered` / `runefoble.events.combat.ready_action_registered`).
+  - `session_id`: UUID | str
+  - `ready_action_id`: String
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `trigger_type`: String ("enemy_enters_range", "spell_cast", "movement", "spatial", "attack")
+  - `trigger_condition`: String
+  - `readied_action`: String
+  - `target_id`: Optional[String]
+  - `range_cells`: Optional[Integer]
+- **`ReadyActionTriggeredEvent`** (alias: `ReadyActionTriggered`): Emitted when an incoming combat or board event fulfills a ready-action trigger condition (`combat.ready_action.triggered` / `runefoble.events.combat.ready_action_triggered`).
+  - `session_id`: UUID | str
+  - `ready_action_id`: String
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `triggering_entity_id`: String
+  - `trigger_type`: String
+  - `readied_action`: String
+
 - **`CharacterControlTransferred`**: Emitted when active token and turn control is transferred mid-session between an AI stand-in and a player (`runefoble.events.session.character_control_transferred`).
   - `session_id`: UUID | str
   - `character_id`: UUID | str

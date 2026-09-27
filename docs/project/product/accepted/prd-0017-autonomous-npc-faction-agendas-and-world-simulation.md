@@ -52,3 +52,6 @@ Game Masters (like Evelyn the Overworked Dungeon Master) and worldbuilders (like
 ## Implementing Backlog Tasks
 - [`TASK-0126: Autonomous NPC Faction Agendas & World Simulation`](../../backlog/complete/0126-autonomous-npc-faction-agendas-and-world-simulation.md)
 - [`TASK-0137: Autonomous NPC Faction Agendas Radar & Bulletin Microfrontend`](../../backlog/complete/0137-npc-faction-agendas-radar-and-bulletin-microfrontend.md)
+- [`TASK-0161: NPC Faction Resource Operations and Bribery Mechanics Aggregate`](../../backlog/proposed/0161-npc-faction-resource-and-bribery-aggregate.md)
+- [`TASK-0162: Faction Turf War and Regional Unrest Event Pipeline`](../../backlog/proposed/0162-faction-turf-war-and-unrest-event-pipeline.md)
+- [`TASK-0163: Faction Espionage and Alert Feeds Microfrontend`](../../backlog/proposed/0163-faction-espionage-radar-alerts-microfrontend.md)
