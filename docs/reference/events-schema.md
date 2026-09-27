@@ -153,6 +153,34 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `wall_segments`: List[Dict[str, Any]]
   - `portals`: List[Dict[str, Any]]
   - `lights`: List[Dict[str, Any]]
+- **`TokenActionExecuted`**: Emitted when a tactical token executes a combat maneuver via the radial action dial (`runefoble.events.board.token_action_executed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `token_id`: String
+  - `action`: String ("attack", "dodge", "dash", "disengage", "cast")
+  - `target_token_id`: Optional[String]
+  - `target_token_ids`: List[String]
+  - `details`: Dict[str, Any]
+  - `initiated_by`: String ("player", "the_watcher", "stand_in")
+- **`AoETemplatePlaced`**: Emitted when a geometric AoE spell template is positioned on the board (`runefoble.events.board.aoe_template_placed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `template_id`: String
+  - `caster_token_id`: Optional[String]
+  - `shape`: String ("cone", "sphere", "line", "cube")
+  - `origin_x`: Float, `origin_y`: Float
+  - `direction_deg`: Float (0-360, snapped in 15° increments)
+  - `radius_ft`: Optional[Float]
+  - `length_ft`: Optional[Float]
+  - `width_ft`: Optional[Float]
+  - `spell_name`: Optional[String]
+  - `affected_token_ids`: List[String]
+  - `affected_cells`: List[List[Integer]]
+- **`AoETemplateRemoved`**: Emitted when an active AoE spell template is dismissed (`runefoble.events.board.aoe_template_removed`).
+  - `session_id`: String
+  - `board_id`: String
+  - `template_id`: String
+
 
 ### CharacterSheet Events (`aggregate_type: CharacterSheet`)
 

@@ -23,6 +23,8 @@ from board_state.models import (
     VisibilityResponse,
 )
 from board_state.routers import (
+    actions_router,
+    aoe_router,
     boards_router,
     previews_router,
     terrain_router,
@@ -42,6 +44,8 @@ app.include_router(boards_router)
 app.include_router(tokens_router)
 app.include_router(terrain_router)
 app.include_router(previews_router)
+app.include_router(actions_router)
+app.include_router(aoe_router)
 
 
 @app.get("/healthz")

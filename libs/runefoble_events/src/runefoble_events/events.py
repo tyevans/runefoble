@@ -26,12 +26,15 @@ from runefoble_events.audience import (
 )
 from runefoble_events.base import BaseRunefobleEvent, register_event
 from runefoble_events.board import (
+    AoETemplatePlaced,
+    AoETemplateRemoved,
     BoardGridInitialized,
     BoardMapImported,
     BoardMoveEvent,
     FogOfWarRevealed,
     FogOfWarShrouded,
     TerrainCellModified,
+    TokenActionExecuted,
     TokenHazardTriggered,
     TokenMoved,
     TokenPlaced,
@@ -177,6 +180,9 @@ __all__ = [
     "TokenPlaced",
     "TokenMoved",
     "TokenRemoved",
+    "TokenActionExecuted",
+    "AoETemplatePlaced",
+    "AoETemplateRemoved",
     "FogOfWarRevealed",
     "FogOfWarShrouded",
     "TerrainCellModified",

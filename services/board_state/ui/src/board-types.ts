@@ -12,6 +12,48 @@ export interface BoardToken {
   isHostile?: boolean;
   isActiveTurn?: boolean;
   movementBudget?: number;
+  activeAction?: string | null;
+  isTargeted?: boolean;
+}
+
+export type RadialActionType = 'attack' | 'dash' | 'disengage' | 'dodge' | 'cast';
+
+export interface RadialActionItem {
+  id: RadialActionType;
+  label: string;
+  icon: string;
+  color: string;
+  description: string;
+}
+
+export type AoEShape = 'cone' | 'sphere' | 'line' | 'cube';
+
+export interface AoETemplateConfig {
+  id?: string;
+  shape: AoEShape;
+  originX: number; // grid coordinates (e.g. 2.5)
+  originY: number; // grid coordinates (e.g. 2.5)
+  directionDeg: number; // 0 to 360
+  radiusFt?: number; // 10, 15, 20, 30
+  lengthFt?: number; // 30, 60
+  widthFt?: number; // 5
+  spellName?: string;
+  casterTokenId?: string;
+  gridType?: 'square' | 'hex';
+}
+
+export interface AoEEvaluationResult {
+  templateId: string;
+  shape: AoEShape;
+  originX: number;
+  originY: number;
+  directionDeg: number;
+  radiusFt?: number;
+  lengthFt?: number;
+  widthFt?: number;
+  spellName?: string;
+  affectedTokenIds: string[];
+  affectedCells: [number, number][];
 }
 
 export type TerrainType = 'normal' | 'difficult';
@@ -71,3 +113,4 @@ export interface DragKinematicsState {
   difficultCells: [number, number][];
   hazardCells: [number, number][];
 }
+

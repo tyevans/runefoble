@@ -24,10 +24,13 @@ from board_state.rules import (
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from runefoble_events.events import (
+    AoETemplatePlaced,
+    AoETemplateRemoved,
     BoardGridInitialized,
     FogOfWarRevealed,
     FogOfWarShrouded,
     TerrainCellModified,
+    TokenActionExecuted,
     TokenHazardTriggered,
     TokenMoved,
     TokenPlaced,
@@ -225,6 +228,82 @@ class BoardAggregate(DeclarativeAggregate[BoardState]):
             shrouded_cells=cells,
         )
 
+    def execute_token_action(
+        self,
+        token_id: str,
+        action: str,
+        target_token_id: str | None = None,
+        target_token_ids: list[str] | None = None,
+        details: dict[str, Any] | None = None,
+        initiated_by: str = "player",
+    ) -> None:
+        """Execute a tactical token action (Dodge, Dash, Melee/Attack, Disengage, Cast)."""
+        tid_str = str(token_id)
+        if tid_str not in self.state.tokens:
+            raise ValueError(f"Token '{token_id}' not found on grid")
+
+        all_targets = list(target_token_ids or [])
+        if target_token_id and target_token_id not in all_targets:
+            all_targets.append(target_token_id)
+
+        self.create_event(
+            TokenActionExecuted,
+            session_id=str(self.state.session_id),
+            board_id=str(self.aggregate_id),
+            token_id=tid_str,
+            action=action.lower(),
+            target_token_id=target_token_id,
+            target_token_ids=all_targets,
+            details=details or {},
+            initiated_by=initiated_by,
+        )
+
+    def place_aoe_template(
+        self,
+        template_id: str,
+        shape: str,
+        origin_x: float,
+        origin_y: float,
+        direction_deg: float = 0.0,
+        radius_ft: float | None = None,
+        length_ft: float | None = None,
+        width_ft: float | None = 5.0,
+        caster_token_id: str | None = None,
+        spell_name: str | None = None,
+        affected_token_ids: list[str] | None = None,
+        affected_cells: list[list[int]] | None = None,
+    ) -> None:
+        """Place a geometric Area of Effect (AoE) spell template onto the board."""
+        self.create_event(
+            AoETemplatePlaced,
+            session_id=str(self.state.session_id),
+            board_id=str(self.aggregate_id),
+            template_id=str(template_id),
+            caster_token_id=str(caster_token_id) if caster_token_id else None,
+            shape=shape,
+            origin_x=float(origin_x),
+            origin_y=float(origin_y),
+            direction_deg=float(direction_deg),
+            radius_ft=float(radius_ft) if radius_ft is not None else None,
+            length_ft=float(length_ft) if length_ft is not None else None,
+            width_ft=float(width_ft) if width_ft is not None else 5.0,
+            spell_name=spell_name,
+            affected_token_ids=affected_token_ids or [],
+            affected_cells=affected_cells or [],
+        )
+
+    def remove_aoe_template(self, template_id: str) -> None:
+        """Remove a placed AoE template from the board."""
+        tid_str = str(template_id)
+        if not any(t.template_id == tid_str for t in self.state.active_aoe_templates):
+            raise ValueError(f"AoE template '{template_id}' not found on grid")
+        self.create_event(
+            AoETemplateRemoved,
+            session_id=str(self.state.session_id),
+            board_id=str(self.aggregate_id),
+            template_id=tid_str,
+        )
+
     def import_uvtt_map(
         self,
         cols: int,
@@ -334,3 +413,33 @@ class BoardAggregate(DeclarativeAggregate[BoardState]):
     @handles(FogOfWarShrouded)
     def _on_fog_shrouded(self, event: FogOfWarShrouded) -> None:
         self._state = self.state.with_fog_shrouded(event.shrouded_cells)
+
+    @handles(TokenActionExecuted)
+    def _on_token_action_executed(self, event: TokenActionExecuted) -> None:
+        self._state = self.state.with_token_action(
+            token_id=str(event.token_id), action=event.action
+        )
+
+    @handles(AoETemplatePlaced)
+    def _on_aoe_template_placed(self, event: AoETemplatePlaced) -> None:
+        from board_state.models import AoETemplateState
+
+        template = AoETemplateState(
+            template_id=event.template_id,
+            caster_token_id=event.caster_token_id,
+            shape=event.shape,
+            origin_x=event.origin_x,
+            origin_y=event.origin_y,
+            direction_deg=event.direction_deg,
+            radius_ft=event.radius_ft,
+            length_ft=event.length_ft,
+            width_ft=event.width_ft,
+            spell_name=event.spell_name,
+            affected_token_ids=event.affected_token_ids,
+            affected_cells=event.affected_cells,
+        )
+        self._state = self.state.with_aoe_template_placed(template)
+
+    @handles(AoETemplateRemoved)
+    def _on_aoe_template_removed(self, event: AoETemplateRemoved) -> None:
+        self._state = self.state.without_aoe_template(event.template_id)

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from uuid import uuid4
+
+from board_state.aoe import evaluate_aoe_targets
 from board_state.dependencies import get_or_create_board, repo
 from board_state.preview import (
     PreviewMoveRequest,
@@ -146,7 +149,124 @@ async def board_websocket(websocket: WebSocket, session_id: str):
                         "token_id": data.get("token_id"),
                     },
                 )
+            elif action in ("token_action", "radial_action"):
+                token_id = data.get("token_id")
+                action_name = (
+                    data.get("token_action")
+                    or data.get("action_name")
+                    or data.get("name")
+                    or "dodge"
+                )
+                board = await get_or_create_board(session_id)
+                if token_id:
+                    board.execute_token_action(
+                        token_id=token_id,
+                        action=action_name,
+                        target_token_id=data.get("target_token_id"),
+                        target_token_ids=data.get("target_token_ids"),
+                        details=data.get("details"),
+                        initiated_by=data.get("initiated_by", "player"),
+                    )
+                    await repo.save(board)
+                    all_targets = list(data.get("target_token_ids") or [])
+                    if (
+                        data.get("target_token_id")
+                        and data.get("target_token_id") not in all_targets
+                    ):
+                        all_targets.append(data.get("target_token_id"))
+                    await board_ws_manager.broadcast(
+                        session_id,
+                        {
+                            "type": "token_action_executed",
+                            "action": action_name.lower(),
+                            "token_id": token_id,
+                            "target_token_ids": all_targets,
+                            "details": data.get("details", {}),
+                            "initiated_by": data.get("initiated_by", "player"),
+                        },
+                    )
+
+            elif action in ("aoe_preview", "aoe_evaluate"):
+                board = await get_or_create_board(session_id)
+                evaluated = evaluate_aoe_targets(
+                    tokens=board.state.tokens,
+                    cols=board.state.cols,
+                    rows=board.state.rows,
+                    shape=data.get("shape", "cone"),
+                    origin_x=float(data.get("origin_x", 0)),
+                    origin_y=float(data.get("origin_y", 0)),
+                    direction_deg=float(data.get("direction_deg", 0)),
+                    radius_ft=float(data["radius_ft"])
+                    if data.get("radius_ft") is not None
+                    else None,
+                    length_ft=float(data["length_ft"])
+                    if data.get("length_ft") is not None
+                    else None,
+                    width_ft=float(data["width_ft"]) if data.get("width_ft") is not None else 5.0,
+                    grid_type=data.get("grid_type", "square"),
+                    template_id=data.get("template_id", str(uuid4())),
+                    caster_token_id=data.get("caster_token_id"),
+                    spell_name=data.get("spell_name"),
+                )
+                await board_ws_manager.broadcast(
+                    session_id,
+                    {
+                        "type": "aoe_preview",
+                        "action": "aoe_preview",
+                        "session_id": session_id,
+                        "template": evaluated.model_dump(),
+                    },
+                )
+
+            elif action == "aoe_place":
+                board = await get_or_create_board(session_id)
+                template_id = data.get("template_id") or str(uuid4())
+                evaluated = evaluate_aoe_targets(
+                    tokens=board.state.tokens,
+                    cols=board.state.cols,
+                    rows=board.state.rows,
+                    shape=data.get("shape", "cone"),
+                    origin_x=float(data.get("origin_x", 0)),
+                    origin_y=float(data.get("origin_y", 0)),
+                    direction_deg=float(data.get("direction_deg", 0)),
+                    radius_ft=float(data["radius_ft"])
+                    if data.get("radius_ft") is not None
+                    else None,
+                    length_ft=float(data["length_ft"])
+                    if data.get("length_ft") is not None
+                    else None,
+                    width_ft=float(data["width_ft"]) if data.get("width_ft") is not None else 5.0,
+                    grid_type=data.get("grid_type", "square"),
+                    template_id=template_id,
+                    caster_token_id=data.get("caster_token_id"),
+                    spell_name=data.get("spell_name"),
+                )
+                board.place_aoe_template(
+                    template_id=template_id,
+                    shape=evaluated.shape,
+                    origin_x=evaluated.origin_x,
+                    origin_y=evaluated.origin_y,
+                    direction_deg=evaluated.direction_deg,
+                    radius_ft=evaluated.radius_ft,
+                    length_ft=evaluated.length_ft,
+                    width_ft=evaluated.width_ft,
+                    caster_token_id=evaluated.caster_token_id,
+                    spell_name=evaluated.spell_name,
+                    affected_token_ids=evaluated.affected_token_ids,
+                    affected_cells=evaluated.affected_cells,
+                )
+                await repo.save(board)
+                await board_ws_manager.broadcast(
+                    session_id,
+                    {
+                        "type": "aoe_template_placed",
+                        "action": "aoe_template_placed",
+                        "session_id": session_id,
+                        "template": evaluated.model_dump(),
+                    },
+                )
             else:
                 await board_ws_manager.broadcast(session_id, data)
+
     except WebSocketDisconnect:
         board_ws_manager.disconnect(session_id, websocket)
