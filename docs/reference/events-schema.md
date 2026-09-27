@@ -1001,3 +1001,10 @@ For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `Intoxic
 - **`MercenaryBountyClaimedEvent`** (`runefoble.events.game_session.mercenary_bounty_claimed` / `MercenaryBountyClaimed`): Emitted when an adventuring party claims an active bounty. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `claimant_user_id`, `claimant_campaign_id`, `claimant_party_name`, `claimed_at`.
 - **`MercenaryBountyFulfilledEvent`** (`runefoble.events.game_session.mercenary_bounty_fulfilled` / `MercenaryBountyFulfilled`): Emitted when fulfillment proof is submitted, disputed, or completed with released escrow payout. Broadcast on Redis Stream `runefoble.events.session`. Fields: `bounty_id`, `session_id`, `proof`, `status`, `payout_gold`, `payout_items`, `fulfilled_by`, `fulfilled_at`.
 
+### Dynamic FastMCP Tool Events (`aggregate_type: DynamicTool`)
+
+- **`DynamicToolRegisteredEvent`** (`runefoble.events.system.dynamic_tool_registered` / `DynamicToolRegistered`): Emitted when a dynamic FastMCP tool is registered or hot-reloaded at runtime. Broadcast on Redis Stream `runefoble:events:system`. Fields: `tool_name`, `description`, `parameters`, `author_id`, `campaign_id`, `metadata`.
+- **`DynamicToolUnregisteredEvent`** (`runefoble.events.system.dynamic_tool_unregistered` / `DynamicToolUnregistered`): Emitted when a dynamic tool is unregistered or retired from discovery. Broadcast on Redis Stream `runefoble:events:system`. Fields: `tool_name`, `unregistered_by`, `campaign_id`.
+- **`DynamicToolInvokedEvent`** (`runefoble.events.system.dynamic_tool_invoked` / `DynamicToolInvoked`): Emitted when an agent or user invokes a dynamic tool via FastMCP or REST frontdoors. Broadcast on Redis Stream `runefoble:events:system`. Fields: `tool_name`, `user_id`, `session_id`, `campaign_id`, `arguments`, `duration_ms`, `success`, `error`.
+
+
