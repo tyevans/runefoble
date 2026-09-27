@@ -1,7 +1,7 @@
 ---
 id: '0213'
 title: App Shell View Orchestration and Session Transition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0206
@@ -20,8 +20,8 @@ governing_stories:
 - US-0065
 - US-0066
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/204
 ---
-
 # TASK-0213: App Shell View Orchestration and Session Transition
 
 ## Status
