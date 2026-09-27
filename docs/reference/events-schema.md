@@ -267,6 +267,41 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `settled_x`: Float, `settled_y`: Float, `settled_z`: Float
   - `bounces`: Integer
   - `trajectory`: List[Dict[str, Float]]
+- **`TrapPlacedEvent`** (alias: `TrapPlaced`): Emitted when a secret DM spatial trap or trigger is placed on the board (`runefoble.events.board.trap_placed`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `name`: String
+  - `x`: Integer, `y`: Integer
+  - `trigger_type`: "step" | "proximity" | "touch"
+  - `proximity_radius`: Integer (default 1)
+  - `dc_detection`: Integer (default 15)
+  - `trap_type`: String ("pit_trap", "spear_trap", etc.)
+  - `is_secret`: Boolean (default True)
+  - `damage_dice`: Optional[String]
+  - `description`: String
+  - `effect_payload`: Dict[str, Any]
+- **`TrapSprungEvent`** (alias: `TrapSprung`): Emitted when a moving token breaches an armed trap cell or proximity zone, pausing movement (`runefoble.events.board.trap_sprung`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `token_id`: String
+  - `trigger_type`: "step" | "proximity" | "touch"
+  - `x`: Integer, `y`: Integer
+  - `damage_dice`: Optional[String]
+  - `effect_payload`: Dict[str, Any]
+  - `movement_paused`: Boolean (default True)
+- **`TrapDisarmedEvent`** (alias: `TrapDisarmed`): Emitted when a secret trap is disarmed or disabled (`runefoble.events.board.trap_disarmed`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `disarmed_by`: Optional[String]
+- **`BattlemapSwitchedEvent`** (alias: `BattlemapSwitched`): Emitted when the DM transitions the stage to a new battlemap and teleports party tokens in a single transaction (`runefoble.events.board.battlemap_switched`).
+  - `board_id`: String
+  - `previous_map_id`: Optional[String]
+  - `new_map_id`: String
+  - `cols`: Integer, `rows`: Integer
+  - `background_asset_id`: Optional[String]
+  - `background_image_url`: Optional[String]
+  - `teleported_tokens`: Dict[str, List[Integer]]
+  - `initiated_by`: Optional[String]
 
 
 

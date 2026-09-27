@@ -10,5 +10,11 @@ dependencies = [
     "uvicorn>=0.54.0",
     "runefoble-platform",
     "runefoble-events",
+    "runefoble-auth",
     "eventsource-py>=0.14.0",
 ]
+
+[tool.uv.sources]
+runefoble-platform = { workspace = true }
+runefoble-events = { workspace = true }
+runefoble-auth = { workspace = true }

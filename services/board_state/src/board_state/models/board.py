@@ -35,6 +35,9 @@ class BoardState(BaseModel, BoardTransitionsMixin):
     recent_collisions: list[PhysicsCollisionState] = Field(default_factory=list)
     last_collision: PhysicsCollisionState | None = None
     last_dice_settled: DiceSettledState | None = None
+    current_map_id: str | None = None
+    traps: dict[str, Any] = Field(default_factory=dict)
+    last_trap_sprung: Any | None = None
 
     @classmethod
     def initial(cls, board_id: UUID, session_id: str, cols: int, rows: int) -> BoardState:
