@@ -151,3 +151,19 @@ When characters take damage, synthesize wardrobe outfits, or swap active portrai
 - **`runefoble.events.character.portrait_variant_generated`**: Emitted when an attire variant is forged or registered.
 - **`runefoble.events.character.portrait_updated`**: Emitted when active avatar/portrait is assigned.
 - **`runefoble.events.character.condition_applied`**: Emitted when a status condition (poisoned, stunned) is inflicted.
+
+---
+
+## 6. Modular Blackbox Test Organization & Architecture
+
+Per **ADR-0013** and **Hard Invariant 6** (< 500 lines per file), the blackbox test suite for generative character wardrobe, condition overlays, and portrait galleries is partitioned into focused, single-responsibility frontdoor modules under `tests/test_blackbox_wardrobe_gallery/` (with all test files < 200 lines):
+
+- **`tests/test_blackbox_wardrobe_gallery/test_wardrobe_api.py`**: Verifies REST endpoints (`/api/v1/characters/{id}/portrait/active`, `/wardrobe`), object-level SpiceDB Zanzibar authorization (`viewer`/`owner`), and `<runefoble-wardrobe-gallery>` microfrontend manifest advertisement and Storybook coverage.
+- **`tests/test_blackbox_wardrobe_gallery/test_wardrobe_conditions.py`**: Verifies dynamic 50% HP threshold bloodied overlays/vignettes, status affliction auras (poisoned, stunned), and condition badge removals.
+- **`tests/test_blackbox_wardrobe_gallery/test_wardrobe_events.py`**: Verifies generative wardrobe variant synthesis, Silo S3 binary asset persistence, and CloudEvents dispatching (`CharacterDamaged`, `PortraitVariantGenerated`, `CharacterPortraitUpdated`).
+
+Run the test suite:
+```bash
+uv run pytest tests/test_blackbox_wardrobe_gallery/
+```
+

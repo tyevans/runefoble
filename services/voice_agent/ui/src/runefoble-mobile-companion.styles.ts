@@ -19,6 +19,7 @@ export const mobileCompanionStyles = css`
     gap: 14px;
     max-width: 480px;
     margin: 0 auto;
+    user-select: none;
   }
 
   .companion-header {
@@ -41,7 +42,7 @@ export const mobileCompanionStyles = css`
 
   .title-text {
     font-weight: 800;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -53,12 +54,15 @@ export const mobileCompanionStyles = css`
   }
 
   .badge {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     padding: 3px 8px;
     border: 1px solid var(--rf-border-color, #111111);
     border-radius: 2px;
     text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .badge.connected {
@@ -81,6 +85,25 @@ export const mobileCompanionStyles = css`
     color: #3b0764;
   }
 
+  .channel-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed var(--rf-border-color, #d1d5db);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--rf-text-secondary, #374151);
+  }
+
+  .channel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3b82f6;
+  }
+
   .audio-status-card {
     background: var(--rf-bg-canvas, #f3f4f6);
     border: 1px solid var(--rf-border-color, #111111);
@@ -93,7 +116,7 @@ export const mobileCompanionStyles = css`
   .status-line {
     display: flex;
     justify-content: space-between;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
   }
 
   .status-label {
@@ -106,6 +129,37 @@ export const mobileCompanionStyles = css`
     font-weight: 700;
   }
 
+  .status-value.buffer-warn {
+    color: #dc2626;
+  }
+
+  .status-value.buffer-ok {
+    color: #15803d;
+  }
+
+  .buffer-bar-container {
+    width: 100%;
+    height: 6px;
+    background: #e5e7eb;
+    border: 1px solid var(--rf-border-color, #111111);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 2px 0;
+  }
+
+  .buffer-bar {
+    height: 100%;
+    transition: width 0.2s ease, background-color 0.2s ease;
+  }
+
+  .buffer-bar.ok {
+    background: #22c55e;
+  }
+
+  .buffer-bar.warn {
+    background: #ef4444;
+  }
+
   .whisper-card {
     background: #1e1b4b;
     color: #e0e7ff;
@@ -114,11 +168,18 @@ export const mobileCompanionStyles = css`
     padding: 14px;
     box-shadow: 0 0 12px rgba(129, 140, 248, 0.4);
     animation: whisper-glow 2s infinite alternate;
+    position: relative;
   }
 
   @keyframes whisper-glow {
-    0% { border-color: #818cf8; box-shadow: 0 0 8px rgba(129, 140, 248, 0.3); }
-    100% { border-color: #c084fc; box-shadow: 0 0 16px rgba(192, 132, 252, 0.6); }
+    0% {
+      border-color: #818cf8;
+      box-shadow: 0 0 8px rgba(129, 140, 248, 0.3);
+    }
+    100% {
+      border-color: #c084fc;
+      box-shadow: 0 0 16px rgba(192, 132, 252, 0.6);
+    }
   }
 
   .whisper-header {
@@ -129,13 +190,44 @@ export const mobileCompanionStyles = css`
     font-size: 0.85rem;
     text-transform: uppercase;
     color: #a5b4fc;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
 
   .whisper-body {
+    position: relative;
     font-style: italic;
     font-size: 0.95rem;
     line-height: 1.4;
+    cursor: pointer;
+    min-height: 2.4em;
+    display: flex;
+    align-items: center;
+    user-select: text;
+  }
+
+  .whisper-body.content-blurred {
+    filter: blur(6px);
+    user-select: none;
+    opacity: 0.7;
+    transition: filter 0.2s ease, opacity 0.2s ease;
+  }
+
+  .blur-overlay-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #fef08a;
+    background: rgba(30, 27, 75, 0.55);
+    border: 1px dashed #fef08a;
+    border-radius: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
   }
 
   .whisper-actions {
@@ -155,8 +247,12 @@ export const mobileCompanionStyles = css`
   }
 
   @keyframes turn-pulse {
-    0% { transform: scale(1); }
-    100% { transform: scale(1.01); }
+    0% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(1.01);
+    }
   }
 
   .turn-title {
@@ -173,30 +269,62 @@ export const mobileCompanionStyles = css`
     cursor: pointer;
     background: #ffffff;
     color: #111111;
-    transition: transform 0.1s ease;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
   }
 
   .btn:active {
-    transform: translate(1px, 1px);
+    transform: translate(2px, 2px);
+    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.8);
+  }
+
+  .btn-xs {
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
   }
 
   .btn-ptt {
-    background: #3b82f6;
+    background: #2563eb;
     color: #ffffff;
-    font-size: 1rem;
-    padding: 12px;
+    font-size: 1.05rem;
+    padding: 16px;
     text-align: center;
     text-transform: uppercase;
-    font-weight: 800;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+    touch-action: none;
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .btn-ptt:hover {
+    background: #1d4ed8;
   }
 
   .btn-ptt.active {
-    background: #ef4444;
+    background: #dc2626;
+    animation: ptt-glow 0.8s infinite alternate;
+    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4);
+    transform: translate(1px, 1px);
+  }
+
+  @keyframes ptt-glow {
+    0% {
+      box-shadow: 0 0 4px #ef4444;
+    }
+    100% {
+      box-shadow: 0 0 14px #ef4444;
+    }
   }
 
   .haptic-pulse-dot {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: #c084fc;
     display: inline-block;
@@ -204,12 +332,22 @@ export const mobileCompanionStyles = css`
 
   .haptic-pulse-dot.vibrating {
     animation: vibrate-anim 0.2s infinite;
+    background: #f43f5e;
   }
 
   @keyframes vibrate-anim {
-    0%, 100% { transform: translate(0, 0); }
-    25% { transform: translate(-2px, 2px); }
-    50% { transform: translate(2px, -2px); }
-    75% { transform: translate(-2px, -2px); }
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    25% {
+      transform: translate(-2px, 2px);
+    }
+    50% {
+      transform: translate(2px, -2px);
+    }
+    75% {
+      transform: translate(-2px, -2px);
+    }
   }
 `;

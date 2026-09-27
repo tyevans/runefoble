@@ -106,17 +106,28 @@ function handleHapticPing(frame) {
 
 ## 4. Using the Lit Microfrontend (`<runefoble-mobile-companion>`)
 
-The mobile companion component is vendored in `@runefoble/voice-agent-ui`:
+The mobile companion component is vendored in `@runefoble/voice-agent-ui` and advertised via `/ui/manifest`:
 
 ```html
 <runefoble-mobile-companion
   sessionId="session-101"
   userId="marcus"
+  channelName="Party Voice (Cellular Opus)"
   .connected=${true}
   audioTier="mobile_optimized"
   .sampleRate=${16000}
   .bitrateKbps=${16}
+  .bufferHealthMs=${45}
+  .privacyBlur=${true}
   .packetLoss=${0.02}
   .bandwidthKbps=${120}
 ></runefoble-mobile-companion>
 ```
+
+### Component Capabilities
+- **Tactile Push-to-Talk**: Large thumb-friendly button triggering `ptt-start` and `ptt-end` events with light 15ms haptic confirmation.
+- **Diegetic Secret Whisper Overlay**: Subtle parchment modal with privacy blur (`filter: blur(...)`) to prevent shoulder surfing, acoustic chime via WebAudio `AudioContext`, and instant reveal/conceal toggle.
+- **Audio Buffer Monitor**: Displays real-time audio buffer health (target 45ms) and cellular stream tier indicators (`mobile_optimized`, `cellular_constrained`, `ultra_low`).
+- **WebSocket Protocol Dispatcher**: Direct client-side connection support via `.connectWebSocket(url)` and message handler for `haptic_vibration`, `haptic_ping`, and `audio_profile_adapted` frames.
+- **Custom Event Contracts**: Dispatches `haptic-pulse`, `whisper-received`, `whisper-dismissed`, `whisper-blur-toggled`, and `connection-changed`.
+

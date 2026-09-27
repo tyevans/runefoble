@@ -1,0 +1,22 @@
+{
+  "service": "voice_agent",
+  "package": "@runefoble/voice-agent-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-voice-controls",
+    "runefoble-audio-indicator",
+    "runefoble-mobile-companion"
+  ],
+  "tags": [
+    "runefoble-voice-controls",
+    "runefoble-audio-indicator",
+    "runefoble-mobile-companion"
+  ],
+  "styles": [
+    "./src/runefoble-voice-controls.styles.ts",
+    "./src/runefoble-mobile-companion.styles.ts"
+  ],
+  "scripts": [
+    "./src/index.ts"
+  ]
+}
