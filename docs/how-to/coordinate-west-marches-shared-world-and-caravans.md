@@ -398,7 +398,26 @@ curl http://localhost:8004/ui/manifest
 
 ## 7. Modular Blackbox Test Organization & Architecture
 
-Per **ADR-0013** and **Hard Invariant 6** (< 500 lines per file), the blackbox test suite for cross-campaign caravan trading ledgers, escort contracts, and settlement economy fulfillment is partitioned into focused, single-responsibility frontdoor modules under `tests/test_blackbox_caravan_contracts/` (with all test files < 150 lines):
+Per **ADR-0001**, **ADR-0006**, **ADR-0011**, **ADR-0013**, and **Hard Invariant 6** (< 500 lines per file), the blackbox test suites for West Marches shared frontiers and caravan contracts are partitioned into focused, single-responsibility frontdoor modules:
+
+### West Marches Shared World Blackbox Suite (`tests/test_blackbox_west_marches/`)
+
+Decomposed under TASK-0145 with all test files strictly under 130 lines:
+
+- **`tests/test_blackbox_west_marches/conftest.py`**: Shared test harness providing `mock_bus`, `spicedb_client`, `client`, and standard party credential fixtures (< 50 lines).
+- **`tests/test_blackbox_west_marches/test_world_registration.py`**: Verifies establishing persistent frontier worlds (`POST /api/v1/shared-worlds`), linking participating campaigns, and handling duplicate registration validations (< 110 lines).
+- **`tests/test_blackbox_west_marches/test_discovery_synchronization.py`**: Verifies cross-party discovery waypoint sharing, `CrossCampaignDiscoveryShared` CloudEvent broadcast over Redis Streams, and fog-of-war landmark filtering (< 130 lines).
+- **`tests/test_blackbox_west_marches/test_caravan_transit.py`**: Verifies outpost establishment, caravan dispatch scheduling, trade fulfillment emitting `CaravanTradeCompleted`, and regional merchant stock unlocks (< 130 lines).
+- **`tests/test_blackbox_west_marches/test_security_isolation.py`**: Verifies SpiceDB Zanzibar object-level multi-tenancy isolation (protecting private character sheets while exposing shared frontier geography) and communal tavern notice boards (< 120 lines).
+
+Run the West Marches test suite:
+```bash
+uv run pytest tests/test_blackbox_west_marches/
+```
+
+### Caravan Contracts & Settlement Economy Blackbox Suite (`tests/test_blackbox_caravan_contracts/`)
+
+Decomposed under TASK-0146 with all test files strictly under 150 lines:
 
 - **`tests/test_blackbox_caravan_contracts/conftest.py`**: Shared test harness, mock Redis event bus, mock SpiceDB Zanzibar client, TestClient setup, and stream event verification helpers (< 50 lines).
 - **`tests/test_blackbox_caravan_contracts/test_board_posting.py`**: Verifies mercenary contract creation, risk metadata, collateral deposits, and tavern notice board filtering queries (< 130 lines).
@@ -406,7 +425,7 @@ Per **ADR-0013** and **Hard Invariant 6** (< 500 lines per file), the blackbox t
 - **`tests/test_blackbox_caravan_contracts/test_caravan_lifecycle.py`**: Verifies caravan dispatch, waypoint advancement, tactical ambushes, cargo damage tracking, and destination settlement economy payout (< 140 lines).
 - **`tests/test_blackbox_caravan_contracts/test_caravan_destruction_and_ui.py`**: Verifies fatal ambushes, contract loss states, forfeit of deposits, and `<runefoble-caravan-board>` microfrontend manifest registration (< 110 lines).
 
-Run the modular test suite:
+Run the caravan contracts test suite:
 ```bash
 uv run pytest tests/test_blackbox_caravan_contracts/
 ```
