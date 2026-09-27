@@ -167,7 +167,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 163. **TASK-0164 (Complete)**: [`0164-cross-campaign-settlement-haven-registry.md`](complete/0164-cross-campaign-settlement-haven-registry.md) — Cross-Campaign Settlement and Haven Registry
 164. **TASK-0206 (Complete)**: [`0206-frontend-spa-client-router-and-navigation-chrome.md`](complete/0206-frontend-spa-client-router-and-navigation-chrome.md) — Frontend SPA Client Router and Navigation Chrome
 165. **TASK-0207 (Complete)**: [`0207-zitadel-auth-client-and-login-modal-component.md`](complete/0207-zitadel-auth-client-and-login-modal-component.md) — Zitadel Auth Client and Login Modal Component
-166. **TASK-0208 (Refined)**: [`0208-gateway-campaign-lifecycle-and-membership-api.md`](refined/0208-gateway-campaign-lifecycle-and-membership-api.md) — Gateway Campaign Lifecycle and Membership API
+166. **TASK-0208 (Complete)**: [`0208-gateway-campaign-lifecycle-and-membership-api.md`](complete/0208-gateway-campaign-lifecycle-and-membership-api.md) — Gateway Campaign Lifecycle and Membership API
 167. **TASK-0209 (Refined)**: [`0209-campaign-dashboard-and-creation-microfrontend.md`](refined/0209-campaign-dashboard-and-creation-microfrontend.md) — Campaign Dashboard and Creation Microfrontend
 168. **TASK-0210 (Refined)**: [`0210-campaign-members-and-zanzibar-role-manager-ui.md`](refined/0210-campaign-members-and-zanzibar-role-manager-ui.md) — Campaign Members and Zanzibar Role Manager UI
 169. **TASK-0211 (Refined)**: [`0211-character-roster-and-party-assignment-microfrontend.md`](refined/0211-character-roster-and-party-assignment-microfrontend.md) — Character Roster and Party Assignment Microfrontend
