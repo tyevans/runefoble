@@ -104,6 +104,7 @@ def apply_token_knockback(
         collision_point=res["collision_point"],
         impact_energy=res["impact_energy"],
         trajectory=res["trajectory"],
+        elevation=float(terrain.elevation_at(snap_x, snap_y)),
         status="settled",
     )
 

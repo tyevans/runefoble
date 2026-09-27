@@ -92,6 +92,7 @@ class KnockbackResponse(BaseModel):
     collision_point: list[float] | None = None
     impact_energy: float = 0.0
     trajectory: list[dict[str, float]] = Field(default_factory=list)
+    elevation: float = 0.0
     status: str = "settled"
 
 

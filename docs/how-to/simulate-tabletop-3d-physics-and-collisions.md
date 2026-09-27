@@ -156,6 +156,9 @@ board.knockbackToken({ tokenId: 'fighter-1', fromX: 2, fromY: 3, toX: 4, toY: 3 
 - **`dice_models.ts`**: Parametric polyhedral collision geometries for d4, d6, d8, d10, d12, and d20 dice with calibrated restitution, center of mass, and friction parameters.
 - **`tray_audio.ts`**: WebAudio synthesis and foley player triggering velocity-scaled acoustic impacts on board perimeters and obstacle collision contacts.
 - **`dice_solver.ts`**: Deterministic trajectory and rotational momentum solver guaranteeing resting face values conform 100% to server-side cryptographic rolls.
+- **`knockback_solver.ts`**: Directional impulse vector solver calculating mass scaling, deceleration sliding friction, and obstacle collision rebounds.
+- **`elevation_fall.ts`**: Raycast heightfield collision dropping miniatures down vertical elevation steps with rotational tilt damping and upright balance recovery.
+- **`grid_snapper.ts`**: Discrete board grid snapper aligning miniature tokens to board grid centers within 50ms of physics settlement.
 
 ---
 
@@ -194,5 +197,58 @@ tray.addEventListener('dice-settled', (e) => {
   console.log('Dice settled on face:', e.detail.faceValue);
 });
 ```
+
+---
+
+## 7. Directional Miniature Knockback, Elevation Ledge Drops & Grid Snapping
+
+For kinetic token combat impacts (bull rushes, thunderwaves, and repelling blasts):
+
+### Solving Knockback Trajectory Client-Side
+
+```typescript
+import {
+  solveKnockbackTrajectory,
+  solveElevationFall,
+  scheduleGridSnap,
+} from '@runefoble/board-state-ui';
+
+// 1. Calculate directional knockback impulse with mass scaling and sliding friction
+const knockback = solveKnockbackTrajectory({
+  tokenId: 'fighter-1',
+  fromX: 2,
+  fromY: 3,
+  directionX: 1.0,
+  directionY: 0.0,
+  distanceFt: 15.0,
+  mass: 1.0,
+  friction: 0.35,
+  restitution: 0.3,
+  walls: [{ x: 5, y: 3 }],
+});
+
+// 2. If token drops off an elevation step, resolve vertical gravity fall & upright balance recovery
+if (knockback.toZ < currentElevation) {
+  const fall = solveElevationFall({
+    tokenId: 'fighter-1',
+    fromZ: currentElevation,
+    targetZ: knockback.toZ,
+    gravity: 14.0,
+    tiltDamping: 7.0,
+  });
+  console.log('Landed safely upright:', fall.recoveredUpright);
+}
+
+// 3. Snap continuous resting position to discrete board grid centers within 50ms
+await scheduleGridSnap({
+  tokenId: 'fighter-1',
+  rawX: knockback.toX,
+  rawY: knockback.toY,
+  rawZ: knockback.toZ,
+}, (snap) => {
+  console.log(`Snapped to cell [${snap.snappedCell}] in ${snap.settledInMs}ms (<= 50ms: ${snap.syncedWithin50ms})`);
+});
+```
+
 
 
