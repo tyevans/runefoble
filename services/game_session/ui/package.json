@@ -29,6 +29,9 @@
     "./runefoble-combat-reaction-prompt": "./src/runefoble-combat-reaction-prompt.ts",
     "./runefoble-combat-reaction-prompt.styles": "./src/runefoble-combat-reaction-prompt.styles.ts",
     "./runefoble-ready-action-card": "./src/runefoble-ready-action-card.ts",
+    "./campaigns": "./src/campaigns/index.ts",
+    "./campaigns/dashboard": "./src/campaigns/runefoble-campaign-dashboard.ts",
+    "./campaigns/creator": "./src/campaigns/runefoble-campaign-creator.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {

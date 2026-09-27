@@ -104,6 +104,8 @@ def test_game_session_ui_manifest_frontdoor(session_client):
     assert "runefoble-spectator-view" in data["components"]
     assert "runefoble-combat-reaction-prompt" in data["components"]
     assert "runefoble-ready-action-card" in data["components"]
+    assert "runefoble-campaign-dashboard" in data["components"]
+    assert "runefoble-campaign-creator" in data["components"]
 
 
 def test_the_watcher_ui_manifest_frontdoor(watcher_client):

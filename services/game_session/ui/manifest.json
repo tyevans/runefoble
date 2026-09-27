@@ -11,7 +11,9 @@
     "runefoble-tavern-parlor",
     "runefoble-caravan-board",
     "runefoble-combat-reaction-prompt",
-    "runefoble-ready-action-card"
+    "runefoble-ready-action-card",
+    "runefoble-campaign-dashboard",
+    "runefoble-campaign-creator"
   ]
 }
 

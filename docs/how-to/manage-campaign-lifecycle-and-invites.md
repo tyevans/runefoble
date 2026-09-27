@@ -165,3 +165,39 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members" \
   }
 ]
 ```
+
+---
+
+## 6. Rendering Campaigns in the Web Component Microfrontend
+
+The campaign hub UI is vendored by `@runefoble/game-session-ui/campaigns` using Lit Web Components:
+
+```typescript
+import '@runefoble/game-session-ui/campaigns';
+
+// In your application template:
+html`
+  <runefoble-campaign-dashboard
+    .campaigns=${campaignList}
+    @select-campaign=${(e: CustomEvent) => {
+      window.location.hash = `#/campaigns/${e.detail.campaignId}`;
+    }}
+    @create-campaign=${async (e: CustomEvent) => {
+      const response = await fetch('/api/v1/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(e.detail),
+      });
+      const newCampaign = await response.json();
+      campaignList = [...campaignList, newCampaign];
+    }}
+  ></runefoble-campaign-dashboard>
+`;
+```
+
+The `<runefoble-campaign-dashboard>` provides:
+- Responsive Bauhaus card grids with elevation drop-shadows and role badges.
+- Filtering by role ("All", "DMing", "Playing") and real-time text search.
+- Active live session indicator (`● Session Live`).
+- Seamless integration with the `<runefoble-campaign-creator>` dialog wizard.
+

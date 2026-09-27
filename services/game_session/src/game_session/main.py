@@ -83,6 +83,8 @@ def get_ui_manifest():
             "runefoble-caravan-board",
             "runefoble-combat-reaction-prompt",
             "runefoble-ready-action-card",
+            "runefoble-campaign-dashboard",
+            "runefoble-campaign-creator",
         ],
         "version": "0.1.0",
     }
