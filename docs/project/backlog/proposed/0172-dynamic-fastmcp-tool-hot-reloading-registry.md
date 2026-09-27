@@ -1,7 +1,7 @@
 ---
 id: '0172'
 title: Dynamic FastMCP Tool Hot-Reloading Registry
-status: Refined
+status: Proposed
 created: 2026-09-26
 dependencies:
 - TASK-0041

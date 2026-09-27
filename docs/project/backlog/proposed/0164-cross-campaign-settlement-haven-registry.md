@@ -1,7 +1,7 @@
 ---
 id: '0164'
 title: Cross-Campaign Settlement and Haven Registry
-status: Refined
+status: Proposed
 created: 2026-09-26
 dependencies:
 - TASK-0127

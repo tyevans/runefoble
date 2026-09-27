@@ -1,7 +1,7 @@
 ---
 id: '0167'
 title: Absentee Mobile Directive and Remote Voting Microfrontend
-status: Refined
+status: Proposed
 created: 2026-09-26
 dependencies:
 - TASK-0134
