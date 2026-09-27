@@ -20,6 +20,7 @@ from campaign_lore.handouts_aggregate import (
     RelicAggregate,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
+from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 
 settings = PlatformSettings()
 
@@ -33,6 +34,9 @@ _handout_repo: AggregateRepository[DiegeticHandoutAggregate] = create_aggregate_
 _relic_repo: AggregateRepository[RelicAggregate] = create_aggregate_repository(RelicAggregate)
 _atlas_repo: AggregateRepository[AtlasAggregate] = create_aggregate_repository(AtlasAggregate)
 _codex_repo: AggregateRepository[CodexAggregate] = create_aggregate_repository(CodexAggregate)
+_west_marches_repo: AggregateRepository[WestMarchesAtlasAggregate] = create_aggregate_repository(
+    WestMarchesAtlasAggregate
+)
 _retrieval_engine: LoreRetrievalEngine = LoreRetrievalEngine()
 _codex_referencer: CodexCrossReferencer = CodexCrossReferencer(_retrieval_engine)
 _campaign_codex_entries: dict[UUID, list[UUID]] = {}
@@ -247,6 +251,51 @@ async def check_user_can_edit_codex_entry(
         return True
 
     # DM / GM can edit entries
+    return await spicedb.check_permission(
+        resource_type="campaign",
+        resource_id=str(campaign_id),
+        permission="run_session",
+        subject_type="user",
+        subject_id=user_id,
+    )
+
+
+def get_west_marches_repo() -> AggregateRepository[WestMarchesAtlasAggregate]:
+    """Provide West Marches shared atlas and stronghold aggregate repository."""
+    return _west_marches_repo
+
+
+def set_west_marches_repo(
+    repo: AggregateRepository[WestMarchesAtlasAggregate],
+) -> None:
+    """Set West Marches repository instance for testing."""
+    global _west_marches_repo
+    _west_marches_repo = repo
+
+
+def set_spicedb_client(client: SpiceDBClient) -> None:
+    """Override SpiceDB client instance for testing."""
+    global _spicedb_client
+    _spicedb_client = client
+
+
+async def check_user_can_play_campaign(
+    user_id: str | None,
+    campaign_id: UUID,
+    spicedb: SpiceDBClient,
+) -> bool:
+    """Evaluate SpiceDB Zanzibar permissions to check whether user can play or discover in campaign."""
+    if not user_id:
+        return True
+    can_play = await spicedb.check_permission(
+        resource_type="campaign",
+        resource_id=str(campaign_id),
+        permission="play",
+        subject_type="user",
+        subject_id=user_id,
+    )
+    if can_play:
+        return True
     return await spicedb.check_permission(
         resource_type="campaign",
         resource_id=str(campaign_id),

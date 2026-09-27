@@ -200,3 +200,54 @@ definition shared_world {
 ```
 
 A member of Party Gold receives `view`, `discover`, and `trade` permissions on the `shared_world`, but has no `view` or `edit` permissions on Party Blue's `character` or private `campaign` resources.
+
+---
+
+## 6. West Marches Shared World Atlas & Communal Stronghold Microfrontend
+
+The `<runefoble-west-marches-atlas>` Lit Web Component (vendored in `@runefoble/campaign-lore-ui`) provides a unified, interactive collaborative cartography interface (PRD-0007 / PRD-0014 / US-0050 / US-0058 / ADR-0013).
+
+### Component Manifest Registration
+
+The component is advertised via the `/ui/manifest` frontdoor on `campaign_lore`:
+
+```bash
+curl http://localhost:8006/ui/manifest
+```
+
+```json
+{
+  "service": "campaign_lore",
+  "package": "@runefoble/campaign-lore-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-campaign-atlas",
+    "runefoble-campaign-codex",
+    "runefoble-handout-viewer",
+    "runefoble-relic-inspector",
+    "runefoble-west-marches-atlas"
+  ]
+}
+```
+
+### Embedding and Consuming in the Frontend
+
+```html
+<runefoble-west-marches-atlas
+  sharedWorldId="world-fenlands-01"
+  worldName="The Sunken Marches"
+  frontierRegion="The Shadowed Fenlands"
+  currentPartyId="camp-blue"
+  currentPartyName="Party Blue"
+  userRole="player"
+  activeTab="map"
+></runefoble-west-marches-atlas>
+```
+
+### Event Contracts
+
+- `pin-selected`: Emitted when clicking a frontier milestone pin (`detail: { discovery, sharedWorldId }`).
+- `discovery-create-requested`: Emitted when clicking coordinates on the frontier canvas (`detail: { coordinates: { x, y }, sharedWorldId }`).
+- `stronghold-upgrade-requested`: Emitted when investing in a facility upgrade (`detail: { outpost_id, facility_id, new_tier, sharedWorldId }`).
+- `tab-changed`: Emitted when switching between `map`, `stronghold`, `tavern`, and `expeditions` (`detail: { tab }`).
+

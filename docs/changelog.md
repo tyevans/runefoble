@@ -18,6 +18,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added REST frontdoor routes in `gateway_api/companion/router.py`: `POST /api/v1/mobile/companion/{session_id}/whisper`, `POST /api/v1/mobile/companion/{session_id}/turn-alert`, and `GET /api/v1/mobile/companion/profiles`.
   - Implemented `<runefoble-mobile-companion>` Lit Web Component in `services/voice_agent/ui/src/runefoble-mobile-companion.ts` with Bauhaus styling and interactive Storybook stories (`runefoble-mobile-companion.stories.ts`).
   - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_mobile_companion.py` and Diataxis guide `docs/how-to/connect-mobile-companion-and-haptic-gateway.md`.
+- **West Marches Shared World Atlas Pins & Communal Stronghold Dashboard Microfrontend (`TASK-0135`, `ADR-0001`, `ADR-0006`, `ADR-0013`, `PRD-0007`, `PRD-0014`, `US-0050`, `US-0058`)**:
+  - Built and vendored `<runefoble-west-marches-atlas>` Lit Web Component in `services/campaign_lore/ui/src/runefoble-west-marches-atlas.ts` with Bauhaus design tokens, multi-party regional frontier map pins, layered milestone pins with danger ratings (1-5), and interactive popovers revealing discovering party attribution, date, and expedition notes.
+  - Implemented Communal Stronghold Dashboard tab with facility status cards (Alchemical Workshop, Watchtower, Trading Post, Arcane Forge, Herbalist Sanctuary), dynamic shared rest boons and defensive buffers, and one-click facility upgrade actions.
+  - Implemented Tavern Rumor Bulletin Board tab with filterable notice cards for expedition bounties, rumors, and party requests.
+  - Implemented Cross-Campaign Expedition Chronicle log timeline displaying multi-party discovery history.
+  - Enforced SpiceDB Zanzibar authorization (`shared_world` object permissions) scoping private discovery notes from rival parties while sharing tactical frontier map pins.
+  - Implemented `WestMarchesAtlasAggregate` in `services/campaign_lore/src/campaign_lore/west_marches_aggregate.py` backed by `eventsource-py` and domain events `SharedWorldCreated`, `CampaignRegisteredToSharedWorld`, `CrossCampaignDiscoveryShared`, `OutpostEstablished`, `SharedStrongholdUpgraded`, and `CommunalNoticePosted`.
+  - Added REST frontdoor router in `services/campaign_lore/src/campaign_lore/routers/west_marches.py` exposing `GET /api/v1/campaigns/{id}/west-marches`, `POST /api/v1/campaigns/{id}/west-marches/discoveries`, `POST /api/v1/campaigns/{id}/west-marches/stronghold/upgrade`, and `POST /api/v1/campaigns/{id}/west-marches/tavern-board/notices`.
+  - Registered and advertised `<runefoble-west-marches-atlas>` in `services/campaign_lore/ui/manifest.json` and `GET /ui/manifest`.
+  - Authored interactive Storybook stories in `services/campaign_lore/ui/src/runefoble-west-marches-atlas.stories.ts` with 5 scenarios (`DefaultFrontierView`, `CommunalStrongholdView`, `TavernNoticeBoardView`, `RestrictedPlayerView`, `GuildOfficerAdminView`).
+  - Added frontdoor blackbox test suite in `tests/test_blackbox_west_marches_ui.py` and updated `tests/test_microfrontend_manifests.py`.
+  - Updated Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md` and `docs/reference/ports-and-endpoints.md`.
 - **West Marches Shared Persistent World State & Cross-Campaign Registry (`TASK-0127`, `ADR-0001`, `ADR-0006`, `ADR-0011`, `PRD-0007`, `US-0058`)**:
   - Implemented event-sourced `SharedWorldAggregate` in `services/game_session/src/game_session/west_marches.py` managing common geographical map pins, shared outpost levels, and communal tavern notice boards.
   - Implemented `CaravanLedgerAggregate` in `services/game_session/src/game_session/caravan_ledger.py` managing scheduled resource caravan transit and regional settlement merchant stock ledgers.
@@ -26,7 +38,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Updated SpiceDB Zanzibar authorization schema (`libs/runefoble_auth/schema/runefoble.zed`) and `MockSpiceDBClient` (`libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py`) defining `shared_world` object permissions (`guild_officer`, `participant`, `campaign->view/play`) while strictly isolating private character sheets and party whisper notes.
   - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_west_marches.py` verifying multi-campaign discovery synchronization, caravan trade unlocks, communal tavern boards, and Zanzibar isolation.
   - Authored Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md` and updated `docs/reference/events-schema.md` and `AGENTS.md`.
-
 - **Autonomous NPC Faction Agendas & Background Simulation Engine (`TASK-0126`, `ADR-0002`, `ADR-0006`, `ADR-0011`)**:
   - Implemented event-sourced `FactionAggregate` in `services/the_watcher/src/the_watcher/factions.py` tracking faction assets, influence (1-100), operational resources, disposition, and goal progress via `eventsource-py` (Hard Invariant 2).
   - Built `FactionSimulationEngine` in `services/the_watcher/src/the_watcher/simulation_engine.py` simulating probabilistic agenda checks based on rival counter-measures and regional stability modifiers.
