@@ -137,6 +137,9 @@ export class RunefobleUserMenu extends LitElement {
             </div>
           </div>
           <div class="menu-actions">
+            <button class="menu-item" role="menuitem" @click=${this.handleCharacterRoster}>
+              <span>⚔️</span> Character Roster
+            </button>
             <button class="menu-item" role="menuitem" @click=${this.handleAccountSettings}>
               <span>⚙️</span> Account Settings
             </button>
@@ -147,6 +150,11 @@ export class RunefobleUserMenu extends LitElement {
         </div>
       ` : ''}
     `;
+  }
+
+  private handleCharacterRoster() {
+    this.isOpen = false;
+    router.navigate('#/characters');
   }
 }
 

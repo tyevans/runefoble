@@ -11,4 +11,4 @@ export * from './runefoble-character-sheet.types.ts';
 export * from './runefoble-character-sheet.templates.ts';
 export * from './runefoble-wardrobe-gallery.ts';
 export * from './runefoble-wardrobe-gallery.styles.ts';
-
+export * from './roster/index.ts';

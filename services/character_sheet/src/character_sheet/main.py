@@ -63,6 +63,8 @@ def get_ui_manifest():
             "runefoble-stand-in-guardrails",
             "runefoble-character-sheet",
             "runefoble-wardrobe-gallery",
+            "runefoble-character-roster",
+            "runefoble-character-builder-modal",
         ],
         "tags": [
             "runefoble-character-card",
@@ -70,6 +72,8 @@ def get_ui_manifest():
             "runefoble-stand-in-guardrails",
             "runefoble-character-sheet",
             "runefoble-wardrobe-gallery",
+            "runefoble-character-roster",
+            "runefoble-character-builder-modal",
         ],
         "styles": [
             "./src/runefoble-absentee-recap.styles.ts",
@@ -78,6 +82,8 @@ def get_ui_manifest():
             "./src/runefoble-character-sheet.inventory.styles.ts",
             "./src/runefoble-character-sheet.conditions.styles.ts",
             "./src/runefoble-wardrobe-gallery.styles.ts",
+            "./src/roster/runefoble-character-roster.styles.ts",
+            "./src/roster/runefoble-character-builder-modal.styles.ts",
         ],
         "scripts": [
             "./src/index.ts",
