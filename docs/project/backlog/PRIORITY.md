@@ -182,5 +182,10 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 178. **TASK-0179 (Proposed)**: [`0179-rules-compendium-homebrew-form-decomposition.md`](proposed/0179-rules-compendium-homebrew-form-decomposition.md) — Rules Compendium Homebrew Subview Modular Decomposition
 179. **TASK-0180 (Proposed)**: [`0180-board-state-stories-modular-decomposition.md`](proposed/0180-board-state-stories-modular-decomposition.md) — Board State Stories Modular Decomposition
 180. **TASK-0181 (Proposed)**: [`0181-soundscape-event-handlers-and-dependencies-decomposition.md`](proposed/0181-soundscape-event-handlers-and-dependencies-decomposition.md) — Soundscape Event Handlers and Dependencies Modular Decomposition
+181. **TASK-0182 (Proposed)**: [`0182-watcher-domain-events-modular-decomposition.md`](proposed/0182-watcher-domain-events-modular-decomposition.md) — Watcher Domain Events Modular Decomposition
+182. **TASK-0183 (Proposed)**: [`0183-faction-resources-blackbox-test-suite-decomposition.md`](proposed/0183-faction-resources-blackbox-test-suite-decomposition.md) — Faction Resources Blackbox Test Suite Modular Decomposition
+183. **TASK-0184 (Proposed)**: [`0184-campfire-crafting-blackbox-test-suite-decomposition.md`](proposed/0184-campfire-crafting-blackbox-test-suite-decomposition.md) — Campfire Crafting Blackbox Test Suite Modular Decomposition
+184. **TASK-0185 (Proposed)**: [`0185-rules-compendium-styles-modular-decomposition.md`](proposed/0185-rules-compendium-styles-modular-decomposition.md) — Rules Compendium Styles Modular Decomposition
+
 
 
