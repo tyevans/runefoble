@@ -128,3 +128,40 @@ async def handle_voice_events(consumer: RedisConsumerGroup):
             print(f"Unspoken remaining text: {event.remaining_narration_text}")
             await consumer.ack("runefoble.events.voice", "watcher_speech_duplex", msg_id)
 ```
+
+---
+
+## 6. Voice Duplex Controls & Real-Time Barge-In Visualizer Microfrontend
+
+The `<runefoble-voice-duplex-controls>` Lit Web Component (TASK-0149) provides real-time visual feedback for conversational speech barge-in, active audio level metering, soft 20ms crossfade indicators, and duplex VAD calibration sliders.
+
+### Component Usage
+
+```html
+<runefoble-voice-duplex-controls
+  sessionId="session-campaign-12"
+  speakerId="spk-marcus"
+  speakerName="Marcus"
+  .isConnected=${true}
+  .vadSensitivity=${75}
+  .duckingGainDb=${-12}
+  .aecEnabled=${true}
+></runefoble-voice-duplex-controls>
+```
+
+### Event Contracts
+
+- `duplex-interrupted`: Dispatched when human speech onset interrupts active AI playback (detail: `{ speakerId, latencyMs, remainingText }`).
+- `vad-sensitivity-change`: Dispatched when interruption sensitivity slider is adjusted (detail: `{ sensitivity }`).
+- `ducking-gain-change`: Dispatched when acoustic ducking gain slider is modified (detail: `{ gainDb }`).
+- `aec-toggle`: Dispatched when acoustic echo cancellation is toggled or retargeted (detail: `{ enabled, suppressionDb }`).
+
+### Microfrontend Manifest Registration
+
+The component is vendored inside `services/voice_agent/ui/` and advertised via the public HTTP endpoint `GET /ui/manifest`:
+
+```bash
+curl -s http://voice-agent.runefoble.svc.cluster.local:8005/ui/manifest | jq .components
+# Output includes: "runefoble-voice-duplex-controls"
+```
+

@@ -1,7 +1,7 @@
 ---
-id: '0149'
+id: 0149
 title: Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0030
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0060
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/166
 ---
-
 # TASK-0149: Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend
 
 ## Status

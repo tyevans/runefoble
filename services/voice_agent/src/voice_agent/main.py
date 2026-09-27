@@ -91,15 +91,18 @@ def get_ui_manifest():
             "runefoble-voice-controls",
             "runefoble-audio-indicator",
             "runefoble-mobile-companion",
+            "runefoble-voice-duplex-controls",
         ],
         "tags": [
             "runefoble-voice-controls",
             "runefoble-audio-indicator",
             "runefoble-mobile-companion",
+            "runefoble-voice-duplex-controls",
         ],
         "styles": [
             "./src/runefoble-voice-controls.styles.ts",
             "./src/runefoble-mobile-companion.styles.ts",
+            "./src/duplex/styles/index.ts",
         ],
         "scripts": ["./src/index.ts"],
         "version": "0.1.0",
