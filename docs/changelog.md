@@ -94,6 +94,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Added frontdoor blackbox test suite `tests/test_blackbox_board_state.py` verifying line length invariants (< 200 lines per file), backward-compatible facade re-exports, modular submodule imports, and BoardState transitions.
 
 ### Added
+- **Faction Espionage and Alert Feeds Microfrontend (`TASK-0163`, `ADR-0004`, `ADR-0012`, `ADR-0013`, `PRD-0017`, `US-0057`)**:
+  - Implemented interactive Lit Web Component `<runefoble-faction-espionage>` in `services/the_watcher/ui/src/runefoble-faction-espionage.ts` (< 140 lines) rendering real-time clandestine operation feeds, intercepted courier messages, and regional alert postures with WCAG AA contrast badges.
+  - Created modular Bauhaus neobrutalism styling in `services/the_watcher/ui/src/runefoble-faction-espionage.styles.ts` (< 80 lines) adhering to semantic CSS variables and dark/light mode invariants.
+  - Registered and advertised `<runefoble-faction-espionage>` in `services/the_watcher/src/the_watcher/routers/ui_manifest.py` and `services/the_watcher/ui/manifest.json`.
+  - Added Storybook stories in `services/the_watcher/ui/src/runefoble-faction-espionage.stories.ts` with 5 scenarios (`Default`, `HighUrgencyAlerts`, `InterceptedDispatches`, `EmptyState`, `DMPrivateBriefing`).
+  - Added frontdoor blackbox test suite `tests/test_blackbox_faction_espionage_ui/` verifying manifest advertisement, package exports, custom element registrations, styling tokens, and modular file length limits.
+  - Updated Diataxis guide `docs/how-to/simulate-npc-faction-agendas-and-world-ticks.md` and reference specification `docs/reference/microfrontend-architecture.md`.
 - **Tabletop 3D Physics Engine & Mesh Collision Integration (`TASK-0150`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `PRD-0013`, `US-0061`)**:
   - Implemented foundational 3D tabletop physics and mesh collision simulation backend in `services/board_state/src/board_state/physics/`:
     - `bounds.py`: Axis-aligned 3D bounding boxes (`BoundingBox3D`), upright cylindrical collision meshes for miniature tokens (`BoundingCylinder`), and elevation grid step collision evaluator (`HeightfieldTerrain`) (< 130 lines).
