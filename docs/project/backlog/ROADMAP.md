@@ -128,6 +128,10 @@
 - [ ] Rules Compendium Homebrew Subview Modular Decomposition (TASK-0179)
 - [ ] Board State Stories Modular Decomposition (TASK-0180)
 - [ ] Soundscape Event Handlers and Dependencies Modular Decomposition (TASK-0181)
+- [ ] Watcher Domain Events Modular Decomposition (TASK-0182)
+- [ ] Faction Resources Blackbox Test Suite Modular Decomposition (TASK-0183)
+- [ ] Campfire Crafting Blackbox Test Suite Modular Decomposition (TASK-0184)
+- [ ] Rules Compendium Styles Modular Decomposition (TASK-0185)
 
 
 
