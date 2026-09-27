@@ -124,6 +124,10 @@
 | `board-state` | POST | `/api/v1/boards/{board_id}/physics/simulate-throw` | Simulates tumbling 3D ballistic dice roll across board terrain with floor/wall bounces and face settling |
 | `board-state` | POST | `/api/v1/boards/{board_id}/physics/knockback` | Applies physical knockback impulse to miniature token, halting upon wall or elevation collisions |
 | `board-state` | POST | `/api/v1/board/{id}/import/uvtt` | Ingests Universal VTT (`.dd2vtt`) files, extracts walls/portals/lights, and stores map texture in Silo S3 (alias: `/api/v1/boards/{id}/import/uvtt`) |
+| `board-state` | POST | `/api/v1/board/{id}/doors/{door_id}/toggle` | Toggles state of an interactive door or portal (alias: `/board/{id}/doors/{door_id}/toggle`) |
+| `board-state` | GET | `/api/v1/board/{id}/doors` | Queries interactive doors and secret portals on the board (alias: `/board/{id}/doors`) |
+| `board-state` | POST | `/api/v1/board/{id}/lights` | Places or updates dynamic point light source (alias: `/board/{id}/lights`) |
+| `board-state` | GET | `/api/v1/board/{id}/lights` | Queries active dynamic point light sources on the board (alias: `/board/{id}/lights`) |
 | `board-state` | POST | `/api/v1/boards/{board_id}/traps` | Creates a secret DM spatial trap or trigger zone (DM only, alias: `/boards/{board_id}/traps`) |
 | `board-state` | GET | `/api/v1/boards/{board_id}/traps` | Retrieves board traps, filtering out secret traps for non-DM players (alias: `/boards/{board_id}/traps`) |
 | `board-state` | POST | `/api/v1/boards/{board_id}/switch-map` | Transitions board to a new battlemap and teleports party tokens atomically in a single event (DM only, alias: `/boards/{board_id}/switch-map`) |
