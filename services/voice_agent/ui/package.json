@@ -9,7 +9,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./runefoble-voice-controls": "./src/runefoble-voice-controls.ts",
-    "./runefoble-mobile-companion": "./src/runefoble-mobile-companion.ts"
+    "./runefoble-mobile-companion": "./src/runefoble-mobile-companion.ts",
+    "./runefoble-voice-duplex-controls": "./src/runefoble-voice-duplex-controls.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
