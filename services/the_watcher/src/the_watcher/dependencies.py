@@ -19,6 +19,7 @@ from the_watcher.compound_actions import CompoundActionEngine
 from the_watcher.copilot import CopilotEngine
 from the_watcher.disambiguation import DisambiguationEngine
 from the_watcher.factions import FactionAggregate
+from the_watcher.factions.resources import FactionResourceAggregate
 from the_watcher.simulation_engine import FactionSimulationEngine
 from the_watcher.watcher_ai import TheWatcherEngine
 
@@ -41,6 +42,7 @@ platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _faction_repo: AggregateRepository[FactionAggregate] | None = None
+_faction_resource_repo: AggregateRepository[FactionResourceAggregate] | None = None
 
 
 def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
@@ -76,6 +78,18 @@ def get_faction_repo() -> AggregateRepository[FactionAggregate]:
 def set_faction_repo(repo: AggregateRepository[FactionAggregate] | None) -> None:
     global _faction_repo
     _faction_repo = repo
+
+
+def get_faction_resource_repo() -> AggregateRepository[FactionResourceAggregate]:
+    global _faction_resource_repo
+    if _faction_resource_repo is None:
+        _faction_resource_repo = create_aggregate_repository(FactionResourceAggregate)
+    return _faction_resource_repo
+
+
+def set_faction_resource_repo(repo: AggregateRepository[FactionResourceAggregate] | None) -> None:
+    global _faction_resource_repo
+    _faction_resource_repo = repo
 
 
 async def check_dm_authorization(

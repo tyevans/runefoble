@@ -108,6 +108,14 @@ from runefoble_events.downtime import (
     StrongholdCreated,
     StrongholdUpgraded,
 )
+from runefoble_events.faction_resources import (
+    FactionBriberyAttempted,
+    FactionBriberyAttemptedEvent,
+    FactionMercenaryRecruited,
+    FactionMercenaryRecruitedEvent,
+    FactionResourceUpdated,
+    FactionResourceUpdatedEvent,
+)
 from runefoble_events.lore import (
     AliasesConsolidated,
     AtlasLayerToggled,
@@ -403,4 +411,10 @@ __all__ = [
     "VocalModulatorPresetAppliedEvent",
     "VoiceFilterToggled",
     "VoiceFilterToggledEvent",
+    "FactionResourceUpdatedEvent",
+    "FactionResourceUpdated",
+    "FactionMercenaryRecruitedEvent",
+    "FactionMercenaryRecruited",
+    "FactionBriberyAttemptedEvent",
+    "FactionBriberyAttempted",
 ]
