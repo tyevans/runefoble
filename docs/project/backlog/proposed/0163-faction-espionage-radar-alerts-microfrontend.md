@@ -1,7 +1,7 @@
 ---
 id: '0163'
 title: Faction Espionage and Alert Feeds Microfrontend
-status: Refined
+status: Proposed
 created: 2026-09-26
 dependencies:
 - TASK-0137

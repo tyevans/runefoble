@@ -81,6 +81,12 @@ This catalog inventories all speculative and visionary capabilities for Runefobl
 | `FEAT-UI-04` | **Tactile Token Kinematics & Momentum** | Drag-and-drop token physics with momentum, spring dampening, step counters, and live waypoint route measurement. | **P1 (Beta)** | `frontend`, `board_state` |
 | `FEAT-UI-05` | **Spoken Command Ghost Previews** | Real-time semi-transparent token trajectory and targeting ghost preview before voice mutations commit to the board. | **P1 (Beta)** | `frontend`, `the_watcher` |
 | `FEAT-UI-06` | **Radial Token Action Menu & AoE Templates** | Contextual circular dial for one-tap token actions and rotatable geometric AoE spell templates with live target intersection highlighting. | **P1 (Beta)** | `frontend`, `board_state` |
+| `FEAT-UI-07` | **User Authentication & Zitadel OIDC Modal** | Sign-up, sign-in, token storage/refresh, user menu dropdown, and profile settings. | **P0 (MVP)** | `frontend`, `runefoble_auth` |
+| `FEAT-UI-08` | **Campaign Management Dashboard & Role Hub** | Campaign cards grid, creation wizard, shareable invite links, and SpiceDB Zanzibar role administration. | **P0 (MVP)** | `frontend`, `game_session`, `gateway_api` |
+| `FEAT-UI-09` | **Character Roster & Campaign Party Assignment** | Personal character library, creation builder modal, and assigning characters to campaign parties. | **P0 (MVP)** | `frontend`, `character_sheet` |
+| `FEAT-UI-10` | **Game Session Pre-Game Lobby & Launchpad** | Staging room with player presence, character lock-in, readiness toggling, and DM one-click session launch. | **P0 (MVP)** | `frontend`, `game_session` |
+| `FEAT-UI-11` | **Client-Side SPA Routing & Navigation Chrome** | Lightweight deep-linkable router (`#/campaigns`, `#/campaigns/:id/sessions/:id`), breadcrumbs, and route-aware WebSocket lifecycles. | **P0 (MVP)** | `frontend` |
+
 
 ---
 

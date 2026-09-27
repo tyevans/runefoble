@@ -32,5 +32,11 @@
 30. **US-0048**: Multi-Modal Kinetic Spell VFX and WebGL Particle Canvas (New / Creative)
 31. **US-0049**: Printable Tabletop Forge: Grid-Calibrated PDFs, Standees and 3D STL Tokens (New / Creative)
 32. **US-0050**: Collaborative Campaign Atlas and Multi-Layered Living Codex (New / Creative)
+33. **US-0062**: User Registration, Zitadel OIDC Authentication, and Profile Management (Active)
+34. **US-0063**: Campaign Creation, Dashboard Hub, and SpiceDB Zanzibar Member Access Control (Active)
+35. **US-0064**: Character Roster Management and Campaign Party Assignment (Active)
+36. **US-0065**: Game Session Pre-Game Lobby, Participant Readiness, and Live Launch Orchestration (Active)
+37. **US-0066**: Application Shell Client-Side Routing, Navigation Chrome, and Route Lifecycle (Active)
+
 
 

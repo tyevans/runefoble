@@ -1,7 +1,7 @@
 ---
 id: '0162'
 title: Faction Turf War and Regional Unrest Event Pipeline
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0126
@@ -18,8 +18,8 @@ governing_stories:
 - US-0057
 - US-0019
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/193
 ---
-
 # TASK-0162: Faction Turf War and Regional Unrest Event Pipeline
 
 ## Status

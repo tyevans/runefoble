@@ -1,7 +1,7 @@
 ---
 id: '0169'
 title: Hardware Acoustic Echo Cancellation and ERLE Validation
-status: Refined
+status: Proposed
 created: 2026-09-26
 dependencies:
 - TASK-0141
