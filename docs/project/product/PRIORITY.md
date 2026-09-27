@@ -22,5 +22,7 @@
 20. **PRD-0020**: Zero-Latency Neural Voice Duplex, Barge-In Interruption & Acoustic Echo Cancellation (In Progress)
 21. **PRD-0021**: 3D WebGL Tabletop Physics, Miniature Mini-Ragdolls & Kinetic Dice Collision (In Progress)
 22. **PRD-0022**: Extensible Modder Platform, Universal VTT Asset Bridge & FastMCP Tool Registry (Accepted)
+23. **PRD-0023**: Unified Frontend Experience with User Authentication, Campaign Hub, and Session Orchestration (Immediate Priority / Active)
+
 
 

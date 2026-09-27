@@ -114,6 +114,12 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`manage-spoken-reactions-and-ready-actions.md`](docs/how-to/manage-spoken-reactions-and-ready-actions.md): How to halt active combat turns with spoken reaction interrupts within 500ms, prompt reacting players, and evaluate conditional ready-action triggers.
 - [`manage-secret-dm-traps-and-map-triggers.md`](docs/how-to/manage-secret-dm-traps-and-map-triggers.md): How to configure DM-only secret spatial traps, handle movement-pause breach detection, and execute seamless battlemap switching with party token teleportation.
 - [`modulate-dm-vocal-npc-presets.md`](docs/how-to/modulate-dm-vocal-npc-presets.md): How to apply real-time DSP pitch and formant shift filters, creature archetype presets, and live stream audio modulation.
+- [`charter-frontier-settlements-and-havens.md`](docs/how-to/charter-frontier-settlements-and-havens.md): How to charter persistent communal havens, co-upgrade workshops and fortresses across West Marches campaigns, claim rest boons, and enforce SpiceDB Zanzibar isolation.
+- [`navigate-client-spa-routes-and-breadcrumbs.md`](docs/how-to/navigate-client-spa-routes-and-breadcrumbs.md): How to navigate deep-linkable client SPA routes, configure authentication guards, manage route lifecycle teardown, and render dynamic breadcrumbs.
+- [`manage-campaign-lifecycle-and-invites.md`](docs/how-to/manage-campaign-lifecycle-and-invites.md): How to create campaigns, generate shareable invite tokens, join existing campaigns, and inspect active party membership with SpiceDB Zanzibar object authorization.
+- [`coordinate-game-session-lobby-and-readiness.md`](docs/how-to/coordinate-game-session-lobby-and-readiness.md): How to coordinate pre-game assembly in the session lobby, verify player presence, toggle readiness and absentee AI stand-ins, and launch live tabletop sessions.
+- [`orchestrate-app-shell-views-and-session-transitions.md`](docs/how-to/orchestrate-app-shell-views-and-session-transitions.md): How to orchestrate routed App Shell views, manage route-bound WebSocket lifecycles, and transition from pre-game lobby to live VTT tabletop.
+- [`post-and-fulfill-mercenary-bounty-contracts.md`](docs/how-to/post-and-fulfill-mercenary-bounty-contracts.md): How to post, claim, and complete mercenary bounties and resource retrieval contracts with locked escrow between adventuring parties sharing a West Marches frontier.
 
 
 
@@ -190,7 +196,8 @@ Work is complete only when:
 7. **Helm & Kubernetes Integrity**: Umbrella Helm chart passes `helm lint` and renders cleanly via `helm template`.[^4]
 8. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs and User Stories) updated to reflect the new state.[^18] For Backlog items (`complete/` and `PRIORITY.md`), updates are applied atomically upon integration into `main` by the integration orchestrator (never directly on feature branches or in worker worktrees to prevent merge conflicts).
 9. **Changelog Maintenance**: User-facing capabilities, architectural shifts, and public API/schema changes are recorded in `CHANGELOG.md` under `[Unreleased]` following the Keep a Changelog standard.
-10. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
+10. **Platform Showcase Maintenance**: The marketing and platform showcase page (`docs/marketing.md`) is maintained and updated as progress is made, keeping live core capabilities, architectural highlights, and roadmap milestone statuses aligned with the current state of the platform.
+11. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
 
 ## Dispatching Work to Agents & Parallel Worktrees
 

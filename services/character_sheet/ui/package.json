@@ -21,7 +21,13 @@
     "./conditions.styles": "./src/conditions.styles.ts",
     "./runefoble-character-sheet.types": "./src/runefoble-character-sheet.types.ts",
     "./runefoble-wardrobe-gallery": "./src/runefoble-wardrobe-gallery.ts",
-    "./runefoble-wardrobe-gallery.styles": "./src/runefoble-wardrobe-gallery.styles.ts"
+    "./runefoble-wardrobe-gallery.styles": "./src/runefoble-wardrobe-gallery.styles.ts",
+    "./roster": "./src/roster/index.ts",
+    "./roster/runefoble-character-roster": "./src/roster/runefoble-character-roster.ts",
+    "./roster/runefoble-character-roster.styles": "./src/roster/runefoble-character-roster.styles.ts",
+    "./roster/runefoble-character-builder-modal": "./src/roster/runefoble-character-builder-modal.ts",
+    "./roster/runefoble-character-builder-modal.styles": "./src/roster/runefoble-character-builder-modal.styles.ts",
+    "./roster/types": "./src/roster/types.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

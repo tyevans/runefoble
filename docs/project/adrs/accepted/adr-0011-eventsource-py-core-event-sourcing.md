@@ -1,4 +1,4 @@
-# ADR 0011: eventsource-py as Core Event Sourcing and Aggregate Engine
+# ADR-0011: eventsource-py as Core Event Sourcing and Aggregate Engine
 
 ## Status
 Accepted

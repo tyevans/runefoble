@@ -1,6 +1,9 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import './runefoble-campaign-nav.ts';
+import './runefoble-breadcrumbs.ts';
+import './runefoble-user-menu.ts';
+import type { BreadcrumbItem } from '../router/router.ts';
 
 @customElement('runefoble-header')
 export class RunefobleHeader extends LitElement {
@@ -11,6 +14,7 @@ export class RunefobleHeader extends LitElement {
   @property({ type: String }) sessionId = '14';
   @property({ type: String }) dmName = 'The Watcher';
   @property({ type: String }) userRole = 'Player';
+  @property({ type: Array }) breadcrumbs: BreadcrumbItem[] = [];
 
   static styles = css`
     :host { display: block; }
@@ -19,6 +23,7 @@ export class RunefobleHeader extends LitElement {
       padding-bottom: 20px; border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color);
       margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
     }
+    .brand-section { display: flex; flex-direction: column; gap: 8px; }
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand h1 { font-size: 1.9rem; margin: 0; color: var(--rf-text-primary); font-weight: 900; letter-spacing: -0.5px; }
     .tagline { font-size: 0.9rem; color: var(--rf-text-muted); }
@@ -56,9 +61,14 @@ export class RunefobleHeader extends LitElement {
   render() {
     return html`
       <header>
-        <div class="brand">
-          <h1>Runefoble</h1>
-          <span class="tagline">Imaginative Gaming for Storytellers</span>
+        <div class="brand-section">
+          <div class="brand">
+            <h1>Runefoble</h1>
+            <span class="tagline">Imaginative Gaming for Storytellers</span>
+          </div>
+          ${this.breadcrumbs && this.breadcrumbs.length > 0 ? html`
+            <runefoble-breadcrumbs .items=${this.breadcrumbs}></runefoble-breadcrumbs>
+          ` : ''}
         </div>
         <div class="header-actions">
           <button
@@ -86,6 +96,7 @@ export class RunefobleHeader extends LitElement {
             .userRole=${this.userRole}
             .socketConnected=${this.socketConnected}
           ></runefoble-campaign-nav>
+          <runefoble-user-menu></runefoble-user-menu>
         </div>
       </header>
     `;

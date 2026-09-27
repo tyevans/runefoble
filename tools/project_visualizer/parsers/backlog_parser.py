@@ -112,11 +112,14 @@ def parse_roadmap_file(project_dir: Path) -> list[MilestoneItem]:
         header = lines[0]
         m_id = "M" + header.split(":")[0].strip()
         name = header.split(":", 1)[1].strip() if ":" in header else header
-        status = (
-            "Complete"
-            if "Complete" in header
-            else ("Current" if "Current" in header else "Planned")
-        )
+        tag_match = re.search(r"\(([^)]+)\)\s*$", header)
+        tag = tag_match.group(1).lower() if tag_match else ""
+        if "complete" in tag:
+            status = "Complete"
+        elif any(k in tag for k in ("current", "active", "immediate", "now")):
+            status = "Current"
+        else:
+            status = "Planned"
 
         body = "\n".join(lines[1:])
         tasks_found = re.findall(r"TASK-\d+", body)
@@ -124,6 +127,8 @@ def parse_roadmap_file(project_dir: Path) -> list[MilestoneItem]:
         done_count = sum(1 for c in checks if c.lower() == "x")
         total_checks = len(checks) if checks else 1
         pct = int((done_count / total_checks) * 100) if total_checks else 0
+        if status == "Planned" and done_count > 0:
+            status = "In Progress"
 
         milestones.append(
             MilestoneItem(
@@ -131,9 +136,12 @@ def parse_roadmap_file(project_dir: Path) -> list[MilestoneItem]:
                 name=name,
                 status=status,
                 task_ids=list(set(tasks_found)),
-                completion_pct=100 if "Complete" in status else pct,
+                completion_pct=100 if status == "Complete" else pct,
             )
         )
+    milestones.sort(
+        key=lambda m: int(re.search(r"\d+", m.id).group()) if re.search(r"\d+", m.id) else 0
+    )
     return milestones
 
 

@@ -90,6 +90,7 @@
     const d = state.data;
     if (!d) return;
     const esc = window.visualizer.escapeHtml;
+    const inlineMd = window.visualizer.renderInlineMarkdown || esc;
 
     const personas = d.personas || [];
     const stories = d.stories || [];
@@ -111,7 +112,7 @@
                 </div>
                 <h3 class="text-sm font-bold text-white mt-3 group-hover:text-indigo-400 transition">${esc(p.name)}</h3>
                 <p class="text-xs text-muted mt-0.5">${esc(p.role)}</p>
-                <div class="mt-3 text-[11px] text-muted italic line-clamp-2">"${esc(p.quote)}"</div>
+                <div class="mt-3 text-[11px] text-muted italic line-clamp-2">"${inlineMd(p.quote)}"</div>
               </div>
               <div class="mt-4 pt-3 border-t border-subtle flex items-center justify-between text-xs font-mono">
                 <span class="text-indigo-400 font-semibold">${p.story_ids.length} Stories</span>
@@ -164,6 +165,7 @@
     const d = state.data;
     if (!d) return;
     const esc = window.visualizer.escapeHtml;
+    const inlineMd = window.visualizer.renderInlineMarkdown || esc;
 
     const adrs = d.adrs || [];
 
@@ -183,11 +185,11 @@
                   <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold">${adr.domain}</span>
                 </div>
                 <h3 class="text-sm font-bold text-white mt-2 group-hover:text-amber-300 transition">${esc(adr.title)}</h3>
-                <p class="text-xs text-muted mt-2 line-clamp-3">${esc(adr.context || '')}</p>
+                <p class="text-xs text-muted mt-2 line-clamp-3">${inlineMd(adr.context || '')}</p>
 
                 <div class="mt-4 p-2.5 rounded-lg bg-[var(--bg-elevated)] border border-subtle text-[11px] text-muted">
                   <strong class="text-amber-400 uppercase font-mono text-[9px] block">Decision Summary</strong>
-                  <span class="line-clamp-2 mt-0.5 text-slate-300">${esc(adr.decision || '')}</span>
+                  <span class="line-clamp-2 mt-0.5 text-slate-300 block">${inlineMd(adr.decision || '')}</span>
                 </div>
               </div>
 

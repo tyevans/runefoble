@@ -45,7 +45,7 @@ definition session {
 
     permission control = campaign->run_session
     permission participate = campaign->play
-    permission observe = campaign->view
+    permission observe = campaign->view + participate + control
 }
 
 definition board_token {
@@ -206,5 +206,57 @@ definition board {
     permission view_secret_layer = dungeon_master + campaign->run_session
     permission switch_map = dungeon_master + campaign->run_session
     permission view = dungeon_master + campaign->view
+}
+
+definition settlement {
+    relation shared_world: shared_world
+    relation founder: user
+    relation discovering_campaign: campaign
+    relation guild_officer: user
+
+    // Viewing settlement requires founder, discovering campaign member, guild officer, or shared_world viewer
+    permission view = founder + guild_officer + discovering_campaign->view + shared_world->view
+
+    // Upgrading facilities in a haven requires founder, discovering campaign player, guild officer, or shared_world trade
+    permission upgrade = founder + guild_officer + discovering_campaign->play + shared_world->trade
+
+    // Claiming rest boons / utilizing sanctums
+    permission use = founder + guild_officer + discovering_campaign->play + shared_world->discover
+
+    // Managing or defending settlement
+    permission manage = founder + guild_officer + shared_world->manage
+}
+
+definition bounty_contract {
+    relation session: session
+    relation campaign: campaign
+    relation creator: user
+    relation claimant: user
+
+    // Viewing open or active bounties
+    permission view = creator + claimant + campaign->view + session->observe
+
+    // Claiming an open bounty requires session/campaign play participation
+    permission claim = claimant + campaign->play + session->participate
+
+    // Submitting proof and fulfilling contract
+    permission fulfill = claimant + creator
+
+    // Managing contract, resolving disputes, and releasing escrow payout
+    permission manage = creator + campaign->run_session + session->control
+    permission disburse = creator + campaign->run_session + session->control
+}
+
+definition mercenary_bounty {
+    relation session: session
+    relation campaign: campaign
+    relation creator: user
+    relation claimant: user
+
+    permission view = creator + claimant + campaign->view + session->observe
+    permission claim = claimant + campaign->play + session->participate
+    permission fulfill = claimant + creator
+    permission manage = creator + campaign->run_session + session->control
+    permission disburse = creator + campaign->run_session + session->control
 }
 

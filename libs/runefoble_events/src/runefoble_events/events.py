@@ -153,6 +153,14 @@ from runefoble_events.session import (
     TurnAdvanced,
     TurnStarted,
 )
+from runefoble_events.settlements import (
+    SettlementChartered,
+    SettlementCharteredEvent,
+    SettlementRestBoonClaimed,
+    SettlementRestBoonClaimedEvent,
+    SettlementUpgraded,
+    SettlementUpgradedEvent,
+)
 from runefoble_events.soundscape import (
     LeitmotifProfileConfigured,
     LeitmotifTriggered,
@@ -168,6 +176,14 @@ from runefoble_events.tavern import (
     MinigameEnded,
     MinigameStarted,
     MinigameTurnTaken,
+)
+from runefoble_events.turf_war import (
+    FactionSkirmishResolved,
+    FactionSkirmishResolvedEvent,
+    FactionTerritoryCaptured,
+    FactionTerritoryCapturedEvent,
+    RegionalUnrestEscalated,
+    RegionalUnrestEscalatedEvent,
 )
 from runefoble_events.vocal_dsp import (
     VocalModulatorPresetApplied,
@@ -423,4 +439,16 @@ __all__ = [
     "FactionMercenaryRecruited",
     "FactionBriberyAttemptedEvent",
     "FactionBriberyAttempted",
+    "FactionSkirmishResolvedEvent",
+    "FactionSkirmishResolved",
+    "FactionTerritoryCapturedEvent",
+    "FactionTerritoryCaptured",
+    "RegionalUnrestEscalatedEvent",
+    "RegionalUnrestEscalated",
+    "SettlementCharteredEvent",
+    "SettlementChartered",
+    "SettlementUpgradedEvent",
+    "SettlementUpgraded",
+    "SettlementRestBoonClaimedEvent",
+    "SettlementRestBoonClaimed",
 ]

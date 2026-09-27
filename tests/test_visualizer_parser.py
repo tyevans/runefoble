@@ -161,6 +161,15 @@ def test_modular_parsers_and_facade_compatibility(repo_root: Path):
     adr_parser = ADRParser(project_dir, repo_root)
     assert len(adr_parser.parse()) == len(adrs)
 
+    # Verify ADR-0011 metadata and domain classification
+    adr11 = next(a for a in adrs if a.id == "ADR-0011")
+    assert adr11.title == "eventsource-py as Core Event Sourcing and Aggregate Engine"
+    assert adr11.status == "Accepted"
+    assert adr11.domain == "Event Sourcing"
+    assert "eventsource-py" in adr11.decision
+    assert len(adr11.context) > 0
+    assert len(adr11.consequences) > 0
+
     prds = parse_prd_files(project_dir, repo_root)
     assert len(prds) >= 12
     stories = parse_user_story_files(project_dir, repo_root)
@@ -208,3 +217,74 @@ def test_subparsers_line_length_invariant_under_200(repo_root: Path):
     assert facade_lines < 200, (
         f"parser.py facade has {facade_lines} lines, exceeding 200 lines limit"
     )
+
+
+def test_adr_parser_resilience(tmp_path: Path):
+    """Verify ADR parser handles variations in title header formats gracefully."""
+    docs_dir = tmp_path / "docs" / "project"
+    adrs_dir = docs_dir / "adrs" / "accepted"
+    adrs_dir.mkdir(parents=True)
+
+    # 1. Standard format "# ADR-0011: Title"
+    adr_file_1 = adrs_dir / "adr-0011-eventsource-py.md"
+    adr_file_1.write_text(
+        "# ADR-0011: Event Sourcing Core\n\n## Status\nAccepted\n\n## Context\nContext here\n\n## Decision\nDecision here\n\n## Consequences\nConsequences here",
+        encoding="utf-8",
+    )
+
+    # 2. Space format "# ADR 0012: Title"
+    adr_file_2 = adrs_dir / "adr-0012-bauhaus-theming.md"
+    adr_file_2.write_text(
+        "# ADR 0012: Bauhaus Theme\n\n## Status\nAccepted\n\n## Context\nContext 2\n\n## Decision\nDecision 2\n\n## Consequences\nConsequences 2",
+        encoding="utf-8",
+    )
+
+    # 3. Registry file with mapping
+    registry = docs_dir / "adrs" / "REGISTRY.md"
+    registry.write_text(
+        "| ID | Title | Status | Date |\n|---|---|---|---|\n"
+        "| ADR-0011 | Canonical Event Sourcing | Accepted | 2026-09-25 |\n",
+        encoding="utf-8",
+    )
+
+    adrs = parse_adr_files(docs_dir, tmp_path)
+    assert len(adrs) == 2
+
+    adr11 = next(a for a in adrs if a.id == "ADR-0011")
+    assert adr11.title == "Canonical Event Sourcing"
+    assert adr11.domain == "Event Sourcing"
+
+    adr12 = next(a for a in adrs if a.id == "ADR-0012")
+    assert adr12.id == "ADR-0012"
+    assert adr12.title == "Bauhaus Theme"
+    assert adr12.domain == "Frontend & UI"
+
+
+def test_roadmap_milestones_and_task_linking(repo_root: Path):
+    """Verify all 10 milestones are parsed with accurate status and linked to tasks."""
+    project_dir = repo_root / "docs" / "project"
+    milestones = parse_roadmap_file(project_dir)
+    assert len(milestones) == 10
+
+    m_by_id = {m.id: m for m in milestones}
+    assert m_by_id["M1"].status == "Complete"
+    assert m_by_id["M1"].completion_pct == 100
+    assert m_by_id["M8"].status == "Complete"
+    assert m_by_id["M8"].completion_pct == 100
+
+    # Milestone 10 is Active / Immediate Priority (status: Current, not 100% complete)
+    assert m_by_id["M10"].status == "Current"
+    assert 0 < m_by_id["M10"].completion_pct < 100
+    assert "Frontend Application Experience" in m_by_id["M10"].name
+
+    # Milestone 9 has in-progress tasks
+    assert m_by_id["M9"].status in ("In Progress", "Planned")
+
+    # Verify ProjectParser / scan_project populates task.milestone across all tasks
+    scanned_data = scan_project(repo_root, force=True)
+    assert len(scanned_data.tasks) > 0
+    assigned_milestones = {t.milestone for t in scanned_data.tasks}
+    assert "M1" in assigned_milestones
+    assert "M2" in assigned_milestones
+    assert "M10" in assigned_milestones
+    assert "" not in assigned_milestones

@@ -139,10 +139,45 @@ async def campaign_websocket_endpoint(websocket: WebSocket, campaign_id: str):
 
 ---
 
+## Step 4: Frontend Client Authentication & Login Modal
+
+Browser-side authentication is orchestrated through the frontend `authService` and Lit Web Components in `frontend/src/`:
+
+```typescript
+import { authService } from './auth/auth-service.ts';
+
+// Sign in with Zitadel credentials or local dev fallback proxy
+const user = await authService.login('marcus', 'SecretPassword123!');
+console.log('Signed in user:', user.username, user.roles);
+
+// Subscribe to auth state transitions
+authService.onAuthChanged((state) => {
+  if (state.isAuthenticated) {
+    console.log('Current user:', state.user?.username);
+  }
+});
+
+// Access current token for HTTP / WebSocket authorization headers
+const token = authService.getAccessToken();
+```
+
+### UI Components
+
+1. `<runefoble-auth-modal>`: Accessible modal with "Sign In" and "Create Account" tabs, validation for required fields, email structure, and minimum password lengths, and Bauhaus styling.
+2. `<runefoble-user-menu>`: Navigation bar avatar badge displaying username and role badges with a dropdown menu offering account navigation and sign-out actions.
+
+```html
+<runefoble-user-menu></runefoble-user-menu>
+<runefoble-auth-modal .open=${isAuthOpen} initialTab="login"></runefoble-auth-modal>
+```
+
+---
+
 ## Verification & Blackbox Testing
 
 Zitadel token verification and Zanzibar integration are verified via modular blackbox test suites:
 - **HTTP Bearer & JWKS**: `tests/test_blackbox_zitadel_http_auth.py` verifies RS256 signature verification, JWKS key rotation, token expiration, tampered signatures, audience enforcement, and dev mode bypass.
 - **WebSocket Handshake & Subprotocols**: `tests/test_blackbox_zitadel_websocket_auth.py` verifies query parameter authentication, Authorization header passing, `Sec-WebSocket-Protocol` subprotocol authentication, and RFC 6455 policy violation close frames (`code=4003`).
 - **Shared Auth Fixtures**: `tests/helpers/zitadel_auth.py` provisions test RSA keypairs, mock JWKS clients, and configured `ZitadelAuthService` instances.
+- **Frontend Auth & Token Management**: `frontend/test/auth.test.ts` verifies client token exchange, credential security, claims extraction, silent background refresh, and event dispatching.
 
