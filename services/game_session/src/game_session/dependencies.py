@@ -9,6 +9,7 @@ import os
 from game_session.aggregate import GameSessionAggregate
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan_ledger import CaravanLedgerAggregate
+from game_session.contracts.engine import MercenaryBountyAggregate
 from game_session.merchants import MerchantAggregate
 from game_session.minigames import TavernGameAggregate
 from game_session.settlements.aggregate import SettlementAggregate
@@ -57,6 +58,9 @@ caravan_contract_repo: AggregateRepository[CaravanContractAggregate] = create_ag
 settlement_repo: AggregateRepository[SettlementAggregate] = create_aggregate_repository(
     SettlementAggregate
 )
+bounty_contract_repo: AggregateRepository[MercenaryBountyAggregate] = create_aggregate_repository(
+    MercenaryBountyAggregate
+)
 
 
 def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
@@ -87,11 +91,20 @@ def get_settlement_repository() -> AggregateRepository[SettlementAggregate]:
     return settlement_repo
 
 
+def get_bounty_contract_repository() -> AggregateRepository[MercenaryBountyAggregate]:
+    return bounty_contract_repo
+
+
 _world_contracts_index: dict[str, list[str]] = {}
+_session_bounties_index: dict[str, list[str]] = {}
 
 
 def get_world_contracts_index() -> dict[str, list[str]]:
     return _world_contracts_index
+
+
+def get_session_bounties_index() -> dict[str, list[str]]:
+    return _session_bounties_index
 
 
 def get_spicedb_client() -> SpiceDBClient:
