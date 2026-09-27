@@ -1,7 +1,7 @@
 ---
 id: '0173'
 title: Universal VTT Door and Dynamic Lighting Parser
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0057
@@ -15,12 +15,13 @@ governing_prds:
 governing_stories:
 - US-0033
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/219
 ---
 
 # TASK-0173: Universal VTT Door and Dynamic Lighting Parser
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Extend the Universal VTT (`.uvtt` / `.dd2vtt`) importer in `services/board_state/` to extract interactive door geometries, secret portal triggers, and point-light sources directly into board state lighting and wall segments.

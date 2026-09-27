@@ -1,7 +1,7 @@
 ---
 id: '0178'
 title: GameSession Models Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-26
 dependencies:
 - TASK-0175
@@ -16,7 +16,7 @@ target_release: 0.7.0
 # TASK-0178: GameSession Models Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Decompose `services/game_session/src/game_session/models.py` (382 lines, 76.4% of limit) into modular submodules under `services/game_session/src/game_session/models/` (`session.py`, `turn_order.py`, `initiative.py`, `reactions.py`, `settlement.py`), keeping all model definitions strictly < 150 lines per Hard Invariant 6.
@@ -28,7 +28,7 @@ Decompose `services/game_session/src/game_session/models.py` (382 lines, 76.4% o
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean module layout in `services/game_session/`.
 - **ADR-0007: Domain-Driven Design Architecture**: Clean domain segregation for session and combat state schemas.
 
-## Scope of Work
+## Detailed Specification & Implementation Plan
 1. **Model Submodule Directory (`services/game_session/src/game_session/models/`)**:
    - `session.py`: Session configuration, participant status, and session metadata (< 100 lines).
    - `combat.py`: Initiative rolls, turn order, and round progression (< 100 lines).
@@ -39,8 +39,20 @@ Decompose `services/game_session/src/game_session/models.py` (382 lines, 76.4% o
 3. **Verification**:
    - Verify blackbox tests and game session test suites pass cleanly.
 
-## Definition of Done
-- `services/game_session/src/game_session/models/` created with focused submodules.
-- All model files strictly < 120 lines.
-- All game session tests pass with `uv run pytest services/game_session/`.
-- Passes `uv run ruff check .` and `uv run ruff format --check .`.
+## INVEST Criteria Evaluation
+- **Independent (I)**: Model decomposition without schema changes; zero impact on client wire format.
+- **Negotiable (N)**: Submodule groupings can be adjusted according to domain bounded contexts.
+- **Valuable (V)**: Protects against file length invariant violations and improves model clarity.
+- **Estimable (E)**: Direct schema extraction with existing comprehensive test coverage.
+- **Small (S)**: Bounded strictly to `services/game_session/src/game_session/models/`; modules < 120 lines.
+- **Testable (T)**: Frontdoor verification via `pytest services/game_session/` and session blackbox suites.
+
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Module Architecture**:
+   - `services/game_session/src/game_session/models/` created with focused submodules.
+   - All model files strictly < 120 lines per Hard Invariant 6.
+2. **Backwards Compatibility & Verification**:
+   - All models re-exported identically from `game_session.models`.
+   - All game session tests pass with `uv run pytest services/game_session/`.
+3. **Quality Gates**:
+   - Passes `uv run ruff check .` and `uv run ruff format --check .`.
