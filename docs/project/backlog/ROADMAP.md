@@ -104,7 +104,7 @@
 
 ## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Active / Immediate Priority)
 ### Core Identity, Gateway & Shell Routing Enablers
-- [ ] Frontend SPA Client Router and Navigation Chrome (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0206)
+- [x] Frontend SPA Client Router and Navigation Chrome (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0206)
 - [ ] Zitadel Auth Client and Login Modal Component (`FEAT-UI-07`, `FEAT-SEC-02`, US-0062, PRD-0023, TASK-0207)
 - [ ] Gateway Campaign Lifecycle and Membership API (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0208)
 
@@ -123,8 +123,8 @@
 ### Living Worlds, Mobile & Voice Enablers
 
 - [x] NPC Faction Resource Operations and Bribery Mechanics Aggregate (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0161)
-- [ ] Faction Turf War and Regional Unrest Event Pipeline (`FEAT-WAT-07`, US-0057, US-0019, PRD-0017, TASK-0162)
-- [ ] Cross-Campaign Settlement and Haven Registry (`FEAT-LRE-04`, US-0058, PRD-0018, TASK-0164)
+- [x] Faction Turf War and Regional Unrest Event Pipeline (`FEAT-WAT-07`, US-0057, US-0019, PRD-0017, TASK-0162)
+- [x] Cross-Campaign Settlement and Haven Registry (`FEAT-LRE-04`, US-0058, PRD-0018, TASK-0164)
 - [ ] Frontier Mercenary Contract and Bounty Board Router (`FEAT-DWN-04`, US-0058, PRD-0018, TASK-0165)
 - [ ] Mobile Low-Bandwidth Opus Adaptive Stream Adapter (`FEAT-VOX-01`, US-0059, PRD-0019, TASK-0166)
 - [ ] Neural Speech Barge-In and Soft Crossfade Audio Filter (`FEAT-VOX-06`, US-0060, PRD-0020, TASK-0168)

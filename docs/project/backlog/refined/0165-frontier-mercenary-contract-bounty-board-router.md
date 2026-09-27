@@ -1,7 +1,7 @@
 ---
 id: '0165'
 title: Frontier Mercenary Contract and Bounty Board Router
-status: Proposed
+status: Refined
 created: 2026-09-26
 dependencies:
 - TASK-0129
