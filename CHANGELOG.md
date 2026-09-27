@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **GameSession Models Modular Decomposition (`TASK-0178`, `ADR-0003`, `ADR-0007`, `PRD-0001`, `US-0001`)**:
+  - Decomposed `services/game_session/src/game_session/models.py` (382 lines) into focused submodules under `services/game_session/src/game_session/models/`, keeping all model files strictly < 100 lines (and all files < 120 lines) per Hard Invariant 6:
+    - `session.py` (91 lines): Session request/response schemas, participant states, absentee autopilot, and `GameSessionState` aggregate model.
+    - `reactions.py` (82 lines): Reaction declarations, ready-action triggers, reaction resolution schemas, and trigger evaluation DTOs.
+    - `combat.py` (25 lines): Unified combat facade composing initiative and turn progression schemas.
+    - `turn_order.py` (25 lines): Combat start request, turn progression, and combat encounter state schemas.
+    - `initiative.py` (33 lines): Initiative roll request and dice roll schemas.
+    - `settlement.py` (23 lines): Frontier outposts, havens, facility upgrades, and rest boon schemas.
+    - `transitions.py` (87 lines): Core session state transition mixin (`GameSessionTransitionsMixin`).
+    - `combat_transitions.py` (47 lines): Combat-specific state transition mixin (`CombatTransitionsMixin`).
+    - `reaction_transitions.py` (38 lines): Reaction and ready-action state transition mixin (`ReactionTransitionsMixin`).
+    - `stand_in_transitions.py` (60 lines): Player presence and stand-in transition mixin (`StandInTransitionsMixin`).
+    - `__init__.py` (83 lines): Transparent re-export package facade maintaining 100% backward compatibility.
+    - `models.py` (10 lines): Module root backward-compatible re-export facade.
+  - Added comprehensive frontdoor blackbox test suite `tests/test_game_session_models_modular_decomposition.py` verifying package facade re-exports, direct submodule imports, file length invariants (< 120 lines budget), state transitions, and Pydantic validation.
+  - Updated Diataxis guide `docs/how-to/define-event-sourced-aggregates.md`.
 - **GameSession Aggregate and Reaction Handlers Modular Decomposition (`TASK-0175`, `ADR-0003`, `ADR-0007`, `ADR-0011`, `PRD-0001`, `US-0001`, `US-0023`)**:
   - Decomposed `services/game_session/src/game_session/aggregate.py` (453 lines) into modular domain handler modules under `services/game_session/src/game_session/aggregate/`, keeping all modules strictly < 160 lines per Hard Invariant 6:
     - `session_handlers.py` (140 lines): `SessionHandlersMixin` handling session creation, starting, player joining, player departure, and character hot-swapping.

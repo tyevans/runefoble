@@ -1,7 +1,7 @@
 ---
 id: '0183'
 title: Faction Resources Blackbox Test Suite Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-27
 dependencies:
 - TASK-0161
@@ -20,10 +20,10 @@ target_release: 0.7.0
 # TASK-0183: Faction Resources Blackbox Test Suite Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
-Decompose `tests/test_blackbox_faction_resources/test_blackbox_faction_resources.py` (360 lines, 72.0% of limit) into modular test submodules under `tests/test_blackbox_faction_resources/` (`conftest.py`, `test_resource_operations.py`, `test_mercenary_recruitment.py`, `test_bribery_mechanics.py`), keeping all test files strictly < 150 lines per Hard Invariant 6.
+Decompose `tests/test_blackbox_faction_resources/test_blackbox_faction_resources.py` (360 lines, 72.0% of limit) into modular test submodules under `tests/test_blackbox_faction_resources/` (`conftest.py`, `test_resource_operations.py`, `test_mercenary_recruitment.py`, `test_bribery_mechanics.py`), keeping all test files strictly < 150 lines per Hard Invariant 6 and ADR-0003.
 
 ## Problem Statement
 `tests/test_blackbox_faction_resources/test_blackbox_faction_resources.py` was introduced in TASK-0161 and covers resource transactions, mercenary hiring, bribery checks, and Redis event emissions in a single monolithic test file of 360 lines. As additional faction turf war and regional unrest tests are added, this suite will breach the 500-line limit unless decomposed into focused, single-responsibility test files.
@@ -34,7 +34,7 @@ Decompose `tests/test_blackbox_faction_resources/test_blackbox_faction_resources
 - **ADR-0007: Domain-Driven Design Architecture**: Clean domain segregation.
 - **ADR-0011: PostgreSQL Event Store via eventsource-py**: Event-sourced aggregate state verification.
 
-## Scope of Work
+## Detailed Specification & Implementation Plan
 1. **Shared Fixtures (`tests/test_blackbox_faction_resources/conftest.py`)**:
    - Extract test client, mock SpiceDB, in-memory event bus/store fixtures, and aggregate repository setup (< 70 lines).
 2. **Resource Operations Tests (`tests/test_blackbox_faction_resources/test_resource_operations.py`)**:
@@ -46,8 +46,19 @@ Decompose `tests/test_blackbox_faction_resources/test_blackbox_faction_resources
 5. **Verification**:
    - Remove root test module `test_blackbox_faction_resources.py` and run `uv run pytest tests/test_blackbox_faction_resources/`.
 
-## Definition of Done
-- `tests/test_blackbox_faction_resources/` package decomposed with all files strictly < 150 lines.
-- Zero files in test suite exceed 200 lines.
-- All tests pass via `uv run pytest tests/test_blackbox_faction_resources/`.
-- Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+## INVEST Criteria Evaluation
+- **Independent (I)**: Test refactoring isolated entirely to the `tests/test_blackbox_faction_resources/` package.
+- **Negotiable (N)**: Split boundaries between test categories can be adjusted as test fixtures evolve.
+- **Valuable (V)**: Safeguards against Hard Invariant 6 (500 lines) and speeds up debugging of faction operations.
+- **Estimable (E)**: Deterministic extraction of test functions into separate test files with shared `conftest.py`.
+- **Small (S)**: Bounded strictly to `tests/test_blackbox_faction_resources/`; all modules < 150 lines.
+- **Testable (T)**: Frontdoor verification through pytest test suite execution against public HTTP endpoints and domain events.
+
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Module Architecture**:
+   - `test_blackbox_faction_resources.py` removed; decomposed submodules created under `tests/test_blackbox_faction_resources/`.
+   - All extracted test files strictly < 150 lines per Hard Invariant 6.
+2. **Frontdoor Test Verification**:
+   - All tests pass via `uv run pytest tests/test_blackbox_faction_resources/`.
+3. **Quality Gates**:
+   - Code passes `uv run ruff check .` and `uv run ruff format --check .`.
