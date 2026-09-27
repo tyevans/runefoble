@@ -17,6 +17,10 @@
     "./runefoble-spectator-overlay.styles": "./src/runefoble-spectator-overlay.styles.ts",
     "./runefoble-campfire-crafting": "./src/runefoble-campfire-crafting.ts",
     "./runefoble-campfire-crafting.styles": "./src/runefoble-campfire-crafting.styles.ts",
+    "./runefoble-tavern-parlor": "./src/runefoble-tavern-parlor.ts",
+    "./runefoble-tavern-parlor.styles": "./src/runefoble-tavern-parlor.styles.ts",
+    "./runefoble-caravan-board": "./src/runefoble-caravan-board.ts",
+    "./runefoble-caravan-board.styles": "./src/runefoble-caravan-board.styles.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {
