@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **GameSession Aggregate and Reaction Handlers Modular Decomposition (`TASK-0175`, `ADR-0003`, `ADR-0007`, `ADR-0011`, `PRD-0001`, `US-0001`, `US-0023`)**:
+  - Decomposed `services/game_session/src/game_session/aggregate.py` (453 lines) into modular domain handler modules under `services/game_session/src/game_session/aggregate/`, keeping all modules strictly < 160 lines per Hard Invariant 6:
+    - `session_handlers.py` (140 lines): `SessionHandlersMixin` handling session creation, starting, player joining, player departure, and character hot-swapping.
+    - `combat_handlers.py` (119 lines): `CombatHandlersMixin` handling combat encounter initiation, initiative rolling and ordering, turn cycling, and combat encounter completion.
+    - `reaction_handlers.py` (152 lines): `ReactionHandlersMixin` handling spoken reaction turn pause/resume, reaction resolution, ready-action conditional trigger registration, and trigger firing.
+    - `aggregate.py` (99 lines): Root `GameSessionAggregate` combining mixins, turn advancement, stand-in decision recording, and session termination.
+    - `__init__.py` (18 lines): Package facade re-exporting `GameSessionAggregate`, handler mixins, and state models.
+    - `aggregate.py` (18 lines): Root package facade ensuring 100% backward compatibility for existing callers.
+  - Added comprehensive frontdoor blackbox test suite `tests/test_game_session_modular_decomposition.py` verifying package re-exports, file length invariants (< 160 lines), complete handler event registry, and end-to-end event replay reconstitution.
+  - Updated Diataxis guide `docs/how-to/define-event-sourced-aggregates.md`.
 - **Campfire Crafting Engine Recipe Registry and Mishap Table Modular Decomposition (`TASK-0153`, `ADR-0003`, `ADR-0007`, `ADR-0011`, `PRD-0014`, `US-0044`)**:
   - Decomposed `services/character_sheet/src/character_sheet/crafting.py` (375 lines) into modular domain submodules under `services/character_sheet/src/character_sheet/crafting/`, with all modules strictly < 130 lines per Hard Invariant 6:
     - `recipes.py` (102 lines): Reagents catalogue, catalysts catalogue, known recipes, `Recipe` schema model, `CraftingState`, and DC difficulty check calculations (`calculate_crafting_dc`, `find_matching_recipe`).
