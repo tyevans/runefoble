@@ -46,10 +46,43 @@ print(f"Background texture URL: {data['background_image_url']}")
 
 When `.dd2vtt` data is ingested:
 1. **Resolution & Dimensions**: Grid resolution (`pixels_per_grid`) and canvas dimensions (`cols`, `rows`) are extracted and set on `BoardState`.
-2. **Line of Sight & Portals**: Vector paths from `line_of_sight` are decomposed into segment dictionaries `{"x1", "y1", "x2", "y2", "wall_type": "wall"}` and door portals are extracted.
-3. **Obstacle Bounds**: Integer grid coordinates along wall segments are populated with `obstacle` tokens within bounds.
-4. **Silo S3 Texture Storage**: Embedded base64 image data is decoded, validated for image MIME types, and uploaded to the `battlemaps/` bucket in Silo S3.
-5. **Event Sourcing**: A `UniversalVTTImported` domain event is emitted and applied to the `BoardAggregate`.
+2. **Line of Sight & Portals**: Vector paths from `line_of_sight` are decomposed into segment dictionaries `{"x1", "y1", "x2", "y2", "wall_type": "wall"}`.
+3. **Interactive Doors & Secret Portals**: Doors are parsed into `DoorGeometry` structures containing coordinate segments `(x1, y1, x2, y2)`, pivot hinges `(pivot_x, pivot_y)`, status (`open`, `closed`, `locked`), secret flag, and detection DC (`dc_detection`).
+4. **Dynamic Point Lights**: Ambient lights are mapped to `BoardLightModel` containing normalized color hex (`#ffffffff`), bright radius, dim radius, flicker intensity, and shadow flags.
+5. **Obstacle Bounds**: Integer grid coordinates along wall segments are populated with `obstacle` tokens within bounds.
+6. **Silo S3 Texture Storage**: Embedded base64 image data is decoded, validated for image MIME types, and uploaded to the `battlemaps/` bucket in Silo S3.
+7. **Event Sourcing**: A `UniversalVTTImported` domain event is emitted and applied to the `BoardAggregate`.
+
+### Interacting with Doors and Dynamic Lights
+
+The `board_state` service provides dedicated REST and WebSocket frontdoors for door toggles and light manipulation:
+
+```python
+import httpx
+
+# Toggle an interactive door
+resp = httpx.post("http://localhost:8002/board/camp-01/doors/main_gate/toggle")
+print("Door state:", resp.json()["door"]["status"])
+
+# Query active doors on the tactical grid
+doors = httpx.get("http://localhost:8002/board/camp-01/doors").json()["doors"]
+
+# Place a dynamic point light source (e.g. torch or campfire)
+httpx.post(
+    "http://localhost:8002/board/camp-01/lights",
+    json={
+        "light_id": "torch_01",
+        "x": 8.0,
+        "y": 6.0,
+        "color_hex": "#ffaa22",
+        "bright_radius": 20.0,
+        "dim_radius": 40.0,
+        "flicker_intensity": 0.25,
+    },
+)
+```
+
+Real-time state changes emit `BoardDoorToggledEvent` and `BoardLightSourcePlacedEvent` CloudEvents, broadcasting mutations across party WebSockets with SpiceDB Zanzibar authorization enforcement.
 
 ---
 

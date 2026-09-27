@@ -185,6 +185,12 @@ from runefoble_events.turf_war import (
     RegionalUnrestEscalated,
     RegionalUnrestEscalatedEvent,
 )
+from runefoble_events.uvtt_elements import (
+    BoardDoorToggled,
+    BoardDoorToggledEvent,
+    BoardLightSourcePlaced,
+    BoardLightSourcePlacedEvent,
+)
 from runefoble_events.vocal_dsp import (
     VocalModulatorPresetApplied,
     VocalModulatorPresetAppliedEvent,
@@ -429,6 +435,10 @@ __all__ = [
     "SharedWorldCreated",
     "BattlemapSwitched",
     "BattlemapSwitchedEvent",
+    "BoardDoorToggled",
+    "BoardDoorToggledEvent",
+    "BoardLightSourcePlaced",
+    "BoardLightSourcePlacedEvent",
     "TrapDisarmed",
     "TrapDisarmedEvent",
     "TrapPlaced",

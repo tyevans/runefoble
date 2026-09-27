@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
+from board_state.uvtt.doors import extract_doors_from_uvtt
+from board_state.uvtt.lights import extract_lights_from_uvtt
 from runefoble_platform.storage import SiloStorageService, get_storage_service
 
 if TYPE_CHECKING:
@@ -35,6 +37,7 @@ class UVTTParseResult:
     pixels_per_grid: int
     wall_segments: list[dict[str, Any]] = field(default_factory=list)
     portals: list[dict[str, Any]] = field(default_factory=list)
+    doors: dict[str, Any] = field(default_factory=dict)
     lights: list[dict[str, Any]] = field(default_factory=list)
     image_bytes: bytes | None = None
     image_mime_type: str = "image/png"
@@ -103,42 +106,32 @@ def parse_uvtt_data(raw_data: str | bytes | dict[str, Any]) -> UVTTParseResult:
                     }
                 )
 
-    # 3. Portals / Doors
+    # 3. Portals & Doors
+    raw_portals = payload.get("portals", [])
+    doors = extract_doors_from_uvtt(raw_portals)
     portals: list[dict[str, Any]] = []
-    for portal in payload.get("portals", []):
+    for portal in raw_portals:
         if not isinstance(portal, dict):
             continue
         pos = portal.get("position", {})
         px = float(pos.get("x", 0.0)) if isinstance(pos, dict) else 0.0
         py = float(pos.get("y", 0.0)) if isinstance(pos, dict) else 0.0
-        bounds = portal.get("bounds", [])
         portals.append(
             {
                 "position": {"x": round(px, 3), "y": round(py, 3)},
-                "bounds": bounds,
+                "bounds": portal.get("bounds", []),
                 "rotation": float(portal.get("rotation", 0.0)),
                 "closed": bool(portal.get("closed", True)),
                 "freestanding": bool(portal.get("freestanding", False)),
             }
         )
 
-    # 4. Ambient Lights
-    lights: list[dict[str, Any]] = []
-    for light in payload.get("lights", []):
-        if not isinstance(light, dict):
-            continue
-        pos = light.get("position", {})
-        lx = float(pos.get("x", 0.0)) if isinstance(pos, dict) else 0.0
-        ly = float(pos.get("y", 0.0)) if isinstance(pos, dict) else 0.0
-        lights.append(
-            {
-                "position": {"x": round(lx, 3), "y": round(ly, 3)},
-                "range": float(light.get("range", 5.0)),
-                "intensity": float(light.get("intensity", 1.0)),
-                "color": str(light.get("color", "ffffffff")),
-                "shadows": bool(light.get("shadows", True)),
-            }
-        )
+    # 4. Ambient & Point Lights
+    raw_lights = payload.get("lights", [])
+    lights = extract_lights_from_uvtt(raw_lights)
+    if not lights:
+        # Fallback empty list if none extracted
+        lights = []
 
     # 5. Base64 Map Texture
     image_bytes = None
@@ -160,6 +153,7 @@ def parse_uvtt_data(raw_data: str | bytes | dict[str, Any]) -> UVTTParseResult:
         pixels_per_grid=pixels_per_grid,
         wall_segments=wall_segments,
         portals=portals,
+        doors=doors,
         lights=lights,
         image_bytes=image_bytes,
         image_mime_type=image_mime_type,
@@ -204,6 +198,7 @@ def apply_uvtt_to_board(
         background_image_url=image_url,
         wall_segments=parsed.wall_segments,
         portals=parsed.portals,
+        doors=parsed.doors,
         lights=parsed.lights,
     )
     return board.state

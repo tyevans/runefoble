@@ -14,6 +14,8 @@ from board_state.models.board import (
     BoardState,
     CreateBoardRequest,
     FogOfWarUpdateRequest,
+    PlaceLightRequest,
+    ToggleDoorRequest,
     UVTTImportResponse,
 )
 from board_state.models.physics import (
@@ -78,6 +80,7 @@ __all__ = [
     "MoveTokenRequest",
     "MoveTokenResponse",
     "PhysicsCollisionState",
+    "PlaceLightRequest",
     "PlaceTokenRequest",
     "PlacedTokenState",
     "SecretTrapState",
@@ -87,6 +90,7 @@ __all__ = [
     "SwitchMapResponse",
     "TerrainCellState",
     "TerrainDict",
+    "ToggleDoorRequest",
     "TokenActionRequest",
     "TokenActionResponse",
     "TrapListResponse",

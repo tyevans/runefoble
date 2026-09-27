@@ -29,6 +29,7 @@ class BoardState(BaseModel, BoardTransitionsMixin):
     background_image_url: str | None = None
     wall_segments: list[dict[str, Any]] = Field(default_factory=list)
     portals: list[dict[str, Any]] = Field(default_factory=list)
+    doors: dict[str, Any] = Field(default_factory=dict)
     lights: list[dict[str, Any]] = Field(default_factory=list)
     pixels_per_grid: int = 70
     active_aoe_templates: list[AoETemplateState] = Field(default_factory=list)
@@ -66,8 +67,28 @@ class UVTTImportResponse(BaseModel):
     pixels_per_grid: int = 70
     wall_segments: list[dict[str, Any]] = Field(default_factory=list)
     portals: list[dict[str, Any]] = Field(default_factory=list)
+    doors: dict[str, Any] = Field(default_factory=dict)
     lights: list[dict[str, Any]] = Field(default_factory=list)
     background_image_url: str | None = None
     background_asset_id: str | None = None
     tokens: dict[str, PlacedTokenState] = Field(default_factory=dict)
     status: str = "imported"
+
+
+class ToggleDoorRequest(BaseModel):
+    door_id: str | None = None
+    status: str | None = None
+    is_open: bool | None = None
+
+
+class PlaceLightRequest(BaseModel):
+    light_id: str | None = None
+    x: float = 0.0
+    y: float = 0.0
+    color_hex: str = "#ffffffff"
+    bright_radius: float = 2.5
+    dim_radius: float = 5.0
+    flicker_intensity: float = 0.0
+    intensity: float = 1.0
+    shadows: bool = True
+    metadata: dict[str, Any] = Field(default_factory=dict)

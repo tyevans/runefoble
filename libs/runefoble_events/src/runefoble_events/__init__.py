@@ -217,6 +217,12 @@ from runefoble_events.mcp_tools import (
     DynamicToolUnregistered,
     DynamicToolUnregisteredEvent,
 )
+from runefoble_events.uvtt_elements import (
+    BoardDoorToggled,
+    BoardDoorToggledEvent,
+    BoardLightSourcePlaced,
+    BoardLightSourcePlacedEvent,
+)
 
 __all__ = [
     "register_event",
@@ -382,6 +388,10 @@ __all__ = [
     "SharedWorldCreated",
     "BattlemapSwitched",
     "BattlemapSwitchedEvent",
+    "BoardDoorToggled",
+    "BoardDoorToggledEvent",
+    "BoardLightSourcePlaced",
+    "BoardLightSourcePlacedEvent",
     "TrapDisarmed",
     "TrapDisarmedEvent",
     "TrapPlaced",
