@@ -17,6 +17,7 @@ from campaign_lore.routers.documents import router as documents_router
 from campaign_lore.routers.handouts import router as handouts_router
 from campaign_lore.routers.relics import router as relics_router
 from campaign_lore.routers.search import router as search_router
+from campaign_lore.routers.west_marches import router as west_marches_router
 
 app = FastAPI(
     title="Runefoble - Campaign Lore Service",
@@ -42,6 +43,7 @@ app.include_router(handouts_router)
 app.include_router(relics_router)
 app.include_router(atlas_router)
 app.include_router(codex_router)
+app.include_router(west_marches_router)
 
 
 @app.get("/healthz", tags=["Health"])
@@ -62,6 +64,7 @@ def get_ui_manifest() -> dict[str, Any]:
             "runefoble-campaign-codex",
             "runefoble-handout-viewer",
             "runefoble-relic-inspector",
+            "runefoble-west-marches-atlas",
         ],
         "version": "0.1.0",
     }

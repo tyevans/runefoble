@@ -1,0 +1,12 @@
+{
+  "service": "campaign_lore",
+  "package": "@runefoble/campaign-lore-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-campaign-atlas",
+    "runefoble-campaign-codex",
+    "runefoble-handout-viewer",
+    "runefoble-relic-inspector",
+    "runefoble-west-marches-atlas"
+  ]
+}

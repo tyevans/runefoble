@@ -62,6 +62,13 @@ def rules_client():
     return TestClient(app)
 
 
+@pytest.fixture
+def lore_client():
+    from campaign_lore.main import app
+
+    return TestClient(app)
+
+
 def test_board_state_ui_manifest_frontdoor(board_client):
     """Verify board_state service vendors its microfrontend via GET /ui/manifest."""
     response = board_client.get("/ui/manifest")
@@ -140,6 +147,17 @@ def test_rules_compendium_ui_manifest_frontdoor(rules_client):
     assert "runefoble-encounter-builder" in data["components"]
 
 
+def test_campaign_lore_ui_manifest_frontdoor(lore_client):
+    """Verify campaign_lore service vendors its microfrontends via GET /ui/manifest."""
+    response = lore_client.get("/ui/manifest")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["service"] == "campaign_lore"
+    assert data["package"] == "@runefoble/campaign-lore-ui"
+    assert "runefoble-west-marches-atlas" in data["components"]
+    assert "runefoble-campaign-atlas" in data["components"]
+
+
 def test_service_ui_package_integrity():
     """Verify that all service UI packages have package.json, tsconfig.json, and Lit elements."""
     expected_packages = [
@@ -174,6 +192,11 @@ def test_service_ui_package_integrity():
             "services/rules_compendium/ui",
             "@runefoble/rules-compendium-ui",
             "runefoble-rules-compendium",
+        ),
+        (
+            "services/campaign_lore/ui",
+            "@runefoble/campaign-lore-ui",
+            "runefoble-west-marches-atlas",
         ),
     ]
 

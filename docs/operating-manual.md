@@ -107,6 +107,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`trigger-kinetic-spell-vfx-and-particles.md`](how-to/trigger-kinetic-spell-vfx-and-particles.md): How to trigger multi-modal kinetic spell VFX, WebGL particle blooms, elemental archetypes, and ephemeral decals.
 - [`interact-with-radial-action-menu-and-aoe-templates.md`](how-to/interact-with-radial-action-menu-and-aoe-templates.md): How to trigger one-tap token actions with the contextual radial menu, rotate geometric AoE spell templates with 15-degree snapping, and highlight targets with glowing halos.
 - [`simulate-npc-faction-agendas-and-world-ticks.md`](how-to/simulate-npc-faction-agendas-and-world-ticks.md): How to execute autonomous NPC faction agenda simulation ticks, resolve rival clashes, and generate DM intelligence bulletins.
+- [`coordinate-west-marches-shared-world-and-caravans.md`](how-to/coordinate-west-marches-shared-world-and-caravans.md): How to coordinate West Marches multi-party shared persistent frontiers, synchronize discovery logs across campaigns, dispatch trade caravans, and enforce SpiceDB Zanzibar party isolation.
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
