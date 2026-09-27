@@ -83,10 +83,21 @@
 
 ## Milestone 7: Neural Audio Duplex & Tangible 3D Tabletop (Current)
 ### Foundational Platform & Physics Enablers
-- [ ] Zero-Latency Neural Voice Duplex & Speech Interruption Handling (`FEAT-VOX-06`, US-0060, TASK-0141)
-- [ ] Tabletop 3D Physics Engine & Mesh Collision Integration (`FEAT-BRD-06`, US-0061, TASK-0150)
+- [x] Zero-Latency Neural Voice Duplex & Speech Interruption Handling (`FEAT-VOX-06`, US-0060, TASK-0141)
+- [x] Tabletop 3D Physics Engine & Mesh Collision Integration (`FEAT-BRD-06`, US-0061, TASK-0150)
 
 ### Interactive Audio & 3D Tabletop Epics
 - [ ] 3D Miniature Tokens & WebGL Tabletop Physics (`FEAT-BRD-06`, US-0061, TASK-0142)
 - [ ] Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend (`FEAT-VOX-06`, US-0060, TASK-0149)
+
+## Milestone 8: Reactive Tactical Environments & In-World DM Tools (Upcoming)
+### Foundational Platform & Audio Enablers
+- [ ] Spoken Reaction Interrupts & Ready-Action Combat Triggers (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0155)
+- [ ] Secret DM Spatial Traps, Map Switching & Hidden Cell Triggers (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0156)
+- [ ] DM Live Vocal Modulator & Real-Time NPC Formant DSP Engine (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0157)
+
+### Tactical Reactions & DM Tooling Epics
+- [ ] Reactive Combat Reactions & Interrupt Prompt Microfrontend (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0158)
+- [ ] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
+- [ ] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
 
