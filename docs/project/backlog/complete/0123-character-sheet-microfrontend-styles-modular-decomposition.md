@@ -1,7 +1,7 @@
 ---
 id: '0123'
 title: Character Sheet Microfrontend Styles Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0107
@@ -10,8 +10,8 @@ governing_adrs:
 - ADR-0012
 - ADR-0013
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/137
 ---
-
 # TASK-0123: Character Sheet Microfrontend Styles Modular Decomposition
 
 ## Status
