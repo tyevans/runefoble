@@ -251,4 +251,5 @@ Key features of `<runefoble-campaign-members>`:
 - **Safe Removal with Confirmation**: Provides a confirmation modal before revoking campaign membership and Zanzibar permissions.
 - **Interactive Invite Generator**: Modal generator with role pre-assignment, shareable link preview, and one-click clipboard copying.
 - **View-Only Mode**: Regular players (`canManage=false`) see clean read-only role badges without destructive controls.
+- **Modular Styles Architecture**: Scoped styles are decomposed into focused submodules under `services/game_session/ui/src/campaigns/styles/` (`base.styles.ts`, `roster.styles.ts`, `modal.styles.ts`, `badge.styles.ts`), composed via `campaignMembersStyles` in `runefoble-campaign-members.styles.ts` (keeping all style modules strictly < 150 lines per Hard Invariant 6).
 
