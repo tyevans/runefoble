@@ -51,6 +51,6 @@ Content creators and tabletop streamers (like Devon), tactile adventurers (like 
 
 ## Implementing Backlog Tasks
 - [`TASK-0150: Tabletop 3D Physics Engine & Mesh Collision Integration`](../../backlog/complete/0150-tabletop-3d-physics-engine-and-mesh-collision-enabler.md)
-- [`TASK-0142: 3D Miniature Tokens & WebGL Tabletop Physics`](../../backlog/refined/0142-3d-miniature-tokens-and-webgl-physics.md)
+- [`TASK-0142: 3D Miniature Tokens & WebGL Tabletop Physics`](../../backlog/complete/0142-3d-miniature-tokens-and-webgl-physics.md)
 - [`TASK-0170: Kinetic 3D Dice Physics and Tray Audio Integration`](../../backlog/proposed/0170-kinetic-3d-dice-physics-and-tray-audio.md)
 - [`TASK-0171: Miniature Knockback Impulse and Elevation Physics`](../../backlog/proposed/0171-miniature-knockback-and-elevation-fall-physics.md)

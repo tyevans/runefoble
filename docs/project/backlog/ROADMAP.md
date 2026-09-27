@@ -144,3 +144,7 @@
 - [ ] Faction Radar SVG and Drawer Subviews Modular Decomposition (TASK-0195)
 - [ ] Campaign Atlas Layers and Pins Subviews Modular Decomposition (TASK-0196)
 - [ ] Asset Forge Raster Generator Modular Decomposition (TASK-0197)
+- [ ] Campaign Lore Codex Router Modular Decomposition (TASK-0198)
+- [ ] Campfire Crafting Subviews Modular Decomposition (TASK-0199)
+- [ ] Campaign Analytics Stories Fixtures Modular Decomposition (TASK-0200)
+- [ ] Board State Radial Menu Glyphs and Styles Modular Decomposition (TASK-0201)

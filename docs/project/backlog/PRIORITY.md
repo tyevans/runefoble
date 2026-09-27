@@ -198,6 +198,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 194. **TASK-0195 (Proposed)**: [`0195-faction-radar-svg-and-drawer-decomposition.md`](proposed/0195-faction-radar-svg-and-drawer-decomposition.md) — Faction Radar SVG and Drawer Subviews Modular Decomposition
 195. **TASK-0196 (Proposed)**: [`0196-campaign-atlas-layers-and-pins-decomposition.md`](proposed/0196-campaign-atlas-layers-and-pins-decomposition.md) — Campaign Atlas Layers and Pins Subviews Modular Decomposition
 196. **TASK-0197 (Proposed)**: [`0197-asset-forge-raster-generator-modular-decomposition.md`](proposed/0197-asset-forge-raster-generator-modular-decomposition.md) — Asset Forge Raster Generator Modular Decomposition
-
-
-
+197. **TASK-0198 (Proposed)**: [`0198-campaign-lore-codex-router-modular-decomposition.md`](proposed/0198-campaign-lore-codex-router-modular-decomposition.md) — Campaign Lore Codex Router Modular Decomposition
+198. **TASK-0199 (Proposed)**: [`0199-campfire-crafting-subviews-modular-decomposition.md`](proposed/0199-campfire-crafting-subviews-modular-decomposition.md) — Campfire Crafting Subviews Modular Decomposition
+199. **TASK-0200 (Proposed)**: [`0200-campaign-analytics-stories-fixtures-decomposition.md`](proposed/0200-campaign-analytics-stories-fixtures-decomposition.md) — Campaign Analytics Stories Fixtures Modular Decomposition
+200. **TASK-0201 (Proposed)**: [`0201-board-state-radial-menu-glyphs-and-styles-decomposition.md`](proposed/0201-board-state-radial-menu-glyphs-and-styles-decomposition.md) — Board State Radial Menu Glyphs and Styles Modular Decomposition
