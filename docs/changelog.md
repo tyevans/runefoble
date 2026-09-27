@@ -29,6 +29,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **Character Sheet Microfrontend Styles Modular Decomposition (`TASK-0123`, `ADR-0004`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` (394 lines) into discrete CSS modules: `runefoble-character-sheet.core.styles.ts` (132 lines), `runefoble-character-sheet.inventory.styles.ts` (125 lines), and `runefoble-character-sheet.conditions.styles.ts` (150 lines), with companion alias modules (`core.styles.ts`, `inventory.styles.ts`, `conditions.styles.ts`).
+  - Reduced `runefoble-character-sheet.styles.ts` to a 28-line aggregator combining the modular CSS blocks into a typed `CSSResultGroup`.
+  - Exposed modular style subpaths in `@runefoble/character-sheet-ui` package manifest and FastAPI `/ui/manifest` frontdoor.
+  - Verified visual rendering and Storybook builds with zero errors across light and dark modes.
+  - Updated blackbox TDD test suite `tests/test_blackbox_character_sheet_ui.py` to enforce style module thresholds (<180 lines per module, <40 lines aggregator, strictly obeying Hard Invariant 6).
 - **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0129`, `TASK-0130`, `TASK-0131`, `TASK-0132`, `TASK-0133`)**:
   - Audited codebase health and file length invariants, identifying `tests/test_blackbox_character_leitmotifs.py` (437 lines), `tests/test_project_visualizer.py` (415 lines), `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` (401 lines), `services/board_state/src/board_state/aggregate.py` (488 lines), and `services/board_state/ui/src/particle_canvas.ts` (492 lines) as refactoring candidates approaching the 500-line invariant limit.
   - Proactively proposed and refined modular decomposition tasks `TASK-0132` (particle canvas projectiles and decals extraction) and `TASK-0133` (board state aggregate mutation handlers and event appliers decomposition) to prevent breaches of Hard Invariant 6 (< 500 lines).
