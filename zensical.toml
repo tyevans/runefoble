@@ -34,6 +34,7 @@ nav = [
     { "Tactile Board & Ghost Previews" = "how-to/interact-with-tactile-board-and-ghost-previews.md" },
     { "Orchestrate Audience Chaos Polls" = "how-to/orchestrate-audience-chaos-polls.md" },
     { "Project Campaign Analytics & Chronicle Timeline" = "how-to/project-campaign-analytics-and-chronicle-timeline.md" },
+    { "Navigate Client SPA Routes & Breadcrumbs" = "how-to/navigate-client-spa-routes-and-breadcrumbs.md" },
   ]},
   { "Technical Reference" = [
     { "Architecture Overview" = "reference/architecture-overview.md" },
