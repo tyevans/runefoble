@@ -1,3 +1,4 @@
+export * from './particle_canvas.ts';
 export * from './runefoble-board.ts';
 export * from './runefoble-map-dropzone.ts';
 export * from './runefoble-map-grid-config.ts';

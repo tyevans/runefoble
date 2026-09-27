@@ -124,9 +124,11 @@ export function renderBoardGrid(options: BoardGridRenderOptions) {
         })}
       </div>
 
+      <canvas class="vfx-particle-canvas" aria-hidden="true"></canvas>
       ${aoeOverlay ? aoeOverlay : nothing}
       ${radialMenu ? radialMenu : nothing}
       ${renderDistanceRuler(dragState)}
     </div>
+
   `;
 }

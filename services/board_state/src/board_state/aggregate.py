@@ -15,20 +15,25 @@ from board_state.rules import (
     calc_move_path,
     calc_party_vis,
     detect_path_hazards,
+    extract_wall_obstacles,
     find_uncharted_cells,
     get_hazard_damage_dice,
     is_within_bounds,
     validate_cells_within_bounds,
     validate_point_within_bounds,
 )
+from board_state.spells import BoardSpellsMixin
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from runefoble_events.events import (
     AoETemplatePlaced,
     AoETemplateRemoved,
+    AreaEffectExploded,
     BoardGridInitialized,
+    EphemeralDecalsDecayed,
     FogOfWarRevealed,
     FogOfWarShrouded,
+    SpellCast,
     TerrainCellModified,
     TokenActionExecuted,
     TokenHazardTriggered,
@@ -36,6 +41,7 @@ from runefoble_events.events import (
     TokenPlaced,
     TokenRemoved,
     UniversalVTTImported,
+    VFXAnimationFinished,
 )
 
 __all__ = [
@@ -49,7 +55,7 @@ __all__ = [
 ]
 
 
-class BoardAggregate(DeclarativeAggregate[BoardState]):
+class BoardAggregate(DeclarativeAggregate[BoardState], BoardSpellsMixin):
     """Event-sourced aggregate managing tactical combat grid, spatial tokens, and fog-of-war."""
 
     aggregate_type = "BoardState"
@@ -334,15 +340,8 @@ class BoardAggregate(DeclarativeAggregate[BoardState]):
         )
 
         # Place wall obstacle tokens for unique integer grid intersections within bounds
-        obstacle_coords: set[tuple[int, int]] = set()
-        for seg in walls:
-            for pt in [("x1", "y1"), ("x2", "y2")]:
-                px = int(round(seg.get(pt[0], 0)))
-                py = int(round(seg.get(pt[1], 0)))
-                if 0 <= px < cols and 0 <= py < rows:
-                    obstacle_coords.add((px, py))
-
-        for idx, (ox, oy) in enumerate(sorted(obstacle_coords)):
+        obstacle_coords = extract_wall_obstacles(walls, cols, rows)
+        for idx, (ox, oy) in enumerate(obstacle_coords):
             token_id = f"wall-obs-{idx + 1}"
             if token_id not in self.state.tokens:
                 self.place_token(
@@ -422,7 +421,7 @@ class BoardAggregate(DeclarativeAggregate[BoardState]):
 
     @handles(AoETemplatePlaced)
     def _on_aoe_template_placed(self, event: AoETemplatePlaced) -> None:
-        from board_state.models import AoETemplateState
+        from board_state.aoe_models import AoETemplateState
 
         template = AoETemplateState(
             template_id=event.template_id,
@@ -443,3 +442,23 @@ class BoardAggregate(DeclarativeAggregate[BoardState]):
     @handles(AoETemplateRemoved)
     def _on_aoe_template_removed(self, event: AoETemplateRemoved) -> None:
         self._state = self.state.without_aoe_template(event.template_id)
+
+    @handles(AreaEffectExploded)
+    def _on_area_effect_exploded(self, event: AreaEffectExploded) -> None:
+        self._state = self.state.with_area_effect(
+            affected_cells=event.affected_cells,
+            decal_type=event.decal_type,
+            decal_duration_rounds=event.decal_duration_rounds,
+        )
+
+    @handles(SpellCast)
+    def _on_spell_cast(self, event: SpellCast) -> None:
+        pass
+
+    @handles(VFXAnimationFinished)
+    def _on_vfx_finished(self, event: VFXAnimationFinished) -> None:
+        pass
+
+    @handles(EphemeralDecalsDecayed)
+    def _on_decals_decayed(self, event: EphemeralDecalsDecayed) -> None:
+        self._state = self.state.with_decals_decayed(event.rounds)

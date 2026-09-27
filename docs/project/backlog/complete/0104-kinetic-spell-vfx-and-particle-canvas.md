@@ -1,7 +1,7 @@
 ---
 id: '0104'
 title: Multi-Modal Kinetic Spell VFX & WebGL Particle Magic
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0004
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0048
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/132
 ---
-
 # TASK-0104: Multi-Modal Kinetic Spell VFX & WebGL Particle Magic
 
 ## Status

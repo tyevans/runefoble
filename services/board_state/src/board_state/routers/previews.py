@@ -265,6 +265,78 @@ async def board_websocket(websocket: WebSocket, session_id: str):
                         "template": evaluated.model_dump(),
                     },
                 )
+
+            elif action in ("cast_spell", "spell_vfx", "SpellCast") or (
+                action == "SpeechIntentParsed"
+                and (
+                    data.get("action_type") == "cast_spell"
+                    or data.get("parameters", {}).get("action") == "cast_spell"
+                )
+            ):
+                board = await get_or_create_board(session_id)
+                params = data.get("parameters", {})
+                spell_name = (
+                    data.get("spell_name") or data.get("spell") or params.get("spell", "Fireball")
+                )
+                tx = (
+                    data.get("target_x")
+                    if data.get("target_x") is not None
+                    else data.get("to_x")
+                    if data.get("to_x") is not None
+                    else params.get("target_x", 0)
+                )
+                ty = (
+                    data.get("target_y")
+                    if data.get("target_y") is not None
+                    else data.get("to_y")
+                    if data.get("to_y") is not None
+                    else params.get("target_y", 0)
+                )
+                caster_token_id = data.get("caster_token_id") or data.get("token_id")
+                speaker_name = data.get("speaker_name")
+                if not caster_token_id and speaker_name:
+                    for tok in board.state.tokens.values():
+                        if tok.name.lower() == speaker_name.lower():
+                            caster_token_id = tok.token_id
+                            break
+                spell_archetype = data.get("spell_archetype") or params.get(
+                    "spell_archetype", "evocation"
+                )
+                radius_ft = data.get("radius_ft") or params.get("radius_ft", 20)
+                damage_type = data.get("damage_type") or params.get("damage_type")
+
+                anim_id, trajectory, affected_tokens, affected_cells, decal_type = board.cast_spell(
+                    spell_name=spell_name,
+                    target_x=int(tx),
+                    target_y=int(ty),
+                    caster_token_id=caster_token_id,
+                    spell_archetype=spell_archetype,
+                    origin_x=data.get("origin_x"),
+                    origin_y=data.get("origin_y"),
+                    radius_ft=int(radius_ft),
+                    damage_type=damage_type,
+                )
+                await repo.save(board)
+                await board_ws_manager.broadcast(
+                    session_id,
+                    {
+                        "type": "spell_vfx",
+                        "action": "spell_vfx",
+                        "status": "launched",
+                        "session_id": session_id,
+                        "animation_id": anim_id,
+                        "spell_name": spell_name,
+                        "spell_archetype": spell_archetype,
+                        "caster_token_id": caster_token_id,
+                        "target_x": int(tx),
+                        "target_y": int(ty),
+                        "radius_ft": int(radius_ft),
+                        "trajectory": trajectory,
+                        "affected_token_ids": affected_tokens,
+                        "affected_cells": affected_cells,
+                        "decal_type": decal_type,
+                    },
+                )
             else:
                 await board_ws_manager.broadcast(session_id, data)
 

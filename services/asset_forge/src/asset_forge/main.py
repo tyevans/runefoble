@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from asset_forge.routers.battlemap import router as battlemap_router
 from asset_forge.routers.print_forge import router as print_forge_router
 from asset_forge.routers.token import router as token_router
+from asset_forge.routers.wardrobe import router as wardrobe_router
 
 app = FastAPI(
     title="Runefoble - Procedural Battlemap & Token Asset Forge Service",
@@ -34,6 +35,7 @@ app.add_middleware(
 app.include_router(battlemap_router)
 app.include_router(token_router)
 app.include_router(print_forge_router)
+app.include_router(wardrobe_router)
 
 
 @app.get("/healthz", tags=["Health"])

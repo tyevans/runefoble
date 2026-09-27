@@ -20,6 +20,7 @@ from character_sheet.dependencies import (
     set_spicedb_client,
 )
 from character_sheet.router import router
+from character_sheet.wardrobe_router import router as wardrobe_router
 from fastapi import FastAPI
 from runefoble_platform.event_sourcing import get_event_store
 
@@ -31,6 +32,7 @@ app = FastAPI(
 
 app.include_router(router)
 app.include_router(crafting_router)
+app.include_router(wardrobe_router)
 
 
 @app.get("/healthz")
@@ -60,12 +62,14 @@ def get_ui_manifest():
             "runefoble-absentee-recap",
             "runefoble-stand-in-guardrails",
             "runefoble-character-sheet",
+            "runefoble-wardrobe-gallery",
         ],
         "tags": [
             "runefoble-character-card",
             "runefoble-absentee-recap",
             "runefoble-stand-in-guardrails",
             "runefoble-character-sheet",
+            "runefoble-wardrobe-gallery",
         ],
         "styles": [
             "./src/runefoble-absentee-recap.styles.ts",

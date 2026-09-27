@@ -3,9 +3,44 @@
 from __future__ import annotations
 
 from typing import Any, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
+from board_state.aoe_models import (
+    AoEEvaluateRequest,
+    AoETemplatePlaceRequest,
+    AoETemplateResponse,
+    AoETemplateState,
+    TokenActionRequest,
+    TokenActionResponse,
+)
 from pydantic import BaseModel, Field
+
+__all__ = [
+    "AoEEvaluateRequest",
+    "AoETemplatePlaceRequest",
+    "AoETemplateResponse",
+    "AoETemplateState",
+    "BoardDecalState",
+    "BoardState",
+    "CastSpellRequest",
+    "CastSpellResponse",
+    "ConfigureTerrainRequest",
+    "CreateBoardRequest",
+    "DecayDecalsRequest",
+    "FinishVFXRequest",
+    "FinishVFXResponse",
+    "FogOfWarUpdateRequest",
+    "MoveTokenRequest",
+    "MoveTokenResponse",
+    "PlaceTokenRequest",
+    "PlacedTokenState",
+    "TerrainCellState",
+    "TerrainDict",
+    "TokenActionRequest",
+    "TokenActionResponse",
+    "UVTTImportResponse",
+    "VisibilityResponse",
+]
 
 
 class TerrainCellState(BaseModel):
@@ -42,21 +77,6 @@ class TerrainDict(dict):
         return super().get(key, default)
 
 
-class AoETemplateState(BaseModel):
-    template_id: str
-    caster_token_id: str | None = None
-    shape: str = "cone"
-    origin_x: float
-    origin_y: float
-    direction_deg: float = 0.0
-    radius_ft: float | None = None
-    length_ft: float | None = None
-    width_ft: float | None = 5.0
-    spell_name: str | None = None
-    affected_token_ids: list[str] = Field(default_factory=list)
-    affected_cells: list[list[int]] = Field(default_factory=list)
-
-
 class PlacedTokenState(BaseModel):
     token_id: str
     name: str
@@ -85,6 +105,16 @@ class PlacedTokenState(BaseModel):
         )
 
 
+class BoardDecalState(BaseModel):
+    decal_id: str
+    x: int
+    y: int
+    decal_type: str = "scorched_earth"
+    duration_rounds: int = 2
+    rounds_remaining: int = 2
+    opacity: float = 1.0
+
+
 class BoardState(BaseModel):
     board_id: UUID
     session_id: str = ""
@@ -93,6 +123,7 @@ class BoardState(BaseModel):
     tokens: dict[str, PlacedTokenState] = Field(default_factory=dict)
     terrain_cells: dict[str, TerrainCellState] = Field(default_factory=TerrainDict)
     active_hazards: list[str] = Field(default_factory=list)
+    active_decals: list[BoardDecalState] = Field(default_factory=list)
     fog_of_war_enabled: bool = True
     revealed_cells: list[list[int]] = Field(default_factory=list)
     background_asset_id: str | None = None
@@ -221,6 +252,44 @@ class BoardState(BaseModel):
         templates = [t for t in self.active_aoe_templates if t.template_id != template_id]
         return self.model_copy(update={"active_aoe_templates": templates})
 
+    def with_area_effect(
+        self,
+        affected_cells: list[list[int]],
+        decal_type: str | None = "scorched_earth",
+        decal_duration_rounds: int = 2,
+    ) -> BoardState:
+        decals = list(self.active_decals)
+        if decal_type:
+            for cell in affected_cells:
+                cx, cy = cell[0], cell[1]
+                decals.append(
+                    BoardDecalState(
+                        decal_id=f"decal-{uuid4().hex[:8]}",
+                        x=cx,
+                        y=cy,
+                        decal_type=decal_type,
+                        duration_rounds=decal_duration_rounds,
+                        rounds_remaining=decal_duration_rounds,
+                        opacity=1.0,
+                    )
+                )
+        return self.model_copy(update={"active_decals": decals})
+
+    def with_decals_decayed(self, rounds: int = 1) -> BoardState:
+        updated = []
+        for d in self.active_decals:
+            rem = d.rounds_remaining - rounds
+            if rem > 0:
+                updated.append(
+                    d.model_copy(
+                        update={
+                            "rounds_remaining": rem,
+                            "opacity": max(0.2, rem / d.duration_rounds),
+                        }
+                    )
+                )
+        return self.model_copy(update={"active_decals": updated})
+
 
 class CreateBoardRequest(BaseModel):
     session_id: str | None = None
@@ -304,63 +373,61 @@ class UVTTImportResponse(BaseModel):
     status: str = "imported"
 
 
-class TokenActionRequest(BaseModel):
-    token_id: str | None = None
-    action: str  # "attack", "dodge", "dash", "disengage", "cast"
-    target_token_id: str | None = None
-    target_token_ids: list[str] = Field(default_factory=list)
-    details: dict[str, Any] = Field(default_factory=dict)
-    initiated_by: Literal["player", "the_watcher", "stand_in"] = "player"
-
-
-class TokenActionResponse(BaseModel):
-    token_id: str
-    action: str
-    status: str = "executed"
-    target_token_ids: list[str] = Field(default_factory=list)
-    details: dict[str, Any] = Field(default_factory=dict)
-    message: str = ""
-
-
-class AoEEvaluateRequest(BaseModel):
-    template_id: str | None = None
+class CastSpellRequest(BaseModel):
     caster_token_id: str | None = None
-    shape: str = "cone"  # "cone", "sphere", "line", "cube"
-    origin_x: float
-    origin_y: float
-    direction_deg: float = 0.0
-    radius_ft: float | None = 15.0
-    length_ft: float | None = None
-    width_ft: float | None = 5.0
-    spell_name: str | None = None
-    grid_type: Literal["square", "hex"] = "square"
+    spell_name: str
+    spell_archetype: Literal[
+        "evocation",
+        "abjuration",
+        "conjuration",
+        "transmutation",
+        "necromancy",
+        "enchantment",
+        "illusion",
+        "divination",
+    ] = "evocation"
+    target_x: int
+    target_y: int
+    origin_x: int | None = None
+    origin_y: int | None = None
+    radius_ft: int = 20
+    damage_dice: str | None = None
+    damage_type: str | None = None
+    theme_palette: str | None = None
 
 
-class AoETemplatePlaceRequest(BaseModel):
-    template_id: str | None = None
+class CastSpellResponse(BaseModel):
+    animation_id: str
+    session_id: str
+    spell_name: str
+    spell_archetype: str
     caster_token_id: str | None = None
-    shape: str = "cone"
-    origin_x: float
-    origin_y: float
-    direction_deg: float = 0.0
-    radius_ft: float | None = 15.0
-    length_ft: float | None = None
-    width_ft: float | None = 5.0
-    spell_name: str | None = None
-    grid_type: Literal["square", "hex"] = "square"
-
-
-class AoETemplateResponse(BaseModel):
-    template_id: str
-    caster_token_id: str | None = None
-    shape: str
-    origin_x: float
-    origin_y: float
-    direction_deg: float
-    radius_ft: float | None = None
-    length_ft: float | None = None
-    width_ft: float | None = None
-    spell_name: str | None = None
+    origin_x: int | None = None
+    origin_y: int | None = None
+    target_x: int
+    target_y: int
+    radius_ft: int = 20
+    trajectory: list[list[float]] = Field(default_factory=list)
     affected_token_ids: list[str] = Field(default_factory=list)
-    affected_tokens: list[PlacedTokenState] = Field(default_factory=list)
     affected_cells: list[list[int]] = Field(default_factory=list)
+    decal_type: str | None = None
+    status: str = "launched"
+    audio_stinger: str = "evocation_fireball_stinger"
+    duration_ms: int = 500
+
+
+class FinishVFXRequest(BaseModel):
+    animation_id: str
+    spell_name: str
+    target_x: int
+    target_y: int
+    duration_ms: int = 500
+
+
+class FinishVFXResponse(BaseModel):
+    animation_id: str
+    status: str = "finished"
+
+
+class DecayDecalsRequest(BaseModel):
+    rounds: int = 1
