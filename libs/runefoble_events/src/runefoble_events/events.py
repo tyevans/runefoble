@@ -175,6 +175,17 @@ from runefoble_events.watcher import (
     WatcherNarrationGenerated,
     WorldTickExecuted,
 )
+from runefoble_events.west_marches import (
+    CampaignRegisteredToSharedWorld,
+    CaravanDispatched,
+    CaravanTradeCompleted,
+    CommunalNoticePosted,
+    CrossCampaignDiscoveryShared,
+    OutpostEstablished,
+    RegionalMerchantStockUpdated,
+    SharedStrongholdUpgraded,
+    SharedWorldCreated,
+)
 
 __all__ = [
     "register_event",
@@ -323,4 +334,13 @@ __all__ = [
     "PortraitVariantGenerated",
     "CharacterPortraitUpdated",
     "PortraitAssigned",
+    "CampaignRegisteredToSharedWorld",
+    "CaravanDispatched",
+    "CaravanTradeCompleted",
+    "CommunalNoticePosted",
+    "CrossCampaignDiscoveryShared",
+    "OutpostEstablished",
+    "RegionalMerchantStockUpdated",
+    "SharedStrongholdUpgraded",
+    "SharedWorldCreated",
 ]

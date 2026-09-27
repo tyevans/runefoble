@@ -108,6 +108,8 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`interact-with-radial-action-menu-and-aoe-templates.md`](docs/how-to/interact-with-radial-action-menu-and-aoe-templates.md): How to trigger one-tap token actions with the contextual radial menu, rotate geometric AoE spell templates with 15-degree snapping, and highlight targets with glowing halos.
 - [`simulate-npc-faction-agendas-and-world-ticks.md`](docs/how-to/simulate-npc-faction-agendas-and-world-ticks.md): How to execute autonomous NPC faction agenda simulation ticks, resolve rival clashes, and generate DM intelligence bulletins.
 - [`connect-mobile-companion-and-haptic-gateway.md`](docs/how-to/connect-mobile-companion-and-haptic-gateway.md): How to connect mobile companions to low-bandwidth adaptive Opus WebRTC audio and haptic vibration pings for secret DM whispers.
+- [`coordinate-west-marches-shared-world-and-caravans.md`](docs/how-to/coordinate-west-marches-shared-world-and-caravans.md): How to coordinate West Marches multi-party shared persistent frontiers, synchronize discovery logs across campaigns, dispatch trade caravans, and enforce SpiceDB Zanzibar party isolation.
+
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture

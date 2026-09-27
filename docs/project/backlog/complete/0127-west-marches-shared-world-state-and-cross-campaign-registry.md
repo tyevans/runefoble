@@ -1,7 +1,7 @@
 ---
 id: '0127'
 title: West Marches Shared Persistent World State & Cross-Campaign Registry
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0008
@@ -17,7 +17,6 @@ governing_stories:
 - US-0058
 target_release: 0.5.0
 ---
-
 # TASK-0127: West Marches Shared Persistent World State & Cross-Campaign Registry
 
 ## Status

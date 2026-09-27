@@ -728,3 +728,16 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 ### Downtime, Crafting, Tavern Minigames & Merchant Haggling Events
 For full schemas of `CraftingAttempted`, `CraftingSucceeded`, `CraftingMishapOccurred`, `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`, see [`downtime-and-crafting-events.md`](downtime-and-crafting-events.md).
 For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `IntoxicationLevelChanged`, and `HagglingNegotiated`, see [`tavern-and-merchants-events.md`](tavern-and-merchants-events.md).
+
+### West Marches & Cross-Campaign Trade Events (`aggregate_type: SharedWorld`, `CaravanLedger`)
+
+- **`SharedWorldCreated`**: Emitted when a persistent West Marches shared frontier is established. Fields: `shared_world_id`, `name`, `frontier_region`, `description`, `created_by`.
+- **`CampaignRegisteredToSharedWorld`**: Emitted when an adventuring campaign links into a shared world frontier. Fields: `shared_world_id`, `campaign_id`, `party_name`, `registered_by`.
+- **`CrossCampaignDiscoveryShared`**: Emitted when an adventuring party maps a point of interest, dungeon, or waypoint. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `discovery_id`, `name`, `discovery_type`, `coordinates`, `discovered_by_campaign_id`, `discovered_by_party_name`, `description`, `danger_level`, `metadata`.
+- **`OutpostEstablished`**: Emitted when a regional settlement or base camp is established. Fields: `shared_world_id`, `outpost_id`, `name`, `region`, `level`, `facilities`, `contributing_campaign_id`, `resources_contributed`.
+- **`SharedStrongholdUpgraded`**: Emitted when communal outpost facilities are upgraded. Fields: `shared_world_id`, `outpost_id`, `facility_id`, `new_tier`, `contributing_campaign_id`, `gold_spent`, `materials_spent`.
+- **`CommunalNoticePosted`**: Emitted when a cross-campaign notice or bounty is posted to the tavern board. Fields: `shared_world_id`, `notice_id`, `campaign_id`, `author_name`, `title`, `content`, `notice_type`, `bounty_reward`.
+- **`CaravanDispatched`**: Emitted when a resource caravan sets off across the frontier. Fields: `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo`, `dispatched_by_campaign_id`, `transit_turns`, `status`.
+- **`CaravanTradeCompleted`**: Emitted when a caravan arrives at its destination outpost, unlocking regional merchant stock. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `unlocked_stock`, `completed_at`.
+- **`RegionalMerchantStockUpdated`**: Emitted when outpost merchant inventory adjusts due to trade or expeditions. Fields: `shared_world_id`, `outpost_name`, `inventory_updates`.
+
