@@ -132,3 +132,12 @@ The decomposition engine in `tools/prd_pipeline/` is structured to adhere to Har
 - **Disk Persistence (`tools/prd_pipeline/writer.py`)**:
   - `PlanWriter` creates directories and writes task files to `docs/project/backlog/proposed/` and user story files to `docs/project/user_stories/accepted/`.
 
+### Modular Test Suite
+
+The test suite is decomposed into single-responsibility modules adhering to the file length limit (< 250 lines per module):
+
+- **Manager & Registry Suite (`tests/test_prd_pipeline_manager.py`)**: Tests for `PRDManager`, auto-increment canonical ID generation, directory initialization, buffer health audits, and registry reconciliation.
+- **Planner & Slice Analysis Suite (`tests/test_prd_pipeline_planner.py`)**: Tests for `DecompositionPlanner`, keyword-based architectural spike detection, UI component detection, worker slice heuristics, and slice dependency graphs.
+- **Decomposer & Task Writer Suite (`tests/test_prd_pipeline_decomposer.py`)**: Tests for `PRDDecomposer` execution facade, counter resolution, `PlanWriter` disk serialization, and task markdown formatting.
+- **CLI & Smoke Suite (`tests/test_prd_pipeline_cli.py`)**: Tests for CLI subcommands (`audit`, `create`, `decompose`, `prompt`, `sync`), error exit codes on missing records, and shell script wrappers (`scripts/decompose-prds.sh`).
+

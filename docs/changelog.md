@@ -29,6 +29,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **PRD Pipeline Test Suite Modular Decomposition (`TASK-0121`, `ADR-0003`, `ADR-0009`)**:
+  - Decomposed monolithic `tests/test_prd_pipeline.py` (418 lines) into discrete, single-responsibility test modules with shared fixture helpers in `tests/helpers/prd_fixtures.py`.
+  - Added `tests/test_prd_pipeline_manager.py` (81 lines) covering `PRDManager` lifecycle, directory structures, buffer audits, and registry index synchronization.
+  - Added `tests/test_prd_pipeline_planner.py` (137 lines) covering `DecompositionPlanner`, architectural spike keyword detection, UI/worker heuristics, and dependency graph sequencing.
+  - Added `tests/test_prd_pipeline_decomposer.py` (141 lines) covering `PRDDecomposer` execution facade, counter resolution, `PlanWriter` file persistence, and task template formatting.
+  - Added `tests/test_prd_pipeline_cli.py` (92 lines) covering CLI subcommands, error exits on missing PRD IDs, and shell script interface wrappers.
+  - Kept all decomposed test modules strictly below 150 lines (and < 250 lines), upholding Hard Invariant 6 with zero regressions across 13 passing test cases.
+  - Updated Diataxis guide `docs/how-to/decompose-prds-into-vertical-slices.md`.
 
 - **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0102`, `TASK-0104`, `TASK-0121`, `TASK-0122`, `TASK-0123`, `TASK-0124`, `TASK-0125`, `TASK-0126`, `TASK-0127`, `TASK-0128`)**:
   - Audited repository health and file length invariants, identifying refactoring candidates in `tests/test_prd_pipeline.py` (417 lines), `tests/test_project_visualizer.py` (415 lines), and `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` (394 lines).
