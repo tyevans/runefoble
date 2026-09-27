@@ -1,7 +1,7 @@
 ---
 id: '0113'
 title: Character Sheet Aggregate Mutation Handlers and Event Appliers Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0009
@@ -18,8 +18,8 @@ governing_stories:
 - US-0015
 - US-0025
 - US-0051
+pr_url: https://github.com/tyevans/runefoble/pull/126
 ---
-
 # TASK-0113: Character Sheet Aggregate Mutation Handlers and Event Appliers Decomposition
 
 ## Status
