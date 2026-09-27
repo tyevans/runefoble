@@ -8,3 +8,5 @@ export * from './runefoble-map-uploader.ts';
 export * from './radial_menu.ts';
 export * from './aoe_templates.ts';
 export * from './physics_3d/index.ts';
+export * from './runefoble-dm-trap-controls.ts';
+export * from './runefoble-map-switcher.ts';

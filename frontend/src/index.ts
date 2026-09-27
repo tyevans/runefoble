@@ -17,6 +17,8 @@ export * from './components/runefoble-campaign-analytics.ts';
 export * from './components/runefoble-rules-compendium.ts';
 export * from './components/runefoble-soundscape-controls.ts';
 export * from './components/runefoble-combat-reaction-prompt.ts';
+export * from './components/runefoble-dm-trap-controls.ts';
+export * from './components/runefoble-map-switcher.ts';
 export * from './styles/app-shell.styles.ts';
 export * from './utils/dice.ts';
 export * from './runefoble-app.ts';
