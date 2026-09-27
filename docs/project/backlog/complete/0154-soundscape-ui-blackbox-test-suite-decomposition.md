@@ -1,7 +1,7 @@
 ---
 id: '0154'
 title: Soundscape UI Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0095
@@ -16,8 +16,8 @@ governing_stories:
 - US-0039
 - US-0053
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/176
 ---
-
 # TASK-0154: Soundscape UI Blackbox Test Suite Modular Decomposition
 
 ## Status
