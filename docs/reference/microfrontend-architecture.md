@@ -35,6 +35,9 @@ runefoble/
 │   │       ├── runefoble-character-card.ts
 │   │       ├── runefoble-character-sheet.ts
 │   │       ├── runefoble-character-sheet.styles.ts
+│   │       ├── runefoble-character-sheet.core.styles.ts
+│   │       ├── runefoble-character-sheet.inventory.styles.ts
+│   │       ├── runefoble-character-sheet.conditions.styles.ts
 │   │       ├── runefoble-character-sheet.templates.ts
 │   │       ├── runefoble-character-sheet.types.ts
 │   │       ├── runefoble-character-sheet.stories.ts
