@@ -11,6 +11,7 @@ import '@runefoble/the-watcher-ui';
 import '@runefoble/voice-agent-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
+import { router, type BreadcrumbItem, type MatchedRoute } from './router/router.ts';
 
 const DEFAULT_TOKENS: BoardToken[] = [
   { id: '1', name: 'Valeros', x: 2, y: 3, color: 'var(--rf-accent-secondary)', hp: 38, maxHp: 45, visionRadius: 2 },
@@ -39,17 +40,42 @@ export class RunefobleApp extends LitElement {
   @state() private sessionId = 'session-tomb-14';
   @state() private tokens: BoardToken[] = DEFAULT_TOKENS;
   @state() private events: WatcherFeedEvent[] = DEFAULT_EVENTS;
+  @state() private breadcrumbs: BreadcrumbItem[] = [];
+  @state() private currentRoute: MatchedRoute | null = null;
 
   private socket: WebSocket | null = null;
+  private unlistenRouter: (() => void) | null = null;
 
   connectedCallback() {
     super.connectedCallback();
     this.initThemeAndColorMode();
+    this.initRouter();
     this.initWebSocket();
   }
   disconnectedCallback() {
     super.disconnectedCallback();
+    if (this.unlistenRouter) this.unlistenRouter();
+    router.stop();
     if (this.socket) this.socket.close();
+  }
+
+  private initRouter() {
+    router.setTitleResolver((type, id) => {
+      if (type === 'campaign' && id === '4') return 'Tomb of the Star-Eater';
+      if (type === 'campaign' && id === '5') return 'Whispering Depths';
+      return undefined;
+    });
+    this.unlistenRouter = router.onRouteChanged((route) => this.handleRouteChanged(route));
+    router.start();
+    const cur = router.getCurrentRoute();
+    if (cur) this.handleRouteChanged(cur);
+  }
+
+  private handleRouteChanged(route: MatchedRoute) {
+    this.currentRoute = route;
+    this.breadcrumbs = route.breadcrumbs;
+    if (route.params.campaignId) this.campaignId = route.params.campaignId;
+    if (route.params.sessionId) this.sessionId = route.params.sessionId;
   }
 
   private initThemeAndColorMode() {
@@ -124,8 +150,10 @@ export class RunefobleApp extends LitElement {
   render() {
     return html`
       <runefoble-header
+        data-route=${this.currentRoute?.pattern || ''}
         .viewMode=${this.viewMode} .isSettingsOpen=${this.isSettingsOpen}
         .socketConnected=${this.socketConnected} .campaignId=${this.campaignId} .sessionId=${'14'}
+        .breadcrumbs=${this.breadcrumbs}
         @open-settings=${() => { this.isSettingsOpen = true; }}
         @toggle-view-mode=${(e: CustomEvent) => { this.viewMode = e.detail.viewMode; }}
         @campaign-changed=${(e: CustomEvent) => { this.campaignId = e.detail.campaignId; }}
