@@ -70,6 +70,10 @@ def test_server_http_endpoints(repo_root: Path):
             content = resp.read().decode("utf-8")
             assert "PRD" in content
 
+        # Test GET /favicon.ico
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/favicon.ico") as resp:
+            assert resp.status == 204
+
     finally:
         server.shutdown()
         server.server_close()
