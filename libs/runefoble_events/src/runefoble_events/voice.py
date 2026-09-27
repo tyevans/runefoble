@@ -1,5 +1,6 @@
 """Domain events for live WebRTC voice room signaling and audio peer management."""
 
+import time
 from typing import ClassVar
 from uuid import UUID, uuid4
 
@@ -102,3 +103,24 @@ class MobileHapticPingDispatched(BaseRunefobleEvent):
     notification_body: str | None = None
     diegetic: bool = True
     dispatched_at: str
+
+
+@register_event("voice.speech.interrupted")
+@register_event("runefoble.events.voice.speech_interrupted")
+class VoiceSpeechInterrupted(BaseRunefobleEvent):
+    """Emitted when active TTS playback/narration is interrupted by player speech (barge-in)."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "VoiceRoom"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "voice.speech.interrupted"
+    session_id: str
+    speaker_id: str
+    speaker_name: str = "Player"
+    timestamp: float = Field(default_factory=time.time)
+    interrupted_at: str | None = None
+    remaining_narration_text: str | None = None
+    original_text: str | None = None
+    playback_duration_ms: float = 0.0
+    cutoff_position_ms: float = 0.0
+    reason: str = "player_barge_in"
