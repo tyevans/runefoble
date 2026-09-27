@@ -1,7 +1,7 @@
 ---
-id: '0180'
+id: 0180
 title: Board State Stories Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -14,8 +14,8 @@ governing_stories:
 - US-0043
 - US-0056
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/236
 ---
-
 # TASK-0180: Board State Stories Modular Decomposition
 
 ## Status
