@@ -187,7 +187,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 183. **TASK-0171 (Complete)**: [`0171-miniature-knockback-and-elevation-fall-physics.md`](complete/0171-miniature-knockback-and-elevation-fall-physics.md) — Miniature Knockback Impulse and Elevation Physics
 184. **TASK-0174 (Complete)**: [`0174-community-plugin-ui-extension-slots-microfrontend.md`](complete/0174-community-plugin-ui-extension-slots-microfrontend.md) — Community Plugin UI Extension Slots Microfrontend
 185. **TASK-0177 (Complete)**: [`0177-runefoble-events-aggregator-modular-decomposition.md`](complete/0177-runefoble-events-aggregator-modular-decomposition.md) — Runefoble Events Aggregator Modular Decomposition
-186. **TASK-0220 (Refined)**: [`0220-campaign-members-styles-modular-decomposition.md`](refined/0220-campaign-members-styles-modular-decomposition.md) — Campaign Members Styles Modular Decomposition
+186. **TASK-0220 (Complete)**: [`0220-campaign-members-styles-modular-decomposition.md`](complete/0220-campaign-members-styles-modular-decomposition.md) — Campaign Members Styles Modular Decomposition
 187. **TASK-0218 (Refined)**: [`0218-project-visualizer-agy-test-suite-decomposition.md`](refined/0218-project-visualizer-agy-test-suite-decomposition.md) — Project Visualizer AGY Test Suite Modular Decomposition
 188. **TASK-0223 (Refined)**: [`0223-session-lobby-styles-modular-decomposition.md`](refined/0223-session-lobby-styles-modular-decomposition.md) — Session Lobby Styles Modular Decomposition
 189. **TASK-0178 (Refined)**: [`0178-game-session-models-modular-decomposition.md`](refined/0178-game-session-models-modular-decomposition.md) — GameSession Models Modular Decomposition
