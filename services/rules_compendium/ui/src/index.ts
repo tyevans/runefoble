@@ -4,6 +4,7 @@
  */
 
 export * from './types.ts';
+export * from './styles/index.ts';
 export * from './runefoble-rules-compendium.styles.ts';
 export * from './runefoble-rules-lookup.ts';
 export * from './runefoble-encounter-builder.ts';
