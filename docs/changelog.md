@@ -29,6 +29,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **Wardrobe Gallery Styles and Sub-Components Modular Decomposition (`TASK-0131`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` from 401 lines down to 185 lines by extracting its extensive CSS stylesheet block into dedicated module `services/character_sheet/ui/src/runefoble-wardrobe-gallery.styles.ts` (246 lines), maintaining strict compliance with Hard Invariant 6 (< 500 lines per file; both modules < 250 lines).
+  - Isolated condition badge, variant card, active section, and attire forging sub-renderers in `RunefobleWardrobeGallery` component.
+  - Advertised companion styles module via `@runefoble/character-sheet-ui/runefoble-wardrobe-gallery.styles`, exported in `src/index.ts`, and declared in `/ui/manifest`.
+  - Updated blackbox test suite `tests/test_blackbox_wardrobe_gallery.py` and `tests/test_microfrontend_app_shell.py` to verify modular styles extraction and file length invariants.
+  - Updated Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` with modular architecture details.
 - **Character Leitmotifs Blackbox Test Suite Modular Decomposition (`TASK-0130`, `ADR-0002`, `ADR-0003`, `ADR-0006`, `ADR-0009`, `ADR-0010`, `ADR-0013`)**:
   - Decomposed monolithic `tests/test_blackbox_character_leitmotifs.py` (437 lines) into discrete, single-responsibility blackbox test suites strictly conforming to Hard Invariant 6 (< 500 lines) and all resulting test files strictly under 200 lines.
   - Added `tests/test_blackbox_leitmotif_events.py` (99 lines) verifying CloudEvents domain event class mapping and payload serialization roundtrips.

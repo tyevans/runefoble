@@ -1,7 +1,7 @@
 ---
 id: '0131'
 title: Wardrobe Gallery Microfrontend Styles and Sub-Components Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0124
@@ -15,8 +15,8 @@ governing_prds:
 - PRD-0016
 governing_stories:
 - US-0055
+pr_url: https://github.com/tyevans/runefoble/pull/136
 ---
-
 # TASK-0131: Wardrobe Gallery Microfrontend Styles and Sub-Components Modular Decomposition
 
 ## Status

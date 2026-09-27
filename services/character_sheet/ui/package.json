@@ -14,7 +14,8 @@
     "./runefoble-character-sheet": "./src/runefoble-character-sheet.ts",
     "./runefoble-character-sheet.styles": "./src/runefoble-character-sheet.styles.ts",
     "./runefoble-character-sheet.types": "./src/runefoble-character-sheet.types.ts",
-    "./runefoble-wardrobe-gallery": "./src/runefoble-wardrobe-gallery.ts"
+    "./runefoble-wardrobe-gallery": "./src/runefoble-wardrobe-gallery.ts",
+    "./runefoble-wardrobe-gallery.styles": "./src/runefoble-wardrobe-gallery.styles.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
