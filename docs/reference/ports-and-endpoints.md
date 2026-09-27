@@ -61,6 +61,10 @@
 | `game-session` | POST | `/api/v1/sessions/{session_id}/combat/next-turn` | Advances initiative turn to next active combatant |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/turns/auto-pilot` | Executes automated stand-in turn for absent player, records action, dispatches events, and advances turn (alias: `/api/v1/sessions/{session_id}/autopilot`) |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Hands off active turn and token control from AI stand-in to authenticating player mid-session without disrupting combat round |
+| `game-session` | POST | `/sessions/{session_id}/reactions/declare` | Halts active combat turn and initiates reaction window within 500ms (alias: `/api/v1/sessions/{session_id}/reactions/declare`) |
+| `game-session` | POST | `/sessions/{session_id}/reactions/ready-action` | Registers conditional ready-action trigger evaluated against combat events (alias: `/api/v1/sessions/{session_id}/reactions/ready-action`) |
+| `game-session` | POST | `/sessions/{session_id}/reactions/{reaction_id}/resolve` | Resolves or dismisses declared reaction interrupt, resuming active turn (alias: `/api/v1/sessions/{session_id}/reactions/{reaction_id}/resolve`) |
+| `game-session` | GET | `/sessions/{session_id}/reactions/active` | Retrieves current reaction pause state and registered ready actions (alias: `/api/v1/sessions/{session_id}/reactions/active`) |
 
 | `voice-agent` | POST | `/api/v1/voice/stream/chunk` | Streaming PCM/WAV chunk ingestion with sub-250ms VAD segmentation and Whisper STT |
 | `voice-agent` | WS | `/api/v1/voice/stream/ws` | Real-time bidirectional WebSocket stream for continuous PCM audio frames and STT events |
