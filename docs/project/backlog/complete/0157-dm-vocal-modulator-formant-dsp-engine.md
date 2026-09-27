@@ -1,7 +1,7 @@
 ---
 id: '0157'
 title: DM Live Vocal Modulator and Real-Time NPC Formant DSP Engine
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0006
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0020
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/181
 ---
-
 # TASK-0157: DM Live Vocal Modulator and Real-Time NPC Formant DSP Engine
 
 ## Status
