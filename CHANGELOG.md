@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Caravan Contracts API Router Modular Decomposition (`TASK-0147`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `PRD-0007`, `US-0058`)**:
+  - Decomposed monolithic API router `services/game_session/src/game_session/routers/caravan_contracts.py` (433 lines) into focused, single-responsibility sub-routers under `services/game_session/src/game_session/routers/caravan_contracts/` strictly complying with Hard Invariant 6 (< 500 lines per file, with all submodules < 180 lines):
+    - `auth.py` (84 lines): Extracted SpiceDB Zanzibar authorization checks (`_check_perm`, `_check_high_tier_auth`), aggregate loader (`_load_contract`), event bus publishing (`_publish`), contractor association, and validation helpers.
+    - `board.py` (132 lines): Extracted notice board creation (`POST /{shared_world_id}/caravans/contracts`), search/filter queries (`GET /{shared_world_id}/caravans/contracts`), and single contract manifest retrieval (`GET /{shared_world_id}/caravans/contracts/{contract_id}`).
+    - `lifecycle.py` (178 lines): Extracted contract claiming (`accept`), caravan transit dispatch (`dispatch`), tactical ambush reporting (`ambush`), and settlement delivery fulfillment (`fulfill`).
+    - `__init__.py` (47 lines): Re-exports aggregated `router` combining notice board and lifecycle routes with identical URL routes, tags, and dependencies.
+  - Maintained 100% backward compatibility via a lightweight facade in `services/game_session/src/game_session/routers/caravan_contracts.py` (7 lines) re-exporting `router` from the package.
+  - Updated Diataxis guides `docs/how-to/decompose-microservice-routers.md` and `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md`.
 - **Mock SpiceDB Client and Auth Schema Modular Decomposition (`TASK-0144`, `ADR-0001`, `PRD-0001`, `US-0009`, `US-0013`)**:
   - Decomposed `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (457 lines) into single-responsibility submodules under `libs/runefoble_auth/src/runefoble_auth/mock/`:
     - `schema_parser.py`: Extracted Zed schema definition parsing, object relation parsing, and relation graph construction (`SchemaGraph`) (< 95 lines).

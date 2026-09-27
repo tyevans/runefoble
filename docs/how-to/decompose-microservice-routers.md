@@ -82,12 +82,17 @@ from <service>.routers.capability_b import router as capability_b_router
 __all__ = ["capability_a_router", "capability_b_router"]
 ```
 
-When a single router accumulates multiple distinct sub-domains or exceeds ~250 lines (e.g. `copilot.py` splitting into `actions.py` and `whispers.py`, or `intent.py` splitting into `disambiguation.py`, `compound.py`, and `speech.py`), promote it to a sub-router package:
+When a single router accumulates multiple distinct sub-domains or exceeds ~250 lines (e.g. `copilot.py` splitting into `actions.py` and `whispers.py`, `intent.py` splitting into `disambiguation.py`, `compound.py`, and `speech.py`, or `caravan_contracts.py` splitting into `auth.py`, `board.py`, and `lifecycle.py`), promote it to a sub-router package:
 
 ```
 routers/
 ├── __init__.py
 ├── capability_a.py
+├── caravan_contracts/
+│   ├── __init__.py      # Re-exports combined router and sub-routers
+│   ├── auth.py          # Authorization and validation helpers
+│   ├── board.py         # Notice board posting and querying endpoints
+│   └── lifecycle.py     # Caravan claim, dispatch, ambush, and fulfillment
 ├── copilot/
 │   ├── __init__.py      # Re-exports combined router and sub-routers
 │   ├── actions.py       # Action interceptor and pause window endpoints
