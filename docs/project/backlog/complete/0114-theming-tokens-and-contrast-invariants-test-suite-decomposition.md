@@ -1,7 +1,7 @@
 ---
 id: '0114'
 title: Theming Tokens and Contrast Invariants Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0012
@@ -17,8 +17,8 @@ governing_stories:
 - US-0016
 - US-0041
 - US-0042
+pr_url: https://github.com/tyevans/runefoble/pull/125
 ---
-
 # TASK-0114: Theming Tokens and Contrast Invariants Test Suite Modular Decomposition
 
 ## Status
