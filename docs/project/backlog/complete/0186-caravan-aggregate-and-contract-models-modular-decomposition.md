@@ -1,7 +1,7 @@
 ---
-id: '0186'
+id: 0186
 title: Caravan Aggregate and Contract Models Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0129
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0058
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/246
 ---
-
 # TASK-0186: Caravan Aggregate and Contract Models Modular Decomposition
 
 ## Status
