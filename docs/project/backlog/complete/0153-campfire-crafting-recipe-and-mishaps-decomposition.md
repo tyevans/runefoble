@@ -1,7 +1,7 @@
 ---
 id: '0153'
 title: Campfire Crafting Engine Recipe Registry and Mishap Table Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0100
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0044
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/178
 ---
-
 # TASK-0153: Campfire Crafting Engine Recipe Registry and Mishap Table Modular Decomposition
 
 ## Status
