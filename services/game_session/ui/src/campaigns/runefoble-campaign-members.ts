@@ -10,7 +10,7 @@ import type {
 
 @customElement('runefoble-campaign-members')
 export class RunefobleCampaignMembers extends LitElement {
-  static styles = [campaignMembersStyles];
+  static styles = campaignMembersStyles;
 
   @property({ type: String, attribute: 'campaign-id' }) campaignId = '';
   @property({ type: String, attribute: 'campaign-title' }) campaignTitle = '';
