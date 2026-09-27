@@ -458,5 +458,16 @@ Per **ADR-0004**, **ADR-0012**, **ADR-0013**, and **Hard Invariant 6** (< 500 li
 - **`styles/`** (< 100 lines each): Scoped CSS split into `layout.styles.ts`, `card.styles.ts`, and `modal.styles.ts`, aggregated by `runefoble-caravan-board.styles.ts`.
 - **`runefoble-caravan-board.ts`** (< 140 lines): Lightweight container orchestrating state, sub-components, and custom event dispatches.
 
+## 10. Modular Caravan Domain Aggregates & Models Architecture
 
+Per **ADR-0003**, **ADR-0007**, **ADR-0011**, and **Hard Invariant 6** (< 500 lines per file, with all submodules strictly < 150 lines), the caravan domain aggregates and ledger are decomposed under `services/game_session/src/game_session/caravan/`:
 
+- **`models.py`** (< 80 lines): `CaravanContractState` and `CaravanLedgerState` Pydantic models.
+- **`transit.py`** (< 120 lines): Waypoint calculations, hazard progression, and escrow payout math.
+- **`escrow.py`** (< 140 lines): Economic price modifier math, outpost stock management, and notice board filtering.
+- **`board_operations.py`** (< 100 lines): Mixin handling contract posting and mercenary acceptance.
+- **`transit_operations.py`** (< 130 lines): Mixin handling caravan dispatch, ambush recording, and fulfillment.
+- **`aggregate.py`** (< 120 lines): `CaravanContractAggregate` DeclarativeAggregate lifecycle and event handlers.
+- **`trade_operations.py`** (< 140 lines): Mixin handling resource caravan dispatch and trade completion.
+- **`ledger.py`** (< 140 lines): `CaravanLedgerAggregate` DeclarativeAggregate managing regional stock.
+- **`caravan.py` & `caravan_ledger.py`** (< 30 lines each): Backward-compatible facades re-exporting aggregates.
