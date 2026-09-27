@@ -161,6 +161,12 @@ from runefoble_events.tavern import (
     MinigameStarted,
     MinigameTurnTaken,
 )
+from runefoble_events.vocal_dsp import (
+    VocalModulatorPresetApplied,
+    VocalModulatorPresetAppliedEvent,
+    VoiceFilterToggled,
+    VoiceFilterToggledEvent,
+)
 from runefoble_events.voice import (
     MobileAudioProfileAdapted,
     MobileCompanionConnected,
@@ -393,4 +399,8 @@ __all__ = [
     "TrapPlacedEvent",
     "TrapSprung",
     "TrapSprungEvent",
+    "VocalModulatorPresetApplied",
+    "VocalModulatorPresetAppliedEvent",
+    "VoiceFilterToggled",
+    "VoiceFilterToggledEvent",
 ]

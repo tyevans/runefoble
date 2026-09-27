@@ -624,6 +624,27 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `playback_duration_ms`: Float
   - `cutoff_position_ms`: Float
   - `reason`: String ("player_barge_in")
+- **`VocalModulatorPresetAppliedEvent`**: Emitted when a DM applies an NPC vocal archetype preset or modulates live stream parameters (`runefoble.events.voice.modulator_preset_applied`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `preset_name`: String ("Ancient Dragon", "Goblin Skulker", "Celestial Spirit", "Robotic Construct", etc.)
+  - `pitch_shift_semitones`: Float
+  - `formant_shift`: Float
+  - `resonance_hz`: Float
+  - `octave_offset`: Float
+  - `reverb_wet`: Float
+  - `active_filters`: List[String]
+  - `user_id`: String
+  - `applied_at`: Float (epoch timestamp)
+- **`VoiceFilterToggledEvent`**: Emitted when a live voice filter parameter or DSP node is toggled on/off (`runefoble.events.voice.filter_toggled`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `filter_name`: String
+  - `enabled`: Boolean
+  - `parameters`: Dict[String, Float]
+  - `user_id`: String
+  - `toggled_at`: Float (epoch timestamp)
+
 
 
 ### Asset Storage Events (`aggregate_type: Asset`)
