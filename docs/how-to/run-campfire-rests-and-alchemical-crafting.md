@@ -189,3 +189,14 @@ Under TASK-0153 (ADR-0003, ADR-0007, ADR-0011), the crafting engine is organized
 - **`__init__.py`**: Re-exports all core domain types (`CraftingEngine`, `Recipe`, `MishapResolver`, `CraftingAggregate`).
 - **`crafting.py`**: Backward-compatible facade preserving all top-level module imports.
 
+---
+
+## 6. Modular Blackbox Test Suite Architecture
+
+Under TASK-0184 (ADR-0003, ADR-0006, ADR-0007, ADR-0011, and Hard Invariant 6), the blackbox test suite is organized into focused submodules under `tests/test_blackbox_campfire_crafting/`:
+
+- **`conftest.py`**: Shared test harness, `MockSpiceDBClient`, `MockAsyncRedis`, and FastAPI `TestClient` fixtures (< 70 lines).
+- **`test_recipe_crafting.py`**: Public reagent catalogs, recipe combinations, inventory synchronization, and Zanzibar authorization (< 150 lines).
+- **`test_volatile_mishaps.py`**: Volatile reaction failure thresholds, explosion events, and setback condition effects (< 110 lines).
+- **`test_campfire_boons.py`**: Stronghold upgrades, resting storytelling prompts, camaraderie boons, and Lit microfrontend manifest (< 150 lines).
+
