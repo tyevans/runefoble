@@ -132,6 +132,10 @@
 - [ ] Faction Resources Blackbox Test Suite Modular Decomposition (TASK-0183)
 - [ ] Campfire Crafting Blackbox Test Suite Modular Decomposition (TASK-0184)
 - [ ] Rules Compendium Styles Modular Decomposition (TASK-0185)
+- [ ] Caravan Aggregate and Contract Models Modular Decomposition (TASK-0186)
+- [ ] Campaign Atlas Blackbox Test Suite Modular Decomposition (TASK-0187)
+- [ ] Board State Previews Router Modular Decomposition (TASK-0188)
+- [ ] Character Sheet UI Templates Modular Decomposition (TASK-0189)
 
 
 
