@@ -23,6 +23,7 @@ runefoble/
 │   │       ├── runefoble-board.styles.ts
 │   │       ├── runefoble-board-tokens.styles.ts
 │   │       ├── runefoble-board.stories.ts
+│   │       ├── runefoble-board.stories.fixtures.ts
 │   │       ├── runefoble-map-uploader.ts
 │   │       ├── runefoble-map-uploader.styles.ts
 │   │       ├── runefoble-map-uploader.stories.ts
