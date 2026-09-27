@@ -1,7 +1,7 @@
 ---
 id: '0215'
 title: Campaign Management and Lobby Blackbox Test Suite
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0208
@@ -21,8 +21,8 @@ governing_stories:
 - US-0064
 - US-0065
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/207
 ---
-
 # TASK-0215: Campaign Management and Lobby Blackbox Test Suite
 
 ## Status
