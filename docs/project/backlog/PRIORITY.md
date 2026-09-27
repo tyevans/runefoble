@@ -186,6 +186,10 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 182. **TASK-0183 (Proposed)**: [`0183-faction-resources-blackbox-test-suite-decomposition.md`](proposed/0183-faction-resources-blackbox-test-suite-decomposition.md) — Faction Resources Blackbox Test Suite Modular Decomposition
 183. **TASK-0184 (Proposed)**: [`0184-campfire-crafting-blackbox-test-suite-decomposition.md`](proposed/0184-campfire-crafting-blackbox-test-suite-decomposition.md) — Campfire Crafting Blackbox Test Suite Modular Decomposition
 184. **TASK-0185 (Proposed)**: [`0185-rules-compendium-styles-modular-decomposition.md`](proposed/0185-rules-compendium-styles-modular-decomposition.md) — Rules Compendium Styles Modular Decomposition
+185. **TASK-0186 (Proposed)**: [`0186-caravan-aggregate-and-contract-models-modular-decomposition.md`](proposed/0186-caravan-aggregate-and-contract-models-modular-decomposition.md) — Caravan Aggregate and Contract Models Modular Decomposition
+186. **TASK-0187 (Proposed)**: [`0187-campaign-atlas-blackbox-test-suite-decomposition.md`](proposed/0187-campaign-atlas-blackbox-test-suite-decomposition.md) — Campaign Atlas Blackbox Test Suite Modular Decomposition
+187. **TASK-0188 (Proposed)**: [`0188-board-state-previews-router-modular-decomposition.md`](proposed/0188-board-state-previews-router-modular-decomposition.md) — Board State Previews Router Modular Decomposition
+188. **TASK-0189 (Proposed)**: [`0189-character-sheet-ui-templates-modular-decomposition.md`](proposed/0189-character-sheet-ui-templates-modular-decomposition.md) — Character Sheet UI Templates Modular Decomposition
 
 
 
