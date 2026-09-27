@@ -33,15 +33,15 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 29. **TASK-0028 (Complete)**: [`0028-microfrontend-diataxis-documentation-synchronization.md`](complete/0028-microfrontend-diataxis-documentation-synchronization.md) — Microfrontend Diataxis Documentation Synchronization
 30. **TASK-0029 (Complete)**: [`0029-frontdoor-blackbox-tests-and-quality-gate-verification.md`](complete/0029-frontdoor-blackbox-tests-and-quality-gate-verification.md) — Frontdoor Blackbox Test Suite and Quality Gate Verification
 31. **TASK-0032 (Complete)**: [`0032-spicedb-zitadel-identity-sync.md`](complete/0032-spicedb-zitadel-identity-sync.md) — SpiceDB Zanzibar Relationship Synchronization with Zitadel OIDC Identities
-32. **TASK-0031 (Complete)**: [`0031-silo-s3-battlemap-uploader-microfrontend.md`](complete/0031-silo-s3-battlemap-uploader-microfrontend.md) — Silo S3 Battlemap Asset Uploader & Shroud Masking in Board State Microfrontend
-33. **TASK-0030 (Complete)**: [`0030-webrtc-voice-stream-visualizer-microfrontend.md`](complete/0030-webrtc-voice-stream-visualizer-microfrontend.md) — WebRTC Audio Stream & Real-Time Waveform Visualizer in Voice Agent Microfrontend
-34. **TASK-0033 (Complete)**: [`0033-webrtc-voice-room-signaling.md`](complete/0033-webrtc-voice-room-signaling.md) — Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
-35. **TASK-0036 (Complete)**: [`0036-postgresql-multi-database-init-and-event-store.md`](complete/0036-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection
-36. **TASK-0034 (Complete)**: [`0034-zitadel-oidc-jwks-verification-middleware.md`](complete/0034-zitadel-oidc-jwks-verification-middleware.md) — Zitadel Production OIDC/JWKS Token Verification Middleware
-37. **TASK-0035 (Complete)**: [`0035-spicedb-live-grpc-client-and-schema-migration.md`](complete/0035-spicedb-live-grpc-client-and-schema-migration.md) — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
-38. **TASK-0072 (Complete)**: [`0072-frontend-experience-vision-prd.md`](complete/0072-frontend-experience-vision-prd.md) — Immersive & Intuitive Frontend Experience Product Requirements Definition (PRD)
-39. **TASK-0037 (Complete)**: [`0037-opentelemetry-tracing-and-metrics-pipeline.md`](complete/0037-opentelemetry-tracing-and-metrics-pipeline.md) — OpenTelemetry Distributed Tracing, Metrics & Collector Helm Integration
-40. **TASK-0038 (Complete)**: [`0038-openpanel-analytics-service-and-event-pipeline.md`](complete/0038-openpanel-analytics-service-and-event-pipeline.md) — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
+32. **TASK-0034 (Complete)**: [`0034-zitadel-oidc-jwks-verification-middleware.md`](complete/0034-zitadel-oidc-jwks-verification-middleware.md) — Zitadel Production OIDC/JWKS Token Verification Middleware
+33. **TASK-0035 (Complete)**: [`0035-spicedb-live-grpc-client-and-schema-migration.md`](complete/0035-spicedb-live-grpc-client-and-schema-migration.md) — Live SpiceDB gRPC Client Integration & Schema Migration Bootstrapper
+34. **TASK-0036 (Complete)**: [`0036-postgresql-multi-database-init-and-event-store.md`](complete/0036-postgresql-multi-database-init-and-event-store.md) — PostgreSQL Multi-Database Initialization & Persistent Event Store Connection
+35. **TASK-0037 (Complete)**: [`0037-opentelemetry-tracing-and-metrics-pipeline.md`](complete/0037-opentelemetry-tracing-and-metrics-pipeline.md) — OpenTelemetry Distributed Tracing, Metrics & Collector Helm Integration
+36. **TASK-0038 (Complete)**: [`0038-openpanel-analytics-service-and-event-pipeline.md`](complete/0038-openpanel-analytics-service-and-event-pipeline.md) — OpenPanel Privacy-Preserving Analytics SDK & Event Pipeline
+37. **TASK-0030 (Complete)**: [`0030-webrtc-voice-stream-visualizer-microfrontend.md`](complete/0030-webrtc-voice-stream-visualizer-microfrontend.md) — WebRTC Audio Stream & Real-Time Waveform Visualizer in Voice Agent Microfrontend
+38. **TASK-0031 (Complete)**: [`0031-silo-s3-battlemap-uploader-microfrontend.md`](complete/0031-silo-s3-battlemap-uploader-microfrontend.md) — Silo S3 Battlemap Asset Uploader & Shroud Masking in Board State Microfrontend
+39. **TASK-0033 (Complete)**: [`0033-webrtc-voice-room-signaling.md`](complete/0033-webrtc-voice-room-signaling.md) — Live WebRTC Bidirectional Voice Room Signaling & WebAudio Pipeline
+40. **TASK-0072 (Complete)**: [`0072-frontend-experience-vision-prd.md`](complete/0072-frontend-experience-vision-prd.md) — Immersive & Intuitive Frontend Experience Product Requirements Definition (PRD)
 41. **TASK-0039 (Complete)**: [`0039-streaming-whisper-speech-to-intent.md`](complete/0039-streaming-whisper-speech-to-intent.md) — Sub-500ms Streaming Audio Whisper Transcription & VAD Pipeline
 42. **TASK-0046 (Complete)**: [`0046-backlog-engine-test-suite-decomposition.md`](complete/0046-backlog-engine-test-suite-decomposition.md) — Backlog Engine Test Suite Modular Decomposition
 43. **TASK-0040 (Complete)**: [`0040-service-modular-router-decomposition.md`](complete/0040-service-modular-router-decomposition.md) — Modular APIRouter Decomposition for The Watcher & Game Session Microservices
@@ -179,4 +179,8 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 175. **TASK-0176 (Proposed)**: [`0176-west-marches-ui-blackbox-test-suite-decomposition.md`](proposed/0176-west-marches-ui-blackbox-test-suite-decomposition.md) — West Marches UI Blackbox Test Suite Modular Decomposition
 176. **TASK-0177 (Proposed)**: [`0177-runefoble-events-aggregator-modular-decomposition.md`](proposed/0177-runefoble-events-aggregator-modular-decomposition.md) — Runefoble Events Aggregator Modular Decomposition
 177. **TASK-0178 (Proposed)**: [`0178-game-session-models-modular-decomposition.md`](proposed/0178-game-session-models-modular-decomposition.md) — GameSession Models Modular Decomposition
+178. **TASK-0179 (Proposed)**: [`0179-rules-compendium-homebrew-form-decomposition.md`](proposed/0179-rules-compendium-homebrew-form-decomposition.md) — Rules Compendium Homebrew Subview Modular Decomposition
+179. **TASK-0180 (Proposed)**: [`0180-board-state-stories-modular-decomposition.md`](proposed/0180-board-state-stories-modular-decomposition.md) — Board State Stories Modular Decomposition
+180. **TASK-0181 (Proposed)**: [`0181-soundscape-event-handlers-and-dependencies-decomposition.md`](proposed/0181-soundscape-event-handlers-and-dependencies-decomposition.md) — Soundscape Event Handlers and Dependencies Modular Decomposition
+
 
