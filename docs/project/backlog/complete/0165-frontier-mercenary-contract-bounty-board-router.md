@@ -1,7 +1,7 @@
 ---
 id: '0165'
 title: Frontier Mercenary Contract and Bounty Board Router
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0129
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0058
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/209
 ---
-
 # TASK-0165: Frontier Mercenary Contract and Bounty Board Router
 
 ## Status
