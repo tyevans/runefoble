@@ -8,15 +8,18 @@ from typing import Any
 
 from the_watcher.compound_actions import CompoundActionEngine
 from the_watcher.disambiguation import DisambiguationEngine
+from the_watcher.intent.reactions import ReactionIntent, parse_reaction_intent
 from the_watcher.models import IntentResult, StandInAction, StandInRecapResponse
 from the_watcher.movement_parser import SpeechIntentParser
 from the_watcher.stand_in_ai import StandInAIEngine
 
 __all__ = [
     "IntentResult",
+    "ReactionIntent",
     "StandInAction",
     "StandInRecapResponse",
     "TheWatcherEngine",
+    "parse_reaction_intent",
 ]
 
 
@@ -59,6 +62,12 @@ class TheWatcherEngine:
     def parse_speech_intent(self, transcript: str, speaker_name: str) -> IntentResult:
         """Parse natural spoken language into game actions and board mutations."""
         return self._movement_parser.parse_speech_intent(transcript, speaker_name)
+
+    def parse_reaction_intent(
+        self, transcript: str, speaker_name: str = ""
+    ) -> ReactionIntent | None:
+        """Parse spoken reaction interrupt or conditional ready action intent."""
+        return parse_reaction_intent(transcript, speaker_name)
 
     def generate_stand_in_action(
         self,

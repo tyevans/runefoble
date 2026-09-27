@@ -111,6 +111,8 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`coordinate-west-marches-shared-world-and-caravans.md`](docs/how-to/coordinate-west-marches-shared-world-and-caravans.md): How to coordinate West Marches multi-party shared persistent frontiers, synchronize discovery logs across campaigns, dispatch trade caravans, and enforce SpiceDB Zanzibar party isolation.
 - [`handle-neural-voice-duplex-and-speech-interruption.md`](docs/how-to/handle-neural-voice-duplex-and-speech-interruption.md): How to handle zero-latency neural voice duplex, speech barge-in detection within 80ms, 20ms soft audio crossfade cancellation, and acoustic echo cancellation.
 - [`simulate-tabletop-3d-physics-and-collisions.md`](docs/how-to/simulate-tabletop-3d-physics-and-collisions.md): How to simulate 3D tumbling physical dice rolls, calculate ballistic trajectories and restitution bounces, apply token knockback impulses, and halt on elevation cliff steps.
+- [`manage-spoken-reactions-and-ready-actions.md`](docs/how-to/manage-spoken-reactions-and-ready-actions.md): How to halt active combat turns with spoken reaction interrupts within 500ms, prompt reacting players, and evaluate conditional ready-action triggers.
+- [`manage-secret-dm-traps-and-map-triggers.md`](docs/how-to/manage-secret-dm-traps-and-map-triggers.md): How to configure DM-only secret spatial traps, handle movement-pause breach detection, and execute seamless battlemap switching with party token teleportation.
 
 
 

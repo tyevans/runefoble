@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Literal
 
 from board_state.handlers.actions import ActionsHandlerMixin
-from board_state.models import PlacedTokenState
+from board_state.models import MoveResult, PlacedTokenState
 from board_state.rules import (
     calc_move_cost,
     calc_move_path,
@@ -78,14 +78,30 @@ class TokensHandlerMixin(ActionsHandlerMixin):
         to_y: int,
         initiated_by: Literal["player", "the_watcher", "stand_in"] = "player",
         movement_budget: int | None = None,
-    ) -> tuple[int, str | None, str | None]:
-        """Move a placed token across the grid and update revealed fog-of-war."""
+    ) -> MoveResult:
+        """Move a placed token across the grid, evaluating traps and updating fog-of-war."""
+        from board_state.traps.evaluator import evaluate_trap_collision_on_path
+
         tid, cur = self._get_token(token_id)
         if not is_within_bounds(to_x, to_y, self.state.cols, self.state.rows):
             raise ValueError(f"Target coordinates ({to_x}, {to_y}) out of bounds")
 
-        path = self.calculate_movement_path(cur.x, cur.y, to_x, to_y)
-        cost = self.calculate_movement_cost(path)
+        full_path = self.calculate_movement_path(cur.x, cur.y, to_x, to_y)
+        traps = getattr(self.state, "traps", {})
+        breach = evaluate_trap_collision_on_path(full_path, traps)
+
+        effective_to_x, effective_to_y = to_x, to_y
+        effective_path = full_path
+        trap_trig = None
+        is_paused = False
+
+        if breach is not None:
+            effective_to_x, effective_to_y = breach.breach_coord
+            effective_path = breach.effective_path
+            trap_trig = breach.trap.trap_id
+            is_paused = True
+
+        cost = self.calculate_movement_cost(effective_path)
         if movement_budget is not None and cost > movement_budget:
             raise ValueError(f"Movement cost {cost} exceeds movement budget {movement_budget}")
 
@@ -96,13 +112,25 @@ class TokensHandlerMixin(ActionsHandlerMixin):
             name=cur.name,
             from_x=cur.x,
             from_y=cur.y,
-            to_x=to_x,
-            to_y=to_y,
+            to_x=effective_to_x,
+            to_y=effective_to_y,
             initiated_by=initiated_by,
         )
 
+        if breach is not None and hasattr(self, "spring_trap"):
+            self.spring_trap(
+                trap_id=breach.trap.trap_id,
+                token_id=tid,
+                trigger_type=breach.trap.trigger_type,
+                x=effective_to_x,
+                y=effective_to_y,
+                damage_dice=breach.trap.damage_dice,
+                effect_payload=breach.trap.effect_payload,
+                movement_paused=True,
+            )
+
         last_h, last_d = None, None
-        for ht, dd in detect_path_hazards(path, self.get_terrain):
+        for ht, dd in detect_path_hazards(effective_path, self.get_terrain):
             last_h, last_d = ht, dd
             self.create_event(
                 ev.TokenHazardTriggered,
@@ -114,8 +142,8 @@ class TokensHandlerMixin(ActionsHandlerMixin):
             )
 
         if cur.is_friendly and self.state.fog_of_war_enabled:
-            self._sync_revealed_fog(tid, to_x, to_y, cur.vision_radius)
-        return cost, last_h, last_d
+            self._sync_revealed_fog(tid, effective_to_x, effective_to_y, cur.vision_radius)
+        return MoveResult(cost, last_h, last_d, trap_triggered=trap_trig, movement_paused=is_paused)
 
     def remove_token(self, token_id: str, reason: str = "defeated") -> None:
         """Remove a token from the board."""

@@ -84,6 +84,40 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`CombatEncounterEnded`**: Emitted when combat concludes.
   - `session_id`: Optional[UUID | str]
   - `total_rounds`: Integer
+- **`CombatTurnPausedForReactionEvent`** (alias: `CombatTurnPausedForReaction`): Emitted when active combat turn is halted within 500ms for a spoken reaction interrupt (`combat.turn.paused_for_reaction` / `runefoble.events.combat.turn_paused_for_reaction`).
+  - `session_id`: UUID | str
+  - `reaction_id`: String
+  - `reacting_combatant_id`: String
+  - `reacting_combatant_name`: String
+  - `trigger_phrase`: String
+  - `reaction_type`: String ("shield", "counterspell", "opportunity_attack", etc.)
+  - `paused_turn_combatant_id`: String
+  - `timeout_seconds`: Float (default 15.0)
+- **`ReactionResolvedEvent`** (alias: `ReactionResolved`): Emitted when a declared combat reaction interrupt is resolved or dismissed, resuming the active combat turn (`combat.reaction.resolved` / `runefoble.events.combat.reaction_resolved`).
+  - `session_id`: UUID | str
+  - `reaction_id`: String
+  - `reacting_combatant_id`: String
+  - `action_taken`: String ("executed", "dismissed", "timeout")
+  - `resumed`: Boolean (default True)
+- **`ReadyActionRegisteredEvent`** (alias: `ReadyActionRegistered`): Emitted when a combatant registers a conditional ready-action trigger evaluated against incoming combat events (`combat.ready_action.registered` / `runefoble.events.combat.ready_action_registered`).
+  - `session_id`: UUID | str
+  - `ready_action_id`: String
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `trigger_type`: String ("enemy_enters_range", "spell_cast", "movement", "spatial", "attack")
+  - `trigger_condition`: String
+  - `readied_action`: String
+  - `target_id`: Optional[String]
+  - `range_cells`: Optional[Integer]
+- **`ReadyActionTriggeredEvent`** (alias: `ReadyActionTriggered`): Emitted when an incoming combat or board event fulfills a ready-action trigger condition (`combat.ready_action.triggered` / `runefoble.events.combat.ready_action_triggered`).
+  - `session_id`: UUID | str
+  - `ready_action_id`: String
+  - `combatant_id`: String
+  - `combatant_name`: String
+  - `triggering_entity_id`: String
+  - `trigger_type`: String
+  - `readied_action`: String
+
 - **`CharacterControlTransferred`**: Emitted when active token and turn control is transferred mid-session between an AI stand-in and a player (`runefoble.events.session.character_control_transferred`).
   - `session_id`: UUID | str
   - `character_id`: UUID | str
@@ -233,6 +267,41 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `settled_x`: Float, `settled_y`: Float, `settled_z`: Float
   - `bounces`: Integer
   - `trajectory`: List[Dict[str, Float]]
+- **`TrapPlacedEvent`** (alias: `TrapPlaced`): Emitted when a secret DM spatial trap or trigger is placed on the board (`runefoble.events.board.trap_placed`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `name`: String
+  - `x`: Integer, `y`: Integer
+  - `trigger_type`: "step" | "proximity" | "touch"
+  - `proximity_radius`: Integer (default 1)
+  - `dc_detection`: Integer (default 15)
+  - `trap_type`: String ("pit_trap", "spear_trap", etc.)
+  - `is_secret`: Boolean (default True)
+  - `damage_dice`: Optional[String]
+  - `description`: String
+  - `effect_payload`: Dict[str, Any]
+- **`TrapSprungEvent`** (alias: `TrapSprung`): Emitted when a moving token breaches an armed trap cell or proximity zone, pausing movement (`runefoble.events.board.trap_sprung`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `token_id`: String
+  - `trigger_type`: "step" | "proximity" | "touch"
+  - `x`: Integer, `y`: Integer
+  - `damage_dice`: Optional[String]
+  - `effect_payload`: Dict[str, Any]
+  - `movement_paused`: Boolean (default True)
+- **`TrapDisarmedEvent`** (alias: `TrapDisarmed`): Emitted when a secret trap is disarmed or disabled (`runefoble.events.board.trap_disarmed`).
+  - `trap_id`: String
+  - `board_id`: String
+  - `disarmed_by`: Optional[String]
+- **`BattlemapSwitchedEvent`** (alias: `BattlemapSwitched`): Emitted when the DM transitions the stage to a new battlemap and teleports party tokens in a single transaction (`runefoble.events.board.battlemap_switched`).
+  - `board_id`: String
+  - `previous_map_id`: Optional[String]
+  - `new_map_id`: String
+  - `cols`: Integer, `rows`: Integer
+  - `background_asset_id`: Optional[String]
+  - `background_image_url`: Optional[String]
+  - `teleported_tokens`: Dict[str, List[Integer]]
+  - `initiated_by`: Optional[String]
 
 
 

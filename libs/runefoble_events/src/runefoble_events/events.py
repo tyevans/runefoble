@@ -47,6 +47,16 @@ from runefoble_events.board import (
     UniversalVTTImported,
     VFXAnimationFinished,
 )
+from runefoble_events.board_traps import (
+    BattlemapSwitched,
+    BattlemapSwitchedEvent,
+    TrapDisarmed,
+    TrapDisarmedEvent,
+    TrapPlaced,
+    TrapPlacedEvent,
+    TrapSprung,
+    TrapSprungEvent,
+)
 from runefoble_events.character import (
     AbsencePenaltyApplied,
     AbsencePenaltyCleared,
@@ -72,6 +82,16 @@ from runefoble_events.character import (
     SpellSlotExpended,
     StandInPolicyUpdated,
     StandInStabilized,
+)
+from runefoble_events.combat_reactions import (
+    CombatTurnPausedForReaction,
+    CombatTurnPausedForReactionEvent,
+    ReactionResolved,
+    ReactionResolvedEvent,
+    ReadyActionRegistered,
+    ReadyActionRegisteredEvent,
+    ReadyActionTriggered,
+    ReadyActionTriggeredEvent,
 )
 from runefoble_events.compendium import (
     ConditionIndexed,
@@ -214,6 +234,14 @@ __all__ = [
     "InitiativeRolled",
     "InitiativeTurnAdvanced",
     "CombatEncounterEnded",
+    "CombatTurnPausedForReactionEvent",
+    "CombatTurnPausedForReaction",
+    "ReactionResolvedEvent",
+    "ReactionResolved",
+    "ReadyActionRegisteredEvent",
+    "ReadyActionRegistered",
+    "ReadyActionTriggeredEvent",
+    "ReadyActionTriggered",
     "SpectatorSessionConnected",
     "BoardGridInitialized",
     "TokenPlaced",
@@ -357,4 +385,12 @@ __all__ = [
     "RegionalMerchantStockUpdated",
     "SharedStrongholdUpgraded",
     "SharedWorldCreated",
+    "BattlemapSwitched",
+    "BattlemapSwitchedEvent",
+    "TrapDisarmed",
+    "TrapDisarmedEvent",
+    "TrapPlaced",
+    "TrapPlacedEvent",
+    "TrapSprung",
+    "TrapSprungEvent",
 ]

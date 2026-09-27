@@ -9,13 +9,14 @@ from board_state.aoe_models import AoETemplateState
 from board_state.models.physics import BoardPhysicsTransitionsMixin
 from board_state.models.terrain import TerrainCellState, TerrainDict
 from board_state.models.tokens import PlacedTokenState
+from board_state.models.traps_transitions import BoardTrapsTransitionsMixin
 from board_state.models.vfx import BoardDecalState
 
 if TYPE_CHECKING:
     from board_state.models.board import BoardState
 
 
-class BoardTransitionsMixin(BoardPhysicsTransitionsMixin):
+class BoardTransitionsMixin(BoardTrapsTransitionsMixin, BoardPhysicsTransitionsMixin):
     """Provides pure state mutation helpers for BoardState."""
 
     def with_map_imported(

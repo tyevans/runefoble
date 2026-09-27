@@ -197,3 +197,14 @@ definition caravan_contract {
     permission manage = poster + guild_officer
 }
 
+definition board {
+    relation campaign: campaign
+    relation dungeon_master: user
+
+    // Secret traps and stage triggers management restricted to DM/GM/Owner
+    permission manage_traps = dungeon_master + campaign->run_session
+    permission view_secret_layer = dungeon_master + campaign->run_session
+    permission switch_map = dungeon_master + campaign->run_session
+    permission view = dungeon_master + campaign->view
+}
+

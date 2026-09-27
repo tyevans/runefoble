@@ -19,6 +19,7 @@ from game_session.routers import (
     caravan_contracts_router,
     caravan_trade_router,
     combat_router,
+    reactions_router,
     session_router,
     stronghold_router,
     tavern_router,
@@ -43,6 +44,7 @@ app = FastAPI(
 
 app.include_router(session_router)
 app.include_router(combat_router)
+app.include_router(reactions_router)
 app.include_router(autopilot_router)
 app.include_router(campfire_router)
 app.include_router(stronghold_router)
