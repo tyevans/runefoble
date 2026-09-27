@@ -1,7 +1,7 @@
 ---
 id: '0147'
 title: Caravan Contracts API Router Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0129
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0058
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/170
 ---
-
 # TASK-0147: Caravan Contracts API Router Modular Decomposition
 
 ## Status
