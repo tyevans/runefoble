@@ -13,7 +13,8 @@
     "runefoble-combat-reaction-prompt",
     "runefoble-ready-action-card",
     "runefoble-campaign-dashboard",
-    "runefoble-campaign-creator"
+    "runefoble-campaign-creator",
+    "runefoble-campaign-members"
   ]
 }
 

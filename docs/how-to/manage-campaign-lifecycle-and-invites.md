@@ -201,3 +201,54 @@ The `<runefoble-campaign-dashboard>` provides:
 - Active live session indicator (`● Session Live`).
 - Seamless integration with the `<runefoble-campaign-creator>` dialog wizard.
 
+---
+
+## 7. Managing Campaign Members & Assigning Zanzibar Roles in the UI
+
+The `<runefoble-campaign-members>` component allows Game Masters to inspect the party roster, assign SpiceDB Zanzibar roles (`dungeon_master`, `player`, `spectator`), remove members safely via confirmation dialogs, and generate copyable invite links:
+
+```typescript
+import '@runefoble/game-session-ui/campaigns';
+
+// In campaign view or settings modal:
+html`
+  <runefoble-campaign-members
+    campaign-id="camp-a1b2c3d4"
+    campaign-title="Shadows of Drakkenheim"
+    current-user-id="usr-dm-evelyn"
+    .canManage=${true}
+    .members=${campaignMembers}
+    invite-token="dGVzdF9pbnZpdGVfdG9rZW4"
+    @assign-role=${async (e: CustomEvent) => {
+      const { userId, role } = e.detail;
+      await fetch(\`/api/v1/campaigns/\${campaignId}/roles\`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, role }),
+      });
+    }}
+    @remove-member=${async (e: CustomEvent) => {
+      const { userId } = e.detail;
+      // Revoke relations / remove membership
+    }}
+    @create-invite=${async (e: CustomEvent) => {
+      const { role } = e.detail;
+      const res = await fetch(\`/api/v1/campaigns/\${campaignId}/invites\`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      });
+      const data = await res.json();
+    }}
+  ></runefoble-campaign-members>
+`;
+```
+
+Key features of `<runefoble-campaign-members>`:
+- **Roster & Avatars**: Displays party member avatars, usernames, user IDs, and assigned characters.
+- **SpiceDB Zanzibar Role Dropdown**: Enables Game Masters (`canManage=true`) to change active relations between `dungeon_master`, `player`, and `spectator`.
+- **Protected Owner**: The campaign owner is protected with an immutable "Owner" badge.
+- **Safe Removal with Confirmation**: Provides a confirmation modal before revoking campaign membership and Zanzibar permissions.
+- **Interactive Invite Generator**: Modal generator with role pre-assignment, shareable link preview, and one-click clipboard copying.
+- **View-Only Mode**: Regular players (`canManage=false`) see clean read-only role badges without destructive controls.
+

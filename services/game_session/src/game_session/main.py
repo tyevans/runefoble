@@ -85,6 +85,7 @@ def get_ui_manifest():
             "runefoble-ready-action-card",
             "runefoble-campaign-dashboard",
             "runefoble-campaign-creator",
+            "runefoble-campaign-members",
         ],
         "version": "0.1.0",
     }
