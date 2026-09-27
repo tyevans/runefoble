@@ -93,11 +93,16 @@ def test_caravan_board_typescript_exports_and_custom_element() -> None:
     assert pkg_json["name"] == "@runefoble/game-session-ui"
     assert "./runefoble-caravan-board" in pkg_json["exports"]
     assert "./runefoble-caravan-board.styles" in pkg_json["exports"]
+    assert "./caravan" in pkg_json["exports"]
+    assert "./caravan/contract_card" in pkg_json["exports"]
+    assert "./caravan/dispatch_modal" in pkg_json["exports"]
+    assert "./caravan/board_filters" in pkg_json["exports"]
 
     assert (ui_dir / "tsconfig.json").is_file()
     assert (ui_dir / "src/index.ts").is_file()
     index_content = (ui_dir / "src/index.ts").read_text(encoding="utf-8")
     assert "runefoble-caravan-board" in index_content
+    assert "./caravan/index.ts" in index_content
 
     styles_file = ui_dir / "src/runefoble-caravan-board.styles.ts"
     assert styles_file.is_file()
@@ -109,48 +114,94 @@ def test_caravan_board_typescript_exports_and_custom_element() -> None:
     assert "@customElement('runefoble-caravan-board')" in comp_src
     assert "class RunefobleCaravanBoard" in comp_src
 
+    # Sub-component custom elements
+    caravan_dir = ui_dir / "src" / "caravan"
+    card_src = (caravan_dir / "contract_card.ts").read_text(encoding="utf-8")
+    modal_src = (caravan_dir / "dispatch_modal.ts").read_text(encoding="utf-8")
+    filters_src = (caravan_dir / "board_filters.ts").read_text(encoding="utf-8")
+
+    assert "@customElement('runefoble-caravan-contract-card')" in card_src
+    assert "@customElement('runefoble-caravan-dispatch-modal')" in modal_src
+    assert "@customElement('runefoble-caravan-board-filters')" in filters_src
+
 
 def test_caravan_board_component_features() -> None:
-    """Verify component implementation contains required UI features and Bauhaus tokens."""
+    """Verify decomposed caravan board components contain required UI features and Bauhaus tokens."""
+    caravan_dir = REPO_ROOT / "services/game_session/ui/src/caravan"
     comp_file = REPO_ROOT / "services/game_session/ui/src/runefoble-caravan-board.ts"
-    comp_src = comp_file.read_text(encoding="utf-8")
+    card_file = caravan_dir / "contract_card.ts"
+    modal_file = caravan_dir / "dispatch_modal.ts"
+    filters_file = caravan_dir / "board_filters.ts"
 
-    # One-click Accept Escort Contract
-    assert "Accept Escort Contract" in comp_src
+    assert card_file.is_file()
+    assert modal_file.is_file()
+    assert filters_file.is_file()
+
+    comp_src = comp_file.read_text(encoding="utf-8")
+    card_src = card_file.read_text(encoding="utf-8")
+    modal_src = modal_file.read_text(encoding="utf-8")
+    filters_src = filters_file.read_text(encoding="utf-8")
+
+    # One-click Accept Escort Contract in contract card & board orchestrator
+    assert "Accept Escort Contract" in card_src
     assert "acceptContract" in comp_src
 
-    # Caravan Manifest Details Modal
-    modal_file = REPO_ROOT / "services/game_session/ui/src/runefoble-caravan-modal.ts"
-    assert modal_file.is_file()
-    modal_src = modal_file.read_text(encoding="utf-8")
-
+    # Caravan Manifest Details Modal Sub-Component
     assert "isModalOpen" in comp_src
-    assert "renderCaravanManifestModal" in comp_src
     assert "Caravan Manifest:" in modal_src
     assert "Departure Settlement:" in modal_src
     assert "Destination Stronghold:" in modal_src
     assert "Cargo Inventory" in modal_src
     assert "Escort Fee Payout:" in modal_src
 
-    # Active Transit Route Status Pill & Ambush Alerts
-    assert "transit-status-pill" in comp_src
-    assert "transit-progress-header" in comp_src
-    assert "progress-track" in comp_src
-    assert "progress-fill" in comp_src
-    assert "ambush-alert-badge" in comp_src
+    # Filter Bar Sub-Component
+    assert "filters-changed" in filters_src
+    assert "Risk Level:" in filters_src
+    assert "searchQuery" in comp_src
 
-    # Real-time notifications
+    # Active Transit Route Status Pill & Ambush Alerts in Card
+    assert "transit-status-pill" in card_src
+    assert "transit-progress-header" in card_src
+    assert "progress-track" in card_src
+    assert "progress-fill" in card_src
+    assert "ambush-alert-badge" in card_src
+
+    # Real-time notifications in Board Orchestrator
     assert "notification-banner" in comp_src
     assert "notificationMessage" in comp_src
 
-    # Bauhaus styling file check
-    styles_file = REPO_ROOT / "services/game_session/ui/src/runefoble-caravan-board.styles.ts"
-    styles_src = styles_file.read_text(encoding="utf-8")
-    assert "--rf-border-color" in styles_src
-    assert "--rf-shadow-hard" in styles_src
-    assert ".transit-status-pill" in styles_src
-    assert ".manifest-modal" in styles_src
-    assert ".modal-backdrop" in styles_src
+    # Bauhaus styling check across modular style files
+    styles_dir = caravan_dir / "styles"
+    layout_styles = (styles_dir / "layout.styles.ts").read_text(encoding="utf-8")
+    card_styles = (styles_dir / "card.styles.ts").read_text(encoding="utf-8")
+    modal_styles = (styles_dir / "modal.styles.ts").read_text(encoding="utf-8")
+
+    assert "--rf-border-color" in layout_styles
+    assert "--rf-shadow-hard" in layout_styles
+    assert ".transit-status-pill" in card_styles
+    assert ".manifest-modal" in modal_styles
+    assert ".modal-backdrop" in modal_styles
+
+
+def test_caravan_files_under_150_lines() -> None:
+    """Verify all caravan UI files strictly comply with <150 lines decomposition limit."""
+    ui_dir = REPO_ROOT / "services/game_session/ui/src"
+    caravan_dir = ui_dir / "caravan"
+    files = [
+        ui_dir / "runefoble-caravan-board.ts",
+        ui_dir / "runefoble-caravan-board.styles.ts",
+        caravan_dir / "contract_card.ts",
+        caravan_dir / "dispatch_modal.ts",
+        caravan_dir / "board_filters.ts",
+        caravan_dir / "caravan_api.ts",
+        caravan_dir / "styles/layout.styles.ts",
+        caravan_dir / "styles/card.styles.ts",
+        caravan_dir / "styles/modal.styles.ts",
+    ]
+    for f in files:
+        assert f.is_file(), f"{f} must exist"
+        line_count = len(f.read_text(encoding="utf-8").splitlines())
+        assert line_count < 150, f"{f.name} exceeds 150 lines: {line_count} lines"
 
 
 def test_storybook_stories_contract() -> None:

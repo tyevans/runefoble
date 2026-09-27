@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Caravan Board Microfrontend Styles and Component Decomposition (`TASK-0148`, `ADR-0004`, `ADR-0012`, `ADR-0013`, `PRD-0018`, `US-0058`)**:
+  - Decomposed `services/game_session/ui/src/runefoble-caravan-board.ts` (399 lines) and `runefoble-caravan-board.styles.ts` (398 lines) into modular sub-components and scoped Bauhaus styles under `services/game_session/ui/src/caravan/`, with all files strictly < 150 lines:
+    - `contract_card.ts` (83 lines): `<runefoble-caravan-contract-card>` rendering individual notice board contract cards, route risk badges, itemized bounty rewards, live transit progress tracks, ambush alerts, and contextual role action buttons.
+    - `dispatch_modal.ts` (123 lines): `<runefoble-caravan-dispatch-modal>` modal dialog providing detailed route breakdowns, escrow collateral summaries, itemized cargo manifests, and caravan dispatch controls.
+    - `board_filters.ts` (109 lines): `<runefoble-caravan-board-filters>` handling real-time search queries, route hazard risk dropdowns, destination filters, and contract transit status selectors.
+    - `caravan_api.ts` (82 lines): Isolated HTTP client helpers (`apiAcceptContract`, `apiDispatchCaravan`, `apiFulfillContract`) for REST operations.
+    - `styles/` (< 85 lines each): Scoped styles split into `layout.styles.ts`, `card.styles.ts`, and `modal.styles.ts`, aggregated by `runefoble-caravan-board.styles.ts`.
+    - `runefoble-caravan-board.ts` (139 lines): Reduced root element to lightweight container orchestrating state and sub-components.
+  - Re-exported new sub-components in `services/game_session/ui/package.json` and `services/game_session/ui/src/index.ts`.
+  - Updated frontdoor blackbox test suite `tests/test_blackbox_caravan_board_ui.py` to verify modular sub-components, custom element decorators, and file size invariants (< 150 lines).
+  - Updated Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md`.
 - **Caravan Contracts API Router Modular Decomposition (`TASK-0147`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `PRD-0007`, `US-0058`)**:
   - Decomposed monolithic API router `services/game_session/src/game_session/routers/caravan_contracts.py` (433 lines) into focused, single-responsibility sub-routers under `services/game_session/src/game_session/routers/caravan_contracts/` strictly complying with Hard Invariant 6 (< 500 lines per file, with all submodules < 180 lines):
     - `auth.py` (84 lines): Extracted SpiceDB Zanzibar authorization checks (`_check_perm`, `_check_high_tier_auth`), aggregate loader (`_load_contract`), event bus publishing (`_publish`), contractor association, and validation helpers.
