@@ -1,7 +1,7 @@
 ---
-id: '0148'
+id: 0148
 title: Caravan Board Microfrontend Styles and Component Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0136
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0058
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/175
 ---
-
 # TASK-0148: Caravan Board Microfrontend Styles and Component Decomposition
 
 ## Status
