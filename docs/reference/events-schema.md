@@ -568,6 +568,38 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `factions_simulated`: List[String] (faction IDs)
   - `shifts`: List[Dict[String, Any]]
   - `rumors`: List[String]
+- **`FactionResourceUpdatedEvent`** (alias: `FactionResourceUpdated`): Emitted when faction treasury or contraband assets mutate (`runefoble.events.watcher.faction_resource_updated`).
+  - `faction_id`: String
+  - `campaign_id`: String
+  - `treasury`: Integer
+  - `contraband`: Integer
+  - `mercenaries_count`: Integer
+  - `delta_treasury`: Integer
+  - `delta_contraband`: Integer
+  - `reason`: String
+  - `metadata`: Dict[String, Any]
+- **`FactionMercenaryRecruitedEvent`** (alias: `FactionMercenaryRecruited`): Emitted when a faction hires a mercenary detachment (`runefoble.events.watcher.faction_mercenary_recruited`).
+  - `faction_id`: String
+  - `campaign_id`: String
+  - `unit_name`: String
+  - `count`: Integer
+  - `cost`: Integer
+  - `unit_type`: String
+  - `total_mercenaries`: Integer
+  - `upkeep_per_tick`: Integer
+- **`FactionBriberyAttemptedEvent`** (alias: `FactionBriberyAttempted`): Emitted when a bribery check is executed against an NPC (`runefoble.events.watcher.faction_bribery_attempted`).
+  - `faction_id`: String
+  - `campaign_id`: String
+  - `target_name`: String
+  - `bribe_amount`: Integer
+  - `dc`: Integer
+  - `roll`: Integer
+  - `modifier`: Integer
+  - `counter_bribe`: Integer
+  - `success`: Boolean
+  - `outcome`: String ("success", "critical_success", "countered", "failure", "critical_failure")
+  - `narrative`: String
+  - `remaining_treasury`: Integer
 
 ### VoiceRoom Events (`aggregate_type: VoiceRoom`)
 

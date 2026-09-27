@@ -115,6 +115,52 @@ GET /api/v1/campaigns/{campaign_id}/world-ticks/latest
 X-User-Id: dm_evelyn
 ```
 
+### Adjust Faction Treasury & Contraband
+```http
+POST /factions/{faction_id}/resources/adjust
+X-User-Id: dm_evelyn
+Content-Type: application/json
+
+{
+  "treasury_delta": 250,
+  "contraband_delta": 10,
+  "reason": "dock_smuggling_run",
+  "campaign_id": "camp-101"
+}
+```
+
+### Execute Bribery Resolution
+```http
+POST /factions/{faction_id}/bribery/resolve
+X-User-Id: dm_evelyn
+Content-Type: application/json
+
+{
+  "target_name": "Clerk Garrow",
+  "target_role": "official",
+  "bribe_amount": 100,
+  "target_loyalty": "corruptible",
+  "counter_bribe": 0,
+  "campaign_id": "camp-101"
+}
+```
+
+### Recruit Mercenary Detachment
+```http
+POST /factions/{faction_id}/mercenaries/recruit
+X-User-Id: dm_evelyn
+Content-Type: application/json
+
+{
+  "unit_name": "Ironfang Crossbowmen",
+  "count": 4,
+  "cost_per_unit": 20,
+  "unit_type": "archers",
+  "upkeep_per_tick": 2,
+  "campaign_id": "camp-101"
+}
+```
+
 ---
 
 ## 5. Sample DM Intelligence Bulletin
