@@ -178,7 +178,9 @@ The soundscape blackbox verification suite is partitioned into focused test modu
 - `tests/test_blackbox_soundscape_ui.py`: Verifies microfrontend manifest advertising, package metadata integrity, TypeScript element exports, Storybook coverage, REST stem and cue data binding, and Zanzibar authorization.
 - `tests/test_blackbox_soundscape_transitions.py`: Verifies multi-track stem layer mixing, ambient/combat crossfading, WebAudio -12dB voice ducking coordination triggered by `PlayerSpokeEvent`, manual mood overrides, and `<runefoble-soundscape-controls>` microfrontend component and token invariants.
 - `tests/test_blackbox_soundscape_tension.py`: Verifies encounter tension scoring heuristics across exploration and combat states, tactical foley cue triggers (`POST /api/v1/soundscape/cue`), autonomous Redis Streams reactivity to `CombatEncounterStarted` and `CombatRoundAdvanced`, and SpiceDB Zanzibar DM authorization enforcement.
-- `tests/test_blackbox_character_leitmotifs.py`: Verifies character leitmotif configuration, clutch critical hit and death save event triggering, volume envelope calculations, WebAudio -12dB voice ducking integration, Zanzibar character authorization, and `<runefoble-leitmotif-config>` microfrontend invariants.
+- `tests/test_blackbox_leitmotif_events.py`: Verifies CloudEvents domain event class mapping (`LeitmotifProfileConfigured`, `LeitmotifTriggered`, `CriticalHitScored`, `DeathSaveStarted`) and payload serialization roundtrips.
+- `tests/test_blackbox_leitmotif_api.py`: Verifies REST API routes (`/api/v1/soundscape/leitmotif/timbres`, `profile`, `trigger`, `active`), SpiceDB Zanzibar character owner authorization enforcement, and `<runefoble-leitmotif-config>` microfrontend manifest and component invariants.
+- `tests/test_blackbox_leitmotif_triggers.py`: Verifies multi-modal combat and reactive triggers (critical hits, near-death cello themes, WebAudio sidechain -12dB voice ducking) and volume envelope stage calculations.
 
 
 
