@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Backlog Curation, JIT Refinement & Milestone 7 Roadmap Activation**:
+  - Identified refactoring candidates approaching 500 lines (`tests/test_blackbox_caravan_contracts.py`, `services/game_session/src/game_session/routers/caravan_contracts.py`, `runefoble-caravan-board.ts`) and proposed decomposition tasks (`TASK-0146`, `TASK-0147`, `TASK-0148`).
+  - Completed and closed Milestone 6 (Intelligent Living Worlds & Spatial Multi-Party Universes) across all 8 feature epics and microfrontends.
+  - Activated Milestone 7 (Neural Audio Duplex & Tangible 3D Tabletop) with foundational platform and physics enablers (`TASK-0141`, `TASK-0150`) prioritized ahead of dependent UI epics (`TASK-0142`, `TASK-0149`).
+  - JIT-refined 6 tasks (`TASK-0141`, `TASK-0144`, `TASK-0145`, `TASK-0146`, `TASK-0147`, `TASK-0150`) to maintain an optimal 10-item ready buffer in `docs/project/backlog/refined/` with zero specification drift.
 - **Wardrobe Gallery Blackbox Test Suite Modular Decomposition (`TASK-0139`, `ADR-0013`)**:
   - Decomposed monolithic blackbox test suite `tests/test_blackbox_wardrobe_gallery.py` (415 lines) into modular frontdoor test suites under `tests/test_blackbox_wardrobe_gallery/` strictly conforming to Hard Invariant 6 (< 500 lines per file, with all test files < 200 lines).
   - Added `tests/test_blackbox_wardrobe_gallery/test_wardrobe_api.py` (125 lines) verifying REST endpoints (`/api/v1/characters/{id}/portrait/active`, `/wardrobe`), object-level SpiceDB Zanzibar authorization checks, and microfrontend manifest advertisement.
