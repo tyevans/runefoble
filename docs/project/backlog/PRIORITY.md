@@ -131,7 +131,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 119. **TASK-0104 (Complete)**: [`0104-kinetic-spell-vfx-and-particle-canvas.md`](complete/0104-kinetic-spell-vfx-and-particle-canvas.md) — Multi-Modal Kinetic Spell VFX & WebGL Particle Magic
 120. **TASK-0124 (Complete)**: [`0124-generative-wardrobe-and-portrait-gallery.md`](complete/0124-generative-wardrobe-and-portrait-gallery.md) — Generative Character Wardrobe, Emotion & State Portrait Gallery
 121. **TASK-0125 (Refined)**: [`0125-radial-token-action-menu-and-aoe-templates.md`](refined/0125-radial-token-action-menu-and-aoe-templates.md) — Radial Token Action Menu & Rotatable AoE Spell Templates
-122. **TASK-0121 (Refined)**: [`0121-prd-pipeline-test-suite-modular-decomposition.md`](refined/0121-prd-pipeline-test-suite-modular-decomposition.md) — PRD Pipeline Test Suite Modular Decomposition
+122. **TASK-0121 (Complete)**: [`0121-prd-pipeline-test-suite-modular-decomposition.md`](complete/0121-prd-pipeline-test-suite-modular-decomposition.md) — PRD Pipeline Test Suite Modular Decomposition
 123. **TASK-0122 (Refined)**: [`0122-project-visualizer-test-suite-modular-decomposition.md`](refined/0122-project-visualizer-test-suite-modular-decomposition.md) — Project Visualizer Test Suite Modular Decomposition
 124. **TASK-0123 (Refined)**: [`0123-character-sheet-microfrontend-styles-modular-decomposition.md`](refined/0123-character-sheet-microfrontend-styles-modular-decomposition.md) — Character Sheet Microfrontend Styles Modular Decomposition
 125. **TASK-0126 (Refined)**: [`0126-autonomous-npc-faction-agendas-and-world-simulation.md`](refined/0126-autonomous-npc-faction-agendas-and-world-simulation.md) — Autonomous NPC Faction Agendas & Background Simulation Engine

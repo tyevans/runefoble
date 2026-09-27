@@ -1,7 +1,7 @@
 ---
 id: '0121'
 title: PRD Pipeline Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0119
@@ -9,8 +9,8 @@ governing_adrs:
 - ADR-0003
 - ADR-0009
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/134
 ---
-
 # TASK-0121: PRD Pipeline Test Suite Modular Decomposition
 
 ## Status
