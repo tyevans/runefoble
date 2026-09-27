@@ -81,6 +81,7 @@ def get_ui_manifest():
             "runefoble-watcher-feed",
             "runefoble-autonomous-dm",
             "runefoble-dm-whisper-bar",
+            "runefoble-faction-radar",
         ],
         "version": "0.1.0",
     }
