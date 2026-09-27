@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Campaign Atlas Blackbox Test Suite Modular Decomposition (`TASK-0187`, `ADR-0001`, `ADR-0003`, `ADR-0007`)**:
+  - Decomposed monolithic test suite `tests/test_blackbox_campaign_atlas.py` (346 lines) into modular domain-focused test suites under `tests/test_blackbox_campaign_atlas/`, keeping all test modules strictly < 110 lines per Hard Invariant 6:
+    - `conftest.py` (32 lines): Shared fixtures for FastAPI `TestClient`, `MockSpiceDBClient`, campaign context, and geometry polygons.
+    - `test_territories.py` (109 lines): Geopolitical boundary definitions, point-in-polygon containment queries, and contested territory updates.
+    - `test_pins.py` (105 lines): Milestone pin placement, coordinates, chronological era/session filtering, and Zanzibar permission checks.
+    - `test_codex_links.py` (73 lines): Entity cross-linking against redstring graph, Zanzibar privacy controls, and UI manifest verification.
+    - `__init__.py` (1 line): Package initializer.
 - **GameSession Models Modular Decomposition (`TASK-0178`, `ADR-0003`, `ADR-0007`, `PRD-0001`, `US-0001`)**:
   - Decomposed `services/game_session/src/game_session/models.py` (382 lines) into focused submodules under `services/game_session/src/game_session/models/`, keeping all model files strictly < 100 lines (and all files < 120 lines) per Hard Invariant 6:
     - `session.py` (91 lines): Session request/response schemas, participant states, absentee autopilot, and `GameSessionState` aggregate model.
