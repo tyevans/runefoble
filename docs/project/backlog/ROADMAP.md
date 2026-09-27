@@ -140,7 +140,7 @@
 - [ ] Kinetic Spell VFX Blackbox Test Suite Modular Decomposition (TASK-0191)
 - [ ] Board Templates Rendering and Subviews Modular Decomposition (TASK-0192)
 - [ ] Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition (TASK-0193)
-
-
-
-
+- [ ] Combat Heatmap Canvas Rendering and Subviews Modular Decomposition (TASK-0194)
+- [ ] Faction Radar SVG and Drawer Subviews Modular Decomposition (TASK-0195)
+- [ ] Campaign Atlas Layers and Pins Subviews Modular Decomposition (TASK-0196)
+- [ ] Asset Forge Raster Generator Modular Decomposition (TASK-0197)

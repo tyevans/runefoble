@@ -194,6 +194,10 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 190. **TASK-0191 (Proposed)**: [`0191-spell-vfx-test-suite-decomposition.md`](proposed/0191-spell-vfx-test-suite-decomposition.md) — Kinetic Spell VFX Blackbox Test Suite Modular Decomposition
 191. **TASK-0192 (Proposed)**: [`0192-board-templates-rendering-decomposition.md`](proposed/0192-board-templates-rendering-decomposition.md) — Board Templates Rendering and Subviews Modular Decomposition
 192. **TASK-0193 (Proposed)**: [`0193-uvtt-importer-and-dynamic-mcp-test-suite-decomposition.md`](proposed/0193-uvtt-importer-and-dynamic-mcp-test-suite-decomposition.md) — Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition
+193. **TASK-0194 (Proposed)**: [`0194-combat-heatmap-canvas-rendering-decomposition.md`](proposed/0194-combat-heatmap-canvas-rendering-decomposition.md) — Combat Heatmap Canvas Rendering and Subviews Modular Decomposition
+194. **TASK-0195 (Proposed)**: [`0195-faction-radar-svg-and-drawer-decomposition.md`](proposed/0195-faction-radar-svg-and-drawer-decomposition.md) — Faction Radar SVG and Drawer Subviews Modular Decomposition
+195. **TASK-0196 (Proposed)**: [`0196-campaign-atlas-layers-and-pins-decomposition.md`](proposed/0196-campaign-atlas-layers-and-pins-decomposition.md) — Campaign Atlas Layers and Pins Subviews Modular Decomposition
+196. **TASK-0197 (Proposed)**: [`0197-asset-forge-raster-generator-modular-decomposition.md`](proposed/0197-asset-forge-raster-generator-modular-decomposition.md) — Asset Forge Raster Generator Modular Decomposition
 
 
 
