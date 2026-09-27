@@ -7,4 +7,4 @@ export * from './runefoble-map-grid-config.ts';
 export * from './runefoble-map-uploader.ts';
 export * from './radial_menu.ts';
 export * from './aoe_templates.ts';
-
+export * from './physics_3d/index.ts';

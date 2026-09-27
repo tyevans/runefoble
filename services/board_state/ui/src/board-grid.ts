@@ -23,6 +23,7 @@ export interface BoardGridRenderOptions {
   dragState: DragKinematicsState | null;
   localGhost: GhostPreviewState | null;
   fogOfWar: boolean;
+  enable3D?: boolean;
   aoeAffectedTokens?: string[];
   aoeAffectedCells?: [number, number][];
   aoeOverlay?: unknown;
@@ -46,6 +47,7 @@ export function renderBoardGrid(options: BoardGridRenderOptions) {
     dragState,
     localGhost,
     fogOfWar,
+    enable3D = false,
     aoeAffectedTokens = [],
     aoeAffectedCells = [],
     aoeOverlay,
@@ -125,6 +127,7 @@ export function renderBoardGrid(options: BoardGridRenderOptions) {
       </div>
 
       <canvas class="vfx-particle-canvas" aria-hidden="true"></canvas>
+      <canvas class="tabletop-3d-canvas ${enable3D ? 'active' : ''}" aria-hidden="true"></canvas>
       ${aoeOverlay ? aoeOverlay : nothing}
       ${radialMenu ? radialMenu : nothing}
       ${renderDistanceRuler(dragState)}

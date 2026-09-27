@@ -202,7 +202,9 @@ export function renderBoardCell(props: BoardCellProps) {
 export function renderBoardHeader(
   fogOfWar: boolean,
   onToggleFog: () => void,
-  watcherStatus: string
+  watcherStatus: string,
+  enable3D?: boolean,
+  onToggle3D?: () => void
 ) {
   return html`
     <div class="header">
@@ -217,6 +219,15 @@ export function renderBoardHeader(
         >
           🌫️ Fog of War: ${fogOfWar ? 'ON' : 'OFF'}
         </button>
+        ${onToggle3D ? html`
+          <button
+            class="mode-3d-toggle ${enable3D ? 'active' : ''}"
+            @click="${onToggle3D}"
+            title="Toggle 3D Miniature Tabletop Physics"
+          >
+            🎲 3D Mode: ${enable3D ? 'ON' : 'OFF'}
+          </button>
+        ` : nothing}
         <div class="watcher-badge">
           <span>👁️ The Watcher:</span>
           <span>${watcherStatus}</span>

@@ -29,6 +29,7 @@ def get_ui_manifest():
             "runefoble-map-uploader",
             "runefoble-radial-menu",
             "runefoble-aoe-template",
+            "runefoble-tabletop-3d",
         ],
         "version": "0.1.0",
     }
