@@ -130,15 +130,15 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 118. **TASK-0102 (Complete)**: [`0102-character-leitmotifs-and-adaptive-themes.md`](complete/0102-character-leitmotifs-and-adaptive-themes.md) — Personal Character Leitmotifs & Adaptive Musical Signatures
 119. **TASK-0104 (Complete)**: [`0104-kinetic-spell-vfx-and-particle-canvas.md`](complete/0104-kinetic-spell-vfx-and-particle-canvas.md) — Multi-Modal Kinetic Spell VFX & WebGL Particle Magic
 120. **TASK-0124 (Complete)**: [`0124-generative-wardrobe-and-portrait-gallery.md`](complete/0124-generative-wardrobe-and-portrait-gallery.md) — Generative Character Wardrobe, Emotion & State Portrait Gallery
-121. **TASK-0125 (Refined)**: [`0125-radial-token-action-menu-and-aoe-templates.md`](refined/0125-radial-token-action-menu-and-aoe-templates.md) — Radial Token Action Menu & Rotatable AoE Spell Templates
-122. **TASK-0121 (Refined)**: [`0121-prd-pipeline-test-suite-modular-decomposition.md`](refined/0121-prd-pipeline-test-suite-modular-decomposition.md) — PRD Pipeline Test Suite Modular Decomposition
-123. **TASK-0122 (Refined)**: [`0122-project-visualizer-test-suite-modular-decomposition.md`](refined/0122-project-visualizer-test-suite-modular-decomposition.md) — Project Visualizer Test Suite Modular Decomposition
+121. **TASK-0121 (Complete)**: [`0121-prd-pipeline-test-suite-modular-decomposition.md`](complete/0121-prd-pipeline-test-suite-modular-decomposition.md) — PRD Pipeline Test Suite Modular Decomposition
+122. **TASK-0122 (Complete)**: [`0122-project-visualizer-test-suite-modular-decomposition.md`](complete/0122-project-visualizer-test-suite-modular-decomposition.md) — Project Visualizer Test Suite Modular Decomposition
+123. **TASK-0125 (Refined)**: [`0125-radial-token-action-menu-and-aoe-templates.md`](refined/0125-radial-token-action-menu-and-aoe-templates.md) — Radial Token Action Menu & Rotatable AoE Spell Templates
 124. **TASK-0123 (Refined)**: [`0123-character-sheet-microfrontend-styles-modular-decomposition.md`](refined/0123-character-sheet-microfrontend-styles-modular-decomposition.md) — Character Sheet Microfrontend Styles Modular Decomposition
-125. **TASK-0126 (Refined)**: [`0126-autonomous-npc-faction-agendas-and-world-simulation.md`](refined/0126-autonomous-npc-faction-agendas-and-world-simulation.md) — Autonomous NPC Faction Agendas & Background Simulation Engine
-126. **TASK-0127 (Refined)**: [`0127-west-marches-shared-world-state-and-cross-campaign-registry.md`](refined/0127-west-marches-shared-world-state-and-cross-campaign-registry.md) — West Marches Shared Persistent World State & Cross-Campaign Registry
-127. **TASK-0128 (Refined)**: [`0128-spatial-companion-mobile-and-haptic-gateway.md`](refined/0128-spatial-companion-mobile-and-haptic-gateway.md) — Spatial Companion Mobile WebRTC Audio & Haptic Ping Gateway
-128. **TASK-0129 (Proposed)**: [`0129-cross-campaign-caravan-trading-and-frontier-contracts.md`](proposed/0129-cross-campaign-caravan-trading-and-frontier-contracts.md) — Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts
-
-
-
-
+125. **TASK-0130 (Refined)**: [`0130-character-leitmotifs-blackbox-test-suite-decomposition.md`](refined/0130-character-leitmotifs-blackbox-test-suite-decomposition.md) — Character Leitmotifs Blackbox Test Suite Modular Decomposition
+126. **TASK-0131 (Refined)**: [`0131-wardrobe-gallery-microfrontend-styles-modular-decomposition.md`](refined/0131-wardrobe-gallery-microfrontend-styles-modular-decomposition.md) — Wardrobe Gallery Microfrontend Styles and Sub-Components Modular Decomposition
+127. **TASK-0132 (Refined)**: [`0132-particle-canvas-decals-and-projectiles-decomposition.md`](refined/0132-particle-canvas-decals-and-projectiles-decomposition.md) — Particle Canvas Decals and Projectile Physics Modular Decomposition
+128. **TASK-0133 (Refined)**: [`0133-board-state-aggregate-handlers-modular-decomposition.md`](refined/0133-board-state-aggregate-handlers-modular-decomposition.md) — Board State Aggregate Mutation Handlers and Event Appliers Modular Decomposition
+129. **TASK-0126 (Refined)**: [`0126-autonomous-npc-faction-agendas-and-world-simulation.md`](refined/0126-autonomous-npc-faction-agendas-and-world-simulation.md) — Autonomous NPC Faction Agendas & Background Simulation Engine
+130. **TASK-0127 (Refined)**: [`0127-west-marches-shared-world-state-and-cross-campaign-registry.md`](refined/0127-west-marches-shared-world-state-and-cross-campaign-registry.md) — West Marches Shared Persistent World State & Cross-Campaign Registry
+131. **TASK-0128 (Refined)**: [`0128-spatial-companion-mobile-and-haptic-gateway.md`](refined/0128-spatial-companion-mobile-and-haptic-gateway.md) — Spatial Companion Mobile WebRTC Audio & Haptic Ping Gateway
+132. **TASK-0129 (Refined)**: [`0129-cross-campaign-caravan-trading-and-frontier-contracts.md`](refined/0129-cross-campaign-caravan-trading-and-frontier-contracts.md) — Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts
