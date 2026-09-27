@@ -18,7 +18,8 @@
   ],
   "styles": [
     "./src/runefoble-absentee-recap.styles.ts",
-    "./src/runefoble-character-sheet.styles.ts"
+    "./src/runefoble-character-sheet.styles.ts",
+    "./src/runefoble-wardrobe-gallery.styles.ts"
   ],
   "scripts": [
     "./src/index.ts"
