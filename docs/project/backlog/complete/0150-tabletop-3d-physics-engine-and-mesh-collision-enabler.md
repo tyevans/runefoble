@@ -1,7 +1,7 @@
 ---
 id: '0150'
 title: Tabletop 3D Physics Engine & Mesh Collision Integration
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0004
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0061
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/160
 ---
-
 # TASK-0150: Tabletop 3D Physics Engine & Mesh Collision Integration
 
 ## Status
