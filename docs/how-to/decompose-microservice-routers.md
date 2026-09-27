@@ -118,6 +118,35 @@ router.include_router(whispers_router)
 __all__ = ["actions_router", "router", "whispers_router"]
 ```
 
+Alternatively, when decomposing a router module into companion HTTP and WebSocket modules without promoting to a subdirectory (e.g., `board_state/routers/previews.py` decomposed into `previews_http.py` and `previews_ws.py`), maintain the original module as a router aggregator facade:
+
+```python
+from fastapi import APIRouter
+from board_state.routers.previews_http import (
+    preview_move,
+    preview_token_move,
+    router as previews_http_router,
+)
+from board_state.routers.previews_ws import (
+    board_websocket,
+    router as previews_ws_router,
+)
+
+router = APIRouter(tags=["previews"])
+router.include_router(previews_http_router)
+router.include_router(previews_ws_router)
+
+__all__ = [
+    "board_websocket",
+    "preview_move",
+    "preview_token_move",
+    "previews_http_router",
+    "previews_ws_router",
+    "router",
+]
+```
+
+
 
 ### 3. Maintain Thin Orchestration Shell in main.py
 Keep `main.py` concise and declarative:
