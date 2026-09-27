@@ -1,7 +1,7 @@
 ---
-id: '0139'
+id: 0139
 title: Wardrobe Gallery Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0124
@@ -12,8 +12,8 @@ governing_prds:
 governing_stories:
 - US-0055
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/155
 ---
-
 # TASK-0139: Wardrobe Gallery Blackbox Test Suite Modular Decomposition
 
 ## Status
