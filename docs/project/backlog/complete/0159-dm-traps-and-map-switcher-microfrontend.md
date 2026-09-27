@@ -1,7 +1,7 @@
 ---
-id: '0159'
+id: 0159
 title: DM Hidden Layers & Multi-Map Switcher Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0156
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0018
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/183
 ---
-
 # TASK-0159: DM Hidden Layers & Multi-Map Switcher Microfrontend
 
 ## Status
