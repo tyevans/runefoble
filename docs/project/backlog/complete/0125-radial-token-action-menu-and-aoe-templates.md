@@ -1,7 +1,7 @@
 ---
 id: '0125'
 title: Radial Token Action Menu & Rotatable AoE Spell Templates
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0004
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0056
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/131
 ---
-
 # TASK-0125: Radial Token Action Menu & Rotatable AoE Spell Templates
 
 ## Status
