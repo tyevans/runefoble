@@ -31,6 +31,7 @@ def get_ui_manifest():
             "runefoble-tabletop-3d",
             "runefoble-dm-trap-controls",
             "runefoble-map-switcher",
+            "runefoble-dice-tray-3d",
         ],
         "tags": [
             "runefoble-board",
@@ -40,11 +41,13 @@ def get_ui_manifest():
             "runefoble-tabletop-3d",
             "runefoble-dm-trap-controls",
             "runefoble-map-switcher",
+            "runefoble-dice-tray-3d",
         ],
         "styles": [
             "./src/runefoble-board.styles.ts",
             "./src/runefoble-map-uploader.styles.ts",
             "./src/runefoble-dm-trap-controls.styles.ts",
+            "./src/runefoble-dice-tray-3d.styles.ts",
         ],
         "scripts": [
             "./src/index.ts",

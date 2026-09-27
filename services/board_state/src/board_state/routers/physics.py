@@ -48,6 +48,7 @@ async def simulate_throw_endpoint(
             dice_id=req.dice_id,
             restitution=req.restitution,
             friction=req.friction,
+            target_face_value=req.target_face_value or req.face_value,
         )
         bus = get_event_bus()
         uncommitted = list(board.uncommitted_events)

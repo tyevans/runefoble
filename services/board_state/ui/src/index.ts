@@ -10,3 +10,5 @@ export * from './aoe_templates.ts';
 export * from './physics_3d/index.ts';
 export * from './runefoble-dm-trap-controls.ts';
 export * from './runefoble-map-switcher.ts';
+export * from './runefoble-dice-tray-3d.ts';
+export * from './runefoble-dice-tray-3d.styles.ts';

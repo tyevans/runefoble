@@ -46,6 +46,8 @@ class SimulateThrowRequest(BaseModel):
     restitution: float = 0.5
     friction: float = 0.3
     seed: int | None = None
+    face_value: int | None = None
+    target_face_value: int | None = None
 
 
 class SimulateThrowResponse(BaseModel):
