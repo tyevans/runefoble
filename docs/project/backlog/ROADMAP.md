@@ -177,3 +177,4 @@
 - [ ] Campaign Members Styles Modular Decomposition (TASK-0220)
 - [ ] Gateway Campaign Store Modular Decomposition (TASK-0221)
 - [ ] Character Roster Styles Modular Decomposition (TASK-0222)
+- [ ] Session Lobby Styles Modular Decomposition (TASK-0223)
