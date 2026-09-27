@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Campfire Crafting Engine Recipe Registry and Mishap Table Modular Decomposition (`TASK-0153`, `ADR-0003`, `ADR-0007`, `ADR-0011`, `PRD-0014`, `US-0044`)**:
+  - Decomposed `services/character_sheet/src/character_sheet/crafting.py` (375 lines) into modular domain submodules under `services/character_sheet/src/character_sheet/crafting/`, with all modules strictly < 130 lines per Hard Invariant 6:
+    - `recipes.py` (102 lines): Reagents catalogue, catalysts catalogue, known recipes, `Recipe` schema model, `CraftingState`, and DC difficulty check calculations (`calculate_crafting_dc`, `find_matching_recipe`).
+    - `mishaps.py` (128 lines): Volatile d100 mishap consequence tables, volatility risk scoring (`calculate_volatile_risk`), and `MishapResolver` consequence generators.
+    - `engine.py` (129 lines): `CraftingEngine` orchestration (proficiency bonuses, recipe evaluation, attempt resolution) and `CraftingAggregate` event-sourced state transitions via `eventsource-py`.
+    - `__init__.py` (27 lines): Re-exports all core domain types (`CraftingEngine`, `Recipe`, `MishapResolver`, `CraftingAggregate`, `CraftingState`).
+    - `crafting.py` (17 lines): Preserved backward-compatible facade re-exporting all top-level module symbols for existing callers.
+  - Added comprehensive frontdoor blackbox test suite `tests/test_blackbox_crafting/` verifying modular decomposition, file size invariants (< 180 lines), domain models, and public HTTP frontdoors (`/api/v1/crafting/recipes`, `/api/v1/crafting/reagents`, `/api/v1/crafting/recipes/combine`, `/api/v1/crafting/{char_id}/history`).
+  - Updated Diataxis guide `docs/how-to/run-campfire-rests-and-alchemical-crafting.md` and reference specification `docs/reference/downtime-and-crafting-events.md`.
 - **Soundscape UI Blackbox Test Suite Modular Decomposition (`TASK-0154`, `ADR-0003`, `ADR-0008`, `ADR-0010`, `PRD-0010`, `US-0039`, `US-0053`)**:
   - Decomposed monolithic blackbox test file `tests/test_blackbox_soundscape_ui.py` (369 lines) into modular test modules under `tests/test_blackbox_soundscape_ui/` strictly complying with Hard Invariant 6 (< 500 lines per file, with all modules < 120 lines):
     - `conftest.py` (88 lines): Shared fixtures (`clean_environment`, `client`, `gateway_client`) and audio test presets (`sample_stem_volumes`, `sample_foley_cue`, `sample_tension_payload`).
