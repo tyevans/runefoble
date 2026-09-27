@@ -1,17 +1,8 @@
-"""Digital Signal Processing (DSP) Audio Conditioning and Slur Engine.
-
-Provides real-time speech transformation, phonetic slurs, audio filter coefficient
-computation, and fast digital signal processing filter chains for tabletop afflictions.
-"""
+"""Audio DSP filter configuration and speech conditioning pipeline."""
 
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
-from voice_agent.audio_utils import (
-    _to_samples_array,
-    generate_synthetic_audio,
-    to_samples_array,
-)
 from voice_agent.filters import (
     apply_audio_filters,
     drunk_filter,
@@ -117,15 +108,12 @@ __all__ = [
     "DSPFilterConfig",
     "ProcessedSpeechResult",
     "VoiceDSPPipeline",
-    "_to_samples_array",
     "apply_audio_filters",
     "apply_slurred_speech",
     "apply_text_transforms",
     "drunk_filter",
     "ethereal_filter",
-    "generate_synthetic_audio",
     "slur_phonemes",
-    "to_samples_array",
     "underwater_filter",
     "whisper_filter",
 ]

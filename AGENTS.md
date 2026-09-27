@@ -113,6 +113,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`simulate-tabletop-3d-physics-and-collisions.md`](docs/how-to/simulate-tabletop-3d-physics-and-collisions.md): How to simulate 3D tumbling physical dice rolls, calculate ballistic trajectories and restitution bounces, apply token knockback impulses, and halt on elevation cliff steps.
 - [`manage-spoken-reactions-and-ready-actions.md`](docs/how-to/manage-spoken-reactions-and-ready-actions.md): How to halt active combat turns with spoken reaction interrupts within 500ms, prompt reacting players, and evaluate conditional ready-action triggers.
 - [`manage-secret-dm-traps-and-map-triggers.md`](docs/how-to/manage-secret-dm-traps-and-map-triggers.md): How to configure DM-only secret spatial traps, handle movement-pause breach detection, and execute seamless battlemap switching with party token teleportation.
+- [`modulate-dm-vocal-npc-presets.md`](docs/how-to/modulate-dm-vocal-npc-presets.md): How to apply real-time DSP pitch and formant shift filters, creature archetype presets, and live stream audio modulation.
 
 
 

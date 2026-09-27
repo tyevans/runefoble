@@ -43,6 +43,7 @@ from voice_agent.routers import (
     room_router,
     stream_router,
     synthesis_router,
+    vocal_effects_router,
 )
 
 app = FastAPI(
@@ -55,6 +56,7 @@ app.include_router(stream_router)
 app.include_router(audio_router)
 app.include_router(synthesis_router)
 app.include_router(duplex_router)
+app.include_router(vocal_effects_router)
 
 _event_bus: RedisStreamsEventBus | None = None
 
