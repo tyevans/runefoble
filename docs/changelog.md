@@ -35,6 +35,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Exposed modular style subpaths in `@runefoble/character-sheet-ui` package manifest and FastAPI `/ui/manifest` frontdoor.
   - Verified visual rendering and Storybook builds with zero errors across light and dark modes.
   - Updated blackbox TDD test suite `tests/test_blackbox_character_sheet_ui.py` to enforce style module thresholds (<180 lines per module, <40 lines aggregator, strictly obeying Hard Invariant 6).
+- **Particle Canvas Decals and Projectile Physics Modular Decomposition (`TASK-0132`, `ADR-0004`, `ADR-0006`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed `services/board_state/ui/src/particle_canvas.ts` from 492 lines down to 254 lines by extracting ballistic projectile physics and trail calculation into `particle_projectiles.ts` (121 lines) and ephemeral combat grid decal lifecycle and opacity decay into `particle_decals.ts` (100 lines).
+  - Streamlined `WebGLParticleEngine` to focus exclusively on WebGL program initialization, buffer management, and the 60fps main animation loop, strictly adhering to Hard Invariant 6 (< 500 lines per file; all files < 260 lines).
+  - Re-exported modular projectile and decal classes (`ProjectileManager`, `DecalManager`) and physics functions across `particle_canvas.ts` and `services/board_state/ui/src/index.ts`.
+  - Updated blackbox TDD test suite `tests/test_blackbox_spell_vfx.py` verifying module extraction, exports, and line limit invariants.
+  - Updated Diataxis guide `docs/how-to/trigger-kinetic-spell-vfx-and-particles.md` with modular architecture breakdown.
 - **Wardrobe Gallery Styles and Sub-Components Modular Decomposition (`TASK-0131`, `ADR-0004`, `ADR-0009`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` from 401 lines down to 185 lines by extracting its extensive CSS stylesheet block into dedicated module `services/character_sheet/ui/src/runefoble-wardrobe-gallery.styles.ts` (246 lines), maintaining strict compliance with Hard Invariant 6 (< 500 lines per file; both modules < 250 lines).
   - Isolated condition badge, variant card, active section, and attire forging sub-renderers in `RunefobleWardrobeGallery` component.

@@ -307,3 +307,35 @@ def test_ui_components_storybook_and_microfrontend_contracts():
     assert "EvocationFirestormVFX" in stories_content
     assert "EvocationLightningArcVFX" in stories_content
     assert "AbjurationShieldBarrierVFX" in stories_content
+
+
+def test_particle_canvas_modular_decomposition_and_line_limits():
+    """Verify TASK-0132 modular decomposition of particle canvas into projectiles and decals."""
+    ui_src = REPO_ROOT / "services/board_state/ui/src"
+    canvas_file = ui_src / "particle_canvas.ts"
+    projectiles_file = ui_src / "particle_projectiles.ts"
+    decals_file = ui_src / "particle_decals.ts"
+
+    assert canvas_file.is_file()
+    assert projectiles_file.is_file()
+    assert decals_file.is_file()
+
+    canvas_lines = len(canvas_file.read_text(encoding="utf-8").splitlines())
+    proj_lines = len(projectiles_file.read_text(encoding="utf-8").splitlines())
+    decal_lines = len(decals_file.read_text(encoding="utf-8").splitlines())
+
+    # Line limit invariants
+    assert canvas_lines < 260, f"particle_canvas.ts must be < 260 lines, got {canvas_lines}"
+    assert proj_lines < 200, f"particle_projectiles.ts must be < 200 lines, got {proj_lines}"
+    assert decal_lines < 200, f"particle_decals.ts must be < 200 lines, got {decal_lines}"
+
+    # Exports and contracts
+    proj_content = projectiles_file.read_text(encoding="utf-8")
+    assert "class ProjectileManager" in proj_content
+    assert "calculateParabolicTrajectory" in proj_content
+    assert "hasProjectileCollided" in proj_content
+
+    decal_content = decals_file.read_text(encoding="utf-8")
+    assert "class DecalManager" in decal_content
+    assert "calculateDecalOpacity" in decal_content
+    assert "renderDecals2D" in decal_content
