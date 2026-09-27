@@ -203,6 +203,18 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `character_name`: String
   - `current_hp`: Integer (0)
   - `stabilized_by`: String (default "permadeath_safeguard")
+- **`CriticalHitScored`** (alias: `CriticalHitRolled`): Emitted when a character rolls a natural 20 or scores a clutch critical hit (`runefoble.events.character.critical_hit_scored`).
+  - `session_id`: String
+  - `character_id`: String
+  - `character_name`: String
+  - `target_id`: Optional[String]
+  - `target_name`: Optional[String]
+  - `roll_total`: Integer (20)
+- **`DeathSaveStarted`**: Emitted when a character drops to 0 HP and begins life-or-death death saving throws (`runefoble.events.character.death_save_started`).
+  - `session_id`: String
+  - `character_id`: String
+  - `character_name`: String
+  - `current_hp`: Integer (0)
 
 ### The Watcher & Gameplay Stream Events
 
@@ -542,6 +554,8 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 - **`SoundscapeTensionUpdated`**: Emitted when encounter tension score is recalculated (`runefoble.events.soundscape.tension_updated`). Fields: `session_id`, `tension_score`, `stem_profile`, `combat_round`, `enemy_cr_balance`, `lowest_health_ratio`.
 - **`SoundscapeMoodOverridden`**: Emitted when DM forces a manual mood override (`runefoble.events.soundscape.mood_overridden`). Fields: `session_id`, `mood`, `overridden_by`.
 - **`SoundscapeDuckingToggled`**: Emitted when WebAudio background music ducking state changes (`runefoble.events.soundscape.ducking_toggled`). Fields: `session_id`, `is_ducked`, `attenuation_db`, `reason`.
+- **`LeitmotifProfileConfigured`**: Emitted when a character's musical leitmotif and instrument signature profile is configured (`runefoble.events.soundscape.leitmotif_configured`). Fields: `session_id`, `character_id`, `character_name`, `instrument_timbre`, `tempo_multiplier`, `triumphant_stem_url`, `somber_stem_url`, `volume_gain`, `attack_ms`, `release_ms`, `duration_ms`.
+- **`LeitmotifTriggered`**: Emitted when a character's triumphant or somber musical stinger is dynamically triggered (`runefoble.events.soundscape.leitmotif_triggered`). Fields: `session_id`, `character_id`, `character_name`, `motif_type`, `instrument_timbre`, `stem_url`, `tempo_multiplier`, `volume_gain`, `attack_ms`, `release_ms`, `duration_ms`, `duck_music`, `trigger_reason`.
 
 ### Audience Studio Events (`aggregate_type: AudiencePoll`)
 

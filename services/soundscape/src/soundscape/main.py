@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from soundscape.routers.cue import router as cue_router
+from soundscape.routers.leitmotif import router as leitmotif_router
 from soundscape.routers.stems import router as stems_router
 from soundscape.routers.tension import router as tension_router
 
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(cue_router)
 app.include_router(tension_router)
 app.include_router(stems_router)
+app.include_router(leitmotif_router)
 
 
 @app.get("/healthz", tags=["Health"])
@@ -56,9 +58,18 @@ def get_ui_manifest() -> dict[str, Any]:
     return {
         "service": "soundscape",
         "package": "@runefoble/soundscape-ui",
-        "components": ["runefoble-soundscape-controls"],
-        "tags": ["runefoble-soundscape-controls"],
-        "styles": ["./src/runefoble-soundscape-controls.styles.ts"],
+        "components": [
+            "runefoble-soundscape-controls",
+            "runefoble-leitmotif-config",
+        ],
+        "tags": [
+            "runefoble-soundscape-controls",
+            "runefoble-leitmotif-config",
+        ],
+        "styles": [
+            "./src/runefoble-soundscape-controls.styles.ts",
+            "./src/runefoble-leitmotif-config.styles.ts",
+        ],
         "scripts": ["./src/index.ts"],
         "version": "0.1.0",
     }

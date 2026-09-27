@@ -10,12 +10,17 @@ from uuid import UUID, uuid4
 from fastapi import Header
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.base import BaseRunefobleEvent
+from runefoble_events.character import (
+    CharacterHealthChanged,
+    CriticalHitScored,
+    DeathSaveStarted,
+)
 from runefoble_events.session import (
     CombatEncounterStarted,
     CombatRoundAdvanced,
     InitiativeTurnAdvanced,
 )
-from runefoble_events.watcher import PlayerSpokeEvent
+from runefoble_events.watcher import DiceRolled, PlayerSpokeEvent
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
@@ -25,6 +30,7 @@ from runefoble_platform.event_sourcing import (
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from soundscape.aggregate import SoundscapeAggregate
+from soundscape.leitmotif import LeitmotifEngine
 from soundscape.mixer import AudioStemMixer
 from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
 
@@ -40,9 +46,10 @@ _spicedb_client: SpiceDBClient = SpiceDBClient(
     token=getattr(settings, "spicedb_token", "secret"),
 )
 
-# In-memory mapping of session_id -> aggregate_id and session_id -> AudioStemMixer
+# In-memory mapping of session_id -> aggregate_id, AudioStemMixer, and LeitmotifEngine
 _session_to_aggregate: dict[str, UUID] = {}
 _session_mixers: dict[str, AudioStemMixer] = {}
+_session_leitmotif_engines: dict[str, LeitmotifEngine] = {}
 
 
 def get_soundscape_repo() -> AggregateRepository[SoundscapeAggregate]:
@@ -90,11 +97,19 @@ def get_or_create_mixer(session_id: str) -> AudioStemMixer:
     return _session_mixers[session_id]
 
 
+def get_or_create_leitmotif_engine(session_id: str) -> LeitmotifEngine:
+    """Resolve or instantiate LeitmotifEngine for a session."""
+    if session_id not in _session_leitmotif_engines:
+        _session_leitmotif_engines[session_id] = LeitmotifEngine(session_id=session_id)
+    return _session_leitmotif_engines[session_id]
+
+
 def reset_dependencies() -> None:
     """Clear in-memory session registries and reset mocks."""
     global _event_bus
     _session_to_aggregate.clear()
     _session_mixers.clear()
+    _session_leitmotif_engines.clear()
     _event_bus = None
 
 
@@ -249,6 +264,8 @@ async def handle_incoming_domain_event(event: Any) -> None:
         session_id = str(getattr(event, "session_id", "default") or "default")
         mixer = get_or_create_mixer(session_id)
         mixer.set_ducking(True, reason="speech")
+        leitmotif_engine = get_or_create_leitmotif_engine(session_id)
+        leitmotif_engine.set_ducking(True)
         agg_id = get_or_create_aggregate_id(session_id)
         try:
             agg = await repo.load(agg_id)
@@ -259,6 +276,90 @@ async def handle_incoming_domain_event(event: Any) -> None:
             is_ducked=True,
             attenuation_db=-12.0,
             reason="speech",
+        )
+        events = list(agg.uncommitted_events)
+        await repo.save(agg)
+        for ev in events:
+            await publish_soundscape_event(ev)
+
+    elif isinstance(event, (CriticalHitScored,)) or (
+        isinstance(event, DiceRolled) and getattr(event, "is_crit", False)
+    ):
+        session_id = str(getattr(event, "session_id", "default") or "default")
+        char_id = str(
+            getattr(event, "character_id", None)
+            or getattr(event, "roller_id", None)
+            or "char-player"
+        )
+        char_name = str(
+            getattr(event, "character_name", None) or getattr(event, "roller_name", None) or "Hero"
+        )
+        engine = get_or_create_leitmotif_engine(session_id)
+        playback = engine.trigger_leitmotif(
+            character_id=char_id,
+            motif_type="triumphant",
+            trigger_reason="critical_hit",
+            character_name=char_name,
+        )
+        agg_id = get_or_create_aggregate_id(session_id)
+        try:
+            agg = await repo.load(agg_id)
+        except Exception:
+            agg = SoundscapeAggregate(agg_id)
+
+        agg.record_leitmotif_trigger(
+            session_id=session_id,
+            character_id=char_id,
+            character_name=char_name,
+            motif_type=playback.motif_type,
+            instrument_timbre=playback.instrument_timbre,
+            stem_url=playback.stem_url,
+            tempo_multiplier=playback.tempo_multiplier,
+            volume_gain=playback.volume_gain,
+            attack_ms=playback.attack_ms,
+            release_ms=playback.release_ms,
+            duration_ms=playback.duration_ms,
+            duck_music=False,
+            trigger_reason="critical_hit",
+        )
+        events = list(agg.uncommitted_events)
+        await repo.save(agg)
+        for ev in events:
+            await publish_soundscape_event(ev)
+
+    elif isinstance(event, (DeathSaveStarted,)) or (
+        isinstance(event, CharacterHealthChanged) and getattr(event, "current_hp", 1) <= 0
+    ):
+        session_id = str(getattr(event, "session_id", "default") or "default")
+        char_id = str(getattr(event, "character_id", None) or "char-player")
+        char_name = str(getattr(event, "character_name", None) or "Hero")
+        engine = get_or_create_leitmotif_engine(session_id)
+        playback = engine.trigger_leitmotif(
+            character_id=char_id,
+            motif_type="somber",
+            trigger_reason="death_save",
+            character_name=char_name,
+        )
+        agg_id = get_or_create_aggregate_id(session_id)
+        try:
+            agg = await repo.load(agg_id)
+        except Exception:
+            agg = SoundscapeAggregate(agg_id)
+
+        agg.record_leitmotif_trigger(
+            session_id=session_id,
+            character_id=char_id,
+            character_name=char_name,
+            motif_type=playback.motif_type,
+            instrument_timbre=playback.instrument_timbre,
+            stem_url=playback.stem_url,
+            tempo_multiplier=playback.tempo_multiplier,
+            volume_gain=playback.volume_gain,
+            attack_ms=playback.attack_ms,
+            release_ms=playback.release_ms,
+            duration_ms=playback.duration_ms,
+            duck_music=False,
+            trigger_reason="death_save",
         )
         events = list(agg.uncommitted_events)
         await repo.save(agg)
