@@ -7,3 +7,6 @@ export * from './runefoble-voice-duplex-controls.ts';
 export * from './duplex/settings_panel.ts';
 export * from './duplex/styles/index.ts';
 export * from './mobile_companion/index.ts';
+export * from './runefoble-vocal-modulator.ts';
+export * from './runefoble-vocal-modulator.styles.ts';
+export * from './runefoble-vocal-sliders.ts';
