@@ -1,7 +1,7 @@
 ---
 id: '0155'
 title: Spoken Reaction Interrupts and Ready-Action Combat Triggers
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0002
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0023
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/171
 ---
-
 # TASK-0155: Spoken Reaction Interrupts and Ready-Action Combat Triggers
 
 ## Status
