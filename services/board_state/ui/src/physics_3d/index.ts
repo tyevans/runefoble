@@ -5,3 +5,6 @@ export * from './runefoble-tabletop-3d.ts';
 export * from './dice_models.ts';
 export * from './tray_audio.ts';
 export * from './dice_solver.ts';
+export * from './knockback_solver.ts';
+export * from './elevation_fall.ts';
+export * from './grid_snapper.ts';
