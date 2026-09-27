@@ -125,6 +125,10 @@
 - [ ] West Marches UI Blackbox Test Suite Modular Decomposition (TASK-0176)
 - [ ] Runefoble Events Aggregator Modular Decomposition (TASK-0177)
 - [ ] GameSession Models Modular Decomposition (TASK-0178)
+- [ ] Rules Compendium Homebrew Subview Modular Decomposition (TASK-0179)
+- [ ] Board State Stories Modular Decomposition (TASK-0180)
+- [ ] Soundscape Event Handlers and Dependencies Modular Decomposition (TASK-0181)
+
 
 
 
