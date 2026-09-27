@@ -114,3 +114,24 @@ assert latency_ms < 50.0  # Guarantees sub-50ms processing
 When vocal modulation presets are applied or toggled, the following CloudEvents are published to Redis Streams:
 - `runefoble.voice.modulator.preset_applied.v1`: Contains `session_id`, `speaker_id`, `preset_id`, `pitch_scale`, `formant_shift`, `resonance`, and `fx_chain`.
 - `runefoble.voice.modulator.filter_toggled.v1`: Emitted when bypass or toggle is changed with `enabled: bool`.
+
+---
+
+## 6. Using the `<runefoble-vocal-modulator>` Microfrontend
+
+For one-touch control during live sessions, `services/voice_agent/ui` vendors `<runefoble-vocal-modulator>`:
+
+```html
+<runefoble-vocal-modulator
+  session-id="session-camp-01"
+  peer-id="dm_speaker"
+></runefoble-vocal-modulator>
+```
+
+### Key Capabilities & Shortcuts
+- **Instant Archetype Presets**: One-tap toggles for Ancient Dragon (`1`), Goblin Skulker (`2`), Celestial Spirit (`3`), and Robotic Construct (`4`).
+- **Bypass Toggle**: Press `B` or tap the active status button to instantly toggle bypass and prevent in-character leakage.
+- **Glowing Active LED**: High-contrast pulsing indicator clearly displays when modulation DSP is actively transforming outgoing audio.
+- **Fine-Tuning Sliders**: Expand `<runefoble-vocal-sliders>` to manually calibrate pitch shift (±12 st), formant scale (0.5x–2.0x), resonance (0–4000 Hz), and octave offsets.
+- **Emitted Custom Events**: Dispatches `vocal-modulate`, `preset-select`, and `vocal-param-change` events for seamless App Shell and WebRTC pipeline synchronization.
+

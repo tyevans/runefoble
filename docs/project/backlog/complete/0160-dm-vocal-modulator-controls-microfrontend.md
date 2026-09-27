@@ -1,7 +1,7 @@
 ---
 id: '0160'
 title: DM Vocal Modulator Controls & Preset Selector Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0157
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0020
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/182
 ---
-
 # TASK-0160: DM Vocal Modulator Controls & Preset Selector Microfrontend
 
 ## Status

@@ -160,8 +160,8 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 156. **TASK-0175 (Complete)**: [`0175-game-session-aggregate-and-handlers-decomposition.md`](complete/0175-game-session-aggregate-and-handlers-decomposition.md) — GameSession Aggregate and Reaction Handlers Modular Decomposition
 157. **TASK-0157 (Complete)**: [`0157-dm-vocal-modulator-formant-dsp-engine.md`](complete/0157-dm-vocal-modulator-formant-dsp-engine.md) — DM Live Vocal Modulator and Real-Time NPC Formant DSP Engine
 158. **TASK-0158 (Complete)**: [`0158-reactive-combat-interrupt-prompt-microfrontend.md`](complete/0158-reactive-combat-interrupt-prompt-microfrontend.md) — Reactive Combat Reactions & Interrupt Prompt Microfrontend
-159. **TASK-0159 (Refined)**: [`0159-dm-traps-and-map-switcher-microfrontend.md`](refined/0159-dm-traps-and-map-switcher-microfrontend.md) — DM Hidden Layers & Multi-Map Switcher Microfrontend
-160. **TASK-0160 (Refined)**: [`0160-dm-vocal-modulator-controls-microfrontend.md`](refined/0160-dm-vocal-modulator-controls-microfrontend.md) — DM Vocal Modulator Controls & Preset Selector Microfrontend
+159. **TASK-0159 (Complete)**: [`0159-dm-traps-and-map-switcher-microfrontend.md`](complete/0159-dm-traps-and-map-switcher-microfrontend.md) — DM Hidden Layers & Multi-Map Switcher Microfrontend
+160. **TASK-0160 (Complete)**: [`0160-dm-vocal-modulator-controls-microfrontend.md`](complete/0160-dm-vocal-modulator-controls-microfrontend.md) — DM Vocal Modulator Controls & Preset Selector Microfrontend
 161. **TASK-0161 (Refined)**: [`0161-npc-faction-resource-and-bribery-aggregate.md`](refined/0161-npc-faction-resource-and-bribery-aggregate.md) — NPC Faction Resource Operations and Bribery Mechanics Aggregate
 162. **TASK-0164 (Refined)**: [`0164-cross-campaign-settlement-haven-registry.md`](refined/0164-cross-campaign-settlement-haven-registry.md) — Cross-Campaign Settlement and Haven Registry
 163. **TASK-0166 (Refined)**: [`0166-mobile-low-bandwidth-opus-stream-adapter.md`](refined/0166-mobile-low-bandwidth-opus-stream-adapter.md) — Mobile Low-Bandwidth Opus Adaptive Stream Adapter

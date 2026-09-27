@@ -111,3 +111,36 @@ Content-Type: application/json
 ```
 
 All tokens are relocated atomically, and `BattlemapSwitchedEvent` is emitted.
+
+---
+
+## 6. UI Microfrontends: DM Hidden Layers & Map Switcher
+
+Vendored in `@runefoble/board-state-ui` per **ADR-0004** and **ADR-0013**:
+
+### `<runefoble-dm-trap-controls>`
+Provides DM-exclusive HUD controls to toggle the hidden grid layer, select trap presets (Spike Pit, Glyph of Warding, Tripwire), adjust trigger radiuses, and arm cells:
+- **Properties**:
+  - `layerVisible: boolean` (default: `true`)
+  - `selectedTrapType: string` (`"pit_trap"`, `"glyph"`, `"tripwire"`)
+  - `triggerType: "step" | "touch" | "proximity"`
+  - `proximityRadius: number`
+  - `damageDice: string`
+  - `dcDetection: number`
+  - `isSecret: boolean`
+- **Events**:
+  - `trap-selected`: Emitted on palette preset selection.
+  - `trap-armed` / `trap-placed`: Emitted when arming a cell.
+  - `layer-toggled`: Emitted when toggling DM layer visibility.
+  - `open-map-switcher`: Emitted to request opening the map switcher modal.
+
+### `<runefoble-map-switcher>`
+Quick-switcher modal providing a thumbnail grid of active campaign battlemaps with one-click teleport execution:
+- **Properties**:
+  - `open: boolean`
+  - `currentMapId: string`
+  - `maps: BattlemapItem[]`
+  - `tokenTeleports: Record<string, [number, number]>`
+- **Events**:
+  - `map-switched`: Emitted with `{ newMapId, cols, rows, backgroundImageUrl, tokenTeleports }`.
+  - `switcher-closed`: Emitted when the modal closes.
