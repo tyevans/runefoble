@@ -52,7 +52,7 @@
 - [x] Campaign Telemetry Dashboard & Chronicle Timeline Microfrontend (PRD-0012, US-0040, US-0054, TASK-0110)
 - [x] Universal VTT Importer & Dynamic MCP Tool Registry (TASK-0057)
 
-## Milestone 5: Collaborative Creation, Downtime & Tactile Immersion (Current)
+## Milestone 5: Collaborative Creation, Downtime & Tactile Immersion (Complete)
 ### Downtime, Social Minigames & Base Building
 - [x] Downtime Activities, Alchemical Crafting & Party Stronghold Engine (PRD-0014, US-0044, TASK-0100)
 - [x] Interactive Tavern Minigames & Personality-Driven Merchant Haggling (PRD-0014, US-0047, TASK-0103)
@@ -68,12 +68,20 @@
 - [x] Personal Character Leitmotifs & Adaptive Musical Signatures (PRD-0016, US-0046, TASK-0102)
 - [x] Multi-Modal Kinetic Spell VFX & WebGL Particle Magic (PRD-0016, US-0048, TASK-0104)
 - [x] Generative Wardrobe, Emotion & State Portrait Gallery (PRD-0016, US-0055, TASK-0124)
-- [ ] Radial Token Action Menu & Rotatable AoE Spell Templates (PRD-0013, US-0056, TASK-0125)
+- [x] Radial Token Action Menu & Rotatable AoE Spell Templates (PRD-0013, US-0056, TASK-0125)
 - [x] Dynamic Soundscape Mixing Panel & Foley Soundboard Microfrontend (PRD-0010, US-0039, US-0053, TASK-0109)
 
-## Milestone 6: Intelligent Living Worlds & Spatial Multi-Party Universes
-- [ ] Autonomous NPC Faction Agendas & Background Simulation Engine (`FEAT-WAT-07`, US-0057, TASK-0126)
-- [ ] Multi-Party West Marches Shared Persistent World State & Cross-Campaign Trade (US-0058, TASK-0127)
+## Milestone 6: Intelligent Living Worlds & Spatial Multi-Party Universes (Current)
+- [x] Autonomous NPC Faction Agendas & Background Simulation Engine (`FEAT-WAT-07`, US-0057, TASK-0126)
+- [x] Multi-Party West Marches Shared Persistent World State & Cross-Campaign Trade (US-0058, TASK-0127)
 - [ ] Spatial Companion Mobile App, Haptic Secret Pings & WebRTC Gateway (US-0059, TASK-0128)
 - [ ] Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts (US-0058, TASK-0129)
+- [ ] Spatial Companion Mobile WebRTC Audio & Haptic Controller Microfrontend (US-0059, TASK-0134)
+- [ ] West Marches Shared World Atlas Pins & Communal Stronghold Dashboard Microfrontend (US-0050, US-0058, TASK-0135)
+- [ ] Cross-Campaign Caravan Trading & Frontier Bounty Board Microfrontend (US-0058, TASK-0136)
+- [ ] Autonomous NPC Faction Agendas Radar & Intelligence Bulletin Microfrontend (US-0057, TASK-0137)
+
+## Milestone 7: Neural Audio Duplex & Tangible 3D Tabletop (Future Horizon)
+- [ ] Zero-Latency Neural Voice Duplex & Speech Interruption Handling (`FEAT-VOX-06`, US-0060, TASK-0141)
+- [ ] 3D Miniature Tokens & WebGL Tabletop Physics (`FEAT-BRD-06`, US-0061, TASK-0142)
 

@@ -46,6 +46,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
+- **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0134`, `TASK-0135`, `TASK-0136`, `TASK-0137`, `TASK-0138`, `TASK-0139`, `TASK-0140`, `TASK-0141`, `TASK-0142`, `TASK-0143`, `TASK-0144`, `TASK-0145`)**:
+  - Audited repository health and file length invariants, identifying refactoring candidates in `services/board_state/src/board_state/models.py` (433 lines), `tests/test_blackbox_wardrobe_gallery.py` (415 lines), `services/board_state/ui/src/aoe_templates.ts` (411 lines), `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` (410 lines), and `tests/test_blackbox_west_marches.py` (402 lines).
+  - Proactively proposed and refined modular decomposition tasks `TASK-0138`, `TASK-0139`, `TASK-0140`, `TASK-0143`, `TASK-0144`, and `TASK-0145` to prevent breaching Hard Invariant 6 (< 500 lines).
+  - Synchronized `docs/project/backlog/ROADMAP.md` Milestone 2 (confirming all foundational enablers complete), Milestone 5 (updating to Complete with `TASK-0125`), Milestone 6 (updating to Current with `TASK-0126`, `TASK-0127`, and new microfrontend epics), and established Milestone 7 for future horizon tabletop capabilities.
+  - Replenished ready buffer in `docs/project/backlog/refined/` to optimal buffer of 10 items (`TASK-0128`, `TASK-0129`, `TASK-0134`, `TASK-0135`, `TASK-0136`, `TASK-0137`, `TASK-0138`, `TASK-0139`, `TASK-0140`, `TASK-0143`), citing governing ADRs, PRDs, and testable frontdoor blackbox definitions of done.
+  - Added new persona-driven user stories `US-0060` (Zero-Latency Neural Voice Duplex) and `US-0061` (3D Miniature Tokens & Tabletop Physics) and registered them in `docs/project/user_stories/REGISTRY.md`.
+  - Re-indexed `docs/project/backlog/PRIORITY.md` following lean engineering hierarchy: Enablers → Current Milestone Epics → Identified Refactorings → Future Milestones.
 - **Board State Aggregate Mutation Handlers and Event Appliers Modular Decomposition (`TASK-0133`, `ADR-0003`, `ADR-0006`, `ADR-0011`)**:
   - Decomposed `services/board_state/src/board_state/aggregate.py` from 488 lines down to 140 lines by extracting domain command mutation handlers and `@handles` event state appliers into modular mixins under `services/board_state/src/board_state/handlers/`.
   - Extracted token placement, movement kinematics, difficult terrain traversal, and path hazard triggers into `TokensHandlerMixin` (`services/board_state/src/board_state/handlers/tokens.py`, 145 lines).
