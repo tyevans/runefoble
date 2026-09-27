@@ -1,7 +1,7 @@
 ---
-id: '0182'
+id: 0182
 title: Watcher Domain Events Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0155
@@ -20,8 +20,8 @@ governing_stories:
 - US-0020
 - US-0023
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/241
 ---
-
 # TASK-0182: Watcher Domain Events Modular Decomposition
 
 ## Status

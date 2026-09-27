@@ -197,7 +197,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 193. **TASK-0179 (Complete)**: [`0179-rules-compendium-homebrew-form-decomposition.md`](complete/0179-rules-compendium-homebrew-form-decomposition.md) — Rules Compendium Homebrew Subview Modular Decomposition
 194. **TASK-0221 (Complete)**: [`0221-gateway-campaign-store-modular-decomposition.md`](complete/0221-gateway-campaign-store-modular-decomposition.md) — Gateway Campaign Store Modular Decomposition
 195. **TASK-0181 (Complete)**: [`0181-soundscape-event-handlers-and-dependencies-decomposition.md`](complete/0181-soundscape-event-handlers-and-dependencies-decomposition.md) — Soundscape Event Handlers and Dependencies Modular Decomposition
-196. **TASK-0182 (Refined)**: [`0182-watcher-domain-events-modular-decomposition.md`](refined/0182-watcher-domain-events-modular-decomposition.md) — Watcher Domain Events Modular Decomposition
+196. **TASK-0182 (Complete)**: [`0182-watcher-domain-events-modular-decomposition.md`](complete/0182-watcher-domain-events-modular-decomposition.md) — Watcher Domain Events Modular Decomposition
 197. **TASK-0183 (Refined)**: [`0183-faction-resources-blackbox-test-suite-decomposition.md`](refined/0183-faction-resources-blackbox-test-suite-decomposition.md) — Faction Resources Blackbox Test Suite Modular Decomposition
 198. **TASK-0184 (Refined)**: [`0184-campfire-crafting-blackbox-test-suite-decomposition.md`](refined/0184-campfire-crafting-blackbox-test-suite-decomposition.md) — Campfire Crafting Blackbox Test Suite Modular Decomposition
 199. **TASK-0185 (Proposed)**: [`0185-rules-compendium-styles-modular-decomposition.md`](proposed/0185-rules-compendium-styles-modular-decomposition.md) — Rules Compendium Styles Modular Decomposition
