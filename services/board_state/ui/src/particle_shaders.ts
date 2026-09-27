@@ -3,6 +3,8 @@
  * Incorporates ADR-0012 accessible dark and light mode bloom calibrations.
  */
 
+import type { Particle } from './particle_types.ts';
+
 export const PARTICLE_VERTEX_SHADER = `
 precision mediump float;
 
@@ -100,47 +102,72 @@ void main() {
 }
 `;
 
-export function initWebGLProgram(
-  gl: WebGLRenderingContext,
-  vsSource: string,
-  fsSource: string
-): WebGLProgram | null {
-  const vs = gl.createShader(gl.VERTEX_SHADER);
-  if (!vs) return null;
-  gl.shaderSource(vs, vsSource);
-  gl.compileShader(vs);
-  if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-    gl.deleteShader(vs);
-    return null;
-  }
+export function initWebGLProgram(gl: WebGLRenderingContext, vsSource: string, fsSource: string): WebGLProgram | null {
+  const compile = (type: number, src: string) => {
+    const s = gl.createShader(type);
+    if (!s) return null;
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { gl.deleteShader(s); return null; }
+    return s;
+  };
+  const vs = compile(gl.VERTEX_SHADER, vsSource);
+  const fs = compile(gl.FRAGMENT_SHADER, fsSource);
+  if (!vs || !fs) return null;
 
-  const fs = gl.createShader(gl.FRAGMENT_SHADER);
-  if (!fs) {
-    gl.deleteShader(vs);
-    return null;
-  }
-  gl.shaderSource(fs, fsSource);
-  gl.compileShader(fs);
-  if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-    gl.deleteShader(vs);
-    gl.deleteShader(fs);
-    return null;
-  }
+  const prog = gl.createProgram();
+  if (!prog) return null;
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { gl.deleteProgram(prog); return null; }
+  return prog;
+}
 
-  const program = gl.createProgram();
-  if (!program) {
-    gl.deleteShader(vs);
-    gl.deleteShader(fs);
-    return null;
-  }
-  gl.attachShader(program, vs);
-  gl.attachShader(program, fs);
-  gl.linkProgram(program);
+export const PARTICLE_ATTRIB_CONFIGS: [string, string, number, number][] = [
+  ['particlePos', 'a_particle_pos', 2, 0],
+  ['color', 'a_color', 4, 8],
+  ['size', 'a_size', 1, 24],
+  ['life', 'a_life', 1, 28],
+  ['type', 'a_type', 1, 32],
+  ['rotation', 'a_rotation', 1, 36],
+];
 
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    gl.deleteProgram(program);
-    return null;
+export function buildParticleVertexData(particles: Particle[]): Float32Array {
+  const stride = 10, data = new Float32Array(particles.length * stride);
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i], o = i * stride;
+    data[o] = p.x; data[o + 1] = p.y;
+    data[o + 2] = p.color[0]; data[o + 3] = p.color[1];
+    data[o + 4] = p.color[2]; data[o + 5] = p.color[3];
+    data[o + 6] = p.size; data[o + 7] = p.life;
+    data[o + 8] = p.type; data[o + 9] = p.rotation;
   }
+  return data;
+}
 
-  return program;
+export function drawInstancedParticles(
+  gl: WebGLRenderingContext, program: WebGLProgram, quadBuffer: WebGLBuffer,
+  instancedBuffer: WebGLBuffer, attribs: Record<string, number>, particles: Particle[]
+): void {
+  if (particles.length === 0) return;
+  gl.useProgram(program);
+  gl.bindBuffer(gl.ARRAY_BUFFER, instancedBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, buildParticleVertexData(particles), gl.DYNAMIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+  gl.enableVertexAttribArray(attribs.quadPos);
+  gl.vertexAttribPointer(attribs.quadPos, 2, gl.FLOAT, false, 0, 0);
+
+  const ext = gl.getExtension('ANGLE_instanced_arrays');
+  if (ext) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, instancedBuffer);
+    for (const [key, , size, byteOffset] of PARTICLE_ATTRIB_CONFIGS) {
+      const loc = attribs[key];
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 40, byteOffset);
+      ext.vertexAttribDivisorANGLE(loc, 1);
+    }
+    ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, particles.length);
+    for (const [key] of PARTICLE_ATTRIB_CONFIGS) ext.vertexAttribDivisorANGLE(attribs[key], 0);
+  }
 }
