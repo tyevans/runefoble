@@ -7,6 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- **Generative Character Wardrobe, Emotion & State Portrait Gallery (`TASK-0124`, `ADR-0003`, `ADR-0006`, `ADR-0013`)**:
+  - Implemented dynamic Condition & Injury Overlay Engine in `services/character_sheet/src/character_sheet/portrait.py` applying real-time bloodied vignettes (<50% HP), poisoned auras, and stunned dizzy halos over base character portrait avatars.
+  - Added generative wardrobe attire variant synthesis in `services/asset_forge/` (`routers/wardrobe.py` and `generator.py`) supporting thematic styles (`ballroom_masquerade`, `arctic_tundra`, `tavern_casual`, `battle_damaged`, `ceremonial`) preserving character facial embedding seeds, uploading to Silo S3 storage.
+  - Implemented `<runefoble-wardrobe-gallery>` microfrontend Web Component in `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` with Bauhaus design tokens, active condition badge pills, outfit carousel, one-click avatar equipping, and interactive Storybook stories (`runefoble-wardrobe-gallery.stories.ts`).
+  - Added new CloudEvents-compliant domain events `CharacterDamaged`, `PortraitVariantGenerated`, and `CharacterPortraitUpdated` (alias: `PortraitAssigned`) in `libs/runefoble_events`.
+  - Added modular `wardrobe_router.py` to `character_sheet` exposing `/api/v1/characters/{id}/portrait` and `/api/v1/characters/{id}/wardrobe` endpoints with SpiceDB Zanzibar authorization checks.
+  - Added comprehensive frontdoor blackbox test suite `tests/test_blackbox_wardrobe_gallery.py` verifying condition badge triggers, asset storage, event stream dispatch, and SpiceDB object permissions.
+  - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
+
 ### Changed
 - **Backlog Curation, Tech Debt Scanning & JIT Ready Buffer Replenishment (`TASK-0102`, `TASK-0104`, `TASK-0121`, `TASK-0122`, `TASK-0123`, `TASK-0124`, `TASK-0125`, `TASK-0126`, `TASK-0127`, `TASK-0128`)**:
   - Audited repository health and file length invariants, identifying refactoring candidates in `tests/test_prd_pipeline.py` (417 lines), `tests/test_project_visualizer.py` (415 lines), and `services/character_sheet/ui/src/runefoble-character-sheet.styles.ts` (394 lines).

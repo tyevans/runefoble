@@ -173,3 +173,53 @@ class DeathSaveStarted(BaseRunefobleEvent):
     character_id: str
     character_name: str = ""
     current_hp: int = 0
+
+
+@register_event("runefoble.events.character.damaged")
+class CharacterDamaged(BaseRunefobleEvent):
+    """Emitted when a character takes damage, reducing hit points."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.character.damaged"
+    character_id: UUID | str
+    delta: int  # negative value
+    current_hp: int
+    max_hp: int
+    source: str = "damage"
+
+
+@register_event("runefoble.events.character.portrait_variant_generated")
+class PortraitVariantGenerated(BaseRunefobleEvent):
+    """Emitted when a generative wardrobe attire variation is synthesized."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.character.portrait_variant_generated"
+    character_id: UUID | str
+    variant_id: str
+    variant_name: str
+    attire_type: str
+    image_url: str
+    prompt: str = ""
+    is_active: bool = False
+    created_at: str = ""
+
+
+@register_event("runefoble.events.character.portrait_updated")
+class CharacterPortraitUpdated(BaseRunefobleEvent):
+    """Emitted when a character's active portrait or token avatar is assigned."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.character.portrait_updated"
+    character_id: UUID | str
+    active_portrait_url: str
+    variant_id: str | None = None
+
+
+# Backward-compatible alias
+PortraitAssigned = CharacterPortraitUpdated

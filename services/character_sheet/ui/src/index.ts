@@ -6,3 +6,5 @@ export * from './runefoble-character-sheet.ts';
 export * from './runefoble-character-sheet.styles.ts';
 export * from './runefoble-character-sheet.types.ts';
 export * from './runefoble-character-sheet.templates.ts';
+export * from './runefoble-wardrobe-gallery.ts';
+
