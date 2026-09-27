@@ -13,7 +13,11 @@ from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
 from fastapi import Depends, Header, HTTPException
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_events.events import StandInPolicyUpdated, StandInStabilized
+from runefoble_events.events import (
+    CharacterDamaged,
+    StandInPolicyUpdated,
+    StandInStabilized,
+)
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -139,6 +143,17 @@ async def modify_character_health(
                 character_id=str(character_id),
                 current_hp=0,
                 condition="unconscious_stabilized",
+            )
+        )
+    if delta < 0:
+        await publish_character_event(
+            CharacterDamaged(
+                aggregate_id=character_id,
+                character_id=str(character_id),
+                delta=delta,
+                current_hp=char.state.current_hp,
+                max_hp=char.state.max_hp,
+                source=source,
             )
         )
     return char.state

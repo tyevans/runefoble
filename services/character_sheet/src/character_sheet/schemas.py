@@ -75,3 +75,28 @@ class CastSpellRequest(BaseModel):
     spell_name: str
     slot_level: int | None = None
     session_id: str = ""
+
+
+class AddWardrobeVariantRequest(BaseModel):
+    variant_id: str | None = None
+    variant_name: str
+    attire_type: str = "base"
+    image_url: str
+    prompt: str = ""
+    set_active: bool = False
+
+
+class SetActivePortraitRequest(BaseModel):
+    variant_id: str | None = None
+    image_url: str | None = None
+
+
+class PortraitResponse(BaseModel):
+    character_id: str
+    active_portrait_url: str
+    base_portrait_url: str
+    active_variant_id: str | None = None
+    condition_badges: list[str] = Field(default_factory=list)
+    svg_overlay: str = ""
+    current_hp: int
+    max_hp: int

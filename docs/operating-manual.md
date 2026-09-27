@@ -103,8 +103,8 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`inspect-diegetic-handouts-and-3d-relics.md`](how-to/inspect-diegetic-handouts-and-3d-relics.md): How to generate diegetic parchment handouts, break wax seals with acoustic feedback, reveal UV invisible ink runes, and inspect 3D WebGL relics.
 - [`forge-print-ready-maps-standees-and-stl-tokens.md`](how-to/forge-print-ready-maps-standees-and-stl-tokens.md): How to forge multi-page 1-inch grid PDFs, foldable papercraft standees, and watertight 3D STL token rings with status clips.
 - [`interact-with-campaign-atlas-and-codex.md`](how-to/interact-with-campaign-atlas-and-codex.md): How to navigate the multi-layered world atlas, define geopolitical boundaries, place milestone pins with era filtering, and manage private/shared party codex notes.
+- [`manage-generative-wardrobe-and-condition-portraits.md`](how-to/manage-generative-wardrobe-and-condition-portraits.md): How to synthesize narrative wardrobe variants, apply real-time condition overlays (bloodied, poisoned, stunned), and synchronize board tokens.
 - [`trigger-kinetic-spell-vfx-and-particles.md`](how-to/trigger-kinetic-spell-vfx-and-particles.md): How to trigger multi-modal kinetic spell VFX, WebGL particle blooms, elemental archetypes, and ephemeral decals.
-
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture

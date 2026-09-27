@@ -6,13 +6,15 @@
     "runefoble-character-card",
     "runefoble-absentee-recap",
     "runefoble-stand-in-guardrails",
-    "runefoble-character-sheet"
+    "runefoble-character-sheet",
+    "runefoble-wardrobe-gallery"
   ],
   "tags": [
     "runefoble-character-card",
     "runefoble-absentee-recap",
     "runefoble-stand-in-guardrails",
-    "runefoble-character-sheet"
+    "runefoble-character-sheet",
+    "runefoble-wardrobe-gallery"
   ],
   "styles": [
     "./src/runefoble-absentee-recap.styles.ts",

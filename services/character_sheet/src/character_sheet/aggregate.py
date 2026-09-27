@@ -2,6 +2,7 @@
 
 from character_sheet.handlers import (
     InventoryHandlerMixin,
+    PortraitHandlerMixin,
     SpellsHandlerMixin,
     VitalsHandlerMixin,
 )
@@ -11,6 +12,7 @@ from character_sheet.models import (
     ConditionState,
     InventoryItem,
     StandInGuardrails,
+    WardrobeVariant,
 )
 from character_sheet.rules import (
     CLASS_HIT_DIE,
@@ -34,9 +36,11 @@ __all__ = [
     "ConditionState",
     "InventoryHandlerMixin",
     "InventoryItem",
+    "PortraitHandlerMixin",
     "SpellsHandlerMixin",
     "StandInGuardrails",
     "VitalsHandlerMixin",
+    "WardrobeVariant",
     "get_hit_die_for_class",
     "get_known_spell_level",
     "get_spell_slots_for_level",
@@ -47,6 +51,7 @@ class CharacterAggregate(
     InventoryHandlerMixin,
     SpellsHandlerMixin,
     VitalsHandlerMixin,
+    PortraitHandlerMixin,
     DeclarativeAggregate[CharacterState],
 ):
     """Event-sourced aggregate managing character stats, equipment, inventory, and conditions."""

@@ -19,6 +19,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Calibrated particle bloom luminance across dark, light, and high-contrast themes per ADR-0012.
   - Added interactive Storybook stories showcasing firestorm, lightning arc, and shield barrier animations with trigger buttons.
   - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_spell_vfx.py` and Diataxis how-to guide `docs/how-to/trigger-kinetic-spell-vfx-and-particles.md`.
+- **Generative Character Wardrobe, Emotion & State Portrait Gallery (`TASK-0124`, `ADR-0003`, `ADR-0006`, `ADR-0013`)**:
+  - Implemented dynamic Condition & Injury Overlay Engine in `services/character_sheet/src/character_sheet/portrait.py` applying real-time bloodied vignettes (<50% HP), poisoned auras, and stunned dizzy halos over base character portrait avatars.
+  - Added generative wardrobe attire variant synthesis in `services/asset_forge/` (`routers/wardrobe.py` and `generator.py`) supporting thematic styles (`ballroom_masquerade`, `arctic_tundra`, `tavern_casual`, `battle_damaged`, `ceremonial`) preserving character facial embedding seeds, uploading to Silo S3 storage.
+  - Implemented `<runefoble-wardrobe-gallery>` microfrontend Web Component in `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts` with Bauhaus design tokens, active condition badge pills, outfit carousel, one-click avatar equipping, and interactive Storybook stories (`runefoble-wardrobe-gallery.stories.ts`).
+  - Added new CloudEvents-compliant domain events `CharacterDamaged`, `PortraitVariantGenerated`, and `CharacterPortraitUpdated` (alias: `PortraitAssigned`) in `libs/runefoble_events`.
+  - Added modular `wardrobe_router.py` to `character_sheet` exposing `/api/v1/characters/{id}/portrait` and `/api/v1/characters/{id}/wardrobe` endpoints with SpiceDB Zanzibar authorization checks.
+  - Added comprehensive frontdoor blackbox test suite `tests/test_blackbox_wardrobe_gallery.py` verifying condition badge triggers, asset storage, event stream dispatch, and SpiceDB object permissions.
+  - Authored Diataxis guide `docs/how-to/manage-generative-wardrobe-and-condition-portraits.md` and updated `docs/reference/events-schema.md`.
 
 ### Changed
 
