@@ -1,7 +1,7 @@
 ---
-id: '0129'
+id: 0129
 title: Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0008
@@ -18,8 +18,8 @@ governing_prds:
 governing_stories:
 - US-0058
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/147
 ---
-
 # TASK-0129: Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts
 
 ## Status
