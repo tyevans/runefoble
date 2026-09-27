@@ -1,7 +1,7 @@
 ---
 id: '0172'
 title: Dynamic FastMCP Tool Hot-Reloading Registry
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0041
@@ -17,8 +17,8 @@ governing_stories:
 - US-0008
 - US-0035
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/213
 ---
-
 # TASK-0172: Dynamic FastMCP Tool Hot-Reloading Registry
 
 ## Status
