@@ -8,6 +8,7 @@ from board_state.handlers import (
     FogHandlerMixin,
     PhysicsHandlerMixin,
     TokensHandlerMixin,
+    TrapsHandlerMixin,
     VFXHandlerMixin,
 )
 from board_state.models import BoardState, PlacedTokenState, TerrainCellState, TerrainDict
@@ -35,12 +36,14 @@ __all__ = [
     "TerrainCellState",
     "TerrainDict",
     "TokensHandlerMixin",
+    "TrapsHandlerMixin",
     "VFXHandlerMixin",
     "get_hazard_damage_dice",
 ]
 
 
 class BoardAggregate(
+    TrapsHandlerMixin,
     TokensHandlerMixin,
     FogHandlerMixin,
     VFXHandlerMixin,

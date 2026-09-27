@@ -31,6 +31,7 @@ from board_state.models.terrain import (
     VisibilityResponse,
 )
 from board_state.models.tokens import (
+    MoveResult,
     MoveTokenRequest,
     MoveTokenResponse,
     PlacedTokenState,
@@ -45,6 +46,13 @@ from board_state.models.vfx import (
     FinishVFXRequest,
     FinishVFXResponse,
 )
+from board_state.traps.models import (
+    CreateTrapRequest,
+    SecretTrapState,
+    SwitchMapRequest,
+    SwitchMapResponse,
+    TrapListResponse,
+)
 
 __all__ = [
     "AoEEvaluateRequest",
@@ -58,6 +66,7 @@ __all__ = [
     "CastSpellResponse",
     "ConfigureTerrainRequest",
     "CreateBoardRequest",
+    "CreateTrapRequest",
     "DecayDecalsRequest",
     "DiceSettledState",
     "FinishVFXRequest",
@@ -65,17 +74,22 @@ __all__ = [
     "FogOfWarUpdateRequest",
     "KnockbackRequest",
     "KnockbackResponse",
+    "MoveResult",
     "MoveTokenRequest",
     "MoveTokenResponse",
     "PhysicsCollisionState",
     "PlaceTokenRequest",
     "PlacedTokenState",
+    "SecretTrapState",
     "SimulateThrowRequest",
     "SimulateThrowResponse",
+    "SwitchMapRequest",
+    "SwitchMapResponse",
     "TerrainCellState",
     "TerrainDict",
     "TokenActionRequest",
     "TokenActionResponse",
+    "TrapListResponse",
     "UVTTImportResponse",
     "VisibilityResponse",
 ]

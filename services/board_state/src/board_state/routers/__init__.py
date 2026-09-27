@@ -7,6 +7,7 @@ from board_state.routers.physics import router as physics_router
 from board_state.routers.previews import router as previews_router
 from board_state.routers.terrain import router as terrain_router
 from board_state.routers.tokens import router as tokens_router
+from board_state.routers.traps import router as traps_router
 from board_state.routers.vfx import router as vfx_router
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "previews_router",
     "terrain_router",
     "tokens_router",
+    "traps_router",
     "vfx_router",
 ]
