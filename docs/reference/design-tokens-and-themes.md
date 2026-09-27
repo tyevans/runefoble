@@ -183,3 +183,20 @@ Persistence is tracked in `localStorage.getItem('runefoble-color-mode')` (defaul
 - **Properties**: `currentTheme: 'bauhaus' | 'dark-fantasy' | 'parchment' | 'cyber-rune'`
 - **Events**: `theme-changed` with `detail: { theme: string }`
 - **Persistence**: Reads and writes `runefoble-theme` in `localStorage`.
+
+---
+
+## Automated Verification & Test Suites
+
+The theming architecture and design tokens are continuously verified by a modular frontdoor test suite conforming to Hard Invariant 6 (File length limit < 500 lines) and Hard Invariant 7 (Blackbox TDD):
+
+1. **`tests/test_theming_tokens.py`**:
+   - Validates semantic token hierarchy across light and dark variations.
+   - Verifies modular stylesheet imports in `frontend/src/styles/themes.css` and sub-module line budgets (< 150 lines).
+   - Confirms index CSS imports and `<runefoble-theme-switcher>` component contracts.
+   - Enforces Storybook preview controls and contrast matrix stories.
+2. **`tests/test_theming_contrast.py`**:
+   - Calculates mathematical contrast ratios enforcing WCAG 2.1 AA (min 4.5:1 for body) and AAA (min 7:1 for headings).
+   - Scans microfrontend Web Component CSS styles for zero hardcoded hex literals.
+   - Validates consumption of `--rf-*` tokens across all UI services.
+   - Verifies settings modal style decomposition sub-modules.
