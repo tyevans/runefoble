@@ -1,7 +1,7 @@
 ---
 id: '0130'
 title: Character Leitmotifs Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0102
@@ -17,8 +17,8 @@ governing_prds:
 - PRD-0016
 governing_stories:
 - US-0046
+pr_url: https://github.com/tyevans/runefoble/pull/140
 ---
-
 # TASK-0130: Character Leitmotifs Blackbox Test Suite Modular Decomposition
 
 ## Status
