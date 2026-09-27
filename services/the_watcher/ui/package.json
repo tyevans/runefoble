@@ -12,7 +12,9 @@
     "./runefoble-autonomous-dm": "./src/runefoble-autonomous-dm.ts",
     "./runefoble-dm-whisper-bar": "./src/runefoble-dm-whisper-bar.ts",
     "./runefoble-faction-radar": "./src/runefoble-faction-radar.ts",
-    "./runefoble-faction-espionage": "./src/runefoble-faction-espionage.ts"
+    "./runefoble-faction-espionage": "./src/runefoble-faction-espionage.ts",
+    "./runefoble-absentee-directive": "./src/runefoble-absentee-directive.ts",
+    "./runefoble-absentee-vote-card": "./src/runefoble-absentee-vote-card.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

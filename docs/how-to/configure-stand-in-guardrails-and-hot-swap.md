@@ -146,4 +146,32 @@ The stand-in decision logic within `services/the_watcher` is decoupled into focu
 - `the_watcher.stand_in_recap`: Implements `generate_absentee_recap` for humorous chronicle paragraphs, highlight summaries, and absentee excuse generation.
 - `the_watcher.stand_in_ai`: Lightweight `StandInAIEngine` facade orchestrating guardrail evaluation, penalty simulation, and chronicle recap delegation.
 
+---
+
+## 7. Absentee Mobile Directive & Remote Decision Voting Microfrontend (TASK-0167)
+
+When players are away from their primary desktop setup, the `<runefoble-absentee-directive>` mobile Web Component (`services/the_watcher/ui/`) allows them to monitor stand-in status, switch tactical posture directives with one tap, and cast remote votes with tactile haptic feedback:
+
+```html
+<runefoble-absentee-directive
+  characterName="Sarah"
+  characterClass="Life Domain Cleric (Lvl 5)"
+  standInActive="true"
+  currentStance="defensive"
+  currentHp="28"
+  maxHp="38">
+</runefoble-absentee-directive>
+```
+
+### Tactical Posture Presets
+- **Defensive (`defensive`)**: Prioritizes ally protection, healing wounded companions, preserving high-level spell slots, and avoiding frontline melee.
+- **Cautious (`cautious`)**: Ranged spell and projectile support while conserving slots for emergencies.
+- **Heroic (`heroic`)**: Frontline engagement, burst spellcasting, and high-impact interventions.
+
+### Remote Party Decision Voting (`<runefoble-absentee-vote-card>`)
+Active party decisions (e.g. resting in dangerous dungeons, pressing forward, or dividing loot) render an interactive vote card that triggers physical haptic vibration pulses (`navigator.vibrate([100, 50, 100])`):
+- `@directive-changed`: Dispatched when the player shifts tactical stance.
+- `@vote-cast`: Dispatched when the player records a vote on an active party decision poll.
+- `@haptic-pulse`: Emitted when tactile vibration events fire.
+
 
