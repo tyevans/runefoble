@@ -6,6 +6,7 @@
     "runefoble-watcher-feed",
     "runefoble-autonomous-dm",
     "runefoble-dm-whisper-bar",
-    "runefoble-faction-radar"
+    "runefoble-faction-radar",
+    "runefoble-faction-espionage"
   ]
 }

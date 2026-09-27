@@ -48,6 +48,7 @@ from the_watcher.routers import (
     intent_router,
     stand_in_router,
     turf_war_router,
+    ui_manifest_router,
 )
 
 app = FastAPI(
@@ -64,6 +65,7 @@ app.include_router(copilot_router)
 app.include_router(factions_router)
 app.include_router(faction_resources_router)
 app.include_router(turf_war_router)
+app.include_router(ui_manifest_router)
 
 
 @app.get("/healthz")
@@ -72,22 +74,6 @@ async def health_check():
         "status": "ok",
         "service": "the_watcher",
         "inference_worker_url": INFERENCE_URL or "none (using local heuristic engine)",
-    }
-
-
-@app.get("/ui/manifest")
-def get_ui_manifest():
-    """Advertise vendored microfrontend components for The Watcher."""
-    return {
-        "service": "the_watcher",
-        "package": "@runefoble/the-watcher-ui",
-        "components": [
-            "runefoble-watcher-feed",
-            "runefoble-autonomous-dm",
-            "runefoble-dm-whisper-bar",
-            "runefoble-faction-radar",
-        ],
-        "version": "0.1.0",
     }
 
 

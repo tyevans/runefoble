@@ -330,3 +330,24 @@ Returns:
 ```
 
 Events are streamed across Redis Streams topic `runefoble:events:world` for automated session and chronicle synchronization.
+
+---
+
+## 6. Faction Espionage and Regional Alert Feeds Microfrontend
+
+The `<runefoble-faction-espionage>` Lit component (`@runefoble/the-watcher-ui`) visualizes real-time espionage feeds, intercepted courier dispatches, and regional security alert postures (ADR-0004, ADR-0012, ADR-0013):
+
+```html
+<runefoble-faction-espionage
+  campaignId="camp-101"
+  .alerts=${espionageAlerts}
+  .intercepts=${courierDispatches}
+  .regionalAlerts=${regionalAlertLevels}
+></runefoble-faction-espionage>
+```
+
+### Component Capabilities & Events
+- **Urgency Badges & Filtering**: Filter clandestine operations by severity (`critical`, `high`, `medium`, `low`) adhering to WCAG AA contrast standards.
+- **Intercepted Courier Dispatches**: Inspect courier transcripts, routes, and compromised status without leaving the session screen.
+- **Dossier Inspection**: Dispatches `alert-selected` and `dispatch-inspected` custom events on card click for contextual dossier expansion.
+- **Zanzibar DM Intelligence**: If `isDm` is set, private informant identifiers and counter-espionage advisories are displayed.
