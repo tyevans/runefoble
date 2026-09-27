@@ -163,7 +163,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 159. **TASK-0159 (Complete)**: [`0159-dm-traps-and-map-switcher-microfrontend.md`](complete/0159-dm-traps-and-map-switcher-microfrontend.md) — DM Hidden Layers & Multi-Map Switcher Microfrontend
 160. **TASK-0160 (Complete)**: [`0160-dm-vocal-modulator-controls-microfrontend.md`](complete/0160-dm-vocal-modulator-controls-microfrontend.md) — DM Vocal Modulator Controls & Preset Selector Microfrontend
 161. **TASK-0161 (Complete)**: [`0161-npc-faction-resource-and-bribery-aggregate.md`](complete/0161-npc-faction-resource-and-bribery-aggregate.md) — NPC Faction Resource Operations and Bribery Mechanics Aggregate
-162. **TASK-0162 (Refined)**: [`0162-faction-turf-war-and-unrest-event-pipeline.md`](refined/0162-faction-turf-war-and-unrest-event-pipeline.md) — Faction Turf War and Regional Unrest Event Pipeline
+162. **TASK-0162 (Complete)**: [`0162-faction-turf-war-and-unrest-event-pipeline.md`](complete/0162-faction-turf-war-and-unrest-event-pipeline.md) — Faction Turf War and Regional Unrest Event Pipeline
 163. **TASK-0164 (Refined)**: [`0164-cross-campaign-settlement-haven-registry.md`](refined/0164-cross-campaign-settlement-haven-registry.md) — Cross-Campaign Settlement and Haven Registry
 164. **TASK-0165 (Refined)**: [`0165-frontier-mercenary-contract-bounty-board-router.md`](refined/0165-frontier-mercenary-contract-bounty-board-router.md) — Frontier Mercenary Contract and Bounty Board Router
 165. **TASK-0166 (Refined)**: [`0166-mobile-low-bandwidth-opus-stream-adapter.md`](refined/0166-mobile-low-bandwidth-opus-stream-adapter.md) — Mobile Low-Bandwidth Opus Adaptive Stream Adapter
