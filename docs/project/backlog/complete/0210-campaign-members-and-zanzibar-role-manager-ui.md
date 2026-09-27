@@ -1,7 +1,7 @@
 ---
 id: '0210'
 title: Campaign Members and Zanzibar Role Manager UI
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0208
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0063
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/200
 ---
-
 # TASK-0210: Campaign Members and Zanzibar Role Manager UI
 
 ## Status

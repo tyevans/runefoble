@@ -169,7 +169,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 165. **TASK-0207 (Complete)**: [`0207-zitadel-auth-client-and-login-modal-component.md`](complete/0207-zitadel-auth-client-and-login-modal-component.md) — Zitadel Auth Client and Login Modal Component
 166. **TASK-0208 (Complete)**: [`0208-gateway-campaign-lifecycle-and-membership-api.md`](complete/0208-gateway-campaign-lifecycle-and-membership-api.md) — Gateway Campaign Lifecycle and Membership API
 167. **TASK-0209 (Complete)**: [`0209-campaign-dashboard-and-creation-microfrontend.md`](complete/0209-campaign-dashboard-and-creation-microfrontend.md) — Campaign Dashboard and Creation Microfrontend
-168. **TASK-0210 (Refined)**: [`0210-campaign-members-and-zanzibar-role-manager-ui.md`](refined/0210-campaign-members-and-zanzibar-role-manager-ui.md) — Campaign Members and Zanzibar Role Manager UI
+168. **TASK-0210 (Complete)**: [`0210-campaign-members-and-zanzibar-role-manager-ui.md`](complete/0210-campaign-members-and-zanzibar-role-manager-ui.md) — Campaign Members and Zanzibar Role Manager UI
 169. **TASK-0211 (Refined)**: [`0211-character-roster-and-party-assignment-microfrontend.md`](refined/0211-character-roster-and-party-assignment-microfrontend.md) — Character Roster and Party Assignment Microfrontend
 170. **TASK-0212 (Refined)**: [`0212-game-session-lobby-and-readiness-microfrontend.md`](refined/0212-game-session-lobby-and-readiness-microfrontend.md) — Game Session Lobby and Readiness Microfrontend
 171. **TASK-0213 (Refined)**: [`0213-app-shell-view-orchestration-and-session-transition.md`](refined/0213-app-shell-view-orchestration-and-session-transition.md) — App Shell View Orchestration and Session Transition
