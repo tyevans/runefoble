@@ -107,6 +107,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`trigger-kinetic-spell-vfx-and-particles.md`](docs/how-to/trigger-kinetic-spell-vfx-and-particles.md): How to trigger multi-modal kinetic spell VFX, WebGL particle blooms, elemental archetypes, and ephemeral decals.
 - [`interact-with-radial-action-menu-and-aoe-templates.md`](docs/how-to/interact-with-radial-action-menu-and-aoe-templates.md): How to trigger one-tap token actions with the contextual radial menu, rotate geometric AoE spell templates with 15-degree snapping, and highlight targets with glowing halos.
 - [`simulate-npc-faction-agendas-and-world-ticks.md`](docs/how-to/simulate-npc-faction-agendas-and-world-ticks.md): How to execute autonomous NPC faction agenda simulation ticks, resolve rival clashes, and generate DM intelligence bulletins.
+- [`connect-mobile-companion-and-haptic-gateway.md`](docs/how-to/connect-mobile-companion-and-haptic-gateway.md): How to connect mobile companions to low-bandwidth adaptive Opus WebRTC audio and haptic vibration pings for secret DM whispers.
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture

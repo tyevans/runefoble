@@ -16,6 +16,12 @@ from gateway_api.dependencies import (
     set_event_bus,
     ws_manager,
 )
+from gateway_api.mobile_companion import (
+    mobile_companion_websocket_endpoint,
+)
+from gateway_api.mobile_companion import (
+    router as companion_router,
+)
 from gateway_api.routers import (
     campaigns_router,
     downtime_router,
@@ -54,6 +60,7 @@ app.include_router(overlay_router)
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 app.include_router(voice_rooms_router)
+app.include_router(companion_router)
 app.include_router(mcp_tools_router)
 app.include_router(mcp_tools_router, prefix="/api/v1")
 
@@ -91,6 +98,12 @@ async def session_websocket(websocket: WebSocket, session_id: str) -> None:
 async def voice_websocket(websocket: WebSocket, session_id: str) -> None:
     """Zanzibar-protected WebRTC live voice room signaling stream."""
     await voice_signaling_websocket_endpoint(websocket, session_id)
+
+
+@app.websocket("/ws/mobile-companion/{session_id}")
+async def mobile_companion_websocket(websocket: WebSocket, session_id: str) -> None:
+    """Zanzibar-protected low-bandwidth mobile WebRTC companion and haptic gateway."""
+    await mobile_companion_websocket_endpoint(websocket, session_id)
 
 
 def main() -> None:

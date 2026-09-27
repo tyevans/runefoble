@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Spatial Companion Mobile WebRTC Audio & Haptic Ping Gateway (`TASK-0128`, `ADR-0002`, `ADR-0005`, `ADR-0013`)**:
+  - Implemented low-bandwidth adaptive Opus mono 16kHz audio stream profile in `services/voice_agent/src/voice_agent/mobile.py` optimizing cellular transmission over constrained network links.
+  - Implemented automatic network degradation fallback across profile tiers (`mobile_optimized` at 16 kbps, `cellular_constrained` at 12 kbps, and `ultra_low` at 8 kbps) with Forward Error Correction (FEC) and Discontinuous Transmission (DTX).
+  - Built dedicated WebSocket companion gateway at `/ws/mobile-companion/{session_id}` in `gateway_api.companion` enforcing SpiceDB Zanzibar authorization on connection.
+  - Implemented haptic vibration framing protocols (triple-pulse `[200, 100, 200]` for secret DM whispers and double-pulse `[300, 150, 300]` for combat turn prompts) leveraging Web Vibration API.
+  - Built diegetic lockscreen and app overlay notification formatters with recipient isolation ensuring private clues are withheld from other party members.
+  - Added CloudEvents-compliant domain events `MobileCompanionConnected`, `MobileAudioProfileAdapted`, and `MobileHapticPingDispatched` registered in `libs/runefoble_events`.
+  - Added REST frontdoor routes in `gateway_api/companion/router.py`: `POST /api/v1/mobile/companion/{session_id}/whisper`, `POST /api/v1/mobile/companion/{session_id}/turn-alert`, and `GET /api/v1/mobile/companion/profiles`.
+  - Implemented `<runefoble-mobile-companion>` Lit Web Component in `services/voice_agent/ui/src/runefoble-mobile-companion.ts` with Bauhaus styling and interactive Storybook stories (`runefoble-mobile-companion.stories.ts`).
+  - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_mobile_companion.py` and Diataxis guide `docs/how-to/connect-mobile-companion-and-haptic-gateway.md`.
 - **Autonomous NPC Faction Agendas & Background Simulation Engine (`TASK-0126`, `ADR-0002`, `ADR-0006`, `ADR-0011`)**:
   - Implemented event-sourced `FactionAggregate` in `services/the_watcher/src/the_watcher/factions.py` tracking faction assets, influence (1-100), operational resources, disposition, and goal progress via `eventsource-py` (Hard Invariant 2).
   - Built `FactionSimulationEngine` in `services/the_watcher/src/the_watcher/simulation_engine.py` simulating probabilistic agenda checks based on rival counter-measures and regional stability modifiers.

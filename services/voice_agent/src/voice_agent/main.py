@@ -85,7 +85,11 @@ def get_ui_manifest():
     return {
         "service": "voice_agent",
         "package": "@runefoble/voice-agent-ui",
-        "components": ["runefoble-voice-controls", "runefoble-audio-indicator"],
+        "components": [
+            "runefoble-voice-controls",
+            "runefoble-audio-indicator",
+            "runefoble-mobile-companion",
+        ],
         "version": "0.1.0",
     }
 
