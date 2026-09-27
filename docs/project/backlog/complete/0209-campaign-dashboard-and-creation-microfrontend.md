@@ -1,7 +1,7 @@
 ---
-id: '0209'
+id: 0209
 title: Campaign Dashboard and Creation Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0206
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0063
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/199
 ---
-
 # TASK-0209: Campaign Dashboard and Creation Microfrontend
 
 ## Status
