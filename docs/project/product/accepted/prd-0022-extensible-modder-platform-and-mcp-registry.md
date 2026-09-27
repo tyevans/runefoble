@@ -52,3 +52,6 @@ Developer modders (like Alex the Developer / Plugin Modder) and Game Masters (li
 ## Implementing Backlog Tasks
 - [`TASK-0041: FastMCP Gateway Server Modular Decomposition`](../../backlog/complete/0041-fastmcp-gateway-server-modular-decomposition.md)
 - [`TASK-0057: Universal VTT Importer & Dynamic MCP Tool Registry`](../../backlog/complete/0057-universal-vtt-importer-and-custom-mcp-tool-registry.md)
+- [`TASK-0172: Dynamic FastMCP Tool Hot-Reloading Registry`](../../backlog/proposed/0172-dynamic-fastmcp-tool-hot-reloading-registry.md)
+- [`TASK-0173: Universal VTT Door and Dynamic Lighting Parser`](../../backlog/proposed/0173-universal-vtt-door-and-lighting-parser.md)
+- [`TASK-0174: Community Plugin UI Extension Slots Microfrontend`](../../backlog/proposed/0174-community-plugin-ui-extension-slots-microfrontend.md)
