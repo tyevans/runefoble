@@ -1,7 +1,7 @@
 """CharacterSheet aggregate events."""
 
 from typing import Any, ClassVar, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import Field
 
@@ -139,3 +139,37 @@ class StandInStabilized(BaseRunefobleEvent):
 
 # Legacy backward-compatible alias
 SessionPenaltyEvent = AbsencePenaltyApplied
+CharacterConditionApplied = ConditionApplied
+
+
+@register_event("runefoble.events.character.critical_hit_scored")
+class CriticalHitScored(BaseRunefobleEvent):
+    """Emitted when a character scores a critical hit or natural 20."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.character.critical_hit_scored"
+    session_id: str
+    character_id: str
+    character_name: str = ""
+    target_id: str | None = None
+    target_name: str | None = None
+    roll_total: int = 20
+
+
+CriticalHitRolled = CriticalHitScored
+
+
+@register_event("runefoble.events.character.death_save_started")
+class DeathSaveStarted(BaseRunefobleEvent):
+    """Emitted when a character drops to 0 HP and begins death saves."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.character.death_save_started"
+    session_id: str
+    character_id: str
+    character_name: str = ""
+    current_hp: int = 0

@@ -3,13 +3,16 @@
   "package": "@runefoble/soundscape-ui",
   "version": "0.1.0",
   "components": [
-    "runefoble-soundscape-controls"
+    "runefoble-soundscape-controls",
+    "runefoble-leitmotif-config"
   ],
   "tags": [
-    "runefoble-soundscape-controls"
+    "runefoble-soundscape-controls",
+    "runefoble-leitmotif-config"
   ],
   "styles": [
-    "./src/runefoble-soundscape-controls.styles.ts"
+    "./src/runefoble-soundscape-controls.styles.ts",
+    "./src/runefoble-leitmotif-config.styles.ts"
   ],
   "scripts": [
     "./src/index.ts"

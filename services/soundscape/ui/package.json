@@ -9,7 +9,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./runefoble-soundscape-controls": "./src/runefoble-soundscape-controls.ts",
-    "./runefoble-soundscape-controls.styles": "./src/runefoble-soundscape-controls.styles.ts"
+    "./runefoble-soundscape-controls.styles": "./src/runefoble-soundscape-controls.styles.ts",
+    "./runefoble-leitmotif-config": "./src/runefoble-leitmotif-config.ts",
+    "./runefoble-leitmotif-config.styles": "./src/runefoble-leitmotif-config.styles.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

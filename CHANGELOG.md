@@ -51,6 +51,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 
 ### Added
+- **Personal Character Leitmotifs & Adaptive Musical Signatures (`TASK-0102`, `PRD-0016`, `US-0046`, `ADR-0002`, `ADR-0006`, `ADR-0010`, `ADR-0013`)**:
+  - Implemented personalized character leitmotif profile modeling (`leitmotif.py`) supporting five instrument timbres (`lute`, `brass`, `woodwind`, `strings`, `synth`), tempo multiplier scaling, and triumphant/somber audio stem URLs.
+  - Implemented adaptive audio layering engine with sub-250ms dynamic stinger triggering on clutch criticals (`CriticalHitScored`, `DiceRolled(is_crit=True)`) and near-death saves (`DeathSaveStarted`).
+  - Implemented smooth volume envelope generator with configurable attack, sustain, and release curves preventing audio clipping.
+  - Integrated WebAudio sidechain compressor applying -12dB attenuation to active leitmotif stems during human speech activity (`PlayerSpokeEvent` or `/duck`).
+  - Added event-sourced CloudEvents domain events: `LeitmotifProfileConfigured`, `LeitmotifTriggered`, `CriticalHitScored`, and `DeathSaveStarted`.
+  - Built and vendored `<runefoble-leitmotif-config>` Lit microfrontend in `services/soundscape/ui/src/` with instrument timbre selector, tempo/volume sliders, audition buttons with WebAudio earcon synthesis, and Storybook stories.
+  - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_character_leitmotifs.py` and updated Diataxis how-to guide `docs/how-to/manage-dynamic-soundscapes-and-audio-ducking.md` and reference `docs/reference/events-schema.md`.
+
 - **Collaborative Campaign World Atlas & Living Party Codex (`TASK-0106`, `PRD-0015`, `US-0050`, `ADR-0001`, `ADR-0003`, `ADR-0006`, `ADR-0011`, `ADR-0013`)**:
   - Implemented interactive multi-layered world atlas engine (`atlas.py`) with deep-zoom coordinate projections across continental, regional, and municipal layers, ray-casting territory polygon containment, and contested boundary detection.
   - Implemented event-sourced `AtlasAggregate` and `CodexAggregate` tracking geographical markers, geopolitical boundary shifts, and journal entry revisions with CloudEvents domain events (`AtlasPinCreated`, `AtlasPinUpdated`, `AtlasLayerToggled`, `AtlasTerritoryUpdated`, `CodexEntryPublished`, `CodexEntryUpdated`).
