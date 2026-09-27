@@ -31,6 +31,7 @@ from board_state.routers import (
     terrain_router,
     tokens_router,
     traps_router,
+    uvtt_import_router,
     vfx_router,
 )
 from board_state.routers.boards import get_ui_manifest
@@ -52,6 +53,7 @@ app.include_router(aoe_router)
 app.include_router(vfx_router)
 app.include_router(physics_router)
 app.include_router(traps_router)
+app.include_router(uvtt_import_router)
 
 
 @app.get("/healthz")

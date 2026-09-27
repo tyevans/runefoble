@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from board_state.handlers import (
+    DoorsLightsHandlerMixin,
     FogHandlerMixin,
     PhysicsHandlerMixin,
     TokensHandlerMixin,
@@ -30,6 +31,7 @@ __all__ = [
     "DEFAULT_HAZARD_DAMAGE",
     "BoardAggregate",
     "BoardState",
+    "DoorsLightsHandlerMixin",
     "FogHandlerMixin",
     "PhysicsHandlerMixin",
     "PlacedTokenState",
@@ -44,6 +46,7 @@ __all__ = [
 
 class BoardAggregate(
     TrapsHandlerMixin,
+    DoorsLightsHandlerMixin,
     TokensHandlerMixin,
     FogHandlerMixin,
     VFXHandlerMixin,
@@ -101,6 +104,7 @@ class BoardAggregate(
         wall_segments: list[dict[str, Any]] | None = None,
         portals: list[dict[str, Any]] | None = None,
         lights: list[dict[str, Any]] | None = None,
+        doors: dict[str, Any] | None = None,
     ) -> None:
         """Import Universal VTT map geometry, background imagery, and wall obstacles."""
         walls = wall_segments or []
@@ -115,6 +119,7 @@ class BoardAggregate(
             background_image_url=background_image_url,
             wall_segments=walls,
             portals=portals or [],
+            doors=doors or {},
             lights=lights or [],
         )
 
@@ -143,6 +148,7 @@ class BoardAggregate(
             wall_segments=event.wall_segments,
             portals=event.portals,
             lights=event.lights,
+            doors=getattr(event, "doors", {}),
         )
 
     @handles(TerrainCellModified)

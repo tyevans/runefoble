@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from board_state.aoe_models import AoETemplateState
+from board_state.models.doors_lights_transitions import BoardDoorsLightsTransitionsMixin
 from board_state.models.physics import BoardPhysicsTransitionsMixin
 from board_state.models.terrain import TerrainCellState, TerrainDict
 from board_state.models.tokens import PlacedTokenState
@@ -16,7 +17,11 @@ if TYPE_CHECKING:
     from board_state.models.board import BoardState
 
 
-class BoardTransitionsMixin(BoardTrapsTransitionsMixin, BoardPhysicsTransitionsMixin):
+class BoardTransitionsMixin(
+    BoardDoorsLightsTransitionsMixin,
+    BoardTrapsTransitionsMixin,
+    BoardPhysicsTransitionsMixin,
+):
     """Provides pure state mutation helpers for BoardState."""
 
     def with_map_imported(
@@ -29,6 +34,7 @@ class BoardTransitionsMixin(BoardTrapsTransitionsMixin, BoardPhysicsTransitionsM
         wall_segments: list[dict[str, Any]] | None = None,
         portals: list[dict[str, Any]] | None = None,
         lights: list[dict[str, Any]] | None = None,
+        doors: dict[str, Any] | None = None,
     ) -> BoardState:
         return self.model_copy(
             update={
@@ -39,6 +45,7 @@ class BoardTransitionsMixin(BoardTrapsTransitionsMixin, BoardPhysicsTransitionsM
                 "background_image_url": background_image_url,
                 "wall_segments": wall_segments if wall_segments is not None else self.wall_segments,
                 "portals": portals if portals is not None else self.portals,
+                "doors": doors if doors is not None else self.doors,
                 "lights": lights if lights is not None else self.lights,
             }
         )

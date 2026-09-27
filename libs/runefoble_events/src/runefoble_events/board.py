@@ -110,6 +110,7 @@ class UniversalVTTImported(BaseRunefobleEvent):
     background_image_url: str | None = None
     wall_segments: list[dict[str, Any]] = Field(default_factory=list)
     portals: list[dict[str, Any]] = Field(default_factory=list)
+    doors: dict[str, Any] = Field(default_factory=dict)
     lights: list[dict[str, Any]] = Field(default_factory=list)
 
 
