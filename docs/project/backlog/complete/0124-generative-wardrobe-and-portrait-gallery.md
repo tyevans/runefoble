@@ -1,7 +1,7 @@
 ---
 id: '0124'
 title: Generative Character Wardrobe, Emotion & State Portrait Gallery
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0009
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0055
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/130
 ---
-
 # TASK-0124: Generative Character Wardrobe, Emotion & State Portrait Gallery
 
 ## Status
