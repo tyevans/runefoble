@@ -156,7 +156,7 @@ Follow the Runefoble Definition of Done in AGENTS.md:
 1. Blackbox TDD: verify feature strictly through public frontdoors (HTTP, WebSockets, or CloudEvents).
 2. Maintain file length invariant (<500 lines per file).
 3. Verify all tests pass ('uv run pytest').
-4. Synchronize Diataxis documentation and CHANGELOG.md under [Unreleased].`;
+4. Synchronize Diataxis docs, docs/marketing.md, and CHANGELOG.md under [Unreleased].`;
   }
 
   function launchAgyForEntity(entityId) {

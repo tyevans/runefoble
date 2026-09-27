@@ -177,6 +177,14 @@ from runefoble_events.tavern import (
     MinigameStarted,
     MinigameTurnTaken,
 )
+from runefoble_events.turf_war import (
+    FactionSkirmishResolved,
+    FactionSkirmishResolvedEvent,
+    FactionTerritoryCaptured,
+    FactionTerritoryCapturedEvent,
+    RegionalUnrestEscalated,
+    RegionalUnrestEscalatedEvent,
+)
 from runefoble_events.vocal_dsp import (
     VocalModulatorPresetApplied,
     VocalModulatorPresetAppliedEvent,
@@ -425,6 +433,12 @@ __all__ = [
     "FactionMercenaryRecruited",
     "FactionBriberyAttemptedEvent",
     "FactionBriberyAttempted",
+    "FactionSkirmishResolvedEvent",
+    "FactionSkirmishResolved",
+    "FactionTerritoryCapturedEvent",
+    "FactionTerritoryCaptured",
+    "RegionalUnrestEscalatedEvent",
+    "RegionalUnrestEscalated",
     "SettlementCharteredEvent",
     "SettlementChartered",
     "SettlementUpgradedEvent",

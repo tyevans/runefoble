@@ -48,6 +48,8 @@ A task moves from `refined/` to `complete/` only when:
 7. **Frontdoor Blackbox Suite**: End-to-end blackbox tests verify behavior exclusively through public entrypoints.
 8. **File Length Invariant**: All modified and created source files strictly under 500 lines.
 9. **Registry & Backlog Synchronization**: Status updated in `PRIORITY.md` and relevant PRD/ADR registries.
+10. **Changelog Maintenance**: User-facing capabilities, architectural shifts, and public API/schema changes recorded in `CHANGELOG.md` under `[Unreleased]` following Keep a Changelog.
+11. **Platform Showcase Maintenance**: Public Platform Showcase marketing page (`docs/marketing.md`) maintained as capabilities progress, keeping live core capabilities and roadmap milestones synchronized with current platform deliverables.
 
 ## Picking Work
 Always pick the highest-priority item from [`docs/project/backlog/PRIORITY.md`](PRIORITY.md) that is currently marked `(Refined)`.

@@ -90,23 +90,42 @@
 - [x] 3D Miniature Tokens & WebGL Tabletop Physics (`FEAT-BRD-06`, US-0061, TASK-0142)
 - [x] Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend (`FEAT-VOX-06`, US-0060, TASK-0149)
 
-## Milestone 8: Reactive Tactical Environments & In-World DM Tools (Current)
+## Milestone 8: Reactive Tactical Environments & In-World DM Tools (Complete)
 ### Foundational Platform & Audio Enablers
 - [x] Spoken Reaction Interrupts & Ready-Action Combat Triggers (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0155)
 - [x] Secret DM Spatial Traps, Map Switching & Hidden Cell Triggers (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0156)
-- [ ] DM Live Vocal Modulator & Real-Time NPC Formant DSP Engine (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0157)
-- [ ] GameSession Aggregate and Reaction Handlers Modular Decomposition (TASK-0175)
+- [x] DM Live Vocal Modulator & Real-Time NPC Formant DSP Engine (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0157)
+- [x] GameSession Aggregate and Reaction Handlers Modular Decomposition (TASK-0175)
 
 ### Tactical Reactions & DM Tooling Epics
-- [ ] Reactive Combat Reactions & Interrupt Prompt Microfrontend (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0158)
-- [ ] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
-- [ ] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
+- [x] Reactive Combat Reactions & Interrupt Prompt Microfrontend (`FEAT-WAT-08`, US-0023, PRD-0001, TASK-0158)
+- [x] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
+- [x] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
 
-## Milestone 9: Persona Immersion & Community Ecosystem (Upcoming)
+## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Active / Immediate Priority)
+### Core Identity, Gateway & Shell Routing Enablers
+- [ ] Frontend SPA Client Router and Navigation Chrome (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0206)
+- [ ] Zitadel Auth Client and Login Modal Component (`FEAT-UI-07`, `FEAT-SEC-02`, US-0062, PRD-0023, TASK-0207)
+- [ ] Gateway Campaign Lifecycle and Membership API (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0208)
+
+### Campaign Hub, Character Roster & Pre-Game Lobby Epics
+- [ ] Campaign Dashboard and Creation Microfrontend (`FEAT-UI-08`, US-0063, PRD-0023, TASK-0209)
+- [ ] Campaign Members and Zanzibar Role Manager UI (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0210)
+- [ ] Character Roster and Party Assignment Microfrontend (`FEAT-UI-09`, US-0064, PRD-0023, TASK-0211)
+- [ ] Game Session Lobby and Readiness Microfrontend (`FEAT-UI-10`, US-0065, PRD-0023, TASK-0212)
+- [ ] App Shell View Orchestration and Session Transition (`FEAT-UI-11`, US-0065, US-0066, PRD-0023, TASK-0213)
+
+### Frontdoor Blackbox Verification Suites
+- [ ] Frontend Routing and Auth Blackbox Test Suite (US-0062, US-0066, PRD-0023, TASK-0214)
+- [ ] Campaign Management and Lobby Blackbox Test Suite (US-0063, US-0064, US-0065, PRD-0023, TASK-0215)
+
+## Milestone 9: Persona Immersion & Community Ecosystem
 ### Living Worlds, Mobile & Voice Enablers
-- [ ] NPC Faction Resource Operations and Bribery Mechanics Aggregate (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0161)
+
+- [x] NPC Faction Resource Operations and Bribery Mechanics Aggregate (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0161)
 - [ ] Faction Turf War and Regional Unrest Event Pipeline (`FEAT-WAT-07`, US-0057, US-0019, PRD-0017, TASK-0162)
 - [ ] Cross-Campaign Settlement and Haven Registry (`FEAT-LRE-04`, US-0058, PRD-0018, TASK-0164)
+- [ ] Frontier Mercenary Contract and Bounty Board Router (`FEAT-DWN-04`, US-0058, PRD-0018, TASK-0165)
 - [ ] Mobile Low-Bandwidth Opus Adaptive Stream Adapter (`FEAT-VOX-01`, US-0059, PRD-0019, TASK-0166)
 - [ ] Neural Speech Barge-In and Soft Crossfade Audio Filter (`FEAT-VOX-06`, US-0060, PRD-0020, TASK-0168)
 - [ ] Hardware Acoustic Echo Cancellation and ERLE Validation (`FEAT-VOX-06`, US-0060, PRD-0020, TASK-0169)
@@ -115,12 +134,39 @@
 
 ### Multi-Party, Physics & Extensible UI Epics
 - [ ] Faction Espionage and Alert Feeds Microfrontend (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0163)
-- [ ] Frontier Mercenary Contract and Bounty Board Router (`FEAT-DWN-04`, US-0058, PRD-0018, TASK-0165)
 - [ ] Absentee Mobile Directive and Remote Voting Microfrontend (`FEAT-WAT-05`, US-0059, US-0027, PRD-0019, TASK-0167)
 - [ ] Kinetic 3D Dice Physics and Tray Audio Integration (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0170)
 - [ ] Miniature Knockback Impulse and Elevation Physics (`FEAT-BRD-06`, US-0061, PRD-0021, TASK-0171)
 - [ ] Community Plugin UI Extension Slots Microfrontend (`FEAT-DEV-01`, US-0035, PRD-0022, TASK-0174)
+
+### Continuous Architecture & Modular Refactorings
 - [ ] West Marches UI Blackbox Test Suite Modular Decomposition (TASK-0176)
-
-
-
+- [ ] Runefoble Events Aggregator Modular Decomposition (TASK-0177)
+- [ ] GameSession Models Modular Decomposition (TASK-0178)
+- [ ] Rules Compendium Homebrew Subview Modular Decomposition (TASK-0179)
+- [ ] Board State Stories Modular Decomposition (TASK-0180)
+- [ ] Soundscape Event Handlers and Dependencies Modular Decomposition (TASK-0181)
+- [ ] Watcher Domain Events Modular Decomposition (TASK-0182)
+- [ ] Faction Resources Blackbox Test Suite Modular Decomposition (TASK-0183)
+- [ ] Campfire Crafting Blackbox Test Suite Modular Decomposition (TASK-0184)
+- [ ] Rules Compendium Styles Modular Decomposition (TASK-0185)
+- [ ] Caravan Aggregate and Contract Models Modular Decomposition (TASK-0186)
+- [ ] Campaign Atlas Blackbox Test Suite Modular Decomposition (TASK-0187)
+- [ ] Board State Previews Router Modular Decomposition (TASK-0188)
+- [ ] Character Sheet UI Templates Modular Decomposition (TASK-0189)
+- [ ] Cinematic Director Blackbox Test Suite Modular Decomposition (TASK-0190)
+- [ ] Kinetic Spell VFX Blackbox Test Suite Modular Decomposition (TASK-0191)
+- [ ] Board Templates Rendering and Subviews Modular Decomposition (TASK-0192)
+- [ ] Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition (TASK-0193)
+- [ ] Combat Heatmap Canvas Rendering and Subviews Modular Decomposition (TASK-0194)
+- [ ] Faction Radar SVG and Drawer Subviews Modular Decomposition (TASK-0195)
+- [ ] Campaign Atlas Layers and Pins Subviews Modular Decomposition (TASK-0196)
+- [ ] Asset Forge Raster Generator Modular Decomposition (TASK-0197)
+- [ ] Campaign Lore Codex Router Modular Decomposition (TASK-0198)
+- [ ] Campfire Crafting Subviews Modular Decomposition (TASK-0199)
+- [ ] Campaign Analytics Stories Fixtures Modular Decomposition (TASK-0200)
+- [ ] Board State Radial Menu Glyphs and Styles Modular Decomposition (TASK-0201)
+- [ ] Backlog Queue Parser and Serializer Modular Decomposition (TASK-0202)
+- [ ] Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (TASK-0203)
+- [ ] Character Sheet Component Action Handlers and State Modular Decomposition (TASK-0204)
+- [ ] West Marches Aggregate Discovery and Territory Handlers Modular Decomposition (TASK-0205)

@@ -1,7 +1,7 @@
 ---
 id: '0166'
 title: Mobile Low-Bandwidth Opus Adaptive Stream Adapter
-status: Refined
+status: Proposed
 created: 2026-09-26
 dependencies:
 - TASK-0128

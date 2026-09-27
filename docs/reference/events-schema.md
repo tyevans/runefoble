@@ -601,6 +601,40 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `narrative`: String
   - `remaining_treasury`: Integer
 
+### RegionalUnrest & Turf War Events (`aggregate_type: RegionalUnrest`)
+
+- **`FactionSkirmishResolvedEvent`** (alias: `FactionSkirmishResolved`): Emitted when a tactical boundary clash between two factions resolves (`runefoble.events.watcher.faction_skirmish_resolved`).
+  - `skirmish_id`: String
+  - `campaign_id`: String
+  - `region_id`: String
+  - `contested_node`: String
+  - `attacker_faction_id`: String
+  - `defender_faction_id`: String
+  - `winning_faction_id`: String
+  - `is_stalemate`: Boolean
+  - `attacker_casualties`: Integer
+  - `defender_casualties`: Integer
+  - `territory_captured`: Boolean
+  - `unrest_delta`: Integer
+  - `narrative`: String
+- **`FactionTerritoryCapturedEvent`** (alias: `FactionTerritoryCaptured`): Emitted when contested territory or an outpost changes faction ownership (`runefoble.events.watcher.faction_territory_captured`).
+  - `campaign_id`: String
+  - `region_id`: String
+  - `previous_controlling_faction_id`: Optional[String]
+  - `new_controlling_faction_id`: String
+  - `territory_node`: String
+  - `unrest_delta`: Integer
+- **`RegionalUnrestEscalatedEvent`** (alias: `RegionalUnrestEscalated`): Emitted when regional instability, guard alert levels, or economic friction escalate (`runefoble.events.watcher.regional_unrest_escalated`).
+  - `campaign_id`: String
+  - `region_id`: String
+  - `previous_unrest`: Integer
+  - `current_unrest`: Integer
+  - `unrest_delta`: Integer
+  - `alert_level`: String ("calm", "guarded", "elevated", "high", "critical")
+  - `security_level`: String ("standard", "patrolled", "heightened", "curfew", "martial_law")
+  - `economic_friction`: Float (0.0 to 1.0)
+  - `cause`: String
+
 ### VoiceRoom Events (`aggregate_type: VoiceRoom`)
 
 - **`VoicePeerJoined`**: Emitted when an audio peer connects and joins the session WebRTC voice room (`runefoble.events.voice.peer_joined`).
