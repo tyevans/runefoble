@@ -174,7 +174,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 170. **TASK-0213 (Refined)**: [`0213-app-shell-view-orchestration-and-session-transition.md`](refined/0213-app-shell-view-orchestration-and-session-transition.md) — App Shell View Orchestration and Session Transition
 171. **TASK-0214 (Refined)**: [`0214-frontend-routing-and-auth-blackbox-test-suite.md`](refined/0214-frontend-routing-and-auth-blackbox-test-suite.md) — Frontend Routing and Auth Blackbox Test Suite
 172. **TASK-0215 (Refined)**: [`0215-campaign-management-and-lobby-blackbox-test-suite.md`](refined/0215-campaign-management-and-lobby-blackbox-test-suite.md) — Campaign Management and Lobby Blackbox Test Suite
-173. **TASK-0164 (Proposed)**: [`0164-cross-campaign-settlement-haven-registry.md`](proposed/0164-cross-campaign-settlement-haven-registry.md) — Cross-Campaign Settlement and Haven Registry
+173. **TASK-0164 (Complete)**: [`0164-cross-campaign-settlement-haven-registry.md`](complete/0164-cross-campaign-settlement-haven-registry.md) — Cross-Campaign Settlement and Haven Registry
 174. **TASK-0165 (Proposed)**: [`0165-frontier-mercenary-contract-bounty-board-router.md`](proposed/0165-frontier-mercenary-contract-bounty-board-router.md) — Frontier Mercenary Contract and Bounty Board Router
 175. **TASK-0166 (Proposed)**: [`0166-mobile-low-bandwidth-opus-stream-adapter.md`](proposed/0166-mobile-low-bandwidth-opus-stream-adapter.md) — Mobile Low-Bandwidth Opus Adaptive Stream Adapter
 176. **TASK-0168 (Proposed)**: [`0168-neural-speech-barge-in-crossfade-filter.md`](proposed/0168-neural-speech-barge-in-crossfade-filter.md) — Neural Speech Barge-In and Soft Crossfade Audio Filter
