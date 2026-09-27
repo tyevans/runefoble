@@ -210,3 +210,32 @@ class StlTokenResponse(BaseModel):
     is_watertight: bool = True
     condition_label: str
     status: str = "forged"
+
+
+class WardrobeForgeRequest(BaseModel):
+    """Prompt and configuration parameters for generative character wardrobe synthesis."""
+
+    character_id: UUID | str = Field(..., description="ID of character receiving wardrobe variant")
+    character_name: str = Field(..., min_length=1, description="Name of character")
+    attire_type: str = Field(
+        default="ballroom_masquerade",
+        description="Thematic attire style: ballroom_masquerade, arctic_tundra, tavern_casual, battle_damaged, ceremonial",
+    )
+    prompt: str | None = Field(default=None, description="Optional custom prompt additions")
+    campaign_id: UUID | None = None
+    face_embedding_seed: str | None = None
+    border_color: str = Field(default="#e63946", description="Border ring hex color")
+    size_px: int = Field(default=256, ge=64, le=512, description="Square pixel dimensions")
+
+
+class WardrobeForgeResponse(BaseModel):
+    """Result of generative wardrobe synthesis and Silo S3 storage."""
+
+    variant_id: str
+    character_id: str
+    variant_name: str
+    attire_type: str
+    image_url: str
+    download_url: str
+    prompt: str
+    status: str = "forged"

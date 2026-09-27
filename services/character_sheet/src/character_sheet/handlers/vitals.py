@@ -18,6 +18,12 @@ class VitalsHandlerMixin:
     create_event: Any
     aggregate_id: Any
 
+    def _emit_hp(self, delta: int, hp: int, src: str) -> None:
+        kw = {"delta": delta, "current_hp": hp, "max_hp": self.state.max_hp, "source": src}
+        if delta < 0:
+            self.create_event(ev.CharacterDamaged, character_id=str(self.aggregate_id), **kw)
+        self.create_event(ev.CharacterHealthChanged, **kw)
+
     def modify_health(
         self, delta: int, source: str = "damage", is_stand_in: bool | None = None
     ) -> None:
@@ -31,13 +37,7 @@ class VitalsHandlerMixin:
             and effective_stand_in
             and self.state.stand_in_guardrails.permadeath_safeguard
         ):
-            self.create_event(
-                ev.CharacterHealthChanged,
-                delta=delta,
-                current_hp=0,
-                max_hp=self.state.max_hp,
-                source=source,
-            )
+            self._emit_hp(delta, 0, source)
             self.create_event(
                 ev.StandInStabilized,
                 character_id=str(self.aggregate_id),
@@ -53,23 +53,16 @@ class VitalsHandlerMixin:
             return
 
         new_hp = max(0, min(self.state.max_hp, self.state.current_hp + delta))
-        self.create_event(
-            ev.CharacterHealthChanged,
-            delta=delta,
-            current_hp=new_hp,
-            max_hp=self.state.max_hp,
-            source=source,
-        )
+        self._emit_hp(delta, new_hp, source)
 
     def update_stand_in_guardrails(self, guardrails: StandInGuardrails | dict[str, Any]) -> None:
         """Configure tactical constraints for stand-in AI."""
-        gr_dict = guardrails.model_dump() if hasattr(guardrails, "model_dump") else dict(guardrails)
+        gr = guardrails.model_dump() if hasattr(guardrails, "model_dump") else dict(guardrails)
         self.create_event(
-            ev.StandInPolicyUpdated, character_id=str(self.aggregate_id), guardrails=gr_dict
+            ev.StandInPolicyUpdated, character_id=str(self.aggregate_id), guardrails=gr
         )
 
     def set_stand_in_active(self, active: bool) -> None:
-        """Set whether the character is currently piloted by the stand-in AI."""
         self._state = self.state.with_stand_in_active(active)
 
     def apply_penalty(

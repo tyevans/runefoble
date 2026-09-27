@@ -215,6 +215,24 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `character_id`: String
   - `character_name`: String
   - `current_hp`: Integer (0)
+- **`CharacterDamaged`**: Emitted when a character takes damage, reducing hit points (`runefoble.events.character.damaged`).
+  - `character_id`: UUID | str
+  - `delta`: Integer (negative delta)
+  - `current_hp`: Integer
+  - `max_hp`: Integer
+  - `source`: String
+- **`PortraitVariantGenerated`**: Emitted when a generative wardrobe attire variant is forged or registered (`runefoble.events.character.portrait_variant_generated`).
+  - `character_id`: UUID | str
+  - `variant_id`: String
+  - `variant_name`: String
+  - `attire_type`: String (e.g. "ballroom_masquerade", "arctic_tundra", "tavern_casual")
+  - `image_url`: String
+  - `prompt`: String
+  - `is_active`: Boolean
+- **`CharacterPortraitUpdated`** (alias: `PortraitAssigned`): Emitted when a character's active portrait or board token avatar is assigned (`runefoble.events.character.portrait_updated`).
+  - `character_id`: UUID | str
+  - `active_portrait_url`: String
+  - `variant_id`: Optional[String]
 
 ### The Watcher & Gameplay Stream Events
 
