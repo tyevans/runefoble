@@ -260,3 +260,18 @@ definition mercenary_bounty {
     permission disburse = creator + campaign->run_session + session->control
 }
 
+definition mcp_tool {
+    relation campaign: campaign
+    relation author: user
+
+    // Viewing tool definition / schema
+    permission view = author + campaign->view
+
+    // Managing, registering, or unregistering dynamic tool requires author or campaign run_session
+    permission manage = author + campaign->manage + campaign->run_session
+
+    // Executing or invoking dynamic tool requires author, campaign play permission, or DM/GM
+    permission execute = author + campaign->play + manage
+}
+
+

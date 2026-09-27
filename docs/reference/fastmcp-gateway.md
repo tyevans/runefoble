@@ -8,7 +8,15 @@ The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates
 
 gateway/mcp/src/gateway_mcp/
 ├── constants.py           # RPG constants (spell effects, condition descriptions)
-├── dynamic_registry.py    # Runtime tool registration, JSON schema, & sandbox
+├── dynamic_registry.py    # Backward-compatible re-exports (< 30 lines)
+├── dynamic/               # Dynamic tool registry package (< 140 lines per module)
+│   ├── auth.py            # SpiceDB Zanzibar authorization guard & relationship sync
+│   ├── builder.py         # Signature builder and callable adapter
+│   ├── events.py          # Redis Streams system event bus integration
+│   ├── models.py          # Dynamic tool schemas and JSON Schema validation
+│   └── registry.py        # Thread-safe tool registry with event notifications
+├── routers/               # FastMCP REST routers (< 130 lines)
+│   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
 ├── main.py                # CLI execution wrapper
 ├── server.py              # FastMCP orchestration shell and module mounting
 ├── tools/                 # MCP tool implementations (< 180 lines each)
@@ -21,7 +29,6 @@ gateway/mcp/src/gateway_mcp/
 └── prompts/               # FastMCP prompt templates (< 120 lines each)
     └── narrative.py       # Narrative DM guidance and tactical action adviser
 ```
-
 
 ## Tools Registry
 
@@ -66,18 +73,43 @@ Prompt templates provide standardized prompts for LLM decision-making and narrat
 
 ## Dynamic Runtime Tool Registry
 
-The Dynamic Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic_registry.py`) enables tabletop creators, homebrew modders, and external developers to register custom FastMCP tools dynamically at runtime without restarting the FastMCP gateway or dropping active client SSE connections (ADR-0008, TASK-0057).
+The Dynamic Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic/`) enables tabletop creators, homebrew modders, and external developers to register, update, and hot-reload custom FastMCP tools dynamically at runtime with SpiceDB authorization checks, without restarting the FastMCP gateway or terminating active AI agent sessions (ADR-0001, ADR-0003, ADR-0006, ADR-0007, ADR-0008, TASK-0172).
 
 ### Administrative REST Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/mcp/tools` (or `/api/v1/mcp/tools`) | List all dynamically registered tools and JSON Schemas |
-| `POST` | `/mcp/tools` (or `/api/v1/mcp/tools`) | Register a new dynamic tool with parameter validation and sandbox checks |
+| `GET` | `/mcp/tools/dynamic` (alias: `/mcp/tools`) | List all dynamically registered tools and JSON Schemas |
+| `POST` | `/mcp/tools/register` (alias: `/mcp/tools`) | Register a new dynamic tool with parameter validation and SpiceDB authorization |
 | `GET` | `/mcp/tools/{name}` | Retrieve schema and configuration for a specific dynamic tool |
-| `PUT` | `/mcp/tools/{name}` | Update an existing dynamic tool definition |
-| `DELETE` | `/mcp/tools/{name}` | Deregister a dynamic tool and remove it from FastMCP discovery |
-| `POST` | `/mcp/tools/{name}/execute` | Invoke a dynamic tool directly via HTTP frontdoor |
+| `PUT` | `/mcp/tools/{name}` | Update an existing dynamic tool definition and hot-reload logic |
+| `DELETE` | `/mcp/tools/{tool_name}` | Deregister a dynamic tool and revoke permissions |
+| `POST` | `/mcp/tools/{name}/execute` | Invoke a dynamic tool directly via HTTP frontdoor with auth checks |
+
+### SpiceDB Zanzibar Object-Level Authorization
+
+Dynamic tools are guarded by SpiceDB object-level Zanzibar permissions defined in `libs/runefoble_auth/schema/runefoble.zed`:
+
+```zed
+definition mcp_tool {
+    relation campaign: campaign
+    relation author: user
+
+    permission view = author + campaign->view
+    permission manage = author + campaign->manage + campaign->run_session
+    permission execute = author + campaign->play + manage
+}
+```
+
+- **Tool Management (`manage`)**: Creating, updating, or deleting custom tools requires the tool author (`author: user`) or campaign DM/GM/Owner (`campaign->run_session`).
+- **Tool Execution (`execute`)**: Invoking tools requires campaign players (`campaign->play`), DM/GMs (`campaign->run_session`), or the author.
+
+### Redis Streams Event Notifications
+
+Dynamic tool lifecycle events are published to Redis Streams topic `runefoble:events:system`:
+- **`DynamicToolRegisteredEvent`**: Emitted when a dynamic tool is registered or hot-reloaded.
+- **`DynamicToolUnregisteredEvent`**: Emitted when a dynamic tool is retired or removed.
+- **`DynamicToolInvokedEvent`**: Emitted upon dynamic tool execution with execution duration and telemetry.
 
 ### Security & Sandbox Policies
 
@@ -87,4 +119,5 @@ Dynamic tool definitions containing custom Python logic (`handler_code`) undergo
 - **Attribute Access Restrictions**: Access to dunder attributes (e.g. `__class__`, `__subclasses__`, `__globals__`, `__code__`) is rejected.
 - **Allowed Modules**: Safe modules such as `math`, `json`, `re`, `random`.
 - **Parameter Validation**: Enforced via JSON Schema Draft-07 specifications with type matching across Python signatures.
+
 

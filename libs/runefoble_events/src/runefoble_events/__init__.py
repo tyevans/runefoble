@@ -209,6 +209,14 @@ from runefoble_events.events import (
     WorldTickExecuted,
     register_event,
 )
+from runefoble_events.mcp_tools import (
+    DynamicToolInvoked,
+    DynamicToolInvokedEvent,
+    DynamicToolRegistered,
+    DynamicToolRegisteredEvent,
+    DynamicToolUnregistered,
+    DynamicToolUnregisteredEvent,
+)
 
 __all__ = [
     "register_event",
@@ -410,6 +418,12 @@ __all__ = [
     "EchoSuppressionEngagedEvent",
     "AECBenchmarkCompleted",
     "AECBenchmarkCompletedEvent",
+    "DynamicToolRegistered",
+    "DynamicToolRegisteredEvent",
+    "DynamicToolUnregistered",
+    "DynamicToolUnregisteredEvent",
+    "DynamicToolInvoked",
+    "DynamicToolInvokedEvent",
     # Backward-compatible aliases
     "WatcherNarrationEvent",
     "BoardMoveEvent",
