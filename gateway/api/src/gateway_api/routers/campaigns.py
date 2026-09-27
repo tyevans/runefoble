@@ -72,17 +72,11 @@ async def create_campaign(
     dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
 )
 async def get_campaign_proxy(campaign_id: str) -> dict:
-    """Retrieve campaign overview details (requires 'view')."""
     camp = campaign_store.get_campaign(campaign_id)
     return (
         camp.to_dict()
         if camp
-        else {
-            "id": campaign_id,
-            "campaign_id": campaign_id,
-            "title": f"Campaign {campaign_id}",
-            "status": "active",
-        }
+        else {"id": campaign_id, "title": f"Campaign {campaign_id}", "status": "active"}
     )
 
 
@@ -165,6 +159,17 @@ async def get_session_proxy(session_id: str) -> dict:
         "current_turn": "c1",
         "participants": DEFAULT_SESSION_PARTICIPANTS,
     }
+
+
+@router.post(
+    "/api/v1/sessions/{session_id}/start",
+    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
+)
+async def start_session_proxy(session_id: str) -> dict:
+    await ws_manager.broadcast(
+        {"type": "session_started", "sessionId": session_id, "status": "active"}
+    )
+    return {"session_id": session_id, "status": "active"}
 
 
 @router.post(

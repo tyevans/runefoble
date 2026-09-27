@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from uuid import UUID
 
 from character_sheet.dependencies import (
@@ -36,8 +37,20 @@ router = APIRouter(tags=["character_sheet"])
 
 @router.post("/api/v1/characters", response_model=CharacterState)
 @router.post("/api/v1/characters/create", response_model=CharacterState)
-async def create_character(req: CreateCharacterRequest, repo: RepoDep):
-    return await create_new_character(repo, req)
+async def create_character(
+    req: CreateCharacterRequest,
+    repo: RepoDep,
+    spicedb: SpiceDep,
+    x_user_id: UserHeader = None,
+):
+    owner_id = req.player_id or x_user_id
+    state = await create_new_character(repo, req)
+    if owner_id:
+        with contextlib.suppress(Exception):
+            await spicedb.write_relationship(
+                "character", str(state.character_id), "owner", "user", owner_id
+            )
+    return state
 
 
 @router.post("/api/v1/characters/{character_id}/level-up", response_model=CharacterState)
