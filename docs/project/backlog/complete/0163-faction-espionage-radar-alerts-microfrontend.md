@@ -1,7 +1,7 @@
 ---
 id: '0163'
 title: Faction Espionage and Alert Feeds Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0137
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0057
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/220
 ---
-
 # TASK-0163: Faction Espionage and Alert Feeds Microfrontend
 
 ## Status
