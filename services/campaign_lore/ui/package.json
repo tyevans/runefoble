@@ -8,6 +8,7 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./runefoble-campaign-atlas": "./src/runefoble-campaign-atlas.ts",
     "./runefoble-campaign-codex": "./src/runefoble-campaign-codex.ts",
     "./runefoble-handout-viewer": "./src/runefoble-handout-viewer.ts",
     "./runefoble-relic-inspector": "./src/runefoble-relic-inspector.ts"

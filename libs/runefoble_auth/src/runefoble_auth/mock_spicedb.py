@@ -303,4 +303,76 @@ class MockSpiceDBClient:
                 ):
                     return True
 
+        # 8. Atlas evaluation (view = campaign->view, edit = campaign->run_session, place_pin = campaign->play)
+        if resource_type == "atlas":
+            parents = self._find_subjects("atlas", resource_id, "campaign")
+            if not parents:
+                parents = [("campaign", resource_id)]
+            for p_type, p_id in parents:
+                if permission in ("edit", "manage") and await self.check_permission(
+                    p_type, p_id, "run_session", subject_type, subject_id
+                ):
+                    return True
+                if permission in ("place_pin",) and (
+                    await self.check_permission(p_type, p_id, "play", subject_type, subject_id)
+                    or await self.check_permission(
+                        p_type, p_id, "run_session", subject_type, subject_id
+                    )
+                ):
+                    return True
+                if permission in ("view", "read") and await self.check_permission(
+                    p_type, p_id, "view", subject_type, subject_id
+                ):
+                    return True
+
+        # 9. Codex entry evaluation (author + editor + reader; party_shared; public)
+        if resource_type == "codex_entry":
+            # Author or editor direct access
+            if (
+                self._tuple_key("codex_entry", resource_id, "author", subject_type, subject_id)
+                in self._tuples
+                or self._tuple_key("codex_entry", resource_id, "editor", subject_type, subject_id)
+                in self._tuples
+            ):
+                return True
+            if (
+                permission in ("view", "read")
+                and self._tuple_key("codex_entry", resource_id, "reader", subject_type, subject_id)
+                in self._tuples
+            ):
+                return True
+
+            parents = self._find_subjects("codex_entry", resource_id, "campaign")
+            if not parents:
+                parents = [("campaign", resource_id)]
+            for p_type, p_id in parents:
+                if permission in ("manage", "edit") and await self.check_permission(
+                    p_type, p_id, "run_session", subject_type, subject_id
+                ):
+                    return True
+                if permission in ("view", "read"):
+                    # Check party_shared visibility
+                    if (
+                        self._tuple_key(
+                            "codex_entry", resource_id, "party_shared", "campaign", p_id
+                        )
+                        in self._tuples
+                        or self._tuple_key("codex_entry", resource_id, "shared", "campaign", p_id)
+                        in self._tuples
+                    ) and (
+                        await self.check_permission(p_type, p_id, "play", subject_type, subject_id)
+                        or await self.check_permission(
+                            p_type, p_id, "run_session", subject_type, subject_id
+                        )
+                    ):
+                        return True
+                    # Check public visibility
+                    if (
+                        self._tuple_key("codex_entry", resource_id, "public", "campaign", p_id)
+                        in self._tuples
+                    ) and await self.check_permission(
+                        p_type, p_id, "view", subject_type, subject_id
+                    ):
+                        return True
+
         return False

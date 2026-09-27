@@ -102,6 +102,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`run-tavern-minigames-and-merchant-haggling.md`](how-to/run-tavern-minigames-and-merchant-haggling.md): How to run interactive Liar's Dice wagering, drinking contests with DSP voice filters, and negotiate with personality-driven merchants.
 - [`inspect-diegetic-handouts-and-3d-relics.md`](how-to/inspect-diegetic-handouts-and-3d-relics.md): How to generate diegetic parchment handouts, break wax seals with acoustic feedback, reveal UV invisible ink runes, and inspect 3D WebGL relics.
 - [`forge-print-ready-maps-standees-and-stl-tokens.md`](how-to/forge-print-ready-maps-standees-and-stl-tokens.md): How to forge multi-page 1-inch grid PDFs, foldable papercraft standees, and watertight 3D STL token rings with status clips.
+- [`interact-with-campaign-atlas-and-codex.md`](how-to/interact-with-campaign-atlas-and-codex.md): How to navigate the multi-layered world atlas, define geopolitical boundaries, place milestone pins with era filtering, and manage private/shared party codex notes.
 
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture

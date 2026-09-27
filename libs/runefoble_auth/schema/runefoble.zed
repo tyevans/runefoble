@@ -131,5 +131,23 @@ definition relic {
     // Relics can be viewed/inspected by campaign members or creator
     permission inspect = campaign->view + creator
     permission manage = campaign->run_session + creator
+
+definition atlas {
+    relation campaign: campaign
+
+    permission view = campaign->view
+    permission edit = campaign->run_session
+    permission place_pin = campaign->play + campaign->run_session
 }
 
+definition codex_entry {
+    relation campaign: campaign
+    relation author: user
+    relation editor: user
+    relation reader: user
+
+    // Private codex entries are accessible only to author and direct readers/editors
+    permission view = author + editor + reader
+    permission edit = author + editor + campaign->run_session
+    permission manage = author + campaign->run_session
+}
