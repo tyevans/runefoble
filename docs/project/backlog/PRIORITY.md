@@ -185,7 +185,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 181. **TASK-0167 (Complete)**: [`0167-absentee-mobile-directive-voting-microfrontend.md`](complete/0167-absentee-mobile-directive-voting-microfrontend.md) — Absentee Mobile Directive and Remote Voting Microfrontend
 182. **TASK-0170 (Complete)**: [`0170-kinetic-3d-dice-physics-and-tray-audio.md`](complete/0170-kinetic-3d-dice-physics-and-tray-audio.md) — Kinetic 3D Dice Physics and Tray Audio Integration
 183. **TASK-0171 (Refined)**: [`0171-miniature-knockback-and-elevation-fall-physics.md`](refined/0171-miniature-knockback-and-elevation-fall-physics.md) — Miniature Knockback Impulse and Elevation Physics
-184. **TASK-0174 (Refined)**: [`0174-community-plugin-ui-extension-slots-microfrontend.md`](refined/0174-community-plugin-ui-extension-slots-microfrontend.md) — Community Plugin UI Extension Slots Microfrontend
+184. **TASK-0174 (Complete)**: [`0174-community-plugin-ui-extension-slots-microfrontend.md`](complete/0174-community-plugin-ui-extension-slots-microfrontend.md) — Community Plugin UI Extension Slots Microfrontend
 185. **TASK-0177 (Refined)**: [`0177-runefoble-events-aggregator-modular-decomposition.md`](refined/0177-runefoble-events-aggregator-modular-decomposition.md) — Runefoble Events Aggregator Modular Decomposition
 186. **TASK-0220 (Refined)**: [`0220-campaign-members-styles-modular-decomposition.md`](refined/0220-campaign-members-styles-modular-decomposition.md) — Campaign Members Styles Modular Decomposition
 187. **TASK-0218 (Refined)**: [`0218-project-visualizer-agy-test-suite-decomposition.md`](refined/0218-project-visualizer-agy-test-suite-decomposition.md) — Project Visualizer AGY Test Suite Modular Decomposition
