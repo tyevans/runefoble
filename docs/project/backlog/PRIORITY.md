@@ -148,7 +148,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 144. **TASK-0145 (Complete)**: [`0145-west-marches-test-suite-modular-decomposition.md`](complete/0145-west-marches-test-suite-modular-decomposition.md) — West Marches Blackbox Test Suite Modular Decomposition
 145. **TASK-0146 (Complete)**: [`0146-caravan-contracts-test-suite-modular-decomposition.md`](complete/0146-caravan-contracts-test-suite-modular-decomposition.md) — Caravan Contracts Blackbox Test Suite Modular Decomposition
 146. **TASK-0155 (Refined)**: [`0155-spoken-reaction-interrupts-and-ready-actions-engine.md`](refined/0155-spoken-reaction-interrupts-and-ready-actions-engine.md) — Spoken Reaction Interrupts and Ready-Action Combat Triggers
-147. **TASK-0156 (Refined)**: [`0156-secret-dm-traps-and-map-switching-triggers.md`](refined/0156-secret-dm-traps-and-map-switching-triggers.md) — Secret DM Spatial Traps, Map Switching and Stage Triggers
+147. **TASK-0156 (Complete)**: [`0156-secret-dm-traps-and-map-switching-triggers.md`](complete/0156-secret-dm-traps-and-map-switching-triggers.md) — Secret DM Spatial Traps, Map Switching and Stage Triggers
 148. **TASK-0157 (Proposed)**: [`0157-dm-vocal-modulator-formant-dsp-engine.md`](proposed/0157-dm-vocal-modulator-formant-dsp-engine.md) — DM Live Vocal Modulator and Real-Time NPC Formant DSP Engine
 149. **TASK-0149 (Complete)**: [`0149-voice-duplex-barge-in-visualizer-microfrontend.md`](complete/0149-voice-duplex-barge-in-visualizer-microfrontend.md) — Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend
 150. **TASK-0142 (Refined)**: [`0142-3d-miniature-tokens-and-webgl-physics.md`](refined/0142-3d-miniature-tokens-and-webgl-physics.md) — 3D Miniature Tokens & WebGL Tabletop Physics

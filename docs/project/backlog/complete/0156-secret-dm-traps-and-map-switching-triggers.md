@@ -1,7 +1,7 @@
 ---
 id: '0156'
 title: Secret DM Spatial Traps, Map Switching and Stage Triggers
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0007
@@ -18,8 +18,8 @@ governing_prds:
 governing_stories:
 - US-0018
 target_release: 0.6.0
+pr_url: https://github.com/tyevans/runefoble/pull/169
 ---
-
 # TASK-0156: Secret DM Spatial Traps, Map Switching and Stage Triggers
 
 ## Status
