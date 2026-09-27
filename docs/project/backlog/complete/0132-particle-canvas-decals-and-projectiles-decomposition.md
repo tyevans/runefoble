@@ -1,7 +1,7 @@
 ---
 id: '0132'
 title: Particle Canvas Decals and Projectile Physics Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0104
@@ -15,8 +15,8 @@ governing_prds:
 - PRD-0016
 governing_stories:
 - US-0048
+pr_url: https://github.com/tyevans/runefoble/pull/139
 ---
-
 # TASK-0132: Particle Canvas Decals and Projectile Physics Modular Decomposition
 
 ## Status
