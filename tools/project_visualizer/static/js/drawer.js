@@ -199,6 +199,7 @@
     }
 
     if (type === 'PRD') {
+      const md = window.visualizer.renderMarkdown || esc;
       return `
         <div class="space-y-5">
           <div>
@@ -208,7 +209,7 @@
 
           <div class="p-4 rounded-xl bg-[var(--bg-elevated)] border border-subtle space-y-3">
             <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wider">Problem Statement</h4>
-            <p class="text-xs text-slate-300 leading-relaxed">${esc(entity.problem_statement || 'See specification document.')}</p>
+            <div class="text-xs text-slate-300 leading-relaxed">${md(entity.problem_statement || 'See specification document.')}</div>
           </div>
 
           <div class="space-y-2">
@@ -217,7 +218,7 @@
               ${(entity.outcomes || []).map(o => `
                 <li class="p-2.5 rounded-lg bg-[var(--bg-card)] border border-subtle text-xs text-slate-300 flex items-start gap-2">
                   <span class="text-rose-400 font-bold">•</span>
-                  <span>${esc(o)}</span>
+                  <span class="flex-1">${md(o)}</span>
                 </li>
               `).join('')}
             </ul>
@@ -227,25 +228,56 @@
     }
 
     if (type === 'ADR') {
+      const md = window.visualizer.renderMarkdown || esc;
+      const implTasks = entity.implementing_tasks || [];
+
       return `
         <div class="space-y-5">
           <div>
             <h3 class="text-lg font-bold text-white mb-1">${esc(entity.title)}</h3>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <span class="px-2 py-0.5 rounded text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30">${entity.status}</span>
               <span class="px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-300 font-mono">${entity.domain}</span>
+              <span class="px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-400 font-mono">${entity.date || '2026-09-25'}</span>
             </div>
           </div>
 
           <div class="space-y-3">
-            <div class="p-3.5 rounded-xl bg-[var(--bg-elevated)] border border-subtle">
-              <h4 class="text-xs font-bold text-purple-400 uppercase mb-1">Decision</h4>
-              <p class="text-xs text-slate-300 leading-relaxed">${esc(entity.decision || 'See ADR document.')}</p>
+            ${entity.context ? `
+              <div class="p-4 rounded-xl bg-[var(--bg-elevated)] border border-subtle">
+                <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Context</h4>
+                <div class="text-xs text-slate-300 leading-relaxed">${md(entity.context)}</div>
+              </div>
+            ` : ''}
+
+            <div class="p-4 rounded-xl bg-[var(--bg-elevated)] border border-subtle">
+              <h4 class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2">Decision</h4>
+              <div class="text-xs text-slate-300 leading-relaxed">${md(entity.decision || 'See ADR document.')}</div>
             </div>
-            <div class="p-3.5 rounded-xl bg-[var(--bg-elevated)] border border-subtle">
-              <h4 class="text-xs font-bold text-slate-400 uppercase mb-1">Consequences</h4>
-              <p class="text-xs text-slate-300 leading-relaxed">${esc(entity.consequences || 'Documented in architectural decision record.')}</p>
+
+            <div class="p-4 rounded-xl bg-[var(--bg-elevated)] border border-subtle">
+              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Consequences</h4>
+              <div class="text-xs text-slate-300 leading-relaxed">${md(entity.consequences || 'Documented in architectural decision record.')}</div>
             </div>
+
+            ${implTasks.length > 0 ? `
+              <div class="p-4 rounded-xl bg-[var(--bg-elevated)] border border-subtle space-y-2">
+                <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
+                  <span>Implementing Tasks</span>
+                  <span class="font-mono text-[11px] text-muted">${implTasks.length} tasks</span>
+                </h4>
+                <div class="flex flex-wrap gap-1.5">
+                  ${implTasks.map(t => `<button onclick="window.visualizer.openDrawer('${t}')" class="px-2 py-0.5 rounded font-mono text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 transition">${t}</button>`).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${entity.raw_markdown ? `
+              <div class="pt-4 border-t border-subtle">
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-2">Full ADR Markdown</h4>
+                <div class="p-4 rounded-xl bg-[var(--bg-card)] border border-subtle text-xs font-mono whitespace-pre-wrap max-h-64 overflow-y-auto text-slate-300">${esc(entity.raw_markdown)}</div>
+              </div>
+            ` : ''}
           </div>
         </div>
       `;

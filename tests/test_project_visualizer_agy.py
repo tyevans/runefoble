@@ -287,3 +287,53 @@ def test_server_favicon_endpoint(repo_root: Path):
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_markdown_renderer_and_drawer_integration(repo_root: Path):
+    """Verify client markdown renderer parses ADR sections into formatted HTML."""
+    import json
+    import shutil
+    import subprocess
+
+    from tools.project_visualizer.assets_js import get_client_js
+
+    node_bin = shutil.which("node")
+    if not node_bin:
+        pytest.skip("Node.js binary not found for markdown rendering verification")
+
+    client_bundle = get_client_js(is_live_server=False)
+    test_script = f"""
+const window = {{ visualizer: {{}} }};
+global.window = window;
+global.document = {{ addEventListener: () => {{}}, querySelectorAll: () => [], getElementById: () => null }};
+
+{client_bundle}
+
+const adrDecision = `We adopt \\`eventsource-py\\`:
+1. **Domain Events**: Registered via \\`@register_event\\`.
+2. **Aggregates**: Subclasses of \\`DeclarativeAggregate\\`:
+   - \\`GameSessionAggregate\\` in \\`services/game_session\\`
+   - \\`BoardAggregate\\` in \\`services/board_state\\`
+3. **Distribution**: Events published via Redis.`;
+
+const html = window.visualizer.renderMarkdown(adrDecision);
+const results = {{
+    hasOl: html.includes('<ol class="list-decimal'),
+    hasUl: html.includes('<ul class="list-disc'),
+    hasStrong: html.includes('<strong class="font-semibold text-white">Domain Events</strong>'),
+    hasCode: html.includes('eventsource-py</code>'),
+    hasNestedCode: html.includes('GameSessionAggregate</code>'),
+    isHtml: html.startsWith('<p')
+}};
+console.log(JSON.stringify(results));
+"""
+
+    proc = subprocess.run([node_bin, "-e", test_script], capture_output=True, text=True)
+    assert proc.returncode == 0, f"Error executing markdown test script: {proc.stderr}"
+    data = json.loads(proc.stdout)
+    assert data["hasOl"] is True
+    assert data["hasUl"] is True
+    assert data["hasStrong"] is True
+    assert data["hasCode"] is True
+    assert data["hasNestedCode"] is True
+    assert data["isHtml"] is True

@@ -7,6 +7,7 @@ from pathlib import Path
 _STATIC_JS_DIR = Path(__file__).resolve().parent / "static" / "js"
 _MODULE_ORDER = [
     "core.js",
+    "markdown.js",
     "drawer.js",
     "kanban.js",
     "gantt.js",
