@@ -1,7 +1,7 @@
 ---
 id: '0166'
 title: Mobile Low-Bandwidth Opus Adaptive Stream Adapter
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0128
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0059
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/210
 ---
-
 # TASK-0166: Mobile Low-Bandwidth Opus Adaptive Stream Adapter
 
 ## Status

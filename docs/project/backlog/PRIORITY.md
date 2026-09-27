@@ -176,7 +176,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 172. **TASK-0214 (Complete)**: [`0214-frontend-routing-and-auth-blackbox-test-suite.md`](complete/0214-frontend-routing-and-auth-blackbox-test-suite.md) — Frontend Routing and Auth Blackbox Test Suite
 173. **TASK-0215 (Complete)**: [`0215-campaign-management-and-lobby-blackbox-test-suite.md`](complete/0215-campaign-management-and-lobby-blackbox-test-suite.md) — Campaign Management and Lobby Blackbox Test Suite
 174. **TASK-0165 (Complete)**: [`0165-frontier-mercenary-contract-bounty-board-router.md`](complete/0165-frontier-mercenary-contract-bounty-board-router.md) — Frontier Mercenary Contract and Bounty Board Router
-175. **TASK-0166 (Refined)**: [`0166-mobile-low-bandwidth-opus-stream-adapter.md`](refined/0166-mobile-low-bandwidth-opus-stream-adapter.md) — Mobile Low-Bandwidth Opus Adaptive Stream Adapter
+175. **TASK-0166 (Complete)**: [`0166-mobile-low-bandwidth-opus-stream-adapter.md`](complete/0166-mobile-low-bandwidth-opus-stream-adapter.md) — Mobile Low-Bandwidth Opus Adaptive Stream Adapter
 176. **TASK-0168 (Refined)**: [`0168-neural-speech-barge-in-crossfade-filter.md`](refined/0168-neural-speech-barge-in-crossfade-filter.md) — Neural Speech Barge-In and Soft Crossfade Audio Filter
 177. **TASK-0169 (Refined)**: [`0169-hardware-aec-filter-and-erle-validation.md`](refined/0169-hardware-aec-filter-and-erle-validation.md) — Hardware Acoustic Echo Cancellation and ERLE Validation
 178. **TASK-0172 (Refined)**: [`0172-dynamic-fastmcp-tool-hot-reloading-registry.md`](refined/0172-dynamic-fastmcp-tool-hot-reloading-registry.md) — Dynamic FastMCP Tool Hot-Reloading Registry
