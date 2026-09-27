@@ -1,7 +1,7 @@
 ---
-id: '0138'
+id: 0138
 title: Board State Models and Pydantic Schemas Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0085
@@ -16,8 +16,8 @@ governing_stories:
 - US-0012
 - US-0043
 target_release: 0.4.0
+pr_url: https://github.com/tyevans/runefoble/pull/158
 ---
-
 # TASK-0138: Board State Models and Pydantic Schemas Modular Decomposition
 
 ## Status
