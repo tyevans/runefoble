@@ -176,11 +176,11 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 172. **TASK-0214 (Refined)**: [`0214-frontend-routing-and-auth-blackbox-test-suite.md`](refined/0214-frontend-routing-and-auth-blackbox-test-suite.md) — Frontend Routing and Auth Blackbox Test Suite
 173. **TASK-0215 (Refined)**: [`0215-campaign-management-and-lobby-blackbox-test-suite.md`](refined/0215-campaign-management-and-lobby-blackbox-test-suite.md) — Campaign Management and Lobby Blackbox Test Suite
 174. **TASK-0165 (Refined)**: [`0165-frontier-mercenary-contract-bounty-board-router.md`](refined/0165-frontier-mercenary-contract-bounty-board-router.md) — Frontier Mercenary Contract and Bounty Board Router
-175. **TASK-0166 (Proposed)**: [`0166-mobile-low-bandwidth-opus-stream-adapter.md`](proposed/0166-mobile-low-bandwidth-opus-stream-adapter.md) — Mobile Low-Bandwidth Opus Adaptive Stream Adapter
-176. **TASK-0168 (Proposed)**: [`0168-neural-speech-barge-in-crossfade-filter.md`](proposed/0168-neural-speech-barge-in-crossfade-filter.md) — Neural Speech Barge-In and Soft Crossfade Audio Filter
-177. **TASK-0169 (Proposed)**: [`0169-hardware-aec-filter-and-erle-validation.md`](proposed/0169-hardware-aec-filter-and-erle-validation.md) — Hardware Acoustic Echo Cancellation and ERLE Validation
-178. **TASK-0172 (Proposed)**: [`0172-dynamic-fastmcp-tool-hot-reloading-registry.md`](proposed/0172-dynamic-fastmcp-tool-hot-reloading-registry.md) — Dynamic FastMCP Tool Hot-Reloading Registry
-179. **TASK-0173 (Proposed)**: [`0173-universal-vtt-door-and-lighting-parser.md`](proposed/0173-universal-vtt-door-and-lighting-parser.md) — Universal VTT Door and Dynamic Lighting Parser
+175. **TASK-0166 (Refined)**: [`0166-mobile-low-bandwidth-opus-stream-adapter.md`](refined/0166-mobile-low-bandwidth-opus-stream-adapter.md) — Mobile Low-Bandwidth Opus Adaptive Stream Adapter
+176. **TASK-0168 (Refined)**: [`0168-neural-speech-barge-in-crossfade-filter.md`](refined/0168-neural-speech-barge-in-crossfade-filter.md) — Neural Speech Barge-In and Soft Crossfade Audio Filter
+177. **TASK-0169 (Refined)**: [`0169-hardware-aec-filter-and-erle-validation.md`](refined/0169-hardware-aec-filter-and-erle-validation.md) — Hardware Acoustic Echo Cancellation and ERLE Validation
+178. **TASK-0172 (Refined)**: [`0172-dynamic-fastmcp-tool-hot-reloading-registry.md`](refined/0172-dynamic-fastmcp-tool-hot-reloading-registry.md) — Dynamic FastMCP Tool Hot-Reloading Registry
+179. **TASK-0173 (Refined)**: [`0173-universal-vtt-door-and-lighting-parser.md`](refined/0173-universal-vtt-door-and-lighting-parser.md) — Universal VTT Door and Dynamic Lighting Parser
 180. **TASK-0163 (Proposed)**: [`0163-faction-espionage-radar-alerts-microfrontend.md`](proposed/0163-faction-espionage-radar-alerts-microfrontend.md) — Faction Espionage and Alert Feeds Microfrontend
 181. **TASK-0167 (Proposed)**: [`0167-absentee-mobile-directive-voting-microfrontend.md`](proposed/0167-absentee-mobile-directive-voting-microfrontend.md) — Absentee Mobile Directive and Remote Voting Microfrontend
 182. **TASK-0170 (Proposed)**: [`0170-kinetic-3d-dice-physics-and-tray-audio.md`](proposed/0170-kinetic-3d-dice-physics-and-tray-audio.md) — Kinetic 3D Dice Physics and Tray Audio Integration
@@ -220,3 +220,6 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 216. **TASK-0217 (Proposed)**: [`0217-project-visualizer-graph-rendering-decomposition.md`](proposed/0217-project-visualizer-graph-rendering-decomposition.md) — Project Visualizer Graph Rendering Modular Decomposition
 217. **TASK-0218 (Proposed)**: [`0218-project-visualizer-agy-test-suite-decomposition.md`](proposed/0218-project-visualizer-agy-test-suite-decomposition.md) — Project Visualizer AGY Test Suite Modular Decomposition
 218. **TASK-0219 (Proposed)**: [`0219-project-visualizer-drawer-views-decomposition.md`](proposed/0219-project-visualizer-drawer-views-decomposition.md) — Project Visualizer Drawer Subviews Modular Decomposition
+219. **TASK-0220 (Proposed)**: [`0220-campaign-members-styles-modular-decomposition.md`](proposed/0220-campaign-members-styles-modular-decomposition.md) — Campaign Members Styles Modular Decomposition
+220. **TASK-0221 (Proposed)**: [`0221-gateway-campaign-store-modular-decomposition.md`](proposed/0221-gateway-campaign-store-modular-decomposition.md) — Gateway Campaign Store Modular Decomposition
+221. **TASK-0222 (Proposed)**: [`0222-character-roster-styles-modular-decomposition.md`](proposed/0222-character-roster-styles-modular-decomposition.md) — Character Roster Styles Modular Decomposition

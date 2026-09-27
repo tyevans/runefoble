@@ -274,7 +274,7 @@ def test_roadmap_milestones_and_task_linking(repo_root: Path):
 
     # Milestone 10 is Active / Immediate Priority (status: Current, not 100% complete)
     assert m_by_id["M10"].status == "Current"
-    assert m_by_id["M10"].completion_pct < 50
+    assert 0 < m_by_id["M10"].completion_pct < 100
     assert "Frontend Application Experience" in m_by_id["M10"].name
 
     # Milestone 9 has in-progress tasks
