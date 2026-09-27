@@ -83,6 +83,7 @@ class ProjectParser:
         data.tasks = self.parse_backlog_tasks()
         data.milestones = self.parse_milestones()
         data.features = self.parse_features()
+        data = build_traceability_graph(data)
 
         self._cached_fingerprint = fingerprint
         self._cached_data = data

@@ -258,3 +258,33 @@ def test_adr_parser_resilience(tmp_path: Path):
     assert adr12.id == "ADR-0012"
     assert adr12.title == "Bauhaus Theme"
     assert adr12.domain == "Frontend & UI"
+
+
+def test_roadmap_milestones_and_task_linking(repo_root: Path):
+    """Verify all 10 milestones are parsed with accurate status and linked to tasks."""
+    project_dir = repo_root / "docs" / "project"
+    milestones = parse_roadmap_file(project_dir)
+    assert len(milestones) == 10
+
+    m_by_id = {m.id: m for m in milestones}
+    assert m_by_id["M1"].status == "Complete"
+    assert m_by_id["M1"].completion_pct == 100
+    assert m_by_id["M8"].status == "Complete"
+    assert m_by_id["M8"].completion_pct == 100
+
+    # Milestone 10 is Active / Immediate Priority (status: Current, not 100% complete)
+    assert m_by_id["M10"].status == "Current"
+    assert m_by_id["M10"].completion_pct < 50
+    assert "Frontend Application Experience" in m_by_id["M10"].name
+
+    # Milestone 9 has in-progress tasks
+    assert m_by_id["M9"].status in ("In Progress", "Planned")
+
+    # Verify ProjectParser / scan_project populates task.milestone across all tasks
+    scanned_data = scan_project(repo_root, force=True)
+    assert len(scanned_data.tasks) > 0
+    assigned_milestones = {t.milestone for t in scanned_data.tasks}
+    assert "M1" in assigned_milestones
+    assert "M2" in assigned_milestones
+    assert "M10" in assigned_milestones
+    assert "" not in assigned_milestones

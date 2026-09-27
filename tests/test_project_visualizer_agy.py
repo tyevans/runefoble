@@ -359,3 +359,65 @@ console.log(JSON.stringify(results));
     assert data["adrHasStrong"] is True
     assert data["adrHasCode"] is True
     assert data["adrNoP"] is True
+
+
+def test_gantt_chart_dynamic_milestones_and_timeline_rendering(repo_root: Path):
+    """Verify Gantt chart renders dynamic 10-milestone scale and accurate bar lane offsets."""
+    import json
+    import shutil
+    import subprocess
+
+    from tools.project_visualizer.assets_js import get_client_js
+    from tools.project_visualizer.generator import ProjectVisualizerGenerator
+
+    node_bin = shutil.which("node")
+    if not node_bin:
+        pytest.skip("Node.js binary not found for gantt rendering verification")
+
+    client_bundle = get_client_js(is_live_server=False)
+    project_data = ProjectVisualizerGenerator(repo_root).get_data().to_dict()
+
+    test_script = f"""
+const window = {{ visualizer: {{}} }};
+global.window = window;
+global.document = {{ addEventListener: () => {{}}, querySelectorAll: () => [], getElementById: () => null }};
+
+{client_bundle}
+
+const container = {{ innerHTML: '' }};
+const state = {{
+  data: {json.dumps(project_data, default=str)},
+  filters: {{ hideDone: false, bc: 'all', milestone: 'all', search: '' }},
+  gantt: {{ groupBy: 'milestone' }}
+}};
+
+window.visualizer.renderGantt(container, state);
+const html = container.innerHTML;
+
+const results = {{
+  hasM1: html.includes('>M1<'),
+  hasM10: html.includes('>M10<'),
+  hasAppShell: html.includes('App Shell'),
+  noOldPhase1: !html.includes('Phase 1: Foundations'),
+  noOldPhase2: !html.includes('Phase 2: Alpha (Now)'),
+  noOldPhase3: !html.includes('Phase 3: AI DM'),
+  noOldPhase4: !html.includes('Phase 4: Studio'),
+  hasMilestoneFilter: html.includes('All Milestones'),
+  hasGanttGrid: html.includes('gantt-grid'),
+  htmlSnippet: html.slice(0, 1500)
+}};
+console.log(JSON.stringify(results));
+"""
+
+    proc = subprocess.run([node_bin], input=test_script, capture_output=True, text=True)
+    assert proc.returncode == 0, f"Error executing gantt test script: {proc.stderr}"
+    res = json.loads(proc.stdout)
+    assert res["hasM1"] is True
+    assert res["hasM10"] is True
+    assert res["hasAppShell"] is True
+    assert res["noOldPhase1"] is True
+    assert res["noOldPhase2"] is True
+    assert res["noOldPhase3"] is True
+    assert res["noOldPhase4"] is True
+    assert res["hasMilestoneFilter"] is True
+    assert res["hasGanttGrid"] is True
