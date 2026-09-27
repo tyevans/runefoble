@@ -1,7 +1,7 @@
 ---
-id: '0218'
+id: 0218
 title: Project Visualizer AGY Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -9,8 +9,8 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/230
 ---
-
 # TASK-0218: Project Visualizer AGY Test Suite Modular Decomposition
 
 ## Status
