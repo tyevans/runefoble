@@ -161,6 +161,11 @@ def test_zero_hardcoded_hexes_in_session_lobby_styles() -> None:
     assert styles_file.is_file()
 
     css_content = styles_file.read_text(encoding="utf-8")
+    styles_sub_dir = LOBBY_DIR / "styles"
+    if styles_sub_dir.is_dir():
+        for sub_file in styles_sub_dir.glob("*.styles.ts"):
+            css_content += "\n" + sub_file.read_text(encoding="utf-8")
+
     hexes_found = hex_pattern.findall(css_content)
     assert not hexes_found, f"Found hardcoded hex literals in lobby styles: {hexes_found}"
 

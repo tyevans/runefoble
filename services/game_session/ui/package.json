@@ -37,7 +37,8 @@
     "./campaigns/styles": "./src/campaigns/styles/index.ts",
     "./lobby": "./src/lobby/index.ts",
     "./lobby/session-lobby": "./src/lobby/runefoble-session-lobby.ts",
-    "./lobby/styles": "./src/lobby/runefoble-session-lobby.styles.ts",
+    "./lobby/session-lobby.styles": "./src/lobby/runefoble-session-lobby.styles.ts",
+    "./lobby/styles": "./src/lobby/styles/index.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {
