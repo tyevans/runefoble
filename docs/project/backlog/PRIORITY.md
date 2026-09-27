@@ -125,7 +125,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 114. **TASK-0113 (Complete)**: [`0113-character-sheet-aggregate-and-event-handlers-decomposition.md`](complete/0113-character-sheet-aggregate-and-event-handlers-decomposition.md) — Character Sheet Aggregate Mutation Handlers and Event Appliers Decomposition
 115. **TASK-0114 (Complete)**: [`0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md`](complete/0114-theming-tokens-and-contrast-invariants-test-suite-decomposition.md) — Theming Tokens and Contrast Invariants Test Suite Modular Decomposition
 
-116. **TASK-0106 (Proposed)**: [`0106-collaborative-campaign-atlas-and-codex-bc.md`](proposed/0106-collaborative-campaign-atlas-and-codex-bc.md) — Collaborative Multi-Layered Campaign Atlas & Living Interactive Codex
+116. **TASK-0106 (Complete)**: [`0106-collaborative-campaign-atlas-and-codex-bc.md`](complete/0106-collaborative-campaign-atlas-and-codex-bc.md) — Collaborative Multi-Layered Campaign Atlas & Living Interactive Codex
 117. **TASK-0102 (Proposed)**: [`0102-character-leitmotifs-and-adaptive-themes.md`](proposed/0102-character-leitmotifs-and-adaptive-themes.md) — Character Musical Leitmotifs & Dynamic Dramatic Themes
 118. **TASK-0104 (Proposed)**: [`0104-kinetic-spell-vfx-and-particle-canvas.md`](proposed/0104-kinetic-spell-vfx-and-particle-canvas.md) — Multi-Modal Kinetic Spell VFX & WebGL Particle Canvas
 119. **TASK-0066 (Proposed)**: [`0066-project-visualizer-client-assets-and-template-decomposition.md`](proposed/0066-project-visualizer-client-assets-and-template-decomposition.md) — Project Visualizer Client Assets and Standalone HTML Template Modular Decomposition
