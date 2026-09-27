@@ -182,7 +182,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 178. **TASK-0172 (Complete)**: [`0172-dynamic-fastmcp-tool-hot-reloading-registry.md`](complete/0172-dynamic-fastmcp-tool-hot-reloading-registry.md) — Dynamic FastMCP Tool Hot-Reloading Registry
 179. **TASK-0173 (Complete)**: [`0173-universal-vtt-door-and-lighting-parser.md`](complete/0173-universal-vtt-door-and-lighting-parser.md) — Universal VTT Door and Dynamic Lighting Parser
 180. **TASK-0163 (Complete)**: [`0163-faction-espionage-radar-alerts-microfrontend.md`](complete/0163-faction-espionage-radar-alerts-microfrontend.md) — Faction Espionage and Alert Feeds Microfrontend
-181. **TASK-0167 (Refined)**: [`0167-absentee-mobile-directive-voting-microfrontend.md`](refined/0167-absentee-mobile-directive-voting-microfrontend.md) — Absentee Mobile Directive and Remote Voting Microfrontend
+181. **TASK-0167 (Complete)**: [`0167-absentee-mobile-directive-voting-microfrontend.md`](complete/0167-absentee-mobile-directive-voting-microfrontend.md) — Absentee Mobile Directive and Remote Voting Microfrontend
 182. **TASK-0170 (Refined)**: [`0170-kinetic-3d-dice-physics-and-tray-audio.md`](refined/0170-kinetic-3d-dice-physics-and-tray-audio.md) — Kinetic 3D Dice Physics and Tray Audio Integration
 183. **TASK-0171 (Refined)**: [`0171-miniature-knockback-and-elevation-fall-physics.md`](refined/0171-miniature-knockback-and-elevation-fall-physics.md) — Miniature Knockback Impulse and Elevation Physics
 184. **TASK-0174 (Refined)**: [`0174-community-plugin-ui-extension-slots-microfrontend.md`](refined/0174-community-plugin-ui-extension-slots-microfrontend.md) — Community Plugin UI Extension Slots Microfrontend

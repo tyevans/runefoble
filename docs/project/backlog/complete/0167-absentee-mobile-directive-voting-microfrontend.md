@@ -1,7 +1,7 @@
 ---
 id: '0167'
 title: Absentee Mobile Directive and Remote Voting Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0134
@@ -16,8 +16,8 @@ governing_stories:
 - US-0059
 - US-0027
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/222
 ---
-
 # TASK-0167: Absentee Mobile Directive and Remote Voting Microfrontend
 
 ## Status
