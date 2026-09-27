@@ -23,6 +23,24 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 
 ---
 
+## Modular Package Architecture
+
+The `libs/runefoble_events` package organizes domain event definitions and re-exports into discrete, single-responsibility category modules governed by Hard Invariant 6 (< 150 lines per submodule, < 80 lines per aggregator facade):
+
+- **Aggregator Facades**:
+  - `runefoble_events`: Package root facade re-exporting all domain events with 100% backward compatibility.
+  - `runefoble_events.events`: Subpackage aggregator facade providing unified access to domain event models.
+- **Domain Category Submodules (`runefoble_events.events.*` and root aliases `runefoble_events.*_events`)**:
+  - `session_events.py`: Game session lifecycle, turn sequencing, initiative rolls, combat rounds, and reaction pause/triggers.
+  - `board_events.py`: Tactical board grid initialization, token kinematics, fog-of-war, spell AoE templates, and secret traps.
+  - `narrative_events.py`: The Watcher DM narrations, intent parsing, candidate ghost previews, story recaps, and AI stand-ins.
+  - `world_events.py`: West Marches persistent frontier, trade caravans, haven settlements, faction agendas, and lore knowledge.
+  - `character_events.py`: Character progression, inventory slots, conditions, alchemical crafting mishaps, and tavern minigames.
+  - `media_events.py`: Low-latency voice duplex, audio DSP modulation, dynamic soundscapes, procedural asset forge, and audience polls.
+  - `platform_events.py`: Core event base models, privacy-preserving combat analytics, compendium indexing, mercenary contracts, and dynamic MCP tools.
+
+---
+
 ## Domain Event Catalog
 
 ### GameSession Events (`aggregate_type: GameSession`)
