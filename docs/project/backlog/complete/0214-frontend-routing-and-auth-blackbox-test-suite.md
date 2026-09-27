@@ -1,7 +1,7 @@
 ---
 id: '0214'
 title: Frontend Routing and Auth Blackbox Test Suite
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0206
@@ -17,8 +17,8 @@ governing_stories:
 - US-0062
 - US-0066
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/206
 ---
-
 # TASK-0214: Frontend Routing and Auth Blackbox Test Suite
 
 ## Status
