@@ -1,36 +1,42 @@
-"""The Watcher, Voice, and Gameplay Stream Events facade."""
+"""Watcher and gameplay stream domain events package."""
 
-from runefoble_events.watcher_events import (
-    AbsenteeRecapGenerated,
-    AutonomousActionResolved,
-    CandidateGhostPreviewEmitted,
+from runefoble_events.watcher_events.actions import (
     CompoundActionResolved,
-    DiceRolled,
-    DiceRollEvent,
-    DMNarrativeWhispered,
-    EncounterSpawned,
-    FactionAgendaAdvanced,
-    FactionAgendaSet,
-    FactionCreated,
-    GeopoliticalShiftOccurred,
     IntentDisambiguationRequested,
-    PlayerSpokeEvent,
-    ReactionOpportunityResolved,
-    ReactionPromptTriggered,
-    SceneAtmosphereSet,
-    SecretTrapTriggered,
-    SpeechIntentParsed,
-    StandInActionDecided,
-    StandInTurnExecuted,
-    VocalModulatorPresetChanged,
     VoiceAudioConditioned,
     WatcherActionApproved,
     WatcherActionModified,
     WatcherActionProposed,
     WatcherActionVetoed,
+)
+from runefoble_events.watcher_events.combat import (
+    AutonomousActionResolved,
+    CandidateGhostPreviewEmitted,
+    DiceRolled,
+    DiceRollEvent,
+    EncounterSpawned,
+    ReactionOpportunityResolved,
+    ReactionPromptTriggered,
+    SecretTrapTriggered,
+    VocalModulatorPresetChanged,
+)
+from runefoble_events.watcher_events.factions import (
+    FactionAgendaAdvanced,
+    FactionAgendaSet,
+    FactionCreated,
+    GeopoliticalShiftOccurred,
+    WorldTickExecuted,
+)
+from runefoble_events.watcher_events.narrative import (
+    AbsenteeRecapGenerated,
+    DMNarrativeWhispered,
+    PlayerSpokeEvent,
+    SceneAtmosphereSet,
+    SpeechIntentParsed,
+    StandInActionDecided,
+    StandInTurnExecuted,
     WatcherNarrationEvent,
     WatcherNarrationGenerated,
-    WorldTickExecuted,
 )
 
 __all__ = [
