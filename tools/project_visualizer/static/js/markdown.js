@@ -263,5 +263,13 @@
     return blocks.join('\n');
   }
 
+  function renderInlineMarkdown(rawText) {
+    if (!rawText) return '';
+    const normalized = rawText.replace(/\r?\n+/g, ' ').trim();
+    return formatInline(escapeHtml(normalized));
+  }
+
   window.visualizer.renderMarkdown = renderMarkdown;
+  window.visualizer.renderInlineMarkdown = renderInlineMarkdown;
+  window.visualizer.formatInline = formatInline;
 })();

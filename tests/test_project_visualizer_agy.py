@@ -317,18 +317,33 @@ const adrDecision = `We adopt \\`eventsource-py\\`:
 3. **Distribution**: Events published via Redis.`;
 
 const html = window.visualizer.renderMarkdown(adrDecision);
+
+// Test inline markdown on persona pain points/goals and ADR card summaries
+const personaBullet = "Standard \\`MCP\\` server with **sub-50ms** response and [docs](https://example.com).";
+const inlinePersona = window.visualizer.renderInlineMarkdown(personaBullet);
+
+const adrSummary = "We adopt **SpiceDB** (Google Zanzibar).\\n\\n1. **Object-Level Scoping**: Using \\`resource:id\\`.";
+const inlineAdr = window.visualizer.renderInlineMarkdown(adrSummary);
+
 const results = {{
     hasOl: html.includes('<ol class="list-decimal'),
     hasUl: html.includes('<ul class="list-disc'),
     hasStrong: html.includes('<strong class="font-semibold text-white">Domain Events</strong>'),
     hasCode: html.includes('eventsource-py</code>'),
     hasNestedCode: html.includes('GameSessionAggregate</code>'),
-    isHtml: html.startsWith('<p')
+    isHtml: html.startsWith('<p'),
+    personaHasCode: inlinePersona.includes('MCP</code>'),
+    personaHasStrong: inlinePersona.includes('<strong class="font-semibold text-white">sub-50ms</strong>'),
+    personaHasLink: inlinePersona.includes('href="https://example.com"'),
+    personaNoP: !inlinePersona.startsWith('<p'),
+    adrHasStrong: inlineAdr.includes('<strong class="font-semibold text-white">SpiceDB</strong>'),
+    adrHasCode: inlineAdr.includes('resource:id</code>'),
+    adrNoP: !inlineAdr.startsWith('<p')
 }};
 console.log(JSON.stringify(results));
 """
 
-    proc = subprocess.run([node_bin, "-e", test_script], capture_output=True, text=True)
+    proc = subprocess.run([node_bin], input=test_script, capture_output=True, text=True)
     assert proc.returncode == 0, f"Error executing markdown test script: {proc.stderr}"
     data = json.loads(proc.stdout)
     assert data["hasOl"] is True
@@ -337,3 +352,10 @@ console.log(JSON.stringify(results));
     assert data["hasCode"] is True
     assert data["hasNestedCode"] is True
     assert data["isHtml"] is True
+    assert data["personaHasCode"] is True
+    assert data["personaHasStrong"] is True
+    assert data["personaHasLink"] is True
+    assert data["personaNoP"] is True
+    assert data["adrHasStrong"] is True
+    assert data["adrHasCode"] is True
+    assert data["adrNoP"] is True
