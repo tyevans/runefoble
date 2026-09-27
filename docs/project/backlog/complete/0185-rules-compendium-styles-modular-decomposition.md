@@ -1,7 +1,7 @@
 ---
-id: '0185'
+id: 0185
 title: Rules Compendium Styles Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0048
@@ -16,8 +16,8 @@ governing_stories:
 - US-0037
 - US-0052
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/245
 ---
-
 # TASK-0185: Rules Compendium Styles Modular Decomposition
 
 ## Status
