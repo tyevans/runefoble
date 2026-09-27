@@ -733,6 +733,24 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `codec_mode`: String ("standard", "mobile_optimized", "cellular_constrained", "ultra_low")
   - `reason`: String
   - `adapted_at`: String (ISO-8601 UTC timestamp)
+- **`NeuralSpeechBargeInDetectedEvent`**: Emitted when high-precision neural VAD detects vocalization onset during active TTS playback (`runefoble.events.voice.barge_in_detected` / `voice.barge_in_detected`).
+  - `session_id`: String
+  - `speaker_id`: String
+  - `speaker_name`: String
+  - `onset_latency_ms`: Float (< 40ms)
+  - `confidence`: Float
+  - `rms_energy`: Float
+  - `detected_at`: Float (epoch timestamp)
+  - `reason`: String ("human_speech_barge_in")
+- **`TTSStreamAttenuatedEvent`**: Emitted when active TTS playback is attenuated gracefully to silence with cosine crossfading (`runefoble.events.voice.tts_stream_attenuated` / `voice.tts_stream_attenuated`).
+  - `session_id`: String
+  - `stream_id`: String
+  - `fade_duration_ms`: Float (10ms-30ms, default 20ms)
+  - `attenuated_samples_count`: Integer
+  - `peak_tail_amplitude`: Integer (<= 1)
+  - `cutoff_position_ms`: Float
+  - `remaining_text`: Optional[String]
+  - `attenuated_at`: Float (epoch timestamp)
 
 
 

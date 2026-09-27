@@ -200,6 +200,12 @@ from runefoble_events.voice import (
     VoicePeerMuteToggled,
     VoiceSpeechInterrupted,
 )
+from runefoble_events.voice_barge_in import (
+    NeuralSpeechBargeInDetected,
+    NeuralSpeechBargeInDetectedEvent,
+    TTSStreamAttenuated,
+    TTSStreamAttenuatedEvent,
+)
 from runefoble_events.voice_stream_quality import (
     VoiceStreamCodecAdaptedEvent,
     VoiceStreamQualityDegradedEvent,
@@ -451,4 +457,8 @@ __all__ = [
     "SettlementUpgraded",
     "SettlementRestBoonClaimedEvent",
     "SettlementRestBoonClaimed",
+    "NeuralSpeechBargeInDetected",
+    "NeuralSpeechBargeInDetectedEvent",
+    "TTSStreamAttenuated",
+    "TTSStreamAttenuatedEvent",
 ]

@@ -5,32 +5,14 @@ Halts active TTS narration within < 100ms with a 20ms soft crossfade to silence.
 
 from __future__ import annotations
 
-import array
 import contextlib
-import math
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from runefoble_events.events import VoiceSpeechInterrupted
-
-
-def apply_soft_crossfade(
-    audio_bytes: bytes, fade_duration_ms: float = 20.0, sample_rate: int = 16000
-) -> bytes:
-    """Apply smooth 20ms cosine crossfade to silence on 16-bit signed PCM audio."""
-    if not audio_bytes:
-        return b""
-    samples = array.array("h", audio_bytes)
-    fade_samples = min(len(samples), int(sample_rate * (fade_duration_ms / 1000.0)))
-    if fade_samples <= 0:
-        return bytes(samples)
-    start_idx = max(0, len(samples) - fade_samples)
-    for i in range(fade_samples):
-        multiplier = 0.5 * (1.0 + math.cos(math.pi * i / fade_samples))
-        samples[start_idx + i] = int(samples[start_idx + i] * multiplier)
-    return bytes(samples)
+from voice_agent.dsp.cosine_crossfade import apply_cosine_crossfade as apply_soft_crossfade
 
 
 @dataclass

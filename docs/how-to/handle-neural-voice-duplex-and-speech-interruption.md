@@ -8,6 +8,7 @@ Governed by:
 - **PRD-0004**: Dynamic Vocal Audio Conditioning and DSP Filters
 - **US-0060**: Zero-Latency Neural Voice Duplex & Speech Interruption Handling
 - **TASK-0141**: Zero-Latency Neural Voice Duplex & Speech Interruption Handling
+- **TASK-0168**: Neural Speech Barge-In and Soft Crossfade Audio Filter
 
 ---
 
@@ -164,4 +165,51 @@ The component is vendored inside `services/voice_agent/ui/` and advertised via t
 curl -s http://voice-agent.runefoble.svc.cluster.local:8005/ui/manifest | jq .components
 # Output includes: "runefoble-voice-duplex-controls"
 ```
+
+---
+
+## 7. Neural Speech Barge-In Filter & Cosine Soft Crossfading (TASK-0168)
+
+To eliminate harsh audio clipping and delayed conversational cutoffs, `voice_agent.dsp` provides sub-40ms onset detection coupled with a 20ms raised-cosine crossfade:
+
+### Architecture Components
+- **`BargeInOnsetFilter` (`voice_agent.dsp.barge_in_filter`)**: Audio ring-buffer evaluator continuously analyzing 10ms PCM frames for energy and zero-crossing rates, triggering barge-in within `< 40ms` of speech onset.
+- **`CosineCrossfadeAttenuator` (`voice_agent.dsp.cosine_crossfade`)**: Smooth raised-cosine attenuation filter ($0.5 \times (1 + \cos(\pi \times (i+1)/N))$) damping outgoing TTS audio samples to zero amplitude across 20ms without pop artifacts.
+- **CloudEvents**: Automatically publishes `runefoble.events.voice.barge_in_detected` and `runefoble.events.voice.tts_stream_attenuated` over Redis Streams.
+
+### Diagnostic Evaluation Frontdoor API
+
+The diagnostic endpoint evaluates synthetic or captured audio frames and returns onset metrics and attenuated PCM waveforms:
+
+```bash
+curl -X POST http://voice-agent.runefoble.svc.cluster.local:8005/voice/filters/barge-in/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "session-campaign-12",
+    "speaker_id": "spk-marcus",
+    "speaker_name": "Marcus",
+    "audio_base64": "<base64-pcm-speech>",
+    "fade_duration_ms": 20.0,
+    "energy_threshold": 350.0
+  }'
+```
+
+Response includes:
+```json
+{
+  "session_id": "session-campaign-12",
+  "speaker_id": "spk-marcus",
+  "barge_in_detected": true,
+  "onset_latency_ms": 20.0,
+  "confidence": 0.85,
+  "rms_energy": 6363.9,
+  "attenuation_applied": true,
+  "fade_duration_ms": 20.0,
+  "attenuated_audio_base64": "...",
+  "peak_tail_amplitude": 0,
+  "halt_latency_ms": 40.0,
+  "status": "success"
+}
+```
+
 
