@@ -102,7 +102,7 @@
 - [x] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
 - [x] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
 
-## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Complete)
+## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Active / Immediate Priority)
 ### Core Identity, Gateway & Shell Routing Enablers
 - [x] Frontend SPA Client Router and Navigation Chrome (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0206)
 - [x] Zitadel Auth Client and Login Modal Component (`FEAT-UI-07`, `FEAT-SEC-02`, US-0062, PRD-0023, TASK-0207)
@@ -112,14 +112,14 @@
 - [x] Campaign Dashboard and Creation Microfrontend (`FEAT-UI-08`, US-0063, PRD-0023, TASK-0209)
 - [x] Campaign Members and Zanzibar Role Manager UI (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0210)
 - [x] Character Roster and Party Assignment Microfrontend (`FEAT-UI-09`, US-0064, PRD-0023, TASK-0211)
-- [x] Game Session Lobby and Readiness Microfrontend (`FEAT-UI-10`, US-0065, PRD-0023, TASK-0212)
-- [x] App Shell View Orchestration and Session Transition (`FEAT-UI-11`, US-0065, US-0066, PRD-0023, TASK-0213)
+- [ ] Game Session Lobby and Readiness Microfrontend (`FEAT-UI-10`, US-0065, PRD-0023, TASK-0212)
+- [ ] App Shell View Orchestration and Session Transition (`FEAT-UI-11`, US-0065, US-0066, PRD-0023, TASK-0213)
 
 ### Frontdoor Blackbox Verification Suites
-- [x] Frontend Routing and Auth Blackbox Test Suite (US-0062, US-0066, PRD-0023, TASK-0214)
-- [x] Campaign Management and Lobby Blackbox Test Suite (US-0063, US-0064, US-0065, PRD-0023, TASK-0215)
+- [ ] Frontend Routing and Auth Blackbox Test Suite (US-0062, US-0066, PRD-0023, TASK-0214)
+- [ ] Campaign Management and Lobby Blackbox Test Suite (US-0063, US-0064, US-0065, PRD-0023, TASK-0215)
 
-## Milestone 9: Persona Immersion & Community Ecosystem (Active / Immediate Priority)
+## Milestone 9: Persona Immersion & Community Ecosystem
 ### Living Worlds, Mobile & Voice Enablers
 
 - [x] NPC Faction Resource Operations and Bribery Mechanics Aggregate (`FEAT-WAT-07`, US-0057, PRD-0017, TASK-0161)
