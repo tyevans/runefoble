@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Cross-Campaign Caravan Trading & Frontier Bounty Board Microfrontend (`TASK-0136`, `ADR-0001`, `ADR-0006`, `ADR-0013`, `PRD-0007`, `US-0058`)**:
+  - Implemented `<runefoble-caravan-board>` Lit Web Component in `services/game_session/ui/src/runefoble-caravan-board.ts` displaying active trade caravans, cargo manifests, escort contracts, payout bounties, transit route risk indicators, and real-time status notifications using Bauhaus design tokens.
+  - Built Caravan Manifest Details Modal with detailed inspection view showing cargo inventory, departure settlement, destination stronghold, required collateral, and escort fee payout.
+  - Built Active Transit Route Status Pill with visual progress bar showing remaining travel distance and ambush encounter alerts.
+  - Implemented one-click "Accept Escort Contract" button triggering SpiceDB Zanzibar authorized REST call to `/api/v1/shared-worlds/{wid}/caravans/contracts/{cid}/accept` and optimistic UI updates.
+  - Decomposed component into focused modules (`runefoble-caravan-types.ts`, `runefoble-caravan-modal.ts`, `runefoble-caravan-board.styles.ts`) strictly maintaining Hard Invariant 6 (<500 lines per file).
+  - Registered and advertised `<runefoble-caravan-board>` via `/ui/manifest` and `/game_session/ui/manifest` in `services/game_session/src/game_session/main.py`.
+  - Authored interactive Storybook stories in `services/game_session/ui/src/runefoble-caravan-board.stories.ts` with 6 scenarios (`DefaultNoticeBoard`, `ActiveCaravanTransit`, `AmbushWarningAlert`, `CaravanManifestModalOpen`, `GuildOfficerManagement`, `ContractPayoutFulfilled`).
+  - Added comprehensive frontdoor blackbox test suite in `tests/test_blackbox_caravan_board_ui.py` validating manifest registration, component features, Storybook contract, and REST acceptance.
+  - Updated Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md`.
 - **Spatial Companion Mobile WebRTC Audio & Haptic Controller Microfrontend (`TASK-0134`, `ADR-0002`, `ADR-0005`, `ADR-0013`, `PRD-0004`, `US-0059`)**:
   - Implemented responsive mobile companion Web Component `<runefoble-mobile-companion>` vendored in `services/voice_agent/ui/src/runefoble-mobile-companion.ts` with Bauhaus design tokens, active channel indicator, connection status pill, and large thumb-friendly push-to-talk button.
   - Implemented tactile haptic feedback dispatcher triggering `navigator.vibrate(pattern)` with graceful fallback for environments lacking vibration support, dispatching `haptic-pulse` CustomEvents.

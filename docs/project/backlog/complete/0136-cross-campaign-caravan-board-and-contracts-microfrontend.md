@@ -1,7 +1,7 @@
 ---
 id: '0136'
 title: Cross-Campaign Caravan Trading & Frontier Bounty Board Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0008
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0058
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/148
 ---
-
 # TASK-0136: Cross-Campaign Caravan Trading & Frontier Bounty Board Microfrontend
 
 ## Status
