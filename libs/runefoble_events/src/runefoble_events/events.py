@@ -184,6 +184,12 @@ from runefoble_events.voice import (
     VoicePeerMuteToggled,
     VoiceSpeechInterrupted,
 )
+from runefoble_events.voice_barge_in import (
+    NeuralSpeechBargeInDetected,
+    NeuralSpeechBargeInDetectedEvent,
+    TTSStreamAttenuated,
+    TTSStreamAttenuatedEvent,
+)
 from runefoble_events.watcher import (
     AbsenteeRecapGenerated,
     AutonomousActionResolved,
@@ -417,4 +423,8 @@ __all__ = [
     "FactionMercenaryRecruited",
     "FactionBriberyAttemptedEvent",
     "FactionBriberyAttempted",
+    "NeuralSpeechBargeInDetected",
+    "NeuralSpeechBargeInDetectedEvent",
+    "TTSStreamAttenuated",
+    "TTSStreamAttenuatedEvent",
 ]

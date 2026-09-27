@@ -38,6 +38,7 @@ from voice_agent.models import (
     VoicePersona,
 )
 from voice_agent.routers import (
+    audio_filters_router,
     audio_router,
     duplex_router,
     room_router,
@@ -57,6 +58,7 @@ app.include_router(audio_router)
 app.include_router(synthesis_router)
 app.include_router(duplex_router)
 app.include_router(vocal_effects_router)
+app.include_router(audio_filters_router)
 
 _event_bus: RedisStreamsEventBus | None = None
 

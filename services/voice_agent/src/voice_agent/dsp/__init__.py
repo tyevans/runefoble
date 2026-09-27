@@ -7,10 +7,16 @@ from voice_agent.audio_utils import (
     generate_synthetic_audio,
     to_samples_array,
 )
+from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter, BargeInOnsetResult
 from voice_agent.dsp.base import (
     DSPFilterConfig,
     ProcessedSpeechResult,
     VoiceDSPPipeline,
+)
+from voice_agent.dsp.cosine_crossfade import (
+    CosineAttenuationResult,
+    CosineCrossfadeAttenuator,
+    apply_cosine_crossfade,
 )
 from voice_agent.dsp.formants import (
     biquad_resonance,
@@ -44,7 +50,11 @@ from voice_agent.phonetics import (
 
 __all__ = [
     "ANCIENT_DRAGON",
+    "BargeInOnsetFilter",
+    "BargeInOnsetResult",
     "CELESTIAL_SPIRIT",
+    "CosineAttenuationResult",
+    "CosineCrossfadeAttenuator",
     "DSPFilterConfig",
     "GOBLIN_SKULKER",
     "NPCVoicePreset",
@@ -56,6 +66,7 @@ __all__ = [
     "VoiceDSPPipeline",
     "_to_samples_array",
     "apply_audio_filters",
+    "apply_cosine_crossfade",
     "apply_slurred_speech",
     "apply_text_transforms",
     "biquad_resonance",
