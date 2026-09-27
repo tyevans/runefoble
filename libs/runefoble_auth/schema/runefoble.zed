@@ -131,6 +131,14 @@ definition relic {
     // Relics can be viewed/inspected by campaign members or creator
     permission inspect = campaign->view + creator
     permission manage = campaign->run_session + creator
+}
+
+definition faction {
+    relation campaign: campaign
+
+    permission view = campaign->view
+    permission manage = campaign->run_session
+}
 
 definition atlas {
     relation campaign: campaign

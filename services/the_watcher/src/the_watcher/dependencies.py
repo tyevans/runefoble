@@ -8,12 +8,18 @@ from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_sourcing import (
+    AggregateRepository,
+    create_aggregate_repository,
+)
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.autonomous_dm import AutonomousDMEngine
 from the_watcher.chronicle import ChronicleRecapEngine
 from the_watcher.compound_actions import CompoundActionEngine
 from the_watcher.copilot import CopilotEngine
 from the_watcher.disambiguation import DisambiguationEngine
+from the_watcher.factions import FactionAggregate
+from the_watcher.simulation_engine import FactionSimulationEngine
 from the_watcher.watcher_ai import TheWatcherEngine
 
 logger = logging.getLogger("runefoble.the_watcher")
@@ -28,11 +34,13 @@ autonomous_dm_engine = AutonomousDMEngine()
 copilot_engine = CopilotEngine()
 disambiguation_engine = DisambiguationEngine()
 compound_action_engine = CompoundActionEngine()
+faction_simulation_engine = FactionSimulationEngine()
 
 platform_settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
+_faction_repo: AggregateRepository[FactionAggregate] | None = None
 
 
 def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
@@ -52,6 +60,22 @@ def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None
 
 def get_copilot_engine() -> CopilotEngine:
     return copilot_engine
+
+
+def get_faction_simulation_engine() -> FactionSimulationEngine:
+    return faction_simulation_engine
+
+
+def get_faction_repo() -> AggregateRepository[FactionAggregate]:
+    global _faction_repo
+    if _faction_repo is None:
+        _faction_repo = create_aggregate_repository(FactionAggregate)
+    return _faction_repo
+
+
+def set_faction_repo(repo: AggregateRepository[FactionAggregate] | None) -> None:
+    global _faction_repo
+    _faction_repo = repo
 
 
 async def check_dm_authorization(

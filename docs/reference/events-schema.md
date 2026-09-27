@@ -432,6 +432,52 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
   - `filters_applied`: List[String]
   - `latency_ms`: Float
   - `audio_bytes_length`: Integer
+- **`FactionCreated`**: Emitted when a new autonomous NPC faction aggregate is registered (`runefoble.events.watcher.faction_created`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `name`: String
+  - `influence`: Integer (1-100)
+  - `resources`: Integer
+  - `disposition`: String ("hostile", "unfriendly", "neutral", "friendly", "allied")
+  - `active_goal`: String
+  - `rival_faction_ids`: List[String]
+  - `territory`: String
+  - `metadata`: Dict[String, Any]
+- **`FactionAgendaSet`**: Emitted when a faction updates or shifts their active agenda goal (`runefoble.events.watcher.faction_agenda_set`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `active_goal`: String
+  - `target_progress`: Integer (default 100)
+  - `current_progress`: Integer
+  - `target_faction_or_location`: Optional[String]
+- **`FactionAgendaAdvanced`**: Emitted when a background simulation check resolves and mutates faction goal progress (`runefoble.events.watcher.faction_agenda_advanced`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `faction_name`: String
+  - `agenda_name`: String
+  - `roll`: Integer (1-20)
+  - `modifier`: Integer
+  - `dc`: Integer
+  - `outcome`: String ("success", "partial_success", "countered", "failure")
+  - `progress_delta`: Integer
+  - `current_progress`: Integer
+  - `target_progress`: Integer
+  - `narrative`: String
+- **`GeopoliticalShiftOccurred`**: Emitted when faction agenda completion alters territorial control, creates shortages, or sparks conflicts (`runefoble.events.watcher.geopolitical_shift_occurred`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `territory`: String
+  - `shift_type`: String ("trade_shortage", "territory_captured", "martial_law", "open_conflict")
+  - `description`: String
+  - `severity`: String ("minor", "moderate", "critical")
+  - `ripple_effects`: List[String]
+- **`WorldTickExecuted`**: Emitted when a downtime world progression tick completes across all campaign factions (`runefoble.events.watcher.world_tick_executed`).
+  - `campaign_id`: String
+  - `tick_number`: Integer
+  - `intelligence_bulletin`: String (Markdown formatted DM briefing)
+  - `factions_simulated`: List[String] (faction IDs)
+  - `shifts`: List[Dict[String, Any]]
+  - `rumors`: List[String]
 
 ### VoiceRoom Events (`aggregate_type: VoiceRoom`)
 
