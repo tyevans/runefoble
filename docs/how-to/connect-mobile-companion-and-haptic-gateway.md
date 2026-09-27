@@ -149,4 +149,58 @@ Per ADR-0004 and Hard Invariant 6, the mobile companion is decomposed into focus
    - Renders online/offline badges, cellular tier tags, live haptic pulse animations, round-trip latency readouts, and reconnection trigger buttons.
    - Emits: `reconnect`.
 
+---
+
+## 6. WebRTC RTCP Quality Monitoring & Adaptive Bitrate Diagnostics (TASK-0166)
+
+The voice agent automatically scales individual WebRTC stream bitrates down to 16kHz mono Opus (<50 kbps) when cellular packet loss occurs:
+
+### Reporting RTCP Telemetry via HTTP
+
+Clients submit standard RTCP receiver reports to `/voice/streams/{session_id}/report`:
+
+```bash
+curl -X POST "http://localhost:8005/voice/streams/session-101/report" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "peer_id": "peer_marcus",
+    "packet_loss": 0.08,
+    "rtt_ms": 120.0,
+    "jitter_ms": 14.5
+  }'
+```
+
+- When packet loss > 5% or RTT > 250ms is detected, `VoiceStreamQualityDegradedEvent` is emitted.
+- The `AdaptiveBitrateRegulator` steps transmission down to 12 kbps (`cellular_constrained` mode) or 8 kbps (`ultra_low` mode) within 200ms.
+- A `VoiceStreamCodecAdaptedEvent` is published to Redis Streams.
+
+### Querying Stream Diagnostics
+
+Inspect the active stream quality, bitrate, and codec mode via `/voice/streams/{session_id}/quality`:
+
+```bash
+curl "http://localhost:8005/voice/streams/session-101/quality?peer_id=peer_marcus"
+```
+
+Response:
+```json
+{
+  "session_id": "session-101",
+  "peer_id": "peer_marcus",
+  "bitrate_kbps": 12,
+  "packet_loss": 0.08,
+  "codec_mode": "cellular_constrained",
+  "sample_rate": 16000,
+  "channels": 1,
+  "complexity": 4,
+  "fec_enabled": true,
+  "dtx_enabled": true,
+  "rtt_ms": 120.0,
+  "jitter_ms": 14.5,
+  "is_degraded": true,
+  "severity": "degraded"
+}
+```
+
+
 

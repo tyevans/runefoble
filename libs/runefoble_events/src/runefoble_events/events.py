@@ -184,6 +184,10 @@ from runefoble_events.voice import (
     VoicePeerMuteToggled,
     VoiceSpeechInterrupted,
 )
+from runefoble_events.voice_stream_quality import (
+    VoiceStreamCodecAdaptedEvent,
+    VoiceStreamQualityDegradedEvent,
+)
 from runefoble_events.watcher import (
     AbsenteeRecapGenerated,
     AutonomousActionResolved,
@@ -316,6 +320,8 @@ __all__ = [
     "VoicePeerLeft",
     "VoicePeerMuteToggled",
     "VoiceSpeechInterrupted",
+    "VoiceStreamCodecAdaptedEvent",
+    "VoiceStreamQualityDegradedEvent",
     "MobileCompanionConnected",
     "MobileAudioProfileAdapted",
     "MobileHapticPingDispatched",
