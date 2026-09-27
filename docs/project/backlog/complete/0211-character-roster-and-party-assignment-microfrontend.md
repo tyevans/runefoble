@@ -1,7 +1,7 @@
 ---
 id: '0211'
 title: Character Roster and Party Assignment Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0206
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0064
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/201
 ---
-
 # TASK-0211: Character Roster and Party Assignment Microfrontend
 
 ## Status
