@@ -4,49 +4,37 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import Annotated, Any
+from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import Header
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.base import BaseRunefobleEvent
-from runefoble_events.character import (
-    CharacterHealthChanged,
-    CriticalHitScored,
-    DeathSaveStarted,
-)
-from runefoble_events.session import (
-    CombatEncounterStarted,
-    CombatRoundAdvanced,
-    InitiativeTurnAdvanced,
-)
-from runefoble_events.watcher import DiceRolled, PlayerSpokeEvent
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import (
-    AggregateRepository,
-    create_aggregate_repository,
-)
+from runefoble_platform.event_sourcing import AggregateRepository, create_aggregate_repository
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from soundscape.aggregate import SoundscapeAggregate
+from soundscape.event_handlers import (
+    handle_incoming_domain_event,
+    register_soundscape_event_handlers,
+)
+
+__all__ = ["handle_incoming_domain_event", "register_soundscape_event_handlers"]
 from soundscape.leitmotif import LeitmotifEngine
 from soundscape.mixer import AudioStemMixer
-from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
 
 logger = logging.getLogger("runefoble.soundscape")
 settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
-_soundscape_repo: AggregateRepository[SoundscapeAggregate] = create_aggregate_repository(
-    SoundscapeAggregate
-)
-_spicedb_client: SpiceDBClient = SpiceDBClient(
+_soundscape_repo = create_aggregate_repository(SoundscapeAggregate)
+_spicedb_client = SpiceDBClient(
     endpoint=settings.spicedb_endpoint or "localhost:50051",
     token=getattr(settings, "spicedb_token", "secret"),
 )
 
-# In-memory mapping of session_id -> aggregate_id, AudioStemMixer, and LeitmotifEngine
 _session_to_aggregate: dict[str, UUID] = {}
 _session_mixers: dict[str, AudioStemMixer] = {}
 _session_leitmotif_engines: dict[str, LeitmotifEngine] = {}
@@ -129,239 +117,23 @@ async def check_user_can_control_soundscape(
     """Check Zanzibar authorization for managing audio soundscapes."""
     if not user_id:
         return True
-
-    # 1. Check session permission directly if session_id provided
-    try:
-        can_control = await spicedb.check_permission(
-            resource_type="session",
-            resource_id=session_id,
-            permission="control",
-            subject_type="user",
-            subject_id=user_id,
-        )
-        if can_control:
+    with contextlib.suppress(Exception):
+        if await spicedb.check_permission("session", session_id, "control", "user", user_id):
             return True
-    except Exception:
-        pass
-
-    # 2. Check campaign context
     if campaign_id:
-        try:
-            can_run = await spicedb.check_permission(
-                resource_type="campaign",
-                resource_id=str(campaign_id),
-                permission="run_session",
-                subject_type="user",
-                subject_id=user_id,
-            )
-            if can_run:
-                return True
-            return await spicedb.check_permission(
-                resource_type="campaign",
-                resource_id=str(campaign_id),
-                permission="play",
-                subject_type="user",
-                subject_id=user_id,
-            )
-        except Exception:
-            return False
-
+        with contextlib.suppress(Exception):
+            cid = str(campaign_id)
+            for perm in ("run_session", "play"):
+                if await spicedb.check_permission("campaign", cid, perm, "user", user_id):
+                    return True
     return False
 
 
 async def publish_soundscape_event(event: BaseRunefobleEvent) -> None:
     """Publish soundscape domain event across in-memory platform bus and Redis Streams."""
-    # 1. In-memory bus
     with contextlib.suppress(Exception):
         await platform_bus.publish(event.event_type, event)
-
-    # 2. Redis stream bus
     bus = get_event_bus()
     if bus:
-        stream = "runefoble.events.soundscape"
         with contextlib.suppress(Exception):
-            await bus.publish_event(stream, event)
-
-
-async def handle_incoming_domain_event(event: Any) -> None:
-    """Process domain events (CombatStarted, CombatRoundAdvanced, PlayerSpokeEvent) to adjust soundscape."""
-    repo = get_soundscape_repo()
-
-    if isinstance(event, (CombatEncounterStarted,)):
-        session_id = str(getattr(event, "session_id", "default") or "default")
-        agg_id = get_or_create_aggregate_id(session_id)
-        try:
-            agg = await repo.load(agg_id)
-        except Exception:
-            agg = SoundscapeAggregate(agg_id)
-
-        tension = calculate_encounter_tension(
-            combat_active=True, combat_round=1, enemy_cr_balance=2.0
-        )
-        profile = derive_stem_profile(tension)
-        mixer = get_or_create_mixer(session_id)
-        mixer.stem_profile = profile
-
-        agg.record_tension_update(
-            session_id=session_id,
-            tension_score=tension,
-            stem_profile=profile,
-            combat_round=1,
-            enemy_cr_balance=2.0,
-        )
-        agg.record_track_change(
-            session_id=session_id,
-            track_id="track-combat-01",
-            stem_profile=profile,
-            tension_score=tension,
-            crossfade_duration_ms=1500,
-            active_stems=[profile],
-        )
-        events = list(agg.uncommitted_events)
-        await repo.save(agg)
-        for ev in events:
-            await publish_soundscape_event(ev)
-
-    elif isinstance(event, (CombatRoundAdvanced, InitiativeTurnAdvanced)):
-        session_id = str(getattr(event, "session_id", "default") or "default")
-        round_num = getattr(event, "round_number", 1)
-        agg_id = get_or_create_aggregate_id(session_id)
-        try:
-            agg = await repo.load(agg_id)
-        except Exception:
-            agg = SoundscapeAggregate(agg_id)
-
-        tension = calculate_encounter_tension(
-            combat_active=True, combat_round=round_num, enemy_cr_balance=2.5
-        )
-        profile = derive_stem_profile(tension)
-        mixer = get_or_create_mixer(session_id)
-        old_profile = mixer.stem_profile
-        mixer.stem_profile = profile
-
-        agg.record_tension_update(
-            session_id=session_id,
-            tension_score=tension,
-            stem_profile=profile,
-            combat_round=round_num,
-        )
-        if profile != old_profile:
-            agg.record_track_change(
-                session_id=session_id,
-                track_id=f"track-{profile}-01",
-                stem_profile=profile,
-                tension_score=tension,
-                crossfade_duration_ms=1500,
-                active_stems=[profile],
-            )
-        events = list(agg.uncommitted_events)
-        await repo.save(agg)
-        for ev in events:
-            await publish_soundscape_event(ev)
-
-    elif isinstance(event, PlayerSpokeEvent):
-        # Speech detected: trigger -12dB WebAudio ducking
-        session_id = str(getattr(event, "session_id", "default") or "default")
-        mixer = get_or_create_mixer(session_id)
-        mixer.set_ducking(True, reason="speech")
-        leitmotif_engine = get_or_create_leitmotif_engine(session_id)
-        leitmotif_engine.set_ducking(True)
-        agg_id = get_or_create_aggregate_id(session_id)
-        try:
-            agg = await repo.load(agg_id)
-        except Exception:
-            agg = SoundscapeAggregate(agg_id)
-        agg.record_ducking_toggle(
-            session_id=session_id,
-            is_ducked=True,
-            attenuation_db=-12.0,
-            reason="speech",
-        )
-        events = list(agg.uncommitted_events)
-        await repo.save(agg)
-        for ev in events:
-            await publish_soundscape_event(ev)
-
-    elif isinstance(event, (CriticalHitScored,)) or (
-        isinstance(event, DiceRolled) and getattr(event, "is_crit", False)
-    ):
-        session_id = str(getattr(event, "session_id", "default") or "default")
-        char_id = str(
-            getattr(event, "character_id", None)
-            or getattr(event, "roller_id", None)
-            or "char-player"
-        )
-        char_name = str(
-            getattr(event, "character_name", None) or getattr(event, "roller_name", None) or "Hero"
-        )
-        engine = get_or_create_leitmotif_engine(session_id)
-        playback = engine.trigger_leitmotif(
-            character_id=char_id,
-            motif_type="triumphant",
-            trigger_reason="critical_hit",
-            character_name=char_name,
-        )
-        agg_id = get_or_create_aggregate_id(session_id)
-        try:
-            agg = await repo.load(agg_id)
-        except Exception:
-            agg = SoundscapeAggregate(agg_id)
-
-        agg.record_leitmotif_trigger(
-            session_id=session_id,
-            character_id=char_id,
-            character_name=char_name,
-            motif_type=playback.motif_type,
-            instrument_timbre=playback.instrument_timbre,
-            stem_url=playback.stem_url,
-            tempo_multiplier=playback.tempo_multiplier,
-            volume_gain=playback.volume_gain,
-            attack_ms=playback.attack_ms,
-            release_ms=playback.release_ms,
-            duration_ms=playback.duration_ms,
-            duck_music=False,
-            trigger_reason="critical_hit",
-        )
-        events = list(agg.uncommitted_events)
-        await repo.save(agg)
-        for ev in events:
-            await publish_soundscape_event(ev)
-
-    elif isinstance(event, (DeathSaveStarted,)) or (
-        isinstance(event, CharacterHealthChanged) and getattr(event, "current_hp", 1) <= 0
-    ):
-        session_id = str(getattr(event, "session_id", "default") or "default")
-        char_id = str(getattr(event, "character_id", None) or "char-player")
-        char_name = str(getattr(event, "character_name", None) or "Hero")
-        engine = get_or_create_leitmotif_engine(session_id)
-        playback = engine.trigger_leitmotif(
-            character_id=char_id,
-            motif_type="somber",
-            trigger_reason="death_save",
-            character_name=char_name,
-        )
-        agg_id = get_or_create_aggregate_id(session_id)
-        try:
-            agg = await repo.load(agg_id)
-        except Exception:
-            agg = SoundscapeAggregate(agg_id)
-
-        agg.record_leitmotif_trigger(
-            session_id=session_id,
-            character_id=char_id,
-            character_name=char_name,
-            motif_type=playback.motif_type,
-            instrument_timbre=playback.instrument_timbre,
-            stem_url=playback.stem_url,
-            tempo_multiplier=playback.tempo_multiplier,
-            volume_gain=playback.volume_gain,
-            attack_ms=playback.attack_ms,
-            release_ms=playback.release_ms,
-            duration_ms=playback.duration_ms,
-            duck_music=False,
-            trigger_reason="death_save",
-        )
-        events = list(agg.uncommitted_events)
-        await repo.save(agg)
-        for ev in events:
-            await publish_soundscape_event(ev)
+            await bus.publish_event("runefoble.events.soundscape", event)
