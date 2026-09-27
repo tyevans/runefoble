@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Spatial Companion Mobile WebRTC Audio & Haptic Controller Microfrontend (`TASK-0134`, `ADR-0002`, `ADR-0005`, `ADR-0013`, `PRD-0004`, `US-0059`)**:
+  - Implemented responsive mobile companion Web Component `<runefoble-mobile-companion>` vendored in `services/voice_agent/ui/src/runefoble-mobile-companion.ts` with Bauhaus design tokens, active channel indicator, connection status pill, and large thumb-friendly push-to-talk button.
+  - Implemented tactile haptic feedback dispatcher triggering `navigator.vibrate(pattern)` with graceful fallback for environments lacking vibration support, dispatching `haptic-pulse` CustomEvents.
+  - Implemented diegetic secret whisper overlay with acoustic chime cue synthesized via WebAudio `AudioContext`, dismiss action, and privacy blur filter (`filter: blur(...)`) to prevent shoulder surfing.
+  - Implemented low-bandwidth WebAudio stream controller with audio buffer health monitor (target 45ms), cellular stream profile indicators (`mobile_optimized`, `cellular_constrained`, `ultra_low`), and real-time network loss/bitrate gauges.
+  - Registered and advertised `<runefoble-mobile-companion>` in `services/voice_agent/ui/manifest.json` and served via `/ui/manifest`.
+  - Authored interactive Storybook stories in `services/voice_agent/ui/src/runefoble-mobile-companion.stories.ts` with 6 scenarios (`DefaultConnected`, `SecretWhisperActive`, `ConstrainedCellularFallback`, `TurnAlertPrompt`, `OfflineDisconnected`, `InteractiveSimulator`).
+  - Added frontdoor blackbox test suite in `tests/test_blackbox_mobile_companion_ui.py` validating UI manifest registration, element contracts, and WebSocket frame dispatch.
+  - Updated Diataxis guide `docs/how-to/connect-mobile-companion-and-haptic-gateway.md` and `docs/reference/microfrontend-architecture.md`.
 - **Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts (`TASK-0129`, `ADR-0001`, `ADR-0006`, `ADR-0011`, `ADR-0013`, `PRD-0007`, `US-0058`)**:
   - Implemented event-sourced `CaravanContractAggregate` in `services/game_session/src/game_session/caravan.py` modeling cargo inventory, route risk level, transit stages, escort collateral, and reward gold/reputation with `@handles` methods for `CaravanContractPosted`, `CaravanContractAccepted`, `CaravanDispatched`, `CaravanAmbushed`, and `CaravanTradeFulfilled`.
   - Added public REST frontdoor notice board endpoints in `services/game_session/src/game_session/routers/caravan_contracts.py`: `POST /api/v1/shared-worlds/{id}/caravans/contracts`, `GET /api/v1/shared-worlds/{id}/caravans/contracts`, `GET /api/v1/shared-worlds/{id}/caravans/contracts/{cid}`, `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/accept`, `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/dispatch`, `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/ambush`, and `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/fulfill`.

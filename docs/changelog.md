@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Spatial Companion Mobile WebRTC Audio & Haptic Controller Microfrontend (`TASK-0134`, `ADR-0002`, `ADR-0005`, `ADR-0013`, `PRD-0004`, `US-0059`)**:
+  - Implemented responsive mobile companion Web Component `<runefoble-mobile-companion>` vendored in `services/voice_agent/ui/src/runefoble-mobile-companion.ts` with Bauhaus design tokens, active channel indicator, connection status pill, and large thumb-friendly push-to-talk button.
+  - Implemented tactile haptic feedback dispatcher triggering `navigator.vibrate(pattern)` with graceful fallback for environments lacking vibration support, dispatching `haptic-pulse` CustomEvents.
+  - Implemented diegetic secret whisper overlay with acoustic chime cue synthesized via WebAudio `AudioContext`, dismiss action, and privacy blur filter (`filter: blur(...)`) to prevent shoulder surfing.
+  - Implemented low-bandwidth WebAudio stream controller with audio buffer health monitor (target 45ms), cellular stream profile indicators (`mobile_optimized`, `cellular_constrained`, `ultra_low`), and real-time network loss/bitrate gauges.
+  - Registered and advertised `<runefoble-mobile-companion>` in `services/voice_agent/ui/manifest.json` and served via `/ui/manifest`.
+  - Authored interactive Storybook stories in `services/voice_agent/ui/src/runefoble-mobile-companion.stories.ts` with 6 scenarios (`DefaultConnected`, `SecretWhisperActive`, `ConstrainedCellularFallback`, `TurnAlertPrompt`, `OfflineDisconnected`, `InteractiveSimulator`).
+  - Added frontdoor blackbox test suite in `tests/test_blackbox_mobile_companion_ui.py` validating UI manifest registration, element contracts, and WebSocket frame dispatch.
+  - Updated Diataxis guide `docs/how-to/connect-mobile-companion-and-haptic-gateway.md` and `docs/reference/microfrontend-architecture.md`.
 - **Cross-Campaign Caravan Trading Ledgers & Frontier Mercenary Contracts (`TASK-0129`, `ADR-0001`, `ADR-0006`, `ADR-0011`, `ADR-0013`, `PRD-0007`, `US-0058`)**:
   - Implemented event-sourced `CaravanContractAggregate` in `services/game_session/src/game_session/caravan.py` modeling cargo inventory, route risk level, transit stages, escort collateral, and reward gold/reputation with `@handles` methods for `CaravanContractPosted`, `CaravanContractAccepted`, `CaravanDispatched`, `CaravanAmbushed`, and `CaravanTradeFulfilled`.
   - Added public REST frontdoor notice board endpoints in `services/game_session/src/game_session/routers/caravan_contracts.py`: `POST /api/v1/shared-worlds/{id}/caravans/contracts`, `GET /api/v1/shared-worlds/{id}/caravans/contracts`, `GET /api/v1/shared-worlds/{id}/caravans/contracts/{cid}`, `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/accept`, `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/dispatch`, `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/ambush`, and `POST /api/v1/shared-worlds/{id}/caravans/contracts/{cid}/fulfill`.
@@ -47,6 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Updated SpiceDB Zanzibar authorization schema (`libs/runefoble_auth/schema/runefoble.zed`) and `MockSpiceDBClient` (`libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py`) defining `shared_world` object permissions (`guild_officer`, `participant`, `campaign->view/play`) while strictly isolating private character sheets and party whisper notes.
   - Authored comprehensive blackbox TDD test suite `tests/test_blackbox_west_marches.py` verifying multi-campaign discovery synchronization, caravan trade unlocks, communal tavern boards, and Zanzibar isolation.
   - Authored Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md` and updated `docs/reference/events-schema.md` and `AGENTS.md`.
+
 - **Autonomous NPC Faction Agendas & Background Simulation Engine (`TASK-0126`, `ADR-0002`, `ADR-0006`, `ADR-0011`)**:
   - Implemented event-sourced `FactionAggregate` in `services/the_watcher/src/the_watcher/factions.py` tracking faction assets, influence (1-100), operational resources, disposition, and goal progress via `eventsource-py` (Hard Invariant 2).
   - Built `FactionSimulationEngine` in `services/the_watcher/src/the_watcher/simulation_engine.py` simulating probabilistic agenda checks based on rival counter-measures and regional stability modifiers.

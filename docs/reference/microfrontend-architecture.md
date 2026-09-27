@@ -71,7 +71,7 @@ runefoble/
 | `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-character-sheet>`, `<runefoble-absentee-recap>`, `<runefoble-stand-in-guardrails>` | `services/character_sheet/ui/src/*.stories.ts` |
 | `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>` | `services/game_session/ui/src/*.stories.ts` |
 | `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>` | `services/the_watcher/ui/src/*.stories.ts` |
-| `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>` | `services/voice_agent/ui/src/runefoble-voice-controls.stories.ts` |
+| `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>`, `<runefoble-audio-indicator>`, `<runefoble-mobile-companion>` | `services/voice_agent/ui/src/*.stories.ts` |
 | `frontend` (App Shell) | `frontend` | `<runefoble-app>`, `<runefoble-settings-modal>`, `<runefoble-theme-switcher>` | `frontend/src/stories/runefoble-settings-modal.stories.ts` |
 
 
