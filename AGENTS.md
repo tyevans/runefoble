@@ -120,6 +120,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`coordinate-game-session-lobby-and-readiness.md`](docs/how-to/coordinate-game-session-lobby-and-readiness.md): How to coordinate pre-game assembly in the session lobby, verify player presence, toggle readiness and absentee AI stand-ins, and launch live tabletop sessions.
 - [`orchestrate-app-shell-views-and-session-transitions.md`](docs/how-to/orchestrate-app-shell-views-and-session-transitions.md): How to orchestrate routed App Shell views, manage route-bound WebSocket lifecycles, and transition from pre-game lobby to live VTT tabletop.
 - [`post-and-fulfill-mercenary-bounty-contracts.md`](docs/how-to/post-and-fulfill-mercenary-bounty-contracts.md): How to post, claim, and complete mercenary bounties and resource retrieval contracts with locked escrow between adventuring parties sharing a West Marches frontier.
+- [`mount-community-plugin-ui-extension-slots.md`](docs/how-to/mount-community-plugin-ui-extension-slots.md): How to mount community Lit Web Components into designated extension slots (hud-widget, dice-panel, sidebar-tool) with Bauhaus token inheritance and Shadow DOM event isolation.
 
 
 
