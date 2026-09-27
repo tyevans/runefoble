@@ -1,61 +1,45 @@
-"""Event-sourced BoardState aggregate using eventsource-py."""
+"""Event-sourced BoardState aggregate using eventsource-py and modular handlers."""
 
-from typing import Any, Literal
+from __future__ import annotations
 
-from board_state.models import (
-    BoardState,
-    PlacedTokenState,
-    TerrainCellState,
-    TerrainDict,
-)
+from typing import Any
+
+from board_state.handlers import FogHandlerMixin, TokensHandlerMixin, VFXHandlerMixin
+from board_state.models import BoardState, PlacedTokenState, TerrainCellState, TerrainDict
 from board_state.rules import (
     DEFAULT_HAZARD_DAMAGE,
-    calc_chebyshev,
-    calc_move_cost,
-    calc_move_path,
-    calc_party_vis,
-    detect_path_hazards,
     extract_wall_obstacles,
-    find_uncharted_cells,
     get_hazard_damage_dice,
-    is_within_bounds,
-    validate_cells_within_bounds,
     validate_point_within_bounds,
 )
-from board_state.spells import BoardSpellsMixin
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from runefoble_events.events import (
-    AoETemplatePlaced,
-    AoETemplateRemoved,
-    AreaEffectExploded,
     BoardGridInitialized,
-    EphemeralDecalsDecayed,
-    FogOfWarRevealed,
-    FogOfWarShrouded,
-    SpellCast,
     TerrainCellModified,
-    TokenActionExecuted,
-    TokenHazardTriggered,
-    TokenMoved,
-    TokenPlaced,
-    TokenRemoved,
     UniversalVTTImported,
-    VFXAnimationFinished,
 )
 
 __all__ = [
     "DEFAULT_HAZARD_DAMAGE",
     "BoardAggregate",
     "BoardState",
+    "FogHandlerMixin",
     "PlacedTokenState",
     "TerrainCellState",
     "TerrainDict",
+    "TokensHandlerMixin",
+    "VFXHandlerMixin",
     "get_hazard_damage_dice",
 ]
 
 
-class BoardAggregate(DeclarativeAggregate[BoardState], BoardSpellsMixin):
+class BoardAggregate(
+    TokensHandlerMixin,
+    FogHandlerMixin,
+    VFXHandlerMixin,
+    DeclarativeAggregate[BoardState],
+):
     """Event-sourced aggregate managing tactical combat grid, spatial tokens, and fog-of-war."""
 
     aggregate_type = "BoardState"
@@ -70,54 +54,6 @@ class BoardAggregate(DeclarativeAggregate[BoardState], BoardSpellsMixin):
             height=rows,
             session_id_str=session_id,
         )
-
-    def calculate_chebyshev_cells(self, cx: int, cy: int, radius: int) -> list[list[int]]:
-        """Calculate all bounded grid coordinates within Chebyshev distance radius."""
-        return calc_chebyshev(cx, cy, radius, self.state.cols, self.state.rows)
-
-    def compute_party_visibility(self) -> list[list[int]]:
-        """Compute the union of all cells currently visible by friendly/party tokens."""
-        return calc_party_vis(self.state.tokens.values(), self.state.cols, self.state.rows)
-
-    def _sync_revealed_fog(self, token_id: str, cx: int, cy: int, radius: int) -> None:
-        """Evaluate newly seen cells and emit FogOfWarRevealed event if uncharted cells found."""
-        new_cells = find_uncharted_cells(
-            self.state.revealed_cells, self.calculate_chebyshev_cells(cx, cy, radius)
-        )
-        if new_cells:
-            self.create_event(
-                FogOfWarRevealed,
-                session_id=self.aggregate_id,
-                revealed_cells=new_cells,
-                revealed_by_token_id=token_id,
-            )
-
-    def place_token(
-        self,
-        token_id: str,
-        name: str,
-        token_type: Literal["pc", "monster", "npc", "obstacle"],
-        x: int,
-        y: int,
-        hp: int | None = None,
-        is_friendly: bool = False,
-        vision_radius: int = 2,
-    ) -> None:
-        """Place a token onto the grid with spatial bounds check and fog update."""
-        validate_point_within_bounds(x, y, self.state.cols, self.state.rows, "Placement")
-        self.create_event(
-            TokenPlaced,
-            session_id=self.aggregate_id,
-            token_id=str(token_id),
-            name=name,
-            token_type=token_type,
-            x=x,
-            y=y,
-            hp=hp,
-            is_friendly=is_friendly,
-        )
-        if is_friendly and self.state.fog_of_war_enabled:
-            self._sync_revealed_fog(str(token_id), x, y, vision_radius)
 
     def configure_terrain(
         self,
@@ -145,171 +81,6 @@ class BoardAggregate(DeclarativeAggregate[BoardState], BoardSpellsMixin):
         cell = self.state.terrain_cells.get((x, y))
         return cell if cell is not None else TerrainCellState(x=x, y=y)
 
-    def calculate_movement_path(
-        self, from_x: int, from_y: int, to_x: int, to_y: int
-    ) -> list[tuple[int, int]]:
-        """Calculate line of cells traversed when moving between coordinates."""
-        return calc_move_path(from_x, from_y, to_x, to_y)
-
-    def calculate_movement_cost(self, path: list[tuple[int, int]]) -> int:
-        """Calculate movement budget cost across path, difficult terrain costs 2x per cell."""
-        return calc_move_cost(path, self.get_terrain)
-
-    def move_token(
-        self,
-        token_id: str,
-        to_x: int,
-        to_y: int,
-        initiated_by: Literal["player", "the_watcher", "stand_in"] = "player",
-        movement_budget: int | None = None,
-    ) -> tuple[int, str | None, str | None]:
-        """Move a placed token across the grid and update revealed fog-of-war."""
-        tid_str = str(token_id)
-        if tid_str not in self.state.tokens:
-            raise ValueError(f"Token '{token_id}' not found on grid")
-        if not is_within_bounds(to_x, to_y, self.state.cols, self.state.rows):
-            raise ValueError(f"Target coordinates ({to_x}, {to_y}) out of bounds")
-
-        current = self.state.tokens[tid_str]
-        path = self.calculate_movement_path(current.x, current.y, to_x, to_y)
-        cost = self.calculate_movement_cost(path)
-        if movement_budget is not None and cost > movement_budget:
-            raise ValueError(f"Movement cost {cost} exceeds movement budget {movement_budget}")
-
-        self.create_event(
-            TokenMoved,
-            session_id=self.aggregate_id,
-            token_id=tid_str,
-            name=current.name,
-            from_x=current.x,
-            from_y=current.y,
-            to_x=to_x,
-            to_y=to_y,
-            initiated_by=initiated_by,
-        )
-
-        hazards = detect_path_hazards(path, self.get_terrain)
-        last_hazard, last_damage = None, None
-        for h_type, d_dice in hazards:
-            last_hazard, last_damage = h_type, d_dice
-            self.create_event(
-                TokenHazardTriggered,
-                session_id=str(self.state.session_id),
-                board_id=str(self.aggregate_id),
-                token_id=tid_str,
-                hazard_type=h_type,
-                damage_dice=d_dice,
-            )
-
-        if current.is_friendly and self.state.fog_of_war_enabled:
-            self._sync_revealed_fog(tid_str, to_x, to_y, current.vision_radius)
-        return cost, last_hazard, last_damage
-
-    def remove_token(self, token_id: str, reason: str = "defeated") -> None:
-        """Remove a token from the board."""
-        tid_str = str(token_id)
-        if tid_str not in self.state.tokens:
-            raise ValueError(f"Token '{token_id}' not found on grid")
-        self.create_event(
-            TokenRemoved, session_id=self.aggregate_id, token_id=tid_str, reason=reason
-        )
-
-    def reveal_cells(self, cells: list[list[int]], revealed_by_token_id: str | None = None) -> None:
-        """Manually reveal specified grid cells."""
-        validate_cells_within_bounds(cells, self.state.cols, self.state.rows, "Reveal")
-        self.create_event(
-            FogOfWarRevealed,
-            session_id=self.aggregate_id,
-            revealed_cells=cells,
-            revealed_by_token_id=revealed_by_token_id,
-        )
-
-    def shroud_cells(self, cells: list[list[int]]) -> None:
-        """Manually shroud specified grid cells."""
-        validate_cells_within_bounds(cells, self.state.cols, self.state.rows, "Shroud")
-        self.create_event(
-            FogOfWarShrouded,
-            session_id=str(self.state.session_id),
-            aggregate_id=self.aggregate_id,
-            shrouded_cells=cells,
-        )
-
-    def execute_token_action(
-        self,
-        token_id: str,
-        action: str,
-        target_token_id: str | None = None,
-        target_token_ids: list[str] | None = None,
-        details: dict[str, Any] | None = None,
-        initiated_by: str = "player",
-    ) -> None:
-        """Execute a tactical token action (Dodge, Dash, Melee/Attack, Disengage, Cast)."""
-        tid_str = str(token_id)
-        if tid_str not in self.state.tokens:
-            raise ValueError(f"Token '{token_id}' not found on grid")
-
-        all_targets = list(target_token_ids or [])
-        if target_token_id and target_token_id not in all_targets:
-            all_targets.append(target_token_id)
-
-        self.create_event(
-            TokenActionExecuted,
-            session_id=str(self.state.session_id),
-            board_id=str(self.aggregate_id),
-            token_id=tid_str,
-            action=action.lower(),
-            target_token_id=target_token_id,
-            target_token_ids=all_targets,
-            details=details or {},
-            initiated_by=initiated_by,
-        )
-
-    def place_aoe_template(
-        self,
-        template_id: str,
-        shape: str,
-        origin_x: float,
-        origin_y: float,
-        direction_deg: float = 0.0,
-        radius_ft: float | None = None,
-        length_ft: float | None = None,
-        width_ft: float | None = 5.0,
-        caster_token_id: str | None = None,
-        spell_name: str | None = None,
-        affected_token_ids: list[str] | None = None,
-        affected_cells: list[list[int]] | None = None,
-    ) -> None:
-        """Place a geometric Area of Effect (AoE) spell template onto the board."""
-        self.create_event(
-            AoETemplatePlaced,
-            session_id=str(self.state.session_id),
-            board_id=str(self.aggregate_id),
-            template_id=str(template_id),
-            caster_token_id=str(caster_token_id) if caster_token_id else None,
-            shape=shape,
-            origin_x=float(origin_x),
-            origin_y=float(origin_y),
-            direction_deg=float(direction_deg),
-            radius_ft=float(radius_ft) if radius_ft is not None else None,
-            length_ft=float(length_ft) if length_ft is not None else None,
-            width_ft=float(width_ft) if width_ft is not None else 5.0,
-            spell_name=spell_name,
-            affected_token_ids=affected_token_ids or [],
-            affected_cells=affected_cells or [],
-        )
-
-    def remove_aoe_template(self, template_id: str) -> None:
-        """Remove a placed AoE template from the board."""
-        tid_str = str(template_id)
-        if not any(t.template_id == tid_str for t in self.state.active_aoe_templates):
-            raise ValueError(f"AoE template '{template_id}' not found on grid")
-        self.create_event(
-            AoETemplateRemoved,
-            session_id=str(self.state.session_id),
-            board_id=str(self.aggregate_id),
-            template_id=tid_str,
-        )
-
     def import_uvtt_map(
         self,
         cols: int,
@@ -323,8 +94,6 @@ class BoardAggregate(DeclarativeAggregate[BoardState], BoardSpellsMixin):
     ) -> None:
         """Import Universal VTT map geometry, background imagery, and wall obstacles."""
         walls = wall_segments or []
-        ports = portals or []
-        lgts = lights or []
         self.create_event(
             UniversalVTTImported,
             session_id=str(self.state.session_id),
@@ -335,27 +104,14 @@ class BoardAggregate(DeclarativeAggregate[BoardState], BoardSpellsMixin):
             background_asset_id=background_asset_id,
             background_image_url=background_image_url,
             wall_segments=walls,
-            portals=ports,
-            lights=lgts,
+            portals=portals or [],
+            lights=lights or [],
         )
 
-        # Place wall obstacle tokens for unique integer grid intersections within bounds
-        obstacle_coords = extract_wall_obstacles(walls, cols, rows)
-        for idx, (ox, oy) in enumerate(obstacle_coords):
-            token_id = f"wall-obs-{idx + 1}"
-            if token_id not in self.state.tokens:
-                self.place_token(
-                    token_id=token_id,
-                    name=f"Wall Obstacle {idx + 1}",
-                    token_type="obstacle",
-                    x=ox,
-                    y=oy,
-                    is_friendly=False,
-                )
-
-    # -----------------------------------------------------------------------
-    # Event Handlers (@handles)
-    # -----------------------------------------------------------------------
+        for idx, (ox, oy) in enumerate(extract_wall_obstacles(walls, cols, rows)):
+            tid = f"wall-obs-{idx + 1}"
+            if tid not in self.state.tokens:
+                self.place_token(tid, f"Wall Obstacle {idx + 1}", "obstacle", ox, oy)
 
     @handles(BoardGridInitialized)
     def _on_grid_initialized(self, event: BoardGridInitialized) -> None:
@@ -382,83 +138,3 @@ class BoardAggregate(DeclarativeAggregate[BoardState], BoardSpellsMixin):
     @handles(TerrainCellModified)
     def _on_terrain_modified(self, event: TerrainCellModified) -> None:
         self._state = self.state.with_terrain_modified_from_event(event)
-
-    @handles(TokenHazardTriggered)
-    def _on_hazard_triggered(self, event: TokenHazardTriggered) -> None:
-        self._state = self.state.with_hazard_triggered(
-            token_id=str(event.token_id), hazard_type=event.hazard_type
-        )
-
-    @handles(TokenPlaced)
-    def _on_token_placed(self, event: TokenPlaced) -> None:
-        h = self.get_terrain(event.x, event.y).hazard
-        self._state = self.state.with_token_placed(PlacedTokenState.from_placed_event(event, h))
-
-    @handles(TokenMoved)
-    def _on_token_moved(self, event: TokenMoved) -> None:
-        h = self.get_terrain(event.to_x, event.to_y).hazard
-        self._state = self.state.with_token_moved(
-            token_id=str(event.token_id), to_x=event.to_x, to_y=event.to_y, active_hazard=h
-        )
-
-    @handles(TokenRemoved)
-    def _on_token_removed(self, event: TokenRemoved) -> None:
-        self._state = self.state.without_token(str(event.token_id))
-
-    @handles(FogOfWarRevealed)
-    def _on_fog_revealed(self, event: FogOfWarRevealed) -> None:
-        self._state = self.state.with_fog_revealed(event.revealed_cells)
-
-    @handles(FogOfWarShrouded)
-    def _on_fog_shrouded(self, event: FogOfWarShrouded) -> None:
-        self._state = self.state.with_fog_shrouded(event.shrouded_cells)
-
-    @handles(TokenActionExecuted)
-    def _on_token_action_executed(self, event: TokenActionExecuted) -> None:
-        self._state = self.state.with_token_action(
-            token_id=str(event.token_id), action=event.action
-        )
-
-    @handles(AoETemplatePlaced)
-    def _on_aoe_template_placed(self, event: AoETemplatePlaced) -> None:
-        from board_state.aoe_models import AoETemplateState
-
-        template = AoETemplateState(
-            template_id=event.template_id,
-            caster_token_id=event.caster_token_id,
-            shape=event.shape,
-            origin_x=event.origin_x,
-            origin_y=event.origin_y,
-            direction_deg=event.direction_deg,
-            radius_ft=event.radius_ft,
-            length_ft=event.length_ft,
-            width_ft=event.width_ft,
-            spell_name=event.spell_name,
-            affected_token_ids=event.affected_token_ids,
-            affected_cells=event.affected_cells,
-        )
-        self._state = self.state.with_aoe_template_placed(template)
-
-    @handles(AoETemplateRemoved)
-    def _on_aoe_template_removed(self, event: AoETemplateRemoved) -> None:
-        self._state = self.state.without_aoe_template(event.template_id)
-
-    @handles(AreaEffectExploded)
-    def _on_area_effect_exploded(self, event: AreaEffectExploded) -> None:
-        self._state = self.state.with_area_effect(
-            affected_cells=event.affected_cells,
-            decal_type=event.decal_type,
-            decal_duration_rounds=event.decal_duration_rounds,
-        )
-
-    @handles(SpellCast)
-    def _on_spell_cast(self, event: SpellCast) -> None:
-        pass
-
-    @handles(VFXAnimationFinished)
-    def _on_vfx_finished(self, event: VFXAnimationFinished) -> None:
-        pass
-
-    @handles(EphemeralDecalsDecayed)
-    def _on_decals_decayed(self, event: EphemeralDecalsDecayed) -> None:
-        self._state = self.state.with_decals_decayed(event.rounds)

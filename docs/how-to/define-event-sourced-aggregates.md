@@ -134,6 +134,6 @@ To satisfy Hard Invariant 6 (< 500 lines per file) and separate concerns as doma
 
 1. **`rules.py`**: Static game balance rules, progression tables (e.g., `SPELL_SLOTS_TABLE`, `CLASS_HIT_DIE`), hazard damage formulas, and pure calculation functions (e.g., initiative tie-breaking, movement path costs).
 2. **`models.py`**: Immutable Pydantic aggregate state schemas (`CharacterState`, `BoardState`, `GameSessionState`) equipped with transition helper methods (e.g., `with_health`, `with_token_moved`), alongside request/response DTOs.
-3. **`handlers/`**: Specialized command mutation handlers and `@handles` event state applier mixins (e.g., `InventoryHandlerMixin`, `SpellsHandlerMixin`, `VitalsHandlerMixin`) partitioning domain operations into focused, single-responsibility modules strictly under 150 lines.
-4. **`aggregate.py`**: The `DeclarativeAggregate` implementation composing domain mixins, encapsulating aggregate initialization, creation events, and delegating state updates while maintaining 100% backward-compatible symbol re-exports.
+3. **`handlers/`**: Specialized command mutation handlers and `@handles` event state applier mixins (e.g., `CharacterAggregate`'s `InventoryHandlerMixin`, `SpellsHandlerMixin`, `VitalsHandlerMixin` and `BoardAggregate`'s `TokensHandlerMixin`, `FogHandlerMixin`, `VFXHandlerMixin`, `ActionsHandlerMixin`) partitioning domain operations into focused, single-responsibility modules strictly under 160 lines.
+4. **`aggregate.py`**: The `DeclarativeAggregate` implementation composing domain mixins, encapsulating aggregate initialization, creation events, and delegating state updates while maintaining 100% backward-compatible symbol re-exports (< 150 lines).
 

@@ -181,3 +181,23 @@ calc_chebyshev = calculate_chebyshev_cells
 calc_move_cost = calculate_movement_cost
 calc_move_path = calculate_movement_path
 calc_party_vis = compute_party_visibility
+
+
+def validate_and_compute_move(
+    cur_x: int,
+    cur_y: int,
+    to_x: int,
+    to_y: int,
+    cols: int,
+    rows: int,
+    get_terrain_fn: Callable[[int, int], Any],
+    movement_budget: int | None = None,
+) -> tuple[list[tuple[int, int]], int]:
+    """Validate spatial bounds and movement budget, returning path and movement cost."""
+    if not is_within_bounds(to_x, to_y, cols, rows):
+        raise ValueError(f"Target coordinates ({to_x}, {to_y}) out of bounds")
+    path = calculate_movement_path(cur_x, cur_y, to_x, to_y)
+    cost = calculate_movement_cost(path, get_terrain_fn)
+    if movement_budget is not None and cost > movement_budget:
+        raise ValueError(f"Movement cost {cost} exceeds movement budget {movement_budget}")
+    return path, cost
