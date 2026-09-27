@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **West Marches Blackbox Test Suite Modular Decomposition (`TASK-0145`, `ADR-0001`, `ADR-0006`, `ADR-0011`, `PRD-0007`, `US-0058`)**:
+  - Decomposed monolithic blackbox test suite `tests/test_blackbox_west_marches.py` (402 lines) into focused, domain-specific modules under `tests/test_blackbox_west_marches/` strictly conforming to Hard Invariant 6 (< 500 lines per file, with zero files exceeding 130 lines):
+    - `conftest.py` (46 lines): Shared test harness isolating `mock_bus`, `spicedb_client`, `client`, and standard party credential fixtures.
+    - `test_world_registration.py` (102 lines): Tests for establishing persistent frontier worlds (`POST /api/v1/shared-worlds`), linking participating campaigns, and duplicate registration validation.
+    - `test_discovery_synchronization.py` (127 lines): Tests for cross-party discovery waypoint sharing, `CrossCampaignDiscoveryShared` CloudEvent broadcast over Redis Streams, and fog-of-war landmark filtering.
+    - `test_caravan_transit.py` (120 lines): Tests for regional outpost establishment, caravan dispatch scheduling, trade fulfillment emitting `CaravanTradeCompleted`, and regional merchant stock unlocks.
+    - `test_security_isolation.py` (118 lines): Tests for SpiceDB Zanzibar object-level multi-tenancy isolation (protecting private character sheets while exposing shared frontier geography) and communal tavern notice boards.
+  - Safely removed monolithic `tests/test_blackbox_west_marches.py` with pytest discovering the new directory suite.
+  - Updated Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md` with verification instructions.
 - **Board State Models and Pydantic Schemas Modular Decomposition (`TASK-0138`, `ADR-0003`, `ADR-0011`, `PRD-0003`, `PRD-0013`, `US-0012`, `US-0043`)**:
   - Decomposed `services/board_state/src/board_state/models.py` (433 lines) into focused, single-responsibility modules under `services/board_state/src/board_state/models/`:
     - `terrain.py`: Extracted `TerrainCellState`, `TerrainDict`, `ConfigureTerrainRequest`, and `VisibilityResponse` (< 70 lines).

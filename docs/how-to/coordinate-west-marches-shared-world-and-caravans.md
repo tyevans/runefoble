@@ -394,3 +394,22 @@ curl http://localhost:8004/ui/manifest
 3. **Active Transit Route Status Pill**: Caravans in transit display a live progress bar tracking completed stages vs. remaining distance, alongside ambush encounter warning badges.
 4. **Real-Time Notifications**: Bauhaus toast banners display immediate visual confirmation upon claiming, dispatching, or delivering trade convoys.
 
+---
+
+## 7. Verification & Blackbox Testing
+
+Per **ADR-0001**, **ADR-0006**, **ADR-0011**, and **Hard Invariant 6** (< 500 lines per file), the West Marches blackbox test suite is organized into focused, domain-specific modules under `tests/test_blackbox_west_marches/` (TASK-0145):
+
+- **`tests/test_blackbox_west_marches/conftest.py`**: Shared test harness providing `mock_bus`, `spicedb_client`, `client`, and standard party credential fixtures.
+- **`tests/test_blackbox_west_marches/test_world_registration.py`**: Verifies establishing persistent frontier worlds (`POST /api/v1/shared-worlds`), linking participating campaigns, and handling duplicate registration validations.
+- **`tests/test_blackbox_west_marches/test_discovery_synchronization.py`**: Verifies cross-party discovery waypoint sharing, `CrossCampaignDiscoveryShared` CloudEvent broadcast over Redis Streams, and fog-of-war landmark filtering.
+- **`tests/test_blackbox_west_marches/test_caravan_transit.py`**: Verifies outpost establishment, caravan dispatch scheduling, trade fulfillment emitting `CaravanTradeCompleted`, and regional merchant stock unlocks.
+- **`tests/test_blackbox_west_marches/test_security_isolation.py`**: Verifies SpiceDB Zanzibar object-level multi-tenancy isolation (protecting private character sheets while exposing shared frontier geography) and communal tavern notice boards.
+
+Run the test suite via `uv`:
+
+```bash
+uv run pytest tests/test_blackbox_west_marches/
+```
+
+
