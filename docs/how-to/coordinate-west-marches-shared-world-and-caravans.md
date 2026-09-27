@@ -348,4 +348,49 @@ Safe delivery unlocks refined items in the outpost inventory, deposits raw reage
 
 ### Step 6: Frontend Caravan Board Microfrontend
 
-The `<runefoble-caravan-board>` Lit Web Component (vendored in `@runefoble/game-session-ui`) renders interactive contract cards with Bauhaus risk badges, cargo manifests, and one-tap claim/dispatch actions.
+The `<runefoble-caravan-board>` Lit Web Component (vendored in `@runefoble/game-session-ui`) renders interactive contracts with Bauhaus design tokens, route risk badges, cargo value indicators, transit progress, and one-click actions (PRD-0007 / US-0058 / ADR-0013).
+
+#### Component Manifest Registration
+
+Advertised via `/ui/manifest` and `/game_session/ui/manifest` on `game_session`:
+
+```bash
+curl http://localhost:8004/ui/manifest
+```
+
+```json
+{
+  "service": "game_session",
+  "package": "@runefoble/game-session-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-initiative-tracker",
+    "runefoble-dice-roller",
+    "runefoble-spectator-view",
+    "runefoble-spectator-overlay",
+    "runefoble-campfire-crafting",
+    "runefoble-tavern-parlor",
+    "runefoble-caravan-board"
+  ]
+}
+```
+
+#### Embedding and Attributes
+
+```html
+<runefoble-caravan-board
+  shared-world-id="world-fenlands-01"
+  campaign-id="camp-amber-vanguard"
+  party-name="The Amber Vanguard"
+  user-role="player"
+  api-base="/api/v1"
+></runefoble-caravan-board>
+```
+
+#### Key Capabilities
+
+1. **One-Click Contract Acceptance**: Click **Accept Escort Contract** to claim open jobs via `POST /api/v1/shared-worlds/{wid}/caravans/contracts/{cid}/accept` with SpiceDB Zanzibar role enforcement.
+2. **Caravan Manifest Details Modal**: Click **Inspect Manifest** or any contract card to open the inspection modal showing departure settlement, destination stronghold, itemized cargo pills, and escrow bounty fees.
+3. **Active Transit Route Status Pill**: Caravans in transit display a live progress bar tracking completed stages vs. remaining distance, alongside ambush encounter warning badges.
+4. **Real-Time Notifications**: Bauhaus toast banners display immediate visual confirmation upon claiming, dispatching, or delivering trade convoys.
+

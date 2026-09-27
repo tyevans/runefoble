@@ -62,6 +62,7 @@ async def health_check():
 
 
 @app.get("/ui/manifest")
+@app.get("/game_session/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for game session."""
     return {
