@@ -1,7 +1,7 @@
 ---
 id: '0126'
 title: Autonomous NPC Faction Agendas & Background Simulation Engine
-status: Refined
+status: Complete
 created: 2026-09-26
 dependencies:
 - TASK-0013
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0057
 target_release: 0.5.0
+pr_url: https://github.com/tyevans/runefoble/pull/141
 ---
-
 # TASK-0126: Autonomous NPC Faction Agendas & Background Simulation Engine
 
 ## Status
