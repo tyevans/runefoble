@@ -1,7 +1,7 @@
 ---
 id: '0212'
 title: Game Session Lobby and Readiness Microfrontend
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0208
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0065
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/205
 ---
-
 # TASK-0212: Game Session Lobby and Readiness Microfrontend
 
 ## Status

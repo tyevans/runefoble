@@ -171,7 +171,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 167. **TASK-0209 (Complete)**: [`0209-campaign-dashboard-and-creation-microfrontend.md`](complete/0209-campaign-dashboard-and-creation-microfrontend.md) — Campaign Dashboard and Creation Microfrontend
 168. **TASK-0210 (Complete)**: [`0210-campaign-members-and-zanzibar-role-manager-ui.md`](complete/0210-campaign-members-and-zanzibar-role-manager-ui.md) — Campaign Members and Zanzibar Role Manager UI
 169. **TASK-0211 (Complete)**: [`0211-character-roster-and-party-assignment-microfrontend.md`](complete/0211-character-roster-and-party-assignment-microfrontend.md) — Character Roster and Party Assignment Microfrontend
-170. **TASK-0212 (Refined)**: [`0212-game-session-lobby-and-readiness-microfrontend.md`](refined/0212-game-session-lobby-and-readiness-microfrontend.md) — Game Session Lobby and Readiness Microfrontend
+170. **TASK-0212 (Complete)**: [`0212-game-session-lobby-and-readiness-microfrontend.md`](complete/0212-game-session-lobby-and-readiness-microfrontend.md) — Game Session Lobby and Readiness Microfrontend
 171. **TASK-0213 (Complete)**: [`0213-app-shell-view-orchestration-and-session-transition.md`](complete/0213-app-shell-view-orchestration-and-session-transition.md) — App Shell View Orchestration and Session Transition
 172. **TASK-0214 (Refined)**: [`0214-frontend-routing-and-auth-blackbox-test-suite.md`](refined/0214-frontend-routing-and-auth-blackbox-test-suite.md) — Frontend Routing and Auth Blackbox Test Suite
 173. **TASK-0215 (Refined)**: [`0215-campaign-management-and-lobby-blackbox-test-suite.md`](refined/0215-campaign-management-and-lobby-blackbox-test-suite.md) — Campaign Management and Lobby Blackbox Test Suite
