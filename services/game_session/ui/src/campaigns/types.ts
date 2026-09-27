@@ -38,3 +38,32 @@ export interface SelectCampaignEventDetail {
   campaignId: string;
   campaign: CampaignItem;
 }
+
+export interface CampaignMember {
+  user_id: string;
+  username: string;
+  avatar_url?: string;
+  character_name?: string;
+  role: CampaignRole | string;
+  subject_type?: string;
+  zanzibar_relation?: string;
+  joined_at?: string;
+}
+
+export interface AssignRoleEventDetail {
+  campaignId: string;
+  userId: string;
+  role: 'dungeon_master' | 'player' | 'spectator' | string;
+}
+
+export interface RemoveMemberEventDetail {
+  campaignId: string;
+  userId: string;
+}
+
+export interface CreateInviteEventDetail {
+  campaignId: string;
+  role: 'player' | 'spectator';
+  expiresInHours?: number;
+  maxUses?: number;
+}

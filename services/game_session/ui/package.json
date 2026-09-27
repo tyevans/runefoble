@@ -32,6 +32,8 @@
     "./campaigns": "./src/campaigns/index.ts",
     "./campaigns/dashboard": "./src/campaigns/runefoble-campaign-dashboard.ts",
     "./campaigns/creator": "./src/campaigns/runefoble-campaign-creator.ts",
+    "./campaigns/members": "./src/campaigns/runefoble-campaign-members.ts",
+    "./campaigns/members.styles": "./src/campaigns/runefoble-campaign-members.styles.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {
