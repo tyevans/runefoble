@@ -200,3 +200,102 @@ definition shared_world {
 ```
 
 A member of Party Gold receives `view`, `discover`, and `trade` permissions on the `shared_world`, but has no `view` or `edit` permissions on Party Blue's `character` or private `campaign` resources.
+
+---
+
+## 6. Frontier Mercenary Contracts & Dynamic Economy Ledgers
+
+As introduced in TASK-0129, parties can post and claim asynchronous mercenary contracts to escort cargo caravans between settlements across different live sessions.
+
+### Step 1: Post an Escort Contract
+
+Party A posts a caravan contract pledging cargo value and bounty rewards:
+
+```bash
+curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts \
+  -H "Content-Type: application/json" \
+  -H "x-user-id: blue_quartermaster" \
+  -d '{
+    "origin_outpost": "Bastion Cross",
+    "destination_outpost": "Ironford",
+    "cargo": {"iron_ingots": 50, "medicinal_herbs": 25},
+    "cargo_value": 450,
+    "route_risk_level": "medium",
+    "transit_stages": 2,
+    "escort_collateral": 75,
+    "reward_gold": 250,
+    "reward_reputation": 20,
+    "posted_by_campaign_id": "c1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c"
+  }'
+```
+
+For high-tier contracts (`route_risk_level: "high"` or `"deadly"`), SpiceDB Zanzibar checks enforce that only campaign owners/DMs or shared world guild officers can bind party funds or post dangerous bounties.
+
+### Step 2: Browse Available Contracts on the Notice Board
+
+Adventuring parties query the multi-party notice board with filters for risk, destination, and minimum rewards:
+
+```bash
+curl -X GET "http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts?destination=Ironford&risk_level=medium" \
+  -H "x-user-id: gold_leader"
+```
+
+### Step 3: Claim and Dispatch Caravan
+
+Party B claims the contract during their live session:
+
+```bash
+curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts/{contract_id}/accept \
+  -H "Content-Type: application/json" \
+  -H "x-user-id: gold_leader" \
+  -d '{
+    "contractor_campaign_id": "d2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
+    "contractor_party_name": "Party Gold"
+  }'
+```
+
+Once accepted, the caravan is dispatched into wilderness transit:
+
+```bash
+curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts/{contract_id}/dispatch \
+  -H "Content-Type: application/json" \
+  -H "x-user-id: gold_leader" \
+  -d '{"dispatched_by_campaign_id": "d2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d"}'
+```
+
+### Step 4: Resolve Ambush Outcomes & Deliver Cargo
+
+If an ambush occurs during transit stages, the tactical outcome is reported:
+
+```bash
+curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts/{contract_id}/ambush \
+  -H "Content-Type: application/json" \
+  -H "x-user-id: gold_leader" \
+  -d '{
+    "stage_index": 1,
+    "ambush_type": "bandit_raid",
+    "danger_level": 2,
+    "outcome": "repelled",
+    "cargo_loss_percentage": 0.0
+  }'
+```
+
+Upon arriving at the destination outpost, the escort party fulfills the contract:
+
+```bash
+curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts/{contract_id}/fulfill \
+  -H "Content-Type: application/json" \
+  -H "x-user-id: gold_leader" \
+  -d '{}'
+```
+
+### Step 5: Dynamic Settlement Economy & Price Modifiers
+
+Safe delivery unlocks refined items in the outpost inventory, deposits raw reagents in the communal workshop, and updates the outpost's economic price modifier:
+
+- High delivery success rate (100%): `price_modifier = 0.90` (10% abundance discount).
+- Plagued by ambushes / destroyed caravans: `price_modifier = 1.25 - 1.50` (scarcity surcharge).
+
+### Step 6: Frontend Caravan Board Microfrontend
+
+The `<runefoble-caravan-board>` Lit Web Component (vendored in `@runefoble/game-session-ui`) renders interactive contract cards with Bauhaus risk badges, cargo manifests, and one-tap claim/dispatch actions.

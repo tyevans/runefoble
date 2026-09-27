@@ -16,6 +16,7 @@ from game_session.dependencies import (
 from game_session.routers import (
     autopilot_router,
     campfire_router,
+    caravan_contracts_router,
     caravan_trade_router,
     combat_router,
     session_router,
@@ -48,6 +49,7 @@ app.include_router(stronghold_router)
 app.include_router(tavern_router)
 app.include_router(west_marches_router)
 app.include_router(caravan_trade_router)
+app.include_router(caravan_contracts_router)
 
 
 @app.get("/healthz")
@@ -72,6 +74,7 @@ def get_ui_manifest():
             "runefoble-spectator-overlay",
             "runefoble-campfire-crafting",
             "runefoble-tavern-parlor",
+            "runefoble-caravan-board",
         ],
         "version": "0.1.0",
     }

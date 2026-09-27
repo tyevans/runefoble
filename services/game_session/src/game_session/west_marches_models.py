@@ -63,12 +63,55 @@ class CompleteCaravanRequest(BaseModel):
     unlocked_stock: dict[str, Any] | None = None
 
 
+class PostCaravanContractRequest(BaseModel):
+    origin_outpost: str
+    destination_outpost: str
+    cargo: dict[str, int]
+    cargo_value: int
+    route_risk_level: str = "medium"
+    transit_stages: int = 2
+    escort_collateral: int = 50
+    reward_gold: int = 150
+    reward_reputation: int = 10
+    posted_by_campaign_id: str
+    expires_in_turns: int = 10
+
+
+class AcceptCaravanContractRequest(BaseModel):
+    contractor_campaign_id: str
+    contractor_party_name: str
+
+
+class DispatchContractCaravanRequest(BaseModel):
+    caravan_id: str | None = None
+    dispatched_by_campaign_id: str | None = None
+
+
+class ReportAmbushRequest(BaseModel):
+    stage_index: int = 1
+    ambush_type: str = "bandit_raid"
+    danger_level: int = 1
+    outcome: str = "repelled"
+    cargo_loss_percentage: float = 0.0
+    reported_by_campaign_id: str = ""
+    notes: str = ""
+
+
+class FulfillContractRequest(BaseModel):
+    unlocked_stock: dict[str, Any] | None = None
+
+
 __all__ = [
+    "AcceptCaravanContractRequest",
     "CompleteCaravanRequest",
     "CreateSharedWorldRequest",
     "DispatchCaravanRequest",
+    "DispatchContractCaravanRequest",
     "EstablishOutpostRequest",
+    "FulfillContractRequest",
+    "PostCaravanContractRequest",
     "PostNoticeRequest",
     "RecordDiscoveryRequest",
     "RegisterCampaignRequest",
+    "ReportAmbushRequest",
 ]

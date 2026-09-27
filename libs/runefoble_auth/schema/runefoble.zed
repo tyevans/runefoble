@@ -178,3 +178,22 @@ definition shared_world {
     permission trade = guild_officer + participant + campaign->play
 }
 
+definition caravan_contract {
+    relation shared_world: shared_world
+    relation poster: user
+    relation contractor: user
+    relation guild_officer: user
+
+    // Viewing contracts available on the notice board
+    permission view = poster + contractor + guild_officer + shared_world->view
+
+    // Claiming / accepting a contract requires contractor, guild officer, or shared_world trade authority
+    permission claim = contractor + guild_officer + shared_world->trade
+
+    // Fulfilling contract transit or claiming rewards
+    permission fulfill = contractor + poster + guild_officer
+
+    // Managing or canceling contracts
+    permission manage = poster + guild_officer
+}
+

@@ -407,4 +407,51 @@ class MockSpiceDBClient:
                 ):
                     return True
 
+        # 11. Caravan contract evaluation (poster, contractor, guild_officer, shared_world->...)
+        if resource_type == "caravan_contract":
+            if (
+                self._tuple_key(
+                    "caravan_contract", resource_id, "guild_officer", subject_type, subject_id
+                )
+                in self._tuples
+            ):
+                return True
+            if self._tuple_key(
+                "caravan_contract", resource_id, "poster", subject_type, subject_id
+            ) in self._tuples and permission in (
+                "poster",
+                "view",
+                "read",
+                "manage",
+                "fulfill",
+                "trade",
+            ):
+                return True
+            if self._tuple_key(
+                "caravan_contract", resource_id, "contractor", subject_type, subject_id
+            ) in self._tuples and permission in (
+                "contractor",
+                "view",
+                "read",
+                "claim",
+                "fulfill",
+                "trade",
+            ):
+                return True
+
+            parents = self._find_subjects("caravan_contract", resource_id, "shared_world")
+            for p_type, p_id in parents:
+                if permission in ("view", "read") and await self.check_permission(
+                    p_type, p_id, "view", subject_type, subject_id
+                ):
+                    return True
+                if permission in ("claim", "trade") and await self.check_permission(
+                    p_type, p_id, "trade", subject_type, subject_id
+                ):
+                    return True
+                if permission in ("manage",) and await self.check_permission(
+                    p_type, p_id, "manage", subject_type, subject_id
+                ):
+                    return True
+
         return False
