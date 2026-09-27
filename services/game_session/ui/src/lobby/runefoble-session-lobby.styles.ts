@@ -7,10 +7,7 @@ export const sessionLobbyStyles = css`
     font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
     color: var(--rf-text-primary, rgb(18, 18, 18));
   }
-
-  * {
-    box-sizing: border-box;
-  }
+  * { box-sizing: border-box; }
 
   .lobby-container {
     display: flex;
@@ -31,13 +28,11 @@ export const sessionLobbyStyles = css`
     padding-bottom: 20px;
     border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
   }
-
   .header-titles {
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
-
   .lobby-badge-status {
     display: inline-flex;
     align-items: center;
@@ -52,7 +47,6 @@ export const sessionLobbyStyles = css`
     border: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
     color: var(--rf-text-primary, rgb(18, 18, 18));
   }
-
   .status-pulse {
     width: 8px;
     height: 8px;
@@ -60,7 +54,6 @@ export const sessionLobbyStyles = css`
     background: var(--rf-accent-tertiary, rgb(255, 183, 3));
     display: inline-block;
   }
-
   .lobby-title {
     font-size: 1.75rem;
     font-weight: 900;
@@ -69,7 +62,6 @@ export const sessionLobbyStyles = css`
     letter-spacing: 0.04em;
     color: var(--rf-text-primary, rgb(18, 18, 18));
   }
-
   .lobby-subtitle {
     font-size: 0.9rem;
     color: var(--rf-text-muted, rgb(100, 116, 139));
@@ -84,7 +76,6 @@ export const sessionLobbyStyles = css`
     flex-wrap: wrap;
     gap: 14px;
   }
-
   .readiness-summary-pill {
     display: inline-flex;
     align-items: center;
@@ -98,7 +89,6 @@ export const sessionLobbyStyles = css`
     color: var(--rf-text-primary, rgb(18, 18, 18));
     letter-spacing: 0.02em;
   }
-
   .btn-launch {
     background: var(--rf-accent-primary, rgb(230, 57, 70));
     color: var(--rf-text-inverse, rgb(255, 255, 255));
@@ -115,17 +105,14 @@ export const sessionLobbyStyles = css`
     align-items: center;
     gap: 8px;
   }
-
   .btn-launch:hover:not(:disabled) {
     transform: translate(-2px, -2px);
     box-shadow: 6px 6px 0px var(--rf-shadow-color, rgb(18, 18, 18));
   }
-
   .btn-launch:active:not(:disabled) {
     transform: translate(1px, 1px);
     box-shadow: 2px 2px 0px var(--rf-shadow-color, rgb(18, 18, 18));
   }
-
   .btn-launch:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -138,7 +125,6 @@ export const sessionLobbyStyles = css`
     flex-direction: column;
     gap: 16px;
   }
-
   .section-label {
     font-size: 0.85rem;
     font-weight: 800;
@@ -146,13 +132,11 @@ export const sessionLobbyStyles = css`
     letter-spacing: 0.08em;
     color: var(--rf-text-secondary, rgb(43, 45, 66));
   }
-
   .participants-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 18px;
   }
-
   .participant-card {
     background: var(--rf-bg-surface, rgb(255, 255, 255));
     border: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
@@ -163,13 +147,11 @@ export const sessionLobbyStyles = css`
     gap: 14px;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-
   .participant-card.current-user {
     border-color: var(--rf-border-focus, rgb(29, 53, 87));
     outline: 2px dashed var(--rf-border-focus, rgb(29, 53, 87));
     outline-offset: 2px;
   }
-
   .participant-card.absent {
     opacity: 0.85;
     background: var(--rf-bg-inset, rgb(241, 243, 245));
@@ -182,28 +164,24 @@ export const sessionLobbyStyles = css`
     align-items: center;
     gap: 12px;
   }
-
   .user-identity {
     display: flex;
     align-items: center;
     gap: 12px;
     overflow: hidden;
   }
-
   .avatar-wrap {
     position: relative;
     width: 44px;
     height: 44px;
     flex-shrink: 0;
   }
-
   .avatar-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     border: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
   }
-
   .avatar-fallback {
     width: 100%;
     height: 100%;
@@ -216,7 +194,6 @@ export const sessionLobbyStyles = css`
     font-size: 1.1rem;
     border: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
   }
-
   .presence-dot {
     position: absolute;
     bottom: -2px;
@@ -226,25 +203,15 @@ export const sessionLobbyStyles = css`
     border-radius: 50%;
     border: 2px solid var(--rf-bg-surface, rgb(255, 255, 255));
   }
-
-  .presence-dot.online {
-    background: rgb(34, 197, 94);
-  }
-
-  .presence-dot.idle {
-    background: var(--rf-accent-tertiary, rgb(255, 183, 3));
-  }
-
-  .presence-dot.offline {
-    background: rgb(156, 163, 175);
-  }
+  .presence-dot.online { background: rgb(34, 197, 94); }
+  .presence-dot.idle { background: var(--rf-accent-tertiary, rgb(255, 183, 3)); }
+  .presence-dot.offline { background: rgb(156, 163, 175); }
 
   .user-info {
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
-
   .username {
     font-weight: 800;
     font-size: 1rem;
@@ -253,7 +220,6 @@ export const sessionLobbyStyles = css`
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .user-role {
     font-size: 0.75rem;
     font-weight: 700;
@@ -272,17 +238,14 @@ export const sessionLobbyStyles = css`
     border: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
     white-space: nowrap;
   }
-
   .badge-ready {
     background: rgb(34, 197, 94);
     color: rgb(255, 255, 255);
   }
-
   .badge-setting-up {
     background: var(--rf-accent-tertiary, rgb(255, 183, 3));
     color: rgb(18, 18, 18);
   }
-
   .badge-standin {
     background: rgb(168, 85, 247);
     color: rgb(255, 255, 255);
@@ -297,36 +260,28 @@ export const sessionLobbyStyles = css`
     align-items: center;
     gap: 10px;
   }
-
-  .char-portrait {
-    width: 36px;
-    height: 36px;
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
-    background: var(--rf-bg-surface, rgb(255, 255, 255));
-    object-fit: cover;
-    flex-shrink: 0;
-  }
-
+  .char-portrait,
   .char-portrait-fallback {
     width: 36px;
     height: 36px;
     border: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
     background: var(--rf-bg-surface, rgb(255, 255, 255));
+    flex-shrink: 0;
+  }
+  .char-portrait { object-fit: cover; }
+  .char-portrait-fallback {
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 900;
     font-size: 0.9rem;
     color: var(--rf-text-muted, rgb(100, 116, 139));
-    flex-shrink: 0;
   }
-
   .char-details {
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
-
   .char-name {
     font-weight: 800;
     font-size: 0.9rem;
@@ -335,13 +290,11 @@ export const sessionLobbyStyles = css`
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .char-meta {
     font-size: 0.75rem;
     color: var(--rf-text-secondary, rgb(43, 45, 66));
     font-weight: 600;
   }
-
   .no-character-msg {
     font-size: 0.8rem;
     font-style: italic;
@@ -354,7 +307,6 @@ export const sessionLobbyStyles = css`
     flex-direction: column;
     gap: 4px;
   }
-
   .select-label {
     font-size: 0.75rem;
     font-weight: 700;
@@ -362,7 +314,6 @@ export const sessionLobbyStyles = css`
     letter-spacing: 0.04em;
     color: var(--rf-text-secondary, rgb(43, 45, 66));
   }
-
   .character-dropdown {
     width: 100%;
     padding: 8px 10px;
@@ -374,7 +325,6 @@ export const sessionLobbyStyles = css`
     font-weight: 700;
     cursor: pointer;
   }
-
   .character-dropdown:focus {
     outline: none;
     border-color: var(--rf-border-focus, rgb(29, 53, 87));
@@ -388,7 +338,6 @@ export const sessionLobbyStyles = css`
     padding-top: 10px;
     border-top: 1px solid var(--rf-border-subtle, rgba(18, 18, 18, 0.15));
   }
-
   .control-toggle {
     display: inline-flex;
     align-items: center;
@@ -399,7 +348,6 @@ export const sessionLobbyStyles = css`
     color: var(--rf-text-primary, rgb(18, 18, 18));
     user-select: none;
   }
-
   .control-toggle input[type="checkbox"] {
     width: 16px;
     height: 16px;
@@ -415,13 +363,11 @@ export const sessionLobbyStyles = css`
     border: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
     box-shadow: var(--rf-shadow, 4px 4px 0px var(--rf-shadow-color, rgb(18, 18, 18)));
   }
-
   .empty-state h3 {
     margin: 0 0 8px 0;
     font-size: 1.2rem;
     font-weight: 800;
   }
-
   .empty-state p {
     margin: 0;
     color: var(--rf-text-muted, rgb(100, 116, 139));
@@ -433,13 +379,11 @@ export const sessionLobbyStyles = css`
       flex-direction: column;
       align-items: flex-start;
     }
-
     .header-actions {
       width: 100%;
       flex-direction: column;
       align-items: stretch;
     }
-
     .btn-launch {
       width: 100%;
       justify-content: center;
