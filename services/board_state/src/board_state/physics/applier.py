@@ -117,12 +117,20 @@ def apply_dice_throw(
     dice_id: str | None = None,
     restitution: float = 0.5,
     friction: float = 0.3,
+    target_face_value: int | None = None,
 ) -> SimulateThrowResponse:
     """Simulate tumbling 3D dice roll across board terrain, record collisions, and settle value."""
     terrain = HeightfieldTerrain.from_board_state(board.state)
     d_id = dice_id or f"dice-{uuid4()}"
     traj, (sx, sy, sz), bounces, face_val, cols = simulate_dice_trajectory(
-        origin, velocity, dice_type, terrain, restitution, friction, seed=seed
+        origin,
+        velocity,
+        dice_type,
+        terrain,
+        restitution,
+        friction,
+        seed=seed,
+        target_face_value=target_face_value,
     )
     settled_cell = [
         max(0, min(board.state.cols - 1, int(math.floor(sx)))),

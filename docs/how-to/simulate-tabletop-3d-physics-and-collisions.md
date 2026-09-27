@@ -153,4 +153,46 @@ board.knockbackToken({ tokenId: 'fighter-1', fromX: 2, fromY: 3, toX: 4, toY: 3 
 - **`miniature_mesh.ts`**: Extrudes circular 2D tokens into stylized 3D miniature bases with character portraits, health pips, and snap-on condition rings (e.g., stunned, on fire, blessed).
 - **`tabletop_canvas.ts`**: WebGL/Canvas visualizer driving 60fps polyhedral dice tumbling, wall collisions, and ragdoll tilt balance recovery.
 - **`physics_bridge.ts`**: Handles bidirectional WebSocket events (`dice_settled`, `token_knockback`) and triggers backend simulation endpoints.
+- **`dice_models.ts`**: Parametric polyhedral collision geometries for d4, d6, d8, d10, d12, and d20 dice with calibrated restitution, center of mass, and friction parameters.
+- **`tray_audio.ts`**: WebAudio synthesis and foley player triggering velocity-scaled acoustic impacts on board perimeters and obstacle collision contacts.
+- **`dice_solver.ts`**: Deterministic trajectory and rotational momentum solver guaranteeing resting face values conform 100% to server-side cryptographic rolls.
+
+---
+
+## 6. Kinetic 3D Dice Tray & Synchronized Acoustic Clatter
+
+The `<runefoble-dice-tray-3d>` component provides an encapsulated 3D dice tray with physical rigid-body tumbling, perimeter wall bounces, and real-time WebAudio synthesis:
+
+```html
+<runefoble-dice-tray-3d
+  .width="${500}"
+  .height="${300}"
+  theme="dark"
+></runefoble-dice-tray-3d>
+```
+
+```typescript
+// Throw a d20 with server-side cryptographic alignment
+const tray = document.querySelector('runefoble-dice-tray-3d');
+tray.roll('d20', 20, { velocity: { x: 6.2, y: 5.1, z: 2.2 } });
+
+// Multi-dice toss across full polyhedral set
+tray.rollMultiple([
+  { diceType: 'd4', targetFaceValue: 4 },
+  { diceType: 'd6', targetFaceValue: 6 },
+  { diceType: 'd8', targetFaceValue: 8 },
+  { diceType: 'd10', targetFaceValue: 10 },
+  { diceType: 'd12', targetFaceValue: 12 },
+  { diceType: 'd20', targetFaceValue: 20 },
+]);
+
+// Listen for acoustic impact and settlement events
+tray.addEventListener('tray-audio-played', (e) => {
+  console.log('Impact sound:', e.detail.impactType, e.detail.velocity);
+});
+tray.addEventListener('dice-settled', (e) => {
+  console.log('Dice settled on face:', e.detail.faceValue);
+});
+```
+
 

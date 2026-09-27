@@ -41,6 +41,7 @@ def simulate_dice_trajectory(
     dt: float = 0.04,
     max_steps: int = 120,
     seed: int | None = None,
+    target_face_value: int | None = None,
 ) -> tuple[list[dict[str, float]], tuple[float, float, float], int, int, list[dict[str, Any]]]:
     """Compute tumbling 3D ballistic trajectory, restitution bounces, and stopping coordinates."""
     g, drag = 9.81, 0.02
@@ -88,11 +89,16 @@ def simulate_dice_trajectory(
 
     sides = _parse_dice_sides(dice_type)
     rng = random.Random(seed) if seed is not None else random.Random()
+    settled_face = (
+        max(1, min(sides, int(target_face_value)))
+        if target_face_value is not None
+        else rng.randint(1, sides)
+    )
     return (
         trajectory,
         (round(x, 3), round(y, 3), round(z, 3)),
         bounces,
-        rng.randint(1, sides),
+        settled_face,
         collisions,
     )
 
