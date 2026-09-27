@@ -23,6 +23,8 @@ Before entering active tactical combat or exploration, players and Game Masters 
 
 The `<runefoble-session-lobby>` component is vendored in `@runefoble/game-session-ui` and conforms to ADR-0004, ADR-0012, and ADR-0013.
 
+- **Modular Styles Architecture**: Scoped styles are decomposed into focused submodules under `services/game_session/ui/src/lobby/styles/` (`base.styles.ts`, `roster.styles.ts`, `controls.styles.ts`), composed via `sessionLobbyStyles` in `runefoble-session-lobby.styles.ts` (keeping all style modules strictly < 150 lines per Hard Invariant 6).
+
 ### Component Attributes & Properties
 
 | Attribute / Property | Type | Description |

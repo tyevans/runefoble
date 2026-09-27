@@ -14,7 +14,7 @@ import {
 
 @customElement('runefoble-session-lobby')
 export class RunefobleSessionLobby extends LitElement {
-  static styles = [sessionLobbyStyles];
+  static styles = sessionLobbyStyles;
 
   @property({ type: String, attribute: 'session-id' }) sessionId = '';
   @property({ type: String, attribute: 'campaign-id' }) campaignId = '';
