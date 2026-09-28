@@ -102,7 +102,7 @@
 - [x] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
 - [x] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
 
-## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Complete)
+## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Active / Immediate Priority)
 ### Core Identity, Gateway & Shell Routing Enablers
 - [x] Frontend SPA Client Router and Navigation Chrome (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0206)
 - [x] Zitadel Auth Client and Login Modal Component (`FEAT-UI-07`, `FEAT-SEC-02`, US-0062, PRD-0023, TASK-0207)
@@ -138,7 +138,7 @@
 - [x] App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite (US-0065, US-0066, PRD-0023, TASK-0251)
 - [x] Character Management and Tabletop Sync Blackbox Test Suite (US-0064, US-0069, PRD-0023, TASK-0258)
 
-## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames (Active / Immediate Priority)
+## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames
 ### Foundational Aggregates, Social Graphs & Civic Enablers
 - [x] Settlement Haven Builder and Establishment Aggregate (`FEAT-SET-01`, `FEAT-SET-02`, US-0072, PRD-0024, TASK-0259)
 - [x] Assignable NPC Worker and Social Relationship Graph (`FEAT-SET-02`, US-0073, PRD-0024, TASK-0260)
