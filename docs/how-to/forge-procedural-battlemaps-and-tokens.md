@@ -108,3 +108,19 @@ The `board_geometry_payload` returned by the battlemap generator maps directly t
 ## 4. SpiceDB Zanzibar Campaign Access Control
 
 When `campaign_id` is supplied in the request body, the service validates that the authenticated caller holds `play` or `run_session` permissions on the campaign object in SpiceDB. Non-members receive a `403 Forbidden` rejection.
+
+---
+
+## 5. Modular Raster Synthesis Submodules (`asset_forge.raster`)
+
+In accordance with Hard Invariant 6 and ADR-0003/ADR-0007, raster generation is decoupled into focused submodules under `services/asset_forge/src/asset_forge/raster/`:
+
+| Module | Responsibilities | Key Functions |
+|---|---|---|
+| `png_codec.py` | Low-level PNG chunk encoding (IHDR, IDAT, IEND), scanlines, and hex parsing | `encode_png_rgba`, `parse_hex_color` |
+| `battlemap_raster.py` | Procedural tactical battlemap rendering, theme palettes, and grid overlays | `generate_battlemap_png` |
+| `token_raster.py` | Circular token portrait generator, border rings, and alpha transparency | `generate_token_portrait_png`, `generate_token_png` |
+| `wardrobe_raster.py` | Character wardrobe attire variants preserving facial embedding seeds | `generate_wardrobe_portrait_png`, `ATTIRE_PROMPTS`, `ATTIRE_PALETTES` |
+
+The top-level `asset_forge.generator` module serves as a lightweight aggregator facade (< 50 lines) providing 100% backward-compatible function re-exports.
+
