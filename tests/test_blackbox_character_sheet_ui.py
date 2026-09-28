@@ -110,6 +110,11 @@ def test_typescript_element_source_and_custom_elements() -> None:
 
     templates_file = ui_dir / "src/runefoble-character-sheet.templates.ts"
     assert templates_file.is_file()
+    assert (ui_dir / "src/templates/stats.template.ts").is_file()
+    assert (ui_dir / "src/templates/inventory.template.ts").is_file()
+    assert (ui_dir / "src/templates/conditions.template.ts").is_file()
+    assert (ui_dir / "src/templates/spells.template.ts").is_file()
+    assert (ui_dir / "src/templates/index.ts").is_file()
 
 
 def test_storybook_stories_definition() -> None:
@@ -284,6 +289,11 @@ def test_file_length_invariants() -> None:
         REPO_ROOT / "services/character_sheet/ui/src/conditions.styles.ts",
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.types.ts",
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.stories.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/templates/stats.template.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/templates/inventory.template.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/templates/conditions.template.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/templates/spells.template.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/templates/index.ts",
         REPO_ROOT / "tests/test_blackbox_character_sheet_ui.py",
     ]
 
@@ -316,3 +326,27 @@ def test_modular_styles_line_length_limits() -> None:
         lines = len(mod.read_text(encoding="utf-8").splitlines())
         assert lines < 180, f"{mod.name} has {lines} lines, exceeding the 180 line threshold!"
         assert lines < 200, f"{mod.name} has {lines} lines, exceeding the 200 line threshold!"
+
+
+def test_modular_templates_line_length_limits() -> None:
+    """Verify TASK-0189 template modularization: sub-templates < 120 lines, aggregator < 60 lines."""
+    ui_src = REPO_ROOT / "services/character_sheet/ui/src"
+
+    aggregator = ui_src / "runefoble-character-sheet.templates.ts"
+    assert len(aggregator.read_text(encoding="utf-8").splitlines()) < 60
+    assert len(aggregator.read_text(encoding="utf-8").splitlines()) < 50
+
+    template_modules = [
+        (ui_src / "templates/stats.template.ts", 100),
+        (ui_src / "templates/inventory.template.ts", 100),
+        (ui_src / "templates/conditions.template.ts", 80),
+        (ui_src / "templates/spells.template.ts", 80),
+    ]
+
+    for mod, target_limit in template_modules:
+        assert mod.is_file(), f"{mod.name} must exist"
+        lines = len(mod.read_text(encoding="utf-8").splitlines())
+        assert lines < 120, f"{mod.name} has {lines} lines, exceeding the 120 line threshold!"
+        assert lines < target_limit, (
+            f"{mod.name} has {lines} lines, exceeding the {target_limit} line threshold!"
+        )

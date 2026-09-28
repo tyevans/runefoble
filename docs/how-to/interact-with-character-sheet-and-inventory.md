@@ -88,7 +88,18 @@ The character sheet's visual styling is modularized into discrete CSS blocks adh
 
 ---
 
-## 7. Character Roster & Campaign Party Assignment
+## 7. Modular Lit HTML Templates Architecture
+
+Per ADR-0004, ADR-0012, and ADR-0013, the character sheet template rendering logic is split into focused, single-responsibility sub-templates under `templates/`, keeping files strictly within the line length limit:
+- **Stats Template** (`templates/stats.template.ts`): Renders character identity header (`renderSheetHeader`) and vitals grid with HP gauge (`renderVitalsGrid`).
+- **Inventory Template** (`templates/inventory.template.ts`): Renders interactive paper doll equipment slots, dynamic encumbrance capacity gauge, inventory table, and add-item inputs (`renderEquipmentAndInventory`).
+- **Conditions Template** (`templates/conditions.template.ts`): Renders tactical condition badges, absence penalties, popover tooltips, and condition selector (`renderConditionsPanel`).
+- **Spells Template** (`templates/spells.template.ts`): Renders tiered spell slot tracking pips, prepared spells list, and known spellbook management (`renderSpellbookPanel`).
+- **Aggregator Facade** (`runefoble-character-sheet.templates.ts`): Unified entry point re-exporting modular render functions to preserve component API stability.
+
+---
+
+## 8. Character Roster & Campaign Party Assignment
 
 The Character Roster microfrontend (`<runefoble-character-roster>`) and builder modal (`<runefoble-character-builder-modal>`) allow players to maintain a persistent library of adventurers across campaigns.
 
