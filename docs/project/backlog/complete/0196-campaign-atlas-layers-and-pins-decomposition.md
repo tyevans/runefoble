@@ -1,7 +1,7 @@
 ---
-id: '0196'
+id: 0196
 title: Campaign Atlas Layers and Pins Subviews Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0106
@@ -17,8 +17,8 @@ governing_stories:
 - US-0050
 - US-0058
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/257
 ---
-
 # TASK-0196: Campaign Atlas Layers and Pins Subviews Modular Decomposition
 
 ## Status

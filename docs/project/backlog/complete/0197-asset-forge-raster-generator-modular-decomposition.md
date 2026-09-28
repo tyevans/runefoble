@@ -1,7 +1,7 @@
 ---
-id: '0197'
+id: 0197
 title: Asset Forge Raster Generator Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0049
@@ -17,8 +17,8 @@ governing_stories:
 - US-0021
 - US-0049
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/258
 ---
-
 # TASK-0197: Asset Forge Raster Generator Modular Decomposition
 
 ## Status
