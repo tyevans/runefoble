@@ -254,6 +254,7 @@ The `<runefoble-campaign-dashboard>` provides:
 - Filtering by role ("All", "DMing", "Playing") and real-time text search.
 - Active live session indicator (`● Session Live`).
 - Seamless integration with the `<runefoble-campaign-creator>` dialog wizard.
+- Modular styles decomposed under `@runefoble/game-session-ui/campaigns/styles/dashboard` (`base.styles.ts`, `cards.styles.ts`, `modal.styles.ts`) strictly < 130 lines per module.
 
 ---
 

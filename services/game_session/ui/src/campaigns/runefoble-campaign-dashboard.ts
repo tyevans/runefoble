@@ -6,7 +6,7 @@ import './runefoble-campaign-creator.ts';
 
 @customElement('runefoble-campaign-dashboard')
 export class RunefobleCampaignDashboard extends LitElement {
-  static styles = [campaignDashboardStyles];
+  static styles = campaignDashboardStyles;
 
   @property({ type: Array }) campaigns: CampaignItem[] = [];
   @property({ type: String }) activeFilter: RoleFilter = 'all';
