@@ -152,3 +152,13 @@ To create real session entities prior to assembling in the lobby, the campaign d
      ```
    - The App Shell delegates to `AppDataService.createCampaignSession()`, calling `POST /api/v1/campaigns/{campaign_id}/sessions` requiring Zanzibar `run_session` permission.
    - On success, the campaign session list refreshes. If `status === 'lobby'`, the router automatically navigates to `#/campaigns/:campaignId/lobby/:sessionId`.
+
+---
+
+## 6. Dynamic Character Selection and Active VTT Hand-off (TASK-0256)
+
+Instead of static placeholders, `<runefoble-session-lobby>` receives available characters dynamically populated from the authenticated user's character roster via `appDataService.fetchLobbyState(campaignId, sessionId)`:
+1. **Campaign Prioritization**: Characters assigned to `campaignId` are prioritized at the top of the character selection dropdown.
+2. **Selection Propagation**: Selecting a character dispatches `@select-character` (and `@character-selected`), synchronizing the selection with `RunefobleApp.activeCharacter`.
+3. **Seamless Transition**: When launching the session, the active VTT `<runefoble-character-card>` mounts directly bound to the selected character's name, class, HP, AC, and portrait.
+
