@@ -1,7 +1,7 @@
 ---
 id: '0232'
 title: Rules Compendium UI Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0048
@@ -16,8 +16,8 @@ governing_stories:
 - US-0037
 - US-0052
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/269
 ---
-
 # TASK-0232: Rules Compendium UI Blackbox Test Suite Modular Decomposition
 
 ## Status
