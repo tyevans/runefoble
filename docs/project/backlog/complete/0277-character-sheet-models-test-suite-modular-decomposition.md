@@ -1,7 +1,7 @@
 ---
 id: '0277'
 title: Character Sheet Models Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0229
@@ -15,8 +15,8 @@ governing_stories:
 - US-0015
 - US-0051
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/319
 ---
-
 # TASK-0277: Character Sheet Models Test Suite Modular Decomposition
 
 ## Status

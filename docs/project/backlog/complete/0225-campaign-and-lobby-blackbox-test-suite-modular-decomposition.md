@@ -1,7 +1,7 @@
 ---
 id: '0225'
 title: Campaign and Lobby Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0215
@@ -19,8 +19,8 @@ governing_stories:
 - US-0064
 - US-0065
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/321
 ---
-
 # TASK-0225: Campaign and Lobby Blackbox Test Suite Modular Decomposition
 
 ## Status

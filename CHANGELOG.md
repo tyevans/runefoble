@@ -19,6 +19,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **Project Visualizer AGY Launcher Modular Decomposition (`TASK-0224`, `ADR-0003`, `ADR-0004`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed monolithic script `tools/project_visualizer/static/js/agy_launcher.js` (353 lines) into focused submodules under `tools/project_visualizer/static/js/agy/`, reducing `agy_launcher.js` to 16 lines (< 50 lines DoD limit) and keeping all submodules strictly < 140 lines per Hard Invariant 6:
+    - `agy_modal.js` (97 lines): Modal open/close transitions, keyboard shortcuts (Escape key handler), drawer action triggers, and entity badge population (< 100 lines target).
+    - `agy_presets.js` (94 lines): Prompt preset templates (`feature_process`, `task`, `backlog_curator`, `health_check`, `test_suite`), command generation, clipboard copying, and live preview listeners (< 110 lines target).
+    - `agy_runner.js` (124 lines): Job launch POST handler, terminal log streaming with byte offsets, status chip styling, elapsed execution timer, and cancellation termination (< 130 lines target).
+    - `agy_launcher.js` (16 lines): Backward-compatible aggregation facade exposing all launcher controls on `window.visualizer` (< 40 lines target).
+  - Updated `tools/project_visualizer/assets_js.py` to bundle submodules in designated order during live dev server mode and strictly exclude all AGY scripts during static GitHub Pages builds.
+  - Added architecture verification tests in `tests/test_project_visualizer_agy/test_agy_launcher.py` and frontdoor client Node.js tests in `tests/test_project_visualizer_agy/test_agy_client.py`.
+  - Updated Diataxis guide `docs/how-to/visualize-project-content.md`.
 - **West Marches Aggregate Discovery and Territory Handlers Modular Decomposition (`TASK-0205`, `ADR-0003`, `ADR-0007`, `ADR-0011`)**:
   - Decomposed `services/campaign_lore/src/campaign_lore/west_marches_aggregate.py` from 304 lines to 148 lines (< 150 lines limit) by extracting discovery pin mutation logic, territory claim evaluations, and outpost fortification calculations into `services/campaign_lore/src/campaign_lore/west_marches_handlers.py` (125 lines, strictly < 130 lines limit).
   - Moved `WestMarchesState` to `services/campaign_lore/src/campaign_lore/models.py` (52 lines, < 500 lines limit) and re-exported from `west_marches_aggregate.py` for 100% backward compatibility.
