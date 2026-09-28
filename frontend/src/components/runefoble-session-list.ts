@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import './runefoble-session-modal.ts';
+import type { CreateSessionDetail } from './runefoble-session-modal.ts';
 
 export interface CampaignSessionItem {
   id: string;
@@ -8,13 +10,19 @@ export interface CampaignSessionItem {
   status: 'active' | 'lobby' | 'upcoming' | 'completed';
   round?: number;
   participantsCount?: number;
+  scheduledAt?: string;
+  scheduled_at?: string;
+  description?: string;
 }
+
+export type { CreateSessionDetail };
 
 @customElement('runefoble-session-list')
 export class RunefobleSessionList extends LitElement {
   @property({ type: String, attribute: 'campaign-id' }) campaignId = '';
   @property({ type: Array }) sessions: CampaignSessionItem[] = [];
   @property({ type: Boolean, attribute: 'is-dm' }) isDm = false;
+  @property({ type: Boolean, attribute: 'create-modal-open' }) isCreateModalOpen = false;
 
   static styles = css`
     :host {
@@ -96,6 +104,16 @@ export class RunefobleSessionList extends LitElement {
       font-size: 0.8rem;
       color: var(--rf-text-muted);
     }
+    .session-schedule {
+      color: var(--rf-accent-secondary, #1d3557);
+      font-weight: 700;
+    }
+    .session-description {
+      font-size: 0.85rem;
+      color: var(--rf-text-primary);
+      margin-top: 4px;
+      font-style: italic;
+    }
     .badge-status {
       font-size: 0.75rem;
       font-weight: 800;
@@ -114,6 +132,10 @@ export class RunefobleSessionList extends LitElement {
     .badge-upcoming {
       background: var(--rf-bg-surface);
       color: var(--rf-text-primary);
+    }
+    .badge-completed {
+      background: var(--rf-bg-inset, #e9ecef);
+      color: var(--rf-text-muted, #6c757d);
     }
     .action-group {
       display: flex;
@@ -146,6 +168,14 @@ export class RunefobleSessionList extends LitElement {
     }
   `;
 
+  public openCreateModal() {
+    this.isCreateModalOpen = true;
+  }
+
+  public closeCreateModal() {
+    this.isCreateModalOpen = false;
+  }
+
   private handleEnterLobby(sessionId: string) {
     this.dispatchEvent(new CustomEvent('enter-lobby', {
       detail: { sessionId, campaignId: this.campaignId },
@@ -163,11 +193,7 @@ export class RunefobleSessionList extends LitElement {
   }
 
   private handleCreateSession() {
-    this.dispatchEvent(new CustomEvent('create-session', {
-      detail: { campaignId: this.campaignId },
-      bubbles: true,
-      composed: true,
-    }));
+    this.isCreateModalOpen = true;
   }
 
   render() {
@@ -193,16 +219,18 @@ export class RunefobleSessionList extends LitElement {
                   <div class="session-title-row">
                     <span class="session-title">${s.title}</span>
                     <span class="badge-status badge-${s.status}">
-                      ${s.status === 'active' ? '● Live VTT' : s.status === 'lobby' ? '⧖ Pre-Game Lobby' : s.status}
+                      ${s.status === 'active' ? '● Live VTT' : s.status === 'lobby' ? '⧖ Pre-Game Lobby' : s.status === 'upcoming' ? '📅 Upcoming' : s.status}
                     </span>
                   </div>
                   <div class="session-meta">
                     Session ID: ${s.id} ${s.participantsCount ? `• ${s.participantsCount} Assembled` : ''}
+                    ${s.scheduledAt || s.scheduled_at ? html`• <span class="session-schedule">Scheduled: ${s.scheduledAt || s.scheduled_at}</span>` : ''}
                   </div>
+                  ${s.description ? html`<div class="session-description">${s.description}</div>` : ''}
                 </div>
                 <div class="action-group">
                   <button class="btn-action" type="button" @click=${() => this.handleEnterLobby(s.id)}>
-                    Enter Lobby
+                    ${s.status === 'upcoming' ? 'Open Staging' : 'Enter Lobby'}
                   </button>
                   <button class="btn-action primary" type="button" @click=${() => this.handleJoinSession(s.id)}>
                     Join Tabletop
@@ -222,6 +250,13 @@ export class RunefobleSessionList extends LitElement {
           </div>
         `}
       </div>
+
+      <runefoble-session-modal
+        .open=${this.isCreateModalOpen}
+        campaign-id=${this.campaignId}
+        @modal-closed=${() => { this.isCreateModalOpen = false; }}
+        @create-session=${() => { this.isCreateModalOpen = false; }}
+      ></runefoble-session-modal>
     `;
   }
 }

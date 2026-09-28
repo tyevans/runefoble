@@ -124,3 +124,31 @@ curl -X POST "http://localhost:8004/api/v1/sessions/sess-star-eater-15/start" \
 ```
 
 Upon successful start, a `SessionStarted` domain event is broadcast across Redis Streams channel `events:session`, prompting all connected lobby clients to navigate to the active VTT board route `#/campaigns/:campaignId/sessions/:sessionId`.
+
+---
+
+## 5. Scheduling Sessions and Creating Staging Lobbies with `<runefoble-session-modal>`
+
+To create real session entities prior to assembling in the lobby, the campaign detail view equips `<runefoble-session-list>` with `<runefoble-session-modal>`:
+
+1. **Triggering the Modal**: In the campaign detail view (`#/campaigns/:campaignId`), Game Masters click `+ New Session` to open `<runefoble-session-modal>`.
+2. **Configuring Session Parameters**:
+   - **Session Title**: Descriptive scenario name (e.g. `Chapter 4: The Sunken Vault`).
+   - **Initial Status**:
+     - `lobby`: Immediately opens a pre-game staging lobby for participant assembly.
+     - `upcoming`: Creates a scheduled calendar entry with date/time for future sessions.
+   - **Scheduled Date & Time**: Optional ISO-8601 / datetime-local value.
+   - **Description & DM Notes**: Scenario briefing, preparation notes, or DM recap.
+3. **Event Dispatch & Persistence**:
+   - Submitting the form validates input and emits `@create-session` with payload:
+     ```typescript
+     interface CreateSessionDetail {
+       campaignId?: string;
+       title: string;
+       scheduledAt?: string;
+       description?: string;
+       status: 'lobby' | 'upcoming';
+     }
+     ```
+   - The App Shell delegates to `AppDataService.createCampaignSession()`, calling `POST /api/v1/campaigns/{campaign_id}/sessions` requiring Zanzibar `run_session` permission.
+   - On success, the campaign session list refreshes. If `status === 'lobby'`, the router automatically navigates to `#/campaigns/:campaignId/lobby/:sessionId`.

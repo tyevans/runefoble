@@ -79,3 +79,4 @@ Instead of hardcoded mock state, the App Shell fetches data parameterized by rou
 - **Characters**: Fetches player characters from `GET /api/v1/characters`.
 - **Session Lobby**: Fetches participant readiness from `GET /api/v1/sessions/:id`.
 - **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`.
+- **Session Scheduling & Staging**: Creates new sessions or launches staging lobbies from `POST /api/v1/campaigns/:id/sessions` via `<runefoble-session-modal>`.
