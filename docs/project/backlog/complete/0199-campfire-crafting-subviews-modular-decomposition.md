@@ -1,7 +1,7 @@
 ---
-id: '0199'
+id: 0199
 title: Campfire Crafting Subviews Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0100
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0044
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/262
 ---
-
 # TASK-0199: Campfire Crafting Subviews Modular Decomposition
 
 ## Status
