@@ -19,6 +19,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **Gateway Auth Router Modular Decomposition (`TASK-0241`, `ADR-0003`, `ADR-0005`, `ADR-0007`)**:
+  - Decomposed monolithic router `gateway/api/src/gateway_api/routers/auth.py` (409 lines) into modular submodules under `gateway/api/src/gateway_api/routers/auth/`, keeping all submodules strictly < 130 lines per Hard Invariant 6:
+    - `schemas.py` (70 lines): Extracted Pydantic models `RegisterRequest`, `TokenRequest`, `RefreshRequest`, `VerifyEmailRequest`, `DevSendEmailRequest`, `TestEmailRequest`, `PasswordResetRequest`, `SeedAdminRequest`, and `InviteAdminRequest`.
+    - `tokens.py` (85 lines): Extracted OAuth2 `/token` password exchange, `/refresh` token grant, `/logout` handler, and lightweight dev JWT generation (`_generate_mock_jwt`).
+    - `registration.py` (119 lines): Extracted `/register` signup flow, `/verify` and `/verify-email` OTP validation, `/resend-verification` trigger, and in-memory pending verifications store.
+    - `dev_mail.py` (75 lines): Extracted `/dev/send-test`, `/test-email`, `/dev/emails` listing, `/dev/stats`, `/mailpit/status`, inbox clearing, and Mailpit client dependency injection helpers (`get_mailpit_client`, `set_mailpit_client`).
+    - `admin.py` (112 lines): Extracted `/admin/seed` default local developer administrator Zanzibar seeding and `/admin/invite` invitation dispatch with SpiceDB role assignment.
+    - `__init__.py` (95 lines): Aggregator facade mounting all sub-routers onto unified `APIRouter(prefix="/api/v1/auth", tags=["Authentication & Signups"])` maintaining 100% backward compatibility.
+  - Added frontdoor blackbox test suite `tests/test_gateway_auth_modular_decomposition.py` verifying strict line length limits, endpoint behavior, and symbol re-exports.
+  - Updated Diataxis guide `docs/how-to/decompose-microservice-routers.md`.
 - **Campfire Crafting Subviews Modular Decomposition (`TASK-0199`, `ADR-0004`, `ADR-0007`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed `services/game_session/ui/src/runefoble-campfire-crafting.ts` (previously 323 lines) into modular subviews under `services/game_session/ui/src/campfire/`, reducing `runefoble-campfire-crafting.ts` to 98 lines (< 100 lines) and keeping all presentation sub-modules strictly < 120 lines per Hard Invariant 6:
     - `crafting-bench.template.ts` (81 lines): Reagent picker chips, catalyst selector, brewing trigger button, volatile mishap risk meter, and crafting outcome notification alert.

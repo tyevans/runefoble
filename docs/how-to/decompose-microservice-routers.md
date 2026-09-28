@@ -98,6 +98,13 @@ routers/
 │   ├── entries.py       # REST endpoints for entry publishing, retrieval, update, filtering
 │   ├── referencing.py   # Cross-referencing, entity link extraction, mention resolution
 │   └── schemas.py       # Pydantic request/response schemas and entry formatting
+├── auth/
+│   ├── __init__.py      # Re-exports combined router mounted at /api/v1/auth
+│   ├── admin.py         # Local dev admin seeding and invitation endpoints
+│   ├── dev_mail.py      # Mailpit test emails, inbox listing, and health diagnostics
+│   ├── registration.py  # User signup, OTP verification, and resend endpoints
+│   ├── schemas.py       # Pydantic request/response schemas and request models
+│   └── tokens.py        # OAuth2 token issuance, refresh, and logout
 ├── copilot/
 │   ├── __init__.py      # Re-exports combined router and sub-routers
 │   ├── actions.py       # Action interceptor and pause window endpoints
