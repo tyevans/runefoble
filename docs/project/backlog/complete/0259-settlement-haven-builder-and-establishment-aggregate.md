@@ -1,7 +1,7 @@
 ---
-id: '0259'
+id: 0259
 title: Settlement Haven Builder and Establishment Aggregate Domain Model
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0164
@@ -17,8 +17,8 @@ governing_stories:
 - US-0072
 - US-0073
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/292
 ---
-
 # TASK-0259: Settlement Haven Builder and Establishment Aggregate Domain Model
 
 ## Status
