@@ -10,9 +10,10 @@ The unified App Shell subscribes to the client SPA router (`Router`) and mounts 
 |---|---|---|
 | `#/login` / `#/register` | `login` | `<runefoble-auth-modal>` |
 | `#/campaigns` | `campaigns` | `<runefoble-campaign-dashboard>` |
-| `#/campaigns/:campaignId` | `campaign-detail` | `<runefoble-campaign-members>`, `<runefoble-session-list>` |
-| `#/campaigns/:campaignId/characters` | `campaign-detail` | `<runefoble-campaign-members>`, `<runefoble-session-list>` |
+| `#/campaigns/:campaignId` | `campaign-detail` | `<runefoble-campaign-header>`, tab navigation bar (`Overview & Sessions`, `Party Characters`, `Codex & Lore`, `Chronicle & Stats`), `<runefoble-campaign-members>`, `<runefoble-session-list>` |
+| `#/campaigns/:campaignId/characters` | `campaign-characters` | `<runefoble-campaign-header>`, tab navigation bar, `<runefoble-character-roster>` (scoped to campaign) |
 | `#/characters` | `characters` | `<runefoble-character-roster>` |
+| `#/profile` | `profile` | Adventurer profile summary |
 | `#/campaigns/:campaignId/lobby/:sessionId` | `session-lobby` | `<runefoble-session-lobby>` |
 | `#/campaigns/:campaignId/sessions/:sessionId` | `session-active` | `<runefoble-vtt-view>` (Tactical board, card, feed, voice) |
 
@@ -22,11 +23,12 @@ The unified App Shell subscribes to the client SPA router (`Router`) and mounts 
 export function getActiveView(route: MatchedRoute | null): AppActiveView {
   const pat = route?.pattern || '';
   if (pat === '#/login' || pat === '#/register') return 'login';
-  if (pat === '#/campaigns/:campaignId' || pat === '#/campaigns/:campaignId/characters') return 'campaign-detail';
+  if (pat.startsWith('#/campaigns/:campaignId/lobby/')) return 'session-lobby';
+  if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
+  if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
+  if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
   if (pat === '#/characters') return 'characters';
-  if (pat === '#/campaigns/:campaignId/lobby/:sessionId') return 'session-lobby';
-  if (pat === '#/campaigns/:campaignId/sessions/:sessionId') return 'session-active';
-  return 'campaigns';
+  return pat === '#/profile' ? 'profile' : 'campaigns';
 }
 ```
 
@@ -75,8 +77,9 @@ private handleIncomingSocketMessage(msg: Record<string, any>) {
 Instead of hardcoded mock state, the App Shell fetches data parameterized by route attributes via `appDataService`:
 
 - **Campaigns**: Fetches viewable campaigns from `GET /api/v1/campaigns`.
+- **Campaign Metadata & Updates**: Fetches metadata from `GET /api/v1/campaigns/:id` and persists updates from `@update-campaign` via `PATCH /api/v1/campaigns/:id` with Zanzibar authorization.
 - **Campaign Detail**: Fetches roster from `GET /api/v1/campaigns/:id/members` and sessions from `GET /api/v1/campaigns/:id/sessions`.
-- **Characters**: Fetches player characters from `GET /api/v1/characters`.
+- **Characters**: Fetches player characters from `GET /api/v1/characters` and scopes party roster in `#/campaigns/:id/characters`.
 - **Session Lobby**: Fetches participant readiness from `GET /api/v1/sessions/:id`.
 - **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`.
 - **Session Scheduling & Staging**: Creates new sessions or launches staging lobbies from `POST /api/v1/campaigns/:id/sessions` via `<runefoble-session-modal>`.

@@ -14,11 +14,12 @@ import type { AppActiveView } from '../src/runefoble-app.ts';
 function resolveActiveView(route: MatchedRoute | null): AppActiveView {
   const pat = route?.pattern || '';
   if (pat === '#/login' || pat === '#/register') return 'login';
-  if (pat === '#/campaigns/:campaignId' || pat === '#/campaigns/:campaignId/characters') return 'campaign-detail';
+  if (pat.startsWith('#/campaigns/:campaignId/lobby/')) return 'session-lobby';
+  if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
+  if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
+  if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
   if (pat === '#/characters') return 'characters';
-  if (pat === '#/campaigns/:campaignId/lobby/:sessionId') return 'session-lobby';
-  if (pat === '#/campaigns/:campaignId/sessions/:sessionId') return 'session-active';
-  return 'campaigns';
+  return pat === '#/profile' ? 'profile' : 'campaigns';
 }
 
 // Helper checking if a route requires an active session WebSocket
@@ -55,8 +56,11 @@ describe('App Shell Dynamic View Routing & Parameter Extraction', () => {
     assert.equal(route?.params.campaignId, '4');
 
     const partyRoute = router.match('#/campaigns/42/characters');
-    assert.equal(resolveActiveView(partyRoute), 'campaign-detail');
+    assert.equal(resolveActiveView(partyRoute), 'campaign-characters');
     assert.equal(partyRoute?.params.campaignId, '42');
+
+    const profileRoute = router.match('#/profile');
+    assert.equal(resolveActiveView(profileRoute), 'profile');
   });
 
   it('resolves character roster view for #/characters', () => {
