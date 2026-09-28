@@ -1,7 +1,7 @@
 ---
 id: '0236'
 title: Character Sheet UI Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0107
@@ -19,8 +19,8 @@ governing_stories:
 - US-0015
 - US-0051
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/301
 ---
-
 # TASK-0236: Character Sheet UI Blackbox Test Suite Modular Decomposition
 
 ## Status

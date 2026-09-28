@@ -1,7 +1,7 @@
 ---
 id: '0271'
 title: Frontend App Data Service Fixtures and Client Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -10,8 +10,8 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/303
 ---
-
 # TASK-0271: Frontend App Data Service Fixtures and Client Modular Decomposition
 
 ## Status

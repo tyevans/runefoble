@@ -188,3 +188,16 @@ node --experimental-strip-types --test frontend/test/app-shell-views-wiring-audi
 uv run pytest tests/test_blackbox_app_shell_views_audit.py
 ```
 
+## 9. Modular Data Service & Offline Fixture Fallbacks
+
+To preserve Hard Invariant 6 (<500 lines) and separate network transport from test fixture data, `AppDataService` delegates static campaign, character, and session fixtures to `frontend/src/services/app-data-service.fixtures.ts`:
+
+- `FALLBACK_CAMPAIGNS`: Default campaign items (`Tomb of the Star-Eater`, `Whispering Depths`).
+- `FALLBACK_CHARACTERS`: Default character roster items (`Valeros`, `Kyra`, `Ezren`).
+- `FALLBACK_MEMBERS`: Default campaign party members.
+- `FALLBACK_PARTICIPANTS`: Pre-game lobby attendee states.
+- `FALLBACK_SESSIONS`: Staged and active campaign sessions.
+
+When backend services are unavailable during offline development or isolated unit testing, `appDataService` gracefully falls back to these static fixtures without crashing.
+
+
