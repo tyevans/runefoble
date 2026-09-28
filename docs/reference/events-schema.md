@@ -1044,9 +1044,16 @@ For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `Intoxic
 
 ### Cross-Campaign Settlement & Haven Events (`aggregate_type: Settlement`)
 
+- **`SettlementFoundedEvent`** (`runefoble.events.game_session.settlement_founded` / `SettlementFounded`): Emitted when a new settlement haven is founded with scale (hamlet, village, market town, city, metropolis), biome, coordinates, and initial district zoning. Fields: `settlement_id`, `campaign_id`, `name`, `scale`, `biome`, `coordinates`, `tier`, `prosperity`, `unlocked_districts`, `founded_by`, `metadata`.
+- **`SettlementTierUpgradedEvent`** (`runefoble.events.game_session.settlement_tier_upgraded` / `SettlementTierUpgraded`): Emitted when a settlement accumulates sufficient civic prosperity and advances to a higher scale tier, unlocking specialized districts. Fields: `settlement_id`, `old_tier`, `new_tier`, `unlocked_districts`, `scale`, `prosperity`, `metadata`.
 - **`SettlementCharteredEvent`** (`runefoble.events.game_session.settlement_chartered`): Emitted when a new frontier outpost, communal haven, or fortress is chartered. Fields: `settlement_id`, `shared_world_id`, `name`, `settlement_type`, `region`, `coordinates`, `founded_by_campaign_id`, `chartered_by`, `level`, `defense_rating`, `facilities`, `metadata`.
 - **`SettlementUpgradedEvent`** (`runefoble.events.game_session.settlement_upgraded`): Emitted when a settlement facility (workshop, sanctum, fortifications, watchtower) or defense rating is upgraded. Fields: `settlement_id`, `shared_world_id`, `facility_id`, `new_tier`, `tier_name`, `contributing_campaign_id`, `gold_spent`, `materials_spent`, `defense_rating`, `metadata`.
 - **`SettlementRestBoonClaimedEvent`** (`runefoble.events.game_session.settlement_rest_boon_claimed`): Emitted when an adventuring party or character claims a sanctum rest boon or workshop crafting perk. Fields: `settlement_id`, `shared_world_id`, `campaign_id`, `character_id`, `claimed_by`, `facility_id`, `boon`, `metadata`.
+
+### Establishment Domain Events (`aggregate_type: Establishment`)
+
+- **`EstablishmentConstructedEvent`** (`runefoble.events.game_session.establishment_constructed` / `EstablishmentConstructed`): Emitted when a new commercial, civic, faith, underworld, or hospitality establishment is constructed in a zoned settlement district. Fields: `establishment_id`, `settlement_id`, `district_id`, `category`, `name`, `campaign_id`, `tier`, `capacity`, `operating_cost`, `amenities`, `owner_id`, `metadata`.
+- **`EstablishmentUpgradedEvent`** (`runefoble.events.game_session.establishment_upgraded` / `EstablishmentUpgraded`): Emitted when an establishment advances in tier, expanding patron capacity, operating costs, and amenities. Fields: `establishment_id`, `settlement_id`, `tier`, `added_amenities`, `capacity`, `operating_cost`, `metadata`.
 
 ### Frontier Mercenary Bounty & Retrieval Contract Events (`aggregate_type: MercenaryBounty`)
 
