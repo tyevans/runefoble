@@ -19,10 +19,14 @@ from game_session.settlement.models import (
     SCALE_TO_TIER,
     TIER_MIN_PROSPERITY,
     TIER_TO_SCALE,
+    BulletinNoticeState,
     SettlementScale,
     SettlementState,
 )
 from runefoble_events.settlements import (
+    BulletinNoticePinnedEvent,
+    BulletinNoticeRemovedEvent,
+    CipherNoticeDecryptedEvent,
     SettlementCharteredEvent,
     SettlementFoundedEvent,
     SettlementRestBoonClaimedEvent,
@@ -130,6 +134,44 @@ class SettlementAggregate(DeclarativeAggregate[SettlementState]):
     def handle_boon_claimed(self, event: SettlementRestBoonClaimedEvent) -> None:
         """Handle claiming of rest boons."""
         self._state.active_boons[event.facility_id] = event.boon
+
+    @handles(BulletinNoticePinnedEvent)
+    def handle_bulletin_notice_pinned(self, ev: BulletinNoticePinnedEvent) -> None:
+        """Handle pinning a new bulletin notice or bounty to the settlement board."""
+        notice = BulletinNoticeState(
+            notice_id=ev.notice_id,
+            settlement_id=ev.settlement_id,
+            board_type=ev.board_type,
+            title=ev.title,
+            author_id=ev.author_id,
+            category=ev.category,
+            content=ev.content,
+            wax_sealed=ev.wax_sealed,
+            cipher_encoded=ev.cipher_encoded,
+            cipher_puzzle=ev.cipher_puzzle,
+            cipher_solution=ev.cipher_solution,
+            cipher_hint=ev.cipher_hint,
+            hidden_content=ev.hidden_content,
+            decrypted_by=[],
+            status="active",
+            created_at=str(ev.occurred_at or ""),
+            metadata=dict(ev.metadata),
+        )
+        self._state.bulletin_notices[ev.notice_id] = notice
+
+    @handles(BulletinNoticeRemovedEvent)
+    def handle_bulletin_notice_removed(self, ev: BulletinNoticeRemovedEvent) -> None:
+        """Handle removing or fulfilling a bulletin notice."""
+        if ev.notice_id in self._state.bulletin_notices:
+            self._state.bulletin_notices[ev.notice_id].status = "removed"
+
+    @handles(CipherNoticeDecryptedEvent)
+    def handle_cipher_notice_decrypted(self, ev: CipherNoticeDecryptedEvent) -> None:
+        """Handle unlocking cipher secret for a player."""
+        if ev.notice_id in self._state.bulletin_notices:
+            notice = self._state.bulletin_notices[ev.notice_id]
+            if ev.player_id and ev.player_id not in notice.decrypted_by:
+                notice.decrypted_by.append(ev.player_id)
 
     def found(
         self,
@@ -308,3 +350,106 @@ class SettlementAggregate(DeclarativeAggregate[SettlementState]):
             metadata=metadata or {},
         )
         return boon
+
+    def pin_bulletin_notice(
+        self,
+        title: str,
+        content: str,
+        author_id: str,
+        board_type: str = "town_square",
+        category: str = "rumor",
+        wax_sealed: bool = False,
+        cipher_encoded: bool = False,
+        cipher_puzzle: str = "rot13",
+        cipher_solution: str = "",
+        cipher_hint: str = "",
+        hidden_content: str = "",
+        notice_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """Pin a notice, rumor, bounty, or job to the settlement notice board."""
+        if not self._state.is_founded:
+            raise ValueError(f"Settlement '{self.aggregate_id}' has not been founded yet")
+
+        nid = notice_id or f"ntc_{uuid4().hex[:12]}"
+        sid = str(self._state.settlement_id or self.aggregate_id)
+        self.create_event(
+            BulletinNoticePinnedEvent,
+            aggregate_id=_to_uuid(sid),
+            notice_id=nid,
+            settlement_id=sid,
+            board_type=board_type,
+            title=title,
+            author_id=str(author_id),
+            category=category,
+            content=content,
+            wax_sealed=wax_sealed,
+            cipher_encoded=cipher_encoded,
+            cipher_puzzle=cipher_puzzle,
+            cipher_solution=cipher_solution,
+            cipher_hint=cipher_hint,
+            hidden_content=hidden_content,
+            metadata=metadata or {},
+        )
+        return nid
+
+    def remove_bulletin_notice(
+        self,
+        notice_id: str,
+        remover_id: str = "",
+        reason: str = "removed",
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """Remove or fulfill a notice from the bulletin board."""
+        if not self._state.is_founded:
+            raise ValueError(f"Settlement '{self.aggregate_id}' has not been founded yet")
+        if notice_id not in self._state.bulletin_notices:
+            raise ValueError(f"Bulletin notice '{notice_id}' not found in settlement")
+        if self._state.bulletin_notices[notice_id].status == "removed":
+            raise ValueError(f"Bulletin notice '{notice_id}' is already removed")
+
+        sid = str(self._state.settlement_id or self.aggregate_id)
+        self.create_event(
+            BulletinNoticeRemovedEvent,
+            aggregate_id=_to_uuid(sid),
+            notice_id=notice_id,
+            settlement_id=sid,
+            remover_id=str(remover_id),
+            reason=reason,
+            metadata=metadata or {},
+        )
+        return notice_id
+
+    def decrypt_cipher_notice(
+        self,
+        notice_id: str,
+        player_id: str,
+        solution: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """Decrypt a cipher-encoded notice when a player submits the correct solution."""
+        if not self._state.is_founded:
+            raise ValueError(f"Settlement '{self.aggregate_id}' has not been founded yet")
+        if notice_id not in self._state.bulletin_notices:
+            raise ValueError(f"Bulletin notice '{notice_id}' not found in settlement")
+
+        notice = self._state.bulletin_notices[notice_id]
+        if not notice.cipher_encoded:
+            return notice.content
+
+        expected = notice.cipher_solution.strip().lower()
+        submitted = solution.strip().lower()
+        if expected and submitted != expected:
+            raise ValueError("Incorrect cipher solution")
+
+        sid = str(self._state.settlement_id or self.aggregate_id)
+        self.create_event(
+            CipherNoticeDecryptedEvent,
+            aggregate_id=_to_uuid(sid),
+            notice_id=notice_id,
+            settlement_id=sid,
+            player_id=str(player_id),
+            decrypted_content=notice.hidden_content or notice.content,
+            metadata=metadata or {},
+        )
+        return notice.hidden_content or notice.content

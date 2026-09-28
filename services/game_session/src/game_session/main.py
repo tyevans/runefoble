@@ -99,6 +99,7 @@ def get_ui_manifest():
             "runefoble-campaign-members",
             "runefoble-campaign-header",
             "runefoble-session-lobby",
+            "runefoble-bulletin-board",
         ],
         "version": "0.1.0",
     }
