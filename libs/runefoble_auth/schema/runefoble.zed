@@ -306,5 +306,24 @@ definition npc {
     permission edit_mood = manage + campaign->play
 }
 
+definition negotiation {
+    relation establishment: establishment
+    relation session: session
+    relation campaign: campaign
+    relation participant: user
+    relation arbitrator: user
+
+    // Participant or player can submit gambits and offers
+    permission participate = participant + campaign->play + session->participate
+
+    // Viewing negotiation state and barks
+    permission view = participate + arbitrator + campaign->view + session->observe + establishment->view
+
+    // Real-time DM arbitration: mood nudging, custom barks, price override, acceptance, ejection
+    permission arbitrate = arbitrator + campaign->run_session + session->control + establishment->manage
+    permission manage = arbitrate
+}
+
+
 
 

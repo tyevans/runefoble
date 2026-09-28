@@ -13,6 +13,7 @@ from game_session.contracts.engine import MercenaryBountyAggregate
 from game_session.merchants import MerchantAggregate
 from game_session.minigames import TavernGameAggregate
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
+from game_session.settlement.haggling import NegotiationAggregate
 from game_session.settlement.workers import NPCWorkerAggregate
 from game_session.settlements.aggregate import SettlementAggregate
 from game_session.stronghold import StrongholdAggregate
@@ -69,6 +70,9 @@ bounty_contract_repo: AggregateRepository[MercenaryBountyAggregate] = create_agg
 worker_repo: AggregateRepository[NPCWorkerAggregate] = create_aggregate_repository(
     NPCWorkerAggregate
 )
+negotiation_repo: AggregateRepository[NegotiationAggregate] = create_aggregate_repository(
+    NegotiationAggregate
+)
 
 
 def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
@@ -77,6 +81,10 @@ def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
 
 def get_merchant_repository() -> AggregateRepository[MerchantAggregate]:
     return merchant_repo
+
+
+def get_negotiation_repository() -> AggregateRepository[NegotiationAggregate]:
+    return negotiation_repo
 
 
 def get_stronghold_repository() -> AggregateRepository[StrongholdAggregate]:
@@ -116,6 +124,7 @@ _session_bounties_index: dict[str, list[str]] = {}
 _settlement_establishments_index: dict[str, list[str]] = {}
 _campaign_settlements_index: dict[str, list[str]] = {}
 _establishment_workers_index: dict[str, list[str]] = {}
+_establishment_negotiations_index: dict[str, list[str]] = {}
 
 
 def get_world_contracts_index() -> dict[str, list[str]]:
@@ -136,6 +145,10 @@ def get_campaign_settlements_index() -> dict[str, list[str]]:
 
 def get_establishment_workers_index() -> dict[str, list[str]]:
     return _establishment_workers_index
+
+
+def get_establishment_negotiations_index() -> dict[str, list[str]]:
+    return _establishment_negotiations_index
 
 
 def get_spicedb_client() -> SpiceDBClient:

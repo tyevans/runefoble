@@ -1,7 +1,7 @@
 ---
 id: '0262'
 title: Interactive Merchant Haggling Engine with DM Arbitration Controls
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0260
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0075
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/298
 ---
-
 # TASK-0262: Interactive Merchant Haggling Engine with DM Arbitration Controls
 
 ## Status

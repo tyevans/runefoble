@@ -35,6 +35,14 @@ from runefoble_events.downtime import (
     StrongholdCreated,
     StrongholdUpgraded,
 )
+from runefoble_events.haggling import (
+    CurrencyCredited,
+    CurrencyDeducted,
+    DMNegotiationOverridden,
+    GambitExecuted,
+    NegotiationConcluded,
+    NegotiationSessionStarted,
+)
 from runefoble_events.tavern import (
     HagglingNegotiated,
     IntoxicationLevelChanged,
@@ -61,8 +69,12 @@ __all__ = [
     "CraftingSucceeded",
     "CriticalHitRolled",
     "CriticalHitScored",
+    "CurrencyCredited",
+    "CurrencyDeducted",
+    "DMNegotiationOverridden",
     "DeathSaveStarted",
     "EquipmentSlotUpdated",
+    "GambitExecuted",
     "HagglingNegotiated",
     "IntoxicationLevelChanged",
     "ItemAddedToInventory",
@@ -70,6 +82,8 @@ __all__ = [
     "MinigameEnded",
     "MinigameStarted",
     "MinigameTurnTaken",
+    "NegotiationConcluded",
+    "NegotiationSessionStarted",
     "PlayerAbsenteePenalized",
     "PortraitAssigned",
     "PortraitVariantGenerated",
