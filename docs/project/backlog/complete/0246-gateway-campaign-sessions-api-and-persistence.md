@@ -1,7 +1,7 @@
 ---
 id: '0246'
 title: Gateway Campaign Sessions API and Persistence
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0208
@@ -16,6 +16,7 @@ governing_stories:
 - US-0063
 - US-0067
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/282
 ---
 # TASK-0246: Gateway Campaign Sessions API and Persistence
 
