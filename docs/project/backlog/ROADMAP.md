@@ -295,5 +295,11 @@
 - [ ] Tavern Parlor Component Styles Modular Decomposition (TASK-0325)
 - [ ] Game Session Tavern Router Modular Decomposition (TASK-0326)
 - [ ] Spectator Overlay Styles Modular Decomposition (TASK-0327)
+- [ ] Project Visualizer Markdown Renderer Modular Decomposition (TASK-0328)
+- [ ] Board Templates Test Suite Modular Decomposition (TASK-0329)
+- [ ] Miniature Knockback Test Suite Modular Decomposition (TASK-0330)
+- [ ] Campaign Analytics Component Modular Decomposition (TASK-0331)
+- [ ] Faction Radar Styles Modular Decomposition (TASK-0332)
+- [ ] Docs Build and Pages Test Suite Modular Decomposition (TASK-0333)
 
 

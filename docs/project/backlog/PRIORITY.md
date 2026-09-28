@@ -328,6 +328,12 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 324. **TASK-0327 (Proposed)**: [`0327-spectator-overlay-styles-modular-decomposition.md`](proposed/0327-spectator-overlay-styles-modular-decomposition.md) — Spectator Overlay Styles Modular Decomposition
 325. **TASK-0291 (Proposed)**: [`0291-project-visualizer-core-client-modular-decomposition.md`](proposed/0291-project-visualizer-core-client-modular-decomposition.md) — Project Visualizer Core Client Modular Decomposition
 326. **TASK-0235 (Proposed)**: [`0235-project-visualizer-gantt-modular-decomposition.md`](proposed/0235-project-visualizer-gantt-modular-decomposition.md) — Project Visualizer Gantt Chart Modular Decomposition
+327. **TASK-0328 (Proposed)**: [`0328-project-visualizer-markdown-renderer-modular-decomposition.md`](proposed/0328-project-visualizer-markdown-renderer-modular-decomposition.md) — Project Visualizer Markdown Renderer Modular Decomposition
+328. **TASK-0329 (Proposed)**: [`0329-board-templates-test-suite-modular-decomposition.md`](proposed/0329-board-templates-test-suite-modular-decomposition.md) — Board Templates Test Suite Modular Decomposition
+329. **TASK-0330 (Proposed)**: [`0330-miniature-knockback-test-suite-modular-decomposition.md`](proposed/0330-miniature-knockback-test-suite-modular-decomposition.md) — Miniature Knockback Test Suite Modular Decomposition
+330. **TASK-0331 (Proposed)**: [`0331-campaign-analytics-component-modular-decomposition.md`](proposed/0331-campaign-analytics-component-modular-decomposition.md) — Campaign Analytics Component Modular Decomposition
+331. **TASK-0332 (Proposed)**: [`0332-faction-radar-styles-modular-decomposition.md`](proposed/0332-faction-radar-styles-modular-decomposition.md) — Faction Radar Styles Modular Decomposition
+332. **TASK-0333 (Proposed)**: [`0333-docs-build-and-pages-test-suite-modular-decomposition.md`](proposed/0333-docs-build-and-pages-test-suite-modular-decomposition.md) — Docs Build and Pages Test Suite Modular Decomposition
 
 
 
