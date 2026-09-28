@@ -23,6 +23,7 @@ export * from './components/runefoble-map-switcher.ts';
 export * from './components/runefoble-breadcrumbs.ts';
 export * from './components/runefoble-auth-modal.ts';
 export * from './components/runefoble-user-menu.ts';
+export * from './components/runefoble-user-profile.ts';
 export * from './components/runefoble-session-list.ts';
 export * from './components/runefoble-session-modal.ts';
 export * from './auth/index.ts';
