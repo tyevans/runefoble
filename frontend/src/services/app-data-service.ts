@@ -278,59 +278,50 @@ export class AppDataService {
     }
   }
 
-  async fetchLobbyState(sessionId: string): Promise<{
+  async fetchLobbyState(
+    arg1: string,
+    arg2?: string
+  ): Promise<{
     participants: LobbyParticipant[];
     availableCharacters: LobbyCharacterOption[];
   }> {
+    const isArg1Session = arg1.startsWith('session-') || arg1.startsWith('lobby-');
+    const sessionId = arg2 !== undefined ? (isArg1Session ? arg1 : arg2) : arg1;
+    const campaignId = arg2 !== undefined ? (isArg1Session ? arg2 : arg1) : undefined;
+    let participants: LobbyParticipant[] = [];
     try {
       const res = await fetch(`${this.apiBase}/sessions/${sessionId}`, { headers: this.getAuthHeaders() });
       if (res.ok) {
         const data = await res.json();
-        if (data.participants) {
-          return {
-            participants: data.participants,
-            availableCharacters: [
-              { id: 'char-valeros', name: 'Valeros of Korvosa', characterClass: 'Fighter', level: 4 },
-              { id: 'char-kyra', name: 'Kyra the Sun Maiden', characterClass: 'Cleric', level: 4 },
-            ],
-          };
-        }
+        if (data.participants) participants = data.participants;
       }
     } catch { /* fallback */ }
 
-    return {
-      participants: [
-        {
-          userId: 'user-valeros',
-          username: 'Valeros',
-          role: 'Fighter Lvl 4',
-          characterId: 'char-valeros',
-          characterName: 'Valeros of Korvosa',
-          characterClass: 'Fighter',
-          characterLevel: 4,
-          isReady: true,
-          isAbsent: false,
-          onlineStatus: 'online',
-        },
-        {
-          userId: 'user-kyra',
-          username: 'Kyra',
-          role: 'Cleric Lvl 4',
-          characterId: 'char-kyra',
-          characterName: 'Kyra the Sun Maiden',
-          characterClass: 'Cleric',
-          characterLevel: 4,
-          isReady: false,
-          isAbsent: true,
-          onlineStatus: 'offline',
-        },
-      ],
-      availableCharacters: [
-        { id: 'char-valeros', name: 'Valeros of Korvosa', characterClass: 'Fighter', level: 4 },
-        { id: 'char-kyra', name: 'Kyra the Sun Maiden', characterClass: 'Cleric', level: 4 },
-        { id: 'char-ezren', name: 'Ezren the Gray', characterClass: 'Wizard', level: 5 },
-      ],
-    };
+    if (participants.length === 0) {
+      participants = [
+        { userId: 'user-valeros', username: 'Valeros', role: 'Fighter Lvl 4', characterId: 'char-valeros', characterName: 'Valeros of Korvosa', characterClass: 'Fighter', characterLevel: 4, isReady: true, isAbsent: false, onlineStatus: 'online' },
+        { userId: 'user-kyra', username: 'Kyra', role: 'Cleric Lvl 4', characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden', characterClass: 'Cleric', characterLevel: 4, isReady: false, isAbsent: true, onlineStatus: 'offline' },
+      ];
+    }
+
+    const characters = await this.fetchCharacters();
+    const sorted = campaignId
+      ? [
+          ...characters.filter((c) => c.campaignId === campaignId),
+          ...characters.filter((c) => !c.campaignId),
+          ...characters.filter((c) => c.campaignId && c.campaignId !== campaignId),
+        ]
+      : characters;
+
+    const availableCharacters: LobbyCharacterOption[] = sorted.map((c) => ({
+      id: c.id,
+      name: c.name,
+      characterClass: c.characterClass,
+      level: c.level,
+      portraitUrl: c.portraitUrl,
+    }));
+
+    return { participants, availableCharacters };
   }
 
   async fetchBoardTokens(sessionId: string): Promise<BoardToken[]> {

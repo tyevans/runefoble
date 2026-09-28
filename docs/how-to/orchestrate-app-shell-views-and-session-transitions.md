@@ -111,3 +111,17 @@ if (v === 'characters') {
 }
 ```
 
+## 6. Dynamic Character Binding in Lobby and Active VTT (TASK-0256)
+
+During session staging and active virtual tabletop play, the App Shell dynamically resolves and binds the player's active character:
+
+1. **Lobby Roster Population**: `appDataService.fetchLobbyState(campaignId, sessionId)` queries the user's real character roster and prioritizes characters assigned to the active campaign.
+2. **Lobby Selection Sync**: When a player selects a character in `<runefoble-session-lobby>`, the component emits `@select-character` (and `@character-selected`), storing the selection in App Shell `activeCharacter` state and updating participant cards.
+3. **Session Transition & Fallback Resolution**: When launching or entering `session-active` (`#/campaigns/:id/sessions/:sessionId`), `resolveActiveCharacter(campaignId)` preserves any character chosen during lobby staging. If no selection was made, it falls back to:
+   - The first character assigned to the specified `campaignId`.
+   - The user's first available character in their roster.
+   - A graceful fallback adventurer placeholder.
+4. **VTT Character Card Binding**: The `<runefoble-character-card>` dynamically receives `.characterName`, `.characterClass`, `.level`, `.currentHp`, `.maxHp`, `.armorClass`, and `.portraitUrl`.
+5. **DM Party Inspector & Switcher**: When authenticated as DM/Owner, a high-contrast inspection banner and `<select class="dm-character-switcher">` allow the Dungeon Master to inspect and switch active character cards across the entire party.
+
+

@@ -97,48 +97,12 @@ export const appShellStyles = css`
     gap: 24px;
   }
 
-  .profile-layout {
-    padding: 32px;
-    background: var(--rf-bg-surface);
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
-    box-shadow: var(--rf-shadow);
-    max-width: 600px;
-    margin: 24px auto;
-  }
-
-  .auth-fallback-view {
-    padding: 48px;
-    text-align: center;
-    background: var(--rf-bg-surface);
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
-    box-shadow: var(--rf-shadow);
-    max-width: 600px;
-    margin: 40px auto;
-  }
-
-  .auth-fallback-view h2 {
-    font-size: 1.5rem;
-    margin-top: 0;
-    margin-bottom: 12px;
-    color: var(--rf-text-primary);
-  }
-
-  .auth-fallback-view p {
-    color: var(--rf-text-muted);
-    margin-bottom: 24px;
-  }
-
-  .toast-notification {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--rf-bg-surface);
-    color: var(--rf-text-primary);
-    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
-    border-left: 6px solid var(--rf-accent-primary);
-    padding: 12px 20px;
-    box-shadow: var(--rf-shadow);
-    font-weight: 500;
-    z-index: 1000;
-  }
+  .profile-layout { padding: 32px; background: var(--rf-bg-surface); border: var(--rf-border-width, 2px) solid var(--rf-border-color); box-shadow: var(--rf-shadow); max-width: 600px; margin: 24px auto; }
+  .auth-fallback-view { padding: 48px; text-align: center; background: var(--rf-bg-surface); border: var(--rf-border-width, 2px) solid var(--rf-border-color); box-shadow: var(--rf-shadow); max-width: 600px; margin: 40px auto; }
+  .auth-fallback-view h2 { font-size: 1.5rem; margin-top: 0; margin-bottom: 12px; color: var(--rf-text-primary); }
+  .auth-fallback-view p { color: var(--rf-text-muted); margin-bottom: 24px; }
+  .toast-notification { position: fixed; bottom: 24px; right: 24px; background: var(--rf-bg-surface); color: var(--rf-text-primary); border: var(--rf-border-width, 2px) solid var(--rf-border-color); border-left: 6px solid var(--rf-accent-primary); padding: 12px 20px; box-shadow: var(--rf-shadow); font-weight: 500; z-index: 1000; }
+  .dm-party-inspector { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--rf-bg-surface); border: var(--rf-border-width, 2px) solid var(--rf-border-color); box-shadow: var(--rf-shadow); box-sizing: border-box; }
+  .dm-badge { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--rf-accent-primary); }
+  .dm-character-switcher { padding: 6px 10px; font-size: 0.85rem; font-family: inherit; background: var(--rf-bg-canvas); color: var(--rf-text-primary); border: var(--rf-border-width, 2px) solid var(--rf-border-color); border-radius: var(--rf-border-radius, 0px); cursor: pointer; }
 `;
