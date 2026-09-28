@@ -89,6 +89,7 @@ export class RunefobleCampaignDashboard extends LitElement {
   }
 
   private handleCreatorSubmit(e: CustomEvent<CreateCampaignPayload>): void {
+    e.stopPropagation();
     this.isCreatorOpen = false;
     this.dispatchEvent(
       new CustomEvent<CreateCampaignPayload>('create-campaign', {

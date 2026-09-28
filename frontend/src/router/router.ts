@@ -151,7 +151,9 @@ export class Router {
       return [{ label: 'Campaigns', path: '#/campaigns' }, { label: cTitle(), path: `#/campaigns/${params.campaignId}` }, { label: sTitle, path, active: true }];
     }
     if (pattern === '#/characters') return [{ label: 'Characters', path: '#/characters', active: true }];
-    if (pattern === '#/profile') return [{ label: 'Profile', path: '#/profile', active: true }];
+    if (pattern === '#/profile') {
+      return [{ label: 'Home', path: '#/campaigns' }, { label: 'Account Settings', path: '#/profile', active: true }];
+    }
     if (pattern === '#/login') return [{ label: 'Login', path: '#/login', active: true }];
     if (pattern === '#/register') return [{ label: 'Register', path: '#/register', active: true }];
     const segments = path.replace(/^#?\/?/, '').split('/');

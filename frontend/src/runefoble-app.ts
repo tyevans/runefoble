@@ -2,7 +2,7 @@ import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import './styles/themes.css';
 import { appShellStyles } from './styles/app-shell.styles.ts';
-import './components/runefoble-header.ts'; import './components/runefoble-settings-modal.ts'; import './components/runefoble-auth-modal.ts'; import './components/runefoble-session-list.ts'; import './components/plugins/runefoble-plugin-slot.ts';
+import './components/runefoble-header.ts'; import './components/runefoble-settings-modal.ts'; import './components/runefoble-auth-modal.ts'; import './components/runefoble-session-list.ts'; import './components/plugins/runefoble-plugin-slot.ts'; import './components/runefoble-user-profile.ts';
 
 import '@runefoble/board-state-ui'; import '@runefoble/character-sheet-ui'; import '@runefoble/game-session-ui'; import '@runefoble/the-watcher-ui'; import '@runefoble/voice-agent-ui';
 import type { BoardToken } from '@runefoble/board-state-ui'; import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
@@ -228,7 +228,9 @@ export class RunefobleApp extends LitElement {
     }
     if (v === 'characters') return html`<runefoble-character-roster .characters=${this.characters} .campaigns=${this.rosterCampaigns} current-user-id=${this.currentUserId} @create-character=${this.handleCreateCharacter} @assign-campaign=${this.handleAssignCampaign} @delete-character=${this.handleDeleteCharacter} @inspect-character=${this.handleInspectCharacter}></runefoble-character-roster>`;
     if (v === 'session-lobby') return html`<runefoble-session-lobby session-id=${this.sessionId} campaign-id=${this.campaignId} session-title=${this.sessionTitle} current-user-id=${this.currentUserId} .participants=${this.lobbyParticipants} .availableCharacters=${this.lobbyAvailableCharacters} .isDm=${this.isDM} .canLaunch=${this.isDM} @launch-session=${this.handleLaunchSession}></runefoble-session-lobby>`;
-    if (v === 'profile') return html`<div class="profile-layout"><h2>Adventurer Profile</h2><p>User: <strong>${this.currentUserId}</strong> (${this.userRole})</p></div>`;
+    if (v === 'profile') {
+      return html`<runefoble-user-profile .user=${authService.getUser()} .currentTheme=${this.currentTheme} .currentColorMode=${this.currentColorMode} @theme-changed=${(e: CustomEvent) => { if (e.detail?.theme) this.currentTheme = e.detail.theme; }} @color-mode-changed=${(e: CustomEvent) => { if (e.detail?.mode) this.currentColorMode = e.detail.mode; }} @auth-logout=${() => { router.navigate('#/login'); }}></runefoble-user-profile>`;
+    }
     if (v === 'session-active') {
       return this.viewMode === 'spectator' ? html`<runefoble-spectator-view .sessionId=${this.sessionId} .cols=${8} .rows=${8} .tokens=${this.tokens} .atmosphere=${{ location_name: 'Ancient Crypt' }} .chronicle=${this.events}></runefoble-spectator-view>` : html`<div class="layout-grid"><div class="board-column"><runefoble-plugin-slot slot-id="hud-widget" .showFallback=${false}></runefoble-plugin-slot><runefoble-board .cols=${8} .rows=${8} .tokens=${this.tokens} .fogOfWar=${true} @move-token=${(e: CustomEvent) => { if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify({ type: 'board_move', ...e.detail })); }}></runefoble-board></div><div class="character-column"><runefoble-character-card characterName="Kyra the Sun Maiden" characterClass="Cleric Lvl 4" .isAiStandIn=${true} .currentHp=${28} .maxHp=${32}></runefoble-character-card><runefoble-plugin-slot slot-id="sidebar-tool" .showFallback=${false}></runefoble-plugin-slot><runefoble-plugin-slot slot-id="dice-panel" .showFallback=${false}></runefoble-plugin-slot></div><runefoble-watcher-feed .events=${this.events}></runefoble-watcher-feed></div><div class="voice-container"><runefoble-voice-controls .isListening=${this.isListening} @voice-toggle=${() => { this.isListening = !this.isListening; }}></runefoble-voice-controls></div>`;
     }
