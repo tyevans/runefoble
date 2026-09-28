@@ -149,7 +149,7 @@
 - [x] Town Bulletin Board Civic Notices and Bounty Board (`FEAT-SET-05`, US-0076, PRD-0024, TASK-0263)
 
 ### Settlement & Minigames Blackbox Verification
-- [ ] Settlement Builder and Minigames Blackbox Test Suite (US-0072, US-0073, US-0074, US-0075, US-0076, PRD-0024, TASK-0264)
+- [x] Settlement Builder and Minigames Blackbox Test Suite (US-0072, US-0073, US-0074, US-0075, US-0076, PRD-0024, TASK-0264)
 
 ## Milestone 9: Persona Immersion & Community Ecosystem
 ### Living Worlds, Mobile & Voice Enablers
@@ -245,10 +245,10 @@
 - [x] NPC Worker Engine Blackbox Test Suite Modular Decomposition (TASK-0275)
 - [x] Settlement Bulletin Board Blackbox Test Suite Modular Decomposition (TASK-0276)
 - [x] Character Sheet Models Test Suite Modular Decomposition (TASK-0277)
-- [ ] Settlement Auth and Permissions Modular Decomposition (TASK-0278)
+- [x] Settlement Auth and Permissions Modular Decomposition (TASK-0278)
 - [ ] Settlement Haggling Engine Modular Decomposition (TASK-0279)
-- [ ] Settlement Workers Router Modular Decomposition (TASK-0280)
-- [ ] Merchant Haggling Blackbox Test Suite Modular Decomposition (TASK-0281)
+- [x] Settlement Workers Router Modular Decomposition (TASK-0280)
+- [x] Merchant Haggling Blackbox Test Suite Modular Decomposition (TASK-0281)
 - [ ] Settlement Haven Router Modular Decomposition (TASK-0282)
 - [ ] Lobby and VTT Character Sync Blackbox Test Suite Modular Decomposition (TASK-0283)
 - [ ] Session Modal Blackbox Test Suite Modular Decomposition (TASK-0284)
@@ -307,5 +307,7 @@
 - [ ] Gateway Campaign Sessions Blackbox Test Suite Modular Decomposition (TASK-0337)
 - [ ] Campaign Lore Handouts Generator Modular Decomposition (TASK-0338)
 - [ ] Initiative Tracker Blackbox Test Suite Modular Decomposition (TASK-0339)
+- [ ] Settlement Integration Test Suite Modular Decomposition (TASK-0340)
+- [ ] Minigames WebSocket Test Suite Modular Decomposition (TASK-0341)
 
 
