@@ -1,7 +1,7 @@
 ---
 id: '0264'
 title: Settlement Builder and Mobile Minigames Blackbox Test Suite
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0259
@@ -23,8 +23,8 @@ governing_stories:
 - US-0075
 - US-0076
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/335
 ---
-
 # TASK-0264: Settlement Builder and Mobile Minigames Blackbox Test Suite
 
 ## Status

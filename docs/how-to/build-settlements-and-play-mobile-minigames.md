@@ -300,7 +300,7 @@ The aggregator `frontend/src/components/runefoble-bulletin-board.styles.ts` comp
 
 ---
 
-## 5. Modular Settlement Auth & Zanzibar Permissions Architecture
+## 6. Modular Settlement Auth & Zanzibar Permissions Architecture
 
 Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authentication and object authorization in `services/game_session/src/game_session/settlement/auth/` are decoupled into single-responsibility submodules strictly under 130 lines:
 
@@ -312,7 +312,7 @@ Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authenticat
 
 ---
 
-## 6. Modular Settlement Haggling Engine Architecture
+## 7. Modular Settlement Haggling Engine Architecture
 
 Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the merchant negotiation engine in `services/game_session/src/game_session/settlement/haggling/` is decomposed into modular submodules strictly under 110–130 lines:
 
@@ -320,6 +320,28 @@ Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the merchant negotiation engine 
 - **`rhetoric.py`**: `RhetoricMovesMixin` managing tactical bargaining gambits, roll evaluation, and patience decay.
 - **`dm_controls.py`**: `DMControlsMixin` managing live GM arbitration, price overrides, and veto/accept actions.
 - **`haggling.py` / `__init__.py`**: Aggregator facades (< 40 lines) preserving backwards compatibility for all imports.
+
+---
+
+## 8. Blackbox Test Suites & Verification
+
+In accordance with Hard Invariant 7 (Blackbox TDD with frontdoor setup) and ADR-0008, all settlement haven and mobile minigame mechanics are covered by comprehensive end-to-end blackbox suites driving public HTTP endpoints and WebSocket streams:
+
+1. **Settlement Integration Suite (`tests/test_blackbox_settlements_integration.py`)**:
+   - `test_found_settlement_and_upgrade_tier_flow`: Verifies civic scaling caps (hamlet 2 districts, village 4 districts), prosperity gates, and event publishing (`SettlementFounded`, `SettlementTierUpgraded`).
+   - `test_establishment_creation_and_worker_assignment`: Validates storefront construction, assignable NPC workers with role synergy bonuses, and dynamic inventory inspection via `GET /api/v1/establishments/{id}/workers`.
+   - `test_merchant_haggling_gambits_and_dm_override`: Simulates persuasion rolls against merchant temperament, flattery gambits, and real-time DM mood/force-accept arbitration controls.
+   - `test_bulletin_board_pin_and_cipher_decrypt`: Tests wax-sealed bounty proclamations, cipher decryption workflows, and live party broadcast over `/ws/campaigns/{id}`.
+
+2. **Multiplayer WebSocket Synchronization Suite (`tests/test_blackbox_minigames_websocket.py`)**:
+   - `test_darts_and_billiards_multiplayer_turn_sync`: Tests concurrent player connections exchanging touch trajectory vectors (`throw_dart`, `billiards_stroke`), double bullseye scoring, and turn order passing.
+   - `test_casino_craps_and_roulette_betting_and_payouts`: Validates multi-patron wagering, dice tumble evaluation (natural 7 and point phase hits), roulette wheel spins, and automatic character coin purse crediting.
+
+Execute the suites locally via UV:
+
+```bash
+uv run pytest tests/test_blackbox_settlements_integration.py tests/test_blackbox_minigames_websocket.py
+```
 
 
 
