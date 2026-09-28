@@ -145,6 +145,11 @@ def test_zero_hardcoded_hexes_in_roster_styles() -> None:
     ]:
         assert style_file.is_file()
         css_text = style_file.read_text(encoding="utf-8")
+        styles_sub_dir = ROSTER_DIR / "styles"
+        if styles_sub_dir.is_dir() and style_file.name == "runefoble-character-roster.styles.ts":
+            for sub_file in styles_sub_dir.glob("*.styles.ts"):
+                css_text += "\n" + sub_file.read_text(encoding="utf-8")
+
         matches = hex_pattern.findall(css_text)
         assert not matches, f"Found hardcoded hex literals in {style_file.name}: {matches}"
 
