@@ -131,3 +131,46 @@ def test_blackbox_forge_token_portrait_and_transparency(client: TestClient):
     w, h = struct.unpack(">II", asset_bytes[16:24])
     assert w == 128
     assert h == 128
+
+
+def test_raster_modular_decomposition_and_line_limits():
+    """Verify TASK-0197 modular decomposition limits and facade re-exports."""
+    from pathlib import Path
+
+    import asset_forge.generator as gen_facade
+    import asset_forge.raster as raster_pkg
+    import asset_forge.raster.battlemap_raster as bm_mod
+    import asset_forge.raster.png_codec as codec_mod
+    import asset_forge.raster.token_raster as tok_mod
+    import asset_forge.raster.wardrobe_raster as wd_mod
+
+    # 1. Structural line limits verification
+    gen_file = Path(gen_facade.__file__)
+    raster_dir = Path(raster_pkg.__file__).parent
+
+    gen_lines = len(gen_file.read_text().splitlines())
+    assert gen_lines < 50, f"generator.py facade must be < 50 lines, got {gen_lines}"
+
+    for py_file in raster_dir.glob("*.py"):
+        lines = len(py_file.read_text().splitlines())
+        assert lines < 120, (
+            f"Submodule {py_file.name} must be < 120 lines per Hard Invariant 6, got {lines}"
+        )
+
+    # 2. Re-export parity between facade and submodules
+    assert gen_facade.encode_png_rgba is codec_mod.encode_png_rgba
+    assert gen_facade.parse_hex_color is codec_mod.parse_hex_color
+    assert gen_facade.generate_battlemap_png is bm_mod.generate_battlemap_png
+    assert gen_facade.generate_token_portrait_png is tok_mod.generate_token_portrait_png
+    assert gen_facade.generate_token_png is tok_mod.generate_token_png
+    assert gen_facade.generate_wardrobe_portrait_png is wd_mod.generate_wardrobe_portrait_png
+    assert gen_facade.ATTIRE_PROMPTS is wd_mod.ATTIRE_PROMPTS
+    assert gen_facade.ATTIRE_PALETTES is wd_mod.ATTIRE_PALETTES
+
+    # 3. Direct functional generation test via submodules
+    grid = [[0, 1], [2, 0]]
+    map_png = bm_mod.generate_battlemap_png(grid, "dwarven_forge", cell_size_px=32)
+    assert map_png.startswith(PNG_SIGNATURE)
+
+    tok_png = tok_mod.generate_token_png("TestToken", "A brave warrior")
+    assert tok_png.startswith(PNG_SIGNATURE)
