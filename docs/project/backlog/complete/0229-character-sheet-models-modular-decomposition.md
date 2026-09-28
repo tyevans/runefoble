@@ -1,7 +1,7 @@
 ---
-id: '0229'
+id: 0229
 title: Character Sheet Models Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0009
@@ -15,8 +15,8 @@ governing_stories:
 - US-0015
 - US-0051
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/310
 ---
-
 # TASK-0229: Character Sheet Models Modular Decomposition
 
 ## Status
