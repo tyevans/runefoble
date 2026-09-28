@@ -1,7 +1,7 @@
 ---
 id: '0196'
 title: Campaign Atlas Layers and Pins Subviews Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-27
 dependencies:
 - TASK-0106
@@ -22,10 +22,10 @@ target_release: 0.7.0
 # TASK-0196: Campaign Atlas Layers and Pins Subviews Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
-Decompose `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` (331 lines, 66.2% of limit) into modular subviews under `services/campaign_lore/ui/src/atlas/` (`territory-renderer.template.ts`, `pins-layer.template.ts`, and `codex-sidebar.template.ts`), keeping each subview strictly < 120 lines per Hard Invariant 6.
+Decompose `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` (331 lines, 66.2% of limit) into modular subviews under `services/campaign_lore/ui/src/atlas/` (`territory-renderer.template.ts`, `pins-layer.template.ts`, and `codex-sidebar.template.ts`), keeping each subview strictly < 120 lines per Hard Invariant 6 and ADR-0004/ADR-0013.
 
 ## Problem Statement
 `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` currently spans 331 lines implementing multi-layer SVG world map rendering, geopolitical territory polygon math, interactive milestone pins, era timeline filtering, and the living party codex drawer. As West Marches persistent frontier settlements and shared havens are introduced, this file will cross the 400-line warning threshold unless modularized into focused presentation sub-components.
@@ -36,7 +36,7 @@ Decompose `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` (331 lines
 - **ADR-0012: Theming Tokens & Bauhaus Design System**: Unified design tokens for map overlays and cartographic typography.
 - **ADR-0013: Microfrontend Bounded Context Architecture**: UI encapsulation within `services/campaign_lore/ui/`.
 
-## Scope of Work
+## Detailed Specification & Implementation Plan
 1. **Modular Subview Templates (`services/campaign_lore/ui/src/atlas/`)**:
    - `territory-renderer.template.ts`: SVG polygon generation for geopolitical borders, contested territory cross-hatching, and faction color fills (< 110 lines).
    - `pins-layer.template.ts`: Milestone pins, era timeline filtering, coordinate markers, and pin placement click handlers (< 100 lines).
@@ -47,8 +47,21 @@ Decompose `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` (331 lines
    - Verify Storybook stories for `<runefoble-campaign-atlas>` render cleanly across layers and eras.
    - Run `tests/test_blackbox_campaign_atlas.py` to ensure all frontdoor behaviors remain green.
 
-## Definition of Done
-- `runefoble-campaign-atlas.ts` reduced to < 120 lines.
-- Sub-modules in `services/campaign_lore/ui/src/atlas/` strictly < 120 lines each.
-- Storybook stories render without errors.
-- Blackbox test suite passes via `uv run pytest tests/test_blackbox_campaign_atlas.py`.
+## INVEST Criteria Evaluation
+- **Independent (I)**: Isolated entirely within `services/campaign_lore/ui/src/` presentation layer.
+- **Negotiable (N)**: Modular templates partition SVG territories, milestone pins, and codex sidebars.
+- **Valuable (V)**: Safeguards against Hard Invariant 6 and simplifies atlas feature expansion.
+- **Estimable (E)**: Clean extraction of visual SVG subroutines into Lit template functions.
+- **Small (S)**: Scope strictly isolated to `<runefoble-campaign-atlas>` component (< 120 lines each).
+- **Testable (T)**: Frontdoor validation through Storybook and blackbox atlas test suites.
+
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Module Architecture**:
+   - `runefoble-campaign-atlas.ts` reduced to strictly < 120 lines.
+   - Sub-modules in `services/campaign_lore/ui/src/atlas/` strictly < 120 lines each.
+2. **Frontdoor Verification**:
+   - Storybook stories render without errors across all viewport modes.
+   - Blackbox test suite passes via `uv run pytest tests/test_blackbox_campaign_atlas.py`.
+3. **Quality Gates**:
+   - Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+   - Microfrontend bundle builds cleanly via `pnpm run build`.

@@ -1,7 +1,7 @@
 ---
-id: '0191'
+id: 0191
 title: Kinetic Spell VFX Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0104
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0048
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/251
 ---
-
 # TASK-0191: Kinetic Spell VFX Blackbox Test Suite Modular Decomposition
 
 ## Status

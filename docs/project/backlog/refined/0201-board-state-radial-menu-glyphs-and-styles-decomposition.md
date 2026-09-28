@@ -1,7 +1,7 @@
 ---
 id: '0201'
 title: Board State Radial Menu Glyphs and Styles Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-27
 dependencies:
 - TASK-0125
@@ -19,10 +19,10 @@ target_release: 0.7.0
 # TASK-0201: Board State Radial Menu Glyphs and Styles Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
-Decompose `services/board_state/ui/src/radial_menu.ts` (321 lines, 64.2% of limit) into modular submodules under `services/board_state/ui/src/radial/` (`radial_menu.styles.ts`, `radial_glyphs.ts`, and `radial_wedge.ts`), keeping each module strictly < 110 lines per Hard Invariant 6.
+Decompose `services/board_state/ui/src/radial_menu.ts` (321 lines, 64.2% of limit) into modular submodules under `services/board_state/ui/src/radial/` (`radial_menu.styles.ts`, `radial_glyphs.ts`, and `radial_wedge.ts`), keeping each module strictly < 110 lines per Hard Invariant 6 and ADR-0004/ADR-0013.
 
 ## Problem Statement
 `services/board_state/ui/src/radial_menu.ts` spans 321 lines combining Bauhaus CSS styles (`static styles`), SVG geometric glyph generators (`renderBauhausGlyph`), polar trigonometry calculations for arc wedges (`renderWedge`), and the Lit component lifecycle. As additional quick actions (such as shove, hide, help, or grapple) are added, this file will rapidly approach the 400-line threshold unless modularized.
@@ -32,7 +32,7 @@ Decompose `services/board_state/ui/src/radial_menu.ts` (321 lines, 64.2% of limi
 - **ADR-0012: Theming Tokens & Bauhaus Design System**: Bauhaus geometric iconography and styling token isolation.
 - **ADR-0013: Microfrontend Bounded Context Architecture**: UI encapsulation within `services/board_state/ui/`.
 
-## Scope of Work
+## Detailed Specification & Implementation Plan
 1. **Modular Submodules (`services/board_state/ui/src/radial/`)**:
    - `radial_menu.styles.ts`: Lit CSS styles for circular radial overlay, wedge transitions, and action badges (< 90 lines).
    - `radial_glyphs.ts`: Bauhaus SVG glyph rendering functions for attack, dash, disengage, dodge, cast, etc. (< 100 lines).
@@ -43,8 +43,20 @@ Decompose `services/board_state/ui/src/radial_menu.ts` (321 lines, 64.2% of limi
    - Verify Storybook stories for `<runefoble-radial-menu>` render and respond to wedge clicks.
    - Run existing board state tests to verify zero regressions.
 
-## Definition of Done
-- `radial_menu.ts` reduced to < 110 lines.
-- Submodules in `services/board_state/ui/src/radial/` strictly < 110 lines each.
-- Storybook stories render without errors.
-- All relevant tests pass via `uv run pytest`.
+## INVEST Criteria Evaluation
+- **Independent (I)**: Isolated entirely within `services/board_state/ui/src/` presentation components.
+- **Negotiable (N)**: Clear structural separation of CSS styles, SVG glyph drawings, and trigonometric wedge math.
+- **Valuable (V)**: Protects against Hard Invariant 6 and makes radial action glyphs reusable across HUD elements.
+- **Estimable (E)**: Discrete extraction of independent pure rendering and math routines.
+- **Small (S)**: Scope strictly isolated to `radial_menu.ts` decomposition (< 110 lines per module).
+- **Testable (T)**: Frontdoor validation via Storybook stories and blackbox tactile board tests.
+
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Module Architecture**:
+   - `radial_menu.ts` reduced to strictly < 110 lines.
+   - Submodules in `services/board_state/ui/src/radial/` strictly < 110 lines each.
+2. **Frontdoor Verification**:
+   - Storybook stories render and interactive wedge clicks fire expected custom events.
+   - Microfrontend bundle builds cleanly via `pnpm run build`.
+3. **Quality Gates**:
+   - Code passes `uv run ruff check .` and `uv run ruff format --check .`.
