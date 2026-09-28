@@ -9,6 +9,7 @@
 | `/docs`, `/swagger-ui` | `swagger-ui:8080` | Unified Swagger UI aggregating all OpenAPI specs |
 | `/auth` | `zitadel:8080` | Self-hosted Zitadel identity provider |
 | `/analytics` | `openpanel:3000` | Self-hosted OpenPanel privacy-preserving analytics |
+| `/mail`, `/mailpit` | `mailpit:8025` | Self-hosted Mailpit email testing & mock SMTP Web UI and API |
 
 ## Microservice Internal Ports
 
@@ -245,6 +246,14 @@
 | `gateway-api` | GET | `/readyz` | Kubernetes readiness probe verifying gateway orchestration status |
 | `gateway-api` | POST | `/api/v1/assets/upload` | Uploads binary or base64 assets (battlemap, avatar, audio) to Silo S3 |
 | `gateway-api` | GET | `/api/v1/assets/{asset_id}` | Retrieves or streams stored asset files from Silo S3 storage |
+| `gateway-api` | POST | `/api/v1/auth/register` | Registers a new user account, dispatches verification email to Mailpit SMTP, and returns JWT |
+| `gateway-api` | POST | `/api/v1/auth/verify` | Verifies user email using OTP code or activation token captured in Mailpit |
+| `gateway-api` | POST | `/api/v1/auth/token` | Exchanges credentials for access and refresh JWT tokens |
+| `gateway-api` | POST | `/api/v1/auth/refresh` | Refreshes expired access tokens |
+| `gateway-api` | POST | `/api/v1/auth/test-email` | Dispatches test email to Mailpit SMTP to verify developer mail delivery |
+| `gateway-api` | GET | `/api/v1/auth/mailpit/status` | Probes Mailpit SMTP and REST API connectivity status |
+| `gateway-api` | POST | `/api/v1/auth/admin/seed` | Seeds default local dev admin in SpiceDB and dispatches credentials to Mailpit |
+| `gateway-api` | POST | `/api/v1/auth/admin/invite` | Invites admin/DM user, grants Zanzibar permissions, and dispatches invite email to Mailpit |
 | `gateway-api` / `gateway-mcp` | GET/POST | `/mcp/tools` | Lists or registers dynamic FastMCP tools with JSON schema and sandboxing (alias: `/api/v1/mcp/tools`) |
 | `gateway-api` / `gateway-mcp` | GET/PUT/DELETE | `/mcp/tools/{name}` | Inspects, updates, or deregisters runtime FastMCP tools without server restarts |
 | `gateway-api` / `gateway-mcp` | POST | `/mcp/tools/{name}/execute` | Executes sandboxed dynamic FastMCP tool directly |
@@ -263,8 +272,10 @@
 | Silo (MinIO fork) | `silo` | `9000` (S3), `9001` (Console) | S3 Object Storage |
 | SpiceDB | `spicedb` | `50051` (gRPC), `8443` (HTTP) | Zanzibar graph authorization |
 | OpenPanel | `openpanel` | `3000` | Self-hosted analytics |
+| Mailpit | `mailpit` | `1025` (SMTP), `8025` (HTTP/API) | Mock SMTP server and Web UI for email testing |
 | OpenTelemetry Collector | `otel-collector` | `4317` (gRPC), `4318` (HTTP) | OpenTelemetry metrics and distributed trace collector |
 | Loki | `loki` | `3100` | Log aggregation |
 | Grafana | `grafana` | `3001` | Metrics and observability dashboards |
 | Storybook (Dev) | Local | `6006` | Component development studio |
+
 

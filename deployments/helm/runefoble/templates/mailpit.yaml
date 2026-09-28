@@ -1,0 +1,51 @@
+{{- if .Values.mailpit.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailpit
+  labels:
+    app: mailpit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailpit
+  template:
+    metadata:
+      labels:
+        app: mailpit
+    spec:
+      containers:
+        - name: mailpit
+          image: {{ .Values.mailpit.image }}
+          ports:
+            - name: smtp
+              containerPort: {{ .Values.mailpit.smtpPort | default 1025 }}
+            - name: http
+              containerPort: {{ .Values.mailpit.httpPort | default 8025 }}
+          env:
+            - name: MP_WEBROOT
+              value: {{ .Values.mailpit.webroot | default "/mail/" | quote }}
+            - name: MP_SMTP_AUTH_ACCEPT_ANY
+              value: "true"
+            - name: MP_SMTP_AUTH_ALLOW_INSECURE
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailpit
+  labels:
+    app: mailpit
+spec:
+  type: ClusterIP
+  ports:
+    - name: smtp
+      port: {{ .Values.mailpit.smtpPort | default 1025 }}
+      targetPort: {{ .Values.mailpit.smtpPort | default 1025 }}
+    - name: http
+      port: {{ .Values.mailpit.httpPort | default 8025 }}
+      targetPort: {{ .Values.mailpit.httpPort | default 8025 }}
+  selector:
+    app: mailpit
+{{- end }}

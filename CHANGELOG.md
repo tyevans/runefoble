@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- **Mailpit Email Testing and Mock SMTP Infrastructure (`ADR-0005`)**:
+  - Integrated Mailpit (`axllent/mailpit:v1.21.8`) as the modern local development mock SMTP server and email inspection dashboard, replacing legacy MailHog.
+  - Added Helm manifests `deployments/helm/runefoble/templates/mailpit.yaml` (Deployment & Service) exposing SMTP port 1025 and Web UI/API port 8025 with `MP_WEBROOT=/mail/`.
+  - Configured Traefik Ingress routing for `/mail` and `/mailpit` to `mailpit:8025` in `deployments/helm/runefoble/values.yaml`.
+  - Wired Zitadel OIDC container in Helm to dispatch account confirmation and verification emails to `mailpit:1025` via `ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_*` environment variables.
+  - Implemented `MailpitClient` in `libs/runefoble_platform/src/runefoble_platform/email_client.py` with SMTP delivery, REST API inspection, message search, verification link/OTP code extraction, and offline in-memory fallback.
+  - Added Gateway API authentication router `gateway/api/src/gateway_api/routers/auth.py` providing `/api/v1/auth/register`, `/api/v1/auth/verify`, `/api/v1/auth/token`, `/api/v1/auth/test-email`, and `/api/v1/auth/mailpit/status`.
+  - Created blackbox test suite `tests/test_blackbox_email_signup_mailpit.py` verifying SMTP transmission, REST inspection, OTP verification, and gateway signup flows.
+  - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
+
 ### Changed
 - **Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition (`TASK-0193`, `ADR-0003`, `ADR-0007`, `ADR-0008`, `ADR-0010`)**:
   - Decomposed monolithic test suite `tests/test_blackbox_uvtt_import.py` (336 lines) into modular domain-focused test suites under `tests/test_blackbox_uvtt_import/`, keeping all test modules strictly < 140 lines and conftest < 70 lines per Hard Invariant 6 and Hard Invariant 7:

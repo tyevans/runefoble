@@ -23,6 +23,7 @@ from gateway_api.mobile_companion import (
     router as companion_router,
 )
 from gateway_api.routers import (
+    auth_router,
     campaigns_router,
     downtime_router,
     health_router,
@@ -54,6 +55,7 @@ app.add_middleware(
 )
 
 app.include_router(health_router)
+app.include_router(auth_router)
 app.include_router(campaigns_router)
 app.include_router(downtime_router)
 app.include_router(spectator_router)

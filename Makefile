@@ -1,4 +1,5 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+
 
 CLUSTER_NAME ?= runefoble-local
 KIND_CONFIG ?= deployments/kind/cluster-config.yaml
@@ -27,6 +28,12 @@ prd-sync: ## Synchronize PRD, User Story, and Backlog registries
 
 backlog-worker: ## Run autonomous backlog execution engine (ARGS="--drain --concurrency 2")
 	@python3 -m tools.backlog_engine.cli $(ARGS)
+
+seed-admin: ## Seed default local dev admin and dispatch credentials to Mailpit
+	@uv run python3 scripts/invite_admin.py --seed
+
+invite-admin: ## Invite an admin or DM user via Mailpit (ARGS="--email ... --name ... --role ...")
+	@uv run python3 scripts/invite_admin.py $(ARGS)
 
 visualize-project: ## Launch dynamic docs/project content visualizer web application
 	@python3 -m tools.project_visualizer.cli serve
