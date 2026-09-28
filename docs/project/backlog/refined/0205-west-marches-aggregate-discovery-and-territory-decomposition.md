@@ -1,7 +1,7 @@
 ---
 id: '0205'
 title: West Marches Aggregate Discovery and Territory Handlers Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-27
 dependencies:
 - TASK-0127
@@ -20,7 +20,7 @@ target_release: 0.7.0
 # TASK-0205: West Marches Aggregate Discovery and Territory Handlers Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Decompose `services/campaign_lore/src/campaign_lore/west_marches_aggregate.py` (304 lines, 60.8% of limit) by extracting discovery pin mutation logic, territory claim evaluations, and outpost fortification calculations into `west_marches_handlers.py`, keeping the root aggregate definition strictly < 150 lines per Hard Invariant 6 and ADR-0007.
@@ -33,16 +33,28 @@ Decompose `services/campaign_lore/src/campaign_lore/west_marches_aggregate.py` (
 - **ADR-0007: Domain-Driven Design Architecture**: Clean domain segregation for shared world aggregates and event handlers.
 - **ADR-0011: PostgreSQL Multi-Database Persistent Event Store**: Clean aggregate lifecycle management with `eventsource-py`.
 
-## Scope of Work
+## Detailed Specification & Implementation Plan
 1. **Handlers Submodule (`services/campaign_lore/src/campaign_lore/west_marches_handlers.py`)**:
-   - Extract domain calculation helpers, territory conflict validation, and POI mutation routines (< 120 lines).
+   - Extract domain calculation helpers, territory conflict validation, outpost fortification logic, and POI mutation routines (< 120 lines).
 2. **Aggregate Refactoring (`services/campaign_lore/src/campaign_lore/west_marches_aggregate.py`)**:
-   - Streamline `WestMarchesWorldAggregate` to retain declarative `@handles` routing delegating state mutation to imported handler routines (< 150 lines).
+   - Streamline `WestMarchesWorldAggregate` to retain declarative `@handles` routing that delegates state mutations to imported handler routines (< 150 lines).
 3. **Verification**:
    - Run blackbox tests in `tests/test_blackbox_west_marches.py` and campaign lore unit tests to verify zero regressions.
 
-## Definition of Done
-- `west_marches_aggregate.py` reduced to < 150 lines.
-- `west_marches_handlers.py` created and strictly < 130 lines.
-- All workspace tests pass via `uv run pytest`.
-- Linting and formatting pass via `uv run ruff check .` and `uv run ruff format --check .`.
+## INVEST Criteria Evaluation
+- **Independent (I)**: Internal modularization within `services/campaign_lore/`.
+- **Negotiable (N)**: Pure refactoring preserving existing domain event types and aggregate public contracts.
+- **Valuable (V)**: Protects event-sourced aggregate from bloating and maintains single responsibility.
+- **Estimable (E)**: Follows the established aggregate decomposition pattern used across `game_session` and `board_state`.
+- **Small (S)**: Scope restricted to separating mutation logic into handlers (< 150 lines per file).
+- **Testable (T)**: Frontdoor verification via West Marches domain events and blackbox API routes.
+
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Module Architecture**:
+   - `west_marches_aggregate.py` reduced to < 150 lines.
+   - `west_marches_handlers.py` created and strictly < 130 lines.
+2. **Frontdoor Verification**:
+   - All territory claims, outpost upgrades, and discovery pin events resolve cleanly.
+   - All tests pass via `uv run pytest tests/test_blackbox_west_marches.py`.
+3. **Quality Gates**:
+   - Linting and formatting pass via `uv run ruff check .` and `uv run ruff format --check .`.
