@@ -37,6 +37,23 @@ For local development or environments without remote GitHub push permissions:
 ./scripts/run-backlog-engine.sh --local
 ```
 
+### 6. Queue Inspection and Manual Task Commands
+The CLI supports targeted management commands:
+```bash
+# List ready unblocked tasks (or --all for entire backlog)
+python3 -m tools.backlog_engine.cli list
+python3 -m tools.backlog_engine.cli list --all
+
+# View aggregated status counts across lifecycle states
+python3 -m tools.backlog_engine.cli status
+
+# Manually claim a task for a worker stream
+python3 -m tools.backlog_engine.cli claim TASK-0002 --worker-id manual-worker --branch feat/task-0002
+
+# Complete a task, moving it to complete/ and updating PRIORITY.md
+python3 -m tools.backlog_engine.cli complete TASK-0002
+```
+
 ## How the Pipeline Operates
 ```mermaid
 flowchart TD
@@ -72,16 +89,20 @@ flowchart TD
 ## Modular Engine Architecture
 
 The backlog engine is decomposed into specialized, single-responsibility modules strictly adhering to Hard Invariant 6 (< 500 lines per file, target < 250 lines):
+- **Frontmatter Parser (`tools/backlog_engine/parser.py`)**: YAML frontmatter regex extraction, priority map rank loading, octal safety, and dependency normalization.
+- **Task Serializer (`tools/backlog_engine/serializer.py`)**: Task markdown frontmatter serialization, status mapping, and atomic file writes.
+- **Queue Solver (`tools/backlog_engine/queue.py`)**: Topological dependency resolution, task discovery, priority sorting, and state transitions.
 - **GitHub Client (`tools/backlog_engine/github_client.py`)**: Subprocess wrappers for `gh pr view`, `gh pr checks`, `gh pr close`, `gh pr create`, `gh run view --log-failed`, and PR squash merging.
-- **Git Operations (`tools/backlog_engine/git_ops.py`)**: Branch checkout, worktree synchronization, conflict rebasing (`sync_branch_with_base`, `sync_and_resolve_base_ref`), pre-push `git merge-tree` conflict checks, and local squash merge integration.
+- **Git Operations (`tools/backlog_engine/git_ops.py`)**: Branch checkout, worktree synchronization, conflict rebasing (`sync_branch_with_base`, `sync_and_resolve_base_ref`), pre-push `git merge-tree` conflict checks, local squash merge integration, and completion finalization (`finalize_backlog_completion`).
 - **CI Watcher & Diagnostic Repair (`tools/backlog_engine/ci_watcher.py`)**: Polling loops (`wait_for_ci_checks`), failure diagnostics classification (`get_ci_failure_diagnostics`), and automated PR repair dispatching (`watch_and_repair_pull_request`).
 - **Orchestrator Coordinator (`tools/backlog_engine/orchestrator.py`)**: Task queue monitoring, worker pool concurrency management, and drain loops (`run_orchestrator`, `execute_task_pipeline`).
 - **Worktree Management (`tools/backlog_engine/worktree.py`)**: Git worktree creation, cleanup, and preflight verification gates (`run_preflight_checks`).
-- **Queue Solver (`tools/backlog_engine/queue.py`)**: Topological dependency resolution and task lifecycle state transitions.
+- **CLI Entrypoint (`tools/backlog_engine/cli.py`)**: Command line router for `list`, `status`, `claim`, `complete`, and orchestrator draining.
 
 ## Verifying the Engine Test Suites
 
 The autonomous backlog execution engine is verified via modular frontdoor test suites conforming to Hard Invariant 6 (< 500 lines per file):
+- [`test_blackbox_backlog_engine/`](file:///home/ty/workspace/runefoble/tests/test_blackbox_backlog_engine/): Frontdoor blackbox tests verifying CLI commands (`list`, `status`, `claim`, `complete`) and modular parser/serializer contracts.
 - [`test_backlog_parser.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_parser.py): Validates task markdown syntax, YAML frontmatter schemas, octal safety, title fallback, and Definition of Done parsing.
 - [`test_backlog_queue.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_queue.py): Validates priority ranking, topological dependency resolution, circular dependency detection, and queue transitions.
 - [`test_backlog_execution.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_execution.py): Validates atomic state progression (`claim` -> `review` -> `complete`), preflight quality gate aggregation, self-healing repair loops, and interrupt rollbacks.
@@ -93,6 +114,6 @@ The autonomous backlog execution engine is verified via modular frontdoor test s
 
 Run the test suite via pytest:
 ```bash
-uv run pytest tests/test_backlog_*.py tests/test_pr_conflict_detection.py
+uv run pytest tests/test_backlog_*.py tests/test_blackbox_backlog_engine/ tests/test_pr_conflict_detection.py
 ```
 
