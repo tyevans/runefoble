@@ -21,6 +21,7 @@ The client router (`frontend/src/router/router.ts`) supports standard deep-linka
 | `#/campaigns/:campaignId/lobby/:sessionId` | Pre-game assembly lobby | `http://localhost/#/campaigns/4/lobby/15` |
 | `#/campaigns/:campaignId/sessions/:sessionId` | Active live VTT session | `http://localhost/#/campaigns/4/sessions/14` |
 | `#/characters` | Personal character roster | `http://localhost/#/characters` |
+| `#/characters/:characterId` | Character Sheet inspector & inventory | `http://localhost/#/characters/char-valeros` |
 | `#/profile` | User profile & security settings | `http://localhost/#/profile` |
 
 ## 2. Navigating Programmatically
@@ -148,6 +149,10 @@ router.setAsyncTitleResolver(async (type, id) => {
     const campaign = await appDataService.fetchCampaign(id);
     return campaign?.title;
   }
+  if (type === 'character') {
+    const character = await appDataService.fetchCharacter(id);
+    return character?.name;
+  }
   if (type === 'session' || type === 'lobby') {
     const session = await appDataService.fetchSession(id);
     return session?.title;
@@ -156,7 +161,7 @@ router.setAsyncTitleResolver(async (type, id) => {
 });
 ```
 
-When navigating to deep routes (e.g., `#/campaigns/camp-1790564858218`), `router.navigate()` awaits title resolution before emitting `route-changed` and updating breadcrumb labels.
+When navigating to deep routes (e.g., `#/campaigns/camp-1790564858218` or `#/characters/char-valeros`), `router.navigate()` awaits title resolution before emitting `route-changed` and updating breadcrumb labels (`Home > Characters > Valeros of Korvosa`).
 
 ## 7. Vite Development API & WebSocket Proxying
 

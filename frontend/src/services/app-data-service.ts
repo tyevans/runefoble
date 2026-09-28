@@ -5,8 +5,11 @@ import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
-import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS } from './app-data-fallbacks.ts';
-
+import {
+  FALLBACK_CAMPAIGNS,
+  FALLBACK_CHARACTERS,
+  buildFallbackCharacterDetail,
+} from './fallback-data.ts';
 export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS };
 
 export class AppDataService {
@@ -159,6 +162,19 @@ export class AppDataService {
       if (res.ok) return await res.json();
     } catch { /* fallback */ }
     return [...FALLBACK_CHARACTERS];
+  }
+
+  getFallbackCharacterName(id: string): string | undefined {
+    return FALLBACK_CHARACTERS.find((c) => c.id === id)?.name;
+  }
+
+  async fetchCharacter(characterId: string): Promise<any | null> {
+    try {
+      const res = await fetch(`${this.apiBase}/characters/${characterId}`, { headers: this.getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch { /* fallback */ }
+    const char = FALLBACK_CHARACTERS.find((c) => c.id === characterId);
+    return buildFallbackCharacterDetail(char, characterId);
   }
 
   async fetchRosterCampaignOptions(): Promise<RosterCampaignOption[]> {

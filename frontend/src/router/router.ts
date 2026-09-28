@@ -28,7 +28,7 @@ interface RouteDefinition {
 export const STANDARD_ROUTES = [
   '#/login', '#/register', '#/campaigns', '#/campaigns/:campaignId',
   '#/campaigns/:campaignId/characters', '#/campaigns/:campaignId/lobby/:sessionId',
-  '#/campaigns/:campaignId/sessions/:sessionId', '#/characters', '#/profile',
+  '#/campaigns/:campaignId/sessions/:sessionId', '#/characters', '#/characters/:characterId', '#/profile',
 ] as const;
 
 export class Router {
@@ -151,6 +151,14 @@ export class Router {
       return [{ label: 'Campaigns', path: '#/campaigns' }, { label: cTitle(), path: `#/campaigns/${params.campaignId}` }, { label: sTitle, path, active: true }];
     }
     if (pattern === '#/characters') return [{ label: 'Characters', path: '#/characters', active: true }];
+    if (pattern === '#/characters/:characterId') {
+      const charTitle = this.resolveTitle('character', params.characterId) || 'Character Sheet';
+      return [
+        { label: 'Home', path: '#/campaigns' },
+        { label: 'Characters', path: '#/characters' },
+        { label: charTitle, path, active: true },
+      ];
+    }
     if (pattern === '#/profile') {
       return [{ label: 'Home', path: '#/campaigns' }, { label: 'Account Settings', path: '#/profile', active: true }];
     }

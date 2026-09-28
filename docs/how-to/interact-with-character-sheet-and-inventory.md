@@ -187,3 +187,15 @@ To unassign an adventurer back to free agent status in the player roster:
 1. **Domain Event**: `CharacterAssignedToCampaign` (`character.assigned_to_campaign`) is created and applied to the event stream, then published to the `runefoble.events.character` Redis stream.
 2. **SpiceDB Synchronization**: Writing or removing the Zanzibar relationship `character:{id}#campaign@campaign:{campaign_id}` enforces fine-grained authorization under `runefoble.zed`.
 
+---
+
+## 11. App Shell Inspector Subview & Deep Route Orchestration
+
+The application shell (`frontend/src/runefoble-app.ts`) routes `#/characters/:characterId` directly into the dedicated `'character-sheet'` inspector subview (`TASK-0255`).
+
+### Subview Capabilities
+1. **Direct Deep-Linking**: Users navigating to `#/characters/:characterId` or clicking **"Inspect Sheet"** from the character roster immediately mount `<runefoble-character-sheet>` populated with character vitals, equipment, carried inventory, and spell slots loaded via `appDataService.fetchCharacter(characterId)`.
+2. **Stand-In Guardrails Policies**: Accompanied by `<runefoble-stand-in-guardrails>` to inspect and configure spell slot preservation, protected party allies, and tactical posture for when The Watcher pilots the adventurer during player absence.
+3. **Dynamic Breadcrumbs**: Automatically resolves entity names into hierarchical breadcrumbs (`Home > Characters > [Character Name]`).
+4. **Header Navigation**: Features a prominent **"← Back to Roster"** button returning players to `#/characters`.
+

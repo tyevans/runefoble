@@ -1,7 +1,7 @@
 ---
 id: '0255'
 title: Character Sheet Route and Inspector Subview Orchestration
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0206
@@ -19,8 +19,8 @@ governing_stories:
 - US-0066
 - US-0069
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/289
 ---
-
 # TASK-0255: Character Sheet Route and Inspector Subview Orchestration
 
 ## Status

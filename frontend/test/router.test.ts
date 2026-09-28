@@ -16,6 +16,7 @@ describe('Router Pattern Matcher & Parameter Extraction', () => {
       if (type === 'campaign' && id === '4') return 'Tomb of the Star-Eater';
       if (type === 'lobby' && id === '15') return 'Lobby 15';
       if (type === 'session' && id === '14') return 'Session #14';
+      if (type === 'character' && id === 'char-valeros') return 'Valeros of Korvosa';
       return undefined;
     });
   });
@@ -30,6 +31,7 @@ describe('Router Pattern Matcher & Parameter Extraction', () => {
       '#/campaigns/:campaignId/lobby/:sessionId',
       '#/campaigns/:campaignId/sessions/:sessionId',
       '#/characters',
+      '#/characters/:characterId',
       '#/profile',
     ];
     for (const r of required) {
@@ -81,6 +83,19 @@ describe('Router Pattern Matcher & Parameter Extraction', () => {
     assert.equal(mSession.pattern, '#/campaigns/:campaignId/sessions/:sessionId');
     assert.equal(mSession.params.campaignId, '4');
     assert.equal(mSession.params.sessionId, '14');
+
+    const mChar = router.match('#/characters/char-valeros');
+    assert.ok(mChar);
+    assert.equal(mChar.pattern, '#/characters/:characterId');
+    assert.equal(mChar.params.characterId, 'char-valeros');
+    assert.equal(mChar.breadcrumbs.length, 3);
+    assert.equal(mChar.breadcrumbs[0].label, 'Home');
+    assert.equal(mChar.breadcrumbs[0].path, '#/campaigns');
+    assert.equal(mChar.breadcrumbs[1].label, 'Characters');
+    assert.equal(mChar.breadcrumbs[1].path, '#/characters');
+    assert.equal(mChar.breadcrumbs[2].label, 'Valeros of Korvosa');
+    assert.equal(mChar.breadcrumbs[2].path, '#/characters/char-valeros');
+    assert.equal(mChar.breadcrumbs[2].active, true);
   });
 
   it('parses URL query parameters correctly', () => {
@@ -270,5 +285,27 @@ describe('Dynamic Route Title Resolution & Async Caching (TASK-0247)', () => {
     const current = router.getCurrentRoute();
     assert.ok(current);
     assert.equal(current.breadcrumbs[1].label, 'Campaign #camp-unknown-999');
+  });
+
+  it('asynchronously resolves character names and updates character sheet breadcrumbs', async () => {
+    router.setAsyncTitleResolver(async (type, id) => {
+      if (type === 'character' && id === 'char-shadow') {
+        return 'Theron Shadowblade';
+      }
+      return undefined;
+    });
+
+    await router.navigate('#/characters/char-shadow');
+    const current = router.getCurrentRoute();
+    assert.ok(current);
+    assert.equal(current.pattern, '#/characters/:characterId');
+    assert.equal(current.params.characterId, 'char-shadow');
+    assert.equal(current.breadcrumbs.length, 3);
+    assert.equal(current.breadcrumbs[0].label, 'Home');
+    assert.equal(current.breadcrumbs[0].path, '#/campaigns');
+    assert.equal(current.breadcrumbs[1].label, 'Characters');
+    assert.equal(current.breadcrumbs[1].path, '#/characters');
+    assert.equal(current.breadcrumbs[2].label, 'Theron Shadowblade');
+    assert.equal(current.breadcrumbs[2].active, true);
   });
 });
