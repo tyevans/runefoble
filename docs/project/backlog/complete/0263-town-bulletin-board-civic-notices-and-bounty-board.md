@@ -1,7 +1,7 @@
 ---
 id: '0263'
 title: Town Bulletin Board, Civic Proclamations, and Rumor Network
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0259
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0076
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/300
 ---
-
 # TASK-0263: Town Bulletin Board, Civic Proclamations, and Rumor Network
 
 ## Status
