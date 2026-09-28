@@ -1,7 +1,7 @@
 ---
 id: '0272'
 title: Settlement Haven Aggregate Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0259
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0072
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/309
 ---
-
 # TASK-0272: Settlement Haven Aggregate Blackbox Test Suite Modular Decomposition
 
 ## Status
