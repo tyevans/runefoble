@@ -1,7 +1,7 @@
 ---
-id: '0280'
+id: 0280
 title: Settlement Workers Router Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0260
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0073
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/336
 ---
-
 # TASK-0280: Settlement Workers Router Modular Decomposition
 
 ## Status
