@@ -17,6 +17,8 @@ from game_session.settlement.auth import (
     write_npc_relationships,
     write_settlement_relationships,
 )
+from game_session.settlement.bulletin_handlers import BulletinHandlersMixin
+from game_session.settlement.charter_handlers import CharterHandlersMixin
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.models import (
     DEFAULT_FACILITIES,
@@ -55,6 +57,8 @@ from game_session.settlement.workers import (
 __all__ = [
     "AssignWorkerRequest",
     "BigFivePersonality",
+    "BulletinHandlersMixin",
+    "CharterHandlersMixin",
     "ConstructEstablishmentRequest",
     "DEFAULT_FACILITIES",
     "DEFAULT_TIER_DISTRICTS",
