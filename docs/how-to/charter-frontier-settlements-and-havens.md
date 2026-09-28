@@ -148,6 +148,13 @@ definition settlement {
 - Any adventuring party linked to the `shared_world` inherits `view`, `upgrade`, and `use` access.
 - Non-participating outsider subjects are denied with `403 Forbidden`.
 
+Per ADR-0001, ADR-0005, and ADR-0013, authorization logic in `services/game_session/src/game_session/settlement/auth/` is decomposed into dedicated submodules strictly under 130 lines:
+- **`tokens.py`**: Zitadel OIDC Bearer token decoding, header parsing, and dev-mode fallback.
+- **`permissions.py`**: SpiceDB Zanzibar object authorization helpers for havens, establishments, and workers.
+- **`relationships.py`**: Zanzibar relationship tuple writers.
+- **`dependencies.py`**: FastAPI route dependency injectors (`get_current_settlement_user`, `require_haven_builder`, `require_establishment_manager`).
+- **`auth.py` / `__init__.py`**: Backwards-compatible aggregator facades (< 40 lines).
+
 ---
 
 ## 7. Blackbox Testing
@@ -155,5 +162,6 @@ definition settlement {
 Run the frontdoor blackbox test suite:
 
 ```bash
-uv run pytest tests/test_blackbox_settlements/
+uv run pytest tests/test_blackbox_settlements_integration.py tests/test_blackbox_settlements/
 ```
+
