@@ -34,7 +34,7 @@ Lint and preview the rendered Kubernetes manifests:
 make helm-lint
 make helm-template
 ```
-Deploy the entire Runefoble stack (Postgres, Silo, Zitadel, SpiceDB, OpenPanel, Loki/Grafana, Swagger UI, and microservices):
+Deploy the entire Runefoble stack (Postgres, Silo, Zitadel, SpiceDB, OpenPanel, Mailpit, Loki/Grafana, Swagger UI, and microservices):
 ```bash
 make helm-deploy
 ```
@@ -44,4 +44,5 @@ Open your browser to:
 - **Frontend App**: `http://localhost/`
 - **Swagger UI API Hub**: `http://localhost/swagger-ui`
 - **Identity Provider (Zitadel)**: `http://localhost/auth`
+- **Mailpit Email Testing UI**: `http://localhost/mail/`
 - **Observability (Grafana)**: `http://localhost:3001` (admin / admin)
