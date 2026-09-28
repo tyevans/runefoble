@@ -104,6 +104,15 @@ await client.write_relationship(
     subject_id="alice",
 )
 
+# Grant character ownership
+await client.write_relationship(
+    resource_type="character",
+    resource_id="char_42",
+    relation="owner",
+    subject_type="user",
+    subject_id="alice",
+)
+
 # Bind character to campaign
 await client.write_relationship(
     resource_type="character",
@@ -121,6 +130,15 @@ await client.delete_relationship(
     resource_type="campaign",
     resource_id="camp_101",
     relation="player",
+    subject_type="user",
+    subject_id="alice",
+)
+
+# Delete character owner relationship on deletion
+await client.delete_relationship(
+    resource_type="character",
+    resource_id="char_42",
+    relation="owner",
     subject_type="user",
     subject_id="alice",
 )
@@ -161,6 +179,20 @@ router = APIRouter()
 )
 async def get_session(session_id: str):
     return {"status": "active"}
+
+
+@router.get(
+    "/api/v1/characters/{character_id}",
+    dependencies=[
+        Depends(
+            require_zanzibar_permission(
+                "view", resource_type="character", resource_param="character_id"
+            )
+        )
+    ],
+)
+async def get_character(character_id: str):
+    return {"id": character_id}
 ```
 
 ---

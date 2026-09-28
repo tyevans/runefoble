@@ -144,8 +144,11 @@ def require_zanzibar_permission(
         # Resolve resource ID from path parameters or query parameters
         resource_id = (
             request.path_params.get(resource_param)
+            or request.path_params.get("character_id")
+            or request.path_params.get("id")
             or request.path_params.get("campaign_id")
             or request.path_params.get("session_id")
+            or request.query_params.get("character_id")
             or request.query_params.get("campaign_id")
             or request.query_params.get("session_id")
             or "default_resource"

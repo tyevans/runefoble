@@ -226,6 +226,11 @@
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Lists all sessions and staging lobbies for a campaign (requires `view`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Creates a new session or staging lobby for a campaign (requires `run_session`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Assigns fine-grained SpiceDB Zanzibar relationship tuples (owner, DM, player, spectator) |
+| `gateway-api` | GET | `/api/v1/characters` | Lists characters where authenticated user has SpiceDB Zanzibar `owner` or `view` relation |
+| `gateway-api` | POST | `/api/v1/characters` | Creates new character, registers ownership in SpiceDB Zanzibar (`character:id#owner@user:id`), returns character details |
+| `gateway-api` | GET | `/api/v1/characters/{character_id}` | Retrieves character details (requires Zanzibar `view`) |
+| `gateway-api` | PATCH | `/api/v1/characters/{character_id}/campaign` | Assigns or unassigns character to/from campaign and updates Zanzibar campaign tuple (requires `edit`) |
+| `gateway-api` | DELETE | `/api/v1/characters/{character_id}` | Deletes character record and cleans up SpiceDB Zanzibar relationship tuples (requires `owner`) |
 | `gateway-api` | POST | `/api/v1/auth/sync/user` | Syncs Zitadel user claims into SpiceDB Zanzibar tuples |
 | `gateway-api` | POST | `/api/v1/auth/sync/membership` | Grants or revokes campaign/session membership roles (`gm`, `player`, `spectator`) |
 | `gateway-api` | POST | `/api/v1/auth/sync/character-ownership` | Binds character aggregate to owning user and parent campaign |
