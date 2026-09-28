@@ -1,7 +1,7 @@
 ---
 id: '0226'
 title: Campaign Dashboard Styles Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0209
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0063
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/322
 ---
-
 # TASK-0226: Campaign Dashboard Styles Modular Decomposition
 
 ## Status
