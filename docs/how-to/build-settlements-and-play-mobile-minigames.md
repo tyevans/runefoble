@@ -266,3 +266,13 @@ curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin/ntc-00
 ></runefoble-bulletin-board>
 ```
 
+### Modular Style Architecture
+
+Per Hard Invariant 6 and ADR-0004 / ADR-0012, bulletin board styling is decoupled into focused sub-sheets under `frontend/src/styles/`:
+- `bulletin-board-layout.styles.ts`: Corkboard container, textured radial gradient, header action controls, and responsive grid layout.
+- `bulletin-board-card.styles.ts`: Parchment notice cards, push-pin badges, wax seals, cipher rune indicators, and category ribbons.
+- `bulletin-board-dialog.styles.ts`: Notice authoring dialog, cipher puzzle inspection overlays, and modal action buttons.
+
+The aggregator `frontend/src/components/runefoble-bulletin-board.styles.ts` composes these sheets into a cohesive `CSSResultGroup` array.
+
+
