@@ -175,3 +175,16 @@ The proxy target defaults to `http://localhost:8000` and can be overridden via t
 ```bash
 GATEWAY_API_URL=http://localhost:8000 pnpm dev
 ```
+
+## 8. Auditing Route Declarations and Breadcrumbs
+
+To verify that all registered standard routes parse parameters, resolve titles, and mount views without collision, run the automated audit test suites:
+
+```bash
+# Frontend component and route matrix audit
+node --experimental-strip-types --test frontend/test/app-shell-views-wiring-audit.test.ts
+
+# Python blackbox frontdoor E2E test suite
+uv run pytest tests/test_blackbox_app_shell_views_audit.py
+```
+

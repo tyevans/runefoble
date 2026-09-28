@@ -13,6 +13,7 @@ The unified App Shell subscribes to the client SPA router (`Router`) and mounts 
 | `#/campaigns/:campaignId` | `campaign-detail` | `<runefoble-campaign-header>`, tab navigation bar (`Overview & Sessions`, `Party Characters`, `Codex & Lore`, `Chronicle & Stats`), `<runefoble-campaign-members>`, `<runefoble-session-list>` |
 | `#/campaigns/:campaignId/characters` | `campaign-characters` | `<runefoble-campaign-header>`, tab navigation bar, `<runefoble-character-roster>` (scoped to campaign) |
 | `#/characters` | `characters` | `<runefoble-character-roster>` |
+| `#/characters/:characterId` | `character-sheet` | `<runefoble-character-sheet>`, `<runefoble-stand-in-guardrails>` |
 | `#/profile` | `profile` | `<runefoble-user-profile>` (User claims, role badges, theme selection) |
 | `#/campaigns/:campaignId/lobby/:sessionId` | `session-lobby` | `<runefoble-session-lobby>` |
 | `#/campaigns/:campaignId/sessions/:sessionId` | `session-active` | `<runefoble-vtt-view>` (Tactical board, card, feed, voice) |
@@ -27,6 +28,7 @@ export function getActiveView(route: MatchedRoute | null): AppActiveView {
   if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
   if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
   if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
+  if (pat.startsWith('#/characters/') && pat !== '#/characters') return 'character-sheet';
   if (pat === '#/characters') return 'characters';
   return pat === '#/profile' ? 'profile' : 'campaigns';
 }
@@ -123,5 +125,12 @@ During session staging and active virtual tabletop play, the App Shell dynamical
    - A graceful fallback adventurer placeholder.
 4. **VTT Character Card Binding**: The `<runefoble-character-card>` dynamically receives `.characterName`, `.characterClass`, `.level`, `.currentHp`, `.maxHp`, `.armorClass`, and `.portraitUrl`.
 5. **DM Party Inspector & Switcher**: When authenticated as DM/Owner, a high-contrast inspection banner and `<select class="dm-character-switcher">` allow the Dungeon Master to inspect and switch active character cards across the entire party.
+
+## 7. Auditing View Wiring and Regression Verification
+
+To prevent view collisions (such as `#/profile` defaulting to `campaigns` or `#/campaigns/:id/characters` colliding with `campaign-detail`) and verify route-bound WebSocket lifecycles:
+
+- **Frontend Component & Route Matrix**: Run `node --experimental-strip-types --test frontend/test/app-shell-views-wiring-audit.test.ts` to execute parameterized assertions across all standard routes, verifying parameter extraction, breadcrumbs, and WebSocket connect/teardown events.
+- **Python E2E Blackbox Suite**: Run `pytest tests/test_blackbox_app_shell_views_audit.py` to audit full frontdoor Gateway API endpoints, DOM mounting manifest contracts, and file length constraints.
 
 
