@@ -1,7 +1,7 @@
 ---
 id: '0258'
 title: Character Management and Tabletop Sync Blackbox Test Suite
-status: Proposed
+status: Refined
 created: 2026-09-27
 dependencies:
 - TASK-0252
@@ -12,6 +12,8 @@ dependencies:
 governing_adrs:
 - ADR-0001
 - ADR-0002
+- ADR-0004
+- ADR-0010
 - ADR-0013
 governing_prds:
 - PRD-0006
@@ -23,25 +25,30 @@ governing_stories:
 - US-0071
 target_release: 0.8.0
 ---
+
 # TASK-0258: Character Management and Tabletop Sync Blackbox Test Suite
 
 ## Status
-Proposed
+Refined
 
 ## Summary
-Implement a comprehensive end-to-end blackbox test suite (`tests/test_blackbox_character_management_and_vtt_sync.py` in Python and `frontend/test/character-management-and-profile.test.ts` in TypeScript) verifying the complete lifecycle: character creation via Gateway API, SpiceDB Zanzibar authorization, party assignment, character sheet route rendering (`#/characters/:id`), lobby selection sync, dynamic VTT card binding, profile settings view, and duplicate-free campaign creation.
+Implement a comprehensive end-to-end blackbox test suite (`tests/test_blackbox_character_management_and_vtt_sync.py` in Python and `frontend/test/character-management-and-profile.test.ts` in TypeScript) verifying the complete character lifecycle: creation via Gateway API, SpiceDB Zanzibar authorization checks, campaign assignment, character sheet route rendering (`#/characters/:id`), pre-game lobby selection sync, dynamic VTT card binding, profile settings view, and duplicate-free campaign creation.
 
 ## Problem Statement
 While individual unit tests verify microfrontends in isolation, there is no end-to-end blackbox test suite verifying that characters created in the roster successfully link to campaigns, synchronize to the pre-game lobby, bind to active VTT sessions, and respect SpiceDB Zanzibar object authorization. Furthermore, tests are required to guard against regressions in event bubbling (double campaign creation) and profile view routing.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
-  - `docs/how-to/interact-with-character-sheet-and-inventory.md`: Frontdoor character testing workflows.
+  - `docs/how-to/interact-with-character-sheet-and-inventory.md`: Frontdoor character testing workflows and condition management.
   - `docs/how-to/coordinate-game-session-lobby-and-readiness.md`: Lobby readiness and participant state assertions.
+  - `docs/how-to/define-spicedb-zanzibar-permissions.md`: Writing Zanzibar relationship tuples and checking permissions.
+  - `docs/how-to/navigate-client-spa-routes-and-breadcrumbs.md`: Parameterized route assertions.
 - **Governing Architecture & ADRs**:
-  - **ADR-0001: SpiceDB Zanzibar Object Authorization**: Frontdoor auth verification.
-  - **ADR-0002: Domain Events via eventsource-py**: Observable event assertions.
-  - **ADR-0013: Frontend Microfrontend Architecture**: Shell integration testing.
+  - **ADR-0001: SpiceDB Zanzibar Object Authorization**: Frontdoor auth verification on character ownership and party membership.
+  - **ADR-0002: Domain Events via eventsource-py**: Observable event assertions and projection validation.
+  - **ADR-0004: Lit Web Components and Storybook UI**: Component mounting and DOM assertions.
+  - **ADR-0010: Continuous Integration Pipeline**: Fast, reliable end-to-end blackbox tests.
+  - **ADR-0013: Frontend Microfrontend Architecture**: Shell integration testing and event composition.
 
 ## Product & User Story References
 - **Product Requirement**: [`prd-0006-digital-character-sheet-inventory-and-conditions.md`](../../product/accepted/prd-0006-digital-character-sheet-inventory-and-conditions.md), [`prd-0023-unified-frontend-application-shell-and-campaign-hub.md`](../../product/accepted/prd-0023-unified-frontend-application-shell-and-campaign-hub.md)
@@ -61,9 +68,18 @@ While individual unit tests verify microfrontends in isolation, there is no end-
    - `test_profile_route_renders_user_claims`: Navigate to `#/profile`, verify user claims and roles are displayed.
 3. **Hard Invariant Invariants**:
    - All tests interact strictly through public frontdoor HTTP routes and DOM events.
-   - Source files remain <500 lines.
+   - Source files remain strictly <500 lines.
 
-## Definition of Done
-- [ ] All Python and TypeScript blackbox tests pass with 100% assertion success.
-- [ ] Frontdoor setup is used exclusively without backdoor mock mutation.
-- [ ] All files remain strictly <500 lines.
+## INVEST Criteria Evaluation
+- **Independent (I)**: Runs independently in pytest and frontend test runner.
+- **Negotiable (N)**: Test assertions can focus on key frontdoor state mutations.
+- **Valuable (V)**: Provides automated regression protection across character management and active VTT integration.
+- **Estimable (E)**: Standard blackbox test suite sized within a single development pass.
+- **Small (S)**: Test files split between Python API verification (< 300 lines) and frontend tests (< 300 lines).
+- **Testable (T)**: Directly verifies observable HTTP outputs, DOM structures, and SpiceDB relations.
+
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. Python blackbox test suite `tests/test_blackbox_character_management_and_vtt_sync.py` implemented and passing.
+2. Frontend integration test suite `frontend/test/character-management-and-profile.test.ts` implemented and passing.
+3. Frontdoor setup is used exclusively without backdoor mock mutation.
+4. All test files strictly adhere to file length limit (<500 lines).
