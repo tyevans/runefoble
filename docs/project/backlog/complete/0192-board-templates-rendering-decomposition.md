@@ -1,7 +1,7 @@
 ---
-id: '0192'
+id: 0192
 title: Board Templates Rendering and Subviews Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0004
@@ -17,8 +17,8 @@ governing_stories:
 - US-0043
 - US-0056
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/253
 ---
-
 # TASK-0192: Board Templates Rendering and Subviews Modular Decomposition
 
 ## Status
