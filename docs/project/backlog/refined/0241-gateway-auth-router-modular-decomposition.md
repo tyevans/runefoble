@@ -1,7 +1,7 @@
 ---
 id: '0241'
 title: Gateway Auth Router Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-27
 dependencies:
 - TASK-0034
@@ -20,7 +20,7 @@ target_release: 0.7.0
 # TASK-0241: Gateway Auth Router Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Decompose `gateway/api/src/gateway_api/routers/auth.py` (409 lines, 81.8% of limit - approaching the 500-line invariant) into modular submodules under `gateway/api/src/gateway_api/routers/auth/` (`schemas.py`, `registration.py`, `tokens.py`, and `dev_mail.py`), keeping all submodules strictly < 130 lines per Hard Invariant 6, ADR-0003, and ADR-0007.
@@ -33,7 +33,7 @@ Decompose `gateway/api/src/gateway_api/routers/auth.py` (409 lines, 81.8% of lim
 - **ADR-0005: Kubernetes-First Infrastructure with Helm and Kind**: Zitadel and Mailpit integration interfaces.
 - **ADR-0007: Domain-Driven Design Architecture**: Clean domain segregation between auth schemas, registration workflows, token issuance, and testing utilities.
 
-## Scope of Work
+## Detailed Specification & Implementation Plan
 1. **Schemas Submodule (`gateway/api/src/gateway_api/routers/auth/schemas.py`)**:
    - Extract `RegisterRequest`, `TokenRequest`, `RefreshRequest`, `VerifyEmailRequest`, `DevSendEmailRequest`, `PasswordResetRequest`, and response models (< 100 lines).
 2. **Registration Submodule (`gateway/api/src/gateway_api/routers/auth/registration.py`)**:
@@ -47,9 +47,20 @@ Decompose `gateway/api/src/gateway_api/routers/auth.py` (409 lines, 81.8% of lim
 6. **Verification**:
    - Run blackbox tests in `tests/test_blackbox_email_signup_mailpit.py` and `tests/test_blackbox_frontend_routing_and_auth.py`.
 
-## Definition of Done
-- `gateway/api/src/gateway_api/routers/auth/` created with all submodules strictly < 130 lines each.
-- `gateway/api/src/gateway_api/routers/auth.py` replaced by the modular package with full backward compatibility.
-- Zero health check warnings for gateway auth files.
-- All blackbox tests pass via `uv run pytest tests/test_blackbox_email_signup_mailpit.py`.
-- Formatted and linted cleanly via `uv run ruff check .` and `uv run ruff format --check .`.
+## INVEST Criteria Evaluation
+- **Independent (I)**: Isolated to `gateway/api/src/gateway_api/routers/auth/` package decomposition.
+- **Negotiable (N)**: HTTP API endpoints and response contracts are fully preserved.
+- **Valuable (V)**: Eliminates 409-line health check warning and prevents Hard Invariant 6 breach.
+- **Estimable (E)**: Pure refactoring of existing, well-tested route handlers.
+- **Small (S)**: Scope strictly isolated to extracting router endpoints across 4 focused submodules (< 130 lines each).
+- **Testable (T)**: Frontdoor validation via public HTTP endpoints (`/api/v1/auth/*`) in existing blackbox test suites.
+
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Module Architecture**:
+   - `gateway/api/src/gateway_api/routers/auth/` created with all submodules strictly < 130 lines each.
+   - `gateway/api/src/gateway_api/routers/auth.py` replaced by the modular package with full backward compatibility.
+2. **Frontdoor Verification**:
+   - Zero health check warnings for gateway auth files.
+   - All blackbox tests pass via `uv run pytest tests/test_blackbox_email_signup_mailpit.py` and `uv run pytest tests/test_blackbox_frontend_routing_and_auth.py`.
+3. **Quality Gates**:
+   - Formatted and linted cleanly via `uv run ruff check .` and `uv run ruff format --check .`.
