@@ -1,7 +1,7 @@
 ---
-id: '0278'
+id: 0278
 title: Settlement Auth and Permissions Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0259
@@ -17,8 +17,8 @@ governing_stories:
 - US-0072
 - US-0073
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/333
 ---
-
 # TASK-0278: Settlement Auth and Permissions Modular Decomposition
 
 ## Status
