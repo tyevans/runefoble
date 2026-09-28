@@ -1,7 +1,7 @@
 ---
 id: '0245'
 title: Campaign Lore Dependencies and Permissions Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0047
@@ -19,8 +19,8 @@ governing_stories:
 - US-0050
 - US-0058
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/267
 ---
-
 # TASK-0245: Campaign Lore Dependencies and Permissions Modular Decomposition
 
 ## Status
