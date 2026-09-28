@@ -204,9 +204,12 @@ GET /ui/manifest
 ```
 
 ### Subcomponents & Storybook Verification
-- `<runefoble-combat-heatmap>`: Canvas-based 2D grid overlay visualizing movement corridors, hazard areas, knockouts, and density heatmaps with metric filters (`all`, `damage`, `hit`, `movement`).
+- `<runefoble-combat-heatmap>`: Canvas-based 2D grid overlay visualizing movement corridors, hazard areas, knockouts, and density heatmaps with metric filters (`all`, `damage`, `hit`, `movement`). Decomposed into modular delegates under `services/campaign_analytics/ui/src/heatmap/`:
+  - `canvas-renderer.ts`: Pure 2D canvas drawing routines (grid lines, cell density gradients, movement corridor vectors, hazard callouts, knockout glyphs).
+  - `heatmap-controls.template.ts`: Metric filter buttons (`all`, `damage`, `hit`, `movement`), legend gradient scale, and event summary statistics.
+  - `cell-inspector.template.ts`: Hovered/selected coordinate card, damage breakdown, and casualty listings.
 - `<runefoble-chronicle-timeline>`: Interactive scrubber with auto-playback and click-to-play audio recap snippets.
-- Interactive Storybook stories are co-located in `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` with test states for `EmptyState`, `ActiveCombatTelemetry`, `VictoryCelebration`, and `TotalPartyKill`.
+- Interactive Storybook stories are co-located in `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` and `services/campaign_analytics/ui/src/runefoble-combat-heatmap.stories.ts` with test states for `DefaultAllWeights`, `DamageFilter`, `StrikesFilter`, `TrafficMovementFilter`, `EmptyState`, `ActiveCombatTelemetry`, `VictoryCelebration`, and `TotalPartyKill`.
 
 ---
 
@@ -216,5 +219,5 @@ The Campaign Analytics UI test suite is decomposed into focused frontdoor module
 
 - `tests/test_blackbox_campaign_analytics_ui/test_analytics_dashboard_ui.py`: Verifies microfrontend manifest advertising (`GET /ui/manifest`), component package export and forwarding, Storybook scenario coverage, and REST frontdoor MVP turn metrics delivery.
 - `tests/test_blackbox_campaign_analytics_ui/test_chronicle_timeline_ui.py`: Verifies `<runefoble-chronicle-timeline>` Custom Element decorator integrity, living chronicle milestone frontdoor binding, absentee recap metadata, milestone pagination limits, and session filtering.
-- `tests/test_blackbox_campaign_analytics_ui/test_spatial_heatmaps_ui.py`: Verifies `<runefoble-combat-heatmap>` Custom Element decorator, 2D canvas damage density matrix calculations, grid coordinate overlays, metric filter parameters, and SpiceDB Zanzibar campaign object authorization.
+- `tests/test_blackbox_campaign_analytics_ui/test_spatial_heatmaps_ui.py`: Verifies `<runefoble-combat-heatmap>` Custom Element decorator, modular file boundary budgets (< 120 lines controller, < 120 lines canvas-renderer, < 90 lines controls, < 80 lines inspector), 2D canvas damage density matrix calculations, grid coordinate overlays, metric filter parameters, and SpiceDB Zanzibar campaign object authorization.
 
