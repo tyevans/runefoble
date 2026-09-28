@@ -1,7 +1,7 @@
 ---
-id: '0189'
+id: 0189
 title: Character Sheet UI Templates Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0107
@@ -15,8 +15,8 @@ governing_stories:
 - US-0015
 - US-0051
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/249
 ---
-
 # TASK-0189: Character Sheet UI Templates Modular Decomposition
 
 ## Status
