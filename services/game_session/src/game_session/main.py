@@ -89,6 +89,7 @@ def get_ui_manifest():
             "runefoble-campaign-dashboard",
             "runefoble-campaign-creator",
             "runefoble-campaign-members",
+            "runefoble-campaign-header",
             "runefoble-session-lobby",
         ],
         "version": "0.1.0",
