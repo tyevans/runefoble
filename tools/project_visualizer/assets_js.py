@@ -8,6 +8,11 @@ _STATIC_JS_DIR = Path(__file__).resolve().parent / "static" / "js"
 _MODULE_ORDER = [
     "core.js",
     "markdown.js",
+    "drawer/task_card.js",
+    "drawer/adr_card.js",
+    "drawer/prd_card.js",
+    "drawer/persona_card.js",
+    "drawer/controller.js",
     "drawer.js",
     "kanban.js",
     "gantt.js",

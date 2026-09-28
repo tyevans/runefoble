@@ -222,4 +222,5 @@ To prevent exposing local execution tooling in published public documentation:
 ### 📖 Slide-Over Detail Drawer & Omnibar Search
 - Press `⌘K` or `/` (or click the search button) to open the global Omnibar and search across all tasks, PR numbers, commit hashes, stories, PRDs, and ADRs.
 - Click any card or node anywhere in the interface to slide out the reader drawer, displaying full rendered Markdown, metadata chips, and the exact local file path with one-click copy.
+- **Modular Subviews Architecture**: Inspector drawer presentation is decomposed into single-responsibility subviews under `tools/project_visualizer/static/js/drawer/` (`task_card.js`, `adr_card.js`, `prd_card.js`, `persona_card.js`, `controller.js`) and coordinated by `drawer.js`, enforcing Hard Invariant 6 (<120 lines per submodule).
 - Seamless Dark / Light theme toggle with local storage persistence.

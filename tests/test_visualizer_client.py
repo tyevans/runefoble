@@ -24,7 +24,7 @@ def test_client_javascript_syntax_validity(repo_root: Path):
     if not node_bin:
         pytest.skip("Node.js binary not found for syntax checking")
 
-    # 1. Test every individual static JS module
+    # 1. Test every individual static JS module (recursively including subviews)
     static_js_dir = repo_root / "tools" / "project_visualizer" / "static" / "js"
     for js_file in static_js_dir.rglob("*.js"):
         proc = subprocess.run([node_bin, "-c", str(js_file)], capture_output=True, text=True)
