@@ -55,5 +55,5 @@ Casual adventurers (like Marcus) who prefer relaxing on the couch without a bulk
 ## Implementing Backlog Tasks
 - [`TASK-0128: Spatial Companion Mobile & Haptic Gateway`](../../backlog/complete/0128-spatial-companion-mobile-and-haptic-gateway.md)
 - [`TASK-0134: Spatial Companion Mobile Audio & Haptic Microfrontend`](../../backlog/complete/0134-spatial-companion-mobile-audio-and-haptic-microfrontend.md)
-- [`TASK-0166: Mobile Low-Bandwidth Opus Adaptive Stream Adapter`](../../backlog/proposed/0166-mobile-low-bandwidth-opus-stream-adapter.md)
-- [`TASK-0167: Absentee Mobile Directive and Remote Voting Microfrontend`](../../backlog/proposed/0167-absentee-mobile-directive-voting-microfrontend.md)
+- [`TASK-0166: Mobile Low-Bandwidth Opus Adaptive Stream Adapter`](../../backlog/complete/0166-mobile-low-bandwidth-opus-stream-adapter.md)
+- [`TASK-0167: Absentee Mobile Directive and Remote Voting Microfrontend`](../../backlog/complete/0167-absentee-mobile-directive-voting-microfrontend.md)

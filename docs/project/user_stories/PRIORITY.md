@@ -37,6 +37,5 @@
 35. **US-0064**: Character Roster Management and Campaign Party Assignment (Active)
 36. **US-0065**: Game Session Pre-Game Lobby, Participant Readiness, and Live Launch Orchestration (Active)
 37. **US-0066**: Application Shell Client-Side Routing, Navigation Chrome, and Route Lifecycle (Active)
-
-
-
+38. **US-0067**: Campaign Detail View, Setting Management, and Session Scheduling (Active)
+39. **US-0068**: Application Shell View Audit, Deep Route Wiring, and Dev API Proxying (Active)
