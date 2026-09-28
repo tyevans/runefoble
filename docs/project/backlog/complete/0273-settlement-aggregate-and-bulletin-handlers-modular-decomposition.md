@@ -1,7 +1,7 @@
 ---
 id: '0273'
 title: Settlement Aggregate and Bulletin Handlers Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0259
@@ -15,8 +15,8 @@ governing_stories:
 - US-0072
 - US-0076
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/307
 ---
-
 # TASK-0273: Settlement Aggregate and Bulletin Handlers Modular Decomposition
 
 ## Status
