@@ -186,6 +186,10 @@ def test_zero_hardcoded_hexes_in_campaign_styles() -> None:
     assert creator_styles_file.is_file()
 
     dash_css = dashboard_styles_file.read_text(encoding="utf-8")
+    dashboard_sub_dir = CAMPAIGNS_DIR / "styles" / "dashboard"
+    if dashboard_sub_dir.is_dir():
+        for sub_file in dashboard_sub_dir.glob("*.styles.ts"):
+            dash_css += "\n" + sub_file.read_text(encoding="utf-8")
     creator_css = creator_styles_file.read_text(encoding="utf-8")
 
     assert not hex_pattern.findall(dash_css), "Found hardcoded hex in dashboard styles"
