@@ -298,4 +298,25 @@ Per Hard Invariant 6 and ADR-0004 / ADR-0012, bulletin board styling is decouple
 
 The aggregator `frontend/src/components/runefoble-bulletin-board.styles.ts` composes these sheets into a cohesive `CSSResultGroup` array.
 
+## Blackbox Test Suites & Verification
+
+In accordance with Hard Invariant 7 (Blackbox TDD with frontdoor setup) and ADR-0008, all settlement haven and mobile minigame mechanics are covered by comprehensive end-to-end blackbox suites driving public HTTP endpoints and WebSocket streams:
+
+1. **Settlement Integration Suite (`tests/test_blackbox_settlements_integration.py`)**:
+   - `test_found_settlement_and_upgrade_tier_flow`: Verifies civic scaling caps (hamlet 2 districts, village 4 districts), prosperity gates, and event publishing (`SettlementFounded`, `SettlementTierUpgraded`).
+   - `test_establishment_creation_and_worker_assignment`: Validates storefront construction, assignable NPC workers with role synergy bonuses, and dynamic inventory inspection via `GET /api/v1/establishments/{id}/workers`.
+   - `test_merchant_haggling_gambits_and_dm_override`: Simulates persuasion rolls against merchant temperament, flattery gambits, and real-time DM mood/force-accept arbitration controls.
+   - `test_bulletin_board_pin_and_cipher_decrypt`: Tests wax-sealed bounty proclamations, cipher decryption workflows, and live party broadcast over `/ws/campaigns/{id}`.
+
+2. **Multiplayer WebSocket Synchronization Suite (`tests/test_blackbox_minigames_websocket.py`)**:
+   - `test_darts_and_billiards_multiplayer_turn_sync`: Tests concurrent player connections exchanging touch trajectory vectors (`throw_dart`, `billiards_stroke`), double bullseye scoring, and turn order passing.
+   - `test_casino_craps_and_roulette_betting_and_payouts`: Validates multi-patron wagering, dice tumble evaluation (natural 7 and point phase hits), roulette wheel spins, and automatic character coin purse crediting.
+
+Execute the suites locally via UV:
+
+```bash
+uv run pytest tests/test_blackbox_settlements_integration.py tests/test_blackbox_minigames_websocket.py
+```
+
+
 
