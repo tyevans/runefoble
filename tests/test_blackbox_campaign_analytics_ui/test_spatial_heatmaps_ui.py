@@ -39,6 +39,38 @@ def test_spatial_heatmap_custom_element_declaration() -> None:
     assert "class RunefobleCombatHeatmap" in src
 
 
+def test_combat_heatmap_modular_decomposition_and_limits() -> None:
+    """Verify TASK-0194 modular decomposition file boundaries and line limits."""
+    ui_src = REPO_ROOT / "services/campaign_analytics/ui/src"
+    heatmap_dir = ui_src / "heatmap"
+
+    controller = ui_src / "runefoble-combat-heatmap.ts"
+    canvas_renderer = heatmap_dir / "canvas-renderer.ts"
+    controls = heatmap_dir / "heatmap-controls.template.ts"
+    inspector = heatmap_dir / "cell-inspector.template.ts"
+
+    for path in (controller, canvas_renderer, controls, inspector):
+        assert path.is_file(), f"Expected module {path} to exist"
+
+    controller_lines = len(controller.read_text(encoding="utf-8").splitlines())
+    canvas_lines = len(canvas_renderer.read_text(encoding="utf-8").splitlines())
+    controls_lines = len(controls.read_text(encoding="utf-8").splitlines())
+    inspector_lines = len(inspector.read_text(encoding="utf-8").splitlines())
+
+    assert controller_lines < 120, f"controller has {controller_lines} lines, expected < 120"
+    assert canvas_lines < 120, f"canvas-renderer has {canvas_lines} lines, expected < 120"
+    assert controls_lines < 90, f"controls template has {controls_lines} lines, expected < 90"
+    assert inspector_lines < 80, (
+        f"cell-inspector template has {inspector_lines} lines, expected < 80"
+    )
+
+    # Verify key exports
+    assert "renderHeatmapCanvas" in canvas_renderer.read_text(encoding="utf-8")
+    assert "renderHeatmapHeader" in controls.read_text(encoding="utf-8")
+    assert "renderHeatmapLegend" in controls.read_text(encoding="utf-8")
+    assert "renderCellInspector" in inspector.read_text(encoding="utf-8")
+
+
 @pytest.mark.asyncio
 async def test_spatial_heatmap_frontdoor_cells_and_filtering(
     client: TestClient,

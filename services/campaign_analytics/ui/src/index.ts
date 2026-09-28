@@ -1,4 +1,5 @@
 export * from './types.ts';
+export * from './heatmap/index.ts';
 export * from './runefoble-combat-heatmap.styles.ts';
 export * from './runefoble-combat-heatmap.ts';
 export * from './runefoble-chronicle-timeline.styles.ts';
