@@ -1,7 +1,7 @@
 ---
 id: '0197'
 title: Asset Forge Raster Generator Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-27
 dependencies:
 - TASK-0049
@@ -22,10 +22,10 @@ target_release: 0.7.0
 # TASK-0197: Asset Forge Raster Generator Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
-Decompose `services/asset_forge/src/asset_forge/generator.py` (330 lines, 66.0% of limit) into modular raster submodules under `services/asset_forge/src/asset_forge/raster/` (`png_codec.py`, `battlemap_raster.py`, and `token_raster.py`), keeping each submodule strictly < 120 lines per Hard Invariant 6.
+Decompose `services/asset_forge/src/asset_forge/generator.py` (330 lines, 66.0% of limit) into modular raster submodules under `services/asset_forge/src/asset_forge/raster/` (`png_codec.py`, `battlemap_raster.py`, and `token_raster.py`), keeping each submodule strictly < 120 lines per Hard Invariant 6 and ADR-0003/ADR-0007.
 
 ## Problem Statement
 `services/asset_forge/src/asset_forge/generator.py` currently contains 330 lines combining low-level PNG binary chunk encoders (IHDR, IDAT, IEND, CRC32, scanline compression), procedural grid rasterization for dungeon/wilderness battlemaps, circular token portrait drawing, and printable papercraft standee generation. With upcoming 3D printable STL token and ring generation, this file will exceed 400 lines unless decoupled into focused raster modules.
@@ -35,7 +35,7 @@ Decompose `services/asset_forge/src/asset_forge/generator.py` (330 lines, 66.0% 
 - **ADR-0007: Domain-Driven Design Architecture**: Clean domain separation of low-level raster encoding from higher-level procedural map and token builders.
 - **ADR-0010: Silo S3 Media Asset Bucket Storage**: Raster generation feeds directly into Silo S3 storage buckets.
 
-## Scope of Work
+## Detailed Specification & Implementation Plan
 1. **Modular Submodule Creation (`services/asset_forge/src/asset_forge/raster/`)**:
    - `png_codec.py`: Standard PNG chunk encoder (`encode_png_rgba`), scanline packing, CRC32 calculations, zlib compression, and hex color parsing (`parse_hex_color`) (< 90 lines).
    - `battlemap_raster.py`: Procedural tactical battlemap raster generator (`generate_battlemap_png`) with thematic color palettes and grid line overlays (< 110 lines).
@@ -46,8 +46,19 @@ Decompose `services/asset_forge/src/asset_forge/generator.py` (330 lines, 66.0% 
    - Run `tests/test_blackbox_asset_forge_generation.py` to verify raster outputs remain identical.
    - Run `uv run pytest` and lint checks.
 
-## Definition of Done
-- `generator.py` reduced to a lightweight facade (< 50 lines).
-- Submodules in `services/asset_forge/src/asset_forge/raster/` strictly < 120 lines each.
-- All asset forge blackbox tests pass via `uv run pytest`.
-- Code passes `uv run ruff check .` and `uv run ruff format --check .`.
+## INVEST Criteria Evaluation
+- **Independent (I)**: Refactoring strictly bounded to `services/asset_forge/src/asset_forge/raster/` with stable facade interface.
+- **Negotiable (N)**: Submodules logically divide PNG codec binary primitives from battlemap and token rasterizers.
+- **Valuable (V)**: Protects against Hard Invariant 6 and speeds up raster unit testing.
+- **Estimable (E)**: Direct relocation of existing procedural generation algorithms into sub-modules.
+- **Small (S)**: Scope bounded to single python module decomposition (< 120 lines per submodule).
+- **Testable (T)**: Frontdoor verification asserting identical binary image generation and route responses.
+
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Module Architecture**:
+   - `generator.py` reduced to a lightweight facade (< 50 lines).
+   - Submodules in `services/asset_forge/src/asset_forge/raster/` strictly < 120 lines each.
+2. **Frontdoor Verification**:
+   - All asset forge blackbox tests pass via `uv run pytest tests/test_blackbox_asset_forge_generation.py`.
+3. **Quality Gates**:
+   - Code passes `uv run ruff check .` and `uv run ruff format --check .`.

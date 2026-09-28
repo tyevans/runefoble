@@ -1,7 +1,7 @@
 ---
 id: '0200'
 title: Campaign Analytics Stories Fixtures Modular Decomposition
-status: Proposed
+status: Refined
 created: 2026-09-27
 dependencies:
 - TASK-0052
@@ -21,10 +21,10 @@ target_release: 0.7.0
 # TASK-0200: Campaign Analytics Stories Fixtures Modular Decomposition
 
 ## Status
-Proposed
+Refined
 
 ## Summary
-Decompose `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` (322 lines, 64.4% of limit) by extracting embedded mock datasets into `services/campaign_analytics/ui/src/fixtures/campaign-analytics.fixtures.ts`, keeping the story definition file strictly < 100 lines per Hard Invariant 6.
+Decompose `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` (322 lines, 64.4% of limit) by extracting embedded mock datasets into `services/campaign_analytics/ui/src/fixtures/campaign-analytics.fixtures.ts`, keeping the story definition file strictly < 100 lines per Hard Invariant 6 and ADR-0004/ADR-0013.
 
 ## Problem Statement
 `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` currently contains 322 lines because large mock payloads (`MOCK_HEATMAP_ACTIVE`, `MOCK_MVP_ACTIVE`, and `MOCK_TIMELINE_ACTIVE`) are hardcoded directly within the story file. This clutters Storybook story definitions and prevents reusing mock telemetry data in unit and integration testing.
@@ -34,7 +34,7 @@ Decompose `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stori
 - **ADR-0012: Theming Tokens & Bauhaus Design System**: Storybook documentation for telemetry heatmaps and chronicle milestones.
 - **ADR-0013: Microfrontend Bounded Context Architecture**: UI encapsulation within `services/campaign_analytics/ui/`.
 
-## Scope of Work
+## Detailed Specification & Implementation Plan
 1. **Mock Fixture Module (`services/campaign_analytics/ui/src/fixtures/campaign-analytics.fixtures.ts`)**:
    - Extract `MOCK_HEATMAP_ACTIVE`, `MOCK_MVP_ACTIVE`, and `MOCK_TIMELINE_ACTIVE` into a typed, reusable fixture module (< 120 lines).
 2. **Storybook File Modularization (`services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts`)**:
@@ -43,7 +43,20 @@ Decompose `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stori
    - Verify Storybook builds and stories render with all telemetry sub-panels functional.
    - Run workspace tests via `uv run pytest`.
 
-## Definition of Done
-- `runefoble-campaign-analytics.stories.ts` reduced to < 100 lines.
-- Extracted fixture file strictly < 130 lines.
-- Storybook stories render without errors or regressions.
+## INVEST Criteria Evaluation
+- **Independent (I)**: Isolated to Storybook stories and test fixture assets for campaign analytics.
+- **Negotiable (N)**: Fixtures file provides canonical mock payloads for telemetry components.
+- **Valuable (V)**: Protects against Hard Invariant 6 and makes mock data reusable across test suites.
+- **Estimable (E)**: Pure extraction of static JSON/TypeScript fixture objects.
+- **Small (S)**: Scope strictly isolated to `runefoble-campaign-analytics.stories.ts` refactoring (< 100 lines).
+- **Testable (T)**: Storybook visual verification and TypeScript build verification.
+
+## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
+1. **Module Architecture**:
+   - `runefoble-campaign-analytics.stories.ts` reduced to < 100 lines.
+   - Extracted fixture file in `services/campaign_analytics/ui/src/fixtures/` strictly < 130 lines.
+2. **Frontdoor Verification**:
+   - Storybook stories render without errors or regressions.
+   - Microfrontend bundle builds cleanly via `pnpm run build`.
+3. **Quality Gates**:
+   - Code passes `uv run ruff check .` and `uv run ruff format --check .`.
