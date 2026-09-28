@@ -11,6 +11,7 @@ import { resolve } from 'node:path';
 
 const ROOT_DIR = resolve(process.cwd());
 const MODAL_PATH = resolve(ROOT_DIR, 'src/components/runefoble-session-modal.ts');
+const STYLES_PATH = resolve(ROOT_DIR, 'src/styles/session-modal.styles.ts');
 const LIST_PATH = resolve(ROOT_DIR, 'src/components/runefoble-session-list.ts');
 const STORIES_PATH = resolve(ROOT_DIR, 'src/stories/runefoble-session-modal.stories.ts');
 
@@ -80,5 +81,38 @@ describe('Session Modal & List Component Contracts (TASK-0249)', () => {
     assert.ok(content.includes('ModalWithValidationError'));
     assert.ok(content.includes('DarkMode'));
     assert.ok(content.includes('LightMode'));
+  });
+
+  it('TASK-0270: session-modal.styles.ts exists, satisfies <180 lines, and defines Bauhaus tokens', () => {
+    const content = readFileSync(STYLES_PATH, 'utf-8');
+    const lines = content.split('\n');
+    assert.ok(lines.length < 180, `Styles file has ${lines.length} lines, must be < 180`);
+    assert.ok(lines.length < 160, `Styles file has ${lines.length} lines, must be < 160`);
+    assert.ok(content.includes('export const sessionModalStyles = css`'));
+    assert.ok(content.includes('.modal-backdrop'));
+    assert.ok(content.includes('.modal-card'));
+    assert.ok(content.includes('.form-group'));
+    assert.ok(content.includes('.error-banner'));
+    assert.ok(content.includes('var(--rf-bg-surface'));
+    assert.ok(content.includes('var(--rf-text-primary'));
+    assert.ok(content.includes('var(--rf-border-width'));
+    assert.ok(content.includes('var(--rf-border-color'));
+    assert.ok(content.includes('var(--rf-shadow'));
+    assert.ok(content.includes('var(--rf-accent-primary'));
+  });
+
+  it('TASK-0270: runefoble-session-modal.ts is strictly < 180 lines and isolates form sub-renderers', () => {
+    const content = readFileSync(MODAL_PATH, 'utf-8');
+    const lines = content.split('\n');
+    assert.ok(lines.length < 200, `Modal file has ${lines.length} lines, must be < 200`);
+    assert.ok(lines.length < 180, `Modal file has ${lines.length} lines, must be < 180`);
+    assert.ok(content.includes("import { sessionModalStyles } from '../styles/session-modal.styles.ts'"));
+    assert.ok(content.includes('static styles = sessionModalStyles'));
+    assert.ok(content.includes('renderHeader'));
+    assert.ok(content.includes('renderTitleField'));
+    assert.ok(content.includes('renderStatusField'));
+    assert.ok(content.includes('renderScheduleField'));
+    assert.ok(content.includes('renderDescriptionField'));
+    assert.ok(content.includes('renderActions'));
   });
 });
