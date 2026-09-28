@@ -1,7 +1,7 @@
 ---
 id: '0250'
 title: Unified Campaign Detail View Orchestration and Tabbed Navigation
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0247
@@ -19,8 +19,8 @@ governing_stories:
 - US-0066
 - US-0067
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/286
 ---
-
 # TASK-0250: Unified Campaign Detail View Orchestration and Tabbed Navigation
 
 ## Status
