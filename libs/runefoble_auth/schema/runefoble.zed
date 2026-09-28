@@ -233,9 +233,13 @@ definition establishment {
     relation campaign: campaign
     relation owner: user
     relation manager: user
+    relation patron: user
 
     // Viewing establishment
-    permission view = owner + manager + settlement->view + campaign->view
+    permission view = owner + manager + patron + settlement->view + campaign->view
+
+    // Participating in minigames / patronizing establishment
+    permission play = owner + manager + patron + settlement->use + campaign->play
 
     // Managing or upgrading establishment
     permission manage = owner + manager + settlement->manage + campaign->run_session

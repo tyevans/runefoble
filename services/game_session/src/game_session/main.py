@@ -20,6 +20,7 @@ from game_session.routers import (
     caravan_contracts_router,
     caravan_trade_router,
     combat_router,
+    minigames_ws_router,
     reactions_router,
     session_router,
     settlements_router,
@@ -52,6 +53,7 @@ app.include_router(autopilot_router)
 app.include_router(campfire_router)
 app.include_router(stronghold_router)
 app.include_router(tavern_router)
+app.include_router(minigames_ws_router)
 app.include_router(west_marches_router)
 app.include_router(caravan_trade_router)
 app.include_router(caravan_contracts_router)
@@ -85,6 +87,9 @@ def get_ui_manifest():
             "runefoble-spectator-overlay",
             "runefoble-campfire-crafting",
             "runefoble-tavern-parlor",
+            "runefoble-minigame-darts",
+            "runefoble-minigame-liars-dice",
+            "runefoble-minigame-roulette",
             "runefoble-caravan-board",
             "runefoble-combat-reaction-prompt",
             "runefoble-ready-action-card",
