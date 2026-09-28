@@ -19,6 +19,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **West Marches Aggregate Discovery and Territory Handlers Modular Decomposition (`TASK-0205`, `ADR-0003`, `ADR-0007`, `ADR-0011`)**:
+  - Decomposed `services/campaign_lore/src/campaign_lore/west_marches_aggregate.py` from 304 lines to 148 lines (< 150 lines limit) by extracting discovery pin mutation logic, territory claim evaluations, and outpost fortification calculations into `services/campaign_lore/src/campaign_lore/west_marches_handlers.py` (125 lines, strictly < 130 lines limit).
+  - Moved `WestMarchesState` to `services/campaign_lore/src/campaign_lore/models.py` (52 lines, < 500 lines limit) and re-exported from `west_marches_aggregate.py` for 100% backward compatibility.
+  - Implemented pure domain helpers `calculate_boons`, `calculate_defensive_buffer`, `evaluate_territory_claim`, `build_discovery_entry`, `apply_discovery`, `build_notice_entry`, `apply_outpost_established`, and `apply_outpost_upgraded` in `west_marches_handlers.py`.
+  - Streamlined `WestMarchesAtlasAggregate` (aliased as `WestMarchesWorldAggregate`) with declarative `@handles` routing delegating state mutations to imported handlers.
+  - Created blackbox test suite `tests/test_blackbox_west_marches.py` verifying file length invariants, territory conflict distance checks, outpost upgrades with active boons, discovery pin publishing, and tavern notices.
+  - Updated Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md`.
 - **Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (`TASK-0203`, `ADR-0004`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed monolithic Web Component `services/character_sheet/ui/src/runefoble-stand-in-guardrails.ts` (311 lines) into modular single-responsibility submodules, reducing `runefoble-stand-in-guardrails.ts` to 106 lines (< 130 lines) and keeping all submodules strictly < 130 lines per Hard Invariant 6:
     - `runefoble-stand-in-guardrails.styles.ts` (111 lines): Dedicated Bauhaus design token styling module encapsulating card layouts, risk toggles, priority list chips, slider controls, and status badges.
