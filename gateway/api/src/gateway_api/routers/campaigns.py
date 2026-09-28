@@ -1,12 +1,10 @@
-"""Campaign, session, board, and role management router for Runefoble Gateway API."""
+"""Campaign, session lifecycle, and role management router for Runefoble Gateway API."""
 
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from gateway_api.auth import get_current_user, get_spicedb_client, require_zanzibar_permission
 from gateway_api.campaign_store import (
-    DEFAULT_BOARD_TOKENS,
-    DEFAULT_SESSION_PARTICIPANTS,
     build_campaign_summary,
     campaign_store,
     format_invite_response,
@@ -14,25 +12,24 @@ from gateway_api.campaign_store import (
     get_campaign_members,
     join_from_invite,
 )
-from gateway_api.dependencies import ws_manager
 from gateway_api.models import (
-    AdvanceTurnRequest,
     AssignRoleRequest,
-    AtmosphereUpdateRequest,
     CampaignMemberResponse,
+    CampaignSessionResponse,
     CampaignSummaryResponse,
     CreateCampaignRequest,
-    DMOverrideRequest,
+    CreateCampaignSessionRequest,
     InviteRequest,
     InviteResponse,
     JoinCampaignRequest,
     JoinCampaignResponse,
-    TokenMoveRequest,
     UpdateCampaignRequest,
 )
+from gateway_api.routers.tabletop import router as tabletop_router
 from runefoble_auth.zitadel import AuthenticatedUser
 
 router = APIRouter(tags=["Campaigns & Sessions"])
+router.include_router(tabletop_router)
 
 
 @router.get("/api/v1/profile")
@@ -146,101 +143,38 @@ async def assign_campaign_role(campaign_id: str, req: AssignRoleRequest) -> dict
 
 
 @router.get(
-    "/api/v1/sessions/{session_id}",
-    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
+    "/api/v1/campaigns/{campaign_id}/sessions",
+    response_model=list[CampaignSessionResponse],
+    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
 )
-async def get_session_proxy(session_id: str) -> dict:
-    """Retrieve game session state, participants, and round index (requires 'view')."""
-    return {
-        "id": session_id,
-        "campaign_id": session_id,
-        "status": "active",
-        "round": 3,
-        "current_turn": "c1",
-        "participants": DEFAULT_SESSION_PARTICIPANTS,
-    }
+async def list_campaign_sessions(campaign_id: str) -> list[CampaignSessionResponse]:
+    """List all sessions belonging to a campaign (requires Zanzibar 'view' permission)."""
+    sessions = campaign_store.get_campaign_sessions(campaign_id)
+    return [s.to_response() for s in sessions]
 
 
 @router.post(
-    "/api/v1/sessions/{session_id}/start",
-    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
+    "/api/v1/campaigns/{campaign_id}/sessions",
+    response_model=CampaignSessionResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_zanzibar_permission("run_session", "campaign", "campaign_id"))],
 )
-async def start_session_proxy(session_id: str) -> dict:
-    await ws_manager.broadcast(
-        {"type": "session_started", "sessionId": session_id, "status": "active"}
+async def create_campaign_session(
+    campaign_id: str,
+    req: CreateCampaignSessionRequest,
+    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+) -> CampaignSessionResponse:
+    """Create a new session or staging lobby for a campaign (requires 'run_session' permission)."""
+    session_rec = campaign_store.create_session(
+        campaign_id=campaign_id,
+        title=req.title,
+        status=req.status,
+        scheduled_at=req.scheduled_at,
+        description=req.description,
     )
-    return {"session_id": session_id, "status": "active"}
-
-
-@router.post(
-    "/api/v1/sessions/{session_id}/turns/advance",
-    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
-)
-async def advance_turn_proxy(session_id: str, req: AdvanceTurnRequest) -> dict:
-    return {
-        "session_id": session_id,
-        "status": "turn_advanced",
-        "active_character_id": req.next_character_id,
-    }
-
-
-@router.post(
-    "/api/v1/sessions/{session_id}/dm-override",
-    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
-)
-async def dm_override_proxy(session_id: str, req: DMOverrideRequest) -> dict:
-    return {
-        "session_id": session_id,
-        "status": "override_executed",
-        "action": req.action,
-        "reason": req.reason,
-    }
-
-
-@router.post(
-    "/api/v1/sessions/{session_id}/atmosphere",
-    dependencies=[Depends(require_zanzibar_permission("run_session", resource_type="campaign"))],
-)
-async def update_atmosphere_proxy(session_id: str, req: AtmosphereUpdateRequest) -> dict:
-    return {
-        "session_id": session_id,
-        "status": "atmosphere_updated",
-        "atmosphere": req.model_dump(),
-    }
-
-
-@router.post(
-    "/api/v1/board/tokens/{token_id}/move",
-    dependencies=[Depends(require_zanzibar_permission("move", "board_token", "token_id"))],
-)
-async def move_token_proxy(token_id: str, req: TokenMoveRequest) -> dict:
-    return {"token_id": token_id, "status": "token_moved", "to_x": req.to_x, "to_y": req.to_y}
-
-
-@router.get(
-    "/api/v1/board/tokens/{token_id}",
-    dependencies=[Depends(require_zanzibar_permission("inspect", "board_token", "token_id"))],
-)
-async def get_token_proxy(token_id: str) -> dict:
-    return {"token_id": token_id, "status": "active", "x": 2, "y": 3}
-
-
-@router.get(
-    "/api/v1/boards/{session_id}",
-    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
-)
-async def get_board_proxy(session_id: str) -> dict:
-    return {"session_id": session_id, "cols": 8, "rows": 8, "tokens": DEFAULT_BOARD_TOKENS}
-
-
-@router.post("/api/v1/watcher/speak-and-act")
-async def speak_and_act(transcript: str, speaker_name: str, session_id: str) -> dict:
-    event = {
-        "type": "speech_action",
-        "speaker": speaker_name,
-        "transcript": transcript,
-        "action_taken": "Valeros stepped forward 2 squares.",
-        "watcher_commentary": "The Watcher observes your advance into the crypt.",
-    }
-    await ws_manager.broadcast(event)
-    return event
+    spicedb = get_spicedb_client()
+    await spicedb.write_relationship("session", session_rec.id, "campaign", "campaign", campaign_id)
+    await spicedb.write_relationship(
+        "game_session", session_rec.id, "campaign", "campaign", campaign_id
+    )
+    return session_rec.to_response()

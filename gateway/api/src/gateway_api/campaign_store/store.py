@@ -7,25 +7,35 @@ from datetime import UTC, datetime
 from typing import Any
 
 from gateway_api.campaign_store.invites import InviteManager
-from gateway_api.campaign_store.models import CampaignRecord, InviteRecord
+from gateway_api.campaign_store.models import CampaignRecord, CampaignSessionRecord, InviteRecord
 from gateway_api.campaign_store.queries import (
     build_campaign_summary,
     get_all_viewable_campaigns,
     get_campaign_members,
     get_user_campaign_role,
 )
+from gateway_api.campaign_store.sessions import SessionManager
 
 
 class CampaignStore:
-    """Thread-safe in-memory store for campaigns and invites."""
+    """Thread-safe in-memory store for campaigns, sessions, and invites."""
 
-    def __init__(self, invite_manager: InviteManager | None = None) -> None:
+    def __init__(
+        self,
+        invite_manager: InviteManager | None = None,
+        session_manager: SessionManager | None = None,
+    ) -> None:
         self._campaigns: dict[str, CampaignRecord] = {}
         self._invite_manager = invite_manager or InviteManager()
+        self._session_manager = session_manager or SessionManager()
 
     @property
     def _invites(self) -> dict[str, InviteRecord]:
         return self._invite_manager._invites
+
+    @property
+    def _campaign_sessions(self) -> dict[str, list[CampaignSessionRecord]]:
+        return self._session_manager._campaign_sessions
 
     def create_campaign(
         self,
@@ -116,8 +126,18 @@ class CampaignStore:
     def use_invite(self, token: str) -> tuple[InviteRecord | None, str | None]:
         return self._invite_manager.use_invite(token)
 
+    def create_session(self, *args: Any, **kwargs: Any) -> CampaignSessionRecord:
+        return self._session_manager.create_session(*args, **kwargs)
+
+    def get_campaign_sessions(self, campaign_id: str) -> list[CampaignSessionRecord]:
+        return self._session_manager.get_campaign_sessions(campaign_id)
+
+    def get_session(self, session_id: str) -> CampaignSessionRecord | None:
+        return self._session_manager.get_session(session_id)
+
     def reset(self) -> None:
         self._campaigns.clear()
+        self._session_manager.reset()
         self._invite_manager.reset()
 
 
