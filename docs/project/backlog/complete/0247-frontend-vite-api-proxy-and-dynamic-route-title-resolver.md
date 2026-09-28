@@ -1,7 +1,7 @@
 ---
 id: '0247'
 title: Frontend Vite API Proxy and Dynamic Route Title Resolver
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0206
@@ -15,6 +15,7 @@ governing_stories:
 - US-0066
 - US-0068
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/281
 ---
 # TASK-0247: Frontend Vite API Proxy and Dynamic Route Title Resolver
 

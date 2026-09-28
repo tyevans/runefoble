@@ -34,6 +34,8 @@
     "./campaigns/creator": "./src/campaigns/runefoble-campaign-creator.ts",
     "./campaigns/members": "./src/campaigns/runefoble-campaign-members.ts",
     "./campaigns/members.styles": "./src/campaigns/runefoble-campaign-members.styles.ts",
+    "./campaigns/header": "./src/campaigns/runefoble-campaign-header.ts",
+    "./campaigns/header.styles": "./src/campaigns/runefoble-campaign-header.styles.ts",
     "./campaigns/styles": "./src/campaigns/styles/index.ts",
     "./lobby": "./src/lobby/index.ts",
     "./lobby/session-lobby": "./src/lobby/runefoble-session-lobby.ts",

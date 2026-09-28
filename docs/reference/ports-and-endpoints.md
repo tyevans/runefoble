@@ -281,5 +281,6 @@
 | Loki | `loki` | `3100` | Log aggregation |
 | Grafana | `grafana` | `3001` | Metrics and observability dashboards |
 | Storybook (Dev) | Local | `6006` | Component development studio |
+| Vite Dev Server | Local | `5173` | Frontend application dev server with reverse proxy for `/api/v1` and `/ws` to `gateway-api:8000` |
 
 

@@ -6,11 +6,8 @@ import './components/runefoble-header.ts'; import './components/runefoble-settin
 import './components/runefoble-auth-modal.ts'; import './components/runefoble-session-list.ts';
 import './components/plugins/runefoble-plugin-slot.ts';
 
-import '@runefoble/board-state-ui'; import '@runefoble/character-sheet-ui'; import '@runefoble/game-session-ui';
-import '@runefoble/the-watcher-ui'; import '@runefoble/voice-agent-ui';
-
-import type { BoardToken } from '@runefoble/board-state-ui';
-import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
+import '@runefoble/board-state-ui'; import '@runefoble/character-sheet-ui'; import '@runefoble/game-session-ui'; import '@runefoble/the-watcher-ui'; import '@runefoble/voice-agent-ui';
+import type { BoardToken } from '@runefoble/board-state-ui'; import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignItem, CampaignMember, CreateCampaignPayload, LobbyParticipant, LobbyCharacterOption } from '@runefoble/game-session-ui';
 import type { CharacterItem, RosterCampaignOption } from '@runefoble/character-sheet-ui';
 import type { CampaignSessionItem } from './components/runefoble-session-list.ts';
@@ -42,12 +39,9 @@ export class RunefobleApp extends LitElement {
   @state() private isAuthModalOpen = false;
   @state() private authInitialTab: 'login' | 'register' = 'login';
   @state() private currentUserId = 'user-valeros'; @state() private userRole = 'Player'; @state() private isDM = false;
-  @state() private campaigns: CampaignItem[] = [];
-  @state() private campaignMembers: CampaignMember[] = [];
-  @state() private campaignSessions: CampaignSessionItem[] = [];
-  @state() private characters: CharacterItem[] = [];
-  @state() private rosterCampaigns: RosterCampaignOption[] = [];
-  @state() private lobbyParticipants: LobbyParticipant[] = [];
+  @state() private campaigns: CampaignItem[] = []; @state() private campaignMembers: CampaignMember[] = [];
+  @state() private campaignSessions: CampaignSessionItem[] = []; @state() private characters: CharacterItem[] = [];
+  @state() private rosterCampaigns: RosterCampaignOption[] = []; @state() private lobbyParticipants: LobbyParticipant[] = [];
   @state() private lobbyAvailableCharacters: LobbyCharacterOption[] = [];
 
   private socket: WebSocket | null = null; private activeSocketSessionId: string | null = null;
@@ -102,6 +96,11 @@ export class RunefobleApp extends LitElement {
       if (type === 'campaign' && id === '4') return 'Tomb of the Star-Eater';
       if (type === 'campaign' && id === '5') return 'Whispering Depths';
       return (type === 'session' && (id === '14' || id === 'session-tomb-14')) ? 'Session #14' : type === 'lobby' ? `Lobby ${id}` : undefined;
+    });
+    router.setAsyncTitleResolver(async (type, id) => {
+      if (type === 'campaign') return (await appDataService.fetchCampaign(id))?.title;
+      if (type === 'session' || type === 'lobby') return (await appDataService.fetchSession(id))?.title;
+      return undefined;
     });
     this.unlistenTeardown = router.registerTeardown(() => {
       const p = router.getCurrentRoute()?.pattern || '';

@@ -120,18 +120,53 @@ Alternatively, enable `autoRouter` to have the breadcrumbs component automatical
 
 ## 6. Resolving Custom Entity Titles in Breadcrumbs
 
-Provide custom title resolvers to replace numeric IDs with narrative campaign or session names:
+Provide custom title resolvers to replace numeric IDs with narrative campaign or session names. The router supports both synchronous fallback resolvers and asynchronous resolvers with built-in title caching.
+
+### Synchronous Resolvers (`setTitleResolver`)
 
 ```typescript
 import { router } from './router/index.ts';
 
 router.setTitleResolver((type, id) => {
-  if (type === 'campaign' && id === '4') {
-    return 'Tomb of the Star-Eater';
+  if (type === 'campaign' && id === '4') return 'Tomb of the Star-Eater';
+  if (type === 'campaign' && id === '5') return 'Whispering Depths';
+  if (type === 'session' && id === '14') return 'Session #14 (Crypt Entrance)';
+  return undefined;
+});
+```
+
+### Asynchronous Dynamic Resolvers with Caching (`setAsyncTitleResolver`)
+
+For dynamically created campaigns and sessions loaded from the backend API, register an asynchronous resolver via `router.setAsyncTitleResolver()`. Resolved titles are automatically cached in `router` so subsequent navigation or breadcrumb renders do not trigger redundant network requests or flash raw identifiers:
+
+```typescript
+import { router } from './router/index.ts';
+import { appDataService } from './services/app-data-service.ts';
+
+router.setAsyncTitleResolver(async (type, id) => {
+  if (type === 'campaign') {
+    const campaign = await appDataService.fetchCampaign(id);
+    return campaign?.title;
   }
-  if (type === 'session' && id === '14') {
-    return 'Session #14 (Crypt Entrance)';
+  if (type === 'session' || type === 'lobby') {
+    const session = await appDataService.fetchSession(id);
+    return session?.title;
   }
   return undefined;
 });
+```
+
+When navigating to deep routes (e.g., `#/campaigns/camp-1790564858218`), `router.navigate()` awaits title resolution before emitting `route-changed` and updating breadcrumb labels.
+
+## 7. Vite Development API & WebSocket Proxying
+
+In local development (`http://localhost:5173`), Vite proxies REST API and WebSocket connections to the Gateway API server (`http://localhost:8000`) in `frontend/vite.config.ts`:
+
+- `/api/v1` &rarr; `http://localhost:8000` (with `changeOrigin: true`)
+- `/ws` &rarr; `ws://localhost:8000` (with `ws: true`)
+
+The proxy target defaults to `http://localhost:8000` and can be overridden via the `GATEWAY_API_URL` environment variable:
+
+```bash
+GATEWAY_API_URL=http://localhost:8000 pnpm dev
 ```
