@@ -24,6 +24,11 @@ runefoble/
 │   │       ├── runefoble-board-tokens.styles.ts
 │   │       ├── runefoble-board.stories.ts
 │   │       ├── runefoble-board.stories.fixtures.ts
+│   │       ├── board-templates.ts
+│   │       ├── templates/
+│   │       │   ├── kinematics.template.ts
+│   │       │   ├── cell.template.ts
+│   │       │   └── overlays.template.ts
 │   │       ├── runefoble-map-uploader.ts
 │   │       ├── runefoble-map-uploader.styles.ts
 │   │       ├── runefoble-map-uploader.stories.ts
