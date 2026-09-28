@@ -55,6 +55,14 @@ Response payload:
 }
 ```
 
+### 1.3 Modular Radial Architecture (ADR-0004, ADR-0012, ADR-0013)
+
+Under ADR-0004, ADR-0012, and ADR-0013, the radial action menu is decomposed into decoupled submodules under `services/board_state/ui/src/radial/`:
+- `radial_menu.styles.ts`: Bauhaus Lit CSS styles for circular radial container, bloom animations, action wedge transitions, and action badges (< 90 lines).
+- `radial_glyphs.ts`: Pure Bauhaus SVG glyph rendering functions for tactical combat actions (< 100 lines).
+- `radial_wedge.ts`: Polar coordinate mathematics (`polarToCartesian`, `describeArc`), circular wedge positioning calculations, and Lit HTML wedge template (< 90 lines).
+- `radial_menu.ts`: Component controller `<runefoble-radial-menu>` coordinating action selection and lifecycle events (< 100 lines).
+
 ---
 
 ## 2. Positioning and Rotating AoE Spell Templates
