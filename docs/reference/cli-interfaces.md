@@ -7,6 +7,7 @@
 | `make help` | Displays all available developer commands |
 | `make setup` | Installs Python UV workspace dependencies and frontend packages |
 | `make health-check` | Audits codebase line counts (<500 lines) and backlog ready buffer |
+| `make clean-worktrees` | Cleans up merged and stale git worktrees safely (`ARGS="--dry-run"`) |
 | `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`) |
 | `make visualize-project` | Launches dynamic docs/project content visualizer web application on port 8787 |
 | `make visualize-project-build` | Builds standalone HTML bundle (`dist/project-visualizer.html`) |
@@ -33,6 +34,7 @@
 | Script | Purpose |
 |---|---|
 | `./scripts/health_check.py` | Standalone Python health inspection auditing line count invariants and buffer drift |
+| `./scripts/cleanup-worktrees.sh` | Audits and removes merged git worktrees, cleans up branches, and prunes records |
 | `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |
 | `./scripts/run-backlog-engine.sh` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching |
 | `./scripts/visualize-project.sh` | Starts dynamic project content visualizer web application on port 8787 |

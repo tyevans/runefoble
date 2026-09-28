@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -13,6 +13,9 @@ help: ## Show this help message
 
 health-check: ## Inspect codebase file length invariants and backlog ready buffer
 	@python3 scripts/health_check.py
+
+clean-worktrees: ## Clean up merged and stale git worktrees safely
+	@./scripts/cleanup-worktrees.sh $(ARGS)
 
 prd-audit: ## Audit PRDs, buffer health, and granularity
 	@python3 -m tools.prd_pipeline.cli audit
