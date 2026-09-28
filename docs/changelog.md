@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition (`TASK-0193`, `ADR-0003`, `ADR-0007`, `ADR-0008`, `ADR-0010`)**:
+  - Decomposed monolithic test suite `tests/test_blackbox_uvtt_import.py` (336 lines) into modular domain-focused test suites under `tests/test_blackbox_uvtt_import/`, keeping all test modules strictly < 140 lines and conftest < 70 lines per Hard Invariant 6 and Hard Invariant 7:
+    - `conftest.py` (68 lines): Shared fixtures for `board_client`, `gateway_client`, `clean_environment` state reset, and `build_sample_dd2vtt_dict` canonical helper.
+    - `test_uvtt_map_import.py` (108 lines): Multipart .dd2vtt file upload, JSON payload parsing, wall segment coordinates, interactive door portals, ambient point lights, obstacle tokens, and Silo S3 background texture storage.
+    - `test_dynamic_mcp_registry.py` (138 lines): FastMCP dynamic tool registration, hot discovery without gateway restart, administrative execution frontdoors, AST sandbox security rejections, and dynamic tool lifecycle updates/deregistrations.
+    - `__init__.py` (1 line): Modular test package initializer.
+  - Maintained `tests/test_blackbox_uvtt_import.py` (37 lines) as a backward-compatible test shim re-exporting fixtures and tests.
 - **Campaign Atlas Blackbox Test Suite Modular Decomposition (`TASK-0187`, `ADR-0001`, `ADR-0003`, `ADR-0007`)**:
   - Decomposed monolithic test suite `tests/test_blackbox_campaign_atlas.py` (346 lines) into modular domain-focused test suites under `tests/test_blackbox_campaign_atlas/`, keeping all test modules strictly < 110 lines per Hard Invariant 6:
     - `conftest.py` (32 lines): Shared fixtures for FastAPI `TestClient`, `MockSpiceDBClient`, campaign context, and geometry polygons.

@@ -6,3 +6,4 @@ pytest_plugins = [
     "tests.helpers.spicedb",
     "tests.helpers.zitadel_auth",
 ]
+collect_ignore = ["test_blackbox_uvtt_import.py"]
