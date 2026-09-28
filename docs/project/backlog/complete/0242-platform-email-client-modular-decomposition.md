@@ -1,7 +1,7 @@
 ---
 id: '0242'
 title: Platform Email Client Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0000
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/271
 ---
-
 # TASK-0242: Platform Email Client Modular Decomposition
 
 ## Status
