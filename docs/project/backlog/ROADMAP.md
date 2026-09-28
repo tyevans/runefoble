@@ -250,3 +250,7 @@
 - [ ] Settlement Workers Router Modular Decomposition (TASK-0280)
 - [ ] Merchant Haggling Blackbox Test Suite Modular Decomposition (TASK-0281)
 - [ ] Settlement Haven Router Modular Decomposition (TASK-0282)
+- [ ] Lobby and VTT Character Sync Blackbox Test Suite Modular Decomposition (TASK-0283)
+- [ ] Session Modal Blackbox Test Suite Modular Decomposition (TASK-0284)
+- [ ] Merchant Haggler Styles Modular Decomposition (TASK-0285)
+- [ ] Character Management and VTT Sync Blackbox Test Suite Modular Decomposition (TASK-0286)
