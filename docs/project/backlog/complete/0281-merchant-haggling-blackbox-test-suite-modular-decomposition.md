@@ -1,7 +1,7 @@
 ---
-id: '0281'
+id: 0281
 title: Merchant Haggling Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0262
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0075
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/332
 ---
-
 # TASK-0281: Merchant Haggling Blackbox Test Suite Modular Decomposition
 
 ## Status
