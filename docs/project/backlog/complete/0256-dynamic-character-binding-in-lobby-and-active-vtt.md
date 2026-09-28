@@ -1,7 +1,7 @@
 ---
 id: '0256'
 title: Dynamic Character Binding in Pre-Game Lobby and Active VTT
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0212
@@ -19,8 +19,8 @@ governing_stories:
 - US-0065
 - US-0069
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/290
 ---
-
 # TASK-0256: Dynamic Character Binding in Pre-Game Lobby and Active VTT
 
 ## Status
