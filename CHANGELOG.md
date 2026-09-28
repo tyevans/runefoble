@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
+- **Campaign Atlas Layers and Pins Subviews Modular Decomposition (`TASK-0196`, `ADR-0004`, `ADR-0007`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` (previously 331 lines) into modular subviews under `services/campaign_lore/ui/src/atlas/`, reducing `runefoble-campaign-atlas.ts` to 110 lines and keeping every sub-module strictly < 120 lines per Hard Invariant 6:
+    - `types.ts` (34 lines): Clean interfaces for `AtlasPin`, `AtlasTerritory`, and `CodexEntry`.
+    - `territory-renderer.template.ts` (59 lines): SVG polygon generation for geopolitical borders, contested territory cross-hatching, and faction color fills.
+    - `pins-layer.template.ts` (62 lines): Milestone pins, era timeline filtering, coordinate calculation math, and pin placement click handlers.
+    - `codex-sidebar.template.ts` (85 lines): Slide-out living party codex notes, illuminated typography, and linked entity chips.
+    - `index.ts` (4 lines): Modular export aggregator facade.
+  - Added unit and integration test suite `frontend/test/campaign-atlas-templates.test.ts` verifying territory filtering, pin coordinate math, living codex sidebar, and strict file length invariants.
+  - Updated Diataxis guide `docs/how-to/interact-with-campaign-atlas-and-codex.md`.
 - **Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition (`TASK-0193`, `ADR-0003`, `ADR-0007`, `ADR-0008`, `ADR-0010`)**:
   - Decomposed monolithic test suite `tests/test_blackbox_uvtt_import.py` (336 lines) into modular domain-focused test suites under `tests/test_blackbox_uvtt_import/`, keeping all test modules strictly < 140 lines and conftest < 70 lines per Hard Invariant 6 and Hard Invariant 7:
     - `conftest.py` (68 lines): Shared fixtures for `board_client`, `gateway_client`, `clean_environment` state reset, and `build_sample_dd2vtt_dict` canonical helper.

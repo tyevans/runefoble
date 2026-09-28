@@ -14,7 +14,8 @@
     "./runefoble-relic-inspector": "./src/runefoble-relic-inspector.ts",
     "./runefoble-west-marches-atlas": "./src/runefoble-west-marches-atlas.ts",
     "./runefoble-west-marches-atlas.styles": "./src/runefoble-west-marches-atlas.styles.ts",
-    "./west-marches": "./src/west_marches/index.ts"
+    "./west-marches": "./src/west_marches/index.ts",
+    "./atlas": "./src/atlas/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

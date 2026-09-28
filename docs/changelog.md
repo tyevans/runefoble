@@ -8,17 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Changed
-- **Faction Radar SVG and Drawer Subviews Modular Decomposition (`TASK-0195`, `ADR-0004`, `ADR-0007`, `ADR-0012`, `ADR-0013`)**:
-  - Decomposed monolithic Lit Web Component `services/the_watcher/ui/src/runefoble-faction-radar.ts` (331 lines) into modular subviews under `services/the_watcher/ui/src/faction_radar/`, keeping the controller and all sub-modules strictly < 120 lines per Hard Invariant 6:
-    - `runefoble-faction-radar.ts` (108 lines): Core Lit component controller reduced to state management, drawer toggling, world tick event dispatching, and template composition.
-    - `radar-svg.template.ts` (90 lines): Polar coordinate math, polygon projection, concentric grid rings, radial axes, and clickable faction vertex nodes (`renderRadarChart`).
-    - `bulletin-drawer.template.ts` (83 lines): SpiceDB Zanzibar-redacted DM intelligence briefing drawer, geopolitical shifts with ripple effects, and public tavern rumors feed (`renderDmDrawer`, `renderRumors`).
-    - `faction-details.template.ts` (59 lines): Faction roster cards, disposition badges, influence/resources progress bars, agenda status, and rival faction tags (`renderFactionCards`).
-    - `types.ts` (42 lines): Faction and world tick TypeScript data interfaces (`FactionData`, `WorldTickData`, `FactionShift`, `GeopoliticalShift`).
-    - `index.ts` (4 lines): Barrel export for subview templates and types.
-  - Updated `@runefoble/the-watcher-ui` package exports in `package.json` and `src/index.ts`.
-  - Added modular decomposition and strict line budget verification tests in `tests/test_blackbox_faction_radar_ui.py`.
-  - Updated `docs/reference/microfrontend-architecture.md` and `docs/how-to/simulate-npc-faction-agendas-and-world-ticks.md`.
+- **Campaign Atlas Layers and Pins Subviews Modular Decomposition (`TASK-0196`, `ADR-0004`, `ADR-0007`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` (previously 331 lines) into modular subviews under `services/campaign_lore/ui/src/atlas/`, reducing `runefoble-campaign-atlas.ts` to 110 lines and keeping every sub-module strictly < 120 lines per Hard Invariant 6:
+    - `types.ts` (34 lines): Clean interfaces for `AtlasPin`, `AtlasTerritory`, and `CodexEntry`.
+    - `territory-renderer.template.ts` (59 lines): SVG polygon generation for geopolitical borders, contested territory cross-hatching, and faction color fills.
+    - `pins-layer.template.ts` (62 lines): Milestone pins, era timeline filtering, coordinate calculation math, and pin placement click handlers.
+    - `codex-sidebar.template.ts` (85 lines): Slide-out living party codex notes, illuminated typography, and linked entity chips.
+    - `index.ts` (4 lines): Modular export aggregator facade.
+  - Added unit and integration test suite `frontend/test/campaign-atlas-templates.test.ts` verifying territory filtering, pin coordinate math, living codex sidebar, and strict file length invariants.
+  - Updated Diataxis guide `docs/how-to/interact-with-campaign-atlas-and-codex.md`.
 - **Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition (`TASK-0193`, `ADR-0003`, `ADR-0007`, `ADR-0008`, `ADR-0010`)**:
   - Decomposed monolithic test suite `tests/test_blackbox_uvtt_import.py` (336 lines) into modular domain-focused test suites under `tests/test_blackbox_uvtt_import/`, keeping all test modules strictly < 140 lines and conftest < 70 lines per Hard Invariant 6 and Hard Invariant 7:
     - `conftest.py` (68 lines): Shared fixtures for `board_client`, `gateway_client`, `clean_environment` state reset, and `build_sample_dd2vtt_dict` canonical helper.

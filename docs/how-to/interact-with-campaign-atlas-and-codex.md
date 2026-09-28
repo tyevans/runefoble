@@ -131,3 +131,10 @@ Embed the interactive atlas and codex directly in frontend applications:
 - `pin-selected`: Triggered when a pin marker is clicked (`detail.pin`).
 - `pin-create-requested`: Triggered when an empty canvas location is clicked (`detail.coordinates`, `detail.layer`).
 - `layer-change`: Triggered when the layer zoom mode is toggled (`detail.layer`).
+
+### Modular Subview Architecture
+Per ADR-0004 and Hard Invariant 6, `<runefoble-campaign-atlas>` decomposes its presentation sub-components into modular Lit template functions located under `services/campaign_lore/ui/src/atlas/`:
+- **Territory Renderer (`territory-renderer.template.ts`)**: SVG polygon generation for geopolitical borders, contested territory cross-hatching, and faction banner color fills.
+- **Pins Layer (`pins-layer.template.ts`)**: Milestone pins, chronological era timeline filtering, and canvas click coordinate mapping.
+- **Codex Sidebar (`codex-sidebar.template.ts`)**: Slide-out living party codex notes, illuminated typography, and linked entity chips.
+
