@@ -3,6 +3,7 @@
 from runefoble_events.character import (
     AbsencePenaltyApplied,
     AbsencePenaltyCleared,
+    CharacterAssignedToCampaign,
     CharacterConditionApplied,
     CharacterCreated,
     CharacterDamaged,
@@ -46,6 +47,7 @@ __all__ = [
     "AbsencePenaltyApplied",
     "AbsencePenaltyCleared",
     "CampfireRestCompleted",
+    "CharacterAssignedToCampaign",
     "CharacterConditionApplied",
     "CharacterCreated",
     "CharacterDamaged",

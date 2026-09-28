@@ -11,6 +11,7 @@ from character_sheet.schemas import (
     AddInventoryItemRequest,
     AddWardrobeVariantRequest,
     ApplyConditionRequest,
+    AssignCampaignRequest,
     CastSpellRequest,
     CreateCharacterRequest,
     EquipItemRequest,
@@ -83,6 +84,20 @@ class CharacterState(BaseModel):
     active_variant_id: str | None = None
     wardrobe_variants: dict[str, WardrobeVariant] = Field(default_factory=dict)
     condition_badges: list[str] = Field(default_factory=list)
+    campaign_id: str | None = None
+    subclass: str | None = None
+    armor_class: int = 10
+    speed_ft: int = 30
+    ability_scores: dict[str, int] = Field(
+        default_factory=lambda: {
+            "str": 10,
+            "dex": 10,
+            "con": 10,
+            "int": 10,
+            "wis": 10,
+            "cha": 10,
+        }
+    )
 
     @classmethod
     def initial(
@@ -94,10 +109,27 @@ class CharacterState(BaseModel):
         current_hp: int,
         player_id: str | None = None,
         personality_traits: list[str] | None = None,
+        campaign_id: str | None = None,
+        subclass: str | None = None,
+        armor_class: int = 10,
+        speed_ft: int = 30,
+        ability_scores: dict[str, int] | None = None,
     ) -> CharacterState:
         badges = compute_condition_badges(current_hp, max_hp, {})
         active_url = resolve_active_portrait_url(
             "/assets/portraits/default.svg", current_hp, max_hp, {}
+        )
+        scores = (
+            ability_scores
+            if ability_scores is not None
+            else {
+                "str": 10,
+                "dex": 10,
+                "con": 10,
+                "int": 10,
+                "wis": 10,
+                "cha": 10,
+            }
         )
         return cls(
             character_id=character_id,
@@ -107,11 +139,38 @@ class CharacterState(BaseModel):
             current_hp=current_hp,
             player_id=player_id,
             personality_traits=personality_traits or [],
+            campaign_id=campaign_id,
+            subclass=subclass,
+            armor_class=armor_class,
+            speed_ft=speed_ft,
+            ability_scores=scores,
             spell_slots=dict(SPELL_SLOTS_TABLE.get(1, {1: 2})),
             base_portrait_url="/assets/portraits/default.svg",
             active_portrait_url=active_url,
             condition_badges=badges,
         )
+
+    def with_campaign(self, campaign_id: str | None) -> CharacterState:
+        return self.model_copy(update={"campaign_id": campaign_id})
+
+    def with_core_attributes(
+        self,
+        *,
+        subclass: str | None = None,
+        armor_class: int | None = None,
+        speed_ft: int | None = None,
+        ability_scores: dict[str, int] | None = None,
+    ) -> CharacterState:
+        updates: dict[str, Any] = {}
+        if subclass is not None:
+            updates["subclass"] = subclass
+        if armor_class is not None:
+            updates["armor_class"] = armor_class
+        if speed_ft is not None:
+            updates["speed_ft"] = speed_ft
+        if ability_scores is not None:
+            updates["ability_scores"] = ability_scores
+        return self.model_copy(update=updates)
 
     def with_health(self, current_hp: int) -> CharacterState:
         badges = compute_condition_badges(current_hp, self.max_hp, self.conditions)
@@ -292,6 +351,7 @@ __all__ = [
     "AddInventoryItemRequest",
     "AddWardrobeVariantRequest",
     "ApplyConditionRequest",
+    "AssignCampaignRequest",
     "CastSpellRequest",
     "CharacterSheetState",
     "CharacterState",

@@ -41,6 +41,7 @@ def test_character_sheet_openapi_routes_completeness(char_client):
         "/api/v1/characters/{character_id}/conditions",
         "/api/v1/characters/{character_id}/conditions/{condition}",
         "/api/v1/characters/{character_id}/guardrails",
+        "/api/v1/characters/{character_id}/campaign",
     ]
 
     for route in expected_routes:

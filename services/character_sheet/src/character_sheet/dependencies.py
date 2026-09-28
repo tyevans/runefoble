@@ -14,6 +14,7 @@ from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequ
 from fastapi import Depends, Header, HTTPException
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.events import (
+    CharacterAssignedToCampaign,
     CharacterDamaged,
     StandInPolicyUpdated,
     StandInStabilized,
@@ -104,7 +105,18 @@ async def create_new_character(
     repo: AggregateRepository[CharacterAggregate], req: CreateCharacterRequest
 ) -> CharacterState:
     char = CharacterAggregate(uuid4())
-    char.create(req.name, req.character_class, req.max_hp, req.player_id, req.personality_traits)
+    char.create(
+        name=req.name,
+        character_class=req.character_class,
+        max_hp=req.max_hp,
+        player_id=req.player_id,
+        personality_traits=req.personality_traits,
+        campaign_id=req.campaign_id,
+        subclass=req.subclass,
+        armor_class=req.armor_class,
+        speed_ft=req.speed_ft,
+        ability_scores=req.ability_scores,
+    )
     await repo.save(char)
     return char.state
 
@@ -187,3 +199,36 @@ async def update_character_guardrails(
         )
     )
     return char.state
+
+
+async def assign_character_campaign(
+    repo: AggregateRepository[CharacterAggregate],
+    spicedb: SpiceDBClient,
+    character_id: UUID,
+    campaign_id: str | None,
+    assigned_by: str,
+) -> CharacterState:
+    state = await execute_character_mutation(
+        repo, character_id, lambda c: c.assign_campaign(campaign_id, assigned_by)
+    )
+    with contextlib.suppress(Exception):
+        rels = await spicedb.read_relationships(
+            resource_type="character", resource_id=str(character_id), relation="campaign"
+        )
+        for r in rels:
+            await spicedb.delete_relationship(
+                "character", str(character_id), "campaign", r.subject_type, r.subject_id
+            )
+        if campaign_id:
+            await spicedb.write_relationship(
+                "character", str(character_id), "campaign", "campaign", campaign_id
+            )
+    await publish_character_event(
+        CharacterAssignedToCampaign(
+            aggregate_id=character_id,
+            character_id=str(character_id),
+            campaign_id=campaign_id,
+            assigned_by=assigned_by,
+        )
+    )
+    return state

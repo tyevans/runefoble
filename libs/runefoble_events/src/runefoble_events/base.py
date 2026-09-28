@@ -13,11 +13,25 @@ def register_event(
     *,
     event_type: str | None = None,
     registry: Any = None,
+    schema_version: int | None = None,
+    **kwargs: Any,
 ) -> Any:
     """Register event decorator supporting both class and positional event_type string."""
     if isinstance(event_class, str):
-        return _orig_register_event(event_type=event_class, registry=registry)
-    return _orig_register_event(event_class=event_class, event_type=event_type, registry=registry)
+        inner = _orig_register_event(event_type=event_class, registry=registry)
+        if schema_version is not None:
+
+            def wrapped(cls: Any) -> Any:
+                res = inner(cls)
+                res.schema_version = schema_version
+                return res
+
+            return wrapped
+        return inner
+    res = _orig_register_event(event_class=event_class, event_type=event_type, registry=registry)
+    if schema_version is not None:
+        res.schema_version = schema_version
+    return res
 
 
 class BaseRunefobleEvent(DomainEvent):
