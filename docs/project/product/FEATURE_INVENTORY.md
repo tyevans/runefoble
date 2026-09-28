@@ -86,6 +86,8 @@ This catalog inventories all speculative and visionary capabilities for Runefobl
 | `FEAT-UI-09` | **Character Roster & Campaign Party Assignment** | Personal character library, creation builder modal, and assigning characters to campaign parties. | **P0 (MVP)** | `frontend`, `character_sheet` |
 | `FEAT-UI-10` | **Game Session Pre-Game Lobby & Launchpad** | Staging room with player presence, character lock-in, readiness toggling, and DM one-click session launch. | **P0 (MVP)** | `frontend`, `game_session` |
 | `FEAT-UI-11` | **Client-Side SPA Routing & Navigation Chrome** | Lightweight deep-linkable router (`#/campaigns`, `#/campaigns/:id/sessions/:id`), breadcrumbs, and route-aware WebSocket lifecycles. | **P0 (MVP)** | `frontend` |
+| `FEAT-UI-12` | **Campaign Detail Command Hub & Session Scheduler** | Full campaign overview with hero banner, setting, description, ruleset system, GM metadata editing modal, session scheduling modal, and tabbed sub-navigation linking to party roster, codex, and chronicle. | **P0 (MVP)** | `frontend`, `game_session`, `gateway_api` |
+| `FEAT-UI-13` | **Application Shell View Audit & Dev Proxy** | Deep route wiring (`#/campaigns/:id/characters`, `#/profile`), Vite dev server proxying for `/api/v1` and WebSockets, and dynamic API-backed route title resolution. | **P0 (MVP)** | `frontend`, `gateway_api` |
 
 
 ---
