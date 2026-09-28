@@ -70,6 +70,9 @@ def test_typescript_element_source_and_custom_elements() -> None:
     assert pkg_json["name"] == "@runefoble/character-sheet-ui"
     assert "./runefoble-character-sheet" in pkg_json["exports"]
     assert "./runefoble-character-sheet.styles" in pkg_json["exports"]
+    assert "./runefoble-stand-in-guardrails" in pkg_json["exports"]
+    assert "./runefoble-stand-in-guardrails.styles" in pkg_json["exports"]
+    assert "./runefoble-stand-in-guardrails.templates" in pkg_json["exports"]
 
     assert (ui_dir / "tsconfig.json").is_file()
     assert (ui_dir / "src/index.ts").is_file()
@@ -294,6 +297,9 @@ def test_file_length_invariants() -> None:
         REPO_ROOT / "services/character_sheet/ui/src/templates/conditions.template.ts",
         REPO_ROOT / "services/character_sheet/ui/src/templates/spells.template.ts",
         REPO_ROOT / "services/character_sheet/ui/src/templates/index.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/runefoble-stand-in-guardrails.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/runefoble-stand-in-guardrails.styles.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/runefoble-stand-in-guardrails.templates.ts",
         REPO_ROOT / "tests/test_blackbox_character_sheet_ui.py",
     ]
 

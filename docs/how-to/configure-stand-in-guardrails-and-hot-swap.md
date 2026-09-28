@@ -125,6 +125,12 @@ The `<runefoble-stand-in-guardrails>` custom element is vendored in `services/ch
 - `@guardrails-updated`: Dispatched when the player saves modified guardrail sliders and checkboxes.
 - `@request-hot-swap`: Dispatched when clicking the "Take Control" button to initiate mid-session hot-swap.
 
+### Modular UI Architecture (TASK-0203)
+Per ADR-0004, ADR-0012, and ADR-0013, the guardrails microfrontend is decomposed into single-responsibility submodules strictly < 130 lines:
+- **`runefoble-stand-in-guardrails.styles.ts`**: Encapsulates Bauhaus design tokens, card layouts, risk toggles, priority list chips, and status badges.
+- **`runefoble-stand-in-guardrails.templates.ts`**: Standalone Lit HTML render helpers (`renderHeader`, `renderSpellSlotPreservation`, `renderAllyProtectionTags`, `renderSliderControls`, `renderPostureSelector`, `renderCustomPriorityChips`, `renderActionsBar`).
+- **`runefoble-stand-in-guardrails.ts`**: Component controller orchestrating reactive property state, event bubbling, and custom element registration.
+
 ---
 
 ## 5. Modular Stand-In Test Organization & Architecture
@@ -134,7 +140,8 @@ The AI stand-in and absentee recap test infrastructure is partitioned into modul
 - `tests/test_blackbox_stand_in_service.py` (TASK-0070): Blackbox integration tests verifying The Watcher stand-in action endpoint (`POST /api/v1/watcher/stand-in/act`), Redis Streams event publication (`StandInActionDecided`, `AbsencePenaltyApplied`), Game Session automated turn progression (`POST /api/v1/sessions/{id}/turns/auto-pilot`), and absentee chronicle recap generation (`POST /api/v1/watcher/stand-in/recap`).
 - `tests/test_blackbox_stand_in_policies.py` (TASK-0096): Verifies tactical guardrail configuration via `PUT/GET /api/v1/characters/{id}/guardrails`, SpiceDB Zanzibar permission checks, `StandInPolicyUpdated` and `StandInStabilized` CloudEvent publications, The Watcher stand-in tactical decision graph evaluation under 'drunk' and 'foolishness' penalties, and zero-HP permadeath stabilization invariants.
 - `tests/test_blackbox_stand_in_takeover.py` (TASK-0096): Verifies mid-session hot-swap handoffs via `POST /api/v1/sessions/{id}/hot-swap`, active combat round and initiative continuity, SpiceDB Zanzibar object authorization, and `CharacterControlTransferred` CloudEvent emissions.
-- `tests/test_blackbox_stand_in_guardrails.py` (TASK-0112): Blackbox TDD test suite validating the modular decomposition of `StandInAIEngine` across `stand_in_guardrails.py`, `stand_in_persona.py`, and `stand_in_recap.py`, ensuring 100% backward compatibility and file length invariants (< 150 lines).
+- `tests/test_blackbox_stand_in_guardrails.py` (TASK-0112, TASK-0203): Blackbox TDD test suite validating the modular decomposition of `StandInAIEngine` across backend modules and verifying UI component line length invariants (< 130 lines) and style/template imports.
+- `frontend/test/stand-in-guardrails-decomposition.test.ts` (TASK-0203): Frontend integration tests verifying Lit template renderers, Bauhaus style token isolation, and file length constraints.
 
 ---
 
