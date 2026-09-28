@@ -102,7 +102,7 @@
 - [x] DM Hidden Layers & Multi-Map Switcher Microfrontend (`FEAT-BRD-07`, US-0018, PRD-0007, TASK-0159)
 - [x] DM Vocal Modulator Controls & Preset Selector Microfrontend (`FEAT-VOX-07`, US-0020, PRD-0004, TASK-0160)
 
-## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Active / Immediate Priority)
+## Milestone 10: Complete Frontend Application Experience, User Identity & Campaign Orchestration (Complete)
 ### Core Identity, Gateway & Shell Routing Enablers
 - [x] Frontend SPA Client Router and Navigation Chrome (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0206)
 - [x] Zitadel Auth Client and Login Modal Component (`FEAT-UI-07`, `FEAT-SEC-02`, US-0062, PRD-0023, TASK-0207)
@@ -136,17 +136,17 @@
 
 ### Phase 2 Verification Suites
 - [x] App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite (US-0065, US-0066, PRD-0023, TASK-0251)
-- [ ] Character Management and Tabletop Sync Blackbox Test Suite (US-0064, US-0069, PRD-0023, TASK-0258)
+- [x] Character Management and Tabletop Sync Blackbox Test Suite (US-0064, US-0069, PRD-0023, TASK-0258)
 
-## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames
+## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames (Active / Immediate Priority)
 ### Foundational Aggregates, Social Graphs & Civic Enablers
 - [x] Settlement Haven Builder and Establishment Aggregate (`FEAT-SET-01`, `FEAT-SET-02`, US-0072, PRD-0024, TASK-0259)
-- [ ] Assignable NPC Worker and Social Relationship Graph (`FEAT-SET-02`, US-0073, PRD-0024, TASK-0260)
+- [x] Assignable NPC Worker and Social Relationship Graph (`FEAT-SET-02`, US-0073, PRD-0024, TASK-0260)
 
 ### Mobile Minigames, Haggling & Notice Board Epics
 - [ ] Mobile-First Touch-Optimized Tavern & Casino Minigames (`FEAT-SET-03`, US-0074, PRD-0024, TASK-0261)
-- [ ] Interactive Merchant Haggling Engine with DM Controls (`FEAT-SET-04`, US-0075, PRD-0024, TASK-0262)
-- [ ] Town Bulletin Board Civic Notices and Bounty Board (`FEAT-SET-05`, US-0076, PRD-0024, TASK-0263)
+- [x] Interactive Merchant Haggling Engine with DM Controls (`FEAT-SET-04`, US-0075, PRD-0024, TASK-0262)
+- [x] Town Bulletin Board Civic Notices and Bounty Board (`FEAT-SET-05`, US-0076, PRD-0024, TASK-0263)
 
 ### Settlement & Minigames Blackbox Verification
 - [ ] Settlement Builder and Minigames Blackbox Test Suite (US-0072, US-0073, US-0074, US-0075, US-0076, PRD-0024, TASK-0264)
@@ -222,7 +222,7 @@
 - [ ] Character Leitmotif Generator Modular Decomposition (TASK-0233)
 - [ ] Campfire Crafting Styles Modular Decomposition (TASK-0234)
 - [ ] Project Visualizer Gantt Chart Modular Decomposition (TASK-0235)
-- [ ] Character Sheet UI Blackbox Test Suite Modular Decomposition (TASK-0236)
+- [x] Character Sheet UI Blackbox Test Suite Modular Decomposition (TASK-0236)
 - [ ] Caravan Board UI Blackbox Test Suite Modular Decomposition (TASK-0237)
 - [ ] GameSession Models Test Suite Modular Decomposition (TASK-0238)
 - [ ] Asset Forge Print Forge Router Modular Decomposition (TASK-0239)
@@ -236,3 +236,11 @@
 - [ ] Vocal Modulator Blackbox Test Suite Modular Decomposition (TASK-0266)
 - [ ] Rules Compendium Encounter Builder Subviews Modular Decomposition (TASK-0267)
 - [ ] Radial Menu and AoE Templates Test Suite Modular Decomposition (TASK-0268)
+- [x] Campaign Header Styles Modular Decomposition (TASK-0269)
+- [ ] Session Modal Component and Form Styles Modular Decomposition (TASK-0270)
+- [x] Frontend App Data Service Fixtures and Client Modular Decomposition (TASK-0271)
+- [ ] Settlement Haven Aggregate Blackbox Test Suite Modular Decomposition (TASK-0272)
+- [ ] Settlement Aggregate and Bulletin Handlers Modular Decomposition (TASK-0273)
+- [ ] Settlement Bulletin Board Styles Modular Decomposition (TASK-0274)
+- [ ] NPC Worker Engine Blackbox Test Suite Modular Decomposition (TASK-0275)
+- [ ] Settlement Bulletin Board Blackbox Test Suite Modular Decomposition (TASK-0276)
