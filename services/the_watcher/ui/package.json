@@ -12,6 +12,11 @@
     "./runefoble-autonomous-dm": "./src/runefoble-autonomous-dm.ts",
     "./runefoble-dm-whisper-bar": "./src/runefoble-dm-whisper-bar.ts",
     "./runefoble-faction-radar": "./src/runefoble-faction-radar.ts",
+    "./faction_radar": "./src/faction_radar/index.ts",
+    "./faction_radar/radar-svg.template": "./src/faction_radar/radar-svg.template.ts",
+    "./faction_radar/bulletin-drawer.template": "./src/faction_radar/bulletin-drawer.template.ts",
+    "./faction_radar/faction-details.template": "./src/faction_radar/faction-details.template.ts",
+    "./faction_radar/types": "./src/faction_radar/types.ts",
     "./runefoble-faction-espionage": "./src/runefoble-faction-espionage.ts",
     "./runefoble-absentee-directive": "./src/runefoble-absentee-directive.ts",
     "./runefoble-absentee-vote-card": "./src/runefoble-absentee-vote-card.ts"

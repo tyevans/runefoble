@@ -72,6 +72,12 @@ runefoble/
 │   │       ├── runefoble-faction-radar.ts
 │   │       ├── runefoble-faction-radar.styles.ts
 │   │       ├── runefoble-faction-radar.stories.ts
+│   │       ├── faction_radar/
+│   │       │   ├── types.ts
+│   │       │   ├── radar-svg.template.ts
+│   │       │   ├── bulletin-drawer.template.ts
+│   │       │   ├── faction-details.template.ts
+│   │       │   └── index.ts
 │   │       ├── runefoble-faction-espionage.ts
 │   │       ├── runefoble-faction-espionage.styles.ts
 │   │       └── runefoble-faction-espionage.stories.ts
