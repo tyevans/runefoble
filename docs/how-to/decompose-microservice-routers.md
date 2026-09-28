@@ -82,7 +82,7 @@ from <service>.routers.capability_b import router as capability_b_router
 __all__ = ["capability_a_router", "capability_b_router"]
 ```
 
-When a single router accumulates multiple distinct sub-domains or exceeds ~250 lines (e.g. `copilot.py` splitting into `actions.py` and `whispers.py`, `intent.py` splitting into `disambiguation.py`, `compound.py`, and `speech.py`, or `caravan_contracts.py` splitting into `auth.py`, `board.py`, and `lifecycle.py`), promote it to a sub-router package:
+When a single router accumulates multiple distinct sub-domains or exceeds ~250 lines (e.g. `copilot.py` splitting into `actions.py` and `whispers.py`, `intent.py` splitting into `disambiguation.py`, `compound.py`, and `speech.py`, `caravan_contracts.py` splitting into `auth.py`, `board.py`, and `lifecycle.py`, or `codex.py` splitting into `schemas.py`, `entries.py`, and `referencing.py`), promote it to a sub-router package:
 
 ```
 routers/
@@ -93,6 +93,11 @@ routers/
 │   ├── auth.py          # Authorization and validation helpers
 │   ├── board.py         # Notice board posting and querying endpoints
 │   └── lifecycle.py     # Caravan claim, dispatch, ambush, and fulfillment
+├── codex/
+│   ├── __init__.py      # Re-exports combined codex router and sub-routers
+│   ├── entries.py       # REST endpoints for entry publishing, retrieval, update, filtering
+│   ├── referencing.py   # Cross-referencing, entity link extraction, mention resolution
+│   └── schemas.py       # Pydantic request/response schemas and entry formatting
 ├── copilot/
 │   ├── __init__.py      # Re-exports combined router and sub-routers
 │   ├── actions.py       # Action interceptor and pause window endpoints

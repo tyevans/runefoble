@@ -1,7 +1,7 @@
 """Event-sourced CodexAggregate using eventsource-py."""
 
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -82,6 +82,47 @@ class CodexAggregate(DeclarativeAggregate[CodexEntryState]):
             era=era,
             tags=tags,
             linked_entity_ids=linked_entity_ids,
+            updated_by=updated_by,
+            metadata=metadata,
+        )
+
+    @classmethod
+    def create(
+        cls,
+        campaign_id: UUID,
+        payload: Any,
+        author_id: str,
+        metadata: dict[str, Any],
+        linked_entity_ids: list[str],
+    ) -> "CodexAggregate":
+        """Factory creating a new initialized CodexAggregate from payload and enriched metadata."""
+        agg = cls(uuid4())
+        agg.publish(
+            campaign_id=campaign_id,
+            title=payload.title,
+            content=payload.content,
+            author_id=author_id,
+            privacy=payload.privacy,
+            era=payload.era,
+            tags=payload.tags,
+            linked_entity_ids=linked_entity_ids,
+            metadata=metadata,
+        )
+        return agg
+
+    def apply_update(
+        self,
+        payload: Any,
+        updated_by: str | None,
+        metadata: dict[str, Any],
+    ) -> None:
+        """Apply domain update payload with revised metadata and entity links."""
+        self.update(
+            title=payload.title,
+            content=payload.content,
+            privacy=payload.privacy,
+            era=payload.era,
+            tags=payload.tags,
             updated_by=updated_by,
             metadata=metadata,
         )
