@@ -271,4 +271,11 @@
 - [ ] Settlement Models Modular Decomposition (TASK-0301)
 - [ ] Campaign Lore Atlas Router Modular Decomposition (TASK-0302)
 - [ ] Bulletin Board Component Modular Decomposition (TASK-0303)
+- [ ] Rules Compendium SRD Monsters Modular Decomposition (TASK-0304)
+- [ ] Mobile Companion UI Test Suite Modular Decomposition (TASK-0305)
+- [ ] The Watcher Models Modular Decomposition (TASK-0306)
+- [ ] Tavern Parlor Component Modular Decomposition (TASK-0307)
+- [ ] Print Forge Component Modular Decomposition (TASK-0308)
+- [ ] Game Session Minigames Modular Decomposition (TASK-0309)
+
 
