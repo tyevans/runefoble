@@ -313,6 +313,11 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 309. **TASK-0310 (Proposed)**: [`0310-minigames-suite-test-decomposition.md`](proposed/0310-minigames-suite-test-decomposition.md) — Minigames Suite Blackbox Test Modular Decomposition
 310. **TASK-0311 (Proposed)**: [`0311-faction-radar-ui-test-suite-decomposition.md`](proposed/0311-faction-radar-ui-test-suite-decomposition.md) — Faction Radar UI Test Suite Modular Decomposition
 311. **TASK-0312 (Proposed)**: [`0312-dice-roller-component-modular-decomposition.md`](proposed/0312-dice-roller-component-modular-decomposition.md) — Dice Roller Component Modular Decomposition
+312. **TASK-0313 (Proposed)**: [`0313-visualizer-parser-test-suite-modular-decomposition.md`](proposed/0313-visualizer-parser-test-suite-modular-decomposition.md) — Visualizer Parser Test Suite Modular Decomposition
+313. **TASK-0314 (Proposed)**: [`0314-faction-simulation-blackbox-test-suite-decomposition.md`](proposed/0314-faction-simulation-blackbox-test-suite-decomposition.md) — Faction Simulation Blackbox Test Suite Decomposition
+314. **TASK-0315 (Proposed)**: [`0315-mobile-companion-blackbox-test-suite-decomposition.md`](proposed/0315-mobile-companion-blackbox-test-suite-decomposition.md) — Mobile Companion Blackbox Test Suite Decomposition
+315. **TASK-0316 (Proposed)**: [`0316-gateway-spectator-router-modular-decomposition.md`](proposed/0316-gateway-spectator-router-modular-decomposition.md) — Gateway Spectator Router and Stream Manager Modular Decomposition
+316. **TASK-0317 (Proposed)**: [`0317-microfrontend-manifests-test-suite-modular-decomposition.md`](proposed/0317-microfrontend-manifests-test-suite-modular-decomposition.md) — Microfrontend Manifests Test Suite Modular Decomposition
 
 
 
