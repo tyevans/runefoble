@@ -29,6 +29,9 @@ _MODULE_ORDER = [
 ]
 
 _LIVE_ONLY_MODULES = [
+    "agy/agy_modal.js",
+    "agy/agy_presets.js",
+    "agy/agy_runner.js",
     "agy_launcher.js",
 ]
 
@@ -37,8 +40,8 @@ def get_client_js(is_live_server: bool = False) -> str:
     """Concatenate and return modular client JavaScript assets.
 
     In static distribution mode (is_live_server=False), interactive agent runners
-    like agy_launcher.js are strictly excluded to avoid leaking development tooling
-    into published static documentation for GitHub Pages.
+    like agy_launcher.js and agy/* submodules are strictly excluded to avoid leaking
+    development tooling into published static documentation for GitHub Pages.
     """
     parts: list[str] = []
     seen: set[str] = set()
@@ -56,7 +59,11 @@ def get_client_js(is_live_server: bool = False) -> str:
     # Include any remaining .js files dynamically (filtering live-only modules when not in live server mode)
     for extra_file in sorted(_STATIC_JS_DIR.rglob("*.js")):
         rel_posix = extra_file.relative_to(_STATIC_JS_DIR).as_posix()
-        if extra_file.name in _LIVE_ONLY_MODULES and not is_live_server:
+        if (
+            rel_posix in _LIVE_ONLY_MODULES
+            or extra_file.name in _LIVE_ONLY_MODULES
+            or rel_posix.startswith("agy/")
+        ) and not is_live_server:
             continue
         if rel_posix not in seen and extra_file.name not in seen:
             parts.append(f"// --- {rel_posix} ---\n" + extra_file.read_text(encoding="utf-8"))

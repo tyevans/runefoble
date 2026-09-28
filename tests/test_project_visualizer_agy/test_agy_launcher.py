@@ -60,6 +60,9 @@ def test_static_build_strict_github_pages_isolation(repo_root: Path, tmp_path: P
     for elem in [
         "agy-header-btn",
         "agy-modal",
+        "// --- agy/agy_modal.js ---",
+        "// --- agy/agy_presets.js ---",
+        "// --- agy/agy_runner.js ---",
         "// --- agy_launcher.js ---",
         "Launch AGY",
     ]:
@@ -71,8 +74,33 @@ def test_static_build_strict_github_pages_isolation(repo_root: Path, tmp_path: P
     for elem in [
         "agy-header-btn",
         "agy-modal",
+        "// --- agy/agy_modal.js ---",
+        "// --- agy/agy_presets.js ---",
+        "// --- agy/agy_runner.js ---",
         "// --- agy_launcher.js ---",
         "Launch AGY",
     ]:
         assert elem in live_html
     assert "window.IS_LIVE_SERVER = true;" in live_html
+
+
+def test_agy_launcher_module_decomposition_architecture(repo_root: Path):
+    """Verify AGY submodules under agy/ adhere to Hard Invariant 6 and DoD line limits."""
+    agy_dir = repo_root / "tools" / "project_visualizer" / "static" / "js" / "agy"
+    assert agy_dir.is_dir(), "tools/project_visualizer/static/js/agy/ must exist"
+
+    expected_submodules = {
+        "agy_modal.js": 140,
+        "agy_presets.js": 140,
+        "agy_runner.js": 140,
+    }
+    for filename, limit in expected_submodules.items():
+        file_path = agy_dir / filename
+        assert file_path.is_file(), f"Expected submodule {filename} does not exist"
+        line_count = len(file_path.read_text(encoding="utf-8").splitlines())
+        assert line_count < limit, f"{filename} must be < {limit} lines, got {line_count}"
+
+    facade_path = repo_root / "tools" / "project_visualizer" / "static" / "js" / "agy_launcher.js"
+    assert facade_path.is_file(), "Facade agy_launcher.js must exist"
+    facade_lines = len(facade_path.read_text(encoding="utf-8").splitlines())
+    assert facade_lines < 50, f"Facade agy_launcher.js must be < 50 lines, got {facade_lines}"
