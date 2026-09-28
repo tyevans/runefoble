@@ -216,4 +216,17 @@ The complete end-to-end lifecycle across the Gateway API, SpiceDB Zanzibar autho
   - `test_profile_route_renders_user_claims`: Verifies routing to `#/profile` and claims rendering.
   - `test_lobby_character_selection_and_vtt_sync`: Verifies lobby character selection propagation and dynamic VTT character card binding.
 
+---
+
+## 13. Modular Domain Models Architecture (TASK-0229)
+
+Per ADR-0003 and ADR-0007, the domain models for the Character Sheet bounded context are modularized under `services/character_sheet/src/character_sheet/models/`, ensuring every domain submodule remains strictly within the file length budget (< 120 lines):
+- **Base Traits & Guardrails** (`models/base.py`): Encapsulates `AttributeScores` (with 5e standard scores and `.to_dict()`), `WardrobeVariant`, `StandInGuardrails`, and `VitalsTransitionsMixin`.
+- **Core Character Aggregate** (`models/character.py`): Defines `CharacterCore`, the composite `CharacterState` (inheriting from domain transition mixins), and the `initial(...)` factory constructor.
+- **Inventory & Encumbrance** (`models/inventory.py`): Defines `InventoryItem`, `EquipmentSlot`, `Encumbrance` (with `.calculate(...)` determining load tier thresholds per Strength score), and `InventoryTransitionsMixin`.
+- **Conditions & Absence Modifiers** (`models/conditions.py`): Defines `ConditionState`, `ConditionModifier`, and `ConditionsTransitionsMixin` managing tactical conditions and DM absence penalties.
+- **Progression & Spells** (`models/progression.py`): Encapsulates `SpellProgression`, `LevelProgression`, and `ProgressionTransitionsMixin` managing level ups and spell slot expending.
+- **Aggregator Facade** (`models.py`): Minimal backward-compatibility facade re-exporting all domain models, mixins, and request schemas.
+
+
 
