@@ -1,7 +1,7 @@
 ---
 id: '0251'
 title: App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0247
@@ -16,8 +16,8 @@ governing_stories:
 - US-0066
 - US-0068
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/293
 ---
-
 # TASK-0251: App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite
 
 ## Status
