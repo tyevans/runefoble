@@ -289,5 +289,11 @@
 - [ ] Caravan Modular Decomposition Test Suite Decomposition (TASK-0319)
 - [ ] Campaign Analytics Component Styles Modular Decomposition (TASK-0320)
 - [ ] Gateway Characters Blackbox Test Suite Decomposition (TASK-0321)
+- [ ] Campaign Lore Relic Inspector Component Modular Decomposition (TASK-0322)
+- [ ] Campaign Lore Handout Viewer Component Modular Decomposition (TASK-0323)
+- [ ] Settlement Bulletin Router Modular Decomposition (TASK-0324)
+- [ ] Tavern Parlor Component Styles Modular Decomposition (TASK-0325)
+- [ ] Game Session Tavern Router Modular Decomposition (TASK-0326)
+- [ ] Spectator Overlay Styles Modular Decomposition (TASK-0327)
 
 

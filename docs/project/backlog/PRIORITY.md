@@ -320,8 +320,15 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 316. **TASK-0319 (Proposed)**: [`0319-caravan-decomposition-test-suite-modular-decomposition.md`](proposed/0319-caravan-decomposition-test-suite-modular-decomposition.md) — Caravan Modular Decomposition Test Suite Decomposition
 317. **TASK-0320 (Proposed)**: [`0320-campaign-analytics-styles-modular-decomposition.md`](proposed/0320-campaign-analytics-styles-modular-decomposition.md) — Campaign Analytics Component Styles Modular Decomposition
 318. **TASK-0321 (Proposed)**: [`0321-gateway-characters-blackbox-test-suite-decomposition.md`](proposed/0321-gateway-characters-blackbox-test-suite-decomposition.md) — Gateway Characters Blackbox Test Suite Decomposition
-319. **TASK-0291 (Proposed)**: [`0291-project-visualizer-core-client-modular-decomposition.md`](proposed/0291-project-visualizer-core-client-modular-decomposition.md) — Project Visualizer Core Client Modular Decomposition
-320. **TASK-0235 (Proposed)**: [`0235-project-visualizer-gantt-modular-decomposition.md`](proposed/0235-project-visualizer-gantt-modular-decomposition.md) — Project Visualizer Gantt Chart Modular Decomposition
+319. **TASK-0322 (Proposed)**: [`0322-campaign-lore-relic-inspector-modular-decomposition.md`](proposed/0322-campaign-lore-relic-inspector-modular-decomposition.md) — Campaign Lore Relic Inspector Component Modular Decomposition
+320. **TASK-0323 (Proposed)**: [`0323-campaign-lore-handout-viewer-modular-decomposition.md`](proposed/0323-campaign-lore-handout-viewer-modular-decomposition.md) — Campaign Lore Handout Viewer Component Modular Decomposition
+321. **TASK-0324 (Proposed)**: [`0324-settlement-bulletin-router-modular-decomposition.md`](proposed/0324-settlement-bulletin-router-modular-decomposition.md) — Settlement Bulletin Router Modular Decomposition
+322. **TASK-0325 (Proposed)**: [`0325-tavern-parlor-styles-modular-decomposition.md`](proposed/0325-tavern-parlor-styles-modular-decomposition.md) — Tavern Parlor Component Styles Modular Decomposition
+323. **TASK-0326 (Proposed)**: [`0326-game-session-tavern-router-modular-decomposition.md`](proposed/0326-game-session-tavern-router-modular-decomposition.md) — Game Session Tavern Router Modular Decomposition
+324. **TASK-0327 (Proposed)**: [`0327-spectator-overlay-styles-modular-decomposition.md`](proposed/0327-spectator-overlay-styles-modular-decomposition.md) — Spectator Overlay Styles Modular Decomposition
+325. **TASK-0291 (Proposed)**: [`0291-project-visualizer-core-client-modular-decomposition.md`](proposed/0291-project-visualizer-core-client-modular-decomposition.md) — Project Visualizer Core Client Modular Decomposition
+326. **TASK-0235 (Proposed)**: [`0235-project-visualizer-gantt-modular-decomposition.md`](proposed/0235-project-visualizer-gantt-modular-decomposition.md) — Project Visualizer Gantt Chart Modular Decomposition
+
 
 
 
