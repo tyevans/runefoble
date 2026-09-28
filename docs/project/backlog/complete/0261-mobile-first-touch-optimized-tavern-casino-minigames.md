@@ -1,7 +1,7 @@
 ---
 id: '0261'
 title: Mobile-First Touch-Optimized Tavern and Casino Minigames Suite
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0259
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0074
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/323
 ---
-
 # TASK-0261: Mobile-First Touch-Optimized Tavern and Casino Minigames Suite
 
 ## Status
