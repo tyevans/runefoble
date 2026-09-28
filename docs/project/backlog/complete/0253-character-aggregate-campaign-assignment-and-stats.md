@@ -1,7 +1,7 @@
 ---
 id: '0253'
 title: Character Aggregate Campaign Assignment and Core Attributes Extension
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0009
@@ -16,6 +16,7 @@ governing_stories:
 - US-0064
 - US-0069
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/285
 ---
 # TASK-0253: Character Aggregate Campaign Assignment and Core Attributes Extension
 
