@@ -117,7 +117,8 @@ curl -X POST http://localhost/api/v1/auth/verify \
 In Python integration tests and blackbox test suites, use `MailpitClient` from `runefoble_platform`:
 
 ```python
-from runefoble_platform.email_client import MailpitClient
+# Import from modular email subsystem (or backward-compatible runefoble_platform.email_client shim)
+from runefoble_platform.email import MailpitClient
 
 # Initialize client (uses PlatformSettings defaults)
 mailpit = MailpitClient()
