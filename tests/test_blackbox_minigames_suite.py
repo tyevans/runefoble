@@ -7,6 +7,7 @@ Hard Invariant 6 (<500 lines limit), and Hard Invariant 7 (Blackbox TDD).
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from uuid import uuid4
 
@@ -74,16 +75,19 @@ def test_minigames_suite_manifest_and_file_invariants(session_client: TestClient
     assert len(roulette_file.read_text().splitlines()) < 280
 
 
-@pytest.mark.asyncio
-async def test_blackbox_darts_table_join_bet_and_throw(
+def test_blackbox_darts_table_join_bet_and_throw(
     session_client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
 ) -> None:
     """Multiplayer darts table: joining, bet placement, flick throw, and score synchronization."""
     table_id = f"table-darts-{uuid4().hex[:6]}"
     establishment_id = "est-salty-siren"
 
-    await spicedb.write_relationship("establishment", establishment_id, "patron", "user", "kip")
-    await spicedb.write_relationship("establishment", establishment_id, "patron", "user", "sam")
+    asyncio.run(
+        spicedb.write_relationship("establishment", establishment_id, "patron", "user", "kip")
+    )
+    asyncio.run(
+        spicedb.write_relationship("establishment", establishment_id, "patron", "user", "sam")
+    )
 
     with session_client.websocket_connect(
         f"/ws/establishments/{establishment_id}/tables/{table_id}?user_id=kip"
@@ -140,57 +144,61 @@ def test_blackbox_roulette_multiplayer_bets_and_payouts(
     """Roulette table: multiple betting tokens, wheel spin, and 35:1 / 1:1 payouts."""
     table_id = f"table-roulette-{uuid4().hex[:6]}"
 
-    with (
-        session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws1,
-        session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws2,
-    ):
-        ws1.receive_json(), ws2.receive_json()
-        ws1.send_json(
-            {"action": "join", "player_id": "player_black", "name": "Black Bettor", "chips": 100}
-        )
-        ws1.receive_json(), ws2.receive_json()
+    with session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws1:
+        assert ws1.receive_json()["type"] == "connected"
+        with session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws2:
+            assert ws2.receive_json()["type"] == "connected"
+            ws1.send_json(
+                {
+                    "action": "join",
+                    "player_id": "player_black",
+                    "name": "Black Bettor",
+                    "chips": 100,
+                }
+            )
+            ws1.receive_json(), ws2.receive_json()
 
-        ws2.send_json(
-            {
-                "action": "join",
-                "player_id": "player_straight",
-                "name": "Straight Bettor",
-                "chips": 100,
-            }
-        )
-        ws1.receive_json(), ws2.receive_json()
+            ws2.send_json(
+                {
+                    "action": "join",
+                    "player_id": "player_straight",
+                    "name": "Straight Bettor",
+                    "chips": 100,
+                }
+            )
+            ws1.receive_json(), ws2.receive_json()
 
-        # Player 1 bets 20 on black; Player 2 bets 10 on straight 17 (which is black)
-        ws1.send_json(
-            {
-                "action": "bet",
-                "player_id": "player_black",
-                "amount": 20,
-                "bet_type": "color",
-                "target": "black",
-            }
-        )
-        ws1.receive_json(), ws2.receive_json()
+            # Player 1 bets 20 on black; Player 2 bets 10 on straight 17 (which is black)
+            ws1.send_json(
+                {
+                    "action": "bet",
+                    "player_id": "player_black",
+                    "amount": 20,
+                    "bet_type": "color",
+                    "target": "black",
+                }
+            )
+            ws1.receive_json(), ws2.receive_json()
 
-        ws2.send_json(
-            {
-                "action": "bet",
-                "player_id": "player_straight",
-                "amount": 10,
-                "bet_type": "straight",
-                "target": 17,
-            }
-        )
-        ws1.receive_json(), ws2.receive_json()
+            ws2.send_json(
+                {
+                    "action": "bet",
+                    "player_id": "player_straight",
+                    "amount": 10,
+                    "bet_type": "straight",
+                    "target": 17,
+                }
+            )
+            ws1.receive_json(), ws2.receive_json()
 
-        ws1.send_json({"action": "spin_roulette", "winning_number": 17})
-        res1, res2 = ws1.receive_json(), ws2.receive_json()
-        assert res1["type"] == "wheel_spun" and res2["type"] == "wheel_spun"
-        assert res1["winning_number"] == 17 and res1["color"] == "black"
-        assert res1["payouts"]["player_black"] == 40
-        assert res1["payouts"]["player_straight"] == 360
-        assert res1["player_balances"]["player_black"] == 120
-        assert res1["player_balances"]["player_straight"] == 450
+            ws1.send_json({"action": "spin_roulette", "winning_number": 17})
+            res1, res2 = ws1.receive_json(), ws2.receive_json()
+            assert res1["type"] == "wheel_spun" and res2["type"] == "wheel_spun"
+            assert res1["winning_number"] == 17 and res1["color"] == "black"
+            assert res1["payouts"]["player_black"] == 40
+            assert res1["payouts"]["player_straight"] == 360
+            assert res1["player_balances"]["player_black"] == 120
+            assert res1["player_balances"]["player_straight"] == 450
 
 
 def test_blackbox_liars_dice_turn_progression_and_challenge(
@@ -199,49 +207,48 @@ def test_blackbox_liars_dice_turn_progression_and_challenge(
     """Liar's dice table: bid escalation, bluff challenge, and victory payout."""
     table_id = f"table-liars-{uuid4().hex[:6]}"
 
-    with (
-        session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws1,
-        session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws2,
-    ):
-        ws1.receive_json(), ws2.receive_json()
-        ws1.send_json(
-            {
-                "action": "join",
-                "player_id": "p1",
-                "name": "Cap'n Flint",
-                "chips": 50,
-                "game_type": "liars_dice",
-            }
-        )
-        ws1.receive_json(), ws2.receive_json()
+    with session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws1:
+        assert ws1.receive_json()["type"] == "connected"
+        with session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws2:
+            assert ws2.receive_json()["type"] == "connected"
+            ws1.send_json(
+                {
+                    "action": "join",
+                    "player_id": "p1",
+                    "name": "Cap'n Flint",
+                    "chips": 50,
+                    "game_type": "liars_dice",
+                }
+            )
+            ws1.receive_json(), ws2.receive_json()
 
-        ws2.send_json(
-            {
-                "action": "join",
-                "player_id": "p2",
-                "name": "Silver",
-                "chips": 50,
-                "game_type": "liars_dice",
-            }
-        )
-        ws1.receive_json(), ws2.receive_json()
+            ws2.send_json(
+                {
+                    "action": "join",
+                    "player_id": "p2",
+                    "name": "Silver",
+                    "chips": 50,
+                    "game_type": "liars_dice",
+                }
+            )
+            ws1.receive_json(), ws2.receive_json()
 
-        ws1.send_json({"action": "bet", "player_id": "p1", "amount": 25})
-        ws1.receive_json(), ws2.receive_json()
-        ws2.send_json({"action": "bet", "player_id": "p2", "amount": 25})
-        ws1.receive_json(), ws2.receive_json()
+            ws1.send_json({"action": "bet", "player_id": "p1", "amount": 25})
+            ws1.receive_json(), ws2.receive_json()
+            ws2.send_json({"action": "bet", "player_id": "p2", "amount": 25})
+            ws1.receive_json(), ws2.receive_json()
 
-        # P1 bids 2 threes
-        ws1.send_json({"action": "bid", "player_id": "p1", "quantity": 2, "face": 3})
-        b1, b2 = ws1.receive_json(), ws2.receive_json()
-        assert b1["type"] == "bid_placed" and b2["type"] == "bid_placed"
-        assert b1["bid"]["quantity"] == 2 and b1["bid"]["face"] == 3
+            # P1 bids 2 threes
+            ws1.send_json({"action": "bid", "player_id": "p1", "quantity": 2, "face": 3})
+            b1, b2 = ws1.receive_json(), ws2.receive_json()
+            assert b1["type"] == "bid_placed" and b2["type"] == "bid_placed"
+            assert b1["bid"]["quantity"] == 2 and b1["bid"]["face"] == 3
 
-        # P2 calls bluff
-        ws2.send_json({"action": "challenge", "challenger_id": "p2"})
-        c1, c2 = ws1.receive_json(), ws2.receive_json()
-        assert c1["type"] == "challenge_resolved" and c2["type"] == "challenge_resolved"
-        assert "matching_count" in c1 and c1["winner_id"] in ("p1", "p2")
+            # P2 calls bluff
+            ws2.send_json({"action": "challenge", "challenger_id": "p2"})
+            c1, c2 = ws1.receive_json(), ws2.receive_json()
+            assert c1["type"] == "challenge_resolved" and c2["type"] == "challenge_resolved"
+            assert "matching_count" in c1 and c1["winner_id"] in ("p1", "p2")
 
 
 def test_blackbox_dragon_craps_pass_line_and_field_roll(session_client: TestClient) -> None:
@@ -278,12 +285,13 @@ def test_blackbox_dragon_craps_pass_line_and_field_roll(session_client: TestClie
         assert roll_res["player_balances"]["shooter_kip"] == 100
 
 
-@pytest.mark.asyncio
-async def test_blackbox_zanzibar_establishment_authorization(
+def test_blackbox_zanzibar_establishment_authorization(
     session_client: TestClient, spicedb: MockSpiceDBClient
 ) -> None:
     """SpiceDB Zanzibar: verify unauthorized patrons are rejected with 4003."""
-    await spicedb.write_relationship("establishment", "est-vip-lounge", "patron", "user", "vip_kip")
+    asyncio.run(
+        spicedb.write_relationship("establishment", "est-vip-lounge", "patron", "user", "vip_kip")
+    )
 
     with session_client.websocket_connect(
         "/ws/establishments/est-vip-lounge/tables/tbl-1?user_id=stranger_user"
