@@ -257,3 +257,8 @@
 - [ ] Frontend App Shell Test Suite Modular Decomposition (TASK-0287)
 - [ ] Frontend Character Management Test Suite Modular Decomposition (TASK-0288)
 - [ ] Project Visualizer Drawer Test Suite Modular Decomposition (TASK-0289)
+- [ ] Frontend SPA Router Test Suite Modular Decomposition (TASK-0290)
+- [ ] Project Visualizer Core Client Modular Decomposition (TASK-0291)
+- [ ] Tavern and Haggling Blackbox Test Suite Modular Decomposition (TASK-0292)
+- [ ] Settlement Haggling Router Modular Decomposition (TASK-0293)
+- [ ] Character Campaign Assignment Test Suite Modular Decomposition (TASK-0294)
