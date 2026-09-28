@@ -164,23 +164,58 @@ curl -X POST "http://localhost:8004/api/v1/sessions/session-wyvern-01/merchants/
 
 ---
 
-## 4. Web Component & Storybook Verification
+## 4. Interactive Merchant Haggling Engine & DM Controls (TASK-0262)
 
-The `<runefoble-tavern-parlor>` microfrontend renders an interactive 3D cup and shaker stage, bidding controls, intoxication meters, and merchant dialogue panels:
+The interactive merchant haggling engine provides real-time bartering with a tug-of-war price meter, persuasive bargaining gambits, and Game Master arbitration controls.
 
-```html
-<runefoble-tavern-parlor
-  session-id="session-wyvern-01"
-  character-id="char-bram"
-  character-name="Bram the Tinkerer"
-  activeTab="dice"
-  .wagerGold="10"
-  .diceRolls="[2, 3, 3, 5, 6]"
-  .currentBid='{"quantity": 3, "face": 4, "bidder": "npc_pirate"}'
-></runefoble-tavern-parlor>
+### Step 1: Bargaining Gambits
+Players choose from five tactical gambits evaluated against the merchant's DC and temperament:
+- **Flattery / Praise**: Appeals to artisan pride (exceptional bonus against Vain merchants).
+- **Bulk Order Promise**: Promises future recurring orders (exceptional bonus against Greedy merchants).
+- **Point Out Flaw**: Scrutinizes visible blemishes; offends Stubborn or Vain merchants on failure.
+- **Hard Intimidation**: Aggressive threats; high reward on success, severe patience penalty on failure.
+- **Walk Away Bluff**: Feigns disinterest to force a compromise before stepping out the door.
+
+Submit a gambit via `POST /api/v1/haggling/{negotiation_id}/gambit`:
+```bash
+curl -X POST http://localhost:8004/api/v1/haggling/neg-101/gambit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "character_id": "char_nicole",
+    "gambit": "bulk_order_promise",
+    "roll_value": 18,
+    "charisma_modifier": 3
+  }'
 ```
 
-Interactive stories are viewable in Storybook:
-- `LiarsDiceActiveRound`: 3D shaker cup, hidden/revealed dice, current bid display, and call bluff controls.
-- `DrinkingContestIntoxicated`: Live intoxication meter at 'drunk' with active voice DSP badge.
-- `MerchantHagglingStubbornGreedy`: Dwarven blacksmith temperament, 42 GP counter badge, and voice dialogue.
+### Step 2: DM Real-Time Arbitration Controls
+Game Masters can intervene in live negotiations without halting game flow via `PATCH /api/v1/haggling/{negotiation_id}/dm-override`:
+- **Soothe Merchant**: Grants +2 patience and restores morale.
+- **Enrage Merchant**: Inflicts -2 patience and triggers indignation barks.
+- **Accept Deal**: Forces instant agreement at current offer or override price, concluding transactions with zero race conditions.
+- **Refuse & Kick Out**: Immediately ejects the customer and terminates the exchange.
+
+```bash
+curl -X PATCH http://localhost:8004/api/v1/haggling/neg-101/dm-override \
+  -H "Content-Type: application/json" \
+  -H "x-user-id: dm_wyvern_01" \
+  -d '{
+    "action": "force_accept",
+    "override_price_gp": 280,
+    "narrative_bark": "Torvin scowls, then nods in begrudging respect. Done."
+  }'
+```
+
+---
+
+## 5. Web Component & Storybook Verification
+
+Interactive components render with high-contrast Bauhaus tokens and shadow DOM isolation:
+- `<runefoble-tavern-parlor>`: Shaker cups, drinking contest meters, and legacy merchant panels.
+- `<runefoble-merchant-haggler>`: Responsive tug-of-war price meter, patience pips (1-5), and dialogue cards.
+- `<runefoble-dm-negotiation-drawer>`: Live DM arbitration drawer with one-click mood buttons and custom bark injection.
+
+Viewable in Storybook:
+- `Minigames/RunefobleMerchantHaggler`: `ActiveNegotiationLight`, `ActiveNegotiationDark`, `LowPatienceWarning`, `CompletedTransaction`.
+- `DMControls/RunefobleDMNegotiationDrawer`: `LiveArbitrationLight`, `LiveArbitrationDark`, `DealCompletedDrawer`.
+

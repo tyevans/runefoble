@@ -27,6 +27,7 @@ from game_session.routers import (
     tavern_router,
     west_marches_router,
 )
+from game_session.settlement.haggling_router import router as settlement_haggling_router
 from game_session.settlement.router import router as settlement_haven_router
 from game_session.settlement.workers_router import router as settlement_workers_router
 from runefoble_platform.event_sourcing import get_event_store
@@ -60,6 +61,7 @@ app.include_router(settlements_router)
 app.include_router(settlements_router, prefix="/api/v1")
 app.include_router(settlement_haven_router)
 app.include_router(settlement_workers_router)
+app.include_router(settlement_haggling_router)
 app.include_router(bounties_router)
 app.include_router(bounties_router, prefix="/api/v1")
 
@@ -87,6 +89,8 @@ def get_ui_manifest():
             "runefoble-spectator-overlay",
             "runefoble-campfire-crafting",
             "runefoble-tavern-parlor",
+            "runefoble-merchant-haggler",
+            "runefoble-dm-negotiation-drawer",
             "runefoble-caravan-board",
             "runefoble-combat-reaction-prompt",
             "runefoble-ready-action-card",

@@ -26,7 +26,10 @@ export * from './components/runefoble-user-menu.ts';
 export * from './components/runefoble-user-profile.ts';
 export * from './components/runefoble-session-list.ts';
 export * from './components/runefoble-session-modal.ts';
+export * from './components/minigames/runefoble-merchant-haggler.ts';
+export * from './components/dm-controls/runefoble-dm-negotiation-drawer.ts';
 export * from './auth/index.ts';
+
 export * from './router/index.ts';
 export * from './styles/app-shell.styles.ts';
 export * from './utils/dice.ts';

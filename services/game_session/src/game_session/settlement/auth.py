@@ -253,3 +253,112 @@ async def write_npc_relationships(
             subject_type="user",
             subject_id=str(manager_id),
         )
+
+
+async def check_negotiation_read_permission(
+    spicedb: Any,
+    negotiation_id: str,
+    user_id: str | None,
+) -> None:
+    """Ensure user has permission to view negotiation state and barks."""
+    if not user_id:
+        return
+    allowed = await spicedb.check_permission(
+        "negotiation", str(negotiation_id), "view", "user", str(user_id)
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Permission denied: subject '{user_id}' cannot view negotiation:{negotiation_id}",
+        )
+
+
+async def check_negotiation_participate_permission(
+    spicedb: Any,
+    negotiation_id: str,
+    user_id: str | None,
+) -> None:
+    """Ensure user has permission to participate in negotiation and submit gambits."""
+    if not user_id:
+        return
+    allowed = await spicedb.check_permission(
+        "negotiation", str(negotiation_id), "participate", "user", str(user_id)
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Permission denied: subject '{user_id}' cannot participate in negotiation:{negotiation_id}",
+        )
+
+
+async def check_negotiation_arbitrate_permission(
+    spicedb: Any,
+    negotiation_id: str,
+    user_id: str | None,
+) -> None:
+    """Ensure user has DM or manager authority to arbitrate negotiation terms and moods."""
+    if not user_id:
+        return
+    allowed = await spicedb.check_permission(
+        "negotiation", str(negotiation_id), "arbitrate", "user", str(user_id)
+    ) or await spicedb.check_permission(
+        "negotiation", str(negotiation_id), "manage", "user", str(user_id)
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Permission denied: subject '{user_id}' lacks DM arbitration rights on negotiation:{negotiation_id}",
+        )
+
+
+async def write_negotiation_relationships(
+    spicedb: Any,
+    negotiation_id: str,
+    establishment_id: str | None = None,
+    campaign_id: str | None = None,
+    session_id: str | None = None,
+    participant_id: str | None = None,
+    arbitrator_id: str | None = None,
+) -> None:
+    """Write SpiceDB Zanzibar tuples for interactive negotiation session."""
+    nid = str(negotiation_id)
+    if establishment_id:
+        await spicedb.write_relationship(
+            resource_type="negotiation",
+            resource_id=nid,
+            relation="establishment",
+            subject_type="establishment",
+            subject_id=str(establishment_id),
+        )
+    if campaign_id:
+        await spicedb.write_relationship(
+            resource_type="negotiation",
+            resource_id=nid,
+            relation="campaign",
+            subject_type="campaign",
+            subject_id=str(campaign_id),
+        )
+    if session_id:
+        await spicedb.write_relationship(
+            resource_type="negotiation",
+            resource_id=nid,
+            relation="session",
+            subject_type="session",
+            subject_id=str(session_id),
+        )
+    if participant_id:
+        await spicedb.write_relationship(
+            resource_type="negotiation",
+            resource_id=nid,
+            relation="participant",
+            subject_type="user",
+            subject_id=str(participant_id),
+        )
+    if arbitrator_id:
+        await spicedb.write_relationship(
+            resource_type="negotiation",
+            resource_id=nid,
+            relation="arbitrator",
+            subject_type="user",
+            subject_id=str(arbitrator_id),
+        )
