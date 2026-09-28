@@ -5,6 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from tools.prd_pipeline.decomposer import PRDDecomposer
+from tools.prd_pipeline.manager import (
+    AuditSummary,
+    PRDRecord,
+    PRDScanner,
+    PRDStage,
+    RequirementAuditor,
+)
 from tools.prd_pipeline.prd_manager import PRDManager
 from tools.prd_pipeline.registry_sync import RegistrySynchronizer
 from tools.prd_pipeline.writer import PlanWriter
@@ -44,6 +51,66 @@ def test_prd_audit_detects_buffer_and_undecomposed(temp_project: Path):
     assert audit["total_prds"] == 1
     assert prd.canonical_id in audit["undecomposed_prds"]
     assert audit["buffer"]["ready_buffer_low"] is True
+
+    summary = mgr.audit_summary()
+    assert isinstance(summary, AuditSummary)
+    assert summary.total_prds == 1
+    assert prd.canonical_id in summary.undecomposed_prds
+
+
+def test_prd_scanner_and_models(temp_project: Path):
+    """Verifies direct PRDScanner parsing and PRDStage categorization."""
+    mgr = PRDManager(temp_project)
+    prd = mgr.create_prd(
+        title="Fog of War",
+        persona="The DM",
+        target_bc="board_state",
+        summary="Dynamic sight lines.",
+        status="Shaped",
+    )
+
+    scanner = PRDScanner(temp_project / "docs" / "project" / "product")
+    files = scanner.list_files()
+    assert prd.file_path in files
+
+    record = scanner.parse_file(prd.file_path)
+    assert isinstance(record, PRDRecord)
+    assert record.canonical_id == "PRD-0001"
+    assert record.title == "Fog of War"
+    assert record.target_bc == "board_state"
+    assert PRDStage.SHAPED.value == "shaped"
+
+
+def test_requirement_auditor_detects_epic_tasks(temp_project: Path):
+    """Verifies auditor flags oversized proposed tasks failing INVEST small criteria."""
+    mgr = PRDManager(temp_project)
+    mgr.create_prd(
+        title="Epic Quest",
+        persona="Hero",
+        target_bc="campaign_lore",
+        summary="A huge journey.",
+        status="Accepted",
+    )
+
+    proposed_dir = temp_project / "docs" / "project" / "backlog" / "proposed"
+    proposed_dir.mkdir(parents=True, exist_ok=True)
+    epic_task = proposed_dir / "9999-epic-lore-microservice.md"
+    epic_task.write_text(
+        """# TASK-9999: Epic Lore Microservice
+
+## Scope of Work
+- Item 1
+- Item 2
+- Item 3
+- Item 4
+""",
+        encoding="utf-8",
+    )
+
+    auditor = RequirementAuditor(temp_project / "docs" / "project" / "backlog")
+    summary = auditor.audit(mgr.load_prds())
+    assert len(summary.epic_proposed_tasks) >= 1
+    assert summary.epic_proposed_tasks[0]["id"] == "TASK-9999"
 
 
 def test_registry_synchronizer_repairs_stale_links_and_indexes(temp_project: Path):

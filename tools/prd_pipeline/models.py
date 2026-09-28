@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from pathlib import Path
-from typing import Any
+
+from .manager.models import PRD, PRDRecord, PRDStage
 
 
 class PRDStatus(StrEnum):
@@ -21,36 +21,6 @@ class SliceType(StrEnum):
     API_AUTH = "api_auth"
     MICROFRONTEND = "microfrontend"
     WORKER_INTEGRATION = "worker_integration"
-
-
-@dataclass
-class PRD:
-    id: str
-    number: int
-    title: str
-    status: PRDStatus | str
-    created: str
-    file_path: Path
-    who_for: str = ""
-    problem_statement: str = ""
-    good_looks_like: list[str] = field(default_factory=list)
-    does_not_do: list[str] = field(default_factory=list)
-    costs_at_scale: str = ""
-    checkable_outcomes: list[str] = field(default_factory=list)
-    linked_stories: list[str] = field(default_factory=list)
-    implementing_tasks: list[str] = field(default_factory=list)
-    raw_frontmatter: dict[str, Any] = field(default_factory=dict)
-    body: str = ""
-    target_bc: str = "platform"
-
-    @property
-    def canonical_id(self) -> str:
-        clean = self.id.upper().replace("PRD-", "")
-        return f"PRD-{clean.zfill(4)}"
-
-    @property
-    def slug(self) -> str:
-        return self.file_path.stem
 
 
 @dataclass
@@ -110,3 +80,15 @@ class DecompositionPlan:
     @property
     def all_tasks(self) -> list[TaskDraft]:
         return [*self.spikes, *self.slices]
+
+
+__all__ = [
+    "PRD",
+    "DecompositionPlan",
+    "PRDRecord",
+    "PRDStage",
+    "PRDStatus",
+    "SliceType",
+    "TaskDraft",
+    "UserStoryDraft",
+]
