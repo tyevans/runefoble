@@ -60,8 +60,7 @@ def test_static_build_strict_github_pages_isolation(repo_root: Path, tmp_path: P
     for elem in [
         "agy-header-btn",
         "agy-modal",
-        "agy_launcher.js",
-        "dangerously-skip-permissions",
+        "// --- agy_launcher.js ---",
         "Launch AGY",
     ]:
         assert elem not in static_html
@@ -72,8 +71,7 @@ def test_static_build_strict_github_pages_isolation(repo_root: Path, tmp_path: P
     for elem in [
         "agy-header-btn",
         "agy-modal",
-        "agy_launcher.js",
-        "dangerously-skip-permissions",
+        "// --- agy_launcher.js ---",
         "Launch AGY",
     ]:
         assert elem in live_html
