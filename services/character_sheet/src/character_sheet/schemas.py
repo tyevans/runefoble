@@ -13,6 +13,25 @@ class CreateCharacterRequest(BaseModel):
     max_hp: int = 30
     player_id: str | None = None
     personality_traits: list[str] = ["brave", "curious"]
+    campaign_id: str | None = None
+    subclass: str | None = None
+    armor_class: int = 10
+    speed_ft: int = 30
+    ability_scores: dict[str, int] = Field(
+        default_factory=lambda: {
+            "str": 10,
+            "dex": 10,
+            "con": 10,
+            "int": 10,
+            "wis": 10,
+            "cha": 10,
+        }
+    )
+
+
+class AssignCampaignRequest(BaseModel):
+    campaign_id: str | None = None
+    assigned_by: str | None = None
 
 
 class HealthChangeRequest(BaseModel):

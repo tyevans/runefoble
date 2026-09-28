@@ -357,6 +357,15 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `max_hp`: Integer, `current_hp`: Integer
   - `player_id`: Optional[String]
   - `personality_traits`: List[String]
+  - `campaign_id`: Optional[String]
+  - `subclass`: Optional[String]
+  - `armor_class`: Integer (default 10)
+  - `speed_ft`: Integer (default 30)
+  - `ability_scores`: Dict[String, Integer]
+- **`CharacterAssignedToCampaign`**: Emitted when a character is assigned to or unassigned from a campaign party (`character.assigned_to_campaign` / `runefoble.events.character.assigned_to_campaign`).
+  - `character_id`: String
+  - `campaign_id`: Optional[String]
+  - `assigned_by`: String
 - **`CharacterHealthChanged`**: Emitted when hit points change from damage or healing.
   - `delta`: Integer
   - `current_hp`: Integer, `max_hp`: Integer

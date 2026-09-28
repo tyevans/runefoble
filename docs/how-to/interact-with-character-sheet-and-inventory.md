@@ -149,3 +149,41 @@ Provides a validated form for creating new adventurers:
 ></runefoble-character-roster>
 ```
 
+---
+
+## 10. Backend Aggregate & Campaign Assignment REST API
+
+The event-sourced `CharacterAggregate` and `CharacterState` persist core 5e character attributes and campaign party assignment:
+
+### Core Character Attributes
+- **`subclass`** (`Optional[str]`): Specialization path (e.g. `"Evocation"`, `"Champion"`).
+- **`armor_class`** (`int`, default `10`): Defensive rating.
+- **`speed_ft`** (`int`, default `30`): Base movement speed per tactical turn.
+- **`ability_scores`** (`dict[str, int]`): Standard 5e scores (`str`, `dex`, `con`, `int`, `wis`, `cha`, default `10` each).
+- **`campaign_id`** (`Optional[str]`): UUID or slug of assigned campaign.
+
+### Campaign Assignment Endpoint
+To attach or detach an adventurer to an active campaign party, issue a `PATCH` request:
+
+```http
+PATCH /api/v1/characters/{character_id}/campaign
+Content-Type: application/json
+x-user-id: usr-dm-01
+
+{
+  "campaign_id": "camp-9812-frontier",
+  "assigned_by": "usr-dm-01"
+}
+```
+
+To unassign an adventurer back to free agent status in the player roster:
+```json
+{
+  "campaign_id": null
+}
+```
+
+### Domain Event & Zanzibar Security
+1. **Domain Event**: `CharacterAssignedToCampaign` (`character.assigned_to_campaign`) is created and applied to the event stream, then published to the `runefoble.events.character` Redis stream.
+2. **SpiceDB Synchronization**: Writing or removing the Zanzibar relationship `character:{id}#campaign@campaign:{campaign_id}` enforces fine-grained authorization under `runefoble.zed`.
+

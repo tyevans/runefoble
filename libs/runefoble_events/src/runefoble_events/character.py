@@ -18,6 +18,19 @@ class CharacterCreated(BaseRunefobleEvent):
     player_id: str | None = None
     campaign_id: UUID | str = ""
     personality_traits: list[str] = Field(default_factory=list)
+    subclass: str | None = None
+    armor_class: int = 10
+    speed_ft: int = 30
+    ability_scores: dict[str, int] = Field(
+        default_factory=lambda: {
+            "str": 10,
+            "dex": 10,
+            "con": 10,
+            "int": 10,
+            "wis": 10,
+            "cha": 10,
+        }
+    )
 
 
 @register_event
@@ -223,3 +236,17 @@ class CharacterPortraitUpdated(BaseRunefobleEvent):
 
 # Backward-compatible alias
 PortraitAssigned = CharacterPortraitUpdated
+
+
+@register_event("runefoble.events.character.assigned_to_campaign")
+@register_event("character.assigned_to_campaign", schema_version=1)
+class CharacterAssignedToCampaign(BaseRunefobleEvent):
+    """Emitted when a character is assigned to or unassigned from a campaign."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "character.assigned_to_campaign"
+    character_id: str = ""
+    campaign_id: str | None = None
+    assigned_by: str = ""
