@@ -65,8 +65,10 @@ def test_spa_router_declarations_and_api():
     assert "onRouteChanged(" in content
     assert "registerTeardown(" in content
     assert "setTitleResolver(" in content
+    assert "setAsyncTitleResolver(" in content
     assert "setRouteTitle(" in content
     assert "resolveTitle(" in content
+    assert "resolveTitleAsync(" in content
     assert "match(" in content
     assert "navigate(" in content
     assert "teardownCurrentRoute(" in content
@@ -118,6 +120,8 @@ def test_barrel_exports_and_header_integration():
 
 def test_typescript_router_unit_test_suite_execution():
     """Execute the Node-based TypeScript router unit test suite."""
+    import re
+
     assert TEST_ROUTER_TS.is_file()
     result = subprocess.run(
         [
@@ -133,5 +137,19 @@ def test_typescript_router_unit_test_suite_execution():
     assert result.returncode == 0, (
         f"Router tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )
-    assert "pass 10" in result.stdout
+    match = re.search(r"pass (\d+)", result.stdout)
+    assert match is not None, f"Could not find pass count in output: {result.stdout}"
+    assert int(match.group(1)) >= 14, f"Expected at least 14 passed tests, got {match.group(1)}"
     assert "fail 0" in result.stdout
+
+
+def test_vite_proxy_configuration():
+    """Verify frontend/vite.config.ts configures reverse proxy for /api/v1 and /ws."""
+    vite_config_path = FRONTEND_DIR / "vite.config.ts"
+    assert vite_config_path.is_file()
+    content = vite_config_path.read_text(encoding="utf-8")
+    assert "'/api/v1'" in content
+    assert "'/ws'" in content
+    assert "GATEWAY_API_URL" in content
+    assert "changeOrigin: true" in content
+    assert "ws: true" in content

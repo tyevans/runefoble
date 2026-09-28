@@ -194,3 +194,81 @@ describe('Router Navigation, Guards & Teardown Lifecycle', () => {
     assert.equal(router.getCurrentRoute()?.path, '#/campaigns');
   });
 });
+
+describe('Vite Proxy Configuration (TASK-0247)', () => {
+  it('configures reverse proxy for /api/v1 to gateway backend with changeOrigin', async () => {
+    const viteConfig = (await import('../vite.config.ts')).default;
+    const proxy = (viteConfig as any).server?.proxy;
+    assert.ok(proxy, 'server.proxy must be configured');
+    assert.ok(proxy['/api/v1'], 'proxy must contain /api/v1 mapping');
+    assert.equal(proxy['/api/v1'].target, process.env.GATEWAY_API_URL || 'http://localhost:8000');
+    assert.equal(proxy['/api/v1'].changeOrigin, true);
+  });
+
+  it('configures websocket proxy for /ws with ws protocol and flag', async () => {
+    const viteConfig = (await import('../vite.config.ts')).default;
+    const proxy = (viteConfig as any).server?.proxy;
+    assert.ok(proxy, 'server.proxy must be configured');
+    assert.ok(proxy['/ws'], 'proxy must contain /ws mapping');
+    const expectedWs = process.env.GATEWAY_WS_URL || (process.env.GATEWAY_API_URL || 'http://localhost:8000').replace(/^http/, 'ws');
+    assert.equal(proxy['/ws'].target, expectedWs);
+    assert.equal(proxy['/ws'].ws, true);
+  });
+});
+
+describe('Dynamic Route Title Resolution & Async Caching (TASK-0247)', () => {
+  let router: Router;
+
+  beforeEach(() => {
+    router = new Router();
+    router.reset();
+  });
+
+  it('asynchronously resolves entity titles and updates breadcrumbs during navigation', async () => {
+    let callCount = 0;
+    router.setAsyncTitleResolver(async (type, id) => {
+      callCount++;
+      if (type === 'campaign' && id === 'camp-1790564858218') {
+        return 'Curse of the Frost Giant';
+      }
+      if (type === 'session' && id === 'sess-deep-44') {
+        return 'Session #44: The Frozen Gate';
+      }
+      return undefined;
+    });
+
+    await router.navigate('#/campaigns/camp-1790564858218');
+    const current = router.getCurrentRoute();
+    assert.ok(current);
+    assert.equal(current.breadcrumbs.length, 2);
+    assert.equal(current.breadcrumbs[0].label, 'Campaigns');
+    assert.equal(current.breadcrumbs[1].label, 'Curse of the Frost Giant');
+    assert.equal(current.breadcrumbs[1].active, true);
+
+    // Navigate to session
+    await router.navigate('#/campaigns/camp-1790564858218/sessions/sess-deep-44');
+    const sessRoute = router.getCurrentRoute();
+    assert.ok(sessRoute);
+    assert.equal(sessRoute.breadcrumbs.length, 3);
+    assert.equal(sessRoute.breadcrumbs[0].label, 'Campaigns');
+    assert.equal(sessRoute.breadcrumbs[1].label, 'Curse of the Frost Giant');
+    assert.equal(sessRoute.breadcrumbs[2].label, 'Session #44: The Frozen Gate');
+
+    // Verify caching: calling resolveTitle synchronously returns cached title without re-fetching
+    const cached = router.resolveTitle('campaign', 'camp-1790564858218');
+    assert.equal(cached, 'Curse of the Frost Giant');
+    const prevCalls = callCount;
+    const asyncCached = await router.resolveTitleAsync('campaign', 'camp-1790564858218');
+    assert.equal(asyncCached, 'Curse of the Frost Giant');
+    assert.equal(callCount, prevCalls, 'Cached title must not invoke resolver again');
+  });
+
+  it('falls back to default identifier formatting if title resolution returns undefined', async () => {
+    router.setAsyncTitleResolver(async () => undefined);
+
+    await router.navigate('#/campaigns/camp-unknown-999');
+    const current = router.getCurrentRoute();
+    assert.ok(current);
+    assert.equal(current.breadcrumbs[1].label, 'Campaign #camp-unknown-999');
+  });
+});
