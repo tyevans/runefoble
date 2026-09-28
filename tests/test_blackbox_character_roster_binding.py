@@ -290,5 +290,8 @@ def test_frontend_app_shell_typescript_unit_suite():
     assert "creates character via createCharacter mutation" in result.stdout
     assert "assigns character to campaign and unassigns" in result.stdout
     assert "deletes character via deleteCharacter mutation" in result.stdout
-    assert "navigates to deep route #/characters/:characterId" in result.stdout
+    assert (
+        "navigates to deep route #/characters/:characterId" in result.stdout
+        or "navigates to deep route \\#/characters/:characterId" in result.stdout
+    )
     assert "fail 0" in result.stdout
