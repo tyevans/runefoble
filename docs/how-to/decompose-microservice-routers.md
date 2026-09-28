@@ -109,6 +109,15 @@ routers/
 │   ├── __init__.py      # Re-exports combined router and sub-routers
 │   ├── actions.py       # Action interceptor and pause window endpoints
 │   └── whispers.py      # Private narrative whisper endpoints
+├── settlement/
+│   ├── workers_router.py # Aggregator facade (< 35 lines)
+│   └── workers/
+│       ├── __init__.py   # Re-exports models and dynamic router properties
+│       ├── loaders.py    # Aggregate loading and Zanzibar authorization (< 80 lines)
+│       ├── operations.py # Assignment and operating cost recalculation (< 125 lines)
+│       ├── routes_roster.py # Worker assignment and roster listing (< 120 lines)
+│       ├── routes_relationships.py # Ties, mood updates, rumors (< 100 lines)
+│       └── routes_inventory.py # Shelf inventory, item prices, restocking (< 90 lines)
 └── intent/
     ├── __init__.py      # Re-exports combined intent router and sub-routers
     ├── disambiguation.py# Ambiguity detection, clarification prompts, and target matching

@@ -215,3 +215,139 @@ async def test_frontdoor_settlement_auth_lifecycle(client: TestClient, spicedb: 
         f"/api/v1/campaigns/{cid}/settlements/{sid}", headers={"x-user-id": intruder_id}
     )
     assert intruder_view.status_code == 403
+
+
+def test_workers_submodule_line_invariants():
+    """Verify all extracted worker submodules remain strictly < 130 lines and workers_router.py < 40 lines."""
+    base_dir = Path("services/game_session/src/game_session/settlement/workers")
+    assert base_dir.is_dir(), "workers package directory must exist"
+
+    router_py = Path("services/game_session/src/game_session/settlement/workers_router.py")
+    assert router_py.exists(), "workers_router.py must exist"
+    router_lines = len(router_py.read_text().splitlines())
+    assert router_lines < 40, f"workers_router.py must be strictly < 40 lines, got {router_lines}"
+
+    submodules = list(base_dir.glob("*.py"))
+    assert len(submodules) >= 4, (
+        "Expected at least loaders, operations, routes_roster, routes_relationships, routes_inventory"
+    )
+
+    for sm in submodules:
+        lines = len(sm.read_text().splitlines())
+        assert lines < 130, f"{sm.name} must be strictly < 130 lines per Invariant 6, got {lines}"
+
+
+def test_workers_backwards_compatibility_exports():
+    """Verify complete backwards compatibility of exported symbols from workers_router and workers."""
+    import game_session.settlement.workers as workers_pkg
+    import game_session.settlement.workers_router as wr_mod
+
+    for sym in ["router", "roster_router", "relationships_router", "inventory_router"]:
+        assert hasattr(wr_mod, sym), f"Missing exported symbol {sym} in workers_router"
+
+    for sym in [
+        "NPCWorkerAggregate",
+        "AssignWorkerRequest",
+        "NPCWorkerState",
+        "RelieveWorkerRequest",
+        "UpdateWorkerMoodRequest",
+        "WorkerInventoryItem",
+        "WorkerRelationship",
+    ]:
+        assert hasattr(workers_pkg, sym), f"Missing exported symbol {sym} in workers package"
+
+
+@pytest.mark.asyncio
+async def test_frontdoor_worker_modular_endpoints(
+    client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
+):
+    """Verify frontdoor execution across roster, relationships, rumors, and shelf inventory routers."""
+    cid = str(uuid4())
+    gm_id = f"gm_{uuid4().hex[:6]}"
+    await spicedb.write_relationship("campaign", cid, "dungeon_master", "user", gm_id)
+    await spicedb.write_relationship("campaign", cid, "player", "user", gm_id)
+    h = {"x-user-id": gm_id}
+
+    s_res = client.post(
+        f"/api/v1/campaigns/{cid}/settlements",
+        json={"name": "WorkerPort", "districts": ["market"]},
+        headers=h,
+    )
+    sid = s_res.json()["settlement_id"]
+    e_res = client.post(
+        f"/api/v1/settlements/{sid}/establishments",
+        json={"district_id": "market", "category": "commerce", "name": "Alchemy Haven"},
+        headers=h,
+    )
+    eid = e_res.json()["establishment_id"]
+
+    # 1. Assign worker with shelf & vault inventories and social ties
+    assign_res = client.post(
+        f"/api/v1/establishments/{eid}/workers",
+        json={
+            "name": "Alchemist Sarah",
+            "role": "apothecary",
+            "wage": 5,
+            "shelf_inventory": [{"item_id": "healing_pot", "stock": 5, "price_gp": 25}],
+            "vault_inventory": [
+                {"item_id": "black_lotus", "stock": 1, "price_gp": 200, "is_contraband": True}
+            ],
+            "relationships": [
+                {
+                    "target_npc": "pip",
+                    "relation": "rival",
+                    "intensity": 0.6,
+                    "notes": "Disputed recipe",
+                }
+            ],
+            "metadata": {"grievance": "overdue_supply"},
+        },
+        headers=h,
+    )
+    assert assign_res.status_code == 201
+    sarah = assign_res.json()
+    nid = sarah["npc_id"]
+
+    # 2. Worker detail lookup
+    worker_detail = client.get(f"/api/v1/npcs/{nid}", headers=h).json()
+    assert worker_detail["name"] == "Alchemist Sarah"
+
+    # 3. Inventory routes: shelf stock, vault stock, item lookup, and restock
+    inv_res = client.get(f"/api/v1/npcs/{nid}/inventory", headers=h).json()
+    assert inv_res["total_shelf_items"] == 1
+    assert inv_res["shelf_inventory"][0]["item_id"] == "healing_pot"
+
+    vault_res = client.get(f"/api/v1/npcs/{nid}/inventory/vault", headers=h).json()
+    assert len(vault_res) == 1 and vault_res[0]["item_id"] == "black_lotus"
+
+    item_lookup = client.get(f"/api/v1/npcs/{nid}/inventory/healing_pot", headers=h).json()
+    assert (item_lookup.get("price_gp") == 25 or item_lookup.get("unit_price") == 25) and (
+        item_lookup.get("stock") == 5 or item_lookup.get("quantity") == 5
+    )
+
+    restock_res = client.post(
+        f"/api/v1/npcs/{nid}/inventory/restock?destination=shelf",
+        json={"item_id": "mana_potion", "quantity": 3, "unit_price": 40},
+        headers=h,
+    )
+    assert restock_res.status_code == 200 and (
+        restock_res.json().get("stock") == 3 or restock_res.json().get("quantity") == 3
+    )
+
+    # 4. Relationships and rumors routes
+    rel_res = client.get(f"/api/v1/npcs/{nid}/relationships", headers=h).json()
+    assert len(rel_res) == 1 and (
+        rel_res[0].get("target_npc_id") == "pip" or rel_res[0].get("target_npc") == "pip"
+    )
+
+    rumor_res = client.get(f"/api/v1/npcs/{nid}/rumors", headers=h).json()
+    assert any(r["topic"] == "rival" and "recipe" in r["detail"] for r in rumor_res)
+    assert any(r["topic"] == "grievance" for r in rumor_res)
+
+    # 5. Relieve worker
+    rel_out = client.post(
+        f"/api/v1/establishments/{eid}/workers/{nid}/relieve",
+        json={"reason": "Contract completed"},
+        headers=h,
+    )
+    assert rel_out.status_code == 200 and rel_out.json()["status"] == "relieved"

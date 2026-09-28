@@ -300,7 +300,7 @@ The aggregator `frontend/src/components/runefoble-bulletin-board.styles.ts` comp
 
 ---
 
-## 5. Modular Settlement Auth & Zanzibar Permissions Architecture
+## 6. Modular Settlement Auth & Zanzibar Permissions Architecture
 
 Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authentication and object authorization in `services/game_session/src/game_session/settlement/auth/` are decoupled into single-responsibility submodules strictly under 130 lines:
 
@@ -309,6 +309,19 @@ Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authenticat
 - **`relationships.py`**: SpiceDB Zanzibar tuple writers (`write_settlement_relationships`, `write_establishment_relationships`, `write_npc_relationships`, `write_negotiation_relationships`).
 - **`dependencies.py`**: FastAPI route dependency factories (`get_current_settlement_user`, `require_haven_builder`, `require_establishment_manager`, `require_haven_viewer`).
 - **`auth.py` / `__init__.py`**: Aggregator facades (< 40 lines) preserving 100% backwards-compatible re-exports for existing routers and services.
+
+---
+
+## 7. Modular Settlement Workers APIRouter Architecture
+
+Per ADR-0003, ADR-0007, ADR-0013, and PRD-0024, the settlement NPC workers router is decomposed into dedicated submodules under `services/game_session/src/game_session/settlement/workers/` with all route modules remaining strictly under 130 lines:
+
+- **`routes_roster.py`**: Worker assignment (`POST /api/v1/establishments/{id}/workers`), staff listing (`GET /api/v1/establishments/{id}/workers`), roster operations projection (`GET /api/v1/establishments/{id}/roster`), duty relieving (`POST /api/v1/establishments/{id}/workers/{npc_id}/relieve`), and worker profile retrieval (`GET /api/v1/npcs/{npc_id}`).
+- **`routes_relationships.py`**: Interpersonal social ties (`POST /api/v1/npcs/{npc_id}/relationships`), relationship queries (`GET /api/v1/npcs/{npc_id}/relationships`), mood and loyalty updates (`PATCH /api/v1/npcs/{npc_id}/mood`), and workplace rumor discovery (`GET /api/v1/npcs/{npc_id}/rumors`).
+- **`routes_inventory.py`**: Shelf stock listings (`GET /api/v1/npcs/{npc_id}/inventory`), manager backroom vault access (`GET /api/v1/npcs/{npc_id}/inventory/vault`), item pricing lookups (`GET /api/v1/npcs/{npc_id}/inventory/{item_id}`), and merchandise restocking (`POST /api/v1/npcs/{npc_id}/inventory/restock`).
+- **`loaders.py` & `operations.py`**: Aggregate loaders, SpiceDB Zanzibar object-level permission enforcement, and establishment operational metrics synchronization.
+- **`workers_router.py`**: Aggregator router facade (< 35 lines) combining `roster_router`, `relationships_router`, and `inventory_router` with 100% backward route compatibility.
+
 
 
 
