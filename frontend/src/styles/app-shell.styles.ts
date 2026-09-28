@@ -74,6 +74,22 @@ export const appShellStyles = css`
     font-weight: 500; z-index: 1000;
   }
 
+  .dm-party-inspector {
+    display: flex; flex-direction: column; gap: 8px; padding: 12px;
+    background: var(--rf-bg-surface); border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    box-shadow: var(--rf-shadow); box-sizing: border-box;
+  }
+  .dm-badge {
+    font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--rf-accent-primary);
+  }
+  .dm-character-switcher {
+    padding: 6px 10px; font-size: 0.85rem; font-family: inherit;
+    background: var(--rf-bg-canvas); color: var(--rf-text-primary);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    border-radius: var(--rf-border-radius, 0px); cursor: pointer;
+  }
+
   .character-sheet-view {
     display: flex; flex-direction: column; gap: 20px;
     max-width: 1400px; margin: 0 auto; width: 100%;
