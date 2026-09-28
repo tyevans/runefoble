@@ -62,8 +62,25 @@ def test_typescript_element_source_and_storybook() -> None:
     stories_file = ui_dir / "src/runefoble-campaign-analytics.stories.ts"
     assert stories_file.is_file()
     stories_content = stories_file.read_text(encoding="utf-8")
-    for state in ["EmptyState", "ActiveCombatTelemetry", "VictoryCelebration", "TotalPartyKill"]:
+    assert len(stories_content.splitlines()) < 100
+    for state in [
+        "EmptyState",
+        "ActiveCombatTelemetry",
+        "VictoryCelebration",
+        "TotalPartyKill",
+        "Default",
+        "HeatmapDensity",
+        "CombatMVP",
+        "ChronicleTimeline",
+    ]:
         assert state in stories_content
+
+    fixtures_file = ui_dir / "src/fixtures/campaign-analytics.fixtures.ts"
+    assert fixtures_file.is_file()
+    fixtures_content = fixtures_file.read_text(encoding="utf-8")
+    assert len(fixtures_content.splitlines()) < 130
+    for fixture in ["MOCK_HEATMAP_ACTIVE", "MOCK_MVP_ACTIVE", "MOCK_TIMELINE_ACTIVE"]:
+        assert fixture in fixtures_content
 
 
 @pytest.mark.asyncio
