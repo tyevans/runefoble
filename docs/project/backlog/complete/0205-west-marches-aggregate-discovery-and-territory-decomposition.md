@@ -1,7 +1,7 @@
 ---
 id: '0205'
 title: West Marches Aggregate Discovery and Territory Handlers Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0127
@@ -15,8 +15,8 @@ governing_stories:
 - US-0050
 - US-0058
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/279
 ---
-
 # TASK-0205: West Marches Aggregate Discovery and Territory Handlers Modular Decomposition
 
 ## Status
