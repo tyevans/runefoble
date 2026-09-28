@@ -19,6 +19,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **West Marches Aggregate Discovery and Territory Handlers Modular Decomposition (`TASK-0205`, `ADR-0003`, `ADR-0007`, `ADR-0011`)**:
+  - Decomposed `services/campaign_lore/src/campaign_lore/west_marches_aggregate.py` from 304 lines to 148 lines (< 150 lines limit) by extracting discovery pin mutation logic, territory claim evaluations, and outpost fortification calculations into `services/campaign_lore/src/campaign_lore/west_marches_handlers.py` (125 lines, strictly < 130 lines limit).
+  - Moved `WestMarchesState` to `services/campaign_lore/src/campaign_lore/models.py` (52 lines, < 500 lines limit) and re-exported from `west_marches_aggregate.py` for 100% backward compatibility.
+  - Implemented pure domain helpers `calculate_boons`, `calculate_defensive_buffer`, `evaluate_territory_claim`, `build_discovery_entry`, `apply_discovery`, `build_notice_entry`, `apply_outpost_established`, and `apply_outpost_upgraded` in `west_marches_handlers.py`.
+  - Streamlined `WestMarchesAtlasAggregate` (aliased as `WestMarchesWorldAggregate`) with declarative `@handles` routing delegating state mutations to imported handlers.
+  - Created blackbox test suite `tests/test_blackbox_west_marches.py` verifying file length invariants, territory conflict distance checks, outpost upgrades with active boons, discovery pin publishing, and tavern notices.
+  - Updated Diataxis guide `docs/how-to/coordinate-west-marches-shared-world-and-caravans.md`.
 - **Project Visualizer Graph Rendering Modular Decomposition (`TASK-0217`, `ADR-0004`, `ADR-0012`)**:
   - Decomposed monolithic script `tools/project_visualizer/static/js/graph.js` (371 lines) into focused submodules under `tools/project_visualizer/static/js/graph/`, reducing `graph.js` to 63 lines (< 70 lines) and keeping all submodules strictly < 150 lines per Hard Invariant 6:
     - `simulation.js` (74 lines): Force simulation engine configuring layout switching (network/flow/radial), physics toggles (freeze/run), and kinetic reheat/shuffle (< 90 lines).

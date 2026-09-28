@@ -471,3 +471,13 @@ Per **ADR-0003**, **ADR-0007**, **ADR-0011**, and **Hard Invariant 6** (< 500 li
 - **`trade_operations.py`** (< 140 lines): Mixin handling resource caravan dispatch and trade completion.
 - **`ledger.py`** (< 140 lines): `CaravanLedgerAggregate` DeclarativeAggregate managing regional stock.
 - **`caravan.py` & `caravan_ledger.py`** (< 30 lines each): Backward-compatible facades re-exporting aggregates.
+
+## 11. Modular West Marches Shared World Aggregate & Handlers Architecture
+
+Per **ADR-0003**, **ADR-0007**, **ADR-0011**, and **Hard Invariant 6** (< 500 lines per file), the shared frontier domain logic in `services/campaign_lore/src/campaign_lore/` is modularized into:
+
+- **`west_marches_aggregate.py`** (< 150 lines): Streamlined `WestMarchesAtlasAggregate` (`DeclarativeAggregate[WestMarchesState]`) handling declarative `@handles` routing for `SharedWorldCreated`, `CampaignRegisteredToSharedWorld`, `CrossCampaignDiscoveryShared`, `OutpostEstablished`, `SharedStrongholdUpgraded`, and `CommunalNoticePosted`.
+- **`west_marches_handlers.py`** (< 130 lines): Pure domain calculation helpers (`calculate_boons`, `calculate_defensive_buffer`), outpost fortification logic (`build_default_outpost`, `apply_outpost_established`, `apply_outpost_upgraded`), POI mutation routines (`build_discovery_entry`, `apply_discovery`, `build_notice_entry`), and territory conflict evaluations (`evaluate_territory_claim`).
+- **`models.py`** (< 500 lines): Defines `WestMarchesState` Pydantic model for persistent world projection state.
+- **`tests/test_blackbox_west_marches.py`** (< 500 lines): Frontdoor verification covering territory claims, outpost facility upgrades, discovery pin publishing, and tavern notice postings.
+
