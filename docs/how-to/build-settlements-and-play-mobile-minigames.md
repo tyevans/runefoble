@@ -77,7 +77,59 @@ curl -X POST http://localhost:8000/api/v1/establishments/est-ember-01/workers \
   }'
 ```
 
+### Step 3: Query Staff Roster & Operational Projections
+
+```bash
+curl -X GET http://localhost:8000/api/v1/establishments/est-ember-01/roster \
+  -H "x-user-id: user-dm-01"
+```
+
+Response includes computed service quality score, operational costs, and redstring knowledge graph edges:
+
+```json
+{
+  "establishment_id": "est-ember-01",
+  "workers": [...],
+  "operations": {
+    "total_staff": 1,
+    "total_wages": 12,
+    "net_operating_cost": 57,
+    "projected_service_quality": 2.2,
+    "service_quality_tier": "standard",
+    "interpersonal_tension_index": 0.15
+  },
+  "social_graph_edges": [
+    {
+      "source_id": "npc-torvin-01",
+      "target_id": "npc_baker_marta",
+      "relationship_type": "debtor",
+      "intensity": 0.6,
+      "confidence": 0.95
+    }
+  ]
+}
+```
+
+### Step 4: Shift Worker Mood & Temperament
+
+When external world events occur (e.g. flour supply hijacked by river bandits), update worker temperament:
+
+```bash
+curl -X PATCH http://localhost:8000/api/v1/npcs/npc-torvin-01/mood \
+  -H "Content-Type: application/json" \
+  -H "x-user-id: user-dm-01" \
+  -d '{
+    "mood": "desperate",
+    "temperament": "Anxious and Desperate",
+    "patience_delta": -3,
+    "metadata": {"crisis": "ore_shortage"}
+  }'
+```
+
+This emits `NPCMoodUpdated`, updates individual morale, and dynamically recalculates projected service quality across the establishment storefront.
+
 ---
+
 
 ## 3. Playing Mobile-First Web Minigames (No App Install)
 

@@ -141,6 +141,13 @@ class EstablishmentState(BaseModel):
     status: str = "operational"
     owner_id: str = ""
     is_constructed: bool = False
+    staff: list[str] = Field(default_factory=list)
+    staff_count: int = 0
+    total_wages: int = 0
+    net_operating_cost: int = 5
+    projected_service_quality: float = 1.0
+    service_quality_tier: str = "standard"
+    interpersonal_tension_index: float = 0.0
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

@@ -4,6 +4,7 @@
 
 from runefoble_events.faction_resources import *
 from runefoble_events.lore import *
+from runefoble_events.settlement_workers import *
 from runefoble_events.settlements import *
 from runefoble_events.turf_war import *
 from runefoble_events.watcher import (
@@ -33,6 +34,12 @@ __all__ = [
     "CommunalNoticePosted",
     "CrossCampaignDiscoveryShared",
     "EntitiesExtracted",
+    "EstablishmentConstructed",
+    "EstablishmentConstructedEvent",
+    "EstablishmentOperationsUpdated",
+    "EstablishmentOperationsUpdatedEvent",
+    "EstablishmentUpgraded",
+    "EstablishmentUpgradedEvent",
     "FactionAgendaAdvanced",
     "FactionAgendaSet",
     "FactionBriberyAttempted",
@@ -50,6 +57,14 @@ __all__ = [
     "HandoutGenerated",
     "InvisibleInkRevealed",
     "LoreDocumentIngested",
+    "NPCMoodUpdated",
+    "NPCMoodUpdatedEvent",
+    "NPCRelationshipFormed",
+    "NPCRelationshipFormedEvent",
+    "NPCWorkerAssigned",
+    "NPCWorkerAssignedEvent",
+    "NPCWorkerRelieved",
+    "NPCWorkerRelievedEvent",
     "OutpostEstablished",
     "RegionalMerchantStockUpdated",
     "RegionalUnrestEscalated",

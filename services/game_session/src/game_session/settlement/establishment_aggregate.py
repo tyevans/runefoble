@@ -16,6 +16,7 @@ from game_session.settlement.models import (
 )
 from runefoble_events.settlements import (
     EstablishmentConstructedEvent,
+    EstablishmentOperationsUpdatedEvent,
     EstablishmentUpgradedEvent,
 )
 
@@ -67,6 +68,19 @@ class EstablishmentAggregate(DeclarativeAggregate[EstablishmentState]):
         for a in ev.added_amenities:
             if a not in self._state.amenities:
                 self._state.amenities.append(a)
+
+    @handles(EstablishmentOperationsUpdatedEvent)
+    def handle_operations_updated(self, ev: EstablishmentOperationsUpdatedEvent) -> None:
+        """Handle operational staffing, wages, and service quality updates."""
+        self._state.staff = list(ev.staff)
+        self._state.staff_count = len(ev.staff)
+        self._state.total_wages = ev.total_wages
+        self._state.net_operating_cost = self._state.operating_cost + ev.total_wages
+        self._state.projected_service_quality = ev.projected_service_quality
+        self._state.service_quality_tier = ev.service_quality_tier
+        self._state.interpersonal_tension_index = ev.interpersonal_tension_index
+        for k, v in ev.metadata.items():
+            self._state.metadata[k] = v
 
     def construct(
         self,
@@ -149,3 +163,26 @@ class EstablishmentAggregate(DeclarativeAggregate[EstablishmentState]):
             metadata=metadata or {},
         )
         return tier
+
+    def sync_operations(
+        self,
+        staff: list[str],
+        total_wages: int,
+        projected_service_quality: float,
+        service_quality_tier: str,
+        interpersonal_tension_index: float,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Record updated operational staff, wages, and service quality projection."""
+        eid = str(self._state.establishment_id or self.aggregate_id)
+        self.create_event(
+            EstablishmentOperationsUpdatedEvent,
+            aggregate_id=_to_uuid(eid),
+            establishment_id=eid,
+            staff=list(staff),
+            total_wages=total_wages,
+            projected_service_quality=projected_service_quality,
+            service_quality_tier=service_quality_tier,
+            interpersonal_tension_index=interpersonal_tension_index,
+            metadata=metadata or {},
+        )

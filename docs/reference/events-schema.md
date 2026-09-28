@@ -1054,6 +1054,15 @@ For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `Intoxic
 
 - **`EstablishmentConstructedEvent`** (`runefoble.events.game_session.establishment_constructed` / `EstablishmentConstructed`): Emitted when a new commercial, civic, faith, underworld, or hospitality establishment is constructed in a zoned settlement district. Fields: `establishment_id`, `settlement_id`, `district_id`, `category`, `name`, `campaign_id`, `tier`, `capacity`, `operating_cost`, `amenities`, `owner_id`, `metadata`.
 - **`EstablishmentUpgradedEvent`** (`runefoble.events.game_session.establishment_upgraded` / `EstablishmentUpgraded`): Emitted when an establishment advances in tier, expanding patron capacity, operating costs, and amenities. Fields: `establishment_id`, `settlement_id`, `tier`, `added_amenities`, `capacity`, `operating_cost`, `metadata`.
+- **`EstablishmentOperationsUpdatedEvent`** (`runefoble.events.game_session.establishment_operations_updated` / `EstablishmentOperationsUpdated`): Emitted when active staff, total wages, and projected service quality update. Fields: `establishment_id`, `staff`, `total_wages`, `projected_service_quality`, `service_quality_tier`, `interpersonal_tension_index`, `metadata`.
+
+### Assignable NPC Worker & Social Graph Events (`aggregate_type: NPCWorker`)
+
+- **`NPCWorkerAssigned`** (`runefoble.events.game_session.npc_worker_assigned` / `NPCWorkerAssignedEvent`): Emitted when an NPC is hired or assigned to a role in an establishment storefront. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `npc_id`, `establishment_id`, `role`, `wage`, `assigned_at`, `name`, `campaign_id`, `traits`, `vices`, `trade_proficiencies`, `shelf_inventory`, `backroom_inventory`, `patience`, `metadata`.
+- **`NPCWorkerRelieved`** (`runefoble.events.game_session.npc_worker_relieved` / `NPCWorkerRelievedEvent`): Emitted when an NPC worker is relieved, dismissed, or fired from an establishment. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `npc_id`, `establishment_id`, `reason`, `metadata`.
+- **`NPCMoodUpdated`** (`runefoble.events.game_session.npc_mood_updated` / `NPCMoodUpdatedEvent`): Emitted when an NPC worker's mood, temperament, or patience shifts. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `npc_id`, `mood`, `temperament`, `patience_delta`, `metadata`.
+- **`NPCRelationshipFormed`** (`runefoble.events.game_session.npc_relationship_formed` / `NPCRelationshipFormedEvent`): Emitted when an interpersonal social or supply tie is established between NPCs. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `source_npc_id`, `target_npc_id`, `relation_type`, `intensity`, `notes`, `metadata`.
+
 
 ### Frontier Mercenary Bounty & Retrieval Contract Events (`aggregate_type: MercenaryBounty`)
 
