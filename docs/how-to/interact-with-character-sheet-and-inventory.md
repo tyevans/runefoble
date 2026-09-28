@@ -199,3 +199,21 @@ The application shell (`frontend/src/runefoble-app.ts`) routes `#/characters/:ch
 3. **Dynamic Breadcrumbs**: Automatically resolves entity names into hierarchical breadcrumbs (`Home > Characters > [Character Name]`).
 4. **Header Navigation**: Features a prominent **"← Back to Roster"** button returning players to `#/characters`.
 
+---
+
+## 12. Character Management and Tabletop Sync Blackbox Test Suite (TASK-0258)
+
+The complete end-to-end lifecycle across the Gateway API, SpiceDB Zanzibar authorization, pre-game lobby synchronization, and active VTT character card binding is verified via dual blackbox test suites:
+
+- **Python Gateway & Zanzibar Suite** (`tests/test_blackbox_character_management_and_vtt_sync.py`):
+  - `test_character_crud_and_zanzibar_ownership`: Frontdoor character creation via `POST /api/v1/characters`, SpiceDB owner tuple verification, and owner-only deletion.
+  - `test_character_campaign_assignment`: Verifies `PATCH /api/v1/characters/{id}/campaign` writes campaign relationships, propagates view permissions to campaign members, and revokes access upon unassignment.
+  - `test_character_listing_filtered_by_zanzibar_visibility`: Verifies character listing isolation and campaign party visibility.
+  - `test_profile_endpoint_claims_and_roles`: Verifies `GET /api/v1/profile` Zitadel OIDC claims and role assertions.
+- **Frontend Blackbox Integration Suite** (`frontend/test/character-management-and-profile.test.ts`):
+  - `test_roster_inspect_sheet_navigates_to_deep_route`: Verifies clicking "Inspect Sheet" navigates to `#/characters/:id`, updates breadcrumbs, and mounts `<runefoble-character-sheet>`.
+  - `test_campaign_creation_single_event_dispatch`: Verifies campaign creation stops bubbling and prevents duplicate dashboard cards.
+  - `test_profile_route_renders_user_claims`: Verifies routing to `#/profile` and claims rendering.
+  - `test_lobby_character_selection_and_vtt_sync`: Verifies lobby character selection propagation and dynamic VTT character card binding.
+
+
