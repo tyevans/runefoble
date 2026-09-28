@@ -5,7 +5,7 @@ import { type CampaignItem, type UpdateCampaignPayload, formatRulesetSystem } fr
 
 @customElement('runefoble-campaign-header')
 export class RunefobleCampaignHeader extends LitElement {
-  static styles = [campaignHeaderStyles];
+  static styles = campaignHeaderStyles;
 
   @property({ type: Object }) campaign: CampaignItem | null = null;
   @property({ type: Boolean, attribute: 'can-manage' }) canManage = false;
