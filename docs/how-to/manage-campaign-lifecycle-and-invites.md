@@ -351,5 +351,6 @@ Key features of `<runefoble-campaign-header>`:
 - **Narrative Lore Block**: Presents the campaign introduction and synopsis with readable line-height and Bauhaus typography tokens.
 - **SpiceDB Zanzibar Guarded Editing**: Renders the "Edit Campaign" button strictly when `canManage=true` (granted to users holding `manage` permission in SpiceDB Zanzibar schema).
 - **Edit Campaign Modal**: Provides a form to update title, setting, system ruleset, cover art URL, and narrative description, dispatching standard `@update-campaign` custom events with `UpdateCampaignPayload`.
+- **Modular Styles Architecture**: Scoped styles are decomposed into focused submodules under `services/game_session/ui/src/campaigns/styles/` (`header_hero.styles.ts`, `header_meta.styles.ts`, `header_actions.styles.ts`), composed via `campaignHeaderStyles` in `runefoble-campaign-header.styles.ts` (keeping all style modules strictly < 150 lines per Hard Invariant 6).
 
 

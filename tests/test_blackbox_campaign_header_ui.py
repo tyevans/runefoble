@@ -152,6 +152,11 @@ def test_zero_hardcoded_hexes_in_campaign_header_styles() -> None:
     assert styles_file.is_file()
 
     css_text = styles_file.read_text(encoding="utf-8")
+    styles_sub_dir = CAMPAIGNS_DIR / "styles"
+    if styles_sub_dir.is_dir():
+        for sub_file in styles_sub_dir.glob("header_*.styles.ts"):
+            css_text += "\n" + sub_file.read_text(encoding="utf-8")
+
     matches = hex_pattern.findall(css_text)
     assert not matches, f"Found hardcoded hex literals in campaign header styles: {matches}"
 

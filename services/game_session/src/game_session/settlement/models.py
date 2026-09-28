@@ -31,6 +31,23 @@ class EstablishmentCategory(StrEnum):
     UNDERWORLD = "underworld"
 
 
+class BulletinBoardType(StrEnum):
+    """Physical location and atmosphere of a community notice board."""
+
+    TOWN_SQUARE = "town_square"
+    TAVERN = "tavern"
+    GUILDHALL = "guildhall"
+
+
+class BulletinCategory(StrEnum):
+    """Functional category of a pinned proclamation or parchment note."""
+
+    BOUNTY = "bounty"
+    RUMOR = "rumor"
+    ORDINANCE = "ordinance"
+    JOB = "job"
+
+
 SCALE_TO_TIER: dict[str, int] = {
     "hamlet": 1,
     "thorp": 1,
@@ -98,6 +115,28 @@ FACILITY_TIER_NAMES: dict[str, dict[int, str]] = {
 }
 
 
+class BulletinNoticeState(BaseModel):
+    """Event-sourced state of a notice pinned to a settlement bulletin board."""
+
+    notice_id: str
+    settlement_id: str
+    board_type: str = "town_square"
+    title: str
+    author_id: str
+    category: str = "rumor"
+    content: str
+    wax_sealed: bool = False
+    cipher_encoded: bool = False
+    cipher_puzzle: str = "rot13"
+    cipher_solution: str = ""
+    cipher_hint: str = ""
+    hidden_content: str = ""
+    decrypted_by: list[str] = Field(default_factory=list)
+    status: str = "active"
+    created_at: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class SettlementState(BaseModel):
     """Event-sourced state of a persistent settlement haven and district layout."""
 
@@ -123,6 +162,7 @@ class SettlementState(BaseModel):
     region: str = "Wilderness"
     chartered_by: str = ""
     is_founded: bool = False
+    bulletin_notices: dict[str, BulletinNoticeState] = Field(default_factory=dict)
 
 
 class EstablishmentState(BaseModel):
@@ -213,3 +253,46 @@ class SettlementProjectionResponse(BaseModel):
     facilities: dict[str, int] = Field(default_factory=dict)
     active_boons: dict[str, str] = Field(default_factory=dict)
     establishments: list[EstablishmentState] = Field(default_factory=list)
+
+
+class PinBulletinNoticeRequest(BaseModel):
+    """Request payload to pin a notice or bounty to a settlement bulletin board."""
+
+    board_type: str = "town_square"
+    title: str
+    category: str = "rumor"
+    content: str
+    wax_sealed: bool = False
+    cipher_encoded: bool = False
+    cipher_puzzle: str = "rot13"
+    cipher_solution: str = ""
+    cipher_hint: str = ""
+    hidden_content: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class DecryptCipherNoticeRequest(BaseModel):
+    """Request payload to submit a cipher decryption solution."""
+
+    solution: str
+
+
+class BulletinNoticeResponse(BaseModel):
+    """Client projection of a pinned bulletin notice with selective cipher masking."""
+
+    notice_id: str
+    settlement_id: str
+    board_type: str
+    title: str
+    author_id: str
+    category: str
+    content: str
+    wax_sealed: bool = False
+    cipher_encoded: bool = False
+    cipher_puzzle: str = ""
+    cipher_hint: str = ""
+    hidden_content: str | None = None
+    is_decrypted: bool = False
+    status: str = "active"
+    created_at: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)

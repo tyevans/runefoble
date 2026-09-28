@@ -226,6 +226,7 @@ definition settlement {
 
     // Managing or defending settlement
     permission manage = founder + guild_officer + shared_world->manage + campaign->run_session
+    permission edit = upgrade + manage
 }
 
 definition establishment {
@@ -323,6 +324,21 @@ definition negotiation {
     permission arbitrate = arbitrator + campaign->run_session + session->control + establishment->manage
     permission manage = arbitrate
 }
+
+definition bulletin_notice {
+    relation settlement: settlement
+    relation campaign: campaign
+    relation author: user
+    relation reader: user
+
+    // Notices can be viewed by author, designated readers, or anyone who can view the settlement/campaign
+    permission view = author + reader + settlement->view + campaign->view
+
+    // Editing, removing, or moderating notices requires author, settlement manager, or campaign DM
+    permission edit = author + settlement->manage + campaign->run_session
+    permission manage = author + settlement->manage + campaign->run_session
+}
+
 
 
 

@@ -28,6 +28,15 @@ from game_session.settlement.auth import (
     write_establishment_relationships,
     write_settlement_relationships,
 )
+from game_session.settlement.bulletin_router import (
+    decrypt_cipher_notice,
+    list_bulletin_notices,
+    pin_bulletin_notice,
+    remove_bulletin_notice,
+)
+from game_session.settlement.bulletin_router import (
+    router as bulletin_router,
+)
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.models import (
     ConstructEstablishmentRequest,
@@ -40,6 +49,7 @@ from game_session.settlement.models import (
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 
 router = APIRouter(tags=["settlement-haven-builder"])
+router.include_router(bulletin_router)
 
 
 def _to_uuid(val: Any) -> UUID:
@@ -329,3 +339,13 @@ async def upgrade_establishment(
 
     await _save_and_publish(get_establishment_repository(), get_event_bus(), agg)
     return agg.state
+
+
+__all__ = [
+    "bulletin_router",
+    "decrypt_cipher_notice",
+    "list_bulletin_notices",
+    "pin_bulletin_notice",
+    "remove_bulletin_notice",
+    "router",
+]

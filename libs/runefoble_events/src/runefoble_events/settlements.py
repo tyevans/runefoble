@@ -164,6 +164,60 @@ class EstablishmentOperationsUpdatedEvent(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+@register_event("runefoble.events.game_session.bulletin_notice_pinned")
+class BulletinNoticePinnedEvent(BaseRunefobleEvent):
+    """Fired when a new bulletin notice, bounty, rumor, or job is pinned to a board."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Settlement"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.game_session.bulletin_notice_pinned"
+    notice_id: str
+    settlement_id: str
+    board_type: str = "town_square"
+    title: str
+    author_id: str
+    category: str = "rumor"
+    content: str
+    wax_sealed: bool = False
+    cipher_encoded: bool = False
+    cipher_puzzle: str = "rot13"
+    cipher_solution: str = ""
+    cipher_hint: str = ""
+    hidden_content: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.game_session.bulletin_notice_removed")
+class BulletinNoticeRemovedEvent(BaseRunefobleEvent):
+    """Fired when a notice is removed or fulfilled from a bulletin board."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Settlement"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.game_session.bulletin_notice_removed"
+    notice_id: str
+    settlement_id: str
+    remover_id: str = ""
+    reason: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+@register_event("runefoble.events.game_session.cipher_notice_decrypted")
+class CipherNoticeDecryptedEvent(BaseRunefobleEvent):
+    """Fired when a player successfully decrypts a coded cipher notice."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Settlement"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.game_session.cipher_notice_decrypted"
+    notice_id: str
+    settlement_id: str
+    player_id: str
+    decrypted_content: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 SettlementChartered = SettlementCharteredEvent
 SettlementUpgraded = SettlementUpgradedEvent
 SettlementRestBoonClaimed = SettlementRestBoonClaimedEvent
@@ -172,8 +226,17 @@ SettlementTierUpgraded = SettlementTierUpgradedEvent
 EstablishmentConstructed = EstablishmentConstructedEvent
 EstablishmentUpgraded = EstablishmentUpgradedEvent
 EstablishmentOperationsUpdated = EstablishmentOperationsUpdatedEvent
+BulletinNoticePinned = BulletinNoticePinnedEvent
+BulletinNoticeRemoved = BulletinNoticeRemovedEvent
+CipherNoticeDecrypted = CipherNoticeDecryptedEvent
 
 __all__ = [
+    "BulletinNoticePinned",
+    "BulletinNoticePinnedEvent",
+    "BulletinNoticeRemoved",
+    "BulletinNoticeRemovedEvent",
+    "CipherNoticeDecrypted",
+    "CipherNoticeDecryptedEvent",
     "EstablishmentConstructed",
     "EstablishmentConstructedEvent",
     "EstablishmentOperationsUpdated",
