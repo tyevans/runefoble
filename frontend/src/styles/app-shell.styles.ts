@@ -62,4 +62,18 @@ export const appShellStyles = css`
     color: var(--rf-text-muted);
     margin-bottom: 24px;
   }
+
+  .toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--rf-bg-surface);
+    color: var(--rf-text-primary);
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    border-left: 6px solid var(--rf-accent-primary);
+    padding: 12px 20px;
+    box-shadow: var(--rf-shadow);
+    font-weight: 500;
+    z-index: 1000;
+  }
 `;

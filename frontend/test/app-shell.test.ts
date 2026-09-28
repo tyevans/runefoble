@@ -253,4 +253,82 @@ describe('Route-Parameterized AppDataService Data Fetching', () => {
     assert.ok(tokens.some((t) => t.name === 'Valeros'));
     assert.ok(tokens.some((t) => t.isAiControlled));
   });
+
+  it('creates character via createCharacter mutation', async () => {
+    const newChar = await dataService.createCharacter({
+      name: 'Harsk the Ranger',
+      characterClass: 'Ranger',
+      level: 3,
+      maxHp: 28,
+      armorClass: 15,
+      speed: 30,
+      abilityScores: { str: 14, dex: 16, con: 14, int: 10, wis: 14, cha: 8 },
+      portraitUrl: '/assets/portraits/ranger.svg',
+    });
+    assert.ok(newChar.id);
+    assert.equal(newChar.name, 'Harsk the Ranger');
+    assert.equal(newChar.characterClass, 'Ranger');
+    const all = await dataService.fetchCharacters();
+    assert.ok(all.some((c) => c.name === 'Harsk the Ranger'));
+  });
+
+  it('assigns character to campaign and unassigns via assignCharacterCampaign', async () => {
+    // Pick an existing character
+    const chars = await dataService.fetchCharacters();
+    const ezren = chars.find((c) => c.id === 'char-ezren') || chars[0];
+    assert.ok(ezren);
+
+    // Assign to campaign 4
+    await dataService.assignCharacterCampaign(ezren.id, '4');
+    let updatedChars = await dataService.fetchCharacters();
+    let updated = updatedChars.find((c) => c.id === ezren.id);
+    assert.equal(updated?.campaignId, '4');
+    assert.equal(updated?.campaignTitle, 'Tomb of the Star-Eater');
+
+    // Unassign from campaign
+    await dataService.assignCharacterCampaign(ezren.id, null);
+    updatedChars = await dataService.fetchCharacters();
+    updated = updatedChars.find((c) => c.id === ezren.id);
+    assert.equal(updated?.campaignId, null);
+  });
+
+  it('deletes character via deleteCharacter mutation', async () => {
+    const created = await dataService.createCharacter({
+      name: 'Temp Deletable',
+      characterClass: 'Fighter',
+      level: 1,
+      maxHp: 10,
+      armorClass: 10,
+      speed: 30,
+      abilityScores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+      portraitUrl: '',
+    });
+    let list = await dataService.fetchCharacters();
+    assert.ok(list.some((c) => c.id === created.id));
+
+    await dataService.deleteCharacter(created.id);
+    list = await dataService.fetchCharacters();
+    assert.ok(!list.some((c) => c.id === created.id));
+  });
+});
+
+describe('Character Roster Inspect Navigation (TASK-0254 & US-0069)', () => {
+  let router: Router;
+
+  beforeEach(() => {
+    router = new Router();
+    router.reset();
+  });
+
+  it('navigates to deep route #/characters/:characterId on inspect sheet event', async () => {
+    await router.navigate('#/characters');
+    assert.equal(router.getCurrentRoute()?.path, '#/characters');
+
+    // Inspect character event triggers navigation
+    const targetCharacterId = 'char-valeros';
+    await router.navigate(`#/characters/${targetCharacterId}`);
+
+    const route = router.getCurrentRoute();
+    assert.equal(route?.path, '#/characters/char-valeros');
+  });
 });

@@ -80,3 +80,31 @@ Instead of hardcoded mock state, the App Shell fetches data parameterized by rou
 - **Session Lobby**: Fetches participant readiness from `GET /api/v1/sessions/:id`.
 - **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`.
 - **Session Scheduling & Staging**: Creates new sessions or launches staging lobbies from `POST /api/v1/campaigns/:id/sessions` via `<runefoble-session-modal>`.
+
+## 5. Character Roster Event Binding & Data Mutations
+
+When mounting `<runefoble-character-roster>` on the `#/characters` route, the App Shell wires event listeners for all dispatched roster actions to bridge UI interactions with Gateway API persistence:
+
+| Event | Dispatched Detail | App Shell Handler | Gateway Endpoint / State Mutation |
+|---|---|---|---|
+| `@create-character` | `CreateCharacterPayload` | `handleCreateCharacter(e)` | `POST /api/v1/characters` via `appDataService.createCharacter()` + toast confirmation + roster refresh |
+| `@assign-campaign` | `AssignCampaignEventDetail` | `handleAssignCampaign(e)` | `PATCH /api/v1/characters/:id/campaign` via `appDataService.assignCharacterCampaign()` + local tag update |
+| `@delete-character` | `DeleteCharacterEventDetail` | `handleDeleteCharacter(e)` | `DELETE /api/v1/characters/:id` via `appDataService.deleteCharacter()` + roster removal |
+| `@inspect-character` | `InspectCharacterEventDetail` | `handleInspectCharacter(e)` | Navigates router to `#/characters/:characterId` via `router.navigate()` |
+
+```typescript
+if (v === 'characters') {
+  return html`
+    <runefoble-character-roster
+      .characters=${this.characters}
+      .campaigns=${this.rosterCampaigns}
+      current-user-id=${this.currentUserId}
+      @create-character=${this.handleCreateCharacter}
+      @assign-campaign=${this.handleAssignCampaign}
+      @delete-character=${this.handleDeleteCharacter}
+      @inspect-character=${this.handleInspectCharacter}
+    ></runefoble-character-roster>
+  `;
+}
+```
+

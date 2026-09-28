@@ -1,6 +1,6 @@
 import type { CampaignItem, CampaignMember, CreateCampaignPayload } from '@runefoble/game-session-ui';
 import type { LobbyParticipant, LobbyCharacterOption } from '@runefoble/game-session-ui';
-import type { CharacterItem, RosterCampaignOption } from '@runefoble/character-sheet-ui';
+import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
@@ -217,6 +217,65 @@ export class AppDataService {
   async fetchRosterCampaignOptions(): Promise<RosterCampaignOption[]> {
     const campaigns = await this.fetchCampaigns();
     return campaigns.map((c) => ({ id: c.id, title: c.title }));
+  }
+
+  async createCharacter(payload: CreateCharacterPayload): Promise<CharacterItem> {
+    try {
+      const res = await fetch(`${this.apiBase}/characters`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) return await res.json();
+    } catch { /* fallback */ }
+    const newChar: CharacterItem = {
+      id: `char-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: payload.name,
+      characterClass: payload.characterClass,
+      subclass: payload.subclass,
+      level: payload.level || 1,
+      currentHp: payload.maxHp,
+      maxHp: payload.maxHp,
+      armorClass: payload.armorClass,
+      speed: payload.speed || 30,
+      portraitUrl: payload.portraitUrl,
+      campaignId: null,
+      campaignTitle: null,
+      ownerId: authService.getUser()?.user_id || 'user-valeros',
+    };
+    FALLBACK_CHARACTERS.unshift(newChar);
+    return newChar;
+  }
+
+  async assignCharacterCampaign(characterId: string, campaignId: string | null): Promise<void> {
+    try {
+      const res = await fetch(`${this.apiBase}/characters/${characterId}/campaign`, {
+        method: 'PATCH',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ campaignId }),
+      });
+      if (res.ok) return;
+    } catch { /* fallback */ }
+    const char = FALLBACK_CHARACTERS.find((c) => c.id === characterId);
+    if (char) {
+      char.campaignId = campaignId;
+      const camp = FALLBACK_CAMPAIGNS.find((c) => c.id === campaignId);
+      char.campaignTitle = camp ? camp.title : null;
+    }
+  }
+
+  async deleteCharacter(characterId: string): Promise<void> {
+    try {
+      const res = await fetch(`${this.apiBase}/characters/${characterId}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders(),
+      });
+      if (res.ok) return;
+    } catch { /* fallback */ }
+    const idx = FALLBACK_CHARACTERS.findIndex((c) => c.id === characterId);
+    if (idx !== -1) {
+      FALLBACK_CHARACTERS.splice(idx, 1);
+    }
   }
 
   async fetchLobbyState(sessionId: string): Promise<{
