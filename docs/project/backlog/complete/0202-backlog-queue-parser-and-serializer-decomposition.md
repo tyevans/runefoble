@@ -1,7 +1,7 @@
 ---
 id: '0202'
 title: Backlog Queue Parser and Serializer Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0091
@@ -11,8 +11,8 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/266
 ---
-
 # TASK-0202: Backlog Queue Parser and Serializer Modular Decomposition
 
 ## Status
