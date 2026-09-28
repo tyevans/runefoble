@@ -1,7 +1,7 @@
 ---
 id: '0241'
 title: Gateway Auth Router Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0034
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/268
 ---
-
 # TASK-0241: Gateway Auth Router Modular Decomposition
 
 ## Status
