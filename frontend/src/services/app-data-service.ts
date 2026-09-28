@@ -134,7 +134,14 @@ export class AppDataService {
   async fetchCampaignSessions(campaignId: string): Promise<CampaignSessionItem[]> {
     try {
       const res = await fetch(`${this.apiBase}/campaigns/${campaignId}/sessions`, { headers: this.getAuthHeaders() });
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        const items = await res.json();
+        return items.map((item: any) => ({
+          ...item,
+          campaignId: item.campaign_id || item.campaignId,
+          participantsCount: item.participants_count ?? item.participantsCount ?? 0,
+        }));
+      }
     } catch { /* fallback */ }
     return [
       {
@@ -289,6 +296,35 @@ export class AppDataService {
       { id: '2', timestamp: '19:45:20', source: 'player', speaker: 'Valeros', text: '"I ready my shield and move two steps forward."', actionType: 'speech' },
       { id: '3', timestamp: '19:45:30', source: 'stand_in', speaker: 'Kyra (AI Stand-in, Drunk)', text: '"Hah! No dragon can outwit Sarenrae finest vintner!"', actionType: 'speech' },
     ];
+  }
+
+  async createCampaignSession(
+    campaignId: string,
+    payload: { title: string; status?: string; scheduled_at?: string; description?: string }
+  ): Promise<CampaignSessionItem> {
+    try {
+      const res = await fetch(`${this.apiBase}/campaigns/${campaignId}/sessions`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const item = await res.json();
+        return {
+          ...item,
+          campaignId: item.campaign_id || item.campaignId,
+          participantsCount: item.participants_count ?? item.participantsCount ?? 0,
+        };
+      }
+    } catch { /* fallback */ }
+    const fallbackId = `lobby-${campaignId}-${Date.now()}`;
+    return {
+      id: fallbackId,
+      campaignId,
+      title: payload.title,
+      status: (payload.status as any) || 'lobby',
+      participantsCount: 1,
+    };
   }
 
   async createCampaign(payload: CreateCampaignPayload): Promise<CampaignItem> {

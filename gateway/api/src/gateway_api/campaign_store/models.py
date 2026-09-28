@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+from gateway_api.campaign_store.sessions import CampaignSessionRecord as CampaignSessionRecord
 from gateway_api.models import CampaignSummaryResponse
 
 

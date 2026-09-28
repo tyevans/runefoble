@@ -168,7 +168,61 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members" \
 
 ---
 
-## 6. Rendering Campaigns in the Web Component Microfrontend
+## 6. Creating and Listing Campaign Sessions
+
+Campaign owners and Dungeon Masters (holding `run_session` permission) can create staging lobbies and scheduled sessions using `POST /api/v1/campaigns/{campaign_id}/sessions`. All members (holding `view` permission) can list active and scheduled sessions via `GET /api/v1/campaigns/{campaign_id}/sessions`:
+
+### Creating a Session / Staging Lobby
+```bash
+curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/sessions" \
+  -H "Authorization: Bearer <DM_JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Session #1: Crypt of the Sunken King",
+    "status": "lobby",
+    "description": "Pre-game character staging and readiness check."
+  }'
+```
+
+**Response (`201 Created`):**
+```json
+{
+  "id": "session-e7a9b1c2",
+  "campaign_id": "camp-a1b2c3d4",
+  "title": "Session #1: Crypt of the Sunken King",
+  "status": "lobby",
+  "round": 1,
+  "participants_count": 0,
+  "scheduled_at": null,
+  "created_at": "2026-09-27T10:30:00Z"
+}
+```
+
+### Listing Campaign Sessions
+```bash
+curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/sessions" \
+  -H "Authorization: Bearer <PLAYER_JWT>"
+```
+
+**Response (`200 OK`):**
+```json
+[
+  {
+    "id": "session-e7a9b1c2",
+    "campaign_id": "camp-a1b2c3d4",
+    "title": "Session #1: Crypt of the Sunken King",
+    "status": "lobby",
+    "round": 1,
+    "participants_count": 0,
+    "scheduled_at": null,
+    "created_at": "2026-09-27T10:30:00Z"
+  }
+]
+```
+
+---
+
+## 7. Rendering Campaigns in the Web Component Microfrontend
 
 The campaign hub UI is vendored by `@runefoble/game-session-ui/campaigns` using Lit Web Components:
 
@@ -203,7 +257,7 @@ The `<runefoble-campaign-dashboard>` provides:
 
 ---
 
-## 7. Managing Campaign Members & Assigning Zanzibar Roles in the UI
+## 8. Managing Campaign Members & Assigning Zanzibar Roles in the UI
 
 The `<runefoble-campaign-members>` component allows Game Masters to inspect the party roster, assign SpiceDB Zanzibar roles (`dungeon_master`, `player`, `spectator`), remove members safely via confirmation dialogs, and generate copyable invite links:
 
@@ -255,18 +309,19 @@ Key features of `<runefoble-campaign-members>`:
 
 ---
 
-## 8. Gateway Campaign Store Modular Architecture
+## 9. Gateway Campaign Store Modular Architecture
 
 The campaign and invite storage layer in the Gateway API is decomposed into focused modular subpackages under `gateway/api/src/gateway_api/campaign_store/` (keeping all submodules strictly < 160 lines per Hard Invariant 6):
 - **Record Models (`models.py`)**: Defines `CampaignRecord`, `CampaignMemberRecord`, and `InviteTokenRecord` (aliased as `InviteRecord`) dataclasses with dictionary serialization and default participant constants (`DEFAULT_SESSION_PARTICIPANTS`, `DEFAULT_BOARD_TOKENS`).
+- **Session Management (`sessions.py`)**: Defines `CampaignSessionRecord` dataclass and `SessionManager` managing campaign session lifecycles, active states, and lobbies.
 - **Invite Management (`invites.py`)**: Provides secure token generation (`generate_invite_token`), expiration tracking (`calculate_invite_expiry`), `InviteManager` state storage, response formatting (`format_invite_response`), and Zanzibar redemption (`join_from_invite`).
 - **SpiceDB Zanzibar Queries (`queries.py`)**: Encapsulates fine-grained Zanzibar authorization queries, including `get_user_campaign_role`, `build_campaign_summary`, `get_all_viewable_campaigns`, and `get_campaign_members`.
-- **Store Repository (`store.py`)**: Implements thread-safe in-memory campaign lifecycle mutations (`create_campaign`, `update_campaign`, `create_from_request`, `update_from_request`), delegating invite tracking to `InviteManager`.
+- **Store Repository (`store.py`)**: Implements thread-safe in-memory campaign lifecycle mutations (`create_campaign`, `update_campaign`, `create_from_request`, `update_from_request`), delegating invite tracking to `InviteManager` and session management to `SessionManager`.
 - **Package Facade (`__init__.py`)**: Re-exports all core classes, helpers, and default constants for complete backward compatibility across existing Gateway API routers and test suites.
 
 ---
 
-## 9. Campaign Detail Hero Header & Metadata Component
+## 10. Campaign Detail Hero Header & Metadata Component
 
 The `<runefoble-campaign-header>` component presents the hero banner, campaign title, setting badge, ruleset system pill (`5e`, `PF2e`, `Call of Cthulhu`), active status indicator, DM profile badge, and narrative description:
 

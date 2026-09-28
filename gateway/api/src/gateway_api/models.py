@@ -138,3 +138,29 @@ class CampaignMemberResponse(BaseModel):
     role: str
     subject_type: str = "user"
     zanzibar_relation: str
+
+
+class CreateCampaignSessionRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
+    scheduled_at: str | None = None
+    description: str = ""
+    status: str = "lobby"
+
+
+class CampaignSessionResponse(BaseModel):
+    id: str
+    campaign_id: str
+    title: str
+    status: str
+    round: int = 1
+    participants_count: int = 0
+    scheduled_at: str | None = None
+    created_at: str
+    campaignId: str | None = None
+    participantsCount: int | None = None
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.campaignId is None:
+            self.campaignId = self.campaign_id
+        if self.participantsCount is None:
+            self.participantsCount = self.participants_count

@@ -151,6 +151,13 @@ def require_zanzibar_permission(
             or "default_resource"
         )
 
+        if resource_type == "campaign":
+            from gateway_api.campaign_store import campaign_store
+
+            sess = campaign_store.get_session(resource_id)
+            if sess:
+                resource_id = sess.campaign_id
+
         allowed = await client.check_permission(
             resource_type=resource_type,
             resource_id=resource_id,

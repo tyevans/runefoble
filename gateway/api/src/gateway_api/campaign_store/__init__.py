@@ -14,6 +14,7 @@ from gateway_api.campaign_store.models import (
     DEFAULT_SESSION_PARTICIPANTS,
     CampaignMemberRecord,
     CampaignRecord,
+    CampaignSessionRecord,
     InviteRecord,
     InviteTokenRecord,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "DEFAULT_SESSION_PARTICIPANTS",
     "CampaignMemberRecord",
     "CampaignRecord",
+    "CampaignSessionRecord",
     "CampaignStore",
     "InviteManager",
     "InviteRecord",
