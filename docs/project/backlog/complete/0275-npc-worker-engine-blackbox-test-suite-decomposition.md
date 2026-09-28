@@ -1,7 +1,7 @@
 ---
 id: '0275'
 title: NPC Worker Engine Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0260
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0073
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/305
 ---
-
 # TASK-0275: NPC Worker Engine Blackbox Test Suite Modular Decomposition
 
 ## Status
