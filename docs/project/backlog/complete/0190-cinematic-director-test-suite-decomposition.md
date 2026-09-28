@@ -1,7 +1,7 @@
 ---
-id: '0190'
+id: 0190
 title: Cinematic Director Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0056
@@ -16,8 +16,8 @@ governing_stories:
 - US-0040
 - US-0054
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/250
 ---
-
 # TASK-0190: Cinematic Director Blackbox Test Suite Modular Decomposition
 
 ## Status
