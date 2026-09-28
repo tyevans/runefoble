@@ -213,7 +213,7 @@
 - [x] Project Visualizer AGY Launcher Modular Decomposition (TASK-0224)
 - [x] Campaign and Lobby Blackbox Test Suite Modular Decomposition (TASK-0225)
 - [x] Campaign Dashboard Styles Modular Decomposition (TASK-0226)
-- [ ] Project Visualizer Graph Builder Modular Decomposition (TASK-0227)
+- [x] Project Visualizer Graph Builder Modular Decomposition (TASK-0227)
 - [x] PRD Pipeline Manager Modular Decomposition (TASK-0228)
 - [x] Character Sheet Models Modular Decomposition (TASK-0229)
 - [ ] Soundscape Aggregate Handlers Modular Decomposition (TASK-0230)
@@ -301,5 +301,11 @@
 - [ ] Campaign Analytics Component Modular Decomposition (TASK-0331)
 - [ ] Faction Radar Styles Modular Decomposition (TASK-0332)
 - [ ] Docs Build and Pages Test Suite Modular Decomposition (TASK-0333)
+- [ ] Visualizer Graph Test Suite Modular Decomposition (TASK-0334)
+- [ ] Project Visualizer Template Modular Decomposition (TASK-0335)
+- [ ] Rules Compendium Blackbox Test Suite Modular Decomposition (TASK-0336)
+- [ ] Gateway Campaign Sessions Blackbox Test Suite Modular Decomposition (TASK-0337)
+- [ ] Campaign Lore Handouts Generator Modular Decomposition (TASK-0338)
+- [ ] Initiative Tracker Blackbox Test Suite Modular Decomposition (TASK-0339)
 
 

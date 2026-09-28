@@ -261,17 +261,17 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 257. **TASK-0225 (Complete)**: [`0225-campaign-and-lobby-blackbox-test-suite-modular-decomposition.md`](complete/0225-campaign-and-lobby-blackbox-test-suite-modular-decomposition.md) — Campaign and Lobby Blackbox Test Suite Modular Decomposition
 258. **TASK-0226 (Complete)**: [`0226-campaign-dashboard-styles-modular-decomposition.md`](complete/0226-campaign-dashboard-styles-modular-decomposition.md) — Campaign Dashboard Styles Modular Decomposition
 259. **TASK-0228 (Complete)**: [`0228-prd-pipeline-manager-modular-decomposition.md`](complete/0228-prd-pipeline-manager-modular-decomposition.md) — PRD Pipeline Manager Modular Decomposition
-260. **TASK-0264 (Refined)**: [`0264-settlement-builder-and-minigames-blackbox-test-suite.md`](refined/0264-settlement-builder-and-minigames-blackbox-test-suite.md) — Settlement Builder and Mobile Minigames Blackbox Test Suite
-261. **TASK-0278 (Refined)**: [`0278-settlement-auth-and-permissions-modular-decomposition.md`](refined/0278-settlement-auth-and-permissions-modular-decomposition.md) — Settlement Auth and Permissions Modular Decomposition
-262. **TASK-0281 (Refined)**: [`0281-merchant-haggling-blackbox-test-suite-modular-decomposition.md`](refined/0281-merchant-haggling-blackbox-test-suite-modular-decomposition.md) — Merchant Haggling Blackbox Test Suite Modular Decomposition
-263. **TASK-0280 (Refined)**: [`0280-settlement-workers-router-modular-decomposition.md`](refined/0280-settlement-workers-router-modular-decomposition.md) — Settlement Workers Router Modular Decomposition
-264. **TASK-0279 (Refined)**: [`0279-settlement-haggling-engine-modular-decomposition.md`](refined/0279-settlement-haggling-engine-modular-decomposition.md) — Settlement Haggling Engine Modular Decomposition
-265. **TASK-0282 (Refined)**: [`0282-settlement-haven-router-modular-decomposition.md`](refined/0282-settlement-haven-router-modular-decomposition.md) — Settlement Haven Router Modular Decomposition
-266. **TASK-0243 (Refined)**: [`0243-email-signup-mailpit-test-suite-decomposition.md`](refined/0243-email-signup-mailpit-test-suite-decomposition.md) — Email Signup Mailpit Blackbox Test Suite Decomposition
-267. **TASK-0230 (Refined)**: [`0230-soundscape-aggregate-handlers-modular-decomposition.md`](refined/0230-soundscape-aggregate-handlers-modular-decomposition.md) — Soundscape Aggregate Handlers Modular Decomposition
-268. **TASK-0231 (Refined)**: [`0231-board-domain-events-modular-decomposition.md`](refined/0231-board-domain-events-modular-decomposition.md) — Board Domain Events Modular Decomposition
-269. **TASK-0227 (Refined)**: [`0227-project-visualizer-graph-builder-modular-decomposition.md`](refined/0227-project-visualizer-graph-builder-modular-decomposition.md) — Project Visualizer Graph Builder Modular Decomposition
-270. **TASK-0287 (Proposed)**: [`0287-frontend-app-shell-test-suite-modular-decomposition.md`](proposed/0287-frontend-app-shell-test-suite-modular-decomposition.md) — Frontend App Shell Test Suite Modular Decomposition
+260. **TASK-0227 (Complete)**: [`0227-project-visualizer-graph-builder-modular-decomposition.md`](complete/0227-project-visualizer-graph-builder-modular-decomposition.md) — Project Visualizer Graph Builder Modular Decomposition
+261. **TASK-0264 (Refined)**: [`0264-settlement-builder-and-minigames-blackbox-test-suite.md`](refined/0264-settlement-builder-and-minigames-blackbox-test-suite.md) — Settlement Builder and Mobile Minigames Blackbox Test Suite
+262. **TASK-0278 (Refined)**: [`0278-settlement-auth-and-permissions-modular-decomposition.md`](refined/0278-settlement-auth-and-permissions-modular-decomposition.md) — Settlement Auth and Permissions Modular Decomposition
+263. **TASK-0281 (Refined)**: [`0281-merchant-haggling-blackbox-test-suite-modular-decomposition.md`](refined/0281-merchant-haggling-blackbox-test-suite-modular-decomposition.md) — Merchant Haggling Blackbox Test Suite Modular Decomposition
+264. **TASK-0280 (Refined)**: [`0280-settlement-workers-router-modular-decomposition.md`](refined/0280-settlement-workers-router-modular-decomposition.md) — Settlement Workers Router Modular Decomposition
+265. **TASK-0279 (Refined)**: [`0279-settlement-haggling-engine-modular-decomposition.md`](refined/0279-settlement-haggling-engine-modular-decomposition.md) — Settlement Haggling Engine Modular Decomposition
+266. **TASK-0282 (Refined)**: [`0282-settlement-haven-router-modular-decomposition.md`](refined/0282-settlement-haven-router-modular-decomposition.md) — Settlement Haven Router Modular Decomposition
+267. **TASK-0243 (Refined)**: [`0243-email-signup-mailpit-test-suite-decomposition.md`](refined/0243-email-signup-mailpit-test-suite-decomposition.md) — Email Signup Mailpit Blackbox Test Suite Decomposition
+268. **TASK-0230 (Refined)**: [`0230-soundscape-aggregate-handlers-modular-decomposition.md`](refined/0230-soundscape-aggregate-handlers-modular-decomposition.md) — Soundscape Aggregate Handlers Modular Decomposition
+269. **TASK-0231 (Refined)**: [`0231-board-domain-events-modular-decomposition.md`](refined/0231-board-domain-events-modular-decomposition.md) — Board Domain Events Modular Decomposition
+270. **TASK-0287 (Refined)**: [`0287-frontend-app-shell-test-suite-modular-decomposition.md`](refined/0287-frontend-app-shell-test-suite-modular-decomposition.md) — Frontend App Shell Test Suite Modular Decomposition
 271. **TASK-0238 (Proposed)**: [`0238-game-session-models-test-suite-decomposition.md`](proposed/0238-game-session-models-test-suite-decomposition.md) — GameSession Models Test Suite Modular Decomposition
 272. **TASK-0288 (Proposed)**: [`0288-frontend-character-management-test-suite-modular-decomposition.md`](proposed/0288-frontend-character-management-test-suite-modular-decomposition.md) — Frontend Character Management Test Suite Modular Decomposition
 273. **TASK-0283 (Proposed)**: [`0283-lobby-and-vtt-character-sync-test-suite-modular-decomposition.md`](proposed/0283-lobby-and-vtt-character-sync-test-suite-modular-decomposition.md) — Lobby and VTT Character Sync Blackbox Test Suite Modular Decomposition
@@ -334,6 +334,12 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 330. **TASK-0331 (Proposed)**: [`0331-campaign-analytics-component-modular-decomposition.md`](proposed/0331-campaign-analytics-component-modular-decomposition.md) — Campaign Analytics Component Modular Decomposition
 331. **TASK-0332 (Proposed)**: [`0332-faction-radar-styles-modular-decomposition.md`](proposed/0332-faction-radar-styles-modular-decomposition.md) — Faction Radar Styles Modular Decomposition
 332. **TASK-0333 (Proposed)**: [`0333-docs-build-and-pages-test-suite-modular-decomposition.md`](proposed/0333-docs-build-and-pages-test-suite-modular-decomposition.md) — Docs Build and Pages Test Suite Modular Decomposition
+333. **TASK-0334 (Proposed)**: [`0334-visualizer-graph-test-suite-modular-decomposition.md`](proposed/0334-visualizer-graph-test-suite-modular-decomposition.md) — Visualizer Graph Test Suite Modular Decomposition
+334. **TASK-0335 (Proposed)**: [`0335-project-visualizer-template-modular-decomposition.md`](proposed/0335-project-visualizer-template-modular-decomposition.md) — Project Visualizer Template Modular Decomposition
+335. **TASK-0336 (Proposed)**: [`0336-rules-compendium-blackbox-test-suite-modular-decomposition.md`](proposed/0336-rules-compendium-blackbox-test-suite-modular-decomposition.md) — Rules Compendium Blackbox Test Suite Modular Decomposition
+336. **TASK-0337 (Proposed)**: [`0337-gateway-campaign-sessions-blackbox-test-suite-modular-decomposition.md`](proposed/0337-gateway-campaign-sessions-blackbox-test-suite-modular-decomposition.md) — Gateway Campaign Sessions Blackbox Test Suite Modular Decomposition
+337. **TASK-0338 (Proposed)**: [`0338-campaign-lore-handouts-generator-modular-decomposition.md`](proposed/0338-campaign-lore-handouts-generator-modular-decomposition.md) — Campaign Lore Handouts Generator Modular Decomposition
+338. **TASK-0339 (Proposed)**: [`0339-initiative-tracker-blackbox-test-suite-modular-decomposition.md`](proposed/0339-initiative-tracker-blackbox-test-suite-modular-decomposition.md) — Initiative Tracker Blackbox Test Suite Modular Decomposition
 
 
 
