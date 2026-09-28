@@ -1,7 +1,7 @@
 ---
-id: '0195'
+id: 0195
 title: Faction Radar SVG and Drawer Subviews Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0126
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0057
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/256
 ---
-
 # TASK-0195: Faction Radar SVG and Drawer Subviews Modular Decomposition
 
 ## Status
