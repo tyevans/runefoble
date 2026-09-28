@@ -1,7 +1,7 @@
 ---
-id: '0248'
+id: 0248
 title: Campaign Detail Hero Header and Metadata Component
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0210
@@ -17,6 +17,7 @@ governing_stories:
 - US-0063
 - US-0067
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/280
 ---
 # TASK-0248: Campaign Detail Hero Header and Metadata Component
 
