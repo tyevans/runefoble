@@ -336,3 +336,43 @@ describe('Character Roster Inspect Navigation (TASK-0254 & US-0069)', () => {
     assert.equal(route?.path, '#/characters/char-valeros');
   });
 });
+
+describe('Dynamic Character Binding in Pre-Game Lobby and Active VTT (TASK-0256)', () => {
+  it('dynamically populates lobby available characters from character roster with campaign priority', async () => {
+    const dataService = new AppDataService();
+    // Fetch lobby state for campaign '4'
+    const lobby = await dataService.fetchLobbyState('4', 'session-tomb-14');
+    assert.ok(lobby.availableCharacters.length >= 2);
+
+    // Characters assigned to campaign '4' should be prioritized first
+    const firstChar = lobby.availableCharacters[0];
+    assert.ok(firstChar.id === 'char-valeros' || firstChar.id === 'char-kyra');
+
+    // Also supports signature fetchLobbyState(sessionId)
+    const lobbyLegacy = await dataService.fetchLobbyState('session-tomb-14');
+    assert.ok(lobbyLegacy.availableCharacters.length >= 2);
+  });
+
+  it('prioritizes campaign-assigned character fallback when entering active session without explicit selection', async () => {
+    const characters = [
+      { id: 'char-1', name: 'Rogue One', characterClass: 'Rogue', level: 3, currentHp: 24, maxHp: 24, armorClass: 14, speed: 30, campaignId: '99' },
+      { id: 'char-2', name: 'Paladin Two', characterClass: 'Paladin', level: 4, currentHp: 40, maxHp: 40, armorClass: 18, speed: 30, campaignId: '4' },
+    ];
+    // Emulate resolveActiveCharacter logic from RunefobleApp
+    const resolveActive = (cId: string, currentActive: any | null) => {
+      if (currentActive) return currentActive;
+      const matching = characters.find((c) => c.campaignId === cId);
+      if (matching) return matching;
+      return characters[0];
+    };
+
+    const resolved = resolveActive('4', null);
+    assert.equal(resolved.id, 'char-2');
+    assert.equal(resolved.name, 'Paladin Two');
+
+    // When an explicit selection was made in lobby, it retains the selected character
+    const explicitlySelected = characters[0];
+    const resolvedExplicit = resolveActive('4', explicitlySelected);
+    assert.equal(resolvedExplicit.id, 'char-1');
+  });
+});

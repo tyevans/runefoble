@@ -113,10 +113,24 @@ if (v === 'characters') {
 }
 ```
 
-## 6. Auditing View Wiring and Regression Verification
+## 6. Dynamic Character Binding in Lobby and Active VTT (TASK-0256)
+
+During session staging and active virtual tabletop play, the App Shell dynamically resolves and binds the player's active character:
+
+1. **Lobby Roster Population**: `appDataService.fetchLobbyState(campaignId, sessionId)` queries the user's real character roster and prioritizes characters assigned to the active campaign.
+2. **Lobby Selection Sync**: When a player selects a character in `<runefoble-session-lobby>`, the component emits `@select-character` (and `@character-selected`), storing the selection in App Shell `activeCharacter` state and updating participant cards.
+3. **Session Transition & Fallback Resolution**: When launching or entering `session-active` (`#/campaigns/:id/sessions/:sessionId`), `resolveActiveCharacter(campaignId)` preserves any character chosen during lobby staging. If no selection was made, it falls back to:
+   - The first character assigned to the specified `campaignId`.
+   - The user's first available character in their roster.
+   - A graceful fallback adventurer placeholder.
+4. **VTT Character Card Binding**: The `<runefoble-character-card>` dynamically receives `.characterName`, `.characterClass`, `.level`, `.currentHp`, `.maxHp`, `.armorClass`, and `.portraitUrl`.
+5. **DM Party Inspector & Switcher**: When authenticated as DM/Owner, a high-contrast inspection banner and `<select class="dm-character-switcher">` allow the Dungeon Master to inspect and switch active character cards across the entire party.
+
+## 7. Auditing View Wiring and Regression Verification
 
 To prevent view collisions (such as `#/profile` defaulting to `campaigns` or `#/campaigns/:id/characters` colliding with `campaign-detail`) and verify route-bound WebSocket lifecycles:
 
 - **Frontend Component & Route Matrix**: Run `node --experimental-strip-types --test frontend/test/app-shell-views-wiring-audit.test.ts` to execute parameterized assertions across all standard routes, verifying parameter extraction, breadcrumbs, and WebSocket connect/teardown events.
 - **Python E2E Blackbox Suite**: Run `pytest tests/test_blackbox_app_shell_views_audit.py` to audit full frontdoor Gateway API endpoints, DOM mounting manifest contracts, and file length constraints.
+
 

@@ -33,6 +33,19 @@ export class RunefobleCharacterCard extends LitElement {
       border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color);
       padding-bottom: 8px;
     }
+    .header-identity {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .char-portrait {
+      width: 40px;
+      height: 40px;
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+      border-radius: var(--rf-border-radius, 0px);
+      object-fit: cover;
+      background: var(--rf-bg-canvas);
+    }
     .name-title {
       font-size: 1.15rem;
       font-weight: 800;
@@ -131,6 +144,8 @@ export class RunefobleCharacterCard extends LitElement {
 
   @property({ type: String }) characterName = 'Valeros the Bold';
   @property({ type: String }) characterClass = 'Fighter 4';
+  @property({ type: Number }) level = 4;
+  @property({ type: String }) portraitUrl = '';
   @property({ type: Boolean }) isAiStandIn = false;
   @property({ type: Number }) currentHp = 34;
   @property({ type: Number }) maxHp = 42;
@@ -145,9 +160,14 @@ export class RunefobleCharacterCard extends LitElement {
 
     return html`
       <div class="card-header">
-        <div>
-          <div class="name-title">${this.characterName}</div>
-          <div class="class-level">${this.characterClass}</div>
+        <div class="header-identity">
+          ${this.portraitUrl
+            ? html`<img class="char-portrait" src="${this.portraitUrl}" alt="${this.characterName}" />`
+            : html``}
+          <div>
+            <div class="name-title">${this.characterName}</div>
+            <div class="class-level">${this.characterClass}</div>
+          </div>
         </div>
         ${this.isAiStandIn
           ? html`<span class="ai-badge">🤖 AI Stand-in</span>`
