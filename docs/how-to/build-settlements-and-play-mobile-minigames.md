@@ -196,6 +196,73 @@ curl -X PATCH http://localhost:8000/api/v1/haggling/hgl-8f12a3/dm-override \
 
 Town squares and tavern common rooms feature an interactive bulletin board for local proclamations:
 
-1. **Reading Notices**: Tap any pinned parchment card to view bounties, lost artifact flyers, or guild notices.
-2. **Posting Adventurer Requests**: Click "+ Pin Notice" to offer mercenary contracts or purchase reagents.
+1. **Reading Notices**: Tap any pinned parchment card to view bounties, lost artifact flyers, or guild notices. Touch interactions trigger acoustic paper rustle audio feedback.
+2. **Posting Adventurer Requests**: Click "+ Pin Notice" to offer mercenary contracts, job postings, or civic ordinances.
 3. **Deciphering Ciphers**: Rotate hidden glyph rings on coded notices to reveal secret meeting places and illicit faction quests.
+
+### Pinning a Notice or Bounty
+
+```bash
+curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin \
+  -H "X-User-Id: usr_kip" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "board_type": "town_square",
+    "title": "WANTED: Manticore of Wyvern Crag",
+    "category": "bounty",
+    "content": "A wounded manticore preys on cattle north of the mill. 250gp reward.",
+    "wax_sealed": false,
+    "cipher_encoded": false
+  }'
+```
+
+### Pinning a Coded Thieves' Cant Cipher Notice
+
+```bash
+curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin \
+  -H "X-User-Id: usr_rogue" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "board_type": "tavern",
+    "title": "Whispers Behind the Barrels",
+    "category": "rumor",
+    "content": "Seek the shadow where the three-toed crow perches.",
+    "wax_sealed": false,
+    "cipher_encoded": true,
+    "cipher_puzzle": "rot13",
+    "cipher_solution": "gilded serpent",
+    "cipher_hint": "Where gold scales rattle...",
+    "hidden_content": "Midnight rendezvous at the Gilded Serpent back alley."
+  }'
+```
+
+### Retrieving Active Notices
+
+```bash
+# Filter by board location: town_square, tavern, guildhall
+curl -X GET "http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin?board_type=town_square" \
+  -H "X-User-Id: usr_adventurer"
+```
+
+### Submitting Cipher Solution
+
+```bash
+curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin/ntc-004/decrypt \
+  -H "X-User-Id: usr_kip" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "solution": "gilded serpent"
+  }'
+```
+
+### Embedding the Lit Web Component
+
+```html
+<runefoble-bulletin-board
+  settlement-id="stl-oak-01"
+  settlement-name="Oakhaven Crossroads"
+  board-type="town_square"
+  current-user-id="usr_kip"
+></runefoble-bulletin-board>
+```
+

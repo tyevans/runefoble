@@ -28,6 +28,7 @@ export * from './components/runefoble-session-list.ts';
 export * from './components/runefoble-session-modal.ts';
 export * from './components/minigames/runefoble-merchant-haggler.ts';
 export * from './components/dm-controls/runefoble-dm-negotiation-drawer.ts';
+export * from './components/runefoble-bulletin-board.ts';
 export * from './auth/index.ts';
 
 export * from './router/index.ts';
