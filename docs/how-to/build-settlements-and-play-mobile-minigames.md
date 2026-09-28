@@ -310,5 +310,17 @@ Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authenticat
 - **`dependencies.py`**: FastAPI route dependency factories (`get_current_settlement_user`, `require_haven_builder`, `require_establishment_manager`, `require_haven_viewer`).
 - **`auth.py` / `__init__.py`**: Aggregator facades (< 40 lines) preserving 100% backwards-compatible re-exports for existing routers and services.
 
+---
+
+## 6. Modular Settlement Haggling Engine Architecture
+
+Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the merchant negotiation engine in `services/game_session/src/game_session/settlement/haggling/` is decomposed into modular submodules strictly under 110–130 lines:
+
+- **`state.py`**: `NegotiationAggregate` session state machine, managing session initialization, offer ranges, and event persistence.
+- **`rhetoric.py`**: `RhetoricMovesMixin` managing tactical bargaining gambits, roll evaluation, and patience decay.
+- **`dm_controls.py`**: `DMControlsMixin` managing live GM arbitration, price overrides, and veto/accept actions.
+- **`haggling.py` / `__init__.py`**: Aggregator facades (< 40 lines) preserving backwards compatibility for all imports.
+
+
 
 
