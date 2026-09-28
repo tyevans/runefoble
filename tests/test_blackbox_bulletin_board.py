@@ -78,6 +78,24 @@ def test_blackbox_bulletin_board_manifest_and_components(client: TestClient) -> 
         line_count = len(f.read_text().splitlines())
         assert line_count < 400, f"File {f.name} exceeds 400 lines: {line_count}"
 
+    # TASK-0274: Modular style decomposition invariants
+    assert len(styles_file.read_text().splitlines()) < 40, (
+        f"Aggregator {styles_file.name} must be < 40 lines"
+    )
+
+    layout_styles_file = (
+        REPO_ROOT / "frontend" / "src" / "styles" / "bulletin-board-layout.styles.ts"
+    )
+    card_styles_file = REPO_ROOT / "frontend" / "src" / "styles" / "bulletin-board-card.styles.ts"
+    dialog_styles_file = (
+        REPO_ROOT / "frontend" / "src" / "styles" / "bulletin-board-dialog.styles.ts"
+    )
+
+    for f in [layout_styles_file, card_styles_file, dialog_styles_file]:
+        assert f.exists(), f"Extracted style file {f} must exist"
+        count = len(f.read_text().splitlines())
+        assert count < 150, f"Style sheet {f.name} must be < 150 lines: {count}"
+
 
 @pytest.mark.asyncio
 async def test_blackbox_pin_and_list_bulletin_notices(
