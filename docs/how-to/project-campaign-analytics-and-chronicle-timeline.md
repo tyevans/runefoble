@@ -209,7 +209,7 @@ GET /ui/manifest
   - `heatmap-controls.template.ts`: Metric filter buttons (`all`, `damage`, `hit`, `movement`), legend gradient scale, and event summary statistics.
   - `cell-inspector.template.ts`: Hovered/selected coordinate card, damage breakdown, and casualty listings.
 - `<runefoble-chronicle-timeline>`: Interactive scrubber with auto-playback and click-to-play audio recap snippets.
-- Interactive Storybook stories are co-located in `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` and `services/campaign_analytics/ui/src/runefoble-combat-heatmap.stories.ts` with test states for `DefaultAllWeights`, `DamageFilter`, `StrikesFilter`, `TrafficMovementFilter`, `EmptyState`, `ActiveCombatTelemetry`, `VictoryCelebration`, and `TotalPartyKill`.
+- Interactive Storybook stories are co-located in `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` (with reusable mock datasets modularized in `services/campaign_analytics/ui/src/fixtures/campaign-analytics.fixtures.ts`) and `services/campaign_analytics/ui/src/runefoble-combat-heatmap.stories.ts` with test states for `DefaultAllWeights`, `DamageFilter`, `StrikesFilter`, `TrafficMovementFilter`, `EmptyState`, `ActiveCombatTelemetry`, `VictoryCelebration`, and `TotalPartyKill`.
 
 ---
 
