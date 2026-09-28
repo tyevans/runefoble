@@ -110,6 +110,27 @@ async def check_establishment_write_permission(
         )
 
 
+async def check_establishment_play_permission(
+    spicedb: Any,
+    establishment_id: str,
+    user_id: str | None,
+) -> bool:
+    """Ensure user has permission to play minigames / patronize establishment."""
+    if not user_id:
+        return True
+    return bool(
+        await spicedb.check_permission(
+            "establishment", str(establishment_id), "play", "user", str(user_id)
+        )
+        or await spicedb.check_permission(
+            "establishment", str(establishment_id), "view", "user", str(user_id)
+        )
+        or await spicedb.check_permission(
+            "establishment", str(establishment_id), "manage", "user", str(user_id)
+        )
+    )
+
+
 async def write_settlement_relationships(
     spicedb: Any,
     settlement_id: str,

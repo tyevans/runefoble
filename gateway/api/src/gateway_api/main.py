@@ -112,6 +112,29 @@ async def mobile_companion_websocket(websocket: WebSocket, session_id: str) -> N
     await mobile_companion_websocket_endpoint(websocket, session_id)
 
 
+@app.websocket("/ws/establishments/{establishment_id}/tables/{table_id}")
+async def gateway_establishment_table_ws(
+    websocket: WebSocket,
+    establishment_id: str,
+    table_id: str,
+) -> None:
+    """Establishment-scoped multiplayer minigame table WebSocket channel via gateway."""
+    from game_session.routers.minigames_ws import handle_table_websocket
+
+    await handle_table_websocket(websocket, table_id, establishment_id)
+
+
+@app.websocket("/ws/minigames/{table_id}")
+async def gateway_standalone_minigame_ws(
+    websocket: WebSocket,
+    table_id: str,
+) -> None:
+    """Standalone multiplayer minigame table WebSocket channel via gateway."""
+    from game_session.routers.minigames_ws import handle_table_websocket
+
+    await handle_table_websocket(websocket, table_id, "est-default")
+
+
 def main() -> None:
     import uvicorn
 

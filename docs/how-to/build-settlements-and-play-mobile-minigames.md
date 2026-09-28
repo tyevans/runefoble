@@ -146,15 +146,38 @@ Players on iOS and Android can open `#/campaigns/:id/town/minigames` in mobile S
    - Pull back cue stick slider to adjust impact force.
    - 2D ball-to-ball and cushion collisions render at 60 FPS on mobile canvas.
 
-### Casino Games: Roulette & Dragon Craps
+### Casino Games: Roulette, Liar's Dice & Dragon Craps
 
-1. **Imperial Roulette**:
-   - Tap chips (1, 5, 25 gold) and place them onto the digital felt betting grid (Straight Up, Red/Black, Odd/Even).
-   - Tap "Spin Wheel" or wait for the casino croupier countdown.
-   - The ball deceleration animation resolves and credits winnings immediately to the character sheet.
-2. **Dragon Craps (Street Bones)**:
+1. **Imperial Roulette (`runefoble-minigame-roulette`)**:
+   - Tap chips (1, 5, 25 gold) and place them onto the digital felt betting grid (Straight Up 0-36, Red/Black, Odd/Even).
+   - Tap "SPIN WHEEL" or trigger croupier countdown.
+   - Smooth deceleration physics resolve winning pocket, 35:1 or 1:1 payouts, and haptic pulses.
+2. **Liar's Dice (`runefoble-minigame-liars-dice`)**:
+   - Accelerometer and swipe cup shaker with dice clatter audio and `navigator.vibrate([20, 40, 20])`.
+   - Touch-and-hold privacy peek shade protects hidden dice from spectator view.
+   - Bluff bids escalation interface and instant "Liar!" challenge showdown with elimination tracking.
+3. **Dragon Craps (Street Bones)**:
    - Perform a two-finger upward swipe to fling physical 3D dice across the wooden tray.
-   - Dice bounce physics calculate final faces and resolve Pass Line / Don't Pass wagers.
+   - Evaluates Pass Line / Don't Pass naturals (7, 11) and craps (2, 3, 12), point establishment, and field payouts.
+
+### Real-Time WebSocket Table Protocol
+
+Connect to table channels at `/ws/establishments/{establishment_id}/tables/{table_id}` or standalone `/ws/minigames/{table_id}`:
+
+```json
+// 1. Join Table
+{ "action": "join", "player_id": "kip", "name": "Kip", "chips": 100, "game_type": "darts" }
+
+// 2. Place Bet
+{ "action": "bet", "player_id": "kip", "amount": 10, "bet_type": "straight", "target": 17 }
+
+// 3. Game Actions (dispatched to all connected mobile clients < 150ms)
+{ "action": "throw_dart", "player_id": "kip", "vx": 0.5, "vy": -2.1 }
+{ "action": "spin_roulette", "winning_number": 17 }
+{ "action": "bid", "player_id": "kip", "quantity": 3, "face": 4 }
+{ "action": "challenge", "challenger_id": "sam" }
+{ "action": "roll_craps", "dice": [3, 4] }
+```
 
 ---
 
