@@ -159,9 +159,16 @@ When running the visualizer locally with `make visualize-project`, developers ca
 
 ### Strict GitHub Pages Build Isolation
 To prevent exposing local execution tooling in published public documentation:
-- In static compilation mode (`make docs-build`, `make visualize-project-build`, and GitHub Pages deployment workflow), the AGY modal HTML and `agy_launcher.js` script are completely omitted from generated HTML bundles.
+- In static compilation mode (`make docs-build`, `make visualize-project-build`, and GitHub Pages deployment workflow), the AGY modal HTML, `agy_launcher.js` facade, and `agy/*` submodules are completely omitted from generated HTML bundles.
 - Task drawers and navigation headers in static documentation render without any launcher buttons or references.
 - Backend execution endpoints (`/api/agy/*`) are only registered on the local dynamic development server.
+
+### Modular Submodule Architecture
+The AGY Launcher client frontend is decomposed into focused submodules under `tools/project_visualizer/static/js/agy/`:
+- `agy_modal.js`: Modal open/close transitions, keyboard shortcuts, drawer action triggers, and entity badge population (<100 lines).
+- `agy_presets.js`: Preset prompt templates, command builder, copy utilities, and preview synchronization (<110 lines).
+- `agy_runner.js`: Job launch POST handler, status chip styling, polling stream reader, and elapsed timer (<130 lines).
+- `agy_launcher.js`: Backward-compatible aggregation facade exposing all launcher controls on `window.visualizer` (<20 lines). All modules strictly comply with Hard Invariant 6 (<140 lines per client module).
 
 ---
 
