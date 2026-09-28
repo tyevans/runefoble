@@ -210,21 +210,36 @@ definition board {
 
 definition settlement {
     relation shared_world: shared_world
+    relation campaign: campaign
     relation founder: user
     relation discovering_campaign: campaign
     relation guild_officer: user
 
-    // Viewing settlement requires founder, discovering campaign member, guild officer, or shared_world viewer
-    permission view = founder + guild_officer + discovering_campaign->view + shared_world->view
+    // Viewing settlement requires founder, discovering campaign member, campaign member, guild officer, or shared_world viewer
+    permission view = founder + guild_officer + discovering_campaign->view + shared_world->view + campaign->view
 
-    // Upgrading facilities in a haven requires founder, discovering campaign player, guild officer, or shared_world trade
-    permission upgrade = founder + guild_officer + discovering_campaign->play + shared_world->trade
+    // Upgrading facilities in a haven requires founder, discovering campaign player, campaign member, guild officer, or shared_world trade
+    permission upgrade = founder + guild_officer + discovering_campaign->play + shared_world->trade + campaign->play
 
     // Claiming rest boons / utilizing sanctums
-    permission use = founder + guild_officer + discovering_campaign->play + shared_world->discover
+    permission use = founder + guild_officer + discovering_campaign->play + shared_world->discover + campaign->play
 
     // Managing or defending settlement
-    permission manage = founder + guild_officer + shared_world->manage
+    permission manage = founder + guild_officer + shared_world->manage + campaign->run_session
+}
+
+definition establishment {
+    relation settlement: settlement
+    relation campaign: campaign
+    relation owner: user
+    relation manager: user
+
+    // Viewing establishment
+    permission view = owner + manager + settlement->view + campaign->view
+
+    // Managing or upgrading establishment
+    permission manage = owner + manager + settlement->manage + campaign->run_session
+    permission edit = manage
 }
 
 definition bounty_contract {
