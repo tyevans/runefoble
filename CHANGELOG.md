@@ -19,6 +19,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (`TASK-0203`, `ADR-0004`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed monolithic Web Component `services/character_sheet/ui/src/runefoble-stand-in-guardrails.ts` (311 lines) into modular single-responsibility submodules, reducing `runefoble-stand-in-guardrails.ts` to 106 lines (< 130 lines) and keeping all submodules strictly < 130 lines per Hard Invariant 6:
+    - `runefoble-stand-in-guardrails.styles.ts` (111 lines): Dedicated Bauhaus design token styling module encapsulating card layouts, risk toggles, priority list chips, slider controls, and status badges.
+    - `runefoble-stand-in-guardrails.templates.ts` (108 lines): Extracted standalone Lit HTML render helpers (`renderHeader`, `renderSpellSlotPreservation`, `renderAllyProtectionTags`, `renderSliderControls`, `renderPostureSelector`, `renderCustomPriorityChips`, `renderActionsBar`).
+  - Added package exports in `services/character_sheet/ui/package.json` (`./runefoble-stand-in-guardrails`, `./runefoble-stand-in-guardrails.styles`, `./runefoble-stand-in-guardrails.templates`) and re-exported in `services/character_sheet/ui/src/index.ts` and `frontend/src/index.ts`.
+  - Registered `./src/runefoble-stand-in-guardrails.styles.ts` in `manifest.json` and GET `/ui/manifest` endpoint in `services/character_sheet/src/character_sheet/main.py`.
+  - Added frontend test suite `frontend/test/stand-in-guardrails-decomposition.test.ts` and blackbox verification in `tests/test_blackbox_stand_in_guardrails.py` and `tests/test_blackbox_character_sheet_ui.py`.
+  - Updated Diataxis guide `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md`.
 - **Gateway Auth Router Modular Decomposition (`TASK-0241`, `ADR-0003`, `ADR-0005`, `ADR-0007`)**:
   - Decomposed monolithic router `gateway/api/src/gateway_api/routers/auth.py` (409 lines) into modular submodules under `gateway/api/src/gateway_api/routers/auth/`, keeping all submodules strictly < 130 lines per Hard Invariant 6:
     - `schemas.py` (70 lines): Extracted Pydantic models `RegisterRequest`, `TokenRequest`, `RefreshRequest`, `VerifyEmailRequest`, `DevSendEmailRequest`, `TestEmailRequest`, `PasswordResetRequest`, `SeedAdminRequest`, and `InviteAdminRequest`.

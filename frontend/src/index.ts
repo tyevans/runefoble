@@ -4,6 +4,7 @@ export * from './components/runefoble-character-card.ts';
 export * from './components/runefoble-character-sheet.ts';
 export * from './components/runefoble-watcher-feed.ts';
 export * from './components/runefoble-absentee-recap.ts';
+export * from './components/runefoble-stand-in-guardrails.ts';
 export * from './components/runefoble-autonomous-dm.ts';
 export * from './components/runefoble-theme-switcher.ts';
 export * from './components/runefoble-spectator-view.ts';

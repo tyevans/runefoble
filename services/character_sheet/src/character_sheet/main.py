@@ -77,6 +77,7 @@ def get_ui_manifest():
         ],
         "styles": [
             "./src/runefoble-absentee-recap.styles.ts",
+            "./src/runefoble-stand-in-guardrails.styles.ts",
             "./src/runefoble-character-sheet.styles.ts",
             "./src/runefoble-character-sheet.core.styles.ts",
             "./src/runefoble-character-sheet.inventory.styles.ts",
