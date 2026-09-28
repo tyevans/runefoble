@@ -1,4 +1,4 @@
-import type { CampaignItem, CampaignMember, CreateCampaignPayload } from '@runefoble/game-session-ui';
+import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaignPayload } from '@runefoble/game-session-ui';
 import type { LobbyParticipant, LobbyCharacterOption } from '@runefoble/game-session-ui';
 import type { CharacterItem, RosterCampaignOption } from '@runefoble/character-sheet-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
@@ -348,6 +348,34 @@ export class AppDataService {
     };
     FALLBACK_CAMPAIGNS.unshift(newCamp);
     return newCamp;
+  }
+
+  async updateCampaign(campaignId: string, payload: UpdateCampaignPayload): Promise<CampaignItem | null> {
+    try {
+      const res = await fetch(`${this.apiBase}/campaigns/${campaignId}`, {
+        method: 'PATCH',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) return await res.json();
+    } catch { /* fallback */ }
+    const c = FALLBACK_CAMPAIGNS.find((item) => item.id === campaignId);
+    if (c) {
+      if (payload.title !== undefined) c.title = payload.title;
+      if (payload.setting !== undefined) c.setting = payload.setting;
+      if (payload.system !== undefined) c.system = payload.system;
+      if (payload.cover_image_url !== undefined) c.cover_image_url = payload.cover_image_url;
+      if (payload.description !== undefined) c.description = payload.description;
+      return { ...c };
+    }
+    return {
+      id: campaignId,
+      title: payload.title,
+      setting: payload.setting,
+      system: payload.system || '5e',
+      cover_image_url: payload.cover_image_url,
+      description: payload.description,
+    };
   }
 }
 
