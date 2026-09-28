@@ -1,7 +1,7 @@
 ---
-id: '0193'
+id: 0193
 title: Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0057
@@ -17,8 +17,8 @@ governing_stories:
 - US-0033
 - US-0035
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/254
 ---
-
 # TASK-0193: Universal VTT Importer and Dynamic MCP Test Suite Modular Decomposition
 
 ## Status
