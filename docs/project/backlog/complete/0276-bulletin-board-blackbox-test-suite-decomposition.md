@@ -1,7 +1,7 @@
 ---
 id: '0276'
 title: Settlement Bulletin Board Blackbox Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0263
@@ -16,8 +16,8 @@ governing_prds:
 governing_stories:
 - US-0076
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/308
 ---
-
 # TASK-0276: Settlement Bulletin Board Blackbox Test Suite Modular Decomposition
 
 ## Status
