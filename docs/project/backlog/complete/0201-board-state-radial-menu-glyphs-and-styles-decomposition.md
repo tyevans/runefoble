@@ -1,7 +1,7 @@
 ---
 id: '0201'
 title: Board State Radial Menu Glyphs and Styles Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0125
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0056
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/264
 ---
-
 # TASK-0201: Board State Radial Menu Glyphs and Styles Modular Decomposition
 
 ## Status
