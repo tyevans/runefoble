@@ -5,3 +5,5 @@ export * from './runefoble-campaign-creator.ts';
 export * from './runefoble-campaign-creator.styles.ts';
 export * from './runefoble-campaign-members.ts';
 export * from './runefoble-campaign-members.styles.ts';
+export * from './runefoble-campaign-header.ts';
+export * from './runefoble-campaign-header.styles.ts';

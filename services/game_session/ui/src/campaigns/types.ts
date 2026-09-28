@@ -34,6 +34,26 @@ export interface CreateCampaignPayload {
   description?: string;
 }
 
+export interface UpdateCampaignPayload {
+  campaignId: string;
+  title: string;
+  setting?: string;
+  system?: string;
+  cover_image_url?: string;
+  description?: string;
+}
+
+export function formatRulesetSystem(system?: string): string {
+  if (!system) return '5e';
+  const s = system.toLowerCase().trim();
+  if (s === '5e' || s === 'dnd5e' || s === 'd&d 5e') return '5e';
+  if (s === 'pf2e' || s === 'pathfinder 2e') return 'PF2e';
+  if (s === 'call_of_cthulhu' || s === 'coc' || s === 'call of cthulhu') return 'Call of Cthulhu';
+  if (s === 'daggerheart') return 'Daggerheart';
+  if (s === 'custom') return 'Custom';
+  return system;
+}
+
 export interface SelectCampaignEventDetail {
   campaignId: string;
   campaign: CampaignItem;

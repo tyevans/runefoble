@@ -264,3 +264,37 @@ The campaign and invite storage layer in the Gateway API is decomposed into focu
 - **Store Repository (`store.py`)**: Implements thread-safe in-memory campaign lifecycle mutations (`create_campaign`, `update_campaign`, `create_from_request`, `update_from_request`), delegating invite tracking to `InviteManager`.
 - **Package Facade (`__init__.py`)**: Re-exports all core classes, helpers, and default constants for complete backward compatibility across existing Gateway API routers and test suites.
 
+---
+
+## 9. Campaign Detail Hero Header & Metadata Component
+
+The `<runefoble-campaign-header>` component presents the hero banner, campaign title, setting badge, ruleset system pill (`5e`, `PF2e`, `Call of Cthulhu`), active status indicator, DM profile badge, and narrative description:
+
+```typescript
+import '@runefoble/game-session-ui/campaigns';
+
+html`
+  <runefoble-campaign-header
+    .campaign=${campaignItem}
+    .canManage=${isDM}
+    current-user-id="usr-dm-evelyn"
+    @update-campaign=${async (e: CustomEvent<UpdateCampaignPayload>) => {
+      const { campaignId, title, setting, system, cover_image_url, description } = e.detail;
+      await fetch(\`/api/v1/campaigns/\${campaignId}\`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, setting, system, cover_image_url, description }),
+      });
+    }}
+  ></runefoble-campaign-header>
+`;
+```
+
+Key features of `<runefoble-campaign-header>`:
+- **Hero Banner & Bauhaus Fallback**: Renders high-resolution cover artwork if configured, or automatically renders a vibrant neobrutalist Bauhaus geometric composition with grid patterns and primary-accent shapes when no cover image is provided.
+- **Metadata Badges**: Displays formatted system rulesets (`formatRulesetSystem`), setting genre, live status indicator (`Session Live` / `Active`), and DM identity badge.
+- **Narrative Lore Block**: Presents the campaign introduction and synopsis with readable line-height and Bauhaus typography tokens.
+- **SpiceDB Zanzibar Guarded Editing**: Renders the "Edit Campaign" button strictly when `canManage=true` (granted to users holding `manage` permission in SpiceDB Zanzibar schema).
+- **Edit Campaign Modal**: Provides a form to update title, setting, system ruleset, cover art URL, and narrative description, dispatching standard `@update-campaign` custom events with `UpdateCampaignPayload`.
+
+
