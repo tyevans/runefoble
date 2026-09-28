@@ -19,6 +19,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **Campfire Crafting Subviews Modular Decomposition (`TASK-0199`, `ADR-0004`, `ADR-0007`, `ADR-0012`, `ADR-0013`)**:
+  - Decomposed `services/game_session/ui/src/runefoble-campfire-crafting.ts` (previously 323 lines) into modular subviews under `services/game_session/ui/src/campfire/`, reducing `runefoble-campfire-crafting.ts` to 98 lines (< 100 lines) and keeping all presentation sub-modules strictly < 120 lines per Hard Invariant 6:
+    - `crafting-bench.template.ts` (81 lines): Reagent picker chips, catalyst selector, brewing trigger button, volatile mishap risk meter, and crafting outcome notification alert.
+    - `boons-display.template.ts` (40 lines): Storytelling campfire prompt quote, rest type toggle, rest invocation button, and active resting party boons list.
+    - `stronghold-status.template.ts` (31 lines): Campsite fortifications list (Watchtower, Herbal Drying Rack, Arcane Forge), tier badges, and facility upgrade triggers.
+    - `types.ts` (53 lines): TypeScript interfaces (`CraftingOutcome`, `CraftingBenchProps`, `BoonsDisplayProps`, `StrongholdStatusProps`) and campsite constants.
+    - `index.ts` (4 lines): Export aggregator barrel module for campfire templates and interfaces.
+  - Added blackbox test suite `tests/test_blackbox_campfire_crafting/test_campfire_subviews_decomposition.py` verifying line length invariants, template DOM structures, and public frontdoor APIs.
+  - Updated Diataxis guide `docs/how-to/run-campfire-rests-and-alchemical-crafting.md`.
 - **Campaign Atlas Layers and Pins Subviews Modular Decomposition (`TASK-0196`, `ADR-0004`, `ADR-0007`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed `services/campaign_lore/ui/src/runefoble-campaign-atlas.ts` (previously 331 lines) into modular subviews under `services/campaign_lore/ui/src/atlas/`, reducing `runefoble-campaign-atlas.ts` to 110 lines and keeping every sub-module strictly < 120 lines per Hard Invariant 6:
     - `types.ts` (34 lines): Clean interfaces for `AtlasPin`, `AtlasTerritory`, and `CodexEntry`.
