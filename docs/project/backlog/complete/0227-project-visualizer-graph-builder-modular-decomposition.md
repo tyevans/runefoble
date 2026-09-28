@@ -1,7 +1,7 @@
 ---
 id: '0227'
 title: Project Visualizer Graph Builder Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -11,12 +11,13 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/330
 ---
 
 # TASK-0227: Project Visualizer Graph Builder Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tools/project_visualizer/graph.py` (327 lines, 65.4% of limit) into modular Python submodules under `tools/project_visualizer/graph/` (`models.py`, `builder.py`, `filtering.py`), ensuring all modules remain strictly < 130 lines per Hard Invariant 6.

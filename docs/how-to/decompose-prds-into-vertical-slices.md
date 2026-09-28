@@ -123,6 +123,8 @@ The PRD pipeline completes the three-tier autonomous engineering loop:
 
 The decomposition engine in `tools/prd_pipeline/` is structured to adhere to Hard Invariant 6 (< 500 lines per file):
 
+- **Manager & Scanner Modules (`tools/prd_pipeline/manager/` & `prd_manager.py`)**:
+  - `PRDManager` facade orchestrates stage directory scanning via `PRDScanner` (`scanner.py`), INVEST criteria auditing via `RequirementAuditor` (`auditor.py`), and document creation/link updates via `PRDLifecycle` (`lifecycle.py`), operating on `PRDRecord`, `PRDStage`, and `AuditSummary` models (`models.py`).
 - **Orchestrator Facade (`tools/prd_pipeline/decomposer.py`)**:
   - `PRDDecomposer` provides the public API for counting tasks/stories (`get_max_task_number`, `get_max_story_number`), generating plans (`plan_decomposition`), and persisting tasks (`execute_decomposition`).
 - **Planning & Dependency Engine (`tools/prd_pipeline/planner.py`)**:

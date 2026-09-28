@@ -298,7 +298,21 @@ Per Hard Invariant 6 and ADR-0004 / ADR-0012, bulletin board styling is decouple
 
 The aggregator `frontend/src/components/runefoble-bulletin-board.styles.ts` composes these sheets into a cohesive `CSSResultGroup` array.
 
-## Blackbox Test Suites & Verification
+---
+
+## 6. Modular Settlement Auth & Zanzibar Permissions Architecture
+
+Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authentication and object authorization in `services/game_session/src/game_session/settlement/auth/` are decoupled into single-responsibility submodules strictly under 130 lines:
+
+- **`tokens.py`**: Zitadel OIDC bearer token extraction, verification via `ZitadelAuthService`, and development mode mock user context (`dev-user-001`).
+- **`permissions.py`**: SpiceDB Zanzibar object permission evaluators for settlement viewing/upgrading, establishment management/patronage, and worker editing.
+- **`relationships.py`**: SpiceDB Zanzibar tuple writers (`write_settlement_relationships`, `write_establishment_relationships`, `write_npc_relationships`, `write_negotiation_relationships`).
+- **`dependencies.py`**: FastAPI route dependency factories (`get_current_settlement_user`, `require_haven_builder`, `require_establishment_manager`, `require_haven_viewer`).
+- **`auth.py` / `__init__.py`**: Aggregator facades (< 40 lines) preserving 100% backwards-compatible re-exports for existing routers and services.
+
+---
+
+## 7. Blackbox Test Suites & Verification
 
 In accordance with Hard Invariant 7 (Blackbox TDD with frontdoor setup) and ADR-0008, all settlement haven and mobile minigame mechanics are covered by comprehensive end-to-end blackbox suites driving public HTTP endpoints and WebSocket streams:
 
@@ -317,6 +331,7 @@ Execute the suites locally via UV:
 ```bash
 uv run pytest tests/test_blackbox_settlements_integration.py tests/test_blackbox_minigames_websocket.py
 ```
+
 
 
 

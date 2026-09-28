@@ -1,7 +1,7 @@
 ---
-id: '0228'
+id: 0228
 title: PRD Pipeline Manager Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -11,8 +11,8 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/324
 ---
-
 # TASK-0228: PRD Pipeline Manager Modular Decomposition
 
 ## Status
