@@ -268,3 +268,7 @@
 - [ ] Character Roster Binding Blackbox Test Suite Modular Decomposition (TASK-0298)
 - [ ] Autonomous DM Test Suite Modular Decomposition (TASK-0299)
 - [ ] DM Copilot Narrative Whispers and Interceptor Modular Decomposition (TASK-0300)
+- [ ] Settlement Models Modular Decomposition (TASK-0301)
+- [ ] Campaign Lore Atlas Router Modular Decomposition (TASK-0302)
+- [ ] Bulletin Board Component Modular Decomposition (TASK-0303)
+

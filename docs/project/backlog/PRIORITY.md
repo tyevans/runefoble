@@ -301,5 +301,9 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 297. **TASK-0290 (Proposed)**: [`0290-frontend-spa-router-test-suite-modular-decomposition.md`](proposed/0290-frontend-spa-router-test-suite-modular-decomposition.md) — Frontend SPA Router Test Suite Modular Decomposition
 298. **TASK-0291 (Proposed)**: [`0291-project-visualizer-core-client-modular-decomposition.md`](proposed/0291-project-visualizer-core-client-modular-decomposition.md) — Project Visualizer Core Client Modular Decomposition
 299. **TASK-0235 (Proposed)**: [`0235-project-visualizer-gantt-modular-decomposition.md`](proposed/0235-project-visualizer-gantt-modular-decomposition.md) — Project Visualizer Gantt Chart Modular Decomposition
+300. **TASK-0301 (Proposed)**: [`0301-settlement-models-modular-decomposition.md`](proposed/0301-settlement-models-modular-decomposition.md) — Settlement Models Modular Decomposition
+301. **TASK-0302 (Proposed)**: [`0302-campaign-lore-atlas-router-modular-decomposition.md`](proposed/0302-campaign-lore-atlas-router-modular-decomposition.md) — Campaign Lore Atlas Router Modular Decomposition
+302. **TASK-0303 (Proposed)**: [`0303-bulletin-board-component-modular-decomposition.md`](proposed/0303-bulletin-board-component-modular-decomposition.md) — Bulletin Board Component Modular Decomposition
+
 
 
