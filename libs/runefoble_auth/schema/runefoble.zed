@@ -289,4 +289,18 @@ definition mcp_tool {
     permission execute = author + campaign->play + manage
 }
 
+definition npc {
+    relation establishment: establishment
+    relation campaign: campaign
+    relation manager: user
+
+    // Viewing worker details
+    permission view = manager + establishment->view + campaign->view
+
+    // Managing worker role, inventory, and mood
+    permission manage = manager + establishment->manage + campaign->run_session
+    permission edit_mood = manage + campaign->play
+}
+
+
 
