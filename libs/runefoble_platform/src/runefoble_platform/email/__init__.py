@@ -1,21 +1,20 @@
-"""Backward-compatibility shim for runefoble_platform.email.
+"""Modular email subsystem for Runefoble platform.
 
-DEPRECATED: Import from runefoble_platform.email instead.
+Provides transactional email models, SMTP transport, and Mailpit testing integration.
 """
 
-from runefoble_platform.email import (
+from runefoble_platform.email.mailpit import MailpitClient
+from runefoble_platform.email.models import (
     EmailMessage,
     EmailRecipient,
     EmailVerificationPayload,
-    MailpitClient,
     MailpitMessage,
     MailpitMessageSummary,
     OutboundEmail,
-    SmtpTransport,
-    build_mime_message,
     extract_verification_code,
     extract_verification_link,
 )
+from runefoble_platform.email.smtp import SmtpTransport, build_mime_message
 
 __all__ = [
     "EmailMessage",
