@@ -1,7 +1,7 @@
 ---
-id: '0258'
+id: 0258
 title: Character Management and Tabletop Sync Blackbox Test Suite
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0252
@@ -24,8 +24,8 @@ governing_stories:
 - US-0070
 - US-0071
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/297
 ---
-
 # TASK-0258: Character Management and Tabletop Sync Blackbox Test Suite
 
 ## Status

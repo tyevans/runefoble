@@ -1,7 +1,7 @@
 ---
 id: '0260'
 title: Assignable NPC Worker Engine and Social Relationship Graph
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0259
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0073
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/296
 ---
-
 # TASK-0260: Assignable NPC Worker Engine and Social Relationship Graph
 
 ## Status

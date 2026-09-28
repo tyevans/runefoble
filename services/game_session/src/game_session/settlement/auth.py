@@ -205,3 +205,72 @@ async def write_establishment_relationships(
             subject_type="user",
             subject_id=str(owner_id),
         )
+
+
+async def check_npc_read_permission(
+    spicedb: Any,
+    npc_id: str,
+    user_id: str | None,
+) -> None:
+    """Ensure user has permission to view worker profile."""
+    if not user_id:
+        return
+    allowed = await spicedb.check_permission("npc", str(npc_id), "view", "user", str(user_id))
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Permission denied: subject '{user_id}' cannot view npc:{npc_id}",
+        )
+
+
+async def check_npc_write_permission(
+    spicedb: Any,
+    npc_id: str,
+    user_id: str | None,
+) -> None:
+    """Ensure user has permission to manage worker or edit temperament state."""
+    if not user_id:
+        return
+    allowed = await spicedb.check_permission(
+        "npc", str(npc_id), "edit_mood", "user", str(user_id)
+    ) or await spicedb.check_permission("npc", str(npc_id), "manage", "user", str(user_id))
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Permission denied: subject '{user_id}' cannot manage npc:{npc_id}",
+        )
+
+
+async def write_npc_relationships(
+    spicedb: Any,
+    npc_id: str,
+    establishment_id: str | None = None,
+    campaign_id: str | None = None,
+    manager_id: str | None = None,
+) -> None:
+    """Write SpiceDB Zanzibar tuples for assigned NPC worker."""
+    nid = str(npc_id)
+    if establishment_id:
+        await spicedb.write_relationship(
+            resource_type="npc",
+            resource_id=nid,
+            relation="establishment",
+            subject_type="establishment",
+            subject_id=str(establishment_id),
+        )
+    if campaign_id:
+        await spicedb.write_relationship(
+            resource_type="npc",
+            resource_id=nid,
+            relation="campaign",
+            subject_type="campaign",
+            subject_id=str(campaign_id),
+        )
+    if manager_id:
+        await spicedb.write_relationship(
+            resource_type="npc",
+            resource_id=nid,
+            relation="manager",
+            subject_type="user",
+            subject_id=str(manager_id),
+        )

@@ -147,6 +147,23 @@ class EstablishmentUpgradedEvent(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+@register_event("runefoble.events.game_session.establishment_operations_updated")
+class EstablishmentOperationsUpdatedEvent(BaseRunefobleEvent):
+    """Fired when establishment staffing, total wages, and projected service quality update."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Establishment"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.game_session.establishment_operations_updated"
+    establishment_id: str
+    staff: list[str] = Field(default_factory=list)
+    total_wages: int = 0
+    projected_service_quality: float = 1.0
+    service_quality_tier: str = "standard"
+    interpersonal_tension_index: float = 0.0
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 SettlementChartered = SettlementCharteredEvent
 SettlementUpgraded = SettlementUpgradedEvent
 SettlementRestBoonClaimed = SettlementRestBoonClaimedEvent
@@ -154,10 +171,13 @@ SettlementFounded = SettlementFoundedEvent
 SettlementTierUpgraded = SettlementTierUpgradedEvent
 EstablishmentConstructed = EstablishmentConstructedEvent
 EstablishmentUpgraded = EstablishmentUpgradedEvent
+EstablishmentOperationsUpdated = EstablishmentOperationsUpdatedEvent
 
 __all__ = [
     "EstablishmentConstructed",
     "EstablishmentConstructedEvent",
+    "EstablishmentOperationsUpdated",
+    "EstablishmentOperationsUpdatedEvent",
     "EstablishmentUpgraded",
     "EstablishmentUpgradedEvent",
     "SettlementChartered",
