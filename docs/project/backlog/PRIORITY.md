@@ -262,7 +262,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 258. **TASK-0225 (Complete)**: [`0225-campaign-and-lobby-blackbox-test-suite-modular-decomposition.md`](complete/0225-campaign-and-lobby-blackbox-test-suite-modular-decomposition.md) — Campaign and Lobby Blackbox Test Suite Modular Decomposition
 259. **TASK-0226 (Complete)**: [`0226-campaign-dashboard-styles-modular-decomposition.md`](complete/0226-campaign-dashboard-styles-modular-decomposition.md) — Campaign Dashboard Styles Modular Decomposition
 260. **TASK-0227 (Refined)**: [`0227-project-visualizer-graph-builder-modular-decomposition.md`](refined/0227-project-visualizer-graph-builder-modular-decomposition.md) — Project Visualizer Graph Builder Modular Decomposition
-261. **TASK-0228 (Refined)**: [`0228-prd-pipeline-manager-modular-decomposition.md`](refined/0228-prd-pipeline-manager-modular-decomposition.md) — PRD Pipeline Manager Modular Decomposition
+261. **TASK-0228 (Complete)**: [`0228-prd-pipeline-manager-modular-decomposition.md`](complete/0228-prd-pipeline-manager-modular-decomposition.md) — PRD Pipeline Manager Modular Decomposition
 262. **TASK-0230 (Refined)**: [`0230-soundscape-aggregate-handlers-modular-decomposition.md`](refined/0230-soundscape-aggregate-handlers-modular-decomposition.md) — Soundscape Aggregate Handlers Modular Decomposition
 263. **TASK-0231 (Refined)**: [`0231-board-domain-events-modular-decomposition.md`](refined/0231-board-domain-events-modular-decomposition.md) — Board Domain Events Modular Decomposition
 264. **TASK-0278 (Proposed)**: [`0278-settlement-auth-and-permissions-modular-decomposition.md`](proposed/0278-settlement-auth-and-permissions-modular-decomposition.md) — Settlement Auth and Permissions Modular Decomposition
