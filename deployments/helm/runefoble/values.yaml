@@ -32,6 +32,14 @@ ingress:
           pathType: Prefix
           service: openpanel
           port: 3000
+        - path: /mail
+          pathType: Prefix
+          service: mailpit
+          port: 8025
+        - path: /mailpit
+          pathType: Prefix
+          service: mailpit
+          port: 8025
         - path: /
           pathType: Prefix
           service: frontend
@@ -58,6 +66,14 @@ ingress:
           pathType: Prefix
           service: openpanel
           port: 3000
+        - path: /mail
+          pathType: Prefix
+          service: mailpit
+          port: 8025
+        - path: /mailpit
+          pathType: Prefix
+          service: mailpit
+          port: 8025
         - path: /
           pathType: Prefix
           service: frontend
@@ -124,6 +140,14 @@ openpanel:
   enabled: true
   image: openpanel/openpanel:latest
   port: 3000
+
+# Email Testing & Mock SMTP (Mailpit)
+mailpit:
+  enabled: true
+  image: axllent/mailpit:v1.21.8
+  smtpPort: 1025
+  httpPort: 8025
+  webroot: /mail/
 
 # Observability (OpenTelemetry, Grafana, Loki)
 observability:

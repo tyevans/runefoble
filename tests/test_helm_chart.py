@@ -120,3 +120,91 @@ def test_zitadel_deployment_postgres_credentials_and_ssl_mode():
     assert "ZITADEL_DATABASE_POSTGRES_USER_USERNAME" in env_map
     assert "ZITADEL_DATABASE_POSTGRES_USER_PASSWORD" in env_map
     assert env_map.get("ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE") == "disable"
+    assert env_map.get("ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME") == "admin"
+    assert env_map.get("ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL") == "admin@runefoble.local"
+    assert "ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD" in env_map
+
+
+def test_mailpit_deployment_and_service():
+    """Verify Mailpit deployment and service manifests for email testing and mock SMTP."""
+    docs = _render_helm_templates()
+    mailpit_deploy = next(
+        (
+            d
+            for d in docs
+            if d.get("kind") == "Deployment" and d.get("metadata", {}).get("name") == "mailpit"
+        ),
+        None,
+    )
+    assert mailpit_deploy is not None, "mailpit Deployment manifest not found"
+
+    container = mailpit_deploy["spec"]["template"]["spec"]["containers"][0]
+    assert "mailpit" in container["image"]
+
+    ports = {p.get("name"): p.get("containerPort") for p in container.get("ports", [])}
+    assert ports.get("smtp") == 1025
+    assert ports.get("http") == 8025
+
+    env_map = {item["name"]: item["value"] for item in container.get("env", [])}
+    assert env_map.get("MP_WEBROOT") == "/mail/"
+    assert env_map.get("MP_SMTP_AUTH_ACCEPT_ANY") == "true"
+
+    mailpit_svc = next(
+        (
+            d
+            for d in docs
+            if d.get("kind") == "Service" and d.get("metadata", {}).get("name") == "mailpit"
+        ),
+        None,
+    )
+    assert mailpit_svc is not None, "mailpit Service manifest not found"
+    svc_ports = {p.get("name"): p.get("port") for p in mailpit_svc["spec"]["ports"]}
+    assert svc_ports.get("smtp") == 1025
+    assert svc_ports.get("http") == 8025
+
+
+def test_zitadel_deployment_mailpit_smtp_configuration():
+    """Verify Zitadel deployment wires SMTP to Mailpit for local email testing."""
+    docs = _render_helm_templates()
+    zitadel_deploy = next(
+        (
+            d
+            for d in docs
+            if d.get("kind") == "Deployment" and d.get("metadata", {}).get("name") == "zitadel"
+        ),
+        None,
+    )
+    assert zitadel_deploy is not None
+
+    container = zitadel_deploy["spec"]["template"]["spec"]["containers"][0]
+    env_map = {item["name"]: item["value"] for item in container.get("env", [])}
+
+    assert env_map.get("ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST") == "mailpit:1025"
+    assert env_map.get("ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_TLS") == "false"
+    assert env_map.get("ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_SSL") == "false"
+    assert (
+        env_map.get("ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_FROM")
+        == "admin@runefoble.local"
+    )
+    assert env_map.get("ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_FROMNAME") == "Runefoble"
+
+
+def test_ingress_mailpit_routing():
+    """Verify Ingress rules route /mail and /mailpit to the Mailpit service."""
+    docs = _render_helm_templates()
+    ingress = next(
+        (d for d in docs if d.get("kind") == "Ingress" and "mailpit" in str(d)),
+        None,
+    )
+    assert ingress is not None, "Ingress manifest with mailpit routes not found"
+
+    for rule in ingress["spec"]["rules"]:
+        host = rule.get("host")
+        paths = {
+            p["path"]: p["backend"]["service"]["name"]
+            for p in rule.get("http", {}).get("paths", [])
+        }
+        assert "/mail" in paths, f"Missing /mail route on host {host}"
+        assert paths["/mail"] == "mailpit"
+        assert "/mailpit" in paths, f"Missing /mailpit route on host {host}"
+        assert paths["/mailpit"] == "mailpit"

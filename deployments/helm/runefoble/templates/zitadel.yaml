@@ -40,6 +40,32 @@ spec:
               value: {{ .Values.postgres.password | quote }}
             - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
               value: "disable"
+            - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME
+              value: "admin"
+            - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_FIRSTNAME
+              value: "Runefoble"
+            - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_LASTNAME
+              value: "Admin"
+            - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL
+              value: {{ .Values.zitadel.adminEmail | quote }}
+            - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD
+              value: {{ .Values.zitadel.adminPassword | quote }}
+            {{- if .Values.mailpit.enabled }}
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST
+              value: "mailpit:{{ .Values.mailpit.smtpPort | default 1025 }}"
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_USER
+              value: ""
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_PASSWORD
+              value: ""
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_TLS
+              value: "false"
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_SSL
+              value: "false"
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_FROM
+              value: {{ .Values.zitadel.adminEmail | default "noreply@runefoble.local" | quote }}
+            - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_FROMNAME
+              value: "Runefoble"
+            {{- end }}
 ---
 apiVersion: v1
 kind: Service

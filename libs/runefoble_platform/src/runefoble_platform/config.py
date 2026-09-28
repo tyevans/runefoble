@@ -129,3 +129,25 @@ class PlatformSettings(BaseSettings):
         validation_alias=AliasChoices("RUNEFOBLE_LOKI_ENDPOINT", "LOKI_ENDPOINT"),
         description="Grafana Loki endpoint",
     )
+
+    # Email & SMTP Testing (Mailpit)
+    mailpit_smtp_host: str = Field(
+        default="localhost",
+        validation_alias=AliasChoices("RUNEFOBLE_MAILPIT_SMTP_HOST", "MAILPIT_SMTP_HOST"),
+        description="Mailpit SMTP host for email testing",
+    )
+    mailpit_smtp_port: int = Field(
+        default=1025,
+        validation_alias=AliasChoices("RUNEFOBLE_MAILPIT_SMTP_PORT", "MAILPIT_SMTP_PORT"),
+        description="Mailpit SMTP port",
+    )
+    mailpit_http_url: str = Field(
+        default="http://localhost:8025",
+        validation_alias=AliasChoices("RUNEFOBLE_MAILPIT_HTTP_URL", "MAILPIT_HTTP_URL"),
+        description="Mailpit HTTP Web UI and API base URL",
+    )
+    mailpit_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("RUNEFOBLE_MAILPIT_ENABLED", "MAILPIT_ENABLED"),
+        description="Whether Mailpit email testing is enabled",
+    )

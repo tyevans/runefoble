@@ -14,6 +14,12 @@ from runefoble_platform.consumer_group import (
     RedisConsumerGroupWorker,
 )
 from runefoble_platform.dice import DICE_FORMULA_PATTERN, evaluate_dice, parse_and_roll
+from runefoble_platform.email_client import (
+    MailpitClient,
+    MailpitMessage,
+    MailpitMessageSummary,
+    OutboundEmail,
+)
 from runefoble_platform.errors import (
     AuthorizationError,
     EntityNotFoundError,
@@ -59,6 +65,10 @@ from runefoble_platform.telemetry import (
 )
 
 __all__ = [
+    "MailpitClient",
+    "MailpitMessage",
+    "MailpitMessageSummary",
+    "OutboundEmail",
     "evaluate_dice",
     "parse_and_roll",
     "DICE_FORMULA_PATTERN",
