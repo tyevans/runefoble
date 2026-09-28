@@ -97,3 +97,15 @@ boardElement.setThemeMode('light');
   });
 </script>
 ```
+
+---
+
+## 7. Modular Blackbox Test Suite Architecture
+
+Under TASK-0191 (ADR-0003, ADR-0007, ADR-0010, ADR-0013, and Hard Invariant 6), the blackbox test suite is organized into focused submodules under `tests/test_blackbox_spell_vfx/`:
+
+- **`conftest.py`**: Shared test harness, `MockSpiceDBClient`, `MockAsyncRedis`, FastAPI `TestClient`, and spell archetype payload fixtures (< 60 lines).
+- **`test_spell_adjudication.py`**: Public REST spellcasting routes, Evocation/Abjuration/Conjuration archetypes, trajectory generation, and SLA latency verification (< 120 lines).
+- **`test_decals_and_lifecycle.py`**: Ephemeral decal decay over rounds, fading opacity, animation completion callbacks, and WebGL particle canvas contracts (< 100 lines).
+- **`test_speech_vfx_triggers.py`**: Real-time WebSocket speech-to-VFX triggers, sub-150ms broadcast SLA, and event sourcing domain events persistence (< 110 lines).
+
