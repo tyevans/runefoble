@@ -112,12 +112,44 @@
 - [x] Campaign Dashboard and Creation Microfrontend (`FEAT-UI-08`, US-0063, PRD-0023, TASK-0209)
 - [x] Campaign Members and Zanzibar Role Manager UI (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0210)
 - [x] Character Roster and Party Assignment Microfrontend (`FEAT-UI-09`, US-0064, PRD-0023, TASK-0211)
-- [ ] Game Session Lobby and Readiness Microfrontend (`FEAT-UI-10`, US-0065, PRD-0023, TASK-0212)
-- [ ] App Shell View Orchestration and Session Transition (`FEAT-UI-11`, US-0065, US-0066, PRD-0023, TASK-0213)
+- [x] Game Session Lobby and Readiness Microfrontend (`FEAT-UI-10`, US-0065, PRD-0023, TASK-0212)
+- [x] App Shell View Orchestration and Session Transition (`FEAT-UI-11`, US-0065, US-0066, PRD-0023, TASK-0213)
 
 ### Frontdoor Blackbox Verification Suites
-- [ ] Frontend Routing and Auth Blackbox Test Suite (US-0062, US-0066, PRD-0023, TASK-0214)
-- [ ] Campaign Management and Lobby Blackbox Test Suite (US-0063, US-0064, US-0065, PRD-0023, TASK-0215)
+- [x] Frontend Routing and Auth Blackbox Test Suite (US-0062, US-0066, PRD-0023, TASK-0214)
+- [x] Campaign Management and Lobby Blackbox Test Suite (US-0063, US-0064, US-0065, PRD-0023, TASK-0215)
+
+### Extended Campaign Hub & Character Management Enablers (Phase 2)
+- [ ] Gateway Campaign Sessions API and Persistence (`FEAT-UI-08`, US-0063, US-0067, PRD-0023, TASK-0246)
+- [ ] Frontend Vite API Proxy and Dynamic Route Title Resolver (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0247)
+- [ ] Gateway Character Management Router and Zanzibar Authorization (`FEAT-UI-09`, US-0064, PRD-0023, TASK-0252)
+- [ ] Character Aggregate Campaign Assignment and Core Attributes Extension (`FEAT-UI-09`, US-0064, PRD-0006, TASK-0253)
+
+### Extended Campaign Hub & Character Management Epics (Phase 2)
+- [ ] Campaign Detail Hero Header and Metadata Component (`FEAT-UI-08`, US-0067, PRD-0023, TASK-0248)
+- [ ] Session Scheduling and Staging Lobby Creation Modal (`FEAT-UI-10`, US-0065, US-0067, PRD-0023, TASK-0249)
+- [ ] Unified Campaign Detail View Orchestration and Tabbed Navigation (`FEAT-UI-08`, US-0067, PRD-0023, TASK-0250)
+- [ ] Frontend Character Roster Event Binding and Data Mutations (`FEAT-UI-09`, US-0064, US-0069, PRD-0023, TASK-0254)
+- [ ] Character Sheet Route and Inspector Subview Orchestration (`FEAT-UI-09`, US-0069, PRD-0023, TASK-0255)
+- [ ] Dynamic Character Binding in Pre-Game Lobby and Active VTT (`FEAT-UI-10`, US-0065, US-0069, PRD-0023, TASK-0256)
+- [ ] Profile Settings View and Campaign Creation Idempotency (`FEAT-UI-08`, US-0063, US-0068, PRD-0023, TASK-0257)
+
+### Phase 2 Verification Suites
+- [ ] App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite (US-0065, US-0066, PRD-0023, TASK-0251)
+- [ ] Character Management and Tabletop Sync Blackbox Test Suite (US-0064, US-0069, PRD-0023, TASK-0258)
+
+## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames
+### Foundational Aggregates, Social Graphs & Civic Enablers
+- [ ] Settlement Haven Builder and Establishment Aggregate (`FEAT-SET-01`, `FEAT-SET-02`, US-0072, PRD-0024, TASK-0259)
+- [ ] Assignable NPC Worker and Social Relationship Graph (`FEAT-SET-02`, US-0073, PRD-0024, TASK-0260)
+
+### Mobile Minigames, Haggling & Notice Board Epics
+- [ ] Mobile-First Touch-Optimized Tavern & Casino Minigames (`FEAT-SET-03`, US-0074, PRD-0024, TASK-0261)
+- [ ] Interactive Merchant Haggling Engine with DM Controls (`FEAT-SET-04`, US-0075, PRD-0024, TASK-0262)
+- [ ] Town Bulletin Board Civic Notices and Bounty Board (`FEAT-SET-05`, US-0076, PRD-0024, TASK-0263)
+
+### Settlement & Minigames Blackbox Verification
+- [ ] Settlement Builder and Minigames Blackbox Test Suite (US-0072, US-0073, US-0074, US-0075, US-0076, PRD-0024, TASK-0264)
 
 ## Milestone 9: Persona Immersion & Community Ecosystem
 ### Living Worlds, Mobile & Voice Enablers
@@ -166,14 +198,14 @@
 - [x] Campfire Crafting Subviews Modular Decomposition (TASK-0199)
 - [x] Campaign Analytics Stories Fixtures Modular Decomposition (TASK-0200)
 - [x] Board State Radial Menu Glyphs and Styles Modular Decomposition (TASK-0201)
-- [ ] Backlog Queue Parser and Serializer Modular Decomposition (TASK-0202)
-- [ ] Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (TASK-0203)
-- [ ] Character Sheet Component Action Handlers and State Modular Decomposition (TASK-0204)
+- [x] Backlog Queue Parser and Serializer Modular Decomposition (TASK-0202)
+- [x] Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (TASK-0203)
+- [x] Character Sheet Component Action Handlers and State Modular Decomposition (TASK-0204)
 - [ ] West Marches Aggregate Discovery and Territory Handlers Modular Decomposition (TASK-0205)
 - [x] Faction Turf War Test Suite Modular Decomposition (TASK-0216)
-- [ ] Project Visualizer Graph Rendering Modular Decomposition (TASK-0217)
+- [x] Project Visualizer Graph Rendering Modular Decomposition (TASK-0217)
 - [x] Project Visualizer AGY Test Suite Modular Decomposition (TASK-0218)
-- [ ] Project Visualizer Drawer Subviews Modular Decomposition (TASK-0219)
+- [x] Project Visualizer Drawer Subviews Modular Decomposition (TASK-0219)
 - [x] Campaign Members Styles Modular Decomposition (TASK-0220)
 - [x] Gateway Campaign Store Modular Decomposition (TASK-0221)
 - [ ] Character Roster Styles Modular Decomposition (TASK-0222)
@@ -186,7 +218,7 @@
 - [ ] Character Sheet Models Modular Decomposition (TASK-0229)
 - [ ] Soundscape Aggregate Handlers Modular Decomposition (TASK-0230)
 - [ ] Board Domain Events Modular Decomposition (TASK-0231)
-- [ ] Rules Compendium UI Blackbox Test Suite Modular Decomposition (TASK-0232)
+- [x] Rules Compendium UI Blackbox Test Suite Modular Decomposition (TASK-0232)
 - [ ] Character Leitmotif Generator Modular Decomposition (TASK-0233)
 - [ ] Campfire Crafting Styles Modular Decomposition (TASK-0234)
 - [ ] Project Visualizer Gantt Chart Modular Decomposition (TASK-0235)
@@ -195,8 +227,12 @@
 - [ ] GameSession Models Test Suite Modular Decomposition (TASK-0238)
 - [ ] Asset Forge Print Forge Router Modular Decomposition (TASK-0239)
 - [ ] Faction Simulation Engine Modular Decomposition (TASK-0240)
-- [ ] Gateway Auth Router Modular Decomposition (TASK-0241)
-- [ ] Platform Email Client Modular Decomposition (TASK-0242)
+- [x] Gateway Auth Router Modular Decomposition (TASK-0241)
+- [x] Platform Email Client Modular Decomposition (TASK-0242)
 - [ ] Email Signup Mailpit Blackbox Test Suite Decomposition (TASK-0243)
 - [ ] Rules Compendium Hybrid Retrieval Modular Decomposition (TASK-0244)
-- [ ] Campaign Lore Dependencies and Permissions Modular Decomposition (TASK-0245)
+- [x] Campaign Lore Dependencies and Permissions Modular Decomposition (TASK-0245)
+- [ ] Gateway Campaign Store Test Suite Modular Decomposition (TASK-0265)
+- [ ] Vocal Modulator Blackbox Test Suite Modular Decomposition (TASK-0266)
+- [ ] Rules Compendium Encounter Builder Subviews Modular Decomposition (TASK-0267)
+- [ ] Radial Menu and AoE Templates Test Suite Modular Decomposition (TASK-0268)

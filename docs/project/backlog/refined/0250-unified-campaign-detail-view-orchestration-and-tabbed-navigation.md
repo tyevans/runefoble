@@ -1,7 +1,7 @@
 ---
 id: '0250'
 title: Unified Campaign Detail View Orchestration and Tabbed Navigation
-status: Proposed
+status: Refined
 created: 2026-09-27
 dependencies:
 - TASK-0247
@@ -9,6 +9,7 @@ dependencies:
 - TASK-0249
 governing_adrs:
 - ADR-0004
+- ADR-0007
 - ADR-0012
 - ADR-0013
 governing_prds:
@@ -19,10 +20,11 @@ governing_stories:
 - US-0067
 target_release: 0.8.0
 ---
+
 # TASK-0250: Unified Campaign Detail View Orchestration and Tabbed Navigation
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Refactor the `campaign-detail` view in `frontend/src/runefoble-app.ts` into a cohesive, tabbed campaign command center integrating `<runefoble-campaign-header>`, `<runefoble-campaign-members>`, `<runefoble-session-list>`, and sub-navigation links to the party character roster (`#/campaigns/:id/characters`), campaign lore codex, and chronicle analytics.
@@ -36,6 +38,7 @@ The current `campaign-detail` view is a rudimentary `div` holding two disconnect
   - `docs/how-to/navigate-client-spa-routes-and-breadcrumbs.md`: Sub-routing and breadcrumb hierarchy.
 - **Governing Architecture & ADRs**:
   - **ADR-0004: Lit Web Components and Storybook UI**: App shell component composition.
+  - **ADR-0007: Domain-Driven Design Architecture**: Clean domain segregation.
   - **ADR-0012: Design System Theming and Bauhaus Modernism**: Tabbed navigation styling and surface contrast.
   - **ADR-0013: Microfrontend Architecture and Service Component Vendoring**: Composing decoupled `@runefoble/*-ui` microfrontends.
 
@@ -57,6 +60,8 @@ The current `campaign-detail` view is a rudimentary `div` holding two disconnect
    - Bauhaus-styled tab bar adhering to `--rf-border-color` and `--rf-accent-primary`.
 4. **Campaign Update Handling**:
    - Listen for `@update-campaign` from header, call `appDataService.updateCampaign`, and refresh view data seamlessly.
+5. **Frontdoor Blackbox Verification (`tests/test_blackbox_campaign_detail_view.py`)**:
+   - Verify tab navigation, subview rendering, and campaign header data binding via frontdoors.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Composes ready components into the App Shell router hierarchy.
@@ -69,5 +74,6 @@ The current `campaign-detail` view is a rudimentary `div` holding two disconnect
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. `runefoble-app.ts` loads campaign metadata and renders `<runefoble-campaign-header>`.
 2. Navigation between campaign tabs switches subviews without page reloads.
-3. `#/campaigns/:id/characters` mounts party character roster.
-4. `runefoble-app.ts` remains strictly under 450 lines (Hard Invariant 6).
+3. `#/campaigns/:id/characters` mounts party character roster with campaign filter applied.
+4. Frontdoor blackbox test suite passes via `uv run pytest tests/test_blackbox_campaign_detail_view.py`.
+5. `runefoble-app.ts` remains strictly under 450 lines (Hard Invariant 6).

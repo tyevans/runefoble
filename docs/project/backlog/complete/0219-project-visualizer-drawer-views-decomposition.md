@@ -1,7 +1,7 @@
 ---
-id: '0219'
+id: 0219
 title: Project Visualizer Drawer Subviews Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies: []
 governing_adrs:
@@ -10,12 +10,13 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/276
 ---
 
 # TASK-0219: Project Visualizer Drawer Subviews Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `tools/project_visualizer/static/js/drawer.js` (358 lines, 71.6% of limit) into modular card view components under `tools/project_visualizer/static/js/drawer/` (`task_card.js`, `adr_card.js`, `prd_card.js`, `persona_card.js`, `controller.js`), keeping all modules strictly < 120 lines per Hard Invariant 6.

@@ -261,10 +261,10 @@ def test_adr_parser_resilience(tmp_path: Path):
 
 
 def test_roadmap_milestones_and_task_linking(repo_root: Path):
-    """Verify all 10 milestones are parsed with accurate status and linked to tasks."""
+    """Verify all roadmap milestones are parsed with accurate status and linked to tasks."""
     project_dir = repo_root / "docs" / "project"
     milestones = parse_roadmap_file(project_dir)
-    assert len(milestones) == 10
+    assert len(milestones) >= 11
 
     m_by_id = {m.id: m for m in milestones}
     assert m_by_id["M1"].status == "Complete"
@@ -276,6 +276,11 @@ def test_roadmap_milestones_and_task_linking(repo_root: Path):
     assert m_by_id["M10"].status == "Current"
     assert 0 < m_by_id["M10"].completion_pct < 100
     assert "Frontend Application Experience" in m_by_id["M10"].name
+
+    # Milestone 11 is Planned (Settlement Haven Builder & Mobile Web Minigames)
+    assert "M11" in m_by_id
+    assert m_by_id["M11"].status == "Planned"
+    assert "Settlement Haven Builder" in m_by_id["M11"].name
 
     # Milestone 9 has in-progress tasks
     assert m_by_id["M9"].status in ("In Progress", "Planned")
