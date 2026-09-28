@@ -13,6 +13,7 @@ from game_session.contracts.engine import MercenaryBountyAggregate
 from game_session.merchants import MerchantAggregate
 from game_session.minigames import TavernGameAggregate
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
+from game_session.settlement.workers import NPCWorkerAggregate
 from game_session.settlements.aggregate import SettlementAggregate
 from game_session.stronghold import StrongholdAggregate
 from game_session.west_marches import SharedWorldAggregate
@@ -65,6 +66,9 @@ establishment_repo: AggregateRepository[EstablishmentAggregate] = create_aggrega
 bounty_contract_repo: AggregateRepository[MercenaryBountyAggregate] = create_aggregate_repository(
     MercenaryBountyAggregate
 )
+worker_repo: AggregateRepository[NPCWorkerAggregate] = create_aggregate_repository(
+    NPCWorkerAggregate
+)
 
 
 def get_tavern_repository() -> AggregateRepository[TavernGameAggregate]:
@@ -103,10 +107,15 @@ def get_bounty_contract_repository() -> AggregateRepository[MercenaryBountyAggre
     return bounty_contract_repo
 
 
+def get_worker_repository() -> AggregateRepository[NPCWorkerAggregate]:
+    return worker_repo
+
+
 _world_contracts_index: dict[str, list[str]] = {}
 _session_bounties_index: dict[str, list[str]] = {}
 _settlement_establishments_index: dict[str, list[str]] = {}
 _campaign_settlements_index: dict[str, list[str]] = {}
+_establishment_workers_index: dict[str, list[str]] = {}
 
 
 def get_world_contracts_index() -> dict[str, list[str]]:
@@ -123,6 +132,10 @@ def get_settlement_establishments_index() -> dict[str, list[str]]:
 
 def get_campaign_settlements_index() -> dict[str, list[str]]:
     return _campaign_settlements_index
+
+
+def get_establishment_workers_index() -> dict[str, list[str]]:
+    return _establishment_workers_index
 
 
 def get_spicedb_client() -> SpiceDBClient:

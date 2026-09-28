@@ -28,6 +28,7 @@ from game_session.routers import (
     west_marches_router,
 )
 from game_session.settlement.router import router as settlement_haven_router
+from game_session.settlement.workers_router import router as settlement_workers_router
 from runefoble_platform.event_sourcing import get_event_store
 
 __all__ = [
@@ -58,6 +59,7 @@ app.include_router(caravan_contracts_router)
 app.include_router(settlements_router)
 app.include_router(settlements_router, prefix="/api/v1")
 app.include_router(settlement_haven_router)
+app.include_router(settlement_workers_router)
 app.include_router(bounties_router)
 app.include_router(bounties_router, prefix="/api/v1")
 
