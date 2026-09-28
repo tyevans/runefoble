@@ -10,6 +10,7 @@ export * from './runefoble-character-sheet.core.styles.ts';
 export * from './runefoble-character-sheet.inventory.styles.ts';
 export * from './runefoble-character-sheet.conditions.styles.ts';
 export * from './runefoble-character-sheet.types.ts';
+export * from './runefoble-character-sheet.actions.ts';
 export * from './runefoble-character-sheet.templates.ts';
 export * from './templates/index.ts';
 export * from './runefoble-wardrobe-gallery.ts';

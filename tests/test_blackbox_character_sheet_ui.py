@@ -73,6 +73,7 @@ def test_typescript_element_source_and_custom_elements() -> None:
     assert "./runefoble-stand-in-guardrails" in pkg_json["exports"]
     assert "./runefoble-stand-in-guardrails.styles" in pkg_json["exports"]
     assert "./runefoble-stand-in-guardrails.templates" in pkg_json["exports"]
+    assert "./runefoble-character-sheet.actions" in pkg_json["exports"]
 
     assert (ui_dir / "tsconfig.json").is_file()
     assert (ui_dir / "src/index.ts").is_file()
@@ -118,6 +119,22 @@ def test_typescript_element_source_and_custom_elements() -> None:
     assert (ui_dir / "src/templates/conditions.template.ts").is_file()
     assert (ui_dir / "src/templates/spells.template.ts").is_file()
     assert (ui_dir / "src/templates/index.ts").is_file()
+
+    actions_file = ui_dir / "src/runefoble-character-sheet.actions.ts"
+    assert actions_file.is_file()
+    actions_src = actions_file.read_text(encoding="utf-8")
+    assert "calculateEncumbrance" in actions_src
+    assert "calculateHpDelta" in actions_src
+    assert "equipItem" in actions_src
+    assert "unequipItem" in actions_src
+    assert "addItem" in actions_src
+    assert "removeItem" in actions_src
+    assert "toggleSpellSlotPip" in actions_src
+    assert "castSpellSlot" in actions_src
+    assert "togglePreparedSpell" in actions_src
+    assert "applyConditionToState" in actions_src
+    assert "removeConditionFromState" in actions_src
+    assert "dispatchActionEvent" in actions_src
 
 
 def test_storybook_stories_definition() -> None:
@@ -281,6 +298,7 @@ def test_file_length_invariants() -> None:
     """Verify that all files created for runefoble-character-sheet strictly obey Hard Invariant 6 (< 500 lines)."""
     monitored_files = [
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.ts",
+        REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.actions.ts",
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.templates.ts",
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.styles.ts",
         REPO_ROOT / "services/character_sheet/ui/src/runefoble-character-sheet.core.styles.ts",
@@ -356,3 +374,22 @@ def test_modular_templates_line_length_limits() -> None:
         assert lines < target_limit, (
             f"{mod.name} has {lines} lines, exceeding the {target_limit} line threshold!"
         )
+
+
+def test_modular_actions_and_controller_line_length_limits() -> None:
+    """Verify TASK-0204 modular decomposition: controller < 150 lines, actions < 130 lines."""
+    ui_src = REPO_ROOT / "services/character_sheet/ui/src"
+
+    controller = ui_src / "runefoble-character-sheet.ts"
+    assert controller.is_file()
+    controller_lines = len(controller.read_text(encoding="utf-8").splitlines())
+    assert controller_lines < 150, (
+        f"runefoble-character-sheet.ts has {controller_lines} lines, exceeding 150 lines limit!"
+    )
+
+    actions = ui_src / "runefoble-character-sheet.actions.ts"
+    assert actions.is_file()
+    actions_lines = len(actions.read_text(encoding="utf-8").splitlines())
+    assert actions_lines < 130, (
+        f"runefoble-character-sheet.actions.ts has {actions_lines} lines, exceeding 130 lines limit!"
+    )
