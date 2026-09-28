@@ -1,7 +1,7 @@
 ---
-id: '0249'
+id: 0249
 title: Session Scheduling and Staging Lobby Creation Modal
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0246
@@ -16,8 +16,8 @@ governing_stories:
 - US-0065
 - US-0067
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/283
 ---
-
 # TASK-0249: Session Scheduling and Staging Lobby Creation Modal
 
 ## Status
