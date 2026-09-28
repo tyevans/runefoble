@@ -39,6 +39,7 @@
     "./lobby/session-lobby": "./src/lobby/runefoble-session-lobby.ts",
     "./lobby/session-lobby.styles": "./src/lobby/runefoble-session-lobby.styles.ts",
     "./lobby/styles": "./src/lobby/styles/index.ts",
+    "./campfire": "./src/campfire/index.ts",
     "./utils/dice": "./src/utils/dice.ts"
   },
   "scripts": {

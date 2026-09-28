@@ -200,3 +200,16 @@ Under TASK-0184 (ADR-0003, ADR-0006, ADR-0007, ADR-0011, and Hard Invariant 6), 
 - **`test_volatile_mishaps.py`**: Volatile reaction failure thresholds, explosion events, and setback condition effects (< 110 lines).
 - **`test_campfire_boons.py`**: Stronghold upgrades, resting storytelling prompts, camaraderie boons, and Lit microfrontend manifest (< 150 lines).
 
+---
+
+## 7. Modular Campfire Crafting UI Architecture
+
+Under TASK-0199 (ADR-0004, ADR-0012, ADR-0013, and Hard Invariant 6), the presentation subviews for `<runefoble-campfire-crafting>` are modularized into focused template modules under `services/game_session/ui/src/campfire/`:
+
+- **`crafting-bench.template.ts`**: Reagent picker chips, catalyst selector, brewing trigger button, volatile mishap risk meter, and crafting outcome notification alert (< 110 lines).
+- **`boons-display.template.ts`**: Storytelling campfire prompt quote, rest type toggle, rest invocation button, and active resting party boons list (< 90 lines).
+- **`stronghold-status.template.ts`**: Campsite fortifications list (Watchtower, Herbal Drying Rack, Arcane Forge), tier badges, and facility upgrade triggers (< 90 lines).
+- **`types.ts`**: TypeScript interfaces (`CraftingOutcome`, `CraftingBenchProps`, `BoonsDisplayProps`, `StrongholdStatusProps`) and default campsite configuration constants.
+- **`index.ts`**: Aggregator barrel module re-exporting presentation templates and interfaces.
+- **`runefoble-campfire-crafting.ts`**: Controller component (< 100 lines) managing state, volatile mishap risk calculation, and CustomEvent dispatching (`reagents-combined`, `campfire-rest-requested`, `stronghold-upgrade-requested`).
+
