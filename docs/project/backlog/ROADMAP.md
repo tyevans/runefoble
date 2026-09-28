@@ -285,5 +285,9 @@
 - [ ] Mobile Companion Blackbox Test Suite Decomposition (TASK-0315)
 - [ ] Gateway Spectator Router and Stream Manager Modular Decomposition (TASK-0316)
 - [ ] Microfrontend Manifests Test Suite Modular Decomposition (TASK-0317)
+- [ ] Campaign Atlas Styles Modular Decomposition (TASK-0318)
+- [ ] Caravan Modular Decomposition Test Suite Decomposition (TASK-0319)
+- [ ] Campaign Analytics Component Styles Modular Decomposition (TASK-0320)
+- [ ] Gateway Characters Blackbox Test Suite Decomposition (TASK-0321)
 
 
