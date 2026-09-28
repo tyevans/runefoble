@@ -1,7 +1,7 @@
 ---
 id: '0204'
 title: Character Sheet Component Action Handlers and State Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0009
@@ -17,8 +17,8 @@ governing_stories:
 - US-0015
 - US-0051
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/274
 ---
-
 # TASK-0204: Character Sheet Component Action Handlers and State Modular Decomposition
 
 ## Status
