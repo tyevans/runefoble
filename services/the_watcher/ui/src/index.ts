@@ -5,6 +5,7 @@ export * from './runefoble-dm-whisper-bar.ts';
 export * from './runefoble-dm-whisper-bar.styles.ts';
 export * from './runefoble-faction-radar.ts';
 export * from './runefoble-faction-radar.styles.ts';
+export * from './faction_radar/index.ts';
 export * from './runefoble-faction-espionage.ts';
 export * from './runefoble-faction-espionage.styles.ts';
 export * from './runefoble-absentee-directive.ts';

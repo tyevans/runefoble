@@ -237,6 +237,13 @@ Returning:
 | `isDrawerOpen` | `boolean` | State toggle for the secret DM briefing drawer panel. |
 | `tavernRumors` | `string[]` | Optional direct override for public tavern gossip feed. |
 
+### Modular Subview Architecture (ADR-0004 & ADR-0013)
+Per Hard Invariant 6 and ADR-0004/ADR-0013, `<runefoble-faction-radar>` is decomposed into modular subview templates under `services/the_watcher/ui/src/faction_radar/`, keeping the controller and each subview strictly < 120 lines:
+- **`radar-svg.template.ts`**: Mathematical calculations and SVG elements for polar grid circles, radial axes, faction polygons, and vertex hit targets (`renderRadarChart`).
+- **`bulletin-drawer.template.ts`**: Confidential intelligence bulletin drawer, world tick history, tavern rumors feed, and regional unrest shifts (`renderDmDrawer`, `renderRumors`).
+- **`faction-details.template.ts`**: Selected faction inspection card, influence and resources progress bars, active agenda status, and rival faction tags (`renderFactionCards`).
+- **`types.ts`**: Shared TypeScript data interfaces (`FactionData`, `WorldTickData`, `FactionShift`, `GeopoliticalShift`).
+
 ### SpiceDB Zanzibar Object-Level Redaction (ADR-0001)
 When queried through `GET /api/v1/campaigns/{id}/world-ticks/latest`:
 - **Dungeon Masters (`dungeon_master` relation)** receive the full unredacted markdown briefing and tactical advisory.

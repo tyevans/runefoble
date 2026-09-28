@@ -147,6 +147,55 @@ def test_typescript_element_source_and_custom_elements() -> None:
     assert "--rf-border-color" in styles_src
 
 
+def test_faction_radar_modular_decomposition() -> None:
+    """Verify TASK-0195 modular decomposition of faction radar into subviews with strict line limits."""
+    ui_dir = REPO_ROOT / "services/the_watcher/ui"
+    radar_subviews_dir = ui_dir / "src/faction_radar"
+    assert radar_subviews_dir.is_dir(), "faction_radar subviews directory must exist"
+
+    # 1. Main controller strictly < 120 lines (target < 110)
+    controller_file = ui_dir / "src/runefoble-faction-radar.ts"
+    controller_lines = len(controller_file.read_text(encoding="utf-8").splitlines())
+    assert controller_lines < 120, (
+        f"runefoble-faction-radar.ts must be < 120 lines, got {controller_lines}"
+    )
+
+    # 2. radar-svg.template.ts strictly < 120 lines (target < 110)
+    radar_svg_file = radar_subviews_dir / "radar-svg.template.ts"
+    assert radar_svg_file.is_file()
+    radar_svg_content = radar_svg_file.read_text(encoding="utf-8")
+    assert "renderRadarChart" in radar_svg_content
+    assert len(radar_svg_content.splitlines()) < 120, (
+        f"radar-svg.template.ts must be < 120 lines, got {len(radar_svg_content.splitlines())}"
+    )
+
+    # 3. bulletin-drawer.template.ts strictly < 120 lines (target < 100)
+    drawer_file = radar_subviews_dir / "bulletin-drawer.template.ts"
+    assert drawer_file.is_file()
+    drawer_content = drawer_file.read_text(encoding="utf-8")
+    assert "renderDmDrawer" in drawer_content
+    assert "renderRumors" in drawer_content
+    assert len(drawer_content.splitlines()) < 120, (
+        f"bulletin-drawer.template.ts must be < 120 lines, got {len(drawer_content.splitlines())}"
+    )
+
+    # 4. faction-details.template.ts strictly < 120 lines (target < 90)
+    details_file = radar_subviews_dir / "faction-details.template.ts"
+    assert details_file.is_file()
+    details_content = details_file.read_text(encoding="utf-8")
+    assert "renderFactionCards" in details_content
+    assert len(details_content.splitlines()) < 120, (
+        f"faction-details.template.ts must be < 120 lines, got {len(details_content.splitlines())}"
+    )
+
+    # 5. package.json exports verification
+    pkg_json = json.loads((ui_dir / "package.json").read_text(encoding="utf-8"))
+    assert "./faction_radar" in pkg_json["exports"]
+    assert "./faction_radar/radar-svg.template" in pkg_json["exports"]
+    assert "./faction_radar/bulletin-drawer.template" in pkg_json["exports"]
+    assert "./faction_radar/faction-details.template" in pkg_json["exports"]
+
+
 def test_storybook_stories_definition() -> None:
     """Verify Storybook stories include Default, DMPrivateBriefing, PlayerPublicView, and HighTensionWar."""
     stories_file = REPO_ROOT / "services/the_watcher/ui/src/runefoble-faction-radar.stories.ts"
