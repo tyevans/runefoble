@@ -31,6 +31,23 @@ export interface EquipmentSlots {
   [key: string]: string | null | undefined;
 }
 
+export const DEFAULT_EQUIPMENT: EquipmentSlots = {
+  main_hand: 'Longsword +1',
+  off_hand: 'Steel Shield',
+  armor: 'Chain Mail',
+  accessory: 'Ring of Protection',
+};
+
+export const DEFAULT_INVENTORY: InventoryItem[] = [
+  { item_id: 'i-1', name: 'Longsword +1', quantity: 1, weight_lbs: 3.0, slot: 'main_hand' },
+  { item_id: 'i-2', name: 'Steel Shield', quantity: 1, weight_lbs: 6.0, slot: 'off_hand' },
+  { item_id: 'i-3', name: 'Chain Mail', quantity: 1, weight_lbs: 55.0, slot: 'armor' },
+  { item_id: 'i-4', name: 'Ring of Protection', quantity: 1, weight_lbs: 0.1, slot: 'accessory' },
+  { item_id: 'i-5', name: 'Healing Potion', quantity: 3, weight_lbs: 0.5 },
+  { item_id: 'i-6', name: 'Rations (5 days)', quantity: 5, weight_lbs: 2.0 },
+  { item_id: 'i-7', name: 'Dungeoneer Pack', quantity: 1, weight_lbs: 12.0 },
+];
+
 export type EncumbranceTier = 'light' | 'medium' | 'heavy' | 'overburdened';
 
 export interface EncumbranceInfo {

@@ -99,7 +99,18 @@ Per ADR-0004, ADR-0012, and ADR-0013, the character sheet template rendering log
 
 ---
 
-## 8. Character Roster & Campaign Party Assignment
+## 8. Modular Action Handlers & State Mutations Architecture
+
+Per ADR-0004, ADR-0007, and ADR-0013, the character sheet controller delegates interactive state mutations and custom event dispatching to a dedicated actions submodule (`runefoble-character-sheet.actions.ts`), maintaining clean separation of concerns and keeping the main component file strictly under 150 lines:
+- **Encumbrance & HP Calculators**: `calculateEncumbrance(inventory, strength)` determines load weight, capacity, and encumbrance tiers; `calculateHpDelta(currentHp, maxHp, delta)` safely clamps vitals within $[0, \text{maxHp}]$.
+- **Equipment & Inventory Mutators**: `equipItem(equipment, inventory, slot, item)`, `unequipItem(equipment, inventory, slot)`, `addItem(inventory, name, weight)`, and `removeItem(equipment, inventory, item)` operate as pure functions returning updated equipment and carried items without mutating inputs.
+- **Spell Slots & Spellbook**: `toggleSpellSlotPip(slots, maxSlots, tier, pipIndex)` handles expenditure and recovery of spell slot pips; `castSpellSlot(slots, tier)` consumes available slots; `togglePreparedSpell(preparedSpells, spellName)` updates daily spell preparation.
+- **Conditions & Absence Penalties**: `applyConditionToState(conditions, name)` and `removeConditionFromState(conditions, penalties, conditionId, name)` update active condition badges and clear absence penalty effects.
+- **Standardized Event Dispatching**: `dispatchActionEvent(target, type, detail)` dispatches unified composed and bubbling `CustomEvent`s for parent application shell composition.
+
+---
+
+## 9. Character Roster & Campaign Party Assignment
 
 The Character Roster microfrontend (`<runefoble-character-roster>`) and builder modal (`<runefoble-character-builder-modal>`) allow players to maintain a persistent library of adventurers across campaigns.
 
