@@ -123,6 +123,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`post-and-fulfill-mercenary-bounty-contracts.md`](docs/how-to/post-and-fulfill-mercenary-bounty-contracts.md): How to post, claim, and complete mercenary bounties and resource retrieval contracts with locked escrow between adventuring parties sharing a West Marches frontier.
 - [`mount-community-plugin-ui-extension-slots.md`](docs/how-to/mount-community-plugin-ui-extension-slots.md): How to mount community Lit Web Components into designated extension slots (hud-widget, dice-panel, sidebar-tool) with Bauhaus token inheritance and Shadow DOM event isolation.
 - [`test-email-signups-with-mailpit.md`](docs/how-to/test-email-signups-with-mailpit.md): How to capture and verify email signups, OTP verification codes, and password resets in local development with Mailpit mock SMTP.
+- [`build-settlements-and-play-mobile-minigames.md`](docs/how-to/build-settlements-and-play-mobile-minigames.md): How to design and scale settlement havens, customize establishments with living NPC workers, haggle with merchants under DM controls, and play mobile-first tavern and casino minigames.
 
 
 

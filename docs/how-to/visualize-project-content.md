@@ -182,6 +182,7 @@ To prevent exposing local execution tooling in published public documentation:
 - **Bidirectional Lineage Traversal**: Clicking any node illuminates its entire upstream and downstream dependency chain while dimming unrelated entities.
 - **Traceability Multi-Column Flow**: Visual column layout displaying end-to-end lineage across documents with live breadcrumb trails.
 - **Hide Done Toggle**: Instantly filters out completed tasks and their isolated edges from the graph.
+- **Modular Submodule Architecture**: Decomposed into focused submodules under `tools/project_visualizer/static/js/graph/` (`simulation.js`, `nodes.js`, `links.js`, `zoom.js`) orchestrated by a lightweight `graph.js` facade, strictly adhering to Hard Invariant 6 (<150 lines per module).
 
 ### 📊 Roadmap Gantt & Delivery Timeline
 - **Milestone Delivery Horizons**: Chronological timeline tracking phases from Milestone 1 (Foundations) and Milestone 2 (Live Collaborative Alpha) to Milestone 3 (AI DM) and Milestone 4 (Studio).
@@ -221,4 +222,5 @@ To prevent exposing local execution tooling in published public documentation:
 ### 📖 Slide-Over Detail Drawer & Omnibar Search
 - Press `⌘K` or `/` (or click the search button) to open the global Omnibar and search across all tasks, PR numbers, commit hashes, stories, PRDs, and ADRs.
 - Click any card or node anywhere in the interface to slide out the reader drawer, displaying full rendered Markdown, metadata chips, and the exact local file path with one-click copy.
+- **Modular Subviews Architecture**: Inspector drawer presentation is decomposed into single-responsibility subviews under `tools/project_visualizer/static/js/drawer/` (`task_card.js`, `adr_card.js`, `prd_card.js`, `persona_card.js`, `controller.js`) and coordinated by `drawer.js`, enforcing Hard Invariant 6 (<120 lines per submodule).
 - Seamless Dark / Light theme toggle with local storage persistence.
