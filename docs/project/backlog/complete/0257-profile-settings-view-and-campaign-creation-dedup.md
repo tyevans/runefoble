@@ -1,7 +1,7 @@
 ---
 id: '0257'
 title: Profile Settings View and Campaign Creation Idempotency
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0206
@@ -20,8 +20,8 @@ governing_stories:
 - US-0070
 - US-0071
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/291
 ---
-
 # TASK-0257: Profile Settings View and Campaign Creation Idempotency
 
 ## Status

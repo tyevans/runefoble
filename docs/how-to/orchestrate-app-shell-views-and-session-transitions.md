@@ -13,7 +13,7 @@ The unified App Shell subscribes to the client SPA router (`Router`) and mounts 
 | `#/campaigns/:campaignId` | `campaign-detail` | `<runefoble-campaign-header>`, tab navigation bar (`Overview & Sessions`, `Party Characters`, `Codex & Lore`, `Chronicle & Stats`), `<runefoble-campaign-members>`, `<runefoble-session-list>` |
 | `#/campaigns/:campaignId/characters` | `campaign-characters` | `<runefoble-campaign-header>`, tab navigation bar, `<runefoble-character-roster>` (scoped to campaign) |
 | `#/characters` | `characters` | `<runefoble-character-roster>` |
-| `#/profile` | `profile` | Adventurer profile summary |
+| `#/profile` | `profile` | `<runefoble-user-profile>` (User claims, role badges, theme selection) |
 | `#/campaigns/:campaignId/lobby/:sessionId` | `session-lobby` | `<runefoble-session-lobby>` |
 | `#/campaigns/:campaignId/sessions/:sessionId` | `session-active` | `<runefoble-vtt-view>` (Tactical board, card, feed, voice) |
 

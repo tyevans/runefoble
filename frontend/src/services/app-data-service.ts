@@ -4,80 +4,13 @@ import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload } from
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
-import { authService } from '../auth/auth-service.ts';
-
-export const FALLBACK_CAMPAIGNS: CampaignItem[] = [
-  {
-    id: '4',
-    title: 'Tomb of the Star-Eater',
-    description: 'Ancient celestial horrors slumber beneath the irradiated astral sands.',
-    setting: 'Spelljammer Astral Void',
-    system: '5e',
-    role: 'owner',
-    owner_id: 'user-valeros',
-    dm_name: 'The Watcher',
-    player_count: 4,
-    has_active_session: true,
-    active_session_id: 'session-tomb-14',
-  },
-  {
-    id: '5',
-    title: 'Whispering Depths',
-    description: 'Subterranean aquatic expeditions through forgotten dwarven aqueducts.',
-    setting: 'Underdark Aquatics',
-    system: '5e',
-    role: 'player',
-    owner_id: 'user-evelyn',
-    dm_name: 'Evelyn Vance',
-    player_count: 5,
-    has_active_session: false,
-  },
-];
-
-export const FALLBACK_CHARACTERS: CharacterItem[] = [
-  {
-    id: 'char-valeros',
-    name: 'Valeros of Korvosa',
-    characterClass: 'Fighter',
-    subclass: 'Battle Master',
-    level: 4,
-    currentHp: 38,
-    maxHp: 45,
-    armorClass: 18,
-    speed: 30,
-    campaignId: '4',
-    campaignTitle: 'Tomb of the Star-Eater',
-    portraitUrl: '/assets/portraits/fighter.svg',
-  },
-  {
-    id: 'char-kyra',
-    name: 'Kyra the Sun Maiden',
-    characterClass: 'Cleric',
-    subclass: 'Life Domain',
-    level: 4,
-    currentHp: 28,
-    maxHp: 32,
-    armorClass: 16,
-    speed: 25,
-    campaignId: '4',
-    campaignTitle: 'Tomb of the Star-Eater',
-    portraitUrl: '/assets/portraits/cleric.svg',
-  },
-  {
-    id: 'char-ezren',
-    name: 'Ezren the Gray',
-    characterClass: 'Wizard',
-    subclass: 'Evocation',
-    level: 5,
-    currentHp: 22,
-    maxHp: 26,
-    armorClass: 12,
-    speed: 30,
-    campaignId: null,
-    campaignTitle: null,
-    portraitUrl: '/assets/portraits/wizard.svg',
-  },
-];
+import { authService, type UserClaims } from '../auth/auth-service.ts';
+import {
+  FALLBACK_CAMPAIGNS,
+  FALLBACK_CHARACTERS,
+  buildFallbackCharacterDetail,
+} from './fallback-data.ts';
+export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS };
 
 export class AppDataService {
   private static instance: AppDataService;
@@ -97,12 +30,29 @@ export class AppDataService {
     return headers;
   }
 
+  public deduplicateCampaigns(campaigns: CampaignItem[]): CampaignItem[] {
+    const map = new Map<string, CampaignItem>();
+    for (const c of campaigns) if (!map.has(c.id)) map.set(c.id, c);
+    return Array.from(map.values());
+  }
+
   async fetchCampaigns(): Promise<CampaignItem[]> {
     try {
       const res = await fetch(`${this.apiBase}/campaigns`, { headers: this.getAuthHeaders() });
+      if (res.ok) return this.deduplicateCampaigns(await res.json());
+    } catch { /* fallback */ }
+    const deduped = this.deduplicateCampaigns(FALLBACK_CAMPAIGNS);
+    FALLBACK_CAMPAIGNS.length = 0;
+    FALLBACK_CAMPAIGNS.push(...deduped);
+    return [...FALLBACK_CAMPAIGNS];
+  }
+
+  async fetchProfile(): Promise<UserClaims | null> {
+    try {
+      const res = await fetch(`${this.apiBase}/profile`, { headers: this.getAuthHeaders() });
       if (res.ok) return await res.json();
     } catch { /* fallback */ }
-    return [...FALLBACK_CAMPAIGNS];
+    return authService.getUser() || { user_id: 'user-valeros', username: 'Valeros', email: 'valeros@runefoble.local', roles: ['player'], is_admin: false };
   }
 
   async fetchCampaign(campaignId: string): Promise<CampaignItem | null> {
@@ -212,6 +162,19 @@ export class AppDataService {
       if (res.ok) return await res.json();
     } catch { /* fallback */ }
     return [...FALLBACK_CHARACTERS];
+  }
+
+  getFallbackCharacterName(id: string): string | undefined {
+    return FALLBACK_CHARACTERS.find((c) => c.id === id)?.name;
+  }
+
+  async fetchCharacter(characterId: string): Promise<any | null> {
+    try {
+      const res = await fetch(`${this.apiBase}/characters/${characterId}`, { headers: this.getAuthHeaders() });
+      if (res.ok) return await res.json();
+    } catch { /* fallback */ }
+    const char = FALLBACK_CHARACTERS.find((c) => c.id === characterId);
+    return buildFallbackCharacterDetail(char, characterId);
   }
 
   async fetchRosterCampaignOptions(): Promise<RosterCampaignOption[]> {
@@ -378,26 +341,31 @@ export class AppDataService {
   }
 
   async createCampaign(payload: CreateCampaignPayload): Promise<CampaignItem> {
+    let created: CampaignItem | null = null;
     try {
       const res = await fetch(`${this.apiBase}/campaigns`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(payload),
       });
-      if (res.ok) return await res.json();
+      if (res.ok) created = await res.json();
     } catch { /* fallback */ }
-    const newCamp: CampaignItem = {
-      id: `camp-${Date.now()}`,
-      title: payload.title,
-      description: payload.description,
-      setting: payload.setting,
-      system: payload.system || '5e',
-      role: 'owner',
-      player_count: 1,
-      has_active_session: false,
-    };
-    FALLBACK_CAMPAIGNS.unshift(newCamp);
-    return newCamp;
+    if (!created) {
+      created = {
+        id: `camp-${Date.now()}`,
+        title: payload.title,
+        description: payload.description,
+        setting: payload.setting,
+        system: payload.system || '5e',
+        role: 'owner',
+        player_count: 1,
+        has_active_session: false,
+      };
+    }
+    const deduped = this.deduplicateCampaigns([created, ...FALLBACK_CAMPAIGNS]);
+    FALLBACK_CAMPAIGNS.length = 0;
+    FALLBACK_CAMPAIGNS.push(...deduped);
+    return created;
   }
 
   async updateCampaign(campaignId: string, payload: UpdateCampaignPayload): Promise<CampaignItem | null> {
