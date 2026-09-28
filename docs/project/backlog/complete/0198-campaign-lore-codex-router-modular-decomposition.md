@@ -1,7 +1,7 @@
 ---
-id: '0198'
+id: 0198
 title: Campaign Lore Codex Router Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0106
@@ -13,8 +13,8 @@ governing_prds:
 governing_stories:
 - US-0050
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/261
 ---
-
 # TASK-0198: Campaign Lore Codex Router Modular Decomposition
 
 ## Status
