@@ -1,7 +1,7 @@
 ---
 id: '0254'
 title: Frontend Character Roster Event Binding and Data Mutations
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0211
@@ -18,8 +18,8 @@ governing_stories:
 - US-0064
 - US-0069
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/288
 ---
-
 # TASK-0254: Frontend Character Roster Event Binding and Data Mutations
 
 ## Status
