@@ -269,3 +269,108 @@ console.log(JSON.stringify(results));
     assert res["selected"] is True
     assert res["cleared"] is True
     assert res["searchFocused"] is True
+
+
+def test_python_graph_modular_decomposition_and_line_invariants(repo_root: Path):
+    """Verify TASK-0227 decomposition: submodules exist, strictly < 130 lines, facade < 40 lines."""
+    graph_py = repo_root / "tools" / "project_visualizer" / "graph.py"
+    graph_dir = repo_root / "tools" / "project_visualizer" / "graph"
+
+    assert graph_py.exists(), "graph.py facade must exist"
+    assert graph_dir.is_dir(), "graph/ submodule directory must exist"
+
+    # Facade line check (< 40 lines per DoD)
+    facade_lines = len(graph_py.read_text(encoding="utf-8").splitlines())
+    assert facade_lines < 40, f"graph.py facade has {facade_lines} lines (must be < 40)"
+
+    # Specific targets from TASK-0227 specification
+    targets = {
+        "models.py": 90,
+        "builder.py": 120,
+        "filtering.py": 110,
+    }
+
+    for filename, max_lines in targets.items():
+        module_file = graph_dir / filename
+        assert module_file.exists(), f"Submodule {filename} must exist under graph/"
+        lines = len(module_file.read_text(encoding="utf-8").splitlines())
+        assert lines < max_lines, f"{filename} has {lines} lines, exceeding target < {max_lines}"
+        assert lines < 130, f"{filename} has {lines} lines, violating DoD 2 limit (< 130)"
+
+    # DoD 2 Invariant: Every Python submodule under graph/ is strictly < 130 lines
+    for f in graph_dir.glob("*.py"):
+        lines = len(f.read_text(encoding="utf-8").splitlines())
+        assert lines < 130, f"File {f.name} in graph/ exceeds 130 lines ({lines})"
+
+
+def test_python_graph_models_builder_and_filtering(repo_root: Path):
+    """Verify GraphNode/Edge/Data models, builder synthesis, and filtering functions."""
+    from tools.project_visualizer.graph import (
+        GraphData,
+        GraphEdge,
+        GraphNode,
+        ProjectGraphBuilder,
+        apply_layout_hints,
+        build_graph_data,
+        build_graph_edges,
+        build_graph_nodes,
+        filter_graph,
+        find_subgraph,
+    )
+
+    parser = ProjectParser(repo_root)
+    data = parser.parse_all()
+    builder = ProjectGraphBuilder(data)
+    builder.build()
+
+    # 1. Test builder graph synthesis
+    nodes = build_graph_nodes(data)
+    edges = build_graph_edges(data)
+    graph = build_graph_data(data)
+
+    assert len(nodes) > 50
+    assert len(edges) > 50
+    assert len(graph.nodes) == len(nodes)
+    assert len(graph.edges) == len(edges)
+
+    # 2. Test models and dictionary serialization
+    node = nodes[0]
+    assert isinstance(node, GraphNode)
+    node_dict = node.to_dict()
+    assert "id" in node_dict
+    assert "type" in node_dict
+    assert "color" in node_dict
+
+    edge = edges[0]
+    assert isinstance(edge, GraphEdge)
+    edge_dict = edge.to_dict()
+    assert "source_id" in edge_dict
+    assert "target_id" in edge_dict
+    assert "relation" in edge_dict
+
+    g_dict = graph.to_dict()
+    assert "nodes" in g_dict and "edges" in g_dict
+    assert graph.node_by_id(node.id) == node
+    assert graph.node_by_id(graph.nodes[0].id) is graph.nodes[0]
+
+    # 3. Test filter_graph (hide_done, type, search)
+    filtered_done = filter_graph(graph, hide_done=True)
+    done_tasks = [n for n in filtered_done.nodes if n.type == "task" and n.status == "Complete"]
+    assert len(done_tasks) == 0
+
+    filtered_adr = filter_graph(graph, active_type="adr")
+    assert all(n.type == "adr" for n in filtered_adr.nodes)
+    assert len(filtered_adr.nodes) > 0
+
+    # 4. Test find_subgraph
+    first_id = nodes[0].id
+    sub = find_subgraph(graph, first_id, depth="lineage")
+    assert isinstance(sub, GraphData)
+    assert any(n.id == first_id for n in sub.nodes)
+
+    # 5. Test apply_layout_hints
+    flow_g = apply_layout_hints(build_graph_data(data), layout="flow")
+    assert any(n.x > 0 and n.y > 0 for n in flow_g.nodes)
+
+    radial_g = apply_layout_hints(build_graph_data(data), layout="radial")
+    assert any(n.x > 0 and n.y > 0 for n in radial_g.nodes)

@@ -135,6 +135,21 @@ data = build_traceability_graph(data)
 adrs = ADRParser(project_dir, repo_root).parse()
 prds = ProductParser(project_dir, repo_root).parse_prds()
 tasks = BacklogParser(project_dir, repo_root).parse_tasks()
+
+# 4. Construct 2D visualizer graph representations and apply filters
+from tools.project_visualizer.graph import (
+    GraphData,
+    ProjectGraphBuilder,
+    apply_layout_hints,
+    build_graph_data,
+    filter_graph,
+    find_subgraph,
+)
+
+graph = build_graph_data(data)
+filtered = filter_graph(graph, hide_done=True, active_type="task")
+subgraph = find_subgraph(graph, "TASK-0227", depth="lineage")
+layout_graph = apply_layout_hints(graph, layout="flow")
 ```
 
 ---
@@ -188,8 +203,10 @@ The AGY Launcher client frontend is decomposed into focused submodules under `to
 - **Glassmorphism Detail Tooltips & Fullscreen Mode**: Rich floating hover preview cards with node status, linked PRs, and quick actions, plus full-canvas immersion mode.
 - **Bidirectional Lineage Traversal**: Clicking any node illuminates its entire upstream and downstream dependency chain while dimming unrelated entities.
 - **Traceability Multi-Column Flow**: Visual column layout displaying end-to-end lineage across documents with live breadcrumb trails.
-- **Hide Done Toggle**: Instantly filters out completed tasks and their isolated edges from the graph.
-- **Modular Submodule Architecture**: Decomposed into focused submodules under `tools/project_visualizer/static/js/graph/` (`simulation.js`, `nodes.js`, `links.js`, `zoom.js`) orchestrated by a lightweight `graph.js` facade, strictly adhering to Hard Invariant 6 (<150 lines per module).
+- **Modular Submodule Architecture**: Both backend and frontend graph systems are strictly decomposed into focused submodules adhering to Hard Invariant 6:
+  - **Python Graph Engine (`tools/project_visualizer/graph/`)**: `models.py` (<90 lines), `builder.py` (<120 lines), `filtering.py` (<110 lines), `linking.py` (<130 lines), and `metrics.py` (<130 lines) orchestrated by lightweight facades in `graph.py` and `graph/__init__.py` (<40 lines).
+  - **Client Graph Renderer (`tools/project_visualizer/static/js/graph/`)**: `simulation.js`, `nodes.js`, `links.js`, and `zoom.js` orchestrated by a lightweight `graph.js` facade (<150 lines per module).
+
 
 ### 📊 Roadmap Gantt & Delivery Timeline
 - **Milestone Delivery Horizons**: Chronological timeline tracking phases from Milestone 1 (Foundations) and Milestone 2 (Live Collaborative Alpha) to Milestone 3 (AI DM) and Milestone 4 (Studio).
