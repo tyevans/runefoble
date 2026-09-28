@@ -3,6 +3,7 @@
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 from .agent_worker import build_conflict_repair_prompt, run_agent_in_worktree
 from .models import Task
@@ -188,3 +189,67 @@ def merge_local_branch(repo_root: Path, branch: str, task: Task) -> None:
     if status.stdout.strip():
         run_cmd(["git", "commit", "-m", msg], cwd=repo_root, check=True)
     print("🎉 Local branch merged cleanly into main.")
+
+
+def finalize_backlog_completion(
+    repo_root: Path,
+    queue: Any,
+    task: Task,
+    push: bool = False,
+) -> Path:
+    """Marks task complete in queue, stages PRIORITY.md and file, commits and optionally pushes."""
+    dest_file = queue.complete_task(task)
+    subprocess.run(
+        ["git", "add", "docs/project/backlog/PRIORITY.md", str(dest_file)],
+        cwd=repo_root,
+        check=False,
+    )
+    for folder in ("refined", "proposed"):
+        old = repo_root / "docs" / "project" / "backlog" / folder / task.file_path.name
+        if not old.exists():
+            subprocess.run(
+                ["git", "rm", "--cached", "--ignore-unmatch", str(old)],
+                cwd=repo_root,
+                check=False,
+            )
+
+    st = subprocess.run(
+        ["git", "status", "--porcelain", "docs/project/backlog"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if st.stdout.strip():
+        subprocess.run(
+            ["git", "commit", "-m", f"chore(backlog): complete {task.canonical_id}"],
+            cwd=repo_root,
+            check=False,
+        )
+        if push:
+            push_res = subprocess.run(
+                ["git", "push", "origin", "main"],
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if push_res.returncode != 0:
+                print(f"⚠️ Push rejected, fetching and rebasing: {push_res.stderr.strip()}")
+                subprocess.run(
+                    ["git", "pull", "--rebase", "origin", "main"],
+                    cwd=repo_root,
+                    check=False,
+                )
+                push_retry = subprocess.run(
+                    ["git", "push", "origin", "main"],
+                    cwd=repo_root,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if push_retry.returncode != 0:
+                    raise RuntimeError(
+                        f"Failed to push backlog completion on retry: {push_retry.stderr.strip()}"
+                    )
+    return dest_file
