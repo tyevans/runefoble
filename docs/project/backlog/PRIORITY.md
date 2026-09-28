@@ -304,6 +304,13 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 300. **TASK-0301 (Proposed)**: [`0301-settlement-models-modular-decomposition.md`](proposed/0301-settlement-models-modular-decomposition.md) — Settlement Models Modular Decomposition
 301. **TASK-0302 (Proposed)**: [`0302-campaign-lore-atlas-router-modular-decomposition.md`](proposed/0302-campaign-lore-atlas-router-modular-decomposition.md) — Campaign Lore Atlas Router Modular Decomposition
 302. **TASK-0303 (Proposed)**: [`0303-bulletin-board-component-modular-decomposition.md`](proposed/0303-bulletin-board-component-modular-decomposition.md) — Bulletin Board Component Modular Decomposition
+303. **TASK-0304 (Proposed)**: [`0304-rules-compendium-srd-monsters-modular-decomposition.md`](proposed/0304-rules-compendium-srd-monsters-modular-decomposition.md) — Rules Compendium SRD Monsters Modular Decomposition
+304. **TASK-0305 (Proposed)**: [`0305-mobile-companion-ui-test-suite-modular-decomposition.md`](proposed/0305-mobile-companion-ui-test-suite-modular-decomposition.md) — Mobile Companion UI Test Suite Modular Decomposition
+305. **TASK-0306 (Proposed)**: [`0306-the-watcher-models-modular-decomposition.md`](proposed/0306-the-watcher-models-modular-decomposition.md) — The Watcher Models Modular Decomposition
+306. **TASK-0307 (Proposed)**: [`0307-tavern-parlor-component-modular-decomposition.md`](proposed/0307-tavern-parlor-component-modular-decomposition.md) — Tavern Parlor Component Modular Decomposition
+307. **TASK-0308 (Proposed)**: [`0308-print-forge-component-modular-decomposition.md`](proposed/0308-print-forge-component-modular-decomposition.md) — Print Forge Component Modular Decomposition
+308. **TASK-0309 (Proposed)**: [`0309-game-session-minigames-modular-decomposition.md`](proposed/0309-game-session-minigames-modular-decomposition.md) — Game Session Minigames Modular Decomposition
+
 
 
 
