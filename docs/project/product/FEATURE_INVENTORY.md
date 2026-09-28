@@ -130,4 +130,16 @@ This catalog inventories all speculative and visionary capabilities for Runefobl
 | `FEAT-MAK-01` | **Printable Tabletop Handout & Battlemap Forge** | 1-inch grid calibrated multi-page PDF map exports, printable folding papercraft standees, and diegetic letter printouts. | **P1 (Beta)** | `asset_forge`, `frontend` |
 | `FEAT-MAK-02` | **3D Printable Miniature & Token STL Exporter** | Procedural 3D printable token bases, condition ring clips, and miniature STL generation for tabletop 3D printers. | **P2 (Horizon)** | `asset_forge` |
 
+---
+
+## 11. Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames Domain
+
+| Feature ID | Feature Name | Description | Release Tier | Governing Systems |
+|---|---|---|---|---|
+| `FEAT-SET-01` | **Settlement Genesis & Scaling Engine** | Multi-biome settlement founding with 5 progressive scales (hamlet to metropolis) and geographic zoning. | **P1 (Beta)** | `game_session`, `frontend` |
+| `FEAT-SET-02` | **Customizable Establishments & Living Workers** | Establishments (taverns, smithies, bakeries, casinos) with assigned NPCs, dynamic inventories, and social ties. | **P1 (Beta)** | `game_session`, `campaign_lore` |
+| `FEAT-SET-03` | **Mobile-First Touch Web Minigames Suite** | Zero-install responsive web minigames (darts, pool, Liar's Dice, roulette, craps) with haptics and WebSocket sync. | **P1 (Beta)** | `frontend`, `game_session` |
+| `FEAT-SET-04` | **Dynamic Merchant Haggling & DM Arbitration** | Interactive price negotiation with merchant temperament state machines and real-time DM mood/price override controls. | **P1 (Beta)** | `game_session`, `the_watcher` |
+| `FEAT-SET-05` | **Civic Proclamations & Bulletin Board** | Skeuomorphic parchment notice board for local bounties, rumor discovery, contract postings, and cipher puzzles. | **P1 (Beta)** | `game_session`, `frontend` |
+
 
