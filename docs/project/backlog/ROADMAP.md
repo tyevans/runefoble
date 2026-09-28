@@ -144,7 +144,7 @@
 - [x] Assignable NPC Worker and Social Relationship Graph (`FEAT-SET-02`, US-0073, PRD-0024, TASK-0260)
 
 ### Mobile Minigames, Haggling & Notice Board Epics
-- [ ] Mobile-First Touch-Optimized Tavern & Casino Minigames (`FEAT-SET-03`, US-0074, PRD-0024, TASK-0261)
+- [x] Mobile-First Touch-Optimized Tavern & Casino Minigames (`FEAT-SET-03`, US-0074, PRD-0024, TASK-0261)
 - [x] Interactive Merchant Haggling Engine with DM Controls (`FEAT-SET-04`, US-0075, PRD-0024, TASK-0262)
 - [x] Town Bulletin Board Civic Notices and Bounty Board (`FEAT-SET-05`, US-0076, PRD-0024, TASK-0263)
 
@@ -277,5 +277,8 @@
 - [ ] Tavern Parlor Component Modular Decomposition (TASK-0307)
 - [ ] Print Forge Component Modular Decomposition (TASK-0308)
 - [ ] Game Session Minigames Modular Decomposition (TASK-0309)
+- [ ] Minigames Suite Blackbox Test Modular Decomposition (TASK-0310)
+- [ ] Faction Radar UI Test Suite Modular Decomposition (TASK-0311)
+- [ ] Dice Roller Component Modular Decomposition (TASK-0312)
 
 
