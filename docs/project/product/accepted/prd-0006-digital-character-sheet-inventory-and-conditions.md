@@ -21,6 +21,7 @@ Character sheets in Runefoble must track active equipment, inventory capacity, c
 - [`US-0015: Event-Sourced Character Inventory, Equipment & Condition Tracking`](../../user_stories/accepted/us-0015-character-inventory-equipment-tracking.md)
 - [`US-0024: Natural Speech Equipment Swapping and Hands-Free Wake-Word`](../../user_stories/accepted/us-0024-natural-speech-equipment-swapping-and-wake-word.md)
 - [`US-0051: Character Level Progression, Spellbook Preparation & Spell Slot Scaling`](../../user_stories/accepted/us-0051-character-level-progression-and-spellbook.md)
+- [`US-0069: Interactive Character Sheet Inspector and Active Session VTT Binding`](../../user_stories/accepted/us-0069-character-sheet-inspector-and-active-session-binding.md)
 
 ## Implementing Backlog Tasks
 - [`TASK-0009: Character Sheet Equipment, Inventory & Conditions Aggregate`](../../backlog/complete/0009-character-inventory-equipment-conditions.md)
@@ -28,3 +29,7 @@ Character sheets in Runefoble must track active equipment, inventory capacity, c
 - [`TASK-0041: FastMCP Gateway Server Modular Decomposition`](../../backlog/complete/0041-fastmcp-gateway-server-modular-decomposition.md)
 - [`TASK-0077: Character Sheet API Router and Schemas Modular Decomposition`](../../backlog/complete/0077-character-sheet-api-router-and-schemas-decomposition.md)
 - [`TASK-0107: Character Sheet UI Inventory Grid and Condition Indicator Microfrontend`](../../backlog/complete/0107-character-sheet-ui-inventory-and-conditions-microfrontend.md)
+- [`TASK-0252: Gateway Character Management Router and Zanzibar Authorization`](../../backlog/refined/0252-gateway-character-management-router-and-zanzibar-auth.md)
+- [`TASK-0253: Character Aggregate Campaign Assignment and Core Attributes Extension`](../../backlog/refined/0253-character-aggregate-campaign-assignment-and-stats.md)
+- [`TASK-0254: Frontend Character Roster Event Binding and Data Mutations`](../../backlog/proposed/0254-frontend-character-roster-event-binding-and-mutations.md)
+- [`TASK-0255: Character Sheet Route and Inspector Subview Orchestration`](../../backlog/proposed/0255-character-sheet-route-and-inspector-subview.md)

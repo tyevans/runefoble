@@ -39,3 +39,6 @@
 37. **US-0066**: Application Shell Client-Side Routing, Navigation Chrome, and Route Lifecycle (Active)
 38. **US-0067**: Campaign Detail View, Setting Management, and Session Scheduling (Active)
 39. **US-0068**: Application Shell View Audit, Deep Route Wiring, and Dev API Proxying (Active)
+40. **US-0069**: Interactive Character Sheet Inspector and Active Session VTT Binding (Active)
+41. **US-0070**: User Account Settings and Profile Management View (Active)
+42. **US-0071**: Campaign Dashboard Creation Idempotency and Lifecycle Management (Active)

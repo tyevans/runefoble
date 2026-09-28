@@ -82,6 +82,9 @@ Currently, Runefoble provides rich backend domain microservices and isolated boa
 - [`US-0066: Application Shell Client-Side Routing, Navigation Chrome, and Route Lifecycle`](../../user_stories/accepted/us-0066-client-side-routing-navigation-and-breadcrumbs.md)
 - [`US-0067: Campaign Detail View, Setting Management, and Session Scheduling`](../../user_stories/accepted/us-0067-campaign-detail-view-and-session-scheduling.md)
 - [`US-0068: Application Shell View Audit, Deep Route Wiring, and Dev API Proxying`](../../user_stories/accepted/us-0068-app-shell-view-audit-and-api-proxying.md)
+- [`US-0069: Interactive Character Sheet Inspector and Active Session VTT Binding`](../../user_stories/accepted/us-0069-character-sheet-inspector-and-active-session-binding.md)
+- [`US-0070: User Account Settings and Profile Management View`](../../user_stories/accepted/us-0070-user-account-settings-and-profile-management.md)
+- [`US-0071: Campaign Dashboard Creation Idempotency and Lifecycle Management`](../../user_stories/accepted/us-0071-campaign-dashboard-idempotency-and-lifecycle.md)
 
 ## Implementing Backlog Tasks
 
@@ -101,3 +104,10 @@ Currently, Runefoble provides rich backend domain microservices and isolated boa
 - [`TASK-0249: Session Scheduling and Staging Lobby Creation Modal`](../../backlog/proposed/0249-session-scheduling-and-staging-lobby-creation-modal.md)
 - [`TASK-0250: Unified Campaign Detail View Orchestration and Tabbed Navigation`](../../backlog/proposed/0250-unified-campaign-detail-view-orchestration-and-tabbed-navigation.md)
 - [`TASK-0251: App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite`](../../backlog/proposed/0251-app-shell-views-enumeration-and-wiring-audit-test-suite.md)
+- [`TASK-0252: Gateway Character Management Router and Zanzibar Authorization`](../../backlog/refined/0252-gateway-character-management-router-and-zanzibar-auth.md)
+- [`TASK-0253: Character Aggregate Campaign Assignment and Core Attributes Extension`](../../backlog/refined/0253-character-aggregate-campaign-assignment-and-stats.md)
+- [`TASK-0254: Frontend Character Roster Event Binding and Data Mutations`](../../backlog/proposed/0254-frontend-character-roster-event-binding-and-mutations.md)
+- [`TASK-0255: Character Sheet Route and Inspector Subview Orchestration`](../../backlog/proposed/0255-character-sheet-route-and-inspector-subview.md)
+- [`TASK-0256: Dynamic Character Binding in Pre-Game Lobby and Active VTT`](../../backlog/proposed/0256-dynamic-character-binding-in-lobby-and-active-vtt.md)
+- [`TASK-0257: Profile Settings View and Campaign Creation Idempotency`](../../backlog/proposed/0257-profile-settings-view-and-campaign-creation-dedup.md)
+- [`TASK-0258: Character Management and Tabletop Sync Blackbox Test Suite`](../../backlog/proposed/0258-character-management-and-vtt-sync-blackbox-test-suite.md)
