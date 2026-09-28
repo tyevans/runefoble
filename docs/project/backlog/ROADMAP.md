@@ -128,19 +128,19 @@
 ### Extended Campaign Hub & Character Management Epics (Phase 2)
 - [x] Campaign Detail Hero Header and Metadata Component (`FEAT-UI-08`, US-0067, PRD-0023, TASK-0248)
 - [x] Session Scheduling and Staging Lobby Creation Modal (`FEAT-UI-10`, US-0065, US-0067, PRD-0023, TASK-0249)
-- [ ] Unified Campaign Detail View Orchestration and Tabbed Navigation (`FEAT-UI-08`, US-0067, PRD-0023, TASK-0250)
-- [ ] Frontend Character Roster Event Binding and Data Mutations (`FEAT-UI-09`, US-0064, US-0069, PRD-0023, TASK-0254)
-- [ ] Character Sheet Route and Inspector Subview Orchestration (`FEAT-UI-09`, US-0069, PRD-0023, TASK-0255)
-- [ ] Dynamic Character Binding in Pre-Game Lobby and Active VTT (`FEAT-UI-10`, US-0065, US-0069, PRD-0023, TASK-0256)
-- [ ] Profile Settings View and Campaign Creation Idempotency (`FEAT-UI-08`, US-0063, US-0068, PRD-0023, TASK-0257)
+- [x] Unified Campaign Detail View Orchestration and Tabbed Navigation (`FEAT-UI-08`, US-0067, PRD-0023, TASK-0250)
+- [x] Frontend Character Roster Event Binding and Data Mutations (`FEAT-UI-09`, US-0064, US-0069, PRD-0023, TASK-0254)
+- [x] Character Sheet Route and Inspector Subview Orchestration (`FEAT-UI-09`, US-0069, PRD-0023, TASK-0255)
+- [x] Dynamic Character Binding in Pre-Game Lobby and Active VTT (`FEAT-UI-10`, US-0065, US-0069, PRD-0023, TASK-0256)
+- [x] Profile Settings View and Campaign Creation Idempotency (`FEAT-UI-08`, US-0063, US-0068, PRD-0023, TASK-0257)
 
 ### Phase 2 Verification Suites
-- [ ] App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite (US-0065, US-0066, PRD-0023, TASK-0251)
+- [x] App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite (US-0065, US-0066, PRD-0023, TASK-0251)
 - [ ] Character Management and Tabletop Sync Blackbox Test Suite (US-0064, US-0069, PRD-0023, TASK-0258)
 
 ## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames
 ### Foundational Aggregates, Social Graphs & Civic Enablers
-- [ ] Settlement Haven Builder and Establishment Aggregate (`FEAT-SET-01`, `FEAT-SET-02`, US-0072, PRD-0024, TASK-0259)
+- [x] Settlement Haven Builder and Establishment Aggregate (`FEAT-SET-01`, `FEAT-SET-02`, US-0072, PRD-0024, TASK-0259)
 - [ ] Assignable NPC Worker and Social Relationship Graph (`FEAT-SET-02`, US-0073, PRD-0024, TASK-0260)
 
 ### Mobile Minigames, Haggling & Notice Board Epics

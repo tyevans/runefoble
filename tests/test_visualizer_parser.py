@@ -277,9 +277,9 @@ def test_roadmap_milestones_and_task_linking(repo_root: Path):
     assert 0 < m_by_id["M10"].completion_pct < 100
     assert "Frontend Application Experience" in m_by_id["M10"].name
 
-    # Milestone 11 is Planned (Settlement Haven Builder & Mobile Web Minigames)
+    # Milestone 11 has in-progress tasks (Settlement Haven Builder & Mobile Web Minigames)
     assert "M11" in m_by_id
-    assert m_by_id["M11"].status == "Planned"
+    assert m_by_id["M11"].status in ("In Progress", "Planned")
     assert "Settlement Haven Builder" in m_by_id["M11"].name
 
     # Milestone 9 has in-progress tasks
