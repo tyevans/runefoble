@@ -136,7 +136,7 @@
 
 ### Phase 2 Verification Suites
 - [x] App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite (US-0065, US-0066, PRD-0023, TASK-0251)
-- [ ] Character Management and Tabletop Sync Blackbox Test Suite (US-0064, US-0069, PRD-0023, TASK-0258)
+- [x] Character Management and Tabletop Sync Blackbox Test Suite (US-0064, US-0069, PRD-0023, TASK-0258)
 
 ## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames
 ### Foundational Aggregates, Social Graphs & Civic Enablers
@@ -254,3 +254,6 @@
 - [ ] Session Modal Blackbox Test Suite Modular Decomposition (TASK-0284)
 - [ ] Merchant Haggler Styles Modular Decomposition (TASK-0285)
 - [ ] Character Management and VTT Sync Blackbox Test Suite Modular Decomposition (TASK-0286)
+- [ ] Frontend App Shell Test Suite Modular Decomposition (TASK-0287)
+- [ ] Frontend Character Management Test Suite Modular Decomposition (TASK-0288)
+- [ ] Project Visualizer Drawer Test Suite Modular Decomposition (TASK-0289)
