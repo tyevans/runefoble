@@ -152,6 +152,9 @@ To create real session entities prior to assembling in the lobby, the campaign d
      ```
    - The App Shell delegates to `AppDataService.createCampaignSession()`, calling `POST /api/v1/campaigns/{campaign_id}/sessions` requiring Zanzibar `run_session` permission.
    - On success, the campaign session list refreshes. If `status === 'lobby'`, the router automatically navigates to `#/campaigns/:campaignId/lobby/:sessionId`.
+4. **Modular Architecture & Theming**:
+   - Modal styling is cleanly isolated in `frontend/src/styles/session-modal.styles.ts` using Bauhaus design tokens (`--rf-bg-surface`, `--rf-text-primary`, `--rf-border-width`, `--rf-shadow`, `--rf-accent-primary`), maintaining component line length well below project limits (<180 lines).
+   - Form fields are decomposed into dedicated sub-renderers (`renderTitleField`, `renderStatusField`, `renderScheduleField`, `renderDescriptionField`, `renderActions`).
 
 ---
 

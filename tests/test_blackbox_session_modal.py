@@ -21,6 +21,7 @@ COMPONENTS_DIR = SRC_DIR / "components"
 STORIES_DIR = SRC_DIR / "stories"
 
 MODAL_TS = COMPONENTS_DIR / "runefoble-session-modal.ts"
+STYLES_TS = SRC_DIR / "styles" / "session-modal.styles.ts"
 LIST_TS = COMPONENTS_DIR / "runefoble-session-list.ts"
 STORIES_TS = STORIES_DIR / "runefoble-session-modal.stories.ts"
 APP_TS = SRC_DIR / "runefoble-app.ts"
@@ -45,11 +46,28 @@ def reset_store():
 
 def test_file_length_invariants():
     """Verify all related source files strictly adhere to the <500 lines limit."""
-    files_to_check = [MODAL_TS, LIST_TS, STORIES_TS, APP_TS, INDEX_TS]
+    files_to_check = [MODAL_TS, STYLES_TS, LIST_TS, STORIES_TS, APP_TS, INDEX_TS]
     for file_path in files_to_check:
         assert file_path.is_file(), f"{file_path} must exist"
         lines = file_path.read_text(encoding="utf-8").splitlines()
         assert len(lines) < 500, f"{file_path.name} has {len(lines)} lines; must be < 500"
+
+    # TASK-0270 modular decomposition line constraints:
+    modal_lines = MODAL_TS.read_text(encoding="utf-8").splitlines()
+    assert len(modal_lines) < 200, (
+        f"runefoble-session-modal.ts has {len(modal_lines)} lines; must be < 200"
+    )
+    assert len(modal_lines) < 180, (
+        f"runefoble-session-modal.ts has {len(modal_lines)} lines; must be < 180"
+    )
+
+    styles_lines = STYLES_TS.read_text(encoding="utf-8").splitlines()
+    assert len(styles_lines) < 180, (
+        f"session-modal.styles.ts has {len(styles_lines)} lines; must be < 180"
+    )
+    assert len(styles_lines) < 160, (
+        f"session-modal.styles.ts has {len(styles_lines)} lines; must be < 160"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -100,15 +118,36 @@ def test_session_modal_form_fields_and_accessibility():
 
 
 def test_session_modal_bauhaus_tokens_and_theming():
-    """Verify Bauhaus modernism design tokens and high-contrast styles."""
-    content = MODAL_TS.read_text(encoding="utf-8")
-    assert "var(--rf-bg-surface" in content
-    assert "var(--rf-text-primary" in content
-    assert "var(--rf-border-width" in content
-    assert "var(--rf-border-color" in content
-    assert "var(--rf-shadow" in content
-    assert "var(--rf-accent-primary" in content
-    assert "var(--rf-accent-secondary" in content
+    """Verify Bauhaus modernism design tokens and high-contrast styles in extracted styles module."""
+    styles_content = STYLES_TS.read_text(encoding="utf-8")
+    assert "var(--rf-bg-surface" in styles_content
+    assert "var(--rf-text-primary" in styles_content
+    assert "var(--rf-border-width" in styles_content
+    assert "var(--rf-border-color" in styles_content
+    assert "var(--rf-shadow" in styles_content
+    assert "var(--rf-accent-primary" in styles_content
+    assert "var(--rf-accent-secondary" in styles_content
+
+
+def test_session_modal_modular_decomposition():
+    """Verify TASK-0270 style module extraction and form sub-renderers isolation."""
+    styles_content = STYLES_TS.read_text(encoding="utf-8")
+    modal_content = MODAL_TS.read_text(encoding="utf-8")
+
+    # Style module extraction
+    assert "export const sessionModalStyles = css`" in styles_content
+    assert (
+        "import { sessionModalStyles } from '../styles/session-modal.styles.ts';" in modal_content
+    )
+    assert "static styles = sessionModalStyles;" in modal_content
+
+    # Form field sub-renderers isolation
+    assert "renderHeader()" in modal_content
+    assert "renderTitleField()" in modal_content
+    assert "renderStatusField()" in modal_content
+    assert "renderScheduleField()" in modal_content
+    assert "renderDescriptionField()" in modal_content
+    assert "renderActions()" in modal_content
 
 
 # ---------------------------------------------------------------------------
