@@ -35,6 +35,10 @@
     "./roster": "./src/roster/index.ts",
     "./roster/runefoble-character-roster": "./src/roster/runefoble-character-roster.ts",
     "./roster/runefoble-character-roster.styles": "./src/roster/runefoble-character-roster.styles.ts",
+    "./roster/styles": "./src/roster/styles/index.ts",
+    "./roster/styles/roster_layout.styles": "./src/roster/styles/roster_layout.styles.ts",
+    "./roster/styles/character_card.styles": "./src/roster/styles/character_card.styles.ts",
+    "./roster/styles/assignment_dialog.styles": "./src/roster/styles/assignment_dialog.styles.ts",
     "./roster/runefoble-character-builder-modal": "./src/roster/runefoble-character-builder-modal.ts",
     "./roster/runefoble-character-builder-modal.styles": "./src/roster/runefoble-character-builder-modal.styles.ts",
     "./roster/types": "./src/roster/types.ts"
