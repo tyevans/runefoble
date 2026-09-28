@@ -1,7 +1,7 @@
 ---
 id: '0200'
 title: Campaign Analytics Stories Fixtures Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0052
@@ -16,8 +16,8 @@ governing_stories:
 - US-0040
 - US-0054
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/263
 ---
-
 # TASK-0200: Campaign Analytics Stories Fixtures Modular Decomposition
 
 ## Status
