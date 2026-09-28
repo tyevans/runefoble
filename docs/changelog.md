@@ -19,6 +19,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **Project Visualizer Graph Rendering Modular Decomposition (`TASK-0217`, `ADR-0004`, `ADR-0012`)**:
+  - Decomposed monolithic script `tools/project_visualizer/static/js/graph.js` (371 lines) into focused submodules under `tools/project_visualizer/static/js/graph/`, reducing `graph.js` to 63 lines (< 70 lines) and keeping all submodules strictly < 150 lines per Hard Invariant 6:
+    - `simulation.js` (74 lines): Force simulation engine configuring layout switching (network/flow/radial), physics toggles (freeze/run), and kinetic reheat/shuffle (< 90 lines).
+    - `nodes.js` (93 lines): SVG node rendering, dual circle geometric styling, entity badges, PR chips, and DOM position/highlight updates (< 110 lines).
+    - `links.js` (90 lines): Directed dependency edge routing, arrow markers, bidirectional BFS network discovery, and glow animations (< 100 lines).
+    - `zoom.js` (79 lines): Zoom, pan, search focus ripple animations, minimap viewport rect, and graph shell container rendering (< 80 lines).
+    - `graph.js` (63 lines): Lightweight orchestrator facade maintaining backward-compatible `window.visualizer` APIs (< 70 lines).
+  - Updated `assets_js.py` bundler and loader with modular discovery and order.
+  - Added frontdoor blackbox tests in `tests/test_visualizer_graph.py` and updated `tests/test_visualizer_client.py` to recursively validate JS syntax.
+  - Updated Diataxis guide `docs/how-to/visualize-project-content.md`.
 - **Stand-In Guardrails Microfrontend Styles and Controls Modular Decomposition (`TASK-0203`, `ADR-0004`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed monolithic Web Component `services/character_sheet/ui/src/runefoble-stand-in-guardrails.ts` (311 lines) into modular single-responsibility submodules, reducing `runefoble-stand-in-guardrails.ts` to 106 lines (< 130 lines) and keeping all submodules strictly < 130 lines per Hard Invariant 6:
     - `runefoble-stand-in-guardrails.styles.ts` (111 lines): Dedicated Bauhaus design token styling module encapsulating card layouts, risk toggles, priority list chips, slider controls, and status badges.

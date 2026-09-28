@@ -12,6 +12,10 @@ _MODULE_ORDER = [
     "kanban.js",
     "gantt.js",
     "graph_physics.js",
+    "graph/simulation.js",
+    "graph/nodes.js",
+    "graph/links.js",
+    "graph/zoom.js",
     "graph.js",
     "graph_camera.js",
     "traceability.js",
@@ -45,10 +49,11 @@ def get_client_js(is_live_server: bool = False) -> str:
             seen.add(mod_name)
 
     # Include any remaining .js files dynamically (filtering live-only modules when not in live server mode)
-    for extra_file in sorted(_STATIC_JS_DIR.glob("*.js")):
+    for extra_file in sorted(_STATIC_JS_DIR.rglob("*.js")):
+        rel_posix = extra_file.relative_to(_STATIC_JS_DIR).as_posix()
         if extra_file.name in _LIVE_ONLY_MODULES and not is_live_server:
             continue
-        if extra_file.name not in seen:
-            parts.append(f"// --- {extra_file.name} ---\n" + extra_file.read_text(encoding="utf-8"))
-            seen.add(extra_file.name)
+        if rel_posix not in seen and extra_file.name not in seen:
+            parts.append(f"// --- {rel_posix} ---\n" + extra_file.read_text(encoding="utf-8"))
+            seen.add(rel_posix)
     return "\n\n".join(parts)

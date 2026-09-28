@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
 
+from tools.project_visualizer.assets_js import get_client_js
 from tools.project_visualizer.generator import ProjectVisualizerGenerator
 from tools.project_visualizer.graph import ProjectGraphBuilder
 from tools.project_visualizer.parser import (
@@ -108,3 +112,160 @@ def test_graph_visualizer_zoom_and_minimap_bundle(repo_root: Path, tmp_path: Pat
     assert "moveCameraToMinimapPoint" in content
     assert "minimap-view-rect" in content
     assert "isDraggingMinimap" in content
+
+
+def test_graph_modular_decomposition_and_line_invariants(repo_root: Path):
+    """Verify TASK-0217 decomposition: submodules exist, strictly < 150 lines, and meet targets."""
+    graph_js = repo_root / "tools" / "project_visualizer" / "static" / "js" / "graph.js"
+    graph_dir = repo_root / "tools" / "project_visualizer" / "static" / "js" / "graph"
+
+    assert graph_js.exists(), "graph.js orchestrator must exist"
+    assert graph_dir.is_dir(), "graph/ submodule directory must exist"
+
+    # Specific targets from TASK-0217
+    targets = {
+        "simulation.js": 90,
+        "nodes.js": 110,
+        "links.js": 100,
+        "zoom.js": 80,
+    }
+
+    for filename, max_lines in targets.items():
+        module_file = graph_dir / filename
+        assert module_file.exists(), f"Submodule {filename} must exist under static/js/graph/"
+        lines = len(module_file.read_text(encoding="utf-8").splitlines())
+        assert lines < max_lines, f"{filename} has {lines} lines, exceeding target < {max_lines}"
+        assert lines < 150, (
+            f"{filename} has {lines} lines, violating Hard Invariant 6 / DoD (< 150)"
+        )
+
+    # Check graph.js orchestrator (< 70 lines target, < 150 limit)
+    graph_lines = len(graph_js.read_text(encoding="utf-8").splitlines())
+    assert graph_lines < 70, f"graph.js has {graph_lines} lines, exceeding target < 70"
+    assert graph_lines < 150, (
+        f"graph.js has {graph_lines} lines, violating Hard Invariant 6 / DoD (< 150)"
+    )
+
+    # Invariant: Zero files in static/js/graph/ exceed 150 lines
+    for f in graph_dir.glob("*.js"):
+        lines = len(f.read_text(encoding="utf-8").splitlines())
+        assert lines < 150, f"File {f.name} in static/js/graph/ exceeds 150 lines ({lines})"
+
+
+def test_graph_renderer_and_interactions_via_node(repo_root: Path):
+    """Verify frontdoor graph rendering, layout switching, node clicks, and search via Node.js."""
+    node_bin = shutil.which("node")
+    if not node_bin:
+        pytest.skip("Node.js binary not found for frontdoor graph rendering verification")
+
+    client_bundle = get_client_js(is_live_server=False)
+    project_data = ProjectVisualizerGenerator(repo_root).get_data().to_dict()
+
+    test_script = f"""
+const elements = new Map();
+function makeElement(id) {{
+  const el = {{
+    id,
+    style: {{}},
+    classList: {{
+      classes: new Set(),
+      add(c) {{ this.classes.add(c); }},
+      remove(c) {{ this.classes.delete(c); }},
+      toggle(c, force) {{ if (force === undefined) force = !this.classes.has(c); if (force) this.classes.add(c); else this.classes.delete(c); return force; }}
+    }},
+    setAttribute(k, v) {{ this[k] = v; }},
+    getAttribute(k) {{ return this[k]; }},
+    clientWidth: 1200,
+    clientHeight: 800,
+    getBoundingClientRect() {{ return {{ left: 0, top: 0, width: 1200, height: 800 }}; }}
+  }};
+  elements.set(id, el);
+  return el;
+}}
+
+const window = {{ visualizer: {{}} }};
+global.window = window;
+global.requestAnimationFrame = (cb) => setTimeout(cb, 16);
+global.cancelAnimationFrame = (id) => clearTimeout(id);
+global.document = {{
+  addEventListener: () => {{}},
+  querySelectorAll: () => [],
+  getElementById: (id) => elements.get(id) || makeElement(id)
+}};
+
+{client_bundle}
+
+const container = {{ innerHTML: '' }};
+const state = {{
+  data: {json.dumps(project_data, default=str)},
+  filters: {{ hideDone: false, bc: 'all', search: '' }}
+}};
+
+window.visualizer.renderGraph(container, state);
+const html = container.innerHTML;
+
+// Verify submodules were orchestrated
+const hasSvg = html.includes('<svg id="graph-svg"');
+const hasMarkerDefs = html.includes('id="arrow"');
+const hasPanLayer = html.includes('id="graph-pan-layer"');
+const hasMinimap = html.includes('id="graph-minimap"');
+const hasStatPill = html.includes('id="graph-stat-pill"');
+
+// Test interaction functions
+window.visualizer.switchGraphLayout('flow');
+const flowActive = window.visualizer.graphState.activeLayout === 'flow';
+
+window.visualizer.switchGraphLayout('radial');
+const radialActive = window.visualizer.graphState.activeLayout === 'radial';
+
+window.visualizer.switchGraphLayout('network');
+const networkActive = window.visualizer.graphState.activeLayout === 'network';
+
+window.visualizer.toggleGraphPhysics();
+const paused = !window.visualizer.graphState.physicsRunning;
+
+window.visualizer.toggleGraphPhysics();
+const running = window.visualizer.graphState.physicsRunning;
+
+window.visualizer.reheatGraphPhysics();
+
+// Test node selection / highlighting
+const firstNode = window.visualizer.graphState.nodes[0];
+if (firstNode) {{
+  window.visualizer.handleGraphNodeClick(firstNode.id);
+}}
+const selected = window.visualizer.graphState.selectedId === (firstNode ? firstNode.id : null);
+
+window.visualizer.clearNodeHighlights();
+const cleared = window.visualizer.graphState.selectedId === null;
+
+// Test focus from search
+if (firstNode) {{
+  window.visualizer.focusNodeFromSearch(firstNode.id);
+}}
+const searchFocused = window.visualizer.graphState.zoom === 1.35;
+
+const results = {{
+  hasSvg, hasMarkerDefs, hasPanLayer, hasMinimap, hasStatPill,
+  flowActive, radialActive, networkActive, paused, running,
+  selected, cleared, searchFocused
+}};
+console.log(JSON.stringify(results));
+"""
+
+    proc = subprocess.run([node_bin], input=test_script, capture_output=True, text=True)
+    assert proc.returncode == 0, f"Error in node script: {proc.stderr}"
+    res = json.loads(proc.stdout)
+    assert res["hasSvg"] is True
+    assert res["hasMarkerDefs"] is True
+    assert res["hasPanLayer"] is True
+    assert res["hasMinimap"] is True
+    assert res["hasStatPill"] is True
+    assert res["flowActive"] is True
+    assert res["radialActive"] is True
+    assert res["networkActive"] is True
+    assert res["paused"] is True
+    assert res["running"] is True
+    assert res["selected"] is True
+    assert res["cleared"] is True
+    assert res["searchFocused"] is True
