@@ -107,6 +107,7 @@
 - [x] Frontend SPA Client Router and Navigation Chrome (`FEAT-UI-11`, US-0066, PRD-0023, TASK-0206)
 - [x] Zitadel Auth Client and Login Modal Component (`FEAT-UI-07`, `FEAT-SEC-02`, US-0062, PRD-0023, TASK-0207)
 - [x] Gateway Campaign Lifecycle and Membership API (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, PRD-0023, TASK-0208)
+- [x] Comprehensive Local Development Command (make dev) and Vite Proxy Gateway Routing (`FEAT-UI-11`, US-0001, US-0065, PRD-0023, TASK-0352)
 
 ### Campaign Hub, Character Roster & Pre-Game Lobby Epics
 - [x] Campaign Dashboard and Creation Microfrontend (`FEAT-UI-08`, US-0063, PRD-0023, TASK-0209)
@@ -301,7 +302,7 @@
 - [ ] Campaign Analytics Component Modular Decomposition (TASK-0331)
 - [ ] Faction Radar Styles Modular Decomposition (TASK-0332)
 - [ ] Docs Build and Pages Test Suite Modular Decomposition (TASK-0333)
-- [ ] Visualizer Graph Test Suite Modular Decomposition (TASK-0334)
+- [x] Visualizer Graph Test Suite Modular Decomposition (TASK-0334)
 - [ ] Project Visualizer Template Modular Decomposition (TASK-0335)
 - [ ] Rules Compendium Blackbox Test Suite Modular Decomposition (TASK-0336)
 - [ ] Gateway Campaign Sessions Blackbox Test Suite Modular Decomposition (TASK-0337)

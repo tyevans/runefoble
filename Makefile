@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -94,6 +94,9 @@ helm-deploy: ## Deploy Runefoble stack to current Kubernetes context
 	@kubectl cluster-info >/dev/null 2>&1 || (echo "Error: Kubernetes cluster is unreachable. Run 'make cluster-up' first." && exit 1)
 	@echo "==> Deploying Runefoble Helm release..."
 	helm upgrade --install $(RELEASE_NAME) $(HELM_CHART)
+
+dev: ## Run API Gateway and Vite frontend concurrently with health check gating
+	@python3 scripts/dev_server.py $(ARGS)
 
 dev-frontend: ## Run frontend in hot-reloading dev mode
 	@echo "==> Starting Vite development server..."
