@@ -124,6 +124,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`mount-community-plugin-ui-extension-slots.md`](docs/how-to/mount-community-plugin-ui-extension-slots.md): How to mount community Lit Web Components into designated extension slots (hud-widget, dice-panel, sidebar-tool) with Bauhaus token inheritance and Shadow DOM event isolation.
 - [`test-email-signups-with-mailpit.md`](docs/how-to/test-email-signups-with-mailpit.md): How to capture and verify email signups, OTP verification codes, and password resets in local development with Mailpit mock SMTP.
 - [`build-settlements-and-play-mobile-minigames.md`](docs/how-to/build-settlements-and-play-mobile-minigames.md): How to design and scale settlement havens, customize establishments with living NPC workers, haggle with merchants under DM controls, and play mobile-first tavern and casino minigames.
+- [`validate-e2e-journeys-with-playwright-bdd.md`](docs/how-to/validate-e2e-journeys-with-playwright-bdd.md): How to validate end-to-end user journeys with Playwright BDD, frontdoor authentication fixtures, and multi-browser execution.
 
 
 

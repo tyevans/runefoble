@@ -1,7 +1,7 @@
 ---
-id: '0359'
+id: 0359
 title: Playwright BDD Testing Infrastructure and Frontdoor Harness
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0004
@@ -18,8 +18,8 @@ governing_stories:
 - US-0063
 - US-0065
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/356
 ---
-
 # TASK-0359: Playwright BDD Testing Infrastructure and Frontdoor Harness
 
 ## Status

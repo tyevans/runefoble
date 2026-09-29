@@ -56,3 +56,9 @@ dist/
 .agents/
 .claude/last-docs-run
 .worktrees/
+
+# Playwright & BDD
+.features-gen/
+playwright-report/
+test-results/
+
