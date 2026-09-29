@@ -25,8 +25,10 @@ When decomposing a PRD, tasks adhere strictly to the following principles:
      - **API & Zanzibar Authorization**: FastAPI APIRouter, Zitadel JWT auth, and SpiceDB Zanzibar checks.
      - **Microfrontend Presentation**: Lit Web Component in `services/<bc>/ui/` with Bauhaus design tokens, Storybook stories, and `/ui/manifest`.
      - **Async Stream Engine**: Distributed Redis Streams consumer group worker.
-4. **Frontdoor Blackbox Verification (Hard Invariant 7)**:
+4. **Frontdoor Blackbox Verification & BDD Readiness (Hard Invariant 7 & ADR-0014)**:
    - Every task defines concrete public entrypoint test criteria (HTTP, WebSockets, or CloudEvents) with zero backdoor state manipulation.
+   - For user-facing slices and UI journeys, generate or link persona user stories in `docs/project/user_stories/accepted/` specifying executable Gherkin scenarios (`Given ... When ... Then`) whose test setup runs exclusively through public frontdoors (UI forms, Zitadel OIDC tokens, or public REST endpoints).
+   - Require passing Playwright BDD test suites executing all acceptance criteria scenarios in headless browser automation as part of the Definition of Done.
 
 ---
 

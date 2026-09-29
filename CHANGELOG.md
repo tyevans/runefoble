@@ -19,6 +19,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **Definition of Ready & Done Governance Updates for BDD and Playwright (`TASK-0360`, `ADR-0010`, `ADR-0014`)**:
+  - Updated Definition of Ready (DoR) across `AGENTS.md`, `docs/operating-manual.md`, and `docs/project/backlog/README.md` mandating **Frontdoor BDD Scenario Specification** in `docs/project/user_stories/accepted/` with frontdoor-only test setup.
+  - Updated Definition of Done (DoD) across `AGENTS.md`, `docs/operating-manual.md`, and `docs/project/backlog/README.md` requiring **Playwright BDD End-to-End Verification** executing all user flow scenarios in headless browser automation without backdoor state manipulation.
+  - Refined Hard Invariant 7 in `AGENTS.md` and `docs/operating-manual.md` to formally require **Blackbox TDD & BDD with frontdoor setup**, mandating that all user flows and UI journeys be expressed as Gherkin scenarios executed through Playwright browser automation.
+  - Authored Diataxis How-To guide `docs/how-to/test-user-flows-with-playwright-bdd.md` providing practical recipes for authoring Gherkin feature files, implementing TypeScript step definitions with shadow-piercing locators, managing frontdoor OIDC session injection, and executing tests locally via `make test-e2e` and `make test-e2e-ui`.
+  - Updated backlog curation and PRD decomposition guides (`docs/how-to/curate-backlog-and-roadmap.md`, `docs/how-to/decompose-prds-into-vertical-slices.md`) with explicit BDD readiness auditing instructions during JIT refinement and task slicing.
+  - Enhanced backlog worktree isolation in `tools/backlog_engine/worktree.py` and `tools/backlog_engine/git_ops.py` to preserve backlog documentation (`docs/project/backlog/README.md`) during automated isolation reverts while isolating task queues.
 - **Email Signup Mailpit Blackbox Test Suite Decomposition (`TASK-0243`, `ADR-0003`, `ADR-0005`, `ADR-0007`, `ADR-0010`, `ADR-0013`)**:
   - Decomposed monolithic test suite `tests/test_blackbox_email_signup_mailpit.py` (347 lines) into focused test modules under `tests/test_blackbox_email_signup_mailpit/`, keeping all test files strictly < 150 lines per Hard Invariant 6 and Hard Invariant 7:
     - `conftest.py` (34 lines): Shared FastAPI `TestClient` setup and in-memory `MailpitClient` reset fixtures (< 60 lines target).
