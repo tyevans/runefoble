@@ -16,6 +16,21 @@ pytest_plugins = [
 collect_ignore = ["test_blackbox_uvtt_import.py"]
 
 
+SPICEDB_SERVICE_MODULES = [
+    "gateway_api.auth",
+    "gateway_mcp.dynamic.auth",
+    "character_sheet.dependencies",
+    "game_session.dependencies",
+    "rules_compendium.dependencies",
+    "asset_forge.dependencies",
+    "campaign_lore.dependencies",
+    "soundscape.dependencies",
+    "the_watcher.dependencies",
+    "board_state.dependencies",
+    "campaign_analytics.dependencies",
+]
+
+
 @pytest.fixture(autouse=True)
 def default_spicedb_client(request):
     """Provide MockSpiceDBClient singleton for tests unless live_spicedb_endpoint is requested."""
@@ -23,34 +38,23 @@ def default_spicedb_client(request):
         yield None
         return
 
-    import gateway_api.auth as gw_auth
-
-    prev_gw = gw_auth._spicedb_client
-    mock_db = MockSpiceDBClient()
-    gw_auth.set_spicedb_client(mock_db)
-
+    import importlib
     import sys
 
+    mock_db = MockSpiceDBClient()
     modules_to_restore = []
-    for mod_name in [
-        "game_session.dependencies",
-        "soundscape.dependencies",
-        "the_watcher.dependencies",
-        "campaign_lore.dependencies",
-        "gateway_mcp.dynamic.auth",
-    ]:
-        if mod_name in sys.modules:
-            mod = sys.modules[mod_name]
+
+    for mod_name in SPICEDB_SERVICE_MODULES:
+        with contextlib.suppress(Exception):
+            mod = sys.modules.get(mod_name) or importlib.import_module(mod_name)
             if hasattr(mod, "get_spicedb_client") and hasattr(mod, "set_spicedb_client"):
-                with contextlib.suppress(Exception):
-                    prev = mod.get_spicedb_client()
-                    mod.set_spicedb_client(mock_db)
-                    modules_to_restore.append((mod, prev))
+                prev = mod.get_spicedb_client()
+                mod.set_spicedb_client(mock_db)
+                modules_to_restore.append((mod, prev))
 
     try:
         yield mock_db
     finally:
-        gw_auth.set_spicedb_client(prev_gw)
         for mod, prev in modules_to_restore:
             with contextlib.suppress(Exception):
                 mod.set_spicedb_client(prev)
