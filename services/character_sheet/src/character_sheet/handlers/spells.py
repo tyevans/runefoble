@@ -58,6 +58,10 @@ class SpellsHandlerMixin:
             spell_level=spell_level,
         )
 
+    def unprepare_spell(self, spell_name: str) -> None:
+        """Unprepare a spell from the character's active spellbook."""
+        self._state = self.state.without_prepared_spell(spell_name)
+
     def cast_spell(
         self, spell_name: str, slot_level: int | None = None, session_id: str = ""
     ) -> None:

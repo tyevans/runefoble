@@ -8,7 +8,7 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 
 from board_state.aggregate import BoardAggregate
 from fastapi import Header
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -19,10 +19,7 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 logger = logging.getLogger("runefoble.board_state")
 platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
-_spicedb_client: SpiceDBClient = SpiceDBClient(
-    endpoint=getattr(platform_settings, "spicedb_endpoint", "localhost:50051") or "localhost:50051",
-    token=getattr(platform_settings, "spicedb_token", "secret"),
-)
+_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 repo: AggregateRepository[BoardAggregate] = create_aggregate_repository(BoardAggregate)
 
@@ -48,12 +45,19 @@ def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
     _event_bus = bus
 
 
-def get_spicedb_client() -> SpiceDBClient:
+def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
     """Provide SpiceDB Zanzibar authorization client."""
+    global _spicedb_client
+    if _spicedb_client is None:
+        _spicedb_client = SpiceDBClient(
+            endpoint=getattr(platform_settings, "spicedb_endpoint", "localhost:50051")
+            or "localhost:50051",
+            token=getattr(platform_settings, "spicedb_token", "secret"),
+        )
     return _spicedb_client
 
 
-def set_spicedb_client(client: SpiceDBClient) -> None:
+def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
     """Override SpiceDB client for testing."""
     global _spicedb_client
     _spicedb_client = client
@@ -70,7 +74,7 @@ async def check_user_can_manage_traps(
     user_id: str | None,
     board_id: str,
     campaign_id: str | None = None,
-    spicedb: SpiceDBClient | None = None,
+    spicedb: SpiceDBClient | MockSpiceDBClient | None = None,
 ) -> bool:
     """Evaluate SpiceDB Zanzibar permissions to check whether user can manage traps."""
     if not user_id:

@@ -7,7 +7,7 @@ from game_session.main import app as session_app
 from game_session.main import set_event_bus as session_set_event_bus
 from game_session.main import set_spicedb_client as session_set_spicedb
 from httpx import ASGITransport, AsyncClient
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import CharacterControlTransferred
 from runefoble_platform.redis_bus import (
     MockAsyncRedis,
@@ -29,7 +29,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(mock_redis: Moc
     """POST /api/v1/sessions/{id}/hot-swap smoothly transfers control in <100ms, preserving combat order."""
     session_bus = RedisStreamsEventBus(client=mock_redis)
     session_set_event_bus(session_bus)
-    spicedb = SpiceDBClient()
+    spicedb = MockSpiceDBClient()
     session_set_spicedb(spicedb)
 
     async with AsyncClient(
@@ -118,7 +118,7 @@ async def test_hot_swap_unauthorized_user_rejected_by_spicedb(mock_redis: MockAs
     """Unauthorized user without character/session permissions cannot hot-swap control."""
     session_bus = RedisStreamsEventBus(client=mock_redis)
     session_set_event_bus(session_bus)
-    spicedb = SpiceDBClient()
+    spicedb = MockSpiceDBClient()
     session_set_spicedb(spicedb)
 
     async with AsyncClient(

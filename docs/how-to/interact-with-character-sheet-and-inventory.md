@@ -228,5 +228,30 @@ Per ADR-0003 and ADR-0007, the domain models for the Character Sheet bounded con
 - **Progression & Spells** (`models/progression.py`): Encapsulates `SpellProgression`, `LevelProgression`, and `ProgressionTransitionsMixin` managing level ups and spell slot expending.
 - **Aggregator Facade** (`models.py`): Minimal backward-compatibility facade re-exporting all domain models, mixins, and request schemas.
 
+---
 
+## 14. Sub-Resource Mutations & Event-Sourced Persistence (TASK-0356)
 
+Per ADR-0002, ADR-0004, ADR-0007, and ADR-0013, sub-resource mutations on `<runefoble-character-sheet>` are wired to backend persistence via Gateway API endpoints and App Shell event bindings:
+
+### Gateway API Sub-Resource Endpoints
+All sub-resource routes enforce SpiceDB Zanzibar `edit` relation on the target character:
+- **`POST /api/v1/characters/{id}/health`**: Mutates HP by `delta`, clamps between $[0, \text{maxHp}]$, and triggers stand-in permadeath safeguard stabilization (`is_stabilized = True`, `unconscious_stabilized` condition) when HP $\le 0$.
+- **`POST /api/v1/characters/{id}/equipment`**: Equips item to slot (`main_hand`, `off_hand`, `armor`, `accessory`).
+- **`DELETE /api/v1/characters/{id}/equipment/{slot}`**: Unequips item from slot, returning it to inventory.
+- **`POST /api/v1/characters/{id}/inventory`**: Adds item to inventory with item ID, quantity, and weight.
+- **`DELETE /api/v1/characters/{id}/inventory/{item_id}`**: Removes item (or decrements quantity) from inventory.
+- **`POST /api/v1/characters/{id}/conditions`**: Applies condition with tactical source.
+- **`DELETE /api/v1/characters/{id}/conditions/{condition}`**: Removes condition and associated penalties.
+- **`POST /api/v1/characters/{id}/spells/cast`**: Consumes an available spell slot of the specified level.
+- **`POST /api/v1/characters/{id}/spells/prepare`**: Toggles spell preparation status.
+
+### Interactive UI Enhancements
+1. **Interactive HP Delta Buttons**: `stats.template.ts` features quick adjustment buttons (`-5`, `-1`, `+1`, `+5`) that invoke `sheet.handleHpDelta(delta)` with instant visual feedback and optimistic state clamping.
+2. **Equip Slot Selector Modal**: `inventory.template.ts` presents an interactive slot selection dialog when clicking "Equip", allowing players to select target equipment slot (`main_hand`, `off_hand`, `armor`, `accessory`).
+3. **Spell Level Casting**: `spells.template.ts` passes the spell's actual known tier (`spell.level`) to `handleCastSpell` rather than hardcoding tier 1.
+
+### App Shell Action Event Handlers
+`frontend/src/runefoble-app.ts` binds all 11 action events emitted by `<runefoble-character-sheet>`:
+- `@hp-change`, `@equip-item`, `@unequip-item`, `@add-item`, `@remove-item`, `@cast-spell`, `@prepare-spell`, `@apply-condition`, `@remove-condition`, `@expend-slot`, `@restore-slot`.
+Event handlers execute optimistic local cache updates, invoke `appDataService` persistence methods, and display informative toast notifications.

@@ -76,6 +76,7 @@ class CreateCampaignRequest(BaseModel):
     system: str = "5e"
     cover_image_url: str | None = None
     settings: dict[str, Any] = Field(default_factory=dict)
+    seed_initial_session: bool = True
 
 
 class UpdateCampaignRequest(BaseModel):

@@ -47,6 +47,10 @@ class ProgressionTransitionsMixin:
             book.append(spell_name)
         return self.model_copy(update={"prepared_spells": prep, "spellbook": book})
 
+    def without_prepared_spell(self: Any, spell_name: str) -> Any:
+        prep = [s for s in self.prepared_spells if s != spell_name]
+        return self.model_copy(update={"prepared_spells": prep})
+
     def with_expended_spell_slot(self: Any, slot_level: int, remaining: int) -> Any:
         slots = dict(self.spell_slots)
         slots[slot_level] = remaining

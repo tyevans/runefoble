@@ -151,10 +151,14 @@ To create real session entities prior to assembling in the lobby, the campaign d
      }
      ```
    - The App Shell delegates to `AppDataService.createCampaignSession()`, calling `POST /api/v1/campaigns/{campaign_id}/sessions` requiring Zanzibar `run_session` permission.
+   - In fallback/offline mode, newly created sessions are persisted into `FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]`, guaranteeing that subsequent `fetchCampaignSessions(campaignId)` reloads preserve newly scheduled sessions.
    - On success, the campaign session list refreshes. If `status === 'lobby'`, the router automatically navigates to `#/campaigns/:campaignId/lobby/:sessionId`.
 4. **Modular Architecture & Theming**:
    - Modal styling is cleanly isolated in `frontend/src/styles/session-modal.styles.ts` using Bauhaus design tokens (`--rf-bg-surface`, `--rf-text-primary`, `--rf-border-width`, `--rf-shadow`, `--rf-accent-primary`), maintaining component line length well below project limits (<180 lines).
    - Form fields are decomposed into dedicated sub-renderers (`renderTitleField`, `renderStatusField`, `renderScheduleField`, `renderDescriptionField`, `renderActions`).
+5. **Initial Staging Lobby Auto-Seeding (TASK-0354)**:
+   - Creating a new campaign on the backend (`POST /api/v1/campaigns`) automatically seeds an initial staging lobby (`Session #1: Staging Lobby`, status: `lobby`) and writes the corresponding SpiceDB Zanzibar relationship tuples (`session:{id}#campaign@campaign:{campaign_id}` and `game_session:{id}#campaign@campaign:{campaign_id}`).
+   - All campaigns maintain isolated, non-overlapping session rosters with zero hardcoded cross-campaign stubs.
 
 ---
 
@@ -164,4 +168,5 @@ Instead of static placeholders, `<runefoble-session-lobby>` receives available c
 1. **Campaign Prioritization**: Characters assigned to `campaignId` are prioritized at the top of the character selection dropdown.
 2. **Selection Propagation**: Selecting a character dispatches `@select-character` (and `@character-selected`), synchronizing the selection with `RunefobleApp.activeCharacter`.
 3. **Seamless Transition**: When launching the session, the active VTT `<runefoble-character-card>` mounts directly bound to the selected character's name, class, HP, AC, and portrait.
+
 

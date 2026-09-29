@@ -8,7 +8,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Header
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
@@ -30,10 +30,7 @@ _storage_service: SiloStorageService | None = None
 _forge_repo: AggregateRepository[AssetForgeAggregate] = create_aggregate_repository(
     AssetForgeAggregate
 )
-_spicedb_client: SpiceDBClient = SpiceDBClient(
-    endpoint=settings.spicedb_endpoint or "localhost:50051",
-    token=getattr(settings, "spicedb_token", "secret"),
-)
+_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 
 def get_forge_repo() -> AggregateRepository[AssetForgeAggregate]:
@@ -70,9 +67,21 @@ def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
     _event_bus = bus
 
 
-def get_spicedb_client() -> SpiceDBClient:
+def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
     """Provide SpiceDB Zanzibar authorization client."""
+    global _spicedb_client
+    if _spicedb_client is None:
+        _spicedb_client = SpiceDBClient(
+            endpoint=settings.spicedb_endpoint or "localhost:50051",
+            token=getattr(settings, "spicedb_token", "secret"),
+        )
     return _spicedb_client
+
+
+def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
+    """Override SpiceDB client for testing."""
+    global _spicedb_client
+    _spicedb_client = client
 
 
 def get_current_user_id(
@@ -85,7 +94,7 @@ def get_current_user_id(
 async def check_user_can_forge(
     user_id: str | None,
     campaign_id: UUID | None,
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> bool:
     """Check Zanzibar authorization for forging assets in campaign context."""
     if not campaign_id or not user_id:

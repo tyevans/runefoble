@@ -59,7 +59,11 @@ async def create_campaign(
 ) -> CampaignSummaryResponse:
     """Create a new campaign and write owner relation to SpiceDB Zanzibar."""
     cid, camp = campaign_store.create_from_request(req, user.user_id)
-    await get_spicedb_client().write_relationship("campaign", cid, "owner", "user", user.user_id)
+    spicedb = get_spicedb_client()
+    await spicedb.write_relationship("campaign", cid, "owner", "user", user.user_id)
+    for sess in campaign_store.get_campaign_sessions(cid):
+        await spicedb.write_relationship("session", sess.id, "campaign", "campaign", cid)
+        await spicedb.write_relationship("game_session", sess.id, "campaign", "campaign", cid)
     return camp.to_summary(role="owner", member_count=1)
 
 

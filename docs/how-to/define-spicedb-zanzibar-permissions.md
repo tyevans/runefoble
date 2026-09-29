@@ -70,10 +70,10 @@ schema_text = await bootstrap_schema(endpoint="localhost:50051", token="runefobl
 
 ## 3. Connecting to SpiceDB
 
-The `SpiceDBClient` seamlessly handles live gRPC and disconnected test modes:
+The `SpiceDBClient` connects directly to live SpiceDB over gRPC without silent mock fallbacks:
 
 ```python
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
 # 1. Connect to live SpiceDB gRPC
 client = SpiceDBClient(
@@ -82,11 +82,11 @@ client = SpiceDBClient(
     insecure=True,
 )
 
-# 2. Offline / Unit Test Mock Mode
-mock_client = SpiceDBClient(use_mock=True)
+# 2. Offline / Unit Test Mock Mode (Explicit Mock)
+mock_client = MockSpiceDBClient()
 ```
 
-If `use_mock=False` but the gRPC server is unreachable, `SpiceDBClient` logs a warning and automatically falls back to in-memory evaluation so tests and services degrade gracefully.
+`SpiceDBClient` communicates strictly over gRPC. If the SpiceDB server is unreachable or fails, operations fail fast and raise exceptions rather than silently degrading to an in-memory mock, preventing permission desynchronization and data loss. For isolated unit tests, instantiate `MockSpiceDBClient` directly.
 
 ---
 

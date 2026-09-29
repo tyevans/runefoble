@@ -7,6 +7,7 @@ real-time WebSockets for the tactical board and voice chronicle.
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from game_session.settlement.router import router as settlement_haven_router
 from gateway_api.assets import router as assets_router
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.dependencies import (
@@ -28,6 +29,7 @@ from gateway_api.routers import (
     characters_router,
     downtime_router,
     health_router,
+    hub_views_router,
     overlay_router,
     spectator_router,
 )
@@ -49,7 +51,19 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:6006",
+        "http://127.0.0.1:6006",
+        "http://localhost:80",
+        "http://localhost",
+        "http://127.0.0.1",
+        "http://runefoble.local",
+        "*",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,8 +72,10 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(campaigns_router)
+app.include_router(hub_views_router)
 app.include_router(characters_router)
 app.include_router(downtime_router)
+app.include_router(settlement_haven_router)
 app.include_router(spectator_router)
 app.include_router(overlay_router)
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
@@ -136,9 +152,13 @@ async def gateway_standalone_minigame_ws(
 
 
 def main() -> None:
+    import os
+
     import uvicorn
 
-    uvicorn.run("gateway_api.main:app", host="0.0.0.0", port=8000, reload=True)
+    host = os.environ.get("GATEWAY_HOST", "0.0.0.0")
+    port = int(os.environ.get("GATEWAY_PORT", os.environ.get("PORT", "8000")))
+    uvicorn.run("gateway_api.main:app", host=host, port=port, reload=True)
 
 
 if __name__ == "__main__":

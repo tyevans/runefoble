@@ -33,24 +33,37 @@ def mock_bus() -> MockAsyncRedis:
     set_event_bus(None)
 
 
+@pytest.fixture(autouse=True)
+def clean_minigame_state():
+    from game_session.minigame_tables.ws_manager import minigame_table_manager
+
+    minigame_table_manager.tables.clear()
+    minigame_table_manager.connections.clear()
+    yield
+    minigame_table_manager.tables.clear()
+    minigame_table_manager.connections.clear()
+
+
 @pytest.fixture
 def spicedb() -> MockSpiceDBClient:
     mock_db = MockSpiceDBClient()
     set_spicedb_client(mock_db)
     set_gateway_spicedb(mock_db)
     yield mock_db
-    set_spicedb_client(None)
-    set_gateway_spicedb(None)
+    set_spicedb_client(MockSpiceDBClient())
+    set_gateway_spicedb(MockSpiceDBClient())
 
 
 @pytest.fixture
-def session_client(spicedb: MockSpiceDBClient) -> TestClient:
-    return TestClient(session_app)
+def session_client(spicedb: MockSpiceDBClient):
+    with TestClient(session_app) as client:
+        yield client
 
 
 @pytest.fixture
-def gateway_client(spicedb: MockSpiceDBClient) -> TestClient:
-    return TestClient(gateway_app)
+def gateway_client(spicedb: MockSpiceDBClient):
+    with TestClient(gateway_app) as client:
+        yield client
 
 
 def test_minigames_suite_manifest_and_file_invariants(session_client: TestClient) -> None:

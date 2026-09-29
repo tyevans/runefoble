@@ -7,6 +7,8 @@ router = APIRouter(tags=["Health"])
 
 
 @router.get("/healthz")
+@router.get("/health")
+@router.get("/api/v1/health")
 async def health_check() -> dict:
     """Return health status, downstream service availability, and Zanzibar engine."""
     bus = get_event_bus()

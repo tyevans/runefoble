@@ -17,9 +17,17 @@ from runefoble_events import CharacterCreated, ParticipantJoined, SessionCreated
 
 
 @pytest.mark.asyncio
-async def test_spicedb_client_crud_and_permissions() -> None:
+async def test_spicedb_client_crud_and_permissions(
+    live_spicedb_endpoint: str | None = None,
+) -> None:
     """Verify SpiceDBClient relationship writing and permission evaluation."""
-    client = SpiceDBClient()
+    if live_spicedb_endpoint:
+        client = SpiceDBClient(endpoint=live_spicedb_endpoint, token="test_token")
+        from runefoble_auth.bootstrap_schema import bootstrap_schema
+
+        await bootstrap_schema(client=client)
+    else:
+        client = MockSpiceDBClient()
     campaign_id = f"camp-{uuid4().hex[:6]}"
     user_id = f"user-{uuid4().hex[:6]}"
 

@@ -1,6 +1,4 @@
-import type {
-  CampaignItem, CampaignMember, LobbyParticipant, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption,
-} from '@runefoble/game-session-ui';
+import type { CampaignItem, CampaignMember, LobbyParticipant, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption } from '@runefoble/game-session-ui';
 import type { CharacterItem, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
@@ -32,13 +30,7 @@ export const FALLBACK_MEMBERS: CampaignMember[] = [
   { user_id: 'user-merisiel', username: 'Merisiel Nightshadow', character_name: 'Merisiel', role: 'player' },
 ];
 
-const CAMPAIGN_MEMBERS_CACHE: Record<string, CampaignMember[]> = {
-  '4': [
-    { user_id: 'user-valeros', username: 'Valeros (You)', character_name: 'Valeros of Korvosa', role: 'owner' },
-    { user_id: 'user-kyra', username: 'Kyra Sunfall', character_name: 'Kyra the Sun Maiden', role: 'player' },
-    { user_id: 'user-merisiel', username: 'Merisiel Nightshadow', character_name: 'Merisiel', role: 'player' },
-  ],
-};
+const CAMPAIGN_MEMBERS_CACHE: Record<string, CampaignMember[]> = { '4': [...FALLBACK_MEMBERS] };
 
 export function getFallbackCampaignMembers(campaignId: string): CampaignMember[] {
   if (!CAMPAIGN_MEMBERS_CACHE[campaignId]) {
@@ -76,21 +68,34 @@ export const FALLBACK_PARTICIPANTS: LobbyParticipant[] = [
   { userId: 'user-kyra', username: 'Kyra', role: 'Cleric Lvl 4', characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden', characterClass: 'Cleric', characterLevel: 4, isReady: false, isAbsent: true, onlineStatus: 'offline' },
 ];
 
-export const FALLBACK_SESSIONS: CampaignSessionItem[] = [
-  { id: 'session-tomb-14', campaignId: '4', title: 'Session #14: Tomb of the Star-Eater', status: 'active', round: 3, participantsCount: 4 },
-  { id: 'lobby-4-2', campaignId: '4', title: 'Session #15: Chamber of Horrors', status: 'lobby', participantsCount: 3 },
-];
+export const FALLBACK_CAMPAIGN_SESSIONS_MAP: Record<string, CampaignSessionItem[]> = {
+  '4': [
+    { id: 'session-tomb-14', campaignId: '4', title: 'Session #14: Tomb of the Star-Eater', status: 'active', round: 3, participantsCount: 4 },
+    { id: 'lobby-4-2', campaignId: '4', title: 'Session #15: Chamber of Horrors', status: 'lobby', round: 1, participantsCount: 3 },
+  ],
+  '5': [
+    { id: 'session-whisper-1', campaignId: '5', title: 'Session #1: The Sunken Aqueduct', status: 'upcoming', round: 1, participantsCount: 0, description: 'Subterranean dwarven aqueduct expedition.' },
+  ],
+};
+
+export const FALLBACK_SESSIONS: CampaignSessionItem[] = FALLBACK_CAMPAIGN_SESSIONS_MAP['4'];
 
 export function getFallbackCampaignSessions(campaignId: string): CampaignSessionItem[] {
-  return [
-    { id: campaignId === '4' ? 'session-tomb-14' : `session-${campaignId}-1`, campaignId, title: campaignId === '4' ? 'Session #14: Tomb of the Star-Eater' : `Session #1 (${campaignId})`, status: 'active', round: 3, participantsCount: 4 },
-    { id: `lobby-${campaignId}-2`, campaignId, title: 'Session #15: Chamber of Horrors', status: 'lobby', participantsCount: 3 },
-  ];
+  if (!FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]) {
+    FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId] = [
+      { id: `lobby-${campaignId}-1`, campaignId, title: 'Session #1: Assembly & Briefing', status: 'lobby', round: 1, participantsCount: 1 },
+    ];
+  }
+  return [...FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]];
 }
 
 export function getFallbackSession(sessionId: string): CampaignSessionItem {
+  for (const list of Object.values(FALLBACK_CAMPAIGN_SESSIONS_MAP)) {
+    const found = list.find((s) => s.id === sessionId);
+    if (found) return found;
+  }
   if (sessionId === '14' || sessionId === 'session-tomb-14') return { id: sessionId, campaignId: '4', title: 'Session #14: Tomb of the Star-Eater', status: 'active', round: 3, participantsCount: 4 };
-  if (sessionId === '15' || sessionId.startsWith('lobby-')) return { id: sessionId, campaignId: '4', title: sessionId === '15' ? 'Lobby 15' : 'Session #15: Chamber of Horrors', status: 'lobby', participantsCount: 3 };
+  if (sessionId === '15' || sessionId === 'lobby-4-2') return { id: sessionId, campaignId: '4', title: 'Session #15: Chamber of Horrors', status: 'lobby', participantsCount: 3 };
   return { id: sessionId, campaignId: '', title: `Session #${sessionId}`, status: 'active', round: 1, participantsCount: 3 };
 }
 
@@ -100,6 +105,9 @@ export function createFallbackCampaign(campaignId: string): CampaignItem {
 
 export function createFallbackCampaignItem(payload: CreateCampaignPayload, ownerId = 'user-valeros'): CampaignItem {
   const id = `camp-${Date.now()}`;
+  FALLBACK_CAMPAIGN_SESSIONS_MAP[id] = [
+    { id: `lobby-${id}-1`, campaignId: id, title: 'Session #1: Assembly & Briefing', status: 'lobby', round: 1, participantsCount: 1 },
+  ];
   const uname = ownerId === 'user-valeros' ? 'Valeros (You)' : ownerId;
   CAMPAIGN_MEMBERS_CACHE[id] = [{ user_id: ownerId, username: uname, role: 'owner' }];
   return { id, title: payload.title, description: payload.description, owner_id: ownerId, setting: payload.setting, system: payload.system || '5e', role: 'owner', player_count: 1, has_active_session: false };
@@ -108,11 +116,7 @@ export function createFallbackCampaignItem(payload: CreateCampaignPayload, owner
 export function updateFallbackCampaign(campaignId: string, payload: UpdateCampaignPayload): CampaignItem {
   const c = FALLBACK_CAMPAIGNS.find((item) => item.id === campaignId);
   if (c) {
-    if (payload.title !== undefined) c.title = payload.title;
-    if (payload.setting !== undefined) c.setting = payload.setting;
-    if (payload.system !== undefined) c.system = payload.system;
-    if (payload.cover_image_url !== undefined) c.cover_image_url = payload.cover_image_url;
-    if (payload.description !== undefined) c.description = payload.description;
+    Object.assign(c, Object.fromEntries(Object.entries(payload).filter(([_, v]) => v !== undefined)));
     return { ...c };
   }
   return { id: campaignId, title: payload.title, setting: payload.setting, system: payload.system || '5e', cover_image_url: payload.cover_image_url, description: payload.description };
