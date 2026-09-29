@@ -48,6 +48,23 @@ def test_definition_of_ready_contains_bdd_requirement():
     assert "Definition of Ready in [`AGENTS.md`]" in readme.read_text(encoding="utf-8")
 
 
+def test_definition_of_ready_mandates_zero_backward_compatibility_shims():
+    """Verifies DoR mandates zero backward compatibility shims or re-exports across documents."""
+    targets = [
+        REPO_ROOT / "AGENTS.md",
+        REPO_ROOT / "docs" / "operating-manual.md",
+        REPO_ROOT / "docs" / "project" / "backlog" / "README.md",
+    ]
+
+    for file_path in targets:
+        assert file_path.exists(), f"File not found: {file_path}"
+        content = file_path.read_text(encoding="utf-8")
+
+        assert "Zero Backward Compatibility Shims" in content
+        assert "backward compatibility" in content.lower()
+        assert "re-export" in content.lower()
+
+
 def test_definition_of_done_contains_playwright_e2e_requirement():
     """Verifies DoD mandates passing Playwright BDD browser test suites across documents."""
     targets = [

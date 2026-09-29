@@ -185,6 +185,7 @@ A backlog task or feature may only be transitioned to `refined/` and pulled into
 6. **INVEST Criteria Satisfied**: The task is validated against INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small [<500 lines per file], Testable).[^20]
 7. **Frontdoor Blackbox Test Plan**: Frontdoor test scenarios and setup are clearly specified, interacting strictly via public HTTP endpoints, WebSockets, or CloudEvents.
 8. **Frontdoor BDD Scenario Specification**: For any user-facing feature or UI view, the governing user story in `docs/project/user_stories/accepted/` must provide executable Gherkin scenarios (`Given ... When ... Then`) whose test setup is achievable strictly through public frontdoors (UI forms, Zitadel OIDC tokens, or public REST endpoints) per ADR-0014.[^26]
+9. **Zero Backward Compatibility Shims**: Task plans and specifications must never include backward compatibility considerations, transitional shims, deprecated aliases, or legacy re-exports. Because the platform does not yet have active external users, all migrations, refactorings, and architectural evolutions must update call sites directly and excise obsolete shims and re-exports as we go, ensuring the platform continues to evolve cleanly.
 
 ## Definition of Done (DoD)
 

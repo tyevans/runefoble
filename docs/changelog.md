@@ -19,6 +19,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **Definition of Ready Governance Update: Zero Backward Compatibility Shims (`TASK-0485` through `TASK-0502`)**:
+  - Updated Definition of Ready (DoR) across `AGENTS.md`, `docs/operating-manual.md`, and `docs/project/backlog/README.md` to mandate **Zero Backward Compatibility Shims**: task plans and specifications must never include backward compatibility considerations, transitional shims, deprecated aliases, or legacy re-exports.
+  - Added automated governance verification in `tests/test_blackbox_bdd_governance.py` asserting that the zero backward compatibility requirement is enforced across all governance records.
+  - Updated `docs/how-to/curate-backlog-and-roadmap.md` with explicit instructions for auditing tasks against backward compatibility shims during JIT backlog refinement.
+  - Created and refined a high-priority suite of 18 tasks in `docs/project/backlog/refined/` (`TASK-0485` to `TASK-0502`), establishing targeted deprecation and excision plans for every bounded context across libraries (`runefoble_platform`, `runefoble_auth`, `runefoble_events`), gateway (`gateway_api`, `gateway_mcp`), services (`the_watcher`, `game_session`, `board_state`, `character_sheet`, `voice_agent`, `campaign_lore`, `rules_compendium`, `asset_forge`, `soundscape`, `audience_studio`, `campaign_analytics`, `inference_worker`), and `frontend`.
+  - Positioned all 18 tasks as top-priority refined tasks at the head of the ready queue in `docs/project/backlog/PRIORITY.md`.
 - **Definition of Ready & Done Governance Updates for BDD and Playwright (`TASK-0360`, `ADR-0010`, `ADR-0014`)**:
   - Updated Definition of Ready (DoR) across `AGENTS.md`, `docs/operating-manual.md`, and `docs/project/backlog/README.md` mandating **Frontdoor BDD Scenario Specification** in `docs/project/user_stories/accepted/` with frontdoor-only test setup.
   - Updated Definition of Done (DoD) across `AGENTS.md`, `docs/operating-manual.md`, and `docs/project/backlog/README.md` requiring **Playwright BDD End-to-End Verification** executing all user flow scenarios in headless browser automation without backdoor state manipulation.
