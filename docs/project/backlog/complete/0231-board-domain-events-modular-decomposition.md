@@ -19,7 +19,7 @@ governing_stories:
 - US-0014
 - US-0043
 target_release: 0.8.0
-pr_url: https://github.com/tyevans/runefoble/pull/381
+pr_url: https://github.com/tyevans/runefoble/pull/384
 ---
 # TASK-0231: Board Domain Events Modular Decomposition
 
