@@ -309,5 +309,11 @@
 - [ ] Initiative Tracker Blackbox Test Suite Modular Decomposition (TASK-0339)
 - [ ] Settlement Integration Test Suite Modular Decomposition (TASK-0340)
 - [ ] Minigames WebSocket Test Suite Modular Decomposition (TASK-0341)
+- [ ] Campaign Lore RAG Test Suite Modular Decomposition (TASK-0342)
+- [ ] West Marches Domain Models Modular Decomposition (TASK-0343)
+- [ ] Campaign Dashboard Component Modular Decomposition (TASK-0344)
+- [ ] Voice Agent STT Pipeline Modular Decomposition (TASK-0345)
+- [ ] Visualizer Traceability Client Modular Decomposition (TASK-0346)
+- [ ] App Shell Views Wiring Audit Test Suite Modular Decomposition (TASK-0347)
 
 
