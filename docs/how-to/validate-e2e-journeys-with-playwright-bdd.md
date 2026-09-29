@@ -230,3 +230,29 @@ Key validated behaviors:
 - **Health Delta Mutations & Reload Persistence**: Clicking interactive `-5 HP` buttons on `<runefoble-character-sheet>`, verifying immediate UI recalculation (e.g. 38 to 33 HP), executing `page.reload()`, and ensuring persistent HP state from the backend aggregate.
 - **Inventory & Equipment Slots**: Equipping items (`Longsword +1`) into the Main Hand paper doll slot via dialog, dynamically updating carried encumbrance, and unequipping back to general carried inventory.
 - **Stand-In Tactical Guardrails**: Configuring risk appetite (`cautious`), checking `Avoid Melee`, saving directives on `<runefoble-stand-in-guardrails>`, verifying toast feedback (`Tactical Guardrails Saved!`), and ensuring reload retention.
+
+---
+
+## 8. GitHub Actions CI Quality Gate & Local Emulation (TASK-0364)
+
+Governed by **ADR-0010** and **ADR-0014**, every pull request targeting `main` must pass the automated `e2e-playwright` blocking quality gate in `.github/workflows/ci.yml`.
+
+### CI Workflow Architecture
+
+The `e2e-playwright` job coordinates automated browser validation:
+1. **Containerized Redis**: Runs a `redis:7-alpine` service container with health checks on port 6379.
+2. **Browser Binary Caching**: Restores Playwright browser binaries from `~/.cache/ms-playwright` keyed by lockfile hash, avoiding repetitive downloads.
+3. **Background Service Orchestration**: Starts the API Gateway and Vite Frontend via `make dev &` with mock SpiceDB and offline auth enabled.
+4. **Health Readiness Polling**: Probes `http://localhost:8000/api/v1/health` and `http://localhost:5173` with a 60-second timeout before tests execute.
+5. **Headless Execution**: Executes `make test-e2e ARGS="--reporter=github,html"`, outputting GitHub workflow step annotations and HTML reports.
+6. **Failure Artifact Archiving**: On test failure, archives `playwright-report/` and `test-results/` (traces, screenshots, and videos) via `actions/upload-artifact@v4` with a 14-day retention window.
+
+### Running Local CI Emulation
+
+To reproduce the exact GitHub Actions runner environment locally, execute the CI simulation runner:
+
+```bash
+./scripts/test_ci_e2e.sh
+```
+
+The script manages service startup, polls readiness on `:8000` and `:5173`, runs the full suite in headless mode with `--reporter=github,html`, and guarantees clean process group termination on exit.
