@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { Router, type MatchedRoute } from '../src/router/router.ts';
 import { AppDataService } from '../src/services/app-data-service.ts';
 import type { AppActiveView } from '../src/runefoble-app.ts';
+import { registerDefaultPlugins, pluginRegistry } from '../src/components/plugins/plugin_registry.ts';
 
 // Helper view resolver mimicking RunefobleApp.getActiveView()
 function resolveActiveView(route: MatchedRoute | null): AppActiveView {
@@ -388,5 +389,68 @@ describe('Dynamic Character Binding in Pre-Game Lobby and Active VTT (TASK-0256)
     const explicitlySelected = characters[0];
     const resolvedExplicit = resolveActive('4', explicitlySelected);
     assert.equal(resolvedExplicit.id, 'char-1');
+  });
+});
+
+describe('Live Tabletop VTT WebSocket Event Mesh & Plugin Slots (TASK-0358)', () => {
+  it('registers default tabletop plugins across standard slots for players', () => {
+    registerDefaultPlugins(pluginRegistry, false);
+    const hud = pluginRegistry.getPluginsForSlot('hud-widget');
+    assert.ok(hud.some((p) => p.tag === 'runefoble-initiative-tracker'));
+    assert.ok(hud.some((p) => p.tag === 'runefoble-soundscape-controls'));
+
+    const dice = pluginRegistry.getPluginsForSlot('dice-panel');
+    assert.ok(dice.some((p) => p.tag === 'runefoble-dice-roller'));
+    assert.ok(dice.some((p) => p.tag === 'runefoble-dice-tray-3d'));
+
+    const sidebar = pluginRegistry.getPluginsForSlot('sidebar-tool');
+    assert.ok(sidebar.some((p) => p.tag === 'runefoble-combat-reaction-prompt'));
+    assert.equal(sidebar.some((p) => p.tag === 'runefoble-dm-whisper-bar'), false);
+    assert.equal(sidebar.some((p) => p.tag === 'runefoble-dm-trap-controls'), false);
+  });
+
+  it('mounts DM controls in sidebar-tool slot when isDm is enabled', () => {
+    registerDefaultPlugins(pluginRegistry, true);
+    const sidebar = pluginRegistry.getPluginsForSlot('sidebar-tool');
+    assert.ok(sidebar.some((p) => p.tag === 'runefoble-combat-reaction-prompt'));
+    assert.ok(sidebar.some((p) => p.tag === 'runefoble-dm-whisper-bar'));
+    assert.ok(sidebar.some((p) => p.tag === 'runefoble-dm-trap-controls'));
+  });
+
+  it('provides dynamic board dimensions and tokens via fetchBoardState', async () => {
+    const dataService = new AppDataService();
+    const state = await dataService.fetchBoardState('session-tomb-14');
+    assert.ok(typeof state.cols === 'number');
+    assert.ok(typeof state.rows === 'number');
+    assert.ok(Array.isArray(state.tokens));
+    assert.ok(state.tokens.length >= 1);
+  });
+
+  it('validates VTT board and lobby event contracts in App Shell source', async () => {
+    const fs = await import('node:fs');
+    const appShellPath = new URL('../src/runefoble-app.ts', import.meta.url).pathname;
+    const appSrc = fs.readFileSync(appShellPath, 'utf-8');
+
+    // Lobby events
+    assert.ok(appSrc.includes('@toggle-readiness='));
+    assert.ok(appSrc.includes('@toggle-stand-in='));
+    assert.ok(appSrc.includes("'player_readiness'"));
+    assert.ok(appSrc.includes("'player_stand_in'"));
+
+    // Board events and dynamic bounds
+    assert.ok(appSrc.includes('.websocketUrl=${this.getWebSocketUrl()}'));
+    assert.ok(appSrc.includes('@token-action='));
+    assert.ok(appSrc.includes('@aoe-place='));
+    assert.ok(appSrc.includes('@spell-vfx-triggered='));
+    assert.ok(appSrc.includes('@confirm-ghost='));
+    assert.ok(appSrc.includes('.cols=${this.boardCols}'));
+    assert.ok(appSrc.includes('.rows=${this.boardRows}'));
+
+    // WebSocket expanded message types
+    assert.ok(appSrc.includes("'dice_rolled'"));
+    assert.ok(appSrc.includes("'turn_advanced'"));
+    assert.ok(appSrc.includes("'aoe_placed'"));
+    assert.ok(appSrc.includes("'spell_vfx'"));
+    assert.ok(appSrc.includes("'dm_whisper'"));
   });
 });
