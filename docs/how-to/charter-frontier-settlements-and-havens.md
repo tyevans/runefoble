@@ -162,6 +162,6 @@ Per ADR-0001, ADR-0005, and ADR-0013, authorization logic in `services/game_sess
 Run the frontdoor blackbox test suite:
 
 ```bash
-uv run pytest tests/test_blackbox_settlements_integration.py tests/test_blackbox_settlements/
+uv run pytest tests/test_blackbox_settlements_integration/ tests/test_blackbox_settlements/
 ```
 
