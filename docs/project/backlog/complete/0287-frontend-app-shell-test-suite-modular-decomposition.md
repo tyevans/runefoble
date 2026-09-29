@@ -1,7 +1,7 @@
 ---
 id: 0287
 title: Frontend App Shell Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0213
@@ -16,6 +16,7 @@ governing_stories:
 - US-0065
 - US-0066
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/357
 ---
 # TASK-0287: Frontend App Shell Test Suite Modular Decomposition
 
