@@ -26,6 +26,7 @@ def test_required_developer_cli_tools_installed():
     "make_target",
     [
         "help",
+        "dev",
         "install-tools",
         "helm-lint",
         "helm-template",

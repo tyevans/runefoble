@@ -46,3 +46,14 @@ Open your browser to:
 - **Identity Provider (Zitadel)**: `http://localhost/auth`
 - **Mailpit Email Testing UI**: `http://localhost/mail/`
 - **Observability (Grafana)**: `http://localhost:3001` (admin / admin)
+
+## Step 5: Run Fast Local Development Server (`make dev`)
+For rapid day-to-day coding without rebuilding container images, use the unified local development command:
+```bash
+make dev
+```
+This command invokes `scripts/dev_server.py`, which:
+1. Boots the API Gateway on `http://localhost:8000`.
+2. Gates on the Gateway health check (`/healthz`).
+3. Launches the hot-reloading Vite frontend on `http://localhost:5173`.
+4. Proxies backend API requests (`/api`, `/api/v1`), WebSockets (`/ws`), documentation (`/docs`, `/openapi.json`), and email testing (`/mail`) seamlessly to prevent `502 Bad Gateway` errors.
