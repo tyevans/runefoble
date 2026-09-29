@@ -6,6 +6,17 @@ import {
 
 export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS };
 
+export const FALLBACK_CHARACTER_DETAILS_CACHE: Map<string, any> = new Map();
+
+export function getOrCreateFallbackCharacterDetail(char: CharacterItem | undefined, characterId: string): any {
+  if (FALLBACK_CHARACTER_DETAILS_CACHE.has(characterId)) {
+    return FALLBACK_CHARACTER_DETAILS_CACHE.get(characterId);
+  }
+  const detail = buildFallbackCharacterDetail(char, characterId);
+  FALLBACK_CHARACTER_DETAILS_CACHE.set(characterId, detail);
+  return detail;
+}
+
 // Fallback character roster includes: 'char-valeros', 'char-kyra', 'char-ezren'
 export function buildFallbackCharacterDetail(char: CharacterItem | undefined, characterId: string): any {
   const c = char || {

@@ -1,4 +1,4 @@
-"""Character management and Zanzibar authorization router for Gateway API."""
+from __future__ import annotations
 
 from typing import Annotated, Any
 
@@ -10,21 +10,36 @@ from gateway_api.character_models import (
     CreateCharacterRequest,
 )
 from gateway_api.character_store import character_store
+from gateway_api.routers.character_subresources import router as subresources_router
 from runefoble_auth.zitadel import AuthenticatedUser
 
 router = APIRouter(tags=["Characters"])
+router.include_router(subresources_router)
 
 
 @router.get("/api/v1/characters", response_model=list[CharacterResponse])
 async def list_characters(
     user: Annotated[AuthenticatedUser, Depends(get_current_user)],
-    owned_only: bool = Query(default=False, description="Filter strictly to owned characters"),
+    campaign_id: str | None = Query(None, alias="campaignId"),
 ) -> list[CharacterResponse]:
-    """List characters where authenticated user has view or owner relation in SpiceDB."""
-    chars = await character_store.list_characters_for_user(
-        user.user_id, get_spicedb_client(), owned_only=owned_only
-    )
-    return [c.to_response() for c in chars]
+    """List characters viewable by current user under SpiceDB Zanzibar rules."""
+    all_chars = character_store.list_characters()
+    client = get_spicedb_client()
+    allowed = []
+
+    for char in all_chars:
+        if campaign_id and char.campaign_id != campaign_id:
+            continue
+
+        if char.owner_id == user.user_id:
+            allowed.append(char)
+            continue
+
+        has_view = await client.check_permission("character", char.id, "view", "user", user.user_id)
+        if has_view:
+            allowed.append(char)
+
+    return [c.to_response() for c in allowed]
 
 
 @router.post(
@@ -36,14 +51,17 @@ async def create_character(
     req: CreateCharacterRequest,
     user: Annotated[AuthenticatedUser, Depends(get_current_user)],
 ) -> CharacterResponse:
-    """Create a new character and write SpiceDB owner relationship tuple."""
-    char = character_store.create_from_request(req, user.user_id)
+    """Create a new character and assign ownership to caller in SpiceDB."""
+    char = character_store.create_from_request(req, owner_id=user.user_id)
+
     client = get_spicedb_client()
     await client.write_relationship("character", char.id, "owner", "user", user.user_id)
+
     if char.campaign_id:
         await client.write_relationship(
             "character", char.id, "campaign", "campaign", char.campaign_id
         )
+
     return char.to_response()
 
 
@@ -52,8 +70,10 @@ async def create_character(
     response_model=CharacterResponse,
     dependencies=[Depends(require_zanzibar_permission("view", "character", "character_id"))],
 )
-async def get_character(character_id: str) -> CharacterResponse:
-    """Fetch character details (requires Zanzibar 'view' permission)."""
+async def get_character(
+    character_id: str,
+) -> CharacterResponse:
+    """Retrieve full character sheet with dual-case serialization (requires 'view')."""
     char = character_store.get_character(character_id)
     if not char:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
@@ -65,26 +85,24 @@ async def get_character(character_id: str) -> CharacterResponse:
     response_model=CharacterResponse,
     dependencies=[Depends(require_zanzibar_permission("edit", "character", "character_id"))],
 )
-async def assign_character_campaign(
+async def assign_campaign(
     character_id: str,
     req: AssignCampaignRequest,
 ) -> CharacterResponse:
-    """Assign or unassign character to a campaign (requires Zanzibar 'edit' permission)."""
+    """Assign or unassign character to campaign and synchronize SpiceDB (requires 'edit')."""
     char = character_store.get_character(character_id)
     if not char:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
 
     client = get_spicedb_client()
-    old_campaign_id = char.campaign_id
+    old_campaign = char.campaign_id
 
-    # If removing or changing campaign, delete old relationship
-    if old_campaign_id and old_campaign_id != req.campaign_id:
+    if old_campaign and old_campaign != req.campaign_id:
         await client.delete_relationship(
-            "character", character_id, "campaign", "campaign", old_campaign_id
+            "character", character_id, "campaign", "campaign", old_campaign
         )
 
-    # If assigning new campaign, write relationship
-    if req.campaign_id and req.campaign_id != old_campaign_id:
+    if req.campaign_id:
         await client.write_relationship(
             "character", character_id, "campaign", "campaign", req.campaign_id
         )
@@ -107,9 +125,7 @@ async def delete_character(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
 
     client = get_spicedb_client()
-    # Delete owner relationship
     await client.delete_relationship("character", character_id, "owner", "user", user.user_id)
-    # Delete campaign relationship if exists
     if char.campaign_id:
         await client.delete_relationship(
             "character", character_id, "campaign", "campaign", char.campaign_id

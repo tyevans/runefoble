@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
 from typing import Any
 
 from gateway_api.character_defaults import DEFAULT_CHARACTERS
@@ -12,63 +11,11 @@ from gateway_api.character_models import (
     CharacterResponse,
     CreateCharacterRequest,
 )
+from gateway_api.character_record import CharacterRecord
+from gateway_api.character_store_mutations import CharacterMutationsMixin
 
 
-@dataclass
-class CharacterRecord:
-    id: str
-    name: str
-    character_class: str
-    subclass: str | None = None
-    level: int = 1
-    current_hp: int = 10
-    max_hp: int = 10
-    armor_class: int = 10
-    speed: int = 30
-    campaign_id: str | None = None
-    owner_id: str = ""
-    portrait_url: str | None = None
-
-    def to_dict(self, campaign_title: str | None = None) -> dict[str, Any]:
-        title = campaign_title
-        if title is None and self.campaign_id:
-            try:
-                from gateway_api.campaign_store import campaign_store
-
-                c = campaign_store.get_campaign(self.campaign_id)
-                title = c.title if c else f"Campaign #{self.campaign_id}"
-            except Exception:
-                title = f"Campaign #{self.campaign_id}"
-
-        return {
-            "id": self.id,
-            "name": self.name,
-            "character_class": self.character_class,
-            "subclass": self.subclass,
-            "level": self.level,
-            "current_hp": self.current_hp,
-            "max_hp": self.max_hp,
-            "armor_class": self.armor_class,
-            "speed": self.speed,
-            "campaign_id": self.campaign_id,
-            "campaign_title": title,
-            "owner_id": self.owner_id,
-            "portrait_url": self.portrait_url,
-            "characterClass": self.character_class,
-            "currentHp": self.current_hp,
-            "maxHp": self.max_hp,
-            "armorClass": self.armor_class,
-            "campaignId": self.campaign_id,
-            "campaignTitle": title,
-            "ownerId": self.owner_id,
-            "portraitUrl": self.portrait_url,
-        }
-
-    def to_response(self, campaign_title: str | None = None) -> CharacterResponse:
-        return CharacterResponse(**self.to_dict(campaign_title=campaign_title))
-
-
-class CharacterStore:
+class CharacterStore(CharacterMutationsMixin):
     """In-memory character store with Zanzibar SpiceDB integration."""
 
     def __init__(self) -> None:
@@ -122,6 +69,7 @@ class CharacterStore:
             campaign_id=campaign_id,
             owner_id=owner_id,
             portrait_url=portrait_url,
+            is_stand_in_active=kwargs.get("is_stand_in_active", False),
         )
         self._characters[cid] = rec
         return rec
@@ -142,6 +90,7 @@ class CharacterStore:
             campaign_id=req.campaign_id,
             owner_id=owner_id,
             portrait_url=req.portrait_url,
+            is_stand_in_active=getattr(req, "is_stand_in_active", False),
         )
 
     def get_character(self, character_id: str) -> CharacterRecord | None:

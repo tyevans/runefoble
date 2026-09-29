@@ -19,6 +19,7 @@ class CreateCharacterRequest(BaseModel):
     speed: int = Field(default=30, ge=0)
     campaign_id: str | None = Field(default=None, alias="campaignId")
     portrait_url: str | None = Field(default=None, alias="portraitUrl")
+    is_stand_in_active: bool = Field(default=False, alias="isAiStandIn")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -44,6 +45,17 @@ class CharacterResponse(BaseModel):
     campaign_title: str | None = None
     owner_id: str = ""
     portrait_url: str | None = None
+    equipment: dict[str, Any] = Field(default_factory=dict)
+    inventory: dict[str, Any] = Field(default_factory=dict)
+    conditions: dict[str, Any] = Field(default_factory=dict)
+    penalties: dict[str, str] = Field(default_factory=dict)
+    spell_slots: dict[int, int] = Field(default_factory=lambda: {1: 4, 2: 2})
+    max_spell_slots: dict[int, int] = Field(default_factory=lambda: {1: 4, 2: 2})
+    prepared_spells: list[str] = Field(default_factory=list)
+    spellbook: list[str] = Field(default_factory=list)
+    stand_in_guardrails: dict[str, Any] = Field(default_factory=dict)
+    is_stand_in_active: bool = False
+    is_stabilized: bool = False
 
     # CamelCase mirrors for frontend compatibility
     characterClass: str | None = None
@@ -54,6 +66,11 @@ class CharacterResponse(BaseModel):
     campaignTitle: str | None = None
     ownerId: str | None = None
     portraitUrl: str | None = None
+    spellSlots: dict[int, int] | None = None
+    maxSpellSlots: dict[int, int] | None = None
+    preparedSpells: list[str] | None = None
+    isAiStandIn: bool | None = None
+    isStabilized: bool | None = None
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -74,10 +91,81 @@ class CharacterResponse(BaseModel):
             self.ownerId = self.owner_id
         if self.portraitUrl is None:
             self.portraitUrl = self.portrait_url
+        if self.spellSlots is None:
+            self.spellSlots = dict(self.spell_slots)
+        if self.maxSpellSlots is None:
+            self.maxSpellSlots = dict(self.max_spell_slots)
+        if self.preparedSpells is None:
+            self.preparedSpells = list(self.prepared_spells)
+        if self.isAiStandIn is None:
+            self.isAiStandIn = self.is_stand_in_active
+        if self.isStabilized is None:
+            self.isStabilized = self.is_stabilized
+
+
+class HealthChangeRequest(BaseModel):
+    delta: int
+    source: str = "damage"
+    is_stand_in: bool | None = Field(default=None, alias="isStandIn")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class EquipItemRequest(BaseModel):
+    slot: str
+    item_name: str | None = Field(default=None, alias="itemName")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class AddInventoryItemRequest(BaseModel):
+    item_id: str | None = Field(default=None, alias="itemId")
+    name: str
+    quantity: int = 1
+    weight_lbs: float = Field(default=0.0, alias="weightLbs")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class RemoveInventoryItemRequest(BaseModel):
+    quantity: int = 1
+
+
+class ApplyConditionRequest(BaseModel):
+    condition: str
+    duration_rounds: int | None = Field(default=None, alias="durationRounds")
+    source: str = ""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class CastSpellRequest(BaseModel):
+    spell_name: str = Field(..., alias="spellName")
+    slot_level: int | None = Field(default=1, alias="slotLevel")
+    session_id: str = Field(default="", alias="sessionId")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class PrepareSpellRequest(BaseModel):
+    spell_name: str = Field(..., alias="spellName")
+    spell_level: int | None = Field(default=None, alias="spellLevel")
+    is_prepared: bool = Field(default=True, alias="isPrepared")
+    prepared: bool | None = None
+    session_id: str = Field(default="", alias="sessionId")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 __all__ = [
+    "AddInventoryItemRequest",
+    "ApplyConditionRequest",
     "AssignCampaignRequest",
+    "CastSpellRequest",
     "CharacterResponse",
     "CreateCharacterRequest",
+    "EquipItemRequest",
+    "HealthChangeRequest",
+    "PrepareSpellRequest",
+    "RemoveInventoryItemRequest",
 ]

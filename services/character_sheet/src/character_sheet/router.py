@@ -48,6 +48,12 @@ async def level_up(
 
 @router.post("/api/v1/characters/{character_id}/spells/prepare", response_model=CharacterState)
 async def prepare_spell(character_id: UUID, req: schemas.PrepareSpellRequest, repo: deps.RepoDep):
+    if not req.is_prepared:
+        return await deps.execute_character_mutation(
+            repo,
+            character_id,
+            lambda c: c.unprepare_spell(req.spell_name),
+        )
     return await deps.execute_character_mutation(
         repo,
         character_id,
@@ -92,19 +98,27 @@ async def clear_penalty(character_id: UUID, penalty_type: str, repo: deps.RepoDe
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.clear_penalty(penalty_type))
 
 
+@router.post("/api/v1/characters/{character_id}/inventory", response_model=CharacterState)
 @router.post("/api/v1/characters/{character_id}/inventory/add", response_model=CharacterState)
 async def add_inventory_item(character_id: UUID, req: schemas.AddInventoryItemRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.add_inventory_item(req.item_id, req.name, req.quantity, req.weight_lbs))
 
 
+@router.delete("/api/v1/characters/{character_id}/inventory/{item_id}", response_model=CharacterState)
 @router.post("/api/v1/characters/{character_id}/inventory/{item_id}/remove", response_model=CharacterState)
-async def remove_inventory_item(character_id: UUID, item_id: str, req: schemas.RemoveInventoryItemRequest, repo: deps.RepoDep):
-    return await deps.execute_character_mutation(repo, character_id, lambda c: c.remove_inventory_item(item_id, req.quantity))
+async def remove_inventory_item(character_id: UUID, item_id: str, repo: deps.RepoDep, req: schemas.RemoveInventoryItemRequest | None = None, quantity: int = 1):
+    qty = req.quantity if req else quantity
+    return await deps.execute_character_mutation(repo, character_id, lambda c: c.remove_inventory_item(item_id, qty))
 
 
 @router.post("/api/v1/characters/{character_id}/equipment", response_model=CharacterState)
 async def equip_item(character_id: UUID, req: schemas.EquipItemRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.equip_item(req.slot, req.item_name))
+
+
+@router.delete("/api/v1/characters/{character_id}/equipment/{slot}", response_model=CharacterState)
+async def unequip_item(character_id: UUID, slot: str, repo: deps.RepoDep):
+    return await deps.execute_character_mutation(repo, character_id, lambda c: c.equip_item(slot, None))
 
 
 @router.post("/api/v1/characters/{character_id}/conditions", response_model=CharacterState)
