@@ -47,10 +47,9 @@ Open your browser to:
 - **Mailpit Email Testing UI**: `http://localhost/mail/`
 - **Observability (Grafana)**: `http://localhost:3001` (admin / admin)
 
-## Step 5: Rapid Local Development (make dev)
+## Step 5: Rapid Local Development (`make dev`)
 For fast iterative feature work on the frontend and API Gateway without redeploying Helm charts, run:
 ```bash
 make dev
 ```
 This starts the Runefoble API Gateway on port 8000, checks gateway health, and concurrently launches the Vite dev server on `http://localhost:5173`. Vite automatically proxies API requests (`/api`, `/api/v1`, `/ws`, `/docs`, `/openapi.json`, `/mail`, `/oauth`) to local services without 502 Bad Gateway errors. Press `Ctrl+C` to cleanly stop all background processes.
-

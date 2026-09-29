@@ -27,7 +27,7 @@ export default defineConfig({
         ws: true,
         changeOrigin: true,
         configure: (proxy) => {
-          proxy.on('error', (err) => {
+          proxy.on('error', (err: Error) => {
             // Reconnect tolerance for WebSocket proxy in local dev
             console.debug('[vite-proxy] WS proxy connection event:', err.message);
           });
@@ -65,7 +65,10 @@ export default defineConfig({
         target: zitadelUrl,
         changeOrigin: true,
       },
+      '/healthz': {
+        target: gatewayUrl,
+        changeOrigin: true,
+      },
     },
   },
 });
-
