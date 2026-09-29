@@ -45,6 +45,7 @@ These rules are structural. Do not violate them for convenience.
 ## Product & User Stories Navigation
 
 Work answers to a user need. Product requirements and user stories live under `docs/project/`:
+- **System Architecture & Operational Guide**: [`docs/project/README.md`](docs/project/README.md) defines the full Project Management as Code architecture, lifecycles, and git traceability.
 - **Product Requirement Records (PRDs)**: `docs/project/product/`. PRDs move through `idea/`, `shaped/`, `accepted/`, and `shipped/`.[^18]
 - **User Stories**: `docs/project/user_stories/`. User stories define end-to-end value from the persona perspective (Player, DM, Absent Player, Spectator, Developer).[^19]
 
@@ -141,6 +142,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`cli-interfaces.md`](docs/reference/cli-interfaces.md): Developer tooling, `Makefile` targets, `uv` commands, and Antigravity slash commands.
 
 ### 4. Architecture Explanation (`docs/explanation/`) — Design Rationale & Background
+- [`project-management-system.md`](docs/explanation/project-management-system.md): Rationale behind Project Management as Code, lean JIT refinement, thin vertical slicing, and automated git traceability.
 - [`the-watcher-autonomous-dm.md`](docs/explanation/the-watcher-autonomous-dm.md): Rationale behind The Watcher AI DM, intent extraction, and DM veto authority.
 - [`zanzibar-in-ttrpg.md`](docs/explanation/zanzibar-in-ttrpg.md): Design rationale for using Google Zanzibar / SpiceDB fine-grained authorization in tabletop RPGs.
 - [`realtime-voice-and-board-sync.md`](docs/explanation/realtime-voice-and-board-sync.md): Sub-500ms pipeline architecture, audio streaming, WebSockets, and optimistic client synchronization.

@@ -208,3 +208,17 @@ Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, domain event handlers an
 - `services/soundscape/src/soundscape/dependencies.py`: Retains repository singleton factories, SpiceDB Zanzibar permission guards, mixer session registries, and re-exports domain event dispatchers (< 150 lines).
 - `services/soundscape/src/soundscape/event_handlers.py`: Contains domain event subscription callbacks (`CombatEncounterStarted`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, `DeathSaveStarted`), dynamic tension recalculation triggers, and bus listener registration (`register_soundscape_event_handlers()`) (< 180 lines).
 - `services/soundscape/src/soundscape/main.py`: Coordinates service startup and registers event handlers during FastAPI application lifespan.
+
+---
+
+## 10. Modular Aggregate & Domain Handler Architecture
+
+Per ADR-0003, ADR-0007, ADR-0011, and ADR-0013, the event-sourced `SoundscapeAggregate` is cleanly decoupled from monolithic state transitions by delegating domain mutations and `@handles` appliers to dedicated mixin submodules under `services/soundscape/src/soundscape/handlers/`, with each file strictly constrained under 150 lines:
+
+- `services/soundscape/src/soundscape/aggregate.py`: Defines `SoundscapeState` and the core `SoundscapeAggregate` inheriting from all domain mixins (< 80 lines).
+- `services/soundscape/src/soundscape/handlers/stems.py`: `StemHandlersMixin` managing background music stems, crossfade durations, and multi-track channel levels (< 60 lines).
+- `services/soundscape/src/soundscape/handlers/foley.py`: `FoleyHandlersMixin` managing tactical sound cue triggers, recent history rings, and WebAudio ducking toggles (< 85 lines).
+- `services/soundscape/src/soundscape/handlers/tension.py`: `TensionHandlersMixin` managing encounter tension score updates and DM manual mood overrides (< 85 lines).
+- `services/soundscape/src/soundscape/handlers/leitmotif.py`: `LeitmotifHandlersMixin` managing character musical signatures, timbre configuration, and reactive trigger event sourcing (< 135 lines).
+- `services/soundscape/src/soundscape/handlers/__init__.py`: Re-exports domain mixins for consumption by `SoundscapeAggregate`.
+
