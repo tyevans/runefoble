@@ -131,7 +131,8 @@ During session staging and active virtual tabletop play, the App Shell dynamical
 To prevent view collisions (such as `#/profile` defaulting to `campaigns` or `#/campaigns/:id/characters` colliding with `campaign-detail`) and verify route-bound WebSocket lifecycles:
 
 - **Frontend Component & Route Matrix**: Run `node --experimental-strip-types --test frontend/test/app-shell-views-wiring-audit.test.ts` to execute parameterized assertions across all standard routes, verifying parameter extraction, breadcrumbs, and WebSocket connect/teardown events.
-- **Python E2E Blackbox Suite**: Run `pytest tests/test_blackbox_app_shell_views_audit.py` to audit full frontdoor Gateway API endpoints, DOM mounting manifest contracts, and file length constraints.
+- **Modular App Shell Test Submodules**: Run `node --experimental-strip-types --test frontend/test/app_shell/*.test.ts` (or `npm test` in `frontend/`) to execute the decomposed unit and integration test submodules (`routing.test.ts`, `session-transitions.test.ts`, `websocket-lifecycle.test.ts`, `state-breadcrumbs.test.ts`).
+- **Python E2E Blackbox Suite**: Run `pytest tests/test_blackbox_app_shell_views_audit.py` and `pytest tests/test_blackbox_app_shell_test_modular_decomposition.py` to audit full frontdoor Gateway API endpoints, DOM mounting manifest contracts, file length constraints, and modular test execution.
 
 ## 8. Live Tabletop VTT WebSocket Event Mesh & Plugin Slots (TASK-0358)
 
