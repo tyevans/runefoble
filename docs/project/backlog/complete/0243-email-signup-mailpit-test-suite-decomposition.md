@@ -1,7 +1,7 @@
 ---
 id: '0243'
 title: Email Signup Mailpit Blackbox Test Suite Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0034
@@ -17,8 +17,8 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.7.0
+pr_url: https://github.com/tyevans/runefoble/pull/373
 ---
-
 # TASK-0243: Email Signup Mailpit Blackbox Test Suite Decomposition
 
 ## Status
