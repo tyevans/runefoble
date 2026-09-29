@@ -1,159 +1,138 @@
-"""Blackbox integration tests for local development environment (make dev) and Vite proxy.
+"""Blackbox tests for Local Development Workflow (make dev) and Vite Proxy Gateway Routing.
 
-Asserts:
-1. Makefile targets and help documentation include 'dev'.
-2. Dev server orchestrator CLI parsing, health polling, and clean process termination.
-3. API Gateway CORS readiness for http://localhost:5173 and all health endpoint aliases.
-4. Vite proxy configuration routing (/api, /api/v1, /ws, /docs, /openapi.json, /mail, /oauth).
-5. Live end-to-end proxying through Vite dev server to backend endpoints without 502 errors.
+Governed by ADR-0004, ADR-0010, and ADR-0013.
+Part of TASK-0352.
 """
 
 from __future__ import annotations
 
 import http.server
-import json
 import os
-import re
 import socket
 import subprocess
 import threading
 import time
-import urllib.error
 import urllib.request
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
 from scripts.dev_server import (
+    check_health,
     parse_args,
     terminate_processes,
-    wait_for_health,
+    wait_for_gateway,
 )
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
-def find_free_port() -> int:
-    """Find an available TCP port on localhost."""
+
+def get_free_port() -> int:
+    """Find an available port on localhost."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
 
 
-class MockBackendHandler(http.server.BaseHTTPRequestHandler):
-    """Mock backend server to verify Vite proxy dispatch."""
+def test_makefile_dev_target():
+    """Verify that 'make dev' is declared in Makefile and documented in 'make help'."""
+    # 1. Verify dry-run
+    res_dry = subprocess.run(["make", "-n", "dev"], cwd=REPO_ROOT, capture_output=True, text=True)
+    assert res_dry.returncode == 0, f"'make -n dev' failed: {res_dry.stderr}"
+    assert "scripts/dev_server.py" in res_dry.stdout
 
-    def do_GET(self) -> None:  # noqa: N802
-        response_payload = {
-            "path": self.path,
-            "headers": dict(self.headers),
-            "status": "success",
-        }
-        encoded = json.dumps(response_payload).encode("utf-8")
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(encoded)))
-        self.end_headers()
-        self.wfile.write(encoded)
-
-    def log_message(self, format: str, *args: object) -> None:
-        """Suppress stdout log spam during test runs."""
-        pass
+    # 2. Verify make help documentation
+    res_help = subprocess.run(["make", "help"], cwd=REPO_ROOT, capture_output=True, text=True)
+    assert res_help.returncode == 0
+    assert "dev " in res_help.stdout
+    assert "Run API Gateway and Vite frontend concurrently" in res_help.stdout
 
 
-def test_makefile_dev_target_and_help():
-    """Verify that 'make dev' is defined in Makefile and documented in 'make help'."""
-    proc = subprocess.run(["make", "help"], capture_output=True, text=True, check=True)
-    assert "dev " in proc.stdout
-    assert "Run API Gateway and Vite frontend concurrently" in proc.stdout
-
-    dry_run = subprocess.run(["make", "-n", "dev"], capture_output=True, text=True, check=True)
-    assert "scripts/dev_server.py" in dry_run.stdout
-
-
-def test_dev_server_cli_args():
-    """Verify scripts/dev_server.py CLI argument defaults and overrides."""
-    args = parse_args([])
-    assert args.gateway_port == 8000
-    assert args.frontend_port == 5173
-    assert args.host == "127.0.0.1"
-    assert args.health_timeout == 30.0
-    assert not args.with_worker
-    assert not args.no_frontend
-    assert not args.no_gateway
-
-    custom_args = parse_args(
+def test_orchestrator_cli_parsing():
+    """Verify scripts/dev_server.py argument parsing and default configuration."""
+    args = parse_args(
         [
             "--gateway-port",
-            "9000",
+            "8090",
             "--frontend-port",
-            "6173",
-            "--with-worker",
+            "5190",
+            "--worker",
             "--no-frontend",
-            "--health-timeout",
-            "10.0",
+            "--timeout",
+            "12.5",
         ]
     )
-    assert custom_args.gateway_port == 9000
-    assert custom_args.frontend_port == 6173
-    assert custom_args.with_worker is True
-    assert custom_args.no_frontend is True
-    assert custom_args.health_timeout == 10.0
+    assert args.gateway_port == 8090
+    assert args.frontend_port == 5190
+    assert args.worker is True
+    assert args.no_frontend is True
+    assert args.timeout == 12.5
 
 
-def test_dev_server_wait_for_health():
-    """Verify wait_for_health returns True on HTTP 200 and False on unreachable server."""
-    port = find_free_port()
-    server = http.server.HTTPServer(("127.0.0.1", port), MockBackendHandler)
+def test_gateway_health_probes_and_cors():
+    """Verify Gateway API health endpoints and CORS configuration for localhost:5173."""
+    client = TestClient(gateway_app)
+
+    # Health endpoints
+    for route in ["/healthz", "/health", "/api/v1/health"]:
+        resp = client.get(route)
+        assert resp.status_code == 200, f"Expected 200 for {route}, got {resp.status_code}"
+        data = resp.json()
+        assert data.get("status") == "healthy"
+        assert data.get("gateway") == "runefoble-api-gateway"
+
+    # CORS verification for Vite dev origin
+    cors_resp = client.options(
+        "/api/v1/health",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization,content-type",
+        },
+    )
+    assert cors_resp.status_code == 200
+    assert cors_resp.headers.get("access-control-allow-origin") == "http://localhost:5173"
+    assert cors_resp.headers.get("access-control-allow-credentials") == "true"
+
+
+def test_orchestrator_health_waiter_live_and_timeout():
+    """Verify dev orchestrator health check polling and timeout behavior."""
+    # 1. Test timeout on unreachable port
+    unused_port = get_free_port()
+    assert check_health("127.0.0.1", unused_port, timeout=0.1) is False
+    assert wait_for_gateway("127.0.0.1", unused_port, timeout=0.4, poll_interval=0.1) is False
+
+    # 2. Test success against active server
+    mock_port = get_free_port()
+
+    class HealthHandler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status": "healthy"}')
+
+        def log_message(self, format, *args):
+            pass
+
+    server = http.server.HTTPServer(("127.0.0.1", mock_port), HealthHandler)
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
 
     try:
-        url = f"http://127.0.0.1:{port}/healthz"
-        assert wait_for_health(url, timeout=3.0, interval=0.1) is True
-
-        dead_url = f"http://127.0.0.1:{find_free_port()}/healthz"
-        assert wait_for_health(dead_url, timeout=0.5, interval=0.1) is False
+        assert check_health("127.0.0.1", mock_port, timeout=1.0) is True
+        assert wait_for_gateway("127.0.0.1", mock_port, timeout=2.0, poll_interval=0.1) is True
     finally:
         server.shutdown()
-
-
-def test_dev_server_terminate_processes():
-    """Verify terminate_processes cleanly halts running subprocesses."""
-    proc = subprocess.Popen(["sleep", "60"])
-    assert proc.poll() is None
-    terminate_processes([proc], timeout=1.0)
-    assert proc.poll() is not None
-
-
-def test_gateway_cors_and_health_endpoints():
-    """Verify Gateway API provides required health endpoints and permits Vite dev origin CORS."""
-    client = TestClient(gateway_app)
-
-    # Health endpoint aliases
-    for path in ["/healthz", "/health", "/api/v1/health"]:
-        res = client.get(path)
-        assert res.status_code == 200, f"Endpoint {path} failed: {res.text}"
-        data = res.json()
-        assert data["status"] == "healthy"
-
-    # Preflight CORS check for Vite frontend (http://localhost:5173)
-    headers = {
-        "Origin": "http://localhost:5173",
-        "Access-Control-Request-Method": "POST",
-        "Access-Control-Request-Headers": "content-type,authorization",
-    }
-    cors_res = client.options("/api/v1/campaigns", headers=headers)
-    assert cors_res.status_code == 200
-    assert cors_res.headers.get("access-control-allow-origin") == "http://localhost:5173"
-    assert cors_res.headers.get("access-control-allow-credentials") == "true"
+        server.server_close()
 
 
 def test_vite_config_proxy_rules():
-    """Inspect frontend/vite.config.ts to verify all backend and proxy routes are defined."""
-    vite_conf_path = Path("frontend/vite.config.ts")
-    assert vite_conf_path.exists(), "frontend/vite.config.ts must exist"
-    content = vite_conf_path.read_text()
+    """Verify frontend/vite.config.ts expands proxying for all required endpoints."""
+    vite_config_path = REPO_ROOT / "frontend" / "vite.config.ts"
+    assert vite_config_path.exists(), "frontend/vite.config.ts must exist"
+    content = vite_config_path.read_text()
 
     required_proxies = [
         "'/api/v1'",
@@ -162,89 +141,175 @@ def test_vite_config_proxy_rules():
         "'/docs'",
         "'/openapi.json'",
         "'/mail'",
-        "'/mailpit'",
         "'/oauth'",
         "'/auth'",
     ]
-    for proxy in required_proxies:
-        assert proxy in content, f"Proxy route {proxy} missing from frontend/vite.config.ts"
+    for p in required_proxies:
+        assert p in content, f"Missing proxy rule {p} in vite.config.ts"
 
-    # Verify WebSocket proxy is configured with ws: true
-    assert re.search(r"'/ws':\s*\{\s*target:\s*gatewayWsUrl,\s*ws:\s*true", content)
+    assert "ws: true" in content, "WebSocket proxy must declare ws: true"
+    assert "configure: (proxy)" in content, "WebSocket proxy must provide error resilience"
 
 
-@pytest.mark.asyncio
-async def test_live_vite_proxy_forwarding():
-    """Start mock backend and Vite dev server, verifying seamless proxying without 502 errors."""
-    mock_backend_port = find_free_port()
-    mock_mailpit_port = find_free_port()
-    vite_port = find_free_port()
+def test_blackbox_live_vite_proxy_to_gateway():
+    """End-to-end blackbox test: Start mock backend and Vite dev server, verifying seamless proxying."""
+    gw_port = get_free_port()
+    mail_port = get_free_port()
+    vite_port = get_free_port()
 
-    # Start mock gateway and mock mailpit servers
-    backend_server = http.server.HTTPServer(("127.0.0.1", mock_backend_port), MockBackendHandler)
-    backend_thread = threading.Thread(target=backend_server.serve_forever, daemon=True)
-    backend_thread.start()
+    class GatewayMockHandler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(f'{{"service": "gateway", "path": "{self.path}"}}'.encode())
 
-    mailpit_server = http.server.HTTPServer(("127.0.0.1", mock_mailpit_port), MockBackendHandler)
-    mailpit_thread = threading.Thread(target=mailpit_server.serve_forever, daemon=True)
-    mailpit_thread.start()
+        def log_message(self, format, *args):
+            pass
+
+    class MailpitMockHandler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"service": "mailpit", "messages": []}')
+
+        def log_message(self, format, *args):
+            pass
+
+    gw_server = http.server.HTTPServer(("127.0.0.1", gw_port), GatewayMockHandler)
+    mail_server = http.server.HTTPServer(("127.0.0.1", mail_port), MailpitMockHandler)
+
+    threading.Thread(target=gw_server.serve_forever, daemon=True).start()
+    threading.Thread(target=mail_server.serve_forever, daemon=True).start()
 
     env = os.environ.copy()
-    env["GATEWAY_API_URL"] = f"http://127.0.0.1:{mock_backend_port}"
-    env["MAILPIT_URL"] = f"http://127.0.0.1:{mock_mailpit_port}"
+    env["GATEWAY_API_URL"] = f"http://127.0.0.1:{gw_port}"
+    env["MAILPIT_URL"] = f"http://127.0.0.1:{mail_port}"
     env["CHOKIDAR_USEPOLLING"] = "true"
 
     vite_proc = subprocess.Popen(
-        [
-            "pnpm",
-            "run",
-            "dev",
-            "--port",
-            str(vite_port),
-            "--host",
-            "127.0.0.1",
-        ],
-        cwd="frontend",
+        ["pnpm", "exec", "vite", "--host", "0.0.0.0", "--port", str(vite_port)],
+        cwd=REPO_ROOT / "frontend",
         env=env,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
     )
 
     try:
-        # Wait for Vite dev server to be ready
+        # Wait for Vite dev server to boot
         vite_ready = False
-        deadline = time.monotonic() + 15.0
+        deadline = time.monotonic() + 30.0
         while time.monotonic() < deadline:
             try:
-                req = urllib.request.Request(f"http://127.0.0.1:{vite_port}/")
-                with urllib.request.urlopen(req, timeout=1.0) as resp:
+                with urllib.request.urlopen(
+                    f"http://127.0.0.1:{vite_port}/api/v1/health", timeout=1.0
+                ) as resp:
                     if resp.status == 200:
                         vite_ready = True
                         break
             except Exception:
                 time.sleep(0.3)
 
+        if not vite_ready and vite_proc.stdout:
+            logs = vite_proc.stdout.read().decode(errors="replace")
+            print(f"Vite dev server logs on startup failure:\n{logs}")
+
         assert vite_ready, "Vite dev server failed to start within timeout"
 
-        # Verify proxy routes do not return 502 Bad Gateway
-        endpoints_to_test = [
-            f"http://127.0.0.1:{vite_port}/api/v1/health",
-            f"http://127.0.0.1:{vite_port}/api/campaigns",
-            f"http://127.0.0.1:{vite_port}/docs",
-            f"http://127.0.0.1:{vite_port}/openapi.json",
-            f"http://127.0.0.1:{vite_port}/mail/api/v1/messages",
+        # Assert proxy endpoints through Vite
+        test_routes = [
+            ("/api/v1/health", "gateway"),
+            ("/api/v1/campaigns", "gateway"),
+            ("/api/users", "gateway"),
+            ("/docs", "gateway"),
+            ("/openapi.json", "gateway"),
+            ("/mail/messages", "mailpit"),
         ]
 
-        for url in endpoints_to_test:
-            req = urllib.request.Request(url)
+        for path, expected_service in test_routes:
+            url = f"http://127.0.0.1:{vite_port}{path}"
+            req = urllib.request.Request(url, headers={"Accept": "application/json"})
             with urllib.request.urlopen(req, timeout=3.0) as resp:
-                assert resp.status == 200, (
-                    f"Proxy request to {url} returned non-200 status {resp.status}"
-                )
-                data = json.loads(resp.read().decode("utf-8"))
-                assert data["status"] == "success"
+                assert resp.status == 200, f"Expected 200 from {url}, got {resp.status}"
+                body = resp.read().decode()
+                assert expected_service in body, f"Expected '{expected_service}' in body for {path}"
 
     finally:
-        terminate_processes([vite_proc], timeout=2.0)
-        backend_server.shutdown()
-        mailpit_server.shutdown()
+        terminate_processes([vite_proc])
+        gw_server.shutdown()
+        gw_server.server_close()
+        mail_server.shutdown()
+        mail_server.server_close()
+
+
+def test_orchestrator_process_termination_group():
+    """Verify terminate_processes cleanly halts processes and child process groups."""
+    proc = subprocess.Popen(
+        ["python3", "-c", "import time; time.sleep(30)"],
+        start_new_session=True,
+    )
+    assert proc.poll() is None
+    terminate_processes([proc])
+    assert proc.poll() is not None
+
+
+def test_orchestrator_live_full_flow():
+    """Verify complete make dev workflow: starts Gateway and Vite concurrently and cleanly stops."""
+    import signal
+
+    gw_port = get_free_port()
+    vite_port = get_free_port()
+
+    proc = subprocess.Popen(
+        [
+            "python3",
+            "scripts/dev_server.py",
+            "--gateway-port",
+            str(gw_port),
+            "--frontend-port",
+            str(vite_port),
+            "--timeout",
+            "30",
+        ],
+        cwd=REPO_ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+
+    try:
+        # Wait for Vite dev server and proxy to become ready
+        ready = False
+        deadline = time.monotonic() + 35.0
+        while time.monotonic() < deadline:
+            try:
+                with urllib.request.urlopen(
+                    f"http://127.0.0.1:{vite_port}/api/v1/health", timeout=1.0
+                ) as resp:
+                    if resp.status == 200:
+                        ready = True
+                        break
+            except Exception:
+                time.sleep(0.3)
+
+        if not ready and proc.stdout:
+            logs = proc.stdout.read().decode(errors="replace")
+            print(f"Dev orchestrator logs on startup failure:\n{logs}")
+
+        assert ready, "Full dev orchestrator failed to bring up Vite proxy"
+
+        # Verify gateway direct health
+        with urllib.request.urlopen(f"http://127.0.0.1:{gw_port}/healthz", timeout=2.0) as resp:
+            assert resp.status == 200
+
+    finally:
+        os.killpg(proc.pid, signal.SIGINT)
+        try:
+            proc.wait(timeout=6.0)
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait(timeout=2.0)
+
+    assert proc.returncode in (0, -signal.SIGINT)

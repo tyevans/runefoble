@@ -7,6 +7,7 @@ const zitadelUrl = process.env.ZITADEL_URL || 'http://localhost:8080';
 
 export default defineConfig({
   server: {
+    host: '0.0.0.0',
     watch: {
       usePolling: true,
       interval: 1000,
@@ -25,9 +26,10 @@ export default defineConfig({
         target: gatewayWsUrl,
         ws: true,
         changeOrigin: true,
-        configure: (proxy, _options) => {
+        configure: (proxy) => {
           proxy.on('error', (err: Error) => {
-            console.warn('[vite-proxy] WebSocket proxy error:', err.message);
+            // Reconnect tolerance for WebSocket proxy in local dev
+            console.debug('[vite-proxy] WS proxy connection event:', err.message);
           });
         },
       },
@@ -36,6 +38,14 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/openapi.json': {
+        target: gatewayUrl,
+        changeOrigin: true,
+      },
+      '/redoc': {
+        target: gatewayUrl,
+        changeOrigin: true,
+      },
+      '/campaigns': {
         target: gatewayUrl,
         changeOrigin: true,
       },

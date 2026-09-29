@@ -18,10 +18,11 @@
 | `make helm-lint` | Validates Helm chart syntax |
 | `make helm-template` | Renders and inspects Kubernetes manifests |
 | `make helm-deploy` | Deploys the full Runefoble stack to the active Kubernetes cluster |
-| `make dev` | Starts API Gateway, worker, and Vite frontend concurrently with health check gating |
+| `make dev` | Runs API Gateway and Vite frontend concurrently with health check gating and clean signal handling |
 | `make dev-frontend` | Runs the Vite frontend development server |
 | `make dev-storybook` | Runs the Storybook component studio on port 6006 |
 | `make dev-api` | Runs the API Gateway locally |
+| `make dev-worker` | Runs AI inference worker locally |
 | `make test` | Executes the Python test suite and builds the frontend |
 | `make lint` | Runs typechecking and Helm chart linter |
 | `make build` | Produces production frontend bundle and static Storybook documentation |
@@ -35,7 +36,7 @@
 | Script | Purpose |
 |---|---|
 | `./scripts/health_check.py` | Standalone Python health inspection auditing line count invariants and buffer drift |
-| `./scripts/dev_server.py` | Local development orchestrator launching Gateway, worker, and Vite with health gating |
+| `./scripts/dev_server.py` | Unified local development orchestrator running gateway, Vite frontend, and optional AI inference worker concurrently |
 | `./scripts/cleanup-worktrees.sh` | Audits and removes merged git worktrees, cleans up branches, and prunes records |
 | `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |
 | `./scripts/run-backlog-engine.sh` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching |
