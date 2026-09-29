@@ -27,10 +27,10 @@ target_release: 0.8.0
 Refined
 
 ## Summary
-Decompose `frontend/test/character-management-and-profile.test.ts` (331 lines, 66.2% of limit) into modular TypeScript test submodules under `frontend/test/character_management/` (`navigation.test.ts`, `creation.test.ts`, `profile.test.ts`, `invariants.test.ts`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
+Decompose `frontend/test/character-management-and-profile.test.ts` (474 lines, 94.8% of limit) into modular TypeScript test submodules under `frontend/test/character_management/` (`navigation.test.ts`, `creation.test.ts`, `profile.test.ts`, `invariants.test.ts`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-`frontend/test/character-management-and-profile.test.ts` handles character creation modal events, character roster inspection routes, staging lobby character selection, dynamic VTT card binding, user profile settings view rendering, and campaign deduplication assertions in a single 331-line suite. As character sheets support multiclassing and advanced equipment interactions, this frontend test suite will approach the 500-line invariant limit unless modularized into focused test suites.
+`frontend/test/character-management-and-profile.test.ts` handles character creation modal events, character roster inspection routes, staging lobby character selection, dynamic VTT card binding, user profile settings view rendering, and campaign deduplication assertions in a single 474-line suite. Following character sheet sub-resource and stand-in guardrails expansions, this suite is now at 474 lines (approaching the 500-line invariant limit) and must be decomposed into focused submodules before reaching the limit.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:

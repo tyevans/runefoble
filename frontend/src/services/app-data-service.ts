@@ -5,10 +5,20 @@ import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
 import { getOrCreateFallbackCharacterDetail, FALLBACK_CHARACTER_DETAILS_CACHE } from './fallback-data.ts';
-import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_PROFILE, FALLBACK_BOARD_TOKENS, FALLBACK_SESSION_EVENTS, FALLBACK_CAMPAIGN_SESSIONS_MAP, getFallbackCampaignSessions, getFallbackSession, createFallbackCampaign, createFallbackCampaignItem, updateFallbackCampaign, createFallbackCharacter, assignFallbackCharacterCampaign, deleteFallbackCharacter, resolveLobbyAvailableCharacters } from './app-data-service.fixtures.ts';
-import { mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory, mutateCharacterRemoveInventory, mutateCharacterApplyCondition, mutateCharacterRemoveCondition, mutateCharacterCastSpell, mutateCharacterPrepareSpell, mutateCharacterRestoreSlot, mutateCharacterGuardrails } from './character-subresource-client.ts';
+import {
+  FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_PROFILE,
+  FALLBACK_BOARD_TOKENS, FALLBACK_SESSION_EVENTS, FALLBACK_CAMPAIGN_SESSIONS_MAP, getFallbackCampaignSessions,
+  getFallbackSession, createFallbackCampaign, createFallbackCampaignItem, updateFallbackCampaign, createFallbackCharacter,
+  assignFallbackCharacterCampaign, deleteFallbackCharacter, resolveLobbyAvailableCharacters,
+  getFallbackCampaignMembers, assignFallbackMemberRole, removeFallbackMember, createFallbackInvite, type InviteResponse,
+} from './app-data-service.fixtures.ts';
+import {
+  mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory,
+  mutateCharacterRemoveInventory, mutateCharacterApplyCondition, mutateCharacterRemoveCondition,
+  mutateCharacterCastSpell, mutateCharacterPrepareSpell, mutateCharacterRestoreSlot, mutateCharacterGuardrails,
+} from './character-subresource-client.ts';
 
-export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_CAMPAIGN_SESSIONS_MAP };
+export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_CAMPAIGN_SESSIONS_MAP, type InviteResponse };
 
 export class AppDataService {
   private static instance: AppDataService;
@@ -21,9 +31,8 @@ export class AppDataService {
 
   private getAuthHeaders(): HeadersInit {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const token = authService.getAccessToken();
+    const token = authService.getAccessToken(), user = authService.getUser();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const user = authService.getUser();
     if (user?.user_id) headers['X-User-Id'] = user.user_id;
     return headers;
   }
@@ -50,8 +59,7 @@ export class AppDataService {
     const data = await this.request<CampaignItem[]>(`${this.apiBase}/campaigns`);
     if (data) return this.deduplicateCampaigns(data);
     const deduped = this.deduplicateCampaigns(FALLBACK_CAMPAIGNS);
-    FALLBACK_CAMPAIGNS.length = 0;
-    FALLBACK_CAMPAIGNS.push(...deduped);
+    FALLBACK_CAMPAIGNS.length = 0; FALLBACK_CAMPAIGNS.push(...deduped);
     return [...FALLBACK_CAMPAIGNS];
   }
 
@@ -65,7 +73,22 @@ export class AppDataService {
   }
 
   async fetchCampaignMembers(campaignId: string): Promise<CampaignMember[]> {
-    return (await this.request<CampaignMember[]>(`${this.apiBase}/campaigns/${campaignId}/members`)) || [...FALLBACK_MEMBERS];
+    return (await this.request<CampaignMember[]>(`${this.apiBase}/campaigns/${campaignId}/members`)) || getFallbackCampaignMembers(campaignId);
+  }
+
+  async assignMemberRole(campaignId: string, userId: string, role: string): Promise<void> {
+    const res = await this.request<void>(`${this.apiBase}/campaigns/${campaignId}/roles`, { method: 'POST', body: JSON.stringify({ user_id: userId, role }) });
+    if (res === null) assignFallbackMemberRole(campaignId, userId, role);
+  }
+
+  async createCampaignInvite(campaignId: string, role: string, expiresInHours?: number, maxUses?: number): Promise<InviteResponse> {
+    const data = await this.request<InviteResponse>(`${this.apiBase}/campaigns/${campaignId}/invites`, { method: 'POST', body: JSON.stringify({ role, expires_in_hours: expiresInHours, max_uses: maxUses }) });
+    return data || createFallbackInvite(campaignId, role, expiresInHours, maxUses);
+  }
+
+  async removeCampaignMember(campaignId: string, userId: string): Promise<void> {
+    const res = await this.request<void>(`${this.apiBase}/campaigns/${campaignId}/members/${userId}`, { method: 'DELETE' });
+    if (res === null) removeFallbackMember(campaignId, userId);
   }
 
   async fetchCampaignSessions(campaignId: string): Promise<CampaignSessionItem[]> {
@@ -80,24 +103,17 @@ export class AppDataService {
     return getFallbackSession(sessionId);
   }
 
-  async fetchCharacters(): Promise<CharacterItem[]> {
-    return (await this.request<CharacterItem[]>(`${this.apiBase}/characters`)) || [...FALLBACK_CHARACTERS];
-  }
-
-  getFallbackCharacterName(id: string): string | undefined {
-    return FALLBACK_CHARACTERS.find((c) => c.id === id)?.name;
-  }
+  async fetchCharacters(): Promise<CharacterItem[]> { return (await this.request<CharacterItem[]>(`${this.apiBase}/characters`)) || [...FALLBACK_CHARACTERS]; }
+  getFallbackCharacterName(id: string): string | undefined { return FALLBACK_CHARACTERS.find((c) => c.id === id)?.name; }
 
   async fetchCharacter(characterId: string): Promise<any | null> {
     const data = await this.request<any>(`${this.apiBase}/characters/${characterId}`);
     if (data) { FALLBACK_CHARACTER_DETAILS_CACHE.set(characterId, data); return data; }
-    const char = FALLBACK_CHARACTERS.find((c) => c.id === characterId);
-    return getOrCreateFallbackCharacterDetail(char, characterId);
+    return getOrCreateFallbackCharacterDetail(FALLBACK_CHARACTERS.find((c) => c.id === characterId), characterId);
   }
 
   getFallbackCharacterDetail(characterId: string): any {
-    const char = FALLBACK_CHARACTERS.find((c) => c.id === characterId);
-    return getOrCreateFallbackCharacterDetail(char, characterId);
+    return getOrCreateFallbackCharacterDetail(FALLBACK_CHARACTERS.find((c) => c.id === characterId), characterId);
   }
 
   async modifyCharacterHealth(characterId: string, delta: number, source = 'damage'): Promise<any> {
@@ -147,20 +163,11 @@ export class AppDataService {
 
   async fetchBoardState(sessionId: string): Promise<{ cols: number; rows: number; tokens: BoardToken[] }> {
     const data = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
-    return {
-      cols: data?.cols ?? 10,
-      rows: data?.rows ?? 10,
-      tokens: data?.tokens || [...FALLBACK_BOARD_TOKENS],
-    };
+    return { cols: data?.cols ?? 10, rows: data?.rows ?? 10, tokens: data?.tokens || [...FALLBACK_BOARD_TOKENS] };
   }
 
-  async fetchBoardTokens(sessionId: string): Promise<BoardToken[]> {
-    return (await this.fetchBoardState(sessionId)).tokens;
-  }
-
-  async fetchSessionEvents(_sessionId: string): Promise<WatcherFeedEvent[]> {
-    return [...FALLBACK_SESSION_EVENTS];
-  }
+  async fetchBoardTokens(sessionId: string): Promise<BoardToken[]> { return (await this.fetchBoardState(sessionId)).tokens; }
+  async fetchSessionEvents(_sessionId: string): Promise<WatcherFeedEvent[]> { return [...FALLBACK_SESSION_EVENTS]; }
 
   async createCampaignSession(campaignId: string, payload: { title: string; status?: string; scheduled_at?: string; scheduledAt?: string; description?: string }): Promise<CampaignSessionItem> {
     const item = await this.request<any>(`${this.apiBase}/campaigns/${campaignId}/sessions`, { method: 'POST', body: JSON.stringify(payload) });
@@ -172,7 +179,7 @@ export class AppDataService {
   }
 
   async createCampaign(payload: CreateCampaignPayload): Promise<CampaignItem> {
-    const created = (await this.request<CampaignItem>(`${this.apiBase}/campaigns`, { method: 'POST', body: JSON.stringify(payload) })) || createFallbackCampaignItem(payload);
+    const created = (await this.request<CampaignItem>(`${this.apiBase}/campaigns`, { method: 'POST', body: JSON.stringify(payload) })) || createFallbackCampaignItem(payload, authService.getUser()?.user_id || 'user-valeros');
     const deduped = this.deduplicateCampaigns([created, ...FALLBACK_CAMPAIGNS]);
     FALLBACK_CAMPAIGNS.length = 0; FALLBACK_CAMPAIGNS.push(...deduped);
     return created;
@@ -185,21 +192,14 @@ export class AppDataService {
 
   async requestHotSwap(sessionId: string, characterId: string, playerId?: string): Promise<any> {
     const pid = playerId || authService.getUser()?.user_id || 'user-valeros';
-    const data = await this.request<any>(`${this.apiBase}/sessions/${sessionId}/hot-swap`, {
-      method: 'POST', body: JSON.stringify({ sessionId, characterId, playerId: pid }),
-    });
+    const data = await this.request<any>(`${this.apiBase}/sessions/${sessionId}/hot-swap`, { method: 'POST', body: JSON.stringify({ sessionId, characterId, playerId: pid }) });
     return data || { session_id: sessionId, character_id: characterId, player_id: pid, status: 'control_transferred' };
   }
 
   async updateProfile(payload: UpdateProfilePayload): Promise<UserClaims | null> {
     const data = await this.request<UserClaims>(`${this.apiBase}/profile`, { method: 'PATCH', body: JSON.stringify(payload) });
     const cur = authService.getUser() || FALLBACK_PROFILE;
-    const updated: UserClaims = {
-      ...cur, ...(data || {}),
-      display_name: payload.displayName ?? data?.display_name ?? cur.display_name,
-      avatar_url: payload.avatarUrl ?? data?.avatar_url ?? cur.avatar_url,
-      bio: payload.bio ?? data?.bio ?? cur.bio,
-    };
+    const updated: UserClaims = { ...cur, ...(data || {}), display_name: payload.displayName ?? data?.display_name ?? cur.display_name, avatar_url: payload.avatarUrl ?? data?.avatar_url ?? cur.avatar_url, bio: payload.bio ?? data?.bio ?? cur.bio };
     authService.updateUser(updated);
     return updated;
   }

@@ -46,3 +46,8 @@ Vector embeddings and text chunk indexing require asynchronous worker processing
 ## Implementing Backlog Tasks
 - [`TASK-0047: Campaign Lore Knowledge Base & redstring RAG Microservice`](../../backlog/complete/0047-campaign-lore-rag-knowledge-base-bc.md)
 - [`TASK-0089: Campaign Lore Extraction, Embeddings, and Hybrid Retrieval Modular Decomposition`](../../backlog/complete/0089-campaign-lore-retrieval-and-extractor-modular-decomposition.md)
+- [`TASK-0466: FastMCP Campaign Lore RAG Tools and The Watcher Intent Grounding`](../../backlog/proposed/0466-fastmcp-campaign-lore-rag-tools-and-watcher-intent-grounding.md)
+- [`TASK-0467: Gateway Campaign Lore Documents and Alias API Routing & Zanzibar Proxy`](../../backlog/proposed/0467-gateway-campaign-lore-documents-and-alias-api-proxy.md)
+- [`TASK-0468: App Shell Campaign Lore Document Uploader and Alias Manager Microfrontend`](../../backlog/proposed/0468-app-shell-campaign-lore-document-uploader-and-alias-manager.md)
+- [`TASK-0469: Campaign Lore RAG Grounding and Ingestion Blackbox Test Suite`](../../backlog/proposed/0469-campaign-lore-rag-grounding-and-ingestion-blackbox-test-suite.md)
+

@@ -19,7 +19,7 @@ export const test = baseTest.extend<BddCustomFixtures>({
   world: async ({}, use) => {
     const world = new World();
     await use(world);
-    world.reset();
+    await world.cleanup();
   },
   auth: async ({ page, context }, use) => {
     const auth = new AuthFixtures(page, context);

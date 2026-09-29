@@ -127,6 +127,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`validate-e2e-journeys-with-playwright-bdd.md`](how-to/validate-e2e-journeys-with-playwright-bdd.md): How to validate end-to-end user journeys with Playwright BDD, frontdoor authentication fixtures, and multi-browser execution.
 - [`test-user-flows-with-playwright-bdd.md`](how-to/test-user-flows-with-playwright-bdd.md): How to author Gherkin user flow scenarios, implement TypeScript step definitions with Playwright shadow-piercing locators, and execute E2E test suites.
 
+
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
 - [`platform-services.md`](reference/platform-services.md): Directory of external platform services, container images, ports, environment variables, and test fallbacks.

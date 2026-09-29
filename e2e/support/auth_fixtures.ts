@@ -46,6 +46,33 @@ export const PREDEFINED_PERSONAS: Record<string, UserClaims> = {
     display_name: 'Spectator Zephyr',
     bio: 'Tavern observer watching epic tabletop battles unfold.',
   },
+  evelyn: {
+    user_id: 'user-dm-evelyn',
+    username: 'Evelyn',
+    email: 'evelyn@runefoble.dev',
+    roles: ['dm', 'player', 'owner'],
+    is_admin: true,
+    display_name: 'Evelyn Vance',
+    bio: 'Dungeon Master orchestrating campaign adventures.',
+  },
+  valeros: {
+    user_id: 'user-valeros',
+    username: 'Valeros',
+    email: 'valeros@runefoble.dev',
+    roles: ['player'],
+    is_admin: false,
+    display_name: 'Valeros of Korvosa',
+    bio: 'Valiant fighter defending the weak with blade and shield.',
+  },
+  sarah: {
+    user_id: 'user-sarah',
+    username: 'Sarah',
+    email: 'sarah@runefoble.dev',
+    roles: ['player'],
+    is_admin: false,
+    display_name: 'Sarah Shadowstep',
+    bio: 'Shadow rogue navigating the ancient halls.',
+  },
 };
 
 /**
@@ -110,6 +137,15 @@ export class AuthFixtures {
 
   public resolvePersona(roleOrName: string): UserClaims {
     const normalized = roleOrName.toLowerCase().replace(/[^a-z]/g, '');
+    if (normalized.includes('evelyn')) {
+      return PREDEFINED_PERSONAS.evelyn;
+    }
+    if (normalized.includes('valeros')) {
+      return PREDEFINED_PERSONAS.valeros;
+    }
+    if (normalized.includes('sarah')) {
+      return PREDEFINED_PERSONAS.sarah;
+    }
     if (normalized.includes('dm') || normalized.includes('master') || normalized.includes('gm')) {
       return PREDEFINED_PERSONAS.dm;
     }
@@ -119,10 +155,21 @@ export class AuthFixtures {
     return PREDEFINED_PERSONAS.player;
   }
 
-  async injectUser(roleOrName: string, customClaims?: Partial<UserClaims>): Promise<TestUser> {
+  async injectUserIntoPage(targetPage: Page, roleOrName: string, customClaims?: Partial<UserClaims>): Promise<TestUser> {
     const baseClaims = this.resolvePersona(roleOrName);
-    const finalClaims: UserClaims = { ...baseClaims, ...customClaims };
+    const normalized = roleOrName.toLowerCase().replace(/[^a-z]/g, '');
+    const isGenericRole = ['player', 'dm', 'master', 'gm', 'spectator'].includes(normalized);
+    const username = isGenericRole ? baseClaims.username : roleOrName;
+    const userId = isGenericRole ? baseClaims.user_id : `user-${normalized}`;
+    const finalClaims: UserClaims = {
+      ...baseClaims,
+      username,
+      display_name: username,
+      user_id: userId,
+      ...customClaims,
+    };
     const token = createMockJwt(finalClaims);
+
 
     const sessionPayload = {
       tokens: {
@@ -137,7 +184,7 @@ export class AuthFixtures {
     const userJson = JSON.stringify(finalClaims);
 
     // Inject into localStorage for subsequent page loads
-    await this.page.addInitScript(
+    await targetPage.addInitScript(
       ({ sJson, tok, uJson }) => {
         try {
           window.localStorage.setItem('rf_auth_session', sJson);
@@ -152,7 +199,7 @@ export class AuthFixtures {
 
     // If page is currently navigated to an existing document, update active localStorage
     try {
-      await this.page.evaluate(
+      await targetPage.evaluate(
         ({ sJson, tok, uJson, detailState }) => {
           if (typeof window !== 'undefined' && window.localStorage) {
             window.localStorage.setItem('rf_auth_session', sJson);
@@ -189,6 +236,10 @@ export class AuthFixtures {
       token,
       isAdmin: finalClaims.is_admin,
     };
+  }
+
+  async injectUser(roleOrName: string, customClaims?: Partial<UserClaims>): Promise<TestUser> {
+    return this.injectUserIntoPage(this.page, roleOrName, customClaims);
   }
 
   async clearAuth(): Promise<void> {

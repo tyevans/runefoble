@@ -46,3 +46,7 @@ Asynchronous projection workers consuming Redis Streams events and populating pa
 - [`TASK-0082: OpenPanel Analytics SDK & Worker Modular Decomposition`](../../backlog/complete/0082-analytics-sdk-and-worker-modular-decomposition.md)
 - [`TASK-0097: OpenPanel Analytics Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0097-openpanel-analytics-blackbox-test-suite-decomposition.md)
 - [`TASK-0110: Campaign Telemetry Dashboard and Chronicle Timeline Microfrontend`](../../backlog/complete/0110-campaign-telemetry-dashboard-and-chronicle-timeline-microfrontend.md)
+- [`TASK-0458: Automated Player Achievement Engine and Milestone Badges Projection`](../../backlog/proposed/0458-automated-player-achievement-engine-and-milestone-badges-projection.md)
+- [`TASK-0459: Campaign Chronicle Relic Discoveries and Loot Milestones Projection`](../../backlog/proposed/0459-campaign-chronicle-relic-discoveries-and-loot-milestones-projection.md)
+- [`TASK-0460: App Shell Player Achievement Badges and Milestone Gallery Component`](../../backlog/proposed/0460-app-shell-player-achievement-badges-and-milestone-gallery-component.md)
+- [`TASK-0461: Absentee Player Session Telemetry and Audio Recap Companion API`](../../backlog/proposed/0461-absentee-player-session-telemetry-and-audio-recap-companion-api.md)

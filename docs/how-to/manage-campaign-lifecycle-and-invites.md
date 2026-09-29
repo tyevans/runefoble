@@ -155,20 +155,45 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members" \
     "user_id": "usr-dm-evelyn",
     "role": "owner",
     "subject_type": "user",
-    "zanzibar_relation": "campaign:camp-a1b2c3d4#owner@user:usr-dm-evelyn"
+    "zanzibar_relation": "campaign:camp-a1b2c3d4#owner@user:usr-dm-evelyn",
+    "username": "Evelyn Vance",
+    "character_name": null
   },
   {
     "user_id": "usr-player-marcus",
     "role": "player",
     "subject_type": "user",
-    "zanzibar_relation": "campaign:camp-a1b2c3d4#player@user:usr-player-marcus"
+    "zanzibar_relation": "campaign:camp-a1b2c3d4#player@user:usr-player-marcus",
+    "username": "Marcus",
+    "character_name": "Marcus Aurelius the Paladin"
   }
 ]
 ```
 
 ---
 
-## 6. Creating and Listing Campaign Sessions
+## 6. Removing a Member from a Campaign
+
+Campaign owners and managers (holding `manage` permission) can remove members from a campaign via `DELETE /api/v1/campaigns/{campaign_id}/members/{user_id}`. This endpoint immediately revokes the target user's SpiceDB Zanzibar relation tuples on the campaign and purges them from the roster:
+
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members/usr-player-marcus" \
+  -H "Authorization: Bearer <DM_JWT>"
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "status": "member_removed",
+  "campaign_id": "camp-a1b2c3d4",
+  "user_id": "usr-player-marcus"
+}
+```
+
+---
+
+
+## 7. Creating and Listing Campaign Sessions
 
 Campaign owners and Dungeon Masters (holding `run_session` permission) can create staging lobbies and scheduled sessions using `POST /api/v1/campaigns/{campaign_id}/sessions`. All members (holding `view` permission) can list active and scheduled sessions via `GET /api/v1/campaigns/{campaign_id}/sessions`:
 
@@ -222,7 +247,7 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/sessions" \
 
 ---
 
-## 7. Rendering Campaigns in the Web Component Microfrontend
+## 8. Rendering Campaigns in the Web Component Microfrontend
 
 The campaign hub UI is vendored by `@runefoble/game-session-ui/campaigns` using Lit Web Components:
 
@@ -258,7 +283,7 @@ The `<runefoble-campaign-dashboard>` provides:
 
 ---
 
-## 8. Managing Campaign Members & Assigning Zanzibar Roles in the UI
+## 9. Managing Campaign Members & Assigning Zanzibar Roles in the UI
 
 The `<runefoble-campaign-members>` component allows Game Masters to inspect the party roster, assign SpiceDB Zanzibar roles (`dungeon_master`, `player`, `spectator`), remove members safely via confirmation dialogs, and generate copyable invite links:
 
@@ -276,7 +301,7 @@ html`
     invite-token="dGVzdF9pbnZpdGVfdG9rZW4"
     @assign-role=${async (e: CustomEvent) => {
       const { userId, role } = e.detail;
-      await fetch(\`/api/v1/campaigns/\${campaignId}/roles\`, {
+      await fetch(`/api/v1/campaigns/${campaignId}/roles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, role }),
@@ -288,7 +313,7 @@ html`
     }}
     @create-invite=${async (e: CustomEvent) => {
       const { role } = e.detail;
-      const res = await fetch(\`/api/v1/campaigns/\${campaignId}/invites\`, {
+      const res = await fetch(`/api/v1/campaigns/${campaignId}/invites`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role }),
@@ -310,7 +335,7 @@ Key features of `<runefoble-campaign-members>`:
 
 ---
 
-## 9. Gateway Campaign Store Modular Architecture
+## 10. Gateway Campaign Store Modular Architecture
 
 The campaign and invite storage layer in the Gateway API is decomposed into focused modular subpackages under `gateway/api/src/gateway_api/campaign_store/` (keeping all submodules strictly < 160 lines per Hard Invariant 6):
 - **Record Models (`models.py`)**: Defines `CampaignRecord`, `CampaignMemberRecord`, and `InviteTokenRecord` (aliased as `InviteRecord`) dataclasses with dictionary serialization and default participant constants (`DEFAULT_SESSION_PARTICIPANTS`, `DEFAULT_BOARD_TOKENS`).
@@ -322,7 +347,8 @@ The campaign and invite storage layer in the Gateway API is decomposed into focu
 
 ---
 
-## 10. Campaign Detail Hero Header & Metadata Component
+## 11. Campaign Detail Hero Header & Metadata Component
+
 
 The `<runefoble-campaign-header>` component presents the hero banner, campaign title, setting badge, ruleset system pill (`5e`, `PF2e`, `Call of Cthulhu`), active status indicator, DM profile badge, and narrative description:
 
