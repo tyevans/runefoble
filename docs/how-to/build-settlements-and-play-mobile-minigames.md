@@ -328,7 +328,8 @@ Per ADR-0003, ADR-0007, ADR-0013, and PRD-0024, the settlement NPC workers route
 
 In accordance with Hard Invariant 7 (Blackbox TDD with frontdoor setup) and ADR-0008, all settlement haven and mobile minigame mechanics are covered by comprehensive end-to-end blackbox suites driving public HTTP endpoints and WebSocket streams:
 
-1. **Settlement Integration Suite (`tests/test_blackbox_settlements_integration.py`)**:
+1. **Settlement Integration Suite (`tests/test_blackbox_settlements_integration/`)**:
+   - Decomposed into modular test submodules strictly under 130 lines per Invariant 6 (`test_invariants_and_compat.py`, `test_auth_and_permissions.py`, `test_settlement_and_establishments.py`, `test_haggling_and_bulletin.py`).
    - `test_found_settlement_and_upgrade_tier_flow`: Verifies civic scaling caps (hamlet 2 districts, village 4 districts), prosperity gates, and event publishing (`SettlementFounded`, `SettlementTierUpgraded`).
    - `test_establishment_creation_and_worker_assignment`: Validates storefront construction, assignable NPC workers with role synergy bonuses, and dynamic inventory inspection via `GET /api/v1/establishments/{id}/workers`.
    - `test_merchant_haggling_gambits_and_dm_override`: Simulates persuasion rolls against merchant temperament, flattery gambits, and real-time DM mood/force-accept arbitration controls.
@@ -341,7 +342,7 @@ In accordance with Hard Invariant 7 (Blackbox TDD with frontdoor setup) and ADR-
 Execute the suites locally via UV:
 
 ```bash
-uv run pytest tests/test_blackbox_settlements_integration.py tests/test_blackbox_minigames_websocket.py
+uv run pytest tests/test_blackbox_settlements_integration/ tests/test_blackbox_minigames_websocket.py
 ```
 
 
