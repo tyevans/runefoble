@@ -139,6 +139,17 @@
 - [x] App Shell Views Enumeration, Wiring Audit, and Blackbox Test Suite (US-0065, US-0066, PRD-0023, TASK-0251)
 - [x] Character Management and Tabletop Sync Blackbox Test Suite (US-0064, US-0069, PRD-0023, TASK-0258)
 
+### Extended App Shell, Live VTT Mesh & Persistent Directives Epics (Phase 3)
+- [x] Campaign Roster, Roles & Zanzibar Membership Lifecycle Integration (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, US-0064, PRD-0023, TASK-0353)
+- [x] Dynamic Campaign Sessions Scoping, Scheduling & Offline Cache (`FEAT-UI-10`, US-0065, US-0067, PRD-0023, TASK-0354)
+- [x] Campaign Hub Client Routing and View Orchestration for Codex, Atlas, and Telemetry (`FEAT-UI-08`, US-0050, US-0067, PRD-0023, TASK-0355)
+- [x] Character Sheet Sub-Resource Mutations & Event-Sourced Persistence Integration (`FEAT-UI-09`, US-0015, US-0051, PRD-0006, PRD-0023, TASK-0356)
+- [x] Stand-In Guardrails Persistence, Absentee Directives & User Profile Management (`FEAT-WAT-05`, US-0004, US-0066, PRD-0002, PRD-0023, TASK-0357)
+- [x] Live Tabletop VTT WebSocket Event Mesh, Plugin Slots & Tangential Controls Integration (`FEAT-UI-11`, US-0035, US-0065, PRD-0022, PRD-0023, TASK-0358)
+- [ ] Gateway Soundscape API Routing & Zanzibar Authorization Proxy (`FEAT-SND-01`, US-0039, US-0053, PRD-0010, TASK-0436)
+- [ ] App Shell Soundscape Real-Time WebSocket Audio Synchronization & Foley Playback (`FEAT-SND-02`, US-0039, US-0053, PRD-0010, TASK-0437)
+- [ ] Soundscape Tactical Board Event Subscribers for Kinetic Foley Audio Cues (`FEAT-SND-03`, US-0039, US-0048, PRD-0010, TASK-0438)
+
 ## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames
 ### Foundational Aggregates, Social Graphs & Civic Enablers
 - [x] Settlement Haven Builder and Establishment Aggregate (`FEAT-SET-01`, `FEAT-SET-02`, US-0072, PRD-0024, TASK-0259)
@@ -320,6 +331,8 @@
 - [ ] Campaign Lore West Marches Router Modular Decomposition (TASK-0349)
 - [ ] Rules Compendium Aggregate Handlers Modular Decomposition (TASK-0350)
 - [ ] Speech-to-Intent Test Suite Modular Decomposition (TASK-0351)
+- [ ] Dev Server Orchestrator Modular Decomposition (TASK-0434)
+- [ ] Gateway Character Subresources Router Modular Decomposition (TASK-0435)
 
 ### Playwright BDD Component Coverage Epics (ADR-0014)
 - [ ] Auth Modal and User Menu Playwright BDD Component Coverage (TASK-0365)
