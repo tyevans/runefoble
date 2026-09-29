@@ -187,6 +187,10 @@
 - [ ] Pre-Game Session Lobby Microphone Preflight and Audio Calibration Component (`FEAT-UI-10`, `FEAT-VOX-01`, US-0065, PRD-0004, PRD-0020, PRD-0023, TASK-0477)
 - [ ] Campaign Archival Status Lifecycle and Dashboard Archive Filter Tabs (`FEAT-UI-08`, US-0063, US-0071, PRD-0023, TASK-0478)
 - [ ] Campaign Invites, Offline Recovery, and Audio Preflight Blackbox Test Suite (US-0063, US-0065, US-0066, US-0071, PRD-0023, TASK-0479)
+- [ ] Gateway Voice DSP and Vocal Modulator API Routing & Zanzibar Proxy (`FEAT-VOX-07`, `FEAT-SEC-01`, US-0011, US-0020, PRD-0004, TASK-0480)
+- [ ] App Shell DM Vocal Modulator Integration & Live Session Preset Synchronization (`FEAT-UI-11`, `FEAT-VOX-07`, US-0011, US-0020, PRD-0004, TASK-0481)
+- [ ] WebAudio Client-Side Formant and Pitch Shifting DSP Node Chain (`FEAT-VOX-07`, US-0011, US-0020, PRD-0004, TASK-0482)
+- [ ] DM Vocal Modulation and Voice DSP Frontdoor Blackbox Test Suite (US-0011, US-0020, PRD-0004, TASK-0483)
 
 
 
@@ -385,6 +389,7 @@
 - [ ] Dev Environment Blackbox Test Suite Modular Decomposition (TASK-0442)
 - [ ] Character Sheet Mutations Blackbox Test Suite Modular Decomposition (TASK-0443)
 - [ ] Character Sheet Playwright BDD Steps Modular Decomposition (TASK-0447)
+- [ ] User Profile Component and Styles Modular Decomposition (TASK-0484)
 
 ### Playwright BDD Component Coverage Epics (ADR-0014)
 - [ ] Auth Modal and User Menu Playwright BDD Component Coverage (TASK-0365)
