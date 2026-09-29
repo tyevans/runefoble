@@ -95,16 +95,16 @@ def test_dynamic_permission_revocation_rejects_reconnect():
 
 
 def test_spicedb_client_mock_and_grpc_handling():
-    """Verify SpiceDBClient handles mock fallback and client instantiation properly."""
-    client = SpiceDBClient(use_mock=True)
-    assert client.use_mock is True
-    assert client._grpc_client is None
+    """Verify SpiceDBClient rejects use_mock and instantiates live gRPC client."""
+    with pytest.raises(ValueError, match="no longer supports mock fallback"):
+        SpiceDBClient(use_mock=True)
 
     default_client = SpiceDBClient()
     assert default_client._grpc_client is not None
 
-    asyncio.run(default_client.write_relationship("campaign", "c1", "player", "user", "u1"))
-    assert asyncio.run(default_client.check_permission("campaign", "c1", "view", "user", "u1"))
+    mock_client = MockSpiceDBClient()
+    asyncio.run(mock_client.write_relationship("campaign", "c1", "player", "user", "u1"))
+    assert asyncio.run(mock_client.check_permission("campaign", "c1", "view", "user", "u1"))
     assert not asyncio.run(
-        default_client.check_permission("campaign", "c1", "run_session", "user", "u1")
+        mock_client.check_permission("campaign", "c1", "run_session", "user", "u1")
     )

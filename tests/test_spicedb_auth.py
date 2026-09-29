@@ -1,10 +1,15 @@
 import pytest
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.bootstrap_schema import bootstrap_schema
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
 
 @pytest.mark.asyncio
-async def test_spicedb_zanzibar_permissions():
-    client = SpiceDBClient()
+async def test_spicedb_zanzibar_permissions(live_spicedb_endpoint: str | None = None):
+    if live_spicedb_endpoint:
+        client = SpiceDBClient(endpoint=live_spicedb_endpoint, token="test_token")
+        await bootstrap_schema(client=client)
+    else:
+        client = MockSpiceDBClient()
 
     # User Alice is DM for campaign 'camp_1'
     await client.write_relationship(

@@ -14,6 +14,7 @@ import contextlib
 import os
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -33,6 +34,64 @@ RED = "\033[31m"
 MAGENTA = "\033[35m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
+
+
+def is_port_open(host: str, port: int, timeout: float = 0.5) -> bool:
+    """Check if a TCP port is open and accepting connections."""
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def ensure_spicedb_available(
+    host: str = "127.0.0.1", port: int = 50051, timeout: float = 5.0
+) -> subprocess.Popen | None:
+    """Ensure SpiceDB is accessible on host:port, auto-forwarding from Kind/K8s if needed."""
+    if is_port_open(host, port):
+        return None
+
+    if shutil.which("kubectl"):
+        try:
+            check = subprocess.run(
+                ["kubectl", "get", "svc", "spicedb"],
+                capture_output=True,
+                text=True,
+                timeout=3.0,
+            )
+            if check.returncode == 0:
+                print(
+                    f"{CYAN}[dev-orchestrator]{RESET} Establishing SpiceDB port-forward (svc/spicedb:{port})...",
+                    flush=True,
+                )
+                pf_proc = subprocess.Popen(
+                    ["kubectl", "port-forward", "svc/spicedb", f"{port}:{port}"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True,
+                )
+                start_time = time.monotonic()
+                while time.monotonic() - start_time < timeout:
+                    if is_port_open(host, port):
+                        print(
+                            f"{GREEN}[dev-orchestrator] SpiceDB port-forward established at {host}:{port}!{RESET}",
+                            flush=True,
+                        )
+                        return pf_proc
+                    if pf_proc.poll() is not None:
+                        break
+                    time.sleep(0.2)
+                return pf_proc
+        except Exception:
+            pass
+
+    print(
+        f"{YELLOW}[dev-orchestrator] Warning: SpiceDB not reachable at {host}:{port}. "
+        f"Make sure SpiceDB is running or port-forwarded.{RESET}",
+        flush=True,
+    )
+    return None
 
 
 def check_health(host: str, port: int, timeout: float = 1.0) -> bool:
@@ -176,6 +235,18 @@ def parse_args(args: Sequence[str] | None = None) -> argparse.Namespace:
         help="Skip starting the Vite frontend",
     )
     parser.add_argument(
+        "--spicedb-port",
+        type=int,
+        default=int(os.environ.get("SPICEDB_PORT", "50051")),
+        help="Port for SpiceDB Zanzibar gRPC (default: 50051)",
+    )
+    parser.add_argument(
+        "--spicedb-host",
+        type=str,
+        default=os.environ.get("SPICEDB_HOST", "127.0.0.1"),
+        help="Host for SpiceDB Zanzibar gRPC (default: 127.0.0.1)",
+    )
+    parser.add_argument(
         "--timeout",
         type=float,
         default=float(os.environ.get("GATEWAY_HEALTH_TIMEOUT", "30.0")),
@@ -196,10 +267,24 @@ def run_orchestrator(args: argparse.Namespace) -> int:
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
 
+    spicedb_host = str(args.spicedb_host)
+    spicedb_port = int(args.spicedb_port)
+
+    # 0. Ensure SpiceDB is accessible (auto-forwarding from K8s if needed)
+    spicedb_proc = ensure_spicedb_available(host=spicedb_host, port=spicedb_port)
+    if spicedb_proc is not None:
+        processes.append(spicedb_proc)
+        t_spicedb = threading.Thread(
+            target=pipe_output, args=(spicedb_proc, "spicedb-pf", YELLOW), daemon=True
+        )
+        t_spicedb.start()
+        threads.append(t_spicedb)
+
     print(f"{BOLD}{MAGENTA}======================================================{RESET}")
     print(f"{BOLD}{MAGENTA}       Runefoble Local Development Environment        {RESET}")
     print(f"{BOLD}{MAGENTA}======================================================{RESET}")
     print(f"{CYAN}  * API Gateway:{RESET}     http://{args.gateway_host}:{args.gateway_port}")
+    print(f"{CYAN}  * SpiceDB gRPC:{RESET}    {spicedb_host}:{spicedb_port}")
     if not args.no_frontend:
         print(f"{CYAN}  * Vite Frontend:{RESET}   http://localhost:{args.frontend_port}")
     if args.worker:
@@ -210,6 +295,8 @@ def run_orchestrator(args: argparse.Namespace) -> int:
     gateway_env = os.environ.copy()
     gateway_env["GATEWAY_PORT"] = str(args.gateway_port)
     gateway_env["GATEWAY_HOST"] = str(args.gateway_host)
+    gateway_env["RUNEFOBLE_SPICEDB_ENDPOINT"] = f"{spicedb_host}:{spicedb_port}"
+    gateway_env["SPICEDB_ENDPOINT"] = f"{spicedb_host}:{spicedb_port}"
 
     gateway_cmd = (
         ["uv", "run", "python", "gateway/api/src/gateway_api/main.py"]
