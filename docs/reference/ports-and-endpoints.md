@@ -277,6 +277,11 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `gateway-api` | WS | `/ws/overlay/{session_id}` | Real-time spectator WebSocket feed streaming sanitized party vitals and cinematic camera updates (aliases: `/overlay/ws/{session_id}`, `/ws/spectator/{session_id}`) |
 | `gateway-api` | WS | `/ws/spectator/{session_id}` | Real-time spectator WebSocket feed streaming sanitized session state and broadcast updates |
 | `gateway-api` | GET | `/readyz` | Kubernetes readiness probe verifying gateway orchestration status |
+| `gateway-api` | POST | `/api/v1/soundscape/cue` | Triggers tactical foley sound effects or acoustic stingers (Zanzibar `play` required, proxies to soundscape) |
+| `gateway-api` | GET | `/api/v1/soundscape/tension` | Retrieves current session encounter tension score and active stems (proxies to soundscape) |
+| `gateway-api` | POST | `/api/v1/soundscape/tension/calculate` | Calculates encounter tension and adapts music stems (proxies to soundscape) |
+| `gateway-api` | POST | `/api/v1/soundscape/stems/override` | DM manual mood override forcing stem profile (Zanzibar `run_session`/`manage` required, alias: `/api/v1/soundscape/override`) |
+| `gateway-api` | GET | `/api/v1/soundscape/leitmotif/{character_id}` | Retrieves character musical leitmotif timbre configuration (alias: `/api/v1/soundscape/leitmotif/profile/{character_id}`) |
 | `gateway-api` | POST | `/api/v1/assets/upload` | Uploads binary or base64 assets (battlemap, avatar, audio) to Silo S3 |
 | `gateway-api` | GET | `/api/v1/assets/{asset_id}` | Retrieves or streams stored asset files from Silo S3 storage |
 | `gateway-api` | POST | `/api/v1/auth/register` | Registers a new user account, dispatches verification email to Mailpit SMTP, and returns JWT |
