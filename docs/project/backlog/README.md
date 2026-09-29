@@ -35,6 +35,7 @@ Before any task moves from `proposed/` to `refined/`, it must satisfy the Defini
 4. **Governing ADRs & PRDs Cited**: Architectural impacts reviewed against governing ADRs (e.g. ADR-0004, ADR-0012, ADR-0013) and accepted PRDs.
 5. **Frontdoor Blackbox Acceptance Criteria**: Testable scenarios specified strictly through public APIs, `/ui/manifest`, WebSockets, or published standard events (Hard Invariant 7).
 6. **File Length Pre-check**: Target module decompositions planned to remain strictly within the <500 lines invariant.
+7. **Zero Backward Compatibility Shims**: Specifications must strictly prohibit backward compatibility shims, transitional facades, and legacy re-exports. All refactorings must update call sites directly and excise legacy artifacts immediately.
 
 ## Definition of Done (DoD)
 
