@@ -68,10 +68,12 @@ def test_darts_and_billiards_multiplayer_turn_sync(
         spicedb.write_relationship("establishment", est_id, "patron", "user", "ranger_lyra")
     )
 
-    client_darts = TestClient(session_app)
-    with client_darts.websocket_connect(
-        f"/ws/establishments/{est_id}/tables/{darts_table_id}?user_id=archer_kip"
-    ) as ws_kip:
+    with (
+        TestClient(session_app) as client_darts,
+        client_darts.websocket_connect(
+            f"/ws/establishments/{est_id}/tables/{darts_table_id}?user_id=archer_kip"
+        ) as ws_kip,
+    ):
         assert ws_kip.receive_json()["type"] == "connected"
         ws_kip.send_json(
             {
@@ -130,9 +132,10 @@ def test_darts_and_billiards_multiplayer_turn_sync(
 
     # ---------------- 2. Billiards Touch Trajectory Vector Exchange ----------------
     billiards_table_id = f"table-billiards-{uuid4().hex[:6]}"
-    client_billiards = TestClient(session_app)
-
-    with client_billiards.websocket_connect(f"/ws/minigames/{billiards_table_id}") as ws1:
+    with (
+        TestClient(session_app) as client_billiards,
+        client_billiards.websocket_connect(f"/ws/minigames/{billiards_table_id}") as ws1,
+    ):
         assert ws1.receive_json()["type"] == "connected"
         with client_billiards.websocket_connect(f"/ws/minigames/{billiards_table_id}") as ws2:
             assert ws2.receive_json()["type"] == "connected"
@@ -200,9 +203,10 @@ def test_casino_craps_and_roulette_betting_and_payouts(
     """Wager placement, dice tumble resolution, and character coin purse crediting."""
     # ---------------- 1. Dragon Craps Wagering, Tumble, and Payouts ----------------
     craps_table_id = f"table-craps-{uuid4().hex[:6]}"
-    client_craps = TestClient(session_app)
-
-    with client_craps.websocket_connect(f"/ws/minigames/{craps_table_id}") as ws_craps:
+    with (
+        TestClient(session_app) as client_craps,
+        client_craps.websocket_connect(f"/ws/minigames/{craps_table_id}") as ws_craps,
+    ):
         ws_craps.receive_json()
         # Gideon joins with 200 chips in coin purse
         ws_craps.send_json(
@@ -261,9 +265,10 @@ def test_casino_craps_and_roulette_betting_and_payouts(
 
     # ---------------- 2. Roulette Multi-Patron Wagering and Payouts ----------------
     roulette_table_id = f"table-roulette-{uuid4().hex[:6]}"
-    client_roulette = TestClient(session_app)
-
-    with client_roulette.websocket_connect(f"/ws/minigames/{roulette_table_id}") as ws1:
+    with (
+        TestClient(session_app) as client_roulette,
+        client_roulette.websocket_connect(f"/ws/minigames/{roulette_table_id}") as ws1,
+    ):
         assert ws1.receive_json()["type"] == "connected"
         with client_roulette.websocket_connect(f"/ws/minigames/{roulette_table_id}") as ws2:
             assert ws2.receive_json()["type"] == "connected"
