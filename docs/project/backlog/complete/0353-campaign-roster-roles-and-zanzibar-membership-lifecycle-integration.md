@@ -1,7 +1,7 @@
 ---
 id: '0353'
 title: Campaign Roster, Roles & Zanzibar Membership Lifecycle Integration
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0008
@@ -17,12 +17,13 @@ governing_stories:
 - US-0063
 - US-0064
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/352
 ---
 
 # TASK-0353: Campaign Roster, Roles & Zanzibar Membership Lifecycle Integration
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Eradicate stubbed/identical campaign rosters by adding a Zanzibar-backed member removal endpoint (`DELETE /api/v1/campaigns/{id}/members/{user_id}`), enriching member responses with user and character profiles, wiring all `<runefoble-campaign-members>` custom events (`@assign-role`, `@create-invite`, `@remove-member`) in `frontend/src/runefoble-app.ts`, and implementing campaign-scoped fallback caching in `frontend/src/services/app-data-service.ts`.

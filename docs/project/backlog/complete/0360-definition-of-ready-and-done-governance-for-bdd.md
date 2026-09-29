@@ -1,7 +1,7 @@
 ---
 id: '0360'
 title: Definition of Ready & Done Governance Updates for BDD and Playwright
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0024
@@ -14,8 +14,8 @@ governing_prds:
 governing_stories:
 - US-0065
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/371
 ---
-
 # TASK-0360: Definition of Ready & Done Governance Updates for BDD and Playwright
 
 ## Status

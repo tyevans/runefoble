@@ -1,7 +1,7 @@
 # PRD-0004: Dynamic Vocal Audio Conditioning and DSP Filters
 
 ## Status
-Shipped
+Accepted
 
 ## Purpose
 Voice immersion is paramount in collaborative tabletop roleplaying. When characters are afflicted by magical curses, excessive tavern drinking, fear, or environmental immersion (e.g. underwater, cathedral echo), their audio speech should organically reflect their state without breaking session flow. The `voice_agent` service will provide DSP audio filtering and speech cadence transformation for synthesized AI personas and streamed audio.
@@ -30,3 +30,9 @@ Voice immersion is paramount in collaborative tabletop roleplaying. When charact
 - [`TASK-0065: Voice Agent DSP Pipeline, Audio Routing, and Room Coordinator Modular Decomposition`](../../backlog/complete/0065-voice-agent-dsp-pipeline-and-router-decomposition.md)
 - [`TASK-0068: WebRTC Client Voice Service and Peer Connection Mesh Modular Decomposition`](../../backlog/complete/0068-webrtc-client-service-and-peer-mesh-decomposition.md)
 - [`TASK-0083: Streaming Whisper Audio Transcription Test Suite Modular Decomposition`](../../backlog/complete/0083-streaming-whisper-test-suite-modular-decomposition.md)
+- [`TASK-0157: DM Live Vocal Modulator & Real-Time NPC Formant DSP Engine`](../../backlog/complete/0157-dm-vocal-modulator-formant-dsp-engine.md)
+- [`TASK-0160: DM Vocal Modulator Controls & Preset Selector Microfrontend`](../../backlog/complete/0160-dm-vocal-modulator-controls-microfrontend.md)
+- [`TASK-0480: Gateway Voice DSP and Vocal Modulator API Routing & Zanzibar Proxy`](../../backlog/proposed/0480-gateway-voice-dsp-and-vocal-modulator-api-proxy.md)
+- [`TASK-0481: App Shell DM Vocal Modulator Integration & Live Session Preset Synchronization`](../../backlog/proposed/0481-app-shell-dm-vocal-modulator-integration-and-preset-sync.md)
+- [`TASK-0482: WebAudio Client-Side Formant and Pitch Shifting DSP Node Chain`](../../backlog/proposed/0482-webaudio-client-formant-and-pitch-shifting-dsp-nodes.md)
+- [`TASK-0483: DM Vocal Modulation and Voice DSP Frontdoor Blackbox Test Suite`](../../backlog/proposed/0483-voice-dsp-and-vocal-modulator-blackbox-test-suite.md)
