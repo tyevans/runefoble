@@ -155,6 +155,9 @@
 - [ ] Gateway Character Wardrobe & Dynamic Portrait API Routing & Zanzibar Proxy (`FEAT-UI-09`, `FEAT-SEC-01`, US-0055, PRD-0016, TASK-0444)
 - [ ] App Shell Character Wardrobe Gallery Integration & Dynamic Condition Portrait Synchronization (`FEAT-UI-09`, US-0055, PRD-0016, TASK-0445)
 - [ ] App Shell Character Leitmotif Configuration & Audition Integration (`FEAT-UI-09`, `FEAT-SND-01`, US-0046, PRD-0016, TASK-0446)
+- [ ] The Watcher Pluggable LLM Inference Provider Backend & Endpoint Router (`FEAT-WAT-01`, US-0001, US-0032, PRD-0001, TASK-0448)
+- [ ] The Watcher Intent Middleware Interceptor Pipeline & OpenTelemetry Tracing (`FEAT-WAT-01`, US-0001, US-0032, PRD-0001, TASK-0449)
+- [ ] Custom LLM Inference and Intent Middleware Blackbox Test Suite (US-0001, US-0032, PRD-0001, TASK-0450)
 
 ### Playwright BDD End-to-End Verification & Governance (ADR-0014)
 - [x] Playwright BDD Testing Infrastructure and Frontdoor Harness (`TASK-0359`)
@@ -349,6 +352,8 @@
 - [ ] Dev Server Orchestrator Modular Decomposition (TASK-0434)
 - [ ] Gateway Character Subresources Router Modular Decomposition (TASK-0435)
 - [ ] Dev Environment Blackbox Test Suite Modular Decomposition (TASK-0442)
+- [ ] Character Sheet Mutations Blackbox Test Suite Modular Decomposition (TASK-0443)
+- [ ] Character Sheet Playwright BDD Steps Modular Decomposition (TASK-0447)
 
 ### Playwright BDD Component Coverage Epics (ADR-0014)
 - [ ] Auth Modal and User Menu Playwright BDD Component Coverage (TASK-0365)
