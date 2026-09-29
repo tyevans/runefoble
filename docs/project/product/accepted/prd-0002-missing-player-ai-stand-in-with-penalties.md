@@ -41,3 +41,7 @@ In traditional tabletop gaming, an absent player either halts the entire campaig
 - [`TASK-0055: Stand-In Policy Guardrails and Mid-Session Hot-Swap Takeover`](../../backlog/complete/0055-stand-in-policy-guardrails-and-hot-swap-handoff.md)
 - [`TASK-0070: Missing Player AI Stand-In and Absentee Recap Test Suite Modular Decomposition`](../../backlog/complete/0070-stand-in-engine-and-absentee-recap-test-suite-decomposition.md)
 - [`TASK-0096: Stand-In Policy Guardrails and Hot-Swap Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0096-stand-in-guardrails-blackbox-test-suite-decomposition.md)
+- [`TASK-0462: Absentee Character Resource Audit Ledger and DM Reconciliation API`](../../backlog/proposed/0462-absentee-character-resource-audit-ledger-and-reconciliation.md)
+- [`TASK-0463: App Shell Absentee Catch-Up Storybook Reel Microfrontend`](../../backlog/proposed/0463-app-shell-absentee-catchup-storybook-reel.md)
+- [`TASK-0464: Personalized Voice-Cloned Stand-In Dialogue with Dynamic Affliction Slurs`](../../backlog/proposed/0464-personalized-voice-cloned-standin-dialogue-and-afflictions.md)
+- [`TASK-0465: Absentee Resource Audit and Catch-Up Reel Blackbox Test Suite`](../../backlog/proposed/0465-absentee-resource-audit-and-catchup-blackbox-test-suite.md)
