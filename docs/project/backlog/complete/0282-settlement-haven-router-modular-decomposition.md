@@ -1,7 +1,7 @@
 ---
-id: '0282'
+id: 0282
 title: Settlement Haven Router Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0259
@@ -15,8 +15,8 @@ governing_prds:
 governing_stories:
 - US-0072
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/374
 ---
-
 # TASK-0282: Settlement Haven Router Modular Decomposition
 
 ## Status
