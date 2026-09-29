@@ -1,7 +1,7 @@
 ---
 id: '0362'
 title: Session Lobby & Tabletop VTT Playwright BDD Test Suite
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0354
@@ -22,8 +22,8 @@ governing_stories:
 - US-0005
 - US-0065
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/359
 ---
-
 # TASK-0362: Session Lobby & Tabletop VTT Playwright BDD Test Suite
 
 ## Status

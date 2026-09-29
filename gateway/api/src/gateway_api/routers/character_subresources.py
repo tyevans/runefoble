@@ -17,6 +17,7 @@ from gateway_api.character_models import (
     EquipItemRequest,
     HealthChangeRequest,
     PrepareSpellRequest,
+    StandInGuardrailsRequest,
 )
 from gateway_api.character_store import character_store
 
@@ -301,3 +302,55 @@ async def prepare_spell(
         json_body=req.model_dump(exclude_unset=True),
     )
     return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+
+
+@router.put(
+    "/api/v1/characters/{character_id}/guardrails",
+    response_model=CharacterResponse,
+    dependencies=[Depends(require_zanzibar_permission("edit", "character", "character_id"))],
+)
+async def update_guardrails(
+    character_id: str,
+    req: StandInGuardrailsRequest,
+) -> CharacterResponse:
+    """Update stand-in policy guardrails (requires 'edit')."""
+    char = character_store.get_character(character_id)
+    if not char:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
+
+    payload = req.model_dump(by_alias=False)
+
+    async def fallback():
+        updated = await character_store.update_guardrails(character_id, payload)
+        return updated.to_response()
+
+    res = await proxy_or_fallback(
+        "PUT",
+        f"/api/v1/characters/{character_id}/guardrails",
+        fallback,
+        json_body=payload,
+    )
+    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+
+
+@router.get(
+    "/api/v1/characters/{character_id}/guardrails",
+    dependencies=[Depends(require_zanzibar_permission("view", "character", "character_id"))],
+)
+async def get_guardrails(
+    character_id: str,
+) -> dict[str, Any]:
+    """Retrieve stand-in policy guardrails (requires 'view')."""
+    char = character_store.get_character(character_id)
+    if not char:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
+
+    async def fallback():
+        return char.stand_in_guardrails
+
+    res = await proxy_or_fallback(
+        "GET",
+        f"/api/v1/characters/{character_id}/guardrails",
+        fallback,
+    )
+    return res if isinstance(res, dict) else dict(res)

@@ -66,3 +66,6 @@ Low latency audio transcription and LLM inference require optimized streaming co
 - [`TASK-0090: Modular Routers Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0090-modular-routers-test-suite-decomposition.md)
 - [`TASK-0093: DM Co-Pilot Router and Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0093-dm-copilot-router-and-blackbox-test-suite-decomposition.md)
 - [`TASK-0094: Intent Disambiguation Router and Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0094-intent-disambiguation-router-and-blackbox-test-suite-decomposition.md)
+- [`TASK-0448: The Watcher Pluggable LLM Inference Provider Backend & Endpoint Router`](../../backlog/proposed/0448-watcher-pluggable-llm-inference-provider-backend.md)
+- [`TASK-0449: The Watcher Intent Middleware Interceptor Pipeline & OpenTelemetry Tracing`](../../backlog/proposed/0449-watcher-intent-middleware-pipeline-and-tracing.md)
+- [`TASK-0450: Custom LLM Inference and Intent Middleware Blackbox Test Suite`](../../backlog/proposed/0450-custom-llm-and-intent-middleware-blackbox-test-suite.md)

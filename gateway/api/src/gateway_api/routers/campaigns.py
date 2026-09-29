@@ -24,23 +24,13 @@ from gateway_api.models import (
     JoinCampaignResponse,
     UpdateCampaignRequest,
 )
+from gateway_api.routers.auth.profile import router as profile_router
 from gateway_api.routers.tabletop import router as tabletop_router
 from runefoble_auth.zitadel import AuthenticatedUser
 
 router = APIRouter(tags=["Campaigns & Sessions"])
 router.include_router(tabletop_router)
-
-
-@router.get("/api/v1/profile")
-async def get_profile(user: Annotated[AuthenticatedUser, Depends(get_current_user)]) -> dict:
-    """Retrieve authenticated Zitadel user profile claims."""
-    return {
-        "user_id": user.user_id,
-        "username": user.username,
-        "email": user.email,
-        "roles": user.roles,
-        "is_admin": user.is_admin,
-    }
+router.include_router(profile_router)
 
 
 @router.get("/api/v1/campaigns", response_model=list[CampaignSummaryResponse])

@@ -23,6 +23,14 @@ from gateway_api.routers.auth.dev_mail import (
 from gateway_api.routers.auth.dev_mail import (
     router as dev_mail_router,
 )
+from gateway_api.routers.auth.profile import (
+    UpdateProfileRequest,
+    get_profile,
+    update_profile,
+)
+from gateway_api.routers.auth.profile import (
+    router as profile_router,
+)
 from gateway_api.routers.auth.registration import (
     _pending_verifications,
     register_user,
@@ -59,6 +67,8 @@ router.include_router(registration_router)
 router.include_router(tokens_router)
 router.include_router(dev_mail_router)
 router.include_router(admin_router)
+router.include_router(profile_router)
+
 
 __all__ = [
     "DevSendEmailRequest",
@@ -92,4 +102,8 @@ __all__ = [
     "set_mailpit_client",
     "tokens_router",
     "verify_email",
+    "profile_router",
+    "UpdateProfileRequest",
+    "get_profile",
+    "update_profile",
 ]

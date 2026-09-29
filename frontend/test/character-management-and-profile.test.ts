@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 import { Router, type MatchedRoute } from '../src/router/router.ts';
-import { AppDataService } from '../src/services/app-data-service.ts';
+import { AppDataService, appDataService } from '../src/services/app-data-service.ts';
 import { authService, type UserClaims } from '../src/auth/auth-service.ts';
 import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS } from '../src/services/fallback-data.ts';
 import type { AppActiveView } from '../src/runefoble-app.ts';
@@ -226,6 +226,14 @@ describe('User Account Profile View & Claims (US-0070, TASK-0258)', () => {
     assert.ok(profileContent.includes('user.email'));
     assert.ok(profileContent.includes('user.user_id'));
     assert.ok(profileContent.includes('role-badge'));
+    assert.ok(profileContent.includes('isEditing'));
+    assert.ok(profileContent.includes('appDataService.updateProfile'));
+
+    // Test profile update persistence through appDataService
+    const updated = await appDataService.updateProfile({ displayName: 'Valeros the Bold', bio: 'Korvosan Champion' });
+    assert.equal(updated?.display_name, 'Valeros the Bold');
+    assert.equal(updated?.bio, 'Korvosan Champion');
+    assert.equal(authService.getUser()?.display_name, 'Valeros the Bold');
 
     // Verify App Shell mounts profile component
     const appShellContent = readFileSync(APP_SHELL_PATH, 'utf-8');
@@ -418,6 +426,32 @@ describe('TASK-0356: Character Sheet Sub-Resource Mutations & Persistence', () =
     const sheetContent = readFileSync(SHEET_COMPONENT_PATH, 'utf-8');
     assert.ok(sheetContent.includes('openEquipDialog'), 'Sheet component must support openEquipDialog');
     assert.ok(sheetContent.includes('confirmEquipItem'), 'Sheet component must support confirmEquipItem');
+  });
+});
+
+describe('TASK-0357: Stand-In Guardrails Persistence & Absentee Integration', () => {
+  it('updates guardrails and requests hot-swap via AppDataService', async () => {
+    const resGuardrails = await appDataService.updateCharacterGuardrails('char-valeros', {
+      riskThreshold: 'reckless',
+      avoidMelee: false,
+      permadeathSafeguard: true,
+    });
+    assert.equal(resGuardrails.stand_in_guardrails.riskThreshold, 'reckless');
+    assert.equal(resGuardrails.stand_in_guardrails.avoidMelee, false);
+
+    const resHotSwap = await appDataService.requestHotSwap('session-tomb-14', 'char-valeros', 'user-valeros');
+    assert.ok(resHotSwap);
+    assert.equal(resHotSwap.status, 'control_transferred');
+  });
+
+  it('verifies App Shell unconditionally mounts guardrails and binds handlers', () => {
+    const appShell = readFileSync(APP_SHELL_PATH, 'utf-8');
+    assert.ok(appShell.includes('<runefoble-stand-in-guardrails'));
+    assert.ok(appShell.includes('@guardrails-saved='));
+    assert.ok(appShell.includes('@hot-swap-requested='));
+    assert.ok(appShell.includes('<runefoble-absentee-directive'));
+    assert.ok(appShell.includes('<runefoble-absentee-recap'));
+    assert.ok(appShell.includes('riskThreshold'));
   });
 });
 

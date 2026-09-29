@@ -1,7 +1,8 @@
 ---
-id: '0358'
-title: Live Tabletop VTT WebSocket Event Mesh, Plugin Slots & Tangential Controls Integration
-status: Refined
+id: 0358
+title: Live Tabletop VTT WebSocket Event Mesh, Plugin Slots & Tangential Controls
+  Integration
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0004
@@ -23,8 +24,8 @@ governing_stories:
 - US-0005
 - US-0065
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/351
 ---
-
 # TASK-0358: Live Tabletop VTT WebSocket Event Mesh, Plugin Slots & Tangential Controls Integration
 
 ## Status

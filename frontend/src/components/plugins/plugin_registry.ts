@@ -90,3 +90,24 @@ export class PluginRegistry {
 }
 
 export const pluginRegistry = new PluginRegistry();
+
+export function registerDefaultPlugins(reg: PluginRegistry = pluginRegistry, isDm = false): void {
+  const base: PluginDefinition[] = [
+    { id: 'default-initiative-tracker', name: 'Initiative Tracker', slot: 'hud-widget', tag: 'runefoble-initiative-tracker', order: 10 },
+    { id: 'default-soundscape-controls', name: 'Soundscape Controls', slot: 'hud-widget', tag: 'runefoble-soundscape-controls', order: 20 },
+    { id: 'default-dice-roller', name: 'Dice Roller', slot: 'dice-panel', tag: 'runefoble-dice-roller', order: 10 },
+    { id: 'default-dice-tray-3d', name: '3D Dice Tray', slot: 'dice-panel', tag: 'runefoble-dice-tray-3d', order: 20 },
+    { id: 'default-combat-reaction-prompt', name: 'Combat Reaction Prompt', slot: 'sidebar-tool', tag: 'runefoble-combat-reaction-prompt', order: 10 },
+  ];
+  for (const p of base) if (!reg.getPlugin(p.id)) reg.register(p);
+  const dm: PluginDefinition[] = [
+    { id: 'default-dm-whisper-bar', name: 'DM Whisper Bar', slot: 'sidebar-tool', tag: 'runefoble-dm-whisper-bar', order: 20 },
+    { id: 'default-dm-trap-controls', name: 'DM Trap Controls', slot: 'sidebar-tool', tag: 'runefoble-dm-trap-controls', order: 30 },
+  ];
+  for (const p of dm) {
+    if (isDm) { if (!reg.getPlugin(p.id)) reg.register(p); }
+    else if (reg.getPlugin(p.id)) reg.unregister(p.id);
+  }
+}
+
+registerDefaultPlugins(pluginRegistry, false);

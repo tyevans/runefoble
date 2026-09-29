@@ -248,3 +248,21 @@ export async function mutateCharacterRestoreSlot(
   }
   return fallback;
 }
+
+export async function mutateCharacterGuardrails(
+  host: MutationHost,
+  characterId: string,
+  payload: any
+): Promise<any> {
+  const data = await host.request<any>(`${host.apiBase}/characters/${characterId}/guardrails`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+  const fallback = host.getFallbackCharacterDetail(characterId);
+  if (fallback) {
+    fallback.stand_in_guardrails = { ...(fallback.stand_in_guardrails || {}), ...payload };
+    fallback.standInGuardrails = { ...(fallback.standInGuardrails || {}), ...payload };
+  }
+  return data || fallback;
+}
+

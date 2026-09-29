@@ -1,7 +1,7 @@
 ---
 id: '0357'
 title: Stand-In Guardrails Persistence, Absentee Directives & User Profile Management
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0003
@@ -20,8 +20,8 @@ governing_stories:
 - US-0004
 - US-0066
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/353
 ---
-
 # TASK-0357: Stand-In Guardrails Persistence, Absentee Directives & User Profile Management
 
 ## Status

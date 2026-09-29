@@ -20,10 +20,13 @@ def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
     global _spicedb_client
     if _spicedb_client is None:
         settings = PlatformSettings()
-        _spicedb_client = SpiceDBClient(
-            endpoint=settings.spicedb_endpoint,
-            token=settings.spicedb_preshared_key,
-        )
+        if settings.spicedb_endpoint.lower() in ("mock", "mock://"):
+            _spicedb_client = MockSpiceDBClient()
+        else:
+            _spicedb_client = SpiceDBClient(
+                endpoint=settings.spicedb_endpoint,
+                token=settings.spicedb_preshared_key,
+            )
     return _spicedb_client
 
 
