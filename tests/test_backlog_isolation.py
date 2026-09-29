@@ -183,3 +183,42 @@ def test_orchestrator_parallel_dispatch_does_not_hold_merge_lock_during_ci(tmp_p
     assert res.success is True
     # The crucial assertion: MERGE_LOCK was NOT held while waiting for CI checks!
     assert lock_held_during_ci is False
+
+
+def test_enforce_backlog_isolation_preserves_backlog_readme(tmp_path: Path):
+    """Verifies that enforce_backlog_isolation preserves docs/project/backlog/README.md."""
+    subprocess.run(["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+
+    backlog_dir = tmp_path / "docs" / "project" / "backlog"
+    backlog_dir.mkdir(parents=True)
+    priority_file = backlog_dir / "PRIORITY.md"
+    priority_file.write_text("Original PRIORITY.md\n", encoding="utf-8")
+    readme_file = backlog_dir / "README.md"
+    readme_file.write_text("Original Backlog Guide\n", encoding="utf-8")
+
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit"], cwd=tmp_path, check=True, capture_output=True
+    )
+
+    # Simulate modifying both PRIORITY.md and README.md
+    priority_file.write_text("Modified PRIORITY.md by rogue agent\n", encoding="utf-8")
+    readme_file.write_text("Updated Backlog Guide with BDD governance\n", encoding="utf-8")
+
+    # Enforce isolation
+    reverted, msg = enforce_backlog_isolation(tmp_path)
+    assert reverted is True
+    assert "Reverted branch modifications" in msg
+    # PRIORITY.md should be reverted
+    assert priority_file.read_text(encoding="utf-8") == "Original PRIORITY.md\n"
+    # README.md should be preserved!
+    assert readme_file.read_text(encoding="utf-8") == "Updated Backlog Guide with BDD governance\n"

@@ -34,8 +34,15 @@ Or schedule it to run daily at 9:00 AM:
 ## How Curation Operates
 1. **Health & Invariants**: Identifies files approaching or exceeding 500 lines per `AGENTS.md` Rule 6, filing refactoring proposals in `docs/project/backlog/proposed/`.
 2. **Roadmap Alignment**: Reads `docs/project/backlog/ROADMAP.md` (e.g. Milestone 2: Live Collaborative Alpha) to ensure foundational architectural enablers precede dependent feature epics.
-3. **JIT Refinement**: Checks `docs/project/backlog/refined/`. If the ready buffer falls below ~10 items, it refines the top proposed enabler/task against the Definition of Ready in `AGENTS.md`—including INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable), bounded context isolation, microfrontend UI slice declaration (`services/<bc>/ui/`) per [ADR-0013](../project/adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md), Storybook isolation planning, and a frontdoor blackbox TDD Definition of Done with platform showcase (`docs/marketing.md`) and changelog synchronization.
+3. **JIT Refinement**: Checks `docs/project/backlog/refined/`. If the ready buffer falls below ~10 items, it refines the top proposed enabler/task against the Definition of Ready in `AGENTS.md`—including INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable), bounded context isolation, microfrontend UI slice declaration (`services/<bc>/ui/`) per [ADR-0013](../project/adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md), Storybook isolation planning, frontdoor BDD Gherkin scenario readiness in `docs/project/user_stories/accepted/` with frontdoor-only setup per [ADR-0014](../project/adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md), and a frontdoor blackbox TDD & BDD Definition of Done (requiring passing Playwright browser automation suites) with platform showcase (`docs/marketing.md`) and changelog synchronization.
 4. **PRIORITY Index Sync**: Reconciles `docs/project/backlog/PRIORITY.md` with filesystem state.
+
+### Auditing BDD Readiness During Curation
+When curating and refining candidate tasks that introduce or modify user-facing journeys, App Shell routes, or microfrontend custom elements:
+1. **Gherkin User Story Linkage**: Verify that the task explicitly links to an accepted user story in `docs/project/user_stories/accepted/`.
+2. **Frontdoor Setup Audit**: Inspect scenario `Given` steps to ensure preconditions are prepared exclusively through public frontdoors (UI forms, public REST APIs, or Zitadel OIDC session injection). Reject or repair any task whose scenarios depend on private backdoors or direct database manipulation.
+3. **Playwright BDD Verification Plan**: Ensure the task's Definition of Done mandates a passing Playwright BDD test suite in `e2e/` executing all acceptance scenarios in headless browser automation per [ADR-0014](../project/adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md).
+
 
 ## Backlog Isolation and Conflict-Free Concurrent Execution
 
