@@ -50,12 +50,14 @@ nav = [
     { "CLI Interfaces" = "reference/cli-interfaces.md" },
   ]},
   { "Architecture Explanation" = [
+    { "Project Management as Code" = "explanation/project-management-system.md" },
     { "The Watcher Autonomous DM" = "explanation/the-watcher-autonomous-dm.md" },
     { "Google Zanzibar in Tabletop RPG" = "explanation/zanzibar-in-ttrpg.md" },
     { "Microfrontends in RPG Domains" = "explanation/microfrontends-in-rpg-domains.md" },
     { "Realtime Voice & Board Sync" = "explanation/realtime-voice-and-board-sync.md" },
   ]},
   { "Project Specifications" = [
+    { "Project Management System" = "project/README.md" },
     { "ADR Registry" = "project/adrs/REGISTRY.md" },
     { "Product PRD Registry" = "project/product/REGISTRY.md" },
     { "Feature Inventory" = "project/product/FEATURE_INVENTORY.md" },
