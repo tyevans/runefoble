@@ -1,7 +1,7 @@
 ---
 id: '0352'
 title: Comprehensive Local Development Command (make dev) and Vite Proxy Gateway Routing
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0000
@@ -18,12 +18,13 @@ governing_stories:
 - US-0001
 - US-0065
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/341
 ---
 
 # TASK-0352: Comprehensive Local Development Command (make dev) and Vite Proxy Gateway Routing
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Implement a unified, robust `make dev` workflow in the root `Makefile` that starts the API Gateway (`dev-api`), background inference worker, and hot-reloading Vite frontend (`dev-frontend`) concurrently with health check gating. Expand `frontend/vite.config.ts` proxy configuration to route all backend API paths (`/api`, `/api/v1`, `/ws`, `/docs`, `/openapi.json`, `/mail`, `/oauth`) to their respective local services, eliminating `502 Bad Gateway` errors and un-proxied endpoint failures.
