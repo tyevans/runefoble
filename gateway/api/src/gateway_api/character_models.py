@@ -69,6 +69,7 @@ class CharacterResponse(BaseModel):
     spellSlots: dict[int, int] | None = None
     maxSpellSlots: dict[int, int] | None = None
     preparedSpells: list[str] | None = None
+    standInGuardrails: dict[str, Any] | None = None
     isAiStandIn: bool | None = None
     isStabilized: bool | None = None
 
@@ -97,10 +98,24 @@ class CharacterResponse(BaseModel):
             self.maxSpellSlots = dict(self.max_spell_slots)
         if self.preparedSpells is None:
             self.preparedSpells = list(self.prepared_spells)
+        if self.standInGuardrails is None:
+            self.standInGuardrails = dict(self.stand_in_guardrails)
         if self.isAiStandIn is None:
             self.isAiStandIn = self.is_stand_in_active
         if self.isStabilized is None:
             self.isStabilized = self.is_stabilized
+
+
+class StandInGuardrailsRequest(BaseModel):
+    preserve_spell_slots: dict[int, int] = Field(default_factory=dict, alias="preserveSpellSlots")
+    protect_allies: list[str] = Field(default_factory=list, alias="protectAllies")
+    protect_ally_hp_threshold: float = Field(default=0.3, alias="protectAllyHpThreshold")
+    risk_threshold: str = Field(default="cautious", alias="riskThreshold")
+    avoid_melee: bool = Field(default=True, alias="avoidMelee")
+    permadeath_safeguard: bool = Field(default=True, alias="permadeathSafeguard")
+    custom_priorities: list[str] = Field(default_factory=list, alias="customPriorities")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class HealthChangeRequest(BaseModel):
@@ -168,4 +183,5 @@ __all__ = [
     "HealthChangeRequest",
     "PrepareSpellRequest",
     "RemoveInventoryItemRequest",
+    "StandInGuardrailsRequest",
 ]

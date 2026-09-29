@@ -1,12 +1,13 @@
-"""Tabletop session, board tokens, and watcher proxy routes for Gateway API."""
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends
-from gateway_api.auth import require_zanzibar_permission
+from fastapi import APIRouter, Depends, HTTPException, status
+from gateway_api.auth import get_current_user, get_spicedb_client, require_zanzibar_permission
 from gateway_api.campaign_store import (
     DEFAULT_BOARD_TOKENS,
     DEFAULT_SESSION_PARTICIPANTS,
     campaign_store,
 )
+from gateway_api.character_store import character_store
 from gateway_api.dependencies import ws_manager
 from gateway_api.models import (
     AdvanceTurnRequest,
@@ -14,8 +15,17 @@ from gateway_api.models import (
     DMOverrideRequest,
     TokenMoveRequest,
 )
+from pydantic import BaseModel, ConfigDict, Field
+from runefoble_auth.zitadel import AuthenticatedUser
 
 router = APIRouter(tags=["Tabletop & Game Sessions"])
+
+
+class HotSwapRequest(BaseModel):
+    player_id: str | None = Field(default=None, alias="playerId")
+    character_id: str | None = Field(default=None, alias="characterId")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 @router.get(
@@ -45,6 +55,63 @@ async def start_session_proxy(session_id: str) -> dict:
         {"type": "session_started", "sessionId": session_id, "status": "active"}
     )
     return {"session_id": session_id, "status": "active"}
+
+
+@router.post(
+    "/api/v1/sessions/{session_id}/hot-swap",
+    dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
+)
+async def hot_swap_session_proxy(
+    session_id: str,
+    req: HotSwapRequest,
+    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+) -> dict[str, Any]:
+    """Hands off active turn control from AI stand-in to player mid-session."""
+    player_id = req.player_id or user.user_id
+    char_id = req.character_id or ""
+
+    if char_id:
+        spicedb = get_spicedb_client()
+        allowed = await spicedb.check_permission(
+            resource_type="character",
+            resource_id=char_id,
+            permission="edit",
+            subject_type="user",
+            subject_id=player_id,
+        )
+        if not allowed:
+            allowed = await spicedb.check_permission(
+                resource_type="campaign",
+                resource_id=session_id,
+                permission="view",
+                subject_type="user",
+                subject_id=player_id,
+            )
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"User '{player_id}' does not have permission to take control of character '{char_id}'",
+            )
+        char = character_store.get_character(char_id)
+        if char:
+            char.is_stand_in_active = False
+
+    payload = {
+        "type": "hot_swap_takeover",
+        "sessionId": session_id,
+        "playerId": player_id,
+        "characterId": char_id,
+        "status": "control_transferred",
+    }
+    await ws_manager.broadcast(payload)
+
+    return {
+        "session_id": session_id,
+        "character_id": char_id,
+        "player_id": player_id,
+        "status": "control_transferred",
+        "is_stand_in_active": False,
+    }
 
 
 @router.post(

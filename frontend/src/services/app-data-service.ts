@@ -5,19 +5,8 @@ import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
 import { getOrCreateFallbackCharacterDetail, FALLBACK_CHARACTER_DETAILS_CACHE } from './fallback-data.ts';
-import {
-  FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS,
-  FALLBACK_SESSIONS, FALLBACK_PROFILE, FALLBACK_BOARD_TOKENS, FALLBACK_SESSION_EVENTS,
-  FALLBACK_CAMPAIGN_SESSIONS_MAP, getFallbackCampaignSessions, getFallbackSession, createFallbackCampaign,
-  createFallbackCampaignItem, updateFallbackCampaign, createFallbackCharacter,
-  assignFallbackCharacterCampaign, deleteFallbackCharacter, resolveLobbyAvailableCharacters,
-} from './app-data-service.fixtures.ts';
-import {
-  mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip,
-  mutateCharacterAddInventory, mutateCharacterRemoveInventory, mutateCharacterApplyCondition,
-  mutateCharacterRemoveCondition, mutateCharacterCastSpell, mutateCharacterPrepareSpell,
-  mutateCharacterRestoreSlot,
-} from './character-subresource-client.ts';
+import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_PROFILE, FALLBACK_BOARD_TOKENS, FALLBACK_SESSION_EVENTS, FALLBACK_CAMPAIGN_SESSIONS_MAP, getFallbackCampaignSessions, getFallbackSession, createFallbackCampaign, createFallbackCampaignItem, updateFallbackCampaign, createFallbackCharacter, assignFallbackCharacterCampaign, deleteFallbackCharacter, resolveLobbyAvailableCharacters } from './app-data-service.fixtures.ts';
+import { mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory, mutateCharacterRemoveInventory, mutateCharacterApplyCondition, mutateCharacterRemoveCondition, mutateCharacterCastSpell, mutateCharacterPrepareSpell, mutateCharacterRestoreSlot, mutateCharacterGuardrails } from './character-subresource-client.ts';
 
 export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_CAMPAIGN_SESSIONS_MAP };
 
@@ -127,6 +116,7 @@ export class AppDataService {
   castCharacterSpell(characterId: string, spellName: string, slotLevel = 1): Promise<any> { return mutateCharacterCastSpell(this, characterId, spellName, slotLevel); }
   prepareCharacterSpell(characterId: string, spellName: string, isPrepared = true): Promise<any> { return mutateCharacterPrepareSpell(this, characterId, spellName, isPrepared); }
   restoreCharacterSpellSlot(characterId: string, slotLevel: number): Promise<any> { return mutateCharacterRestoreSlot(this, characterId, slotLevel); }
+  updateCharacterGuardrails(characterId: string, payload: any): Promise<any> { return mutateCharacterGuardrails(this, characterId, payload); }
   async fetchRosterCampaignOptions(): Promise<RosterCampaignOption[]> { return (await this.fetchCampaigns()).map((c) => ({ id: c.id, title: c.title })); }
 
   async createCharacter(payload: CreateCharacterPayload): Promise<CharacterItem> {
@@ -192,6 +182,29 @@ export class AppDataService {
     const data = await this.request<CampaignItem>(`${this.apiBase}/campaigns/${campaignId}`, { method: 'PATCH', body: JSON.stringify(payload) });
     return data || updateFallbackCampaign(campaignId, payload);
   }
+
+  async requestHotSwap(sessionId: string, characterId: string, playerId?: string): Promise<any> {
+    const pid = playerId || authService.getUser()?.user_id || 'user-valeros';
+    const data = await this.request<any>(`${this.apiBase}/sessions/${sessionId}/hot-swap`, {
+      method: 'POST', body: JSON.stringify({ sessionId, characterId, playerId: pid }),
+    });
+    return data || { session_id: sessionId, character_id: characterId, player_id: pid, status: 'control_transferred' };
+  }
+
+  async updateProfile(payload: UpdateProfilePayload): Promise<UserClaims | null> {
+    const data = await this.request<UserClaims>(`${this.apiBase}/profile`, { method: 'PATCH', body: JSON.stringify(payload) });
+    const cur = authService.getUser() || FALLBACK_PROFILE;
+    const updated: UserClaims = {
+      ...cur, ...(data || {}),
+      display_name: payload.displayName ?? data?.display_name ?? cur.display_name,
+      avatar_url: payload.avatarUrl ?? data?.avatar_url ?? cur.avatar_url,
+      bio: payload.bio ?? data?.bio ?? cur.bio,
+    };
+    authService.updateUser(updated);
+    return updated;
+  }
 }
+
+export interface UpdateProfilePayload { displayName?: string; avatarUrl?: string; bio?: string; email?: string; }
 
 export const appDataService = AppDataService.getInstance();
