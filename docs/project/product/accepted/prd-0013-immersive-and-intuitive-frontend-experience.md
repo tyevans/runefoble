@@ -74,3 +74,8 @@ Existing virtual tabletops (Roll20, Foundry, Owlbear Rodeo) suffer from clunky, 
 - [`TASK-0084: Tactile Board Kinematics and Spoken Ghost Previews`](../../backlog/complete/0084-tactile-board-kinematics-and-spoken-ghost-previews.md)
 - [`TASK-0086: Settings Modal Tab Panels and Sub-Controllers Modular Decomposition`](../../backlog/complete/0086-settings-modal-tabs-and-controllers-decomposition.md)
 - [`TASK-0088: Microfrontends Blackbox Test Suite Modular Decomposition`](../../backlog/complete/0088-microfrontends-test-suite-decomposition.md)
+- [`TASK-0485: Tactile Board Atmospheric Weather Particles and Torchlight Flicker Overlay`](../../backlog/proposed/0485-tactile-board-atmospheric-weather-and-torchlight-flicker-overlay.md)
+- [`TASK-0486: Tactile Board Spoken Ghost Preview Interactive Fine-Tuning and Confirmation`](../../backlog/proposed/0486-tactile-board-spoken-ghost-preview-interactive-fine-tuning-and-confirmation.md)
+- [`TASK-0487: Tactile Board GM God-Mode Workspace and Fog-of-War Paintbrush`](../../backlog/proposed/0487-tactile-board-gm-god-mode-workspace-and-fog-paintbrush.md)
+- [`TASK-0488: Tactile Board Atmosphere and GM Workspace Frontdoor Blackbox Test Suite`](../../backlog/proposed/0488-tactile-board-atmosphere-and-gm-workspace-frontdoor-blackbox-test-suite.md)
+

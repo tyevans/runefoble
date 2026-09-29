@@ -1,7 +1,7 @@
 ---
 id: '0231'
 title: Board Domain Events Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0004
@@ -19,8 +19,8 @@ governing_stories:
 - US-0014
 - US-0043
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/381
 ---
-
 # TASK-0231: Board Domain Events Modular Decomposition
 
 ## Status

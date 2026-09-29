@@ -172,7 +172,23 @@ The component dispatches custom DOM events:
 
 ---
 
-## 7. Modular Blackbox Test Organization & Architecture
+## 7. Gateway API Soundscape Routing & Edge Zanzibar Authorization
+
+When frontend microfrontends such as `<runefoble-soundscape-controls>` or external client SDKs interact with soundscape capabilities, requests are routed through the API Gateway at `http://localhost:8000/api/v1/soundscape/*` (governed by TASK-0436, ADR-0001, ADR-0010, ADR-0013):
+
+| Gateway Endpoint | Method | Required Zanzibar Permission | Downstream Proxy / Action |
+|---|---|---|---|
+| `/api/v1/soundscape/cue` | POST | `play` on campaign or session | Triggers tactical foley cue (`SoundscapeCueRequest`) |
+| `/api/v1/soundscape/tension` | GET | Public / Authenticated | Retrieves session encounter tension & stem profile |
+| `/api/v1/soundscape/tension/calculate` | POST | Public / Authenticated | Computes tension score from combat round and CR |
+| `/api/v1/soundscape/stems/override` | POST | `run_session` or `manage` on campaign | Forces DM mood override (exploration, combat, etc.) |
+| `/api/v1/soundscape/leitmotif/{character_id}` | GET | Public / Authenticated | Queries character leitmotif signature configuration |
+
+The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) checks SpiceDB Zanzibar object permissions before forwarding to `SOUNDSCAPE_SERVICE_URL` (`http://soundscape:8010`) with an automatic in-process fallback for local execution.
+
+---
+
+## 8. Modular Blackbox Test Organization & Architecture
 
 The soundscape blackbox verification suite is partitioned into focused test modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
 - `tests/test_blackbox_soundscape_ui/`: Modular blackbox test suite (`test_manifest.py`, `test_stem_mixing.py`, `test_foley_ducking.py`, `conftest.py`) verifying microfrontend manifest advertising, package metadata integrity, TypeScript element exports, Storybook coverage, multi-channel stem mixing, tension scoring, WebAudio -12dB audio ducking, and Zanzibar authorization.
@@ -181,13 +197,28 @@ The soundscape blackbox verification suite is partitioned into focused test modu
 - `tests/test_blackbox_leitmotif_events.py`: Verifies CloudEvents domain event class mapping (`LeitmotifProfileConfigured`, `LeitmotifTriggered`, `CriticalHitScored`, `DeathSaveStarted`) and payload serialization roundtrips.
 - `tests/test_blackbox_leitmotif_api.py`: Verifies REST API routes (`/api/v1/soundscape/leitmotif/timbres`, `profile`, `trigger`, `active`), SpiceDB Zanzibar character owner authorization enforcement, and `<runefoble-leitmotif-config>` microfrontend manifest and component invariants.
 - `tests/test_blackbox_leitmotif_triggers.py`: Verifies multi-modal combat and reactive triggers (critical hits, near-death cello themes, WebAudio sidechain -12dB voice ducking) and volume envelope stage calculations.
+- `tests/test_blackbox_soundscape_gateway.py`: Verifies API Gateway `/api/v1/soundscape/*` proxy routing, OpenAPI schema exposure, SpiceDB Zanzibar object authorization (`play`, `run_session`, `manage`), and downstream service forwarding (< 500 lines).
 - `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`CombatEncounterStarted`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DeathSaveStarted`), platform bus subscription wiring, backward-compatibility re-exports, and file length limit invariants (< 180 lines).
 
 ---
 
-## 8. Modular Event Subscription & Service Architecture
+## 9. Modular Event Subscription & Service Architecture
 
 Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, domain event handlers and dependency injection are cleanly separated into focused modules strictly maintained under 180 lines:
 - `services/soundscape/src/soundscape/dependencies.py`: Retains repository singleton factories, SpiceDB Zanzibar permission guards, mixer session registries, and re-exports domain event dispatchers (< 150 lines).
 - `services/soundscape/src/soundscape/event_handlers.py`: Contains domain event subscription callbacks (`CombatEncounterStarted`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, `DeathSaveStarted`), dynamic tension recalculation triggers, and bus listener registration (`register_soundscape_event_handlers()`) (< 180 lines).
 - `services/soundscape/src/soundscape/main.py`: Coordinates service startup and registers event handlers during FastAPI application lifespan.
+
+---
+
+## 10. Modular Aggregate & Domain Handler Architecture
+
+Per ADR-0003, ADR-0007, ADR-0011, and ADR-0013, the event-sourced `SoundscapeAggregate` is cleanly decoupled from monolithic state transitions by delegating domain mutations and `@handles` appliers to dedicated mixin submodules under `services/soundscape/src/soundscape/handlers/`, with each file strictly constrained under 150 lines:
+
+- `services/soundscape/src/soundscape/aggregate.py`: Defines `SoundscapeState` and the core `SoundscapeAggregate` inheriting from all domain mixins (< 80 lines).
+- `services/soundscape/src/soundscape/handlers/stems.py`: `StemHandlersMixin` managing background music stems, crossfade durations, and multi-track channel levels (< 60 lines).
+- `services/soundscape/src/soundscape/handlers/foley.py`: `FoleyHandlersMixin` managing tactical sound cue triggers, recent history rings, and WebAudio ducking toggles (< 85 lines).
+- `services/soundscape/src/soundscape/handlers/tension.py`: `TensionHandlersMixin` managing encounter tension score updates and DM manual mood overrides (< 85 lines).
+- `services/soundscape/src/soundscape/handlers/leitmotif.py`: `LeitmotifHandlersMixin` managing character musical signatures, timbre configuration, and reactive trigger event sourcing (< 135 lines).
+- `services/soundscape/src/soundscape/handlers/__init__.py`: Re-exports domain mixins for consumption by `SoundscapeAggregate`.
+
