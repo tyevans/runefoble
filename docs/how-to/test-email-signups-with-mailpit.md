@@ -148,6 +148,19 @@ link = MailpitClient.extract_verification_link(latest.text)
 ### Offline & In-Memory Fallback
 In local unit tests where the Mailpit container is not active, `MailpitClient` automatically falls back to an in-memory buffer (`fallback_in_memory=True`), recording sent emails and allowing queries without network socket failures.
 
+### Running Blackbox Email Tests
+Runefoble maintains a modular blackbox test suite exercising user registration, token exchange, dev endpoints, and Mailpit email dispatch:
+
+```bash
+uv run pytest tests/test_blackbox_email_signup_mailpit/
+```
+
+The suite is decomposed into focused modules:
+- `conftest.py`: Shared FastAPI `TestClient` and in-memory `MailpitClient` isolation fixtures.
+- `test_registration_flow.py`: User registration, OTP code validation, resend verification, and activation link extraction.
+- `test_token_exchange.py`: Password token grant, refresh token flow, role verification, and logout.
+- `test_dev_mailpit_api.py`: Dev testing endpoints (`/dev/emails`, `/dev/send-test`, `/dev/stats`), inbox purging, and admin provisioning.
+
 ---
 
 ## Step 5: Test SMTP Delivery Manually

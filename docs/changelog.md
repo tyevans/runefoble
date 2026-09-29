@@ -19,6 +19,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **Email Signup Mailpit Blackbox Test Suite Decomposition (`TASK-0243`, `ADR-0003`, `ADR-0005`, `ADR-0007`, `ADR-0010`, `ADR-0013`)**:
+  - Decomposed monolithic test suite `tests/test_blackbox_email_signup_mailpit.py` (347 lines) into focused test modules under `tests/test_blackbox_email_signup_mailpit/`, keeping all test files strictly < 150 lines per Hard Invariant 6 and Hard Invariant 7:
+    - `conftest.py` (34 lines): Shared FastAPI `TestClient` setup and in-memory `MailpitClient` reset fixtures (< 60 lines target).
+    - `test_registration_flow.py` (109 lines): User registration, verification email receipt, OTP code validation, resend verification, and link/code regex extraction (< 120 lines target).
+    - `test_token_exchange.py` (82 lines): OAuth2 password token grant, role assignment, refresh token flow, error handling, and logout (< 110 lines target).
+    - `test_dev_mailpit_api.py` (85 lines): Development endpoints (`/dev/emails`, `/dev/send-test`, `/dev/stats`), inbox purging, admin seeding/invite, and line invariant tests (< 110 lines target).
+  - Preserved wire protocol TCP socket test and in-memory MailpitClient lifecycle integration in `tests/test_platform_email_modular_decomposition.py`.
+  - Updated Diataxis guide `docs/how-to/test-email-signups-with-mailpit.md`.
 - **Visualizer Graph Test Suite Modular Decomposition (`TASK-0334`, `ADR-0003`, `ADR-0007`, `ADR-0009`, `ADR-0010`, `ADR-0013`)**:
   - Decomposed monolithic test suite `tests/test_visualizer_graph.py` (376 lines) into modular test submodules under `tests/test_visualizer_graph/`, keeping all test modules strictly < 130 lines per Hard Invariant 6:
     - `test_builder.py` (64 lines): Entity parsing, dependency edge construction, graph synthesis, and bidirectional link validation (< 110 lines target).
