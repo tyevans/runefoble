@@ -78,6 +78,12 @@ async def update_stem_volumes(
     status_code=status.HTTP_200_OK,
     summary="Manually override soundscape mood profile (DM authority)",
 )
+@router.post(
+    "/stems/override",
+    response_model=TensionStatusResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Manually override soundscape mood profile (DM authority)",
+)
 async def override_mood(
     request: MoodOverrideRequest,
     user_id: Annotated[str | None, Depends(get_current_user_id)],

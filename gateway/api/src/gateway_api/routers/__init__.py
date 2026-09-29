@@ -7,6 +7,7 @@ from gateway_api.routers.downtime import router as downtime_router
 from gateway_api.routers.health import router as health_router
 from gateway_api.routers.hub_views import router as hub_views_router
 from gateway_api.routers.overlay import router as overlay_router
+from gateway_api.routers.soundscape import router as soundscape_router
 from gateway_api.routers.spectator import router as spectator_router
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "health_router",
     "hub_views_router",
     "overlay_router",
+    "soundscape_router",
     "spectator_router",
 ]

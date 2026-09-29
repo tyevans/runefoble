@@ -140,6 +140,12 @@ async def configure_character_leitmotif(
 
 
 @router.get(
+    "/{character_id}",
+    response_model=CharacterLeitmotifProfile,
+    status_code=status.HTTP_200_OK,
+    summary="Get character leitmotif configuration profile",
+)
+@router.get(
     "/profile/{character_id}",
     response_model=CharacterLeitmotifProfile,
     status_code=status.HTTP_200_OK,
