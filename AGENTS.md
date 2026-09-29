@@ -33,7 +33,7 @@ These rules are structural. Do not violate them for convenience.
 4. **All Python packages are managed through the root UV workspace.** Do not use pip, poetry, or virtualenvs directly. Run commands through `uv` or the developer `Makefile`.[^14]
 5. **Services publish OpenAPI specs to the Swagger UI hub.** Every new HTTP service must expose `/openapi.json` and register its URL in `deployments/helm/runefoble/values.yaml`.[^11]
 6. **File length limit (<500 lines).** Source files over ~500 lines are rarely justified. Whenever editing or committing code, inspect file lengths and decompose large files into focused, single-responsibility modules.
-7. **Blackbox TDD with frontdoor setup.** All feature development must be driven by blackbox tests interacting strictly through public frontdoors (e.g. public HTTP routes, WebSockets, or published standard domain events) rather than reaching into private internals or backdoor state manipulation. Test setup must be performed through the frontdoor interfaces, and assertions must verify observable outputs, public query projections, or emitted standard events.
+7. **Blackbox TDD & BDD with frontdoor setup.** All feature development must be driven by blackbox tests interacting strictly through public frontdoors (e.g. public HTTP routes, WebSockets, or published standard domain events) rather than reaching into private internals or backdoor state manipulation. All user flows and UI journeys must be expressed as Gherkin scenarios executed through Playwright browser automation without private backdoors or database manipulation. Test setup must be performed through the frontdoor interfaces, and assertions must verify observable outputs, public query projections, or emitted standard events.[^26]
 
 ## Design Principles
 
@@ -125,11 +125,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`test-email-signups-with-mailpit.md`](docs/how-to/test-email-signups-with-mailpit.md): How to capture and verify email signups, OTP verification codes, and password resets in local development with Mailpit mock SMTP.
 - [`build-settlements-and-play-mobile-minigames.md`](docs/how-to/build-settlements-and-play-mobile-minigames.md): How to design and scale settlement havens, customize establishments with living NPC workers, haggle with merchants under DM controls, and play mobile-first tavern and casino minigames.
 - [`validate-e2e-journeys-with-playwright-bdd.md`](docs/how-to/validate-e2e-journeys-with-playwright-bdd.md): How to validate end-to-end user journeys with Playwright BDD, frontdoor authentication fixtures, and multi-browser execution.
-
-
-
-
-
+- [`test-user-flows-with-playwright-bdd.md`](docs/how-to/test-user-flows-with-playwright-bdd.md): How to author Gherkin user flow scenarios, implement TypeScript step definitions with Playwright shadow-piercing locators, and execute E2E test suites.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
@@ -183,14 +179,15 @@ A backlog task or feature may only be transitioned to `refined/` and pulled into
 2. **Bounded Context & Microfrontends**: Target service bounded context (`services/<bc>`) is designated, and for any user-facing feature, the owning UI package (`services/<bc>/ui/`) and Custom Element tags (`<runefoble-...>`) are defined.[^25]
 3. **Reference PRD Cited**: A governing Product Requirement Document in `docs/project/product/accepted/` is linked to establish the user need and business value.[^18]
 4. **User Stories Linked**: Persona-driven user stories in `docs/project/user_stories/accepted/` are linked to anchor acceptance criteria.[^19]
-5. **Architectural Review**: Governing ADRs in `docs/project/adrs/accepted/` (e.g. ADR-0004, ADR-0012, ADR-0013) are cited and technical impact on existing boundaries evaluated.[^3][^25]
+5. **Architectural Review**: Governing ADRs in `docs/project/adrs/accepted/` (e.g. ADR-0004, ADR-0012, ADR-0013, ADR-0014) are cited and technical impact on existing boundaries evaluated.[^3][^25][^26]
 6. **INVEST Criteria Satisfied**: The task is validated against INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small [<500 lines per file], Testable).[^20]
 7. **Frontdoor Blackbox Test Plan**: Frontdoor test scenarios and setup are clearly specified, interacting strictly via public HTTP endpoints, WebSockets, or CloudEvents.
+8. **Frontdoor BDD Scenario Specification**: For any user-facing feature or UI view, the governing user story in `docs/project/user_stories/accepted/` must provide executable Gherkin scenarios (`Given ... When ... Then`) whose test setup is achievable strictly through public frontdoors (UI forms, Zitadel OIDC tokens, or public REST endpoints) per ADR-0014.[^26]
 
 ## Definition of Done (DoD)
 
 Work is complete only when:
-1. **Architectural Alignment**: Verified against governing ADRs (including ADR-0013 for microfrontends) without backdoor state manipulation.[^3][^25]
+1. **Architectural Alignment**: Verified against governing ADRs (including ADR-0013 for microfrontends and ADR-0014 for BDD) without backdoor state manipulation.[^3][^25][^26]
 2. **Microfrontend Vendoring**: Any user-facing components are built and vendored inside their owning service bounded context (`services/<bc>/ui/`), exposed via `/ui/manifest`, with the App Shell (`frontend/`) remaining strictly decoupled.[^25]
 3. **Frontend Storybook Verification**: UI components built with Shadow DOM and Bauhaus design tokens, accompanied by interactive Storybook stories with zero console errors.[^13]
 4. **Documentation Integrity**:
@@ -198,12 +195,13 @@ Work is complete only when:
    - New Diataxis guides (`docs/how-to/` or `docs/reference/`) are created if introducing generic patterns, microfrontends, or cross-service capabilities.
    - All new public APIs, events, and microfrontend custom elements are documented in `docs/reference/`.[^12]
 5. **Blackbox TDD Suite with Frontdoor Setup**: All scenarios verified through public entrypoints (HTTP routes, WebSockets, standard domain events) rather than private internals or backdoor state manipulation.
-6. **Automated Verification Gates**: All Python tests pass via `uv run pytest`, frontend builds pass via `pnpm run build` and `make build`, and `make health-check` passes.[^23]
-7. **Helm & Kubernetes Integrity**: Umbrella Helm chart passes `helm lint` and renders cleanly via `helm template`.[^4]
-8. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs and User Stories) updated to reflect the new state.[^18] For Backlog items (`complete/` and `PRIORITY.md`), updates are applied atomically upon integration into `main` by the integration orchestrator (never directly on feature branches or in worker worktrees to prevent merge conflicts).
-9. **Changelog Maintenance**: User-facing capabilities, architectural shifts, and public API/schema changes are recorded in `CHANGELOG.md` under `[Unreleased]` following the Keep a Changelog standard.
-10. **Platform Showcase Maintenance**: The marketing and platform showcase page (`docs/marketing.md`) is maintained and updated as progress is made, keeping live core capabilities, architectural highlights, and roadmap milestone statuses aligned with the current state of the platform.
-11. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
+6. **Playwright BDD End-to-End Verification**: User-facing features must have passing Playwright BDD test suites executing all acceptance criteria scenarios in headless browser automation without backdoor state manipulation per ADR-0014.[^26]
+7. **Automated Verification Gates**: All Python tests pass via `uv run pytest`, frontend builds pass via `pnpm run build` and `make build`, and `make health-check` passes.[^23]
+8. **Helm & Kubernetes Integrity**: Umbrella Helm chart passes `helm lint` and renders cleanly via `helm template`.[^4]
+9. **Registry & Backlog Synchronization**: Registries in `docs/project/` (PRDs and User Stories) updated to reflect the new state.[^18] For Backlog items (`complete/` and `PRIORITY.md`), updates are applied atomically upon integration into `main` by the integration orchestrator (never directly on feature branches or in worker worktrees to prevent merge conflicts).
+10. **Changelog Maintenance**: User-facing capabilities, architectural shifts, and public API/schema changes are recorded in `CHANGELOG.md` under `[Unreleased]` following the Keep a Changelog standard.
+11. **Platform Showcase Maintenance**: The marketing and platform showcase page (`docs/marketing.md`) is maintained and updated as progress is made, keeping live core capabilities, architectural highlights, and roadmap milestone statuses aligned with the current state of the platform.
+12. **File Length Limit**: Strictly enforced with zero source files exceeding ~500 lines.
 
 ## Dispatching Work to Agents & Parallel Worktrees
 
@@ -244,3 +242,4 @@ When delegating tasks to subagents:
 [^23]: Developer Makefile interfaces. `Makefile`
 [^24]: eventsource-py architecture ADR. `docs/project/adrs/accepted/adr-0011-eventsource-py-core-event-sourcing.md`
 [^25]: Microfrontend Architecture and Service Component Vendoring ADR. `docs/project/adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md`
+[^26]: Behavior-Driven Development and Playwright E2E ADR. `docs/project/adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md`

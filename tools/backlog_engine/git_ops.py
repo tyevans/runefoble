@@ -28,8 +28,16 @@ def commit_and_push(worktree_dir: Path, task: Task, branch: str) -> None:
     chk = run_cmd(["git", "rev-parse", "--verify", "origin/main"], cwd=worktree_dir)
     base_ref = "origin/main" if chk.returncode == 0 else "main"
 
-    run_cmd(["git", "checkout", base_ref, "--", "docs/project/backlog"], cwd=worktree_dir)
-    run_cmd(["git", "clean", "-fd", "docs/project/backlog"], cwd=worktree_dir)
+    status = run_cmd(["git", "status", "--porcelain", "docs/project/backlog"], cwd=worktree_dir)
+    dirty_files = set()
+    for line in status.stdout.splitlines():
+        parts = line.strip().split()
+        if len(parts) >= 2:
+            dirty_files.add(parts[-1])
+    revert_targets = [f for f in dirty_files if not f.endswith("docs/project/backlog/README.md")]
+    for target in revert_targets:
+        run_cmd(["git", "checkout", base_ref, "--", target], cwd=worktree_dir)
+        run_cmd(["git", "clean", "-fd", target], cwd=worktree_dir)
     run_cmd(["git", "add", "-A"], cwd=worktree_dir, check=True)
 
     status = run_cmd(["git", "status", "--porcelain"], cwd=worktree_dir)

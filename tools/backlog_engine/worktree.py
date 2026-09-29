@@ -85,12 +85,26 @@ def enforce_backlog_isolation(worktree_dir: Path) -> tuple[bool, str]:
 
     status_res = run_git(["status", "--porcelain", "docs/project/backlog"], cwd=worktree_dir)
     diff_res = run_git(
-        ["diff", f"{base_ref}...HEAD", "--", "docs/project/backlog"], cwd=worktree_dir
+        ["diff", f"{base_ref}...HEAD", "--name-only", "docs/project/backlog"], cwd=worktree_dir
     )
 
-    if status_res.stdout.strip() or diff_res.stdout.strip():
-        run_git(["checkout", base_ref, "--", "docs/project/backlog"], cwd=worktree_dir)
-        run_git(["clean", "-fd", "docs/project/backlog"], cwd=worktree_dir)
+    dirty_files = set()
+    for line in status_res.stdout.splitlines():
+        parts = line.strip().split()
+        if len(parts) >= 2:
+            dirty_files.add(parts[-1])
+    for line in diff_res.stdout.splitlines():
+        if line.strip():
+            dirty_files.add(line.strip())
+
+    revert_targets = [f for f in dirty_files if not f.endswith("docs/project/backlog/README.md")]
+
+    if revert_targets:
+        for target in revert_targets:
+            run_git(["checkout", base_ref, "--", target], cwd=worktree_dir)
+            target_path = worktree_dir / target
+            if not target_path.exists():
+                run_git(["clean", "-fd", target], cwd=worktree_dir)
         return (
             True,
             "Reverted branch modifications to docs/project/backlog/ (backlog progression is handled by the orchestrator).",
