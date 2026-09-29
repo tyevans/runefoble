@@ -43,6 +43,10 @@ When curating and refining candidate tasks that introduce or modify user-facing 
 2. **Frontdoor Setup Audit**: Inspect scenario `Given` steps to ensure preconditions are prepared exclusively through public frontdoors (UI forms, public REST APIs, or Zitadel OIDC session injection). Reject or repair any task whose scenarios depend on private backdoors or direct database manipulation.
 3. **Playwright BDD Verification Plan**: Ensure the task's Definition of Done mandates a passing Playwright BDD test suite in `e2e/` executing all acceptance scenarios in headless browser automation per [ADR-0014](../project/adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md).
 
+### Auditing Zero Backward Compatibility Shims During Curation
+During JIT refinement and task authoring, verify that proposed plans never preserve legacy shims, transitional facades, or re-exports:
+1. **Direct Call Site Migration**: Verify that all callers are updated to authoritative modules rather than through transitional shims.
+2. **Immediate Removal**: Reject any task plan that retains deprecated aliases or re-exports "for backwards compatibility" given that the platform has no external users yet.
 
 ## Backlog Isolation and Conflict-Free Concurrent Execution
 
