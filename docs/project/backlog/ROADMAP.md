@@ -140,7 +140,7 @@
 - [x] Character Management and Tabletop Sync Blackbox Test Suite (US-0064, US-0069, PRD-0023, TASK-0258)
 
 ### Extended App Shell, Live VTT Mesh & Persistent Directives Epics (Phase 3)
-- [x] Campaign Roster, Roles & Zanzibar Membership Lifecycle Integration (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, US-0064, PRD-0023, TASK-0353)
+- [ ] Campaign Roster, Roles & Zanzibar Membership Lifecycle Integration (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, US-0064, PRD-0023, TASK-0353)
 - [x] Dynamic Campaign Sessions Scoping, Scheduling & Offline Cache (`FEAT-UI-10`, US-0065, US-0067, PRD-0023, TASK-0354)
 - [x] Campaign Hub Client Routing and View Orchestration for Codex, Atlas, and Telemetry (`FEAT-UI-08`, US-0050, US-0067, PRD-0023, TASK-0355)
 - [x] Character Sheet Sub-Resource Mutations & Event-Sourced Persistence Integration (`FEAT-UI-09`, US-0015, US-0051, PRD-0006, PRD-0023, TASK-0356)
@@ -149,6 +149,17 @@
 - [ ] Gateway Soundscape API Routing & Zanzibar Authorization Proxy (`FEAT-SND-01`, US-0039, US-0053, PRD-0010, TASK-0436)
 - [ ] App Shell Soundscape Real-Time WebSocket Audio Synchronization & Foley Playback (`FEAT-SND-02`, US-0039, US-0053, PRD-0010, TASK-0437)
 - [ ] Soundscape Tactical Board Event Subscribers for Kinetic Foley Audio Cues (`FEAT-SND-03`, US-0039, US-0048, PRD-0010, TASK-0438)
+- [ ] Gateway Audience Studio API Routing & Zanzibar Authorization Proxy (`FEAT-UI-08`, `FEAT-SEC-01`, US-0006, US-0030, US-0031, PRD-0011, TASK-0439)
+- [ ] App Shell Audience Studio Chaos Poll Drawer & Live Voting Integration (`FEAT-UI-11`, US-0030, US-0031, PRD-0011, TASK-0440)
+- [ ] Audience Chaos Modifiers Event Bridge & Game Session Mutation Handlers (`FEAT-WAT-01`, US-0023, US-0031, PRD-0011, TASK-0441)
+
+### Playwright BDD End-to-End Verification & Governance (ADR-0014)
+- [x] Playwright BDD Testing Infrastructure and Frontdoor Harness (`TASK-0359`)
+- [ ] Definition of Ready & Done Governance Updates for BDD and Playwright (`TASK-0360`)
+- [ ] Campaign Hub Lifecycle and Navigation Playwright BDD Test Suite (`TASK-0361`)
+- [x] Session Lobby & Tabletop VTT Playwright BDD Test Suite (`TASK-0362`)
+- [ ] Character Sheet and Inventory Mutations Playwright BDD Test Suite (`TASK-0363`)
+- [ ] GitHub Actions CI Workflow Playwright BDD Quality Gate Integration (`TASK-0364`)
 
 ## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames
 ### Foundational Aggregates, Social Graphs & Civic Enablers
@@ -266,7 +277,7 @@
 - [ ] Session Modal Blackbox Test Suite Modular Decomposition (TASK-0284)
 - [ ] Merchant Haggler Styles Modular Decomposition (TASK-0285)
 - [ ] Character Management and VTT Sync Blackbox Test Suite Modular Decomposition (TASK-0286)
-- [ ] Frontend App Shell Test Suite Modular Decomposition (TASK-0287)
+- [x] Frontend App Shell Test Suite Modular Decomposition (TASK-0287)
 - [ ] Frontend Character Management Test Suite Modular Decomposition (TASK-0288)
 - [ ] Project Visualizer Drawer Test Suite Modular Decomposition (TASK-0289)
 - [ ] Frontend SPA Router Test Suite Modular Decomposition (TASK-0290)
@@ -319,7 +330,7 @@
 - [ ] Gateway Campaign Sessions Blackbox Test Suite Modular Decomposition (TASK-0337)
 - [ ] Campaign Lore Handouts Generator Modular Decomposition (TASK-0338)
 - [ ] Initiative Tracker Blackbox Test Suite Modular Decomposition (TASK-0339)
-- [ ] Settlement Integration Test Suite Modular Decomposition (TASK-0340)
+- [x] Settlement Integration Test Suite Modular Decomposition (TASK-0340)
 - [ ] Minigames WebSocket Test Suite Modular Decomposition (TASK-0341)
 - [ ] Campaign Lore RAG Test Suite Modular Decomposition (TASK-0342)
 - [ ] West Marches Domain Models Modular Decomposition (TASK-0343)
@@ -333,6 +344,7 @@
 - [ ] Speech-to-Intent Test Suite Modular Decomposition (TASK-0351)
 - [ ] Dev Server Orchestrator Modular Decomposition (TASK-0434)
 - [ ] Gateway Character Subresources Router Modular Decomposition (TASK-0435)
+- [ ] Dev Environment Blackbox Test Suite Modular Decomposition (TASK-0442)
 
 ### Playwright BDD Component Coverage Epics (ADR-0014)
 - [ ] Auth Modal and User Menu Playwright BDD Component Coverage (TASK-0365)

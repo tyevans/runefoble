@@ -47,3 +47,6 @@ High-concurrency read-only WebSocket connections; handled via edge Redis fanout 
 - [`TASK-0051: TypeScript Audience Studio & Live Stream Interactivity Microservice`](../../backlog/complete/0051-audience-studio-and-live-stream-interactivity-bc.md)
 - [`TASK-0056: Cinematic Director Auto-Camera and OBS Stream Overlay`](../../backlog/complete/0056-cinematic-director-auto-camera-and-obs-overlay.md)
 - [`TASK-0075: Spectator View Stream Clean Overlay and Broadcast Test Suite Modular Decomposition`](../../backlog/complete/0075-spectator-view-stream-overlay-test-suite-decomposition.md)
+- [`TASK-0439: Gateway Audience Studio API Routing & Zanzibar Authorization Proxy`](../../backlog/proposed/0439-gateway-audience-studio-api-routing-and-zanzibar-proxy.md)
+- [`TASK-0440: App Shell Audience Studio Chaos Poll Drawer & Live Voting Integration`](../../backlog/proposed/0440-app-shell-audience-studio-chaos-poll-drawer-and-voting-integration.md)
+- [`TASK-0441: Audience Chaos Modifiers Event Bridge & Game Session Mutation Handlers`](../../backlog/proposed/0441-audience-chaos-modifiers-event-bridge-and-game-session-mutations.md)
