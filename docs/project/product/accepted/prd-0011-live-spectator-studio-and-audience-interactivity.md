@@ -50,3 +50,6 @@ High-concurrency read-only WebSocket connections; handled via edge Redis fanout 
 - [`TASK-0439: Gateway Audience Studio API Routing & Zanzibar Authorization Proxy`](../../backlog/proposed/0439-gateway-audience-studio-api-routing-and-zanzibar-proxy.md)
 - [`TASK-0440: App Shell Audience Studio Chaos Poll Drawer & Live Voting Integration`](../../backlog/proposed/0440-app-shell-audience-studio-chaos-poll-drawer-and-voting-integration.md)
 - [`TASK-0441: Audience Chaos Modifiers Event Bridge & Game Session Mutation Handlers`](../../backlog/proposed/0441-audience-chaos-modifiers-event-bridge-and-game-session-mutations.md)
+- [`TASK-0455: Audience Studio Twitch EventSub and YouTube Live Chat Ingestion Engine`](../../backlog/proposed/0455-audience-studio-twitch-eventsub-and-youtube-chat-ingestion.md)
+- [`TASK-0456: Audience Studio OBS WebSocket Bridge and Stream Deck Hardware Actions`](../../backlog/proposed/0456-audience-studio-obs-websocket-bridge-and-stream-deck-actions.md)
+- [`TASK-0457: Spectator Overlay Multi-Track Audio Routing and Stem Isolation`](../../backlog/proposed/0457-spectator-overlay-multi-track-audio-routing-and-stem-isolation.md)
