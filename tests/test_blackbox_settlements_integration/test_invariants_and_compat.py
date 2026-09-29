@@ -15,14 +15,11 @@ from .conftest import _assert_submodules
 
 def test_modular_submodule_line_invariants():
     """Verify extracted auth, worker, and test suite submodules remain strictly < 130 lines."""
-    _assert_submodules(
-        "services/game_session/src/game_session/settlement/auth",
-        "services/game_session/src/game_session/settlement/auth.py",
-    )
-    _assert_submodules(
-        "services/game_session/src/game_session/settlement/workers",
-        "services/game_session/src/game_session/settlement/workers_router.py",
-    )
+    for d, f in [("auth", "auth.py"), ("workers", "workers_router.py"), ("haven", "router.py")]:
+        _assert_submodules(
+            f"services/game_session/src/game_session/settlement/{d}",
+            f"services/game_session/src/game_session/settlement/{f}",
+        )
     for sm in Path("tests/test_blackbox_settlements_integration").glob("*.py"):
         lines = len(sm.read_text().splitlines())
         assert lines < 130, f"{sm.name} must be strictly < 130 lines, got {lines}"

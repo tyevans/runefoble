@@ -110,6 +110,13 @@ routers/
 │   ├── actions.py       # Action interceptor and pause window endpoints
 │   └── whispers.py      # Private narrative whisper endpoints
 ├── settlement/
+│   ├── router.py         # Haven builder aggregator facade (< 40 lines)
+│   ├── haven/
+│   │   ├── __init__.py   # Re-exports haven routers, handlers, and loaders (< 60 lines)
+│   │   ├── loaders.py    # Aggregate loading and Zanzibar authorization (< 130 lines)
+│   │   ├── routes_havens.py # Haven founding, projection, and listing (< 130 lines)
+│   │   ├── routes_establishments.py # District zoning and construction (< 130 lines)
+│   │   └── routes_upgrades.py # Civic tier scaling and facility upgrades (< 130 lines)
 │   ├── workers_router.py # Aggregator facade (< 35 lines)
 │   └── workers/
 │       ├── __init__.py   # Re-exports models and dynamic router properties
