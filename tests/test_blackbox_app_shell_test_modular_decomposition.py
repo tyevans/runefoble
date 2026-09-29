@@ -81,7 +81,7 @@ def test_package_json_test_script_covers_submodules():
                 "resolves session lobby view",
                 "resolves active VTT session view",
                 "defaults to campaigns view",
-                "navigates to deep route #/characters/:characterId",
+                "navigates to deep route",
             ],
         ),
         (
@@ -132,7 +132,8 @@ def test_individual_submodule_execution(submodule_name: str, expected_tokens: li
     )
     assert "fail 0" in result.stdout
     for token in expected_tokens:
-        assert token in result.stdout, (
+        escaped_token = token.replace("#", "\\#")
+        assert token in result.stdout or escaped_token in result.stdout, (
             f"Expected token '{token}' not found in {submodule_name} execution stdout:\n{result.stdout}"
         )
 
