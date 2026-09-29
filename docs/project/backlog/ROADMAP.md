@@ -182,6 +182,11 @@
 - [ ] FastMCP Live Session Transcripts and Initiative Streaming Resources (`FEAT-DEV-01`, US-0008, PRD-0022, TASK-0472)
 - [ ] App Shell External Integrations and Webhook Management Microfrontend (`FEAT-UI-08`, `FEAT-DEV-01`, US-0035, PRD-0022, PRD-0023, TASK-0473)
 - [ ] External Webhooks and Scriptable Tile Triggers Blackbox Test Suite (US-0008, US-0033, US-0035, PRD-0022, TASK-0474)
+- [ ] Gateway Campaign Invite Preview API and Client-Side Invite Acceptance Route (`FEAT-UI-08`, `FEAT-SEC-01`, US-0063, US-0066, PRD-0023, TASK-0475)
+- [ ] App Shell Network Connectivity Monitor, Offline Status Banner, and Auto-Reconnection (`FEAT-UI-11`, US-0066, PRD-0005, PRD-0023, TASK-0476)
+- [ ] Pre-Game Session Lobby Microphone Preflight and Audio Calibration Component (`FEAT-UI-10`, `FEAT-VOX-01`, US-0065, PRD-0004, PRD-0020, PRD-0023, TASK-0477)
+- [ ] Campaign Archival Status Lifecycle and Dashboard Archive Filter Tabs (`FEAT-UI-08`, US-0063, US-0071, PRD-0023, TASK-0478)
+- [ ] Campaign Invites, Offline Recovery, and Audio Preflight Blackbox Test Suite (US-0063, US-0065, US-0066, US-0071, PRD-0023, TASK-0479)
 
 
 
