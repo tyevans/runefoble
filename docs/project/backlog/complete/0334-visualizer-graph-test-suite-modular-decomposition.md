@@ -1,7 +1,7 @@
 ---
 id: '0334'
 title: Visualizer Graph Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0227
@@ -14,8 +14,8 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/340
 ---
-
 # TASK-0334: Visualizer Graph Test Suite Modular Decomposition
 
 ## Status
