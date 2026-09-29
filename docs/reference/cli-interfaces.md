@@ -36,7 +36,7 @@
 | Script | Purpose |
 |---|---|
 | `./scripts/health_check.py` | Standalone Python health inspection auditing line count invariants and buffer drift |
-| `./scripts/dev_server.py` | Unified local development orchestrator running gateway, Vite frontend, and optional AI inference worker concurrently |
+| `./scripts/dev_server.py` | Unified local development orchestrator CLI driver (< 100 lines) backed by `scripts/dev_orchestrator/` submodules (`colors.py`, `ports.py`, `health.py`, `runner.py`) running gateway, Vite frontend, and optional AI worker concurrently |
 | `./scripts/cleanup-worktrees.sh` | Audits and removes merged git worktrees, cleans up branches, and prunes records |
 | `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |
 | `./scripts/run-backlog-engine.sh` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching |
