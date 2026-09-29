@@ -144,6 +144,26 @@ def test_git_metadata_harvester_parsing(tmp_path: Path, monkeypatch: pytest.Monk
     assert any(c.hash == "744383e" for c in commits)
 
 
+def test_git_metadata_harvester_max_commits(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    (tmp_path / ".git").mkdir()
+    executed_cmds = []
+
+    def mock_check_output(cmd, **kwargs):
+        executed_cmds.append(cmd)
+        return ""
+
+    monkeypatch.setattr(subprocess, "check_output", mock_check_output)
+
+    harvester_unlimited = GitMetadataHarvester(tmp_path)
+    harvester_unlimited.harvest()
+    assert "-n" not in executed_cmds[0]
+
+    harvester_limited = GitMetadataHarvester(tmp_path, max_commits=250)
+    harvester_limited.harvest()
+    assert "-n" in executed_cmds[1]
+    assert "250" in executed_cmds[1]
+
+
 def test_modular_parsers_and_facade_compatibility(repo_root: Path):
     # Test markdown utils facade
     fm, body = parse_frontmatter("---\nid: 1\n---\n# Test\n## Section\n- item 1\n- item 2")
