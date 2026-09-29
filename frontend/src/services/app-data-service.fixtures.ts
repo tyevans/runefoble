@@ -55,8 +55,9 @@ export const FALLBACK_MEMBERS: CampaignMember[] = [
 ];
 
 export const FALLBACK_PARTICIPANTS: LobbyParticipant[] = [
-  { userId: 'user-valeros', username: 'Valeros', role: 'Fighter Lvl 4', characterId: 'char-valeros', characterName: 'Valeros of Korvosa', characterClass: 'Fighter', characterLevel: 4, isReady: true, isAbsent: false, onlineStatus: 'online' },
-  { userId: 'user-kyra', username: 'Kyra', role: 'Cleric Lvl 4', characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden', characterClass: 'Cleric', characterLevel: 4, isReady: false, isAbsent: true, onlineStatus: 'offline' },
+  { userId: 'user-valeros', username: 'Valeros', role: 'Fighter Lvl 4', characterId: 'char-valeros', characterName: 'Valeros of Korvosa', characterClass: 'Fighter', characterLevel: 4, isReady: false, isAbsent: false, onlineStatus: 'online' },
+  { userId: 'user-sarah', username: 'Sarah', role: 'Rogue Lvl 3', characterId: 'char-sarah', characterName: 'Sarah Shadowstep', characterClass: 'Rogue', characterLevel: 3, isReady: false, isAbsent: false, onlineStatus: 'online' },
+  { userId: 'user-kyra', username: 'Kyra', role: 'Cleric Lvl 4', characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden', characterClass: 'Cleric', characterLevel: 4, isReady: false, isAbsent: false, onlineStatus: 'offline' },
 ];
 
 export const FALLBACK_CAMPAIGN_SESSIONS_MAP: Record<string, CampaignSessionItem[]> = {
@@ -115,22 +116,14 @@ export function updateFallbackCampaign(campaignId: string, payload: UpdateCampai
 }
 
 export function createFallbackCharacter(payload: CreateCharacterPayload, ownerId: string): CharacterItem {
-  return {
-    id: `char-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    name: payload.name, characterClass: payload.characterClass, subclass: payload.subclass,
-    level: payload.level || 1, currentHp: payload.maxHp, maxHp: payload.maxHp, armorClass: payload.armorClass,
-    speed: payload.speed || 30, portraitUrl: payload.portraitUrl, campaignId: null, campaignTitle: null, ownerId,
-  };
+  return { id: `char-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, name: payload.name, characterClass: payload.characterClass, subclass: payload.subclass, level: payload.level || 1, currentHp: payload.maxHp, maxHp: payload.maxHp, armorClass: payload.armorClass, speed: payload.speed || 30, portraitUrl: payload.portraitUrl, campaignId: null, campaignTitle: null, ownerId };
 }
 
 export function assignFallbackCharacterCampaign(characterId: string, campaignId: string | null): void {
   const char = FALLBACK_CHARACTERS.find((c) => c.id === characterId);
-  if (char) {
-    char.campaignId = campaignId;
-    const camp = FALLBACK_CAMPAIGNS.find((c) => c.id === campaignId);
-    char.campaignTitle = camp ? camp.title : null;
-  }
+  if (char) { char.campaignId = campaignId; const camp = FALLBACK_CAMPAIGNS.find((c) => c.id === campaignId); char.campaignTitle = camp ? camp.title : null; }
 }
+
 
 export function deleteFallbackCharacter(characterId: string): void {
   const idx = FALLBACK_CHARACTERS.findIndex((c) => c.id === characterId);
@@ -145,7 +138,7 @@ export function resolveLobbyAvailableCharacters(characters: CharacterItem[], cam
 }
 
 export const FALLBACK_BOARD_TOKENS: BoardToken[] = [
-  { id: '1', name: 'Valeros', x: 2, y: 3, color: 'var(--rf-accent-secondary)', hp: 38, maxHp: 45, visionRadius: 2 },
+  { id: '1', name: 'Valeros', x: 2, y: 2, color: 'var(--rf-accent-secondary)', hp: 38, maxHp: 45, visionRadius: 2 },
   { id: '2', name: 'Kyra (AI)', x: 3, y: 3, isAiControlled: true, color: 'var(--rf-accent-primary)', hp: 28, maxHp: 32, visionRadius: 2 },
   { id: '3', name: 'Goblin Scout', x: 5, y: 1, isHostile: true, color: 'var(--rf-accent-tertiary)', hp: 7, maxHp: 12 },
   { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, isHostile: true, color: 'var(--rf-border-color)', hp: 52, maxHp: 75 },

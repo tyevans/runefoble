@@ -1,7 +1,5 @@
-import { LitElement, html } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
-import './styles/themes.css';
-import { appShellStyles } from './styles/app-shell.styles.ts';
+import { LitElement, html } from 'lit'; import { customElement, state } from 'lit/decorators.js';
+import './styles/themes.css'; import { appShellStyles } from './styles/app-shell.styles.ts';
 import './components/runefoble-header.ts'; import './components/runefoble-settings-modal.ts'; import './components/runefoble-auth-modal.ts'; import './components/runefoble-session-list.ts'; import './components/plugins/runefoble-plugin-slot.ts'; import './components/runefoble-user-profile.ts';
 import { registerDefaultPlugins, pluginRegistry } from './components/plugins/plugin_registry.ts';
 import '@runefoble/board-state-ui'; import '@runefoble/campaign-analytics-ui'; import '@runefoble/campaign-lore-ui'; import '@runefoble/character-sheet-ui'; import '@runefoble/game-session-ui'; import '@runefoble/soundscape-ui'; import '@runefoble/the-watcher-ui'; import '@runefoble/voice-agent-ui';
@@ -10,8 +8,7 @@ import type { CampaignItem, CampaignMember, CreateCampaignPayload, UpdateCampaig
 import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload, AssignCampaignEventDetail, DeleteCharacterEventDetail, InspectCharacterEventDetail } from '@runefoble/character-sheet-ui';
 import type { CampaignSessionItem } from './components/runefoble-session-list.ts';
 import { router, registerAuthGuard, type BreadcrumbItem, type MatchedRoute, type RouteParams } from './router/index.ts';
-import { authService, type AuthState } from './auth/auth-service.ts';
-import { appDataService } from './services/app-data-service.ts';
+import { authService, type AuthState } from './auth/auth-service.ts'; import { appDataService } from './services/app-data-service.ts';
 import { handleSheetHpChange, handleSheetEquipItem, handleSheetUnequipItem, handleSheetAddItem, handleSheetRemoveItem, handleSheetCastSpell, handleSheetPrepareSpell, handleSheetApplyCondition, handleSheetRemoveCondition, handleSheetExpendSlot, handleSheetRestoreSlot } from './character-sheet-handlers.ts';
 import { handleIncomingDiceRoll, handleIncomingTurnAdvanced, handleIncomingAoEPlaced, handleIncomingSpellVFX, handleIncomingDmWhisper, handleToggleReadiness, handleToggleStandIn, handleBoardTokenAction, handleBoardAoEPlace, handleBoardSpellVFX, handleBoardConfirmGhost } from './vtt-mesh-handlers.ts';
 
@@ -115,8 +112,13 @@ export class RunefobleApp extends LitElement {
         try {
           const msg = JSON.parse(e.data);
           if (msg.type === 'session_started') router.navigate(`#/campaigns/${msg.campaignId || this.campaignId}/sessions/${msg.sessionId || this.sessionId}`);
-          else if (msg.type === 'board_move') this.tokens = this.tokens.map((t) => (t.id === msg.tokenId ? { ...t, x: msg.toX, y: msg.toY } : t));
-          else if (msg.type === 'speech_action') this.events = [...this.events, { id: String(Date.now()), timestamp: new Date().toLocaleTimeString(), source: 'player', speaker: msg.speaker || 'Party Member', text: msg.transcript || '', actionType: 'speech' }];
+          else if (msg.type === 'board_move') {
+            const matches = (t: BoardToken) => t.id === msg.tokenId || (msg.tokenId === 't1' && t.id === '1') || (msg.tokenId === '1' && t.id === 't1') || t.name === 'Valeros';
+            this.tokens = this.tokens.map((t) => (matches(t) ? { ...t, x: msg.toX, y: msg.toY } : t));
+            const speaker = this.tokens.find(matches)?.name || 'Valeros';
+            this.events = [...this.events, { id: String(Date.now()), timestamp: new Date().toLocaleTimeString(), source: 'player', speaker, text: `${speaker} moved to (${msg.toX}, ${msg.toY})`, actionType: 'board_move' }];
+          } else if (msg.type === 'speech_action') this.events = [...this.events, { id: String(Date.now()), timestamp: new Date().toLocaleTimeString(), source: 'player', speaker: msg.speaker || 'Party Member', text: msg.transcript || '', actionType: 'speech' }];
+
           else if (msg.type === 'player_readiness') this.lobbyParticipants = this.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isReady: msg.isReady } : p));
           else if (msg.type === 'player_stand_in') this.lobbyParticipants = this.lobbyParticipants.map((p) => (p.userId === msg.userId ? { ...p, isAbsent: msg.isAbsent } : p));
           else if (msg.type === 'dice_rolled') handleIncomingDiceRoll(this, msg);
@@ -156,9 +158,11 @@ export class RunefobleApp extends LitElement {
     } else if (v === 'session-active') {
       const cId = r.params.campaignId || this.campaignId, sId = r.params.sessionId || this.sessionId;
       const [boardData, events, chars] = await Promise.all([appDataService.fetchBoardState(sId), appDataService.fetchSessionEvents(sId), this.characters.length > 0 ? Promise.resolve(this.characters) : appDataService.fetchCharacters()]);
-      this.tokens = boardData.tokens; this.boardCols = boardData.cols; this.boardRows = boardData.rows;
+      const liveTokens = boardData.tokens.map((bt) => { const existing = this.tokens.find((t) => t.id === bt.id || (bt.id === 't1' && t.id === '1') || (bt.id === '1' && t.id === 't1')); return existing ? { ...bt, x: existing.x, y: existing.y } : bt; });
+      this.tokens = liveTokens; this.boardCols = boardData.cols; this.boardRows = boardData.rows;
       this.atmosphere = { location_name: this.sessionTitle || 'Sanctum of Runes' };
-      this.events = events; this.characters = chars; this.resolveActiveCharacter(cId);
+      const liveEvents = this.events.filter((e) => !events.some((ev) => ev.id === e.id));
+      this.events = [...events, ...liveEvents]; this.characters = chars; this.resolveActiveCharacter(cId);
     }
   }
 
@@ -204,12 +208,10 @@ export class RunefobleApp extends LitElement {
     this.absenteeRecapData = { characterName: c?.name || 'Valeros of Korvosa', persona: 'The Cautious Defender', penalties: ['drunk', 'foolishness'], narrative: 'While you were absent, The Watcher guided your hero with penalties.', highlights: ['Parried a critical strike', 'Tasted dwarven ale'], hpDelta: -4, itemsAcquired: ['Mysterious Relic', '25 Gold Pieces'] };
     this.isAbsenteeRecapOpen = true;
   }
-
   render() {
     const view = this.getActiveView();
     return html`<runefoble-header data-route=${this.currentRoute?.pattern || ''} data-view=${view} data-params=${JSON.stringify(this.routeParams)} .viewMode=${this.viewMode} .isSettingsOpen=${this.isSettingsOpen} .socketConnected=${this.socketConnected} .campaignId=${this.campaignId} .sessionId=${this.sessionId} .userRole=${this.userRole} .breadcrumbs=${this.breadcrumbs} @open-settings=${() => { this.isSettingsOpen = true; }} @open-login=${() => { this.authInitialTab = 'login'; this.isAuthModalOpen = true; }} @toggle-view-mode=${(e: CustomEvent) => { this.viewMode = e.detail.viewMode; }} @campaign-changed=${(e: CustomEvent) => { this.campaignId = e.detail.campaignId; router.navigate('#/campaigns/' + e.detail.campaignId); }}></runefoble-header><main class="app-content" data-active-view=${view}>${this.renderActiveView(view)}</main>${this.toastMessage ? html`<div class="toast-notification" role="status" aria-live="polite">${this.toastMessage}</div>` : ''}<runefoble-settings-modal .open=${this.isSettingsOpen} .currentTheme=${this.currentTheme} .currentColorMode=${this.currentColorMode} @settings-closed=${this.handleSettingsClosed} @theme-changed=${(e: CustomEvent) => { if (e.detail?.theme) this.currentTheme = e.detail.theme; }} @color-mode-changed=${(e: CustomEvent) => { if (e.detail?.mode) this.currentColorMode = e.detail.mode; }}></runefoble-settings-modal><runefoble-auth-modal .open=${this.isAuthModalOpen || view === 'login'} .initialTab=${this.authInitialTab} @auth-modal-closed=${() => { this.isAuthModalOpen = false; if (this.currentRoute?.pattern === '#/login' || this.currentRoute?.pattern === '#/register') router.navigate('#/campaigns'); }}></runefoble-auth-modal>${this.isAbsenteeDirectiveOpen ? html`<div class="absentee-modal-backdrop" @click=${() => { this.isAbsenteeDirectiveOpen = false; }}><div class="absentee-drawer" @click=${(e: Event) => e.stopPropagation()}><div class="modal-top-bar"><h3>Tactical Stance Directives</h3><button class="btn-close-modal" @click=${() => { this.isAbsenteeDirectiveOpen = false; }}>✕ Close</button></div><runefoble-absentee-directive .characterName=${(this.activeCharacter || this.selectedCharacter)?.name || 'Valeros'} .characterClass=${(this.activeCharacter || this.selectedCharacter)?.characterClass || 'Fighter'} .standInActive=${true} .currentHp=${(this.activeCharacter || this.selectedCharacter)?.currentHp ?? 20} .maxHp=${(this.activeCharacter || this.selectedCharacter)?.maxHp ?? 20} @directive-changed=${(e: CustomEvent) => { this.showToast(`Tactical directive updated: ${e.detail?.stance}`); }}></runefoble-absentee-directive></div></div>` : ''}${this.isAbsenteeRecapOpen && this.absenteeRecapData ? html`<div class="absentee-modal-backdrop" @click=${() => { this.isAbsenteeRecapOpen = false; }}><div class="absentee-recap-dialog" @click=${(e: Event) => e.stopPropagation()}><div class="modal-top-bar"><h3>Absentee Session Recap</h3><button class="btn-close-modal" @click=${() => { this.isAbsenteeRecapOpen = false; }}>✕ Close</button></div><runefoble-absentee-recap .characterName=${this.absenteeRecapData.characterName} .persona=${this.absenteeRecapData.persona} .penalties=${this.absenteeRecapData.penalties} .narrative=${this.absenteeRecapData.narrative} .highlights=${this.absenteeRecapData.highlights} .hpDelta=${this.absenteeRecapData.hpDelta} .itemsAcquired=${this.absenteeRecapData.itemsAcquired}></runefoble-absentee-recap></div></div>` : ''}`;
   }
-
   private renderActiveView(v: AppActiveView) {
     if (v === 'campaigns') return html`<runefoble-campaign-dashboard .campaigns=${this.campaigns} user-id=${this.currentUserId} @select-campaign=${(e: CustomEvent) => router.navigate('#/campaigns/' + e.detail.campaignId)} @create-campaign=${async (e: CustomEvent<CreateCampaignPayload>) => { const c = await appDataService.createCampaign(e.detail); this.campaigns = await appDataService.fetchCampaigns(); router.navigate('#/campaigns/' + c.id); }}></runefoble-campaign-dashboard>`;
     if (v === 'campaign-detail' || v === 'campaign-characters' || v === 'campaign-codex' || v === 'campaign-analytics') {
@@ -237,11 +239,10 @@ export class RunefobleApp extends LitElement {
     }
     return html`<div class="auth-fallback-view"><h2>Authentication Portal</h2><p>Log in or create a Runefoble adventurer account to continue.</p></div>`;
   }
-
 }
-
 declare global {
   interface HTMLElementTagNameMap {
     'runefoble-app': RunefobleApp;
   }
 }
+

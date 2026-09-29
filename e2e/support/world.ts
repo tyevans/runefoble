@@ -1,7 +1,4 @@
-/**
- * Runefoble Playwright BDD World Context Storage
- * Governed by ADR-0014 and Hard Invariant 7 (Frontdoor Blackbox TDD).
- */
+import type { BrowserContext, Page } from '@playwright/test';
 
 export interface TestUser {
   userId: string;
@@ -19,6 +16,16 @@ export class World {
   public characterId: string | null = null;
   public activeTheme: string | null = null;
   public customState: Map<string, unknown> = new Map();
+  public extraContexts: BrowserContext[] = [];
+  public userPages: Map<string, Page> = new Map();
+
+  setPage(name: string, page: Page): void {
+    this.userPages.set(name.toLowerCase(), page);
+  }
+
+  getPage(name: string): Page | undefined {
+    return this.userPages.get(name.toLowerCase());
+  }
 
   reset(): void {
     this.currentUser = null;
@@ -28,6 +35,15 @@ export class World {
     this.characterId = null;
     this.activeTheme = null;
     this.customState.clear();
+    this.userPages.clear();
+  }
+
+  async cleanup(): Promise<void> {
+    for (const ctx of this.extraContexts) {
+      await ctx.close().catch(() => {});
+    }
+    this.extraContexts = [];
+    this.reset();
   }
 
   set(key: string, value: unknown): void {
@@ -38,3 +54,4 @@ export class World {
     return this.customState.get(key) as T | undefined;
   }
 }
+
