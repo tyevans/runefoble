@@ -55,3 +55,9 @@ Developer modders (like Alex the Developer / Plugin Modder) and Game Masters (li
 - [`TASK-0172: Dynamic FastMCP Tool Hot-Reloading Registry`](../../backlog/complete/0172-dynamic-fastmcp-tool-hot-reloading-registry.md)
 - [`TASK-0173: Universal VTT Door and Dynamic Lighting Parser`](../../backlog/complete/0173-universal-vtt-door-and-lighting-parser.md)
 - [`TASK-0174: Community Plugin UI Extension Slots Microfrontend`](../../backlog/complete/0174-community-plugin-ui-extension-slots-microfrontend.md)
+- [`TASK-0470: Universal VTT Scriptable Grid Tile Triggers and Activation Event Pipeline`](../../backlog/proposed/0470-universal-vtt-scriptable-grid-tile-triggers.md)
+- [`TASK-0471: Redis Streams External Domain Event Webhooks Gateway and Delivery Worker`](../../backlog/proposed/0471-redis-streams-external-event-webhooks-gateway.md)
+- [`TASK-0472: FastMCP Live Session Transcripts and Initiative Streaming Resources`](../../backlog/proposed/0472-fastmcp-live-session-transcripts-and-initiative-resources.md)
+- [`TASK-0473: App Shell External Integrations and Webhook Management Microfrontend`](../../backlog/proposed/0473-app-shell-external-integrations-and-webhooks-microfrontend.md)
+- [`TASK-0474: External Webhooks and Scriptable Tile Triggers Blackbox Test Suite`](../../backlog/proposed/0474-external-webhooks-and-scriptable-tile-triggers-blackbox-test-suite.md)
+

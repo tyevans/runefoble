@@ -177,6 +177,11 @@
 - [ ] Gateway Campaign Lore Documents and Alias API Routing & Zanzibar Proxy (`FEAT-LRE-04`, `FEAT-SEC-01`, US-0036, US-0063, PRD-0007, TASK-0467)
 - [ ] App Shell Campaign Lore Document Uploader and Alias Manager Microfrontend (`FEAT-UI-08`, `FEAT-UI-11`, US-0036, US-0067, PRD-0007, PRD-0023, TASK-0468)
 - [ ] Campaign Lore RAG Grounding and Ingestion Blackbox Test Suite (US-0001, US-0036, PRD-0001, PRD-0007, TASK-0469)
+- [ ] Universal VTT Scriptable Grid Tile Triggers and Activation Event Pipeline (`FEAT-BRD-05`, US-0033, PRD-0022, TASK-0470)
+- [ ] Redis Streams External Domain Event Webhooks Gateway and Delivery Worker (`FEAT-DEV-01`, US-0008, US-0035, PRD-0022, TASK-0471)
+- [ ] FastMCP Live Session Transcripts and Initiative Streaming Resources (`FEAT-DEV-01`, US-0008, PRD-0022, TASK-0472)
+- [ ] App Shell External Integrations and Webhook Management Microfrontend (`FEAT-UI-08`, `FEAT-DEV-01`, US-0035, PRD-0022, PRD-0023, TASK-0473)
+- [ ] External Webhooks and Scriptable Tile Triggers Blackbox Test Suite (US-0008, US-0033, US-0035, PRD-0022, TASK-0474)
 
 
 
