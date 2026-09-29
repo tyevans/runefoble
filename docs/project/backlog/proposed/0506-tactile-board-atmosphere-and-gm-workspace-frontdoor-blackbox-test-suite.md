@@ -1,12 +1,12 @@
 ---
-id: '0488'
+id: '0506'
 title: Tactile Board Atmosphere and GM Workspace Frontdoor Blackbox Test Suite
 status: Proposed
 created: 2026-09-29
 dependencies:
-- TASK-0485
-- TASK-0486
-- TASK-0487
+- TASK-0503
+- TASK-0504
+- TASK-0505
 governing_adrs:
 - ADR-0001
 - ADR-0004
@@ -21,7 +21,7 @@ governing_stories:
 target_release: 0.9.0
 ---
 
-# TASK-0488: Tactile Board Atmosphere and GM Workspace Frontdoor Blackbox Test Suite
+# TASK-0506: Tactile Board Atmosphere and GM Workspace Frontdoor Blackbox Test Suite
 
 ## Status
 Proposed

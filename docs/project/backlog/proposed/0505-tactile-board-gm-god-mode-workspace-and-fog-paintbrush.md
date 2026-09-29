@@ -1,5 +1,5 @@
 ---
-id: '0487'
+id: '0505'
 title: Tactile Board GM God-Mode Workspace and Fog-of-War Paintbrush
 status: Proposed
 created: 2026-09-29
@@ -22,7 +22,7 @@ governing_stories:
 target_release: 0.9.0
 ---
 
-# TASK-0487: Tactile Board GM God-Mode Workspace and Fog-of-War Paintbrush
+# TASK-0505: Tactile Board GM God-Mode Workspace and Fog-of-War Paintbrush
 
 ## Status
 Proposed

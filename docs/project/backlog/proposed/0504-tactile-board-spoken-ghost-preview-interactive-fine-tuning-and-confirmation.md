@@ -1,5 +1,5 @@
 ---
-id: '0486'
+id: '0504'
 title: Tactile Board Spoken Ghost Preview Interactive Fine-Tuning and Confirmation
 status: Proposed
 created: 2026-09-29
@@ -19,7 +19,7 @@ governing_stories:
 target_release: 0.9.0
 ---
 
-# TASK-0486: Tactile Board Spoken Ghost Preview Interactive Fine-Tuning and Confirmation
+# TASK-0504: Tactile Board Spoken Ghost Preview Interactive Fine-Tuning and Confirmation
 
 ## Status
 Proposed
