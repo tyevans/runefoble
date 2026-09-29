@@ -1,6 +1,6 @@
-"""Aggregator facade re-exporting settlement haggling domain for backward compatibility.
+"""Settlement Haggling domain package.
 
-Governed by ADR-0003, ADR-0007, and ADR-0013.
+Governed by ADR-0003, ADR-0006, ADR-0007, and ADR-0013.
 """
 
 from __future__ import annotations

@@ -324,7 +324,18 @@ Per ADR-0003, ADR-0007, ADR-0013, and PRD-0024, the settlement NPC workers route
 
 ---
 
-## 8. Blackbox Test Suites & Verification
+## 8. Modular Settlement Haggling Engine Architecture
+
+Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the merchant negotiation engine in `services/game_session/src/game_session/settlement/haggling/` is decomposed into modular submodules strictly under 110–130 lines:
+
+- **`state.py`**: `NegotiationAggregate` session state machine, managing session initialization, offer ranges, and event persistence.
+- **`rhetoric.py`**: `RhetoricMovesMixin` managing tactical bargaining gambits, roll evaluation, and patience decay.
+- **`dm_controls.py`**: `DMControlsMixin` managing live GM arbitration, price overrides, and veto/accept actions.
+- **`haggling.py` / `__init__.py`**: Aggregator facades (< 40 lines) preserving backwards compatibility for all imports.
+
+---
+
+## 9. Blackbox Test Suites & Verification
 
 In accordance with Hard Invariant 7 (Blackbox TDD with frontdoor setup) and ADR-0008, all settlement haven and mobile minigame mechanics are covered by comprehensive end-to-end blackbox suites driving public HTTP endpoints and WebSocket streams:
 
