@@ -24,7 +24,7 @@ Every task—from initial submission in `proposed/` to formal qualification in `
 - **Valuable (V)**: The task delivers tangible value to players, DMs, operators, or developers (e.g. auditable security, operational visibility, or gameplay features).
 - **Estimable (E)**: Scope and technical boundaries are well-understood. Governing ADRs and PRDs are cited, preventing unbounded research spikes.
 - **Small (S)**: The item represents a focused unit of work achievable within a single workstream session. File changes conform strictly to the repository file length limit (<500 lines per Hard Invariant 6). Monolithic features must be split into incremental enablers.
-- **Testable (T)**: Complies with Hard Invariant 7 (Blackbox TDD & BDD with frontdoor setup). The Definition of Done establishes verifiable acceptance criteria through public frontdoors (HTTP endpoints, WebSockets, or published CloudEvents), verified by automated pytest and Playwright BDD test suites per [ADR-0014](../adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md).
+- **Testable (T)**: Complies with Hard Invariant 7 (Blackbox TDD with frontdoor setup). The Definition of Done establishes verifiable acceptance criteria through public frontdoors (HTTP endpoints, WebSockets, or published CloudEvents), verified by automated pytest/Playwright test suites.
 
 ## Definition of Ready (DoR)
 
@@ -32,26 +32,24 @@ Before any task moves from `proposed/` to `refined/`, it must satisfy the Defini
 1. **Bounded Context Identified**: Target service bounded context (`services/<bc>`) explicitly designated.
 2. **Microfrontend Slice Declared**: For user-facing features, the owning UI package (`services/<bc>/ui/`) and Custom Element tag (`<runefoble-...>`) are defined per [ADR-0013](../adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md).
 3. **Storybook Isolation Planned**: Mock property states and visual acceptance criteria specified for Storybook isolation testing prior to App Shell composition.
-4. **Governing ADRs & PRDs Cited**: Architectural impacts reviewed against governing ADRs (e.g. ADR-0004, ADR-0012, ADR-0013, ADR-0014) and accepted PRDs.
+4. **Governing ADRs & PRDs Cited**: Architectural impacts reviewed against governing ADRs (e.g. ADR-0004, ADR-0012, ADR-0013) and accepted PRDs.
 5. **Frontdoor Blackbox Acceptance Criteria**: Testable scenarios specified strictly through public APIs, `/ui/manifest`, WebSockets, or published standard events (Hard Invariant 7).
-6. **Frontdoor BDD Scenario Specification**: For any user-facing feature or UI view, the governing user story in `docs/project/user_stories/accepted/` must provide executable Gherkin scenarios (`Given ... When ... Then`) whose test setup is achievable strictly through public frontdoors (UI forms, Zitadel OIDC tokens, or public REST endpoints) per [ADR-0014](../adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md).
-7. **File Length Pre-check**: Target module decompositions planned to remain strictly within the <500 lines invariant.
+6. **File Length Pre-check**: Target module decompositions planned to remain strictly within the <500 lines invariant.
 
 ## Definition of Done (DoD)
 
 A task moves from `refined/` to `complete/` only when:
-1. **Architectural Review**: Conformant with governing ADRs (including ADR-0013 for microfrontends and ADR-0014 for BDD).
+1. **Architectural Review**: Conformant with governing ADRs (including ADR-0013 for microfrontends).
 2. **Microfrontend Vendoring**: User-facing components built and vendored within their owning service bounded context (`services/<bc>/ui/`), exposed via `/ui/manifest`, with the App Shell (`frontend/`) remaining strictly decoupled.
 3. **Storybook Verification**: Interactive stories created and verified with zero console errors in Storybook.
 4. **Documentation**: All public APIs, events, and microfrontend custom elements documented in `docs/reference/` and Diataxis guides.
 5. **Automated Testing & Builds**: Python tests pass (`uv run pytest`), frontend builds pass (`pnpm run build`), and `make build` completes cleanly.
 6. **Helm & Kubernetes Verification**: Helm charts lint and template without error (`helm lint`, `helm template`).
 7. **Frontdoor Blackbox Suite**: End-to-end blackbox tests verify behavior exclusively through public entrypoints.
-8. **Playwright BDD End-to-End Verification**: User-facing features must have passing Playwright BDD test suites executing all acceptance criteria scenarios in headless browser automation without backdoor state manipulation per [ADR-0014](../adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md).
-9. **File Length Invariant**: All modified and created source files strictly under 500 lines.
-10. **Registry & Backlog Synchronization**: Status updated in `PRIORITY.md` and relevant PRD/ADR registries.
-11. **Changelog Maintenance**: User-facing capabilities, architectural shifts, and public API/schema changes recorded in `CHANGELOG.md` under `[Unreleased]` following Keep a Changelog.
-12. **Platform Showcase Maintenance**: Public Platform Showcase marketing page (`docs/marketing.md`) maintained as capabilities progress, keeping live core capabilities and roadmap milestones synchronized with current platform deliverables.
+8. **File Length Invariant**: All modified and created source files strictly under 500 lines.
+9. **Registry & Backlog Synchronization**: Status updated in `PRIORITY.md` and relevant PRD/ADR registries.
+10. **Changelog Maintenance**: User-facing capabilities, architectural shifts, and public API/schema changes recorded in `CHANGELOG.md` under `[Unreleased]` following Keep a Changelog.
+11. **Platform Showcase Maintenance**: Public Platform Showcase marketing page (`docs/marketing.md`) maintained as capabilities progress, keeping live core capabilities and roadmap milestones synchronized with current platform deliverables.
 
 ## Picking Work
 Always pick the highest-priority item from [`docs/project/backlog/PRIORITY.md`](PRIORITY.md) that is currently marked `(Refined)`.
