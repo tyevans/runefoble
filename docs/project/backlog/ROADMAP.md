@@ -173,6 +173,11 @@
 - [ ] App Shell Absentee Catch-Up Storybook Reel Microfrontend (`FEAT-UI-10`, `FEAT-UI-11`, US-0027, PRD-0002, TASK-0463)
 - [ ] Personalized Voice-Cloned Stand-In Dialogue with Dynamic Affliction Slurs (`FEAT-VOX-05`, `FEAT-WAT-05`, US-0028, PRD-0002, TASK-0464)
 - [ ] Absentee Resource Audit and Catch-Up Reel Blackbox Test Suite (US-0027, US-0028, PRD-0002, TASK-0465)
+- [ ] FastMCP Campaign Lore RAG Tools and The Watcher Intent Grounding (`FEAT-WAT-06`, `FEAT-DEV-01`, US-0001, US-0036, PRD-0001, PRD-0007, TASK-0466)
+- [ ] Gateway Campaign Lore Documents and Alias API Routing & Zanzibar Proxy (`FEAT-LRE-04`, `FEAT-SEC-01`, US-0036, US-0063, PRD-0007, TASK-0467)
+- [ ] App Shell Campaign Lore Document Uploader and Alias Manager Microfrontend (`FEAT-UI-08`, `FEAT-UI-11`, US-0036, US-0067, PRD-0007, PRD-0023, TASK-0468)
+- [ ] Campaign Lore RAG Grounding and Ingestion Blackbox Test Suite (US-0001, US-0036, PRD-0001, PRD-0007, TASK-0469)
+
 
 
 ### Playwright BDD End-to-End Verification & Governance (ADR-0014)
