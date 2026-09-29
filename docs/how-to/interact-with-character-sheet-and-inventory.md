@@ -210,11 +210,11 @@ The complete end-to-end lifecycle across the Gateway API, SpiceDB Zanzibar autho
   - `test_character_campaign_assignment`: Verifies `PATCH /api/v1/characters/{id}/campaign` writes campaign relationships, propagates view permissions to campaign members, and revokes access upon unassignment.
   - `test_character_listing_filtered_by_zanzibar_visibility`: Verifies character listing isolation and campaign party visibility.
   - `test_profile_endpoint_claims_and_roles`: Verifies `GET /api/v1/profile` Zitadel OIDC claims and role assertions.
-- **Frontend Blackbox Integration Suite** (`frontend/test/character-management-and-profile.test.ts`):
-  - `test_roster_inspect_sheet_navigates_to_deep_route`: Verifies clicking "Inspect Sheet" navigates to `#/characters/:id`, updates breadcrumbs, and mounts `<runefoble-character-sheet>`.
-  - `test_campaign_creation_single_event_dispatch`: Verifies campaign creation stops bubbling and prevents duplicate dashboard cards.
-  - `test_profile_route_renders_user_claims`: Verifies routing to `#/profile` and claims rendering.
-  - `test_lobby_character_selection_and_vtt_sync`: Verifies lobby character selection propagation and dynamic VTT character card binding.
+- **Frontend Blackbox Integration Suite** (`frontend/test/character_management/`):
+  - `navigation.test.ts`: Verifies character roster route matching, active view resolution, dynamic title resolution, deep route navigation (`#/characters/:id`), and lobby character selection sync.
+  - `creation.test.ts`: Verifies character creation payload validation, unassigned roster state, campaign fallback filtering, health/permadeath stabilization, and subresource mutations.
+  - `profile.test.ts`: Verifies user profile view rendering, auth session claims, campaign creation single-event bubbling, and duplicate submission prevention.
+  - `invariants.test.ts`: Verifies source file line count limits (<500 lines for components, <130 lines for test modules), Bauhaus tokens, and custom element encapsulation.
 
 ---
 

@@ -127,7 +127,6 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`validate-e2e-journeys-with-playwright-bdd.md`](how-to/validate-e2e-journeys-with-playwright-bdd.md): How to validate end-to-end user journeys with Playwright BDD, frontdoor authentication fixtures, and multi-browser execution.
 - [`test-user-flows-with-playwright-bdd.md`](how-to/test-user-flows-with-playwright-bdd.md): How to author Gherkin user flow scenarios, implement TypeScript step definitions with Playwright shadow-piercing locators, and execute E2E test suites.
 
-
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
 - [`platform-services.md`](reference/platform-services.md): Directory of external platform services, container images, ports, environment variables, and test fallbacks.
@@ -218,29 +217,29 @@ When delegating tasks to subagents:
 
 ## References
 
-[^1]: Bootstrap task completion record. `project/backlog/complete/0000-bootstrap-repository-and-foundations.md`
-[^2]: Repository architecture overview. `reference/architecture-overview.md`
-[^3]: ADR Registry. `project/adrs/REGISTRY.md`
-[^4]: Kubernetes and Helm infrastructure ADR. `project/adrs/accepted/adr-0005-kubernetes-first-infrastructure-with-helm-and-kind.md`
+[^1]: Bootstrap task completion record. `docs/project/backlog/complete/0000-bootstrap-repository-and-foundations.md`
+[^2]: Repository architecture overview. `docs/reference/architecture-overview.md`
+[^3]: ADR Registry. `docs/project/adrs/REGISTRY.md`
+[^4]: Kubernetes and Helm infrastructure ADR. `docs/project/adrs/accepted/adr-0005-kubernetes-first-infrastructure-with-helm-and-kind.md`
 [^5]: Zitadel identity integration. `libs/runefoble_auth/src/runefoble_auth/zitadel.py`
-[^6]: SpiceDB Zanzibar authorization ADR. `project/adrs/accepted/adr-0001-spicedb-zanzibar-object-authorization.md`
+[^6]: SpiceDB Zanzibar authorization ADR. `docs/project/adrs/accepted/adr-0001-spicedb-zanzibar-object-authorization.md`
 [^7]: Database configuration. `libs/runefoble_platform/src/runefoble_platform/config.py`
 [^8]: Silo S3 configuration. `deployments/helm/runefoble/templates/silo.yaml`
 [^9]: OpenPanel analytics configuration. `deployments/helm/runefoble/templates/openpanel.yaml`
 [^10]: Observability configuration. `deployments/helm/runefoble/templates/observability.yaml`
 [^11]: Swagger UI aggregator. `deployments/helm/runefoble/templates/swagger-ui.yaml`
-[^12]: Events schema reference. `reference/events-schema.md`
-[^13]: Frontend Lit and Storybook ADR. `project/adrs/accepted/adr-0004-lit-web-components-and-storybook-ui.md`
-[^14]: UV workspace monorepo ADR. `project/adrs/accepted/adr-0003-uv-monorepo-workspace-for-python-bcs.md`
-[^15]: Realtime voice and board sync. `explanation/realtime-voice-and-board-sync.md`
-[^16]: The Watcher Autonomous DM architecture. `explanation/the-watcher-autonomous-dm.md`
-[^17]: Missing player stand-in PRD. `project/product/accepted/prd-0002-missing-player-ai-stand-in-with-penalties.md`
-[^18]: Product requirements registry. `project/product/REGISTRY.md`
-[^19]: User stories registry. `project/user_stories/REGISTRY.md`
-[^20]: Backlog guide. `project/backlog/README.md`
-[^21]: Backlog priority index. `project/backlog/PRIORITY.md`
+[^12]: Events schema reference. `docs/reference/events-schema.md`
+[^13]: Frontend Lit and Storybook ADR. `docs/project/adrs/accepted/adr-0004-lit-web-components-and-storybook-ui.md`
+[^14]: UV workspace monorepo ADR. `docs/project/adrs/accepted/adr-0003-uv-monorepo-workspace-for-python-bcs.md`
+[^15]: Realtime voice and board sync. `docs/explanation/realtime-voice-and-board-sync.md`
+[^16]: The Watcher Autonomous DM architecture. `docs/explanation/the-watcher-autonomous-dm.md`
+[^17]: Missing player stand-in PRD. `docs/project/product/accepted/prd-0002-missing-player-ai-stand-in-with-penalties.md`
+[^18]: Product requirements registry. `docs/project/product/REGISTRY.md`
+[^19]: User stories registry. `docs/project/user_stories/REGISTRY.md`
+[^20]: Backlog guide. `docs/project/backlog/README.md`
+[^21]: Backlog priority index. `docs/project/backlog/PRIORITY.md`
 [^22]: Diataxis documentation framework. `https://diataxis.fr/`
 [^23]: Developer Makefile interfaces. `Makefile`
-[^24]: eventsource-py architecture ADR. `project/adrs/accepted/adr-0011-eventsource-py-core-event-sourcing.md`
-[^25]: Microfrontend Architecture and Service Component Vendoring ADR. `project/adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md`
-[^26]: Behavior-Driven Development and Playwright E2E ADR. `project/adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md`
+[^24]: eventsource-py architecture ADR. `docs/project/adrs/accepted/adr-0011-eventsource-py-core-event-sourcing.md`
+[^25]: Microfrontend Architecture and Service Component Vendoring ADR. `docs/project/adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md`
+[^26]: Behavior-Driven Development and Playwright E2E ADR. `docs/project/adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md`
