@@ -184,8 +184,11 @@ To verify that all registered standard routes parse parameters, resolve titles, 
 # Frontend component and route matrix audit
 node --experimental-strip-types --test frontend/test/app-shell-views-wiring-audit.test.ts
 
-# Python blackbox frontdoor E2E test suite
-uv run pytest tests/test_blackbox_app_shell_views_audit.py
+# Modular App Shell test submodules (routing, session transitions, websocket lifecycle, breadcrumbs)
+node --experimental-strip-types --test frontend/test/app_shell/*.test.ts
+
+# Python blackbox frontdoor E2E test suites
+uv run pytest tests/test_blackbox_app_shell_views_audit.py tests/test_blackbox_app_shell_test_modular_decomposition.py
 ```
 
 ## 9. Modular Data Service & Offline Fixture Fallbacks

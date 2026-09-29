@@ -269,16 +269,17 @@ def test_file_length_invariants():
 
 
 def test_frontend_app_shell_typescript_unit_suite():
-    """Execute the Node-based TypeScript app-shell test suite including character roster bindings."""
-    app_shell_test = FRONTEND_DIR / "test" / "app-shell.test.ts"
-    assert app_shell_test.is_file()
+    app_shell_dir = FRONTEND_DIR / "test" / "app_shell"
+    assert app_shell_dir.is_dir()
+    test_files = sorted(str(p.relative_to(REPO_ROOT)) for p in app_shell_dir.glob("*.test.ts"))
+    assert len(test_files) == 4
 
     result = subprocess.run(
         [
             "node",
             "--experimental-strip-types",
             "--test",
-            str(app_shell_test.relative_to(REPO_ROOT)),
+            *test_files,
         ],
         cwd=REPO_ROOT,
         capture_output=True,
