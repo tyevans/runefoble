@@ -315,5 +315,7 @@
 - [ ] Voice Agent STT Pipeline Modular Decomposition (TASK-0345)
 - [ ] Visualizer Traceability Client Modular Decomposition (TASK-0346)
 - [ ] App Shell Views Wiring Audit Test Suite Modular Decomposition (TASK-0347)
-
-
+- [ ] Gateway Assets Router Modular Decomposition (TASK-0348)
+- [ ] Campaign Lore West Marches Router Modular Decomposition (TASK-0349)
+- [ ] Rules Compendium Aggregate Handlers Modular Decomposition (TASK-0350)
+- [ ] Speech-to-Intent Test Suite Modular Decomposition (TASK-0351)
