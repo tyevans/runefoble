@@ -1,7 +1,7 @@
 ---
 id: '0363'
 title: Character Sheet and Inventory Mutations Playwright BDD Test Suite
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0356
@@ -21,8 +21,8 @@ governing_stories:
 - US-0007
 - US-0066
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/358
 ---
-
 # TASK-0363: Character Sheet and Inventory Mutations Playwright BDD Test Suite
 
 ## Status
