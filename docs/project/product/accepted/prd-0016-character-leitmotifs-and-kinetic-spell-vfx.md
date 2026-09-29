@@ -50,3 +50,7 @@ Expressive performers (like Nadia the Bard), casual adventurers (like Marcus), a
 - [`TASK-0102: Personal Character Leitmotifs & Adaptive Musical Signatures`](../../backlog/complete/0102-character-leitmotifs-and-adaptive-themes.md)
 - [`TASK-0104: Multi-Modal Kinetic Spell VFX & WebGL Particle Magic`](../../backlog/complete/0104-kinetic-spell-vfx-and-particle-canvas.md)
 - [`TASK-0124: Generative Wardrobe, Emotion & State Portrait Gallery`](../../backlog/complete/0124-generative-wardrobe-and-portrait-gallery.md)
+- [`TASK-0444: Gateway Character Wardrobe & Dynamic Portrait API Routing & Zanzibar Proxy`](../../backlog/proposed/0444-gateway-character-wardrobe-and-portrait-api-proxy.md)
+- [`TASK-0445: App Shell Character Wardrobe Gallery Integration & Dynamic Condition Portrait Synchronization`](../../backlog/proposed/0445-app-shell-character-wardrobe-gallery-and-portrait-sync.md)
+- [`TASK-0446: App Shell Character Leitmotif Configuration & Audition Integration`](../../backlog/proposed/0446-app-shell-character-leitmotif-config-and-audio-sync.md)
+
