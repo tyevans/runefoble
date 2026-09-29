@@ -15,12 +15,12 @@ import { buildFallbackCharacterDetail } from './fallback-data.ts';
 import {
   FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS,
   FALLBACK_SESSIONS, FALLBACK_PROFILE, FALLBACK_BOARD_TOKENS, FALLBACK_SESSION_EVENTS,
-  getFallbackCampaignSessions, getFallbackSession, createFallbackCampaign,
+  FALLBACK_CAMPAIGN_SESSIONS_MAP, getFallbackCampaignSessions, getFallbackSession, createFallbackCampaign,
   createFallbackCampaignItem, updateFallbackCampaign, createFallbackCharacter,
   assignFallbackCharacterCampaign, deleteFallbackCharacter, resolveLobbyAvailableCharacters,
 } from './app-data-service.fixtures.ts';
 
-export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS };
+export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_CAMPAIGN_SESSIONS_MAP };
 
 export class AppDataService {
   private static instance: AppDataService;
@@ -180,13 +180,18 @@ export class AppDataService {
 
   async createCampaignSession(
     campaignId: string,
-    payload: { title: string; status?: string; scheduled_at?: string; description?: string }
+    payload: { title: string; status?: string; scheduled_at?: string; scheduledAt?: string; description?: string }
   ): Promise<CampaignSessionItem> {
     const item = await this.request<any>(`${this.apiBase}/campaigns/${campaignId}/sessions`, { method: 'POST', body: JSON.stringify(payload) });
-    if (item) {
-      return { ...item, campaignId: item.campaign_id || item.campaignId, participantsCount: item.participants_count ?? item.participantsCount ?? 0 };
-    }
-    return { id: `lobby-${campaignId}-${Date.now()}`, campaignId, title: payload.title, status: (payload.status as any) || 'lobby', participantsCount: 1 };
+    if (item) return { ...item, campaignId: item.campaign_id || item.campaignId, participantsCount: item.participants_count ?? item.participantsCount ?? 0 };
+    if (!FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]) getFallbackCampaignSessions(campaignId);
+    const newSession: CampaignSessionItem = {
+      id: `lobby-${campaignId}-${Date.now()}`, campaignId, title: payload.title,
+      status: (payload.status as any) || 'lobby', round: 1, participantsCount: 1,
+      scheduled_at: payload.scheduled_at || payload.scheduledAt, description: payload.description || '',
+    };
+    FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId].push(newSession);
+    return newSession;
   }
 
   async createCampaign(payload: CreateCampaignPayload): Promise<CampaignItem> {
