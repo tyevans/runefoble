@@ -121,8 +121,19 @@ export class AuthFixtures {
 
   async injectUser(roleOrName: string, customClaims?: Partial<UserClaims>): Promise<TestUser> {
     const baseClaims = this.resolvePersona(roleOrName);
-    const finalClaims: UserClaims = { ...baseClaims, ...customClaims };
+    const normalized = roleOrName.toLowerCase().replace(/[^a-z]/g, '');
+    const isGenericRole = ['player', 'dm', 'master', 'gm', 'spectator'].includes(normalized);
+    const username = isGenericRole ? baseClaims.username : roleOrName;
+    const userId = isGenericRole ? baseClaims.user_id : `user-${normalized}`;
+    const finalClaims: UserClaims = {
+      ...baseClaims,
+      username,
+      display_name: username,
+      user_id: userId,
+      ...customClaims,
+    };
     const token = createMockJwt(finalClaims);
+
 
     const sessionPayload = {
       tokens: {
