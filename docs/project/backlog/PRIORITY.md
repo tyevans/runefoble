@@ -285,7 +285,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 281. **TASK-0279 (Complete)**: [`0279-settlement-haggling-engine-modular-decomposition.md`](complete/0279-settlement-haggling-engine-modular-decomposition.md) — Settlement Haggling Engine Modular Decomposition
 282. **TASK-0282 (Complete)**: [`0282-settlement-haven-router-modular-decomposition.md`](complete/0282-settlement-haven-router-modular-decomposition.md) — Settlement Haven Router Modular Decomposition
 283. **TASK-0243 (Complete)**: [`0243-email-signup-mailpit-test-suite-decomposition.md`](complete/0243-email-signup-mailpit-test-suite-decomposition.md) — Email Signup Mailpit Blackbox Test Suite Decomposition
-284. **TASK-0238 (Refined)**: [`0238-game-session-models-test-suite-decomposition.md`](refined/0238-game-session-models-test-suite-decomposition.md) — GameSession Models Test Suite Modular Decomposition
+284. **TASK-0238 (Complete)**: [`0238-game-session-models-test-suite-decomposition.md`](complete/0238-game-session-models-test-suite-decomposition.md) — GameSession Models Test Suite Modular Decomposition
 285. **TASK-0288 (Complete)**: [`0288-frontend-character-management-test-suite-modular-decomposition.md`](complete/0288-frontend-character-management-test-suite-modular-decomposition.md) — Frontend Character Management Test Suite Modular Decomposition
 286. **TASK-0230 (Refined)**: [`0230-soundscape-aggregate-handlers-modular-decomposition.md`](refined/0230-soundscape-aggregate-handlers-modular-decomposition.md) — Soundscape Aggregate Handlers Modular Decomposition
 287. **TASK-0231 (Refined)**: [`0231-board-domain-events-modular-decomposition.md`](refined/0231-board-domain-events-modular-decomposition.md) — Board Domain Events Modular Decomposition

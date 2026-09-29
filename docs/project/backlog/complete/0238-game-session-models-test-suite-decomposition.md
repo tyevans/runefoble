@@ -1,7 +1,7 @@
 ---
-id: '0238'
+id: 0238
 title: GameSession Models Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0178
@@ -21,8 +21,8 @@ governing_stories:
 - US-0044
 - US-0073
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/377
 ---
-
 # TASK-0238: GameSession Models Test Suite Modular Decomposition
 
 ## Status
