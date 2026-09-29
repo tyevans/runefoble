@@ -29,6 +29,7 @@ from gateway_api.routers import (
     characters_router,
     downtime_router,
     health_router,
+    hub_views_router,
     overlay_router,
     spectator_router,
 )
@@ -71,6 +72,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(campaigns_router)
+app.include_router(hub_views_router)
 app.include_router(characters_router)
 app.include_router(downtime_router)
 app.include_router(settlement_haven_router)

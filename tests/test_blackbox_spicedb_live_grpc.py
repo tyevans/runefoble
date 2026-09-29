@@ -81,7 +81,6 @@ async def test_live_spicedb_frontdoor_role_assignment_and_checks(
     live_client = SpiceDBClient(
         endpoint=live_spicedb_endpoint,
         token="test_live_secret",
-        use_mock=False,
     )
     schema_text = await bootstrap_schema(client=live_client)
     assert "definition campaign" in schema_text
@@ -151,7 +150,6 @@ async def test_live_spicedb_relationship_deletion_and_revocation(
     live_client = SpiceDBClient(
         endpoint=live_spicedb_endpoint,
         token="test_deletion_token",
-        use_mock=False,
     )
     await bootstrap_schema(client=live_client)
     set_spicedb_client(live_client)

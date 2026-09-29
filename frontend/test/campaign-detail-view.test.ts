@@ -17,6 +17,8 @@ function resolveAppActiveView(route: MatchedRoute | null): AppActiveView {
   if (pat.startsWith('#/campaigns/:campaignId/lobby/')) return 'session-lobby';
   if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
   if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
+  if (pat === '#/campaigns/:campaignId/codex') return 'campaign-codex';
+  if (pat === '#/campaigns/:campaignId/analytics') return 'campaign-analytics';
   if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
   if (pat === '#/characters') return 'characters';
   return pat === '#/profile' ? 'profile' : 'campaigns';
@@ -44,6 +46,16 @@ describe('Campaign Detail Sub-View Disambiguation (TASK-0250)', () => {
     assert.equal(partyRoute?.params.campaignId, '4');
   });
 
+  it('disambiguates #/campaigns/:id/codex as campaign-codex and #/campaigns/:id/analytics as campaign-analytics (TASK-0355)', () => {
+    const codexRoute = router.match('#/campaigns/4/codex');
+    assert.equal(resolveAppActiveView(codexRoute), 'campaign-codex');
+    assert.equal(codexRoute?.params.campaignId, '4');
+
+    const analyticsRoute = router.match('#/campaigns/4/analytics');
+    assert.equal(resolveAppActiveView(analyticsRoute), 'campaign-analytics');
+    assert.equal(analyticsRoute?.params.campaignId, '4');
+  });
+
   it('disambiguates #/profile as profile view', () => {
     const profileRoute = router.match('#/profile');
     assert.equal(resolveAppActiveView(profileRoute), 'profile');
@@ -62,6 +74,20 @@ describe('Campaign Detail Sub-View Disambiguation (TASK-0250)', () => {
     assert.equal(partyRoute.breadcrumbs[0].label, 'Campaigns');
     assert.equal(partyRoute.breadcrumbs[1].label, 'Tomb of the Star-Eater');
     assert.equal(partyRoute.breadcrumbs[2].label, 'Party');
+
+    const codexRoute = router.match('#/campaigns/4/codex');
+    assert.ok(codexRoute);
+    assert.equal(codexRoute.breadcrumbs.length, 3);
+    assert.equal(codexRoute.breadcrumbs[0].label, 'Campaigns');
+    assert.equal(codexRoute.breadcrumbs[1].label, 'Tomb of the Star-Eater');
+    assert.equal(codexRoute.breadcrumbs[2].label, 'Codex & Atlas');
+
+    const analyticsRoute = router.match('#/campaigns/4/analytics');
+    assert.ok(analyticsRoute);
+    assert.equal(analyticsRoute.breadcrumbs.length, 3);
+    assert.equal(analyticsRoute.breadcrumbs[0].label, 'Campaigns');
+    assert.equal(analyticsRoute.breadcrumbs[1].label, 'Tomb of the Star-Eater');
+    assert.equal(analyticsRoute.breadcrumbs[2].label, 'Chronicle & Stats');
   });
 
   it('switches between campaign tabs without page reloads', async () => {
@@ -76,12 +102,20 @@ describe('Campaign Detail Sub-View Disambiguation (TASK-0250)', () => {
     await router.navigate('#/campaigns/4/characters');
     assert.equal(resolveAppActiveView(router.getCurrentRoute()), 'campaign-characters');
 
+    await router.navigate('#/campaigns/4/codex');
+    assert.equal(resolveAppActiveView(router.getCurrentRoute()), 'campaign-codex');
+
+    await router.navigate('#/campaigns/4/analytics');
+    assert.equal(resolveAppActiveView(router.getCurrentRoute()), 'campaign-analytics');
+
     await router.navigate('#/campaigns/4');
     assert.equal(resolveAppActiveView(router.getCurrentRoute()), 'campaign-detail');
 
     assert.deepEqual(routeChanges, [
       '#/campaigns/4',
       '#/campaigns/4/characters',
+      '#/campaigns/4/codex',
+      '#/campaigns/4/analytics',
       '#/campaigns/4',
     ]);
   });

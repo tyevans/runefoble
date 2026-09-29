@@ -1,7 +1,7 @@
 ---
 id: '0355'
 title: Campaign Hub Client Routing and View Orchestration for Codex, Atlas, and Telemetry
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0047
@@ -23,8 +23,8 @@ governing_stories:
 - US-0067
 - US-0068
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/348
 ---
-
 # TASK-0355: Campaign Hub Client Routing and View Orchestration for Codex, Atlas, and Telemetry
 
 ## Status

@@ -12,7 +12,7 @@ from character_sheet.crafting import CraftingAggregate
 from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
 from fastapi import Depends, Header, HTTPException
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_events.events import (
     CharacterAssignedToCampaign,
     CharacterDamaged,
@@ -31,7 +31,7 @@ STREAM_CRAFTING = "runefoble.events.crafting"
 platform_settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
-_spicedb_client: SpiceDBClient = SpiceDBClient()
+_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 # Global aggregate repositories
 repo: AggregateRepository[CharacterAggregate] = create_aggregate_repository(CharacterAggregate)
@@ -61,11 +61,14 @@ def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
     _event_bus = bus
 
 
-def get_spicedb_client() -> SpiceDBClient:
+def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
+    global _spicedb_client
+    if _spicedb_client is None:
+        _spicedb_client = SpiceDBClient()
     return _spicedb_client
 
 
-def set_spicedb_client(client: SpiceDBClient) -> None:
+def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
     global _spicedb_client
     _spicedb_client = client
 
@@ -74,7 +77,7 @@ RepoDep = Annotated[AggregateRepository[CharacterAggregate], Depends(get_reposit
 CraftingRepoDep = Annotated[
     AggregateRepository[CraftingAggregate], Depends(get_crafting_repository)
 ]
-SpiceDep = Annotated[SpiceDBClient, Depends(get_spicedb_client)]
+SpiceDep = Annotated[SpiceDBClient | MockSpiceDBClient, Depends(get_spicedb_client)]
 UserHeader = Annotated[str | None, Header(alias="x-user-id")]
 
 

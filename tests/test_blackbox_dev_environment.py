@@ -20,6 +20,7 @@ from gateway_api.main import app as gateway_app
 
 from scripts.dev_server import (
     check_health,
+    is_port_open,
     parse_args,
     terminate_processes,
     wait_for_gateway,
@@ -68,6 +69,17 @@ def test_orchestrator_cli_parsing():
     assert args.worker is True
     assert args.no_frontend is True
     assert args.timeout == 12.5
+    assert args.spicedb_port == 50051
+    assert args.spicedb_host == "127.0.0.1"
+
+    # Custom spicedb arguments
+    custom_args = parse_args(["--spicedb-port", "50099", "--spicedb-host", "10.0.0.1"])
+    assert custom_args.spicedb_port == 50099
+    assert custom_args.spicedb_host == "10.0.0.1"
+
+    # is_port_open returns False on unused port
+    unused_port = get_free_port()
+    assert is_port_open("127.0.0.1", unused_port) is False
 
 
 def test_gateway_health_probes_and_cors():

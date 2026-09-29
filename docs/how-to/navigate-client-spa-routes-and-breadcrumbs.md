@@ -18,6 +18,8 @@ The client router (`frontend/src/router/router.ts`) supports standard deep-linka
 | `#/campaigns` | Campaign management hub / dashboard | `http://localhost/#/campaigns` |
 | `#/campaigns/:campaignId` | Campaign details & membership | `http://localhost/#/campaigns/4` |
 | `#/campaigns/:campaignId/characters` | Campaign party roster | `http://localhost/#/campaigns/4/characters` |
+| `#/campaigns/:campaignId/codex` | Campaign world atlas & lore codex | `http://localhost/#/campaigns/4/codex` |
+| `#/campaigns/:campaignId/analytics` | Campaign chronicle timeline & telemetry | `http://localhost/#/campaigns/4/analytics` |
 | `#/campaigns/:campaignId/lobby/:sessionId` | Pre-game assembly lobby | `http://localhost/#/campaigns/4/lobby/15` |
 | `#/campaigns/:campaignId/sessions/:sessionId` | Active live VTT session | `http://localhost/#/campaigns/4/sessions/14` |
 | `#/characters` | Personal character roster | `http://localhost/#/characters` |

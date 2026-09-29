@@ -28,6 +28,8 @@ describe('Router Pattern Matcher & Parameter Extraction', () => {
       '#/campaigns',
       '#/campaigns/:campaignId',
       '#/campaigns/:campaignId/characters',
+      '#/campaigns/:campaignId/codex',
+      '#/campaigns/:campaignId/analytics',
       '#/campaigns/:campaignId/lobby/:sessionId',
       '#/campaigns/:campaignId/sessions/:sessionId',
       '#/characters',
@@ -71,6 +73,16 @@ describe('Router Pattern Matcher & Parameter Extraction', () => {
     assert.ok(mParty);
     assert.equal(mParty.pattern, '#/campaigns/:campaignId/characters');
     assert.equal(mParty.params.campaignId, '42');
+
+    const mCodex = router.match('#/campaigns/42/codex');
+    assert.ok(mCodex);
+    assert.equal(mCodex.pattern, '#/campaigns/:campaignId/codex');
+    assert.equal(mCodex.params.campaignId, '42');
+
+    const mAnalytics = router.match('#/campaigns/42/analytics');
+    assert.ok(mAnalytics);
+    assert.equal(mAnalytics.pattern, '#/campaigns/:campaignId/analytics');
+    assert.equal(mAnalytics.params.campaignId, '42');
 
     const mLobby = router.match('#/campaigns/42/lobby/sess-99');
     assert.ok(mLobby);

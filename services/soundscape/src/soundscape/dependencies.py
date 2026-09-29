@@ -8,7 +8,7 @@ from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import Header
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
@@ -30,10 +30,7 @@ settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
 _soundscape_repo = create_aggregate_repository(SoundscapeAggregate)
-_spicedb_client = SpiceDBClient(
-    endpoint=settings.spicedb_endpoint or "localhost:50051",
-    token=getattr(settings, "spicedb_token", "secret"),
-)
+_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 _session_to_aggregate: dict[str, UUID] = {}
 _session_mixers: dict[str, AudioStemMixer] = {}
@@ -45,12 +42,18 @@ def get_soundscape_repo() -> AggregateRepository[SoundscapeAggregate]:
     return _soundscape_repo
 
 
-def get_spicedb_client() -> SpiceDBClient:
+def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
     """Provide SpiceDB Zanzibar authorization client."""
+    global _spicedb_client
+    if _spicedb_client is None:
+        _spicedb_client = SpiceDBClient(
+            endpoint=settings.spicedb_endpoint or "localhost:50051",
+            token=getattr(settings, "spicedb_token", "secret"),
+        )
     return _spicedb_client
 
 
-def set_spicedb_client(client: SpiceDBClient) -> None:
+def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
     """Override SpiceDB client for testing."""
     global _spicedb_client
     _spicedb_client = client

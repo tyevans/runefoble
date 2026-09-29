@@ -5,7 +5,7 @@ from character_sheet.main import app as character_app
 from character_sheet.main import set_event_bus as character_set_event_bus
 from character_sheet.main import set_spicedb_client as character_set_spicedb
 from httpx import ASGITransport, AsyncClient
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import StandInPolicyUpdated, StandInStabilized
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus, deserialize_event
 from the_watcher.watcher_ai import TheWatcherEngine
@@ -39,7 +39,7 @@ async def test_character_guardrails_configuration_and_events(mock_redis: MockAsy
     """PUT /api/v1/characters/{id}/guardrails configures tactical constraints and emits event."""
     bus = RedisStreamsEventBus(client=mock_redis)
     character_set_event_bus(bus)
-    spicedb = SpiceDBClient()
+    spicedb = MockSpiceDBClient()
     character_set_spicedb(spicedb)
 
     async with AsyncClient(
