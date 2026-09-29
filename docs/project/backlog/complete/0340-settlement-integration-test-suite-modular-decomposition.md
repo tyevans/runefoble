@@ -1,7 +1,7 @@
 ---
 id: '0340'
 title: Settlement Integration Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0264
@@ -23,6 +23,7 @@ governing_stories:
 - US-0075
 - US-0076
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/355
 ---
 # TASK-0340: Settlement Integration Test Suite Modular Decomposition
 
