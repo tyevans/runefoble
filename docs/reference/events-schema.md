@@ -44,6 +44,15 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `watcher_events/combat.py`: Dice roll telemetry (`DiceRolled`), autonomous combat encounters, candidate ghost previews, combat reaction interrupts, and trap triggers (< 150 lines).
   - `watcher_events/actions.py`: The Watcher DM copilot proposal, veto, approval, modification, and compound action disambiguation (< 150 lines).
   - `watcher_events/factions.py`: Autonomous NPC faction agendas, progress advances, geopolitical territory shifts, and world ticks (< 150 lines).
+- **Board Domain Events (`runefoble_events.board_events.*` and `runefoble_events.board` facade)**:
+  - `board.py`: Re-export facade (< 40 lines) maintaining 100% backward-compatible imports for consuming services.
+  - `board_events/token.py`: Tactical token placement, movement, actions, knockback impulses (`TokenKnockbackApplied`), and elevation changes (`ElevationChanged`) (< 100 lines).
+  - `board_events/fog.py`: Fog-of-war reveal (`FogOfWarRevealed` / `FogRevealed`), shroud reset (`FogOfWarShrouded` / `ShroudReset`), and complete visibility mask updates (`VisibilityMaskUpdated`) (< 80 lines).
+  - `board_events/templates.py`: Geometric AoE spell template positioning and removal (`AoETemplatePlaced`, `AoETemplateRemoved`) (< 80 lines).
+  - `board_events/lighting.py`: Dynamic point lights and interactive doors (`BoardLightSourcePlaced`, `BoardDoorToggled`) (< 80 lines).
+  - `board_events/terrain.py`: Board grid initialization, cell elevation / hazard modifications, and Universal VTT map imports (< 80 lines).
+  - `board_events/physics.py`: Rigid-body physical collisions and 3D tumbling dice resting telemetry (< 80 lines).
+  - `board_events/spells.py`: Kinetic spell launches, area-of-effect blooms, WebGL particle VFX completion, and decal decay (< 120 lines).
 
 ---
 
@@ -177,9 +186,30 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
 - **`TokenRemoved`**: Emitted when a token leaves the board.
   - `token_id`: String
   - `reason`: String ("defeated", "retreated", "teleported")
-- **`FogOfWarRevealed`**: Emitted when a token's vision reveals uncharted grid cells.
+- **`TokenKnockbackApplied`**: Emitted when a directional knockback impulse is applied to a token (`runefoble.events.board.token_knockback_applied`).
+  - `token_id`: String
+  - `distance_ft`: Float
+  - `direction_x`: Float, `direction_y`: Float
+  - `from_x`: Integer, `from_y`: Integer
+  - `to_x`: Integer, `to_y`: Integer
+  - `mass`: Float (default 1.0)
+- **`ElevationChanged`**: Emitted when a token's elevation changes due to climbing, falling, or terrain stepping (`runefoble.events.board.elevation_changed`).
+  - `token_id`: String
+  - `previous_elevation`: Integer
+  - `new_elevation`: Integer
+  - `x`: Integer, `y`: Integer
+- **`FogOfWarRevealed`** (alias: `FogRevealed`): Emitted when a token's vision reveals uncharted grid cells.
   - `revealed_cells`: List[List[Integer]]
   - `revealed_by_token_id`: Optional[String]
+- **`FogOfWarShrouded`** (alias: `ShroudReset`): Emitted when fog-of-war shrouds previously revealed cells (`runefoble.events.board.fog_of_war_shrouded`).
+  - `session_id`: String
+  - `shrouded_cells`: List[List[Integer]]
+- **`VisibilityMaskUpdated`**: Emitted when the complete visibility mask or line-of-sight polygon is updated (`runefoble.events.board.visibility_mask_updated`).
+  - `session_id`: String
+  - `board_id`: String
+  - `token_id`: Optional[String]
+  - `revealed_count`: Integer
+  - `total_cells`: Integer
 - **`TerrainCellModified`**: Emitted when a tactical grid cell's elevation, terrain difficulty, or hazard is modified (`runefoble.events.board.terrain_modified`).
   - `session_id`: String
   - `board_id`: String

@@ -31,6 +31,7 @@ from gateway_api.routers import (
     health_router,
     hub_views_router,
     overlay_router,
+    soundscape_router,
     spectator_router,
 )
 from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
@@ -78,6 +79,7 @@ app.include_router(downtime_router)
 app.include_router(settlement_haven_router)
 app.include_router(spectator_router)
 app.include_router(overlay_router)
+app.include_router(soundscape_router)
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 app.include_router(voice_rooms_router)
