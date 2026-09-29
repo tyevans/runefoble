@@ -164,7 +164,7 @@ The autonomous delivery engine and developer workflows follow strict tagging con
 
 ### Automated Git Metadata Harvesting
 The **GitMetadataHarvester** (`tools/project_visualizer/git_metadata.py`) continuously scans git history:
-- Inspects `git log --pretty=format:%h%x09%an%x09%ad%x09%s -n 600`.
+- Inspects `git log --pretty=format:%h%x09%an%x09%ad%x09%s`.
 - Regex-parses task identifiers (`\btask[-_ ]?(\d+)\b`) and PR numbers (`(?:pull request\s*#|PR\s*#|#)(\d+)`).
 - Dynamically maps commit hashes, authors, dates, and PR badges directly onto backlog tasks in the visualizer graph, Kanban board, and slide-over drawers without manual bookkeeping.
 

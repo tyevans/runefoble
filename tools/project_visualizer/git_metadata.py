@@ -13,8 +13,9 @@ from tools.project_visualizer.models import CommitInfo
 class GitMetadataHarvester:
     """Harvests Git commits and Pull Request tags associated with backlog tasks."""
 
-    def __init__(self, root_dir: str | Path):
+    def __init__(self, root_dir: str | Path, max_commits: int | None = None):
         self.root_dir = Path(root_dir).resolve()
+        self.max_commits = max_commits
 
     def harvest(self) -> dict[str, tuple[list[CommitInfo], list[str]]]:
         """Harvest commits and PR numbers mapped by canonical task ID (e.g. 'TASK-0041')."""
@@ -34,9 +35,9 @@ class GitMetadataHarvester:
                 "log",
                 "--pretty=format:%h%x09%an%x09%ad%x09%s",
                 "--date=short",
-                "-n",
-                "600",
             ]
+            if self.max_commits is not None:
+                cmd.extend(["-n", str(self.max_commits)])
             raw_output = subprocess.check_output(
                 cmd,
                 cwd=str(self.root_dir),
