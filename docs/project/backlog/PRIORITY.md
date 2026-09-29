@@ -466,3 +466,8 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 462. **TASK-0463 (Proposed)**: [`0463-app-shell-absentee-catchup-storybook-reel.md`](proposed/0463-app-shell-absentee-catchup-storybook-reel.md) — App Shell Absentee Catch-Up Storybook Reel Microfrontend
 463. **TASK-0464 (Proposed)**: [`0464-personalized-voice-cloned-standin-dialogue-and-afflictions.md`](proposed/0464-personalized-voice-cloned-standin-dialogue-and-afflictions.md) — Personalized Voice-Cloned Stand-In Dialogue with Dynamic Affliction Slurs
 464. **TASK-0465 (Proposed)**: [`0465-absentee-resource-audit-and-catchup-blackbox-test-suite.md`](proposed/0465-absentee-resource-audit-and-catchup-blackbox-test-suite.md) — Absentee Resource Audit and Catch-Up Reel Blackbox Test Suite
+465. **TASK-0466 (Proposed)**: [`0466-fastmcp-campaign-lore-rag-tools-and-watcher-intent-grounding.md`](proposed/0466-fastmcp-campaign-lore-rag-tools-and-watcher-intent-grounding.md) — FastMCP Campaign Lore RAG Tools and The Watcher Intent Grounding
+466. **TASK-0467 (Proposed)**: [`0467-gateway-campaign-lore-documents-and-alias-api-proxy.md`](proposed/0467-gateway-campaign-lore-documents-and-alias-api-proxy.md) — Gateway Campaign Lore Documents and Alias API Routing & Zanzibar Proxy
+467. **TASK-0468 (Proposed)**: [`0468-app-shell-campaign-lore-document-uploader-and-alias-manager.md`](proposed/0468-app-shell-campaign-lore-document-uploader-and-alias-manager.md) — App Shell Campaign Lore Document Uploader and Alias Manager Microfrontend
+468. **TASK-0469 (Proposed)**: [`0469-campaign-lore-rag-grounding-and-ingestion-blackbox-test-suite.md`](proposed/0469-campaign-lore-rag-grounding-and-ingestion-blackbox-test-suite.md) — Campaign Lore RAG Grounding and Ingestion Blackbox Test Suite
+
