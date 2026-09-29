@@ -220,9 +220,13 @@
 - [x] Mobile-First Touch-Optimized Tavern & Casino Minigames (`FEAT-SET-03`, US-0074, PRD-0024, TASK-0261)
 - [x] Interactive Merchant Haggling Engine with DM Controls (`FEAT-SET-04`, US-0075, PRD-0024, TASK-0262)
 - [x] Town Bulletin Board Civic Notices and Bounty Board (`FEAT-SET-05`, US-0076, PRD-0024, TASK-0263)
+- [ ] App Shell Campaign Town Haven Route and View Orchestration (`FEAT-UI-11`, US-0066, US-0067, US-0072, US-0076, PRD-0024, TASK-0513)
+- [ ] Settlement Haven Scaled Layout and District Map Microfrontend (`FEAT-SET-01`, US-0072, US-0073, PRD-0024, TASK-0514)
+- [ ] Establishment Detail Drawer and NPC Worker Assignment Component (`FEAT-SET-02`, US-0073, US-0074, US-0075, PRD-0024, TASK-0515)
 
 ### Settlement & Minigames Blackbox Verification
 - [x] Settlement Builder and Minigames Blackbox Test Suite (US-0072, US-0073, US-0074, US-0075, US-0076, PRD-0024, TASK-0264)
+- [ ] Settlement Town Haven Frontdoor Blackbox Test Suite (US-0072, US-0073, US-0074, US-0075, US-0076, PRD-0024, TASK-0516)
 
 ## Milestone 9: Persona Immersion & Community Ecosystem
 ### Living Worlds, Mobile & Voice Enablers
@@ -399,6 +403,7 @@
 - [ ] Character Sheet Playwright BDD Steps Modular Decomposition (TASK-0447)
 - [ ] User Profile Component and Styles Modular Decomposition (TASK-0484)
 - [ ] Board Events Test Suite Modular Decomposition (TASK-0507)
+- [ ] Campaign Hub Playwright BDD Steps Modular Decomposition (TASK-0512)
 
 
 ### Playwright BDD Component Coverage Epics (ADR-0014)

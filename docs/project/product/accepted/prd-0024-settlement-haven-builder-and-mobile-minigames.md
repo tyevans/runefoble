@@ -89,3 +89,7 @@ created: 2026-09-27
 - [`TASK-0262: Interactive Merchant Haggling Engine with DM Arbitration Controls`](../../backlog/complete/0262-interactive-merchant-haggling-engine-with-dm-controls.md)
 - [`TASK-0263: Town Bulletin Board, Civic Proclamations, and Rumor Network`](../../backlog/complete/0263-town-bulletin-board-civic-notices-and-bounty-board.md)
 - [`TASK-0264: Settlement Builder and Mobile Minigames Blackbox Test Suite`](../../backlog/complete/0264-settlement-builder-and-minigames-blackbox-test-suite.md)
+- [`TASK-0513: App Shell Campaign Town Haven Route and View Orchestration`](../../backlog/proposed/0513-app-shell-campaign-town-haven-route-and-view-orchestration.md)
+- [`TASK-0514: Settlement Haven Scaled Layout and District Map Microfrontend`](../../backlog/proposed/0514-settlement-haven-scaled-layout-and-district-map-microfrontend.md)
+- [`TASK-0515: Establishment Detail Drawer and NPC Worker Assignment Component`](../../backlog/proposed/0515-establishment-detail-drawer-and-npc-worker-assignment-component.md)
+- [`TASK-0516: Settlement Town Haven Frontdoor Blackbox Test Suite`](../../backlog/proposed/0516-settlement-town-haven-frontdoor-blackbox-test-suite.md)
