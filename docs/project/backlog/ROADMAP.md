@@ -169,6 +169,10 @@
 - [ ] Campaign Chronicle Relic Discoveries and Loot Milestones Projection (`FEAT-UI-08`, US-0040, US-0045, US-0050, PRD-0012, TASK-0459)
 - [ ] App Shell Player Achievement Badges and Milestone Gallery Component (`FEAT-UI-08`, `FEAT-UI-11`, US-0040, US-0054, US-0067, PRD-0012, TASK-0460)
 - [ ] Absentee Player Session Telemetry and Audio Recap Companion API (`FEAT-UI-08`, `FEAT-WAT-05`, US-0040, US-0004, US-0054, PRD-0012, TASK-0461)
+- [ ] Absentee Character Resource Audit Ledger and DM Reconciliation API (`FEAT-WAT-05`, `FEAT-CHR-01`, US-0027, PRD-0002, TASK-0462)
+- [ ] App Shell Absentee Catch-Up Storybook Reel Microfrontend (`FEAT-UI-10`, `FEAT-UI-11`, US-0027, PRD-0002, TASK-0463)
+- [ ] Personalized Voice-Cloned Stand-In Dialogue with Dynamic Affliction Slurs (`FEAT-VOX-05`, `FEAT-WAT-05`, US-0028, PRD-0002, TASK-0464)
+- [ ] Absentee Resource Audit and Catch-Up Reel Blackbox Test Suite (US-0027, US-0028, PRD-0002, TASK-0465)
 
 
 ### Playwright BDD End-to-End Verification & Governance (ADR-0014)
