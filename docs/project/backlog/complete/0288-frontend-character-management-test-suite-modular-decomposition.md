@@ -1,7 +1,7 @@
 ---
-id: '0288'
+id: 0288
 title: Frontend Character Management Test Suite Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0258
@@ -19,8 +19,8 @@ governing_stories:
 - US-0070
 - US-0071
 target_release: 0.8.0
+pr_url: https://github.com/tyevans/runefoble/pull/376
 ---
-
 # TASK-0288: Frontend Character Management Test Suite Modular Decomposition
 
 ## Status
