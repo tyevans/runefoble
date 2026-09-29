@@ -1,51 +1,27 @@
-import type {
-  CampaignItem,
-  CampaignMember,
-  LobbyParticipant,
-  CreateCampaignPayload,
-  UpdateCampaignPayload,
-  LobbyCharacterOption,
-} from '@runefoble/game-session-ui';
+import type { CampaignItem, CampaignMember, LobbyParticipant, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption } from '@runefoble/game-session-ui';
 import type { CharacterItem, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import type { UserClaims } from '../auth/auth-service.ts';
 
+export interface InviteResponse {
+  token: string; campaign_id: string; role: string; invite_url: string; expires_at?: string | null; created_at: string; max_uses?: number | null; uses?: number;
+}
+
 export const FALLBACK_PROFILE: UserClaims = {
   user_id: 'user-valeros', username: 'Valeros', email: 'valeros@runefoble.local', roles: ['player'], is_admin: false,
 };
 
 export const FALLBACK_CAMPAIGNS: CampaignItem[] = [
-  {
-    id: '4', title: 'Tomb of the Star-Eater', system: '5e', role: 'owner', owner_id: 'user-valeros',
-    description: 'Ancient celestial horrors slumber beneath the irradiated astral sands.',
-    setting: 'Spelljammer Astral Void', dm_name: 'The Watcher', player_count: 4,
-    has_active_session: true, active_session_id: 'session-tomb-14',
-  },
-  {
-    id: '5', title: 'Whispering Depths', system: '5e', role: 'player', owner_id: 'user-evelyn',
-    description: 'Subterranean aquatic expeditions through forgotten dwarven aqueducts.',
-    setting: 'Underdark Aquatics', dm_name: 'Evelyn Vance', player_count: 5, has_active_session: false,
-  },
+  { id: '4', title: 'Tomb of the Star-Eater', system: '5e', role: 'owner', owner_id: 'user-valeros', description: 'Ancient celestial horrors slumber beneath the irradiated astral sands.', setting: 'Spelljammer Astral Void', dm_name: 'The Watcher', player_count: 4, has_active_session: true, active_session_id: 'session-tomb-14' },
+  { id: '5', title: 'Whispering Depths', system: '5e', role: 'player', owner_id: 'user-evelyn', description: 'Subterranean aquatic expeditions through forgotten dwarven aqueducts.', setting: 'Underdark Aquatics', dm_name: 'Evelyn Vance', player_count: 5, has_active_session: false },
 ];
 
 export const FALLBACK_CHARACTERS: CharacterItem[] = [
-  {
-    id: 'char-valeros', name: 'Valeros of Korvosa', characterClass: 'Fighter', subclass: 'Battle Master',
-    level: 4, currentHp: 38, maxHp: 45, armorClass: 18, speed: 30, campaignId: '4',
-    campaignTitle: 'Tomb of the Star-Eater', portraitUrl: '/assets/portraits/fighter.svg',
-  },
-  {
-    id: 'char-kyra', name: 'Kyra the Sun Maiden', characterClass: 'Cleric', subclass: 'Life Domain',
-    level: 4, currentHp: 28, maxHp: 32, armorClass: 16, speed: 25, campaignId: '4',
-    campaignTitle: 'Tomb of the Star-Eater', portraitUrl: '/assets/portraits/cleric.svg',
-  },
-  {
-    id: 'char-ezren', name: 'Ezren the Gray', characterClass: 'Wizard', subclass: 'Evocation',
-    level: 5, currentHp: 22, maxHp: 26, armorClass: 12, speed: 30, campaignId: null,
-    campaignTitle: null, portraitUrl: '/assets/portraits/wizard.svg',
-  },
+  { id: 'char-valeros', name: 'Valeros of Korvosa', characterClass: 'Fighter', subclass: 'Battle Master', level: 4, currentHp: 38, maxHp: 45, armorClass: 18, speed: 30, campaignId: '4', campaignTitle: 'Tomb of the Star-Eater', portraitUrl: '/assets/portraits/fighter.svg' },
+  { id: 'char-kyra', name: 'Kyra the Sun Maiden', characterClass: 'Cleric', subclass: 'Life Domain', level: 4, currentHp: 28, maxHp: 32, armorClass: 16, speed: 25, campaignId: '4', campaignTitle: 'Tomb of the Star-Eater', portraitUrl: '/assets/portraits/cleric.svg' },
+  { id: 'char-ezren', name: 'Ezren the Gray', characterClass: 'Wizard', subclass: 'Evocation', level: 5, currentHp: 22, maxHp: 26, armorClass: 12, speed: 30, campaignId: null, campaignTitle: null, portraitUrl: '/assets/portraits/wizard.svg' },
 ];
 
 export const FALLBACK_MEMBERS: CampaignMember[] = [
@@ -53,6 +29,39 @@ export const FALLBACK_MEMBERS: CampaignMember[] = [
   { user_id: 'user-kyra', username: 'Kyra Sunfall', character_name: 'Kyra the Sun Maiden', role: 'player' },
   { user_id: 'user-merisiel', username: 'Merisiel Nightshadow', character_name: 'Merisiel', role: 'player' },
 ];
+
+const CAMPAIGN_MEMBERS_CACHE: Record<string, CampaignMember[]> = { '4': [...FALLBACK_MEMBERS] };
+
+export function getFallbackCampaignMembers(campaignId: string): CampaignMember[] {
+  if (!CAMPAIGN_MEMBERS_CACHE[campaignId]) {
+    const c = FALLBACK_CAMPAIGNS.find((item) => item.id === campaignId);
+    const owner = c?.owner_id || 'user-valeros';
+    const name = owner === 'user-valeros' ? 'Valeros (You)' : (c?.dm_name || owner);
+    CAMPAIGN_MEMBERS_CACHE[campaignId] = [{ user_id: owner, username: name, role: 'owner' }];
+  }
+  return CAMPAIGN_MEMBERS_CACHE[campaignId];
+}
+
+export function assignFallbackMemberRole(campaignId: string, userId: string, role: string): void {
+  const m = getFallbackCampaignMembers(campaignId).find((x) => x.user_id === userId);
+  if (m) m.role = role as any;
+}
+
+export function removeFallbackMember(campaignId: string, userId: string): void {
+  const list = getFallbackCampaignMembers(campaignId);
+  const idx = list.findIndex((x) => x.user_id === userId);
+  if (idx !== -1) list.splice(idx, 1);
+}
+
+export function createFallbackInvite(campaignId: string, role: string, expiresInHours = 72, maxUses?: number): InviteResponse {
+  const token = `inv-${Math.random().toString(36).substring(2, 10)}`;
+  const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://runefoble.local';
+  return {
+    token, campaign_id: campaignId, role, invite_url: `${origin}/#/join/${token}`,
+    created_at: new Date().toISOString(), expires_at: new Date(Date.now() + expiresInHours * 3600000).toISOString(),
+    max_uses: maxUses ?? null, uses: 0,
+  };
+}
 
 export const FALLBACK_PARTICIPANTS: LobbyParticipant[] = [
   { userId: 'user-valeros', username: 'Valeros', role: 'Fighter Lvl 4', characterId: 'char-valeros', characterName: 'Valeros of Korvosa', characterClass: 'Fighter', characterLevel: 4, isReady: false, isAbsent: false, onlineStatus: 'online' },
@@ -95,15 +104,14 @@ export function createFallbackCampaign(campaignId: string): CampaignItem {
   return { id: campaignId, title: `Campaign #${campaignId}`, role: 'player', player_count: 3, has_active_session: false };
 }
 
-export function createFallbackCampaignItem(payload: CreateCampaignPayload): CampaignItem {
-  const newId = `camp-${Date.now()}`;
-  FALLBACK_CAMPAIGN_SESSIONS_MAP[newId] = [
-    { id: `lobby-${newId}-1`, campaignId: newId, title: 'Session #1: Assembly & Briefing', status: 'lobby', round: 1, participantsCount: 1 },
+export function createFallbackCampaignItem(payload: CreateCampaignPayload, ownerId = 'user-valeros'): CampaignItem {
+  const id = `camp-${Date.now()}`;
+  FALLBACK_CAMPAIGN_SESSIONS_MAP[id] = [
+    { id: `lobby-${id}-1`, campaignId: id, title: 'Session #1: Assembly & Briefing', status: 'lobby', round: 1, participantsCount: 1 },
   ];
-  return {
-    id: newId, title: payload.title, description: payload.description,
-    setting: payload.setting, system: payload.system || '5e', role: 'owner', player_count: 1, has_active_session: false,
-  };
+  const uname = ownerId === 'user-valeros' ? 'Valeros (You)' : ownerId;
+  CAMPAIGN_MEMBERS_CACHE[id] = [{ user_id: ownerId, username: uname, role: 'owner' }];
+  return { id, title: payload.title, description: payload.description, owner_id: ownerId, setting: payload.setting, system: payload.system || '5e', role: 'owner', player_count: 1, has_active_session: false };
 }
 
 export function updateFallbackCampaign(campaignId: string, payload: UpdateCampaignPayload): CampaignItem {
@@ -131,9 +139,7 @@ export function deleteFallbackCharacter(characterId: string): void {
 }
 
 export function resolveLobbyAvailableCharacters(characters: CharacterItem[], campaignId?: string): LobbyCharacterOption[] {
-  const sorted = campaignId
-    ? [...characters.filter((c) => c.campaignId === campaignId), ...characters.filter((c) => !c.campaignId), ...characters.filter((c) => c.campaignId && c.campaignId !== campaignId)]
-    : characters;
+  const sorted = campaignId ? [...characters.filter((c) => c.campaignId === campaignId), ...characters.filter((c) => !c.campaignId), ...characters.filter((c) => c.campaignId && c.campaignId !== campaignId)] : characters;
   return sorted.map((c) => ({ id: c.id, name: c.name, characterClass: c.characterClass, level: c.level, portraitUrl: c.portraitUrl }));
 }
 

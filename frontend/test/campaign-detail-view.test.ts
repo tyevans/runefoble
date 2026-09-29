@@ -167,3 +167,51 @@ describe('Campaign Metadata Loading & Update Flow (TASK-0250)', () => {
     assert.ok(!campaign4Characters.some((c) => c.name.includes('Ezren')));
   });
 });
+
+describe('Campaign Members Roster Lifecycle & Scoping (TASK-0353)', () => {
+  let dataService: AppDataService;
+
+  beforeEach(() => {
+    dataService = new AppDataService();
+  });
+
+  it('returns distinct, campaign-scoped member rosters', async () => {
+    const campaign4Members = await dataService.fetchCampaignMembers('4');
+    assert.equal(campaign4Members.length, 3);
+    assert.ok(campaign4Members.some((m) => m.user_id === 'user-valeros'));
+    assert.ok(campaign4Members.some((m) => m.user_id === 'user-kyra'));
+    assert.ok(campaign4Members.some((m) => m.user_id === 'user-merisiel'));
+
+    const customMembers = await dataService.fetchCampaignMembers('camp-test-isolated');
+    assert.equal(customMembers.length, 1);
+    assert.equal(customMembers[0].role, 'owner');
+    assert.ok(!customMembers.some((m) => m.user_id === 'user-kyra'));
+  });
+
+  it('assigns member role and updates the member list without reloading', async () => {
+    await dataService.assignMemberRole('4', 'user-kyra', 'dungeon_master');
+    const members = await dataService.fetchCampaignMembers('4');
+    const kyra = members.find((m) => m.user_id === 'user-kyra');
+    assert.ok(kyra);
+    assert.equal(kyra?.role, 'dungeon_master');
+  });
+
+  it('generates a shareable campaign invite token and url', async () => {
+    const invite = await dataService.createCampaignInvite('4', 'player', 48, 5);
+    assert.ok(invite.token);
+    assert.equal(invite.campaign_id, '4');
+    assert.equal(invite.role, 'player');
+    assert.ok(invite.invite_url.includes(invite.token));
+    assert.equal(invite.max_uses, 5);
+  });
+
+  it('removes a member from the campaign roster', async () => {
+    const before = await dataService.fetchCampaignMembers('4');
+    assert.ok(before.some((m) => m.user_id === 'user-merisiel'));
+
+    await dataService.removeCampaignMember('4', 'user-merisiel');
+    const after = await dataService.fetchCampaignMembers('4');
+    assert.ok(!after.some((m) => m.user_id === 'user-merisiel'));
+  });
+});
+

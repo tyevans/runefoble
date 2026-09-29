@@ -55,6 +55,43 @@ async def get_all_viewable_campaigns(
     ]
 
 
+def resolve_member_profile(campaign_id: str, user_id: str) -> tuple[str, str | None]:
+    """Resolve display username and active character for campaign member."""
+    char_name: str | None = None
+    try:
+        from gateway_api.character_store import character_store
+
+        chars = [
+            c
+            for c in character_store.list_characters()
+            if c.campaign_id == campaign_id and c.owner_id == user_id
+        ]
+        if chars:
+            char_name = chars[0].name
+    except Exception:
+        pass
+
+    known_names = {
+        "user-valeros": "Valeros",
+        "user-kyra": "Kyra Sunfall",
+        "user-merisiel": "Merisiel Nightshadow",
+        "dm_evelyn": "Evelyn Vance",
+        "user-evelyn": "Evelyn Vance",
+        "player_marcus": "Marcus",
+    }
+    if user_id in known_names:
+        username = known_names[user_id]
+    else:
+        cleaned = user_id
+        for prefix in ("user-", "user_", "player-", "player_", "dm-", "dm_"):
+            if cleaned.startswith(prefix):
+                cleaned = cleaned[len(prefix) :]
+                break
+        username = cleaned.replace("-", " ").replace("_", " ").title() if cleaned else user_id
+
+    return username, char_name
+
+
 async def get_campaign_members(
     campaign_id: str, client: Any, store: Any = None
 ) -> list[CampaignMemberResponse]:
@@ -71,16 +108,20 @@ async def get_campaign_members(
     for r in rels:
         if r.relation in valid_roles and (r.subject_id, r.relation) not in seen:
             seen.add((r.subject_id, r.relation))
+            username, char_name = resolve_member_profile(campaign_id, r.subject_id)
             members.append(
                 CampaignMemberResponse(
                     user_id=r.subject_id,
                     role=r.relation,
                     subject_type=r.subject_type,
                     zanzibar_relation=r.to_tuple_key(),
+                    username=username,
+                    character_name=char_name,
                 )
             )
     c = store.get_campaign(campaign_id)
     if c and c.owner_id and (c.owner_id, "owner") not in seen:
+        username, char_name = resolve_member_profile(campaign_id, c.owner_id)
         members.insert(
             0,
             CampaignMemberResponse(
@@ -88,6 +129,8 @@ async def get_campaign_members(
                 role="owner",
                 subject_type="user",
                 zanzibar_relation=f"campaign:{campaign_id}#owner@user:{c.owner_id}",
+                username=username,
+                character_name=char_name,
             ),
         )
     return members

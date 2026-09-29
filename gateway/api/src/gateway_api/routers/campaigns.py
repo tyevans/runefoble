@@ -1,5 +1,4 @@
-"""Campaign, session lifecycle, and role management router for Runefoble Gateway API."""
-
+import contextlib
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
@@ -120,6 +119,42 @@ async def join_campaign(
 async def list_campaign_members(campaign_id: str) -> list[CampaignMemberResponse]:
     """List all members and their active Zanzibar roles (requires 'view')."""
     return await get_campaign_members(campaign_id, get_spicedb_client())
+
+
+@router.delete(
+    "/api/v1/campaigns/{campaign_id}/members/{user_id}",
+    dependencies=[Depends(require_zanzibar_permission("manage", "campaign", "campaign_id"))],
+)
+async def remove_campaign_member(
+    campaign_id: str,
+    user_id: str,
+    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+) -> dict:
+    """Remove a member from a campaign by deleting their SpiceDB Zanzibar relationships."""
+    spicedb = get_spicedb_client()
+    rels = await spicedb.read_relationships(resource_type="campaign", resource_id=campaign_id)
+    removed_any = False
+    for r in rels:
+        if r.subject_id == user_id:
+            await spicedb.delete_relationship(
+                "campaign", campaign_id, r.relation, r.subject_type, user_id
+            )
+            removed_any = True
+
+    if not removed_any:
+        for rel in ("player", "spectator", "dungeon_master", "owner"):
+            with contextlib.suppress(Exception):
+                await spicedb.delete_relationship("campaign", campaign_id, rel, "user", user_id)
+
+    camp = campaign_store.get_campaign(campaign_id)
+    if camp and camp.owner_id == user_id:
+        camp.owner_id = ""
+
+    return {
+        "status": "member_removed",
+        "campaign_id": campaign_id,
+        "user_id": user_id,
+    }
 
 
 @router.post("/api/v1/campaigns/{campaign_id}/roles")

@@ -139,6 +139,9 @@ class CampaignMemberResponse(BaseModel):
     role: str
     subject_type: str = "user"
     zanzibar_relation: str
+    username: str | None = None
+    character_name: str | None = None
+    avatar_url: str | None = None
 
 
 class CreateCampaignSessionRequest(BaseModel):
