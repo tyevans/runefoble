@@ -1,5 +1,5 @@
 ---
-id: '0287'
+id: 0287
 title: Frontend App Shell Test Suite Modular Decomposition
 status: Refined
 created: 2026-09-28
@@ -17,7 +17,6 @@ governing_stories:
 - US-0066
 target_release: 0.8.0
 ---
-
 # TASK-0287: Frontend App Shell Test Suite Modular Decomposition
 
 ## Status
