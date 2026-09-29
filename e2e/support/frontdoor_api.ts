@@ -94,4 +94,40 @@ export class FrontdoorApi {
     }
     return res.json();
   }
+
+  async listCharacters(token?: string): Promise<any[]> {
+    const res = await this.request.get(`${this.baseUrl}/api/v1/characters`, {
+      headers: this.authHeaders(token),
+    });
+    if (!res.ok()) {
+      throw new Error(`Failed to list characters: ${res.status()} ${res.statusText()}`);
+    }
+    return res.json();
+  }
+
+  async createCharacter(payload: Record<string, unknown>, token?: string): Promise<any> {
+    const res = await this.request.post(`${this.baseUrl}/api/v1/characters`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.authHeaders(token),
+      },
+      data: payload,
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(`Failed to create character: ${res.status()} ${res.statusText()} - ${errText}`);
+    }
+    return res.json();
+  }
+
+  async getCharacter(characterId: string, token?: string): Promise<any> {
+    const res = await this.request.get(`${this.baseUrl}/api/v1/characters/${characterId}`, {
+      headers: this.authHeaders(token),
+    });
+    if (!res.ok()) {
+      throw new Error(`Failed to get character "${characterId}": ${res.status()} ${res.statusText()}`);
+    }
+    return res.json();
+  }
 }
+

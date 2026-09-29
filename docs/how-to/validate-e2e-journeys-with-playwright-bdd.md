@@ -15,9 +15,13 @@ The BDD testing harness resides in `e2e/` and `playwright.config.ts`:
 ```
 e2e/
 ├── features/         # Gherkin .feature specifications
+│   ├── character_sheet.feature
+│   ├── session_lobby_and_vtt.feature
 │   └── smoke.feature
 ├── steps/            # Playwright step definitions
-│   └── common_steps.ts
+│   ├── character_sheet_steps.ts
+│   ├── common_steps.ts
+│   └── vtt_steps.ts
 └── support/          # Frontdoor test fixtures & world context
     ├── auth_fixtures.ts
     ├── fixtures.ts
@@ -213,3 +217,14 @@ await expect(dmPage.locator('runefoble-board')).toContainText('3, 3');
 await expect(dmPage.locator('runefoble-watcher-feed')).toContainText('moved to (3, 3)');
 ```
 
+---
+
+## 7. Character Sheet & Inventory Mutations Suite (TASK-0363)
+
+The character management and state mutation user journeys are validated in `e2e/features/character_sheet.feature` with step definitions in `e2e/steps/character_sheet_steps.ts`.
+
+Key validated behaviors:
+- **Character Creation & Roster Inspection**: Opening `<runefoble-character-roster>`, launching `<runefoble-character-builder-modal>`, inputting attributes, and inspecting newly created character cards navigating to `#/characters/:id`.
+- **Health Delta Mutations & Reload Persistence**: Clicking interactive `-5 HP` buttons on `<runefoble-character-sheet>`, verifying immediate UI recalculation (e.g. 38 to 33 HP), executing `page.reload()`, and ensuring persistent HP state from the backend aggregate.
+- **Inventory & Equipment Slots**: Equipping items (`Longsword +1`) into the Main Hand paper doll slot via dialog, dynamically updating carried encumbrance, and unequipping back to general carried inventory.
+- **Stand-In Tactical Guardrails**: Configuring risk appetite (`cautious`), checking `Avoid Melee`, saving directives on `<runefoble-stand-in-guardrails>`, verifying toast feedback (`Tactical Guardrails Saved!`), and ensuring reload retention.

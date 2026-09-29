@@ -57,7 +57,10 @@ export class RunefobleCharacterSheet extends LitElement {
   async fetchCharacter(): Promise<void> {
     if (!this.characterId) return;
     try {
-      const res = await fetch(`${this.apiBaseUrl}/${this.characterId}`);
+      const token = window?.localStorage?.getItem('runefoble-access-token');
+      const res = await fetch(`${this.apiBaseUrl}/${this.characterId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (res.ok) syncCharacterResponse(this, await res.json());
     } catch {}
   }
