@@ -49,6 +49,12 @@ def ensure_spicedb_available(
     host: str = "127.0.0.1", port: int = 50051, timeout: float = 5.0
 ) -> subprocess.Popen | None:
     """Ensure SpiceDB is accessible on host:port, auto-forwarding from Kind/K8s if needed."""
+    if (
+        os.environ.get("SPICEDB_ENDPOINT") == "mock"
+        or os.environ.get("RUNEFOBLE_SPICEDB_ENDPOINT") == "mock"
+    ):
+        return None
+
     if is_port_open(host, port):
         return None
 
@@ -295,8 +301,10 @@ def run_orchestrator(args: argparse.Namespace) -> int:
     gateway_env = os.environ.copy()
     gateway_env["GATEWAY_PORT"] = str(args.gateway_port)
     gateway_env["GATEWAY_HOST"] = str(args.gateway_host)
-    gateway_env["RUNEFOBLE_SPICEDB_ENDPOINT"] = f"{spicedb_host}:{spicedb_port}"
-    gateway_env["SPICEDB_ENDPOINT"] = f"{spicedb_host}:{spicedb_port}"
+    if "RUNEFOBLE_SPICEDB_ENDPOINT" not in gateway_env:
+        gateway_env["RUNEFOBLE_SPICEDB_ENDPOINT"] = f"{spicedb_host}:{spicedb_port}"
+    if "SPICEDB_ENDPOINT" not in gateway_env:
+        gateway_env["SPICEDB_ENDPOINT"] = f"{spicedb_host}:{spicedb_port}"
 
     gateway_cmd = (
         ["uv", "run", "python", "gateway/api/src/gateway_api/main.py"]

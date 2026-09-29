@@ -138,6 +138,12 @@ Launch the interactive Playwright UI mode with time-travel DOM inspection, step-
 make test-e2e-ui
 ```
 
+### Local CI Runner Simulation
+Simulate the GitHub Actions CI environment locally with background service orchestration and readiness polling:
+```bash
+./scripts/test_ci_e2e.sh
+```
+
 ---
 
 ## 5. BDD Governance Checklist for Engineers
@@ -148,4 +154,5 @@ Before submitting pull requests or considering a user-facing task "Done", verify
 - [ ] **Feature File Committed**: Feature file placed in `e2e/features/` with no private backdoors.
 - [ ] **Step Definitions Implemented**: Step definitions in `e2e/steps/` use shadow-piercing locators and web-first assertions.
 - [ ] **Cross-Browser Verification**: `make test-e2e` passes across Chromium, Firefox, and WebKit.
+- [ ] **CI Simulation Verified**: `./scripts/test_ci_e2e.sh` passes locally before PR submission.
 - [ ] **Zero Backdoor Manipulation**: Preconditions created solely through public REST APIs or OIDC session injection.

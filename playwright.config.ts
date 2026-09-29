@@ -16,11 +16,16 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: [
-    ['html', { open: 'never' }],
-    ['list'],
-  ],
+  workers: 1,
+  reporter: process.env.CI
+    ? [
+        ['github'],
+        ['html', { open: 'never' }],
+      ]
+    : [
+        ['html', { open: 'never' }],
+        ['list'],
+      ],
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173',
     trace: 'on-first-retry',
@@ -45,7 +50,7 @@ export default defineConfig({
     {
       command: 'uv run python gateway/api/src/gateway_api/main.py',
       url: 'http://localhost:8000/healthz',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 60_000,
       env: {
         SPICEDB_ENDPOINT: process.env.SPICEDB_ENDPOINT || 'mock',
@@ -57,7 +62,7 @@ export default defineConfig({
     {
       command: 'cd frontend && pnpm run dev',
       url: 'http://localhost:5173',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 60_000,
     },
   ],

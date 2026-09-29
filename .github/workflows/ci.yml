@@ -133,3 +133,105 @@ jobs:
 
       - name: Verify Docs, Visualizer & Storybook Build
         run: make docs-build
+
+  e2e-playwright:
+    name: Playwright BDD End-to-End Quality Gate
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11.22.0
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      - name: Install workspace Node dependencies & build services
+        run: pnpm install --frozen-lockfile && pnpm run build
+
+      - name: Cache Playwright browser binaries
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright system dependencies
+        run: pnpm exec playwright install --with-deps
+
+      - name: Start development services in background
+        run: |
+          make dev &
+        env:
+          GATEWAY_PORT: 8000
+          FRONTEND_PORT: 5173
+          SPICEDB_ENDPOINT: "mock"
+          RUNEFOBLE_SPICEDB_ENDPOINT: "mock"
+          AUTH_DEV_MODE: "true"
+          RUNEFOBLE_AUTH_DEV_MODE: "true"
+          REDIS_URL: "redis://localhost:6379/0"
+          RUNEFOBLE_REDIS_URL: "redis://localhost:6379/0"
+
+      - name: Poll service readiness
+        run: |
+          echo "Waiting for API Gateway and Vite Frontend to become ready..."
+          timeout 60 bash -c '
+            until curl -sf http://localhost:8000/api/v1/health > /dev/null && curl -sf http://localhost:5173 > /dev/null; do
+              echo "Services pending readiness, sleeping 2s..."
+              sleep 2
+            done
+            echo "API Gateway and Vite Frontend are ready!"
+          '
+
+      - name: Run Playwright BDD test suite
+        run: make test-e2e ARGS="--reporter=github,html"
+        env:
+          CI: "true"
+          PLAYWRIGHT_BASE_URL: "http://localhost:5173"
+          SPICEDB_ENDPOINT: "mock"
+          RUNEFOBLE_SPICEDB_ENDPOINT: "mock"
+          AUTH_DEV_MODE: "true"
+          RUNEFOBLE_AUTH_DEV_MODE: "true"
+          REDIS_URL: "redis://localhost:6379/0"
+          RUNEFOBLE_REDIS_URL: "redis://localhost:6379/0"
+
+      - name: Archive Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
