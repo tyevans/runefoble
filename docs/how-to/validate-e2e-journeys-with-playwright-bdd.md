@@ -149,3 +149,67 @@ await expect(page.getByRole('heading', { name: 'Runefoble' })).toBeVisible();
 const themeBtn = page.locator('runefoble-theme-switcher button.theme-button.active');
 await expect(themeBtn).toBeVisible();
 ```
+
+---
+
+## 6. Multi-Browser Concurrent Sessions & Real-Time Tabletop VTT Verification
+
+For features involving synchronized collaborative workflows—such as session lobby readiness, absentee AI stand-in toggles, dynamic session launch transitions, and real-time token kinematics—Playwright runs multiple isolated `BrowserContext` instances within a single scenario.
+
+### Dual-Context Architecture
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor DM as Dungeon Master (Evelyn)
+    participant WS as WebSocket Gateway (:8000)
+    actor Player as Player (Valeros)
+
+    Note over DM,Player: Scenario: Multi-User Lobby Assembly & Readiness
+    DM->>WS: Connects to /ws/session/15 (Context 1)
+    Player->>WS: Connects to /ws/session/15 (Context 2)
+    Player->>WS: Sends participant_ready (ready=true)
+    WS-->>DM: Broadcasts participant_ready event
+    Note over DM: Evelyn's screen updates in real time to "Ready" without page reload
+```
+
+### Implementing Multi-Context Step Definitions
+
+Step definitions in `e2e/steps/vtt_steps.ts` leverage `browser.newContext()` and the custom `World` helper to maintain separate pages per participant:
+
+```typescript
+// Evelyn hosts session in default context
+Given('{word} is hosting session {string} for campaign {string}', async ({ page, world }, user, session, campaign) => {
+  await injectUserIntoPage(page, user.toLowerCase());
+  world.setPage(user, page);
+  await page.goto(`/#/campaigns/${campaign}/sessions/${session}`);
+});
+
+// Valeros joins in a separate browser context
+Given('{word} joins {string} in a separate browser', async ({ browser, world }, user, session) => {
+  const context = await browser.newContext({ baseURL: 'http://localhost:5173' });
+  world.extraContexts.push(context);
+  const userPage = await context.newPage();
+  await injectUserIntoPage(userPage, user.toLowerCase());
+  world.setPage(user, userPage);
+  await userPage.goto(`/#/campaigns/4/sessions/${session}`);
+});
+```
+
+### Verifying Token Kinematics and Movement Sync
+
+Token dragging dispatches standard pointer and custom DOM events or UI interactions on `<runefoble-board>`, triggering WebSocket broadcasts over `/ws/session/{id}`:
+
+```typescript
+// Drag token on Player screen
+await playerPage.locator('runefoble-board').dispatchEvent('token-move', {
+  detail: { tokenId: 'token-valeros', x: 3, y: 3 }
+});
+
+// Verify smooth coordinate update on DM screen
+await expect(dmPage.locator('runefoble-board')).toContainText('3, 3');
+
+// Verify chronicle feed reflection
+await expect(dmPage.locator('runefoble-watcher-feed')).toContainText('moved to (3, 3)');
+```
+
