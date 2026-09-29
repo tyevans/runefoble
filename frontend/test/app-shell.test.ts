@@ -17,6 +17,8 @@ function resolveActiveView(route: MatchedRoute | null): AppActiveView {
   if (pat.startsWith('#/campaigns/:campaignId/lobby/')) return 'session-lobby';
   if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
   if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
+  if (pat === '#/campaigns/:campaignId/codex') return 'campaign-codex';
+  if (pat === '#/campaigns/:campaignId/analytics') return 'campaign-analytics';
   if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
   if (pat === '#/characters') return 'characters';
   return pat === '#/profile' ? 'profile' : 'campaigns';
@@ -61,6 +63,18 @@ describe('App Shell Dynamic View Routing & Parameter Extraction', () => {
 
     const profileRoute = router.match('#/profile');
     assert.equal(resolveActiveView(profileRoute), 'profile');
+  });
+
+  it('resolves campaign codex and analytics views with extracted campaignId parameter (TASK-0355)', () => {
+    const codexRoute = router.match('#/campaigns/4/codex');
+    assert.equal(resolveActiveView(codexRoute), 'campaign-codex');
+    assert.equal(codexRoute?.params.campaignId, '4');
+    assert.equal(isSessionWebSocketRequired(codexRoute), false);
+
+    const analyticsRoute = router.match('#/campaigns/4/analytics');
+    assert.equal(resolveActiveView(analyticsRoute), 'campaign-analytics');
+    assert.equal(analyticsRoute?.params.campaignId, '4');
+    assert.equal(isSessionWebSocketRequired(analyticsRoute), false);
   });
 
   it('resolves character roster view for #/characters', () => {

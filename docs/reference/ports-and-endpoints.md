@@ -239,6 +239,12 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Lists all sessions and staging lobbies for a campaign (requires `view`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Creates a new session or staging lobby for a campaign (requires `run_session`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Assigns fine-grained SpiceDB Zanzibar relationship tuples (owner, DM, player, spectator) |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/atlas` | Retrieves world atlas map layers, milestone pins, and geopolitical territories (requires `view`) |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/codex` | Retrieves campaign lore codex entries and cross-references (requires `view`) |
+| `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}` | Retrieves campaign chronicle analytics and telemetry summary (requires `view`) |
+| `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/heatmap` | Retrieves combat spatial damage and strike heatmap data (requires `view`) |
+| `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/mvp` | Retrieves turn MVP awards and combatant performance statistics (requires `view`) |
+| `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/timeline` | Retrieves chronological campaign milestones and narrative chronicle events (requires `view`) |
 | `gateway-api` | GET | `/api/v1/characters` | Lists characters where authenticated user has SpiceDB Zanzibar `owner` or `view` relation |
 | `gateway-api` | POST | `/api/v1/characters` | Creates new character, registers ownership in SpiceDB Zanzibar (`character:id#owner@user:id`), returns character details |
 | `gateway-api` | GET | `/api/v1/characters/{character_id}` | Retrieves character details (requires Zanzibar `view`) |
