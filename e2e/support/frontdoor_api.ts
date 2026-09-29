@@ -129,5 +129,60 @@ export class FrontdoorApi {
     }
     return res.json();
   }
+
+  async assignCampaignRole(
+    campaignId: string,
+    userId: string,
+    role: string,
+    token?: string
+  ): Promise<any> {
+    const res = await this.request.post(`${this.baseUrl}/api/v1/campaigns/${campaignId}/roles`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.authHeaders(token),
+      },
+      data: { user_id: userId, role },
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(
+        `Failed to assign role "${role}" to "${userId}": ${res.status()} ${res.statusText()} - ${errText}`
+      );
+    }
+    return res.json();
+  }
+
+  async createCampaignInvite(
+    campaignId: string,
+    role = 'player',
+    token?: string
+  ): Promise<any> {
+    const res = await this.request.post(`${this.baseUrl}/api/v1/campaigns/${campaignId}/invites`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.authHeaders(token),
+      },
+      data: { role },
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(
+        `Failed to create campaign invite: ${res.status()} ${res.statusText()} - ${errText}`
+      );
+    }
+    return res.json();
+  }
+
+  async listCampaignMembers(campaignId: string, token?: string): Promise<any[]> {
+    const res = await this.request.get(`${this.baseUrl}/api/v1/campaigns/${campaignId}/members`, {
+      headers: this.authHeaders(token),
+    });
+    if (!res.ok()) {
+      throw new Error(
+        `Failed to list members for "${campaignId}": ${res.status()} ${res.statusText()}`
+      );
+    }
+    return res.json();
+  }
 }
 

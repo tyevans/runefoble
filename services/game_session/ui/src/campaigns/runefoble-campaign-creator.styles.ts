@@ -2,10 +2,17 @@ import { css } from 'lit';
 
 export const campaignCreatorStyles = css`
   :host {
-    display: block;
+    display: none;
     box-sizing: border-box;
     font-family: var(--rf-font-family, system-ui, -apple-system, sans-serif);
     color: var(--rf-text-primary, rgb(18, 18, 18));
+  }
+
+  :host([open]) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--rf-z-modal, 1000);
   }
 
   * {

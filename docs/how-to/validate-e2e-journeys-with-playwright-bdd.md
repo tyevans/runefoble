@@ -15,10 +15,12 @@ The BDD testing harness resides in `e2e/` and `playwright.config.ts`:
 ```
 e2e/
 ├── features/         # Gherkin .feature specifications
+│   ├── campaign_hub.feature
 │   ├── character_sheet.feature
 │   ├── session_lobby_and_vtt.feature
 │   └── smoke.feature
 ├── steps/            # Playwright step definitions
+│   ├── campaign_hub_steps.ts
 │   ├── character_sheet_steps.ts
 │   ├── common_steps.ts
 │   └── vtt_steps.ts

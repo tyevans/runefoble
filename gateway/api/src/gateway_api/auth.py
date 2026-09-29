@@ -21,7 +21,22 @@ def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
     if _spicedb_client is None:
         settings = PlatformSettings()
         if settings.spicedb_endpoint.lower() in ("mock", "mock://"):
-            _spicedb_client = MockSpiceDBClient()
+            mock_client = MockSpiceDBClient()
+            mock_client._tuples.update(
+                {
+                    "campaign:4#owner@user:user-dm-evelyn",
+                    "campaign:4#dm@user:user-dm-evelyn",
+                    "campaign:4#owner@user:user-evelyn",
+                    "campaign:4#dm@user:user-evelyn",
+                    "campaign:4#player@user:user-valeros",
+                    "campaign:4#player@user:user-sarah",
+                    "session:14#campaign@campaign:4",
+                    "session:15#campaign@campaign:4",
+                    "game_session:14#campaign@campaign:4",
+                    "game_session:15#campaign@campaign:4",
+                }
+            )
+            _spicedb_client = mock_client
         else:
             _spicedb_client = SpiceDBClient(
                 endpoint=settings.spicedb_endpoint,

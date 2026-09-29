@@ -78,7 +78,8 @@ export const modalStyles = css`
     background: var(--rf-bg-inset, rgb(241, 250, 238));
   }
 
-  .btn-copy {
+  .btn-copy,
+  .btn-generate-link {
     background: var(--rf-accent-secondary, rgb(29, 53, 87));
     color: var(--rf-text-inverse, rgb(255, 255, 255));
     border: var(--rf-border-width, 2px) solid var(--rf-border-color, rgb(18, 18, 18));
@@ -88,7 +89,8 @@ export const modalStyles = css`
     transition: transform 0.1s ease;
   }
 
-  .btn-copy:hover {
+  .btn-copy:hover,
+  .btn-generate-link:hover {
     transform: translate(-1px, -1px);
   }
 
