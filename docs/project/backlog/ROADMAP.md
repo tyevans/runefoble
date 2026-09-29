@@ -165,6 +165,11 @@
 - [ ] App Shell West Marches Shared Atlas and Stronghold Integration (`FEAT-UI-08`, US-0050, US-0058, US-0067, PRD-0018, TASK-0452)
 - [ ] App Shell Caravan Trading and Bounty Board Integration (`FEAT-UI-08`, US-0058, US-0067, PRD-0018, TASK-0453)
 - [ ] West Marches Multi-Party Gateway and App Shell Blackbox Test Suite (US-0050, US-0058, US-0067, PRD-0018, TASK-0454)
+- [ ] Automated Player Achievement Engine and Milestone Badges Projection (`FEAT-UI-08`, US-0040, US-0054, PRD-0012, TASK-0458)
+- [ ] Campaign Chronicle Relic Discoveries and Loot Milestones Projection (`FEAT-UI-08`, US-0040, US-0045, US-0050, PRD-0012, TASK-0459)
+- [ ] App Shell Player Achievement Badges and Milestone Gallery Component (`FEAT-UI-08`, `FEAT-UI-11`, US-0040, US-0054, US-0067, PRD-0012, TASK-0460)
+- [ ] Absentee Player Session Telemetry and Audio Recap Companion API (`FEAT-UI-08`, `FEAT-WAT-05`, US-0040, US-0004, US-0054, PRD-0012, TASK-0461)
+
 
 ### Playwright BDD End-to-End Verification & Governance (ADR-0014)
 - [x] Playwright BDD Testing Infrastructure and Frontdoor Harness (`TASK-0359`)
