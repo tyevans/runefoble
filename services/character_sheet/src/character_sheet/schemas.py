@@ -87,6 +87,7 @@ class LevelUpRequest(BaseModel):
 class PrepareSpellRequest(BaseModel):
     spell_name: str
     spell_level: int | None = None
+    is_prepared: bool = True
     session_id: str = ""
 
 
