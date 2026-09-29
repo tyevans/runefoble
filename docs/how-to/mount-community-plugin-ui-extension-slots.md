@@ -68,6 +68,13 @@ pluginRegistry.register({
 });
 ```
 
+### Standard Default Tabletop Plugins
+
+Runefoble seeds default built-in microfrontends into active slots via `registerDefaultPlugins(pluginRegistry, isDm)`:
+- **`hud-widget`**: `<runefoble-initiative-tracker>`, `<runefoble-soundscape-controls>`
+- **`dice-panel`**: `<runefoble-dice-roller>`, `<runefoble-dice-tray-3d>`
+- **`sidebar-tool`**: `<runefoble-combat-reaction-prompt>`, and when authenticated as DM, `<runefoble-dm-whisper-bar>` and `<runefoble-dm-trap-controls>`
+
 ## Step 3: Embed an Extension Slot in Layouts
 
 Place `<runefoble-plugin-slot>` at the desired extension point in the markup:

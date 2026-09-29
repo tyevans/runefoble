@@ -5,19 +5,8 @@ import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
 import { getOrCreateFallbackCharacterDetail, FALLBACK_CHARACTER_DETAILS_CACHE } from './fallback-data.ts';
-import {
-  FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS,
-  FALLBACK_SESSIONS, FALLBACK_PROFILE, FALLBACK_BOARD_TOKENS, FALLBACK_SESSION_EVENTS,
-  FALLBACK_CAMPAIGN_SESSIONS_MAP, getFallbackCampaignSessions, getFallbackSession, createFallbackCampaign,
-  createFallbackCampaignItem, updateFallbackCampaign, createFallbackCharacter,
-  assignFallbackCharacterCampaign, deleteFallbackCharacter, resolveLobbyAvailableCharacters,
-} from './app-data-service.fixtures.ts';
-import {
-  mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip,
-  mutateCharacterAddInventory, mutateCharacterRemoveInventory, mutateCharacterApplyCondition,
-  mutateCharacterRemoveCondition, mutateCharacterCastSpell, mutateCharacterPrepareSpell,
-  mutateCharacterRestoreSlot, mutateCharacterGuardrails,
-} from './character-subresource-client.ts';
+import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_PROFILE, FALLBACK_BOARD_TOKENS, FALLBACK_SESSION_EVENTS, FALLBACK_CAMPAIGN_SESSIONS_MAP, getFallbackCampaignSessions, getFallbackSession, createFallbackCampaign, createFallbackCampaignItem, updateFallbackCampaign, createFallbackCharacter, assignFallbackCharacterCampaign, deleteFallbackCharacter, resolveLobbyAvailableCharacters } from './app-data-service.fixtures.ts';
+import { mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory, mutateCharacterRemoveInventory, mutateCharacterApplyCondition, mutateCharacterRemoveCondition, mutateCharacterCastSpell, mutateCharacterPrepareSpell, mutateCharacterRestoreSlot, mutateCharacterGuardrails } from './character-subresource-client.ts';
 
 export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_CAMPAIGN_SESSIONS_MAP };
 
@@ -156,8 +145,17 @@ export class AppDataService {
     return { participants, availableCharacters: resolveLobbyAvailableCharacters(characters, campaignId) };
   }
 
+  async fetchBoardState(sessionId: string): Promise<{ cols: number; rows: number; tokens: BoardToken[] }> {
+    const data = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
+    return {
+      cols: data?.cols ?? 10,
+      rows: data?.rows ?? 10,
+      tokens: data?.tokens || [...FALLBACK_BOARD_TOKENS],
+    };
+  }
+
   async fetchBoardTokens(sessionId: string): Promise<BoardToken[]> {
-    return (await this.request<any>(`${this.apiBase}/boards/${sessionId}`))?.tokens || [...FALLBACK_BOARD_TOKENS];
+    return (await this.fetchBoardState(sessionId)).tokens;
   }
 
   async fetchSessionEvents(_sessionId: string): Promise<WatcherFeedEvent[]> {
@@ -207,12 +205,6 @@ export class AppDataService {
   }
 }
 
-export interface UpdateProfilePayload {
-  displayName?: string;
-  avatarUrl?: string;
-  bio?: string;
-  email?: string;
-}
+export interface UpdateProfilePayload { displayName?: string; avatarUrl?: string; bio?: string; email?: string; }
 
 export const appDataService = AppDataService.getInstance();
-
