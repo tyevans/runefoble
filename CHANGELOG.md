@@ -19,6 +19,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- **Visualizer Graph Test Suite Modular Decomposition (`TASK-0334`, `ADR-0003`, `ADR-0007`, `ADR-0009`, `ADR-0010`, `ADR-0013`)**:
+  - Decomposed monolithic test suite `tests/test_visualizer_graph.py` (376 lines) into modular test submodules under `tests/test_visualizer_graph/`, keeping all test modules strictly < 130 lines per Hard Invariant 6:
+    - `test_builder.py` (64 lines): Entity parsing, dependency edge construction, graph synthesis, and bidirectional link validation (< 110 lines target).
+    - `test_facade.py` (54 lines): Legacy `scan_project`, `build_traceability_graph`, and `GraphBuilder` facade compatibility tests and Python graph decomposition invariants (< 90 lines target).
+    - `test_filters_and_metrics.py` (56 lines): Tag/type filtering, search subgraphs, and health metric calculations (< 100 lines target).
+    - `test_serialization.py` (86 lines): GraphNode/Edge/Data dictionary serialization, node positioning layout hints, and standalone HTML bundle export tests (< 100 lines target).
+    - `test_rendering.py` (117 lines): Client graph rendering via Node.js, interaction controls, and JavaScript line length invariants (< 130 lines limit).
+  - Updated Diataxis guide `docs/how-to/visualize-project-content.md`.
 - **Project Visualizer AGY Launcher Modular Decomposition (`TASK-0224`, `ADR-0003`, `ADR-0004`, `ADR-0012`, `ADR-0013`)**:
   - Decomposed monolithic script `tools/project_visualizer/static/js/agy_launcher.js` (353 lines) into focused submodules under `tools/project_visualizer/static/js/agy/`, reducing `agy_launcher.js` to 16 lines (< 50 lines DoD limit) and keeping all submodules strictly < 140 lines per Hard Invariant 6:
     - `agy_modal.js` (97 lines): Modal open/close transitions, keyboard shortcuts (Escape key handler), drawer action triggers, and entity badge population (< 100 lines target).

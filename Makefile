@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation lint lint-fix build dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -95,6 +95,9 @@ helm-deploy: ## Deploy Runefoble stack to current Kubernetes context
 	@echo "==> Deploying Runefoble Helm release..."
 	helm upgrade --install $(RELEASE_NAME) $(HELM_CHART)
 
+dev: ## Run API Gateway and Vite frontend concurrently with health check gating
+	@python3 scripts/dev_server.py $(ARGS)
+
 dev-frontend: ## Run frontend in hot-reloading dev mode
 	@echo "==> Starting Vite development server..."
 	cd frontend && CHOKIDAR_USEPOLLING=true pnpm run dev
@@ -136,6 +139,20 @@ test-mutation: ## Run mutation testing with mutmut on core domain modules
 	@echo "==> Running mutation tests..."
 	uv run mutmut run || true
 	uv run mutmut results || true
+
+test-bdd: ## Validate Gherkin feature syntax and step definition coverage
+	@echo "==> Validating Gherkin feature syntax and step definitions..."
+	@pnpm exec bddgen
+
+test-e2e: ## Run headless Playwright BDD suite across standard browsers
+	@echo "==> Running Playwright BDD end-to-end tests..."
+	@pnpm exec bddgen
+	@pnpm exec playwright test $(ARGS)
+
+test-e2e-ui: ## Launch interactive Playwright UI mode for live debugging
+	@echo "==> Launching Playwright interactive UI..."
+	@pnpm exec bddgen
+	@pnpm exec playwright test --ui $(ARGS)
 
 lint: ## Check types, Ruff lint, format, and Helm
 	@echo "==> Checking Ruff lint rules..."

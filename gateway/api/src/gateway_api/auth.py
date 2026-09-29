@@ -5,22 +5,32 @@ from collections.abc import Callable
 from typing import Any
 
 from fastapi import Header, HTTPException, Request
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import AuthenticatedUser, ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 
 logger = logging.getLogger("runefoble.gateway.auth")
 
 # Default global clients for the gateway
-_spicedb_client = SpiceDBClient()
+_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _zitadel_auth_service: ZitadelAuthService | None = None
 
 
-def get_spicedb_client() -> SpiceDBClient:
+def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
+    global _spicedb_client
+    if _spicedb_client is None:
+        settings = PlatformSettings()
+        if settings.spicedb_endpoint.lower() in ("mock", "mock://"):
+            _spicedb_client = MockSpiceDBClient()
+        else:
+            _spicedb_client = SpiceDBClient(
+                endpoint=settings.spicedb_endpoint,
+                token=settings.spicedb_preshared_key,
+            )
     return _spicedb_client
 
 
-def set_spicedb_client(client: SpiceDBClient) -> None:
+def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
     global _spicedb_client
     _spicedb_client = client
 

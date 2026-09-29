@@ -85,7 +85,7 @@ created: 2026-09-27
 
 - [`TASK-0259: Settlement Haven Builder and Establishment Aggregate Domain Model`](../../backlog/complete/0259-settlement-haven-builder-and-establishment-aggregate.md)
 - [`TASK-0260: Assignable NPC Worker Engine and Social Relationship Graph`](../../backlog/complete/0260-assignable-npc-worker-and-social-relationship-graph.md)
-- [`TASK-0261: Mobile-First Touch-Optimized Tavern and Casino Minigames Suite`](../../backlog/refined/0261-mobile-first-touch-optimized-tavern-casino-minigames.md)
+- [`TASK-0261: Mobile-First Touch-Optimized Tavern and Casino Minigames Suite`](../../backlog/complete/0261-mobile-first-touch-optimized-tavern-casino-minigames.md)
 - [`TASK-0262: Interactive Merchant Haggling Engine with DM Arbitration Controls`](../../backlog/complete/0262-interactive-merchant-haggling-engine-with-dm-controls.md)
 - [`TASK-0263: Town Bulletin Board, Civic Proclamations, and Rumor Network`](../../backlog/complete/0263-town-bulletin-board-civic-notices-and-bounty-board.md)
-- [`TASK-0264: Settlement Builder and Mobile Minigames Blackbox Test Suite`](../../backlog/refined/0264-settlement-builder-and-minigames-blackbox-test-suite.md)
+- [`TASK-0264: Settlement Builder and Mobile Minigames Blackbox Test Suite`](../../backlog/complete/0264-settlement-builder-and-minigames-blackbox-test-suite.md)

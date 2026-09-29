@@ -12,7 +12,7 @@ BACKLOG_DIR = REPO_ROOT / "docs" / "project" / "backlog"
 
 def inspect_file_lengths():
     print("--- 1. File Length Inspection (Hard Invariant: <500 lines) ---")
-    scanned_dirs = ["libs", "services", "gateway", "frontend/src", "tests"]
+    scanned_dirs = ["libs", "services", "gateway", "frontend/src", "frontend/test", "tests"]
     file_lengths = []
 
     for d in scanned_dirs:

@@ -18,6 +18,8 @@ The client router (`frontend/src/router/router.ts`) supports standard deep-linka
 | `#/campaigns` | Campaign management hub / dashboard | `http://localhost/#/campaigns` |
 | `#/campaigns/:campaignId` | Campaign details & membership | `http://localhost/#/campaigns/4` |
 | `#/campaigns/:campaignId/characters` | Campaign party roster | `http://localhost/#/campaigns/4/characters` |
+| `#/campaigns/:campaignId/codex` | Campaign world atlas & lore codex | `http://localhost/#/campaigns/4/codex` |
+| `#/campaigns/:campaignId/analytics` | Campaign chronicle timeline & telemetry | `http://localhost/#/campaigns/4/analytics` |
 | `#/campaigns/:campaignId/lobby/:sessionId` | Pre-game assembly lobby | `http://localhost/#/campaigns/4/lobby/15` |
 | `#/campaigns/:campaignId/sessions/:sessionId` | Active live VTT session | `http://localhost/#/campaigns/4/sessions/14` |
 | `#/characters` | Personal character roster | `http://localhost/#/characters` |
@@ -184,8 +186,11 @@ To verify that all registered standard routes parse parameters, resolve titles, 
 # Frontend component and route matrix audit
 node --experimental-strip-types --test frontend/test/app-shell-views-wiring-audit.test.ts
 
-# Python blackbox frontdoor E2E test suite
-uv run pytest tests/test_blackbox_app_shell_views_audit.py
+# Modular App Shell test submodules (routing, session transitions, websocket lifecycle, breadcrumbs)
+node --experimental-strip-types --test frontend/test/app_shell/*.test.ts
+
+# Python blackbox frontdoor E2E test suites
+uv run pytest tests/test_blackbox_app_shell_views_audit.py tests/test_blackbox_app_shell_test_modular_decomposition.py
 ```
 
 ## 9. Modular Data Service & Offline Fixture Fallbacks

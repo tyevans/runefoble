@@ -131,6 +131,33 @@ During session staging and active virtual tabletop play, the App Shell dynamical
 To prevent view collisions (such as `#/profile` defaulting to `campaigns` or `#/campaigns/:id/characters` colliding with `campaign-detail`) and verify route-bound WebSocket lifecycles:
 
 - **Frontend Component & Route Matrix**: Run `node --experimental-strip-types --test frontend/test/app-shell-views-wiring-audit.test.ts` to execute parameterized assertions across all standard routes, verifying parameter extraction, breadcrumbs, and WebSocket connect/teardown events.
-- **Python E2E Blackbox Suite**: Run `pytest tests/test_blackbox_app_shell_views_audit.py` to audit full frontdoor Gateway API endpoints, DOM mounting manifest contracts, and file length constraints.
+- **Modular App Shell Test Submodules**: Run `node --experimental-strip-types --test frontend/test/app_shell/*.test.ts` (or `npm test` in `frontend/`) to execute the decomposed unit and integration test submodules (`routing.test.ts`, `session-transitions.test.ts`, `websocket-lifecycle.test.ts`, `state-breadcrumbs.test.ts`).
+- **Python E2E Blackbox Suite**: Run `pytest tests/test_blackbox_app_shell_views_audit.py` and `pytest tests/test_blackbox_app_shell_test_modular_decomposition.py` to audit full frontdoor Gateway API endpoints, DOM mounting manifest contracts, file length constraints, and modular test execution.
+
+## 8. Live Tabletop VTT WebSocket Event Mesh & Plugin Slots (TASK-0358)
+
+In the active session (`session-active`) and pre-game lobby (`session-lobby`), the App Shell binds multi-user real-time events over `/ws/session/:sessionId`:
+
+1. **Session Lobby Readiness & Absentee AI Stand-In Sync**:
+   - `<runefoble-session-lobby>` dispatches `@toggle-readiness` and `@toggle-stand-in`.
+   - The App Shell updates `lobbyParticipants` state and broadcasts `{ type: 'player_readiness', userId, isReady }` and `{ type: 'player_stand_in', userId, isAbsent }` to all connected party members.
+2. **Tactical Board Event Mesh & Dynamic Bounds**:
+   - `<runefoble-board>` receives `.cols` and `.rows` dynamically from `appDataService.fetchBoardState(sessionId)` and `.websocketUrl` connecting directly to the session WebSocket.
+   - Listens to board actions:
+     - `@token-action`: Broadcasts `{ type: 'token_action', ... }` (radial menu actions).
+     - `@aoe-place`: Broadcasts `{ type: 'aoe_placed', ... }` (geometric spell placements).
+     - `@spell-vfx-triggered`: Broadcasts `{ type: 'spell_vfx', ... }` (WebGL particle bloom).
+     - `@confirm-ghost`: Broadcasts `{ type: 'confirm_ghost', ... }` (spoken movement finalization).
+3. **Default Tabletop Plugin Seeding**:
+   - `pluginRegistry` is automatically seeded via `registerDefaultPlugins()`:
+     - Slot `hud-widget`: `<runefoble-initiative-tracker>`, `<runefoble-soundscape-controls>`.
+     - Slot `dice-panel`: `<runefoble-dice-roller>`, `<runefoble-dice-tray-3d>`.
+     - Slot `sidebar-tool`: `<runefoble-combat-reaction-prompt>`, plus `<runefoble-dm-whisper-bar>` and `<runefoble-dm-trap-controls>` when authenticated as DM.
+4. **Expanded WebSocket Message Routing**:
+   - `dice_rolled`: Triggers 3D dice tray physics toss (`runefoble-dice-tray-3d.roll()`) and updates roller state.
+   - `turn_advanced`: Updates active combatant and round number on `<runefoble-initiative-tracker>`.
+   - `aoe_placed`: Renders AoE spell templates on `<runefoble-board>`.
+   - `spell_vfx`: Triggers WebGL particle blooms on `<runefoble-board>`.
+   - `dm_whisper`: Streams private DM whispers into `<runefoble-dm-whisper-bar>`.
 
 

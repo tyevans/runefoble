@@ -42,18 +42,25 @@ export class RunefobleCharacterSheet extends LitElement {
   @state() newItemName = '';
   @state() newItemWeight = 1.0;
   @state() selectedConditionToAdd = 'blinded';
+  @state() equippingItem: InventoryItem | null = null;
+  @state() selectedEquipSlot = 'main_hand';
+
+  openEquipDialog(item: InventoryItem) { this.equippingItem = item; this.selectedEquipSlot = item.slot || 'main_hand'; }
+  closeEquipDialog() { this.equippingItem = null; }
+  confirmEquipItem() { if (!this.equippingItem) return; this.handleEquipItem(this.selectedEquipSlot, this.equippingItem); this.equippingItem = null; }
 
   connectedCallback() {
     super.connectedCallback();
-    if (this.characterId && typeof window !== 'undefined' && typeof window.fetch === 'function') {
-      this.fetchCharacter().catch(() => {});
-    }
+    if (this.characterId && typeof window !== 'undefined' && typeof window.fetch === 'function') { this.fetchCharacter().catch(() => {}); }
   }
 
   async fetchCharacter(): Promise<void> {
     if (!this.characterId) return;
     try {
-      const res = await fetch(`${this.apiBaseUrl}/${this.characterId}`);
+      const token = window?.localStorage?.getItem('runefoble-access-token');
+      const res = await fetch(`${this.apiBaseUrl}/${this.characterId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (res.ok) syncCharacterResponse(this, await res.json());
     } catch {}
   }

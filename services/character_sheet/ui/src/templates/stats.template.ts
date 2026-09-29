@@ -27,6 +27,12 @@ export function renderVitalsGrid(sheet: RunefobleCharacterSheet) {
         <div class="hp-bar-outer">
           <div class="hp-bar-inner ${hpPercent < 30 ? 'low' : ''}" style="width: ${hpPercent}%"></div>
         </div>
+        <div class="hp-controls" style="display:flex; gap:4px; margin-top:6px; justify-content:center;">
+          <button class="action-btn hp-btn hp-btn-minus-5" title="Take 5 Damage" @click=${() => sheet.handleHpDelta(-5)}>-5</button>
+          <button class="action-btn hp-btn hp-btn-minus-1" title="Take 1 Damage" @click=${() => sheet.handleHpDelta(-1)}>-1</button>
+          <button class="action-btn hp-btn hp-btn-plus-1" title="Heal 1 HP" @click=${() => sheet.handleHpDelta(1)}>+1</button>
+          <button class="action-btn hp-btn hp-btn-plus-5" title="Heal 5 HP" @click=${() => sheet.handleHpDelta(5)}>+5</button>
+        </div>
       </div>
       <div class="vital-card">
         <div class="vital-label">Armor Class</div>

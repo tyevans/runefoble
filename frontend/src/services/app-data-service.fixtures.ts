@@ -55,33 +55,39 @@ export const FALLBACK_MEMBERS: CampaignMember[] = [
 ];
 
 export const FALLBACK_PARTICIPANTS: LobbyParticipant[] = [
-  { userId: 'user-valeros', username: 'Valeros', role: 'Fighter Lvl 4', characterId: 'char-valeros', characterName: 'Valeros of Korvosa', characterClass: 'Fighter', characterLevel: 4, isReady: true, isAbsent: false, onlineStatus: 'online' },
-  { userId: 'user-kyra', username: 'Kyra', role: 'Cleric Lvl 4', characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden', characterClass: 'Cleric', characterLevel: 4, isReady: false, isAbsent: true, onlineStatus: 'offline' },
+  { userId: 'user-valeros', username: 'Valeros', role: 'Fighter Lvl 4', characterId: 'char-valeros', characterName: 'Valeros of Korvosa', characterClass: 'Fighter', characterLevel: 4, isReady: false, isAbsent: false, onlineStatus: 'online' },
+  { userId: 'user-sarah', username: 'Sarah', role: 'Rogue Lvl 3', characterId: 'char-sarah', characterName: 'Sarah Shadowstep', characterClass: 'Rogue', characterLevel: 3, isReady: false, isAbsent: false, onlineStatus: 'online' },
+  { userId: 'user-kyra', username: 'Kyra', role: 'Cleric Lvl 4', characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden', characterClass: 'Cleric', characterLevel: 4, isReady: false, isAbsent: false, onlineStatus: 'offline' },
 ];
 
-export const FALLBACK_SESSIONS: CampaignSessionItem[] = [
-  { id: 'session-tomb-14', campaignId: '4', title: 'Session #14: Tomb of the Star-Eater', status: 'active', round: 3, participantsCount: 4 },
-  { id: 'lobby-4-2', campaignId: '4', title: 'Session #15: Chamber of Horrors', status: 'lobby', participantsCount: 3 },
-];
+export const FALLBACK_CAMPAIGN_SESSIONS_MAP: Record<string, CampaignSessionItem[]> = {
+  '4': [
+    { id: 'session-tomb-14', campaignId: '4', title: 'Session #14: Tomb of the Star-Eater', status: 'active', round: 3, participantsCount: 4 },
+    { id: 'lobby-4-2', campaignId: '4', title: 'Session #15: Chamber of Horrors', status: 'lobby', round: 1, participantsCount: 3 },
+  ],
+  '5': [
+    { id: 'session-whisper-1', campaignId: '5', title: 'Session #1: The Sunken Aqueduct', status: 'upcoming', round: 1, participantsCount: 0, description: 'Subterranean dwarven aqueduct expedition.' },
+  ],
+};
+
+export const FALLBACK_SESSIONS: CampaignSessionItem[] = FALLBACK_CAMPAIGN_SESSIONS_MAP['4'];
 
 export function getFallbackCampaignSessions(campaignId: string): CampaignSessionItem[] {
-  return [
-    {
-      id: campaignId === '4' ? 'session-tomb-14' : `session-${campaignId}-1`, campaignId,
-      title: campaignId === '4' ? 'Session #14: Tomb of the Star-Eater' : `Session #1 (${campaignId})`,
-      status: 'active', round: 3, participantsCount: 4,
-    },
-    { id: `lobby-${campaignId}-2`, campaignId, title: 'Session #15: Chamber of Horrors', status: 'lobby', participantsCount: 3 },
-  ];
+  if (!FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]) {
+    FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId] = [
+      { id: `lobby-${campaignId}-1`, campaignId, title: 'Session #1: Assembly & Briefing', status: 'lobby', round: 1, participantsCount: 1 },
+    ];
+  }
+  return [...FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]];
 }
 
 export function getFallbackSession(sessionId: string): CampaignSessionItem {
-  if (sessionId === '14' || sessionId === 'session-tomb-14') {
-    return { id: sessionId, campaignId: '4', title: 'Session #14: Tomb of the Star-Eater', status: 'active', round: 3, participantsCount: 4 };
+  for (const list of Object.values(FALLBACK_CAMPAIGN_SESSIONS_MAP)) {
+    const found = list.find((s) => s.id === sessionId);
+    if (found) return found;
   }
-  if (sessionId === '15' || sessionId.startsWith('lobby-')) {
-    return { id: sessionId, campaignId: '4', title: sessionId === '15' ? 'Lobby 15' : 'Session #15: Chamber of Horrors', status: 'lobby', participantsCount: 3 };
-  }
+  if (sessionId === '14' || sessionId === 'session-tomb-14') return { id: sessionId, campaignId: '4', title: 'Session #14: Tomb of the Star-Eater', status: 'active', round: 3, participantsCount: 4 };
+  if (sessionId === '15' || sessionId === 'lobby-4-2') return { id: sessionId, campaignId: '4', title: 'Session #15: Chamber of Horrors', status: 'lobby', participantsCount: 3 };
   return { id: sessionId, campaignId: '', title: `Session #${sessionId}`, status: 'active', round: 1, participantsCount: 3 };
 }
 
@@ -90,8 +96,12 @@ export function createFallbackCampaign(campaignId: string): CampaignItem {
 }
 
 export function createFallbackCampaignItem(payload: CreateCampaignPayload): CampaignItem {
+  const newId = `camp-${Date.now()}`;
+  FALLBACK_CAMPAIGN_SESSIONS_MAP[newId] = [
+    { id: `lobby-${newId}-1`, campaignId: newId, title: 'Session #1: Assembly & Briefing', status: 'lobby', round: 1, participantsCount: 1 },
+  ];
   return {
-    id: `camp-${Date.now()}`, title: payload.title, description: payload.description,
+    id: newId, title: payload.title, description: payload.description,
     setting: payload.setting, system: payload.system || '5e', role: 'owner', player_count: 1, has_active_session: false,
   };
 }
@@ -99,33 +109,21 @@ export function createFallbackCampaignItem(payload: CreateCampaignPayload): Camp
 export function updateFallbackCampaign(campaignId: string, payload: UpdateCampaignPayload): CampaignItem {
   const c = FALLBACK_CAMPAIGNS.find((item) => item.id === campaignId);
   if (c) {
-    if (payload.title !== undefined) c.title = payload.title;
-    if (payload.setting !== undefined) c.setting = payload.setting;
-    if (payload.system !== undefined) c.system = payload.system;
-    if (payload.cover_image_url !== undefined) c.cover_image_url = payload.cover_image_url;
-    if (payload.description !== undefined) c.description = payload.description;
+    Object.assign(c, Object.fromEntries(Object.entries(payload).filter(([_, v]) => v !== undefined)));
     return { ...c };
   }
   return { id: campaignId, title: payload.title, setting: payload.setting, system: payload.system || '5e', cover_image_url: payload.cover_image_url, description: payload.description };
 }
 
 export function createFallbackCharacter(payload: CreateCharacterPayload, ownerId: string): CharacterItem {
-  return {
-    id: `char-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    name: payload.name, characterClass: payload.characterClass, subclass: payload.subclass,
-    level: payload.level || 1, currentHp: payload.maxHp, maxHp: payload.maxHp, armorClass: payload.armorClass,
-    speed: payload.speed || 30, portraitUrl: payload.portraitUrl, campaignId: null, campaignTitle: null, ownerId,
-  };
+  return { id: `char-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, name: payload.name, characterClass: payload.characterClass, subclass: payload.subclass, level: payload.level || 1, currentHp: payload.maxHp, maxHp: payload.maxHp, armorClass: payload.armorClass, speed: payload.speed || 30, portraitUrl: payload.portraitUrl, campaignId: null, campaignTitle: null, ownerId };
 }
 
 export function assignFallbackCharacterCampaign(characterId: string, campaignId: string | null): void {
   const char = FALLBACK_CHARACTERS.find((c) => c.id === characterId);
-  if (char) {
-    char.campaignId = campaignId;
-    const camp = FALLBACK_CAMPAIGNS.find((c) => c.id === campaignId);
-    char.campaignTitle = camp ? camp.title : null;
-  }
+  if (char) { char.campaignId = campaignId; const camp = FALLBACK_CAMPAIGNS.find((c) => c.id === campaignId); char.campaignTitle = camp ? camp.title : null; }
 }
+
 
 export function deleteFallbackCharacter(characterId: string): void {
   const idx = FALLBACK_CHARACTERS.findIndex((c) => c.id === characterId);
@@ -140,7 +138,7 @@ export function resolveLobbyAvailableCharacters(characters: CharacterItem[], cam
 }
 
 export const FALLBACK_BOARD_TOKENS: BoardToken[] = [
-  { id: '1', name: 'Valeros', x: 2, y: 3, color: 'var(--rf-accent-secondary)', hp: 38, maxHp: 45, visionRadius: 2 },
+  { id: '1', name: 'Valeros', x: 2, y: 2, color: 'var(--rf-accent-secondary)', hp: 38, maxHp: 45, visionRadius: 2 },
   { id: '2', name: 'Kyra (AI)', x: 3, y: 3, isAiControlled: true, color: 'var(--rf-accent-primary)', hp: 28, maxHp: 32, visionRadius: 2 },
   { id: '3', name: 'Goblin Scout', x: 5, y: 1, isHostile: true, color: 'var(--rf-accent-tertiary)', hp: 7, maxHp: 12 },
   { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, isHostile: true, color: 'var(--rf-border-color)', hp: 52, maxHp: 75 },

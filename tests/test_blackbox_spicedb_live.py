@@ -3,13 +3,13 @@
 from uuid import uuid4
 
 import pytest
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient
 
 
 @pytest.mark.asyncio
-async def test_spicedb_client_mock_fallback_crud() -> None:
-    """Verify SpiceDBClient graceful fallback to in-memory evaluation."""
-    client = SpiceDBClient(use_mock=True)
+async def test_spicedb_client_mock_crud() -> None:
+    """Verify MockSpiceDBClient in-memory evaluation."""
+    client = MockSpiceDBClient()
     campaign_id = f"camp-{uuid4().hex[:6]}"
     user_id = f"user-{uuid4().hex[:6]}"
 
@@ -38,7 +38,7 @@ async def test_spicedb_client_mock_fallback_crud() -> None:
 @pytest.mark.asyncio
 async def test_spicedb_multi_entity_authorization() -> None:
     """Verify authorization graphs across character, board_token, and shared_world."""
-    client = SpiceDBClient(use_mock=True)
+    client = MockSpiceDBClient()
     camp_id = f"camp-{uuid4().hex[:6]}"
     dm_id = f"dm-{uuid4().hex[:6]}"
     player_id = f"player-{uuid4().hex[:6]}"

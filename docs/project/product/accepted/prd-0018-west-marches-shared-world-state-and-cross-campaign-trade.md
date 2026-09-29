@@ -55,3 +55,7 @@ Worldbuilding artisans (like Rowan the Chronicler), downtime crafters (like Bram
 - [`TASK-0136: Cross-Campaign Caravan Trading & Bounty Board Microfrontend`](../../backlog/complete/0136-cross-campaign-caravan-board-and-contracts-microfrontend.md)
 - [`TASK-0164: Cross-Campaign Settlement and Haven Registry`](../../backlog/complete/0164-cross-campaign-settlement-haven-registry.md)
 - [`TASK-0165: Frontier Mercenary Contract and Bounty Board Router`](../../backlog/complete/0165-frontier-mercenary-contract-bounty-board-router.md)
+- [`TASK-0451: Gateway West Marches and Caravan API Routing & Zanzibar Proxy`](../../backlog/proposed/0451-gateway-west-marches-and-caravan-api-routing-and-zanzibar-proxy.md)
+- [`TASK-0452: App Shell West Marches Shared Atlas and Stronghold Integration`](../../backlog/proposed/0452-app-shell-west-marches-shared-atlas-and-stronghold-integration.md)
+- [`TASK-0453: App Shell Caravan Trading and Bounty Board Integration`](../../backlog/proposed/0453-app-shell-caravan-trading-and-bounty-board-integration.md)
+- [`TASK-0454: West Marches Multi-Party Gateway and App Shell Blackbox Test Suite`](../../backlog/proposed/0454-west-marches-multi-party-gateway-and-app-shell-blackbox-test-suite.md)

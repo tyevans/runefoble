@@ -13,7 +13,7 @@ _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 
 def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    """Retrieve active SpiceDB client singleton with mock fallback."""
+    """Retrieve active SpiceDB client singleton."""
     global _spicedb_client
     if _spicedb_client is None:
         _spicedb_client = SpiceDBClient()

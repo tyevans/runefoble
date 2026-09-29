@@ -7,6 +7,14 @@
     "build": "pnpm -r run build",
     "storybook": "pnpm --filter frontend run storybook",
     "build-storybook": "pnpm --filter frontend run build-storybook",
-    "typecheck": "pnpm -r run typecheck"
+    "typecheck": "pnpm -r run typecheck",
+    "test:bdd": "bddgen",
+    "test:e2e": "bddgen && playwright test",
+    "test:e2e:ui": "bddgen && playwright test --ui",
+    "playwright:install": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "playwright-bdd": "^9.2.1"
   }
 }

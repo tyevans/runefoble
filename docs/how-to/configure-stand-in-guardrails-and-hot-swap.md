@@ -17,8 +17,10 @@ Players who anticipate missing a session can configure personal tactical guardra
 
 ### Updating Guardrails via REST API
 
+Requests can be issued directly to `character-sheet:8003` or through `gateway-api:8000`:
+
 ```bash
-curl -X PUT http://localhost:8003/api/v1/characters/char-sarah-cleric/guardrails \
+curl -X PUT http://localhost:8000/api/v1/characters/char-sarah-cleric/guardrails \
   -H "Content-Type: application/json" \
   -H "X-User-Id: sarah-user" \
   -d '{

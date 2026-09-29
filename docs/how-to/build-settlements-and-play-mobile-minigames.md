@@ -312,7 +312,19 @@ Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authenticat
 
 ---
 
-## 7. Modular Settlement Haggling Engine Architecture
+## 7. Modular Settlement Workers APIRouter Architecture
+
+Per ADR-0003, ADR-0007, ADR-0013, and PRD-0024, the settlement NPC workers router is decomposed into dedicated submodules under `services/game_session/src/game_session/settlement/workers/` with all route modules remaining strictly under 130 lines:
+
+- **`routes_roster.py`**: Worker assignment (`POST /api/v1/establishments/{id}/workers`), staff listing (`GET /api/v1/establishments/{id}/workers`), roster operations projection (`GET /api/v1/establishments/{id}/roster`), duty relieving (`POST /api/v1/establishments/{id}/workers/{npc_id}/relieve`), and worker profile retrieval (`GET /api/v1/npcs/{npc_id}`).
+- **`routes_relationships.py`**: Interpersonal social ties (`POST /api/v1/npcs/{npc_id}/relationships`), relationship queries (`GET /api/v1/npcs/{npc_id}/relationships`), mood and loyalty updates (`PATCH /api/v1/npcs/{npc_id}/mood`), and workplace rumor discovery (`GET /api/v1/npcs/{npc_id}/rumors`).
+- **`routes_inventory.py`**: Shelf stock listings (`GET /api/v1/npcs/{npc_id}/inventory`), manager backroom vault access (`GET /api/v1/npcs/{npc_id}/inventory/vault`), item pricing lookups (`GET /api/v1/npcs/{npc_id}/inventory/{item_id}`), and merchandise restocking (`POST /api/v1/npcs/{npc_id}/inventory/restock`).
+- **`loaders.py` & `operations.py`**: Aggregate loaders, SpiceDB Zanzibar object-level permission enforcement, and establishment operational metrics synchronization.
+- **`workers_router.py`**: Aggregator router facade (< 35 lines) combining `roster_router`, `relationships_router`, and `inventory_router` with 100% backward route compatibility.
+
+---
+
+## 8. Modular Settlement Haggling Engine Architecture
 
 Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the merchant negotiation engine in `services/game_session/src/game_session/settlement/haggling/` is decomposed into modular submodules strictly under 110–130 lines:
 
@@ -323,11 +335,12 @@ Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the merchant negotiation engine 
 
 ---
 
-## 8. Blackbox Test Suites & Verification
+## 9. Blackbox Test Suites & Verification
 
 In accordance with Hard Invariant 7 (Blackbox TDD with frontdoor setup) and ADR-0008, all settlement haven and mobile minigame mechanics are covered by comprehensive end-to-end blackbox suites driving public HTTP endpoints and WebSocket streams:
 
-1. **Settlement Integration Suite (`tests/test_blackbox_settlements_integration.py`)**:
+1. **Settlement Integration Suite (`tests/test_blackbox_settlements_integration/`)**:
+   - Decomposed into modular test submodules strictly under 130 lines per Invariant 6 (`test_invariants_and_compat.py`, `test_auth_and_permissions.py`, `test_settlement_and_establishments.py`, `test_haggling_and_bulletin.py`).
    - `test_found_settlement_and_upgrade_tier_flow`: Verifies civic scaling caps (hamlet 2 districts, village 4 districts), prosperity gates, and event publishing (`SettlementFounded`, `SettlementTierUpgraded`).
    - `test_establishment_creation_and_worker_assignment`: Validates storefront construction, assignable NPC workers with role synergy bonuses, and dynamic inventory inspection via `GET /api/v1/establishments/{id}/workers`.
    - `test_merchant_haggling_gambits_and_dm_override`: Simulates persuasion rolls against merchant temperament, flattery gambits, and real-time DM mood/force-accept arbitration controls.
@@ -340,7 +353,7 @@ In accordance with Hard Invariant 7 (Blackbox TDD with frontdoor setup) and ADR-
 Execute the suites locally via UV:
 
 ```bash
-uv run pytest tests/test_blackbox_settlements_integration.py tests/test_blackbox_minigames_websocket.py
+uv run pytest tests/test_blackbox_settlements_integration/ tests/test_blackbox_minigames_websocket.py
 ```
 
 

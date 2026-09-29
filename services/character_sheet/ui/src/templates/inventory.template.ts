@@ -70,8 +70,8 @@ export function renderEquipmentAndInventory(sheet: RunefobleCharacterSheet) {
                 <td>x${item.quantity}</td>
                 <td>${(item.weight_lbs * item.quantity).toFixed(1)}</td>
                 <td>
-                  <button class="action-btn" title="Equip into slot" @click=${() => sheet.handleEquipItem(item.slot || 'main_hand', item)}>Equip</button>
-                  <button class="action-btn" title="Drop item" @click=${() => sheet.handleRemoveItem(item)}>Drop</button>
+                  <button class="action-btn equip-btn" title="Equip into slot" @click=${() => sheet.openEquipDialog(item)}>Equip</button>
+                  <button class="action-btn drop-btn" title="Drop item" @click=${() => sheet.handleRemoveItem(item)}>Drop</button>
                 </td>
               </tr>
             `
@@ -93,6 +93,46 @@ export function renderEquipmentAndInventory(sheet: RunefobleCharacterSheet) {
         />
         <button class="action-btn" @click=${() => sheet.handleAddItem()}>+ Add</button>
       </div>
+
+      <!-- Slot Selector Dialog -->
+      ${sheet.equippingItem
+        ? html`
+            <div
+              class="equip-dialog-overlay"
+              style="position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:1000;"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Equip Slot Selector"
+            >
+              <div
+                class="equip-dialog"
+                style="background:var(--rf-bg-panel, #222); color:var(--rf-text-primary, #eee); border:2px solid var(--rf-border-color, #444); padding:16px; min-width:280px; box-shadow:0 8px 24px rgba(0,0,0,0.5);"
+              >
+                <div style="font-weight:700; font-size:1rem; margin-bottom:8px;">
+                  Equip ${sheet.equippingItem.name}
+                </div>
+                <label style="display:block; font-size:0.8rem; margin-bottom:6px; color:var(--rf-text-muted, #aaa);">
+                  Choose Equipment Slot:
+                </label>
+                <select
+                  class="slot-selector"
+                  style="width:100%; padding:6px; font-size:0.85rem; margin-bottom:12px; background:var(--rf-bg-input, #333); color:var(--rf-text-primary, #fff); border:1px solid var(--rf-border-color, #555);"
+                  .value=${sheet.selectedEquipSlot}
+                  @change=${(e: any) => { sheet.selectedEquipSlot = e.target.value; }}
+                >
+                  <option value="main_hand">⚔️ Main Hand</option>
+                  <option value="off_hand">🛡️ Off Hand</option>
+                  <option value="armor">🥋 Armor</option>
+                  <option value="accessory">💍 Accessory</option>
+                </select>
+                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                  <button class="action-btn cancel-btn" @click=${() => sheet.closeEquipDialog()}>Cancel</button>
+                  <button class="action-btn confirm-equip-btn" @click=${() => sheet.confirmEquipItem()}>Confirm Equip</button>
+                </div>
+              </div>
+            </div>
+          `
+        : html``}
     </div>
   `;
 }

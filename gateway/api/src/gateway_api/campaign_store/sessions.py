@@ -54,7 +54,26 @@ class SessionManager:
     """Manages active, lobby, and scheduled sessions for campaigns."""
 
     def __init__(self) -> None:
-        self._campaign_sessions: dict[str, list[CampaignSessionRecord]] = {}
+        self._campaign_sessions: dict[str, list[CampaignSessionRecord]] = {
+            "4": [
+                CampaignSessionRecord(
+                    id="14",
+                    campaign_id="4",
+                    title="Session #14: Tomb of the Star-Eater",
+                    status="active",
+                    round=3,
+                    participants_count=4,
+                ),
+                CampaignSessionRecord(
+                    id="15",
+                    campaign_id="4",
+                    title="Session #15: Chamber of Horrors",
+                    status="lobby",
+                    round=1,
+                    participants_count=3,
+                ),
+            ],
+        }
 
     def create_session(
         self,
@@ -90,4 +109,58 @@ class SessionManager:
         return None
 
     def reset(self) -> None:
-        self._campaign_sessions.clear()
+        self.__init__()
+
+
+DEFAULT_SESSION_PARTICIPANTS: list[dict[str, Any]] = [
+    {
+        "userId": "user-valeros",
+        "username": "Valeros",
+        "role": "player",
+        "character": "Valeros",
+        "characterId": "char-valeros",
+        "characterName": "Valeros",
+        "characterClass": "Fighter",
+        "characterLevel": 4,
+        "isReady": False,
+        "isAbsent": False,
+        "onlineStatus": "online",
+        "online": True,
+        "ai_stand_in": False,
+    },
+    {
+        "userId": "user-sarah",
+        "username": "Sarah",
+        "role": "player",
+        "character": "Sarah",
+        "characterId": "char-sarah",
+        "characterName": "Sarah",
+        "characterClass": "Rogue",
+        "characterLevel": 3,
+        "isReady": False,
+        "isAbsent": False,
+        "onlineStatus": "online",
+        "online": True,
+        "ai_stand_in": False,
+    },
+    {
+        "userId": "user-kyra",
+        "username": "Kyra",
+        "role": "player",
+        "character": "Kyra",
+        "characterId": "char-kyra",
+        "characterName": "Kyra",
+        "characterClass": "Cleric",
+        "characterLevel": 4,
+        "isReady": False,
+        "isAbsent": False,
+        "onlineStatus": "offline",
+        "online": False,
+        "ai_stand_in": False,
+    },
+]
+
+DEFAULT_BOARD_TOKENS: list[dict[str, Any]] = [
+    {"id": "t1", "name": "Valeros", "x": 2, "y": 2, "color": "#2563eb"},
+    {"id": "t2", "name": "Kyra", "x": 3, "y": 3, "color": "#db2777", "is_ai_controlled": True},
+]
