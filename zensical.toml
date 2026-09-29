@@ -35,6 +35,7 @@ nav = [
     { "Orchestrate Audience Chaos Polls" = "how-to/orchestrate-audience-chaos-polls.md" },
     { "Project Campaign Analytics & Chronicle Timeline" = "how-to/project-campaign-analytics-and-chronicle-timeline.md" },
     { "Navigate Client SPA Routes & Breadcrumbs" = "how-to/navigate-client-spa-routes-and-breadcrumbs.md" },
+    { "Validate E2E Journeys with Playwright BDD" = "how-to/validate-e2e-journeys-with-playwright-bdd.md" },
   ]},
   { "Technical Reference" = [
     { "Architecture Overview" = "reference/architecture-overview.md" },
