@@ -8,12 +8,6 @@ from typing import Any
 
 from gateway_api.campaign_store.invites import InviteManager
 from gateway_api.campaign_store.models import CampaignRecord, CampaignSessionRecord, InviteRecord
-from gateway_api.campaign_store.queries import (
-    build_campaign_summary,
-    get_all_viewable_campaigns,
-    get_campaign_members,
-    get_user_campaign_role,
-)
 from gateway_api.campaign_store.sessions import SessionManager
 
 
@@ -47,6 +41,7 @@ class CampaignStore:
         system: str = "5e",
         cover_image_url: str | None = None,
         settings: dict[str, Any] | None = None,
+        seed_initial_session: bool = True,
     ) -> CampaignRecord:
         rec = CampaignRecord(
             id=campaign_id,
@@ -59,6 +54,13 @@ class CampaignStore:
             settings=settings or {},
         )
         self._campaigns[campaign_id] = rec
+        if seed_initial_session and not self._session_manager.get_campaign_sessions(campaign_id):
+            self._session_manager.create_session(
+                campaign_id=campaign_id,
+                title="Session #1: Staging Lobby",
+                status="lobby",
+                description="Initial campaign staging lobby.",
+            )
         return rec
 
     def get_campaign(self, campaign_id: str) -> CampaignRecord | None:
@@ -86,8 +88,11 @@ class CampaignStore:
         rec.updated_at = datetime.now(UTC).isoformat()
         return rec
 
-    def create_from_request(self, req: Any, owner_id: str) -> tuple[str, CampaignRecord]:
+    def create_from_request(
+        self, req: Any, owner_id: str, seed_initial_session: bool = True
+    ) -> tuple[str, CampaignRecord]:
         cid = f"camp-{uuid.uuid4().hex[:8]}"
+        seed = getattr(req, "seed_initial_session", seed_initial_session)
         rec = self.create_campaign(
             cid,
             req.title,
@@ -97,25 +102,25 @@ class CampaignStore:
             req.system,
             req.cover_image_url,
             req.settings,
+            seed,
         )
         return cid, rec
 
     def update_from_request(self, campaign_id: str, req: Any, owner_id: str) -> CampaignRecord:
         if not self.get_campaign(campaign_id):
-            self.create_campaign(campaign_id, req.title or f"Campaign {campaign_id}", owner_id)
-        return (
-            self.update_campaign(
-                campaign_id,
-                title=req.title,
-                description=req.description,
-                setting=req.setting,
-                system=req.system,
-                cover_image_url=req.cover_image_url,
-                status=req.status,
-                settings=req.settings,
+            self.create_campaign(
+                campaign_id, req.title or f"Campaign {campaign_id}", owner_id, False
             )
-            or self._campaigns[campaign_id]
-        )
+        params = {
+            "title": req.title,
+            "description": req.description,
+            "setting": req.setting,
+            "system": req.system,
+            "cover_image_url": req.cover_image_url,
+            "status": req.status,
+            "settings": req.settings,
+        }
+        return self.update_campaign(campaign_id, **params) or self._campaigns[campaign_id]
 
     def create_invite(self, *args: Any, **kwargs: Any) -> InviteRecord:
         return self._invite_manager.create_invite(*args, **kwargs)
@@ -143,11 +148,4 @@ class CampaignStore:
 
 campaign_store = CampaignStore()
 
-__all__ = [
-    "CampaignStore",
-    "build_campaign_summary",
-    "campaign_store",
-    "get_all_viewable_campaigns",
-    "get_campaign_members",
-    "get_user_campaign_role",
-]
+__all__ = ["CampaignStore", "campaign_store"]
