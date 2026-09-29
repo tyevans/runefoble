@@ -158,6 +158,10 @@
 - [ ] The Watcher Pluggable LLM Inference Provider Backend & Endpoint Router (`FEAT-WAT-01`, US-0001, US-0032, PRD-0001, TASK-0448)
 - [ ] The Watcher Intent Middleware Interceptor Pipeline & OpenTelemetry Tracing (`FEAT-WAT-01`, US-0001, US-0032, PRD-0001, TASK-0449)
 - [ ] Custom LLM Inference and Intent Middleware Blackbox Test Suite (US-0001, US-0032, PRD-0001, TASK-0450)
+- [ ] Gateway West Marches and Caravan API Routing & Zanzibar Proxy (`FEAT-UI-08`, `FEAT-SEC-01`, US-0058, PRD-0018, TASK-0451)
+- [ ] App Shell West Marches Shared Atlas and Stronghold Integration (`FEAT-UI-08`, US-0050, US-0058, US-0067, PRD-0018, TASK-0452)
+- [ ] App Shell Caravan Trading and Bounty Board Integration (`FEAT-UI-08`, US-0058, US-0067, PRD-0018, TASK-0453)
+- [ ] West Marches Multi-Party Gateway and App Shell Blackbox Test Suite (US-0050, US-0058, US-0067, PRD-0018, TASK-0454)
 
 ### Playwright BDD End-to-End Verification & Governance (ADR-0014)
 - [x] Playwright BDD Testing Infrastructure and Frontdoor Harness (`TASK-0359`)
