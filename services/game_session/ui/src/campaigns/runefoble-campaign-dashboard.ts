@@ -188,8 +188,9 @@ export class RunefobleCampaignDashboard extends LitElement {
             class="btn-create-campaign"
             @click=${this.openCreator}
             type="button"
+            aria-label="+ New Campaign"
           >
-            + Create Campaign
+            + New Campaign
           </button>
         </header>
 
@@ -253,15 +254,7 @@ export class RunefobleCampaignDashboard extends LitElement {
                       : 'Try adjusting your search terms or role filters to find what you are looking for.'}
                   </p>
                   ${this.campaigns.length === 0
-                    ? html`
-                        <button
-                          class="btn-create-campaign"
-                          @click=${this.openCreator}
-                          type="button"
-                        >
-                          + Create Campaign
-                        </button>
-                      `
+                    ? html`<button class="btn-create-campaign" @click=${this.openCreator} type="button" aria-label="+ New Campaign">+ New Campaign</button>`
                     : ''}
                 </div>
               `}

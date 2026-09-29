@@ -82,6 +82,9 @@ export class RunefobleCampaignMembers extends LitElement {
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(link).catch(() => {});
     }
+    if (typeof window !== 'undefined') {
+      (window as any).__lastCopiedInviteUrl = link;
+    }
     this.copied = true;
     this.dispatchEvent(new CustomEvent('copy-invite-link', {
       detail: { inviteUrl: link, role: this.selectedInviteRole },
@@ -153,14 +156,17 @@ export class RunefobleCampaignMembers extends LitElement {
           </div>
           <div class="form-group">
             <label class="form-label" for="invite-role-select">Zanzibar Role Pre-Assignment</label>
-            <select id="invite-role-select" class="form-select" .value=${this.selectedInviteRole}
-              @change=${(e: Event) => {
-                this.selectedInviteRole = (e.target as HTMLSelectElement).value as 'player' | 'spectator';
-                this.handleGenerateInvite();
-              }}>
-              <option value="player">Player</option>
-              <option value="spectator">Spectator</option>
-            </select>
+            <div class="invite-role-row" style="display: flex; gap: 8px;">
+              <select id="invite-role-select" class="form-select" style="flex: 1;" .value=${this.selectedInviteRole}
+                @change=${(e: Event) => {
+                  this.selectedInviteRole = (e.target as HTMLSelectElement).value as 'player' | 'spectator';
+                  this.handleGenerateInvite();
+                }}>
+                <option value="player">Player</option>
+                <option value="spectator">Spectator</option>
+              </select>
+              <button class="btn-generate-link" @click=${this.handleGenerateInvite} type="button">Generate Link</button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Shareable Link</label>
@@ -206,7 +212,7 @@ export class RunefobleCampaignMembers extends LitElement {
             <p class="members-subtitle">${this.campaignTitle ? `${this.campaignTitle} • ` : ''}Manage player permissions and SpiceDB Zanzibar relations</p>
           </div>
           <div class="header-actions">
-            ${this.isManager ? html`<button class="btn-invite" @click=${this.openInviteModal} type="button">+ Invite Player</button>` : ''}
+            ${this.isManager ? html`<button class="btn-invite" @click=${this.openInviteModal} type="button" aria-label="Invite Adventurers">+ Invite Adventurers</button>` : ''}
           </div>
         </header>
 

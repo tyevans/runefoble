@@ -77,7 +77,10 @@ def resolve_member_profile(campaign_id: str, user_id: str) -> tuple[str, str | N
         "user-merisiel": "Merisiel Nightshadow",
         "dm_evelyn": "Evelyn Vance",
         "user-evelyn": "Evelyn Vance",
+        "user-dm-evelyn": "Evelyn",
         "player_marcus": "Marcus",
+        "user-marcus": "Marcus",
+        "user-sarah": "Sarah",
     }
     if user_id in known_names:
         username = known_names[user_id]

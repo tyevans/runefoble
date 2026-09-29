@@ -94,6 +94,7 @@ class PlatformSettings(BaseSettings):
     # Authorization & Zanzibar (SpiceDB)
     spicedb_endpoint: str = Field(
         default="localhost:50051",
+        validation_alias=AliasChoices("RUNEFOBLE_SPICEDB_ENDPOINT", "SPICEDB_ENDPOINT"),
         description="SpiceDB gRPC endpoint",
     )
     spicedb_preshared_key: str = Field(
