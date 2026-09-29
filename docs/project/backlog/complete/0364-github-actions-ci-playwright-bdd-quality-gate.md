@@ -1,7 +1,7 @@
 ---
 id: '0364'
 title: GitHub Actions CI Workflow Playwright BDD Quality Gate Integration
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0010
@@ -18,8 +18,8 @@ governing_prds:
 governing_stories:
 - US-0065
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/378
 ---
-
 # TASK-0364: GitHub Actions CI Workflow Playwright BDD Quality Gate Integration
 
 ## Status
