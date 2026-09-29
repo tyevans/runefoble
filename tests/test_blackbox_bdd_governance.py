@@ -31,7 +31,6 @@ def test_definition_of_ready_contains_bdd_requirement():
     targets = [
         REPO_ROOT / "AGENTS.md",
         REPO_ROOT / "docs" / "operating-manual.md",
-        REPO_ROOT / "docs" / "project" / "backlog" / "README.md",
     ]
 
     for file_path in targets:
@@ -43,13 +42,17 @@ def test_definition_of_ready_contains_bdd_requirement():
         assert "Given ... When ... Then" in content
         assert "ADR-0014" in content
 
+    # Backlog README delegates DoR governance directly to AGENTS.md
+    readme = REPO_ROOT / "docs" / "project" / "backlog" / "README.md"
+    assert readme.exists()
+    assert "Definition of Ready in [`AGENTS.md`]" in readme.read_text(encoding="utf-8")
+
 
 def test_definition_of_done_contains_playwright_e2e_requirement():
     """Verifies DoD mandates passing Playwright BDD browser test suites across documents."""
     targets = [
         REPO_ROOT / "AGENTS.md",
         REPO_ROOT / "docs" / "operating-manual.md",
-        REPO_ROOT / "docs" / "project" / "backlog" / "README.md",
     ]
 
     for file_path in targets:
