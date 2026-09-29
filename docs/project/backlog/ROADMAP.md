@@ -152,14 +152,18 @@
 - [ ] Gateway Audience Studio API Routing & Zanzibar Authorization Proxy (`FEAT-UI-08`, `FEAT-SEC-01`, US-0006, US-0030, US-0031, PRD-0011, TASK-0439)
 - [ ] App Shell Audience Studio Chaos Poll Drawer & Live Voting Integration (`FEAT-UI-11`, US-0030, US-0031, PRD-0011, TASK-0440)
 - [ ] Audience Chaos Modifiers Event Bridge & Game Session Mutation Handlers (`FEAT-WAT-01`, US-0023, US-0031, PRD-0011, TASK-0441)
+- [ ] Gateway Character Wardrobe & Dynamic Portrait API Routing & Zanzibar Proxy (`FEAT-UI-09`, `FEAT-SEC-01`, US-0055, PRD-0016, TASK-0444)
+- [ ] App Shell Character Wardrobe Gallery Integration & Dynamic Condition Portrait Synchronization (`FEAT-UI-09`, US-0055, PRD-0016, TASK-0445)
+- [ ] App Shell Character Leitmotif Configuration & Audition Integration (`FEAT-UI-09`, `FEAT-SND-01`, US-0046, PRD-0016, TASK-0446)
 
 ### Playwright BDD End-to-End Verification & Governance (ADR-0014)
 - [x] Playwright BDD Testing Infrastructure and Frontdoor Harness (`TASK-0359`)
 - [ ] Definition of Ready & Done Governance Updates for BDD and Playwright (`TASK-0360`)
 - [ ] Campaign Hub Lifecycle and Navigation Playwright BDD Test Suite (`TASK-0361`)
 - [x] Session Lobby & Tabletop VTT Playwright BDD Test Suite (`TASK-0362`)
-- [ ] Character Sheet and Inventory Mutations Playwright BDD Test Suite (`TASK-0363`)
+- [x] Character Sheet and Inventory Mutations Playwright BDD Test Suite (`TASK-0363`)
 - [ ] GitHub Actions CI Workflow Playwright BDD Quality Gate Integration (`TASK-0364`)
+
 
 ## Milestone 11: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames
 ### Foundational Aggregates, Social Graphs & Civic Enablers
