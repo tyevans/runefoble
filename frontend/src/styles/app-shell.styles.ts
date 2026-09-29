@@ -109,4 +109,29 @@ export const appShellStyles = css`
   }
   .back-to-roster-btn:hover { transform: translate(-1px, -1px); box-shadow: var(--rf-shadow); color: var(--rf-accent-primary); }
   .back-to-roster-btn:active { transform: translate(1px, 1px); box-shadow: none; }
+
+  .absentee-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
+    z-index: 1000; display: flex; align-items: center; justify-content: center;
+    padding: 16px; box-sizing: border-box; backdrop-filter: blur(2px);
+  }
+  .absentee-drawer, .absentee-recap-dialog {
+    background: var(--rf-bg-surface); border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    box-shadow: var(--rf-shadow); max-width: 680px; width: 100%;
+    max-height: 90vh; overflow-y: auto; padding: 20px; box-sizing: border-box;
+  }
+  .modal-top-bar {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .btn-close-modal {
+    background: var(--rf-bg-surface); color: var(--rf-text-primary); border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    font-weight: 700; cursor: pointer; padding: 4px 10px; font-size: 0.85rem;
+  }
+  .btn-toggle-directive {
+    background: var(--rf-accent-secondary); color: var(--rf-text-on-accent, var(--rf-bg-surface));
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    padding: 6px 12px; font-weight: 700; cursor: pointer; font-size: 0.85rem;
+    box-shadow: var(--rf-shadow-sm); margin-top: 8px;
+  }
 `;
+

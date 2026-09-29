@@ -245,3 +245,18 @@ class CharacterMutationsMixin:
                 ),
             )
         return char
+
+    async def update_guardrails(
+        self,
+        character_id: str,
+        guardrails: dict[str, Any],
+    ) -> CharacterRecord:
+        char = self.get_character(character_id)
+        if not char:
+            raise KeyError(f"Character '{character_id}' not found")
+        char.stand_in_guardrails.update(guardrails)
+        await self._sync_aggregate(
+            char,
+            lambda agg: agg.update_stand_in_guardrails(guardrails),
+        )
+        return char
