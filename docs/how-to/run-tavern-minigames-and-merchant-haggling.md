@@ -219,3 +219,15 @@ Viewable in Storybook:
 - `Minigames/RunefobleMerchantHaggler`: `ActiveNegotiationLight`, `ActiveNegotiationDark`, `LowPatienceWarning`, `CompletedTransaction`.
 - `DMControls/RunefobleDMNegotiationDrawer`: `LiveArbitrationLight`, `LiveArbitrationDark`, `DealCompletedDrawer`.
 
+---
+
+## 6. Modular Settlement Haggling Engine Architecture
+
+Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the haggling negotiation engine in `services/game_session/src/game_session/settlement/haggling/` is decoupled into focused, single-responsibility submodules strictly under 110–130 lines:
+
+- **`state.py`**: Event-sourced `NegotiationAggregate` state machine and session initiation (`start_negotiation`), managing baseline offer calculations, price ranges, and patience counters.
+- **`rhetoric.py`**: `RhetoricMovesMixin` managing player bargaining gambits, roll adjudication via `evaluate_gambit`, merchant temperament modifiers, and patience decay.
+- **`dm_controls.py`**: `DMControlsMixin` managing live DM arbitration endpoints, narrative dialogue barks, manual price overrides, and immediate deal resolution.
+- **`haggling.py` / `__init__.py`**: Aggregator facades (< 40 lines) maintaining 100% backwards-compatible re-exports for existing routers and services.
+
+
