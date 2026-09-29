@@ -1,7 +1,7 @@
 ---
 id: '0230'
 title: Soundscape Aggregate Handlers Modular Decomposition
-status: Refined
+status: Complete
 created: 2026-09-27
 dependencies:
 - TASK-0050
@@ -22,7 +22,7 @@ target_release: 0.8.0
 # TASK-0230: Soundscape Aggregate Handlers Modular Decomposition
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Decompose `services/soundscape/src/soundscape/aggregate.py` (319 lines, 63.8% of limit) by extracting tension scoring handlers, foley cue handlers, and stem crossfade logic into dedicated domain handler submodules under `services/soundscape/src/soundscape/handlers/` (`stems.py`, `foley.py`, `tension.py`), ensuring all handler modules remain strictly < 150 lines per Hard Invariant 6.

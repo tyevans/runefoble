@@ -1,7 +1,7 @@
 ---
 id: '0441'
 title: Audience Chaos Modifiers Event Bridge & Game Session Mutation Handlers
-status: Proposed
+status: Refined
 created: 2026-09-29
 dependencies:
 - TASK-0051
@@ -23,7 +23,7 @@ target_release: 0.9.0
 # TASK-0441: Audience Chaos Modifiers Event Bridge & Game Session Mutation Handlers
 
 ## Status
-Proposed
+Refined
 
 ## Summary
 Implement Redis Streams domain event subscribers in `services/game_session` and `services/the_watcher` for `AudienceProposalApproved` domain events. Translate approved audience chaos modifiers (e.g. weather shifts, environmental hazards, wild magic surges, tavern brawls, consumable item drops) into concrete `GameSession` aggregate mutations, board state updates, and Watcher narrative commentary events.
@@ -31,10 +31,15 @@ Implement Redis Streams domain event subscribers in `services/game_session` and 
 ## Problem Statement
 When a DM approves an audience chaos poll outcome in `services/audience_studio`, an `AudienceProposalApproved` CloudEvent is published to the Redis event stream. However, neither `game_session` nor `the_watcher` currently listens to this event topic. Consequently, approved audience modifiers remain purely cosmetic records in the audience studio database and never affect the active tactical board, party inventory, or narrative gameplay.
 
-## Governing Architecture & ADRs
-- **ADR-0006: Redis Streams Distributed Domain Event Streaming**: Consumer group message processing across bounded contexts.
-- **ADR-0007: Domain-Driven Design Architecture**: Cross-context event handling between Audience Studio, Game Session, and The Watcher.
-- **ADR-0011: Event Sourcing with Eventsource-py**: State transitions recorded via immutable domain events.
+## Documentation & Architecture Review
+- **Documentation Consulted**:
+  - `docs/how-to/orchestrate-audience-chaos-polls.md`: Event routing between Audience Studio, Game Session, and The Watcher.
+  - `docs/how-to/define-event-sourced-aggregates.md`: DeclarativeAggregate mutation handlers and event publication.
+  - `docs/reference/events-schema.md`: CloudEvents payloads for audience proposals and mechanical modifiers.
+- **Governing Architecture & ADRs**:
+  - **ADR-0006: Redis Streams Distributed Domain Event Streaming**: Consumer group message processing across bounded contexts.
+  - **ADR-0007: Domain-Driven Design Architecture**: Cross-context event handling between Audience Studio, Game Session, and The Watcher.
+  - **ADR-0011: Event Sourcing with Eventsource-py**: State transitions recorded via immutable domain events.
 
 ## Product & User Story References
 - [`prd-0001-the-watcher-ai-dm-and-board-animator.md`](../../product/accepted/prd-0001-the-watcher-ai-dm-and-board-animator.md)
@@ -42,7 +47,7 @@ When a DM approves an audience chaos poll outcome in `services/audience_studio`,
 - [`us-0023-spoken-reaction-interrupts-and-ready-actions.md`](../../user_stories/accepted/us-0023-spoken-reaction-interrupts-and-ready-actions.md)
 - [`us-0031-live-stream-audience-chaos-polls-and-rumors.md`](../../user_stories/accepted/us-0031-live-stream-audience-chaos-polls-and-rumors.md)
 
-## Scope of Work
+## Detailed Specification & Implementation Plan
 1. **CloudEvents Definition (`libs/runefoble_events/src/runefoble_events/audience.py`)**:
    - Verify `AudienceProposalApproved` CloudEvent schema with fields: `campaign_id`, `session_id`, `proposal_id`, `modifier_type`, `description`, `mechanical_payload`.
 2. **GameSession Event Handler (`services/game_session/src/game_session/event_handlers.py`)**:
@@ -57,8 +62,16 @@ When a DM approves an audience chaos poll outcome in `services/audience_studio`,
 4. **Blackbox Tests (`tests/test_blackbox_audience_chaos_event_bridge.py`)**:
    - Publish `AudienceProposalApproved` event to the platform event bus and assert that `GameSession` state reflects the modifier and `WatcherNarrativeDispatched` event is emitted.
 
+## INVEST Criteria Evaluation
+- **Independent (I)**: Decoupled via CloudEvents; both producer and consumers interact via standard event topics.
+- **Negotiable (N)**: Specific list of modifier mechanical effects can expand over time.
+- **Valuable (V)**: Bridges viewer engagement with actual in-game tactical consequences.
+- **Estimable (E)**: Standard eventsource-py aggregate pattern.
+- **Small (S)**: Handler implementations < 100 lines and one blackbox test file.
+- **Testable (T)**: Frontdoor event dispatching asserting published CloudEvents and aggregate projections.
+
 ## Definition of Done
 1. `AudienceProposalApproved` subscribed in `game_session` and `the_watcher`.
 2. Approved modifiers apply concrete mechanical effects to the session and trigger Watcher narrative commentary.
-3. Blackbox test suite passes with 100% assertions.
+3. Frontdoor blackbox test suite `tests/test_blackbox_audience_chaos_event_bridge.py` passes with 100% assertions.
 4. Code passes `uv run ruff check .` and `uv run ruff format --check .`.
