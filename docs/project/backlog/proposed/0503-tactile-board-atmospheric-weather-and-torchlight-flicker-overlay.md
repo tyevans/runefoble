@@ -1,5 +1,5 @@
 ---
-id: '0485'
+id: '0503'
 title: Tactile Board Atmospheric Weather Particles and Torchlight Flicker Overlay
 status: Proposed
 created: 2026-09-29
@@ -19,7 +19,7 @@ governing_stories:
 target_release: 0.9.0
 ---
 
-# TASK-0485: Tactile Board Atmospheric Weather Particles and Torchlight Flicker Overlay
+# TASK-0503: Tactile Board Atmospheric Weather Particles and Torchlight Flicker Overlay
 
 ## Status
 Proposed

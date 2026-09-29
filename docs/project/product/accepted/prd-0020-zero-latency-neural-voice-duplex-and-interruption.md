@@ -53,3 +53,7 @@ Voice-first tabletop roleplayers (like Marcus), expressive dramatic performers (
 - [`TASK-0149: Voice Duplex Audio Settings & Real-Time Barge-In Visualizer Microfrontend`](../../backlog/complete/0149-voice-duplex-barge-in-visualizer-microfrontend.md)
 - [`TASK-0168: Neural Speech Barge-In and Soft Crossfade Audio Filter`](../../backlog/complete/0168-neural-speech-barge-in-crossfade-filter.md)
 - [`TASK-0169: Hardware Acoustic Echo Cancellation and ERLE Validation`](../../backlog/complete/0169-hardware-aec-filter-and-erle-validation.md)
+- [`TASK-0508: Gateway Voice Duplex WebSocket Routing and Zanzibar Proxy`](../../backlog/proposed/0508-gateway-voice-duplex-websocket-routing-and-zanzibar-proxy.md)
+- [`TASK-0509: App Shell Voice Duplex Controls and Tabletop HUD Integration`](../../backlog/proposed/0509-app-shell-voice-duplex-controls-and-tabletop-hud-integration.md)
+- [`TASK-0510: The Watcher Voice Interruption Subscriber and Reactive Intent Prioritization`](../../backlog/proposed/0510-the-watcher-voice-interruption-subscriber-and-reactive-intent-prioritization.md)
+- [`TASK-0511: Voice Duplex Frontdoor Blackbox Test Suite`](../../backlog/proposed/0511-voice-duplex-frontdoor-blackbox-test-suite.md)

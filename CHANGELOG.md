@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
+- **Backlog Curation, Deconfliction & PRD-0020 Voice Duplex Extension (`TASK-0508` through `TASK-0511`)**:
+  - Resolved task ID collisions in `docs/project/backlog/proposed/`, renumbering atmospheric weather, ghost preview fine-tuning, GM God-Mode workspace, blackbox test suite, and board events test decomposition to `TASK-0503` through `TASK-0507`.
+  - Conducted random PRD implementation audit of `PRD-0020` (Zero-Latency Neural Voice Duplex & Interruption) selected via `/dev/urandom`.
+  - Identified missing architectural implementations and authored 4 new proposed tasks: Gateway voice duplex WebSocket routing and Zanzibar proxy (`TASK-0508`), App Shell voice duplex controls and tabletop HUD integration (`TASK-0509`), The Watcher voice interruption subscriber and reactive intent prioritization (`TASK-0510`), and Voice Duplex frontdoor blackbox test suite (`TASK-0511`).
+  - Synchronized `docs/project/backlog/PRIORITY.md`, `docs/project/backlog/ROADMAP.md`, `PRD-0013`, and `PRD-0020`, verifying zero status drift and zero line invariant violations.
 - **Mailpit Email Testing and Mock SMTP Infrastructure (`ADR-0005`)**:
   - Integrated Mailpit (`axllent/mailpit:v1.21.8`) as the modern local development mock SMTP server and email inspection dashboard, replacing legacy MailHog.
   - Added Helm manifests `deployments/helm/runefoble/templates/mailpit.yaml` (Deployment & Service) exposing SMTP port 1025 and Web UI/API port 8025 with `MP_WEBROOT=/mail/`.

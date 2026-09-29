@@ -191,10 +191,14 @@
 - [ ] App Shell DM Vocal Modulator Integration & Live Session Preset Synchronization (`FEAT-UI-11`, `FEAT-VOX-07`, US-0011, US-0020, PRD-0004, TASK-0481)
 - [ ] WebAudio Client-Side Formant and Pitch Shifting DSP Node Chain (`FEAT-VOX-07`, US-0011, US-0020, PRD-0004, TASK-0482)
 - [ ] DM Vocal Modulation and Voice DSP Frontdoor Blackbox Test Suite (US-0011, US-0020, PRD-0004, TASK-0483)
-- [ ] Tactile Board Atmospheric Weather Particles and Torchlight Flicker Overlay (`FEAT-BRD-05`, US-0042, US-0043, PRD-0013, TASK-0485)
-- [ ] Tactile Board Spoken Ghost Preview Interactive Fine-Tuning and Confirmation (`FEAT-BRD-05`, US-0043, US-0056, PRD-0013, TASK-0486)
-- [ ] Tactile Board GM God-Mode Workspace and Fog-of-War Paintbrush (`FEAT-BRD-05`, `FEAT-SEC-01`, US-0013, US-0043, PRD-0013, TASK-0487)
-- [ ] Tactile Board Atmosphere and GM Workspace Frontdoor Blackbox Test Suite (US-0013, US-0043, US-0056, PRD-0013, TASK-0488)
+- [ ] Tactile Board Atmospheric Weather Particles and Torchlight Flicker Overlay (`FEAT-BRD-05`, US-0042, US-0043, PRD-0013, TASK-0503)
+- [ ] Tactile Board Spoken Ghost Preview Interactive Fine-Tuning and Confirmation (`FEAT-BRD-05`, US-0043, US-0056, PRD-0013, TASK-0504)
+- [ ] Tactile Board GM God-Mode Workspace and Fog-of-War Paintbrush (`FEAT-BRD-05`, `FEAT-SEC-01`, US-0013, US-0043, PRD-0013, TASK-0505)
+- [ ] Tactile Board Atmosphere and GM Workspace Frontdoor Blackbox Test Suite (US-0013, US-0043, US-0056, PRD-0013, TASK-0506)
+- [ ] Gateway Voice Duplex WebSocket Routing and Zanzibar Proxy (`FEAT-VOX-06`, `FEAT-SEC-01`, US-0060, PRD-0020, TASK-0508)
+- [ ] App Shell Voice Duplex Controls & Tabletop HUD Integration (`FEAT-UI-11`, `FEAT-VOX-06`, US-0060, PRD-0020, TASK-0509)
+- [ ] The Watcher Voice Interruption Subscriber & Reactive Intent Prioritization (`FEAT-WAT-01`, `FEAT-VOX-06`, US-0023, US-0060, PRD-0001, PRD-0020, TASK-0510)
+- [ ] Voice Duplex Frontdoor Blackbox Test Suite (US-0023, US-0060, PRD-0020, TASK-0511)
 
 
 
@@ -394,7 +398,7 @@
 - [ ] Character Sheet Mutations Blackbox Test Suite Modular Decomposition (TASK-0443)
 - [ ] Character Sheet Playwright BDD Steps Modular Decomposition (TASK-0447)
 - [ ] User Profile Component and Styles Modular Decomposition (TASK-0484)
-- [ ] Board Events Test Suite Modular Decomposition (TASK-0489)
+- [ ] Board Events Test Suite Modular Decomposition (TASK-0507)
 
 
 ### Playwright BDD Component Coverage Epics (ADR-0014)

@@ -1,5 +1,5 @@
 ---
-id: '0489'
+id: '0507'
 title: Board Events Test Suite Modular Decomposition
 status: Proposed
 created: 2026-09-29
@@ -20,7 +20,7 @@ governing_stories:
 target_release: 0.9.0
 ---
 
-# TASK-0489: Board Events Test Suite Modular Decomposition
+# TASK-0507: Board Events Test Suite Modular Decomposition
 
 ## Status
 Proposed
