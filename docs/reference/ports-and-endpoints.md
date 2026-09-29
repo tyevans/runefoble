@@ -223,6 +223,7 @@
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/invites` | Generates shareable invite token for player or spectator (requires `run_session`) |
 | `gateway-api` | POST | `/api/v1/campaigns/join` | Accepts invite token and registers membership relation in SpiceDB Zanzibar |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/members` | Lists campaign members and active Zanzibar roles (requires `view`) |
+| `gateway-api` | DELETE | `/api/v1/campaigns/{campaign_id}/members/{user_id}` | Removes a member from campaign and purges SpiceDB Zanzibar relationships (requires `manage`) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Lists all sessions and staging lobbies for a campaign (requires `view`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Creates a new session or staging lobby for a campaign (requires `run_session`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Assigns fine-grained SpiceDB Zanzibar relationship tuples (owner, DM, player, spectator) |

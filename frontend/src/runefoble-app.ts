@@ -34,27 +34,22 @@ export class RunefobleApp extends LitElement {
   @state() private campaignMembers: CampaignMember[] = []; @state() private campaignSessions: CampaignSessionItem[] = [];
   @state() private characters: CharacterItem[] = []; @state() private rosterCampaigns: RosterCampaignOption[] = [];
   @state() private lobbyParticipants: LobbyParticipant[] = []; @state() private lobbyAvailableCharacters: LobbyCharacterOption[] = [];
-  @state() public activeCharacter: CharacterItem | null = null;
-  @state() private toastMessage: string | null = null;
-  private toastTimeout: ReturnType<typeof setTimeout> | null = null;
+  @state() public activeCharacter: CharacterItem | null = null; @state() private toastMessage: string | null = null;
+  @state() private inviteUrl = ''; @state() private inviteToken = ''; private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
   private socket: WebSocket | null = null; private activeSocketSessionId: string | null = null; private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private unlistenRouter: (() => void) | null = null; private unlistenAuth: (() => void) | null = null; private unlistenTeardown: (() => void) | null = null; private unlistenGuard: (() => void) | null = null;
 
   connectedCallback() {
-    super.connectedCallback();
-    this.initTheme(); this.syncAuthState(authService.getState());
-    this.unlistenAuth = authService.onAuthChanged((s) => this.syncAuthState(s));
-    this.initRouter();
+    super.connectedCallback(); this.initTheme(); this.syncAuthState(authService.getState());
+    this.unlistenAuth = authService.onAuthChanged((s) => this.syncAuthState(s)); this.initRouter();
   }
 
   disconnectedCallback() {
-    super.disconnectedCallback();
-    this.unlistenRouter?.(); this.unlistenAuth?.(); this.unlistenTeardown?.(); this.unlistenGuard?.();
-    this.disconnectWebSocket();
-    if (this.toastTimeout) { clearTimeout(this.toastTimeout); this.toastTimeout = null; }
-    router.stop();
+    super.disconnectedCallback(); this.unlistenRouter?.(); this.unlistenAuth?.(); this.unlistenTeardown?.(); this.unlistenGuard?.();
+    this.disconnectWebSocket(); if (this.toastTimeout) { clearTimeout(this.toastTimeout); this.toastTimeout = null; } router.stop();
   }
+
 
   public getActiveView(): AppActiveView {
     const pat = this.currentRoute?.pattern || '';
@@ -156,6 +151,7 @@ export class RunefobleApp extends LitElement {
     if (v === 'campaigns') this.campaigns = await appDataService.fetchCampaigns();
     else if (v === 'campaign-detail' || v === 'campaign-characters') {
       const c = r.params.campaignId || this.campaignId;
+      this.inviteUrl = ''; this.inviteToken = '';
       const [camp, members, sessions, chars, rosterCamps] = await Promise.all([appDataService.fetchCampaign(c), appDataService.fetchCampaignMembers(c), appDataService.fetchCampaignSessions(c), appDataService.fetchCharacters(), appDataService.fetchRosterCampaignOptions()]);
       if (camp) { this.currentCampaign = camp; this.campaignTitle = camp.title; router.setRouteTitle('campaign:' + camp.id, camp.title); }
       this.campaignMembers = members; this.campaignSessions = sessions; this.characters = chars; this.rosterCampaigns = rosterCamps;
@@ -177,7 +173,11 @@ export class RunefobleApp extends LitElement {
 
   private async handleUpdateCampaign(e: CustomEvent<UpdateCampaignPayload>) { const p = e.detail; const cId = p?.campaignId || this.campaignId; const updated = await appDataService.updateCampaign(cId, p); if (updated) { this.currentCampaign = updated; this.campaignTitle = updated.title; router.setRouteTitle('campaign:' + updated.id, updated.title); } await this.loadRouteData(this.currentRoute || router.getCurrentRoute()!); }
   private async handleCreateSession(e: CustomEvent) { const detail = e.detail || {}; const status = detail.status || 'lobby'; const newSess = await appDataService.createCampaignSession(this.campaignId, { title: detail.title || ('Session #' + ((this.campaignSessions?.length || 0) + 1)), status, scheduled_at: detail.scheduledAt || detail.scheduled_at, description: detail.description || '' }); this.campaignSessions = await appDataService.fetchCampaignSessions(this.campaignId); if (status === 'lobby') router.navigate('#/campaigns/' + this.campaignId + '/lobby/' + newSess.id); }
+  private async handleAssignRole(e: CustomEvent) { const { campaignId, userId, role } = e.detail || {}; const cId = campaignId || this.campaignId; await appDataService.assignMemberRole(cId, userId, role); this.campaignMembers = await appDataService.fetchCampaignMembers(cId); this.showToast(`Role updated to ${role}`); }
+  private async handleCreateInvite(e: CustomEvent) { const { campaignId, role, expiresInHours, maxUses } = e.detail || {}; const cId = campaignId || this.campaignId; const inv = await appDataService.createCampaignInvite(cId, role, expiresInHours, maxUses); this.inviteToken = inv.token; this.inviteUrl = inv.invite_url; this.showToast(`Invite created for ${role}`); }
+  private async handleRemoveMember(e: CustomEvent) { const { campaignId, userId } = e.detail || {}; const cId = campaignId || this.campaignId; await appDataService.removeCampaignMember(cId, userId); this.campaignMembers = await appDataService.fetchCampaignMembers(cId); this.showToast('Member removed from campaign'); }
   private renderCampaignTabs(activeTab: 'overview' | 'characters' | 'codex' | 'analytics') { const cId = this.campaignId; return html`<nav class="campaign-nav-tabs" role="tablist" aria-label="Campaign Sections"><a class="nav-tab ${activeTab === 'overview' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'overview'} href="#/campaigns/${cId}" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId); }}>Overview & Sessions</a><a class="nav-tab ${activeTab === 'characters' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'characters'} href="#/campaigns/${cId}/characters" @click=${(e: Event) => { e.preventDefault(); router.navigate('#/campaigns/' + cId + '/characters'); }}>Party Characters</a><a class="nav-tab ${activeTab === 'codex' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'codex'} href="#/campaigns/${cId}#codex" @click=${(e: Event) => { e.preventDefault(); }}>Codex & Lore</a><a class="nav-tab ${activeTab === 'analytics' ? 'active' : ''}" role="tab" aria-selected=${activeTab === 'analytics'} href="#/campaigns/${cId}#analytics" @click=${(e: Event) => { e.preventDefault(); }}>Chronicle & Stats</a></nav>`; }
+
   private handleLaunchSession(e: CustomEvent) { const cId = e.detail?.campaignId || this.campaignId; const sId = e.detail?.sessionId || this.sessionId; if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify({ type: 'session_started', campaignId: cId, sessionId: sId })); router.navigate(`#/campaigns/${cId}/sessions/${sId}`); }
   public showToast(message: string, durationMs = 4000) { this.toastMessage = message; if (this.toastTimeout) clearTimeout(this.toastTimeout); this.toastTimeout = setTimeout(() => { this.toastMessage = null; this.toastTimeout = null; }, durationMs); }
 
@@ -216,7 +216,7 @@ export class RunefobleApp extends LitElement {
     if (v === 'campaigns') return html`<runefoble-campaign-dashboard .campaigns=${this.campaigns} user-id=${this.currentUserId} @select-campaign=${(e: CustomEvent) => router.navigate('#/campaigns/' + e.detail.campaignId)} @create-campaign=${async (e: CustomEvent<CreateCampaignPayload>) => { const c = await appDataService.createCampaign(e.detail); this.campaigns = await appDataService.fetchCampaigns(); router.navigate('#/campaigns/' + c.id); }}></runefoble-campaign-dashboard>`;
     if (v === 'campaign-detail' || v === 'campaign-characters') {
       const activeTab = v === 'campaign-characters' ? 'characters' : 'overview';
-      return html`<div class="campaign-hub-layout"><runefoble-campaign-header .campaign=${this.currentCampaign} .canManage=${this.isDM || this.currentCampaign?.role === 'owner' || this.currentCampaign?.role === 'dm'} current-user-id=${this.currentUserId} @update-campaign=${(e: CustomEvent<UpdateCampaignPayload>) => this.handleUpdateCampaign(e)}></runefoble-campaign-header>${this.renderCampaignTabs(activeTab)}<div class="campaign-tab-content">${activeTab === 'overview' ? html`<div class="campaign-detail-layout"><runefoble-campaign-members campaign-id=${this.campaignId} campaign-title=${this.campaignTitle} .members=${this.campaignMembers} .canManage=${this.isDM} .isGm=${this.isDM} current-user-id=${this.currentUserId}></runefoble-campaign-members><runefoble-session-list campaign-id=${this.campaignId} .sessions=${this.campaignSessions} .isDm=${this.isDM} @enter-lobby=${(e: CustomEvent) => router.navigate('#/campaigns/' + this.campaignId + '/lobby/' + e.detail.sessionId)} @join-session=${(e: CustomEvent) => router.navigate('#/campaigns/' + this.campaignId + '/sessions/' + e.detail.sessionId)} @create-session=${(e: CustomEvent) => this.handleCreateSession(e)}></runefoble-session-list></div>` : html`<runefoble-character-roster campaign-id=${this.campaignId} .characters=${this.characters.filter((c) => c.campaignId === this.campaignId)} .campaigns=${this.rosterCampaigns} current-user-id=${this.currentUserId} active-filter="assigned" @create-character=${this.handleCreateCharacter} @assign-campaign=${this.handleAssignCampaign} @delete-character=${this.handleDeleteCharacter} @inspect-character=${this.handleInspectCharacter}></runefoble-character-roster>`}</div></div>`;
+      return html`<div class="campaign-hub-layout"><runefoble-campaign-header .campaign=${this.currentCampaign} .canManage=${this.isDM || this.currentCampaign?.role === 'owner' || this.currentCampaign?.role === 'dm'} current-user-id=${this.currentUserId} @update-campaign=${(e: CustomEvent<UpdateCampaignPayload>) => this.handleUpdateCampaign(e)}></runefoble-campaign-header>${this.renderCampaignTabs(activeTab)}<div class="campaign-tab-content">${activeTab === 'overview' ? html`<div class="campaign-detail-layout"><runefoble-campaign-members campaign-id=${this.campaignId} campaign-title=${this.campaignTitle} .members=${this.campaignMembers} .canManage=${this.isDM || this.currentCampaign?.role === 'owner' || this.currentCampaign?.role === 'dm'} .isGm=${this.isDM || this.currentCampaign?.role === 'owner' || this.currentCampaign?.role === 'dm'} current-user-id=${this.currentUserId} .inviteUrl=${this.inviteUrl} .inviteToken=${this.inviteToken} @assign-role=${(e: CustomEvent) => this.handleAssignRole(e)} @create-invite=${(e: CustomEvent) => this.handleCreateInvite(e)} @remove-member=${(e: CustomEvent) => this.handleRemoveMember(e)}></runefoble-campaign-members><runefoble-session-list campaign-id=${this.campaignId} .sessions=${this.campaignSessions} .isDm=${this.isDM} @enter-lobby=${(e: CustomEvent) => router.navigate('#/campaigns/' + this.campaignId + '/lobby/' + e.detail.sessionId)} @join-session=${(e: CustomEvent) => router.navigate('#/campaigns/' + this.campaignId + '/sessions/' + e.detail.sessionId)} @create-session=${(e: CustomEvent) => this.handleCreateSession(e)}></runefoble-session-list></div>` : html`<runefoble-character-roster campaign-id=${this.campaignId} .characters=${this.characters.filter((c) => c.campaignId === this.campaignId)} .campaigns=${this.rosterCampaigns} current-user-id=${this.currentUserId} active-filter="assigned" @create-character=${this.handleCreateCharacter} @assign-campaign=${this.handleAssignCampaign} @delete-character=${this.handleDeleteCharacter} @inspect-character=${this.handleInspectCharacter}></runefoble-character-roster>`}</div></div>`;
     }
     if (v === 'characters') return html`<runefoble-character-roster .characters=${this.characters} .campaigns=${this.rosterCampaigns} current-user-id=${this.currentUserId} @create-character=${this.handleCreateCharacter} @assign-campaign=${this.handleAssignCampaign} @delete-character=${this.handleDeleteCharacter} @inspect-character=${this.handleInspectCharacter}></runefoble-character-roster>`;
     if (v === 'character-sheet') {
