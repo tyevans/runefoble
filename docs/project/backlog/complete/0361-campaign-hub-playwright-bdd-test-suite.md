@@ -1,7 +1,7 @@
 ---
 id: '0361'
 title: Campaign Hub Lifecycle and Navigation Playwright BDD Test Suite
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0353
@@ -21,8 +21,8 @@ governing_stories:
 - US-0064
 - US-0067
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/375
 ---
-
 # TASK-0361: Campaign Hub Lifecycle and Navigation Playwright BDD Test Suite
 
 ## Status
