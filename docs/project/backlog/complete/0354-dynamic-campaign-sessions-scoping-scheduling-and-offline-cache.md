@@ -1,7 +1,7 @@
 ---
 id: '0354'
 title: Dynamic Campaign Sessions Scoping, Scheduling & Offline Cache
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0250
@@ -16,8 +16,8 @@ governing_stories:
 - US-0063
 - US-0065
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/346
 ---
-
 # TASK-0354: Dynamic Campaign Sessions Scoping, Scheduling & Offline Cache
 
 ## Status
