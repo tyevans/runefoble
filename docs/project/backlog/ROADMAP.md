@@ -301,7 +301,7 @@
 - [ ] Campaign Analytics Component Modular Decomposition (TASK-0331)
 - [ ] Faction Radar Styles Modular Decomposition (TASK-0332)
 - [ ] Docs Build and Pages Test Suite Modular Decomposition (TASK-0333)
-- [ ] Visualizer Graph Test Suite Modular Decomposition (TASK-0334)
+- [x] Visualizer Graph Test Suite Modular Decomposition (TASK-0334)
 - [ ] Project Visualizer Template Modular Decomposition (TASK-0335)
 - [ ] Rules Compendium Blackbox Test Suite Modular Decomposition (TASK-0336)
 - [ ] Gateway Campaign Sessions Blackbox Test Suite Modular Decomposition (TASK-0337)
