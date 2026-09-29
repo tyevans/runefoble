@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import AggregateRepository, create_aggregate_repository
 
@@ -43,10 +43,7 @@ _west_marches_repo = create_aggregate_repository(WestMarchesAtlasAggregate)
 _retrieval_engine = LoreRetrievalEngine()
 _codex_referencer = CodexCrossReferencer(_retrieval_engine)
 _campaign_codex_entries: dict[UUID, list[UUID]] = {}
-_spicedb_client = SpiceDBClient(
-    endpoint=settings.spicedb_endpoint or "localhost:50051",
-    token=getattr(settings, "spicedb_token", "secret"),
-)
+_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 
 def get_repo() -> AggregateRepository[LoreDocumentAggregate]:
@@ -69,8 +66,14 @@ def get_retrieval_engine() -> LoreRetrievalEngine:
     return _retrieval_engine
 
 
-def get_spicedb_client() -> SpiceDBClient:
+def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
     """Provide SpiceDB Zanzibar authorization client."""
+    global _spicedb_client
+    if _spicedb_client is None:
+        _spicedb_client = SpiceDBClient(
+            endpoint=settings.spicedb_endpoint or "localhost:50051",
+            token=getattr(settings, "spicedb_token", "secret"),
+        )
     return _spicedb_client
 
 
@@ -105,7 +108,7 @@ def set_west_marches_repo(repo: AggregateRepository[WestMarchesAtlasAggregate]) 
     _west_marches_repo = repo
 
 
-def set_spicedb_client(client: SpiceDBClient) -> None:
+def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
     """Override SpiceDB client instance for testing."""
     global _spicedb_client
     _spicedb_client = client

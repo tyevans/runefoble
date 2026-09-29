@@ -55,16 +55,26 @@ def live_spicedb_endpoint() -> Generator[str | None]:
         yield None
         return
 
-    endpoint = f"localhost:{port}"
-    deadline = time.time() + 10
+    endpoint = f"127.0.0.1:{port}"
+    deadline = time.time() + 15
     ready = False
     while time.time() < deadline:
         try:
-            with socket.create_connection(("localhost", port), timeout=0.5):
+            import grpc
+            from authzed.api.v1 import InsecureClient, ReadSchemaRequest
+
+            test_client = InsecureClient(endpoint, "test")
+            try:
+                test_client.ReadSchema(ReadSchemaRequest())
                 ready = True
                 break
-        except OSError:
-            time.sleep(0.2)
+            except grpc.RpcError as rpc_err:
+                if rpc_err.code() in (grpc.StatusCode.OK, grpc.StatusCode.NOT_FOUND):
+                    ready = True
+                    break
+        except Exception:
+            pass
+        time.sleep(0.2)
 
     if not ready:
         subprocess.run(["docker", "kill", container_id], capture_output=True)

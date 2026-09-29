@@ -42,7 +42,7 @@ metadata:
   labels:
     app: spicedb
 spec:
-  type: ClusterIP
+  type: {{ .Values.spicedb.serviceType | default "ClusterIP" }}
   ports:
     - name: grpc
       port: {{ .Values.spicedb.grpcPort }}
