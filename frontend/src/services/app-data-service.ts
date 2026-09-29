@@ -155,8 +155,17 @@ export class AppDataService {
     return { participants, availableCharacters: resolveLobbyAvailableCharacters(characters, campaignId) };
   }
 
+  async fetchBoardState(sessionId: string): Promise<{ cols: number; rows: number; tokens: BoardToken[] }> {
+    const data = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
+    return {
+      cols: data?.cols ?? 10,
+      rows: data?.rows ?? 10,
+      tokens: data?.tokens || [...FALLBACK_BOARD_TOKENS],
+    };
+  }
+
   async fetchBoardTokens(sessionId: string): Promise<BoardToken[]> {
-    return (await this.request<any>(`${this.apiBase}/boards/${sessionId}`))?.tokens || [...FALLBACK_BOARD_TOKENS];
+    return (await this.fetchBoardState(sessionId)).tokens;
   }
 
   async fetchSessionEvents(_sessionId: string): Promise<WatcherFeedEvent[]> {
