@@ -6,7 +6,15 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from gateway_api.campaign_store.sessions import CampaignSessionRecord as CampaignSessionRecord
+from gateway_api.campaign_store.sessions import (
+    DEFAULT_BOARD_TOKENS as DEFAULT_BOARD_TOKENS,
+)
+from gateway_api.campaign_store.sessions import (
+    DEFAULT_SESSION_PARTICIPANTS as DEFAULT_SESSION_PARTICIPANTS,
+)
+from gateway_api.campaign_store.sessions import (
+    CampaignSessionRecord as CampaignSessionRecord,
+)
 from gateway_api.models import CampaignSummaryResponse
 
 
@@ -96,19 +104,3 @@ class InviteTokenRecord:
 
 
 InviteRecord = InviteTokenRecord
-
-DEFAULT_SESSION_PARTICIPANTS = [
-    {"username": "Alice", "character": "Valeros", "role": "player", "online": True},
-    {
-        "username": "Bob",
-        "character": "Kyra",
-        "role": "player",
-        "online": False,
-        "ai_stand_in": True,
-    },
-]
-
-DEFAULT_BOARD_TOKENS = [
-    {"id": "t1", "name": "Valeros", "x": 2, "y": 3, "color": "#2563eb"},
-    {"id": "t2", "name": "Kyra", "x": 3, "y": 3, "color": "#db2777", "is_ai_controlled": True},
-]
