@@ -24,7 +24,6 @@ governing_stories:
 - US-0076
 target_release: 0.8.0
 ---
-
 # TASK-0340: Settlement Integration Test Suite Modular Decomposition
 
 ## Status

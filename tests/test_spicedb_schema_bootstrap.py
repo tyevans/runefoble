@@ -7,12 +7,9 @@ Governed by:
 """
 
 from pathlib import Path
-from uuid import uuid4
 
+import grpc
 import pytest
-from fastapi.testclient import TestClient
-from gateway_api.auth import set_spicedb_client
-from gateway_api.main import app
 from runefoble_auth.bootstrap_schema import DEFAULT_SCHEMA_PATH, bootstrap_schema
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
@@ -63,39 +60,23 @@ async def test_schema_bootstrapper_execution(live_spicedb_endpoint: str | None) 
         live_client = SpiceDBClient(
             endpoint=live_spicedb_endpoint,
             token="bootstrap_test_token",
-            use_mock=False,
         )
         applied_live = await bootstrap_schema(client=live_client)
         assert "definition board_token" in applied_live
 
 
 @pytest.mark.asyncio
-async def test_spicedb_resilient_fallback_on_unreachable_endpoint() -> None:
-    """Verify SpiceDBClient falls back gracefully to in-memory mock when endpoint is unreachable."""
+async def test_spicedb_client_fails_on_unreachable_endpoint() -> None:
+    """Verify SpiceDBClient raises an error when endpoint is unreachable without falling back to mock."""
     unreachable_client = SpiceDBClient(
         endpoint="localhost:59997",
         token="invalid_token",
-        use_mock=False,
     )
-    set_spicedb_client(unreachable_client)
-    tc = TestClient(app)
-
-    camp_id = f"camp-fallback-{uuid4().hex[:8]}"
-    user_id = "user_fallback"
-
-    # Assign role -> handles gRPC connection failure and writes to mock fallback
-    res = tc.post(
-        f"/api/v1/campaigns/{camp_id}/roles",
-        json={"user_id": user_id, "role": "player"},
-    )
-    assert res.status_code == 200
-
-    # View session -> evaluates against mock fallback
-    res_view = tc.get(f"/api/v1/sessions/{camp_id}", headers={"X-User-Id": user_id})
-    assert res_view.status_code == 200
-
-    # Read relationships from mock fallback
-    rels = await unreachable_client.read_relationships(
-        resource_type="campaign", resource_id=camp_id
-    )
-    assert any(r.subject_id == user_id for r in rels)
+    with pytest.raises(grpc.RpcError):
+        await unreachable_client.write_relationship(
+            resource_type="campaign",
+            resource_id="camp-1",
+            relation="player",
+            subject_type="user",
+            subject_id="u-1",
+        )

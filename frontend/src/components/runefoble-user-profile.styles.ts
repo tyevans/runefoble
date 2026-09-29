@@ -231,4 +231,36 @@ export const userProfileStyles = css`
     color: #ffffff;
     border-color: var(--rf-border-color, #121212);
   }
+
+  .btn-edit-profile {
+    background: var(--rf-accent-secondary); color: var(--rf-text-on-accent, var(--rf-bg-surface));
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color); box-shadow: var(--rf-shadow-sm);
+    padding: 8px 18px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .btn-edit-profile:hover { transform: translate(-1px, -1px); box-shadow: var(--rf-shadow); }
+  .header-actions { display: flex; align-items: center; gap: 12px; }
+  .edit-profile-section {
+    display: flex; flex-direction: column; gap: 16px; background: var(--rf-bg-subtle, var(--rf-bg-canvas));
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color); padding: 20px; box-shadow: var(--rf-shadow-sm);
+  }
+  .edit-profile-form { display: flex; flex-direction: column; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .profile-input, .profile-textarea {
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color); padding: 8px 12px;
+    font-family: inherit; font-size: 0.95rem; background: var(--rf-bg-surface);
+    box-shadow: var(--rf-shadow-sm); color: var(--rf-text-primary);
+  }
+  .form-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .btn-save-profile {
+    background: var(--rf-accent-tertiary); color: var(--rf-text-on-accent, var(--rf-bg-surface));
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color); box-shadow: var(--rf-shadow-sm);
+    padding: 8px 18px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; cursor: pointer;
+  }
+  .btn-cancel {
+    background: none; border: var(--rf-border-width, 2px) solid var(--rf-border-color);
+    color: var(--rf-text-primary); padding: 8px 18px; font-weight: 800; font-size: 0.85rem; cursor: pointer;
+  }
+  .save-status { font-size: 0.85rem; font-weight: 700; color: var(--rf-accent-tertiary); }
 `;

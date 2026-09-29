@@ -9,6 +9,9 @@ export interface UserClaims {
   email?: string;
   roles: string[];
   is_admin?: boolean;
+  display_name?: string;
+  avatar_url?: string;
+  bio?: string;
 }
 
 export interface AuthTokens {
@@ -49,6 +52,9 @@ export function extractClaimsFromPayload(payload: Record<string, unknown>): User
     email: payload.email ? String(payload.email) : undefined,
     roles,
     is_admin: roles.includes('admin') || Boolean(payload.is_admin),
+    display_name: payload.display_name ? String(payload.display_name) : (payload.name ? String(payload.name) : undefined),
+    avatar_url: payload.avatar_url || payload.picture ? String(payload.avatar_url || payload.picture) : undefined,
+    bio: payload.bio ? String(payload.bio) : undefined,
   };
 }
 
@@ -76,6 +82,21 @@ export class AuthService {
     this.listeners.add(listener);
     return () => { this.listeners.delete(listener); };
   }
+
+  updateUser(claims: Partial<UserClaims>): void {
+    const base = this.state.user || {
+      user_id: 'user-valeros',
+      username: 'Valeros of Korvosa',
+      roles: ['player'],
+    };
+    this.state.user = { ...base, ...claims };
+    if (this.state.tokens) {
+      this.persistSession(this.state.tokens, this.state.user);
+    } else {
+      this.notify();
+    }
+  }
+
 
   private notify(): void {
     const current = this.getState();

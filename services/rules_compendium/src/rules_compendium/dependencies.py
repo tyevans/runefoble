@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Header
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -24,10 +24,7 @@ _encounter_repo: AggregateRepository[EncounterAggregate] = create_aggregate_repo
     EncounterAggregate
 )
 _retrieval_engine: CompendiumRetrievalEngine = CompendiumRetrievalEngine()
-_spicedb_client: SpiceDBClient = SpiceDBClient(
-    endpoint=settings.spicedb_endpoint or "localhost:50051",
-    token=getattr(settings, "spicedb_token", "secret"),
-)
+_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 
 def get_compendium_repo() -> AggregateRepository[CompendiumAggregate]:
@@ -45,9 +42,21 @@ def get_retrieval_engine() -> CompendiumRetrievalEngine:
     return _retrieval_engine
 
 
-def get_spicedb_client() -> SpiceDBClient:
+def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
     """Provide SpiceDB Zanzibar client."""
+    global _spicedb_client
+    if _spicedb_client is None:
+        _spicedb_client = SpiceDBClient(
+            endpoint=settings.spicedb_endpoint or "localhost:50051",
+            token=getattr(settings, "spicedb_token", "secret"),
+        )
     return _spicedb_client
+
+
+def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
+    """Override SpiceDB client for testing."""
+    global _spicedb_client
+    _spicedb_client = client
 
 
 def get_current_user_id(
@@ -60,7 +69,7 @@ def get_current_user_id(
 async def check_user_can_view_campaign(
     user_id: str | None,
     campaign_id: UUID,
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> bool:
     """Check if user can view campaign resources under Zanzibar schema."""
     if not user_id:
@@ -77,7 +86,7 @@ async def check_user_can_view_campaign(
 async def check_user_can_manage_homebrew(
     user_id: str | None,
     campaign_id: UUID,
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> bool:
     """Check if user can manage/register homebrew rules under Zanzibar schema."""
     if not user_id:

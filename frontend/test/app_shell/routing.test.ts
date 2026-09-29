@@ -19,6 +19,8 @@ function resolveActiveView(route: MatchedRoute | null): AppActiveView {
   if (pat.startsWith('#/campaigns/:campaignId/lobby/')) return 'session-lobby';
   if (pat.startsWith('#/campaigns/:campaignId/sessions/')) return 'session-active';
   if (pat === '#/campaigns/:campaignId/characters') return 'campaign-characters';
+  if (pat === '#/campaigns/:campaignId/codex') return 'campaign-codex';
+  if (pat === '#/campaigns/:campaignId/analytics') return 'campaign-analytics';
   if (pat.startsWith('#/campaigns/:campaignId')) return 'campaign-detail';
   if (pat.startsWith('#/characters/') && pat !== '#/characters') return 'character-sheet';
   if (pat === '#/characters') return 'characters';
@@ -34,16 +36,12 @@ describe('App Shell Dynamic View Routing & Parameter Extraction', () => {
   });
 
   it('resolves login and registration views with auth modal trigger', () => {
-    const loginRoute = router.match('#/login');
-    assert.equal(resolveActiveView(loginRoute), 'login');
-
-    const registerRoute = router.match('#/register');
-    assert.equal(resolveActiveView(registerRoute), 'login');
+    assert.equal(resolveActiveView(router.match('#/login')), 'login');
+    assert.equal(resolveActiveView(router.match('#/register')), 'login');
   });
 
   it('resolves campaign dashboard view for root campaigns route', () => {
-    const route = router.match('#/campaigns');
-    assert.equal(resolveActiveView(route), 'campaigns');
+    assert.equal(resolveActiveView(router.match('#/campaigns')), 'campaigns');
   });
 
   it('resolves campaign detail view with extracted campaignId parameter', () => {
@@ -55,13 +53,21 @@ describe('App Shell Dynamic View Routing & Parameter Extraction', () => {
     assert.equal(resolveActiveView(partyRoute), 'campaign-characters');
     assert.equal(partyRoute?.params.campaignId, '42');
 
-    const profileRoute = router.match('#/profile');
-    assert.equal(resolveActiveView(profileRoute), 'profile');
+    assert.equal(resolveActiveView(router.match('#/profile')), 'profile');
+  });
+
+  it('resolves campaign codex and analytics views with extracted campaignId parameter (TASK-0355)', () => {
+    const codex = router.match('#/campaigns/4/codex');
+    assert.equal(resolveActiveView(codex), 'campaign-codex');
+    assert.equal(codex?.params.campaignId, '4');
+
+    const analytics = router.match('#/campaigns/4/analytics');
+    assert.equal(resolveActiveView(analytics), 'campaign-analytics');
+    assert.equal(analytics?.params.campaignId, '4');
   });
 
   it('resolves character roster view for #/characters', () => {
-    const route = router.match('#/characters');
-    assert.equal(resolveActiveView(route), 'characters');
+    assert.equal(resolveActiveView(router.match('#/characters')), 'characters');
   });
 
   it('resolves session lobby view for #/campaigns/:id/lobby/:sessionId', () => {
@@ -79,17 +85,13 @@ describe('App Shell Dynamic View Routing & Parameter Extraction', () => {
   });
 
   it('defaults to campaigns view for empty or unrecognized route', () => {
-    const emptyRoute = router.match('');
-    assert.equal(resolveActiveView(emptyRoute), 'campaigns');
-
-    const unknownRoute = router.match('#/unknown-route');
-    assert.equal(resolveActiveView(unknownRoute), 'campaigns');
+    assert.equal(resolveActiveView(router.match('')), 'campaigns');
+    assert.equal(resolveActiveView(router.match('#/unknown-route')), 'campaigns');
   });
 
   it('navigates to deep route #/characters/:characterId on inspect sheet event', async () => {
     await router.navigate('#/characters');
     assert.equal(router.getCurrentRoute()?.path, '#/characters');
-
     await router.navigate('#/characters/char-valeros');
     assert.equal(router.getCurrentRoute()?.path, '#/characters/char-valeros');
   });

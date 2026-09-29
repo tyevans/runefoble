@@ -26,11 +26,15 @@ def test_required_developer_cli_tools_installed():
     "make_target",
     [
         "help",
+        "dev",
         "install-tools",
         "helm-lint",
         "helm-template",
         "lint",
         "test-property",
+        "dev",
+        "dev-api",
+        "dev-frontend",
     ],
 )
 def test_makefile_targets_dry_run(make_target: str):

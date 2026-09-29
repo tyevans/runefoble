@@ -87,13 +87,16 @@ async def test_player_can_list_sessions_but_cannot_create():
     )
     assert res_join.status_code == 200
 
-    # 3. Player lists sessions -> 200 OK (empty initially)
+    # 3. Player lists sessions -> 200 OK (contains initial staging lobby)
     res_list = client.get(
         f"/api/v1/campaigns/{campaign_id}/sessions",
         headers=headers_player,
     )
     assert res_list.status_code == 200
-    assert res_list.json() == []
+    sessions = res_list.json()
+    assert len(sessions) == 1
+    assert sessions[0]["title"] == "Session #1: Staging Lobby"
+    assert sessions[0]["status"] == "lobby"
 
     # 4. Player attempts to create session -> 403 Forbidden (requires 'run_session')
     res_create = client.post(
@@ -131,13 +134,15 @@ async def test_spectator_can_list_sessions_but_cannot_create():
         headers=headers_spectator,
     )
 
-    # Spectator can list sessions
+    # Spectator can list sessions (contains seeded staging lobby)
     res_list = client.get(
         f"/api/v1/campaigns/{campaign_id}/sessions",
         headers=headers_spectator,
     )
     assert res_list.status_code == 200
-    assert res_list.json() == []
+    sessions = res_list.json()
+    assert len(sessions) == 1
+    assert sessions[0]["title"] == "Session #1: Staging Lobby"
 
     # Spectator cannot create sessions
     res_create = client.post(
@@ -212,15 +217,16 @@ async def test_owner_and_dm_create_and_list_sessions():
     assert s2_data["status"] == "upcoming"
     assert s2_data["scheduled_at"] == "2026-10-15T18:00:00Z"
 
-    # 5. Player Lancelot lists sessions and sees both
+    # 5. Player Lancelot lists sessions and sees all (initial lobby + 2 created)
     res_list = client.get(
         f"/api/v1/campaigns/{campaign_id}/sessions",
         headers=headers_player,
     )
     assert res_list.status_code == 200
     sessions = res_list.json()
-    assert len(sessions) == 2
+    assert len(sessions) == 3
     session_titles = [s["title"] for s in sessions]
+    assert "Session #1: Staging Lobby" in session_titles
     assert "Session #1: The Round Table Assembles" in session_titles
     assert "Session #2: Quest for the Holy Grail" in session_titles
 
@@ -270,15 +276,19 @@ async def test_cross_campaign_session_isolation():
     )
     assert res_sb.status_code == 201
 
-    # Alice queries Campaign A sessions -> only gets Alpha Session 1
+    # Alice queries Campaign A sessions -> gets initial lobby and Alpha Session 1
     alice_sessions = client.get(f"/api/v1/campaigns/{camp_a}/sessions", headers=headers_a).json()
-    assert len(alice_sessions) == 1
-    assert alice_sessions[0]["title"] == "Alpha Session 1"
+    assert len(alice_sessions) == 2
+    alice_titles = [s["title"] for s in alice_sessions]
+    assert "Session #1: Staging Lobby" in alice_titles
+    assert "Alpha Session 1" in alice_titles
 
-    # Bob queries Campaign B sessions -> only gets Beta Session 1
+    # Bob queries Campaign B sessions -> gets initial lobby and Beta Session 1
     bob_sessions = client.get(f"/api/v1/campaigns/{camp_b}/sessions", headers=headers_b).json()
-    assert len(bob_sessions) == 1
-    assert bob_sessions[0]["title"] == "Beta Session 1"
+    assert len(bob_sessions) == 2
+    bob_titles = [s["title"] for s in bob_sessions]
+    assert "Session #1: Staging Lobby" in bob_titles
+    assert "Beta Session 1" in bob_titles
 
     # Bob tries to access Campaign A sessions -> 403 Forbidden
     res_forbidden = client.get(f"/api/v1/campaigns/{camp_a}/sessions", headers=headers_b)

@@ -18,7 +18,7 @@ from game_session.settlement.workers import NPCWorkerAggregate
 from game_session.settlements.aggregate import SettlementAggregate
 from game_session.stronghold import StrongholdAggregate
 from game_session.west_marches import SharedWorldAggregate
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -36,7 +36,7 @@ STREAM_WEST_MARCHES = "runefoble.events.west_marches"
 
 platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
-_spicedb_client: SpiceDBClient = SpiceDBClient()
+_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 repo: AggregateRepository[GameSessionAggregate] = create_aggregate_repository(GameSessionAggregate)
 stronghold_repo: AggregateRepository[StrongholdAggregate] = create_aggregate_repository(
@@ -151,11 +151,14 @@ def get_establishment_negotiations_index() -> dict[str, list[str]]:
     return _establishment_negotiations_index
 
 
-def get_spicedb_client() -> SpiceDBClient:
+def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
+    global _spicedb_client
+    if _spicedb_client is None:
+        _spicedb_client = SpiceDBClient()
     return _spicedb_client
 
 
-def set_spicedb_client(client: SpiceDBClient) -> None:
+def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
     global _spicedb_client
     _spicedb_client = client
 

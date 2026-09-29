@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 import { Router, type MatchedRoute } from '../src/router/router.ts';
-import { AppDataService } from '../src/services/app-data-service.ts';
+import { AppDataService, appDataService } from '../src/services/app-data-service.ts';
 import { authService, type UserClaims } from '../src/auth/auth-service.ts';
 import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS } from '../src/services/fallback-data.ts';
 import type { AppActiveView } from '../src/runefoble-app.ts';
@@ -34,6 +34,9 @@ const ROUTER_PATH = resolve(FRONTEND_DIR, 'src/router/router.ts');
 const PROFILE_PATH = resolve(FRONTEND_DIR, 'src/components/runefoble-user-profile.ts');
 const ROSTER_PATH = resolve(REPO_ROOT, 'services/character_sheet/ui/src/roster/runefoble-character-roster.ts');
 const CHARACTER_CARD_PATH = resolve(REPO_ROOT, 'services/character_sheet/ui/src/runefoble-character-card.ts');
+const STATS_TEMPLATE_PATH = resolve(REPO_ROOT, 'services/character_sheet/ui/src/templates/stats.template.ts');
+const SPELLS_TEMPLATE_PATH = resolve(REPO_ROOT, 'services/character_sheet/ui/src/templates/spells.template.ts');
+const SHEET_COMPONENT_PATH = resolve(REPO_ROOT, 'services/character_sheet/ui/src/runefoble-character-sheet.ts');
 
 function resolveActiveView(route: MatchedRoute | null): AppActiveView {
   const pat = route?.pattern || '';
@@ -223,6 +226,14 @@ describe('User Account Profile View & Claims (US-0070, TASK-0258)', () => {
     assert.ok(profileContent.includes('user.email'));
     assert.ok(profileContent.includes('user.user_id'));
     assert.ok(profileContent.includes('role-badge'));
+    assert.ok(profileContent.includes('isEditing'));
+    assert.ok(profileContent.includes('appDataService.updateProfile'));
+
+    // Test profile update persistence through appDataService
+    const updated = await appDataService.updateProfile({ displayName: 'Valeros the Bold', bio: 'Korvosan Champion' });
+    assert.equal(updated?.display_name, 'Valeros the Bold');
+    assert.equal(updated?.bio, 'Korvosan Champion');
+    assert.equal(authService.getUser()?.display_name, 'Valeros the Bold');
 
     // Verify App Shell mounts profile component
     const appShellContent = readFileSync(APP_SHELL_PATH, 'utf-8');
@@ -309,6 +320,138 @@ describe('Lobby Selection Sync and Active VTT Dynamic Card Binding (US-0065, US-
     const resolved = resolveActiveCharacter('4', null);
     assert.equal(resolved.id, 'c2');
     assert.equal(resolved.name, 'Valeros the Fighter');
+  });
+});
+
+describe('TASK-0356: Character Sheet Sub-Resource Mutations & Persistence', () => {
+  it('modifies character health and clamps within [0, maxHp]', async () => {
+    const service = AppDataService.getInstance();
+    const resDmg = await service.modifyCharacterHealth('char-valeros', -10);
+    assert.equal(resDmg.current_hp, 28);
+
+    const resHeal = await service.modifyCharacterHealth('char-valeros', 20);
+    assert.equal(resHeal.current_hp, 45);
+  });
+
+  it('triggers permadeath safeguard stabilization when AI stand-in health <= 0', async () => {
+    const service = AppDataService.getInstance();
+    const detail = service.getFallbackCharacterDetail('char-kyra');
+    detail.isAiStandIn = true;
+    detail.is_stand_in_active = true;
+
+    const res = await service.modifyCharacterHealth('char-kyra', -100);
+    assert.equal(res.current_hp, 0);
+    assert.equal(res.is_stabilized, true);
+    assert.ok(
+      Array.isArray(res.conditions)
+        ? res.conditions.some((c: any) => c.name === 'unconscious_stabilized')
+        : Boolean(res.conditions?.unconscious_stabilized)
+    );
+  });
+
+  it('equips and unequips gear with inventory synchronization', async () => {
+    const service = AppDataService.getInstance();
+    const resEquip = await service.equipCharacterItem('char-valeros', 'main_hand', 'Frostbrand Scimitar');
+    assert.equal(resEquip.equipment.main_hand, 'Frostbrand Scimitar');
+
+    const resUnequip = await service.unequipCharacterItem('char-valeros', 'main_hand');
+    assert.equal(resUnequip.equipment.main_hand, undefined);
+  });
+
+  it('adds and removes inventory items with quantity tracking', async () => {
+    const service = AppDataService.getInstance();
+    const item = { item_id: 'tst-potion', name: 'Potion of Invisibility', quantity: 2, weight_lbs: 0.5 };
+    const resAdd = await service.addCharacterInventoryItem('char-valeros', item);
+    const added = resAdd.inventory.find((i: any) => i.item_id === 'tst-potion');
+    assert.ok(added);
+    assert.equal(added.quantity, 2);
+
+    const resRem = await service.removeCharacterInventoryItem('char-valeros', 'tst-potion', 1);
+    const remaining = resRem.inventory.find((i: any) => i.item_id === 'tst-potion');
+    assert.equal(remaining.quantity, 1);
+  });
+
+  it('applies and removes conditions', async () => {
+    const service = AppDataService.getInstance();
+    const resApply = await service.applyCharacterCondition('char-valeros', 'frightened', 'dragon_roar');
+    assert.ok(
+      Array.isArray(resApply.conditions)
+        ? resApply.conditions.some((c: any) => c.name === 'frightened')
+        : Boolean(resApply.conditions?.frightened)
+    );
+
+    const resRem = await service.removeCharacterCondition('char-valeros', 'frightened');
+    assert.ok(
+      Array.isArray(resRem.conditions)
+        ? !resRem.conditions.some((c: any) => c.name === 'frightened')
+        : !resRem.conditions?.frightened
+    );
+  });
+
+  it('casts spells, updates slot tracking, and toggles prepared spells', async () => {
+    const service = AppDataService.getInstance();
+    const resCast = await service.castCharacterSpell('char-valeros', 'Magic Missile', 1);
+    assert.equal(resCast.spell_slots[1], 3);
+
+    const resPrep = await service.prepareCharacterSpell('char-valeros', 'Detect Magic', true);
+    assert.ok(resPrep.prepared_spells.includes('Detect Magic'));
+
+    const resUnprep = await service.prepareCharacterSpell('char-valeros', 'Detect Magic', false);
+    assert.ok(!resUnprep.prepared_spells.includes('Detect Magic'));
+  });
+
+  it('verifies App Shell binds all 11 action events to <runefoble-character-sheet>', () => {
+    const appShellContent = readFileSync(APP_SHELL_PATH, 'utf-8');
+    const requiredEvents = [
+      '@hp-change', '@equip-item', '@unequip-item', '@add-item', '@remove-item',
+      '@cast-spell', '@prepare-spell', '@apply-condition', '@remove-condition',
+      '@expend-slot', '@restore-slot'
+    ];
+    for (const evt of requiredEvents) {
+      assert.ok(appShellContent.includes(evt), `App Shell must bind ${evt}`);
+    }
+  });
+
+  it('verifies template controls: quick HP buttons, spell tier cast, and slot modal', () => {
+    const statsContent = readFileSync(STATS_TEMPLATE_PATH, 'utf-8');
+    assert.ok(statsContent.includes('handleHpDelta(-5)'), 'Stats template must include -5 HP button');
+    assert.ok(statsContent.includes('handleHpDelta(-1)'), 'Stats template must include -1 HP button');
+    assert.ok(statsContent.includes('handleHpDelta(1)'), 'Stats template must include +1 HP button');
+    assert.ok(statsContent.includes('handleHpDelta(5)'), 'Stats template must include +5 HP button');
+
+    const spellsContent = readFileSync(SPELLS_TEMPLATE_PATH, 'utf-8');
+    assert.ok(spellsContent.includes('handleCastSpell('), 'Spells template must invoke handleCastSpell');
+    assert.ok(!spellsContent.includes('handleCastSpell(spell, 1)'), 'Spells template must not hardcode level 1');
+
+    const sheetContent = readFileSync(SHEET_COMPONENT_PATH, 'utf-8');
+    assert.ok(sheetContent.includes('openEquipDialog'), 'Sheet component must support openEquipDialog');
+    assert.ok(sheetContent.includes('confirmEquipItem'), 'Sheet component must support confirmEquipItem');
+  });
+});
+
+describe('TASK-0357: Stand-In Guardrails Persistence & Absentee Integration', () => {
+  it('updates guardrails and requests hot-swap via AppDataService', async () => {
+    const resGuardrails = await appDataService.updateCharacterGuardrails('char-valeros', {
+      riskThreshold: 'reckless',
+      avoidMelee: false,
+      permadeathSafeguard: true,
+    });
+    assert.equal(resGuardrails.stand_in_guardrails.riskThreshold, 'reckless');
+    assert.equal(resGuardrails.stand_in_guardrails.avoidMelee, false);
+
+    const resHotSwap = await appDataService.requestHotSwap('session-tomb-14', 'char-valeros', 'user-valeros');
+    assert.ok(resHotSwap);
+    assert.equal(resHotSwap.status, 'control_transferred');
+  });
+
+  it('verifies App Shell unconditionally mounts guardrails and binds handlers', () => {
+    const appShell = readFileSync(APP_SHELL_PATH, 'utf-8');
+    assert.ok(appShell.includes('<runefoble-stand-in-guardrails'));
+    assert.ok(appShell.includes('@guardrails-saved='));
+    assert.ok(appShell.includes('@hot-swap-requested='));
+    assert.ok(appShell.includes('<runefoble-absentee-directive'));
+    assert.ok(appShell.includes('<runefoble-absentee-recap'));
+    assert.ok(appShell.includes('riskThreshold'));
   });
 });
 

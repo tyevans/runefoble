@@ -19,7 +19,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.vocal_dsp import (
     VocalModulatorPresetApplied,
     VocalModulatorPresetAppliedEvent,
@@ -36,7 +36,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 @pytest.fixture
 def test_setup():
     coord = get_voice_room_coordinator()
-    mock_spicedb = SpiceDBClient(use_mock=True)
+    mock_spicedb = MockSpiceDBClient()
     coord.set_spicedb(mock_spicedb)
 
     mock_bus = AsyncMock()

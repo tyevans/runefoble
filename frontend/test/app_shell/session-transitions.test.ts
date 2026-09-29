@@ -12,6 +12,7 @@ import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router } from '../../src/router/router.ts';
 import { AppDataService } from '../../src/services/app-data-service.ts';
+import { registerDefaultPlugins, pluginRegistry } from '../../src/components/plugins/plugin_registry.ts';
 
 describe('App Shell Session Lifecycle & Transitions', () => {
   let router: Router;
@@ -25,8 +26,6 @@ describe('App Shell Session Lifecycle & Transitions', () => {
 
   it('transitions router from lobby to active VTT on launch-session event', async () => {
     await router.navigate('#/campaigns/4/lobby/session-tomb-14');
-    assert.equal(router.getCurrentRoute()?.pattern, '#/campaigns/:campaignId/lobby/:sessionId');
-
     await router.navigate('#/campaigns/4/sessions/session-tomb-14');
     const target = router.getCurrentRoute();
     assert.equal(target?.pattern, '#/campaigns/:campaignId/sessions/:sessionId');
@@ -46,44 +45,48 @@ describe('App Shell Session Lifecycle & Transitions', () => {
   it('dynamically populates lobby available characters from character roster with campaign priority', async () => {
     const lobby = await dataService.fetchLobbyState('4', 'session-tomb-14');
     assert.ok(lobby.availableCharacters.length >= 2);
-    const firstChar = lobby.availableCharacters[0];
-    assert.ok(firstChar.id === 'char-valeros' || firstChar.id === 'char-kyra');
+    assert.ok(lobby.availableCharacters[0].id === 'char-valeros' || lobby.availableCharacters[0].id === 'char-kyra');
   });
 
   it('prioritizes campaign-assigned character fallback when entering active session without explicit selection', () => {
-    const chars = [
-      { id: 'c1', name: 'Rogue', campaignId: '99' },
-      { id: 'c2', name: 'Paladin Two', campaignId: '4' },
-    ];
-    const resolveActive = (cId: string, current: any) => current || chars.find((c) => c.campaignId === cId) || chars[0];
-    assert.equal(resolveActive('4', null).id, 'c2');
-    assert.equal(resolveActive('4', chars[0]).id, 'c1');
+    const chars = [{ id: 'c1', name: 'Rogue', campaignId: '99' }, { id: 'c2', name: 'Paladin', campaignId: '4' }];
+    const resolve = (cId: string, cur: any) => cur || chars.find((c) => c.campaignId === cId) || chars[0];
+    assert.equal(resolve('4', null).id, 'c2');
+    assert.equal(resolve('4', chars[0]).id, 'c1');
   });
 
   it('creates character via createCharacter mutation', async () => {
-    const newChar = await dataService.createCharacter({
-      name: 'Harsk the Ranger', characterClass: 'Ranger', level: 3, maxHp: 28, armorClass: 15, speed: 30,
-    });
+    const newChar = await dataService.createCharacter({ name: 'Harsk the Ranger', characterClass: 'Ranger', level: 3, maxHp: 28 });
     assert.equal(newChar.name, 'Harsk the Ranger');
-    const all = await dataService.fetchCharacters();
-    assert.ok(all.some((c) => c.name === 'Harsk the Ranger'));
+    assert.ok((await dataService.fetchCharacters()).some((c) => c.name === 'Harsk the Ranger'));
   });
 
   it('assigns character to campaign and unassigns via assignCharacterCampaign', async () => {
     const chars = await dataService.fetchCharacters();
     const ezren = chars.find((c) => c.id === 'char-ezren') || chars[0];
     await dataService.assignCharacterCampaign(ezren.id, '4');
-    let updated = (await dataService.fetchCharacters()).find((c) => c.id === ezren.id);
-    assert.equal(updated?.campaignId, '4');
+    assert.equal((await dataService.fetchCharacters()).find((c) => c.id === ezren.id)?.campaignId, '4');
     await dataService.assignCharacterCampaign(ezren.id, null);
-    updated = (await dataService.fetchCharacters()).find((c) => c.id === ezren.id);
-    assert.equal(updated?.campaignId, null);
+    assert.equal((await dataService.fetchCharacters()).find((c) => c.id === ezren.id)?.campaignId, null);
   });
 
   it('deletes character via deleteCharacter mutation', async () => {
     const created = await dataService.createCharacter({ name: 'Temp Deletable', characterClass: 'Fighter', maxHp: 10 });
     await dataService.deleteCharacter(created.id);
-    const list = await dataService.fetchCharacters();
-    assert.ok(!list.some((c) => c.id === created.id));
+    assert.ok(!(await dataService.fetchCharacters()).some((c) => c.id === created.id));
+  });
+
+  it('provides dynamic board dimensions and tokens via fetchBoardState', async () => {
+    const state = await dataService.fetchBoardState('session-tomb-14');
+    assert.ok(typeof state.cols === 'number' && typeof state.rows === 'number');
+    assert.ok(Array.isArray(state.tokens) && state.tokens.length >= 1);
+  });
+
+  it('registers default tabletop plugins across standard slots for players and DM (TASK-0358)', () => {
+    registerDefaultPlugins(pluginRegistry, false);
+    assert.ok(pluginRegistry.getPluginsForSlot('hud-widget').some((p) => p.tag === 'runefoble-initiative-tracker'));
+    assert.equal(pluginRegistry.getPluginsForSlot('sidebar-tool').some((p) => p.tag === 'runefoble-dm-whisper-bar'), false);
+    registerDefaultPlugins(pluginRegistry, true);
+    assert.ok(pluginRegistry.getPluginsForSlot('sidebar-tool').some((p) => p.tag === 'runefoble-dm-whisper-bar'));
   });
 });

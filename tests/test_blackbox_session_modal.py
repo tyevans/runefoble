@@ -289,10 +289,11 @@ async def test_gateway_session_creation_and_listing_contract(client: TestClient)
     )
     assert res_list.status_code == 200
     sessions = res_list.json()
-    assert len(sessions) == 2
+    assert len(sessions) == 3
     session_ids = [s["id"] for s in sessions]
     assert lobby_session_id in session_ids
     assert upcoming_data["id"] in session_ids
+    assert any(s["title"] == "Session #1: Staging Lobby" for s in sessions)
 
 
 @pytest.mark.asyncio
