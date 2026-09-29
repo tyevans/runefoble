@@ -1,7 +1,7 @@
 ---
 id: '0356'
 title: Character Sheet Sub-Resource Mutations & Event-Sourced Persistence Integration
-status: Refined
+status: Complete
 created: 2026-09-28
 dependencies:
 - TASK-0009
@@ -19,8 +19,8 @@ governing_stories:
 - US-0007
 - US-0066
 target_release: 0.9.0
+pr_url: https://github.com/tyevans/runefoble/pull/350
 ---
-
 # TASK-0356: Character Sheet Sub-Resource Mutations & Event-Sourced Persistence Integration
 
 ## Status
