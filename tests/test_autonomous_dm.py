@@ -16,10 +16,12 @@ from runefoble_events.events import (
     EncounterSpawned,
     SceneAtmosphereSet,
 )
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.autonomous_dm import AutonomousDMEngine
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

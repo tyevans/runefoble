@@ -10,10 +10,12 @@ import pytest
 from eventsource.domain.event_registry import default_registry
 from fastapi.testclient import TestClient
 from runefoble_events.events import AbsenteeRecapGenerated
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.chronicle import ChronicleRecapEngine
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

@@ -12,9 +12,10 @@ from asset_forge.dependencies import set_event_bus
 from asset_forge.main import app as asset_forge_app
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.storage import SiloStorageService, get_storage_service, set_storage_service
 
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES, SILO_TEST_ENDPOINT, FakeSilo
 
 BATTLEMAP_BODY = {

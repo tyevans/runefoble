@@ -53,11 +53,3 @@ class WorkerSettings(BaseSettings):
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=512, ge=1, le=8192)
     timeout_seconds: float = Field(default=30.0, gt=0.0)
-
-    # Redis Streams integration
-    redis_enabled: bool = Field(default=False, description="Enable Redis Streams consumer")
-    redis_url: str = Field(default="redis://127.0.0.1:6379/0")
-    redis_stream_in: str = Field(default="runefoble.inference.requests")
-    redis_stream_out: str = Field(default="runefoble.inference.results")
-    redis_consumer_group: str = Field(default="runefoble-inference-workers")
-    redis_consumer_name: str = Field(default="worker-01")

@@ -30,9 +30,10 @@ from runefoble_events.voice import (
     MobileCompanionConnected,
     MobileHapticPingDispatched,
 )
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.mobile import HapticVibrationPattern, MobileAudioProfileTier
 
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import ws_subprotocols
 
 

@@ -19,8 +19,9 @@ from board_state.dependencies import set_event_bus, set_spicedb_client
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

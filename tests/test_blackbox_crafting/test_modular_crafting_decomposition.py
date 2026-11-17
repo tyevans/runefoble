@@ -38,9 +38,9 @@ from character_sheet.dependencies import (
 )
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.mock_redis import MockAsyncRedis
 
 @pytest.fixture
 def mock_bus():

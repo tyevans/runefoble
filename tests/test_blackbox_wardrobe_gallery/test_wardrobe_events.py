@@ -23,7 +23,9 @@ from runefoble_events import (
     CharacterPortraitUpdated,
     PortraitVariantGenerated,
 )
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 from .conftest import PNG_SIGNATURE
 

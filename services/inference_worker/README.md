@@ -12,7 +12,6 @@ The worker implements stateful reasoning pipelines using **LangGraph** and **Lan
 ## Interfaces
 
 - **HTTP REST API**: Fast synchronous endpoints (`/inference/v1/intent`, `/inference/v1/dm-narration`, `/inference/v1/stand-in-action`) for direct service orchestration.
-- **Redis Streams Event Listener**: Asynchronous consumer subscribing to `runefoble.inference.requests` and emitting domain events (`runefoble.inference.results`) compliant with CloudEvents.
 - **Pluggable Model Backends**:
   - `openai_compatible`: Direct integration with `llama-swap` / `vLLM` / local OpenAI-compatible servers (default port `8080`).
   - `ollama`: Direct integration with local Ollama daemon (default port `11434`).

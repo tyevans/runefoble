@@ -15,8 +15,9 @@ from game_session.main import app as session_app
 from gateway_api.auth import get_spicedb_client
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
-from runefoble_platform.consumer_group import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture(autouse=True)

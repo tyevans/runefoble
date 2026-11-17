@@ -15,11 +15,11 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app
-from runefoble_auth.listener import SpiceDBEventListener
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_events import SessionCreated
-from runefoble_platform.consumer_group import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 client = TestClient(app)
 
@@ -188,7 +188,6 @@ async def test_redis_streams_event_bus_deserialization_and_sync() -> None:
     event_bus = RedisStreamsEventBus(client=mock_redis)
     spicedb = get_spicedb_client()
     sync_service = ZitadelSpiceDBSyncService(spicedb_client=spicedb)
-    listener = SpiceDBEventListener(sync_service=sync_service)
 
     campaign_id = f"camp-redis-{uuid4().hex[:8]}"
     dm_id = "redis_dm_01"
@@ -203,8 +202,8 @@ async def test_redis_streams_event_bus_deserialization_and_sync() -> None:
     entry_id = await event_bus.publish_event("runefoble.events.session", evt)
     assert entry_id is not None
 
-    # Consume and pass to listener
-    await listener.on_session_created(evt)
+    # Pass the consumed event to the sync service
+    await sync_service.handle_session_created(evt)
 
     # Assert permission is synchronized
     assert await spicedb.check_permission("campaign", campaign_id, "run_session", "user", dm_id)

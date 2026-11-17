@@ -13,8 +13,9 @@ from gateway_mcp.dynamic import (
 from gateway_mcp.routers import tools_registry_router
 from gateway_mcp.server import mcp
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
-from runefoble_platform.consumer_group import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

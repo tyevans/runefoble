@@ -7,10 +7,11 @@ from fastapi.testclient import TestClient
 from game_session.dependencies import set_event_bus, set_spicedb_client
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

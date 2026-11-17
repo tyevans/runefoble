@@ -19,12 +19,13 @@ import math
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.aec import AECBenchmarkCompletedEvent, EchoSuppressionEngagedEvent
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from voice_agent.aec.pipeline import AECPipeline
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter
 from voice_agent.main import app, set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

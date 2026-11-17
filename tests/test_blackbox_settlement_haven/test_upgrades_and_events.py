@@ -16,8 +16,8 @@ from runefoble_events.settlements import (
     SettlementFoundedEvent,
     SettlementTierUpgradedEvent,
 )
-from runefoble_platform.mock_redis import MockAsyncRedis
 
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.test_blackbox_settlement_haven.conftest import assert_event_emitted
 
 

@@ -42,6 +42,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
   - `RUNEFOBLE_EVENT_STORE_TABLE_NAME`: Event store table name (default `runefoble_events`).
 - **Fail-Fast Initialization**: If `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` and the database host is unreachable, `get_event_store()` raises `EventStoreInitializationError`. The service process exits at start-up. It never runs on `InMemoryEventStore` in this case. `InMemoryEventStore` is used only when the flag is `false` (for example, in tests).
 - **Store Kind Reporting**: Service `/healthz` endpoints report `event_store` as `postgresql` or `memory`, from `event_store_kind()`.
+- **Consumer Status Reporting**: Services that run Redis Stream consumers (`campaign-analytics`, `soundscape`) report `consumers` on `/healthz`, one entry per consumer set, with `running` or `failed`. The endpoint returns `503` when any consumer is `failed`. See [Run Supervised Redis Stream Consumers](../how-to/run-supervised-redis-stream-consumers.md).
 
 ### 2. Redis Streams (Event Streaming & Consumer Groups)
 - **Role**: High-throughput distributed event bus powering pub/sub across bounded contexts.

@@ -1,7 +1,6 @@
 """Runefoble Auth Library."""
 
 from runefoble_auth.bootstrap_schema import bootstrap_schema
-from runefoble_auth.listener import SpiceDBEventListener
 from runefoble_auth.principal import (
     BearerVerifier,
     TokenVerificationError,
@@ -29,6 +28,5 @@ __all__ = [
     "WebSocketAuthError",
     "ZitadelSpiceDBSyncService",
     "SyncResult",
-    "SpiceDBEventListener",
     "bootstrap_schema",
 ]

@@ -29,7 +29,7 @@ from runefoble_platform.event_sourcing import (
     InMemoryEventBus,
     InMemoryEventStore,
 )
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     get_spicedb_client,
     set_campaign_world_repo,
@@ -40,6 +40,8 @@ from the_watcher.dependencies import (
 from the_watcher.factions import FactionAggregate
 from the_watcher.factions.campaign_world import CampaignWorldAggregate
 from the_watcher.main import app
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture(autouse=True)

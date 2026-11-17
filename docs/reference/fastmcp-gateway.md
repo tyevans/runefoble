@@ -126,7 +126,7 @@ Dynamic tool lifecycle events are published to Redis Streams topic `runefoble:ev
 - **`DynamicToolUnregisteredEvent`**: Emitted when a dynamic tool is retired or removed.
 - **`DynamicToolInvokedEvent`**: Emitted upon dynamic tool execution with execution duration and telemetry.
 
-The gateway API injects the Redis Streams bus at startup (`configure_dynamic_tool_event_bus` in `gateway/api/src/gateway_api/main.py`) from `REDIS_URL`. Startup fails when `REDIS_URL` is empty. The gateway MCP package has no in-memory fallback bus.
+The gateway API injects the Redis Streams bus when its module loads (`configure_dynamic_tool_event_bus` in `gateway/api/src/gateway_api/main.py`) from `REDIS_URL`. Startup fails when `REDIS_URL` is empty. The gateway MCP package has no in-memory fallback bus.
 
 A failed publish is not silent. The gateway logs an `ERROR` record that names the event type and the cause. It also adds a `dynamic_tool_event_dropped` event to the active OpenTelemetry span. This applies to a missing bus, a Redis error, and a dispatch with no running event loop.
 

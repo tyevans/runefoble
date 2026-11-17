@@ -12,7 +12,7 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from runefoble_events.events import TokenMoved
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.consumer_group import MockAsyncRedis, deserialize_event
+from runefoble_platform.consumer_group import deserialize_event
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.telemetry import (
     extract_trace_context,
@@ -20,6 +20,8 @@ from runefoble_platform.telemetry import (
     reset_tracer_provider,
     uninstrument_fastapi,
 )
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture(autouse=True)

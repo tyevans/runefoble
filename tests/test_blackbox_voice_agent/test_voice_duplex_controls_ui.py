@@ -17,11 +17,12 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import VoiceSpeechInterrupted
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from voice_agent.main import app as voice_app
 from voice_agent.main import set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_sine
+from tests.helpers.mock_redis import MockAsyncRedis
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
