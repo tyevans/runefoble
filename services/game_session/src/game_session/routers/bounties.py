@@ -32,6 +32,7 @@ from game_session.dependencies import (
     get_session_bounties_index,
     get_spicedb_client,
 )
+from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(prefix="/sessions", tags=["bounties"])
 
@@ -41,8 +42,7 @@ async def _save_pub(agg: MercenaryBountyAggregate) -> None:
     await get_bounty_contract_repository().save(agg)
     if bus := get_event_bus():
         for ev in events:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_SESSION, ev)
+            await publish_or_fail(bus, STREAM_SESSION, ev)
 
 
 async def _load(bid: UUID) -> MercenaryBountyAggregate:

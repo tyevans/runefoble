@@ -12,6 +12,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
+from runefoble_platform.event_publish import event_publish_failures
 
 from asset_forge.dependencies import get_wardrobe_generator
 from asset_forge.map_generation_engine import get_map_generator
@@ -56,9 +57,13 @@ app.include_router(wardrobe_router)
 
 @app.get("/healthz", tags=["Health"])
 @app.get("/health", tags=["Health"])
-def health_check() -> dict[str, str]:
+def health_check() -> dict[str, Any]:
     """Health check endpoint."""
-    return {"status": "ok", "service": "asset_forge"}
+    return {
+        "status": "ok",
+        "service": "asset_forge",
+        "event_publish_failures": event_publish_failures(),
+    }
 
 
 @app.get("/ui/manifest", tags=["Microfrontends"])

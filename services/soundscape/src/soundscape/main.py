@@ -12,6 +12,7 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from runefoble_platform.event_publish import event_publish_failures
 
 from soundscape.event_handlers import register_soundscape_event_handlers
 from soundscape.routers.cue import router as cue_router
@@ -53,9 +54,13 @@ app.include_router(leitmotif_router)
 
 @app.get("/healthz", tags=["Health"])
 @app.get("/health", tags=["Health"])
-def health_check() -> dict[str, str]:
+def health_check() -> dict[str, Any]:
     """Health check endpoint."""
-    return {"status": "ok", "service": "soundscape"}
+    return {
+        "status": "ok",
+        "service": "soundscape",
+        "event_publish_failures": event_publish_failures(),
+    }
 
 
 @app.get("/ui/manifest", tags=["Microfrontends"])

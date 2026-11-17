@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from uuid import uuid4
 
@@ -17,6 +16,7 @@ from board_state.models import (
 )
 from board_state.preview import board_ws_manager
 from fastapi import APIRouter, HTTPException
+from runefoble_platform.event_publish import deliver_best_effort
 
 logger = logging.getLogger("runefoble.board_state.routers.aoe")
 
@@ -92,14 +92,17 @@ async def place_aoe_template(session_id: str, req: AoETemplatePlaceRequest):
         await repo.save(board)
 
         # Broadcast via WebSocket
-        with contextlib.suppress(Exception):
-            await board_ws_manager.broadcast(
+        await deliver_best_effort(
+            f"board_ws:{session_id}",
+            "aoe_template_placed",
+            board_ws_manager.broadcast(
                 session_id,
                 {
                     "type": "aoe_template_placed",
                     "template": evaluated.model_dump(),
                 },
-            )
+            ),
+        )
 
         bus = get_event_bus()
         if bus is not None:
@@ -125,14 +128,17 @@ async def remove_aoe_template(session_id: str, template_id: str):
     try:
         board.remove_aoe_template(template_id)
         await repo.save(board)
-        with contextlib.suppress(Exception):
-            await board_ws_manager.broadcast(
+        await deliver_best_effort(
+            f"board_ws:{session_id}",
+            "aoe_template_removed",
+            board_ws_manager.broadcast(
                 session_id,
                 {
                     "type": "aoe_template_removed",
                     "template_id": template_id,
                 },
-            )
+            ),
+        )
         return {"template_id": template_id, "status": "removed"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e

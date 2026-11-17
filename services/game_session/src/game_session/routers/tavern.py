@@ -6,7 +6,6 @@ Governed by Hard Invariant 1 (SpiceDB auth) and Hard Invariant 2 (eventsource-py
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
@@ -29,6 +28,7 @@ from game_session.minigames import (
 )
 from game_session.voice_client import VoiceAgentUnavailableError
 from pydantic import BaseModel
+from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(tags=["tavern"])
 
@@ -120,8 +120,7 @@ async def start_minigame(
     bus = get_event_bus()
     if bus:
         for ev in events_to_publish:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_TAVERN, ev)
+            await publish_or_fail(bus, STREAM_TAVERN, ev)
 
     return aggregate.state
 
@@ -169,8 +168,7 @@ async def take_minigame_turn(
     bus = get_event_bus()
     if bus:
         for ev in events_to_publish:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_TAVERN, ev)
+            await publish_or_fail(bus, STREAM_TAVERN, ev)
 
     return {
         "game_id": game_id,
@@ -237,8 +235,7 @@ async def haggle_merchant(
     bus = get_event_bus()
     if bus:
         for ev in events_to_publish:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_TAVERN, ev)
+            await publish_or_fail(bus, STREAM_TAVERN, ev)
 
     return HaggleResponse(
         merchant_id=merchant_id,

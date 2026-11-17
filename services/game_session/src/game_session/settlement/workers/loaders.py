@@ -5,7 +5,6 @@ Governed by ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID
 
@@ -24,6 +23,7 @@ from game_session.settlement.auth import (
 )
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.worker_aggregate import NPCWorkerAggregate
+from runefoble_platform.event_publish import publish_best_effort
 
 
 def to_uuid(val: Any) -> UUID:
@@ -40,8 +40,7 @@ async def save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
     await repo.save(agg)
     if bus:
         for ev in events:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_WEST_MARCHES, ev)
+            await publish_best_effort(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def load_establishment(eid: str, perm: str, uid: str | None) -> EstablishmentAggregate:

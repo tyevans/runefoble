@@ -36,6 +36,7 @@ from game_session.settlement.haggling_models import (
     NegotiationSessionState,
     StartNegotiationRequest,
 )
+from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(tags=["merchant-haggling"])
 
@@ -52,10 +53,8 @@ async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
     await repo.save(agg)
     if bus:
         for ev in events:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_TAVERN, ev)
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_WEST_MARCHES, ev)
+            await publish_or_fail(bus, STREAM_TAVERN, ev)
+            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def _load_negotiation(nid: str) -> NegotiationAggregate:

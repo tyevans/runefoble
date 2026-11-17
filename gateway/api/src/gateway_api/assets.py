@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import contextlib
 import logging
 import re
 from typing import Any
@@ -20,6 +19,7 @@ from runefoble_platform.asset_index import (
 )
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_publish import deliver_best_effort, publish_best_effort
 from runefoble_platform.storage import (
     AssetNotFoundError,
     AssetStorageError,
@@ -163,12 +163,14 @@ async def upload_asset(
 
     bus = get_event_bus()
     if bus is not None:
-        with contextlib.suppress(Exception):
-            await bus.publish_event("runefoble.events.asset", event)
+        await publish_best_effort(bus, "runefoble.events.asset", event)
 
     # Dispatched via platform in-memory bus
-    with contextlib.suppress(Exception):
-        await platform_bus.publish("runefoble.events.asset.uploaded", event)
+    await deliver_best_effort(
+        "in-memory",
+        "runefoble.events.asset.uploaded",
+        platform_bus.publish("runefoble.events.asset.uploaded", event),
+    )
 
     meta_copy = dict(meta)
     meta_copy["download_url"] = f"/api/v1/assets/{meta['asset_id']}?stream=true"
@@ -258,11 +260,13 @@ async def delete_asset(
 
     bus = get_event_bus()
     if bus is not None:
-        with contextlib.suppress(Exception):
-            await bus.publish_event("runefoble.events.asset", delete_event)
+        await publish_best_effort(bus, "runefoble.events.asset", delete_event)
 
-    with contextlib.suppress(Exception):
-        await platform_bus.publish("runefoble.events.asset.deleted", delete_event)
+    await deliver_best_effort(
+        "in-memory",
+        "runefoble.events.asset.deleted",
+        platform_bus.publish("runefoble.events.asset.deleted", delete_event),
+    )
 
     return {
         "deleted": True,

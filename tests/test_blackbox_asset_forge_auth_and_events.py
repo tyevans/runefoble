@@ -191,7 +191,10 @@ def test_blackbox_health_openapi_and_ui_manifest(client: TestClient):
     """Verify /healthz, /openapi.json hub, and /ui/manifest endpoints."""
     h_res = client.get("/healthz")
     assert h_res.status_code == 200
-    assert h_res.json() == {"status": "ok", "service": "asset_forge"}
+    health = h_res.json()
+    assert health["status"] == "ok"
+    assert health["service"] == "asset_forge"
+    assert isinstance(health["event_publish_failures"], int)
 
     o_res = client.get("/openapi.json")
     assert o_res.status_code == 200

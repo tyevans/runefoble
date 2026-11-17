@@ -6,7 +6,6 @@ Synchronizes turn state, bets, dice rolls, and payouts across connected mobile c
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 
 from fastapi import WebSocket
@@ -21,6 +20,7 @@ from game_session.minigame_tables.actions import (
 )
 from game_session.minigame_tables.models import MinigameTableState, TablePlayer
 from runefoble_events.tavern import MinigameStarted
+from runefoble_platform.event_publish import publish_best_effort
 
 
 class MinigameTableManager:
@@ -210,8 +210,7 @@ class MinigameTableManager:
         bus = get_event_bus()
         if bus:
             for ev in events:
-                with contextlib.suppress(Exception):
-                    await bus.publish_event(STREAM_TAVERN, ev)
+                await publish_best_effort(bus, STREAM_TAVERN, ev)
 
 
 minigame_table_manager = MinigameTableManager()

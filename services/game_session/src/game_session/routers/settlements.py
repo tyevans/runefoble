@@ -5,7 +5,6 @@ Part of TASK-0164 / PRD-0018 / US-0058 / ADR-0001 / ADR-0006 / ADR-0011.
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -26,6 +25,7 @@ from game_session.settlements import (
     register_campaign_haven_discovery,
     write_settlement_relationships,
 )
+from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(prefix="/settlements", tags=["settlements"])
 
@@ -42,8 +42,7 @@ async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
     await repo.save(agg)
     if bus:
         for ev in events:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_WEST_MARCHES, ev)
+            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def _load_haven(sid: str, perm: str, uid: str | None) -> SettlementAggregate:

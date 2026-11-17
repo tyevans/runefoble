@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter
 from gateway_api.dependencies import get_event_bus
+from runefoble_platform.event_publish import event_publish_failures
 
 router = APIRouter(tags=["Health"])
 
@@ -16,6 +17,7 @@ async def health_check() -> dict:
     return {
         "status": "healthy",
         "gateway": "runefoble-api-gateway",
+        "event_publish_failures": event_publish_failures(),
         "downstream_services": {
             "the_watcher": "operational",
             "game_session": "operational",

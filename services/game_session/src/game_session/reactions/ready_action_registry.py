@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -11,6 +10,7 @@ from game_session.dependencies import STREAM_SESSION, get_event_bus
 from game_session.dependencies import repo as default_repo
 from game_session.models import ReadyActionResponse
 from runefoble_events.events import ReadyActionRegisteredEvent, ReadyActionTriggeredEvent
+from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.event_sourcing import AggregateRepository
 
 
@@ -66,8 +66,7 @@ class ReadyActionRegistry:
             details=details or {},
         )
         if bus := get_event_bus():
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_SESSION, event)
+            await publish_or_fail(bus, STREAM_SESSION, event)
 
         return ReadyActionResponse(
             session_id=session_id,
@@ -149,8 +148,7 @@ class ReadyActionRegistry:
                     readied_action=act.get("readied_action", ""),
                     details=event_data,
                 )
-                with contextlib.suppress(Exception):
-                    await bus.publish_event(STREAM_SESSION, ev)
+                await publish_or_fail(bus, STREAM_SESSION, ev)
 
         if triggered:
             await self._repo.save(session)

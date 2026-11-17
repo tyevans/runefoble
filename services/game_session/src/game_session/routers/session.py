@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Header, HTTPException
@@ -28,6 +27,7 @@ from runefoble_events.events import (
     SessionStarted,
 )
 from runefoble_platform.dice import parse_and_roll
+from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 
 router = APIRouter(tags=["session"])
 
@@ -64,14 +64,14 @@ async def start_session(session_id: UUID) -> GameSessionState:
 
     bus = get_event_bus()
     if bus:
-        with contextlib.suppress(Exception):
-            await bus.publish_event(
-                STREAM_SESSION,
-                SessionStarted(
-                    aggregate_id=session_id,
-                    started_at_turn=session.state.current_turn,
-                ),
-            )
+        await publish_or_fail(
+            bus,
+            STREAM_SESSION,
+            SessionStarted(
+                aggregate_id=session_id,
+                started_at_turn=session.state.current_turn,
+            ),
+        )
 
     return session.state
 
@@ -152,8 +152,7 @@ async def hot_swap_session(
     )
     bus = get_event_bus()
     if bus:
-        with contextlib.suppress(Exception):
-            await bus.publish_event(STREAM_SESSION, event)
+        await publish_or_fail(bus, STREAM_SESSION, event)
 
     return HotSwapResponse(
         session_id=session_id,
@@ -203,8 +202,7 @@ async def roll_dice_session(
 
     bus = get_event_bus()
     if bus:
-        with contextlib.suppress(Exception):
-            await bus.publish_event(STREAM_SESSION, event)
+        await publish_best_effort(bus, STREAM_SESSION, event)
 
     return RollDiceResponse(
         session_id=session_id,

@@ -2,29 +2,20 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterable
 from typing import Any
 
+from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-
-logger = logging.getLogger("runefoble.board_state.events")
 
 BOARD_EVENTS_STREAM = "runefoble.events.board"
 
 
 async def publish_board_events(bus: RedisStreamsEventBus, events: Iterable[Any]) -> None:
-    """Publish each event, in order, to the board stream via ``publish_event``.
+    """Publish each event, in order, to the board stream.
 
-    Failures are logged with the stream and event type, then re-raised.
+    Board routes save state before they publish. A failed publish raises
+    DomainEventPublishError, which the app maps to HTTP 503 so the client retries.
     """
     for evt in events:
-        try:
-            await bus.publish_event(BOARD_EVENTS_STREAM, evt)
-        except Exception:
-            logger.exception(
-                "Failed to publish %s to stream %s",
-                type(evt).__name__,
-                BOARD_EVENTS_STREAM,
-            )
-            raise
+        await publish_or_fail(bus, BOARD_EVENTS_STREAM, evt)

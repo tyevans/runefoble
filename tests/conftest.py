@@ -47,6 +47,7 @@ SPICEDB_SERVICE_MODULES = [
 
 REDIS_BUS_MODULES = [
     "board_state.dependencies",
+    "game_session.dependencies",
     "the_watcher.dependencies",
 ]
 

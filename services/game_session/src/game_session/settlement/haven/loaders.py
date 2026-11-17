@@ -5,7 +5,6 @@ Governed by ADR-0001, ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID
 
@@ -29,6 +28,7 @@ from game_session.settlement.models import (
     SettlementProjectionResponse,
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from runefoble_platform.event_publish import publish_best_effort
 
 
 def to_uuid(val: Any) -> UUID:
@@ -45,8 +45,7 @@ async def save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
     await repo.save(agg)
     if bus:
         for ev in events:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_WEST_MARCHES, ev)
+            await publish_best_effort(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def load_settlement(sid: str, perm: str, uid: str | None) -> SettlementAggregate:

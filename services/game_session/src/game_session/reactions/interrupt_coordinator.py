@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from typing import Any
 from uuid import UUID, uuid4
@@ -12,6 +11,7 @@ from game_session.dependencies import STREAM_SESSION, get_event_bus
 from game_session.dependencies import repo as default_repo
 from game_session.models import DeclareReactionResponse, ResolveReactionResponse
 from runefoble_events.events import CombatTurnPausedForReactionEvent, ReactionResolvedEvent
+from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.event_sourcing import AggregateRepository
 
 logger = logging.getLogger(__name__)
@@ -69,8 +69,7 @@ class ReactionInterruptCoordinator:
             details=details_payload,
         )
         if bus := get_event_bus():
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_SESSION, event)
+            await publish_or_fail(bus, STREAM_SESSION, event)
 
         return DeclareReactionResponse(
             session_id=session_id,
@@ -124,8 +123,7 @@ class ReactionInterruptCoordinator:
             details=details or {},
         )
         if bus := get_event_bus():
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_SESSION, event)
+            await publish_or_fail(bus, STREAM_SESSION, event)
 
         return ResolveReactionResponse(
             session_id=session_id,

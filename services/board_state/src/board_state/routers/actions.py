@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 
 from board_state.dependencies import get_board, get_event_bus, repo
@@ -10,6 +9,7 @@ from board_state.events import publish_board_events
 from board_state.models import TokenActionRequest, TokenActionResponse
 from board_state.preview import board_ws_manager
 from fastapi import APIRouter, HTTPException
+from runefoble_platform.event_publish import deliver_best_effort
 
 logger = logging.getLogger("runefoble.board_state.routers.actions")
 
@@ -36,8 +36,10 @@ async def execute_token_action(session_id: str, token_id: str, req: TokenActionR
         await repo.save(board)
 
         # Broadcast via WebSocket if manager has active connections
-        with contextlib.suppress(Exception):
-            await board_ws_manager.broadcast(
+        await deliver_best_effort(
+            f"board_ws:{session_id}",
+            "token_action_executed",
+            board_ws_manager.broadcast(
                 session_id,
                 {
                     "type": "token_action_executed",
@@ -48,7 +50,8 @@ async def execute_token_action(session_id: str, token_id: str, req: TokenActionR
                     "details": req.details,
                     "initiated_by": req.initiated_by,
                 },
-            )
+            ),
+        )
 
         bus = get_event_bus()
         if bus is not None:

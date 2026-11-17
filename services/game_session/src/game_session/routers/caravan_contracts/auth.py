@@ -6,7 +6,6 @@ Governed by Hard Invariant 1 (SpiceDB Zanzibar).
 
 from __future__ import annotations
 
-import contextlib
 from collections.abc import Callable
 from typing import Any
 from uuid import UUID
@@ -19,6 +18,7 @@ from game_session.dependencies import (
     get_event_bus,
     get_spicedb_client,
 )
+from runefoble_platform.event_publish import publish_or_fail
 
 
 def _to_uuid(val: Any) -> UUID:
@@ -77,8 +77,7 @@ def _val_err(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
 async def _publish(events: list[Any]) -> None:
     if bus := get_event_bus():
         for ev in events:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_WEST_MARCHES, ev)
+            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
 
 __all__ = [

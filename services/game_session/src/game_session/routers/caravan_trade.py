@@ -6,7 +6,6 @@ Governed by Hard Invariant 1 (SpiceDB Zanzibar) and Hard Invariant 2 (eventsourc
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID
 
@@ -21,6 +20,7 @@ from game_session.west_marches_models import (
     CompleteCaravanRequest,
     DispatchCaravanRequest,
 )
+from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(prefix="/api/v1/shared-worlds", tags=["caravan-trade"])
 
@@ -76,8 +76,7 @@ async def dispatch_caravan(
     bus = get_event_bus()
     if bus:
         for ev in events_to_emit:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_WEST_MARCHES, ev)
+            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
     return {"shared_world_id": str(wid), "caravan": ledger.state.caravans[cid]}
 
@@ -116,8 +115,7 @@ async def complete_caravan_trade(
     bus = get_event_bus()
     if bus:
         for ev in events_to_emit:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_WEST_MARCHES, ev)
+            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
     dest = caravan["destination_outpost"].lower()
     stock = ledger.state.outpost_stocks.get(dest, {})

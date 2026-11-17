@@ -20,6 +20,7 @@ from runefoble_events.events import (
     StandInStabilized,
 )
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
@@ -84,15 +85,13 @@ UserHeader = Annotated[str | None, Header(alias="x-user-id")]
 async def publish_character_event(event: Any) -> None:
     bus = get_event_bus()
     if bus:
-        with contextlib.suppress(Exception):
-            await bus.publish_event(STREAM_CHARACTER, event)
+        await publish_best_effort(bus, STREAM_CHARACTER, event)
 
 
 async def publish_crafting_event(event: Any) -> None:
     bus = get_event_bus()
     if bus:
-        with contextlib.suppress(Exception):
-            await bus.publish_event(STREAM_CRAFTING, event)
+        await publish_best_effort(bus, STREAM_CRAFTING, event)
 
 
 async def load_character(

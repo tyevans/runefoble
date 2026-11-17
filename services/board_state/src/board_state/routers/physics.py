@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 
 from board_state.dependencies import get_board, get_event_bus, repo
@@ -16,6 +15,7 @@ from board_state.models import (
 from board_state.physics import apply_dice_throw, apply_token_knockback
 from board_state.preview import board_ws_manager
 from fastapi import APIRouter, HTTPException
+from runefoble_platform.event_publish import deliver_best_effort
 
 logger = logging.getLogger("runefoble.board_state.routers.physics")
 router = APIRouter(tags=["physics"])
@@ -45,8 +45,10 @@ async def simulate_throw_endpoint(
         uncommitted = list(board.uncommitted_events)
         await repo.save(board)
 
-        with contextlib.suppress(Exception):
-            await board_ws_manager.broadcast(
+        await deliver_best_effort(
+            f"board_ws:{board_id}",
+            "dice_settled",
+            board_ws_manager.broadcast(
                 board_id,
                 {
                     "type": "dice_settled",
@@ -54,7 +56,8 @@ async def simulate_throw_endpoint(
                     "status": "settled",
                     "dice": resp.model_dump(),
                 },
-            )
+            ),
+        )
         if bus is not None:
             await publish_board_events(bus, uncommitted)
         return resp
@@ -84,8 +87,10 @@ async def knockback_endpoint(board_id: str, req: KnockbackRequest) -> KnockbackR
         uncommitted = list(board.uncommitted_events)
         await repo.save(board)
 
-        with contextlib.suppress(Exception):
-            await board_ws_manager.broadcast(
+        await deliver_best_effort(
+            f"board_ws:{board_id}",
+            "token_knockback",
+            board_ws_manager.broadcast(
                 board_id,
                 {
                     "type": "token_knockback",
@@ -93,7 +98,8 @@ async def knockback_endpoint(board_id: str, req: KnockbackRequest) -> KnockbackR
                     "status": "settled",
                     "knockback": resp.model_dump(),
                 },
-            )
+            ),
+        )
         if bus is not None:
             await publish_board_events(bus, uncommitted)
         return resp
