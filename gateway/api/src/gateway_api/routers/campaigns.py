@@ -24,7 +24,6 @@ from gateway_api.models import (
     JoinCampaignResponse,
     UpdateCampaignRequest,
 )
-from gateway_api.routers.auth.profile import router as profile_router
 from gateway_api.routers.tabletop import router as tabletop_router
 from pydantic import BaseModel
 
@@ -32,7 +31,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Campaigns & Sessions"])
 router.include_router(tabletop_router)
-router.include_router(profile_router)
 
 
 @router.get("/api/v1/campaigns", response_model=list[CampaignSummaryResponse])
