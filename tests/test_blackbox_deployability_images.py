@@ -61,6 +61,8 @@ def helm_service_ports() -> dict[str, int]:
     values = yaml.safe_load(VALUES.read_text(encoding="utf-8"))
     ports: dict[str, int] = {}
     for config in values["services"].values():
+        if "image" not in config:  # settings-only entries, e.g. gatewayMcp upstream URLs
+            continue
         image = config["image"]
         name = image.removeprefix("runefoble/").removesuffix(f":{IMAGE_TAG}")
         ports[name] = int(config["port"])
