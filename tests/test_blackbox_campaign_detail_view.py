@@ -173,9 +173,11 @@ def test_node_campaign_detail_view_suite_execution() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_campaign_detail_and_patch_update_frontdoor(client: TestClient) -> None:
+def test_gateway_campaign_detail_and_patch_update_frontdoor(
+    client: TestClient, signing_issuer
+) -> None:
     """Verify campaign creation, retrieval, and PATCH update through gateway public frontdoor."""
-    owner_headers = {"X-User-Id": "dm_alyssa"}
+    owner_headers = {"Authorization": f"Bearer {signing_issuer.mint('dm_alyssa')}"}
 
     create_res = client.post(
         "/api/v1/campaigns",
