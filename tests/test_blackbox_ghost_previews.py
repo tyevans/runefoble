@@ -218,11 +218,16 @@ def test_gateway_campaign_websocket_ghost_preview_authorization():
     import asyncio
 
     # Authorize player to view campaign and move token 't-valeros'
-    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "view", "user", "alice"))
-    asyncio.run(spicedb.write_relationship("board_token", "t-valeros", "move", "user", "alice"))
+    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "spectator", "user", "alice"))
+    asyncio.run(
+        spicedb.write_relationship(
+            "board_token", "t-valeros", "character", "character", "char-valeros"
+        )
+    )
+    asyncio.run(spicedb.write_relationship("character", "char-valeros", "owner", "user", "alice"))
 
     # Authorize bob only to view
-    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "view", "user", "bob"))
+    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "spectator", "user", "bob"))
 
     client = TestClient(gateway_app)
 

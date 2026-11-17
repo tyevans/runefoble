@@ -20,3 +20,10 @@ class AuthzSchemaError(AuthzError):
 
 class AuthzWriteError(AuthzError):
     """SpiceDB did not apply a relationship write, delete, or schema write."""
+
+
+class SchemaContractError(AuthzSchemaError):
+    """A name is not defined in runefoble.zed (type, relation, subject, or permission).
+
+    Raised by the strict mock. Live SpiceDB raises AuthzSchemaError for the same call.
+    """

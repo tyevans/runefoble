@@ -60,8 +60,6 @@ async def kick_voice_peer(
         or await spicedb.check_permission("session", session_id, "control", "user", user_id)
         or await spicedb.check_permission("campaign", session_id, "run_session", "user", user_id)
         or await spicedb.check_permission("campaign", session_id, "manage", "user", user_id)
-        or await spicedb.check_permission("campaign", session_id, "owner", "user", user_id)
-        or await spicedb.check_permission("campaign", session_id, "dungeon_master", "user", user_id)
     )
 
     if not is_allowed:

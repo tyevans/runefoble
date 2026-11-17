@@ -35,14 +35,19 @@ def test_load_default_schema() -> None:
 
 @pytest.mark.asyncio
 async def test_evaluator_direct_and_caveat() -> None:
-    evaluator = PermissionEvaluator(caveats={"ip_check": lambda ctx: ctx.get("ip") == "127.0.0.1"})
+    evaluator = PermissionEvaluator(
+        schema=load_default_schema(),
+        caveats={"ip_check": lambda ctx: ctx.get("ip") == "127.0.0.1"},
+    )
     assert evaluator.evaluate_caveat("ip_check", {"ip": "127.0.0.1"}) is True
     assert evaluator.evaluate_caveat("ip_check", {"ip": "10.0.0.1"}) is False
     assert evaluator.evaluate_caveat("unknown", None) is True
 
-    tuples = {"doc:1#view@user:alice"}
-    assert await evaluator.evaluate(tuples, "doc", "1", "view", "user", "alice") is True
-    assert await evaluator.evaluate(tuples, "doc", "1", "view", "user", "bob") is False
+    tuples = {"campaign:c1#player@user:alice"}
+    assert await evaluator.evaluate(tuples, "campaign", "c1", "view", "user", "alice") is True
+    assert await evaluator.evaluate(tuples, "campaign", "c1", "view", "user", "bob") is False
+    # A permission the schema does not define grants nothing.
+    assert await evaluator.evaluate(tuples, "campaign", "c1", "read", "user", "alice") is False
 
 
 @pytest.mark.asyncio
@@ -64,6 +69,8 @@ async def test_mock_spicedb_client_crud_and_touch() -> None:
 async def test_mock_client_schema_update() -> None:
     client = MockSpiceDBClient()
     custom_schema = """
+    definition user {}
+
     definition post {
         relation author: user
         permission edit = author

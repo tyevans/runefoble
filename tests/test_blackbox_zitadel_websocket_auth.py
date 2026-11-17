@@ -40,7 +40,7 @@ def client() -> TestClient:
 
 
 def _grant_view(spicedb: MockSpiceDBClient, campaign_id: str, user_id: str) -> None:
-    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "view", "user", user_id))
+    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "spectator", "user", user_id))
 
 
 def test_valid_bearer_subprotocol_connects(client: TestClient, spicedb: MockSpiceDBClient) -> None:

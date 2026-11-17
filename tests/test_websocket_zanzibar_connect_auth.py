@@ -36,7 +36,7 @@ def test_connecting_with_valid_campaign_viewer_permissions():
     client = TestClient(app)
 
     # 1. User with 'view' permission can connect
-    _grant("campaign", campaign_id, "view", "viewer_alice")
+    _grant("campaign", campaign_id, "spectator", "viewer_alice")
     with client.websocket_connect(
         f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("viewer_alice")
     ) as ws:
@@ -46,7 +46,7 @@ def test_connecting_with_valid_campaign_viewer_permissions():
         assert msg["user_id"] == "viewer_alice"
 
     # 2. User with 'read' permission can connect
-    _grant("campaign", campaign_id, "read", "reader_bob")
+    _grant("campaign", campaign_id, "spectator", "reader_bob")
     with client.websocket_connect(
         f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("reader_bob")
     ) as ws:
@@ -84,14 +84,14 @@ def test_dynamic_permission_revocation_rejects_reconnect():
     client = TestClient(app)
 
     # 1. Initially granted permission and connects successfully
-    _grant("campaign", campaign_id, "view", user_id)
+    _grant("campaign", campaign_id, "spectator", user_id)
     with client.websocket_connect(
         f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(user_id)
     ) as ws:
         assert ws.receive_json()["type"] == "connected"
 
     # 2. Dynamically revoke Zanzibar relationship
-    asyncio.run(spicedb.delete_relationship("campaign", campaign_id, "view", "user", user_id))
+    asyncio.run(spicedb.delete_relationship("campaign", campaign_id, "spectator", "user", user_id))
 
     # 3. Subsequent connection attempt is rejected with PERMISSION_DENIED and code 4003
     with client.websocket_connect(

@@ -29,11 +29,25 @@ def _grant(resource_type: str, resource_id: str, relation: str, subject_id: str)
     )
 
 
+def _character_for(token_id: str) -> str:
+    return f"char-{token_id}"
+
+
+def _grant_token_owner(token_id: str, subject_id: str) -> None:
+    """Make the subject own the character behind the token. The schema grants token move."""
+    asyncio.run(
+        get_spicedb_client().write_relationship(
+            "board_token", token_id, "character", "character", _character_for(token_id)
+        )
+    )
+    _grant("character", _character_for(token_id), "owner", subject_id)
+
+
 def test_player_moving_token_with_valid_zanzibar_relation():
     """Verify player moving their token with valid Zanzibar relation succeeds."""
     campaign_id, player_id, token_id = "camp-player-move", "player_valeros", "token_valeros_01"
     _grant("campaign", campaign_id, "player", player_id)
-    _grant("board_token", token_id, "move", player_id)
+    _grant_token_owner(token_id, player_id)
 
     client = TestClient(app)
     with client.websocket_connect(
@@ -176,7 +190,7 @@ def test_dynamic_relation_revocation_denies_mid_session_action():
     """Verify revoking token ownership mid-session denies subsequent token movements."""
     campaign_id, player_id, token_id = "camp-dynamic-move", "player_sajan", "token_sajan"
     _grant("campaign", campaign_id, "player", player_id)
-    _grant("board_token", token_id, "move", player_id)
+    _grant_token_owner(token_id, player_id)
 
     client = TestClient(app)
     with client.websocket_connect(
@@ -191,7 +205,7 @@ def test_dynamic_relation_revocation_denies_mid_session_action():
         # 2. Revoke move permission dynamically
         asyncio.run(
             get_spicedb_client().delete_relationship(
-                "board_token", token_id, "move", "user", player_id
+                "character", _character_for(token_id), "owner", "user", player_id
             )
         )
 

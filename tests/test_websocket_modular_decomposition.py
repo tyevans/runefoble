@@ -85,7 +85,7 @@ async def test_websocket_action_validator_direct_evaluation():
     player_id = "user_direct_player"
     dm_id = "user_direct_dm"
 
-    await spicedb.write_relationship("campaign", campaign_id, "view", "user", player_id)
+    await spicedb.write_relationship("campaign", campaign_id, "spectator", "user", player_id)
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id)
 
     # validate_connect

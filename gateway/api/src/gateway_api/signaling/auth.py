@@ -30,17 +30,8 @@ async def validate_voice_connection(
         if await spicedb.check_permission("session", session_id, perm, "user", subject_id):
             return True
 
-    # Check campaign-level permissions
-    for perm in (
-        "play",
-        "view",
-        "read",
-        "run_session",
-        "owner",
-        "manage",
-        "dungeon_master",
-        "player",
-    ):
+    # Check campaign-level permissions. The schema unions owner, DM, GM, and player into these.
+    for perm in ("play", "view", "run_session", "manage"):
         if await spicedb.check_permission("campaign", session_id, perm, "user", subject_id):
             return True
 
