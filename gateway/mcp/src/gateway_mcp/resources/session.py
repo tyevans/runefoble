@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING, Any
 
-from gateway_mcp.tools.board import inspect_tactical_board, query_encounter_state
+from gateway_mcp.tools.board import inspect_tactical_board
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
@@ -35,7 +35,13 @@ async def get_active_session_context() -> dict[str, Any]:
 
 async def get_combat_encounter_state() -> dict[str, Any]:
     """Retrieve the board state of the active encounter (tokens, grid, and hazards)."""
-    return await query_encounter_state(ACTIVE_SESSION_ID)
+    board = await inspect_tactical_board(ACTIVE_SESSION_ID)
+    return {
+        "session_id": board["session_id"],
+        "grid_dimensions": board["grid_dimensions"],
+        "tokens": board["tokens"],
+        "active_hazards": board["active_hazards"],
+    }
 
 
 def register_session_resources(mcp: "FastMCP") -> None:

@@ -298,7 +298,7 @@ async def test_blackbox_character_tools():
 
 @pytest.mark.asyncio
 async def test_blackbox_create_encounter_stores_enemy_tokens():
-    """Verify create_encounter stores enemies on the board that query_encounter_state reads back."""
+    """Verify create_encounter stores enemies on the board that inspect_tactical_board reads back."""
     created = tool_payload(
         await call_tool(
             "create_encounter",
@@ -313,7 +313,7 @@ async def test_blackbox_create_encounter_stores_enemy_tokens():
     assert created["grid"] == {"cols": 10, "rows": 8}
 
     state = tool_payload(
-        await call_tool("query_encounter_state", {"encounter_id": created["encounter_id"]})
+        await call_tool("inspect_tactical_board", {"session_id": created["encounter_id"]})
     )
     assert state["grid_dimensions"] == {"cols": 10, "rows": 8}
     assert [(t["name"], t["x"], t["y"]) for t in state["tokens"]] == [("Bandit", 4, 4)]
