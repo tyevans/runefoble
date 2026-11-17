@@ -2,7 +2,7 @@
 
 import logging
 import socket
-from typing import Any
+from typing import Any, Literal
 
 from eventsource.adapters.memory.bus import InMemoryEventBus
 from eventsource.adapters.memory.store import InMemoryEventStore
@@ -25,6 +25,13 @@ logger = logging.getLogger("runefoble.platform.event_sourcing")
 # Singleton instances for process lifecycle
 _global_event_store: FullEventStore | None = None
 _global_event_bus: EventBus | None = None
+
+
+class EventStoreInitializationError(RuntimeError):
+    """Raised when the configured PostgreSQL event store cannot be initialized.
+
+    Services must not run on an in-memory store when persistence is requested.
+    """
 
 
 def normalize_async_postgres_url(url: str) -> str:
@@ -53,7 +60,11 @@ def get_event_store(
     probe_connection: bool = True,
     force_new: bool = False,
 ) -> FullEventStore:
-    """Provide initialized event store: PostgreSQL if configured, or InMemoryEventStore."""
+    """Provide the event store: PostgreSQL when the flag is set, otherwise InMemoryEventStore.
+
+    Raises EventStoreInitializationError when the PostgreSQL flag is set and the store
+    cannot be initialized. No fallback to InMemoryEventStore occurs in that case.
+    """
     global _global_event_store
     if _global_event_store is not None and settings is None and not force_new:
         return _global_event_store
@@ -92,12 +103,25 @@ def get_event_store(
             _global_event_store = store
             return _global_event_store
         except Exception as e:
-            logger.warning(
-                "Failed to initialize PostgreSQLEventStore (%s). Falling back to InMemory.", e
-            )
+            raise EventStoreInitializationError(
+                f"Failed to initialize PostgreSQLEventStore: {e}"
+            ) from e
 
     _global_event_store = InMemoryEventStore()
     return _global_event_store
+
+
+def event_store_kind(store: FullEventStore | None = None) -> Literal["postgresql", "memory"]:
+    """Report the kind of event store in use: 'postgresql' or 'memory'.
+
+    Uses the process-wide store when no store is given.
+    """
+    target = store if store is not None else get_event_store()
+    if isinstance(target, PostgreSQLEventStore):
+        return "postgresql"
+    if isinstance(target, InMemoryEventStore):
+        return "memory"
+    raise TypeError(f"Unsupported event store type: {type(target).__name__}")
 
 
 def set_event_store(store: FullEventStore | None) -> None:
@@ -158,7 +182,9 @@ __all__ = [
     "RedisEventBus",
     "handles",
     "register_event",
+    "EventStoreInitializationError",
     "get_event_store",
+    "event_store_kind",
     "set_event_store",
     "get_event_bus",
     "set_event_bus",

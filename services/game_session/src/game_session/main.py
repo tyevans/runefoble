@@ -31,7 +31,7 @@ from game_session.routers import (
 from game_session.settlement.haggling_router import router as settlement_haggling_router
 from game_session.settlement.router import router as settlement_haven_router
 from game_session.settlement.workers_router import router as settlement_workers_router
-from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.event_sourcing import event_store_kind
 
 __all__ = [
     "app",
@@ -73,7 +73,7 @@ async def health_check():
     return {
         "status": "ok",
         "service": "game_session",
-        "event_store": type(get_event_store()).__name__,
+        "event_store": event_store_kind(),
     }
 
 

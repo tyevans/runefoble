@@ -35,11 +35,12 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
   - `openpanel`: Telemetry event tables.
 - **Environment Variables**:
   - `RUNEFOBLE_DATABASE_URL`: Connection string (`postgresql+asyncpg://...` or standard `postgresql://...` auto-normalized to asyncpg).
-  - `RUNEFOBLE_USE_POSTGRES_EVENT_STORE`: Boolean flag (`true` to enable persistent `PostgreSQLEventStore`, default `false`).
+  - `RUNEFOBLE_USE_POSTGRES_EVENT_STORE`: Boolean flag (`true` to enable persistent `PostgreSQLEventStore`, default `false`). The Helm chart sets `true` for every service that owns aggregate state.
   - `RUNEFOBLE_POSTGRES_POOL_SIZE`: Async connection pool size (default `5`).
   - `RUNEFOBLE_POSTGRES_MAX_OVERFLOW`: Async connection pool max overflow (default `10`).
   - `RUNEFOBLE_EVENT_STORE_TABLE_NAME`: Event store table name (default `runefoble_events`).
-- **Graceful Fallback**: If `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` but the database host is unreachable, `get_event_store()` logs a warning and falls back to `InMemoryEventStore`.
+- **Fail-Fast Initialization**: If `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` and the database host is unreachable, `get_event_store()` raises `EventStoreInitializationError`. The service process exits at start-up. It never runs on `InMemoryEventStore` in this case. `InMemoryEventStore` is used only when the flag is `false` (for example, in tests).
+- **Store Kind Reporting**: Service `/healthz` endpoints report `event_store` as `postgresql` or `memory`, from `event_store_kind()`.
 
 ### 2. Redis Streams (Event Streaming & Consumer Groups)
 - **Role**: High-throughput distributed event bus powering pub/sub across bounded contexts.
