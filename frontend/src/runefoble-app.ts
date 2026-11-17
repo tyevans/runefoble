@@ -16,7 +16,7 @@ import { handleToggleReadiness, handleToggleStandIn, handleBoardTokenAction, han
 import { loadRouteData } from './app/route-data-loader.ts';
 import { renderAppShell } from './app/shell-template.ts';
 import { initTheme, syncAuthState } from './app/shell-state.ts';
-import { SessionSocket, sessionSocketUrl } from './app/session-socket.ts';
+import { SessionSocket } from './app/session-socket.ts';
 import { installTitleResolvers } from './app/title-resolver.ts';
 import { updateCampaignFromEvent, createSessionFromEvent, assignRoleFromEvent, createInviteFromEvent, removeMemberFromEvent } from './app/campaign-actions.ts';
 import { createCharacterFromEvent, assignCharacterFromEvent, deleteCharacterFromEvent, selectCharacterFromEvent, switchDmCharacter } from './app/character-actions.ts';

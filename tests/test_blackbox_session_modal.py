@@ -14,6 +14,8 @@ from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
@@ -201,7 +203,7 @@ def test_session_list_integration_with_modal():
 
 def test_app_shell_create_session_event_handling():
     """Verify runefoble-app handles @create-session and navigates conditionally."""
-    app_content = APP_TS.read_text(encoding="utf-8")
+    app_content = read_app_shell_source(APP_TS)
     assert "@create-session=" in app_content
     assert "createCampaignSession" in app_content
     assert "fetchCampaignSessions" in app_content

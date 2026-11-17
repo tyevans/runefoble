@@ -15,6 +15,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 FRONTEND_PLUGINS_DIR = REPO_ROOT / "frontend" / "src" / "components" / "plugins"
 STORIES_FILE = REPO_ROOT / "frontend" / "src" / "stories" / "runefoble-plugin-slot.stories.ts"
@@ -116,9 +118,7 @@ def test_frontend_barrel_exports_and_app_shell_integration() -> None:
     app_index = REPO_ROOT / "frontend" / "src" / "index.ts"
     assert "components/plugins/index.ts" in app_index.read_text(encoding="utf-8")
 
-    app_shell_src = (REPO_ROOT / "frontend" / "src" / "runefoble-app.ts").read_text(
-        encoding="utf-8"
-    )
+    app_shell_src = read_app_shell_source(REPO_ROOT / "frontend" / "src" / "runefoble-app.ts")
     assert "components/plugins/runefoble-plugin-slot.ts" in app_shell_src
     assert 'runefoble-plugin-slot slot-id="hud-widget"' in app_shell_src
     assert 'runefoble-plugin-slot slot-id="sidebar-tool"' in app_shell_src
