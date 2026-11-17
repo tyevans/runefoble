@@ -97,12 +97,12 @@ async def test_blackbox_handout_generation_and_seal_cracking(client: TestClient)
     # 3. Public frontdoor: Crack wax seal
     break_resp = client.post(
         f"/api/v1/lore/handouts/{handout_id}/break-seal",
-        json={"broken_by": "valeros_player", "break_force": 14.0},
+        json={"break_force": 14.0},
     )
     assert break_resp.status_code == 200, break_resp.text
     break_data = break_resp.json()
     assert break_data["seal_state"] == "broken"
-    assert break_data["broken_by"] == "valeros_player"
+    assert break_data["broken_by"] == member
     assert break_data["haptic_audio_effect"] == "wax_crack_crisp_01.wav"
     assert "Citadel guards rotate" in break_data["revealed_content"]
 
@@ -113,14 +113,14 @@ async def test_blackbox_handout_generation_and_seal_cracking(client: TestClient)
     # 4. Attempting to break an already broken seal fails with 409 Conflict
     dup_resp = client.post(
         f"/api/v1/lore/handouts/{handout_id}/break-seal",
-        json={"broken_by": "valeros_player"},
+        json={},
     )
     assert dup_resp.status_code == 409
 
     # 5. Public frontdoor: Reveal invisible ink under UV torchlight
     uv_resp = client.post(
         f"/api/v1/lore/handouts/{handout_id}/reveal-invisible-ink",
-        json={"revealed_by": "rowan_chronicler", "uv_intensity": 1.0},
+        json={"uv_intensity": 1.0},
     )
     assert uv_resp.status_code == 200, uv_resp.text
     uv_data = uv_resp.json()
@@ -193,7 +193,6 @@ async def test_blackbox_relic_forge_and_inspection(client: TestClient):
     inspect_resp = client.post(
         f"/api/v1/lore/relics/{relic_id}/inspect",
         json={
-            "inspected_by": "rowan_chronicler",
             "notes": "Rotating back casing reveals etched draconic glyphs.",
         },
     )

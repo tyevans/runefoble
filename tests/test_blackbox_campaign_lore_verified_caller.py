@@ -190,3 +190,40 @@ def test_public_routes_stay_open(client: TestClient) -> None:
     assert client.get("/health").status_code == 200
     assert client.get("/openapi.json").status_code == 200
     assert client.get("/ui/manifest").status_code == 200
+
+
+@pytest.mark.parametrize(
+    ("route", "body", "actor_field"),
+    [
+        (
+            "/api/v1/lore/documents",
+            {"title": "t", "content": "c", "author_id": "other-user"},
+            "author_id",
+        ),
+        (
+            "/api/v1/lore/handouts/{id}/break-seal",
+            {"break_force": 14.0, "broken_by": "other-user"},
+            "broken_by",
+        ),
+        (
+            "/api/v1/lore/handouts/{id}/reveal-invisible-ink",
+            {"uv_intensity": 1.0, "revealed_by": "other-user"},
+            "revealed_by",
+        ),
+        (
+            "/api/v1/lore/relics/{id}/inspect",
+            {"notes": "n", "inspected_by": "other-user"},
+            "inspected_by",
+        ),
+    ],
+)
+def test_body_actor_field_is_refused_and_actor_is_the_verified_subject(
+    client: TestClient, route: str, body: dict[str, str], actor_field: str
+) -> None:
+    """A body naming another actor fails validation. The actor is never read from the body."""
+    path = route.replace("{id}", str(uuid4()))
+
+    res = client.post(path, json=body, headers=_bearer("verified-player"))
+
+    assert res.status_code == 422, res.text
+    assert actor_field in res.text

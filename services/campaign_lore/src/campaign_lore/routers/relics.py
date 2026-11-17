@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -39,9 +39,10 @@ class ForgeRelicRequest(BaseModel):
 
 
 class InspectRelicRequest(BaseModel):
-    """Payload to record a player's 3D rotation and relic inspection."""
+    """Payload to record a player's 3D rotation and relic inspection. The inspector is the verified caller."""
 
-    inspected_by: str = "player"
+    model_config = ConfigDict(extra="forbid")
+
     discovered_runes: list[dict[str, Any]] | None = None
     notes: str | None = None
 
@@ -177,7 +178,7 @@ async def inspect_relic(
         )
 
     relic.inspect(
-        inspected_by=payload.inspected_by or user_id or "player",
+        inspected_by=user_id,
         discovered_runes=payload.discovered_runes,
         notes=payload.notes,
     )
@@ -185,7 +186,7 @@ async def inspect_relic(
 
     return {
         "relic_id": str(relic_id),
-        "inspected_by": payload.inspected_by or user_id or "player",
+        "inspected_by": user_id,
         "discovered_runes": relic.state.inspections[-1]["discovered_runes"],
         "status": "inspected",
     }

@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -44,16 +44,18 @@ class GenerateHandoutRequest(BaseModel):
 
 
 class BreakSealRequest(BaseModel):
-    """Payload to crack/break a wax seal on a handout."""
+    """Payload to crack/break a wax seal on a handout. The breaker is the verified caller."""
 
-    broken_by: str = "player"
+    model_config = ConfigDict(extra="forbid")
+
     break_force: float = 12.5
 
 
 class RevealInvisibleInkRequest(BaseModel):
-    """Payload to shine simulated UV torchlight over invisible ink runes."""
+    """Payload to shine simulated UV torchlight over invisible ink runes. The revealer is the verified caller."""
 
-    revealed_by: str = "player"
+    model_config = ConfigDict(extra="forbid")
+
     uv_intensity: float = 1.0
 
 
@@ -198,7 +200,7 @@ async def break_seal(
     audio = "wax_fracture_heavy.wav" if payload.break_force > 15.0 else "wax_crack_crisp_01.wav"
 
     handout.break_seal(
-        broken_by=payload.broken_by or user_id or "player",
+        broken_by=user_id,
         break_force=payload.break_force,
         audio_cue=audio,
     )
@@ -207,7 +209,7 @@ async def break_seal(
     return {
         "handout_id": str(handout_id),
         "seal_state": "broken",
-        "broken_by": payload.broken_by or user_id or "player",
+        "broken_by": user_id,
         "break_force": payload.break_force,
         "haptic_audio_effect": audio,
         "revealed_content": handout.state.content,
@@ -249,7 +251,7 @@ async def reveal_invisible_ink(
         )
 
     handout.reveal_invisible_ink(
-        revealed_by=payload.revealed_by or user_id or "player",
+        revealed_by=user_id,
         uv_intensity=payload.uv_intensity,
     )
     await repo.save(handout)

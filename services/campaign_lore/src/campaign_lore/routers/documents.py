@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -24,13 +24,14 @@ router = APIRouter(tags=["Lore Documents"], dependencies=[Depends(get_campaign_p
 
 
 class IngestDocumentRequest(BaseModel):
-    """Payload to ingest a worldbuilding document."""
+    """Payload to ingest a worldbuilding document. The author is the verified caller."""
+
+    model_config = ConfigDict(extra="forbid")
 
     campaign_id: UUID = Field(description="Campaign UUID")
     title: str = Field(description="Title of lore document")
     content: str = Field(description="Markdown or text lore content")
     is_secret: bool = Field(default=False, description="Whether lore is restricted to DMs/GMs")
-    author_id: str | None = Field(default=None, description="Author identifier")
     tags: list[str] = Field(default_factory=list, description="Categorization tags")
     aliases: dict[str, str] | None = Field(
         default=None, description="Optional map of alias -> canonical entity name"
@@ -68,7 +69,7 @@ async def ingest_document(
         title=req.title,
         content=req.content,
         is_secret=req.is_secret,
-        author_id=req.author_id or user_id,
+        author_id=user_id,
         metadata={"tags": req.tags, **req.metadata},
     )
     await repo.save(aggregate)
