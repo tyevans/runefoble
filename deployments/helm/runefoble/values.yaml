@@ -202,6 +202,8 @@ swaggerUI:
       url: "http://audience-studio:8010/openapi.json"
     - name: "Campaign Analytics Service"
       url: "http://campaign-analytics:8011/openapi.json"
+    - name: "Inference Worker Service"
+      url: "http://inference-worker:8100/openapi.json"
 
 # Services
 services:
@@ -267,6 +269,14 @@ services:
     image: runefoble/campaign-analytics:0.1.0
     replicas: 1
     port: 8011
+  inferenceWorker:
+    # Explicit inference backend: mock (canned output, labelled source "mock"), openai_compatible, ollama, or auto.
+    image: runefoble/inference-worker:0.1.0
+    replicas: 1
+    port: 8100
+    backend: mock
+    # Required when backend is openai_compatible. Empty means no base URL is set.
+    openaiCompatibleBaseUrl: ""
   gatewayMcp:
     # Upstream URLs that MCP tools call over HTTP (BOARD_STATE_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL).
     # No gateway-mcp deployment template exists yet; these values are for that template.
