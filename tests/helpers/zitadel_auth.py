@@ -86,13 +86,10 @@ def auth_environment():
     jwk_client = jwt.PyJWKClient("http://zitadel:8080/.well-known/jwks.json")
     jwk_client.fetch_data = lambda: jwks_dict
 
-    # Production auth service (dev_mode=False, signature & audience verified)
     auth_service = ZitadelAuthService(
         issuer="http://zitadel:8080",
-        client_id="runefoble-api",
-        dev_mode=False,
+        audience="runefoble-api",
         jwk_client=jwk_client,
-        verify_audience=True,
     )
 
     mock_spicedb = MockSpiceDBClient()

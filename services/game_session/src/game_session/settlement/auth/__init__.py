@@ -31,7 +31,7 @@ from game_session.settlement.auth.relationships import (
     write_settlement_relationships,
 )
 from game_session.settlement.auth.tokens import (
-    AuthenticatedUser,
+    VerifiedPrincipal,
     decode_settlement_token,
     extract_bearer_token,
     get_zitadel_auth_service,
@@ -39,7 +39,7 @@ from game_session.settlement.auth.tokens import (
 )
 
 __all__ = [
-    "AuthenticatedUser",
+    "VerifiedPrincipal",
     "check_campaign_write_permission",
     "check_establishment_play_permission",
     "check_establishment_read_permission",

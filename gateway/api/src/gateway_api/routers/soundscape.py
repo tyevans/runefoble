@@ -10,7 +10,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from gateway_api.auth import get_current_user, get_spicedb_client
 from gateway_api.campaign_store import campaign_store
-from runefoble_auth.zitadel import AuthenticatedUser
+from runefoble_auth.principal import VerifiedPrincipal
 from soundscape.models import MoodOverrideRequest, SoundscapeCueRequest, TensionCalculationRequest
 from soundscape.routers.cue import trigger_sound_cue
 from soundscape.routers.leitmotif import get_character_leitmotif_profile
@@ -69,7 +69,7 @@ async def _check_soundscape_perm(
 
 @router.post("/cue")
 async def trigger_cue(
-    req: SoundscapeCueRequest, user: Annotated[AuthenticatedUser, Depends(get_current_user)]
+    req: SoundscapeCueRequest, user: Annotated[VerifiedPrincipal, Depends(get_current_user)]
 ) -> dict[str, Any]:
     await _check_soundscape_perm(user.user_id, "play", req.session_id, req.campaign_id)
     return await _proxy_or_fallback(
@@ -103,7 +103,7 @@ async def calculate_encounter_tension(req: TensionCalculationRequest) -> dict[st
 @router.post("/stems/override")
 @router.post("/override")
 async def override_soundscape_mood(
-    req: MoodOverrideRequest, user: Annotated[AuthenticatedUser, Depends(get_current_user)]
+    req: MoodOverrideRequest, user: Annotated[VerifiedPrincipal, Depends(get_current_user)]
 ) -> dict[str, Any]:
     await _check_soundscape_perm(user.user_id, "run_session", req.session_id, req.campaign_id)
     return await _proxy_or_fallback(

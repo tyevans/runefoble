@@ -16,7 +16,7 @@ from gateway_api.models import (
     TokenMoveRequest,
 )
 from pydantic import BaseModel, ConfigDict, Field
-from runefoble_auth.zitadel import AuthenticatedUser
+from runefoble_auth.principal import VerifiedPrincipal
 
 router = APIRouter(tags=["Tabletop & Game Sessions"])
 
@@ -69,7 +69,7 @@ async def start_session_proxy(session_id: str) -> dict:
 async def hot_swap_session_proxy(
     session_id: str,
     req: HotSwapRequest,
-    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
 ) -> dict[str, Any]:
     """Hands off active turn control from AI stand-in to player mid-session."""
     player_id = req.player_id or user.user_id

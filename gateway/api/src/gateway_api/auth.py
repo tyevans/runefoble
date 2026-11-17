@@ -5,8 +5,12 @@ from collections.abc import Callable
 from typing import Any
 
 from fastapi import Header, HTTPException, Request
+from runefoble_auth.principal import (
+    authenticate_authorization,
+    require_principal,
+)
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
-from runefoble_auth.zitadel import AuthenticatedUser, ZitadelAuthService
+from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 
 logger = logging.getLogger("runefoble.gateway.auth")
@@ -56,9 +60,8 @@ def get_zitadel_auth_service() -> ZitadelAuthService:
         settings = PlatformSettings()
         _zitadel_auth_service = ZitadelAuthService(
             issuer=settings.zitadel_issuer,
-            client_id=settings.zitadel_client_id,
+            audience=settings.zitadel_audience,
             jwks_url=settings.zitadel_jwks_url,
-            dev_mode=settings.auth_dev_mode,
         )
     return _zitadel_auth_service
 
@@ -68,48 +71,7 @@ def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
     _zitadel_auth_service = service
 
 
-async def get_current_user(
-    request: Request,
-    authorization: str | None = Header(None, alias="Authorization"),
-    x_user_id: str | None = Header(None, alias="X-User-Id"),
-) -> AuthenticatedUser:
-    """Dependency that extracts and validates the authenticated Zitadel user."""
-    auth_service = get_zitadel_auth_service()
-
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization[7:].strip()
-        try:
-            user = auth_service.verify_token(token)
-            request.state.user = user
-            return user
-        except Exception as exc:
-            logger.warning("Bearer token verification failed: %s", exc)
-            raise HTTPException(
-                status_code=401,
-                detail={
-                    "error": "unauthorized",
-                    "message": f"Token verification failed: {exc}",
-                },
-            ) from exc
-
-    if auth_service.dev_mode:
-        effective_id = x_user_id or "dev-user-001"
-        dev_user = AuthenticatedUser(
-            user_id=effective_id,
-            username=effective_id,
-            roles=["player", "dm"],
-            is_admin=True,
-        )
-        request.state.user = dev_user
-        return dev_user
-
-    raise HTTPException(
-        status_code=401,
-        detail={
-            "error": "unauthorized",
-            "message": "Missing or invalid Bearer token",
-        },
-    )
+get_current_user = require_principal(get_zitadel_auth_service)
 
 
 def require_zanzibar_permission(
@@ -121,48 +83,11 @@ def require_zanzibar_permission(
 
     async def _checker(
         request: Request,
-        x_user_id: str | None = Header(None, alias="X-User-Id"),
         authorization: str | None = Header(None, alias="Authorization"),
     ) -> dict[str, Any]:
-        auth_service = get_zitadel_auth_service()
-        user_id: str | None = None
-        authenticated_user: AuthenticatedUser | None = None
-
-        if authorization and authorization.startswith("Bearer "):
-            token = authorization[7:].strip()
-            try:
-                authenticated_user = auth_service.verify_token(token)
-                user_id = authenticated_user.user_id
-                request.state.user = authenticated_user
-            except Exception as exc:
-                logger.warning("Token verification failed in require_zanzibar_permission: %s", exc)
-                raise HTTPException(
-                    status_code=401,
-                    detail={
-                        "error": "unauthorized",
-                        "message": f"Token verification failed: {exc}",
-                    },
-                ) from exc
-        elif auth_service.dev_mode:
-            user_id = x_user_id or "guest_user"
-            authenticated_user = AuthenticatedUser(
-                user_id=user_id,
-                username=user_id,
-                roles=["player", "dm"],
-                is_admin=True,
-            )
-            request.state.user = authenticated_user
-        else:
-            logger.warning(
-                "Authentication failed: Missing or invalid Bearer token in production mode"
-            )
-            raise HTTPException(
-                status_code=401,
-                detail={
-                    "error": "unauthorized",
-                    "message": "Authentication required: missing or unverified Bearer token",
-                },
-            )
+        principal = authenticate_authorization(get_zitadel_auth_service(), authorization)
+        user_id = principal.user_id
+        request.state.principal = principal
 
         client = get_spicedb_client()
 
@@ -217,7 +142,7 @@ def require_zanzibar_permission(
             "user_id": user_id,
             "permission": permission,
             "resource_id": resource_id,
-            "user": authenticated_user,
+            "user": principal,
         }
 
     return _checker

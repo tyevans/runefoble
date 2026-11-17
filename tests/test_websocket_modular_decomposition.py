@@ -23,15 +23,11 @@ from gateway_api.websocket import (
     authenticate_websocket,
     campaign_websocket_endpoint,
     default_action_validator,
-    extract_subject_id,
     extract_token_from_websocket,
     ws_campaign_manager,
 )
 from gateway_api.websocket_auth import (
     authenticate_websocket as auth_fn,
-)
-from gateway_api.websocket_auth import (
-    extract_subject_id as extract_sub_fn,
 )
 from gateway_api.websocket_auth import (
     extract_token_from_websocket as extract_tok_fn,
@@ -106,7 +102,6 @@ def test_module_re_export_parity():
     assert ws_campaign_manager is manager_instance
     assert campaign_websocket_endpoint is endpoint_fn
     assert extract_token_from_websocket is extract_tok_fn
-    assert extract_subject_id is extract_sub_fn
     assert authenticate_websocket is auth_fn
 
 

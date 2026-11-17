@@ -16,19 +16,16 @@ from runefoble_auth.zitadel import ZitadelAuthService
 
 
 def test_bearer_token_extraction_and_decoding():
-    """Verify Zitadel bearer token extraction and dev mock resolution."""
+    """Verify bearer token extraction and that a missing token is refused without fallback."""
     assert sa.extract_bearer_token(None) is None
     assert sa.extract_bearer_token("Basic 12345") is None
     assert sa.extract_bearer_token("Bearer secret_jwt_token") == "secret_jwt_token"
 
-    dev_user = sa.decode_settlement_token(authorization=None, x_user_id="artisan_bob")
-    assert dev_user.user_id == "artisan_bob" and "player" in dev_user.roles
-
-    service = ZitadelAuthService(dev_mode=False)
+    service = ZitadelAuthService()
     sa.set_zitadel_auth_service(service)
     try:
         with pytest.raises(HTTPException) as exc:
-            sa.decode_settlement_token(authorization=None, x_user_id="intruder")
+            sa.decode_settlement_token(authorization=None)
         assert exc.value.status_code == 401
     finally:
         sa.set_zitadel_auth_service(None)
@@ -39,11 +36,11 @@ def test_fastapi_route_dependencies(spicedb: MockSpiceDBClient):
     r = APIRouter(prefix="/api/v1/test_auth")
 
     @r.get("/h/{s}", dependencies=[Depends(sa.require_haven_builder("s"))])
-    async def h_ep(u: Annotated[sa.AuthenticatedUser, Depends(sa.get_current_settlement_user)]):
+    async def h_ep(u: Annotated[sa.VerifiedPrincipal, Depends(sa.get_current_settlement_user)]):
         return {"user": u.user_id}
 
     @r.get("/e/{e}", dependencies=[Depends(sa.require_establishment_manager("e"))])
-    async def e_ep(u: Annotated[sa.AuthenticatedUser, Depends(sa.get_current_settlement_user)]):
+    async def e_ep(u: Annotated[sa.VerifiedPrincipal, Depends(sa.get_current_settlement_user)]):
         return {"user": u.user_id}
 
     session_app.include_router(r)

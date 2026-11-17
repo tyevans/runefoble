@@ -8,9 +8,7 @@ Governed by:
 - TASK-0079: Zitadel OIDC Token Verification Blackbox Test Suite Modular Decomposition
 """
 
-import jwt
 import pytest
-from runefoble_auth.zitadel import ZitadelAuthService
 
 from tests.helpers.zitadel_auth import create_signed_token
 
@@ -54,7 +52,6 @@ async def test_http_valid_signed_token_succeeds_and_extracts_subject(auth_enviro
     profile = profile_res.json()
     assert profile["user_id"] == user_id
     assert profile["username"] == "Valeros"
-    assert "player" in profile["roles"]
 
 
 def test_http_forged_signature_rejected_401(auth_environment):
@@ -132,7 +129,7 @@ def test_http_spoofed_x_user_id_rejected_in_production(auth_environment):
         headers={"X-User-Id": "spoofed_admin"},
     )
     assert res.status_code == 401
-    assert "Authentication required" in res.json()["detail"]["message"]
+    assert "Missing or invalid Bearer token" in res.json()["detail"]["message"]
 
 
 def test_http_invalid_audience_rejected_401(auth_environment):
@@ -153,20 +150,3 @@ def test_http_invalid_audience_rejected_401(auth_environment):
         headers={"Authorization": f"Bearer {wrong_aud_token}"},
     )
     assert res.status_code == 401
-
-
-def test_dev_mode_mock_bypass():
-    """Verify offline dev mode preserves mock bypass without contacting JWKS."""
-    auth_service = ZitadelAuthService(dev_mode=True)
-
-    # 1. Unverified token decodes claims directly in dev mode
-    payload = {"sub": "offline-hero", "preferred_username": "Hero", "email": "hero@runefoble.local"}
-    dummy_jwt = jwt.encode(payload, "super-secret-development-key-32b", algorithm="HS256")
-    user = auth_service.verify_token(dummy_jwt)
-    assert user.user_id == "offline-hero"
-    assert user.username == "Hero"
-
-    # 2. Non-JWT mock token falls back to dev-user-001
-    fallback_user = auth_service.verify_token("invalid-raw-token")
-    assert fallback_user.user_id == "dev-user-001"
-    assert fallback_user.username == "DevAdventurer"

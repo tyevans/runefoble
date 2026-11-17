@@ -11,7 +11,6 @@ from fastapi import WebSocket, WebSocketDisconnect
 from gateway_api.auth import get_zitadel_auth_service
 from gateway_api.websocket_auth import (
     authenticate_websocket,
-    extract_subject_id,
     extract_token_from_websocket,
 )
 from gateway_api.websocket_manager import ws_campaign_manager
@@ -133,7 +132,6 @@ async def campaign_websocket_endpoint(
 
 __all__ = [
     "campaign_websocket_endpoint",
-    "extract_subject_id",
     "extract_token_from_websocket",
     "logger",
 ]

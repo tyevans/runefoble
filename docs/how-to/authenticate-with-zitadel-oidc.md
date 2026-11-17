@@ -1,14 +1,17 @@
 # How-To: Authenticate Users with Zitadel OIDC and JWTs
 
 ## Overview
-Runefoble integrates with self-hosted Zitadel (`ghcr.io/zitadel/zitadel`) to provide OIDC identity management, user authentication, and project role mapping. Authenticated user IDs extracted from Zitadel RS256 JWTs serve directly as Zanzibar `subject_id` identifiers in SpiceDB.
+Runefoble integrates with self-hosted Zitadel (`ghcr.io/zitadel/zitadel`) for OIDC sign-in. Zitadel issues RS256 access tokens. The `sub` claim is the user ID. The platform uses this ID as the Zanzibar `subject_id` in SpiceDB.
+
+The platform has one identity verifier: `ZitadelAuthService` in `libs/runefoble_auth`. No mode disables verification. No header, query parameter, or request body sets identity. Roles and admin flags are not identity. Authorization comes from SpiceDB only (ADR-0001).
 
 ## Architecture & Verification Flows
 
-1. **User Login**: The frontend client redirects to Zitadel (`/auth`) via PKCE flow.
-2. **Token Issuance**: Zitadel issues an RS256-signed JWT containing `sub` (User ID), `email`, and project roles (`urn:zitadel:iam:org:project:roles`).
-3. **Gateway Verification**: `gateway-api` retrieves Zitadel's public JSON Web Key Sets (JWKS) via `jwt.PyJWKClient`, verifies the RS256 cryptographic signature, validates expiration (`exp`) and audience (`aud`), and extracts the authenticated subject.
-4. **Zanzibar Check**: The verified `user_id` is supplied to SpiceDB client dependencies to verify fine-grained permissions.
+1. **User Login**: The frontend signs the user in with Zitadel (PKCE flow).
+2. **Token Issuance**: Zitadel issues an RS256 access token with `sub`, `iss`, `aud`, `exp`, and optional `email` and `preferred_username`.
+3. **Verification**: `ZitadelAuthService.verify_token` checks the RS256 signature against the issuer's JWKS. It checks `exp`, `sub`, `iss` (exact match), and `aud` (exact match). Any failure raises `TokenVerificationError`.
+4. **Principal**: A passing token yields a `VerifiedPrincipal` (`user_id`, `username`, `email`).
+5. **Zanzibar Check**: The `user_id` is the SpiceDB subject for permission checks.
 
 ```mermaid
 sequenceDiagram
@@ -22,10 +25,10 @@ sequenceDiagram
     Client->>GW: GET /api/v1/sessions/c1 (Bearer Token)
     GW->>ZS: verify_token(token)
     opt JWKS Cache Miss or Expired
-        ZS->>JWKS: GET /.well-known/jwks.json
+        ZS->>JWKS: GET jwks_uri (from OIDC discovery)
         JWKS-->>ZS: JWK Set (keys)
     end
-    ZS-->>GW: AuthenticatedUser(user_id="alice", roles=["player"])
+    ZS-->>GW: VerifiedPrincipal(user_id="alice")
     GW->>SP: check_permission(campaign:c1, view, user:alice)
     SP-->>GW: allowed=true
     GW-->>Client: 200 OK (Session State)
@@ -35,52 +38,45 @@ sequenceDiagram
 
 ## Step 1: Verify Tokens in `ZitadelAuthService`
 
-Use `ZitadelAuthService` from `libs/runefoble_auth`:
-
 ```python
-from runefoble_auth.zitadel import AuthenticatedUser, ZitadelAuthService
+from runefoble_auth.principal import VerifiedPrincipal
+from runefoble_auth.zitadel import ZitadelAuthService
 
-# Initialize service pointing to internal Zitadel issuer
 auth_service = ZitadelAuthService(
-    issuer="http://zitadel:8080",
-    client_id="runefoble-api",
-    jwks_cache_ttl=300,  # 5 minutes JWKS cache
-    verify_audience=True,
+    issuer="http://zitadel:8080",   # Must equal the token `iss` claim
+    audience="runefoble-api",       # Must equal the token `aud` claim
+    jwks_url=None,                  # None: read jwks_uri from OIDC discovery
+    jwks_cache_ttl=300,             # Seconds
 )
 
-# Cryptographically verify RS256 signature against cached JWKS
-user: AuthenticatedUser = auth_service.verify_token(bearer_token)
-print(f"Authenticated user: {user.username} ({user.user_id})")
-print(f"Assigned roles: {user.roles}")
+principal: VerifiedPrincipal = auth_service.verify_token(bearer_token)
 ```
 
-### Offline & Development Mode Bypass
-In local unit tests or offline environments where Zitadel is not running, set `RUNEFOBLE_AUTH_DEV_MODE=true` (or instantiate `ZitadelAuthService(dev_mode=True)`) or pass `verify=False` to `verify_token` to bypass JWKS network lookups and fall back to local mock contexts (`dev-user-001`).
+Rules:
+- `verify_token` accepts only `RS256`.
+- `jwks_url` defaults to the `jwks_uri` in `<issuer>/.well-known/openid-configuration`. Zitadel does not serve keys at `/.well-known/jwks.json`.
+- Settings: `zitadel_issuer`, `zitadel_audience` (defaults to `zitadel_client_id`), and `zitadel_jwks_url` (optional internal URL for key fetch).
+- There is no offline or development bypass. Tests mint real signed tokens (Step 5).
 
 ---
 
 ## Step 2: Enforce Authentication in Gateway HTTP Endpoints
 
-FastAPI endpoints enforce authentication and Zanzibar permissions via `require_zanzibar_permission` and `get_current_user`:
+Use the shared dependency. Do not write a new one.
 
 ```python
 from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from gateway_api.auth import get_current_user, require_zanzibar_permission
-from runefoble_auth.zitadel import AuthenticatedUser
+from runefoble_auth.principal import VerifiedPrincipal
 
 router = APIRouter()
 
 
 @router.get("/api/v1/profile")
-async def get_profile(user: Annotated[AuthenticatedUser, Depends(get_current_user)]):
-    return {
-        "user_id": user.user_id,
-        "username": user.username,
-        "email": user.email,
-        "roles": user.roles,
-        "is_admin": user.is_admin,
-    }
+async def get_profile(user: Annotated[VerifiedPrincipal, Depends(get_current_user)]):
+    return {"user_id": user.user_id, "username": user.username, "email": user.email}
 
 
 @router.get(
@@ -91,93 +87,69 @@ async def get_session(session_id: str):
     return {"id": session_id, "status": "active"}
 ```
 
-In production mode (`RUNEFOBLE_AUTH_DEV_MODE=false`), requests lacking a valid Bearer token or presenting spoofed `X-User-Id` headers receive `HTTP 401 Unauthorized`.
+A missing, malformed, or unverified Bearer token returns `HTTP 401` with `WWW-Authenticate: Bearer`. For the full contract, see [Verify Identity in FastAPI and WebSockets](verify-identity-in-fastapi-and-websockets.md).
 
 ---
 
 ## Step 3: Authenticate Real-Time WebSocket Handshakes
 
-For real-time connections (`/ws/campaigns/{campaign_id}`), clients send the token via one of three supported channels:
-1. Query parameter (`?token=...` or `?access_token=...`)
-2. `Authorization: Bearer <token>` HTTP header
-3. `Sec-WebSocket-Protocol: bearer.<token>` subprotocol header
+Browsers cannot set `Authorization` on a WebSocket. The client offers two subprotocols:
+
+1. `runefoble.v1` (the protocol name)
+2. `runefoble.bearer.<jwt>` (the token)
+
+The server reads the bearer subprotocol, verifies the token, and rejects the handshake before accept on failure. On success it accepts with `runefoble.v1`. Tokens in the URL query string are not accepted by the shared helper.
 
 ```python
-from fastapi import HTTPException, WebSocket
-from gateway_api.auth import get_zitadel_auth_service
-from gateway_api.websocket import default_action_validator, extract_token_from_websocket
+from fastapi import WebSocket
+from runefoble_auth.websocket import (
+    RUNEFOBLE_SUBPROTOCOL,
+    WebSocketAuthError,
+    authenticate_websocket,
+)
 
 
-async def campaign_websocket_endpoint(websocket: WebSocket, campaign_id: str):
-    auth_service = get_zitadel_auth_service()
-    token = extract_token_from_websocket(websocket)
-
-    if token:
-        try:
-            user = auth_service.verify_token(token)
-            subject_id = user.user_id
-        except Exception as exc:
-            raise HTTPException(
-                status_code=401,
-                detail=f"Token verification failed: {exc}",
-            ) from exc
-    elif auth_service.dev_mode:
-        subject_id = websocket.query_params.get("user_id", "guest")
-    else:
-        raise HTTPException(status_code=401, detail="Authentication required: missing token")
-
-    # Verify SpiceDB Zanzibar permissions
-    can_connect = await default_action_validator.validate_connect(campaign_id, subject_id)
-    if not can_connect:
-        await websocket.accept()
-        await websocket.send_json({"type": "error", "code": "PERMISSION_DENIED"})
-        await websocket.close(code=4003)
+async def campaign_websocket_endpoint(websocket: WebSocket, verifier) -> None:
+    try:
+        principal = authenticate_websocket(websocket, verifier)
+    except WebSocketAuthError:
+        await websocket.close(code=4401)
         return
-
-    await websocket.accept()
+    await websocket.accept(subprotocol=RUNEFOBLE_SUBPROTOCOL)
+    # Verify SpiceDB permissions for principal.user_id before serving the session.
 ```
+
+> **Migration status:** The gateway WebSocket endpoint still reads the token from the query string and the `Authorization` header. It also accepts a `bearer.<jwt>` subprotocol with a different prefix. TASK-0522 moves the gateway to the shared helper above. Until then, do not add new WebSocket clients that depend on the query-string path.
 
 ---
 
-## Step 4: Frontend Client Authentication & Login Modal
+## Step 4: Frontend Client Authentication
 
-Browser-side authentication is orchestrated through the frontend `authService` and Lit Web Components in `frontend/src/`:
+Browser sign-in and token handling are in `frontend/src/auth/`. The migration to Zitadel PKCE is tracked in TASK-0524. The frontend must not treat roles in the token as authority. Permissions come from the gateway.
 
-```typescript
-import { authService } from './auth/auth-service.ts';
+---
 
-// Sign in with Zitadel credentials or local dev fallback proxy
-const user = await authService.login('marcus', 'SecretPassword123!');
-console.log('Signed in user:', user.username, user.roles);
+## Step 5: Test with Signed Tokens
 
-// Subscribe to auth state transitions
-authService.onAuthChanged((state) => {
-  if (state.isAuthenticated) {
-    console.log('Current user:', state.user?.username);
-  }
-});
+Tests use `SigningTestIssuer` from `runefoble_auth.testing.signing_test_issuer`. It creates an RSA key, mints RS256 tokens, and builds a verifier that trusts only that key.
 
-// Access current token for HTTP / WebSocket authorization headers
-const token = authService.getAccessToken();
+```python
+from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
+
+issuer = SigningTestIssuer()
+verifier = issuer.verifier()
+token = issuer.mint("user-evelyn", username="evelyn")
 ```
 
-### UI Components
+Use `mint(..., expires_in=-60)`, `mint(..., audience="other")`, or `mint(..., issuer="http://evil.test")` for negative tests. Forge tokens with another key or with HS256 or `alg: none` to test rejection.
 
-1. `<runefoble-auth-modal>`: Accessible modal with "Sign In" and "Create Account" tabs, validation for required fields, email structure, and minimum password lengths, and Bauhaus styling.
-2. `<runefoble-user-menu>`: Navigation bar avatar badge displaying username and role badges with a dropdown menu offering account navigation and sign-out actions.
-
-```html
-<runefoble-user-menu></runefoble-user-menu>
-<runefoble-auth-modal .open=${isAuthOpen} initialTab="login"></runefoble-auth-modal>
-```
+Shared fixtures are in `tests/helpers/zitadel_auth.py`. The `auth_environment` fixture configures the gateway with a signing verifier.
 
 ---
 
 ## Verification & Blackbox Testing
 
-Zitadel token verification and Zanzibar integration are verified via modular blackbox test suites:
-- **HTTP Bearer & JWKS**: `tests/test_blackbox_zitadel_http_auth.py` verifies RS256 signature verification, JWKS key rotation, token expiration, tampered signatures, audience enforcement, and dev mode bypass.
-- **WebSocket Handshake & Subprotocols**: `tests/test_blackbox_zitadel_websocket_auth.py` verifies query parameter authentication, Authorization header passing, `Sec-WebSocket-Protocol` subprotocol authentication, and RFC 6455 policy violation close frames (`code=4003`).
-- **Shared Auth Fixtures**: `tests/helpers/zitadel_auth.py` provisions test RSA keypairs, mock JWKS clients, and configured `ZitadelAuthService` instances.
-- **Frontend Auth & Token Management**: `frontend/test/auth.test.ts` verifies client token exchange, credential security, claims extraction, silent background refresh, and event dispatching.
-
+- **Principal and HTTP dependency**: `libs/runefoble_auth/tests/test_verified_principal.py` covers accepted tokens and rejected tokens (missing, garbage, HS256, `alg: none`, unsigned, unknown key, expired, wrong `aud`, wrong `iss`, missing or empty `sub`) and the WebSocket handshake.
+- **HTTP Bearer & JWKS (gateway)**: `tests/test_blackbox_zitadel_http_auth.py`.
+- **WebSocket handshake (gateway)**: `tests/test_blackbox_zitadel_websocket_auth.py`.
+- **Shared Auth Fixtures**: `tests/helpers/zitadel_auth.py`.

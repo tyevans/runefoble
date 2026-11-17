@@ -55,8 +55,6 @@ export default defineConfig({
       env: {
         SPICEDB_ENDPOINT: process.env.SPICEDB_ENDPOINT || 'mock',
         RUNEFOBLE_SPICEDB_ENDPOINT: process.env.RUNEFOBLE_SPICEDB_ENDPOINT || 'mock',
-        AUTH_DEV_MODE: 'true',
-        RUNEFOBLE_AUTH_DEV_MODE: 'true',
       },
     },
     {

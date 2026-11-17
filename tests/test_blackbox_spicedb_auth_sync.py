@@ -3,9 +3,9 @@
 from uuid import uuid4
 
 import pytest
+from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.spicedb import MockSpiceDBClient, Relationship
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
-from runefoble_auth.zitadel import AuthenticatedUser
 from runefoble_events import CharacterCreated, ParticipantJoined, SessionCreated
 
 
@@ -17,7 +17,7 @@ async def test_auth_sync_user_claims_and_permissions() -> None:
     campaign_id = f"camp-{uuid4().hex[:6]}"
     user_id = f"user-{uuid4().hex[:6]}"
 
-    user = AuthenticatedUser(user_id=user_id, username="Bob", roles=["player"])
+    user = VerifiedPrincipal(user_id=user_id, username="Bob", roles=["player"])
     synced = await service.sync_user_claims(user, campaign_id=campaign_id)
     assert len(synced) > 0
 

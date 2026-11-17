@@ -167,8 +167,6 @@ def test_gateway_profile_rest_endpoint_claims(auth_environment):
     assert data["user_id"] == user_id
     assert data["username"] == "Valeros"
     assert data["email"] == f"{user_id}@runefoble.local"
-    assert "player" in data["roles"]
-    assert "dm" in data["roles"]
 
 
 def test_typescript_unit_test_suite_execution():

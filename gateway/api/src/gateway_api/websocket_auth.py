@@ -27,18 +27,6 @@ def extract_token_from_websocket(websocket: WebSocket) -> str | None:
     return None
 
 
-def extract_subject_id(websocket: WebSocket) -> str:
-    """Extract authenticated subject identifier from WebSocket query or headers (dev mode)."""
-    for param in ("user_id", "x_user_id", "subject_id"):
-        val = websocket.query_params.get(param)
-        if val:
-            return val
-    x_user = websocket.headers.get("x-user-id")
-    if x_user:
-        return x_user
-    return "guest"
-
-
 def authenticate_websocket(
     websocket: WebSocket,
     service: ZitadelAuthService,
@@ -56,9 +44,6 @@ def authenticate_websocket(
                 detail=f"Token verification failed: {exc}",
             ) from exc
 
-    if service.dev_mode:
-        return extract_subject_id(websocket)
-
     logger.warning("WebSocket connection rejected: missing token in production mode")
     raise HTTPException(
         status_code=401,
@@ -68,7 +53,6 @@ def authenticate_websocket(
 
 __all__ = [
     "authenticate_websocket",
-    "extract_subject_id",
     "extract_token_from_websocket",
     "logger",
 ]

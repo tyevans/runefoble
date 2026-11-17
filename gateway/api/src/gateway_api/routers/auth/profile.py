@@ -7,7 +7,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends
 from gateway_api.auth import get_current_user
 from pydantic import BaseModel, ConfigDict, Field
-from runefoble_auth.zitadel import AuthenticatedUser
+from runefoble_auth.principal import VerifiedPrincipal
 
 router = APIRouter(tags=["User Profile"])
 
@@ -24,7 +24,7 @@ class UpdateProfileRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-def get_stored_profile(user: AuthenticatedUser) -> dict[str, Any]:
+def get_stored_profile(user: VerifiedPrincipal) -> dict[str, Any]:
     stored = USER_PROFILES.setdefault(
         user.user_id,
         {
@@ -43,14 +43,12 @@ def get_stored_profile(user: AuthenticatedUser) -> dict[str, Any]:
         "display_name": stored.get("display_name", user.username),
         "avatar_url": stored.get("avatar_url", None),
         "bio": stored.get("bio", ""),
-        "roles": user.roles,
-        "is_admin": user.is_admin,
     }
 
 
 @router.get("/api/v1/profile")
 async def get_profile(
-    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
 ) -> dict[str, Any]:
     """Retrieve authenticated Zitadel user profile claims and customized settings."""
     return get_stored_profile(user)
@@ -59,7 +57,7 @@ async def get_profile(
 @router.patch("/api/v1/profile")
 async def update_profile(
     req: UpdateProfileRequest,
-    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
 ) -> dict[str, Any]:
     """Update user profile claims (display name, avatar URL, bio)."""
     stored = USER_PROFILES.setdefault(
