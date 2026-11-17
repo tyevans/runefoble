@@ -428,6 +428,16 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `character_id`: String
   - `slot_level`: Optional[Integer] (absent means every level was restored)
   - `spell_slots`: Mapping[Integer, Integer] (full resulting slot map)
+- **`SpellUnprepared`**: Emitted when a prepared spell is removed from a character's active spellbook. Unpreparing a spell that is not prepared emits no event (`runefoble.events.character.spell_unprepared`).
+  - `session_id`: String
+  - `character_id`: String
+  - `spell_name`: String
+- **`StandInActivated`**: Emitted when the AI stand-in takes control of a character (`runefoble.events.character.stand_in_activated`). Activation and release are idempotent. A request that does not change the flag emits no event.
+  - `session_id`: String
+  - `character_id`: UUID | str
+- **`StandInReleased`**: Emitted when a player takes control back from the AI stand-in (`runefoble.events.character.stand_in_released`).
+  - `session_id`: String
+  - `character_id`: UUID | str
 - **`StandInPolicyUpdated`**: Emitted when tactical guardrail constraints and preferences are configured for a character's AI stand-in (`runefoble.events.character.stand_in_policy_updated`).
   - `session_id`: Optional[UUID | str]
   - `character_id`: UUID | str
