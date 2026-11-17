@@ -9,6 +9,7 @@ import httpx
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 from inference_worker.config import WorkerSettings
 
@@ -83,20 +84,20 @@ class MultiBackendLLMClient:
         if backend == "openai_compatible":
             return ChatOpenAI(
                 base_url=self.settings.openai_base_url,
-                api_key=self.settings.openai_api_key.get_secret_value(),
+                api_key=self.settings.openai_api_key,
                 model=self.settings.openai_model,
                 temperature=self.settings.temperature,
-                max_tokens=self.settings.max_tokens,
+                max_completion_tokens=self.settings.max_tokens,
                 timeout=self.settings.timeout_seconds,
             )
         if backend == "ollama":
             # Ollama exposes OpenAI-compatible /v1/chat/completions as well
             return ChatOpenAI(
                 base_url=f"{self.settings.ollama_base_url}/v1",
-                api_key="ollama",
+                api_key=SecretStr("ollama"),
                 model=self.settings.ollama_model,
                 temperature=self.settings.temperature,
-                max_tokens=self.settings.max_tokens,
+                max_completion_tokens=self.settings.max_tokens,
                 timeout=self.settings.timeout_seconds,
             )
         return None

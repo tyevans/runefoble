@@ -24,6 +24,9 @@ We adopt **Ruff** as our unified Python linter and formatter, backed by **pre-co
    - Checks include: `ruff`, `ruff-format`, trailing whitespace removal, YAML validation, and merge conflict marker checks.
 3. **Zero-Warning Tolerance**:
    - CI runs `ruff check .` with exit-on-error.
+4. **Static Type Checks**:
+   - `make lint` runs `mypy` on `services/inference_worker/src` (TASK-0628). Type errors fail the gate. Do not add `# type: ignore` to pass it.
+   - Other packages do not yet run mypy in the gate.
 
 ## Consequences
 

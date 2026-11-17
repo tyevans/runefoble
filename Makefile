@@ -207,6 +207,8 @@ lint: ## Check types, Ruff lint, format, and Helm
 	uv run ruff check .
 	@echo "==> Checking Ruff formatting..."
 	uv run ruff format --check .
+	@echo "==> Typechecking inference worker..."
+	uv run mypy services/inference_worker/src
 	@echo "==> Typechecking frontend..."
 	cd frontend && pnpm exec tsc --noEmit
 	@echo "==> Linting Helm charts..."
