@@ -156,6 +156,65 @@ class PlatformSettings(BaseSettings):
     )
 
 
+class EmbeddingEndpointSettings(BaseSettings):
+    """Connection settings for an OpenAI-compatible embeddings endpoint.
+
+    Read by the embedding provider factory in `libs/runefoble_embeddings`. Any
+    service that selects a provider reads these values. Fields that a provider
+    needs are checked when the provider is built, so a missing value stops start-up.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="RUNEFOBLE_EMBEDDING_",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    base_url: str | None = Field(
+        default=None,
+        description="Base URL of the embeddings API, including the /v1 path",
+    )
+    model: str | None = Field(
+        default=None,
+        description="Model name sent to the endpoint and recorded as provenance",
+    )
+    dimension: int | None = Field(
+        default=None,
+        description="Vector width the model produces; checked on the first embedding",
+    )
+    api_key: str = Field(
+        default="not-needed",
+        description="Bearer key for the endpoint. Local servers usually ignore it",
+    )
+    document_prefix: str = Field(
+        default="",
+        description="Text prepended to every indexed document (asymmetric models)",
+    )
+    query_prefix: str = Field(
+        default="",
+        description="Text prepended to every search query (asymmetric models)",
+    )
+
+
+class RulesCompendiumSettings(BaseSettings):
+    """Rules Compendium retrieval mode.
+
+    `lexical` ranks rules with BM25 only, and search responses say so. Any other
+    value names a configured embedding provider, and search becomes hybrid.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="RUNEFOBLE_RULES_",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    embedding: Literal["lexical", "openai_compatible"] = Field(
+        default="lexical",
+        description="Retrieval mode: lexical (BM25 only) or a configured embedding provider",
+    )
+
+
 class LoreBackendSettings(BaseSettings):
     """Campaign Lore retrieval backends, selected per port.
 

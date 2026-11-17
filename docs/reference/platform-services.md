@@ -100,3 +100,15 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **`RUNEFOBLE_LORE_CHUNK`**: `memory` (default). Passage corpus for BM25 and dense search, in process.
 - **`RUNEFOBLE_LORE_EMBEDDING`**: `fake` (default). Deterministic hash embeddings, not semantic.
 - **Event store**: The replay reads `RUNEFOBLE_USE_POSTGRES_EVENT_STORE` and `RUNEFOBLE_DATABASE_URL`. Start-up fails if PostgreSQL is configured and unreachable.
+
+---
+
+## Rules Compendium Retrieval Mode
+
+`RulesCompendiumSettings` (`libs/runefoble_platform`) selects the retrieval mode of the Rules Compendium. The mode is reported in every search response as `retrieval_mode`.
+
+- **`RUNEFOBLE_RULES_EMBEDDING`**: `lexical` (default). BM25 only. Responses report `lexical`.
+- **`RUNEFOBLE_RULES_EMBEDDING`**: `openai_compatible`. BM25 fused with vector search. Responses report `hybrid`. Requires the endpoint settings below.
+- **`RUNEFOBLE_EMBEDDING_BASE_URL`**, **`RUNEFOBLE_EMBEDDING_MODEL`**, **`RUNEFOBLE_EMBEDDING_DIMENSION`**: Required for `openai_compatible`. Start-up fails if one is missing.
+- **`RUNEFOBLE_EMBEDDING_API_KEY`**, **`RUNEFOBLE_EMBEDDING_DOCUMENT_PREFIX`**, **`RUNEFOBLE_EMBEDDING_QUERY_PREFIX`**: Optional.
+- **Details**: [Embedding Providers](embedding-providers.md).

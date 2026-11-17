@@ -1,0 +1,17 @@
+[project]
+name = "runefoble-embeddings"
+version = "0.1.0"
+description = "Runefoble - Embedding provider factory over the redstring EmbeddingProvider port"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "redstring[llm]>=0.11.0",
+    "runefoble-platform",
+]
+
+[tool.uv.sources]
+runefoble-platform = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.12.19"]
+build-backend = "uv_build"

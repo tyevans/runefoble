@@ -29,7 +29,7 @@ def owning_services() -> Iterator[dict[str, str]]:
     with (
         pytest.MonkeyPatch.context() as env,
         serve(board_app) as board_url,
-        serve(compendium_app) as compendium_url,
+        serve(compendium_app, lifespan="on") as compendium_url,
     ):
         env.setenv("BOARD_STATE_URL", board_url)
         env.setenv("RULES_COMPENDIUM_URL", compendium_url)

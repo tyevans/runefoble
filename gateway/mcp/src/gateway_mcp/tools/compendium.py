@@ -3,7 +3,6 @@
 from typing import TYPE_CHECKING, Any
 
 from gateway_mcp.clients import ServiceClient
-from rules_compendium.dependencies import get_retrieval_engine
 from rules_compendium.srd_data import CANONICAL_MONSTERS
 
 if TYPE_CHECKING:
@@ -12,12 +11,6 @@ if TYPE_CHECKING:
 
 def query_monster_stat_block(monster_name: str) -> dict[str, Any]:
     """Retrieve full canonical monster stat block by name (e.g. 'Goblin', 'Ogre', 'Young Red Dragon')."""
-    engine = get_retrieval_engine()
-    monster = engine.get_monster(monster_name)
-    if monster:
-        return {"status": "success", "monster": monster}
-
-    # Fallback to direct SRD scan
     for m in CANONICAL_MONSTERS:
         if m["name"].lower() == monster_name.lower().strip():
             return {"status": "success", "monster": m}

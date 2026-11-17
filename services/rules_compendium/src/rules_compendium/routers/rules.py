@@ -49,6 +49,7 @@ async def search_rules(
         query=query,
         results_count=len(results),
         took_ms=took_ms,
+        retrieval_mode=engine.retrieval_mode,
         results=results,
     )
 

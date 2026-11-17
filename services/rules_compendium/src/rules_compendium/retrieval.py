@@ -1,8 +1,13 @@
-"""Hybrid BM25 and Semantic retrieval engine for rules compendium powered by redstring."""
+"""Rules retrieval engine for the Rules Compendium, powered by redstring.
+
+Without an embedding provider the engine ranks rules with BM25 only, and it
+reports `lexical`. With a provider it fuses BM25 and vector search, and it
+reports `hybrid`. The engine never uses hash vectors.
+"""
 
 import logging
 import time
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 import redstring
@@ -18,18 +23,33 @@ logger = logging.getLogger(__name__)
 
 CANONICAL_TENANT_ID = UUID("00000000-0000-0000-0000-000000000001")
 
+RetrievalMode = Literal["lexical", "hybrid"]
+
+# A lexical-only store keeps no vectors. The store still needs a positive width.
+LEXICAL_ONLY_DIMENSION = 1
+
 
 class CompendiumRetrievalEngine:
-    """Hybrid BM25 and semantic vector search engine over canonical SRD and homebrew rules."""
+    """BM25 search, plus vector search when a provider is configured, over SRD and homebrew rules."""
 
-    def __init__(self, dimension: int = 32) -> None:
-        self.embeddings = redstring.FakeEmbeddingProvider(dimension=dimension)
-        dim = self.embeddings.dimension
-        self.chunks = redstring.InMemoryChunkStore(dimension=dim)
-        self.chunk_retriever = redstring.ChunkRetriever(
-            embeddings=self.embeddings,
-            chunks=self.chunks,
-        )
+    def __init__(self, *, embeddings: redstring.EmbeddingProvider | None) -> None:
+        """Build an empty engine. Call `initialize_srd_data` before the first search.
+
+        Args:
+            embeddings: The embedding provider, or None for lexical-only retrieval.
+        """
+        self.embeddings = embeddings
+        if embeddings is None:
+            self.retrieval_mode: RetrievalMode = "lexical"
+            self.chunks = redstring.InMemoryChunkStore(dimension=LEXICAL_ONLY_DIMENSION)
+            self.chunk_retriever = redstring.ChunkRetriever.lexical_only(chunks=self.chunks)
+        else:
+            self.retrieval_mode = "hybrid"
+            self.chunks = redstring.InMemoryChunkStore(dimension=embeddings.dimension)
+            self.chunk_retriever = redstring.ChunkRetriever(
+                embeddings=embeddings,
+                chunks=self.chunks,
+            )
 
         # Fast direct lookups
         self._monsters: dict[str, dict[str, Any]] = {}
@@ -39,14 +59,20 @@ class CompendiumRetrievalEngine:
 
         self._initialized = False
 
+    async def _vectors_for(self, texts: list[str]) -> list[list[float] | None]:
+        """Embed indexed texts in one batch. Lexical engines store no vectors."""
+        if self.embeddings is None:
+            return [None] * len(texts)
+        return list(await self.embeddings.embed(texts))
+
     async def initialize_srd_data(self) -> None:
         """Pre-index canonical SRD monsters, spells, and conditions."""
         if self._initialized:
             return
 
-        stored_chunks: list[redstring.StoredChunk] = []
+        # (source_id, text, metadata) for each canonical entry, indexed in one batch.
+        entries: list[tuple[str, str, dict[str, Any]]] = []
 
-        # Index monsters
         for m in CANONICAL_MONSTERS:
             name_lower = m["name"].lower()
             self._monsters[name_lower] = m
@@ -58,28 +84,8 @@ class CompendiumRetrievalEngine:
                 f"AC {m.get('armor_class', '')}, HP {m.get('hit_points', '')}, speed {m.get('speed', '')}. "
                 f"{m.get('description', '')} Traits: {traits_str} Actions: {actions_str}"
             )
-            embs = await self.embeddings.embed([text])
-            stored_chunks.append(
-                redstring.StoredChunk(
-                    tenant_id=CANONICAL_TENANT_ID,
-                    source_id=f"srd-monster-{name_lower}",
-                    text=text,
-                    chunk_index=0,
-                    start_char=0,
-                    end_char=len(text),
-                    entity_ids=[],
-                    metadata={
-                        "category": "monster",
-                        "name": m["name"],
-                        "details": {},
-                        "is_homebrew": False,
-                        "campaign_id": None,
-                    },
-                    embedding=embs[0],
-                )
-            )
+            entries.append((f"srd-monster-{name_lower}", text, _srd_metadata("monster", m["name"])))
 
-        # Index spells
         for s in CANONICAL_SPELLS:
             name_lower = s["name"].lower()
             self._spells[name_lower] = s
@@ -89,53 +95,32 @@ class CompendiumRetrievalEngine:
                 f"Components: {s.get('components', '')}, Duration: {s.get('duration', '')}. "
                 f"{s.get('description', '')}"
             )
-            embs = await self.embeddings.embed([text])
-            stored_chunks.append(
-                redstring.StoredChunk(
-                    tenant_id=CANONICAL_TENANT_ID,
-                    source_id=f"srd-spell-{name_lower}",
-                    text=text,
-                    chunk_index=0,
-                    start_char=0,
-                    end_char=len(text),
-                    entity_ids=[],
-                    metadata={
-                        "category": "spell",
-                        "name": s["name"],
-                        "details": {},
-                        "is_homebrew": False,
-                        "campaign_id": None,
-                    },
-                    embedding=embs[0],
-                )
-            )
+            entries.append((f"srd-spell-{name_lower}", text, _srd_metadata("spell", s["name"])))
 
-        # Index conditions
         for c in CANONICAL_CONDITIONS:
             name_lower = c["name"].lower()
             self._conditions[name_lower] = c
             effects_str = " ".join(c.get("effects", []))
             text = f"{c['name']} (Condition): {c.get('description', '')} Effects: {effects_str}"
-            embs = await self.embeddings.embed([text])
-            stored_chunks.append(
-                redstring.StoredChunk(
-                    tenant_id=CANONICAL_TENANT_ID,
-                    source_id=f"srd-condition-{name_lower}",
-                    text=text,
-                    chunk_index=0,
-                    start_char=0,
-                    end_char=len(text),
-                    entity_ids=[],
-                    metadata={
-                        "category": "condition",
-                        "name": c["name"],
-                        "details": {},
-                        "is_homebrew": False,
-                        "campaign_id": None,
-                    },
-                    embedding=embs[0],
-                )
+            entries.append(
+                (f"srd-condition-{name_lower}", text, _srd_metadata("condition", c["name"]))
             )
+
+        vectors = await self._vectors_for([text for _, text, _ in entries])
+        stored_chunks = [
+            redstring.StoredChunk(
+                tenant_id=CANONICAL_TENANT_ID,
+                source_id=source_id,
+                text=text,
+                chunk_index=0,
+                start_char=0,
+                end_char=len(text),
+                entity_ids=[],
+                metadata=metadata,
+                embedding=vector,
+            )
+            for (source_id, text, metadata), vector in zip(entries, vectors, strict=True)
+        ]
 
         await self.chunks.upsert_many(stored_chunks)
         self._initialized = True
@@ -187,7 +172,7 @@ class CompendiumRetrievalEngine:
             f"{k}: {v}" for k, v in content.items() if isinstance(v, (str, int, float))
         )
         text = f"{title} (Homebrew {rule_type}): {content_str}"
-        embs = await self.embeddings.embed([text])
+        [vector] = await self._vectors_for([text])
         chunk = redstring.StoredChunk(
             tenant_id=campaign_id,
             source_id=f"homebrew-{rule_id}",
@@ -204,7 +189,7 @@ class CompendiumRetrievalEngine:
                 "is_homebrew": True,
                 "campaign_id": str(campaign_id),
             },
-            embedding=embs[0],
+            embedding=vector,
         )
         await self.chunks.upsert_many([chunk])
 
@@ -216,7 +201,10 @@ class CompendiumRetrievalEngine:
         can_view_homebrew: bool = False,
         limit: int = 10,
     ) -> tuple[list[RuleSearchResultItem], float]:
-        """Perform hybrid BM25 and semantic vector lookup across SRD and authorized homebrew rules."""
+        """Search canonical SRD rules and authorized homebrew rules, best first.
+
+        The ranking is BM25 in lexical mode and BM25 fused with vector search in hybrid mode.
+        """
         if not self._initialized:
             await self.initialize_srd_data()
 
@@ -304,3 +292,13 @@ class CompendiumRetrievalEngine:
     def get_homebrew_by_campaign(self, campaign_id: UUID) -> list[dict[str, Any]]:
         """Retrieve homebrew rules belonging to a specific campaign."""
         return self._homebrew.get(campaign_id, [])
+
+
+def _srd_metadata(category: str, name: str) -> dict[str, Any]:
+    return {
+        "category": category,
+        "name": name,
+        "details": {},
+        "is_homebrew": False,
+        "campaign_id": None,
+    }
