@@ -15,8 +15,8 @@ export class ZanzibarClient {
   private tuples: Set<string> = new Set();
 
   constructor(
-    private readonly endpoint?: string,
-    private readonly token?: string
+    private readonly endpoint: string | undefined,
+    private readonly token: string
   ) {}
 
   private tupleKey(
@@ -52,7 +52,7 @@ export class ZanzibarClient {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.token || 'runefoble_secret_key'}`,
+            Authorization: `Bearer ${this.token}`,
           },
           body: JSON.stringify({
             updates: [
@@ -144,7 +144,7 @@ export class ZanzibarClient {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.token || 'runefoble_secret_key'}`,
+            Authorization: `Bearer ${this.token}`,
           },
           body: JSON.stringify({
             resource: { objectType: resourceType, objectId: resourceId },

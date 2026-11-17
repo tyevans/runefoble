@@ -15,7 +15,7 @@ DEFAULT_SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "schema" /
 
 async def bootstrap_schema(
     endpoint: str = "localhost:50051",
-    token: str = "secret",
+    token: str | None = None,
     schema_path: str | Path | None = None,
     client: SpiceDBClient | None = None,
     insecure: bool = True,
@@ -57,11 +57,6 @@ def main() -> None:
         help="SpiceDB gRPC endpoint (default: localhost:50051 or SPICEDB_ENDPOINT)",
     )
     parser.add_argument(
-        "--token",
-        default=os.getenv("SPICEDB_PRESHARED_KEY", os.getenv("SPICEDB_TOKEN", "secret")),
-        help="SpiceDB preshared authentication key (default: SPICEDB_PRESHARED_KEY or 'secret')",
-    )
-    parser.add_argument(
         "--schema",
         default=None,
         help="Path to runefoble.zed schema file (default: libs/runefoble_auth/schema/runefoble.zed)",
@@ -78,7 +73,6 @@ def main() -> None:
     asyncio.run(
         bootstrap_schema(
             endpoint=args.endpoint,
-            token=args.token,
             schema_path=args.schema,
             insecure=args.insecure,
         )

@@ -53,7 +53,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Role**: Object-level access control enforcing who can view, run, mutate, or roll within campaigns, characters, and boards.
 - **Datastore Migrations**: Uses `spicedb datastore migrate head` executed via initContainers in the deployment and Helm schema job before serving or writing schemas.
 - **Schema**: `libs/runefoble_auth/schema/runefoble.zed`.
-- **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`.
+- **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. The preshared key is an operator secret with no default outside tests. A process that cannot read it exits at startup and names the variable. Helm supplies it from `spicedb.presharedKey` until TASK-0626 moves it to a Kubernetes Secret.
 - **Direct gRPC Enforcement**: `SpiceDBClient` connects directly over gRPC without silent mock fallbacks; errors fail fast to prevent authorization drift. Offline unit tests explicitly instantiate `MockSpiceDBClient`.
 - **How-To Guide**: [Define and Check SpiceDB Zanzibar Permissions](../how-to/define-spicedb-zanzibar-permissions.md).
 

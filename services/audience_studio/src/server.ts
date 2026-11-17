@@ -18,7 +18,7 @@ import { WebSocketManager } from './websocket.js';
 export interface ServerOptions {
   redisUrl?: string;
   spicedbEndpoint?: string;
-  spicedbToken?: string;
+  spicedbToken: string;
   logger?: boolean;
 }
 
@@ -31,7 +31,7 @@ export interface AppContext {
   wsManager: WebSocketManager;
 }
 
-export async function buildServer(options: ServerOptions = {}): Promise<AppContext> {
+export async function buildServer(options: ServerOptions): Promise<AppContext> {
   const server = Fastify({
     logger: options.logger ?? false,
   });

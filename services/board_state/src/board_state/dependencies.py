@@ -63,7 +63,7 @@ def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
         _spicedb_client = SpiceDBClient(
             endpoint=getattr(platform_settings, "spicedb_endpoint", "localhost:50051")
             or "localhost:50051",
-            token=getattr(platform_settings, "spicedb_token", "secret"),
+            token=platform_settings.spicedb_preshared_key,
         )
     return _spicedb_client
 

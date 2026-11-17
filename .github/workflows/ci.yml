@@ -197,6 +197,7 @@ jobs:
           FRONTEND_PORT: 5173
           SPICEDB_ENDPOINT: "mock"
           RUNEFOBLE_SPICEDB_ENDPOINT: "mock"
+          RUNEFOBLE_SPICEDB_PRESHARED_KEY: "ci-only-spicedb-key"
           REDIS_URL: "redis://localhost:6379/0"
           RUNEFOBLE_REDIS_URL: "redis://localhost:6379/0"
 
@@ -218,6 +219,7 @@ jobs:
           PLAYWRIGHT_BASE_URL: "http://localhost:5173"
           SPICEDB_ENDPOINT: "mock"
           RUNEFOBLE_SPICEDB_ENDPOINT: "mock"
+          RUNEFOBLE_SPICEDB_PRESHARED_KEY: "ci-only-spicedb-key"
           REDIS_URL: "redis://localhost:6379/0"
           RUNEFOBLE_REDIS_URL: "redis://localhost:6379/0"
 
