@@ -25,6 +25,7 @@ export CI=true
 export PLAYWRIGHT_BASE_URL="http://localhost:5173"
 export SPICEDB_ENDPOINT="mock"
 export RUNEFOBLE_SPICEDB_ENDPOINT="mock"
+export RUNEFOBLE_SPICEDB_PRESHARED_KEY="${RUNEFOBLE_SPICEDB_PRESHARED_KEY:-ci-only-spicedb-key}"
 export AUTH_DEV_MODE="true"
 export RUNEFOBLE_AUTH_DEV_MODE="true"
 export REDIS_URL="${REDIS_URL:-redis://localhost:6379/0}"

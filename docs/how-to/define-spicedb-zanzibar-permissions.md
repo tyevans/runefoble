@@ -55,7 +55,7 @@ During cluster deployment (`helm install` or `helm upgrade`), SpiceDB datastore 
 - **Job**: Executes `zed schema write /etc/spicedb/schema/runefoble.zed --endpoint spicedb:50051 --token <key> --insecure`.
 
 ### Python Migration CLI
-You can also apply schema migrations programmatically or via CLI.
+You can also apply schema migrations programmatically or via CLI. Both read the preshared key from `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. The key has no default. The commands below fail if the variable is unset.
 The SpiceDB Service is `ClusterIP`. The Kind cluster does not map its gRPC port to the host.
 Before you connect from the host, forward the port:
 ```bash
@@ -64,12 +64,13 @@ kubectl port-forward svc/spicedb 50051:50051
 Keep the port-forward running in a separate terminal. `make dev` starts it for you when SpiceDB is unreachable.
 ```bash
 # Using UV
-uv run python -m runefoble_auth.bootstrap_schema --endpoint localhost:50051 --token runefoble_secret_key
+export RUNEFOBLE_SPICEDB_PRESHARED_KEY=<operator-secret>
+uv run python -m runefoble_auth.bootstrap_schema --endpoint localhost:50051
 
-# Programmatic Python call
+# Programmatic Python call (reads RUNEFOBLE_SPICEDB_PRESHARED_KEY)
 from runefoble_auth.bootstrap_schema import bootstrap_schema
 
-schema_text = await bootstrap_schema(endpoint="localhost:50051", token="runefoble_secret_key")
+schema_text = await bootstrap_schema(endpoint="localhost:50051")
 ```
 
 ---
@@ -81,16 +82,17 @@ The `SpiceDBClient` connects directly to live SpiceDB over gRPC without silent m
 ```python
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
-# 1. Connect to live SpiceDB gRPC
+# 1. Connect to live SpiceDB gRPC. The token comes from RUNEFOBLE_SPICEDB_PRESHARED_KEY.
 client = SpiceDBClient(
     endpoint="spicedb:50051",
-    token="runefoble_secret_key",
     insecure=True,
 )
 
 # 2. Offline / Unit Test Mock Mode (Explicit Mock)
 mock_client = MockSpiceDBClient()
 ```
+
+The preshared key is an operator secret. The library has no literal default. If `RUNEFOBLE_SPICEDB_PRESHARED_KEY` is unset and no `token` is passed, the constructor raises `RuntimeError`. Services read the same setting through `PlatformSettings.spicedb_preshared_key` and fail at startup when it is unset. Tests set a throwaway value in `tests/conftest.py`.
 
 `SpiceDBClient` communicates strictly over gRPC. If the SpiceDB server is unreachable or fails, operations fail fast and raise exceptions rather than silently degrading to an in-memory mock, preventing permission desynchronization and data loss. For isolated unit tests, instantiate `MockSpiceDBClient` directly.
 

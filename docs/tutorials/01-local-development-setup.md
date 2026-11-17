@@ -63,8 +63,10 @@ Open your browser to:
 - **Observability (Grafana)**: `http://localhost:3001` (admin / admin)
 
 ## Step 6: Rapid Local Development (`make dev`)
-For fast iterative feature work on the frontend and API Gateway without redeploying Helm charts, run:
+For fast iterative feature work on the frontend and API Gateway without redeploying Helm charts, export the SpiceDB preshared key and run:
 ```bash
+export RUNEFOBLE_SPICEDB_PRESHARED_KEY=runefoble_secret_key   # the value in values.yaml (spicedb.presharedKey)
 make dev
 ```
+The key has no default. Services refuse to start without it.
 This starts the Runefoble API Gateway on port 8000, checks gateway health, and concurrently launches the Vite dev server on `http://localhost:5173`. Vite automatically proxies API requests (`/api`, `/api/v1`, `/ws`, `/docs`, `/openapi.json`, `/mail`, `/oauth`) to local services without 502 Bad Gateway errors. Press `Ctrl+C` to cleanly stop all background processes.
