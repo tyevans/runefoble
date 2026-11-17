@@ -241,7 +241,7 @@ dependencies = [
     { name = "eventsource-py" },
     { name = "fastapi" },
     { name = "pydantic" },
-    { name = "redstring", extra = ["llm", "redis"] },
+    { name = "redstring", extra = ["llm", "pgvector", "redis"] },
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
@@ -253,7 +253,7 @@ requires-dist = [
     { name = "eventsource-py", specifier = ">=0.14.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
-    { name = "redstring", extras = ["redis", "llm"], specifier = ">=0.11.0" },
+    { name = "redstring", extras = ["redis", "llm", "pgvector"], specifier = ">=0.11.0" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
@@ -2542,6 +2542,9 @@ wheels = [
 llm = [
     { name = "langchain-core" },
     { name = "langchain-openai" },
+]
+pgvector = [
+    { name = "asyncpg" },
 ]
 redis = [
     { name = "redis", extra = ["hiredis"] },

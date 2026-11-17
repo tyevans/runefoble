@@ -36,7 +36,7 @@ def spicedb_client() -> MockSpiceDBClient:
 
 
 @pytest.fixture
-def client(spicedb_client: MockSpiceDBClient) -> Iterator[TestClient]:
+def client(spicedb_client: MockSpiceDBClient, lore_backends) -> Iterator[TestClient]:
     fresh_repo = create_aggregate_repository(WestMarchesAtlasAggregate)
     set_west_marches_repo(fresh_repo)
     with TestClient(lore_app) as lore_client:

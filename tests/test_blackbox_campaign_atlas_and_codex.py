@@ -68,6 +68,7 @@ def test_dependencies_expose_core_getters() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("lore_backends")
 async def test_frontdoor_codex_crud_and_permissions() -> None:
     """Verify codex endpoints enforce SpiceDB Zanzibar authorization through public frontdoors."""
     with TestClient(app) as client:

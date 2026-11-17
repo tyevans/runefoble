@@ -230,8 +230,10 @@ class RulesCompendiumSettings(BaseSettings):
 class LoreBackendSettings(BaseSettings):
     """Campaign Lore retrieval backends, selected per port.
 
-    Every port is rebuilt at start-up from the event store (ADR-0011). Only
-    in-process adapters exist today. Other choices arrive with their adapters.
+    The entity vector index lives in PostgreSQL (pgvector) and the embeddings come
+    from a configured OpenAI-compatible endpoint (`EmbeddingEndpointSettings`). There
+    is no in-process vector index and no fake embedder in production settings
+    (ADR-0015). Start-up fails when either backend is unreachable.
     """
 
     model_config = SettingsConfigDict(
@@ -244,17 +246,17 @@ class LoreBackendSettings(BaseSettings):
         default="projection",
         description="Entity graph, rebuilt from LoreDocument events at start-up",
     )
-    vector: Literal["memory"] = Field(
-        default="memory",
-        description="Entity vector index, rebuilt at start-up (in-process)",
+    vector: Literal["pgvector"] = Field(
+        default="pgvector",
+        description="Entity vectors in PostgreSQL (pgvector) on the platform database",
     )
     chunk: Literal["memory"] = Field(
         default="memory",
-        description="Passage corpus for BM25 and dense search, rebuilt at start-up",
+        description="Passage corpus for BM25 and dense search, rebuilt at start-up (in process)",
     )
-    embedding: Literal["fake"] = Field(
-        default="fake",
-        description="Deterministic hash embeddings (not semantic); replaced by a provider adapter",
+    embedding: Literal["openai_compatible"] = Field(
+        default="openai_compatible",
+        description="Embedding provider: an OpenAI-compatible /v1/embeddings endpoint",
     )
 
 

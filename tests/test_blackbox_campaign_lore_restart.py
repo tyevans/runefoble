@@ -17,12 +17,19 @@ import subprocess
 import sys
 from uuid import uuid4
 
+import asyncpg
 import pytest
 from campaign_lore.dependencies import get_spicedb_client
 from campaign_lore.main import create_app
 from fastapi.testclient import TestClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import get_event_store, set_event_store
+
+from tests.helpers.lore_backends import (
+    LORE_DOCUMENTS,
+    TREASURE_QUERY,
+    UNDEAD_QUERY,
+)
 
 
 def _use_postgres_event_store(dsn: str):
@@ -33,6 +40,28 @@ def _use_postgres_event_store(dsn: str):
     return store
 
 
+async def _vector_rows(dsn: str, campaign_id: str) -> int:
+    """Count the pgvector entity rows that one campaign tenant owns. An observation only."""
+    connection = await asyncpg.connect(dsn)
+    try:
+        return int(
+            await connection.fetchval(
+                "SELECT count(*) FROM lore_entity_vectors WHERE tenant_id = $1::uuid",
+                campaign_id,
+            )
+        )
+    finally:
+        await connection.close()
+
+
+def _ranked_titles(client: TestClient, campaign_id: str, query: str) -> list[str]:
+    resp = client.post(
+        "/api/v1/lore/search", json={"campaign_id": campaign_id, "query": query, "limit": 5}
+    )
+    assert resp.status_code == 200, resp.text
+    return [result["document_title"] for result in resp.json()["results"]]
+
+
 @pytest.fixture(autouse=True)
 def reset_event_store_singleton():
     set_event_store(None)
@@ -41,6 +70,44 @@ def reset_event_store_singleton():
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("lore_backends")
+async def test_pgvector_ranking_survives_restart_without_reingest(postgres_service):
+    """A restart on the same PostgreSQL fixture keeps the ranking and one row per entity."""
+    if not postgres_service:
+        pytest.skip("Docker not available for PostgreSQL pgvector test")
+
+    dsn = str(postgres_service["dsn"])
+    campaign_id = str(uuid4())
+
+    store_before = _use_postgres_event_store(dsn)
+    with TestClient(create_app()) as first:
+        for title, content in LORE_DOCUMENTS:
+            resp = first.post(
+                "/api/v1/lore/documents",
+                json={"campaign_id": campaign_id, "title": title, "content": content},
+            )
+            assert resp.status_code == 200, resp.text
+        undead_before = _ranked_titles(first, campaign_id, UNDEAD_QUERY)
+        treasure_before = _ranked_titles(first, campaign_id, TREASURE_QUERY)
+    await store_before.close()
+    rows_before = await _vector_rows(dsn, campaign_id)
+
+    store_after = _use_postgres_event_store(dsn)
+    with TestClient(create_app()) as second:
+        undead_after = _ranked_titles(second, campaign_id, UNDEAD_QUERY)
+        treasure_after = _ranked_titles(second, campaign_id, TREASURE_QUERY)
+    await store_after.close()
+    rows_after = await _vector_rows(dsn, campaign_id)
+
+    assert undead_after[:1] == [LORE_DOCUMENTS[0][0]]
+    assert undead_before == undead_after
+    assert treasure_before == treasure_after
+    assert rows_before > 0
+    assert rows_after == rows_before
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("lore_backends")
 async def test_lore_projection_survives_restart(postgres_service):
     """Documents, aliases, and secrecy rules hold after a restart on the same event store."""
     if not postgres_service:
@@ -145,6 +212,7 @@ async def test_lore_projection_survives_restart(postgres_service):
     await store_after.close()
 
 
+@pytest.mark.usefixtures("lore_backends")
 def test_extracted_entities_record_pattern_provenance():
     """Entities from regex extraction are recorded as pattern extraction, never as LLM output."""
     set_event_store(None)
@@ -168,6 +236,7 @@ def test_extracted_entities_record_pattern_provenance():
     assert any(e["name"] == "Sir Gareth" for e in doc["entities"])
 
 
+@pytest.mark.usefixtures("lore_backends")
 def test_alias_consolidation_requires_an_existing_document():
     """A consolidation cannot be recorded against a document that does not exist."""
     set_event_store(None)

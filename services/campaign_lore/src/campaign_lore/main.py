@@ -12,7 +12,11 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from runefoble_platform.config import LoreBackendSettings, PlatformSettings
+from runefoble_platform.config import (
+    EmbeddingEndpointSettings,
+    LoreBackendSettings,
+    PlatformSettings,
+)
 from runefoble_platform.event_sourcing import PostgreSQLEventStore, get_event_store
 
 from campaign_lore.codex import CodexCrossReferencer
@@ -34,8 +38,8 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Build the retrieval engine and replay lore events before serving requests.
 
-    Start-up fails if the configured event store is not available. The service never
-    serves from an empty projection while its durable store is down.
+    Start-up fails if the configured event store, embedding endpoint, or pgvector store
+    is not available. The service never serves from an empty projection or a fallback.
     """
     store = get_event_store()
     if PlatformSettings().use_postgres_event_store and not isinstance(store, PostgreSQLEventStore):
@@ -43,11 +47,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             "PostgreSQL event store is configured but unreachable; refusing to start "
             "Campaign Lore with an empty projection."
         )
-    engine = build_retrieval_engine(LoreBackendSettings())
-    await rebuild_lore_projection(engine, store)
-    app.state.retrieval_engine = engine
-    app.state.codex_referencer = CodexCrossReferencer(engine)
-    yield
+    engine = await build_retrieval_engine(
+        LoreBackendSettings(),
+        EmbeddingEndpointSettings(),
+        PlatformSettings().database_url,
+    )
+    try:
+        await rebuild_lore_projection(engine, store)
+        app.state.retrieval_engine = engine
+        app.state.codex_referencer = CodexCrossReferencer(engine)
+        yield
+    finally:
+        await engine.close()
 
 
 def create_app() -> FastAPI:

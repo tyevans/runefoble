@@ -81,7 +81,7 @@ def postgres_service() -> Generator[dict[str, str | int] | None]:
         "POSTGRES_DB=runefoble",
         "-e",
         "POSTGRES_MULTIPLE_DATABASES=zitadel,spicedb,openpanel",
-        "postgres:16-alpine",
+        "pgvector/pgvector:pg16",
     ]
 
     try:
