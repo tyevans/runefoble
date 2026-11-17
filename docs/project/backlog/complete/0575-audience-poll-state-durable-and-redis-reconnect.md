@@ -1,7 +1,7 @@
 ---
 id: '0575'
 title: Audience Studio Poll and Proposal State Durable, With Redis Publish Recovery
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -22,7 +22,7 @@ source_audits:
 # TASK-0575: Audience Studio Poll and Proposal State Durable, With Redis Publish Recovery
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Audience Studio keeps polls, votes, open timers, and pending proposals in TypeScript `Map`s. Its Redis client sets `retryStrategy: () => null` and swallows `xadd` errors. A restart drops every open poll and pending DM approval, and a failed first connection disables publishing for the life of the process. This task makes poll and proposal state event-sourced, rebuilt on start, and makes publish failures visible.

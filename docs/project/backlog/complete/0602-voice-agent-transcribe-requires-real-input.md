@@ -1,7 +1,7 @@
 ---
 id: '0602'
 title: Voice Agent Transcribe Route Requires Real Audio or Transcript
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0600
@@ -22,7 +22,7 @@ source_audits:
 # TASK-0602: Voice Agent Transcribe Route Requires Real Audio or Transcript
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The transcribe route invents a player action when the request has no text. `audio_base64` is accepted but never decoded. This task makes the route decode audio through the STT port (TASK-0600) and return 422 when neither input is present. The route never invents text.

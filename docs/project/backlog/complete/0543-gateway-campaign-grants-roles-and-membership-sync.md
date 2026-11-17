@@ -1,7 +1,7 @@
 ---
 id: '0543'
 title: Gateway Campaign Grants, Role Assignment, and Membership Sync Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -31,7 +31,7 @@ source_audits:
 # TASK-0543: Gateway Campaign Grants, Role Assignment, and Membership Sync Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Any caller can grant a campaign role, including `owner`. Any caller can write membership, character ownership, and token bindings through the gateway. Any caller can post admin seed and invite routes that write `system:runefoble#admin`. This task makes every grant path go through a SpiceDB `manage` check on the campaign, or it removes the public route. It also adds a capability projection for the App Shell. The projection replaces role-name checks in the client (TASK-0559).

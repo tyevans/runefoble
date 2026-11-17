@@ -1,7 +1,7 @@
 ---
 id: '0536'
 title: Gateway Proxies Forward the Verified Bearer Token to Services and Return Honest Errors
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0521
@@ -25,7 +25,7 @@ source_audits:
 # TASK-0536: Gateway Proxies Forward the Verified Bearer Token to Services and Return Honest Errors
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Services now verify the caller's token themselves (TASK-0527 to TASK-0531). The gateway's proxies must forward the bearer token, not a user header. Today the proxies send no identity, so every proxied call looks anonymous. Also, a proxy error must return the upstream status, not a success with the wrong data. Canned fallback removal belongs to the fake-implementation theme; this task changes identity and error status only.

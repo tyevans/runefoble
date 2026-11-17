@@ -1,7 +1,7 @@
 ---
 id: '0646'
 title: Embedded Analytics and Lore Microfrontends Receive Live Data From the Gateway
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -26,7 +26,7 @@ source_audits:
 # TASK-0646: Embedded Analytics and Lore Microfrontends Receive Live Data From the Gateway
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Two campaign tabs mount microfrontends that never show real data. The "Chronicle & Stats" tab passes `apiBaseUrl=""`, so the analytics component returns before it fetches anything. The "Codex & Lore" tab mounts `runefoble-campaign-atlas` with no pins, territories, or entries, and it never mounts `runefoble-campaign-codex`. Pass the gateway base, load the atlas and codex data through the gateway, and mount the codex view.

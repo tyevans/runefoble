@@ -1,7 +1,7 @@
 ---
 id: '0496'
 title: Remove Backward Compatibility Shims & Re-exports in rules_compendium
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0048
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0496: Remove Backward Compatibility Shims & Re-exports in rules_compendium
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: dependency on proposed TASK-0350 removed. `aggregate.py` is 270 lines and needs no split, and TASK-0350 would add re-export shims that DoR rule 9 forbids. The shim to delete is `srd_data.py` (13 lines), imported by `retrieval.py` and `encounter_builder.py`.
 

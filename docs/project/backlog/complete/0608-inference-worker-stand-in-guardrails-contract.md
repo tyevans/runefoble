@@ -1,7 +1,7 @@
 ---
 id: '0608'
 title: Inference Worker Stand-In Guardrails Contract Matches The Watcher
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0607
@@ -22,7 +22,7 @@ source_audits:
 # TASK-0608: Inference Worker Stand-In Guardrails Contract Matches The Watcher
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The Watcher sends stand-in guardrails to the inference worker. The worker drops them, so the stand-in graph always runs with no guardrails. The worker also never reports which guardrails it applied, so The Watcher always receives an empty list. This task adds the missing fields on both sides and tests the round trip through public routes.

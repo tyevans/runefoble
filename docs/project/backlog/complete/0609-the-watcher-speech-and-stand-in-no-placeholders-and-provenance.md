@@ -1,7 +1,7 @@
 ---
 id: '0609'
 title: The Watcher Speech and Stand-In Routes Stop Sending Placeholder Ids and Report Provenance
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0607
@@ -25,7 +25,7 @@ source_audits:
 # TASK-0609: The Watcher Speech and Stand-In Routes Stop Sending Placeholder Ids and Report Provenance
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The Watcher replaces missing campaign and session ids with the strings `current-campaign` and `current-session`. It also sends fixed scene data ("Dungeon chamber", "dark_fantasy") and does not send visible tokens on the speech path. Its speech result reports a default confidence of 0.9 and a template reply when the worker sends nothing. This task removes all placeholders, requires real ids, passes real scene data, and reports the source of each result.

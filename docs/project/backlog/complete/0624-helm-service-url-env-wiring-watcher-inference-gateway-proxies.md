@@ -1,7 +1,7 @@
 ---
 id: '0624'
 title: Helm Wiring for Service URL Environment Variables and Remove Localhost Defaults
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0622
@@ -26,7 +26,7 @@ source_audits:
 # TASK-0624: Helm Wiring for Service URL Environment Variables and Remove Localhost Defaults
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Cross-service URLs are read from environment variables that the Helm chart never sets. In the cluster, voice-agent falls back to `localhost:8001`, game-session never calls The Watcher, the-watcher never calls the inference worker, and gateway proxies use defaults that do not match the chart. Set every service URL in the chart from values, and replace code defaults that point at `localhost` or a wrong port.

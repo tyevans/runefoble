@@ -1,7 +1,7 @@
 ---
 id: '0681'
 title: Replace Per-Test File Layout and Line-Limit Assertions With the Single Health Gate
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ source_audits:
 # TASK-0681: Replace Per-Test File Layout and Line-Limit Assertions With the Single Health Gate
 
 ## Status
-Refined. Consolidation approved by the user at the round-10 pause (2026-11-17).
+Complete
 
 ## Summary
 About a dozen test files assert their own line limits (for example 250 or 110 lines) and assert that named source files exist. These are white-box checks of code structure. They fail on correct refactors and they duplicate the 500-line rule that `make health-check` enforces. This task deletes them and keeps one gate.

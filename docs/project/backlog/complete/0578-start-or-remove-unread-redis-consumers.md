@@ -1,7 +1,7 @@
 ---
 id: '0578'
 title: Start or Remove Redis Stream Consumers That Never Run in Deployed Processes
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -30,7 +30,7 @@ source_audits:
 # TASK-0578: Start or Remove Redis Stream Consumers That Never Run in Deployed Processes
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Every deployed stream is written and none is read by a running process. Four consumer implementations exist and none runs. Campaign analytics tries to start its consumer and fails silently. The SpiceDB sync listener is never registered. Soundscape has no Redis consumer. The inference worker consumes a stream nothing writes. This task gives each consumer a single start point in its lifespan with logged failures and a `/healthz` status, or removes the consumer when no producer exists.

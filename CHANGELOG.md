@@ -8,16 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- The gateway no longer issues or accepts self-signed tokens. Zitadel is the only token issuer (TASK-0523).
+- Campaign role grants now require the `manage` permission. `owner` cannot be granted through the API (422). A failed authorization write returns 503 and grants nothing. Non-members and players can no longer grant roles. (TASK-0543)
 - The SpiceDB preshared key has no default. Services and audience-studio fail at startup unless `RUNEFOBLE_SPICEDB_PRESHARED_KEY` is set. Literal keys were removed from the auth library, schema bootstrap, and audience-studio. (TASK-0625)
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- asset_forge: deleted the `asset_forge.generator` aggregator facade and the `generate_token_png` alias. Import generators from `asset_forge.raster.*`. (TASK-0497)
+- Removed the `rules_compendium.srd_data` re-export shim. Callers import from `rules_compendium.srd`. (TASK-0496)
+- Removed about 290 test functions that checked per-file line limits, source file existence, module counts, and source text. `make health-check` is the only file length gate. (TASK-0681)
 - Zitadel dev-mode identity bypass, the `dev-user-001` fallback, `decode_token`, `is_admin`, and `AuthenticatedUser`. Set `RUNEFOBLE_AUTH_DEV_MODE` or `AUTH_DEV_MODE` no longer has any effect. (TASK-0520)
 - Campaign Lore: removed the `routers/codex.py` compatibility facade, the `WestMarchesWorldAggregate` alias, and package-root, router and dependency re-exports. Import symbols from their owning modules. (TASK-0495)
 - Removed the UVTT blackbox test suite re-export shim `tests/test_blackbox_uvtt_import_suite.py`. The package `tests/test_blackbox_uvtt_import/` runs unchanged (DoR 9). (TASK-0680)
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Stand-in guardrails are validated at The Watcher and at the inference worker. An unknown guardrail name returns HTTP 422. (TASK-0608)
+- `GET /readyz` on audience-studio returns 503 while Redis Streams or PostgreSQL is unavailable. (TASK-0575)
+- Character sheet: `POST /api/v1/characters/{id}/stand-in` activates or releases the AI stand-in. Emits `StandInActivated` or `StandInReleased`. (TASK-0570)
+- Audience Studio Node service image (`services/audience_studio/Dockerfile`), built by `make images` and loaded into the Kind cluster. Runs as a non-root user on port 8010. (TASK-0621)
+- `game_session` owns campaign lifecycle, membership, and invites under `/api/v1/campaigns` (event-sourced, PostgreSQL store, SpiceDB tuples written after save). (0590) (TASK-0590)
+- The inference worker deploys in the Helm chart as a `inference-worker` Deployment and ClusterIP Service on port 8100. Its OpenAPI spec is listed in Swagger UI, and `make images` builds its image. (TASK-0622)
 - Campaign Lore entity vectors are stored in PostgreSQL with pgvector (`lore_entity_vectors`). (TASK-0670)
 - Character sheet: restore spent spell slots with `POST /api/v1/characters/{id}/spells/restore` (all levels, or one level with `slot_level`). Emits `SpellSlotsRestored`. (TASK-0679)
 - Voice agent `POST /api/v1/voice/dsp/condition` returns conditioned speech text and DSP parameters for the game session. (TASK-0675)
@@ -43,6 +54,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- The inference worker now type-checks with mypy. `make lint` runs mypy on `services/inference_worker/src`. (TASK-0628)
+- Campaign Analytics and Soundscape start their Redis Stream consumers at start-up. A failed start stops the service. `/healthz` reports `consumers` as `running` or `failed` and returns 503 when a consumer fails. (TASK-0578)
+- Watcher world ticks keep their tick counter, faction registry, and latest bulletin in a durable `CampaignWorldAggregate`. A service restart resumes the simulation (TASK-0569).
+- The Helm chart sets every cross-service URL (Watcher, voice agent, inference worker, soundscape, campaign lore, campaign analytics, character sheet) from one values-driven block. (TASK-0624)
+- The Watcher stand-in and narrate routes return HTTP 503 `backend_unavailable` when the inference worker fails. They no longer return canned output with HTTP 200. (TASK-0609)
+- The App Shell signs in through Zitadel with the authorization code flow and PKCE. The password form, the mock session, and the refresh fallback are removed. Tokens come only from Zitadel (0524). (TASK-0524)
+- Gateway proxies for the campaign hub, soundscape, and character sub-resources forward the caller's verified bearer token. They no longer send anonymous requests. (TASK-0536)
+- Domain event publish failures no longer disappear. Watcher decisions and state-changing game session and board routes return 503 when the audit event cannot be published. Other publish failures are logged and counted in `event_publish_failures` on `/healthz`. (TASK-0564)
+- Gateway MCP character tools (`get_character_sheet`, `inspect_inventory`, `apply_absentee_penalty`, `cast_spell`, `modify_character_hp`, `add_condition`, `apply_condition`) call the `character_sheet` service over HTTP. Character id must be a UUID. (TASK-0604)
+- Zitadel serves the browser-facing host `auth.localhost`. Services and the gateway set `RUNEFOBLE_ZITADEL_ISSUER` to that URL. `RUNEFOBLE_ZITADEL_JWKS_URL` points to the in-cluster Zitadel host (0526). (TASK-0526)
 - `make test` (`uv run pytest`) now applies a 300 second per-test timeout by default. Added `pytest-timeout` to the root dev group. (TASK-0627)
 - The caravan board shows a red error banner when the server rejects a dispatch or a fulfilment. The contract keeps its previous status. Caravans no longer appear in transit or fulfilled without a successful server response. (TASK-0677)
 - Settings-selected engine ports (speech-to-text, speech synthesis, battlemap layout, wardrobe image, rules embeddings) share one selection and error contract. An unknown engine setting stops the voice agent and Asset Forge at start-up and names the allowed values. An unavailable engine returns `503` through one shared handler. The `503` bodies are unchanged. (TASK-0682)
@@ -1024,6 +1045,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- Chronicle & Stats and Codex & Lore tabs now show live gateway data. The analytics tab no longer skips its load with an empty API base. The codex tab mounts the lore codex with sub-tabs. Gateway hub views forward the verified user id to campaign-lore and campaign-analytics. (TASK-0646)
+- Campaign lore: a repeated or conflicting alias consolidation returns HTTP 409 with the conflict reason, not HTTP 500. A service that has not started returns HTTP 503 with "campaign_lore is not started", not an AttributeError. (TASK-0673)
+- The voice transcribe route no longer invents "I inspect my surroundings." when a request has no input. The route decodes `audio_base64` through the STT port, and returns 422 when no input is present. (TASK-0602)
 - Helm ingress now routes `/ws/...` WebSocket paths to `gateway-api:8000`. Before, they reached the frontend container. (TASK-0660)
 - Board UI trap arming, map switching and token moves now reach the board service. Trap and map events fire only after the server accepts the change. Token moves are sent as `confirm_move` on `/ws/boards/{id}`. (TASK-0563)
 - Service images start again after the shared Dockerfile build. Declared missing dependencies: httpx (runefoble-platform), gateway-mcp (gateway-api), voice-agent (game-session), python-multipart (board-state). (TASK-0620)

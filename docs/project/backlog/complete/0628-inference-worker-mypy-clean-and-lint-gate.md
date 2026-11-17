@@ -1,7 +1,7 @@
 ---
 id: '0628'
 title: Make mypy Pass on the Inference Worker and Add It to the Lint Gate
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0501
@@ -20,7 +20,7 @@ source_audits:
 # TASK-0628: Make mypy Pass on the Inference Worker and Add It to the Lint Gate
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `uv run mypy services/inference_worker/src` reports 5 errors in 2 files. The `make lint` gate runs ruff only, so these errors never block a change. Fix the errors without ignores and add the mypy check for this service to the lint target.

@@ -1,7 +1,7 @@
 ---
 id: '0673'
 title: Campaign Lore Alias Conflicts Return 409 and Retrieval Wiring Fails Clearly
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0611
@@ -22,7 +22,7 @@ source_audits:
 # TASK-0673: Campaign Lore Alias Conflicts Return 409 and Retrieval Wiring Fails Clearly
 
 ## Status
-Refined. Created from the discovered-defect triage of round 1 (2026-11-17).
+Complete
 
 ## Summary
 Two defects in the campaign lore HTTP layer. A repeated alias merge raises a redstring domain error that no route maps, so the client gets HTTP 500. The retrieval engine dependency reads a field that exists only after the application lifespan has started, and it fails with a bare `AttributeError`.

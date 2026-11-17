@@ -1,7 +1,7 @@
 ---
 id: '0523'
 title: Retire Gateway Mock Token Issuance, Admin Seeding, and Username-Derived Roles
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -27,7 +27,7 @@ source_audits:
 # TASK-0523: Retire Gateway Mock Token Issuance, Admin Seeding, and Username-Derived Roles
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The gateway issues its own tokens. It signs them with a fixed string, accepts any password, and derives DM roles from the username. It also seeds system admins without authentication. Remove every route that mints, refreshes, or seeds identity. Zitadel issues all tokens. Local admin bootstrap moves to the Zitadel wiring task.

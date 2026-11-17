@@ -1,7 +1,7 @@
 ---
 id: '0621'
 title: Audience Studio Node Service Dockerfile and Image Build
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0620
@@ -21,7 +21,7 @@ source_audits:
 # TASK-0621: Audience Studio Node Service Dockerfile and Image Build
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `services/audience_studio` is a TypeScript HTTP service deployed by Helm (`deployments/helm/runefoble/templates/audience-studio.yaml`, image `runefoble/audience-studio:0.1.0`). It has no Dockerfile and is not in `make images`. Add a Node Dockerfile and include the image in the `make images` target from TASK-0620.

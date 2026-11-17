@@ -1,7 +1,7 @@
 ---
 id: '0564'
 title: Stop Suppressing Domain Event Publish Failures and Fail DM Decisions Loudly
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0562
@@ -25,7 +25,7 @@ source_audits:
 # TASK-0564: Stop Suppressing Domain Event Publish Failures and Fail DM Decisions Loudly
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Eighty publish call sites were found. Forty-six wrap the call in `contextlib.suppress(Exception)`. A DM veto, approval, or dice roll can change state while its audit event is lost, and the request still returns success. This task replaces suppression with a logged, counted failure. Decision routes that change state return 503 when the event cannot be published.

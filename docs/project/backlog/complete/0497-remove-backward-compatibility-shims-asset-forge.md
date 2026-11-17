@@ -1,7 +1,7 @@
 ---
 id: '0497'
 title: Remove Backward Compatibility Shims & Re-exports in asset_forge
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0023
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0497: Remove Backward Compatibility Shims & Re-exports in asset_forge
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: coordinate with TASK-0612 on the Silo upload path in `libs/runefoble_platform/src/runefoble_platform/storage.py` and on the asset routes.
 

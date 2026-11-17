@@ -1,7 +1,7 @@
 ---
 id: '0524'
 title: App Shell Sign-In Through Zitadel OIDC Authorization Code with PKCE
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0523
@@ -24,7 +24,7 @@ source_audits:
 # TASK-0524: App Shell Sign-In Through Zitadel OIDC Authorization Code with PKCE
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Replace the App Shell password form and its local fake session with the OIDC authorization-code flow with PKCE against Zitadel. The client keeps tokens only from Zitadel. Remove the dev fallback, the mock session, the mock signature, and the false "RS256 PKCE" claim that is not yet true.

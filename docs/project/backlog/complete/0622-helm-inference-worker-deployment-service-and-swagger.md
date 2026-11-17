@@ -1,7 +1,7 @@
 ---
 id: '0622'
 title: Helm Deployment, Service, and Swagger Entry for the Inference Worker
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0620
@@ -24,7 +24,7 @@ source_audits:
 # TASK-0622: Helm Deployment, Service, and Swagger Entry for the Inference Worker
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `services/inference_worker` serves HTTP on port 8100 (`/inference/v1/*`, `/healthz`) but has no Helm Deployment, Service, image, or Swagger URL. Hard Invariant 5 requires `/openapi.json` and a Swagger registration for every HTTP service. Deploy it in the chart and register it with the Swagger hub.

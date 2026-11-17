@@ -1,7 +1,7 @@
 ---
 id: '0526'
 title: Zitadel OIDC Application, Issuer Consistency, and Runtime Config for Kind and Helm
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -23,7 +23,7 @@ source_audits:
 # TASK-0526: Zitadel OIDC Application, Issuer Consistency, and Runtime Config for Kind and Helm
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Wire the real Zitadel container so that a browser can sign in and every service can verify the result. Today the issuer is an in-cluster URL that a browser cannot reach, no OIDC application exists, and the frontend has no runtime configuration. Provision the application idempotently, make `iss` match the browser-facing issuer, and render the frontend runtime config from Helm.

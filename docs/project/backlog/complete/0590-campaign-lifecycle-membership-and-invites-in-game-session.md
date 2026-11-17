@@ -1,7 +1,7 @@
 ---
 id: '0590'
 title: Campaign Lifecycle, Membership, and Invites Owned by Game Session
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -28,7 +28,7 @@ target_release: 0.9.0
 # TASK-0590: Campaign Lifecycle, Membership, and Invites Owned by Game Session
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Campaign records, membership, invites and campaign sessions live in `gateway/api/src/gateway_api/campaign_store/` as in-memory dicts. A restart loses them. No bounded context owns them. This task makes `game_session` the owner. It adds eventsource-py aggregates and public routes for each operation. TASK-0591 then moves the gateway to proxy them.

@@ -1,7 +1,7 @@
 ---
 id: '0569'
 title: Watcher World Tick Counter and Faction Registry as Durable Aggregate State
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -23,7 +23,7 @@ source_audits:
 # TASK-0569: Watcher World Tick Counter and Faction Registry as Durable Aggregate State
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The world simulation keeps its tick counter, faction registry, tick history, and latest bulletins in module-level dicts. The tick event is also never published (fixed by TASK-0562). This task moves the counter and the registry into `FactionAggregate` and the tick record into the event stream, so that a restart resumes the simulation where it stopped.

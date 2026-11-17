@@ -1,7 +1,7 @@
 ---
 id: '0604'
 title: Gateway MCP Character Tools Call Character Sheet Service Frontdoors
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0603
@@ -23,7 +23,7 @@ source_audits:
 # TASK-0604: Gateway MCP Character Tools Call Character Sheet Service Frontdoors
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The MCP character tools return echoes and hardcoded characters. `get_character_sheet` returns "Valeros" or "Kyra" by id. `modify_character_hp` uses a fixed baseline. Replace these with calls to the `character_sheet` service through its public routes.

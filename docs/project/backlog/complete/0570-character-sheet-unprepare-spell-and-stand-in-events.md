@@ -1,7 +1,7 @@
 ---
 id: '0570'
 title: Character Sheet Unprepare Spell and Stand-In Activation as Persisted Events
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -24,7 +24,7 @@ source_audits:
 # TASK-0570: Character Sheet Unprepare Spell and Stand-In Activation as Persisted Events
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Two character mutations change state without an event. `unprepare_spell` removes a prepared spell in memory only, so the spell returns after a reload. `set_stand_in_active` writes the stand-in flag directly, so no caller activates it and the guardrail and permadeath checks never see it. This task adds `SpellUnprepared`, `StandInActivated`, and `StandInReleased` events and removes the direct writes.
