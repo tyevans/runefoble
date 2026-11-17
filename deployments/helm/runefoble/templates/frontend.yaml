@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         app: frontend
+      annotations:
+        checksum/runtime-config: {{ include (print $.Template.BasePath "/frontend-runtime-config.yaml") . | sha256sum }}
     spec:
       containers:
         - name: frontend
@@ -20,6 +22,15 @@ spec:
           imagePullPolicy: {{ .Values.frontend.imagePullPolicy | default "IfNotPresent" }}
           ports:
             - containerPort: {{ .Values.frontend.port }}
+          volumeMounts:
+            - name: runtime-config
+              mountPath: /usr/share/nginx/html/runtime-config.json
+              subPath: runtime-config.json
+              readOnly: true
+      volumes:
+        - name: runtime-config
+          configMap:
+            name: frontend-runtime-config
 ---
 apiVersion: v1
 kind: Service

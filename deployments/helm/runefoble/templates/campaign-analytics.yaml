@@ -37,7 +37,9 @@ spec:
             - name: RUNEFOBLE_DATABASE_URL
               value: "postgresql+asyncpg://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}"
             - name: RUNEFOBLE_ZITADEL_ISSUER
-              value: "http://zitadel:{{ .Values.zitadel.port }}"
+              value: {{ include "runefoble.zitadelIssuer" $ | quote }}
+            - name: RUNEFOBLE_ZITADEL_JWKS_URL
+              value: {{ include "runefoble.zitadelJwksUrl" $ | quote }}
             - name: RUNEFOBLE_SPICEDB_ENDPOINT
               value: "spicedb:{{ .Values.spicedb.grpcPort }}"
             - name: RUNEFOBLE_SPICEDB_PRESHARED_KEY

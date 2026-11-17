@@ -22,6 +22,12 @@ spec:
           ports:
             - containerPort: {{ .Values.zitadel.port }}
           env:
+            - name: ZITADEL_EXTERNALDOMAIN
+              value: {{ .Values.zitadel.externalDomain | quote }}
+            - name: ZITADEL_EXTERNALPORT
+              value: {{ .Values.zitadel.externalPort | quote }}
+            - name: ZITADEL_EXTERNALSECURE
+              value: {{ .Values.zitadel.externalSecure | quote }}
             - name: ZITADEL_DATABASE_POSTGRES_HOST
               value: "postgres"
             - name: ZITADEL_DATABASE_POSTGRES_PORT
