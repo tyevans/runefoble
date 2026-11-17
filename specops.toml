@@ -1,0 +1,27 @@
+[project]
+name = "Runefoble"
+docs_dir = "docs/project"
+
+[architecture]
+file_length_limit = 500
+buffer_target = 10
+buffer_warning_threshold = 6
+
+components = [
+  { id = "libs", name = "Shared Libraries", path = "libs" },
+  { id = "services", name = "Bounded Context Services", path = "services" },
+  { id = "gateway-api", name = "API Gateway", path = "gateway/api" },
+  { id = "gateway-mcp", name = "MCP Gateway", path = "gateway/mcp" },
+  { id = "frontend", name = "App Shell", path = "frontend" },
+]
+
+[quality]
+testing_style = "blackbox-frontdoor"
+require_bdd = true
+preflight = [
+  "uv run pytest",
+]
+
+[execution]
+git_branch_prefix = "task/"
+backlog_isolation = true
