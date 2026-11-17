@@ -38,7 +38,7 @@ Behavior:
 
 Gateway code uses the same pattern through `gateway_api.auth.get_current_user`.
 
-## WebSocket: Use `authenticate_websocket`
+## WebSocket: Use `admit_websocket`
 
 Browsers cannot send `Authorization` on a WebSocket. The client offers two subprotocols:
 - `runefoble.v1`
@@ -46,25 +46,21 @@ Browsers cannot send `Authorization` on a WebSocket. The client offers two subpr
 
 ```python
 from fastapi import WebSocket
-from runefoble_auth.websocket import (
-    RUNEFOBLE_SUBPROTOCOL,
-    WebSocketAuthError,
-    authenticate_websocket,
-)
+from runefoble_auth.websocket import admit_websocket
 
 
 async def ws_handler(websocket: WebSocket) -> None:
-    try:
-        principal = authenticate_websocket(websocket, verifier)
-    except WebSocketAuthError:
-        await websocket.close(code=4401)  # Reject before accept
-        return
-    await websocket.accept(subprotocol=RUNEFOBLE_SUBPROTOCOL)
+    principal = await admit_websocket(websocket, verifier)
+    if principal is None:
+        return  # Handshake refused and closed with 1008 before accept
     # Continue with principal.user_id
 ```
 
+`admit_websocket` verifies the handshake. On success it accepts with `runefoble.v1`. On failure it closes with code 1008 before accept, logs the path and the reason (never the token), and returns `None`.
+
 Rules:
-- Reject before accept. Do not accept and then send an error.
+- Call `admit_websocket` first. Do not accept the socket in the route before it.
+- Do not accept, then send an error, for an identity failure. The handshake is refused.
 - Never read a token from the URL query string.
 - Accept only `runefoble.v1` as the protocol echo.
 

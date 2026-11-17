@@ -48,10 +48,13 @@ The cinematic director automatically tracks live gameplay events:
 
 ### WebSockets Integration
 
-Connect to the dedicated spectator WebSocket feed (available at `ws://localhost:8000/ws/overlay/${sessionId}` or alias `ws://localhost:8000/overlay/ws/${sessionId}`):
+Connect to the dedicated spectator WebSocket feed (available at `ws://localhost:8000/ws/overlay/${sessionId}` or alias `ws://localhost:8000/overlay/ws/${sessionId}`). The gateway admits the handshake only with a verified bearer subprotocol. Tokens in the URL are refused:
 
 ```javascript
-const ws = new WebSocket(`ws://localhost:8000/overlay/ws/${sessionId}`);
+const ws = new WebSocket(`ws://localhost:8000/overlay/ws/${sessionId}`, [
+  "runefoble.v1",
+  `runefoble.bearer.${accessToken}`,
+]);
 
 ws.onmessage = (event) => {
   const msg = JSON.parse(event.data);
