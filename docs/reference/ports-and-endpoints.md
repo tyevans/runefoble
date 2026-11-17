@@ -8,7 +8,7 @@
 | `/api` | `gateway-api:8000` | REST API gateway (`/api/v1/...`) |
 | `/ws` | `gateway-api:8000` | WebSocket gateway (`/ws/session/{id}`, `/ws/voice/{id}`, `/ws/campaigns/{id}`, `/ws/minigames/{id}`, and other `/ws/...` routes). Traefik forwards the HTTP upgrade without extra annotations. Clients authenticate as described in [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md) |
 | `/docs`, `/swagger-ui` | `swagger-ui:8080` | Unified Swagger UI aggregating all OpenAPI specs |
-| `/auth` | `zitadel:8080` | Self-hosted Zitadel identity provider |
+| Host `auth.localhost`, path `/` | `zitadel:8080` | Self-hosted Zitadel identity provider. Zitadel has its own host because it serves only its root path |
 | `/analytics` | `openpanel:3000` | Self-hosted OpenPanel privacy-preserving analytics |
 | `/mail`, `/mailpit` | `mailpit:8025` | Self-hosted Mailpit email testing & mock SMTP Web UI and API |
 | `/` | `frontend:80` | Lit + Vite web application (catch-all, lowest precedence) |

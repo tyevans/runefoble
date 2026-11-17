@@ -12,7 +12,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 | **PostgreSQL** | `pgvector/pgvector:pg16` | `postgres:5432` | None (Internal) | ADR-0005, ADR-0011 | `InMemoryEventStore` |
 | **Redis Streams** | `redis:7.2-alpine` | `runefoble-redis:6379` | None (Internal) | ADR-0006 | `InMemoryEventBus` |
 | **SpiceDB (Zanzibar)** | `authzed/spicedb:v1.34.0` | `spicedb:50051` (gRPC), `8443` (HTTP) | None (Internal) | ADR-0001 | `MockSpiceDBClient` (In-Memory) |
-| **Zitadel (OIDC/AuthN)** | `ghcr.io/zitadel/zitadel:v2.54.0` | `zitadel:8080` | `/auth` | ADR-0005 | `ZitadelAuthService` (PyJWKClient RS256 verification of signature, `iss`, `aud`, `exp`, `sub`; no bypass) |
+| **Zitadel (OIDC/AuthN)** | `ghcr.io/zitadel/zitadel:v2.54.0` | `zitadel:8080` | `auth.localhost` (own host, root path) | ADR-0005 | `ZitadelAuthService` (PyJWKClient RS256 verification of signature, `iss`, `aud`, `exp`, `sub`; no bypass) |
 | **Silo (S3 Storage)** | `minio/minio:RELEASE.2024-01-01...` | `silo:9000` (S3), `9001` (UI) | None (Proxy via Gateway) | ADR-0005 | `FakeSilo` HTTP transport (tests only, no production fallback) |
 | **OpenTelemetry Collector** | `otel/opentelemetry-collector-contrib` | `otel-collector:4317` (gRPC), `4318` (HTTP) | None (Internal) | ADR-0005 | Null Tracer / No-op Span Processor |
 | **Loki** | `grafana/loki:3.0.0` | `loki:3100` | None (Internal) | ADR-0005 | Standard Python logging stdout |
@@ -60,7 +60,12 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 ### 4. Zitadel (OIDC Identity & JWT Authentication)
 - **Role**: Single Sign-On (SSO), PKCE login flows, user profile management, RS256 token issuance, and JWKS public key discovery (`/.well-known/jwks.json`).
 - **Database Connection**: Configured with PostgreSQL admin credentials and `ZITADEL_DATABASE_POSTGRES_*_SSL_MODE=disable` for local Kind environments.
-- **Environment Variables**: `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_CLIENT_ID`, `RUNEFOBLE_ZITADEL_JWKS_URL`, `RUNEFOBLE_ZITADEL_AUDIENCE`. (`RUNEFOBLE_AUTH_DEV_MODE` was removed in TASK-0520.)
+- **Issuer Variables** (set by the chart on every service that verifies tokens):
+  - `RUNEFOBLE_ZITADEL_ISSUER`: the browser-facing issuer, `http://auth.localhost` by default. It must equal the token `iss` claim. Zitadel writes this value, built from `zitadel.externalDomain`, `externalPort`, and `externalSecure`.
+  - `RUNEFOBLE_ZITADEL_JWKS_URL`: the in-cluster JWKS endpoint, `http://zitadel:8080/oauth/v2/keys`. Pods cannot resolve the browser-facing host, so the verifier does not read discovery.
+  - `RUNEFOBLE_ZITADEL_AUDIENCE`: the expected `aud` claim. Not yet set by the chart. It defaults to `RUNEFOBLE_ZITADEL_CLIENT_ID`.
+- **Other Variables**: `RUNEFOBLE_ZITADEL_CLIENT_ID`. (`RUNEFOBLE_AUTH_DEV_MODE` was removed in TASK-0520.)
+- **Browser Runtime Config**: the frontend serves `/runtime-config.json` (issuer, client ID, scopes, provider name). The chart renders it from `frontend.runtimeConfig`. It holds no secret.
 - **Gateway CORS**: `RUNEFOBLE_CORS_ORIGINS` is a comma-separated list of browser origins allowed to call the gateway with credentials. The default is `http://localhost:5173,http://127.0.0.1:5173`. The value `*` is refused at startup.
 - **How-To Guide**: [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md).
 
