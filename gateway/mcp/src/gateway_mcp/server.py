@@ -15,8 +15,7 @@ from gateway_mcp.prompts import (
     tactical_action_adviser,
 )
 from gateway_mcp.resources import (
-    get_active_session_context,
-    get_combat_encounter_state,
+    get_encounter_state,
     get_session_state,
     register_resources,
 )
@@ -68,9 +67,8 @@ __all__ = [
     "create_encounter",
     "dm_narrative_guidance",
     "execute_agent_action_plan",
-    "get_active_session_context",
     "get_character_sheet",
-    "get_combat_encounter_state",
+    "get_encounter_state",
     "get_session_state",
     "inspect_inventory",
     "inspect_tactical_board",

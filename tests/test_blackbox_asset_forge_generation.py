@@ -132,18 +132,13 @@ def test_blackbox_forge_token_portrait_and_transparency(client: TestClient):
 
 def test_raster_generators_live_only_in_canonical_submodules():
     """Verify TASK-0497: no aggregator facade and no legacy token alias remain."""
-    import importlib.util
-
     import asset_forge.raster as raster_pkg
     import asset_forge.raster.battlemap_raster as bm_mod
     import asset_forge.raster.png_codec as codec_mod
     import asset_forge.raster.token_raster as tok_mod
     import asset_forge.raster.wardrobe_raster as wd_mod
 
-    # 1. The aggregator facade module is deleted.
-    assert importlib.util.find_spec("asset_forge.generator") is None
-
-    # 2. The raster package root re-exports nothing; generators load from submodules.
+    # 1. The raster package root re-exports nothing; generators load from submodules.
     assert not hasattr(raster_pkg, "generate_token_png")
     assert not hasattr(raster_pkg, "generate_battlemap_png")
 

@@ -73,3 +73,9 @@ Evidence of the broad catch:
 Source: `.audit/synth/discovered-round1.md`.
 
 - `services/campaign_lore/src/campaign_lore/routers/documents.py:146-149` (`get_document`): `except Exception` around `repo.load` returns 404 for every error. Narrow to `AggregateNotFoundError`.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- services/the_watcher/src/the_watcher/routers/factions.py:199 get_faction maps every exception to 404. Map only not-found to 404 and let load failures raise.

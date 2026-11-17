@@ -3,7 +3,7 @@
 ## Overview
 The Watcher AI system exposes tools to external LLMs and internal agents via the Model Context Protocol (MCP) server located in `gateway/mcp/src/gateway_mcp/server.py`. Tools, resources, and prompt templates are organized into modular domain sub-packages under `gateway/mcp/src/gateway_mcp/`:
 - `tools/`: Tabletop mechanics, dice, board mutations, character sheet actions, and action planning.
-- `resources/`: Dynamic session state (`session://active`, `session://{session_id}/state`) and combat encounters (`encounter://current`).
+- `resources/`: Dynamic session state (`session://{session_id}/state`) and combat encounters (`encounter://{session_id}/current`). Each resource reads its owning service.
 - `prompts/`: Narrative framing and tactical guidance prompts (`dm_narrative_guidance`, `tactical_action_adviser`).
 
 ## Adding a New MCP Tool

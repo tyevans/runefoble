@@ -51,3 +51,9 @@ None. Platform wiring with no user-facing change, except that events now reliabl
 ## Definition of Done
 - One factory and one dependency in libs. No per-service copies. No in-memory bus in production code.
 - Tests and helm-lint pass. Reference doc updated. CHANGELOG line given to the orchestrator.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- gateway/api/src/gateway_api/dependencies.py:21 and services/soundscape/src/soundscape/dependencies.py:67,124,128 wrap bus creation in contextlib.suppress(Exception). Use the shared factory and let start-up fail when Redis is configured and unreachable.

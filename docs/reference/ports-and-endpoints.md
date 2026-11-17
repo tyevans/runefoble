@@ -47,6 +47,8 @@ When running the local development environment via `make dev`, Vite proxies requ
 
 ## Key Microservice Endpoints
 
+Campaign Lore routes require a verified bearer token, except `/health`, `/healthz`, `/openapi.json`, and `/ui/manifest`. The service never reads the caller from a body field or an identity header (TASK-0531).
+
 | Service | Method | Route | Description |
 |---|---|---|---|
 | `the-watcher` | POST | `/api/v1/watcher/transcribe-and-act` | Parses spoken transcript, dispatches events to Redis Streams, triggers board actions (alias: `/api/v1/watcher/intent`) |
@@ -192,7 +194,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `campaign-lore` | GET | `/api/v1/lore/documents/{id}` | Retrieves ingested lore document aggregate (SpiceDB Zanzibar authorized for secret lore) |
 | `campaign-lore` | POST | `/api/v1/lore/aliases/consolidate` | Consolidates entity aliases into canonical graph nodes via redstring Consolidator. Requires `document_id`; records the merge on that document. Returns `409` for a repeated or conflicting merge and `503` when the service is not started |
 | `campaign-lore` | GET | `/api/v1/lore/aliases/resolve` | Resolves entity titles or aliases to canonical node names |
-| `campaign-lore` | POST | `/api/v1/lore/search` | Sub-50ms hybrid RAG search combining BM25, dense embeddings, and graph walks with secret filtering |
+| `campaign-lore` | POST | `/api/v1/lore/search` | Sub-50ms hybrid RAG search combining BM25, dense embeddings, and graph walks with secret filtering. Requires a bearer token (`401` without one). Body fields: `campaign_id`, `query`, `limit`, `include_graph_walk`. Any other field, including `caller_id`, returns `422`. The caller is the verified token subject |
 | `campaign-lore` | GET | `/api/v1/campaigns/{campaign_id}/atlas` | Retrieves multi-layered world atlas state with deep-zoom coordinate projection and era filtering |
 | `campaign-lore` | POST | `/api/v1/campaigns/{campaign_id}/atlas/pins` | Places geotagged milestone pin with automatic polygon territory containment detection |
 | `campaign-lore` | POST | `/api/v1/campaigns/{campaign_id}/atlas/layers/toggle` | Toggles map layer or contested boundary overlay visibility |
@@ -316,6 +318,14 @@ When running the local development environment via `make dev`, Vite proxies requ
 ## Gateway WebSocket Authentication
 
 Every gateway WebSocket route (`/ws/*` and `/overlay/ws/*`) takes the caller's identity only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The gateway accepts the handshake with `runefoble.v1`. A handshake without a verified token closes with code `1008` before accept. Identity in the query string (`user_id`, `token`) or in headers (`X-User-Id`, `Authorization`) is refused. A token that is valid but lacks SpiceDB permission is admitted, then receives a `PERMISSION_DENIED` frame and close code `4003`.
+
+## Voice Agent Identity (TASK-0530)
+
+Every `voice-agent` HTTP route except `GET /healthz` and `GET /ui/manifest` requires `Authorization: Bearer <jwt>`. The service verifies the token against Zitadel (ADR-0015 c). Missing, malformed, or untrusted tokens return `401` with `WWW-Authenticate: Bearer`. `X-User-Id`, `?user_id=`, and `?token=` are ignored.
+
+Every `voice-agent` WebSocket route (`/api/v1/voice/duplex/ws/...`, `/api/v1/voice/stream/ws/...`) admits the handshake only with a valid `runefoble.bearer.<jwt>` subprotocol. The service accepts with `runefoble.v1`. A refused handshake closes with code `1008` before accept.
+
+`game-session` forwards the caller's `Authorization` header on `POST /api/v1/voice/dsp/condition`. No service credential exists yet (ADR-0015 e). Until one exists, the caller's token is the only credential for that call.
 
 ## Gateway Proxy Identity and Errors
 

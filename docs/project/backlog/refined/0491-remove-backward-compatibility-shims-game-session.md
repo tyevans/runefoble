@@ -97,3 +97,9 @@ These artifacts contradict the DoR zero backward compatibility mandate and must 
 3. Internal routers and external tests updated to direct modular imports.
 4. Obsolete facade parity tests removed.
 5. All game session tests pass with zero warnings.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- tests/test_blackbox_settlements_integration/test_invariants_and_compat.py::test_workers_backwards_compatibility_exports checks re-exports. Delete the test with the re-exports it checks.

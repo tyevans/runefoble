@@ -25,6 +25,10 @@ class GatewayMcpSettings(BaseSettings):
         default="http://localhost:8007",
         description="Base URL of the rules_compendium service (RULES_COMPENDIUM_URL).",
     )
+    the_watcher_url: str = Field(
+        default="http://localhost:8001",
+        description="Base URL of the the_watcher service (THE_WATCHER_URL).",
+    )
 
 
 def load_settings() -> GatewayMcpSettings:

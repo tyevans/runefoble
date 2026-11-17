@@ -5,28 +5,29 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.spicedb import SpiceDBClient
 
 from campaign_lore.dependencies import (
     get_retrieval_engine,
     get_spicedb_client,
 )
+from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_read_secrets,
-    get_current_user_id,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
 
-router = APIRouter(tags=["Lore Search & RAG"])
+router = APIRouter(tags=["Lore Search & RAG"], dependencies=[Depends(get_campaign_principal)])
 
 
 class LoreSearchRequest(BaseModel):
-    """Payload to execute hybrid RAG search query."""
+    """Payload to execute hybrid RAG search query. The caller is the verified bearer subject."""
+
+    model_config = ConfigDict(extra="forbid")
 
     campaign_id: UUID = Field(description="Campaign UUID")
     query: str = Field(description="Search prompt, question, or entity query")
-    caller_id: str | None = Field(default=None, description="Optional explicit caller identity")
     limit: int = Field(default=10, ge=1, le=50, description="Max results to return")
     include_graph_walk: bool = Field(
         default=True, description="Whether to include graph neighbor traversal"
@@ -59,7 +60,7 @@ class LoreSearchResponse(BaseModel):
 @router.post("/api/v1/lore/search", response_model=LoreSearchResponse)
 async def search_lore(
     req: LoreSearchRequest,
-    header_user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     retrieval_engine: Annotated[LoreRetrievalEngine, Depends(get_retrieval_engine)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> LoreSearchResponse:
@@ -68,8 +69,6 @@ async def search_lore(
     Enforces SpiceDB Zanzibar object authorization to filter out DM secret lore for players.
     """
     start_time = time.perf_counter()
-    user_id = req.caller_id or header_user_id
-
     # Check whether caller has permission to view secret lore in this campaign
     can_read_secrets = await check_user_can_read_secrets(
         user_id=user_id,

@@ -29,6 +29,9 @@ from runefoble_events.events import (
     TokenMoved,
     TokenPlaced,
 )
+from runefoble_platform.redis_bus import RedisConsumerGroup
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def test_import_and_exports_facade() -> None:
@@ -154,7 +157,9 @@ async def test_direct_event_dispatch_and_projections() -> None:
 async def test_worker_handle_event_delegates_to_dispatcher() -> None:
     """Verify worker.handle_event dispatches a domain event into storage."""
     storage = CampaignAnalyticsStorage()
-    worker = CampaignAnalyticsWorker(storage=storage)
+    worker = CampaignAnalyticsWorker(
+        storage=storage, consumer_group=RedisConsumerGroup(client=MockAsyncRedis())
+    )
     session_id, campaign_id = str(uuid4()), str(uuid4())
 
     await worker.handle_event(

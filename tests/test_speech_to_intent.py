@@ -19,6 +19,9 @@ from voice_agent.main import app as voice_app
 from voice_agent.main import set_event_bus as voice_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 
 @pytest.fixture
@@ -240,7 +243,9 @@ async def test_voice_agent_transcription_and_event_emission(mock_redis: MockAsyn
     campaign_id = str(uuid.uuid4())
 
     transport = ASGITransport(app=voice_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test", headers=voice_auth_headers()
+    ) as client:
         resp = await client.post(
             "/api/v1/voice/transcribe",
             json={
