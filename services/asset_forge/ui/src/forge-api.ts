@@ -1,6 +1,7 @@
 /**
  * HTTP client for the Asset Forge routes (services/asset_forge).
  * TASK-0613: Asset Forge and Print Forge Components Call Forge API and Show Results.
+ * Token placement calls the board_state token route (services/board_state).
  *
  * Every call posts to a forge route and resolves only with the response body.
  * A non-2xx response rejects with ForgeApiError that carries the server detail.
@@ -278,4 +279,42 @@ export async function exportStlToken(
       input.campaignId,
     ),
   );
+}
+
+export interface PlaceBoardTokenInput {
+  sessionId: string;
+  name: string;
+  tokenType: string;
+  x: number;
+  y: number;
+}
+
+export interface PlacedBoardToken {
+  token_id: string;
+  name: string;
+  token_type: string;
+  x: number;
+  y: number;
+}
+
+/** Places a token on a board through the board_state route. Requires a session id. */
+export async function placeBoardToken(
+  baseUrl: string,
+  input: PlaceBoardTokenInput,
+  fetchImpl: FetchLike = fetch,
+): Promise<PlacedBoardToken> {
+  const url = `${baseUrl}/api/v1/boards/${encodeURIComponent(input.sessionId)}/tokens`;
+  const res = await postForge<PlacedBoardToken>(fetchImpl, url, {
+    name: input.name,
+    token_type: input.tokenType,
+    x: input.x,
+    y: input.y,
+  });
+  return {
+    token_id: res.token_id,
+    name: res.name,
+    token_type: res.token_type,
+    x: res.x,
+    y: res.y,
+  };
 }

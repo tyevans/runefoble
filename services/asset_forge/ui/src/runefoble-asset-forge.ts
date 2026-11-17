@@ -4,6 +4,7 @@ import { assetForgeStyles } from './runefoble-asset-forge.styles.ts';
 import {
   forgeBattlemap,
   forgeToken,
+  placeBoardToken,
   type ForgedMapData,
   type ForgedTokenData,
 } from './forge-api.ts';
@@ -18,6 +19,10 @@ export class RunefobleAssetForge extends LitElement {
   /** Base URL prepended to the forge routes (for example, the gateway origin). */
   @property({ type: String })
   apiBaseUrl = '';
+
+  /** Board session that receives a placed token. Required before placement. */
+  @property({ type: String })
+  sessionId = '';
 
   @property({ type: String })
   activeTab: 'battlemap' | 'token' = 'battlemap';
@@ -42,6 +47,12 @@ export class RunefobleAssetForge extends LitElement {
 
   @state()
   private tokenType = 'pc';
+
+  @state()
+  private tokenX = 0;
+
+  @state()
+  private tokenY = 0;
 
   @state()
   private errorMessage = '';
@@ -109,24 +120,34 @@ export class RunefobleAssetForge extends LitElement {
     });
   }
 
-  private handleProjectGeometry() {
-    this.dispatchEvent(
-      new CustomEvent('geometry-projected', {
-        detail: { map: this.lastForgedMap },
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }
-
-  private handlePlaceToken() {
-    this.dispatchEvent(
-      new CustomEvent('token-placed', {
-        detail: { token: this.lastForgedToken },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  private async handlePlaceToken() {
+    await this.runForge(async () => {
+      if (!this.sessionId) {
+        throw new Error('Set a session ID before placing a token.');
+      }
+      const forged = this.lastForgedToken;
+      if (!forged) {
+        throw new Error('Forge a token before placing it.');
+      }
+      const placed = await placeBoardToken(this.apiBaseUrl, {
+        sessionId: this.sessionId,
+        name: forged.token_name,
+        tokenType: forged.token_type,
+        x: this.tokenX,
+        y: this.tokenY,
+      });
+      this.dispatchEvent(
+        new CustomEvent('token-placed', {
+          detail: {
+            session_id: this.sessionId,
+            token: placed,
+            asset: forged,
+          },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
   }
 
   render() {
@@ -194,9 +215,6 @@ export class RunefobleAssetForge extends LitElement {
                 <span class="stat-badge">${this.lastForgedMap.wall_count} Walls</span>
                 <span class="stat-badge">${this.lastForgedMap.hazard_count} Hazards</span>
               </div>
-              <button class="action-btn" @click=${this.handleProjectGeometry}>
-                Project Geometry to Board State
-              </button>
             </div>
           `
         : ''}
@@ -263,7 +281,29 @@ export class RunefobleAssetForge extends LitElement {
                 <span class="stat-badge">Circular Mask</span>
                 <span class="stat-badge">Alpha Transparent</span>
               </div>
-              <button class="action-btn" @click=${this.handlePlaceToken}>
+              <div class="row">
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">Column (x)</label>
+                  <input
+                    type="number"
+                    class="input-field"
+                    min="0"
+                    .value=${String(this.tokenX)}
+                    @input=${(e: Event) => (this.tokenX = Number((e.target as HTMLInputElement).value))}
+                  />
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">Row (y)</label>
+                  <input
+                    type="number"
+                    class="input-field"
+                    min="0"
+                    .value=${String(this.tokenY)}
+                    @input=${(e: Event) => (this.tokenY = Number((e.target as HTMLInputElement).value))}
+                  />
+                </div>
+              </div>
+              <button class="action-btn" ?disabled=${this.isGenerating} @click=${this.handlePlaceToken}>
                 Place Token on Tactical Board
               </button>
             </div>

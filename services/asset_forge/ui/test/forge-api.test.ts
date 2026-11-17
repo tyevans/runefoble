@@ -16,6 +16,7 @@ import {
   exportStlToken,
   forgeBattlemap,
   forgeToken,
+  placeBoardToken,
 } from '../src/forge-api.ts';
 
 interface RecordedCall {
@@ -316,6 +317,59 @@ describe('print forge exports (TASK-0613)', () => {
     await assert.rejects(
       exportStlToken('', { diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4, campaignId: '' }, fetchImpl),
       (err: unknown) => err instanceof ForgeApiError && err.status === 503,
+    );
+  });
+});
+
+describe('placeBoardToken', () => {
+  it('posts the token to the session board route and maps the placed token', async () => {
+    const { calls, fetchImpl } = stubFetch(() =>
+      jsonResponse(200, {
+        token_id: 'tok-1',
+        name: 'Thorin Ironbreaker',
+        token_type: 'pc',
+        x: 4,
+        y: 7,
+        hp: null,
+        is_friendly: true,
+        vision_radius: 2,
+      }),
+    );
+
+    const result = await placeBoardToken(
+      '',
+      { sessionId: 'session-42', name: 'Thorin Ironbreaker', tokenType: 'pc', x: 4, y: 7 },
+      fetchImpl,
+    );
+
+    assert.equal(calls[0].method, 'POST');
+    assert.equal(calls[0].url, '/api/v1/boards/session-42/tokens');
+    assert.deepEqual(calls[0].body, {
+      name: 'Thorin Ironbreaker',
+      token_type: 'pc',
+      x: 4,
+      y: 7,
+    });
+    assert.deepEqual(result, { token_id: 'tok-1', name: 'Thorin Ironbreaker', token_type: 'pc', x: 4, y: 7 });
+  });
+
+  it('encodes the session id in the route path', async () => {
+    const { calls, fetchImpl } = stubFetch(() =>
+      jsonResponse(200, { token_id: 't', name: 'n', token_type: 'npc', x: 0, y: 0 }),
+    );
+
+    await placeBoardToken('', { sessionId: 'a/b c', name: 'n', tokenType: 'npc', x: 0, y: 0 }, fetchImpl);
+
+    assert.equal(calls[0].url, '/api/v1/boards/a%2Fb%20c/tokens');
+  });
+
+  it('throws ForgeApiError with the board detail on 400', async () => {
+    const { fetchImpl } = stubFetch(() => jsonResponse(400, { detail: 'Cell is occupied by another token.' }));
+
+    await assert.rejects(
+      placeBoardToken('', { sessionId: 's', name: 'n', tokenType: 'pc', x: 1, y: 1 }, fetchImpl),
+      (err: unknown) =>
+        err instanceof ForgeApiError && err.status === 400 && err.message === 'Cell is occupied by another token.',
     );
   });
 });
