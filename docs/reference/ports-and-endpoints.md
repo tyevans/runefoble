@@ -43,6 +43,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `soundscape` | `8009` | `/openapi.json` |
 | `audience-studio` | `8010` | `/openapi.json` |
 | `campaign-analytics` | `8011` | `/openapi.json` |
+| `inference-worker` | `8100` | `/openapi.json` |
 
 ## Key Microservice Endpoints
 
@@ -300,6 +301,10 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `gateway-api` / `gateway-mcp` | GET/PUT/DELETE | `/mcp/tools/{name}` | Inspects, updates, or deregisters runtime FastMCP tools without server restarts |
 | `gateway-api` / `gateway-mcp` | POST | `/mcp/tools/{name}/execute` | Executes sandboxed dynamic FastMCP tool directly |
 | `gateway-mcp` | MCP | `Dynamic & Static Tools` | Tabletop tools (`execute_agent_action_plan`, `cast_spell`, `modify_character_hp`, dynamic registry, etc.) and dynamic resource `session://{session_id}/state` |
+| `inference-worker` | GET | `/healthz` | Liveness and readiness check. Reports the active backend and model names. Also served at `/health` |
+| `inference-worker` | POST | `/inference/v1/intent` | Parses a natural speech transcript into a `ParsedAction` list (`IntentParseResponse`) |
+| `inference-worker` | POST | `/inference/v1/dm-narration` | Generates DM narration and rulings (`DMNarrationResponse`) |
+| `inference-worker` | POST | `/inference/v1/stand-in-action` | Generates a stand-in action for an absent player's character (`StandInActionResponse`) |
 
 
 
