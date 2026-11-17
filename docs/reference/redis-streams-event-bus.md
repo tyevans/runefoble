@@ -63,6 +63,16 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
 
 Call `publish_event(stream, event)` on `RedisStreamsEventBus` for every event. Do not call `publish`. A call to `publish` raises `AttributeError`. A broad exception guard around that call hides the error, so the event never reaches Redis. Do not wrap publish calls in `contextlib.suppress(Exception)`.
 
+### Aggregate Event Publication
+
+Routers do not publish events that an aggregate commits. The `AggregateRepository` publishes every committed event through its event publisher.
+
+- The game session repository uses `SessionEventPublisher` (`services/game_session/src/game_session/events.py`).
+- `SESSION_EVENT_STREAMS` in the same module maps each session event type to its stream.
+- An event type with no mapping raises `UnmappedSessionEventError`. Add the mapping when you add an event.
+- A publish failure raises `DomainEventPublishError`. The API returns HTTP 503 and the client retries.
+- A missing bus skips publication, as the other game session routes do when Redis is not configured.
+
 ### Board Events
 
 Board State publishes every uncommitted event through one helper, `publish_board_events(bus, events)` (`services/board_state/src/board_state/events.py`):

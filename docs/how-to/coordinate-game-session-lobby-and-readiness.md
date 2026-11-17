@@ -81,6 +81,8 @@ interface ToggleReadinessEventDetail {
 }
 ```
 
+The session service stores readiness in the session aggregate. Send it with `POST /api/v1/sessions/{session_id}/lobby/readiness` and body `{"player_id": "...", "is_ready": true}`. The response is the session state, with the stored readiness in `lobby_readiness`. The route accepts changes only while the session status is `lobby`, and only for a joined player. The lobby client does not call this route yet. It still sends readiness only as a WebSocket frame (follow-up for the gateway theme).
+
 ### `toggle-stand-in`
 Dispatched when a player or GM toggles absentee AI stand-in takeover:
 ```typescript
