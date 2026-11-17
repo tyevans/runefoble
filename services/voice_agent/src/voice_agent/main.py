@@ -53,6 +53,7 @@ from voice_agent.routers import (
     stream_diagnostics_router,
     stream_router,
     synthesis_router,
+    transcribe_router,
     vocal_effects_router,
 )
 from voice_agent.stt import get_streaming_pipeline
@@ -78,6 +79,7 @@ app.include_router(room_router)
 app.include_router(stream_router)
 app.include_router(audio_router)
 app.include_router(synthesis_router)
+app.include_router(transcribe_router)
 app.include_router(duplex_router)
 app.include_router(vocal_effects_router)
 app.include_router(dsp_condition_router)
