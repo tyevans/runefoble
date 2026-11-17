@@ -133,6 +133,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`build-settlements-and-play-mobile-minigames.md`](docs/how-to/build-settlements-and-play-mobile-minigames.md): How to design and scale settlement havens, customize establishments with living NPC workers, haggle with merchants under DM controls, and play mobile-first tavern and casino minigames.
 - [`validate-e2e-journeys-with-playwright-bdd.md`](docs/how-to/validate-e2e-journeys-with-playwright-bdd.md): How to validate end-to-end user journeys with Playwright BDD, frontdoor authentication fixtures, and multi-browser execution.
 - [`test-user-flows-with-playwright-bdd.md`](docs/how-to/test-user-flows-with-playwright-bdd.md): How to author Gherkin user flow scenarios, implement TypeScript step definitions with Playwright shadow-piercing locators, and execute E2E test suites.
+- [`test-cross-service-calls-with-live-upstreams.md`](docs/how-to/test-cross-service-calls-with-live-upstreams.md): How to test cross-service HTTP calls with live loopback upstreams, simulate 503 and unreachable upstreams, and avoid monkeypatching clients.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
