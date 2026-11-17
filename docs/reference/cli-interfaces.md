@@ -15,6 +15,7 @@
 | `make docs-serve` | Serves documentation site locally with live preview on port 8000 |
 | `make cluster-up` | Launches local Kind Kubernetes cluster with port mapping and Traefik |
 | `make cluster-down` | Deletes the local Kind cluster |
+| `make images` | Builds every Python service image (`runefoble/<service>:0.1.0`) from `deployments/docker/python-service.Dockerfile` and loads each into the `runefoble-local` Kind cluster |
 | `make helm-lint` | Validates Helm chart syntax |
 | `make helm-template` | Renders and inspects Kubernetes manifests |
 | `make helm-deploy` | Deploys the full Runefoble stack to the active Kubernetes cluster |

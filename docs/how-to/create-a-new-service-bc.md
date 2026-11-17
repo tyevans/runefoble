@@ -42,10 +42,15 @@ async def health_check():
     return {"status": "ok", "service": "<new_service_name>"}
 ```
 
-### 5. Register with Swagger UI and Helm
+### 5. Register with Swagger UI, Helm, and the Image Table
 In `deployments/helm/runefoble/values.yaml`:
 1. Add an entry under `swaggerUI.urls` to expose its OpenAPI spec.
 2. Add an entry under `services` to deploy its Kubernetes pod.
+
+In `Makefile`, add one row to `PYTHON_IMAGE_ROWS`:
+`'<image-name>|<uv-package>|<module>.main:app|<port>'`.
+The port must equal the `services.*.port` value in `values.yaml`.
+`make images` builds the image from the shared `deployments/docker/python-service.Dockerfile`.
 
 ### 6. Verify with Tests
 Run `uv sync` followed by `uv run pytest`.
