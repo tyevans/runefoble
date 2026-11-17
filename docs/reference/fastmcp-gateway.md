@@ -40,7 +40,7 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | Tool Name | Parameters | Description |
 |---|---|---|
 | `roll_dice` | `notation: str`, `reason: str` | Parse standard RPG dice notation (`1d20+3`, `2d6`) and return roll breakdown. |
-| `inspect_tactical_board` | `session_id: str` | Read tokens, positions, HP, and grid dimensions from `board_state` (`GET /api/v1/boards/{session_id}`). |
+| `inspect_tactical_board` | `session_id: str` | Read tokens, positions, HP, and grid dimensions from `board_state` (`GET /api/v1/boards/{session_id}`). Returns an error result when the board does not exist. |
 | `move_board_token` | `session_id: str`, `token_id: str`, `to_x: int`, `to_y: int` | Move a token through `board_state` (`POST /api/v1/boards/{session_id}/tokens/{token_id}/move`). The board rejects out-of-bounds moves. |
 | `get_character_sheet` | `character_id: str` | Retrieve character stats, level, hit points, equipment, and active conditions. |
 | `inspect_inventory` | `character_id: str` | Retrieve equipped items, carried inventory, and currency breakdown. |

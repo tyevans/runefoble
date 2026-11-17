@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from board_state.dependencies import get_event_bus, get_or_create_board, repo
+from board_state.dependencies import get_board, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
     PlaceLightRequest,
@@ -64,7 +64,7 @@ async def import_uvtt_map_endpoint(
                 detail="Silo asset storage is unavailable. The map was not imported.",
             ) from exc
 
-    board = await get_or_create_board(id)
+    board = await get_board(id)
     apply_uvtt_to_board(board, parsed, asset_id=asset_id, image_url=image_url)
     events = list(board.uncommitted_events)
     await repo.save(board)
@@ -95,7 +95,7 @@ async def toggle_door_endpoint(
     id: str, door_id: str, body: ToggleDoorRequest | None = None
 ) -> dict:
     """Toggle state of an interactive door or portal on the board."""
-    board = await get_or_create_board(id)
+    board = await get_board(id)
     status, is_open = (body.status, body.is_open) if body else (None, None)
     result = board.toggle_door(door_id=door_id, status=status, is_open=is_open)
     events = list(board.uncommitted_events)
@@ -108,7 +108,7 @@ async def toggle_door_endpoint(
 @router.get("/boards/{id}/doors")
 async def get_doors_endpoint(id: str) -> dict:
     """Query interactive doors and secret portals on the board."""
-    board = await get_or_create_board(id)
+    board = await get_board(id)
     return {"doors": board.state.doors, "portals": board.state.portals}
 
 
@@ -117,7 +117,7 @@ async def get_doors_endpoint(id: str) -> dict:
 @router.post("/api/v1/board/{id}/lights")
 async def place_light_endpoint(id: str, req: PlaceLightRequest) -> dict:
     """Place or update a dynamic point light source on the tactical board."""
-    board = await get_or_create_board(id)
+    board = await get_board(id)
     lid = board.place_light_source(
         light_id=req.light_id,
         x=req.x,
@@ -140,5 +140,5 @@ async def place_light_endpoint(id: str, req: PlaceLightRequest) -> dict:
 @router.get("/boards/{id}/lights")
 async def get_lights_endpoint(id: str) -> dict:
     """Query active dynamic light sources on the board."""
-    board = await get_or_create_board(id)
+    board = await get_board(id)
     return {"lights": board.state.lights}

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from board_state.dependencies import get_or_create_board
+from board_state.dependencies import get_board
 from board_state.preview import (
     PreviewMoveRequest,
     PreviewMoveResponse,
@@ -18,7 +18,7 @@ router = APIRouter(tags=["previews"])
 )
 async def preview_token_move(session_id: str, token_id: str, req: PreviewMoveRequest):
     """Compute waypoint trajectory, 5-ft increments, terrain penalties, and hazard warnings."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         return compute_kinematic_route_preview(
             board_aggregate=board,

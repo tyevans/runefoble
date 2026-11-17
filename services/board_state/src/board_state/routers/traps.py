@@ -9,9 +9,9 @@ from board_state.dependencies import (
     check_user_can_manage_traps,
     check_user_can_switch_map,
     check_user_can_view_secret_layer,
+    get_board,
     get_current_user_id,
     get_event_bus,
-    get_or_create_board,
     repo,
 )
 from board_state.events import publish_board_events
@@ -44,7 +44,7 @@ async def create_trap(
             detail="Forbidden: DM permissions required to create secret traps",
         )
 
-    board = await get_or_create_board(board_id)
+    board = await get_board(board_id)
     tid = board.place_trap(
         name=req.name,
         x=req.x,
@@ -78,7 +78,7 @@ async def list_traps(
     campaign_id: str | None = Query(default=None),
 ) -> TrapListResponse:
     """Retrieve traps on the board, filtering out secret traps for non-DM players."""
-    board = await get_or_create_board(board_id)
+    board = await get_board(board_id)
     can_view_secret = await check_user_can_view_secret_layer(user_id, board_id, campaign_id)
 
     all_traps = list(board.state.traps.values())
@@ -102,7 +102,7 @@ async def switch_map_endpoint(
             detail="Forbidden: DM permissions required to switch battlemaps",
         )
 
-    board = await get_or_create_board(board_id)
+    board = await get_board(board_id)
     resp = perform_map_switch(board, req, initiated_by=user_id)
 
     bus = get_event_bus()
@@ -122,7 +122,7 @@ async def disarm_trap_endpoint(
     user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
 ) -> dict[str, str]:
     """Disarm a trap on the board."""
-    board = await get_or_create_board(board_id)
+    board = await get_board(board_id)
     if trap_id not in board.state.traps:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Trap not found")
 

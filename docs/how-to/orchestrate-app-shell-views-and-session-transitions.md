@@ -83,7 +83,7 @@ The App Shell fetches data parameterized by route attributes via `appDataService
 - **Campaign Detail**: Fetches roster from `GET /api/v1/campaigns/:id/members` and sessions from `GET /api/v1/campaigns/:id/sessions`.
 - **Characters**: Fetches player characters from `GET /api/v1/characters` and scopes party roster in `#/campaigns/:id/characters`.
 - **Session Lobby**: Fetches participant readiness from `GET /api/v1/sessions/:id`.
-- **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`.
+- **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`. The route returns `404` for an unknown board and never creates one. Create the board first with `POST /api/v1/boards`.
 - **Session Scheduling & Staging**: Creates new sessions or launches staging lobbies from `POST /api/v1/campaigns/:id/sessions` via `<runefoble-session-modal>`.
 
 ## 5. Character Roster Event Binding & Data Mutations

@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import logging
 
-from board_state.dependencies import get_event_bus, get_or_create_board, repo
+from board_state.dependencies import get_board, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
     KnockbackRequest,
@@ -28,7 +28,7 @@ async def simulate_throw_endpoint(
     board_id: str, req: SimulateThrowRequest
 ) -> SimulateThrowResponse:
     """Simulate a 3D physical tumbling dice throw with gravity, floor/wall bounces, and resting face."""
-    board = await get_or_create_board(board_id)
+    board = await get_board(board_id)
     try:
         resp = apply_dice_throw(
             board,
@@ -70,7 +70,7 @@ async def simulate_throw_endpoint(
 @router.post("/api/v1/boards/{board_id}/physics/knockback", response_model=KnockbackResponse)
 async def knockback_endpoint(board_id: str, req: KnockbackRequest) -> KnockbackResponse:
     """Apply physical knockback impulse to a miniature token, halting upon wall or elevation collisions."""
-    board = await get_or_create_board(board_id)
+    board = await get_board(board_id)
     try:
         resp = apply_token_knockback(
             board,

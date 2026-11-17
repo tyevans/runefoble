@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from board_state.dependencies import get_or_create_board, repo
+from board_state.dependencies import get_board, repo
 from board_state.models import (
     BoardDecalState,
     CastSpellRequest,
@@ -38,7 +38,7 @@ def _determine_audio_stinger(archetype: str, spell_name: str, damage_type: str |
 @router.post("/api/v1/boards/{session_id}/vfx/spell", response_model=CastSpellResponse)
 async def cast_spell_vfx(session_id: str, req: CastSpellRequest) -> CastSpellResponse:
     """Cast a kinetic spell, calculate WebGL trajectory, radius bloom, decals, and broadcast VFX."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
 
     try:
         anim_id, trajectory, affected_tokens, affected_cells, decal_type = board.cast_spell(
@@ -116,7 +116,7 @@ async def cast_spell_vfx(session_id: str, req: CastSpellRequest) -> CastSpellRes
 @router.post("/api/v1/boards/{session_id}/vfx/finish", response_model=FinishVFXResponse)
 async def finish_spell_vfx(session_id: str, req: FinishVFXRequest) -> FinishVFXResponse:
     """Record completion of WebGL particle animation."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     board.finish_vfx(
         animation_id=req.animation_id,
         spell_name=req.spell_name,
@@ -143,14 +143,14 @@ async def finish_spell_vfx(session_id: str, req: FinishVFXRequest) -> FinishVFXR
 @router.get("/api/v1/boards/{session_id}/decals", response_model=list[BoardDecalState])
 async def get_board_decals(session_id: str) -> list[BoardDecalState]:
     """Retrieve all active ephemeral decals on the tactical board."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     return board.state.active_decals
 
 
 @router.post("/api/v1/boards/{session_id}/decals/decay", response_model=list[BoardDecalState])
 async def decay_board_decals(session_id: str, req: DecayDecalsRequest) -> list[BoardDecalState]:
     """Decay ephemeral scorched earth / frost decals over rounds."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     board.decay_decals(req.rounds)
     await repo.save(board)
     return board.state.active_decals
