@@ -2,78 +2,62 @@
 
 from __future__ import annotations
 
-import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from runefoble_events.events import (
     SpeechIntentParsed,
     TokenMoved,
     WatcherNarrationGenerated,
 )
 from runefoble_platform.event_publish import publish_best_effort
+from the_watcher.board_client import fetch_visible_tokens
 from the_watcher.dependencies import (
+    BOARD_STATE_URL,
     INFERENCE_URL,
     STREAM_BOARD,
     STREAM_WATCHER,
     engine,
     get_event_bus,
-    logger,
     to_uuid,
 )
 from the_watcher.models import (
     IntentResult,
     SpeechInputRequest,
 )
+from the_watcher.worker_client import call_worker
 
 router = APIRouter(tags=["intent"])
 
 
 async def _parse_with_worker(req: SpeechInputRequest) -> IntentResult:
-    """Parse speech with the inference worker.
+    """Parse speech with the inference worker. The worker receives the session's visible tokens.
 
-    A worker failure is raised as HTTP 503. It is never replaced by a local template reply.
+    A worker or board state failure is raised as HTTP 503. It is never replaced by a template.
     """
-    try:
-        async with httpx.AsyncClient(timeout=2.0) as client:
-            res = await client.post(
-                f"{INFERENCE_URL}/inference/v1/intent",
-                json={
-                    "campaign_id": req.campaign_id,
-                    "session_id": req.session_id,
-                    "speaker_id": req.speaker_id,
-                    "speaker_name": req.speaker_name,
-                    "transcript": req.transcript,
-                },
-            )
-    except httpx.HTTPError as e:
-        logger.error("Inference worker unreachable at %s: %s", INFERENCE_URL, e)
-        raise HTTPException(
-            status_code=503,
-            detail={"error": "backend_unavailable", "backend": "inference_worker"},
-        ) from e
-
-    if res.status_code == 503:
-        backend = res.json().get("backend", "unknown")
-        logger.error("Inference worker reported backend '%s' unavailable", backend)
-        raise HTTPException(
-            status_code=503,
-            detail={"error": "backend_unavailable", "backend": backend},
-        )
-    if res.status_code != 200:
-        logger.error("Inference worker returned HTTP %s for intent parse", res.status_code)
-        raise HTTPException(
-            status_code=502,
-            detail={"error": "inference_worker_error", "status": res.status_code},
-        )
-
-    action = res.json()["action"]
+    visible_tokens = await fetch_visible_tokens(BOARD_STATE_URL, req.session_id)
+    data = await call_worker(
+        INFERENCE_URL,
+        "/inference/v1/intent",
+        {
+            "campaign_id": req.campaign_id,
+            "session_id": req.session_id,
+            "speaker_id": req.speaker_id,
+            "speaker_name": req.speaker_name,
+            "transcript": req.transcript,
+            "visible_tokens": visible_tokens,
+        },
+        timeout=2.0,
+    )
+    action = data["action"]
     target_name = action.get("target_token_name") or action.get("target_token_id")
     return IntentResult(
         action_type=action["action_type"],
-        confidence=action["confidence"],
+        confidence=action.get("confidence"),
         parameters=action,
         target=target_name,
         details=action.get("narrative_flavor", req.transcript),
         watcher_reply=action.get("narrative_flavor", ""),
+        source=data["source"],
+        degraded=data["degraded"],
     )
 
 

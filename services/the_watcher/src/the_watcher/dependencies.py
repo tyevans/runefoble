@@ -26,6 +26,7 @@ from the_watcher.watcher_ai import TheWatcherEngine
 
 logger = logging.getLogger("runefoble.the_watcher")
 INFERENCE_URL = os.environ.get("RUNEFOBLE_INFERENCE_URL")
+BOARD_STATE_URL = os.environ.get("RUNEFOBLE_BOARD_STATE_URL")
 
 STREAM_WATCHER = "runefoble.events.watcher"
 STREAM_BOARD = "runefoble.events.board"

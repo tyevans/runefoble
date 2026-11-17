@@ -1,17 +1,19 @@
 """Domain models for The Watcher AI system."""
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 
 class IntentResult(BaseModel):
     action_type: str  # "move", "attack", "cast_spell", "skill_check", "narrative", "roll_dice"
-    confidence: float
+    confidence: float | None = None  # None when the worker reports no confidence
     parameters: dict[str, Any] = Field(default_factory=dict)
     watcher_reply: str
     target: str | None = None
     details: str | None = None
+    source: str = "watcher_rules"  # "llm" | "heuristic" | "mock" from the worker
+    degraded: bool = False
 
 
 class StandInAction(BaseModel):
@@ -24,6 +26,8 @@ class StandInAction(BaseModel):
     penalties_applied: list[str] = Field(default_factory=list)
     guardrails_applied: list[str] = Field(default_factory=list)
     flavor_text: str = ""
+    source: str = "watcher_rules"  # "llm" | "heuristic" | "mock" from the worker
+    degraded: bool = False
 
 
 class StandInRecapResponse(BaseModel):
@@ -84,11 +88,11 @@ class StandInRequest(BaseModel):
     character_name: str
     character_class: str
     penalties: list[str] = Field(default_factory=list)
-    scene_context: str = "In combat with subterranean creatures"
+    scene_context: str
     personality_traits: list[str] = Field(default_factory=list)
     guardrails: dict[str, Any] | None = None
-    session_id: str | None = None
-    campaign_id: str | None = None
+    session_id: str
+    campaign_id: str
 
 
 class StandInRecapRequest(BaseModel):
@@ -97,9 +101,22 @@ class StandInRecapRequest(BaseModel):
     penalties: list[str] = Field(default_factory=list)
 
 
+class DMNarrationResult(BaseModel):
+    session_id: str
+    narrative: str
+    sensory_details: list[str] = Field(default_factory=list)
+    suggested_dm_prompts: list[str] = Field(default_factory=list)
+    tension_level: str = "rising"
+    source: str
+    degraded: bool
+
+
 class DMGuidanceRequest(BaseModel):
     session_id: str
+    campaign_id: str
     prompt: str
+    scene_environment: str
+    tone: Literal["dark_fantasy", "epic_heroic", "tense_mystery", "whimsical", "gritty"]
 
 
 class WhisperSuggestion(BaseModel):
