@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -170,6 +170,10 @@ test: ## Run complete test suite (unit, entrypoints, properties, frontend build)
 	uv run pytest
 	@echo "==> Verifying frontend build..."
 	cd frontend && pnpm run build
+
+test-authz-live: ## Run the live SpiceDB authorization suite (needs Docker; fails if missing)
+	@echo "==> Running live SpiceDB authorization suite..."
+	RUNEFOBLE_REQUIRE_LIVE_SPICEDB=1 uv run pytest -m authz_live
 
 test-entrypoints: ## Test developer entrypoints, CLI tools, and microservice startups
 	@echo "==> Running entrypoint tests..."

@@ -84,7 +84,8 @@ def default_spicedb_client(request):
     The shared factory client (`runefoble_auth.factory`) is the one seam. Service-local
     dependency modules that still keep their own client keep their setter swap.
     """
-    if "live_spicedb_endpoint" in getattr(request, "fixturenames", []):
+    live_fixtures = {"live_spicedb_endpoint", "live_spicedb_with_schema"}
+    if live_fixtures & set(getattr(request, "fixturenames", [])):
         yield None
         return
 

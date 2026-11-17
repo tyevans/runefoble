@@ -100,6 +100,7 @@ timeout = 300
 timeout_method = "thread"
 markers = [
     "docker: builds and runs Docker images; needs a reachable Docker daemon",
+    "authz_live: runs against a live SpiceDB container with runefoble.zed loaded (make test-authz-live)",
 ]
 
 [tool.importlinter]
