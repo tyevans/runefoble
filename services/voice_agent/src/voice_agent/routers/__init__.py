@@ -10,6 +10,7 @@ from voice_agent.routers.dsp_condition import router as dsp_condition_router
 from voice_agent.routers.duplex import router as duplex_router
 from voice_agent.routers.stream_diagnostics import router as stream_diagnostics_router
 from voice_agent.routers.synthesis import router as synthesis_router
+from voice_agent.routers.transcribe import router as transcribe_router
 from voice_agent.routers.vocal_effects import router as vocal_effects_router
 from voice_agent.stream_routes import router as stream_router
 
@@ -23,5 +24,6 @@ __all__ = [
     "stream_diagnostics_router",
     "stream_router",
     "synthesis_router",
+    "transcribe_router",
     "vocal_effects_router",
 ]

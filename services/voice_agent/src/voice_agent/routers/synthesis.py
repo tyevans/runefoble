@@ -7,27 +7,18 @@ import hashlib
 import logging
 from typing import Any
 
-import httpx
 from fastapi import APIRouter
-from runefoble_events.events import PlayerSpokeEvent
 from voice_agent.dependencies import (
-    STREAM_SESSION,
-    WATCHER_URL,
     _dispatch_voice_audio_conditioned,
     dsp_pipeline,
-    get_event_bus,
-    to_uuid,
 )
 from voice_agent.dsp import apply_audio_filters
 from voice_agent.models import (
     AVAILABLE_PERSONAS,
-    TranscribeRequest,
-    TranscribeResponse,
     TTSRequest,
     TTSResponse,
     VoicePersona,
 )
-from voice_agent.stt import get_streaming_pipeline
 from voice_agent.synthesis_engine import get_speech_synthesizer
 from voice_agent.synthesizer import AudioClip
 from voice_agent.wav import encode_wav
@@ -100,74 +91,4 @@ async def synthesize_voice(req: TTSRequest):
         audio_payload=audio_b64,
         audio_base64=audio_b64,
         latency_ms=total_latency,
-    )
-
-
-@router.post("/api/v1/voice/transcribe", response_model=TranscribeResponse)
-async def transcribe_speech(req: TranscribeRequest):
-    """Transcribe player speech, emit PlayerSpokeEvent, and forward to The Watcher."""
-    transcript = req.transcript or "I inspect my surroundings."
-    session_uuid = to_uuid(req.session_id)
-    campaign_uuid = to_uuid(req.campaign_id)
-
-    # 1. Emit PlayerSpokeEvent
-    spoke_event = PlayerSpokeEvent(
-        aggregate_id=session_uuid,
-        session_id=session_uuid,
-        campaign_id=campaign_uuid,
-        speaker_id=req.speaker_id,
-        speaker_name=req.speaker_name,
-        transcript=transcript,
-        is_whisper=req.is_whisper,
-        target_character_id=req.target_character_id,
-    )
-    bus = get_event_bus()
-    event_entry_id = None
-    try:
-        event_entry_id = await bus.publish_event(STREAM_SESSION, spoke_event)
-    except Exception as e:
-        logger.warning(
-            "Failed to publish PlayerSpokeEvent to Redis stream '%s': %s", STREAM_SESSION, e
-        )
-
-    # 2. Forward to The Watcher
-    watcher_intent = None
-    try:
-        watcher_client = get_streaming_pipeline()._watcher_client
-        if watcher_client:
-            resp = await watcher_client.post(
-                "/api/v1/watcher/transcribe-and-act",
-                json={
-                    "speaker_id": req.speaker_id,
-                    "speaker_name": req.speaker_name,
-                    "transcript": transcript,
-                    "session_id": req.session_id,
-                    "campaign_id": req.campaign_id,
-                },
-            )
-            if resp.status_code == 200:
-                watcher_intent = resp.json()
-        else:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.post(
-                    f"{WATCHER_URL}/api/v1/watcher/transcribe-and-act",
-                    json={
-                        "speaker_id": req.speaker_id,
-                        "speaker_name": req.speaker_name,
-                        "transcript": transcript,
-                        "session_id": req.session_id,
-                        "campaign_id": req.campaign_id,
-                    },
-                )
-                if resp.status_code == 200:
-                    watcher_intent = resp.json()
-    except Exception as e:
-        logger.warning("Failed to forward transcript to The Watcher: %s", e)
-
-    return TranscribeResponse(
-        transcript=transcript,
-        speaker_id=req.speaker_id,
-        speaker_name=req.speaker_name,
-        event_id=event_entry_id,
-        watcher_intent=watcher_intent,
     )

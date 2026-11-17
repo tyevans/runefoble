@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -104,6 +104,7 @@ class TranscribeRequest(BaseModel):
 
 class TranscribeResponse(BaseModel):
     transcript: str
+    source: Literal["audio", "client_text"]
     speaker_id: str
     speaker_name: str
     event_id: str | None = None
