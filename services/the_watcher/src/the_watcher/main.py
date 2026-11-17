@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from runefoble_platform.event_publish import (
+    event_publish_failures,
+    install_publish_failure_handler,
+)
 from the_watcher.dependencies import (
     INFERENCE_URL,
     STREAM_BOARD,
@@ -66,6 +70,7 @@ app.include_router(factions_router)
 app.include_router(faction_resources_router)
 app.include_router(turf_war_router)
 app.include_router(ui_manifest_router)
+install_publish_failure_handler(app)
 
 
 @app.get("/healthz")
@@ -74,6 +79,7 @@ async def health_check():
         "status": "ok",
         "service": "the_watcher",
         "inference_worker_url": INFERENCE_URL or "none (using local heuristic engine)",
+        "event_publish_failures": event_publish_failures(),
     }
 
 

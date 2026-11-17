@@ -30,6 +30,15 @@ from runefoble_platform.errors import (
     GameRuleViolationError,
     RunefobleError,
 )
+from runefoble_platform.event_publish import (
+    DomainEventPublishError,
+    deliver_best_effort,
+    event_publish_failures,
+    install_publish_failure_handler,
+    publish_best_effort,
+    publish_or_fail,
+    record_publish_failure,
+)
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     DeclarativeAggregate,
@@ -88,6 +97,13 @@ __all__ = [
     "UserPrincipal",
     "utc_now",
     "RunefobleError",
+    "DomainEventPublishError",
+    "deliver_best_effort",
+    "event_publish_failures",
+    "install_publish_failure_handler",
+    "publish_best_effort",
+    "publish_or_fail",
+    "record_publish_failure",
     "EntityNotFoundError",
     "AuthorizationError",
     "GameRuleViolationError",

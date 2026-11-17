@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 from runefoble_events.events import AbsenteeRecapGenerated
+from runefoble_platform.event_publish import publish_best_effort
 from the_watcher.dependencies import (
     STREAM_WATCHER,
     chronicle_engine,
     get_event_bus,
-    logger,
 )
 from the_watcher.models import RecapRequest
 
@@ -30,12 +30,5 @@ async def generate_chronicle_recap(req: RecapRequest) -> AbsenteeRecapGenerated:
         audio_url=req.audio_url,
     )
     bus = get_event_bus()
-    try:
-        await bus.publish_event(STREAM_WATCHER, recap_event)
-    except Exception as e:
-        logger.warning(
-            "Failed to publish AbsenteeRecapGenerated event to Redis stream '%s': %s",
-            STREAM_WATCHER,
-            e,
-        )
+    await publish_best_effort(bus, STREAM_WATCHER, recap_event)
     return recap_event

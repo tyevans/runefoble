@@ -5,6 +5,7 @@ from __future__ import annotations
 import httpx
 from fastapi import APIRouter
 from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
+from runefoble_platform.event_publish import publish_or_fail
 from the_watcher.dependencies import (
     INFERENCE_URL,
     STREAM_WATCHER,
@@ -83,24 +84,19 @@ async def stand_in_act(req: StandInRequest) -> StandInAction:
         flavor_text=stand_in.action_description,
     )
 
-    try:
-        await bus.publish_event(STREAM_WATCHER, action_event)
-        for p in req.penalties:
-            p_clean = p.lower()
-            if p_clean in ("drunk", "foolishness", "cowardice", "greed", "curse"):
-                pen_event = AbsencePenaltyApplied(
-                    aggregate_id=session_uuid,
-                    session_id=session_uuid,
-                    campaign_id=campaign_uuid,
-                    penalty_type=p_clean,
-                    description=stand_in.penalty_influence or f"Absence penalty {p} active",
-                    imposed_by="the_watcher",
-                )
-                await bus.publish_event(STREAM_WATCHER, pen_event)
-    except Exception as e:
-        logger.warning(
-            "Failed to publish stand-in events to Redis stream '%s': %s", STREAM_WATCHER, e
-        )
+    await publish_or_fail(bus, STREAM_WATCHER, action_event)
+    for p in req.penalties:
+        p_clean = p.lower()
+        if p_clean in ("drunk", "foolishness", "cowardice", "greed", "curse"):
+            pen_event = AbsencePenaltyApplied(
+                aggregate_id=session_uuid,
+                session_id=session_uuid,
+                campaign_id=campaign_uuid,
+                penalty_type=p_clean,
+                description=stand_in.penalty_influence or f"Absence penalty {p} active",
+                imposed_by="the_watcher",
+            )
+            await publish_or_fail(bus, STREAM_WATCHER, pen_event)
 
     return stand_in
 
