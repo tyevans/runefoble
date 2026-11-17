@@ -1048,11 +1048,15 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
 
 ### Audience Studio Events (`aggregate_type: AudiencePoll`)
 
+The TypeScript `audience_studio` service publishes these events to the `runefoble.events.audience` stream. A command publishes its events before it stores them. If a publish fails, the command is rejected and nothing is stored. The CloudEvent `id` is `<stream>#<version>`, so a retried command publishes the same id. Poll events use stream `AudiencePoll-<poll_id>`. Proposal events use stream `AudienceModifierProposal-<proposal_id>`. The CloudEvent `time` is the command time.
+
 - **`AudiencePollStarted`**: Emitted when a live spectator chaos poll starts (`runefoble.events.audience.poll_started`). Fields: `poll_id`, `campaign_id`, `session_id`, `title`, `prompt`, `options`, `duration_seconds`, `quorum`, `expires_at`.
 - **`AudienceVoteCast`**: Emitted when a spectator casts a vote (`runefoble.events.audience.vote_cast`). Fields: `poll_id`, `campaign_id`, `voter_id`, `option_id`, `channel`, `timestamp`.
-- **`AudiencePollCompleted`**: Emitted when poll voting concludes (`runefoble.events.audience.poll_completed`). Fields: `poll_id`, `campaign_id`, `winning_option_id`, `total_votes`, `quorum_met`, `proposed_modifier`.
-- **`AudienceModifierProposed`**: Emitted when winning chaos option enters DM moderation queue (`runefoble.events.audience.modifier_proposed`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `modifier_type`, `description`, `parameters`, `status`.
-- **`AudienceModifierApproved`**: Emitted when DM approves modifier into session (`runefoble.events.audience.modifier_approved`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `approved_by`, `approved`, `applied_at`.
+- **`AudiencePollCompleted`**: Emitted when poll voting concludes (`runefoble.events.audience.poll_completed`). Fields: `poll_id`, `campaign_id`, `session_id`, `winning_option_id`, `winning_option_label`, `total_votes`, `quorum_met`, `proposed_modifier` (the full proposal object, or `null` when quorum is not met).
+- **`AudienceModifierProposed`**: Emitted when winning chaos option enters DM moderation queue (`runefoble.events.audience.modifier_proposed`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `session_id`, `title`, `modifier_type`, `description`, `parameters`, `status`.
+- **`AudienceModifierApproved`**: Emitted when the DM decides a proposal (`runefoble.events.audience.modifier_approved`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `session_id`, `approved_by`, `approved`, `modifier_type`, `parameters`, `applied_at` (the decision time). A veto uses the same event type with `approved: false`. No separate veto event exists.
+
+Consumers must check `approved` before they apply a modifier.
 
 ### Campaign Analytics & Chronicle Events (`aggregate_type: CampaignChronicle`)
 
