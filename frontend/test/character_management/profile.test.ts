@@ -86,14 +86,13 @@ describe('Profile Settings & Campaign Deduplication (US-0070, US-0071, TASK-0288
     assert.ok(profileContent.includes('user.user_id'));
     assert.ok(profileContent.includes('role-badge'));
 
-    authService.updateUser({ user_id: 'user-valeros', username: 'Valeros', email: 'valeros@runefoble.local', roles: ['player'] });
+    // No Zitadel sign-in exists in this unit test, so the profile update must be refused. No user is invented.
     gateway = installFakeGateway({
-      'PATCH /api/v1/profile': (req) => ({ body: { user_id: 'user-valeros', ...(req.body as object) } }),
+      'PATCH /api/v1/profile': (req) => ({ body: { user_id: 'user-signed-in', ...(req.body as object) } }),
     });
-    const updated = await appDataService.updateProfile({ displayName: 'Valeros the Bold', bio: 'Korvosan Champion' });
-    assert.equal(updated.ok, true);
-    assert.equal(updated.ok && updated.data.display_name, 'Valeros the Bold');
-    assert.equal(authService.getUser()?.display_name, 'Valeros the Bold');
+    const refused = await appDataService.updateProfile({ displayName: 'Adventurer', bio: 'Korvosan Champion' });
+    assert.equal(refused.ok, false, 'a profile update needs a Zitadel sign-in');
+    assert.equal(authService.getUser(), null, 'the App Shell must not invent a user');
 
     const appShellContent = readAppShellSource();
     assert.ok(appShellContent.includes('<runefoble-user-profile'));

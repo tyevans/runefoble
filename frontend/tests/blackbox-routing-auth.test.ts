@@ -58,18 +58,21 @@ const historyHarness = new BrowserHistoryHarness();
 
 import { Router } from '../src/router/router.ts';
 import { AuthService } from '../src/auth/auth-service.ts';
+import { createFakeZitadel, signInWithFake, type FakeZitadel } from '../test/support/fake-zitadel.ts';
 import { registerAuthGuard } from '../src/router/auth-guard.ts';
 
 describe('Router & Deep-Link Blackbox Tests (US-0066)', () => {
   let router: Router;
   let unlistenGuard: (() => void) | null = null;
   let auth: AuthService;
+  let fake: FakeZitadel;
 
   beforeEach(() => {
     mockStorage.clear();
     router = new Router();
     router.reset();
-    auth = new AuthService();
+    fake = createFakeZitadel();
+    auth = new AuthService(fake.env);
     historyHarness.stack = [];
     historyHarness.index = -1;
     (globalThis as any).window.location.hash = '';
@@ -149,13 +152,15 @@ describe('Router & Deep-Link Blackbox Tests (US-0066)', () => {
 describe('Auth Guard & Session Persistence Tests (US-0062)', () => {
   let router: Router;
   let auth: AuthService;
+  let fake: FakeZitadel;
   let unlistenGuard: (() => void) | null = null;
 
   beforeEach(() => {
     mockStorage.clear();
     router = new Router();
     router.reset();
-    auth = new AuthService();
+    fake = createFakeZitadel();
+    auth = new AuthService(fake.env);
     unlistenGuard = registerAuthGuard(router, auth);
   });
 
@@ -174,14 +179,14 @@ describe('Auth Guard & Session Persistence Tests (US-0062)', () => {
   });
 
   it('permits direct access to protected routes when valid session exists in localStorage', async () => {
-    // 1. Sign in via public login frontdoor
-    await auth.login('Marcus', 'Password123!');
+    // 1. Sign in via the Zitadel frontdoor (PKCE against the fake IdP)
+    await signInWithFake(auth, fake);
     assert.equal(auth.isAuthenticated(), true);
 
     // Verify session in localStorage
     const rawSession = mockStorage.getItem('rf_auth_session');
     assert.ok(rawSession);
-    assert.equal(JSON.parse(rawSession).user.username, 'Marcus');
+    assert.equal(JSON.parse(rawSession).user.username, 'marcus');
 
     // 2. Access protected route directly
     const navigated = await router.navigate('#/campaigns/42/sessions/108');
@@ -191,12 +196,12 @@ describe('Auth Guard & Session Persistence Tests (US-0062)', () => {
   });
 
   it('restores authenticated session upon browser reload and allows protected navigation', async () => {
-    await auth.login('EvelynDM', 'VaultPass123!');
+    await signInWithFake(auth, fake);
 
     // Simulate browser reload with new AuthService instance
-    const freshAuth = new AuthService();
+    const freshAuth = new AuthService(fake.env);
     assert.equal(freshAuth.isAuthenticated(), true);
-    assert.equal(freshAuth.getUser()?.username, 'EvelynDM');
+    assert.equal(freshAuth.getUser()?.username, 'marcus');
 
     const freshRouter = new Router();
     const cleanup = registerAuthGuard(freshRouter, freshAuth);
@@ -209,12 +214,12 @@ describe('Auth Guard & Session Persistence Tests (US-0062)', () => {
   });
 
   it('triggers redirection to login when token is cleared or expired', async () => {
-    await auth.login('SarahCleric', 'SecretKey456!');
+    await signInWithFake(auth, fake);
     await router.navigate('#/campaigns');
     assert.equal(router.getCurrentRoute()?.path, '#/campaigns');
 
     // User logs out or token expires -> clears session
-    auth.logout();
+    await auth.logout();
     assert.equal(auth.isAuthenticated(), false);
     assert.equal(mockStorage.getItem('rf_auth_session'), null);
 

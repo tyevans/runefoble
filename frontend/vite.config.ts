@@ -61,10 +61,6 @@ export default defineConfig({
         target: zitadelUrl,
         changeOrigin: true,
       },
-      '/auth': {
-        target: zitadelUrl,
-        changeOrigin: true,
-      },
       '/healthz': {
         target: gatewayUrl,
         changeOrigin: true,

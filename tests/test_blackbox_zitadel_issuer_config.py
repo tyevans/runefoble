@@ -92,7 +92,7 @@ def test_runtime_config_is_rendered_from_values_and_mounted_into_nginx():
     runtime = json.loads(config_map["data"]["runtime-config.json"])
     assert runtime["issuer"] == EXPECTED_ISSUER
     assert runtime["clientId"] == ""
-    assert runtime["scopes"] == ["openid", "profile", "email"]
+    assert runtime["scopes"] == ["openid", "profile", "email", "offline_access"]
     assert runtime["providerName"] == "Zitadel"
     assert "client_secret" not in config_map["data"]["runtime-config.json"]
 

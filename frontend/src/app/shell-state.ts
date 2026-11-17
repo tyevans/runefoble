@@ -21,7 +21,7 @@ export function initTheme(host: RunefobleApp): void {
 
 /** Copies the auth state to the host and registers plugins for the user's role. */
 export function syncAuthState(host: RunefobleApp, s: AuthState): void {
-  host.currentUserId = s.user?.user_id || 'user-valeros';
+  host.currentUserId = s.user?.user_id || '';
   host.isDM = Boolean(s.user?.roles.some((r) => ['dm', 'admin', 'owner'].includes(r)));
   host.userRole = host.isDM ? 'Dungeon Master' : 'Player';
   registerDefaultPlugins(pluginRegistry, host.isDM);
