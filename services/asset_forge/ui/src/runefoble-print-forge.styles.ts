@@ -118,4 +118,19 @@ export const printForgeStyles = css`
     text-align: center;
     line-height: 1.4;
   }
+  .error-banner {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border: var(--rf-border-width, 2px) solid #9d0208;
+    background: #ffe5e5;
+    color: #9d0208;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .download-link {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #121212;
+    word-break: break-all;
+  }
 `;

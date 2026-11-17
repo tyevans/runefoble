@@ -1,24 +1,12 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { assetForgeStyles } from './runefoble-asset-forge.styles.ts';
-
-export interface ForgedMapData {
-  asset_id: string;
-  image_url: string;
-  theme: string;
-  width_cells: number;
-  height_cells: number;
-  wall_count: number;
-  hazard_count: number;
-}
-
-export interface ForgedTokenData {
-  asset_id: string;
-  image_url: string;
-  token_name: string;
-  token_type: string;
-  size_px: number;
-}
+import {
+  forgeBattlemap,
+  forgeToken,
+  type ForgedMapData,
+  type ForgedTokenData,
+} from './forge-api.ts';
 
 @customElement('runefoble-asset-forge')
 export class RunefobleAssetForge extends LitElement {
@@ -26,6 +14,10 @@ export class RunefobleAssetForge extends LitElement {
 
   @property({ type: String })
   campaignId = '';
+
+  /** Base URL prepended to the forge routes (for example, the gateway origin). */
+  @property({ type: String })
+  apiBaseUrl = '';
 
   @property({ type: String })
   activeTab: 'battlemap' | 'token' = 'battlemap';
@@ -51,34 +43,70 @@ export class RunefobleAssetForge extends LitElement {
   @state()
   private tokenType = 'pc';
 
-  private handleForgeMap() {
-    this.dispatchEvent(
-      new CustomEvent('forge-battlemap', {
-        detail: {
-          prompt: this.mapPrompt,
-          campaignId: this.campaignId,
-          width_cells: 20,
-          height_cells: 20,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  @state()
+  private errorMessage = '';
+
+  /** Runs one forge request. Shows the error on failure. Never reports false success. */
+  private async runForge(action: () => Promise<void>) {
+    this.isGenerating = true;
+    this.errorMessage = '';
+    try {
+      await action();
+    } catch (err) {
+      this.errorMessage = err instanceof Error ? err.message : 'Forge request failed.';
+    } finally {
+      this.isGenerating = false;
+    }
   }
 
-  private handleForgeToken() {
-    this.dispatchEvent(
-      new CustomEvent('forge-token', {
-        detail: {
-          prompt: this.tokenPrompt,
-          token_name: this.tokenName,
-          token_type: this.tokenType,
-          campaignId: this.campaignId,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  private async handleForgeMap() {
+    await this.runForge(async () => {
+      const map = await forgeBattlemap(this.apiBaseUrl, {
+        prompt: this.mapPrompt,
+        campaignId: this.campaignId || undefined,
+        widthCells: 20,
+        heightCells: 20,
+      });
+      this.lastForgedMap = map;
+      this.dispatchEvent(
+        new CustomEvent('forge-battlemap', {
+          detail: {
+            prompt: this.mapPrompt,
+            campaignId: this.campaignId,
+            width_cells: 20,
+            height_cells: 20,
+            asset: map,
+          },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
+  }
+
+  private async handleForgeToken() {
+    await this.runForge(async () => {
+      const token = await forgeToken(this.apiBaseUrl, {
+        prompt: this.tokenPrompt,
+        tokenName: this.tokenName,
+        tokenType: this.tokenType,
+        campaignId: this.campaignId || undefined,
+      });
+      this.lastForgedToken = token;
+      this.dispatchEvent(
+        new CustomEvent('forge-token', {
+          detail: {
+            prompt: this.tokenPrompt,
+            token_name: this.tokenName,
+            token_type: this.tokenType,
+            campaignId: this.campaignId,
+            asset: token,
+          },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
   }
 
   private handleProjectGeometry() {
@@ -105,7 +133,7 @@ export class RunefobleAssetForge extends LitElement {
     return html`
       <div class="header">
         <span class="title">Tactical Asset Forge</span>
-        <span style="font-size: 0.75rem; font-weight: 700;">Procedural Diffusion Engine</span>
+        <span style="font-size: 0.75rem; font-weight: 700;">Procedural Battlemap Forge</span>
       </div>
 
       <div class="tabs">
@@ -124,6 +152,9 @@ export class RunefobleAssetForge extends LitElement {
       </div>
 
       ${this.activeTab === 'battlemap' ? this.renderBattlemapTab() : this.renderTokenTab()}
+      ${this.errorMessage
+        ? html`<div class="error-banner" role="alert">${this.errorMessage}</div>`
+        : ''}
     `;
   }
 

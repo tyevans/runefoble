@@ -121,4 +121,13 @@ export const assetForgeStyles = css`
     border: none;
     cursor: pointer;
   }
+  .error-banner {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border: var(--rf-border-width, 2px) solid #9d0208;
+    background: #ffe5e5;
+    color: #9d0208;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
 `;
