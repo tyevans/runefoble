@@ -21,7 +21,7 @@ gateway/mcp/src/gateway_mcp/
 │   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
 ├── main.py                # CLI execution wrapper
 ├── server.py              # FastMCP orchestration shell and module mounting
-├── settings.py            # Upstream service URLs (BOARD_STATE_URL, RULES_COMPENDIUM_URL)
+├── settings.py            # Upstream service URLs (BOARD_STATE_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL)
 ├── tools/                 # MCP tool implementations (< 180 lines each)
 │   ├── dice.py            # Dice notation parsing and rolling (roll_dice)
 │   ├── board.py           # Tactical board and encounter tools (HTTP-backed by board_state)
@@ -48,8 +48,8 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | `cast_spell` | `character_id: str`, `spell_name: str`, `spell_level: int`, `target: str` | Cast a spell, tracking spell slot expenditure and mechanical rules. |
 | `modify_character_hp` | `character_id: str`, `delta: int`, `damage_type: str`, `reason: str` | Apply damage or healing, calculating `bloodied` or `unconscious` states. |
 | `add_condition` / `apply_condition` | `character_id: str`, `condition: str`, `duration_rounds: int`, `source: str` | Impose status condition (`blinded`, `prone`, `frightened`) with rule effects. |
-| `query_encounter_state` | `encounter_id: str` | Read the encounter board from `board_state`: tokens, grid, and active hazards. Turn order and round number are not yet tracked by the board service. |
-| `create_encounter` | `encounter_name: str`, `terrain: str`, `enemies: list[{name, x, y, hp?}]` | Create a 10x8 board in `board_state` and place enemy monster tokens. Returns the board session id as `encounter_id`. |
+| `query_encounter_state` | `encounter_id: str` | Read an encounter. Round, active combatant, and turn order come from `game_session` (`GET /api/v1/sessions/{session_id}/combat`). Tokens, grid, and active hazards come from `board_state`. The `encounter_id` is the game session id. Returns `in_combat`, `round`, `active_combatant_id`, `turn_order`, `session_id`, `grid_dimensions`, `tokens`, and `active_hazards`. |
+| `create_encounter` | `encounter_name: str`, `terrain: str`, `enemies: list[{name, x, y, hp?}]` | Create a 10x8 board in `board_state` and place enemy monster tokens. Returns the board session id as `encounter_id`. This id is not a game session id, so `query_encounter_state` cannot read round or turn order for it. |
 | `narrate_with_the_watcher` | `scene_prompt: str`, `player_actions: str` | Invoke The Watcher AI GM for immersive narration and environmental cues. |
 | `execute_agent_action_plan` | `session_id: str`, `actions: list` | Sequentially execute multi-turn action plan with step validation and timing. |
 | `query_monster_stat_block` | `monster_name: str` | Retrieve full canonical monster stat block, AC, HP, CR, actions, and traits. |
@@ -57,11 +57,12 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 
 ### Upstream Service Calls
 
-Board and encounter tools hold no board state. They call the owning service over HTTP through `gateway_mcp/clients/services.py`:
+Board and encounter tools hold no board or combat state. They call the owning services over HTTP through `gateway_mcp/clients/services.py`:
 
 | Setting | Environment Variable | Default | Owning Service |
 |---|---|---|---|
 | `board_state_url` | `BOARD_STATE_URL` | `http://localhost:8002` | `board_state` |
+| `game_session_url` | `GAME_SESSION_URL` | `http://localhost:8004` | `game_session` |
 | `rules_compendium_url` | `RULES_COMPENDIUM_URL` | `http://localhost:8007` | `rules_compendium` |
 
 An upstream 5xx status or an unreachable service raises `ServiceUnavailableError`. An upstream 4xx status raises `ServiceRejectedError`. FastMCP reports both to the caller as an MCP tool error result. The gateway never returns fallback data.
@@ -74,7 +75,7 @@ Dynamic FastMCP resources supply structured context to LLMs without requiring ex
 |---|---|---|
 | `session://active` | `application/json` | Active session state including tokens, threat level, and scene atmosphere. |
 | `session://{session_id}/state` | `application/json` | Specific session state including active tokens and atmosphere. |
-| `encounter://current` | `application/json` | Board state (tokens, grid, and hazards) of the active encounter. |
+| `encounter://current` | `application/json` | Board state (tokens, grid, and hazards) of the active encounter from `board_state`. Round and turn order are not included; use `query_encounter_state` for them. |
 
 ## Prompt Templates
 
