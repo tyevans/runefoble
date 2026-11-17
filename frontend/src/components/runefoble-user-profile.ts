@@ -6,6 +6,7 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
+import { loadRuntimeConfig } from '../auth/runtime-config.ts';
 import { appDataService } from '../services/app-data-service.ts';
 import { router } from '../router/router.ts';
 import './runefoble-theme-switcher.ts';
@@ -23,12 +24,14 @@ export class RunefobleUserProfile extends LitElement {
   @state() private profileData: UserClaims | null = null; @state() private isLoading = false;
   @state() public isEditing = false; @state() public editDisplayName = ''; @state() public editAvatarUrl = '';
   @state() public editBio = ''; @state() public isSaving = false; @state() public saveMessage = '';
+  @state() private providerName = '';
   private unlistenAuth: (() => void) | null = null;
 
 
   connectedCallback() {
     super.connectedCallback();
     this.initPreferences();
+    this.loadProvider();
     this.loadProfile();
     this.unlistenAuth = authService.onAuthChanged((st) => {
       if (st.user) {
@@ -52,6 +55,16 @@ export class RunefobleUserProfile extends LitElement {
     }
   }
 
+  /** Shows the identity provider name from runtime config. Shows "Unavailable" when config cannot load. */
+  private loadProvider() {
+    loadRuntimeConfig()
+      .then((config) => { this.providerName = config.providerName; })
+      .catch((err) => {
+        console.error('Runtime config unavailable', err);
+        this.providerName = 'Unavailable';
+      });
+  }
+
   private initPreferences() {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -69,9 +82,7 @@ export class RunefobleUserProfile extends LitElement {
       return;
     }
     const current = authService.getUser();
-    if (current) {
-      this.profileData = current;
-    }
+    this.profileData = current;
     try {
       this.isLoading = true;
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -82,36 +93,18 @@ export class RunefobleUserProfile extends LitElement {
       const res = await fetch('/api/v1/profile', { headers });
       if (res.ok) {
         this.profileData = await res.json();
+      } else {
+        console.error(`Profile request failed (${res.status})`);
       }
-    } catch {
-      // Fallback preserved
+    } catch (err) {
+      console.error('Profile request failed', err);
     } finally {
       this.isLoading = false;
     }
-
-    if (!this.profileData) {
-      this.profileData = {
-        user_id: 'user-valeros',
-        username: 'Valeros',
-        email: 'valeros@runefoble.local',
-        roles: ['player'],
-        is_admin: false,
-      };
-    }
   }
 
-  private getEffectiveUser(): UserClaims {
-    return (
-      this.user ||
-      this.profileData ||
-      authService.getUser() || {
-        user_id: 'user-valeros',
-        username: 'Valeros',
-        email: 'valeros@runefoble.local',
-        roles: ['player'],
-        is_admin: false,
-      }
-    );
+  private getEffectiveUser(): UserClaims | null {
+    return this.user || this.profileData || authService.getUser();
   }
 
   private getInitials(name: string): string {
@@ -119,7 +112,7 @@ export class RunefobleUserProfile extends LitElement {
   }
 
   private handleSignOut() {
-    authService.logout();
+    void authService.logout();
     this.dispatchEvent(new CustomEvent('auth-logout', { bubbles: true, composed: true }));
     router.navigate('#/login');
   }
@@ -160,6 +153,7 @@ export class RunefobleUserProfile extends LitElement {
     this.isEditing = !this.isEditing;
     if (this.isEditing) {
       const u = this.getEffectiveUser();
+      if (!u) return;
       this.editDisplayName = u.display_name || u.username || '';
       this.editAvatarUrl = u.avatar_url || '';
       this.editBio = u.bio || '';
@@ -203,6 +197,9 @@ export class RunefobleUserProfile extends LitElement {
 
   render() {
     const user = this.getEffectiveUser();
+    if (!user) {
+      return html`<div class="profile-card" data-testid="profile-settings-card">Sign in to view your profile.</div>`;
+    }
     const roles = user.roles || [];
     const isAdmin = Boolean(user.is_admin || roles.includes('admin'));
     const displayName = user.display_name || user.username;
@@ -269,9 +266,8 @@ export class RunefobleUserProfile extends LitElement {
             <div class="claim-item"><span class="claim-label">Display Name</span><span class="claim-value" data-testid="profile-display-name">${displayName}</span></div>
             <div class="claim-item"><span class="claim-label">Adventurer Bio</span><span class="claim-value" data-testid="profile-bio">${user.bio || 'No bio written yet'}</span></div>
             <div class="claim-item"><span class="claim-label">Email Address</span><span class="claim-value" data-testid="profile-email">${user.email || 'Not configured'}</span></div>
-            <div class="claim-item"><span class="claim-label">Assigned Roles</span><div class="roles-list" data-testid="profile-roles">${roles.length > 0 ? roles.map((r) => html`<span class="role-badge ${r.toLowerCase()}">${r}</span>`) : html`<span class="claim-value">Adventurer</span>`}${isAdmin ? html`<span class="role-badge admin">Admin</span>` : ''}</div></div>
-            <div class="claim-item"><span class="claim-label">Privilege Level</span><span class="claim-value" data-testid="profile-admin-status">${isAdmin ? 'Full Administrator (Zanzibar Superuser)' : 'Standard Adventurer'}</span></div>
-            <div class="claim-item"><span class="claim-label">Authentication Provider</span><span class="claim-value">Zitadel OIDC (RS256 PKCE)</span></div>
+            <div class="claim-item"><span class="claim-label">Identity Roles (display only)</span><div class="roles-list" data-testid="profile-roles">${roles.length > 0 ? roles.map((r) => html`<span class="role-badge ${r.toLowerCase()}">${r}</span>`) : html`<span class="claim-value">None</span>`}${isAdmin ? html`<span class="role-badge admin">Admin</span>` : ''}</div></div>
+            <div class="claim-item"><span class="claim-label">Authentication Provider</span><span class="claim-value" data-testid="profile-provider">${this.providerName || 'Loading...'}</span></div>
           </div>
         </section>
 

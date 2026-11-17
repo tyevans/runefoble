@@ -101,7 +101,7 @@ export class RunefobleUserMenu extends LitElement {
 
   private handleSignOut() {
     this.isOpen = false;
-    authService.logout();
+    void authService.logout();
     this.dispatchEvent(new CustomEvent('auth-logout', { bubbles: true, composed: true }));
     router.navigate('#/login');
   }

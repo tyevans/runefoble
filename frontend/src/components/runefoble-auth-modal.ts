@@ -1,26 +1,22 @@
 /**
- * Runefoble Zitadel Authentication Modal Component
- * ADR-0004, ADR-0012, ADR-0013, TASK-0207
+ * Runefoble Zitadel Sign-In Gate Component
+ * ADR-0004, ADR-0012, ADR-0013, ADR-0015 (d), TASK-0207, TASK-0524
+ *
+ * The modal holds no credential field. Sign-in and hosted sign-up both send the user to Zitadel.
  */
 
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { authService, type UserClaims } from '../auth/auth-service.ts';
-import { router } from '../router/router.ts';
+import { authService } from '../auth/auth-service.ts';
 
 @customElement('runefoble-auth-modal')
 export class RunefobleAuthModal extends LitElement {
   @property({ type: Boolean, reflect: true }) open = false;
-  @property({ type: String }) initialTab: 'login' | 'register' = 'login';
   @property({ type: String }) errorMessage = '';
+  /** True while the browser leaves for Zitadel. Set by the parent or by this component. */
+  @property({ type: Boolean }) busy = false;
 
-  @state() private activeTab: 'login' | 'register' = 'login';
-  @state() private username = '';
-  @state() private email = '';
-  @state() private password = '';
-  @state() private confirmPassword = '';
   @state() private localError = '';
-  @state() private isLoading = false;
 
   static styles = css`
     :host { display: contents; }
@@ -41,24 +37,8 @@ export class RunefobleAuthModal extends LitElement {
       background: none; border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
       cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 4px 8px; font-weight: 800;
     }
-    .tabs { display: flex; gap: 8px; border-bottom: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212); padding-bottom: 8px; }
-    .tab-btn {
-      background: var(--rf-bg-inset, #f1f3f5); border: var(--rf-border-width, 2px) solid transparent;
-      padding: 6px 14px; font-weight: 700; cursor: pointer; color: var(--rf-text-muted, #4b5563);
-    }
-    .tab-btn.active {
-      background: var(--rf-accent-secondary, #1d3557); color: #fff;
-      border-color: var(--rf-border-color, #121212); box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212);
-    }
-    form { display: flex; flex-direction: column; gap: 12px; }
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
-    label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; }
-    input {
-      padding: 8px 10px; border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
-      background: var(--rf-bg-surface, #fff); color: var(--rf-text-primary, #121212);
-      font-size: 0.95rem; font-family: inherit;
-    }
-    input:focus { outline: none; border-color: var(--rf-accent-secondary, #1d3557); }
+    .intro { margin: 0; font-size: 0.95rem; line-height: 1.4; }
+    .actions { display: flex; flex-direction: column; gap: 12px; }
     .error-banner {
       background: var(--rf-accent-primary, #e63946); color: #fff;
       padding: 8px 12px; font-size: 0.85rem; font-weight: 700;
@@ -70,17 +50,20 @@ export class RunefobleAuthModal extends LitElement {
       box-shadow: var(--rf-shadow-sm, 2px 2px 0px #121212); padding: 10px;
       font-weight: 800; font-size: 0.95rem; cursor: pointer; text-transform: uppercase;
     }
-    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .secondary-btn {
+      background: var(--rf-bg-inset, #f1f3f5); color: var(--rf-text-primary, #121212);
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      padding: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; text-transform: uppercase;
+    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
   `;
 
   willUpdate(changed: Map<string, unknown>) {
-    if (changed.has('initialTab')) this.activeTab = this.initialTab;
     if (changed.has('errorMessage')) this.localError = this.errorMessage;
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this.activeTab = this.initialTab;
     window.addEventListener('keydown', this.handleKeydown);
   }
 
@@ -99,42 +82,14 @@ export class RunefobleAuthModal extends LitElement {
     this.dispatchEvent(new CustomEvent('auth-modal-closed', { bubbles: true, composed: true }));
   }
 
-  private validate(): boolean {
-    if (!this.username.trim()) { this.localError = 'Username is required'; return false; }
-    if (!this.password) { this.localError = 'Password is required'; return false; }
-    if (this.activeTab === 'register') {
-      if (!this.email || !/\S+@\S+\.\S+/.test(this.email)) {
-        this.localError = 'A valid email address is required'; return false;
-      }
-      if (this.password.length < 8) {
-        this.localError = 'Password must be at least 8 characters'; return false;
-      }
-      if (this.password !== this.confirmPassword) {
-        this.localError = 'Passwords do not match'; return false;
-      }
-    }
+  private async startSignIn(signUp: boolean) {
+    this.busy = true;
     this.localError = '';
-    return true;
-  }
-
-  private async handleSubmit(e: Event) {
-    e.preventDefault();
-    if (!this.validate()) return;
-    this.isLoading = true;
     try {
-      let user: UserClaims;
-      if (this.activeTab === 'login') {
-        user = await authService.login(this.username, this.password);
-      } else {
-        user = await authService.register(this.username, this.email, this.password);
-      }
-      this.dispatchEvent(new CustomEvent('auth-success', { detail: { user }, bubbles: true, composed: true }));
-      this.open = false;
-      router.navigate('#/campaigns');
+      await authService.startSignIn({ signUp });
     } catch (err) {
-      this.localError = err instanceof Error ? err.message : 'Authentication failed';
-    } finally {
-      this.isLoading = false;
+      this.busy = false;
+      this.localError = err instanceof Error ? err.message : 'Sign-in could not start.';
     }
   }
 
@@ -147,46 +102,16 @@ export class RunefobleAuthModal extends LitElement {
             <h2 id="auth-modal-title" class="title">Zitadel Identity</h2>
             <button class="close-btn" aria-label="Close modal" @click=${this.handleClose}>×</button>
           </div>
-          <div class="tabs" role="tablist">
-            <button class="tab-btn ${this.activeTab === 'login' ? 'active' : ''}" role="tab"
-              aria-selected="${this.activeTab === 'login'}" @click=${() => { this.activeTab = 'login'; this.localError = ''; }}>
-              Sign In
+          <p class="intro">Sign in with your Zitadel account. Enter your password on the Zitadel page only.</p>
+          ${this.localError ? html`<div class="error-banner" role="alert">${this.localError}</div>` : ''}
+          <div class="actions">
+            <button type="button" class="submit-btn" ?disabled=${this.busy} @click=${() => this.startSignIn(false)}>
+              ${this.busy ? 'Redirecting to Zitadel...' : 'Sign In with Zitadel'}
             </button>
-            <button class="tab-btn ${this.activeTab === 'register' ? 'active' : ''}" role="tab"
-              aria-selected="${this.activeTab === 'register'}" @click=${() => { this.activeTab = 'register'; this.localError = ''; }}>
+            <button type="button" class="secondary-btn" ?disabled=${this.busy} @click=${() => this.startSignIn(true)}>
               Create Account
             </button>
           </div>
-          ${this.localError ? html`<div class="error-banner" role="alert">${this.localError}</div>` : ''}
-          <form @submit=${this.handleSubmit}>
-            <div class="form-group">
-              <label for="rf-auth-username">Username</label>
-              <input id="rf-auth-username" type="text" .value=${this.username} autocomplete="username"
-                @input=${(e: Event) => { this.username = (e.target as HTMLInputElement).value; }} required />
-            </div>
-            ${this.activeTab === 'register' ? html`
-              <div class="form-group">
-                <label for="rf-auth-email">Email</label>
-                <input id="rf-auth-email" type="email" .value=${this.email} autocomplete="email"
-                  @input=${(e: Event) => { this.email = (e.target as HTMLInputElement).value; }} required />
-              </div>
-            ` : ''}
-            <div class="form-group">
-              <label for="rf-auth-password">Password</label>
-              <input id="rf-auth-password" type="password" .value=${this.password} autocomplete="current-password"
-                @input=${(e: Event) => { this.password = (e.target as HTMLInputElement).value; }} required />
-            </div>
-            ${this.activeTab === 'register' ? html`
-              <div class="form-group">
-                <label for="rf-auth-confirm-password">Confirm Password</label>
-                <input id="rf-auth-confirm-password" type="password" .value=${this.confirmPassword} autocomplete="new-password"
-                  @input=${(e: Event) => { this.confirmPassword = (e.target as HTMLInputElement).value; }} required />
-              </div>
-            ` : ''}
-            <button type="submit" class="submit-btn" ?disabled=${this.isLoading}>
-              ${this.isLoading ? 'Processing...' : this.activeTab === 'login' ? 'Sign In' : 'Create Account'}
-            </button>
-          </form>
         </div>
       </div>
     `;

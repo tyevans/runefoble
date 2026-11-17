@@ -54,8 +54,8 @@ The UI shows:
 
 ## Step 2: Sign Up Through Zitadel
 
-1. Open the Zitadel hosted sign-up page. The App Shell sign-up link is added by TASK-0524.
-2. Enter a username, an email address, and a password.
+1. Open the App Shell at `http://localhost/#/login`. Select **Create Account**. Zitadel opens its hosted sign-up page.
+2. Enter a username, an email address, and a password on the Zitadel page.
 3. Open Mailpit at `http://localhost/mail/`.
 4. Open the newest message. Copy the verification code or open the verification link.
 5. Complete verification on the Zitadel page.

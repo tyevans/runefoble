@@ -4,7 +4,8 @@ import './styles/themes.css';
 import { appShellStyles } from './styles/app-shell.styles.ts';
 import './app/component-registry.ts';
 import { registerDefaultPlugins, pluginRegistry } from './components/plugins/plugin_registry.ts';
-import { authService } from './auth/auth-service.ts';
+import { authService, isAuthCallbackPath } from './auth/auth-service.ts';
+import { completeSignInCallback } from './app/auth-callback.ts';
 import { router, registerAuthGuard, type BreadcrumbItem, type MatchedRoute, type RouteParams } from './router/index.ts';
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
@@ -47,8 +48,8 @@ export class RunefobleApp extends LitElement {
   @state() public currentRoute: MatchedRoute | null = null;
   @state() public routeParams: RouteParams = {};
   @state() public isAuthModalOpen = false;
-  @state() public authInitialTab: 'login' | 'register' = 'login';
-  @state() public currentUserId = 'user-valeros';
+  @state() public authError = '';
+  @state() public currentUserId = '';
   @state() public userRole = 'Player';
   @state() public isDM = false;
   @state() public campaigns: CampaignItem[] = [];
@@ -81,7 +82,12 @@ export class RunefobleApp extends LitElement {
     syncAuthState(this, authService.getState());
     registerDefaultPlugins(pluginRegistry, this.isDM);
     this.unlistenAuth = authService.onAuthChanged((s) => syncAuthState(this, s));
-    this.initRouter();
+    // The router starts after the Zitadel code exchange so the guard sees the result.
+    if (isAuthCallbackPath(window.location.pathname)) {
+      void completeSignInCallback().then((error) => { this.authError = error; this.initRouter(); });
+    } else {
+      this.initRouter();
+    }
   }
 
   disconnectedCallback() {
@@ -138,7 +144,6 @@ export class RunefobleApp extends LitElement {
     }
     if (route.params.characterId) this.selectedCharacterId = route.params.characterId;
     if (route.pattern === '#/login' || route.pattern === '#/register') {
-      this.authInitialTab = route.pattern === '#/register' ? 'register' : 'login';
       this.isAuthModalOpen = true;
     }
     this.sessionSocket.manageWebSocketLifecycle(route);

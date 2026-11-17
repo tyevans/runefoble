@@ -24,7 +24,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `/docs`, `/openapi.json`, `/redoc` | `http://localhost:8000` (`gateway-api`) | Unified OpenAPI documentation and Swagger schema hub |
 | `/campaigns` | `http://localhost:8000` (`gateway-api`) | Direct campaign and settlement management endpoints |
 | `/mail`, `/mailpit` | `http://localhost:8025` (`mailpit`) | Mailpit mock SMTP web interface and REST API |
-| `/oauth`, `/auth` | `http://localhost:8080` (`zitadel`) | Zitadel OIDC authentication and token discovery endpoints |
+| `/oauth` | `http://localhost:8080` (`zitadel`) | Zitadel OIDC token and discovery endpoints used by the dev proxy. The browser reaches Zitadel at `auth.localhost` for sign-in. The App Shell callback is `/auth/callback` and is served by the SPA fallback |
 | `/healthz` | `http://localhost:8000` (`gateway-api`) | Gateway liveness check |
 
 ## Microservice Internal Ports

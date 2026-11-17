@@ -1,7 +1,14 @@
 /**
  * Runefoble Zitadel OIDC Browser Authentication Service
- * ADR-0004, ADR-0005, ADR-0012, ADR-0013, TASK-0207
+ * ADR-0004, ADR-0005, ADR-0013, ADR-0015 (d), TASK-0207, TASK-0524
+ *
+ * The App Shell never handles a password. It sends the user to Zitadel (authorization code + PKCE),
+ * receives the code at /auth/callback, and keeps only the tokens Zitadel issues.
  */
+
+import { createPkceSession, loadPendingSignIn, clearPendingSignIn, savePendingSignIn, type KeyValueStore, type PendingSignIn } from './pkce.ts';
+import { OidcClient, type OidcTokenResponse } from './oidc-client.ts';
+import { loadRuntimeConfig } from './runtime-config.ts';
 
 export interface UserClaims {
   user_id: string;
@@ -16,6 +23,7 @@ export interface UserClaims {
 
 export interface AuthTokens {
   accessToken: string;
+  idToken?: string;
   refreshToken?: string;
   expiresAt: number;
 }
@@ -28,6 +36,32 @@ export interface AuthState {
 
 export type AuthListener = (state: AuthState) => void;
 const STORAGE_KEY = 'rf_auth_session';
+
+/** Path that receives the Zitadel redirect. A redirect URI cannot carry a fragment, so this is a real path, not a hash route. */
+export const AUTH_CALLBACK_PATH = '/auth/callback';
+
+export function isAuthCallbackPath(pathname: string): boolean {
+  return pathname === AUTH_CALLBACK_PATH;
+}
+
+/** Browser-side wiring. Tests inject fakes for each field. */
+export interface AuthEnvironment {
+  oidc: OidcClient;
+  callbackUri: () => string;
+  postLogoutUri: () => string;
+  navigate: (url: string) => void;
+  pendingStore: () => KeyValueStore;
+}
+
+function defaultEnvironment(): AuthEnvironment {
+  return {
+    oidc: new OidcClient(loadRuntimeConfig, (input, init) => globalThis.fetch(input, init)),
+    callbackUri: () => `${window.location.origin}${AUTH_CALLBACK_PATH}`,
+    postLogoutUri: () => `${window.location.origin}/`,
+    navigate: (url) => window.location.assign(url),
+    pendingStore: () => window.sessionStorage,
+  };
+}
 
 export function parseJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -58,15 +92,36 @@ export function extractClaimsFromPayload(payload: Record<string, unknown>): User
   };
 }
 
+/** Expiry comes from the access token `exp` claim when it is a JWT, else from `expires_in`. */
+function expiresAtFor(response: OidcTokenResponse): number {
+  const exp = parseJwtPayload(response.access_token)?.exp;
+  if (typeof exp === 'number') return exp * 1000;
+  if (typeof response.expires_in !== 'number' || !Number.isFinite(response.expires_in)) {
+    throw new Error('Token response has no expiry.');
+  }
+  return Date.now() + response.expires_in * 1000;
+}
+
+function toAuthTokens(response: OidcTokenResponse): AuthTokens {
+  return {
+    accessToken: response.access_token,
+    idToken: response.id_token,
+    refreshToken: response.refresh_token,
+    expiresAt: expiresAtFor(response),
+  };
+}
+
 export class AuthService {
   private static instance: AuthService;
   private state: AuthState = { isAuthenticated: false, user: null, tokens: null };
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
   private listeners: Set<AuthListener> = new Set();
-  public apiBase = '/api/v1/auth';
-  public devFallback = true;
+  private readonly env: AuthEnvironment;
 
-  constructor() { this.restoreSession(); }
+  constructor(env: Partial<AuthEnvironment> = {}) {
+    this.env = { ...defaultEnvironment(), ...env };
+    this.restoreSession();
+  }
 
   static getInstance(): AuthService {
     if (!AuthService.instance) AuthService.instance = new AuthService();
@@ -74,29 +129,120 @@ export class AuthService {
   }
 
   getState(): AuthState { return { ...this.state }; }
-  isAuthenticated(): boolean { return this.state.isAuthenticated; }
+
+  /** True only while the stored access token is unexpired by its own expiry. The server still verifies every call. */
+  isAuthenticated(): boolean {
+    return this.state.isAuthenticated && this.state.tokens !== null && this.state.tokens.expiresAt > Date.now();
+  }
+
   getUser(): UserClaims | null { return this.state.user; }
-  getAccessToken(): string | null { return this.state.tokens?.accessToken || null; }
+  getAccessToken(): string | null { return this.isAuthenticated() ? this.state.tokens?.accessToken || null : null; }
 
   onAuthChanged(listener: AuthListener): () => void {
     this.listeners.add(listener);
     return () => { this.listeners.delete(listener); };
   }
 
+  /** Merges profile changes into the signed-in user. Fails when no user is signed in. */
   updateUser(claims: Partial<UserClaims>): void {
-    const base = this.state.user || {
-      user_id: 'user-valeros',
-      username: 'Valeros of Korvosa',
-      roles: ['player'],
-    };
-    this.state.user = { ...base, ...claims };
-    if (this.state.tokens) {
-      this.persistSession(this.state.tokens, this.state.user);
-    } else {
-      this.notify();
+    if (!this.state.user || !this.state.tokens) throw new Error('Cannot update a user without a sign-in session.');
+    this.persistSession(this.state.tokens, { ...this.state.user, ...claims });
+  }
+
+  /** Redirects the browser to Zitadel. `signUp` opens the hosted registration page. */
+  async startSignIn(options: { signUp?: boolean } = {}): Promise<void> {
+    const pkce = await createPkceSession();
+    const store = this.env.pendingStore();
+    savePendingSignIn(store, { state: pkce.state, nonce: pkce.nonce, codeVerifier: pkce.codeVerifier });
+    try {
+      const url = await this.env.oidc.buildAuthorizeUrl({
+        state: pkce.state,
+        nonce: pkce.nonce,
+        codeChallenge: pkce.codeChallenge,
+        redirectUri: this.env.callbackUri(),
+        signUp: options.signUp === true,
+      });
+      this.env.navigate(url);
+    } catch (err) {
+      clearPendingSignIn(store);
+      throw err;
     }
   }
 
+  /**
+   * Finishes the sign-in at /auth/callback. Checks `state` and `nonce`, exchanges the code with the PKCE verifier,
+   * and stores the tokens. On any error the session is cleared and the error is thrown.
+   */
+  async completeSignIn(search: string): Promise<UserClaims> {
+    const store = this.env.pendingStore();
+    try {
+      const params = new URLSearchParams(search);
+      let pending: PendingSignIn | null;
+      try {
+        pending = loadPendingSignIn(store);
+      } finally {
+        clearPendingSignIn(store);
+      }
+      const oidcError = params.get('error');
+      if (oidcError) throw new Error(`Sign-in was not completed (${oidcError}).`);
+      if (!pending) throw new Error('No sign-in is pending. Start sign-in again.');
+      if (params.get('state') !== pending.state) throw new Error('Sign-in state did not match. No session was stored.');
+      const code = params.get('code');
+      if (!code) throw new Error('Sign-in response has no authorization code.');
+
+      const response = await this.env.oidc.exchangeCode({
+        code,
+        codeVerifier: pending.codeVerifier,
+        redirectUri: this.env.callbackUri(),
+      });
+      if (!response.id_token) throw new Error('Token response has no ID token.');
+      const idClaims = parseJwtPayload(response.id_token);
+      if (!idClaims || idClaims.nonce !== pending.nonce) throw new Error('Sign-in nonce did not match. No session was stored.');
+
+      const user = extractClaimsFromPayload(idClaims);
+      this.persistSession(toAuthTokens(response), user);
+      return user;
+    } catch (err) {
+      this.clearSession();
+      throw err;
+    }
+  }
+
+  /** Renews the access token with the refresh token. On failure the session is cleared and the error is thrown. */
+  async refreshToken(): Promise<string> {
+    const current = this.state.tokens;
+    const user = this.state.user;
+    try {
+      if (!current?.refreshToken || !user) throw new Error('No refresh token available');
+      const response = await this.env.oidc.refresh(current.refreshToken);
+      let nextUser = user;
+      if (response.id_token) {
+        const claims = parseJwtPayload(response.id_token);
+        if (!claims) throw new Error('Refreshed ID token is malformed.');
+        nextUser = extractClaimsFromPayload(claims);
+        if (nextUser.user_id !== user.user_id) throw new Error('Refreshed token belongs to another user.');
+      }
+      const renewed = toAuthTokens(response);
+      this.persistSession({
+        accessToken: renewed.accessToken,
+        idToken: renewed.idToken ?? current.idToken,
+        refreshToken: renewed.refreshToken ?? current.refreshToken,
+        expiresAt: renewed.expiresAt,
+      }, nextUser);
+      return renewed.accessToken;
+    } catch (err) {
+      this.clearSession();
+      throw err;
+    }
+  }
+
+  /** Clears local tokens, then ends the Zitadel session when an ID token is held. */
+  async logout(): Promise<void> {
+    const idToken = this.state.tokens?.idToken;
+    this.clearSession();
+    if (!idToken) return;
+    this.env.navigate(await this.env.oidc.endSessionUrl(idToken, this.env.postLogoutUri()));
+  }
 
   private notify(): void {
     const current = this.getState();
@@ -135,14 +281,14 @@ export class AuthService {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const data = JSON.parse(raw);
-      if (data?.tokens?.accessToken && data?.user) {
-        if (data.tokens.expiresAt && Date.now() >= data.tokens.expiresAt) {
-          this.refreshToken(data.tokens.refreshToken).catch(() => this.clearSession());
-          return;
-        }
-        this.state = { isAuthenticated: true, user: data.user, tokens: data.tokens };
-        this.scheduleRefresh(data.tokens.expiresAt);
+      if (!data?.tokens?.accessToken || !data?.user) return;
+      this.state = { isAuthenticated: true, user: data.user, tokens: data.tokens };
+      if (data.tokens.expiresAt <= Date.now()) {
+        // refreshToken() clears the session when renewal fails. The guard then sends the user to login.
+        this.refreshToken().catch((err) => console.error('Session renewal failed', err));
+        return;
       }
+      this.scheduleRefresh(data.tokens.expiresAt);
     } catch { this.clearSession(); }
   }
 
@@ -150,90 +296,9 @@ export class AuthService {
     if (this.refreshTimer) clearTimeout(this.refreshTimer);
     const delay = Math.max(5000, expiresAt - Date.now() - 60000);
     this.refreshTimer = setTimeout(() => {
-      this.refreshToken().catch(() => this.logout());
+      this.refreshToken().catch((err) => console.error('Session renewal failed', err));
     }, delay);
     (this.refreshTimer as any)?.unref?.();
-  }
-
-  async login(username: string, password: string): Promise<UserClaims> {
-    try {
-      const res = await fetch(`${this.apiBase}/token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, grant_type: 'password' }),
-      });
-      if (!res.ok) throw new Error(`Auth failed (${res.status})`);
-      return this.handleTokenResponse(await res.json(), username);
-    } catch (err) {
-      if (this.devFallback) return this.createMockSession(username, `${username}@runefoble.local`);
-      throw err;
-    }
-  }
-
-  async register(username: string, email: string, password: string): Promise<UserClaims> {
-    try {
-      const res = await fetch(`${this.apiBase}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password }),
-      });
-      if (!res.ok) throw new Error(`Registration failed (${res.status})`);
-      return this.handleTokenResponse(await res.json(), username, email);
-    } catch (err) {
-      if (this.devFallback) return this.createMockSession(username, email);
-      throw err;
-    }
-  }
-
-  async refreshToken(existingRefresh?: string): Promise<string> {
-    const token = existingRefresh || this.state.tokens?.refreshToken;
-    if (!token && !this.devFallback) throw new Error('No refresh token available');
-    try {
-      const res = await fetch(`${this.apiBase}/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: token, grant_type: 'refresh_token' }),
-      });
-      if (!res.ok) throw new Error('Refresh failed');
-      const body = await res.json();
-      this.handleTokenResponse(body, this.state.user?.username || 'User');
-      return body.access_token;
-    } catch (err) {
-      if (this.devFallback && this.state.user) {
-        return this.createMockSession(this.state.user.username, this.state.user.email).user_id;
-      }
-      throw err;
-    }
-  }
-
-  logout(): void { this.clearSession(); }
-
-  private handleTokenResponse(body: Record<string, unknown>, fallbackName: string, fallbackEmail?: string): UserClaims {
-    const accessToken = String(body.access_token || '');
-    const refreshToken = body.refresh_token ? String(body.refresh_token) : undefined;
-    const expiresIn = Number(body.expires_in || 3600);
-    const expiresAt = Date.now() + expiresIn * 1000;
-    const payload = parseJwtPayload(accessToken);
-    const user = payload ? extractClaimsFromPayload(payload) : {
-      user_id: String(body.user_id || 'user-default'),
-      username: fallbackName,
-      email: fallbackEmail,
-      roles: ['player'],
-      is_admin: false,
-    };
-    this.persistSession({ accessToken, refreshToken, expiresAt }, user);
-    return user;
-  }
-
-  private createMockSession(username: string, email?: string): UserClaims {
-    const user_id = `user-${username.toLowerCase().replace(/[^a-z0-9]/g, '') || 'adventurer'}`;
-    const roles = username.toLowerCase().includes('dm') ? ['dm', 'player'] : ['player'];
-    const user: UserClaims = { user_id, username, email, roles, is_admin: roles.includes('admin') };
-    const expiresAt = Date.now() + 3600 * 1000;
-    const fakePayload = btoa(JSON.stringify({ sub: user_id, preferred_username: username, email, roles, exp: Math.floor(expiresAt / 1000) }));
-    const accessToken = `eyJhbGciOiJIUzI1NiJ9.${fakePayload}.mocksignature`;
-    this.persistSession({ accessToken, refreshToken: `mock-refresh-${user_id}`, expiresAt }, user);
-    return user;
   }
 }
 
