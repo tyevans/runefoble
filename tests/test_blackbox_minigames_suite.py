@@ -15,8 +15,8 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.dependencies import STREAM_TAVERN, set_event_bus, set_spicedb_client
 from game_session.main import app as session_app
-from gateway_api.auth import set_spicedb_client as set_gateway_spicedb
 from gateway_api.main import app as gateway_app
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -49,12 +49,10 @@ def clean_minigame_state():
 
 @pytest.fixture
 def spicedb() -> MockSpiceDBClient:
-    mock_db = MockSpiceDBClient()
+    mock_db = get_spicedb_client()
     set_spicedb_client(mock_db)
-    set_gateway_spicedb(mock_db)
     yield mock_db
     set_spicedb_client(MockSpiceDBClient())
-    set_gateway_spicedb(MockSpiceDBClient())
 
 
 @pytest.fixture

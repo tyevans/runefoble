@@ -18,7 +18,6 @@ from game_session.dependencies import (
     set_spicedb_client as set_session_spicedb,
 )
 from game_session.main import app as session_app
-from gateway_api.auth import set_spicedb_client as set_gateway_spicedb
 from gateway_api.main import app as gateway_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.mock_redis import MockAsyncRedis
@@ -56,8 +55,6 @@ def live_voice_agent(monkeypatch):
 
 @pytest.fixture
 def gateway_client():
-    mock_spicedb = MockSpiceDBClient()
-    set_gateway_spicedb(mock_spicedb)
     return TestClient(gateway_app)
 
 

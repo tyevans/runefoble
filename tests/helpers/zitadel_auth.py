@@ -12,7 +12,6 @@ import base64
 import time
 from collections.abc import Iterator
 from typing import Any
-from unittest.mock import patch
 
 import jwt
 import pytest
@@ -23,6 +22,8 @@ from gateway_api.main import app
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_auth.zitadel import ZitadelAuthService
+
+from tests.helpers.spicedb_factory import shared_spicedb_client
 
 
 def generate_rsa_key() -> rsa.RSAPrivateKey:
@@ -96,7 +97,7 @@ def auth_environment():
     )
 
     mock_spicedb = MockSpiceDBClient()
-    spicedb_patch = patch("gateway_api.auth.get_spicedb_client", return_value=mock_spicedb)
+    spicedb_patch = shared_spicedb_client(mock_spicedb)
     spicedb_patch.start()
     set_zitadel_auth_service(auth_service)
 

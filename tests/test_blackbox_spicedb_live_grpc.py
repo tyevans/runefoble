@@ -16,11 +16,12 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.auth import set_spicedb_client
 from gateway_api.main import app
 from runefoble_auth.bootstrap_schema import bootstrap_schema
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
+
+from tests.helpers.spicedb_factory import shared_spicedb_client
 
 
 def _bearer(issuer: SigningTestIssuer, sub: str) -> dict[str, str]:
@@ -68,8 +69,6 @@ def _join_with_invite(
 @pytest.mark.asyncio
 async def test_mock_spicedb_frontdoor_role_assignment(signing_issuer):
     """Verify invite-based membership and enforcement using MockSpiceDBClient."""
-    mock_client = MockSpiceDBClient()
-    set_spicedb_client(mock_client)
     tc = TestClient(app)
 
     owner = _bearer(signing_issuer, f"owner-{uuid4().hex[:6]}")
@@ -123,44 +122,46 @@ async def test_live_spicedb_frontdoor_role_assignment_and_checks(
     assert "definition campaign" in schema_text
     assert "relation dungeon_master: user" in schema_text
 
-    set_spicedb_client(live_client)
-    tc = TestClient(app)
-    dm = _bearer(signing_issuer, "dm_garrick")
-    player = _bearer(signing_issuer, "player_talia")
-    camp_id, session_id = _create_campaign_with_session(tc, dm)
+    with shared_spicedb_client(live_client):
+        tc = TestClient(app)
+        dm = _bearer(signing_issuer, "dm_garrick")
+        player = _bearer(signing_issuer, "player_talia")
+        camp_id, session_id = _create_campaign_with_session(tc, dm)
 
-    # Before membership -> 403 Forbidden
-    assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 403
+        # Before membership -> 403 Forbidden
+        assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 403
 
-    # Redeem a player invite through the frontdoor
-    _join_with_invite(tc, camp_id, dm, player, role="player")
+        # Redeem a player invite through the frontdoor
+        _join_with_invite(tc, camp_id, dm, player, role="player")
 
-    # Player can view session but cannot advance turn
-    assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 200
-    res_player_adv = tc.post(
-        f"/api/v1/sessions/{session_id}/turns/advance",
-        headers=player,
-        json={"next_character_id": "char_1"},
-    )
-    assert res_player_adv.status_code == 403
+        # Player can view session but cannot advance turn
+        assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 200
+        res_player_adv = tc.post(
+            f"/api/v1/sessions/{session_id}/turns/advance",
+            headers=player,
+            json={"next_character_id": "char_1"},
+        )
+        assert res_player_adv.status_code == 403
 
-    # The campaign owner (DM) advances turn
-    res_dm_adv = tc.post(
-        f"/api/v1/sessions/{session_id}/turns/advance",
-        headers=dm,
-        json={"next_character_id": "char_1"},
-    )
-    assert res_dm_adv.status_code == 200
-    assert res_dm_adv.json()["status"] == "turn_advanced"
+        # The campaign owner (DM) advances turn
+        res_dm_adv = tc.post(
+            f"/api/v1/sessions/{session_id}/turns/advance",
+            headers=dm,
+            json={"next_character_id": "char_1"},
+        )
+        assert res_dm_adv.status_code == 200
+        assert res_dm_adv.json()["status"] == "turn_advanced"
 
-    # Direct permission check via live SpiceDB client
-    assert await live_client.check_permission("campaign", camp_id, "view", "user", "player_talia")
-    assert not await live_client.check_permission(
-        "campaign", camp_id, "run_session", "user", "player_talia"
-    )
-    assert await live_client.check_permission(
-        "campaign", camp_id, "run_session", "user", "dm_garrick"
-    )
+        # Direct permission check via live SpiceDB client
+        assert await live_client.check_permission(
+            "campaign", camp_id, "view", "user", "player_talia"
+        )
+        assert not await live_client.check_permission(
+            "campaign", camp_id, "run_session", "user", "player_talia"
+        )
+        assert await live_client.check_permission(
+            "campaign", camp_id, "run_session", "user", "dm_garrick"
+        )
 
 
 @pytest.mark.asyncio
@@ -177,23 +178,23 @@ async def test_live_spicedb_relationship_deletion_and_revocation(
         token="test_deletion_token",
     )
     await bootstrap_schema(client=live_client)
-    set_spicedb_client(live_client)
-    tc = TestClient(app)
+    with shared_spicedb_client(live_client):
+        tc = TestClient(app)
 
-    owner = _bearer(signing_issuer, "owner_revocation")
-    member = _bearer(signing_issuer, "user_revoked")
-    camp_id, session_id = _create_campaign_with_session(tc, owner)
+        owner = _bearer(signing_issuer, "owner_revocation")
+        member = _bearer(signing_issuer, "user_revoked")
+        camp_id, session_id = _create_campaign_with_session(tc, owner)
 
-    # Membership through the invite frontdoor -> 200
-    _join_with_invite(tc, camp_id, owner, member, role="player")
-    assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 200
+        # Membership through the invite frontdoor -> 200
+        _join_with_invite(tc, camp_id, owner, member, role="player")
+        assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 200
 
-    # Delete the relationship in live SpiceDB and verify immediately denied
-    await live_client.delete_relationship(
-        resource_type="campaign",
-        resource_id=camp_id,
-        relation="player",
-        subject_type="user",
-        subject_id="user_revoked",
-    )
-    assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 403
+        # Delete the relationship in live SpiceDB and verify immediately denied
+        await live_client.delete_relationship(
+            resource_type="campaign",
+            resource_id=camp_id,
+            relation="player",
+            subject_type="user",
+            subject_id="user_revoked",
+        )
+        assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 403

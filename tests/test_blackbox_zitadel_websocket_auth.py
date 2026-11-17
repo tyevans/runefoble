@@ -15,9 +15,9 @@ import asyncio
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.auth import set_spicedb_client
 from gateway_api.main import app
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from starlette.websockets import WebSocketDisconnect
 
@@ -30,10 +30,8 @@ RUNEFOBLE_PROTOCOL = "runefoble.v1"
 
 @pytest.fixture
 def spicedb() -> MockSpiceDBClient:
-    client = MockSpiceDBClient()
-    set_spicedb_client(client)
+    client = get_spicedb_client()
     yield client
-    set_spicedb_client(SpiceDBClient())
 
 
 @pytest.fixture

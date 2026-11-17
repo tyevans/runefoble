@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client, set_spicedb_client
 from gateway_api.main import app, set_event_bus
 from gateway_api.websocket import (
     CampaignConnectionManager,
@@ -49,7 +48,7 @@ from gateway_api.websocket_validator import (
 from gateway_api.websocket_validator import (
     default_action_validator as default_validator_instance,
 )
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 
 from tests.helpers.ws_identity import ws_subprotocols
@@ -60,11 +59,8 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture(autouse=True)
 def reset_gateway_state():
     """Reset SpiceDB client and event bus before and after each test."""
-    client = MockSpiceDBClient()
-    set_spicedb_client(client)
     set_event_bus(None)
     yield
-    set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
 
 

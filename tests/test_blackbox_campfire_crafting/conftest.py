@@ -14,9 +14,9 @@ from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
 from game_session.dependencies import set_event_bus as set_session_event_bus
 from game_session.main import app as session_app
-from gateway_api.auth import set_spicedb_client as set_gateway_spicedb
 from gateway_api.main import app as gateway_app
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
@@ -36,10 +36,8 @@ def mock_bus() -> Generator[MockAsyncRedis]:
 
 @pytest.fixture
 def mock_spicedb() -> Generator[MockSpiceDBClient]:
-    client = MockSpiceDBClient()
-    set_gateway_spicedb(client)
+    client = get_spicedb_client()
     yield client
-    set_gateway_spicedb(SpiceDBClient())
 
 
 @pytest.fixture

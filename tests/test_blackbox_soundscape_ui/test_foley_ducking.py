@@ -15,8 +15,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.auth import set_spicedb_client as set_gw_spicedb_client
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.ws_identity import ws_subprotocols
 
@@ -64,8 +63,7 @@ def test_gateway_websocket_soundscape_broadcast(gateway_client: TestClient) -> N
     campaign_id = "camp-soundscape-ws-01"
     dm_user = "dm-evelyn"
 
-    mock_db = MockSpiceDBClient()
-    set_gw_spicedb_client(mock_db)
+    mock_db = get_spicedb_client()
 
     asyncio.run(
         mock_db.write_relationship(

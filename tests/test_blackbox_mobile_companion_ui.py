@@ -19,12 +19,10 @@ from uuid import uuid4
 import pytest
 import voice_agent.main as va_main
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client, set_spicedb_client
 from gateway_api.companion import mobile_companion_manager
 from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
-from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.main import app as voice_app
 
@@ -37,8 +35,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 @pytest.fixture(autouse=True)
 def clean_companion_ui_environment():
     """Ensure clean SpiceDB, Redis event bus, and companion connection state."""
-    mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
+    mock_spicedb = get_spicedb_client()
     mock_redis = MockAsyncRedis()
     bus = RedisStreamsEventBus(client=mock_redis)
     set_event_bus(bus)
@@ -52,7 +49,6 @@ def clean_companion_ui_environment():
     mobile_companion_manager.active_profiles.clear()
     va_main.set_event_bus(None)
     set_event_bus(None)
-    set_spicedb_client(SpiceDBClient())
 
 
 @pytest.fixture

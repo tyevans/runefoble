@@ -16,10 +16,9 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.auth import set_spicedb_client as set_gw_spicedb_client
 from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus as set_gw_event_bus
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from soundscape.dependencies import (
     reset_dependencies,
@@ -33,16 +32,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 @pytest.fixture(autouse=True)
 def clean_environment() -> Generator[None]:
     """Ensure clean soundscape and gateway state for each test."""
-    mock_db = MockSpiceDBClient()
+    mock_db = get_spicedb_client()
     set_spicedb_client(mock_db)
-    set_gw_spicedb_client(mock_db)
     set_gw_event_bus(None)
     reset_dependencies()
     set_spicedb_client(mock_db)
     yield
     reset_dependencies()
     set_spicedb_client(SpiceDBClient())
-    set_gw_spicedb_client(SpiceDBClient())
     set_gw_event_bus(None)
 
 

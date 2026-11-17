@@ -10,10 +10,9 @@ from uuid import uuid4
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client, set_spicedb_client
 from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.ws_identity import ws_subprotocols
 
@@ -22,11 +21,8 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 @pytest.fixture(autouse=True)
 def reset_spicedb_state():
-    client = MockSpiceDBClient()
-    set_spicedb_client(client)
     set_event_bus(None)
     yield
-    set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
 
 

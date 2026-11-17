@@ -20,10 +20,10 @@ import pytest
 import voice_agent.main as va_main
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client, set_spicedb_client
 from gateway_api.main import app, set_event_bus
 from gateway_api.signaling import signaling_manager
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
@@ -35,8 +35,7 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture(autouse=True)
 def reset_voice_signaling_environment():
     """Reset SpiceDB client, Redis event bus, and voice room coordinator before each test."""
-    mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
+    mock_spicedb = get_spicedb_client()
 
     mock_redis = MockAsyncRedis()
     bus = RedisStreamsEventBus(client=mock_redis)
@@ -62,7 +61,6 @@ def reset_voice_signaling_environment():
     signaling_manager.peer_sessions.clear()
     signaling_manager._coordinator = None
     va_main.set_event_bus(None)
-    set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
     set_voice_room_coordinator(None)
 

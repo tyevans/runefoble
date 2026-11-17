@@ -12,11 +12,11 @@ from game_session.dependencies import set_event_bus as set_s_bus
 from game_session.dependencies import set_spicedb_client as set_s_db
 from game_session.main import app as session_app
 from game_session.settlement import auth as settlement_auth
-from gateway_api.auth import set_spicedb_client as set_gw_db
 from gateway_api.auth import set_zitadel_auth_service as set_gw_verifier
 from gateway_api.dependencies import set_event_bus as set_gw_bus
 from gateway_api.main import app as gateway_app
 from gateway_api.websocket_manager import ws_campaign_manager
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.mock_redis import MockAsyncRedis
@@ -36,12 +36,10 @@ def mock_bus() -> Generator[MockAsyncRedis]:
 
 @pytest.fixture
 def spicedb() -> Generator[MockSpiceDBClient]:
-    db = MockSpiceDBClient()
+    db = get_spicedb_client()
     set_s_db(db)
-    set_gw_db(db)
     yield db
     set_s_db(MockSpiceDBClient())
-    set_gw_db(MockSpiceDBClient())
 
 
 @pytest.fixture

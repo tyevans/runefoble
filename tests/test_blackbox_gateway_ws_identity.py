@@ -25,7 +25,6 @@ from game_session.settlement.auth.tokens import (
 )
 from gateway_api.auth import (
     get_zitadel_auth_service,
-    set_spicedb_client,
     set_zitadel_auth_service,
 )
 from gateway_api.main import app
@@ -63,7 +62,6 @@ def client(issuer: SigningTestIssuer) -> Iterator[TestClient]:
     previous_session = get_session_auth()
     set_zitadel_auth_service(issuer.verifier())
     set_session_auth(issuer.verifier())
-    set_spicedb_client(MockSpiceDBClient())
     set_session_spicedb(MockSpiceDBClient())
     yield TestClient(app)
     set_zitadel_auth_service(previous_gateway)
