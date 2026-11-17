@@ -28,6 +28,11 @@ APP_TS_PATH = REPO_ROOT / "frontend" / "src" / "runefoble-app.ts"
 ROUTER_TS_PATH = REPO_ROOT / "frontend" / "src" / "router" / "router.ts"
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(gateway_app)
@@ -40,7 +45,7 @@ def reset_store():
 
 
 @pytest.fixture
-def created_campaign_id(client: TestClient) -> str:
+def created_campaign_id(client: TestClient, signing_issuer) -> str:
     """Create a campaign through the public frontdoor where dm_valeros is the Zanzibar owner."""
     res = client.post(
         "/api/v1/campaigns",
@@ -50,7 +55,7 @@ def created_campaign_id(client: TestClient) -> str:
             "system": "5e",
             "description": "Exploration of the ancient stellar tomb.",
         },
-        headers={"X-User-Id": "dm_valeros"},
+        headers=_auth(signing_issuer, "dm_valeros"),
     )
     assert res.status_code == 201
     return res.json()["id"]
@@ -85,9 +90,11 @@ def test_file_length_invariants() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_campaign_atlas_frontdoor(client: TestClient, created_campaign_id: str) -> None:
+def test_gateway_campaign_atlas_frontdoor(
+    client: TestClient, created_campaign_id: str, signing_issuer
+) -> None:
     """Verify world atlas endpoint retrieves map layers, pins, and territories through gateway."""
-    headers = {"X-User-Id": "dm_valeros"}
+    headers = _auth(signing_issuer, "dm_valeros")
     response = client.get(f"/api/v1/campaigns/{created_campaign_id}/atlas", headers=headers)
     assert response.status_code == 200
     data = response.json()
@@ -101,14 +108,17 @@ def test_gateway_campaign_atlas_frontdoor(client: TestClient, created_campaign_i
 
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(
-        f"/api/v1/campaigns/{created_campaign_id}/atlas", headers={"X-User-Id": "stranger_bob"}
+        f"/api/v1/campaigns/{created_campaign_id}/atlas",
+        headers=_auth(signing_issuer, "stranger_bob"),
     )
     assert unauthorized_res.status_code == 403
 
 
-def test_gateway_campaign_codex_frontdoors(client: TestClient, created_campaign_id: str) -> None:
+def test_gateway_campaign_codex_frontdoors(
+    client: TestClient, created_campaign_id: str, signing_issuer
+) -> None:
     """Verify campaign codex endpoints retrieve lore entries through gateway."""
-    headers = {"X-User-Id": "dm_valeros"}
+    headers = _auth(signing_issuer, "dm_valeros")
 
     # Base codex endpoint
     res1 = client.get(f"/api/v1/campaigns/{created_campaign_id}/codex", headers=headers)
@@ -128,16 +138,17 @@ def test_gateway_campaign_codex_frontdoors(client: TestClient, created_campaign_
 
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(
-        f"/api/v1/campaigns/{created_campaign_id}/codex", headers={"X-User-Id": "stranger_bob"}
+        f"/api/v1/campaigns/{created_campaign_id}/codex",
+        headers=_auth(signing_issuer, "stranger_bob"),
     )
     assert unauthorized_res.status_code == 403
 
 
 def test_gateway_campaign_analytics_frontdoors(
-    client: TestClient, created_campaign_id: str
+    client: TestClient, created_campaign_id: str, signing_issuer
 ) -> None:
     """Verify analytics telemetry endpoints (heatmap, MVP, timeline, summary) through gateway."""
-    headers = {"X-User-Id": "dm_valeros"}
+    headers = _auth(signing_issuer, "dm_valeros")
 
     # Summary
     summary_res = client.get(f"/api/v1/analytics/campaigns/{created_campaign_id}", headers=headers)
@@ -181,7 +192,7 @@ def test_gateway_campaign_analytics_frontdoors(
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(
         f"/api/v1/analytics/campaigns/{created_campaign_id}/heatmap",
-        headers={"X-User-Id": "stranger_bob"},
+        headers=_auth(signing_issuer, "stranger_bob"),
     )
     assert unauthorized_res.status_code == 403
 
