@@ -23,7 +23,9 @@ from asset_forge.dependencies import (
     publish_forge_event,
 )
 from asset_forge.generator import generate_battlemap_png
-from asset_forge.geometry import build_board_geometry_payload, generate_map_layout
+from asset_forge.geometry import build_board_geometry_payload
+from asset_forge.map_generation_engine import get_map_generator
+from asset_forge.map_generator import MapGenerationUnavailable, map_generation_error_body
 from asset_forge.models import (
     BattlemapForgeRequest,
     BattlemapForgeResponse,
@@ -53,14 +55,29 @@ async def forge_battlemap(
                 detail=f"Forbidden: User '{user_id}' does not have permission to forge maps for campaign '{request.campaign_id}'",
             )
 
-    # 1. Procedural layout & geometry calculation
-    theme, wall_segments, hazard_cells, doors, grid = generate_map_layout(
-        prompt=request.prompt,
-        width=request.width_cells,
-        height=request.height_cells,
-        wall_density=request.wall_density,
-        hazard_density=request.hazard_density,
-        theme_override=request.theme,
+    # 1. Layout through the MapGenerator port. No layout means no map is stored.
+    generator = get_map_generator()
+    try:
+        layout = await generator.generate(
+            prompt=request.prompt,
+            width=request.width_cells,
+            height=request.height_cells,
+            seed=request.seed,
+            wall_density=request.wall_density,
+            hazard_density=request.hazard_density,
+            theme_override=request.theme,
+        )
+    except MapGenerationUnavailable as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=map_generation_error_body(generator.generator_name, exc),
+        ) from exc
+    theme, wall_segments, hazard_cells, doors, grid = (
+        layout.theme,
+        layout.wall_segments,
+        layout.hazard_cells,
+        layout.doors,
+        layout.grid,
     )
 
     # 2. Raster map synthesis (standard valid PNG)
@@ -158,6 +175,7 @@ async def forge_battlemap(
         hazard_cells=hazard_cells,
         doors=doors,
         board_geometry_payload=geometry_payload,
+        generator=generator.generator_name,
         status="forged",
     )
 
