@@ -36,6 +36,7 @@ Call `forward_json` from `gateway_api.proxy`. Pass the service name, the method,
 ```python
 from gateway_api.proxy import forward_json
 
+
 @router.get(
     "/api/v1/campaigns/{campaign_id}/atlas",
     dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
@@ -66,6 +67,7 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
 from tests.helpers.live_services import serve
+
 
 def test_atlas_forwards_bearer_token(monkeypatch, signing_issuer):
     with serve(stand_in_lore) as lore_url:

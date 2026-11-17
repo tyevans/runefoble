@@ -24,7 +24,6 @@ from runefoble_platform.event_sourcing import (
     InMemoryEventBus,
     InMemoryEventStore,
 )
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     get_spicedb_client,
@@ -38,6 +37,8 @@ from the_watcher.factions import FactionAggregate
 from the_watcher.factions.campaign_world import CampaignWorldAggregate
 from the_watcher.main import app
 from the_watcher.simulation_engine import FactionSimulationEngine
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 WATCHER_STREAM = "runefoble.events.watcher"
 WORLD_TICK_TYPE = "runefoble.events.watcher.world_tick_executed"
