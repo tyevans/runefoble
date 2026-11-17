@@ -4,6 +4,10 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+# Provenance of a response: llm (model output), heuristic (regex rules after
+# model output was unusable), or mock (canned output, explicit mock backend only).
+ResponseSource = Literal["llm", "heuristic", "mock"]
+
 
 class TokenContext(BaseModel):
     token_id: str
@@ -61,6 +65,8 @@ class IntentParseResponse(BaseModel):
     speaker_name: str
     action: ParsedAction
     execution_time_ms: float = 0.0
+    source: ResponseSource
+    degraded: bool = Field(..., description="True when a fallback path produced the result")
 
 
 class DMNarrationRequest(BaseModel):
@@ -91,6 +97,8 @@ class DMNarrationResponse(BaseModel):
     sensory_details: list[str] = Field(default_factory=list)
     suggested_dm_prompts: list[str] = Field(default_factory=list)
     tension_level: Literal["calm", "rising", "climax", "aftermath"] = "rising"
+    source: ResponseSource
+    degraded: bool = Field(..., description="True when a fallback path produced the result")
 
 
 class StandInActionRequest(BaseModel):
@@ -122,3 +130,5 @@ class StandInActionResponse(BaseModel):
     narrative_flavor: str
     penalties_applied: list[str]
     mechanics: dict[str, Any] = Field(default_factory=dict)
+    source: ResponseSource
+    degraded: bool = Field(..., description="True when a fallback path produced the result")

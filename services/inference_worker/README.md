@@ -16,7 +16,10 @@ The worker implements stateful reasoning pipelines using **LangGraph** and **Lan
 - **Pluggable Model Backends**:
   - `openai_compatible`: Direct integration with `llama-swap` / `vLLM` / local OpenAI-compatible servers (default port `8080`).
   - `ollama`: Direct integration with local Ollama daemon (default port `11434`).
-  - `mock`: Safe offline fallback for continuous integration, property testing, and environments without an active GPU.
+  - `mock`: Canned output for continuous integration and property testing. Select it only with `RUNEFOBLE_WORKER_BACKEND=mock`.
+  - `auto`: Probes the two backends above. If neither answers, the worker returns HTTP 503 (`backend_unavailable`). It does not switch to `mock`.
+
+Backend failures are never masked. A failed backend returns HTTP 503 with `{"error": "backend_unavailable", "backend": "<name>"}`. Every response reports `source` (`llm`, `heuristic`, or `mock`) and `degraded`. See `docs/reference/inference-worker-response-contract.md`.
 
 ## Remote Deployment on Dedicated GPU Node
 
