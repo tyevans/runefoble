@@ -7,7 +7,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Security
+- The SpiceDB preshared key has no default. Services and audience-studio fail at startup unless `RUNEFOBLE_SPICEDB_PRESHARED_KEY` is set. Literal keys were removed from the auth library, schema bootstrap, and audience-studio. (TASK-0625)
+- Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
+
+### Removed
+- Zitadel dev-mode identity bypass, the `dev-user-001` fallback, `decode_token`, `is_admin`, and `AuthenticatedUser`. Set `RUNEFOBLE_AUTH_DEV_MODE` or `AUTH_DEV_MODE` no longer has any effect. (TASK-0520)
+- Campaign Lore: removed the `routers/codex.py` compatibility facade, the `WestMarchesWorldAggregate` alias, and package-root, router and dependency re-exports. Import symbols from their owning modules. (TASK-0495)
+- Removed the UVTT blackbox test suite re-export shim `tests/test_blackbox_uvtt_import_suite.py`. The package `tests/test_blackbox_uvtt_import/` runs unchanged (DoR 9). (TASK-0680)
+- Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
+
 ### Added
+- Campaign Lore entity vectors are stored in PostgreSQL with pgvector (`lore_entity_vectors`). (TASK-0670)
+- Character sheet: restore spent spell slots with `POST /api/v1/characters/{id}/spells/restore` (all levels, or one level with `slot_level`). Emits `SpellSlotsRestored`. (TASK-0679)
+- Voice agent `POST /api/v1/voice/dsp/condition` returns conditioned speech text and DSP parameters for the game session. (TASK-0675)
+- Voice agent image installs espeak-ng. The shared Dockerfile takes a `SYSTEM_PACKAGES` build argument. (TASK-0676)
+- `VerifiedPrincipal`, `require_principal`, `authenticate_authorization` (0520). (TASK-0534)
+- spec-ops project configuration (`specops.toml`). ADR-0016 (spec as code), ADR-0017 (file length), ADR-0018 (worktree and backlog isolation), and ADR-0019 (agent constitution and Diataxis) with a spec-ops baseline mapping. (TASK-0664)
+- Rules Compendium retrieval mode setting `RUNEFOBLE_RULES_EMBEDDING` (`lexical` default, or `openai_compatible`). Search responses report `retrieval_mode`. (TASK-0616)
+- Voice agent text-to-speech port with an espeak-ng adapter (`RUNEFOBLE_VOICE_TTS_ENGINE`, `RUNEFOBLE_VOICE_TTS_BINARY`). (TASK-0601)
+- Asset Forge token portraits can be placed on a board. The board receives the token name and type at the chosen cell. (TASK-0613)
 - **Backlog Curation, Deconfliction & PRD-0020 Voice Duplex Extension (`TASK-0508` through `TASK-0511`)**:
   - Resolved task ID collisions in `docs/project/backlog/proposed/`, renumbering atmospheric weather, ghost preview fine-tuning, GM God-Mode workspace, blackbox test suite, and board events test decomposition to `TASK-0503` through `TASK-0507`.
   - Conducted random PRD implementation audit of `PRD-0020` (Zero-Latency Neural Voice Duplex & Interruption) selected via `/dev/urandom`.
@@ -24,6 +43,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- `make test` (`uv run pytest`) now applies a 300 second per-test timeout by default. Added `pytest-timeout` to the root dev group. (TASK-0627)
+- The caravan board shows a red error banner when the server rejects a dispatch or a fulfilment. The contract keeps its previous status. Caravans no longer appear in transit or fulfilled without a successful server response. (TASK-0677)
+- Settings-selected engine ports (speech-to-text, speech synthesis, battlemap layout, wardrobe image, rules embeddings) share one selection and error contract. An unknown engine setting stops the voice agent and Asset Forge at start-up and names the allowed values. An unavailable engine returns `503` through one shared handler. The `503` bodies are unchanged. (TASK-0682)
+- Frontdoor test guidance: new how-to `docs/how-to/test-cross-service-calls-with-live-upstreams.md` for cross-service HTTP tests, with shared loopback upstream helpers (TASK-0683).
+- Redis event bus start-up no longer falls back to the in-memory bus. Initialization errors propagate. (TASK-0672)
+- The MCP `query_encounter_state` tool returns the combat round, active combatant, and initiative order from `game_session`, merged with board tokens. An upstream failure returns an MCP error result. (TASK-0671)
+- Gateway HTTP routes accept identity only from a verified Zitadel bearer token. Asset uploads and deletes use the token subject as owner. The spectator view no longer reads `X-User-Id`. (TASK-0521)
+- Board State `GET /api/v1/boards/{session_id}` returns 404 for an unknown board. It no longer creates a board. (TASK-0617)
+- Microfrontend UI packages type-check their Storybook stories. The `tsconfig.json` of each `services/*/ui` package no longer excludes `src/**/*.stories.ts`. `@storybook/web-components` is a devDependency of each UI package. (TASK-0678)
+- Inference worker Redis consumer requires the canonical message fields (`type`, `payload`). Unknown task types and incomplete messages are rejected and not acknowledged. (TASK-0501)
+- Asset Forge wardrobe synthesis runs behind a `WardrobeGenerator` port. The default `placeholder` generator draws a flat colour portrait and preserves no face. The response reports `generator` and `preserves_face`. Select the generator with `RUNEFOBLE_WARDROBE_GENERATOR`. (TASK-0615)
+- Asset Forge battlemap layout moves behind a `MapGenerator` port. The deterministic generator is the default and uses no diffusion model. Layouts vary with prompt, seed and size. The battlemap response names the generator. A generator that cannot produce a layout returns `503 map_generation_unavailable` and stores nothing (TASK-0614).
+- Dynamic MCP tool events publish to the Redis Streams bus that the gateway API injects at startup. The in-memory fallback bus is removed. Gateway startup fails when `REDIS_URL` is empty. (TASK-0606)
+- `make cluster-up` now exits non-zero when the Traefik install fails and prints "Cluster is ready!" only after the Traefik rollout completes. (TASK-0632)
+- Aligned `@runefoble/audience-studio` and `@runefoble/audience-studio-ui` TypeScript to 7.0.2, matching the rest of the workspace. (TASK-0630)
+- Mercenary Bounty event classes renamed to `MercenaryBountyPosted`, `MercenaryBountyClaimed`, and `MercenaryBountyFulfilled` so the class names match their unchanged wire types. Importing `runefoble_events` no longer prints event type warnings. (TASK-0631)
+- SpiceDB schema: `character` gains `delete` (owner only). `codex_entry` gains `party_shared` and `public` campaign relations, and its `view` honours both. Shared codex entries now save with a valid ACL. (TASK-0540)
+- Inference worker returns HTTP 503 `backend_unavailable` when a model backend fails. It no longer returns canned text with HTTP 200. (TASK-0607)
+- App Shell reads and writes return typed results. A failed read shows a not-found or error state with retry. A failed write shows a toast with the server message and leaves the view unchanged. (TASK-0640)
+- Campaign Lore retrieval backends are configurable (`RUNEFOBLE_LORE_*`). The lore projection rebuilds from events at start-up. Search results and secrecy survive a restart. Start-up fails when a configured PostgreSQL event store is unreachable. (TASK-0611)
 - Asset Forge Silo upload, read and delete fail closed with 503 and no in-memory fallback. Asset metadata is an event-sourced index (TASK-0612).
 - Gateway MCP board and encounter tools call `board_state` and `rules_compendium` over HTTP. Canned tokens, fixed initiative data and random encounter ids are removed. Upstream failures return MCP error results (TASK-0603).
 - Voice agent speech-to-text uses a configured faster-whisper engine. The canned transcript default is removed. A failed utterance returns `503 speech_engine_unavailable` and publishes `VoiceTranscriptionFailed` (TASK-0600).
@@ -985,6 +1024,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- Helm ingress now routes `/ws/...` WebSocket paths to `gateway-api:8000`. Before, they reached the frontend container. (TASK-0660)
+- Board UI trap arming, map switching and token moves now reach the board service. Trap and map events fire only after the server accepts the change. Token moves are sent as `confirm_move` on `/ws/boards/{id}`. (TASK-0563)
+- Service images start again after the shared Dockerfile build. Declared missing dependencies: httpx (runefoble-platform), gateway-mcp (gateway-api), voice-agent (game-session), python-multipart (board-state). (TASK-0620)
 - Services with the PostgreSQL event store enabled exit at start-up when PostgreSQL is unreachable, with no in-memory fallback. Helm enables the PostgreSQL store for all nine aggregate-owning services (TASK-0560).
 - Board and watcher events now reach the Redis event streams. Board routes publish every uncommitted event through `publish_event`, and world ticks publish `world_tick_executed` (TASK-0562).
 - **Backlog Engine Missing & Concurrently Moved Task File Handling**:
