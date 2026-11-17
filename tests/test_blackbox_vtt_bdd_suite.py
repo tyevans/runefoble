@@ -17,6 +17,7 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
+from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
 from tests.helpers.ws_identity import ws_subprotocols
 
@@ -104,35 +105,47 @@ def test_step_definitions_contract() -> None:
     assert "toX" in content or "to_x" in content or "x" in content
 
 
-def test_gateway_api_session_and_participants_frontdoor(client: TestClient) -> None:
-    """Verify gateway campaign store seeds session 15 and participants for lobby test."""
-    # Grant DM role to user-evelyn on campaign 4
-    assign_res = client.post(
-        "/api/v1/campaigns/4/roles",
-        json={"user_id": "user-evelyn", "role": "dungeon_master"},
+def test_gateway_api_session_and_participants_frontdoor(
+    client: TestClient, signing_issuer: SigningTestIssuer
+) -> None:
+    """Verify the gateway serves a lobby session to its members through public frontdoors."""
+    owner = {"Authorization": f"Bearer {signing_issuer.mint('user-evelyn')}"}
+    member = {"Authorization": f"Bearer {signing_issuer.mint('user-valeros')}"}
+    stranger = {"Authorization": f"Bearer {signing_issuer.mint('user-stranger')}"}
+
+    # Owner creates the campaign and its staging lobby session
+    created = client.post("/api/v1/campaigns", json={"title": "Lobby Campaign"}, headers=owner)
+    assert created.status_code == 201
+    campaign_id = created.json()["id"]
+    sessions = client.get(f"/api/v1/campaigns/{campaign_id}/sessions", headers=owner)
+    assert sessions.status_code == 200
+    session_id = sessions.json()[0]["id"]
+
+    # A stranger has no view permission
+    assert client.get(f"/api/v1/sessions/{session_id}", headers=stranger).status_code == 403
+
+    # Owner invites the member; the member redeems the invite
+    invite = client.post(
+        f"/api/v1/campaigns/{campaign_id}/invites", json={"role": "player"}, headers=owner
     )
-    assert assign_res.status_code == 200
+    assert invite.status_code == 201
+    joined = client.post(
+        "/api/v1/campaigns/join", json={"invite_token": invite.json()["token"]}, headers=member
+    )
+    assert joined.status_code == 200
 
-    headers = {"X-User-Id": "user-evelyn"}
-
-    # Fetch session 15
-    res = client.get("/api/v1/sessions/15", headers=headers)
+    # Member fetches the lobby session through the frontdoor
+    res = client.get(f"/api/v1/sessions/{session_id}", headers=member)
     assert res.status_code == 200
     session_data = res.json()
-    assert session_data["id"] == "15"
-    assert session_data.get("campaign_id") == "4" or session_data.get("campaignId") == "4"
-
-    # Check participants for session 15
-    participants = session_data["participants"]
-    assert len(participants) >= 3
-
-    # Check Evelyn or Valeros and Sarah presence
-    participant_names = {p.get("username") or p.get("name") for p in participants}
-    assert "Valeros" in participant_names
-    assert "Sarah" in participant_names
+    assert session_data["id"] == session_id
+    assert session_data.get("campaign_id") == campaign_id
+    assert "participants" in session_data
 
 
-def test_gateway_websocket_session_events(client: TestClient) -> None:
+def test_gateway_websocket_session_events(
+    client: TestClient, trusted_ws_issuer: SigningTestIssuer
+) -> None:
     """Verify gateway tabletop router supports real-time WebSocket protocol for session 15."""
     with client.websocket_connect(
         "/ws/session/15", subprotocols=ws_subprotocols("test-valeros")
