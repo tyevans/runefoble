@@ -12,14 +12,15 @@ import base64
 import time
 from collections.abc import Iterator
 from typing import Any
+from unittest.mock import patch
 
 import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
-from gateway_api.auth import set_spicedb_client, set_zitadel_auth_service
+from gateway_api.auth import set_zitadel_auth_service
 from gateway_api.main import app
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_auth.zitadel import ZitadelAuthService
 
@@ -95,7 +96,8 @@ def auth_environment():
     )
 
     mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
+    spicedb_patch = patch("gateway_api.auth.get_spicedb_client", return_value=mock_spicedb)
+    spicedb_patch.start()
     set_zitadel_auth_service(auth_service)
 
     client = TestClient(app)
@@ -110,7 +112,7 @@ def auth_environment():
     }
 
     # Teardown
-    set_spicedb_client(SpiceDBClient())
+    spicedb_patch.stop()
     set_zitadel_auth_service(None)
 
 

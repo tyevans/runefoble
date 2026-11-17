@@ -5,54 +5,20 @@ from collections.abc import Callable
 from typing import Annotated, Any
 
 from fastapi import Depends, Header, HTTPException, Request
+from runefoble_auth.errors import AuthzUnavailableError
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.principal import (
     VerifiedPrincipal,
     authenticate_authorization,
     require_principal,
 )
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 
 logger = logging.getLogger("runefoble.gateway.auth")
 
-# Default global clients for the gateway
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
+# The gateway uses the shared SpiceDB client factory. It holds no mock wiring.
 _zitadel_auth_service: ZitadelAuthService | None = None
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    global _spicedb_client
-    if _spicedb_client is None:
-        settings = PlatformSettings()
-        if settings.spicedb_endpoint.lower() in ("mock", "mock://"):
-            mock_client = MockSpiceDBClient()
-            mock_client._tuples.update(
-                {
-                    "campaign:4#owner@user:user-dm-evelyn",
-                    "campaign:4#dm@user:user-dm-evelyn",
-                    "campaign:4#owner@user:user-evelyn",
-                    "campaign:4#dm@user:user-evelyn",
-                    "campaign:4#player@user:user-valeros",
-                    "campaign:4#player@user:user-sarah",
-                    "session:14#campaign@campaign:4",
-                    "session:15#campaign@campaign:4",
-                    "game_session:14#campaign@campaign:4",
-                    "game_session:15#campaign@campaign:4",
-                }
-            )
-            _spicedb_client = mock_client
-        else:
-            _spicedb_client = SpiceDBClient(
-                endpoint=settings.spicedb_endpoint,
-                token=settings.spicedb_preshared_key,
-            )
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    global _spicedb_client
-    _spicedb_client = client
 
 
 def get_zitadel_auth_service() -> ZitadelAuthService:
@@ -115,13 +81,28 @@ def require_zanzibar_permission(
             if sess:
                 resource_id = sess.campaign_id
 
-        allowed = await client.check_permission(
-            resource_type=resource_type,
-            resource_id=resource_id,
-            permission=permission,
-            subject_type="user",
-            subject_id=user_id,
-        )
+        try:
+            allowed = await client.check_permission(
+                resource_type=resource_type,
+                resource_id=resource_id,
+                permission=permission,
+                subject_type="user",
+                subject_id=user_id,
+            )
+        except AuthzUnavailableError as exc:
+            logger.error(
+                "Authorization unavailable for '%s' on %s:%s",
+                permission,
+                resource_type,
+                resource_id,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error": "authorization_unavailable",
+                    "message": "Authorization service is unavailable.",
+                },
+            ) from exc
 
         if not allowed:
             logger.warning(

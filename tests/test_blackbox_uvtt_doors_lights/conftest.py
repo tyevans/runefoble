@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+from unittest.mock import patch
 
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client, set_spicedb_client
+from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient
 
 
 @pytest.fixture
@@ -26,12 +27,10 @@ def gateway_client() -> TestClient:
 @pytest.fixture(autouse=True)
 def clean_environment():
     """Ensure clean storage, mock spicedb, and event bus for each test."""
-    mock_spice = MockSpiceDBClient()
-    set_spicedb_client(mock_spice)
-    set_event_bus(None)
-    yield
-    set_spicedb_client(SpiceDBClient())
-    set_event_bus(None)
+    with patch("gateway_api.auth.get_spicedb_client", return_value=MockSpiceDBClient()):
+        set_event_bus(None)
+        yield
+        set_event_bus(None)
 
 
 def create_board(client: TestClient, board_id: str) -> None:
