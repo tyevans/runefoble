@@ -17,9 +17,7 @@ from runefoble_platform.consumer_group import RedisConsumerGroup
 
 from campaign_analytics.event_handlers import (
     AnalyticsEventDispatcher,
-    get_event_attr,
     handle_domain_event,
-    is_event_type,
 )
 from campaign_analytics.storage import CampaignAnalyticsStorage
 
@@ -56,44 +54,6 @@ class CampaignAnalyticsWorker:
         self.processed_count: int = 0
         self.dispatcher = dispatcher or AnalyticsEventDispatcher(storage=self.storage)
 
-    @property
-    def token_positions(self) -> dict[str, tuple[int, int]]:
-        return self.dispatcher.token_positions
-
-    @token_positions.setter
-    def token_positions(self, val: dict[str, tuple[int, int]]) -> None:
-        self.dispatcher.token_positions = val
-
-    @property
-    def token_names(self) -> dict[str, str]:
-        return self.dispatcher.token_names
-
-    @token_names.setter
-    def token_names(self, val: dict[str, str]) -> None:
-        self.dispatcher.token_names = val
-
-    @property
-    def active_combatants(self) -> dict[str, str]:
-        return self.dispatcher.active_combatants
-
-    @active_combatants.setter
-    def active_combatants(self, val: dict[str, str]) -> None:
-        self.dispatcher.active_combatants = val
-
-    @property
-    def active_encounters(self) -> dict[str, str]:
-        return self.dispatcher.active_encounters
-
-    @active_encounters.setter
-    def active_encounters(self, val: dict[str, str]) -> None:
-        self.dispatcher.active_encounters = val
-
-    def _get_attr(self, obj: Any, key: str, default: Any = None) -> Any:
-        return get_event_attr(obj, key, default)
-
-    def _is_type(self, obj: Any, candidates: list[str]) -> bool:
-        return is_event_type(obj, candidates)
-
     async def setup_groups(self) -> None:
         """Ensure consumer groups exist across all monitored streams."""
         if not self.consumer_group:
@@ -110,10 +70,6 @@ class CampaignAnalyticsWorker:
     async def handle_event(self, event: Any) -> None:
         """Process a single domain event and update analytical read-models."""
         await handle_domain_event(event, self.storage, self.dispatcher)
-
-    async def process_event(self, event: Any) -> None:
-        """Public alias for handle_event for backward-compatibility."""
-        await self.handle_event(event)
 
     async def process_once(self, count: int = 10, block_ms: int = 100) -> int:
         """Poll monitored streams once and apply projection events."""
@@ -135,7 +91,7 @@ class CampaignAnalyticsWorker:
 
             for msg_id, payload in entries:
                 try:
-                    await self.process_event(payload)
+                    await self.handle_event(payload)
                     await self.consumer_group.ack(stream, self.group_name, msg_id)
                     total += 1
                     self.processed_count += 1
