@@ -12,6 +12,7 @@ from runefoble_auth.grpc_adapter import (
     create_grpc_client,
     grpc_check_permission,
     grpc_delete_relationship,
+    grpc_lookup_resources,
     grpc_read_relationships,
     grpc_read_schema,
     grpc_write_relationship,
@@ -142,6 +143,22 @@ class SpiceDBClient:
             )
         return await grpc_read_relationships(
             self._grpc_client, resource_type, resource_id, relation
+        )
+
+    async def lookup_resources(
+        self,
+        resource_type: str,
+        permission: str,
+        subject_type: str,
+        subject_id: str,
+    ) -> list[str]:
+        """Return the IDs of resources of `resource_type` that the subject can `permission`."""
+        if self._grpc_client is None:
+            raise RuntimeError(
+                f"SpiceDB client not initialized. Cannot look up resources on {self.endpoint}."
+            )
+        return await grpc_lookup_resources(
+            self._grpc_client, resource_type, permission, subject_type, subject_id
         )
 
     async def write_schema(self, schema_text: str) -> None:

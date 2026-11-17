@@ -113,6 +113,28 @@ class MockSpiceDBClient:
                 results.append(rel)
         return results
 
+    async def lookup_resources(
+        self,
+        resource_type: str,
+        permission: str,
+        subject_type: str,
+        subject_id: str,
+    ) -> list[str]:
+        """Return resource IDs of `resource_type` where the subject has `permission`.
+
+        Candidates are the resources that hold at least one direct tuple.
+        """
+        candidates = sorted(
+            {rel.resource_id for rel in await self.read_relationships(resource_type=resource_type)}
+        )
+        found: list[str] = []
+        for resource_id in candidates:
+            if await self.check_permission(
+                resource_type, resource_id, permission, subject_type, subject_id
+            ):
+                found.append(resource_id)
+        return found
+
     async def write_schema(self, schema_text: str) -> None:
         """Store mock schema definition and update schema graph."""
         self._schema = schema_text

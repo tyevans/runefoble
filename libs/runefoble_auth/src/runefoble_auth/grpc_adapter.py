@@ -115,6 +115,37 @@ async def grpc_read_relationships(
     return await asyncio.to_thread(_stream_sync)
 
 
+async def grpc_lookup_resources(
+    client: Any,
+    resource_type: str,
+    permission: str,
+    subject_type: str,
+    subject_id: str,
+) -> list[str]:
+    """Return the IDs of every resource of `resource_type` where the subject has `permission`."""
+    from authzed.api.v1 import (
+        Consistency,
+        LookupResourcesRequest,
+        ObjectReference,
+        SubjectReference,
+    )
+
+    spicedb_perm = "game_master" if permission == "gm" else permission
+    request = LookupResourcesRequest(
+        consistency=Consistency(fully_consistent=True),
+        resource_object_type=resource_type,
+        permission=spicedb_perm,
+        subject=SubjectReference(
+            object=ObjectReference(object_type=subject_type, object_id=subject_id)
+        ),
+    )
+
+    def _stream_sync() -> list[str]:
+        return [resp.resource_object_id for resp in client.LookupResources(request)]
+
+    return await asyncio.to_thread(_stream_sync)
+
+
 async def grpc_write_schema(invoke_fn: Any, schema_text: str) -> None:
     from authzed.api.v1 import WriteSchemaRequest
 

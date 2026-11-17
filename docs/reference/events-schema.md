@@ -1077,6 +1077,18 @@ For schemas of `MinigameStarted`, `MinigameTurnTaken`, `MinigameEnded`, `Intoxic
 - **`CaravanTradeCompleted`**: Emitted when a caravan arrives at its destination outpost, unlocking regional merchant stock. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `unlocked_stock`, `completed_at`.
 - **`RegionalMerchantStockUpdated`**: Emitted when outpost merchant inventory adjusts due to trade or expeditions. Fields: `shared_world_id`, `outpost_name`, `inventory_updates`.
 
+### Campaign Lifecycle, Membership & Invite Events (`aggregate_type: Campaign`, `CampaignMembership`, `CampaignInvite`, `CampaignSessions`)
+
+Owned by `game_session` (ADR-0015 decision a). Defined in `libs/runefoble_events/src/runefoble_events/campaign_lifecycle.py`. The stream ID is the campaign UUID, except for `CampaignInvite`. There the stream ID is derived from a SHA-256 hash of the invite token, so the raw token never appears in the event store.
+
+- **`CampaignCreated`**: Emitted when a campaign is created. The creator becomes owner. Fields: `campaign_id`, `owner_id`, `title`, `description`, `setting`, `system`, `cover_image_url`, `settings`.
+- **`CampaignUpdated`**: Emitted when editable campaign fields change. Carries only the changed fields. Fields: `campaign_id`, `changes`.
+- **`CampaignMemberAdded`**: Emitted when a user joins with a `player` or `spectator` role. Fields: `campaign_id`, `user_id`, `role`.
+- **`CampaignMemberRemoved`**: Emitted when a member is removed. Fields: `campaign_id`, `user_id`.
+- **`CampaignInviteCreated`**: Emitted when an invite is issued. Fields: `campaign_id`, `role`, `created_by`, `expires_at`, `max_uses`.
+- **`CampaignInviteRedeemed`**: Emitted when a user redeems an invite. Fields: `campaign_id`, `user_id`.
+- **`CampaignSessionCreated`**: Emitted when a session or staging lobby is added to a campaign. Fields: `campaign_id`, `session_id`, `title`, `status`, `scheduled_at`, `description`.
+
 ### Cross-Campaign Settlement & Haven Events (`aggregate_type: Settlement`)
 
 - **`SettlementFoundedEvent`** (`runefoble.events.game_session.settlement_founded` / `SettlementFounded`): Emitted when a new settlement haven is founded with scale (hamlet, village, market town, city, metropolis), biome, coordinates, and initial district zoning. Fields: `settlement_id`, `campaign_id`, `name`, `scale`, `biome`, `coordinates`, `tier`, `prosperity`, `unlocked_districts`, `founded_by`, `metadata`.

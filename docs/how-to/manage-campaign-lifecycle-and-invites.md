@@ -1,11 +1,13 @@
 # How to Manage Campaign Lifecycle and Membership Invites
 
-This recipe demonstrates how to create campaigns, generate shareable invite tokens, join existing campaigns, and inspect active party membership using Runefoble's Gateway API backed by SpiceDB Zanzibar object authorization.
+This recipe demonstrates how to create campaigns, generate shareable invite tokens, join existing campaigns, and inspect active party membership. The `game_session` service owns these records and their SpiceDB Zanzibar tuples (ADR-0015 decision a). It is the only service that writes them.
+
+Clients call these routes through the Gateway API. The gateway forwards them to `game_session` after TASK-0591 lands. Until then, the gateway still answers from its own in-memory copy, which is not durable (see section 10).
 
 ## Prerequisites
 
 - Local Kind cluster or developer environment running (`make cluster-up` or `uv run pytest`).
-- Authenticated user session with Zitadel JWT bearer token or local developer mode header (`X-User-Id`).
+- A Zitadel JWT bearer token for each caller. There is no developer header mode. Identity comes only from a verified token (ADR-0015 c).
 - SpiceDB running locally on port `50051`.
 
 ---
@@ -13,9 +15,11 @@ This recipe demonstrates how to create campaigns, generate shareable invite toke
 ## 1. Creating a New Campaign
 
 When creating a new campaign via `POST /api/v1/campaigns`, the API automatically:
-1. Generates a unique campaign identifier (`camp-<uuid>`).
-2. Persists campaign metadata (title, description, setting, system, and settings).
-3. Writes the `campaign:<id>#owner@user:<user_id>` relationship tuple to SpiceDB Zanzibar.
+1. Generates a unique campaign identifier (UUID).
+2. Persists campaign metadata (title, description, setting, system, and settings) in the event store.
+3. Writes the `campaign:<id>#owner@user:<user_id>` relationship tuple to SpiceDB Zanzibar. The tuple is written only after the save succeeds.
+
+It also seeds a `Session #1: Staging Lobby` unless the request sets `"seed_initial_session": false`.
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/campaigns" \
@@ -36,13 +40,13 @@ curl -X POST "http://localhost:8000/api/v1/campaigns" \
 **Response (`201 Created`):**
 ```json
 {
-  "id": "camp-a1b2c3d4",
+  "id": "6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b",
   "title": "Shadows of Drakkenheim",
   "description": "Gothic horror urban survival campaign.",
   "setting": "Gothic Fantasy",
   "system": "5e",
   "status": "active",
-  "owner_id": "usr-dm-evelyn",
+  "owner_id": "dm-evelyn",
   "role": "owner",
   "member_count": 1,
   "settings": {
@@ -69,7 +73,7 @@ curl -X GET "http://localhost:8000/api/v1/campaigns" \
 ```json
 [
   {
-    "id": "camp-a1b2c3d4",
+    "id": "6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b",
     "title": "Shadows of Drakkenheim",
     "setting": "Gothic Fantasy",
     "system": "5e",
@@ -84,10 +88,13 @@ curl -X GET "http://localhost:8000/api/v1/campaigns" \
 
 ## 3. Generating Shareable Invite Links
 
-Dungeon Masters and owners (holding `run_session` permission) can generate cryptographically secure shareable invite tokens:
+Dungeon Masters and owners (holding `run_session` permission) can generate cryptographically secure shareable invite tokens. The token is shown once. The service stores only a hash of it.
+
+- `expires_in_hours` defaults to 72. It must be at least 1. Send `null` for an invite that never expires.
+- `max_uses` defaults to unlimited. It must be at least 1.
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/invites" \
+curl -X POST "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/invites" \
   -H "Authorization: Bearer <ZITADEL_JWT>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -101,7 +108,7 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/invites" \
 ```json
 {
   "token": "dGVzdF9pbnZpdGVfdG9rZW4",
-  "campaign_id": "camp-a1b2c3d4",
+  "campaign_id": "6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b",
   "role": "player",
   "invite_url": "/#/join/dGVzdF9pbnZpdGVfdG9rZW4",
   "expires_at": "2026-09-30T10:15:00Z",
@@ -115,7 +122,7 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/invites" \
 
 ## 4. Joining a Campaign via Invite
 
-A player or spectator redeems an invite code via `POST /api/v1/campaigns/join`. The gateway writes the corresponding Zanzibar relation (`player` or `spectator`) for the user:
+A player or spectator redeems an invite code via `POST /api/v1/campaigns/join`. The service writes the corresponding Zanzibar relation (`player` or `spectator`) after it saves the membership:
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/campaigns/join" \
@@ -126,14 +133,22 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/join" \
   }'
 ```
 
+| Case | Status | `detail.error` |
+|---|---|---|
+| Unknown token | `400` | `invalid_invite` |
+| Invite past `expires_at` | `410` | `invite_expired` |
+| `max_uses` reached | `409` | `invite_exhausted` |
+
+A user who is already a member gets `200` again. The join does not use up another invite slot. The owner gets `200` with role `owner`.
+
 **Response (`200 OK`):**
 ```json
 {
   "status": "joined",
-  "campaign_id": "camp-a1b2c3d4",
-  "user_id": "usr-player-marcus",
+  "campaign_id": "6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b",
+  "user_id": "player-marcus",
   "role": "player",
-  "zanzibar_relation": "campaign:camp-a1b2c3d4#player@user:usr-player-marcus"
+  "zanzibar_relation": "campaign:6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b#player@user:player-marcus"
 }
 ```
 
@@ -141,10 +156,10 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/join" \
 
 ## 5. Querying Campaign Members and Active Roles
 
-Inspect all members and their Zanzibar roles via `GET /api/v1/campaigns/{id}/members`:
+Inspect the owner and every member via `GET /api/v1/campaigns/{id}/members`. The roster comes from the membership record. `character_name` is `null` here, because character data is owned by `character_sheet`:
 
 ```bash
-curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members" \
+curl -X GET "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/members" \
   -H "Authorization: Bearer <PLAYER_JWT>"
 ```
 
@@ -152,18 +167,18 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members" \
 ```json
 [
   {
-    "user_id": "usr-dm-evelyn",
+    "user_id": "dm-evelyn",
     "role": "owner",
     "subject_type": "user",
-    "zanzibar_relation": "campaign:camp-a1b2c3d4#owner@user:usr-dm-evelyn",
+    "zanzibar_relation": "campaign:6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b#owner@user:dm-evelyn",
     "username": "Evelyn Vance",
     "character_name": null
   },
   {
-    "user_id": "usr-player-marcus",
+    "user_id": "player-marcus",
     "role": "player",
     "subject_type": "user",
-    "zanzibar_relation": "campaign:camp-a1b2c3d4#player@user:usr-player-marcus",
+    "zanzibar_relation": "campaign:6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b#player@user:player-marcus",
     "username": "Marcus",
     "character_name": "Marcus Aurelius the Paladin"
   }
@@ -174,6 +189,8 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members" \
 
 Assign a role with `POST /api/v1/campaigns/{id}/roles`. The caller must hold the `manage` permission on the campaign. Only the campaign owner holds `manage` by default.
 
+This route is not yet owned by `game_session`. It writes a SpiceDB tuple and no membership record, so a role granted here does not appear in the `game_session` roster. TASK-0591 must not move it until its authorization gap is fixed.
+
 - Grantable roles: `dungeon_master`, `game_master`, `player`, `spectator`.
 - `owner` is not grantable. Ownership moves only with campaign creation. The route returns `422` for `owner`.
 - A caller without `manage` gets `403` (`permission_denied`). A refused request writes no tuple.
@@ -181,20 +198,24 @@ Assign a role with `POST /api/v1/campaigns/{id}/roles`. The caller must hold the
 - To read the caller's flags (`manage`, `run_session`, `play`, `view`), call `GET /api/v1/campaigns/{id}/capabilities`.
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/roles" \
+curl -X POST "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/roles" \
   -H "Authorization: Bearer <OWNER_JWT>" \
   -H "Content-Type: application/json" \
-  -d '{"user_id": "usr-dm-arthur", "role": "dungeon_master"}'
+  -d '{"user_id": "dm-arthur", "role": "dungeon_master"}'
 ```
 
 ---
 
 ## 6. Removing a Member from a Campaign
 
-Campaign owners and managers (holding `manage` permission) can remove members from a campaign via `DELETE /api/v1/campaigns/{campaign_id}/members/{user_id}`. This endpoint immediately revokes the target user's SpiceDB Zanzibar relation tuples on the campaign and purges them from the roster:
+Campaign owners and managers (holding `manage` permission) can remove members from a campaign via `DELETE /api/v1/campaigns/{campaign_id}/members/{user_id}`. The service saves the removal first. Then it revokes the user's `player`, `spectator`, `dungeon_master`, and `game_master` tuples on the campaign.
+
+- The owner cannot be removed. The route returns `409` with `owner_not_removable`.
+- The route is idempotent. Removing a user who is not a member returns `200`, and any leftover tuples are revoked.
+
 
 ```bash
-curl -X DELETE "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members/usr-player-marcus" \
+curl -X DELETE "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/members/player-marcus" \
   -H "Authorization: Bearer <DM_JWT>"
 ```
 
@@ -202,8 +223,8 @@ curl -X DELETE "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members/usr
 ```json
 {
   "status": "member_removed",
-  "campaign_id": "camp-a1b2c3d4",
-  "user_id": "usr-player-marcus"
+  "campaign_id": "6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b",
+  "user_id": "player-marcus"
 }
 ```
 
@@ -216,7 +237,7 @@ Campaign owners and Dungeon Masters (holding `run_session` permission) can creat
 
 ### Creating a Session / Staging Lobby
 ```bash
-curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/sessions" \
+curl -X POST "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/sessions" \
   -H "Authorization: Bearer <DM_JWT>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -229,8 +250,8 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/sessions" \
 **Response (`201 Created`):**
 ```json
 {
-  "id": "session-e7a9b1c2",
-  "campaign_id": "camp-a1b2c3d4",
+  "id": "session-e7a9b1c2d4f54a6b8c9d0e1f2a3b4c5d",
+  "campaign_id": "6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b",
   "title": "Session #1: Crypt of the Sunken King",
   "status": "lobby",
   "round": 1,
@@ -242,7 +263,7 @@ curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/sessions" \
 
 ### Listing Campaign Sessions
 ```bash
-curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/sessions" \
+curl -X GET "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/sessions" \
   -H "Authorization: Bearer <PLAYER_JWT>"
 ```
 
@@ -250,8 +271,8 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/sessions" \
 ```json
 [
   {
-    "id": "session-e7a9b1c2",
-    "campaign_id": "camp-a1b2c3d4",
+    "id": "session-e7a9b1c2d4f54a6b8c9d0e1f2a3b4c5d",
+    "campaign_id": "6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b",
     "title": "Session #1: Crypt of the Sunken King",
     "status": "lobby",
     "round": 1,
@@ -310,9 +331,9 @@ import '@runefoble/game-session-ui/campaigns';
 // In campaign view or settings modal:
 html`
   <runefoble-campaign-members
-    campaign-id="camp-a1b2c3d4"
+    campaign-id="6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b"
     campaign-title="Shadows of Drakkenheim"
-    current-user-id="usr-dm-evelyn"
+    current-user-id="dm-evelyn"
     .canManage=${true}
     .members=${campaignMembers}
     invite-token="dGVzdF9pbnZpdGVfdG9rZW4"
@@ -352,9 +373,9 @@ Key features of `<runefoble-campaign-members>`:
 
 ---
 
-## 10. Gateway Campaign Store Modular Architecture
+## 10. Gateway Campaign Store (Transitional, Retired by TASK-0591)
 
-The campaign and invite storage layer in the Gateway API is decomposed into focused modular subpackages under `gateway/api/src/gateway_api/campaign_store/` (keeping all submodules strictly < 160 lines per Hard Invariant 6):
+The Gateway API still holds a copy of the campaign and invite records under `gateway/api/src/gateway_api/campaign_store/`. That copy is in memory and is lost on restart. It is not the source of truth. `game_session` is the owner (ADR-0015 a). TASK-0591 removes the gateway copy. Do not add code that depends on it. The submodules are:
 - **Record Models (`models.py`)**: Defines `CampaignRecord`, `CampaignMemberRecord`, and `InviteTokenRecord` (aliased as `InviteRecord`) dataclasses with dictionary serialization and default participant constants (`DEFAULT_SESSION_PARTICIPANTS`, `DEFAULT_BOARD_TOKENS`).
 - **Session Management (`sessions.py`)**: Defines `CampaignSessionRecord` dataclass and `SessionManager` managing campaign session lifecycles, active states, and lobbies.
 - **Invite Management (`invites.py`)**: Provides secure token generation (`generate_invite_token`), expiration tracking (`calculate_invite_expiry`), `InviteManager` state storage, response formatting (`format_invite_response`), and Zanzibar redemption (`join_from_invite`).
@@ -376,7 +397,7 @@ html`
   <runefoble-campaign-header
     .campaign=${campaignItem}
     .canManage=${isDM}
-    current-user-id="usr-dm-evelyn"
+    current-user-id="dm-evelyn"
     @update-campaign=${async (e: CustomEvent<UpdateCampaignPayload>) => {
       const { campaignId, title, setting, system, cover_image_url, description } = e.detail;
       await fetch(\`/api/v1/campaigns/\${campaignId}\`, {

@@ -195,6 +195,20 @@ if not can_view:
     raise HTTPException(status_code=403, detail="Forbidden")
 ```
 
+### Listing Resources a Subject Can Access
+To list the resources of one type that a subject can use, call `lookup_resources`. The check runs in SpiceDB, so the result follows the schema. Do not read every tuple and filter in code:
+
+```python
+campaign_ids = await client.lookup_resources(
+    resource_type="campaign",
+    permission="view",
+    subject_type="user",
+    subject_id="alice",
+)
+```
+
+The mock client returns only resources that hold at least one direct tuple. The live client returns every resource that the schema grants. `game_session` uses this call for `GET /api/v1/campaigns`.
+
 ### FastAPI Dependency Factory
 In HTTP routes, use `require_zanzibar_permission`:
 ```python
