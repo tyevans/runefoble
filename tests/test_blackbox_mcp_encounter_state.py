@@ -13,10 +13,27 @@ from uuid import uuid4
 import httpx
 import pytest
 from gateway_mcp.server import mcp
-from mcp.shared.memory import create_connected_server_and_client_session
 from mcp.types import CallToolResult
 
 from tests.helpers.live_services import serve, unavailable_app
+from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+_MCP: dict[str, str] = {}
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
+@pytest.fixture(scope="module", autouse=True)
+def mcp_endpoint() -> Iterator[None]:
+    """Serve the gateway MCP server over HTTP so each call carries the caller bearer."""
+    with serve_mcp(mcp) as endpoint:
+        _MCP["url"] = endpoint
+        yield
+    _MCP.clear()
 
 
 @pytest.fixture(scope="module")
@@ -87,7 +104,7 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
         )
         assert advanced.status_code == 200, advanced.text
 
-    with httpx.Client(base_url=upstreams["board"]) as http:
+    with httpx.Client(base_url=upstreams["board"], headers=bearer("user-test")) as http:
         created_board = http.post(
             "/api/v1/boards", json={"session_id": session_id, "cols": 10, "rows": 8}
         )
@@ -102,9 +119,13 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
 
 
 async def call_query_encounter_state(encounter_id: str) -> CallToolResult:
-    """Call query_encounter_state through the MCP protocol with an in-memory client."""
-    async with create_connected_server_and_client_session(mcp) as session:
-        return await session.call_tool("query_encounter_state", {"encounter_id": encounter_id})
+    """Call query_encounter_state over MCP HTTP, with the `user-test` caller bearer."""
+    return await call_tool_over_http(
+        _MCP["url"],
+        "query_encounter_state",
+        {"encounter_id": encounter_id},
+        SIGNING_ISSUER.mint("user-test"),
+    )
 
 
 def tool_text(result: CallToolResult) -> str:
@@ -136,7 +157,7 @@ async def test_blackbox_query_encounter_state_upstream_unavailable_returns_error
     upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch
 ):
     """Verify a game_session 503 yields an MCP error result, not canned round or order data."""
-    with httpx.Client(base_url=upstreams["board"]) as http:
+    with httpx.Client(base_url=upstreams["board"], headers=bearer("user-test")) as http:
         session_id = str(uuid4())
         created_board = http.post(
             "/api/v1/boards", json={"session_id": session_id, "cols": 10, "rows": 8}

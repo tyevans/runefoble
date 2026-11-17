@@ -26,7 +26,7 @@ from board_state.traps import (
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 logger = logging.getLogger("runefoble.board_state.routers.traps")
-router = APIRouter(tags=["traps"])
+router = APIRouter(tags=["traps"], dependencies=[Depends(get_current_user_id)])
 
 
 @router.post("/api/v1/boards/{board_id}/traps", response_model=SecretTrapState, status_code=201)
@@ -34,7 +34,7 @@ router = APIRouter(tags=["traps"])
 async def create_trap(
     board_id: str,
     req: CreateTrapRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: Annotated[str, Depends(get_current_user_id)],
     campaign_id: str | None = Query(default=None),
 ) -> SecretTrapState:
     """Create a secret DM trap or trigger on the tactical board (DM only)."""
@@ -74,7 +74,7 @@ async def create_trap(
 @router.get("/boards/{board_id}/traps", response_model=TrapListResponse)
 async def list_traps(
     board_id: str,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: Annotated[str, Depends(get_current_user_id)],
     campaign_id: str | None = Query(default=None),
 ) -> TrapListResponse:
     """Retrieve traps on the board, filtering out secret traps for non-DM players."""
@@ -92,7 +92,7 @@ async def list_traps(
 async def switch_map_endpoint(
     board_id: str,
     req: SwitchMapRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: Annotated[str, Depends(get_current_user_id)],
     campaign_id: str | None = Query(default=None),
 ) -> SwitchMapResponse:
     """Transition board to new battlemap and teleport party tokens in a single transaction (DM only)."""
@@ -119,7 +119,7 @@ async def switch_map_endpoint(
 async def disarm_trap_endpoint(
     board_id: str,
     trap_id: str,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: Annotated[str, Depends(get_current_user_id)],
 ) -> dict[str, str]:
     """Disarm a trap on the board."""
     board = await get_board(board_id)

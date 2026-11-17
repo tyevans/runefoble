@@ -5,16 +5,16 @@ from __future__ import annotations
 from uuid import uuid4
 
 from board_state.aggregate import PlacedTokenState
-from board_state.dependencies import get_board, get_event_bus, repo
+from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
     MoveTokenRequest,
     MoveTokenResponse,
     PlaceTokenRequest,
 )
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-router = APIRouter(tags=["tokens"])
+router = APIRouter(tags=["tokens"], dependencies=[Depends(get_current_user_id)])
 
 
 @router.post("/api/v1/boards/{session_id}/tokens", response_model=PlacedTokenState)

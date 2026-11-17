@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from board_state.dependencies import get_board, repo
+from board_state.dependencies import get_board, get_current_user_id, repo
 from board_state.models import (
     BoardDecalState,
     CastSpellRequest,
@@ -12,9 +12,9 @@ from board_state.models import (
     FinishVFXResponse,
 )
 from board_state.preview import board_ws_manager
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-router = APIRouter(tags=["vfx"])
+router = APIRouter(tags=["vfx"], dependencies=[Depends(get_current_user_id)])
 
 
 def _determine_audio_stinger(archetype: str, spell_name: str, damage_type: str | None) -> str:
