@@ -16,9 +16,10 @@ import httpx
 from pydantic import BaseModel
 from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.speech_settings import VoiceAgentSettings, build_transcriber
-from voice_agent.transcriber import BaseTranscriber, SpeechEngineUnavailable
+from voice_agent.transcriber import BaseTranscriber
 from voice_agent.vad import (
     AudioRingBuffer,
     VADSegmenter,
@@ -34,7 +35,6 @@ __all__ = [
     "BaseTranscriber",
     "ChunkProcessingResult",
     "ParticipantAudioState",
-    "SpeechEngineUnavailable",
     "StreamingAudioPipeline",
     "VADSegmenter",
     "get_streaming_pipeline",
@@ -147,7 +147,7 @@ class StreamingAudioPipeline:
         session_id: str,
         speaker_id: str,
         speaker_name: str,
-        exc: SpeechEngineUnavailable,
+        exc: EngineUnavailableError,
     ) -> None:
         event = VoiceTranscriptionFailed(
             session_id=session_id,
@@ -209,7 +209,7 @@ class StreamingAudioPipeline:
 
         try:
             transcript = await self.transcriber.transcribe(utterance_audio, sample_rate=sr)
-        except SpeechEngineUnavailable as exc:
+        except EngineUnavailableError as exc:
             await self._publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
             raise
 

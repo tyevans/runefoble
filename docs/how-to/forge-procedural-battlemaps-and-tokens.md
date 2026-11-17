@@ -166,7 +166,7 @@ The battlemap route gets its wall, door, hazard, and grid layout from a `MapGene
 
 It uses no diffusion model, no GPU, and no network call. Its output is a rule-based grid, not generated imagery. The raster (PNG) is drawn from that grid by `asset_forge.raster`.
 
-**A configured provider can replace it.** Select the generator with the `RUNEFOBLE_ASSET_FORGE_MAP_GENERATOR` environment variable. The default is `deterministic`, which is the only supported value in this release. A provider adapter must implement `MapGenerator`. It must raise `MapGenerationUnavailable` when it cannot produce a layout. The route then returns the `503` body shown in section "Failure Behaviour".
+**A configured provider can replace it.** Select the generator with the `RUNEFOBLE_ASSET_FORGE_MAP_GENERATOR` environment variable. The default is `deterministic`, which is the only supported value in this release. A provider adapter must implement `MapGenerator`. It must raise `EngineUnavailableError` with `engine_field="generator"` when it cannot produce a layout. See [Add a Settings-Selected Engine Port Adapter](add-an-engine-port-adapter.md). The route then returns the `503` body shown in section "Failure Behaviour".
 
 | Environment variable | Default | Meaning |
 |---|---|---|

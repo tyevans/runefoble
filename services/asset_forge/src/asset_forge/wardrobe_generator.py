@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 from runefoble_platform.config import WardrobeGeneratorSettings
+from runefoble_platform.engine_ports import build_adapter
 
 from asset_forge.wardrobe_placeholder import PlaceholderWardrobeGenerator
 
@@ -47,6 +48,8 @@ class WardrobeGenerator(Protocol):
 
 def build_wardrobe_generator(settings: WardrobeGeneratorSettings) -> WardrobeGenerator:
     """Return the generator named by settings. Unknown names fail at start-up."""
-    if settings.generator == "placeholder":
-        return PlaceholderWardrobeGenerator()
-    raise ValueError(f"Unsupported wardrobe generator: {settings.generator!r}")
+    return build_adapter(
+        "RUNEFOBLE_WARDROBE_GENERATOR",
+        settings.generator,
+        {"placeholder": PlaceholderWardrobeGenerator},
+    )

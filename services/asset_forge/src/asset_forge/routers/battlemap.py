@@ -25,7 +25,6 @@ from asset_forge.dependencies import (
 from asset_forge.generator import generate_battlemap_png
 from asset_forge.geometry import build_board_geometry_payload
 from asset_forge.map_generation_engine import get_map_generator
-from asset_forge.map_generator import MapGenerationUnavailable, map_generation_error_body
 from asset_forge.models import (
     BattlemapForgeRequest,
     BattlemapForgeResponse,
@@ -56,22 +55,17 @@ async def forge_battlemap(
             )
 
     # 1. Layout through the MapGenerator port. No layout means no map is stored.
+    # EngineUnavailableError becomes HTTP 503 in the app exception handler. Nothing is stored.
     generator = get_map_generator()
-    try:
-        layout = await generator.generate(
-            prompt=request.prompt,
-            width=request.width_cells,
-            height=request.height_cells,
-            seed=request.seed,
-            wall_density=request.wall_density,
-            hazard_density=request.hazard_density,
-            theme_override=request.theme,
-        )
-    except MapGenerationUnavailable as exc:
-        raise HTTPException(
-            status_code=503,
-            detail=map_generation_error_body(generator.generator_name, exc),
-        ) from exc
+    layout = await generator.generate(
+        prompt=request.prompt,
+        width=request.width_cells,
+        height=request.height_cells,
+        seed=request.seed,
+        wall_density=request.wall_density,
+        hazard_density=request.hazard_density,
+        theme_override=request.theme,
+    )
     theme, wall_segments, hazard_cells, doors, grid = (
         layout.theme,
         layout.wall_segments,

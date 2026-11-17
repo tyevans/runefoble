@@ -8,6 +8,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, ClassVar
 
+from runefoble_platform.engine_ports import EngineUnavailableError
+
 logger = logging.getLogger("runefoble.voice_agent.transcriber")
 
 
@@ -16,8 +18,7 @@ def _hub_repo_dir(model_size: str) -> str:
     return f"models--Systran--faster-whisper-{model_size}"
 
 
-class SpeechEngineUnavailable(RuntimeError):
-    """The speech engine cannot load its model or cannot infer a transcript."""
+SPEECH_ENGINE_UNAVAILABLE = "speech_engine_unavailable"
 
 
 class BaseTranscriber(ABC):
@@ -29,14 +30,14 @@ class BaseTranscriber(ABC):
     async def transcribe(self, audio_bytes: bytes, sample_rate: int = 16000) -> str:
         """Transcribe PCM audio bytes into text.
 
-        Raises SpeechEngineUnavailable when the engine cannot produce a transcript.
+        Raises EngineUnavailableError when the engine cannot produce a transcript.
         """
 
     @abstractmethod
     async def check_ready(self) -> None:
         """Verify that the engine can transcribe without a network download.
 
-        Raises SpeechEngineUnavailable when the model is not available.
+        Raises EngineUnavailableError when the model is not available.
         """
 
 
@@ -78,15 +79,19 @@ class FasterWhisperTranscriber(BaseTranscriber):
         if self.download_enabled:
             return  # the model downloads on first use
         if not self.model_dir:
-            raise SpeechEngineUnavailable(
+            raise EngineUnavailableError(
+                SPEECH_ENGINE_UNAVAILABLE,
+                self.engine_name,
                 f"faster-whisper model '{self.model_size}' has no cache directory and "
-                "download is disabled"
+                "download is disabled",
             )
         snapshots = Path(self.model_dir) / _hub_repo_dir(self.model_size) / "snapshots"
         if not snapshots.is_dir() or not any(snapshots.iterdir()):
-            raise SpeechEngineUnavailable(
+            raise EngineUnavailableError(
+                SPEECH_ENGINE_UNAVAILABLE,
+                self.engine_name,
                 f"faster-whisper model '{self.model_size}' is not cached in '{self.model_dir}' "
-                "and download is disabled"
+                "and download is disabled",
             )
 
     async def transcribe(self, audio_bytes: bytes, sample_rate: int = 16000) -> str:
@@ -102,6 +107,8 @@ class FasterWhisperTranscriber(BaseTranscriber):
             return await asyncio.to_thread(_infer)
         except Exception as e:
             logger.warning("faster-whisper model '%s' failed: %s", self.model_size, e)
-            raise SpeechEngineUnavailable(
-                f"faster-whisper model '{self.model_size}' failed: {e}"
+            raise EngineUnavailableError(
+                SPEECH_ENGINE_UNAVAILABLE,
+                self.engine_name,
+                f"faster-whisper model '{self.model_size}' failed: {e}",
             ) from e

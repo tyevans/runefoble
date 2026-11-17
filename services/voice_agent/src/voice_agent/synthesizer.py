@@ -7,10 +7,6 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 
-class SpeechSynthesisUnavailable(RuntimeError):
-    """The speech engine cannot render the text into audio."""
-
-
 @dataclass(frozen=True)
 class AudioClip:
     """Signed 16-bit little-endian mono PCM with its sample rate."""
@@ -43,12 +39,12 @@ class BaseSynthesizer(ABC):
     async def synthesize(self, text: str, voice: str) -> AudioClip:
         """Render text with the named voice.
 
-        Raises SpeechSynthesisUnavailable when the engine cannot produce audio.
+        Raises EngineUnavailableError when the engine cannot produce audio.
         """
 
     @abstractmethod
     async def check_ready(self) -> None:
         """Verify that the engine can run now, without synthesizing text.
 
-        Raises SpeechSynthesisUnavailable when the engine is missing or broken.
+        Raises EngineUnavailableError when the engine is missing or broken.
         """

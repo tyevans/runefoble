@@ -6,9 +6,13 @@ Text-To-Speech synthesis with persona voice models, and dynamic DSP audio condit
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 import httpx
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.dependencies import (
     STREAM_SESSION,
@@ -53,11 +57,22 @@ from voice_agent.routers import (
 from voice_agent.stt import get_streaming_pipeline
 from voice_agent.synthesis_engine import get_speech_synthesizer
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Build the configured speech engines at start-up. A bad engine setting stops the service."""
+    get_streaming_pipeline()
+    get_speech_synthesizer()
+    yield
+
+
 app = FastAPI(
     title="Runefoble - Voice Agent Service",
     version="0.1.0",
     description="Real-time Voice Streaming, STT / TTS Pipelines, and Persona Voice Synthesis.",
+    lifespan=lifespan,
 )
+app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)
 app.include_router(room_router)
 app.include_router(stream_router)
 app.include_router(audio_router)

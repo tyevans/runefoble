@@ -9,7 +9,8 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from voice_agent.stt import SpeechEngineUnavailable, get_streaming_pipeline
+from runefoble_platform.engine_ports import EngineUnavailableError
+from voice_agent.stt import get_streaming_pipeline
 
 logger = logging.getLogger("runefoble.voice_agent.stream_routes")
 
@@ -44,15 +45,6 @@ class AudioStreamChunkResponse(BaseModel):
     buffer_duration_ms: float = 0.0
 
 
-def speech_engine_error_body(engine: str, exc: SpeechEngineUnavailable) -> dict[str, str]:
-    """Explicit error payload for a completed utterance that could not be transcribed."""
-    return {
-        "error": "speech_engine_unavailable",
-        "engine": engine,
-        "message": str(exc),
-    }
-
-
 @router.post("/chunk", response_model=AudioStreamChunkResponse)
 async def ingest_audio_chunk(req: AudioStreamChunkRequest):
     """Ingest PCM/WAV audio chunk, process VAD boundaries, and trigger streaming transcription."""
@@ -67,24 +59,18 @@ async def ingest_audio_chunk(req: AudioStreamChunkRequest):
                 detail=f"Invalid base64 audio payload: {e}",
             ) from e
 
-    pipeline = get_streaming_pipeline()
-    try:
-        result = await pipeline.process_chunk(
-            session_id=req.session_id,
-            speaker_id=req.speaker_id,
-            speaker_name=req.speaker_name,
-            campaign_id=req.campaign_id,
-            audio_bytes=audio_bytes,
-            sample_rate=req.sample_rate,
-            is_whisper=req.is_whisper,
-            target_character_id=req.target_character_id,
-            is_final=req.is_final,
-        )
-    except SpeechEngineUnavailable as e:
-        raise HTTPException(
-            status_code=503,
-            detail=speech_engine_error_body(pipeline.transcriber.engine_name, e),
-        ) from e
+    # EngineUnavailableError becomes HTTP 503 in the app exception handler.
+    result = await get_streaming_pipeline().process_chunk(
+        session_id=req.session_id,
+        speaker_id=req.speaker_id,
+        speaker_name=req.speaker_name,
+        campaign_id=req.campaign_id,
+        audio_bytes=audio_bytes,
+        sample_rate=req.sample_rate,
+        is_whisper=req.is_whisper,
+        target_character_id=req.target_character_id,
+        is_final=req.is_final,
+    )
 
     return AudioStreamChunkResponse(**result.model_dump())
 
@@ -143,10 +129,8 @@ async def audio_stream_websocket(
                     sample_rate=sample_rate,
                     is_final=is_final,
                 )
-            except SpeechEngineUnavailable as e:
-                await websocket.send_json(
-                    speech_engine_error_body(pipeline.transcriber.engine_name, e)
-                )
+            except EngineUnavailableError as e:
+                await websocket.send_json(e.body())
                 continue
 
             await websocket.send_json(result.model_dump())

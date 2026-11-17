@@ -5,17 +5,19 @@ from __future__ import annotations
 import asyncio
 from typing import ClassVar
 
-from voice_agent.synthesizer import AudioClip, BaseSynthesizer, SpeechSynthesisUnavailable
+from runefoble_platform.engine_ports import EngineUnavailableError
+from voice_agent.synthesizer import AudioClip, BaseSynthesizer
 from voice_agent.wav import decode_wav
 
 DEFAULT_TIMEOUT_S = 30.0
+SPEECH_SYNTHESIS_UNAVAILABLE = "speech_synthesis_unavailable"
 
 
 class EspeakNgSynthesizer(BaseSynthesizer):
     """Runs `espeak-ng --stdout` and returns the WAV it writes.
 
     The text is sent on stdin, so no caller text reaches the command line.
-    Any failure to start, exit, or return audio raises SpeechSynthesisUnavailable.
+    Any failure to start, exit, or return audio raises EngineUnavailableError.
     """
 
     engine_name: ClassVar[str] = "espeak-ng"
@@ -24,11 +26,14 @@ class EspeakNgSynthesizer(BaseSynthesizer):
         self.binary = binary
         self.timeout_s = timeout_s
 
+    def _unavailable(self, message: str) -> EngineUnavailableError:
+        return EngineUnavailableError(SPEECH_SYNTHESIS_UNAVAILABLE, self.engine_name, message)
+
     async def check_ready(self) -> None:
         """Run `espeak-ng --version`. A missing or failing binary is not ready."""
         returncode, _stdout, stderr = await self._run([self.binary, "--version"], b"")
         if returncode != 0:
-            raise SpeechSynthesisUnavailable(
+            raise self._unavailable(
                 f"'{self.binary}' --version exited with status {returncode}: {stderr}"
             )
 
@@ -36,18 +41,14 @@ class EspeakNgSynthesizer(BaseSynthesizer):
         argv = [self.binary, "--stdout", "-v", voice, "--stdin"]
         returncode, stdout, stderr = await self._run(argv, text.encode("utf-8"))
         if returncode != 0:
-            raise SpeechSynthesisUnavailable(
-                f"'{self.binary}' exited with status {returncode}: {stderr}"
-            )
+            raise self._unavailable(f"'{self.binary}' exited with status {returncode}: {stderr}")
 
         try:
             clip = decode_wav(stdout)
         except ValueError as exc:
-            raise SpeechSynthesisUnavailable(
-                f"'{self.binary}' returned no usable audio: {exc}"
-            ) from exc
+            raise self._unavailable(f"'{self.binary}' returned no usable audio: {exc}") from exc
         if clip.sample_count == 0:
-            raise SpeechSynthesisUnavailable(f"'{self.binary}' returned zero audio samples")
+            raise self._unavailable(f"'{self.binary}' returned zero audio samples")
         return clip
 
     async def _run(self, argv: list[str], stdin: bytes) -> tuple[int, bytes, str]:
@@ -60,14 +61,14 @@ class EspeakNgSynthesizer(BaseSynthesizer):
                 stderr=asyncio.subprocess.PIPE,
             )
         except OSError as exc:
-            raise SpeechSynthesisUnavailable(f"cannot start '{self.binary}': {exc}") from exc
+            raise self._unavailable(f"cannot start '{self.binary}': {exc}") from exc
 
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(stdin), self.timeout_s)
         except TimeoutError as exc:
             process.kill()
             await process.wait()
-            raise SpeechSynthesisUnavailable(
+            raise self._unavailable(
                 f"'{self.binary}' did not finish within {self.timeout_s} s"
             ) from exc
 

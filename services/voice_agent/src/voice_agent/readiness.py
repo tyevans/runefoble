@@ -5,8 +5,9 @@ A missing dependency fails the readiness check. It never degrades silently.
 
 from __future__ import annotations
 
-from voice_agent.synthesizer import BaseSynthesizer, SpeechSynthesisUnavailable
-from voice_agent.transcriber import BaseTranscriber, SpeechEngineUnavailable
+from runefoble_platform.engine_ports import EngineUnavailableError
+from voice_agent.synthesizer import BaseSynthesizer
+from voice_agent.transcriber import BaseTranscriber
 
 
 async def speech_readiness_problems(
@@ -16,10 +17,10 @@ async def speech_readiness_problems(
     problems: dict[str, str] = {}
     try:
         await transcriber.check_ready()
-    except SpeechEngineUnavailable as exc:
+    except EngineUnavailableError as exc:
         problems["stt"] = str(exc)
     try:
         await synthesizer.check_ready()
-    except SpeechSynthesisUnavailable as exc:
+    except EngineUnavailableError as exc:
         problems["tts"] = str(exc)
     return problems

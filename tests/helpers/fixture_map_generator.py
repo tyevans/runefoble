@@ -6,8 +6,9 @@ set_map_generator to prove the port is used and to force the 503 path.
 
 from __future__ import annotations
 
-from asset_forge.map_generator import MapGenerationUnavailable, MapGenerator, MapLayout
+from asset_forge.map_generator import MAP_GENERATION_UNAVAILABLE, MapGenerator, MapLayout
 from asset_forge.models import WallSegment
+from runefoble_platform.engine_ports import EngineUnavailableError
 
 FIXTURE_THEME = "fixture_theme"
 
@@ -53,4 +54,9 @@ class UnavailableMapGenerator(MapGenerator):
         hazard_density: float = 0.1,
         theme_override: str | None = None,
     ) -> MapLayout:
-        raise MapGenerationUnavailable("fixture generator is offline")
+        raise EngineUnavailableError(
+            MAP_GENERATION_UNAVAILABLE,
+            self.generator_name,
+            "fixture generator is offline",
+            engine_field="generator",
+        )

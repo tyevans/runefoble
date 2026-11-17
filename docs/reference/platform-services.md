@@ -137,3 +137,13 @@ The chart sets `RUNEFOBLE_VOICE_STT_MODEL_SIZE` from `services.voiceAgent.sttMod
 Pre-fetch the model for Kind with `make voice-model-cache`. The target downloads the model to `.cache/voice-models` on the host and copies it into the running voice-agent pod. Set `VOICE_MODEL_SIZE` to use another model.
 
 The `voice-agent` container has a readiness probe on `GET /healthz`. The probe fails when `espeak-ng --version` fails, or when the cache holds no model. A failed probe removes the pod from the service endpoints. The gateway then returns `503`.
+
+## Engine Port Adapters
+
+The module `runefoble_platform.engine_ports` holds the parts that settings-selected engine ports share. See [Add a Settings-Selected Engine Port Adapter](../how-to/add-an-engine-port-adapter.md) for the pattern.
+
+- **`build_adapter(setting, value, registry)`**: returns `registry[value]()`. `registry` maps allowed values to zero-argument factories. An unknown value raises `UnknownAdapterError` (a `ValueError`). The message names `setting` and every allowed value.
+- **`EngineUnavailableError(error_code, engine, message, *, engine_field="engine")`**: raised by an adapter when its engine cannot produce a result. `body()` returns `{"error": error_code, <engine_field>: engine, "message": message}`.
+- **`engine_unavailable_handler`**: FastAPI exception handler. It returns HTTP `503` with the body under `detail`. Register it with `app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)`.
+
+Services that register the handler: `voice_agent`, `asset_forge`.
