@@ -18,6 +18,7 @@ class StandInGraphState(TypedDict, total=False):
     action_decision: dict[str, Any]
     source: ResponseSource
     degraded: bool
+    guardrails_applied: list[str]
     final_response: dict[str, Any]
 
 
@@ -56,20 +57,24 @@ async def generate_stand_in_decision_node(
     penalty_effects = state.get("penalty_effects", [])
     scene_context = req.get("scene_context", "In combat")
     enemies = req.get("visible_enemies", [])
-    guardrails = req.get("guardrails", {})
+    guardrails = req.get("guardrails") or {}
 
-    guardrail_notes = []
-    if guardrails:
-        if guardrails.get("preserve_spell_slots"):
-            guardrail_notes.append(f"Preserve spell slots: {guardrails['preserve_spell_slots']}")
-        if guardrails.get("protect_allies"):
-            guardrail_notes.append(f"Protect allies: {', '.join(guardrails['protect_allies'])}")
-        if guardrails.get("avoid_melee"):
-            guardrail_notes.append("Avoid frontline melee engagement")
-        if guardrails.get("custom_priorities"):
-            guardrail_notes.append(
-                f"Custom priorities: {'; '.join(guardrails['custom_priorities'])}"
-            )
+    # Each active guardrail adds one note to the prompt. Its name is the key of the note.
+    guardrail_notes: dict[str, str] = {}
+    if guardrails.get("preserve_spell_slots"):
+        guardrail_notes["preserve_spell_slots"] = (
+            f"Preserve spell slots: {guardrails['preserve_spell_slots']}"
+        )
+    if guardrails.get("protect_allies"):
+        guardrail_notes["protect_allies"] = (
+            f"Protect allies: {', '.join(guardrails['protect_allies'])}"
+        )
+    if guardrails.get("avoid_melee"):
+        guardrail_notes["avoid_melee"] = "Avoid frontline melee engagement"
+    if guardrails.get("custom_priorities"):
+        guardrail_notes["custom_priorities"] = (
+            f"Custom priorities: {'; '.join(guardrails['custom_priorities'])}"
+        )
 
     system_prompt = (
         "You are Runefoble's Absent Player Stand-in AI. "
@@ -77,14 +82,15 @@ async def generate_stand_in_decision_node(
         "Faithfully reflect their class and personality, BUT you MUST comically and mechanically "
         "incorporate any DM-inflicted penalties (like 'drunk' or 'foolishness') and MUST respect "
         "any player-configured tactical guardrails (e.g. preserving high level slots, protecting allies).\n"
-        "Return a JSON object with: action_type, target, dialogue, narrative_flavor, mechanics."
+        "Return a JSON object with: action_type, target, dialogue, narrative_flavor, mechanics, "
+        "guardrails_applied (the names of the guardrails you followed)."
     )
     user_prompt = (
         f"Character: {char_name} ({char_class})\n"
         f"Traits: {', '.join(traits)}\n"
         f"DM Penalties: {', '.join(penalties) if penalties else 'None'}\n"
         f"Penalty Manifestation: {'; '.join(penalty_effects)}\n"
-        f"Tactical Guardrails: {'; '.join(guardrail_notes) if guardrail_notes else 'None'}\n"
+        f"Tactical Guardrails: {'; '.join(guardrail_notes.values()) if guardrail_notes else 'None'}\n"
         f"Scene: {scene_context}\n"
         f"Enemies: {', '.join(enemies) if enemies else 'Unknown threats'}\n"
         "Generate their turn action and in-character spoken dialogue."
@@ -93,16 +99,21 @@ async def generate_stand_in_decision_node(
     # Raises InferenceBackendError when a real backend fails. No silent fallback.
     resp = await llm_client.generate_completion(system_prompt, user_prompt)
     decision: dict[str, Any] = {}
+    applied: list[str] = []
     if resp["source"] == "llm":
         decision = parse_json_object(resp["content"])
         if not decision.get("action_type"):
             raise InferenceBackendError(resp["backend"], "model output had no action_type")
+        # The model declares what it followed. Only active guardrail names are reported.
+        declared = decision.get("guardrails_applied")
+        if isinstance(declared, list):
+            applied = [g for g in declared if g in guardrail_notes]
 
     # Canned rules run only for the explicit mock backend
     if resp["source"] == "mock":
         target = enemies[0] if enemies else "nearest foe"
-        protect_allies = guardrails.get("protect_allies", []) if guardrails else []
-        avoid_melee = guardrails.get("avoid_melee", False) if guardrails else False
+        protect_allies = guardrails.get("protect_allies", [])
+        avoid_melee = guardrails.get("avoid_melee", False)
 
         if protect_allies and (
             any(a.lower() in scene_context.lower() for a in protect_allies)
@@ -123,6 +134,7 @@ async def generate_stand_in_decision_node(
                 dialogue = f"'Protecting {target_ally}! Stand fast!'"
                 flavor = f"{char_name} casts protective healing on {target_ally} obeying tactical guardrails."
                 mechanics = {"action": "heal", "target": target_ally, "guardrail": "protect_allies"}
+            applied = ["protect_allies"]
         elif avoid_melee and char_class.lower() in [
             "cleric",
             "wizard",
@@ -134,6 +146,7 @@ async def generate_stand_in_decision_node(
             dialogue = "'Keeping distance from frontline melee as planned!'"
             flavor = f"{char_name} maintains safe distance, deploying ranged attacks per tactical guardrails."
             mechanics = {"action": action_type, "target": target, "guardrail": "avoid_melee"}
+            applied = ["avoid_melee"]
         elif "drunk" in [p.lower() for p in penalties]:
             action_type = "attack"
             dialogue = (
@@ -178,7 +191,12 @@ async def generate_stand_in_decision_node(
             "mechanics": mechanics,
         }
 
-    return {"action_decision": decision, "source": resp["source"], "degraded": False}
+    return {
+        "action_decision": decision,
+        "source": resp["source"],
+        "degraded": False,
+        "guardrails_applied": applied,
+    }
 
 
 def compile_stand_in_response_node(state: StandInGraphState) -> StandInGraphState:
@@ -198,6 +216,7 @@ def compile_stand_in_response_node(state: StandInGraphState) -> StandInGraphStat
         narrative_flavor=dec.get("narrative_flavor", ""),
         penalties_applied=req.get("penalties", []),
         mechanics=dec.get("mechanics", {}),
+        guardrails_applied=state.get("guardrails_applied", []),
         source=state["source"],
         degraded=state["degraded"],
     )

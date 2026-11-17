@@ -31,6 +31,7 @@ async def stand_in_act(req: StandInRequest) -> StandInAction:
     substitutes canned output for a failed worker call.
     """
     stand_in: StandInAction
+    guardrails = req.guardrails.model_dump() if req.guardrails is not None else None
     if INFERENCE_URL:
         data = await call_worker(
             INFERENCE_URL,
@@ -43,7 +44,7 @@ async def stand_in_act(req: StandInRequest) -> StandInAction:
                 "penalties": req.penalties,
                 "scene_context": req.scene_context,
                 "personality_traits": req.personality_traits,
-                "guardrails": req.guardrails,
+                "guardrails": guardrails,
             },
             timeout=10.0,
         )
@@ -53,7 +54,7 @@ async def stand_in_act(req: StandInRequest) -> StandInAction:
             action_description=data["narrative_flavor"],
             dialogue=data["dialogue"],
             penalties_applied=data["penalties_applied"],
-            guardrails_applied=[],
+            guardrails_applied=data["guardrails_applied"],
             flavor_text=data["narrative_flavor"],
             source=data["source"],
             degraded=data["degraded"],
@@ -65,7 +66,7 @@ async def stand_in_act(req: StandInRequest) -> StandInAction:
             penalties=req.penalties,
             scene_context=req.scene_context,
             personality_traits=req.personality_traits,
-            guardrails=req.guardrails,
+            guardrails=guardrails,
         )
 
     # Publish events to Redis Streams

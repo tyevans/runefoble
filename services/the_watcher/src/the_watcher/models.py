@@ -3,6 +3,7 @@
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 
 class IntentResult(BaseModel):
@@ -90,7 +91,7 @@ class StandInRequest(BaseModel):
     penalties: list[str] = Field(default_factory=list)
     scene_context: str
     personality_traits: list[str] = Field(default_factory=list)
-    guardrails: dict[str, Any] | None = None
+    guardrails: StandInGuardrailPolicy | None = None
     session_id: str
     campaign_id: str
 
