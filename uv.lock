@@ -356,6 +356,7 @@ dependencies = [
     { name = "eventsource-py" },
     { name = "fastapi" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
@@ -366,6 +367,7 @@ requires-dist = [
     { name = "eventsource-py", specifier = ">=0.14.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
@@ -797,6 +799,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "the-watcher" },
@@ -809,6 +812,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "the-watcher", editable = "services/the_watcher" },
@@ -820,24 +824,30 @@ name = "gateway-api"
 version = "0.1.0"
 source = { editable = "gateway/api" }
 dependencies = [
+    { name = "character-sheet" },
     { name = "fastapi" },
+    { name = "game-session" },
     { name = "httpx" },
     { name = "pydantic" },
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
+    { name = "soundscape" },
     { name = "uvicorn" },
     { name = "voice-agent" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "character-sheet", editable = "services/character_sheet" },
     { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "game-session", editable = "services/game_session" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
+    { name = "soundscape", editable = "services/soundscape" },
     { name = "uvicorn", specifier = ">=0.54.0" },
     { name = "voice-agent", editable = "services/voice_agent" },
 ]
@@ -3152,6 +3162,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
@@ -3162,6 +3173,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },

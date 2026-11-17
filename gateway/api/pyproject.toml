@@ -13,4 +13,7 @@ dependencies = [
     "runefoble-platform",
     "runefoble-events",
     "voice-agent",
+    "game-session",
+    "character-sheet",
+    "soundscape",
 ]
