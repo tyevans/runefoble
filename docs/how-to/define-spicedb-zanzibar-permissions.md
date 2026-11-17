@@ -55,7 +55,13 @@ During cluster deployment (`helm install` or `helm upgrade`), SpiceDB datastore 
 - **Job**: Executes `zed schema write /etc/spicedb/schema/runefoble.zed --endpoint spicedb:50051 --token <key> --insecure`.
 
 ### Python Migration CLI
-You can also apply schema migrations programmatically or via CLI:
+You can also apply schema migrations programmatically or via CLI.
+The SpiceDB Service is `ClusterIP`. The Kind cluster does not map its gRPC port to the host.
+Before you connect from the host, forward the port:
+```bash
+kubectl port-forward svc/spicedb 50051:50051
+```
+Keep the port-forward running in a separate terminal. `make dev` starts it for you when SpiceDB is unreachable.
 ```bash
 # Using UV
 uv run python -m runefoble_auth.bootstrap_schema --endpoint localhost:50051 --token runefoble_secret_key
