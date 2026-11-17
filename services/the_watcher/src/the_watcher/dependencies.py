@@ -19,6 +19,7 @@ from the_watcher.compound_actions import CompoundActionEngine
 from the_watcher.copilot import CopilotEngine
 from the_watcher.disambiguation import DisambiguationEngine
 from the_watcher.factions import FactionAggregate
+from the_watcher.factions.campaign_world import CampaignWorldAggregate
 from the_watcher.factions.resources import FactionResourceAggregate
 from the_watcher.simulation_engine import FactionSimulationEngine
 from the_watcher.turf_war.aggregate import RegionalUnrestAggregate
@@ -37,13 +38,13 @@ autonomous_dm_engine = AutonomousDMEngine()
 copilot_engine = CopilotEngine()
 disambiguation_engine = DisambiguationEngine()
 compound_action_engine = CompoundActionEngine()
-faction_simulation_engine = FactionSimulationEngine()
 
 platform_settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _faction_repo: AggregateRepository[FactionAggregate] | None = None
+_campaign_world_repo: AggregateRepository[CampaignWorldAggregate] | None = None
 _faction_resource_repo: AggregateRepository[FactionResourceAggregate] | None = None
 _regional_unrest_repo: AggregateRepository[RegionalUnrestAggregate] | None = None
 
@@ -67,8 +68,16 @@ def get_copilot_engine() -> CopilotEngine:
     return copilot_engine
 
 
+_faction_simulation_engine = FactionSimulationEngine()
+
+
 def get_faction_simulation_engine() -> FactionSimulationEngine:
-    return faction_simulation_engine
+    return _faction_simulation_engine
+
+
+def set_faction_simulation_engine(engine: FactionSimulationEngine) -> None:
+    global _faction_simulation_engine
+    _faction_simulation_engine = engine
 
 
 def get_faction_repo() -> AggregateRepository[FactionAggregate]:
@@ -81,6 +90,18 @@ def get_faction_repo() -> AggregateRepository[FactionAggregate]:
 def set_faction_repo(repo: AggregateRepository[FactionAggregate] | None) -> None:
     global _faction_repo
     _faction_repo = repo
+
+
+def get_campaign_world_repo() -> AggregateRepository[CampaignWorldAggregate]:
+    global _campaign_world_repo
+    if _campaign_world_repo is None:
+        _campaign_world_repo = create_aggregate_repository(CampaignWorldAggregate)
+    return _campaign_world_repo
+
+
+def set_campaign_world_repo(repo: AggregateRepository[CampaignWorldAggregate] | None) -> None:
+    global _campaign_world_repo
+    _campaign_world_repo = repo
 
 
 def get_faction_resource_repo() -> AggregateRepository[FactionResourceAggregate]:

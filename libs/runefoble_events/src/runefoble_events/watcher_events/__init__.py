@@ -21,6 +21,7 @@ from runefoble_events.watcher_events.combat import (
     VocalModulatorPresetChanged,
 )
 from runefoble_events.watcher_events.factions import (
+    CampaignFactionRegistered,
     FactionAgendaAdvanced,
     FactionAgendaSet,
     FactionCreated,
@@ -40,6 +41,7 @@ from runefoble_events.watcher_events.narrative import (
 )
 
 __all__ = [
+    "CampaignFactionRegistered",
     "AbsenteeRecapGenerated",
     "AutonomousActionResolved",
     "CandidateGhostPreviewEmitted",

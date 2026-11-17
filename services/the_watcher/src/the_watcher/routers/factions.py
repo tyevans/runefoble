@@ -8,6 +8,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Header, HTTPException
 from the_watcher.dependencies import (
     check_dm_authorization,
+    get_campaign_world_repo,
     get_event_bus,
     get_faction_repo,
     get_faction_simulation_engine,
@@ -69,9 +70,14 @@ async def advance_world_tick(
     """Execute an autonomous background simulation tick for all campaign factions."""
     await _assert_dm_permission(x_user_id, campaign_id)
     engine = get_faction_simulation_engine()
-    repo = get_faction_repo()
     tick_req = req or WorldTickRequest()
-    return await engine.execute_world_tick(campaign_id, tick_req, repo, bus=get_event_bus())
+    return await engine.execute_world_tick(
+        campaign_id,
+        tick_req,
+        faction_repo=get_faction_repo(),
+        world_repo=get_campaign_world_repo(),
+        bus=get_event_bus(),
+    )
 
 
 @router.post(
@@ -105,7 +111,7 @@ async def create_faction(
     await repo.save(agg)
 
     engine = get_faction_simulation_engine()
-    engine.register_faction_id(campaign_id, faction_id)
+    await engine.register_faction(campaign_id, faction_id, get_campaign_world_repo())
 
     return FactionResponse(
         faction_id=agg.state.faction_id,
@@ -135,9 +141,10 @@ async def list_factions(
     """List all registered and simulated factions for a campaign."""
     await _assert_view_permission(x_user_id, campaign_id)
     engine = get_faction_simulation_engine()
-    repo = get_faction_repo()
 
-    factions = await engine.ensure_default_factions(campaign_id, repo)
+    factions = await engine.ensure_default_factions(
+        campaign_id, get_faction_repo(), get_campaign_world_repo()
+    )
     responses: list[FactionResponse] = []
     for f in factions:
         responses.append(
@@ -204,7 +211,9 @@ async def get_latest_bulletin(
     """Retrieve the most recent DM intelligence bulletin and world progression state."""
     await _assert_view_permission(x_user_id, campaign_id)
     engine = get_faction_simulation_engine()
-    bulletin = engine.get_latest_bulletin(campaign_id)
+    bulletin = await engine.get_latest_bulletin(
+        campaign_id, get_faction_repo(), get_campaign_world_repo()
+    )
     if not bulletin:
         raise HTTPException(
             status_code=404,
