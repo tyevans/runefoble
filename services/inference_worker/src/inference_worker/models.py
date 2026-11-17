@@ -3,6 +3,7 @@
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 # Provenance of a response: llm (model output), heuristic (regex rules after
 # model output was unusable), or mock (canned output, explicit mock backend only).
@@ -119,6 +120,10 @@ class StandInActionRequest(BaseModel):
     scene_context: str = "Surrounded by hostile creatures"
     visible_enemies: list[str] = Field(default_factory=list)
     visible_allies: list[str] = Field(default_factory=list)
+    guardrails: StandInGuardrailPolicy | None = Field(
+        default=None,
+        description="Tactical policy from The Watcher. None means no policy is active.",
+    )
 
 
 class StandInActionResponse(BaseModel):
@@ -130,5 +135,9 @@ class StandInActionResponse(BaseModel):
     narrative_flavor: str
     penalties_applied: list[str]
     mechanics: dict[str, Any] = Field(default_factory=dict)
+    guardrails_applied: list[str] = Field(
+        default_factory=list,
+        description="Active guardrail names that the decision enforced",
+    )
     source: ResponseSource
     degraded: bool = Field(..., description="True when a fallback path produced the result")
