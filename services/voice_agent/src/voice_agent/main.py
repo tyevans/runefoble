@@ -48,6 +48,7 @@ from voice_agent.routers import (
     synthesis_router,
     vocal_effects_router,
 )
+from voice_agent.stt import get_streaming_pipeline
 
 app = FastAPI(
     title="Runefoble - Voice Agent Service",
@@ -86,7 +87,11 @@ def set_watcher_client(client: httpx.AsyncClient | None) -> None:
 
 @app.get("/healthz")
 async def health_check():
-    return {"status": "ok", "service": "voice_agent"}
+    return {
+        "status": "ok",
+        "service": "voice_agent",
+        "stt_engine": get_streaming_pipeline().transcriber.engine_name,
+    }
 
 
 @app.get("/ui/manifest")

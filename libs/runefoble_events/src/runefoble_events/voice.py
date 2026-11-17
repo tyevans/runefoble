@@ -124,3 +124,23 @@ class VoiceSpeechInterrupted(BaseRunefobleEvent):
     playback_duration_ms: float = 0.0
     cutoff_position_ms: float = 0.0
     reason: str = "player_barge_in"
+
+
+@register_event("runefoble.events.voice.transcription_failed")
+class VoiceTranscriptionFailed(BaseRunefobleEvent):
+    """Emitted when the speech engine cannot transcribe a completed utterance.
+
+    No PlayerSpokeEvent is published for the failed utterance.
+    """
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "VoiceRoom"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.voice.transcription_failed"
+    session_id: str
+    speaker_id: str
+    speaker_name: str = "Player"
+    engine: str
+    error_code: str = "speech_engine_unavailable"
+    reason: str
+    failed_at: float = Field(default_factory=time.time)
