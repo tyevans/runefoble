@@ -19,10 +19,10 @@ from fastapi.testclient import TestClient
 from gateway_api.dependencies import ws_manager
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.app_shell_source import read_app_shell_source
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-from tests.helpers.app_shell_source import read_app_shell_source
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
