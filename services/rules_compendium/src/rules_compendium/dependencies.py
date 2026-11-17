@@ -3,7 +3,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Header
+from fastapi import Header, Request
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
@@ -23,7 +23,6 @@ _compendium_repo: AggregateRepository[CompendiumAggregate] = create_aggregate_re
 _encounter_repo: AggregateRepository[EncounterAggregate] = create_aggregate_repository(
     EncounterAggregate
 )
-_retrieval_engine: CompendiumRetrievalEngine = CompendiumRetrievalEngine()
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 
@@ -37,9 +36,10 @@ def get_encounter_repo() -> AggregateRepository[EncounterAggregate]:
     return _encounter_repo
 
 
-def get_retrieval_engine() -> CompendiumRetrievalEngine:
-    """Provide CompendiumRetrievalEngine singleton."""
-    return _retrieval_engine
+def get_retrieval_engine(request: Request) -> CompendiumRetrievalEngine:
+    """Provide the retrieval engine owned by this application instance."""
+    engine: CompendiumRetrievalEngine = request.app.state.retrieval_engine
+    return engine
 
 
 def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
