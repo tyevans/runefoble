@@ -13,7 +13,7 @@ from uuid import UUID
 import redstring
 
 from rules_compendium.models import RuleSearchResultItem
-from rules_compendium.srd_data import (
+from rules_compendium.srd import (
     CANONICAL_CONDITIONS,
     CANONICAL_MONSTERS,
     CANONICAL_SPELLS,

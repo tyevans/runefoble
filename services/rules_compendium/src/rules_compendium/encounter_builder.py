@@ -5,7 +5,7 @@ from typing import Any
 from rules_compendium.models import (
     MonsterGroupRecommendation,
 )
-from rules_compendium.srd_data import CANONICAL_MONSTERS
+from rules_compendium.srd import CANONICAL_MONSTERS
 
 # Standard 5e XP Thresholds by character level
 XP_THRESHOLDS: dict[int, dict[str, int]] = {

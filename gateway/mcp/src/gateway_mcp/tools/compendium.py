@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Any
 
 from gateway_mcp.clients import ServiceClient
-from rules_compendium.srd_data import CANONICAL_MONSTERS
+from rules_compendium.srd import CANONICAL_MONSTERS
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
