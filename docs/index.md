@@ -78,6 +78,7 @@ The Runefoble system documentation is organized strictly according to the **Diat
     * [Ports & Endpoints Routing Table](reference/ports-and-endpoints.md)
     * [Events Schema (CloudEvents)](reference/events-schema.md)
     * [Redis Streams Event Bus](reference/redis-streams-event-bus.md)
+    * [Embedding Providers](reference/embedding-providers.md)
     * [Design Tokens & Themes](reference/design-tokens-and-themes.md)
     * [FastMCP Tabletop Gateway](reference/fastmcp-gateway.md)
     * [CLI Interfaces & Developer Tools](reference/cli-interfaces.md)
