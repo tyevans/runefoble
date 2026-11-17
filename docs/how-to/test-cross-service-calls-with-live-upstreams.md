@@ -38,7 +38,9 @@ def owning_services() -> Iterator[dict[str, str]]:
     with pytest.MonkeyPatch.context() as env, serve(board_app) as board_url:
         env.setenv("BOARD_STATE_URL", board_url)
         with httpx.Client(base_url=board_url) as http:
-            created = http.post("/api/v1/boards", json={"session_id": "camp1", "cols": 10, "rows": 10})
+            created = http.post(
+                "/api/v1/boards", json={"session_id": "camp1", "cols": 10, "rows": 10}
+            )
             assert created.status_code == 200, created.text
         yield {"board": board_url}
 ```

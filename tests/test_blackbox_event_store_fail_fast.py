@@ -70,6 +70,7 @@ def test_service_process_exits_when_postgres_event_store_is_unreachable():
     offline_port = get_free_port()
     env = _clean_env()
     env["RUNEFOBLE_USE_POSTGRES_EVENT_STORE"] = "true"
+    env.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-preshared-key")
     env["RUNEFOBLE_DATABASE_URL"] = (
         f"postgresql+asyncpg://runefoble_user:secret@127.0.0.1:{offline_port}/runefoble"
     )

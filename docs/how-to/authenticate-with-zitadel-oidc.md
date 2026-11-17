@@ -43,10 +43,10 @@ from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.zitadel import ZitadelAuthService
 
 auth_service = ZitadelAuthService(
-    issuer="http://zitadel:8080",   # Must equal the token `iss` claim
-    audience="runefoble-api",       # Must equal the token `aud` claim
-    jwks_url=None,                  # None: read jwks_uri from OIDC discovery
-    jwks_cache_ttl=300,             # Seconds
+    issuer="http://zitadel:8080",  # Must equal the token `iss` claim
+    audience="runefoble-api",  # Must equal the token `aud` claim
+    jwks_url=None,  # None: read jwks_uri from OIDC discovery
+    jwks_cache_ttl=300,  # Seconds
 )
 
 principal: VerifiedPrincipal = auth_service.verify_token(bearer_token)
