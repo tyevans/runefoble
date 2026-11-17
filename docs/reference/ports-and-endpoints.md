@@ -312,6 +312,17 @@ When running the local development environment via `make dev`, Vite proxies requ
 
 Every gateway WebSocket route (`/ws/*` and `/overlay/ws/*`) takes the caller's identity only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The gateway accepts the handshake with `runefoble.v1`. A handshake without a verified token closes with code `1008` before accept. Identity in the query string (`user_id`, `token`) or in headers (`X-User-Id`, `Authorization`) is refused. A token that is valid but lacks SpiceDB permission is admitted, then receives a `PERMISSION_DENIED` frame and close code `4003`.
 
+## Gateway Proxy Identity and Errors
+
+A gateway proxy route forwards the caller's verified bearer token to the owning service. The gateway verifies the token first. The owning service verifies it again.
+
+- The gateway copies the `Authorization` header to the upstream request. It forwards no other identity header. A client `X-User-Id` header is not forwarded.
+- An upstream `401` or `403` returns to the client with the same status code.
+- A connection failure, a timeout, a non-JSON success body, or an upstream `5xx` returns `502` with the detail `Upstream service is unavailable`. The gateway never returns substitute data.
+- An upstream URL that is not set returns `503` with the detail `Upstream service is not configured`.
+
+Proxy routes read their upstream base URL at call time: `CAMPAIGN_LORE_URL`, `CAMPAIGN_ANALYTICS_URL`, `SOUNDSCAPE_SERVICE_URL`, and `CHARACTER_SHEET_URL`. The shared helper is `gateway_api.proxy`.
+
 ### Voice Agent TTS Response (`POST /api/v1/voice/tts`)
 
 The response describes the audio it carries. Filters run on the synthesised clip only.
