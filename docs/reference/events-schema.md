@@ -80,6 +80,12 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
 - **`PlayerLeftSession`**: Emitted when a participant disconnects or misses game night.
   - `player_id`: String
   - `reason`: String
+- **`ReadinessToggled`**: Emitted when a player sets lobby readiness (`POST /api/v1/sessions/{session_id}/lobby/readiness`). Stream: `runefoble.events.session`.
+  - `player_id`: String
+  - `is_ready`: Boolean
+- **`CharacterSelectedForLobby`**: Emitted when a player selects the character brought to the lobby (`POST /api/v1/sessions/{session_id}/lobby/character`). Stream: `runefoble.events.session`.
+  - `player_id`: String
+  - `character_id`: UUID
 - **`TurnAdvanced`**: Emitted when the initiative turn counter advances.
   - `previous_turn`: Integer
   - `new_turn`: Integer
@@ -526,7 +532,7 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `action_type`: String
   - `dialogue`: String
   - `penalties_applied`: List[String]
-- **`DiceRolled`**: Emitted when dice are rolled (`runefoble.events.dice.rolled`).
+- **`DiceRolled`**: Emitted when dice are rolled through `POST /api/v1/sessions/{session_id}/roll`. The session aggregate records the roll, so the session must exist (404 otherwise). The session repository publishes it to `runefoble.events.session` (`runefoble.events.dice.rolled`).
   - `session_id`: String
   - `roller_id`: String
   - `roller_name`: String

@@ -37,6 +37,18 @@ class GameSessionState(BaseModel, GameSessionTransitionsMixin):
     turn_paused_for_reaction: bool = False
     active_reaction: dict[str, Any] | None = None
     ready_actions: list[dict[str, Any]] = Field(default_factory=list)
+    lobby_readiness: dict[str, bool] = Field(default_factory=dict)
+    lobby_characters: dict[str, UUID] = Field(default_factory=dict)
+
+
+class ReadinessRequest(BaseModel):
+    player_id: str
+    is_ready: bool = True
+
+
+class SelectLobbyCharacterRequest(BaseModel):
+    player_id: str
+    character_id: UUID
 
 
 class CreateSessionRequest(BaseModel):

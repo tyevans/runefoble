@@ -9,12 +9,8 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import (
-    STREAM_SESSION,
-    get_session_bounties_index,
-    set_event_bus,
-    set_spicedb_client,
-)
+from game_session.dependencies import get_session_bounties_index, set_event_bus, set_spicedb_client
+from game_session.events import STREAM_SESSION
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus

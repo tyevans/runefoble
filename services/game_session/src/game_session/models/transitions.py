@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from game_session.models.combat_transitions import CombatTransitionsMixin
+from game_session.models.lobby_transitions import LobbyTransitionsMixin
 from game_session.models.reaction_transitions import ReactionTransitionsMixin
 from game_session.models.stand_in_transitions import StandInTransitionsMixin
 
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
 
 class GameSessionTransitionsMixin(
     CombatTransitionsMixin,
+    LobbyTransitionsMixin,
     ReactionTransitionsMixin,
     StandInTransitionsMixin,
 ):

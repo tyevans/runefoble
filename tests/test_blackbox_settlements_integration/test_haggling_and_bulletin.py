@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
-from game_session.dependencies import STREAM_TAVERN, STREAM_WEST_MARCHES
+from game_session.events import STREAM_TAVERN, STREAM_WEST_MARCHES
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 

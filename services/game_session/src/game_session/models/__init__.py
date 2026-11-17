@@ -32,6 +32,8 @@ from game_session.models.session import (
     JoinSessionRequest,
     LeaveSessionRequest,
     ParticipantState,
+    ReadinessRequest,
+    SelectLobbyCharacterRequest,
 )
 from game_session.models.settlement import (
     DEFAULT_FACILITIES,
@@ -70,6 +72,8 @@ __all__ = [
     "LeaveSessionRequest",
     "NextTurnRequest",
     "ParticipantState",
+    "ReadinessRequest",
+    "SelectLobbyCharacterRequest",
     "ReactionTransitionsMixin",
     "ReadyActionRequest",
     "ReadyActionResponse",

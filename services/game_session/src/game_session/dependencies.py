@@ -10,6 +10,7 @@ from game_session.aggregate import GameSessionAggregate
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan_ledger import CaravanLedgerAggregate
 from game_session.contracts.engine import MercenaryBountyAggregate
+from game_session.events import SessionEventPublisher
 from game_session.merchants import MerchantAggregate
 from game_session.minigames import TavernGameAggregate
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
@@ -28,17 +29,15 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 logger = logging.getLogger("runefoble.game_session")
 WATCHER_SERVICE_URL = os.environ.get("RUNEFOBLE_WATCHER_URL")
-STREAM_WATCHER = "runefoble.events.watcher"
-STREAM_SESSION = "runefoble.events.session"
-STREAM_STRONGHOLD = "runefoble.events.stronghold"
-STREAM_TAVERN = "runefoble.events.tavern"
-STREAM_WEST_MARCHES = "runefoble.events.west_marches"
 
 platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
-repo: AggregateRepository[GameSessionAggregate] = create_aggregate_repository(GameSessionAggregate)
+repo: AggregateRepository[GameSessionAggregate] = create_aggregate_repository(
+    GameSessionAggregate,
+    event_bus=SessionEventPublisher(lambda: get_event_bus()),
+)
 stronghold_repo: AggregateRepository[StrongholdAggregate] = create_aggregate_repository(
     StrongholdAggregate
 )

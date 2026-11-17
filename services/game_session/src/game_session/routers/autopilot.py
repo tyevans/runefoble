@@ -7,15 +7,10 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, HTTPException
 from game_session.aggregate import ParticipantState
-from game_session.dependencies import (
-    STREAM_WATCHER,
-    WATCHER_SERVICE_URL,
-    get_event_bus,
-    logger,
-    repo,
-)
+from game_session.dependencies import WATCHER_SERVICE_URL, get_event_bus, logger, repo
+from game_session.events import STREAM_WATCHER
 from game_session.models import AutoPilotRequest, AutoPilotResponse
-from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
+from runefoble_events.events import AbsencePenaltyApplied
 from the_watcher.watcher_ai import StandInAction, TheWatcherEngine
 
 router = APIRouter(tags=["autopilot"])
@@ -121,21 +116,11 @@ async def auto_pilot_turn(
     session.advance_turn()
     await repo.save(session)
 
-    # Dispatch to Redis Streams
+    # Dispatch absence penalties to Redis Streams. The stand-in action is published
+    # by the session repository when it commits the aggregate above.
     bus = get_event_bus()
     if bus:
         try:
-            action_event = StandInActionDecided(
-                aggregate_id=session_id,
-                session_id=session_id,
-                campaign_id=session.state.campaign_id,
-                character_name=stand_in_action.character_name,
-                action_type=stand_in_action.action_type,
-                dialogue=stand_in_action.dialogue,
-                penalties_applied=stand_in_action.penalties_applied or request_data.penalties,
-                flavor_text=stand_in_action.action_description,
-            )
-            await bus.publish_event(STREAM_WATCHER, action_event)
             for p in request_data.penalties:
                 p_clean = p.lower()
                 if p_clean in ("drunk", "foolishness", "cowardice", "greed", "curse"):
