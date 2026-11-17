@@ -61,6 +61,7 @@ The gateway MCP reads its upstream addresses from the environment:
 | Environment variable | Owning service |
 |---|---|
 | `BOARD_STATE_URL` | `board_state` |
+| `CHARACTER_SHEET_URL` | `character_sheet` |
 | `RULES_COMPENDIUM_URL` | `rules_compendium` |
 
 `ServiceClient` reads these settings when it is created. Each tool call creates a client. A test can therefore set the variable with `monkeypatch.setenv` inside the test body.

@@ -7,9 +7,8 @@ The FastMCP Gateway (`gateway/mcp`) exposes Runefoble tabletop actions, spatial 
 The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 80 lines) delegating domain capabilities to modular sub-packages:
 
 gateway/mcp/src/gateway_mcp/
-├── clients/               # HTTP clients for owning services (board_state, rules_compendium)
+├── clients/               # HTTP clients for owning services (board_state, character_sheet, game_session, rules_compendium)
 │   └── services.py        # Typed async client and ServiceError types
-├── constants.py           # RPG constants (spell effects, condition descriptions)
 ├── dynamic_registry.py    # Backward-compatible re-exports (< 30 lines)
 ├── dynamic/               # Dynamic tool registry package (< 140 lines per module)
 │   ├── auth.py            # SpiceDB Zanzibar authorization guard & relationship sync
@@ -21,11 +20,11 @@ gateway/mcp/src/gateway_mcp/
 │   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
 ├── main.py                # CLI execution wrapper
 ├── server.py              # FastMCP orchestration shell and module mounting
-├── settings.py            # Upstream service URLs (BOARD_STATE_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL)
+├── settings.py            # Upstream service URLs (BOARD_STATE_URL, CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL)
 ├── tools/                 # MCP tool implementations (< 180 lines each)
 │   ├── dice.py            # Dice notation parsing and rolling (roll_dice)
 │   ├── board.py           # Tactical board and encounter tools (HTTP-backed by board_state)
-│   ├── character.py       # Character stats, HP, spells, conditions, inventory
+│   ├── character.py       # Character stats, HP, spells, conditions, inventory (HTTP-backed by character_sheet)
 │   └── orchestration.py   # The Watcher narration and agent action plan execution
 ├── resources/             # FastMCP dynamic resource providers (< 120 lines each)
 │   └── session.py         # Session context and combat encounter resources
@@ -42,12 +41,12 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | `roll_dice` | `notation: str`, `reason: str` | Parse standard RPG dice notation (`1d20+3`, `2d6`) and return roll breakdown. |
 | `inspect_tactical_board` | `session_id: str` | Read tokens, positions, HP, and grid dimensions from `board_state` (`GET /api/v1/boards/{session_id}`). Returns an error result when the board does not exist. |
 | `move_board_token` | `session_id: str`, `token_id: str`, `to_x: int`, `to_y: int` | Move a token through `board_state` (`POST /api/v1/boards/{session_id}/tokens/{token_id}/move`). The board rejects out-of-bounds moves. |
-| `get_character_sheet` | `character_id: str` | Retrieve character stats, level, hit points, equipment, and active conditions. |
-| `inspect_inventory` | `character_id: str` | Retrieve equipped items, carried inventory, and currency breakdown. |
-| `apply_absentee_penalty` | `character_id: str`, `penalty_type: str`, `explanation: str` | Impose session miss penalties (`drunk`, `foolishness`) on absent player PCs. |
-| `cast_spell` | `character_id: str`, `spell_name: str`, `spell_level: int`, `target: str` | Cast a spell, tracking spell slot expenditure and mechanical rules. |
-| `modify_character_hp` | `character_id: str`, `delta: int`, `damage_type: str`, `reason: str` | Apply damage or healing, calculating `bloodied` or `unconscious` states. |
-| `add_condition` / `apply_condition` | `character_id: str`, `condition: str`, `duration_rounds: int`, `source: str` | Impose status condition (`blinded`, `prone`, `frightened`) with rule effects. |
+| `get_character_sheet` | `character_id: str` | Read the stored sheet from `character_sheet` (`GET /api/v1/characters/{character_id}`): name, class, level, HP, armor class, ability scores, spell slots, equipment, inventory, conditions, and penalties. An unknown id returns a tool error. |
+| `inspect_inventory` | `character_id: str` | Read equipped items and carried inventory from `character_sheet`. |
+| `apply_absentee_penalty` | `character_id: str`, `penalty_type: str`, `explanation: str` | Impose a session miss penalty (`drunk`, `foolishness`, `cowardice`, `greed`, `curse`) through `character_sheet` (`POST /api/v1/characters/{character_id}/penalties`). Returns the active penalties. |
+| `cast_spell` | `character_id: str`, `spell_name: str`, `spell_level: int` | Expend a spell slot through `character_sheet` (`POST /api/v1/characters/{character_id}/spells/cast`). Returns the remaining spell slots. A `spell_level` of 0 asks the sheet to use the standard level of the spell. An empty slot level returns a tool error. The sheet does not store a target. |
+| `modify_character_hp` | `character_id: str`, `delta: int`, `damage_type: str`, `reason: str` | Apply damage (negative `delta`) or healing through `character_sheet` (`POST /api/v1/characters/{character_id}/health`). Returns the stored `current_hp`, `max_hp`, and stabilization state. The `damage_type` and `reason` are recorded in the change source. |
+| `add_condition` / `apply_condition` | `character_id: str`, `condition: str`, `duration_rounds: int`, `source: str` | Impose a status condition through `character_sheet` (`POST /api/v1/characters/{character_id}/conditions`). Returns the active conditions. Both tools share one route. |
 | `query_encounter_state` | `encounter_id: str` | Read an encounter. Round, active combatant, and turn order come from `game_session` (`GET /api/v1/sessions/{session_id}/combat`). Tokens, grid, and active hazards come from `board_state`. The `encounter_id` is the game session id. Returns `in_combat`, `round`, `active_combatant_id`, `turn_order`, `session_id`, `grid_dimensions`, `tokens`, and `active_hazards`. |
 | `create_encounter` | `encounter_name: str`, `terrain: str`, `enemies: list[{name, x, y, hp?}]` | Create a 10x8 board in `board_state` and place enemy monster tokens. Returns the board session id as `encounter_id`. This id is not a game session id, so `query_encounter_state` cannot read round or turn order for it. |
 | `narrate_with_the_watcher` | `scene_prompt: str`, `player_actions: str` | Invoke The Watcher AI GM for immersive narration and environmental cues. |
@@ -57,11 +56,12 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 
 ### Upstream Service Calls
 
-Board and encounter tools hold no board or combat state. They call the owning services over HTTP through `gateway_mcp/clients/services.py`:
+Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway_mcp/clients/services.py`:
 
 | Setting | Environment Variable | Default | Owning Service |
 |---|---|---|---|
 | `board_state_url` | `BOARD_STATE_URL` | `http://localhost:8002` | `board_state` |
+| `character_sheet_url` | `CHARACTER_SHEET_URL` | `http://localhost:8003` | `character_sheet` |
 | `game_session_url` | `GAME_SESSION_URL` | `http://localhost:8004` | `game_session` |
 | `rules_compendium_url` | `RULES_COMPENDIUM_URL` | `http://localhost:8007` | `rules_compendium` |
 
