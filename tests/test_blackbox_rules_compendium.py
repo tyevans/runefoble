@@ -16,6 +16,8 @@ from gateway_mcp.server import mcp
 from rules_compendium.dependencies import get_spicedb_client
 from rules_compendium.main import app
 
+from tests.helpers.live_services import serve
+
 
 @pytest.fixture
 def client():
@@ -235,30 +237,29 @@ async def test_blackbox_spicedb_homebrew_registration_and_isolation(client: Test
 
 
 @pytest.mark.asyncio
-async def test_blackbox_fastmcp_compendium_tools():
-    """Verify the FastMCP monster tool is registered and executable.
+async def test_blackbox_fastmcp_compendium_tools(monkeypatch: pytest.MonkeyPatch):
+    """Verify the FastMCP monster tool reads the stat block from rules_compendium over HTTP."""
+    with serve(app, lifespan="on") as compendium_url:
+        monkeypatch.setenv("RULES_COMPENDIUM_URL", compendium_url)
+        # 1. query_monster_stat_block tool
+        monster_tool = mcp.get_tool("query_monster_stat_block")
+        assert monster_tool is not None, "query_monster_stat_block must be registered in FastMCP"
 
-    Encounter balance goes through rules_compendium HTTP; see test_blackbox_mcp_gateway.py.
-    """
-    # 1. query_monster_stat_block tool
-    monster_tool = mcp.get_tool("query_monster_stat_block")
-    assert monster_tool is not None, "query_monster_stat_block must be registered in FastMCP"
+        m_result = await monster_tool.run({"monster_name": "Bugbear"})
+        # Result may be a dictionary or wrapped in CallToolResult
+        res_data = m_result if isinstance(m_result, dict) else m_result.structured_content
+        if res_data is None and hasattr(m_result, "content"):
+            import json
 
-    m_result = await monster_tool.run({"monster_name": "Bugbear"})
-    # Result may be a dictionary or wrapped in CallToolResult
-    res_data = m_result if isinstance(m_result, dict) else m_result.structured_content
-    if res_data is None and hasattr(m_result, "content"):
-        import json
+            res_data = json.loads(m_result.content[0].text)
 
-        res_data = json.loads(m_result.content[0].text)
-
-    assert res_data["status"] == "success"
-    monster = res_data["monster"]
-    assert monster["name"] == "Bugbear"
-    assert monster["challenge_rating"] == 1.0
-    assert monster["armor_class"] == 16
-    assert monster["hit_points"] == 27
-    assert monster["role"] == "brute"
+        assert res_data["status"] == "success"
+        monster = res_data["monster"]
+        assert monster["name"] == "Bugbear"
+        assert monster["challenge_rating"] == 1.0
+        assert monster["armor_class"] == 16
+        assert monster["hit_points"] == 27
+        assert monster["role"] == "brute"
 
 
 def test_blackbox_openapi_spec(client: TestClient):
