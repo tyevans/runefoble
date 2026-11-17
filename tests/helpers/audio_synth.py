@@ -24,7 +24,13 @@ from voice_agent.main import (
 from voice_agent.main import (
     set_watcher_client,
 )
-from voice_agent.stt import get_streaming_pipeline
+from voice_agent.stt import (
+    StreamingAudioPipeline,
+    get_streaming_pipeline,
+    set_streaming_pipeline,
+)
+
+from tests.helpers.fixture_transcriber import FixtureTranscriber
 
 
 def generate_pcm_sine(
@@ -89,6 +95,7 @@ def mock_redis() -> MockAsyncRedis:
 
 @pytest.fixture
 def shared_event_bus(mock_redis: MockAsyncRedis) -> Generator[RedisStreamsEventBus]:
+    set_streaming_pipeline(StreamingAudioPipeline(transcriber=FixtureTranscriber()))
     bus = RedisStreamsEventBus(client=mock_redis)
     voice_set_event_bus(bus)
     watcher_set_event_bus(bus)

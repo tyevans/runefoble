@@ -12,4 +12,5 @@ dependencies = [
     "runefoble-platform",
     "runefoble-events",
     "runefoble-auth",
+    "faster-whisper>=1.2.1",
 ]

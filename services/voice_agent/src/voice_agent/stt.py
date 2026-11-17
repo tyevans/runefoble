@@ -14,14 +14,11 @@ from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
 import httpx
 from pydantic import BaseModel
-from runefoble_events.events import PlayerSpokeEvent
+from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-from voice_agent.transcriber import (
-    BaseTranscriber,
-    FasterWhisperTranscriber,
-    MockWhisperTranscriber,
-)
+from voice_agent.speech_settings import VoiceAgentSettings, build_transcriber
+from voice_agent.transcriber import BaseTranscriber, SpeechEngineUnavailable
 from voice_agent.vad import (
     AudioRingBuffer,
     VADSegmenter,
@@ -30,14 +27,14 @@ from voice_agent.vad import (
 
 logger = logging.getLogger("runefoble.voice_agent.stt")
 STREAM_SESSION = "runefoble.events.session"
+STREAM_VOICE = "runefoble.events.voice"
 
 __all__ = [
     "AudioRingBuffer",
     "BaseTranscriber",
     "ChunkProcessingResult",
-    "FasterWhisperTranscriber",
-    "MockWhisperTranscriber",
     "ParticipantAudioState",
+    "SpeechEngineUnavailable",
     "StreamingAudioPipeline",
     "VADSegmenter",
     "get_streaming_pipeline",
@@ -95,11 +92,11 @@ class StreamingAudioPipeline:
 
     def __init__(
         self,
-        transcriber: BaseTranscriber | None = None,
+        transcriber: BaseTranscriber,
         silence_threshold_ms: float = 200.0,
         energy_threshold: float = 350.0,
     ):
-        self.transcriber: BaseTranscriber = transcriber or MockWhisperTranscriber()
+        self.transcriber: BaseTranscriber = transcriber
         self.silence_threshold_ms = silence_threshold_ms
         self.energy_threshold = energy_threshold
         self.participants: dict[str, ParticipantAudioState] = {}
@@ -114,9 +111,6 @@ class StreamingAudioPipeline:
         if self._event_bus is None:
             self._event_bus = RedisStreamsEventBus(redis_url=PlatformSettings().redis_url)
         return self._event_bus
-
-    def set_transcriber(self, transcriber: BaseTranscriber) -> None:
-        self.transcriber = transcriber
 
     def set_watcher_client(self, client: httpx.AsyncClient | None) -> None:
         self._watcher_client = client
@@ -147,6 +141,25 @@ class StreamingAudioPipeline:
 
     def reset_all(self) -> None:
         self.participants.clear()
+
+    async def _publish_transcription_failed(
+        self,
+        session_id: str,
+        speaker_id: str,
+        speaker_name: str,
+        exc: SpeechEngineUnavailable,
+    ) -> None:
+        event = VoiceTranscriptionFailed(
+            session_id=session_id,
+            speaker_id=speaker_id,
+            speaker_name=speaker_name,
+            engine=self.transcriber.engine_name,
+            reason=str(exc),
+        )
+        try:
+            await self.get_event_bus().publish_event(STREAM_VOICE, event)
+        except Exception:
+            logger.exception("Failed to publish VoiceTranscriptionFailed to '%s'", STREAM_VOICE)
 
     async def process_chunk(
         self,
@@ -198,7 +211,11 @@ class StreamingAudioPipeline:
         if mock_transcript:
             transcript = mock_transcript
         else:
-            transcript = await self.transcriber.transcribe(utterance_audio, sample_rate=sr)
+            try:
+                transcript = await self.transcriber.transcribe(utterance_audio, sample_rate=sr)
+            except SpeechEngineUnavailable as exc:
+                await self._publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
+                raise
 
         session_uuid = to_uuid(session_id)
         campaign_uuid = to_uuid(campaign_id) if campaign_id else None
@@ -269,7 +286,7 @@ _pipeline: StreamingAudioPipeline | None = None
 def get_streaming_pipeline() -> StreamingAudioPipeline:
     global _pipeline
     if _pipeline is None:
-        _pipeline = StreamingAudioPipeline()
+        _pipeline = StreamingAudioPipeline(transcriber=build_transcriber(VoiceAgentSettings()))
     return _pipeline
 
 

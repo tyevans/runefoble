@@ -267,5 +267,30 @@ Response includes:
 }
 ```
 
+## 9. Speech-to-Text Engine Selection & Failure Behaviour (TASK-0600)
 
+The voice agent transcribes completed utterances with a configured speech engine. Production has no canned transcript. The engine is set through environment variables with the `RUNEFOBLE_VOICE_` prefix:
 
+| Variable | Default | Meaning |
+|---|---|---|
+| `RUNEFOBLE_VOICE_STT_ENGINE` | `faster-whisper` | Speech engine. `faster-whisper` is the only supported value. |
+| `RUNEFOBLE_VOICE_STT_MODEL_SIZE` | `tiny.en` | faster-whisper model name (for example `tiny.en`, `base.en`). |
+| `RUNEFOBLE_VOICE_STT_DEVICE` | `cpu` | CTranslate2 device. |
+| `RUNEFOBLE_VOICE_STT_COMPUTE_TYPE` | `int8` | CTranslate2 compute type. |
+
+The model downloads on first use. The model file must be reachable from the pod, or cached in the image.
+
+### Failure Behaviour
+
+When the engine fails to load a model or to infer text, the utterance is dropped and the caller receives an explicit error:
+
+- `POST /api/v1/voice/stream/chunk` returns `503` with `{"detail": {"error": "speech_engine_unavailable", "engine": "faster-whisper", "message": "..."}}`.
+- `WS /api/v1/voice/stream/ws` sends `{"error": "speech_engine_unavailable", "engine": "...", "message": "..."}` and keeps the socket open.
+- The service publishes `runefoble.events.voice.transcription_failed` (`VoiceTranscriptionFailed`) to `runefoble.events.voice`.
+- No `PlayerSpokeEvent` is published, and The Watcher receives no transcript.
+
+Check the active engine with `GET /healthz`. The response includes `"stt_engine": "faster-whisper"`.
+
+### Test Setup
+
+Blackbox tests inject a deterministic engine (`tests/helpers/fixture_transcriber.py`) into the composition root. Tests that need an unavailable engine set `RUNEFOBLE_VOICE_STT_MODEL_SIZE` to an unknown model name and `HF_HUB_OFFLINE=1`. See `tests/test_blackbox_voice_stt_engine.py`.

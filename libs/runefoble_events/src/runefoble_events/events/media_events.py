@@ -38,6 +38,7 @@ from runefoble_events.voice import (
     VoicePeerLeft,
     VoicePeerMuteToggled,
     VoiceSpeechInterrupted,
+    VoiceTranscriptionFailed,
 )
 from runefoble_events.voice_barge_in import (
     NeuralSpeechBargeInDetected,
@@ -88,6 +89,7 @@ __all__ = [
     "VoicePeerLeft",
     "VoicePeerMuteToggled",
     "VoiceSpeechInterrupted",
+    "VoiceTranscriptionFailed",
     "VoiceStreamCodecAdaptedEvent",
     "VoiceStreamQualityDegradedEvent",
 ]
