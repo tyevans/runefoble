@@ -58,6 +58,8 @@ spec:
           {{- if eq .name "game-session" }}
             - name: RUNEFOBLE_VOICE_AGENT_URL
               value: "http://voice-agent:{{ $.Values.services.voiceAgent.port }}"
+            - name: RUNEFOBLE_CHARACTER_SHEET_URL
+              value: "http://character-sheet:{{ $.Values.services.characterSheet.port }}"
           {{- end }}
             {{- range $name, $value := .config.env }}
             {{- if $value }}

@@ -13,6 +13,7 @@ from runefoble_events.events import (
     CharacterLeveledUp,
     SpellPrepared,
     SpellSlotExpended,
+    SpellUnprepared,
 )
 
 
@@ -58,9 +59,16 @@ class SpellsHandlerMixin:
             spell_level=spell_level,
         )
 
-    def unprepare_spell(self, spell_name: str) -> None:
-        """Unprepare a spell from the character's active spellbook."""
-        self._state = self.state.without_prepared_spell(spell_name)
+    def unprepare_spell(self, spell_name: str, session_id: str = "") -> None:
+        """Unprepare a spell from the character's active spellbook. Unknown spells are a no-op."""
+        if spell_name not in self.state.prepared_spells:
+            return
+        self.create_event(
+            SpellUnprepared,
+            session_id=session_id,
+            character_id=str(self.aggregate_id),
+            spell_name=spell_name,
+        )
 
     def cast_spell(
         self, spell_name: str, slot_level: int | None = None, session_id: str = ""
@@ -99,6 +107,10 @@ class SpellsHandlerMixin:
     @handles(SpellPrepared)
     def _on_spell_prepared(self, event: SpellPrepared) -> None:
         self._state = self.state.with_prepared_spell(event.spell_name)
+
+    @handles(SpellUnprepared)
+    def _on_spell_unprepared(self, event: SpellUnprepared) -> None:
+        self._state = self.state.without_prepared_spell(event.spell_name)
 
     @handles(SpellSlotExpended)
     def _on_spell_slot_expended(self, event: SpellSlotExpended) -> None:

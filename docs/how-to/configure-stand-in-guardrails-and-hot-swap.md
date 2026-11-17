@@ -53,7 +53,20 @@ When an absent player's character is controlled by the AI stand-in (`is_stand_in
 2. **Death Save Immunity**: The character does not accrue failed death saving throws while under stand-in control.
 3. **Domain Event**: Emits a `StandInStabilized` event over Redis Streams (`runefoble.events.character.stand_in_stabilized`) notifying the DM and table chronicle.
 
-To activate stand-in status during combat:
+To activate the stand-in for an absent player, call the character sheet route. This route emits `StandInActivated` and stores the flag in the character aggregate:
+
+```bash
+curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/stand-in \
+  -H "Content-Type: application/json" \
+  -d '{
+    "active": true,
+    "session_id": "session-crypt-01"
+  }'
+```
+
+Send `"active": false` to release the stand-in. This emits `StandInReleased`. The permadeath check reads the flag from the aggregate. The `is_stand_in` field on `POST .../health` only overrides the check for one request. It does not change the stored flag.
+
+Then damage the character:
 
 ```bash
 curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/health \
@@ -61,8 +74,7 @@ curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/health \
   -H "X-User-Id: dm-evelyn" \
   -d '{
     "delta": -15,
-    "source": "Orc Chieftain Greatsword",
-    "is_stand_in": true
+    "source": "Orc Chieftain Greatsword"
   }'
 ```
 
@@ -104,6 +116,7 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-crypt-01/hot-swap \
 - **SpiceDB Zanzibar Authorization**: Validates that the requesting player has `participate` rights on the session or ownership of the character.
 - **Round & Turn Continuity**: The combat round and active initiative order are preserved intact without reload.
 - **Domain Event Publication**: Emits `CharacterControlTransferred` (`runefoble.events.session.character_control_transferred`) over Redis Streams.
+- **Stand-In Release**: Before it saves the session, `game_session` calls `POST /api/v1/characters/{character_id}/stand-in` with `"active": false` on `character-sheet`. The call uses `RUNEFOBLE_CHARACTER_SHEET_URL`. If the URL is not set, or `character-sheet` does not confirm the release, the hot-swap returns `502 Bad Gateway`. The session stays unchanged and the stand-in keeps control.
 
 ---
 

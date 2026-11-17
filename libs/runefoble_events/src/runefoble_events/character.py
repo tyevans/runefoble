@@ -142,6 +142,16 @@ class SpellSlotsRestored(BaseRunefobleEvent):
     spell_slots: dict[int, int] = Field(default_factory=dict)
 
 
+@register_event("runefoble.events.character.spell_unprepared")
+class SpellUnprepared(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    event_type: str = "runefoble.events.character.spell_unprepared"
+    session_id: str = ""
+    character_id: str
+    spell_name: str
+
+
 @register_event("runefoble.events.character.stand_in_policy_updated")
 class StandInPolicyUpdated(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True
@@ -159,6 +169,24 @@ class StandInStabilized(BaseRunefobleEvent):
     character_id: UUID | str
     current_hp: int = 0
     condition: str = "unconscious_stabilized"
+
+
+@register_event("runefoble.events.character.stand_in_activated")
+class StandInActivated(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    event_type: str = "runefoble.events.character.stand_in_activated"
+    session_id: str = ""
+    character_id: UUID | str
+
+
+@register_event("runefoble.events.character.stand_in_released")
+class StandInReleased(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    event_type: str = "runefoble.events.character.stand_in_released"
+    session_id: str = ""
+    character_id: UUID | str
 
 
 # Legacy backward-compatible alias

@@ -166,9 +166,10 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `character-sheet` | POST | `/api/v1/characters` | Creates a new character with initial level and spell slots (alias: `/api/v1/characters/create`) |
 | `character-sheet` | GET | `/api/v1/characters/{id}` | Retrieves character sheet details, stats, equipment, and active conditions |
 | `character-sheet` | POST | `/api/v1/characters/{id}/level-up` | Levels up character, increasing HP and unlocking class spell slots |
-| `character-sheet` | POST | `/api/v1/characters/{id}/spells/prepare` | Prepares a spell in the character's active spellbook |
+| `character-sheet` | POST | `/api/v1/characters/{id}/spells/prepare` | Prepares a spell in the character's active spellbook. With `is_prepared: false`, unprepares it and emits `SpellUnprepared` |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/cast` | Expends a spell slot to cast a spell with slot exhaustion validation |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/restore` | Restores spent spell slots to maximum (all levels, or one level with optional `slot_level`) |
+| `character-sheet` | POST | `/api/v1/characters/{id}/stand-in` | Activates or releases the AI stand-in for a character (body: `active`, optional `session_id`). Emits `StandInActivated` or `StandInReleased` |
 | `character-sheet` | POST | `/api/v1/characters/{id}/health` | Updates character hit points with damage or healing (auto-stabilizes stand-in at 0 HP) |
 | `character-sheet` | POST | `/api/v1/characters/{id}/penalties` | Inflicts DM session miss penalty on absent player stand-in |
 | `character-sheet` | DELETE | `/api/v1/characters/{id}/penalties/{penalty_type}` | Clears active session penalty from character |
