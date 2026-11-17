@@ -11,13 +11,13 @@ from runefoble_events.events import (
     WatcherActionProposed,
     WatcherActionVetoed,
 )
+from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from the_watcher.dependencies import (
     STREAM_WATCHER,
     check_dm_authorization,
     get_copilot_engine,
     get_event_bus,
     get_spicedb_client,
-    logger,
     to_uuid,
 )
 from the_watcher.models import (
@@ -33,6 +33,27 @@ router = APIRouter(tags=["copilot"])
 
 def _extract_caller_id(x_user_id: str | None, user_id: str | None) -> str | None:
     return x_user_id or user_id
+
+
+def _planned_action(
+    action_id: str, session_id: str | None, campaign_id: str | None
+) -> PendingAction:
+    """Return a copy of the pending action that the engine is about to change.
+
+    Decision routes publish the audit event from this copy before the engine mutates state.
+    A failed publish then leaves the real pending action unchanged.
+    """
+    existing = get_copilot_engine().get_pending_action(action_id)
+    if existing is not None:
+        return existing.model_copy(deep=True)
+    return PendingAction(
+        action_id=action_id,
+        session_id=session_id or "unknown",
+        campaign_id=campaign_id or "",
+        actor_name="unknown",
+        action_type="unknown",
+        description="Unknown action",
+    )
 
 
 async def _assert_dm_permission(
@@ -71,10 +92,7 @@ async def propose_action(req: ProposeActionRequest) -> PendingAction:
         parameters=req.parameters,
         pause_window_ms=action.pause_window_ms,
     )
-    try:
-        await bus.publish_event(STREAM_WATCHER, event)
-    except Exception as e:
-        logger.warning("Failed to publish WatcherActionProposed event: %s", e)
+    await publish_best_effort(bus, STREAM_WATCHER, event)
 
     return action
 
@@ -94,22 +112,22 @@ async def veto_action(
     target_session = req.session_id or (pending.session_id if pending else None)
     await _assert_dm_permission(caller, target_campaign, target_session)
 
-    action = engine.veto_action(req.action_id, vetoed_by=caller or "unknown", reason=req.reason)
-
-    bus = get_event_bus()
+    planned = _planned_action(req.action_id, target_session, target_campaign)
+    planned.status = "vetoed"
+    planned.vetoed_by = caller or "unknown"
+    planned.veto_reason = req.reason
     event = WatcherActionVetoed(
-        aggregate_id=to_uuid(action.session_id),
-        action_id=action.action_id,
-        session_id=str(action.session_id),
-        campaign_id=str(action.campaign_id) if action.campaign_id else "",
+        aggregate_id=to_uuid(planned.session_id),
+        action_id=planned.action_id,
+        session_id=str(planned.session_id),
+        campaign_id=str(planned.campaign_id) if planned.campaign_id else "",
         vetoed_by=caller or "unknown",
         reason=req.reason,
-        original_action=action.model_dump(),
+        original_action=planned.model_dump(),
     )
-    try:
-        await bus.publish_event(STREAM_WATCHER, event)
-    except Exception as e:
-        logger.warning("Failed to publish WatcherActionVetoed event: %s", e)
+    await publish_or_fail(get_event_bus(), STREAM_WATCHER, event)
+
+    action = engine.veto_action(req.action_id, vetoed_by=caller or "unknown", reason=req.reason)
 
     return {
         "status": "vetoed",
@@ -134,22 +152,21 @@ async def approve_action(
     target_session = req.session_id or (pending.session_id if pending else None)
     await _assert_dm_permission(caller, target_campaign, target_session)
 
-    action = await engine.approve_action(req.action_id, approved_by=caller or "unknown")
-
-    bus = get_event_bus()
+    planned = _planned_action(req.action_id, target_session, target_campaign)
+    planned.status = "approved"
+    planned.approved_by = caller or "unknown"
     event = WatcherActionApproved(
-        aggregate_id=to_uuid(action.session_id),
-        action_id=action.action_id,
-        session_id=str(action.session_id),
-        campaign_id=str(action.campaign_id) if action.campaign_id else "",
+        aggregate_id=to_uuid(planned.session_id),
+        action_id=planned.action_id,
+        session_id=str(planned.session_id),
+        campaign_id=str(planned.campaign_id) if planned.campaign_id else "",
         approved_by=caller or "unknown",
-        action_type=action.action_type,
-        parameters=action.parameters,
+        action_type=planned.action_type,
+        parameters=planned.parameters,
     )
-    try:
-        await bus.publish_event(STREAM_WATCHER, event)
-    except Exception as e:
-        logger.warning("Failed to publish WatcherActionApproved event: %s", e)
+    await publish_or_fail(get_event_bus(), STREAM_WATCHER, event)
+
+    action = await engine.approve_action(req.action_id, approved_by=caller or "unknown")
 
     return {
         "status": "approved",
@@ -173,6 +190,26 @@ async def modify_action(
     target_session = req.session_id or (pending.session_id if pending else None)
     await _assert_dm_permission(caller, target_campaign, target_session)
 
+    planned = _planned_action(req.action_id, target_session, target_campaign)
+    if req.description is not None:
+        planned.description = req.description
+    if req.target is not None:
+        planned.target = req.target
+    if req.parameters is not None:
+        planned.parameters.update(req.parameters)
+    planned.modified_by = caller or "unknown"
+    event = WatcherActionModified(
+        aggregate_id=to_uuid(planned.session_id),
+        action_id=planned.action_id,
+        session_id=str(planned.session_id),
+        campaign_id=str(planned.campaign_id) if planned.campaign_id else "",
+        modified_by=caller or "unknown",
+        description=planned.description,
+        target=planned.target,
+        parameters=planned.parameters,
+    )
+    await publish_or_fail(get_event_bus(), STREAM_WATCHER, event)
+
     action = await engine.modify_action(
         req.action_id,
         modified_by=caller or "unknown",
@@ -181,22 +218,6 @@ async def modify_action(
         parameters=req.parameters,
         auto_approve=req.auto_approve,
     )
-
-    bus = get_event_bus()
-    event = WatcherActionModified(
-        aggregate_id=to_uuid(action.session_id),
-        action_id=action.action_id,
-        session_id=str(action.session_id),
-        campaign_id=str(action.campaign_id) if action.campaign_id else "",
-        modified_by=caller or "unknown",
-        description=action.description,
-        target=action.target,
-        parameters=action.parameters,
-    )
-    try:
-        await bus.publish_event(STREAM_WATCHER, event)
-    except Exception as e:
-        logger.warning("Failed to publish WatcherActionModified event: %s", e)
 
     return {
         "status": action.status,

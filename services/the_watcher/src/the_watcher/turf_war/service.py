@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
+from runefoble_platform.event_publish import publish_best_effort
 from the_watcher.dependencies import (
     STREAM_WORLD,
     get_event_bus,
@@ -18,8 +18,6 @@ from the_watcher.turf_war.models import (
 )
 from the_watcher.turf_war.skirmish_engine import skirmish_engine
 from the_watcher.turf_war.unrest_calculator import unrest_calculator
-
-logger = logging.getLogger("runefoble.the_watcher.turf_war.service")
 
 
 async def load_or_create_unrest(region_id: str, campaign_id: str = "") -> RegionalUnrestAggregate:
@@ -42,10 +40,7 @@ async def publish_turf_events(events: list[Any]) -> None:
     if not bus:
         return
     for evt in events:
-        try:
-            await bus.publish_event(STREAM_WORLD, evt)
-        except Exception as e:
-            logger.warning("Failed to publish event to stream %s: %s", STREAM_WORLD, e)
+        await publish_best_effort(bus, STREAM_WORLD, evt)
 
 
 async def execute_skirmish_simulation(

@@ -9,6 +9,7 @@ from runefoble_events.events import (
     EncounterSpawned,
     SceneAtmosphereSet,
 )
+from runefoble_platform.event_publish import publish_or_fail
 from the_watcher.dependencies import (
     INFERENCE_URL,
     STREAM_WATCHER,
@@ -35,14 +36,7 @@ async def generate_scene(req: SceneGenerateRequest) -> SceneAtmosphereSet:
         mood=req.mood,
     )
     bus = get_event_bus()
-    try:
-        await bus.publish_event(STREAM_WATCHER, event)
-    except Exception as e:
-        logger.warning(
-            "Failed to publish SceneAtmosphereSet event to Redis stream '%s': %s",
-            STREAM_WATCHER,
-            e,
-        )
+    await publish_or_fail(bus, STREAM_WATCHER, event)
     return event
 
 
@@ -57,14 +51,7 @@ async def spawn_encounter(req: EncounterSpawnRequest) -> EncounterSpawned:
         difficulty=req.difficulty,
     )
     bus = get_event_bus()
-    try:
-        await bus.publish_event(STREAM_WATCHER, event)
-    except Exception as e:
-        logger.warning(
-            "Failed to publish EncounterSpawned event to Redis stream '%s': %s",
-            STREAM_WATCHER,
-            e,
-        )
+    await publish_or_fail(bus, STREAM_WATCHER, event)
     return event
 
 
@@ -79,14 +66,7 @@ async def execute_npc_turn(req: NpcTurnRequest) -> AutonomousActionResolved:
         round_number=req.round_number,
     )
     bus = get_event_bus()
-    try:
-        await bus.publish_event(STREAM_WATCHER, event)
-    except Exception as e:
-        logger.warning(
-            "Failed to publish AutonomousActionResolved event to Redis stream '%s': %s",
-            STREAM_WATCHER,
-            e,
-        )
+    await publish_or_fail(bus, STREAM_WATCHER, event)
     return event
 
 

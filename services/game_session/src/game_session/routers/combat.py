@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -23,6 +22,7 @@ from runefoble_events.events import (
     InitiativeRolled,
     InitiativeTurnAdvanced,
 )
+from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.event_sourcing import AggregateRepository
 
 if TYPE_CHECKING:
@@ -74,17 +74,17 @@ async def start_combat_encounter(session_id: UUID, req: StartCombatRequest | Non
     if _get_bus_fn:
         bus = _get_bus_fn()
         if bus:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(
-                    STREAM_SESSION,
-                    CombatEncounterStarted(
-                        aggregate_id=session_id,
-                        session_id=session_id,
-                        campaign_id=session.state.campaign_id,
-                        round_number=session.state.combat_round,
-                        combatants=session.state.initiative_order,
-                    ),
-                )
+            await publish_or_fail(
+                bus,
+                STREAM_SESSION,
+                CombatEncounterStarted(
+                    aggregate_id=session_id,
+                    session_id=session_id,
+                    campaign_id=session.state.campaign_id,
+                    round_number=session.state.combat_round,
+                    combatants=session.state.initiative_order,
+                ),
+            )
 
     return _build_combat_response(session)
 
@@ -111,19 +111,19 @@ async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest):
     if _get_bus_fn:
         bus = _get_bus_fn()
         if bus:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(
-                    STREAM_SESSION,
-                    InitiativeRolled(
-                        aggregate_id=session_id,
-                        session_id=session_id,
-                        campaign_id=session.state.campaign_id,
-                        combatant_id=req.combatant_id,
-                        combatant_name=req.combatant_name,
-                        initiative_score=req.initiative_score,
-                        is_npc=req.is_npc,
-                    ),
-                )
+            await publish_or_fail(
+                bus,
+                STREAM_SESSION,
+                InitiativeRolled(
+                    aggregate_id=session_id,
+                    session_id=session_id,
+                    campaign_id=session.state.campaign_id,
+                    combatant_id=req.combatant_id,
+                    combatant_name=req.combatant_name,
+                    initiative_score=req.initiative_score,
+                    is_npc=req.is_npc,
+                ),
+            )
 
     return _build_combat_response(session)
 
@@ -146,18 +146,18 @@ async def advance_combat_turn(session_id: UUID, req: NextTurnRequest | None = No
     if _get_bus_fn:
         bus = _get_bus_fn()
         if bus:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(
-                    STREAM_SESSION,
-                    InitiativeTurnAdvanced(
-                        aggregate_id=session_id,
-                        session_id=session_id,
-                        campaign_id=session.state.campaign_id,
-                        round_number=session.state.combat_round,
-                        active_combatant_id=session.state.combat_active_id or "",
-                        turn_seconds_remaining=turn_secs,
-                    ),
-                )
+            await publish_or_fail(
+                bus,
+                STREAM_SESSION,
+                InitiativeTurnAdvanced(
+                    aggregate_id=session_id,
+                    session_id=session_id,
+                    campaign_id=session.state.campaign_id,
+                    round_number=session.state.combat_round,
+                    active_combatant_id=session.state.combat_active_id or "",
+                    turn_seconds_remaining=turn_secs,
+                ),
+            )
 
     return _build_combat_response(session, turn_seconds=turn_secs)
 
@@ -179,16 +179,16 @@ async def end_combat_encounter(session_id: UUID):
     if _get_bus_fn:
         bus = _get_bus_fn()
         if bus:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(
-                    STREAM_SESSION,
-                    CombatEncounterEnded(
-                        aggregate_id=session_id,
-                        session_id=session_id,
-                        campaign_id=session.state.campaign_id,
-                        total_rounds=session.state.combat_round,
-                    ),
-                )
+            await publish_or_fail(
+                bus,
+                STREAM_SESSION,
+                CombatEncounterEnded(
+                    aggregate_id=session_id,
+                    session_id=session_id,
+                    campaign_id=session.state.campaign_id,
+                    total_rounds=session.state.combat_round,
+                ),
+            )
 
     return _build_combat_response(session)
 

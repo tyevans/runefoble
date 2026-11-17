@@ -12,6 +12,7 @@ from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings, WardrobeGeneratorSettings
+from runefoble_platform.event_publish import deliver_best_effort, publish_best_effort
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
@@ -124,12 +125,12 @@ async def check_user_can_forge(
 async def publish_forge_event(event: BaseRunefobleEvent) -> None:
     """Publish forge domain event across in-memory platform bus and Redis Streams."""
     # 1. In-memory bus
-    with contextlib.suppress(Exception):
-        await platform_bus.publish(event.event_type, event)
+    await deliver_best_effort(
+        "in-memory", event.event_type, platform_bus.publish(event.event_type, event)
+    )
 
     # 2. Redis stream bus
     bus = get_event_bus()
     if bus:
         stream = "runefoble.events.asset"
-        with contextlib.suppress(Exception):
-            await bus.publish_event(stream, event)
+        await publish_best_effort(bus, stream, event)

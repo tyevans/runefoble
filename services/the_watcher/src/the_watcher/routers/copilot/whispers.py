@@ -6,13 +6,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Header, HTTPException, Query
 from runefoble_events.events import DMNarrativeWhispered
+from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from the_watcher.dependencies import (
     STREAM_WATCHER,
     check_dm_authorization,
     get_copilot_engine,
     get_event_bus,
     get_spicedb_client,
-    logger,
     to_uuid,
 )
 from the_watcher.models import (
@@ -102,10 +102,7 @@ async def create_whisper(
         recipient_role=created.recipient_role,
         metadata=created.metadata,
     )
-    try:
-        await bus.publish_event(STREAM_WATCHER, event)
-    except Exception as e:
-        logger.warning("Failed to publish DMNarrativeWhispered event: %s", e)
+    await publish_or_fail(bus, STREAM_WATCHER, event)
 
     return created
 
@@ -141,9 +138,6 @@ async def generate_whispers(
             recipient_role=w.recipient_role,
             metadata=w.metadata,
         )
-        try:
-            await bus.publish_event(STREAM_WATCHER, event)
-        except Exception as e:
-            logger.warning("Failed to publish DMNarrativeWhispered event: %s", e)
+        await publish_best_effort(bus, STREAM_WATCHER, event)
 
     return whispers

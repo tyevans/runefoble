@@ -22,6 +22,7 @@ from character_sheet.dependencies import (
 from character_sheet.router import router
 from character_sheet.wardrobe_router import router as wardrobe_router
 from fastapi import FastAPI
+from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import event_store_kind
 
 app = FastAPI(
@@ -41,6 +42,7 @@ async def health_check():
         "status": "ok",
         "service": "character_sheet",
         "event_store": event_store_kind(),
+        "event_publish_failures": event_publish_failures(),
     }
 
 

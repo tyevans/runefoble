@@ -9,6 +9,7 @@ from typing import Any
 
 from fastapi import WebSocket
 from runefoble_events.voice import MobileHapticPingDispatched
+from runefoble_platform.event_publish import publish_best_effort
 from voice_agent.mobile import (
     HapticVibrationPattern,
     MobileAudioProfileTier,
@@ -24,8 +25,7 @@ async def publish_companion_event(stream: str, event: Any) -> None:
     import gateway_api.main as gw_main
 
     if bus := gw_main.get_event_bus():
-        with contextlib.suppress(Exception):
-            await bus.publish_event(stream, event)
+        await publish_best_effort(bus, stream, event)
 
 
 class MobileCompanionManager:

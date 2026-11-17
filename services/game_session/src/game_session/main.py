@@ -31,6 +31,10 @@ from game_session.routers import (
 from game_session.settlement.haggling_router import router as settlement_haggling_router
 from game_session.settlement.router import router as settlement_haven_router
 from game_session.settlement.workers_router import router as settlement_workers_router
+from runefoble_platform.event_publish import (
+    event_publish_failures,
+    install_publish_failure_handler,
+)
 from runefoble_platform.event_sourcing import event_store_kind
 
 __all__ = [
@@ -66,6 +70,7 @@ app.include_router(settlement_workers_router)
 app.include_router(settlement_haggling_router)
 app.include_router(bounties_router)
 app.include_router(bounties_router, prefix="/api/v1")
+install_publish_failure_handler(app)
 
 
 @app.get("/healthz")
@@ -74,6 +79,7 @@ async def health_check():
         "status": "ok",
         "service": "game_session",
         "event_store": event_store_kind(),
+        "event_publish_failures": event_publish_failures(),
     }
 
 

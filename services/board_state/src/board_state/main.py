@@ -38,6 +38,10 @@ from board_state.routers import (
 from board_state.routers.boards import get_ui_manifest
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from runefoble_platform.event_publish import (
+    event_publish_failures,
+    install_publish_failure_handler,
+)
 from runefoble_platform.event_sourcing import event_store_kind
 
 app = FastAPI(
@@ -56,6 +60,7 @@ app.include_router(vfx_router)
 app.include_router(physics_router)
 app.include_router(traps_router)
 app.include_router(uvtt_import_router)
+install_publish_failure_handler(app)
 
 
 @app.exception_handler(BoardNotFoundError)
@@ -68,6 +73,7 @@ async def health_check():
     return {
         "status": "ok",
         "service": "board_state",
+        "event_publish_failures": event_publish_failures(),
         "event_store": event_store_kind(),
     }
 

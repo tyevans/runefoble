@@ -9,6 +9,7 @@ from runefoble_events.events import (
     TokenMoved,
     WatcherNarrationGenerated,
 )
+from runefoble_platform.event_publish import publish_best_effort
 from the_watcher.dependencies import (
     INFERENCE_URL,
     STREAM_BOARD,
@@ -116,13 +117,8 @@ async def process_speech_action(req: SpeechInputRequest) -> IntentResult:
         tone="tactical" if intent.action_type in ("move", "attack") else "dark_fantasy",
     )
 
-    try:
-        await bus.publish_event(STREAM_WATCHER, speech_intent_event)
-        await bus.publish_event(STREAM_WATCHER, narration_event)
-    except Exception as e:
-        logger.warning(
-            "Failed to publish watcher events to Redis stream '%s': %s", STREAM_WATCHER, e
-        )
+    await publish_best_effort(bus, STREAM_WATCHER, speech_intent_event)
+    await publish_best_effort(bus, STREAM_WATCHER, narration_event)
 
     if intent.action_type == "move":
         from_x = req.from_x if req.from_x is not None else 0
@@ -151,11 +147,6 @@ async def process_speech_action(req: SpeechInputRequest) -> IntentResult:
             to_y=to_y,
             initiated_by="player",
         )
-        try:
-            await bus.publish_event(STREAM_BOARD, token_moved_event)
-        except Exception as e:
-            logger.warning(
-                "Failed to publish TokenMoved event to Redis stream '%s': %s", STREAM_BOARD, e
-            )
+        await publish_best_effort(bus, STREAM_BOARD, token_moved_event)
 
     return intent

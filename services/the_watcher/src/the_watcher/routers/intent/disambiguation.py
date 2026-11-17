@@ -10,13 +10,13 @@ from runefoble_events.events import (
     CompoundActionResolved,
     IntentDisambiguationRequested,
 )
+from runefoble_platform.event_publish import publish_best_effort
 from the_watcher.dependencies import (
     STREAM_BOARD,
     STREAM_WATCHER,
     compound_action_engine,
     disambiguation_engine,
     get_event_bus,
-    logger,
     to_uuid,
 )
 from the_watcher.models import (
@@ -32,10 +32,7 @@ router = APIRouter(tags=["intent"])
 
 
 async def _safe_publish(bus, stream: str, event) -> None:
-    try:
-        await bus.publish_event(stream, event)
-    except Exception as e:
-        logger.warning("Failed to publish %s: %s", type(event).__name__, e)
+    await publish_best_effort(bus, stream, event)
 
 
 def evaluate_target_ambiguity(

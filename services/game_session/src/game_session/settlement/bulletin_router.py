@@ -7,7 +7,6 @@ ADR-0006 (Redis Streams), and ADR-0012 (Design Tokens).
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID
 
@@ -33,6 +32,7 @@ from game_session.settlement.models import (
     PinBulletinNoticeRequest,
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(tags=["bulletin-board"])
 
@@ -49,8 +49,7 @@ async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
     await repo.save(agg)
     if bus:
         for ev in events:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_WEST_MARCHES, ev)
+            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
 
 async def _load_settlement_for_bulletin(

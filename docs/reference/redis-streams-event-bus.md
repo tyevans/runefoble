@@ -69,12 +69,32 @@ if bus is not None:
 ```
 
 - Events publish in order to the `runefoble.events.board` stream.
-- The helper logs the stream and event type on failure, then re-raises.
+- The helper calls `publish_or_fail`. On failure it logs the stream and event type, counts the failure, and raises `DomainEventPublishError`. The route returns HTTP 503.
 - Capture the events before `repo.save`. The save marks them committed and clears the list.
 
 ### Watcher Events
 
-The Watcher publishes to `runefoble.events.watcher` and to `runefoble:events:world` (turf war, `STREAM_WORLD`) with `publish_event(STREAM, event)`.
+The Watcher publishes to `runefoble.events.watcher` and to `runefoble:events:world` (turf war, `STREAM_WORLD`) with `publish_event(STREAM, event)`. Each call goes through the publish failure policy below.
+
+### Publish Failure Policy
+
+Every publish call uses one of two helpers from `runefoble_platform.event_publish`. Neither helper suppresses an error silently.
+
+| Helper | Use for | On failure |
+|---|---|---|
+| `publish_or_fail(bus, stream, event)` | Routes that change state, and DM decisions | Logs at error level, counts the failure, raises `DomainEventPublishError`. The app returns HTTP 503. |
+| `publish_best_effort(bus, stream, event)` | Read-model updates, projections, recaps, and suggestions | Logs at error level and counts the failure. Returns `False`. The request still succeeds. |
+
+`deliver_best_effort(destination, event_type, awaitable)` applies the best-effort policy to WebSocket broadcasts and the in-memory platform bus.
+
+Rules for clients and operators:
+
+- A 503 means the audit event was not published. The state change may already be saved. Retry the request. Retried create requests can produce a second record, so check for duplicates.
+- `publish_or_fail` routes call the engine or save the aggregate only after the event is built. Veto, approve, and modify publish the event from a planned copy first. A failed publish leaves the pending action unchanged.
+- Each service exposes `event_publish_failures` (a count) on `/healthz`. Watch this value. A rising count means events are being lost.
+- Services that map 503 call `install_publish_failure_handler(app)` in their `main.py`.
+
+Decision routes that return 503 include the Watcher veto, approve, modify, DM whisper, stand-in activation, and autonomous DM routes. Game session routes that return 503 include session start, hot-swap takeover, combat, tavern, bounty, campfire, caravan, stronghold, settlement, and west marches routes. The dice roll route in game session uses `publish_best_effort` until TASK-0565 refactors it.
 
 ---
 
@@ -206,6 +226,7 @@ The Redis Streams event bus, consumer groups, and read projections are verified 
 
 - **`tests/test_redis_consumer_groups.py`**: Low-level distributed consumer group mechanics, competing consumers, PEL acknowledgements, `XAUTOCLAIM` recovery, and DLQ dispatching.
 - **`tests/test_session_projections.py`**: High-level `SessionReadProjection` worker event processing, read model state transitions, and poison pill DLQ isolation.
+- **`tests/test_blackbox_publish_failure_policy.py`**: Verifies that decision routes return 503 with the pending action unchanged, and that side-effect publish failures are counted on `/healthz`.
 - **`tests/test_blackbox_board_event_publish.py`**: Verifies board and watcher events reach the Redis stream through `publish_event`.
 - **`tests/test_game_session_projections.py`**: Modular projection lifecycle tests covering `InitiativeProjection`, `PresenceProjection`, tie-breaking rules, and participant presence tracking.
 

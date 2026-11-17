@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -16,6 +15,7 @@ from gateway_api.websocket_validator import (
     default_action_validator,
 )
 from runefoble_auth.zitadel import ZitadelAuthService
+from runefoble_platform.event_publish import publish_best_effort
 
 logger = logging.getLogger("runefoble.gateway.websocket_endpoint")
 SESSION_ACTIONS = ("modify_hp", "apply_condition", "clear_condition")
@@ -43,8 +43,7 @@ async def _publish_event(
             "data": data,
             "timestamp": datetime.now(UTC).isoformat(),
         }
-        with contextlib.suppress(Exception):
-            await bus.publish_event(_resolve_stream(action), payload)
+        await publish_best_effort(bus, _resolve_stream(action), payload)
 
 
 async def _send_denied(websocket: WebSocket, action: str, msg: str) -> None:

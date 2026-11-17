@@ -5,7 +5,6 @@ Part of TASK-0100 / PRD-0014 / US-0044.
 
 from __future__ import annotations
 
-import contextlib
 import random
 from typing import Any, Literal
 from uuid import UUID
@@ -20,6 +19,7 @@ from game_session.dependencies import (
 )
 from pydantic import BaseModel, Field
 from runefoble_events.events import CampfireRestCompleted
+from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(tags=["campfire"])
 
@@ -140,8 +140,7 @@ async def campfire_rest(
 
     bus = get_event_bus()
     if bus:
-        with contextlib.suppress(Exception):
-            await bus.publish_event(STREAM_SESSION, rest_event)
+        await publish_or_fail(bus, STREAM_SESSION, rest_event)
 
     return CampfireRestResponse(
         session_id=str(session_id),

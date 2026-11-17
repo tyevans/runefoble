@@ -1,6 +1,5 @@
 """Spectator stream overlay proxy router for Runefoble Gateway API."""
 
-import contextlib
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Header, Query, WebSocket
@@ -14,6 +13,7 @@ from gateway_api.spectator import (
 )
 from runefoble_auth.principal import authenticate_authorization
 from runefoble_events import SpectatorSessionConnected
+from runefoble_platform.event_publish import publish_best_effort
 
 router = APIRouter(tags=["Spectator"])
 
@@ -57,8 +57,7 @@ async def get_spectator_state(
     )
     bus = get_event_bus()
     if bus is not None:
-        with contextlib.suppress(Exception):
-            await bus.publish_event("runefoble.events.spectator", event)
+        await publish_best_effort(bus, "runefoble.events.spectator", event)
 
     raw_state = get_raw_session_state(session_id)
     return sanitize_spectator_state(raw_state, viewer_info=viewer_info)

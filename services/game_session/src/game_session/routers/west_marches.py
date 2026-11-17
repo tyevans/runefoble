@@ -6,7 +6,6 @@ Governed by Hard Invariant 1 (SpiceDB Zanzibar) and Hard Invariant 2 (eventsourc
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -24,6 +23,7 @@ from game_session.west_marches_models import (
     RecordDiscoveryRequest,
     RegisterCampaignRequest,
 )
+from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(prefix="/api/v1/shared-worlds", tags=["west-marches"])
 
@@ -163,8 +163,7 @@ async def record_discovery(
     bus = get_event_bus()
     if bus:
         for ev in events_to_emit:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_WEST_MARCHES, ev)
+            await publish_or_fail(bus, STREAM_WEST_MARCHES, ev)
 
     found = next((d for d in world.state.discoveries if d["discovery_id"] == did), None)
     return {"shared_world_id": str(wid), "discovery": found}

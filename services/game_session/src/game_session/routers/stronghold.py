@@ -5,7 +5,6 @@ Part of TASK-0100 / PRD-0014 / US-0044.
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID
 
@@ -22,6 +21,7 @@ from game_session.stronghold import (
     StrongholdState,
 )
 from pydantic import BaseModel, Field
+from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(tags=["stronghold"])
 
@@ -135,8 +135,7 @@ async def upgrade_stronghold_facility(
     bus = get_event_bus()
     if bus:
         for ev in events_to_publish:
-            with contextlib.suppress(Exception):
-                await bus.publish_event(STREAM_STRONGHOLD, ev)
+            await publish_or_fail(bus, STREAM_STRONGHOLD, ev)
 
     return UpgradeStrongholdResponse(
         campaign_id=str(campaign_id),
