@@ -65,7 +65,7 @@ class ZitadelSpiceDBSyncService:
         self,
         campaign_id: str,
         user_id: str,
-        role: Literal["gm", "dungeon_master", "player", "spectator", "owner"] | str,
+        role: Literal["game_master", "player", "spectator", "owner"] | str,
         session_id: str | None = None,
         action: Literal["grant", "revoke"] = "grant",
     ) -> list[str]:

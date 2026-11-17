@@ -23,11 +23,12 @@ class SyncResult(BaseModel):
     errors: list[str] = Field(default_factory=list)
 
 
-# Mapping from incoming role names to canonical Zanzibar campaign relations
+# Mapping from incoming role names to canonical Zanzibar campaign relations.
+# The schema defines one Game Master relation: `game_master`. `gm` is never a relation.
 CAMPAIGN_ROLE_RELATIONS: dict[str, list[str]] = {
-    "gm": ["gm", "dungeon_master"],
-    "dm": ["gm", "dungeon_master"],
-    "dungeon_master": ["gm", "dungeon_master"],
+    "gm": ["game_master"],
+    "dm": ["game_master"],
+    "dungeon_master": ["game_master"],
     "player": ["player"],
     "spectator": ["spectator"],
     "owner": ["owner"],

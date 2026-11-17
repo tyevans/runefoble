@@ -56,15 +56,15 @@ async def test_spicedb_client_crud_and_permissions(
 
 def test_sync_tuples_helpers_and_models() -> None:
     """Verify SyncResult, tuple formatting, and role normalization."""
-    result = SyncResult(status="success", synced_tuples=["campaign:c1#gm@user:u1"])
+    result = SyncResult(status="success", synced_tuples=["campaign:c1#game_master@user:u1"])
     assert result.status == "success"
     assert len(result.synced_tuples) == 1
 
     formatted = format_tuple("campaign", "c1", "player", "user", "u2")
     assert formatted == "campaign:c1#player@user:u2"
 
-    assert normalize_campaign_role("gm") == ["gm", "dungeon_master"]
-    assert normalize_campaign_role("dm") == ["gm", "dungeon_master"]
+    assert normalize_campaign_role("gm") == ["game_master"]
+    assert normalize_campaign_role("dm") == ["game_master"]
     assert normalize_campaign_role("player") == ["player"]
     assert normalize_campaign_role("custom_role") == ["custom_role"]
     assert "spectator" in CAMPAIGN_ROLE_RELATIONS
@@ -88,7 +88,7 @@ async def test_handle_domain_event_dispatch() -> None:
         dm_id=dm_id,
     )
     synced_session = await service.handle_domain_event(evt_session)
-    assert any("campaign:" in t and "#gm@" in t for t in synced_session)
+    assert any("campaign:" in t and "#game_master@" in t for t in synced_session)
 
     # 2. Pydantic ParticipantJoined
     user_id = f"player-{uuid4().hex[:6]}"
@@ -154,7 +154,7 @@ async def test_reconcile_and_batch_relationships() -> None:
 
     rels = [
         Relationship("campaign", "c1", "player", "user", "u1"),
-        Relationship("campaign", "c1", "gm", "user", "u2"),
+        Relationship("campaign", "c1", "game_master", "user", "u2"),
     ]
     synced = await service.batch_write_relationships(rels)
     assert len(synced) == 2

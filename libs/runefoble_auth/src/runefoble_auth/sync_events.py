@@ -51,7 +51,9 @@ async def handle_session_created(sync_service: Any, event: Any) -> list[str]:
 
     synced: list[str] = []
     if campaign_id and dm_id:
-        synced.extend(await sync_service.sync_membership(str(campaign_id), str(dm_id), "gm"))
+        synced.extend(
+            await sync_service.sync_membership(str(campaign_id), str(dm_id), "game_master")
+        )
     if session_id and campaign_id:
         synced.extend(await sync_service.sync_session_campaign(str(session_id), str(campaign_id)))
     return synced
