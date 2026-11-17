@@ -43,7 +43,7 @@ def reset_voice_signaling_environment():
     set_event_bus(bus)
     va_main.set_event_bus(bus)
 
-    coord = VoiceRoomCoordinator(event_bus=bus, spicedb_client=mock_spicedb)
+    coord = VoiceRoomCoordinator(event_bus=bus)
     set_voice_room_coordinator(coord)
 
     signaling_manager.active_rooms.clear()

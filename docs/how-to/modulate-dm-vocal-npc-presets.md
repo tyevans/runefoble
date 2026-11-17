@@ -56,6 +56,8 @@ Query the preset catalog via the frontdoor endpoint `GET /voice/presets`:
 
 ## 3. Applying Vocal Modulation via Frontdoor REST API
 
+`POST /voice/modulate` checks `session.participate` for the token subject. The DM passes because the DM holds `campaign#dungeon_master`. A spectator gets `403`. See [Voice Agent Permissions](../reference/ports-and-endpoints.md#voice-agent-permissions-task-0558).
+
 ### Inspecting Presets
 ```bash
 curl -X GET "https://runefoble.local/voice/presets" \

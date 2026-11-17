@@ -6,6 +6,7 @@ segmentation, and standard 44-byte WAV container ingestion.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import uuid
 
@@ -21,6 +22,7 @@ from tests.helpers.audio_synth import (
 )
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_grants import grant_voice_session
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
@@ -31,6 +33,11 @@ def test_silence_chunk_rejected_without_events(client: TestClient, mock_redis: M
     silence_b64 = base64.b64encode(silence_pcm).decode("ascii")
 
     session_id = str(uuid.uuid4())
+    asyncio.run(
+        grant_voice_session(
+            session_id, players=["spk-silence-1", "spk-speech-1", "spk-kyra-1", "spk-wav-1"]
+        )
+    )
     resp = client.post(
         "/api/v1/voice/stream/chunk",
         json={
@@ -58,6 +65,11 @@ def test_speech_onset_and_accumulation(client: TestClient, mock_redis: MockAsync
     speech_b64 = base64.b64encode(speech_pcm).decode("ascii")
 
     session_id = str(uuid.uuid4())
+    asyncio.run(
+        grant_voice_session(
+            session_id, players=["spk-silence-1", "spk-speech-1", "spk-kyra-1", "spk-wav-1"]
+        )
+    )
     resp = client.post(
         "/api/v1/voice/stream/chunk",
         json={
@@ -84,6 +96,11 @@ def test_sub_250ms_silence_triggers_utterance_and_event(
 ):
     """Trailing silence exceeding the 200ms threshold (< 250ms SLA) triggers transcription and PlayerSpokeEvent."""
     session_id = str(uuid.uuid4())
+    asyncio.run(
+        grant_voice_session(
+            session_id, players=["spk-silence-1", "spk-speech-1", "spk-kyra-1", "spk-wav-1"]
+        )
+    )
     campaign_id = str(uuid.uuid4())
 
     # 1. Stream 300ms of active speech
@@ -140,6 +157,11 @@ def test_wav_container_ingestion(
     wav_b64 = base64.b64encode(wav_bytes).decode("ascii")
 
     session_id = str(uuid.uuid4())
+    asyncio.run(
+        grant_voice_session(
+            session_id, players=["spk-silence-1", "spk-speech-1", "spk-kyra-1", "spk-wav-1"]
+        )
+    )
     resp = client.post(
         "/api/v1/voice/stream/chunk",
         json={

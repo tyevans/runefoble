@@ -19,6 +19,7 @@ from voice_agent.main import app as voice_app
 from voice_agent.main import set_event_bus as voice_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_grants import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -175,6 +176,7 @@ async def test_watcher_redis_stream_event_emission(mock_redis: MockAsyncRedis):
     watcher_set_event_bus(event_bus)
 
     session_id = str(uuid.uuid4())
+    await grant_voice_session(session_id, players=["valeros-1", "kyra-1"])
     campaign_id = str(uuid.uuid4())
 
     transport = ASGITransport(app=watcher_app)
@@ -240,6 +242,7 @@ async def test_voice_agent_transcription_and_event_emission(mock_redis: MockAsyn
     voice_set_event_bus(event_bus)
 
     session_id = str(uuid.uuid4())
+    await grant_voice_session(session_id, players=["valeros-1", "kyra-1"])
     campaign_id = str(uuid.uuid4())
 
     transport = ASGITransport(app=voice_app)

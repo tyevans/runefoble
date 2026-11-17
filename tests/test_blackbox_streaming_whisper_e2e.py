@@ -6,6 +6,7 @@ immediate forced utterance completion via is_final, and multi-speaker ring buffe
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import time
 import uuid
@@ -24,6 +25,7 @@ from tests.helpers.audio_synth import (
 )
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_grants import grant_voice_session
 from tests.helpers.voice_identity import voice_ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -34,6 +36,12 @@ def test_end_to_end_streaming_speech_to_intent_latency_budget(
 ):
     """Verifies end-to-end streaming speech transcription and Watcher intent parsing strictly within 500ms."""
     session_id = str(uuid.uuid4())
+    asyncio.run(
+        grant_voice_session(
+            session_id,
+            players=["spk-valeros-1", "spk-ws-valeros", "spk-final-1", "spk-kyra", "spk-valeros"],
+        )
+    )
     campaign_id = str(uuid.uuid4())
 
     speech_pcm = generate_pcm_sine(duration_ms=300)
@@ -96,6 +104,12 @@ def test_end_to_end_streaming_speech_to_intent_latency_budget(
 def test_continuous_stream_over_websocket_frontdoor(client: TestClient, mock_redis: MockAsyncRedis):
     """Continuous PCM audio frame streaming via WebSocket frontdoor dispatches events upon utterance completion."""
     session_id = str(uuid.uuid4())
+    asyncio.run(
+        grant_voice_session(
+            session_id,
+            players=["spk-valeros-1", "spk-ws-valeros", "spk-final-1", "spk-kyra", "spk-valeros"],
+        )
+    )
     speaker_id = "spk-ws-valeros"
 
     with client.websocket_connect(
@@ -135,6 +149,12 @@ def test_forced_completion_via_is_final(
     speech_engine.script("I cast shield")
 
     session_id = str(uuid.uuid4())
+    asyncio.run(
+        grant_voice_session(
+            session_id,
+            players=["spk-valeros-1", "spk-ws-valeros", "spk-final-1", "spk-kyra", "spk-valeros"],
+        )
+    )
     resp = client.post(
         "/api/v1/voice/stream/chunk",
         json={
@@ -158,6 +178,12 @@ def test_multi_speaker_buffer_isolation(
 ):
     """Multiple participants streaming audio concurrently maintain isolated ring buffers and VAD states."""
     session_id = str(uuid.uuid4())
+    asyncio.run(
+        grant_voice_session(
+            session_id,
+            players=["spk-valeros-1", "spk-ws-valeros", "spk-final-1", "spk-kyra", "spk-valeros"],
+        )
+    )
 
     speech_pcm = generate_pcm_sine(duration_ms=200)
     silence_pcm = generate_pcm_silence(duration_ms=200)

@@ -5,6 +5,7 @@ POST /api/v1/voice/tts) and validates observable responses, DSP frequency modula
 metadata, audio payloads, processing latency (<50ms), and emitted domain events.
 """
 
+import asyncio
 import base64
 import json
 import time
@@ -17,7 +18,39 @@ from voice_agent.main import app, set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_grants import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
+
+
+@pytest.fixture(autouse=True)
+def _voice_session_grants() -> None:
+    """Make the DM and the speakers of these literal sessions authorized through the SpiceDB seam."""
+    for session_id in (
+        "session_default",
+        "sess-bench-1",
+        "sess-drunk-1",
+        "sess-ethereal-1",
+        "session-conditioned-99",
+        "sess-tts-combo-1",
+        "sess-underwater-1",
+        "sess-whisper-1",
+    ):
+        asyncio.run(
+            grant_voice_session(
+                session_id,
+                players=[
+                    "speaker_default",
+                    "speaker-sarah-42",
+                    "spk-bench",
+                    "spk-kyra",
+                    "spk-marcus",
+                    "spk-sarah",
+                    "spk-valeros",
+                    "spk-watcher",
+                ],
+            )
+        )
+
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "fake_speech_synthesizer")
 

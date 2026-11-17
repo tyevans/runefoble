@@ -327,6 +327,38 @@ Every `voice-agent` WebSocket route (`/api/v1/voice/duplex/ws/...`, `/api/v1/voi
 
 `game-session` forwards the caller's `Authorization` header on `POST /api/v1/voice/dsp/condition`. No service credential exists yet (ADR-0015 e). Until one exists, the caller's token is the only credential for that call.
 
+## Voice Agent Permissions (TASK-0558)
+
+After the bearer token passes, each voice route checks one permission in `libs/runefoble_auth/schema/runefoble.zed`. The check names the action in `ACTION_PERMISSIONS`. SpiceDB failures are not denials.
+
+| Route | Check | Subject |
+|---|---|---|
+| `POST /api/v1/voice/rooms/{session_id}/kick` | `session.control` | Token subject |
+| `POST /voice/modulate` | `session.participate` | Token subject |
+| `POST /api/v1/voice/aec/benchmark` | `session.control` | Token subject |
+| `GET /voice/streams/{session_id}/quality`, `POST /voice/streams/{session_id}/report` | `session.control` | Token subject |
+| `GET /api/v1/voice/duplex/status/{session_id}` | `session.observe` | Token subject |
+| `POST /api/v1/voice/duplex/playback/start` | `session.participate` | Token subject |
+| `POST /api/v1/voice/synthesize`, `POST /api/v1/voice/tts` | Speaker rule | `speaker_id` |
+| `POST /api/v1/voice/dsp/apply` | Speaker rule | `speaker_id` |
+| `POST /voice/filters/barge-in/evaluate` | Speaker rule | `speaker_id` |
+| `POST /api/v1/voice/transcribe` | Speaker rule | `speaker_id` |
+| `POST /api/v1/voice/stream/chunk` | Speaker rule | `speaker_id` |
+| `WS /api/v1/voice/duplex/ws/...` | Speaker rule at connect | `speaker_id` |
+| `WS /api/v1/voice/stream/ws/...` | Speaker rule for each new session and speaker pair | `speaker_id` |
+
+The speaker rule has two parts. The named speaker must hold `session.participate`. The token subject may act for another speaker only when the token subject holds `session.control`. A WebSocket frame that names another speaker closes the socket with `1008`.
+
+`session.control` resolves to `campaign->run_session` through the session's campaign relation. A DM holds it. A player and a spectator do not.
+
+| Condition | Response |
+|---|---|
+| Permission denied | `403` with `{"detail": {"error": "permission_denied", "required_permission": "...", "resource": "...", "subject": "..."}}` |
+| SpiceDB unreachable or timed out | `503` with `{"error": "authorization_unavailable"}` |
+| Schema mismatch (a name is not in `runefoble.zed`) | `500` with `{"error": "authorization_schema_error", "error_id": "<uuid>"}`. The gRPC detail stays in the log. |
+
+The gateway mounts the voice room and stream diagnostics routers. It registers the same handlers through `runefoble_auth.authz_http.install_authz_error_handlers`.
+
 ## Gateway Proxy Identity and Errors
 
 A gateway proxy route forwards the caller's verified bearer token to the owning service. The gateway verifies the token first. The owning service verifies it again.

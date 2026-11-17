@@ -7,6 +7,7 @@ engine is driven through configuration, with a process-boundary stand-in for the
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import io
@@ -21,7 +22,16 @@ from voice_agent.main import app
 from voice_agent.synthesis_engine import set_speech_synthesizer
 
 from tests.helpers.audio_synth import generate_pcm_sine
+from tests.helpers.voice_grants import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
+
+
+@pytest.fixture(autouse=True)
+def _voice_session_grants() -> None:
+    """Make the DM and the speakers of these literal sessions authorized through the SpiceDB seam."""
+    for session_id in ("session_default",):
+        asyncio.run(grant_voice_session(session_id, players=["speaker_default"]))
+
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 

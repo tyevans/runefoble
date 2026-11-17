@@ -64,6 +64,8 @@ When matched, the registry emits `combat.ready_action.triggered` and executes th
 
 ## 4. REST API Reference
 
+The reaction routes above belong to game-session. The voice barge-in routes belong to voice-agent. Voice-agent checks the speaker that a request names. The speaker must hold `session.participate`. See [Voice Agent Permissions](../reference/ports-and-endpoints.md#voice-agent-permissions-task-0558).
+
 ### Declare Reaction Interrupt
 ```http
 POST /sessions/{session_id}/reactions/declare

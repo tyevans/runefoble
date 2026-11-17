@@ -47,7 +47,7 @@ Clients establish a duplex voice control and audio streaming connection to the V
 
 The Voice Agent verifies the Zitadel bearer token itself (ADR-0015 c). It does not trust an identity header from the gateway.
 
-- **HTTP routes** take the token only from `Authorization: Bearer <jwt>`. A request with no token, a garbage token, or a token from another issuer returns `401` with `WWW-Authenticate: Bearer`. `X-User-Id` and `?user_id=` are ignored. The DM kick and modulate routes use the token subject for SpiceDB checks.
+- **HTTP routes** take the token only from `Authorization: Bearer <jwt>`. A request with no token, a garbage token, or a token from another issuer returns `401` with `WWW-Authenticate: Bearer`. `X-User-Id` and `?user_id=` are ignored. After the token passes, each route checks one schema permission. The subject is the token subject, or the speaker that the request names. A denial returns `403`. A SpiceDB outage returns `503` with `{"error": "authorization_unavailable"}`. The full route table is in [Voice Agent Permissions](../reference/ports-and-endpoints.md#voice-agent-permissions-task-0558).
 - **WebSocket routes** (`/api/v1/voice/duplex/ws/...`, `/api/v1/voice/stream/ws/...`) take the token only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The service accepts the handshake with `runefoble.v1`. A handshake with no valid token closes with code `1008` before accept. A token in the query string is refused.
 - `GET /healthz` and `GET /ui/manifest` stay public.
 
