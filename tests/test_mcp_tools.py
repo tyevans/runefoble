@@ -1,10 +1,11 @@
 """Unit tests for Model Context Protocol (MCP) RPG tools.
 
-Board and encounter tools call owning services over HTTP. Their behavior is
-covered by tests/test_blackbox_mcp_gateway.py.
+Board, encounter, narration, and resource tools call owning services over HTTP.
+Their behavior is covered by tests/test_blackbox_mcp_gateway.py and
+tests/test_blackbox_mcp_orchestration_and_resources.py.
 """
 
-from gateway_mcp.server import mcp, narrate_with_the_watcher, roll_dice
+from gateway_mcp.server import mcp, roll_dice
 
 
 def test_mcp_registered_tools():
@@ -42,10 +43,3 @@ def test_roll_dice():
     fallback = roll_dice("invalid", "Check")
     assert fallback["notation"] == "1d20"
     assert 1 <= fallback["total"] <= 20
-
-
-def test_narrate_with_the_watcher():
-    """Test DM narration generation via MCP."""
-    res = narrate_with_the_watcher("Dungeon gate", "Valeros kicks open the gate")
-    assert "Valeros kicks open the gate" in res["narration"]
-    assert len(res["environmental_effects"]) > 0

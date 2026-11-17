@@ -7,6 +7,8 @@ routes and return what it stores. They hold no board data of their own.
 from typing import TYPE_CHECKING, Any
 
 from gateway_mcp.clients import ServiceClient
+from gateway_mcp.clients.caller import caller_bearer
+from mcp.server.fastmcp import Context
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
@@ -61,13 +63,13 @@ async def move_board_token(session_id: str, token_id: str, to_x: int, to_y: int)
     }
 
 
-async def query_encounter_state(encounter_id: str) -> dict[str, Any]:
+async def query_encounter_state(encounter_id: str, ctx: Context | None = None) -> dict[str, Any]:
     """Query an encounter: round, turn order, active combatant, tokens, grid, and hazards.
 
     Round and turn order come from game_session. Tokens, grid, and hazards come from
     board_state. The encounter id is the game session id.
     """
-    client = ServiceClient()
+    client = ServiceClient(bearer=caller_bearer(ctx))
     board = await client.get_board(encounter_id)
     combat = await client.get_combat_state(encounter_id)
     return {
