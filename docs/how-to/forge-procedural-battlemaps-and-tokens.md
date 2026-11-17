@@ -52,9 +52,14 @@ curl -X POST http://localhost:8008/api/v1/forge/battlemap \
     "wall_segments": [...],
     "doors": [...]
   },
+  "generator": "deterministic",
   "status": "forged"
 }
 ```
+
+The `generator` field names the layout adapter that made the map. The default is `deterministic` (see section 6).
+
+To get a different layout for the same prompt and size, send a `seed` integer. The same prompt, seed, and size always give the same layout. When `seed` is omitted, the service derives a stable seed from the prompt and the size.
 
 ---
 
@@ -100,6 +105,7 @@ curl -X POST http://localhost:8008/api/v1/forge/token \
 Forged assets are written to Silo before the forge responds. The service never returns a URL for bytes it did not store.
 
 - If Silo is unreachable or returns an error status, the forge route returns `503 Service Unavailable`. The response has no `asset_id` and no `image_url`.
+- If the layout generator cannot produce a layout, the route returns `503` with `{"error": "map_generation_unavailable", "generator": "<name>", "message": "..."}`. Nothing is stored.
 - Retry the request after Silo recovers. A retry creates a new asset id.
 - `GET /api/v1/forge/battlemap/{asset_id}` and `GET /api/v1/forge/token/{asset_id}` read the durable asset index. They return the same metadata before and after a service restart.
 
@@ -143,3 +149,25 @@ In accordance with Hard Invariant 6 and ADR-0003/ADR-0007, raster generation is 
 
 The top-level `asset_forge.generator` module serves as a lightweight aggregator facade (< 50 lines) providing 100% backward-compatible function re-exports.
 
+---
+
+## 6. Battlemap Layout Generator (`MapGenerator` Port)
+
+The battlemap route gets its wall, door, hazard, and grid layout from a `MapGenerator` port (`asset_forge.map_generator`). The port takes a prompt, a width, a height, and a seed. It returns a `MapLayout`.
+
+**The default is the deterministic generator.** The `deterministic` generator (`asset_forge.deterministic_map_generator`) does the following:
+
+- Picks a theme and hazard type from keywords in the prompt.
+- Draws a perimeter, a central divider, and a left-wing divider. Each divider has a door at a position chosen from the seeded random stream.
+- Places pillars on a lattice in the right wing. Each site is an independent seeded draw against `wall_density`.
+- Lays a hazard canal whose length follows `hazard_density`.
+
+It uses no diffusion model, no GPU, and no network call. Its output is a rule-based grid, not generated imagery. The raster (PNG) is drawn from that grid by `asset_forge.raster`.
+
+**A configured provider can replace it.** Select the generator with the `RUNEFOBLE_ASSET_FORGE_MAP_GENERATOR` environment variable. The default is `deterministic`, which is the only supported value in this release. A provider adapter must implement `MapGenerator`. It must raise `MapGenerationUnavailable` when it cannot produce a layout. The route then returns the `503` body shown in section "Failure Behaviour".
+
+| Environment variable | Default | Meaning |
+|---|---|---|
+| `RUNEFOBLE_ASSET_FORGE_MAP_GENERATOR` | `deterministic` | Layout adapter. `deterministic` is the only supported value. |
+
+Blackbox tests inject a fixed generator (`tests/helpers/fixture_map_generator.py`) through `set_map_generator` at the composition root. They check that the route uses the port, names the generator in the response, and returns `503` with no stored asset when the generator is unavailable. See `tests/test_blackbox_asset_forge_map_generator.py`.

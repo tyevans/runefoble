@@ -3,7 +3,7 @@
 Procedural Battlemap & Token Asset Forge Microservice for Runefoble.
 
 ## Overview
-Generates high-resolution tactical battlemaps and transparent circular token portraits directly from natural language prompts, calculates line-of-sight wall segments and hazard coordinates, uploads media assets to Silo S3 object storage, and dispatches domain events over Redis Streams.
+Generates high-resolution tactical battlemaps and transparent circular token portraits directly from natural language prompts, calculates line-of-sight wall segments and hazard coordinates through a `MapGenerator` port (the deterministic generator is the default, and it uses no diffusion model), uploads media assets to Silo S3 object storage, and dispatches domain events over Redis Streams.
 
 ## Ports & Endpoints
 - Port: `8008`

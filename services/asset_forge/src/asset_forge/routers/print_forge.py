@@ -21,7 +21,8 @@ from asset_forge.dependencies import (
     get_storage,
     publish_forge_event,
 )
-from asset_forge.geometry import generate_map_layout
+from asset_forge.map_generation_engine import get_map_generator
+from asset_forge.map_generator import MapGenerationUnavailable, map_generation_error_body
 from asset_forge.models import (
     PrintPdfRequest,
     PrintPdfResponse,
@@ -70,12 +71,21 @@ async def export_print_pdf(
 
     grid, theme = request.grid, request.theme
     if not grid and request.prompt:
-        theme, _, _, _, grid = generate_map_layout(
-            prompt=request.prompt,
-            width=request.width_cells,
-            height=request.height_cells,
-            theme_override=request.theme,
-        )
+        generator = get_map_generator()
+        try:
+            layout = await generator.generate(
+                prompt=request.prompt,
+                width=request.width_cells,
+                height=request.height_cells,
+                seed=None,
+                theme_override=request.theme,
+            )
+        except MapGenerationUnavailable as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=map_generation_error_body(generator.generator_name, exc),
+            ) from exc
+        theme, grid = layout.theme, layout.grid
 
     pdf_bytes, meta = tile_battlemap_to_pdf(
         width_cells=request.width_cells,

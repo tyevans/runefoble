@@ -64,6 +64,11 @@ class BattlemapForgeRequest(BaseModel):
     hazard_density: float = Field(
         default=0.1, ge=0.0, le=1.0, description="Hazard pool density ratio"
     )
+    seed: int | None = Field(
+        default=None,
+        ge=0,
+        description="Layout seed. The same prompt, seed and size give the same layout.",
+    )
 
 
 class BattlemapForgeResponse(BaseModel):
@@ -80,6 +85,7 @@ class BattlemapForgeResponse(BaseModel):
     hazard_cells: list[HazardCell]
     doors: list[DoorSegment]
     board_geometry_payload: BoardGeometryPayload
+    generator: str
     status: str = "forged"
 
 
