@@ -8,9 +8,9 @@ from uuid import UUID
 from character_sheet import dependencies as deps
 from character_sheet import schemas
 from character_sheet.models import CharacterState, StandInGuardrails
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-router = APIRouter(tags=["character_sheet"])
+router = APIRouter(tags=["character_sheet"], dependencies=[Depends(deps.get_principal)])
 
 
 @router.post("/api/v1/characters", response_model=CharacterState)
@@ -19,15 +19,13 @@ async def create_character(
     req: schemas.CreateCharacterRequest,
     repo: deps.RepoDep,
     spicedb: deps.SpiceDep,
-    x_user_id: deps.UserHeader = None,
+    user_id: deps.VerifiedUserId,
 ):
-    owner_id = req.player_id or x_user_id
     state = await deps.create_new_character(repo, req)
-    if owner_id:
-        with contextlib.suppress(Exception):
-            await spicedb.write_relationship(
-                "character", str(state.character_id), "owner", "user", owner_id
-            )
+    with contextlib.suppress(Exception):
+        await spicedb.write_relationship(
+            "character", str(state.character_id), "owner", "user", user_id
+        )
     if req.campaign_id:
         with contextlib.suppress(Exception):
             await spicedb.write_relationship(
@@ -159,9 +157,9 @@ async def update_guardrails(
     req: schemas.UpdateGuardrailsRequest,
     repo: deps.RepoDep,
     spicedb: deps.SpiceDep,
-    x_user_id: deps.UserHeader = None,
+    user_id: deps.VerifiedUserId,
 ):
-    await deps.authorize_character_edit(spicedb, character_id, x_user_id)
+    await deps.authorize_character_edit(spicedb, character_id, user_id)
     try:
         return await deps.update_character_guardrails(repo, character_id, req)
     except Exception as e:
@@ -179,10 +177,9 @@ async def assign_campaign(
     req: schemas.AssignCampaignRequest,
     repo: deps.RepoDep,
     spicedb: deps.SpiceDep,
-    x_user_id: deps.UserHeader = None,
+    user_id: deps.VerifiedUserId,
 ):
-    await deps.authorize_character_edit(spicedb, character_id, x_user_id)
-    assigned_by = req.assigned_by or x_user_id or "system"
+    await deps.authorize_character_edit(spicedb, character_id, user_id)
     return await deps.assign_character_campaign(
-        repo, spicedb, character_id, req.campaign_id, assigned_by
+        repo, spicedb, character_id, req.campaign_id, user_id
     )

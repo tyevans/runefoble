@@ -50,6 +50,8 @@ spec:
               value: {{ include "runefoble.zitadelIssuer" $ | quote }}
             - name: RUNEFOBLE_ZITADEL_JWKS_URL
               value: {{ include "runefoble.zitadelJwksUrl" $ | quote }}
+            - name: RUNEFOBLE_ZITADEL_AUDIENCE
+              value: {{ $.Values.zitadel.audience | quote }}
             - name: RUNEFOBLE_SPICEDB_ENDPOINT
               value: "spicedb:{{ .Values.spicedb.grpcPort }}"
             - name: RUNEFOBLE_SPICEDB_PRESHARED_KEY

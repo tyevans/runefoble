@@ -21,14 +21,19 @@ from character_sheet.dependencies import (
     CraftingRepoDep,
     RepoDep,
     SpiceDep,
-    UserHeader,
+    VerifiedUserId,
     authorize_character_edit,
+    get_principal,
     publish_crafting_event,
 )
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-router = APIRouter(prefix="/api/v1/crafting", tags=["crafting"])
+router = APIRouter(
+    prefix="/api/v1/crafting",
+    tags=["crafting"],
+    dependencies=[Depends(get_principal)],
+)
 
 
 class CombineReagentsRequest(BaseModel):
@@ -88,7 +93,7 @@ async def combine_reagents(
     crafting_repo: CraftingRepoDep,
     char_repo: RepoDep,
     spicedb: SpiceDep,
-    user_id: UserHeader = None,
+    user_id: VerifiedUserId,
 ) -> CombineReagentsResponse:
     """Combine alchemical reagents, calculate volatile risk, and update character state."""
     await authorize_character_edit(spicedb, req.character_id, user_id)
