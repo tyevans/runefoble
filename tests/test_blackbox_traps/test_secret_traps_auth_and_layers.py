@@ -16,7 +16,6 @@ from uuid import uuid4
 import pytest
 from board_state.dependencies import (
     get_spicedb_client,
-    set_event_bus,
     set_spicedb_client,
 )
 from board_state.main import app as board_app
@@ -35,10 +34,8 @@ from runefoble_events.board_traps import (
 def setup_auth_and_bus():
     mock_spicedb = MockSpiceDBClient()
     set_spicedb_client(mock_spicedb)
-    set_event_bus(None)
     yield
     set_spicedb_client(SpiceDBClient())
-    set_event_bus(None)
 
 
 def test_board_traps_cloudevents_registration():
