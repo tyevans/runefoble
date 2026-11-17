@@ -24,33 +24,20 @@ class EspeakNgSynthesizer(BaseSynthesizer):
         self.binary = binary
         self.timeout_s = timeout_s
 
+    async def check_ready(self) -> None:
+        """Run `espeak-ng --version`. A missing or failing binary is not ready."""
+        returncode, _stdout, stderr = await self._run([self.binary, "--version"], b"")
+        if returncode != 0:
+            raise SpeechSynthesisUnavailable(
+                f"'{self.binary}' --version exited with status {returncode}: {stderr}"
+            )
+
     async def synthesize(self, text: str, voice: str) -> AudioClip:
         argv = [self.binary, "--stdout", "-v", voice, "--stdin"]
-        try:
-            process = await asyncio.create_subprocess_exec(
-                *argv,
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-        except OSError as exc:
-            raise SpeechSynthesisUnavailable(f"cannot start '{self.binary}': {exc}") from exc
-
-        try:
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(text.encode("utf-8")), timeout=self.timeout_s
-            )
-        except TimeoutError as exc:
-            process.kill()
-            await process.wait()
+        returncode, stdout, stderr = await self._run(argv, text.encode("utf-8"))
+        if returncode != 0:
             raise SpeechSynthesisUnavailable(
-                f"'{self.binary}' did not finish within {self.timeout_s} s"
-            ) from exc
-
-        if process.returncode != 0:
-            detail = stderr.decode("utf-8", errors="replace").strip()
-            raise SpeechSynthesisUnavailable(
-                f"'{self.binary}' exited with status {process.returncode}: {detail}"
+                f"'{self.binary}' exited with status {returncode}: {stderr}"
             )
 
         try:
@@ -62,3 +49,27 @@ class EspeakNgSynthesizer(BaseSynthesizer):
         if clip.sample_count == 0:
             raise SpeechSynthesisUnavailable(f"'{self.binary}' returned zero audio samples")
         return clip
+
+    async def _run(self, argv: list[str], stdin: bytes) -> tuple[int, bytes, str]:
+        """Run the binary with a timeout. Return (exit status, stdout, decoded stderr)."""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *argv,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except OSError as exc:
+            raise SpeechSynthesisUnavailable(f"cannot start '{self.binary}': {exc}") from exc
+
+        try:
+            stdout, stderr = await asyncio.wait_for(process.communicate(stdin), self.timeout_s)
+        except TimeoutError as exc:
+            process.kill()
+            await process.wait()
+            raise SpeechSynthesisUnavailable(
+                f"'{self.binary}' did not finish within {self.timeout_s} s"
+            ) from exc
+
+        assert process.returncode is not None
+        return process.returncode, stdout, stderr.decode("utf-8", errors="replace").strip()

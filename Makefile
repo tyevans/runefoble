@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down images helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -82,22 +82,29 @@ cluster-down: ## Delete local Kind Kubernetes cluster
 	kind delete cluster --name $(CLUSTER_NAME)
 
 # Python service images built by `make images`.
-# Row format: image-name|uv-package|ASGI-app|port (no spaces inside a row).
+# Row format: image-name|uv-package|ASGI-app|port|system-packages (no spaces inside a row).
 # Each port must equal services.*.port in deployments/helm/runefoble/values.yaml.
+# The system-packages field is empty unless the service needs Debian packages at runtime.
 IMAGE_VERSION ?= 0.1.0
 PYTHON_DOCKERFILE ?= deployments/docker/python-service.Dockerfile
 PYTHON_IMAGE_ROWS = \
-	'gateway-api|gateway-api|gateway_api.main:app|8000' \
-	'the-watcher|the-watcher|the_watcher.main:app|8001' \
-	'board-state|board-state|board_state.main:app|8002' \
-	'character-sheet|character-sheet|character_sheet.main:app|8003' \
-	'game-session|game-session|game_session.main:app|8004' \
-	'voice-agent|voice-agent|voice_agent.main:app|8005' \
-	'campaign-lore|campaign-lore|campaign_lore.main:app|8006' \
-	'rules-compendium|rules-compendium|rules_compendium.main:app|8007' \
-	'asset-forge|asset-forge|asset_forge.main:app|8008' \
-	'soundscape|soundscape|soundscape.main:app|8009' \
-	'campaign-analytics|campaign-analytics|campaign_analytics.main:app|8011'
+	'gateway-api|gateway-api|gateway_api.main:app|8000|' \
+	'the-watcher|the-watcher|the_watcher.main:app|8001|' \
+	'board-state|board-state|board_state.main:app|8002|' \
+	'character-sheet|character-sheet|character_sheet.main:app|8003|' \
+	'game-session|game-session|game_session.main:app|8004|' \
+	'voice-agent|voice-agent|voice_agent.main:app|8005|espeak-ng' \
+	'campaign-lore|campaign-lore|campaign_lore.main:app|8006|' \
+	'rules-compendium|rules-compendium|rules_compendium.main:app|8007|' \
+	'asset-forge|asset-forge|asset_forge.main:app|8008|' \
+	'soundscape|soundscape|soundscape.main:app|8009|' \
+	'campaign-analytics|campaign-analytics|campaign_analytics.main:app|8011|'
+
+# Speech model pre-fetch for voice-agent (TASK-0676). The model downloads on the host,
+# then the files are copied into the running voice-agent pod's model cache volume.
+VOICE_MODEL_SIZE ?= tiny.en
+VOICE_MODEL_HOST_DIR ?= .cache/voice-models
+VOICE_MODEL_POD_DIR ?= /var/lib/runefoble/whisper
 
 images: ## Build every Python service image and load it into the Kind cluster
 	@for row in $(PYTHON_IMAGE_ROWS); do \
@@ -105,11 +112,19 @@ images: ## Build every Python service image and load it into the Kind cluster
 	  svc=$$(echo "$$row" | cut -d'|' -f2); \
 	  app=$$(echo "$$row" | cut -d'|' -f3); \
 	  port=$$(echo "$$row" | cut -d'|' -f4); \
+	  pkgs=$$(echo "$$row" | cut -d'|' -f5); \
 	  echo "==> Building runefoble/$$name:$(IMAGE_VERSION) (package $$svc, port $$port)"; \
-	  docker build -f $(PYTHON_DOCKERFILE) --build-arg SERVICE=$$svc --build-arg APP=$$app --build-arg PORT=$$port -t runefoble/$$name:$(IMAGE_VERSION) . || exit 1; \
+	  docker build -f $(PYTHON_DOCKERFILE) --build-arg SERVICE=$$svc --build-arg APP=$$app --build-arg PORT=$$port --build-arg SYSTEM_PACKAGES="$$pkgs" -t runefoble/$$name:$(IMAGE_VERSION) . || exit 1; \
 	  echo "==> Loading runefoble/$$name:$(IMAGE_VERSION) into Kind cluster $(CLUSTER_NAME)"; \
 	  kind load docker-image runefoble/$$name:$(IMAGE_VERSION) --name $(CLUSTER_NAME) || exit 1; \
 	done
+
+voice-model-cache: ## Pre-fetch the faster-whisper model and copy it into the voice-agent pod (Kind)
+	@echo "==> Downloading faster-whisper $(VOICE_MODEL_SIZE) into $(VOICE_MODEL_HOST_DIR)..."
+	uv run python -c "from faster_whisper import WhisperModel; WhisperModel('$(VOICE_MODEL_SIZE)', device='cpu', compute_type='int8', download_root='$(VOICE_MODEL_HOST_DIR)')"
+	@pod=$$(kubectl get pod -l app=voice-agent -o jsonpath='{.items[0].metadata.name}') || exit 1; \
+	  echo "==> Copying model cache into pod $$pod:$(VOICE_MODEL_POD_DIR)"; \
+	  kubectl cp $(VOICE_MODEL_HOST_DIR)/. $$pod:$(VOICE_MODEL_POD_DIR) || exit 1
 
 helm-lint: ## Validate Helm chart syntax
 	@echo "==> Linting Helm chart..."

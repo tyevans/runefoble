@@ -21,6 +21,9 @@ class FixtureSynthesizer(BaseSynthesizer):
 
     engine_name = "fixture"
 
+    async def check_ready(self) -> None:
+        return None
+
     async def synthesize(self, text: str, voice: str) -> AudioClip:
         samples = array.array("h")
         for char in text:

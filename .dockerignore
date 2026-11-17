@@ -25,3 +25,6 @@ scripts
 **/ui
 **/dist
 **/*.log
+
+# Pre-fetched speech models (make voice-model-cache). They reach the pod through a volume, not the image.
+.cache

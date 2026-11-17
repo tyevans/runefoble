@@ -116,7 +116,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `voice-agent` | GET | `/voice/streams/{session_id}/quality` | Queries stream bitrate, packet loss, and Opus codec mode (alias: `/api/v1/voice/streams/{session_id}/quality`) |
 | `voice-agent` | POST | `/voice/streams/{session_id}/report` | Submits RTCP receiver reports and dynamically adapts Opus bitrate/complexity within 200ms (alias: `/api/v1/voice/streams/{session_id}/report`) |
 | `voice-agent` | POST | `/voice/filters/barge-in/evaluate` | Evaluates audio frames for vocal onset (<40ms) and applies 20ms cosine crossfade attenuation (<80ms halt) (alias: `/api/v1/voice/filters/barge-in/evaluate`) |
-| `voice-agent` | GET | `/healthz` | Liveness check. Reports the active speech engines as `stt_engine` (default `faster-whisper`) and `tts_engine` (default `espeak-ng`) |
+| `voice-agent` | GET | `/healthz` | Readiness check. Reports the active speech engines as `stt_engine` (default `faster-whisper`) and `tts_engine` (default `espeak-ng`). Returns `503` with `status: not_ready` and `problems` when a speech engine is not ready |
 | `voice-agent` | POST | `/api/v1/voice/dsp/apply` | Applies DSP filters to supplied base64 PCM or WAV audio. Returns `422` when `audio_base64` is missing or invalid. The route never synthesises a carrier tone |
 | `voice-agent` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-voice-controls`, `runefoble-audio-indicator`, `runefoble-mobile-companion` [subviews: `audio-stream-controller`, `haptic-ping-panel`, `connection-status-badge`], `runefoble-voice-duplex-controls`) |
 | `board-state` | POST | `/api/v1/boards` | Creates the tactical grid aggregate with specified dimensions. This is the only route that creates a board. |

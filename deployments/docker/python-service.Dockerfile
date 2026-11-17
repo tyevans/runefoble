@@ -7,7 +7,10 @@
 #     --build-arg PORT=8004 \
 #     -t runefoble/game-session:0.1.0 .
 #
-# `make images` runs this build for every row of IMAGE_TABLE in the Makefile.
+# SYSTEM_PACKAGES lists Debian packages to install before the app runs, for example
+# `espeak-ng` for voice-agent. Leave it empty for services that need none.
+#
+# `make images` runs this build for every row of PYTHON_IMAGE_ROWS in the Makefile.
 
 ARG PYTHON_VERSION=3.13
 ARG UV_VERSION=0.12.21
@@ -19,6 +22,7 @@ FROM python:${PYTHON_VERSION}-slim
 ARG SERVICE
 ARG APP
 ARG PORT=8000
+ARG SYSTEM_PACKAGES=""
 
 COPY --from=uv /uv /usr/local/bin/uv
 
@@ -30,6 +34,12 @@ ENV UV_COMPILE_BYTECODE=1 \
     SERVICE_PORT=${PORT}
 
 WORKDIR /app
+
+RUN if [ -n "${SYSTEM_PACKAGES}" ]; then \
+      apt-get update \
+      && apt-get install -y --no-install-recommends ${SYSTEM_PACKAGES} \
+      && rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # The whole uv workspace is needed to resolve `uv.lock`. Tests and frontend code
 # are excluded by .dockerignore.
