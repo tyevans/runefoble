@@ -1,4 +1,9 @@
-"""Silo S3-compatible media asset storage service."""
+"""Silo S3-compatible media asset storage service.
+
+Writes and reads go straight to the Silo daemon. There is no in-memory fallback.
+A failed Silo request raises AssetStorageError, so callers never report success
+for bytes that Silo did not store.
+"""
 
 from __future__ import annotations
 
@@ -31,6 +36,8 @@ ALLOWED_MIME_TYPES: frozenset[str] = frozenset(
 
 MAX_ASSET_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 
+SILO_TIMEOUT_SECONDS: float = 1.5
+
 
 class AssetStorageError(RunefobleError):
     """Raised when an asset storage operation fails."""
@@ -48,10 +55,11 @@ class AssetNotFoundError(EntityNotFoundError):
 
 
 class SiloStorageService:
-    """S3-compatible object storage service for Silo (MinIO fork).
+    """S3-compatible object storage client for Silo (MinIO fork).
 
-    Provides media asset uploads, retrieval, presigned URL generation,
-    and automatic in-memory mock fallback when the remote Silo daemon is offline.
+    Provides media asset uploads, retrieval, deletion, and presigned URL generation.
+    The optional ``transport`` argument injects an httpx transport. Tests use it to
+    stand in for the Silo HTTP boundary. Production code never sets it.
     """
 
     def __init__(
@@ -61,7 +69,7 @@ class SiloStorageService:
         secret_key: str | None = None,
         bucket_assets: str | None = None,
         secure: bool | None = None,
-        force_mock: bool = False,
+        transport: httpx.BaseTransport | None = None,
     ) -> None:
         settings = PlatformSettings()
         raw_endpoint = endpoint or settings.silo_endpoint
@@ -69,19 +77,13 @@ class SiloStorageService:
         self.access_key = access_key or settings.silo_access_key
         self.secret_key = secret_key or settings.silo_secret_key
         self.default_bucket = bucket_assets or settings.silo_bucket_assets
-        self.force_mock = force_mock
+        self._transport = transport
 
         if raw_endpoint.startswith("http://") or raw_endpoint.startswith("https://"):
             self.base_url = raw_endpoint.rstrip("/")
         else:
             scheme = "https" if self.secure else "http"
             self.base_url = f"{scheme}://{raw_endpoint.lstrip('/')}"
-
-        # In-memory storage structures for offline mock fallback
-        # Key: "{bucket}/{object_key}" -> (data_bytes, content_type, metadata_dict)
-        self._memory_store: dict[str, tuple[bytes, str, dict[str, Any]]] = {}
-        # Key: asset_id -> metadata_dict
-        self._asset_index: dict[str, dict[str, Any]] = {}
 
     def validate_asset(self, data: bytes, content_type: str) -> None:
         """Validate media payload MIME type and file size."""
@@ -104,6 +106,19 @@ class SiloStorageService:
         """Generate a public or presigned access URL for an object."""
         return f"{self.base_url}/{bucket}/{object_key}?expires={expires_in}"
 
+    def _object_url(self, bucket: str, object_key: str) -> str:
+        return f"{self.base_url}/{bucket}/{object_key}"
+
+    def _request(self, method: str, bucket: str, object_key: str, **kwargs: Any) -> httpx.Response:
+        """Send one request to Silo. Transport failures raise AssetStorageError."""
+        try:
+            with httpx.Client(timeout=SILO_TIMEOUT_SECONDS, transport=self._transport) as client:
+                return client.request(method, self._object_url(bucket, object_key), **kwargs)
+        except httpx.HTTPError as exc:
+            raise AssetStorageError(
+                f"Silo {method} failed for '{bucket}/{object_key}': {exc}"
+            ) from exc
+
     def upload_asset(
         self,
         bucket: str,
@@ -113,118 +128,57 @@ class SiloStorageService:
         owner_id: str,
         asset_id: str | None = None,
     ) -> dict[str, Any]:
-        """Upload media bytes to Silo storage or in-memory fallback.
+        """Validate media, PUT the bytes to Silo, and return the stored object metadata.
 
-        Validates MIME type and size, writes data, and returns metadata.
+        Raises AssetValidationError for rejected payloads and AssetStorageError when
+        Silo does not confirm the write. Nothing is recorded on failure.
         """
         self.validate_asset(data=data, content_type=content_type)
 
-        aid = asset_id or str(uuid4())
-        url = self.generate_presigned_url(bucket=bucket, object_key=object_key)
-        created_at = datetime.now(UTC).isoformat()
+        resp = self._request(
+            "PUT",
+            bucket,
+            object_key,
+            content=data,
+            headers={"Content-Type": content_type},
+        )
+        if resp.status_code not in (200, 201, 204):
+            raise AssetStorageError(
+                f"Silo PUT for '{bucket}/{object_key}' returned status {resp.status_code}."
+            )
 
-        metadata: dict[str, Any] = {
-            "asset_id": aid,
+        return {
+            "asset_id": asset_id or str(uuid4()),
             "bucket": bucket,
             "object_key": object_key,
             "content_type": content_type,
             "byte_size": len(data),
             "owner_id": owner_id,
-            "url": url,
-            "created_at": created_at,
+            "url": self.generate_presigned_url(bucket=bucket, object_key=object_key),
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
-        # Attempt remote Silo PUT if not forcing mock
-        if not self.force_mock:
-            try:
-                target_url = f"{self.base_url}/{bucket}/{object_key}"
-                with httpx.Client(timeout=1.5) as client:
-                    resp = client.put(
-                        target_url,
-                        content=data,
-                        headers={"Content-Type": content_type},
-                    )
-                    if resp.status_code not in (200, 201, 204):
-                        logger.warning(
-                            "Silo remote returned status %d. Falling back to in-memory store.",
-                            resp.status_code,
-                        )
-            except Exception as exc:
-                logger.debug(
-                    "Remote Silo unreachable (%s). Using robust in-memory mock fallback.",
-                    exc,
-                )
-
-        # Store in memory cache / fallback
-        store_key = f"{bucket}/{object_key}"
-        self._memory_store[store_key] = (data, content_type, metadata)
-        self._asset_index[aid] = metadata
-
-        return metadata
-
     def get_asset(self, bucket: str, object_key: str) -> tuple[bytes, str]:
-        """Retrieve asset binary content and content-type."""
-        store_key = f"{bucket}/{object_key}"
-        if store_key in self._memory_store:
-            data, content_type, _ = self._memory_store[store_key]
-            return data, content_type
+        """Retrieve asset binary content and content-type from Silo."""
+        resp = self._request("GET", bucket, object_key)
+        if resp.status_code == 404:
+            raise AssetNotFoundError(f"{bucket}/{object_key}")
+        if resp.status_code != 200:
+            raise AssetStorageError(
+                f"Silo GET for '{bucket}/{object_key}' returned status {resp.status_code}."
+            )
+        content_type = resp.headers.get("Content-Type", "application/octet-stream")
+        return resp.content, content_type
 
-        if not self.force_mock:
-            try:
-                target_url = f"{self.base_url}/{bucket}/{object_key}"
-                with httpx.Client(timeout=1.5) as client:
-                    resp = client.get(target_url)
-                    if resp.status_code == 200:
-                        content_type = resp.headers.get("Content-Type", "application/octet-stream")
-                        return resp.content, content_type
-            except Exception as exc:
-                logger.debug("Failed remote GET from Silo (%s)", exc)
-
-        raise AssetNotFoundError(store_key)
-
-    def get_asset_by_id(self, asset_id: str) -> dict[str, Any]:
-        """Retrieve metadata for an asset by asset_id."""
-        if asset_id not in self._asset_index:
-            raise AssetNotFoundError(asset_id)
-        return self._asset_index[asset_id]
-
-    def get_asset_data_by_id(self, asset_id: str) -> tuple[bytes, str, dict[str, Any]]:
-        """Retrieve binary data, content-type, and metadata by asset_id."""
-        meta = self.get_asset_by_id(asset_id)
-        data, content_type = self.get_asset(meta["bucket"], meta["object_key"])
-        return data, content_type, meta
-
-    def delete_asset(self, bucket: str, object_key: str, deleted_by: str) -> bool:
-        """Delete an asset from storage."""
-        store_key = f"{bucket}/{object_key}"
-        deleted = False
-
-        if store_key in self._memory_store:
-            _, _, meta = self._memory_store.pop(store_key)
-            self._asset_index.pop(meta.get("asset_id", ""), None)
-            deleted = True
-
-        if not self.force_mock:
-            try:
-                target_url = f"{self.base_url}/{bucket}/{object_key}"
-                with httpx.Client(timeout=1.5) as client:
-                    resp = client.delete(target_url)
-                    if resp.status_code in (200, 204):
-                        deleted = True
-            except Exception as exc:
-                logger.debug("Failed remote DELETE from Silo (%s)", exc)
-
-        return deleted
-
-    def delete_asset_by_id(self, asset_id: str, deleted_by: str) -> bool:
-        """Delete an asset given its asset_id."""
-        meta = self.get_asset_by_id(asset_id)
-        return self.delete_asset(meta["bucket"], meta["object_key"], deleted_by)
-
-    def clear(self) -> None:
-        """Clear in-memory mock storage (useful for test isolation)."""
-        self._memory_store.clear()
-        self._asset_index.clear()
+    def delete_asset(self, bucket: str, object_key: str) -> None:
+        """Delete an object from Silo. Missing objects raise AssetNotFoundError."""
+        resp = self._request("DELETE", bucket, object_key)
+        if resp.status_code == 404:
+            raise AssetNotFoundError(f"{bucket}/{object_key}")
+        if resp.status_code not in (200, 204):
+            raise AssetStorageError(
+                f"Silo DELETE for '{bucket}/{object_key}' returned status {resp.status_code}."
+            )
 
 
 _global_storage_service: SiloStorageService | None = None
