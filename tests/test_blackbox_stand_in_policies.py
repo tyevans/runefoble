@@ -11,6 +11,13 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from the_watcher.watcher_ai import TheWatcherEngine
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 GUARDRAILS_PAYLOAD = {
     "preserve_spell_slots": {"3": 1},
@@ -45,7 +52,9 @@ async def test_character_guardrails_configuration_and_events(mock_redis: MockAsy
     character_set_spicedb(spicedb)
 
     async with AsyncClient(
-        transport=ASGITransport(app=character_app), base_url="http://test"
+        transport=ASGITransport(app=character_app),
+        base_url="http://test",
+        headers=auth_headers("character-owner"),
     ) as client:
         # 1. Create Sarah's Cleric & configure Zanzibar ownership
         create_res = await client.post(
@@ -72,7 +81,7 @@ async def test_character_guardrails_configuration_and_events(mock_redis: MockAsy
         put_res = await client.put(
             f"/api/v1/characters/{char_id}/guardrails",
             json=GUARDRAILS_PAYLOAD,
-            headers={"x-user-id": "sarah-user"},
+            headers=auth_headers("sarah-user"),
         )
         assert put_res.status_code == 200
         gr = put_res.json()["stand_in_guardrails"]
@@ -89,7 +98,7 @@ async def test_character_guardrails_configuration_and_events(mock_redis: MockAsy
         unauth_res = await client.put(
             f"/api/v1/characters/{char_id}/guardrails",
             json=GUARDRAILS_PAYLOAD,
-            headers={"x-user-id": "malicious-intruder"},
+            headers=auth_headers("malicious-intruder"),
         )
         assert unauth_res.status_code == 403
         assert "does not have edit permission" in unauth_res.json()["detail"]
@@ -162,7 +171,9 @@ async def test_zero_hp_permadeath_safeguard_invariant(mock_redis: MockAsyncRedis
     character_set_event_bus(bus)
 
     async with AsyncClient(
-        transport=ASGITransport(app=character_app), base_url="http://test"
+        transport=ASGITransport(app=character_app),
+        base_url="http://test",
+        headers=auth_headers("character-owner"),
     ) as client:
         res = await client.post(
             "/api/v1/characters/create",

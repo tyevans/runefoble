@@ -46,6 +46,13 @@ SPICEDB_SERVICE_MODULES = [
 ]
 
 
+SERVICE_VERIFIER_MODULES = [
+    "asset_forge.dependencies",
+    "soundscape.dependencies",
+    "character_sheet.dependencies",
+]
+
+
 REDIS_BUS_MODULES = [
     "board_state.dependencies",
     "game_session.dependencies",
@@ -77,6 +84,26 @@ def default_redis_event_bus():
     finally:
         for mod, prev in modules_to_restore:
             mod.set_event_bus(prev)
+
+
+@pytest.fixture(autouse=True)
+def default_service_verifiers() -> Iterator[None]:
+    """Trust the shared test signing issuer in the token-verifying microservices.
+
+    Tests send bearer tokens minted by SIGNING_ISSUER. A test that needs another issuer
+    overrides the verifier itself.
+    """
+    import importlib
+
+    modules = [importlib.import_module(name) for name in SERVICE_VERIFIER_MODULES]
+    previous = [mod.get_zitadel_auth_service() for mod in modules]
+    for mod in modules:
+        mod.set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    try:
+        yield
+    finally:
+        for mod, prev in zip(modules, previous, strict=True):
+            mod.set_zitadel_auth_service(prev)
 
 
 @pytest.fixture(autouse=True)
