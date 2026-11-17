@@ -51,6 +51,11 @@ export class RunefobleCaravanBoard extends LitElement {
     this.dispatchEvent(new CustomEvent('contract-selected', { bubbles: true, composed: true, detail: { contractId } }));
   }
   public closeModal(): void { this.isModalOpen = false; }
+  private showError(message: string): void {
+    this.notificationMessage = message;
+    this.notificationType = 'danger';
+    this.requestUpdate();
+  }
   public dismissNotification(): void { this.notificationMessage = null; }
 
   public async acceptContract(contract: CaravanContractItem, e?: Event): Promise<void> {
@@ -71,7 +76,11 @@ export class RunefobleCaravanBoard extends LitElement {
 
   public async dispatchCaravan(contract: CaravanContractItem, e?: Event): Promise<void> {
     if (e) e.stopPropagation();
-    await apiDispatchCaravan(this.apiCtx, contract);
+    const result = await apiDispatchCaravan(this.apiCtx, contract);
+    if (!result.ok) {
+      this.showError(`Dispatch failed: ${result.message}`);
+      return;
+    }
     this.notificationMessage = `Caravan dispatched from ${contract.origin_outpost}!`;
     this.notificationType = 'info';
     this.requestUpdate();
@@ -80,7 +89,11 @@ export class RunefobleCaravanBoard extends LitElement {
 
   public async fulfillContract(contract: CaravanContractItem, e?: Event): Promise<void> {
     if (e) e.stopPropagation();
-    await apiFulfillContract(this.apiCtx, contract);
+    const result = await apiFulfillContract(this.apiCtx, contract);
+    if (!result.ok) {
+      this.showError(`Fulfilment failed: ${result.message}`);
+      return;
+    }
     this.notificationMessage = `Caravan arrived at ${contract.destination_outpost}! Payout: +${contract.reward_gold}g & +${contract.reward_reputation} rep.`;
     this.notificationType = 'success';
     this.requestUpdate();

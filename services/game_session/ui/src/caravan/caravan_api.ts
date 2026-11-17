@@ -8,6 +8,9 @@ export interface CaravanApiContext {
   userId?: string;
 }
 
+/** Outcome of a caravan request. A failed request never changes the contract. */
+export type CaravanActionResult = { ok: true } | { ok: false; message: string };
+
 export async function apiAcceptContract(
   ctx: CaravanApiContext,
   contract: CaravanContractItem
@@ -35,48 +38,63 @@ export async function apiAcceptContract(
   contract.contractor_party_name = data?.contract?.contractor_party_name || ctx.partyName;
 }
 
+/** Sends a POST to a caravan route and reports the result. Never throws. */
+async function postCaravanAction(
+  ctx: CaravanApiContext,
+  path: string,
+  body: Record<string, unknown>
+): Promise<CaravanActionResult> {
+  let res: Response;
+  try {
+    res = await fetch(`${ctx.apiBase}/shared-worlds/${ctx.sharedWorldId}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(ctx.userId ? { 'x-user-id': ctx.userId } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (err: unknown) {
+    const reason = err instanceof Error ? err.message : String(err);
+    return { ok: false, message: `Network error: ${reason}` };
+  }
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => undefined)) as { detail?: unknown } | undefined;
+    const detail = typeof payload?.detail === 'string' ? payload.detail : '';
+    return {
+      ok: false,
+      message: detail || `Request failed with status ${res.status}`,
+    };
+  }
+  return { ok: true };
+}
+
 export async function apiDispatchCaravan(
   ctx: CaravanApiContext,
   contract: CaravanContractItem
-): Promise<void> {
-  try {
-    await fetch(
-      `${ctx.apiBase}/shared-worlds/${ctx.sharedWorldId}/caravans/contracts/${contract.contract_id}/dispatch`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(ctx.userId ? { 'x-user-id': ctx.userId } : {}),
-        },
-        body: JSON.stringify({ dispatched_by_campaign_id: ctx.campaignId }),
-      }
-    );
-  } catch {
-    /* offline fallback */
-  }
+): Promise<CaravanActionResult> {
+  const result = await postCaravanAction(
+    ctx,
+    `/caravans/contracts/${contract.contract_id}/dispatch`,
+    { dispatched_by_campaign_id: ctx.campaignId }
+  );
+  if (!result.ok) return result;
   contract.status = 'in_transit';
   contract.current_stage = 1;
+  return result;
 }
 
 export async function apiFulfillContract(
   ctx: CaravanApiContext,
   contract: CaravanContractItem
-): Promise<void> {
-  try {
-    await fetch(
-      `${ctx.apiBase}/shared-worlds/${ctx.sharedWorldId}/caravans/contracts/${contract.contract_id}/fulfill`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(ctx.userId ? { 'x-user-id': ctx.userId } : {}),
-        },
-        body: JSON.stringify({}),
-      }
-    );
-  } catch {
-    /* offline fallback */
-  }
+): Promise<CaravanActionResult> {
+  const result = await postCaravanAction(
+    ctx,
+    `/caravans/contracts/${contract.contract_id}/fulfill`,
+    {}
+  );
+  if (!result.ok) return result;
   contract.status = 'fulfilled';
   contract.current_stage = contract.transit_stages;
+  return result;
 }
