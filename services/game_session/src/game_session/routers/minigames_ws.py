@@ -12,6 +12,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from game_session.dependencies import get_spicedb_client
 from game_session.minigame_tables.ws_manager import minigame_table_manager
 from game_session.settlement.auth import check_establishment_play_permission
+from game_session.settlement.auth.tokens import get_zitadel_auth_service
+from runefoble_auth.principal import BearerVerifier
+from runefoble_auth.websocket import admit_websocket
 
 logger = logging.getLogger("runefoble.game_session.minigames_ws")
 
@@ -21,17 +24,20 @@ router = APIRouter(tags=["minigames_ws"])
 async def handle_table_websocket(
     websocket: WebSocket,
     table_id: str,
-    establishment_id: str = "est-default",
+    establishment_id: str,
+    verifier: BearerVerifier | None = None,
 ) -> None:
-    """Handle bidirectional minigames table WebSocket session."""
-    user_id = websocket.query_params.get("user_id")
+    """Admit the verified caller, then run the bidirectional minigames table session."""
+    principal = await admit_websocket(websocket, verifier or get_zitadel_auth_service())
+    if principal is None:
+        return
+    user_id = principal.user_id
     spicedb = get_spicedb_client()
 
-    # Zanzibar permission check on connect
-    if establishment_id and establishment_id != "est-default" and user_id:
+    # Zanzibar permission check on connect. The default establishment is a route value only.
+    if establishment_id != "est-default":
         has_perm = await check_establishment_play_permission(spicedb, establishment_id, user_id)
         if not has_perm:
-            await websocket.accept()
             await websocket.send_json(
                 {
                     "type": "error",
@@ -42,7 +48,7 @@ async def handle_table_websocket(
             await websocket.close(code=4003, reason="Forbidden")
             return
 
-    await minigame_table_manager.connect(table_id, websocket)
+    minigame_table_manager.register(table_id, websocket)
     table = minigame_table_manager.get_or_create_table(table_id, establishment_id)
     await websocket.send_json(
         {
@@ -61,7 +67,7 @@ async def handle_table_websocket(
             if action == "join":
                 await minigame_table_manager.join_player(
                     table_id=table_id,
-                    player_id=data.get("player_id", user_id or "anon"),
+                    player_id=data.get("player_id", user_id),
                     name=data.get("name", "Adventurer"),
                     chips=data.get("chips", 100),
                     establishment_id=establishment_id,
@@ -70,7 +76,7 @@ async def handle_table_websocket(
             elif action == "bet":
                 await minigame_table_manager.place_bet(
                     table_id=table_id,
-                    player_id=data.get("player_id", user_id or "anon"),
+                    player_id=data.get("player_id", user_id),
                     amount=int(data.get("amount", 10)),
                     bet_type=data.get("bet_type", "straight"),
                     target=data.get("target"),
@@ -78,7 +84,7 @@ async def handle_table_websocket(
             elif action == "throw_dart":
                 await minigame_table_manager.throw_dart(
                     table_id=table_id,
-                    player_id=data.get("player_id", user_id or "anon"),
+                    player_id=data.get("player_id", user_id),
                     vx=float(data.get("vx", 0.0)),
                     vy=float(data.get("vy", 0.0)),
                     wind_x=float(data.get("wind_x", 0.0)),
@@ -87,14 +93,14 @@ async def handle_table_websocket(
             elif action == "bid":
                 await minigame_table_manager.submit_bid(
                     table_id=table_id,
-                    player_id=data.get("player_id", user_id or "anon"),
+                    player_id=data.get("player_id", user_id),
                     quantity=int(data.get("quantity", 1)),
                     face=int(data.get("face", 1)),
                 )
             elif action == "challenge":
                 await minigame_table_manager.challenge_bluff(
                     table_id=table_id,
-                    challenger_id=data.get("challenger_id", user_id or "anon"),
+                    challenger_id=data.get("challenger_id", user_id),
                 )
             elif action == "spin_roulette":
                 winning_num = data.get("winning_number")

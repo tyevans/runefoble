@@ -1,9 +1,16 @@
 """Root pytest configuration and global fixtures for Runefoble test suite."""
 
 import contextlib
+from collections.abc import Iterator
 
 import pytest
+from game_session.settlement.auth.tokens import get_zitadel_auth_service as get_session_auth
+from game_session.settlement.auth.tokens import set_zitadel_auth_service as set_session_auth
+from gateway_api.auth import get_zitadel_auth_service, set_zitadel_auth_service
 from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytest_plugins = [
     "tests.helpers.audio_synth",
@@ -89,3 +96,15 @@ def default_spicedb_client(request):
         for mod, prev in modules_to_restore:
             with contextlib.suppress(Exception):
                 mod.set_spicedb_client(prev)
+
+
+@pytest.fixture
+def trusted_ws_issuer() -> Iterator[SigningTestIssuer]:
+    """Trust the shared test issuer in the gateway and game_session verifiers."""
+    previous_gateway = get_zitadel_auth_service()
+    previous_session = get_session_auth()
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    set_session_auth(SIGNING_ISSUER.verifier())
+    yield SIGNING_ISSUER
+    set_zitadel_auth_service(previous_gateway)
+    set_session_auth(previous_session)

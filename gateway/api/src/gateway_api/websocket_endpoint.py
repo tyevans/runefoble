@@ -8,11 +8,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import WebSocket, WebSocketDisconnect
-from gateway_api.auth import get_zitadel_auth_service
-from gateway_api.websocket_auth import (
-    authenticate_websocket,
-    extract_token_from_websocket,
-)
+from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_api.websocket_manager import ws_campaign_manager
 from gateway_api.websocket_validator import (
     MOVE_ACTIONS,
@@ -65,8 +61,10 @@ async def campaign_websocket_endpoint(
 ) -> None:
     """Handle Zanzibar-protected WebSocket connections at /ws/campaigns/{campaign_id}."""
     action_validator = validator or default_action_validator
-    service = auth_service or get_zitadel_auth_service()
-    subject_id = authenticate_websocket(websocket, service)
+    principal = await admit_gateway_websocket(websocket, auth_service)
+    if principal is None:
+        return
+    subject_id = principal.user_id
 
     # 1. On connect: verify viewer/subject has campaign:view or campaign:read permission
     if not await action_validator.validate_connect(campaign_id, subject_id):
@@ -75,13 +73,11 @@ async def campaign_websocket_endpoint(
             subject_id,
             campaign_id,
         )
-        await websocket.accept()
         denied_msg = f"Zanzibar authorization denied: insufficient permissions to view campaign '{campaign_id}'"
         await _send_denied(websocket, "connect", denied_msg)
         await websocket.close(code=4003, reason="Forbidden: insufficient permissions for campaign")
         return
 
-    await websocket.accept()
     await ws_campaign_manager.connect(campaign_id, websocket, subject_id)
 
     try:
@@ -132,6 +128,5 @@ async def campaign_websocket_endpoint(
 
 __all__ = [
     "campaign_websocket_endpoint",
-    "extract_token_from_websocket",
     "logger",
 ]

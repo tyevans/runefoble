@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from gateway_api.signaling.auth import (
-    extract_signaling_auth,
+    extract_peer_and_role,
     validate_voice_connection,
 )
 from gateway_api.signaling.endpoint import (
@@ -28,7 +28,7 @@ __all__ = [
     "SignalingPeerState",
     "WebRTCSignalingManager",
     "dispatch_signaling_message",
-    "extract_signaling_auth",
+    "extract_peer_and_role",
     "handle_join",
     "handle_leave",
     "handle_mute",
