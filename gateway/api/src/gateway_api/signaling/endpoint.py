@@ -6,13 +6,14 @@ import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
 from gateway_api.auth import get_spicedb_client
-from gateway_api.signaling.auth import extract_signaling_auth, validate_voice_connection
+from gateway_api.signaling.auth import extract_peer_and_role, validate_voice_connection
 from gateway_api.signaling.handlers import (
     SignalingPeerState,
     dispatch_signaling_message,
     handle_peer_disconnect,
 )
 from gateway_api.signaling.manager import WebRTCSignalingManager, signaling_manager
+from gateway_api.websocket_auth import admit_gateway_websocket
 
 logger = logging.getLogger("runefoble.gateway.signaling.endpoint")
 
@@ -23,11 +24,14 @@ async def voice_signaling_websocket_endpoint(
     manager: WebRTCSignalingManager | None = None,
 ) -> None:
     """Handle WebRTC voice room signaling WebSocket at /ws/voice/{session_id}."""
+    principal = await admit_gateway_websocket(websocket)
+    if principal is None:
+        return
+    user_id = principal.user_id
     sig_manager = manager or signaling_manager
     coord = sig_manager.coordinator
     spicedb = get_spicedb_client()
-
-    user_id, peer_id, role = extract_signaling_auth(websocket)
+    peer_id, role = extract_peer_and_role(websocket, user_id)
 
     # 1. SpiceDB Zanzibar permission check on connect (Hard Invariant 1)
     can_connect = await validate_voice_connection(spicedb, session_id, user_id)
@@ -37,7 +41,6 @@ async def voice_signaling_websocket_endpoint(
             user_id,
             session_id,
         )
-        await websocket.accept()
         await websocket.send_json(
             {
                 "type": "error",
@@ -54,7 +57,6 @@ async def voice_signaling_websocket_endpoint(
         )
         return
 
-    await websocket.accept()
     await sig_manager.connect_peer(session_id, peer_id, websocket)
 
     # 2. Register peer joining the voice room aggregate

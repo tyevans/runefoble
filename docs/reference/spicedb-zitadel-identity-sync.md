@@ -2,11 +2,11 @@
 
 ## Overview
 
-Runefoble enforces object-level access control via Google Zanzibar schema on SpiceDB (`libs/runefoble_auth/schema/runefoble.zed`). The Zitadel-to-SpiceDB synchronization bridge translates authenticated Zitadel OIDC identities, role assignments, and domain events into Zanzibar relationship tuples without manual administrator intervention.
+Runefoble enforces object-level access control via Google Zanzibar schema on SpiceDB (`libs/runefoble_auth/schema/runefoble.zed`). The Zitadel-to-SpiceDB synchronization bridge translates domain events and authorized membership changes into Zanzibar relationship tuples. Zitadel identity claims never grant a relation. A token role such as `owner`, `dm`, or `is_admin` writes no tuple (ADR-0015 (d), TASK-0534).
 
 ```mermaid
 flowchart LR
-    A["Zitadel OIDC JWT"] --> B["ZitadelSpiceDBSyncService"]
+    A["Zitadel OIDC JWT"] -. "identity only, no grants" .-> H["Gateway auth dependency"]
     E["Redis Streams Events<br/>(SessionCreated, ParticipantJoined, CharacterCreated)"] --> D["SpiceDBEventListener"]
     D --> B
     B --> C[("SpiceDB Zanzibar Engine")]
@@ -85,44 +85,17 @@ definition board_token {
 
 | Trigger / Claim | SpiceDB Relationship Tuple | Meaning |
 |---|---|---|
-| User claim role `gm` / `dm` | `campaign:<id>#game_master@user:<sub_id>`<br/>`campaign:<id>#dungeon_master@user:<sub_id>` | Grants DM / GM powers: `run_session`, `edit`, `move`, atmosphere mutation |
-| User claim role `player` | `campaign:<id>#player@user:<sub_id>` | Grants session participation and board viewing |
-| User claim role `spectator` | `campaign:<id>#spectator@user:<sub_id>` | Grants read-only observation (`view`, `inspect`) |
+| Token claim (any role, `is_admin`) | None | Claims never write a tuple. The verified principal carries identity only. |
+| `POST /api/v1/auth/sync/membership` (`gm`, `dungeon_master`, `player`, `spectator`, `owner`) | `campaign:<id>#<role>@user:<sub_id>` | Grants the membership role after an authorized domain action |
 | Character aggregate binding | `character:<char_id>#owner@user:<sub_id>`<br/>`character:<char_id>#campaign@campaign:<id>` | Binds character to owning player and campaign |
 | Session aggregate binding | `session:<sess_id>#campaign@campaign:<id>` | Inherits campaign authorization policies onto the active session |
 | Board token binding | `board_token:<token_id>#character@character:<char_id>`<br/>`board_token:<token_id>#campaign@campaign:<id>` | Enforces that only character owner or GM can move the token |
 
 ## Public Synchronization Endpoints
 
-All endpoints are hosted on the API Gateway under `/api/v1/auth/sync`:
+All endpoints are hosted on the API Gateway under `/api/v1/auth/sync`. `POST /user` was removed by TASK-0534. The membership, ownership, and token-binding routes still accept unauthenticated requests. Their permission model belongs to the authorization theme (TASK-0543).
 
-### 1. `POST /api/v1/auth/sync/user`
-Synchronizes user identity claims or bearer JWT claims into SpiceDB identity tuples for an optional target campaign.
-
-**Request Body:**
-```json
-{
-  "user_id": "adventurer_robin",
-  "username": "Robin",
-  "roles": ["player"],
-  "campaign_id": "camp-101",
-  "token": "optional-raw-jwt-token"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "status": "synchronized",
-  "user_id": "adventurer_robin",
-  "username": "Robin",
-  "synced_relationships": [
-    "campaign:camp-101#player@user:adventurer_robin"
-  ]
-}
-```
-
-### 2. `POST /api/v1/auth/sync/membership`
+### 1. `POST /api/v1/auth/sync/membership`
 Grants or revokes campaign/session membership roles (`gm`, `dungeon_master`, `player`, `spectator`, `owner`).
 
 **Request Body:**
@@ -150,7 +123,7 @@ Grants or revokes campaign/session membership roles (`gm`, `dungeon_master`, `pl
 }
 ```
 
-### 3. `POST /api/v1/auth/sync/character-ownership`
+### 2. `POST /api/v1/auth/sync/character-ownership`
 Binds a character aggregate to its owner user and parent campaign.
 
 **Request Body:**
@@ -176,7 +149,7 @@ Binds a character aggregate to its owner user and parent campaign.
 }
 ```
 
-### 4. `POST /api/v1/auth/sync/token-binding`
+### 3. `POST /api/v1/auth/sync/token-binding`
 Binds a tactical board token to its character aggregate and campaign grid.
 
 **Request Body:**
@@ -202,7 +175,7 @@ Binds a tactical board token to its character aggregate and campaign grid.
 }
 ```
 
-### 5. `GET /api/v1/auth/sync/health`
+### 4. `GET /api/v1/auth/sync/health`
 Health probe reporting SpiceDB connectivity and synchronization backend (`mock` or `grpc`).
 
 **Response (200 OK):**
@@ -233,7 +206,6 @@ To adhere to Hard Invariant 6 (file length < 500 lines) and separate operational
    - `CAMPAIGN_ROLE_RELATIONS` mapping and `normalize_campaign_role` normalization tables.
    - `write_relationship_tuple` and `delete_relationship_tuple` with retry execution.
    - `batch_write_tuples` and `reconcile_tuples` idempotency helpers.
-   - `resolve_user_claims` utility supporting `AuthenticatedUser`, dict claims, or JWT tokens.
 
 2. **Domain Event Handlers (`sync_events.py`)**:
    - `extract_event_type` and `get_event_field` parsing domain event models and CloudEvent JSON dictionaries.
@@ -242,7 +214,7 @@ To adhere to Hard Invariant 6 (file length < 500 lines) and separate operational
 
 3. **Service Coordinator (`sync.py`)**:
    - `ZitadelSpiceDBSyncService` coordinator delegating to `sync_tuples` and `sync_events`.
-   - Re-exports `SyncResult` and key utilities preserving 100% backward compatibility.
+   - Re-exports `SyncResult`. Claim-to-relation mapping does not exist (TASK-0534).
 
 ## Resilience & Retry Policy
 

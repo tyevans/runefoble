@@ -22,9 +22,10 @@ async def test_gateway_health_and_docs():
 
 
 @pytest.mark.asyncio
-async def test_gateway_speak_and_act():
+async def test_gateway_speak_and_act(signing_issuer):
     transport = ASGITransport(app=gateway_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    headers = {"Authorization": f"Bearer {signing_issuer.mint('valeros-player')}"}
+    async with AsyncClient(transport=transport, base_url="http://test", headers=headers) as client:
         res = await client.post(
             "/api/v1/watcher/speak-and-act",
             params={

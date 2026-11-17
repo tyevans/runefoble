@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import time
+from collections.abc import Iterator
 from typing import Any
 
 import jwt
@@ -19,6 +20,7 @@ from fastapi.testclient import TestClient
 from gateway_api.auth import set_spicedb_client, set_zitadel_auth_service
 from gateway_api.main import app
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_auth.zitadel import ZitadelAuthService
 
 
@@ -86,13 +88,10 @@ def auth_environment():
     jwk_client = jwt.PyJWKClient("http://zitadel:8080/.well-known/jwks.json")
     jwk_client.fetch_data = lambda: jwks_dict
 
-    # Production auth service (dev_mode=False, signature & audience verified)
     auth_service = ZitadelAuthService(
         issuer="http://zitadel:8080",
-        client_id="runefoble-api",
-        dev_mode=False,
+        audience="runefoble-api",
         jwk_client=jwk_client,
-        verify_audience=True,
     )
 
     mock_spicedb = MockSpiceDBClient()
@@ -112,4 +111,16 @@ def auth_environment():
 
     # Teardown
     set_spicedb_client(SpiceDBClient())
+    set_zitadel_auth_service(None)
+
+
+@pytest.fixture
+def signing_issuer() -> Iterator[SigningTestIssuer]:
+    """Trust a fresh RS256 signing issuer in the gateway verifier for one test.
+
+    Mint tokens with `signing_issuer.mint(sub)` and send them as a Bearer header.
+    """
+    issuer = SigningTestIssuer()
+    set_zitadel_auth_service(issuer.verifier())
+    yield issuer
     set_zitadel_auth_service(None)

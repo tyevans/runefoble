@@ -9,6 +9,10 @@ from gateway_api.auth import get_spicedb_client, set_spicedb_client
 from gateway_api.main import app, set_event_bus
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture(autouse=True)
 def reset_state():
@@ -36,7 +40,9 @@ def test_connecting_with_valid_campaign_viewer_permissions():
 
     # 1. User with 'view' permission can connect
     _grant("campaign", campaign_id, "view", "viewer_alice")
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id=viewer_alice") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("viewer_alice")
+    ) as ws:
         msg = ws.receive_json()
         assert msg["type"] == "connected"
         assert msg["campaign_id"] == campaign_id
@@ -44,7 +50,9 @@ def test_connecting_with_valid_campaign_viewer_permissions():
 
     # 2. User with 'read' permission can connect
     _grant("campaign", campaign_id, "read", "reader_bob")
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id=reader_bob") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("reader_bob")
+    ) as ws:
         msg = ws.receive_json()
         assert msg["type"] == "connected"
         assert msg["user_id"] == "reader_bob"
@@ -56,7 +64,9 @@ def test_connecting_with_unauthorized_subject():
     client = TestClient(app)
 
     # Stranger has no relations in SpiceDB
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id=stranger_joe") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("stranger_joe")
+    ) as ws:
         err_msg = ws.receive_json()
         assert err_msg["type"] == "error"
         assert err_msg["code"] == "PERMISSION_DENIED"
@@ -78,14 +88,18 @@ def test_dynamic_permission_revocation_rejects_reconnect():
 
     # 1. Initially granted permission and connects successfully
     _grant("campaign", campaign_id, "view", user_id)
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={user_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(user_id)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
 
     # 2. Dynamically revoke Zanzibar relationship
     asyncio.run(spicedb.delete_relationship("campaign", campaign_id, "view", "user", user_id))
 
     # 3. Subsequent connection attempt is rejected with PERMISSION_DENIED and code 4003
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={user_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(user_id)
+    ) as ws:
         err_msg = ws.receive_json()
         assert err_msg["type"] == "error"
         assert err_msg["code"] == "PERMISSION_DENIED"

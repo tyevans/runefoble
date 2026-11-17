@@ -5,9 +5,10 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 from game_session.dependencies import STREAM_TAVERN, STREAM_WEST_MARCHES
 from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.mock_redis import MockAsyncRedis
 
-from .conftest import assert_stream_event, setup_campaign_settlement
+from .conftest import assert_stream_event, setup_campaign_settlement, ws_subprotocols
 
 
 def test_merchant_haggling_gambits_and_dm_override(
@@ -69,20 +70,21 @@ def test_bulletin_board_pin_and_cipher_decrypt(
     gateway_client: TestClient,
     spicedb: MockSpiceDBClient,
     mock_bus: MockAsyncRedis,
+    settlement_issuer: SigningTestIssuer,
 ) -> None:
     """Post bounty, decrypt hidden cipher notice, and verify WebSocket party broadcast."""
-    cid, sid, p_id, dm_h, p_h = setup_campaign_settlement(session_client, spicedb)
-    dm_id, base_url = dm_h["x-user-id"], f"/api/v1/settlements/{sid}/bulletin"
+    cid, sid, p_id, dm_h, p_h = setup_campaign_settlement(
+        session_client, spicedb, issuer=settlement_issuer
+    )
 
-    def _post_dm(data: dict):
-        return session_client.post(base_url, json=data, headers=dm_h)
+    bulletin = f"/api/v1/settlements/{sid}/bulletin"
 
     b_data = {"board_type": "town_square", "title": "Wyvern", "category": "bounty"} | {
         "content": "300gp",
         "wax_sealed": True,
         "metadata": {"reward_gp": 300},
     }
-    bounty = _post_dm(b_data)
+    bounty = session_client.post(bulletin, json=b_data, headers=dm_h)
     assert bounty.status_code == 201 and bounty.json()["wax_sealed"] is True
     assert_stream_event(mock_bus, STREAM_WEST_MARCHES, "BulletinNoticePinned")
 
@@ -93,22 +95,23 @@ def test_bulletin_board_pin_and_cipher_decrypt(
         "cipher_solution": "gilded night",
         "hidden_content": secret_text,
     }
-    nid = _post_dm(c_data).json()["notice_id"]
+    nid = session_client.post(bulletin, json=c_data, headers=dm_h).json()["notice_id"]
 
-    notices = session_client.get(base_url, headers=p_h).json()
+    notices = session_client.get(bulletin, headers=p_h).json()
     assert any(
         n["notice_id"] == nid and not n["is_decrypted"] and not n["hidden_content"] for n in notices
     )
 
     dec = session_client.post(
-        f"{base_url}/{nid}/decrypt", json={"solution": "gilded night"}, headers=p_h
+        f"{bulletin}/{nid}/decrypt", json={"solution": "gilded night"}, headers=p_h
     )
     assert dec.status_code == 200 and dec.json()["decrypted_content"] == secret_text
     assert_stream_event(mock_bus, STREAM_WEST_MARCHES, "CipherNoticeDecrypted")
 
+    ws_url = f"/ws/campaigns/{cid}"
     with (
-        gateway_client.websocket_connect(f"/ws/campaigns/{cid}?user_id={dm_id}") as ws_dm,
-        gateway_client.websocket_connect(f"/ws/campaigns/{cid}?user_id={p_id}") as ws_player,
+        gateway_client.websocket_connect(ws_url, subprotocols=ws_subprotocols(dm_h)) as ws_dm,
+        gateway_client.websocket_connect(ws_url, subprotocols=ws_subprotocols(p_h)) as ws_player,
     ):
         assert ws_dm.receive_json()["type"] == "connected"
         assert ws_player.receive_json()["type"] == "connected"

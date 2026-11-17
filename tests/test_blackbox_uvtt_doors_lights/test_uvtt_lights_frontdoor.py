@@ -4,9 +4,13 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import ws_subprotocols
 from tests.test_blackbox_uvtt_doors_lights.conftest import create_board, grant_permission
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def build_uvtt_with_lights() -> dict:
@@ -132,7 +136,9 @@ def test_light_placement_over_websocket_authorized_and_denied(gateway_client: Te
     grant_permission("campaign", campaign_id, "spectator", spectator_id)
 
     # 1. DM can place light over WebSocket
-    with gateway_client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={dm_id}") as ws:
+    with gateway_client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(dm_id)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
         ws.send_json(
             {
@@ -152,7 +158,7 @@ def test_light_placement_over_websocket_authorized_and_denied(gateway_client: Te
 
     # 2. Spectator cannot place light (denied with PERMISSION_DENIED)
     with gateway_client.websocket_connect(
-        f"/ws/campaigns/{campaign_id}?user_id={spectator_id}"
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(spectator_id)
     ) as ws:
         assert ws.receive_json()["type"] == "connected"
         ws.send_json(

@@ -39,7 +39,7 @@ def test_auth_backwards_compatibility_exports():
         "write_establishment_relationships write_npc_relationships "
         "write_negotiation_relationships get_current_settlement_user "
         "require_haven_builder require_establishment_manager "
-        "extract_bearer_token decode_settlement_token AuthenticatedUser"
+        "extract_bearer_token decode_settlement_token VerifiedPrincipal"
     ).split():
         assert hasattr(auth_mod, sym), f"Missing exported symbol {sym} in auth facade"
 

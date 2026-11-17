@@ -18,8 +18,11 @@ Mobile devices connect to the API Gateway at `/ws/mobile-companion/{session_id}`
 ```typescript
 const sessionId = "session-adventure-101";
 const userId = "marcus";
+const accessToken = "<Zitadel access token>";
+// The token travels in the subprotocol, never in the URL. The gateway refuses the handshake without it.
 const ws = new WebSocket(
-  `wss://runefoble.local/ws/mobile-companion/${sessionId}?user_id=${userId}&peer_id=peer_${userId}`
+  `wss://runefoble.local/ws/mobile-companion/${sessionId}?peer_id=peer_${userId}`,
+  ["runefoble.v1", `runefoble.bearer.${accessToken}`]
 );
 
 ws.onopen = () => {

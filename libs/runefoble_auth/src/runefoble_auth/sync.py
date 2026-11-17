@@ -15,17 +15,15 @@ from runefoble_auth.sync_events import (
     handle_token_placed,
 )
 from runefoble_auth.sync_tuples import (
-    CAMPAIGN_ROLE_RELATIONS,
     SyncResult,
     batch_write_tuples,
     delete_relationship_tuple,
     execute_with_retry,
     normalize_campaign_role,
     reconcile_tuples,
-    resolve_user_claims,
     write_relationship_tuple,
 )
-from runefoble_auth.zitadel import AuthenticatedUser, ZitadelAuthService
+from runefoble_auth.zitadel import ZitadelAuthService
 
 logger = logging.getLogger(__name__)
 
@@ -61,23 +59,6 @@ class ZitadelSpiceDBSyncService:
         return await delete_relationship_tuple(
             self.spicedb, res_t, res_id, rel, sub_t, sub_id, self._execute_with_retry
         )
-
-    async def sync_user_claims(
-        self,
-        user_or_claims: AuthenticatedUser | dict[str, Any] | str,
-        campaign_id: str | None = None,
-    ) -> list[str]:
-        """Translate Zitadel token or user claims into SpiceDB relationships."""
-        user = resolve_user_claims(self.zitadel, user_or_claims)
-        synced: list[str] = []
-        if campaign_id:
-            roles = set(user.roles) | ({"gm"} if user.is_admin else set())
-            for role in roles:
-                for norm in CAMPAIGN_ROLE_RELATIONS.get(role.lower(), []):
-                    synced.append(
-                        await self._write_tuple("campaign", campaign_id, norm, "user", user.user_id)
-                    )
-        return synced
 
     async def sync_membership(
         self,
@@ -167,7 +148,6 @@ class ZitadelSpiceDBSyncService:
 
 
 __all__ = [
-    "CAMPAIGN_ROLE_RELATIONS",
     "SyncResult",
     "ZitadelSpiceDBSyncService",
 ]

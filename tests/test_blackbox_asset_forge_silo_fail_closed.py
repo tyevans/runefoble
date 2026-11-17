@@ -69,15 +69,18 @@ def test_token_forge_fails_closed_when_silo_returns_server_error(
     assert redis_stream.streams.get(ASSET_STREAM, []) == []
 
 
-def test_gateway_upload_fails_closed_when_silo_unreachable(silo_double: FakeSilo):
+def test_gateway_upload_fails_closed_when_silo_unreachable(silo_double: FakeSilo, signing_issuer):
     """Gateway avatar upload with Silo down returns 503 and stores nothing."""
     silo_double.outage = True
-    gateway_client = TestClient(gateway_app)
+    gateway_client = TestClient(
+        gateway_app,
+        headers={"Authorization": f"Bearer {signing_issuer.mint('player-valeros')}"},
+    )
 
     response = gateway_client.post(
         "/api/v1/assets/upload",
         files={"file": ("crest.png", PNG_SAMPLE_BYTES, "image/png")},
-        data={"owner_id": "player-valeros", "asset_type": "avatar"},
+        data={"asset_type": "avatar"},
     )
 
     assert response.status_code == 503, response.text

@@ -9,8 +9,9 @@ import re
 from typing import Any
 from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request, Response
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException, Query, Request, Response
+from gateway_api.auth import CurrentPrincipal
+from pydantic import BaseModel
 from runefoble_events import AssetDeleted, AssetUploaded
 from runefoble_platform.asset_index import (
     get_stored_asset,
@@ -30,20 +31,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 platform_settings = PlatformSettings()
-
-
-class AssetUploadRequest(BaseModel):
-    """JSON payload model for uploading media assets."""
-
-    filename: str = Field(..., description="File name of the asset")
-    content_type: str = Field(..., description="MIME content type (e.g. image/png)")
-    data_base64: str = Field(..., description="Base64-encoded binary content")
-    bucket: str | None = Field(default=None, description="Target Silo bucket")
-    owner_id: str | None = Field(default=None, description="Asset owner user ID")
-    asset_type: str = Field(
-        default="avatar",
-        description="Asset classification (avatar, battlemap, audio)",
-    )
 
 
 class AssetMetadataResponse(BaseModel):
@@ -73,25 +60,10 @@ def _sanitize_filename(name: str) -> str:
     return cleaned or "asset.bin"
 
 
-def _resolve_user_id(
-    explicit: str | None,
-    x_user_id: str | None,
-    authorization: str | None,
-) -> str:
-    if explicit:
-        return explicit
-    if x_user_id:
-        return x_user_id
-    if authorization and authorization.startswith("Bearer "):
-        return authorization[7:].strip()
-    return "user-default"
-
-
 @router.post("/upload", response_model=AssetMetadataResponse)
 async def upload_asset(
     request: Request,
-    x_user_id: str | None = Header(None, alias="X-User-Id"),
-    authorization: str | None = Header(None, alias="Authorization"),
+    principal: CurrentPrincipal,
 ) -> dict[str, Any]:
     """Upload media assets (avatars, battlemaps, audio) to Silo S3 storage.
 
@@ -103,7 +75,6 @@ async def upload_asset(
     filename = "upload.bin"
     content_type = ""
     data: bytes = b""
-    explicit_owner: str | None = None
     bucket: str | None = None
     asset_type: str = "avatar"
 
@@ -123,7 +94,6 @@ async def upload_asset(
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"Invalid base64 payload: {exc}") from exc
 
-        explicit_owner = body.get("owner_id")
         bucket = body.get("bucket")
         asset_type = body.get("asset_type", "avatar")
 
@@ -139,7 +109,6 @@ async def upload_asset(
         content_type = getattr(upload_file, "content_type", None) or str(
             form.get("content_type", "")
         )
-        explicit_owner = str(form.get("owner_id")) if "owner_id" in form else None
         bucket = str(form.get("bucket")) if "bucket" in form else None
         asset_type = str(form.get("asset_type", "avatar"))
 
@@ -148,11 +117,10 @@ async def upload_asset(
         data = await request.body()
         content_type = ct_header.split(";")[0].strip()
         filename = request.query_params.get("filename", "upload.bin")
-        explicit_owner = request.query_params.get("owner_id")
         bucket = request.query_params.get("bucket")
         asset_type = request.query_params.get("asset_type", "avatar")
 
-    owner_id = _resolve_user_id(explicit_owner, x_user_id, authorization)
+    owner_id = principal.user_id
     target_bucket = bucket or platform_settings.silo_bucket_assets
     safe_name = _sanitize_filename(filename)
     object_key = f"{asset_type}s/{uuid4().hex[:10]}_{safe_name}"
@@ -256,11 +224,10 @@ async def download_asset(asset_id: str):
 @router.delete("/{asset_id}", response_model=AssetDeleteResponse)
 async def delete_asset(
     asset_id: str,
-    x_user_id: str | None = Header(None, alias="X-User-Id"),
-    authorization: str | None = Header(None, alias="Authorization"),
+    principal: CurrentPrincipal,
 ) -> dict[str, Any]:
     """Delete asset from Silo storage and emit AssetDeleted domain event."""
-    deleted_by = _resolve_user_id(None, x_user_id, authorization)
+    deleted_by = principal.user_id
 
     try:
         meta = await get_stored_asset(asset_id)

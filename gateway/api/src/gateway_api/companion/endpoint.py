@@ -12,7 +12,8 @@ from gateway_api.companion.manager import (
     mobile_companion_manager,
     publish_companion_event,
 )
-from gateway_api.signaling.auth import extract_signaling_auth, validate_voice_connection
+from gateway_api.signaling.auth import extract_peer_and_role, validate_voice_connection
+from gateway_api.websocket_auth import admit_gateway_websocket
 from runefoble_events.voice import (
     MobileAudioProfileAdapted,
     MobileCompanionConnected,
@@ -34,9 +35,13 @@ async def mobile_companion_websocket_endpoint(
     manager: MobileCompanionManager | None = None,
 ) -> None:
     """Handle low-bandwidth mobile companion WebSockets at /ws/mobile-companion/{session_id}."""
+    principal = await admit_gateway_websocket(websocket)
+    if principal is None:
+        return
+    user_id = principal.user_id
     comp_manager = manager or mobile_companion_manager
     spicedb = get_spicedb_client()
-    user_id, peer_id, role = extract_signaling_auth(websocket)
+    peer_id, role = extract_peer_and_role(websocket, user_id)
 
     # 1. SpiceDB Zanzibar permission check on connect (Hard Invariant 1)
     can_connect = await validate_voice_connection(spicedb, session_id, user_id)
@@ -46,7 +51,6 @@ async def mobile_companion_websocket_endpoint(
             user_id,
             session_id,
         )
-        await websocket.accept()
         await websocket.send_json(
             {
                 "type": "error",
@@ -58,7 +62,6 @@ async def mobile_companion_websocket_endpoint(
         await websocket.close(code=4003, reason="Forbidden: insufficient permissions")
         return
 
-    await websocket.accept()
     await comp_manager.connect(session_id, user_id, peer_id, websocket)
 
     # 2. Publish MobileCompanionConnected domain event

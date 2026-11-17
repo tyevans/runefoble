@@ -3,14 +3,20 @@
 import json
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_overlay_websocket_connection_and_initial_sanitized_state(client: TestClient) -> None:
     """Verify connecting to /ws/overlay/{session_id} delivers initial sanitized party state."""
-    with client.websocket_connect("/ws/overlay/sess-ws-1") as ws:
+    with client.websocket_connect(
+        "/ws/overlay/sess-ws-1", subprotocols=ws_subprotocols("overlay-tester")
+    ) as ws:
         msg = ws.receive_json()
         assert msg["type"] == "overlay_connected"
         assert msg["session_id"] == "sess-ws-1"
@@ -31,7 +37,9 @@ def test_overlay_websocket_connection_and_initial_sanitized_state(client: TestCl
 
 def test_overlay_websocket_turn_started_and_token_moved_camera_updates(client: TestClient) -> None:
     """Verify WebSocket updates camera target smoothly when turn starts or token moves."""
-    with client.websocket_connect("/ws/overlay/sess-ws-events") as ws:
+    with client.websocket_connect(
+        "/ws/overlay/sess-ws-events", subprotocols=ws_subprotocols("overlay-tester")
+    ) as ws:
         _init = ws.receive_json()
 
         # 1. Turn Started -> broadcast camera centering

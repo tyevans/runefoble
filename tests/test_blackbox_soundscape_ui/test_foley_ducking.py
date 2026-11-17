@@ -13,9 +13,14 @@ import asyncio
 import math
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import set_spicedb_client as set_gw_spicedb_client
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
+
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def test_rest_data_binding_foley_cue_trigger(
@@ -72,7 +77,9 @@ def test_gateway_websocket_soundscape_broadcast(gateway_client: TestClient) -> N
         )
     )
 
-    with gateway_client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={dm_user}") as ws:
+    with gateway_client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(dm_user)
+    ) as ws:
         connected_frame = ws.receive_json()
         assert connected_frame["type"] == "connected"
 

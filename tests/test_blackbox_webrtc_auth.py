@@ -27,6 +27,10 @@ from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture(autouse=True)
 def reset_voice_signaling_environment():
@@ -69,7 +73,7 @@ def test_voice_websocket_connect_unauthorized_subject_rejected():
     session_id = "sess-unauth-test"
 
     with client.websocket_connect(
-        f"/ws/voice/{session_id}?user_id=stranger_bob&peer_id=peer_bob"
+        f"/ws/voice/{session_id}?peer_id=peer_bob", subprotocols=ws_subprotocols("stranger_bob")
     ) as ws:
         err_msg = ws.receive_json()
         assert err_msg["type"] == "error"
@@ -92,7 +96,8 @@ def test_voice_websocket_connect_authorized_subject_succeeds():
 
     client = TestClient(app)
     with client.websocket_connect(
-        f"/ws/voice/{session_id}?user_id={user_id}&peer_id=peer_alice&role=player"
+        f"/ws/voice/{session_id}?peer_id=peer_alice&role=player",
+        subprotocols=ws_subprotocols(user_id),
     ) as ws:
         connected_frame = ws.receive_json()
         assert connected_frame["type"] == "connected"
@@ -108,27 +113,31 @@ def test_voice_websocket_connect_authorized_subject_succeeds():
         assert joined_frame["peers"][0]["peer_id"] == "peer_alice"
 
 
-def test_voice_websocket_credential_extraction_variants():
-    """Verify header and bearer token auth extraction and fallback to guest."""
+def test_voice_websocket_identity_comes_only_from_verified_token():
+    """Verify the voice socket admits only a verified bearer subprotocol. No guest fallback."""
     spicedb = get_spicedb_client()
     session_id = "sess-cred-variants"
 
     asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", "bearer_user"))
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", "guest_user"))
 
     client = TestClient(app)
     with client.websocket_connect(
-        f"/ws/voice/{session_id}",
-        headers={"Authorization": "Bearer bearer_user"},
+        f"/ws/voice/{session_id}", subprotocols=ws_subprotocols("bearer_user")
     ) as ws:
         msg = ws.receive_json()
         assert msg["user_id"] == "bearer_user"
         assert msg["peer_id"] == "peer_bearer_user"
 
-    with client.websocket_connect(f"/ws/voice/{session_id}") as ws:
-        msg = ws.receive_json()
-        assert msg["user_id"] == "guest_user"
-        assert msg["peer_id"] == "peer_guest_user"
+    with pytest.raises(WebSocketDisconnect), client.websocket_connect(f"/ws/voice/{session_id}"):
+        pass
+
+    with (
+        pytest.raises(WebSocketDisconnect),
+        client.websocket_connect(
+            f"/ws/voice/{session_id}", headers={"Authorization": "Bearer bearer_user"}
+        ),
+    ):
+        pass
 
 
 def test_voice_peer_lifecycle_events_published_to_redis(reset_voice_signaling_environment):
@@ -143,7 +152,8 @@ def test_voice_peer_lifecycle_events_published_to_redis(reset_voice_signaling_en
 
     client = TestClient(app)
     with client.websocket_connect(
-        f"/ws/voice/{session_id}?user_id={user_id}&peer_id=peer_valeros&role=player"
+        f"/ws/voice/{session_id}?peer_id=peer_valeros&role=player",
+        subprotocols=ws_subprotocols(user_id),
     ) as ws:
         _ = ws.receive_json()
         _ = ws.receive_json()
@@ -164,7 +174,7 @@ def test_signaling_facade_and_submodule_backward_compatibility():
     """Verify facade re-exports identical objects as the modular signaling submodules."""
     assert sig_facade.WebRTCSignalingManager is sig_pkg.WebRTCSignalingManager
     assert sig_facade.signaling_manager is sig_pkg.signaling_manager
-    assert sig_facade.extract_signaling_auth is sig_pkg.extract_signaling_auth
+    assert sig_facade.extract_peer_and_role is sig_pkg.extract_peer_and_role
     assert sig_facade.validate_voice_connection is sig_pkg.validate_voice_connection
     assert (
         sig_facade.voice_signaling_websocket_endpoint is sig_pkg.voice_signaling_websocket_endpoint

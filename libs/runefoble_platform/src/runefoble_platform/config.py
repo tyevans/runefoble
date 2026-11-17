@@ -5,7 +5,7 @@ Centralizes configuration settings across bounded contexts.
 
 from typing import Literal
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -54,6 +54,12 @@ class PlatformSettings(BaseSettings):
         description="Table name for event store events",
     )
 
+    @model_validator(mode="after")
+    def _default_audience_to_client_id(self) -> "PlatformSettings":
+        if not self.zitadel_audience:
+            self.zitadel_audience = self.zitadel_client_id
+        return self
+
     @property
     def postgres_dsn(self) -> str:
         """Alias for database_url for backward compatibility."""
@@ -73,6 +79,12 @@ class PlatformSettings(BaseSettings):
     silo_bucket_assets: str = Field(default="runefoble-assets", description="Silo assets bucket")
     silo_secure: bool = Field(default=False, description="Use TLS for Silo")
 
+    # Gateway CORS: comma-separated browser origins that may call the API with credentials.
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        description="Comma-separated allowed CORS origins. Never '*' with credentials.",
+    )
+
     # Identity & AuthN (Zitadel)
     zitadel_issuer: str = Field(
         default="http://localhost:8080",
@@ -82,10 +94,10 @@ class PlatformSettings(BaseSettings):
         default="runefoble-api",
         description="Zitadel OAuth client ID",
     )
-    auth_dev_mode: bool = Field(
-        default=True,
-        validation_alias=AliasChoices("RUNEFOBLE_AUTH_DEV_MODE", "AUTH_DEV_MODE"),
-        description="Enable offline development auth bypass",
+    zitadel_audience: str = Field(
+        default="",
+        validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_AUDIENCE", "ZITADEL_AUDIENCE"),
+        description="Expected 'aud' claim. Empty means use zitadel_client_id.",
     )
     zitadel_jwks_url: str | None = Field(
         default=None,

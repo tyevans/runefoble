@@ -11,7 +11,7 @@ from gateway_api.character_models import (
 )
 from gateway_api.character_store import character_store
 from gateway_api.routers.character_subresources import router as subresources_router
-from runefoble_auth.zitadel import AuthenticatedUser
+from runefoble_auth.principal import VerifiedPrincipal
 
 router = APIRouter(tags=["Characters"])
 router.include_router(subresources_router)
@@ -19,7 +19,7 @@ router.include_router(subresources_router)
 
 @router.get("/api/v1/characters", response_model=list[CharacterResponse])
 async def list_characters(
-    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
     campaign_id: str | None = Query(None, alias="campaignId"),
 ) -> list[CharacterResponse]:
     """List characters viewable by current user under SpiceDB Zanzibar rules."""
@@ -49,7 +49,7 @@ async def list_characters(
 )
 async def create_character(
     req: CreateCharacterRequest,
-    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
 ) -> CharacterResponse:
     """Create a new character and assign ownership to caller in SpiceDB."""
     char = character_store.create_from_request(req, owner_id=user.user_id)
@@ -117,7 +117,7 @@ async def assign_campaign(
 )
 async def delete_character(
     character_id: str,
-    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
 ) -> dict[str, Any]:
     """Delete owned character and remove SpiceDB relationships (requires 'owner')."""
     char = character_store.get_character(character_id)

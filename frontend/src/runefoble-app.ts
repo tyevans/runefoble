@@ -109,8 +109,10 @@ export class RunefobleApp extends LitElement {
     this.activeSocketSessionId = sessionId;
     try {
       if (typeof window === 'undefined' || typeof WebSocket === 'undefined') return;
+      const token = authService.getAccessToken();
+      if (!token) return;
       const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      this.socket = new WebSocket(`${proto}//${window.location.host || 'localhost:8000'}/ws/session/${sessionId}`);
+      this.socket = new WebSocket(`${proto}//${window.location.host || 'localhost:8000'}/ws/session/${sessionId}`, ['runefoble.v1', `runefoble.bearer.${token}`]);
       this.socket.onopen = () => { this.socketConnected = true; };
       this.socket.onmessage = (e) => {
         try {

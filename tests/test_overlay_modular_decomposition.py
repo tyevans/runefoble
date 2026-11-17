@@ -10,6 +10,7 @@ Verifies:
 
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 from gateway_api.cinematic_director import clear_cinematic_directors
 from gateway_api.main import app as gateway_app
@@ -30,6 +31,9 @@ from gateway_api.routers.overlay import (
 )
 from gateway_api.spectator import clear_raw_session_state, set_raw_session_state
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -93,7 +97,9 @@ def test_frontdoor_get_party_vitals_json():
 def test_frontdoor_websocket_overlay_ws_endpoint():
     """Verify WebSocket /overlay/ws/{session_id} connects and delivers sanitized real-time feeds."""
     client = TestClient(gateway_app)
-    with client.websocket_connect("/overlay/ws/sess-decomp-ws-1") as ws:
+    with client.websocket_connect(
+        "/overlay/ws/sess-decomp-ws-1", subprotocols=ws_subprotocols("overlay-tester")
+    ) as ws:
         init_msg = ws.receive_json()
         assert init_msg["type"] == "overlay_connected"
         assert init_msg["session_id"] == "sess-decomp-ws-1"

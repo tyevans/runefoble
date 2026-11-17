@@ -1,60 +1,63 @@
-"""Zitadel OIDC and JWT token authentication helper."""
+"""Zitadel access-token verifier. The only identity verifier in the platform.
 
+Every token must pass: RS256 signature against the issuer's JWKS, `exp`,
+`sub`, `iss` (exact match), and `aud` (exact match). No mode disables any
+check. No code path decodes a token without verifying it.
+"""
+
+from __future__ import annotations
+
+import json
 import logging
-import os
+import urllib.request
 from typing import Any
 
 import jwt
-from pydantic import BaseModel
+
+from runefoble_auth.principal import TokenVerificationError, VerifiedPrincipal
 
 logger = logging.getLogger("runefoble.auth.zitadel")
 
+ACCEPTED_ALGORITHMS: tuple[str, ...] = ("RS256",)
+REQUIRED_CLAIMS: tuple[str, ...] = ("exp", "sub", "iss", "aud")
+DISCOVERY_PATH = "/.well-known/openid-configuration"
+DISCOVERY_TIMEOUT_SECONDS = 5
 
-class TokenVerificationError(jwt.PyJWTError):
-    """Raised when JWT verification against Zitadel fails."""
 
-
-class AuthenticatedUser(BaseModel):
-    user_id: str
-    username: str
-    email: str | None = None
-    roles: list[str] = []
-    is_admin: bool = False
+def discover_jwks_url(issuer: str) -> str:
+    """Read `jwks_uri` from the issuer's OIDC discovery document."""
+    url = f"{issuer.rstrip('/')}{DISCOVERY_PATH}"
+    with urllib.request.urlopen(url, timeout=DISCOVERY_TIMEOUT_SECONDS) as response:
+        document: dict[str, Any] = json.loads(response.read().decode("utf-8"))
+    jwks_uri = document.get("jwks_uri")
+    if not isinstance(jwks_uri, str) or not jwks_uri:
+        raise TokenVerificationError(f"Discovery document at {url} has no jwks_uri")
+    return jwks_uri
 
 
 class ZitadelAuthService:
-    """Validates tokens and provides user claims against self-hosted Zitadel."""
+    """Verifies Zitadel access tokens against the issuer's signing keys."""
 
     def __init__(
         self,
         issuer: str = "http://localhost:8080",
-        client_id: str = "runefoble-api",
+        audience: str = "runefoble-api",
         jwks_url: str | None = None,
         jwks_cache_ttl: float = 300,
-        dev_mode: bool | None = None,
         jwk_client: jwt.PyJWKClient | None = None,
-        verify_audience: bool = False,
-        audience: str | None = None,
-        verify_issuer: bool = False,
-    ):
+    ) -> None:
         self.issuer = issuer.rstrip("/")
-        self.client_id = client_id
-        self.jwks_url = jwks_url or f"{self.issuer}/.well-known/jwks.json"
+        self.audience = audience
         self.jwks_cache_ttl = jwks_cache_ttl
-        self.verify_audience = verify_audience
-        self.audience = audience or client_id
-        self.verify_issuer = verify_issuer
-
-        if dev_mode is not None:
-            self.dev_mode = dev_mode
-        else:
-            self.dev_mode = os.environ.get("RUNEFOBLE_AUTH_DEV_MODE", "true").lower() in (
-                "true",
-                "1",
-                "yes",
-            )
-
+        self._jwks_url = jwks_url
         self._jwk_client = jwk_client
+
+    @property
+    def jwks_url(self) -> str:
+        """Configured JWKS URL, or the `jwks_uri` advertised by OIDC discovery."""
+        if self._jwks_url is None:
+            self._jwks_url = discover_jwks_url(self.issuer)
+        return self._jwks_url
 
     @property
     def jwk_client(self) -> jwt.PyJWKClient:
@@ -66,106 +69,37 @@ class ZitadelAuthService:
             )
         return self._jwk_client
 
-    @jwk_client.setter
-    def jwk_client(self, client: jwt.PyJWKClient | None) -> None:
-        self._jwk_client = client
+    def verify_token(self, token: str, audience: str | None = None) -> VerifiedPrincipal:
+        """Verify a bearer token and return the principal it identifies.
 
-    def _extract_user_from_payload(self, payload: dict[str, Any]) -> AuthenticatedUser:
-        user_id = payload.get("sub")
-        if not user_id:
-            raise TokenVerificationError("Token missing required 'sub' claim")
-
-        email = payload.get("email")
-        roles_raw = payload.get("urn:zitadel:iam:org:project:roles", [])
-        if isinstance(roles_raw, dict):
-            roles = list(roles_raw.keys())
-        elif isinstance(roles_raw, list):
-            roles = [str(r) for r in roles_raw]
-        else:
-            roles = []
-
-        username = payload.get("preferred_username", user_id)
-        return AuthenticatedUser(
-            user_id=str(user_id),
-            username=str(username),
-            email=str(email) if email else None,
-            roles=roles,
-            is_admin="admin" in roles,
-        )
-
-    def _dev_mock_decode(self, token: str) -> AuthenticatedUser:
-        try:
-            payload: dict[str, Any] = jwt.decode(
-                token,
-                options={
-                    "verify_signature": False,
-                    "verify_exp": False,
-                    "verify_aud": False,
-                    "verify_iss": False,
-                },
-                algorithms=["RS256", "HS256"],
-            )
-            return self._extract_user_from_payload(payload)
-        except Exception:
-            # Fallback for dev / mock tokens
-            return AuthenticatedUser(
-                user_id="dev-user-001",
-                username="DevAdventurer",
-                email="dev@runefoble.local",
-                roles=["player", "dm"],
-                is_admin=True,
-            )
-
-    def _verify_token_jwks(
-        self,
-        token: str,
-        audience: str | None = None,
-    ) -> AuthenticatedUser:
+        `audience` overrides the configured audience for one call. Leave it
+        unset in production code.
+        """
+        expected_audience = audience or self.audience
         try:
             signing_key = self.jwk_client.get_signing_key_from_jwt(token)
-            target_audience = audience or (self.audience if self.verify_audience else None)
-            options = {
-                "verify_signature": True,
-                "verify_exp": True,
-                "verify_aud": bool(target_audience),
-                "verify_iss": self.verify_issuer,
-            }
-            decode_kwargs: dict[str, Any] = {
-                "algorithms": ["RS256"],
-                "options": options,
-            }
-            if target_audience:
-                decode_kwargs["audience"] = target_audience
-            if self.verify_issuer:
-                decode_kwargs["issuer"] = self.issuer
-
             payload: dict[str, Any] = jwt.decode(
                 token,
                 signing_key.key,
-                **decode_kwargs,
+                algorithms=list(ACCEPTED_ALGORITHMS),
+                audience=expected_audience,
+                issuer=self.issuer,
+                options={"require": list(REQUIRED_CLAIMS)},
             )
-            return self._extract_user_from_payload(payload)
-        except jwt.PyJWTError:
-            raise
-        except Exception as exc:
-            raise TokenVerificationError(f"JWKS verification failed: {exc}") from exc
+        except jwt.PyJWTError as exc:
+            logger.warning("Token rejected: %s", exc)
+            raise TokenVerificationError(str(exc)) from exc
+        return _principal_from_claims(payload)
 
-    def verify_token(
-        self,
-        token: str,
-        *,
-        verify: bool | None = None,
-        audience: str | None = None,
-    ) -> AuthenticatedUser:
-        """Verify a Zitadel JWT token against JWKS endpoint or dev bypass."""
-        should_verify = (not self.dev_mode) if verify is None else verify
-        if not should_verify:
-            return self._dev_mock_decode(token)
-        return self._verify_token_jwks(token, audience=audience)
 
-    def decode_token(self, token: str, verify: bool = False) -> AuthenticatedUser:
-        """Decode a Zitadel JWT token into a structured user object.
-
-        Provided for backward compatibility. In production, calls verify_token.
-        """
-        return self.verify_token(token, verify=verify)
+def _principal_from_claims(payload: dict[str, Any]) -> VerifiedPrincipal:
+    subject = payload.get("sub")
+    if not isinstance(subject, str) or not subject:
+        raise TokenVerificationError("Token 'sub' claim is empty or not a string")
+    username = payload.get("preferred_username") or subject
+    email = payload.get("email") or None
+    return VerifiedPrincipal(
+        user_id=subject,
+        username=str(username),
+        email=str(email) if email else None,
+    )

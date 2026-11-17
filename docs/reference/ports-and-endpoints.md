@@ -230,7 +230,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `campaign-analytics` | GET | `/api/v1/analytics/campaigns/{id}/mvp` | Per-encounter MVP awards based on damage dealt, healing, and critical hits |
 | `campaign-analytics` | GET | `/api/v1/analytics/campaigns/{id}/timeline` | Chronological event milestones linking session recaps and boss encounters |
 | `campaign-analytics` | GET | `/ui/manifest` | Discovers vendored microfrontend (`runefoble-campaign-analytics`) |
-| `gateway-api` | GET | `/api/v1/profile` | Retrieves authenticated Zitadel user claims (`user_id`, `username`, `roles`, `email`, `display_name`, `avatar_url`, `bio`) |
+| `gateway-api` | GET | `/api/v1/profile` | Retrieves the verified bearer token's user profile (`user_id`, `username`, `email`, `display_name`, `avatar_url`, `bio`). Requires a valid Zitadel bearer token (401 otherwise) |
 | `gateway-api` | PATCH | `/api/v1/profile` | Updates user profile display name, avatar URL, and bio |
 | `gateway-api` | GET | `/api/v1/campaigns` | Lists all campaigns where authenticated user has Zanzibar `view` permission |
 | `gateway-api` | POST | `/api/v1/campaigns` | Creates new campaign, registers owner in SpiceDB Zanzibar (`owner`), returns campaign summary |
@@ -301,6 +301,10 @@ When running the local development environment via `make dev`, Vite proxies requ
 
 
 
+
+## Gateway WebSocket Authentication
+
+Every gateway WebSocket route (`/ws/*` and `/overlay/ws/*`) takes the caller's identity only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The gateway accepts the handshake with `runefoble.v1`. A handshake without a verified token closes with code `1008` before accept. Identity in the query string (`user_id`, `token`) or in headers (`X-User-Id`, `Authorization`) is refused. A token that is valid but lacks SpiceDB permission is admitted, then receives a `PERMISSION_DENIED` frame and close code `4003`.
 
 ### Voice Agent TTS Response (`POST /api/v1/voice/tts`)
 

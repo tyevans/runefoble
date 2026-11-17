@@ -20,6 +20,11 @@ from gateway_api.main import app
 client = TestClient(app)
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 @pytest.fixture(autouse=True)
 def reset_stores():
     """Reset character and campaign memory stores before each test."""
@@ -29,9 +34,9 @@ def reset_stores():
 
 
 @pytest.mark.asyncio
-async def test_character_creation_and_ownership():
+async def test_character_creation_and_ownership(signing_issuer):
     """Verify POST /api/v1/characters creates character and writes SpiceDB owner tuple."""
-    headers_valeros = {"X-User-Id": "user_valeros"}
+    headers_valeros = _auth(signing_issuer, "user_valeros")
 
     payload = {
         "name": "Valeros of Korvosa",
@@ -78,10 +83,10 @@ async def test_character_creation_and_ownership():
 
 
 @pytest.mark.asyncio
-async def test_character_listing_isolation():
+async def test_character_listing_isolation(signing_issuer):
     """Verify GET /api/v1/characters lists only characters owned or viewable by the user."""
-    headers_alice = {"X-User-Id": "user_alice"}
-    headers_bob = {"X-User-Id": "user_bob"}
+    headers_alice = _auth(signing_issuer, "user_alice")
+    headers_bob = _auth(signing_issuer, "user_bob")
 
     # Alice creates a wizard
     res_a = client.post(
@@ -115,10 +120,10 @@ async def test_character_listing_isolation():
 
 
 @pytest.mark.asyncio
-async def test_character_detail_and_zanzibar_view_guard():
+async def test_character_detail_and_zanzibar_view_guard(signing_issuer):
     """Verify GET /api/v1/characters/{id} returns details for owner and 403 for strangers."""
-    headers_alice = {"X-User-Id": "user_alice"}
-    headers_stranger = {"X-User-Id": "user_stranger"}
+    headers_alice = _auth(signing_issuer, "user_alice")
+    headers_stranger = _auth(signing_issuer, "user_stranger")
 
     res = client.post(
         "/api/v1/characters",
@@ -139,12 +144,12 @@ async def test_character_detail_and_zanzibar_view_guard():
 
 
 @pytest.mark.asyncio
-async def test_character_campaign_assignment_and_view_propagation():
+async def test_character_campaign_assignment_and_view_propagation(signing_issuer):
     """Verify PATCH /api/v1/characters/{id}/campaign writes campaign tuple and propagates view."""
-    headers_alice = {"X-User-Id": "user_alice"}
-    headers_dm = {"X-User-Id": "dm_merlin"}
-    headers_party_member = {"X-User-Id": "user_grognak"}
-    headers_outsider = {"X-User-Id": "user_outsider"}
+    headers_alice = _auth(signing_issuer, "user_alice")
+    headers_dm = _auth(signing_issuer, "dm_merlin")
+    headers_party_member = _auth(signing_issuer, "user_grognak")
+    headers_outsider = _auth(signing_issuer, "user_outsider")
 
     # DM creates Campaign
     camp_res = client.post(
@@ -216,10 +221,10 @@ async def test_character_campaign_assignment_and_view_propagation():
 
 
 @pytest.mark.asyncio
-async def test_character_deletion_owner_only():
+async def test_character_deletion_owner_only(signing_issuer):
     """Verify DELETE /api/v1/characters/{id} allows owner and blocks non-owners with 403."""
-    headers_alice = {"X-User-Id": "user_alice"}
-    headers_bob = {"X-User-Id": "user_bob"}
+    headers_alice = _auth(signing_issuer, "user_alice")
+    headers_bob = _auth(signing_issuer, "user_bob")
 
     res = client.post(
         "/api/v1/characters",
@@ -247,18 +252,18 @@ async def test_character_deletion_owner_only():
 
 
 @pytest.mark.asyncio
-async def test_default_characters_loaded_and_accessible():
-    """Verify default seed characters are accessible to dev users."""
+async def test_default_characters_loaded_and_accessible(signing_issuer):
+    """Verify default seed characters are accessible to their verified owners."""
     character_store.load_defaults()
 
     # Valeros is owned by user-valeros
-    res_valeros = client.get("/api/v1/characters", headers={"X-User-Id": "user-valeros"})
+    res_valeros = client.get("/api/v1/characters", headers=_auth(signing_issuer, "user-valeros"))
     assert res_valeros.status_code == 200
     ids_valeros = [c["id"] for c in res_valeros.json()]
     assert "char-valeros" in ids_valeros
 
-    # Ezren is owned by dev-user-001
-    res_ezren = client.get("/api/v1/characters", headers={"X-User-Id": "dev-user-001"})
+    # Ezren is owned by user-evelyn
+    res_ezren = client.get("/api/v1/characters", headers=_auth(signing_issuer, "user-evelyn"))
     assert res_ezren.status_code == 200
     ids_ezren = [c["id"] for c in res_ezren.json()]
     assert "char-ezren" in ids_ezren

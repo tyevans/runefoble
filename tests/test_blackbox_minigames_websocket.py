@@ -24,6 +24,10 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture
 def mock_bus():
@@ -71,7 +75,8 @@ def test_darts_and_billiards_multiplayer_turn_sync(
     with (
         TestClient(session_app) as client_darts,
         client_darts.websocket_connect(
-            f"/ws/establishments/{est_id}/tables/{darts_table_id}?user_id=archer_kip"
+            f"/ws/establishments/{est_id}/tables/{darts_table_id}",
+            subprotocols=ws_subprotocols("archer_kip"),
         ) as ws_kip,
     ):
         assert ws_kip.receive_json()["type"] == "connected"
@@ -87,7 +92,8 @@ def test_darts_and_billiards_multiplayer_turn_sync(
         assert ws_kip.receive_json()["type"] == "player_joined"
 
         with client_darts.websocket_connect(
-            f"/ws/establishments/{est_id}/tables/{darts_table_id}?user_id=ranger_lyra"
+            f"/ws/establishments/{est_id}/tables/{darts_table_id}",
+            subprotocols=ws_subprotocols("ranger_lyra"),
         ) as ws_lyra:
             assert ws_lyra.receive_json()["type"] == "connected"
             ws_lyra.send_json(
@@ -134,10 +140,14 @@ def test_darts_and_billiards_multiplayer_turn_sync(
     billiards_table_id = f"table-billiards-{uuid4().hex[:6]}"
     with (
         TestClient(session_app) as client_billiards,
-        client_billiards.websocket_connect(f"/ws/minigames/{billiards_table_id}") as ws1,
+        client_billiards.websocket_connect(
+            f"/ws/minigames/{billiards_table_id}", subprotocols=ws_subprotocols("minigame-tester")
+        ) as ws1,
     ):
         assert ws1.receive_json()["type"] == "connected"
-        with client_billiards.websocket_connect(f"/ws/minigames/{billiards_table_id}") as ws2:
+        with client_billiards.websocket_connect(
+            f"/ws/minigames/{billiards_table_id}", subprotocols=ws_subprotocols("minigame-tester")
+        ) as ws2:
             assert ws2.receive_json()["type"] == "connected"
 
             ws1.send_json(
@@ -205,7 +215,9 @@ def test_casino_craps_and_roulette_betting_and_payouts(
     craps_table_id = f"table-craps-{uuid4().hex[:6]}"
     with (
         TestClient(session_app) as client_craps,
-        client_craps.websocket_connect(f"/ws/minigames/{craps_table_id}") as ws_craps,
+        client_craps.websocket_connect(
+            f"/ws/minigames/{craps_table_id}", subprotocols=ws_subprotocols("minigame-tester")
+        ) as ws_craps,
     ):
         ws_craps.receive_json()
         # Gideon joins with 200 chips in coin purse
@@ -267,10 +279,14 @@ def test_casino_craps_and_roulette_betting_and_payouts(
     roulette_table_id = f"table-roulette-{uuid4().hex[:6]}"
     with (
         TestClient(session_app) as client_roulette,
-        client_roulette.websocket_connect(f"/ws/minigames/{roulette_table_id}") as ws1,
+        client_roulette.websocket_connect(
+            f"/ws/minigames/{roulette_table_id}", subprotocols=ws_subprotocols("minigame-tester")
+        ) as ws1,
     ):
         assert ws1.receive_json()["type"] == "connected"
-        with client_roulette.websocket_connect(f"/ws/minigames/{roulette_table_id}") as ws2:
+        with client_roulette.websocket_connect(
+            f"/ws/minigames/{roulette_table_id}", subprotocols=ws_subprotocols("minigame-tester")
+        ) as ws2:
             assert ws2.receive_json()["type"] == "connected"
 
             ws1.send_json(

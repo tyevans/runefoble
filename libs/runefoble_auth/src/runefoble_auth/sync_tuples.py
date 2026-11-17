@@ -10,7 +10,6 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from runefoble_auth.spicedb import Relationship
-from runefoble_auth.zitadel import AuthenticatedUser, ZitadelAuthService
 
 logger = logging.getLogger(__name__)
 
@@ -43,29 +42,6 @@ def normalize_campaign_role(role: str) -> list[str]:
 def format_tuple(res_t: str, res_id: str, rel: str, sub_t: str, sub_id: str) -> str:
     """Format Zanzibar tuple string representation (resource#relation@subject)."""
     return f"{res_t}:{res_id}#{rel}@{sub_t}:{sub_id}"
-
-
-def resolve_user_claims(
-    zitadel_auth: ZitadelAuthService | Any,
-    user_or_claims: AuthenticatedUser | dict[str, Any] | str,
-) -> AuthenticatedUser:
-    """Resolve raw token, dict claims, or AuthenticatedUser instance."""
-    if isinstance(user_or_claims, str):
-        return zitadel_auth.decode_token(user_or_claims)
-    if isinstance(user_or_claims, AuthenticatedUser):
-        return user_or_claims
-    if isinstance(user_or_claims, dict):
-        token = user_or_claims.get("token")
-        if token:
-            return zitadel_auth.decode_token(token)
-        return AuthenticatedUser(
-            user_id=str(user_or_claims.get("user_id") or user_or_claims.get("sub", "anon")),
-            username=str(user_or_claims.get("username") or "User"),
-            email=user_or_claims.get("email"),
-            roles=user_or_claims.get("roles", []),
-            is_admin=bool(user_or_claims.get("is_admin", False)),
-        )
-    raise ValueError(f"Unsupported user_or_claims type: {type(user_or_claims)}")
 
 
 async def execute_with_retry(

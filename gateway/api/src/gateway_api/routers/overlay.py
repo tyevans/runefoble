@@ -27,6 +27,7 @@ from gateway_api.overlay_templates import (
     render_overlay_html,
 )
 from gateway_api.spectator import get_raw_session_state
+from gateway_api.websocket_auth import admit_gateway_websocket
 
 router = APIRouter(tags=["OBS Overlay"])
 
@@ -37,8 +38,8 @@ class OverlayConnectionManager:
     def __init__(self) -> None:
         self.active_connections: dict[str, list[WebSocket]] = {}
 
-    async def connect(self, session_id: str, websocket: WebSocket) -> None:
-        await websocket.accept()
+    def register(self, session_id: str, websocket: WebSocket) -> None:
+        """Track an admitted, accepted socket. The route accepts it first."""
         self.active_connections.setdefault(session_id, []).append(websocket)
 
     def disconnect(self, session_id: str, websocket: WebSocket) -> None:
@@ -86,7 +87,9 @@ async def get_party_vitals_overlay(
 @router.websocket("/ws/overlay/{session_id}")
 async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
     """Real-time spectator WebSocket feed delivering sanitized updates."""
-    await ws_overlay_manager.connect(session_id, websocket)
+    if await admit_gateway_websocket(websocket) is None:
+        return
+    ws_overlay_manager.register(session_id, websocket)
     raw = get_raw_session_state(session_id)
     director = get_cinematic_director(session_id)
     initial = sanitize_party_vitals(raw, director.current_target)

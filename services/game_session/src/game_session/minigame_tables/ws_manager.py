@@ -44,8 +44,8 @@ class MinigameTableManager:
             )
         return self.tables[table_id]
 
-    async def connect(self, table_id: str, websocket: WebSocket) -> None:
-        await websocket.accept()
+    def register(self, table_id: str, websocket: WebSocket) -> None:
+        """Track an admitted, accepted socket. The route accepts it first."""
         if table_id not in self.connections:
             self.connections[table_id] = set()
         self.connections[table_id].add(websocket)

@@ -34,8 +34,8 @@ class WebSocketConnectionManager:
     def __init__(self) -> None:
         self.active_connections: list[WebSocket] = []
 
-    async def connect(self, websocket: WebSocket) -> None:
-        await websocket.accept()
+    def register(self, websocket: WebSocket) -> None:
+        """Track an admitted, accepted socket. The route accepts it first."""
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket) -> None:

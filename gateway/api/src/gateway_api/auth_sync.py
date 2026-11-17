@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Literal
 
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 from gateway_api.auth import get_spicedb_client
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 
 logger = logging.getLogger(__name__)
@@ -33,22 +33,6 @@ def set_sync_service(service: ZitadelSpiceDBSyncService | None) -> None:
 # ---------------------------------------------------------------------------
 # Request & Response Models
 # ---------------------------------------------------------------------------
-
-
-class SyncUserRequest(BaseModel):
-    user_id: str | None = None
-    username: str | None = None
-    email: str | None = None
-    roles: list[str] = Field(default_factory=list)
-    campaign_id: str | None = None
-    token: str | None = None
-
-
-class SyncUserResponse(BaseModel):
-    status: str = "synchronized"
-    user_id: str
-    username: str
-    synced_relationships: list[str]
 
 
 class SyncMembershipRequest(BaseModel):
@@ -106,41 +90,6 @@ class SyncHealthResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
-
-
-@router.post("/user", response_model=SyncUserResponse)
-async def sync_user_claims(
-    req: SyncUserRequest,
-    authorization: str | None = Header(None, alias="Authorization"),
-) -> SyncUserResponse:
-    """Sync Zitadel user claims into SpiceDB Zanzibar relationship tuples."""
-    service = get_sync_service()
-
-    # Extract bearer token if passed in header and not in body
-    token_to_use = req.token
-    if not token_to_use and authorization and authorization.startswith("Bearer "):
-        token_to_use = authorization[7:].strip()
-
-    claims_data: dict[str, Any] = req.model_dump()
-    if token_to_use:
-        claims_data["token"] = token_to_use
-
-    try:
-        synced = await service.sync_user_claims(claims_data, campaign_id=req.campaign_id)
-        effective_user_id = req.user_id or "user_from_token"
-        effective_username = req.username or "Adventurer"
-        return SyncUserResponse(
-            status="synchronized",
-            user_id=effective_user_id,
-            username=effective_username,
-            synced_relationships=synced,
-        )
-    except Exception as exc:
-        logger.error("Failed to sync user claims: %s", exc)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"User synchronization error: {exc}",
-        ) from exc
 
 
 @router.post("/membership", response_model=SyncMembershipResponse)

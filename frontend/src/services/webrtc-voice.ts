@@ -37,6 +37,7 @@ export class WebRTCVoiceService {
   public async connect(
     sessionId: string, userId: string, peerId?: string, role: string = 'player', token?: string
   ): Promise<void> {
+    if (!token) throw new Error('Missing access token: cannot open voice WebSocket');
     this.sessionId = sessionId;
     this.userId = userId;
     this.peerId = peerId || `peer_${userId}_${Math.random().toString(36).substring(2, 7)}`;
@@ -44,12 +45,11 @@ export class WebRTCVoiceService {
     this.token = token;
     this.setConnectionState('connecting');
 
-    const q = new URLSearchParams({ session_id: sessionId, user_id: userId, peer_id: this.peerId, role: this.role });
-    if (token) q.set('token', token);
+    const q = new URLSearchParams({ session_id: sessionId, peer_id: this.peerId, role: this.role });
 
     return new Promise((resolve, reject) => {
       try {
-        this.socket = new WebSocket(`${this.options.wsBaseUrl}/ws/voice/${sessionId}?${q.toString()}`);
+        this.socket = new WebSocket(`${this.options.wsBaseUrl}/ws/voice/${sessionId}?${q.toString()}`, ['runefoble.v1', `runefoble.bearer.${token}`]);
         this.socket.onopen = () => { this.setConnectionState('connected'); this.startTelemetryLoop(); resolve(); };
         this.socket.onmessage = async (e) => {
           try { await this.handleSignalingMessage(JSON.parse(e.data)); } catch (err) { this.options.onError?.(err as Error); }

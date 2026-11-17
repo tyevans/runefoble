@@ -14,7 +14,7 @@ from game_session.settlement.auth.permissions import (
     check_settlement_read_permission,
     check_settlement_write_permission,
 )
-from game_session.settlement.auth.tokens import AuthenticatedUser, decode_settlement_token
+from game_session.settlement.auth.tokens import VerifiedPrincipal, decode_settlement_token
 
 
 def _get_spicedb() -> Any:
@@ -25,10 +25,9 @@ def _get_spicedb() -> Any:
 
 async def get_current_settlement_user(
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
-    x_user_id: Annotated[str | None, Header(alias="x-user-id")] = None,
-) -> AuthenticatedUser:
+) -> VerifiedPrincipal:
     """FastAPI dependency extracting authenticated settlement user context."""
-    return decode_settlement_token(authorization=authorization, x_user_id=x_user_id)
+    return decode_settlement_token(authorization=authorization)
 
 
 def require_haven_viewer(param_name: str = "settlement_id") -> Callable:
@@ -36,9 +35,9 @@ def require_haven_viewer(param_name: str = "settlement_id") -> Callable:
 
     async def _dependency(
         request: Request,
-        user: Annotated[AuthenticatedUser, Depends(get_current_settlement_user)],
+        user: Annotated[VerifiedPrincipal, Depends(get_current_settlement_user)],
         spicedb: Annotated[Any, Depends(_get_spicedb)],
-    ) -> AuthenticatedUser:
+    ) -> VerifiedPrincipal:
         settlement_id = request.path_params.get(param_name)
         if settlement_id:
             await check_settlement_read_permission(spicedb, settlement_id, user.user_id)
@@ -52,9 +51,9 @@ def require_haven_builder(param_name: str = "settlement_id") -> Callable:
 
     async def _dependency(
         request: Request,
-        user: Annotated[AuthenticatedUser, Depends(get_current_settlement_user)],
+        user: Annotated[VerifiedPrincipal, Depends(get_current_settlement_user)],
         spicedb: Annotated[Any, Depends(_get_spicedb)],
-    ) -> AuthenticatedUser:
+    ) -> VerifiedPrincipal:
         settlement_id = request.path_params.get(param_name)
         if settlement_id:
             await check_settlement_write_permission(spicedb, settlement_id, user.user_id)
@@ -68,9 +67,9 @@ def require_establishment_manager(param_name: str = "establishment_id") -> Calla
 
     async def _dependency(
         request: Request,
-        user: Annotated[AuthenticatedUser, Depends(get_current_settlement_user)],
+        user: Annotated[VerifiedPrincipal, Depends(get_current_settlement_user)],
         spicedb: Annotated[Any, Depends(_get_spicedb)],
-    ) -> AuthenticatedUser:
+    ) -> VerifiedPrincipal:
         establishment_id = request.path_params.get(param_name)
         if establishment_id:
             await check_establishment_write_permission(spicedb, establishment_id, user.user_id)

@@ -10,9 +10,7 @@ from runefoble_auth.sync_tuples import (
     CAMPAIGN_ROLE_RELATIONS,
     format_tuple,
     normalize_campaign_role,
-    resolve_user_claims,
 )
-from runefoble_auth.zitadel import AuthenticatedUser
 from runefoble_events import CharacterCreated, ParticipantJoined, SessionCreated
 
 
@@ -70,22 +68,6 @@ def test_sync_tuples_helpers_and_models() -> None:
     assert normalize_campaign_role("player") == ["player"]
     assert normalize_campaign_role("custom_role") == ["custom_role"]
     assert "spectator" in CAMPAIGN_ROLE_RELATIONS
-
-
-def test_resolve_user_claims_variants() -> None:
-    """Verify resolve_user_claims handles dict, AuthenticatedUser, and error cases."""
-    user = AuthenticatedUser(user_id="u_alice", username="Alice", roles=["player"])
-    resolved = resolve_user_claims(None, user)
-    assert resolved.user_id == "u_alice"
-
-    resolved_dict = resolve_user_claims(
-        None, {"user_id": "u_bob", "username": "Bob", "roles": ["gm"]}
-    )
-    assert resolved_dict.user_id == "u_bob"
-    assert "gm" in resolved_dict.roles
-
-    with pytest.raises(ValueError, match="Unsupported user_or_claims type"):
-        resolve_user_claims(None, 12345)  # type: ignore
 
 
 @pytest.mark.asyncio

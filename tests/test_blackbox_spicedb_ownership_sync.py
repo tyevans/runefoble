@@ -23,8 +23,13 @@ from runefoble_platform.bus import EventBus
 client = TestClient(app)
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 @pytest.mark.asyncio
-async def test_token_movement_player_isolation_and_spectator_readonly() -> None:
+async def test_token_movement_player_isolation_and_spectator_readonly(signing_issuer) -> None:
     """Players move own tokens, cannot move other player tokens; spectators are read-only."""
     campaign_id = f"camp-tactical-{uuid4().hex[:8]}"
     player_alice, player_bob = "alice_fighter", "bob_wizard"
@@ -63,7 +68,7 @@ async def test_token_movement_player_isolation_and_spectator_readonly() -> None:
     # 4. Alice moves her own token -> Allowed (200)
     res_a = client.post(
         f"/api/v1/board/tokens/{token_alice}/move",
-        headers={"X-User-Id": player_alice},
+        headers=_auth(signing_issuer, player_alice),
         json={"to_x": 4, "to_y": 5},
     )
     assert res_a.status_code == 200 and res_a.json()["status"] == "token_moved"
@@ -71,7 +76,7 @@ async def test_token_movement_player_isolation_and_spectator_readonly() -> None:
     # 5. Alice attempts to move Bob's token -> Denied (403)
     res_ab = client.post(
         f"/api/v1/board/tokens/{token_bob}/move",
-        headers={"X-User-Id": player_alice},
+        headers=_auth(signing_issuer, player_alice),
         json={"to_x": 1, "to_y": 1},
     )
     assert res_ab.status_code == 403 and res_ab.json()["detail"]["required_permission"] == "move"
@@ -79,7 +84,7 @@ async def test_token_movement_player_isolation_and_spectator_readonly() -> None:
     # 6. Bob moves his own token -> Allowed (200)
     res_b = client.post(
         f"/api/v1/board/tokens/{token_bob}/move",
-        headers={"X-User-Id": player_bob},
+        headers=_auth(signing_issuer, player_bob),
         json={"to_x": 6, "to_y": 7},
     )
     assert res_b.status_code == 200
@@ -87,7 +92,7 @@ async def test_token_movement_player_isolation_and_spectator_readonly() -> None:
     # 7. Bob attempts to move Alice's token -> Denied (403)
     res_ba = client.post(
         f"/api/v1/board/tokens/{token_alice}/move",
-        headers={"X-User-Id": player_bob},
+        headers=_auth(signing_issuer, player_bob),
         json={"to_x": 0, "to_y": 0},
     )
     assert res_ba.status_code == 403
@@ -95,7 +100,7 @@ async def test_token_movement_player_isolation_and_spectator_readonly() -> None:
     # 8. Spectator Clara attempts to move Token Alice -> Denied (403)
     res_sp_move = client.post(
         f"/api/v1/board/tokens/{token_alice}/move",
-        headers={"X-User-Id": spectator_clara},
+        headers=_auth(signing_issuer, spectator_clara),
         json={"to_x": 2, "to_y": 2},
     )
     assert res_sp_move.status_code == 403
@@ -103,7 +108,7 @@ async def test_token_movement_player_isolation_and_spectator_readonly() -> None:
     # 9. Spectator Clara inspects Token Alice -> Read-only Allowed (200)
     res_sp_inspect = client.get(
         f"/api/v1/board/tokens/{token_alice}",
-        headers={"X-User-Id": spectator_clara},
+        headers=_auth(signing_issuer, spectator_clara),
     )
     assert res_sp_inspect.status_code == 200 and res_sp_inspect.json()["token_id"] == token_alice
 
@@ -111,7 +116,7 @@ async def test_token_movement_player_isolation_and_spectator_readonly() -> None:
     assert (
         client.post(
             f"/api/v1/board/tokens/{token_alice}/move",
-            headers={"X-User-Id": gm_derek},
+            headers=_auth(signing_issuer, gm_derek),
             json={"to_x": 8, "to_y": 9},
         ).status_code
         == 200
@@ -119,7 +124,7 @@ async def test_token_movement_player_isolation_and_spectator_readonly() -> None:
     assert (
         client.post(
             f"/api/v1/board/tokens/{token_bob}/move",
-            headers={"X-User-Id": gm_derek},
+            headers=_auth(signing_issuer, gm_derek),
             json={"to_x": 9, "to_y": 9},
         ).status_code
         == 200

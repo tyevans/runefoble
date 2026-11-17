@@ -9,6 +9,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from game_session.settlement.router import router as settlement_haven_router
 from gateway_api.assets import router as assets_router
+from gateway_api.auth import get_zitadel_auth_service
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.dependencies import (
     WebSocketConnectionManager,
@@ -36,6 +37,7 @@ from gateway_api.routers import (
 )
 from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
 from gateway_api.websocket import campaign_websocket_endpoint
+from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_tool_event_bus
 from gateway_mcp.dynamic_registry import router as mcp_tools_router
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -52,21 +54,13 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+_cors_origins = [o.strip() for o in platform_settings.cors_origins.split(",") if o.strip()]
+if "*" in _cors_origins:
+    raise RuntimeError("RUNEFOBLE_CORS_ORIGINS must list explicit origins. '*' is refused.")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:6006",
-        "http://127.0.0.1:6006",
-        "http://localhost:80",
-        "http://localhost",
-        "http://127.0.0.1",
-        "http://runefoble.local",
-        "*",
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -119,7 +113,9 @@ async def campaign_websocket(websocket: WebSocket, campaign_id: str) -> None:
 @app.websocket("/ws/session/{session_id}")
 async def session_websocket(websocket: WebSocket, session_id: str) -> None:
     """Realtime stream connecting board, voice, and Watcher chronicle."""
-    await ws_manager.connect(websocket)
+    if await admit_gateway_websocket(websocket) is None:
+        return
+    ws_manager.register(websocket)
     try:
         await websocket.send_json(
             {
@@ -157,7 +153,7 @@ async def gateway_establishment_table_ws(
     """Establishment-scoped multiplayer minigame table WebSocket channel via gateway."""
     from game_session.routers.minigames_ws import handle_table_websocket
 
-    await handle_table_websocket(websocket, table_id, establishment_id)
+    await handle_table_websocket(websocket, table_id, establishment_id, get_zitadel_auth_service())
 
 
 @app.websocket("/ws/minigames/{table_id}")
@@ -168,7 +164,7 @@ async def gateway_standalone_minigame_ws(
     """Standalone multiplayer minigame table WebSocket channel via gateway."""
     from game_session.routers.minigames_ws import handle_table_websocket
 
-    await handle_table_websocket(websocket, table_id, "est-default")
+    await handle_table_websocket(websocket, table_id, "est-default", get_zitadel_auth_service())
 
 
 def main() -> None:

@@ -1,7 +1,7 @@
-from typing import Annotated, Any
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from gateway_api.auth import get_current_user, get_spicedb_client, require_zanzibar_permission
+from gateway_api.auth import CurrentPrincipal, get_spicedb_client, require_zanzibar_permission
 from gateway_api.campaign_store import (
     DEFAULT_BOARD_TOKENS,
     DEFAULT_SESSION_PARTICIPANTS,
@@ -16,7 +16,6 @@ from gateway_api.models import (
     TokenMoveRequest,
 )
 from pydantic import BaseModel, ConfigDict, Field
-from runefoble_auth.zitadel import AuthenticatedUser
 
 router = APIRouter(tags=["Tabletop & Game Sessions"])
 
@@ -69,7 +68,7 @@ async def start_session_proxy(session_id: str) -> dict:
 async def hot_swap_session_proxy(
     session_id: str,
     req: HotSwapRequest,
-    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    user: CurrentPrincipal,
 ) -> dict[str, Any]:
     """Hands off active turn control from AI stand-in to player mid-session."""
     player_id = req.player_id or user.user_id
@@ -181,7 +180,12 @@ async def get_board_proxy(session_id: str) -> dict:
 
 
 @router.post("/api/v1/watcher/speak-and-act")
-async def speak_and_act(transcript: str, speaker_name: str, session_id: str) -> dict:
+async def speak_and_act(
+    transcript: str,
+    speaker_name: str,
+    session_id: str,
+    user: CurrentPrincipal,
+) -> dict:
     event = {
         "type": "speech_action",
         "speaker": speaker_name,

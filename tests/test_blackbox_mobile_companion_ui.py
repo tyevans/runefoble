@@ -28,6 +28,9 @@ from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.main import app as voice_app
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -211,7 +214,8 @@ def test_gateway_websocket_frontdoor_handshake_and_frames(client: TestClient) ->
     asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
 
     with client.websocket_connect(
-        f"/ws/mobile-companion/{session_id}?user_id={user_id}&peer_id=peer_marcus"
+        f"/ws/mobile-companion/{session_id}?peer_id=peer_marcus",
+        subprotocols=ws_subprotocols(user_id),
     ) as ws:
         # 1. Connected handshake frame consumed by mobile_companion_connected handler
         conn_frame = ws.receive_json()
@@ -249,7 +253,7 @@ def test_gateway_websocket_frontdoor_handshake_and_frames(client: TestClient) ->
         assert haptic_frame["vibration_pattern"] == [200, 100, 200]
 
 
-def test_public_http_whisper_and_turn_alert_delivery(client: TestClient) -> None:
+def test_public_http_whisper_and_turn_alert_delivery(client: TestClient, trusted_ws_issuer) -> None:
     """Verify HTTP whisper & turn alert endpoints deliver haptic frames to mobile client."""
     spicedb = get_spicedb_client()
     session_id, user_id = f"sess-{uuid4().hex[:6]}", "marcus"
@@ -260,14 +264,15 @@ def test_public_http_whisper_and_turn_alert_delivery(client: TestClient) -> None
     )
 
     with client.websocket_connect(
-        f"/ws/mobile-companion/{session_id}?user_id={user_id}&peer_id=peer_marcus"
+        f"/ws/mobile-companion/{session_id}?peer_id=peer_marcus",
+        subprotocols=ws_subprotocols(user_id),
     ) as ws:
         _ = ws.receive_json()  # Consume connected frame
 
         # Dispatch secret whisper via public HTTP frontdoor
         whisper_res = client.post(
             f"/api/v1/mobile/companion/{session_id}/whisper",
-            headers={"X-User-Id": dm_user},
+            headers={"Authorization": f"Bearer {trusted_ws_issuer.mint(dm_user)}"},
             json={
                 "recipient_id": user_id,
                 "sender": "The Watcher",
@@ -285,7 +290,7 @@ def test_public_http_whisper_and_turn_alert_delivery(client: TestClient) -> None
         # Dispatch combat turn alert via public HTTP frontdoor
         alert_res = client.post(
             f"/api/v1/mobile/companion/{session_id}/turn-alert",
-            headers={"X-User-Id": dm_user},
+            headers={"Authorization": f"Bearer {trusted_ws_issuer.mint(dm_user)}"},
             json={"recipient_id": user_id, "character_name": "Marcus", "round_num": 2},
         )
         assert alert_res.status_code == 200

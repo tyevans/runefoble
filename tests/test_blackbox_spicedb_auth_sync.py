@@ -3,29 +3,32 @@
 from uuid import uuid4
 
 import pytest
+from fastapi.testclient import TestClient
+from gateway_api.auth import get_spicedb_client
+from gateway_api.main import app
 from runefoble_auth.spicedb import MockSpiceDBClient, Relationship
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
-from runefoble_auth.zitadel import AuthenticatedUser
 from runefoble_events import CharacterCreated, ParticipantJoined, SessionCreated
+
+client = TestClient(app)
 
 
 @pytest.mark.asyncio
-async def test_auth_sync_user_claims_and_permissions() -> None:
-    """Verify syncing user claims creates valid tuples and enables permissions."""
-    spicedb = MockSpiceDBClient()
-    service = ZitadelSpiceDBSyncService(spicedb_client=spicedb)
+async def test_token_roles_grant_no_campaign_relations(signing_issuer) -> None:
+    """A verified token that carries owner and GM roles grants no campaign relation (TASK-0534)."""
     campaign_id = f"camp-{uuid4().hex[:6]}"
     user_id = f"user-{uuid4().hex[:6]}"
+    token = signing_issuer.mint(user_id, extra_claims={"roles": ["owner", "dungeon_master"]})
+    headers = {"Authorization": f"Bearer {token}"}
 
-    user = AuthenticatedUser(user_id=user_id, username="Bob", roles=["player"])
-    synced = await service.sync_user_claims(user, campaign_id=campaign_id)
-    assert len(synced) > 0
+    res = client.get(f"/api/v1/sessions/{campaign_id}", headers=headers)
+    assert res.status_code == 403
 
-    assert await spicedb.check_permission("campaign", campaign_id, "play", "user", user_id)
-    assert await spicedb.check_permission("campaign", campaign_id, "view", "user", user_id)
-    assert not await spicedb.check_permission(
-        "campaign", campaign_id, "run_session", "user", user_id
-    )
+    spicedb = get_spicedb_client()
+    for permission in ("manage", "run_session", "play", "view"):
+        assert not await spicedb.check_permission(
+            "campaign", campaign_id, permission, "user", user_id
+        )
 
 
 @pytest.mark.asyncio

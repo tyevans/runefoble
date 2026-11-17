@@ -72,7 +72,7 @@ def test_asset_events_registration_and_cloudevents():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_event_emission_on_upload_and_delete():
+async def test_blackbox_event_emission_on_upload_and_delete(signing_issuer):
     """Verify AssetUploaded and AssetDeleted domain events are emitted to event buses."""
     mock_redis = MockAsyncRedis()
     mock_bus = RedisStreamsEventBus(client=mock_redis)
@@ -85,13 +85,15 @@ async def test_blackbox_event_emission_on_upload_and_delete():
 
     platform_bus.subscribe("runefoble.events.asset.uploaded", in_memory_upload_handler)
 
-    client = TestClient(gateway_app)
+    client = TestClient(
+        gateway_app,
+        headers={"Authorization": f"Bearer {signing_issuer.mint('paladin_order')}"},
+    )
 
     # 1. Perform upload
     upload_res = client.post(
         "/api/v1/assets/upload",
         files={"file": ("paladin_crest.png", PNG_SAMPLE_BYTES, "image/png")},
-        data={"owner_id": "paladin_order"},
     )
     assert upload_res.status_code == 200
     asset_id = upload_res.json()["asset_id"]
@@ -112,10 +114,8 @@ async def test_blackbox_event_emission_on_upload_and_delete():
     assert mem_event.owner_id == "paladin_order"
 
     # 2. Perform delete
-    del_res = client.delete(
-        f"/api/v1/assets/{asset_id}",
-        headers={"X-User-Id": "dm_cleanser"},
-    )
+    client.headers["Authorization"] = f"Bearer {signing_issuer.mint('dm_cleanser')}"
+    del_res = client.delete(f"/api/v1/assets/{asset_id}")
     assert del_res.status_code == 200
 
     # Verify AssetDeleted in Redis stream

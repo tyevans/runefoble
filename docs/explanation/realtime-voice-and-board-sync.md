@@ -106,7 +106,7 @@ Real-time campaign mutations, token movement broadcasts, health modifications, a
 - **Connection Hub Manager (`gateway_api.websocket_manager`)**:
   `CampaignConnectionManager` (and backward-compatible alias `CampaignWebSocketManager`) tracks active client connections per campaign and handles JSON broadcast dispatching across connected party members.
 - **Credential & Handshake Auth (`gateway_api.websocket_auth`)**:
-  `extract_token_from_websocket` and `extract_subject_id` extract JWT credentials across query parameters, `Authorization: Bearer` headers, and `Sec-WebSocket-Protocol` subprotocol headers, validating signatures via `ZitadelAuthService` in production.
+  `admit_gateway_websocket` binds the gateway verifier to the shared `runefoble_auth.websocket.admit_websocket` check. Every gateway socket route calls it before accept. The token comes only from the `runefoble.bearer.<jwt>` subprotocol. Query strings and headers carry no identity.
 - **WebSocket Routing Endpoint (`gateway_api.websocket_endpoint`)**:
   `campaign_websocket_endpoint` manages the WebSocket handshake lifecycle, validates viewer connection permissions, dispatches incoming actions to Redis Streams (`runefoble.events.board`, `runefoble.events.session`, `runefoble.events.watcher`), and coordinates disconnect cleanup.
 - **Backward-Compatible Facade (`gateway_api.websocket`)**:

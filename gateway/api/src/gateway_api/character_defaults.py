@@ -92,7 +92,7 @@ DEFAULT_CHARACTERS: list[dict[str, Any]] = [
         "armor_class": 12,
         "speed": 30,
         "campaign_id": None,
-        "owner_id": "dev-user-001",
+        "owner_id": "user-evelyn",
         "portrait_url": "/assets/portraits/wizard.svg",
     },
 ]
