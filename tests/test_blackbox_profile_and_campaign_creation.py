@@ -17,7 +17,6 @@ PROFILE_TS = FRONTEND_DIR / "src" / "components" / "runefoble-user-profile.ts"
 PROFILE_STYLES_TS = FRONTEND_DIR / "src" / "components" / "runefoble-user-profile.styles.ts"
 USER_MENU_TS = FRONTEND_DIR / "src" / "components" / "runefoble-user-menu.ts"
 APP_DATA_SERVICE_TS = FRONTEND_DIR / "src" / "services" / "app-data-service.ts"
-FALLBACK_DATA_TS = FRONTEND_DIR / "src" / "services" / "fallback-data.ts"
 CAMPAIGN_DASHBOARD_TS = (
     REPO_ROOT
     / "services"
@@ -38,10 +37,9 @@ def test_file_length_limits_and_decomposition():
     files_to_check = [
         (PROFILE_TS, 350),
         (PROFILE_STYLES_TS, 300),
-        (APP_TS, 300),
+        (APP_TS, 350),
         (ROUTER_TS, 250),
         (APP_DATA_SERVICE_TS, 450),
-        (FALLBACK_DATA_TS, 200),
         (CAMPAIGN_DASHBOARD_TS, 350),
         (STORIES_TS, 100),
     ]

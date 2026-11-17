@@ -6,14 +6,15 @@
  * Hard Invariants: Hard Invariant 6 (< 130 lines), Hard Invariant 7 (Blackbox TDD)
  */
 
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Router } from '../../src/router/router.ts';
 import { AppDataService, appDataService } from '../../src/services/app-data-service.ts';
 import { authService } from '../../src/auth/auth-service.ts';
-import { FALLBACK_CAMPAIGNS } from '../../src/services/fallback-data.ts';
+import { FALLBACK_CAMPAIGNS } from '../../src/fixtures/app-data-service.fixtures.ts';
+import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
 import type { CampaignItem, CreateCampaignPayload } from '../../../services/game_session/ui/src/campaigns/types.ts';
 
 const APP_SHELL_PATH = resolve(import.meta.dirname, '../../src/runefoble-app.ts');
@@ -22,13 +23,20 @@ const PROFILE_PATH = resolve(import.meta.dirname, '../../src/components/runefobl
 describe('Profile Settings & Campaign Deduplication (US-0070, US-0071, TASK-0288)', () => {
   let router: Router;
 
+  let gateway: FakeGateway;
+
   beforeEach(() => {
     router = new Router();
     router.reset();
   });
 
+  afterEach(() => gateway?.restore());
+
   it('test_campaign_creation_single_event_dispatch: stops bubbling and deduplicates campaign list', async () => {
     const dataService = new AppDataService();
+    gateway = installFakeGateway({
+      'POST /api/v1/campaigns': { status: 201, body: { id: 'camp-astral-1', title: 'Chronicles of the Astral Sea', role: 'owner', player_count: 1 } },
+    });
     let eventsDispatched = 0;
     let stopPropagationCalled = false;
 
@@ -45,7 +53,9 @@ describe('Profile Settings & Campaign Deduplication (US-0070, US-0071, TASK-0288
     assert.equal(stopPropagationCalled, true, 'stopPropagation must be called on child submit');
     assert.equal(eventsDispatched, 1, 'Exactly one create-campaign event must be emitted');
 
-    const newCamp = await dataService.createCampaign(fakeEvent.detail);
+    const created = await dataService.createCampaign(fakeEvent.detail);
+    assert.ok(created.ok, 'Campaign must be created through the gateway');
+    const newCamp = created.data;
     assert.ok(newCamp.id, 'Campaign must be created with ID');
     assert.equal(newCamp.title, 'Chronicles of the Astral Sea');
 
@@ -76,8 +86,13 @@ describe('Profile Settings & Campaign Deduplication (US-0070, US-0071, TASK-0288
     assert.ok(profileContent.includes('user.user_id'));
     assert.ok(profileContent.includes('role-badge'));
 
+    authService.updateUser({ user_id: 'user-valeros', username: 'Valeros', email: 'valeros@runefoble.local', roles: ['player'] });
+    gateway = installFakeGateway({
+      'PATCH /api/v1/profile': (req) => ({ body: { user_id: 'user-valeros', ...(req.body as object) } }),
+    });
     const updated = await appDataService.updateProfile({ displayName: 'Valeros the Bold', bio: 'Korvosan Champion' });
-    assert.equal(updated?.display_name, 'Valeros the Bold');
+    assert.equal(updated.ok, true);
+    assert.equal(updated.ok && updated.data.display_name, 'Valeros the Bold');
     assert.equal(authService.getUser()?.display_name, 'Valeros the Bold');
 
     const appShellContent = readFileSync(APP_SHELL_PATH, 'utf-8');

@@ -4,12 +4,14 @@
  * ADR-0004, ADR-0007, ADR-0012, ADR-0013, PRD-0023, US-0064, US-0067
  */
 
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router, type MatchedRoute } from '../src/router/router.ts';
 import { AppDataService } from '../src/services/app-data-service.ts';
 import type { AppActiveView } from '../src/runefoble-app.ts';
 import type { UpdateCampaignPayload } from '@runefoble/game-session-ui';
+import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
+import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS } from '../src/fixtures/app-data-service.fixtures.ts';
 
 function resolveAppActiveView(route: MatchedRoute | null): AppActiveView {
   const pat = route?.pattern || '';
@@ -123,19 +125,29 @@ describe('Campaign Detail Sub-View Disambiguation (TASK-0250)', () => {
 
 describe('Campaign Metadata Loading & Update Flow (TASK-0250)', () => {
   let dataService: AppDataService;
+  let gateway: FakeGateway;
+  let campaign: any;
 
   beforeEach(() => {
     dataService = new AppDataService();
+    campaign = { ...FALLBACK_CAMPAIGNS[0] };
+    gateway = installFakeGateway({
+      'GET /api/v1/campaigns/4': () => ({ body: campaign }),
+      'PATCH /api/v1/campaigns/4': (req) => { campaign = { ...campaign, ...(req.body as any) }; return { body: campaign }; },
+      'GET /api/v1/characters': { body: FALLBACK_CHARACTERS },
+    });
   });
 
+  afterEach(() => gateway.restore());
+
   it('fetches full campaign record including metadata and roles', async () => {
-    const campaign = await dataService.fetchCampaign('4');
-    assert.ok(campaign);
-    assert.equal(campaign?.id, '4');
-    assert.equal(campaign?.title, 'Tomb of the Star-Eater');
-    assert.equal(campaign?.setting, 'Spelljammer Astral Void');
-    assert.equal(campaign?.system, '5e');
-    assert.equal(campaign?.role, 'owner');
+    const result = await dataService.fetchCampaign('4');
+    assert.ok(result.ok);
+    assert.equal(result.data.id, '4');
+    assert.equal(result.data.title, 'Tomb of the Star-Eater');
+    assert.equal(result.data.setting, 'Spelljammer Astral Void');
+    assert.equal(result.data.system, '5e');
+    assert.equal(result.data.role, 'owner');
   });
 
   it('updates campaign metadata via updateCampaign and retains updated values', async () => {
@@ -148,18 +160,20 @@ describe('Campaign Metadata Loading & Update Flow (TASK-0250)', () => {
     };
 
     const updated = await dataService.updateCampaign('4', updatePayload);
-    assert.ok(updated);
-    assert.equal(updated?.title, 'Tomb of the Astral Colossus');
-    assert.equal(updated?.setting, 'Deep Astral Sea');
-    assert.equal(updated?.description, 'The ancient colossus awakes from cosmic slumber.');
+    assert.ok(updated.ok);
+    assert.equal(updated.data.title, 'Tomb of the Astral Colossus');
+    assert.equal(updated.data.setting, 'Deep Astral Sea');
+    assert.equal(updated.data.description, 'The ancient colossus awakes from cosmic slumber.');
 
     const reFetched = await dataService.fetchCampaign('4');
-    assert.equal(reFetched?.title, 'Tomb of the Astral Colossus');
+    assert.ok(reFetched.ok);
+    assert.equal(reFetched.data.title, 'Tomb of the Astral Colossus');
   });
 
   it('filters party characters scoped to active campaign', async () => {
     const characters = await dataService.fetchCharacters();
-    const campaign4Characters = characters.filter((c) => c.campaignId === '4');
+    assert.ok(characters.ok);
+    const campaign4Characters = characters.data.filter((c) => c.campaignId === '4');
 
     assert.ok(campaign4Characters.length >= 2);
     assert.ok(campaign4Characters.some((c) => c.name.includes('Valeros')));
@@ -170,34 +184,62 @@ describe('Campaign Metadata Loading & Update Flow (TASK-0250)', () => {
 
 describe('Campaign Members Roster Lifecycle & Scoping (TASK-0353)', () => {
   let dataService: AppDataService;
+  let gateway: FakeGateway;
+  let members: any[];
 
   beforeEach(() => {
     dataService = new AppDataService();
+    members = FALLBACK_MEMBERS.map((m) => ({ ...m }));
+    gateway = installFakeGateway({
+      'GET /api/v1/campaigns/4/members': () => ({ body: members }),
+      'GET /api/v1/campaigns/camp-test-isolated/members': { body: [{ user_id: 'user-solo', username: 'Solo', role: 'owner' }] },
+      'POST /api/v1/campaigns/4/roles': (req) => {
+        const body = req.body as any;
+        members.find((m) => m.user_id === body.user_id).role = body.role;
+        return { status: 204 };
+      },
+      'POST /api/v1/campaigns/4/invites': (req) => ({
+        status: 201,
+        body: {
+          token: 'inv-test-token', campaign_id: '4', role: (req.body as any).role, max_uses: (req.body as any).max_uses,
+          invite_url: 'https://runefoble.local/#/join/inv-test-token', created_at: '2026-11-17T00:00:00Z',
+        },
+      }),
+      'DELETE /api/v1/campaigns/4/members/user-merisiel': () => { members = members.filter((m) => m.user_id !== 'user-merisiel'); return { status: 204 }; },
+    });
   });
+
+  afterEach(() => gateway.restore());
 
   it('returns distinct, campaign-scoped member rosters', async () => {
     const campaign4Members = await dataService.fetchCampaignMembers('4');
-    assert.equal(campaign4Members.length, 3);
-    assert.ok(campaign4Members.some((m) => m.user_id === 'user-valeros'));
-    assert.ok(campaign4Members.some((m) => m.user_id === 'user-kyra'));
-    assert.ok(campaign4Members.some((m) => m.user_id === 'user-merisiel'));
+    assert.ok(campaign4Members.ok);
+    assert.equal(campaign4Members.data.length, 3);
+    assert.ok(campaign4Members.data.some((m) => m.user_id === 'user-valeros'));
+    assert.ok(campaign4Members.data.some((m) => m.user_id === 'user-kyra'));
+    assert.ok(campaign4Members.data.some((m) => m.user_id === 'user-merisiel'));
 
     const customMembers = await dataService.fetchCampaignMembers('camp-test-isolated');
-    assert.equal(customMembers.length, 1);
-    assert.equal(customMembers[0].role, 'owner');
-    assert.ok(!customMembers.some((m) => m.user_id === 'user-kyra'));
+    assert.ok(customMembers.ok);
+    assert.equal(customMembers.data.length, 1);
+    assert.equal(customMembers.data[0].role, 'owner');
+    assert.ok(!customMembers.data.some((m) => m.user_id === 'user-kyra'));
   });
 
   it('assigns member role and updates the member list without reloading', async () => {
-    await dataService.assignMemberRole('4', 'user-kyra', 'dungeon_master');
-    const members = await dataService.fetchCampaignMembers('4');
-    const kyra = members.find((m) => m.user_id === 'user-kyra');
+    const assigned = await dataService.assignMemberRole('4', 'user-kyra', 'dungeon_master');
+    assert.equal(assigned.ok, true);
+    const after = await dataService.fetchCampaignMembers('4');
+    assert.ok(after.ok);
+    const kyra = after.data.find((m) => m.user_id === 'user-kyra');
     assert.ok(kyra);
-    assert.equal(kyra?.role, 'dungeon_master');
+    assert.equal(kyra.role, 'dungeon_master');
   });
 
   it('generates a shareable campaign invite token and url', async () => {
-    const invite = await dataService.createCampaignInvite('4', 'player', 48, 5);
+    const result = await dataService.createCampaignInvite('4', 'player', 48, 5);
+    assert.ok(result.ok);
+    const invite = result.data;
     assert.ok(invite.token);
     assert.equal(invite.campaign_id, '4');
     assert.equal(invite.role, 'player');
@@ -207,11 +249,11 @@ describe('Campaign Members Roster Lifecycle & Scoping (TASK-0353)', () => {
 
   it('removes a member from the campaign roster', async () => {
     const before = await dataService.fetchCampaignMembers('4');
-    assert.ok(before.some((m) => m.user_id === 'user-merisiel'));
+    assert.ok(before.ok && before.data.some((m) => m.user_id === 'user-merisiel'));
 
-    await dataService.removeCampaignMember('4', 'user-merisiel');
+    const removed = await dataService.removeCampaignMember('4', 'user-merisiel');
+    assert.equal(removed.ok, true);
     const after = await dataService.fetchCampaignMembers('4');
-    assert.ok(!after.some((m) => m.user_id === 'user-merisiel'));
+    assert.ok(after.ok && !after.data.some((m) => m.user_id === 'user-merisiel'));
   });
 });
-

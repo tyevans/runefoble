@@ -15,6 +15,8 @@ import { AppDataService } from '../../src/services/app-data-service.ts';
 import type { AppActiveView } from '../../src/runefoble-app.ts';
 import type { CharacterItem, InspectCharacterEventDetail } from '../../../services/character_sheet/ui/src/roster/types.ts';
 import type { LobbyParticipant } from '../../../services/game_session/ui/src/campaigns/types.ts';
+import { installFakeGateway } from '../support/fake-gateway.ts';
+import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS } from '../../src/fixtures/app-data-service.fixtures.ts';
 
 const APP_SHELL_PATH = resolve(import.meta.dirname, '../../src/runefoble-app.ts');
 
@@ -71,11 +73,26 @@ describe('Character Roster & Deep Route Navigation (US-0064, US-0069, TASK-0288)
   });
 
   it('test_lobby_selection_and_active_card_binding: syncs lobby participant and card vitals', async () => {
+    const gateway = installFakeGateway({
+      'GET /api/v1/sessions/session-tomb-14': { body: { id: 'session-tomb-14', campaign_id: '4', participants: FALLBACK_PARTICIPANTS } },
+      'GET /api/v1/characters': { body: FALLBACK_CHARACTERS },
+    });
+    try {
+      await runLobbyBinding();
+    } finally {
+      gateway.restore();
+    }
+  });
+
+  async function runLobbyBinding(): Promise<void> {
     const dataService = new AppDataService();
     const lobby = await dataService.fetchLobbyState('4', 'session-tomb-14');
-    assert.ok(lobby.availableCharacters.length >= 2);
+    assert.ok(lobby.ok);
+    assert.ok(lobby.data.availableCharacters.length >= 2);
 
-    const characters = await dataService.fetchCharacters();
+    const roster = await dataService.fetchCharacters();
+    assert.ok(roster.ok);
+    const characters = roster.data;
     const valeros = characters.find((c) => c.id === 'char-valeros')!;
     assert.ok(valeros, 'Valeros must exist in character store');
 
@@ -96,5 +113,5 @@ describe('Character Roster & Deep Route Navigation (US-0064, US-0069, TASK-0288)
     assert.equal(activeCharacter?.name, 'Valeros of Korvosa');
     assert.equal(activeCharacter?.armorClass, 18);
     assert.equal(activeCharacter?.maxHp, 45);
-  });
+  }
 });

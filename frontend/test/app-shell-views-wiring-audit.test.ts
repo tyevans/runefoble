@@ -6,11 +6,13 @@
  * Governing ADRs: ADR-0004, ADR-0010, ADR-0012, ADR-0013 | PRD-0023, US-0068
  */
 
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router, type MatchedRoute } from '../src/router/router.ts';
 import { AppDataService } from '../src/services/app-data-service.ts';
 import type { AppActiveView } from '../src/runefoble-app.ts';
+import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
+import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_CAMPAIGN_SESSIONS_MAP } from '../src/fixtures/app-data-service.fixtures.ts';
 
 // Pure frontdoor view resolver mirroring RunefobleApp.getActiveView()
 function resolveActiveView(route: MatchedRoute | null): AppActiveView {
@@ -114,18 +116,26 @@ describe('App Shell Views Route Enumeration & Component Wiring Audit (TASK-0251)
 describe('Dynamic Title Resolution & Breadcrumbs Audit (TASK-0251)', () => {
   let router: Router;
   let dataService: AppDataService;
+  let gateway: FakeGateway;
 
   beforeEach(() => {
     router = new Router();
     router.reset();
     dataService = new AppDataService();
+    gateway = installFakeGateway({
+      'GET /api/v1/campaigns/4': { body: FALLBACK_CAMPAIGNS[0] },
+      'GET /api/v1/sessions/session-tomb-14': { body: { id: 'session-tomb-14', campaign_id: '4', title: FALLBACK_CAMPAIGN_SESSIONS_MAP['4'][0].title, status: 'active' } },
+      'GET /api/v1/characters/char-valeros': { body: FALLBACK_CHARACTERS[0] },
+    });
   });
+
+  afterEach(() => gateway.restore());
 
   it('populates dynamic campaign and session titles in breadcrumb trail without raw ID fallbacks', async () => {
     router.setAsyncTitleResolver(async (type, id) => {
-      if (type === 'campaign') return (await dataService.fetchCampaign(id))?.title;
-      if (type === 'session' || type === 'lobby') return (await dataService.fetchSession(id))?.title;
-      if (type === 'character') return (await dataService.fetchCharacter(id))?.name;
+      if (type === 'campaign') { const r = await dataService.fetchCampaign(id); return r.ok ? r.data.title : undefined; }
+      if (type === 'session' || type === 'lobby') { const r = await dataService.fetchSession(id); return r.ok ? r.data.title : undefined; }
+      if (type === 'character') { const r = await dataService.fetchCharacter(id); return r.ok ? r.data.name : undefined; }
       return undefined;
     });
 
@@ -143,7 +153,7 @@ describe('Dynamic Title Resolution & Breadcrumbs Audit (TASK-0251)', () => {
 
   it('asynchronously resolves character names in breadcrumbs for deep inspector route', async () => {
     router.setAsyncTitleResolver(async (type, id) => {
-      if (type === 'character') return (await dataService.fetchCharacter(id))?.name;
+      if (type === 'character') { const r = await dataService.fetchCharacter(id); return r.ok ? r.data.name : undefined; }
       return undefined;
     });
 
