@@ -8,6 +8,7 @@ from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 # Provenance of a response: llm (model output), heuristic (regex rules after
 # model output was unusable), or mock (canned output, explicit mock backend only).
 ResponseSource = Literal["llm", "heuristic", "mock"]
+TensionLevel = Literal["calm", "rising", "climax", "aftermath"]
 
 
 class TokenContext(BaseModel):
@@ -97,7 +98,7 @@ class DMNarrationResponse(BaseModel):
     narration: str
     sensory_details: list[str] = Field(default_factory=list)
     suggested_dm_prompts: list[str] = Field(default_factory=list)
-    tension_level: Literal["calm", "rising", "climax", "aftermath"] = "rising"
+    tension_level: TensionLevel = "rising"
     source: ResponseSource
     degraded: bool = Field(..., description="True when a fallback path produced the result")
 
