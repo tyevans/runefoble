@@ -5,19 +5,11 @@ All setup and verification are performed strictly through public HTTP API endpoi
 using TestClient(app) from game_session.main.
 """
 
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
-from eventsource.domain.stream_id import StreamId
 from fastapi.testclient import TestClient
 from game_session.main import app
-from runefoble_events.events import (
-    CombatEncounterEnded,
-    CombatEncounterStarted,
-    InitiativeRolled,
-    InitiativeTurnAdvanced,
-)
-from runefoble_platform.event_sourcing import get_event_store
 
 
 @pytest.fixture
@@ -188,16 +180,6 @@ async def test_blackbox_combat_initiative_encounter_lifecycle_and_turn_cycling(c
     concluded_resp = client.get(f"/api/v1/sessions/{session_id}/combat")
     assert concluded_resp.status_code == 200
     assert concluded_resp.json()["in_combat"] is False
-
-    # 12. Verify event stream persistence of combat events
-    store = get_event_store()
-    stream_id = StreamId(UUID(session_id), "GameSession")
-    envelopes = [env async for env in store.read_stream(stream_id)]
-    event_types = [type(env.event) for env in envelopes]
-    assert CombatEncounterStarted in event_types
-    assert InitiativeRolled in event_types
-    assert InitiativeTurnAdvanced in event_types
-    assert CombatEncounterEnded in event_types
 
 
 def test_blackbox_start_combat_with_initial_combatants_and_tiebreaking(client: TestClient):
