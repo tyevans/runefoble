@@ -68,6 +68,7 @@ dev = [
     "zensical>=0.0.65",
     "pytest-timeout>=2.4.0",
     "import-linter>=2.16",
+    "mypy>=1.19.0",
 ]
 
 [tool.ruff]
