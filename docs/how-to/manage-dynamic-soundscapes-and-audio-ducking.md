@@ -184,7 +184,7 @@ When frontend microfrontends such as `<runefoble-soundscape-controls>` or extern
 | `/api/v1/soundscape/stems/override` | POST | `run_session` or `manage` on campaign | Forces DM mood override (exploration, combat, etc.) |
 | `/api/v1/soundscape/leitmotif/{character_id}` | GET | Public / Authenticated | Queries character leitmotif signature configuration |
 
-The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) checks SpiceDB Zanzibar object permissions before forwarding to `SOUNDSCAPE_SERVICE_URL` (`http://soundscape:8010`) with an automatic in-process fallback for local execution.
+The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) checks SpiceDB Zanzibar object permissions before it forwards the request to `SOUNDSCAPE_SERVICE_URL` (default `http://soundscape:8009`). The gateway forwards the caller's bearer token. If the soundscape service is unreachable or returns `5xx`, the gateway returns `502`. It does not run soundscape code in process. See [Gateway Proxy Identity and Errors](../reference/ports-and-endpoints.md#gateway-proxy-identity-and-errors).
 
 ---
 

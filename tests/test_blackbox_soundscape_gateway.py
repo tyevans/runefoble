@@ -13,17 +13,19 @@ Governed by:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
-from unittest.mock import patch
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
-from soundscape.dependencies import get_or_create_leitmotif_engine, reset_dependencies
+from soundscape.dependencies import reset_dependencies
 from soundscape.leitmotif import CharacterLeitmotifProfile
+from soundscape.main import app as soundscape_app
 
+from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -36,6 +38,14 @@ def clean_state():
     yield
     reset_dependencies()
     campaign_store.reset()
+
+
+@pytest.fixture(autouse=True)
+def soundscape_service(monkeypatch) -> Iterator[str]:
+    """Run the real soundscape service on a loopback port and point the gateway at it."""
+    with serve(soundscape_app) as url:
+        monkeypatch.setenv("SOUNDSCAPE_SERVICE_URL", url)
+        yield url
 
 
 def _auth(sub: str) -> dict[str, str]:
@@ -274,20 +284,25 @@ def test_mood_override_unauthorized_stranger(
 
 
 def test_leitmotif_profile_query(
-    client: TestClient, setup_zanzibar_soundscape: dict[str, str]
+    client: TestClient,
+    setup_zanzibar_soundscape: dict[str, str],
+    soundscape_service: str,
 ) -> None:
     """Verify querying character leitmotif timbre configuration."""
     sid = setup_zanzibar_soundscape["sid"]
-    engine = get_or_create_leitmotif_engine(sid)
-    engine.register_profile(
-        CharacterLeitmotifProfile(
-            session_id=sid,
-            character_id="valeros",
-            character_name="Valeros",
-            instrument_timbre="brass",
-            tempo_multiplier=1.2,
-        )
+    profile = CharacterLeitmotifProfile(
+        session_id=sid,
+        character_id="valeros",
+        character_name="Valeros",
+        instrument_timbre="brass",
+        tempo_multiplier=1.2,
     )
+    # Seed the profile through the soundscape service's public route.
+    seeded = httpx.post(
+        f"{soundscape_service}/api/v1/soundscape/leitmotif/profile",
+        json=profile.model_dump(mode="json"),
+    )
+    assert seeded.status_code == 200, seeded.text
 
     res = client.get(
         f"/api/v1/soundscape/leitmotif/valeros?session_id={sid}", headers=_auth("player_valeros")
@@ -307,43 +322,29 @@ def test_leitmotif_profile_query(
 def test_downstream_proxy_forwarding(
     client: TestClient, setup_zanzibar_soundscape: dict[str, str]
 ) -> None:
-    """Verify router proxies to downstream soundscape service when reachable."""
+    """Verify the gateway returns the body of the soundscape service it reached."""
     sid = setup_zanzibar_soundscape["sid"]
-    mock_resp_data = {
-        "cue_id": "cue-proxied-99",
-        "session_id": sid,
-        "status": "triggered",
-        "cue_name": "fireball",
-        "sound_url": "http://silo:9000/runefoble-assets/audio/foley/fireball.ogg",
-        "cue_type": "spell",
-        "volume_gain": 1.0,
-        "duck_music": True,
-    }
+    res = client.post(
+        "/api/v1/soundscape/cue",
+        headers=_auth("dm_evelyn"),
+        json={"session_id": sid, "cue_name": "fireball"},
+    )
+    assert res.status_code == 200
+    assert res.json()["session_id"] == sid
+    assert res.json()["cue_name"] == "fireball"
 
-    class MockResponse:
-        status_code = 200
 
-        def json(self) -> dict[str, Any]:
-            return mock_resp_data
+def test_proxy_returns_502_when_soundscape_is_unreachable(
+    client: TestClient, setup_zanzibar_soundscape: dict[str, str], monkeypatch
+) -> None:
+    """Verify an unreachable soundscape service returns 502, not a local substitute."""
+    sid = setup_zanzibar_soundscape["sid"]
+    monkeypatch.setenv("SOUNDSCAPE_SERVICE_URL", closed_port_url())
 
-    class MockAsyncClient:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, exc_type, exc_val, exc_tb):
-            pass
-
-        async def request(self, method: str, url: str, **kwargs):
-            return MockResponse()
-
-    with patch("httpx.AsyncClient", MockAsyncClient):
-        res = client.post(
-            "/api/v1/soundscape/cue",
-            headers=_auth("dm_evelyn"),
-            json={"session_id": sid, "cue_name": "fireball"},
-        )
-        assert res.status_code == 200
-        assert res.json()["cue_id"] == "cue-proxied-99"
+    res = client.post(
+        "/api/v1/soundscape/cue",
+        headers=_auth("dm_evelyn"),
+        json={"session_id": sid, "cue_name": "fireball"},
+    )
+    assert res.status_code == 502
+    assert "cue_id" not in res.text

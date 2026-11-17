@@ -129,7 +129,6 @@ These tests still stub an upstream with `monkeypatch` or `patch`. Each gap needs
 |---|---|---|
 | `tests/test_blackbox_print_forge.py::test_blackbox_print_forge_spicedb_authorization` | `monkeypatch.setattr(SpiceDBClient, "check_permission", ...)` | No SpiceDB test server runs in the test environment. Needs a live SpiceDB or a process-boundary fake. |
 | `tests/test_inference_worker_failure_contract.py::test_watcher_speech_surfaces_worker_503` and `::test_watcher_speech_unreachable_worker_is_503_not_template` | `monkeypatch.setattr(speech, "INFERENCE_URL", ...)` | `INFERENCE_URL` is read from `RUNEFOBLE_INFERENCE_URL` at import time (`the_watcher/dependencies.py`). Needs call-time read. |
-| `tests/test_blackbox_soundscape_gateway.py::test_downstream_proxy_forwarding` | `patch("httpx.AsyncClient", MockAsyncClient)` | `SOUNDSCAPE_SERVICE_URL` is read at import time (`gateway_api/routers/soundscape.py`). Needs call-time read. The router also falls back to local data on upstream failure. |
 | `tests/test_inference_worker_failure_contract.py::use_worker_backend` fixture and `tests/test_inference_worker.py::mock_api` fixture | `monkeypatch.setattr(api, "llm_client", ...)` | `llm_client` is built at import time (`inference_worker/api.py`). Needs a call-time or env-driven backend selection. |
 
 Tests in `tests/test_blackbox_mcp_*.py`, `tests/test_blackbox_gateway_*.py`, and settlement tests contain no stub of this kind. Their `monkeypatch` use is limited to environment variables.
