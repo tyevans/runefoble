@@ -86,96 +86,23 @@ definition board_token {
 | Trigger / Claim | SpiceDB Relationship Tuple | Meaning |
 |---|---|---|
 | Token claim (any role, `is_admin`) | None | Claims never write a tuple. The verified principal carries identity only. |
-| `POST /api/v1/auth/sync/membership` (`gm`, `dungeon_master`, `player`, `spectator`, `owner`) | `campaign:<id>#<role>@user:<sub_id>` | Grants the membership role after an authorized domain action |
+| Campaign role grant (`POST /api/v1/campaigns/{id}/roles`, requires `manage`) and invite redemption (`POST /api/v1/campaigns/join`) | `campaign:<id>#<role>@user:<sub_id>` | Grants the membership role after an authorized domain action |
 | Character aggregate binding | `character:<char_id>#owner@user:<sub_id>`<br/>`character:<char_id>#campaign@campaign:<id>` | Binds character to owning player and campaign |
 | Session aggregate binding | `session:<sess_id>#campaign@campaign:<id>` | Inherits campaign authorization policies onto the active session |
 | Board token binding | `board_token:<token_id>#character@character:<char_id>`<br/>`board_token:<token_id>#campaign@campaign:<id>` | Enforces that only character owner or GM can move the token |
 
 ## Public Synchronization Endpoints
 
-All endpoints are hosted on the API Gateway under `/api/v1/auth/sync`. `POST /user` was removed by TASK-0534. The membership, ownership, and token-binding routes still accept unauthenticated requests. Their permission model belongs to the authorization theme (TASK-0543).
+The gateway hosts one public sync endpoint under `/api/v1/auth/sync`: the health probe (section 4). The write routes were removed:
 
-### 1. `POST /api/v1/auth/sync/membership`
-Grants or revokes campaign/session membership roles (`gm`, `dungeon_master`, `player`, `spectator`, `owner`).
+- `POST /user` was removed by TASK-0534.
+- `POST /membership` was removed by TASK-0543. Campaign roles use `POST /api/v1/campaigns/{id}/roles` (requires `manage`). Membership comes from `POST /api/v1/campaigns/join`.
+- `POST /character-ownership` was removed by TASK-0543. Ownership comes from character creation (`POST /api/v1/characters`).
+- `POST /token-binding` was removed by TASK-0543. Token binding comes from the login frontdoor (TASK-0520).
 
-**Request Body:**
-```json
-{
-  "campaign_id": "camp-101",
-  "user_id": "gm_elena",
-  "role": "gm",
-  "action": "grant"
-}
-```
+Each removed route returns `404`.
 
-**Response (200 OK):**
-```json
-{
-  "status": "membership_updated",
-  "campaign_id": "camp-101",
-  "user_id": "gm_elena",
-  "role": "gm",
-  "action": "grant",
-  "synced_relationships": [
-    "campaign:camp-101#gm@user:gm_elena",
-    "campaign:camp-101#dungeon_master@user:gm_elena"
-  ]
-}
-```
-
-### 2. `POST /api/v1/auth/sync/character-ownership`
-Binds a character aggregate to its owner user and parent campaign.
-
-**Request Body:**
-```json
-{
-  "character_id": "char-valeros",
-  "user_id": "player_alice",
-  "campaign_id": "camp-101"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "status": "ownership_bound",
-  "character_id": "char-valeros",
-  "user_id": "player_alice",
-  "campaign_id": "camp-101",
-  "synced_relationships": [
-    "character:char-valeros#owner@user:player_alice",
-    "character:char-valeros#campaign@campaign:camp-101"
-  ]
-}
-```
-
-### 3. `POST /api/v1/auth/sync/token-binding`
-Binds a tactical board token to its character aggregate and campaign grid.
-
-**Request Body:**
-```json
-{
-  "token_id": "tok-1",
-  "character_id": "char-valeros",
-  "campaign_id": "camp-101"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "status": "token_bound",
-  "token_id": "tok-1",
-  "character_id": "char-valeros",
-  "campaign_id": "camp-101",
-  "synced_relationships": [
-    "board_token:tok-1#character@character:char-valeros",
-    "board_token:tok-1#campaign@campaign:camp-101"
-  ]
-}
-```
-
-### 4. `GET /api/v1/auth/sync/health`
+### 1. `GET /api/v1/auth/sync/health`
 Health probe reporting SpiceDB connectivity and synchronization backend (`mock` or `grpc`).
 
 **Response (200 OK):**

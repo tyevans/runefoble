@@ -178,6 +178,7 @@ Assign a role with `POST /api/v1/campaigns/{id}/roles`. The caller must hold the
 - `owner` is not grantable. Ownership moves only with campaign creation. The route returns `422` for `owner`.
 - A caller without `manage` gets `403` (`permission_denied`). A refused request writes no tuple.
 - If the authorization store cannot write the tuple, the route returns `503`. The role is not granted.
+- To read the caller's flags (`manage`, `run_session`, `play`, `view`), call `GET /api/v1/campaigns/{id}/capabilities`.
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/roles" \

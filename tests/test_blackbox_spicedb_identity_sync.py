@@ -55,13 +55,25 @@ def _bearer(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
+def _create_campaign_as_owner(issuer, owner_sub: str) -> str:
+    """Create a campaign through the public route. The creator becomes its owner."""
+    res = client.post(
+        "/api/v1/campaigns",
+        json={"title": "Sync Campaign"},
+        headers=_bearer(issuer, owner_sub),
+    )
+    assert res.status_code == 201, res.text
+    return res.json()["id"]
+
+
 @pytest.mark.asyncio
 async def test_gm_synchronization_dm_override_and_atmosphere(signing_issuer) -> None:
     """Synchronized GM can execute DM override and update campaign atmosphere."""
     spicedb = get_spicedb_client()
-    campaign_id = f"camp-gm-{uuid4().hex[:8]}"
+    owner_id = "owner_arthur"
     gm_id = "gm_elena"
     stranger_id = "stranger_pete"
+    campaign_id = _create_campaign_as_owner(signing_issuer, owner_id)
 
     # 1. Before sync: GM and stranger are rejected with 403
     res_before = client.post(
@@ -71,13 +83,14 @@ async def test_gm_synchronization_dm_override_and_atmosphere(signing_issuer) -> 
     )
     assert res_before.status_code == 403
 
-    # 2. Synchronize GM membership via public frontdoor endpoint
+    # 2. Owner grants the DM role through the public roles frontdoor
     res_sync = client.post(
-        "/api/v1/auth/sync/membership",
-        json={"campaign_id": campaign_id, "user_id": gm_id, "role": "gm"},
+        f"/api/v1/campaigns/{campaign_id}/roles",
+        json={"user_id": gm_id, "role": "dungeon_master"},
+        headers=_bearer(signing_issuer, owner_id),
     )
     assert res_sync.status_code == 200
-    assert res_sync.json()["status"] == "membership_updated"
+    assert res_sync.json()["status"] == "role_assigned"
 
     # 3. Assert observable permission via SpiceDBClient
     assert await spicedb.check_permission("campaign", campaign_id, "run_session", "user", gm_id)
@@ -125,18 +138,25 @@ async def test_gm_synchronization_dm_override_and_atmosphere(signing_issuer) -> 
 
 @pytest.mark.asyncio
 async def test_idempotence_and_instant_revocation(signing_issuer) -> None:
-    """Re-syncing produces no duplicates; revocation immediately revokes permissions."""
-    campaign_id = f"camp-idem-{uuid4().hex[:8]}"
+    """Re-granting produces no duplicates; removal immediately revokes permissions."""
+    owner_id = "owner_idem"
+    campaign_id = _create_campaign_as_owner(signing_issuer, owner_id)
     user_id = "test_player_grant"
+    owner_headers = _bearer(signing_issuer, owner_id)
+    grant_payload = {"user_id": user_id, "role": "player"}
 
-    grant_payload = {
-        "campaign_id": campaign_id,
-        "user_id": user_id,
-        "role": "player",
-        "action": "grant",
-    }
-    assert client.post("/api/v1/auth/sync/membership", json=grant_payload).status_code == 200
-    assert client.post("/api/v1/auth/sync/membership", json=grant_payload).status_code == 200
+    assert (
+        client.post(
+            f"/api/v1/campaigns/{campaign_id}/roles", json=grant_payload, headers=owner_headers
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            f"/api/v1/campaigns/{campaign_id}/roles", json=grant_payload, headers=owner_headers
+        ).status_code
+        == 200
+    )
 
     # User can view session
     assert (
@@ -146,15 +166,11 @@ async def test_idempotence_and_instant_revocation(signing_issuer) -> None:
         == 200
     )
 
-    # Revoke membership
-    revoke_payload = {
-        "campaign_id": campaign_id,
-        "user_id": user_id,
-        "role": "player",
-        "action": "revoke",
-    }
-    res_revoke = client.post("/api/v1/auth/sync/membership", json=revoke_payload)
-    assert res_revoke.status_code == 200 and res_revoke.json()["action"] == "revoke"
+    # Owner removes the member through the public members frontdoor
+    res_revoke = client.delete(
+        f"/api/v1/campaigns/{campaign_id}/members/{user_id}", headers=owner_headers
+    )
+    assert res_revoke.status_code == 200 and res_revoke.json()["status"] == "member_removed"
 
     # Immediately after revocation: view attempt must fail with 403 Forbidden
     assert (

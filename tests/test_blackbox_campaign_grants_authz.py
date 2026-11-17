@@ -193,3 +193,75 @@ def test_spicedb_write_failure_returns_503_and_writes_nothing(signing_issuer, mo
         headers=_auth(signing_issuer, "dm_arthur"),
     )
     assert session.status_code == 403, session.text
+
+
+def test_capabilities_reflect_the_callers_grants(signing_issuer):
+    """Owner, DM, player, and stranger see the capability flags their grants allow."""
+    campaign_id, headers_owner = _create_campaign(signing_issuer)
+    _join_with_invite(signing_issuer, campaign_id, headers_owner, "player", "player_cadence")
+    _join_with_invite(signing_issuer, campaign_id, headers_owner, "spectator", "dm_arthur")
+    grant = client.post(
+        f"/api/v1/campaigns/{campaign_id}/roles",
+        json={"user_id": "dm_arthur", "role": "dungeon_master"},
+        headers=headers_owner,
+    )
+    assert grant.status_code == 200, grant.text
+
+    def _caps(sub: str) -> dict:
+        res = client.get(
+            f"/api/v1/campaigns/{campaign_id}/capabilities", headers=_auth(signing_issuer, sub)
+        )
+        assert res.status_code == 200, res.text
+        return res.json()
+
+    assert _caps("owner_evelyn") == {
+        "manage": True,
+        "run_session": True,
+        "play": True,
+        "view": True,
+    }
+    assert _caps("dm_arthur") == {
+        "manage": False,
+        "run_session": True,
+        "play": True,
+        "view": True,
+    }
+    assert _caps("player_cadence") == {
+        "manage": False,
+        "run_session": False,
+        "play": True,
+        "view": True,
+    }
+    assert _caps("attacker_mallory") == {
+        "manage": False,
+        "run_session": False,
+        "play": False,
+        "view": False,
+    }
+
+
+def test_capabilities_require_a_verified_token(signing_issuer):
+    """Anonymous callers cannot read capability flags."""
+    campaign_id, _ = _create_campaign(signing_issuer)
+    res = client.get(f"/api/v1/campaigns/{campaign_id}/capabilities")
+    assert res.status_code == 401, res.text
+
+
+def test_capabilities_route_is_in_openapi():
+    """The capabilities route is published in the gateway OpenAPI document."""
+    paths = client.get("/openapi.json").json()["paths"]
+    assert "get" in paths["/api/v1/campaigns/{campaign_id}/capabilities"]
+
+
+def test_removed_public_sync_routes_return_404(signing_issuer):
+    """Membership, character-ownership, and token-binding sync routes are gone (TASK-0543)."""
+    campaign_id, headers_owner = _create_campaign(signing_issuer)
+    body = {"campaign_id": campaign_id, "user_id": "attacker_mallory", "role": "owner"}
+    for path in (
+        "/api/v1/auth/sync/membership",
+        "/api/v1/auth/sync/character-ownership",
+        "/api/v1/auth/sync/token-binding",
+    ):
+        res = client.post(path, json=body, headers=headers_owner)
+        assert res.status_code == 404, f"{path}: {res.status_code}"
+    assert _member_ids(campaign_id, headers_owner) == {"owner_evelyn"}

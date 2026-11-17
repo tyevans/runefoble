@@ -1,6 +1,5 @@
 """User registration and email verification handlers for Gateway API."""
 
-import contextlib
 import logging
 import secrets
 import time
@@ -10,16 +9,10 @@ from fastapi import APIRouter, HTTPException, status
 from gateway_api.routers.auth.dev_mail import get_mailpit_client
 from gateway_api.routers.auth.schemas import RegisterRequest, VerifyEmailRequest
 from gateway_api.routers.auth.tokens import _generate_mock_jwt
-from runefoble_auth.spicedb import SpiceDBClient
 
 logger = logging.getLogger("runefoble.gateway.registration")
 router = APIRouter()
 _pending_verifications: dict[str, dict[str, Any]] = {}
-
-
-async def _write_campaign_viewer(user_id: str) -> None:
-    with contextlib.suppress(Exception):
-        await SpiceDBClient().write_relationship("campaign", "public", "viewer", "user", user_id)
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
@@ -57,7 +50,6 @@ async def register_user(payload: RegisterRequest) -> dict[str, Any]:
     except Exception as exc:
         logger.warning("Could not dispatch email via Mailpit SMTP: %s", exc)
 
-    await _write_campaign_viewer(user_id)
     return {
         "user_id": user_id,
         "username": username,
