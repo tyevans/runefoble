@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from runefoble_events.events import (
     AutonomousActionResolved,
     EncounterSpawned,
@@ -19,10 +18,12 @@ from the_watcher.dependencies import (
 )
 from the_watcher.models import (
     DMGuidanceRequest,
+    DMNarrationResult,
     EncounterSpawnRequest,
     NpcTurnRequest,
     SceneGenerateRequest,
 )
+from the_watcher.worker_client import call_worker
 
 router = APIRouter(tags=["autonomous_dm"])
 
@@ -70,36 +71,37 @@ async def execute_npc_turn(req: NpcTurnRequest) -> AutonomousActionResolved:
     return event
 
 
-@router.post("/api/v1/watcher/narrate")
-async def narrate_scene(req: DMGuidanceRequest):
-    """Autonomous DM scene description and event resolution."""
-    if INFERENCE_URL:
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                res = await client.post(
-                    f"{INFERENCE_URL}/inference/v1/dm-narration",
-                    json={
-                        "campaign_id": "current-campaign",
-                        "session_id": req.session_id,
-                        "scene_environment": "Dungeon chamber",
-                        "tone": "dark_fantasy",
-                        "guidance_prompt": req.prompt,
-                    },
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    return {
-                        "session_id": req.session_id,
-                        "narrative": data.get("narration"),
-                        "sensory_details": data.get("sensory_details", []),
-                        "suggested_dm_prompts": data.get("suggested_dm_prompts", []),
-                        "tension_level": data.get("tension_level", "rising"),
-                    }
-        except Exception as e:
-            logger.warning("Inference worker failed: %s. Falling back to local engine.", e)
+@router.post("/api/v1/watcher/narrate", response_model=DMNarrationResult)
+async def narrate_scene(req: DMGuidanceRequest) -> DMNarrationResult:
+    """Autonomous DM scene description and event resolution.
 
-    return {
-        "session_id": req.session_id,
-        "narrative": f"The shadows lengthen. {req.prompt}. An ominous chill fills the chamber as fate shifts.",
-        "tone": "suspenseful",
-    }
+    The narration comes only from the inference worker. Without a configured worker, or when
+    the worker fails, the route returns HTTP 503. It never returns canned narrative text.
+    """
+    if not INFERENCE_URL:
+        logger.error("RUNEFOBLE_INFERENCE_URL is not set. Scene narration has no backend.")
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "backend_unavailable", "backend": "inference_worker"},
+        )
+    data = await call_worker(
+        INFERENCE_URL,
+        "/inference/v1/dm-narration",
+        {
+            "campaign_id": req.campaign_id,
+            "session_id": req.session_id,
+            "scene_environment": req.scene_environment,
+            "tone": req.tone,
+            "guidance_prompt": req.prompt,
+        },
+        timeout=10.0,
+    )
+    return DMNarrationResult(
+        session_id=req.session_id,
+        narrative=data["narration"],
+        sensory_details=data["sensory_details"],
+        suggested_dm_prompts=data["suggested_dm_prompts"],
+        tension_level=data["tension_level"],
+        source=data["source"],
+        degraded=data["degraded"],
+    )

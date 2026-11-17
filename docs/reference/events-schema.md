@@ -484,7 +484,7 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `speaker_name`: String
   - `action_type`: String ("attack", "cast_spell", "move", "dialogue")
   - `target`: Optional[String]
-  - `confidence`: Float
+  - `confidence`: Optional[Float] (null when the inference worker reports no confidence)
   - `flavor_text`: String
 - **`IntentDisambiguationRequested`**: Emitted when a spoken intent contains ambiguous entity references requiring player clarification (`runefoble.events.watcher.disambiguation_requested`).
   - `session_id`: String

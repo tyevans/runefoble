@@ -102,13 +102,19 @@ def test_watcher_encounters_frontdoor(watcher_client):
 
 
 def test_watcher_narrate_frontdoor(watcher_client):
-    """Verify DM narration synthesis frontdoor."""
+    """Verify the DM narration frontdoor. Without a worker, narration fails with 503."""
     res_narrate = watcher_client.post(
         "/api/v1/watcher/narrate",
-        json={"session_id": str(uuid4()), "prompt": "Thunder echoes"},
+        json={
+            "session_id": str(uuid4()),
+            "campaign_id": str(uuid4()),
+            "prompt": "Thunder echoes",
+            "scene_environment": "Dungeon chamber",
+            "tone": "dark_fantasy",
+        },
     )
-    assert res_narrate.status_code == 200
-    assert "narrative" in res_narrate.json()
+    assert res_narrate.status_code == 503
+    assert res_narrate.json()["detail"]["error"] == "backend_unavailable"
 
 
 def test_watcher_stand_in_frontdoor(watcher_client):
@@ -120,6 +126,8 @@ def test_watcher_stand_in_frontdoor(watcher_client):
             "character_class": "Rogue",
             "penalties": ["drunk"],
             "scene_context": "ambush",
+            "session_id": str(uuid4()),
+            "campaign_id": str(uuid4()),
         },
     )
     assert res_stand_in.status_code == 200
