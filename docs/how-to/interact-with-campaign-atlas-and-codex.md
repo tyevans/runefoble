@@ -14,7 +14,7 @@ The world atlas engine supports three primary hierarchical zoom scales:
 ### Querying the Atlas
 ```bash
 curl -X GET "http://localhost:8006/api/v1/campaigns/{campaign_id}/atlas?layer=continental&era=Session%2012" \
-  -H "x-user-id: rowan_chronicler"
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN"
 ```
 
 The response includes:
@@ -34,7 +34,7 @@ Define territory polygons and assign faction ownership:
 ```bash
 curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/atlas/territories" \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_chronicler" \
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{
     "name": "Silverkeep Garrison",
     "layer": "continental",
@@ -57,7 +57,7 @@ Place a geotagged campaign milestone pin:
 ```bash
 curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/atlas/pins" \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_chronicler" \
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{
     "title": "Silverkeep Garrison Liberation",
     "coordinates": {"x": 200.0, "y": 200.0},
@@ -81,7 +81,7 @@ The Living Party Codex stores markdown lore notes and chronicles with automated 
 ```bash
 curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/codex/entries" \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_chronicler" \
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{
     "title": "Secret Hypothesis on the Cabal",
     "content": "I suspect the Order of the Obsidian Veil is tunneling into Silverkeep Garrison.",
@@ -104,7 +104,7 @@ To reveal a private theory to the party:
 ```bash
 curl -X PATCH "http://localhost:8006/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}" \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_chronicler" \
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{"privacy": "party_shared"}'
 ```
 
