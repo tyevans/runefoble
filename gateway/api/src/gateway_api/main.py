@@ -5,6 +5,9 @@ enforces fine-grained SpiceDB Zanzibar object authorization, and powers
 real-time WebSockets for the tactical board and voice chronicle.
 """
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from game_session.settlement.router import router as settlement_haven_router
@@ -35,15 +38,29 @@ from gateway_api.routers import (
     soundscape_router,
     spectator_router,
 )
+from gateway_api.upstream_errors import register_upstream_error_handlers
+from gateway_api.upstreams import UpstreamRegistry
 from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
 from gateway_api.websocket import campaign_websocket_endpoint
 from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_tool_event_bus
 from gateway_mcp.dynamic_registry import router as mcp_tools_router
+from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.telemetry import init_telemetry
 from voice_agent.room_routes import router as voice_rooms_router
 from voice_agent.routers.stream_diagnostics import router as stream_diagnostics_router
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Build the upstream service clients from settings at start-up. Close them at shutdown."""
+    app.state.upstreams = UpstreamRegistry.from_settings(PlatformSettings())
+    try:
+        yield
+    finally:
+        await app.state.upstreams.aclose()
+
 
 app = FastAPI(
     title="Runefoble Platform Unified Gateway",
@@ -52,7 +69,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=_lifespan,
 )
+register_upstream_error_handlers(app)
 
 _cors_origins = [o.strip() for o in platform_settings.cors_origins.split(",") if o.strip()]
 if "*" in _cors_origins:

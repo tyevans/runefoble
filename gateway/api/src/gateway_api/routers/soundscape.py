@@ -7,15 +7,10 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from gateway_api.auth import CurrentPrincipal, get_spicedb_client
 from gateway_api.campaign_store import campaign_store
-from gateway_api.proxy import forward_json, upstream_url
+from gateway_api.proxy import forward_json
 from soundscape.models import MoodOverrideRequest, SoundscapeCueRequest, TensionCalculationRequest
 
 router = APIRouter(prefix="/api/v1/soundscape", tags=["Soundscape"])
-SOUNDSCAPE_DEFAULT_URL = "http://soundscape:8009"
-
-
-def _soundscape_url() -> str:
-    return upstream_url("SOUNDSCAPE_SERVICE_URL", SOUNDSCAPE_DEFAULT_URL)
 
 
 async def _check_soundscape_perm(
@@ -53,7 +48,7 @@ async def trigger_cue(req: SoundscapeCueRequest, user: CurrentPrincipal, request
     return await forward_json(
         request,
         method="POST",
-        base_url=_soundscape_url(),
+        service="soundscape",
         path="/api/v1/soundscape/cue",
         json_body=req.model_dump(mode="json"),
     )
@@ -66,7 +61,7 @@ async def get_tension(
     return await forward_json(
         request,
         method="GET",
-        base_url=_soundscape_url(),
+        service="soundscape",
         path="/api/v1/soundscape/tension",
         params={"session_id": session_id},
     )
@@ -79,7 +74,7 @@ async def calculate_encounter_tension(
     return await forward_json(
         request,
         method="POST",
-        base_url=_soundscape_url(),
+        service="soundscape",
         path="/api/v1/soundscape/tension/calculate",
         json_body=req.model_dump(mode="json"),
     )
@@ -94,7 +89,7 @@ async def override_soundscape_mood(
     return await forward_json(
         request,
         method="POST",
-        base_url=_soundscape_url(),
+        service="soundscape",
         path="/api/v1/soundscape/override",
         json_body=req.model_dump(mode="json"),
     )
@@ -111,7 +106,7 @@ async def get_leitmotif_profile(
     return await forward_json(
         request,
         method="GET",
-        base_url=_soundscape_url(),
+        service="soundscape",
         path=f"/api/v1/soundscape/leitmotif/profile/{character_id}",
         params={"session_id": session_id},
     )

@@ -5,7 +5,8 @@ from __future__ import annotations
 import contextlib
 from typing import Any
 
-from fastapi import WebSocket
+from fastapi import Request, WebSocket
+from gateway_api.upstreams import UpstreamRegistry
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
@@ -49,3 +50,8 @@ class WebSocketConnectionManager:
 
 
 ws_manager = WebSocketConnectionManager()
+
+
+def get_upstreams(request: Request) -> UpstreamRegistry:
+    """FastAPI dependency: the service clients built in the gateway lifespan."""
+    return request.app.state.upstreams

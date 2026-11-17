@@ -53,8 +53,10 @@ def _auth(sub: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def client(trusted_ws_issuer) -> TestClient:
-    return TestClient(gateway_app)
+def client(trusted_ws_issuer) -> Iterator[TestClient]:
+    """Run the gateway lifespan after the soundscape URL is set, so the client sees it."""
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture
@@ -334,17 +336,19 @@ def test_downstream_proxy_forwarding(
     assert res.json()["cue_name"] == "fireball"
 
 
-def test_proxy_returns_502_when_soundscape_is_unreachable(
+def test_proxy_returns_503_when_soundscape_is_unreachable(
     client: TestClient, setup_zanzibar_soundscape: dict[str, str], monkeypatch
 ) -> None:
-    """Verify an unreachable soundscape service returns 502, not a local substitute."""
+    """Verify an unreachable soundscape service returns 503, not a local substitute."""
     sid = setup_zanzibar_soundscape["sid"]
     monkeypatch.setenv("SOUNDSCAPE_SERVICE_URL", closed_port_url())
 
-    res = client.post(
-        "/api/v1/soundscape/cue",
-        headers=_auth("dm_evelyn"),
-        json={"session_id": sid, "cue_name": "fireball"},
-    )
-    assert res.status_code == 502
+    with TestClient(gateway_app) as restarted_gateway:
+        res = restarted_gateway.post(
+            "/api/v1/soundscape/cue",
+            headers=_auth("dm_evelyn"),
+            json={"session_id": sid, "cue_name": "fireball"},
+        )
+    assert res.status_code == 503
+    assert res.json()["upstream"] == "soundscape"
     assert "cue_id" not in res.text

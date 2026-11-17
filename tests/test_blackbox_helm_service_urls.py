@@ -119,8 +119,8 @@ def test_service_urls_never_point_at_localhost():
             "http://the-watcher:8001",
         ),
         (
-            "gateway_api.routers.soundscape",
-            "SOUNDSCAPE_DEFAULT_URL",
+            "runefoble_platform.config",
+            "PlatformSettings().soundscape_url",
             "SOUNDSCAPE_SERVICE_URL",
             "http://soundscape:8009",
         ),
