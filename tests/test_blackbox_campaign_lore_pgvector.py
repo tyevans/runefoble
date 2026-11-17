@@ -14,6 +14,7 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
+from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import create_app
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
@@ -30,11 +31,27 @@ from tests.helpers.lore_backends import (
     VAULT_TITLE,
     lore_embedding_app,
 )
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+VISITOR_SUBJECT = "lore-test-visitor"
+
+
+def _bearer(user_id: str) -> dict[str, str]:
+    """Return headers carrying a signed bearer token for `user_id`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
+
+
+@pytest.fixture(autouse=True)
+def _trust_signing_issuer():
+    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    yield
+    set_zitadel_auth_service(None)
 
 
 @pytest.fixture
 def client(lore_backends: dict[str, str | int]) -> Iterator[TestClient]:
-    with TestClient(create_app()) as client:
+    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as client:
         yield client
 
 
@@ -93,7 +110,7 @@ def test_start_up_fails_when_embedding_endpoint_is_unreachable(
 
     with (
         pytest.raises(RuntimeError, match="embedding endpoint is unreachable"),
-        TestClient(create_app()),
+        TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)),
     ):
         pass
 
@@ -114,7 +131,7 @@ def test_start_up_fails_when_pgvector_store_is_unreachable(
 
         with (
             pytest.raises(RuntimeError, match="vector store .* is unreachable"),
-            TestClient(create_app()),
+            TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)),
         ):
             pass
 
@@ -132,6 +149,6 @@ def test_embedding_endpoint_settings_are_required_by_the_default_backend(
 
     with (
         pytest.raises(ValueError, match="RUNEFOBLE_EMBEDDING_BASE_URL"),
-        TestClient(create_app()),
+        TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)),
     ):
         pass
