@@ -103,6 +103,14 @@ Forged assets are written to Silo before the forge responds. The service never r
 - Retry the request after Silo recovers. A retry creates a new asset id.
 - `GET /api/v1/forge/battlemap/{asset_id}` and `GET /api/v1/forge/token/{asset_id}` read the durable asset index. They return the same metadata before and after a service restart.
 
+### Component Behaviour (`<runefoble-asset-forge>`)
+
+- **Forge Tactical Battlemap** posts the prompt to `POST /api/v1/forge/battlemap`. The preview appears only after the route returns a successful response.
+- **Forge Token Portrait** posts the name, type, and prompt to `POST /api/v1/forge/token`. The preview appears only after a successful response.
+- If the route returns an error (for example, `503` when Silo is down), the component shows the `detail` text from the response in an error banner. No preview is shown.
+- The `forge-battlemap` and `forge-token` events fire only after a successful response. The event detail includes the `asset` field.
+- The header reads "Procedural Battlemap Forge". The component does not use a diffusion model.
+
 ## 3. Projecting Geometry to `board_state`
 
 The `board_geometry_payload` returned by the battlemap generator maps directly to `board_state` REST endpoints:
