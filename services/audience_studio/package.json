@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "node --experimental-strip-types src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --test \"dist-test/test/**/*.test.js\""
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
@@ -17,10 +18,12 @@
     "@fastify/websocket": "^11.0.2",
     "fastify": "^5.2.1",
     "ioredis": "^5.5.0",
+    "pg": "^8.23.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.9",
+    "@types/pg": "^8.23.1",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
     "typescript": "~7.0.2"
