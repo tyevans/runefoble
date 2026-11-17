@@ -26,7 +26,12 @@ This command:
 1. Reads `deployments/kind/cluster-config.yaml`.
 2. Creates a local Kubernetes cluster named `runefoble-local`.
 3. Binds ports 80 and 443 to your host.
-4. Installs the Traefik ingress controller into the cluster.
+4. Installs the Traefik ingress controller into the cluster and waits until its rollout completes.
+
+The command stops at the first failed step and exits with a non-zero status. It prints `Cluster is ready!` only when Traefik is running.
+If the command fails, fix the error and run `make cluster-up` again. You can also check Traefik with `kubectl -n kube-system rollout status deploy/traefik`.
+
+SpiceDB is not exposed on the host. To reach its gRPC port from the host, run `kubectl port-forward svc/spicedb 50051:50051`.
 
 ## Step 3: Build and Load the Service Images
 Build every Python service image and load it into the Kind cluster:
