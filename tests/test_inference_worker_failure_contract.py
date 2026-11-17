@@ -4,23 +4,21 @@ The worker and The Watcher run as real HTTP servers in this process. The LLM bac
 fake OpenAI-compatible server, which is a true process boundary. No code under test is mocked.
 """
 
-import contextlib
 import json
-import socket
 import threading
-import time
 from collections.abc import Iterator
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 import pytest
-import uvicorn
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api
 from inference_worker.config import WorkerSettings
 from inference_worker.llm_client import MultiBackendLLMClient
 from the_watcher.main import app as watcher_app
 from the_watcher.routers.intent import speech
+
+from tests.helpers.live_services import closed_port_url, serve
 
 INTENT_PAYLOAD: dict[str, Any] = {
     "campaign_id": "camp-1",
@@ -49,12 +47,6 @@ ENDPOINTS = [
     ("/inference/v1/dm-narration", NARRATION_PAYLOAD),
     ("/inference/v1/stand-in-action", STAND_IN_PAYLOAD),
 ]
-
-
-def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        return sock.getsockname()[1]
 
 
 @pytest.fixture
@@ -133,33 +125,13 @@ def _llm_settings(server: ThreadingHTTPServer) -> WorkerSettings:
     )
 
 
-@contextlib.contextmanager
-def _serve_worker_app(app: Any) -> Iterator[str]:
-    """Run an ASGI app on a real local port for the duration of a test."""
-    port = _free_port()
-    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning", lifespan="off")
-    server = uvicorn.Server(config)
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-    deadline = time.monotonic() + 10.0
-    while not server.started:
-        if time.monotonic() > deadline:
-            raise RuntimeError("worker server did not start")
-        time.sleep(0.05)
-    try:
-        yield f"http://127.0.0.1:{port}"
-    finally:
-        server.should_exit = True
-        thread.join(timeout=10.0)
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("path", "payload"), ENDPOINTS)
 async def test_unreachable_backend_returns_explicit_503(use_worker_backend, path, payload):
     """A real backend that cannot be reached returns 503, never a success body."""
     unreachable = WorkerSettings(
         backend="openai_compatible",
-        openai_base_url=f"http://127.0.0.1:{_free_port()}/v1",
+        openai_base_url=f"{closed_port_url()}/v1",
         timeout_seconds=2.0,
     )
     use_worker_backend(unreachable)
@@ -271,7 +243,7 @@ async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatc
         "campaign_id": "camp-1",
     }
 
-    with _serve_worker_app(api.app) as worker_url:
+    with serve(api.app) as worker_url:
         monkeypatch.setattr(speech, "INFERENCE_URL", worker_url)
         async with AsyncClient(
             transport=ASGITransport(app=watcher_app), base_url="http://test"
@@ -285,7 +257,7 @@ async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatc
 @pytest.mark.asyncio
 async def test_watcher_speech_unreachable_worker_is_503_not_template(monkeypatch):
     """With the worker unreachable, The Watcher does not return a template reply."""
-    monkeypatch.setattr(speech, "INFERENCE_URL", f"http://127.0.0.1:{_free_port()}")
+    monkeypatch.setattr(speech, "INFERENCE_URL", closed_port_url())
     speech_payload = {
         "speaker_id": "user-1",
         "speaker_name": "Valeros",
