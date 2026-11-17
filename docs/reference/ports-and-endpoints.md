@@ -5,11 +5,13 @@
 | Ingress Path | Destination Service | Description |
 |---|---|---|
 | `/` | `frontend:80` | Lit + Vite web application |
-| `/api` | `gateway-api:8000` | REST and WebSocket API gateway |
+| `/api` | `gateway-api:8000` | REST API gateway (`/api/v1/...`) |
+| `/ws` | `gateway-api:8000` | WebSocket gateway (`/ws/session/{id}`, `/ws/voice/{id}`, `/ws/campaigns/{id}`, `/ws/minigames/{id}`, and other `/ws/...` routes). Traefik forwards the HTTP upgrade without extra annotations. Clients authenticate as described in [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md) |
 | `/docs`, `/swagger-ui` | `swagger-ui:8080` | Unified Swagger UI aggregating all OpenAPI specs |
 | `/auth` | `zitadel:8080` | Self-hosted Zitadel identity provider |
 | `/analytics` | `openpanel:3000` | Self-hosted OpenPanel privacy-preserving analytics |
 | `/mail`, `/mailpit` | `mailpit:8025` | Self-hosted Mailpit email testing & mock SMTP Web UI and API |
+| `/` | `frontend:80` | Lit + Vite web application (catch-all, lowest precedence) |
 
 ## Local Development Vite Proxy Routes (localhost:5173)
 
@@ -23,6 +25,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `/campaigns` | `http://localhost:8000` (`gateway-api`) | Direct campaign and settlement management endpoints |
 | `/mail`, `/mailpit` | `http://localhost:8025` (`mailpit`) | Mailpit mock SMTP web interface and REST API |
 | `/oauth`, `/auth` | `http://localhost:8080` (`zitadel`) | Zitadel OIDC authentication and token discovery endpoints |
+| `/healthz` | `http://localhost:8000` (`gateway-api`) | Gateway liveness check |
 
 ## Microservice Internal Ports
 
@@ -97,7 +100,6 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `game-session` | GET | `/sessions/{session_id}/contracts/bounties/{bounty_id}` | Retrieves details and escrow status for a specific bounty contract (alias: `/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}`) |
 | `game-session` | POST | `/sessions/{session_id}/contracts/bounties/{bounty_id}/claim` | Claims an open mercenary bounty on behalf of an adventuring party (alias: `/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/claim`, Zanzibar enforced) |
 | `game-session` | POST | `/sessions/{session_id}/contracts/bounties/{bounty_id}/complete` | Submits fulfillment proof, resolves contract, and disburses escrow payout (alias: `/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/complete`, Zanzibar enforced) |
-
 | `voice-agent` | POST | `/api/v1/voice/stream/chunk` | Streaming PCM/WAV chunk ingestion with sub-250ms VAD segmentation and Whisper STT. Returns `503` with `error: speech_engine_unavailable` when the configured engine cannot transcribe a completed utterance; publishes `VoiceTranscriptionFailed` to `runefoble.events.voice` and no `PlayerSpokeEvent` |
 | `voice-agent` | WS | `/api/v1/voice/stream/ws` | Real-time bidirectional WebSocket stream for continuous PCM audio frames and STT events. Sends `{"error": "speech_engine_unavailable", ...}` for a failed utterance and keeps the socket open |
 | `voice-agent` | POST | `/api/v1/voice/transcribe` | Transcribes player speech, emits `PlayerSpokeEvent` to Redis Streams, and forwards to The Watcher |
@@ -116,7 +118,6 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `voice-agent` | POST | `/voice/filters/barge-in/evaluate` | Evaluates audio frames for vocal onset (<40ms) and applies 20ms cosine crossfade attenuation (<80ms halt) (alias: `/api/v1/voice/filters/barge-in/evaluate`) |
 | `voice-agent` | GET | `/healthz` | Liveness check. Reports the active speech engine as `stt_engine` (default `faster-whisper`) |
 | `voice-agent` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-voice-controls`, `runefoble-audio-indicator`, `runefoble-mobile-companion` [subviews: `audio-stream-controller`, `haptic-ping-panel`, `connection-status-badge`], `runefoble-voice-duplex-controls`) |
-
 | `board-state` | POST | `/api/v1/boards` | Initializes tactical grid aggregate with specified dimensions |
 | `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens` | Places token onto tactical grid with bounds check and fog update |
@@ -202,7 +203,6 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `asset-forge` | POST | `/assets/standees` | Generates folding papercraft miniature sheets with mirrored artwork, nameplates, and base tabs (alias: `/api/v1/forge/standees`) |
 | `asset-forge` | POST | `/assets/stl-token` | Procedurally generates watertight 3D printable STL miniature bases with condition clips (alias: `/api/v1/forge/stl-token`) |
 | `asset-forge` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-asset-forge`, `runefoble-print-forge`) |
-
 | `soundscape` | POST | `/api/v1/soundscape/cue` | Triggers tactical foley sound effects or acoustic stingers (fireball, sword slash, etc.) |
 | `soundscape` | GET | `/api/v1/soundscape/tension` | Retrieves current session encounter tension score (0-100) and active stem weights |
 | `soundscape` | POST | `/api/v1/soundscape/tension/calculate` | Calculates encounter tension from rounds, CR balance, and lowest HP, adapting music stems |
@@ -296,7 +296,6 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `gateway-api` / `gateway-mcp` | GET/POST | `/mcp/tools` | Lists or registers dynamic FastMCP tools with JSON schema and sandboxing (alias: `/api/v1/mcp/tools`) |
 | `gateway-api` / `gateway-mcp` | GET/PUT/DELETE | `/mcp/tools/{name}` | Inspects, updates, or deregisters runtime FastMCP tools without server restarts |
 | `gateway-api` / `gateway-mcp` | POST | `/mcp/tools/{name}/execute` | Executes sandboxed dynamic FastMCP tool directly |
-
 | `gateway-mcp` | MCP | `Dynamic & Static Tools` | Tabletop tools (`execute_agent_action_plan`, `cast_spell`, `modify_character_hp`, dynamic registry, etc.) and dynamic resource `session://{session_id}/state` |
 
 
