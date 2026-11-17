@@ -40,6 +40,10 @@ ingress:
           pathType: Prefix
           service: mailpit
           port: 8025
+        - path: /ws
+          pathType: Prefix
+          service: gateway-api
+          port: 8000
         - path: /
           pathType: Prefix
           service: frontend
@@ -74,6 +78,10 @@ ingress:
           pathType: Prefix
           service: mailpit
           port: 8025
+        - path: /ws
+          pathType: Prefix
+          service: gateway-api
+          port: 8000
         - path: /
           pathType: Prefix
           service: frontend
