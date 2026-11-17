@@ -38,7 +38,7 @@ class MockSpiceDBClient:
     def __init__(
         self,
         endpoint: str = "localhost:50051",
-        token: str = "secret",
+        token: str | None = None,
         schema_text: str | None = None,
     ):
         self.endpoint = endpoint

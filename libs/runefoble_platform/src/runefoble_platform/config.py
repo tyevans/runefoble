@@ -112,8 +112,8 @@ class PlatformSettings(BaseSettings):
         description="SpiceDB gRPC endpoint",
     )
     spicedb_preshared_key: str = Field(
-        default="runefoble_secret_key",
-        description="SpiceDB preshared authentication token",
+        validation_alias=AliasChoices("RUNEFOBLE_SPICEDB_PRESHARED_KEY"),
+        description="SpiceDB preshared key (operator secret). No default; required at startup",
     )
 
     # Analytics (OpenPanel)

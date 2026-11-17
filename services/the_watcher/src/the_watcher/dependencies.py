@@ -53,7 +53,7 @@ def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
     if _spicedb_client is None:
         _spicedb_client = SpiceDBClient(
             endpoint=platform_settings.spicedb_endpoint,
-            token=platform_settings.spicedb_token,
+            token=platform_settings.spicedb_preshared_key,
         )
     return _spicedb_client
 

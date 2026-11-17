@@ -1,7 +1,13 @@
 """Root pytest configuration and global fixtures for Runefoble test suite."""
 
 import contextlib
+import os
 from collections.abc import Iterator
+
+# Test mode: the SpiceDB preshared key has no default outside tests. Tests supply a throwaway
+# value before any settings object is built. Live tests may override it in their environment.
+os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key")
+# ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest
 from game_session.settlement.auth.tokens import get_zitadel_auth_service as get_session_auth
