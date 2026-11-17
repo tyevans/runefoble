@@ -26,9 +26,10 @@ from runefoble_events.vocal_dsp import (
     VoiceFilterToggled,
     VoiceFilterToggledEvent,
 )
-from voice_agent.audio_utils import generate_synthetic_audio
 from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.main import app as voice_app
+
+from tests.helpers.audio_synth import generate_synthetic_audio
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 

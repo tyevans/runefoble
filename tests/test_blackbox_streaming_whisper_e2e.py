@@ -24,10 +24,11 @@ from tests.helpers.audio_synth import (
     generate_pcm_silence,
     generate_pcm_sine,
 )
+from tests.helpers.fixture_transcriber import FixtureTranscriber
 
 
 def test_end_to_end_streaming_speech_to_intent_latency_budget(
-    client: TestClient, mock_redis: MockAsyncRedis
+    client: TestClient, mock_redis: MockAsyncRedis, speech_engine: FixtureTranscriber
 ):
     """Verifies end-to-end streaming speech transcription and Watcher intent parsing strictly within 500ms."""
     session_id = str(uuid.uuid4())
@@ -35,6 +36,7 @@ def test_end_to_end_streaming_speech_to_intent_latency_budget(
 
     speech_pcm = generate_pcm_sine(duration_ms=300)
     silence_pcm = generate_pcm_silence(duration_ms=200)
+    speech_engine.script("advance 2 east")
 
     # 1. Send speech
     client.post(
@@ -45,7 +47,6 @@ def test_end_to_end_streaming_speech_to_intent_latency_budget(
             "speaker_name": "Valeros",
             "campaign_id": campaign_id,
             "audio_data": base64.b64encode(speech_pcm).decode("ascii"),
-            "mock_transcript": "advance 2 east",
         },
     )
 
@@ -59,7 +60,6 @@ def test_end_to_end_streaming_speech_to_intent_latency_budget(
             "speaker_name": "Valeros",
             "campaign_id": campaign_id,
             "audio_data": base64.b64encode(silence_pcm).decode("ascii"),
-            "mock_transcript": "advance 2 east",
         },
     )
     elapsed_ms = (time.perf_counter() - t0) * 1000.0
@@ -123,10 +123,13 @@ def test_continuous_stream_over_websocket_frontdoor(client: TestClient, mock_red
     assert event.speaker_name == "Valeros"
 
 
-def test_forced_completion_via_is_final(client: TestClient, mock_redis: MockAsyncRedis):
+def test_forced_completion_via_is_final(
+    client: TestClient, mock_redis: MockAsyncRedis, speech_engine: FixtureTranscriber
+):
     """Passing is_final=True immediately flushes and transcribes active speech without trailing silence."""
     speech_pcm = generate_pcm_sine(duration_ms=200)
     speech_b64 = base64.b64encode(speech_pcm).decode("ascii")
+    speech_engine.script("I cast shield")
 
     session_id = str(uuid.uuid4())
     resp = client.post(
@@ -137,7 +140,6 @@ def test_forced_completion_via_is_final(client: TestClient, mock_redis: MockAsyn
             "speaker_name": "Merisiel",
             "audio_data": speech_b64,
             "is_final": True,
-            "mock_transcript": "I cast shield",
         },
     )
     assert resp.status_code == 200, resp.text
@@ -148,12 +150,15 @@ def test_forced_completion_via_is_final(client: TestClient, mock_redis: MockAsyn
     assert "runefoble.events.session" in mock_redis.streams
 
 
-def test_multi_speaker_buffer_isolation(client: TestClient, mock_redis: MockAsyncRedis):
+def test_multi_speaker_buffer_isolation(
+    client: TestClient, mock_redis: MockAsyncRedis, speech_engine: FixtureTranscriber
+):
     """Multiple participants streaming audio concurrently maintain isolated ring buffers and VAD states."""
     session_id = str(uuid.uuid4())
 
     speech_pcm = generate_pcm_sine(duration_ms=200)
     silence_pcm = generate_pcm_silence(duration_ms=200)
+    speech_engine.script("heal Valeros")
 
     # Kyra speaks
     client.post(
@@ -163,7 +168,6 @@ def test_multi_speaker_buffer_isolation(client: TestClient, mock_redis: MockAsyn
             "speaker_id": "spk-kyra",
             "speaker_name": "Kyra",
             "audio_data": base64.b64encode(speech_pcm).decode("ascii"),
-            "mock_transcript": "heal Valeros",
         },
     )
 
@@ -188,7 +192,6 @@ def test_multi_speaker_buffer_isolation(client: TestClient, mock_redis: MockAsyn
             "speaker_id": "spk-kyra",
             "speaker_name": "Kyra",
             "audio_data": base64.b64encode(silence_pcm).decode("ascii"),
-            "mock_transcript": "heal Valeros",
         },
     )
     assert res_kyra.json()["utterance_complete"] is True

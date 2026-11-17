@@ -12,7 +12,7 @@ import math
 import time
 from typing import Any
 
-from voice_agent.audio_utils import _to_samples_array, generate_synthetic_audio
+from voice_agent.audio_utils import _to_samples_array
 
 
 def whisper_filter(
@@ -150,18 +150,18 @@ def drunk_filter(
 
 
 def apply_audio_filters(
-    audio_data: bytes | array.array | list[float | int] | None,
+    audio_data: bytes | array.array | list[float | int],
     filters: list[str],
     sample_rate: int = 16000,
 ) -> tuple[bytes, dict[str, Any], float]:
-    """Execute the audio filter chain and return (audio_bytes, metadata, latency_ms)."""
+    """Execute the audio filter chain and return (audio_bytes, metadata, latency_ms).
+
+    The filters only transform supplied audio. Empty input raises ValueError.
+    """
     t0 = time.perf_counter()
-    if audio_data is None or (
-        isinstance(audio_data, (bytes, list, array.array)) and len(audio_data) == 0
-    ):
-        current_samples = _to_samples_array(generate_synthetic_audio(0.05, sample_rate))
-    else:
-        current_samples = _to_samples_array(audio_data)
+    current_samples = _to_samples_array(audio_data)
+    if len(current_samples) == 0:
+        raise ValueError("audio_data must contain at least one PCM sample")
 
     combined_metadata: dict[str, Any] = {}
     normalized_filters = [f.lower().strip() for f in filters]

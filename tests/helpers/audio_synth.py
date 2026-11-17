@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import array
 import math
 import struct
 from collections.abc import Generator
@@ -29,7 +30,9 @@ from voice_agent.stt import (
     get_streaming_pipeline,
     set_streaming_pipeline,
 )
+from voice_agent.synthesis_engine import set_speech_synthesizer
 
+from tests.helpers.fixture_synthesizer import FixtureSynthesizer
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 
 
@@ -46,6 +49,25 @@ def generate_pcm_sine(
         for i in range(num_samples)
     ]
     return struct.pack(f"<{num_samples}h", *samples)
+
+
+def generate_synthetic_audio(duration_sec: float = 0.05, sample_rate: int = 16000) -> bytes:
+    """Generate a 220 Hz tone with harmonics as PCM test input for DSP filters."""
+    n_samples = max(160, int(duration_sec * sample_rate))
+    samples = array.array("h")
+    omega = 2.0 * math.pi * 220.0 / sample_rate
+    fade_len = int(0.01 * sample_rate)
+    for i in range(n_samples):
+        theta = i * omega
+        val = (
+            0.50 * math.sin(theta)
+            + 0.25 * math.sin(2 * theta)
+            + 0.15 * math.sin(3 * theta)
+            + 0.10 * math.sin(4 * theta)
+        )
+        fade = min(1.0, i / max(1, fade_len), (n_samples - 1 - i) / max(1, fade_len))
+        samples.append(max(-32767, min(32767, int(val * fade * 20000))))
+    return samples.tobytes()
 
 
 def generate_pcm_silence(duration_ms: int = 100, sample_rate: int = 16000) -> bytes:
@@ -94,8 +116,25 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.fixture
-def shared_event_bus(mock_redis: MockAsyncRedis) -> Generator[RedisStreamsEventBus]:
-    set_streaming_pipeline(StreamingAudioPipeline(transcriber=FixtureTranscriber()))
+def speech_engine() -> FixtureTranscriber:
+    """The fake STT engine injected at the test composition root. Tests script its transcripts."""
+    return FixtureTranscriber()
+
+
+@pytest.fixture
+def fake_speech_synthesizer() -> Generator[FixtureSynthesizer]:
+    """Inject the fake TTS engine at the test composition root and restore the default after."""
+    fake = FixtureSynthesizer()
+    set_speech_synthesizer(fake)
+    yield fake
+    set_speech_synthesizer(None)
+
+
+@pytest.fixture
+def shared_event_bus(
+    mock_redis: MockAsyncRedis, speech_engine: FixtureTranscriber
+) -> Generator[RedisStreamsEventBus]:
+    set_streaming_pipeline(StreamingAudioPipeline(transcriber=speech_engine))
     bus = RedisStreamsEventBus(client=mock_redis)
     voice_set_event_bus(bus)
     watcher_set_event_bus(bus)
