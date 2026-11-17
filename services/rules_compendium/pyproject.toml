@@ -11,6 +11,7 @@ dependencies = [
     "runefoble-platform",
     "runefoble-auth",
     "runefoble-events",
+    "runefoble-embeddings",
     "eventsource-py>=0.14.0",
     "redstring[redis,llm]>=0.11.0",
 ]
@@ -19,3 +20,4 @@ dependencies = [
 runefoble-platform = { workspace = true }
 runefoble-auth = { workspace = true }
 runefoble-events = { workspace = true }
+runefoble-embeddings = { workspace = true }

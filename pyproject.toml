@@ -8,6 +8,7 @@ dependencies = [
     "runefoble-platform",
     "runefoble-auth",
     "runefoble-events",
+    "runefoble-embeddings",
     "the-watcher",
     "game-session",
     "board-state",
@@ -29,6 +30,7 @@ dependencies = [
 runefoble-platform = { workspace = true }
 runefoble-auth = { workspace = true }
 runefoble-events = { workspace = true }
+runefoble-embeddings = { workspace = true }
 the-watcher = { workspace = true }
 game-session = { workspace = true }
 board-state = { workspace = true }

@@ -21,6 +21,7 @@ members = [
     "inference-worker",
     "rules-compendium",
     "runefoble-auth",
+    "runefoble-embeddings",
     "runefoble-events",
     "runefoble-platform",
     "runefoble-workspace",
@@ -2803,6 +2804,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "redstring", extra = ["llm", "redis"] },
     { name = "runefoble-auth" },
+    { name = "runefoble-embeddings" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
@@ -2815,6 +2817,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "redstring", extras = ["redis", "llm"], specifier = ">=0.11.0" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
+    { name = "runefoble-embeddings", editable = "libs/runefoble_embeddings" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
@@ -2837,6 +2840,21 @@ requires-dist = [
     { name = "cryptography", specifier = ">=50.0.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pyjwt", specifier = ">=2.15.0" },
+]
+
+[[package]]
+name = "runefoble-embeddings"
+version = "0.1.0"
+source = { editable = "libs/runefoble_embeddings" }
+dependencies = [
+    { name = "redstring", extra = ["llm"] },
+    { name = "runefoble-platform" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "redstring", extras = ["llm"], specifier = ">=0.11.0" },
+    { name = "runefoble-platform", editable = "libs/runefoble_platform" },
 ]
 
 [[package]]
@@ -2901,6 +2919,7 @@ dependencies = [
     { name = "redstring", extra = ["llm", "redis"] },
     { name = "rules-compendium" },
     { name = "runefoble-auth" },
+    { name = "runefoble-embeddings" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "soundscape" },
@@ -2937,6 +2956,7 @@ requires-dist = [
     { name = "redstring", extras = ["llm", "redis"], specifier = ">=0.11.0" },
     { name = "rules-compendium", editable = "services/rules_compendium" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
+    { name = "runefoble-embeddings", editable = "libs/runefoble_embeddings" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "soundscape", editable = "services/soundscape" },
