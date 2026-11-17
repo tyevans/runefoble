@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Shared typed service client (`runefoble_platform.service_client`) for gateway calls to owning services. Each call sets its own timeout and forwards the verified bearer token and the trace context. (TASK-0580)
 - Stand-in guardrails are validated at The Watcher and at the inference worker. An unknown guardrail name returns HTTP 422. (TASK-0608)
 - `GET /readyz` on audience-studio returns 503 while Redis Streams or PostgreSQL is unavailable. (TASK-0575)
 - Character sheet: `POST /api/v1/characters/{id}/stand-in` activates or releases the AI stand-in. Emits `StandInActivated` or `StandInReleased`. (TASK-0570)
@@ -54,6 +55,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- E2E suite runs a strict TypeScript typecheck (`make test-bdd`, `make lint`) and fails on unused Playwright BDD step definitions. Step base URLs now follow `PLAYWRIGHT_BASE_URL`. (TASK-0651)
+- Blackbox tests for asset forge, bulletin board, merchant haggling, and minigames no longer assert line counts or file existence. The file length invariant stays with `make health-check`. (TASK-0696)
+- Campaign Lore takes the caller only from the verified bearer token. Every campaign-lore route except `/health`, `/healthz`, `/openapi.json`, and `/ui/manifest` returns 401 without a valid token. (TASK-0531)
+- Voice agent HTTP routes require a verified Zitadel bearer token. Health and manifest stay public. Duplex and stream WebSockets admit a connection only with the `runefoble.bearer.<jwt>` subprotocol. (TASK-0530)
+- Gateway MCP `narrate_with_the_watcher` returns The Watcher narration from `POST /api/v1/watcher/narrate`. `execute_agent_action_plan` proposes each step to The Watcher, which lets the DM veto it. `query_monster_stat_block` reads `rules_compendium`. Session and encounter resources take a session id and read `game_session` and `board_state`. (TASK-0605)
+- Game session routes save through the session aggregate. The session repository publishes every committed event to its stream. Session create, join, leave, next-turn, hot-swap, combat, and reaction events reach `runefoble.events.session` through the repository. (TASK-0565)
 - The inference worker now type-checks with mypy. `make lint` runs mypy on `services/inference_worker/src`. (TASK-0628)
 - Campaign Analytics and Soundscape start their Redis Stream consumers at start-up. A failed start stops the service. `/healthz` reports `consumers` as `running` or `failed` and returns 503 when a consumer fails. (TASK-0578)
 - Watcher world ticks keep their tick counter, faction registry, and latest bulletin in a durable `CampaignWorldAggregate`. A service restart resumes the simulation (TASK-0569).

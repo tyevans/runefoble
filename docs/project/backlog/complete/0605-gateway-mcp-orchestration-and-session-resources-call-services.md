@@ -1,7 +1,7 @@
 ---
 id: '0605'
 title: Gateway MCP Narration and Session Resources Call The Watcher and Game Session
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0603
@@ -25,7 +25,7 @@ source_audits:
 # TASK-0605: Gateway MCP Narration and Session Resources Call The Watcher and Game Session
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `narrate_with_the_watcher` returns a fixed template and does not call The Watcher. The `session://active` and `encounter://current` resources return fixed data for campaign `camp1`. `execute_agent_action_plan` needs the same check. Replace them with calls to `the_watcher` and `game_session` public routes.
