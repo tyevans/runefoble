@@ -37,6 +37,24 @@ definition campaign {
 }
 ```
 
+### Name Contract
+Every name in code must exist in `runefoble.zed`. Four kinds of name exist. Use each one for its own purpose:
+
+| Kind | Example | Written as a tuple? | Checked with `check_permission`? |
+|---|---|---|---|
+| Type | `campaign` | No | No |
+| Relation (a stored grant) | `game_master`, `player`, `spectator` | Yes | No |
+| Permission (a computed check) | `run_session`, `play`, `view` | No | Yes |
+| Role name (a label) | `gm`, `dm`, `read`, `control` | Never | Never |
+
+Rules:
+- Write only relations. `campaign#play` is not a relation, so SpiceDB rejects it.
+- Check only permissions. `campaign#owner` is a relation, so it is not a permission.
+- Map a domain action to its `(type, permission)` pair in `ACTION_PERMISSIONS` (`libs/runefoble_auth/src/runefoble_auth/contract.py`). Do not write the names inline.
+- The Game Master relation is `game_master`. `gm` is not a relation.
+
+`runefoble_auth.contract` parses the schema once. `require_permission`, `require_relation`, and `require_subject_type` raise `SchemaContractError` for a name that the schema does not define. `SchemaContractError` is an `AuthzSchemaError`. The live client raises `AuthzSchemaError` for the same call.
+
 ### Validating Schema Changes
 Validate schema syntax using the `zed` CLI or container:
 ```bash
@@ -265,6 +283,22 @@ docker run -d --rm -p 50051:50051 authzed/spicedb:v1.34.0 serve-testing
 ```
 The `serve-testing` mode provides an in-memory, fully-isolated Zanzibar engine where every client-supplied token isolates its own graph.
 
+### Live Authorization Suite
+Run the live name-contract suite with:
+```bash
+make test-authz-live
+```
+The target sets `RUNEFOBLE_REQUIRE_LIVE_SPICEDB=1` and runs `uv run pytest -m authz_live`. The suite needs a reachable Docker daemon. With the flag set, a missing Docker or a failed container start raises an error. It does not skip. Without the flag, the same tests skip when Docker is missing. `make test` keeps its default behaviour.
+
+The `live_spicedb_with_schema` fixture (module scope, in `tests/helpers/spicedb.py`):
+- Starts `serve-testing` with the image tag from `deployments/helm/runefoble/values.yaml` (`spicedb.image`).
+- Loads `runefoble.zed` through `bootstrap_schema`. A failed write fails the fixture.
+- Yields the endpoint and a `SpiceDBClient`.
+
+`tests/test_authz_live_contract.py` runs against this fixture. It checks that a permission name written as a relation is rejected, that `game_master` grants `run_session`, and that an undefined permission check raises `AuthzSchemaError`.
+
+Tests that need the shared client use `tests/helpers/spicedb_factory.py`. The root `tests/conftest.py` autouse fixture swaps the factory client for a fresh strict mock on every test. A test that needs live SpiceDB requests `live_spicedb_with_schema` instead.
+
 ### Automated Test Suites & Fixtures
 Automated testing uses the `live_spicedb_endpoint` fixture defined in `tests/helpers/spicedb.py` and registered globally via `tests/conftest.py`:
 - **`tests/test_spicedb_schema_bootstrap.py`**: Fast-running unit suite validating `runefoble.zed` existence, definition syntax, error handling for empty schemas, and graceful offline fallback behavior when endpoints are unreachable.
@@ -279,9 +313,9 @@ Automated testing uses the `live_spicedb_endpoint` fixture defined in `tests/hel
 ## 7. Modular Mock SpiceDB Engine Architecture
 
 For lightweight unit and offline testing, `runefoble_auth` provides an in-memory mock engine decomposed into single-responsibility submodules under `runefoble_auth.mock`:
-- **`runefoble_auth.mock.schema_parser`**: Parses Zed schema definitions into `SchemaGraph`, extracting relations, permissions, and target types.
-- **`runefoble_auth.mock.evaluator`**: Recursively evaluates Zanzibar graph reachability, schema arrow expressions (`relation->permission`), domain entity relations, and caveats.
-- **`runefoble_auth.mock.client`**: Provides `MockSpiceDBClient` tuple storage, relationship CRUD, touch updates, and permission checks.
+- **`runefoble_auth.schema_graph`**: Parses Zed schema definitions into `SchemaGraph`, extracting relations, permissions, and target types. It is shared by the name contract and the mock.
+- **`runefoble_auth.mock.evaluator`**: Recursively evaluates schema-defined permissions, union rules, and arrow expressions (`relation->permission`). It holds no role-name grants and no alias table. Caveats are supported.
+- **`runefoble_auth.mock.client`**: Provides `MockSpiceDBClient` tuple storage, relationship CRUD, touch updates, and permission checks. It enforces the name contract. A write to an undefined type, relation, or subject raises `SchemaContractError`. A check of an undefined permission raises it too.
 - **`runefoble_auth.mock_spicedb`**: Facade module re-exporting `MockSpiceDBClient` and `Relationship` for complete backward compatibility.
 
 
