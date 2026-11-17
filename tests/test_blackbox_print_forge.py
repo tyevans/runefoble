@@ -31,12 +31,9 @@ class MockEventBus:
 @pytest.fixture(autouse=True)
 def clean_environment():
     """Ensure clean storage and bus states before and after each test."""
-    storage = get_storage()
-    storage.clear()
     bus = MockEventBus()
     set_event_bus(bus)
     yield bus
-    storage.clear()
     set_event_bus(None)
 
 

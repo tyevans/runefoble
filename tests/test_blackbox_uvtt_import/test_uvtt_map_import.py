@@ -50,9 +50,11 @@ def test_blackbox_uvtt_multipart_file_upload(board_client: TestClient):
     assert data["background_image_url"] is not None
     assert data["background_asset_id"] is not None
     storage = get_storage_service()
-    asset = storage.get_asset_by_id(data["background_asset_id"])
-    assert asset["content_type"] == "image/png"
-    assert asset["byte_size"] == len(PNG_SAMPLE_BYTES)
+    stored_bytes, content_type = storage.get_asset(
+        storage.default_bucket, f"battlemaps/{data['background_asset_id']}.png"
+    )
+    assert content_type == "image/png"
+    assert stored_bytes == PNG_SAMPLE_BYTES
 
     # Observable public projection check via GET /api/v1/boards/{board_id}
     get_res = board_client.get(f"/api/v1/boards/{board_id}")

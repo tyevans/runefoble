@@ -13,7 +13,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from asset_forge.dependencies import get_storage as get_asset_storage
 from asset_forge.dependencies import set_event_bus as set_forge_bus
 from asset_forge.main import app as asset_forge_app
 from character_sheet.dependencies import (
@@ -29,12 +28,9 @@ PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 @pytest.fixture(autouse=True)
 def clean_environment():
     """Ensure clean storage and bus states before and after each test."""
-    storage = get_asset_storage()
-    storage.clear()
     set_char_bus(None)
     set_forge_bus(None)
     yield
-    storage.clear()
     set_char_bus(None)
     set_forge_bus(None)
 
