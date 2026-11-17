@@ -102,7 +102,7 @@ class StreamingAudioPipeline:
         self.participants: dict[str, ParticipantAudioState] = {}
         self._event_bus: RedisStreamsEventBus | None = None
         self._watcher_client: httpx.AsyncClient | None = None
-        self._watcher_url: str = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://localhost:8001")
+        self._watcher_url: str = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://the-watcher:8001")
 
     def set_event_bus(self, bus: RedisStreamsEventBus | None) -> None:
         self._event_bus = bus
