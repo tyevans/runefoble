@@ -8,6 +8,7 @@ to the caller as an MCP tool error result.
 from __future__ import annotations
 
 from typing import Any, Literal
+from uuid import UUID
 
 import httpx
 from gateway_mcp.settings import GatewayMcpSettings, load_settings
@@ -41,8 +42,18 @@ def _error_detail(response: httpx.Response) -> str:
     return str(body)
 
 
+def _character_path(character_id: str) -> str:
+    """Return the character_sheet route for a character id, or reject a malformed id."""
+    try:
+        return f"/api/v1/characters/{UUID(character_id)}"
+    except ValueError as exc:
+        raise ServiceRejectedError(
+            f"character_id must be a character UUID, got '{character_id}'"
+        ) from exc
+
+
 class ServiceClient:
-    """Calls the board_state, game_session, and rules_compendium public routes."""
+    """Calls the board_state, character_sheet, game_session, and rules_compendium public routes."""
 
     def __init__(self, settings: GatewayMcpSettings | None = None) -> None:
         self._settings = settings or load_settings()
@@ -102,6 +113,75 @@ class ServiceClient:
             self._settings.game_session_url,
             "GET",
             f"/api/v1/sessions/{session_id}/combat",
+        )
+        return dict(result)
+
+    async def get_character(self, character_id: str) -> dict[str, Any]:
+        """Read the stored character sheet from character_sheet."""
+        result = await self._request(
+            "character_sheet",
+            self._settings.character_sheet_url,
+            "GET",
+            _character_path(character_id),
+        )
+        return dict(result)
+
+    async def change_health(self, character_id: str, *, delta: int, source: str) -> dict[str, Any]:
+        """Apply damage (negative delta) or healing and return the stored sheet."""
+        result = await self._request(
+            "character_sheet",
+            self._settings.character_sheet_url,
+            "POST",
+            f"{_character_path(character_id)}/health",
+            {"delta": delta, "source": source},
+        )
+        return dict(result)
+
+    async def apply_penalty(
+        self, character_id: str, *, penalty_type: str, description: str
+    ) -> dict[str, Any]:
+        """Impose a session miss penalty and return the stored sheet."""
+        result = await self._request(
+            "character_sheet",
+            self._settings.character_sheet_url,
+            "POST",
+            f"{_character_path(character_id)}/penalties",
+            {
+                "penalty_type": penalty_type,
+                "description": description,
+                "imposed_by": "the_watcher",
+            },
+        )
+        return dict(result)
+
+    async def cast_spell(
+        self, character_id: str, *, spell_name: str, slot_level: int
+    ) -> dict[str, Any]:
+        """Cast a spell from a slot and return the stored sheet."""
+        result = await self._request(
+            "character_sheet",
+            self._settings.character_sheet_url,
+            "POST",
+            f"{_character_path(character_id)}/spells/cast",
+            {"spell_name": spell_name, "slot_level": slot_level},
+        )
+        return dict(result)
+
+    async def apply_condition(
+        self,
+        character_id: str,
+        *,
+        condition: str,
+        duration_rounds: int | None,
+        source: str,
+    ) -> dict[str, Any]:
+        """Impose a status condition and return the stored sheet."""
+        result = await self._request(
+            "character_sheet",
+            self._settings.character_sheet_url,
+            "POST",
+            f"{_character_path(character_id)}/conditions",
+            {"condition": condition, "duration_rounds": duration_rounds, "source": source},
         )
         return dict(result)
 
