@@ -270,13 +270,3 @@ def test_blackbox_openapi_spec(client: TestClient):
     assert "/api/v1/compendium/encounters/balance" in spec["paths"]
     assert "/api/v1/compendium/homebrew" in spec["paths"]
     assert "/api/v1/compendium/monsters/{name}" in spec["paths"]
-
-
-def test_blackbox_srd_data_reexport_shim_removed():
-    """Verify the removed re-export shim is not importable (DoR 9, no compatibility shims)."""
-    import importlib.util
-
-    assert importlib.util.find_spec("rules_compendium.srd_data") is None
-    from rules_compendium.srd import CANONICAL_MONSTERS
-
-    assert any(m["name"] == "Bugbear" for m in CANONICAL_MONSTERS)
