@@ -277,8 +277,10 @@ The voice agent transcribes completed utterances with a configured speech engine
 | `RUNEFOBLE_VOICE_STT_MODEL_SIZE` | `tiny.en` | faster-whisper model name (for example `tiny.en`, `base.en`). |
 | `RUNEFOBLE_VOICE_STT_DEVICE` | `cpu` | CTranslate2 device. |
 | `RUNEFOBLE_VOICE_STT_COMPUTE_TYPE` | `int8` | CTranslate2 compute type. |
+| `RUNEFOBLE_VOICE_STT_MODEL_DIR` | unset (Hugging Face default cache) | Directory that holds the model cache. The Helm chart mounts a volume here. |
+| `RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED` | `true` | When `true`, the model downloads on first use. When `false`, the model must already sit in `RUNEFOBLE_VOICE_STT_MODEL_DIR`. The Helm chart sets `false`. |
 
-The model downloads on first use. The model file must be reachable from the pod, or cached in the image.
+Local development downloads the model on first use. The Kind cluster has no internet access. Run `make voice-model-cache` to copy the model into the running voice-agent pod.
 
 ### Failure Behaviour
 
@@ -290,6 +292,8 @@ When the engine fails to load a model or to infer text, the utterance is dropped
 - No `PlayerSpokeEvent` is published, and The Watcher receives no transcript.
 
 Check the active engine with `GET /healthz`. The response includes `"stt_engine": "faster-whisper"`.
+
+With download disabled, `GET /healthz` returns `503` and `"status": "not_ready"` when the cache holds no model for `RUNEFOBLE_VOICE_STT_MODEL_SIZE`. The body names the failing engine in `problems.stt`.
 
 Callers cannot supply a transcript. The chunk request and the WebSocket frame do not accept `mock_transcript`. The configured engine always decides the text.
 
@@ -306,7 +310,7 @@ Blackbox tests inject a deterministic engine (`tests/helpers/fixture_transcriber
 | `RUNEFOBLE_VOICE_TTS_ENGINE` | `espeak-ng` | Speech synthesis engine. `espeak-ng` is the only supported value. |
 | `RUNEFOBLE_VOICE_TTS_BINARY` | `espeak-ng` | Path or name of the engine binary. The adapter runs `espeak-ng --stdout -v <voice> --stdin` and sends the text on stdin. |
 
-The engine must be installed in the runtime image. The voice agent does not bundle it.
+The voice-agent image installs `espeak-ng`. The Dockerfile build argument `SYSTEM_PACKAGES` adds it. The service does not install packages at pod start.
 
 ### Output Contract
 
@@ -318,6 +322,8 @@ The engine must be installed in the runtime image. The voice agent does not bund
 ### Failure Behaviour
 
 When the engine cannot start, exits with an error, times out, or returns no audio, the route returns `503` with `{"detail": {"error": "speech_synthesis_unavailable", "engine": "espeak-ng", "message": "..."}}`. No tone or placeholder audio is returned. The health route reports `"tts_engine": "espeak-ng"`.
+
+`GET /healthz` runs `espeak-ng --version`. A missing or failing binary returns `503` with `"status": "not_ready"` and `problems.tts`.
 
 ### Test Setup
 

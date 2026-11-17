@@ -51,6 +51,31 @@ spec:
               value: "{{ $.Values.observability.enabled }}"
             - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otel-collector:{{ $.Values.observability.otelCollector.grpcPort }}"
+          {{- if eq .name "voice-agent" }}
+            - name: RUNEFOBLE_VOICE_STT_MODEL_SIZE
+              value: {{ .config.sttModelSize | quote }}
+            - name: RUNEFOBLE_VOICE_STT_MODEL_DIR
+              value: {{ .config.modelCache.mountPath | quote }}
+            - name: RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED
+              value: "false"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .config.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: model-cache
+              mountPath: {{ .config.modelCache.mountPath | quote }}
+          {{- end }}
+      {{- if eq .name "voice-agent" }}
+      securityContext:
+        fsGroup: 10001
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: voice-agent-model-cache
+      {{- end }}
 ---
 
 apiVersion: v1

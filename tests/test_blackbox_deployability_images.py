@@ -7,6 +7,7 @@ They use no private state and no backdoors.
 
 from __future__ import annotations
 
+import base64
 import json
 import re
 import shutil
@@ -30,7 +31,8 @@ IMAGE_TAG = "0.1.0"
 # Helm images that are not built by `make images`.
 NON_PYTHON_OR_OUT_OF_SCOPE = {"frontend", "audience-studio"}
 ROW_RE = re.compile(
-    r"'(?P<name>[a-z-]+)\|(?P<service>[a-z-]+)\|(?P<app>[a-z_.]+:\w+)\|(?P<port>\d+)'",
+    r"'(?P<name>[a-z-]+)\|(?P<service>[a-z-]+)\|(?P<app>[a-z_.]+:\w+)\|(?P<port>\d+)"
+    r"\|(?P<packages>[a-z0-9 -]*)'",
 )
 
 
@@ -40,6 +42,7 @@ class ImageRow:
     service: str
     app: str
     port: int
+    system_packages: str = ""
 
     @property
     def tag(self) -> str:
@@ -49,7 +52,7 @@ class ImageRow:
 def read_image_table() -> list[ImageRow]:
     """Read the IMAGE_TABLE rows that `make images` builds."""
     rows = [
-        ImageRow(m["name"], m["service"], m["app"], int(m["port"]))
+        ImageRow(m["name"], m["service"], m["app"], int(m["port"]), m["packages"].strip())
         for m in ROW_RE.finditer(MAKEFILE.read_text(encoding="utf-8"))
     ]
     assert rows, "Makefile declares no IMAGE_TABLE rows"
@@ -150,11 +153,8 @@ def test_helm_template_image_tags_match_built_tags():
     assert built <= rendered, f"built tags not used by Helm: {built - rendered}"
 
 
-@pytest.mark.docker
-@pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
-@pytest.mark.parametrize("row", read_image_table(), ids=lambda row: row.name)
-def test_built_image_serves_openapi_on_helm_port(row: ImageRow):
-    """A built image starts and serves `/openapi.json` on its Helm port."""
+def build_image(row: ImageRow) -> None:
+    """Build one service image through the shared Dockerfile, as `make images` does."""
     build = subprocess.run(
         [
             "docker",
@@ -167,6 +167,8 @@ def test_built_image_serves_openapi_on_helm_port(row: ImageRow):
             f"APP={row.app}",
             "--build-arg",
             f"PORT={row.port}",
+            "--build-arg",
+            f"SYSTEM_PACKAGES={row.system_packages}",
             "-t",
             row.tag,
             str(REPO_ROOT),
@@ -176,6 +178,14 @@ def test_built_image_serves_openapi_on_helm_port(row: ImageRow):
         timeout=1800,
     )
     assert build.returncode == 0, f"docker build failed:\n{build.stderr[-4000:]}"
+
+
+@pytest.mark.docker
+@pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
+@pytest.mark.parametrize("row", read_image_table(), ids=lambda row: row.name)
+def test_built_image_serves_openapi_on_helm_port(row: ImageRow):
+    """A built image starts and serves `/openapi.json` on its Helm port."""
+    build_image(row)
 
     host_port = free_port()
     container = subprocess.run(
@@ -191,6 +201,84 @@ def test_built_image_serves_openapi_on_helm_port(row: ImageRow):
         assert "paths" in document
     finally:
         subprocess.run(["docker", "rm", "-f", container_id], capture_output=True, timeout=120)
+
+
+def _voice_agent_row() -> ImageRow:
+    (row,) = [r for r in read_image_table() if r.name == "voice-agent"]
+    return row
+
+
+@pytest.mark.docker
+@pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
+def test_voice_agent_image_synthesizes_speech_with_espeak():
+    """The voice-agent image ships espeak-ng. `POST /api/v1/voice/tts` returns a WAV payload."""
+    row = _voice_agent_row()
+    assert "espeak-ng" in row.system_packages.split()
+    build_image(row)
+
+    host_port = free_port()
+    container = subprocess.run(
+        ["docker", "run", "-d", "-p", f"127.0.0.1:{host_port}:{row.port}", row.tag],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert container.returncode == 0, f"docker run failed: {container.stderr}"
+    container_id = container.stdout.strip()
+    try:
+        _wait_for_openapi(f"http://127.0.0.1:{host_port}/openapi.json", container_id)
+        request = urllib.request.Request(
+            f"http://127.0.0.1:{host_port}/api/v1/voice/tts",
+            data=json.dumps({"text": "The gate creaks open.", "persona_id": "watcher_dm"}).encode(
+                "utf-8"
+            ),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=120) as response:
+            assert response.status == 200
+            body = json.loads(response.read().decode("utf-8"))
+        wav = base64.b64decode(body["audio_base64"])
+        assert wav[:4] == b"RIFF" and wav[8:12] == b"WAVE"
+        assert body["engine"] == "espeak-ng"
+        assert body["duration_ms"] > 0
+    finally:
+        subprocess.run(["docker", "rm", "-f", container_id], capture_output=True, timeout=120)
+
+
+def _rendered_helm_documents() -> list[dict]:
+    result = subprocess.run(
+        ["helm", "template", "runefoble", str(REPO_ROOT / "deployments/helm/runefoble")],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"helm template failed: {result.stderr}"
+    return [doc for doc in yaml.safe_load_all(result.stdout) if doc]
+
+
+def test_voice_agent_chart_mounts_model_cache_and_probes_readiness():
+    """The voice agent Deployment mounts a model cache PVC, disables download, and probes /healthz."""
+    documents = _rendered_helm_documents()
+    pvcs = [d for d in documents if d.get("kind") == "PersistentVolumeClaim"]
+    deployments = {d["metadata"]["name"]: d for d in documents if d.get("kind") == "Deployment"}
+    voice = deployments["voice-agent"]["spec"]["template"]["spec"]
+    container = voice["containers"][0]
+
+    claim_names = {pvc["metadata"]["name"] for pvc in pvcs}
+    volume = next(v for v in voice["volumes"] if "persistentVolumeClaim" in v)
+    assert volume["persistentVolumeClaim"]["claimName"] in claim_names
+
+    mount = next(m for m in container["volumeMounts"] if m["name"] == volume["name"])
+    env = {item["name"]: item.get("value") for item in container["env"]}
+    assert env["RUNEFOBLE_VOICE_STT_MODEL_DIR"] == mount["mountPath"]
+    assert env["RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED"] == "false"
+    assert env["RUNEFOBLE_VOICE_STT_MODEL_SIZE"]
+
+    probe = container["readinessProbe"]["httpGet"]
+    assert probe["path"] == "/healthz"
+    assert probe["port"] == 8005
+    assert voice["securityContext"]["fsGroup"] == 10001
 
 
 def _wait_for_openapi(url: str, container_id: str, timeout_s: float = 90.0) -> dict:

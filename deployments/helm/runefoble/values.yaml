@@ -229,6 +229,11 @@ services:
     image: runefoble/voice-agent:0.1.0
     replicas: 1
     port: 8005
+    # faster-whisper model name. The model is pre-fetched into modelCache (make voice-model-cache).
+    sttModelSize: tiny.en
+    modelCache:
+      size: 1Gi
+      mountPath: /var/lib/runefoble/whisper
   campaignLore:
     image: runefoble/campaign-lore:0.1.0
     replicas: 1

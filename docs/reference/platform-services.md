@@ -122,3 +122,18 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 `WardrobeGeneratorSettings` (`libs/runefoble_platform`) selects the generator behind the `WardrobeGenerator` port. The Asset Forge service reads it at start-up.
 
 - **`RUNEFOBLE_WARDROBE_GENERATOR`**: `placeholder` (default). Draws a flat colour portrait. It preserves no face and does not read the attire prompt. Any other value fails validation at start-up.
+
+## Voice Agent Runtime Assets (TASK-0676)
+
+The `voice-agent` image needs two runtime assets. The image and the Helm chart provide both. Nothing installs at pod start.
+
+| Asset | Provided by | Location in pod |
+|---|---|---|
+| `espeak-ng` binary | Dockerfile build argument `SYSTEM_PACKAGES=espeak-ng` (`PYTHON_IMAGE_ROWS` in the Makefile) | `/usr/bin/espeak-ng` |
+| faster-whisper model cache | PVC `voice-agent-model-cache` (`services.voiceAgent.modelCache.size`, default `1Gi`) | `/var/lib/runefoble/whisper` |
+
+The chart sets `RUNEFOBLE_VOICE_STT_MODEL_SIZE` from `services.voiceAgent.sttModelSize` (default `tiny.en`), `RUNEFOBLE_VOICE_STT_MODEL_DIR` to the mount path, and `RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED=false`. The pod does not download the model.
+
+Pre-fetch the model for Kind with `make voice-model-cache`. The target downloads the model to `.cache/voice-models` on the host and copies it into the running voice-agent pod. Set `VOICE_MODEL_SIZE` to use another model.
+
+The `voice-agent` container has a readiness probe on `GET /healthz`. The probe fails when `espeak-ng --version` fails, or when the cache holds no model. A failed probe removes the pod from the service endpoints. The gateway then returns `503`.

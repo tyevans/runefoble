@@ -1,0 +1,14 @@
+# Model cache for voice-agent. Holds the faster-whisper model that `make voice-model-cache`
+# copies in. The pod does not download the model when RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED is false.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: voice-agent-model-cache
+  labels:
+    app: voice-agent
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.services.voiceAgent.modelCache.size }}
