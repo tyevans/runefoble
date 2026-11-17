@@ -23,6 +23,28 @@ from runefoble_platform.consumer_group import RedisConsumerGroup
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
+    """Give the signed-in test member view rights on a campaign.
+
+    campaign_analytics has no public campaign-creation frontdoor, so the view relation is
+    seeded in the authorization double. Tests that assert deny paths do not call this.
+    """
+    await spicedb_client.write_relationship(
+        resource_type="campaign",
+        resource_id=campaign_id,
+        relation="view",
+        subject_type="user",
+        subject_id="user-test",
+    )
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 @pytest.fixture
 def storage() -> CampaignAnalyticsStorage:
@@ -42,7 +64,7 @@ def client(storage: CampaignAnalyticsStorage, spicedb_client: MockSpiceDBClient)
     set_storage(storage)
     set_worker(worker)
     set_spicedb_client(spicedb_client)
-    return TestClient(app)
+    return TestClient(app, headers=bearer("user-test"))
 
 
 def test_service_healthz_metrics_and_manifest(client: TestClient) -> None:
@@ -62,10 +84,11 @@ def test_service_healthz_metrics_and_manifest(client: TestClient) -> None:
 
 @pytest.mark.asyncio
 async def test_campaign_analytics_api_heatmap(
-    client: TestClient, storage: CampaignAnalyticsStorage
+    spicedb_client: MockSpiceDBClient, client: TestClient, storage: CampaignAnalyticsStorage
 ) -> None:
     """Verify spatial heatmap REST endpoint schemas, bucketing, and query parameters."""
     cid, sid = str(uuid4()), str(uuid4())
+    await grant_view(spicedb_client, cid)
     await storage.record_spatial(cid, sid, "tok-1", "Valeros", 12, 18, "movement")
     await storage.record_spatial(cid, sid, "tok-1", "Valeros", 12, 18, "damage", damage=25)
 
@@ -92,10 +115,11 @@ async def test_campaign_analytics_api_heatmap(
 
 @pytest.mark.asyncio
 async def test_campaign_analytics_api_mvp(
-    client: TestClient, storage: CampaignAnalyticsStorage
+    spicedb_client: MockSpiceDBClient, client: TestClient, storage: CampaignAnalyticsStorage
 ) -> None:
     """Verify combat MVP statistics REST endpoint and encounter filtering."""
     cid, sid, enc_id = str(uuid4()), str(uuid4()), "enc-boss"
+    await grant_view(spicedb_client, cid)
     valeros_id, kyra_id = str(uuid4()), str(uuid4())
 
     await storage.record_combatant_stat(
@@ -122,10 +146,11 @@ async def test_campaign_analytics_api_mvp(
 
 @pytest.mark.asyncio
 async def test_campaign_analytics_api_timeline(
-    client: TestClient, storage: CampaignAnalyticsStorage
+    spicedb_client: MockSpiceDBClient, client: TestClient, storage: CampaignAnalyticsStorage
 ) -> None:
     """Verify chronicle milestone timeline REST endpoint and limit parameter filtering."""
     cid, sid = str(uuid4()), str(uuid4())
+    await grant_view(spicedb_client, cid)
     await storage.record_milestone(
         cid, sid, "session_start", "Session Started", "Began", "2026-09-01"
     )
@@ -151,15 +176,16 @@ async def test_blackbox_spicedb_zanzibar_authorization(
     campaign_id = "camp-secure-123"
     storage.session_to_campaign["sess-1"] = campaign_id
 
-    # 1. Without credentials -> public view is permitted
-    resp_pub = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/timeline")
-    assert resp_pub.status_code == 200
+    # 1. Without credentials -> 401. There is no public view (ADR-0015).
+    anonymous = TestClient(app)
+    resp_pub = anonymous.get(f"/api/v1/analytics/campaigns/{campaign_id}/timeline")
+    assert resp_pub.status_code == 401
 
     # 2. With unauthorized user ID header -> 403 Forbidden across all routers
     for endpoint in ("timeline", "heatmap", "mvp"):
         resp_forbidden = client.get(
             f"/api/v1/analytics/campaigns/{campaign_id}/{endpoint}",
-            headers={"X-User-ID": "unauthorized-intruder"},
+            headers=bearer("unauthorized-intruder"),
         )
         assert resp_forbidden.status_code == 403
         assert "Forbidden" in resp_forbidden.json()["detail"]
@@ -174,6 +200,6 @@ async def test_blackbox_spicedb_zanzibar_authorization(
     )
     resp_ok = client.get(
         f"/api/v1/analytics/campaigns/{campaign_id}/timeline",
-        headers={"X-User-ID": "authorized-player"},
+        headers=bearer("authorized-player"),
     )
     assert resp_ok.status_code == 200

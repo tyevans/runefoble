@@ -29,6 +29,13 @@ from runefoble_events.board_traps import (
     TrapSprungEvent,
 )
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 @pytest.fixture(autouse=True)
 def setup_auth_and_bus():
@@ -71,7 +78,7 @@ def test_board_traps_cloudevents_registration():
 async def test_zanzibar_dm_trap_creation_and_player_masking():
     """Verify non-DM players cannot place secret traps and cannot query secret markers."""
     spicedb: MockSpiceDBClient = get_spicedb_client()
-    client = TestClient(board_app)
+    client = TestClient(board_app, headers=bearer("user-test"))
 
     board_id = f"board-{uuid4().hex[:8]}"
     campaign_id = f"camp-{uuid4().hex[:8]}"
@@ -91,7 +98,7 @@ async def test_zanzibar_dm_trap_creation_and_player_masking():
     unauth_post = client.post(
         f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
         json={"name": "Player Sneaky Trap", "x": 5, "y": 5, "is_secret": True},
-        headers={"X-User-Id": player_user},
+        headers=bearer(player_user),
     )
     assert unauth_post.status_code == 403
     assert "Forbidden" in unauth_post.json()["detail"]
@@ -108,7 +115,7 @@ async def test_zanzibar_dm_trap_creation_and_player_masking():
             "damage_dice": "2d10",
             "is_secret": True,
         },
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
     assert auth_post.status_code == 201
     trap_data = auth_post.json()
@@ -120,13 +127,13 @@ async def test_zanzibar_dm_trap_creation_and_player_masking():
     client.post(
         f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
         json={"name": "Visible Barricade", "x": 8, "y": 8, "is_secret": False},
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
 
     # 5. Player queries traps -> secret traps MUST be masked; only visible trap returned
     player_get = client.get(
         f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
-        headers={"X-User-Id": player_user},
+        headers=bearer(player_user),
     )
     assert player_get.status_code == 200
     player_traps = player_get.json()["traps"]
@@ -137,7 +144,7 @@ async def test_zanzibar_dm_trap_creation_and_player_masking():
     # 6. DM queries traps -> receives all traps including secret pit
     dm_get = client.get(
         f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
     assert dm_get.status_code == 200
     dm_traps = dm_get.json()["traps"]
@@ -147,7 +154,7 @@ async def test_zanzibar_dm_trap_creation_and_player_masking():
     # 7. Disarming the trap via public endpoint
     disarm_res = client.post(
         f"/api/v1/boards/{board_id}/traps/{trap_id}/disarm",
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
     assert disarm_res.status_code == 200
     assert disarm_res.json()["status"] == "disarmed"

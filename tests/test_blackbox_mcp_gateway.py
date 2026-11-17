@@ -1,9 +1,9 @@
 """Blackbox TDD integration test suite for FastMCP Gateway Server.
 
 Tests exercise FastMCP public protocol entrypoints exclusively:
-- Resource templates ('session://{session_id}/state')
-- Tool discovery and execution via 'mcp.get_tool(...)' and 'mcp._tool_manager'
-- Multi-turn agent action plan orchestration
+- Tool discovery and execution through the MCP streamable HTTP transport, with the
+  caller's signed bearer on each MCP request ('tests/helpers/mcp_http.py')
+- Tool discovery via 'mcp._tool_manager'
 - Error handling for invalid tools and out-of-bounds tactical grid movements
 """
 
@@ -14,10 +14,32 @@ from typing import Any
 import httpx
 import pytest
 from gateway_mcp.server import mcp
-from mcp.shared.memory import create_connected_server_and_client_session
 from mcp.types import CallToolResult
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
+from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+_MCP: dict[str, str] = {}
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {bearer_token(sub)}"}
+
+
+def bearer_token(sub: str) -> str:
+    """Return a token that the shared test issuer signs for `sub`."""
+    return SIGNING_ISSUER.mint(sub)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def mcp_endpoint() -> Iterator[None]:
+    """Serve the gateway MCP server over HTTP so each call carries the caller bearer."""
+    with serve_mcp(mcp) as endpoint:
+        _MCP["url"] = endpoint
+        yield
+    _MCP.clear()
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -34,7 +56,7 @@ def owning_services() -> Iterator[dict[str, str]]:
         env.setenv("BOARD_STATE_URL", board_url)
         env.setenv("RULES_COMPENDIUM_URL", compendium_url)
         # Setup through the public board_state HTTP frontdoor: place the active session token.
-        with httpx.Client(base_url=board_url) as http:
+        with httpx.Client(base_url=board_url, headers=bearer("user-test")) as http:
             created = http.post(
                 "/api/v1/boards", json={"session_id": "camp1", "cols": 10, "rows": 10}
             )
@@ -48,9 +70,8 @@ def owning_services() -> Iterator[dict[str, str]]:
 
 
 async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
-    """Call a tool through the MCP protocol with an in-memory client session."""
-    async with create_connected_server_and_client_session(mcp) as session:
-        return await session.call_tool(name, arguments)
+    """Call a tool over MCP HTTP as the `user-test` caller."""
+    return await call_tool_over_http(_MCP["url"], name, arguments, bearer_token("user-test"))
 
 
 def tool_text(result: CallToolResult) -> str:

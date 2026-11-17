@@ -13,13 +13,21 @@ import pytest
 from fastapi.testclient import TestClient
 from rules_compendium.main import app
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 @pytest.fixture
 def client() -> Generator[TestClient]:
     """TestClient fixture for rules_compendium FastAPI app."""
-    with TestClient(app) as test_client:
+    with TestClient(app, headers=bearer("user-test")) as test_client:
         yield test_client
 
 

@@ -37,15 +37,21 @@ def _board_summary(board: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-async def inspect_tactical_board(session_id: str) -> dict[str, Any]:
+async def inspect_tactical_board(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
     """Retrieve all tokens, coordinates, and grid dimensions for the active session."""
-    board = await ServiceClient().get_board(session_id)
+    board = await ServiceClient(bearer=caller_bearer(ctx)).get_board(session_id)
     return _board_summary(board)
 
 
-async def move_board_token(session_id: str, token_id: str, to_x: int, to_y: int) -> dict[str, Any]:
+async def move_board_token(
+    session_id: str,
+    token_id: str,
+    to_x: int,
+    to_y: int,
+    ctx: Context | None = None,
+) -> dict[str, Any]:
     """Move a token to target coordinates (x, y) on the tactical map."""
-    result = await ServiceClient().move_token(
+    result = await ServiceClient(bearer=caller_bearer(ctx)).move_token(
         session_id,
         token_id,
         to_x=to_x,
@@ -85,9 +91,10 @@ async def create_encounter(
     encounter_name: str,
     terrain: str = "dungeon",
     enemies: list[EnemyPlacement] | None = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Create a tactical combat board and place the enemy tokens on it."""
-    client = ServiceClient()
+    client = ServiceClient(bearer=caller_bearer(ctx))
     board = await client.create_board(cols=ENCOUNTER_COLS, rows=ENCOUNTER_ROWS)
     encounter_id = board["session_id"]
     spawned: list[dict[str, Any]] = []

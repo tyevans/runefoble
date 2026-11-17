@@ -7,6 +7,8 @@ from board_state.aggregate import BoardAggregate
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 
 async def _create_seeded_party_board(client: AsyncClient, session_id: str) -> None:
     """Create a board and place the party and one hostile through public routes."""
@@ -31,10 +33,17 @@ async def _create_seeded_party_board(client: AsyncClient, session_id: str) -> No
         assert placed.status_code == 200, placed.text
 
 
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
 @pytest.mark.asyncio
 async def test_board_get_and_move():
     transport = ASGITransport(app=board_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test", headers=bearer("user-test")
+    ) as client:
         await _create_seeded_party_board(client, "session-test-1")
         # Get board
         res = await client.get("/api/v1/boards/session-test-1")
@@ -85,7 +94,9 @@ async def test_board_fog_of_war_eventsourcing():
 async def test_board_visibility_api_filtering():
     """Verify visibility endpoint filters shrouded hostile tokens for players."""
     transport = ASGITransport(app=board_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test", headers=bearer("user-test")
+    ) as client:
         await _create_seeded_party_board(client, "session-vis-test")
         # Player perspective (is_dm=False): hostile token t3 at (8, 8) is outside initial party vision at (2, 3)/(3, 3)
         vis_player = await client.get("/api/v1/boards/session-vis-test/visibility?is_dm=false")

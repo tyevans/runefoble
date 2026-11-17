@@ -10,9 +10,12 @@ os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key"
 # ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest
+from board_state import dependencies as board_state_dependencies
+from campaign_analytics import dependencies as campaign_analytics_dependencies
 from game_session.settlement.auth.tokens import get_zitadel_auth_service as get_session_auth
 from game_session.settlement.auth.tokens import set_zitadel_auth_service as set_session_auth
 from gateway_api.auth import get_zitadel_auth_service, set_zitadel_auth_service
+from rules_compendium import dependencies as rules_compendium_dependencies
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
@@ -76,6 +79,30 @@ def default_redis_event_bus():
     finally:
         for mod, prev in modules_to_restore:
             mod.set_event_bus(prev)
+
+
+# Services that verify bearer tokens themselves (ADR-0015). The gateway forwards the caller's
+# token to them, so the shared test issuer must be trusted by each of them as well.
+SERVICE_IDENTITY_MODULES = [
+    board_state_dependencies,
+    campaign_analytics_dependencies,
+    rules_compendium_dependencies,
+]
+
+
+@pytest.fixture(autouse=True, scope="session")
+def shared_issuer_in_token_services() -> Iterator[None]:
+    """Trust the shared test issuer in each token-verifying service for the whole session.
+
+    Session scope lets module-scoped fixtures that start live upstreams send signed requests.
+    """
+    previous = [(mod, mod.get_zitadel_auth_service()) for mod in SERVICE_IDENTITY_MODULES]
+    verifier = SIGNING_ISSUER.verifier()
+    for mod in SERVICE_IDENTITY_MODULES:
+        mod.set_zitadel_auth_service(verifier)
+    yield
+    for mod, prev in previous:
+        mod.set_zitadel_auth_service(prev)
 
 
 @pytest.fixture(autouse=True)
