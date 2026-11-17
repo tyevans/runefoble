@@ -56,7 +56,7 @@ def test_frontend_storybook_watcher_protection():
     assert "CHOKIDAR_USEPOLLING=true" in pkg_json
 
 
-def test_microservice_entrypoint_initialization():
+def test_microservice_entrypoint_initialization(monkeypatch, tmp_path):
     """Verify all microservice FastAPI entrypoints initialize and generate OpenAPI schemas."""
     from asset_forge.main import app as forge_app
     from board_state.main import app as board_app
@@ -66,6 +66,14 @@ def test_microservice_entrypoint_initialization():
     from inference_worker.api import app as inference_app
     from the_watcher.main import app as watcher_app
     from voice_agent.main import app as voice_app
+    from voice_agent.synthesis_engine import set_speech_synthesizer
+
+    # The voice agent is ready only when its speech binary answers. A stub stands in for espeak-ng.
+    speech_stub = tmp_path / "espeak-ng-version"
+    speech_stub.write_text("#!/bin/sh\necho 'eSpeak NG stub'\nexit 0\n", encoding="utf-8")
+    speech_stub.chmod(0o755)
+    monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(speech_stub))
+    set_speech_synthesizer(None)
 
     apps = [
         ("gateway-api", gateway_app),

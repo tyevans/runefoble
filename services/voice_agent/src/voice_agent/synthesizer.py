@@ -45,3 +45,10 @@ class BaseSynthesizer(ABC):
 
         Raises SpeechSynthesisUnavailable when the engine cannot produce audio.
         """
+
+    @abstractmethod
+    async def check_ready(self) -> None:
+        """Verify that the engine can run now, without synthesizing text.
+
+        Raises SpeechSynthesisUnavailable when the engine is missing or broken.
+        """

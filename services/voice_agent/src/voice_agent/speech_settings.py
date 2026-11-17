@@ -23,6 +23,8 @@ class VoiceAgentSettings(BaseSettings):
     stt_model_size: str = "tiny.en"
     stt_device: str = "cpu"
     stt_compute_type: str = "int8"
+    stt_model_dir: str | None = None
+    stt_download_enabled: bool = True
 
     tts_engine: Literal["espeak-ng"] = "espeak-ng"
     tts_binary: str = "espeak-ng"
@@ -36,6 +38,8 @@ def build_transcriber(settings: VoiceAgentSettings) -> BaseTranscriber:
                 model_size=settings.stt_model_size,
                 device=settings.stt_device,
                 compute_type=settings.stt_compute_type,
+                model_dir=settings.stt_model_dir,
+                download_enabled=settings.stt_download_enabled,
             )
     raise ValueError(f"Unsupported speech engine: {settings.stt_engine}")
 

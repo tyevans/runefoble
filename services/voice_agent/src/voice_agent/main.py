@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import httpx
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.dependencies import (
     STREAM_SESSION,
@@ -37,6 +38,7 @@ from voice_agent.models import (
     TTSResponse,
     VoicePersona,
 )
+from voice_agent.readiness import speech_readiness_problems
 from voice_agent.routers import (
     aec_diagnostics_router,
     audio_filters_router,
@@ -88,12 +90,19 @@ def set_watcher_client(client: httpx.AsyncClient | None) -> None:
 
 @app.get("/healthz")
 async def health_check():
-    return {
-        "status": "ok",
+    transcriber = get_streaming_pipeline().transcriber
+    synthesizer = get_speech_synthesizer()
+    problems = await speech_readiness_problems(transcriber, synthesizer)
+    body = {
+        "status": "not_ready" if problems else "ok",
         "service": "voice_agent",
-        "stt_engine": get_streaming_pipeline().transcriber.engine_name,
-        "tts_engine": get_speech_synthesizer().engine_name,
+        "stt_engine": transcriber.engine_name,
+        "tts_engine": synthesizer.engine_name,
     }
+    if problems:
+        body["problems"] = problems
+        return JSONResponse(body, status_code=503)
+    return body
 
 
 @app.get("/ui/manifest")

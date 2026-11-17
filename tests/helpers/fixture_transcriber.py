@@ -26,6 +26,9 @@ class FixtureTranscriber(BaseTranscriber):
         """Queue transcripts for the next completed utterances, in order."""
         self._script.extend(transcripts)
 
+    async def check_ready(self) -> None:
+        return None
+
     async def transcribe(self, audio_bytes: bytes, sample_rate: int = 16000) -> str:
         if self._script:
             return self._script.popleft()

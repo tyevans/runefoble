@@ -190,11 +190,18 @@ def test_production_adapter_returns_the_audio_the_engine_wrote(
     assert base64.b64decode(data["audio_base64"]) == original
 
 
-def test_health_reports_active_tts_engine(production_tts: None):
-    """The health route names the active speech synthesis engine."""
+def test_health_reports_active_tts_engine(
+    production_tts: None, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """The health route names the active speech synthesis engine once the binary answers."""
+    script = tmp_path / "espeak-ng-version"
+    script.write_text("#!/bin/sh\necho 'eSpeak NG stub'\nexit 0\n", encoding="utf-8")
+    script.chmod(0o755)
+    monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(script))
+
     resp = TestClient(app).get("/healthz")
 
-    assert resp.status_code == 200
+    assert resp.status_code == 200, resp.text
     assert resp.json()["tts_engine"] == "espeak-ng"
 
 

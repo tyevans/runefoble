@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import uuid
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,6 +18,7 @@ from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus, d
 from voice_agent.main import app as voice_app
 from voice_agent.main import set_event_bus as voice_set_event_bus
 from voice_agent.stt import set_streaming_pipeline
+from voice_agent.synthesis_engine import set_speech_synthesizer
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.fixture_transcriber import FIXTURE_TRANSCRIPT
@@ -48,19 +50,26 @@ def _stream_events(mock_redis: MockAsyncRedis, stream: str) -> list:
 
 @pytest.fixture
 def production_engine_client(
-    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis
+    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis, tmp_path: Path
 ) -> Generator[TestClient]:
     """Voice app wired to the production engine, forced unavailable through settings.
 
     An unknown model size makes faster-whisper fail to load without any network access.
+    The speech binary is a stub that answers `--version`, so only the STT engine is not ready.
     """
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_MODEL_SIZE", "runefoble-missing-model")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+    stub = tmp_path / "espeak-ng-version"
+    stub.write_text("#!/bin/sh\necho 'eSpeak NG stub'\nexit 0\n", encoding="utf-8")
+    stub.chmod(0o755)
+    monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(stub))
+    set_speech_synthesizer(None)
     set_streaming_pipeline(None)
     voice_set_event_bus(RedisStreamsEventBus(client=mock_redis))
     yield TestClient(voice_app)
     voice_set_event_bus(None)
     set_streaming_pipeline(None)
+    set_speech_synthesizer(None)
 
 
 def test_unavailable_engine_returns_error_and_publishes_no_player_spoke(
