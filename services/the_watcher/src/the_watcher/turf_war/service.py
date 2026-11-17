@@ -43,10 +43,7 @@ async def publish_turf_events(events: list[Any]) -> None:
         return
     for evt in events:
         try:
-            if hasattr(bus, "publish_event"):
-                await bus.publish_event(STREAM_WORLD, evt)
-            elif hasattr(bus, "publish"):
-                await bus.publish(STREAM_WORLD, evt)
+            await bus.publish_event(STREAM_WORLD, evt)
         except Exception as e:
             logger.warning("Failed to publish event to stream %s: %s", STREAM_WORLD, e)
 

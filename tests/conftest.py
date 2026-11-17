@@ -31,6 +31,37 @@ SPICEDB_SERVICE_MODULES = [
 ]
 
 
+REDIS_BUS_MODULES = [
+    "board_state.dependencies",
+    "the_watcher.dependencies",
+]
+
+
+@pytest.fixture(autouse=True)
+def default_redis_event_bus():
+    """Route board and watcher publishes to an in-memory Redis double unless a test overrides it.
+
+    Redis is an external process. Tests must not open real connections to localhost:6379.
+    """
+    import importlib
+
+    from runefoble_platform.mock_redis import MockAsyncRedis
+    from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+    bus = RedisStreamsEventBus(client=MockAsyncRedis())
+    modules_to_restore = []
+    for mod_name in REDIS_BUS_MODULES:
+        mod = importlib.import_module(mod_name)
+        modules_to_restore.append((mod, mod.get_event_bus()))
+        mod.set_event_bus(bus)
+
+    try:
+        yield bus
+    finally:
+        for mod, prev in modules_to_restore:
+            mod.set_event_bus(prev)
+
+
 @pytest.fixture(autouse=True)
 def default_spicedb_client(request):
     """Provide MockSpiceDBClient singleton for tests unless live_spicedb_endpoint is requested."""

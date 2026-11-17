@@ -14,6 +14,7 @@ from board_state.dependencies import (
     get_or_create_board,
     repo,
 )
+from board_state.events import publish_board_events
 from board_state.traps import (
     CreateTrapRequest,
     SecretTrapState,
@@ -26,17 +27,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 logger = logging.getLogger("runefoble.board_state.routers.traps")
 router = APIRouter(tags=["traps"])
-
-
-async def _publish_events(bus: object, events: list[object]) -> None:
-    for evt in events:
-        try:
-            if hasattr(bus, "publish_event"):
-                await bus.publish_event("runefoble.events.board", evt)
-            elif hasattr(bus, "publish"):
-                await bus.publish(evt)
-        except Exception:
-            pass
 
 
 @router.post("/api/v1/boards/{board_id}/traps", response_model=SecretTrapState, status_code=201)
@@ -74,8 +64,8 @@ async def create_trap(
     bus = get_event_bus()
     uncommitted = list(board.uncommitted_events)
     await repo.save(board)
-    if bus and uncommitted:
-        await _publish_events(bus, uncommitted)
+    if bus is not None:
+        await publish_board_events(bus, uncommitted)
 
     return board.state.traps[tid]
 
@@ -118,8 +108,8 @@ async def switch_map_endpoint(
     bus = get_event_bus()
     uncommitted = list(board.uncommitted_events)
     await repo.save(board)
-    if bus and uncommitted:
-        await _publish_events(bus, uncommitted)
+    if bus is not None:
+        await publish_board_events(bus, uncommitted)
 
     return resp
 
@@ -140,7 +130,7 @@ async def disarm_trap_endpoint(
     bus = get_event_bus()
     uncommitted = list(board.uncommitted_events)
     await repo.save(board)
-    if bus and uncommitted:
-        await _publish_events(bus, uncommitted)
+    if bus is not None:
+        await publish_board_events(bus, uncommitted)
 
     return {"trap_id": trap_id, "status": "disarmed"}

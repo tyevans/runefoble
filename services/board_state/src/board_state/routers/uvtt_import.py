@@ -7,6 +7,7 @@ import logging
 from typing import Annotated
 
 from board_state.dependencies import get_event_bus, get_or_create_board, repo
+from board_state.events import publish_board_events
 from board_state.models import (
     PlaceLightRequest,
     ToggleDoorRequest,
@@ -23,11 +24,10 @@ logger = logging.getLogger("runefoble.board_state.routers.uvtt_import")
 router = APIRouter(tags=["uvtt"])
 
 
-async def _publish_latest_event(board) -> None:
+async def _publish_board_events(events: list) -> None:
     bus = get_event_bus()
-    if bus and board.uncommitted_events:
-        with contextlib.suppress(Exception):
-            await bus.publish(board.uncommitted_events[-1])
+    if bus is not None:
+        await publish_board_events(bus, events)
 
 
 @router.post("/board/{id}/import/uvtt", response_model=UVTTImportResponse)
@@ -60,8 +60,9 @@ async def import_uvtt_map_endpoint(
 
     board = await get_or_create_board(id)
     apply_uvtt_to_board(board, parsed, asset_id=asset_id, image_url=image_url)
+    events = list(board.uncommitted_events)
     await repo.save(board)
-    await _publish_latest_event(board)
+    await _publish_board_events(events)
 
     s = board.state
     return UVTTImportResponse(
@@ -91,8 +92,9 @@ async def toggle_door_endpoint(
     board = await get_or_create_board(id)
     status, is_open = (body.status, body.is_open) if body else (None, None)
     result = board.toggle_door(door_id=door_id, status=status, is_open=is_open)
+    events = list(board.uncommitted_events)
     await repo.save(board)
-    await _publish_latest_event(board)
+    await _publish_board_events(events)
     return {"status": "success", "door": board.state.doors.get(door_id, result)}
 
 
@@ -122,8 +124,9 @@ async def place_light_endpoint(id: str, req: PlaceLightRequest) -> dict:
         shadows=req.shadows,
         metadata=req.metadata,
     )
+    events = list(board.uncommitted_events)
     await repo.save(board)
-    await _publish_latest_event(board)
+    await _publish_board_events(events)
     return {"status": "success", "light_id": lid}
 
 

@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from board_state.aggregate import PlacedTokenState
 from board_state.dependencies import get_event_bus, get_or_create_board, repo
+from board_state.events import publish_board_events
 from board_state.models import (
     MoveTokenRequest,
     MoveTokenResponse,
@@ -55,15 +56,8 @@ async def move_token_by_id(session_id: str, token_id: str, req: MoveTokenRequest
         bus = get_event_bus()
         uncommitted = list(board.uncommitted_events)
         await repo.save(board)
-        if bus and uncommitted:
-            for evt in uncommitted:
-                try:
-                    if hasattr(bus, "publish_event"):
-                        await bus.publish_event("runefoble.events.board", evt)
-                    elif hasattr(bus, "publish"):
-                        await bus.publish(evt)
-                except Exception:
-                    pass
+        if bus is not None:
+            await publish_board_events(bus, uncommitted)
 
         tok = board.state.tokens[token_id]
         return MoveTokenResponse(

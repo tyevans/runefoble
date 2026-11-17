@@ -32,6 +32,7 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
 1. **`RedisStreamsEventBus` (`libs/runefoble_platform/redis_bus.py`)**:
    - Publishes domain events, Pydantic models, or structured dictionaries to Redis Streams using `XADD`.
    - Serializes events into `event_type`, `event_id`, and JSON payload fields.
+   - `publish_event(stream, event)` is the only publish method. No `publish` method exists.
 
 2. **`RedisConsumerGroup` & `deserialize_event` (`libs/runefoble_platform/consumer_group.py`, `event_deserializer.py`)**:
    - `RedisConsumerGroup` (aliased as `RedisConsumerGroupWorker`) manages consumer group lifecycles (`create_group`, `read_group`, `ack`, `auto_claim_pending`, `route_to_dead_letter`).
@@ -48,6 +49,32 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
    - `apply_session_event` (`projections/appliers.py`): applies token, atmosphere, encounter, and turn state changes.
    - `SessionReadProjection` (`projections/session.py`): composes projections into comprehensive session read models (`SessionReadModel`, `TokenReadModel`, `AtmosphereReadModel`, `EncounterReadModel`).
    - Re-exported via `services/game_session/projections/__init__.py` for backward compatibility.
+
+---
+
+## Publishing Events
+
+Call `publish_event(stream, event)` on `RedisStreamsEventBus` for every event. Do not call `publish`. A call to `publish` raises `AttributeError`. A broad exception guard around that call hides the error, so the event never reaches Redis. Do not wrap publish calls in `contextlib.suppress(Exception)`.
+
+### Board Events
+
+Board State publishes every uncommitted event through one helper, `publish_board_events(bus, events)` (`services/board_state/src/board_state/events.py`):
+
+```python
+events = list(board.uncommitted_events)  # capture before the save clears them
+await repo.save(board)
+bus = get_event_bus()
+if bus is not None:
+    await publish_board_events(bus, events)
+```
+
+- Events publish in order to the `runefoble.events.board` stream.
+- The helper logs the stream and event type on failure, then re-raises.
+- Capture the events before `repo.save`. The save marks them committed and clears the list.
+
+### Watcher Events
+
+The Watcher publishes to `runefoble.events.watcher` and to `runefoble:events:world` (turf war, `STREAM_WORLD`) with `publish_event(STREAM, event)`.
 
 ---
 
@@ -170,5 +197,6 @@ The Redis Streams event bus, consumer groups, and read projections are verified 
 
 - **`tests/test_redis_consumer_groups.py`**: Low-level distributed consumer group mechanics, competing consumers, PEL acknowledgements, `XAUTOCLAIM` recovery, and DLQ dispatching.
 - **`tests/test_session_projections.py`**: High-level `SessionReadProjection` worker event processing, read model state transitions, and poison pill DLQ isolation.
+- **`tests/test_blackbox_board_event_publish.py`**: Verifies board and watcher events reach the Redis stream through `publish_event`.
 - **`tests/test_game_session_projections.py`**: Modular projection lifecycle tests covering `InitiativeProjection`, `PresenceProjection`, tie-breaking rules, and participant presence tracking.
 

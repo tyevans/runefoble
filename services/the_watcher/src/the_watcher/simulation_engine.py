@@ -8,7 +8,6 @@ Governed by:
 
 from __future__ import annotations
 
-import contextlib
 import datetime
 import random
 from typing import Any
@@ -282,8 +281,7 @@ class FactionSimulationEngine:
             rumors=rumors,
         )
         if bus is not None:
-            with contextlib.suppress(Exception):
-                await bus.publish(STREAM_WATCHER, tick_event)
+            await bus.publish_event(STREAM_WATCHER, tick_event)
 
         response = WorldTickResponse(
             campaign_id=campaign_id,
