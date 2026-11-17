@@ -15,6 +15,13 @@ from runefoble_events.events import VoiceAudioConditioned
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.main import app, set_event_bus
 
+from tests.helpers.audio_synth import generate_pcm_sine
+
+pytestmark = pytest.mark.usefixtures("fake_speech_synthesizer")
+
+# DSP filters only transform supplied audio, so every apply request carries input PCM.
+INPUT_AUDIO_B64 = base64.b64encode(generate_pcm_sine(duration_ms=100)).decode("ascii")
+
 
 @pytest.fixture
 def client() -> TestClient:
@@ -42,6 +49,7 @@ def mock_event_bus(mock_redis: MockAsyncRedis):
 def test_dsp_apply_whisper_filter(client: TestClient):
     """POST /api/v1/voice/dsp/apply with filter='whisper' produces reduced dynamic range and high-pass shimmer."""
     payload = {
+        "audio_base64": INPUT_AUDIO_B64,
         "filter": "whisper",
         "session_id": "sess-whisper-1",
         "speaker_id": "spk-sarah",
@@ -71,6 +79,7 @@ def test_dsp_apply_whisper_filter(client: TestClient):
 def test_dsp_apply_underwater_filter(client: TestClient):
     """POST /api/v1/voice/dsp/apply with filter='underwater' produces muffled low-pass and sub-bass resonance."""
     payload = {
+        "audio_base64": INPUT_AUDIO_B64,
         "filter": "underwater",
         "session_id": "sess-underwater-1",
         "speaker_id": "spk-marcus",
@@ -98,6 +107,7 @@ def test_dsp_apply_underwater_filter(client: TestClient):
 def test_dsp_apply_ethereal_filter(client: TestClient):
     """POST /api/v1/voice/dsp/apply with filter='ethereal' produces ghostly echo modulation and delay tail."""
     payload = {
+        "audio_base64": INPUT_AUDIO_B64,
         "filter": "ethereal",
         "session_id": "sess-ethereal-1",
         "speaker_id": "spk-watcher",
@@ -124,6 +134,7 @@ def test_dsp_apply_ethereal_filter(client: TestClient):
 def test_dsp_apply_drunk_filter(client: TestClient):
     """POST /api/v1/voice/dsp/apply with filter='drunk' produces slurred formant modulation and pitch sway."""
     payload = {
+        "audio_base64": INPUT_AUDIO_B64,
         "filter": "drunk",
         "session_id": "sess-drunk-1",
         "speaker_id": "spk-valeros",
@@ -191,6 +202,7 @@ def test_tts_multiple_filters_audio_payload_and_metadata(client: TestClient):
 def test_benchmark_dsp_latency_sub_50ms(client: TestClient, mock_event_bus):
     """Benchmark latency: verify DSP filter processing runs strictly under 50ms."""
     payload = {
+        "audio_base64": INPUT_AUDIO_B64,
         "filters": ["drunk", "underwater", "ethereal"],
         "session_id": "sess-bench-1",
         "speaker_id": "spk-bench",
@@ -227,6 +239,7 @@ def test_dsp_apply_dispatches_voice_audio_conditioned_event(
 ):
     """Verify event dispatch of VoiceAudioConditioned upon DSP conditioning."""
     payload = {
+        "audio_base64": INPUT_AUDIO_B64,
         "filters": ["whisper", "ethereal"],
         "session_id": "session-conditioned-99",
         "speaker_id": "speaker-sarah-42",

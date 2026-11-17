@@ -49,6 +49,7 @@ from voice_agent.routers import (
     vocal_effects_router,
 )
 from voice_agent.stt import get_streaming_pipeline
+from voice_agent.synthesis_engine import get_speech_synthesizer
 
 app = FastAPI(
     title="Runefoble - Voice Agent Service",
@@ -91,6 +92,7 @@ async def health_check():
         "status": "ok",
         "service": "voice_agent",
         "stt_engine": get_streaming_pipeline().transcriber.engine_name,
+        "tts_engine": get_speech_synthesizer().engine_name,
     }
 
 

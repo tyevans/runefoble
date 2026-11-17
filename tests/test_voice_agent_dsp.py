@@ -5,8 +5,9 @@ from __future__ import annotations
 import pathlib
 import time
 
+import pytest
 from fastapi.testclient import TestClient
-from voice_agent.audio_utils import generate_synthetic_audio, to_samples_array
+from voice_agent.audio_utils import to_samples_array
 from voice_agent.coordinator import VoiceRoomCoordinator, get_voice_room_coordinator
 from voice_agent.dsp import (
     DSPFilterConfig,
@@ -31,6 +32,10 @@ from voice_agent.routers import (
     stream_router,
     synthesis_router,
 )
+
+from tests.helpers.audio_synth import generate_synthetic_audio
+
+pytestmark = pytest.mark.usefixtures("fake_speech_synthesizer")
 
 client = TestClient(app)
 
@@ -158,7 +163,7 @@ def test_backward_compatible_reexports():
     assert cfg.speed_factor == 1.0
     res = ProcessedSpeechResult(original_text="hello", conditioned_text="hello", dsp_config=cfg)
     assert res.original_text == "hello"
-    audio_bytes, _, _ = apply_audio_filters(None, ["whisper"])
+    audio_bytes, _, _ = apply_audio_filters(generate_synthetic_audio(0.05, 16000), ["whisper"])
     assert len(audio_bytes) > 0
     state = VoiceRoomState(session_id="sess-1")
     assert state.active is True

@@ -103,7 +103,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `voice-agent` | POST | `/api/v1/voice/stream/chunk` | Streaming PCM/WAV chunk ingestion with sub-250ms VAD segmentation and Whisper STT. Returns `503` with `error: speech_engine_unavailable` when the configured engine cannot transcribe a completed utterance; publishes `VoiceTranscriptionFailed` to `runefoble.events.voice` and no `PlayerSpokeEvent` |
 | `voice-agent` | WS | `/api/v1/voice/stream/ws` | Real-time bidirectional WebSocket stream for continuous PCM audio frames and STT events. Sends `{"error": "speech_engine_unavailable", ...}` for a failed utterance and keeps the socket open |
 | `voice-agent` | POST | `/api/v1/voice/transcribe` | Transcribes player speech, emits `PlayerSpokeEvent` to Redis Streams, and forwards to The Watcher |
-| `voice-agent` | POST | `/api/v1/voice/tts` | Synthesizes TTS audio stream with DSP audio conditioning (drunk slurs, underwater, whisper, ghostly) |
+| `voice-agent` | POST | `/api/v1/voice/tts` | Synthesizes persona speech with the configured engine (`espeak-ng`), applies DSP filters (drunk, underwater, whisper, ghostly) to that audio, and returns the audio it describes. Returns `503` with `error: speech_synthesis_unavailable` when the engine cannot render audio. No tone is returned. See the TTS response schema below |
 | `voice-agent` | POST | `/api/v1/voice/synthesize` | Backward-compatible TTS synthesis endpoint |
 | `voice-agent` | GET | `/api/v1/voice/personas` | Lists available voice persona models |
 | `voice-agent` | GET | `/api/v1/voice/rooms/{session_id}` | Retrieves active WebRTC voice room participants, roles, mute status, and audio telemetry |
@@ -116,7 +116,8 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `voice-agent` | GET | `/voice/streams/{session_id}/quality` | Queries stream bitrate, packet loss, and Opus codec mode (alias: `/api/v1/voice/streams/{session_id}/quality`) |
 | `voice-agent` | POST | `/voice/streams/{session_id}/report` | Submits RTCP receiver reports and dynamically adapts Opus bitrate/complexity within 200ms (alias: `/api/v1/voice/streams/{session_id}/report`) |
 | `voice-agent` | POST | `/voice/filters/barge-in/evaluate` | Evaluates audio frames for vocal onset (<40ms) and applies 20ms cosine crossfade attenuation (<80ms halt) (alias: `/api/v1/voice/filters/barge-in/evaluate`) |
-| `voice-agent` | GET | `/healthz` | Liveness check. Reports the active speech engine as `stt_engine` (default `faster-whisper`) |
+| `voice-agent` | GET | `/healthz` | Liveness check. Reports the active speech engines as `stt_engine` (default `faster-whisper`) and `tts_engine` (default `espeak-ng`) |
+| `voice-agent` | POST | `/api/v1/voice/dsp/apply` | Applies DSP filters to supplied base64 PCM or WAV audio. Returns `422` when `audio_base64` is missing or invalid. The route never synthesises a carrier tone |
 | `voice-agent` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-voice-controls`, `runefoble-audio-indicator`, `runefoble-mobile-companion` [subviews: `audio-stream-controller`, `haptic-ping-panel`, `connection-status-badge`], `runefoble-voice-duplex-controls`) |
 | `board-state` | POST | `/api/v1/boards` | Initializes tactical grid aggregate with specified dimensions |
 | `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states |
@@ -300,6 +301,24 @@ When running the local development environment via `make dev`, Vite proxies requ
 
 
 
+
+### Voice Agent TTS Response (`POST /api/v1/voice/tts`)
+
+The response describes the audio it carries. Filters run on the synthesised clip only.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `audio_base64` | string | Base64 of a RIFF/WAVE file (mono, 16-bit PCM) at `sample_rate_hz`. |
+| `audio_payload` | string | Same value as `audio_base64`. |
+| `audio_mime_type` | string | Always `audio/wav`. |
+| `sample_rate_hz` | integer | Sample rate of the WAV samples. |
+| `duration_ms` | number | Sample count divided by `sample_rate_hz`, in milliseconds. |
+| `content_sha256` | string | SHA-256 of the decoded WAV bytes. Equal text gives an equal hash. |
+| `engine` | string | Speech engine that rendered the text (`espeak-ng`). |
+| `original_text`, `conditioned_text` | string | Input text and the text after affliction transforms. `conditioned_text` is metadata and is not voiced. |
+| `effects_applied`, `dsp_parameters`, `dsp_metadata`, `latency_ms`, `persona_used` | mixed | DSP and request metadata. |
+
+Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavailable", "engine": "espeak-ng", "message": "..."}}`. No audio field is present.
 
 ## Infrastructure Ports
 

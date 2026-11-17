@@ -291,6 +291,34 @@ When the engine fails to load a model or to infer text, the utterance is dropped
 
 Check the active engine with `GET /healthz`. The response includes `"stt_engine": "faster-whisper"`.
 
+Callers cannot supply a transcript. The chunk request and the WebSocket frame do not accept `mock_transcript`. The configured engine always decides the text.
+
 ### Test Setup
 
 Blackbox tests inject a deterministic engine (`tests/helpers/fixture_transcriber.py`) into the composition root. Tests that need an unavailable engine set `RUNEFOBLE_VOICE_STT_MODEL_SIZE` to an unknown model name and `HF_HUB_OFFLINE=1`. See `tests/test_blackbox_voice_stt_engine.py`.
+
+## 10. Text-to-Speech Engine and Synthesis Output (TASK-0601)
+
+`POST /api/v1/voice/tts` renders the persona text with the configured speech synthesis engine. It then applies the requested DSP filters to that audio and returns the audio.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `RUNEFOBLE_VOICE_TTS_ENGINE` | `espeak-ng` | Speech synthesis engine. `espeak-ng` is the only supported value. |
+| `RUNEFOBLE_VOICE_TTS_BINARY` | `espeak-ng` | Path or name of the engine binary. The adapter runs `espeak-ng --stdout -v <voice> --stdin` and sends the text on stdin. |
+
+The engine must be installed in the runtime image. The voice agent does not bundle it.
+
+### Output Contract
+
+- The response carries a WAV file in `audio_base64`. `duration_ms` is computed from the sample count and `sample_rate_hz`.
+- The response has no stream URL. `content_sha256` identifies the audio.
+- The voiced text is the request `text`. `conditioned_text` is returned as metadata only.
+- `POST /api/v1/voice/dsp/apply` filters supplied audio only. It returns `422` when `audio_base64` is missing.
+
+### Failure Behaviour
+
+When the engine cannot start, exits with an error, times out, or returns no audio, the route returns `503` with `{"detail": {"error": "speech_synthesis_unavailable", "engine": "espeak-ng", "message": "..."}}`. No tone or placeholder audio is returned. The health route reports `"tts_engine": "espeak-ng"`.
+
+### Test Setup
+
+Blackbox tests inject a deterministic fake (`tests/helpers/fixture_synthesizer.py`) through the `fake_speech_synthesizer` fixture. The fake renders 40 ms of tone per character, so audio length follows the text. Failure tests set `RUNEFOBLE_VOICE_TTS_BINARY` to a missing path or to a script that exits with an error. See `tests/test_blackbox_voice_tts.py`.
