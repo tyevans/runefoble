@@ -26,6 +26,14 @@ from soundscape.dependencies import (
 )
 from soundscape.main import app as soundscape_app
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -45,7 +53,7 @@ def clean_environment() -> Generator[None]:
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(soundscape_app)
+    return TestClient(soundscape_app, headers=auth_headers("soundscape-tester"))
 
 
 @pytest.fixture
@@ -64,9 +72,28 @@ def sample_stem_volumes() -> dict[str, float]:
 
 
 @pytest.fixture
-def sample_foley_cue() -> dict[str, Any]:
+def soundscape_session_id(trusted_ws_issuer) -> str:
+    """Create a campaign and a session through the gateway frontdoor. The default subject owns both."""
+    gateway = TestClient(gateway_app)
+    campaign = gateway.post(
+        "/api/v1/campaigns",
+        json={"title": "Soundscape Vault", "setting": "Underdark"},
+        headers=auth_headers("soundscape-tester"),
+    )
+    assert campaign.status_code == 201, campaign.text
+    session = gateway.post(
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+        json={"title": "Echoing Depths"},
+        headers=auth_headers("soundscape-tester"),
+    )
+    assert session.status_code == 201, session.text
+    return session.json()["id"]
+
+
+@pytest.fixture
+def sample_foley_cue(soundscape_session_id: str) -> dict[str, Any]:
     return {
-        "session_id": "sess-ui-01",
+        "session_id": soundscape_session_id,
         "cue_name": "thunder",
         "cue_type": "foley",
         "volume_gain": 1.1,

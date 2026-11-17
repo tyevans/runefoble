@@ -20,6 +20,7 @@ from uuid import uuid4
 import asyncpg
 import pytest
 from campaign_lore.dependencies import get_spicedb_client
+from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import create_app
 from fastapi.testclient import TestClient
 from runefoble_platform.config import PlatformSettings
@@ -30,6 +31,22 @@ from tests.helpers.lore_backends import (
     TREASURE_QUERY,
     UNDEAD_QUERY,
 )
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+VISITOR_SUBJECT = "lore-test-visitor"
+
+
+def _bearer(user_id: str) -> dict[str, str]:
+    """Return headers carrying a signed bearer token for `user_id`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
+
+
+@pytest.fixture(autouse=True)
+def _trust_signing_issuer():
+    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    yield
+    set_zitadel_auth_service(None)
 
 
 def _use_postgres_event_store(dsn: str):
@@ -80,7 +97,7 @@ async def test_pgvector_ranking_survives_restart_without_reingest(postgres_servi
     campaign_id = str(uuid4())
 
     store_before = _use_postgres_event_store(dsn)
-    with TestClient(create_app()) as first:
+    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as first:
         for title, content in LORE_DOCUMENTS:
             resp = first.post(
                 "/api/v1/lore/documents",
@@ -93,7 +110,7 @@ async def test_pgvector_ranking_survives_restart_without_reingest(postgres_servi
     rows_before = await _vector_rows(dsn, campaign_id)
 
     store_after = _use_postgres_event_store(dsn)
-    with TestClient(create_app()) as second:
+    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as second:
         undead_after = _ranked_titles(second, campaign_id, UNDEAD_QUERY)
         treasure_after = _ranked_titles(second, campaign_id, TREASURE_QUERY)
     await store_after.close()
@@ -121,7 +138,7 @@ async def test_lore_projection_survives_restart(postgres_service):
     await spicedb.write_relationship("campaign", campaign_id, "run_session", "user", dm_user)
 
     store_before = _use_postgres_event_store(dsn)
-    with TestClient(create_app()) as first:
+    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as first:
         public_resp = first.post(
             "/api/v1/lore/documents",
             json={
@@ -160,15 +177,15 @@ async def test_lore_projection_survives_restart(postgres_service):
     await store_before.close()
 
     store_after = _use_postgres_event_store(dsn)
-    with TestClient(create_app()) as second:
+    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as second:
         player_search = second.post(
             "/api/v1/lore/search",
             json={
                 "campaign_id": campaign_id,
                 "query": "Sunblade undead",
-                "caller_id": player_user,
                 "limit": 5,
             },
+            headers=_bearer(player_user),
         )
         assert player_search.status_code == 200, player_search.text
         titles = [r["document_title"] for r in player_search.json()["results"]]
@@ -179,9 +196,9 @@ async def test_lore_projection_survives_restart(postgres_service):
             json={
                 "campaign_id": campaign_id,
                 "query": "Dragon Eye gem secret vault",
-                "caller_id": player_user,
                 "limit": 5,
             },
+            headers=_bearer(player_user),
         )
         assert "Vault of the Dragon Eye" not in [
             r["document_title"] for r in secret_for_player.json()["results"]
@@ -192,9 +209,9 @@ async def test_lore_projection_survives_restart(postgres_service):
             json={
                 "campaign_id": campaign_id,
                 "query": "Dragon Eye gem secret vault",
-                "caller_id": dm_user,
                 "limit": 5,
             },
+            headers=_bearer(dm_user),
         )
         assert "Vault of the Dragon Eye" in [
             r["document_title"] for r in secret_for_dm.json()["results"]
@@ -206,7 +223,7 @@ async def test_lore_projection_survives_restart(postgres_service):
         )
         assert resolve.json()["canonical_name"] == "Sir Gareth"
 
-        doc = second.get(f"/api/v1/lore/documents/{public_id}", headers={"x-user-id": player_user})
+        doc = second.get(f"/api/v1/lore/documents/{public_id}", headers=_bearer(player_user))
         assert doc.status_code == 200, doc.text
         assert doc.json()["title"] == "Knights of the Sunblade"
     await store_after.close()
@@ -217,7 +234,7 @@ def test_extracted_entities_record_pattern_provenance():
     """Entities from regex extraction are recorded as pattern extraction, never as LLM output."""
     set_event_store(None)
     campaign_id = str(uuid4())
-    with TestClient(create_app()) as client:
+    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as client:
         resp = client.post(
             "/api/v1/lore/documents",
             json={
@@ -240,7 +257,7 @@ def test_extracted_entities_record_pattern_provenance():
 def test_alias_consolidation_requires_an_existing_document():
     """A consolidation cannot be recorded against a document that does not exist."""
     set_event_store(None)
-    with TestClient(create_app()) as client:
+    with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as client:
         resp = client.post(
             "/api/v1/lore/aliases/consolidate",
             json={

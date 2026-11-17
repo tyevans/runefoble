@@ -8,6 +8,13 @@ import pytest
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 def test_facade_re_exports_backward_compatibility():
     """Verify importing from board_state.models exposes all public schemas and DTOs."""
@@ -181,7 +188,9 @@ def test_board_state_transitions_behavior():
 async def test_frontdoor_board_endpoints():
     """Verify frontdoor HTTP operations through public REST endpoints."""
     transport = ASGITransport(app=board_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test", headers=bearer("user-test")
+    ) as client:
         created = await client.post(
             "/api/v1/boards", json={"session_id": "session-test-modular", "cols": 12, "rows": 12}
         )

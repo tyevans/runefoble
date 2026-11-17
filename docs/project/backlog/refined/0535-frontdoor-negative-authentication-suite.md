@@ -67,3 +67,10 @@ The suite is the test plan. Each case is one public request and one observable r
 3. No test in the repo sets `RUNEFOBLE_AUTH_DEV_MODE=true` to obtain a pass, except this module's negative guard in step 3.
 4. The authentication test count in `docs/reference` (if stated) is updated.
 5. No file exceeds 500 lines.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- tests/helpers/zitadel_auth.py:56 and :88 build tokens with issuer http://zitadel:8080 and a JWKS URL on the same host. Align the helper with the chart issuer and the in-cluster JWKS setting from TASK-0687.
+- Move the gateway frontdoor tests that still send X-User-Id (for example tests/test_blackbox_campaign_detail_view.py) to the signed-token helper.

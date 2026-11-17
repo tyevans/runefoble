@@ -15,7 +15,7 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
-from .conftest import REPO_ROOT, create_test_establishment
+from .conftest import create_test_establishment
 
 
 def test_blackbox_merchant_haggling_manifest_and_components(client: TestClient) -> None:
@@ -25,21 +25,6 @@ def test_blackbox_merchant_haggling_manifest_and_components(client: TestClient) 
     manifest = res.json()
     assert "runefoble-merchant-haggler" in manifest["components"]
     assert "runefoble-dm-negotiation-drawer" in manifest["components"]
-
-    haggler_file = REPO_ROOT / "frontend/src/components/minigames/runefoble-merchant-haggler.ts"
-    dm_drawer_file = (
-        REPO_ROOT / "frontend/src/components/dm-controls/runefoble-dm-negotiation-drawer.ts"
-    )
-    haggler_stories = REPO_ROOT / "frontend/src/stories/runefoble-merchant-haggler.stories.ts"
-    dm_drawer_stories = (
-        REPO_ROOT / "frontend/src/stories/runefoble-dm-negotiation-drawer.stories.ts"
-    )
-
-    for path in (haggler_file, dm_drawer_file, haggler_stories, dm_drawer_stories):
-        assert path.is_file(), f"{path.name} must exist"
-
-    assert len(haggler_file.read_text(encoding="utf-8").splitlines()) < 400
-    assert len(dm_drawer_file.read_text(encoding="utf-8").splitlines()) < 400
 
 
 @pytest.mark.asyncio

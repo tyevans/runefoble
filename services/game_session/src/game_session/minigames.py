@@ -227,6 +227,7 @@ class TavernGameAggregate(DeclarativeAggregate[TavernGameState]):
         character_id: str,
         con_roll: int | None = None,
         speech_text: str | None = None,
+        authorization: str | None = None,
     ) -> dict[str, Any]:
         """Process a round in a drinking contest and apply progressive intoxication.
 
@@ -245,7 +246,7 @@ class TavernGameAggregate(DeclarativeAggregate[TavernGameState]):
 
         dsp_result = None
         if speech_text:
-            dsp_result = await apply_tavern_voice_dsp(speech_text, new_stage)
+            dsp_result = await apply_tavern_voice_dsp(speech_text, new_stage, authorization)
 
         self.create_event(
             IntoxicationLevelChanged,

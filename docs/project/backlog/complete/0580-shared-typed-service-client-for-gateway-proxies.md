@@ -1,7 +1,7 @@
 ---
 id: '0580'
 title: Shared Typed Service Client for Gateway Proxies
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0624
@@ -24,7 +24,7 @@ target_release: 0.9.0
 # TASK-0580: Shared Typed Service Client for Gateway Proxies
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Add one typed HTTP client for calls from a gateway to an owning bounded context. The client lives in `libs/runefoble_platform`. It sets the timeout for each call, injects trace headers, forwards the verified caller identity, and maps upstream failures to HTTP 502 or 503. It has no fallback. Later router tasks (TASK-0581 to TASK-0596) use this client and delete their own canned or in-process code.

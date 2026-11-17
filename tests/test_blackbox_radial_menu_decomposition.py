@@ -17,6 +17,13 @@ import pytest
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 @pytest.mark.asyncio
 async def test_frontdoor_radial_actions_execution() -> None:
@@ -24,7 +31,9 @@ async def test_frontdoor_radial_actions_execution() -> None:
     transport = ASGITransport(app=board_app)
     session_id = f"radial-sess-{uuid4().hex[:8]}"
 
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test", headers=bearer("user-test")
+    ) as client:
         # 1. Create board through the public POST frontdoor
         init_res = await client.post(
             "/api/v1/boards", json={"session_id": session_id, "cols": 12, "rows": 12}

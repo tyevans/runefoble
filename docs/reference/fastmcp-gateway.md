@@ -20,7 +20,7 @@ gateway/mcp/src/gateway_mcp/
 │   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
 ├── main.py                # CLI execution wrapper
 ├── server.py              # FastMCP orchestration shell and module mounting
-├── settings.py            # Upstream service URLs (BOARD_STATE_URL, CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL)
+├── settings.py            # Upstream service URLs (BOARD_STATE_URL, CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL, THE_WATCHER_URL)
 ├── tools/                 # MCP tool implementations (< 180 lines each)
 │   ├── dice.py            # Dice notation parsing and rolling (roll_dice)
 │   ├── board.py           # Tactical board and encounter tools (HTTP-backed by board_state)
@@ -49,9 +49,9 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | `add_condition` / `apply_condition` | `character_id: str`, `condition: str`, `duration_rounds: int`, `source: str` | Impose a status condition through `character_sheet` (`POST /api/v1/characters/{character_id}/conditions`). Returns the active conditions. Both tools share one route. |
 | `query_encounter_state` | `encounter_id: str` | Read an encounter. Round, active combatant, and turn order come from `game_session` (`GET /api/v1/sessions/{session_id}/combat`). Tokens, grid, and active hazards come from `board_state`. The `encounter_id` is the game session id. Returns `in_combat`, `round`, `active_combatant_id`, `turn_order`, `session_id`, `grid_dimensions`, `tokens`, and `active_hazards`. |
 | `create_encounter` | `encounter_name: str`, `terrain: str`, `enemies: list[{name, x, y, hp?}]` | Create a 10x8 board in `board_state` and place enemy monster tokens. Returns the board session id as `encounter_id`. This id is not a game session id, so `query_encounter_state` cannot read round or turn order for it. |
-| `narrate_with_the_watcher` | `scene_prompt: str`, `player_actions: str` | Invoke The Watcher AI GM for immersive narration and environmental cues. |
-| `execute_agent_action_plan` | `session_id: str`, `actions: list` | Sequentially execute multi-turn action plan with step validation and timing. |
-| `query_monster_stat_block` | `monster_name: str` | Retrieve full canonical monster stat block, AC, HP, CR, actions, and traits. |
+| `narrate_with_the_watcher` | `campaign_id: str`, `session_id: str`, `scene_prompt: str`, `player_actions: str`, `scene_environment: str`, `tone: str` (default `dark_fantasy`) | Call The Watcher route `POST /api/v1/watcher/narrate`. Returns The Watcher response unchanged: `narrative`, `sensory_details`, `suggested_dm_prompts`, `tension_level`, `source`, and `degraded`. The gateway adds no narration of its own. If the inference worker fails, the tool returns an error. |
+| `execute_agent_action_plan` | `session_id: str`, `campaign_id: str`, `actions: list[{tool, actor_name, description?, parameters}]` | Propose each step to The Watcher (`POST /api/v1/watcher/actions/propose`), in order. Each step returns the pending action that The Watcher stored. The DM can veto or change a pending action before it takes effect. No board state changes in this tool. Planning stops at the first failed step. An unknown tool name fails its step before any call. |
+| `query_monster_stat_block` | `monster_name: str` | Read the monster stat block from `rules_compendium` (`GET /api/v1/compendium/monsters/{name}`). An unknown name returns a tool error. |
 | `calculate_encounter_balance` | `party_levels: list[int]`, `target_difficulty: str` | Call the `rules_compendium` route `POST /api/v1/compendium/encounters/balance`. Returns its CR XP thresholds and recommended monster group. |
 
 ### Upstream Service Calls
@@ -64,6 +64,9 @@ Board, encounter, and character tools hold no board, combat, or character state.
 | `character_sheet_url` | `CHARACTER_SHEET_URL` | `http://localhost:8003` | `character_sheet` |
 | `game_session_url` | `GAME_SESSION_URL` | `http://localhost:8004` | `game_session` |
 | `rules_compendium_url` | `RULES_COMPENDIUM_URL` | `http://localhost:8007` | `rules_compendium` |
+| `the_watcher_url` | `THE_WATCHER_URL` | `http://localhost:8001` | `the_watcher` |
+
+The client forwards the `Authorization: Bearer` token of the MCP request, when the transport carries one. The gateway never creates a token. Without a token, the client sends no `Authorization` header. The upstream service then decides the result.
 
 An upstream 5xx status or an unreachable service raises `ServiceUnavailableError`. An upstream 4xx status raises `ServiceRejectedError`. FastMCP reports both to the caller as an MCP tool error result. The gateway never returns fallback data.
 
@@ -73,9 +76,10 @@ Dynamic FastMCP resources supply structured context to LLMs without requiring ex
 
 | Resource URI | MIME Type | Description |
 |---|---|---|
-| `session://active` | `application/json` | Active session state including tokens, threat level, and scene atmosphere. |
-| `session://{session_id}/state` | `application/json` | Specific session state including active tokens and atmosphere. |
-| `encounter://current` | `application/json` | Board state (tokens, grid, and hazards) of the active encounter from `board_state`. Round and turn order are not included; use `query_encounter_state` for them. |
+| `session://{session_id}/state` | `application/json` | Stored session state from `game_session` (`GET /api/v1/sessions/{session_id}`): title, status, turn, combat round, and participants. An unknown session id returns a resource error. |
+| `encounter://{session_id}/current` | `application/json` | Encounter of a game session: tokens, grid, and hazards from `board_state`, plus round and turn order from `game_session`. The session id is the encounter id. An unknown id returns a resource error. |
+
+The `session://active` and `encounter://current` resources were removed. They had no session id, so they could not read the session that a caller asked for.
 
 ## Prompt Templates
 

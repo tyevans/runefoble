@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import base64
 
-from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from voice_agent.auth import VoicePrincipal, get_voice_principal
 from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.dsp.pipeline import StreamPipelineFilter
 from voice_agent.dsp.presets import NPCVoicePreset, get_preset, list_presets
 
-router = APIRouter(tags=["Vocal Modulator"])
+router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Vocal Modulator"])
 AUTH_SPECS = (
     ("game_session", "control"),
     ("session", "control"),
@@ -47,14 +48,6 @@ class ModulateVoiceResponse(BaseModel):
     status: str = "success"
 
 
-def _extract_user_id(request: Request, x_user_id: str | None, authorization: str | None) -> str:
-    if x_user_id:
-        return x_user_id
-    if authorization and authorization.startswith("Bearer "):
-        return authorization[7:].strip()
-    return request.query_params.get("user_id") or "dm_user"
-
-
 async def _check_session_auth(coord, session_id: str, user_id: str) -> None:
     for rtype, perm in AUTH_SPECS:
         if await coord.spicedb.check_permission(rtype, session_id, perm, "user", user_id):
@@ -75,12 +68,10 @@ async def get_presets():
 @router.post("/api/v1/voice/modulate", response_model=ModulateVoiceResponse)
 async def modulate_voice(
     req: ModulateVoiceRequest,
-    request: Request,
-    x_user_id: str | None = Header(None, alias="X-User-Id"),
-    authorization: str | None = Header(None, alias="Authorization"),
+    principal: VoicePrincipal,
 ):
     """Set active preset or fine-tune pitch/formant parameters on an active stream session."""
-    user_id = _extract_user_id(request, x_user_id, authorization)
+    user_id = principal.user_id
     coord = get_voice_room_coordinator()
     await _check_session_auth(coord, req.session_id, user_id)
 

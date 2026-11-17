@@ -21,6 +21,9 @@ from voice_agent.main import app
 from voice_agent.synthesis_engine import set_speech_synthesizer
 
 from tests.helpers.audio_synth import generate_pcm_sine
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 TTS_URL = "/api/v1/voice/tts"
 DSP_URL = "/api/v1/voice/dsp/apply"
@@ -56,7 +59,7 @@ def _speak(client: TestClient, text: str, **extra) -> dict:
 @pytest.fixture
 def client(fake_speech_synthesizer) -> TestClient:
     """Voice app with the fake engine injected at the composition root."""
-    return TestClient(app)
+    return TestClient(app, headers=voice_auth_headers())
 
 
 @pytest.fixture
@@ -140,7 +143,7 @@ def test_unavailable_engine_returns_503_and_no_audio(
 ):
     """When the engine binary is missing, the route fails with 503 and returns no audio."""
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(tmp_path / "missing-espeak-ng"))
-    client = TestClient(app)
+    client = TestClient(app, headers=voice_auth_headers())
 
     resp = client.post(TTS_URL, json={"text": LONG_TEXT, "persona_id": "watcher_dm"})
 
@@ -160,7 +163,7 @@ def test_engine_failure_exit_status_returns_503(
     script.write_text("#!/bin/sh\necho 'voice data missing' >&2\nexit 2\n")
     script.chmod(script.stat().st_mode | stat.S_IXUSR)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(script))
-    client = TestClient(app)
+    client = TestClient(app, headers=voice_auth_headers())
 
     resp = client.post(TTS_URL, json={"text": LONG_TEXT, "persona_id": "watcher_dm"})
 
@@ -178,7 +181,7 @@ def test_production_adapter_returns_the_audio_the_engine_wrote(
     script.write_text(f'#!/bin/sh\ncat "{engine_wav}"\n')
     script.chmod(script.stat().st_mode | stat.S_IXUSR)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(script))
-    client = TestClient(app)
+    client = TestClient(app, headers=voice_auth_headers())
 
     data = _speak(client, LONG_TEXT)
 
@@ -199,7 +202,7 @@ def test_health_reports_active_tts_engine(
     script.chmod(0o755)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(script))
 
-    resp = TestClient(app).get("/healthz")
+    resp = TestClient(app, headers=voice_auth_headers()).get("/healthz")
 
     assert resp.status_code == 200, resp.text
     assert resp.json()["tts_engine"] == "espeak-ng"

@@ -8,6 +8,7 @@ to the caller as an MCP tool error result.
 from __future__ import annotations
 
 from typing import Any, Literal
+from urllib.parse import quote
 from uuid import UUID
 
 import httpx
@@ -55,8 +56,16 @@ def _character_path(character_id: str) -> str:
 class ServiceClient:
     """Calls the board_state, character_sheet, game_session, and rules_compendium public routes."""
 
-    def __init__(self, settings: GatewayMcpSettings | None = None) -> None:
+    def __init__(
+        self, settings: GatewayMcpSettings | None = None, *, bearer: str | None = None
+    ) -> None:
+        """Create a client. `bearer` is the MCP caller's Zitadel token, forwarded as is.
+
+        Without a bearer the client sends no Authorization header. The upstream service
+        decides whether that request is allowed.
+        """
         self._settings = settings or load_settings()
+        self._bearer = bearer
 
     async def _request(
         self,
@@ -66,11 +75,12 @@ class ServiceClient:
         path: str,
         json_body: dict[str, Any] | None = None,
     ) -> Any:
+        headers = {"Authorization": f"Bearer {self._bearer}"} if self._bearer else None
         try:
             async with httpx.AsyncClient(
                 base_url=base_url, timeout=DEFAULT_TIMEOUT_SECONDS
             ) as http:
-                response = await http.request(method, path, json=json_body)
+                response = await http.request(method, path, json=json_body, headers=headers)
         except httpx.HTTPError as exc:
             raise ServiceUnavailableError(f"{service} is unreachable at {base_url}: {exc}") from exc
 
@@ -103,6 +113,16 @@ class ServiceClient:
             self._settings.board_state_url,
             "GET",
             f"/api/v1/boards/{session_id}",
+        )
+        return dict(result)
+
+    async def get_session(self, session_id: str) -> dict[str, Any]:
+        """Read the stored game session state from game_session."""
+        result = await self._request(
+            "game_session",
+            self._settings.game_session_url,
+            "GET",
+            f"/api/v1/sessions/{quote(session_id, safe='')}",
         )
         return dict(result)
 
@@ -229,6 +249,38 @@ class ServiceClient:
             "POST",
             f"/api/v1/boards/{session_id}/tokens/{token_id}/move",
             {"to_x": to_x, "to_y": to_y, "initiated_by": initiated_by},
+        )
+        return dict(result)
+
+    async def get_monster(self, name: str) -> dict[str, Any]:
+        """Read a monster stat block from rules_compendium."""
+        result = await self._request(
+            "rules_compendium",
+            self._settings.rules_compendium_url,
+            "GET",
+            f"/api/v1/compendium/monsters/{quote(name, safe='')}",
+        )
+        return dict(result)
+
+    async def narrate(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Ask The Watcher for DM narration. The response is returned as The Watcher sent it."""
+        result = await self._request(
+            "the_watcher",
+            self._settings.the_watcher_url,
+            "POST",
+            "/api/v1/watcher/narrate",
+            request,
+        )
+        return dict(result)
+
+    async def propose_action(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Propose an agent action to The Watcher. The DM can veto it before it takes effect."""
+        result = await self._request(
+            "the_watcher",
+            self._settings.the_watcher_url,
+            "POST",
+            "/api/v1/watcher/actions/propose",
+            request,
         )
         return dict(result)
 

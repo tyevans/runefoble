@@ -31,7 +31,6 @@ class CreateCharacterRequest(BaseModel):
 
 class AssignCampaignRequest(BaseModel):
     campaign_id: str | None = None
-    assigned_by: str | None = None
 
 
 class HealthChangeRequest(BaseModel):

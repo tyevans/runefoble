@@ -3,8 +3,10 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Header, Request
+from fastapi import Depends, Request
+from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -24,6 +26,7 @@ _encounter_repo: AggregateRepository[EncounterAggregate] = create_aggregate_repo
     EncounterAggregate
 )
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
+_zitadel_auth_service: ZitadelAuthService | None = None
 
 
 def get_compendium_repo() -> AggregateRepository[CompendiumAggregate]:
@@ -59,21 +62,40 @@ def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None
     _spicedb_client = client
 
 
+def get_zitadel_auth_service() -> ZitadelAuthService:
+    """Provide the Zitadel verifier that this service trusts, built from platform settings."""
+    global _zitadel_auth_service
+    if _zitadel_auth_service is None:
+        _zitadel_auth_service = ZitadelAuthService(
+            issuer=settings.zitadel_issuer,
+            audience=settings.zitadel_audience,
+            jwks_url=settings.zitadel_jwks_url,
+        )
+    return _zitadel_auth_service
+
+
+def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
+    """Override the Zitadel verifier for tests."""
+    global _zitadel_auth_service
+    _zitadel_auth_service = service
+
+
+get_current_principal = require_principal(get_zitadel_auth_service)
+
+
 def get_current_user_id(
-    x_user_id: Annotated[str | None, Header(alias="x-user-id")] = None,
-) -> str | None:
-    """Extract authenticated caller identity from x-user-id header."""
-    return x_user_id
+    principal: Annotated[VerifiedPrincipal, Depends(get_current_principal)],
+) -> str:
+    """Return the subject of the verified bearer token. Raise 401 when no token verifies."""
+    return principal.user_id
 
 
 async def check_user_can_view_campaign(
-    user_id: str | None,
+    user_id: str,
     campaign_id: UUID,
     spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> bool:
     """Check if user can view campaign resources under Zanzibar schema."""
-    if not user_id:
-        return True
     return await spicedb.check_permission(
         resource_type="campaign",
         resource_id=str(campaign_id),
@@ -84,13 +106,11 @@ async def check_user_can_view_campaign(
 
 
 async def check_user_can_manage_homebrew(
-    user_id: str | None,
+    user_id: str,
     campaign_id: UUID,
     spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> bool:
     """Check if user can manage/register homebrew rules under Zanzibar schema."""
-    if not user_id:
-        return False
     # Check if user has manage or run_session on campaign
     can_run = await spicedb.check_permission(
         resource_type="campaign",
@@ -108,3 +128,6 @@ async def check_user_can_manage_homebrew(
         subject_type="user",
         subject_id=user_id,
     )
+
+
+CurrentUserId = Annotated[str, Depends(get_current_user_id)]

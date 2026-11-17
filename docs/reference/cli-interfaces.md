@@ -25,7 +25,8 @@
 | `make dev-api` | Runs the API Gateway locally |
 | `make dev-worker` | Runs AI inference worker locally |
 | `make test` | Executes the Python test suite (`uv run pytest`, default per-test timeout of 300 seconds from `[tool.pytest.ini_options]`; a test that exceeds it fails with a timeout error) and builds the frontend |
-| `make lint` | Runs typechecking and Helm chart linter |
+| `make lint` | Runs typechecking (frontend and e2e suite) and Helm chart linter |
+| `make test-bdd` | Typechecks `e2e/` (`pnpm run e2e:typecheck`), fails on unused Playwright BDD step definitions (`uv run python scripts/check_e2e_unused_steps.py`), and runs `bddgen`. Does not launch browsers |
 | `make build` | Produces production frontend bundle and static Storybook documentation |
 | `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks |
 | `make prd-decompose` | Decomposes PRDs into ADR spikes and vertical slices (`ARGS="--prd PRD-0014"`) |

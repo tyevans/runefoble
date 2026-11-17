@@ -19,6 +19,13 @@ from tests.helpers.fixture_map_generator import (
     UnavailableMapGenerator,
 )
 from tests.helpers.silo_fixtures import FakeSilo
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 ROUTE = "/api/v1/forge/battlemap"
 SIZE = {"width_cells": 20, "height_cells": 20, "cell_size_px": 64}
@@ -26,7 +33,7 @@ SIZE = {"width_cells": 20, "height_cells": 20, "cell_size_px": 64}
 
 @pytest.fixture
 def forge_client() -> TestClient:
-    return TestClient(asset_forge_app)
+    return TestClient(asset_forge_app, headers=auth_headers("forge-tester"))
 
 
 def _forge(client: TestClient, prompt: str, seed: int | None = None) -> dict:

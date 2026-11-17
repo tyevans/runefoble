@@ -1,51 +1,74 @@
-"""Agent action planning and Watcher DM orchestration tools."""
+"""Agent action planning and Watcher DM orchestration tools.
+
+The Watcher owns narration and action decisions. These tools forward agent requests to
+the_watcher public routes and return its answer unchanged.
+"""
 
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
+
+from gateway_mcp.clients import ServiceClient, ServiceError
+from gateway_mcp.clients.caller import caller_bearer
+from mcp.server.fastmcp import Context
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
 
 _mcp_instance: Any = None
 
+Tone = Literal["dark_fantasy", "epic_heroic", "tense_mystery", "whimsical", "gritty"]
 
-def narrate_with_the_watcher(scene_prompt: str, player_actions: str) -> dict[str, Any]:
-    """Invoke The Watcher AI Game Master to arbitrate actions and generate immersive narration."""
-    return {
-        "scene_prompt": scene_prompt,
-        "player_actions": player_actions,
-        "narration": (
-            f"The Watcher weaves fate: As {player_actions}, the stone beneath your boots trembles. "
-            "Ancient glyphs ignite along the chamber ceiling."
-        ),
-        "environmental_effects": ["flickering_shadows", "low_rumble"],
+
+async def narrate_with_the_watcher(
+    campaign_id: str,
+    session_id: str,
+    scene_prompt: str,
+    player_actions: str,
+    scene_environment: str,
+    tone: Tone = "dark_fantasy",
+    ctx: Context | None = None,
+) -> dict[str, Any]:
+    """Ask The Watcher AI Game Master to narrate the scene after the player actions."""
+    request = {
+        "campaign_id": campaign_id,
+        "session_id": session_id,
+        "prompt": f"{scene_prompt}\nPlayer actions: {player_actions}",
+        "scene_environment": scene_environment,
+        "tone": tone,
     }
+    return await ServiceClient(bearer=caller_bearer(ctx)).narrate(request)
 
 
 async def execute_agent_action_plan(
-    session_id: str, actions: list[dict[str, Any]]
+    session_id: str,
+    campaign_id: str,
+    actions: list[dict[str, Any]],
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Sequentially validate and execute a multi-turn agent action plan, collecting step results and timings."""
+    """Propose each step of an agent action plan to The Watcher, in order.
+
+    Each step becomes a pending action. The DM can veto or change it before it takes
+    effect. Planning stops at the first step that fails, and later steps do not run.
+    """
+    client = ServiceClient(bearer=caller_bearer(ctx))
     step_results: list[dict[str, Any]] = []
     total_duration_ms: float = 0.0
 
-    def _fail(
-        err: str, idx: int, tool_name: str, duration: float = 0.0, output: Any = None
-    ) -> dict[str, Any]:
-        entry: dict[str, Any] = {
-            "step": idx + 1,
-            "tool": tool_name,
-            "status": "error",
-            "error": err,
-            "duration_ms": duration,
-        }
-        if output is not None:
-            entry["output"] = output
-        step_results.append(entry)
+    def _fail(err: str, idx: int, tool_name: str, duration: float = 0.0) -> dict[str, Any]:
+        step_results.append(
+            {
+                "step": idx + 1,
+                "tool": tool_name,
+                "status": "error",
+                "error": err,
+                "duration_ms": duration,
+            }
+        )
         return {
             "status": "error",
             "success": False,
             "session_id": session_id,
+            "campaign_id": campaign_id,
             "error": err,
             "failed_step": idx + 1,
             "total_steps": len(actions),
@@ -65,6 +88,10 @@ async def execute_agent_action_plan(
         if tool is None:
             return _fail(f"Invalid tool: '{tool_name}' not found", idx, tool_name)
 
+        actor_name = action.get("actor_name")
+        if not actor_name:
+            return _fail("Action missing 'actor_name' specification", idx, tool_name)
+
         raw = action.get("parameters") or action.get("arguments") or action.get("args")
         params = (
             dict(raw)
@@ -72,57 +99,45 @@ async def execute_agent_action_plan(
             else {
                 k: v
                 for k, v in action.items()
-                if k not in {"tool", "name", "tool_name", "step_id", "description"}
+                if k not in {"tool", "name", "tool_name", "actor_name", "step_id", "description"}
             }
         )
+        target = params.get("target", params.get("token_id"))
 
-        if "session_id" not in params and tool_name in {
-            "move_board_token",
-            "inspect_tactical_board",
-        }:
-            params["session_id"] = session_id
-
-        if tool_name == "move_board_token":
-            to_x, to_y = params.get("to_x"), params.get("to_y")
-            if to_x is not None and to_y is not None and not (0 <= to_x < 8 and 0 <= to_y < 8):
-                return _fail(
-                    f"Coordinates ({to_x}, {to_y}) out of grid bounds (8x8)",
-                    idx,
-                    tool_name,
-                )
+        request = {
+            "session_id": session_id,
+            "campaign_id": campaign_id,
+            "actor_name": actor_name,
+            "action_type": tool_name,
+            "description": action.get("description") or tool_name,
+            "target": str(target) if target is not None else None,
+            "parameters": params,
+        }
 
         t0 = time.perf_counter()
         try:
-            output = await tool.run(params)
-            duration_ms = round((time.perf_counter() - t0) * 1000, 2)
-            total_duration_ms += duration_ms
-
-            if isinstance(output, dict) and output.get("status") == "error":
-                return _fail(
-                    output.get("error", "Step returned error status"),
-                    idx,
-                    tool_name,
-                    duration_ms,
-                    output,
-                )
-
-            step_results.append(
-                {
-                    "step": idx + 1,
-                    "tool": tool_name,
-                    "status": "success",
-                    "output": output,
-                    "duration_ms": duration_ms,
-                }
-            )
-        except Exception as exc:
+            pending = await client.propose_action(request)
+        except ServiceError as exc:
             duration_ms = round((time.perf_counter() - t0) * 1000, 2)
             return _fail(str(exc), idx, tool_name, duration_ms)
+
+        duration_ms = round((time.perf_counter() - t0) * 1000, 2)
+        total_duration_ms += duration_ms
+        step_results.append(
+            {
+                "step": idx + 1,
+                "tool": tool_name,
+                "status": "success",
+                "output": pending,
+                "duration_ms": duration_ms,
+            }
+        )
 
     return {
         "status": "success",
         "success": True,
         "session_id": session_id,
+        "campaign_id": campaign_id,
         "total_steps": len(actions),
         "completed_steps": len(actions),
         "steps": step_results,

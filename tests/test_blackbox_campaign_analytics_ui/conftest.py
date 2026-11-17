@@ -21,6 +21,13 @@ from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -71,4 +78,4 @@ def client(
     set_storage(storage)
     set_worker(worker)
     set_spicedb_client(spicedb_client)
-    return TestClient(app)
+    return TestClient(app, headers=bearer("user-test"))

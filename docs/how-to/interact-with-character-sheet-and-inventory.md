@@ -2,6 +2,10 @@
 
 This guide explains how to use the interactive digital character sheet microfrontend (`<runefoble-character-sheet>`) to equip gear, manage inventory encumbrance, inspect active conditions and absence penalties, and track spell slots.
 
+## Authentication
+
+Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
+
 ---
 
 ## 1. Visual Paper Doll & Click-to-Equip Interaction
@@ -168,13 +172,14 @@ To attach or detach an adventurer to an active campaign party, issue a `PATCH` r
 ```http
 PATCH /api/v1/characters/{character_id}/campaign
 Content-Type: application/json
-x-user-id: usr-dm-01
+Authorization: Bearer {TOKEN}
 
 {
-  "campaign_id": "camp-9812-frontier",
-  "assigned_by": "usr-dm-01"
+  "campaign_id": "camp-9812-frontier"
 }
 ```
+
+The service records the verified caller from the bearer token as `assigned_by`. The request body does not set it.
 
 To unassign an adventurer back to free agent status in the player roster:
 ```json

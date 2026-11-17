@@ -21,6 +21,9 @@ from voice_agent.stt import set_streaming_pipeline
 
 from tests.helpers.audio_synth import generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 TRANSCRIBE_URL = "/api/v1/voice/transcribe"
 SESSION_STREAM = "runefoble.events.session"
@@ -64,7 +67,7 @@ def production_engine_client(
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
     set_streaming_pipeline(None)
     voice_set_event_bus(RedisStreamsEventBus(client=mock_redis))
-    yield TestClient(voice_app)
+    yield TestClient(voice_app, headers=voice_auth_headers())
     voice_set_event_bus(None)
     set_streaming_pipeline(None)
 

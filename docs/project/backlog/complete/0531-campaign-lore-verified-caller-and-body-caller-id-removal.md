@@ -1,7 +1,7 @@
 ---
 id: '0531'
 title: Campaign Lore Derives the Caller Only from the Verified Principal and Removes Body caller_id
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -23,7 +23,7 @@ source_audits:
 # TASK-0531: Campaign Lore Derives the Caller Only from the Verified Principal and Removes Body caller_id
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Lore search takes the caller from a request body field named `caller_id`. A player can send the DM id and read secret lore. Remove the body field. Apply the verified principal to every campaign-lore route. Keep the secret-visibility rule itself with the authorization theme.

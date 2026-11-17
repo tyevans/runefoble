@@ -11,13 +11,31 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
+from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app, create_app
 from fastapi.testclient import TestClient
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+VISITOR_SUBJECT = "lore-test-visitor"
+
+
+def _bearer(user_id: str) -> dict[str, str]:
+    """Return headers carrying a signed bearer token for `user_id`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
+
+
+@pytest.fixture(autouse=True)
+def _trust_signing_issuer():
+    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    yield
+    set_zitadel_auth_service(None)
 
 
 @pytest.fixture
 def client(lore_backends) -> Iterator[TestClient]:
-    with TestClient(app) as client:
+    with TestClient(app, headers=_bearer(VISITOR_SUBJECT)) as client:
         yield client
 
 
@@ -93,7 +111,7 @@ def test_alias_that_is_already_a_canonical_target_conflicts_with_409(client: Tes
 
 def test_consolidate_without_started_service_returns_503_with_message():
     """An application that never ran its lifespan reports a missing backend as 503."""
-    client = TestClient(create_app())
+    client = TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT))
     resp = client.post(
         "/api/v1/lore/aliases/consolidate",
         json={
@@ -109,7 +127,7 @@ def test_consolidate_without_started_service_returns_503_with_message():
 
 def test_openapi_documents_409_and_503_for_consolidate_route():
     """OpenAPI lists the conflict and unavailable responses for the consolidate route."""
-    spec = TestClient(create_app()).get("/openapi.json").json()
+    spec = TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)).get("/openapi.json").json()
     responses = spec["paths"]["/api/v1/lore/aliases/consolidate"]["post"]["responses"]
     assert "409" in responses
     assert "503" in responses

@@ -8,12 +8,21 @@ Governed by:
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
-from soundscape.dependencies import set_spicedb_client
 
-from tests.helpers.leitmotif_fixtures import clean_environment, client, setup_leitmotif_profile
+from tests.helpers.leitmotif_fixtures import (
+    clean_environment,
+    client,
+    leitmotif_session_id_fixture,  # noqa: F401 (registers the leitmotif_session_id fixture)
+    setup_leitmotif_profile,
+)
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 __all__ = ["clean_environment", "client"]
 
@@ -32,10 +41,12 @@ def test_list_timbre_presets_endpoint(client: TestClient) -> None:
     assert lute_preset["label"] == "Lute & Celtic Flute"
 
 
-def test_character_leitmotif_profile_crud_frontdoor(client: TestClient) -> None:
+def test_character_leitmotif_profile_crud_frontdoor(
+    client: TestClient, leitmotif_session_id: str
+) -> None:
     """Verify POST and GET /api/v1/soundscape/leitmotif/profile endpoints."""
     payload = {
-        "session_id": "session-tomb-14",
+        "session_id": leitmotif_session_id,
         "character_id": "char-nadia",
         "character_name": "Nadia",
         "instrument_timbre": "lute",
@@ -54,20 +65,28 @@ def test_character_leitmotif_profile_crud_frontdoor(client: TestClient) -> None:
     assert "lute_somber.ogg" in created["somber_stem_url"]
 
     get_resp = client.get(
-        "/api/v1/soundscape/leitmotif/profile/char-nadia?session_id=session-tomb-14"
+        f"/api/v1/soundscape/leitmotif/profile/char-nadia?session_id={leitmotif_session_id}"
     )
     assert get_resp.status_code == 200
     retrieved = get_resp.json()
     assert retrieved["character_name"] == "Nadia" and retrieved["attack_ms"] == 120
 
 
-def test_trigger_and_audition_leitmotif_frontdoor(client: TestClient) -> None:
+def test_trigger_and_audition_leitmotif_frontdoor(
+    client: TestClient, leitmotif_session_id: str
+) -> None:
     """Verify POST /api/v1/soundscape/leitmotif/trigger stinger audition."""
-    setup_leitmotif_profile(client, "session-tomb-14", "char-valeros", "Valeros", "brass")
+    setup_leitmotif_profile(
+        client,
+        leitmotif_session_id,
+        "char-valeros",
+        "Valeros",
+        "brass",
+    )
     trigger_resp = client.post(
         "/api/v1/soundscape/leitmotif/trigger",
         json={
-            "session_id": "session-tomb-14",
+            "session_id": leitmotif_session_id,
             "character_id": "char-valeros",
             "motif_type": "triumphant",
             "trigger_reason": "audition",
@@ -79,21 +98,21 @@ def test_trigger_and_audition_leitmotif_frontdoor(client: TestClient) -> None:
     assert playback["instrument_timbre"] == "brass" and playback["is_ducked"] is False
     assert playback["scheduled_latency_ms"] <= 250
 
-    active_resp = client.get("/api/v1/soundscape/leitmotif/active?session_id=session-tomb-14")
+    active_resp = client.get(
+        f"/api/v1/soundscape/leitmotif/active?session_id={leitmotif_session_id}"
+    )
     assert active_resp.status_code == 200
     active_data = active_resp.json()
     assert active_data["is_playing"] is True
     assert active_data["active_leitmotif"]["character_id"] == "char-valeros"
 
 
-@pytest.mark.asyncio
-async def test_zanzibar_authorization_enforced_on_leitmotif_profile(client: TestClient) -> None:
-    """Verify unauthorized users receive 403 Forbidden under Zanzibar schema."""
-    mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
-
+def test_zanzibar_authorization_enforced_on_leitmotif_profile(
+    client: TestClient, leitmotif_session_id: str
+) -> None:
+    """Verify a stranger gets 403 and the campaign owner gets 200 through the campaign grant."""
     payload = {
-        "session_id": "session-tomb-14",
+        "session_id": leitmotif_session_id,
         "character_id": "char-restricted",
         "character_name": "Restricted Char",
         "instrument_timbre": "brass",
@@ -101,22 +120,12 @@ async def test_zanzibar_authorization_enforced_on_leitmotif_profile(client: Test
     resp_forbidden = client.post(
         "/api/v1/soundscape/leitmotif/profile",
         json=payload,
-        headers={"x-user-id": "user-unauthorized"},
+        headers=auth_headers("user-unauthorized"),
     )
     assert resp_forbidden.status_code == 403 and "Forbidden" in resp_forbidden.json()["detail"]
 
-    await mock_spicedb.write_relationship(
-        resource_type="character",
-        resource_id="char-restricted",
-        relation="owner",
-        subject_type="user",
-        subject_id="user-owner",
-    )
-    resp_allowed = client.post(
-        "/api/v1/soundscape/leitmotif/profile",
-        json=payload,
-        headers={"x-user-id": "user-owner"},
-    )
+    # The client default subject created the campaign, so it is the owner.
+    resp_allowed = client.post("/api/v1/soundscape/leitmotif/profile", json=payload)
     assert (
         resp_allowed.status_code == 200 and resp_allowed.json()["character_id"] == "char-restricted"
     )

@@ -1,7 +1,7 @@
 ---
 id: '0565'
 title: Game Session Events Persisted Through Aggregates and Published to the Session Stream
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -26,7 +26,7 @@ source_audits:
 # TASK-0565: Game Session Events Persisted Through Aggregates and Published to the Session Stream
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Game session state is event-sourced, but several session actions bypass the aggregate or never reach the stream. Session create, join, leave, and next-turn save events but do not publish them. Dice rolls and lobby readiness are not aggregate state at all. This task makes the repository publish every committed event, and moves dice rolls and lobby readiness into the session aggregate.

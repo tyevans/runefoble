@@ -192,7 +192,11 @@ test-mutation: ## Run mutation testing with mutmut on core domain modules
 	uv run mutmut run || true
 	uv run mutmut results || true
 
-test-bdd: ## Validate Gherkin feature syntax and step definition coverage
+test-bdd: ## Typecheck e2e steps, reject unused steps, validate Gherkin syntax
+	@echo "==> Typechecking e2e suite..."
+	@pnpm run e2e:typecheck
+	@echo "==> Checking for unused e2e step definitions..."
+	@uv run python scripts/check_e2e_unused_steps.py
 	@echo "==> Validating Gherkin feature syntax and step definitions..."
 	@pnpm exec bddgen
 
@@ -215,6 +219,8 @@ lint: ## Check types, Ruff lint, format, and Helm
 	uv run mypy services/inference_worker/src
 	@echo "==> Typechecking frontend..."
 	cd frontend && pnpm exec tsc --noEmit
+	@echo "==> Typechecking e2e suite..."
+	pnpm run e2e:typecheck
 	@echo "==> Linting Helm charts..."
 	helm lint $(HELM_CHART)
 

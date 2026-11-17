@@ -2,8 +2,10 @@
 
 The gateway is called through its public HTTP routes. The upstream campaign-lore and
 campaign-analytics services are real HTTP stand-ins on loopback ports (ADR-0014). Each
-stand-in records the headers it receives. The gateway forwards the caller's verified
-bearer token and no user header (ADR-0015 c, TASK-0536).
+stand-in records the headers it receives and verifies the forwarded bearer token with the
+same test issuer that the gateway trusts (ADR-0015 c, TASK-0531, TASK-0536). A token the
+upstream cannot verify gets 401, which the gateway passes through. The gateway forwards the
+caller's verified bearer token and no user header.
 """
 
 from __future__ import annotations
@@ -16,6 +18,8 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
+from runefoble_auth.principal import authenticate_authorization
+from runefoble_auth.zitadel import ZitadelAuthService
 
 from tests.helpers.live_services import serve
 
@@ -28,17 +32,19 @@ LIVE_PIN = {
 LIVE_CODEX_ENTRY = {"entry_id": "entry-live", "title": "The Star-Eater Relic"}
 
 
-def _recording_upstream(received: list[dict[str, Any]]) -> FastAPI:
-    """Return an upstream stand-in that records the path and headers of each request."""
+def _recording_upstream(received: list[dict[str, Any]], verifier: ZitadelAuthService) -> FastAPI:
+    """Return an upstream stand-in that records each request and verifies its bearer token."""
     app = FastAPI()
 
     @app.get("/{path:path}")
     def _live(path: str, request: Request) -> Any:
+        principal = authenticate_authorization(verifier, request.headers.get("authorization"))
         received.append(
             {
                 "path": request.url.path,
                 "authorization": request.headers.get("authorization"),
                 "x_user_id": request.headers.get("x-user-id"),
+                "subject": principal.user_id,
             }
         )
         if path.endswith("/atlas"):
@@ -58,13 +64,16 @@ def reset_store() -> Iterator[None]:
 
 
 @pytest.fixture
-def upstream_received(monkeypatch) -> Iterator[dict[str, list[dict[str, Any]]]]:
-    """Serve recording stand-ins for campaign_lore and campaign_analytics, and set their URLs."""
+def upstream_received(monkeypatch, signing_issuer) -> Iterator[dict[str, list[dict[str, Any]]]]:
+    """Serve recording stand-ins for campaign_lore and campaign_analytics, and set their URLs.
+
+    Both stand-ins verify bearer tokens with the test issuer that the gateway trusts.
+    """
     lore_seen: list[dict[str, Any]] = []
     analytics_seen: list[dict[str, Any]] = []
     with (
-        serve(_recording_upstream(lore_seen)) as lore_url,
-        serve(_recording_upstream(analytics_seen)) as analytics_url,
+        serve(_recording_upstream(lore_seen, signing_issuer.verifier())) as lore_url,
+        serve(_recording_upstream(analytics_seen, signing_issuer.verifier())) as analytics_url,
     ):
         monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
         monkeypatch.setenv("CAMPAIGN_ANALYTICS_URL", analytics_url)
@@ -111,6 +120,7 @@ def test_atlas_returns_upstream_pins_and_forwards_bearer_only(
     assert received[-1]["path"] == f"/api/v1/campaigns/{campaign_id}/atlas"
     assert received[-1]["authorization"] == headers["Authorization"]
     assert received[-1]["x_user_id"] is None
+    assert received[-1]["subject"] == "dm_valeros"
 
 
 def test_codex_returns_upstream_entries_and_forwards_bearer_only(
