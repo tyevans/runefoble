@@ -9,7 +9,8 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import WebSocket
-from game_session.dependencies import STREAM_TAVERN, get_event_bus
+from game_session.dependencies import get_event_bus
+from game_session.events import STREAM_TAVERN
 from game_session.minigame_rules import roll_dice_hand
 from game_session.minigame_tables.actions import (
     handle_liars_bid,

@@ -14,7 +14,8 @@ import pytest
 from board_state.dependencies import repo
 from fastapi.testclient import TestClient
 from runefoble_events.events import DiceSettled
-from runefoble_platform.mock_redis import MockAsyncRedis
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def _create_board(client: TestClient, cols: int = 10, rows: int = 10) -> str:

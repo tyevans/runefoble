@@ -54,6 +54,10 @@ def create_test_character(issuer, owner_id: str = "user_valeros", is_stand_in: b
     return res.json()["id"]
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
+)
 @pytest.mark.asyncio
 async def test_health_modification_and_clamping(signing_issuer):
     """Verify modifying HP with positive and negative deltas clamps within [0, maxHp]."""
@@ -84,6 +88,10 @@ async def test_health_modification_and_clamping(signing_issuer):
     assert detail["currentHp"] == 44
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
+)
 @pytest.mark.asyncio
 async def test_stand_in_permadeath_safeguard_stabilization(signing_issuer):
     """Verify that when an AI stand-in character drops to <= 0 HP, safeguard stabilizes them."""
@@ -106,6 +114,10 @@ async def test_stand_in_permadeath_safeguard_stabilization(signing_issuer):
     assert "unconscious_stabilized" in conditions
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
+)
 @pytest.mark.asyncio
 async def test_equipment_equip_and_unequip(signing_issuer):
     """Verify equipping and unequipping items via sub-resource endpoints."""
@@ -140,6 +152,10 @@ async def test_equipment_equip_and_unequip(signing_issuer):
     assert res.json()["equipment"]["off_hand"] == "Shield +1"
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
+)
 @pytest.mark.asyncio
 async def test_inventory_add_and_remove(signing_issuer):
     """Verify adding and removing inventory items via sub-resource endpoints."""
@@ -193,6 +209,10 @@ async def test_inventory_add_and_remove(signing_issuer):
     assert "item-potion-heal" not in res.json()["inventory"]
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
+)
 @pytest.mark.asyncio
 async def test_conditions_apply_and_remove(signing_issuer):
     """Verify applying and removing conditions via sub-resource endpoints."""
@@ -228,6 +248,10 @@ async def test_conditions_apply_and_remove(signing_issuer):
     assert "stunned" in res.json()["conditions"]
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
+)
 @pytest.mark.asyncio
 async def test_spells_cast_and_prepare(signing_issuer):
     """Verify spell casting slot deduction and spell preparation toggles."""

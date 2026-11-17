@@ -91,6 +91,11 @@ class PrepareSpellRequest(BaseModel):
     session_id: str = ""
 
 
+class StandInActivationRequest(BaseModel):
+    active: bool
+    session_id: str = ""
+
+
 class RestoreSpellSlotsRequest(BaseModel):
     slot_level: int | None = None
     session_id: str = ""

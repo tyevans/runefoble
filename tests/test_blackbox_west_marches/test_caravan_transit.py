@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import STREAM_WEST_MARCHES
+from game_session.events import STREAM_WEST_MARCHES
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.mock_redis import MockAsyncRedis
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 async def _setup_world(

@@ -10,10 +10,15 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from runefoble_platform.event_publish import event_publish_failures
+from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.stream_consumer import consumer_statuses
 
+from soundscape.consumer import start_soundscape_consumers
+from soundscape.dependencies import settings
 from soundscape.event_handlers import register_soundscape_event_handlers
 from soundscape.routers.cue import router as cue_router
 from soundscape.routers.leitmotif import router as leitmotif_router
@@ -23,9 +28,17 @@ from soundscape.routers.tension import router as tension_router
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Bootstrap service lifecycle and wire event handlers."""
+    """Bootstrap service lifecycle, event handlers, and the Redis Streams consumer."""
     register_soundscape_event_handlers()
-    yield
+    bus = RedisStreamsEventBus(redis_url=settings.redis_url)
+    consumers = await start_soundscape_consumers(bus)
+    app.state.consumers = {"soundscape": consumers}
+    try:
+        yield
+    finally:
+        await consumers.stop()
+        await bus.close()
+        app.state.consumers = {}
 
 
 app = FastAPI(
@@ -54,13 +67,19 @@ app.include_router(leitmotif_router)
 
 @app.get("/healthz", tags=["Health"])
 @app.get("/health", tags=["Health"])
-def health_check() -> dict[str, Any]:
-    """Health check endpoint."""
-    return {
-        "status": "ok",
-        "service": "soundscape",
-        "event_publish_failures": event_publish_failures(),
-    }
+def health_check(request: Request) -> JSONResponse:
+    """Report service health and the status of each supervised stream consumer."""
+    statuses = consumer_statuses(getattr(request.app.state, "consumers", {}))
+    healthy = all(status == "running" for status in statuses.values())
+    return JSONResponse(
+        status_code=200 if healthy else 503,
+        content={
+            "status": "ok" if healthy else "degraded",
+            "service": "soundscape",
+            "event_publish_failures": event_publish_failures(),
+            "consumers": statuses,
+        },
+    )
 
 
 @app.get("/ui/manifest", tags=["Microfrontends"])

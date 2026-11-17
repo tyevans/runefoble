@@ -19,7 +19,7 @@ from runefoble_events import (
     WatcherActionProposed,
     WatcherActionVetoed,
 )
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     get_copilot_engine,
     get_spicedb_client,
@@ -28,6 +28,8 @@ from the_watcher.dependencies import (
 )
 from the_watcher.main import app
 from the_watcher.models import ProposeActionRequest
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture(autouse=True)

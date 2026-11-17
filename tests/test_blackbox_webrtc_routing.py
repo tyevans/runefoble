@@ -16,9 +16,10 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app, set_event_bus
 from gateway_api.signaling import signaling_manager
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

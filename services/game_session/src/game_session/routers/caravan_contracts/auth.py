@@ -13,11 +13,11 @@ from uuid import UUID
 from fastapi import HTTPException
 from game_session.caravan import CaravanContractAggregate
 from game_session.dependencies import (
-    STREAM_WEST_MARCHES,
     get_caravan_contract_repository,
     get_event_bus,
     get_spicedb_client,
 )
+from game_session.events import STREAM_WEST_MARCHES
 from runefoble_platform.event_publish import publish_or_fail
 
 

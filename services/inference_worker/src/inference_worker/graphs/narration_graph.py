@@ -9,7 +9,7 @@ from inference_worker.llm_client import (
     MultiBackendLLMClient,
     parse_json_object,
 )
-from inference_worker.models import DMNarrationResponse, ResponseSource
+from inference_worker.models import DMNarrationResponse, ResponseSource, TensionLevel
 
 
 class NarrationGraphState(TypedDict, total=False):
@@ -18,7 +18,7 @@ class NarrationGraphState(TypedDict, total=False):
     narration_text: str
     sensory_details: list[str]
     suggested_prompts: list[str]
-    tension_level: str
+    tension_level: TensionLevel
     source: ResponseSource
     degraded: bool
     final_response: dict[str, Any]
@@ -35,7 +35,7 @@ def analyze_context_node(state: NarrationGraphState) -> NarrationGraphState:
     # Simple heuristic tension analysis
     lower_events = " ".join(recent).lower()
     if any(k in lower_events for k in ["critical", "unconscious", "died", "boss", "collapse"]):
-        tension = "climax"
+        tension: TensionLevel = "climax"
     elif any(k in lower_events for k in ["attack", "damage", "initiative", "hostile", "trap"]):
         tension = "rising"
     elif any(k in lower_events for k in ["rest", "safe", "loot", "campfire"]):
@@ -49,7 +49,7 @@ def analyze_context_node(state: NarrationGraphState) -> NarrationGraphState:
     }
 
 
-def _canned_narration(env: str, prompt: str) -> dict[str, Any]:
+def _canned_narration(env: str, prompt: str) -> NarrationGraphState:
     """Canned scene text. Used only by the explicit mock backend."""
     return {
         "narration_text": (

@@ -3,7 +3,7 @@
  * Governed by ADR-0004, ADR-0007, ADR-0011, and ADR-0013.
  */
 
-import { LitElement, html, type PropertyValues } from 'lit';
+import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { campaignAnalyticsStyles } from './runefoble-campaign-analytics.styles.ts';
 import './runefoble-combat-heatmap.ts';
@@ -15,6 +15,10 @@ import type {
   CombatantPerformance,
 } from './types.ts';
 
+/**
+ * Renders campaign telemetry. The host loads the three datasets through its authenticated
+ * data layer and passes them in. This element performs no network calls (TASK-0646).
+ */
 @customElement('runefoble-campaign-analytics')
 export class RunefobleCampaignAnalytics extends LitElement {
   static styles = [campaignAnalyticsStyles];
@@ -22,58 +26,13 @@ export class RunefobleCampaignAnalytics extends LitElement {
   @property({ type: String }) campaignId = 'campaign-1';
   @property({ type: String }) sessionId: string | null = null;
   @property({ type: String }) encounterId: string | null = null;
-  @property({ type: String }) apiBaseUrl = '';
   @property({ type: String }) activeTab: 'all' | 'heatmap' | 'performance' | 'timeline' = 'all';
 
   @property({ type: Object }) heatmapData: CampaignHeatmapResponse | null = null;
   @property({ type: Object }) mvpData: CampaignMvpResponse | null = null;
   @property({ type: Object }) timelineData: CampaignTimelineResponse | null = null;
 
-  @state() private loading = false;
-  @state() private error: string | null = null;
   @state() private selectedMilestoneIndex = 0;
-
-  firstUpdated() {
-    if (this.apiBaseUrl && (!this.heatmapData || !this.mvpData || !this.timelineData)) {
-      this.fetchAnalyticsData();
-    }
-  }
-
-  updated(changedProperties: PropertyValues) {
-    if (
-      (changedProperties.has('campaignId') ||
-        changedProperties.has('sessionId') ||
-        changedProperties.has('encounterId')) &&
-      this.apiBaseUrl
-    ) {
-      this.fetchAnalyticsData();
-    }
-  }
-
-  public async fetchAnalyticsData() {
-    if (!this.apiBaseUrl) return;
-    this.loading = true;
-    this.error = null;
-
-    try {
-      const sessParam = this.sessionId ? `?session_id=${this.sessionId}` : '';
-      const encParam = this.encounterId ? `?encounter_id=${this.encounterId}` : '';
-
-      const [heatmapRes, mvpRes, timelineRes] = await Promise.all([
-        fetch(`${this.apiBaseUrl}/api/v1/analytics/campaigns/${this.campaignId}/heatmap${sessParam}`),
-        fetch(`${this.apiBaseUrl}/api/v1/analytics/campaigns/${this.campaignId}/mvp${encParam}`),
-        fetch(`${this.apiBaseUrl}/api/v1/analytics/campaigns/${this.campaignId}/timeline${sessParam}`),
-      ]);
-
-      if (heatmapRes.ok) this.heatmapData = await heatmapRes.json();
-      if (mvpRes.ok) this.mvpData = await mvpRes.json();
-      if (timelineRes.ok) this.timelineData = await timelineRes.json();
-    } catch (err: any) {
-      this.error = err.message || 'Failed to load analytics data';
-    } finally {
-      this.loading = false;
-    }
-  }
 
   private handleTabSelect(tab: 'all' | 'heatmap' | 'performance' | 'timeline') {
     this.activeTab = tab;
@@ -224,9 +183,6 @@ export class RunefobleCampaignAnalytics extends LitElement {
           <span class="metric-value">${totalMilestones}</span>
         </div>
       </div>
-
-      ${this.loading ? html`<div style="padding: 20px; font-weight: bold;">Loading telemetry data...</div>` : ''}
-      ${this.error ? html`<div style="padding: 20px; color: red;">Error: ${this.error}</div>` : ''}
 
       ${this.activeTab === 'all'
         ? html`

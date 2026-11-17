@@ -11,16 +11,14 @@ from runefoble_events.events import (
     TokenMoved,
     WatcherNarrationGenerated,
 )
-from runefoble_platform.redis_bus import (
-    MockAsyncRedis,
-    RedisStreamsEventBus,
-    deserialize_event,
-)
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 from the_watcher.watcher_ai import TheWatcherEngine
 from voice_agent.main import app as voice_app
 from voice_agent.main import set_event_bus as voice_set_event_bus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

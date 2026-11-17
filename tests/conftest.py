@@ -60,8 +60,9 @@ def default_redis_event_bus():
     """
     import importlib
 
-    from runefoble_platform.mock_redis import MockAsyncRedis
     from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+    from tests.helpers.mock_redis import MockAsyncRedis
 
     bus = RedisStreamsEventBus(client=MockAsyncRedis())
     modules_to_restore = []

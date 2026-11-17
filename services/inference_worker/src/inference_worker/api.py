@@ -19,7 +19,6 @@ from inference_worker.models import (
     StandInActionRequest,
     StandInActionResponse,
 )
-from inference_worker.redis_consumer import RedisInferenceConsumer
 
 # Global runtime state
 settings = WorkerSettings()
@@ -27,7 +26,6 @@ llm_client = MultiBackendLLMClient(settings)
 intent_graph = None
 narration_graph = None
 stand_in_graph = None
-redis_consumer: RedisInferenceConsumer | None = None
 
 
 def ensure_graphs():
@@ -42,20 +40,11 @@ def ensure_graphs():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global redis_consumer
-
     # Detect backend and compile LangGraph pipelines
     await llm_client.detect_available_backend()
     ensure_graphs()
 
-    # Start optional background Redis stream listener
-    redis_consumer = RedisInferenceConsumer(settings, llm_client)
-    await redis_consumer.start()
-
     yield
-
-    if redis_consumer:
-        await redis_consumer.stop()
 
 
 app = FastAPI(

@@ -9,11 +9,16 @@ This guide describes how to configure tactical guardrail policies for absent pla
 Players who anticipate missing a session can configure personal tactical guardrails and playstyle boundaries on their character sheet. These rules ensure that when The Watcher or an autonomous autopilot executes a turn, the AI stand-in respects the player's tactical preferences.
 
 ### Guardrail Parameters
-- `spell_slot_reserve_level` (int, default `3`): Maximum spell slot level the AI is permitted to cast autonomously, reserving high-level slots (e.g. 3rd-level and above for Revivify or Fireball) for human control.
-- `ally_protection_target` (string, default `"Marcus"`): Ally name whom the stand-in prioritizes for healing or protective intervention when under threat.
-- `avoid_melee` (bool, default `true`): Forces ranged positioning and disengage actions when enemies enter close proximity.
-- `risk_threshold` (string, default `"low"`): Risk appetite profile (`"low"`, `"moderate"`, `"high"`).
-- `custom_priorities` (list of strings): Explicit tactical directives (e.g. `["Save Level 3 slots for Revivify", "Prioritize healing Marcus if under 30% HP", "Avoid frontline melee"]`).
+These names are the fields of `StandInGuardrails` (character sheet) and `StandInGuardrailPolicy` (`libs/runefoble_platform`). The contract test checks that both models declare the same fields.
+- `preserve_spell_slots` (object, default `{}`): Spell level to number of slots held in reserve, for example `{"3": 1}`.
+- `protect_allies` (list of strings, default `[]`): Ally names the stand-in protects when they are in the scene.
+- `protect_ally_hp_threshold` (float 0.0 to 1.0, default `0.3`): HP fraction below which an ally counts as wounded.
+- `risk_threshold` (string, default `"cautious"`): Risk appetite profile (`"cautious"`, `"balanced"`, `"reckless"`).
+- `avoid_melee` (bool, default `false` in the Watcher and worker, `true` on the character sheet): Forces ranged positioning when enemies enter close proximity.
+- `permadeath_safeguard` (bool, default `true` on the character sheet): Stabilizes the character at 0 HP. See section 2.
+- `custom_priorities` (list of strings, default `[]`): Free-text tactical directives. They are passed to the model as prompt text.
+
+An unknown name fails. The Watcher and the inference worker return HTTP 422. A field that a request omits has no effect in the Watcher and worker.
 
 ### Updating Guardrails via REST API
 
@@ -24,15 +29,31 @@ curl -X PUT http://localhost:8000/api/v1/characters/char-sarah-cleric/guardrails
   -H "Content-Type: application/json" \
   -H "X-User-Id: sarah-user" \
   -d '{
-    "spell_slot_reserve_level": 3,
-    "ally_protection_target": "Marcus",
+    "preserve_spell_slots": {"3": 1},
+    "protect_allies": ["Marcus"],
+    "protect_ally_hp_threshold": 0.3,
     "avoid_melee": true,
-    "risk_threshold": "low",
+    "risk_threshold": "cautious",
     "custom_priorities": [
-      "Save Level 3 slots for Revivify",
-      "Prioritize healing Marcus if under 30% HP",
-      "Avoid frontline melee"
+      "Save Level 3 slots for Revivify"
     ]
+  }'
+```
+
+### Reading the Applied Guardrails
+
+When the stand-in acts, The Watcher returns `guardrails_applied` in the response of `POST /api/v1/watcher/stand-in/act`. The list holds the names of the guardrails that the decision enforced, for example `["protect_allies"]`. A guardrail that did not change the decision is not listed. When the model backend names a guardrail, the worker reports it only if the request activated that guardrail. See `docs/reference/inference-worker-response-contract.md`.
+
+```bash
+curl -X POST http://localhost:8001/api/v1/watcher/stand-in/act \
+  -H "Content-Type: application/json" \
+  -d '{
+    "character_name": "Seoni",
+    "character_class": "Cleric",
+    "scene_context": "Marcus is wounded and the orcs close in",
+    "guardrails": {"protect_allies": ["Marcus"]},
+    "session_id": "sess-1",
+    "campaign_id": "camp-1"
   }'
 ```
 
@@ -53,7 +74,20 @@ When an absent player's character is controlled by the AI stand-in (`is_stand_in
 2. **Death Save Immunity**: The character does not accrue failed death saving throws while under stand-in control.
 3. **Domain Event**: Emits a `StandInStabilized` event over Redis Streams (`runefoble.events.character.stand_in_stabilized`) notifying the DM and table chronicle.
 
-To activate stand-in status during combat:
+To activate the stand-in for an absent player, call the character sheet route. This route emits `StandInActivated` and stores the flag in the character aggregate:
+
+```bash
+curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/stand-in \
+  -H "Content-Type: application/json" \
+  -d '{
+    "active": true,
+    "session_id": "session-crypt-01"
+  }'
+```
+
+Send `"active": false` to release the stand-in. This emits `StandInReleased`. The permadeath check reads the flag from the aggregate. The `is_stand_in` field on `POST .../health` only overrides the check for one request. It does not change the stored flag.
+
+Then damage the character:
 
 ```bash
 curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/health \
@@ -61,8 +95,7 @@ curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/health \
   -H "X-User-Id: dm-evelyn" \
   -d '{
     "delta": -15,
-    "source": "Orc Chieftain Greatsword",
-    "is_stand_in": true
+    "source": "Orc Chieftain Greatsword"
   }'
 ```
 
@@ -104,6 +137,7 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-crypt-01/hot-swap \
 - **SpiceDB Zanzibar Authorization**: Validates that the requesting player has `participate` rights on the session or ownership of the character.
 - **Round & Turn Continuity**: The combat round and active initiative order are preserved intact without reload.
 - **Domain Event Publication**: Emits `CharacterControlTransferred` (`runefoble.events.session.character_control_transferred`) over Redis Streams.
+- **Stand-In Release**: Before it saves the session, `game_session` calls `POST /api/v1/characters/{character_id}/stand-in` with `"active": false` on `character-sheet`. The call uses `RUNEFOBLE_CHARACTER_SHEET_URL`. If the URL is not set, or `character-sheet` does not confirm the release, the hot-swap returns `502 Bad Gateway`. The session stays unchanged and the stand-in keeps control.
 
 ---
 
@@ -143,6 +177,7 @@ The AI stand-in and absentee recap test infrastructure is partitioned into modul
 - `tests/test_blackbox_stand_in_policies.py` (TASK-0096): Verifies tactical guardrail configuration via `PUT/GET /api/v1/characters/{id}/guardrails`, SpiceDB Zanzibar permission checks, `StandInPolicyUpdated` and `StandInStabilized` CloudEvent publications, The Watcher stand-in tactical decision graph evaluation under 'drunk' and 'foolishness' penalties, and zero-HP permadeath stabilization invariants.
 - `tests/test_blackbox_stand_in_takeover.py` (TASK-0096): Verifies mid-session hot-swap handoffs via `POST /api/v1/sessions/{id}/hot-swap`, active combat round and initiative continuity, SpiceDB Zanzibar object authorization, and `CharacterControlTransferred` CloudEvent emissions.
 - `tests/test_blackbox_stand_in_guardrails.py` (TASK-0112, TASK-0203): Blackbox TDD test suite validating the modular decomposition of `StandInAIEngine` across backend modules and verifying UI component line length invariants (< 130 lines) and style/template imports.
+- `tests/test_blackbox_stand_in_guardrail_contract.py` (TASK-0608): Blackbox round trip of guardrails from The Watcher route to the inference worker and back. Covers `guardrails_applied`, 422 on unknown names, and the field parity check against the character sheet model.
 - `frontend/test/stand-in-guardrails-decomposition.test.ts` (TASK-0203): Frontend integration tests verifying Lit template renderers, Bauhaus style token isolation, and file length constraints.
 
 ---

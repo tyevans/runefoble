@@ -9,7 +9,25 @@
   (dict "name" "rules-compendium" "config" .Values.services.rulesCompendium)
 -}}
 
+{{- /*
+  Cross-service URLs. Each key is an env var. Its URL uses the target's service port.
+  `consumers` lists the containers that receive the key. Keys render in sorted order.
+*/ -}}
+{{- $serviceUrls := dict
+  "RUNEFOBLE_WATCHER_URL" (dict "url" (printf "http://the-watcher:%v" .Values.services.theWatcher.port) "consumers" (list "game-session" "voice-agent"))
+  "RUNEFOBLE_VOICE_AGENT_URL" (dict "url" (printf "http://voice-agent:%v" .Values.services.voiceAgent.port) "consumers" (list "game-session"))
+  "SOUNDSCAPE_SERVICE_URL" (dict "url" (printf "http://soundscape:%v" .Values.services.soundscape.port) "consumers" (list "gateway-api"))
+  "CAMPAIGN_LORE_URL" (dict "url" (printf "http://campaign-lore:%v" .Values.services.campaignLore.port) "consumers" (list "gateway-api"))
+  "CAMPAIGN_ANALYTICS_URL" (dict "url" (printf "http://campaign-analytics:%v" .Values.services.campaignAnalytics.port) "consumers" (list "gateway-api"))
+  "RUNEFOBLE_CHARACTER_SHEET_URL" (dict "url" (printf "http://character-sheet:%v" .Values.services.characterSheet.port) "consumers" (list "game-session"))
+  "CHARACTER_SHEET_URL" (dict "url" (printf "http://character-sheet:%v" .Values.services.characterSheet.port) "consumers" (list "gateway-api"))
+-}}
+{{- with .Values.services.inferenceWorker }}
+{{- $_ := set $serviceUrls "RUNEFOBLE_INFERENCE_URL" (dict "url" (printf "http://inference-worker:%v" .port) "consumers" (list "the-watcher")) }}
+{{- end }}
+
 {{- range $services }}
+{{- $svcName := .name }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -55,10 +73,12 @@ spec:
               value: "{{ $.Values.observability.enabled }}"
             - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otel-collector:{{ $.Values.observability.otelCollector.grpcPort }}"
-          {{- if eq .name "game-session" }}
-            - name: RUNEFOBLE_VOICE_AGENT_URL
-              value: "http://voice-agent:{{ $.Values.services.voiceAgent.port }}"
-          {{- end }}
+            {{- range $envName, $entry := $serviceUrls }}
+            {{- if has $svcName $entry.consumers }}
+            - name: {{ $envName }}
+              value: {{ $entry.url | quote }}
+            {{- end }}
+            {{- end }}
             {{- range $name, $value := .config.env }}
             {{- if $value }}
             - name: {{ $name }}

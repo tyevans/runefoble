@@ -9,11 +9,13 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import STREAM_WEST_MARCHES, set_event_bus, set_spicedb_client
+from game_session.dependencies import set_event_bus, set_spicedb_client
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.main import app
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

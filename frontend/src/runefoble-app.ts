@@ -4,14 +4,17 @@ import './styles/themes.css';
 import { appShellStyles } from './styles/app-shell.styles.ts';
 import './app/component-registry.ts';
 import { registerDefaultPlugins, pluginRegistry } from './components/plugins/plugin_registry.ts';
-import { authService } from './auth/auth-service.ts';
+import { authService, isAuthCallbackPath } from './auth/auth-service.ts';
+import { completeSignInCallback } from './app/auth-callback.ts';
 import { router, registerAuthGuard, type BreadcrumbItem, type MatchedRoute, type RouteParams } from './router/index.ts';
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignItem, CampaignMember, LobbyParticipant, LobbyCharacterOption, UpdateCampaignPayload } from '@runefoble/game-session-ui';
+import type { LoreEntry } from '@runefoble/campaign-lore-ui';
 import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload, AssignCampaignEventDetail, DeleteCharacterEventDetail, InspectCharacterEventDetail } from '@runefoble/character-sheet-ui';
 import type { CampaignSessionItem } from './components/runefoble-session-list.ts';
 import type { DataFailure } from './services/data-result.ts';
+import type { CampaignAnalyticsView, CampaignAtlasView } from './services/campaign-hub-client.ts';
 import { handleToggleReadiness, handleToggleStandIn, handleBoardTokenAction, handleBoardAoEPlace, handleBoardSpellVFX, handleBoardConfirmGhost } from './vtt-mesh-handlers.ts';
 import { loadRouteData } from './app/route-data-loader.ts';
 import { renderAppShell } from './app/shell-template.ts';
@@ -47,14 +50,18 @@ export class RunefobleApp extends LitElement {
   @state() public currentRoute: MatchedRoute | null = null;
   @state() public routeParams: RouteParams = {};
   @state() public isAuthModalOpen = false;
-  @state() public authInitialTab: 'login' | 'register' = 'login';
-  @state() public currentUserId = 'user-valeros';
+  @state() public authError = '';
+  @state() public currentUserId = '';
   @state() public userRole = 'Player';
   @state() public isDM = false;
   @state() public campaigns: CampaignItem[] = [];
   @state() public currentCampaign: CampaignItem | null = null;
   @state() public campaignMembers: CampaignMember[] = [];
   @state() public campaignSessions: CampaignSessionItem[] = [];
+  @state() public campaignCodexView: 'atlas' | 'codex' = 'atlas';
+  @state() public campaignAtlas: CampaignAtlasView | null = null;
+  @state() public campaignLoreEntries: LoreEntry[] = [];
+  @state() public campaignAnalytics: CampaignAnalyticsView | null = null;
   @state() public characters: CharacterItem[] = [];
   @state() public rosterCampaigns: RosterCampaignOption[] = [];
   @state() public lobbyParticipants: LobbyParticipant[] = [];
@@ -81,7 +88,12 @@ export class RunefobleApp extends LitElement {
     syncAuthState(this, authService.getState());
     registerDefaultPlugins(pluginRegistry, this.isDM);
     this.unlistenAuth = authService.onAuthChanged((s) => syncAuthState(this, s));
-    this.initRouter();
+    // The router starts after the Zitadel code exchange so the guard sees the result.
+    if (isAuthCallbackPath(window.location.pathname)) {
+      void completeSignInCallback().then((error) => { this.authError = error; this.initRouter(); });
+    } else {
+      this.initRouter();
+    }
   }
 
   disconnectedCallback() {
@@ -138,7 +150,6 @@ export class RunefobleApp extends LitElement {
     }
     if (route.params.characterId) this.selectedCharacterId = route.params.characterId;
     if (route.pattern === '#/login' || route.pattern === '#/register') {
-      this.authInitialTab = route.pattern === '#/register' ? 'register' : 'login';
       this.isAuthModalOpen = true;
     }
     this.sessionSocket.manageWebSocketLifecycle(route);

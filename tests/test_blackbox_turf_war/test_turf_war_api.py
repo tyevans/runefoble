@@ -9,8 +9,9 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_platform.redis_bus import MockAsyncRedis
 from the_watcher.dependencies import STREAM_WORLD
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 from .conftest import setup_campaign_roles
 

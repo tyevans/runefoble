@@ -101,7 +101,7 @@ VOICE_MODEL_SIZE ?= tiny.en
 VOICE_MODEL_HOST_DIR ?= .cache/voice-models
 VOICE_MODEL_POD_DIR ?= /var/lib/runefoble/whisper
 
-images: ## Build every Python service image and load it into the Kind cluster
+images: ## Build every service image (Python and Node) and load it into the Kind cluster
 	@for row in $(PYTHON_IMAGE_ROWS); do \
 	  name=$$(echo "$$row" | cut -d'|' -f1); \
 	  svc=$$(echo "$$row" | cut -d'|' -f2); \
@@ -113,6 +113,10 @@ images: ## Build every Python service image and load it into the Kind cluster
 	  echo "==> Loading runefoble/$$name:$(IMAGE_VERSION) into Kind cluster $(CLUSTER_NAME)"; \
 	  kind load docker-image runefoble/$$name:$(IMAGE_VERSION) --name $(CLUSTER_NAME) || exit 1; \
 	done
+	@echo "==> Building runefoble/audience-studio:$(IMAGE_VERSION) (Node service, port 8010)"
+	docker build -f services/audience_studio/Dockerfile -t runefoble/audience-studio:$(IMAGE_VERSION) . || exit 1
+	@echo "==> Loading runefoble/audience-studio:$(IMAGE_VERSION) into Kind cluster $(CLUSTER_NAME)"
+	kind load docker-image runefoble/audience-studio:$(IMAGE_VERSION) --name $(CLUSTER_NAME)
 
 voice-model-cache: ## Pre-fetch the faster-whisper model and copy it into the voice-agent pod (Kind)
 	@echo "==> Downloading faster-whisper $(VOICE_MODEL_SIZE) into $(VOICE_MODEL_HOST_DIR)..."
@@ -207,6 +211,8 @@ lint: ## Check types, Ruff lint, format, and Helm
 	uv run ruff check .
 	@echo "==> Checking Ruff formatting..."
 	uv run ruff format --check .
+	@echo "==> Typechecking inference worker..."
+	uv run mypy services/inference_worker/src
 	@echo "==> Typechecking frontend..."
 	cd frontend && pnpm exec tsc --noEmit
 	@echo "==> Linting Helm charts..."

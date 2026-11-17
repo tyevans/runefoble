@@ -22,11 +22,11 @@ from asset_forge.dependencies import (
     get_storage,
     publish_forge_event,
 )
-from asset_forge.generator import generate_token_portrait_png
 from asset_forge.models import (
     TokenForgeRequest,
     TokenForgeResponse,
 )
+from asset_forge.raster.token_raster import generate_token_portrait_png
 from asset_forge.silo_upload import store_forged_asset
 
 router = APIRouter(prefix="/api/v1/forge/token", tags=["Token Forge"])

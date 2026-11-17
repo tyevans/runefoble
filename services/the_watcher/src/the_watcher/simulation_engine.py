@@ -8,12 +8,11 @@ Governed by:
 
 from __future__ import annotations
 
-import datetime
 import random
 from typing import Any
 from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
-from runefoble_events.watcher import WorldTickExecuted
+from runefoble_platform.event_publish import publish_or_fail
 from the_watcher.bulletin import build_intelligence_bulletin, generate_geopolitical_shift
 from the_watcher.faction_models import (
     FactionResponse,
@@ -22,8 +21,39 @@ from the_watcher.faction_models import (
     WorldTickResponse,
 )
 from the_watcher.factions import FactionAggregate
+from the_watcher.factions.campaign_world import CampaignWorldAggregate
 
 STREAM_WATCHER = "runefoble.events.watcher"
+
+DEFAULT_FACTIONS: list[dict[str, Any]] = [
+    {
+        "name": "Ironfang Syndicate",
+        "influence": 60,
+        "resources": 55,
+        "disposition": "hostile",
+        "active_goal": "Smuggle Arcane Weapons into Oakhaven",
+        "territory": "Oakhaven Docks",
+        "rivals": ["Silver Dawn Guild"],
+    },
+    {
+        "name": "Arcane Order",
+        "influence": 70,
+        "resources": 65,
+        "disposition": "neutral",
+        "active_goal": "Infiltrate Arcane Guild Archives",
+        "territory": "High Spire",
+        "rivals": ["Ironfang Syndicate"],
+    },
+    {
+        "name": "Silver Dawn Guild",
+        "influence": 50,
+        "resources": 45,
+        "disposition": "friendly",
+        "active_goal": "Patrol Eastern Trade Outpost",
+        "territory": "Oakhaven Outpost",
+        "rivals": ["Ironfang Syndicate"],
+    },
+]
 
 
 def to_uuid(val: str | UUID | None) -> UUID:
@@ -37,74 +67,64 @@ def to_uuid(val: str | UUID | None) -> UUID:
         return uuid5(NAMESPACE_DNS, str(val))
 
 
+def summarize_faction(faction: FactionAggregate) -> FactionResponse:
+    """Build the public response model for a faction's current aggregate state."""
+    state = faction.state
+    return FactionResponse(
+        faction_id=state.faction_id,
+        campaign_id=state.campaign_id,
+        name=state.name,
+        influence=state.influence,
+        resources=state.resources,
+        disposition=state.disposition,
+        active_goal=state.active_goal,
+        goal_progress=state.goal_progress,
+        goal_target=state.goal_target,
+        rival_faction_ids=state.rival_faction_ids,
+        territory=state.territory,
+        shifts=state.shifts,
+        history=state.history,
+    )
+
+
 class FactionSimulationEngine:
-    """Simulates background faction agenda progression, rival clashes, and intelligence briefs."""
+    """Simulates background faction agenda progression, rival clashes, and intelligence briefs.
 
-    def __init__(self) -> None:
-        self._campaign_factions: dict[str, list[str]] = {}
-        self._campaign_ticks: dict[str, int] = {}
-        self._latest_bulletins: dict[str, WorldTickResponse] = {}
+    The engine holds no state. The campaign registry and tick counter live in
+    CampaignWorldAggregate, and each faction lives in FactionAggregate. A restart therefore
+    resumes the simulation from the event store.
+    """
 
-    def register_faction_id(self, campaign_id: str, faction_id: str) -> None:
-        """Track faction ID under a campaign."""
-        factions = self._campaign_factions.setdefault(campaign_id, [])
-        if faction_id not in factions:
-            factions.append(faction_id)
+    async def register_faction(self, campaign_id: str, faction_id: str, world_repo: Any) -> None:
+        """Add a faction to the campaign registry."""
+        world = await world_repo.load_or_create(to_uuid(campaign_id))
+        world.register_faction(campaign_id, faction_id)
+        await world_repo.save(world)
 
-    def get_campaign_faction_ids(self, campaign_id: str) -> list[str]:
-        return list(self._campaign_factions.get(campaign_id, []))
+    async def ensure_default_factions(
+        self, campaign_id: str, faction_repo: Any, world_repo: Any
+    ) -> list[FactionAggregate]:
+        """Return the campaign's registered factions, seeding defaults when none exist."""
+        _world, factions = await self._load_campaign(campaign_id, faction_repo, world_repo)
+        return factions
 
-    def clear(self) -> None:
-        self._campaign_factions.clear()
-        self._campaign_ticks.clear()
-        self._latest_bulletins.clear()
+    async def _load_campaign(
+        self, campaign_id: str, faction_repo: Any, world_repo: Any
+    ) -> tuple[CampaignWorldAggregate, list[FactionAggregate]]:
+        world = await world_repo.load_or_create(to_uuid(campaign_id))
+        if not world.state.faction_ids:
+            await self._seed_default_factions(campaign_id, world, faction_repo, world_repo)
+        factions = [await faction_repo.load(to_uuid(fid)) for fid in world.state.faction_ids]
+        return world, factions
 
-    async def ensure_default_factions(self, campaign_id: str, repo: Any) -> list[FactionAggregate]:
-        """Seed canonical default factions if none are currently registered for the campaign."""
-        existing_ids = self.get_campaign_faction_ids(campaign_id)
-        aggregates: list[FactionAggregate] = []
-        if existing_ids:
-            for fid in existing_ids:
-                try:
-                    agg = await repo.load(to_uuid(fid))
-                    aggregates.append(agg)
-                except Exception:
-                    pass
-            if aggregates:
-                return aggregates
-
-        defaults = [
-            {
-                "name": "Ironfang Syndicate",
-                "influence": 60,
-                "resources": 55,
-                "disposition": "hostile",
-                "active_goal": "Smuggle Arcane Weapons into Oakhaven",
-                "territory": "Oakhaven Docks",
-                "rivals": ["Silver Dawn Guild"],
-            },
-            {
-                "name": "Arcane Order",
-                "influence": 70,
-                "resources": 65,
-                "disposition": "neutral",
-                "active_goal": "Infiltrate Arcane Guild Archives",
-                "territory": "High Spire",
-                "rivals": ["Ironfang Syndicate"],
-            },
-            {
-                "name": "Silver Dawn Guild",
-                "influence": 50,
-                "resources": 45,
-                "disposition": "friendly",
-                "active_goal": "Patrol Eastern Trade Outpost",
-                "territory": "Oakhaven Outpost",
-                "rivals": ["Ironfang Syndicate"],
-            },
-        ]
-
-        created_aggs: list[FactionAggregate] = []
-        for d in defaults:
+    async def _seed_default_factions(
+        self,
+        campaign_id: str,
+        world: CampaignWorldAggregate,
+        faction_repo: Any,
+        world_repo: Any,
+    ) -> None:
+        for d in DEFAULT_FACTIONS:
             fid = f"faction-{uuid4().hex[:8]}"
             agg = FactionAggregate(aggregate_id=to_uuid(fid))
             agg.initialize(
@@ -118,10 +138,9 @@ class FactionSimulationEngine:
                 rival_faction_ids=d.get("rivals", []),
                 territory=d["territory"],
             )
-            await repo.save(agg)
-            self.register_faction_id(campaign_id, fid)
-            created_aggs.append(agg)
-        return created_aggs
+            await faction_repo.save(agg)
+            world.register_faction(campaign_id, fid)
+        await world_repo.save(world)
 
     def _resolve_check(
         self,
@@ -182,15 +201,15 @@ class FactionSimulationEngine:
         self,
         campaign_id: str,
         req: WorldTickRequest,
-        repo: Any,
-        bus: Any = None,
+        faction_repo: Any,
+        world_repo: Any,
+        bus: Any,
     ) -> WorldTickResponse:
-        """Advance faction agendas, resolve rolls, persist events, and generate intelligence."""
+        """Advance faction agendas, resolve rolls, persist state, publish, and generate intelligence."""
         rng = random.Random(req.random_seed) if req.random_seed is not None else random.Random()
 
-        factions = await self.ensure_default_factions(campaign_id, repo)
-        tick_num = self._campaign_ticks.get(campaign_id, 0) + req.ticks
-        self._campaign_ticks[campaign_id] = tick_num
+        world, factions = await self._load_campaign(campaign_id, faction_repo, world_repo)
+        tick_num = world.state.tick_count + req.ticks
 
         shifts: list[GeopoliticalShiftModel] = []
         rumors: list[str] = list(req.custom_rumors or [])
@@ -245,24 +264,8 @@ class FactionSimulationEngine:
                     f"Street rumor: 'Skirmish in the alleys! {f.state.name} took a beating from rivals.'"
                 )
 
-            await repo.save(f)
-            faction_summaries.append(
-                FactionResponse(
-                    faction_id=f.state.faction_id,
-                    campaign_id=f.state.campaign_id,
-                    name=f.state.name,
-                    influence=f.state.influence,
-                    resources=f.state.resources,
-                    disposition=f.state.disposition,
-                    active_goal=f.state.active_goal,
-                    goal_progress=f.state.goal_progress,
-                    goal_target=f.state.goal_target,
-                    rival_faction_ids=f.state.rival_faction_ids,
-                    territory=f.state.territory,
-                    shifts=f.state.shifts,
-                    history=f.state.history,
-                )
-            )
+            await faction_repo.save(f)
+            faction_summaries.append(summarize_faction(f))
 
         if not rumors:
             rumors.append("Quiet whispers circulate that tensions are simmering under the surface.")
@@ -270,9 +273,7 @@ class FactionSimulationEngine:
         bulletin = build_intelligence_bulletin(
             campaign_id, tick_num, req.regional_stability, faction_summaries, shifts, rumors
         )
-        now_iso = datetime.datetime.now(datetime.UTC).isoformat()
-
-        tick_event = WorldTickExecuted(
+        tick_event = world.record_world_tick(
             campaign_id=campaign_id,
             tick_number=tick_num,
             intelligence_bulletin=bulletin,
@@ -280,20 +281,37 @@ class FactionSimulationEngine:
             shifts=[s.model_dump() for s in shifts],
             rumors=rumors,
         )
-        if bus is not None:
-            await bus.publish_event(STREAM_WATCHER, tick_event)
+        await world_repo.save(world)
+        await publish_or_fail(bus, STREAM_WATCHER, tick_event)
 
-        response = WorldTickResponse(
+        return WorldTickResponse(
             campaign_id=campaign_id,
             tick_number=tick_num,
             intelligence_bulletin=bulletin,
             factions=faction_summaries,
             shifts=shifts,
             tavern_rumors=rumors,
-            timestamp=now_iso,
+            timestamp=tick_event.occurred_at.isoformat(),
         )
-        self._latest_bulletins[campaign_id] = response
-        return response
 
-    def get_latest_bulletin(self, campaign_id: str) -> WorldTickResponse | None:
-        return self._latest_bulletins.get(campaign_id)
+    async def get_latest_bulletin(
+        self, campaign_id: str, faction_repo: Any, world_repo: Any
+    ) -> WorldTickResponse | None:
+        """Rebuild the latest world tick response from the campaign world and faction aggregates."""
+        world = await world_repo.load_or_create(to_uuid(campaign_id))
+        latest = world.state.latest_tick
+        if latest is None:
+            return None
+        faction_summaries = [
+            summarize_faction(await faction_repo.load(to_uuid(fid)))
+            for fid in latest.factions_simulated
+        ]
+        return WorldTickResponse(
+            campaign_id=campaign_id,
+            tick_number=latest.tick_number,
+            intelligence_bulletin=latest.intelligence_bulletin,
+            factions=faction_summaries,
+            shifts=[GeopoliticalShiftModel(**s) for s in latest.shifts],
+            tavern_rumors=latest.rumors,
+            timestamp=latest.timestamp,
+        )

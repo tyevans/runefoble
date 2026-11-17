@@ -1,6 +1,6 @@
 # Reference: Redis Streams Event Bus & Consumer Groups
 
-Runefoble uses Redis Streams as a high-throughput, distributed event bus for cross-service asynchronous communication, projection workers, and real-time synchronization.
+Runefoble uses Redis Streams as a high-throughput, distributed event bus for cross-service asynchronous communication. Two services run stream consumers in production today: Campaign Analytics and Soundscape. See [Production Consumers](#production-consumers).
 
 ## Architecture Overview
 
@@ -14,14 +14,14 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
                        [ Redis Stream: events.session ]
                                      |
           +--------------------------+--------------------------+
-          | XREADGROUP (Group: session_workers)                 |
+          | XREADGROUP (Group: <service>_workers)               |
           v                                                     v
 +-----------------------+                             +-----------------------+
-|   Consumer Worker 1   |                             |   Consumer Worker 2   |
-| (SessionReadProjection)|                             | (SessionReadProjection)|
+|  Replica 1 (consumer) |                             |  Replica 2 (consumer) |
+|  StreamConsumer       |                             |  StreamConsumer       |
 +-----------+-----------+                             +-----------+-----------+
             |                                                     |
-    Success | XACK                                        Failure | (After retries)
+    Success | XACK                                        Failure | (handler raises)
             v                                                     v
    (PEL Cleared)                                     [ DLQ: events.session.dlq ]
                                                      + XACK original stream
@@ -37,13 +37,20 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
 2. **`RedisConsumerGroup` & `deserialize_event` (`libs/runefoble_platform/consumer_group.py`, `event_deserializer.py`)**:
    - `RedisConsumerGroup` (aliased as `RedisConsumerGroupWorker`) manages consumer group lifecycles (`create_group`, `read_group`, `ack`, `auto_claim_pending`, `route_to_dead_letter`).
    - `deserialize_event` (`event_deserializer.py`) provides isolated deserialization and CloudEvents/DomainEvent registry resolution with W3C trace context preservation (`traceparent`, `tracestate`).
-   - `MockAsyncRedis` (`mock_redis.py`) provides in-memory mock Redis Streams and Consumer Group operations for hermetic testing.
+   - `MockAsyncRedis` is a test double in `tests/helpers/mock_redis.py`. Production code must not import it.
    - Implements competing consumer distribution across horizontally scaled service replicas.
    - Recovers unacknowledged/stuck messages from failed or stalled workers using `XAUTOCLAIM`.
    - Isolates poison pill messages to Dead Letter Queues (`{stream}.dlq`) with failure metadata.
 
-3. **`SessionReadProjection` & Sub-Projections (`services/game_session/projections/`)**:
-   - Sub-packaged projection workers subscribing to session event streams.
+3. **`StreamConsumer`, `SupervisedStreamConsumers` (`libs/runefoble_platform/stream_consumer.py`)**:
+   - One consumer reads one stream for one group. It acknowledges a message only after its handler returns.
+   - A handler failure routes the message to `{stream}.dlq`, then acknowledges it.
+   - A set of consumers starts as one unit. Start-up raises when a consumer group cannot be created.
+   - `status` is `running` while every read loop lives and the last read succeeded. Otherwise it is `failed`.
+   - How-to: [Run Supervised Redis Stream Consumers](../how-to/run-supervised-redis-stream-consumers.md).
+
+4. **`SessionReadProjection` & Sub-Projections (`services/game_session/projections/`)**:
+   - In-memory projection classes over session event streams. No service starts them. `SessionReadProjection` has no production instance.
    - `InitiativeProjection` (`projections/initiative.py`): tracks turn order, round cycling, and initiative snapshots.
    - `PresenceProjection` (`projections/presence.py`): tracks participant presence, standby flags, and hot-swap handoffs.
    - `apply_session_event` (`projections/appliers.py`): applies token, atmosphere, encounter, and turn state changes.
@@ -55,6 +62,16 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
 ## Publishing Events
 
 Call `publish_event(stream, event)` on `RedisStreamsEventBus` for every event. Do not call `publish`. A call to `publish` raises `AttributeError`. A broad exception guard around that call hides the error, so the event never reaches Redis. Do not wrap publish calls in `contextlib.suppress(Exception)`.
+
+### Aggregate Event Publication
+
+Routers do not publish events that an aggregate commits. The `AggregateRepository` publishes every committed event through its event publisher.
+
+- The game session repository uses `SessionEventPublisher` (`services/game_session/src/game_session/events.py`).
+- `SESSION_EVENT_STREAMS` in the same module maps each session event type to its stream.
+- An event type with no mapping raises `UnmappedSessionEventError`. Add the mapping when you add an event.
+- A publish failure raises `DomainEventPublishError`. The API returns HTTP 503 and the client retries.
+- A missing bus skips publication, as the other game session routes do when Redis is not configured.
 
 ### Board Events
 
@@ -98,6 +115,30 @@ Decision routes that return 503 include the Watcher veto, approve, modify, DM wh
 
 ---
 
+## Production Consumers
+
+Each service starts its consumers in its FastAPI lifespan. A start-up failure stops the service. A runtime failure is logged at `ERROR`, and the service reports it on `/healthz`.
+
+| Consumer name | Service | Streams | Group | Handler | `/healthz` key |
+|---|---|---|---|---|---|
+| `analytics` | `campaign_analytics` | `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, `runefoble.events.watcher` | `campaign_analytics_worker` | `handle_domain_event` (analytics projections) | `consumers.analytics` |
+| `soundscape` | `soundscape` | `runefoble.events.session`, `runefoble.events.watcher`, `runefoble.events.character` | `soundscape_workers` | `handle_incoming_domain_event` | `consumers.soundscape` |
+
+`/healthz` returns `200` with `"status": "ok"` when every consumer is `running`. It returns `503` with `"status": "degraded"` when any consumer is `failed`.
+
+### Removed Consumers and Decisions
+
+These consumers had no running process. TASK-0578 removed them or started them. Each decision below is final for this release.
+
+| Component | Decision | Reason |
+|---|---|---|
+| `SpiceDBEventListener` (`libs/runefoble_auth/listener.py`) | Removed. | No service called `register_bus_handlers`. The listener used the in-process `EventBus`, not Redis Streams. Tuple sync runs through `ZitadelSpiceDBSyncService` on the gateway sync routes (`/api/v1/auth/sync/*`). |
+| `RedisInferenceConsumer` (`services/inference_worker`) | Removed. Config keys `RUNEFOBLE_WORKER_REDIS_*` removed. | No producer writes `runefoble.inference.requests`. TASK-0448 may add a producer and a dead-letter path later. |
+| `AnalyticsEventWorker` (`libs/runefoble_platform/analytics/worker.py`) | Removed. | No service started it. OpenPanel forwarding is not deployed. Domain services call `OpenPanelClient` directly if they need it. |
+| Gateway MCP dynamic tool bus | Kept. No mock fallback. | `configure_dynamic_tool_event_bus` in `gateway_api.main` injects the Redis bus when the module loads. It raises when `REDIS_URL` is empty. Dropped events log at `ERROR`. |
+
+---
+
 ## Consumer Group Operations
 
 ### Group Creation
@@ -112,10 +153,7 @@ await consumer_group.create_group(
 - Creates stream and consumer group if absent (`mkstream=True`).
 - Idempotent: returns `True` if created, `False` if `BUSYGROUP` is caught.
 - Any other error propagates. A broken stream or Redis error stops start-up.
-
-#### Inference Worker Start-Up
-
-`RedisInferenceConsumer.start()` (`services/inference_worker/src/inference_worker/redis_consumer.py`) follows the same rule. It catches `ResponseError` only when the message contains `BUSYGROUP`. `WRONGTYPE`, connection errors, and other errors raise from `start()`.
+- `SupervisedStreamConsumers.start()` calls this for every stream before it starts any read loop.
 
 ### Event Bus Selection at Start-Up
 
@@ -181,9 +219,9 @@ dlq_id = await consumer_group.route_to_dead_letter(
 
 ---
 
-## Event Projection Workers
+## In-Memory Session Projections
 
-`SessionReadProjection` maintains denormalized views of tactical boards and active encounters:
+`SessionReadProjection` maintains denormalized views of tactical boards and active encounters. No service starts it. The views exist only in process memory, and no `/healthz` reports them:
 
 ```python
 from game_session.projections import SessionReadProjection
@@ -228,5 +266,6 @@ The Redis Streams event bus, consumer groups, and read projections are verified 
 - **`tests/test_session_projections.py`**: High-level `SessionReadProjection` worker event processing, read model state transitions, and poison pill DLQ isolation.
 - **`tests/test_blackbox_publish_failure_policy.py`**: Verifies that decision routes return 503 with the pending action unchanged, and that side-effect publish failures are counted on `/healthz`.
 - **`tests/test_blackbox_board_event_publish.py`**: Verifies board and watcher events reach the Redis stream through `publish_event`.
+- **`tests/test_blackbox_stream_consumers.py`**: Verifies production consumers through service lifespans: projection from a published event, fail-fast start-up, `/healthz` failure reporting, soundscape reaction, and dead-letter routing.
 - **`tests/test_game_session_projections.py`**: Modular projection lifecycle tests covering `InitiativeProjection`, `PresenceProjection`, tie-breaking rules, and participant presence tracking.
 

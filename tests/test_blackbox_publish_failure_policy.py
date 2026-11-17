@@ -15,7 +15,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     get_copilot_engine,
     get_spicedb_client,
@@ -23,6 +23,8 @@ from the_watcher.dependencies import (
     set_spicedb_client,
 )
 from the_watcher.main import app
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 class FailingRedis(MockAsyncRedis):

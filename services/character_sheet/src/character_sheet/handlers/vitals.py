@@ -62,8 +62,12 @@ class VitalsHandlerMixin:
             ev.StandInPolicyUpdated, character_id=str(self.aggregate_id), guardrails=gr
         )
 
-    def set_stand_in_active(self, active: bool) -> None:
-        self._state = self.state.with_stand_in_active(active)
+    def set_stand_in_active(self, active: bool, session_id: str = "") -> None:
+        """Activate or release the AI stand-in. Emits one event; state changes on replay."""
+        if active == self.state.is_stand_in_active:
+            return
+        event_cls = ev.StandInActivated if active else ev.StandInReleased
+        self.create_event(event_cls, session_id=session_id, character_id=str(self.aggregate_id))
 
     def apply_penalty(
         self, penalty_type: PenaltyType, description: str, imposed_by: ImposedBy = "the_watcher"
@@ -125,6 +129,14 @@ class VitalsHandlerMixin:
     @handles(ev.StandInPolicyUpdated)
     def _on_guardrails_updated(self, event: ev.StandInPolicyUpdated) -> None:
         self._state = self.state.with_stand_in_guardrails(event.guardrails)
+
+    @handles(ev.StandInActivated)
+    def _on_stand_in_activated(self, event: ev.StandInActivated) -> None:
+        self._state = self.state.with_stand_in_active(True)
+
+    @handles(ev.StandInReleased)
+    def _on_stand_in_released(self, event: ev.StandInReleased) -> None:
+        self._state = self.state.with_stand_in_active(False)
 
     @handles(ev.StandInStabilized)
     def _on_stand_in_stabilized(self, event: ev.StandInStabilized) -> None:

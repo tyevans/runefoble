@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from pydantic_core import to_jsonable_python
 
 from runefoble_platform.consumer_group import (
-    MockAsyncRedis,
     RedisConsumerGroup,
     deserialize_event,
 )
@@ -166,5 +165,4 @@ __all__ = [
     "deserialize_event",
     "RedisStreamsEventBus",
     "RedisConsumerGroup",
-    "MockAsyncRedis",
 ]

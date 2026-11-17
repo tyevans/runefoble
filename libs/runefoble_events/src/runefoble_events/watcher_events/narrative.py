@@ -26,7 +26,7 @@ class SpeechIntentParsed(BaseRunefobleEvent):
     speaker_name: str
     action_type: str
     target: str | None = None
-    confidence: float = 1.0
+    confidence: float | None = None
     flavor_text: str = ""
     raw_transcript: str = ""
 

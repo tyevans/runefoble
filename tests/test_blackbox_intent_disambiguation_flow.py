@@ -16,17 +16,15 @@ from runefoble_events.events import (
     CompoundActionResolved,
     IntentDisambiguationRequested,
 )
-from runefoble_platform.redis_bus import (
-    MockAsyncRedis,
-    RedisStreamsEventBus,
-    deserialize_event,
-)
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from the_watcher.dependencies import (
     STREAM_BOARD,
     STREAM_WATCHER,
 )
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def _entity(id_: str, name: str, tag: str, desc: str, x: int, y: int, hp: int) -> dict:

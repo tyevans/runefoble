@@ -15,16 +15,14 @@ from runefoble_events.events import (
     PlayerSpokeEvent,
     SpeechIntentParsed,
 )
-from runefoble_platform.redis_bus import (
-    MockAsyncRedis,
-    deserialize_event,
-)
+from runefoble_platform.redis_bus import deserialize_event
 
 from tests.helpers.audio_synth import (
     generate_pcm_silence,
     generate_pcm_sine,
 )
 from tests.helpers.fixture_transcriber import FixtureTranscriber
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def test_end_to_end_streaming_speech_to_intent_latency_budget(

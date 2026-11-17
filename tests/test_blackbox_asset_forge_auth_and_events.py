@@ -21,7 +21,9 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events import BattlemapForged, TokenAssetForged
 from runefoble_platform.bus import bus as platform_bus
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture(autouse=True)

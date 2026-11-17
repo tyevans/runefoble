@@ -13,12 +13,17 @@ Governed by:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
+
+from tests.helpers.live_services import serve
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -28,9 +33,40 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
+def _echo_upstream(service: str) -> FastAPI:
+    """Return a stand-in upstream that reports the headers and path it received."""
+    app = FastAPI()
+
+    @app.get("/{path:path}")
+    def _echo(request: Request) -> dict[str, Any]:
+        return {
+            "service": service,
+            "path": request.url.path,
+            "query": dict(request.query_params),
+            "authorization": request.headers.get("authorization"),
+            "x_user_id": request.headers.get("x-user-id"),
+        }
+
+    return app
+
+
+@pytest.fixture(autouse=True)
+def hub_upstreams(monkeypatch) -> Iterator[None]:
+    """Run campaign_lore and campaign_analytics stand-ins on loopback ports."""
+    with (
+        serve(_echo_upstream("campaign-lore")) as lore_url,
+        serve(_echo_upstream("campaign-analytics")) as analytics_url,
+    ):
+        monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
+        monkeypatch.setenv("CAMPAIGN_ANALYTICS_URL", analytics_url)
+        yield
+
+
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
+def client(hub_upstreams) -> Iterator[TestClient]:
+    """Run the gateway lifespan after the upstream URLs are set, so clients see them."""
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture(autouse=True)
@@ -69,18 +105,14 @@ def created_campaign_id(client: TestClient, signing_issuer) -> str:
 def test_gateway_campaign_atlas_frontdoor(
     client: TestClient, created_campaign_id: str, signing_issuer
 ) -> None:
-    """Verify world atlas endpoint retrieves map layers, pins, and territories through gateway."""
+    """Verify the atlas route forwards the caller's bearer token to campaign_lore."""
     headers = _auth(signing_issuer, "dm_valeros")
     response = client.get(f"/api/v1/campaigns/{created_campaign_id}/atlas", headers=headers)
     assert response.status_code == 200
     data = response.json()
-    assert data["campaign_id"] == created_campaign_id
-    assert "pins" in data
-    assert len(data["pins"]) >= 1
-    assert data["pins"][0]["title"] == "Sunken Citadel"
-    assert "territories" in data
-    assert "layers" in data
-    assert data["layers"]["continental"] is True
+    assert data["service"] == "campaign-lore"
+    assert data["path"] == f"/api/v1/campaigns/{created_campaign_id}/atlas"
+    assert data["authorization"] == headers["Authorization"]
 
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(
@@ -93,24 +125,16 @@ def test_gateway_campaign_atlas_frontdoor(
 def test_gateway_campaign_codex_frontdoors(
     client: TestClient, created_campaign_id: str, signing_issuer
 ) -> None:
-    """Verify campaign codex endpoints retrieve lore entries through gateway."""
+    """Verify both codex routes forward the bearer token to campaign_lore entries."""
     headers = _auth(signing_issuer, "dm_valeros")
 
-    # Base codex endpoint
-    res1 = client.get(f"/api/v1/campaigns/{created_campaign_id}/codex", headers=headers)
-    assert res1.status_code == 200
-    data1 = res1.json()
-    assert data1["campaign_id"] == created_campaign_id
-    assert "entries" in data1
-    assert len(data1["entries"]) >= 1
-    assert data1["entries"][0]["title"] == "The Star-Eater Relic"
-
-    # Entries subpath endpoint
-    res2 = client.get(f"/api/v1/campaigns/{created_campaign_id}/codex/entries", headers=headers)
-    assert res2.status_code == 200
-    data2 = res2.json()
-    assert data2["campaign_id"] == created_campaign_id
-    assert len(data2["entries"]) >= 1
+    for route in ("codex", "codex/entries"):
+        res = client.get(f"/api/v1/campaigns/{created_campaign_id}/{route}", headers=headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["service"] == "campaign-lore"
+        assert data["path"] == f"/api/v1/campaigns/{created_campaign_id}/codex/entries"
+        assert data["authorization"] == headers["Authorization"]
 
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(
@@ -123,47 +147,29 @@ def test_gateway_campaign_codex_frontdoors(
 def test_gateway_campaign_analytics_frontdoors(
     client: TestClient, created_campaign_id: str, signing_issuer
 ) -> None:
-    """Verify analytics telemetry endpoints (heatmap, MVP, timeline, summary) through gateway."""
+    """Verify analytics routes forward the bearer token and query parameters to campaign_analytics."""
     headers = _auth(signing_issuer, "dm_valeros")
 
-    # Summary
+    # Summary is served by the gateway itself.
     summary_res = client.get(f"/api/v1/analytics/campaigns/{created_campaign_id}", headers=headers)
     assert summary_res.status_code == 200
     assert summary_res.json()["campaign_id"] == created_campaign_id
 
-    # Heatmap
-    heatmap_res = client.get(
-        f"/api/v1/analytics/campaigns/{created_campaign_id}/heatmap?session_id=session-tomb-14",
-        headers=headers,
-    )
-    assert heatmap_res.status_code == 200
-    heatmap = heatmap_res.json()
-    assert heatmap["campaign_id"] == created_campaign_id
-    assert heatmap["grid_cols"] == 8
-    assert len(heatmap["cells"]) >= 2
-    assert heatmap["cells"][0]["hit_count"] == 5
-
-    # MVP and Performance
-    mvp_res = client.get(
-        f"/api/v1/analytics/campaigns/{created_campaign_id}/mvp?encounter_id=enc-crypt-1",
-        headers=headers,
-    )
-    assert mvp_res.status_code == 200
-    mvp = mvp_res.json()
-    assert mvp["campaign_id"] == created_campaign_id
-    assert mvp["overall_mvp"]["recipient_name"] == "Valeros"
-    assert len(mvp["combatants"]) >= 2
-
-    # Chronicle Timeline
-    timeline_res = client.get(
-        f"/api/v1/analytics/campaigns/{created_campaign_id}/timeline?session_id=session-tomb-14",
-        headers=headers,
-    )
-    assert timeline_res.status_code == 200
-    timeline = timeline_res.json()
-    assert timeline["campaign_id"] == created_campaign_id
-    assert timeline["total_milestones"] >= 2
-    assert "Breach of the Astral Crypt" in [m["title"] for m in timeline["milestones"]]
+    # Heatmap, MVP, and timeline are proxied with their query parameters.
+    cases = [
+        ("heatmap?session_id=session-tomb-14", "session_id", "session-tomb-14"),
+        ("mvp?encounter_id=enc-crypt-1", "encounter_id", "enc-crypt-1"),
+        ("timeline?session_id=session-tomb-14", "session_id", "session-tomb-14"),
+    ]
+    for route, key, value in cases:
+        res = client.get(
+            f"/api/v1/analytics/campaigns/{created_campaign_id}/{route}", headers=headers
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["service"] == "campaign-analytics"
+        assert data["authorization"] == headers["Authorization"]
+        assert data["query"] == {key: value}
 
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(

@@ -11,10 +11,12 @@ import contextlib
 from collections.abc import AsyncIterator
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.stream_consumer import consumer_statuses
 
 from campaign_analytics.dependencies import (
     get_storage,
@@ -31,31 +33,26 @@ from campaign_analytics.worker import CampaignAnalyticsWorker
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Manage application startup and shutdown lifecycle."""
-    # Initialize storage
+    """Start storage and the analytics consumer. A failed consumer start stops the service."""
     storage = await CampaignAnalyticsStorage.create(platform_settings)
     set_storage(storage)
 
-    # Initialize worker if Redis is reachable
-    worker: CampaignAnalyticsWorker | None = None
-    if platform_settings.redis_url:
-        try:
-            bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
-            set_event_bus(bus)
-            cg = RedisConsumerGroup(client=bus.client)
-            worker = CampaignAnalyticsWorker(
-                storage=storage,
-                consumer_group=cg,
-            )
-            set_worker(worker)
-            await worker.start()
-        except Exception:
-            pass
+    bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
+    set_event_bus(bus)
+    worker = CampaignAnalyticsWorker(
+        storage=storage,
+        consumer_group=RedisConsumerGroup(client=await bus.get_client()),
+    )
+    set_worker(worker)
+    await worker.start()
+    app.state.consumers = {"analytics": worker.consumers}
 
-    yield
-
-    if worker:
+    try:
+        yield
+    finally:
         await worker.stop()
+        await bus.close()
+        app.state.consumers = {}
 
 
 app = FastAPI(
@@ -83,9 +80,18 @@ app.include_router(timeline_router)
 
 @app.get("/healthz", tags=["Health"])
 @app.get("/health", tags=["Health"])
-def health_check() -> dict[str, str]:
-    """Health check endpoint."""
-    return {"status": "ok", "service": "campaign-analytics"}
+def health_check(request: Request) -> JSONResponse:
+    """Report service health and the status of each supervised stream consumer."""
+    statuses = consumer_statuses(getattr(request.app.state, "consumers", {}))
+    healthy = all(status == "running" for status in statuses.values())
+    return JSONResponse(
+        status_code=200 if healthy else 503,
+        content={
+            "status": "ok" if healthy else "degraded",
+            "service": "campaign-analytics",
+            "consumers": statuses,
+        },
+    )
 
 
 @app.get("/metrics", tags=["Observability"])

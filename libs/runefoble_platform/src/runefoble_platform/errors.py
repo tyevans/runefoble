@@ -54,3 +54,7 @@ class GameRuleViolationError(RunefobleError):
 
 class ConfigurationError(RunefobleError):
     """Raised when a required setting is missing or invalid. The process must not start."""
+
+
+class ServiceUnavailableError(RunefobleError):
+    """Raised when a service dependency is not ready. Maps to HTTP 503 (ADR-0015 b)."""

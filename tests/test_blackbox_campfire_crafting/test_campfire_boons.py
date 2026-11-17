@@ -8,7 +8,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from game_session.dependencies import STREAM_SESSION, STREAM_STRONGHOLD
+from game_session.events import STREAM_SESSION, STREAM_STRONGHOLD
 
 from .conftest import REPO_ROOT
 

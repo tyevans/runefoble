@@ -11,11 +11,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException
 from game_session.dependencies import (
-    STREAM_WEST_MARCHES,
     get_caravan_ledger_repository,
     get_event_bus,
     get_spicedb_client,
 )
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.west_marches_models import (
     CompleteCaravanRequest,
     DispatchCaravanRequest,

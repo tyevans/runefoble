@@ -22,10 +22,11 @@ from runefoble_events.voice_barge_in import (
     NeuralSpeechBargeInDetectedEvent,
     TTSStreamAttenuatedEvent,
 )
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from voice_agent.main import app, set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

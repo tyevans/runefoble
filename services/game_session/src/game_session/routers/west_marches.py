@@ -10,12 +10,8 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Header, HTTPException, Query
-from game_session.dependencies import (
-    STREAM_WEST_MARCHES,
-    get_event_bus,
-    get_shared_world_repository,
-    get_spicedb_client,
-)
+from game_session.dependencies import get_event_bus, get_shared_world_repository, get_spicedb_client
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.west_marches_models import (
     CreateSharedWorldRequest,
     EstablishOutpostRequest,

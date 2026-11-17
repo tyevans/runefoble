@@ -151,6 +151,22 @@ class CombatEncounterEnded(BaseRunefobleEvent):
     total_rounds: int
 
 
+@register_event
+class ReadinessToggled(BaseRunefobleEvent):
+    aggregate_type: str = "GameSession"
+    session_id: UUID | str = ""
+    player_id: str
+    is_ready: bool
+
+
+@register_event
+class CharacterSelectedForLobby(BaseRunefobleEvent):
+    aggregate_type: str = "GameSession"
+    session_id: UUID | str = ""
+    player_id: str
+    character_id: UUID
+
+
 @register_event("runefoble.events.session.character_control_transferred")
 class CharacterControlTransferred(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True

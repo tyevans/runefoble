@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import httpx
 from fastapi import APIRouter
 from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
 from runefoble_platform.event_publish import publish_or_fail
@@ -11,7 +10,6 @@ from the_watcher.dependencies import (
     STREAM_WATCHER,
     engine,
     get_event_bus,
-    logger,
     to_uuid,
 )
 from the_watcher.models import (
@@ -20,58 +18,61 @@ from the_watcher.models import (
     StandInRecapResponse,
     StandInRequest,
 )
+from the_watcher.worker_client import call_worker
 
 router = APIRouter(tags=["stand_in"])
 
 
 @router.post("/api/v1/watcher/stand-in/act", response_model=StandInAction)
 async def stand_in_act(req: StandInRequest) -> StandInAction:
-    """Simulate an action for an absent player's character with applied penalties."""
-    stand_in: StandInAction | None = None
-    if INFERENCE_URL:
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                res = await client.post(
-                    f"{INFERENCE_URL}/inference/v1/stand-in-action",
-                    json={
-                        "campaign_id": req.campaign_id or "current-campaign",
-                        "session_id": req.session_id or "current-session",
-                        "character_name": req.character_name,
-                        "character_class": req.character_class,
-                        "penalties": req.penalties,
-                        "scene_context": req.scene_context,
-                        "personality_traits": req.personality_traits,
-                        "guardrails": req.guardrails,
-                    },
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    stand_in = StandInAction(
-                        character_name=data.get("character_name", req.character_name),
-                        action_type=data.get("action_type", "attack"),
-                        action_description=data.get("narrative_flavor", ""),
-                        dialogue=data.get("dialogue", "..."),
-                        penalties_applied=data.get("penalties_applied", req.penalties),
-                        guardrails_applied=data.get("guardrails_applied", []),
-                        flavor_text=data.get("narrative_flavor", ""),
-                    )
-        except Exception as e:
-            logger.warning("Inference worker failed: %s. Falling back to local engine.", e)
+    """Simulate an action for an absent player's character with applied penalties.
 
-    if stand_in is None:
+    With a worker configured, a worker failure is returned as HTTP 503. The Watcher never
+    substitutes canned output for a failed worker call.
+    """
+    stand_in: StandInAction
+    guardrails = req.guardrails.model_dump() if req.guardrails is not None else None
+    if INFERENCE_URL:
+        data = await call_worker(
+            INFERENCE_URL,
+            "/inference/v1/stand-in-action",
+            {
+                "campaign_id": req.campaign_id,
+                "session_id": req.session_id,
+                "character_name": req.character_name,
+                "character_class": req.character_class,
+                "penalties": req.penalties,
+                "scene_context": req.scene_context,
+                "personality_traits": req.personality_traits,
+                "guardrails": guardrails,
+            },
+            timeout=10.0,
+        )
+        stand_in = StandInAction(
+            character_name=data["character_name"],
+            action_type=data["action_type"],
+            action_description=data["narrative_flavor"],
+            dialogue=data["dialogue"],
+            penalties_applied=data["penalties_applied"],
+            guardrails_applied=data["guardrails_applied"],
+            flavor_text=data["narrative_flavor"],
+            source=data["source"],
+            degraded=data["degraded"],
+        )
+    else:
         stand_in = engine.generate_stand_in_action(
             character_name=req.character_name,
             character_class=req.character_class,
             penalties=req.penalties,
             scene_context=req.scene_context,
             personality_traits=req.personality_traits,
-            guardrails=req.guardrails,
+            guardrails=guardrails,
         )
 
     # Publish events to Redis Streams
     bus = get_event_bus()
     session_uuid = to_uuid(req.session_id)
-    campaign_uuid = to_uuid(req.campaign_id) if req.campaign_id else None
+    campaign_uuid = to_uuid(req.campaign_id)
 
     action_event = StandInActionDecided(
         aggregate_id=session_uuid,

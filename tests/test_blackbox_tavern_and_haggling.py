@@ -9,22 +9,20 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from game_session.dependencies import (
-    STREAM_TAVERN,
-)
-from game_session.dependencies import (
     set_event_bus as set_session_event_bus,
 )
 from game_session.dependencies import (
     set_spicedb_client as set_session_spicedb,
 )
+from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.main import app as voice_app
 
 from tests.helpers.live_services import serve
+from tests.helpers.mock_redis import MockAsyncRedis
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 

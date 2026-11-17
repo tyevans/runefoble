@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from eventsource.domain.aggregate import DeclarativeAggregate
@@ -13,6 +13,7 @@ from game_session.aggregate.session_handlers import SessionHandlersMixin
 from game_session.models import GameSessionState, ParticipantState
 from game_session.rules import calculate_next_active_character
 from runefoble_events.events import (
+    DiceRolled,
     SessionEnded,
     StandInActionDecided,
     TurnAdvanced,
@@ -57,6 +58,27 @@ class GameSessionAggregate(
             active_character_id=next_char_id,
         )
 
+    def record_dice_roll(
+        self,
+        roller_id: str,
+        roller_name: str,
+        formula: str,
+        roll: dict[str, Any],
+    ) -> None:
+        """Record a dice roll evaluated by the caller. The session state does not change."""
+        self.create_event(
+            DiceRolled,
+            campaign_id=self.state.campaign_id,
+            session_id=str(self.aggregate_id),
+            roller_id=roller_id,
+            roller_name=roller_name,
+            formula=formula,
+            total=roll["total"],
+            rolls=roll["rolls"],
+            is_crit=roll.get("is_crit", False),
+            is_fumble=roll.get("is_fumble", False),
+        )
+
     def record_stand_in_action(
         self,
         character_name: str,
@@ -85,6 +107,10 @@ class GameSessionAggregate(
             session_id=self.aggregate_id,
             summary=summary,
         )
+
+    @handles(DiceRolled)
+    def _on_dice_rolled(self, event: DiceRolled) -> None:
+        """Dice rolls do not change session state."""
 
     @handles(TurnAdvanced)
     def _on_turn_advanced(self, event: TurnAdvanced) -> None:

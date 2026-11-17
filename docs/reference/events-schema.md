@@ -80,6 +80,12 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
 - **`PlayerLeftSession`**: Emitted when a participant disconnects or misses game night.
   - `player_id`: String
   - `reason`: String
+- **`ReadinessToggled`**: Emitted when a player sets lobby readiness (`POST /api/v1/sessions/{session_id}/lobby/readiness`). Stream: `runefoble.events.session`.
+  - `player_id`: String
+  - `is_ready`: Boolean
+- **`CharacterSelectedForLobby`**: Emitted when a player selects the character brought to the lobby (`POST /api/v1/sessions/{session_id}/lobby/character`). Stream: `runefoble.events.session`.
+  - `player_id`: String
+  - `character_id`: UUID
 - **`TurnAdvanced`**: Emitted when the initiative turn counter advances.
   - `previous_turn`: Integer
   - `new_turn`: Integer
@@ -428,6 +434,16 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `character_id`: String
   - `slot_level`: Optional[Integer] (absent means every level was restored)
   - `spell_slots`: Mapping[Integer, Integer] (full resulting slot map)
+- **`SpellUnprepared`**: Emitted when a prepared spell is removed from a character's active spellbook. Unpreparing a spell that is not prepared emits no event (`runefoble.events.character.spell_unprepared`).
+  - `session_id`: String
+  - `character_id`: String
+  - `spell_name`: String
+- **`StandInActivated`**: Emitted when the AI stand-in takes control of a character (`runefoble.events.character.stand_in_activated`). Activation and release are idempotent. A request that does not change the flag emits no event.
+  - `session_id`: String
+  - `character_id`: UUID | str
+- **`StandInReleased`**: Emitted when a player takes control back from the AI stand-in (`runefoble.events.character.stand_in_released`).
+  - `session_id`: String
+  - `character_id`: UUID | str
 - **`StandInPolicyUpdated`**: Emitted when tactical guardrail constraints and preferences are configured for a character's AI stand-in (`runefoble.events.character.stand_in_policy_updated`).
   - `session_id`: Optional[UUID | str]
   - `character_id`: UUID | str
@@ -484,7 +500,7 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `speaker_name`: String
   - `action_type`: String ("attack", "cast_spell", "move", "dialogue")
   - `target`: Optional[String]
-  - `confidence`: Float
+  - `confidence`: Optional[Float] (null when the inference worker reports no confidence)
   - `flavor_text`: String
 - **`IntentDisambiguationRequested`**: Emitted when a spoken intent contains ambiguous entity references requiring player clarification (`runefoble.events.watcher.disambiguation_requested`).
   - `session_id`: String
@@ -516,7 +532,7 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `action_type`: String
   - `dialogue`: String
   - `penalties_applied`: List[String]
-- **`DiceRolled`**: Emitted when dice are rolled (`runefoble.events.dice.rolled`).
+- **`DiceRolled`**: Emitted when dice are rolled through `POST /api/v1/sessions/{session_id}/roll`. The session aggregate records the roll, so the session must exist (404 otherwise). The session repository publishes it to `runefoble.events.session` (`runefoble.events.dice.rolled`).
   - `session_id`: String
   - `roller_id`: String
   - `roller_name`: String
@@ -610,6 +626,9 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `filters_applied`: List[String]
   - `latency_ms`: Float
   - `audio_bytes_length`: Integer
+- **`CampaignFactionRegistered`**: Emitted when a faction joins a campaign's simulation registry (`runefoble.events.watcher.campaign_faction_registered`). The event belongs to the `CampaignWorld` aggregate stream (`aggregate_type`: `CampaignWorld`).
+  - `campaign_id`: String
+  - `faction_id`: String
 - **`FactionCreated`**: Emitted when a new autonomous NPC faction aggregate is registered (`runefoble.events.watcher.faction_created`).
   - `campaign_id`: String
   - `faction_id`: String
@@ -649,7 +668,7 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `description`: String
   - `severity`: String ("minor", "moderate", "critical")
   - `ripple_effects`: List[String]
-- **`WorldTickExecuted`**: Emitted when a downtime world progression tick completes across all campaign factions (`runefoble.events.watcher.world_tick_executed`).
+- **`WorldTickExecuted`**: Emitted when a downtime world progression tick completes across all campaign factions (`runefoble.events.watcher.world_tick_executed`). The event belongs to the `CampaignWorld` aggregate stream (`aggregate_type`: `CampaignWorld`).
   - `campaign_id`: String
   - `tick_number`: Integer
   - `intelligence_bulletin`: String (Markdown formatted DM briefing)
@@ -1045,11 +1064,15 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
 
 ### Audience Studio Events (`aggregate_type: AudiencePoll`)
 
+The TypeScript `audience_studio` service publishes these events to the `runefoble.events.audience` stream. A command publishes its events before it stores them. If a publish fails, the command is rejected and nothing is stored. The CloudEvent `id` is `<stream>#<version>`, so a retried command publishes the same id. Poll events use stream `AudiencePoll-<poll_id>`. Proposal events use stream `AudienceModifierProposal-<proposal_id>`. The CloudEvent `time` is the command time.
+
 - **`AudiencePollStarted`**: Emitted when a live spectator chaos poll starts (`runefoble.events.audience.poll_started`). Fields: `poll_id`, `campaign_id`, `session_id`, `title`, `prompt`, `options`, `duration_seconds`, `quorum`, `expires_at`.
 - **`AudienceVoteCast`**: Emitted when a spectator casts a vote (`runefoble.events.audience.vote_cast`). Fields: `poll_id`, `campaign_id`, `voter_id`, `option_id`, `channel`, `timestamp`.
-- **`AudiencePollCompleted`**: Emitted when poll voting concludes (`runefoble.events.audience.poll_completed`). Fields: `poll_id`, `campaign_id`, `winning_option_id`, `total_votes`, `quorum_met`, `proposed_modifier`.
-- **`AudienceModifierProposed`**: Emitted when winning chaos option enters DM moderation queue (`runefoble.events.audience.modifier_proposed`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `modifier_type`, `description`, `parameters`, `status`.
-- **`AudienceModifierApproved`**: Emitted when DM approves modifier into session (`runefoble.events.audience.modifier_approved`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `approved_by`, `approved`, `applied_at`.
+- **`AudiencePollCompleted`**: Emitted when poll voting concludes (`runefoble.events.audience.poll_completed`). Fields: `poll_id`, `campaign_id`, `session_id`, `winning_option_id`, `winning_option_label`, `total_votes`, `quorum_met`, `proposed_modifier` (the full proposal object, or `null` when quorum is not met).
+- **`AudienceModifierProposed`**: Emitted when winning chaos option enters DM moderation queue (`runefoble.events.audience.modifier_proposed`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `session_id`, `title`, `modifier_type`, `description`, `parameters`, `status`.
+- **`AudienceModifierApproved`**: Emitted when the DM decides a proposal (`runefoble.events.audience.modifier_approved`). Fields: `proposal_id`, `poll_id`, `campaign_id`, `session_id`, `approved_by`, `approved`, `modifier_type`, `parameters`, `applied_at` (the decision time). A veto uses the same event type with `approved: false`. No separate veto event exists.
+
+Consumers must check `approved` before they apply a modifier.
 
 ### Campaign Analytics & Chronicle Events (`aggregate_type: CampaignChronicle`)
 

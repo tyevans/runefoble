@@ -52,7 +52,7 @@ async def prepare_spell(character_id: UUID, req: schemas.PrepareSpellRequest, re
         return await deps.execute_character_mutation(
             repo,
             character_id,
-            lambda c: c.unprepare_spell(req.spell_name),
+            lambda c: c.unprepare_spell(req.spell_name, req.session_id),
         )
     return await deps.execute_character_mutation(
         repo,
@@ -83,6 +83,15 @@ async def restore_spell_slots(
 @router.get("/api/v1/characters/{character_id}", response_model=CharacterState)
 async def get_character(character_id: UUID, repo: deps.RepoDep):
     return (await deps.load_character(repo, character_id)).state
+
+
+@router.post("/api/v1/characters/{character_id}/stand-in", response_model=CharacterState)
+async def set_stand_in_active(
+    character_id: UUID, req: schemas.StandInActivationRequest, repo: deps.RepoDep
+):
+    return await deps.execute_character_mutation(
+        repo, character_id, lambda c: c.set_stand_in_active(req.active, req.session_id)
+    )
 
 
 @router.post("/api/v1/characters/{character_id}/health", response_model=CharacterState)

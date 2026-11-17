@@ -20,7 +20,7 @@ from runefoble_events import (
     SoundscapeCueTriggered,
     SoundscapeTensionUpdated,
 )
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from soundscape.dependencies import (
     handle_incoming_domain_event,
     reset_dependencies,
@@ -28,6 +28,8 @@ from soundscape.dependencies import (
 )
 from soundscape.main import app
 from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture(autouse=True)

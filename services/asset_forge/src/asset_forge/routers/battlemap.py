@@ -22,13 +22,13 @@ from asset_forge.dependencies import (
     get_storage,
     publish_forge_event,
 )
-from asset_forge.generator import generate_battlemap_png
 from asset_forge.geometry import build_board_geometry_payload
 from asset_forge.map_generation_engine import get_map_generator
 from asset_forge.models import (
     BattlemapForgeRequest,
     BattlemapForgeResponse,
 )
+from asset_forge.raster.battlemap_raster import generate_battlemap_png
 from asset_forge.silo_upload import store_forged_asset
 
 router = APIRouter(prefix="/api/v1/forge/battlemap", tags=["Battlemap Forge"])

@@ -19,7 +19,9 @@ from campaign_analytics.storage import CampaignAnalyticsStorage
 from campaign_analytics.worker import CampaignAnalyticsWorker
 from fastapi.testclient import TestClient
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
-from runefoble_platform.consumer_group import MockAsyncRedis, RedisConsumerGroup
+from runefoble_platform.consumer_group import RedisConsumerGroup
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture
@@ -45,7 +47,8 @@ def client(storage: CampaignAnalyticsStorage, spicedb_client: MockSpiceDBClient)
 
 def test_service_healthz_metrics_and_manifest(client: TestClient) -> None:
     """Verify /healthz, /metrics, /openapi.json, and /ui/manifest public frontdoors."""
-    assert client.get("/healthz").json() == {"status": "ok", "service": "campaign-analytics"}
+    health = client.get("/healthz").json()
+    assert health == {"status": "ok", "service": "campaign-analytics", "consumers": {}}
     assert "spatial_records_count" in client.get("/metrics").json()
     paths = client.get("/openapi.json").json()["paths"]
     assert "/api/v1/analytics/campaigns/{id}/heatmap" in paths

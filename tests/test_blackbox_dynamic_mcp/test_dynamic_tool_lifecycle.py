@@ -7,7 +7,8 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 from gateway_mcp.server import mcp
-from runefoble_platform.consumer_group import MockAsyncRedis
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.mark.asyncio

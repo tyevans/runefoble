@@ -1,6 +1,6 @@
 /**
  * Storybook stories for Runefoble Zitadel Authentication Components
- * ADR-0004, ADR-0012, ADR-0013, TASK-0207
+ * ADR-0004, ADR-0012, ADR-0013, TASK-0207, TASK-0524
  */
 
 import type { Meta, StoryObj } from '@storybook/web-components';
@@ -27,29 +27,28 @@ const sampleUser: UserClaims = {
   is_admin: true,
 };
 
-export const UnauthenticatedSignInModal: Story = {
+export const SignedOutSignInGate: Story = {
   render: () => html`
     <div style="padding: 24px; min-height: 480px; background: var(--rf-bg-canvas, #f8f9fa);">
-      <runefoble-auth-modal .open=${true} initialTab="login"></runefoble-auth-modal>
+      <runefoble-auth-modal .open=${true}></runefoble-auth-modal>
     </div>
   `,
 };
 
-export const SignUpModal: Story = {
+export const RedirectingToZitadel: Story = {
   render: () => html`
     <div style="padding: 24px; min-height: 480px; background: var(--rf-bg-canvas, #f8f9fa);">
-      <runefoble-auth-modal .open=${true} initialTab="register"></runefoble-auth-modal>
+      <runefoble-auth-modal .open=${true} .busy=${true}></runefoble-auth-modal>
     </div>
   `,
 };
 
-export const ModalWithValidationError: Story = {
+export const SignInErrorAfterCallback: Story = {
   render: () => html`
     <div style="padding: 24px; min-height: 480px; background: var(--rf-bg-canvas, #f8f9fa);">
       <runefoble-auth-modal
         .open=${true}
-        initialTab="register"
-        errorMessage="Passwords do not match"
+        errorMessage="Sign-in state did not match. No session was stored."
       ></runefoble-auth-modal>
     </div>
   `,

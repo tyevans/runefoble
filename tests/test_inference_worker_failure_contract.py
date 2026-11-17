@@ -11,6 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 import pytest
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api
 from inference_worker.config import WorkerSettings
@@ -243,8 +244,9 @@ async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatc
         "campaign_id": "camp-1",
     }
 
-    with serve(api.app) as worker_url:
+    with serve(api.app) as worker_url, serve(_empty_board_app()) as board_url:
         monkeypatch.setattr(speech, "INFERENCE_URL", worker_url)
+        monkeypatch.setattr(speech, "BOARD_STATE_URL", board_url)
         async with AsyncClient(
             transport=ASGITransport(app=watcher_app), base_url="http://test"
         ) as ac:
@@ -266,8 +268,23 @@ async def test_watcher_speech_unreachable_worker_is_503_not_template(monkeypatch
         "campaign_id": "camp-1",
     }
 
-    async with AsyncClient(transport=ASGITransport(app=watcher_app), base_url="http://test") as ac:
-        resp = await ac.post("/api/v1/watcher/intent", json=speech_payload)
+    with serve(_empty_board_app()) as board_url:
+        monkeypatch.setattr(speech, "BOARD_STATE_URL", board_url)
+        async with AsyncClient(
+            transport=ASGITransport(app=watcher_app), base_url="http://test"
+        ) as ac:
+            resp = await ac.post("/api/v1/watcher/intent", json=speech_payload)
 
     assert resp.status_code == 503
-    assert resp.json()["detail"]["error"] == "backend_unavailable"
+    assert resp.json()["detail"] == {"error": "backend_unavailable", "backend": "inference_worker"}
+
+
+def _empty_board_app() -> FastAPI:
+    """Fake board state service with a board that has no tokens."""
+    app = FastAPI()
+
+    @app.get("/api/v1/boards/{session_id}")
+    async def _board(session_id: str) -> dict[str, Any]:
+        return {"session_id": session_id, "tokens": {}}
+
+    return app

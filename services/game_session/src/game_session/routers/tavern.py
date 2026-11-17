@@ -11,7 +11,6 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Header, HTTPException
 from game_session.dependencies import (
-    STREAM_TAVERN,
     get_event_bus,
     get_merchant_repository,
     get_spicedb_client,
@@ -20,6 +19,7 @@ from game_session.dependencies import (
 from game_session.dependencies import (
     repo as session_repo,
 )
+from game_session.events import STREAM_TAVERN
 from game_session.merchants import MERCHANT_TEMPERAMENTS, MerchantAggregate
 from game_session.minigames import (
     TavernGameAggregate,

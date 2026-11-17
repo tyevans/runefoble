@@ -17,8 +17,9 @@ from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 

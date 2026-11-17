@@ -10,11 +10,11 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from game_session.dependencies import (
-    STREAM_WEST_MARCHES,
     get_establishment_repository,
     get_spicedb_client,
     get_worker_repository,
 )
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.auth import (
     check_establishment_read_permission,
     check_establishment_write_permission,

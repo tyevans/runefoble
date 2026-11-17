@@ -25,7 +25,10 @@ from runefoble_events.character import (
     SpellPrepared,
     SpellSlotExpended,
     SpellSlotsRestored,
+    SpellUnprepared,
+    StandInActivated,
     StandInPolicyUpdated,
+    StandInReleased,
     StandInStabilized,
 )
 from runefoble_events.downtime import (
@@ -92,6 +95,9 @@ __all__ = [
     "SpellPrepared",
     "SpellSlotExpended",
     "SpellSlotsRestored",
+    "SpellUnprepared",
+    "StandInActivated",
+    "StandInReleased",
     "StandInPolicyUpdated",
     "StandInStabilized",
     "StrongholdCreated",

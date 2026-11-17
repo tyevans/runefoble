@@ -1,30 +1,30 @@
 /**
- * DM Approval Queue for audience modifiers.
- * Governed by ADR-0001 (SpiceDB Zanzibar) and ADR-0006 (Redis Streams).
+ * DM approval queue for audience modifiers. Governed by ADR-0001 (SpiceDB) and ADR-0006.
+ * Proposal state lives in ProposalAggregate event streams.
  */
 
 import type { ZanzibarClient } from './auth.js';
-import { buildModifierApprovedEvent } from './events.js';
-import type { RedisStreamsClient } from './redis.js';
+import { proposalStreamId } from './domain/events.js';
+import { DomainError } from './errors.js';
+import type { AudienceEventRepository } from './eventSourcing/repository.js';
+import type { KeyedMutex } from './eventSourcing/keyedMutex.js';
+import type { Logger } from './logger.js';
 import type { AudienceModifierProposal, ProposalStatus } from './types.js';
 
+export type ProposalAction = 'queued' | 'approved' | 'vetoed';
+type ProposalListener = (action: ProposalAction, proposal: AudienceModifierProposal) => void;
+
 export class ApprovalQueue {
-  private proposals: Map<string, AudienceModifierProposal> = new Map();
-  private listeners: Array<
-    (action: 'queued' | 'approved' | 'vetoed', proposal: AudienceModifierProposal) => void
-  > = [];
+  private readonly listeners: ProposalListener[] = [];
 
   constructor(
     private readonly auth: ZanzibarClient,
-    private readonly redis: RedisStreamsClient
+    private readonly repo: AudienceEventRepository,
+    private readonly mutex: KeyedMutex,
+    private readonly log: Logger
   ) {}
 
-  onProposalChange(
-    callback: (
-      action: 'queued' | 'approved' | 'vetoed',
-      proposal: AudienceModifierProposal
-    ) => void
-  ): () => void {
+  onProposalChange(callback: ProposalListener): () => void {
     this.listeners.push(callback);
     return () => {
       const idx = this.listeners.indexOf(callback);
@@ -32,33 +32,19 @@ export class ApprovalQueue {
     };
   }
 
-  private notify(
-    action: 'queued' | 'approved' | 'vetoed',
-    proposal: AudienceModifierProposal
-  ): void {
-    for (const listener of this.listeners) {
-      try {
-        listener(action, proposal);
-      } catch {
-        // Ignore listener error
-      }
-    }
-  }
-
-  enqueueProposal(proposal: AudienceModifierProposal): void {
-    this.proposals.set(proposal.id, proposal);
+  /** Called by the poll service after a proposal is committed. */
+  announceQueued(proposal: AudienceModifierProposal): void {
     this.notify('queued', proposal);
   }
 
-  getProposal(proposalId: string): AudienceModifierProposal | undefined {
-    return this.proposals.get(proposalId);
+  async getProposal(proposalId: string): Promise<AudienceModifierProposal | undefined> {
+    return (await this.repo.loadProposal(proposalId))?.snapshot();
   }
 
-  getProposals(
-    campaignId?: string,
-    status?: ProposalStatus
-  ): AudienceModifierProposal[] {
-    let list = Array.from(this.proposals.values());
+  async getProposals(campaignId?: string, status?: ProposalStatus): Promise<AudienceModifierProposal[]> {
+    let list = (await this.repo.loadAllProposals())
+      .map((p) => p.snapshot())
+      .filter((p): p is AudienceModifierProposal => p !== undefined);
     if (campaignId) {
       list = list.filter((p) => p.campaignId === campaignId);
     }
@@ -68,55 +54,56 @@ export class ApprovalQueue {
     return list;
   }
 
-  async approveProposal(
-    proposalId: string,
-    dmUserId: string
-  ): Promise<AudienceModifierProposal> {
-    const proposal = this.proposals.get(proposalId);
-    if (!proposal) {
-      throw new Error(`Proposal '${proposalId}' not found`);
-    }
-
-    const isDM = await this.auth.isDungeonMaster(dmUserId, proposal.campaignId);
-    if (!isDM) {
-      throw new Error(
-        `User '${dmUserId}' does not have dungeon_master permission on campaign '${proposal.campaignId}'`
-      );
-    }
-
-    proposal.status = 'approved';
-    proposal.reviewedBy = dmUserId;
-    proposal.reviewedAt = new Date().toISOString();
-
-    // Publish CloudEvent to Redis Streams
-    const event = buildModifierApprovedEvent(proposal, dmUserId, true);
-    await this.redis.publishEvent('runefoble.events.audience', event);
-
-    this.notify('approved', proposal);
-    return proposal;
+  async approveProposal(proposalId: string, dmUserId: string): Promise<AudienceModifierProposal> {
+    return this.decide(proposalId, dmUserId, 'approve', 'approved');
   }
 
-  async vetoProposal(
-    proposalId: string,
-    dmUserId: string
-  ): Promise<AudienceModifierProposal> {
-    const proposal = this.proposals.get(proposalId);
-    if (!proposal) {
-      throw new Error(`Proposal '${proposalId}' not found`);
-    }
+  async vetoProposal(proposalId: string, dmUserId: string): Promise<AudienceModifierProposal> {
+    return this.decide(proposalId, dmUserId, 'reject', 'vetoed');
+  }
 
-    const isDM = await this.auth.isDungeonMaster(dmUserId, proposal.campaignId);
+  private async decide(
+    proposalId: string,
+    dmUserId: string,
+    command: 'approve' | 'reject',
+    action: 'approved' | 'vetoed'
+  ): Promise<AudienceModifierProposal> {
+    const current = await this.repo.loadProposal(proposalId);
+    if (!current) {
+      throw new DomainError(`Proposal '${proposalId}' not found`, 404);
+    }
+    const campaignId = current.snapshot()!.campaignId;
+    const isDM = await this.auth.isDungeonMaster(dmUserId, campaignId);
     if (!isDM) {
-      throw new Error(
-        `User '${dmUserId}' does not have dungeon_master permission on campaign '${proposal.campaignId}'`
+      throw new DomainError(
+        `User '${dmUserId}' does not have dungeon_master permission on campaign '${campaignId}'`,
+        403
       );
     }
 
-    proposal.status = 'vetoed';
-    proposal.reviewedBy = dmUserId;
-    proposal.reviewedAt = new Date().toISOString();
+    const decided = await this.mutex.run([proposalStreamId(proposalId)], async () => {
+      const proposal = await this.repo.loadProposal(proposalId);
+      if (!proposal) {
+        throw new DomainError(`Proposal '${proposalId}' not found`, 404);
+      }
+      proposal[command](dmUserId, new Date());
+      await this.repo.commit([proposal]);
+      return proposal.snapshot()!;
+    });
 
-    this.notify('vetoed', proposal);
-    return proposal;
+    this.notify(action, decided);
+    return decided;
+  }
+
+  private notify(action: ProposalAction, proposal: AudienceModifierProposal): void {
+    for (const listener of this.listeners) {
+      try {
+        listener(action, proposal);
+      } catch (err) {
+        // A broken listener must not block the other listeners or the command. The failure is logged.
+        this.log.error({ err, action }, 'Proposal listener failed');
+      }
+    }
   }
 }
+

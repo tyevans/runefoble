@@ -42,6 +42,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
   - `RUNEFOBLE_EVENT_STORE_TABLE_NAME`: Event store table name (default `runefoble_events`).
 - **Fail-Fast Initialization**: If `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` and the database host is unreachable, `get_event_store()` raises `EventStoreInitializationError`. The service process exits at start-up. It never runs on `InMemoryEventStore` in this case. `InMemoryEventStore` is used only when the flag is `false` (for example, in tests).
 - **Store Kind Reporting**: Service `/healthz` endpoints report `event_store` as `postgresql` or `memory`, from `event_store_kind()`.
+- **Consumer Status Reporting**: Services that run Redis Stream consumers (`campaign-analytics`, `soundscape`) report `consumers` on `/healthz`, one entry per consumer set, with `running` or `failed`. The endpoint returns `503` when any consumer is `failed`. See [Run Supervised Redis Stream Consumers](../how-to/run-supervised-redis-stream-consumers.md).
 
 ### 2. Redis Streams (Event Streaming & Consumer Groups)
 - **Role**: High-throughput distributed event bus powering pub/sub across bounded contexts.
@@ -101,6 +102,24 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Environment Variables**: `RUNEFOBLE_MAILPIT_SMTP_HOST`, `RUNEFOBLE_MAILPIT_SMTP_PORT`, `RUNEFOBLE_MAILPIT_HTTP_URL`, `RUNEFOBLE_MAILPIT_ENABLED`.
 - **Graceful Fallback**: `MailpitClient` has built-in `fallback_in_memory=True` storing emails in a local memory buffer for offline test execution when Mailpit is not running.
 - **How-To Guide**: [Test Email Signups with Mailpit](../how-to/test-email-signups-with-mailpit.md).
+
+---
+
+## Cross-Service URLs (TASK-0624)
+
+The chart sets each service-to-service URL. The URL uses the in-cluster service name and the port from `services.<name>.port`. The chart renders each key only on the containers listed below. Each service reads its URL from the environment. No code default uses `localhost`.
+
+| Environment variable | Value in cluster | Rendered on | Read by |
+|---|---|---|---|
+| `RUNEFOBLE_WATCHER_URL` | `http://the-watcher:8001` | `game-session`, `voice-agent` | `game_session` (autopilot), `voice_agent` (default `http://the-watcher:8001`) |
+| `RUNEFOBLE_VOICE_AGENT_URL` | `http://voice-agent:8005` | `game-session` | `game_session` voice client |
+| `RUNEFOBLE_INFERENCE_URL` | `http://inference-worker:8100` | `the-watcher` (only when `services.inferenceWorker` is set) | `the_watcher` |
+| `SOUNDSCAPE_SERVICE_URL` | `http://soundscape:8009` | `gateway-api` | Gateway soundscape proxy (default `http://soundscape:8009`) |
+| `CAMPAIGN_LORE_URL` | `http://campaign-lore:8006` | `gateway-api` | Gateway hub views |
+| `CAMPAIGN_ANALYTICS_URL` | `http://campaign-analytics:8011` | `gateway-api` | Gateway hub views |
+| `CHARACTER_SHEET_URL` | `http://character-sheet:8003` | `gateway-api` | Gateway character sub-resources |
+
+The chart defines these keys in one block in `deployments/helm/runefoble/templates/services.yaml`. To add a consumer, add its container name to that key's `consumers` list.
 
 ---
 

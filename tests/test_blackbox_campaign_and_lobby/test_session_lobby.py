@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import STREAM_SESSION
+from game_session.events import STREAM_SESSION
 
 from tests.helpers.ws_identity import ws_subprotocols
 

@@ -77,10 +77,22 @@ class GeopoliticalShiftOccurred(BaseRunefobleEvent):
     ripple_effects: list[str] = Field(default_factory=list)
 
 
+@register_event("runefoble.events.watcher.campaign_faction_registered")
+class CampaignFactionRegistered(BaseRunefobleEvent):
+    """A faction joined a campaign's simulation registry."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CampaignWorld"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.campaign_faction_registered"
+    campaign_id: str
+    faction_id: str
+
+
 @register_event("runefoble.events.watcher.world_tick_executed")
 class WorldTickExecuted(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True
-    aggregate_type: str = "TheWatcher"
+    aggregate_type: str = "CampaignWorld"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.world_tick_executed"
     campaign_id: str
@@ -92,6 +104,7 @@ class WorldTickExecuted(BaseRunefobleEvent):
 
 
 __all__ = [
+    "CampaignFactionRegistered",
     "FactionAgendaAdvanced",
     "FactionAgendaSet",
     "FactionCreated",

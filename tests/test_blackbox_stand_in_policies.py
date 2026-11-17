@@ -7,8 +7,10 @@ from character_sheet.main import set_spicedb_client as character_set_spicedb
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import StandInPolicyUpdated, StandInStabilized
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from the_watcher.watcher_ai import TheWatcherEngine
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 GUARDRAILS_PAYLOAD = {
     "preserve_spell_slots": {"3": 1},

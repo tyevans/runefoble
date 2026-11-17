@@ -19,10 +19,11 @@ import uuid
 
 from fastapi.testclient import TestClient
 from runefoble_events.events import VoiceSpeechInterrupted
-from runefoble_platform.redis_bus import MockAsyncRedis, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.interruption import apply_soft_crossfade
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def test_barge_in_cancels_playback_within_100ms(client: TestClient, mock_redis: MockAsyncRedis):

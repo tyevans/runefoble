@@ -1,6 +1,7 @@
 /**
  * Unit tests for Zitadel Browser Authentication Service
  * TASK-0207: Zitadel Auth Client and Login Modal Component
+ * TASK-0524: Authorization code with PKCE against Zitadel
  */
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
@@ -36,6 +37,7 @@ import {
   extractClaimsFromPayload,
   type AuthState,
 } from '../src/auth/auth-service.ts';
+import { createFakeZitadel, signInWithFake, type FakeZitadel } from './support/fake-zitadel.ts';
 
 describe('Zitadel JWT Claims Extraction & Decoding', () => {
   it('parses valid JWT payloads correctly', () => {
@@ -79,18 +81,18 @@ describe('Zitadel JWT Claims Extraction & Decoding', () => {
   });
 });
 
-describe('AuthService Login, Storage & Event Flow', () => {
+describe('AuthService OIDC Authorization Code with PKCE (TASK-0524)', () => {
   let auth: AuthService;
-  const originalFetch = globalThis.fetch;
+  let fake: FakeZitadel;
 
   beforeEach(() => {
     mockStorage.clear();
-    auth = new AuthService();
+    fake = createFakeZitadel();
+    auth = new AuthService(fake.env);
   });
 
   afterEach(() => {
-    globalThis.fetch = originalFetch;
-    auth.logout();
+    mockStorage.clear();
   });
 
   it('starts unauthenticated with clean state', () => {
@@ -99,114 +101,167 @@ describe('AuthService Login, Storage & Event Flow', () => {
     assert.equal(auth.getAccessToken(), null);
   });
 
-  it('exchanges credentials and notifies listeners via event emitter', async () => {
-    let notifiedState: AuthState | null = null;
-    const unsubscribe = auth.onAuthChanged((state) => {
-      notifiedState = state;
-    });
+  it('redirects to the Zitadel authorize endpoint with PKCE, state, and nonce and no password', async () => {
+    await auth.startSignIn();
 
-    const user = await auth.login('Marcus', 'SuperSecret123!');
-    assert.ok(user);
-    assert.equal(user.username, 'Marcus');
-    assert.equal(auth.isAuthenticated(), true);
-    assert.ok(auth.getAccessToken());
-
-    assert.ok(notifiedState);
-    assert.equal((notifiedState as AuthState).isAuthenticated, true);
-    assert.equal((notifiedState as AuthState).user?.username, 'Marcus');
-
-    unsubscribe();
+    assert.equal(fake.navigated.length, 1);
+    const url = new URL(fake.navigated[0]);
+    assert.equal(url.origin + url.pathname, 'http://auth.localhost/oauth/v2/authorize');
+    assert.equal(url.searchParams.get('response_type'), 'code');
+    assert.equal(url.searchParams.get('client_id'), 'runefoble-web-test');
+    assert.equal(url.searchParams.get('redirect_uri'), 'http://app.localhost/auth/callback');
+    assert.equal(url.searchParams.get('code_challenge_method'), 'S256');
+    assert.ok((url.searchParams.get('code_challenge') ?? '').length >= 43);
+    assert.ok((url.searchParams.get('state') ?? '').length > 0);
+    assert.ok((url.searchParams.get('nonce') ?? '').length > 0);
+    assert.equal(url.searchParams.get('scope'), 'openid profile email offline_access');
+    assert.equal(url.searchParams.has('prompt'), false);
+    assert.equal(url.searchParams.has('password'), false);
   });
 
-  it('persists session in localStorage without leaking sensitive password credentials', async () => {
-    await auth.login('EvelynDM', 'P@ssword1234');
-
-    const storedRaw = mockStorage.getItem('rf_auth_session');
-    assert.ok(storedRaw, 'Storage must have rf_auth_session item');
-    const stored = JSON.parse(storedRaw);
-
-    assert.ok(stored.tokens.accessToken);
-    assert.ok(stored.user);
-    assert.equal(stored.user.username, 'EvelynDM');
-    // Ensure sensitive password was never written to storage
-    assert.equal((stored.user as any).password, undefined);
-    assert.equal(storedRaw.includes('P@ssword1234'), false);
+  it('asks Zitadel for the hosted registration page when signing up', async () => {
+    await auth.startSignIn({ signUp: true });
+    assert.equal(new URL(fake.navigated[0]).searchParams.get('prompt'), 'create');
   });
 
-  it('restores authenticated session from localStorage upon initialization', async () => {
-    await auth.login('Sarah', 'MyVaultKey123!');
-    assert.equal(auth.isAuthenticated(), true);
+  it('completes sign-in: exchanges the code with the verifier and stores Zitadel tokens only', async () => {
+    let notified = false;
+    auth.onAuthChanged(() => { notified = true; });
 
-    // Instantiate a new AuthService to simulate browser reload
-    const freshAuth = new AuthService();
-    assert.equal(freshAuth.isAuthenticated(), true);
-    assert.equal(freshAuth.getUser()?.username, 'Sarah');
+    const user = await signInWithFake(auth, fake);
+
+    assert.equal(user.username, 'marcus');
+    assert.equal(user.email, 'marcus@example.test');
+    assert.equal(auth.isAuthenticated(), true);
+    assert.equal(auth.getAccessToken() !== null, true);
+    assert.equal(notified, true);
+
+    const exchange = fake.tokenRequests.find((f) => f.get('grant_type') === 'authorization_code');
+    assert.ok(exchange, 'the code must be exchanged at the token endpoint');
+    assert.ok((exchange.get('code_verifier') ?? '').length >= 43);
+    assert.equal(exchange.get('client_secret'), null);
+
+    const stored = JSON.parse(mockStorage.getItem('rf_auth_session') ?? 'null');
+    assert.equal(stored.user.username, 'marcus');
+    assert.ok(stored.tokens.idToken, 'the ID token is kept for logout');
   });
 
-  it('clears session and emits unauthenticated state upon logout', async () => {
-    await auth.login('Devon', 'Passw0rdDevon!');
-    assert.equal(auth.isAuthenticated(), true);
+  it('removes the one-time sign-in data after the callback', async () => {
+    await signInWithFake(auth, fake);
+    await assert.rejects(() => auth.completeSignIn(fake.callbackSearch()), /No sign-in is pending/);
+  });
 
-    let authChangeCount = 0;
-    auth.onAuthChanged(() => { authChangeCount++; });
-
-    auth.logout();
+  it('rejects a callback whose state does not match and stores no token', async () => {
+    await auth.startSignIn();
+    await assert.rejects(
+      () => auth.completeSignIn('?code=good-code&state=forged-state'),
+      /state did not match/
+    );
     assert.equal(auth.isAuthenticated(), false);
-    assert.equal(auth.getUser(), null);
-    assert.equal(auth.getAccessToken(), null);
     assert.equal(mockStorage.getItem('rf_auth_session'), null);
-    assert.ok(authChangeCount > 0);
+    assert.equal(fake.tokenRequests.length, 0, 'no code exchange happens for a forged state');
   });
 
-  it('performs silent token refresh successfully', async () => {
-    await auth.login('Alex', 'AlexToken1234');
-    const originalToken = auth.getAccessToken();
-    assert.ok(originalToken);
+  it('rejects an ID token whose nonce does not match and stores no token', async () => {
+    await auth.startSignIn();
+    fake.navigated[0] = fake.navigated[0].replace(/nonce=[^&]+/, 'nonce=other-nonce');
+    await assert.rejects(() => auth.completeSignIn(fake.callbackSearch()), /nonce did not match/);
+    assert.equal(auth.isAuthenticated(), false);
+  });
 
-    // Call frontdoor refreshToken
-    const refreshedToken = await auth.refreshToken();
-    assert.ok(refreshedToken);
+  it('shows the IdP error and stores no token when the user cancels at Zitadel', async () => {
+    await auth.startSignIn();
+    await assert.rejects(
+      () => auth.completeSignIn(fake.errorCallbackSearch('access_denied')),
+      /access_denied/
+    );
+    assert.equal(auth.isAuthenticated(), false);
+  });
+
+  it('persists the session in localStorage without a password', async () => {
+    await signInWithFake(auth, fake);
+    const storedRaw = mockStorage.getItem('rf_auth_session');
+    assert.ok(storedRaw);
+    assert.equal(storedRaw.includes('password'), false);
+  });
+
+  it('restores an unexpired session after a reload', async () => {
+    await signInWithFake(auth, fake);
+    const freshAuth = new AuthService(fake.env);
+    assert.equal(freshAuth.isAuthenticated(), true);
+    assert.equal(freshAuth.getUser()?.username, 'marcus');
+  });
+
+  it('treats an expired access token as no session and renews it before use', async () => {
+    mockStorage.setItem('rf_auth_session', JSON.stringify({
+      tokens: { accessToken: 'eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjEwMH0.s', expiresAt: 1000, refreshToken: 'refresh-1' },
+      user: { user_id: 'user-1', username: 'marcus', roles: [] },
+    }));
+    const expiredAuth = new AuthService(fake.env);
+    assert.equal(expiredAuth.isAuthenticated(), false);
+    assert.equal(expiredAuth.getAccessToken(), null);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const renewed = expiredAuth.getAccessToken();
+    assert.ok(renewed, 'the stored refresh token renews the session');
+    assert.notEqual(renewed, 'eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjEwMH0.s');
+  });
+
+  it('renews the access token with the refresh token', async () => {
+    await signInWithFake(auth, fake);
+    const renewed = await auth.refreshToken();
+    assert.ok(renewed);
+    assert.equal(auth.getAccessToken(), renewed);
+    const refresh = fake.tokenRequests.find((f) => f.get('grant_type') === 'refresh_token');
+    assert.equal(refresh?.get('refresh_token'), 'refresh-1');
+  });
+
+  it('clears the session and throws when the refresh token is rejected', async () => {
+    await signInWithFake(auth, fake);
+    fake.refreshFails = true;
+    await assert.rejects(() => auth.refreshToken(), /Token request failed \(400\)/);
+    assert.equal(auth.isAuthenticated(), false);
+    assert.equal(mockStorage.getItem('rf_auth_session'), null);
+  });
+
+  it('logout clears tokens and ends the Zitadel session with the ID token hint', async () => {
+    await signInWithFake(auth, fake);
+    await auth.logout();
+
+    assert.equal(auth.isAuthenticated(), false);
+    assert.equal(mockStorage.getItem('rf_auth_session'), null);
+    const endSession = fake.navigated.at(-1) ?? '';
+    assert.ok(endSession.startsWith('http://auth.localhost/oidc/v1/end_session?'));
+    const params = new URL(endSession).searchParams;
+    assert.ok((params.get('id_token_hint') ?? '').length > 0);
+    assert.equal(params.get('post_logout_redirect_uri'), 'http://app.localhost/');
+  });
+
+  it('logout without an ID token clears local state and does not navigate', async () => {
+    mockStorage.setItem('rf_auth_session', JSON.stringify({
+      tokens: { accessToken: fakeAccessToken(), expiresAt: Date.now() + 60_000 },
+      user: { user_id: 'user-1', username: 'marcus', roles: [] },
+    }));
+    const restored = new AuthService(fake.env);
+    await restored.logout();
+    assert.equal(restored.isAuthenticated(), false);
+    assert.equal(fake.navigated.length, 0);
+  });
+
+  it('refuses to update a user when no sign-in exists and never invents one', () => {
+    assert.throws(() => auth.updateUser({ bio: 'x' }), /without a sign-in session/);
+    assert.equal(auth.getUser(), null);
+  });
+
+  it('updates the signed-in user and keeps the tokens', async () => {
+    await signInWithFake(auth, fake);
+    auth.updateUser({ display_name: 'Marcus the Bold' });
+    assert.equal(auth.getUser()?.display_name, 'Marcus the Bold');
+    assert.equal(auth.getUser()?.username, 'marcus');
     assert.equal(auth.isAuthenticated(), true);
-  });
-
-  it('handles user registration and creates active session', async () => {
-    const user = await auth.register('NewAdventurer', 'adventurer@runefoble.local', 'PassKey123456');
-    assert.ok(user);
-    assert.equal(user.username, 'NewAdventurer');
-    assert.equal(user.email, 'adventurer@runefoble.local');
-    assert.equal(auth.isAuthenticated(), true);
-  });
-
-  it('handles backend token response with real API mock', async () => {
-    const mockTokenPayload = {
-      sub: 'remote-user-77',
-      preferred_username: 'RemoteWizard',
-      email: 'wizard@runefoble.com',
-      roles: ['dm'],
-    };
-    const fakeJwt = `mock.${btoa(JSON.stringify(mockTokenPayload))}.sig`;
-
-    globalThis.fetch = async (url: any) => {
-      if (String(url).endsWith('/token')) {
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            access_token: fakeJwt,
-            refresh_token: 'refresh-token-xyz',
-            expires_in: 7200,
-          }),
-        } as any;
-      }
-      return { ok: false, status: 404 } as any;
-    };
-
-    auth.devFallback = false;
-    const user = await auth.login('RemoteWizard', 'RemotePassword!');
-    assert.equal(user.user_id, 'remote-user-77');
-    assert.equal(user.username, 'RemoteWizard');
-    assert.equal(user.email, 'wizard@runefoble.com');
-    assert.deepEqual(user.roles, ['dm']);
-    assert.equal(auth.getAccessToken(), fakeJwt);
   });
 });
+
+function fakeAccessToken(): string {
+  return `eyJhbGciOiJSUzI1NiJ9.${btoa(JSON.stringify({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) + 600 }))}.s`;
+}

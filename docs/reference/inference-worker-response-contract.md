@@ -68,15 +68,51 @@ When `status` is `error`, the `error` field holds the failure text. The failure 
 
 The consumer acknowledges each message after it publishes the result. A message stays pending only when the Redis write fails. That failure is logged.
 
-## Watcher Speech Route
+## Stand-In Guardrails
 
-The Watcher (`POST /api/v1/watcher/intent`) calls the worker when `RUNEFOBLE_INFERENCE_URL` is set. The Watcher does not return a template reply on failure.
+`POST /inference/v1/stand-in-action` accepts an optional `guardrails` object. The Watcher sends it when `POST /api/v1/watcher/stand-in/act` receives a policy. The object uses the `StandInGuardrailPolicy` model (`libs/runefoble_platform/src/runefoble_platform/stand_in_guardrails.py`). Its fields are `preserve_spell_slots`, `protect_allies`, `protect_ally_hp_threshold`, `risk_threshold`, `avoid_melee`, `permadeath_safeguard`, and `custom_priorities`.
+
+- Unknown fields return HTTP 422. Both the worker and The Watcher apply this rule.
+- A field that is omitted has no effect. A missing `guardrails` object means that no policy is active.
+- The worker sets `guardrails_applied` to the names of the guardrails that the decision enforced. The response never echoes the input list.
+- In `mock` mode, the worker enforces `protect_allies` and `avoid_melee` in its canned rules. A name is listed only when its rule fires.
+- In `llm` mode, the model declares the guardrails it followed in `guardrails_applied`. The worker keeps only the names that the request activated.
+
+The Watcher returns the worker's `guardrails_applied` list in its `StandInAction` response.
+
+## The Watcher Routes
+
+The Watcher (`services/the_watcher`) calls the worker for three routes. Each route passes the
+worker result through with its `source` and `degraded` fields. The Watcher never returns a
+canned or template result for a failed worker call.
+
+Configuration:
+
+| Variable | Use |
+|---|---|
+| `RUNEFOBLE_INFERENCE_URL` | Base URL of the inference worker. When unset, speech and stand-in use the local rule engine. Narration returns 503. |
+| `RUNEFOBLE_BOARD_STATE_URL` | Base URL of the board state service. Speech reads the session board to send `visible_tokens`. |
+
+| Watcher route | Worker call | Result fields |
+|---|---|---|
+| `POST /api/v1/watcher/intent` (and `transcribe-and-act`) | `/inference/v1/intent` | `source`, `degraded`. `confidence` is `null` when the worker omits it. |
+| `POST /api/v1/watcher/stand-in/act` | `/inference/v1/stand-in-action` | `source`, `degraded`, `guardrails_applied` |
+| `POST /api/v1/watcher/narrate` | `/inference/v1/dm-narration` | `source`, `degraded` |
+
+Speech sends the session's tokens as `visible_tokens`. A session with no board sends an empty list.
+
+Error responses from The Watcher:
 
 | Condition | Watcher response |
 |---|---|
-| Worker returns 200 | Intent result built from `action`. |
+| Worker returns 200 | Result built from the worker body. |
 | Worker returns 503 | HTTP 503 with `detail: {"error": "backend_unavailable", "backend": <worker backend>}`. |
 | Worker unreachable | HTTP 503 with `detail: {"error": "backend_unavailable", "backend": "inference_worker"}`. |
 | Other worker status | HTTP 502 with `detail: {"error": "inference_worker_error", "status": <code>}`. |
+| Board state unreadable, or `RUNEFOBLE_BOARD_STATE_URL` unset on the speech path | HTTP 503 with `detail: {"error": "backend_unavailable", "backend": "board_state"}`. |
+| `RUNEFOBLE_INFERENCE_URL` unset on the narrate route | HTTP 503 with `detail: {"error": "backend_unavailable", "backend": "inference_worker"}`. |
 
-When `RUNEFOBLE_INFERENCE_URL` is not set, The Watcher uses its local rule engine. This is an explicit configuration choice, not a failure fallback.
+Required request fields. A missing field returns HTTP 422:
+
+- Stand-in: `session_id`, `campaign_id`, `scene_context`.
+- Narrate: `session_id`, `campaign_id`, `scene_environment`, `tone`.

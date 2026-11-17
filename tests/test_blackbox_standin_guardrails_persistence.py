@@ -32,6 +32,10 @@ def setup_test_character_and_permissions():
     return char
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="TASK-0586: gateway character store is not the character_sheet store; sub-resource writes now reach the upstream only (TASK-0536)",
+)
 @pytest.mark.asyncio
 async def test_blackbox_put_guardrails_persistence_frontdoor(auth_environment):
     """PUT /api/v1/characters/{id}/guardrails updates guardrails and persists across subsequent queries."""

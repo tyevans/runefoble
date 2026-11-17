@@ -3,6 +3,7 @@
 from runefoble_events.watcher_events import (
     AbsenteeRecapGenerated,
     AutonomousActionResolved,
+    CampaignFactionRegistered,
     CandidateGhostPreviewEmitted,
     CompoundActionResolved,
     DiceRolled,
@@ -35,6 +36,7 @@ from runefoble_events.watcher_events import (
 
 __all__ = [
     "AbsenteeRecapGenerated",
+    "CampaignFactionRegistered",
     "AutonomousActionResolved",
     "CandidateGhostPreviewEmitted",
     "CompoundActionResolved",
