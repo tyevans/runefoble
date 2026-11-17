@@ -21,6 +21,8 @@ from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
@@ -135,7 +137,7 @@ def test_app_data_service_dynamically_populates_lobby_characters() -> None:
 
 def test_app_shell_binds_selected_character_and_card_properties() -> None:
     """Verify runefoble-app.ts binds selected lobby character to active VTT session card."""
-    app_code = APP_SHELL_FILE.read_text(encoding="utf-8")
+    app_code = read_app_shell_source(APP_SHELL_FILE)
 
     # State declaration
     assert "activeCharacter" in app_code

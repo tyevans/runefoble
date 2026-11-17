@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SERVICES_DIR = REPO_ROOT / "services"
@@ -107,7 +109,7 @@ def test_zero_hardcoded_hexes_in_web_components_static_styles():
 
 def test_components_adopt_tokens():
     """Verify components consume --rf-* tokens."""
-    app = (FRONTEND_DIR / "src" / "runefoble-app.ts").read_text(encoding="utf-8")
+    app = read_app_shell_source(FRONTEND_DIR / "src" / "runefoble-app.ts")
     header = (COMPONENTS_DIR / "runefoble-header.ts").read_text(encoding="utf-8")
     styles = (FRONTEND_DIR / "src" / "styles" / "app-shell.styles.ts").read_text(encoding="utf-8")
     assert "import './styles/themes.css';" in app and "<runefoble-settings-modal" in app

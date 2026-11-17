@@ -21,6 +21,8 @@ from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
@@ -72,7 +74,7 @@ def test_audit_file_length_invariants():
 
 def test_app_shell_views_route_enumeration_and_mounting():
     """Verify runefoble-app.ts enumerates all standard routes and mounts dedicated components."""
-    app_code = APP_TS.read_text(encoding="utf-8")
+    app_code = read_app_shell_source(APP_TS)
 
     # AppActiveView union includes all nine standard views plus character-sheet
     expected_views = [
@@ -113,7 +115,7 @@ def test_app_shell_views_route_enumeration_and_mounting():
 
 def test_app_shell_route_collision_prevention():
     """Verify getActiveView() prevents route collisions across nested and ambiguous paths."""
-    app_code = APP_TS.read_text(encoding="utf-8")
+    app_code = read_app_shell_source(APP_TS)
 
     # #/profile disambiguation from #/campaigns
     assert "pat === '#/profile' ? 'profile' : 'campaigns'" in app_code
@@ -134,7 +136,7 @@ def test_app_shell_route_collision_prevention():
 
 def test_route_bound_websocket_lifecycle_and_teardown():
     """Verify WebSocket connects exclusively on session routes and tears down cleanly."""
-    app_code = APP_TS.read_text(encoding="utf-8")
+    app_code = read_app_shell_source(APP_TS)
 
     assert "manageWebSocketLifecycle" in app_code
     assert "connectWebSocket" in app_code

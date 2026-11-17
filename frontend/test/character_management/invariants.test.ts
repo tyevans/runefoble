@@ -10,6 +10,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { readAppShellSource } from '../support/app-shell-source.ts';
 
 const FRONTEND_DIR = resolve(import.meta.dirname, '../..');
 const REPO_ROOT = resolve(FRONTEND_DIR, '..');
@@ -49,7 +50,7 @@ describe('Bauhaus Theming & File Invariants (Hard Invariant 6, TASK-0288)', () =
   });
 
   it('test_app_shell_action_bindings_and_template_controls: verifies all 11 action events and template controls', () => {
-    const appShellContent = readFileSync(APP_SHELL_PATH, 'utf-8');
+    const appShellContent = readAppShellSource();
     const requiredEvents = [
       '@hp-change', '@equip-item', '@unequip-item', '@add-item', '@remove-item',
       '@cast-spell', '@prepare-spell', '@apply-condition', '@remove-condition',

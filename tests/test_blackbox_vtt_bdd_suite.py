@@ -27,7 +27,7 @@ E2E_STEPS_FILE = REPO_ROOT / "e2e" / "steps" / "vtt_steps.ts"
 E2E_WORLD_FILE = REPO_ROOT / "e2e" / "support" / "world.ts"
 E2E_AUTH_FILE = REPO_ROOT / "e2e" / "support" / "auth_fixtures.ts"
 APP_SHELL_FILE = REPO_ROOT / "frontend" / "src" / "runefoble-app.ts"
-APP_FIXTURES_FILE = REPO_ROOT / "frontend" / "src" / "services" / "app-data-service.fixtures.ts"
+APP_DATA_SERVICE_FILE = REPO_ROOT / "frontend" / "src" / "services" / "app-data-service.ts"
 DOCS_HOW_TO_FILE = REPO_ROOT / "docs" / "how-to" / "validate-e2e-journeys-with-playwright-bdd.md"
 
 
@@ -50,7 +50,6 @@ def test_file_length_invariants() -> None:
         E2E_WORLD_FILE,
         E2E_AUTH_FILE,
         APP_SHELL_FILE,
-        APP_FIXTURES_FILE,
         DOCS_HOW_TO_FILE,
         Path(__file__),
     ]
@@ -61,6 +60,12 @@ def test_file_length_invariants() -> None:
         assert lines < 500, (
             f"{path.name} has {lines} lines, exceeding the 500 line limit (Hard Invariant 6)"
         )
+
+
+def test_app_data_service_imports_no_fixtures() -> None:
+    """TASK-0640: the data service has no fixture fallback, so it must not import fixtures."""
+    content = APP_DATA_SERVICE_FILE.read_text(encoding="utf-8")
+    assert "fixture" not in content.lower(), "app-data-service.ts must not import canned fixtures"
 
 
 def test_gherkin_feature_completeness() -> None:

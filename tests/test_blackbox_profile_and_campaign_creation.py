@@ -7,6 +7,7 @@ Task Reference: TASK-0257.
 import subprocess
 from pathlib import Path
 
+from tests.helpers.app_shell_source import read_app_shell_source
 from tests.helpers.zitadel_auth import auth_environment, create_signed_token
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -71,9 +72,9 @@ def test_user_menu_account_settings_navigation():
 
 def test_app_shell_profile_view_orchestration():
     """Verify runefoble-app imports runefoble-user-profile, resolves active view 'profile', and mounts component."""
-    content = APP_TS.read_text(encoding="utf-8")
+    content = read_app_shell_source(APP_TS)
 
-    assert "import './components/runefoble-user-profile.ts';" in content
+    assert "import '../components/runefoble-user-profile.ts';" in content
     assert "'profile'" in content
 
     # getActiveView mapping
@@ -82,8 +83,8 @@ def test_app_shell_profile_view_orchestration():
     # renderActiveView mounting
     assert "<runefoble-user-profile" in content
     assert ".user=${authService.getUser()}" in content
-    assert ".currentTheme=${this.currentTheme}" in content
-    assert ".currentColorMode=${this.currentColorMode}" in content
+    assert ".currentTheme=${app.currentTheme}" in content
+    assert ".currentColorMode=${app.currentColorMode}" in content
     assert "@auth-logout=" in content
 
 

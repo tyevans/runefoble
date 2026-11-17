@@ -2,6 +2,26 @@
 
 This how-to guide explains how the Runefoble App Shell (`frontend/src/runefoble-app.ts`) dynamically mounts routed microfrontend subviews, binds WebSocket connections strictly to active game sessions, and transitions participants from the pre-game assembly lobby to the live virtual tabletop.
 
+## Source Layout
+
+`frontend/src/runefoble-app.ts` owns the Lit element, the route wiring, and the public handler methods. It delegates the work to modules in `frontend/src/app/`. Each module has one responsibility.
+
+| Module | Responsibility |
+|---|---|
+| `app/component-registry.ts` | Loads the custom elements and microfrontend bundles that the shell mounts. |
+| `app/shell-state.ts` | Applies the stored theme. Syncs the user role to the shell. |
+| `app/shell-template.ts` | Renders the header, the main region, the toast, the modals, and the absentee overlays. |
+| `app/view-templates.ts` | Renders the dashboard, campaign hub, roster, lobby, profile, and fallback views. |
+| `app/session-view-templates.ts` | Renders the live VTT view, the spectator view, the character sheet, and the absentee overlays. |
+| `app/route-data-loader.ts` | Loads the data for each route. A failed read sets `loadError`. |
+| `app/session-data-loader.ts` | Loads lobby and active-session data. |
+| `app/session-socket.ts` | Opens, closes, and reconnects the session WebSocket. |
+| `app/session-messages.ts` | Applies live session messages to shell state. |
+| `app/campaign-actions.ts` | Handles campaign, session, membership, and invite events. |
+| `app/character-actions.ts` | Handles roster and lobby character events. |
+| `app/title-resolver.ts` | Resolves breadcrumb titles. |
+| `app/load-error.ts` | Stores the first failed read as the load error. |
+
 ## 1. App Shell Architecture & Route Mapping
 
 The unified App Shell subscribes to the client SPA router (`Router`) and mounts the appropriate microfrontend based on the matched route pattern:

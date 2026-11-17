@@ -20,6 +20,8 @@ from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GATEWAY_ROUTER_PATH = (
     REPO_ROOT / "gateway" / "api" / "src" / "gateway_api" / "routers" / "hub_views.py"
@@ -204,7 +206,7 @@ def test_gateway_campaign_analytics_frontdoors(
 
 def test_app_shell_and_router_integration_contracts() -> None:
     """Verify runefoble-app.ts and router.ts declare required routes, imports, and component mounts."""
-    app_code = APP_TS_PATH.read_text(encoding="utf-8")
+    app_code = read_app_shell_source(APP_TS_PATH)
     router_code = ROUTER_TS_PATH.read_text(encoding="utf-8")
 
     # STANDARD_ROUTES in router.ts

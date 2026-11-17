@@ -2,6 +2,7 @@
  * App Shell Session Lifecycle & Transitions Test Suite.
  *
  * TASK-0287: Frontend App Shell Test Suite Modular Decomposition
+ * TASK-0640b: Board and plugin wiring moved to board-and-plugin-slots.test.ts (line cap).
  * Governing ADRs: ADR-0004, ADR-0012, ADR-0013
  * Hard Invariants:
  * - Hard Invariant 6: File length limit (< 110 lines; limit < 130 lines)
@@ -12,7 +13,6 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router } from '../../src/router/router.ts';
 import { AppDataService } from '../../src/services/app-data-service.ts';
-import { registerDefaultPlugins, pluginRegistry } from '../../src/components/plugins/plugin_registry.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
 import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS, FALLBACK_BOARD_TOKENS } from '../../src/fixtures/app-data-service.fixtures.ts';
 
@@ -102,20 +102,5 @@ describe('App Shell Session Lifecycle & Transitions', () => {
     assert.equal(deleted.ok, true);
     const roster = await dataService.fetchCharacters();
     assert.ok(roster.ok && !roster.data.some((c) => c.id === 'char-kyra'));
-  });
-
-  it('provides dynamic board dimensions and tokens via fetchBoardState', async () => {
-    const state = await dataService.fetchBoardState('session-tomb-14');
-    assert.ok(state.ok);
-    assert.ok(typeof state.data.cols === 'number' && typeof state.data.rows === 'number');
-    assert.ok(Array.isArray(state.data.tokens) && state.data.tokens.length >= 1);
-  });
-
-  it('registers default tabletop plugins across standard slots for players and DM (TASK-0358)', () => {
-    registerDefaultPlugins(pluginRegistry, false);
-    assert.ok(pluginRegistry.getPluginsForSlot('hud-widget').some((p) => p.tag === 'runefoble-initiative-tracker'));
-    assert.equal(pluginRegistry.getPluginsForSlot('sidebar-tool').some((p) => p.tag === 'runefoble-dm-whisper-bar'), false);
-    registerDefaultPlugins(pluginRegistry, true);
-    assert.ok(pluginRegistry.getPluginsForSlot('sidebar-tool').some((p) => p.tag === 'runefoble-dm-whisper-bar'));
   });
 });

@@ -19,9 +19,11 @@ from fastapi.testclient import TestClient
 from gateway_api.dependencies import ws_manager
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.app_shell_source import read_app_shell_source
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -230,7 +232,7 @@ def test_vtt_frontend_app_shell_and_plugin_registry_invariants() -> None:
     assert app_lines < 450, f"runefoble-app.ts must be < 450 lines (got {app_lines})"
     assert reg_lines <= 120, f"plugin_registry.ts must be <= 120 lines (got {reg_lines})"
 
-    app_content = app_shell_path.read_text(encoding="utf-8")
+    app_content = read_app_shell_source(app_shell_path)
     reg_content = registry_path.read_text(encoding="utf-8")
 
     # Plugin slots registration
@@ -255,9 +257,9 @@ def test_vtt_frontend_app_shell_and_plugin_registry_invariants() -> None:
     assert "@aoe-place=" in app_content
     assert "@spell-vfx-triggered=" in app_content
     assert "@confirm-ghost=" in app_content
-    assert ".cols=${this.boardCols}" in app_content
-    assert ".rows=${this.boardRows}" in app_content
-    assert ".atmosphere=${this.atmosphere}" in app_content
+    assert ".cols=${app.boardCols}" in app_content
+    assert ".rows=${app.boardRows}" in app_content
+    assert ".atmosphere=${app.atmosphere}" in app_content
 
     # Expanded socket event handling
     assert "'dice_rolled'" in app_content

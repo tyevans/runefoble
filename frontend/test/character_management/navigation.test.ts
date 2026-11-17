@@ -8,17 +8,15 @@
 
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { Router, type MatchedRoute } from '../../src/router/router.ts';
 import { AppDataService } from '../../src/services/app-data-service.ts';
 import type { AppActiveView } from '../../src/runefoble-app.ts';
 import type { CharacterItem, InspectCharacterEventDetail } from '../../../services/character_sheet/ui/src/roster/types.ts';
 import type { LobbyParticipant } from '../../../services/game_session/ui/src/campaigns/types.ts';
 import { installFakeGateway } from '../support/fake-gateway.ts';
+import { readAppShellSource } from '../support/app-shell-source.ts';
 import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS } from '../../src/fixtures/app-data-service.fixtures.ts';
 
-const APP_SHELL_PATH = resolve(import.meta.dirname, '../../src/runefoble-app.ts');
 
 function resolveActiveView(route: MatchedRoute | null): AppActiveView {
   const pat = route?.pattern || '';
@@ -66,7 +64,7 @@ describe('Character Roster & Deep Route Navigation (US-0064, US-0069, TASK-0288)
     assert.equal(current.breadcrumbs[2].label, 'Valeros of Korvosa');
     assert.equal(current.breadcrumbs[2].active, true);
 
-    const appShellContent = readFileSync(APP_SHELL_PATH, 'utf-8');
+    const appShellContent = readAppShellSource();
     assert.ok(appShellContent.includes('<runefoble-character-sheet'));
     assert.ok(appShellContent.includes('.characterId=${charId}'));
     assert.ok(appShellContent.includes('← Back to Roster'));

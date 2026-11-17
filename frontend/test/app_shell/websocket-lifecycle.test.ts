@@ -10,9 +10,8 @@
 
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { Router, type MatchedRoute } from '../../src/router/router.ts';
+import { readAppShellSource } from '../support/app-shell-source.ts';
 
 function isSessionWebSocketRequired(route: MatchedRoute | null): boolean {
   const pat = route?.pattern || '';
@@ -71,15 +70,14 @@ describe('Route-Bound WebSocket Lifecycle Management', () => {
   });
 
   it('validates VTT board and lobby event contracts in App Shell source (TASK-0358)', () => {
-    const appPath = fileURLToPath(new URL('../../src/runefoble-app.ts', import.meta.url));
-    const appSrc = readFileSync(appPath, 'utf-8');
+    const appSrc = readAppShellSource();
 
     assert.ok(appSrc.includes('@toggle-readiness=') && appSrc.includes('@toggle-stand-in='));
     assert.ok(appSrc.includes("'player_readiness'") && appSrc.includes("'player_stand_in'"));
-    assert.ok(appSrc.includes('.websocketUrl=${this.getWebSocketUrl()}'));
+    assert.ok(appSrc.includes('.websocketUrl=${app.getWebSocketUrl()}'));
     assert.ok(appSrc.includes('@token-action=') && appSrc.includes('@aoe-place='));
     assert.ok(appSrc.includes('@spell-vfx-triggered=') && appSrc.includes('@confirm-ghost='));
-    assert.ok(appSrc.includes('.cols=${this.boardCols}') && appSrc.includes('.rows=${this.boardRows}'));
+    assert.ok(appSrc.includes('.cols=${app.boardCols}') && appSrc.includes('.rows=${app.boardRows}'));
 
     for (const msgType of ["'dice_rolled'", "'turn_advanced'", "'aoe_placed'", "'spell_vfx'", "'dm_whisper'"]) {
       assert.ok(appSrc.includes(msgType), `Missing message handler for ${msgType}`);

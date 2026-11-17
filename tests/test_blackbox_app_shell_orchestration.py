@@ -18,6 +18,8 @@ from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
@@ -66,7 +68,7 @@ def test_app_shell_file_length_invariants() -> None:
 
 def test_app_shell_orchestrates_required_views() -> None:
     """Verify runefoble-app.ts imports and mounts all required subviews by route."""
-    app_code = (SRC_DIR / "runefoble-app.ts").read_text(encoding="utf-8")
+    app_code = read_app_shell_source(SRC_DIR / "runefoble-app.ts")
 
     # Verify custom element registration
     assert "@customElement('runefoble-app')" in app_code
@@ -87,7 +89,7 @@ def test_app_shell_orchestrates_required_views() -> None:
 
 def test_app_shell_route_bound_websocket_lifecycle() -> None:
     """Verify runefoble-app.ts binds WebSocket connections to session routes only."""
-    app_code = (SRC_DIR / "runefoble-app.ts").read_text(encoding="utf-8")
+    app_code = read_app_shell_source(SRC_DIR / "runefoble-app.ts")
 
     # Verify WebSocket connection is managed on route change
     assert "manageWebSocketLifecycle" in app_code
@@ -105,7 +107,7 @@ def test_app_shell_route_bound_websocket_lifecycle() -> None:
 
 def test_app_shell_session_start_transition() -> None:
     """Verify runefoble-app.ts implements transition from lobby to active VTT session."""
-    app_code = (SRC_DIR / "runefoble-app.ts").read_text(encoding="utf-8")
+    app_code = read_app_shell_source(SRC_DIR / "runefoble-app.ts")
 
     # Handles launch-session event
     assert "handleLaunchSession" in app_code
