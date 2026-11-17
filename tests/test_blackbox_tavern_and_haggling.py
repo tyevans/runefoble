@@ -250,23 +250,46 @@ def test_blackbox_merchant_insult_lowball(session_client):
     assert res["mood_score"] < 0
 
 
-def test_blackbox_gateway_zanzibar_authorization(gateway_client):
-    """Verify Gateway Zanzibar authorization enforcement for tavern minigames and merchant haggling."""
-    camp_id = f"camp-tavern-{uuid4().hex[:6]}"
-    user_id = "user_bram"
+def _bearer(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
-    # Assign player role to Bram
-    role_res = gateway_client.post(
-        f"/api/v1/campaigns/{camp_id}/roles",
-        json={"user_id": user_id, "role": "player"},
+
+def test_blackbox_gateway_zanzibar_authorization(gateway_client, signing_issuer):
+    """Verify Gateway Zanzibar authorization enforcement for tavern minigames and merchant haggling.
+
+    Membership is created through frontdoors only: the owner creates the campaign,
+    issues a player invite, and the player redeems it.
+    """
+    owner_headers = _bearer(signing_issuer, "user_dm")
+    user_headers = _bearer(signing_issuer, "user_bram")
+
+    create_res = gateway_client.post(
+        "/api/v1/campaigns",
+        json={"title": "Tavern Nights", "setting": "Waterdeep", "system": "5e"},
+        headers=owner_headers,
     )
-    assert role_res.status_code == 200
+    assert create_res.status_code == 201
+    camp_id = create_res.json()["id"]
+
+    invite_res = gateway_client.post(
+        f"/api/v1/campaigns/{camp_id}/invites",
+        json={"role": "player"},
+        headers=owner_headers,
+    )
+    assert invite_res.status_code == 201
+    join_res = gateway_client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": invite_res.json()["token"]},
+        headers=user_headers,
+    )
+    assert join_res.status_code == 200
 
     # 1. Start minigame via gateway with authorized player
     start_res = gateway_client.post(
         f"/api/v1/sessions/{camp_id}/tavern/games",
         json={"game_type": "liars_dice", "wager_gold": 10, "initiator_id": "bram"},
-        headers={"X-User-Id": user_id},
+        headers=user_headers,
     )
     assert start_res.status_code == 200
     assert start_res.json()["wager_pot"] == 20
@@ -275,7 +298,7 @@ def test_blackbox_gateway_zanzibar_authorization(gateway_client):
     denied_res = gateway_client.post(
         f"/api/v1/sessions/{camp_id}/tavern/games",
         json={"game_type": "liars_dice", "wager_gold": 10, "initiator_id": "bram"},
-        headers={"X-User-Id": "unauthorized_stranger"},
+        headers=_bearer(signing_issuer, "unauthorized_stranger"),
     )
     assert denied_res.status_code == 403
 
@@ -289,7 +312,7 @@ def test_blackbox_gateway_zanzibar_authorization(gateway_client):
             "offered_price": 35,
             "temperament": "stubborn_greedy",
         },
-        headers={"X-User-Id": user_id},
+        headers=user_headers,
     )
     assert haggle_res.status_code == 200
     assert haggle_res.json()["counter_price"] == 42

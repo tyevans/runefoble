@@ -169,9 +169,9 @@ def test_app_shell_binds_selected_character_and_card_properties() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_character_and_campaign_frontdoors(client: TestClient) -> None:
+def test_gateway_character_and_campaign_frontdoors(client: TestClient, signing_issuer) -> None:
     """Verify characters created via public API frontdoors are listed and campaign-assigned."""
-    headers = {"X-User-Id": "user-valeros"}
+    headers = {"Authorization": f"Bearer {signing_issuer.mint('user-valeros')}"}
 
     # 1. Create a campaign
     camp_res = client.post(

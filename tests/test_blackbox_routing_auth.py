@@ -114,10 +114,11 @@ def test_auth_guard_and_router_wiring() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_auth_frontdoors(client: TestClient) -> None:
+def test_gateway_auth_frontdoors(client: TestClient, signing_issuer) -> None:
     """Verify Gateway API provides required frontdoor endpoints for auth workflows."""
-    # Test authenticated profile retrieval with user header
-    res = client.get("/api/v1/profile", headers={"X-User-Id": "user-marcus"})
+    # Test authenticated profile retrieval with a signed bearer token
+    headers = {"Authorization": f"Bearer {signing_issuer.mint('user-marcus')}"}
+    res = client.get("/api/v1/profile", headers=headers)
     assert res.status_code == 200
     user_data = res.json()
     assert user_data["username"] == "user-marcus"

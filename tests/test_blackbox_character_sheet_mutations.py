@@ -28,9 +28,14 @@ def reset_stores():
     yield
 
 
-def create_test_character(owner_id: str = "user_valeros", is_stand_in: bool = False) -> str:
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
+def create_test_character(issuer, owner_id: str = "user_valeros", is_stand_in: bool = False) -> str:
     """Helper to create a test character via frontdoor POST /api/v1/characters."""
-    headers = {"X-User-Id": owner_id}
+    headers = _auth(issuer, owner_id)
     res = client.post(
         "/api/v1/characters",
         json={
@@ -50,10 +55,10 @@ def create_test_character(owner_id: str = "user_valeros", is_stand_in: bool = Fa
 
 
 @pytest.mark.asyncio
-async def test_health_modification_and_clamping():
+async def test_health_modification_and_clamping(signing_issuer):
     """Verify modifying HP with positive and negative deltas clamps within [0, maxHp]."""
-    char_id = create_test_character()
-    headers = {"X-User-Id": "user_valeros"}
+    char_id = create_test_character(signing_issuer)
+    headers = _auth(signing_issuer, "user_valeros")
 
     # Take 10 damage: 38 - 10 = 28
     res = client.post(
@@ -80,10 +85,10 @@ async def test_health_modification_and_clamping():
 
 
 @pytest.mark.asyncio
-async def test_stand_in_permadeath_safeguard_stabilization():
+async def test_stand_in_permadeath_safeguard_stabilization(signing_issuer):
     """Verify that when an AI stand-in character drops to <= 0 HP, safeguard stabilizes them."""
-    char_id = create_test_character(owner_id="user_valeros", is_stand_in=True)
-    headers = {"X-User-Id": "user_valeros"}
+    char_id = create_test_character(signing_issuer, owner_id="user_valeros", is_stand_in=True)
+    headers = _auth(signing_issuer, "user_valeros")
 
     # Take massive damage dropping HP to <= 0
     res = client.post(
@@ -102,10 +107,10 @@ async def test_stand_in_permadeath_safeguard_stabilization():
 
 
 @pytest.mark.asyncio
-async def test_equipment_equip_and_unequip():
+async def test_equipment_equip_and_unequip(signing_issuer):
     """Verify equipping and unequipping items via sub-resource endpoints."""
-    char_id = create_test_character()
-    headers = {"X-User-Id": "user_valeros"}
+    char_id = create_test_character(signing_issuer)
+    headers = _auth(signing_issuer, "user_valeros")
 
     # Equip Longsword to main_hand
     res = client.post(
@@ -136,10 +141,10 @@ async def test_equipment_equip_and_unequip():
 
 
 @pytest.mark.asyncio
-async def test_inventory_add_and_remove():
+async def test_inventory_add_and_remove(signing_issuer):
     """Verify adding and removing inventory items via sub-resource endpoints."""
-    char_id = create_test_character()
-    headers = {"X-User-Id": "user_valeros"}
+    char_id = create_test_character(signing_issuer)
+    headers = _auth(signing_issuer, "user_valeros")
 
     # Add Potion of Healing
     res = client.post(
@@ -189,10 +194,10 @@ async def test_inventory_add_and_remove():
 
 
 @pytest.mark.asyncio
-async def test_conditions_apply_and_remove():
+async def test_conditions_apply_and_remove(signing_issuer):
     """Verify applying and removing conditions via sub-resource endpoints."""
-    char_id = create_test_character()
-    headers = {"X-User-Id": "user_valeros"}
+    char_id = create_test_character(signing_issuer)
+    headers = _auth(signing_issuer, "user_valeros")
 
     # Apply poisoned condition
     res = client.post(
@@ -224,10 +229,10 @@ async def test_conditions_apply_and_remove():
 
 
 @pytest.mark.asyncio
-async def test_spells_cast_and_prepare():
+async def test_spells_cast_and_prepare(signing_issuer):
     """Verify spell casting slot deduction and spell preparation toggles."""
-    char_id = create_test_character()
-    headers = {"X-User-Id": "user_valeros"}
+    char_id = create_test_character(signing_issuer)
+    headers = _auth(signing_issuer, "user_valeros")
 
     # Prepare Fireball
     res = client.post(
@@ -266,10 +271,10 @@ async def test_spells_cast_and_prepare():
 
 
 @pytest.mark.asyncio
-async def test_zanzibar_unauthorized_mutation_rejection():
+async def test_zanzibar_unauthorized_mutation_rejection(signing_issuer):
     """Verify non-permitted user is rejected with 403 Forbidden on all sub-resource mutations."""
-    char_id = create_test_character(owner_id="user_valeros")
-    headers_intruder = {"X-User-Id": "user_intruder"}
+    char_id = create_test_character(signing_issuer, owner_id="user_valeros")
+    headers_intruder = _auth(signing_issuer, "user_intruder")
 
     # 403 on health mutation
     res = client.post(
