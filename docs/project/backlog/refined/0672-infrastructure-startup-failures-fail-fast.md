@@ -67,3 +67,4 @@ Three start-up paths hide a failed Redis connection. The platform event bus fall
 Source: `.audit/synth/discovered-round1.md`.
 
 - `services/inference_worker/src/inference_worker/redis_consumer.py:130-131`: when `_process_message` raises, the error is logged, no result is published, and the message is not acked. Publish an error result with the correlation id, then ack. Callers wait today with no reply.
+- `services/inference_worker/src/inference_worker/redis_consumer.py` (TASK-0501): messages with unknown task types or missing fields are rejected without publish or ack. They stay pending and are redelivered. Publish an error result, then ack (dead-letter policy).

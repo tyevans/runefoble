@@ -70,7 +70,9 @@ def test_app_data_service_modular_imports_and_reexports():
     """Verify app-data-service.ts is free of fixture imports and exposes the public class."""
     service_content = APP_DATA_SERVICE_TS.read_text(encoding="utf-8")
 
-    assert "FALLBACK_" not in service_content, "app-data-service.ts must not reference canned fixtures"
+    assert "FALLBACK_" not in service_content, (
+        "app-data-service.ts must not reference canned fixtures"
+    )
     assert "export class AppDataService" in service_content
     assert "export const appDataService = AppDataService.getInstance()" in service_content
 
