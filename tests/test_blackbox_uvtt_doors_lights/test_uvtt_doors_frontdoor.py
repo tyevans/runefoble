@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
-from tests.test_blackbox_uvtt_doors_lights.conftest import grant_permission
+from tests.test_blackbox_uvtt_doors_lights.conftest import create_board, grant_permission
 
 
 def build_uvtt_with_doors() -> dict:
@@ -68,6 +68,7 @@ def build_uvtt_with_doors() -> dict:
 def test_uvtt_door_geometry_and_secret_portal_extraction(board_client: TestClient):
     """Verify extracting door coordinates, pivot hinges, statuses, and secret detection DCs."""
     board_id = f"board-doors-{uuid4().hex[:8]}"
+    create_board(board_client, board_id)
     uvtt_data = build_uvtt_with_doors()
 
     # Frontdoor import via POST /board/{id}/import/uvtt
@@ -122,6 +123,7 @@ def test_uvtt_door_geometry_and_secret_portal_extraction(board_client: TestClien
 def test_door_toggle_state_transitions_http(board_client: TestClient):
     """Verify toggling door state machine over HTTP frontdoors."""
     board_id = f"board-toggle-{uuid4().hex[:8]}"
+    create_board(board_client, board_id)
     uvtt_data = build_uvtt_with_doors()
 
     # Import map

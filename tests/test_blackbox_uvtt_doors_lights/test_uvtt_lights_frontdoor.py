@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
-from tests.test_blackbox_uvtt_doors_lights.conftest import grant_permission
+from tests.test_blackbox_uvtt_doors_lights.conftest import create_board, grant_permission
 
 
 def build_uvtt_with_lights() -> dict:
@@ -47,6 +47,7 @@ def build_uvtt_with_lights() -> dict:
 def test_uvtt_light_mapping_and_radiance_models(board_client: TestClient):
     """Verify mapping UVTT light sources into bright/dim radius and flicker models."""
     board_id = f"board-lights-{uuid4().hex[:8]}"
+    create_board(board_client, board_id)
     uvtt_data = build_uvtt_with_lights()
 
     # Frontdoor import via POST /board/{id}/import/uvtt
@@ -92,6 +93,7 @@ def test_uvtt_light_mapping_and_radiance_models(board_client: TestClient):
 def test_dynamic_light_placement_http(board_client: TestClient):
     """Verify placing new point light sources via HTTP frontdoors."""
     board_id = f"board-light-place-{uuid4().hex[:8]}"
+    create_board(board_client, board_id)
 
     # Frontdoor placement: POST /board/{id}/lights
     req_payload = {
