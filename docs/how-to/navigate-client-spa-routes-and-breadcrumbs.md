@@ -146,18 +146,19 @@ For dynamically created campaigns and sessions loaded from the backend API, regi
 import { router } from './router/index.ts';
 import { appDataService } from './services/app-data-service.ts';
 
+// Every AppDataService read returns a DataResult. A failed read yields no title.
 router.setAsyncTitleResolver(async (type, id) => {
   if (type === 'campaign') {
-    const campaign = await appDataService.fetchCampaign(id);
-    return campaign?.title;
+    const result = await appDataService.fetchCampaign(id);
+    return result.ok ? result.data.title : undefined;
   }
   if (type === 'character') {
-    const character = await appDataService.fetchCharacter(id);
-    return character?.name;
+    const result = await appDataService.fetchCharacter(id);
+    return result.ok ? result.data.name : undefined;
   }
   if (type === 'session' || type === 'lobby') {
-    const session = await appDataService.fetchSession(id);
-    return session?.title;
+    const result = await appDataService.fetchSession(id);
+    return result.ok ? result.data.title : undefined;
   }
   return undefined;
 });
@@ -193,16 +194,15 @@ node --experimental-strip-types --test frontend/test/app_shell/*.test.ts
 uv run pytest tests/test_blackbox_app_shell_views_audit.py tests/test_blackbox_app_shell_test_modular_decomposition.py
 ```
 
-## 9. Modular Data Service & Offline Fixture Fallbacks
+## 9. Typed Data Results and Error States
 
-To preserve Hard Invariant 6 (<500 lines) and separate network transport from test fixture data, `AppDataService` delegates static campaign, character, and session fixtures to `frontend/src/services/app-data-service.fixtures.ts`:
+`AppDataService` returns a `DataResult` from every read and write. A result is either `{ ok: true, data }` or `{ ok: false, status, message }`. A failed call never returns canned data. Source: `frontend/src/services/data-result.ts` and `frontend/src/services/app-data-service.ts`.
 
-- `FALLBACK_CAMPAIGNS`: Default campaign items (`Tomb of the Star-Eater`, `Whispering Depths`).
-- `FALLBACK_CHARACTERS`: Default character roster items (`Valeros`, `Kyra`, `Ezren`).
-- `FALLBACK_MEMBERS`: Default campaign party members.
-- `FALLBACK_PARTICIPANTS`: Pre-game lobby attendee states.
-- `FALLBACK_SESSIONS`: Staged and active campaign sessions.
+- A failed read shows `<runefoble-data-error>`. HTTP 404 shows "Not found". Any other failure shows "Could not load this view" with a Retry control.
+- A failed write shows a toast that starts with "Not saved." (or the matching action label). The local view state does not change.
+- Fixture arrays live in `frontend/src/fixtures/app-data-service.fixtures.ts`. Only unit tests under `frontend/test/` and Storybook stories may import them. The test `frontend/test/fixture-isolation.test.ts` enforces this.
 
-When backend services are unavailable during offline development or isolated unit testing, `appDataService` gracefully falls back to these static fixtures without crashing.
+Unit tests fake the gateway at the `fetch` boundary with `frontend/test/support/fake-gateway.ts`.
+
 
 

@@ -4,11 +4,12 @@
  * ADR-0001, ADR-0004, ADR-0007, ADR-0012, ADR-0013
  */
 
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router } from '../src/router/router.ts';
 import { AppDataService } from '../src/services/app-data-service.ts';
-import { FALLBACK_CAMPAIGNS } from '../src/services/fallback-data.ts';
+import { FALLBACK_CAMPAIGNS } from '../src/fixtures/app-data-service.fixtures.ts';
+import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 import type { CampaignItem, CreateCampaignPayload } from '../../services/game_session/ui/src/campaigns/types.ts';
 import type { AppActiveView } from '../src/runefoble-app.ts';
 
@@ -55,10 +56,13 @@ describe('Profile Navigation & Breadcrumb Trail (TASK-0257)', () => {
 
 describe('Campaign Creation Deduplication & Idempotency (TASK-0257)', () => {
   let service: AppDataService;
+  let gateway: FakeGateway | undefined;
 
   beforeEach(() => {
     service = new AppDataService();
   });
+
+  afterEach(() => { gateway?.restore(); gateway = undefined; });
 
   it('deduplicates campaigns array by id using Map', () => {
     const duplicates: CampaignItem[] = [
@@ -80,10 +84,15 @@ describe('Campaign Creation Deduplication & Idempotency (TASK-0257)', () => {
       system: '5e',
     };
 
-    const c1 = await service.createCampaign(payload);
+    gateway = installFakeGateway({
+      'POST /api/v1/campaigns': { status: 201, body: { id: 'camp-idem-1', title: payload.title, role: 'owner', player_count: 1 } },
+    });
+    const created = await service.createCampaign(payload);
+    assert.ok(created.ok);
+    const c1 = created.data;
     assert.ok(c1.id);
 
-    // Call deduplicate with existing fallback campaigns plus duplicate
+    // Deduplicate the created campaign alongside the listed campaigns
     const duplicatedList = [c1, c1, ...FALLBACK_CAMPAIGNS];
     const deduped = service.deduplicateCampaigns(duplicatedList);
     const matchingCount = deduped.filter((c) => c.id === c1.id).length;

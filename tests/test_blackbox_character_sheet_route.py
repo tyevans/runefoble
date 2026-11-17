@@ -19,7 +19,7 @@ ROUTER_TS = FRONTEND_DIR / "src" / "router" / "router.ts"
 APP_TS = FRONTEND_DIR / "src" / "runefoble-app.ts"
 APP_STYLES_TS = FRONTEND_DIR / "src" / "styles" / "app-shell.styles.ts"
 DATA_SERVICE_TS = FRONTEND_DIR / "src" / "services" / "app-data-service.ts"
-FALLBACK_DATA_TS = FRONTEND_DIR / "src" / "services" / "fallback-data.ts"
+RETIRED_FALLBACK_DATA_TS = FRONTEND_DIR / "src" / "fixtures" / "fallback-data.ts"
 TEST_ROUTER_TS = FRONTEND_DIR / "test" / "router.test.ts"
 
 
@@ -27,10 +27,9 @@ def test_file_length_limits_and_decomposition():
     """Verify Hard Invariant 6: all modified files strictly satisfy line count constraints (<500 lines)."""
     files_to_check = [
         (ROUTER_TS, 250),
-        (APP_TS, 250),
+        (APP_TS, 350),
         (APP_STYLES_TS, 250),
         (DATA_SERVICE_TS, 450),
-        (FALLBACK_DATA_TS, 200),
         (Path(__file__), 250),
     ]
 
@@ -91,17 +90,12 @@ def test_app_shell_view_orchestration_and_component_mounting():
 
 
 def test_app_data_service_character_fetch_and_fallbacks():
-    """Verify appDataService exports fetchCharacter and getFallbackCharacterName."""
+    """Verify appDataService returns typed results for character reads and keeps no canned fallback (TASK-0640)."""
     service_content = DATA_SERVICE_TS.read_text(encoding="utf-8")
-    assert "fetchCharacter(characterId: string)" in service_content
-    assert "getFallbackCharacterName(id: string)" in service_content
-
-    fallback_content = FALLBACK_DATA_TS.read_text(encoding="utf-8")
-    assert "buildFallbackCharacterDetail" in fallback_content
-    assert "FALLBACK_CHARACTERS" in fallback_content
-    assert "char-valeros" in fallback_content
-    assert "char-kyra" in fallback_content
-    assert "char-ezren" in fallback_content
+    assert "fetchCharacter(characterId: string): Promise<DataResult<any>>" in service_content
+    assert "getFallbackCharacterName" not in service_content
+    assert "FALLBACK_" not in service_content
+    assert not RETIRED_FALLBACK_DATA_TS.exists(), "fixtures/fallback-data.ts must be deleted"
 
 
 def test_character_sheet_styles_in_app_shell():

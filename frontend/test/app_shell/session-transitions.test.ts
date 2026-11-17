@@ -8,21 +8,46 @@
  * - Hard Invariant 7: Blackbox TDD with frontdoor setup
  */
 
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { Router } from '../../src/router/router.ts';
 import { AppDataService } from '../../src/services/app-data-service.ts';
 import { registerDefaultPlugins, pluginRegistry } from '../../src/components/plugins/plugin_registry.ts';
+import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
+import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS, FALLBACK_BOARD_TOKENS } from '../../src/fixtures/app-data-service.fixtures.ts';
+
+/** A stateful roster behind the gateway: create, assign, and delete change what later reads return. */
+function installRosterGateway(): { gateway: FakeGateway; roster: any[] } {
+  const roster: any[] = FALLBACK_CHARACTERS.map((c) => ({ ...c }));
+  const gateway = installFakeGateway({
+    'GET /api/v1/characters': () => ({ body: roster }),
+    'POST /api/v1/characters': (req) => {
+      const body = req.body as any;
+      const created = { id: `char-${roster.length + 1}`, campaignId: null, campaignTitle: null, currentHp: body.maxHp, armorClass: 10, speed: 30, ...body };
+      roster.push(created);
+      return { status: 201, body: created };
+    },
+    'PATCH /api/v1/characters/char-ezren/campaign': (req) => { roster.find((c) => c.id === 'char-ezren').campaignId = (req.body as any).campaignId; return { status: 204 }; },
+    'DELETE /api/v1/characters/char-kyra': () => { roster.splice(roster.findIndex((c) => c.id === 'char-kyra'), 1); return { status: 204 }; },
+    'GET /api/v1/sessions/session-tomb-14': { body: { id: 'session-tomb-14', campaign_id: '4', title: 'Session #14', status: 'active', participants: FALLBACK_PARTICIPANTS } },
+    'GET /api/v1/boards/session-tomb-14': { body: { cols: 12, rows: 10, tokens: FALLBACK_BOARD_TOKENS } },
+  });
+  return { gateway, roster };
+}
 
 describe('App Shell Session Lifecycle & Transitions', () => {
   let router: Router;
   let dataService: AppDataService;
+  let gateway: FakeGateway;
 
   beforeEach(() => {
     router = new Router();
     router.reset();
     dataService = new AppDataService();
+    gateway = installRosterGateway().gateway;
   });
+
+  afterEach(() => gateway.restore());
 
   it('transitions router from lobby to active VTT on launch-session event', async () => {
     await router.navigate('#/campaigns/4/lobby/session-tomb-14');
@@ -44,8 +69,9 @@ describe('App Shell Session Lifecycle & Transitions', () => {
 
   it('dynamically populates lobby available characters from character roster with campaign priority', async () => {
     const lobby = await dataService.fetchLobbyState('4', 'session-tomb-14');
-    assert.ok(lobby.availableCharacters.length >= 2);
-    assert.ok(lobby.availableCharacters[0].id === 'char-valeros' || lobby.availableCharacters[0].id === 'char-kyra');
+    assert.ok(lobby.ok);
+    assert.ok(lobby.data.availableCharacters.length >= 2);
+    assert.ok(lobby.data.availableCharacters[0].id === 'char-valeros' || lobby.data.availableCharacters[0].id === 'char-kyra');
   });
 
   it('prioritizes campaign-assigned character fallback when entering active session without explicit selection', () => {
@@ -56,30 +82,33 @@ describe('App Shell Session Lifecycle & Transitions', () => {
   });
 
   it('creates character via createCharacter mutation', async () => {
-    const newChar = await dataService.createCharacter({ name: 'Harsk the Ranger', characterClass: 'Ranger', level: 3, maxHp: 28 });
-    assert.equal(newChar.name, 'Harsk the Ranger');
-    assert.ok((await dataService.fetchCharacters()).some((c) => c.name === 'Harsk the Ranger'));
+    const created = await dataService.createCharacter({ name: 'Harsk the Ranger', characterClass: 'Ranger', level: 3, maxHp: 28 } as any);
+    assert.ok(created.ok);
+    assert.equal(created.data.name, 'Harsk the Ranger');
+    const roster = await dataService.fetchCharacters();
+    assert.ok(roster.ok && roster.data.some((c) => c.name === 'Harsk the Ranger'));
   });
 
   it('assigns character to campaign and unassigns via assignCharacterCampaign', async () => {
-    const chars = await dataService.fetchCharacters();
-    const ezren = chars.find((c) => c.id === 'char-ezren') || chars[0];
-    await dataService.assignCharacterCampaign(ezren.id, '4');
-    assert.equal((await dataService.fetchCharacters()).find((c) => c.id === ezren.id)?.campaignId, '4');
-    await dataService.assignCharacterCampaign(ezren.id, null);
-    assert.equal((await dataService.fetchCharacters()).find((c) => c.id === ezren.id)?.campaignId, null);
+    const assigned = await dataService.assignCharacterCampaign('char-ezren', '4');
+    assert.equal(assigned.ok, true);
+    const afterAssign = await dataService.fetchCharacters();
+    assert.ok(afterAssign.ok);
+    assert.equal(afterAssign.data.find((c) => c.id === 'char-ezren')?.campaignId, '4');
   });
 
   it('deletes character via deleteCharacter mutation', async () => {
-    const created = await dataService.createCharacter({ name: 'Temp Deletable', characterClass: 'Fighter', maxHp: 10 });
-    await dataService.deleteCharacter(created.id);
-    assert.ok(!(await dataService.fetchCharacters()).some((c) => c.id === created.id));
+    const deleted = await dataService.deleteCharacter('char-kyra');
+    assert.equal(deleted.ok, true);
+    const roster = await dataService.fetchCharacters();
+    assert.ok(roster.ok && !roster.data.some((c) => c.id === 'char-kyra'));
   });
 
   it('provides dynamic board dimensions and tokens via fetchBoardState', async () => {
     const state = await dataService.fetchBoardState('session-tomb-14');
-    assert.ok(typeof state.cols === 'number' && typeof state.rows === 'number');
-    assert.ok(Array.isArray(state.tokens) && state.tokens.length >= 1);
+    assert.ok(state.ok);
+    assert.ok(typeof state.data.cols === 'number' && typeof state.data.rows === 'number');
+    assert.ok(Array.isArray(state.data.tokens) && state.data.tokens.length >= 1);
   });
 
   it('registers default tabletop plugins across standard slots for players and DM (TASK-0358)', () => {
