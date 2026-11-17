@@ -27,7 +27,7 @@ from game_session.settlement.auth.tokens import set_zitadel_auth_service
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.event_sourcing import get_event_store, set_event_store
 
 
 @pytest.fixture
@@ -44,6 +44,20 @@ def spicedb() -> Iterator[MockSpiceDBClient]:
     set_spicedb_client(db)
     yield db
     set_spicedb_client(MockSpiceDBClient())
+
+
+@pytest.fixture(autouse=True)
+def reset_process_globals() -> Iterator[None]:
+    """Clear the event store and campaign repository singletons around every test.
+
+    The PostgreSQL restart test binds both to a container that its module fixture stops.
+    Without this reset, later modules inherit a store that points at a closed port.
+    """
+    set_event_store(None)
+    set_campaign_repositories(None)
+    yield
+    set_event_store(None)
+    set_campaign_repositories(None)
 
 
 @pytest.fixture
