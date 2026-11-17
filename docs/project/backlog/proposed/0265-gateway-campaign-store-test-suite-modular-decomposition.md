@@ -21,6 +21,8 @@ target_release: 0.8.0
 ## Status
 Proposed
 
+Superseded by TASK-0591 (audit 2026-11-17).
+
 ## Summary
 Decompose `tests/test_blackbox_gateway_campaign_store_decomposition.py` (313 lines) into modular test submodules under `tests/test_blackbox_gateway_campaign_store/` (`conftest.py`, `test_campaign_crud.py`, `test_campaign_members.py`, `test_campaign_queries.py`), keeping all test files strictly < 120 lines per Hard Invariant 6.
 

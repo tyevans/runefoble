@@ -26,6 +26,8 @@ target_release: 0.9.0
 ## Status
 Proposed
 
+Superseded by TASK-0586 (audit 2026-11-17).
+
 ## Summary
 Decompose `gateway/api/src/gateway_api/routers/character_subresources.py` (357 lines, 71.4% of limit) into modular domain sub-routers under `gateway/api/src/gateway_api/routers/characters/` (`health.py`, `inventory.py`, `conditions.py`, `spells.py`, `guardrails.py`), ensuring all subresource router modules remain strictly < 120 lines per Hard Invariant 6.
 

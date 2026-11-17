@@ -25,11 +25,13 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: event corrected to `AudienceModifierApproved` (`runefoble.events.audience.modifier_approved`, `libs/runefoble_events/src/runefoble_events/audience.py:75-89`) with the field `parameters`. The earlier name and field were not in the code. The subscriber work stays in this task.
+
 ## Summary
-Implement Redis Streams domain event subscribers in `services/game_session` and `services/the_watcher` for `AudienceProposalApproved` domain events. Translate approved audience chaos modifiers (e.g. weather shifts, environmental hazards, wild magic surges, tavern brawls, consumable item drops) into concrete `GameSession` aggregate mutations, board state updates, and Watcher narrative commentary events.
+Implement Redis Streams domain event subscribers in `services/game_session` and `services/the_watcher` for `AudienceModifierApproved` domain events. Translate approved audience chaos modifiers (e.g. weather shifts, environmental hazards, wild magic surges, tavern brawls, consumable item drops) into concrete `GameSession` aggregate mutations, board state updates, and Watcher narrative commentary events.
 
 ## Problem Statement
-When a DM approves an audience chaos poll outcome in `services/audience_studio`, an `AudienceProposalApproved` CloudEvent is published to the Redis event stream. However, neither `game_session` nor `the_watcher` currently listens to this event topic. Consequently, approved audience modifiers remain purely cosmetic records in the audience studio database and never affect the active tactical board, party inventory, or narrative gameplay.
+When a DM approves an audience chaos poll outcome in `services/audience_studio`, an `AudienceModifierApproved` CloudEvent is published to the Redis event stream. However, neither `game_session` nor `the_watcher` currently listens to this event topic. Consequently, approved audience modifiers remain purely cosmetic records in the audience studio database and never affect the active tactical board, party inventory, or narrative gameplay.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -49,9 +51,9 @@ When a DM approves an audience chaos poll outcome in `services/audience_studio`,
 
 ## Detailed Specification & Implementation Plan
 1. **CloudEvents Definition (`libs/runefoble_events/src/runefoble_events/audience.py`)**:
-   - Verify `AudienceProposalApproved` CloudEvent schema with fields: `campaign_id`, `session_id`, `proposal_id`, `modifier_type`, `description`, `mechanical_payload`.
+   - Verify `AudienceModifierApproved` CloudEvent schema with fields: `campaign_id`, `session_id`, `proposal_id`, `modifier_type`, `parameters`.
 2. **GameSession Event Handler (`services/game_session/src/game_session/event_handlers.py`)**:
-   - Subscribe to `AudienceProposalApproved`.
+   - Subscribe to `AudienceModifierApproved`.
    - Apply mechanical payloads:
      - `weather_change`: Update environmental conditions (e.g. dense fog, thunderstorm, rain).
      - `hazard_spawn`: Dispatch hazard placement event to `board_state`.
@@ -60,7 +62,7 @@ When a DM approves an audience chaos poll outcome in `services/audience_studio`,
 3. **The Watcher Narrative Handler (`services/the_watcher/src/the_watcher/handlers/audience.py`)**:
    - Ingest approved audience modifier and trigger The Watcher AI to compose immersive narrative commentary describing the audience-driven twist.
 4. **Blackbox Tests (`tests/test_blackbox_audience_chaos_event_bridge.py`)**:
-   - Publish `AudienceProposalApproved` event to the platform event bus and assert that `GameSession` state reflects the modifier and `WatcherNarrativeDispatched` event is emitted.
+   - Publish `AudienceModifierApproved` event to the platform event bus and assert that `GameSession` state reflects the modifier and `WatcherNarrativeDispatched` event is emitted.
 
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Decoupled via CloudEvents; both producer and consumers interact via standard event topics.
@@ -71,7 +73,7 @@ When a DM approves an audience chaos poll outcome in `services/audience_studio`,
 - **Testable (T)**: Frontdoor event dispatching asserting published CloudEvents and aggregate projections.
 
 ## Definition of Done
-1. `AudienceProposalApproved` subscribed in `game_session` and `the_watcher`.
+1. `AudienceModifierApproved` subscribed in `game_session` and `the_watcher`.
 2. Approved modifiers apply concrete mechanical effects to the session and trigger Watcher narrative commentary.
 3. Frontdoor blackbox test suite `tests/test_blackbox_audience_chaos_event_bridge.py` passes with 100% assertions.
 4. Code passes `uv run ruff check .` and `uv run ruff format --check .`.

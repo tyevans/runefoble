@@ -26,6 +26,8 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: permission names corrected to the relations in `runefoble.zed`. The names `can_manage_audience_polls` and `can_approve_audience_chaos` do not exist. Port 8010 is correct for audience-studio.
+
 ## Summary
 Implement a unified API Gateway proxy router (`gateway/api/src/gateway_api/routers/audience.py`) that routes REST requests (`/api/v1/audience/*`) and WebSocket connections (`/ws/audience/{campaign_id}`) to the `audience-studio` microservice (`http://audience-studio:8010`). Enforce SpiceDB Zanzibar permission checks (`can_manage_audience_polls`, `can_approve_audience_chaos`) on DM administrative mutators (poll lifecycle, proposal approval, proposal veto), while permitting spectator voting and read-only poll tallies.
 
@@ -52,14 +54,14 @@ The TypeScript `audience_studio` microservice provides high-concurrency chaos po
 
 ## Detailed Specification & Implementation Plan
 1. **FastAPI Audience Proxy Router (`gateway/api/src/gateway_api/routers/audience.py`)**:
-   - Proxy routes to `AUDIENCE_STUDIO_URL` (default `http://localhost:8010` / `http://audience-studio:8010`):
-     - `POST /api/v1/audience/polls` (Create poll; requires `can_manage_audience_polls` or `run_session`)
+   - Proxy routes to the audience-studio URL from the TASK-0580 settings field (default `http://audience-studio:8010`; no localhost default):
+     - `POST /api/v1/audience/polls` (Create poll; requires `campaign.run_session`)
      - `GET /api/v1/audience/polls/{poll_id}` (Get poll tallies; public)
      - `POST /api/v1/audience/polls/{poll_id}/votes` (Submit spectator vote; public/spectator)
-     - `POST /api/v1/audience/polls/{poll_id}/close` (Close poll; requires `can_manage_audience_polls`)
-     - `GET /api/v1/audience/proposals` (List pending proposals; requires `can_approve_audience_chaos`)
-     - `POST /api/v1/audience/proposals/{proposal_id}/approve` (Approve modifier; requires `can_approve_audience_chaos`)
-     - `POST /api/v1/audience/proposals/{proposal_id}/veto` (Veto modifier; requires `can_approve_audience_chaos`)
+     - `POST /api/v1/audience/polls/{poll_id}/close` (Close poll; requires `audience_poll.moderate`)
+     - `GET /api/v1/audience/proposals` (List pending proposals; requires `audience_poll.view`)
+     - `POST /api/v1/audience/proposals/{proposal_id}/approve` (Approve modifier; requires `audience_poll.approve`)
+     - `POST /api/v1/audience/proposals/{proposal_id}/veto` (Veto modifier; requires `audience_poll.veto`)
    - WebSocket proxy:
      - `WS /ws/audience/{campaign_id}` proxying frames bidirectionally between client and audience studio.
 2. **Mount in Gateway API (`gateway/api/src/gateway_api/main.py`)**:

@@ -23,6 +23,8 @@ target_release: 0.8.0
 ## Status
 Proposed
 
+Superseded by TASK-0599 (audit 2026-11-17).
+
 ## Summary
 Decompose `gateway/api/src/gateway_api/spectator.py` (289 lines, 57.8% of limit) into modular submodules under `gateway/api/src/gateway_api/spectator/` (`models.py`, `sanitizer.py`, `router.py`), ensuring all modules remain strictly < 120 lines per Hard Invariant 6.
 

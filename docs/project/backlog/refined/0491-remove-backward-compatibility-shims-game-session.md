@@ -31,6 +31,8 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: the in-memory index dicts (`dependencies.py:122-127`) and the dead projections are owned by TASK-0567 and are not removed here.
+
 ## Summary
 Purge all backward-compatibility facades, router shims, and legacy field aliases from `services/game_session` (`aggregate.py`, `combat_routes.py`, `caravan.py`, `caravan_ledger.py`, `settlements/aggregate.py`, `routers/caravan_contracts.py`, `settlement/auth.py`, `settlement/workers.py`, `settlement/haggling.py`, and `worker_models.py` aliases), migrate callers directly to authoritative submodules, and delete facade parity tests.
 

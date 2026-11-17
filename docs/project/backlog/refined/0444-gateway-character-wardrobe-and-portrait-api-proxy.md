@@ -7,6 +7,8 @@ dependencies:
 - TASK-0124
 - TASK-0252
 - TASK-0356
+- TASK-0585
+- TASK-0586
 governing_adrs:
 - ADR-0001
 - ADR-0007
@@ -27,8 +29,10 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: in-memory and `proxy_or_fallback()` requirements removed. Depends on TASK-0585 and TASK-0586. The owner has `GET` and `POST .../wardrobe` (`wardrobe_router.py:72,78`) and `POST .../portrait/active` (`wardrobe_router.py:48`). No `POST .../portrait` route exists.
+
 ## Summary
-Implement dedicated Gateway APIRouter endpoints (`GET /api/v1/characters/{character_id}/wardrobe`, `POST /api/v1/characters/{character_id}/wardrobe`, and `POST /api/v1/characters/{character_id}/portrait`) protected by SpiceDB Zanzibar authorization (`view` or `edit` permission on `character:{character_id}`) proxying downstream to the Character Sheet service (`wardrobe_router.py`), with in-memory fallback support in `character_store`, enabling clients to query unlocked wardrobe variants, register synthesized attire variations, and update character portraits through the public Gateway frontdoor.
+Implement dedicated Gateway APIRouter endpoints (`GET /api/v1/characters/{character_id}/wardrobe`, `POST /api/v1/characters/{character_id}/wardrobe`, and `POST /api/v1/characters/{character_id}/portrait/active`) protected by SpiceDB Zanzibar authorization (`view` or `edit` permission on `character:{character_id}`) proxying downstream to the Character Sheet service (`wardrobe_router.py`), with no in-memory fallback (the gateway holds no domain state; ADR-0015), enabling clients to query unlocked wardrobe variants, register synthesized attire variations, and update character portraits through the public Gateway frontdoor.
 
 ## Problem Statement
 While `services/character_sheet/src/character_sheet/wardrobe_router.py` exposes REST endpoints for wardrobe attire variants and portrait updates per PRD-0016 and US-0055, the unified Gateway API (`gateway/api/src/gateway_api/`) lacks route mappings for `/api/v1/characters/{id}/wardrobe` and `/api/v1/characters/{id}/portrait`. Consequently, frontend clients and external consumers receive 404 Not Found when attempting to access wardrobe attire or update character portrait avatars via the Gateway frontdoor. Furthermore, SpiceDB Zanzibar object-level permissions (`view` for read, `edit` for mutations) are not enforced at the gateway layer for wardrobe subresources.
@@ -53,13 +57,12 @@ While `services/character_sheet/src/character_sheet/wardrobe_router.py` exposes 
 ## Detailed Specification & Implementation Plan
 1. **Gateway Models & Schemas (`gateway/api/src/gateway_api/character_models.py`)**:
    - Define `WardrobeVariantResponse`, `AddWardrobeVariantRequest`, and `UpdatePortraitRequest` Pydantic models matching character sheet domain schemas (< 50 lines).
-2. **Gateway In-Memory Store Extension (`gateway/api/src/gateway_api/character_store.py`)**:
-   - Add wardrobe variant tracking (`wardrobe_variants: dict[str, dict[str, Any]]`) and portrait updating methods to `CharacterStore` for local development and test fallbacks (< 60 lines).
-3. **Gateway Subresource Router Endpoints (`gateway/api/src/gateway_api/routers/character_subresources.py` or `characters/wardrobe.py`)**:
+2. **No store extension**: do not add wardrobe or portrait state to `character_store.py` (ADR-0015).
+3. **Gateway Proxy Router (`gateway/api/src/gateway_api/routers/characters_wardrobe_proxy.py`, new; `character_subresources.py` is deleted by TASK-0586)**: build on the typed client from TASK-0580.
    - Add `GET /api/v1/characters/{character_id}/wardrobe` with `Depends(require_zanzibar_permission("view", "character", "character_id"))`.
    - Add `POST /api/v1/characters/{character_id}/wardrobe` with `Depends(require_zanzibar_permission("edit", "character", "character_id"))`.
-   - Add `POST /api/v1/characters/{character_id}/portrait` with `Depends(require_zanzibar_permission("edit", "character", "character_id"))`.
-   - Proxy requests downstream to `CHARACTER_SHEET_URL` via `proxy_or_fallback()`.
+   - Add `POST /api/v1/characters/{character_id}/portrait/active` with `Depends(require_zanzibar_permission("edit", "character", "character_id"))`.
+   - Proxy requests downstream to `CHARACTER_SHEET_URL` through the TASK-0580 client. No fallback: upstream failure maps to 502 or 503 (ADR-0015).
 4. **Verification**:
    - Add blackbox frontdoor tests verifying wardrobe variant creation, listing, portrait switching, and 403 Zanzibar rejection for unauthorized callers.
 
@@ -74,6 +77,6 @@ While `services/character_sheet/src/character_sheet/wardrobe_router.py` exposes 
 ## Definition of Done
 1. All three wardrobe and portrait endpoints exposed under `/api/v1/characters/{character_id}/...`.
 2. SpiceDB Zanzibar permissions strictly enforced (403 Forbidden when caller lacks `view`/`edit`).
-3. Downstream proxying works with live character_sheet service, and fallback memory store handles standalone gateway runs.
+3. Downstream proxying works with the live character_sheet service. No fallback store exists.
 4. Comprehensive frontdoor blackbox test suite `tests/test_blackbox_gateway_wardrobe_proxy.py` passes with 100% assertions.
 5. All modified files adhere to Hard Invariant 6 (< 500 lines).

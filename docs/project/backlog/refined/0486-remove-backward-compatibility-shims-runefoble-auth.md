@@ -5,6 +5,7 @@ status: Refined
 created: 2026-09-29
 dependencies:
 - TASK-0034
+- TASK-0520
 governing_adrs:
 - ADR-0001
 - ADR-0002
@@ -20,11 +21,13 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: class names corrected. The auth shim items depend on TASK-0520. The `verify_token` method is not removed.
+
 ## Summary
-Excise all legacy token verification wrappers, backward-compatibility methods, and re-export aliases from `libs/runefoble_auth` (specifically legacy sync `verify_token` shims in `zitadel.py`), migrating all callers directly to authoritative async verification methods.
+Excise all legacy token verification wrappers, backward-compatibility methods, and re-export aliases from `libs/runefoble_auth` (the unverified `decode_token` path, which TASK-0520 removes; `ZitadelAuthService.verify_token` is canonical and stays), migrating all callers directly to authoritative async verification methods.
 
 ## Problem Statement
-In `libs/runefoble_auth/src/runefoble_auth/zitadel.py`, a legacy `verify_token` method exists purely for backward compatibility, wrapping the underlying verification logic. Retaining legacy synchronous verification wrappers or fallback stubs in authorization modules clutters security boundaries and violates the DoR zero backward compatibility mandate.
+In `libs/runefoble_auth/src/runefoble_auth/zitadel.py`, `verify_token` (line 153) is the canonical verification method (audit 2026-11-17: it is not a legacy shim). Retaining legacy synchronous verification wrappers or fallback stubs in authorization modules clutters security boundaries and violates the DoR zero backward compatibility mandate.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -40,10 +43,10 @@ In `libs/runefoble_auth/src/runefoble_auth/zitadel.py`, a legacy `verify_token` 
 
 ## Detailed Specification & Implementation Plan
 1. **Remove Legacy Compatibility Methods in `zitadel.py`**:
-   - Inspect `libs/runefoble_auth/src/runefoble_auth/zitadel.py` and remove legacy `verify_token` backward-compatibility aliases and docstrings.
-   - Ensure `ZitadelAuthClient` exposes only canonical `verify_token_async` (or the unified async verification method).
+   - Inspect `libs/runefoble_auth/src/runefoble_auth/zitadel.py`. Keep `ZitadelAuthService.verify_token`. Remove `decode_token` only as TASK-0520 specifies.
+   - Ensure `ZitadelAuthService` exposes one canonical verification method. The names `ZitadelAuthClient`, `verify_token_async`, and `UserTokenClaims` do not exist in the code (audit 2026-11-17).
 2. **Clean Up `__init__.py` Re-exports**:
-   - Inspect `libs/runefoble_auth/src/runefoble_auth/__init__.py` to ensure only authoritative classes (`ZitadelAuthClient`, `SpiceDBClient`, `UserTokenClaims`) are exposed, removing any deprecated alias symbols.
+   - Inspect `libs/runefoble_auth/src/runefoble_auth/__init__.py` to ensure only authoritative classes that exist (`ZitadelAuthService`, `SpiceDBClient`) are exposed, removing any deprecated alias symbols.
 3. **Migrate Call Sites Across Workspace**:
    - Audit `gateway/api`, services, and tests for any calls to legacy `verify_token` shims and update them to use canonical interfaces.
 4. **Update Test Assertions**:

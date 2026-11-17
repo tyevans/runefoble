@@ -20,11 +20,13 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: file list corrected. `soundscape_events.py` does not exist. Also remove the alias `TrapPlaced = TrapPlacedEvent` (`board_traps.py:93`). `events.py`, `board.py`, and the `board_events/` and `watcher_events/` directories are decided by TASK-0579 and are not deleted here.
+
 ## Summary
-Delete all package-root backward-compatibility alias modules in `libs/runefoble_events` (`board_events.py`, `narrative_events.py`, `platform_events.py`, `soundscape_events.py`, `world_events.py`, `settlement_workers.py`), updating all domain callers to import directly from `runefoble_events.events.<category>`, and remove obsolete parity tests.
+Delete all package-root backward-compatibility alias modules in `libs/runefoble_events` (`board_events.py`, `narrative_events.py`, `platform_events.py`, `world_events.py`, `media_events.py`, `session_events.py`, `character_events.py`), updating all domain callers to import directly from `runefoble_events.events.<category>`, and remove obsolete parity tests.
 
 ## Problem Statement
-When domain events were modularized into `runefoble_events.events.*`, the root of `libs/runefoble_events/src/runefoble_events/` retained legacy alias files (`board_events.py`, `narrative_events.py`, `platform_events.py`, `soundscape_events.py`, `world_events.py`, `settlement_workers.py`) that merely re-export symbols for backward compatibility. Furthermore, tests like `tests/test_runefoble_events_modular_decomposition.py:test_backward_compatibility_re_export_parity` actively verify these shims. In accordance with the DoR zero backward compatibility mandate, these alias files must be deleted and all consumers migrated to authoritative paths.
+When domain events were modularized into `runefoble_events.events.*`, the root of `libs/runefoble_events/src/runefoble_events/` retained legacy alias files (`board_events.py`, `narrative_events.py`, `platform_events.py`, `world_events.py`, `media_events.py`, `session_events.py`, `character_events.py`) that merely re-export symbols for backward compatibility. Furthermore, tests like `tests/test_runefoble_events_modular_decomposition.py:test_backward_compatibility_re_export_parity` actively verify these shims. In accordance with the DoR zero backward compatibility mandate, these alias files must be deleted and all consumers migrated to authoritative paths.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -43,9 +45,9 @@ When domain events were modularized into `runefoble_events.events.*`, the root o
    - Delete `libs/runefoble_events/src/runefoble_events/board_events.py`.
    - Delete `libs/runefoble_events/src/runefoble_events/narrative_events.py`.
    - Delete `libs/runefoble_events/src/runefoble_events/platform_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/soundscape_events.py`.
    - Delete `libs/runefoble_events/src/runefoble_events/world_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/settlement_workers.py`.
+   - Delete `libs/runefoble_events/src/runefoble_events/media_events.py`, `session_events.py`, and `character_events.py` (each is an 8-line facade).
+   - Delete the stray facade `libs/runefoble_events/settlement_workers.py` (outside `src/`). Keep `src/runefoble_events/settlement_workers.py`: it is a 100-line module, not an alias.
 2. **Update Package Root `__init__.py`**:
    - Clean up `libs/runefoble_events/src/runefoble_events/__init__.py` to re-export only canonical core base classes (`BaseRunefobleEvent`, `DomainEvent`, `register_event`), removing obsolete re-export facades.
 3. **Migrate Import Sites Across All Services**:
@@ -56,13 +58,13 @@ When domain events were modularized into `runefoble_events.events.*`, the root o
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Completely decouples `runefoble_events` structure from legacy root imports.
 - **Negotiable (N)**: Direct import paths follow established Diataxis and ADR conventions.
-- **Valuable (V)**: Eliminates 6 redundant shim files and prevents developer confusion on canonical import paths.
-- **Estimable (E)**: Exactly 6 files to delete, root `__init__.py` to clean, and known test suite to prune.
+- **Valuable (V)**: Eliminates the redundant shim files and prevents developer confusion on canonical import paths.
+- **Estimable (E)**: A fixed list of facade files (see the Summary), root `__init__.py` to clean, and known test suite to prune.
 - **Small (S)**: Straightforward file deletions and import migrations.
 - **Testable (T)**: Verified by `uv run pytest tests/test_runefoble_events*.py` and cross-service test suites.
 
 ## Definition of Done
-1. All 6 root alias files in `libs/runefoble_events` deleted.
+1. All root alias files listed in the Summary deleted.
 2. Root `__init__.py` exposes only authoritative base event types.
 3. All repository import sites migrated to `runefoble_events.events.*`.
 4. Obsolete backward-compatibility parity tests removed.

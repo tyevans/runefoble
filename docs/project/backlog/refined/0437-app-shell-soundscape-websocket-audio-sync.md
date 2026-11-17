@@ -27,6 +27,8 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: partly done or unverified (see TASK-0667). Re-scope at verification.
+
 ## Summary
 Update the App Shell WebSocket handler (`frontend/src/runefoble-app.ts`) to receive and process real-time soundscape events (`soundscape_cue`, `tension_updated`, `soundscape_track_changed`, `soundscape_ducking`) over `/ws/session/{session_id}`, dispatching reactive DOM events to `<runefoble-soundscape-controls>` and triggering synchronized client-side WebAudio foley playback within 100ms per PRD-0010 and US-0053.
 

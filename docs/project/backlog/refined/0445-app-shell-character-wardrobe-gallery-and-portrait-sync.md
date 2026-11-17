@@ -7,6 +7,7 @@ dependencies:
 - TASK-0124
 - TASK-0255
 - TASK-0444
+- TASK-0647
 governing_adrs:
 - ADR-0004
 - ADR-0012
@@ -26,6 +27,8 @@ target_release: 0.9.0
 
 ## Status
 Refined
+
+Audit 2026-11-17: no portrait SVG assets exist in the repository, so portrait sync cannot be verified yet. TASK-0647 adds or repoints them. Sequence after TASK-0647.
 
 ## Summary
 Integrate the `<runefoble-wardrobe-gallery>` component into the App Shell character sheet view (`frontend/src/runefoble-app.ts`), add wardrobe API communication methods to `frontend/src/services/app-data-service.ts`, bind `@select-variant` and `@generate-wardrobe` custom events, and synchronize active portrait updates across `<runefoble-character-card>`, pre-game lobby tokens, and the active VTT tactical board.

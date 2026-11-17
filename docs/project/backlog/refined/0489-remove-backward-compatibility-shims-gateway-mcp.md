@@ -21,6 +21,8 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: scope widened to the `get_tool` monkeypatch (`server.py:48`). The `apply_condition` alias named in the audit was not found; `apply_condition` is a plain tool function (`tools/character.py:161`). TASK-0629 depends on this task.
+
 ## Summary
 Remove `dynamic_registry.py` backward-compatibility re-exports and legacy tool registry aliases from `gateway/mcp`, routing all MCP tool registrations and inspections directly to authoritative submodules in `gateway_mcp.dynamic.*`.
 
@@ -43,6 +45,7 @@ Remove `dynamic_registry.py` backward-compatibility re-exports and legacy tool r
 1. **Delete Backward-Compatibility Re-export Module**:
    - Delete `gateway/mcp/src/gateway_mcp/dynamic_registry.py`.
 2. **Standardize Imports on `gateway_mcp.dynamic`**:
+   - Remove the `mcp.get_tool = mcp._tool_manager.get_tool` monkeypatch (`server.py:48`). Coordinate with TASK-0606 on `dynamic/registry.py`, which calls `self.mcp.get_tool` (lines 47 and 79).
    - Audit `gateway/mcp/src/gateway_mcp/server.py`, `routers/tools_registry.py`, and test files.
    - Ensure all references to `dynamic_registry` are rewritten to `gateway_mcp.dynamic.registry` (or canonical submodules).
 3. **Clean Up `gateway_mcp/__init__.py`**:

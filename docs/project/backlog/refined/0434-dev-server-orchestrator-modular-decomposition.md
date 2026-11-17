@@ -22,8 +22,10 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: `scripts/dev_server.py` is 418 lines, not 411.
+
 ## Summary
-Decompose `scripts/dev_server.py` (411 lines, 82.2% of limit) into modular utility submodules under `scripts/dev_orchestrator/` (`ports.py`, `runner.py`, `health.py`, `colors.py`), ensuring `scripts/dev_server.py` serves as a clean, high-level CLI driver strictly < 100 lines per Hard Invariant 6.
+Decompose `scripts/dev_server.py` (418 lines, 83.6% of limit) into modular utility submodules under `scripts/dev_orchestrator/` (`ports.py`, `runner.py`, `health.py`, `colors.py`), ensuring `scripts/dev_server.py` serves as a clean, high-level CLI driver strictly < 100 lines per Hard Invariant 6.
 
 ## Problem Statement
 `scripts/dev_server.py` implements local development orchestration for the entire Runefoble platform. It currently bundles ANSI color formatting, TCP socket probing, SpiceDB automatic kubectl port-forwarding, background service process management, subprocess stdout/stderr line streaming with prefixed labels, hot-reloading Vite frontend startup, health check polling, and graceful multi-signal handling into a monolithic 411-line script. As new downstream services and diagnostic checks are added, this file will breach the 500-line invariant limit unless decomposed into dedicated submodules.

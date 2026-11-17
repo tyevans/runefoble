@@ -20,11 +20,13 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: also remove the alias `RedisConsumerGroupWorker = RedisConsumerGroup` (`consumer_group.py:162`) and the `MockAsyncRedis` re-export (`consumer_group.py:14,168`; also `__init__.py:12,97` and `redis_bus.py:14,169`). The test double must not be exported from production code.
+
 ## Summary
 Purge all backward-compatibility shims, deprecated facades, and re-export aliases from `libs/runefoble_platform` (`email_client.py`, `analytics_client.py`, `analytics_privacy.py`, and `database_url` in `config.py`), updating all internal call sites and blackbox tests directly to authoritative submodules.
 
 ## Problem Statement
-During past modular refactorings of the platform foundation (such as email client extraction and analytics modularization), transitional shims (`email_client.py`, `analytics_client.py`, `analytics_privacy.py`) and configuration aliases (`database_url` for `postgres_url`) were preserved for backward compatibility. Because Runefoble is pre-production with zero active external users, retaining these compatibility artifacts creates maintenance overhead and violates the Definition of Ready (DoR) zero-shim policy.
+During past modular refactorings of the platform foundation (such as email client extraction and analytics modularization), transitional shims (`email_client.py`, `analytics_client.py`, `analytics_privacy.py`) and configuration aliases (`postgres_dsn` for `database_url`) were preserved for backward compatibility. Because Runefoble is pre-production with zero active external users, retaining these compatibility artifacts creates maintenance overhead and violates the Definition of Ready (DoR) zero-shim policy.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -45,7 +47,7 @@ During past modular refactorings of the platform foundation (such as email clien
    - Remove `libs/runefoble_platform/src/runefoble_platform/analytics_client.py`.
    - Remove `libs/runefoble_platform/src/runefoble_platform/analytics_privacy.py`.
 2. **Remove Configuration Aliases**:
-   - In `libs/runefoble_platform/src/runefoble_platform/config.py`, remove the `database_url` backward-compatibility alias property; callers must use `postgres_url` directly.
+   - In `libs/runefoble_platform/src/runefoble_platform/config.py`, remove the `postgres_dsn` backward-compatibility alias property (`config.py:56-58`); callers must use `database_url` directly.
 3. **Direct Call Site Migration**:
    - Audit and migrate any callers importing from `runefoble_platform.email_client` or `runefoble_platform.analytics_client` across `gateway/api`, `services/`, and tests to `runefoble_platform.email` and `runefoble_platform.analytics`.
 4. **Update Blackbox Test Suites**:

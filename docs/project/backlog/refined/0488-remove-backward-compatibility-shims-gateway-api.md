@@ -25,6 +25,8 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: scope adds the double mount of `mcp_tools_router` (`main.py:88-89`) and the import cycle in which `assets.py` (lines 182 and 262) and `websocket_endpoint.py` (line 40) import `gateway_api.main`. Coordinate with TASK-0521 and TASK-0523 on `routers/auth/profile.py` and `tests/test_blackbox_webrtc_auth.py`.
+
 ## Summary
 Excise all backward-compatible facades, alias files, and camelCase request field shims from `gateway/api` (`webrtc_signaling.py`, `websocket.py`, `mobile_companion.py`, `websocket_manager.py` aliases, and `campaign_store/__init__.py`), migrate all callers directly to authoritative submodules, and eliminate facade parity tests.
 

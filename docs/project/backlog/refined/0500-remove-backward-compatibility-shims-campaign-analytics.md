@@ -23,13 +23,15 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: the alias is `process_event` (`worker.py:114-116`), not `process_domain_event`. Grep found no storage aliases in `storage.py`, so remove only the worker wrapper and the tests named above.
+
 ## Summary
-Decommission backward-compatibility method aliases (`process_domain_event = handle_event` in `worker.py`), legacy tracking property wrappers, and re-export parity tests from `services/campaign_analytics`, migrating all consumers directly to canonical event handling methods.
+Decommission backward-compatibility method aliases (`process_event`, a wrapper over `handle_event` (`worker.py:114-116`) in `worker.py`), legacy tracking property wrappers, and re-export parity tests from `services/campaign_analytics`, migrating all consumers directly to canonical event handling methods.
 
 ## Problem Statement
 In `services/campaign_analytics/src/campaign_analytics/worker.py`, line 115 retains:
 `"""Public alias for handle_event for backward-compatibility."""`
-`process_domain_event = handle_event`
+`process_event`, a wrapper over `handle_event` (`worker.py:114-116`)
 Furthermore, `tests/test_campaign_analytics_modular_decomposition.py:test_worker_backward_compatible_properties` actively asserts that `CampaignAnalyticsWorker` maintains backward-compatible tracking properties and helper methods. In a system without active users, maintaining these aliases and writing tests for them incurs waste and violates DoR rule 9.
 
 ## Documentation & Architecture Review
@@ -46,7 +48,7 @@ Furthermore, `tests/test_campaign_analytics_modular_decomposition.py:test_worker
 
 ## Detailed Specification & Implementation Plan
 1. **Remove Worker Method Aliases**:
-   - In `services/campaign_analytics/src/campaign_analytics/worker.py`, remove `process_domain_event = handle_event` and any deprecated tracking property wrappers.
+   - In `services/campaign_analytics/src/campaign_analytics/worker.py`, remove `process_event`, a wrapper over `handle_event` (`worker.py:114-116`) and any deprecated tracking property wrappers.
    - Ensure all callers invoke `handle_event` directly.
 2. **Clean Up `campaign_analytics/__init__.py`**:
    - Prune package root exports to expose only authoritative worker and query classes.
@@ -63,7 +65,7 @@ Furthermore, `tests/test_campaign_analytics_modular_decomposition.py:test_worker
 - **Testable (T)**: Verified via `uv run pytest tests/test_campaign_analytics*`.
 
 ## Definition of Done
-1. `process_domain_event` alias removed from `worker.py`.
+1. `process_event` wrapper removed from `worker.py`.
 2. All callers migrated to `handle_event`.
 3. Obsolete backward-compatibility tests removed from `tests/test_campaign_analytics_modular_decomposition.py`.
 4. All campaign analytics tests pass cleanly.

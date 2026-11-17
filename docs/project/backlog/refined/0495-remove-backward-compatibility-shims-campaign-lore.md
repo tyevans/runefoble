@@ -5,7 +5,6 @@ status: Refined
 created: 2026-09-29
 dependencies:
 - TASK-0047
-- TASK-0349
 governing_adrs:
 - ADR-0003
 - ADR-0009
@@ -22,6 +21,8 @@ target_release: 0.9.0
 
 ## Status
 Refined
+
+Audit 2026-11-17: dependency on proposed TASK-0349 removed. This task does not touch the West Marches router.
 
 ## Summary
 Decommission backward-compatibility router facades (`services/campaign_lore/src/campaign_lore/routers/codex.py`), excise class aliases in `retrieval.py` (`HybridRetrieval = HybridRetrievalCoordinator`), clean up package-root re-exports, and remove backward-compatibility tests in `tests/test_campaign_lore_modular_retrieval.py`.

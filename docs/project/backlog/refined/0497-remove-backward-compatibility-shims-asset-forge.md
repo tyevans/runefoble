@@ -23,6 +23,8 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: coordinate with TASK-0612 on the Silo upload path in `libs/runefoble_platform/src/runefoble_platform/storage.py` and on the asset routes.
+
 ## Summary
 Decommission backward-compatibility aggregator facades (`src/asset_forge/generator.py`), excise legacy function aliases (`generate_token_avatar = generate_token_portrait` in `raster/token_raster.py`), and migrate all raster and battlemap synthesis callers directly to modular subpackages in `asset_forge.raster.*`.
 

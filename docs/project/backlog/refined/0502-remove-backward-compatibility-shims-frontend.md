@@ -25,18 +25,20 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: re-counted. There are 29 forwarders: 28 under `frontend/src/components/` (the 27 named in the Problem Statement plus `components/audience-studio.ts`) and `frontend/src/utils/dice.ts`. Delete all 29 and list each by name before pull.
+
 ## Summary
-Delete all 27 forwarding export components in `frontend/src/components/` created for "App Shell backwards compatibility", migrate any lingering App Shell imports directly to the vendored microfrontend packages (`@runefoble/*-ui`), and purge legacy fallback re-export assertions from frontend test suites.
+Delete all 29 forwarding export components in `frontend/src/components/` created for "App Shell backwards compatibility", migrate any lingering App Shell imports directly to the vendored microfrontend packages (`@runefoble/*-ui`), and purge legacy fallback re-export assertions from frontend test suites.
 
 ## Problem Statement
-When frontend components were decomposed into vendored service microfrontends (`services/<bc>/ui/`) per ADR-0013, 27 forwarding export files were left in `frontend/src/components/` purely for "App Shell backwards compatibility":
+When frontend components were decomposed into vendored service microfrontends (`services/<bc>/ui/`) per ADR-0013, 29 forwarding export files were left in `frontend/src/components/` purely for "App Shell backwards compatibility":
 - `runefoble-absentee-recap.ts`, `runefoble-map-uploader.ts`, `runefoble-session-lobby.ts`, `runefoble-faction-espionage.ts`, `runefoble-watcher-feed.ts`
 - `runefoble-audio-indicator.ts`, `runefoble-dm-trap-controls.ts`, `runefoble-character-sheet.ts`, `runefoble-voice-controls.ts`, `runefoble-spectator-view.ts`
 - `runefoble-stand-in-guardrails.ts`, `runefoble-faction-radar.ts`, `runefoble-absentee-directive.ts`, `runefoble-autonomous-dm.ts`, `runefoble-dice-roller.ts`
 - `runefoble-campaign-analytics.ts`, `runefoble-vocal-modulator.ts`, `runefoble-map-switcher.ts`, `runefoble-mobile-companion.ts`, `runefoble-combat-reaction-prompt.ts`
 - `runefoble-soundscape-controls.ts`, `runefoble-board.ts`, `runefoble-initiative-tracker.ts`, `runefoble-rules-compendium.ts`, `runefoble-voice-duplex-controls.ts`
 - `runefoble-character-card.ts`, `runefoble-absentee-vote-card.ts`
-In addition, `frontend/test/app-data-service-decomposition.test.ts` actively tests legacy fallback data re-exports (`FALLBACK_CAMPAIGNS as LEGACY_FALLBACK_CAMPAIGNS`). Because there are no external consumers, retaining 27 wrapper files adds bloat, obscures the true microfrontend architecture, and violates DoR rule 9.
+In addition, `frontend/test/app-data-service-decomposition.test.ts` actively tests legacy fallback data re-exports (`FALLBACK_CAMPAIGNS as LEGACY_FALLBACK_CAMPAIGNS`). Because there are no external consumers, retaining 29 wrapper files adds bloat, obscures the true microfrontend architecture, and violates DoR rule 9.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -54,7 +56,7 @@ In addition, `frontend/test/app-data-service-decomposition.test.ts` actively tes
 - [`us-0065-routed-app-shell-views-and-session-transitions.md`](../../user_stories/accepted/us-0065-routed-app-shell-views-and-session-transitions.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Delete All 27 Forwarding Export Components**:
+1. **Delete All 29 Forwarding Export Components**:
    - Delete every forwarding wrapper file in `frontend/src/components/` that simply re-exports from `@runefoble/*-ui`.
 2. **Audit and Update App Shell Imports**:
    - In `frontend/src/runefoble-app.ts`, `frontend/src/views/`, and Storybook stories, verify that all Custom Element registrations and components are imported directly from their owning microfrontend package (e.g., `@runefoble/the-watcher-ui`, `@runefoble/game-session-ui`, `@runefoble/board-state-ui`, etc.).
@@ -67,13 +69,13 @@ In addition, `frontend/test/app-data-service-decomposition.test.ts` actively tes
 ## INVEST Criteria Evaluation
 - **Independent (I)**: Isolated cleanly to `frontend` App Shell package.
 - **Negotiable (N)**: Clean TypeScript import standards.
-- **Valuable (V)**: Eliminates 27 redundant wrapper files and enforces strict microfrontend decoupling.
-- **Estimable (E)**: Exactly 27 known files to delete and specific test assertions to prune.
+- **Valuable (V)**: Eliminates 29 redundant wrapper files and enforces strict microfrontend decoupling.
+- **Estimable (E)**: Exactly 29 known files to delete and specific test assertions to prune.
 - **Small (S)**: File deletions and import cleanup.
 - **Testable (T)**: Verified by `pnpm exec tsc --noEmit`, `pnpm test`, and `pnpm run build`.
 
 ## Definition of Done
-1. All 27 forwarding export files in `frontend/src/components/` deleted.
+1. All 29 forwarding export files in `frontend/src/components/` deleted.
 2. All App Shell imports consume `@runefoble/*-ui` packages directly.
 3. Obsolete legacy fallback re-export assertions removed from frontend tests.
 4. Frontend typecheck (`pnpm exec tsc --noEmit`) and build (`pnpm run build`) pass cleanly.

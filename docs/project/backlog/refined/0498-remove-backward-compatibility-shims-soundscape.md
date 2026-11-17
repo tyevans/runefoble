@@ -24,6 +24,8 @@ target_release: 0.9.0
 ## Status
 Refined
 
+Audit 2026-11-17: soundscape port corrected from 8010 to 8009.
+
 ## Summary
 Purge transitional cue trigger wrappers, deprecated tension calculation shims, and package-root re-exports from `services/soundscape`, ensuring all internal and cross-service audio consumers interface strictly through canonical aggregate methods and event subscribers.
 
@@ -33,7 +35,7 @@ During the extraction of soundscape aggregate handlers (`TASK-0230`) and Gateway
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
   - `docs/how-to/manage-dynamic-soundscapes-and-audio-ducking.md`: Encounter tension and foley audio cues.
-  - `docs/reference/ports-and-endpoints.md`: Soundscape service port 8010.
+  - `docs/reference/ports-and-endpoints.md`: Soundscape service port 8009 (`services/soundscape/src/soundscape/main.py:94`; port 8010 is audience-studio).
 - **Governing Architecture & ADRs**:
   - **ADR-0006: Redis Streams Event Bus**: Audio mutation event publishing.
   - **ADR-0010: Real-Time Audio Pipeline and Ducking Coordination**: Soundscape controls and ducking coordination.

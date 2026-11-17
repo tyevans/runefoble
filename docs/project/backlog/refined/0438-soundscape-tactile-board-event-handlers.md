@@ -7,6 +7,7 @@ dependencies:
 - TASK-0050
 - TASK-0104
 - TASK-0150
+- TASK-0578
 governing_adrs:
 - ADR-0002
 - ADR-0006
@@ -61,7 +62,7 @@ Currently, `services/soundscape/src/soundscape/event_handlers.py` only subscribe
    - Publish `SpellCast`, `AreaEffectExploded`, `TokenHazardTriggered`, and `PhysicsCollisionOccurred` to the platform event bus and assert that `SoundscapeCueTriggered` events are recorded and published with valid sound URLs and session IDs.
 
 ## INVEST Criteria Evaluation
-- **Independent (I)**: Operates strictly over Redis Streams domain events without direct imports from UI or physics engine.
+- **Independent (I)**: Operates strictly over Redis Streams domain events without direct imports from UI or physics engine. Soundscape has no Redis Streams consumer today; this task depends on the consumer decision in TASK-0578 (audit 2026-11-17).
 - **Negotiable (N)**: Preset mappings between spell schools and audio files can be refined or extended.
 - **Valuable (V)**: Brings life to tactical board combat with responsive audio foley.
 - **Estimable (E)**: Implements straightforward handler functions matching existing pattern in `event_handlers.py`.

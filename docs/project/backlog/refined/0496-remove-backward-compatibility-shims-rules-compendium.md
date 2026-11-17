@@ -5,7 +5,6 @@ status: Refined
 created: 2026-09-29
 dependencies:
 - TASK-0048
-- TASK-0350
 governing_adrs:
 - ADR-0003
 - ADR-0009
@@ -22,6 +21,8 @@ target_release: 0.9.0
 
 ## Status
 Refined
+
+Audit 2026-11-17: dependency on proposed TASK-0350 removed. `aggregate.py` is 270 lines and needs no split, and TASK-0350 would add re-export shims that DoR rule 9 forbids. The shim to delete is `srd_data.py` (13 lines), imported by `retrieval.py` and `encounter_builder.py`.
 
 ## Summary
 Decommission backward-compatibility re-export shims (`srd_data.py`), remove transitional query accessor facades and legacy dictionary mappings across `rules_compendium`, and migrate all callers directly to authoritative submodules in `rules_compendium.srd.*`.
