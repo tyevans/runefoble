@@ -9,13 +9,17 @@ from fastapi import APIRouter, Depends
 from runefoble_auth.spicedb import SpiceDBClient
 
 from campaign_lore.codex import CodexCrossReferencer
-from campaign_lore.dependencies import (
+from campaign_lore.codex_deps import (
     CodexSessionDeps,
-    get_codex_referencer,
-    get_current_user_id,
-    get_spicedb_client,
     load_codex_entry,
     require_campaign_view,
+)
+from campaign_lore.dependencies import (
+    get_codex_referencer,
+    get_spicedb_client,
+)
+from campaign_lore.permissions import (
+    get_current_user_id,
 )
 from campaign_lore.routers.codex.schemas import CrossReferenceContentRequest
 

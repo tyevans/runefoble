@@ -15,12 +15,6 @@ import redstring
 from campaign_lore.extraction import get_or_create_entity
 from campaign_lore.models import DocumentMetadata, LoreSearchResultItem
 from campaign_lore.pattern_graph import build_pattern_graph
-from campaign_lore.scoring import (
-    bm25_score,
-    cosine_similarity,
-    reciprocal_rank_fusion,
-    tokenize,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -226,12 +220,6 @@ class LoreRetrievalEngine:
 
 
 __all__ = [
-    "DocumentMetadata",
     "IngestSummary",
     "LoreRetrievalEngine",
-    "LoreSearchResultItem",
-    "bm25_score",
-    "cosine_similarity",
-    "reciprocal_rank_fusion",
-    "tokenize",
 ]

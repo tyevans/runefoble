@@ -9,12 +9,14 @@ from fastapi import APIRouter, Depends, Query, status
 
 from campaign_lore.codex import CodexCrossReferencer
 from campaign_lore.codex_aggregate import CodexAggregate
-from campaign_lore.dependencies import (
+from campaign_lore.codex_deps import (
     CodexSessionDeps,
-    get_campaign_codex_index,
-    get_codex_referencer,
     load_codex_entry,
     require_campaign_view,
+)
+from campaign_lore.dependencies import (
+    get_campaign_codex_index,
+    get_codex_referencer,
 )
 from campaign_lore.routers.codex.referencing import enrich_entry_metadata
 from campaign_lore.routers.codex.schemas import (

@@ -20,13 +20,10 @@ import pytest
 from campaign_lore.dependencies import set_spicedb_client, set_west_marches_repo
 from campaign_lore.main import app as lore_app
 from campaign_lore.models import WestMarchesState
-from campaign_lore.west_marches_aggregate import (
-    FACILITY_BOONS,
-    WestMarchesAtlasAggregate,
-    WestMarchesWorldAggregate,
-    calculate_boons,
-)
+from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 from campaign_lore.west_marches_handlers import (
+    FACILITY_BOONS,
+    calculate_boons,
     calculate_defensive_buffer,
     evaluate_territory_claim,
 )
@@ -86,9 +83,8 @@ def test_hard_invariant_6_file_length_limits() -> None:
     assert models_lines < 500, f"models.py has {models_lines} lines (limit: < 500)"
 
 
-def test_backward_compatibility_exports() -> None:
-    """Verify that public interfaces and alias mappings remain fully backward compatible."""
-    assert WestMarchesWorldAggregate is WestMarchesAtlasAggregate
+def test_west_marches_public_surface() -> None:
+    """Verify the aggregate, state model and facility boon table expose the public surface."""
     assert issubclass(WestMarchesAtlasAggregate, object)
     assert hasattr(WestMarchesAtlasAggregate, "handle_created")
     assert hasattr(WestMarchesAtlasAggregate, "handle_campaign_registered")

@@ -9,10 +9,12 @@ from pydantic import BaseModel, Field
 from runefoble_auth.spicedb import SpiceDBClient
 
 from campaign_lore.dependencies import (
-    check_user_can_read_secrets,
-    get_current_user_id,
     get_retrieval_engine,
     get_spicedb_client,
+)
+from campaign_lore.permissions import (
+    check_user_can_read_secrets,
+    get_current_user_id,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
 

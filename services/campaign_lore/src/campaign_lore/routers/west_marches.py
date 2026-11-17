@@ -15,16 +15,16 @@ from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.dependencies import (
-    check_user_can_play_campaign,
-    check_user_can_view_campaign,
-    get_current_user_id,
     get_spicedb_client,
     get_west_marches_repo,
 )
-from campaign_lore.west_marches_aggregate import (
-    WestMarchesAtlasAggregate,
-    WestMarchesState,
+from campaign_lore.models import WestMarchesState
+from campaign_lore.permissions import (
+    check_user_can_play_campaign,
+    check_user_can_view_campaign,
+    get_current_user_id,
 )
+from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 
 router = APIRouter(
     prefix="/api/v1/campaigns/{campaign_id}/west-marches",

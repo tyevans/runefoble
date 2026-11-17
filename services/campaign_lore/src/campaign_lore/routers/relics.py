@@ -9,14 +9,16 @@ from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.dependencies import (
-    check_user_can_inspect_relic,
-    check_user_can_read_secrets,
-    get_current_user_id,
     get_relic_repo,
     get_spicedb_client,
 )
 from campaign_lore.handouts import RelicSynthesizer
 from campaign_lore.handouts_aggregate import RelicAggregate
+from campaign_lore.permissions import (
+    check_user_can_inspect_relic,
+    check_user_can_read_secrets,
+    get_current_user_id,
+)
 
 router = APIRouter(prefix="/api/v1/lore/relics", tags=["3D Relics"])
 

@@ -11,24 +11,7 @@ from campaign_lore.aggregate import LoreDocumentAggregate
 from campaign_lore.atlas_aggregate import AtlasAggregate
 from campaign_lore.codex import CodexCrossReferencer
 from campaign_lore.codex_aggregate import CodexAggregate
-from campaign_lore.codex_deps import (  # noqa: F401
-    CodexSessionDeps,
-    check_user_can_edit_codex_entry,
-    check_user_can_view_codex_entry,
-    load_codex_entry,
-    require_campaign_view,
-    update_codex_permissions,
-    write_codex_permissions,
-)
 from campaign_lore.handouts_aggregate import DiegeticHandoutAggregate, RelicAggregate
-from campaign_lore.permissions import (  # noqa: F401
-    check_user_can_inspect_relic,
-    check_user_can_interact_handout,
-    check_user_can_play_campaign,
-    check_user_can_read_secrets,
-    check_user_can_view_campaign,
-    get_current_user_id,
-)
 from campaign_lore.retrieval import LoreRetrievalEngine
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 

@@ -16,10 +16,12 @@ from campaign_lore.atlas import (
 )
 from campaign_lore.atlas_aggregate import AtlasAggregate, AtlasState
 from campaign_lore.dependencies import (
-    check_user_can_view_campaign,
     get_atlas_repo,
-    get_current_user_id,
     get_spicedb_client,
+)
+from campaign_lore.permissions import (
+    check_user_can_view_campaign,
+    get_current_user_id,
 )
 
 router = APIRouter(prefix="/api/v1/campaigns/{campaign_id}/atlas", tags=["Campaign Atlas"])
