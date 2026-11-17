@@ -134,6 +134,7 @@ async def take_minigame_turn(
     game_id: str,
     req: MinigameTurnRequest,
     x_user_id: str | None = Header(default=None),
+    authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Submit a turn or wager action in an active tavern minigame."""
     await _check_session_auth(session_id, x_user_id)
@@ -153,7 +154,10 @@ async def take_minigame_turn(
             turn_result = aggregate.call_challenge(req.actor_id)
         elif req.action_type == "drink":
             turn_result = await aggregate.take_drink(
-                req.actor_id, con_roll=req.con_roll, speech_text=req.speech_text
+                req.actor_id,
+                con_roll=req.con_roll,
+                speech_text=req.speech_text,
+                authorization=authorization,
             )
         else:
             raise ValueError(f"Action '{req.action_type}' not supported")

@@ -122,6 +122,8 @@ When a participant reaches `blackout`, the contest concludes automatically and t
 
 `game-session` calls `voice_agent` over HTTP at `POST /api/v1/voice/dsp/condition`. The base URL is set by `RUNEFOBLE_VOICE_AGENT_URL` (Helm sets `http://voice-agent:8005`). The timeout is set by `RUNEFOBLE_VOICE_AGENT_TIMEOUT_SECONDS` (default `5`).
 
+`game-session` forwards the caller's `Authorization` header to `voice_agent` unchanged. `voice_agent` verifies the token (TASK-0530). A drink roll with `speech_text` must therefore carry the caller's bearer token. With no token, `voice_agent` refuses the call and the roll returns `503`.
+
 If `voice_agent` is unreachable, returns an error, or the variable is not set, the drink roll returns `503`. The response has no `voice_dsp` value. The drink is not recorded, so the intoxication level and drink count do not change. Retry the roll after `voice_agent` is ready.
 
 ---

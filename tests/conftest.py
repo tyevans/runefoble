@@ -25,6 +25,7 @@ pytest_plugins = [
     "tests.helpers.prd_fixtures",
     "tests.helpers.silo_fixtures",
     "tests.helpers.spicedb",
+    "tests.helpers.voice_identity",
     "tests.helpers.zitadel_auth",
 ]
 collect_ignore = ["test_blackbox_uvtt_import.py"]
