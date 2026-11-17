@@ -1,13 +1,15 @@
 """LangGraph workflow for The Watcher Autonomous DM Narration."""
 
-import json
-import re
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from inference_worker.llm_client import MultiBackendLLMClient
-from inference_worker.models import DMNarrationResponse
+from inference_worker.llm_client import (
+    InferenceBackendError,
+    MultiBackendLLMClient,
+    parse_json_object,
+)
+from inference_worker.models import DMNarrationResponse, ResponseSource
 
 
 class NarrationGraphState(TypedDict, total=False):
@@ -17,6 +19,8 @@ class NarrationGraphState(TypedDict, total=False):
     sensory_details: list[str]
     suggested_prompts: list[str]
     tension_level: str
+    source: ResponseSource
+    degraded: bool
     final_response: dict[str, Any]
 
 
@@ -45,6 +49,26 @@ def analyze_context_node(state: NarrationGraphState) -> NarrationGraphState:
     }
 
 
+def _canned_narration(env: str, prompt: str) -> dict[str, Any]:
+    """Canned scene text. Used only by the explicit mock backend."""
+    return {
+        "narration_text": (
+            f"A heavy silence settles over the {env.lower()}. "
+            f"{prompt}. Shadows dance along the jagged walls as unseen draughts stir the stale air."
+        ),
+        "sensory_details": [
+            "The metallic tang of ozone and old blood",
+            "The distant, rhythmic drip of subterranean water",
+            "A sudden draft extinguishing torch flames",
+        ],
+        "suggested_prompts": [
+            "Ask players to make a DC 13 Perception check",
+            "Introduce an echoing skittering from the northern passage",
+            "Reveal a concealed inscription glowing faintly on the altar",
+        ],
+    }
+
+
 async def generate_narration_node(
     state: NarrationGraphState,
     llm_client: MultiBackendLLMClient,
@@ -69,43 +93,23 @@ async def generate_narration_node(
         "Generate evocative scene narration."
     )
 
-    narration = ""
-    sensory = []
-    suggested = []
+    # Raises InferenceBackendError when a real backend fails. No silent fallback.
+    resp = await llm_client.generate_completion(system_prompt, user_prompt)
 
-    if llm_client.active_backend != "mock":
-        resp = await llm_client.generate_completion(system_prompt, user_prompt)
-        content = resp.get("content", "")
-        try:
-            match = re.search(r"\{.*\}", content, re.DOTALL)
-            if match:
-                data = json.loads(match.group(0))
-                narration = data.get("narration", "")
-                sensory = data.get("sensory_details", [])
-                suggested = data.get("suggested_dm_prompts", [])
-        except Exception:
-            pass
+    if resp["source"] == "mock":
+        return {**_canned_narration(env, prompt), "source": "mock", "degraded": False}
 
+    data = parse_json_object(resp["content"])
+    narration = data.get("narration", "")
     if not narration:
-        narration = (
-            f"A heavy silence settles over the {env.lower()}. "
-            f"{prompt}. Shadows dance along the jagged walls as unseen draughts stir the stale air."
-        )
-        sensory = [
-            "The metallic tang of ozone and old blood",
-            "The distant, rhythmic drip of subterranean water",
-            "A sudden draft extinguishing torch flames",
-        ]
-        suggested = [
-            "Ask players to make a DC 13 Perception check",
-            "Introduce an echoing skittering from the northern passage",
-            "Reveal a concealed inscription glowing faintly on the altar",
-        ]
+        raise InferenceBackendError(resp["backend"], "model output had no narration")
 
     return {
         "narration_text": narration,
-        "sensory_details": sensory,
-        "suggested_prompts": suggested,
+        "sensory_details": data.get("sensory_details", []),
+        "suggested_prompts": data.get("suggested_dm_prompts", []),
+        "source": "llm",
+        "degraded": False,
     }
 
 
@@ -117,6 +121,8 @@ def compile_narration_node(state: NarrationGraphState) -> NarrationGraphState:
         sensory_details=state.get("sensory_details", []),
         suggested_dm_prompts=state.get("suggested_prompts", []),
         tension_level=state.get("tension_level", "rising"),
+        source=state["source"],
+        degraded=state["degraded"],
     )
     return {"final_response": resp.model_dump()}
 

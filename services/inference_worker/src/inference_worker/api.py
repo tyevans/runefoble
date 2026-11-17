@@ -3,12 +3,13 @@
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from inference_worker.config import WorkerSettings
 from inference_worker.graphs import build_intent_graph, build_narration_graph, build_stand_in_graph
-from inference_worker.llm_client import MultiBackendLLMClient
+from inference_worker.llm_client import InferenceBackendError, MultiBackendLLMClient
 from inference_worker.models import (
     DMNarrationRequest,
     DMNarrationResponse,
@@ -73,6 +74,17 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(InferenceBackendError)
+async def backend_unavailable_handler(
+    _request: Request, exc: InferenceBackendError
+) -> JSONResponse:
+    """Report a failed model backend as an explicit 503. Never return substitute output."""
+    return JSONResponse(
+        status_code=503,
+        content={"error": "backend_unavailable", "backend": exc.backend},
+    )
+
+
 @app.get("/healthz")
 @app.get("/health")
 async def health_check():
@@ -104,6 +116,8 @@ async def parse_intent(req: IntentParseRequest):
         speaker_name=req.speaker_name,
         action=action,
         execution_time_ms=round(elapsed_ms, 2),
+        source=state["source"],
+        degraded=state["degraded"],
     )
 
 
