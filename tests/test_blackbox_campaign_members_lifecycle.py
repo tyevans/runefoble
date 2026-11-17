@@ -231,7 +231,6 @@ def test_source_file_length_limits():
         root / "gateway" / "api" / "src" / "gateway_api" / "routers" / "campaigns.py",
         root / "gateway" / "api" / "src" / "gateway_api" / "campaign_store" / "queries.py",
         root / "frontend" / "src" / "services" / "app-data-service.ts",
-        root / "frontend" / "src" / "services" / "app-data-service.fixtures.ts",
         root / "frontend" / "src" / "runefoble-app.ts",
         Path(__file__),
     ]
@@ -239,3 +238,11 @@ def test_source_file_length_limits():
         assert f.is_file(), f"Expected file {f} to exist"
         line_count = len(f.read_text(encoding="utf-8").splitlines())
         assert line_count < 500, f"File {f.name} has {line_count} lines (exceeds 500)"
+
+    # TASK-0640: the data service has no fixture fallback, so it must not import fixtures.
+    data_service = (root / "frontend" / "src" / "services" / "app-data-service.ts").read_text(
+        encoding="utf-8"
+    )
+    assert "fixture" not in data_service.lower(), (
+        "app-data-service.ts must not import canned fixtures"
+    )

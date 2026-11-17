@@ -21,6 +21,8 @@ from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
@@ -76,7 +78,7 @@ def test_campaign_detail_file_length_invariants() -> None:
 
 def test_campaign_detail_subview_disambiguation_in_app_shell() -> None:
     """Verify runefoble-app.ts disambiguates #/campaigns/:id/characters and #/profile."""
-    app_code = APP_TS.read_text(encoding="utf-8")
+    app_code = read_app_shell_source(APP_TS)
 
     # AppActiveView union includes new subviews
     assert "'campaign-characters'" in app_code
@@ -100,7 +102,7 @@ def test_campaign_detail_subview_disambiguation_in_app_shell() -> None:
 
 def test_tabbed_navigation_bar_and_bauhaus_tokens() -> None:
     """Verify tab bar renders four tabs and styles adhere to Bauhaus design tokens without hex literals."""
-    app_code = APP_TS.read_text(encoding="utf-8")
+    app_code = read_app_shell_source(APP_TS)
     styles_code = APP_STYLES_TS.read_text(encoding="utf-8")
 
     # Tab labels

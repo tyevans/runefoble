@@ -7,6 +7,8 @@ and component style extractions adhere to Hard Invariant 6 (< 500 lines limit).
 
 from pathlib import Path
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -14,7 +16,7 @@ def test_app_shell_microfrontend_composition():
     """Verify frontend/src/runefoble-app.ts acts as the App Shell orchestrating microfrontends."""
     shell_file = REPO_ROOT / "frontend/src/runefoble-app.ts"
     assert shell_file.is_file()
-    content = shell_file.read_text(encoding="utf-8")
+    content = read_app_shell_source(shell_file)
 
     # Shell imports all microfrontend packages
     assert "@runefoble/board-state-ui" in content

@@ -20,6 +20,8 @@ from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 APP_TS = FRONTEND_DIR / "src" / "runefoble-app.ts"
@@ -169,12 +171,15 @@ def test_app_data_service_character_mutation_methods():
     content = DATA_SERVICE_TS.read_text(encoding="utf-8")
 
     # Mutation methods exist
-    assert "createCharacter(payload: CreateCharacterPayload): Promise<CharacterItem>" in content
     assert (
-        "assignCharacterCampaign(characterId: string, campaignId: string | null): Promise<void>"
+        "createCharacter(payload: CreateCharacterPayload): Promise<DataResult<CharacterItem>>"
         in content
     )
-    assert "deleteCharacter(characterId: string): Promise<void>" in content
+    assert (
+        "assignCharacterCampaign(characterId: string, campaignId: string | null): Promise<DataResult<void>>"
+        in content
+    )
+    assert "deleteCharacter(characterId: string): Promise<DataResult<void>>" in content
 
     # Hitting gateway endpoints
     assert "`${this.apiBase}/characters`" in content
@@ -187,14 +192,14 @@ def test_app_data_service_character_mutation_methods():
 
 def test_app_shell_character_roster_event_binding():
     """Verify runefoble-app.ts binds all four actions dispatched by runefoble-character-roster."""
-    content = APP_TS.read_text(encoding="utf-8")
+    content = read_app_shell_source(APP_TS)
 
     # Event listeners on runefoble-character-roster element
     assert "<runefoble-character-roster" in content
-    assert "@create-character=${this.handleCreateCharacter}" in content
-    assert "@assign-campaign=${this.handleAssignCampaign}" in content
-    assert "@delete-character=${this.handleDeleteCharacter}" in content
-    assert "@inspect-character=${this.handleInspectCharacter}" in content
+    assert "@create-character=${app.handleCreateCharacter}" in content
+    assert "@assign-campaign=${app.handleAssignCampaign}" in content
+    assert "@delete-character=${app.handleDeleteCharacter}" in content
+    assert "@inspect-character=${app.handleInspectCharacter}" in content
 
     # Handler methods defined
     assert "handleCreateCharacter(e: CustomEvent" in content
@@ -272,7 +277,7 @@ def test_frontend_app_shell_typescript_unit_suite():
     app_shell_dir = FRONTEND_DIR / "test" / "app_shell"
     assert app_shell_dir.is_dir()
     test_files = sorted(str(p.relative_to(REPO_ROOT)) for p in app_shell_dir.glob("*.test.ts"))
-    assert len(test_files) == 4
+    assert len(test_files) == 5
 
     result = subprocess.run(
         [

@@ -291,8 +291,8 @@ def test_source_file_lengths_and_invariants():
 
     # Verify modular test submodules strictly < 130 lines per Hard Invariant 6
     submodules = list(TS_TEST_DIR.glob("*.test.ts"))
-    assert len(submodules) == 4, (
-        f"Expected 4 test modules under {TS_TEST_DIR}, got {len(submodules)}"
+    assert len(submodules) == 5, (
+        f"Expected 5 test modules under {TS_TEST_DIR}, got {len(submodules)}"
     )
     for test_submodule in submodules:
         lines = len(test_submodule.read_text(encoding="utf-8").splitlines())
@@ -303,8 +303,8 @@ def test_frontend_typescript_suite_execution():
     """Execute the Node-based TypeScript blackbox test suite and assert 100% pass."""
     assert TS_TEST_DIR.is_dir(), f"Frontend test directory {TS_TEST_DIR} must exist"
     test_files = sorted(str(p.relative_to(REPO_ROOT)) for p in TS_TEST_DIR.glob("*.test.ts"))
-    assert len(test_files) == 4, (
-        f"Expected 4 test modules under {TS_TEST_DIR}, found {len(test_files)}"
+    assert len(test_files) == 5, (
+        f"Expected 5 test modules under {TS_TEST_DIR}, found {len(test_files)}"
     )
 
     result = subprocess.run(

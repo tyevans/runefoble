@@ -47,7 +47,6 @@ def test_file_length_invariants():
     """Verify Hard Invariant 6: All modified source files strictly satisfy line limits (<500 lines)."""
     files_to_check = [
         (APP_DATA_SERVICE_TS, 220),
-        (FIXTURES_TS, 160),
         (SESSION_MODAL_TS, 180),
         (CAMPAIGN_STORE_PY, 160),
         (ROUTERS_CAMPAIGNS_PY, 500),
@@ -59,6 +58,12 @@ def test_file_length_invariants():
         assert lines < max_lines, (
             f"{file_path.name} has {lines} lines, exceeding the limit of {max_lines}"
         )
+
+
+def test_app_data_service_imports_no_fixtures():
+    """TASK-0640: the data service has no fixture fallback, so it must not import fixtures."""
+    content = APP_DATA_SERVICE_TS.read_text(encoding="utf-8")
+    assert "fixture" not in content.lower(), "app-data-service.ts must not import canned fixtures"
 
 
 @pytest.mark.asyncio

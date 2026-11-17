@@ -13,6 +13,8 @@ import re
 import subprocess
 from pathlib import Path
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 ROUTER_TS = FRONTEND_DIR / "src" / "router" / "router.ts"
@@ -56,7 +58,7 @@ def test_character_sheet_route_registration_and_api():
 
 def test_app_shell_view_orchestration_and_component_mounting():
     """Verify runefoble-app.ts declares 'character-sheet' view and mounts runefoble-character-sheet."""
-    content = APP_TS.read_text(encoding="utf-8")
+    content = read_app_shell_source(APP_TS)
 
     # AppActiveView union includes character-sheet
     assert "'character-sheet'" in content

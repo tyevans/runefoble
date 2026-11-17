@@ -5,6 +5,8 @@ Governing ADRs: ADR-0004, ADR-0012, ADR-0013.
 
 from pathlib import Path
 
+from tests.helpers.app_shell_source import read_app_shell_source
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 APP_TS = FRONTEND_DIR / "src" / "runefoble-app.ts"
@@ -69,7 +71,7 @@ def test_extensible_settings_sections():
 
 def test_app_header_integration():
     """Verify inline switcher is replaced with Settings trigger button and modal is integrated."""
-    app_content = APP_TS.read_text(encoding="utf-8")
+    app_content = read_app_shell_source(APP_TS)
     header_content = HEADER_TS.read_text(encoding="utf-8")
     assert "<runefoble-theme-switcher></runefoble-theme-switcher>" not in app_content
     assert "<runefoble-theme-switcher></runefoble-theme-switcher>" not in header_content
@@ -79,7 +81,7 @@ def test_app_header_integration():
     assert 'aria-label="Open settings"' in header_content
     assert "<runefoble-header" in app_content
     assert "<runefoble-settings-modal" in app_content
-    assert "@settings-closed=${this.handleSettingsClosed}" in app_content
+    assert "@settings-closed=${app.handleSettingsClosed}" in app_content
 
 
 def test_index_export():
