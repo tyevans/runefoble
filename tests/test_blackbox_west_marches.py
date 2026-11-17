@@ -17,6 +17,7 @@ from uuid import uuid4
 
 import pytest
 from campaign_lore.dependencies import set_spicedb_client, set_west_marches_repo
+from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app as lore_app
 from campaign_lore.models import WestMarchesState
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
@@ -29,6 +30,23 @@ from campaign_lore.west_marches_handlers import (
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+VISITOR_SUBJECT = "lore-test-visitor"
+
+
+def _bearer(user_id: str) -> dict[str, str]:
+    """Return headers carrying a signed bearer token for `user_id`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
+
+
+@pytest.fixture(autouse=True)
+def _trust_signing_issuer():
+    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    yield
+    set_zitadel_auth_service(None)
 
 
 @pytest.fixture
@@ -43,7 +61,7 @@ def spicedb_client() -> MockSpiceDBClient:
 def client(spicedb_client: MockSpiceDBClient, lore_backends) -> Iterator[TestClient]:
     fresh_repo = create_aggregate_repository(WestMarchesAtlasAggregate)
     set_west_marches_repo(fresh_repo)
-    with TestClient(lore_app) as lore_client:
+    with TestClient(lore_app, headers=_bearer(VISITOR_SUBJECT)) as lore_client:
         yield lore_client
 
 
@@ -121,7 +139,7 @@ async def test_frontdoor_record_discovery_pin(
     resp = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/discoveries",
         json=payload,
-        headers={"x-user-id": uid},
+        headers=_bearer(uid),
     )
     assert resp.status_code == 201, resp.text
     data = resp.json()
@@ -133,7 +151,7 @@ async def test_frontdoor_record_discovery_pin(
     # Query atlas to ensure discovery appears in aggregate projection
     atlas_resp = client.get(
         f"/api/v1/campaigns/{cid}/west-marches",
-        headers={"x-user-id": uid},
+        headers=_bearer(uid),
     )
     assert atlas_resp.status_code == 200
     atlas_data = atlas_resp.json()
@@ -165,7 +183,7 @@ async def test_frontdoor_upgrade_outpost_facility(
     resp = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/stronghold/upgrade",
         json=upgrade_payload,
-        headers={"x-user-id": uid},
+        headers=_bearer(uid),
     )
     assert resp.status_code == 200, resp.text
     data = resp.json()
@@ -196,7 +214,7 @@ async def test_frontdoor_post_tavern_notice(
     resp = client.post(
         f"/api/v1/campaigns/{cid}/west-marches/tavern-board/notices",
         json=notice_payload,
-        headers={"x-user-id": uid},
+        headers=_bearer(uid),
     )
     assert resp.status_code == 201, resp.text
     data = resp.json()
@@ -207,7 +225,7 @@ async def test_frontdoor_post_tavern_notice(
     # Verify board state
     atlas_resp = client.get(
         f"/api/v1/campaigns/{cid}/west-marches",
-        headers={"x-user-id": uid},
+        headers=_bearer(uid),
     )
     assert atlas_resp.status_code == 200
     board = atlas_resp.json()["tavern_board"]

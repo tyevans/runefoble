@@ -8,7 +8,8 @@ from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.codex_aggregate import CodexAggregate, CodexEntryState
-from campaign_lore.permissions import check_user_can_view_campaign, get_current_user_id
+from campaign_lore.identity import CallerId
+from campaign_lore.permissions import check_user_can_view_campaign
 
 
 async def check_user_can_view_codex_entry(
@@ -117,7 +118,7 @@ class CodexSessionDeps:
 
     def __init__(
         self,
-        user_id: Annotated[str | None, Depends(get_current_user_id)],
+        user_id: CallerId,
         repo: Annotated[AggregateRepository[CodexAggregate], Depends(_repo_dep)],
         spicedb: Annotated[SpiceDBClient, Depends(_spicedb_dep)],
     ) -> None:
