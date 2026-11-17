@@ -116,7 +116,23 @@ The microfrontend is exposed in `services/asset_forge/ui/` and advertised via `/
 ></runefoble-print-forge>
 ```
 
+### Export Requests
+Each export button sends one request to its forge route. The request sets `format` to `json`:
+
+| Button | Route |
+|---|---|
+| Export Grid-Calibrated Multi-Page PDF | `POST /api/v1/forge/print-pdf` |
+| Export Foldable Papercraft Standees | `POST /api/v1/forge/standees` |
+| Export Watertight 3D STL Mesh | `POST /api/v1/forge/stl-token` |
+
+The route URL is prefixed with the `apiBaseUrl` property. The default is an empty string, so the page origin is used.
+
+The component shows one of two results:
+- **Success.** A download link to the returned `download_url` appears. The link comes from the stored asset.
+- **Failure.** The component shows the `detail` text from the response in an error banner. A `503` means Silo did not store the file. No link appears.
+
 ### Dispatched Events
-- `export-print-pdf`: Dispatched when the user triggers a multi-page PDF export.
-- `export-standees`: Dispatched when exporting papercraft standees.
-- `export-stl-token`: Dispatched when generating 3D STL meshes.
+The component dispatches these events only after the route returns a successful response. Each event detail includes the `asset` field from the response.
+- `export-print-pdf`: The multi-page PDF export succeeded.
+- `export-standees`: The papercraft standee export succeeded.
+- `export-stl-token`: The 3D STL export succeeded.

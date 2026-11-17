@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
 import './runefoble-asset-forge.ts';
+import { withMockFetch } from './forge-story-fetch.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleAssetForge',
@@ -79,6 +80,104 @@ export const TokenPortraitForged: Story = {
         token_type: 'pc',
         size_px: 256,
       }}
+    ></runefoble-asset-forge>
+  `,
+};
+
+const battlemapResponse = {
+  asset_id: 'map-forge-demo-02',
+  image_url: sampleBattlemapSvg,
+  download_url: sampleBattlemapSvg,
+  width_cells: 20,
+  height_cells: 20,
+  cell_size_px: 64,
+  theme: 'dwarven_forge',
+  wall_segments: [{ x1: 0, y1: 0, x2: 1, y2: 0 }, { x1: 1, y1: 0, x2: 1, y2: 1 }],
+  hazard_cells: [{ x: 3, y: 4, hazard_type: 'lava', damage_dice: '1d6', terrain_type: 'difficult' }],
+  doors: [],
+  status: 'forged',
+};
+
+const tokenResponse = {
+  asset_id: 'tok-forge-demo-02',
+  image_url: sampleTokenSvg,
+  token_name: 'Thorin Ironbreaker',
+  token_type: 'pc',
+  size_px: 256,
+};
+
+const serviceUnavailable = {
+  detail: 'Silo asset storage is unavailable. The asset was not stored.',
+};
+
+/** Forges a battlemap. The mocked route returns a preview on success. */
+export const ForgeMapSuccess: Story = {
+  decorators: [withMockFetch({ match: '/api/v1/forge/battlemap', status: 200, body: battlemapResponse })],
+  render: () => html`
+    <runefoble-asset-forge campaignId="campaign-alpha" activeTab="battlemap"></runefoble-asset-forge>
+  `,
+};
+
+/** Forges a battlemap while Silo is down. The component shows the server detail. */
+export const ForgeMapServiceUnavailable: Story = {
+  decorators: [
+    withMockFetch({ match: '/api/v1/forge/battlemap', status: 503, body: serviceUnavailable }),
+  ],
+  render: () => html`
+    <runefoble-asset-forge campaignId="campaign-alpha" activeTab="battlemap"></runefoble-asset-forge>
+  `,
+};
+
+/** Forges a token portrait. The mocked route returns a portrait on success. */
+export const ForgeTokenSuccess: Story = {
+  decorators: [withMockFetch({ match: '/api/v1/forge/token', status: 200, body: tokenResponse })],
+  render: () => html`
+    <runefoble-asset-forge campaignId="campaign-alpha" activeTab="token"></runefoble-asset-forge>
+  `,
+};
+
+/** Forges a token portrait while Silo is down. The component shows the server detail. */
+export const ForgeTokenServiceUnavailable: Story = {
+  decorators: [withMockFetch({ match: '/api/v1/forge/token', status: 503, body: serviceUnavailable })],
+  render: () => html`
+    <runefoble-asset-forge campaignId="campaign-alpha" activeTab="token"></runefoble-asset-forge>
+  `,
+};
+
+/** Places a forged token on a board. Requires a session id and a forged token. */
+export const PlaceTokenSuccess: Story = {
+  decorators: [
+    withMockFetch({
+      match: '/api/v1/boards/session-demo-01/tokens',
+      status: 200,
+      body: { token_id: 'tok-placed-01', name: 'Thorin Ironbreaker', token_type: 'pc', x: 0, y: 0 },
+    }),
+  ],
+  render: () => html`
+    <runefoble-asset-forge
+      campaignId="campaign-alpha"
+      sessionId="session-demo-01"
+      activeTab="token"
+      .lastForgedToken=${tokenResponse}
+    ></runefoble-asset-forge>
+  `,
+};
+
+/** Places a token while the board service rejects the request. */
+export const PlaceTokenBoardError: Story = {
+  decorators: [
+    withMockFetch({
+      match: '/api/v1/boards/session-demo-01/tokens',
+      status: 503,
+      body: { detail: 'Board state is unavailable.' },
+    }),
+  ],
+  render: () => html`
+    <runefoble-asset-forge
+      campaignId="campaign-alpha"
+      sessionId="session-demo-01"
+      activeTab="token"
+      .lastForgedToken=${tokenResponse}
     ></runefoble-asset-forge>
   `,
 };

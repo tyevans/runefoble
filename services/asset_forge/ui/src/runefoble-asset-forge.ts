@@ -1,24 +1,13 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { assetForgeStyles } from './runefoble-asset-forge.styles.ts';
-
-export interface ForgedMapData {
-  asset_id: string;
-  image_url: string;
-  theme: string;
-  width_cells: number;
-  height_cells: number;
-  wall_count: number;
-  hazard_count: number;
-}
-
-export interface ForgedTokenData {
-  asset_id: string;
-  image_url: string;
-  token_name: string;
-  token_type: string;
-  size_px: number;
-}
+import {
+  forgeBattlemap,
+  forgeToken,
+  placeBoardToken,
+  type ForgedMapData,
+  type ForgedTokenData,
+} from './forge-api.ts';
 
 @customElement('runefoble-asset-forge')
 export class RunefobleAssetForge extends LitElement {
@@ -26,6 +15,14 @@ export class RunefobleAssetForge extends LitElement {
 
   @property({ type: String })
   campaignId = '';
+
+  /** Base URL prepended to the forge routes (for example, the gateway origin). */
+  @property({ type: String })
+  apiBaseUrl = '';
+
+  /** Board session that receives a placed token. Required before placement. */
+  @property({ type: String })
+  sessionId = '';
 
   @property({ type: String })
   activeTab: 'battlemap' | 'token' = 'battlemap';
@@ -51,61 +48,113 @@ export class RunefobleAssetForge extends LitElement {
   @state()
   private tokenType = 'pc';
 
-  private handleForgeMap() {
-    this.dispatchEvent(
-      new CustomEvent('forge-battlemap', {
-        detail: {
-          prompt: this.mapPrompt,
-          campaignId: this.campaignId,
-          width_cells: 20,
-          height_cells: 20,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  @state()
+  private tokenX = 0;
+
+  @state()
+  private tokenY = 0;
+
+  @state()
+  private errorMessage = '';
+
+  /** Runs one forge request. Shows the error on failure. Never reports false success. */
+  private async runForge(action: () => Promise<void>) {
+    this.isGenerating = true;
+    this.errorMessage = '';
+    try {
+      await action();
+    } catch (err) {
+      this.errorMessage = err instanceof Error ? err.message : 'Forge request failed.';
+    } finally {
+      this.isGenerating = false;
+    }
   }
 
-  private handleForgeToken() {
-    this.dispatchEvent(
-      new CustomEvent('forge-token', {
-        detail: {
-          prompt: this.tokenPrompt,
-          token_name: this.tokenName,
-          token_type: this.tokenType,
-          campaignId: this.campaignId,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  private async handleForgeMap() {
+    await this.runForge(async () => {
+      const map = await forgeBattlemap(this.apiBaseUrl, {
+        prompt: this.mapPrompt,
+        campaignId: this.campaignId || undefined,
+        widthCells: 20,
+        heightCells: 20,
+      });
+      this.lastForgedMap = map;
+      this.dispatchEvent(
+        new CustomEvent('forge-battlemap', {
+          detail: {
+            prompt: this.mapPrompt,
+            campaignId: this.campaignId,
+            width_cells: 20,
+            height_cells: 20,
+            asset: map,
+          },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
   }
 
-  private handleProjectGeometry() {
-    this.dispatchEvent(
-      new CustomEvent('geometry-projected', {
-        detail: { map: this.lastForgedMap },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  private async handleForgeToken() {
+    await this.runForge(async () => {
+      const token = await forgeToken(this.apiBaseUrl, {
+        prompt: this.tokenPrompt,
+        tokenName: this.tokenName,
+        tokenType: this.tokenType,
+        campaignId: this.campaignId || undefined,
+      });
+      this.lastForgedToken = token;
+      this.dispatchEvent(
+        new CustomEvent('forge-token', {
+          detail: {
+            prompt: this.tokenPrompt,
+            token_name: this.tokenName,
+            token_type: this.tokenType,
+            campaignId: this.campaignId,
+            asset: token,
+          },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
   }
 
-  private handlePlaceToken() {
-    this.dispatchEvent(
-      new CustomEvent('token-placed', {
-        detail: { token: this.lastForgedToken },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  private async handlePlaceToken() {
+    await this.runForge(async () => {
+      if (!this.sessionId) {
+        throw new Error('Set a session ID before placing a token.');
+      }
+      const forged = this.lastForgedToken;
+      if (!forged) {
+        throw new Error('Forge a token before placing it.');
+      }
+      const placed = await placeBoardToken(this.apiBaseUrl, {
+        sessionId: this.sessionId,
+        name: forged.token_name,
+        tokenType: forged.token_type,
+        x: this.tokenX,
+        y: this.tokenY,
+      });
+      this.dispatchEvent(
+        new CustomEvent('token-placed', {
+          detail: {
+            session_id: this.sessionId,
+            token: placed,
+            asset: forged,
+          },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
   }
 
   render() {
     return html`
       <div class="header">
         <span class="title">Tactical Asset Forge</span>
-        <span style="font-size: 0.75rem; font-weight: 700;">Procedural Diffusion Engine</span>
+        <span style="font-size: 0.75rem; font-weight: 700;">Procedural Battlemap Forge</span>
       </div>
 
       <div class="tabs">
@@ -124,6 +173,9 @@ export class RunefobleAssetForge extends LitElement {
       </div>
 
       ${this.activeTab === 'battlemap' ? this.renderBattlemapTab() : this.renderTokenTab()}
+      ${this.errorMessage
+        ? html`<div class="error-banner" role="alert">${this.errorMessage}</div>`
+        : ''}
     `;
   }
 
@@ -163,9 +215,6 @@ export class RunefobleAssetForge extends LitElement {
                 <span class="stat-badge">${this.lastForgedMap.wall_count} Walls</span>
                 <span class="stat-badge">${this.lastForgedMap.hazard_count} Hazards</span>
               </div>
-              <button class="action-btn" @click=${this.handleProjectGeometry}>
-                Project Geometry to Board State
-              </button>
             </div>
           `
         : ''}
@@ -232,7 +281,29 @@ export class RunefobleAssetForge extends LitElement {
                 <span class="stat-badge">Circular Mask</span>
                 <span class="stat-badge">Alpha Transparent</span>
               </div>
-              <button class="action-btn" @click=${this.handlePlaceToken}>
+              <div class="row">
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">Column (x)</label>
+                  <input
+                    type="number"
+                    class="input-field"
+                    min="0"
+                    .value=${String(this.tokenX)}
+                    @input=${(e: Event) => (this.tokenX = Number((e.target as HTMLInputElement).value))}
+                  />
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">Row (y)</label>
+                  <input
+                    type="number"
+                    class="input-field"
+                    min="0"
+                    .value=${String(this.tokenY)}
+                    @input=${(e: Event) => (this.tokenY = Number((e.target as HTMLInputElement).value))}
+                  />
+                </div>
+              </div>
+              <button class="action-btn" ?disabled=${this.isGenerating} @click=${this.handlePlaceToken}>
                 Place Token on Tactical Board
               </button>
             </div>
