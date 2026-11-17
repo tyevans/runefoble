@@ -69,3 +69,9 @@ When domain events were modularized into `runefoble_events.events.*`, the root o
 3. All repository import sites migrated to `runefoble_events.events.*`.
 4. Obsolete backward-compatibility parity tests removed.
 5. All Python tests pass and `make lint` reports zero issues.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- Alias assignments `X = XEvent` remain in `aec.py`, `faction_resources.py`, `turf_war.py`, `settlements.py`, `board_traps.py`, `mcp_tools.py` (lines 61-63), `vocal_dsp.py`, `combat_reactions.py`, and `voice_barge_in.py`. Delete them and their `__all__` entries. `grep -rn '^[A-Za-z]* = [A-Za-z]*Event$' libs/runefoble_events/src` must return nothing.

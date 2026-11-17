@@ -66,3 +66,9 @@ HTTP tests through the gateway `TestClient`.
 3. The sync reference doc is corrected.
 4. The index report lists the open product question about project-role seeding.
 5. No file exceeds 500 lines.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- Tokenless claim sync returns HTTP 401, not 500. `gateway/api/src/gateway_api/auth_sync.py:138` maps every exception to 500 today.

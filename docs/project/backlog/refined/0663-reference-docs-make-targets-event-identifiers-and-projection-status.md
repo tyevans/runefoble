@@ -59,3 +59,9 @@ Reference documentation. Not user-facing.
 4. The docs-serve port is verified and stated.
 5. The catalogue test passes in `uv run pytest`.
 6. Files stay under 500 lines.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `docs/reference/events-schema.md` lists `(alias: ...)` names (for example lines 67, 120, 129, 135). Remove them with the code aliases in TASK-0487.

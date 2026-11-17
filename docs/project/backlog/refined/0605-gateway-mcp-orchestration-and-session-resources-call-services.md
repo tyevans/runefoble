@@ -65,3 +65,9 @@ Source: `.audit/reports/w1-gateway-mcp.md` F1.
 3. Blackbox tests pass. Gateway MCP suite passes.
 4. Ruff check and format pass.
 5. Tool and resource docs updated.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `gateway/mcp/src/gateway_mcp/tools/compendium.py:13-28` (`query_monster_stat_block`) falls back to an in-process scan of `rules_compendium.srd_data.CANONICAL_MONSTERS`. Call the `rules_compendium` public route only.

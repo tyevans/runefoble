@@ -66,3 +66,9 @@ The six scenarios above are the test plan. Each one runs in chromium, firefox, a
 3. No step injects state, writes `localStorage`, or dispatches synthetic events (grep check from TASK-0649).
 4. `make test-bdd` passes (Gherkin and step coverage).
 5. Each file is under 500 lines.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- Empty title: `services/game_session/ui/src/campaigns/runefoble-campaign-creator.ts` marks the title input `required`, so an empty submit never reaches the server. Decide the spec: client validation message or server 422.

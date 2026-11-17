@@ -66,3 +66,9 @@ In `libs/runefoble_auth/src/runefoble_auth/zitadel.py`, `verify_token` (line 153
 3. All service and gateway callers migrated to canonical auth methods.
 4. `uv run pytest` passes cleanly with zero deprecation warnings from auth.
 5. Code passes `uv run ruff check .` and file length remains < 500 lines.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` is a facade re-export with `__all__`. Delete it and update the callers.

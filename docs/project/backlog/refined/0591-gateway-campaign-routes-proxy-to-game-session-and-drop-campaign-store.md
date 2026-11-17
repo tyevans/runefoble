@@ -83,3 +83,9 @@ Test file: `tests/test_blackbox_gateway_campaigns_proxy.py` (replaces `tests/tes
 3. The gateway writes no SpiceDB campaign tuple.
 4. The blackbox test file passes. Obsolete store tests are removed in the same PR.
 5. `uv run ruff check .` passes.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `GET /api/v1/campaigns/{campaign_id}` returns HTTP 200 with a fabricated campaign for an unknown id (`gateway/api/src/gateway_api/routers/campaigns.py:61-72`). Return 404. This also unblocks the `@blocked` scenario in `e2e/features/app_shell_data_errors.feature`.
