@@ -83,7 +83,3 @@ def generate_token_portrait_png(
             buffer[pixel_idx + 3] = 255
 
     return encode_png_rgba(size_px, size_px, bytes(buffer))
-
-
-# Backward compatibility alias
-generate_token_png = generate_token_portrait_png
