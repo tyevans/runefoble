@@ -26,7 +26,6 @@ from runefoble_events import (
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
-
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import PNG_SIGNATURE

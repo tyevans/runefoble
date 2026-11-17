@@ -24,7 +24,6 @@ from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
-
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
