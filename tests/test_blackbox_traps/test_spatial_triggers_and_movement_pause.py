@@ -25,7 +25,6 @@ from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
-
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 _mock_redis: MockAsyncRedis | None = None

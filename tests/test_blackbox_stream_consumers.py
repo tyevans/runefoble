@@ -22,6 +22,7 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 SESSION_STREAM = "runefoble.events.session"
 
@@ -51,12 +52,24 @@ def test_campaign_analytics_consumer_projects_session_event_from_redis(
     redis_double: MockAsyncRedis,
 ) -> None:
     """A session event on Redis appears in the analytics timeline after the consumer starts."""
+    from campaign_analytics.dependencies import get_spicedb_client
     from campaign_analytics.main import app
 
     campaign_id = f"camp-{uuid4().hex[:8]}"
     session_id = str(uuid4())
+    # The timeline is a view-protected read. Grant the member view rights on the campaign.
+    asyncio.run(
+        get_spicedb_client().write_relationship(
+            resource_type="campaign",
+            resource_id=campaign_id,
+            relation="view",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )
+    member_headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-test')}"}
 
-    with TestClient(app) as client:
+    with TestClient(app, headers=member_headers) as client:
         assert client.get("/healthz").json()["consumers"] == {"analytics": "running"}
 
         _publish(

@@ -22,7 +22,6 @@ from runefoble_auth.mock_spicedb import MockSpiceDBClient
 from runefoble_platform.consumer_group import RedisConsumerGroup
 
 from tests.helpers.mock_redis import MockAsyncRedis
-
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
