@@ -15,9 +15,9 @@ import { AppDataService, appDataService } from '../../src/services/app-data-serv
 import { authService } from '../../src/auth/auth-service.ts';
 import { FALLBACK_CAMPAIGNS } from '../../src/fixtures/app-data-service.fixtures.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
+import { readAppShellSource } from '../support/app-shell-source.ts';
 import type { CampaignItem, CreateCampaignPayload } from '../../../services/game_session/ui/src/campaigns/types.ts';
 
-const APP_SHELL_PATH = resolve(import.meta.dirname, '../../src/runefoble-app.ts');
 const PROFILE_PATH = resolve(import.meta.dirname, '../../src/components/runefoble-user-profile.ts');
 
 describe('Profile Settings & Campaign Deduplication (US-0070, US-0071, TASK-0288)', () => {
@@ -95,7 +95,7 @@ describe('Profile Settings & Campaign Deduplication (US-0070, US-0071, TASK-0288
     assert.equal(updated.ok && updated.data.display_name, 'Valeros the Bold');
     assert.equal(authService.getUser()?.display_name, 'Valeros the Bold');
 
-    const appShellContent = readFileSync(APP_SHELL_PATH, 'utf-8');
+    const appShellContent = readAppShellSource();
     assert.ok(appShellContent.includes('<runefoble-user-profile'));
     assert.ok(appShellContent.includes('.user=${authService.getUser()}'));
   });
