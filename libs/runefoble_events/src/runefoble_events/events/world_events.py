@@ -2,6 +2,7 @@
 
 # ruff: noqa: F403, F405
 
+from runefoble_events.campaign_lifecycle import *
 from runefoble_events.faction_resources import *
 from runefoble_events.lore import *
 from runefoble_events.settlement_workers import *
@@ -26,7 +27,14 @@ __all__ = [
     "BulletinNoticePinnedEvent",
     "BulletinNoticeRemoved",
     "BulletinNoticeRemovedEvent",
+    "CampaignCreated",
+    "CampaignInviteCreated",
+    "CampaignInviteRedeemed",
+    "CampaignMemberAdded",
+    "CampaignMemberRemoved",
     "CampaignRegisteredToSharedWorld",
+    "CampaignSessionCreated",
+    "CampaignUpdated",
     "CaravanAmbushed",
     "CaravanContractAccepted",
     "CaravanContractPosted",
