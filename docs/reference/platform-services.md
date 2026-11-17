@@ -112,3 +112,11 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **`RUNEFOBLE_EMBEDDING_BASE_URL`**, **`RUNEFOBLE_EMBEDDING_MODEL`**, **`RUNEFOBLE_EMBEDDING_DIMENSION`**: Required for `openai_compatible`. Start-up fails if one is missing.
 - **`RUNEFOBLE_EMBEDDING_API_KEY`**, **`RUNEFOBLE_EMBEDDING_DOCUMENT_PREFIX`**, **`RUNEFOBLE_EMBEDDING_QUERY_PREFIX`**: Optional.
 - **Details**: [Embedding Providers](embedding-providers.md).
+
+---
+
+## Wardrobe Image Generator
+
+`WardrobeGeneratorSettings` (`libs/runefoble_platform`) selects the generator behind the `WardrobeGenerator` port. The Asset Forge service reads it at start-up.
+
+- **`RUNEFOBLE_WARDROBE_GENERATOR`**: `placeholder` (default). Draws a flat colour portrait. It preserves no face and does not read the attire prompt. Any other value fails validation at start-up.

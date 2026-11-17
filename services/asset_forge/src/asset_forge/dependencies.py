@@ -11,7 +11,7 @@ from fastapi import Header
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.bus import bus as platform_bus
-from runefoble_platform.config import PlatformSettings
+from runefoble_platform.config import PlatformSettings, WardrobeGeneratorSettings
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
@@ -21,6 +21,7 @@ from runefoble_platform.storage import SiloStorageService
 from runefoble_platform.storage import get_storage_service as get_platform_storage
 
 from asset_forge.aggregate import AssetForgeAggregate
+from asset_forge.wardrobe_generator import WardrobeGenerator, build_wardrobe_generator
 
 logger = logging.getLogger("runefoble.asset_forge")
 settings = PlatformSettings()
@@ -30,6 +31,7 @@ _forge_repo: AggregateRepository[AssetForgeAggregate] = create_aggregate_reposit
     AssetForgeAggregate
 )
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
+_wardrobe_generator: WardrobeGenerator | None = None
 
 
 def get_forge_repo() -> AggregateRepository[AssetForgeAggregate]:
@@ -40,6 +42,14 @@ def get_forge_repo() -> AggregateRepository[AssetForgeAggregate]:
 def get_storage() -> SiloStorageService:
     """Provide the platform Silo storage client."""
     return get_platform_storage()
+
+
+def get_wardrobe_generator() -> WardrobeGenerator:
+    """Provide the configured wardrobe generator (placeholder by default)."""
+    global _wardrobe_generator
+    if _wardrobe_generator is None:
+        _wardrobe_generator = build_wardrobe_generator(WardrobeGeneratorSettings())
+    return _wardrobe_generator
 
 
 def get_event_bus() -> RedisStreamsEventBus | None:

@@ -244,4 +244,8 @@ class WardrobeForgeResponse(BaseModel):
     image_url: str
     download_url: str
     prompt: str
+    generator: str = Field(description="Name of the wardrobe generator that drew the image")
+    preserves_face: bool = Field(
+        description="True only when the generator preserves the character face. The placeholder is False."
+    )
     status: str = "forged"

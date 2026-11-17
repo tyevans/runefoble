@@ -244,3 +244,22 @@ class LoreBackendSettings(BaseSettings):
         default="fake",
         description="Deterministic hash embeddings (not semantic); replaced by a provider adapter",
     )
+
+
+class WardrobeGeneratorSettings(BaseSettings):
+    """Wardrobe image generator for Asset Forge, selected at start-up.
+
+    Only the deterministic placeholder exists today. It draws a flat colour portrait
+    and preserves no face. Other choices arrive with their adapters.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="RUNEFOBLE_WARDROBE_",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    generator: Literal["placeholder"] = Field(
+        default="placeholder",
+        description="Wardrobe generator behind the WardrobeGenerator port",
+    )

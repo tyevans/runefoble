@@ -1,4 +1,9 @@
-"""Procedural wardrobe portrait and attire variant synthesizer."""
+"""Deterministic placeholder raster for wardrobe portraits.
+
+The raster draws a flat colour disk for the face and a flat colour fill for the
+attire. It does not read the face of the character and does not use the attire
+prompt. The placeholder generator (wardrobe_placeholder.py) wraps this function.
+"""
 
 from __future__ import annotations
 
@@ -39,19 +44,22 @@ ATTIRE_PALETTES: dict[str, tuple[int, int, int]] = {
 }
 
 
-def generate_wardrobe_portrait_png(
-    character_name: str,
-    attire_type: str = "ballroom_masquerade",
-    custom_prompt: str | None = None,
-    face_seed: str | None = None,
-    size_px: int = 256,
-    border_color_hex: str = "#e63946",
-) -> tuple[bytes, str]:
-    """Synthesize wardrobe attire portrait variant preserving character facial features and palette."""
+def build_attire_prompt(attire_type: str, custom_prompt: str | None = None) -> str:
+    """Return the attire prompt that a wardrobe generator receives."""
     template_prompt = ATTIRE_PROMPTS.get(
         attire_type, f"Thematic {attire_type} outfit preserving character facial identity."
     )
-    final_prompt = f"{template_prompt} {custom_prompt or ''}".strip()
+    return f"{template_prompt} {custom_prompt or ''}".strip()
+
+
+def generate_wardrobe_portrait_png(
+    character_name: str,
+    attire_type: str = "ballroom_masquerade",
+    face_seed: str | None = None,
+    size_px: int = 256,
+    border_color_hex: str = "#e63946",
+) -> bytes:
+    """Draw the placeholder wardrobe portrait. The face is a flat colour, not a likeness."""
     attire_rgb = ATTIRE_PALETTES.get(attire_type, (200, 150, 50))
     border_r, border_g, border_b = parse_hex_color(border_color_hex)
 
@@ -104,4 +112,4 @@ def generate_wardrobe_portrait_png(
 
             buffer[pixel_idx : pixel_idx + 4] = bytes((pr, pg, pb, 255))
 
-    return encode_png_rgba(size_px, size_px, bytes(buffer)), final_prompt
+    return encode_png_rgba(size_px, size_px, bytes(buffer))
