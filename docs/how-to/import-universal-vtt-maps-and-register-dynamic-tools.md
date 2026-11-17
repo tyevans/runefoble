@@ -18,7 +18,15 @@ Universal VTT maps created in tools such as Dungeondraft, Dungeon Alchemist, or 
 
 ### Uploading via HTTP Multipart Frontdoor
 
-To import a map file for a session or board aggregate, send a `POST` request with the `.dd2vtt` file:
+The board must exist before you import. Create it first with `POST /api/v1/boards`. Import and door or light routes return `404` for an unknown board. They never create one.
+
+```bash
+curl -X POST "http://localhost:8002/api/v1/boards" \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "camp-01"}'
+```
+
+Then send a `POST` request with the `.dd2vtt` file:
 
 ```bash
 curl -X POST "http://localhost:8002/api/v1/board/camp-01/import/uvtt" \
@@ -56,6 +64,8 @@ When `.dd2vtt` data is ingested:
 ### Interacting with Doors and Dynamic Lights
 
 The `board_state` service provides dedicated REST and WebSocket frontdoors for door toggles and light manipulation:
+
+These routes need an existing board. Create it with `POST /api/v1/boards` first.
 
 ```python
 import httpx

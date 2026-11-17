@@ -34,6 +34,12 @@ def clean_environment():
     set_event_bus(None)
 
 
+def create_board(client: TestClient, board_id: str) -> None:
+    """Create a board through the POST frontdoor. GET and import never create boards."""
+    res = client.post("/api/v1/boards", json={"session_id": board_id})
+    assert res.status_code == 200, res.text
+
+
 def grant_permission(resource_type: str, resource_id: str, relation: str, subject_id: str) -> None:
     """Grant Zanzibar object permission for blackbox test setup."""
     asyncio.run(

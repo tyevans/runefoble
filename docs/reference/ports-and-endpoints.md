@@ -140,7 +140,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `board-state` | POST | `/api/v1/boards/{session_id}/decals/decay` | Advances combat round decay for ephemeral decals over 2 rounds |
 | `board-state` | POST | `/api/v1/boards/{board_id}/physics/simulate-throw` | Simulates tumbling 3D ballistic dice roll across board terrain with floor/wall bounces and face settling |
 | `board-state` | POST | `/api/v1/boards/{board_id}/physics/knockback` | Applies physical knockback impulse to miniature token, halting upon wall or elevation collisions |
-| `board-state` | POST | `/api/v1/board/{id}/import/uvtt` | Ingests Universal VTT (`.dd2vtt`) files, extracts walls/portals/lights, and stores map texture in Silo S3 (alias: `/api/v1/boards/{id}/import/uvtt`) |
+| `board-state` | POST | `/api/v1/board/{id}/import/uvtt` | Ingests Universal VTT (`.dd2vtt`) files, extracts walls/portals/lights, and stores map texture in Silo S3. Returns `404` when no board exists; create the board with `POST /api/v1/boards` first (alias: `/api/v1/boards/{id}/import/uvtt`) |
 | `board-state` | POST | `/api/v1/board/{id}/doors/{door_id}/toggle` | Toggles state of an interactive door or portal (alias: `/board/{id}/doors/{door_id}/toggle`) |
 | `board-state` | GET | `/api/v1/board/{id}/doors` | Queries interactive doors and secret portals on the board (alias: `/board/{id}/doors`) |
 | `board-state` | POST | `/api/v1/board/{id}/lights` | Places or updates dynamic point light source (alias: `/board/{id}/lights`) |
