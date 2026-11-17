@@ -125,12 +125,30 @@ html`
 
 ## 5. Backends, Start-up Replay, and Restarts
 
-The retrieval engine is built from `LoreBackendSettings` (`RUNEFOBLE_LORE_*`, see the platform services reference). Its graph, vector index, and chunk corpus are in-process and derived. At start-up the service replays every `LoreDocument` event from the event store into a fresh engine. Then it accepts requests.
+The retrieval engine is built from `LoreBackendSettings` (`RUNEFOBLE_LORE_*`, see the platform services reference). The entity vector index is a pgvector table on the platform PostgreSQL database. The graph and the passage corpus are in process and derived. At start-up the service replays every `LoreDocument` event from the event store into a fresh engine. Then it accepts requests.
 
-- Start-up fails if `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` and PostgreSQL cannot be reached. The service does not serve an empty projection.
+### Required settings
+
+The service has no fake or in-memory vector backend. It needs these settings:
+
+- **`RUNEFOBLE_EMBEDDING_BASE_URL`**, **`RUNEFOBLE_EMBEDDING_MODEL`**, **`RUNEFOBLE_EMBEDDING_DIMENSION`**: The OpenAI-compatible `/v1/embeddings` endpoint. Start-up names each missing setting and stops.
+- **`RUNEFOBLE_EMBEDDING_API_KEY`**: Optional for local servers. In Kubernetes, the Helm chart reads it from the Secret `campaign-lore-embedding`, key `api-key`. You create that Secret. The chart does not.
+- **`RUNEFOBLE_DATABASE_URL`**: The PostgreSQL database that holds the pgvector table `lore_entity_vectors`. The service creates the `vector` extension and the table at start-up. The PostgreSQL server must provide the `pgvector` extension. The chart uses the `pgvector/pgvector:pg16` image.
+
+### Start-up failures
+
+The service stops with an error when one of these checks fails. It does not serve a partial or fallback search.
+
+- The embedding endpoint does not answer the start-up probe, or it returns a different width. The error contains `embedding endpoint is unreachable`.
+- PostgreSQL does not accept the pgvector connection. The error contains `vector store (PostgreSQL) is unreachable`.
+- `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` and PostgreSQL cannot be reached. The service does not serve an empty projection.
+
+### Restarts
+
 - Document titles, secrecy, aliases, and search results survive a restart, because they come from the replayed events.
+- Entity identifiers are derived from the campaign, document, name, and type. A restart writes the same pgvector rows again. It adds no duplicate rows.
 - Replay time grows with the number of stored documents. Each start re-indexes them.
-- The vector index and the embeddings are not semantic yet. The default `fake` embedding provider uses deterministic hashes. A pgvector store and a real embedding provider are a follow-up.
+- The passage corpus stays in process. Each start rebuilds it from the events.
 
 ## 6. Modular Retrieval Architecture
 

@@ -12,7 +12,7 @@ dependencies = [
     "runefoble-auth",
     "runefoble-events",
     "eventsource-py>=0.14.0",
-    "redstring[redis,llm]>=0.11.0",
+    "redstring[redis,llm,pgvector]>=0.11.0",
 ]
 
 [tool.uv.sources]

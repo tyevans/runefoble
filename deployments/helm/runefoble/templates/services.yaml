@@ -57,6 +57,19 @@ spec:
             - name: RUNEFOBLE_VOICE_AGENT_URL
               value: "http://voice-agent:{{ $.Values.services.voiceAgent.port }}"
           {{- end }}
+            {{- range $name, $value := .config.env }}
+            {{- if $value }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- with .config.embeddingApiKeySecret }}
+            - name: RUNEFOBLE_EMBEDDING_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ . }}
+                  key: api-key
+            {{- end }}
           {{- if eq .name "voice-agent" }}
             - name: RUNEFOBLE_VOICE_STT_MODEL_SIZE
               value: {{ .config.sttModelSize | quote }}

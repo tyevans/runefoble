@@ -214,6 +214,10 @@ class LoreRetrievalEngine:
                 break
         return items
 
+    async def close(self) -> None:
+        """Release the stores that hold connections or pools."""
+        await self.vectors.close()
+
     def get_document(self, document_id: UUID) -> DocumentMetadata | None:
         """Retrieve document metadata by UUID."""
         return self._documents.get(document_id)

@@ -14,7 +14,7 @@ from runefoble_auth.spicedb import SpiceDBClient
 
 
 @pytest.fixture
-def client() -> Iterator[TestClient]:
+def client(lore_backends) -> Iterator[TestClient]:
     with TestClient(app) as client:
         yield client
 

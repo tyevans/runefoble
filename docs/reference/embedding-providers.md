@@ -41,6 +41,15 @@ Settings come from the process environment. They are read when the service start
 | `RUNEFOBLE_EMBEDDING_DOCUMENT_PREFIX` | empty | no | Text added before each indexed document. Needed by some asymmetric models. |
 | `RUNEFOBLE_EMBEDDING_QUERY_PREFIX` | empty | no | Text added before each search query. Needed by some asymmetric models. |
 
+### Campaign Lore selection (`LoreBackendSettings`, prefix `RUNEFOBLE_LORE_`)
+
+| Variable | Default | Values | Effect |
+|---|---|---|---|
+| `RUNEFOBLE_LORE_EMBEDDING` | `openai_compatible` | `openai_compatible` | The only choice. The endpoint settings above are required. |
+| `RUNEFOBLE_LORE_VECTOR` | `pgvector` | `pgvector` | The only choice. Entity vectors go to the `lore_entity_vectors` table. |
+
+`campaign_lore` checks the endpoint at start-up. It sends one probe text and requires a vector of the configured width. A failed probe stops start-up with `embedding endpoint is unreachable`. Campaign Lore has no fake embedder and no in-memory vector store in production settings.
+
 ### Rules Compendium selection (`RulesCompendiumSettings`, prefix `RUNEFOBLE_RULES_`)
 
 | Variable | Default | Values | Effect |
@@ -54,6 +63,8 @@ Settings come from the process environment. They are read when the service start
 - **Invalid dimension.** A dimension that is not positive stops start-up.
 - **Dimension mismatch at run time.** The adapter raises `EmbeddingProviderError` when a
   vector has a different width from `RUNEFOBLE_EMBEDDING_DIMENSION`.
+- **Endpoint down at start-up.** Campaign Lore stops, because its start-up probe fails.
+  Rules Compendium does not probe at start-up. Its searches fail while the endpoint is down.
 - **Endpoint down at run time.** Search that needs a query vector fails. The service does
   not switch to lexical results silently.
 - **No hash fallback.** No service uses hash vectors in production. Hash embeddings exist
