@@ -15,9 +15,16 @@ from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
 
 
+def _create_board(client: TestClient, board_id: str) -> None:
+    """Create a board through the public POST frontdoor before importing a map into it."""
+    res = client.post("/api/v1/boards", json={"session_id": board_id, "cols": 4, "rows": 4})
+    assert res.status_code == 200, res.text
+
+
 def test_blackbox_uvtt_multipart_file_upload(board_client: TestClient):
     """Verify importing a .dd2vtt file via multipart/form-data frontdoor."""
     board_id = f"camp-uvtt-{uuid4().hex[:8]}"
+    _create_board(board_client, board_id)
     uvtt_data = build_sample_dd2vtt_dict(cols=18, rows=14, pixels_per_grid=100)
     file_bytes = json.dumps(uvtt_data).encode("utf-8")
 
@@ -78,6 +85,7 @@ def test_blackbox_uvtt_json_direct_payload(board_client: TestClient):
     """Verify importing a .dd2vtt map via raw JSON payload frontdoor."""
     board_id = f"board-{uuid4().hex[:8]}"
     uvtt_data = build_sample_dd2vtt_dict(cols=24, rows=18, pixels_per_grid=70)
+    _create_board(board_client, board_id)
 
     # Plural route alias frontdoor: POST /api/v1/boards/{id}/import/uvtt
     response = board_client.post(

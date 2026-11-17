@@ -61,10 +61,17 @@ def watcher_redis():
     set_watcher_event_bus(None)
 
 
+def _create_board(client: TestClient, board_id: str) -> None:
+    """Create a board through the public POST frontdoor before any board write."""
+    res = client.post("/api/v1/boards", json={"session_id": board_id, "cols": 18, "rows": 14})
+    assert res.status_code == 200, res.text
+
+
 def test_aoe_placement_publishes_template_placed_event(board_redis: MockAsyncRedis):
     """Placing an AoE template writes one AoETemplatePlaced entry to the board stream."""
     client = TestClient(board_app)
     board_id = f"board-aoe-{uuid4().hex[:8]}"
+    _create_board(client, board_id)
 
     res = client.post(
         f"/api/v1/boards/{board_id}/aoe",
@@ -87,6 +94,7 @@ def test_uvtt_import_publishes_every_uncommitted_event_in_order(board_redis: Moc
     """A UVTT import writes all of its uncommitted events to the board stream, not only the last."""
     client = TestClient(board_app)
     board_id = f"board-uvtt-{uuid4().hex[:8]}"
+    _create_board(client, board_id)
     uvtt_data = build_sample_dd2vtt_dict(cols=18, rows=14, pixels_per_grid=100)
     file_bytes = json.dumps(uvtt_data).encode("utf-8")
 

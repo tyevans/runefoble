@@ -214,6 +214,10 @@ async def test_frontdoor_board_endpoints():
     """Verify frontdoor HTTP operations through public REST endpoints."""
     transport = ASGITransport(app=board_app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
+        created = await client.post(
+            "/api/v1/boards", json={"session_id": "session-test-modular", "cols": 12, "rows": 12}
+        )
+        assert created.status_code == 200
         # Get board state
         res = await client.get("/api/v1/boards/session-test-modular")
         assert res.status_code == 200

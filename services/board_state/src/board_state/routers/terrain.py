@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from board_state.aggregate import PlacedTokenState, TerrainCellState
-from board_state.dependencies import get_or_create_board, repo
+from board_state.dependencies import get_board, repo
 from board_state.models import (
     ConfigureTerrainRequest,
     FogOfWarUpdateRequest,
@@ -19,7 +19,7 @@ async def get_visibility(
     session_id: str, is_dm: bool = Query(False, description="Whether caller is Dungeon Master")
 ):
     """Compute fog-of-war visibility masks and filter hidden enemies."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     party_visible = board.compute_party_visibility()
     revealed_set = {tuple(c) for c in board.state.revealed_cells}
 
@@ -46,7 +46,7 @@ async def get_visibility(
 
 @router.post("/api/v1/boards/{session_id}/terrain", response_model=TerrainCellState)
 async def configure_terrain(session_id: str, req: ConfigureTerrainRequest):
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         board.configure_terrain(
             x=req.x,
@@ -66,7 +66,7 @@ async def configure_terrain(session_id: str, req: ConfigureTerrainRequest):
 @router.post("/api/v1/boards/{session_id}/fog-of-war/reveal", response_model=VisibilityResponse)
 async def reveal_fog_of_war(session_id: str, req: FogOfWarUpdateRequest):
     """Manually reveal fog-of-war cells."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         board.reveal_cells(cells=req.cells, revealed_by_token_id=req.token_id)
         await repo.save(board)
@@ -80,7 +80,7 @@ async def reveal_fog_of_war(session_id: str, req: FogOfWarUpdateRequest):
 @router.post("/api/v1/boards/{session_id}/fog-of-war/shroud", response_model=VisibilityResponse)
 async def shroud_fog_of_war(session_id: str, req: FogOfWarUpdateRequest):
     """Manually shroud fog-of-war cells."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         board.shroud_cells(cells=req.cells)
         await repo.save(board)

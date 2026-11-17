@@ -5,7 +5,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from board_state.aggregate import PlacedTokenState
-from board_state.dependencies import get_event_bus, get_or_create_board, repo
+from board_state.dependencies import get_board, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
     MoveTokenRequest,
@@ -19,7 +19,7 @@ router = APIRouter(tags=["tokens"])
 
 @router.post("/api/v1/boards/{session_id}/tokens", response_model=PlacedTokenState)
 async def place_token(session_id: str, req: PlaceTokenRequest):
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     token_id = req.token_id or str(uuid4())
     try:
         board.place_token(
@@ -40,7 +40,7 @@ async def place_token(session_id: str, req: PlaceTokenRequest):
 
 @router.post("/api/v1/boards/{session_id}/tokens/{token_id}/move", response_model=MoveTokenResponse)
 async def move_token_by_id(session_id: str, token_id: str, req: MoveTokenRequest):
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         move_res = board.move_token(
             token_id=token_id,
@@ -92,7 +92,7 @@ async def move_token(session_id: str, req: MoveTokenRequest):
 
 @router.delete("/api/v1/boards/{session_id}/tokens/{token_id}")
 async def remove_token(session_id: str, token_id: str, reason: str = "defeated"):
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         board.remove_token(token_id=token_id, reason=reason)
         await repo.save(board)

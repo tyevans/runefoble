@@ -119,9 +119,9 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `voice-agent` | GET | `/healthz` | Liveness check. Reports the active speech engines as `stt_engine` (default `faster-whisper`) and `tts_engine` (default `espeak-ng`) |
 | `voice-agent` | POST | `/api/v1/voice/dsp/apply` | Applies DSP filters to supplied base64 PCM or WAV audio. Returns `422` when `audio_base64` is missing or invalid. The route never synthesises a carrier tone |
 | `voice-agent` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-voice-controls`, `runefoble-audio-indicator`, `runefoble-mobile-companion` [subviews: `audio-stream-controller`, `haptic-ping-panel`, `connection-status-badge`], `runefoble-voice-duplex-controls`) |
-| `board-state` | POST | `/api/v1/boards` | Initializes tactical grid aggregate with specified dimensions |
-| `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states |
-| `board-state` | POST | `/api/v1/boards/{session_id}/tokens` | Places token onto tactical grid with bounds check and fog update |
+| `board-state` | POST | `/api/v1/boards` | Creates the tactical grid aggregate with specified dimensions. This is the only route that creates a board. |
+| `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states. Returns `404` when no board exists. Never creates a board or adds tokens. |
+| `board-state` | POST | `/api/v1/boards/{session_id}/tokens` | Places token onto tactical grid with bounds check and fog update. Returns `404` when no board exists; create the board with `POST /api/v1/boards` first. |
 | `board-state` | POST | `/api/v1/boards/{session_id}/tokens/{token_id}/move` | Moves token across grid, checks movement budget, and evaluates hazards (alias: `/api/v1/boards/{session_id}/move`) |
 | `board-state` | DELETE | `/api/v1/boards/{session_id}/tokens/{token_id}` | Removes a token from the tactical grid |
 | `board-state` | GET | `/api/v1/boards/{session_id}/visibility` | Computes Chebyshev fog-of-war masks and filters shrouded hostile tokens |
