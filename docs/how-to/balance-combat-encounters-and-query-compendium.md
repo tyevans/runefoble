@@ -147,12 +147,12 @@ The balancing engine:
 
 ## 4. Registering Campaign Homebrew Rules
 
-To register custom monsters or rules restricted to a campaign:
+To register custom monsters or rules restricted to a campaign. Set `DM_TOKEN` to a Zitadel access token for the DM. rules_compendium takes the author from that token. It ignores `x-user-id` and any `author_id` in the body. A request with no valid token returns `401`.
 
 ```bash
 curl -X POST http://localhost:8007/api/v1/compendium/homebrew \
   -H "Content-Type: application/json" \
-  -H "x-user-id: dm-evelyn-1" \
+  -H "Authorization: Bearer $DM_TOKEN" \
   -d '{
     "campaign_id": "8a329ef2-5c91-4cf1-83d8-21d4bb67f101",
     "rule_type": "monster",
