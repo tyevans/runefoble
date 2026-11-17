@@ -26,6 +26,7 @@ from gateway_api.models import (
 )
 from gateway_api.routers.auth.profile import router as profile_router
 from gateway_api.routers.tabletop import router as tabletop_router
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +184,39 @@ async def assign_campaign_role(
         "role": req.role,
         "zanzibar_relation": f"campaign:{campaign_id}#{req.role}@user:{req.user_id}",
     }
+
+
+class CampaignCapabilitiesResponse(BaseModel):
+    """Per-campaign capability flags for the caller, each from a SpiceDB permission check."""
+
+    manage: bool
+    run_session: bool
+    play: bool
+    view: bool
+
+
+@router.get(
+    "/api/v1/campaigns/{campaign_id}/capabilities",
+    response_model=CampaignCapabilitiesResponse,
+)
+async def get_campaign_capabilities(
+    campaign_id: str,
+    user: CurrentPrincipal,
+) -> CampaignCapabilitiesResponse:
+    """Report which campaign actions the caller holds. Non-members receive all false."""
+    spicedb = get_spicedb_client()
+
+    async def _has(permission: str) -> bool:
+        return await spicedb.check_permission(
+            "campaign", campaign_id, permission, "user", user.user_id
+        )
+
+    return CampaignCapabilitiesResponse(
+        manage=await _has("manage"),
+        run_session=await _has("run_session"),
+        play=await _has("play"),
+        view=await _has("view"),
+    )
 
 
 @router.get(
