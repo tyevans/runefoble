@@ -144,12 +144,12 @@ In accordance with Hard Invariant 6 and ADR-0003/ADR-0007, raster generation is 
 |---|---|---|
 | `png_codec.py` | Low-level PNG chunk encoding (IHDR, IDAT, IEND), scanlines, and hex parsing | `encode_png_rgba`, `parse_hex_color` |
 | `battlemap_raster.py` | Procedural tactical battlemap rendering, theme palettes, and grid overlays | `generate_battlemap_png` |
-| `token_raster.py` | Circular token portrait generator, border rings, and alpha transparency | `generate_token_portrait_png`, `generate_token_png` |
+| `token_raster.py` | Circular token portrait generator, border rings, and alpha transparency | `generate_token_portrait_png` |
 | `wardrobe_raster.py` | Deterministic placeholder wardrobe raster (flat face colour, flat attire fill). It preserves no face | `generate_wardrobe_portrait_png`, `build_attire_prompt`, `ATTIRE_PROMPTS`, `ATTIRE_PALETTES` |
 | `wardrobe_generator.py` | `WardrobeGenerator` port, `WardrobePortrait`, and generator selection (`RUNEFOBLE_WARDROBE_GENERATOR`) | `WardrobeGenerator`, `build_wardrobe_generator` |
 | `wardrobe_placeholder.py` | Default placeholder generator that wraps `wardrobe_raster.py` | `PlaceholderWardrobeGenerator` |
 
-The top-level `asset_forge.generator` module serves as a lightweight aggregator facade (< 50 lines) providing 100% backward-compatible function re-exports.
+Callers import generators directly from these submodules. The package has no aggregator facade and no legacy aliases. The `asset_forge.raster` package root re-exports nothing.
 
 ---
 
