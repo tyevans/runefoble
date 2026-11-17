@@ -12,6 +12,7 @@ dependencies = [
     "runefoble-events",
     "runefoble-auth",
     "eventsource-py>=0.14.0",
+    "python-multipart>=0.0.20",
 ]
 
 [tool.uv.sources]

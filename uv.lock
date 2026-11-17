@@ -184,6 +184,7 @@ dependencies = [
     { name = "eventsource-py" },
     { name = "fastapi" },
     { name = "pydantic" },
+    { name = "python-multipart" },
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
@@ -195,6 +196,7 @@ requires-dist = [
     { name = "eventsource-py", specifier = ">=0.14.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
@@ -356,6 +358,7 @@ dependencies = [
     { name = "eventsource-py" },
     { name = "fastapi" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
@@ -366,6 +369,7 @@ requires-dist = [
     { name = "eventsource-py", specifier = ">=0.14.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
@@ -797,10 +801,12 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "the-watcher" },
     { name = "uvicorn" },
+    { name = "voice-agent" },
 ]
 
 [package.metadata]
@@ -809,10 +815,12 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "the-watcher", editable = "services/the_watcher" },
     { name = "uvicorn", specifier = ">=0.54.0" },
+    { name = "voice-agent", editable = "services/voice_agent" },
 ]
 
 [[package]]
@@ -820,24 +828,32 @@ name = "gateway-api"
 version = "0.1.0"
 source = { editable = "gateway/api" }
 dependencies = [
+    { name = "character-sheet" },
     { name = "fastapi" },
+    { name = "game-session" },
+    { name = "gateway-mcp" },
     { name = "httpx" },
     { name = "pydantic" },
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
+    { name = "soundscape" },
     { name = "uvicorn" },
     { name = "voice-agent" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "character-sheet", editable = "services/character_sheet" },
     { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "game-session", editable = "services/game_session" },
+    { name = "gateway-mcp", editable = "gateway/mcp" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
+    { name = "soundscape", editable = "services/soundscape" },
     { name = "uvicorn", specifier = ">=0.54.0" },
     { name = "voice-agent", editable = "services/voice_agent" },
 ]
@@ -2845,6 +2861,7 @@ source = { editable = "libs/runefoble_platform" }
 dependencies = [
     { name = "asyncpg" },
     { name = "eventsource-py" },
+    { name = "httpx" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "opentelemetry-instrumentation-fastapi" },
@@ -2857,6 +2874,7 @@ dependencies = [
 requires-dist = [
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "eventsource-py", specifier = ">=0.14.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "opentelemetry-api", specifier = ">=1.45.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.45.0" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.66b0" },
@@ -3166,6 +3184,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
@@ -3176,6 +3195,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
