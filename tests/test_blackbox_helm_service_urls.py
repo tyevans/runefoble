@@ -120,7 +120,7 @@ def test_service_urls_never_point_at_localhost():
         ),
         (
             "gateway_api.routers.soundscape",
-            "SOUNDSCAPE_SERVICE_URL",
+            "SOUNDSCAPE_DEFAULT_URL",
             "SOUNDSCAPE_SERVICE_URL",
             "http://soundscape:8009",
         ),
