@@ -48,14 +48,19 @@ def reset_stores():
     yield
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 # ---------------------------------------------------------------------------
 # 1. Gateway API Public Frontdoors for Character Mutations
 # ---------------------------------------------------------------------------
 
 
-def test_frontdoor_create_character_mutation():
+def test_frontdoor_create_character_mutation(signing_issuer):
     """Verify POST /api/v1/characters accepts frontend builder payload and returns character."""
-    headers = {"X-User-Id": "user-marcus"}
+    headers = _auth(signing_issuer, "user-marcus")
     payload = {
         "name": "Thorne Ironbreaker",
         "characterClass": "Fighter",
@@ -89,9 +94,9 @@ def test_frontdoor_create_character_mutation():
     assert data["id"] in listed_ids
 
 
-def test_frontdoor_assign_character_campaign_mutation():
+def test_frontdoor_assign_character_campaign_mutation(signing_issuer):
     """Verify PATCH /api/v1/characters/{id}/campaign updates campaign assignment and title."""
-    headers_owner = {"X-User-Id": "user-marcus"}
+    headers_owner = _auth(signing_issuer, "user-marcus")
 
     # 1. Create campaign
     camp_res = client.post(
@@ -133,9 +138,9 @@ def test_frontdoor_assign_character_campaign_mutation():
     assert unassigned_data["campaignId"] is None
 
 
-def test_frontdoor_delete_character_mutation():
+def test_frontdoor_delete_character_mutation(signing_issuer):
     """Verify DELETE /api/v1/characters/{id} deletes character and removes from listing."""
-    headers_owner = {"X-User-Id": "user-marcus"}
+    headers_owner = _auth(signing_issuer, "user-marcus")
 
     # 1. Create character
     char_res = client.post(

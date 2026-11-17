@@ -195,9 +195,9 @@ def test_execute_node_frontend_audit_test_suite():
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_frontdoor_endpoints_for_audited_views():
+def test_gateway_frontdoor_endpoints_for_audited_views(signing_issuer):
     """Verify Gateway API provides public frontdoor endpoints required by all audited views."""
-    headers = {"X-User-Id": "user-valeros"}
+    headers = {"Authorization": f"Bearer {signing_issuer.mint('user-valeros')}"}
 
     # 1. Campaigns Hub View (#/campaigns)
     camp_res = client.post(

@@ -62,12 +62,12 @@ def test_session_lobby_readiness_and_ai_stand_in(client_sess: TestClient) -> Non
 
 
 def test_session_lobby_launch_transition_and_events(
-    reset_stores, client_gw: TestClient, client_sess: TestClient
+    reset_stores, client_gw: TestClient, client_sess: TestClient, trusted_ws_issuer
 ) -> None:
     """Verify DM triggering Launch Session transitions state and emits events."""
     mock_redis = reset_stores
-    headers_dm = {"X-User-Id": "dm_evelyn"}
-    headers_stranger = {"X-User-Id": "stranger_bob"}
+    headers_dm = {"Authorization": f"Bearer {trusted_ws_issuer.mint('dm_evelyn')}"}
+    headers_stranger = {"Authorization": f"Bearer {trusted_ws_issuer.mint('stranger_bob')}"}
 
     camp_res = client_gw.post(
         "/api/v1/campaigns", json={"title": "Launch Arena"}, headers=headers_dm

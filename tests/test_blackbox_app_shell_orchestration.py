@@ -38,6 +38,11 @@ def reset_store():
     yield
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 # ---------------------------------------------------------------------------
 # 1. Hard Invariant 6: Source File Line Count Constraints
 # ---------------------------------------------------------------------------
@@ -122,9 +127,9 @@ def test_app_shell_session_start_transition() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_campaign_and_session_routes(client: TestClient) -> None:
+def test_gateway_campaign_and_session_routes(client: TestClient, signing_issuer) -> None:
     """Verify Gateway API provides required frontdoor endpoints for route data fetching."""
-    headers = {"X-User-Id": "user-valeros"}
+    headers = _auth(signing_issuer, "user-valeros")
 
     # 1. Create a campaign
     camp_res = client.post(
