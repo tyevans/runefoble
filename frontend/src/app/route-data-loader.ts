@@ -10,6 +10,7 @@ import type { RunefobleApp } from '../runefoble-app.ts';
 import { appDataService } from '../services/app-data-service.ts';
 import { failLoad } from './load-error.ts';
 import { loadActiveSessionData, loadLobbyData } from './session-data-loader.ts';
+import { loadAnalyticsData, loadCodexData } from './campaign-hub-data-loader.ts';
 
 const CAMPAIGN_HUB_VIEWS: string[] = ['campaign-detail', 'campaign-characters', 'campaign-codex', 'campaign-analytics'];
 
@@ -52,6 +53,9 @@ async function loadCampaignHub(host: RunefobleApp, route: MatchedRoute): Promise
   host.campaignSessions = sessions.data;
   host.characters = chars.data;
   host.rosterCampaigns = rosterCamps.data;
+  const view = host.getActiveView();
+  if (view === 'campaign-codex') await loadCodexData(host, c);
+  else if (view === 'campaign-analytics') await loadAnalyticsData(host, c);
 }
 
 async function loadRoster(host: RunefobleApp): Promise<void> {

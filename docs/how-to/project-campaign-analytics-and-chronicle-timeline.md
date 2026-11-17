@@ -192,14 +192,24 @@ GET /ui/manifest
 ```
 
 ### Embedding `<runefoble-campaign-analytics>` in the App Shell
+The element makes no network calls. The App Shell loads the three datasets through the gateway with the signed-in user's bearer token, then passes them in as properties. If any read fails, the Chronicle & Stats tab shows the error state with retry.
+
+Gateway routes read by the App Shell (`frontend/src/services/campaign-hub-client.ts`):
+
+| Gateway route | Property | Source service |
+|---|---|---|
+| `GET /api/v1/analytics/campaigns/{campaign_id}/heatmap` | `.heatmapData` | `campaign_analytics` (port 8011) |
+| `GET /api/v1/analytics/campaigns/{campaign_id}/mvp` | `.mvpData` | `campaign_analytics` (port 8011) |
+| `GET /api/v1/analytics/campaigns/{campaign_id}/timeline` | `.timelineData` | `campaign_analytics` (port 8011) |
+
 ```html
 <script type="module" src="/services/campaign_analytics/ui/src/index.ts"></script>
 
 <runefoble-campaign-analytics
   campaignId="c-sunken-temple"
-  sessionId="sess-03"
-  encounterId="enc-grotto-clash"
-  apiBaseUrl="http://localhost:8011"
+  .heatmapData=${heatmap}
+  .mvpData=${mvp}
+  .timelineData=${timeline}
 ></runefoble-campaign-analytics>
 ```
 

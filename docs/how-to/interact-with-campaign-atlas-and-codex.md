@@ -127,6 +127,16 @@ Embed the interactive atlas and codex directly in frontend applications:
 ></runefoble-campaign-atlas>
 ```
 
+### Live Data Source (TASK-0646)
+The App Shell's Codex & Lore tab shows two sub-tabs. Each sub-tab loads its data through the gateway with the signed-in user's bearer token. The gateway forwards the verified user id to the campaign-lore service.
+
+| Gateway route | Used by | Notes |
+|---|---|---|
+| `GET /api/v1/campaigns/{campaign_id}/atlas` | `<runefoble-campaign-atlas>` (`.pins`, `.territories`) | Returns the campaign-lore atlas view. |
+| `GET /api/v1/campaigns/{campaign_id}/codex` | `<runefoble-campaign-codex>` (`.entries`) | Returns a list of codex entries. The shell maps `entry_id` to `id`, `content` to `text`, and `linked_entities` names to `entities`. |
+
+An empty dataset shows the element's empty state. A failed read shows the App Shell error state with retry. The App Shell never shows sample pins or entries.
+
 ### Emitted Custom Events
 - `pin-selected`: Triggered when a pin marker is clicked (`detail.pin`).
 - `pin-create-requested`: Triggered when an empty canvas location is clicked (`detail.coordinates`, `detail.layer`).
