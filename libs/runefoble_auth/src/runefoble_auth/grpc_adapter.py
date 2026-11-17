@@ -177,18 +177,23 @@ async def grpc_lookup_resources(
         SubjectReference,
     )
 
-    spicedb_perm = "game_master" if permission == "gm" else permission
     request = LookupResourcesRequest(
         consistency=Consistency(fully_consistent=True),
         resource_object_type=resource_type,
-        permission=spicedb_perm,
+        permission=permission,
         subject=SubjectReference(
             object=ObjectReference(object_type=subject_type, object_id=subject_id)
         ),
     )
 
     def _stream_sync() -> list[str]:
-        return [resp.resource_object_id for resp in client.LookupResources(request)]
+        try:
+            return [resp.resource_object_id for resp in client.LookupResources(request)]
+        except Exception as exc:
+            error = check_error_for(exc, "LookupResources")
+            if error is None:
+                raise
+            raise error from exc
 
     return await asyncio.to_thread(_stream_sync)
 
