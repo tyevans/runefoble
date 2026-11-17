@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from board_state.aggregate import PlacedTokenState, TerrainCellState
-from board_state.dependencies import get_board, repo
+from board_state.dependencies import get_board, get_current_user_id, repo
 from board_state.models import (
     ConfigureTerrainRequest,
     FogOfWarUpdateRequest,
     VisibilityResponse,
 )
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-router = APIRouter(tags=["terrain"])
+router = APIRouter(tags=["terrain"], dependencies=[Depends(get_current_user_id)])
 
 
 @router.get("/api/v1/boards/{session_id}/visibility", response_model=VisibilityResponse)
