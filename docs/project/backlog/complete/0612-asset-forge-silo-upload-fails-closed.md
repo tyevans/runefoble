@@ -1,7 +1,7 @@
 ---
 id: '0612'
 title: Asset Forge Silo Upload Fails Closed and Asset Index Is Durable
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -23,7 +23,7 @@ source_audits:
 # TASK-0612: Asset Forge Silo Upload Fails Closed and Asset Index Is Durable
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Asset uploads report success after a failed Silo write. The bytes go to an in-memory store and the caller gets a URL that does not exist after restart. This task removes the in-memory fallback from the production upload path. A failed Silo write returns a 5xx and records nothing. The asset index moves to a durable store.

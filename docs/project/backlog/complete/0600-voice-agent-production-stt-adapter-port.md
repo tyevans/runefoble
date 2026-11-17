@@ -1,7 +1,7 @@
 ---
 id: '0600'
 title: Voice Agent Production STT Adapter Port (Replace Canned Transcript Default)
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -24,7 +24,7 @@ source_audits:
 # TASK-0600: Voice Agent Production STT Adapter Port (Replace Canned Transcript Default)
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The voice agent default speech-to-text adapter is a mock that returns the fixed phrase "I move 3 squares north". Replace the default with a configured STT port. The production default is a real engine. The mock is used only by test fixtures. When the engine is unavailable, the audio chunk fails with an explicit error event.

@@ -24,6 +24,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Asset Forge Silo upload, read and delete fail closed with 503 and no in-memory fallback. Asset metadata is an event-sourced index (TASK-0612).
+- Gateway MCP board and encounter tools call `board_state` and `rules_compendium` over HTTP. Canned tokens, fixed initiative data and random encounter ids are removed. Upstream failures return MCP error results (TASK-0603).
+- Voice agent speech-to-text uses a configured faster-whisper engine. The canned transcript default is removed. A failed utterance returns `503 speech_engine_unavailable` and publishes `VoiceTranscriptionFailed` (TASK-0600).
 - **Definition of Ready Governance Update: Zero Backward Compatibility Shims (`TASK-0485` through `TASK-0502`)**:
   - Updated Definition of Ready (DoR) across `AGENTS.md`, `docs/operating-manual.md`, and `docs/project/backlog/README.md` to mandate **Zero Backward Compatibility Shims**: task plans and specifications must never include backward compatibility considerations, transitional shims, deprecated aliases, or legacy re-exports.
   - Added automated governance verification in `tests/test_blackbox_bdd_governance.py` asserting that the zero backward compatibility requirement is enforced across all governance records.
@@ -982,6 +985,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- Services with the PostgreSQL event store enabled exit at start-up when PostgreSQL is unreachable, with no in-memory fallback. Helm enables the PostgreSQL store for all nine aggregate-owning services (TASK-0560).
+- Board and watcher events now reach the Redis event streams. Board routes publish every uncommitted event through `publish_event`, and world ticks publish `world_tick_executed` (TASK-0562).
 - **Backlog Engine Missing & Concurrently Moved Task File Handling**:
   - Hardened `BacklogQueue` methods (`list_all_tasks`, `get_completed_task_ids`, `recover_stale_tasks`, `release_task`, and `complete_task`) against `FileNotFoundError` and `OSError` caused by race conditions during concurrent git pulls, task completions, and JIT backlog refinements.
   - Added cross-directory canonical task deduplication in `list_all_tasks` (`complete` > `refined` > `proposed`), preventing duplicate task processing across lifecycle directories.
