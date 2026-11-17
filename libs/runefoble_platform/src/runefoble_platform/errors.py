@@ -50,3 +50,7 @@ class GameRuleViolationError(RunefobleError):
                 "reason": reason,
             },
         )
+
+
+class ServiceUnavailableError(RunefobleError):
+    """Raised when a service dependency is not ready. Maps to HTTP 503 (ADR-0015 b)."""

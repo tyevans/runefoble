@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import Request
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import AggregateRepository, create_aggregate_repository
 
 from campaign_lore.aggregate import LoreDocumentAggregate
@@ -40,8 +41,14 @@ def get_relic_repo() -> AggregateRepository[RelicAggregate]:
 
 
 def get_retrieval_engine(request: Request) -> LoreRetrievalEngine:
-    """Provide the retrieval engine owned by this application instance."""
-    engine: LoreRetrievalEngine = request.app.state.retrieval_engine
+    """Provide the retrieval engine owned by this application instance.
+
+    The engine exists only after the application lifespan has started. A missing engine is
+    a service that is not ready, so the request fails with 503 instead of an AttributeError.
+    """
+    engine: LoreRetrievalEngine | None = getattr(request.app.state, "retrieval_engine", None)
+    if engine is None:
+        raise ServiceUnavailableError("campaign_lore is not started")
     return engine
 
 

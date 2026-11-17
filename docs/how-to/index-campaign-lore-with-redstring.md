@@ -62,6 +62,13 @@ curl -X POST http://localhost:8006/api/v1/lore/aliases/consolidate \
 
 `document_id` is required. The service records the consolidation on that document's stream as `AliasesConsolidated`, so it survives a restart. An unknown document returns `404`.
 
+Status codes for this route:
+
+- `200`: The merge is recorded.
+- `404`: The document does not exist, or it belongs to another campaign.
+- `409`: The alias or the canonical entity is already merged. Nothing is written. A repeated call with the same names returns `409`. Read the `detail` field for the reason.
+- `503`: The service has not finished start-up. Retry later. The service does not return a substitute result.
+
 To resolve aliases during dialogue generation or intent extraction:
 
 ```bash
