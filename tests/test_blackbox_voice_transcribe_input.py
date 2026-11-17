@@ -14,12 +14,13 @@ from collections.abc import Generator
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import PlayerSpokeEvent
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from voice_agent.main import app as voice_app
 from voice_agent.main import set_event_bus as voice_set_event_bus
 from voice_agent.stt import set_streaming_pipeline
 
 from tests.helpers.audio_synth import generate_pcm_sine
+from tests.helpers.mock_redis import MockAsyncRedis
 
 TRANSCRIBE_URL = "/api/v1/voice/transcribe"
 SESSION_STREAM = "runefoble.events.session"
