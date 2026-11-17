@@ -1,238 +1,105 @@
-# How-To: Test Email Signups with Mailpit Mock SMTP
+# How-To: Test Zitadel Sign-Up Email with Mailpit
 
 ## Overview
 
-Runefoble integrates **Mailpit** (`axllent/mailpit`) as the platform's local mock SMTP server and email testing dashboard. During local development, all user registrations, Zitadel OIDC account verifications, password resets, and party invitations route through Mailpit instead of public email relays.
+Runefoble uses **Mailpit** (`axllent/mailpit`) as the local mock SMTP server and email inbox. Zitadel sends all account email through Mailpit. Zitadel sends sign-up verification, password reset, and invitation email. The gateway sends no email and issues no tokens.
 
 Mailpit provides:
-1. **Zero External Dependencies**: Traps 100% of outgoing emails in local memory/ephemeral storage.
-2. **Web UI**: Interactive inbox accessible directly at `http://localhost/mail/` or `http://runefoble.local/mail/`.
-3. **REST API**: Automated test inspection via `/api/v1/messages` and `/api/v1/search`.
-4. **Zitadel Integration**: Out-of-the-box wiring so Zitadel's verification emails land in Mailpit automatically.
+1. **No external relay**: It captures every outgoing message in local storage.
+2. **Web UI**: The inbox is at `http://localhost/mail/` or `http://runefoble.local/mail/`.
+3. **REST API**: Tests read messages from the Mailpit API.
 
 ---
 
-## Architecture & Verification Flow
+## Architecture
 
-When a player or DM signs up, the authentication gateway or Zitadel dispatches an RFC-822 email over internal SMTP (`mailpit:1025`). Mailpit captures the email and makes it immediately visible in its Web UI and REST API.
+Zitadel is the only token issuer and the only identity provider (ADR-0005). New users sign up on the Zitadel hosted sign-up page. Zitadel sends the verification email through SMTP to `mailpit:1025`. Mailpit stores the message.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Developer
-    participant UI as Frontend / Auth Modal
-    participant GW as Gateway API (/api/v1/auth)
-    participant ZS as Zitadel OIDC
+    participant App as App Shell
+    participant ZS as Zitadel (hosted sign-up)
     participant MP as Mailpit (SMTP:1025 / HTTP:8025)
 
-    Developer->>UI: Enter Username & Email ("eldrin@runefoble.local")
-    UI->>GW: POST /api/v1/auth/register
-    GW->>MP: SMTP Send (Verification Email + 6-digit Code)
-    MP-->>GW: 250 Ok: queued
-    GW-->>UI: 201 Created (Token + "Check Mailpit")
+    Developer->>App: Choose "Sign up"
+    App->>ZS: Redirect to hosted sign-up page
+    Developer->>ZS: Submit username and email
+    ZS->>MP: SMTP send (verification link or code)
+    MP-->>ZS: 250 Ok: queued
     Developer->>MP: Open http://localhost/mail/
-    MP-->>Developer: View Email & Copy Verification Code (e.g. "849201")
-    Developer->>UI: Submit Code -> POST /api/v1/auth/verify
-    UI-->>Developer: Account Confirmed!
+    MP-->>Developer: Show verification email
+    Developer->>ZS: Enter code or open link
+    ZS-->>App: Account verified, sign-in continues through OIDC
 ```
+
+The Zitadel SMTP settings are in `deployments/helm/runefoble/templates/zitadel.yaml`. They point to `mailpit:1025` when `mailpit.enabled` is true.
 
 ---
 
-## Step 1: Access the Mailpit Web UI
+## Step 1: Open the Mailpit Web UI
 
-Once the local cluster is running (`make cluster-up` and `make helm-deploy`), Traefik ingress routes the Mailpit web interface:
+After `make cluster-up` and `make helm-deploy`, Traefik routes the Mailpit UI:
 
 - **Ingress URL**: [http://localhost/mail/](http://localhost/mail/) or [http://runefoble.local/mail/](http://runefoble.local/mail/)
-- **Alternative Path**: [http://localhost/mailpit/](http://localhost/mailpit/)
-- **Internal Cluster Address**: `http://mailpit:8025`
+- **Internal cluster address**: `http://mailpit:8025`
 
-The Mailpit interface displays:
-- List of captured messages with search and tags
-- Raw headers, plain text, and rendered HTML email tabs
-- Mobile vs desktop view previews
-- Link inspector highlighting all actionable links
+The UI shows:
+- The list of captured messages
+- Plain text and rendered HTML views
+- A link inspector for every link in a message
 
 ---
 
-## Step 2: Trigger an Email Signup
+## Step 2: Sign Up Through Zitadel
 
-You can trigger a user registration through the browser frontend (`<runefoble-auth-modal>`) or via `curl`:
+1. Open the Zitadel hosted sign-up page. The App Shell sign-up link is added by TASK-0524.
+2. Enter a username, an email address, and a password.
+3. Open Mailpit at `http://localhost/mail/`.
+4. Open the newest message. Copy the verification code or open the verification link.
+5. Complete verification on the Zitadel page.
 
-```bash
-curl -X POST http://localhost/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "ThorinOakenshield",
-    "email": "thorin@runefoble.local",
-    "password": "EreborReclaimed2026!"
-  }'
-```
-
-Response:
-```json
-{
-  "user_id": "user-thorinoakenshield",
-  "username": "ThorinOakenshield",
-  "email": "thorin@runefoble.local",
-  "roles": ["player"],
-  "access_token": "eyJhbGciOi...",
-  "verification_required": true,
-  "message": "Verification email dispatched to thorin@runefoble.local. View email in Mailpit at http://localhost/mail/"
-}
-```
+The gateway has no sign-up route. Do not send sign-up requests to `/api/v1/auth/`.
 
 ---
 
-## Step 3: Complete Account Verification
+## Step 3: Read Messages from the Mailpit API
 
-Open [http://localhost/mail/](http://localhost/mail/) and inspect the latest message with subject:
-`Welcome to Runefoble! Confirm your adventurer account`.
-
-You can verify the account using either the 6-digit code or the activation link:
-
-### Option A: Verify via 6-digit Code
-```bash
-curl -X POST http://localhost/api/v1/auth/verify \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "thorin@runefoble.local",
-    "code": "481516"
-  }'
-```
-
-### Option B: Verify via Activation Token
-```bash
-curl -X POST http://localhost/api/v1/auth/verify \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "thorin@runefoble.local",
-    "token": "<token-from-email>"
-  }'
-```
-
----
-
-## Step 4: Automated Testing with `MailpitClient`
-
-In Python integration tests and blackbox test suites, use `MailpitClient` from `runefoble_platform`:
+Automated tests read messages through the Mailpit REST API. The `MailpitClient` class in `runefoble_platform` wraps this API.
 
 ```python
-# Import from modular email subsystem (or backward-compatible runefoble_platform.email_client shim)
 from runefoble_platform.email import MailpitClient
 
-# Initialize client (uses PlatformSettings defaults)
 mailpit = MailpitClient()
 
-# Purge inbox before test for isolation
+# Clear the inbox before the test
 await mailpit.delete_all_messages()
 
-# Send test email or trigger registration endpoint
-await mailpit.send_email(
-    to="valeros@runefoble.local",
-    subject="Welcome to Runefoble",
-    body_text="Your code is: 928371",
-)
-
-# Inspect captured messages
+# Wait for the Zitadel message, then read it
 latest = await mailpit.get_latest_message()
 assert latest is not None
-assert "valeros@runefoble.local" in latest.to
+assert "evelyn@runefoble.local" in latest.to
 
-# Extract code and activation link using built-in helpers
 code = MailpitClient.extract_verification_code(latest.text)
-assert code == "928371"
-
 link = MailpitClient.extract_verification_link(latest.text)
 ```
 
-### Offline & In-Memory Fallback
-In local unit tests where the Mailpit container is not active, `MailpitClient` automatically falls back to an in-memory buffer (`fallback_in_memory=True`), recording sent emails and allowing queries without network socket failures.
+Test setup must not write Zitadel state directly. Drive sign-up through the Zitadel frontdoor (ADR-0014). Use Mailpit only to read the result.
 
-### Running Blackbox Email Tests
-Runefoble maintains a modular blackbox test suite exercising user registration, token exchange, dev endpoints, and Mailpit email dispatch:
+### Offline fallback
 
-```bash
-uv run pytest tests/test_blackbox_email_signup_mailpit/
-```
-
-The suite is decomposed into focused modules:
-- `conftest.py`: Shared FastAPI `TestClient` and in-memory `MailpitClient` isolation fixtures.
-- `test_registration_flow.py`: User registration, OTP code validation, resend verification, and activation link extraction.
-- `test_token_exchange.py`: Password token grant, refresh token flow, role verification, and logout.
-- `test_dev_mailpit_api.py`: Dev testing endpoints (`/dev/emails`, `/dev/send-test`, `/dev/stats`), inbox purging, and admin provisioning.
+When no Mailpit container runs, `MailpitClient` uses an in-memory buffer (`fallback_in_memory=True`). The buffer records sent messages for unit tests. Deployed environments must not use this fallback.
 
 ---
 
-## Step 5: Test SMTP Delivery Manually
+## Step 4: Local Admin
 
-To verify that SMTP connectivity is operational from the command line:
-
-```bash
-curl -X POST http://localhost/api/v1/auth/test-email \
-  -H "Content-Type: application/json" \
-  -d '{
-    "to": "test@runefoble.local",
-    "subject": "Manual SMTP Test",
-    "body": "Checking Mailpit delivery pipeline."
-  }'
-```
-
-Check the Mailpit service health status at any time:
-```bash
-curl http://localhost/api/v1/auth/mailpit/status
-```
-
-Response:
-```json
-{
-  "status": "healthy",
-  "http_available": true,
-  "smtp_available": true,
-  "message_count": 1,
-  "web_ui_url": "http://localhost:8025/mail/"
-}
-```
+The gateway no longer seeds administrators. The `make seed-admin` and `make invite-admin` targets and `scripts/invite_admin.py` are removed. Local admin bootstrap is planned in TASK-0526.
 
 ---
 
-## Step 6: Seed Local Dev Admin & Invite Users
+## Related
 
-For local development and testing, you can provision the default administrator or invite new team members with specific roles:
-
-### 1. Automatic Seeding via Helm
-When the Kind cluster initializes with Helm (`make helm-deploy`), the Zitadel deployment automatically provisions the initial administrator using values from `deployments/helm/runefoble/values.yaml`:
-- **Username**: `admin`
-- **Email**: `admin@runefoble.local`
-- **Password**: `RunefobleAdminPassword123!`
-
-### 2. Manual CLI Seeding
-To provision or re-verify the default dev admin and send a credentials reminder to Mailpit:
-```bash
-make seed-admin
-```
-Or via script:
-```bash
-uv run python3 scripts/invite_admin.py --seed
-```
-
-### 3. Inviting an Admin or Dungeon Master
-To invite a developer or tester as an admin or DM:
-```bash
-make invite-admin ARGS="--email dm-elena@runefoble.local --name Elena --role dm"
-```
-Or via HTTP API:
-```bash
-curl -X POST http://localhost/api/v1/auth/admin/invite \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "dm-elena@runefoble.local",
-    "username": "Elena",
-    "role": "dm"
-  }'
-```
-
-This immediately:
-1. Grants Zanzibar role relationships in SpiceDB (`system:runefoble#game_master@user:user-elena`).
-2. Dispatches an invitation email with an activation token to Mailpit (`http://localhost/mail/`).
-3. Allows the recipient to complete signup by clicking the link in the Mailpit inbox.
-
+- `docs/reference/ports-and-endpoints.md`: Mailpit ports and the gateway routes.
+- `docs/how-to/authenticate-with-zitadel-oidc.md`: How the gateway verifies Zitadel tokens.
