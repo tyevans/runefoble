@@ -1,6 +1,7 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { dmTrapControlsStyles } from './runefoble-dm-trap-controls.styles.ts';
+import { BoardApiError, postTrap } from './board-api.ts';
 
 export interface TrapTypeOption {
   id: string;
@@ -29,7 +30,15 @@ export class RunefobleDmTrapControls extends LitElement {
   @property({ type: String }) damageDice = '2d10';
   @property({ type: Number }) dcDetection = 15;
   @property({ type: Boolean }) isSecret = true;
+  /** Board (session) id that receives the trap. Required to arm. */
+  @property({ type: String }) boardId = '';
+  /** Campaign id sent as campaign_id so the server can check DM permission. */
+  @property({ type: String }) campaignId = '';
+  /** Target grid cell for the trap. Set by the host after a cell is chosen. */
+  @property({ type: Number }) targetX: number | null = null;
+  @property({ type: Number }) targetY: number | null = null;
   @state() private statusMessage = '';
+  @state() private busy = false;
 
   selectPreset(preset: TrapTypeOption) {
     this.selectedTrapType = preset.id;
@@ -45,18 +54,40 @@ export class RunefobleDmTrapControls extends LitElement {
     this.dispatchEvent(new CustomEvent('layer-toggled', { bubbles: true, composed: true, detail: { layerVisible: this.layerVisible } }));
   }
 
-  armTrap() {
-    const detail = {
-      trapType: this.selectedTrapType,
-      triggerType: this.triggerType,
-      proximityRadius: this.proximityRadius,
-      damageDice: this.damageDice,
-      dcDetection: this.dcDetection,
-      isSecret: this.isSecret,
-    };
-    this.statusMessage = `Armed ${this.selectedTrapType}!`;
-    this.dispatchEvent(new CustomEvent('trap-armed', { bubbles: true, composed: true, detail }));
-    this.dispatchEvent(new CustomEvent('trap-placed', { bubbles: true, composed: true, detail }));
+  /**
+   * POST the trap to the board service. Emits `trap-placed` only after a 2xx
+   * response, with the server's trap state as detail.
+   */
+  async armTrap() {
+    if (!this.boardId) {
+      this.statusMessage = 'No board is open. Trap not armed.';
+      return;
+    }
+    if (this.targetX === null || this.targetY === null) {
+      this.statusMessage = 'Select a board cell first. Trap not armed.';
+      return;
+    }
+    this.busy = true;
+    try {
+      const trap = await postTrap(this.boardId, {
+        name: TRAP_PRESETS.find((p) => p.id === this.selectedTrapType)?.name ?? this.selectedTrapType,
+        trapType: this.selectedTrapType,
+        x: this.targetX,
+        y: this.targetY,
+        triggerType: this.triggerType,
+        proximityRadius: this.proximityRadius,
+        dcDetection: this.dcDetection,
+        damageDice: this.damageDice,
+        isSecret: this.isSecret,
+      }, { campaignId: this.campaignId || undefined });
+      this.statusMessage = `Armed ${this.selectedTrapType}.`;
+      this.dispatchEvent(new CustomEvent('trap-placed', { bubbles: true, composed: true, detail: trap }));
+    } catch (err) {
+      const reason = err instanceof BoardApiError ? err.detail : (err as Error).message;
+      this.statusMessage = `Trap not armed: ${reason}`;
+    } finally {
+      this.busy = false;
+    }
   }
 
   openMapSwitcher() {
@@ -103,7 +134,7 @@ export class RunefobleDmTrapControls extends LitElement {
       ${this.statusMessage ? html`<div style="font-size: 0.75rem; font-weight: 700; color: #2a9d8f; margin-bottom: 6px;">${this.statusMessage}</div>` : ''}
 
       <div class="action-footer">
-        <button class="btn-hud primary" @click="${this.armTrap}">⚔️ Arm Cell</button>
+        <button class="btn-hud primary" ?disabled="${this.busy}" @click="${this.armTrap}">⚔️ Arm Cell</button>
         <button class="btn-hud accent" @click="${this.openMapSwitcher}">🗺️ Switch Map</button>
       </div>
     `;
