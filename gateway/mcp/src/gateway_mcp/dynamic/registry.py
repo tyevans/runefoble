@@ -39,8 +39,7 @@ class DynamicToolRegistry:
         self, definition: DynamicToolDefinition, user_id: str | None = None
     ) -> DynamicToolDefinition:
         validate_parameter_schema(definition.parameters)
-        if definition.handler_code:
-            validate_sandbox_code(definition.handler_code)
+        validate_sandbox_code(definition.handler_code)
         with self._lock:
             self._tools[definition.name] = definition
             if self.mcp is not None:
@@ -105,11 +104,7 @@ class DynamicToolRegistry:
             raise ValueError(f"Dynamic tool '{name}' not found")
         t0, success, err_msg = time.perf_counter(), True, None
         try:
-            return (
-                execute_sandboxed_handler(tool_def.handler_code, arguments)
-                if tool_def.handler_code
-                else {"status": "success", "tool": name, "executed": True, "arguments": arguments}
-            )
+            return execute_sandboxed_handler(tool_def.handler_code, arguments)
         except Exception as exc:
             success, err_msg = False, str(exc)
             raise
