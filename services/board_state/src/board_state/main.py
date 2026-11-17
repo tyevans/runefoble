@@ -36,7 +36,7 @@ from board_state.routers import (
 )
 from board_state.routers.boards import get_ui_manifest
 from fastapi import FastAPI
-from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.event_sourcing import event_store_kind
 
 app = FastAPI(
     title="Runefoble - Board State Service",
@@ -61,7 +61,7 @@ async def health_check():
     return {
         "status": "ok",
         "service": "board_state",
-        "event_store": type(get_event_store()).__name__,
+        "event_store": event_store_kind(),
     }
 
 
