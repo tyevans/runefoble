@@ -610,6 +610,9 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `filters_applied`: List[String]
   - `latency_ms`: Float
   - `audio_bytes_length`: Integer
+- **`CampaignFactionRegistered`**: Emitted when a faction joins a campaign's simulation registry (`runefoble.events.watcher.campaign_faction_registered`). The event belongs to the `CampaignWorld` aggregate stream (`aggregate_type`: `CampaignWorld`).
+  - `campaign_id`: String
+  - `faction_id`: String
 - **`FactionCreated`**: Emitted when a new autonomous NPC faction aggregate is registered (`runefoble.events.watcher.faction_created`).
   - `campaign_id`: String
   - `faction_id`: String
@@ -649,7 +652,7 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `description`: String
   - `severity`: String ("minor", "moderate", "critical")
   - `ripple_effects`: List[String]
-- **`WorldTickExecuted`**: Emitted when a downtime world progression tick completes across all campaign factions (`runefoble.events.watcher.world_tick_executed`).
+- **`WorldTickExecuted`**: Emitted when a downtime world progression tick completes across all campaign factions (`runefoble.events.watcher.world_tick_executed`). The event belongs to the `CampaignWorld` aggregate stream (`aggregate_type`: `CampaignWorld`).
   - `campaign_id`: String
   - `tick_number`: Integer
   - `intelligence_bulletin`: String (Markdown formatted DM briefing)
