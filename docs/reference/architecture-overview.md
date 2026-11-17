@@ -5,7 +5,7 @@
 ```mermaid
 graph TD
     Client[Web & Voice Client] -->|HTTP / WS| Ingress[Traefik Ingress Controller]
-    Ingress -->|/api| GatewayAPI[gateway/api]
+    Ingress -->|/api, /ws| GatewayAPI[gateway/api]
     Ingress -->|/| Frontend[frontend - Lit + Vite]
     Ingress -->|/docs| SwaggerUI[Swagger UI Hub]
     Ingress -->|/auth| Zitadel[Zitadel Identity Provider]
