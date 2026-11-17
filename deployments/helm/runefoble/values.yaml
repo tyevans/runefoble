@@ -245,6 +245,11 @@ services:
     image: runefoble/campaign-analytics:0.1.0
     replicas: 1
     port: 8011
+  gatewayMcp:
+    # Upstream URLs that MCP tools call over HTTP (BOARD_STATE_URL, RULES_COMPENDIUM_URL).
+    # No gateway-mcp deployment template exists yet; these values are for that template.
+    boardStateUrl: "http://board-state:8002"
+    rulesCompendiumUrl: "http://rules-compendium:8007"
 
 # Frontend Application
 frontend:

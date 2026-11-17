@@ -1,0 +1,24 @@
+"""Upstream service addresses for the MCP gateway adapters."""
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class GatewayMcpSettings(BaseSettings):
+    """Base URLs of the owning services that MCP tools call over HTTP."""
+
+    model_config = SettingsConfigDict(extra="ignore")
+
+    board_state_url: str = Field(
+        default="http://localhost:8002",
+        description="Base URL of the board_state service (BOARD_STATE_URL).",
+    )
+    rules_compendium_url: str = Field(
+        default="http://localhost:8007",
+        description="Base URL of the rules_compendium service (RULES_COMPENDIUM_URL).",
+    )
+
+
+def load_settings() -> GatewayMcpSettings:
+    """Read gateway upstream settings from the environment on each call."""
+    return GatewayMcpSettings()

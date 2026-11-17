@@ -9,18 +9,25 @@ The Watcher AI system exposes tools to external LLMs and internal agents via the
 ## Adding a New MCP Tool
 
 ### 1. Define the Tool Function in the Appropriate Sub-Package
-Locate the relevant domain module in `gateway/mcp/src/gateway_mcp/tools/` (e.g., `character.py`, `board.py`, or a new module):
+Locate the relevant domain module in `gateway/mcp/src/gateway_mcp/tools/` (e.g., `character.py`, `board.py`, or a new module).
+
+A tool that owns no data must not return fixed data. It calls the owning service over HTTP:
 
 ```python
-def cast_spell(session_id: str, caster_id: str, spell_name: str, target_coords: dict) -> dict:
-    """Cast a tactical spell, calculate AoE, and update affected tokens."""
-    return {
-        "status": "cast",
-        "spell": spell_name,
-        "area_affected": "radius_15ft",
-        "narrative": f"Arcane energy ripples towards ({target_coords.get('x')}, {target_coords.get('y')})!",
-    }
+from gateway_mcp.clients import ServiceClient
+
+
+async def inspect_tactical_board(session_id: str) -> dict:
+    """Read tokens and grid dimensions for the session from board_state."""
+    board = await ServiceClient().get_board(session_id)
+    return {"session_id": session_id, "tokens": list(board["tokens"].values())}
 ```
+
+Add a typed method to `gateway/mcp/src/gateway_mcp/clients/services.py` for each new upstream route. Use `self._request(...)`. It maps 5xx and connection failures to `ServiceUnavailableError`, and 4xx responses to `ServiceRejectedError`. Do not catch these errors in the tool. FastMCP reports them as MCP tool error results.
+
+Add the base URL to `gateway/mcp/src/gateway_mcp/settings.py` and to the Helm `services.gatewayMcp` values when a new upstream service is added.
+
+Only pure computation, such as dice rolls or rule lookups, may run inside the gateway without a service call. Tools that store state must go through the owning bounded context (ADR-0007).
 
 ### 2. Register with FastMCP in Module Registration Hook
 Add the tool registration to the module's registration hook (e.g., `register_character_tools` in `tools/character.py`):
@@ -30,6 +37,8 @@ def register_character_tools(mcp: FastMCP) -> None:
     """Register character and inventory tools on the FastMCP application."""
     mcp.tool()(cast_spell)
 ```
+
+Service-backed tools are `async`. FastMCP awaits them.
 
 Ensure the tool is re-exported in `gateway/mcp/src/gateway_mcp/tools/__init__.py` and included in `register_tools(mcp)`.
 
@@ -45,3 +54,5 @@ And verify via pytest:
 ```bash
 uv run pytest tests/test_mcp_tools.py tests/test_blackbox_mcp_gateway.py
 ```
+
+Write service-backed tools as blackbox tests. Start the owning service with `tests/helpers/live_services.py` (`serve(app)`), set its URL environment variable, and call the tool through the MCP protocol (`call_tool` in `tests/test_blackbox_mcp_gateway.py`). Add an error case that points the URL at `closed_port_url()` or a `unavailable_app(503)` stand-in.

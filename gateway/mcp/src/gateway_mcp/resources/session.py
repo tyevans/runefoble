@@ -7,11 +7,12 @@ from gateway_mcp.tools.board import inspect_tactical_board, query_encounter_stat
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
 
+ACTIVE_SESSION_ID = "camp1"
 
-def get_session_state(session_id: str) -> dict[str, Any]:
-    """Aggregate tactical board tokens, active scene atmosphere, and encounter state."""
-    board = inspect_tactical_board(session_id)
-    encounter = query_encounter_state(f"enc-{session_id}")
+
+async def get_session_state(session_id: str) -> dict[str, Any]:
+    """Aggregate tactical board tokens and active scene atmosphere for a session."""
+    board = await inspect_tactical_board(session_id)
     return {
         "session_id": session_id,
         "tokens": board["tokens"],
@@ -24,18 +25,17 @@ def get_session_state(session_id: str) -> dict[str, Any]:
             "ambient_audio_prompt": "distant dripping water and echoing chanting",
             "threat_level": "medium",
         },
-        "encounter_state": encounter,
     }
 
 
-def get_active_session_context() -> dict[str, Any]:
+async def get_active_session_context() -> dict[str, Any]:
     """Retrieve complete context for the currently active tabletop gaming session."""
-    return get_session_state("camp1")
+    return await get_session_state(ACTIVE_SESSION_ID)
 
 
-def get_combat_encounter_state() -> dict[str, Any]:
-    """Retrieve active combat encounter state, initiative order, and hazards."""
-    return query_encounter_state("enc-camp1")
+async def get_combat_encounter_state() -> dict[str, Any]:
+    """Retrieve the board state of the active encounter (tokens, grid, and hazards)."""
+    return await query_encounter_state(ACTIVE_SESSION_ID)
 
 
 def register_session_resources(mcp: "FastMCP") -> None:

@@ -2,11 +2,8 @@
 
 from typing import TYPE_CHECKING, Any
 
+from gateway_mcp.clients import ServiceClient
 from rules_compendium.dependencies import get_retrieval_engine
-from rules_compendium.encounter_builder import (
-    build_balanced_encounter,
-    calculate_party_thresholds,
-)
 from rules_compendium.srd_data import CANONICAL_MONSTERS
 
 if TYPE_CHECKING:
@@ -31,33 +28,12 @@ def query_monster_stat_block(monster_name: str) -> dict[str, Any]:
     }
 
 
-def calculate_encounter_balance(
+async def calculate_encounter_balance(
     party_levels: list[int],
     target_difficulty: str = "Medium",
 ) -> dict[str, Any]:
     """Calculate balanced combat encounter group and CR XP thresholds for a party roster."""
-    if not party_levels:
-        party_levels = [1]
-
-    thresholds = calculate_party_thresholds(party_levels)
-    monsters, total_raw_xp, multiplier, adjusted_xp, calculated_tier = build_balanced_encounter(
-        party_levels=party_levels,
-        target_difficulty=target_difficulty,
-    )
-
-    return {
-        "status": "success",
-        "party_levels": party_levels,
-        "party_size": len(party_levels),
-        "target_difficulty": target_difficulty,
-        "calculated_tier": calculated_tier,
-        "thresholds": thresholds,
-        "raw_xp": total_raw_xp,
-        "multiplier": multiplier,
-        "adjusted_xp": adjusted_xp,
-        "recommended_monsters": [m.model_dump() for m in monsters],
-        "total_monster_count": sum(m.count for m in monsters),
-    }
+    return await ServiceClient().balance_encounter(party_levels, target_difficulty)
 
 
 def register_compendium_tools(mcp: "FastMCP") -> None:

@@ -1,21 +1,19 @@
-"""Unit tests for Model Context Protocol (MCP) RPG tools."""
+"""Unit tests for Model Context Protocol (MCP) RPG tools.
 
-import pytest
+Board and encounter tools call owning services over HTTP. Their behavior is
+covered by tests/test_blackbox_mcp_gateway.py.
+"""
+
 from gateway_mcp.server import (
     add_condition,
     apply_absentee_penalty,
     apply_condition,
     cast_spell,
-    create_encounter,
-    execute_agent_action_plan,
     get_character_sheet,
     inspect_inventory,
-    inspect_tactical_board,
     mcp,
     modify_character_hp,
-    move_board_token,
     narrate_with_the_watcher,
-    query_encounter_state,
     roll_dice,
 )
 
@@ -55,23 +53,6 @@ def test_roll_dice():
     fallback = roll_dice("invalid", "Check")
     assert fallback["notation"] == "1d20"
     assert 1 <= fallback["total"] <= 20
-
-
-def test_inspect_tactical_board():
-    """Test tactical board query via MCP."""
-    res = inspect_tactical_board("sess-123")
-    assert res["session_id"] == "sess-123"
-    assert "tokens" in res
-    assert len(res["tokens"]) >= 3
-    assert res["grid_dimensions"] == {"cols": 8, "rows": 8}
-
-
-def test_move_board_token():
-    """Test moving a board token via MCP."""
-    res = move_board_token("sess-123", "t1", 4, 5)
-    assert res["status"] == "success"
-    assert res["token_id"] == "t1"
-    assert res["destination"] == {"x": 4, "y": 5}
 
 
 def test_apply_absentee_penalty():
@@ -128,50 +109,12 @@ def test_add_condition():
     assert res["duration_rounds"] == 2
 
 
-def test_query_encounter_state():
-    """Test active encounter state queries."""
-    res = query_encounter_state("enc-55")
-    assert res["encounter_id"] == "enc-55"
-    assert res["round"] == 2
-    assert res["active_turn"]["character_name"] == "Valeros"
-    assert len(res["initiative_order"]) >= 3
-
-
 def test_inspect_inventory():
     """Test inventory inspection."""
     res = inspect_inventory("char-1")
     assert res["character_id"] == "char-1"
     assert "Longsword +1" in res["equipped"]["main_hand"]
     assert res["currency"]["gold"] == 45
-
-
-def test_create_encounter():
-    """Test encounter creation."""
-    res = create_encounter(
-        "Ambush at Crossroads",
-        terrain="forest",
-        enemies=[{"name": "Bandit", "x": 4, "y": 4, "hp": 11}],
-    )
-    assert res["status"] == "encounter_created"
-    assert res["name"] == "Ambush at Crossroads"
-    assert res["terrain"] == "forest"
-    assert len(res["enemies_spawned"]) == 1
-
-
-@pytest.mark.asyncio
-async def test_execute_agent_action_plan():
-    """Test sequential multi-turn action plan execution."""
-    res = await execute_agent_action_plan(
-        session_id="test-plan-sess",
-        actions=[
-            {"tool": "roll_dice", "parameters": {"notation": "1d20+1"}},
-            {"tool": "move_board_token", "parameters": {"token_id": "t1", "to_x": 2, "to_y": 2}},
-        ],
-    )
-    assert res["status"] == "success"
-    assert res["success"] is True
-    assert res["completed_steps"] == 2
-    assert len(res["steps"]) == 2
 
 
 def test_get_character_sheet():
