@@ -28,6 +28,9 @@ from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.main import app as voice_app
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -211,7 +214,8 @@ def test_gateway_websocket_frontdoor_handshake_and_frames(client: TestClient) ->
     asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
 
     with client.websocket_connect(
-        f"/ws/mobile-companion/{session_id}?user_id={user_id}&peer_id=peer_marcus"
+        f"/ws/mobile-companion/{session_id}?peer_id=peer_marcus",
+        subprotocols=ws_subprotocols(user_id),
     ) as ws:
         # 1. Connected handshake frame consumed by mobile_companion_connected handler
         conn_frame = ws.receive_json()
@@ -260,7 +264,8 @@ def test_public_http_whisper_and_turn_alert_delivery(client: TestClient, signing
     )
 
     with client.websocket_connect(
-        f"/ws/mobile-companion/{session_id}?user_id={user_id}&peer_id=peer_marcus"
+        f"/ws/mobile-companion/{session_id}?peer_id=peer_marcus",
+        subprotocols=ws_subprotocols(user_id),
     ) as ws:
         _ = ws.receive_json()  # Consume connected frame
 

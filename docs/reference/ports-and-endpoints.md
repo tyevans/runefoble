@@ -302,6 +302,10 @@ When running the local development environment via `make dev`, Vite proxies requ
 
 
 
+## Gateway WebSocket Authentication
+
+Every gateway WebSocket route (`/ws/*` and `/overlay/ws/*`) takes the caller's identity only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The gateway accepts the handshake with `runefoble.v1`. A handshake without a verified token closes with code `1008` before accept. Identity in the query string (`user_id`, `token`) or in headers (`X-User-Id`, `Authorization`) is refused. A token that is valid but lacks SpiceDB permission is admitted, then receives a `PERMISSION_DENIED` frame and close code `4003`.
+
 ## Infrastructure Ports
 
 | Infrastructure | Service Name | Port | Description |

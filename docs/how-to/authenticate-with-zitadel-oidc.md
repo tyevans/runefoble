@@ -104,24 +104,17 @@ The server reads the bearer subprotocol, verifies the token, and rejects the han
 
 ```python
 from fastapi import WebSocket
-from runefoble_auth.websocket import (
-    RUNEFOBLE_SUBPROTOCOL,
-    WebSocketAuthError,
-    authenticate_websocket,
-)
+from runefoble_auth.websocket import admit_websocket
 
 
 async def campaign_websocket_endpoint(websocket: WebSocket, verifier) -> None:
-    try:
-        principal = authenticate_websocket(websocket, verifier)
-    except WebSocketAuthError:
-        await websocket.close(code=4401)
-        return
-    await websocket.accept(subprotocol=RUNEFOBLE_SUBPROTOCOL)
+    principal = await admit_websocket(websocket, verifier)
+    if principal is None:
+        return  # Refused with close code 1008 before accept
     # Verify SpiceDB permissions for principal.user_id before serving the session.
 ```
 
-> **Migration status:** The gateway WebSocket endpoint still reads the token from the query string and the `Authorization` header. It also accepts a `bearer.<jwt>` subprotocol with a different prefix. TASK-0522 moves the gateway to the shared helper above. Until then, do not add new WebSocket clients that depend on the query-string path.
+Every gateway WebSocket route calls `admit_websocket` before accept (TASK-0522). Tokens in the query string are refused.
 
 ---
 

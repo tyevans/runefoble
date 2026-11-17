@@ -1,4 +1,8 @@
-"""Signaling Zanzibar authorization and credential extraction."""
+"""Signaling Zanzibar authorization and peer metadata extraction.
+
+The subject comes from the verified principal. Query parameters only carry
+presentation fields (peer id and role). They never carry identity.
+"""
 
 from __future__ import annotations
 
@@ -6,31 +10,11 @@ from fastapi import WebSocket
 from runefoble_auth.spicedb import SpiceDBClient
 
 
-def extract_signaling_auth(websocket: WebSocket) -> tuple[str, str, str]:
-    """Extract authenticated (subject_id, peer_id, role) from WebSocket query params or headers."""
-    # Subject / User ID
-    user_id = None
-    for param in ("user_id", "x_user_id", "subject_id", "token"):
-        val = websocket.query_params.get(param)
-        if val:
-            user_id = val
-            break
-    if not user_id:
-        user_id = websocket.headers.get("x-user-id")
-    if not user_id:
-        auth = websocket.headers.get("authorization")
-        if auth and auth.startswith("Bearer "):
-            user_id = auth[7:].strip()
-    if not user_id:
-        user_id = "guest_user"
-
-    # Peer ID
+def extract_peer_and_role(websocket: WebSocket, user_id: str) -> tuple[str, str]:
+    """Return (peer_id, role) for an admitted subject."""
     peer_id = websocket.query_params.get("peer_id") or f"peer_{user_id}"
-
-    # Role
     role = websocket.query_params.get("role") or "player"
-
-    return user_id, peer_id, role
+    return peer_id, role
 
 
 async def validate_voice_connection(
@@ -63,4 +47,4 @@ async def validate_voice_connection(
     return False
 
 
-__all__ = ["extract_signaling_auth", "validate_voice_connection"]
+__all__ = ["extract_peer_and_role", "validate_voice_connection"]

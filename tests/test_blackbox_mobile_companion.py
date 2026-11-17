@@ -34,6 +34,8 @@ from runefoble_events.voice import (
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.mobile import HapticVibrationPattern, MobileAudioProfileTier
 
+from tests.helpers.ws_identity import ws_subprotocols
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -59,8 +61,18 @@ def clean_companion_environment():
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client(trusted_ws_issuer) -> TestClient:
     return TestClient(app)
+
+
+def _companion_socket(
+    client: TestClient, session_id: str, user_id: str, peer_id: str | None = None
+):
+    """Open a companion socket as a verified `user_id`, optionally naming the peer."""
+    path = f"/ws/mobile-companion/{session_id}"
+    if peer_id:
+        path += f"?peer_id={peer_id}"
+    return client.websocket_connect(path, subprotocols=ws_subprotocols(user_id))
 
 
 def test_zanzibar_unauthorized_connection_rejected(client: TestClient):
@@ -68,9 +80,7 @@ def test_zanzibar_unauthorized_connection_rejected(client: TestClient):
     session_id = f"sess-{uuid4().hex[:6]}"
     unauthorized_user = "unauthorized_wanderer"
 
-    with client.websocket_connect(
-        f"/ws/mobile-companion/{session_id}?user_id={unauthorized_user}"
-    ) as ws:
+    with _companion_socket(client, session_id, unauthorized_user) as ws:
         err_msg = ws.receive_json()
         assert err_msg["type"] == "error"
         assert err_msg["code"] == "PERMISSION_DENIED"
@@ -86,9 +96,7 @@ def test_authorized_handshake_and_connected_frame(client: TestClient):
     session_id, user_id = f"sess-{uuid4().hex[:6]}", "marcus"
     asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
 
-    with client.websocket_connect(
-        f"/ws/mobile-companion/{session_id}?user_id={user_id}&peer_id=peer_marcus"
-    ) as ws:
+    with _companion_socket(client, session_id, user_id, "peer_marcus") as ws:
         connected_frame = ws.receive_json()
         assert connected_frame["type"] == "mobile_companion_connected"
         assert connected_frame["session_id"] == session_id
@@ -119,14 +127,10 @@ def test_secret_dm_whisper_haptic_pulse_and_isolation(client: TestClient, signin
         spicedb.write_relationship("campaign", session_id, "dungeon_master", "user", dm_user)
     )
 
-    with client.websocket_connect(
-        f"/ws/mobile-companion/{session_id}?user_id={user_marcus}&peer_id=peer_marcus"
-    ) as ws_marcus:
+    with _companion_socket(client, session_id, user_marcus, "peer_marcus") as ws_marcus:
         ws_marcus.receive_json()  # Handshake frame
 
-        with client.websocket_connect(
-            f"/ws/mobile-companion/{session_id}?user_id={user_elena}&peer_id=peer_elena"
-        ) as ws_elena:
+        with _companion_socket(client, session_id, user_elena, "peer_elena") as ws_elena:
             ws_elena.receive_json()  # Handshake frame
 
             # DM dispatches secret whisper to Marcus via HTTP frontdoor
@@ -169,7 +173,7 @@ def test_combat_turn_initiative_haptic_alert(client: TestClient, signing_issuer)
         spicedb.write_relationship("campaign", session_id, "dungeon_master", "user", dm_user)
     )
 
-    with client.websocket_connect(f"/ws/mobile-companion/{session_id}?user_id={user_marcus}") as ws:
+    with _companion_socket(client, session_id, user_marcus) as ws:
         ws.receive_json()  # Connected frame
 
         # Send turn alert via HTTP frontdoor
@@ -198,7 +202,7 @@ def test_adaptive_audio_degradation_over_constrained_cellular(client: TestClient
     session_id, user_id = f"sess-{uuid4().hex[:6]}", "marcus"
     asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
 
-    with client.websocket_connect(f"/ws/mobile-companion/{session_id}?user_id={user_id}") as ws:
+    with _companion_socket(client, session_id, user_id) as ws:
         ws.receive_json()  # Connected frame
 
         # 1. Mild packet loss (8%) / constrained bandwidth (35 kbps) -> CELLULAR_CONSTRAINED (12 kbps)

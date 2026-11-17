@@ -2,103 +2,74 @@
 
 Governed by:
 - ADR-0001: SpiceDB Zanzibar Object Authorization
-- ADR-0005: Kubernetes-First Infrastructure with Helm and Kind
-- ADR-0007: Real-Time Voice and Board Synchronization
-- ADR-0009: Continuous Backlog Refinement and Technical Debt Management
+- ADR-0015 (c): WebSocket clients send the token in Sec-WebSocket-Protocol only
 - TASK-0034: Zitadel Production OIDC/JWKS Token Verification Middleware
-- TASK-0079: Zitadel OIDC Token Verification Blackbox Test Suite Modular Decomposition
+- TASK-0520: Verified principal and bearer subprotocol contract
+- TASK-0522: Gateway WebSocket routes authenticate before accept
+
+A refused handshake raises WebSocketDisconnect before any frame is delivered.
+An admitted handshake that lacks SpiceDB permission gets a PERMISSION_DENIED frame and close 4003.
 """
 
+import asyncio
+
 import pytest
-from starlette.testclient import WebSocketDenialResponse
+from fastapi.testclient import TestClient
+from gateway_api.auth import set_spicedb_client
+from gateway_api.main import app
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from starlette.websockets import WebSocketDisconnect
 
-from tests.helpers.zitadel_auth import create_signed_token
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+RUNEFOBLE_PROTOCOL = "runefoble.v1"
 
 
-@pytest.mark.asyncio
-async def test_websocket_valid_signed_token_in_query_succeeds(auth_environment):
-    """Frontdoor test: Valid signed token in WebSocket query parameter connects successfully."""
-    client = auth_environment["client"]
-    valid_key = auth_environment["valid_key"]
-    kid = auth_environment["kid"]
-    spicedb = auth_environment["spicedb"]
+@pytest.fixture
+def spicedb() -> MockSpiceDBClient:
+    client = MockSpiceDBClient()
+    set_spicedb_client(client)
+    yield client
+    set_spicedb_client(SpiceDBClient())
 
+
+@pytest.fixture
+def client() -> TestClient:
+    return TestClient(app)
+
+
+def _grant_view(spicedb: MockSpiceDBClient, campaign_id: str, user_id: str) -> None:
+    asyncio.run(spicedb.write_relationship("campaign", campaign_id, "view", "user", user_id))
+
+
+def test_valid_bearer_subprotocol_connects(client: TestClient, spicedb: MockSpiceDBClient) -> None:
+    """Frontdoor test: a valid token in the bearer subprotocol connects and is accepted."""
     campaign_id = "camp-ws-valid-01"
     user_id = "ws_user_kyra"
+    _grant_view(spicedb, campaign_id, user_id)
 
-    await spicedb.write_relationship("campaign", campaign_id, "view", "user", user_id)
-
-    token = create_signed_token(valid_key, sub=user_id, kid=kid)
-
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?token={token}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(user_id)
+    ) as ws:
+        assert ws.accepted_subprotocol == RUNEFOBLE_PROTOCOL
         msg = ws.receive_json()
         assert msg["type"] == "connected"
         assert msg["campaign_id"] == campaign_id
         assert msg["user_id"] == user_id
 
 
-@pytest.mark.asyncio
-async def test_websocket_valid_signed_token_in_header_succeeds(auth_environment):
-    """Frontdoor test: Valid signed token in WebSocket Authorization header connects successfully."""
-    client = auth_environment["client"]
-    valid_key = auth_environment["valid_key"]
-    kid = auth_environment["kid"]
-    spicedb = auth_environment["spicedb"]
-
-    campaign_id = "camp-ws-valid-02"
-    user_id = "ws_user_merisiel"
-
-    await spicedb.write_relationship("campaign", campaign_id, "view", "user", user_id)
-
-    token = create_signed_token(valid_key, sub=user_id, kid=kid)
-
-    with client.websocket_connect(
-        f"/ws/campaigns/{campaign_id}",
-        headers={"Authorization": f"Bearer {token}"},
-    ) as ws:
-        msg = ws.receive_json()
-        assert msg["type"] == "connected"
-        assert msg["user_id"] == user_id
-
-
-@pytest.mark.asyncio
-async def test_websocket_valid_signed_token_in_subprotocol_succeeds(auth_environment):
-    """Frontdoor test: Valid signed token in Sec-WebSocket-Protocol header connects successfully."""
-    client = auth_environment["client"]
-    valid_key = auth_environment["valid_key"]
-    kid = auth_environment["kid"]
-    spicedb = auth_environment["spicedb"]
-
-    campaign_id = "camp-ws-subproto-01"
-    user_id = "ws_user_seoni"
-
-    await spicedb.write_relationship("campaign", campaign_id, "view", "user", user_id)
-
-    token = create_signed_token(valid_key, sub=user_id, kid=kid)
-
-    with client.websocket_connect(
-        f"/ws/campaigns/{campaign_id}",
-        subprotocols=[f"bearer.{token}"],
-    ) as ws:
-        msg = ws.receive_json()
-        assert msg["type"] == "connected"
-        assert msg["campaign_id"] == campaign_id
-        assert msg["user_id"] == user_id
-
-
-def test_websocket_unauthorized_user_rejected_4003(auth_environment):
-    """Frontdoor test: Valid token for user lacking SpiceDB Zanzibar permissions receives 4003 close frame."""
-    client = auth_environment["client"]
-    valid_key = auth_environment["valid_key"]
-    kid = auth_environment["kid"]
-
+def test_valid_token_without_permission_gets_4003(
+    client: TestClient, spicedb: MockSpiceDBClient
+) -> None:
+    """Frontdoor test: a verified stranger is admitted, then refused by SpiceDB with 4003."""
     campaign_id = "camp-ws-unauthorized-01"
-    user_id = "ws_unauthorized_stranger"
 
-    token = create_signed_token(valid_key, sub=user_id, kid=kid)
-
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?token={token}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("ws_unauthorized_stranger")
+    ) as ws:
         err_msg = ws.receive_json()
         assert err_msg["type"] == "error"
         assert err_msg["code"] == "PERMISSION_DENIED"
@@ -109,48 +80,85 @@ def test_websocket_unauthorized_user_rejected_4003(auth_environment):
         assert exc_info.value.code == 4003
 
 
-def test_websocket_forged_signature_rejected_401(auth_environment):
-    """Frontdoor test: Forged token in WebSocket connection is rejected with 401 Unauthorized."""
-    client = auth_environment["client"]
-    attacker_key = auth_environment["attacker_key"]
-    kid = auth_environment["kid"]
-
-    forged_token = create_signed_token(attacker_key, sub="ws_attacker", kid=kid)
+def test_token_in_query_string_is_refused(client: TestClient, spicedb: MockSpiceDBClient) -> None:
+    """Frontdoor test: a token in the URL query string never admits the handshake."""
+    campaign_id = "camp-ws-query-01"
+    user_id = "ws_user_query"
+    _grant_view(spicedb, campaign_id, user_id)
+    token = SIGNING_ISSUER.mint(user_id)
 
     with (
-        pytest.raises(WebSocketDenialResponse) as exc_info,
-        client.websocket_connect(f"/ws/campaigns/camp-ws?token={forged_token}"),
+        pytest.raises(WebSocketDisconnect),
+        client.websocket_connect(f"/ws/campaigns/{campaign_id}?token={token}"),
     ):
         pass
 
-    assert exc_info.value.status_code == 401
 
-
-def test_websocket_expired_token_rejected_401(auth_environment):
-    """Frontdoor test: Expired token in WebSocket connection is rejected with 401 Unauthorized."""
-    client = auth_environment["client"]
-    valid_key = auth_environment["valid_key"]
-    kid = auth_environment["kid"]
-
-    expired_token = create_signed_token(valid_key, sub="ws_user", exp_offset=-60, kid=kid)
+def test_authorization_header_alone_is_refused(
+    client: TestClient, spicedb: MockSpiceDBClient
+) -> None:
+    """Frontdoor test: browsers cannot send Authorization on WebSockets, so the header is ignored."""
+    campaign_id = "camp-ws-header-01"
+    user_id = "ws_user_header"
+    _grant_view(spicedb, campaign_id, user_id)
+    token = SIGNING_ISSUER.mint(user_id)
 
     with (
-        pytest.raises(WebSocketDenialResponse) as exc_info,
-        client.websocket_connect(f"/ws/campaigns/camp-ws?token={expired_token}"),
+        pytest.raises(WebSocketDisconnect),
+        client.websocket_connect(
+            f"/ws/campaigns/{campaign_id}", headers={"Authorization": f"Bearer {token}"}
+        ),
     ):
         pass
 
-    assert exc_info.value.status_code == 401
 
-
-def test_websocket_missing_token_rejected_in_production(auth_environment):
-    """Frontdoor test: Missing token in WebSocket handshake in production mode is rejected with 401."""
-    client = auth_environment["client"]
+def test_legacy_prefix_without_dot_is_refused(
+    client: TestClient, spicedb: MockSpiceDBClient
+) -> None:
+    """Frontdoor test: only the runefoble.bearer.<jwt> form is accepted, not bearer.<jwt>."""
+    campaign_id = "camp-ws-legacy-01"
+    user_id = "ws_user_legacy"
+    _grant_view(spicedb, campaign_id, user_id)
+    token = SIGNING_ISSUER.mint(user_id)
 
     with (
-        pytest.raises(WebSocketDenialResponse) as exc_info,
-        client.websocket_connect("/ws/campaigns/camp-ws?user_id=spoofed_user"),
+        pytest.raises(WebSocketDisconnect),
+        client.websocket_connect(
+            f"/ws/campaigns/{campaign_id}", subprotocols=[RUNEFOBLE_PROTOCOL, f"bearer.{token}"]
+        ),
     ):
         pass
 
-    assert exc_info.value.status_code == 401
+
+def test_forged_signature_is_refused(client: TestClient) -> None:
+    """Frontdoor test: a token signed by an untrusted key never admits the handshake."""
+    attacker = SigningTestIssuer(issuer=SIGNING_ISSUER.issuer, kid=SIGNING_ISSUER.kid)
+    forged = attacker.mint("ws_attacker")
+
+    with (
+        pytest.raises(WebSocketDisconnect),
+        client.websocket_connect(
+            "/ws/campaigns/camp-ws", subprotocols=[RUNEFOBLE_PROTOCOL, f"runefoble.bearer.{forged}"]
+        ),
+    ):
+        pass
+
+
+def test_expired_token_is_refused(client: TestClient) -> None:
+    """Frontdoor test: an expired token never admits the handshake."""
+    expired = SIGNING_ISSUER.mint("ws_user", expires_in=-60)
+
+    with (
+        pytest.raises(WebSocketDisconnect),
+        client.websocket_connect(
+            "/ws/campaigns/camp-ws",
+            subprotocols=[RUNEFOBLE_PROTOCOL, f"runefoble.bearer.{expired}"],
+        ),
+    ):
+        pass
+
+
+def test_missing_token_is_refused(client: TestClient) -> None:
+    """Frontdoor test: a handshake with no bearer subprotocol is refused."""
+    with pytest.raises(WebSocketDisconnect), client.websocket_connect("/ws/campaigns/camp-ws"):
+        pass

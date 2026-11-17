@@ -11,6 +11,7 @@ export class RunefobleMobileCompanion extends LitElement {
   @property({ type: String }) sessionId = 'session_default';
   @property({ type: String }) userId = 'marcus';
   @property({ type: String }) peerId = 'peer_marcus';
+  @property({ type: String }) token = '';
   @property({ type: String }) channelName = 'Party Voice (Cellular Opus)';
   @property({ type: Boolean }) connected = false;
   @property({ type: String }) audioTier = 'mobile_optimized';
@@ -112,10 +113,10 @@ export class RunefobleMobileCompanion extends LitElement {
   }
 
   public connectWebSocket(url?: string): void {
-    const wsUrl = url || (typeof window !== 'undefined' ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/mobile-companion/${this.sessionId}?user_id=${this.userId}&peer_id=${this.peerId}` : '');
-    if (!wsUrl || typeof WebSocket === 'undefined') return;
+    const wsUrl = url || (typeof window !== 'undefined' ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/mobile-companion/${this.sessionId}?peer_id=${this.peerId}` : '');
+    if (!wsUrl || typeof WebSocket === 'undefined' || !this.token) return;
     try {
-      this.ws = new WebSocket(wsUrl);
+      this.ws = new WebSocket(wsUrl, ['runefoble.v1', `runefoble.bearer.${this.token}`]);
       this.ws.onopen = () => { this.connected = true; this.dispatchEvent(new CustomEvent('connection-changed', { detail: { connected: true }, bubbles: true, composed: true })); };
       this.ws.onclose = () => { this.connected = false; this.dispatchEvent(new CustomEvent('connection-changed', { detail: { connected: false }, bubbles: true, composed: true })); };
       this.ws.onerror = () => { this.connected = false; };
