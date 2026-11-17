@@ -71,36 +71,46 @@ async def ingest_document(
     )
     await repo.save(aggregate)
 
-    # Ingest into redstring graph and hybrid vector/chunk stores
-    index_res = await retrieval_engine.ingest_document(
+    # Index into the redstring graph and hybrid vector/chunk stores
+    summary = await retrieval_engine.ingest_document(
         document_id=doc_id,
         campaign_id=req.campaign_id,
         title=req.title,
         content=req.content,
         is_secret=req.is_secret,
-        aliases=req.aliases,
     )
-
-    # Find entities produced for this campaign/document to record on event stream
-    ents = await retrieval_engine.graph.find_entities(req.campaign_id)
-    extracted_entities = [
-        {"name": e.name, "entity_type": e.entity_type, "id": str(e.id)} for e in ents
-    ]
-    extracted_relationships = []
-    for e in ents:
-        rel_items = await retrieval_engine.graph.get_relationships(e.id, req.campaign_id)
-        for r in rel_items:
-            extracted_relationships.append(
-                {
-                    "source_entity_id": str(r.source_entity_id),
-                    "target_entity_id": str(r.target_entity_id),
-                    "relationship_type": r.relationship_type,
-                }
-            )
+    for alias_name, canonical_name in (req.aliases or {}).items():
+        canon_id, alias_id = await retrieval_engine.consolidate_alias(
+            campaign_id=req.campaign_id,
+            canonical_name=canonical_name,
+            alias_name=alias_name,
+            document_id=doc_id,
+        )
+        aggregate.consolidate_alias(
+            canonical_entity_id=canon_id,
+            canonical_name=canonical_name,
+            alias_entity_id=alias_id,
+            alias_name=alias_name,
+        )
 
     aggregate.record_extracted_entities(
-        entities=extracted_entities,
-        relationships=extracted_relationships,
+        entities=[
+            {
+                "name": e.name,
+                "entity_type": e.entity_type,
+                "id": str(e.id),
+                "extraction_method": e.provenance.extraction_method.value,
+            }
+            for e in summary.entities
+        ],
+        relationships=[
+            {
+                "source_entity_id": str(r.source_entity_id),
+                "target_entity_id": str(r.target_entity_id),
+                "relationship_type": r.relationship_type,
+            }
+            for r in summary.relationships
+        ],
     )
     await repo.save(aggregate)
 
@@ -118,9 +128,9 @@ async def ingest_document(
         campaign_id=req.campaign_id,
         title=req.title,
         is_secret=req.is_secret,
-        entities_count=index_res["entities_count"],
-        relationships_count=index_res["relationships_count"],
-        chunks_count=index_res["chunks_count"],
+        entities_count=len(summary.entities),
+        relationships_count=len(summary.relationships),
+        chunks_count=summary.chunks_written,
         status="indexed",
     )
 

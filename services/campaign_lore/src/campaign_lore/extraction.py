@@ -1,11 +1,10 @@
-"""Worldbuilding Entity & Alias Extraction powered by redstring."""
+"""Worldbuilding entity and alias extraction using regex patterns (no model call)."""
 
 import logging
 import re
-from uuid import UUID, uuid4
+from uuid import UUID, uuid5
 
 import redstring
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -71,18 +70,27 @@ def extract_relationships(text: str) -> list[tuple[str, str, str]]:
     ]
 
 
+ENTITY_NAMESPACE = uuid5(UUID(int=0), "runefoble.campaign_lore.entity")
+
+
+def lore_entity_id(campaign_id: UUID, source_id: str, name: str, entity_type: str) -> UUID:
+    """Deterministic entity id: the same name and type in the same document keep one id."""
+    return uuid5(ENTITY_NAMESPACE, f"{campaign_id}:{source_id}:{name}:{entity_type}")
+
+
 async def get_or_create_entity(
-    graph: redstring.InMemoryGraphStore,
+    graph: redstring.GraphStore,
     campaign_id: UUID,
     name: str,
+    source_id: str,
     prov: redstring.Provenance,
     entity_type: str = "npc",
 ) -> UUID:
-    """Find existing entity by name or create a new entity in graph store."""
+    """Find an entity by name, or create it with a deterministic id for the source document."""
     ents = await graph.find_entities(campaign_id, name=name.lower().strip())
     if ents:
         return ents[0].id
-    new_id = uuid4()
+    new_id = lore_entity_id(campaign_id, source_id, name, entity_type)
     await graph.upsert_entity(
         redstring.Entity(
             id=new_id,
@@ -96,69 +104,58 @@ async def get_or_create_entity(
     return new_id
 
 
-class WorldbuildingLlmProvider:
-    """Extraction provider extracting entities, relationships, and aliases from worldbuilding text."""
+def extract_pattern_graph(
+    text: str,
+) -> tuple[list[redstring.ExtractedEntity], list[redstring.ExtractedRelationship]]:
+    """Extract entities, aliases, and relationships from lore text with regex patterns.
 
-    def __init__(self, model: str = "runefoble/worldbuilding-ner-v1") -> None:
-        self._model = model
+    The result is recorded with ExtractionMethod.PATTERN. No model is called.
+    """
+    entities: list[redstring.ExtractedEntity] = []
+    relationships: list[redstring.ExtractedRelationship] = []
 
-    @property
-    def model(self) -> str:
-        return self._model
+    alias_pairs = extract_alias_pairs(text)
+    proper_nouns = extract_proper_nouns(text)
+    seen_names = set(proper_nouns)
 
-    async def extract[S: BaseModel](
-        self,
-        text: str,
-        schema: type[S],
-        *,
-        system_prompt: str | None = None,
-    ) -> S:
-        """Extract structured entities and relationships from worldbuilding lore text."""
-        entities: list[redstring.ExtractedEntity] = []
-        relationships: list[redstring.ExtractedRelationship] = []
-
-        alias_pairs = extract_alias_pairs(text)
-        proper_nouns = extract_proper_nouns(text)
-        seen_names = set(proper_nouns)
-
-        for name in proper_nouns:
-            etype = classify_entity_type(name)
-            entities.append(
-                redstring.ExtractedEntity(
-                    name=name,
-                    entity_type=etype,
-                    description=f"{etype.upper()} mentioned in campaign lore",
-                    confidence=0.9,
-                )
+    for name in proper_nouns:
+        etype = classify_entity_type(name)
+        entities.append(
+            redstring.ExtractedEntity(
+                name=name,
+                entity_type=etype,
+                description=f"{etype.upper()} mentioned in campaign lore",
+                confidence=0.9,
             )
+        )
 
-        for canon, alias in alias_pairs:
-            for n in (canon, alias):
-                if n not in seen_names:
-                    entities.append(
-                        redstring.ExtractedEntity(name=n, entity_type="npc", confidence=0.95)
-                    )
-                    seen_names.add(n)
-            relationships.append(
-                redstring.ExtractedRelationship(
-                    source_name=canon,
-                    target_name=alias,
-                    relationship_type="alias_of",
-                    confidence=0.99,
+    for canon, alias in alias_pairs:
+        for n in (canon, alias):
+            if n not in seen_names:
+                entities.append(
+                    redstring.ExtractedEntity(name=n, entity_type="npc", confidence=0.95)
                 )
+                seen_names.add(n)
+        relationships.append(
+            redstring.ExtractedRelationship(
+                source_name=canon,
+                target_name=alias,
+                relationship_type="alias_of",
+                confidence=0.99,
             )
+        )
 
-        for src, rel, tgt in extract_relationships(text):
-            relationships.append(
-                redstring.ExtractedRelationship(
-                    source_name=src,
-                    target_name=tgt,
-                    relationship_type=rel,
-                    confidence=0.85,
-                )
+    for src, rel, tgt in extract_relationships(text):
+        relationships.append(
+            redstring.ExtractedRelationship(
+                source_name=src,
+                target_name=tgt,
+                relationship_type=rel,
+                confidence=0.85,
             )
+        )
 
-        return schema.model_validate({"entities": entities, "relationships": relationships})
+    return entities, relationships
 
 
 __all__ = [
@@ -168,10 +165,11 @@ __all__ = [
     "NPC_TITLES",
     "PROPER_NOUN_REGEX",
     "RELATIONSHIP_REGEX",
-    "WorldbuildingLlmProvider",
     "classify_entity_type",
     "extract_alias_pairs",
+    "extract_pattern_graph",
     "extract_proper_nouns",
     "extract_relationships",
     "get_or_create_entity",
+    "lore_entity_id",
 ]
