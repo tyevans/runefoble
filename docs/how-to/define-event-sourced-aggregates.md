@@ -107,7 +107,7 @@ async def test_inventory_aggregate():
 
 ## 6. Persistent Event Store (PostgreSQL)
 
-In staging and production deployments, durable event persistence is enabled via `PlatformSettings` and `PostgreSQLEventStore`:
+In staging and production deployments, Helm sets `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` for every service that owns aggregate state. The flag maps to `PlatformSettings.use_postgres_event_store`. Durable persistence uses `PostgreSQLEventStore`:
 
 ```python
 from runefoble_platform.config import PlatformSettings
@@ -126,7 +126,7 @@ store = get_event_store(settings=settings)
 repo = create_aggregate_repository(CharacterInventoryAggregate, event_store=store)
 ```
 
-If the PostgreSQL host is offline or unreachable during startup, `get_event_store` gracefully falls back to `InMemoryEventStore`, logging a diagnostic warning without terminating application boot.
+If the flag is `true` and the PostgreSQL host is offline or unreachable during startup, `get_event_store` raises `EventStoreInitializationError`. The service process exits instead of running on `InMemoryEventStore`. Keep the flag unset only for in-memory test runs. Use `event_store_kind()` to report the store kind (`postgresql` or `memory`) in health endpoints.
 
 ## 7. Modular Aggregate Decomposition
 

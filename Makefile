@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -87,6 +87,9 @@ helm-lint: ## Validate Helm chart syntax
 helm-template: ## Render and inspect Helm manifests
 	@echo "==> Rendering Helm templates..."
 	helm template $(RELEASE_NAME) $(HELM_CHART)
+
+helm-check-event-store: ## Fail if an aggregate-owning service lacks the PostgreSQL event store
+	@python3 scripts/check_helm_event_store.py $(HELM_CHART)
 
 helm-deploy: ## Deploy Runefoble stack to current Kubernetes context
 	@echo "==> Ensuring active kubectl context is kind-$(CLUSTER_NAME)..."

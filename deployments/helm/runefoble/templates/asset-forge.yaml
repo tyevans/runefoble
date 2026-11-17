@@ -36,6 +36,10 @@ spec:
             - configMapRef:
                 name: asset-forge-config
           env:
+            - name: RUNEFOBLE_DATABASE_URL
+              value: "postgresql+asyncpg://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/{{ .Values.postgres.database }}"
+            - name: RUNEFOBLE_USE_POSTGRES_EVENT_STORE
+              value: "true"
             - name: RUNEFOBLE_SILO_ENDPOINT
               value: "silo:{{ .Values.silo.port }}"
             - name: RUNEFOBLE_SILO_ACCESS_KEY
