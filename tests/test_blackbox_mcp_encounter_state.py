@@ -13,21 +13,27 @@ from uuid import uuid4
 import httpx
 import pytest
 from gateway_mcp.server import mcp
-from mcp.shared.memory import create_connected_server_and_client_session
 from mcp.types import CallToolResult
 
 from tests.helpers.live_services import serve, unavailable_app
+from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-MCP_BEARER_GAP = (
-    "TASK-0532/TASK-0623: MCP service calls send no caller bearer yet, "
-    "so board_state and rules_compendium return 401"
-)
+_MCP: dict[str, str] = {}
 
 
 def bearer(sub: str) -> dict[str, str]:
     """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
+@pytest.fixture(scope="module", autouse=True)
+def mcp_endpoint() -> Iterator[None]:
+    """Serve the gateway MCP server over HTTP so each call carries the caller bearer."""
+    with serve_mcp(mcp) as endpoint:
+        _MCP["url"] = endpoint
+        yield
+    _MCP.clear()
 
 
 @pytest.fixture(scope="module")
@@ -113,9 +119,13 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
 
 
 async def call_query_encounter_state(encounter_id: str) -> CallToolResult:
-    """Call query_encounter_state through the MCP protocol with an in-memory client."""
-    async with create_connected_server_and_client_session(mcp) as session:
-        return await session.call_tool("query_encounter_state", {"encounter_id": encounter_id})
+    """Call query_encounter_state over MCP HTTP, with the `user-test` caller bearer."""
+    return await call_tool_over_http(
+        _MCP["url"],
+        "query_encounter_state",
+        {"encounter_id": encounter_id},
+        SIGNING_ISSUER.mint("user-test"),
+    )
 
 
 def tool_text(result: CallToolResult) -> str:
@@ -123,7 +133,6 @@ def tool_text(result: CallToolResult) -> str:
     return str(result.content[0].text)
 
 
-@pytest.mark.xfail(strict=True, reason=MCP_BEARER_GAP)
 @pytest.mark.asyncio
 async def test_blackbox_query_encounter_state_returns_round_and_turn_order(encounter: str):
     """Verify the tool returns round 1, the ordered initiative list, and the second combatant as active."""
@@ -143,7 +152,6 @@ async def test_blackbox_query_encounter_state_returns_round_and_turn_order(encou
     assert [(t["name"], t["x"], t["y"]) for t in payload["tokens"]] == [("Goblin Archer", 3, 4)]
 
 
-@pytest.mark.xfail(strict=True, reason=MCP_BEARER_GAP)
 @pytest.mark.asyncio
 async def test_blackbox_query_encounter_state_upstream_unavailable_returns_error(
     upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch
