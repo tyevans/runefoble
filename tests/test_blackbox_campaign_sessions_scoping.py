@@ -26,6 +26,11 @@ ROUTERS_CAMPAIGNS_PY = REPO_ROOT / "gateway/api/src/gateway_api/routers/campaign
 TS_TEST_FILE = FRONTEND_DIR / "test" / "campaign-sessions-scoping.test.ts"
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(gateway_app)
@@ -57,9 +62,11 @@ def test_file_length_invariants():
 
 
 @pytest.mark.asyncio
-async def test_backend_create_campaign_seeds_initial_staging_lobby_with_spicedb(client: TestClient):
+async def test_backend_create_campaign_seeds_initial_staging_lobby_with_spicedb(
+    client: TestClient, signing_issuer
+):
     """Verify POST /api/v1/campaigns automatically seeds an initial staging lobby session with SpiceDB auth."""
-    headers_owner = {"X-User-Id": "dm_evelyn"}
+    headers_owner = _auth(signing_issuer, "dm_evelyn")
     spicedb = get_spicedb_client()
 
     res_camp = client.post(
@@ -104,7 +111,7 @@ async def test_backend_create_campaign_seeds_initial_staging_lobby_with_spicedb(
     )
     token = res_inv.json()["token"]
 
-    headers_player = {"X-User-Id": "player_drizzt"}
+    headers_player = _auth(signing_issuer, "player_drizzt")
     res_join = client.post(
         "/api/v1/campaigns/join",
         json={"invite_token": token},
@@ -123,10 +130,10 @@ async def test_backend_create_campaign_seeds_initial_staging_lobby_with_spicedb(
 
 
 @pytest.mark.asyncio
-async def test_campaign_sessions_isolation_and_offline_scoping(client: TestClient):
+async def test_campaign_sessions_isolation_and_offline_scoping(client: TestClient, signing_issuer):
     """Verify multi-campaign session roster isolation and persistence across listings."""
-    headers_a = {"X-User-Id": "owner_alpha"}
-    headers_b = {"X-User-Id": "owner_beta"}
+    headers_a = _auth(signing_issuer, "owner_alpha")
+    headers_b = _auth(signing_issuer, "owner_beta")
 
     # 1. Create Campaign A and schedule Session 2
     res_a = client.post(

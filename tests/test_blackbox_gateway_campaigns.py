@@ -17,6 +17,11 @@ from gateway_api.main import app
 client = TestClient(app)
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 @pytest.fixture(autouse=True)
 def reset_store():
     """Reset campaign and invite memory store before each test."""
@@ -25,9 +30,9 @@ def reset_store():
 
 
 @pytest.mark.asyncio
-async def test_campaign_creation_and_ownership():
+async def test_campaign_creation_and_ownership(signing_issuer):
     """Verify POST /api/v1/campaigns registers campaign and assigns owner role in SpiceDB."""
-    headers_evelyn = {"X-User-Id": "dm_evelyn"}
+    headers_evelyn = _auth(signing_issuer, "dm_evelyn")
 
     create_payload = {
         "title": "Shadows of Drakkenheim",
@@ -56,17 +61,17 @@ async def test_campaign_creation_and_ownership():
     assert res_get.json()["title"] == "Shadows of Drakkenheim"
 
     # Unrelated user without Zanzibar permissions is denied access
-    headers_stranger = {"X-User-Id": "stranger_bob"}
+    headers_stranger = _auth(signing_issuer, "stranger_bob")
     res_denied = client.get(f"/api/v1/campaigns/{campaign_id}", headers=headers_stranger)
     assert res_denied.status_code == 403
     assert res_denied.json()["detail"]["error"] == "permission_denied"
 
 
 @pytest.mark.asyncio
-async def test_campaign_listing_isolation():
+async def test_campaign_listing_isolation(signing_issuer):
     """Verify GET /api/v1/campaigns lists only campaigns where the user has Zanzibar view permission."""
-    headers_evelyn = {"X-User-Id": "dm_evelyn"}
-    headers_marcus = {"X-User-Id": "player_marcus"}
+    headers_evelyn = _auth(signing_issuer, "dm_evelyn")
+    headers_marcus = _auth(signing_issuer, "player_marcus")
 
     # Evelyn creates Campaign A
     res_a = client.post(
@@ -100,10 +105,10 @@ async def test_campaign_listing_isolation():
 
 
 @pytest.mark.asyncio
-async def test_campaign_patch_manage_permission():
+async def test_campaign_patch_manage_permission(signing_issuer):
     """Verify PATCH /api/v1/campaigns/{id} requires Zanzibar manage permission."""
-    headers_evelyn = {"X-User-Id": "dm_evelyn"}
-    headers_marcus = {"X-User-Id": "player_marcus"}
+    headers_evelyn = _auth(signing_issuer, "dm_evelyn")
+    headers_marcus = _auth(signing_issuer, "player_marcus")
 
     res_create = client.post(
         "/api/v1/campaigns",
@@ -133,10 +138,10 @@ async def test_campaign_patch_manage_permission():
 
 
 @pytest.mark.asyncio
-async def test_invite_generation_and_joining_workflow():
+async def test_invite_generation_and_joining_workflow(signing_issuer):
     """Verify invite creation, redemption, and membership registration in SpiceDB."""
-    headers_evelyn = {"X-User-Id": "dm_evelyn"}
-    headers_marcus = {"X-User-Id": "player_marcus"}
+    headers_evelyn = _auth(signing_issuer, "dm_evelyn")
+    headers_marcus = _auth(signing_issuer, "player_marcus")
 
     # 1. Evelyn creates campaign
     res_create = client.post(
@@ -147,7 +152,7 @@ async def test_invite_generation_and_joining_workflow():
     camp_id = res_create.json()["id"]
 
     # 2. Stranger cannot create invite -> 403 Forbidden
-    headers_stranger = {"X-User-Id": "random_stranger"}
+    headers_stranger = _auth(signing_issuer, "random_stranger")
     res_unauth_invite = client.post(
         f"/api/v1/campaigns/{camp_id}/invites",
         json={"role": "player"},
@@ -202,11 +207,11 @@ async def test_invite_generation_and_joining_workflow():
 
 
 @pytest.mark.asyncio
-async def test_spectator_invite_and_usage_limit():
+async def test_spectator_invite_and_usage_limit(signing_issuer):
     """Verify spectator role invitation and max_uses exhaustion."""
-    headers_dm = {"X-User-Id": "dm_sarah"}
-    headers_viewer1 = {"X-User-Id": "viewer_devon"}
-    headers_viewer2 = {"X-User-Id": "viewer_clara"}
+    headers_dm = _auth(signing_issuer, "dm_sarah")
+    headers_viewer1 = _auth(signing_issuer, "viewer_devon")
+    headers_viewer2 = _auth(signing_issuer, "viewer_clara")
 
     # DM creates campaign
     res_create = client.post(

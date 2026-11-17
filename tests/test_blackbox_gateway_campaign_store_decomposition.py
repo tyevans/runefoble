@@ -67,6 +67,11 @@ from gateway_api.main import app as gateway_app
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 @pytest.fixture(autouse=True)
 def clean_store():
     campaign_store.reset()
@@ -257,10 +262,10 @@ def test_campaign_store_mutations_and_invites():
     assert len(store._invites) == 0
 
 
-def test_frontdoor_campaign_creation_and_invite_redemption(client):
+def test_frontdoor_campaign_creation_and_invite_redemption(client, signing_issuer):
     """Blackbox TDD: Public HTTP frontdoor workflow for campaign creation, invites, and join."""
-    owner_headers = {"X-User-Id": "dm_frontdoor"}
-    player_headers = {"X-User-Id": "player_frontdoor"}
+    owner_headers = _auth(signing_issuer, "dm_frontdoor")
+    player_headers = _auth(signing_issuer, "player_frontdoor")
 
     # 1. Create campaign via HTTP POST
     create_payload = {

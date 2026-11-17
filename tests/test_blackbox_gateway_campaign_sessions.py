@@ -19,6 +19,11 @@ from gateway_api.main import app
 client = TestClient(app)
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 @pytest.fixture(autouse=True)
 def reset_store():
     """Reset campaign and session store before each test run."""
@@ -27,10 +32,10 @@ def reset_store():
 
 
 @pytest.mark.asyncio
-async def test_non_member_cannot_list_or_create_sessions():
+async def test_non_member_cannot_list_or_create_sessions(signing_issuer):
     """Verify non-members are rejected with 403 Forbidden on session routes."""
-    headers_owner = {"X-User-Id": "dm_evelyn"}
-    headers_stranger = {"X-User-Id": "unauthorized_stranger"}
+    headers_owner = _auth(signing_issuer, "dm_evelyn")
+    headers_stranger = _auth(signing_issuer, "unauthorized_stranger")
 
     res_camp = client.post(
         "/api/v1/campaigns",
@@ -59,10 +64,10 @@ async def test_non_member_cannot_list_or_create_sessions():
 
 
 @pytest.mark.asyncio
-async def test_player_can_list_sessions_but_cannot_create():
+async def test_player_can_list_sessions_but_cannot_create(signing_issuer):
     """Verify members with 'player' role have view access but lack run_session."""
-    headers_owner = {"X-User-Id": "dm_evelyn"}
-    headers_player = {"X-User-Id": "player_valeros"}
+    headers_owner = _auth(signing_issuer, "dm_evelyn")
+    headers_player = _auth(signing_issuer, "player_valeros")
 
     # 1. Owner creates campaign
     res_camp = client.post(
@@ -109,10 +114,10 @@ async def test_player_can_list_sessions_but_cannot_create():
 
 
 @pytest.mark.asyncio
-async def test_spectator_can_list_sessions_but_cannot_create():
+async def test_spectator_can_list_sessions_but_cannot_create(signing_issuer):
     """Verify members with 'spectator' role have view access but lack run_session."""
-    headers_owner = {"X-User-Id": "dm_evelyn"}
-    headers_spectator = {"X-User-Id": "spectator_clara"}
+    headers_owner = _auth(signing_issuer, "dm_evelyn")
+    headers_spectator = _auth(signing_issuer, "spectator_clara")
 
     res_camp = client.post(
         "/api/v1/campaigns",
@@ -154,11 +159,11 @@ async def test_spectator_can_list_sessions_but_cannot_create():
 
 
 @pytest.mark.asyncio
-async def test_owner_and_dm_create_and_list_sessions():
+async def test_owner_and_dm_create_and_list_sessions(signing_issuer):
     """Verify campaign owners and DMs can create sessions and list them."""
-    headers_owner = {"X-User-Id": "owner_merlin"}
-    headers_dm = {"X-User-Id": "dm_arthur"}
-    headers_player = {"X-User-Id": "player_lancelot"}
+    headers_owner = _auth(signing_issuer, "owner_merlin")
+    headers_dm = _auth(signing_issuer, "dm_arthur")
+    headers_player = _auth(signing_issuer, "player_lancelot")
 
     # 1. Owner creates campaign
     res_camp = client.post(
@@ -241,10 +246,10 @@ async def test_owner_and_dm_create_and_list_sessions():
 
 
 @pytest.mark.asyncio
-async def test_cross_campaign_session_isolation():
+async def test_cross_campaign_session_isolation(signing_issuer):
     """Verify sessions are isolated and never leak across campaigns."""
-    headers_a = {"X-User-Id": "dm_alice"}
-    headers_b = {"X-User-Id": "dm_bob"}
+    headers_a = _auth(signing_issuer, "dm_alice")
+    headers_b = _auth(signing_issuer, "dm_bob")
 
     # Alice creates Campaign A and Session A
     res_a = client.post(

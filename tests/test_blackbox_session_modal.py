@@ -28,6 +28,11 @@ APP_TS = SRC_DIR / "runefoble-app.ts"
 INDEX_TS = SRC_DIR / "index.ts"
 
 
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(gateway_app)
@@ -235,9 +240,9 @@ def test_storybook_stories_completeness():
 
 
 @pytest.mark.asyncio
-async def test_gateway_session_creation_and_listing_contract(client: TestClient):
+async def test_gateway_session_creation_and_listing_contract(client: TestClient, signing_issuer):
     """Verify full frontdoor lifecycle for creating sessions (lobby and upcoming)."""
-    headers_dm = {"X-User-Id": "dm_evelyn"}
+    headers_dm = _auth(signing_issuer, "dm_evelyn")
 
     # 1. DM creates campaign
     res_camp = client.post(
@@ -297,10 +302,10 @@ async def test_gateway_session_creation_and_listing_contract(client: TestClient)
 
 
 @pytest.mark.asyncio
-async def test_unauthorized_user_cannot_create_session(client: TestClient):
+async def test_unauthorized_user_cannot_create_session(client: TestClient, signing_issuer):
     """Verify unauthorized users without run_session permission cannot create sessions."""
-    headers_owner = {"X-User-Id": "dm_evelyn"}
-    headers_stranger = {"X-User-Id": "stranger_bob"}
+    headers_owner = _auth(signing_issuer, "dm_evelyn")
+    headers_stranger = _auth(signing_issuer, "stranger_bob")
 
     res_camp = client.post(
         "/api/v1/campaigns",
