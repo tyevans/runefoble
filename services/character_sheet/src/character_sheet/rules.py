@@ -61,6 +61,11 @@ def get_spell_slots_for_level(
     return dict(SPELL_SLOTS_TABLE.get(level, fallback_slots))
 
 
+def get_spell_slots_max(level: int) -> dict[int, int]:
+    """Return the maximum spell slots per tier for a character level, defaulting to level 1."""
+    return dict(SPELL_SLOTS_TABLE.get(level, SPELL_SLOTS_TABLE[1]))
+
+
 def get_known_spell_level(spell_name: str, default: int = 1) -> int:
     """Return the standard spell level for a known spell."""
     return KNOWN_SPELL_LEVELS.get(spell_name.lower(), default)

@@ -4,6 +4,7 @@ from character_sheet.handlers import (
     InventoryHandlerMixin,
     PortraitHandlerMixin,
     SpellsHandlerMixin,
+    SpellSlotRestoreHandlerMixin,
     VitalsHandlerMixin,
 )
 from character_sheet.models import (
@@ -32,7 +33,8 @@ DEFAULT_SCORES = {"str": 10, "dex": 10, "con": 10, "int": 10, "wis": 10, "cha": 
 __all__ = [
     "CLASS_HIT_DIE", "KNOWN_SPELL_LEVELS", "SPELL_SLOTS_TABLE", "CharacterAggregate",
     "CharacterSheetState", "CharacterState", "ConditionState", "InventoryHandlerMixin",
-    "InventoryItem", "PortraitHandlerMixin", "SpellsHandlerMixin", "StandInGuardrails",
+    "InventoryItem", "PortraitHandlerMixin", "SpellSlotRestoreHandlerMixin", "SpellsHandlerMixin",
+    "StandInGuardrails",
     "VitalsHandlerMixin", "WardrobeVariant", "get_hit_die_for_class",
     "get_known_spell_level", "get_spell_slots_for_level",
 ]
@@ -42,6 +44,7 @@ __all__ = [
 class CharacterAggregate(
     InventoryHandlerMixin,
     SpellsHandlerMixin,
+    SpellSlotRestoreHandlerMixin,
     VitalsHandlerMixin,
     PortraitHandlerMixin,
     DeclarativeAggregate[CharacterState],

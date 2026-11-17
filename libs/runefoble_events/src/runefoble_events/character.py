@@ -131,6 +131,17 @@ class SpellSlotExpended(BaseRunefobleEvent):
     remaining_slots: int
 
 
+@register_event("runefoble.events.character.spell_slots_restored")
+class SpellSlotsRestored(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "CharacterSheet"
+    event_type: str = "runefoble.events.character.spell_slots_restored"
+    session_id: str = ""
+    character_id: str
+    slot_level: int | None = None
+    spell_slots: dict[int, int] = Field(default_factory=dict)
+
+
 @register_event("runefoble.events.character.stand_in_policy_updated")
 class StandInPolicyUpdated(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True
