@@ -283,9 +283,11 @@ services:
     # Required when backend is openai_compatible. Empty means no base URL is set.
     openaiCompatibleBaseUrl: ""
   gatewayMcp:
-    # Upstream URLs that MCP tools call over HTTP (BOARD_STATE_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL).
+    # Upstream URLs that MCP tools call over HTTP (BOARD_STATE_URL, CHARACTER_SHEET_URL,
+    # GAME_SESSION_URL, RULES_COMPENDIUM_URL).
     # No gateway-mcp deployment template exists yet; these values are for that template.
     boardStateUrl: "http://board-state:8002"
+    characterSheetUrl: "http://character-sheet:8003"
     gameSessionUrl: "http://game-session:8004"
     rulesCompendiumUrl: "http://rules-compendium:8007"
 

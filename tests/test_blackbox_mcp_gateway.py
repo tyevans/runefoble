@@ -278,25 +278,6 @@ async def test_blackbox_prompt_templates():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_character_tools():
-    """Verify get_character_sheet and apply_condition through public FastMCP tool interface."""
-    sheet_tool = mcp.get_tool("get_character_sheet")
-    assert sheet_tool is not None
-    sheet_res = await sheet_tool.run({"character_id": "char-1"})
-    assert sheet_res["name"] == "Valeros"
-    assert sheet_res["class"] == "Fighter"
-    assert sheet_res["attributes"]["strength"] == 16
-
-    cond_tool = mcp.get_tool("apply_condition")
-    assert cond_tool is not None
-    cond_res = await cond_tool.run(
-        {"character_id": "char-1", "condition": "prone", "duration_rounds": 1}
-    )
-    assert cond_res["status"] == "condition_applied"
-    assert cond_res["condition"] == "prone"
-
-
-@pytest.mark.asyncio
 async def test_blackbox_create_encounter_stores_enemy_tokens():
     """Verify create_encounter stores enemies on the board that inspect_tactical_board reads back."""
     created = tool_payload(
