@@ -6,6 +6,7 @@ Coordinates active sessions, participant presence, turn order, and campaign time
 from __future__ import annotations
 
 from fastapi import FastAPI
+from game_session.campaign import campaign_router, register_campaign_error_handlers
 from game_session.dependencies import (
     get_event_bus,
     get_spicedb_client,
@@ -53,6 +54,8 @@ app = FastAPI(
 )
 
 app.include_router(session_router)
+app.include_router(campaign_router)
+register_campaign_error_handlers(app)
 app.include_router(combat_router)
 app.include_router(reactions_router)
 app.include_router(autopilot_router)
