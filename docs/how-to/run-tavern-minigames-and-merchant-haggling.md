@@ -118,6 +118,12 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-wyvern-01/tavern/game
 
 When a participant reaches `blackout`, the contest concludes automatically and the surviving participant is crowned champion.
 
+### Voice DSP Upstream Failures
+
+`game-session` calls `voice_agent` over HTTP at `POST /api/v1/voice/dsp/condition`. The base URL is set by `RUNEFOBLE_VOICE_AGENT_URL` (Helm sets `http://voice-agent:8005`). The timeout is set by `RUNEFOBLE_VOICE_AGENT_TIMEOUT_SECONDS` (default `5`).
+
+If `voice_agent` is unreachable, returns an error, or the variable is not set, the drink roll returns `503`. The response has no `voice_dsp` value. The drink is not recorded, so the intoxication level and drink count do not change. Retry the roll after `voice_agent` is ready.
+
 ---
 
 ## 3. Personality-Driven Merchant Haggling

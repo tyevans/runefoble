@@ -14,5 +14,4 @@ dependencies = [
     "eventsource-py>=0.14.0",
     "the-watcher",
     "httpx>=0.28.1",
-    "voice-agent",
 ]

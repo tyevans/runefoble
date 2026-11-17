@@ -67,6 +67,7 @@ dev = [
     "ruff>=0.16.9",
     "zensical>=0.0.65",
     "pytest-timeout>=2.4.0",
+    "import-linter>=2.16",
 ]
 
 [tool.ruff]
@@ -100,6 +101,15 @@ timeout_method = "thread"
 markers = [
     "docker: builds and runs Docker images; needs a reachable Docker daemon",
 ]
+
+[tool.importlinter]
+root_packages = ["game_session", "voice_agent"]
+
+[[tool.importlinter.contracts]]
+name = "game_session must not import voice_agent in process (ADR-0007, ADR-0015)"
+type = "forbidden"
+source_modules = ["game_session"]
+forbidden_modules = ["voice_agent"]
 
 [tool.mutmut]
 paths_to_mutate = "libs/runefoble_platform/src/,services/the_watcher/src/"

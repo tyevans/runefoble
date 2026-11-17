@@ -9,7 +9,7 @@ import random
 from typing import Any
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
-from voice_agent.dsp import VoiceDSPPipeline
+from game_session.voice_client import condition_speech_text
 
 
 def to_uuid(val: Any) -> UUID:
@@ -131,19 +131,15 @@ def compute_intoxication_progression(
     return new_stage, dsp_filters
 
 
-def apply_tavern_voice_dsp(text: str, intoxication_stage: str) -> dict[str, Any]:
-    """Condition speech through voice DSP pipeline based on intoxication level."""
-    pipeline = VoiceDSPPipeline()
-    filters = []
+async def apply_tavern_voice_dsp(text: str, intoxication_stage: str) -> dict[str, Any]:
+    """Condition speech through voice_agent based on intoxication level.
+
+    Raises VoiceAgentUnavailableError when voice_agent cannot condition the text.
+    """
+    filters: list[str] = []
     if intoxication_stage in ("drunk", "smashed", "blackout"):
         filters.append("drunk")
-    res = pipeline.process(text, filters)
-    return {
-        "original_text": text,
-        "conditioned_text": res.conditioned_text,
-        "active_filters": res.active_filters,
-        "dsp_config": res.dsp_config.model_dump(),
-    }
+    return await condition_speech_text(text, filters)
 
 
 __all__ = [
