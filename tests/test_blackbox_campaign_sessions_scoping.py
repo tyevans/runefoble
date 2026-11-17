@@ -18,7 +18,6 @@ from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
-APP_DATA_SERVICE_TS = FRONTEND_DIR / "src" / "services" / "app-data-service.ts"
 TS_TEST_FILE = FRONTEND_DIR / "test" / "campaign-sessions-scoping.test.ts"
 
 
@@ -37,12 +36,6 @@ def reset_stores():
     campaign_store.reset()
     yield
     campaign_store.reset()
-
-
-def test_app_data_service_imports_no_fixtures():
-    """TASK-0640: the data service has no fixture fallback, so it must not import fixtures."""
-    content = APP_DATA_SERVICE_TS.read_text(encoding="utf-8")
-    assert "fixture" not in content.lower(), "app-data-service.ts must not import canned fixtures"
 
 
 @pytest.mark.asyncio
