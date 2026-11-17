@@ -31,6 +31,7 @@ from asset_forge.models import (
     StlTokenResponse,
 )
 from asset_forge.pdf_tiler import tile_battlemap_to_pdf
+from asset_forge.silo_upload import store_forged_asset
 from asset_forge.standees import generate_standees_pdf
 from asset_forge.stl_generator import generate_stl_mesh
 
@@ -86,8 +87,8 @@ async def export_print_pdf(
     )
 
     asset_id = f"pdf-{uuid4().hex[:12]}"
-    upload_meta = storage.upload_asset(
-        bucket=storage.default_bucket,
+    upload_meta = await store_forged_asset(
+        storage,
         object_key=f"prints/{asset_id}.pdf",
         data=pdf_bytes,
         content_type="application/pdf",
@@ -171,8 +172,8 @@ async def export_standees(
     )
 
     asset_id = f"std-{uuid4().hex[:12]}"
-    upload_meta = storage.upload_asset(
-        bucket=storage.default_bucket,
+    upload_meta = await store_forged_asset(
+        storage,
         object_key=f"standees/{asset_id}.pdf",
         data=pdf_bytes,
         content_type="application/pdf",
@@ -241,8 +242,8 @@ async def export_stl_token(
     )
 
     asset_id = f"stl-{uuid4().hex[:12]}"
-    upload_meta = storage.upload_asset(
-        bucket=storage.default_bucket,
+    upload_meta = await store_forged_asset(
+        storage,
         object_key=f"stls/{asset_id}.stl",
         data=stl_bytes,
         content_type="model/stl",

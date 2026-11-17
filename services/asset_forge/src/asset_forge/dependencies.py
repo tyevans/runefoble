@@ -26,7 +26,6 @@ logger = logging.getLogger("runefoble.asset_forge")
 settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
-_storage_service: SiloStorageService | None = None
 _forge_repo: AggregateRepository[AssetForgeAggregate] = create_aggregate_repository(
     AssetForgeAggregate
 )
@@ -39,17 +38,8 @@ def get_forge_repo() -> AggregateRepository[AssetForgeAggregate]:
 
 
 def get_storage() -> SiloStorageService:
-    """Provide Silo storage service instance."""
-    global _storage_service
-    if _storage_service is None:
-        _storage_service = get_platform_storage()
-    return _storage_service
-
-
-def set_storage(storage: SiloStorageService | None) -> None:
-    """Override storage service for testing."""
-    global _storage_service
-    _storage_service = storage
+    """Provide the platform Silo storage client."""
+    return get_platform_storage()
 
 
 def get_event_bus() -> RedisStreamsEventBus | None:

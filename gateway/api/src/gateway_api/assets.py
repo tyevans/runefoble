@@ -12,11 +12,16 @@ from uuid import uuid4
 from fastapi import APIRouter, Header, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 from runefoble_events import AssetDeleted, AssetUploaded
+from runefoble_platform.asset_index import (
+    get_stored_asset,
+    record_stored_asset,
+    remove_stored_asset,
+)
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.errors import EntityNotFoundError
 from runefoble_platform.storage import (
     AssetNotFoundError,
+    AssetStorageError,
     AssetValidationError,
     get_storage_service,
 )
@@ -163,9 +168,16 @@ async def upload_asset(
         )
     except (AssetValidationError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except AssetStorageError as exc:
+        logger.error("Silo rejected asset upload: %s", exc)
+        raise HTTPException(
+            status_code=503, detail="Silo asset storage is unavailable. The asset was not stored."
+        ) from exc
     except Exception as exc:
         logger.exception("Asset upload failed: %s", exc)
         raise HTTPException(status_code=500, detail="Failed to store media asset.") from exc
+
+    await record_stored_asset(meta)
 
     # Publish AssetUploaded domain event
     event = AssetUploaded(
@@ -202,24 +214,31 @@ async def get_asset(
     download: bool = Query(False, description="Force download attachment"),
 ):
     """Retrieve asset metadata or stream binary content."""
-    storage_service = get_storage_service()
     try:
-        if stream or download:
-            data, content_type, meta = storage_service.get_asset_data_by_id(asset_id)
-            disposition = "attachment" if download else "inline"
-            fname = meta["object_key"].split("/")[-1]
-            return Response(
-                content=data,
-                media_type=content_type,
-                headers={"Content-Disposition": f'{disposition}; filename="{fname}"'},
-            )
-
-        meta = storage_service.get_asset_by_id(asset_id)
-        resp = dict(meta)
-        resp["download_url"] = f"/api/v1/assets/{asset_id}?stream=true"
-        return resp
-    except (AssetNotFoundError, EntityNotFoundError) as exc:
+        meta = await get_stored_asset(asset_id)
+    except AssetNotFoundError as exc:
         raise HTTPException(status_code=404, detail=f"Asset '{asset_id}' not found.") from exc
+
+    if stream or download:
+        try:
+            data, content_type = get_storage_service().get_asset(meta["bucket"], meta["object_key"])
+        except AssetNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=f"Asset '{asset_id}' not found.") from exc
+        except AssetStorageError as exc:
+            raise HTTPException(
+                status_code=503, detail="Silo asset storage is unavailable."
+            ) from exc
+        disposition = "attachment" if download else "inline"
+        fname = meta["object_key"].split("/")[-1]
+        return Response(
+            content=data,
+            media_type=content_type,
+            headers={"Content-Disposition": f'{disposition}; filename="{fname}"'},
+        )
+
+    resp = dict(meta)
+    resp["download_url"] = f"/api/v1/assets/{asset_id}?stream=true"
+    return resp
 
 
 @router.get("/{asset_id}/stream")
@@ -242,14 +261,23 @@ async def delete_asset(
 ) -> dict[str, Any]:
     """Delete asset from Silo storage and emit AssetDeleted domain event."""
     deleted_by = _resolve_user_id(None, x_user_id, authorization)
-    storage_service = get_storage_service()
 
     try:
-        meta = storage_service.get_asset_by_id(asset_id)
-    except (AssetNotFoundError, EntityNotFoundError) as exc:
+        meta = await get_stored_asset(asset_id)
+    except AssetNotFoundError as exc:
         raise HTTPException(status_code=404, detail=f"Asset '{asset_id}' not found.") from exc
 
-    storage_service.delete_asset_by_id(asset_id, deleted_by=deleted_by)
+    try:
+        get_storage_service().delete_asset(meta["bucket"], meta["object_key"])
+    except AssetNotFoundError:
+        # Silo no longer holds the object. Drop the stale index entry below.
+        logger.warning("Asset '%s' was missing in Silo. Removing its index entry.", asset_id)
+    except AssetStorageError as exc:
+        raise HTTPException(
+            status_code=503, detail="Silo asset storage is unavailable. The asset was not deleted."
+        ) from exc
+
+    await remove_stored_asset(asset_id, deleted_by=deleted_by)
 
     # Publish AssetDeleted domain event
     delete_event = AssetDeleted(

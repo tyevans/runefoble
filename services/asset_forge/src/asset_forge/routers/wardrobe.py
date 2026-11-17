@@ -9,7 +9,8 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.character import PortraitVariantGenerated
-from runefoble_platform.storage import SiloStorageService
+from runefoble_platform.asset_index import get_stored_asset
+from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 
 from asset_forge.dependencies import (
     check_user_can_forge,
@@ -20,6 +21,7 @@ from asset_forge.dependencies import (
 )
 from asset_forge.generator import generate_wardrobe_portrait_png
 from asset_forge.models import WardrobeForgeRequest, WardrobeForgeResponse
+from asset_forge.silo_upload import store_forged_asset
 
 router = APIRouter(prefix="/api/v1/forge/wardrobe", tags=["Wardrobe Forge"])
 
@@ -57,8 +59,8 @@ async def forge_wardrobe_variant(
     # 2. Upload to Silo S3 object storage
     variant_id = f"var-{uuid4().hex[:10]}"
     object_key = f"wardrobe/{variant_id}.png"
-    upload_meta = storage.upload_asset(
-        bucket=storage.default_bucket,
+    upload_meta = await store_forged_asset(
+        storage,
         object_key=object_key,
         data=png_bytes,
         content_type="image/png",
@@ -116,8 +118,8 @@ async def get_forged_wardrobe_variant(
 ) -> dict:
     """Retrieve metadata for a previously forged wardrobe attire variant."""
     try:
-        return storage.get_asset_by_id(variant_id)
-    except Exception as exc:
+        return await get_stored_asset(variant_id)
+    except AssetNotFoundError as exc:
         raise HTTPException(
             status_code=404, detail=f"Wardrobe variant '{variant_id}' not found."
         ) from exc

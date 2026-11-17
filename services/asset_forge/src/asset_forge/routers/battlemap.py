@@ -9,8 +9,9 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.asset import BattlemapForged
+from runefoble_platform.asset_index import get_stored_asset
 from runefoble_platform.event_sourcing import AggregateRepository
-from runefoble_platform.storage import SiloStorageService
+from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 
 from asset_forge.aggregate import AssetForgeAggregate
 from asset_forge.dependencies import (
@@ -27,6 +28,7 @@ from asset_forge.models import (
     BattlemapForgeRequest,
     BattlemapForgeResponse,
 )
+from asset_forge.silo_upload import store_forged_asset
 
 router = APIRouter(prefix="/api/v1/forge/battlemap", tags=["Battlemap Forge"])
 
@@ -71,8 +73,8 @@ async def forge_battlemap(
     # 3. Store in Silo S3 media bucket
     asset_id = f"map-{uuid4().hex[:12]}"
     object_key = f"battlemaps/{asset_id}.png"
-    upload_meta = storage.upload_asset(
-        bucket=storage.default_bucket,
+    upload_meta = await store_forged_asset(
+        storage,
         object_key=object_key,
         data=png_bytes,
         content_type="image/png",
@@ -167,8 +169,8 @@ async def get_forged_battlemap(
 ) -> dict:
     """Retrieve metadata for a previously forged battlemap."""
     try:
-        return storage.get_asset_by_id(asset_id)
-    except Exception as exc:
+        return await get_stored_asset(asset_id)
+    except AssetNotFoundError as exc:
         raise HTTPException(
             status_code=404, detail=f"Battlemap asset '{asset_id}' not found."
         ) from exc
