@@ -95,6 +95,14 @@ curl -X POST http://localhost:8008/api/v1/forge/token \
 
 ---
 
+## Failure Behaviour
+
+Forged assets are written to Silo before the forge responds. The service never returns a URL for bytes it did not store.
+
+- If Silo is unreachable or returns an error status, the forge route returns `503 Service Unavailable`. The response has no `asset_id` and no `image_url`.
+- Retry the request after Silo recovers. A retry creates a new asset id.
+- `GET /api/v1/forge/battlemap/{asset_id}` and `GET /api/v1/forge/token/{asset_id}` read the durable asset index. They return the same metadata before and after a service restart.
+
 ## 3. Projecting Geometry to `board_state`
 
 The `board_geometry_payload` returned by the battlemap generator maps directly to `board_state` REST endpoints:

@@ -19,6 +19,7 @@ from uuid import uuid4
 
 from board_state.uvtt.doors import extract_doors_from_uvtt
 from board_state.uvtt.lights import extract_lights_from_uvtt
+from runefoble_platform.asset_index import record_stored_asset
 from runefoble_platform.storage import SiloStorageService, get_storage_service
 
 if TYPE_CHECKING:
@@ -160,13 +161,17 @@ def parse_uvtt_data(raw_data: str | bytes | dict[str, Any]) -> UVTTParseResult:
     )
 
 
-def store_uvtt_image(
+async def store_uvtt_image(
     image_bytes: bytes,
     mime_type: str = "image/png",
     storage: SiloStorageService | None = None,
     owner_id: str = "uvtt_importer",
 ) -> tuple[str, str]:
-    """Store decoded battlemap image into Silo S3 and return (asset_id, url)."""
+    """Store decoded battlemap image into Silo S3 and return (asset_id, url).
+
+    Raises AssetStorageError when Silo does not confirm the write. The index entry is
+    recorded only after that confirmation.
+    """
     s = storage or get_storage_service()
     asset_id = f"map-{uuid4().hex[:12]}"
     ext = "jpg" if "jpeg" in mime_type else ("webp" if "webp" in mime_type else "png")
@@ -180,6 +185,7 @@ def store_uvtt_image(
         owner_id=owner_id,
         asset_id=asset_id,
     )
+    await record_stored_asset(metadata)
     return asset_id, metadata["url"]
 
 

@@ -9,8 +9,9 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.asset import TokenAssetForged
+from runefoble_platform.asset_index import get_stored_asset
 from runefoble_platform.event_sourcing import AggregateRepository
-from runefoble_platform.storage import SiloStorageService
+from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 
 from asset_forge.aggregate import AssetForgeAggregate
 from asset_forge.dependencies import (
@@ -26,6 +27,7 @@ from asset_forge.models import (
     TokenForgeRequest,
     TokenForgeResponse,
 )
+from asset_forge.silo_upload import store_forged_asset
 
 router = APIRouter(prefix="/api/v1/forge/token", tags=["Token Forge"])
 
@@ -65,8 +67,8 @@ async def forge_token(
     # 2. Upload to Silo S3 object storage
     asset_id = f"tok-{uuid4().hex[:12]}"
     object_key = f"tokens/{asset_id}.png"
-    upload_meta = storage.upload_asset(
-        bucket=storage.default_bucket,
+    upload_meta = await store_forged_asset(
+        storage,
         object_key=object_key,
         data=png_bytes,
         content_type="image/png",
@@ -147,6 +149,6 @@ async def get_forged_token(
 ) -> dict:
     """Retrieve metadata for a previously forged token portrait."""
     try:
-        return storage.get_asset_by_id(asset_id)
-    except Exception as exc:
+        return await get_stored_asset(asset_id)
+    except AssetNotFoundError as exc:
         raise HTTPException(status_code=404, detail=f"Token asset '{asset_id}' not found.") from exc

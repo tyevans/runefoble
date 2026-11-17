@@ -22,11 +22,8 @@ PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 @pytest.fixture(autouse=True)
 def clean_environment():
     """Ensure clean storage and bus states before and after each test."""
-    storage = get_storage()
-    storage.clear()
     set_event_bus(None)
     yield
-    storage.clear()
     set_event_bus(None)
 
 

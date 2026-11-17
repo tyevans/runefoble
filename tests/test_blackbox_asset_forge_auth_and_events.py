@@ -14,7 +14,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-from asset_forge.dependencies import get_forge_repo, get_spicedb_client, get_storage, set_event_bus
+from asset_forge.dependencies import get_forge_repo, get_spicedb_client, set_event_bus
 from asset_forge.main import app
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
@@ -27,11 +27,8 @@ from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 @pytest.fixture(autouse=True)
 def clean_environment():
     """Ensure clean storage and bus states before and after each test."""
-    storage = get_storage()
-    storage.clear()
     set_event_bus(None)
     yield
-    storage.clear()
     set_event_bus(None)
 
 

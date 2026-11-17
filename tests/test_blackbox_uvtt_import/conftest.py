@@ -9,7 +9,6 @@ from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from gateway_mcp.server import dynamic_registry
-from runefoble_platform.storage import get_storage_service
 
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 
@@ -28,7 +27,6 @@ def gateway_client() -> TestClient:
 def clean_environment():
     """Ensure clean storage and dynamic registry for each test."""
     for step in range(2):
-        get_storage_service().clear()
         for t in list(dynamic_registry.list_tools()):
             dynamic_registry.deregister_tool(t.name)
         if step == 0:
