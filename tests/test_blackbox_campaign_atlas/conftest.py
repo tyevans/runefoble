@@ -3,6 +3,7 @@
 Governed by ADR-0001, ADR-0003, ADR-0007, and Hard Invariant 7.
 """
 
+from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
@@ -13,8 +14,9 @@ from runefoble_auth.spicedb import SpiceDBClient
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
+def client() -> Iterator[TestClient]:
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.fixture

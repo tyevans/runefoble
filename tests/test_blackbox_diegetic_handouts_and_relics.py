@@ -5,6 +5,7 @@ All assertions and setup operate strictly through public HTTP endpoints
 using TestClient(app) from campaign_lore.main and verify emitted CloudEvents.
 """
 
+from collections.abc import Iterator
 from uuid import UUID, uuid4
 
 import pytest
@@ -14,8 +15,9 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
+def client() -> Iterator[TestClient]:
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.mark.asyncio

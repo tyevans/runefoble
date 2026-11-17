@@ -6,6 +6,7 @@ using TestClient(app) from campaign_lore.main.
 """
 
 import time
+from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
@@ -15,8 +16,9 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
+def client() -> Iterator[TestClient]:
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.mark.asyncio
