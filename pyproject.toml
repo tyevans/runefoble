@@ -90,6 +90,9 @@ indent-style = "space"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+markers = [
+    "docker: builds and runs Docker images; needs a reachable Docker daemon",
+]
 
 [tool.mutmut]
 paths_to_mutate = "libs/runefoble_platform/src/,services/the_watcher/src/"
