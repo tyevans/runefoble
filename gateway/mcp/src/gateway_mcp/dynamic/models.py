@@ -6,7 +6,7 @@ from typing import Any
 
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import SchemaError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 TYPE_MAP: dict[str, Any] = {
     "string": str,
@@ -27,8 +27,8 @@ class DynamicToolDefinition(BaseModel):
         default_factory=lambda: {"type": "object", "properties": {}},
         description="JSON Schema for input parameters",
     )
-    handler_code: str | None = Field(
-        default=None, description="Optional sandboxed Python handler implementation"
+    handler_code: str = Field(
+        ..., description="Sandboxed Python handler implementation (required, non-blank)"
     )
     sandbox_policy: dict[str, Any] = Field(
         default_factory=dict, description="Custom sandbox execution constraints"
@@ -38,6 +38,13 @@ class DynamicToolDefinition(BaseModel):
     )
     author_id: str | None = Field(default=None, description="Author user ID for SpiceDB checks")
     campaign_id: str | None = Field(default=None, description="Campaign ID for scoped permissions")
+
+    @field_validator("handler_code")
+    @classmethod
+    def _require_handler(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("handler_code must contain a sandboxed handler implementation")
+        return value
 
 
 class DynamicToolExecutionRequest(BaseModel):

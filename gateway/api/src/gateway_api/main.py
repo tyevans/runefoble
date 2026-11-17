@@ -36,7 +36,9 @@ from gateway_api.routers import (
 )
 from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
 from gateway_api.websocket import campaign_websocket_endpoint
+from gateway_mcp.dynamic import set_event_bus as set_dynamic_tool_event_bus
 from gateway_mcp.dynamic_registry import router as mcp_tools_router
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.telemetry import init_telemetry
 from voice_agent.room_routes import router as voice_rooms_router
 from voice_agent.routers.stream_diagnostics import router as stream_diagnostics_router
@@ -90,6 +92,22 @@ app.include_router(mcp_tools_router, prefix="/api/v1")
 
 
 init_telemetry("gateway-api", settings=platform_settings, app=app)
+
+
+def configure_dynamic_tool_event_bus(redis_url: str) -> RedisStreamsEventBus:
+    """Inject the Redis Streams bus that dynamic MCP tool events publish to.
+
+    Raises RuntimeError when no Redis URL is configured, so the gateway never
+    runs dynamic tools with events that cannot reach the system stream.
+    """
+    if not redis_url:
+        raise RuntimeError("REDIS_URL must be set: dynamic MCP tool events require Redis Streams")
+    bus = RedisStreamsEventBus(redis_url=redis_url)
+    set_dynamic_tool_event_bus(bus)
+    return bus
+
+
+configure_dynamic_tool_event_bus(platform_settings.redis_url)
 
 
 @app.websocket("/ws/campaigns/{campaign_id}")
@@ -169,6 +187,7 @@ if __name__ == "__main__":
 __all__ = [
     "WebSocketConnectionManager",
     "app",
+    "configure_dynamic_tool_event_bus",
     "get_event_bus",
     "platform_settings",
     "set_event_bus",

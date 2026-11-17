@@ -6,22 +6,19 @@ import asyncio
 import logging
 from typing import Any
 
+from opentelemetry import trace
+
 logger = logging.getLogger("runefoble.gateway_mcp.dynamic.events")
 SYSTEM_STREAM = "runefoble:events:system"
 _event_bus: Any = None
+# Strong references keep fire-and-forget publish tasks alive until they finish.
+_pending_publishes: set[asyncio.Task[None]] = set()
 
 
 def get_event_bus() -> Any:
-    """Retrieve event bus singleton, falling back to mock Redis bus."""
-    global _event_bus
+    """Return the event bus injected at gateway startup. Never falls back to memory."""
     if _event_bus is None:
-        try:
-            from runefoble_platform.consumer_group import MockAsyncRedis
-            from runefoble_platform.redis_bus import RedisStreamsEventBus
-
-            _event_bus = RedisStreamsEventBus(client=MockAsyncRedis())
-        except Exception:
-            _event_bus = None
+        raise RuntimeError("Dynamic MCP event bus is not configured; call set_event_bus at startup")
     return _event_bus
 
 
@@ -32,19 +29,30 @@ def set_event_bus(bus: Any) -> None:
 
 
 def safe_dispatch_event(event: Any) -> None:
-    """Safely dispatch event to active event loop without blocking."""
+    """Schedule event publication on the running loop without blocking the caller."""
     try:
         loop = asyncio.get_running_loop()
-        loop.create_task(publish_system_event(event))
     except RuntimeError:
-        pass
+        _record_dropped(event, "no running event loop")
+        return
+    task = loop.create_task(publish_system_event(event))
+    _pending_publishes.add(task)
+    task.add_done_callback(_pending_publishes.discard)
 
 
 async def publish_system_event(event: Any) -> None:
-    """Publish domain event to Redis Streams system topic."""
+    """Publish domain event to Redis Streams system topic. Failures are logged, not raised."""
     try:
         bus = get_event_bus()
-        if bus:
-            await bus.publish_event(SYSTEM_STREAM, event)
+        await bus.publish_event(SYSTEM_STREAM, event)
     except Exception as exc:
-        logger.debug("Failed publishing %s: %s", type(event).__name__, exc)
+        _record_dropped(event, f"{type(exc).__name__}: {exc}")
+
+
+def _record_dropped(event: Any, reason: str) -> None:
+    """Log a dropped event at error level and mark the active trace span."""
+    event_type = type(event).__name__
+    logger.error("Dropped %s for %s: %s", event_type, SYSTEM_STREAM, reason)
+    trace.get_current_span().add_event(
+        "dynamic_tool_event_dropped", {"event_type": event_type, "reason": reason}
+    )
