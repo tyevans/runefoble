@@ -9,7 +9,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 
 | Platform Service | Upstream Image | Internal Host & Port | Ingress Route | Governing ADR | Local / Test Fallback |
 |---|---|---|---|---|---|
-| **PostgreSQL** | `postgres:16-alpine` | `postgres:5432` | None (Internal) | ADR-0005, ADR-0011 | `InMemoryEventStore` |
+| **PostgreSQL** | `pgvector/pgvector:pg16` | `postgres:5432` | None (Internal) | ADR-0005, ADR-0011 | `InMemoryEventStore` |
 | **Redis Streams** | `redis:7.2-alpine` | `runefoble-redis:6379` | None (Internal) | ADR-0006 | `InMemoryEventBus` |
 | **SpiceDB (Zanzibar)** | `authzed/spicedb:v1.34.0` | `spicedb:50051` (gRPC), `8443` (HTTP) | None (Internal) | ADR-0001 | `MockSpiceDBClient` (In-Memory) |
 | **Zitadel (OIDC/AuthN)** | `ghcr.io/zitadel/zitadel:v2.54.0` | `zitadel:8080` | `/auth` | ADR-0005 | `ZitadelAuthService` (PyJWKClient RS256 verification of signature, `iss`, `aud`, `exp`, `sub`; no bypass) |
@@ -95,13 +95,16 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 
 ## Campaign Lore Retrieval Backends
 
-`LoreBackendSettings` (`libs/runefoble_platform`) selects each port of the Campaign Lore retrieval engine. All ports are rebuilt from the event store at start-up.
+`LoreBackendSettings` (`libs/runefoble_platform`) selects each port of the Campaign Lore retrieval engine. The graph and passage ports are rebuilt from the event store at start-up.
 
 - **`RUNEFOBLE_LORE_GRAPH`**: `projection` (default). Entity graph, rebuilt from `LoreDocument` events.
-- **`RUNEFOBLE_LORE_VECTOR`**: `memory` (default). Entity vector index, in process.
-- **`RUNEFOBLE_LORE_CHUNK`**: `memory` (default). Passage corpus for BM25 and dense search, in process.
-- **`RUNEFOBLE_LORE_EMBEDDING`**: `fake` (default). Deterministic hash embeddings, not semantic.
+- **`RUNEFOBLE_LORE_VECTOR`**: `pgvector` (default, the only choice). Entity vectors in the `lore_entity_vectors` table on `RUNEFOBLE_DATABASE_URL`. The `memory` value is rejected.
+- **`RUNEFOBLE_LORE_CHUNK`**: `memory` (default, the only choice). Passage corpus for BM25 and dense search, in process.
+- **`RUNEFOBLE_LORE_EMBEDDING`**: `openai_compatible` (default, the only choice). The `fake` value is rejected. Requires the endpoint settings below.
+- **`RUNEFOBLE_EMBEDDING_BASE_URL`**, **`RUNEFOBLE_EMBEDDING_MODEL`**, **`RUNEFOBLE_EMBEDDING_DIMENSION`**: Required. Start-up fails if one is missing or the endpoint does not answer.
+- **`RUNEFOBLE_EMBEDDING_API_KEY`**, **`RUNEFOBLE_EMBEDDING_DOCUMENT_PREFIX`**, **`RUNEFOBLE_EMBEDDING_QUERY_PREFIX`**: Optional.
 - **Event store**: The replay reads `RUNEFOBLE_USE_POSTGRES_EVENT_STORE` and `RUNEFOBLE_DATABASE_URL`. Start-up fails if PostgreSQL is configured and unreachable.
+- **Details**: [Embedding Providers](embedding-providers.md).
 
 ---
 

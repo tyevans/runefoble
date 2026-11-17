@@ -90,7 +90,7 @@ ingress:
 # Database
 postgres:
   enabled: true
-  image: postgres:16-alpine
+  image: pgvector/pgvector:pg16
   database: runefoble
   username: runefoble_user
   password: runefoble_dev_password
@@ -238,6 +238,15 @@ services:
     image: runefoble/campaign-lore:0.1.0
     replicas: 1
     port: 8006
+    # Embedding endpoint for entity and passage search (ADR-0015). Entries with an empty
+    # value are not rendered, so start-up names each missing setting and stops.
+    env:
+      RUNEFOBLE_EMBEDDING_BASE_URL: ""   # OpenAI-compatible base URL, including /v1
+      RUNEFOBLE_EMBEDDING_MODEL: ""
+      RUNEFOBLE_EMBEDDING_DIMENSION: ""  # Vector width the model returns
+    # Kubernetes Secret that holds the endpoint key under the key "api-key". It is not
+    # created by this chart. Local servers ignore the key, but the Secret must still exist.
+    embeddingApiKeySecret: campaign-lore-embedding
   rulesCompendium:
     image: runefoble/rules-compendium:0.1.0
     replicas: 1

@@ -53,6 +53,19 @@ spec:
               value: "{{ $.Values.observability.enabled }}"
             - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otel-collector:{{ $.Values.observability.otelCollector.grpcPort }}"
+            {{- range $name, $value := .config.env }}
+            {{- if $value }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- with .config.embeddingApiKeySecret }}
+            - name: RUNEFOBLE_EMBEDDING_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ . }}
+                  key: api-key
+            {{- end }}
           {{- if eq .name "voice-agent" }}
             - name: RUNEFOBLE_VOICE_STT_MODEL_SIZE
               value: {{ .config.sttModelSize | quote }}
