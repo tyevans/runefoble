@@ -41,11 +41,11 @@ Access to campaign analytics and chronicle records is protected by SpiceDB Zanzi
 - **Roles**: Users holding `owner`, `dungeon_master`, `player`, or `spectator` relations automatically inherit `view` permission.
 - Unauthorized callers receive HTTP `403 Forbidden`.
 
-When querying endpoints, provide the authenticated user ID via the `X-User-Id` header (or Zitadel JWT bearer token):
+When querying endpoints, send the Zitadel JWT as a bearer token. The gateway verifies the token and forwards the same `Authorization` header to the analytics service. The gateway ignores any `X-User-Id` header from the client.
 
 ```http
 GET /api/v1/analytics/campaigns/c5f8742d-cfca-4fbc-8911-37d363b9f4a1/heatmap
-X-User-Id: sarah_player
+Authorization: Bearer <zitadel-jwt>
 ```
 
 ---
@@ -192,14 +192,24 @@ GET /ui/manifest
 ```
 
 ### Embedding `<runefoble-campaign-analytics>` in the App Shell
+The element makes no network calls. The App Shell loads the three datasets through the gateway with the signed-in user's bearer token, then passes them in as properties. If any read fails, the Chronicle & Stats tab shows the error state with retry.
+
+Gateway routes read by the App Shell (`frontend/src/services/campaign-hub-client.ts`):
+
+| Gateway route | Property | Source service |
+|---|---|---|
+| `GET /api/v1/analytics/campaigns/{campaign_id}/heatmap` | `.heatmapData` | `campaign_analytics` (port 8011) |
+| `GET /api/v1/analytics/campaigns/{campaign_id}/mvp` | `.mvpData` | `campaign_analytics` (port 8011) |
+| `GET /api/v1/analytics/campaigns/{campaign_id}/timeline` | `.timelineData` | `campaign_analytics` (port 8011) |
+
 ```html
 <script type="module" src="/services/campaign_analytics/ui/src/index.ts"></script>
 
 <runefoble-campaign-analytics
   campaignId="c-sunken-temple"
-  sessionId="sess-03"
-  encounterId="enc-grotto-clash"
-  apiBaseUrl="http://localhost:8011"
+  .heatmapData=${heatmap}
+  .mvpData=${mvp}
+  .timelineData=${timeline}
 ></runefoble-campaign-analytics>
 ```
 

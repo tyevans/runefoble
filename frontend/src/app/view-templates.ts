@@ -68,10 +68,21 @@ function renderCampaignTabContent(app: RunefobleApp, activeTab: CampaignTab, can
   if (activeTab === 'characters') {
     return html`<runefoble-character-roster campaign-id=${app.campaignId} .characters=${app.characters.filter((c) => c.campaignId === app.campaignId)} .campaigns=${app.rosterCampaigns} current-user-id=${app.currentUserId} active-filter="assigned" @create-character=${app.handleCreateCharacter} @assign-campaign=${app.handleAssignCampaign} @delete-character=${app.handleDeleteCharacter} @inspect-character=${app.handleInspectCharacter}></runefoble-character-roster>`;
   }
-  if (activeTab === 'codex') {
-    return html`<runefoble-campaign-atlas .campaignId=${app.campaignId} .isGm=${app.isDM} .isDM=${app.isDM}></runefoble-campaign-atlas>`;
-  }
-  return html`<runefoble-campaign-analytics .campaignId=${app.campaignId} apiBaseUrl=""></runefoble-campaign-analytics>`;
+  if (activeTab === 'codex') return renderCodexTab(app);
+  return html`<runefoble-campaign-analytics .campaignId=${app.campaignId} .heatmapData=${app.campaignAnalytics?.heatmap ?? null} .mvpData=${app.campaignAnalytics?.mvp ?? null} .timelineData=${app.campaignAnalytics?.timeline ?? null}></runefoble-campaign-analytics>`;
+}
+
+/** Codex & Lore tab. Two sub-tabs mount the atlas and the lore codex with live data. */
+function renderCodexTab(app: RunefobleApp) {
+  const view = app.campaignCodexView;
+  const selectView = (next: 'atlas' | 'codex') => { app.campaignCodexView = next; };
+  return html`<div class="codex-subtabs" role="tablist" aria-label="Codex Views">
+      <button class="nav-tab ${view === 'atlas' ? 'active' : ''}" role="tab" aria-selected=${view === 'atlas'} @click=${() => selectView('atlas')}>World Atlas</button>
+      <button class="nav-tab ${view === 'codex' ? 'active' : ''}" role="tab" aria-selected=${view === 'codex'} @click=${() => selectView('codex')}>Lore Codex</button>
+    </div>
+    ${view === 'atlas'
+      ? html`<runefoble-campaign-atlas .campaignId=${app.campaignId} .pins=${app.campaignAtlas?.pins ?? []} .territories=${app.campaignAtlas?.territories ?? []} .isDM=${app.isDM}></runefoble-campaign-atlas>`
+      : html`<runefoble-campaign-codex .campaignId=${app.campaignId} .entries=${app.campaignLoreEntries} .isDM=${app.isDM}></runefoble-campaign-codex>`}`;
 }
 
 function renderCampaignTabs(app: RunefobleApp, activeTab: CampaignTab) {

@@ -10,9 +10,11 @@ import { router, registerAuthGuard, type BreadcrumbItem, type MatchedRoute, type
 import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignItem, CampaignMember, LobbyParticipant, LobbyCharacterOption, UpdateCampaignPayload } from '@runefoble/game-session-ui';
+import type { LoreEntry } from '@runefoble/campaign-lore-ui';
 import type { CharacterItem, RosterCampaignOption, CreateCharacterPayload, AssignCampaignEventDetail, DeleteCharacterEventDetail, InspectCharacterEventDetail } from '@runefoble/character-sheet-ui';
 import type { CampaignSessionItem } from './components/runefoble-session-list.ts';
 import type { DataFailure } from './services/data-result.ts';
+import type { CampaignAnalyticsView, CampaignAtlasView } from './services/campaign-hub-client.ts';
 import { handleToggleReadiness, handleToggleStandIn, handleBoardTokenAction, handleBoardAoEPlace, handleBoardSpellVFX, handleBoardConfirmGhost } from './vtt-mesh-handlers.ts';
 import { loadRouteData } from './app/route-data-loader.ts';
 import { renderAppShell } from './app/shell-template.ts';
@@ -56,6 +58,10 @@ export class RunefobleApp extends LitElement {
   @state() public currentCampaign: CampaignItem | null = null;
   @state() public campaignMembers: CampaignMember[] = [];
   @state() public campaignSessions: CampaignSessionItem[] = [];
+  @state() public campaignCodexView: 'atlas' | 'codex' = 'atlas';
+  @state() public campaignAtlas: CampaignAtlasView | null = null;
+  @state() public campaignLoreEntries: LoreEntry[] = [];
+  @state() public campaignAnalytics: CampaignAnalyticsView | null = null;
   @state() public characters: CharacterItem[] = [];
   @state() public rosterCampaigns: RosterCampaignOption[] = [];
   @state() public lobbyParticipants: LobbyParticipant[] = [];

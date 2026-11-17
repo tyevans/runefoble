@@ -14,7 +14,7 @@ The world atlas engine supports three primary hierarchical zoom scales:
 ### Querying the Atlas
 ```bash
 curl -X GET "http://localhost:8006/api/v1/campaigns/{campaign_id}/atlas?layer=continental&era=Session%2012" \
-  -H "x-user-id: rowan_chronicler"
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN"
 ```
 
 The response includes:
@@ -34,7 +34,7 @@ Define territory polygons and assign faction ownership:
 ```bash
 curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/atlas/territories" \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_chronicler" \
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{
     "name": "Silverkeep Garrison",
     "layer": "continental",
@@ -57,7 +57,7 @@ Place a geotagged campaign milestone pin:
 ```bash
 curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/atlas/pins" \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_chronicler" \
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{
     "title": "Silverkeep Garrison Liberation",
     "coordinates": {"x": 200.0, "y": 200.0},
@@ -81,7 +81,7 @@ The Living Party Codex stores markdown lore notes and chronicles with automated 
 ```bash
 curl -X POST "http://localhost:8006/api/v1/campaigns/{campaign_id}/codex/entries" \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_chronicler" \
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{
     "title": "Secret Hypothesis on the Cabal",
     "content": "I suspect the Order of the Obsidian Veil is tunneling into Silverkeep Garrison.",
@@ -104,7 +104,7 @@ To reveal a private theory to the party:
 ```bash
 curl -X PATCH "http://localhost:8006/api/v1/campaigns/{campaign_id}/codex/entries/{entry_id}" \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_chronicler" \
+  -H "Authorization: Bearer $RUNEFOBLE_TOKEN" \
   -d '{"privacy": "party_shared"}'
 ```
 
@@ -126,6 +126,16 @@ Embed the interactive atlas and codex directly in frontend applications:
   .isDM=${true}
 ></runefoble-campaign-atlas>
 ```
+
+### Live Data Source (TASK-0646)
+The App Shell's Codex & Lore tab shows two sub-tabs. Each sub-tab loads its data through the gateway with the signed-in user's bearer token. The gateway forwards the verified user id to the campaign-lore service.
+
+| Gateway route | Used by | Notes |
+|---|---|---|
+| `GET /api/v1/campaigns/{campaign_id}/atlas` | `<runefoble-campaign-atlas>` (`.pins`, `.territories`) | Returns the campaign-lore atlas view. |
+| `GET /api/v1/campaigns/{campaign_id}/codex` | `<runefoble-campaign-codex>` (`.entries`) | Returns a list of codex entries. The shell maps `entry_id` to `id`, `content` to `text`, and `linked_entities` names to `entities`. |
+
+An empty dataset shows the element's empty state. A failed read shows the App Shell error state with retry. The App Shell never shows sample pins or entries.
 
 ### Emitted Custom Events
 - `pin-selected`: Triggered when a pin marker is clicked (`detail.pin`).
