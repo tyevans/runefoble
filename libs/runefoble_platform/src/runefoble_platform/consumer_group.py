@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from pydantic_core import to_jsonable_python
 
 from runefoble_platform.event_deserializer import deserialize_event
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.models import utc_now
 
 logger = logging.getLogger(__name__)
@@ -165,5 +164,4 @@ __all__ = [
     "deserialize_event",
     "RedisConsumerGroup",
     "RedisConsumerGroupWorker",
-    "MockAsyncRedis",
 ]

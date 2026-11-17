@@ -19,8 +19,9 @@ from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus
 from runefoble_events import AssetDeleted, AssetUploaded
 from runefoble_platform.bus import bus as platform_bus
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 
 

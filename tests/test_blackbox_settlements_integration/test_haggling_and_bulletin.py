@@ -6,7 +6,8 @@ from fastapi.testclient import TestClient
 from game_session.dependencies import STREAM_TAVERN, STREAM_WEST_MARCHES
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
-from runefoble_platform.mock_redis import MockAsyncRedis
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 from .conftest import assert_stream_event, setup_campaign_settlement, ws_subprotocols
 

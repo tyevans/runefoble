@@ -16,8 +16,10 @@ from runefoble_events.events import (
     TokenRemoved,
     TurnAdvanced,
 )
-from runefoble_platform.consumer_group import MockAsyncRedis, RedisConsumerGroup
+from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

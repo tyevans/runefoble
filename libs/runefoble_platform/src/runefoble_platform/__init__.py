@@ -1,7 +1,6 @@
 """Runefoble Platform Library."""
 
 from runefoble_platform.analytics import (
-    AnalyticsEventWorker,
     OpenPanelClient,
     anonymize_profile_id,
     sanitize_properties,
@@ -9,7 +8,6 @@ from runefoble_platform.analytics import (
 from runefoble_platform.bus import EventBus, bus
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.consumer_group import (
-    MockAsyncRedis,
     RedisConsumerGroup,
     RedisConsumerGroupWorker,
 )
@@ -68,6 +66,11 @@ from runefoble_platform.storage import (
     get_storage_service,
     set_storage_service,
 )
+from runefoble_platform.stream_consumer import (
+    StreamConsumer,
+    SupervisedStreamConsumers,
+    consumer_statuses,
+)
 from runefoble_platform.telemetry import (
     extract_trace_context,
     get_tracer,
@@ -112,10 +115,11 @@ __all__ = [
     "RedisStreamsEventBus",
     "RedisConsumerGroup",
     "RedisConsumerGroupWorker",
-    "MockAsyncRedis",
     "deserialize_event",
+    "StreamConsumer",
+    "SupervisedStreamConsumers",
+    "consumer_statuses",
     "OpenPanelClient",
-    "AnalyticsEventWorker",
     "anonymize_profile_id",
     "sanitize_properties",
     "DeclarativeAggregate",

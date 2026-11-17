@@ -21,7 +21,9 @@ from board_state.dependencies import (
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture(autouse=True)

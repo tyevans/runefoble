@@ -15,7 +15,7 @@ from uuid import uuid4
 import pytest
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import StandInActionDecided
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 from the_watcher.stand_in_ai import (
@@ -24,6 +24,8 @@ from the_watcher.stand_in_ai import (
     evaluate_tactical_guardrails,
     generate_absentee_recap,
 )
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

@@ -10,7 +10,8 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from runefoble_platform.mock_redis import MockAsyncRedis
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def _setup_active_combat(client: TestClient) -> tuple[str, str, str]:

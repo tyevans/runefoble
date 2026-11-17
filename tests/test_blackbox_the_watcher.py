@@ -5,9 +5,11 @@ import uuid
 import pytest
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import SpeechIntentParsed, TokenMoved, WatcherNarrationGenerated
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture

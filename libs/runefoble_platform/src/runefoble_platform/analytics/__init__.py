@@ -12,12 +12,10 @@ from runefoble_platform.analytics.privacy import (
     anonymize_profile_id,
     sanitize_properties,
 )
-from runefoble_platform.analytics.worker import AnalyticsEventWorker
 
 __all__ = [
     "FORBIDDEN_PROPERTY_KEYS",
     "anonymize_profile_id",
     "sanitize_properties",
     "OpenPanelClient",
-    "AnalyticsEventWorker",
 ]

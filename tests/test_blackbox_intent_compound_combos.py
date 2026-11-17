@@ -10,12 +10,11 @@ from uuid import uuid4
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from runefoble_platform.redis_bus import (
-    MockAsyncRedis,
-    RedisStreamsEventBus,
-)
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def _entity(id_: str, name: str, tag: str, desc: str, x: int, y: int) -> dict:

@@ -12,10 +12,11 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import VoiceAudioConditioned
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.main import app, set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_sine
+from tests.helpers.mock_redis import MockAsyncRedis
 
 pytestmark = pytest.mark.usefixtures("fake_speech_synthesizer")
 

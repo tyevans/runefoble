@@ -23,9 +23,11 @@ from runefoble_events.voice_stream_quality import (
     VoiceStreamCodecAdaptedEvent,
     VoiceStreamQualityDegradedEvent,
 )
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.main import app, set_event_bus
 from voice_agent.routers.stream_diagnostics import reset_diagnostics
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture(autouse=True)

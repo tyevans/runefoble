@@ -7,7 +7,7 @@ Runefoble integrates with self-hosted OpenPanel (`openpanel/openpanel`) to recor
 1. **Never log raw audio or transcripts**: Audio data belongs strictly in the ephemeral voice pipeline. Property keys matching `audio`, `transcript`, `speech`, or `dialogue` are stripped automatically.
 2. **Anonymize user identifiers**: Profile IDs are automatically hashed using salted SHA-256 before reporting to OpenPanel.
 3. **Asynchronous dispatch**: Analytics calls never block user interactions, audio streaming, or game turn adjudication.
-4. **Decoupled domain pipeline**: Domain services publish domain events to Redis Streams; the background `AnalyticsEventWorker` maps them to privacy-preserving telemetry metrics.
+4. **Explicit reporting**: Domain services publish domain events to Redis Streams. No worker forwards them to OpenPanel. A service that reports a metric calls `OpenPanelClient` itself.
 
 ---
 
@@ -17,7 +17,6 @@ To comply with Hard Invariant 6 (File length limit < 500 lines) and support clea
 
 - `runefoble_platform.analytics.privacy`: PII scrubbing (`sanitize_properties`), salted SHA-256 ID anonymization (`anonymize_profile_id`), and forbidden property keys (`FORBIDDEN_PROPERTY_KEYS`).
 - `runefoble_platform.analytics.client`: Asynchronous OpenPanel HTTP client (`OpenPanelClient`) with event buffering and mock mode.
-- `runefoble_platform.analytics.worker`: Background Redis Streams consumer worker (`AnalyticsEventWorker`) translating CloudEvents to OpenPanel metrics.
 - `runefoble_platform.analytics`: Unified re-export facade providing 100% backward compatibility for top-level imports.
 
 ---
@@ -54,33 +53,13 @@ In offline development or unit tests, pass `mock_mode=True` to buffer events in 
 
 ---
 
-## Step 2: Stream Domain Events with `AnalyticsEventWorker`
+## Step 2: Report Domain Events Explicitly
 
-Rather than scattering manual analytics calls across domain aggregates, deploy the background `AnalyticsEventWorker` consuming domain events from Redis Streams (`runefoble.events.session`, `runefoble.events.watcher`):
+No background worker forwards Redis Streams events to OpenPanel. The platform `AnalyticsEventWorker` was removed because no service started it. To report a metric from a domain event, call `OpenPanelClient` from the handler that owns the event. Keep the handler on the owning service's consumer, as described in [Run Supervised Redis Stream Consumers](run-supervised-redis-stream-consumers.md).
 
-```python
-from runefoble_platform.analytics import AnalyticsEventWorker, OpenPanelClient
-from runefoble_platform.consumer_group import RedisConsumerGroup
+The table below is the planned mapping for a future forwarder. It is not implemented.
 
-consumer_group = RedisConsumerGroup(redis_url="redis://localhost:6379/0")
-client = OpenPanelClient()
-
-worker = AnalyticsEventWorker(
-    client=client,
-    consumer_group=consumer_group,
-    streams=["runefoble.events.session", "runefoble.events.watcher"],
-    group_name="runefoble_analytics_workers",
-    consumer_name="analytics_worker_1",
-)
-
-# Start background async consumer loop
-await worker.start()
-
-# When shutting down
-await worker.stop()
-```
-
-### Event Mapping Taxonomy
+### Planned Event Mapping Taxonomy (not implemented)
 
 | Domain Event | OpenPanel Metric | Tracked Properties (Anonymized) |
 |---|---|---|
@@ -129,5 +108,5 @@ In local Kind development, navigate to `http://runefoble.local/analytics` (or po
 
 The OpenPanel analytics test suite is partitioned into two focused blackbox test modules strictly adhering to Hard Invariant 6 (< 500 lines per file, strictly < 180 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
 - `tests/test_blackbox_analytics_client.py`: Verifies salted SHA-256 profile anonymization, recursive PII property scrubbing (audio bytes, speech transcripts, secret credentials), HTTP transport dispatch via `OpenPanelClient`, and fast failure modes.
-- `tests/test_blackbox_analytics_worker.py`: Verifies background Redis Streams consumer group processing (`SessionStarted`, `DiceRolled`, `StandInActionDecided`), mapping domain CloudEvents to OpenPanel metrics, and worker lifecycle with dead-letter queue fault isolation.
+- `tests/test_blackbox_stream_consumers.py`: Verifies the supervised stream consumers of Campaign Analytics and Soundscape. The OpenPanel forwarder has no test because it does not exist.
 

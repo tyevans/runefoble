@@ -83,7 +83,8 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`decompose-prds-into-vertical-slices.md`](how-to/decompose-prds-into-vertical-slices.md): How to scaffold PRDs, audit backlog buffers, and decompose requirements into single-pass vertical slices and ADR spikes.
 - [`instrument-services-with-opentelemetry.md`](how-to/instrument-services-with-opentelemetry.md): How to instrument FastAPI services, configure OTel exporters, and propagate trace context over Redis Streams.
 - [`authenticate-with-zitadel-oidc.md`](how-to/authenticate-with-zitadel-oidc.md): How to validate Zitadel JWTs against JWKS discovery, enforce HTTP dependencies, and secure WebSockets.
-- [`track-analytics-events.md`](how-to/track-analytics-events.md): How to record privacy-preserving analytics via OpenPanel SDK and Redis Streams workers.
+- [`track-analytics-events.md`](how-to/track-analytics-events.md): How to record privacy-preserving analytics via OpenPanel SDK and explicit reporting.
+- [`run-supervised-redis-stream-consumers.md`](how-to/run-supervised-redis-stream-consumers.md): How to start Redis Stream consumers in a service lifespan, dead-letter failed messages, and report consumer status on `/healthz`.
 - [`visualize-project-content.md`](how-to/visualize-project-content.md): How to launch the dynamic project content visualizer, trace Redstring dependencies, and export standalone HTML bundles.
 - [`decompose-microservice-routers.md`](how-to/decompose-microservice-routers.md): How to decompose monolithic FastAPI microservices into modular APIRouters.
 - [`configure-appearance-and-themes.md`](how-to/configure-appearance-and-themes.md): How to configure global themes, appearance color modes (Dark/Light/System), and interact with the settings modal.

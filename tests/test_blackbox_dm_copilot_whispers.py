@@ -17,7 +17,7 @@ from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_events import DMNarrativeWhispered
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     get_copilot_engine,
     get_spicedb_client,
@@ -25,6 +25,8 @@ from the_watcher.dependencies import (
     set_spicedb_client,
 )
 from the_watcher.main import app
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture(autouse=True)

@@ -21,13 +21,13 @@ from board_state.dependencies import set_spicedb_client as set_board_spicedb_cli
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import get_spicedb_client as get_watcher_spicedb_client
 from the_watcher.dependencies import set_event_bus as set_watcher_event_bus
 from the_watcher.dependencies import set_spicedb_client as set_watcher_spicedb_client
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
 
 BOARD_STREAM = "runefoble.events.board"

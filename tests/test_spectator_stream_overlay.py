@@ -17,8 +17,9 @@ from gateway_api.spectator import (
     clear_raw_session_state,
     set_raw_session_state,
 )
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")

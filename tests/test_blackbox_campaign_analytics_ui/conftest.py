@@ -17,8 +17,10 @@ from campaign_analytics.storage import CampaignAnalyticsStorage
 from campaign_analytics.worker import CampaignAnalyticsWorker
 from fastapi.testclient import TestClient
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
-from runefoble_platform.consumer_group import MockAsyncRedis, RedisConsumerGroup
+from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 

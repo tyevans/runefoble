@@ -10,10 +10,7 @@ from collections.abc import Generator
 import pytest
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
-from runefoble_platform.redis_bus import (
-    MockAsyncRedis,
-    RedisStreamsEventBus,
-)
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 from voice_agent.main import (
@@ -34,6 +31,7 @@ from voice_agent.synthesis_engine import set_speech_synthesizer
 
 from tests.helpers.fixture_synthesizer import FixtureSynthesizer
 from tests.helpers.fixture_transcriber import FixtureTranscriber
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 def generate_pcm_sine(

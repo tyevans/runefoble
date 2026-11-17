@@ -10,7 +10,8 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.mock_redis import MockAsyncRedis
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 from .conftest import assert_session_stream_events
 
