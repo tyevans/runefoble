@@ -23,6 +23,7 @@ definition campaign {
     permission view = play + spectator
 }
 
+// Character objects: owner edits and deletes; DM edits for penalties and effects.
 definition character {
     relation campaign: campaign
     relation owner: user
@@ -30,6 +31,8 @@ definition character {
     // Character can be edited by owner, or by DM (for assigning penalties/effects)
     permission edit = owner + campaign->run_session
     permission view = edit + campaign->view
+    // Only the owner can delete a character (the DM cannot)
+    permission delete = owner
 }
 
 definition game_session {
@@ -148,14 +151,19 @@ definition atlas {
     permission place_pin = campaign->play + campaign->run_session
 }
 
+// Codex entries: privacy is set by party_shared and public campaign relations.
 definition codex_entry {
     relation campaign: campaign
     relation author: user
     relation editor: user
     relation reader: user
+    // Privacy levels: party_shared grants play-level view; public grants campaign view
+    relation party_shared: campaign
+    relation public: campaign
 
-    // Private codex entries are accessible only to author and direct readers/editors
-    permission view = author + editor + reader
+    // Private codex entries are accessible to author and direct readers/editors;
+    // party_shared and public entries extend view to the campaign
+    permission view = author + editor + reader + party_shared->play + public->view
     permission edit = author + editor + campaign->run_session
     permission manage = author + campaign->run_session
 }
