@@ -109,11 +109,14 @@ Forged assets are written to Silo before the forge responds. The service never r
 - **Forge Token Portrait** posts the name, type, and prompt to `POST /api/v1/forge/token`. The preview appears only after a successful response.
 - If the route returns an error (for example, `503` when Silo is down), the component shows the `detail` text from the response in an error banner. No preview is shown.
 - The `forge-battlemap` and `forge-token` events fire only after a successful response. The event detail includes the `asset` field.
+- **Place Token on Tactical Board** posts the forged token to `POST /api/v1/boards/{session_id}/tokens`. Set the `sessionId` property and the column and row first. The component shows an error when no session id is set. The board route stores the token name and type. It does not store the portrait image.
+- The `token-placed` event fires only after the board route accepts the token.
+- The component does not project map geometry to `board_state`. No public route accepts the `board_geometry_payload`. Section 3 is a manual recipe for API clients.
 - The header reads "Procedural Battlemap Forge". The component does not use a diffusion model.
 
-## 3. Projecting Geometry to `board_state`
+## 3. Projecting Geometry to `board_state` (Manual, Not Yet a Public Route)
 
-The `board_geometry_payload` returned by the battlemap generator maps directly to `board_state` REST endpoints:
+The `board_geometry_payload` returned by the battlemap generator maps to `board_state` REST endpoints. Client code must make these calls itself. The Asset Forge component does not make them.
 
 1. **Hazard Terrain**: Push each entry in `terrain_mutations` to `POST /api/v1/boards/{session_id}/terrain`.
 2. **Solid Obstacles**: Post each item in `obstacle_tokens` to `POST /api/v1/boards/{session_id}/tokens`.
