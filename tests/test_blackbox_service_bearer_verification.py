@@ -19,9 +19,10 @@ from asset_forge.main import app as asset_forge_app
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from soundscape.main import app as soundscape_app
 
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 PUBLIC_PATHS = {"/healthz", "/health", "/ui/manifest", "/openapi.json"}
