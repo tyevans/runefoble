@@ -106,11 +106,14 @@ def test_battlemap_uploader_modular_decomposition_integrity():
     assert "runefoble-map-uploader" in index_code
 
 
-def test_battlemap_uploader_silo_asset_frontdoor_upload():
+def test_battlemap_uploader_silo_asset_frontdoor_upload(signing_issuer):
     """Verify Silo S3 asset upload frontdoor endpoint integrates with map uploader contract."""
     from gateway_api.main import app as gateway_app
 
-    gateway_client = TestClient(gateway_app)
+    gateway_client = TestClient(
+        gateway_app,
+        headers={"Authorization": f"Bearer {signing_issuer.mint('gm-decomposed')}"},
+    )
     sample_png = (
         b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06"
         b"\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01"

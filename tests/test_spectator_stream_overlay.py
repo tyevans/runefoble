@@ -70,19 +70,33 @@ def test_get_spectator_state_with_token_query():
     assert data["viewer"]["viewer_name"] == "Spectator (devon_stream)"
 
 
-def test_get_spectator_state_with_auth_headers():
-    """Verify viewer identity resolution from X-User-Id and Authorization bearer headers."""
+def test_get_spectator_state_resolves_viewer_from_verified_token(signing_issuer):
+    """Verify a signed-in viewer is identified by a verified token, never by X-User-Id."""
     client = TestClient(gateway_app)
 
-    res_x = client.get("/api/v1/spectate/sess-header-1", headers={"X-User-Id": "spectator_sam"})
-    assert res_x.status_code == 200
-    assert res_x.json()["viewer"]["viewer_id"] == "spectator_sam"
+    res_header_only = client.get(
+        "/api/v1/spectate/sess-header-1", headers={"X-User-Id": "spectator_sam"}
+    )
+    assert res_header_only.status_code == 200
+    assert res_header_only.json()["viewer"]["viewer_id"] == "spectator_guest"
 
+    token = signing_issuer.mint("spectator_sam")
     res_bearer = client.get(
-        "/api/v1/spectate/sess-header-2", headers={"Authorization": "Bearer twitch_streamer_7"}
+        "/api/v1/spectate/sess-header-2",
+        headers={"Authorization": f"Bearer {token}", "X-User-Id": "someone_else"},
     )
     assert res_bearer.status_code == 200
-    assert res_bearer.json()["viewer"]["viewer_id"] == "viewer_twitch_streamer_7"
+    assert res_bearer.json()["viewer"]["viewer_id"] == "spectator_sam"
+
+
+def test_get_spectator_state_refuses_forged_bearer(signing_issuer):
+    """Verify a Bearer value that is not a verified token gets 401, not a viewer identity."""
+    client = TestClient(gateway_app)
+
+    res = client.get(
+        "/api/v1/spectate/sess-header-3", headers={"Authorization": "Bearer twitch_streamer_7"}
+    )
+    assert res.status_code == 401
 
 
 @pytest.mark.asyncio

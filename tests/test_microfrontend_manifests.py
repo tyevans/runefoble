@@ -235,7 +235,7 @@ def test_service_ui_package_integrity():
         ), f"Custom element '{elem_tag}' not found in {rel_dir}/src"
 
 
-def test_battlemap_uploader_microfrontend_frontdoor(board_client):
+def test_battlemap_uploader_microfrontend_frontdoor(board_client, signing_issuer):
     """Verify battlemap asset uploader component integrity and Silo S3 upload frontdoor."""
     from gateway_api.main import app as gateway_app
 
@@ -248,7 +248,10 @@ def test_battlemap_uploader_microfrontend_frontdoor(board_client):
     assert "runefoble-map-uploader" in manifest["components"]
 
     # 2. Silo S3 asset upload frontdoor integration
-    gateway_client = TestClient(gateway_app)
+    gateway_client = TestClient(
+        gateway_app,
+        headers={"Authorization": f"Bearer {signing_issuer.mint('gm-alex')}"},
+    )
     sample_png = (
         b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06"
         b"\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01"
