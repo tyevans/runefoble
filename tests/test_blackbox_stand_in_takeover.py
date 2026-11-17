@@ -15,9 +15,8 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import CharacterControlTransferred
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 
-from tests.helpers.mock_redis import MockAsyncRedis
-
 from tests.helpers.live_services import serve
+from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.fixture
