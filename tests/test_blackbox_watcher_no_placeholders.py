@@ -11,13 +11,14 @@ import pytest
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from httpx import ASGITransport, AsyncClient
-from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 from the_watcher.routers import autonomous_dm, stand_in
 from the_watcher.routers.intent import speech
 
 from tests.helpers.live_services import closed_port_url, serve
+from tests.helpers.mock_redis import MockAsyncRedis
 
 WORKER_503 = {"error": "backend_unavailable", "backend": "openai_compatible"}
 
