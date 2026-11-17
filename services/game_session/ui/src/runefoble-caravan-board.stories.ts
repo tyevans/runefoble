@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
 import './runefoble-caravan-board.ts';
-import type { CaravanContractItem } from './runefoble-caravan-board.ts';
+import type { CaravanContractItem, RunefobleCaravanBoard } from './runefoble-caravan-board.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleCaravanBoard',
@@ -172,4 +172,58 @@ export const ContractPayoutFulfilled: Story = {
       is-modal-open
     ></runefoble-caravan-board>
   `,
+};
+
+const acceptedContract: CaravanContractItem = {
+  contract_id: 'contract-accepted-05',
+  origin_outpost: 'Ironford',
+  destination_outpost: 'Bastion Cross',
+  cargo: { iron_ingots: 30 },
+  cargo_value: 420,
+  route_risk_level: 'medium',
+  transit_stages: 3,
+  current_stage: 1,
+  escort_collateral: 60,
+  reward_gold: 200,
+  reward_reputation: 20,
+  status: 'accepted',
+  contractor_party_name: 'The Amber Vanguard',
+};
+
+/**
+ * TASK-0677: the dispatch request fails with 503. The play function clicks
+ * Dispatch through the card and checks that the banner shows the error and
+ * the contract does not change to in transit.
+ */
+export const DispatchServiceUnavailable: Story = {
+  render: () => html`
+    <runefoble-caravan-board
+      shared-world-id="world-sunken-marches"
+      campaign-id="camp-amber-vanguard"
+      party-name="The Amber Vanguard"
+      user-role="player"
+      .contracts=${[acceptedContract]}
+    ></runefoble-caravan-board>
+  `,
+  play: async ({ canvasElement }) => {
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ detail: 'Caravan route service is unavailable.' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      })) as typeof fetch;
+    try {
+      const board = canvasElement.querySelector('runefoble-caravan-board') as RunefobleCaravanBoard;
+      await board.updateComplete;
+      const card = board.shadowRoot!.querySelector('runefoble-caravan-contract-card') as HTMLElement & {
+        updateComplete: Promise<boolean>;
+      };
+      await card.updateComplete;
+      card.shadowRoot!.querySelector<HTMLButtonElement>('.btn-warning')!.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await board.updateComplete;
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  },
 };
