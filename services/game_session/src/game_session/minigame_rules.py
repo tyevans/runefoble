@@ -131,15 +131,18 @@ def compute_intoxication_progression(
     return new_stage, dsp_filters
 
 
-async def apply_tavern_voice_dsp(text: str, intoxication_stage: str) -> dict[str, Any]:
+async def apply_tavern_voice_dsp(
+    text: str, intoxication_stage: str, authorization: str | None
+) -> dict[str, Any]:
     """Condition speech through voice_agent based on intoxication level.
 
+    `authorization` is the caller's Authorization header, forwarded to voice_agent.
     Raises VoiceAgentUnavailableError when voice_agent cannot condition the text.
     """
     filters: list[str] = []
     if intoxication_stage in ("drunk", "smashed", "blackout"):
         filters.append("drunk")
-    return await condition_speech_text(text, filters)
+    return await condition_speech_text(text, filters, authorization)
 
 
 __all__ = [
