@@ -10,13 +10,15 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from runefoble_platform.config import (
     EmbeddingEndpointSettings,
     LoreBackendSettings,
     PlatformSettings,
 )
+from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import PostgreSQLEventStore, get_event_store
 
 from campaign_lore.codex import CodexCrossReferencer
@@ -89,8 +91,14 @@ def create_app() -> FastAPI:
     app.include_router(atlas_router)
     app.include_router(codex_router)
     app.include_router(west_marches_router)
+    app.add_exception_handler(ServiceUnavailableError, _service_unavailable_handler)
     _register_routes(app)
     return app
+
+
+async def _service_unavailable_handler(_request: Request, exc: Exception) -> JSONResponse:
+    """Map a missing backend to HTTP 503. The client may retry; no substitute value is returned."""
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
 
 
 def _register_routes(app: FastAPI) -> None:

@@ -6,6 +6,7 @@ from uuid import UUID
 from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+from redstring import DoubleMergeError, MergeIntoAliasError
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.aggregate import LoreDocumentAggregate
@@ -49,7 +50,17 @@ class ResolveAliasResponse(BaseModel):
     is_alias: bool
 
 
-@router.post("/api/v1/lore/aliases/consolidate", response_model=ConsolidateAliasResponse)
+_CONSOLIDATE_RESPONSES = {
+    409: {"description": "The alias or canonical entity is already merged. Nothing is recorded."},
+    503: {"description": "campaign_lore is not started"},
+}
+
+
+@router.post(
+    "/api/v1/lore/aliases/consolidate",
+    response_model=ConsolidateAliasResponse,
+    responses=_CONSOLIDATE_RESPONSES,
+)
 async def consolidate_alias(
     req: ConsolidateAliasRequest,
     retrieval_engine: Annotated[LoreRetrievalEngine, Depends(get_retrieval_engine)],
@@ -63,13 +74,17 @@ async def consolidate_alias(
     if document.state.campaign_id != req.campaign_id:
         raise HTTPException(status_code=404, detail="Lore document not found")
 
-    canon_id, alias_id = await retrieval_engine.consolidate_alias(
-        campaign_id=req.campaign_id,
-        canonical_name=req.canonical_name,
-        alias_name=req.alias_name,
-        document_id=req.document_id,
-        reason=req.reason,
-    )
+    try:
+        canon_id, alias_id = await retrieval_engine.consolidate_alias(
+            campaign_id=req.campaign_id,
+            canonical_name=req.canonical_name,
+            alias_name=req.alias_name,
+            document_id=req.document_id,
+            reason=req.reason,
+        )
+    except (DoubleMergeError, MergeIntoAliasError) as exc:
+        # A repeated or circular merge is a client conflict. Redstring refused it before writing.
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     document.consolidate_alias(
         canonical_entity_id=canon_id,
         canonical_name=req.canonical_name,
