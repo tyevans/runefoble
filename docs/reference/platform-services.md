@@ -98,6 +98,24 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 
 ---
 
+## Cross-Service URLs (TASK-0624)
+
+The chart sets each service-to-service URL. The URL uses the in-cluster service name and the port from `services.<name>.port`. The chart renders each key only on the containers listed below. Each service reads its URL from the environment. No code default uses `localhost`.
+
+| Environment variable | Value in cluster | Rendered on | Read by |
+|---|---|---|---|
+| `RUNEFOBLE_WATCHER_URL` | `http://the-watcher:8001` | `game-session`, `voice-agent` | `game_session` (autopilot), `voice_agent` (default `http://the-watcher:8001`) |
+| `RUNEFOBLE_VOICE_AGENT_URL` | `http://voice-agent:8005` | `game-session` | `game_session` voice client |
+| `RUNEFOBLE_INFERENCE_URL` | `http://inference-worker:8100` | `the-watcher` (only when `services.inferenceWorker` is set) | `the_watcher` |
+| `SOUNDSCAPE_SERVICE_URL` | `http://soundscape:8009` | `gateway-api` | Gateway soundscape proxy (default `http://soundscape:8009`) |
+| `CAMPAIGN_LORE_URL` | `http://campaign-lore:8006` | `gateway-api` | Gateway hub views |
+| `CAMPAIGN_ANALYTICS_URL` | `http://campaign-analytics:8011` | `gateway-api` | Gateway hub views |
+| `CHARACTER_SHEET_URL` | `http://character-sheet:8003` | `gateway-api` | Gateway character sub-resources |
+
+The chart defines these keys in one block in `deployments/helm/runefoble/templates/services.yaml`. To add a consumer, add its container name to that key's `consumers` list.
+
+---
+
 ## Campaign Lore Retrieval Backends
 
 `LoreBackendSettings` (`libs/runefoble_platform`) selects each port of the Campaign Lore retrieval engine. The graph and passage ports are rebuilt from the event store at start-up.

@@ -16,7 +16,7 @@ from voice_agent.room_aggregate import to_uuid
 from voice_agent.stt import get_streaming_pipeline
 
 logger = logging.getLogger("runefoble.voice_agent")
-WATCHER_URL = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://localhost:8001")
+WATCHER_URL = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://the-watcher:8001")
 STREAM_SESSION = "runefoble.events.session"
 STREAM_VOICE = "runefoble.events.voice"
 
