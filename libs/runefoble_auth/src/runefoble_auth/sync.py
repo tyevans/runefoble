@@ -6,7 +6,6 @@ import logging
 from typing import Any, Literal
 from uuid import UUID
 
-from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.spicedb import MockSpiceDBClient, Relationship, SpiceDBClient
 from runefoble_auth.sync_events import (
     handle_character_created,
@@ -22,7 +21,6 @@ from runefoble_auth.sync_tuples import (
     execute_with_retry,
     normalize_campaign_role,
     reconcile_tuples,
-    resolve_user_claims,
     write_relationship_tuple,
 )
 from runefoble_auth.zitadel import ZitadelAuthService
@@ -61,16 +59,6 @@ class ZitadelSpiceDBSyncService:
         return await delete_relationship_tuple(
             self.spicedb, res_t, res_id, rel, sub_t, sub_id, self._execute_with_retry
         )
-
-    async def sync_user_claims(
-        self,
-        user_or_claims: VerifiedPrincipal | dict[str, Any] | str,
-        campaign_id: str | None = None,
-    ) -> list[str]:
-        """Verify a token or principal. Role-based grants are not synced (see TASK-0534)."""
-        user = resolve_user_claims(self.zitadel, user_or_claims)
-        logger.debug("Verified principal %s; no campaign grants derived", user.user_id)
-        return []
 
     async def sync_membership(
         self,

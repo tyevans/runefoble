@@ -3,7 +3,6 @@
 from uuid import uuid4
 
 import pytest
-from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.spicedb import MockSpiceDBClient, Relationship, SpiceDBClient
 from runefoble_auth.sync import SyncResult, ZitadelSpiceDBSyncService
 from runefoble_auth.sync_events import extract_event_type, handle_domain_event
@@ -11,7 +10,6 @@ from runefoble_auth.sync_tuples import (
     CAMPAIGN_ROLE_RELATIONS,
     format_tuple,
     normalize_campaign_role,
-    resolve_user_claims,
 )
 from runefoble_events import CharacterCreated, ParticipantJoined, SessionCreated
 
@@ -70,19 +68,6 @@ def test_sync_tuples_helpers_and_models() -> None:
     assert normalize_campaign_role("player") == ["player"]
     assert normalize_campaign_role("custom_role") == ["custom_role"]
     assert "spectator" in CAMPAIGN_ROLE_RELATIONS
-
-
-def test_resolve_user_claims_variants() -> None:
-    """Verify resolve_user_claims passes principals through and refuses unverified claims."""
-    user = VerifiedPrincipal(user_id="u_alice", username="Alice")
-    resolved = resolve_user_claims(None, user)
-    assert resolved.user_id == "u_alice"
-
-    with pytest.raises(ValueError, match="without a bearer token"):
-        resolve_user_claims(None, {"user_id": "u_bob", "username": "Bob", "roles": ["gm"]})
-
-    with pytest.raises(ValueError, match="Unsupported user_or_claims type"):
-        resolve_user_claims(None, 12345)  # type: ignore
 
 
 @pytest.mark.asyncio

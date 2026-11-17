@@ -33,28 +33,30 @@ def test_sync_health_frontdoor() -> None:
     assert data["sync_service"] == "operational"
 
 
-def test_sync_user_claims_frontdoor() -> None:
-    """POST /api/v1/auth/sync/user translates Zitadel claims into Zanzibar tuples."""
+def test_sync_user_route_is_removed(signing_issuer) -> None:
+    """POST /api/v1/auth/sync/user is gone. Token roles never write SpiceDB relations (TASK-0534)."""
     campaign_id = f"camp-sync-{uuid4().hex[:8]}"
-    user_id = "adventurer_robin"
+    user_id = f"user-{uuid4().hex[:8]}"
+    body = {"user_id": user_id, "roles": ["owner"], "campaign_id": campaign_id}
+    token = signing_issuer.mint(user_id, extra_claims={"roles": ["owner"]})
 
-    res = client.post(
-        "/api/v1/auth/sync/user",
-        json={
-            "user_id": user_id,
-            "username": "Robin",
-            "roles": ["player"],
-            "campaign_id": campaign_id,
-        },
+    assert client.post("/api/v1/auth/sync/user", json=body).status_code == 404
+    assert (
+        client.post(
+            "/api/v1/auth/sync/user",
+            json=body,
+            headers={"Authorization": f"Bearer {token}"},
+        ).status_code
+        == 404
     )
-    assert res.status_code == 200
-    body = res.json()
-    assert body["status"] == "synchronized" and body["user_id"] == user_id
-    assert f"campaign:{campaign_id}#player@user:{user_id}" in body["synced_relationships"]
+
+
+def _bearer(issuer, sub: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
 @pytest.mark.asyncio
-async def test_gm_synchronization_dm_override_and_atmosphere() -> None:
+async def test_gm_synchronization_dm_override_and_atmosphere(signing_issuer) -> None:
     """Synchronized GM can execute DM override and update campaign atmosphere."""
     spicedb = get_spicedb_client()
     campaign_id = f"camp-gm-{uuid4().hex[:8]}"
@@ -64,7 +66,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere() -> None:
     # 1. Before sync: GM and stranger are rejected with 403
     res_before = client.post(
         f"/api/v1/sessions/{campaign_id}/dm-override",
-        headers={"X-User-Id": gm_id},
+        headers=_bearer(signing_issuer, gm_id),
         json={"action": "pause_encounter", "reason": "DM bathroom break"},
     )
     assert res_before.status_code == 403
@@ -83,7 +85,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere() -> None:
     # 4. Synchronized GM can execute DM override
     res_override = client.post(
         f"/api/v1/sessions/{campaign_id}/dm-override",
-        headers={"X-User-Id": gm_id},
+        headers=_bearer(signing_issuer, gm_id),
         json={"action": "pause_encounter", "reason": "DM narrative pause"},
     )
     assert res_override.status_code == 200
@@ -98,7 +100,7 @@ async def test_gm_synchronization_dm_override_and_atmosphere() -> None:
     }
     res_atmo = client.post(
         f"/api/v1/sessions/{campaign_id}/atmosphere",
-        headers={"X-User-Id": gm_id},
+        headers=_bearer(signing_issuer, gm_id),
         json=atmo_payload,
     )
     assert res_atmo.status_code == 200
@@ -108,21 +110,21 @@ async def test_gm_synchronization_dm_override_and_atmosphere() -> None:
     # 6. Unassigned stranger is denied on both endpoints
     res_stranger_override = client.post(
         f"/api/v1/sessions/{campaign_id}/dm-override",
-        headers={"X-User-Id": stranger_id},
+        headers=_bearer(signing_issuer, stranger_id),
         json={"action": "end_session"},
     )
     assert res_stranger_override.status_code == 403
 
     res_stranger_atmo = client.post(
         f"/api/v1/sessions/{campaign_id}/atmosphere",
-        headers={"X-User-Id": stranger_id},
+        headers=_bearer(signing_issuer, stranger_id),
         json={"location_name": "Sunny Meadow"},
     )
     assert res_stranger_atmo.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_idempotence_and_instant_revocation() -> None:
+async def test_idempotence_and_instant_revocation(signing_issuer) -> None:
     """Re-syncing produces no duplicates; revocation immediately revokes permissions."""
     campaign_id = f"camp-idem-{uuid4().hex[:8]}"
     user_id = "test_player_grant"
@@ -138,7 +140,9 @@ async def test_idempotence_and_instant_revocation() -> None:
 
     # User can view session
     assert (
-        client.get(f"/api/v1/sessions/{campaign_id}", headers={"X-User-Id": user_id}).status_code
+        client.get(
+            f"/api/v1/sessions/{campaign_id}", headers=_bearer(signing_issuer, user_id)
+        ).status_code
         == 200
     )
 
@@ -154,7 +158,9 @@ async def test_idempotence_and_instant_revocation() -> None:
 
     # Immediately after revocation: view attempt must fail with 403 Forbidden
     assert (
-        client.get(f"/api/v1/sessions/{campaign_id}", headers={"X-User-Id": user_id}).status_code
+        client.get(
+            f"/api/v1/sessions/{campaign_id}", headers=_bearer(signing_issuer, user_id)
+        ).status_code
         == 403
     )
 
