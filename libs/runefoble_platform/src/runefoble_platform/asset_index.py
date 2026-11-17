@@ -99,12 +99,6 @@ def get_asset_index_repo() -> AggregateRepository[AssetIndexAggregate]:
     return _asset_index_repo
 
 
-def reset_asset_index_repo() -> None:
-    """Drop the cached repository so the next call binds to the current event store."""
-    global _asset_index_repo
-    _asset_index_repo = None
-
-
 async def record_stored_asset(meta: dict[str, Any]) -> None:
     """Persist the index entry for an object that Silo has confirmed."""
     repo = get_asset_index_repo()
