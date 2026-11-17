@@ -73,6 +73,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -120,6 +123,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -130,6 +136,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -140,6 +149,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -150,6 +162,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -160,6 +175,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -170,6 +188,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -180,6 +201,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -190,6 +214,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -200,6 +227,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -210,6 +240,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@storybook/web-components':
+        specifier: ^10.6.0
+        version: 10.6.0(lit@3.3.3)(storybook@10.6.0(react@19.3.0))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2

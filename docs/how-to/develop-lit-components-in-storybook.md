@@ -57,3 +57,12 @@ Run:
 make test
 ```
 This builds TypeScript and verifies the static Storybook bundle without errors.
+
+### 5. Type-Check Stories
+Stories are part of the component contract. Storybook builds with esbuild and does not type-check, so each UI package type-checks its stories through its own `tsconfig.json`. The `src` directory is in `include` and no story file is excluded.
+
+Run the check for one package:
+```bash
+pnpm --filter ./services/<bc>/ui run typecheck
+```
+A story with a wrong prop type or a missing component import fails this check. Fix the story to match the component API. Do not change the component API only to satisfy a story.
