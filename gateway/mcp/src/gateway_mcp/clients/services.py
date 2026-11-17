@@ -1,0 +1,156 @@
+"""Typed async HTTP client for the owning services behind MCP tools.
+
+Every call goes through a public service route. The client never returns
+fallback data. Upstream failures raise a ServiceError, which FastMCP reports
+to the caller as an MCP tool error result.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Literal
+
+import httpx
+from gateway_mcp.settings import GatewayMcpSettings, load_settings
+
+DEFAULT_TIMEOUT_SECONDS = 5.0
+
+TokenType = Literal["pc", "monster", "npc", "obstacle"]
+InitiatedBy = Literal["player", "the_watcher", "stand_in"]
+
+
+class ServiceError(Exception):
+    """Base error for a failed call to an owning service."""
+
+
+class ServiceUnavailableError(ServiceError):
+    """The service could not be reached, or it answered with a 5xx status."""
+
+
+class ServiceRejectedError(ServiceError):
+    """The service refused the request with a 4xx status."""
+
+
+def _error_detail(response: httpx.Response) -> str:
+    """Return the service error detail, or the raw body when it is not JSON."""
+    try:
+        body = response.json()
+    except ValueError:
+        return response.text
+    if isinstance(body, dict) and "detail" in body:
+        return str(body["detail"])
+    return str(body)
+
+
+class ServiceClient:
+    """Calls the board_state and rules_compendium public routes."""
+
+    def __init__(self, settings: GatewayMcpSettings | None = None) -> None:
+        self._settings = settings or load_settings()
+
+    async def _request(
+        self,
+        service: str,
+        base_url: str,
+        method: str,
+        path: str,
+        json_body: dict[str, Any] | None = None,
+    ) -> Any:
+        try:
+            async with httpx.AsyncClient(
+                base_url=base_url, timeout=DEFAULT_TIMEOUT_SECONDS
+            ) as http:
+                response = await http.request(method, path, json=json_body)
+        except httpx.HTTPError as exc:
+            raise ServiceUnavailableError(f"{service} is unreachable at {base_url}: {exc}") from exc
+
+        if response.status_code >= 500:
+            raise ServiceUnavailableError(
+                f"{service} returned {response.status_code}: {_error_detail(response)}"
+            )
+        if response.status_code >= 400:
+            raise ServiceRejectedError(
+                f"{service} rejected the request ({response.status_code}): "
+                f"{_error_detail(response)}"
+            )
+        return response.json()
+
+    async def create_board(self, *, cols: int, rows: int) -> dict[str, Any]:
+        """Create a board with a service-generated session id."""
+        result = await self._request(
+            "board_state",
+            self._settings.board_state_url,
+            "POST",
+            "/api/v1/boards",
+            {"cols": cols, "rows": rows},
+        )
+        return dict(result)
+
+    async def get_board(self, session_id: str) -> dict[str, Any]:
+        """Read the board state for a session."""
+        result = await self._request(
+            "board_state",
+            self._settings.board_state_url,
+            "GET",
+            f"/api/v1/boards/{session_id}",
+        )
+        return dict(result)
+
+    async def place_token(
+        self,
+        session_id: str,
+        *,
+        name: str,
+        token_type: TokenType,
+        x: int,
+        y: int,
+        hp: int | None,
+        is_friendly: bool,
+    ) -> dict[str, Any]:
+        """Place a token on the board and return its stored state."""
+        result = await self._request(
+            "board_state",
+            self._settings.board_state_url,
+            "POST",
+            f"/api/v1/boards/{session_id}/tokens",
+            {
+                "name": name,
+                "token_type": token_type,
+                "x": x,
+                "y": y,
+                "hp": hp,
+                "is_friendly": is_friendly,
+            },
+        )
+        return dict(result)
+
+    async def move_token(
+        self,
+        session_id: str,
+        token_id: str,
+        *,
+        to_x: int,
+        to_y: int,
+        initiated_by: InitiatedBy,
+    ) -> dict[str, Any]:
+        """Move a token and return the move result from the board."""
+        result = await self._request(
+            "board_state",
+            self._settings.board_state_url,
+            "POST",
+            f"/api/v1/boards/{session_id}/tokens/{token_id}/move",
+            {"to_x": to_x, "to_y": to_y, "initiated_by": initiated_by},
+        )
+        return dict(result)
+
+    async def balance_encounter(
+        self, party_levels: list[int], target_difficulty: str
+    ) -> dict[str, Any]:
+        """Ask rules_compendium to balance an encounter for a party."""
+        result = await self._request(
+            "rules_compendium",
+            self._settings.rules_compendium_url,
+            "POST",
+            "/api/v1/compendium/encounters/balance",
+            {"party_levels": party_levels, "target_difficulty": target_difficulty},
+        )
+        return dict(result)

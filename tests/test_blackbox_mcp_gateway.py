@@ -8,9 +8,59 @@ Tests exercise FastMCP public protocol entrypoints exclusively:
 """
 
 import json
+from collections.abc import Iterator
+from typing import Any
 
+import httpx
 import pytest
 from gateway_mcp.server import mcp
+from mcp.shared.memory import create_connected_server_and_client_session
+from mcp.types import CallToolResult
+
+from tests.helpers.live_services import closed_port_url, serve, unavailable_app
+
+
+@pytest.fixture(scope="module", autouse=True)
+def owning_services() -> Iterator[dict[str, str]]:
+    """Run board_state and rules_compendium as real HTTP services for the gateway."""
+    from board_state.main import app as board_app
+    from rules_compendium.main import app as compendium_app
+
+    with (
+        pytest.MonkeyPatch.context() as env,
+        serve(board_app) as board_url,
+        serve(compendium_app) as compendium_url,
+    ):
+        env.setenv("BOARD_STATE_URL", board_url)
+        env.setenv("RULES_COMPENDIUM_URL", compendium_url)
+        # Setup through the public board_state HTTP frontdoor: place the active session token.
+        with httpx.Client(base_url=board_url) as http:
+            placed = http.post(
+                "/api/v1/boards/camp1/tokens",
+                json={"token_id": "t1", "name": "Valeros", "x": 1, "y": 1},
+            )
+            assert placed.status_code == 200, placed.text
+        yield {"board": board_url, "compendium": compendium_url}
+
+
+async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
+    """Call a tool through the MCP protocol with an in-memory client session."""
+    async with create_connected_server_and_client_session(mcp) as session:
+        return await session.call_tool(name, arguments)
+
+
+def tool_text(result: CallToolResult) -> str:
+    """Return the text of the first content block of a tool result."""
+    assert result.content, "Tool result must contain content"
+    return str(result.content[0].text)
+
+
+def tool_payload(result: CallToolResult) -> dict[str, Any]:
+    """Return the JSON payload of a successful tool result."""
+    assert not result.isError, f"Tool failed: {tool_text(result)}"
+    data = json.loads(tool_text(result))
+    assert isinstance(data, dict)
+    return data
 
 
 @pytest.mark.asyncio
@@ -191,16 +241,15 @@ async def test_blackbox_read_active_session_resource():
 
 @pytest.mark.asyncio
 async def test_blackbox_read_encounter_current_resource():
-    """Verify reading dynamic resource encounter://current returns encounter state."""
+    """Verify reading dynamic resource encounter://current returns the active board state."""
     contents = await mcp.read_resource("encounter://current")
     assert contents is not None
     content_list = list(contents)
     assert len(content_list) > 0
 
     data = json.loads(content_list[0].content)
-    assert data["encounter_id"] == "enc-camp1"
-    assert "initiative_order" in data
-    assert "active_turn" in data
+    assert data["session_id"] == "camp1"
+    assert isinstance(data["tokens"], list)
 
 
 @pytest.mark.asyncio
@@ -241,3 +290,123 @@ async def test_blackbox_character_tools():
     )
     assert cond_res["status"] == "condition_applied"
     assert cond_res["condition"] == "prone"
+
+
+@pytest.mark.asyncio
+async def test_blackbox_create_encounter_stores_enemy_tokens():
+    """Verify create_encounter stores enemies on the board that query_encounter_state reads back."""
+    created = tool_payload(
+        await call_tool(
+            "create_encounter",
+            {
+                "encounter_name": "Ambush at Crossroads",
+                "terrain": "forest",
+                "enemies": [{"name": "Bandit", "x": 4, "y": 4, "hp": 11}],
+            },
+        )
+    )
+    assert created["status"] == "encounter_created"
+    assert created["grid"] == {"cols": 10, "rows": 8}
+
+    state = tool_payload(
+        await call_tool("query_encounter_state", {"encounter_id": created["encounter_id"]})
+    )
+    assert state["grid_dimensions"] == {"cols": 10, "rows": 8}
+    assert [(t["name"], t["x"], t["y"]) for t in state["tokens"]] == [("Bandit", 4, 4)]
+
+
+@pytest.mark.asyncio
+async def test_blackbox_move_board_token_then_inspect_reports_new_position():
+    """Verify a token moved through MCP is read back at its new position from the board."""
+    created = tool_payload(
+        await call_tool(
+            "create_encounter",
+            {"encounter_name": "Skirmish", "enemies": [{"name": "Goblin", "x": 2, "y": 2}]},
+        )
+    )
+    session_id = created["encounter_id"]
+    token_id = created["enemies_spawned"][0]["token_id"]
+
+    moved = tool_payload(
+        await call_tool(
+            "move_board_token",
+            {"session_id": session_id, "token_id": token_id, "to_x": 6, "to_y": 2},
+        )
+    )
+    assert moved["status"] == "success"
+    assert moved["destination"] == {"x": 6, "y": 2}
+
+    board = tool_payload(await call_tool("inspect_tactical_board", {"session_id": session_id}))
+    goblin = board["tokens"][0]
+    assert (goblin["token_id"], goblin["x"], goblin["y"]) == (token_id, 6, 2)
+
+
+@pytest.mark.asyncio
+async def test_blackbox_move_board_token_out_of_bounds_is_error_result():
+    """Verify the board rejects an out-of-bounds move and the MCP result reports an error."""
+    created = tool_payload(
+        await call_tool(
+            "create_encounter",
+            {"encounter_name": "Edge", "enemies": [{"name": "Imp", "x": 0, "y": 0}]},
+        )
+    )
+    result = await call_tool(
+        "move_board_token",
+        {
+            "session_id": created["encounter_id"],
+            "token_id": created["enemies_spawned"][0]["token_id"],
+            "to_x": 99,
+            "to_y": -5,
+        },
+    )
+    assert result.isError is True
+    assert "bounds" in tool_text(result).lower()
+
+
+@pytest.mark.asyncio
+async def test_blackbox_inspect_board_returns_error_when_board_service_returns_503(monkeypatch):
+    """Verify a 503 from board_state becomes an MCP error result, not canned board data."""
+    with serve(unavailable_app(503)) as down_url:
+        monkeypatch.setenv("BOARD_STATE_URL", down_url)
+        result = await call_tool("inspect_tactical_board", {"session_id": "camp-503"})
+
+    assert result.isError is True
+    assert "503" in tool_text(result)
+    assert "Valeros" not in tool_text(result)
+
+
+@pytest.mark.asyncio
+async def test_blackbox_inspect_board_returns_error_when_board_service_is_unreachable(monkeypatch):
+    """Verify an unreachable board_state becomes an MCP error result, not canned board data."""
+    monkeypatch.setenv("BOARD_STATE_URL", closed_port_url())
+    result = await call_tool("inspect_tactical_board", {"session_id": "camp-down"})
+
+    assert result.isError is True
+    assert "unreachable" in tool_text(result)
+
+
+@pytest.mark.asyncio
+async def test_blackbox_calculate_encounter_balance_uses_rules_compendium_route():
+    """Verify encounter balance is computed by the rules_compendium public route."""
+    balance = tool_payload(
+        await call_tool(
+            "calculate_encounter_balance",
+            {"party_levels": [3, 3, 3, 4], "target_difficulty": "Medium"},
+        )
+    )
+    assert balance["party_size"] == 4
+    assert balance["target_difficulty"] == "Medium"
+    assert "difficulty_tier" in balance
+    assert "encounter_id" in balance
+    assert balance["total_monster_count"] == sum(m["count"] for m in balance["monsters"])
+
+
+@pytest.mark.asyncio
+async def test_blackbox_calculate_encounter_balance_rejects_empty_party():
+    """Verify rules_compendium validation errors surface as MCP error results."""
+    result = await call_tool(
+        "calculate_encounter_balance",
+        {"party_levels": [], "target_difficulty": "Medium"},
+    )
+    assert result.isError is True
+    assert "rejected the request (422)" in tool_text(result)

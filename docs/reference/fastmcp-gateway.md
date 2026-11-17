@@ -7,6 +7,8 @@ The FastMCP Gateway (`gateway/mcp`) exposes Runefoble tabletop actions, spatial 
 The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 80 lines) delegating domain capabilities to modular sub-packages:
 
 gateway/mcp/src/gateway_mcp/
+├── clients/               # HTTP clients for owning services (board_state, rules_compendium)
+│   └── services.py        # Typed async client and ServiceError types
 ├── constants.py           # RPG constants (spell effects, condition descriptions)
 ├── dynamic_registry.py    # Backward-compatible re-exports (< 30 lines)
 ├── dynamic/               # Dynamic tool registry package (< 140 lines per module)
@@ -19,9 +21,10 @@ gateway/mcp/src/gateway_mcp/
 │   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
 ├── main.py                # CLI execution wrapper
 ├── server.py              # FastMCP orchestration shell and module mounting
+├── settings.py            # Upstream service URLs (BOARD_STATE_URL, RULES_COMPENDIUM_URL)
 ├── tools/                 # MCP tool implementations (< 180 lines each)
 │   ├── dice.py            # Dice notation parsing and rolling (roll_dice)
-│   ├── board.py           # Tactical board token positioning and encounters
+│   ├── board.py           # Tactical board and encounter tools (HTTP-backed by board_state)
 │   ├── character.py       # Character stats, HP, spells, conditions, inventory
 │   └── orchestration.py   # The Watcher narration and agent action plan execution
 ├── resources/             # FastMCP dynamic resource providers (< 120 lines each)
@@ -37,20 +40,31 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | Tool Name | Parameters | Description |
 |---|---|---|
 | `roll_dice` | `notation: str`, `reason: str` | Parse standard RPG dice notation (`1d20+3`, `2d6`) and return roll breakdown. |
-| `inspect_tactical_board` | `session_id: str` | Retrieve token positions, HP, control status, and grid dimensions. |
-| `move_board_token` | `session_id: str`, `token_id: str`, `to_x: int`, `to_y: int` | Validate coordinates and move a token on the grid. |
+| `inspect_tactical_board` | `session_id: str` | Read tokens, positions, HP, and grid dimensions from `board_state` (`GET /api/v1/boards/{session_id}`). |
+| `move_board_token` | `session_id: str`, `token_id: str`, `to_x: int`, `to_y: int` | Move a token through `board_state` (`POST /api/v1/boards/{session_id}/tokens/{token_id}/move`). The board rejects out-of-bounds moves. |
 | `get_character_sheet` | `character_id: str` | Retrieve character stats, level, hit points, equipment, and active conditions. |
 | `inspect_inventory` | `character_id: str` | Retrieve equipped items, carried inventory, and currency breakdown. |
 | `apply_absentee_penalty` | `character_id: str`, `penalty_type: str`, `explanation: str` | Impose session miss penalties (`drunk`, `foolishness`) on absent player PCs. |
 | `cast_spell` | `character_id: str`, `spell_name: str`, `spell_level: int`, `target: str` | Cast a spell, tracking spell slot expenditure and mechanical rules. |
 | `modify_character_hp` | `character_id: str`, `delta: int`, `damage_type: str`, `reason: str` | Apply damage or healing, calculating `bloodied` or `unconscious` states. |
 | `add_condition` / `apply_condition` | `character_id: str`, `condition: str`, `duration_rounds: int`, `source: str` | Impose status condition (`blinded`, `prone`, `frightened`) with rule effects. |
-| `query_encounter_state` | `encounter_id: str` | Query active combat round, initiative order, active turn, and hazards. |
-| `create_encounter` | `encounter_name: str`, `terrain: str`, `enemies: list` | Initialize a new combat encounter with enemy grid placements. |
+| `query_encounter_state` | `encounter_id: str` | Read the encounter board from `board_state`: tokens, grid, and active hazards. Turn order and round number are not yet tracked by the board service. |
+| `create_encounter` | `encounter_name: str`, `terrain: str`, `enemies: list[{name, x, y, hp?}]` | Create a 10x8 board in `board_state` and place enemy monster tokens. Returns the board session id as `encounter_id`. |
 | `narrate_with_the_watcher` | `scene_prompt: str`, `player_actions: str` | Invoke The Watcher AI GM for immersive narration and environmental cues. |
 | `execute_agent_action_plan` | `session_id: str`, `actions: list` | Sequentially execute multi-turn action plan with step validation and timing. |
 | `query_monster_stat_block` | `monster_name: str` | Retrieve full canonical monster stat block, AC, HP, CR, actions, and traits. |
-| `calculate_encounter_balance` | `party_levels: list[int]`, `target_difficulty: str` | Compute accurate CR XP thresholds and recommend synergistic monster group with role diversity. |
+| `calculate_encounter_balance` | `party_levels: list[int]`, `target_difficulty: str` | Call the `rules_compendium` route `POST /api/v1/compendium/encounters/balance`. Returns its CR XP thresholds and recommended monster group. |
+
+### Upstream Service Calls
+
+Board and encounter tools hold no board state. They call the owning service over HTTP through `gateway_mcp/clients/services.py`:
+
+| Setting | Environment Variable | Default | Owning Service |
+|---|---|---|---|
+| `board_state_url` | `BOARD_STATE_URL` | `http://localhost:8002` | `board_state` |
+| `rules_compendium_url` | `RULES_COMPENDIUM_URL` | `http://localhost:8007` | `rules_compendium` |
+
+An upstream 5xx status or an unreachable service raises `ServiceUnavailableError`. An upstream 4xx status raises `ServiceRejectedError`. FastMCP reports both to the caller as an MCP tool error result. The gateway never returns fallback data.
 
 ## Resources Registry
 
@@ -60,7 +74,7 @@ Dynamic FastMCP resources supply structured context to LLMs without requiring ex
 |---|---|---|
 | `session://active` | `application/json` | Active session state including tokens, threat level, and scene atmosphere. |
 | `session://{session_id}/state` | `application/json` | Specific session state including active tokens and atmosphere. |
-| `encounter://current` | `application/json` | Current combat encounter turn order, round number, and hazards. |
+| `encounter://current` | `application/json` | Board state (tokens, grid, and hazards) of the active encounter. |
 
 ## Prompt Templates
 
