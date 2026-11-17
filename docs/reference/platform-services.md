@@ -20,7 +20,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 | **OpenPanel** | `openpanel/openpanel:latest` | `openpanel:3000` | `/analytics` | ADR-0005 | Mock Event Buffer |
 | **Swagger UI** | `swaggerapi/swagger-ui:v5.17.14` | `swagger-ui:8080` | `/docs`, `/swagger-ui` | ADR-0005 | Service `/openapi.json` direct endpoints |
 | **Mailpit (Mock SMTP & UI)** | `axllent/mailpit:v1.21.8` | `mailpit:1025` (SMTP), `8025` (HTTP) | `/mail`, `/mailpit` | ADR-0005 | In-Memory `MailpitClient` Buffer |
-| **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP; Helm deployment is TASK-0622) | None (Internal) | ADR-0007 | Explicit `mock` backend only (`RUNEFOBLE_WORKER_BACKEND=mock`); no silent fallback |
+| **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP, Helm `inference-worker` Deployment and Service) | None (Internal) | ADR-0007 | Chart default `backend: mock` (`RUNEFOBLE_WORKER_BACKEND=mock`, explicit, labelled `source: mock`); no silent fallback |
 
 ---
 

@@ -98,7 +98,8 @@ PYTHON_IMAGE_ROWS = \
 	'rules-compendium|rules-compendium|rules_compendium.main:app|8007|' \
 	'asset-forge|asset-forge|asset_forge.main:app|8008|' \
 	'soundscape|soundscape|soundscape.main:app|8009|' \
-	'campaign-analytics|campaign-analytics|campaign_analytics.main:app|8011|'
+	'campaign-analytics|campaign-analytics|campaign_analytics.main:app|8011|' \
+	'inference-worker|inference-worker|inference_worker.api:app|8100|'
 
 # Speech model pre-fetch for voice-agent (TASK-0676). The model downloads on the host,
 # then the files are copied into the running voice-agent pod's model cache volume.
