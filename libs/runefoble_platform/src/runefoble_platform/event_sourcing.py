@@ -131,20 +131,20 @@ def set_event_store(store: FullEventStore | None) -> None:
 
 
 def get_event_bus(settings: PlatformSettings | None = None) -> EventBus:
-    """Provide event bus: RedisEventBus if configured, or InMemoryEventBus."""
+    """Provide the event bus: RedisEventBus when the Redis flag is set, otherwise InMemoryEventBus.
+
+    Initialization errors on the Redis path propagate. No in-memory substitute is returned.
+    """
     global _global_event_bus
     if _global_event_bus is not None and settings is None:
         return _global_event_bus
 
     s = settings or PlatformSettings()
     if getattr(s, "use_redis_event_bus", False):
-        try:
-            logger.info("Initializing RedisEventBus...")
-            config = RedisEventBusConfig(redis_url=str(s.redis_url))
-            _global_event_bus = RedisEventBus(config=config)
-            return _global_event_bus
-        except Exception as e:
-            logger.warning("Failed to initialize RedisEventBus (%s). Falling back to InMemory.", e)
+        logger.info("Initializing RedisEventBus...")
+        config = RedisEventBusConfig(redis_url=str(s.redis_url))
+        _global_event_bus = RedisEventBus(config=config)
+        return _global_event_bus
 
     _global_event_bus = InMemoryEventBus()
     return _global_event_bus

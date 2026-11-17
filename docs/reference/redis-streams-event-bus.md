@@ -91,6 +91,15 @@ await consumer_group.create_group(
 ```
 - Creates stream and consumer group if absent (`mkstream=True`).
 - Idempotent: returns `True` if created, `False` if `BUSYGROUP` is caught.
+- Any other error propagates. A broken stream or Redis error stops start-up.
+
+#### Inference Worker Start-Up
+
+`RedisInferenceConsumer.start()` (`services/inference_worker/src/inference_worker/redis_consumer.py`) follows the same rule. It catches `ResponseError` only when the message contains `BUSYGROUP`. `WRONGTYPE`, connection errors, and other errors raise from `start()`.
+
+### Event Bus Selection at Start-Up
+
+`get_event_bus()` (`libs/runefoble_platform/src/runefoble_platform/event_sourcing.py`) returns `RedisEventBus` when the Redis flag is set. It returns `InMemoryEventBus` only when the flag is off. A failure while it creates the Redis bus raises. No in-memory bus replaces it.
 
 ### Competing Consumer Reading
 ```python
