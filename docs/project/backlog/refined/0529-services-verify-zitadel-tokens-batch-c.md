@@ -74,3 +74,9 @@ HTTP tests through `TestClient` and `httpx` for the Inference Worker.
 3. Helm renders the secret reference and the variables.
 4. `docs/how-to/authenticate-with-zitadel-oidc.md` gains a section on service-to-service tokens.
 5. No file exceeds 500 lines. The copilot routers stay in their own modules.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- services/game_session/src/game_session/settlement/auth/tokens.py holds the game_session verifier singleton. Move it to a game_session identity module (no re-export) and update the callers.

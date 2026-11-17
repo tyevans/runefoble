@@ -62,3 +62,9 @@ Refined
 4. Reference docs corrected.
 5. MCP client blackbox test passes.
 6. No file above 500 lines.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- gateway/mcp/src/gateway_mcp/settings.py defaults point at localhost. The gatewayMcp URL keys in values.yaml are not rendered into any template. Render them into the gateway MCP Deployment and remove the localhost defaults for deployed use.

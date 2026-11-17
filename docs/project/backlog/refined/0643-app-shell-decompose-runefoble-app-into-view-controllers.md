@@ -81,3 +81,9 @@ Source: `.audit/synth/discovered-round1.md`.
 Source: `.audit/synth/discovered-round1.md`.
 
 - `fetchSession()` in `frontend/src/services/app-data-service.ts` invents the title `Session #<id>` when the response has none. Return an explicit empty state instead.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- frontend/src/app/session-socket.ts (handleMessage) uses a catch with an ignore comment. It hides message parse and handler errors. Log them and show the connection state to the player.

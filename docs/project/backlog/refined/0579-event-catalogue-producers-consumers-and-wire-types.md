@@ -73,3 +73,9 @@ The event catalogue has drifted from the code. Seventeen registered classes have
 3. Four tests above pass. No import-time event-type warning.
 4. `uv run pytest` and `make health-check` pass. Files under 500 lines. Note in the index report if this task must be split during execution.
 5. `CHANGELOG.md` entry for each renamed stream and removed event.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- libs/runefoble_events/src/runefoble_events/watcher_events/narrative.py:41 types tension_level as str. Use the Literal values of the inference worker TensionLevel type.

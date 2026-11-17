@@ -63,3 +63,9 @@ The Watcher keeps DM approval windows, pending vetoes, private whispers, and ope
 3. Events-schema reference updated for new aggregate events.
 4. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 5. `CHANGELOG.md` entry.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- services/the_watcher/src/the_watcher/copilot.py approve callback (about line 244) logs callback failures as warnings after the approval event is published. Record the failure on the action or return it to the caller.
