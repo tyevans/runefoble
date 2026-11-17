@@ -24,6 +24,7 @@ from runefoble_events.character import (
     SessionPenaltyEvent,
     SpellPrepared,
     SpellSlotExpended,
+    SpellSlotsRestored,
     StandInPolicyUpdated,
     StandInStabilized,
 )
@@ -90,6 +91,7 @@ __all__ = [
     "SessionPenaltyEvent",
     "SpellPrepared",
     "SpellSlotExpended",
+    "SpellSlotsRestored",
     "StandInPolicyUpdated",
     "StandInStabilized",
     "StrongholdCreated",

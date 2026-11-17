@@ -91,6 +91,11 @@ class PrepareSpellRequest(BaseModel):
     session_id: str = ""
 
 
+class RestoreSpellSlotsRequest(BaseModel):
+    slot_level: int | None = None
+    session_id: str = ""
+
+
 class CastSpellRequest(BaseModel):
     spell_name: str
     slot_level: int | None = None

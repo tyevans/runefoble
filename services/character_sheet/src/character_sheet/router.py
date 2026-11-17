@@ -68,6 +68,18 @@ async def cast_spell(character_id: UUID, req: schemas.CastSpellRequest, repo: de
     )
 
 
+@router.post("/api/v1/characters/{character_id}/spells/restore", response_model=CharacterState)
+async def restore_spell_slots(
+    character_id: UUID,
+    repo: deps.RepoDep,
+    req: schemas.RestoreSpellSlotsRequest | None = None,
+):
+    r = req or schemas.RestoreSpellSlotsRequest()
+    return await deps.execute_character_mutation(
+        repo, character_id, lambda c: c.restore_spell_slots(r.slot_level, r.session_id)
+    )
+
+
 @router.get("/api/v1/characters/{character_id}", response_model=CharacterState)
 async def get_character(character_id: UUID, repo: deps.RepoDep):
     return (await deps.load_character(repo, character_id)).state

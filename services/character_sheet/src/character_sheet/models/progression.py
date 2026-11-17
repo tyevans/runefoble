@@ -55,3 +55,6 @@ class ProgressionTransitionsMixin:
         slots = dict(self.spell_slots)
         slots[slot_level] = remaining
         return self.model_copy(update={"spell_slots": slots})
+
+    def with_restored_spell_slots(self: Any, spell_slots: dict[int, int]) -> Any:
+        return self.model_copy(update={"spell_slots": dict(spell_slots)})
