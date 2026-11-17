@@ -2,21 +2,21 @@
  * Entrypoint for services/audience_studio service.
  */
 
+import { createAdapters } from './adapters.js';
 import { readSpicedbPresharedKey } from './config.js';
 import { buildServer } from './server.js';
 
 const PORT = parseInt(process.env.PORT || '8010', 10);
 const HOST = process.env.HOST || '0.0.0.0';
-const REDIS_URL = process.env.REDIS_URL || process.env.RUNEFOBLE_REDIS_URL;
 const SPICEDB_ENDPOINT = process.env.RUNEFOBLE_SPICEDB_ENDPOINT;
 const SPICEDB_TOKEN = readSpicedbPresharedKey(process.env);
 
 async function main() {
   const { server } = await buildServer({
-    redisUrl: REDIS_URL,
     spicedbEndpoint: SPICEDB_ENDPOINT,
     spicedbToken: SPICEDB_TOKEN,
     logger: true,
+    createAdapters: (log) => createAdapters(process.env, log),
   });
 
   const shutdown = async () => {
@@ -44,4 +44,3 @@ main().catch((err) => {
   process.exit(1);
 });
 
-export { buildServer };

@@ -61,4 +61,4 @@ dist/
 .features-gen/
 playwright-report/
 test-results/
-
+services/audience_studio/dist-test/

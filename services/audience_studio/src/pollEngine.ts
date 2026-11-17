@@ -1,23 +1,22 @@
 /**
- * Audience Poll Engine for live high-concurrency spectator voting.
- * Governed by ADR-0006 and ADR-0007.
+ * Audience poll service for live spectator voting. Governed by ADR-0006 and ADR-0007.
+ *
+ * State lives in PollAggregate and ProposalAggregate event streams. The only in-process
+ * state is the timer handles that close each open poll at its deadline.
  */
 
 import { v4 as uuidv4 } from 'uuid';
 import type { ApprovalQueue } from './approvalQueue.js';
-import {
-  buildModifierProposedEvent,
-  buildPollCompletedEvent,
-  buildPollStartedEvent,
-  buildVoteCastEvent,
-} from './events.js';
-import type { RedisStreamsClient } from './redis.js';
-import type {
-  AudienceModifierProposal,
-  AudiencePoll,
-  AudienceVote,
-  PollOption,
-} from './types.js';
+import { PollAggregate, type PollSnapshot } from './domain/pollAggregate.js';
+import { ProposalAggregate } from './domain/proposalAggregate.js';
+import { pollStreamId } from './domain/events.js';
+import { DomainError } from './errors.js';
+import type { AudienceEventRepository } from './eventSourcing/repository.js';
+import { KeyedMutex } from './eventSourcing/keyedMutex.js';
+import type { EventSourcedAggregate } from './eventSourcing/aggregate.js';
+import type { Logger } from './logger.js';
+import { pollView } from './views.js';
+import type { AudienceModifierProposal, AudiencePoll } from './types.js';
 
 export interface CreatePollParams {
   campaignId: string;
@@ -30,20 +29,24 @@ export interface CreatePollParams {
   modifierType?: string;
 }
 
+export type PollEventName = 'poll_started' | 'vote_cast' | 'poll_completed';
+type PollListener = (event: PollEventName, data: unknown) => void;
+
+const MAX_TIMER_MS = 2 ** 31 - 1;
+const RETRY_DELAY_MS = 1000;
+
 export class PollEngine {
-  private polls: Map<string, AudiencePoll> = new Map();
-  private votersByPoll: Map<string, Set<string>> = new Map();
-  private timers: Map<string, NodeJS.Timeout> = new Map();
-  private listeners: Array<(event: 'poll_started' | 'vote_cast' | 'poll_completed', data: unknown) => void> = [];
+  private readonly timers = new Map<string, NodeJS.Timeout>();
+  private readonly listeners: PollListener[] = [];
 
   constructor(
-    private readonly redis: RedisStreamsClient,
-    private readonly approvalQueue: ApprovalQueue
+    private readonly repo: AudienceEventRepository,
+    private readonly mutex: KeyedMutex,
+    private readonly approvalQueue: ApprovalQueue,
+    private readonly log: Logger
   ) {}
 
-  onPollEvent(
-    callback: (event: 'poll_started' | 'vote_cast' | 'poll_completed', data: unknown) => void
-  ): () => void {
+  onPollEvent(callback: PollListener): () => void {
     this.listeners.push(callback);
     return () => {
       const idx = this.listeners.indexOf(callback);
@@ -51,62 +54,47 @@ export class PollEngine {
     };
   }
 
-  private notify(
-    event: 'poll_started' | 'vote_cast' | 'poll_completed',
-    data: unknown
-  ): void {
-    for (const listener of this.listeners) {
-      try {
-        listener(event, data);
-      } catch {
-        // Ignore listener error
+  /** Re-arms the close timer of every open poll from its stored deadline. Call once at start-up. */
+  async restore(): Promise<void> {
+    const polls = await this.repo.loadAllPolls();
+    let open = 0;
+    for (const poll of polls) {
+      const snap = poll.snapshot();
+      if (snap.status === 'active') {
+        open += 1;
+        this.schedule(snap.id, Date.parse(snap.expiresAt) - Date.now());
       }
     }
+    this.log.info({ openPolls: open }, 'Restored open audience polls');
+  }
+
+  /** Clears every timer. Call on shutdown. */
+  close(): void {
+    for (const handle of this.timers.values()) clearTimeout(handle);
+    this.timers.clear();
   }
 
   async createPoll(params: CreatePollParams): Promise<AudiencePoll> {
     const id = uuidv4();
-    const duration = params.durationSeconds ?? 60;
-    const quorum = params.quorum ?? 5;
-    const now = new Date();
-    const expires = new Date(now.getTime() + duration * 1000);
-
-    const options: PollOption[] = params.options.map((label, idx) => ({
-      id: `opt_${idx + 1}`,
-      label,
-      votes: 0,
-    }));
-
-    const poll: AudiencePoll = {
-      id,
+    const durationSeconds = params.durationSeconds ?? 60;
+    const poll = new PollAggregate(id);
+    poll.start({
       campaignId: params.campaignId,
       sessionId: params.sessionId,
       title: params.title,
       prompt: params.prompt,
-      options,
-      durationSeconds: duration,
-      quorum,
-      createdAt: now.toISOString(),
-      expiresAt: expires.toISOString(),
-      status: 'active',
-      totalVotes: 0,
-    };
+      options: params.options,
+      durationSeconds,
+      quorum: params.quorum ?? 5,
+      now: new Date(),
+    });
+    await this.mutex.run([pollStreamId(id)], () => this.repo.commit([poll]));
 
-    this.polls.set(id, poll);
-    this.votersByPoll.set(id, new Set());
-
-    // Schedule expiration timer
-    const timer = setTimeout(() => {
-      this.closePoll(id).catch(() => {});
-    }, duration * 1000);
-    this.timers.set(id, timer);
-
-    // Publish CloudEvent
-    const event = buildPollStartedEvent(poll);
-    await this.redis.publishEvent('runefoble.events.audience', event);
-
-    this.notify('poll_started', poll);
-    return poll;
+    const snap = poll.snapshot();
+    this.schedule(id, Date.parse(snap.expiresAt) - Date.now());
+    const view = pollView(snap);
+    this.notify('poll_started', view);
+    return view;
   }
 
   async castVote(
@@ -115,106 +103,146 @@ export class PollEngine {
     optionId: string,
     channel: string = 'web'
   ): Promise<AudiencePoll> {
-    const poll = this.polls.get(pollId);
+    const now = new Date();
+    const snap = await this.mutex.run([pollStreamId(pollId)], async () => {
+      const poll = await this.requirePoll(pollId);
+      poll.vote(voterId, optionId, channel, now);
+      await this.repo.commit([poll]);
+      return poll.snapshot();
+    });
+
+    const view = await this.viewOf(snap);
+    this.notify('vote_cast', {
+      poll: view,
+      vote: {
+        pollId,
+        campaignId: snap.campaignId,
+        voterId,
+        optionId,
+        channel,
+        timestamp: now.toISOString(),
+      },
+    });
+    return view;
+  }
+
+  /** Completes the poll. Idempotent: a completed poll is returned unchanged. */
+  async closePoll(pollId: string): Promise<AudiencePoll> {
+    const outcome = await this.mutex.run([pollStreamId(pollId)], async () => {
+      const poll = await this.requirePoll(pollId);
+      if (poll.snapshot().status === 'completed') {
+        return { snap: poll.snapshot(), proposal: undefined, closedNow: false };
+      }
+
+      const proposalId = uuidv4();
+      const proposal = poll.close(proposalId, new Date());
+      const changes: EventSourcedAggregate[] = [];
+      if (proposal) {
+        const queued = new ProposalAggregate(proposalId);
+        queued.propose(proposal);
+        changes.push(queued);
+      }
+      changes.push(poll);
+      // Proposal first, so the stream sees modifier_proposed before poll_completed.
+      await this.repo.commit(changes);
+      return { snap: poll.snapshot(), proposal, closedNow: true };
+    });
+
+    this.clearTimer(pollId);
+    if (outcome.proposal) {
+      this.approvalQueue.announceQueued(outcome.proposal);
+    }
+    const view = await this.viewOf(outcome.snap);
+    if (outcome.closedNow) {
+      this.notify('poll_completed', view);
+    }
+    return view;
+  }
+
+  async getPoll(pollId: string): Promise<AudiencePoll | undefined> {
+    const poll = await this.repo.loadPoll(pollId);
+    return poll ? this.viewOf(poll.snapshot()) : undefined;
+  }
+
+  async listPolls(campaignId?: string): Promise<AudiencePoll[]> {
+    const polls = (await this.repo.loadAllPolls()).map((p) => p.snapshot());
+    const selected = campaignId ? polls.filter((p) => p.campaignId === campaignId) : polls;
+    const proposals = await this.proposalIndex(selected);
+    return selected.map((snap) => pollView(snap, snap.proposalId ? proposals.get(snap.proposalId) : undefined));
+  }
+
+  private async requirePoll(pollId: string): Promise<PollAggregate> {
+    const poll = await this.repo.loadPoll(pollId);
     if (!poll) {
-      throw new Error(`Poll '${pollId}' not found`);
+      throw new DomainError(`Poll '${pollId}' not found`, 404);
     }
-    if (poll.status !== 'active') {
-      throw new Error(`Poll '${pollId}' is no longer active`);
-    }
-
-    const option = poll.options.find((o) => o.id === optionId);
-    if (!option) {
-      throw new Error(`Option '${optionId}' not found in poll '${pollId}'`);
-    }
-
-    const voters = this.votersByPoll.get(pollId)!;
-    if (voters.has(voterId)) {
-      throw new Error(`Voter '${voterId}' has already voted in poll '${pollId}'`);
-    }
-    voters.add(voterId);
-
-    option.votes += 1;
-    poll.totalVotes += 1;
-
-    const vote: AudienceVote = {
-      pollId,
-      campaignId: poll.campaignId,
-      voterId,
-      optionId,
-      channel,
-      timestamp: new Date().toISOString(),
-    };
-
-    const event = buildVoteCastEvent(vote);
-    await this.redis.publishEvent('runefoble.events.audience', event);
-
-    this.notify('vote_cast', { poll, vote });
     return poll;
   }
 
-  async closePoll(pollId: string): Promise<AudiencePoll> {
-    const poll = this.polls.get(pollId);
-    if (!poll) {
-      throw new Error(`Poll '${pollId}' not found`);
+  private async viewOf(snap: PollSnapshot): Promise<AudiencePoll> {
+    let proposal: AudienceModifierProposal | undefined;
+    if (snap.proposalId) {
+      proposal = (await this.repo.loadProposal(snap.proposalId))?.snapshot();
     }
-    if (poll.status === 'completed') {
-      return poll;
-    }
+    return pollView(snap, proposal);
+  }
 
-    const timer = this.timers.get(pollId);
-    if (timer) {
-      clearTimeout(timer);
+  private async proposalIndex(polls: PollSnapshot[]): Promise<Map<string, AudienceModifierProposal>> {
+    if (!polls.some((p) => p.proposalId)) return new Map();
+    const index = new Map<string, AudienceModifierProposal>();
+    for (const proposal of await this.repo.loadAllProposals()) {
+      const snap = proposal.snapshot();
+      if (snap) index.set(snap.id, snap);
+    }
+    return index;
+  }
+
+  /** Arms the close timer. The callback re-checks state, so a late or retried fire is harmless. */
+  private schedule(pollId: string, delayMs: number): void {
+    this.clearTimer(pollId);
+    const handle = setTimeout(
+      () => {
+        this.timers.delete(pollId);
+        void this.expire(pollId);
+      },
+      Math.min(Math.max(delayMs, 0), MAX_TIMER_MS)
+    );
+    this.timers.set(pollId, handle);
+  }
+
+  private clearTimer(pollId: string): void {
+    const handle = this.timers.get(pollId);
+    if (handle) {
+      clearTimeout(handle);
       this.timers.delete(pollId);
     }
-
-    poll.status = 'completed';
-    const sorted = [...poll.options].sort((a, b) => b.votes - a.votes);
-    const winningOpt = sorted[0];
-    poll.winningOptionId = winningOpt?.id;
-    poll.quorumMet = poll.totalVotes >= poll.quorum;
-
-    if (poll.quorumMet && winningOpt) {
-      const proposal: AudienceModifierProposal = {
-        id: uuidv4(),
-        pollId: poll.id,
-        campaignId: poll.campaignId,
-        sessionId: poll.sessionId,
-        title: `${poll.title}: ${winningOpt.label}`,
-        modifierType: 'chaos_modifier',
-        description: `Audience voted for: ${winningOpt.label} (${winningOpt.votes}/${poll.totalVotes} votes)`,
-        parameters: {
-          winningOptionId: winningOpt.id,
-          label: winningOpt.label,
-          votes: winningOpt.votes,
-          totalVotes: poll.totalVotes,
-        },
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      };
-      poll.proposedModifier = proposal;
-      this.approvalQueue.enqueueProposal(proposal);
-
-      const propEvent = buildModifierProposedEvent(proposal);
-      await this.redis.publishEvent('runefoble.events.audience', propEvent);
-    }
-
-    const event = buildPollCompletedEvent(poll);
-    await this.redis.publishEvent('runefoble.events.audience', event);
-
-    this.notify('poll_completed', poll);
-    return poll;
   }
 
-  getPoll(pollId: string): AudiencePoll | undefined {
-    return this.polls.get(pollId);
+  private async expire(pollId: string): Promise<void> {
+    try {
+      const poll = await this.repo.loadPoll(pollId);
+      if (!poll || poll.snapshot().status !== 'active') return;
+      const remaining = Date.parse(poll.snapshot().expiresAt) - Date.now();
+      if (remaining > 0) {
+        this.schedule(pollId, remaining);
+        return;
+      }
+      await this.closePoll(pollId);
+    } catch (err) {
+      this.log.error({ err, pollId }, 'Poll expiry failed; retrying');
+      this.schedule(pollId, RETRY_DELAY_MS);
+    }
   }
 
-  listPolls(campaignId?: string): AudiencePoll[] {
-    let list = Array.from(this.polls.values());
-    if (campaignId) {
-      list = list.filter((p) => p.campaignId === campaignId);
+  private notify(event: PollEventName, data: unknown): void {
+    for (const listener of this.listeners) {
+      try {
+        listener(event, data);
+      } catch (err) {
+        // A broken listener must not block the other listeners or the command. The failure is logged.
+        this.log.error({ err, event }, 'Audience poll listener failed');
+      }
     }
-    return list;
   }
 }
+

@@ -3,9 +3,10 @@
  * Governed by ADR-0001, ADR-0006, and Hard Invariant 5 (OpenAPI specs).
  */
 
-import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
+import type { FastifyInstance, FastifyPluginAsync, FastifyReply } from 'fastify';
 import type { ApprovalQueue } from './approvalQueue.js';
 import type { ZanzibarClient } from './auth.js';
+import { DependencyUnavailableError, DomainError } from './errors.js';
 import type { PollEngine } from './pollEngine.js';
 import type { ProposalStatus } from './types.js';
 
@@ -13,6 +14,17 @@ interface RouteContext {
   pollEngine: PollEngine;
   approvalQueue: ApprovalQueue;
   auth: ZanzibarClient;
+}
+
+/** Maps domain and dependency errors to HTTP status codes. Other errors reach Fastify as 500. */
+function sendError(reply: FastifyReply, err: unknown) {
+  if (err instanceof DomainError) {
+    return reply.code(err.statusCode).send({ error: err.message });
+  }
+  if (err instanceof DependencyUnavailableError) {
+    return reply.code(503).send({ error: err.message });
+  }
+  throw err;
 }
 
 export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
@@ -50,17 +62,21 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
       },
     }, async (request, reply) => {
       const b = request.body;
-      const poll = await ctx.pollEngine.createPoll({
-        campaignId: b.campaign_id,
-        sessionId: b.session_id,
-        title: b.title,
-        prompt: b.prompt,
-        options: b.options,
-        durationSeconds: b.duration_seconds,
-        quorum: b.quorum,
-        modifierType: b.modifier_type,
-      });
-      return reply.code(201).send(poll);
+      try {
+        const poll = await ctx.pollEngine.createPoll({
+          campaignId: b.campaign_id,
+          sessionId: b.session_id,
+          title: b.title,
+          prompt: b.prompt,
+          options: b.options,
+          durationSeconds: b.duration_seconds,
+          quorum: b.quorum,
+          modifierType: b.modifier_type,
+        });
+        return reply.code(201).send(poll);
+      } catch (err: unknown) {
+        return sendError(reply, err);
+      }
     });
 
     // 2. List audience polls
@@ -70,8 +86,12 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
         tags: ['Audience'],
       },
     }, async (request, reply) => {
-      const polls = ctx.pollEngine.listPolls(request.query.campaign_id);
-      return reply.send({ polls });
+      try {
+        const polls = await ctx.pollEngine.listPolls(request.query.campaign_id);
+        return reply.send({ polls });
+      } catch (err: unknown) {
+        return sendError(reply, err);
+      }
     });
 
     // 3. Get single poll details
@@ -81,11 +101,15 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
         tags: ['Audience'],
       },
     }, async (request, reply) => {
-      const poll = ctx.pollEngine.getPoll(request.params.pollId);
-      if (!poll) {
-        return reply.code(404).send({ error: 'Poll not found' });
+      try {
+        const poll = await ctx.pollEngine.getPoll(request.params.pollId);
+        if (!poll) {
+          return reply.code(404).send({ error: 'Poll not found' });
+        }
+        return reply.send(poll);
+      } catch (err: unknown) {
+        return sendError(reply, err);
       }
-      return reply.send(poll);
     });
 
     // 4. Cast a spectator vote
@@ -118,8 +142,7 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
         );
         return reply.send({ success: true, poll });
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        return reply.code(400).send({ error: msg });
+        return sendError(reply, err);
       }
     });
 
@@ -134,8 +157,7 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
         const poll = await ctx.pollEngine.closePoll(request.params.pollId);
         return reply.send(poll);
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        return reply.code(400).send({ error: msg });
+        return sendError(reply, err);
       }
     });
 
@@ -148,11 +170,15 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
         tags: ['Audience'],
       },
     }, async (request, reply) => {
-      const proposals = ctx.approvalQueue.getProposals(
-        request.query.campaign_id,
-        request.query.status
-      );
-      return reply.send({ proposals });
+      try {
+        const proposals = await ctx.approvalQueue.getProposals(
+          request.query.campaign_id,
+          request.query.status
+        );
+        return reply.send({ proposals });
+      } catch (err: unknown) {
+        return sendError(reply, err);
+      }
     });
 
     // 7. Approve modifier proposal (DM Zanzibar authorized)
@@ -176,9 +202,7 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
         );
         return reply.send({ success: true, proposal });
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        const code = msg.includes('dungeon_master') ? 403 : 400;
-        return reply.code(code).send({ error: msg });
+        return sendError(reply, err);
       }
     });
 
@@ -203,9 +227,7 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
         );
         return reply.send({ success: true, proposal });
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        const code = msg.includes('dungeon_master') ? 403 : 400;
-        return reply.code(code).send({ error: msg });
+        return sendError(reply, err);
       }
     });
 

@@ -51,7 +51,7 @@ Content-Type: application/json
 }
 ```
 
-This immediately publishes a CloudEvents 1.0 `AudiencePollStarted` domain event to Redis Streams (`runefoble.events.audience`).
+The service publishes a CloudEvents 1.0 `runefoble.events.audience.poll_started` event to Redis Streams (`runefoble.events.audience`). It then stores the poll. If Redis is unavailable, the request fails with HTTP `503 Service Unavailable`, and no poll is stored.
 
 ### Cast Spectator Votes
 High-frequency spectator votes can be submitted from streaming chat bots or the UI:
@@ -67,7 +67,7 @@ Content-Type: application/json
 }
 ```
 
-Duplicate votes from the same `voter_id` are rejected with HTTP `400 Bad Request`.
+Duplicate votes from the same `voter_id` are rejected with HTTP `400 Bad Request`. A vote on an unknown poll returns `404 Not Found`. A vote after the poll window ends returns `400 Bad Request`.
 
 ---
 
@@ -89,8 +89,9 @@ When a poll duration expires (or is explicitly closed via `POST /api/v1/audience
        "dm_user_id": "dm-alice"
      }
      ```
-   - Emits `AudienceModifierApproved` CloudEvent and applies the chaos effect to gameplay.
-   - Alternatively, the DM exercises veto power via `POST /api/v1/audience/proposals/{proposal_id}/veto`.
+   - Emits `runefoble.events.audience.modifier_approved` with `approved: true`. Gameplay does not apply the chaos effect yet. The subscriber that applies it is tracked in TASK-0441.
+   - Alternatively, the DM exercises veto power via `POST /api/v1/audience/proposals/{proposal_id}/veto`. A veto emits the same event type with `approved: false`.
+   - A proposal can be decided once. A second approve or veto returns `400 Bad Request`.
 
 ---
 
@@ -119,7 +120,19 @@ Clients and DM dashboards connect to `/ws/audience/{campaign_id}` for sub-500ms 
 
 ---
 
-## 5. Microfrontend Embedding
+## 5. Durability, Recovery, and Readiness
+
+Poll and proposal state is stored as event streams in PostgreSQL (table `audience_studio_events`). The service keeps no poll state in memory.
+
+- **Required configuration**: set `RUNEFOBLE_DATABASE_URL` and `REDIS_URL`. Outside `NODE_ENV=test`, the service exits at start-up when either one is missing or unreachable.
+- **Restart**: open polls and pending proposals load from the store. Each open poll closes at its stored deadline. A poll whose window ended while the service was down closes at start-up and publishes `poll_completed`.
+- **Publish failure**: a command that cannot publish is rejected. The HTTP route returns `503 Service Unavailable`. The WebSocket route sends an `error` frame. No state changes.
+- **Redis outage**: the Redis client reconnects with a backoff of up to five seconds. Writes resume without a restart.
+- **Readiness**: `GET /readyz` returns `503` with a `dependencies` object while Redis or PostgreSQL is unavailable. Liveness (`GET /healthz`) stays `200`.
+
+---
+
+## 6. Microfrontend Embedding
 
 Embed the vendored `<runefoble-audience-studio>` Lit element into streaming overlays or DM views:
 

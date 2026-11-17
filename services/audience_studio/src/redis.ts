@@ -1,118 +1,68 @@
 /**
- * Redis Streams publisher and consumer with in-memory fallback.
+ * Redis Streams publisher for Audience Studio (ADR-0006).
+ *
+ * The client reconnects forever, with backoff capped at five seconds. Commands fail
+ * at once while the connection is down, so a request never waits on a dead link.
  */
 
 import { Redis } from 'ioredis';
+import { DependencyUnavailableError } from './errors.js';
+import type { Logger } from './logger.js';
+import type { StreamPublisher } from './streamPublisher.js';
 import type { CloudEvent } from './types.js';
 
-export interface PublishedEntry {
-  stream: string;
-  id: string;
-  event: CloudEvent;
-}
+const MAX_RECONNECT_DELAY_MS = 5000;
 
-export class RedisStreamsClient {
-  private client: Redis | null = null;
-  private isConnected = false;
-  private memoryLog: PublishedEntry[] = [];
-  private memorySubscribers: Map<string, Array<(event: CloudEvent) => void>> =
-    new Map();
+export class RedisStreamsClient implements StreamPublisher {
+  private readonly client: Redis;
 
-  constructor(private readonly redisUrl?: string) {
-    if (this.redisUrl && !this.redisUrl.includes('mock://')) {
-      try {
-        this.client = new Redis(this.redisUrl, {
-          lazyConnect: true,
-          retryStrategy: () => null, // Do not hang forever if offline
-          maxRetriesPerRequest: 1,
-        });
-        this.client.connect().then(
-          () => {
-            this.isConnected = true;
-          },
-          () => {
-            this.isConnected = false;
-          }
-        );
-      } catch {
-        this.isConnected = false;
-      }
-    }
+  constructor(url: string, private readonly log: Logger) {
+    this.client = new Redis(url, {
+      enableOfflineQueue: false,
+      maxRetriesPerRequest: 1,
+      retryStrategy: (attempt) => Math.min(100 * 2 ** attempt, MAX_RECONNECT_DELAY_MS),
+    });
+    this.client.on('error', (err: Error) => {
+      this.log.warn({ err }, 'Redis connection error; retrying');
+    });
   }
 
-  async publishEvent(stream: string, event: CloudEvent): Promise<string> {
-    const id = `${Date.now()}-${this.memoryLog.length}`;
-    this.memoryLog.push({ stream, id, event });
-
-    // Notify in-memory subscribers
-    const listeners = this.memorySubscribers.get(stream);
-    if (listeners) {
-      for (const listener of listeners) {
-        try {
-          listener(event);
-        } catch {
-          // Ignore subscriber errors
-        }
-      }
+  async publish(stream: string, event: CloudEvent): Promise<string> {
+    if (this.client.status !== 'ready') {
+      throw new DependencyUnavailableError(`Redis is not connected (stream '${stream}')`);
     }
-
-    if (this.client && this.isConnected) {
-      try {
-        const payload = JSON.stringify(event);
-        const result = await this.client.xadd(
-          stream,
-          '*',
-          'event_type',
-          event.type,
-          'event_id',
-          event.id,
-          'payload',
-          payload
-        );
-        return result ?? id;
-      } catch {
-        // Fall back to memory ID
-      }
+    let id: string | null;
+    try {
+      id = await this.client.xadd(
+        stream,
+        '*',
+        'event_type',
+        event.type,
+        'event_id',
+        event.id,
+        'payload',
+        JSON.stringify(event)
+      );
+    } catch (err) {
+      throw new DependencyUnavailableError(`XADD to '${stream}' failed`, { cause: err });
+    }
+    if (!id) {
+      throw new DependencyUnavailableError(`XADD to '${stream}' returned no entry id`);
     }
     return id;
   }
 
-  subscribe(
-    stream: string,
-    callback: (event: CloudEvent) => void
-  ): () => void {
-    if (!this.memorySubscribers.has(stream)) {
-      this.memorySubscribers.set(stream, []);
+  async ping(): Promise<boolean> {
+    if (this.client.status !== 'ready') return false;
+    try {
+      return (await this.client.ping()) === 'PONG';
+    } catch (err) {
+      this.log.warn({ err }, 'Redis ping failed');
+      return false;
     }
-    this.memorySubscribers.get(stream)!.push(callback);
-
-    return () => {
-      const arr = this.memorySubscribers.get(stream) || [];
-      const idx = arr.indexOf(callback);
-      if (idx !== -1) arr.splice(idx, 1);
-    };
-  }
-
-  getPublishedEvents(stream?: string): CloudEvent[] {
-    if (!stream) {
-      return this.memoryLog.map((e) => e.event);
-    }
-    return this.memoryLog
-      .filter((e) => e.stream === stream)
-      .map((e) => e.event);
-  }
-
-  clearMemory(): void {
-    this.memoryLog = [];
   }
 
   async close(): Promise<void> {
-    if (this.client) {
-      try {
-        await this.client.quit();
-      } catch {
-        // Ignore disconnect errors
-      }
-    }
+    this.client.disconnect();
   }
 }

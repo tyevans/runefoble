@@ -1,5 +1,5 @@
 /**
- * Fastify server factory and configuration for Audience Studio.
+ * Fastify server factory for Audience Studio.
  * Governed by ADR-0005, ADR-0013, and Hard Invariant 5.
  */
 
@@ -10,16 +10,22 @@ import websocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { ApprovalQueue } from './approvalQueue.js';
 import { ZanzibarClient } from './auth.js';
+import type { Adapters } from './adapters.js';
+import { KeyedMutex } from './eventSourcing/keyedMutex.js';
+import { AudienceEventRepository } from './eventSourcing/repository.js';
+import type { Logger } from './logger.js';
 import { PollEngine } from './pollEngine.js';
-import { RedisStreamsClient } from './redis.js';
 import { createAudienceRoutes } from './routes.js';
+import type { StreamPublisher } from './streamPublisher.js';
+import type { EventStore } from './eventStore/types.js';
 import { WebSocketManager } from './websocket.js';
 
 export interface ServerOptions {
-  redisUrl?: string;
   spicedbEndpoint?: string;
   spicedbToken: string;
   logger?: boolean;
+  /** Supplies the event store and stream publisher. Production passes createAdapters. */
+  createAdapters: (log: Logger) => Promise<Adapters>;
 }
 
 export interface AppContext {
@@ -27,7 +33,8 @@ export interface AppContext {
   pollEngine: PollEngine;
   approvalQueue: ApprovalQueue;
   auth: ZanzibarClient;
-  redis: RedisStreamsClient;
+  eventStore: EventStore;
+  streamPublisher: StreamPublisher;
   wsManager: WebSocketManager;
 }
 
@@ -35,15 +42,24 @@ export async function buildServer(options: ServerOptions): Promise<AppContext> {
   const server = Fastify({
     logger: options.logger ?? false,
   });
+  const log = server.log;
 
-  const auth = new ZanzibarClient(
-    options.spicedbEndpoint,
-    options.spicedbToken
-  );
-  const redis = new RedisStreamsClient(options.redisUrl);
-  const approvalQueue = new ApprovalQueue(auth, redis);
-  const pollEngine = new PollEngine(redis, approvalQueue);
+  const { eventStore, streamPublisher } = await options.createAdapters(log);
+  // Fails start-up when the database is unreachable (ADR-0015 decision f).
+  await eventStore.init();
+
+  const auth = new ZanzibarClient(options.spicedbEndpoint, options.spicedbToken);
+  const repo = new AudienceEventRepository(eventStore, streamPublisher, log);
+  const mutex = new KeyedMutex();
+  const approvalQueue = new ApprovalQueue(auth, repo, mutex, log);
+  const pollEngine = new PollEngine(repo, mutex, approvalQueue, log);
   const wsManager = new WebSocketManager(pollEngine, approvalQueue);
+
+  server.addHook('onClose', async () => {
+    pollEngine.close();
+    await streamPublisher.close();
+    await eventStore.close();
+  });
 
   // 1. CORS
   await server.register(cors, { origin: true });
@@ -68,9 +84,19 @@ export async function buildServer(options: ServerOptions): Promise<AppContext> {
   // 3. WebSockets
   await server.register(websocket);
 
-  // Health and Readiness probes
+  // Health and readiness probes. Readiness fails while Redis or the database is unavailable.
   server.get('/healthz', async () => ({ status: 'ok', service: 'audience_studio' }));
-  server.get('/readyz', async () => ({ status: 'ready', service: 'audience_studio' }));
+  server.get('/readyz', async (_request, reply) => {
+    const [streamsUp, storeUp] = await Promise.all([streamPublisher.ping(), eventStore.ping()]);
+    if (streamsUp && storeUp) {
+      return { status: 'ready', service: 'audience_studio' };
+    }
+    return reply.code(503).send({
+      status: 'unavailable',
+      service: 'audience_studio',
+      dependencies: { redis_streams: streamsUp, event_store: storeUp },
+    });
+  });
 
   // Microfrontend manifest (ADR-0013)
   server.get('/ui/manifest', async () => ({
@@ -97,5 +123,8 @@ export async function buildServer(options: ServerOptions): Promise<AppContext> {
     { prefix: '/api/v1/audience' }
   );
 
-  return { server, pollEngine, approvalQueue, auth, redis, wsManager };
+  // Rebuild open polls and their timers from the event store.
+  await pollEngine.restore();
+
+  return { server, pollEngine, approvalQueue, auth, eventStore, streamPublisher, wsManager };
 }
