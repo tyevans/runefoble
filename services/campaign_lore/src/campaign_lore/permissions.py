@@ -1,17 +1,8 @@
-"""SpiceDB Zanzibar object-level permissions and caller identity for Campaign Lore."""
+"""SpiceDB Zanzibar object-level permission checks for Campaign Lore."""
 
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import Header
 from runefoble_auth.spicedb import SpiceDBClient
-
-
-def get_current_user_id(
-    x_user_id: Annotated[str | None, Header(alias="x-user-id")] = None,
-) -> str | None:
-    """Extract authenticated caller identity from x-user-id header."""
-    return x_user_id
 
 
 async def check_user_can_read_secrets(

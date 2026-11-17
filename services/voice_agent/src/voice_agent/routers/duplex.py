@@ -9,7 +9,9 @@ import base64
 import json
 import logging
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from runefoble_auth.websocket import admit_websocket
+from voice_agent.auth import get_voice_principal, get_voice_verifier
 from voice_agent.barge_in import BargeInDetector
 from voice_agent.dependencies import STREAM_SESSION, STREAM_VOICE, get_event_bus
 from voice_agent.echo_canceller import AcousticEchoCanceller
@@ -21,14 +23,14 @@ router = APIRouter(prefix="/api/v1/voice/duplex", tags=["Voice Duplex & Interrup
 _active_playbacks: dict[str, ActivePlayback] = {}
 
 
-@router.post("/playback/start")
+@router.post("/playback/start", dependencies=[Depends(get_voice_principal)])
 async def start_playback(req: PlaybackStartRequest):
     pb = ActivePlayback(req.playback_id, req.session_id, req.text, req.duration_ms)
     _active_playbacks[req.session_id] = pb
     return {"status": "started", "playback_id": req.playback_id, "session_id": req.session_id}
 
 
-@router.get("/status/{session_id}")
+@router.get("/status/{session_id}", dependencies=[Depends(get_voice_principal)])
 async def get_playback_status(session_id: str):
     pb = _active_playbacks.get(session_id)
     return {
@@ -77,7 +79,8 @@ async def _handle_interruption(
 async def duplex_websocket(
     websocket: WebSocket, session_id: str = "default", speaker_id: str = "default"
 ):
-    await websocket.accept()
+    if await admit_websocket(websocket, get_voice_verifier()) is None:
+        return
     qp = websocket.query_params
     sess_id = qp.get("session_id") or session_id
     spk_id = qp.get("speaker_id") or speaker_id

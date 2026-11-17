@@ -22,12 +22,14 @@ from runefoble_events.vocal_dsp import VocalModulatorPresetAppliedEvent
 from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.main import app as voice_app
 
+from tests.helpers.voice_identity import voice_auth_headers
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 @pytest.fixture
-def voice_client() -> TestClient:
-    return TestClient(voice_app)
+def voice_client(trusted_voice_issuer) -> TestClient:
+    return TestClient(voice_app, headers=voice_auth_headers())
 
 
 @pytest.fixture
@@ -86,7 +88,7 @@ async def test_frontdoor_presets_and_modulate_integration(
             "octave_offset": -0.5,
             "enabled": True,
         },
-        headers={"X-User-Id": user_id},
+        headers=voice_auth_headers(user_id),
     )
     assert mod_resp.status_code == 200
     res_data = mod_resp.json()

@@ -89,3 +89,9 @@ Setup: the campaign, the board, a character, and a token are created through the
 4. Docs listed in the Documentation section are updated.
 5. `uv run pytest services/board_state` passes. `uv run ruff check services/board_state` passes.
 6. No file in the change exceeds 500 lines. Split `previews_ws_actions.py` or `actions.py` if needed.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- Re-add the token movement isolation scenario that TASK-0543 removed (player isolation and spectator read-only). Use a public token creation route for setup once one exists.

@@ -80,3 +80,9 @@ The test suite passes while production calls fail. `MockSpiceDBClient` accepts u
 5. No test in `tests/helpers/` or `tests/conftest.py` writes a permission name as a relation.
 6. `docs/how-to/define-spicedb-zanzibar-permissions.md` documents the name contract and the live command.
 7. No file in the change exceeds 500 lines.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- grpc_lookup_resources in libs/runefoble_auth has no live SpiceDB test. Only the mock path is covered. Add a live case to the live schema harness.

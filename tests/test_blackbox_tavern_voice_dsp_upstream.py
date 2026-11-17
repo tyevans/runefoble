@@ -19,6 +19,9 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from voice_agent.main import app as voice_app
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 SPEECH = "I can drink the whole tavern under the table!"
 CHARACTER = "char_bram"
@@ -62,7 +65,11 @@ def _drink(
     }
     if speech_text is not None:
         body["speech_text"] = speech_text
-    return client.post(f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn", json=body)
+    return client.post(
+        f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn",
+        json=body,
+        headers=voice_auth_headers(),
+    )
 
 
 def _drink_two_rounds(client: TestClient, session_id: str, game_id: str) -> None:
@@ -93,7 +100,7 @@ def test_drink_roll_returns_voice_dsp_from_live_voice_agent(
         assert result["intoxication_level"] == "drunk"
         assert result["voice_dsp"] is not None
 
-        with httpx.Client(base_url=voice_url) as direct:
+        with httpx.Client(base_url=voice_url, headers=voice_auth_headers()) as direct:
             upstream = direct.post(CONDITION_PATH, json={"text": SPEECH, "filters": ["drunk"]})
         assert upstream.status_code == 200, upstream.text
         assert result["voice_dsp"] == upstream.json()
@@ -177,3 +184,59 @@ def test_drink_roll_returns_503_when_voice_agent_url_is_not_configured(
 
     assert res.status_code == 503, res.text
     assert "voice_dsp" not in res.text
+
+
+def test_drink_roll_without_caller_token_returns_503_and_records_nothing(
+    session_client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The caller's bearer is forwarded. voice_agent refuses a call with no token, so the roll fails."""
+    session_id, game_id = _start_contest(session_client)
+    _drink_two_rounds(session_client, session_id, game_id)
+    before = _character_state(session_client, session_id, game_id)
+
+    with serve(voice_app) as voice_url:
+        monkeypatch.setenv(VOICE_URL_ENV, voice_url)
+        res = session_client.post(
+            f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn",
+            json={
+                "actor_id": CHARACTER,
+                "action_type": "drink",
+                "con_roll": 6,
+                "speech_text": SPEECH,
+            },
+        )
+    after = _character_state(session_client, session_id, game_id)
+
+    assert res.status_code == 503, res.text
+    assert "voice_dsp" not in res.text
+    assert after["intoxication_levels"][CHARACTER] == before["intoxication_levels"][CHARACTER]
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "ADR-0015 (e) gap: no service credential exists yet. game_session can only "
+        "forward the caller's bearer, so a roll with no caller token cannot reach voice_agent."
+    ),
+)
+def test_drink_roll_without_caller_token_uses_service_credential(
+    session_client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Target behaviour once ADR-0015 (e) lands: game_session calls voice_agent with a service credential."""
+    session_id, game_id = _start_contest(session_client)
+    _drink_two_rounds(session_client, session_id, game_id)
+
+    with serve(voice_app) as voice_url:
+        monkeypatch.setenv(VOICE_URL_ENV, voice_url)
+        res = session_client.post(
+            f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn",
+            json={
+                "actor_id": CHARACTER,
+                "action_type": "drink",
+                "con_roll": 6,
+                "speech_text": SPEECH,
+            },
+        )
+
+    assert res.status_code == 200, res.text
+    assert res.json()["result"]["voice_dsp"] is not None

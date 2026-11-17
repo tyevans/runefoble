@@ -23,6 +23,7 @@ from voice_agent.main import app as voice_app
 
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -44,7 +45,7 @@ def session_client():
 
 
 @pytest.fixture
-def live_voice_agent(monkeypatch):
+def live_voice_agent(monkeypatch, trusted_voice_issuer):
     """Run voice_agent as a real HTTP upstream for the drink DSP call (ADR-0007)."""
     with serve(voice_app) as voice_url:
         monkeypatch.setenv("RUNEFOBLE_VOICE_AGENT_URL", voice_url)
@@ -160,6 +161,7 @@ def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live
     d1_res = session_client.post(
         f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn",
         json={"actor_id": "char_bram", "action_type": "drink", "con_roll": 18},
+        headers=voice_auth_headers(),
     )
     assert d1_res.status_code == 200
     assert d1_res.json()["result"]["intoxication_level"] == "sober"
@@ -168,6 +170,7 @@ def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live
     d2_res = session_client.post(
         f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn",
         json={"actor_id": "char_bram", "action_type": "drink", "con_roll": 5},
+        headers=voice_auth_headers(),
     )
     assert d2_res.json()["result"]["intoxication_level"] == "tipsy"
 
@@ -181,6 +184,7 @@ def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live
             "con_roll": 6,
             "speech_text": speech_phrase,
         },
+        headers=voice_auth_headers(),
     )
     assert d3_res.status_code == 200
     d3_data = d3_res.json()["result"]

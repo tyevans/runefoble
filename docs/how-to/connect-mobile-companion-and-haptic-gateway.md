@@ -160,10 +160,13 @@ The voice agent automatically scales individual WebRTC stream bitrates down to 1
 
 ### Reporting RTCP Telemetry via HTTP
 
+Every voice_agent HTTP route needs `Authorization: Bearer <jwt>` (TASK-0530). The service rejects a request with no valid token with `401`. The token subject is the reporting identity.
+
 Clients submit standard RTCP receiver reports to `/voice/streams/{session_id}/report`:
 
 ```bash
 curl -X POST "http://localhost:8005/voice/streams/session-101/report" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "peer_id": "peer_marcus",
@@ -182,7 +185,7 @@ curl -X POST "http://localhost:8005/voice/streams/session-101/report" \
 Inspect the active stream quality, bitrate, and codec mode via `/voice/streams/{session_id}/quality`:
 
 ```bash
-curl "http://localhost:8005/voice/streams/session-101/quality?peer_id=peer_marcus"
+curl -H "Authorization: Bearer $TOKEN" "http://localhost:8005/voice/streams/session-101/quality?peer_id=peer_marcus"
 ```
 
 Response:

@@ -7,8 +7,26 @@ from uuid import UUID
 
 import pytest
 from campaign_lore.dependencies import get_codex_repo
+from campaign_lore.identity import set_zitadel_auth_service
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+VISITOR_SUBJECT = "lore-test-visitor"
+
+
+def _bearer(user_id: str) -> dict[str, str]:
+    """Return headers carrying a signed bearer token for `user_id`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
+
+
+@pytest.fixture(autouse=True)
+def _trust_signing_issuer():
+    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    yield
+    set_zitadel_auth_service(None)
 
 
 @pytest.mark.asyncio
@@ -18,7 +36,7 @@ async def test_codex_entity_cross_linking_and_privacy(
     """Test codex entity linking against redstring graph and Zanzibar access control."""
     rowan, bob = "rowan_chronicler", "bob_player"
     base = f"/api/v1/campaigns/{campaign_id}/codex/entries"
-    r_h, b_h = {"x-user-id": rowan}, {"x-user-id": bob}
+    r_h, b_h = _bearer(rowan), _bearer(bob)
 
     ingest = client.post(
         "/api/v1/lore/documents",

@@ -14,6 +14,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app as lore_app
 from campaign_lore.routers.codex import router
 from campaign_lore.routers.codex.entries import (
@@ -38,6 +39,23 @@ from campaign_lore.routers.codex.schemas import (
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+VISITOR_SUBJECT = "lore-test-visitor"
+
+
+def _bearer(user_id: str) -> dict[str, str]:
+    """Return headers carrying a signed bearer token for `user_id`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
+
+
+@pytest.fixture(autouse=True)
+def _trust_signing_issuer():
+    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    yield
+    set_zitadel_auth_service(None)
 
 
 def test_codex_router_exposes_endpoints_and_models() -> None:
@@ -85,7 +103,7 @@ async def test_codex_frontdoor_referencing_and_crud(
 ) -> None:
     """Verify frontdoor publishing, referencing extraction, filtering, and Zanzibar privacy."""
     dm_user, player_user = f"dm_{uuid4().hex[:6]}", f"player_{uuid4().hex[:6]}"
-    dm_h, player_h = {"x-user-id": dm_user}, {"x-user-id": player_user}
+    dm_h, player_h = _bearer(dm_user), _bearer(player_user)
     base = f"/api/v1/campaigns/{campaign_id}/codex"
 
     # Set up Zanzibar permissions for campaign

@@ -42,12 +42,22 @@ def _timeout_seconds() -> float:
     return float(raw) if raw else DEFAULT_TIMEOUT_SECONDS
 
 
-async def condition_speech_text(text: str, filters: list[str]) -> dict[str, Any]:
-    """Ask voice_agent to condition speech text for the given affliction filters."""
+async def condition_speech_text(
+    text: str, filters: list[str], authorization: str | None
+) -> dict[str, Any]:
+    """Ask voice_agent to condition speech text for the given affliction filters.
+
+    The caller's `Authorization` value is forwarded unchanged. voice_agent verifies
+    the bearer token itself (ADR-0015 c). No service credential exists yet (ADR-0015 e).
+    With no caller token, voice_agent refuses the call and this raises.
+    """
     url = f"{_base_url()}{CONDITION_PATH}"
+    headers = {"Authorization": authorization} if authorization else {}
     try:
         async with httpx.AsyncClient(timeout=_timeout_seconds()) as client:
-            response = await client.post(url, json={"text": text, "filters": filters})
+            response = await client.post(
+                url, json={"text": text, "filters": filters}, headers=headers
+            )
     except httpx.HTTPError as exc:
         raise VoiceAgentUnavailableError(f"voice_agent is unreachable: {exc}") from exc
 
