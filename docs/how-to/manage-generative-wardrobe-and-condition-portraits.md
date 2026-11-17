@@ -1,6 +1,6 @@
 # How-To: Manage Generative Character Wardrobe & Condition Portraits
 
-This guide explains how to generate thematic character wardrobe variations (such as ballroom masquerade, arctic tundra, or tavern casual attire) preserving character facial embeddings, configure real-time condition overlays (bloodied injury vignettes, poisoned auras, and stunned dizzy halos), and synchronize character portraits with board tokens.
+This guide explains how to generate thematic character wardrobe variations (such as ballroom masquerade, arctic tundra, or tavern casual attire) through the configured wardrobe generator, configure real-time condition overlays (bloodied injury vignettes, poisoned auras, and stunned dizzy halos), and synchronize character portraits with board tokens.
 
 ---
 
@@ -39,7 +39,11 @@ Returns:
 
 ## 2. Generative Wardrobe Synthesis via Asset Forge
 
-Players and DMs can synthesize stylistic narrative attire variants tailored for specific campaign scenes without altering the character's facial features.
+Players and DMs can synthesize stylistic narrative attire variants tailored for specific campaign scenes.
+
+**Face preservation.** The default generator is the `placeholder`. It draws a flat colour portrait. It does not read the character face, and it does not use the attire prompt to draw the image. The placeholder preserves no face. Each response says so with `"generator": "placeholder"` and `"preserves_face": false`. Do not present a placeholder variant as a likeness of the character.
+
+To use another image generator, implement the `WardrobeGenerator` port in `services/asset_forge/src/asset_forge/wardrobe_generator.py` and add it to `build_wardrobe_generator`. Select it with `RUNEFOBLE_WARDROBE_GENERATOR`. A generator that preserves the face must set `preserves_face = True`.
 
 ### Synthesizing an Outfit Variant
 Send a POST request to the Asset Forge service:
@@ -55,6 +59,23 @@ X-User-Id: player-nadia
   "prompt": "Ornate gold filigree mask and violet velvet gown",
   "face_embedding_seed": "nadia_face_v1",
   "size_px": 256
+}
+```
+
+Response (default placeholder):
+
+```json
+{
+  "variant_id": "var-3f9a1c2b7d",
+  "character_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "variant_name": "Nadia the Bard - Ballroom Masquerade",
+  "attire_type": "ballroom_masquerade",
+  "image_url": "http://silo:9000/runefoble-assets/wardrobe/var-3f9a1c2b7d.png",
+  "download_url": "http://silo:9000/runefoble-assets/wardrobe/var-3f9a1c2b7d.png",
+  "prompt": "Ornate royal masquerade ball attire, ... Ornate gold filigree mask and violet velvet gown",
+  "generator": "placeholder",
+  "preserves_face": false,
+  "status": "forged"
 }
 ```
 

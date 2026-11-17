@@ -100,3 +100,9 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **`RUNEFOBLE_LORE_CHUNK`**: `memory` (default). Passage corpus for BM25 and dense search, in process.
 - **`RUNEFOBLE_LORE_EMBEDDING`**: `fake` (default). Deterministic hash embeddings, not semantic.
 - **Event store**: The replay reads `RUNEFOBLE_USE_POSTGRES_EVENT_STORE` and `RUNEFOBLE_DATABASE_URL`. Start-up fails if PostgreSQL is configured and unreachable.
+
+## Wardrobe Image Generator
+
+`WardrobeGeneratorSettings` (`libs/runefoble_platform`) selects the generator behind the `WardrobeGenerator` port. The Asset Forge service reads it at start-up.
+
+- **`RUNEFOBLE_WARDROBE_GENERATOR`**: `placeholder` (default). Draws a flat colour portrait. It preserves no face and does not read the attire prompt. Any other value fails validation at start-up.
