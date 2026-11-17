@@ -28,7 +28,7 @@ curl -X POST "http://localhost:8001/api/v1/campaigns/camp-101/world-tick" \
 
 ## 2. Faction Domain Modeling & Aggregate Sourcing
 
-Factions are modeled as event-sourced aggregates (`FactionAggregate` in `services/the_watcher/src/the_watcher/factions.py`), governed by Hard Invariant 2 and ADR-0011.
+Factions are modeled as event-sourced aggregates (`FactionAggregate` in `services/the_watcher/src/the_watcher/factions/factions.py`), governed by Hard Invariant 2 and ADR-0011.
 
 Key attributes tracked in `FactionState`:
 - `faction_id`: Unique identifier (e.g. `faction-ironfang`).
@@ -46,7 +46,18 @@ All state mutations occur strictly via domain events registered with `@register_
 - `FactionAgendaSet`: Establishes or redirects the active goal.
 - `FactionAgendaAdvanced`: Records d20 check resolution, progress delta, and narrative log.
 - `GeopoliticalShiftOccurred`: Dispatched upon agenda completion to signal territorial control changes or market shortages.
-- `WorldTickExecuted`: Published to Redis Streams (`runefoble.events.watcher`) summarizing the cycle.
+- `CampaignFactionRegistered`: Adds a faction to the campaign registry that each world tick simulates.
+- `WorldTickExecuted`: Recorded in the campaign world stream and published to Redis Streams (`runefoble.events.watcher`) summarizing the cycle.
+
+### Campaign World State
+`CampaignWorldAggregate` (in `services/the_watcher/src/the_watcher/factions/campaign_world.py`) holds the state that persists across tick requests and service restarts:
+- `tick_count`: The number of the last executed world tick. The next tick uses `tick_count + ticks`.
+- `faction_ids`: The campaign faction registry. A tick simulates each registered faction.
+- `latest_tick`: The most recent `WorldTickExecuted` payload, including its bulletin, rumors, shifts, and timestamp.
+
+There is one aggregate per campaign. The simulation engine holds no state between requests. A restart resumes the tick count and the faction list from the event store.
+
+`GET /api/v1/campaigns/{campaign_id}/world-ticks/latest` rebuilds the response from `latest_tick`. Its `factions` list shows each faction's current state, not the state at the time of the tick.
 
 ---
 
