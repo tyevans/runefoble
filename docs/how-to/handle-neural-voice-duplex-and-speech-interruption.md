@@ -297,9 +297,28 @@ With download disabled, `GET /healthz` returns `503` and `"status": "not_ready"`
 
 Callers cannot supply a transcript. The chunk request and the WebSocket frame do not accept `mock_transcript`. The configured engine always decides the text.
 
+### Transcribe Route Input (TASK-0602)
+
+`POST /api/v1/voice/transcribe` accepts one of two inputs:
+
+| Input | Source label | Behaviour |
+|---|---|---|
+| `audio_base64` | `audio` | The service decodes the base64 audio (WAV or raw PCM) and calls the STT port. The engine text becomes the player action. |
+| `transcript` | `client_text` | The service uses the typed text as given. |
+
+Rules:
+
+- Send neither input, or a blank `transcript`, and the route returns `422`. No event is published.
+- Send invalid base64 in `audio_base64`, and the route returns `422`. No event is published.
+- Send both inputs, and the audio wins. The typed text is ignored.
+- Audio that the engine transcribes to no words returns `200` with `transcript` set to `""`. No `PlayerSpokeEvent` is published, and The Watcher receives nothing.
+- An unavailable engine returns `503` with `error: speech_engine_unavailable`. The route never falls back to typed or canned text.
+
+The response carries `source` so that callers can tell the two inputs apart.
+
 ### Test Setup
 
-Blackbox tests inject a deterministic engine (`tests/helpers/fixture_transcriber.py`) into the composition root. Tests that need an unavailable engine set `RUNEFOBLE_VOICE_STT_MODEL_SIZE` to an unknown model name and `HF_HUB_OFFLINE=1`. See `tests/test_blackbox_voice_stt_engine.py`.
+Blackbox tests inject a deterministic engine (`tests/helpers/fixture_transcriber.py`) into the composition root. Tests that need an unavailable engine set `RUNEFOBLE_VOICE_STT_MODEL_SIZE` to an unknown model name and `HF_HUB_OFFLINE=1`. See `tests/test_blackbox_voice_stt_engine.py` and `tests/test_blackbox_voice_transcribe_input.py`.
 
 ## 10. Text-to-Speech Engine and Synthesis Output (TASK-0601)
 

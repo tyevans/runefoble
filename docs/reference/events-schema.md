@@ -475,7 +475,7 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
 
 ### The Watcher & Gameplay Stream Events
 
-- **`PlayerSpokeEvent`**: Emitted when natural player speech is captured and transcribed.
+- **`PlayerSpokeEvent`**: Emitted when natural player speech is captured and transcribed. The transcript comes from the speaker's audio (STT port) or from text the client typed. The service never publishes a substitute transcript. No event is published for empty audio or for a request with no input (TASK-0602).
   - `speaker_id`: String
   - `speaker_name`: String
   - `transcript`: String
