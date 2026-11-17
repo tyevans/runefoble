@@ -9,12 +9,8 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException
-from game_session.dependencies import (
-    STREAM_STRONGHOLD,
-    get_event_bus,
-    get_spicedb_client,
-    stronghold_repo,
-)
+from game_session.dependencies import get_event_bus, get_spicedb_client, stronghold_repo
+from game_session.events import STREAM_STRONGHOLD
 from game_session.stronghold import (
     FACILITY_TIERS,
     StrongholdAggregate,

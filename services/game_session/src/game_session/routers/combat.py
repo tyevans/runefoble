@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from game_session.aggregate import GameSessionAggregate
-from game_session.dependencies import STREAM_SESSION, get_event_bus
 from game_session.dependencies import repo as default_repo
 from game_session.models import (
     CombatStateResponse,
@@ -16,31 +13,11 @@ from game_session.models import (
     NextTurnRequest,
     StartCombatRequest,
 )
-from runefoble_events.events import (
-    CombatEncounterEnded,
-    CombatEncounterStarted,
-    InitiativeRolled,
-    InitiativeTurnAdvanced,
-)
-from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.event_sourcing import AggregateRepository
-
-if TYPE_CHECKING:
-    from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 router = APIRouter(tags=["combat"])
 
 _repo: AggregateRepository[GameSessionAggregate] = default_repo
-_get_bus_fn: Callable[[], RedisStreamsEventBus | None] = get_event_bus
-
-
-def init_combat_routes(
-    repo: AggregateRepository[GameSessionAggregate],
-    get_bus: Callable[[], RedisStreamsEventBus | None],
-) -> None:
-    global _repo, _get_bus_fn
-    _repo = repo
-    _get_bus_fn = get_bus
 
 
 def _build_combat_response(
@@ -71,21 +48,6 @@ async def start_combat_encounter(session_id: UUID, req: StartCombatRequest | Non
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
 
-    if _get_bus_fn:
-        bus = _get_bus_fn()
-        if bus:
-            await publish_or_fail(
-                bus,
-                STREAM_SESSION,
-                CombatEncounterStarted(
-                    aggregate_id=session_id,
-                    session_id=session_id,
-                    campaign_id=session.state.campaign_id,
-                    round_number=session.state.combat_round,
-                    combatants=session.state.initiative_order,
-                ),
-            )
-
     return _build_combat_response(session)
 
 
@@ -108,23 +70,6 @@ async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest):
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
 
-    if _get_bus_fn:
-        bus = _get_bus_fn()
-        if bus:
-            await publish_or_fail(
-                bus,
-                STREAM_SESSION,
-                InitiativeRolled(
-                    aggregate_id=session_id,
-                    session_id=session_id,
-                    campaign_id=session.state.campaign_id,
-                    combatant_id=req.combatant_id,
-                    combatant_name=req.combatant_name,
-                    initiative_score=req.initiative_score,
-                    is_npc=req.is_npc,
-                ),
-            )
-
     return _build_combat_response(session)
 
 
@@ -143,22 +88,6 @@ async def advance_combat_turn(session_id: UUID, req: NextTurnRequest | None = No
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
 
-    if _get_bus_fn:
-        bus = _get_bus_fn()
-        if bus:
-            await publish_or_fail(
-                bus,
-                STREAM_SESSION,
-                InitiativeTurnAdvanced(
-                    aggregate_id=session_id,
-                    session_id=session_id,
-                    campaign_id=session.state.campaign_id,
-                    round_number=session.state.combat_round,
-                    active_combatant_id=session.state.combat_active_id or "",
-                    turn_seconds_remaining=turn_secs,
-                ),
-            )
-
     return _build_combat_response(session, turn_seconds=turn_secs)
 
 
@@ -175,20 +104,6 @@ async def end_combat_encounter(session_id: UUID):
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
-
-    if _get_bus_fn:
-        bus = _get_bus_fn()
-        if bus:
-            await publish_or_fail(
-                bus,
-                STREAM_SESSION,
-                CombatEncounterEnded(
-                    aggregate_id=session_id,
-                    session_id=session_id,
-                    campaign_id=session.state.campaign_id,
-                    total_rounds=session.state.combat_round,
-                ),
-            )
 
     return _build_combat_response(session)
 

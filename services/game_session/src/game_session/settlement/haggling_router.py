@@ -12,8 +12,6 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Header, HTTPException
 from game_session.dependencies import (
-    STREAM_TAVERN,
-    STREAM_WEST_MARCHES,
     get_establishment_negotiations_index,
     get_establishment_repository,
     get_establishment_workers_index,
@@ -22,6 +20,7 @@ from game_session.dependencies import (
     get_spicedb_client,
     get_worker_repository,
 )
+from game_session.events import STREAM_TAVERN, STREAM_WEST_MARCHES
 from game_session.settlement.auth import (
     check_establishment_read_permission,
     check_negotiation_arbitrate_permission,

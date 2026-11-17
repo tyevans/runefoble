@@ -26,12 +26,12 @@ from game_session.contracts.models import (
     PostBountyRequest,
 )
 from game_session.dependencies import (
-    STREAM_SESSION,
     get_bounty_contract_repository,
     get_event_bus,
     get_session_bounties_index,
     get_spicedb_client,
 )
+from game_session.events import STREAM_SESSION
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(prefix="/sessions", tags=["bounties"])

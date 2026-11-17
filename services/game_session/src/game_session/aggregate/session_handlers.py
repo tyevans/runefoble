@@ -9,8 +9,10 @@ from eventsource.domain.decorators import handles
 from game_session.models import GameSessionState
 from runefoble_events.events import (
     CharacterControlTransferred,
+    CharacterSelectedForLobby,
     PlayerJoinedSession,
     PlayerLeftSession,
+    ReadinessToggled,
     SessionCreated,
     SessionStarted,
 )
@@ -78,6 +80,34 @@ class SessionHandlersMixin:
             reason=reason,
         )
 
+    def toggle_readiness(self, player_id: str, is_ready: bool) -> None:
+        """Record a player's lobby readiness before the session starts."""
+        self._require_lobby_participant(player_id)
+        self.create_event(
+            ReadinessToggled,
+            campaign_id=self.state.campaign_id,
+            session_id=self.aggregate_id,
+            player_id=player_id,
+            is_ready=is_ready,
+        )
+
+    def select_lobby_character(self, player_id: str, character_id: UUID) -> None:
+        """Record which character a player brings to the lobby."""
+        self._require_lobby_participant(player_id)
+        self.create_event(
+            CharacterSelectedForLobby,
+            campaign_id=self.state.campaign_id,
+            session_id=self.aggregate_id,
+            player_id=player_id,
+            character_id=character_id,
+        )
+
+    def _require_lobby_participant(self, player_id: str) -> None:
+        if self.state.status != "lobby":
+            raise ValueError(f"Lobby changes need status 'lobby', not '{self.state.status}'")
+        if player_id not in self.state.participants:
+            raise ValueError(f"Player {player_id} is not in session")
+
     def hot_swap_character(self, player_id: str, character_id: UUID) -> None:
         """Transfer active token and turn control from AI stand-in back to player."""
         if self.state.status != "active":
@@ -102,6 +132,14 @@ class SessionHandlersMixin:
             previous_controller="ai_stand_in",
             new_controller="player",
         )
+
+    @handles(ReadinessToggled)
+    def _on_readiness_toggled(self, event: ReadinessToggled) -> None:
+        self._state = self.state.with_readiness(event.player_id, event.is_ready)
+
+    @handles(CharacterSelectedForLobby)
+    def _on_character_selected_for_lobby(self, event: CharacterSelectedForLobby) -> None:
+        self._state = self.state.with_lobby_character(event.player_id, event.character_id)
 
     @handles(SessionCreated)
     def _on_created(self, event: SessionCreated) -> None:

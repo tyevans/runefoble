@@ -9,14 +9,12 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from game_session.dependencies import (
-    STREAM_TAVERN,
-)
-from game_session.dependencies import (
     set_event_bus as set_session_event_bus,
 )
 from game_session.dependencies import (
     set_spicedb_client as set_session_spicedb,
 )
+from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
 from gateway_api.auth import set_spicedb_client as set_gateway_spicedb
 from gateway_api.main import app as gateway_app

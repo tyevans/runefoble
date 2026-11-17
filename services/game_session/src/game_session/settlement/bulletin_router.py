@@ -11,12 +11,8 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, status
-from game_session.dependencies import (
-    STREAM_WEST_MARCHES,
-    get_event_bus,
-    get_settlement_repository,
-    get_spicedb_client,
-)
+from game_session.dependencies import get_event_bus, get_settlement_repository, get_spicedb_client
+from game_session.events import STREAM_WEST_MARCHES
 from game_session.settlement.bulletin_auth import (
     check_bulletin_board_edit_permission,
     check_bulletin_board_view_permission,

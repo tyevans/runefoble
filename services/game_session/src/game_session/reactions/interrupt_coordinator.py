@@ -7,11 +7,8 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from game_session.aggregate import GameSessionAggregate
-from game_session.dependencies import STREAM_SESSION, get_event_bus
 from game_session.dependencies import repo as default_repo
 from game_session.models import DeclareReactionResponse, ResolveReactionResponse
-from runefoble_events.events import CombatTurnPausedForReactionEvent, ReactionResolvedEvent
-from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.event_sourcing import AggregateRepository
 
 logger = logging.getLogger(__name__)
@@ -55,22 +52,6 @@ class ReactionInterruptCoordinator:
         )
         await self._repo.save(session)
 
-        event = CombatTurnPausedForReactionEvent(
-            aggregate_id=session_id,
-            session_id=session_id,
-            campaign_id=session.state.campaign_id,
-            reaction_id=reaction_id,
-            reacting_combatant_id=reacting_combatant_id,
-            reacting_combatant_name=reacting_combatant_name,
-            trigger_phrase=trigger_phrase,
-            reaction_type=reaction_type,
-            paused_turn_combatant_id=session.state.combat_active_id or "",
-            timeout_seconds=timeout_seconds,
-            details=details_payload,
-        )
-        if bus := get_event_bus():
-            await publish_or_fail(bus, STREAM_SESSION, event)
-
         return DeclareReactionResponse(
             session_id=session_id,
             reaction_id=reaction_id,
@@ -111,19 +92,6 @@ class ReactionInterruptCoordinator:
             details=details or {},
         )
         await self._repo.save(session)
-
-        event = ReactionResolvedEvent(
-            aggregate_id=session_id,
-            session_id=session_id,
-            campaign_id=session.state.campaign_id,
-            reaction_id=reaction_id,
-            reacting_combatant_id=active_react.get("reacting_combatant_id", ""),
-            action_taken=action_taken,
-            resumed=True,
-            details=details or {},
-        )
-        if bus := get_event_bus():
-            await publish_or_fail(bus, STREAM_SESSION, event)
 
         return ResolveReactionResponse(
             session_id=session_id,

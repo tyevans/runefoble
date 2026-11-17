@@ -10,13 +10,8 @@ from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException
-from game_session.dependencies import (
-    STREAM_SESSION,
-    get_event_bus,
-    get_spicedb_client,
-    repo,
-    stronghold_repo,
-)
+from game_session.dependencies import get_event_bus, get_spicedb_client, repo, stronghold_repo
+from game_session.events import STREAM_SESSION
 from pydantic import BaseModel, Field
 from runefoble_events.events import CampfireRestCompleted
 from runefoble_platform.event_publish import publish_or_fail

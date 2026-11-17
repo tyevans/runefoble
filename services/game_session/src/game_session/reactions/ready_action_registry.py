@@ -6,11 +6,8 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from game_session.aggregate import GameSessionAggregate
-from game_session.dependencies import STREAM_SESSION, get_event_bus
 from game_session.dependencies import repo as default_repo
 from game_session.models import ReadyActionResponse
-from runefoble_events.events import ReadyActionRegisteredEvent, ReadyActionTriggeredEvent
-from runefoble_platform.event_publish import publish_or_fail
 from runefoble_platform.event_sourcing import AggregateRepository
 
 
@@ -50,23 +47,6 @@ class ReadyActionRegistry:
             details=details or {},
         )
         await self._repo.save(session)
-
-        event = ReadyActionRegisteredEvent(
-            aggregate_id=session_id,
-            session_id=session_id,
-            campaign_id=session.state.campaign_id,
-            ready_action_id=r_id,
-            combatant_id=combatant_id,
-            combatant_name=combatant_name,
-            trigger_type=trigger_type,
-            trigger_condition=trigger_condition,
-            target_id=target_id,
-            range_cells=range_cells,
-            readied_action=readied_action,
-            details=details or {},
-        )
-        if bus := get_event_bus():
-            await publish_or_fail(bus, STREAM_SESSION, event)
 
         return ReadyActionResponse(
             session_id=session_id,
@@ -112,7 +92,6 @@ class ReadyActionRegistry:
 
         triggered: list[dict[str, Any]] = []
         ent_id = str(event_data.get("token_id") or event_data.get("combatant_id") or "")
-        bus = get_event_bus()
 
         for act in list(session.state.ready_actions):
             if not self._matches(act, event_type, event_data):
@@ -135,20 +114,6 @@ class ReadyActionRegistry:
                     "triggering_entity_id": ent_id,
                 }
             )
-            if bus:
-                ev = ReadyActionTriggeredEvent(
-                    aggregate_id=session_id,
-                    session_id=session_id,
-                    campaign_id=session.state.campaign_id,
-                    ready_action_id=r_id,
-                    combatant_id=act["combatant_id"],
-                    combatant_name=act.get("combatant_name", ""),
-                    triggering_entity_id=ent_id,
-                    trigger_type=act.get("trigger_type", ""),
-                    readied_action=act.get("readied_action", ""),
-                    details=event_data,
-                )
-                await publish_or_fail(bus, STREAM_SESSION, ev)
 
         if triggered:
             await self._repo.save(session)
