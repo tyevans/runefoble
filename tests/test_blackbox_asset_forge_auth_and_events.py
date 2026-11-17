@@ -24,6 +24,12 @@ from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture(autouse=True)
@@ -36,7 +42,8 @@ def clean_environment():
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    """Client that sends a signed DM token by default. Requests may override the header."""
+    return TestClient(app, headers=auth_headers("dm-evelyn"))
 
 
 def test_asset_forge_cloudevents_registration():
@@ -98,7 +105,7 @@ async def test_blackbox_event_publication_to_redis_streams_and_event_sourcing(cl
     res_map = client.post(
         "/api/v1/forge/battlemap",
         json={"prompt": "Catacombs", "campaign_id": cid, "width_cells": 10, "height_cells": 10},
-        headers={"X-User-Id": "dm-evelyn"},
+        headers=auth_headers("dm-evelyn"),
     )
     assert res_map.status_code == 200
     map_asset_id = res_map.json()["asset_id"]
@@ -111,7 +118,7 @@ async def test_blackbox_event_publication_to_redis_streams_and_event_sourcing(cl
             "token_type": "monster",
             "campaign_id": cid,
         },
-        headers={"X-User-Id": "dm-evelyn"},
+        headers=auth_headers("dm-evelyn"),
     )
     assert res_tok.status_code == 200
     tok_asset_id = res_tok.json()["asset_id"]
@@ -158,14 +165,14 @@ async def test_blackbox_spicedb_zanzibar_authorization(client: TestClient):
     res_auth = client.post(
         "/api/v1/forge/battlemap",
         json={"prompt": "Elven sanctuary treehouse in canopy", "campaign_id": str(campaign_id)},
-        headers={"X-User-Id": authorized_dm},
+        headers=auth_headers(authorized_dm),
     )
     assert res_auth.status_code == 200
 
     res_unauth = client.post(
         "/api/v1/forge/battlemap",
         json={"prompt": "Malicious fortress intrusion", "campaign_id": str(campaign_id)},
-        headers={"X-User-Id": unauthorized_user},
+        headers=auth_headers(unauthorized_user),
     )
     assert res_unauth.status_code == 403
     assert "Forbidden" in res_unauth.json()["detail"]

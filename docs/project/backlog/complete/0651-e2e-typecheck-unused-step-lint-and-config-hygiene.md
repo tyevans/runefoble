@@ -1,7 +1,7 @@
 ---
 id: '0651'
 title: E2E Suite Gets a Typecheck Gate, an Unused-Step Check, and Config-Driven Base URLs
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -19,7 +19,7 @@ source_audits:
 # TASK-0651: E2E Suite Gets a Typecheck Gate, an Unused-Step Check, and Config-Driven Base URLs
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The Playwright BDD suite has no type gate. Playwright transpiles TypeScript without type checking, so the type error at `e2e/steps/character_sheet_steps.ts:65` passes every current gate. Unused step definitions are also not reported. Two steps hard-code `http://localhost:5173`, which ignores `PLAYWRIGHT_BASE_URL`. The `@serial` tags have no effect. Add a typecheck of `e2e/` to the gates, add an unused-step check, and read the base URL from the config. Remove the dead steps and the dead tags.

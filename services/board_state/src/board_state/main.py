@@ -32,6 +32,7 @@ from board_state.routers import (
     terrain_router,
     tokens_router,
     traps_router,
+    ui_manifest_router,
     uvtt_import_router,
     vfx_router,
 )
@@ -50,6 +51,7 @@ app = FastAPI(
     description="Tactical Map, Grid Coordinates, Token Management, and Spatial Queries backed by eventsource-py.",
 )
 
+app.include_router(ui_manifest_router)
 app.include_router(boards_router)
 app.include_router(tokens_router)
 app.include_router(terrain_router)

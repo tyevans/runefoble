@@ -1,7 +1,7 @@
 ---
 id: '0530'
 title: Voice Agent Verifies Identity on HTTP and WebSocket Routes
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -27,7 +27,7 @@ source_audits:
 # TASK-0530: Voice Agent Verifies Identity on HTTP and WebSocket Routes
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The voice service takes the subject of a request from `X-User-Id`, the raw bearer text, a query parameter, or a default value such as `guest_user` or `dm_user`. The SpiceDB checks then run on that subject. Apply the verified principal to every voice route, and make the WebSocket routes authenticate before accept.

@@ -17,7 +17,7 @@ from fastapi import FastAPI, Request
 from gateway_mcp.clients import ServiceClient
 from gateway_mcp.clients.caller import caller_bearer
 from gateway_mcp.server import mcp
-from mcp.shared.memory import create_connected_server_and_client_session
+from mcp.shared.exceptions import McpError
 from mcp.types import CallToolResult
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
@@ -25,7 +25,9 @@ from the_watcher.main import set_event_bus as watcher_set_event_bus
 from the_watcher.routers import autonomous_dm
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
+from tests.helpers.mcp_http import call_tool_over_http, read_resource_over_http, serve_mcp
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
 def _fake_worker() -> FastAPI:
@@ -104,10 +106,36 @@ def _create_session(session_url: str, title: str) -> str:
         return str(created.json()["session_id"])
 
 
+_MCP: dict[str, str] = {}
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {caller_token(sub)}"}
+
+
+def caller_token(sub: str = "user-test") -> str:
+    """Return a token that the shared test issuer signs for `sub`."""
+    return SIGNING_ISSUER.mint(sub)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def mcp_endpoint() -> Iterator[None]:
+    """Serve the gateway MCP server over HTTP so each call carries the caller bearer."""
+    with serve_mcp(mcp) as endpoint:
+        _MCP["url"] = endpoint
+        yield
+    _MCP.clear()
+
+
 async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
-    """Call a tool through the MCP protocol with an in-memory client session."""
-    async with create_connected_server_and_client_session(mcp) as session:
-        return await session.call_tool(name, arguments)
+    """Call a tool over MCP HTTP as the `user-test` caller."""
+    return await call_tool_over_http(_MCP["url"], name, arguments, caller_token())
+
+
+async def read_resource(uri: str) -> str:
+    """Read a resource over MCP HTTP as the `user-test` caller and return its JSON text."""
+    return await read_resource_over_http(_MCP["url"], uri, caller_token())
 
 
 def tool_text(result: CallToolResult) -> str:
@@ -185,8 +213,7 @@ async def test_blackbox_session_resource_returns_the_created_session(services: d
     """Verify session://{id}/state returns the session created through game_session."""
     session_id = _create_session(services["session"], "Ambush at Red Larch")
 
-    contents = await mcp.read_resource(f"session://{session_id}/state")
-    data = json.loads(list(contents)[0].content)
+    data = json.loads(await read_resource(f"session://{session_id}/state"))
 
     assert data["session_id"] == session_id
     assert data["title"] == "Ambush at Red Larch"
@@ -196,8 +223,8 @@ async def test_blackbox_session_resource_returns_the_created_session(services: d
 @pytest.mark.asyncio
 async def test_blackbox_session_resource_unknown_session_is_error(services: dict[str, str]):
     """Verify an unknown session id fails the resource read. No fixed session is returned."""
-    with pytest.raises(ValueError, match="Error creating resource from template"):
-        await mcp.read_resource(f"session://{uuid4()}/state")
+    with pytest.raises(McpError, match="Error creating resource from template"):
+        await read_resource(f"session://{uuid4()}/state")
 
 
 @pytest.mark.asyncio
@@ -206,7 +233,7 @@ async def test_blackbox_encounter_resource_returns_tokens_from_board_state(
 ):
     """Verify encounter://{id}/current returns the tokens that board_state stores for the id."""
     session_id = _create_session(services["session"], "Red Larch Encounter")
-    with httpx.Client(base_url=services["board"]) as http:
+    with httpx.Client(base_url=services["board"], headers=bearer("user-test")) as http:
         created = http.post(
             "/api/v1/boards", json={"session_id": session_id, "cols": 10, "rows": 8}
         )
@@ -217,8 +244,7 @@ async def test_blackbox_encounter_resource_returns_tokens_from_board_state(
         )
         assert placed.status_code == 200, placed.text
 
-    contents = await mcp.read_resource(f"encounter://{session_id}/current")
-    data = json.loads(list(contents)[0].content)
+    data = json.loads(await read_resource(f"encounter://{session_id}/current"))
 
     assert data["session_id"] == session_id
     assert [(t["name"], t["x"], t["y"]) for t in data["tokens"]] == [("Goblin Sentry", 5, 2)]
@@ -227,8 +253,8 @@ async def test_blackbox_encounter_resource_returns_tokens_from_board_state(
 @pytest.mark.asyncio
 async def test_blackbox_encounter_resource_unknown_board_is_error(services: dict[str, str]):
     """Verify an unknown encounter id fails the read. game_session answers 404."""
-    with pytest.raises(ValueError, match="Error creating resource from template"):
-        await mcp.read_resource(f"encounter://{uuid4()}/current")
+    with pytest.raises(McpError, match="Error creating resource from template"):
+        await read_resource(f"encounter://{uuid4()}/current")
 
 
 # ---------------------------------------------------------------------------

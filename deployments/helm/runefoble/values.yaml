@@ -132,6 +132,8 @@ zitadel:
   externalDomain: auth.localhost
   externalPort: 80
   externalSecure: false
+  # Expected token `aud`. Every verifying service reads it as RUNEFOBLE_ZITADEL_AUDIENCE.
+  audience: runefoble-api
   adminEmail: admin@runefoble.local
   adminPassword: RunefobleAdminPassword123!
   masterKey: RunefobleMasterKeyMustBe32Bytes!

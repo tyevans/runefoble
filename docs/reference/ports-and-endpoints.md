@@ -389,6 +389,14 @@ The response describes the audio it carries. Filters run on the synthesised clip
 
 Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavailable", "engine": "espeak-ng", "message": "..."}}`. No audio field is present.
 
+## Service Bearer Token Verification
+
+`asset-forge`, `soundscape`, and `character-sheet` verify the Zitadel bearer token on every route. A request without a valid `Authorization: Bearer <token>` header returns `401`. The `X-User-Id` header is ignored. The creator, owner, or caller is the token `sub`.
+
+Public routes: `/healthz`, `/health`, `/ui/manifest`, and `/openapi.json`.
+
+The shared settings are `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, and `RUNEFOBLE_ZITADEL_JWKS_URL`. The Helm chart sets them for each service.
+
 ## Infrastructure Ports
 
 | Infrastructure | Service Name | Port | Description |

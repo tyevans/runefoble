@@ -6,7 +6,7 @@ import logging
 from uuid import uuid4
 
 from board_state.aoe import evaluate_aoe_targets
-from board_state.dependencies import get_board, get_event_bus, repo
+from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
     AoEEvaluateRequest,
@@ -15,12 +15,12 @@ from board_state.models import (
     AoETemplateState,
 )
 from board_state.preview import board_ws_manager
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from runefoble_platform.event_publish import deliver_best_effort
 
 logger = logging.getLogger("runefoble.board_state.routers.aoe")
 
-router = APIRouter(tags=["aoe"])
+router = APIRouter(tags=["aoe"], dependencies=[Depends(get_current_user_id)])
 
 
 @router.post("/api/v1/boards/{session_id}/aoe/evaluate", response_model=AoETemplateResponse)

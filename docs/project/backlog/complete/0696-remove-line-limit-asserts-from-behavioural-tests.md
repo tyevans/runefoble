@@ -1,7 +1,7 @@
 ---
 id: '0696'
 title: Remove Line-Limit Asserts From Four Behavioural Test Modules
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0681
@@ -18,7 +18,7 @@ source_audits:
 # TASK-0696: Remove Line-Limit Asserts From Four Behavioural Test Modules
 
 ## Status
-Refined. Discovered in round 2 audit of report 0681. TASK-0681 removed whole structural tests. It left four tests that mix one behavioural check with line-limit asserts.
+Complete
 
 ## Summary
 Four test functions check a behaviour and also assert source line counts. The line-limit part is structural. ADR-0017 owns the file length invariant, and the health gate owns its check. This task keeps the behavioural part and deletes the line-limit asserts.

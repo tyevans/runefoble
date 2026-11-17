@@ -39,7 +39,8 @@ Access to campaign analytics and chronicle records is protected by SpiceDB Zanzi
 
 - **Permission**: Callers must possess the `view` permission on the target campaign (`campaign:<campaign_id>`).
 - **Roles**: Users holding `owner`, `dungeon_master`, `player`, or `spectator` relations automatically inherit `view` permission.
-- Unauthorized callers receive HTTP `403 Forbidden`.
+- Callers without a verified bearer token receive HTTP `401 Unauthorized`. There is no public view.
+- Authenticated callers without the `view` permission receive HTTP `403 Forbidden`.
 
 When querying endpoints, send the Zitadel JWT as a bearer token. The gateway verifies the token and forwards the same `Authorization` header to the analytics service. The gateway ignores any `X-User-Id` header from the client.
 

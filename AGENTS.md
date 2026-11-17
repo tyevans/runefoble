@@ -76,14 +76,14 @@ All system documentation outside project records lives in `docs/` and strictly f
 - **Produce docs for generic / reusable patterns**: If you are implementing capabilities that will be generally or generically applied across services or integrated in multiple places (e.g. auth middleware, tracing, storage pipelines, client SDKs), you must author corresponding Diataxis guides (`docs/how-to/` or `docs/reference/`) when none exist.
 
 ### 1. Tutorials (`docs/tutorials/`) — Learning-Oriented
-- [`01-local-development-setup.md`](docs/tutorials/01-local-development-setup.md): Complete setup for local Kind cluster, Helm stack, UV monorepo, and Storybook.
+- [`01-local-development-setup.md`](docs/tutorials/01-local-development-setup.md): Complete setup for local Kind cluster, Helm stack, and UV monorepo.
 - [`02-running-your-first-session.md`](docs/tutorials/02-running-your-first-session.md): Walkthrough of running an interactive tabletop session with The Watcher.
 
 ### 2. How-To Guides (`docs/how-to/`) — Practical Recipes & Instructions
 - [`create-a-new-service-bc.md`](docs/how-to/create-a-new-service-bc.md): How to scaffold a new bounded context microservice and wire it into Helm and UV.
 - [`define-event-sourced-aggregates.md`](docs/how-to/define-event-sourced-aggregates.md): How to define declarative aggregates and handle domain events with `eventsource-py`.
 - [`define-spicedb-zanzibar-permissions.md`](docs/how-to/define-spicedb-zanzibar-permissions.md): How to define schema relations in `runefoble.zed`, write tuples, and check permissions.
-- [`develop-lit-components-in-storybook.md`](docs/how-to/develop-lit-components-in-storybook.md): How to develop Lit Web Components in Storybook with Bauhaus design tokens.
+- [`develop-lit-components-in-storybook.md`](docs/how-to/develop-lit-components-in-storybook.md): How to develop Lit Web Components in Storybook, from launch to verified story.
 - [`add-a-watcher-ai-tool.md`](docs/how-to/add-a-watcher-ai-tool.md): How to expose new FastMCP tabletop tools and session resources to LLM agents.
 - [`curate-backlog-and-roadmap.md`](docs/how-to/curate-backlog-and-roadmap.md): How to triage the backlog, evaluate INVEST criteria, scan file invariants, and perform JIT refinement.
 - [`decompose-prds-into-vertical-slices.md`](docs/how-to/decompose-prds-into-vertical-slices.md): How to scaffold PRDs, audit backlog buffers, and decompose requirements into single-pass vertical slices and ADR spikes.
@@ -134,6 +134,12 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`validate-e2e-journeys-with-playwright-bdd.md`](docs/how-to/validate-e2e-journeys-with-playwright-bdd.md): How to validate end-to-end user journeys with Playwright BDD, frontdoor authentication fixtures, and multi-browser execution.
 - [`test-user-flows-with-playwright-bdd.md`](docs/how-to/test-user-flows-with-playwright-bdd.md): How to author Gherkin user flow scenarios, implement TypeScript step definitions with Playwright shadow-piercing locators, and execute E2E test suites.
 - [`test-cross-service-calls-with-live-upstreams.md`](docs/how-to/test-cross-service-calls-with-live-upstreams.md): How to test cross-service HTTP calls with live loopback upstreams, simulate 503 and unreachable upstreams, and avoid monkeypatching clients.
+- [`add-an-engine-port-adapter.md`](docs/how-to/add-an-engine-port-adapter.md): How to add a settings-selected engine port adapter. An unavailable engine returns `503`. It never returns substitute output.
+- [`authoring-service-microfrontends.md`](docs/how-to/authoring-service-microfrontends.md): How to build a Lit microfrontend in a service bounded context, register it in the frontdoor manifest, and verify it in Storybook.
+- [`call-owning-services-through-the-gateway.md`](docs/how-to/call-owning-services-through-the-gateway.md): How to add a gateway route that calls an owning bounded context through the shared service client, and test it through public frontdoors.
+- [`run-autonomous-backlog-engine.md`](docs/how-to/run-autonomous-backlog-engine.md): How to run the autonomous backlog engine (`tools/backlog_engine`) that executes refined tasks in isolated worktrees.
+- [`run-supervised-redis-stream-consumers.md`](docs/how-to/run-supervised-redis-stream-consumers.md): How to run supervised Redis Stream consumers in a service lifespan and report their status on `/healthz`.
+- [`verify-identity-in-fastapi-and-websockets.md`](docs/how-to/verify-identity-in-fastapi-and-websockets.md): How to require a verified principal on FastAPI HTTP routes and WebSockets, and test both with signed tokens.
 
 ### 3. Technical Reference (`docs/reference/`) — Specifications & Architecture
 - [`architecture-overview.md`](docs/reference/architecture-overview.md): Macro architecture, system boundaries, and cross-service data flows.
@@ -146,13 +152,19 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`redis-streams-event-bus.md`](docs/reference/redis-streams-event-bus.md): Redis Streams transport architecture, channel conventions, and consumer groups.
 - [`design-tokens-and-themes.md`](docs/reference/design-tokens-and-themes.md): Bauhaus geometric tokens, typography, CSS custom properties, and UI themes.
 - [`fastmcp-gateway.md`](docs/reference/fastmcp-gateway.md): Model Context Protocol gateway architecture, tool inventory, resources, and prompt templates.
-- [`cli-interfaces.md`](docs/reference/cli-interfaces.md): Developer tooling, `Makefile` targets, `uv` commands, and Antigravity slash commands.
+- [`cli-interfaces.md`](docs/reference/cli-interfaces.md): Developer tooling: `Makefile` targets and automation runner scripts.
+- [`embedding-providers.md`](docs/reference/embedding-providers.md): Embedding provider port, factory, selection settings, and failure rules.
+- [`inference-worker-response-contract.md`](docs/reference/inference-worker-response-contract.md): HTTP response contract of the inference worker: endpoints, provenance fields, and backend failure.
+- [`microfrontend-architecture.md`](docs/reference/microfrontend-architecture.md): Microfrontend layout, service component catalog, `/ui/manifest` discovery, and Storybook aggregation.
+- [`service-client.md`](docs/reference/service-client.md): Typed HTTP client that gateways use to call owning bounded contexts, with errors and gateway status mapping.
+- [`spicedb-zitadel-identity-sync.md`](docs/reference/spicedb-zitadel-identity-sync.md): Zitadel-to-SpiceDB relationship synchronization: tuple mapping, public sync endpoints, and retry policy.
 
 ### 4. Architecture Explanation (`docs/explanation/`) — Design Rationale & Background
 - [`project-management-system.md`](docs/explanation/project-management-system.md): Rationale behind Project Management as Code, lean JIT refinement, thin vertical slicing, and automated git traceability.
 - [`the-watcher-autonomous-dm.md`](docs/explanation/the-watcher-autonomous-dm.md): Rationale behind The Watcher AI DM, intent extraction, and DM veto authority.
 - [`zanzibar-in-ttrpg.md`](docs/explanation/zanzibar-in-ttrpg.md): Design rationale for using Google Zanzibar / SpiceDB fine-grained authorization in tabletop RPGs.
 - [`realtime-voice-and-board-sync.md`](docs/explanation/realtime-voice-and-board-sync.md): Sub-500ms pipeline architecture, audio streaming, WebSockets, and optimistic client synchronization.
+- [`microfrontends-in-rpg-domains.md`](docs/explanation/microfrontends-in-rpg-domains.md): Rationale for microfrontends in tabletop domains: why centralized frontends break down, and the Web Components and App Shell pattern.
 
 ## Repository Layout
 
@@ -161,12 +173,14 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `libs/runefoble_platform/` | Common models, config, error hierarchy, event bus |
 | `libs/runefoble_auth/` | Zitadel JWT decoding, SpiceDB Zanzibar client, `runefoble.zed` schema |
 | `libs/runefoble_events/` | CloudEvents-compliant domain event definitions |
+| `libs/runefoble_embeddings/` | Embedding provider factory that builds `redstring` providers from Runefoble settings |
 | `services/the_watcher/` | The Watcher AI gameplay engine (speech-to-intent, DM, AI stand-ins) & microfrontend |
 | `services/game_session/` | Active session lifecycle, turns, player presence, dice & microfrontends |
 | `services/board_state/` | Tactical grid, token coordinates, spatial movement rules & board microfrontend |
 | `services/character_sheet/` | Character stats, HP tracking, session absence penalties & character microfrontends |
 | `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis & voice controls microfrontend |
 | `services/campaign_lore/` | Worldbuilding knowledge graphs, entity alias consolidation & redstring hybrid RAG microservice |
+| `services/inference_worker/` | Distributed LangGraph AI inference worker for The Watcher and AI stand-ins |
 | `services/rules_compendium/` | TTRPG rules compendium, sub-50ms redstring hybrid retrieval & automated CR encounter builder |
 | `services/asset_forge/` | Procedural battlemap layout behind a `MapGenerator` port (deterministic default, no diffusion model), wall/hazard geometry extraction & token portrait generator |
 | `services/soundscape/` | Dynamic audio stem mixing, tactical foley cues, tension scoring & audio controls microfrontend |
@@ -175,6 +189,9 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `gateway/api/` | Unified API Gateway, WebSockets, OpenAPI aggregator |
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
 | `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |
+| `tools/` | Developer tooling packages: backlog engine, PRD pipeline, project visualizer |
+| `scripts/` | Developer scripts run through the Makefile, including `health_check.py` (`make health-check`) |
+| `tests/` | Python pytest suite: blackbox frontdoor tests and unit tests |
 | `deployments/helm/` | Umbrella Helm chart for Kubernetes deployment |
 | `deployments/kind/` | Kind Kubernetes cluster configuration for local development |
 | `docs/project/` | ADRs, PRDs, User Stories, and Backlog records |

@@ -17,6 +17,7 @@ import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
 from eventsource.application.aggregates.repository import AggregateRepository
 from fastapi.testclient import TestClient
+from gateway_api.main import app as gateway_app
 from runefoble_events.soundscape import (
     LeitmotifProfileConfigured,
     LeitmotifTriggered,
@@ -39,6 +40,32 @@ from soundscape.handlers import (
 )
 from soundscape.main import app
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+@pytest.fixture
+def tomb_session_id(trusted_ws_issuer) -> str:
+    """Create a campaign and a session through the gateway frontdoor. The default test subject owns both."""
+    gateway = TestClient(gateway_app)
+    campaign = gateway.post(
+        "/api/v1/campaigns",
+        json={"title": "Tomb of Echoes", "setting": "Underdark"},
+        headers=auth_headers("soundscape-tester"),
+    )
+    assert campaign.status_code == 201, campaign.text
+    session = gateway.post(
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+        json={"title": "Echoing Depths"},
+        headers=auth_headers("soundscape-tester"),
+    )
+    assert session.status_code == 201, session.text
+    return session.json()["id"]
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 @pytest.fixture(autouse=True)
 def clean_environment():
@@ -50,7 +77,7 @@ def clean_environment():
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers=auth_headers("soundscape-tester"))
 
 
 def test_soundscape_aggregate_facade_and_mixins():
@@ -173,9 +200,11 @@ async def test_full_aggregate_domain_lifecycle_and_reconstitution():
     assert reconstituted.state.active_leitmotif["character_id"] == "char-valeros"
 
 
-def test_frontdoor_http_endpoints_with_decomposed_aggregate(client: TestClient):
+def test_frontdoor_http_endpoints_with_decomposed_aggregate(
+    client: TestClient, tomb_session_id: str
+):
     """Verify public HTTP frontdoors interact seamlessly with the decomposed aggregate."""
-    session_id = "session-e2e-frontdoor-test"
+    session_id = tomb_session_id
 
     # 1. POST /api/v1/soundscape/override
     override_resp = client.post(

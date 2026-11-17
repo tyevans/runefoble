@@ -19,6 +19,13 @@ from asset_forge.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 class MockEventBus:
     def __init__(self):
@@ -56,7 +63,7 @@ def test_blackbox_tiled_pdf_battlemap_letter_and_a4(
             "theme": "dwarven_forge",
             "title": "Molten Caverns",
         },
-        headers={"X-User-Id": "crafter-rowan"},
+        headers=auth_headers("crafter-rowan"),
     )
     assert response.status_code == 200, response.text
     assert response.headers["content-type"] == "application/pdf"
@@ -98,7 +105,7 @@ def test_blackbox_tiled_pdf_json_format_and_alias(client: TestClient):
             "format": "json",
             "title": "A4 Crypt",
         },
-        headers={"X-User-Id": "crafter-rowan"},
+        headers=auth_headers("crafter-rowan"),
     )
     assert response.status_code == 200, response.text
     data = response.json()
@@ -122,7 +129,7 @@ def test_blackbox_papercraft_standees_generation(client: TestClient):
             ],
             "page_size": "letter",
         },
-        headers={"X-User-Id": "crafter-rowan"},
+        headers=auth_headers("crafter-rowan"),
     )
     assert response.status_code == 200, response.text
     assert response.headers["content-type"] == "application/pdf"
@@ -148,7 +155,7 @@ def test_blackbox_stl_token_watertight_mesh(client: TestClient, clean_environmen
             "condition_label": "Poisoned",
             "binary": True,
         },
-        headers={"X-User-Id": "crafter-rowan"},
+        headers=auth_headers("crafter-rowan"),
     )
     assert response.status_code == 200, response.text
     assert response.headers["content-type"] == "model/stl"
@@ -218,7 +225,7 @@ def test_blackbox_stl_token_ascii_format(client: TestClient):
             "binary": False,
             "format": "json",
         },
-        headers={"X-User-Id": "crafter-rowan"},
+        headers=auth_headers("crafter-rowan"),
     )
     assert response.status_code == 200, response.text
     data = response.json()
@@ -241,7 +248,7 @@ async def test_blackbox_print_forge_spicedb_authorization(client: TestClient, mo
     response = client.post(
         "/assets/print-pdf",
         json={"campaign_id": str(camp_id), "width_cells": 10, "height_cells": 10},
-        headers={"X-User-Id": "unauthorized-user"},
+        headers=auth_headers("unauthorized-user"),
     )
     assert response.status_code == 403
     assert "Forbidden" in response.text

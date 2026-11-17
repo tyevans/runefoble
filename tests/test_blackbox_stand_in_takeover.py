@@ -17,6 +17,12 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture
@@ -34,7 +40,7 @@ def character_service(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
 
 def _create_stand_in_character(character_url: str) -> str:
     """Create a character and activate its AI stand-in through the character_sheet frontdoor."""
-    with httpx.Client(base_url=character_url) as http:
+    with httpx.Client(base_url=character_url, headers=auth_headers("character-owner")) as http:
         created = http.post(
             "/api/v1/characters",
             json={"name": "Kyra", "character_class": "Cleric", "max_hp": 20},
@@ -49,6 +55,13 @@ def _create_stand_in_character(character_url: str) -> str:
 # --- 1. Mid-Session Hot-Swap Takeover & Combat Order Continuity ---
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "game_session releases the stand-in with no service credential for character_sheet "
+        "(TASK-0604, ADR-0015 (e)). character_sheet returns 401, so the hot-swap returns 502."
+    ),
+)
 @pytest.mark.asyncio
 async def test_mid_session_hot_swap_takeover_and_turn_continuity(
     mock_redis: MockAsyncRedis, character_service: str

@@ -2,7 +2,7 @@
 
 Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 All setup and verification are performed strictly through public HTTP API endpoints
-using TestClient(app) from board_state.main and checking emitted domain events.
+using TestClient(app, headers=bearer("user-test")) from board_state.main and checking emitted domain events.
 """
 
 from board_state.dependencies import repo
@@ -10,10 +10,17 @@ from board_state.main import app
 from fastapi.testclient import TestClient
 from runefoble_events.events import DiceSettled, PhysicsCollisionOccurred
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 def test_tabletop_physics_dice_throw_and_wall_collision_knockback():
     """Verify 3D physical dice toss settling and miniature knockback collision with high walls."""
-    client = TestClient(app)
+    client = TestClient(app, headers=bearer("user-test"))
 
     # 1. Create a tactical board via public endpoint POST /api/v1/boards
     create_resp = client.post(

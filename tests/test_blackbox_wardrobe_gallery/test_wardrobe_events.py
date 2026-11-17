@@ -26,8 +26,14 @@ from runefoble_events import (
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import PNG_SIGNATURE
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 def test_blackbox_generative_wardrobe_synthesis_and_storage(
@@ -52,7 +58,7 @@ def test_blackbox_generative_wardrobe_synthesis_and_storage(
             "face_embedding_seed": "nadia_face_signature_123",
             "size_px": 256,
         },
-        headers={"X-User-Id": "dm-nadia"},
+        headers=auth_headers("dm-nadia"),
     )
     assert forge_res.status_code == 200, forge_res.text
     forge_data = forge_res.json()
