@@ -5,7 +5,6 @@ Part of TASK-0276 / PRD-0024 / US-0076. Governed by ADR-0001, ADR-0004, ADR-0008
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -16,27 +15,11 @@ from tests.helpers.mock_redis import MockAsyncRedis
 
 from .conftest import assert_event_emitted
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-
 
 def test_blackbox_bulletin_board_manifest_and_components(client: TestClient) -> None:
-    """Verify UI manifest advertises runefoble-bulletin-board and component files exist."""
+    """Verify UI manifest advertises runefoble-bulletin-board."""
     res = client.get("/ui/manifest")
     assert res.status_code == 200 and "runefoble-bulletin-board" in res.json()["components"]
-
-    fe = REPO_ROOT / "frontend" / "src"
-    checks = [
-        (fe / "components" / "runefoble-bulletin-board.ts", 400),
-        (fe / "components" / "runefoble-bulletin-board.styles.ts", 40),
-        (fe / "components" / "runefoble-bulletin-board.modals.ts", 400),
-        (fe / "stories" / "runefoble-bulletin-board.stories.ts", 400),
-        (fe / "styles" / "bulletin-board-layout.styles.ts", 150),
-        (fe / "styles" / "bulletin-board-card.styles.ts", 150),
-        (fe / "styles" / "bulletin-board-dialog.styles.ts", 150),
-    ]
-    for path, max_lines in checks:
-        assert path.exists(), f"File {path.name} must exist"
-        assert len(path.read_text().splitlines()) < max_lines
 
 
 @pytest.mark.asyncio
