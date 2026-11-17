@@ -399,7 +399,7 @@ curl http://localhost:8004/ui/manifest
 1. **One-Click Contract Acceptance**: Click **Accept Escort Contract** to claim open jobs via `POST /api/v1/shared-worlds/{wid}/caravans/contracts/{cid}/accept` with SpiceDB Zanzibar role enforcement.
 2. **Caravan Manifest Details Modal**: Click **Inspect Manifest** or any contract card to open the inspection modal showing departure settlement, destination stronghold, itemized cargo pills, and escrow bounty fees.
 3. **Active Transit Route Status Pill**: Caravans in transit display a live progress bar tracking completed stages vs. remaining distance, alongside ambush encounter warning badges.
-4. **Real-Time Notifications**: Bauhaus toast banners display immediate visual confirmation upon claiming, dispatching, or delivering trade convoys.
+4. **Real-Time Notifications**: Bauhaus toast banners display immediate visual confirmation upon claiming, dispatching, or delivering trade convoys. If the server rejects a dispatch or a fulfilment, the banner shows a red error with the server message. The contract keeps its previous status. The board never shows a caravan as in transit or fulfilled without a successful server response (TASK-0677).
 
 ---
 
