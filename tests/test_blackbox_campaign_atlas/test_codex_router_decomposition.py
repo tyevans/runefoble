@@ -16,21 +16,25 @@ from uuid import uuid4
 
 import pytest
 from campaign_lore.main import app as lore_app
-from campaign_lore.routers.codex import (
+from campaign_lore.routers.codex import router
+from campaign_lore.routers.codex.entries import (
+    get_entry,
+    list_entries,
+    publish_entry,
+    update_entry,
+)
+from campaign_lore.routers.codex.entries import router as entries_router
+from campaign_lore.routers.codex.referencing import (
+    extract_references,
+    get_entry_references,
+)
+from campaign_lore.routers.codex.referencing import router as referencing_router
+from campaign_lore.routers.codex.schemas import (
     CrossReferenceContentRequest,
     CrossReferenceResponse,
     PublishCodexEntryRequest,
     UpdateCodexEntryRequest,
-    entries_router,
-    extract_references,
     format_codex_entry,
-    get_entry,
-    get_entry_references,
-    list_entries,
-    publish_entry,
-    referencing_router,
-    router,
-    update_entry,
 )
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
@@ -43,12 +47,9 @@ def test_codex_modular_file_budgets() -> None:
     """Verify file length limits strictly conform to TASK-0198 DoD and Hard Invariant 6."""
     routers_dir = REPO_ROOT / "services" / "campaign_lore" / "src" / "campaign_lore" / "routers"
     codex_pkg_dir = routers_dir / "codex"
-    codex_facade = routers_dir / "codex.py"
-
-    assert codex_facade.exists(), "codex.py aggregator facade must exist"
+    assert not (routers_dir / "codex.py").exists(), "codex.py facade must not exist"
     assert codex_pkg_dir.is_dir(), "codex/ router package directory must exist"
 
-    facade_lines = len(codex_facade.read_text(encoding="utf-8").splitlines())
     init_lines = len((codex_pkg_dir / "__init__.py").read_text(encoding="utf-8").splitlines())
     schemas_lines = len((codex_pkg_dir / "schemas.py").read_text(encoding="utf-8").splitlines())
     entries_lines = len((codex_pkg_dir / "entries.py").read_text(encoding="utf-8").splitlines())
@@ -57,7 +58,6 @@ def test_codex_modular_file_budgets() -> None:
     )
 
     # TASK-0198 Specification Limits:
-    assert facade_lines < 50, f"codex.py facade exceeds 50 lines ({facade_lines} lines)"
     assert init_lines < 50, f"codex/__init__.py exceeds 50 lines ({init_lines} lines)"
     assert schemas_lines < 80, f"codex/schemas.py exceeds 80 lines ({schemas_lines} lines)"
     assert entries_lines < 110, f"codex/entries.py exceeds 110 lines ({entries_lines} lines)"
@@ -76,8 +76,8 @@ def test_codex_modular_file_budgets() -> None:
         assert line_count < 500, f"{py_file.name} violates Hard Invariant 6 ({line_count} lines)"
 
 
-def test_codex_facade_and_symbol_reexports() -> None:
-    """Verify facade and package re-export APIRouter and symbols for 100% backward compatibility."""
+def test_codex_router_exposes_endpoints_and_models() -> None:
+    """Verify the codex router package and its submodules expose APIRouters, endpoints and models."""
     assert isinstance(router, APIRouter)
     assert isinstance(entries_router, APIRouter)
     assert isinstance(referencing_router, APIRouter)

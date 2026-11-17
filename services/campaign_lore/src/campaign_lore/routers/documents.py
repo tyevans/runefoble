@@ -10,11 +10,13 @@ from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.aggregate import LoreDocumentAggregate, LoreDocumentState
 from campaign_lore.dependencies import (
-    check_user_can_read_secrets,
-    get_current_user_id,
     get_repo,
     get_retrieval_engine,
     get_spicedb_client,
+)
+from campaign_lore.permissions import (
+    check_user_can_read_secrets,
+    get_current_user_id,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
 

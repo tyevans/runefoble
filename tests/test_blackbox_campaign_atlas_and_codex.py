@@ -15,7 +15,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from campaign_lore import codex_deps, dependencies, permissions
+from campaign_lore import dependencies, permissions
 from campaign_lore.main import app
 from fastapi.testclient import TestClient
 
@@ -46,35 +46,8 @@ def test_dependency_module_file_budgets() -> None:
     assert codex_lines < 150, f"codex_deps.py exceeds 150 lines ({codex_lines} lines)"
 
 
-def test_backward_compatibility_reexports() -> None:
-    """Verify dependencies.py re-exports modular symbols for 100% backward compatibility."""
-    expected_perm_symbols = [
-        "check_user_can_read_secrets",
-        "check_user_can_view_campaign",
-        "check_user_can_interact_handout",
-        "check_user_can_inspect_relic",
-        "check_user_can_play_campaign",
-        "get_current_user_id",
-    ]
-    for sym in expected_perm_symbols:
-        assert hasattr(permissions, sym), f"permissions.{sym} missing"
-        assert hasattr(dependencies, sym), f"dependencies.{sym} missing"
-        assert getattr(dependencies, sym) is getattr(permissions, sym)
-
-    expected_codex_symbols = [
-        "check_user_can_view_codex_entry",
-        "check_user_can_edit_codex_entry",
-        "require_campaign_view",
-        "load_codex_entry",
-        "write_codex_permissions",
-        "update_codex_permissions",
-        "CodexSessionDeps",
-    ]
-    for sym in expected_codex_symbols:
-        assert hasattr(codex_deps, sym), f"codex_deps.{sym} missing"
-        assert hasattr(dependencies, sym), f"dependencies.{sym} missing"
-        assert getattr(dependencies, sym) is getattr(codex_deps, sym)
-
+def test_dependencies_expose_core_getters() -> None:
+    """Verify dependencies.py exposes its own repository, client and session getters."""
     expected_core_getters = [
         "get_repo",
         "get_handout_repo",

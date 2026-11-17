@@ -1,4 +1,4 @@
-"""Tests verifying modular decomposition and backward compatibility of campaign_lore retrieval submodules."""
+"""Tests verifying modular decomposition of campaign_lore retrieval submodules and absence of legacy shims."""
 
 from __future__ import annotations
 
@@ -6,79 +6,60 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
+import campaign_lore
 import pytest
 import redstring
-from campaign_lore import (
-    DocumentMetadata,
-    LoreRetrievalEngine,
-    LoreSearchResultItem,
-    bm25_score,
-    bm25_term_score,
+from campaign_lore import dependencies, routers, west_marches_aggregate
+from campaign_lore import retrieval as retrieval_module
+from campaign_lore.extraction import (
     classify_entity_type,
-    compute_idf,
-    cosine_similarity,
     extract_alias_pairs,
     extract_pattern_graph,
     extract_proper_nouns,
     extract_relationships,
+    get_or_create_entity,
+)
+from campaign_lore.routers import codex as codex_package
+from campaign_lore.scoring import (
+    bm25_score,
+    compute_idf,
+    cosine_similarity,
     reciprocal_rank_fusion,
     tokenize,
 )
-from campaign_lore.extraction import (
-    get_or_create_entity,
-)
-from campaign_lore.retrieval import (
-    DocumentMetadata as RetrievalMeta,
-)
-from campaign_lore.retrieval import (
-    LoreRetrievalEngine as RetrievalEngine,
-)
-from campaign_lore.retrieval import (
-    LoreSearchResultItem as RetrievalItem,
-)
-from campaign_lore.scoring import (
-    bm25_score as scoring_bm25_score,
-)
-from campaign_lore.scoring import (
-    cosine_similarity as scoring_cosine_similarity,
-)
-from campaign_lore.scoring import (
-    reciprocal_rank_fusion as scoring_rrf,
-)
-from campaign_lore.scoring import (
-    tokenize as scoring_tokenize,
-)
 
 
-def test_import_from_subpackage_facade() -> None:
-    """Verify that importing from campaign_lore exposes all public symbols."""
-    assert LoreRetrievalEngine is not None
-    assert DocumentMetadata is not None
-    assert LoreSearchResultItem is not None
-    assert callable(extract_pattern_graph)
-    assert callable(tokenize)
-    assert callable(compute_idf)
-    assert callable(bm25_term_score)
-    assert callable(bm25_score)
-    assert callable(cosine_similarity)
-    assert callable(reciprocal_rank_fusion)
-    assert callable(classify_entity_type)
-    assert callable(extract_alias_pairs)
-    assert callable(extract_proper_nouns)
-    assert callable(extract_relationships)
+def test_legacy_shims_are_removed() -> None:
+    """Verify that facade modules, alias names and package-root re-exports are gone."""
+    package_dir = Path(campaign_lore.__file__).resolve().parent
 
+    # Codex router facade (routers/codex.py); the routers/codex/ package is the canonical router.
+    assert not (package_dir / "routers" / "codex.py").exists()
+    assert not hasattr(codex_package, "PublishCodexEntryRequest")
+    assert not hasattr(codex_package, "extract_references")
 
-def test_import_from_retrieval_submodule() -> None:
-    """Verify campaign_lore.retrieval exposes the engine and result models."""
-    assert RetrievalEngine is LoreRetrievalEngine
-    assert RetrievalMeta is DocumentMetadata
-    assert RetrievalItem is LoreSearchResultItem
+    # Class alias WestMarchesWorldAggregate = WestMarchesAtlasAggregate.
+    assert not hasattr(west_marches_aggregate, "WestMarchesWorldAggregate")
+
+    # Package-root and routers-package re-exports.
+    assert not hasattr(campaign_lore, "LoreRetrievalEngine")
+    assert not hasattr(campaign_lore, "tokenize")
+    assert not hasattr(routers, "codex_router")
+    assert not hasattr(routers, "west_marches_router")
+
+    # Retrieval module exports only its own coordinator types.
+    assert "tokenize" not in retrieval_module.__all__
+    assert "DocumentMetadata" not in retrieval_module.__all__
+
+    # Dependencies module no longer re-exports permission or codex dependency symbols.
+    assert not hasattr(dependencies, "check_user_can_read_secrets")
+    assert not hasattr(dependencies, "load_codex_entry")
 
 
 def test_modular_scoring_primitives() -> None:
     """Verify BM25 tokenization, term scoring, cosine similarity, and RRF rank fusion."""
     # 1. Tokenization
-    tokens = scoring_tokenize("Sir Gareth, the Silver Knight of Neverwinter!")
+    tokens = tokenize("Sir Gareth, the Silver Knight of Neverwinter!")
     assert tokens == ["sir", "gareth", "the", "silver", "knight", "of", "neverwinter"]
 
     # 2. IDF calculation
@@ -91,8 +72,8 @@ def test_modular_scoring_primitives() -> None:
     idf_map = {"sunblade": 2.5, "paladin": 1.8}
     doc1 = ["sir", "gareth", "wields", "the", "sunblade", "paladin"]
     doc2 = ["the", "citadel", "is", "guarded"]
-    score1 = scoring_bm25_score(["sunblade"], doc1, idf_map, avg_doc_len=5.0)
-    score2 = scoring_bm25_score(["sunblade"], doc2, idf_map, avg_doc_len=5.0)
+    score1 = bm25_score(["sunblade"], doc1, idf_map, avg_doc_len=5.0)
+    score2 = bm25_score(["sunblade"], doc2, idf_map, avg_doc_len=5.0)
     assert score1 > 0.0
     assert score2 == 0.0
 
@@ -100,14 +81,14 @@ def test_modular_scoring_primitives() -> None:
     vec_a = [1.0, 0.0, 0.0]
     vec_b = [1.0, 0.0, 0.0]
     vec_c = [0.0, 1.0, 0.0]
-    assert scoring_cosine_similarity(vec_a, vec_b) == pytest.approx(1.0)
-    assert scoring_cosine_similarity(vec_a, vec_c) == pytest.approx(0.0)
-    assert scoring_cosine_similarity([], []) == 0.0
+    assert cosine_similarity(vec_a, vec_b) == pytest.approx(1.0)
+    assert cosine_similarity(vec_a, vec_c) == pytest.approx(0.0)
+    assert cosine_similarity([], []) == 0.0
 
     # 5. Reciprocal Rank Fusion
     list1 = ["itemA", "itemB", "itemC"]
     list2 = ["itemB", "itemA", "itemD"]
-    fused = scoring_rrf([list1, list2], k=60)
+    fused = reciprocal_rank_fusion([list1, list2], k=60)
     fused_dict = dict(fused)
     # itemA and itemB appear in top 2 of both lists, itemC and itemD only in one
     assert fused_dict["itemA"] > fused_dict["itemC"]

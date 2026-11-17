@@ -143,5 +143,5 @@ To comply with Hard Invariant 6 (File length limit < 500 lines) and enable indep
 - **Data Models (`models.py`)**: Defines `DocumentMetadata` and `LoreSearchResultItem` data classes.
 - **Engine Coordinator (`retrieval.py`)**: Exposes `LoreRetrievalEngine`. The engine receives its ports through its constructor. It manages document ingestion, knowledge graph neighbor traversal, alias consolidation, and hybrid search query execution.
 
-Submodules re-export their public symbols through `campaign_lore`.
+Import each symbol from its owning module, for example `from campaign_lore.retrieval import LoreRetrievalEngine`. The `campaign_lore` package root and `campaign_lore.routers` have no re-exports.
 
