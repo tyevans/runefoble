@@ -11,7 +11,7 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
 @register_event
-class MercenaryBountyPostedEvent(BaseRunefobleEvent):
+class MercenaryBountyPosted(BaseRunefobleEvent):
     """Fired when a new mercenary bounty or retrieval contract is posted."""
 
     aggregate_type: str = "MercenaryBounty"
@@ -32,7 +32,7 @@ class MercenaryBountyPostedEvent(BaseRunefobleEvent):
 
 
 @register_event
-class MercenaryBountyClaimedEvent(BaseRunefobleEvent):
+class MercenaryBountyClaimed(BaseRunefobleEvent):
     """Fired when an adventuring party claims an active mercenary bounty."""
 
     aggregate_type: str = "MercenaryBounty"
@@ -47,7 +47,7 @@ class MercenaryBountyClaimedEvent(BaseRunefobleEvent):
 
 
 @register_event
-class MercenaryBountyFulfilledEvent(BaseRunefobleEvent):
+class MercenaryBountyFulfilled(BaseRunefobleEvent):
     """Fired when proof of bounty fulfillment is submitted or completed."""
 
     aggregate_type: str = "MercenaryBounty"
@@ -63,15 +63,8 @@ class MercenaryBountyFulfilledEvent(BaseRunefobleEvent):
     fulfilled_at: str | None = None
 
 
-MercenaryBountyPosted = MercenaryBountyPostedEvent
-MercenaryBountyClaimed = MercenaryBountyClaimedEvent
-MercenaryBountyFulfilled = MercenaryBountyFulfilledEvent
-
 __all__ = [
     "MercenaryBountyClaimed",
-    "MercenaryBountyClaimedEvent",
     "MercenaryBountyFulfilled",
-    "MercenaryBountyFulfilledEvent",
     "MercenaryBountyPosted",
-    "MercenaryBountyPostedEvent",
 ]
