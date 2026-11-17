@@ -12,10 +12,9 @@ Governed by:
 from __future__ import annotations
 
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
-from campaign_lore.dependencies import get_retrieval_engine
 from campaign_lore.main import app as lore_app
 from campaign_lore.routers.codex import (
     CrossReferenceContentRequest,
@@ -131,12 +130,15 @@ async def test_codex_frontdoor_referencing_and_crud(
     await spicedb.write_relationship("campaign", campaign_id, "view", "user", player_user)
 
     # Ingest document to populate redstring entity graph
-    await get_retrieval_engine().ingest_document(
-        uuid4(),
-        UUID(campaign_id),
-        "Keep of the Silver Gryphon",
-        "The Silver Gryphon is an ancient bastion guarded by Lord Theresa.",
+    ingest = client.post(
+        "/api/v1/lore/documents",
+        json={
+            "campaign_id": campaign_id,
+            "title": "Keep of the Silver Gryphon",
+            "content": "The Silver Gryphon is an ancient bastion guarded by Lord Theresa.",
+        },
     )
+    assert ingest.status_code == 200, ingest.text
 
     # 1. Test standalone reference extraction frontdoor
     ext_resp = client.post(

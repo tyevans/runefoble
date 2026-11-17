@@ -3,6 +3,8 @@
 Centralizes configuration settings across bounded contexts.
 """
 
+from typing import Literal
+
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -151,4 +153,35 @@ class PlatformSettings(BaseSettings):
         default=True,
         validation_alias=AliasChoices("RUNEFOBLE_MAILPIT_ENABLED", "MAILPIT_ENABLED"),
         description="Whether Mailpit email testing is enabled",
+    )
+
+
+class LoreBackendSettings(BaseSettings):
+    """Campaign Lore retrieval backends, selected per port.
+
+    Every port is rebuilt at start-up from the event store (ADR-0011). Only
+    in-process adapters exist today. Other choices arrive with their adapters.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="RUNEFOBLE_LORE_",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    graph: Literal["projection"] = Field(
+        default="projection",
+        description="Entity graph, rebuilt from LoreDocument events at start-up",
+    )
+    vector: Literal["memory"] = Field(
+        default="memory",
+        description="Entity vector index, rebuilt at start-up (in-process)",
+    )
+    chunk: Literal["memory"] = Field(
+        default="memory",
+        description="Passage corpus for BM25 and dense search, rebuilt at start-up",
+    )
+    embedding: Literal["fake"] = Field(
+        default="fake",
+        description="Deterministic hash embeddings (not semantic); replaced by a provider adapter",
     )

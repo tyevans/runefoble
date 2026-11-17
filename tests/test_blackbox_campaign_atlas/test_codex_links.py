@@ -3,10 +3,10 @@
 Governed by ADR-0001, ADR-0007, and Hard Invariant 7.
 """
 
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
-from campaign_lore.dependencies import get_codex_repo, get_retrieval_engine
+from campaign_lore.dependencies import get_codex_repo
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
 
@@ -20,12 +20,15 @@ async def test_codex_entity_cross_linking_and_privacy(
     base = f"/api/v1/campaigns/{campaign_id}/codex/entries"
     r_h, b_h = {"x-user-id": rowan}, {"x-user-id": bob}
 
-    await get_retrieval_engine().ingest_document(
-        uuid4(),
-        UUID(campaign_id),
-        "Arcane Factions",
-        "The Order of the Obsidian Veil is secretive.",
+    ingest = client.post(
+        "/api/v1/lore/documents",
+        json={
+            "campaign_id": campaign_id,
+            "title": "Arcane Factions",
+            "content": "The Order of the Obsidian Veil is secretive.",
+        },
     )
+    assert ingest.status_code == 200, ingest.text
     for uid in (rowan, bob):
         await spicedb.write_relationship("campaign", campaign_id, "player", "user", uid)
 

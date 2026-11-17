@@ -12,6 +12,7 @@ Governed by:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from uuid import uuid4
 
@@ -45,10 +46,11 @@ def spicedb_client() -> MockSpiceDBClient:
 
 
 @pytest.fixture
-def client(spicedb_client: MockSpiceDBClient) -> TestClient:
+def client(spicedb_client: MockSpiceDBClient) -> Iterator[TestClient]:
     fresh_repo = create_aggregate_repository(WestMarchesAtlasAggregate)
     set_west_marches_repo(fresh_repo)
-    return TestClient(lore_app)
+    with TestClient(lore_app) as lore_client:
+        yield lore_client
 
 
 def test_hard_invariant_6_file_length_limits() -> None:

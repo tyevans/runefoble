@@ -89,3 +89,14 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Graceful Fallback**: `MailpitClient` has built-in `fallback_in_memory=True` storing emails in a local memory buffer for offline test execution when Mailpit is not running.
 - **How-To Guide**: [Test Email Signups with Mailpit](../how-to/test-email-signups-with-mailpit.md).
 
+---
+
+## Campaign Lore Retrieval Backends
+
+`LoreBackendSettings` (`libs/runefoble_platform`) selects each port of the Campaign Lore retrieval engine. All ports are rebuilt from the event store at start-up.
+
+- **`RUNEFOBLE_LORE_GRAPH`**: `projection` (default). Entity graph, rebuilt from `LoreDocument` events.
+- **`RUNEFOBLE_LORE_VECTOR`**: `memory` (default). Entity vector index, in process.
+- **`RUNEFOBLE_LORE_CHUNK`**: `memory` (default). Passage corpus for BM25 and dense search, in process.
+- **`RUNEFOBLE_LORE_EMBEDDING`**: `fake` (default). Deterministic hash embeddings, not semantic.
+- **Event store**: The replay reads `RUNEFOBLE_USE_POSTGRES_EVENT_STORE` and `RUNEFOBLE_DATABASE_URL`. Start-up fails if PostgreSQL is configured and unreachable.

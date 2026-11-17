@@ -3,10 +3,14 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from eventsource import AggregateNotFoundError
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+from runefoble_platform.event_sourcing import AggregateRepository
 
+from campaign_lore.aggregate import LoreDocumentAggregate
 from campaign_lore.dependencies import (
+    get_repo,
     get_retrieval_engine,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
@@ -21,7 +25,7 @@ class ConsolidateAliasRequest(BaseModel):
     canonical_name: str = Field(description="Canonical entity name (e.g. 'Sir Gareth')")
     alias_name: str = Field(description="Alias name or title (e.g. 'The Silver Knight')")
     reason: str = Field(default="alias consolidation", description="Rationale for consolidation")
-    document_id: UUID | None = Field(default=None, description="Optional document aggregate ID")
+    document_id: UUID = Field(description="Document aggregate that records the consolidation")
 
 
 class ConsolidateAliasResponse(BaseModel):
@@ -49,8 +53,16 @@ class ResolveAliasResponse(BaseModel):
 async def consolidate_alias(
     req: ConsolidateAliasRequest,
     retrieval_engine: Annotated[LoreRetrievalEngine, Depends(get_retrieval_engine)],
+    repo: Annotated[AggregateRepository[LoreDocumentAggregate], Depends(get_repo)],
 ) -> ConsolidateAliasResponse:
-    """Merge an alias title into a canonical entity node using redstring Consolidator."""
+    """Merge an alias title into a canonical entity node and record it on the document."""
+    try:
+        document = await repo.load(req.document_id)
+    except AggregateNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Lore document not found") from exc
+    if document.state.campaign_id != req.campaign_id:
+        raise HTTPException(status_code=404, detail="Lore document not found")
+
     canon_id, alias_id = await retrieval_engine.consolidate_alias(
         campaign_id=req.campaign_id,
         canonical_name=req.canonical_name,
@@ -58,6 +70,14 @@ async def consolidate_alias(
         document_id=req.document_id,
         reason=req.reason,
     )
+    document.consolidate_alias(
+        canonical_entity_id=canon_id,
+        canonical_name=req.canonical_name,
+        alias_entity_id=alias_id,
+        alias_name=req.alias_name,
+        reason=req.reason,
+    )
+    await repo.save(document)
 
     return ConsolidateAliasResponse(
         campaign_id=req.campaign_id,
