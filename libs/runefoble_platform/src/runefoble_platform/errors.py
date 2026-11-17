@@ -50,3 +50,7 @@ class GameRuleViolationError(RunefobleError):
                 "reason": reason,
             },
         )
+
+
+class ConfigurationError(RunefobleError):
+    """Raised when a required setting is missing or invalid. The process must not start."""

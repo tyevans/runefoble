@@ -2917,6 +2917,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "pydantic" },
     { name = "pyjwt" },
+    { name = "runefoble-platform" },
 ]
 
 [package.metadata]
@@ -2926,6 +2927,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pyjwt", specifier = ">=2.15.0" },
+    { name = "runefoble-platform", editable = "libs/runefoble_platform" },
 ]
 
 [[package]]

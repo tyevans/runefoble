@@ -6,9 +6,20 @@ import asyncio
 import logging
 from typing import Any
 
+import grpc
+
+from runefoble_auth.errors import (
+    AuthzError,
+    AuthzSchemaError,
+    AuthzUnavailableError,
+    AuthzWriteError,
+)
 from runefoble_auth.mock_spicedb import Relationship
 
 logger = logging.getLogger(__name__)
+
+_UNAVAILABLE_CODES = frozenset({grpc.StatusCode.UNAVAILABLE, grpc.StatusCode.DEADLINE_EXCEEDED})
+_SCHEMA_CODES = frozenset({grpc.StatusCode.INVALID_ARGUMENT, grpc.StatusCode.FAILED_PRECONDITION})
 
 
 def create_grpc_client(endpoint: str, token: str, insecure: bool = True) -> Any:
@@ -17,12 +28,39 @@ def create_grpc_client(endpoint: str, token: str, insecure: bool = True) -> Any:
 
     if insecure:
         return InsecureClient(endpoint, token)
-    import grpc
-
     channel_creds = grpc.ssl_channel_credentials()
     call_creds = grpc.access_token_call_credentials(token)
     creds = grpc.composite_channel_credentials(channel_creds, call_creds)
     return Client(endpoint, creds)
+
+
+def _describe(exc: BaseException) -> str:
+    if isinstance(exc, grpc.RpcError):
+        return f"{exc.code().name}: {exc.details()}"
+    return f"{type(exc).__name__}: {exc}"
+
+
+def check_error_for(exc: BaseException, operation: str) -> AuthzError | None:
+    """Translate a failed check call into a typed error. Return None for other exceptions."""
+    if isinstance(exc, grpc.RpcError):
+        code = exc.code()
+        if code in _UNAVAILABLE_CODES:
+            return AuthzUnavailableError(f"{operation} failed. {_describe(exc)}")
+        if code in _SCHEMA_CODES:
+            return AuthzSchemaError(f"{operation} rejected by schema. {_describe(exc)}")
+        return AuthzError(f"{operation} failed. {_describe(exc)}")
+    if isinstance(exc, ConnectionError | TimeoutError):
+        return AuthzUnavailableError(f"{operation} failed. {_describe(exc)}")
+    return None
+
+
+def write_error_for(exc: BaseException, operation: str) -> AuthzError | None:
+    """Translate a failed write, delete, or schema call. Return None for other exceptions."""
+    if isinstance(exc, grpc.RpcError) and exc.code() in _SCHEMA_CODES:
+        return AuthzSchemaError(f"{operation} rejected by schema. {_describe(exc)}")
+    if isinstance(exc, grpc.RpcError | ConnectionError | TimeoutError):
+        return AuthzWriteError(f"{operation} failed. {_describe(exc)}")
+    return None
 
 
 async def grpc_write_relationship(
@@ -43,18 +81,23 @@ async def grpc_write_relationship(
         Relationship as AuthzedRelationship,
     )
 
-    spicedb_relation = "game_master" if relation == "gm" else relation
     update = RelationshipUpdate(
         operation=RelationshipUpdate.OPERATION_TOUCH,
         relationship=AuthzedRelationship(
             resource=ObjectReference(object_type=resource_type, object_id=resource_id),
-            relation=spicedb_relation,
+            relation=relation,
             subject=SubjectReference(
                 object=ObjectReference(object_type=subject_type, object_id=subject_id)
             ),
         ),
     )
-    await invoke_fn("WriteRelationships", WriteRelationshipsRequest(updates=[update]))
+    try:
+        await invoke_fn("WriteRelationships", WriteRelationshipsRequest(updates=[update]))
+    except Exception as exc:
+        error = write_error_for(exc, "WriteRelationships")
+        if error is None:
+            raise
+        raise error from exc
 
 
 async def grpc_delete_relationship(
@@ -67,18 +110,23 @@ async def grpc_delete_relationship(
 ) -> None:
     from authzed.api.v1 import DeleteRelationshipsRequest, RelationshipFilter, SubjectFilter
 
-    spicedb_relation = "game_master" if relation == "gm" else relation
     request = DeleteRelationshipsRequest(
         relationship_filter=RelationshipFilter(
             resource_type=resource_type,
             optional_resource_id=resource_id,
-            optional_relation=spicedb_relation,
+            optional_relation=relation,
             optional_subject_filter=SubjectFilter(
                 subject_type=subject_type, optional_subject_id=subject_id
             ),
         )
     )
-    await invoke_fn("DeleteRelationships", request)
+    try:
+        await invoke_fn("DeleteRelationships", request)
+    except Exception as exc:
+        error = write_error_for(exc, "DeleteRelationships")
+        if error is None:
+            raise
+        raise error from exc
 
 
 async def grpc_read_relationships(
@@ -86,11 +134,10 @@ async def grpc_read_relationships(
 ) -> list[Relationship]:
     from authzed.api.v1 import Consistency, ReadRelationshipsRequest, RelationshipFilter
 
-    spicedb_rel = "game_master" if relation == "gm" else (relation or "")
     rf = RelationshipFilter(
         resource_type=resource_type,
         optional_resource_id=resource_id or "",
-        optional_relation=spicedb_rel,
+        optional_relation=relation or "",
     )
     request = ReadRelationshipsRequest(
         relationship_filter=rf,
@@ -105,7 +152,7 @@ async def grpc_read_relationships(
                 Relationship(
                     resource_type=rel.resource.object_type,
                     resource_id=rel.resource.object_id,
-                    relation="gm" if rel.relation == "game_master" else rel.relation,
+                    relation=rel.relation,
                     subject_type=rel.subject.object.object_type,
                     subject_id=rel.subject.object.object_id,
                 )
@@ -149,7 +196,13 @@ async def grpc_lookup_resources(
 async def grpc_write_schema(invoke_fn: Any, schema_text: str) -> None:
     from authzed.api.v1 import WriteSchemaRequest
 
-    await invoke_fn("WriteSchema", WriteSchemaRequest(schema=schema_text))
+    try:
+        await invoke_fn("WriteSchema", WriteSchemaRequest(schema=schema_text))
+    except Exception as exc:
+        error = write_error_for(exc, "WriteSchema")
+        if error is None:
+            raise
+        raise error from exc
 
 
 async def grpc_read_schema(invoke_fn: Any) -> str:
@@ -167,6 +220,7 @@ async def grpc_check_permission(
     subject_type: str,
     subject_id: str,
 ) -> bool:
+    """Return True or False only for a definitive answer. Raise a typed error otherwise."""
     from authzed.api.v1 import (
         CheckPermissionRequest,
         CheckPermissionResponse,
@@ -175,14 +229,28 @@ async def grpc_check_permission(
         SubjectReference,
     )
 
-    spicedb_perm = "game_master" if permission == "gm" else permission
     request = CheckPermissionRequest(
         resource=ObjectReference(object_type=resource_type, object_id=resource_id),
-        permission=spicedb_perm,
+        permission=permission,
         subject=SubjectReference(
             object=ObjectReference(object_type=subject_type, object_id=subject_id)
         ),
         consistency=Consistency(fully_consistent=True),
     )
-    response = await invoke_fn("CheckPermission", request)
-    return response.permissionship == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION
+    try:
+        response = await invoke_fn("CheckPermission", request)
+    except Exception as exc:
+        error = check_error_for(exc, "CheckPermission")
+        if error is None:
+            raise
+        raise error from exc
+
+    answer = response.permissionship
+    if answer == CheckPermissionResponse.PERMISSIONSHIP_HAS_PERMISSION:
+        return True
+    if answer == CheckPermissionResponse.PERMISSIONSHIP_NO_PERMISSION:
+        return False
+    name = CheckPermissionResponse.Permissionship.Name(answer)
+    raise AuthzError(
+        f"CheckPermission returned an answer that is neither allowed nor denied: {name}"
+    )

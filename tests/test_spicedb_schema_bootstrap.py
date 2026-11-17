@@ -8,9 +8,9 @@ Governed by:
 
 from pathlib import Path
 
-import grpc
 import pytest
 from runefoble_auth.bootstrap_schema import DEFAULT_SCHEMA_PATH, bootstrap_schema
+from runefoble_auth.errors import AuthzWriteError
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
 
@@ -72,7 +72,7 @@ async def test_spicedb_client_fails_on_unreachable_endpoint() -> None:
         endpoint="localhost:59997",
         token="invalid_token",
     )
-    with pytest.raises(grpc.RpcError):
+    with pytest.raises(AuthzWriteError, match="UNAVAILABLE"):
         await unreachable_client.write_relationship(
             resource_type="campaign",
             resource_id="camp-1",
