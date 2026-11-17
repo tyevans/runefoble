@@ -67,6 +67,7 @@ The Runefoble system documentation is organized strictly according to the **Diat
     * [Develop Lit Components in Storybook](how-to/develop-lit-components-in-storybook.md)
     * [Instrument Services with OpenTelemetry](how-to/instrument-services-with-opentelemetry.md)
     * [Authenticate with Zitadel OIDC](how-to/authenticate-with-zitadel-oidc.md)
+    * [Add a Settings-Selected Engine Port Adapter](how-to/add-an-engine-port-adapter.md)
 
 -   :material-file-code: **[Technical Reference](reference/architecture-overview.md)**
 

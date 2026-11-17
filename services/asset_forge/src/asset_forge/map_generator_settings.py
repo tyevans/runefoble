@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from runefoble_platform.engine_ports import build_adapter
 
 from asset_forge.deterministic_map_generator import DeterministicMapGenerator
 from asset_forge.map_generator import MapGenerator
@@ -28,7 +29,8 @@ class AssetForgeSettings(BaseSettings):
 
 def build_map_generator(settings: AssetForgeSettings) -> MapGenerator:
     """Select the configured battlemap layout adapter."""
-    match settings.map_generator:
-        case "deterministic":
-            return DeterministicMapGenerator()
-    raise ValueError(f"Unsupported map generator: {settings.map_generator}")
+    return build_adapter(
+        "RUNEFOBLE_ASSET_FORGE_MAP_GENERATOR",
+        settings.map_generator,
+        {"deterministic": DeterministicMapGenerator},
+    )

@@ -5,15 +5,29 @@ Synthesizes procedural battlemap tiles, calculates line-of-sight wall segments,
 crops transparent circular token portraits, and pushes spatial geometry to board_state.
 """
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 
+from asset_forge.dependencies import get_wardrobe_generator
+from asset_forge.map_generation_engine import get_map_generator
 from asset_forge.routers.battlemap import router as battlemap_router
 from asset_forge.routers.print_forge import router as print_forge_router
 from asset_forge.routers.token import router as token_router
 from asset_forge.routers.wardrobe import router as wardrobe_router
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Build the configured generators at start-up. A bad generator setting stops the service."""
+    get_map_generator()
+    get_wardrobe_generator()
+    yield
+
 
 app = FastAPI(
     title="Runefoble - Procedural Battlemap & Token Asset Forge Service",
@@ -22,7 +36,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
+app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)
 
 app.add_middleware(
     CORSMiddleware,

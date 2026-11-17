@@ -8,9 +8,7 @@ from typing import ClassVar
 
 from asset_forge.models import DoorSegment, HazardCell, WallSegment
 
-
-class MapGenerationUnavailable(RuntimeError):
-    """The map generator cannot produce a layout for the request."""
+MAP_GENERATION_UNAVAILABLE = "map_generation_unavailable"
 
 
 @dataclass(frozen=True)
@@ -47,14 +45,6 @@ class MapGenerator(ABC):
     ) -> MapLayout:
         """Return the layout for the request.
 
-        Raises MapGenerationUnavailable when the generator cannot produce a layout.
+        Raises EngineUnavailableError(MAP_GENERATION_UNAVAILABLE, engine, message,
+        engine_field="generator") when no layout is produced.
         """
-
-
-def map_generation_error_body(generator: str, exc: MapGenerationUnavailable) -> dict[str, str]:
-    """Explicit error payload when no layout is produced. No map is stored."""
-    return {
-        "error": "map_generation_unavailable",
-        "generator": generator,
-        "message": str(exc),
-    }

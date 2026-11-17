@@ -8,7 +8,7 @@ import logging
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from runefoble_events.events import PlayerSpokeEvent
 from voice_agent.dependencies import (
     STREAM_SESSION,
@@ -29,22 +29,13 @@ from voice_agent.models import (
 )
 from voice_agent.stt import get_streaming_pipeline
 from voice_agent.synthesis_engine import get_speech_synthesizer
-from voice_agent.synthesizer import AudioClip, SpeechSynthesisUnavailable
+from voice_agent.synthesizer import AudioClip
 from voice_agent.wav import encode_wav
 
 logger = logging.getLogger("runefoble.voice_agent.synthesis")
 router = APIRouter(tags=["Speech Synthesis & Transcription"])
 
 DEFAULT_TTS_VOICE = "en-us"
-
-
-def speech_synthesis_error_body(engine: str, exc: SpeechSynthesisUnavailable) -> dict[str, str]:
-    """Explicit error payload when the engine cannot render audio. No audio is returned."""
-    return {
-        "error": "speech_synthesis_unavailable",
-        "engine": engine,
-        "message": str(exc),
-    }
 
 
 @router.get("/api/v1/voice/personas", response_model=list[VoicePersona])
@@ -67,14 +58,9 @@ async def synthesize_voice(req: TTSRequest):
 
     processed = dsp_pipeline.process(req.text, filters=filters, persona_pitch=pitch)
 
+    # EngineUnavailableError becomes HTTP 503 in the app exception handler. No audio is returned.
     synthesizer = get_speech_synthesizer()
-    try:
-        spoken = await synthesizer.synthesize(req.text, voice=voice)
-    except SpeechSynthesisUnavailable as exc:
-        raise HTTPException(
-            status_code=503,
-            detail=speech_synthesis_error_body(synthesizer.engine_name, exc),
-        ) from exc
+    spoken = await synthesizer.synthesize(req.text, voice=voice)
 
     filtered_pcm, audio_meta, filter_latency = apply_audio_filters(
         spoken.pcm, filters, sample_rate=spoken.sample_rate

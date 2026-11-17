@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from runefoble_platform.engine_ports import build_adapter
 from voice_agent.espeak_synthesizer import EspeakNgSynthesizer
 from voice_agent.synthesizer import BaseSynthesizer
 from voice_agent.transcriber import BaseTranscriber, FasterWhisperTranscriber
@@ -31,22 +32,26 @@ class VoiceAgentSettings(BaseSettings):
 
 
 def build_transcriber(settings: VoiceAgentSettings) -> BaseTranscriber:
-    """Select the configured speech engine adapter."""
-    match settings.stt_engine:
-        case "faster-whisper":
-            return FasterWhisperTranscriber(
+    """Select the configured speech-to-text adapter."""
+    return build_adapter(
+        "RUNEFOBLE_VOICE_STT_ENGINE",
+        settings.stt_engine,
+        {
+            "faster-whisper": lambda: FasterWhisperTranscriber(
                 model_size=settings.stt_model_size,
                 device=settings.stt_device,
                 compute_type=settings.stt_compute_type,
                 model_dir=settings.stt_model_dir,
                 download_enabled=settings.stt_download_enabled,
-            )
-    raise ValueError(f"Unsupported speech engine: {settings.stt_engine}")
+            ),
+        },
+    )
 
 
 def build_synthesizer(settings: VoiceAgentSettings) -> BaseSynthesizer:
     """Select the configured text-to-speech adapter."""
-    match settings.tts_engine:
-        case "espeak-ng":
-            return EspeakNgSynthesizer(binary=settings.tts_binary)
-    raise ValueError(f"Unsupported speech synthesis engine: {settings.tts_engine}")
+    return build_adapter(
+        "RUNEFOBLE_VOICE_TTS_ENGINE",
+        settings.tts_engine,
+        {"espeak-ng": lambda: EspeakNgSynthesizer(binary=settings.tts_binary)},
+    )

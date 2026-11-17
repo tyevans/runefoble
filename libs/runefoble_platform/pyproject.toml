@@ -17,6 +17,7 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-grpc>=1.45.0",
     "opentelemetry-instrumentation-fastapi>=0.66b0",
     "httpx>=0.28.1",
+    "fastapi>=0.141.1",
 ]
 
 [build-system]
