@@ -91,11 +91,11 @@ class RedisInferenceConsumer:
     async def _process_message(self, message_id: str, fields: dict[str, Any]) -> None:
         assert self._redis is not None
         try:
-            task_type = fields.get("type", "unknown")
-            payload_str = fields.get("payload", "{}")
-            payload = json.loads(payload_str)
+            # Canonical schema only: both fields are required. Missing fields raise KeyError.
+            task_type = fields["type"]
+            payload = json.loads(fields["payload"])
 
-            result_data: dict[str, Any] = {}
+            result_data: dict[str, Any]
             if task_type == "parse_intent":
                 state = await self._intent_graph.ainvoke({"request": payload})
                 result_data = {
@@ -105,10 +105,12 @@ class RedisInferenceConsumer:
                 }
             elif task_type == "generate_narration":
                 state = await self._narration_graph.ainvoke({"request": payload})
-                result_data = state.get("final_response", {})
+                result_data = state["final_response"]
             elif task_type == "stand_in_action":
                 state = await self._stand_in_graph.ainvoke({"request": payload})
-                result_data = state.get("final_response", {})
+                result_data = state["final_response"]
+            else:
+                raise ValueError(f"unknown inference task type: {task_type!r}")
 
             # Publish result
             correlation_id = fields.get("correlation_id", message_id)
