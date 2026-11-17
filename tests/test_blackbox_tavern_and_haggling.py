@@ -23,6 +23,9 @@ from gateway_api.main import app as gateway_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from voice_agent.main import app as voice_app
+
+from tests.helpers.live_services import serve
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -41,6 +44,14 @@ def session_client():
     mock_spicedb = MockSpiceDBClient()
     set_session_spicedb(mock_spicedb)
     return TestClient(session_app)
+
+
+@pytest.fixture
+def live_voice_agent(monkeypatch):
+    """Run voice_agent as a real HTTP upstream for the drink DSP call (ADR-0007)."""
+    with serve(voice_app) as voice_url:
+        monkeypatch.setenv("RUNEFOBLE_VOICE_AGENT_URL", voice_url)
+        yield voice_url
 
 
 @pytest.fixture
@@ -134,7 +145,7 @@ def test_blackbox_liars_dice_minigame_flow(session_client, mock_bus):
     assert any("MinigameEnded" in entry[1].get("event_type", "") for entry in entries)
 
 
-def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus):
+def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live_voice_agent):
     """Test drinking contest with progressive intoxication DC and DSP speech conditioning."""
     session_id = str(uuid4())
 

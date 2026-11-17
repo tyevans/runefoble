@@ -53,6 +53,10 @@ spec:
               value: "{{ $.Values.observability.enabled }}"
             - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otel-collector:{{ $.Values.observability.otelCollector.grpcPort }}"
+          {{- if eq .name "game-session" }}
+            - name: RUNEFOBLE_VOICE_AGENT_URL
+              value: "http://voice-agent:{{ $.Values.services.voiceAgent.port }}"
+          {{- end }}
           {{- if eq .name "voice-agent" }}
             - name: RUNEFOBLE_VOICE_STT_MODEL_SIZE
               value: {{ .config.sttModelSize | quote }}

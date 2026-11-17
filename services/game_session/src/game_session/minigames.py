@@ -222,13 +222,17 @@ class TavernGameAggregate(DeclarativeAggregate[TavernGameState]):
         )
         return {**resolution, "payout": payout}
 
-    def take_drink(
+    async def take_drink(
         self,
         character_id: str,
         con_roll: int | None = None,
         speech_text: str | None = None,
     ) -> dict[str, Any]:
-        """Process a round in a drinking contest and apply progressive intoxication."""
+        """Process a round in a drinking contest and apply progressive intoxication.
+
+        The voice DSP call runs before any event is recorded. If voice_agent is
+        unavailable, this raises VoiceAgentUnavailableError and no state changes.
+        """
         if self.state.status != "active":
             raise ValueError("Contest is not active")
 
@@ -238,6 +242,10 @@ class TavernGameAggregate(DeclarativeAggregate[TavernGameState]):
 
         roll = con_roll if con_roll is not None else random.randint(1, 20)
         new_stage, dsp_filters = compute_intoxication_progression(current_stage, roll, con_dc)
+
+        dsp_result = None
+        if speech_text:
+            dsp_result = await apply_tavern_voice_dsp(speech_text, new_stage)
 
         self.create_event(
             IntoxicationLevelChanged,
@@ -249,10 +257,6 @@ class TavernGameAggregate(DeclarativeAggregate[TavernGameState]):
             consecutive_drinks=current_drinks,
             dsp_filters=dsp_filters,
         )
-
-        dsp_result = None
-        if speech_text:
-            dsp_result = apply_tavern_voice_dsp(speech_text, new_stage)
 
         res: dict[str, Any] = {
             "character_id": character_id,

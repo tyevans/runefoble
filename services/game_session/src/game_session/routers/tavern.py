@@ -27,6 +27,7 @@ from game_session.minigames import (
     TavernGameState,
     to_uuid,
 )
+from game_session.voice_client import VoiceAgentUnavailableError
 from pydantic import BaseModel
 
 router = APIRouter(tags=["tavern"])
@@ -152,7 +153,7 @@ async def take_minigame_turn(
         elif req.action_type == "challenge":
             turn_result = aggregate.call_challenge(req.actor_id)
         elif req.action_type == "drink":
-            turn_result = aggregate.take_drink(
+            turn_result = await aggregate.take_drink(
                 req.actor_id, con_roll=req.con_roll, speech_text=req.speech_text
             )
         else:
@@ -162,6 +163,8 @@ async def take_minigame_turn(
         await tavern_repo.save(aggregate)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    except VoiceAgentUnavailableError as e:
+        raise HTTPException(status_code=503, detail=f"Voice DSP unavailable: {e}") from e
 
     bus = get_event_bus()
     if bus:
