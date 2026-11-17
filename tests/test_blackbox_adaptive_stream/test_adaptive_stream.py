@@ -29,6 +29,7 @@ from voice_agent.routers.stream_diagnostics import reset_diagnostics
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
+
 @pytest.fixture(autouse=True)
 def clean_environment():
     """Ensure clean Redis event bus and stream diagnostics state."""

@@ -35,6 +35,7 @@ from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
+
 @pytest.fixture(autouse=True)
 def clean_simulation_environment():
     """Ensure clean SpiceDB, simulation engine, event store, and bus before and after each test."""

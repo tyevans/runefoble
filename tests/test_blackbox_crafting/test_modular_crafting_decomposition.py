@@ -42,6 +42,7 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
+
 @pytest.fixture
 def mock_bus():
     redis_client = MockAsyncRedis()
