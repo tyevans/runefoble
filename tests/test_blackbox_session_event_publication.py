@@ -19,8 +19,9 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.dependencies import set_event_bus
 from game_session.main import app as session_app
-from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.mock_redis import MockAsyncRedis
 
 SESSION_STREAM = "runefoble.events.session"
 
