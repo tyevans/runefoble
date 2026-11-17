@@ -4,14 +4,19 @@ POST /api/v1/voice/dsp/condition returns conditioned text and DSP parameters.
 It never returns audio. Tests use the public HTTP route only.
 """
 
+import pytest
 from fastapi.testclient import TestClient
 from voice_agent.main import app
+
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 SPEECH = "I can drink the whole tavern under the table!"
 
 
 def test_condition_returns_drunk_text_and_dsp_config() -> None:
-    client = TestClient(app)
+    client = TestClient(app, headers=voice_auth_headers())
 
     res = client.post("/api/v1/voice/dsp/condition", json={"text": SPEECH, "filters": ["drunk"]})
 
@@ -25,7 +30,7 @@ def test_condition_returns_drunk_text_and_dsp_config() -> None:
 
 
 def test_condition_without_filters_returns_text_unchanged() -> None:
-    client = TestClient(app)
+    client = TestClient(app, headers=voice_auth_headers())
 
     res = client.post("/api/v1/voice/dsp/condition", json={"text": SPEECH, "filters": []})
 
@@ -34,7 +39,7 @@ def test_condition_without_filters_returns_text_unchanged() -> None:
 
 
 def test_condition_rejects_empty_text() -> None:
-    client = TestClient(app)
+    client = TestClient(app, headers=voice_auth_headers())
 
     res = client.post("/api/v1/voice/dsp/condition", json={"text": "", "filters": ["drunk"]})
 

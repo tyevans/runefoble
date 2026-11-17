@@ -23,6 +23,7 @@ from voice_agent.main import set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_ws_subprotocols
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -37,7 +38,7 @@ def clean_voice_bus():
 
 
 @pytest.fixture
-def voice_client() -> TestClient:
+def voice_client(trusted_voice_issuer) -> TestClient:
     return TestClient(voice_app)
 
 
@@ -68,7 +69,8 @@ def test_duplex_websocket_protocol_frontdoor_integration(
     text = "A chilling roar echoes through the subterranean vault!"
 
     with voice_client.websocket_connect(
-        f"/api/v1/voice/duplex/ws/{session_id}/{speaker_id}?speaker_name=Marcus"
+        f"/api/v1/voice/duplex/ws/{session_id}/{speaker_id}?speaker_name=Marcus",
+        subprotocols=voice_ws_subprotocols(),
     ) as ws:
         assert ws.receive_json()["type"] == "voice_duplex_connected"
 

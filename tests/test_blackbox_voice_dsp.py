@@ -17,8 +17,9 @@ from voice_agent.main import app, set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
 
-pytestmark = pytest.mark.usefixtures("fake_speech_synthesizer")
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "fake_speech_synthesizer")
 
 # DSP filters only transform supplied audio, so every apply request carries input PCM.
 INPUT_AUDIO_B64 = base64.b64encode(generate_pcm_sine(duration_ms=100)).decode("ascii")
@@ -26,7 +27,7 @@ INPUT_AUDIO_B64 = base64.b64encode(generate_pcm_sine(duration_ms=100)).decode("a
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers=voice_auth_headers())
 
 
 @pytest.fixture

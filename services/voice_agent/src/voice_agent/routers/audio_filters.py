@@ -5,18 +5,19 @@ from __future__ import annotations
 import base64
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from runefoble_events.voice_barge_in import (
     NeuralSpeechBargeInDetectedEvent,
     TTSStreamAttenuatedEvent,
 )
+from voice_agent.auth import get_voice_principal
 from voice_agent.dependencies import STREAM_SESSION, STREAM_VOICE, get_event_bus
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter
 from voice_agent.dsp.cosine_crossfade import CosineCrossfadeAttenuator
 
 logger = logging.getLogger("runefoble.voice_agent.audio_filters")
-router = APIRouter(tags=["Audio DSP Filters"])
+router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Audio DSP Filters"])
 
 
 class BargeInEvaluationRequest(BaseModel):

@@ -10,6 +10,7 @@ import base64
 import time
 import uuid
 
+import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import (
     PlayerSpokeEvent,
@@ -23,6 +24,9 @@ from tests.helpers.audio_synth import (
 )
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 
 def test_end_to_end_streaming_speech_to_intent_latency_budget(
@@ -95,7 +99,8 @@ def test_continuous_stream_over_websocket_frontdoor(client: TestClient, mock_red
     speaker_id = "spk-ws-valeros"
 
     with client.websocket_connect(
-        f"/api/v1/voice/stream/ws/{session_id}/{speaker_id}?speaker_name=Valeros"
+        f"/api/v1/voice/stream/ws/{session_id}/{speaker_id}?speaker_name=Valeros",
+        subprotocols=voice_ws_subprotocols(),
     ) as ws:
         # Frame 1: 200ms speech
         speech_pcm = generate_pcm_sine(duration_ms=200)
