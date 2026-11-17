@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Header, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState
+from game_session.character_client import CharacterSheetUnavailableError, release_stand_in
 from game_session.dependencies import (
     STREAM_SESSION,
     get_event_bus,
@@ -138,9 +139,14 @@ async def hot_swap_session(
     try:
         session = await repo.load(session_id)
         session.hot_swap_character(player_id=req.player_id, character_id=req.character_id)
-        await repo.save(session)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+    try:
+        await release_stand_in(req.character_id, session_id)
+    except CharacterSheetUnavailableError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
+    await repo.save(session)
 
     event = CharacterControlTransferred(
         aggregate_id=session_id,
