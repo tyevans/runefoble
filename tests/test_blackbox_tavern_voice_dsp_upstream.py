@@ -210,3 +210,33 @@ def test_drink_roll_without_caller_token_returns_503_and_records_nothing(
     assert res.status_code == 503, res.text
     assert "voice_dsp" not in res.text
     assert after["intoxication_levels"][CHARACTER] == before["intoxication_levels"][CHARACTER]
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "ADR-0015 (e) gap: no service credential exists yet. game_session can only "
+        "forward the caller's bearer, so a roll with no caller token cannot reach voice_agent."
+    ),
+)
+def test_drink_roll_without_caller_token_uses_service_credential(
+    session_client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Target behaviour once ADR-0015 (e) lands: game_session calls voice_agent with a service credential."""
+    session_id, game_id = _start_contest(session_client)
+    _drink_two_rounds(session_client, session_id, game_id)
+
+    with serve(voice_app) as voice_url:
+        monkeypatch.setenv(VOICE_URL_ENV, voice_url)
+        res = session_client.post(
+            f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn",
+            json={
+                "actor_id": CHARACTER,
+                "action_type": "drink",
+                "con_roll": 6,
+                "speech_text": SPEECH,
+            },
+        )
+
+    assert res.status_code == 200, res.text
+    assert res.json()["result"]["voice_dsp"] is not None
