@@ -423,6 +423,11 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `spell_name`: String
   - `slot_level_used`: Integer
   - `remaining_slots`: Integer
+- **`SpellSlotsRestored`**: Emitted when spent spell slots return to their maximum, for all levels or for one level (`runefoble.events.character.spell_slots_restored`).
+  - `session_id`: String
+  - `character_id`: String
+  - `slot_level`: Optional[Integer] (absent means every level was restored)
+  - `spell_slots`: Mapping[Integer, Integer] (full resulting slot map)
 - **`StandInPolicyUpdated`**: Emitted when tactical guardrail constraints and preferences are configured for a character's AI stand-in (`runefoble.events.character.stand_in_policy_updated`).
   - `session_id`: Optional[UUID | str]
   - `character_id`: UUID | str
