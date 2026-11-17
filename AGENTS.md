@@ -60,6 +60,12 @@ Engineering work lives in `docs/project/backlog/`.[^20] An item moves through th
 
 Always pick the highest-priority item from `docs/project/backlog/PRIORITY.md` that is in `refined/`.[^21]
 
+### spec-ops Tooling
+- **Config**: `specops.toml` at the repository root. Do not run `spec-ops init` in this repository. It scaffolds ADR-0001 to ADR-0007 and collides with the Runefoble ADR set.
+- **Install (uv only, no pip)**: `uv tool install --from git+https://github.com/tyevans/spec-ops@2c8d073180eb558a57aeb500ffcc6210361c8ee7 spec-ops`
+- **Health gate**: `spec-ops health` from the repository root.
+- **ADR mapping and security decision**: `docs/project/adrs/REGISTRY.md`.
+
 ## Documentation Directory & Agent Instructions
 
 All system documentation outside project records lives in `docs/` and strictly follows the Diataxis framework:[^22] Agents must consult these guides before writing code or modifying structures:

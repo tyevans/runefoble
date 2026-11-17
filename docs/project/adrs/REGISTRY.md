@@ -19,3 +19,32 @@ This registry records every architectural decision in Runefoble. Numbers are all
 | ADR-0013 | Microfrontend Architecture and Service Component Vendoring | Accepted | 2026-09-25 | [`adr-0013-microfrontend-architecture-and-service-component-vendoring.md`](accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md) |
 | ADR-0014 | Behavior-Driven Development (BDD) with Gherkin User Stories and Playwright End-to-End Validation | Accepted | 2026-09-28 | [`adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md`](accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md) |
 | ADR-0015 | Audit Remediation Decisions (Campaign Ownership, Thin Gateway, Token Verification, Registration, Service Credentials, Event Store) | Accepted | 2026-11-17 | [`adr-0015-audit-remediation-decisions.md`](accepted/adr-0015-audit-remediation-decisions.md) |
+| ADR-0016 | Specifications Are Code in docs/project | Accepted | 2026-11-17 | [`adr-0016-spec-as-code-project-records.md`](accepted/adr-0016-spec-as-code-project-records.md) |
+| ADR-0017 | File Length Limit of 500 Lines | Accepted | 2026-11-17 | [`adr-0017-file-length-invariant.md`](accepted/adr-0017-file-length-invariant.md) |
+| ADR-0018 | Worktree Isolation for Backlog Work | Accepted | 2026-11-17 | [`adr-0018-worktree-and-backlog-isolation.md`](accepted/adr-0018-worktree-and-backlog-isolation.md) |
+| ADR-0019 | Agent Constitution and Diataxis Documentation | Accepted | 2026-11-17 | [`adr-0019-agent-constitution-and-diataxis-documentation.md`](accepted/adr-0019-agent-constitution-and-diataxis-documentation.md) |
+
+## spec-ops Baseline Mapping
+
+The spec-ops baseline ADRs (spec-ops ADR-0001 to ADR-0009) use the same numbers as Runefoble ADR-0001 to ADR-0009 for different topics. Runefoble does not copy the spec-ops files. Each spec-ops topic maps to a Runefoble ADR below, or to a new ADR that uses the next free number.
+
+| spec-ops baseline | Topic | Runefoble mapping | Status |
+|---|---|---|---|
+| 0001 | Spec as code | [ADR-0016](accepted/adr-0016-spec-as-code-project-records.md) | New |
+| 0002 | File length under 500 lines | [ADR-0017](accepted/adr-0017-file-length-invariant.md) | New |
+| 0003 | Blackbox frontdoor testing | ADR-0014 (partial). AGENTS.md Hard Invariant 7 | Partial |
+| 0004 | Preflight and self-healing CI | ADR-0010 (partial) | Partial |
+| 0005 | Worktree and backlog isolation | [ADR-0018](accepted/adr-0018-worktree-and-backlog-isolation.md) | New |
+| 0006 | BDD Gherkin and Playwright | ADR-0014 | Mapped |
+| 0007 | DDD and bounded contexts | ADR-0007 | Mapped |
+| 0008 | Agent constitution and Diataxis | [ADR-0019](accepted/adr-0019-agent-constitution-and-diataxis-documentation.md) | New |
+| 0009 | Property and mutation testing | ADR-0008 | Mapped |
+
+Rule: Runefoble ADR numbers are stable. A spec-ops ADR file is never copied into `accepted/`.
+
+## spec-ops Install and Security Decisions
+
+| Decision | Outcome | Date | Record |
+|---|---|---|---|
+| spec-ops install path | `uv tool install` pinned to a commit. Pip is not used (Hard Invariant 4). Command in AGENTS.md. | 2026-11-17 | AGENTS.md, Command Reference |
+| spec-ops security profile | Declined for now. The profile needs dual-custody signing and signed commits. No signing keys or custody process exist. Revisit when signing is in place. | 2026-11-17 | This registry |
