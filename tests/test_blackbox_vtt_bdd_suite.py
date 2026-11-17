@@ -18,6 +18,8 @@ from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.ws_identity import ws_subprotocols
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 E2E_FEATURE_FILE = REPO_ROOT / "e2e" / "features" / "session_lobby_and_vtt.feature"
 E2E_STEPS_FILE = REPO_ROOT / "e2e" / "steps" / "vtt_steps.ts"
@@ -132,7 +134,9 @@ def test_gateway_api_session_and_participants_frontdoor(client: TestClient) -> N
 
 def test_gateway_websocket_session_events(client: TestClient) -> None:
     """Verify gateway tabletop router supports real-time WebSocket protocol for session 15."""
-    with client.websocket_connect("/ws/session/15?token=test-valeros-token") as ws:
+    with client.websocket_connect(
+        "/ws/session/15", subprotocols=ws_subprotocols("test-valeros")
+    ) as ws:
         # Initial handshake or presence
         initial = ws.receive_json()
         assert initial.get("type") in ["connected", "presence_state"]

@@ -19,6 +19,10 @@ from gateway_api.spectator import (
 )
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture(autouse=True)
 def clean_state():
@@ -141,7 +145,9 @@ def test_custom_session_state_overrides_and_sanitization():
 def test_spectator_websocket_connection_and_initial_stream_state():
     """Verify live WebSocket /ws/spectator/{id} connects and delivers sanitized party state."""
     client = TestClient(gateway_app)
-    with client.websocket_connect("/ws/spectator/sess-ws-spec-1") as ws:
+    with client.websocket_connect(
+        "/ws/spectator/sess-ws-spec-1", subprotocols=ws_subprotocols("spectator-tester")
+    ) as ws:
         msg = ws.receive_json()
         assert msg["type"] == "overlay_connected"
         assert msg["session_id"] == "sess-ws-spec-1"
@@ -162,7 +168,9 @@ def test_spectator_websocket_connection_and_initial_stream_state():
 def test_spectator_websocket_realtime_broadcast_updates():
     """Verify live WebSocket receives camera updates upon turn start and token move events."""
     client = TestClient(gateway_app)
-    with client.websocket_connect("/ws/spectator/sess-ws-events-spec") as ws:
+    with client.websocket_connect(
+        "/ws/spectator/sess-ws-events-spec", subprotocols=ws_subprotocols("spectator-tester")
+    ) as ws:
         _init = ws.receive_json()
 
         # 1. Turn Started -> broadcast camera centering

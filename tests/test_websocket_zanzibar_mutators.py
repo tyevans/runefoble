@@ -9,6 +9,10 @@ from gateway_api.main import app, set_event_bus
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture(autouse=True)
 def reset_state():
@@ -36,7 +40,9 @@ def test_player_moving_token_with_valid_zanzibar_relation():
     _grant("board_token", token_id, "move", player_id)
 
     client = TestClient(app)
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={player_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(player_id)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
         ws.send_json({"action": "move_token", "token_id": token_id, "to_x": 4, "to_y": 6})
         broadcast = ws.receive_json()
@@ -56,7 +62,9 @@ def test_spectator_attempting_to_move_token():
     _grant("campaign", campaign_id, "spectator", spectator_id)
 
     client = TestClient(app)
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={spectator_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(spectator_id)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
         ws.send_json({"action": "move_token", "token_id": token_id, "to_x": 1, "to_y": 1})
         err = ws.receive_json()
@@ -72,7 +80,9 @@ def test_player_attempting_to_trigger_dm_only_encounter_or_scene():
     _grant("campaign", campaign_id, "player", player_id)
 
     client = TestClient(app)
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={player_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(player_id)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
 
         # 1. Attempt spawn_monster
@@ -98,7 +108,9 @@ def test_dungeon_master_executing_all_actions():
     _grant("campaign", campaign_id, "dungeon_master", dm_id)
 
     client = TestClient(app)
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={dm_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(dm_id)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
         actions = [
             ("move_token", {"token_id": "token_goblin", "to_x": 3, "to_y": 3}),
@@ -122,14 +134,18 @@ def test_character_hp_modification_permissions():
 
     client = TestClient(app)
     # 1. Player1 edits own character -> Allowed
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={p1}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(p1)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
         ws.send_json({"action": "modify_hp", "character_id": char1, "delta": 2})
         res = ws.receive_json()
         assert res["action"] == "modify_hp" and res["status"] == "applied"
 
     # 2. Player2 attempts to edit char1 -> Denied
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={p2}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(p2)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
         ws.send_json({"action": "modify_hp", "character_id": char1, "delta": -10})
         err = ws.receive_json()
@@ -148,7 +164,9 @@ def test_redis_publishing_on_authorized_and_rejection_suppression():
     set_event_bus(bus)
 
     client = TestClient(app)
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={dm_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(dm_id)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
         ws.send_json({"action": "move_token", "token_id": "tok_1", "to_x": 2, "to_y": 2})
         ws.receive_json()
@@ -165,7 +183,9 @@ def test_dynamic_relation_revocation_denies_mid_session_action():
     _grant("board_token", token_id, "move", player_id)
 
     client = TestClient(app)
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={player_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(player_id)
+    ) as ws:
         assert ws.receive_json()["type"] == "connected"
         # 1. Initial move succeeds
         ws.send_json({"action": "move_token", "token_id": token_id, "to_x": 1, "to_y": 1})

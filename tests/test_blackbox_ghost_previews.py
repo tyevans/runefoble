@@ -15,6 +15,10 @@ from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture(autouse=True)
 def reset_spicedb_state():
@@ -227,7 +231,9 @@ def test_gateway_campaign_websocket_ghost_preview_authorization():
     client = TestClient(gateway_app)
 
     # 1. Alice (authorized) stages ghost preview
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id=alice") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("alice")
+    ) as ws:
         connected = ws.receive_json()
         assert connected["type"] == "connected"
 
@@ -245,7 +251,9 @@ def test_gateway_campaign_websocket_ghost_preview_authorization():
         assert staged["token_id"] == "t-valeros"
 
     # 2. Bob (unauthorized to move t-valeros) attempts ghost preview and is denied
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id=bob") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols("bob")
+    ) as ws:
         ws.receive_json()
         ws.send_json(
             {

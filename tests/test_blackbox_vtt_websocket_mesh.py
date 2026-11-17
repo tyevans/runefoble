@@ -19,6 +19,9 @@ from fastapi.testclient import TestClient
 from gateway_api.dependencies import ws_manager
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -39,12 +42,16 @@ def test_vtt_websocket_mesh_multi_client_readiness_and_stand_in(client_gw: TestC
     """Verify multi-client WebSocket synchronization for session lobby readiness and stand-in toggles."""
     session_id = f"session-mesh-{uuid4()}"
 
-    with client_gw.websocket_connect(f"/ws/session/{session_id}") as ws_client_a:
+    with client_gw.websocket_connect(
+        f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
+    ) as ws_client_a:
         conn_a = ws_client_a.receive_json()
         assert conn_a["type"] == "connected"
         assert conn_a["session_id"] == session_id
 
-        with client_gw.websocket_connect(f"/ws/session/{session_id}") as ws_client_b:
+        with client_gw.websocket_connect(
+            f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
+        ) as ws_client_b:
             conn_b = ws_client_b.receive_json()
             assert conn_b["type"] == "connected"
 
@@ -84,10 +91,14 @@ def test_vtt_websocket_mesh_dice_rolls_and_turn_advancement(client_gw: TestClien
     """Verify live dice rolls (updating 3D tray) and turn advancements stream across party members."""
     session_id = f"session-combat-{uuid4()}"
 
-    with client_gw.websocket_connect(f"/ws/session/{session_id}") as ws_player:
+    with client_gw.websocket_connect(
+        f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
+    ) as ws_player:
         assert ws_player.receive_json()["type"] == "connected"
 
-        with client_gw.websocket_connect(f"/ws/session/{session_id}") as ws_dm:
+        with client_gw.websocket_connect(
+            f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
+        ) as ws_dm:
             assert ws_dm.receive_json()["type"] == "connected"
 
             # Player rolls attack dice
@@ -131,10 +142,14 @@ def test_vtt_websocket_mesh_aoe_templates_vfx_and_token_actions(client_gw: TestC
     """Verify AoE spell placements, WebGL particle VFX triggers, and radial menu token actions."""
     session_id = f"session-tactical-{uuid4()}"
 
-    with client_gw.websocket_connect(f"/ws/session/{session_id}") as ws_caster:
+    with client_gw.websocket_connect(
+        f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
+    ) as ws_caster:
         assert ws_caster.receive_json()["type"] == "connected"
 
-        with client_gw.websocket_connect(f"/ws/session/{session_id}") as ws_observer:
+        with client_gw.websocket_connect(
+            f"/ws/session/{session_id}", subprotocols=ws_subprotocols("mesh-tester")
+        ) as ws_observer:
             assert ws_observer.receive_json()["type"] == "connected"
 
             # Radial token action (e.g. cast selected from radial menu)

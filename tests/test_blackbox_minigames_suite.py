@@ -21,6 +21,9 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -103,7 +106,8 @@ def test_blackbox_darts_table_join_bet_and_throw(
     )
 
     with session_client.websocket_connect(
-        f"/ws/establishments/{establishment_id}/tables/{table_id}?user_id=kip"
+        f"/ws/establishments/{establishment_id}/tables/{table_id}",
+        subprotocols=ws_subprotocols("kip"),
     ) as ws1:
         assert ws1.receive_json()["type"] == "connected"
         ws1.send_json(
@@ -118,7 +122,8 @@ def test_blackbox_darts_table_join_bet_and_throw(
         assert ws1.receive_json()["type"] == "player_joined"
 
         with session_client.websocket_connect(
-            f"/ws/establishments/{establishment_id}/tables/{table_id}?user_id=sam"
+            f"/ws/establishments/{establishment_id}/tables/{table_id}",
+            subprotocols=ws_subprotocols("sam"),
         ) as ws2:
             ws2.receive_json()
             ws2.send_json(
@@ -157,9 +162,13 @@ def test_blackbox_roulette_multiplayer_bets_and_payouts(
     """Roulette table: multiple betting tokens, wheel spin, and 35:1 / 1:1 payouts."""
     table_id = f"table-roulette-{uuid4().hex[:6]}"
 
-    with session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws1:
+    with session_client.websocket_connect(
+        f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
+    ) as ws1:
         assert ws1.receive_json()["type"] == "connected"
-        with session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws2:
+        with session_client.websocket_connect(
+            f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
+        ) as ws2:
             assert ws2.receive_json()["type"] == "connected"
             ws1.send_json(
                 {
@@ -220,9 +229,13 @@ def test_blackbox_liars_dice_turn_progression_and_challenge(
     """Liar's dice table: bid escalation, bluff challenge, and victory payout."""
     table_id = f"table-liars-{uuid4().hex[:6]}"
 
-    with session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws1:
+    with session_client.websocket_connect(
+        f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
+    ) as ws1:
         assert ws1.receive_json()["type"] == "connected"
-        with session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws2:
+        with session_client.websocket_connect(
+            f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
+        ) as ws2:
             assert ws2.receive_json()["type"] == "connected"
             ws1.send_json(
                 {
@@ -268,7 +281,9 @@ def test_blackbox_dragon_craps_pass_line_and_field_roll(session_client: TestClie
     """Dragon Craps: Come-out natural 7 win and field bets."""
     table_id = f"table-craps-{uuid4().hex[:6]}"
 
-    with session_client.websocket_connect(f"/ws/minigames/{table_id}") as ws:
+    with session_client.websocket_connect(
+        f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
+    ) as ws:
         ws.receive_json()
         ws.send_json(
             {
@@ -307,14 +322,15 @@ def test_blackbox_zanzibar_establishment_authorization(
     )
 
     with session_client.websocket_connect(
-        "/ws/establishments/est-vip-lounge/tables/tbl-1?user_id=stranger_user"
+        "/ws/establishments/est-vip-lounge/tables/tbl-1",
+        subprotocols=ws_subprotocols("stranger_user"),
     ) as ws_unauth:
         err_msg = ws_unauth.receive_json()
         assert err_msg["type"] == "error"
         assert err_msg["code"] == "PERMISSION_DENIED"
 
     with session_client.websocket_connect(
-        "/ws/establishments/est-vip-lounge/tables/tbl-1?user_id=vip_kip"
+        "/ws/establishments/est-vip-lounge/tables/tbl-1", subprotocols=ws_subprotocols("vip_kip")
     ) as ws_auth:
         assert ws_auth.receive_json()["type"] == "connected"
 
@@ -322,6 +338,8 @@ def test_blackbox_zanzibar_establishment_authorization(
 def test_blackbox_gateway_minigames_websocket_proxy(gateway_client: TestClient) -> None:
     """Gateway API: verify gateway routes minigames WebSocket tables."""
     table_id = f"table-gw-{uuid4().hex[:6]}"
-    with gateway_client.websocket_connect(f"/ws/minigames/{table_id}") as ws:
+    with gateway_client.websocket_connect(
+        f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
+    ) as ws:
         msg = ws.receive_json()
         assert msg["type"] == "connected" and msg["table_id"] == table_id

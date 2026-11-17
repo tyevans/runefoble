@@ -51,7 +51,9 @@ client = session_client
 
 
 @pytest.fixture
-def gateway_client(spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis) -> TestClient:
+def gateway_client(
+    spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis, trusted_ws_issuer
+) -> TestClient:
     return TestClient(gateway_app)
 
 

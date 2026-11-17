@@ -20,17 +20,13 @@ from gateway_api.websocket import (
     CampaignConnectionManager,
     CampaignWebSocketManager,
     WebSocketActionValidator,
-    authenticate_websocket,
+    admit_gateway_websocket,
     campaign_websocket_endpoint,
     default_action_validator,
-    extract_token_from_websocket,
     ws_campaign_manager,
 )
 from gateway_api.websocket_auth import (
-    authenticate_websocket as auth_fn,
-)
-from gateway_api.websocket_auth import (
-    extract_token_from_websocket as extract_tok_fn,
+    admit_gateway_websocket as admit_fn,
 )
 from gateway_api.websocket_endpoint import (
     campaign_websocket_endpoint as endpoint_fn,
@@ -57,6 +53,10 @@ from gateway_api.websocket_validator import (
 )
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
+
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture(autouse=True)
@@ -101,8 +101,7 @@ def test_module_re_export_parity():
     assert CampaignWebSocketManager is WebSocketManagerClass
     assert ws_campaign_manager is manager_instance
     assert campaign_websocket_endpoint is endpoint_fn
-    assert extract_token_from_websocket is extract_tok_fn
-    assert authenticate_websocket is auth_fn
+    assert admit_gateway_websocket is admit_fn
 
 
 @pytest.mark.asyncio
@@ -166,7 +165,9 @@ def test_frontdoor_websocket_lifecycle_and_broadcast():
     set_event_bus(bus)
 
     client = TestClient(app)
-    with client.websocket_connect(f"/ws/campaigns/{campaign_id}?user_id={dm_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(dm_id)
+    ) as ws:
         connected_frame = ws.receive_json()
         assert connected_frame["type"] == "connected"
         assert connected_frame["campaign_id"] == campaign_id

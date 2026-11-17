@@ -21,6 +21,9 @@ from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
+from tests.helpers.ws_identity import ws_subprotocols
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -58,12 +61,12 @@ def test_multi_peer_signaling_offer_answer_and_ice_candidate_relay():
 
     client = TestClient(app)
     with client.websocket_connect(
-        f"/ws/voice/{session_id}?user_id={user_a}&peer_id=peer_a"
+        f"/ws/voice/{session_id}?peer_id=peer_a", subprotocols=ws_subprotocols(user_a)
     ) as ws_a:
         ws_a.receive_json()
         ws_a.receive_json()
         with client.websocket_connect(
-            f"/ws/voice/{session_id}?user_id={user_b}&peer_id=peer_b"
+            f"/ws/voice/{session_id}?peer_id=peer_b", subprotocols=ws_subprotocols(user_b)
         ) as ws_b:
             ws_b.receive_json()
             ws_b.receive_json()
@@ -120,7 +123,7 @@ def test_voice_mute_toggle_and_telemetry_reporting():
 
     client = TestClient(app)
     with client.websocket_connect(
-        f"/ws/voice/{session_id}?user_id={user_id}&peer_id=peer_cleric"
+        f"/ws/voice/{session_id}?peer_id=peer_cleric", subprotocols=ws_subprotocols(user_id)
     ) as ws:
         ws.receive_json()
         ws.receive_json()
@@ -177,7 +180,7 @@ def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer():
 
     client = TestClient(app)
     with client.websocket_connect(
-        f"/ws/voice/{session_id}?user_id={bad_user}&peer_id=peer_troll"
+        f"/ws/voice/{session_id}?peer_id=peer_troll", subprotocols=ws_subprotocols(bad_user)
     ) as ws:
         ws.receive_json()
         ws.receive_json()

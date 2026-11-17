@@ -7,6 +7,8 @@ from game_session.dependencies import STREAM_TAVERN, STREAM_WEST_MARCHES
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.mock_redis import MockAsyncRedis
 
+from tests.helpers.ws_identity import ws_subprotocols
+
 from .conftest import assert_stream_event, setup_campaign_settlement
 
 
@@ -106,9 +108,10 @@ def test_bulletin_board_pin_and_cipher_decrypt(
     assert dec.status_code == 200 and dec.json()["decrypted_content"] == secret_text
     assert_stream_event(mock_bus, STREAM_WEST_MARCHES, "CipherNoticeDecrypted")
 
+    dm_ws, p_ws = ws_subprotocols(dm_id), ws_subprotocols(p_id)
     with (
-        gateway_client.websocket_connect(f"/ws/campaigns/{cid}?user_id={dm_id}") as ws_dm,
-        gateway_client.websocket_connect(f"/ws/campaigns/{cid}?user_id={p_id}") as ws_player,
+        gateway_client.websocket_connect(f"/ws/campaigns/{cid}", subprotocols=dm_ws) as ws_dm,
+        gateway_client.websocket_connect(f"/ws/campaigns/{cid}", subprotocols=p_ws) as ws_player,
     ):
         assert ws_dm.receive_json()["type"] == "connected"
         assert ws_player.receive_json()["type"] == "connected"
