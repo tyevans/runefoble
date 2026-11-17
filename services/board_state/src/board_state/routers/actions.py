@@ -6,6 +6,7 @@ import contextlib
 import logging
 
 from board_state.dependencies import get_event_bus, get_or_create_board, repo
+from board_state.events import publish_board_events
 from board_state.models import TokenActionRequest, TokenActionResponse
 from board_state.preview import board_ws_manager
 from fastapi import APIRouter, HTTPException
@@ -31,6 +32,7 @@ async def execute_token_action(session_id: str, token_id: str, req: TokenActionR
             details=req.details,
             initiated_by=req.initiated_by,
         )
+        events = list(board.uncommitted_events)
         await repo.save(board)
 
         # Broadcast via WebSocket if manager has active connections
@@ -48,11 +50,9 @@ async def execute_token_action(session_id: str, token_id: str, req: TokenActionR
                 },
             )
 
-        # Publish to event bus if available
         bus = get_event_bus()
-        if bus and board.uncommitted_events:
-            with contextlib.suppress(Exception):
-                await bus.publish(board.uncommitted_events[-1])
+        if bus is not None:
+            await publish_board_events(bus, events)
 
         all_targets = list(req.target_token_ids or [])
         if req.target_token_id and req.target_token_id not in all_targets:

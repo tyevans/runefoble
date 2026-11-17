@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import Any
 
 from board_state.dependencies import get_event_bus, get_or_create_board, repo
+from board_state.events import publish_board_events
 from board_state.models import (
     KnockbackRequest,
     KnockbackResponse,
@@ -19,15 +19,6 @@ from fastapi import APIRouter, HTTPException
 
 logger = logging.getLogger("runefoble.board_state.routers.physics")
 router = APIRouter(tags=["physics"])
-
-
-async def _publish_events(bus: Any, events: list[Any]) -> None:
-    for evt in events:
-        with contextlib.suppress(Exception):
-            if hasattr(bus, "publish_event"):
-                await bus.publish_event("runefoble.events.board", evt)
-            elif hasattr(bus, "publish"):
-                await bus.publish(evt)
 
 
 @router.post(
@@ -64,8 +55,8 @@ async def simulate_throw_endpoint(
                     "dice": resp.model_dump(),
                 },
             )
-        if bus and uncommitted:
-            await _publish_events(bus, uncommitted)
+        if bus is not None:
+            await publish_board_events(bus, uncommitted)
         return resp
     except ValueError as e:
         raise HTTPException(
@@ -103,8 +94,8 @@ async def knockback_endpoint(board_id: str, req: KnockbackRequest) -> KnockbackR
                     "knockback": resp.model_dump(),
                 },
             )
-        if bus and uncommitted:
-            await _publish_events(bus, uncommitted)
+        if bus is not None:
+            await publish_board_events(bus, uncommitted)
         return resp
     except ValueError as e:
         raise HTTPException(
