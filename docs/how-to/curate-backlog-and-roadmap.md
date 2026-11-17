@@ -10,8 +10,9 @@ make health-check
 ```
 Or run the Python script directly:
 ```bash
-python3 .agents/skills/backlog-curator/scripts/health_check.py
+python3 scripts/health_check.py
 ```
+The command exits with status 1 when a source file exceeds 500 lines. This is the only file length gate. Tests do not check line counts.
 
 ## Running the Backlog Curator
 To run the automated triage, refactoring scan, and JIT refinement cycle:
