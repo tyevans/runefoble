@@ -26,6 +26,12 @@ from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app
 
+
+def _auth(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
+
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 TS_TEST_DIR = FRONTEND_DIR / "test" / "character_management"
@@ -48,10 +54,10 @@ def reset_stores():
 
 
 @pytest.mark.asyncio
-async def test_character_crud_and_zanzibar_ownership():
+async def test_character_crud_and_zanzibar_ownership(signing_issuer):
     """Verify character creation, SpiceDB Zanzibar ownership relations, and owner-only deletion."""
-    headers_owner = {"X-User-Id": "user_valeros"}
-    headers_stranger = {"X-User-Id": "user_stranger"}
+    headers_owner = _auth(signing_issuer, "user_valeros")
+    headers_stranger = _auth(signing_issuer, "user_stranger")
 
     payload = {
         "name": "Valeros of Korvosa",
@@ -127,11 +133,11 @@ async def test_character_crud_and_zanzibar_ownership():
 
 
 @pytest.mark.asyncio
-async def test_character_campaign_assignment():
+async def test_character_campaign_assignment(signing_issuer):
     """Verify character campaign assignment writes campaign tuple and grants view to party members."""
-    headers_alice = {"X-User-Id": "user_alice"}
-    headers_party_bob = {"X-User-Id": "user_bob"}
-    headers_outsider = {"X-User-Id": "user_outsider"}
+    headers_alice = _auth(signing_issuer, "user_alice")
+    headers_party_bob = _auth(signing_issuer, "user_bob")
+    headers_outsider = _auth(signing_issuer, "user_outsider")
 
     # 1. Create Campaign
     camp_res = client.post(
@@ -197,10 +203,10 @@ async def test_character_campaign_assignment():
 
 
 @pytest.mark.asyncio
-async def test_character_listing_filtered_by_zanzibar_visibility():
+async def test_character_listing_filtered_by_zanzibar_visibility(signing_issuer):
     """Verify GET /api/v1/characters returns only viewable characters for requesting user."""
-    headers_alice = {"X-User-Id": "user_alice"}
-    headers_bob = {"X-User-Id": "user_bob"}
+    headers_alice = _auth(signing_issuer, "user_alice")
+    headers_bob = _auth(signing_issuer, "user_bob")
 
     res_a = client.post(
         "/api/v1/characters",
@@ -228,24 +234,25 @@ async def test_character_listing_filtered_by_zanzibar_visibility():
     assert char_a_id not in bob_ids
 
 
-def test_profile_endpoint_claims_and_roles():
-    """Verify GET /api/v1/profile returns authenticated Zitadel claims, user ID, and roles."""
-    headers = {"X-User-Id": "user_marcus"}
+def test_profile_endpoint_returns_verified_identity(signing_issuer):
+    """Verify GET /api/v1/profile returns the verified token subject and no role claims (ADR-0015)."""
+    headers = _auth(signing_issuer, "user_marcus")
     res = client.get("/api/v1/profile", headers=headers)
     assert res.status_code == 200
     data = res.json()
 
     assert data["user_id"] == "user_marcus"
-    assert "roles" in data
-    assert isinstance(data["roles"], list)
     assert "username" in data
     assert "email" in data
+    # Role claims grant nothing and are not projected to the profile.
+    assert "roles" not in data
+    assert "is_admin" not in data
 
 
 @pytest.mark.asyncio
-async def test_campaign_creation_and_ownership():
+async def test_campaign_creation_and_ownership(signing_issuer):
     """Verify POST /api/v1/campaigns creates campaign and writes Zanzibar owner relation."""
-    headers_gm = {"X-User-Id": "user_gm_evelyn"}
+    headers_gm = _auth(signing_issuer, "user_gm_evelyn")
     res = client.post(
         "/api/v1/campaigns",
         json={"title": "Whispering Depths", "setting": "Underdark", "system": "5e"},

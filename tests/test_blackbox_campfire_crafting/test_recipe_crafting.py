@@ -78,34 +78,57 @@ def test_blackbox_alchemical_crafting_success_flow(char_client: TestClient, mock
     assert any("CraftingSucceeded" in entry[1].get("event_type", "") for entry in entries)
 
 
-def test_blackbox_gateway_zanzibar_authorization(gateway_client: TestClient, mock_spicedb):
-    """Verify Gateway Zanzibar authorization enforcement for downtime and crafting endpoints."""
-    camp_id = f"camp-auth-{uuid4().hex[:6]}"
-    user_id = "user_bram"
+def _bearer(issuer, sub: str) -> dict[str, str]:
+    """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
+    return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
-    role_res = gateway_client.post(
-        f"/api/v1/campaigns/{camp_id}/roles",
-        json={"user_id": user_id, "role": "player"},
-    )
-    assert role_res.status_code == 200
 
-    get_res = gateway_client.get(
-        f"/api/v1/campaigns/{camp_id}/stronghold",
-        headers={"X-User-Id": user_id},
+def test_blackbox_gateway_zanzibar_authorization(
+    gateway_client: TestClient, mock_spicedb, signing_issuer
+):
+    """Verify Gateway Zanzibar authorization enforcement for downtime and crafting endpoints.
+
+    Membership is created through frontdoors only: the owner creates the campaign,
+    issues a player invite, and the player redeems it.
+    """
+    owner_headers = _bearer(signing_issuer, "user_dm")
+    user_headers = _bearer(signing_issuer, "user_bram")
+
+    create_res = gateway_client.post(
+        "/api/v1/campaigns",
+        json={"title": "Campfire Crafting", "setting": "Ashen Hollow", "system": "5e"},
+        headers=owner_headers,
     )
+    assert create_res.status_code == 201
+    camp_id = create_res.json()["id"]
+
+    invite_res = gateway_client.post(
+        f"/api/v1/campaigns/{camp_id}/invites",
+        json={"role": "player"},
+        headers=owner_headers,
+    )
+    assert invite_res.status_code == 201
+    join_res = gateway_client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": invite_res.json()["token"]},
+        headers=user_headers,
+    )
+    assert join_res.status_code == 200
+
+    get_res = gateway_client.get(f"/api/v1/campaigns/{camp_id}/stronghold", headers=user_headers)
     assert get_res.status_code == 200
     assert get_res.json()["campaign_id"] == camp_id
 
     denied_res = gateway_client.get(
         f"/api/v1/campaigns/{camp_id}/stronghold",
-        headers={"X-User-Id": "unauthorized_stranger"},
+        headers=_bearer(signing_issuer, "unauthorized_stranger"),
     )
     assert denied_res.status_code == 403
 
     upg_res = gateway_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
         json={"facility_id": "watchtower", "gold_spent": 100},
-        headers={"X-User-Id": user_id},
+        headers=user_headers,
     )
     assert upg_res.status_code == 200
     assert upg_res.json()["status"] == "upgraded"
@@ -116,7 +139,7 @@ def test_blackbox_gateway_zanzibar_authorization(gateway_client: TestClient, moc
             "character_id": str(uuid4()),
             "reagents": ["Glowmoss Extract", "Volcano Ash"],
         },
-        headers={"X-User-Id": user_id},
+        headers=user_headers,
         params={"campaign_id": camp_id},
     )
     assert craft_res.status_code == 200
