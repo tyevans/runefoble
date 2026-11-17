@@ -10,7 +10,6 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.vocal_dsp import (
     VocalModulatorPresetAppliedEvent,
     VoiceFilterToggledEvent,
@@ -31,22 +30,12 @@ class VoiceRoomCoordinator:
     def __init__(
         self,
         event_bus: RedisStreamsEventBus | None = None,
-        spicedb_client: SpiceDBClient | None = None,
     ):
-        self._event_bus, self._spicedb = event_bus, spicedb_client
+        self._event_bus = event_bus
         self._repository = create_aggregate_repository(VoiceRoomAggregate)
         self._telemetry: dict[str, dict[str, dict[str, Any]]] = {}
         self._aggregates: dict[str, VoiceRoomAggregate] = {}
         self._kick_callbacks: list[Callable[[str, str, str], Any]] = []
-
-    @property
-    def spicedb(self) -> SpiceDBClient:
-        if self._spicedb is None:
-            self._spicedb = SpiceDBClient()
-        return self._spicedb
-
-    def set_spicedb(self, client: SpiceDBClient) -> None:
-        self._spicedb = client
 
     def set_event_bus(self, bus: RedisStreamsEventBus | None) -> None:
         self._event_bus = bus

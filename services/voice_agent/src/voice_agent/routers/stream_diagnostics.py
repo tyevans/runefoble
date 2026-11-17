@@ -9,7 +9,8 @@ from runefoble_events.voice_stream_quality import (
     VoiceStreamCodecAdaptedEvent,
     VoiceStreamQualityDegradedEvent,
 )
-from voice_agent.auth import get_voice_principal
+from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.authz import require_action
 from voice_agent.dependencies import publish_voice_event
 from voice_agent.webrtc.adaptive_bitrate import AdaptiveBitrateRegulator
 from voice_agent.webrtc.models import RTCPReportRequest, StreamQualityResponse
@@ -60,8 +61,11 @@ def _make_resp(
 
 @router.get("/voice/streams/{session_id}/quality")
 @router.get("/api/v1/voice/streams/{session_id}/quality")
-async def get_stream_quality(session_id: str, peer_id: str | None = None) -> Any:
+async def get_stream_quality(
+    session_id: str, principal: VoicePrincipal, peer_id: str | None = None
+) -> Any:
     """Query stream bitrate, packet loss, and codec mode."""
+    await require_action("session.control", session_id, principal.user_id)
     if peer_id:
         return _make_resp(session_id, peer_id)
     return {
@@ -73,8 +77,11 @@ async def get_stream_quality(session_id: str, peer_id: str | None = None) -> Any
 @router.post("/voice/streams/{session_id}/report", response_model=StreamQualityResponse)
 @router.post("/voice/streams/{session_id}/quality", response_model=StreamQualityResponse)
 @router.post("/api/v1/voice/streams/{session_id}/report", response_model=StreamQualityResponse)
-async def submit_rtcp_report(session_id: str, req: RTCPReportRequest) -> StreamQualityResponse:
+async def submit_rtcp_report(
+    session_id: str, req: RTCPReportRequest, principal: VoicePrincipal
+) -> StreamQualityResponse:
     """Submit RTCP report, evaluate degradation, and adapt Opus bitrate."""
+    await require_action("session.control", session_id, principal.user_id)
     prev = _abr.get_current_params(session_id, req.peer_id)
     m = _qm.analyze_report(session_id, req.peer_id, req.model_dump())
     if m.is_degraded:
@@ -82,7 +89,7 @@ async def submit_rtcp_report(session_id: str, req: RTCPReportRequest) -> StreamQ
             VoiceStreamQualityDegradedEvent(
                 session_id=session_id,
                 peer_id=req.peer_id,
-                user_id=req.user_id,
+                user_id=principal.user_id,
                 packet_loss=m.packet_loss,
                 round_trip_time_ms=m.rtt_ms,
                 jitter_ms=m.jitter_ms,
@@ -95,7 +102,7 @@ async def submit_rtcp_report(session_id: str, req: RTCPReportRequest) -> StreamQ
             VoiceStreamCodecAdaptedEvent(
                 session_id=session_id,
                 peer_id=req.peer_id,
-                user_id=req.user_id,
+                user_id=principal.user_id,
                 previous_bitrate_kbps=prev.bitrate_kbps,
                 new_bitrate_kbps=p.bitrate_kbps,
                 sample_rate=p.sample_rate,

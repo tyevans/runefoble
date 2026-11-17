@@ -11,7 +11,8 @@ from runefoble_events.voice_barge_in import (
     NeuralSpeechBargeInDetectedEvent,
     TTSStreamAttenuatedEvent,
 )
-from voice_agent.auth import get_voice_principal
+from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.authz import require_speaker
 from voice_agent.dependencies import STREAM_SESSION, STREAM_VOICE, get_event_bus
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter
 from voice_agent.dsp.cosine_crossfade import CosineCrossfadeAttenuator
@@ -49,8 +50,11 @@ class BargeInEvaluationResponse(BaseModel):
 
 @router.post("/voice/filters/barge-in/evaluate", response_model=BargeInEvaluationResponse)
 @router.post("/api/v1/voice/filters/barge-in/evaluate", response_model=BargeInEvaluationResponse)
-async def evaluate_barge_in(req: BargeInEvaluationRequest) -> BargeInEvaluationResponse:
+async def evaluate_barge_in(
+    req: BargeInEvaluationRequest, principal: VoicePrincipal
+) -> BargeInEvaluationResponse:
     """Evaluate synthetic audio frames for speech onset and measure halt latency."""
+    await require_speaker(req.session_id, req.speaker_id, principal.user_id)
     in_pcm = base64.b64decode(req.audio_base64) if req.audio_base64 else b""
     onset_filter = BargeInOnsetFilter(req.sample_rate, energy_threshold=req.energy_threshold)
     result = onset_filter.evaluate_stream(in_pcm)
