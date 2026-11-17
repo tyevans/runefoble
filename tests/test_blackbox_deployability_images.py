@@ -287,3 +287,77 @@ def _wait_for_openapi(url: str, container_id: str, timeout_s: float = 90.0) -> d
             raise AssertionError(f"container exited early:\n{(logs.stdout + logs.stderr)[-4000:]}")
         time.sleep(1.0)
     raise AssertionError(f"{url} not served within {timeout_s}s: {last_error}")
+
+
+AUDIENCE_DOCKERFILE = REPO_ROOT / "services" / "audience_studio" / "Dockerfile"
+AUDIENCE_PORT = 8010
+AUDIENCE_TAG = f"runefoble/audience-studio:{IMAGE_TAG}"
+
+
+def test_make_images_builds_audience_studio_from_node_dockerfile():
+    """`make -n images` builds the Node audience-studio image and loads it into Kind."""
+    result = subprocess.run(
+        ["make", "-n", "images"], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60
+    )
+    assert result.returncode == 0, f"`make -n images` failed: {result.stderr}"
+    output = result.stdout
+    assert f"-f {AUDIENCE_DOCKERFILE.relative_to(REPO_ROOT)}" in output
+    assert f"-t {AUDIENCE_TAG}" in output
+    assert f"kind load docker-image {AUDIENCE_TAG} --name runefoble-local" in output
+
+
+def test_audience_studio_dockerfile_runs_non_root_on_helm_port():
+    """The Node image runs `dist/index.js` as a non-root user on the Helm port."""
+    text = AUDIENCE_DOCKERFILE.read_text(encoding="utf-8")
+    assert "FROM node:20-alpine" in text
+    assert f"PORT={AUDIENCE_PORT}" in text
+    assert re.search(r"^USER\s+(?!root\b)\S+", text, re.MULTILINE), "no non-root USER"
+    assert 'CMD ["node", "dist/index.js"]' in text
+
+
+@pytest.mark.docker
+@pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
+def test_built_audience_studio_image_serves_health_and_openapi():
+    """The audience-studio image starts, reports healthy and serves `/openapi.json`."""
+    build = subprocess.run(
+        [
+            "docker",
+            "build",
+            "-f",
+            str(AUDIENCE_DOCKERFILE),
+            "-t",
+            AUDIENCE_TAG,
+            str(REPO_ROOT),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=1800,
+    )
+    assert build.returncode == 0, f"docker build failed:\n{build.stderr[-4000:]}"
+
+    host_port = free_port()
+    container = subprocess.run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "-e",
+            "RUNEFOBLE_SPICEDB_PRESHARED_KEY=blackbox-test-key",
+            "-p",
+            f"127.0.0.1:{host_port}:{AUDIENCE_PORT}",
+            AUDIENCE_TAG,
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert container.returncode == 0, f"docker run failed: {container.stderr}"
+    container_id = container.stdout.strip()
+    try:
+        document = _wait_for_openapi(f"http://127.0.0.1:{host_port}/openapi.json", container_id)
+        assert "paths" in document
+        for path in ("/healthz", "/readyz"):
+            with urllib.request.urlopen(f"http://127.0.0.1:{host_port}{path}", timeout=10) as r:
+                assert r.status == 200, path
+    finally:
+        subprocess.run(["docker", "rm", "-f", container_id], capture_output=True, timeout=120)
