@@ -24,6 +24,8 @@ from gateway_api.main import app as gateway_app
 from soundscape.dependencies import get_or_create_leitmotif_engine, reset_dependencies
 from soundscape.leitmotif import CharacterLeitmotifProfile
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GATEWAY_ROUTER_PATH = (
     REPO_ROOT / "gateway" / "api" / "src" / "gateway_api" / "routers" / "soundscape.py"
@@ -39,8 +41,12 @@ def clean_state():
     campaign_store.reset()
 
 
+def _auth(sub: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
 @pytest.fixture
-def client() -> TestClient:
+def client(trusted_ws_issuer) -> TestClient:
     return TestClient(gateway_app)
 
 
@@ -56,7 +62,7 @@ def setup_zanzibar_soundscape(client: TestClient) -> dict[str, str]:
             "system": "5e",
             "description": "Soundscape testing campaign.",
         },
-        headers={"X-User-Id": "dm_evelyn"},
+        headers=_auth("dm_evelyn"),
     )
     assert res_camp.status_code == 201
     cid = res_camp.json()["id"]
@@ -65,7 +71,7 @@ def setup_zanzibar_soundscape(client: TestClient) -> dict[str, str]:
     res_role = client.post(
         f"/api/v1/campaigns/{cid}/roles",
         json={"user_id": "player_valeros", "role": "player"},
-        headers={"X-User-Id": "dm_evelyn"},
+        headers=_auth("dm_evelyn"),
     )
     assert res_role.status_code == 200
 
@@ -73,7 +79,7 @@ def setup_zanzibar_soundscape(client: TestClient) -> dict[str, str]:
     res_sess = client.post(
         f"/api/v1/campaigns/{cid}/sessions",
         json={"title": "Echoing Depths"},
-        headers={"X-User-Id": "dm_evelyn"},
+        headers=_auth("dm_evelyn"),
     )
     assert res_sess.status_code == 201
     sid = res_sess.json()["id"]
@@ -116,7 +122,7 @@ def test_cue_trigger_authorized_player(
 ) -> None:
     """Verify authorized player with 'play' permission can trigger foley cues."""
     sid = setup_zanzibar_soundscape["sid"]
-    headers = {"X-User-Id": "player_valeros"}
+    headers = _auth("player_valeros")
 
     res = client.post(
         "/api/v1/soundscape/cue",
@@ -143,7 +149,7 @@ def test_cue_trigger_unauthorized_user(
 ) -> None:
     """Verify unauthorized user lacking 'play' receives 403 Forbidden."""
     sid = setup_zanzibar_soundscape["sid"]
-    headers = {"X-User-Id": "stranger_bob"}
+    headers = _auth("stranger_bob")
 
     res = client.post(
         "/api/v1/soundscape/cue",
@@ -169,7 +175,9 @@ def test_tension_status_query(
 ) -> None:
     """Verify GET /api/v1/soundscape/tension retrieves tension score and stem weights."""
     sid = setup_zanzibar_soundscape["sid"]
-    res = client.get(f"/api/v1/soundscape/tension?session_id={sid}")
+    res = client.get(
+        f"/api/v1/soundscape/tension?session_id={sid}", headers=_auth("player_valeros")
+    )
     assert res.status_code == 200
     data = res.json()
     assert data["session_id"] == sid
@@ -184,6 +192,7 @@ def test_tension_calculation(client: TestClient, setup_zanzibar_soundscape: dict
     sid = setup_zanzibar_soundscape["sid"]
     res = client.post(
         "/api/v1/soundscape/tension/calculate",
+        headers=_auth("player_valeros"),
         json={
             "session_id": sid,
             "combat_active": True,
@@ -209,7 +218,7 @@ def test_mood_override_dm_authority(
 ) -> None:
     """Verify DM with 'run_session' / 'manage' can manually force audio mood."""
     sid = setup_zanzibar_soundscape["sid"]
-    headers = {"X-User-Id": "dm_evelyn"}
+    headers = _auth("dm_evelyn")
 
     res = client.post(
         "/api/v1/soundscape/stems/override",
@@ -232,7 +241,7 @@ def test_mood_override_player_forbidden(
 ) -> None:
     """Verify player with 'play' but lacking 'run_session' is 403 Forbidden."""
     sid = setup_zanzibar_soundscape["sid"]
-    headers = {"X-User-Id": "player_valeros"}
+    headers = _auth("player_valeros")
 
     res = client.post(
         "/api/v1/soundscape/stems/override",
@@ -253,7 +262,7 @@ def test_mood_override_unauthorized_stranger(
 ) -> None:
     """Verify unauthenticated/stranger user is 403 Forbidden when overriding mood."""
     sid = setup_zanzibar_soundscape["sid"]
-    headers = {"X-User-Id": "stranger_bob"}
+    headers = _auth("stranger_bob")
 
     res = client.post(
         "/api/v1/soundscape/stems/override",
@@ -290,7 +299,9 @@ def test_leitmotif_profile_query(
         )
     )
 
-    res = client.get(f"/api/v1/soundscape/leitmotif/valeros?session_id={sid}")
+    res = client.get(
+        f"/api/v1/soundscape/leitmotif/valeros?session_id={sid}", headers=_auth("player_valeros")
+    )
     assert res.status_code == 200
     data = res.json()
     assert data["character_id"] == "valeros"
@@ -341,7 +352,7 @@ def test_downstream_proxy_forwarding(
     with patch("httpx.AsyncClient", MockAsyncClient):
         res = client.post(
             "/api/v1/soundscape/cue",
-            headers={"X-User-Id": "dm_evelyn"},
+            headers=_auth("dm_evelyn"),
             json={"session_id": sid, "cue_name": "fireball"},
         )
         assert res.status_code == 200

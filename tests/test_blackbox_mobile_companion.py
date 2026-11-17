@@ -115,7 +115,7 @@ def test_authorized_handshake_and_connected_frame(client: TestClient):
         assert patterns["turn_alert"] == HapticVibrationPattern.TURN_ALERT
 
 
-def test_secret_dm_whisper_haptic_pulse_and_isolation(client: TestClient, signing_issuer):
+def test_secret_dm_whisper_haptic_pulse_and_isolation(client: TestClient, trusted_ws_issuer):
     """Marcus receives secret whisper with triple-pulse haptic vibration; other player is isolated."""
     spicedb = get_spicedb_client()
     session_id = f"sess-{uuid4().hex[:6]}"
@@ -137,7 +137,7 @@ def test_secret_dm_whisper_haptic_pulse_and_isolation(client: TestClient, signin
             whisper_text = "You feel cold breath upon the back of your neck."
             res = client.post(
                 f"/api/v1/mobile/companion/{session_id}/whisper",
-                headers={"Authorization": f"Bearer {signing_issuer.mint(dm_user)}"},
+                headers={"Authorization": f"Bearer {trusted_ws_issuer.mint(dm_user)}"},
                 json={
                     "recipient_id": user_marcus,
                     "content": whisper_text,
@@ -164,7 +164,7 @@ def test_secret_dm_whisper_haptic_pulse_and_isolation(client: TestClient, signin
             assert pong["type"] == "pong"
 
 
-def test_combat_turn_initiative_haptic_alert(client: TestClient, signing_issuer):
+def test_combat_turn_initiative_haptic_alert(client: TestClient, trusted_ws_issuer):
     """Combat turn notification triggers distinct double alert pulse [300, 150, 300]."""
     spicedb = get_spicedb_client()
     session_id, user_marcus, dm_user = f"sess-{uuid4().hex[:6]}", "marcus", "the_watcher_dm"
@@ -179,7 +179,7 @@ def test_combat_turn_initiative_haptic_alert(client: TestClient, signing_issuer)
         # Send turn alert via HTTP frontdoor
         res = client.post(
             f"/api/v1/mobile/companion/{session_id}/turn-alert",
-            headers={"Authorization": f"Bearer {signing_issuer.mint(dm_user)}"},
+            headers={"Authorization": f"Bearer {trusted_ws_issuer.mint(dm_user)}"},
             json={
                 "recipient_id": user_marcus,
                 "character_name": "Marcus the Tactician",

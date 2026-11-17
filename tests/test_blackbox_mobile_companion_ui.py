@@ -253,7 +253,7 @@ def test_gateway_websocket_frontdoor_handshake_and_frames(client: TestClient) ->
         assert haptic_frame["vibration_pattern"] == [200, 100, 200]
 
 
-def test_public_http_whisper_and_turn_alert_delivery(client: TestClient, signing_issuer) -> None:
+def test_public_http_whisper_and_turn_alert_delivery(client: TestClient, trusted_ws_issuer) -> None:
     """Verify HTTP whisper & turn alert endpoints deliver haptic frames to mobile client."""
     spicedb = get_spicedb_client()
     session_id, user_id = f"sess-{uuid4().hex[:6]}", "marcus"
@@ -272,7 +272,7 @@ def test_public_http_whisper_and_turn_alert_delivery(client: TestClient, signing
         # Dispatch secret whisper via public HTTP frontdoor
         whisper_res = client.post(
             f"/api/v1/mobile/companion/{session_id}/whisper",
-            headers={"Authorization": f"Bearer {signing_issuer.mint(dm_user)}"},
+            headers={"Authorization": f"Bearer {trusted_ws_issuer.mint(dm_user)}"},
             json={
                 "recipient_id": user_id,
                 "sender": "The Watcher",
@@ -290,7 +290,7 @@ def test_public_http_whisper_and_turn_alert_delivery(client: TestClient, signing
         # Dispatch combat turn alert via public HTTP frontdoor
         alert_res = client.post(
             f"/api/v1/mobile/companion/{session_id}/turn-alert",
-            headers={"Authorization": f"Bearer {signing_issuer.mint(dm_user)}"},
+            headers={"Authorization": f"Bearer {trusted_ws_issuer.mint(dm_user)}"},
             json={"recipient_id": user_id, "character_name": "Marcus", "round_num": 2},
         )
         assert alert_res.status_code == 200
