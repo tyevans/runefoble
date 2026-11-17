@@ -1,4 +1,4 @@
-"""Tests verifying modular decomposition and backward compatibility of campaign_analytics worker and event handlers.
+"""Tests verifying modular decomposition of campaign_analytics worker and event handlers.
 
 Governed by:
 - ADR-0003: UV Monorepo Workspace for Python BCs
@@ -14,16 +14,14 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from campaign_analytics import (
-    AnalyticsEventDispatcher,
-    CampaignAnalyticsWorker,
-    handle_domain_event,
-)
 from campaign_analytics.event_handlers import (
+    AnalyticsEventDispatcher,
     get_event_attr,
+    handle_domain_event,
     is_event_type,
 )
 from campaign_analytics.storage import CampaignAnalyticsStorage
+from campaign_analytics.worker import CampaignAnalyticsWorker
 from runefoble_events.events import (
     CharacterHealthChanged,
     CombatRoundAdvanced,
@@ -67,32 +65,10 @@ def test_modular_file_length_limits() -> None:
     )
 
 
-def test_worker_backward_compatible_properties() -> None:
-    """Verify CampaignAnalyticsWorker maintains backward-compatible tracking properties."""
-    storage = CampaignAnalyticsStorage()
-    worker = CampaignAnalyticsWorker(storage=storage)
-
-    assert isinstance(worker.token_positions, dict)
-    assert isinstance(worker.token_names, dict)
-    assert isinstance(worker.active_combatants, dict)
-    assert isinstance(worker.active_encounters, dict)
-
-    # Verify setter mutability forwards to dispatcher
-    worker.token_positions["tok_1"] = (5, 10)
-    worker.token_names["tok_1"] = "Fighter"
-    worker.active_combatants["sess_1"] = "tok_1"
-    worker.active_encounters["sess_1"] = "enc_boss"
-
-    assert worker.dispatcher.token_positions["tok_1"] == (5, 10)
-    assert worker.dispatcher.token_names["tok_1"] == "Fighter"
-    assert worker.dispatcher.active_combatants["sess_1"] == "tok_1"
-    assert worker.dispatcher.active_encounters["sess_1"] == "enc_boss"
-
-    # Backward-compatible helper methods
-    event_dict = {"event_type": "SessionCreated", "title": "Test Title"}
-    assert worker._get_attr(event_dict, "title") == "Test Title"
-    assert worker._is_type(event_dict, ["SessionCreated"]) is True
-    assert worker._is_type(event_dict, ["TokenMoved"]) is False
+def test_worker_exposes_only_canonical_event_handling() -> None:
+    """Verify the worker exposes handle_event and no alias for it."""
+    assert callable(CampaignAnalyticsWorker.handle_event)
+    assert not hasattr(CampaignAnalyticsWorker, "process_event")
 
 
 @pytest.mark.asyncio
@@ -200,13 +176,13 @@ async def test_direct_event_dispatch_and_projections() -> None:
 
 
 @pytest.mark.asyncio
-async def test_worker_process_event_delegates_to_dispatcher() -> None:
-    """Verify worker.process_event public method dispatches seamlessly."""
+async def test_worker_handle_event_delegates_to_dispatcher() -> None:
+    """Verify worker.handle_event dispatches a domain event into storage."""
     storage = CampaignAnalyticsStorage()
     worker = CampaignAnalyticsWorker(storage=storage)
     session_id, campaign_id = str(uuid4()), str(uuid4())
 
-    await worker.process_event(
+    await worker.handle_event(
         SessionCreated(
             aggregate_id=session_id,
             campaign_id=campaign_id,
