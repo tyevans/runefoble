@@ -4,20 +4,9 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
 from gateway_api.auth import require_zanzibar_permission
-from gateway_api.proxy import forward_json, upstream_url
+from gateway_api.proxy import forward_json
 
 router = APIRouter(tags=["Campaign Hub Views"])
-
-CAMPAIGN_LORE_DEFAULT_URL = "http://campaign-lore:8006"
-CAMPAIGN_ANALYTICS_DEFAULT_URL = "http://campaign-analytics:8011"
-
-
-def _lore_url() -> str:
-    return upstream_url("CAMPAIGN_LORE_URL", CAMPAIGN_LORE_DEFAULT_URL)
-
-
-def _analytics_url() -> str:
-    return upstream_url("CAMPAIGN_ANALYTICS_URL", CAMPAIGN_ANALYTICS_DEFAULT_URL)
 
 
 @router.get(
@@ -29,7 +18,7 @@ async def get_campaign_atlas(campaign_id: str, request: Request) -> Any:
     return await forward_json(
         request,
         method="GET",
-        base_url=_lore_url(),
+        service="campaign_lore",
         path=f"/api/v1/campaigns/{campaign_id}/atlas",
     )
 
@@ -47,7 +36,7 @@ async def get_campaign_codex(campaign_id: str, request: Request) -> Any:
     return await forward_json(
         request,
         method="GET",
-        base_url=_lore_url(),
+        service="campaign_lore",
         path=f"/api/v1/campaigns/{campaign_id}/codex/entries",
     )
 
@@ -79,7 +68,7 @@ async def get_campaign_heatmap(
     return await forward_json(
         request,
         method="GET",
-        base_url=_analytics_url(),
+        service="campaign_analytics",
         path=f"/api/v1/analytics/campaigns/{campaign_id}/heatmap",
         params={"session_id": session_id} if session_id else None,
     )
@@ -98,7 +87,7 @@ async def get_campaign_mvp(
     return await forward_json(
         request,
         method="GET",
-        base_url=_analytics_url(),
+        service="campaign_analytics",
         path=f"/api/v1/analytics/campaigns/{campaign_id}/mvp",
         params={"encounter_id": encounter_id} if encounter_id else None,
     )
@@ -117,7 +106,7 @@ async def get_campaign_timeline(
     return await forward_json(
         request,
         method="GET",
-        base_url=_analytics_url(),
+        service="campaign_analytics",
         path=f"/api/v1/analytics/campaigns/{campaign_id}/timeline",
         params={"session_id": session_id} if session_id else None,
     )

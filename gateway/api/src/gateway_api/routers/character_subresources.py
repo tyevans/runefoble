@@ -17,11 +17,9 @@ from gateway_api.character_models import (
     StandInGuardrailsRequest,
 )
 from gateway_api.character_store import character_store
-from gateway_api.proxy import forward_json, upstream_url
+from gateway_api.proxy import forward_json
 
 router = APIRouter(tags=["characters-subresources"])
-
-CHARACTER_SHEET_ENV = "CHARACTER_SHEET_URL"
 
 
 def _require_known_character(character_id: str) -> None:
@@ -39,7 +37,7 @@ async def _forward(
     return await forward_json(
         request,
         method=method,
-        base_url=upstream_url(CHARACTER_SHEET_ENV),
+        service="character_sheet",
         path=path,
         json_body=json_body,
         params=params,

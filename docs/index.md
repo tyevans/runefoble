@@ -66,6 +66,7 @@ The Runefoble system documentation is organized strictly according to the **Diat
     * [Define Event-Sourced Aggregates](how-to/define-event-sourced-aggregates.md)
     * [Develop Lit Components in Storybook](how-to/develop-lit-components-in-storybook.md)
     * [Instrument Services with OpenTelemetry](how-to/instrument-services-with-opentelemetry.md)
+    * [Call Owning Services Through the Gateway](how-to/call-owning-services-through-the-gateway.md)
     * [Authenticate with Zitadel OIDC](how-to/authenticate-with-zitadel-oidc.md)
     * [Add a Settings-Selected Engine Port Adapter](how-to/add-an-engine-port-adapter.md)
 
@@ -77,6 +78,7 @@ The Runefoble system documentation is organized strictly according to the **Diat
     * [Architecture Overview](reference/architecture-overview.md)
     * [Microfrontend Architecture](reference/microfrontend-architecture.md)
     * [Ports & Endpoints Routing Table](reference/ports-and-endpoints.md)
+    * [Service Client (Gateway Upstream Calls)](reference/service-client.md)
     * [Events Schema (CloudEvents)](reference/events-schema.md)
     * [Redis Streams Event Bus](reference/redis-streams-event-bus.md)
     * [Embedding Providers](reference/embedding-providers.md)

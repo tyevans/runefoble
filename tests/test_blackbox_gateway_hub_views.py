@@ -63,8 +63,10 @@ def hub_upstreams(monkeypatch) -> Iterator[None]:
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
+def client(hub_upstreams) -> Iterator[TestClient]:
+    """Run the gateway lifespan after the upstream URLs are set, so clients see them."""
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture(autouse=True)

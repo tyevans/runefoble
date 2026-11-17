@@ -58,8 +58,24 @@ def reset_store() -> Iterator[None]:
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
+def upstream_received(monkeypatch) -> Iterator[dict[str, list[dict[str, Any]]]]:
+    """Serve recording stand-ins for campaign_lore and campaign_analytics, and set their URLs."""
+    lore_seen: list[dict[str, Any]] = []
+    analytics_seen: list[dict[str, Any]] = []
+    with (
+        serve(_recording_upstream(lore_seen)) as lore_url,
+        serve(_recording_upstream(analytics_seen)) as analytics_url,
+    ):
+        monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
+        monkeypatch.setenv("CAMPAIGN_ANALYTICS_URL", analytics_url)
+        yield {"lore": lore_seen, "analytics": analytics_seen}
+
+
+@pytest.fixture
+def client(upstream_received) -> Iterator[TestClient]:
+    """Run the gateway lifespan after the upstream URLs are set, so clients see them."""
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture
@@ -81,16 +97,14 @@ def owner(client: TestClient, signing_issuer) -> tuple[str, dict[str, str]]:
 
 
 def test_atlas_returns_upstream_pins_and_forwards_bearer_only(
-    client: TestClient, owner, monkeypatch
+    client: TestClient, owner, upstream_received
 ) -> None:
     campaign_id, headers = owner
-    received: list[dict[str, Any]] = []
-    with serve(_recording_upstream(received)) as lore_url:
-        monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
-        res = client.get(
-            f"/api/v1/campaigns/{campaign_id}/atlas",
-            headers={**headers, "X-User-Id": "spoofed-user"},
-        )
+    received = upstream_received["lore"]
+    res = client.get(
+        f"/api/v1/campaigns/{campaign_id}/atlas",
+        headers={**headers, "X-User-Id": "spoofed-user"},
+    )
 
     assert res.status_code == 200
     assert [pin["title"] for pin in res.json()["pins"]] == ["Star-Eater Gate"]
@@ -100,13 +114,11 @@ def test_atlas_returns_upstream_pins_and_forwards_bearer_only(
 
 
 def test_codex_returns_upstream_entries_and_forwards_bearer_only(
-    client: TestClient, owner, monkeypatch
+    client: TestClient, owner, upstream_received
 ) -> None:
     campaign_id, headers = owner
-    received: list[dict[str, Any]] = []
-    with serve(_recording_upstream(received)) as lore_url:
-        monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
-        res = client.get(f"/api/v1/campaigns/{campaign_id}/codex", headers=headers)
+    received = upstream_received["lore"]
+    res = client.get(f"/api/v1/campaigns/{campaign_id}/codex", headers=headers)
 
     assert res.status_code == 200
     assert res.json() == [LIVE_CODEX_ENTRY]
@@ -115,12 +127,12 @@ def test_codex_returns_upstream_entries_and_forwards_bearer_only(
     assert received[-1]["x_user_id"] is None
 
 
-def test_heatmap_forwards_bearer_only_to_analytics(client: TestClient, owner, monkeypatch) -> None:
+def test_heatmap_forwards_bearer_only_to_analytics(
+    client: TestClient, owner, upstream_received
+) -> None:
     campaign_id, headers = owner
-    received: list[dict[str, Any]] = []
-    with serve(_recording_upstream(received)) as analytics_url:
-        monkeypatch.setenv("CAMPAIGN_ANALYTICS_URL", analytics_url)
-        res = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/heatmap", headers=headers)
+    received = upstream_received["analytics"]
+    res = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/heatmap", headers=headers)
 
     assert res.status_code == 200
     assert received[-1]["path"] == f"/api/v1/analytics/campaigns/{campaign_id}/heatmap"

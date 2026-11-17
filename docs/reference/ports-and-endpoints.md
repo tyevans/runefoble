@@ -321,12 +321,13 @@ Every gateway WebSocket route (`/ws/*` and `/overlay/ws/*`) takes the caller's i
 
 A gateway proxy route forwards the caller's verified bearer token to the owning service. The gateway verifies the token first. The owning service verifies it again.
 
-- The gateway copies the `Authorization` header to the upstream request. It forwards no other identity header. A client `X-User-Id` header is not forwarded.
-- An upstream `401` or `403` returns to the client with the same status code.
-- A connection failure, a timeout, a non-JSON success body, or an upstream `5xx` returns `502` with the detail `Upstream service is unavailable`. The gateway never returns substitute data.
-- An upstream URL that is not set returns `503` with the detail `Upstream service is not configured`.
+- The gateway copies the `Authorization` header to the upstream request. It forwards no other header from the client. A client `X-User-Id` header is not forwarded.
+- An upstream `2xx` or `4xx` answer returns to the client with the same status and body.
+- An upstream `5xx` returns `502` with `{"detail": "Upstream service is unavailable", "upstream": "<service>"}`.
+- A connection failure, a timeout, or an unset base URL returns `503` with the same body shape.
+- A `2xx` answer with a non-JSON body returns `502`.
 
-Proxy routes read their upstream base URL at call time: `CAMPAIGN_LORE_URL`, `CAMPAIGN_ANALYTICS_URL`, `SOUNDSCAPE_SERVICE_URL`, and `CHARACTER_SHEET_URL`. The shared helper is `gateway_api.proxy`.
+The gateway reads each owning service base URL once, at start-up. The variables are `CAMPAIGN_LORE_URL`, `CAMPAIGN_ANALYTICS_URL`, `SOUNDSCAPE_SERVICE_URL`, and `CHARACTER_SHEET_URL`. The gateway builds one shared client for each service. See [Service Client](service-client.md).
 
 ### Voice Agent TTS Response (`POST /api/v1/voice/tts`)
 
