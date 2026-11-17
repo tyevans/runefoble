@@ -2,6 +2,10 @@
 
 This guide explains how to generate tactical battlemaps with pre-calculated wall collisions and hazard grids, synthesize circular character and monster tokens with alpha transparency, and project spatial geometry directly into `board_state`.
 
+## Authentication
+
+Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
+
 ---
 
 ## 1. Procedural Battlemap Generation
@@ -11,7 +15,7 @@ To synthesize a tactical grid battlemap from natural language descriptions:
 ```bash
 curl -X POST http://localhost:8008/api/v1/forge/battlemap \
   -H "Content-Type: application/json" \
-  -H "X-User-Id: dm-evelyn" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "prompt": "Subterranean dwarven forge with lava canals and broken anvil statues",
     "width_cells": 20,
@@ -70,7 +74,7 @@ To synthesize a circular token with transparent background for player characters
 ```bash
 curl -X POST http://localhost:8008/api/v1/forge/token \
   -H "Content-Type: application/json" \
-  -H "X-User-Id: player-marcus" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "token_name": "Thorin Ironbreaker",
     "prompt": "Dwarven paladin with glowing runic warhammer",

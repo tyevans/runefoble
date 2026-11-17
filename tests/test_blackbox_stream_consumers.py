@@ -27,6 +27,11 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 SESSION_STREAM = "runefoble.events.session"
 
 
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
 @pytest.fixture
 def redis_double(monkeypatch: pytest.MonkeyPatch) -> MockAsyncRedis:
     """Route every service-created Redis client to one in-memory transport double."""
@@ -143,7 +148,7 @@ def test_soundscape_consumer_applies_combat_start_from_redis(
     )
     set_event_bus(RedisStreamsEventBus(client=redis_double))
 
-    with TestClient(app) as client:
+    with TestClient(app, headers=auth_headers("soundscape-tester")) as client:
         assert client.get("/healthz").json()["consumers"] == {"soundscape": "running"}
         tension_url = f"/api/v1/soundscape/tension?session_id={session_id}"
         assert client.get(tension_url).json()["tension_score"] != expected_tension

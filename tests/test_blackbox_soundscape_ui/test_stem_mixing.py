@@ -11,12 +11,15 @@ Governed by:
 from __future__ import annotations
 
 from typing import Any
-from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
-from soundscape.dependencies import set_spicedb_client
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 def test_rest_data_binding_catalog_and_foley_presets(client: TestClient) -> None:
@@ -64,53 +67,27 @@ def test_rest_data_binding_tension_calculation(
     assert data["stem_profile"] in ("tension", "combat", "boss")
 
 
-@pytest.mark.asyncio
-async def test_spicedb_zanzibar_authorization_on_soundscape_controls(
-    client: TestClient,
+def test_spicedb_zanzibar_authorization_on_soundscape_controls(
+    client: TestClient, soundscape_session_id: str
 ) -> None:
     """Verify Zanzibar permissions guard DM mood overrides and controls."""
-    session_id = "sess-zanzibar-01"
-    campaign_id = str(uuid4())
-    dm_user = "dm-evelyn"
-    player_user = "player-marcus"
+    payload = {
+        "session_id": soundscape_session_id,
+        "mood": "boss",
+        "master_volume": 0.9,
+    }
 
-    mock_db = MockSpiceDBClient()
-    set_spicedb_client(mock_db)
-
-    # 1. Player without DM authority attempts mood override -> 403 Forbidden
+    # 1. A player without DM authority attempts a mood override -> 403 Forbidden
     resp_unauth = client.post(
         "/api/v1/soundscape/override",
-        headers={"X-User-ID": player_user},
-        json={
-            "session_id": session_id,
-            "campaign_id": campaign_id,
-            "mood": "boss",
-            "master_volume": 0.9,
-        },
+        headers=auth_headers("player-marcus"),
+        json=payload,
     )
     assert resp_unauth.status_code == 403
     assert "Forbidden" in resp_unauth.json()["detail"]
 
-    # 2. Grant DM run_session permission in Zanzibar
-    await mock_db.write_relationship(
-        resource_type="campaign",
-        resource_id=campaign_id,
-        relation="run_session",
-        subject_type="user",
-        subject_id=dm_user,
-    )
-
-    # 3. DM with permission performs mood override -> 200 OK
-    resp_auth = client.post(
-        "/api/v1/soundscape/override",
-        headers={"X-User-ID": dm_user},
-        json={
-            "session_id": session_id,
-            "campaign_id": campaign_id,
-            "mood": "boss",
-            "master_volume": 0.9,
-        },
-    )
+    # 2. The campaign owner (the default client subject) overrides the mood -> 200 OK
+    resp_auth = client.post("/api/v1/soundscape/override", json=payload)
     assert resp_auth.status_code == 200
     data = resp_auth.json()
     assert data["stem_profile"] == "boss"

@@ -2,6 +2,10 @@
 
 This guide explains how to use the `soundscape` bounded context (TASK-0050, PRD-0010, US-0039) to score encounter tension dynamically, crossfade adaptive audio stem layers, trigger synchronized tactical foley sound effects, and enforce -12dB WebAudio ducking during voice communication.
 
+## Authentication
+
+Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
+
 ---
 
 ## 1. Calculating Encounter Tension & Stem Transitions
@@ -10,6 +14,7 @@ The Encounter Tension Scoring Engine computes real-time tension (0–100) based 
 
 ```bash
 curl -X POST http://localhost:8009/api/v1/soundscape/tension/calculate \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "session-tomb-14",
@@ -56,7 +61,7 @@ To fire a tactical sound effect (e.g. upon spell casting or critical rolls):
 ```bash
 curl -X POST http://localhost:8009/api/v1/soundscape/cue \
   -H "Content-Type: application/json" \
-  -H "X-User-Id: dm-evelyn" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "session_id": "session-tomb-14",
     "cue_name": "fireball",
@@ -83,6 +88,7 @@ Whenever a player speaks (via `PlayerSpokeEvent` or WebRTC audio frames), the du
 
 ```bash
 curl -X POST http://localhost:8009/api/v1/soundscape/duck \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "session-tomb-14",
@@ -100,7 +106,7 @@ DMs retain final authority over table atmosphere. To lock the soundscape to a sp
 ```bash
 curl -X POST http://localhost:8009/api/v1/soundscape/override \
   -H "Content-Type: application/json" \
-  -H "X-User-Id: dm-evelyn" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "session_id": "session-tomb-14",
     "mood": "combat",
@@ -120,7 +126,7 @@ Players can configure distinct instrument signatures and melodic leitmotifs (TAS
 ```bash
 curl -X POST http://localhost:8009/api/v1/soundscape/leitmotif/profile \
   -H "Content-Type: application/json" \
-  -H "X-User-Id: player-nadia" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "session_id": "session-tomb-14",
     "character_id": "char-nadia",

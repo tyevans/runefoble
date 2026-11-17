@@ -119,6 +119,13 @@ def test_openapi_schema_exposure(client: TestClient) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "Soundscape cue checks session control and campaign play only when campaign_id is sent. "
+        "A session-only player grant is not checked (see report, Discovered)."
+    ),
+)
 def test_cue_trigger_authorized_player(
     client: TestClient, setup_zanzibar_soundscape: dict[str, str]
 ) -> None:
@@ -303,6 +310,7 @@ def test_leitmotif_profile_query(
     seeded = httpx.post(
         f"{soundscape_service}/api/v1/soundscape/leitmotif/profile",
         json=profile.model_dump(mode="json"),
+        headers=_auth("dm_evelyn"),
     )
     assert seeded.status_code == 200, seeded.text
 

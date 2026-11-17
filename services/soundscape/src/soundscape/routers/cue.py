@@ -10,17 +10,20 @@ from runefoble_auth.spicedb import SpiceDBClient
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
+    VerifiedUserId,
     check_user_can_control_soundscape,
-    get_current_user_id,
     get_or_create_aggregate_id,
     get_or_create_mixer,
+    get_principal,
     get_soundscape_repo,
     get_spicedb_client,
     publish_soundscape_event,
 )
 from soundscape.models import SoundscapeCueRequest, SoundscapeCueResponse
 
-router = APIRouter(prefix="/api/v1/soundscape", tags=["Foley & Cues"])
+router = APIRouter(
+    prefix="/api/v1/soundscape", tags=["Foley & Cues"], dependencies=[Depends(get_principal)]
+)
 
 
 @router.post(
@@ -31,7 +34,7 @@ router = APIRouter(prefix="/api/v1/soundscape", tags=["Foley & Cues"])
 )
 async def trigger_sound_cue(
     request: SoundscapeCueRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: VerifiedUserId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> SoundscapeCueResponse:
     """Trigger a tactical foley cue or sound effect (e.g. fireball, sword slash).
