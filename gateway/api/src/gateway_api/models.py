@@ -6,8 +6,10 @@ from pydantic import BaseModel, Field
 
 
 class AssignRoleRequest(BaseModel):
+    """Grant a campaign role. Ownership is not grantable; it moves only with campaign creation."""
+
     user_id: str
-    role: Literal["owner", "dungeon_master", "player", "spectator"]
+    role: Literal["dungeon_master", "game_master", "player", "spectator"]
 
 
 class AdvanceTurnRequest(BaseModel):

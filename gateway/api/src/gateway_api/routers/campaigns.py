@@ -1,6 +1,7 @@
 import contextlib
+import logging
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from gateway_api.auth import CurrentPrincipal, get_spicedb_client, require_zanzibar_permission
 from gateway_api.campaign_store import (
     build_campaign_summary,
@@ -25,6 +26,8 @@ from gateway_api.models import (
 )
 from gateway_api.routers.auth.profile import router as profile_router
 from gateway_api.routers.tabletop import router as tabletop_router
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Campaigns & Sessions"])
 router.include_router(tabletop_router)
@@ -153,21 +156,32 @@ async def remove_campaign_member(
     }
 
 
-@router.post("/api/v1/campaigns/{campaign_id}/roles")
+@router.post(
+    "/api/v1/campaigns/{campaign_id}/roles",
+    dependencies=[Depends(require_zanzibar_permission("manage", "campaign", "campaign_id"))],
+)
 async def assign_campaign_role(
     campaign_id: str,
     req: AssignRoleRequest,
     user: CurrentPrincipal,
 ) -> dict:
-    """Write fine-grained relationship tuple to SpiceDB Zanzibar."""
-    rel = "spectator" if req.role == "spectator" else req.role
-    await get_spicedb_client().write_relationship("campaign", campaign_id, rel, "user", req.user_id)
+    """Grant a campaign role as a SpiceDB Zanzibar tuple (requires 'manage'; owner only)."""
+    try:
+        await get_spicedb_client().write_relationship(
+            "campaign", campaign_id, req.role, "user", req.user_id
+        )
+    except Exception as exc:
+        logger.exception("Role grant failed for campaign %s", campaign_id)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authorization store is unavailable. The role was not granted.",
+        ) from exc
     return {
         "status": "role_assigned",
         "campaign_id": campaign_id,
         "user_id": req.user_id,
         "role": req.role,
-        "zanzibar_relation": f"campaign:{campaign_id}#{rel}@user:{req.user_id}",
+        "zanzibar_relation": f"campaign:{campaign_id}#{req.role}@user:{req.user_id}",
     }
 
 

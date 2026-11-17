@@ -170,6 +170,22 @@ curl -X GET "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/members" \
 ]
 ```
 
+### Assigning a Role to a Member
+
+Assign a role with `POST /api/v1/campaigns/{id}/roles`. The caller must hold the `manage` permission on the campaign. Only the campaign owner holds `manage` by default.
+
+- Grantable roles: `dungeon_master`, `game_master`, `player`, `spectator`.
+- `owner` is not grantable. Ownership moves only with campaign creation. The route returns `422` for `owner`.
+- A caller without `manage` gets `403` (`permission_denied`). A refused request writes no tuple.
+- If the authorization store cannot write the tuple, the route returns `503`. The role is not granted.
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/campaigns/camp-a1b2c3d4/roles" \
+  -H "Authorization: Bearer <OWNER_JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "usr-dm-arthur", "role": "dungeon_master"}'
+```
+
 ---
 
 ## 6. Removing a Member from a Campaign
@@ -285,7 +301,7 @@ The `<runefoble-campaign-dashboard>` provides:
 
 ## 9. Managing Campaign Members & Assigning Zanzibar Roles in the UI
 
-The `<runefoble-campaign-members>` component allows Game Masters to inspect the party roster, assign SpiceDB Zanzibar roles (`dungeon_master`, `player`, `spectator`), remove members safely via confirmation dialogs, and generate copyable invite links:
+The `<runefoble-campaign-members>` component allows Game Masters to inspect the party roster, assign SpiceDB Zanzibar roles (`dungeon_master`, `game_master`, `player`, `spectator`; the caller must hold `manage`), remove members safely via confirmation dialogs, and generate copyable invite links:
 
 ```typescript
 import '@runefoble/game-session-ui/campaigns';
@@ -303,7 +319,7 @@ html`
       const { userId, role } = e.detail;
       await fetch(`/api/v1/campaigns/${campaignId}/roles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ user_id: userId, role }),
       });
     }}
@@ -326,7 +342,7 @@ html`
 
 Key features of `<runefoble-campaign-members>`:
 - **Roster & Avatars**: Displays party member avatars, usernames, user IDs, and assigned characters.
-- **SpiceDB Zanzibar Role Dropdown**: Enables Game Masters (`canManage=true`) to change active relations between `dungeon_master`, `player`, and `spectator`.
+- **SpiceDB Zanzibar Role Dropdown**: Enables owners (`canManage=true`) to change active relations between `dungeon_master`, `game_master`, `player`, and `spectator`. Only `manage` holders see it.
 - **Protected Owner**: The campaign owner is protected with an immutable "Owner" badge.
 - **Safe Removal with Confirmation**: Provides a confirmation modal before revoking campaign membership and Zanzibar permissions.
 - **Interactive Invite Generator**: Modal generator with role pre-assignment, shareable link preview, and one-click clipboard copying.
