@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import os
-from collections.abc import Callable
 from typing import Any
 
-import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from gateway_api.auth import require_zanzibar_permission
 from gateway_api.character_models import (
     AddInventoryItemRequest,
@@ -20,33 +17,33 @@ from gateway_api.character_models import (
     StandInGuardrailsRequest,
 )
 from gateway_api.character_store import character_store
+from gateway_api.proxy import forward_json, upstream_url
 
 router = APIRouter(tags=["characters-subresources"])
 
-CHARACTER_SHEET_URL = os.getenv("CHARACTER_SHEET_URL")
+CHARACTER_SHEET_ENV = "CHARACTER_SHEET_URL"
 
 
-async def proxy_or_fallback(
+def _require_known_character(character_id: str) -> None:
+    if not character_store.get_character(character_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
+
+
+async def _forward(
+    request: Request,
     method: str,
     path: str,
-    fallback_fn: Callable[[], Any],
     json_body: Any = None,
-    params: Any = None,
+    params: dict[str, str] | None = None,
 ) -> Any:
-    if CHARACTER_SHEET_URL:
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                res = await client.request(
-                    method,
-                    f"{CHARACTER_SHEET_URL}{path}",
-                    json=json_body,
-                    params=params,
-                )
-                if res.status_code == 200:
-                    return res.json()
-        except Exception:
-            pass
-    return await fallback_fn()
+    return await forward_json(
+        request,
+        method=method,
+        base_url=upstream_url(CHARACTER_SHEET_ENV),
+        path=path,
+        json_body=json_body,
+        params=params,
+    )
 
 
 @router.post(
@@ -57,25 +54,17 @@ async def proxy_or_fallback(
 async def modify_health(
     character_id: str,
     req: HealthChangeRequest,
+    request: Request,
 ) -> CharacterResponse:
     """Mutate character HP, verify stand-in stabilization (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        updated = await character_store.modify_health(
-            character_id, req.delta, req.source, req.is_stand_in
-        )
-        return updated.to_response()
-
-    res = await proxy_or_fallback(
+    _require_known_character(character_id)
+    res = await _forward(
+        request,
         "POST",
         f"/api/v1/characters/{character_id}/health",
-        fallback,
         json_body=req.model_dump(exclude_unset=True),
     )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    return CharacterResponse(**res)
 
 
 @router.post(
@@ -86,23 +75,17 @@ async def modify_health(
 async def equip_item(
     character_id: str,
     req: EquipItemRequest,
+    request: Request,
 ) -> CharacterResponse:
     """Equip item to slot (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        updated = await character_store.equip_item(character_id, req.slot, req.item_name)
-        return updated.to_response()
-
-    res = await proxy_or_fallback(
+    _require_known_character(character_id)
+    res = await _forward(
+        request,
         "POST",
         f"/api/v1/characters/{character_id}/equipment",
-        fallback,
         json_body=req.model_dump(exclude_unset=True),
     )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    return CharacterResponse(**res)
 
 
 @router.delete(
@@ -113,22 +96,12 @@ async def equip_item(
 async def unequip_item(
     character_id: str,
     slot: str,
+    request: Request,
 ) -> CharacterResponse:
     """Unequip item from slot (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        updated = await character_store.unequip_item(character_id, slot)
-        return updated.to_response()
-
-    res = await proxy_or_fallback(
-        "DELETE",
-        f"/api/v1/characters/{character_id}/equipment/{slot}",
-        fallback,
-    )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    _require_known_character(character_id)
+    res = await _forward(request, "DELETE", f"/api/v1/characters/{character_id}/equipment/{slot}")
+    return CharacterResponse(**res)
 
 
 @router.post(
@@ -139,29 +112,17 @@ async def unequip_item(
 async def add_inventory(
     character_id: str,
     req: AddInventoryItemRequest,
+    request: Request,
 ) -> CharacterResponse:
     """Add item to inventory (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        updated = await character_store.add_inventory_item(
-            character_id,
-            req.name,
-            req.quantity,
-            req.weight_lbs,
-            item_id=req.item_id,
-        )
-        return updated.to_response()
-
-    res = await proxy_or_fallback(
+    _require_known_character(character_id)
+    res = await _forward(
+        request,
         "POST",
         f"/api/v1/characters/{character_id}/inventory",
-        fallback,
         json_body=req.model_dump(exclude_unset=True),
     )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    return CharacterResponse(**res)
 
 
 @router.delete(
@@ -172,24 +133,18 @@ async def add_inventory(
 async def remove_inventory(
     character_id: str,
     item_id: str,
+    request: Request,
     quantity: int = 1,
 ) -> CharacterResponse:
     """Remove item from inventory (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        updated = await character_store.remove_inventory_item(character_id, item_id, quantity)
-        return updated.to_response()
-
-    res = await proxy_or_fallback(
+    _require_known_character(character_id)
+    res = await _forward(
+        request,
         "DELETE",
         f"/api/v1/characters/{character_id}/inventory/{item_id}",
-        fallback,
-        params={"quantity": quantity},
+        params={"quantity": str(quantity)},
     )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    return CharacterResponse(**res)
 
 
 @router.post(
@@ -200,25 +155,17 @@ async def remove_inventory(
 async def apply_condition(
     character_id: str,
     req: ApplyConditionRequest,
+    request: Request,
 ) -> CharacterResponse:
     """Apply tactical condition (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        updated = await character_store.apply_condition(
-            character_id, req.condition, req.duration_rounds, req.source
-        )
-        return updated.to_response()
-
-    res = await proxy_or_fallback(
+    _require_known_character(character_id)
+    res = await _forward(
+        request,
         "POST",
         f"/api/v1/characters/{character_id}/conditions",
-        fallback,
         json_body=req.model_dump(exclude_unset=True),
     )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    return CharacterResponse(**res)
 
 
 @router.delete(
@@ -229,22 +176,14 @@ async def apply_condition(
 async def remove_condition(
     character_id: str,
     condition: str,
+    request: Request,
 ) -> CharacterResponse:
     """Remove tactical condition (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        updated = await character_store.remove_condition(character_id, condition)
-        return updated.to_response()
-
-    res = await proxy_or_fallback(
-        "DELETE",
-        f"/api/v1/characters/{character_id}/conditions/{condition}",
-        fallback,
+    _require_known_character(character_id)
+    res = await _forward(
+        request, "DELETE", f"/api/v1/characters/{character_id}/conditions/{condition}"
     )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    return CharacterResponse(**res)
 
 
 @router.post(
@@ -255,26 +194,17 @@ async def remove_condition(
 async def cast_spell(
     character_id: str,
     req: CastSpellRequest,
+    request: Request,
 ) -> CharacterResponse:
     """Cast spell, deducting slot tier (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        try:
-            updated = await character_store.cast_spell(character_id, req.spell_name, req.slot_level)
-            return updated.to_response()
-        except ValueError as err:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err)) from err
-
-    res = await proxy_or_fallback(
+    _require_known_character(character_id)
+    res = await _forward(
+        request,
         "POST",
         f"/api/v1/characters/{character_id}/spells/cast",
-        fallback,
         json_body=req.model_dump(exclude_unset=True),
     )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    return CharacterResponse(**res)
 
 
 @router.post(
@@ -285,23 +215,17 @@ async def cast_spell(
 async def prepare_spell(
     character_id: str,
     req: PrepareSpellRequest,
+    request: Request,
 ) -> CharacterResponse:
     """Prepare or unprepare spell (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        updated = await character_store.prepare_spell(character_id, req.spell_name, req.is_prepared)
-        return updated.to_response()
-
-    res = await proxy_or_fallback(
+    _require_known_character(character_id)
+    res = await _forward(
+        request,
         "POST",
         f"/api/v1/characters/{character_id}/spells/prepare",
-        fallback,
         json_body=req.model_dump(exclude_unset=True),
     )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    return CharacterResponse(**res)
 
 
 @router.put(
@@ -312,25 +236,17 @@ async def prepare_spell(
 async def update_guardrails(
     character_id: str,
     req: StandInGuardrailsRequest,
+    request: Request,
 ) -> CharacterResponse:
     """Update stand-in policy guardrails (requires 'edit')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    payload = req.model_dump(by_alias=False)
-
-    async def fallback():
-        updated = await character_store.update_guardrails(character_id, payload)
-        return updated.to_response()
-
-    res = await proxy_or_fallback(
+    _require_known_character(character_id)
+    res = await _forward(
+        request,
         "PUT",
         f"/api/v1/characters/{character_id}/guardrails",
-        fallback,
-        json_body=payload,
+        json_body=req.model_dump(by_alias=False),
     )
-    return res if isinstance(res, CharacterResponse) else CharacterResponse(**res)
+    return CharacterResponse(**res)
 
 
 @router.get(
@@ -339,18 +255,9 @@ async def update_guardrails(
 )
 async def get_guardrails(
     character_id: str,
+    request: Request,
 ) -> dict[str, Any]:
     """Retrieve stand-in policy guardrails (requires 'view')."""
-    char = character_store.get_character(character_id)
-    if not char:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-
-    async def fallback():
-        return char.stand_in_guardrails
-
-    res = await proxy_or_fallback(
-        "GET",
-        f"/api/v1/characters/{character_id}/guardrails",
-        fallback,
-    )
-    return res if isinstance(res, dict) else dict(res)
+    _require_known_character(character_id)
+    res = await _forward(request, "GET", f"/api/v1/characters/{character_id}/guardrails")
+    return dict(res)
