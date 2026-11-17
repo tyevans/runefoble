@@ -13,6 +13,10 @@ class GatewayMcpSettings(BaseSettings):
         default="http://localhost:8002",
         description="Base URL of the board_state service (BOARD_STATE_URL).",
     )
+    game_session_url: str = Field(
+        default="http://localhost:8004",
+        description="Base URL of the game_session service (GAME_SESSION_URL).",
+    )
     rules_compendium_url: str = Field(
         default="http://localhost:8007",
         description="Base URL of the rules_compendium service (RULES_COMPENDIUM_URL).",

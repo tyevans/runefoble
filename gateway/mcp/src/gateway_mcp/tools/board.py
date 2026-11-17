@@ -62,12 +62,21 @@ async def move_board_token(session_id: str, token_id: str, to_x: int, to_y: int)
 
 
 async def query_encounter_state(encounter_id: str) -> dict[str, Any]:
-    """Query the board state of an encounter: tokens, grid, and active hazards.
+    """Query an encounter: round, turn order, active combatant, tokens, grid, and hazards.
 
-    Turn order and round number are not tracked by the board service.
+    Round and turn order come from game_session. Tokens, grid, and hazards come from
+    board_state. The encounter id is the game session id.
     """
-    board = await ServiceClient().get_board(encounter_id)
-    return _board_summary(board)
+    client = ServiceClient()
+    board = await client.get_board(encounter_id)
+    combat = await client.get_combat_state(encounter_id)
+    return {
+        **_board_summary(board),
+        "in_combat": combat["in_combat"],
+        "round": combat["combat_round"],
+        "active_combatant_id": combat["combat_active_id"],
+        "turn_order": combat["initiative_order"],
+    }
 
 
 async def create_encounter(

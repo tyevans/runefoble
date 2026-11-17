@@ -42,7 +42,7 @@ def _error_detail(response: httpx.Response) -> str:
 
 
 class ServiceClient:
-    """Calls the board_state and rules_compendium public routes."""
+    """Calls the board_state, game_session, and rules_compendium public routes."""
 
     def __init__(self, settings: GatewayMcpSettings | None = None) -> None:
         self._settings = settings or load_settings()
@@ -92,6 +92,16 @@ class ServiceClient:
             self._settings.board_state_url,
             "GET",
             f"/api/v1/boards/{session_id}",
+        )
+        return dict(result)
+
+    async def get_combat_state(self, session_id: str) -> dict[str, Any]:
+        """Read the combat round, active combatant, and initiative order from game_session."""
+        result = await self._request(
+            "game_session",
+            self._settings.game_session_url,
+            "GET",
+            f"/api/v1/sessions/{session_id}/combat",
         )
         return dict(result)
 
