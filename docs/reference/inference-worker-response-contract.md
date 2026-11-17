@@ -53,12 +53,20 @@ Set the backend with `RUNEFOBLE_WORKER_BACKEND`:
 
 ## Redis Streams Results
 
-The Redis consumer publishes results to `RUNEFOBLE_WORKER_REDIS_STREAM_OUT`. Each `result` field holds a JSON object:
+The Redis consumer publishes one result entry for each message to `RUNEFOBLE_WORKER_REDIS_STREAM_OUT`. Every entry has these fields:
+
+- `correlation_id`: the request `correlation_id`. The message ID is used when the request has none.
+- `task_type`: the request `type`. The value is `unknown` when the request has no type.
+- `status`: `ok` or `error`.
+
+When `status` is `ok`, the `result` field holds a JSON object:
 
 - `parse_intent`: `{"action": <ParsedAction>, "source": ..., "degraded": ...}`
 - `generate_narration` and `stand_in_action`: the same shape as the HTTP response body.
 
-A backend failure on the Redis path is logged. The worker does not publish a result, and the message is not acknowledged.
+When `status` is `error`, the `error` field holds the failure text. The failure can be an unknown task type, a missing `type` or `payload` field, or a backend failure.
+
+The consumer acknowledges each message after it publishes the result. A message stays pending only when the Redis write fails. That failure is logged.
 
 ## Watcher Speech Route
 
