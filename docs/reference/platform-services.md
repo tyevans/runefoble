@@ -60,6 +60,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Role**: Single Sign-On (SSO), PKCE login flows, user profile management, RS256 token issuance, and JWKS public key discovery (`/.well-known/jwks.json`).
 - **Database Connection**: Configured with PostgreSQL admin credentials and `ZITADEL_DATABASE_POSTGRES_*_SSL_MODE=disable` for local Kind environments.
 - **Environment Variables**: `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_CLIENT_ID`, `RUNEFOBLE_ZITADEL_JWKS_URL`, `RUNEFOBLE_ZITADEL_AUDIENCE`. (`RUNEFOBLE_AUTH_DEV_MODE` was removed in TASK-0520.)
+- **Gateway CORS**: `RUNEFOBLE_CORS_ORIGINS` is a comma-separated list of browser origins allowed to call the gateway with credentials. The default is `http://localhost:5173,http://127.0.0.1:5173`. The value `*` is refused at startup.
 - **How-To Guide**: [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md).
 
 ### 5. Silo S3 (Object Storage)

@@ -4,6 +4,7 @@ import contextlib
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Header, Query, WebSocket
+from gateway_api.auth import get_zitadel_auth_service
 from gateway_api.dependencies import get_event_bus
 from gateway_api.spectator import (
     SpectatorStateResponse,
@@ -11,6 +12,7 @@ from gateway_api.spectator import (
     get_raw_session_state,
     sanitize_spectator_state,
 )
+from runefoble_auth.principal import authenticate_authorization
 from runefoble_events import SpectatorSessionConnected
 
 router = APIRouter(tags=["Spectator"])
@@ -24,24 +26,22 @@ router = APIRouter(tags=["Spectator"])
 async def get_spectator_state(
     session_id: str,
     token: str | None = Query(None, description="Optional spectator access token"),
-    x_user_id: str | None = Header(None, alias="X-User-Id"),
     authorization: str | None = Header(None, alias="Authorization"),
 ) -> dict:
     """Retrieve audience-safe spectator view of the session, board, and chronicle.
 
+    A spectator access token identifies an anonymous audience viewer. A Bearer token
+    identifies a signed-in viewer and must verify. Otherwise the viewer is a guest.
     Redacts hidden tokens, monster stat blocks, and private DM notes.
     Dispatches SpectatorSessionConnected event to the Redis event bus.
     """
     if token:
         viewer_id = f"spectator_{token}"
         viewer_name = f"Spectator ({token})"
-    elif x_user_id:
-        viewer_id = x_user_id
-        viewer_name = f"Viewer {x_user_id}"
-    elif authorization and authorization.startswith("Bearer "):
-        bearer = authorization[7:].strip()
-        viewer_id = f"viewer_{bearer}"
-        viewer_name = f"Spectator ({bearer})"
+    elif authorization:
+        principal = authenticate_authorization(get_zitadel_auth_service(), authorization)
+        viewer_id = principal.user_id
+        viewer_name = principal.username
     else:
         viewer_id = "spectator_guest"
         viewer_name = "Guest Spectator"

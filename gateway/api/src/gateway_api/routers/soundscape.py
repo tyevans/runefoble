@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable
-from typing import Annotated, Any
+from typing import Any
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from gateway_api.auth import get_current_user, get_spicedb_client
+from fastapi import APIRouter, HTTPException, Query, status
+from gateway_api.auth import CurrentPrincipal, get_spicedb_client
 from gateway_api.campaign_store import campaign_store
-from runefoble_auth.principal import VerifiedPrincipal
 from soundscape.models import MoodOverrideRequest, SoundscapeCueRequest, TensionCalculationRequest
 from soundscape.routers.cue import trigger_sound_cue
 from soundscape.routers.leitmotif import get_character_leitmotif_profile
@@ -68,9 +67,7 @@ async def _check_soundscape_perm(
 
 
 @router.post("/cue")
-async def trigger_cue(
-    req: SoundscapeCueRequest, user: Annotated[VerifiedPrincipal, Depends(get_current_user)]
-) -> dict[str, Any]:
+async def trigger_cue(req: SoundscapeCueRequest, user: CurrentPrincipal) -> dict[str, Any]:
     await _check_soundscape_perm(user.user_id, "play", req.session_id, req.campaign_id)
     return await _proxy_or_fallback(
         "POST",
@@ -81,7 +78,9 @@ async def trigger_cue(
 
 
 @router.get("/tension")
-async def get_tension(session_id: str = Query(default="default")) -> dict[str, Any]:
+async def get_tension(
+    user: CurrentPrincipal, session_id: str = Query(default="default")
+) -> dict[str, Any]:
     return await _proxy_or_fallback(
         "GET",
         "/api/v1/soundscape/tension",
@@ -91,7 +90,9 @@ async def get_tension(session_id: str = Query(default="default")) -> dict[str, A
 
 
 @router.post("/tension/calculate")
-async def calculate_encounter_tension(req: TensionCalculationRequest) -> dict[str, Any]:
+async def calculate_encounter_tension(
+    req: TensionCalculationRequest, user: CurrentPrincipal
+) -> dict[str, Any]:
     return await _proxy_or_fallback(
         "POST",
         "/api/v1/soundscape/tension/calculate",
@@ -103,7 +104,7 @@ async def calculate_encounter_tension(req: TensionCalculationRequest) -> dict[st
 @router.post("/stems/override")
 @router.post("/override")
 async def override_soundscape_mood(
-    req: MoodOverrideRequest, user: Annotated[VerifiedPrincipal, Depends(get_current_user)]
+    req: MoodOverrideRequest, user: CurrentPrincipal
 ) -> dict[str, Any]:
     await _check_soundscape_perm(user.user_id, "run_session", req.session_id, req.campaign_id)
     return await _proxy_or_fallback(
@@ -117,7 +118,7 @@ async def override_soundscape_mood(
 @router.get("/leitmotif/{character_id}")
 @router.get("/leitmotif/profile/{character_id}")
 async def get_leitmotif_profile(
-    character_id: str, session_id: str = Query(default="default")
+    character_id: str, user: CurrentPrincipal, session_id: str = Query(default="default")
 ) -> dict[str, Any]:
     return await _proxy_or_fallback(
         "GET",

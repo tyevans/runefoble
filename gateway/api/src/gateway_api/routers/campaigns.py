@@ -1,8 +1,7 @@
 import contextlib
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
-from gateway_api.auth import get_current_user, get_spicedb_client, require_zanzibar_permission
+from gateway_api.auth import CurrentPrincipal, get_spicedb_client, require_zanzibar_permission
 from gateway_api.campaign_store import (
     build_campaign_summary,
     campaign_store,
@@ -26,7 +25,6 @@ from gateway_api.models import (
 )
 from gateway_api.routers.auth.profile import router as profile_router
 from gateway_api.routers.tabletop import router as tabletop_router
-from runefoble_auth.principal import VerifiedPrincipal
 
 router = APIRouter(tags=["Campaigns & Sessions"])
 router.include_router(tabletop_router)
@@ -35,7 +33,7 @@ router.include_router(profile_router)
 
 @router.get("/api/v1/campaigns", response_model=list[CampaignSummaryResponse])
 async def list_campaigns(
-    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
+    user: CurrentPrincipal,
 ) -> list[CampaignSummaryResponse]:
     """List all campaigns the authenticated user has Zanzibar permission to view."""
     return await get_all_viewable_campaigns(user.user_id, get_spicedb_client())
@@ -45,7 +43,7 @@ async def list_campaigns(
     "/api/v1/campaigns", response_model=CampaignSummaryResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_campaign(
-    req: CreateCampaignRequest, user: Annotated[VerifiedPrincipal, Depends(get_current_user)]
+    req: CreateCampaignRequest, user: CurrentPrincipal
 ) -> CampaignSummaryResponse:
     """Create a new campaign and write owner relation to SpiceDB Zanzibar."""
     cid, camp = campaign_store.create_from_request(req, user.user_id)
@@ -78,7 +76,7 @@ async def get_campaign_proxy(campaign_id: str) -> dict:
 async def update_campaign(
     campaign_id: str,
     req: UpdateCampaignRequest,
-    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
+    user: CurrentPrincipal,
 ) -> CampaignSummaryResponse:
     """Update campaign title, description, and settings (requires 'manage' permission)."""
     camp = campaign_store.update_from_request(campaign_id, req, user.user_id)
@@ -94,7 +92,7 @@ async def update_campaign(
 async def create_campaign_invite(
     campaign_id: str,
     req: InviteRequest,
-    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
+    user: CurrentPrincipal,
 ) -> InviteResponse:
     """Generate shareable invite token for a campaign (requires 'run_session' / DM/owner)."""
     inv = campaign_store.create_invite(
@@ -104,9 +102,7 @@ async def create_campaign_invite(
 
 
 @router.post("/api/v1/campaigns/join", response_model=JoinCampaignResponse)
-async def join_campaign(
-    req: JoinCampaignRequest, user: Annotated[VerifiedPrincipal, Depends(get_current_user)]
-) -> JoinCampaignResponse:
+async def join_campaign(req: JoinCampaignRequest, user: CurrentPrincipal) -> JoinCampaignResponse:
     """Accept an invite token and register membership in SpiceDB Zanzibar."""
     return await join_from_invite(req.invite_token, user.user_id, get_spicedb_client())
 
@@ -128,7 +124,7 @@ async def list_campaign_members(campaign_id: str) -> list[CampaignMemberResponse
 async def remove_campaign_member(
     campaign_id: str,
     user_id: str,
-    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
+    user: CurrentPrincipal,
 ) -> dict:
     """Remove a member from a campaign by deleting their SpiceDB Zanzibar relationships."""
     spicedb = get_spicedb_client()
@@ -158,7 +154,11 @@ async def remove_campaign_member(
 
 
 @router.post("/api/v1/campaigns/{campaign_id}/roles")
-async def assign_campaign_role(campaign_id: str, req: AssignRoleRequest) -> dict:
+async def assign_campaign_role(
+    campaign_id: str,
+    req: AssignRoleRequest,
+    user: CurrentPrincipal,
+) -> dict:
     """Write fine-grained relationship tuple to SpiceDB Zanzibar."""
     rel = "spectator" if req.role == "spectator" else req.role
     await get_spicedb_client().write_relationship("campaign", campaign_id, rel, "user", req.user_id)
@@ -191,7 +191,7 @@ async def list_campaign_sessions(campaign_id: str) -> list[CampaignSessionRespon
 async def create_campaign_session(
     campaign_id: str,
     req: CreateCampaignSessionRequest,
-    user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
+    user: CurrentPrincipal,
 ) -> CampaignSessionResponse:
     """Create a new session or staging lobby for a campaign (requires 'run_session' permission)."""
     session_rec = campaign_store.create_session(

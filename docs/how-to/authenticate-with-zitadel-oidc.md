@@ -89,6 +89,8 @@ async def get_session(session_id: str):
 
 A missing, malformed, or unverified Bearer token returns `HTTP 401` with `WWW-Authenticate: Bearer`. For the full contract, see [Verify Identity in FastAPI and WebSockets](verify-identity-in-fastapi-and-websockets.md).
 
+The gateway does not read an `X-User-Id` header as identity. Use the verified token subject. Public routes are limited to health checks, OpenAPI and docs pages, the sign-in flow, and the spectator view. Upload and delete routes for assets take the owner from the token.
+
 ---
 
 ## Step 3: Authenticate Real-Time WebSocket Handshakes

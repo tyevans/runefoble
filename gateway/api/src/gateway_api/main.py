@@ -50,21 +50,13 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+_cors_origins = [o.strip() for o in platform_settings.cors_origins.split(",") if o.strip()]
+if "*" in _cors_origins:
+    raise RuntimeError("RUNEFOBLE_CORS_ORIGINS must list explicit origins. '*' is refused.")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:6006",
-        "http://127.0.0.1:6006",
-        "http://localhost:80",
-        "http://localhost",
-        "http://127.0.0.1",
-        "http://runefoble.local",
-        "*",
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

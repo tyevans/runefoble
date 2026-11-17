@@ -77,6 +77,12 @@ class PlatformSettings(BaseSettings):
     silo_bucket_assets: str = Field(default="runefoble-assets", description="Silo assets bucket")
     silo_secure: bool = Field(default=False, description="Use TLS for Silo")
 
+    # Gateway CORS: comma-separated browser origins that may call the API with credentials.
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        description="Comma-separated allowed CORS origins. Never '*' with credentials.",
+    )
+
     # Identity & AuthN (Zitadel)
     zitadel_issuer: str = Field(
         default="http://localhost:8080",

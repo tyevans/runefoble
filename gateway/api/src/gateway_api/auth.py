@@ -2,10 +2,11 @@
 
 import logging
 from collections.abc import Callable
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import Header, HTTPException, Request
+from fastapi import Depends, Header, HTTPException, Request
 from runefoble_auth.principal import (
+    VerifiedPrincipal,
     authenticate_authorization,
     require_principal,
 )
@@ -72,6 +73,9 @@ def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
 
 
 get_current_user = require_principal(get_zitadel_auth_service)
+
+# Route parameter type: the verified principal for an authenticated request.
+CurrentPrincipal = Annotated[VerifiedPrincipal, Depends(get_current_user)]
 
 
 def require_zanzibar_permission(
