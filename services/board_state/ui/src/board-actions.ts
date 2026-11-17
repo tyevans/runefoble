@@ -116,6 +116,14 @@ export function handleBoardSocketMessage(
     if (parsed) host.ghostEngine?.stage(parsed);
   } else if (action === 'token_moved' || action === 'preview_cancelled') {
     host.ghostEngine?.cancel();
+    if (action === 'token_moved') {
+      const movedToken = host.tokens.find((t) => t.id === data.token_id);
+      if (movedToken && typeof data.x === 'number' && typeof data.y === 'number') {
+        movedToken.x = data.x;
+        movedToken.y = data.y;
+        host.requestUpdate();
+      }
+    }
   } else if (action === 'token_action_executed') {
     const targetToken = host.tokens.find((t) => t.id === data.token_id);
     if (targetToken) {
