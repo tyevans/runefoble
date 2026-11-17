@@ -2,13 +2,14 @@
  * Entrypoint for services/audience_studio service.
  */
 
+import { readSpicedbPresharedKey } from './config.js';
 import { buildServer } from './server.js';
 
 const PORT = parseInt(process.env.PORT || '8010', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const REDIS_URL = process.env.REDIS_URL || process.env.RUNEFOBLE_REDIS_URL;
 const SPICEDB_ENDPOINT = process.env.RUNEFOBLE_SPICEDB_ENDPOINT;
-const SPICEDB_TOKEN = process.env.SPICEDB_PRESHARED_KEY || 'runefoble_secret_key';
+const SPICEDB_TOKEN = readSpicedbPresharedKey(process.env);
 
 async function main() {
   const { server } = await buildServer({
