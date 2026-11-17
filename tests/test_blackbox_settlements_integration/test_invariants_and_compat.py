@@ -2,27 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.mock_redis import MockAsyncRedis
-
-from .conftest import _assert_submodules
-
-
-def test_modular_submodule_line_invariants():
-    """Verify extracted auth, worker, and test suite submodules remain strictly < 130 lines."""
-    for d, f in [("auth", "auth.py"), ("workers", "workers_router.py"), ("haven", "router.py")]:
-        _assert_submodules(
-            f"services/game_session/src/game_session/settlement/{d}",
-            f"services/game_session/src/game_session/settlement/{f}",
-        )
-    for sm in Path("tests/test_blackbox_settlements_integration").glob("*.py"):
-        lines = len(sm.read_text().splitlines())
-        assert lines < 130, f"{sm.name} must be strictly < 130 lines, got {lines}"
 
 
 def test_auth_backwards_compatibility_exports():

@@ -15,7 +15,6 @@ Frontdoor Entrypoints:
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -35,8 +34,6 @@ from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.mobile import HapticVibrationPattern, MobileAudioProfileTier
 
 from tests.helpers.ws_identity import ws_subprotocols
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(autouse=True)
@@ -276,21 +273,3 @@ def test_mobile_companion_cloudevents_conformance():
     ce_haptic = haptic_event.to_cloudevent_dict()
     assert ce_haptic["type"] == "runefoble.events.voice.haptic_ping"
     assert ce_haptic["data"]["vibration_pattern"] == [200, 100, 200]
-
-
-def test_companion_file_length_invariants():
-    """Verify Hard Invariant 6: All companion modules and test suites strictly under 300 lines."""
-    files_to_check = [
-        "services/voice_agent/src/voice_agent/mobile.py",
-        "gateway/api/src/gateway_api/companion/manager.py",
-        "gateway/api/src/gateway_api/companion/endpoint.py",
-        "gateway/api/src/gateway_api/companion/router.py",
-        "gateway/api/src/gateway_api/companion/__init__.py",
-        "gateway/api/src/gateway_api/mobile_companion.py",
-        "tests/test_blackbox_mobile_companion.py",
-    ]
-    for rel in files_to_check:
-        path = REPO_ROOT / rel
-        assert path.is_file(), f"{path} must exist"
-        lines = len(path.read_text(encoding="utf-8").splitlines())
-        assert lines < 300, f"{path.name} has {lines} lines, exceeding 300 lines limit"

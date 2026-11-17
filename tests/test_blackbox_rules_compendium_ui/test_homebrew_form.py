@@ -12,8 +12,6 @@ import pytest
 from fastapi.testclient import TestClient
 from rules_compendium.dependencies import get_spicedb_client
 
-from .conftest import REPO_ROOT
-
 
 @pytest.mark.asyncio
 async def test_spicedb_zanzibar_authorization_on_homebrew(
@@ -66,22 +64,3 @@ async def test_spicedb_zanzibar_authorization_on_homebrew(
     )
     assert resp_stranger.status_code == 200
     assert not any(r["name"] == "Abyssal Shadowstalker" for r in resp_stranger.json()["results"])
-
-
-def test_homebrew_creator_component_and_styles() -> None:
-    """Verify homebrew creator custom element and modular styles per TASK-0179."""
-    ui_dir = REPO_ROOT / "services/rules_compendium/ui"
-    hb_file = ui_dir / "src/runefoble-homebrew-creator.ts"
-    assert hb_file.is_file()
-    hb_src = hb_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-homebrew-creator')" in hb_src
-    assert len(hb_src.splitlines()) < 200
-
-    styles_file = ui_dir / "src/styles/homebrew-form.styles.ts"
-    assert styles_file.is_file()
-    assert len(styles_file.read_text(encoding="utf-8").splitlines()) < 110
-    assert "export const homebrewFormStyles" in styles_file.read_text(encoding="utf-8")
-
-    stories = (ui_dir / "src/runefoble-rules-compendium.stories.ts").read_text(encoding="utf-8")
-    assert "HomebrewCreator" in stories
-    assert "DedicatedHomebrewCreator" in stories

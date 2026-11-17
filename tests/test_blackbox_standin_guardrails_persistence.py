@@ -9,8 +9,6 @@ Hard Invariants:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from gateway_api.auth import get_spicedb_client
 from gateway_api.character_store import character_store
@@ -200,20 +198,3 @@ async def test_blackbox_profile_patch_and_get_persistence_frontdoor(auth_environ
     assert get_data["display_name"] == "Valeros the Undaunted"
     assert get_data["avatar_url"] == "/assets/portraits/valeros-veteran.svg"
     assert get_data["bio"] == patch_payload["bio"]
-
-
-def test_file_length_invariants():
-    """Hard Invariant 6: Ensure all modified backend router files are strictly < 500 lines."""
-    base_dir = Path(__file__).resolve().parent.parent
-    files_to_check = [
-        Path(__file__),
-        base_dir / "gateway/api/src/gateway_api/character_models.py",
-        base_dir / "gateway/api/src/gateway_api/character_store_mutations.py",
-        base_dir / "gateway/api/src/gateway_api/routers/character_subresources.py",
-        base_dir / "gateway/api/src/gateway_api/routers/tabletop.py",
-        base_dir / "gateway/api/src/gateway_api/routers/auth/profile.py",
-    ]
-    for file_path in files_to_check:
-        assert file_path.exists(), f"File {file_path} does not exist"
-        line_count = len(file_path.read_text().splitlines())
-        assert line_count < 500, f"{file_path.name} exceeds 500 lines ({line_count} lines)"

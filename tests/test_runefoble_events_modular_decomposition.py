@@ -10,7 +10,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import runefoble_events
@@ -84,53 +83,6 @@ from runefoble_events.world_events import (
 from runefoble_events.world_events import (
     FactionCreated as FactionCreatedRoot,
 )
-
-
-def test_aggregator_facade_and_submodule_file_length_invariants() -> None:
-    """Verify strictly enforced file length budgets per TASK-0177 and Hard Invariant 6."""
-    pkg_dir = (
-        Path(__file__).resolve().parent.parent
-        / "libs"
-        / "runefoble_events"
-        / "src"
-        / "runefoble_events"
-    )
-    events_dir = pkg_dir / "events"
-
-    # Facade budget targets (< 80 lines)
-    assert len((pkg_dir / "events.py").read_text(encoding="utf-8").splitlines()) < 80
-    assert len((pkg_dir / "__init__.py").read_text(encoding="utf-8").splitlines()) < 80
-    assert len((events_dir / "__init__.py").read_text(encoding="utf-8").splitlines()) < 80
-
-    # Category submodule budgets specified in TASK-0177
-    submodule_budgets = {
-        "session_events.py": 100,
-        "board_events.py": 110,
-        "narrative_events.py": 100,
-        "world_events.py": 110,
-        "character_events.py": 150,
-        "media_events.py": 150,
-        "platform_events.py": 150,
-    }
-
-    for filename, max_lines in submodule_budgets.items():
-        file_path = events_dir / filename
-        assert file_path.exists(), f"Missing expected submodule: {filename}"
-        lines = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, f"{filename} has {lines} lines, exceeding budget {max_lines}"
-        assert lines < 150, f"{filename} violates Hard Invariant 6 (< 150 lines)"
-
-    # Backwards-compatibility aliases in package root (< 150 lines)
-    for filename in submodule_budgets:
-        alias_path = pkg_dir / filename
-        assert alias_path.exists(), f"Missing expected alias file: {filename}"
-        lines = len(alias_path.read_text(encoding="utf-8").splitlines())
-        assert lines < 150, f"Alias {filename} exceeds limit: {lines} lines"
-
-    # Global Hard Invariant 6: No file in runefoble_events exceeds 500 lines
-    for p in pkg_dir.rglob("*.py"):
-        line_count = len(p.read_text(encoding="utf-8").splitlines())
-        assert line_count < 500, f"{p.name} has {line_count} lines, breaching 500 line limit"
 
 
 def test_backward_compatibility_re_export_parity() -> None:

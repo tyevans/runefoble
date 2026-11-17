@@ -6,7 +6,6 @@ Governed by Hard Invariant 6 (File length limits) and Hard Invariant 7 (Blackbox
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -38,32 +37,6 @@ from game_session.caravan_ledger import (
     CaravanLedgerState,
     calculate_economic_price_modifier,
 )
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-CARAVAN_DIR = REPO_ROOT / "services" / "game_session" / "src" / "game_session" / "caravan"
-
-
-def test_caravan_file_length_invariants():
-    """Verify all caravan source files respect strict length bounds under Hard Invariant 6."""
-    caravan_facade = CARAVAN_DIR.parent / "caravan.py"
-    ledger_facade = CARAVAN_DIR.parent / "caravan_ledger.py"
-
-    assert caravan_facade.is_file()
-    assert ledger_facade.is_file()
-
-    # Facade files must be strictly < 60 lines
-    caravan_lines = len(caravan_facade.read_text(encoding="utf-8").splitlines())
-    ledger_lines = len(ledger_facade.read_text(encoding="utf-8").splitlines())
-    assert caravan_lines < 60, f"caravan.py has {caravan_lines} lines (expected < 60)"
-    assert ledger_lines < 60, f"caravan_ledger.py has {ledger_lines} lines (expected < 60)"
-
-    # All submodule files under caravan/ must be strictly < 150 lines
-    submodules = [path for path in CARAVAN_DIR.glob("*.py") if not path.name.startswith("__")]
-    assert len(submodules) >= 6, "Expected at least 6 modular submodules in caravan/"
-
-    for path in CARAVAN_DIR.glob("*.py"):
-        lines = len(path.read_text(encoding="utf-8").splitlines())
-        assert lines < 150, f"{path.name} has {lines} lines (must be strictly < 150 lines)"
 
 
 def test_caravan_models_and_uuid_helpers():

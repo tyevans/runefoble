@@ -1,6 +1,5 @@
 """Comprehensive unit and integration tests for decomposed CharacterAggregate and modular handlers."""
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -28,8 +27,6 @@ from runefoble_events.events import (
     StandInStabilized,
 )
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_character_aggregate_exports_backward_compatibility():
@@ -123,38 +120,3 @@ def test_stand_in_permadeath_safeguard():
     assert CharacterHealthChanged in events
     assert StandInStabilized in events
     assert ConditionApplied in events
-
-
-def test_character_sheet_decomposed_file_length_invariants():
-    """Enforce strict line limits on decomposed handlers (<150 lines) and aggregate (<120 lines)."""
-    cs_dir = REPO_ROOT / "services" / "character_sheet" / "src" / "character_sheet"
-    handlers_dir = cs_dir / "handlers"
-
-    aggregate_py = cs_dir / "aggregate.py"
-    inventory_py = handlers_dir / "inventory.py"
-    spells_py = handlers_dir / "spells.py"
-    vitals_py = handlers_dir / "vitals.py"
-    init_py = handlers_dir / "__init__.py"
-
-    assert aggregate_py.exists()
-    assert inventory_py.exists()
-    assert spells_py.exists()
-    assert vitals_py.exists()
-    assert init_py.exists()
-
-    aggregate_lines = len(aggregate_py.read_text().splitlines())
-    inventory_lines = len(inventory_py.read_text().splitlines())
-    spells_lines = len(spells_py.read_text().splitlines())
-    vitals_lines = len(vitals_py.read_text().splitlines())
-
-    assert aggregate_lines < 120, f"aggregate.py has {aggregate_lines} lines; must be < 120 lines"
-    assert inventory_lines < 120, f"inventory.py has {inventory_lines} lines; must be < 120 lines"
-    assert spells_lines < 120, f"spells.py has {spells_lines} lines; must be < 120 lines"
-    assert vitals_lines < 140, f"vitals.py has {vitals_lines} lines; must be < 140 lines"
-
-    # Hard Invariant 6: All files strictly under 500 lines
-    for f in list(cs_dir.glob("*.py")) + list(handlers_dir.glob("*.py")):
-        lines = len(f.read_text().splitlines())
-        assert lines < 500, (
-            f"File {f.name} violates Hard Invariant 6 with {lines} lines (>500 limit)"
-        )

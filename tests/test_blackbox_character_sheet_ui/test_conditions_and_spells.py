@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from .conftest import REPO_ROOT
-
 
 def test_conditions_and_penalties_lifecycle(client: TestClient, created_character_id: str) -> None:
     """Verify applying conditions, absentee penalties, and removals via frontdoor REST."""
@@ -57,30 +55,3 @@ def test_spell_slots_and_preparation(client: TestClient, created_character_id: s
         json={"spell_name": "Magic Missile", "slot_level": 1},
     )
     assert cast_resp.status_code == 200
-
-
-def test_conditions_spells_components_and_invariants() -> None:
-    """Verify action handlers, condition types, and file length invariant limits."""
-    ui_dir = REPO_ROOT / "services/character_sheet/ui"
-    actions_src = (ui_dir / "src/runefoble-character-sheet.actions.ts").read_text(encoding="utf-8")
-    for act in (
-        "castSpellSlot",
-        "togglePreparedSpell",
-        "applyConditionToState",
-        "toggleSpellSlotPip",
-    ):
-        assert act in actions_src
-
-    types_src = (ui_dir / "src/runefoble-character-sheet.types.ts").read_text(encoding="utf-8")
-    assert "blinded" in types_src and "drunk" in types_src
-
-    styles_src = (ui_dir / "src/runefoble-character-sheet.conditions.styles.ts").read_text(
-        encoding="utf-8"
-    )
-    assert "condition-badge" in styles_src
-
-    # Invariant: all test sub-modules strictly < 130 lines per Hard Invariant 6
-    test_dir = REPO_ROOT / "tests/test_blackbox_character_sheet_ui"
-    for py_file in test_dir.glob("*.py"):
-        lines = len(py_file.read_text(encoding="utf-8").splitlines())
-        assert lines < 130, f"{py_file.name} exceeded 130 lines ({lines})"

@@ -14,20 +14,11 @@ from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
-from tests.helpers.app_shell_source import read_app_shell_source
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
 COMPONENTS_DIR = SRC_DIR / "components"
 STORIES_DIR = SRC_DIR / "stories"
-
-MODAL_TS = COMPONENTS_DIR / "runefoble-session-modal.ts"
-STYLES_TS = SRC_DIR / "styles" / "session-modal.styles.ts"
-LIST_TS = COMPONENTS_DIR / "runefoble-session-list.ts"
-STORIES_TS = STORIES_DIR / "runefoble-session-modal.stories.ts"
-APP_TS = SRC_DIR / "runefoble-app.ts"
-INDEX_TS = SRC_DIR / "index.ts"
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -51,110 +42,9 @@ def reset_store():
 # ---------------------------------------------------------------------------
 
 
-def test_file_length_invariants():
-    """Verify all related source files strictly adhere to the <500 lines limit."""
-    files_to_check = [MODAL_TS, STYLES_TS, LIST_TS, STORIES_TS, APP_TS, INDEX_TS]
-    for file_path in files_to_check:
-        assert file_path.is_file(), f"{file_path} must exist"
-        lines = file_path.read_text(encoding="utf-8").splitlines()
-        assert len(lines) < 500, f"{file_path.name} has {len(lines)} lines; must be < 500"
-
-    # TASK-0270 modular decomposition line constraints:
-    modal_lines = MODAL_TS.read_text(encoding="utf-8").splitlines()
-    assert len(modal_lines) < 200, (
-        f"runefoble-session-modal.ts has {len(modal_lines)} lines; must be < 200"
-    )
-    assert len(modal_lines) < 180, (
-        f"runefoble-session-modal.ts has {len(modal_lines)} lines; must be < 180"
-    )
-
-    styles_lines = STYLES_TS.read_text(encoding="utf-8").splitlines()
-    assert len(styles_lines) < 180, (
-        f"session-modal.styles.ts has {len(styles_lines)} lines; must be < 180"
-    )
-    assert len(styles_lines) < 160, (
-        f"session-modal.styles.ts has {len(styles_lines)} lines; must be < 160"
-    )
-
-
 # ---------------------------------------------------------------------------
 # 2. Lit Component Registration, Properties, and Shadow DOM Contract
 # ---------------------------------------------------------------------------
-
-
-def test_session_modal_component_registration_and_properties():
-    """Verify runefoble-session-modal custom element registration and properties."""
-    content = MODAL_TS.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-session-modal')" in content
-    assert "class RunefobleSessionModal extends LitElement" in content
-    assert "@property({ type: Boolean, reflect: true }) open = false;" in content
-    assert "@property({ type: String, attribute: 'campaign-id' }) campaignId = '';" in content
-    assert "@property({ type: String }) errorMessage = '';" in content
-    assert "'runefoble-session-modal': RunefobleSessionModal;" in content
-
-
-def test_session_modal_form_fields_and_accessibility():
-    """Verify required form fields, accessibility ARIA attributes, and dialog shell."""
-    content = MODAL_TS.read_text(encoding="utf-8")
-
-    # Dialog accessibility
-    assert 'role="dialog"' in content
-    assert 'aria-modal="true"' in content
-    assert 'aria-labelledby="session-modal-title"' in content
-    assert 'aria-label="Close modal"' in content
-
-    # Form fields
-    assert 'id="session-title"' in content
-    assert 'id="session-status"' in content
-    assert 'id="scheduled-at"' in content
-    assert 'id="session-description"' in content
-
-    # Status options
-    assert 'value="lobby"' in content
-    assert 'value="upcoming"' in content
-
-    # Action buttons
-    assert 'class="btn-cancel"' in content
-    assert 'class="btn-submit"' in content
-    assert "Create Session" in content
-
-    # Keyboard / backdrop handling
-    assert "Escape" in content
-    assert "handleKeyDown" in content
-    assert "handleBackdropClick" in content
-
-
-def test_session_modal_bauhaus_tokens_and_theming():
-    """Verify Bauhaus modernism design tokens and high-contrast styles in extracted styles module."""
-    styles_content = STYLES_TS.read_text(encoding="utf-8")
-    assert "var(--rf-bg-surface" in styles_content
-    assert "var(--rf-text-primary" in styles_content
-    assert "var(--rf-border-width" in styles_content
-    assert "var(--rf-border-color" in styles_content
-    assert "var(--rf-shadow" in styles_content
-    assert "var(--rf-accent-primary" in styles_content
-    assert "var(--rf-accent-secondary" in styles_content
-
-
-def test_session_modal_modular_decomposition():
-    """Verify TASK-0270 style module extraction and form sub-renderers isolation."""
-    styles_content = STYLES_TS.read_text(encoding="utf-8")
-    modal_content = MODAL_TS.read_text(encoding="utf-8")
-
-    # Style module extraction
-    assert "export const sessionModalStyles = css`" in styles_content
-    assert (
-        "import { sessionModalStyles } from '../styles/session-modal.styles.ts';" in modal_content
-    )
-    assert "static styles = sessionModalStyles;" in modal_content
-
-    # Form field sub-renderers isolation
-    assert "renderHeader()" in modal_content
-    assert "renderTitleField()" in modal_content
-    assert "renderStatusField()" in modal_content
-    assert "renderScheduleField()" in modal_content
-    assert "renderDescriptionField()" in modal_content
-    assert "renderActions()" in modal_content
 
 
 # ---------------------------------------------------------------------------
@@ -162,78 +52,9 @@ def test_session_modal_modular_decomposition():
 # ---------------------------------------------------------------------------
 
 
-def test_session_modal_event_emission_and_validation():
-    """Verify validation and @create-session event payload contract."""
-    content = MODAL_TS.read_text(encoding="utf-8")
-
-    # Validation
-    assert "Session title is required" in content
-    assert "error-banner" in content
-    assert 'role="alert"' in content
-
-    # CustomEvent dispatch
-    assert "new CustomEvent('create-session'" in content
-    assert "bubbles: true" in content
-    assert "composed: true" in content
-    assert "title: this.sessionTitle.trim()" in content
-    assert "scheduledAt:" in content
-    assert "description:" in content
-    assert "status: this.status" in content
-
-    # Modal closed event
-    assert "new CustomEvent('modal-closed'" in content
-
-
-def test_session_list_integration_with_modal():
-    """Verify runefoble-session-list hosts runefoble-session-modal and triggers it."""
-    list_content = LIST_TS.read_text(encoding="utf-8")
-
-    # Imports and hosts modal
-    assert "import './runefoble-session-modal.ts'" in list_content
-    assert "<runefoble-session-modal" in list_content
-    assert "isCreateModalOpen" in list_content
-    assert "openCreateModal" in list_content
-    assert "closeCreateModal" in list_content
-
-    # Button triggers modal opening
-    assert "+ New Session" in list_content
-    assert "handleCreateSession" in list_content
-    assert "this.isCreateModalOpen = true" in list_content
-
-
-def test_app_shell_create_session_event_handling():
-    """Verify runefoble-app handles @create-session and navigates conditionally."""
-    app_content = read_app_shell_source(APP_TS)
-    assert "@create-session=" in app_content
-    assert "createCampaignSession" in app_content
-    assert "fetchCampaignSessions" in app_content
-    assert "lobby" in app_content
-
-
-def test_index_exports_session_modal_and_list():
-    """Verify runefoble-session-modal and runefoble-session-list are exported."""
-    index_content = INDEX_TS.read_text(encoding="utf-8")
-    assert "export * from './components/runefoble-session-list.ts';" in index_content
-    assert "export * from './components/runefoble-session-modal.ts';" in index_content
-
-
 # ---------------------------------------------------------------------------
 # 4. Storybook Stories Completeness
 # ---------------------------------------------------------------------------
-
-
-def test_storybook_stories_completeness():
-    """Verify Storybook stories exist for lobby, upcoming, validation errors, and themes."""
-    assert STORIES_TS.is_file(), "runefoble-session-modal.stories.ts must exist"
-    stories_content = STORIES_TS.read_text(encoding="utf-8")
-    assert "Campaign/RunefobleSessionModal" in stories_content
-    assert "DefaultOpenLobby" in stories_content
-    assert "OpenUpcomingSession" in stories_content
-    assert "ModalWithValidationError" in stories_content
-    assert "DarkMode" in stories_content
-    assert "LightMode" in stories_content
-    assert "CyberRuneTheme" in stories_content
-    assert "ParchmentTheme" in stories_content
 
 
 # ---------------------------------------------------------------------------

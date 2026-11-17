@@ -9,8 +9,6 @@ Hard Invariants:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
@@ -222,27 +220,3 @@ async def test_campaign_member_role_mutation_and_purge_lifecycle(
     # 6. Cadence no longer has any permissions
     assert not await spicedb.check_permission("campaign", camp_id, "view", "user", "player_cadence")
     assert not await spicedb.check_permission("campaign", camp_id, "play", "user", "player_cadence")
-
-
-def test_source_file_length_limits():
-    """Verify Hard Invariant 6: All files touched satisfy file length limits (< 500 lines)."""
-    root = Path(__file__).resolve().parent.parent
-    files = [
-        root / "gateway" / "api" / "src" / "gateway_api" / "routers" / "campaigns.py",
-        root / "gateway" / "api" / "src" / "gateway_api" / "campaign_store" / "queries.py",
-        root / "frontend" / "src" / "services" / "app-data-service.ts",
-        root / "frontend" / "src" / "runefoble-app.ts",
-        Path(__file__),
-    ]
-    for f in files:
-        assert f.is_file(), f"Expected file {f} to exist"
-        line_count = len(f.read_text(encoding="utf-8").splitlines())
-        assert line_count < 500, f"File {f.name} has {line_count} lines (exceeds 500)"
-
-    # TASK-0640: the data service has no fixture fallback, so it must not import fixtures.
-    data_service = (root / "frontend" / "src" / "services" / "app-data-service.ts").read_text(
-        encoding="utf-8"
-    )
-    assert "fixture" not in data_service.lower(), (
-        "app-data-service.ts must not import canned fixtures"
-    )

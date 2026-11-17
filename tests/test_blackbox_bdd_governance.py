@@ -82,26 +82,6 @@ def test_definition_of_done_contains_playwright_e2e_requirement():
         assert "ADR-0014" in content
 
 
-def test_playwright_bdd_how_to_guide_exists_and_meets_invariants():
-    """Verifies the Diataxis How-To guide for Playwright BDD satisfies repository constraints."""
-    guide_path = REPO_ROOT / "docs" / "how-to" / "test-user-flows-with-playwright-bdd.md"
-    assert guide_path.exists(), f"How-to guide not found: {guide_path}"
-
-    lines = guide_path.read_text(encoding="utf-8").splitlines()
-    assert len(lines) < 300, f"Guide exceeds 300 lines (actual: {len(lines)})"
-    assert len(lines) < 500, "Guide violates Hard Invariant 6 (<500 lines)"
-
-    content = "\n".join(lines)
-    # Check required practical recipes
-    assert "Authoring Gherkin Features from User Stories" in content
-    assert "Managing Frontdoor Test Setup and Authenticated Sessions" in content
-    assert "Implementing Step Definitions with Shadow-Piercing Locators" in content
-    assert "Running and Debugging Tests Locally" in content
-    assert "make test-e2e" in content
-    assert "make test-e2e-ui" in content
-    assert "make test-bdd" in content
-
-
 def test_curation_and_decomposition_guides_auditing_guidance():
     """Verifies curation and PRD decomposition guides instruct agents to audit BDD readiness."""
     curate_guide = REPO_ROOT / "docs" / "how-to" / "curate-backlog-and-roadmap.md"

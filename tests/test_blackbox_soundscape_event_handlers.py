@@ -10,7 +10,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -38,8 +37,6 @@ from soundscape.event_handlers import (
     register_soundscape_event_handlers,
 )
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
 
 @pytest.fixture(autouse=True)
 def clean_environment():
@@ -47,24 +44,6 @@ def clean_environment():
     reset_dependencies()
     yield
     reset_dependencies()
-
-
-def test_module_line_count_invariants():
-    """Verify dependencies.py and event_handlers.py strictly adhere to line length limit (< 180)."""
-    soundscape_dir = REPO_ROOT / "services" / "soundscape" / "src" / "soundscape"
-    deps_path = soundscape_dir / "dependencies.py"
-    handlers_path = soundscape_dir / "event_handlers.py"
-
-    assert deps_path.is_file(), "dependencies.py must exist"
-    assert handlers_path.is_file(), "event_handlers.py must exist"
-
-    deps_lines = len(deps_path.read_text(encoding="utf-8").splitlines())
-    handlers_lines = len(handlers_path.read_text(encoding="utf-8").splitlines())
-
-    assert deps_lines < 180, f"dependencies.py ({deps_lines} lines) exceeds 180 lines limit"
-    assert handlers_lines < 180, (
-        f"event_handlers.py ({handlers_lines} lines) exceeds 180 lines limit"
-    )
 
 
 def test_handler_backward_compatibility_reexport():

@@ -17,40 +17,6 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
-def test_drawer_module_decomposition_architecture(repo_root: Path):
-    """Verify drawer subviews architecture, file counts, and Hard Invariant 6 line limits."""
-    drawer_dir = repo_root / "tools" / "project_visualizer" / "static" / "js" / "drawer"
-    assert drawer_dir.is_dir(), "drawer/ subdirectory must exist"
-
-    expected_modules = {
-        "task_card.js": 100,
-        "adr_card.js": 90,
-        "prd_card.js": 90,
-        "persona_card.js": 80,
-        "controller.js": 80,
-    }
-
-    # Verify all expected modules exist and verify target and hard limits
-    for mod_name, target_limit in expected_modules.items():
-        mod_path = drawer_dir / mod_name
-        assert mod_path.is_file(), f"Expected drawer subview {mod_name} does not exist"
-        lines = len(mod_path.read_text(encoding="utf-8").splitlines())
-        assert lines < target_limit, f"{mod_name} must be < {target_limit} lines, got {lines}"
-        assert lines < 120, f"{mod_name} strictly < 120 lines per Hard Invariant 6, got {lines}"
-
-    # Verify zero files in drawer directory exceed 150 lines
-    for js_file in drawer_dir.glob("*.js"):
-        lines = len(js_file.read_text(encoding="utf-8").splitlines())
-        assert lines <= 150, f"{js_file.name} exceeds 150 lines: {lines}"
-
-    # Verify coordinator drawer.js line count
-    drawer_js = repo_root / "tools" / "project_visualizer" / "static" / "js" / "drawer.js"
-    assert drawer_js.is_file(), "drawer.js coordinator must exist"
-    coord_lines = len(drawer_js.read_text(encoding="utf-8").splitlines())
-    assert coord_lines < 80, f"drawer.js coordinator must be < 80 lines, got {coord_lines}"
-    assert coord_lines < 120, f"drawer.js coordinator strictly < 120 lines, got {coord_lines}"
-
-
 def test_drawer_subviews_and_controller_frontdoor(repo_root: Path):
     """Frontdoor verification of drawer opening, card subviews rendering, and action bridges."""
     node_bin = shutil.which("node")

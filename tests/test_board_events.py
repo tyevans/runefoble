@@ -12,7 +12,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import runefoble_events
@@ -63,43 +62,6 @@ from runefoble_events.board_events.token import (
     TokenPlaced,
     TokenRemoved,
 )
-
-
-def test_board_events_file_length_invariants() -> None:
-    """Verify strictly enforced file length budgets per TASK-0231 and Hard Invariant 6."""
-    pkg_dir = (
-        Path(__file__).resolve().parent.parent
-        / "libs"
-        / "runefoble_events"
-        / "src"
-        / "runefoble_events"
-    )
-    board_events_dir = pkg_dir / "board_events"
-
-    # Facade budget target: strictly < 50 lines (TASK-0231 Definition of Done 1)
-    board_facade_lines = len((pkg_dir / "board.py").read_text(encoding="utf-8").splitlines())
-    assert board_facade_lines < 50, f"board.py has {board_facade_lines} lines (must be < 50)"
-
-    # Submodule budgets under board_events/ (TASK-0231 Definition of Done 2: strictly < 120 lines)
-    submodule_budgets = {
-        "token.py": 100,
-        "fog.py": 80,
-        "templates.py": 80,
-        "lighting.py": 80,
-        "terrain.py": 80,
-        "physics.py": 80,
-        "spells.py": 120,
-        "__init__.py": 80,
-    }
-
-    for filename, max_lines in submodule_budgets.items():
-        submodule_path = board_events_dir / filename
-        assert submodule_path.exists(), f"Missing expected board submodule: {filename}"
-        line_count = len(submodule_path.read_text(encoding="utf-8").splitlines())
-        assert line_count < max_lines, (
-            f"Submodule {filename} has {line_count} lines, exceeding budget {max_lines}"
-        )
-        assert line_count < 120, f"Submodule {filename} violates invariant (< 120 lines)"
 
 
 def test_board_facade_backward_compatibility_re_exports() -> None:

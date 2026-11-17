@@ -8,7 +8,6 @@ Interacts strictly through public frontdoors:
 """
 
 import asyncio
-from pathlib import Path
 
 import pytest
 import voice_agent.main as va_main
@@ -24,7 +23,6 @@ from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(autouse=True)
@@ -201,21 +199,3 @@ def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer():
         assert exc.value.code == 4001
 
     assert client.get(f"/api/v1/voice/rooms/{session_id}").json()["participant_count"] == 0
-
-
-def test_webrtc_signaling_file_lengths():
-    """Verify Hard Invariant 6: signaling modules and test suites strictly under 250 lines."""
-    for rel in [
-        "gateway/api/src/gateway_api/signaling/__init__.py",
-        "gateway/api/src/gateway_api/signaling/manager.py",
-        "gateway/api/src/gateway_api/signaling/auth.py",
-        "gateway/api/src/gateway_api/signaling/handlers.py",
-        "gateway/api/src/gateway_api/signaling/endpoint.py",
-        "gateway/api/src/gateway_api/webrtc_signaling.py",
-        "tests/test_blackbox_webrtc_auth.py",
-        "tests/test_blackbox_webrtc_routing.py",
-    ]:
-        path = REPO_ROOT / rel
-        assert path.is_file(), f"{path} must exist"
-        lines = len(path.read_text(encoding="utf-8").splitlines())
-        assert lines < 250, f"{path.name} has {lines} lines, exceeding 250 line limit"

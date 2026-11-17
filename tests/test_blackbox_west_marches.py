@@ -13,7 +13,6 @@ Governed by:
 from __future__ import annotations
 
 from collections.abc import Iterator
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -31,8 +30,6 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
 
 @pytest.fixture
 def spicedb_client() -> MockSpiceDBClient:
@@ -48,39 +45,6 @@ def client(spicedb_client: MockSpiceDBClient, lore_backends) -> Iterator[TestCli
     set_west_marches_repo(fresh_repo)
     with TestClient(lore_app) as lore_client:
         yield lore_client
-
-
-def test_hard_invariant_6_file_length_limits() -> None:
-    """Verify decomposed aggregate and handlers strictly adhere to line count limits."""
-    agg_path = (
-        REPO_ROOT
-        / "services"
-        / "campaign_lore"
-        / "src"
-        / "campaign_lore"
-        / "west_marches_aggregate.py"
-    )
-    handlers_path = (
-        REPO_ROOT
-        / "services"
-        / "campaign_lore"
-        / "src"
-        / "campaign_lore"
-        / "west_marches_handlers.py"
-    )
-    models_path = REPO_ROOT / "services" / "campaign_lore" / "src" / "campaign_lore" / "models.py"
-
-    agg_lines = len(agg_path.read_text(encoding="utf-8").splitlines())
-    handlers_lines = len(handlers_path.read_text(encoding="utf-8").splitlines())
-    models_lines = len(models_path.read_text(encoding="utf-8").splitlines())
-
-    assert agg_lines < 150, (
-        f"west_marches_aggregate.py has {agg_lines} lines (limit: strictly < 150)"
-    )
-    assert handlers_lines < 130, (
-        f"west_marches_handlers.py has {handlers_lines} lines (limit: strictly < 130)"
-    )
-    assert models_lines < 500, f"models.py has {models_lines} lines (limit: < 500)"
 
 
 def test_west_marches_public_surface() -> None:

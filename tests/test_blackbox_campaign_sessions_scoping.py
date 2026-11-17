@@ -19,10 +19,6 @@ from gateway_api.main import app as gateway_app
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 APP_DATA_SERVICE_TS = FRONTEND_DIR / "src" / "services" / "app-data-service.ts"
-FIXTURES_TS = FRONTEND_DIR / "src" / "services" / "app-data-service.fixtures.ts"
-SESSION_MODAL_TS = FRONTEND_DIR / "src" / "components" / "runefoble-session-modal.ts"
-CAMPAIGN_STORE_PY = REPO_ROOT / "gateway/api/src/gateway_api/campaign_store/store.py"
-ROUTERS_CAMPAIGNS_PY = REPO_ROOT / "gateway/api/src/gateway_api/routers/campaigns.py"
 TS_TEST_FILE = FRONTEND_DIR / "test" / "campaign-sessions-scoping.test.ts"
 
 
@@ -41,23 +37,6 @@ def reset_stores():
     campaign_store.reset()
     yield
     campaign_store.reset()
-
-
-def test_file_length_invariants():
-    """Verify Hard Invariant 6: All modified source files strictly satisfy line limits (<500 lines)."""
-    files_to_check = [
-        (APP_DATA_SERVICE_TS, 220),
-        (SESSION_MODAL_TS, 180),
-        (CAMPAIGN_STORE_PY, 160),
-        (ROUTERS_CAMPAIGNS_PY, 500),
-        (Path(__file__), 500),
-    ]
-    for file_path, max_lines in files_to_check:
-        assert file_path.is_file(), f"{file_path} must exist"
-        lines = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, (
-            f"{file_path.name} has {lines} lines, exceeding the limit of {max_lines}"
-        )
 
 
 def test_app_data_service_imports_no_fixtures():

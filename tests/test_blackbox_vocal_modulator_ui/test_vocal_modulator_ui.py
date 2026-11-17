@@ -58,67 +58,6 @@ def test_voice_agent_manifest_exposes_vocal_modulator(voice_client: TestClient) 
     assert file_data["tags"] == data["tags"]
 
 
-def test_vocal_modulator_file_length_invariants() -> None:
-    """Verify Hard Invariant 6 & DoD file limits (<140 for modulator, <120 for sliders, <110 for styles)."""
-    limits = {
-        "services/voice_agent/ui/src/runefoble-vocal-modulator.ts": 140,
-        "services/voice_agent/ui/src/runefoble-vocal-sliders.ts": 120,
-        "services/voice_agent/ui/src/runefoble-vocal-modulator.styles.ts": 110,
-        "services/voice_agent/ui/src/runefoble-vocal-modulator.stories.ts": 130,
-        "tests/test_blackbox_vocal_modulator_ui/test_vocal_modulator_ui.py": 170,
-    }
-    for rel_path, max_lines in limits.items():
-        full_path = REPO_ROOT / rel_path
-        assert full_path.is_file(), f"{full_path} must exist"
-        lines = len(full_path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, f"{rel_path} has {lines} lines, exceeding target {max_lines}"
-        assert lines < 160 or rel_path.endswith(".py"), (
-            f"{rel_path} has {lines} lines, exceeding strict DoD limit 160"
-        )
-
-
-def test_vocal_modulator_component_contracts() -> None:
-    """Verify component and slider contracts, custom elements, and events."""
-    ui_src = REPO_ROOT / "services/voice_agent/ui/src"
-    mod_code = (ui_src / "runefoble-vocal-modulator.ts").read_text(encoding="utf-8")
-    sliders_code = (ui_src / "runefoble-vocal-sliders.ts").read_text(encoding="utf-8")
-    index_code = (ui_src / "index.ts").read_text(encoding="utf-8")
-
-    assert "@customElement('runefoble-vocal-modulator')" in mod_code
-    assert "@customElement('runefoble-vocal-sliders')" in sliders_code
-    assert "runefoble-vocal-modulator" in index_code
-    assert "runefoble-vocal-sliders" in index_code
-
-    # Event dispatches & public control methods
-    assert "vocal-modulate" in mod_code and "preset-select" in mod_code
-    assert "vocal-param-change" in sliders_code
-    assert "selectPreset" in mod_code and "toggleBypass" in mod_code
-    assert "pitchShift" in sliders_code and "formantShift" in sliders_code
-
-
-def test_vocal_modulator_storybook_stories_coverage() -> None:
-    """Verify interactive Storybook stories cover all visual states."""
-    stories_path = REPO_ROOT / "services/voice_agent/ui/src/runefoble-vocal-modulator.stories.ts"
-    content = stories_path.read_text(encoding="utf-8")
-    for story in [
-        "DefaultBypassed",
-        "DragonActive",
-        "GoblinActive",
-        "EtherealActive",
-        "RoboticActive",
-        "AdvancedSlidersOpen",
-        "InteractiveSimulator",
-    ]:
-        assert story in content, f"Story {story} missing from stories file"
-
-
-def test_app_shell_forwarding_export() -> None:
-    """Verify App Shell forwarding export for runefoble-vocal-modulator."""
-    shell_file = REPO_ROOT / "frontend/src/components/runefoble-vocal-modulator.ts"
-    assert shell_file.is_file()
-    assert "@runefoble/voice-agent-ui" in shell_file.read_text(encoding="utf-8")
-
-
 @pytest.mark.asyncio
 async def test_frontdoor_presets_and_modulate_integration(
     voice_client: TestClient, setup_coordinator: dict

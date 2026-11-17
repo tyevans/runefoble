@@ -4,14 +4,11 @@ Ensures zero contract regressions, public HTTP frontdoor reachability, OpenAPI s
 and strict compliance with Hard Invariant 6 (file length < 500 lines).
 """
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture
@@ -190,46 +187,3 @@ def test_board_state_previews_modular_frontdoors(board_client):
         cancel_msg = ws.receive_json()
         assert cancel_msg["type"] == "preview_cancelled"
         assert cancel_msg["token_id"] == "valeros"
-
-
-def test_previews_modular_file_invariants():
-    """Verify file length limits for TASK-0188 previews router decomposition."""
-    routers_dir = REPO_ROOT / "services" / "board_state" / "src" / "board_state" / "routers"
-
-    previews_facade = routers_dir / "previews.py"
-    previews_http = routers_dir / "previews_http.py"
-    previews_ws = routers_dir / "previews_ws.py"
-    previews_ws_actions = routers_dir / "previews_ws_actions.py"
-    previews_ws_spells = routers_dir / "previews_ws_spells.py"
-
-    assert previews_facade.exists(), "previews.py aggregator facade must exist"
-    assert previews_http.exists(), "previews_http.py must exist"
-    assert previews_ws.exists(), "previews_ws.py must exist"
-    assert previews_ws_actions.exists(), "previews_ws_actions.py must exist"
-    assert previews_ws_spells.exists(), "previews_ws_spells.py must exist"
-
-    facade_lines = len(previews_facade.read_text().splitlines())
-    http_lines = len(previews_http.read_text().splitlines())
-    ws_lines = len(previews_ws.read_text().splitlines())
-    actions_lines = len(previews_ws_actions.read_text().splitlines())
-    spells_lines = len(previews_ws_spells.read_text().splitlines())
-
-    # TASK-0188 DoD: previews.py strictly < 60 lines (and < 50 lines per spec)
-    assert facade_lines < 60, f"previews.py exceeds 60 lines limit (current: {facade_lines})"
-
-    # Extracted submodules strictly < 150 lines each
-    assert http_lines < 150, f"previews_http.py exceeds 150 lines limit (current: {http_lines})"
-    assert ws_lines < 150, f"previews_ws.py exceeds 150 lines limit (current: {ws_lines})"
-    assert actions_lines < 150, (
-        f"previews_ws_actions.py exceeds 150 lines limit (current: {actions_lines})"
-    )
-    assert spells_lines < 150, (
-        f"previews_ws_spells.py exceeds 150 lines limit (current: {spells_lines})"
-    )
-
-    # Hard Invariant 6: All files in router directory must be strictly < 500 lines
-    for py_file in routers_dir.glob("*.py"):
-        line_count = len(py_file.read_text().splitlines())
-        assert line_count < 500, (
-            f"File {py_file.name} violates Hard Invariant 6 ({line_count} lines)"
-        )

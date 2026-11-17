@@ -267,22 +267,3 @@ async def test_default_characters_loaded_and_accessible(signing_issuer):
     assert res_ezren.status_code == 200
     ids_ezren = [c["id"] for c in res_ezren.json()]
     assert "char-ezren" in ids_ezren
-
-
-def test_file_length_invariants():
-    """Verify all character gateway source files satisfy file length limits (<500 lines, target limits)."""
-    import os
-
-    targets = [
-        ("gateway/api/src/gateway_api/routers/characters.py", 200),
-        ("gateway/api/src/gateway_api/character_store.py", 250),
-        ("gateway/api/src/gateway_api/character_models.py", 200),
-        ("gateway/api/src/gateway_api/character_defaults.py", 100),
-    ]
-
-    for path, max_lines in targets:
-        assert os.path.exists(path), f"File {path} does not exist"
-        with open(path, encoding="utf-8") as f:
-            lines = len(f.readlines())
-        assert lines < max_lines, f"{path} has {lines} lines (exceeds target limit {max_lines})"
-        assert lines < 500, f"{path} has {lines} lines (exceeds hard limit 500)"

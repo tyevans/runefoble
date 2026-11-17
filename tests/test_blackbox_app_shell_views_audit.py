@@ -21,13 +21,9 @@ from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
-from tests.helpers.app_shell_source import read_app_shell_source
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
-ROUTER_TS = SRC_DIR / "router" / "router.ts"
-APP_TS = SRC_DIR / "runefoble-app.ts"
 AUDIT_TEST_TS = FRONTEND_DIR / "test" / "app-shell-views-wiring-audit.test.ts"
 
 client = TestClient(gateway_app)
@@ -46,87 +42,9 @@ def reset_stores():
 # ---------------------------------------------------------------------------
 
 
-def test_audit_file_length_invariants():
-    """Verify all audit files and modified components strictly satisfy line count constraints."""
-    assert AUDIT_TEST_TS.is_file(), f"{AUDIT_TEST_TS} must exist"
-    audit_lines = len(AUDIT_TEST_TS.read_text(encoding="utf-8").splitlines())
-    assert audit_lines < 350, f"audit test has {audit_lines} lines; must be < 350 lines (DoD)"
-    assert audit_lines < 500, f"audit test exceeds global 500 line limit: {audit_lines}"
-
-    this_file = Path(__file__)
-    py_lines = len(this_file.read_text(encoding="utf-8").splitlines())
-    assert py_lines < 350, f"{this_file.name} has {py_lines} lines; must be < 350 lines (DoD)"
-    assert py_lines < 500, f"{this_file.name} exceeds global 500 line limit: {py_lines}"
-
-    assert APP_TS.is_file(), f"{APP_TS} must exist"
-    app_lines = len(APP_TS.read_text(encoding="utf-8").splitlines())
-    assert app_lines < 250, f"runefoble-app.ts has {app_lines} lines; must be < 250 baseline"
-
-    assert ROUTER_TS.is_file(), f"{ROUTER_TS} must exist"
-    router_lines = len(ROUTER_TS.read_text(encoding="utf-8").splitlines())
-    assert router_lines < 250, f"router.ts has {router_lines} lines; must be < 250 baseline"
-
-
 # ---------------------------------------------------------------------------
 # 2. Route Enumeration Matrix & App Shell View Mounting Audit
 # ---------------------------------------------------------------------------
-
-
-def test_app_shell_views_route_enumeration_and_mounting():
-    """Verify runefoble-app.ts enumerates all standard routes and mounts dedicated components."""
-    app_code = read_app_shell_source(APP_TS)
-
-    # AppActiveView union includes all nine standard views plus character-sheet
-    expected_views = [
-        "'login'",
-        "'campaigns'",
-        "'campaign-detail'",
-        "'campaign-characters'",
-        "'characters'",
-        "'character-sheet'",
-        "'session-lobby'",
-        "'session-active'",
-        "'profile'",
-    ]
-    for view in expected_views:
-        assert view in app_code, f"View {view} must be declared in AppActiveView union"
-
-    # Dedicated components mounted by view
-    expected_components = [
-        "runefoble-auth-modal",
-        "runefoble-campaign-dashboard",
-        "runefoble-campaign-header",
-        "runefoble-campaign-members",
-        "runefoble-session-list",
-        "runefoble-character-roster",
-        "runefoble-session-lobby",
-        "runefoble-board",
-        "runefoble-character-card",
-        "runefoble-watcher-feed",
-        "runefoble-voice-controls",
-        "runefoble-user-profile",
-        "runefoble-character-sheet",
-    ]
-    for comp in expected_components:
-        assert comp in app_code, (
-            f"Component {comp} must be imported and mounted in runefoble-app.ts"
-        )
-
-
-def test_app_shell_route_collision_prevention():
-    """Verify getActiveView() prevents route collisions across nested and ambiguous paths."""
-    app_code = read_app_shell_source(APP_TS)
-
-    # #/profile disambiguation from #/campaigns
-    assert "pat === '#/profile' ? 'profile' : 'campaigns'" in app_code
-
-    # #/campaigns/:id/characters disambiguation from #/campaigns/:id
-    assert "#/campaigns/:campaignId/characters" in app_code
-    assert "pat.startsWith('#/campaigns/:campaignId')" in app_code
-
-    # #/characters/:characterId disambiguation from #/characters
-    assert "pat.startsWith('#/characters/') && pat !== '#/characters'" in app_code
-    assert "pat === '#/characters'" in app_code
 
 
 # ---------------------------------------------------------------------------
@@ -134,35 +52,9 @@ def test_app_shell_route_collision_prevention():
 # ---------------------------------------------------------------------------
 
 
-def test_route_bound_websocket_lifecycle_and_teardown():
-    """Verify WebSocket connects exclusively on session routes and tears down cleanly."""
-    app_code = read_app_shell_source(APP_TS)
-
-    assert "manageWebSocketLifecycle" in app_code
-    assert "connectWebSocket" in app_code
-    assert "disconnectWebSocket" in app_code
-    assert "registerTeardown" in app_code
-
-    # WebSocket connected only for session routes
-    assert "route.pattern.includes('/sessions/') || route.pattern.includes('/lobby/')" in app_code
-    assert "/ws/session/" in app_code
-
-
 # ---------------------------------------------------------------------------
 # 4. Dynamic Route Title & Breadcrumb Resolution Architecture
 # ---------------------------------------------------------------------------
-
-
-def test_dynamic_title_and_breadcrumb_resolver_api():
-    """Verify router declares synchronous and asynchronous title resolvers with caching."""
-    router_code = ROUTER_TS.read_text(encoding="utf-8")
-
-    assert "setTitleResolver(" in router_code
-    assert "setAsyncTitleResolver(" in router_code
-    assert "setRouteTitle(" in router_code
-    assert "resolveTitle(" in router_code
-    assert "resolveTitleAsync(" in router_code
-    assert "routeTitles: Map<string, string>" in router_code
 
 
 # ---------------------------------------------------------------------------

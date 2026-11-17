@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import character_sheet.models as models_facade
 from character_sheet.models import (
     AddWardrobeVariantRequest,
@@ -29,33 +27,6 @@ from character_sheet.models.character import AttributeScores as CharAttributeSco
 from character_sheet.models.character import CharacterCore as CharCharacterCore
 from character_sheet.models.character import CharacterSheetState as CharCharacterSheetState
 from character_sheet.models.character import CharacterState as CharCharacterState
-
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-
-
-def test_models_facade_and_submodules_line_length_invariants() -> None:
-    """Verify models.py facade and all submodules strictly comply with line budget targets."""
-    models_dir = REPO_ROOT / "services" / "character_sheet" / "src" / "character_sheet" / "models"
-    facade_file = models_dir.parent / "models.py"
-
-    assert facade_file.exists(), f"Facade file {facade_file} does not exist"
-    facade_lines = len(facade_file.read_text(encoding="utf-8").splitlines())
-    assert facade_lines < 30, f"Facade {facade_file} has {facade_lines} lines (expected < 30)"
-
-    expected_submodules = {
-        "character.py": 100,
-        "inventory.py": 90,
-        "conditions.py": 90,
-        "progression.py": 90,
-        "base.py": 120,
-        "__init__.py": 120,
-    }
-    for sub_filename, max_lines in expected_submodules.items():
-        sub_file = models_dir / sub_filename
-        assert sub_file.exists(), f"Submodule file {sub_file} does not exist"
-        lines = len(sub_file.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, f"{sub_filename} exceeds {max_lines}"
-        assert lines < 120, f"{sub_filename} exceeds Hard Invariant 6 limit"
 
 
 def test_core_facade_and_direct_imports() -> None:

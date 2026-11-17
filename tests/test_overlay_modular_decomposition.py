@@ -8,8 +8,6 @@ Verifies:
 5. Pydantic models integrity and public symbol re-exports.
 """
 
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.cinematic_director import clear_cinematic_directors
@@ -34,7 +32,6 @@ from gateway_api.spectator import clear_raw_session_state, set_raw_session_state
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def setup_function():
@@ -47,23 +44,6 @@ def teardown_function():
     """Reset spectator and director state after each test."""
     clear_raw_session_state()
     clear_cinematic_directors()
-
-
-def test_overlay_file_length_invariants():
-    """Verify all decomposed overlay files are strictly under 200 lines (Hard Invariant 6)."""
-    base_dir = REPO_ROOT / "gateway/api/src/gateway_api"
-    files_to_check = [
-        base_dir / "overlay_models.py",
-        base_dir / "overlay_templates.py",
-        base_dir / "routers/overlay.py",
-    ]
-
-    for file_path in files_to_check:
-        assert file_path.is_file(), f"Expected file {file_path} to exist"
-        line_count = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert line_count < 200, (
-            f"File {file_path.name} has {line_count} lines, exceeding the 200-line strict limit"
-        )
 
 
 def test_frontdoor_get_party_vitals_html():

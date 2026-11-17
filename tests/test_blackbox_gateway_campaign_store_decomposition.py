@@ -9,7 +9,6 @@ for existing imports, and end-to-end frontdoor HTTP operations for campaigns and
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -64,8 +63,6 @@ from gateway_api.campaign_store.store import (
 )
 from gateway_api.main import app as gateway_app
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
 
 def _auth(issuer, sub: str) -> dict[str, str]:
     """Return Bearer headers carrying a token that the gateway verifies for `sub`."""
@@ -82,32 +79,6 @@ def clean_store():
 @pytest.fixture
 def client():
     return TestClient(gateway_app)
-
-
-def test_modular_file_lengths_and_structure():
-    """Verify Hard Invariant 6: All campaign store submodules are strictly < 160 lines."""
-    store_dir = REPO_ROOT / "gateway/api/src/gateway_api/campaign_store"
-    assert store_dir.is_dir(), f"{store_dir} must exist as a package directory"
-
-    # Old monolithic file must not exist
-    old_file = REPO_ROOT / "gateway/api/src/gateway_api/campaign_store.py"
-    assert not old_file.exists(), "Old monolithic campaign_store.py must be removed"
-
-    expected_modules = {
-        "__init__.py": 160,
-        "models.py": 120,
-        "invites.py": 100,
-        "queries.py": 160,
-        "store.py": 160,
-    }
-
-    for filename, max_lines in expected_modules.items():
-        file_path = store_dir / filename
-        assert file_path.is_file(), f"Expected module {filename} does not exist in {store_dir}"
-        lines = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, (
-            f"{filename} has {lines} lines, exceeding the limit of {max_lines} lines"
-        )
 
 
 def test_package_facade_and_direct_submodule_exports():

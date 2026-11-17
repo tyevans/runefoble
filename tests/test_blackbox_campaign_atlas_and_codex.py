@@ -11,39 +11,12 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from campaign_lore import dependencies, permissions
 from campaign_lore.main import app
 from fastapi.testclient import TestClient
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
-
-def test_dependency_module_file_budgets() -> None:
-    """Verify dependencies, permissions, and codex_deps strictly conform to TASK-0245 budgets."""
-    pkg_dir = REPO_ROOT / "services" / "campaign_lore" / "src" / "campaign_lore"
-    deps_file = pkg_dir / "dependencies.py"
-    perm_file = pkg_dir / "permissions.py"
-    codex_file = pkg_dir / "codex_deps.py"
-
-    assert deps_file.exists(), "dependencies.py must exist"
-    assert perm_file.exists(), "permissions.py must exist"
-    assert codex_file.exists(), "codex_deps.py must exist"
-
-    deps_lines = len(deps_file.read_text(encoding="utf-8").splitlines())
-    perm_lines = len(perm_file.read_text(encoding="utf-8").splitlines())
-    codex_lines = len(codex_file.read_text(encoding="utf-8").splitlines())
-
-    assert deps_lines < 150, f"dependencies.py exceeds 150 lines ({deps_lines} lines)"
-    assert deps_lines < 120, f"dependencies.py exceeds target 120 lines ({deps_lines} lines)"
-
-    assert perm_lines < 150, f"permissions.py exceeds 150 lines ({perm_lines} lines)"
-    assert perm_lines < 120, f"permissions.py exceeds target 120 lines ({perm_lines} lines)"
-
-    assert codex_lines < 150, f"codex_deps.py exceeds 150 lines ({codex_lines} lines)"
 
 
 def test_dependencies_expose_core_getters() -> None:

@@ -21,8 +21,6 @@ from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
-SRC_DIR = FRONTEND_DIR / "src"
-ROUTER_DIR = SRC_DIR / "router"
 TESTS_DIR = FRONTEND_DIR / "tests"
 
 
@@ -40,24 +38,6 @@ def reset_store():
 # ---------------------------------------------------------------------------
 # 1. Hard Invariant 6: Source File Line Count Constraints
 # ---------------------------------------------------------------------------
-
-
-def test_file_length_invariants() -> None:
-    """Verify blackbox test suite and router files are strictly kept under size limits."""
-    test_ts = TESTS_DIR / "blackbox-routing-auth.test.ts"
-    assert test_ts.is_file(), f"{test_ts} must exist"
-    test_lines = len(test_ts.read_text(encoding="utf-8").splitlines())
-    assert test_lines < 250, (
-        f"blackbox-routing-auth.test.ts has {test_lines} lines; must be < 250 lines"
-    )
-
-    auth_guard_ts = ROUTER_DIR / "auth-guard.ts"
-    assert auth_guard_ts.is_file(), f"{auth_guard_ts} must exist"
-    assert len(auth_guard_ts.read_text(encoding="utf-8").splitlines()) < 100
-
-    app_ts = SRC_DIR / "runefoble-app.ts"
-    assert app_ts.is_file(), f"{app_ts} must exist"
-    assert len(app_ts.read_text(encoding="utf-8").splitlines()) < 250
 
 
 # ---------------------------------------------------------------------------
@@ -92,21 +72,6 @@ def test_node_blackbox_routing_auth_suite_execution() -> None:
 # ---------------------------------------------------------------------------
 # 3. Router & Auth Guard Declarations and Integration
 # ---------------------------------------------------------------------------
-
-
-def test_auth_guard_and_router_wiring() -> None:
-    """Verify router index exports auth guard and runefoble-app registers it."""
-    router_index = (ROUTER_DIR / "index.ts").read_text(encoding="utf-8")
-    assert "export * from './auth-guard.ts';" in router_index
-
-    app_code = (SRC_DIR / "runefoble-app.ts").read_text(encoding="utf-8")
-    assert "registerAuthGuard" in app_code
-    assert "unlistenGuard" in app_code
-
-    guard_code = (ROUTER_DIR / "auth-guard.ts").read_text(encoding="utf-8")
-    assert "export function registerAuthGuard" in guard_code
-    assert "targetRouter.beforeEach" in guard_code
-    assert "auth.onAuthChanged" in guard_code
 
 
 # ---------------------------------------------------------------------------

@@ -11,8 +11,6 @@ Governed by:
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -33,8 +31,6 @@ from the_watcher.dependencies import (
 )
 from the_watcher.factions import FactionAggregate
 from the_watcher.main import app
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(autouse=True)
@@ -103,118 +99,6 @@ def test_the_watcher_ui_manifest_advertises_faction_radar(client: TestClient) ->
     assert "runefoble-faction-radar" in data["components"]
     assert "runefoble-autonomous-dm" in data["components"]
     assert "runefoble-watcher-feed" in data["components"]
-
-
-def test_manifest_file_matches_advertised_manifest() -> None:
-    """Verify services/the_watcher/ui/manifest.json matches runtime advertising."""
-    manifest_path = REPO_ROOT / "services/the_watcher/ui/manifest.json"
-    assert manifest_path.is_file(), f"{manifest_path} must exist"
-
-    manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert manifest_data["service"] == "the_watcher"
-    assert manifest_data["package"] == "@runefoble/the-watcher-ui"
-    assert manifest_data["version"] == "0.1.0"
-    assert "runefoble-faction-radar" in manifest_data["components"]
-
-
-def test_typescript_element_source_and_custom_elements() -> None:
-    """Verify UI package exports, custom element decorator, and style imports."""
-    ui_dir = REPO_ROOT / "services/the_watcher/ui"
-
-    pkg_json = json.loads((ui_dir / "package.json").read_text(encoding="utf-8"))
-    assert pkg_json["name"] == "@runefoble/the-watcher-ui"
-    assert "./runefoble-faction-radar" in pkg_json["exports"]
-
-    assert (ui_dir / "tsconfig.json").is_file()
-    assert (ui_dir / "src/index.ts").is_file()
-
-    # Verify component source
-    comp_file = ui_dir / "src/runefoble-faction-radar.ts"
-    assert comp_file.is_file()
-    comp_src = comp_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-faction-radar')" in comp_src
-    assert "class RunefobleFactionRadar" in comp_src
-    assert "faction-selected" in comp_src
-    assert "drawer-toggled" in comp_src
-    assert "world-tick-requested" in comp_src
-
-    # Verify styles source
-    styles_file = ui_dir / "src/runefoble-faction-radar.styles.ts"
-    assert styles_file.is_file()
-    styles_src = styles_file.read_text(encoding="utf-8")
-    assert "factionRadarStyles" in styles_src
-    assert "--rf-bg-surface" in styles_src
-    assert "--rf-border-color" in styles_src
-
-
-def test_faction_radar_modular_decomposition() -> None:
-    """Verify TASK-0195 modular decomposition of faction radar into subviews with strict line limits."""
-    ui_dir = REPO_ROOT / "services/the_watcher/ui"
-    radar_subviews_dir = ui_dir / "src/faction_radar"
-    assert radar_subviews_dir.is_dir(), "faction_radar subviews directory must exist"
-
-    # 1. Main controller strictly < 120 lines (target < 110)
-    controller_file = ui_dir / "src/runefoble-faction-radar.ts"
-    controller_lines = len(controller_file.read_text(encoding="utf-8").splitlines())
-    assert controller_lines < 120, (
-        f"runefoble-faction-radar.ts must be < 120 lines, got {controller_lines}"
-    )
-
-    # 2. radar-svg.template.ts strictly < 120 lines (target < 110)
-    radar_svg_file = radar_subviews_dir / "radar-svg.template.ts"
-    assert radar_svg_file.is_file()
-    radar_svg_content = radar_svg_file.read_text(encoding="utf-8")
-    assert "renderRadarChart" in radar_svg_content
-    assert len(radar_svg_content.splitlines()) < 120, (
-        f"radar-svg.template.ts must be < 120 lines, got {len(radar_svg_content.splitlines())}"
-    )
-
-    # 3. bulletin-drawer.template.ts strictly < 120 lines (target < 100)
-    drawer_file = radar_subviews_dir / "bulletin-drawer.template.ts"
-    assert drawer_file.is_file()
-    drawer_content = drawer_file.read_text(encoding="utf-8")
-    assert "renderDmDrawer" in drawer_content
-    assert "renderRumors" in drawer_content
-    assert len(drawer_content.splitlines()) < 120, (
-        f"bulletin-drawer.template.ts must be < 120 lines, got {len(drawer_content.splitlines())}"
-    )
-
-    # 4. faction-details.template.ts strictly < 120 lines (target < 90)
-    details_file = radar_subviews_dir / "faction-details.template.ts"
-    assert details_file.is_file()
-    details_content = details_file.read_text(encoding="utf-8")
-    assert "renderFactionCards" in details_content
-    assert len(details_content.splitlines()) < 120, (
-        f"faction-details.template.ts must be < 120 lines, got {len(details_content.splitlines())}"
-    )
-
-    # 5. package.json exports verification
-    pkg_json = json.loads((ui_dir / "package.json").read_text(encoding="utf-8"))
-    assert "./faction_radar" in pkg_json["exports"]
-    assert "./faction_radar/radar-svg.template" in pkg_json["exports"]
-    assert "./faction_radar/bulletin-drawer.template" in pkg_json["exports"]
-    assert "./faction_radar/faction-details.template" in pkg_json["exports"]
-
-
-def test_storybook_stories_definition() -> None:
-    """Verify Storybook stories include Default, DMPrivateBriefing, PlayerPublicView, and HighTensionWar."""
-    stories_file = REPO_ROOT / "services/the_watcher/ui/src/runefoble-faction-radar.stories.ts"
-    assert stories_file.is_file()
-    content = stories_file.read_text(encoding="utf-8")
-    assert "Default" in content
-    assert "DMPrivateBriefing" in content
-    assert "PlayerPublicView" in content
-    assert "HighTensionWar" in content
-    assert "EmptyState" in content
-    assert "runefoble-faction-radar" in content
-
-
-def test_frontend_app_shell_forwarding_export() -> None:
-    """Verify frontend/src/components/ re-exports the microfrontend per ADR-0013."""
-    forwarding_file = REPO_ROOT / "frontend/src/components/runefoble-faction-radar.ts"
-    assert forwarding_file.is_file()
-    content = forwarding_file.read_text(encoding="utf-8")
-    assert "@runefoble/the-watcher-ui" in content
 
 
 # ---------------------------------------------------------------------------

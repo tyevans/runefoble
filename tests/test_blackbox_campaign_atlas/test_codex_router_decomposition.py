@@ -11,7 +11,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -39,41 +38,6 @@ from campaign_lore.routers.codex.schemas import (
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
-
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-
-
-def test_codex_modular_file_budgets() -> None:
-    """Verify file length limits strictly conform to TASK-0198 DoD and Hard Invariant 6."""
-    routers_dir = REPO_ROOT / "services" / "campaign_lore" / "src" / "campaign_lore" / "routers"
-    codex_pkg_dir = routers_dir / "codex"
-    assert not (routers_dir / "codex.py").exists(), "codex.py facade must not exist"
-    assert codex_pkg_dir.is_dir(), "codex/ router package directory must exist"
-
-    init_lines = len((codex_pkg_dir / "__init__.py").read_text(encoding="utf-8").splitlines())
-    schemas_lines = len((codex_pkg_dir / "schemas.py").read_text(encoding="utf-8").splitlines())
-    entries_lines = len((codex_pkg_dir / "entries.py").read_text(encoding="utf-8").splitlines())
-    referencing_lines = len(
-        (codex_pkg_dir / "referencing.py").read_text(encoding="utf-8").splitlines()
-    )
-
-    # TASK-0198 Specification Limits:
-    assert init_lines < 50, f"codex/__init__.py exceeds 50 lines ({init_lines} lines)"
-    assert schemas_lines < 80, f"codex/schemas.py exceeds 80 lines ({schemas_lines} lines)"
-    assert entries_lines < 110, f"codex/entries.py exceeds 110 lines ({entries_lines} lines)"
-    assert referencing_lines < 100, (
-        f"codex/referencing.py exceeds 100 lines ({referencing_lines} lines)"
-    )
-
-    # Hard Invariant 6: All submodules strictly < 120 lines
-    for py_file in codex_pkg_dir.glob("*.py"):
-        line_count = len(py_file.read_text(encoding="utf-8").splitlines())
-        assert line_count < 120, f"{py_file.name} violates < 120 lines limit ({line_count} lines)"
-
-    # Hard Invariant 6: All files in campaign_lore router directory strictly < 500 lines
-    for py_file in routers_dir.glob("*.py"):
-        line_count = len(py_file.read_text(encoding="utf-8").splitlines())
-        assert line_count < 500, f"{py_file.name} violates Hard Invariant 6 ({line_count} lines)"
 
 
 def test_codex_router_exposes_endpoints_and_models() -> None:

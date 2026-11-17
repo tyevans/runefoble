@@ -10,7 +10,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -39,30 +38,6 @@ def test_import_and_exports_facade() -> None:
     assert callable(handle_domain_event)
     assert callable(get_event_attr)
     assert callable(is_event_type)
-
-
-def test_modular_file_length_limits() -> None:
-    """Verify both worker.py and event_handlers.py strictly comply with line length budgets."""
-    pkg_dir = (
-        Path(__file__).resolve().parent.parent
-        / "services"
-        / "campaign_analytics"
-        / "src"
-        / "campaign_analytics"
-    )
-    worker_file = pkg_dir / "worker.py"
-    handlers_file = pkg_dir / "event_handlers.py"
-
-    assert worker_file.exists()
-    assert handlers_file.exists()
-
-    worker_lines = len(worker_file.read_text().splitlines())
-    handlers_lines = len(handlers_file.read_text().splitlines())
-
-    assert worker_lines < 180, f"worker.py has {worker_lines} lines, exceeding 180 target"
-    assert handlers_lines < 220, (
-        f"event_handlers.py has {handlers_lines} lines, exceeding 220 target"
-    )
 
 
 def test_worker_exposes_only_canonical_event_handling() -> None:

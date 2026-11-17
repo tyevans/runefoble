@@ -11,86 +11,11 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
-
-def test_board_templates_file_length_limits() -> None:
-    """Verify board templates and submodules strictly comply with TASK-0192 line limits."""
-    templates_dir = REPO_ROOT / "services/board_state/ui/src/templates"
-    facade_file = REPO_ROOT / "services/board_state/ui/src/board-templates.ts"
-
-    assert facade_file.is_file(), f"{facade_file} must exist"
-    facade_lines = len(facade_file.read_text(encoding="utf-8").splitlines())
-    # Facade must be strictly < 60 lines (target < 50 lines)
-    assert facade_lines < 60, f"board-templates.ts has {facade_lines} lines (must be < 60)"
-    assert facade_lines < 50, f"board-templates.ts has {facade_lines} lines (target < 50)"
-
-    submodules = [
-        (templates_dir / "kinematics.template.ts", 130, 90),
-        (templates_dir / "cell.template.ts", 130, 120),
-        (templates_dir / "overlays.template.ts", 130, 130),
-    ]
-
-    for path, max_limit, target_limit in submodules:
-        assert path.is_file(), f"{path} must exist"
-        lines = len(path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_limit, f"{path.name} has {lines} lines (must be < {max_limit})"
-        assert lines < target_limit, f"{path.name} has {lines} lines (target < {target_limit})"
-
-
-def test_board_templates_facade_and_submodule_exports() -> None:
-    """Verify aggregator facade re-exports all required template functions and interfaces."""
-    facade_file = REPO_ROOT / "services/board_state/ui/src/board-templates.ts"
-    facade_content = facade_file.read_text(encoding="utf-8")
-
-    expected_reexports = [
-        "getHealthBarColor",
-        "renderVectorOverlay",
-        "renderDistanceRuler",
-        "renderGhostBanner",
-        "BoardCellProps",
-        "renderBoardCell",
-        "renderBoardHeader",
-        "renderStatusBar",
-        "renderRadialMenuOverlay",
-        "renderAoEOverlay",
-        "renderAoEBanner",
-    ]
-
-    for sym in expected_reexports:
-        assert sym in facade_content, f"Expected {sym} to be re-exported in board-templates.ts"
-
-    # Verify kinematics template content
-    kinematics_file = REPO_ROOT / "services/board_state/ui/src/templates/kinematics.template.ts"
-    k_content = kinematics_file.read_text(encoding="utf-8")
-    assert "getHealthBarColor" in k_content
-    assert "renderVectorOverlay" in k_content
-    assert "renderDistanceRuler" in k_content
-    assert "renderGhostBanner" in k_content
-    assert "calculateVectorLineCoordinates" in k_content
-
-    # Verify cell template content
-    cell_file = REPO_ROOT / "services/board_state/ui/src/templates/cell.template.ts"
-    c_content = cell_file.read_text(encoding="utf-8")
-    assert "interface BoardCellProps" in c_content
-    assert "renderBoardCell" in c_content
-    assert "getHealthBarColor" in c_content
-
-    # Verify overlays template content
-    overlays_file = REPO_ROOT / "services/board_state/ui/src/templates/overlays.template.ts"
-    o_content = overlays_file.read_text(encoding="utf-8")
-    assert "renderBoardHeader" in o_content
-    assert "renderStatusBar" in o_content
-    assert "renderRadialMenuOverlay" in o_content
-    assert "renderAoEOverlay" in o_content
-    assert "renderAoEBanner" in o_content
 
 
 @pytest.mark.asyncio

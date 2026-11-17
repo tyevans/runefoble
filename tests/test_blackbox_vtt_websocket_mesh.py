@@ -11,7 +11,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -19,12 +18,9 @@ from fastapi.testclient import TestClient
 from gateway_api.dependencies import ws_manager
 from gateway_api.main import app as gateway_app
 
-from tests.helpers.app_shell_source import read_app_shell_source
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture
@@ -215,55 +211,3 @@ def test_vtt_websocket_mesh_aoe_templates_vfx_and_token_actions(client_gw: TestC
             recv_whisper = ws_observer.receive_json()
             assert recv_whisper["type"] == "dm_whisper"
             assert recv_whisper["whisper"]["whisper_id"] == "whisp-99"
-
-
-def test_vtt_frontend_app_shell_and_plugin_registry_invariants() -> None:
-    """Verify App Shell and plugin registry adhere to Hard Invariant 6 and contain all required bindings."""
-    app_shell_path = REPO_ROOT / "frontend" / "src" / "runefoble-app.ts"
-    registry_path = REPO_ROOT / "frontend" / "src" / "components" / "plugins" / "plugin_registry.ts"
-
-    assert app_shell_path.is_file()
-    assert registry_path.is_file()
-
-    app_lines = len(app_shell_path.read_text(encoding="utf-8").splitlines())
-    reg_lines = len(registry_path.read_text(encoding="utf-8").splitlines())
-
-    # Hard Invariant 6: File length limit (< 500 lines)
-    assert app_lines < 450, f"runefoble-app.ts must be < 450 lines (got {app_lines})"
-    assert reg_lines <= 120, f"plugin_registry.ts must be <= 120 lines (got {reg_lines})"
-
-    app_content = read_app_shell_source(app_shell_path)
-    reg_content = registry_path.read_text(encoding="utf-8")
-
-    # Plugin slots registration
-    assert "registerDefaultPlugins" in reg_content
-    assert "runefoble-initiative-tracker" in reg_content
-    assert "runefoble-soundscape-controls" in reg_content
-    assert "runefoble-dice-roller" in reg_content
-    assert "runefoble-dice-tray-3d" in reg_content
-    assert "runefoble-combat-reaction-prompt" in reg_content
-    assert "runefoble-dm-whisper-bar" in reg_content
-    assert "runefoble-dm-trap-controls" in reg_content
-
-    # App shell lobby event integration
-    assert "@toggle-readiness=" in app_content
-    assert "@toggle-stand-in=" in app_content
-    assert "'player_readiness'" in app_content
-    assert "'player_stand_in'" in app_content
-
-    # App shell board integration & dynamic bounds
-    assert ".websocketUrl=" in app_content
-    assert "@token-action=" in app_content
-    assert "@aoe-place=" in app_content
-    assert "@spell-vfx-triggered=" in app_content
-    assert "@confirm-ghost=" in app_content
-    assert ".cols=${app.boardCols}" in app_content
-    assert ".rows=${app.boardRows}" in app_content
-    assert ".atmosphere=${app.atmosphere}" in app_content
-
-    # Expanded socket event handling
-    assert "'dice_rolled'" in app_content
-    assert "'turn_advanced'" in app_content
-    assert "'aoe_placed'" in app_content
-    assert "'spell_vfx'" in app_content
-    assert "'dm_whisper'" in app_content

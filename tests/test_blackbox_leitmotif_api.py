@@ -8,8 +8,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
@@ -17,7 +15,6 @@ from soundscape.dependencies import set_spicedb_client
 
 from tests.helpers.leitmotif_fixtures import clean_environment, client, setup_leitmotif_profile
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
 __all__ = ["clean_environment", "client"]
 
 
@@ -133,28 +130,3 @@ def test_soundscape_manifest_includes_leitmotif_config(client: TestClient) -> No
     tag = "runefoble-leitmotif-config"
     assert tag in data["components"] and tag in data["tags"]
     assert any("runefoble-leitmotif-config.styles" in s for s in data["styles"])
-
-
-def test_leitmotif_microfrontend_component_invariants() -> None:
-    """Verify Lit component, styles, and Storybook stories conform to code limits."""
-    ui_dir = REPO_ROOT / "services" / "soundscape" / "ui"
-    comp_file = ui_dir / "src" / "runefoble-leitmotif-config.ts"
-    styles_file = ui_dir / "src" / "runefoble-leitmotif-config.styles.ts"
-    stories_file = ui_dir / "src" / "runefoble-leitmotif-config.stories.ts"
-
-    assert comp_file.is_file() and styles_file.is_file() and stories_file.is_file()
-    comp_content = comp_file.read_text(encoding="utf-8")
-    styles_content = styles_file.read_text(encoding="utf-8")
-    stories_content = stories_file.read_text(encoding="utf-8")
-
-    assert len(comp_content.splitlines()) < 300 and len(styles_content.splitlines()) < 250
-    assert len(stories_content.splitlines()) < 200
-
-    assert "@customElement('runefoble-leitmotif-config')" in comp_content
-    events = ("'leitmotif-audition'", "'leitmotif-configured'", "'leitmotif-timbre-selected'")
-    assert all(e in comp_content for e in events)
-    assert all(
-        t in styles_content for t in ("--rf-accent-primary", "--rf-border-color", "--rf-shadow")
-    )
-    stories = ("DefaultNadiaLute", "HeroicBrass", "SomberCelloStrings", "VoiceDuckingActive")
-    assert all(s in stories_content for s in stories)

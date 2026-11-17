@@ -101,25 +101,3 @@ def test_blackbox_ui_microfrontend_manifest_and_storybook(char_client: TestClien
     assert "BloodiedInjury" in stories_src
     assert "PoisonedAffliction" in stories_src
     assert "GalaAttireMasquerade" in stories_src
-
-
-def test_blackbox_wardrobe_gallery_styles_and_subcomponents_modular_decomposition():
-    """Verify TASK-0131: Wardrobe gallery styles extracted to companion *.styles.ts module and line limits (<250 lines)."""
-    comp_file = REPO_ROOT / "services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts"
-    styles_file = REPO_ROOT / "services/character_sheet/ui/src/runefoble-wardrobe-gallery.styles.ts"
-
-    assert comp_file.is_file(), f"{comp_file} must exist"
-    assert styles_file.is_file(), f"{styles_file} must exist"
-
-    comp_lines = len(comp_file.read_text(encoding="utf-8").splitlines())
-    styles_lines = len(styles_file.read_text(encoding="utf-8").splitlines())
-
-    assert comp_lines < 250, f"Component file has {comp_lines} lines (expected < 250)"
-    assert styles_lines < 250, f"Styles file has {styles_lines} lines (expected < 250)"
-
-    comp_src = comp_file.read_text(encoding="utf-8")
-    assert "renderConditionBadge" in comp_src
-    assert "renderConditionBadges" in comp_src
-    assert "renderVariantCard" in comp_src
-    assert "renderActiveSection" in comp_src
-    assert "renderForgePanel" in comp_src

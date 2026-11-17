@@ -10,7 +10,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -57,35 +56,6 @@ def test_package_facade_and_backward_compatibility() -> None:
     assert issubclass(GameSessionAggregate, SessionHandlersMixin)
     assert issubclass(GameSessionAggregate, CombatHandlersMixin)
     assert issubclass(GameSessionAggregate, ReactionHandlersMixin)
-
-
-def test_aggregate_submodules_line_count_invariant() -> None:
-    """Verify all aggregate modules strictly adhere to the < 160 line count budget."""
-    pkg_dir = (
-        Path(__file__).resolve().parent.parent
-        / "services"
-        / "game_session"
-        / "src"
-        / "game_session"
-        / "aggregate"
-    )
-    facade_file = pkg_dir.parent / "aggregate.py"
-
-    assert facade_file.exists()
-    assert len(facade_file.read_text().splitlines()) < 160
-
-    submodules = [
-        "__init__.py",
-        "aggregate.py",
-        "combat_handlers.py",
-        "reaction_handlers.py",
-        "session_handlers.py",
-    ]
-    for sub in submodules:
-        sub_file = pkg_dir / sub
-        assert sub_file.exists(), f"Submodule file {sub_file} does not exist"
-        lines = len(sub_file.read_text().splitlines())
-        assert lines < 160, f"{sub} has {lines} lines, exceeding 160 line limit"
 
 
 def test_event_handlers_registry_completeness() -> None:

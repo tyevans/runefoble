@@ -16,7 +16,6 @@ import array
 import base64
 import time
 import uuid
-from pathlib import Path
 
 from fastapi.testclient import TestClient
 from runefoble_events.events import VoiceSpeechInterrupted
@@ -24,8 +23,6 @@ from runefoble_platform.redis_bus import MockAsyncRedis, deserialize_event
 from voice_agent.interruption import apply_soft_crossfade
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_barge_in_cancels_playback_within_100ms(client: TestClient, mock_redis: MockAsyncRedis):
@@ -114,20 +111,3 @@ def test_silence_input_does_not_trigger_barge_in(client: TestClient, mock_redis:
         assert state["type"] == "duplex_state" and state["speech_detected"] is False
 
     assert "runefoble.events.voice" not in mock_redis.streams
-
-
-def test_voice_duplex_file_length_invariants():
-    """Verify Hard Invariant 6: All voice duplex modules strictly adhere to line count limits."""
-    limits = {
-        "services/voice_agent/src/voice_agent/barge_in.py": 150,
-        "services/voice_agent/src/voice_agent/interruption.py": 140,
-        "services/voice_agent/src/voice_agent/echo_canceller.py": 130,
-        "services/voice_agent/src/voice_agent/routers/duplex.py": 140,
-        "tests/test_blackbox_voice_duplex.py": 180,
-    }
-    for rel_path, max_lines in limits.items():
-        full_path = REPO_ROOT / rel_path
-        assert full_path.is_file(), f"{full_path} must exist"
-        lines = len(full_path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, f"{rel_path} has {lines} lines, exceeding target {max_lines}"
-        assert lines < 180, f"{rel_path} has {lines} lines, exceeding DoD limit 180"

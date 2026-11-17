@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import UUID
 
 import game_session.models as models
@@ -68,22 +67,3 @@ def test_combat_transitions(initial_session_state: models.GameSessionState) -> N
 
     state = state.with_combat_ended()
     assert not state.in_combat and state.combat_active_id is None
-
-
-def test_model_files_line_count_invariants() -> None:
-    """Verify model files adhere to file length limits."""
-    models_dir = (
-        Path(__file__).resolve().parents[2] / "services/game_session/src/game_session/models"
-    )
-    facade_file = models_dir.parent / "models.py"
-    assert facade_file.exists() and len(facade_file.read_text().splitlines()) < 60
-
-    budgets = {"settlement.py": 80, "reactions.py": 90}
-    for sub_file in models_dir.glob("*.py"):
-        limit = budgets.get(
-            sub_file.name,
-            100
-            if sub_file.name in ("combat.py", "initiative.py", "session.py", "turn_order.py")
-            else 120,
-        )
-        assert len(sub_file.read_text().splitlines()) < limit

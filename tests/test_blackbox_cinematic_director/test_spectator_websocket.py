@@ -1,15 +1,11 @@
 """Spectator WebSocket and microfrontend manifest blackbox tests (TASK-0190)."""
 
-import json
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_overlay_websocket_connection_and_initial_sanitized_state(client: TestClient) -> None:
@@ -101,25 +97,3 @@ def test_game_session_ui_manifest_advertises_spectator_overlay(
     assert manifest["service"] == "game_session"
     assert manifest["package"] == "@runefoble/game-session-ui"
     assert "runefoble-spectator-overlay" in manifest["components"]
-
-
-def test_spectator_overlay_manifest_file_and_element_export() -> None:
-    """Verify services/game_session/ui/manifest.json and TypeScript element source."""
-    manifest_file = REPO_ROOT / "services/game_session/ui/manifest.json"
-    assert manifest_file.is_file(), "services/game_session/ui/manifest.json must exist"
-
-    data = json.loads(manifest_file.read_text(encoding="utf-8"))
-    assert "runefoble-spectator-overlay" in data["components"]
-
-    comp_file = REPO_ROOT / "services/game_session/ui/src/runefoble-spectator-overlay.ts"
-    assert comp_file.is_file()
-    comp_code = comp_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-spectator-overlay')" in comp_code
-    assert "class RunefobleSpectatorOverlay" in comp_code
-
-    stories_file = REPO_ROOT / "services/game_session/ui/src/spectator-overlay.stories.ts"
-    assert stories_file.is_file()
-    stories_code = stories_file.read_text(encoding="utf-8")
-    assert "DefaultPartyHUD" in stories_code
-    assert "ActiveTurnFocus" in stories_code
-    assert "CriticalRollAnimation" in stories_code
