@@ -14,13 +14,15 @@ from campaign_lore.dependencies import (
 )
 from campaign_lore.handouts import RelicSynthesizer
 from campaign_lore.handouts_aggregate import RelicAggregate
+from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_inspect_relic,
     check_user_can_read_secrets,
-    get_current_user_id,
 )
 
-router = APIRouter(prefix="/api/v1/lore/relics", tags=["3D Relics"])
+router = APIRouter(
+    prefix="/api/v1/lore/relics", tags=["3D Relics"], dependencies=[Depends(get_campaign_principal)]
+)
 
 
 class ForgeRelicRequest(BaseModel):
@@ -55,7 +57,7 @@ class TranslateRuneRequest(BaseModel):
 @router.post("/forge", response_model=dict[str, Any], status_code=status.HTTP_200_OK)
 async def forge_relic(
     payload: ForgeRelicRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
@@ -108,7 +110,7 @@ async def forge_relic(
 @router.get("/{relic_id}", response_model=dict[str, Any])
 async def get_relic(
     relic_id: UUID,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
@@ -154,7 +156,7 @@ async def get_relic(
 async def inspect_relic(
     relic_id: UUID,
     payload: InspectRelicRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
@@ -193,7 +195,7 @@ async def inspect_relic(
 async def translate_rune(
     relic_id: UUID,
     payload: TranslateRuneRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:

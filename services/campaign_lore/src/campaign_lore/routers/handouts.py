@@ -14,13 +14,17 @@ from campaign_lore.dependencies import (
 )
 from campaign_lore.handouts import HandoutSynthesizer
 from campaign_lore.handouts_aggregate import DiegeticHandoutAggregate
+from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_interact_handout,
     check_user_can_view_campaign,
-    get_current_user_id,
 )
 
-router = APIRouter(prefix="/api/v1/lore/handouts", tags=["Diegetic Handouts"])
+router = APIRouter(
+    prefix="/api/v1/lore/handouts",
+    tags=["Diegetic Handouts"],
+    dependencies=[Depends(get_campaign_principal)],
+)
 
 
 class GenerateHandoutRequest(BaseModel):
@@ -56,7 +60,7 @@ class RevealInvisibleInkRequest(BaseModel):
 @router.post("/generate", response_model=dict[str, Any], status_code=status.HTTP_200_OK)
 async def generate_handout(
     payload: GenerateHandoutRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
@@ -118,7 +122,7 @@ async def generate_handout(
 @router.get("/{handout_id}", response_model=dict[str, Any])
 async def get_handout(
     handout_id: UUID,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
@@ -161,7 +165,7 @@ async def get_handout(
 async def break_seal(
     handout_id: UUID,
     payload: BreakSealRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
@@ -214,7 +218,7 @@ async def break_seal(
 async def reveal_invisible_ink(
     handout_id: UUID,
     payload: RevealInvisibleInkRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)

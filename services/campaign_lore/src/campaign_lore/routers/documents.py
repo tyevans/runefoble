@@ -14,13 +14,13 @@ from campaign_lore.dependencies import (
     get_retrieval_engine,
     get_spicedb_client,
 )
+from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_read_secrets,
-    get_current_user_id,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
 
-router = APIRouter(tags=["Lore Documents"])
+router = APIRouter(tags=["Lore Documents"], dependencies=[Depends(get_campaign_principal)])
 
 
 class IngestDocumentRequest(BaseModel):
@@ -54,7 +54,7 @@ class IngestDocumentResponse(BaseModel):
 @router.post("/api/v1/lore/documents", response_model=IngestDocumentResponse)
 async def ingest_document(
     req: IngestDocumentRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     repo: Annotated[AggregateRepository[LoreDocumentAggregate], Depends(get_repo)],
     retrieval_engine: Annotated[LoreRetrievalEngine, Depends(get_retrieval_engine)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
@@ -140,7 +140,7 @@ async def ingest_document(
 @router.get("/api/v1/lore/documents/{document_id}", response_model=LoreDocumentState)
 async def get_document(
     document_id: UUID,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     repo: Annotated[AggregateRepository[LoreDocumentAggregate], Depends(get_repo)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> LoreDocumentState:
