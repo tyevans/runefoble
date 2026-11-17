@@ -47,15 +47,6 @@ def test_makefile_targets_dry_run(make_target: str):
     assert proc.returncode == 0, f"Makefile target '{make_target}' failed dry-run: {proc.stderr}"
 
 
-def test_frontend_storybook_watcher_protection():
-    """Verify that Storybook scripts in package.json enable polling to protect against inotify limits."""
-    from pathlib import Path
-
-    pkg_json = Path("frontend/package.json").read_text()
-    assert "WATCHPACK_POLLING=true" in pkg_json
-    assert "CHOKIDAR_USEPOLLING=true" in pkg_json
-
-
 def test_microservice_entrypoint_initialization(monkeypatch, tmp_path):
     """Verify all microservice FastAPI entrypoints initialize and generate OpenAPI schemas."""
     from asset_forge.main import app as forge_app

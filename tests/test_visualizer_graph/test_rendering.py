@@ -13,28 +13,6 @@ from tools.project_visualizer.assets_js import get_client_js
 from tools.project_visualizer.generator import ProjectVisualizerGenerator
 
 
-def test_graph_modular_decomposition_and_line_invariants(repo_root: Path):
-    """Verify TASK-0217 decomposition: submodules exist, strictly < 150 lines, and meet targets."""
-    graph_js = repo_root / "tools" / "project_visualizer" / "static" / "js" / "graph.js"
-    graph_dir = repo_root / "tools" / "project_visualizer" / "static" / "js" / "graph"
-
-    assert graph_js.exists(), "graph.js orchestrator must exist"
-    assert graph_dir.is_dir(), "graph/ submodule directory must exist"
-
-    targets = {"simulation.js": 90, "nodes.js": 110, "links.js": 100, "zoom.js": 80}
-    for filename, max_lines in targets.items():
-        module_file = graph_dir / filename
-        assert module_file.exists(), f"Submodule {filename} must exist"
-        lines = len(module_file.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, f"{filename} has {lines} lines (target < {max_lines})"
-        assert lines < 150, f"{filename} has {lines} lines (limit < 150)"
-
-    graph_lines = len(graph_js.read_text(encoding="utf-8").splitlines())
-    assert graph_lines < 70 and graph_lines < 150
-    for f in graph_dir.glob("*.js"):
-        assert len(f.read_text(encoding="utf-8").splitlines()) < 150
-
-
 def test_graph_renderer_and_interactions_via_node(repo_root: Path):
     """Verify frontdoor graph rendering, layout switching, node clicks, and search via Node.js."""
     node_bin = shutil.which("node")

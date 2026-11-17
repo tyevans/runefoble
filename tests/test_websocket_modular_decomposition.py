@@ -10,8 +10,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client, set_spicedb_client
@@ -68,29 +66,6 @@ def reset_gateway_state():
     yield
     set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
-
-
-def test_modular_file_length_invariants():
-    """Verify that all decomposed WebSocket modules strictly comply with line limits (< 150 lines)."""
-    base_dir = Path(__file__).resolve().parent.parent / "gateway" / "api" / "src" / "gateway_api"
-    target_files = {
-        "websocket_validator.py": 140,
-        "websocket_manager.py": 100,
-        "websocket_endpoint.py": 150,
-        "websocket_auth.py": 150,
-        "websocket.py": 130,
-    }
-
-    for filename, max_lines in target_files.items():
-        file_path = base_dir / filename
-        assert file_path.exists(), f"Expected module {filename} does not exist"
-        line_count = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert line_count < max_lines, (
-            f"File {filename} has {line_count} lines, exceeding task limit {max_lines}"
-        )
-        assert line_count < 150, (
-            f"File {filename} has {line_count} lines, violating Hard Invariant 6 (<150)"
-        )
 
 
 def test_module_re_export_parity():

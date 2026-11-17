@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -27,8 +26,6 @@ from runefoble_events.voice_stream_quality import (
 from runefoble_platform.redis_bus import MockAsyncRedis, RedisStreamsEventBus
 from voice_agent.main import app, set_event_bus
 from voice_agent.routers.stream_diagnostics import reset_diagnostics
-
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 @pytest.fixture(autouse=True)
@@ -217,21 +214,3 @@ def test_cloudevents_conformance():
     assert ce_adapt["specversion"] == "1.0"
     assert ce_adapt["type"] == "runefoble.events.voice.stream_codec_adapted"
     assert ce_adapt["data"]["new_bitrate_kbps"] == 12
-
-
-def test_file_length_invariants():
-    """Verify Hard Invariant 6: All adaptive stream modules strictly under line limits."""
-    limits = {
-        "services/voice_agent/src/voice_agent/webrtc/quality_monitor.py": 140,
-        "services/voice_agent/src/voice_agent/webrtc/adaptive_bitrate.py": 130,
-        "services/voice_agent/src/voice_agent/routers/stream_diagnostics.py": 120,
-        "libs/runefoble_events/src/runefoble_events/voice_stream_quality.py": 80,
-        "tests/test_blackbox_adaptive_stream/test_adaptive_stream.py": 300,
-    }
-    for rel_path, max_lines in limits.items():
-        file_path = REPO_ROOT / rel_path
-        assert file_path.is_file(), f"{file_path} must exist"
-        lines = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, (
-            f"{rel_path} has {lines} lines, exceeding specified limit of {max_lines}"
-        )

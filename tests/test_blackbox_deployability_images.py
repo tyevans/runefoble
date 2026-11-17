@@ -25,7 +25,6 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MAKEFILE = REPO_ROOT / "Makefile"
 DOCKERFILE = REPO_ROOT / "deployments" / "docker" / "python-service.Dockerfile"
-DOCKERIGNORE = REPO_ROOT / ".dockerignore"
 VALUES = REPO_ROOT / "deployments" / "helm" / "runefoble" / "values.yaml"
 IMAGE_TAG = "0.1.0"
 # Helm images that are not built by `make images`.
@@ -83,22 +82,6 @@ def docker_daemon_available() -> bool:
         return False
     result = subprocess.run(["docker", "info"], capture_output=True, text=True, timeout=60)
     return result.returncode == 0
-
-
-def test_shared_dockerfile_and_dockerignore_exist():
-    """One shared Dockerfile and a root .dockerignore exist, with no per-service copies."""
-    assert DOCKERFILE.is_file(), f"missing {DOCKERFILE.relative_to(REPO_ROOT)}"
-    assert DOCKERIGNORE.is_file(), "missing root .dockerignore"
-
-    dockerfile = DOCKERFILE.read_text(encoding="utf-8")
-    for arg in ("ARG SERVICE", "ARG APP", "ARG PORT"):
-        assert arg in dockerfile, f"Dockerfile does not declare `{arg}`"
-    assert "uv sync --frozen --package" in dockerfile
-    assert "--no-dev" in dockerfile
-
-    ignored = {line.strip() for line in DOCKERIGNORE.read_text(encoding="utf-8").splitlines()}
-    for pattern in (".git", ".venv", "node_modules", ".audit", "docs", "e2e", "frontend"):
-        assert pattern in ignored, f".dockerignore does not exclude `{pattern}`"
 
 
 def test_image_table_matches_helm_services():

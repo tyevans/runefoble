@@ -145,15 +145,3 @@ async def test_get_or_create_entity_helper() -> None:
     e1_id = await get_or_create_entity(graph, cid, "Sir Gareth", "test", prov)
     e2_id = await get_or_create_entity(graph, cid, "sir gareth", "test", prov)
     assert e1_id == e2_id
-
-
-def test_file_length_invariants() -> None:
-    """Verify Hard Invariant 6 file length limit (< 500 lines) for campaign_lore modules."""
-    base_dir = Path("services/campaign_lore/src/campaign_lore")
-    target_files = ["retrieval.py", "extraction.py", "scoring.py", "models.py", "pattern_graph.py"]
-
-    for fname in target_files:
-        path = base_dir / fname
-        assert path.exists(), f"File {fname} missing"
-        line_count = len(path.read_text().splitlines())
-        assert line_count < 500, f"{fname} has {line_count} lines, exceeding 500 limit"

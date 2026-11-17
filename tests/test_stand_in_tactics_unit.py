@@ -120,27 +120,3 @@ def test_personality_traits_alter_dialogue_and_tactics(watcher_engine: TheWatche
         personality_traits=["impulsive"],
     )
     assert "strike hard and fast" in impulsive_action.dialogue.lower()
-
-
-def test_stand_in_test_suite_modular_decomposition_invariants():
-    """Verify TASK-0070 decomposition: monolithic test file removed, modular suites < 220 lines."""
-    from pathlib import Path
-
-    tests_dir = Path(__file__).resolve().parent
-    monolithic_file = tests_dir / "test_stand_in_engine.py"
-    unit_suite = tests_dir / "test_stand_in_tactics_unit.py"
-    service_suite = tests_dir / "test_blackbox_stand_in_service.py"
-
-    assert not monolithic_file.exists(), "test_stand_in_engine.py should be decomposed and removed"
-    assert unit_suite.exists()
-    assert service_suite.exists()
-
-    unit_lines = len(unit_suite.read_text().splitlines())
-    service_lines = len(service_suite.read_text().splitlines())
-
-    assert unit_lines < 220, (
-        f"test_stand_in_tactics_unit.py exceeds 220 lines (current: {unit_lines})"
-    )
-    assert service_lines < 220, (
-        f"test_blackbox_stand_in_service.py exceeds 220 lines (current: {service_lines})"
-    )

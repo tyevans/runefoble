@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Generator
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -95,13 +94,6 @@ def assert_stream_event(mock_bus: MockAsyncRedis, stream: str, event_name: str) 
     assert any(
         ev_norm in str(e[1]).lower().replace("_", "") for e in mock_bus.streams.get(stream, [])
     )
-
-
-def _assert_submodules(dir_path: str, facade_path: str) -> None:
-    base, facade = Path(dir_path), Path(facade_path)
-    assert base.is_dir() and facade.exists() and len(facade.read_text().splitlines()) < 40
-    submodules = list(base.glob("*.py"))
-    assert len(submodules) >= 4 and all(len(s.read_text().splitlines()) < 130 for s in submodules)
 
 
 def setup_campaign_settlement(

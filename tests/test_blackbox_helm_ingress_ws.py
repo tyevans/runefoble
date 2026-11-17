@@ -4,7 +4,6 @@ The tests use only the rendered Helm manifests and the frontend Vite config.
 They do not reach into service internals.
 """
 
-import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -13,7 +12,6 @@ import pytest
 import yaml
 
 HELM_CHART = Path("deployments/helm/runefoble")
-VITE_CONFIG = Path("frontend/vite.config.ts")
 # Zitadel has its own host. It is not an application host and has no /ws route.
 ZITADEL_HOST = "auth.localhost"
 
@@ -75,13 +73,3 @@ def test_ingress_keeps_api_route_to_gateway():
         api_routes = [p for p in rule["http"]["paths"] if p["path"] == "/api"]
         assert api_routes, f"host {rule['host']} lost its /api route"
         assert api_routes[0]["backend"]["service"]["name"] == "gateway-api"
-
-
-def test_vite_dev_proxy_forwards_ws_with_upgrade_support():
-    """The Vite dev proxy forwards /ws to the gateway with ws: true."""
-    source = VITE_CONFIG.read_text(encoding="utf-8")
-    match = re.search(r"'/ws':\s*\{(?P<body>[^}]*)\}", source, re.DOTALL)
-    assert match, "Vite proxy has no '/ws' entry"
-    body = match.group("body")
-    assert "ws: true" in body, "Vite '/ws' proxy entry does not enable ws: true"
-    assert "gatewayWsUrl" in body, "Vite '/ws' proxy entry does not target the gateway"

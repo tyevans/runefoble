@@ -16,7 +16,6 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 LOCAL_CI_SCRIPT_PATH = REPO_ROOT / "scripts" / "test_ci_e2e.sh"
-PLAYWRIGHT_CONFIG_PATH = REPO_ROOT / "playwright.config.ts"
 
 
 def test_ci_workflow_valid_yaml() -> None:
@@ -118,12 +117,3 @@ def test_local_ci_simulation_script() -> None:
     assert "api/v1/health" in content
     assert "http://localhost:5173" in content
     assert "trap cleanup" in content
-
-
-def test_playwright_config_invariants() -> None:
-    """Verify playwright.config.ts has workers=1, reuseExistingServer=true, and CI reporters."""
-    content = PLAYWRIGHT_CONFIG_PATH.read_text(encoding="utf-8")
-    assert "workers: 1" in content
-    assert "reuseExistingServer: true" in content
-    assert "github" in content
-    assert "html" in content

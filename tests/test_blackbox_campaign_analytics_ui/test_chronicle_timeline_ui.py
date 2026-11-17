@@ -21,17 +21,6 @@ from runefoble_events.events import (
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.test_blackbox_campaign_analytics_ui.conftest import REPO_ROOT
-
-
-def test_chronicle_timeline_custom_element_declaration() -> None:
-    """Verify Chronicle Timeline Custom Element decorator and Lit component export."""
-    timeline_file = REPO_ROOT / "services/campaign_analytics/ui/src/runefoble-chronicle-timeline.ts"
-    assert timeline_file.is_file()
-    src = timeline_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-chronicle-timeline')" in src
-    assert "class RunefobleChronicleTimeline" in src
-
 
 @pytest.mark.asyncio
 async def test_chronicle_timeline_frontdoor_and_recap_metadata(

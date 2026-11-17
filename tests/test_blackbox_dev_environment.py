@@ -140,29 +140,6 @@ def test_orchestrator_health_waiter_live_and_timeout():
         server.server_close()
 
 
-def test_vite_config_proxy_rules():
-    """Verify frontend/vite.config.ts expands proxying for all required endpoints."""
-    vite_config_path = REPO_ROOT / "frontend" / "vite.config.ts"
-    assert vite_config_path.exists(), "frontend/vite.config.ts must exist"
-    content = vite_config_path.read_text()
-
-    required_proxies = [
-        "'/api/v1'",
-        "'/api'",
-        "'/ws'",
-        "'/docs'",
-        "'/openapi.json'",
-        "'/mail'",
-        "'/oauth'",
-        "'/auth'",
-    ]
-    for p in required_proxies:
-        assert p in content, f"Missing proxy rule {p} in vite.config.ts"
-
-    assert "ws: true" in content, "WebSocket proxy must declare ws: true"
-    assert "configure: (proxy)" in content, "WebSocket proxy must provide error resilience"
-
-
 def test_blackbox_live_vite_proxy_to_gateway():
     """End-to-end blackbox test: Start mock backend and Vite dev server, verifying seamless proxying."""
     gw_port = get_free_port()

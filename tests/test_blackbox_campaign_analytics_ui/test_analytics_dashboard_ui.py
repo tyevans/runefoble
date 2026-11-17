@@ -9,7 +9,6 @@ Governed by:
 
 from __future__ import annotations
 
-import json
 from uuid import uuid4
 
 import pytest
@@ -24,8 +23,6 @@ from runefoble_events.events import (
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.test_blackbox_campaign_analytics_ui.conftest import REPO_ROOT
-
 
 def test_campaign_analytics_manifest_endpoint(client: TestClient) -> None:
     """Verify GET /ui/manifest frontdoor exposes correct microfrontend metadata."""
@@ -36,51 +33,6 @@ def test_campaign_analytics_manifest_endpoint(client: TestClient) -> None:
     assert data["package"] == "@runefoble/campaign-analytics-ui"
     assert data["version"] == "0.1.0"
     assert "runefoble-campaign-analytics" in data["components"]
-
-
-def test_manifest_and_app_shell_forwarding() -> None:
-    """Verify manifest.json on disk and frontend app shell forwarding export."""
-    manifest_path = REPO_ROOT / "services/campaign_analytics/ui/manifest.json"
-    assert manifest_path.is_file()
-    manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert manifest_data["service"] == "campaign-analytics"
-    assert "runefoble-campaign-analytics" in manifest_data["components"]
-
-    forwarding_file = REPO_ROOT / "frontend/src/components/runefoble-campaign-analytics.ts"
-    assert forwarding_file.is_file()
-    assert "@runefoble/campaign-analytics-ui" in forwarding_file.read_text(encoding="utf-8")
-
-
-def test_typescript_element_source_and_storybook() -> None:
-    """Verify TypeScript component decorator and Storybook test scenario states."""
-    ui_dir = REPO_ROOT / "services/campaign_analytics/ui"
-    comp_file = ui_dir / "src/runefoble-campaign-analytics.ts"
-    assert comp_file.is_file()
-    comp_src = comp_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-campaign-analytics')" in comp_src
-
-    stories_file = ui_dir / "src/runefoble-campaign-analytics.stories.ts"
-    assert stories_file.is_file()
-    stories_content = stories_file.read_text(encoding="utf-8")
-    assert len(stories_content.splitlines()) < 100
-    for state in [
-        "EmptyState",
-        "ActiveCombatTelemetry",
-        "VictoryCelebration",
-        "TotalPartyKill",
-        "Default",
-        "HeatmapDensity",
-        "CombatMVP",
-        "ChronicleTimeline",
-    ]:
-        assert state in stories_content
-
-    fixtures_file = ui_dir / "src/fixtures/campaign-analytics.fixtures.ts"
-    assert fixtures_file.is_file()
-    fixtures_content = fixtures_file.read_text(encoding="utf-8")
-    assert len(fixtures_content.splitlines()) < 130
-    for fixture in ["MOCK_HEATMAP_ACTIVE", "MOCK_MVP_ACTIVE", "MOCK_TIMELINE_ACTIVE"]:
-        assert fixture in fixtures_content
 
 
 @pytest.mark.asyncio

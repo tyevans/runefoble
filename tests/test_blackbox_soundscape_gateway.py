@@ -27,9 +27,6 @@ from soundscape.leitmotif import CharacterLeitmotifProfile
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-GATEWAY_ROUTER_PATH = (
-    REPO_ROOT / "gateway" / "api" / "src" / "gateway_api" / "routers" / "soundscape.py"
-)
 
 
 @pytest.fixture(autouse=True)
@@ -90,13 +87,6 @@ def setup_zanzibar_soundscape(client: TestClient) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 # 1. File Length & Schema DoD Invariants
 # ---------------------------------------------------------------------------
-
-
-def test_file_length_invariants() -> None:
-    """Verify soundscape router is strictly < 130 lines (DoD 1)."""
-    assert GATEWAY_ROUTER_PATH.is_file(), f"{GATEWAY_ROUTER_PATH} must exist"
-    lines = len(GATEWAY_ROUTER_PATH.read_text(encoding="utf-8").splitlines())
-    assert lines < 130, f"soundscape.py has {lines} lines; must be strictly < 130 lines (DoD 1)"
 
 
 def test_openapi_schema_exposure(client: TestClient) -> None:

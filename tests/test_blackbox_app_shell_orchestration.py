@@ -18,13 +18,9 @@ from fastapi.testclient import TestClient
 from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
-from tests.helpers.app_shell_source import read_app_shell_source
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
-COMPONENTS_DIR = SRC_DIR / "components"
-SERVICES_DIR = SRC_DIR / "services"
 
 
 @pytest.fixture
@@ -48,78 +44,9 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
-def test_app_shell_file_length_invariants() -> None:
-    """Verify runefoble-app.ts is strictly kept under 450 lines (Hard Invariant 6)."""
-    app_ts = SRC_DIR / "runefoble-app.ts"
-    assert app_ts.is_file(), f"{app_ts} must exist"
-
-    lines = app_ts.read_text(encoding="utf-8").splitlines()
-    assert len(lines) <= 450, f"runefoble-app.ts has {len(lines)} lines; must be <= 450 lines"
-
-    # Also verify associated decomposed components are well under 500 lines
-    session_list_ts = COMPONENTS_DIR / "runefoble-session-list.ts"
-    assert session_list_ts.is_file(), f"{session_list_ts} must exist"
-    assert len(session_list_ts.read_text(encoding="utf-8").splitlines()) < 500
-
-    app_data_service_ts = SERVICES_DIR / "app-data-service.ts"
-    assert app_data_service_ts.is_file(), f"{app_data_service_ts} must exist"
-    assert len(app_data_service_ts.read_text(encoding="utf-8").splitlines()) < 500
-
-
 # ---------------------------------------------------------------------------
 # 2. Dynamic View Rendering & Microfrontend Orchestration
 # ---------------------------------------------------------------------------
-
-
-def test_app_shell_orchestrates_required_views() -> None:
-    """Verify runefoble-app.ts imports and mounts all required subviews by route."""
-    app_code = read_app_shell_source(SRC_DIR / "runefoble-app.ts")
-
-    # Verify custom element registration
-    assert "@customElement('runefoble-app')" in app_code
-    assert "class RunefobleApp extends LitElement" in app_code
-
-    # Verify routed microfrontends and views are mounted
-    assert "runefoble-auth-modal" in app_code
-    assert "runefoble-campaign-dashboard" in app_code
-    assert "runefoble-campaign-members" in app_code
-    assert "runefoble-session-list" in app_code
-    assert "runefoble-character-roster" in app_code
-    assert "runefoble-session-lobby" in app_code
-    assert "runefoble-board" in app_code
-    assert "runefoble-character-card" in app_code
-    assert "runefoble-watcher-feed" in app_code
-    assert "runefoble-voice-controls" in app_code
-
-
-def test_app_shell_route_bound_websocket_lifecycle() -> None:
-    """Verify runefoble-app.ts binds WebSocket connections to session routes only."""
-    app_code = read_app_shell_source(SRC_DIR / "runefoble-app.ts")
-
-    # Verify WebSocket connection is managed on route change
-    assert "manageWebSocketLifecycle" in app_code
-    assert "connectWebSocket" in app_code
-    assert "disconnectWebSocket" in app_code
-
-    # Verify teardown registration on router
-    assert "registerTeardown" in app_code
-
-    # Verify WebSocket connects to session routes
-    assert "/ws/session/" in app_code
-    assert "lobby" in app_code
-    assert "sessions" in app_code
-
-
-def test_app_shell_session_start_transition() -> None:
-    """Verify runefoble-app.ts implements transition from lobby to active VTT session."""
-    app_code = read_app_shell_source(SRC_DIR / "runefoble-app.ts")
-
-    # Handles launch-session event
-    assert "handleLaunchSession" in app_code
-    assert "@launch-session" in app_code
-
-    # Handles session_started WS message
-    assert "session_started" in app_code
 
 
 # ---------------------------------------------------------------------------

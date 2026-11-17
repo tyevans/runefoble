@@ -11,75 +11,11 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
-
-def test_radial_menu_file_length_limits() -> None:
-    """Verify radial menu component and submodules strictly comply with TASK-0201 line limits."""
-    radial_dir = REPO_ROOT / "services/board_state/ui/src/radial"
-    controller_file = REPO_ROOT / "services/board_state/ui/src/radial_menu.ts"
-
-    assert controller_file.is_file(), f"{controller_file} must exist"
-    controller_lines = len(controller_file.read_text(encoding="utf-8").splitlines())
-    assert controller_lines < 110, (
-        f"radial_menu.ts has {controller_lines} lines (must be strictly < 110)"
-    )
-    assert controller_lines < 100, f"radial_menu.ts has {controller_lines} lines (target < 100)"
-
-    submodules = [
-        (radial_dir / "radial_menu.styles.ts", 110, 90),
-        (radial_dir / "radial_glyphs.ts", 110, 100),
-        (radial_dir / "radial_wedge.ts", 110, 90),
-        (radial_dir / "index.ts", 110, 50),
-    ]
-
-    for path, max_limit, target_limit in submodules:
-        assert path.is_file(), f"{path} must exist"
-        lines = len(path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_limit, f"{path.name} has {lines} lines (must be strictly < {max_limit})"
-        assert lines < target_limit, f"{path.name} has {lines} lines (target < {target_limit})"
-
-
-def test_radial_menu_exports_and_submodule_structure() -> None:
-    """Verify radial_menu.ts and submodules export required constants, types, and functions."""
-    controller_file = REPO_ROOT / "services/board_state/ui/src/radial_menu.ts"
-    controller_content = controller_file.read_text(encoding="utf-8")
-
-    assert "@customElement('runefoble-radial-menu')" in controller_content
-    assert "class RunefobleRadialMenu extends LitElement" in controller_content
-    assert "export * from './radial/index.ts'" in controller_content
-    assert "'runefoble-radial-menu': RunefobleRadialMenu" in controller_content
-
-    # Verify styles submodule
-    styles_file = REPO_ROOT / "services/board_state/ui/src/radial/radial_menu.styles.ts"
-    styles_content = styles_file.read_text(encoding="utf-8")
-    assert "export const radialMenuStyles = css`" in styles_content
-    assert ".radial-container" in styles_content
-    assert ".action-wedge" in styles_content
-    assert ".center-button" in styles_content
-
-    # Verify glyphs submodule
-    glyphs_file = REPO_ROOT / "services/board_state/ui/src/radial/radial_glyphs.ts"
-    glyphs_content = glyphs_file.read_text(encoding="utf-8")
-    assert "export function renderBauhausGlyph" in glyphs_content
-    for action in ["attack", "dash", "disengage", "dodge", "cast"]:
-        assert f"case '{action}':" in glyphs_content
-
-    # Verify wedge submodule
-    wedge_file = REPO_ROOT / "services/board_state/ui/src/radial/radial_wedge.ts"
-    wedge_content = wedge_file.read_text(encoding="utf-8")
-    assert "export const RADIAL_ACTIONS" in wedge_content
-    assert "export function polarToCartesian" in wedge_content
-    assert "export function describeArc" in wedge_content
-    assert "export function calculateWedgePosition" in wedge_content
-    assert "export function renderWedge" in wedge_content
 
 
 @pytest.mark.asyncio

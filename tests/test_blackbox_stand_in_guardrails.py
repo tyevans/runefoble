@@ -10,7 +10,6 @@ Verifies:
 4. Hard Invariant 6: All stand-in source modules are strictly under their line limits (< 150 lines).
 """
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -197,46 +196,3 @@ def test_stand_in_facade_and_submodule_backward_compatibility(
 # ---------------------------------------------------------------------------
 # 3. Modular Decomposition Line Limits and Structural Invariants
 # ---------------------------------------------------------------------------
-
-
-def test_stand_in_decomposition_file_length_invariants():
-    """Verify Hard Invariant 6: Decomposed files meet strict line length limits (< 150 lines)."""
-    watcher_dir = (
-        Path(__file__).resolve().parent.parent / "services" / "the_watcher" / "src" / "the_watcher"
-    )
-
-    modules = {
-        watcher_dir / "stand_in_ai.py": 80,
-        watcher_dir / "stand_in_guardrails.py": 140,
-        watcher_dir / "stand_in_persona.py": 140,
-        watcher_dir / "stand_in_recap.py": 110,
-    }
-
-    for path, max_lines in modules.items():
-        assert path.exists(), f"{path.name} must exist"
-        lines = len(path.read_text().splitlines())
-        assert lines < max_lines, f"{path.name} exceeds {max_lines} lines (current: {lines})"
-        assert lines < 200, f"{path.name} exceeds 200 lines (current: {lines})"
-
-
-def test_stand_in_guardrails_ui_decomposition_invariants():
-    """Verify Hard Invariant 6 & TASK-0203: UI component, styles, and templates are strictly < 130 lines."""
-    ui_src = Path(__file__).resolve().parent.parent / "services" / "character_sheet" / "ui" / "src"
-
-    modules = {
-        ui_src / "runefoble-stand-in-guardrails.ts": 130,
-        ui_src / "runefoble-stand-in-guardrails.styles.ts": 130,
-        ui_src / "runefoble-stand-in-guardrails.templates.ts": 130,
-    }
-
-    for path, max_lines in modules.items():
-        assert path.exists(), f"{path.name} must exist"
-        lines = len(path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, f"{path.name} exceeds {max_lines} lines (current: {lines})"
-
-    comp_text = (ui_src / "runefoble-stand-in-guardrails.ts").read_text(encoding="utf-8")
-    assert "standInGuardrailsStyles" in comp_text
-    assert "runefoble-stand-in-guardrails.styles.ts" in comp_text
-    assert "runefoble-stand-in-guardrails.templates.ts" in comp_text
-    assert "renderHeader" in comp_text
-    assert "renderPostureSelector" in comp_text

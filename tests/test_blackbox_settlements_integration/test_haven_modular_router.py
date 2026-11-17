@@ -5,27 +5,11 @@ Governed by ADR-0001, ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
-
-
-def test_haven_router_submodule_line_invariants():
-    """Verify haven aggregator router is < 40 lines and all submodules are < 130 lines."""
-    facade = Path("services/game_session/src/game_session/settlement/router.py")
-    assert facade.exists()
-    facade_lines = len(facade.read_text().splitlines())
-    assert facade_lines < 40, f"router.py must be strictly < 40 lines, got {facade_lines}"
-
-    haven_dir = Path("services/game_session/src/game_session/settlement/haven")
-    submodules = list(haven_dir.glob("*.py"))
-    assert len(submodules) >= 5, f"Expected at least 5 haven submodules, found {len(submodules)}"
-    for mod in submodules:
-        lines = len(mod.read_text().splitlines())
-        assert lines < 130, f"{mod.name} must be strictly < 130 lines, got {lines}"
 
 
 def test_haven_router_backwards_compatibility_exports():

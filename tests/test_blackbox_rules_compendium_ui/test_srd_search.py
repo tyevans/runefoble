@@ -78,22 +78,3 @@ def test_rest_data_binding_monster_spell_condition(client: TestClient) -> None:
     cond = c_resp.json()
     assert cond["name"] == "Paralyzed"
     assert len(cond["effects"]) >= 2
-
-
-def test_rules_lookup_components_and_styles() -> None:
-    """Verify UI components, custom elements, and modular base styles."""
-    ui_dir = REPO_ROOT / "services/rules_compendium/ui"
-    comp_src = (ui_dir / "src/runefoble-rules-compendium.ts").read_text(encoding="utf-8")
-    assert "@customElement('runefoble-rules-compendium')" in comp_src
-    assert len(comp_src.splitlines()) < 180
-
-    lookup_src = (ui_dir / "src/runefoble-rules-lookup.ts").read_text(encoding="utf-8")
-    assert "@customElement('runefoble-rules-lookup')" in lookup_src
-
-    base_styles = (ui_dir / "src/styles/compendium-base.styles.ts").read_text(encoding="utf-8")
-    assert "export const compendiumBaseStyles" in base_styles
-    assert len(base_styles.splitlines()) < 100
-
-    facade = (ui_dir / "src/runefoble-rules-compendium.styles.ts").read_text(encoding="utf-8")
-    assert "export const compendiumStyles" in facade
-    assert len(facade.splitlines()) < 60

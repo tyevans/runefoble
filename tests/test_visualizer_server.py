@@ -112,16 +112,3 @@ def test_cli_subcommands(repo_root: Path, tmp_path: Path):
     assert "metrics" in loaded
     assert "adrs" in loaded
     assert "tasks" in loaded
-
-
-def test_file_length_invariant_strictly_enforced(repo_root: Path):
-    vis_dir = repo_root / "tools" / "project_visualizer"
-    assert vis_dir.exists()
-
-    all_files = list(vis_dir.glob("*.py")) + list(vis_dir.glob("static/**/*.*"))
-    for f in all_files:
-        if f.is_file():
-            line_count = len(f.read_text(encoding="utf-8").splitlines())
-            assert line_count < 500, (
-                f"File {f.name} has {line_count} lines, exceeding 500 lines limit"
-            )

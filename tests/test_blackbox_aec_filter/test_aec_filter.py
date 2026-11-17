@@ -15,7 +15,6 @@ from __future__ import annotations
 import array
 import base64
 import math
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,8 +25,6 @@ from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter
 from voice_agent.main import app, set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
-
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 @pytest.fixture
@@ -226,24 +223,3 @@ def test_near_end_only_speech_transparency(client: TestClient):
     assert data["echo_detected"] is False
     assert data["double_talk_detected"] is False
     assert abs(data["residual_rms"] - data["initial_rms"]) < 5.0
-
-
-def test_file_length_invariants():
-    """Verify Hard Invariant 6: All TASK-0169 modules strictly adhere to line count limits."""
-    limits = {
-        "services/voice_agent/src/voice_agent/aec/nlms_filter.py": 150,
-        "services/voice_agent/src/voice_agent/aec/double_talk.py": 130,
-        "services/voice_agent/src/voice_agent/aec/pipeline.py": 150,
-        "libs/runefoble_events/src/runefoble_events/aec.py": 70,
-        "services/voice_agent/src/voice_agent/routers/aec_diagnostics.py": 120,
-        "tests/test_blackbox_aec_filter/test_aec_filter.py": 250,
-    }
-
-    for rel_path, max_lines in limits.items():
-        full_path = REPO_ROOT / rel_path
-        assert full_path.is_file(), f"{full_path} must exist"
-        lines = len(full_path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_lines, f"{rel_path} has {lines} lines, exceeding target {max_lines}"
-        assert lines < 160 or "test_" in rel_path, (
-            f"{rel_path} has {lines} lines, exceeding limit 160"
-        )

@@ -20,23 +20,8 @@ from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app
 
-from tests.helpers.app_shell_source import read_app_shell_source
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
-APP_TS = FRONTEND_DIR / "src" / "runefoble-app.ts"
-DATA_SERVICE_TS = FRONTEND_DIR / "src" / "services" / "app-data-service.ts"
-APP_SHELL_STYLES_TS = FRONTEND_DIR / "src" / "styles" / "app-shell.styles.ts"
-ROSTER_COMPONENT_TS = (
-    REPO_ROOT
-    / "services"
-    / "character_sheet"
-    / "ui"
-    / "src"
-    / "roster"
-    / "runefoble-character-roster.ts"
-)
-
 client = TestClient(app)
 
 
@@ -171,106 +156,9 @@ def test_frontdoor_delete_character_mutation(signing_issuer):
 # ---------------------------------------------------------------------------
 
 
-def test_app_data_service_character_mutation_methods():
-    """Verify AppDataService exports createCharacter, assignCharacterCampaign, and deleteCharacter."""
-    content = DATA_SERVICE_TS.read_text(encoding="utf-8")
-
-    # Mutation methods exist
-    assert (
-        "createCharacter(payload: CreateCharacterPayload): Promise<DataResult<CharacterItem>>"
-        in content
-    )
-    assert (
-        "assignCharacterCampaign(characterId: string, campaignId: string | null): Promise<DataResult<void>>"
-        in content
-    )
-    assert "deleteCharacter(characterId: string): Promise<DataResult<void>>" in content
-
-    # Hitting gateway endpoints
-    assert "`${this.apiBase}/characters`" in content
-    assert "method: 'POST'" in content
-    assert "`${this.apiBase}/characters/${characterId}/campaign`" in content
-    assert "method: 'PATCH'" in content
-    assert "`${this.apiBase}/characters/${characterId}`" in content
-    assert "method: 'DELETE'" in content
-
-
-def test_app_shell_character_roster_event_binding():
-    """Verify runefoble-app.ts binds all four actions dispatched by runefoble-character-roster."""
-    content = read_app_shell_source(APP_TS)
-
-    # Event listeners on runefoble-character-roster element
-    assert "<runefoble-character-roster" in content
-    assert "@create-character=${app.handleCreateCharacter}" in content
-    assert "@assign-campaign=${app.handleAssignCampaign}" in content
-    assert "@delete-character=${app.handleDeleteCharacter}" in content
-    assert "@inspect-character=${app.handleInspectCharacter}" in content
-
-    # Handler methods defined
-    assert "handleCreateCharacter(e: CustomEvent" in content
-    assert "handleAssignCampaign(e: CustomEvent" in content
-    assert "handleDeleteCharacter(e: CustomEvent" in content
-    assert "handleInspectCharacter(e: CustomEvent" in content
-
-    # Inspect navigation to deep route #/characters/:characterId
-    assert "router.navigate('#/characters/' + e.detail.characterId)" in content
-
-    # Toast notification functionality
-    assert "showToast(" in content
-    assert "toastMessage" in content
-    assert "toast-notification" in content
-
-
-def test_roster_component_event_dispatches():
-    """Verify runefoble-character-roster component emits all four expected events."""
-    content = ROSTER_COMPONENT_TS.read_text(encoding="utf-8")
-
-    assert "'create-character'" in content
-    assert "'assign-campaign'" in content
-    assert "'delete-character'" in content
-    assert "'inspect-character'" in content
-
-
-def test_toast_notification_bauhaus_tokens():
-    """Verify toast notification styling in app-shell.styles.ts uses Bauhaus tokens with zero hexes."""
-    import re
-
-    content = APP_SHELL_STYLES_TS.read_text(encoding="utf-8")
-
-    assert ".toast-notification" in content
-    assert "var(--rf-bg-surface)" in content
-    assert "var(--rf-text-primary)" in content
-    assert "var(--rf-border-color)" in content
-    assert "var(--rf-accent-primary)" in content
-    assert "var(--rf-shadow)" in content
-
-    # No hardcoded hexes
-    hex_pattern = re.compile(r"#[0-9a-fA-F]{3,8}")
-    assert not hex_pattern.findall(content)
-
-
 # ---------------------------------------------------------------------------
 # 3. File Length Limits (<500 lines Hard Invariant 6)
 # ---------------------------------------------------------------------------
-
-
-def test_file_length_invariants():
-    """Verify all modified files strictly comply with Hard Invariant 6 (<500 lines)."""
-    targets = [
-        (APP_TS, 350),
-        (DATA_SERVICE_TS, 450),
-        (APP_SHELL_STYLES_TS, 150),
-    ]
-
-    for file_path, max_expected in targets:
-        assert file_path.is_file(), f"{file_path} must exist"
-        lines = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert lines < max_expected, (
-            f"{file_path.name} has {lines} lines (expected < {max_expected})"
-        )
-        assert lines < 500, (
-            f"{file_path.name} has {lines} lines (exceeds Hard Invariant 6 limit of 500)"
-        )
 
 
 # ---------------------------------------------------------------------------

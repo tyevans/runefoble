@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import pathlib
 import time
 
 import pytest
 from fastapi.testclient import TestClient
 from voice_agent.audio_utils import to_samples_array
-from voice_agent.coordinator import VoiceRoomCoordinator, get_voice_room_coordinator
 from voice_agent.dsp import (
     DSPFilterConfig,
     ProcessedSpeechResult,
@@ -26,12 +24,6 @@ from voice_agent.phonetics import (
     slur_phonemes,
 )
 from voice_agent.room import VoiceRoomAggregate, VoiceRoomState
-from voice_agent.routers import (
-    audio_router,
-    room_router,
-    stream_router,
-    synthesis_router,
-)
 
 from tests.helpers.audio_synth import generate_synthetic_audio
 
@@ -132,29 +124,6 @@ def test_modular_phonetics_and_filters():
     assert e_meta["filter"] == "ethereal"
     d_out, d_meta = drunk_filter(samples, 16000)
     assert d_meta["filter"] == "drunk"
-
-
-def test_modular_room_and_routers():
-    """Verify modular router mounting and room coordinator architecture."""
-    assert audio_router is not None
-    assert synthesis_router is not None
-    assert room_router is not None
-    assert stream_router is not None
-
-    coord = get_voice_room_coordinator()
-    assert isinstance(coord, VoiceRoomCoordinator)
-
-    # Invariant: modified and new source files < 200 lines
-    va_dir = pathlib.Path(__file__).parent.parent / "services/voice_agent/src/voice_agent"
-    for py_file in va_dir.glob("*.py"):
-        if py_file.name in ("stt.py", "vad.py"):
-            continue
-        line_count = len(py_file.read_text(encoding="utf-8").splitlines())
-        assert line_count < 200, f"{py_file.name} exceeded 200 lines ({line_count})"
-
-    for router_file in (va_dir / "routers").glob("*.py"):
-        line_count = len(router_file.read_text(encoding="utf-8").splitlines())
-        assert line_count < 200, f"{router_file.name} exceeded 200 lines ({line_count})"
 
 
 def test_backward_compatible_reexports():

@@ -10,7 +10,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -22,36 +21,6 @@ from campaign_analytics.queries import (
     query_spatial_heatmap,
 )
 from campaign_analytics.storage import CampaignAnalyticsStorage
-
-
-def test_modular_file_length_limits() -> None:
-    """Verify storage facade and query modules strictly respect line length budgets."""
-    pkg_dir = (
-        Path(__file__).resolve().parent.parent
-        / "services"
-        / "campaign_analytics"
-        / "src"
-        / "campaign_analytics"
-    )
-    storage_file = pkg_dir / "storage.py"
-    spatial_file = pkg_dir / "queries" / "spatial.py"
-    mvp_file = pkg_dir / "queries" / "mvp.py"
-    timeline_file = pkg_dir / "queries" / "timeline.py"
-
-    assert storage_file.exists()
-    assert spatial_file.exists()
-    assert mvp_file.exists()
-    assert timeline_file.exists()
-
-    storage_lines = len(storage_file.read_text().splitlines())
-    spatial_lines = len(spatial_file.read_text().splitlines())
-    mvp_lines = len(mvp_file.read_text().splitlines())
-    timeline_lines = len(timeline_file.read_text().splitlines())
-
-    assert storage_lines < 170, f"storage.py has {storage_lines} lines (exceeds 170 target)"
-    assert spatial_lines < 120, f"spatial.py has {spatial_lines} lines (exceeds 120 target)"
-    assert mvp_lines < 120, f"mvp.py has {mvp_lines} lines (exceeds 120 target)"
-    assert timeline_lines < 110, f"timeline.py has {timeline_lines} lines (exceeds 110 target)"
 
 
 def test_direct_query_spatial_heatmap() -> None:

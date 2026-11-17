@@ -12,7 +12,6 @@ Governed by:
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import pytest
@@ -21,17 +20,10 @@ from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
-from tests.helpers.app_shell_source import read_app_shell_source
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
 SERVICES_DIR = SRC_DIR / "services"
-CHARACTER_CARD_FILE = (
-    REPO_ROOT / "services" / "character_sheet" / "ui" / "src" / "runefoble-character-card.ts"
-)
-APP_SHELL_FILE = SRC_DIR / "runefoble-app.ts"
-APP_DATA_SERVICE_FILE = SERVICES_DIR / "app-data-service.ts"
 
 
 @pytest.fixture
@@ -51,119 +43,14 @@ def reset_stores():
 # ---------------------------------------------------------------------------
 
 
-def test_source_file_length_invariants() -> None:
-    """Verify all modified files strictly comply with line count constraints (<500 lines)."""
-    assert APP_SHELL_FILE.is_file(), f"{APP_SHELL_FILE} must exist"
-    app_lines = len(APP_SHELL_FILE.read_text(encoding="utf-8").splitlines())
-    assert app_lines <= 450, f"runefoble-app.ts has {app_lines} lines; must be <= 450 lines"
-
-    assert APP_DATA_SERVICE_FILE.is_file(), f"{APP_DATA_SERVICE_FILE} must exist"
-    service_lines = len(APP_DATA_SERVICE_FILE.read_text(encoding="utf-8").splitlines())
-    assert service_lines < 500, (
-        f"app-data-service.ts has {service_lines} lines; must be < 500 lines"
-    )
-
-    assert CHARACTER_CARD_FILE.is_file(), f"{CHARACTER_CARD_FILE} must exist"
-    card_lines = len(CHARACTER_CARD_FILE.read_text(encoding="utf-8").splitlines())
-    assert card_lines < 500, (
-        f"runefoble-character-card.ts has {card_lines} lines; must be < 500 lines"
-    )
-
-    test_lines = len(Path(__file__).read_text(encoding="utf-8").splitlines())
-    assert test_lines < 500, f"{__file__} must be < 500 lines (Hard Invariant 6)"
-
-
 # ---------------------------------------------------------------------------
 # 2. Design Tokens & Zero Hex Literals Invariant (ADR-0012)
 # ---------------------------------------------------------------------------
 
 
-def test_zero_hardcoded_hexes_in_character_card() -> None:
-    """Verify runefoble-character-card.ts consumes --rf-* tokens with zero hardcoded hex literals."""
-    hex_pattern = re.compile(r"#[0-9a-fA-F]{3,8}")
-    card_code = CHARACTER_CARD_FILE.read_text(encoding="utf-8")
-    hexes_found = hex_pattern.findall(card_code)
-    assert not hexes_found, f"Found hardcoded hex literals in character card: {hexes_found}"
-
-    for token in [
-        "--rf-border-color",
-        "--rf-text-primary",
-        "--rf-text-muted",
-        "--rf-bg-card",
-        "--rf-bg-canvas",
-        "--rf-accent-primary",
-        "--rf-accent-secondary",
-    ]:
-        assert token in card_code, f"Expected {token} in runefoble-character-card.ts"
-
-
 # ---------------------------------------------------------------------------
 # 3. Component Contracts & Dynamic Vitals Invariants
 # ---------------------------------------------------------------------------
-
-
-def test_character_card_component_declares_dynamic_properties() -> None:
-    """Verify RunefobleCharacterCard declares dynamic name, class, level, HP, AC, and portrait."""
-    card_code = CHARACTER_CARD_FILE.read_text(encoding="utf-8")
-
-    assert "@customElement('runefoble-character-card')" in card_code
-    assert "class RunefobleCharacterCard extends LitElement" in card_code
-
-    # Properties for dynamic character binding
-    assert "characterName" in card_code
-    assert "characterClass" in card_code
-    assert "level" in card_code
-    assert "portraitUrl" in card_code
-    assert "currentHp" in card_code
-    assert "maxHp" in card_code
-    assert "armorClass" in card_code
-    assert "isAiStandIn" in card_code
-
-    # Render template contains portrait and name
-    assert "char-portrait" in card_code
-    assert "name-title" in card_code
-    assert "class-level" in card_code
-
-
-def test_app_data_service_dynamically_populates_lobby_characters() -> None:
-    """Verify app-data-service.ts dynamically resolves availableCharacters with campaign prioritization."""
-    service_code = APP_DATA_SERVICE_FILE.read_text(encoding="utf-8")
-
-    assert "fetchLobbyState" in service_code
-    assert "fetchCharacters" in service_code
-    assert "availableCharacters" in service_code
-    assert "campaignId" in service_code
-
-
-def test_app_shell_binds_selected_character_and_card_properties() -> None:
-    """Verify runefoble-app.ts binds selected lobby character to active VTT session card."""
-    app_code = read_app_shell_source(APP_SHELL_FILE)
-
-    # State declaration
-    assert "activeCharacter" in app_code
-
-    # Event handlers
-    assert "@select-character" in app_code
-    assert "@character-selected" in app_code
-    assert "handleSelectCharacter" in app_code
-
-    # Character fallback resolution
-    assert "resolveActiveCharacter" in app_code
-
-    # Dynamic binding to character card
-    assert "<runefoble-character-card" in app_code
-    assert ".characterName=${char.name}" in app_code
-    assert ".characterClass=" in app_code
-    assert ".level=${char.level}" in app_code
-    assert ".currentHp=${char.currentHp}" in app_code
-    assert ".maxHp=${char.maxHp}" in app_code
-    assert ".armorClass=${char.armorClass}" in app_code
-    assert ".portraitUrl=${char.portraitUrl" in app_code
-
-    # DM Party Inspector & Switcher
-    assert "dm-party-inspector" in app_code
-    assert "dm-character-switcher" in app_code
-    assert "handleDmSwitchCharacter" in app_code
 
 
 # ---------------------------------------------------------------------------

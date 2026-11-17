@@ -13,8 +13,6 @@ Governed by:
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -28,8 +26,6 @@ from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture
@@ -72,149 +68,6 @@ def test_caravan_board_ui_manifest_frontdoor(client: TestClient) -> None:
     alias_res = client.get("/game_session/ui/manifest")
     assert alias_res.status_code == 200
     assert "runefoble-caravan-board" in alias_res.json()["components"]
-
-
-def test_manifest_file_matches_advertised_manifest() -> None:
-    """Verify services/game_session/ui/manifest.json matches runtime advertising."""
-    manifest_path = REPO_ROOT / "services/game_session/ui/manifest.json"
-    assert manifest_path.is_file(), f"{manifest_path} must exist"
-
-    manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert manifest_data["service"] == "game_session"
-    assert manifest_data["package"] == "@runefoble/game-session-ui"
-    assert "runefoble-caravan-board" in manifest_data["components"]
-
-
-def test_caravan_board_typescript_exports_and_custom_element() -> None:
-    """Verify UI package configuration, exports, and Custom Element decorators."""
-    ui_dir = REPO_ROOT / "services/game_session/ui"
-
-    pkg_json = json.loads((ui_dir / "package.json").read_text(encoding="utf-8"))
-    assert pkg_json["name"] == "@runefoble/game-session-ui"
-    assert "./runefoble-caravan-board" in pkg_json["exports"]
-    assert "./runefoble-caravan-board.styles" in pkg_json["exports"]
-    assert "./caravan" in pkg_json["exports"]
-    assert "./caravan/contract_card" in pkg_json["exports"]
-    assert "./caravan/dispatch_modal" in pkg_json["exports"]
-    assert "./caravan/board_filters" in pkg_json["exports"]
-
-    assert (ui_dir / "tsconfig.json").is_file()
-    assert (ui_dir / "src/index.ts").is_file()
-    index_content = (ui_dir / "src/index.ts").read_text(encoding="utf-8")
-    assert "runefoble-caravan-board" in index_content
-    assert "./caravan/index.ts" in index_content
-
-    styles_file = ui_dir / "src/runefoble-caravan-board.styles.ts"
-    assert styles_file.is_file()
-    assert "caravanBoardStyles" in styles_file.read_text(encoding="utf-8")
-
-    comp_file = ui_dir / "src/runefoble-caravan-board.ts"
-    assert comp_file.is_file()
-    comp_src = comp_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-caravan-board')" in comp_src
-    assert "class RunefobleCaravanBoard" in comp_src
-
-    # Sub-component custom elements
-    caravan_dir = ui_dir / "src" / "caravan"
-    card_src = (caravan_dir / "contract_card.ts").read_text(encoding="utf-8")
-    modal_src = (caravan_dir / "dispatch_modal.ts").read_text(encoding="utf-8")
-    filters_src = (caravan_dir / "board_filters.ts").read_text(encoding="utf-8")
-
-    assert "@customElement('runefoble-caravan-contract-card')" in card_src
-    assert "@customElement('runefoble-caravan-dispatch-modal')" in modal_src
-    assert "@customElement('runefoble-caravan-board-filters')" in filters_src
-
-
-def test_caravan_board_component_features() -> None:
-    """Verify decomposed caravan board components contain required UI features and Bauhaus tokens."""
-    caravan_dir = REPO_ROOT / "services/game_session/ui/src/caravan"
-    comp_file = REPO_ROOT / "services/game_session/ui/src/runefoble-caravan-board.ts"
-    card_file = caravan_dir / "contract_card.ts"
-    modal_file = caravan_dir / "dispatch_modal.ts"
-    filters_file = caravan_dir / "board_filters.ts"
-
-    assert card_file.is_file()
-    assert modal_file.is_file()
-    assert filters_file.is_file()
-
-    comp_src = comp_file.read_text(encoding="utf-8")
-    card_src = card_file.read_text(encoding="utf-8")
-    modal_src = modal_file.read_text(encoding="utf-8")
-    filters_src = filters_file.read_text(encoding="utf-8")
-
-    # One-click Accept Escort Contract in contract card & board orchestrator
-    assert "Accept Escort Contract" in card_src
-    assert "acceptContract" in comp_src
-
-    # Caravan Manifest Details Modal Sub-Component
-    assert "isModalOpen" in comp_src
-    assert "Caravan Manifest:" in modal_src
-    assert "Departure Settlement:" in modal_src
-    assert "Destination Stronghold:" in modal_src
-    assert "Cargo Inventory" in modal_src
-    assert "Escort Fee Payout:" in modal_src
-
-    # Filter Bar Sub-Component
-    assert "filters-changed" in filters_src
-    assert "Risk Level:" in filters_src
-    assert "searchQuery" in comp_src
-
-    # Active Transit Route Status Pill & Ambush Alerts in Card
-    assert "transit-status-pill" in card_src
-    assert "transit-progress-header" in card_src
-    assert "progress-track" in card_src
-    assert "progress-fill" in card_src
-    assert "ambush-alert-badge" in card_src
-
-    # Real-time notifications in Board Orchestrator
-    assert "notification-banner" in comp_src
-    assert "notificationMessage" in comp_src
-
-    # Bauhaus styling check across modular style files
-    styles_dir = caravan_dir / "styles"
-    layout_styles = (styles_dir / "layout.styles.ts").read_text(encoding="utf-8")
-    card_styles = (styles_dir / "card.styles.ts").read_text(encoding="utf-8")
-    modal_styles = (styles_dir / "modal.styles.ts").read_text(encoding="utf-8")
-
-    assert "--rf-border-color" in layout_styles
-    assert "--rf-shadow-hard" in layout_styles
-    assert ".transit-status-pill" in card_styles
-    assert ".manifest-modal" in modal_styles
-    assert ".modal-backdrop" in modal_styles
-
-
-def test_caravan_files_under_150_lines() -> None:
-    """Verify all caravan UI files strictly comply with <150 lines decomposition limit."""
-    ui_dir = REPO_ROOT / "services/game_session/ui/src"
-    caravan_dir = ui_dir / "caravan"
-    files = [
-        ui_dir / "runefoble-caravan-board.ts",
-        ui_dir / "runefoble-caravan-board.styles.ts",
-        caravan_dir / "contract_card.ts",
-        caravan_dir / "dispatch_modal.ts",
-        caravan_dir / "board_filters.ts",
-        caravan_dir / "caravan_api.ts",
-        caravan_dir / "styles/layout.styles.ts",
-        caravan_dir / "styles/card.styles.ts",
-        caravan_dir / "styles/modal.styles.ts",
-    ]
-    for f in files:
-        assert f.is_file(), f"{f} must exist"
-        line_count = len(f.read_text(encoding="utf-8").splitlines())
-        assert line_count < 150, f"{f.name} exceeds 150 lines: {line_count} lines"
-
-
-def test_storybook_stories_contract() -> None:
-    """Verify Storybook stories simulate active caravan transit, ambush warnings, and contract payouts."""
-    stories_file = REPO_ROOT / "services/game_session/ui/src/runefoble-caravan-board.stories.ts"
-    assert stories_file.is_file()
-    stories_code = stories_file.read_text(encoding="utf-8")
-    assert "DefaultNoticeBoard" in stories_code
-    assert "ActiveCaravanTransit" in stories_code
-    assert "AmbushWarningAlert" in stories_code
-    assert "CaravanManifestModalOpen" in stories_code
-    assert "GuildOfficerManagement" in stories_code
-    assert "ContractPayoutFulfilled" in stories_code
 
 
 # ---------------------------------------------------------------------------

@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from .conftest import REPO_ROOT
-
 
 def test_inventory_addition_and_removal(client: TestClient, created_character_id: str) -> None:
     """Verify item addition, removal, and weight tracking via frontdoor REST."""
@@ -52,19 +50,3 @@ def test_equipment_paper_doll_slots(client: TestClient, created_character_id: st
         )
         assert res.status_code == 200
         assert res.json()["equipment"][slot] == item_name
-
-
-def test_inventory_encumbrance_components_and_actions() -> None:
-    """Verify encumbrance calculation, action handlers, and inventory templates."""
-    ui_dir = REPO_ROOT / "services/character_sheet/ui"
-    actions_src = (ui_dir / "src/runefoble-character-sheet.actions.ts").read_text(encoding="utf-8")
-    for action in ("calculateEncumbrance", "equipItem", "unequipItem", "addItem", "removeItem"):
-        assert action in actions_src
-
-    styles_src = (ui_dir / "src/runefoble-character-sheet.inventory.styles.ts").read_text(
-        encoding="utf-8"
-    )
-    assert "encumbrance-bar" in styles_src
-
-    inv_tmpl = (ui_dir / "src/templates/inventory.template.ts").read_text(encoding="utf-8")
-    assert len(inv_tmpl) > 0

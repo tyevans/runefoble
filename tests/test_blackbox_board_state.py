@@ -2,43 +2,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from board_state.main import app as board_app
 from httpx import ASGITransport, AsyncClient
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-MODELS_DIR = REPO_ROOT / "services/board_state/src/board_state/models"
-FACADE_FILE = REPO_ROOT / "services/board_state/src/board_state/models.py"
-
-
-def test_models_file_length_invariants():
-    """Verify all models submodules and facade are strictly under their line limits."""
-    # Check facade re-export file (< 80 lines)
-    assert FACADE_FILE.is_file(), f"Facade file {FACADE_FILE} must exist"
-    facade_lines = len(FACADE_FILE.read_text(encoding="utf-8").splitlines())
-    assert facade_lines < 80, f"Facade models.py is {facade_lines} lines; must be < 80 lines"
-
-    # Check package submodules (< 200 lines each, specific submodules < 100 lines)
-    submodules = [
-        "terrain.py",
-        "tokens.py",
-        "vfx.py",
-        "actions.py",
-        "board.py",
-        "transitions.py",
-        "__init__.py",
-    ]
-
-    for filename in submodules:
-        file_path = MODELS_DIR / filename
-        assert file_path.is_file(), f"Submodule {file_path} must exist"
-        lines = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert lines < 200, f"{filename} is {lines} lines; exceeds 200 lines limit"
-        if filename in ["terrain.py", "tokens.py", "vfx.py", "actions.py", "board.py"]:
-            assert lines < 100, f"{filename} is {lines} lines; exceeds 100 lines target"
 
 
 def test_facade_re_exports_backward_compatibility():

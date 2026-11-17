@@ -24,9 +24,6 @@ from tests.helpers.ws_identity import ws_subprotocols
 REPO_ROOT = Path(__file__).resolve().parent.parent
 E2E_FEATURE_FILE = REPO_ROOT / "e2e" / "features" / "session_lobby_and_vtt.feature"
 E2E_STEPS_FILE = REPO_ROOT / "e2e" / "steps" / "vtt_steps.ts"
-E2E_WORLD_FILE = REPO_ROOT / "e2e" / "support" / "world.ts"
-E2E_AUTH_FILE = REPO_ROOT / "e2e" / "support" / "auth_fixtures.ts"
-APP_SHELL_FILE = REPO_ROOT / "frontend" / "src" / "runefoble-app.ts"
 APP_DATA_SERVICE_FILE = REPO_ROOT / "frontend" / "src" / "services" / "app-data-service.ts"
 DOCS_HOW_TO_FILE = REPO_ROOT / "docs" / "how-to" / "validate-e2e-journeys-with-playwright-bdd.md"
 
@@ -40,26 +37,6 @@ def client() -> TestClient:
 def reset_campaign_store():
     campaign_store.reset()
     yield
-
-
-def test_file_length_invariants() -> None:
-    """Verify all files touched or created in TASK-0362 conform strictly to Hard Invariant 6 (<500 lines)."""
-    checked_files = [
-        E2E_FEATURE_FILE,
-        E2E_STEPS_FILE,
-        E2E_WORLD_FILE,
-        E2E_AUTH_FILE,
-        APP_SHELL_FILE,
-        DOCS_HOW_TO_FILE,
-        Path(__file__),
-    ]
-
-    for path in checked_files:
-        assert path.is_file(), f"{path} must exist"
-        lines = len(path.read_text(encoding="utf-8").splitlines())
-        assert lines < 500, (
-            f"{path.name} has {lines} lines, exceeding the 500 line limit (Hard Invariant 6)"
-        )
 
 
 def test_app_data_service_imports_no_fixtures() -> None:

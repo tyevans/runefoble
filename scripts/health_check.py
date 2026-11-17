@@ -3,6 +3,7 @@
 
 import os
 import re
+import sys
 from pathlib import Path
 
 # Repo root is 1 level up from scripts/
@@ -64,6 +65,7 @@ def inspect_file_lengths():
         for lines, rel_path in warnings:
             print(f"  ⚡ {rel_path} ({lines} lines)")
     print()
+    return len(violations)
 
 
 def inspect_backlog_state():
@@ -142,9 +144,11 @@ def inspect_backlog_state():
 def main():
     print("=== Runefoble Codebase & Backlog Health Check ===")
     print(f"Repository Root: {REPO_ROOT}\n")
-    inspect_file_lengths()
+    violations = inspect_file_lengths()
     inspect_backlog_state()
     print("=== Health Check Complete ===")
+    if violations:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

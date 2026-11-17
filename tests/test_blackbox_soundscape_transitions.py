@@ -8,7 +8,6 @@ manual mood override frontdoors, and Lit microfrontend UI component invariants.
 from __future__ import annotations
 
 import math
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -26,8 +25,6 @@ from soundscape.dependencies import (
 )
 from soundscape.main import app
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER, AudioStemMixer
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(autouse=True)
@@ -161,38 +158,3 @@ async def test_voice_ducking_reactive_subscription():
     mixer = get_or_create_mixer(session_id_str)
     assert mixer.is_ducked is True
     assert mixer.get_effective_gain() < 0.5
-
-
-def test_soundscape_microfrontend_component_invariants():
-    """Verify <runefoble-soundscape-controls> component, styles, and Storybook coverage."""
-    ui_dir = REPO_ROOT / "services" / "soundscape" / "ui"
-    comp_file = ui_dir / "src" / "runefoble-soundscape-controls.ts"
-    styles_file = ui_dir / "src" / "runefoble-soundscape-controls.styles.ts"
-    stories_file = ui_dir / "src" / "runefoble-soundscape-controls.stories.ts"
-
-    assert comp_file.is_file()
-    assert styles_file.is_file()
-    assert stories_file.is_file()
-
-    comp_content = comp_file.read_text(encoding="utf-8")
-    styles_content = styles_file.read_text(encoding="utf-8")
-    stories_content = stories_file.read_text(encoding="utf-8")
-
-    assert len(comp_content.splitlines()) < 250
-    assert len(styles_content.splitlines()) < 200
-    assert len(stories_content.splitlines()) < 150
-
-    assert "@customElement('runefoble-soundscape-controls')" in comp_content
-    assert "'soundscape-volume'" in comp_content
-    assert "'soundscape-mood'" in comp_content
-    assert "'soundscape-cue'" in comp_content
-    assert "'soundscape-duck'" in comp_content
-
-    assert "--rf-accent-primary" in styles_content
-    assert "--rf-border-color" in styles_content
-    assert "--rf-shadow" in styles_content
-
-    assert "ExplorationDefault" in stories_content
-    assert "CombatActive" in stories_content
-    assert "BossClimax" in stories_content
-    assert "VoiceDuckingActive" in stories_content

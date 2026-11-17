@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 
 import pytest
 from runefoble_platform.email import MailpitClient
@@ -133,33 +132,6 @@ def test_import_from_backward_compatibility_shim() -> None:
     assert callable(build_mime_message)
     assert callable(extract_verification_link)
     assert callable(extract_verification_code)
-
-
-def test_submodules_line_counts_strictly_under_limit() -> None:
-    """Verify Hard Invariant 6: all submodules are strictly < 130 lines each."""
-    email_pkg = (
-        Path(__file__).resolve().parent.parent
-        / "libs"
-        / "runefoble_platform"
-        / "src"
-        / "runefoble_platform"
-        / "email"
-    )
-    shim_file = (
-        Path(__file__).resolve().parent.parent
-        / "libs"
-        / "runefoble_platform"
-        / "src"
-        / "runefoble_platform"
-        / "email_client.py"
-    )
-
-    py_files = list(email_pkg.glob("*.py")) + [shim_file]
-    assert len(py_files) >= 4
-
-    for f in py_files:
-        lines = len(f.read_text().splitlines())
-        assert lines < 130, f"{f.name} has {lines} lines, exceeding the 130 line limit"
 
 
 @pytest.mark.asyncio

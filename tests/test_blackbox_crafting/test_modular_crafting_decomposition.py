@@ -10,7 +10,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -42,8 +41,6 @@ from fastapi.testclient import TestClient
 from runefoble_platform.mock_redis import MockAsyncRedis
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-
 
 @pytest.fixture
 def mock_bus():
@@ -57,45 +54,6 @@ def mock_bus():
 @pytest.fixture
 def char_client():
     return TestClient(character_app)
-
-
-def test_crafting_submodules_line_length_invariants():
-    """Verify that crafting modules strictly adhere to file length limits."""
-    crafting_dir = (
-        REPO_ROOT / "services" / "character_sheet" / "src" / "character_sheet" / "crafting"
-    )
-    facade_file = crafting_dir.parent / "crafting.py"
-
-    assert crafting_dir.is_dir(), "crafting package directory must exist"
-    assert facade_file.is_file(), "crafting.py facade file must exist"
-
-    recipes_file = crafting_dir / "recipes.py"
-    mishaps_file = crafting_dir / "mishaps.py"
-    engine_file = crafting_dir / "engine.py"
-    init_file = crafting_dir / "__init__.py"
-
-    for f in (recipes_file, mishaps_file, engine_file, init_file, facade_file):
-        assert f.is_file(), f"{f.name} must exist"
-
-    recipes_lines = len(recipes_file.read_text(encoding="utf-8").splitlines())
-    mishaps_lines = len(mishaps_file.read_text(encoding="utf-8").splitlines())
-    engine_lines = len(engine_file.read_text(encoding="utf-8").splitlines())
-    init_lines = len(init_file.read_text(encoding="utf-8").splitlines())
-    facade_lines = len(facade_file.read_text(encoding="utf-8").splitlines())
-
-    assert recipes_lines < 120, f"recipes.py must be < 120 lines, got {recipes_lines}"
-    assert mishaps_lines < 130, f"mishaps.py must be < 130 lines, got {mishaps_lines}"
-    assert engine_lines < 130, f"engine.py must be < 130 lines, got {engine_lines}"
-    assert init_lines < 30, f"__init__.py must be < 30 lines, got {init_lines}"
-    assert facade_lines < 20, f"crafting.py facade must be < 20 lines, got {facade_lines}"
-
-    for name, count in [
-        ("recipes.py", recipes_lines),
-        ("mishaps.py", mishaps_lines),
-        ("engine.py", engine_lines),
-        ("crafting.py", facade_lines),
-    ]:
-        assert count < 180, f"{name} must be strictly < 180 lines, got {count}"
 
 
 def test_crafting_package_and_facade_exports():

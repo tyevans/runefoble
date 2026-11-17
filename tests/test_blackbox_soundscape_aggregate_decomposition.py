@@ -11,7 +11,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -40,8 +39,6 @@ from soundscape.handlers import (
 )
 from soundscape.main import app
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
 
 @pytest.fixture(autouse=True)
 def clean_environment():
@@ -63,26 +60,6 @@ def test_soundscape_aggregate_facade_and_mixins():
     assert issubclass(SoundscapeAggregate, TensionHandlersMixin)
     assert issubclass(SoundscapeAggregate, LeitmotifHandlersMixin)
     assert SoundscapeState is not None
-
-
-def test_soundscape_aggregate_submodules_line_count_invariants():
-    """Verify aggregate.py is strictly < 80 lines and all handler modules strictly < 150 lines."""
-    soundscape_dir = REPO_ROOT / "services" / "soundscape" / "src" / "soundscape"
-    aggregate_file = soundscape_dir / "aggregate.py"
-    handlers_dir = soundscape_dir / "handlers"
-
-    assert aggregate_file.exists(), "aggregate.py must exist"
-    agg_lines = len(aggregate_file.read_text(encoding="utf-8").splitlines())
-    assert agg_lines < 80, f"aggregate.py ({agg_lines} lines) exceeds strict 80-line limit"
-
-    expected_handlers = ["__init__.py", "stems.py", "foley.py", "tension.py", "leitmotif.py"]
-    for handler_name in expected_handlers:
-        handler_file = handlers_dir / handler_name
-        assert handler_file.exists(), f"Handler module {handler_file} must exist"
-        h_lines = len(handler_file.read_text(encoding="utf-8").splitlines())
-        assert h_lines < 150, (
-            f"Handler submodule {handler_name} ({h_lines} lines) exceeds strict 150-line limit"
-        )
 
 
 def test_soundscape_event_handlers_registry_completeness():

@@ -220,25 +220,6 @@ def test_modular_parsers_and_facade_compatibility(repo_root: Path):
     assert len(scanned_data.tasks) == len(tasks)
 
 
-def test_subparsers_line_length_invariant_under_200(repo_root: Path):
-    parsers_dir = repo_root / "tools" / "project_visualizer" / "parsers"
-    assert parsers_dir.exists()
-
-    all_files = list(parsers_dir.glob("*.py"))
-    assert len(all_files) >= 5
-    for f in all_files:
-        line_count = len(f.read_text(encoding="utf-8").splitlines())
-        assert line_count < 200, (
-            f"Parser file {f.name} has {line_count} lines, exceeding 200 lines limit"
-        )
-
-    parser_facade = repo_root / "tools" / "project_visualizer" / "parser.py"
-    facade_lines = len(parser_facade.read_text(encoding="utf-8").splitlines())
-    assert facade_lines < 200, (
-        f"parser.py facade has {facade_lines} lines, exceeding 200 lines limit"
-    )
-
-
 def test_adr_parser_resilience(tmp_path: Path):
     """Verify ADR parser handles variations in title header formats gracefully."""
     docs_dir = tmp_path / "docs" / "project"

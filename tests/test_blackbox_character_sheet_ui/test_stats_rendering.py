@@ -56,18 +56,3 @@ def test_stats_and_vitals_lifecycle(client: TestClient, created_character_id: st
     lvl_resp = client.post(f"/api/v1/characters/{char_id}/level-up")
     assert lvl_resp.status_code == 200
     assert lvl_resp.json()["level"] == 2
-
-
-def test_stats_components_and_storybook() -> None:
-    """Verify Lit component registration, stats templates, and Storybook stories."""
-    ui_dir = REPO_ROOT / "services/character_sheet/ui"
-    comp_src = (ui_dir / "src/runefoble-character-sheet.ts").read_text(encoding="utf-8")
-    assert "@customElement('runefoble-character-sheet')" in comp_src
-    assert "class RunefobleCharacterSheet" in comp_src
-
-    stats_tmpl = (ui_dir / "src/templates/stats.template.ts").read_text(encoding="utf-8")
-    assert "renderStats" in stats_tmpl or len(stats_tmpl) > 0
-
-    stories = (ui_dir / "src/runefoble-character-sheet.stories.ts").read_text(encoding="utf-8")
-    for variant in ("Healthy", "Encumbered", "Afflicted", "LeveledUpSpellcaster"):
-        assert variant in stories

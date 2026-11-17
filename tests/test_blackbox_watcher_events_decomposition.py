@@ -10,7 +10,6 @@ Governed by:
 
 from __future__ import annotations
 
-from pathlib import Path
 from uuid import uuid4
 
 import runefoble_events.watcher as watcher_facade
@@ -34,28 +33,6 @@ from runefoble_events.watcher_events import (
     narrative as narrative_mod,
 )
 from runefoble_platform.consumer_group import deserialize_event
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
-
-def test_file_length_invariants():
-    """Verify watcher.py and all watcher_events submodules adhere strictly to line limits."""
-    events_dir = REPO_ROOT / "libs" / "runefoble_events" / "src" / "runefoble_events"
-    facade_path = events_dir / "watcher.py"
-    submodules_dir = events_dir / "watcher_events"
-
-    assert facade_path.is_file(), "watcher.py must exist"
-    facade_lines = len(facade_path.read_text(encoding="utf-8").splitlines())
-    assert facade_lines < 80, (
-        f"watcher.py facade ({facade_lines} lines) must be strictly < 80 lines"
-    )
-
-    submodule_files = list(submodules_dir.glob("*.py"))
-    assert len(submodule_files) >= 5, "watcher_events must contain submodules and __init__.py"
-
-    for path in submodule_files:
-        line_count = len(path.read_text(encoding="utf-8").splitlines())
-        assert line_count < 150, f"{path.name} ({line_count} lines) must be strictly < 150 lines"
 
 
 def test_watcher_facade_backward_compatibility_reexports():

@@ -15,7 +15,6 @@ Verifies:
 
 from __future__ import annotations
 
-import json
 import subprocess
 from pathlib import Path
 
@@ -24,48 +23,6 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 APP_SHELL_TEST_DIR = FRONTEND_DIR / "test" / "app_shell"
-MONOLITHIC_TEST_FILE = FRONTEND_DIR / "test" / "app-shell.test.ts"
-PACKAGE_JSON = FRONTEND_DIR / "package.json"
-
-EXPECTED_SUBMODULES = {
-    "routing.test.ts": 110,
-    "session-transitions.test.ts": 110,
-    "websocket-lifecycle.test.ts": 100,
-    "state-breadcrumbs.test.ts": 100,
-}
-
-
-def test_monolithic_app_shell_test_removed():
-    """Verify monolithic frontend/test/app-shell.test.ts has been safely removed."""
-    assert not MONOLITHIC_TEST_FILE.exists(), (
-        f"Monolithic test file {MONOLITHIC_TEST_FILE} must be safely removed"
-    )
-
-
-def test_modular_submodules_exist_and_satisfy_line_invariants():
-    """Verify all 4 submodules exist and strictly satisfy line length limits (< 130 lines)."""
-    assert APP_SHELL_TEST_DIR.is_dir(), f"{APP_SHELL_TEST_DIR} must exist as directory"
-
-    for file_name, max_expected_lines in EXPECTED_SUBMODULES.items():
-        file_path = APP_SHELL_TEST_DIR / file_name
-        assert file_path.is_file(), f"Submodule {file_name} must exist"
-
-        line_count = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert line_count <= max_expected_lines, (
-            f"{file_name} has {line_count} lines, exceeding target limit of {max_expected_lines}"
-        )
-        assert line_count < 130, (
-            f"{file_name} has {line_count} lines, exceeding Hard Invariant 6 limit (< 130 lines)"
-        )
-
-
-def test_package_json_test_script_covers_submodules():
-    """Verify frontend/package.json test script includes subdirectories."""
-    data = json.loads(PACKAGE_JSON.read_text(encoding="utf-8"))
-    test_script = data.get("scripts", {}).get("test", "")
-    assert "test/*/*.test.ts" in test_script or "test/**/*.test.ts" in test_script, (
-        f"frontend/package.json test script must match nested test submodules, got: {test_script}"
-    )
 
 
 @pytest.mark.parametrize(

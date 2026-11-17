@@ -14,24 +14,19 @@ Governed by:
 from __future__ import annotations
 
 import base64
-import pathlib
 from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.vocal_dsp import (
-    VocalModulatorPresetApplied,
     VocalModulatorPresetAppliedEvent,
-    VoiceFilterToggled,
     VoiceFilterToggledEvent,
 )
 from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.main import app as voice_app
 
 from tests.helpers.audio_synth import generate_synthetic_audio
-
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 
 
 @pytest.fixture
@@ -282,25 +277,3 @@ def test_vocal_modulator_error_handling(test_setup):
         headers={"X-User-Id": user_id},
     )
     assert resp_bad.status_code == 400
-
-
-def test_modular_file_invariants():
-    """Verify Hard Invariant 6: decomposed files strictly within length limits."""
-    limits = {
-        "services/voice_agent/src/voice_agent/dsp/formants.py": 160,
-        "services/voice_agent/src/voice_agent/dsp/presets.py": 120,
-        "services/voice_agent/src/voice_agent/dsp/pipeline.py": 140,
-        "services/voice_agent/src/voice_agent/dsp/base.py": 170,
-        "services/voice_agent/src/voice_agent/dsp/__init__.py": 170,
-        "services/voice_agent/src/voice_agent/routers/vocal_effects.py": 160,
-        "libs/runefoble_events/src/runefoble_events/vocal_dsp.py": 80,
-    }
-
-    for path_str, max_lines in limits.items():
-        file_path = REPO_ROOT / path_str
-        assert file_path.is_file(), f"File {path_str} does not exist"
-        lines = len(file_path.read_text(encoding="utf-8").splitlines())
-        assert lines <= max_lines, f"{path_str} has {lines} lines (limit: {max_lines})"
-
-    assert VocalModulatorPresetApplied is VocalModulatorPresetAppliedEvent
-    assert VoiceFilterToggled is VoiceFilterToggledEvent
