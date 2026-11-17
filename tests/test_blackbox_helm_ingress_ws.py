@@ -14,6 +14,8 @@ import yaml
 
 HELM_CHART = Path("deployments/helm/runefoble")
 VITE_CONFIG = Path("frontend/vite.config.ts")
+# Zitadel has its own host. It is not an application host and has no /ws route.
+ZITADEL_HOST = "auth.localhost"
 
 
 def _render_ingress_documents() -> list[dict]:
@@ -31,15 +33,18 @@ def _render_ingress_documents() -> list[dict]:
     return [doc for doc in docs if doc.get("kind") == "Ingress"]
 
 
-def test_ingress_routes_websocket_path_to_gateway_on_every_host():
-    """Every ingress host sends /ws/... to gateway-api:8000 with Prefix matching."""
+def _app_rules() -> list[dict]:
+    """Return the ingress host rules that serve the application, excluding the Zitadel host."""
     ingresses = _render_ingress_documents()
     assert len(ingresses) == 1, "expected exactly one Ingress manifest"
+    rules = [r for r in ingresses[0]["spec"]["rules"] if r["host"] != ZITADEL_HOST]
+    assert rules, "ingress has no application host rules"
+    return rules
 
-    rules = ingresses[0]["spec"]["rules"]
-    assert rules, "ingress has no host rules"
 
-    for rule in rules:
+def test_ingress_routes_websocket_path_to_gateway_on_every_host():
+    """Every application ingress host sends /ws/... to gateway-api:8000 with Prefix matching."""
+    for rule in _app_rules():
         paths = rule["http"]["paths"]
         ws_paths = [p for p in paths if p["path"] == "/ws"]
         assert ws_paths, f"host {rule['host']} has no /ws path"
@@ -56,8 +61,7 @@ def test_ingress_routes_websocket_path_to_gateway_on_every_host():
 
 def test_ingress_ws_route_precedes_frontend_catch_all():
     """The /ws rule sits before the frontend catch-all so it is not shadowed."""
-    ingresses = _render_ingress_documents()
-    for rule in ingresses[0]["spec"]["rules"]:
+    for rule in _app_rules():
         paths = [p["path"] for p in rule["http"]["paths"]]
         assert "/ws" in paths, f"host {rule['host']} has no /ws path"
         assert paths.index("/ws") < paths.index("/"), (
@@ -67,8 +71,7 @@ def test_ingress_ws_route_precedes_frontend_catch_all():
 
 def test_ingress_keeps_api_route_to_gateway():
     """Adding /ws must not change the existing /api route."""
-    ingresses = _render_ingress_documents()
-    for rule in ingresses[0]["spec"]["rules"]:
+    for rule in _app_rules():
         api_routes = [p for p in rule["http"]["paths"] if p["path"] == "/api"]
         assert api_routes, f"host {rule['host']} lost its /api route"
         assert api_routes[0]["backend"]["service"]["name"] == "gateway-api"

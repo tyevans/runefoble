@@ -24,10 +24,6 @@ ingress:
           pathType: Prefix
           service: swagger-ui
           port: 8080
-        - path: /auth
-          pathType: Prefix
-          service: zitadel
-          port: 8080
         - path: /analytics
           pathType: Prefix
           service: openpanel
@@ -62,10 +58,6 @@ ingress:
           pathType: Prefix
           service: swagger-ui
           port: 8080
-        - path: /auth
-          pathType: Prefix
-          service: zitadel
-          port: 8080
         - path: /analytics
           pathType: Prefix
           service: openpanel
@@ -86,6 +78,14 @@ ingress:
           pathType: Prefix
           service: frontend
           port: 80
+    # Browser-facing Zitadel host. Zitadel serves only its own root path, so it
+    # cannot sit under /auth. Must equal zitadel.externalDomain.
+    - host: auth.localhost
+      paths:
+        - path: /
+          pathType: Prefix
+          service: zitadel
+          port: 8080
 
 # Database
 postgres:
@@ -127,6 +127,11 @@ zitadel:
   enabled: true
   image: ghcr.io/zitadel/zitadel:v2.54.0
   port: 8080
+  # Browser-facing issuer parts. Zitadel writes the issuer into the token `iss` claim.
+  # Zitadel serves only the configured host, protocol, and port.
+  externalDomain: auth.localhost
+  externalPort: 80
+  externalSecure: false
   adminEmail: admin@runefoble.local
   adminPassword: RunefobleAdminPassword123!
   masterKey: RunefobleMasterKeyMustBe32Bytes!
@@ -279,3 +284,12 @@ frontend:
   image: runefoble/frontend:0.1.0
   replicas: 1
   port: 80
+  # Rendered to /runtime-config.json. Holds no secret. Zitadel generates the client ID,
+  # so set clientId after the application is provisioned.
+  runtimeConfig:
+    clientId: ""
+    scopes:
+      - openid
+      - profile
+      - email
+    providerName: Zitadel

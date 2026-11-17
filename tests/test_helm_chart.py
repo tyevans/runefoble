@@ -200,6 +200,9 @@ def test_ingress_mailpit_routing():
 
     for rule in ingress["spec"]["rules"]:
         host = rule.get("host")
+        if host == "auth.localhost":
+            # The Zitadel host serves only Zitadel.
+            continue
         paths = {
             p["path"]: p["backend"]["service"]["name"]
             for p in rule.get("http", {}).get("paths", [])

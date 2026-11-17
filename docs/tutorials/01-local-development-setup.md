@@ -58,7 +58,8 @@ Run the targets in this order. `make helm-deploy` does not build images by itsel
 Open your browser to:
 - **Frontend App**: `http://localhost/`
 - **Swagger UI API Hub**: `http://localhost/swagger-ui`
-- **Identity Provider (Zitadel)**: `http://localhost/auth`
+- **Identity Provider (Zitadel)**: `http://auth.localhost`. Chromium and Firefox resolve `*.localhost` to your machine. For `curl`, add `-H "Host: auth.localhost"` to the request, for example `curl -H "Host: auth.localhost" http://localhost/.well-known/openid-configuration`.
+  - First run: the sign-in application (`runefoble-web`) and the client ID are not provisioned by the chart yet. Until the bootstrap task lands, the App Shell cannot complete a sign-in. `/runtime-config.json` on the frontend carries an empty `clientId`.
 - **Mailpit Email Testing UI**: `http://localhost/mail/`
 - **Observability (Grafana)**: `http://localhost:3001` (admin / admin)
 
