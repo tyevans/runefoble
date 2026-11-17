@@ -29,12 +29,16 @@ def owning_services() -> Iterator[dict[str, str]]:
     with (
         pytest.MonkeyPatch.context() as env,
         serve(board_app) as board_url,
-        serve(compendium_app) as compendium_url,
+        serve(compendium_app, lifespan="on") as compendium_url,
     ):
         env.setenv("BOARD_STATE_URL", board_url)
         env.setenv("RULES_COMPENDIUM_URL", compendium_url)
         # Setup through the public board_state HTTP frontdoor: place the active session token.
         with httpx.Client(base_url=board_url) as http:
+            created = http.post(
+                "/api/v1/boards", json={"session_id": "camp1", "cols": 10, "rows": 10}
+            )
+            assert created.status_code == 200, created.text
             placed = http.post(
                 "/api/v1/boards/camp1/tokens",
                 json={"token_id": "t1", "name": "Valeros", "x": 1, "y": 1},

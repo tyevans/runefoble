@@ -4,6 +4,7 @@ import type { AoETemplateConfig, BoardToken, DragKinematicsState, GhostPreviewSt
 import { renderAoEBanner, renderAoEOverlay, renderBoardHeader, renderGhostBanner, renderRadialMenuOverlay, renderStatusBar } from './board-templates.ts';
 import { cancelAoEPlacement, confirmAoEPlacement, executeRadialAction, handleBoardSocketMessage } from './board-actions.ts';
 import { renderBoardGrid } from './board-grid.ts';
+import { buildConfirmMoveMessage } from './board-api.ts';
 import { GhostPreviewEngine, parseIncomingGhostPreview } from './ghost_preview.ts';
 import { computeDragUpdate, initDragState, isCellVisible, snapToGrid } from './kinematics.ts';
 import { boardStyles } from './runefoble-board.styles.ts';
@@ -154,7 +155,7 @@ export class RunefobleBoard extends LitElement {
     const ghost = this.ghostEngine?.confirm();
     if (ghost) {
       this.dispatchEvent(new CustomEvent('confirm-ghost', { detail: { ghost }, bubbles: true, composed: true }));
-      this.dispatchEvent(new CustomEvent('move-token', { detail: { tokenId: ghost.tokenId, toX: ghost.toX, toY: ghost.toY }, bubbles: true, composed: true }));
+      this.requestTokenMove(ghost.tokenId, ghost.toX, ghost.toY);
     }
     return ghost ?? null;
   }
@@ -198,17 +199,34 @@ export class RunefobleBoard extends LitElement {
     if (!this.dragState?.isDragging) return;
     const { targetCellX: toX, targetCellY: toY, startX, startY, tokenId } = this.dragState;
     if (toX !== startX || toY !== startY) {
-      this.dispatchEvent(new CustomEvent('move-token', { detail: { tokenId, toX, toY }, bubbles: true, composed: true }));
+      this.requestTokenMove(tokenId, toX, toY);
     } else {
       this.radialTokenId = tokenId;
     }
     try { (e.target as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
     this.dragState = null;
   }
+  /**
+   * Sends a token move as the `confirm_move` action on the board socket.
+   * Emits `move-rejected` when the socket is not open, so the host can react.
+   */
+  private requestTokenMove(tokenId: string, toX: number, toY: number): void {
+    this.dispatchEvent(new CustomEvent('move-token', { detail: { tokenId, toX, toY }, bubbles: true, composed: true }));
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(buildConfirmMoveMessage({ tokenId, toX, toY })));
+    } else {
+      this.dispatchEvent(new CustomEvent('move-rejected', {
+        detail: { tokenId, toX, toY, reason: 'board socket is not open' },
+        bubbles: true,
+        composed: true,
+      }));
+    }
+  }
+
   private handleCellClick(x: number, y: number) {
     if (this.radialTokenId) { this.radialTokenId = null; return; }
     if (this.selectedTokenId && !this.dragState?.isDragging) {
-      this.dispatchEvent(new CustomEvent('move-token', { detail: { tokenId: this.selectedTokenId, toX: x, toY: y }, bubbles: true, composed: true }));
+      this.requestTokenMove(this.selectedTokenId, x, y);
       this.selectedTokenId = null;
     }
   }

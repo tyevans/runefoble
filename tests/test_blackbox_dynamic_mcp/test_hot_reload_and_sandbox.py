@@ -90,6 +90,7 @@ def test_blackbox_invalid_parameter_schema_rejection(client: TestClient):
     bad_schema_1 = {
         "name": "bad_tool_1",
         "parameters": {"type": "array", "items": {"type": "string"}},
+        "handler_code": "def handle(): return {}",
     }
     res1 = client.post("/mcp/tools/register", json=bad_schema_1)
     assert res1.status_code == 400
@@ -99,6 +100,7 @@ def test_blackbox_invalid_parameter_schema_rejection(client: TestClient):
     bad_schema_2 = {
         "name": "bad_tool_2",
         "parameters": {"type": "object", "properties": "invalid_not_dict"},
+        "handler_code": "def handle(): return {}",
     }
     res2 = client.post("/mcp/tools/register", json=bad_schema_2)
     assert res2.status_code == 400

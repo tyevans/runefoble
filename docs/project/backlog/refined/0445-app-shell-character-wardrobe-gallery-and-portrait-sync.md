@@ -82,3 +82,9 @@ The `<runefoble-wardrobe-gallery>` component exists in `@runefoble/character-she
 3. Portrait updates synchronize immediately to character card and VTT token representations.
 4. Frontdoor blackbox test suite `frontend/test/wardrobe-gallery-integration.test.ts` passes with 100% assertions.
 5. All touched files adhere to Hard Invariant 6 (< 500 lines).
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- Backend: `services/board_state/src/board_state/models/tokens.py` (`PlaceTokenRequest`) and `routers/tokens.py:20` (`place_token`) keep name and type only. The forged portrait `image_url` is dropped, so VTT avatars show no portrait. Store `image_url` on the token.

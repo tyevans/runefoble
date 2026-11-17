@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from board_state.dependencies import get_or_create_board, repo
+from board_state.dependencies import BoardNotFoundError, get_board, repo
 from board_state.preview import (
     board_ws_manager,
     compute_kinematic_route_preview,
@@ -31,7 +31,7 @@ def _find_token_id(board: Any, token_id: str | None, speaker_name: str | None) -
 
 
 async def _handle_ghost_preview(session_id: str, data: dict[str, Any]) -> None:
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     token_id = _find_token_id(board, data.get("token_id"), data.get("speaker_name"))
     to_x, to_y = data.get("to_x"), data.get("to_y")
     if token_id and to_x is not None and to_y is not None:
@@ -61,7 +61,7 @@ async def _handle_confirm_move(session_id: str, data: dict[str, Any]) -> None:
     token_id, to_x, to_y = data.get("token_id"), data.get("to_x"), data.get("to_y")
     if not (token_id and to_x is not None and to_y is not None):
         return
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     cost, hazard, dice = board.move_token(
         token_id=token_id,
         to_x=int(to_x),
@@ -88,6 +88,29 @@ async def _handle_confirm_move(session_id: str, data: dict[str, Any]) -> None:
     await board_ws_manager.broadcast(session_id, msg)
 
 
+async def _dispatch_action(session_id: str, action: str, is_cast: bool, data: dict[str, Any]):
+    if not is_cast and action in GHOST_ACTIONS:
+        await _handle_ghost_preview(session_id, data)
+    elif action in CONFIRM_ACTIONS:
+        await _handle_confirm_move(session_id, data)
+    elif action in CANCEL_ACTIONS:
+        msg = {
+            "type": "preview_cancelled",
+            "action": "preview_cancelled",
+            "status": "cancelled",
+            "session_id": session_id,
+            "token_id": data.get("token_id"),
+        }
+        await board_ws_manager.broadcast(session_id, msg)
+    else:
+        board = await get_board(session_id)
+        handled = await handle_ws_action(session_id, action, data, board) or await handle_ws_spell(
+            session_id, action, data, board
+        )
+        if not handled:
+            await board_ws_manager.broadcast(session_id, data)
+
+
 @router.websocket("/ws/boards/{session_id}")
 async def board_websocket(websocket: WebSocket, session_id: str):
     """Real-time tactical board WebSocket stream for kinematic dragging and ghost previews."""
@@ -108,26 +131,12 @@ async def board_websocket(websocket: WebSocket, session_id: str):
                 or data.get("parameters", {}).get("action") == "cast_spell"
             )
 
-            if not is_cast and action in GHOST_ACTIONS:
-                await _handle_ghost_preview(session_id, data)
-            elif action in CONFIRM_ACTIONS:
-                await _handle_confirm_move(session_id, data)
-            elif action in CANCEL_ACTIONS:
-                msg = {
-                    "type": "preview_cancelled",
-                    "action": "preview_cancelled",
-                    "status": "cancelled",
-                    "session_id": session_id,
-                    "token_id": data.get("token_id"),
-                }
-                await board_ws_manager.broadcast(session_id, msg)
-            else:
-                board = await get_or_create_board(session_id)
-                handled = await handle_ws_action(
-                    session_id, action, data, board
-                ) or await handle_ws_spell(session_id, action, data, board)
-                if not handled:
-                    await board_ws_manager.broadcast(session_id, data)
+            try:
+                await _dispatch_action(session_id, action, is_cast, data)
+            except BoardNotFoundError as exc:
+                await websocket.send_json(
+                    {"type": "error", "status": 404, "session_id": session_id, "message": str(exc)}
+                )
 
     except WebSocketDisconnect:
         board_ws_manager.disconnect(session_id, websocket)

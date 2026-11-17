@@ -63,3 +63,9 @@ Eighty publish call sites were found. Forty-six wrap the call in `contextlib.sup
 2. Decision routes return 503 on publish failure. Blackbox tests above pass.
 3. `uv run pytest` and `make health-check` pass. Changed files under 500 lines.
 4. Reference doc describes the policy. `CHANGELOG.md` entry.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- WebSocket broadcast suppression: `services/board_state/src/board_state/routers/aoe.py:95,128`, `actions.py:39`, `physics.py:48,87` wrap broadcasts in `contextlib.suppress(Exception)`. `services/the_watcher/src/the_watcher/turf_war/service.py:46-50` logs publish failures as warnings. Apply the same policy.

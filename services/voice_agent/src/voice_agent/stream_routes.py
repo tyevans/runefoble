@@ -28,7 +28,6 @@ class AudioStreamChunkRequest(BaseModel):
     is_whisper: bool = False
     target_character_id: str | None = None
     is_final: bool = False
-    mock_transcript: str | None = None
 
 
 class AudioStreamChunkResponse(BaseModel):
@@ -80,7 +79,6 @@ async def ingest_audio_chunk(req: AudioStreamChunkRequest):
             is_whisper=req.is_whisper,
             target_character_id=req.target_character_id,
             is_final=req.is_final,
-            mock_transcript=req.mock_transcript,
         )
     except SpeechEngineUnavailable as e:
         raise HTTPException(
@@ -115,7 +113,6 @@ async def audio_stream_websocket(
                 break
             audio_bytes = b""
             is_final = False
-            mock_transcript = None
             sample_rate = 16000
 
             if "bytes" in message and message["bytes"]:
@@ -131,7 +128,6 @@ async def audio_stream_websocket(
                     sess_id = payload.get("session_id") or sess_id
                     camp_id = payload.get("campaign_id") or camp_id
                     is_final = bool(payload.get("is_final", False))
-                    mock_transcript = payload.get("mock_transcript")
                     sample_rate = int(payload.get("sample_rate", 16000))
                 except Exception as exc:
                     logger.warning("Failed to parse WebSocket JSON audio frame: %s", exc)
@@ -146,7 +142,6 @@ async def audio_stream_websocket(
                     audio_bytes=audio_bytes,
                     sample_rate=sample_rate,
                     is_final=is_final,
-                    mock_transcript=mock_transcript,
                 )
             except SpeechEngineUnavailable as e:
                 await websocket.send_json(

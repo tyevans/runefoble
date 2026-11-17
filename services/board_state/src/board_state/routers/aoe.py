@@ -7,7 +7,7 @@ import logging
 from uuid import uuid4
 
 from board_state.aoe import evaluate_aoe_targets
-from board_state.dependencies import get_event_bus, get_or_create_board, repo
+from board_state.dependencies import get_board, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
     AoEEvaluateRequest,
@@ -26,7 +26,7 @@ router = APIRouter(tags=["aoe"])
 @router.post("/api/v1/boards/{session_id}/aoe/evaluate", response_model=AoETemplateResponse)
 async def evaluate_aoe_template(session_id: str, req: AoEEvaluateRequest):
     """Compute mathematical intersection of cone/sphere/line with grid tokens without saving."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         response = evaluate_aoe_targets(
             tokens=board.state.tokens,
@@ -54,7 +54,7 @@ async def evaluate_aoe_template(session_id: str, req: AoEEvaluateRequest):
 @router.post("/api/v1/boards/{session_id}/aoe", response_model=AoETemplateResponse)
 async def place_aoe_template(session_id: str, req: AoETemplatePlaceRequest):
     """Place and persist an AoE spell template on the board, emitting AoETemplatePlaced."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         template_id = req.template_id or str(uuid4())
         evaluated = evaluate_aoe_targets(
@@ -114,14 +114,14 @@ async def place_aoe_template(session_id: str, req: AoETemplatePlaceRequest):
 @router.get("/api/v1/boards/{session_id}/aoe", response_model=list[AoETemplateState])
 async def list_active_aoe_templates(session_id: str):
     """List all active AoE spell templates currently placed on the board."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     return board.state.active_aoe_templates
 
 
 @router.delete("/api/v1/boards/{session_id}/aoe/{template_id}")
 async def remove_aoe_template(session_id: str, template_id: str):
     """Remove an active AoE template from the board."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         board.remove_aoe_template(template_id)
         await repo.save(board)

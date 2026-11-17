@@ -90,3 +90,34 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Graceful Fallback**: `MailpitClient` has built-in `fallback_in_memory=True` storing emails in a local memory buffer for offline test execution when Mailpit is not running.
 - **How-To Guide**: [Test Email Signups with Mailpit](../how-to/test-email-signups-with-mailpit.md).
 
+---
+
+## Campaign Lore Retrieval Backends
+
+`LoreBackendSettings` (`libs/runefoble_platform`) selects each port of the Campaign Lore retrieval engine. All ports are rebuilt from the event store at start-up.
+
+- **`RUNEFOBLE_LORE_GRAPH`**: `projection` (default). Entity graph, rebuilt from `LoreDocument` events.
+- **`RUNEFOBLE_LORE_VECTOR`**: `memory` (default). Entity vector index, in process.
+- **`RUNEFOBLE_LORE_CHUNK`**: `memory` (default). Passage corpus for BM25 and dense search, in process.
+- **`RUNEFOBLE_LORE_EMBEDDING`**: `fake` (default). Deterministic hash embeddings, not semantic.
+- **Event store**: The replay reads `RUNEFOBLE_USE_POSTGRES_EVENT_STORE` and `RUNEFOBLE_DATABASE_URL`. Start-up fails if PostgreSQL is configured and unreachable.
+
+---
+
+## Rules Compendium Retrieval Mode
+
+`RulesCompendiumSettings` (`libs/runefoble_platform`) selects the retrieval mode of the Rules Compendium. The mode is reported in every search response as `retrieval_mode`.
+
+- **`RUNEFOBLE_RULES_EMBEDDING`**: `lexical` (default). BM25 only. Responses report `lexical`.
+- **`RUNEFOBLE_RULES_EMBEDDING`**: `openai_compatible`. BM25 fused with vector search. Responses report `hybrid`. Requires the endpoint settings below.
+- **`RUNEFOBLE_EMBEDDING_BASE_URL`**, **`RUNEFOBLE_EMBEDDING_MODEL`**, **`RUNEFOBLE_EMBEDDING_DIMENSION`**: Required for `openai_compatible`. Start-up fails if one is missing.
+- **`RUNEFOBLE_EMBEDDING_API_KEY`**, **`RUNEFOBLE_EMBEDDING_DOCUMENT_PREFIX`**, **`RUNEFOBLE_EMBEDDING_QUERY_PREFIX`**: Optional.
+- **Details**: [Embedding Providers](embedding-providers.md).
+
+---
+
+## Wardrobe Image Generator
+
+`WardrobeGeneratorSettings` (`libs/runefoble_platform`) selects the generator behind the `WardrobeGenerator` port. The Asset Forge service reads it at start-up.
+
+- **`RUNEFOBLE_WARDROBE_GENERATOR`**: `placeholder` (default). Draws a flat colour portrait. It preserves no face and does not read the attire prompt. Any other value fails validation at start-up.

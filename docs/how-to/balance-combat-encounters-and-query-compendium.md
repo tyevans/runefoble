@@ -1,12 +1,12 @@
 # How-To: Balance Combat Encounters & Query Rules Compendium
 
-This guide explains how to query canonical SRD 5.1 monsters, spells, and conditions using sub-50ms `redstring` hybrid search, generate mathematically balanced combat encounters with role synergy, register campaign homebrew rules guarded by SpiceDB Zanzibar, and use FastMCP tabletop tools.
+This guide explains how to query canonical SRD 5.1 monsters, spells, and conditions using sub-50ms `redstring` search (BM25 by default, hybrid when an embedding provider is configured), generate mathematically balanced combat encounters with role synergy, register campaign homebrew rules guarded by SpiceDB Zanzibar, and use FastMCP tabletop tools.
 
 ---
 
-## 1. Hybrid Rules Search
+## 1. Rules Search
 
-To query rules, spells, conditions, or monsters with combined BM25 lexical keyword matching and semantic vector retrieval:
+To query rules, spells, conditions, or monsters:
 
 ```bash
 curl -G http://localhost:8007/api/v1/compendium/rules/search \
@@ -20,6 +20,7 @@ curl -G http://localhost:8007/api/v1/compendium/rules/search \
   "query": "fire damage explosion",
   "results_count": 2,
   "took_ms": 1.25,
+  "retrieval_mode": "lexical",
   "results": [
     {
       "category": "spell",
@@ -38,7 +39,18 @@ curl -G http://localhost:8007/api/v1/compendium/rules/search \
 }
 ```
 
-The endpoint guarantees sub-50ms response times for real-time voice arbitration and DM rule verification.
+### Retrieval Modes
+
+The `retrieval_mode` field states how the service ranked the results.
+
+| Mode | Ranking | When it applies |
+|---|---|---|
+| `lexical` | BM25 keyword match only. A query that shares no keyword with a rule does not find it. | No embedding provider is configured. This is the default. |
+| `hybrid` | BM25 fused with vector search from the configured provider. | `RUNEFOBLE_RULES_EMBEDDING=openai_compatible`. |
+
+To enable `hybrid` mode, set the variables in [Platform Services](../reference/platform-services.md#rules-compendium-retrieval-mode). The provider contract is in [Embedding Providers](../reference/embedding-providers.md).
+
+In `lexical` mode the endpoint answers in under 50 ms for real-time voice arbitration and DM rule verification. In `hybrid` mode, the embedding call adds the provider latency.
 
 ---
 

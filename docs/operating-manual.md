@@ -161,7 +161,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis & voice controls microfrontend |
 | `services/campaign_lore/` | Worldbuilding knowledge graphs, entity alias consolidation & redstring hybrid RAG microservice |
 | `services/rules_compendium/` | TTRPG rules compendium, sub-50ms redstring hybrid retrieval & automated CR encounter builder |
-| `services/asset_forge/` | Procedural battlemap diffusion synthesis, wall/hazard geometry extraction & token portrait generator |
+| `services/asset_forge/` | Procedural battlemap layout behind a `MapGenerator` port (deterministic default, no diffusion model), wall/hazard geometry extraction & token portrait generator |
 | `services/soundscape/` | Dynamic audio stem mixing, tactical foley cues, tension scoring & audio controls microfrontend |
 | `services/audience_studio/` | TypeScript audience interactivity engine, live chaos polls, DM approval queue & microfrontend |
 | `services/campaign_analytics/` | Combat telemetry, tactical heatmaps, MVP turn statistics & chronicle timeline archive |

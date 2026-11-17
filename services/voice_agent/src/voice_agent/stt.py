@@ -172,7 +172,6 @@ class StreamingAudioPipeline:
         is_whisper: bool = False,
         target_character_id: str | None = None,
         is_final: bool = False,
-        mock_transcript: str | None = None,
     ) -> ChunkProcessingResult:
         start_t = time.perf_counter()
         participant = self.get_or_create_participant(session_id, speaker_id, sample_rate)
@@ -208,14 +207,11 @@ class StreamingAudioPipeline:
                 buffer_duration_ms=buf_dur,
             )
 
-        if mock_transcript:
-            transcript = mock_transcript
-        else:
-            try:
-                transcript = await self.transcriber.transcribe(utterance_audio, sample_rate=sr)
-            except SpeechEngineUnavailable as exc:
-                await self._publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
-                raise
+        try:
+            transcript = await self.transcriber.transcribe(utterance_audio, sample_rate=sr)
+        except SpeechEngineUnavailable as exc:
+            await self._publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
+            raise
 
         session_uuid = to_uuid(session_id)
         campaign_uuid = to_uuid(campaign_id) if campaign_id else None

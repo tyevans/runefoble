@@ -64,3 +64,9 @@ Documentation accuracy. Not user-facing.
 4. Absolute `file:///` links are gone from `docs/how-to`.
 5. The check runs in `make health-check` or in `spec-ops health` (decision in TASK-0668).
 6. Files stay under 500 lines.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `docs/how-to/define-spicedb-zanzibar-permissions.md:263` says "complete backward compatibility" for `runefoble_auth.mock_spicedb`. `docs/reference/ports-and-endpoints.md:107,114,115` call the voice routes "Backward-compatible" or "alias". Remove the wording after the code aliases are gone (TASK-0494).

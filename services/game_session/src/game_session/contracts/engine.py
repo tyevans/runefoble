@@ -13,9 +13,9 @@ from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from game_session.contracts.models import BountyStatus, MercenaryBountyState
 from runefoble_events.contracts import (
-    MercenaryBountyClaimedEvent,
-    MercenaryBountyFulfilledEvent,
-    MercenaryBountyPostedEvent,
+    MercenaryBountyClaimed,
+    MercenaryBountyFulfilled,
+    MercenaryBountyPosted,
 )
 
 _COMPLETABLE = (BountyStatus.ACCEPTED, BountyStatus.FULFILLED, BountyStatus.DISPUTED)
@@ -40,8 +40,8 @@ class MercenaryBountyAggregate(DeclarativeAggregate[MercenaryBountyState]):
         if self._state is None:
             self._state = MercenaryBountyState(bounty_id=str(aggregate_id or ""))
 
-    @handles(MercenaryBountyPostedEvent)
-    def handle_posted(self, ev: MercenaryBountyPostedEvent) -> None:
+    @handles(MercenaryBountyPosted)
+    def handle_posted(self, ev: MercenaryBountyPosted) -> None:
         d = ev.model_dump()
         fields = MercenaryBountyState.model_fields
         payload = {k: v for k, v in d.items() if k in fields and v is not None}
@@ -52,15 +52,15 @@ class MercenaryBountyAggregate(DeclarativeAggregate[MercenaryBountyState]):
             **payload, status=BountyStatus.POSTED, escrow_locked=True
         )
 
-    @handles(MercenaryBountyClaimedEvent)
-    def handle_claimed(self, ev: MercenaryBountyClaimedEvent) -> None:
+    @handles(MercenaryBountyClaimed)
+    def handle_claimed(self, ev: MercenaryBountyClaimed) -> None:
         self.state.status = BountyStatus.ACCEPTED
         self.state.claimant_user_id = ev.claimant_user_id
         self.state.claimant_campaign_id = ev.claimant_campaign_id
         self.state.claimant_party_name = ev.claimant_party_name
 
-    @handles(MercenaryBountyFulfilledEvent)
-    def handle_fulfilled(self, ev: MercenaryBountyFulfilledEvent) -> None:
+    @handles(MercenaryBountyFulfilled)
+    def handle_fulfilled(self, ev: MercenaryBountyFulfilled) -> None:
         self.state.status = ev.status
         if ev.proof:
             self.state.proof = ev.proof
@@ -76,7 +76,7 @@ class MercenaryBountyAggregate(DeclarativeAggregate[MercenaryBountyState]):
         sid = _to_u(session_id) if session_id else None
         cid = _to_u(campaign_id) if campaign_id else None
         self.create_event(
-            MercenaryBountyPostedEvent,
+            MercenaryBountyPosted,
             aggregate_id=_to_u(bid),
             bounty_id=bid,
             session_id=sid,
@@ -92,7 +92,7 @@ class MercenaryBountyAggregate(DeclarativeAggregate[MercenaryBountyState]):
         if self.state.poster_user_id and self.state.poster_user_id == uid:
             raise ValueError("Creator cannot claim their own bounty")
         self.create_event(
-            MercenaryBountyClaimedEvent,
+            MercenaryBountyClaimed,
             aggregate_id=_to_u(self.state.bounty_id or self.aggregate_id),
             bounty_id=self.state.bounty_id,
             session_id=self.state.session_id or None,
@@ -106,7 +106,7 @@ class MercenaryBountyAggregate(DeclarativeAggregate[MercenaryBountyState]):
         self, status: str, proof: str, user: str, g: int = 0, items: list[Any] | None = None
     ) -> None:
         self.create_event(
-            MercenaryBountyFulfilledEvent,
+            MercenaryBountyFulfilled,
             aggregate_id=_to_u(self.state.bounty_id or self.aggregate_id),
             bounty_id=self.state.bounty_id,
             session_id=self.state.session_id or None,

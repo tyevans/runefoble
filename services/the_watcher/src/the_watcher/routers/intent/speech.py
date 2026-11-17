@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from runefoble_events.events import (
     SpeechIntentParsed,
     TokenMoved,
@@ -26,6 +26,56 @@ from the_watcher.models import (
 router = APIRouter(tags=["intent"])
 
 
+async def _parse_with_worker(req: SpeechInputRequest) -> IntentResult:
+    """Parse speech with the inference worker.
+
+    A worker failure is raised as HTTP 503. It is never replaced by a local template reply.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            res = await client.post(
+                f"{INFERENCE_URL}/inference/v1/intent",
+                json={
+                    "campaign_id": req.campaign_id,
+                    "session_id": req.session_id,
+                    "speaker_id": req.speaker_id,
+                    "speaker_name": req.speaker_name,
+                    "transcript": req.transcript,
+                },
+            )
+    except httpx.HTTPError as e:
+        logger.error("Inference worker unreachable at %s: %s", INFERENCE_URL, e)
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "backend_unavailable", "backend": "inference_worker"},
+        ) from e
+
+    if res.status_code == 503:
+        backend = res.json().get("backend", "unknown")
+        logger.error("Inference worker reported backend '%s' unavailable", backend)
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "backend_unavailable", "backend": backend},
+        )
+    if res.status_code != 200:
+        logger.error("Inference worker returned HTTP %s for intent parse", res.status_code)
+        raise HTTPException(
+            status_code=502,
+            detail={"error": "inference_worker_error", "status": res.status_code},
+        )
+
+    action = res.json()["action"]
+    target_name = action.get("target_token_name") or action.get("target_token_id")
+    return IntentResult(
+        action_type=action["action_type"],
+        confidence=action["confidence"],
+        parameters=action,
+        target=target_name,
+        details=action.get("narrative_flavor", req.transcript),
+        watcher_reply=action.get("narrative_flavor", ""),
+    )
+
+
 @router.post("/api/v1/watcher/transcribe-and-act", response_model=IntentResult)
 @router.post("/api/v1/watcher/intent", response_model=IntentResult)
 async def process_speech_action(req: SpeechInputRequest) -> IntentResult:
@@ -33,33 +83,7 @@ async def process_speech_action(req: SpeechInputRequest) -> IntentResult:
     intent: IntentResult | None = None
 
     if INFERENCE_URL:
-        try:
-            async with httpx.AsyncClient(timeout=2.0) as client:
-                res = await client.post(
-                    f"{INFERENCE_URL}/inference/v1/intent",
-                    json={
-                        "campaign_id": req.campaign_id,
-                        "session_id": req.session_id,
-                        "speaker_id": req.speaker_id,
-                        "speaker_name": req.speaker_name,
-                        "transcript": req.transcript,
-                    },
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    action = data.get("action", {})
-                    target_name = action.get("target_token_name") or action.get("target_token_id")
-                    intent = IntentResult(
-                        action_type=action.get("action_type", "unknown"),
-                        confidence=action.get("confidence", 0.9),
-                        parameters=action,
-                        target=target_name,
-                        details=action.get("narrative_flavor", req.transcript),
-                        watcher_reply=action.get("narrative_flavor")
-                        or f"The Watcher acknowledges {req.speaker_name}.",
-                    )
-        except Exception as e:
-            logger.warning("Inference worker failed: %s. Falling back to local engine.", e)
+        intent = await _parse_with_worker(req)
 
     if intent is None:
         intent = engine.parse_speech_intent(req.transcript, req.speaker_name)

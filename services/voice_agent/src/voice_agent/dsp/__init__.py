@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from voice_agent.audio_utils import (
     _to_samples_array,
-    generate_synthetic_audio,
     to_samples_array,
 )
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter, BargeInOnsetResult
@@ -72,7 +71,6 @@ __all__ = [
     "biquad_resonance",
     "drunk_filter",
     "ethereal_filter",
-    "generate_synthetic_audio",
     "get_preset",
     "list_presets",
     "pitch_shift",

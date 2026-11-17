@@ -1,6 +1,6 @@
 """Pydantic data models for the Rules Compendium and Encounter Builder."""
 
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -137,4 +137,7 @@ class RuleSearchResponse(BaseModel):
     query: str
     results_count: int
     took_ms: float
+    retrieval_mode: Literal["lexical", "hybrid"] = Field(
+        description="lexical: BM25 only. hybrid: BM25 fused with vector search from the configured provider",
+    )
     results: list[RuleSearchResultItem]

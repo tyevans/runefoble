@@ -10,6 +10,7 @@ Governed by:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -35,10 +36,11 @@ def spicedb_client() -> MockSpiceDBClient:
 
 
 @pytest.fixture
-def client(spicedb_client: MockSpiceDBClient) -> TestClient:
+def client(spicedb_client: MockSpiceDBClient) -> Iterator[TestClient]:
     fresh_repo = create_aggregate_repository(WestMarchesAtlasAggregate)
     set_west_marches_repo(fresh_repo)
-    return TestClient(lore_app)
+    with TestClient(lore_app) as lore_client:
+        yield lore_client
 
 
 @pytest.fixture

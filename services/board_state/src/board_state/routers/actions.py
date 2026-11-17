@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import logging
 
-from board_state.dependencies import get_event_bus, get_or_create_board, repo
+from board_state.dependencies import get_board, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import TokenActionRequest, TokenActionResponse
 from board_state.preview import board_ws_manager
@@ -22,7 +22,7 @@ router = APIRouter(tags=["actions"])
 )
 async def execute_token_action(session_id: str, token_id: str, req: TokenActionRequest):
     """Execute a contextual tactical action for a token (Dodge, Dash, Melee, Disengage, Cast)."""
-    board = await get_or_create_board(session_id)
+    board = await get_board(session_id)
     try:
         board.execute_token_action(
             token_id=token_id,

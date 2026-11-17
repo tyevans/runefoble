@@ -37,9 +37,10 @@ curl -X POST http://localhost:8006/api/v1/lore/documents \
 
 This endpoint:
 1. Creates an event-sourced `LoreDocumentAggregate` and emits `LoreDocumentIngested`.
-2. Passes the document through `redstring.build_graph` to build semantic embeddings, lexical BM25 chunks, and knowledge graph projections.
-3. Records extracted entities on the aggregate stream via `EntitiesExtracted`.
-4. Writes SpiceDB Zanzibar relationship tuples binding the document to the campaign.
+2. Extracts entities, aliases, and relationships with regex patterns. No model is called. Each entity records `extraction_method: "pattern"`.
+3. Indexes the graph, the BM25 and dense chunk corpus, and the entity vectors in the service process.
+4. Records extracted entities on the aggregate stream via `EntitiesExtracted`.
+5. Writes SpiceDB Zanzibar relationship tuples binding the document to the campaign.
 
 ---
 
@@ -54,9 +55,12 @@ curl -X POST http://localhost:8006/api/v1/lore/aliases/consolidate \
     "campaign_id": "8a329ef2-5c91-4cf1-83d8-21d4bb67f101",
     "canonical_name": "Sir Gareth",
     "alias_name": "The Silver Knight",
-    "reason": "Honorary knighthood title"
+    "reason": "Honorary knighthood title",
+    "document_id": "3c89b218-0f04-45aa-b883-9bca4020a101"
   }'
 ```
+
+`document_id` is required. The service records the consolidation on that document's stream as `AliasesConsolidated`, so it survives a restart. An unknown document returns `404`.
 
 To resolve aliases during dialogue generation or intent extraction:
 
@@ -119,14 +123,25 @@ html`
 
 ---
 
-## 5. Modular Retrieval Architecture
+## 5. Backends, Start-up Replay, and Restarts
+
+The retrieval engine is built from `LoreBackendSettings` (`RUNEFOBLE_LORE_*`, see the platform services reference). Its graph, vector index, and chunk corpus are in-process and derived. At start-up the service replays every `LoreDocument` event from the event store into a fresh engine. Then it accepts requests.
+
+- Start-up fails if `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` and PostgreSQL cannot be reached. The service does not serve an empty projection.
+- Document titles, secrecy, aliases, and search results survive a restart, because they come from the replayed events.
+- Replay time grows with the number of stored documents. Each start re-indexes them.
+- The vector index and the embeddings are not semantic yet. The default `fake` embedding provider uses deterministic hashes. A pgvector store and a real embedding provider are a follow-up.
+
+## 6. Modular Retrieval Architecture
 
 To comply with Hard Invariant 6 (File length limit < 500 lines) and enable independent optimization of worldbuilding heuristics and search algorithms, campaign lore retrieval is partitioned into dedicated submodules:
 
-- **Entity & Alias Extraction (`extraction.py`)**: Implements `WorldbuildingLlmProvider`, heuristic NER pattern scanning, entity classification (`npc`, `location`, `faction`), and alias detection.
+- **Entity & Alias Extraction (`extraction.py`)**: Implements `extract_pattern_graph`, regex NER scanning, entity classification (`npc`, `location`, `faction`), and alias detection.
+- **Pattern Graph (`pattern_graph.py`)**: Turns extraction output into graph entities and relationships with `ExtractionMethod.PATTERN` provenance.
+- **Composition (`retrieval_factory.py`, `projection.py`)**: Builds the engine from settings, and replays lore events at start-up.
 - **Scoring Primitives (`scoring.py`)**: Implements Okapi BM25 tokenization (`tokenize`), BM25 term weighting (`bm25_term_score`), inverse document frequency (`compute_idf`), dense vector similarity (`cosine_similarity`), and Reciprocal Rank Fusion (`reciprocal_rank_fusion`).
 - **Data Models (`models.py`)**: Defines `DocumentMetadata` and `LoreSearchResultItem` data classes.
-- **Engine Coordinator (`retrieval.py`)**: Exposes `LoreRetrievalEngine` (aliased as `HybridLoreEngine`), managing document ingestion, knowledge graph neighbor traversal, alias consolidation, and hybrid search query execution.
+- **Engine Coordinator (`retrieval.py`)**: Exposes `LoreRetrievalEngine`. The engine receives its ports through its constructor. It manages document ingestion, knowledge graph neighbor traversal, alias consolidation, and hybrid search query execution.
 
-All submodules re-export their public symbols through `campaign_lore` and `campaign_lore.retrieval` to guarantee full backward compatibility.
+Submodules re-export their public symbols through `campaign_lore`.
 

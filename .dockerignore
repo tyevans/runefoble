@@ -1,0 +1,27 @@
+# Build context for deployments/docker/python-service.Dockerfile.
+# Keep the context small: no VCS data, local virtualenvs, frontend code, docs or tests.
+
+.git
+.worktrees
+.audit
+.venv
+**/.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.mutmut-cache
+.coverage
+htmlcov
+
+node_modules
+**/node_modules
+frontend
+e2e
+docs
+tests
+tools
+scripts
+**/ui
+**/dist
+**/*.log

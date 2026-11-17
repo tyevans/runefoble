@@ -57,3 +57,9 @@ Developer documentation. Not user-facing.
 3. The repository layout table lists all top-level source directories.
 4. The footnote check passes.
 5. The index check runs in `make health-check` or `spec-ops health` (decision in TASK-0668).
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `docs/reference/inference-worker-response-contract.md` exists on main but is not in the AGENTS.md reference index.

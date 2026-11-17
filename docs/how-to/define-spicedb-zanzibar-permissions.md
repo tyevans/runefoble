@@ -3,7 +3,7 @@
 ## Overview
 Runefoble enforces fine-grained, object-level authorization across campaigns, game sessions, characters, and tactical boards using **SpiceDB** (a Google Zanzibar-inspired graph permission system).
 
-All permission models and relationships are defined in the canonical schema at `libs/runefoble_auth/schema/runefoble.zed`. The `SpiceDBClient` in `libs/runefoble_auth` connects over gRPC using the official `authzed` SDK while automatically falling back to an in-memory mock store for offline unit tests.
+All permission models and relationships are defined in the canonical schema at `libs/runefoble_auth/schema/runefoble.zed`. The `SpiceDBClient` in `libs/runefoble_auth` connects over gRPC using the official `authzed` SDK. It does not fall back to an in-memory store. Unit tests use `MockSpiceDBClient` explicitly.
 
 ---
 
@@ -55,7 +55,13 @@ During cluster deployment (`helm install` or `helm upgrade`), SpiceDB datastore 
 - **Job**: Executes `zed schema write /etc/spicedb/schema/runefoble.zed --endpoint spicedb:50051 --token <key> --insecure`.
 
 ### Python Migration CLI
-You can also apply schema migrations programmatically or via CLI:
+You can also apply schema migrations programmatically or via CLI.
+The SpiceDB Service is `ClusterIP`. The Kind cluster does not map its gRPC port to the host.
+Before you connect from the host, forward the port:
+```bash
+kubectl port-forward svc/spicedb 50051:50051
+```
+Keep the port-forward running in a separate terminal. `make dev` starts it for you when SpiceDB is unreachable.
 ```bash
 # Using UV
 uv run python -m runefoble_auth.bootstrap_schema --endpoint localhost:50051 --token runefoble_secret_key
@@ -122,6 +128,29 @@ await client.write_relationship(
     subject_id="camp_101",
 )
 ```
+
+### Codex Privacy Relations
+A codex entry has three privacy levels. Each level is one relation tuple:
+```python
+# Share a codex entry with the whole party (view for campaign play members)
+await client.write_relationship(
+    resource_type="codex_entry",
+    resource_id="entry_7",
+    relation="party_shared",
+    subject_type="campaign",
+    subject_id="camp_101",
+)
+
+# Make a codex entry visible to everyone who can view the campaign
+await client.write_relationship(
+    resource_type="codex_entry",
+    resource_id="entry_7",
+    relation="public",
+    subject_type="campaign",
+    subject_id="camp_101",
+)
+```
+A private entry has no `party_shared` or `public` tuple. Only `author`, `editor`, and `reader` can view it.
 
 ### Deleting Relationship Tuples (Revocation)
 When a role is revoked or an entity is removed:
@@ -194,6 +223,21 @@ async def get_session(session_id: str):
 async def get_character(character_id: str):
     return {"id": character_id}
 ```
+
+---
+
+### Character Delete Check
+Only the character owner holds the `delete` permission. The DM can edit a character but cannot delete it:
+```python
+can_delete = await client.check_permission(
+    resource_type="character",
+    resource_id="char_42",
+    permission="delete",
+    subject_type="user",
+    subject_id="alice",
+)
+```
+Do not check `owner` as a permission. `owner` is a relation, not a permission.
 
 ---
 

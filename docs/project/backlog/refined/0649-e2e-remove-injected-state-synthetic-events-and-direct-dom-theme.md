@@ -71,3 +71,9 @@ These scenarios already exist. The change removes their backdoors, so they must 
 5. Each step file is under 500 lines.
 6. The how-to examples name real step files and the full persona list (item 6 of the plan).
 7. Changelog entry is not required (test-only change).
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `e2e/features/asset_forge.feature:17` and `e2e/steps/asset_forge_steps.ts:6` inject a 503 at the network boundary. Decide under ADR-0014 whether this is an allowed fault double. If not, stop the service instead.

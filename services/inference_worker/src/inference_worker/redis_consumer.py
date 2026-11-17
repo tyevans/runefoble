@@ -98,7 +98,11 @@ class RedisInferenceConsumer:
             result_data: dict[str, Any] = {}
             if task_type == "parse_intent":
                 state = await self._intent_graph.ainvoke({"request": payload})
-                result_data = state.get("parsed_action", {})
+                result_data = {
+                    "action": state.get("parsed_action", {}),
+                    "source": state["source"],
+                    "degraded": state["degraded"],
+                }
             elif task_type == "generate_narration":
                 state = await self._narration_graph.ainvoke({"request": payload})
                 result_data = state.get("final_response", {})

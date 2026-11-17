@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down images helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker seed-admin invite-admin docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -70,15 +70,46 @@ cluster-up: install-tools ## Create local Kind Kubernetes cluster with port mapp
 	@echo "==> Setting active kubectl context to kind-$(CLUSTER_NAME)..."
 	kubectl config use-context kind-$(CLUSTER_NAME)
 	@echo "==> Installing Traefik Ingress Controller..."
-	kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml 2>/dev/null || true
-	helm repo add traefik https://traefik.github.io/charts 2>/dev/null || true
-	helm repo update 2>/dev/null || true
-	helm upgrade --install traefik traefik/traefik --namespace kube-system --set ports.web.nodePort=30080 --set ports.web.hostPort=80 --set ports.websecure.hostPort=443 2>/dev/null || true
+	kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+	@helm repo list 2>/dev/null | grep -q "^traefik[[:space:]]" || helm repo add traefik https://traefik.github.io/charts
+	helm repo update
+	helm upgrade --install traefik traefik/traefik --namespace kube-system --set ports.web.nodePort=30080 --set ports.web.hostPort=80 --set ports.websecure.hostPort=443
+	kubectl -n kube-system rollout status deploy/traefik --timeout=300s
 	@echo "==> Cluster is ready! Ingress on localhost:80"
 
 cluster-down: ## Delete local Kind Kubernetes cluster
 	@echo "==> Tearing down Kind cluster $(CLUSTER_NAME)..."
 	kind delete cluster --name $(CLUSTER_NAME)
+
+# Python service images built by `make images`.
+# Row format: image-name|uv-package|ASGI-app|port (no spaces inside a row).
+# Each port must equal services.*.port in deployments/helm/runefoble/values.yaml.
+IMAGE_VERSION ?= 0.1.0
+PYTHON_DOCKERFILE ?= deployments/docker/python-service.Dockerfile
+PYTHON_IMAGE_ROWS = \
+	'gateway-api|gateway-api|gateway_api.main:app|8000' \
+	'the-watcher|the-watcher|the_watcher.main:app|8001' \
+	'board-state|board-state|board_state.main:app|8002' \
+	'character-sheet|character-sheet|character_sheet.main:app|8003' \
+	'game-session|game-session|game_session.main:app|8004' \
+	'voice-agent|voice-agent|voice_agent.main:app|8005' \
+	'campaign-lore|campaign-lore|campaign_lore.main:app|8006' \
+	'rules-compendium|rules-compendium|rules_compendium.main:app|8007' \
+	'asset-forge|asset-forge|asset_forge.main:app|8008' \
+	'soundscape|soundscape|soundscape.main:app|8009' \
+	'campaign-analytics|campaign-analytics|campaign_analytics.main:app|8011'
+
+images: ## Build every Python service image and load it into the Kind cluster
+	@for row in $(PYTHON_IMAGE_ROWS); do \
+	  name=$$(echo "$$row" | cut -d'|' -f1); \
+	  svc=$$(echo "$$row" | cut -d'|' -f2); \
+	  app=$$(echo "$$row" | cut -d'|' -f3); \
+	  port=$$(echo "$$row" | cut -d'|' -f4); \
+	  echo "==> Building runefoble/$$name:$(IMAGE_VERSION) (package $$svc, port $$port)"; \
+	  docker build -f $(PYTHON_DOCKERFILE) --build-arg SERVICE=$$svc --build-arg APP=$$app --build-arg PORT=$$port -t runefoble/$$name:$(IMAGE_VERSION) . || exit 1; \
+	  echo "==> Loading runefoble/$$name:$(IMAGE_VERSION) into Kind cluster $(CLUSTER_NAME)"; \
+	  kind load docker-image runefoble/$$name:$(IMAGE_VERSION) --name $(CLUSTER_NAME) || exit 1; \
+	done
 
 helm-lint: ## Validate Helm chart syntax
 	@echo "==> Linting Helm chart..."

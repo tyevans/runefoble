@@ -100,7 +100,11 @@ async def test_frontdoor_board_state_integration_for_templates() -> None:
     session_id = f"session-tpl-{uuid4().hex[:8]}"
 
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        # 1. Fetch initial board state via public frontdoor
+        # 1. Create the board via POST, then fetch its state via GET
+        created = await client.post(
+            "/api/v1/boards", json={"session_id": session_id, "cols": 12, "rows": 12}
+        )
+        assert created.status_code == 200
         get_res = await client.get(f"/api/v1/boards/{session_id}")
         assert get_res.status_code == 200
         board_data = get_res.json()

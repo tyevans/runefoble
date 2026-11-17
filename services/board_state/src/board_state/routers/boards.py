@@ -6,7 +6,7 @@ import logging
 from uuid import uuid4
 
 from board_state.aggregate import BoardAggregate, BoardState
-from board_state.dependencies import get_or_create_board, repo, to_board_uuid
+from board_state.dependencies import get_board, repo, to_board_uuid
 from board_state.models import CreateBoardRequest
 from fastapi import APIRouter
 
@@ -68,6 +68,7 @@ async def create_board(req: CreateBoardRequest):
 
 
 @router.get("/api/v1/boards/{session_id}", response_model=BoardState)
-async def get_board(session_id: str):
-    board = await get_or_create_board(session_id)
+async def read_board(session_id: str):
+    """Return the board for a session. Respond 404 when no board exists. Never creates one."""
+    board = await get_board(session_id)
     return board.state

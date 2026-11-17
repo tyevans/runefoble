@@ -21,11 +21,8 @@ from runefoble_events.compendium import (
 )
 from runefoble_events.contracts import (
     MercenaryBountyClaimed,
-    MercenaryBountyClaimedEvent,
     MercenaryBountyFulfilled,
-    MercenaryBountyFulfilledEvent,
     MercenaryBountyPosted,
-    MercenaryBountyPostedEvent,
 )
 from runefoble_events.mcp_tools import (
     DynamicToolInvoked,
@@ -55,11 +52,8 @@ __all__ = [
     "EncounterMvpAwarded",
     "HomebrewRuleRegistered",
     "MercenaryBountyClaimed",
-    "MercenaryBountyClaimedEvent",
     "MercenaryBountyFulfilled",
-    "MercenaryBountyFulfilledEvent",
     "MercenaryBountyPosted",
-    "MercenaryBountyPostedEvent",
     "MonsterIndexed",
     "SpellIndexed",
     "register_event",

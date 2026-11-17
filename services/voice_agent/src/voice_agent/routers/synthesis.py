@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import logging
+from typing import Any
 
 import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from runefoble_events.events import PlayerSpokeEvent
 from voice_agent.dependencies import (
     STREAM_SESSION,
@@ -26,9 +28,23 @@ from voice_agent.models import (
     VoicePersona,
 )
 from voice_agent.stt import get_streaming_pipeline
+from voice_agent.synthesis_engine import get_speech_synthesizer
+from voice_agent.synthesizer import AudioClip, SpeechSynthesisUnavailable
+from voice_agent.wav import encode_wav
 
 logger = logging.getLogger("runefoble.voice_agent.synthesis")
 router = APIRouter(tags=["Speech Synthesis & Transcription"])
+
+DEFAULT_TTS_VOICE = "en-us"
+
+
+def speech_synthesis_error_body(engine: str, exc: SpeechSynthesisUnavailable) -> dict[str, str]:
+    """Explicit error payload when the engine cannot render audio. No audio is returned."""
+    return {
+        "error": "speech_synthesis_unavailable",
+        "engine": engine,
+        "message": str(exc),
+    }
 
 
 @router.get("/api/v1/voice/personas", response_model=list[VoicePersona])
@@ -40,23 +56,38 @@ async def list_personas():
 @router.post("/api/v1/voice/synthesize", response_model=TTSResponse)
 @router.post("/api/v1/voice/tts", response_model=TTSResponse)
 async def synthesize_voice(req: TTSRequest):
-    """Synthesize speech audio stream with DSP audio conditioning and phonetic slurs."""
+    """Synthesize persona speech, apply DSP filters to that audio, and return the audio it describes."""
     filters = list(req.filters)
     if req.apply_drunk_filter and "drunk" not in filters:
         filters.append("drunk")
 
     persona = AVAILABLE_PERSONAS.get(req.persona_id)
     pitch = persona.pitch_modifier if persona else 1.0
+    voice = persona.tts_voice if persona else DEFAULT_TTS_VOICE
 
     processed = dsp_pipeline.process(req.text, filters=filters, persona_pitch=pitch)
-    raw_audio, audio_meta, filter_latency = apply_audio_filters(None, filters)
-    audio_b64 = base64.b64encode(raw_audio).decode("ascii")
+
+    synthesizer = get_speech_synthesizer()
+    try:
+        spoken = await synthesizer.synthesize(req.text, voice=voice)
+    except SpeechSynthesisUnavailable as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=speech_synthesis_error_body(synthesizer.engine_name, exc),
+        ) from exc
+
+    filtered_pcm, audio_meta, filter_latency = apply_audio_filters(
+        spoken.pcm, filters, sample_rate=spoken.sample_rate
+    )
+    clip = AudioClip(pcm=filtered_pcm, sample_rate=spoken.sample_rate)
+    wav_bytes = encode_wav(clip)
+    audio_b64 = base64.b64encode(wav_bytes).decode("ascii")
 
     effects = list(filters)
     if "drunk" in filters:
         effects.extend(["slur_articulation", "pitch_wobble"])
 
-    dsp_params = processed.dsp_config.model_dump()
+    dsp_params: dict[str, Any] = processed.dsp_config.model_dump()
     dsp_params.update(audio_meta)
     total_latency = round(filter_latency + processed.latency_ms, 2)
 
@@ -66,12 +97,14 @@ async def synthesize_voice(req: TTSRequest):
         speaker_name=req.speaker_name,
         filters_applied=filters,
         latency_ms=total_latency,
-        audio_bytes_length=len(raw_audio),
+        audio_bytes_length=len(filtered_pcm),
     )
 
     return TTSResponse(
-        audio_stream_url=f"/streams/audio/{req.persona_id}_{abs(hash(processed.conditioned_text)) % 10000}.wav",
-        duration_ms=max(1200, len(processed.conditioned_text) * 65),
+        duration_ms=clip.duration_ms,
+        sample_rate_hz=clip.sample_rate,
+        content_sha256=hashlib.sha256(wav_bytes).hexdigest(),
+        engine=synthesizer.engine_name,
         persona_used=req.persona_id,
         original_text=req.text,
         conditioned_text=processed.conditioned_text,

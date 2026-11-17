@@ -73,3 +73,9 @@ These artifacts represent legacy debt violating the updated DoR.
 2. Function aliases removed from `phonetics.py` and `audio_utils.py`.
 3. Obsolete facade re-export tests removed from `tests/test_voice_agent_dsp.py`.
 4. All voice agent tests pass with zero warnings.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- Router and module aliases: `routers/synthesis.py:57` (second route `/api/v1/voice/tts`), `routers/vocal_effects.py:67-75` (non-`/api` routes `/voice/presets`, `/voice/modulate`; check callers first), `audio_utils.py:39` (`_to_samples_array`), `dsp/__init__.py` (re-export), `models.py:57,89` (`audio_payload` copies `audio_base64`), and `tests/test_voice_agent_dsp.py:160` (`test_backward_compatible_reexports`).

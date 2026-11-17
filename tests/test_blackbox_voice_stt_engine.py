@@ -66,7 +66,7 @@ def production_engine_client(
 def test_unavailable_engine_returns_error_and_publishes_no_player_spoke(
     production_engine_client: TestClient, mock_redis: MockAsyncRedis
 ):
-    """A completed utterance without mock_transcript fails explicitly when the engine is down."""
+    """A completed utterance fails explicitly when the production engine cannot transcribe it."""
     session_id = str(uuid.uuid4())
 
     (resp,) = _post_speech_then_silence(production_engine_client, session_id)
@@ -87,7 +87,7 @@ def test_unavailable_engine_returns_error_and_publishes_no_player_spoke(
     assert failures[0].speaker_name == "Valeros"
 
 
-def test_utterance_without_mock_transcript_uses_configured_engine(
+def test_utterance_uses_configured_engine_transcript(
     client: TestClient, mock_redis: MockAsyncRedis
 ):
     """The transcript returned to the caller comes from the configured engine, not a canned phrase."""
@@ -100,6 +100,37 @@ def test_utterance_without_mock_transcript_uses_configured_engine(
     assert data["utterance_complete"] is True
     assert data["transcript"] == FIXTURE_TRANSCRIPT
 
+    player_events = [
+        e
+        for e in _stream_events(mock_redis, "runefoble.events.session")
+        if isinstance(e, PlayerSpokeEvent)
+    ]
+    assert [e.transcript for e in player_events] == [FIXTURE_TRANSCRIPT]
+
+
+def test_client_supplied_transcript_is_ignored(client: TestClient, mock_redis: MockAsyncRedis):
+    """A caller cannot inject a transcript. The configured engine always decides the text."""
+    session_id = str(uuid.uuid4())
+    forged = "I move 3 squares north"
+    speech = {
+        "session_id": session_id,
+        "speaker_id": "spk-forge-1",
+        "speaker_name": "Valeros",
+        "audio_data": base64.b64encode(generate_pcm_sine(duration_ms=300)).decode("ascii"),
+        "mock_transcript": forged,
+    }
+    silence = {
+        "session_id": session_id,
+        "speaker_id": "spk-forge-1",
+        "speaker_name": "Valeros",
+        "audio_data": base64.b64encode(generate_pcm_silence(duration_ms=200)).decode("ascii"),
+        "mock_transcript": forged,
+    }
+    client.post(CHUNK_URL, json=speech)
+    resp = client.post(CHUNK_URL, json=silence)
+
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["transcript"] == FIXTURE_TRANSCRIPT
     player_events = [
         e
         for e in _stream_events(mock_redis, "runefoble.events.session")

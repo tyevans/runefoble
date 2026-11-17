@@ -11,6 +11,7 @@ import threading
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
+from typing import Literal
 
 import uvicorn
 from fastapi import FastAPI
@@ -24,11 +25,14 @@ def _free_port() -> int:
 
 
 @contextmanager
-def serve(app: FastAPI) -> Iterator[str]:
-    """Serve an ASGI app on a free loopback port and yield its base URL."""
+def serve(app: FastAPI, *, lifespan: Literal["on", "off"] = "off") -> Iterator[str]:
+    """Serve an ASGI app on a free loopback port and yield its base URL.
+
+    Pass `lifespan="on"` for a service that builds its state at start-up.
+    """
     port = _free_port()
     server = uvicorn.Server(
-        uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning", lifespan="off")
+        uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning", lifespan=lifespan)
     )
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()

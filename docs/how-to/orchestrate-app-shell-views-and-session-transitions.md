@@ -76,14 +76,14 @@ private handleIncomingSocketMessage(msg: Record<string, any>) {
 
 ## 4. Route-Parameterized Service Fetching
 
-Instead of hardcoded mock state, the App Shell fetches data parameterized by route attributes via `appDataService`:
+The App Shell fetches data parameterized by route attributes via `appDataService`. Each call returns a `DataResult`. A failed read sets `loadError`, which renders `<runefoble-data-error>`. The App Shell never substitutes fixture data:
 
 - **Campaigns**: Fetches viewable campaigns from `GET /api/v1/campaigns`.
 - **Campaign Metadata & Updates**: Fetches metadata from `GET /api/v1/campaigns/:id` and persists updates from `@update-campaign` via `PATCH /api/v1/campaigns/:id` with Zanzibar authorization.
 - **Campaign Detail**: Fetches roster from `GET /api/v1/campaigns/:id/members` and sessions from `GET /api/v1/campaigns/:id/sessions`.
 - **Characters**: Fetches player characters from `GET /api/v1/characters` and scopes party roster in `#/campaigns/:id/characters`.
 - **Session Lobby**: Fetches participant readiness from `GET /api/v1/sessions/:id`.
-- **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`.
+- **Active Tabletop**: Fetches tactical tokens from `GET /api/v1/boards/:id`. The route returns `404` for an unknown board and never creates one. Create the board first with `POST /api/v1/boards`.
 - **Session Scheduling & Staging**: Creates new sessions or launches staging lobbies from `POST /api/v1/campaigns/:id/sessions` via `<runefoble-session-modal>`.
 
 ## 5. Character Roster Event Binding & Data Mutations
@@ -119,10 +119,10 @@ During session staging and active virtual tabletop play, the App Shell dynamical
 
 1. **Lobby Roster Population**: `appDataService.fetchLobbyState(campaignId, sessionId)` queries the user's real character roster and prioritizes characters assigned to the active campaign.
 2. **Lobby Selection Sync**: When a player selects a character in `<runefoble-session-lobby>`, the component emits `@select-character` (and `@character-selected`), storing the selection in App Shell `activeCharacter` state and updating participant cards.
-3. **Session Transition & Fallback Resolution**: When launching or entering `session-active` (`#/campaigns/:id/sessions/:sessionId`), `resolveActiveCharacter(campaignId)` preserves any character chosen during lobby staging. If no selection was made, it falls back to:
+3. **Session Transition & Character Resolution**: When launching or entering `session-active` (`#/campaigns/:id/sessions/:sessionId`), `resolveActiveCharacter(campaignId)` preserves any character chosen during lobby staging. If no selection was made, it selects:
    - The first character assigned to the specified `campaignId`.
    - The user's first available character in their roster.
-   - A graceful fallback adventurer placeholder.
+   - Known gap: when the roster is empty, a placeholder character (`char-placeholder`) is used. This remains until a follow-up task removes it (TASK-0640 discovered item).
 4. **VTT Character Card Binding**: The `<runefoble-character-card>` dynamically receives `.characterName`, `.characterClass`, `.level`, `.currentHp`, `.maxHp`, `.armorClass`, and `.portraitUrl`.
 5. **DM Party Inspector & Switcher**: When authenticated as DM/Owner, a high-contrast inspection banner and `<select class="dm-character-switcher">` allow the Dungeon Master to inspect and switch active character cards across the entire party.
 

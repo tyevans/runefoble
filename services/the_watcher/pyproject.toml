@@ -11,4 +11,5 @@ dependencies = [
     "httpx>=0.28.1",
     "runefoble-platform",
     "runefoble-events",
+    "runefoble-auth",
 ]

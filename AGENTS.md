@@ -60,6 +60,12 @@ Engineering work lives in `docs/project/backlog/`.[^20] An item moves through th
 
 Always pick the highest-priority item from `docs/project/backlog/PRIORITY.md` that is in `refined/`.[^21]
 
+### spec-ops Tooling
+- **Config**: `specops.toml` at the repository root. Do not run `spec-ops init` in this repository. It scaffolds ADR-0001 to ADR-0007 and collides with the Runefoble ADR set.
+- **Install (uv only, no pip)**: `uv tool install --from git+https://github.com/tyevans/spec-ops@2c8d073180eb558a57aeb500ffcc6210361c8ee7 spec-ops`
+- **Health gate**: `spec-ops health` from the repository root.
+- **ADR mapping and security decision**: `docs/project/adrs/REGISTRY.md`.
+
 ## Documentation Directory & Agent Instructions
 
 All system documentation outside project records lives in `docs/` and strictly follows the Diataxis framework:[^22] Agents must consult these guides before writing code or modifying structures:
@@ -161,7 +167,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `services/voice_agent/` | Audio streaming, STT/TTS pipeline, voice persona synthesis & voice controls microfrontend |
 | `services/campaign_lore/` | Worldbuilding knowledge graphs, entity alias consolidation & redstring hybrid RAG microservice |
 | `services/rules_compendium/` | TTRPG rules compendium, sub-50ms redstring hybrid retrieval & automated CR encounter builder |
-| `services/asset_forge/` | Procedural battlemap diffusion synthesis, wall/hazard geometry extraction & token portrait generator |
+| `services/asset_forge/` | Procedural battlemap layout behind a `MapGenerator` port (deterministic default, no diffusion model), wall/hazard geometry extraction & token portrait generator |
 | `services/soundscape/` | Dynamic audio stem mixing, tactical foley cues, tension scoring & audio controls microfrontend |
 | `services/audience_studio/` | TypeScript audience interactivity engine, live chaos polls, DM approval queue & microfrontend |
 | `services/campaign_analytics/` | Combat telemetry, tactical heatmaps, MVP turn statistics & chronicle timeline archive |

@@ -8,7 +8,7 @@ This guide explains how to use tactile token kinematics, interactive 5-foot rout
 
 When dragging a miniature or token across the tactical board:
 1. **Inertia & Elevation**: Tokens elevate visually with spring dampening and a raised drop shadow (`z-index: 100`, scale: 1.18).
-2. **Snap-to-Grid Collision**: When the pointer is released, the token snaps smoothly to the nearest valid cell center and dispatches the standard `move-token` event with `{ tokenId, toX, toY }`.
+2. **Snap-to-Grid Collision**: When the pointer is released, the token snaps smoothly to the nearest valid cell center and dispatches the standard `move-token` event with `{ tokenId, toX, toY }`. The board also sends the `confirm_move` action over its own socket, `/ws/boards/{session_id}` (see section 4.1).
 3. **Dynamic Distance Ruler**: While dragging, a floating Bauhaus distance badge displays the cumulative travel distance in 5-foot increments.
 
 ---
@@ -63,6 +63,22 @@ Per PRD-0013 and US-0043 ("Speak and the board obeys"), spoken voice actions sta
 - `confirm-ghost`: `{ ghost: GhostPreviewState }`
 - `cancel-ghost`: `{ ghost: GhostPreviewState }`
 - `ghost-timeout`: `{ tokenId: string }`
+- `move-rejected`: `{ tokenId: string, toX: number, toY: number, reason: string }`. Emitted when the board socket is not open, so no `confirm_move` was sent.
+
+### 4.1 Event-to-Route Table
+
+Each board UI event maps to one public route or socket action. The owning component renders the server response. It does not show an optimistic result (TASK-0563).
+
+| UI event | Owning component | Backend call | Success signal |
+|---|---|---|---|
+| `move-token` (drag release, cell click, ghost confirm) | `<runefoble-board>` | WebSocket `/ws/boards/{session_id}`, action `confirm_move` with `{ token_id, to_x, to_y, initiated_by: "player" }` | Server broadcasts `token_moved`. The board updates the token position. |
+| `trap-placed` (emitted by Arm Cell) | `<runefoble-dm-trap-controls>` | `POST /api/v1/boards/{board_id}/traps?campaign_id=...` | HTTP 201. Event detail is the server trap state. |
+| `map-switched` (emitted by Teleport Here) | `<runefoble-map-switcher>` | `POST /api/v1/boards/{board_id}/switch-map?campaign_id=...` | HTTP 2xx. Event detail is the server switch response. |
+| `open-map-switcher` (Switch Map button) | `<runefoble-dm-trap-controls>` | None. UI only. | Host opens `<runefoble-map-switcher>`. |
+
+On a non-2xx response, Arm Cell and Teleport Here show the server `detail` text. They do not emit a success event.
+
+Set `boardId` and `campaignId` on both DM components. Set `targetX` and `targetY` on the trap controls before Arm Cell. Without a target cell, Arm Cell does not send a request.
 
 ---
 

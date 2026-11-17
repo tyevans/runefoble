@@ -64,6 +64,11 @@ class BattlemapForgeRequest(BaseModel):
     hazard_density: float = Field(
         default=0.1, ge=0.0, le=1.0, description="Hazard pool density ratio"
     )
+    seed: int | None = Field(
+        default=None,
+        ge=0,
+        description="Layout seed. The same prompt, seed and size give the same layout.",
+    )
 
 
 class BattlemapForgeResponse(BaseModel):
@@ -80,6 +85,7 @@ class BattlemapForgeResponse(BaseModel):
     hazard_cells: list[HazardCell]
     doors: list[DoorSegment]
     board_geometry_payload: BoardGeometryPayload
+    generator: str
     status: str = "forged"
 
 
@@ -238,4 +244,8 @@ class WardrobeForgeResponse(BaseModel):
     image_url: str
     download_url: str
     prompt: str
+    generator: str = Field(description="Name of the wardrobe generator that drew the image")
+    preserves_face: bool = Field(
+        description="True only when the generator preserves the character face. The placeholder is False."
+    )
     status: str = "forged"

@@ -6,8 +6,9 @@ Manages tactical maps, token coordinates, collision rules, kinematics, and fog-o
 from __future__ import annotations
 
 from board_state.dependencies import (
+    BoardNotFoundError,
+    get_board,
     get_event_bus,
-    get_or_create_board,
     repo,
     set_event_bus,
     to_board_uuid,
@@ -35,7 +36,8 @@ from board_state.routers import (
     vfx_router,
 )
 from board_state.routers.boards import get_ui_manifest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from runefoble_platform.event_sourcing import event_store_kind
 
 app = FastAPI(
@@ -54,6 +56,11 @@ app.include_router(vfx_router)
 app.include_router(physics_router)
 app.include_router(traps_router)
 app.include_router(uvtt_import_router)
+
+
+@app.exception_handler(BoardNotFoundError)
+async def board_not_found_handler(request: Request, exc: BoardNotFoundError) -> JSONResponse:
+    return JSONResponse(status_code=404, content={"detail": str(exc)})
 
 
 @app.get("/healthz")
@@ -84,8 +91,9 @@ __all__ = [
     "UVTTImportResponse",
     "VisibilityResponse",
     "app",
+    "BoardNotFoundError",
+    "get_board",
     "get_event_bus",
-    "get_or_create_board",
     "get_ui_manifest",
     "main",
     "repo",

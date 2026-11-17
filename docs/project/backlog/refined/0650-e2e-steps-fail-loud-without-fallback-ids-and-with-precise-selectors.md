@@ -66,3 +66,9 @@ These are regression checks on the existing scenarios, with stricter assertions:
 3. No `.first()` or `.nth(0)` selector remains in `e2e/steps` without a justification comment.
 4. Each file is under 500 lines.
 5. The how-to states the fail-loud rule with one example.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- The gateway-unavailable scenario needs a public make target that stops and starts the gateway. Add the target or drop the scenario.

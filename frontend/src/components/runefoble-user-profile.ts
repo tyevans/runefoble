@@ -177,12 +177,12 @@ export class RunefobleUserProfile extends LitElement {
         avatarUrl: this.editAvatarUrl,
         bio: this.editBio,
       });
-      if (updated) {
-        this.profileData = updated;
+      if (updated.ok) {
+        this.profileData = updated.data;
         this.saveMessage = 'Profile updated successfully!';
         this.dispatchEvent(
           new CustomEvent('profile-updated', {
-            detail: updated,
+            detail: updated.data,
             bubbles: true,
             composed: true,
           })
@@ -191,6 +191,8 @@ export class RunefobleUserProfile extends LitElement {
           this.isEditing = false;
           this.saveMessage = '';
         }, 1200);
+      } else {
+        this.saveMessage = `Not saved. ${updated.message}`;
       }
     } catch {
       this.saveMessage = 'Failed to update profile';

@@ -2,11 +2,13 @@
  * Character Sheet Action Event Handlers.
  *
  * Dispatches character sub-resource mutations from <runefoble-character-sheet>
- * to appDataService with optimistic UI updates and toast notifications.
+ * to appDataService. Local view state changes only after the gateway confirms the write.
+ * A failed write shows a toast with the server message and leaves the sheet unchanged (TASK-0640).
  * TASK-0356: Character Sheet Sub-Resource Mutations & Event-Sourced Persistence Integration.
  */
 
 import { appDataService } from './services/app-data-service.ts';
+import type { DataResult } from './services/data-result.ts';
 
 export interface SheetAppHost {
   selectedCharacter: any;
@@ -15,9 +17,19 @@ export interface SheetAppHost {
   showToast(message: string): void;
 }
 
+/** Runs a gateway write. On failure, shows the server message and returns false. */
+async function commit<T>(host: { showToast(message: string): void }, call: Promise<DataResult<T>>): Promise<boolean> {
+  const result = await call;
+  if (!result.ok) {
+    host.showToast(`Not saved. ${result.message}`);
+    return false;
+  }
+  return true;
+}
+
 export async function handleSheetHpChange(host: any, charId: string, e: CustomEvent) {
   const { delta, currentHp, maxHp } = e.detail || {};
-  await appDataService.modifyCharacterHealth(charId, delta);
+  if (!(await commit(host, appDataService.modifyCharacterHealth(charId, delta)))) return;
   if (host.selectedCharacter) { host.selectedCharacter.currentHp = currentHp; host.selectedCharacter.current_hp = currentHp; }
   host.characters = host.characters.map((c: any) => (c.id === charId ? { ...c, currentHp } : c));
   if (host.activeCharacter?.id === charId) host.activeCharacter = { ...host.activeCharacter, currentHp };
@@ -26,14 +38,14 @@ export async function handleSheetHpChange(host: any, charId: string, e: CustomEv
 
 export async function handleSheetEquipItem(host: any, charId: string, e: CustomEvent) {
   const { slot, itemName } = e.detail || {};
-  await appDataService.equipCharacterItem(charId, slot, itemName);
+  if (!(await commit(host, appDataService.equipCharacterItem(charId, slot, itemName)))) return;
   if (host.selectedCharacter) { if (!host.selectedCharacter.equipment) host.selectedCharacter.equipment = {}; host.selectedCharacter.equipment[slot] = itemName; }
   host.showToast(`Equipped ${itemName} to ${slot.replace('_', ' ')}`);
 }
 
 export async function handleSheetUnequipItem(host: any, charId: string, e: CustomEvent) {
   const { slot, itemName } = e.detail || {};
-  await appDataService.unequipCharacterItem(charId, slot);
+  if (!(await commit(host, appDataService.unequipCharacterItem(charId, slot)))) return;
   if (host.selectedCharacter?.equipment) delete host.selectedCharacter.equipment[slot];
   host.showToast(`Unequipped ${itemName || slot.replace('_', ' ')}`);
 }
@@ -41,7 +53,7 @@ export async function handleSheetUnequipItem(host: any, charId: string, e: Custo
 export async function handleSheetAddItem(host: any, charId: string, e: CustomEvent) {
   const { item } = e.detail || {};
   if (!item) return;
-  await appDataService.addCharacterInventoryItem(charId, item);
+  if (!(await commit(host, appDataService.addCharacterInventoryItem(charId, item)))) return;
   if (host.selectedCharacter) {
     const inv = Array.isArray(host.selectedCharacter.inventory) ? host.selectedCharacter.inventory : Object.values(host.selectedCharacter.inventory || {});
     host.selectedCharacter.inventory = [...inv, item];
@@ -51,7 +63,7 @@ export async function handleSheetAddItem(host: any, charId: string, e: CustomEve
 
 export async function handleSheetRemoveItem(host: any, charId: string, e: CustomEvent) {
   const { itemId, itemName } = e.detail || {};
-  await appDataService.removeCharacterInventoryItem(charId, itemId);
+  if (!(await commit(host, appDataService.removeCharacterInventoryItem(charId, itemId)))) return;
   if (host.selectedCharacter && Array.isArray(host.selectedCharacter.inventory)) {
     host.selectedCharacter.inventory = host.selectedCharacter.inventory.filter((i: any) => i.item_id !== itemId && i.itemId !== itemId);
   }
@@ -60,7 +72,7 @@ export async function handleSheetRemoveItem(host: any, charId: string, e: Custom
 
 export async function handleSheetCastSpell(host: any, charId: string, e: CustomEvent) {
   const { spellName, slotLevel } = e.detail || {};
-  await appDataService.castCharacterSpell(charId, spellName, slotLevel);
+  if (!(await commit(host, appDataService.castCharacterSpell(charId, spellName, slotLevel)))) return;
   if (host.selectedCharacter) {
     const s = host.selectedCharacter.spellSlots || host.selectedCharacter.spell_slots;
     if (s && s[slotLevel] > 0) s[slotLevel] -= 1;
@@ -70,7 +82,7 @@ export async function handleSheetCastSpell(host: any, charId: string, e: CustomE
 
 export async function handleSheetPrepareSpell(host: any, charId: string, e: CustomEvent) {
   const { spellName, prepared } = e.detail || {};
-  await appDataService.prepareCharacterSpell(charId, spellName, prepared);
+  if (!(await commit(host, appDataService.prepareCharacterSpell(charId, spellName, prepared)))) return;
   if (host.selectedCharacter) {
     const list = host.selectedCharacter.preparedSpells || host.selectedCharacter.prepared_spells || [];
     if (prepared && !list.includes(spellName)) list.push(spellName);
@@ -82,7 +94,7 @@ export async function handleSheetPrepareSpell(host: any, charId: string, e: Cust
 
 export async function handleSheetApplyCondition(host: any, charId: string, e: CustomEvent) {
   const { condition, source } = e.detail || {};
-  await appDataService.applyCharacterCondition(charId, condition, source);
+  if (!(await commit(host, appDataService.applyCharacterCondition(charId, condition, source)))) return;
   if (host.selectedCharacter && Array.isArray(host.selectedCharacter.conditions)) {
     host.selectedCharacter.conditions.push({ id: condition, name: condition, source: source || 'tactical' });
   }
@@ -91,7 +103,7 @@ export async function handleSheetApplyCondition(host: any, charId: string, e: Cu
 
 export async function handleSheetRemoveCondition(host: any, charId: string, e: CustomEvent) {
   const { condition } = e.detail || {};
-  await appDataService.removeCharacterCondition(charId, condition);
+  if (!(await commit(host, appDataService.removeCharacterCondition(charId, condition)))) return;
   if (host.selectedCharacter && Array.isArray(host.selectedCharacter.conditions)) {
     host.selectedCharacter.conditions = host.selectedCharacter.conditions.filter((c: any) => (c.name || c.id) !== condition);
   }
@@ -100,12 +112,12 @@ export async function handleSheetRemoveCondition(host: any, charId: string, e: C
 
 export async function handleSheetExpendSlot(host: any, charId: string, e: CustomEvent) {
   const { slotLevel, remaining } = e.detail || {};
-  await appDataService.castCharacterSpell(charId, 'Spell Slot', slotLevel);
+  if (!(await commit(host, appDataService.castCharacterSpell(charId, 'Spell Slot', slotLevel)))) return;
   host.showToast(`Expended level ${slotLevel} spell slot (${remaining} remaining)`);
 }
 
 export async function handleSheetRestoreSlot(host: any, charId: string, e: CustomEvent) {
   const { slotLevel, remaining } = e.detail || {};
-  await appDataService.restoreCharacterSpellSlot(charId, slotLevel);
+  if (!(await commit(host, appDataService.restoreCharacterSpellSlot(charId, slotLevel)))) return;
   host.showToast(`Restored level ${slotLevel} spell slot (${remaining} remaining)`);
 }

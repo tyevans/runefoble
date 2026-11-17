@@ -67,3 +67,9 @@ Evidence of the broad catch:
 3. Storage errors produce 503 through the public API. Blackbox tests above pass.
 4. `uv run pytest` and `make health-check` pass. Each changed file is under 500 lines.
 5. How-to updated. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `services/campaign_lore/src/campaign_lore/routers/documents.py:146-149` (`get_document`): `except Exception` around `repo.load` returns 404 for every error. Narrow to `AggregateNotFoundError`.

@@ -1,7 +1,7 @@
 ---
 id: '0603'
 title: Gateway MCP Board and Encounter Tools Call Owning Service Frontdoors
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -21,7 +21,7 @@ source_audits:
 # TASK-0603: Gateway MCP Board and Encounter Tools Call Owning Service Frontdoors
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The MCP board and encounter tools return fixed data and persist nothing. Replace them with HTTP calls to the owning service (`board_state`, `rules_compendium` for encounter balance) through their public routes. Remove the canned dictionaries.

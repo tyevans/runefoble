@@ -128,9 +128,13 @@ Provides DM-exclusive HUD controls to toggle the hidden grid layer, select trap 
   - `damageDice: string`
   - `dcDetection: number`
   - `isSecret: boolean`
+- **Additional Properties**:
+  - `boardId: string`: Board that receives the trap. Required to arm.
+  - `campaignId: string`: Sent as `campaign_id` for the DM permission check.
+  - `targetX: number | null`, `targetY: number | null`: Target grid cell. Required to arm.
 - **Events**:
   - `trap-selected`: Emitted on palette preset selection.
-  - `trap-armed` / `trap-placed`: Emitted when arming a cell.
+  - `trap-placed`: Emitted after `POST /api/v1/boards/{boardId}/traps` returns 2xx. Detail is the server trap state.
   - `layer-toggled`: Emitted when toggling DM layer visibility.
   - `open-map-switcher`: Emitted to request opening the map switcher modal.
 
@@ -141,6 +145,9 @@ Quick-switcher modal providing a thumbnail grid of active campaign battlemaps wi
   - `currentMapId: string`
   - `maps: BattlemapItem[]`
   - `tokenTeleports: Record<string, [number, number]>`
+- **Additional Properties**:
+  - `boardId: string`: Board to switch. Required to teleport.
+  - `campaignId: string`: Sent as `campaign_id` for the DM permission check.
 - **Events**:
-  - `map-switched`: Emitted with `{ newMapId, cols, rows, backgroundImageUrl, tokenTeleports }`.
+  - `map-switched`: Emitted after `POST /api/v1/boards/{boardId}/switch-map` returns 2xx, with `{ newMapId, cols, rows, backgroundImageUrl, tokenTeleports }` from the server response.
   - `switcher-closed`: Emitted when the modal closes.

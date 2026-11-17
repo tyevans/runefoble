@@ -1,19 +1,23 @@
 """LangGraph workflow for Missing Player Stand-in AI with penalties."""
 
-import json
-import re
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from inference_worker.llm_client import MultiBackendLLMClient
-from inference_worker.models import StandInActionResponse
+from inference_worker.llm_client import (
+    InferenceBackendError,
+    MultiBackendLLMClient,
+    parse_json_object,
+)
+from inference_worker.models import ResponseSource, StandInActionResponse
 
 
 class StandInGraphState(TypedDict, total=False):
     request: dict[str, Any]
     penalty_effects: list[str]
     action_decision: dict[str, Any]
+    source: ResponseSource
+    degraded: bool
     final_response: dict[str, Any]
 
 
@@ -86,19 +90,16 @@ async def generate_stand_in_decision_node(
         "Generate their turn action and in-character spoken dialogue."
     )
 
-    decision = {}
-    if llm_client.active_backend != "mock":
-        resp = await llm_client.generate_completion(system_prompt, user_prompt)
-        content = resp.get("content", "")
-        try:
-            match = re.search(r"\{.*\}", content, re.DOTALL)
-            if match:
-                decision = json.loads(match.group(0))
-        except Exception:
-            pass
+    # Raises InferenceBackendError when a real backend fails. No silent fallback.
+    resp = await llm_client.generate_completion(system_prompt, user_prompt)
+    decision: dict[str, Any] = {}
+    if resp["source"] == "llm":
+        decision = parse_json_object(resp["content"])
+        if not decision.get("action_type"):
+            raise InferenceBackendError(resp["backend"], "model output had no action_type")
 
-    # Heuristic fallback if LLM returned empty or mock
-    if not decision or not decision.get("action_type"):
+    # Canned rules run only for the explicit mock backend
+    if resp["source"] == "mock":
         target = enemies[0] if enemies else "nearest foe"
         protect_allies = guardrails.get("protect_allies", []) if guardrails else []
         avoid_melee = guardrails.get("avoid_melee", False) if guardrails else False
@@ -177,7 +178,7 @@ async def generate_stand_in_decision_node(
             "mechanics": mechanics,
         }
 
-    return {"action_decision": decision}
+    return {"action_decision": decision, "source": resp["source"], "degraded": False}
 
 
 def compile_stand_in_response_node(state: StandInGraphState) -> StandInGraphState:
@@ -197,6 +198,8 @@ def compile_stand_in_response_node(state: StandInGraphState) -> StandInGraphStat
         narrative_flavor=dec.get("narrative_flavor", ""),
         penalties_applied=req.get("penalties", []),
         mechanics=dec.get("mechanics", {}),
+        source=state["source"],
+        degraded=state["degraded"],
     )
     return {"final_response": resp.model_dump()}
 

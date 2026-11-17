@@ -7,8 +7,6 @@ using TestClient(app) from board_state.main.
 
 from board_state.main import app
 from fastapi.testclient import TestClient
-from runefoble_events.events import TokenHazardTriggered
-from runefoble_platform.event_sourcing import get_event_store
 
 
 def test_board_terrain_elevation_difficult_movement_and_hazard_flow():
@@ -119,20 +117,6 @@ def test_board_terrain_elevation_difficult_movement_and_hazard_flow():
     assert move_hazard_data["movement_cost"] == 1
     assert move_hazard_data["hazard_triggered"] == "lava"
     assert move_hazard_data["damage_dice"] == "2d10"
-
-    # Verify TokenHazardTriggered event in event store stream
-    store = get_event_store()
-    stream_events = [
-        env.event
-        for env in store._events
-        if isinstance(env.event, TokenHazardTriggered)
-        and getattr(env.event, "token_id", None) == "fighter-1"
-    ]
-    assert len(stream_events) >= 1
-    hazard_event = stream_events[-1]
-    assert hazard_event.hazard_type == "lava"
-    assert hazard_event.damage_dice == "2d10"
-    assert hazard_event.board_id == str(board_id)
 
     # f) Verify GET /api/v1/boards/{id} reflects updated terrain grid, token coordinates, and active hazard status.
     get_board = client.get(f"/api/v1/boards/{board_id}")

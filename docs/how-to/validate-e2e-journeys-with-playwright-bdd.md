@@ -204,7 +204,7 @@ Given('{word} joins {string} in a separate browser', async ({ browser, world }, 
 
 ### Verifying Token Kinematics and Movement Sync
 
-Token dragging dispatches standard pointer and custom DOM events or UI interactions on `<runefoble-board>`, triggering WebSocket broadcasts over `/ws/session/{id}`:
+Token dragging dispatches standard pointer and custom DOM events or UI interactions on `<runefoble-board>`, triggering WebSocket broadcasts over `/ws/boards/{id}` (`confirm_move` action):
 
 ```typescript
 // Drag token on Player screen

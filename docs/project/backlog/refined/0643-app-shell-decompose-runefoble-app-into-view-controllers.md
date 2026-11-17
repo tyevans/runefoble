@@ -69,3 +69,15 @@ Refined
 4. Entry chunk is under 500 kB, verified by the build output.
 5. `docs/how-to/orchestrate-app-shell-views-and-session-transitions.md` names the new modules.
 6. Storybook stories for moved components build with zero console errors.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `fetchProfile()` in `frontend/src/services/app-data-service.ts` has no caller. Delete it.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- `fetchSession()` in `frontend/src/services/app-data-service.ts` invents the title `Session #<id>` when the response has none. Return an explicit empty state instead.

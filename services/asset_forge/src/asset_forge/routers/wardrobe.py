@@ -17,11 +17,13 @@ from asset_forge.dependencies import (
     get_current_user_id,
     get_spicedb_client,
     get_storage,
+    get_wardrobe_generator,
     publish_forge_event,
 )
-from asset_forge.generator import generate_wardrobe_portrait_png
 from asset_forge.models import WardrobeForgeRequest, WardrobeForgeResponse
+from asset_forge.raster.wardrobe_raster import build_attire_prompt
 from asset_forge.silo_upload import store_forged_asset
+from asset_forge.wardrobe_generator import WardrobeGenerator, WardrobePortrait
 
 router = APIRouter(prefix="/api/v1/forge/wardrobe", tags=["Wardrobe Forge"])
 
@@ -33,8 +35,13 @@ async def forge_wardrobe_variant(
     user_id: Annotated[str | None, Depends(get_current_user_id)],
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    generator: Annotated[WardrobeGenerator, Depends(get_wardrobe_generator)],
 ) -> WardrobeForgeResponse:
-    """Synthesize stylistic narrative wardrobe attire variation preserving character facial identity."""
+    """Synthesize a wardrobe attire variant with the configured generator.
+
+    The response names the generator and states whether it preserves the face.
+    The default placeholder preserves no face.
+    """
     creator_id = user_id or "anonymous_creator"
 
     # Zanzibar campaign authorization check
@@ -46,14 +53,17 @@ async def forge_wardrobe_variant(
                 detail=f"Forbidden: User '{user_id}' does not have permission to forge wardrobe for campaign '{request.campaign_id}'",
             )
 
-    # 1. Synthesize PNG raster preserving facial embedding seed
-    png_bytes, final_prompt = generate_wardrobe_portrait_png(
-        character_name=request.character_name,
-        attire_type=request.attire_type,
-        custom_prompt=request.prompt,
-        face_seed=request.face_embedding_seed,
-        size_px=request.size_px,
-        border_color_hex=request.border_color,
+    # 1. Synthesize the image through the configured generator port
+    final_prompt = build_attire_prompt(request.attire_type, request.prompt)
+    png_bytes = generator.generate(
+        WardrobePortrait(
+            character_name=request.character_name,
+            attire_type=request.attire_type,
+            size_px=request.size_px,
+            border_color_hex=request.border_color,
+        ),
+        final_prompt,
+        request.face_embedding_seed,
     )
 
     # 2. Upload to Silo S3 object storage
@@ -107,6 +117,8 @@ async def forge_wardrobe_variant(
         image_url=upload_meta["url"],
         download_url=upload_meta["url"],
         prompt=final_prompt,
+        generator=generator.name,
+        preserves_face=generator.preserves_face,
         status="forged",
     )
 

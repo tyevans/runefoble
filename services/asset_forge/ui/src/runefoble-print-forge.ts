@@ -1,8 +1,15 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { printForgeStyles } from './runefoble-print-forge.styles.ts';
+import { exportPrintPdf, exportStandees, exportStlToken } from './forge-api.ts';
 
 export type PrintForgeTab = 'tiled-map' | 'standees' | 'stl-tokens';
+
+interface ExportResult {
+  label: string;
+  asset_id: string;
+  download_url: string;
+}
 
 @customElement('runefoble-print-forge')
 export class RunefoblePrintForge extends LitElement {
@@ -10,6 +17,10 @@ export class RunefoblePrintForge extends LitElement {
 
   @property({ type: String })
   campaignId = '';
+
+  /** Base URL prepended to the forge routes (for example, the gateway origin). */
+  @property({ type: String })
+  apiBaseUrl = '';
 
   @property({ type: String })
   activeTab: PrintForgeTab = 'tiled-map';
@@ -41,50 +52,135 @@ export class RunefoblePrintForge extends LitElement {
   @state()
   private stlCondition = 'Poisoned';
 
-  private handleExportPdf() {
-    this.dispatchEvent(
-      new CustomEvent('export-print-pdf', {
-        detail: {
-          title: this.mapTitle,
-          width_cells: this.widthCells,
-          height_cells: this.heightCells,
-          page_size: this.pageSize,
-          campaign_id: this.campaignId || undefined,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  @state()
+  private errorMessage = '';
+
+  @state()
+  private lastExport: ExportResult | null = null;
+
+  /** Runs one export request. Shows the error on failure. Never reports false success. */
+  private async runExport(action: () => Promise<void>) {
+    this.isExporting = true;
+    this.errorMessage = '';
+    try {
+      await action();
+    } catch (err) {
+      this.errorMessage = err instanceof Error ? err.message : 'Export request failed.';
+    } finally {
+      this.isExporting = false;
+    }
   }
 
-  private handleExportStandees() {
-    this.dispatchEvent(
-      new CustomEvent('export-standees', {
-        detail: {
-          sheet_title: `${this.standeeName} Standees`,
-          standees: [{ name: this.standeeName, type: 'pc', hp: this.standeeHp, color: '#2a9d8f' }],
-          page_size: this.pageSize,
-          campaign_id: this.campaignId || undefined,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  private async handleExportPdf() {
+    await this.runExport(async () => {
+      const pdf = await exportPrintPdf(this.apiBaseUrl, {
+        title: this.mapTitle,
+        widthCells: this.widthCells,
+        heightCells: this.heightCells,
+        pageSize: this.pageSize,
+        campaignId: this.campaignId || undefined,
+      });
+      this.lastExport = {
+        label: `Tiled map PDF (${pdf.total_pages} pages)`,
+        asset_id: pdf.asset_id,
+        download_url: pdf.download_url,
+      };
+      this.dispatchEvent(
+        new CustomEvent('export-print-pdf', {
+          detail: {
+            title: this.mapTitle,
+            width_cells: this.widthCells,
+            height_cells: this.heightCells,
+            page_size: this.pageSize,
+            campaign_id: this.campaignId || undefined,
+            asset: pdf,
+          },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
   }
 
-  private handleExportStl() {
-    this.dispatchEvent(
-      new CustomEvent('export-stl-token', {
-        detail: {
-          diameter_mm: this.stlDiameterMm,
-          condition_label: this.stlCondition,
-          num_slots: 4,
-          campaign_id: this.campaignId || undefined,
-        },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  private async handleExportStandees() {
+    await this.runExport(async () => {
+      const sheetTitle = `${this.standeeName} Standees`;
+      const standees = await exportStandees(this.apiBaseUrl, {
+        sheetTitle,
+        standees: [{ name: this.standeeName, type: 'pc', hp: this.standeeHp, color: '#2a9d8f' }],
+        pageSize: this.pageSize,
+        campaignId: this.campaignId || undefined,
+      });
+      this.lastExport = {
+        label: `Papercraft standees (${standees.pages} page${standees.pages === 1 ? '' : 's'})`,
+        asset_id: standees.asset_id,
+        download_url: standees.download_url,
+      };
+      this.dispatchEvent(
+        new CustomEvent('export-standees', {
+          detail: {
+            sheet_title: sheetTitle,
+            standees: [{ name: this.standeeName, type: 'pc', hp: this.standeeHp, color: '#2a9d8f' }],
+            page_size: this.pageSize,
+            campaign_id: this.campaignId || undefined,
+            asset: standees,
+          },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
+  }
+
+  private async handleExportStl() {
+    await this.runExport(async () => {
+      const stl = await exportStlToken(this.apiBaseUrl, {
+        diameterMm: this.stlDiameterMm,
+        conditionLabel: this.stlCondition,
+        numSlots: 4,
+        campaignId: this.campaignId || undefined,
+      });
+      this.lastExport = {
+        label: `Watertight STL token (${stl.facet_count} facets)`,
+        asset_id: stl.asset_id,
+        download_url: stl.download_url,
+      };
+      this.dispatchEvent(
+        new CustomEvent('export-stl-token', {
+          detail: {
+            diameter_mm: this.stlDiameterMm,
+            condition_label: this.stlCondition,
+            num_slots: 4,
+            campaign_id: this.campaignId || undefined,
+            asset: stl,
+          },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
+  }
+
+  private renderExportResult() {
+    if (this.errorMessage) {
+      return html`<div class="error-banner" role="alert">${this.errorMessage}</div>`;
+    }
+    if (this.lastExport) {
+      return html`
+        <div class="preview-panel">
+          <div class="download-link">${this.lastExport.label} ready.</div>
+          <a
+            class="download-link"
+            href=${this.lastExport.download_url}
+            download
+            target="_blank"
+            rel="noopener"
+            >Download ${this.lastExport.asset_id}</a
+          >
+        </div>
+      `;
+    }
+    return '';
   }
 
   private renderTiledMapTab() {
@@ -288,6 +384,7 @@ export class RunefoblePrintForge extends LitElement {
         : this.activeTab === 'standees'
         ? this.renderStandeesTab()
         : this.renderStlTab()}
+      ${this.renderExportResult()}
     `;
   }
 }

@@ -40,7 +40,7 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | Tool Name | Parameters | Description |
 |---|---|---|
 | `roll_dice` | `notation: str`, `reason: str` | Parse standard RPG dice notation (`1d20+3`, `2d6`) and return roll breakdown. |
-| `inspect_tactical_board` | `session_id: str` | Read tokens, positions, HP, and grid dimensions from `board_state` (`GET /api/v1/boards/{session_id}`). |
+| `inspect_tactical_board` | `session_id: str` | Read tokens, positions, HP, and grid dimensions from `board_state` (`GET /api/v1/boards/{session_id}`). Returns an error result when the board does not exist. |
 | `move_board_token` | `session_id: str`, `token_id: str`, `to_x: int`, `to_y: int` | Move a token through `board_state` (`POST /api/v1/boards/{session_id}/tokens/{token_id}/move`). The board rejects out-of-bounds moves. |
 | `get_character_sheet` | `character_id: str` | Retrieve character stats, level, hit points, equipment, and active conditions. |
 | `inspect_inventory` | `character_id: str` | Retrieve equipped items, carried inventory, and currency breakdown. |
@@ -94,7 +94,7 @@ The Dynamic Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic/`) enables table
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/mcp/tools/dynamic` (alias: `/mcp/tools`) | List all dynamically registered tools and JSON Schemas |
-| `POST` | `/mcp/tools/register` (alias: `/mcp/tools`) | Register a new dynamic tool with parameter validation and SpiceDB authorization |
+| `POST` | `/mcp/tools/register` (alias: `/mcp/tools`) | Register a new dynamic tool with parameter validation and SpiceDB authorization. A non-blank `handler_code` is required; a definition without one returns HTTP 422 and adds no tool |
 | `GET` | `/mcp/tools/{name}` | Retrieve schema and configuration for a specific dynamic tool |
 | `PUT` | `/mcp/tools/{name}` | Update an existing dynamic tool definition and hot-reload logic |
 | `DELETE` | `/mcp/tools/{tool_name}` | Deregister a dynamic tool and revoke permissions |
@@ -124,6 +124,10 @@ Dynamic tool lifecycle events are published to Redis Streams topic `runefoble:ev
 - **`DynamicToolRegisteredEvent`**: Emitted when a dynamic tool is registered or hot-reloaded.
 - **`DynamicToolUnregisteredEvent`**: Emitted when a dynamic tool is retired or removed.
 - **`DynamicToolInvokedEvent`**: Emitted upon dynamic tool execution with execution duration and telemetry.
+
+The gateway API injects the Redis Streams bus at startup (`configure_dynamic_tool_event_bus` in `gateway/api/src/gateway_api/main.py`) from `REDIS_URL`. Startup fails when `REDIS_URL` is empty. The gateway MCP package has no in-memory fallback bus.
+
+A failed publish is not silent. The gateway logs an `ERROR` record that names the event type and the cause. It also adds a `dynamic_tool_event_dropped` event to the active OpenTelemetry span. This applies to a missing bus, a Redis error, and a dispatch with no running event loop.
 
 ### Security & Sandbox Policies
 

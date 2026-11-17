@@ -236,7 +236,10 @@ async def test_blackbox_spicedb_homebrew_registration_and_isolation(client: Test
 
 @pytest.mark.asyncio
 async def test_blackbox_fastmcp_compendium_tools():
-    """Verify FastMCP compendium tools are registered and executable via FastMCP protocol entrypoint."""
+    """Verify the FastMCP monster tool is registered and executable.
+
+    Encounter balance goes through rules_compendium HTTP; see test_blackbox_mcp_gateway.py.
+    """
     # 1. query_monster_stat_block tool
     monster_tool = mcp.get_tool("query_monster_stat_block")
     assert monster_tool is not None, "query_monster_stat_block must be registered in FastMCP"
@@ -256,23 +259,6 @@ async def test_blackbox_fastmcp_compendium_tools():
     assert monster["armor_class"] == 16
     assert monster["hit_points"] == 27
     assert monster["role"] == "brute"
-
-    # 2. calculate_encounter_balance tool
-    enc_tool = mcp.get_tool("calculate_encounter_balance")
-    assert enc_tool is not None, "calculate_encounter_balance must be registered in FastMCP"
-
-    enc_result = await enc_tool.run({"party_levels": [4, 4, 4], "target_difficulty": "Hard"})
-    enc_data = enc_result if isinstance(enc_result, dict) else enc_result.structured_content
-    if enc_data is None and hasattr(enc_result, "content"):
-        import json
-
-        enc_data = json.loads(enc_result.content[0].text)
-
-    assert enc_data["status"] == "success"
-    assert enc_data["party_size"] == 3
-    assert enc_data["target_difficulty"] == "Hard"
-    assert enc_data["adjusted_xp"] > 0
-    assert len(enc_data["recommended_monsters"]) >= 1
 
 
 def test_blackbox_openapi_spec(client: TestClient):

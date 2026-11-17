@@ -15,6 +15,7 @@
 | `make docs-serve` | Serves documentation site locally with live preview on port 8000 |
 | `make cluster-up` | Launches local Kind Kubernetes cluster with port mapping and Traefik |
 | `make cluster-down` | Deletes the local Kind cluster |
+| `make images` | Builds every Python service image (`runefoble/<service>:0.1.0`) from `deployments/docker/python-service.Dockerfile` and loads each into the `runefoble-local` Kind cluster |
 | `make helm-lint` | Validates Helm chart syntax |
 | `make helm-template` | Renders and inspects Kubernetes manifests |
 | `make helm-deploy` | Deploys the full Runefoble stack to the active Kubernetes cluster |
@@ -23,7 +24,7 @@
 | `make dev-storybook` | Runs the Storybook component studio on port 6006 |
 | `make dev-api` | Runs the API Gateway locally |
 | `make dev-worker` | Runs AI inference worker locally |
-| `make test` | Executes the Python test suite and builds the frontend |
+| `make test` | Executes the Python test suite (`uv run pytest`, default per-test timeout of 300 seconds from `[tool.pytest.ini_options]`; a test that exceeds it fails with a timeout error) and builds the frontend |
 | `make lint` | Runs typechecking and Helm chart linter |
 | `make build` | Produces production frontend bundle and static Storybook documentation |
 | `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks |

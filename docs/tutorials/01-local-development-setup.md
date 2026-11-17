@@ -26,9 +26,23 @@ This command:
 1. Reads `deployments/kind/cluster-config.yaml`.
 2. Creates a local Kubernetes cluster named `runefoble-local`.
 3. Binds ports 80 and 443 to your host.
-4. Installs the Traefik ingress controller into the cluster.
+4. Installs the Traefik ingress controller into the cluster and waits until its rollout completes.
 
-## Step 3: Validate and Deploy the Helm Chart
+The command stops at the first failed step and exits with a non-zero status. It prints `Cluster is ready!` only when Traefik is running.
+If the command fails, fix the error and run `make cluster-up` again. You can also check Traefik with `kubectl -n kube-system rollout status deploy/traefik`.
+
+SpiceDB is not exposed on the host. To reach its gRPC port from the host, run `kubectl port-forward svc/spicedb 50051:50051`.
+
+## Step 3: Build and Load the Service Images
+Build every Python service image and load it into the Kind cluster:
+```bash
+make images
+```
+This command builds each service from `deployments/docker/python-service.Dockerfile`
+and tags it `runefoble/<service>:0.1.0`. It then runs `kind load docker-image` for each tag.
+Helm references these tags, so run this step before `make helm-deploy`.
+
+## Step 4: Validate and Deploy the Helm Chart
 Lint and preview the rendered Kubernetes manifests:
 ```bash
 make helm-lint
@@ -36,10 +50,11 @@ make helm-template
 ```
 Deploy the entire Runefoble stack (Postgres, Silo, Zitadel, SpiceDB, OpenPanel, Mailpit, Loki/Grafana, Swagger UI, and microservices):
 ```bash
-make helm-deploy
+make cluster-up images helm-deploy
 ```
+Run the targets in this order. `make helm-deploy` does not build images by itself.
 
-## Step 4: Verify Local Endpoints
+## Step 5: Verify Local Endpoints
 Open your browser to:
 - **Frontend App**: `http://localhost/`
 - **Swagger UI API Hub**: `http://localhost/swagger-ui`
@@ -47,7 +62,7 @@ Open your browser to:
 - **Mailpit Email Testing UI**: `http://localhost/mail/`
 - **Observability (Grafana)**: `http://localhost:3001` (admin / admin)
 
-## Step 5: Rapid Local Development (`make dev`)
+## Step 6: Rapid Local Development (`make dev`)
 For fast iterative feature work on the frontend and API Gateway without redeploying Helm charts, run:
 ```bash
 make dev

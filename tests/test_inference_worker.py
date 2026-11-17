@@ -2,6 +2,7 @@
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from inference_worker import api
 from inference_worker.api import app
 from inference_worker.config import WorkerSettings
 from inference_worker.graphs import (
@@ -17,6 +18,15 @@ from the_watcher.main import app as watcher_app
 def mock_client():
     settings = WorkerSettings(backend="mock")
     return MultiBackendLLMClient(settings)
+
+
+@pytest.fixture
+def mock_api(monkeypatch: pytest.MonkeyPatch):
+    """Select the explicit mock backend for the worker app. Graphs rebuild for that client."""
+    monkeypatch.setattr(api, "llm_client", MultiBackendLLMClient(WorkerSettings(backend="mock")))
+    monkeypatch.setattr(api, "intent_graph", None)
+    monkeypatch.setattr(api, "narration_graph", None)
+    monkeypatch.setattr(api, "stand_in_graph", None)
 
 
 @pytest.mark.asyncio
@@ -83,7 +93,7 @@ async def test_intent_graph_movement_coordinates(mock_client):
 
 
 @pytest.mark.asyncio
-async def test_intent_api_endpoint():
+async def test_intent_api_endpoint(mock_api):
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         payload = {
             "campaign_id": "camp-test",
@@ -108,10 +118,12 @@ async def test_intent_api_endpoint():
         assert data["action"]["action_type"] == "attack"
         assert data["action"]["target_token_id"] == "tok-skel-1"
         assert data["execution_time_ms"] >= 0
+        assert data["source"] == "mock"
+        assert data["degraded"] is False
 
 
 @pytest.mark.asyncio
-async def test_narration_graph_and_api(mock_client):
+async def test_narration_graph_and_api(mock_client, mock_api):
     graph = build_narration_graph(mock_client)
     state = await graph.ainvoke(
         {

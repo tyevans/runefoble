@@ -4,21 +4,21 @@ import type { BoardToken } from '@runefoble/board-state-ui';
 import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import { authService, type UserClaims } from '../auth/auth-service.ts';
-import { getOrCreateFallbackCharacterDetail, FALLBACK_CHARACTER_DETAILS_CACHE } from './fallback-data.ts';
+import { resolveLobbyAvailableCharacters } from './lobby-character-options.ts';
 import {
-  FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_PROFILE,
-  FALLBACK_BOARD_TOKENS, FALLBACK_SESSION_EVENTS, FALLBACK_CAMPAIGN_SESSIONS_MAP, getFallbackCampaignSessions,
-  getFallbackSession, createFallbackCampaign, createFallbackCampaignItem, updateFallbackCampaign, createFallbackCharacter,
-  assignFallbackCharacterCampaign, deleteFallbackCharacter, resolveLobbyAvailableCharacters,
-  getFallbackCampaignMembers, assignFallbackMemberRole, removeFallbackMember, createFallbackInvite, type InviteResponse,
-} from './app-data-service.fixtures.ts';
+  dataFailure, dataOk, errorMessageFromBody, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult,
+} from './data-result.ts';
 import {
   mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory,
   mutateCharacterRemoveInventory, mutateCharacterApplyCondition, mutateCharacterRemoveCondition,
   mutateCharacterCastSpell, mutateCharacterPrepareSpell, mutateCharacterRestoreSlot, mutateCharacterGuardrails,
 } from './character-subresource-client.ts';
 
-export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS, FALLBACK_PARTICIPANTS, FALLBACK_SESSIONS, FALLBACK_CAMPAIGN_SESSIONS_MAP, type InviteResponse };
+export type { DataResult } from './data-result.ts';
+
+export interface InviteResponse {
+  token: string; campaign_id: string; role: string; invite_url: string; expires_at?: string | null; created_at: string; max_uses?: number | null; uses?: number;
+}
 
 export class AppDataService {
   private static instance: AppDataService;
@@ -37,16 +37,24 @@ export class AppDataService {
     return headers;
   }
 
-  public async request<T>(path: string, init?: RequestInit): Promise<T | null> {
+  /**
+   * Calls the gateway. Returns a typed result. Never substitutes local data.
+   * A 204 or empty body yields `{}` cast to T; callers that expect no body use DataResult<void>.
+   */
+  public async request<T>(path: string, init?: RequestInit): Promise<DataResult<T>> {
     const url = path.startsWith(this.apiBase) ? path : `${this.apiBase}${path}`;
+    let res: Response;
     try {
-      const res = await fetch(url, { headers: this.getAuthHeaders(), ...init });
-      if (!res.ok) return null;
-      const text = await res.text();
-      return text ? (JSON.parse(text) as T) : ({} as T);
+      res = await fetch(url, { headers: this.getAuthHeaders(), ...init });
     } catch {
-      return null;
+      return dataFailure(0, NETWORK_FAILURE_MESSAGE);
     }
+    let text: string;
+    try { text = await res.text(); } catch { return dataFailure(res.status, UNREADABLE_RESPONSE_MESSAGE); }
+    let body: unknown = null;
+    try { body = text ? JSON.parse(text) : null; } catch { if (res.ok && text) return dataFailure(res.status, UNREADABLE_RESPONSE_MESSAGE); }
+    if (!res.ok) return dataFailure(res.status, errorMessageFromBody(body, res.status));
+    return dataOk((body ?? {}) as T);
   }
 
   public deduplicateCampaigns(campaigns: CampaignItem[]): CampaignItem[] {
@@ -55,153 +63,147 @@ export class AppDataService {
     return Array.from(map.values());
   }
 
-  async fetchCampaigns(): Promise<CampaignItem[]> {
-    const data = await this.request<CampaignItem[]>(`${this.apiBase}/campaigns`);
-    if (data) return this.deduplicateCampaigns(data);
-    const deduped = this.deduplicateCampaigns(FALLBACK_CAMPAIGNS);
-    FALLBACK_CAMPAIGNS.length = 0; FALLBACK_CAMPAIGNS.push(...deduped);
-    return [...FALLBACK_CAMPAIGNS];
+  async fetchCampaigns(): Promise<DataResult<CampaignItem[]>> {
+    const res = await this.request<CampaignItem[]>(`${this.apiBase}/campaigns`);
+    return res.ok ? dataOk(this.deduplicateCampaigns(res.data)) : res;
   }
 
-  async fetchProfile(): Promise<UserClaims | null> {
-    return (await this.request<UserClaims>(`${this.apiBase}/profile`)) || authService.getUser() || FALLBACK_PROFILE;
+  async fetchProfile(): Promise<DataResult<UserClaims>> {
+    return this.request<UserClaims>(`${this.apiBase}/profile`);
   }
 
-  async fetchCampaign(campaignId: string): Promise<CampaignItem | null> {
-    const data = await this.request<CampaignItem>(`${this.apiBase}/campaigns/${campaignId}`);
-    return data || FALLBACK_CAMPAIGNS.find((c) => c.id === campaignId) || createFallbackCampaign(campaignId);
+  async fetchCampaign(campaignId: string): Promise<DataResult<CampaignItem>> {
+    return this.request<CampaignItem>(`${this.apiBase}/campaigns/${campaignId}`);
   }
 
-  async fetchCampaignMembers(campaignId: string): Promise<CampaignMember[]> {
-    return (await this.request<CampaignMember[]>(`${this.apiBase}/campaigns/${campaignId}/members`)) || getFallbackCampaignMembers(campaignId);
+  async fetchCampaignMembers(campaignId: string): Promise<DataResult<CampaignMember[]>> {
+    return this.request<CampaignMember[]>(`${this.apiBase}/campaigns/${campaignId}/members`);
   }
 
-  async assignMemberRole(campaignId: string, userId: string, role: string): Promise<void> {
-    const res = await this.request<void>(`${this.apiBase}/campaigns/${campaignId}/roles`, { method: 'POST', body: JSON.stringify({ user_id: userId, role }) });
-    if (res === null) assignFallbackMemberRole(campaignId, userId, role);
+  async assignMemberRole(campaignId: string, userId: string, role: string): Promise<DataResult<void>> {
+    return this.request<void>(`${this.apiBase}/campaigns/${campaignId}/roles`, { method: 'POST', body: JSON.stringify({ user_id: userId, role }) });
   }
 
-  async createCampaignInvite(campaignId: string, role: string, expiresInHours?: number, maxUses?: number): Promise<InviteResponse> {
-    const data = await this.request<InviteResponse>(`${this.apiBase}/campaigns/${campaignId}/invites`, { method: 'POST', body: JSON.stringify({ role, expires_in_hours: expiresInHours, max_uses: maxUses }) });
-    return data || createFallbackInvite(campaignId, role, expiresInHours, maxUses);
+  async createCampaignInvite(campaignId: string, role: string, expiresInHours?: number, maxUses?: number): Promise<DataResult<InviteResponse>> {
+    return this.request<InviteResponse>(`${this.apiBase}/campaigns/${campaignId}/invites`, { method: 'POST', body: JSON.stringify({ role, expires_in_hours: expiresInHours, max_uses: maxUses }) });
   }
 
-  async removeCampaignMember(campaignId: string, userId: string): Promise<void> {
-    const res = await this.request<void>(`${this.apiBase}/campaigns/${campaignId}/members/${userId}`, { method: 'DELETE' });
-    if (res === null) removeFallbackMember(campaignId, userId);
+  async removeCampaignMember(campaignId: string, userId: string): Promise<DataResult<void>> {
+    return this.request<void>(`${this.apiBase}/campaigns/${campaignId}/members/${userId}`, { method: 'DELETE' });
   }
 
-  async fetchCampaignSessions(campaignId: string): Promise<CampaignSessionItem[]> {
-    const data = await this.request<any[]>(`${this.apiBase}/campaigns/${campaignId}/sessions`);
-    if (data) return data.map((item) => ({ ...item, campaignId: item.campaign_id || item.campaignId, participantsCount: item.participants_count ?? item.participantsCount ?? 0 }));
-    return getFallbackCampaignSessions(campaignId);
+  async fetchCampaignSessions(campaignId: string): Promise<DataResult<CampaignSessionItem[]>> {
+    const res = await this.request<any[]>(`${this.apiBase}/campaigns/${campaignId}/sessions`);
+    if (!res.ok) return res;
+    return dataOk(res.data.map((item) => this.toSessionItem(item)));
   }
 
-  async fetchSession(sessionId: string): Promise<CampaignSessionItem | null> {
-    const data = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
-    if (data) return { id: data.id || sessionId, campaignId: data.campaign_id || data.campaignId || '', title: data.title || (sessionId === '14' || sessionId === 'session-tomb-14' ? 'Session #14' : `Session #${sessionId}`), status: data.status || 'active', round: data.round || 1, participantsCount: Array.isArray(data.participants) ? data.participants.length : (data.participantsCount || 0) };
-    return getFallbackSession(sessionId);
+  async fetchSession(sessionId: string): Promise<DataResult<CampaignSessionItem>> {
+    const res = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
+    if (!res.ok) return res;
+    const data = res.data;
+    return dataOk({
+      id: data.id || sessionId,
+      campaignId: data.campaign_id || data.campaignId || '',
+      title: data.title || `Session #${sessionId}`,
+      status: data.status || 'active',
+      round: data.round || 1,
+      participantsCount: Array.isArray(data.participants) ? data.participants.length : (data.participantsCount || 0),
+    });
   }
 
-  async fetchCharacters(): Promise<CharacterItem[]> { return (await this.request<CharacterItem[]>(`${this.apiBase}/characters`)) || [...FALLBACK_CHARACTERS]; }
-  getFallbackCharacterName(id: string): string | undefined { return FALLBACK_CHARACTERS.find((c) => c.id === id)?.name; }
-
-  async fetchCharacter(characterId: string): Promise<any | null> {
-    const data = await this.request<any>(`${this.apiBase}/characters/${characterId}`);
-    if (data) { FALLBACK_CHARACTER_DETAILS_CACHE.set(characterId, data); return data; }
-    return getOrCreateFallbackCharacterDetail(FALLBACK_CHARACTERS.find((c) => c.id === characterId), characterId);
+  private toSessionItem(item: any): CampaignSessionItem {
+    return { ...item, campaignId: item.campaign_id || item.campaignId, participantsCount: item.participants_count ?? item.participantsCount ?? 0 };
   }
 
-  getFallbackCharacterDetail(characterId: string): any {
-    return getOrCreateFallbackCharacterDetail(FALLBACK_CHARACTERS.find((c) => c.id === characterId), characterId);
+  async fetchCharacters(): Promise<DataResult<CharacterItem[]>> { return this.request<CharacterItem[]>(`${this.apiBase}/characters`); }
+
+  async fetchCharacter(characterId: string): Promise<DataResult<any>> { return this.request<any>(`${this.apiBase}/characters/${characterId}`); }
+
+  async modifyCharacterHealth(characterId: string, delta: number, source = 'damage'): Promise<DataResult<any>> {
+    return mutateCharacterHealth(this, characterId, delta, source);
+  }
+  equipCharacterItem(characterId: string, slot: string, itemName: string | null): Promise<DataResult<any>> { return mutateCharacterEquip(this, characterId, slot, itemName || ''); }
+  unequipCharacterItem(characterId: string, slot: string): Promise<DataResult<any>> { return mutateCharacterUnequip(this, characterId, slot); }
+  addCharacterInventoryItem(characterId: string, item: any): Promise<DataResult<any>> { return mutateCharacterAddInventory(this, characterId, item); }
+  removeCharacterInventoryItem(characterId: string, itemId: string, quantity = 1): Promise<DataResult<any>> { return mutateCharacterRemoveInventory(this, characterId, itemId, quantity); }
+  applyCharacterCondition(characterId: string, condition: string, source = 'tactical'): Promise<DataResult<any>> { return mutateCharacterApplyCondition(this, characterId, condition, source); }
+  removeCharacterCondition(characterId: string, condition: string): Promise<DataResult<any>> { return mutateCharacterRemoveCondition(this, characterId, condition); }
+  castCharacterSpell(characterId: string, spellName: string, slotLevel = 1): Promise<DataResult<any>> { return mutateCharacterCastSpell(this, characterId, spellName, slotLevel); }
+  prepareCharacterSpell(characterId: string, spellName: string, isPrepared = true): Promise<DataResult<any>> { return mutateCharacterPrepareSpell(this, characterId, spellName, isPrepared); }
+  restoreCharacterSpellSlot(characterId: string, slotLevel: number): Promise<DataResult<any>> { return mutateCharacterRestoreSlot(this, characterId, slotLevel); }
+  updateCharacterGuardrails(characterId: string, payload: any): Promise<DataResult<any>> { return mutateCharacterGuardrails(this, characterId, payload); }
+
+  async fetchRosterCampaignOptions(): Promise<DataResult<RosterCampaignOption[]>> {
+    const res = await this.fetchCampaigns();
+    return res.ok ? dataOk(res.data.map((c) => ({ id: c.id, title: c.title }))) : res;
   }
 
-  async modifyCharacterHealth(characterId: string, delta: number, source = 'damage'): Promise<any> {
-    const res = await mutateCharacterHealth(this, characterId, delta, source);
-    const fc = FALLBACK_CHARACTERS.find((c) => c.id === characterId);
-    if (fc && res?.current_hp !== undefined) fc.currentHp = res.current_hp;
-    return res;
-  }
-  modifyCharacterHealthSync(characterId: string, delta: number, source = 'damage'): any { return mutateCharacterHealth(this, characterId, delta, source); }
-  equipCharacterItem(characterId: string, slot: string, itemName: string | null): Promise<any> { return mutateCharacterEquip(this, characterId, slot, itemName || ''); }
-  unequipCharacterItem(characterId: string, slot: string): Promise<any> { return mutateCharacterUnequip(this, characterId, slot); }
-  addCharacterInventoryItem(characterId: string, item: any): Promise<any> { return mutateCharacterAddInventory(this, characterId, item); }
-  removeCharacterInventoryItem(characterId: string, itemId: string, quantity = 1): Promise<any> { return mutateCharacterRemoveInventory(this, characterId, itemId, quantity); }
-  applyCharacterCondition(characterId: string, condition: string, source = 'tactical'): Promise<any> { return mutateCharacterApplyCondition(this, characterId, condition, source); }
-  removeCharacterCondition(characterId: string, condition: string): Promise<any> { return mutateCharacterRemoveCondition(this, characterId, condition); }
-  castCharacterSpell(characterId: string, spellName: string, slotLevel = 1): Promise<any> { return mutateCharacterCastSpell(this, characterId, spellName, slotLevel); }
-  prepareCharacterSpell(characterId: string, spellName: string, isPrepared = true): Promise<any> { return mutateCharacterPrepareSpell(this, characterId, spellName, isPrepared); }
-  restoreCharacterSpellSlot(characterId: string, slotLevel: number): Promise<any> { return mutateCharacterRestoreSlot(this, characterId, slotLevel); }
-  updateCharacterGuardrails(characterId: string, payload: any): Promise<any> { return mutateCharacterGuardrails(this, characterId, payload); }
-  async fetchRosterCampaignOptions(): Promise<RosterCampaignOption[]> { return (await this.fetchCampaigns()).map((c) => ({ id: c.id, title: c.title })); }
-
-  async createCharacter(payload: CreateCharacterPayload): Promise<CharacterItem> {
-    const created = await this.request<CharacterItem>(`${this.apiBase}/characters`, { method: 'POST', body: JSON.stringify(payload) });
-    if (created) return created;
-    const newChar = createFallbackCharacter(payload, authService.getUser()?.user_id || 'user-valeros');
-    FALLBACK_CHARACTERS.unshift(newChar);
-    return newChar;
+  async createCharacter(payload: CreateCharacterPayload): Promise<DataResult<CharacterItem>> {
+    return this.request<CharacterItem>(`${this.apiBase}/characters`, { method: 'POST', body: JSON.stringify(payload) });
   }
 
-  async assignCharacterCampaign(characterId: string, campaignId: string | null): Promise<void> {
-    if ((await this.request<void>(`${this.apiBase}/characters/${characterId}/campaign`, { method: 'PATCH', body: JSON.stringify({ campaignId }) })) === null) assignFallbackCharacterCampaign(characterId, campaignId);
+  async assignCharacterCampaign(characterId: string, campaignId: string | null): Promise<DataResult<void>> {
+    return this.request<void>(`${this.apiBase}/characters/${characterId}/campaign`, { method: 'PATCH', body: JSON.stringify({ campaignId }) });
   }
 
-  async deleteCharacter(characterId: string): Promise<void> {
-    if ((await this.request<void>(`${this.apiBase}/characters/${characterId}`, { method: 'DELETE' })) === null) deleteFallbackCharacter(characterId);
+  async deleteCharacter(characterId: string): Promise<DataResult<void>> {
+    return this.request<void>(`${this.apiBase}/characters/${characterId}`, { method: 'DELETE' });
   }
 
-  async fetchLobbyState(arg1: string, arg2?: string): Promise<{ participants: LobbyParticipant[]; availableCharacters: LobbyCharacterOption[] }> {
+  async fetchLobbyState(arg1: string, arg2?: string): Promise<DataResult<{ participants: LobbyParticipant[]; availableCharacters: LobbyCharacterOption[] }>> {
     const isArg1Session = arg1.startsWith('session-') || arg1.startsWith('lobby-');
     const sessionId = arg2 !== undefined ? (isArg1Session ? arg1 : arg2) : arg1;
     const campaignId = arg2 !== undefined ? (isArg1Session ? arg2 : arg1) : undefined;
-    const data = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
-    const participants: LobbyParticipant[] = data?.participants?.length ? data.participants : [...FALLBACK_PARTICIPANTS];
+    const session = await this.request<any>(`${this.apiBase}/sessions/${sessionId}`);
+    if (!session.ok) return session;
     const characters = await this.fetchCharacters();
-    return { participants, availableCharacters: resolveLobbyAvailableCharacters(characters, campaignId) };
+    if (!characters.ok) return characters;
+    const participants: LobbyParticipant[] = Array.isArray(session.data?.participants) ? session.data.participants : [];
+    return dataOk({ participants, availableCharacters: resolveLobbyAvailableCharacters(characters.data, campaignId) });
   }
 
-  async fetchBoardState(sessionId: string): Promise<{ cols: number; rows: number; tokens: BoardToken[] }> {
-    const data = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
-    return { cols: data?.cols ?? 10, rows: data?.rows ?? 10, tokens: data?.tokens || [...FALLBACK_BOARD_TOKENS] };
+  async fetchBoardState(sessionId: string): Promise<DataResult<{ cols: number; rows: number; tokens: BoardToken[] }>> {
+    const res = await this.request<any>(`${this.apiBase}/boards/${sessionId}`);
+    if (!res.ok) return res;
+    return dataOk({ cols: res.data?.cols ?? 10, rows: res.data?.rows ?? 10, tokens: res.data?.tokens || [] });
   }
 
-  async fetchBoardTokens(sessionId: string): Promise<BoardToken[]> { return (await this.fetchBoardState(sessionId)).tokens; }
-  async fetchSessionEvents(_sessionId: string): Promise<WatcherFeedEvent[]> { return [...FALLBACK_SESSION_EVENTS]; }
-
-  async createCampaignSession(campaignId: string, payload: { title: string; status?: string; scheduled_at?: string; scheduledAt?: string; description?: string }): Promise<CampaignSessionItem> {
-    const item = await this.request<any>(`${this.apiBase}/campaigns/${campaignId}/sessions`, { method: 'POST', body: JSON.stringify(payload) });
-    if (item) return { ...item, campaignId: item.campaign_id || item.campaignId, participantsCount: item.participants_count ?? item.participantsCount ?? 0 };
-    if (!FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId]) getFallbackCampaignSessions(campaignId);
-    const newSession: CampaignSessionItem = { id: `lobby-${campaignId}-${Date.now()}`, campaignId, title: payload.title, status: (payload.status as any) || 'lobby', round: 1, participantsCount: 1, scheduled_at: payload.scheduled_at || payload.scheduledAt, description: payload.description || '' };
-    FALLBACK_CAMPAIGN_SESSIONS_MAP[campaignId].push(newSession);
-    return newSession;
+  async fetchBoardTokens(sessionId: string): Promise<DataResult<BoardToken[]>> {
+    const res = await this.fetchBoardState(sessionId);
+    return res.ok ? dataOk(res.data.tokens) : res;
   }
 
-  async createCampaign(payload: CreateCampaignPayload): Promise<CampaignItem> {
-    const created = (await this.request<CampaignItem>(`${this.apiBase}/campaigns`, { method: 'POST', body: JSON.stringify(payload) })) || createFallbackCampaignItem(payload, authService.getUser()?.user_id || 'user-valeros');
-    const deduped = this.deduplicateCampaigns([created, ...FALLBACK_CAMPAIGNS]);
-    FALLBACK_CAMPAIGNS.length = 0; FALLBACK_CAMPAIGNS.push(...deduped);
-    return created;
+  /** No session-event read endpoint exists yet. The feed starts empty and fills from live WebSocket events. */
+  async fetchSessionEvents(_sessionId: string): Promise<DataResult<WatcherFeedEvent[]>> { return dataOk([]); }
+
+  async createCampaignSession(campaignId: string, payload: { title: string; status?: string; scheduled_at?: string; scheduledAt?: string; description?: string }): Promise<DataResult<CampaignSessionItem>> {
+    const res = await this.request<any>(`${this.apiBase}/campaigns/${campaignId}/sessions`, { method: 'POST', body: JSON.stringify(payload) });
+    return res.ok ? dataOk(this.toSessionItem(res.data)) : res;
   }
 
-  async updateCampaign(campaignId: string, payload: UpdateCampaignPayload): Promise<CampaignItem | null> {
-    const data = await this.request<CampaignItem>(`${this.apiBase}/campaigns/${campaignId}`, { method: 'PATCH', body: JSON.stringify(payload) });
-    return data || updateFallbackCampaign(campaignId, payload);
+  async createCampaign(payload: CreateCampaignPayload): Promise<DataResult<CampaignItem>> {
+    return this.request<CampaignItem>(`${this.apiBase}/campaigns`, { method: 'POST', body: JSON.stringify(payload) });
   }
 
-  async requestHotSwap(sessionId: string, characterId: string, playerId?: string): Promise<any> {
-    const pid = playerId || authService.getUser()?.user_id || 'user-valeros';
-    const data = await this.request<any>(`${this.apiBase}/sessions/${sessionId}/hot-swap`, { method: 'POST', body: JSON.stringify({ sessionId, characterId, playerId: pid }) });
-    return data || { session_id: sessionId, character_id: characterId, player_id: pid, status: 'control_transferred' };
+  async updateCampaign(campaignId: string, payload: UpdateCampaignPayload): Promise<DataResult<CampaignItem>> {
+    return this.request<CampaignItem>(`${this.apiBase}/campaigns/${campaignId}`, { method: 'PATCH', body: JSON.stringify(payload) });
   }
 
-  async updateProfile(payload: UpdateProfilePayload): Promise<UserClaims | null> {
-    const data = await this.request<UserClaims>(`${this.apiBase}/profile`, { method: 'PATCH', body: JSON.stringify(payload) });
-    const cur = authService.getUser() || FALLBACK_PROFILE;
-    const updated: UserClaims = { ...cur, ...(data || {}), display_name: payload.displayName ?? data?.display_name ?? cur.display_name, avatar_url: payload.avatarUrl ?? data?.avatar_url ?? cur.avatar_url, bio: payload.bio ?? data?.bio ?? cur.bio };
+  async requestHotSwap(sessionId: string, characterId: string, playerId?: string): Promise<DataResult<any>> {
+    const pid = playerId || authService.getUser()?.user_id || '';
+    return this.request<any>(`${this.apiBase}/sessions/${sessionId}/hot-swap`, { method: 'POST', body: JSON.stringify({ sessionId, characterId, playerId: pid }) });
+  }
+
+  async updateProfile(payload: UpdateProfilePayload): Promise<DataResult<UserClaims>> {
+    const cur = authService.getUser();
+    if (!cur) return dataFailure(401, 'Sign in to update your profile.');
+    const res = await this.request<UserClaims>(`${this.apiBase}/profile`, { method: 'PATCH', body: JSON.stringify(payload) });
+    if (!res.ok) return res;
+    const data = res.data;
+    const updated: UserClaims = { ...cur, ...data, display_name: payload.displayName ?? data.display_name ?? cur.display_name, avatar_url: payload.avatarUrl ?? data.avatar_url ?? cur.avatar_url, bio: payload.bio ?? data.bio ?? cur.bio };
     authService.updateUser(updated);
-    return updated;
+    return dataOk(updated);
   }
 }
 

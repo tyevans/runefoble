@@ -73,3 +73,9 @@ Playwright BDD in TASK-0525 is the frontdoor. Unit tests cover `pkce.ts`.
 3. Storybook stories for the login states exist and show zero console errors.
 4. `docs/how-to/authenticate-with-zitadel-oidc.md` describes the browser flow (TASK-0520 rewrote the dev sections).
 5. No file exceeds 500 lines.
+
+## Orchestrator Addenda (2026-11-17)
+
+Source: `.audit/synth/discovered-round1.md`.
+
+- Delete the `updateUser` fallback that invents user `user-valeros` (`frontend/src/auth/auth-service.ts:86-92`).

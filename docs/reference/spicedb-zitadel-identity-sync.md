@@ -16,18 +16,20 @@ flowchart LR
 
 ## Zanzibar Schema Model (`runefoble.zed`)
 
+This excerpt matches `runefoble.zed` for the definitions it shows. The schema file is canonical.
+
 ```zed
 definition user {}
 
 definition campaign {
     relation owner: user
     relation dungeon_master: user
-    relation gm: user
+    relation game_master: user
     relation player: user
     relation spectator: user
 
     permission manage = owner
-    permission run_session = owner + dungeon_master + gm
+    permission run_session = owner + dungeon_master + game_master
     permission play = run_session + player
     permission view = play + spectator
 }
@@ -38,6 +40,20 @@ definition character {
 
     permission edit = owner + campaign->run_session
     permission view = edit + campaign->view
+    permission delete = owner
+}
+
+definition codex_entry {
+    relation campaign: campaign
+    relation author: user
+    relation editor: user
+    relation reader: user
+    relation party_shared: campaign
+    relation public: campaign
+
+    permission view = author + editor + reader + party_shared->play + public->view
+    permission edit = author + editor + campaign->run_session
+    permission manage = author + campaign->run_session
 }
 
 definition game_session {

@@ -21,6 +21,7 @@ members = [
     "inference-worker",
     "rules-compendium",
     "runefoble-auth",
+    "runefoble-embeddings",
     "runefoble-events",
     "runefoble-platform",
     "runefoble-workspace",
@@ -184,6 +185,7 @@ dependencies = [
     { name = "eventsource-py" },
     { name = "fastapi" },
     { name = "pydantic" },
+    { name = "python-multipart" },
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
@@ -195,6 +197,7 @@ requires-dist = [
     { name = "eventsource-py", specifier = ">=0.14.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
@@ -356,6 +359,7 @@ dependencies = [
     { name = "eventsource-py" },
     { name = "fastapi" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
@@ -366,6 +370,7 @@ requires-dist = [
     { name = "eventsource-py", specifier = ">=0.14.0" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
@@ -797,10 +802,12 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "the-watcher" },
     { name = "uvicorn" },
+    { name = "voice-agent" },
 ]
 
 [package.metadata]
@@ -809,10 +816,12 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "the-watcher", editable = "services/the_watcher" },
     { name = "uvicorn", specifier = ">=0.54.0" },
+    { name = "voice-agent", editable = "services/voice_agent" },
 ]
 
 [[package]]
@@ -820,24 +829,32 @@ name = "gateway-api"
 version = "0.1.0"
 source = { editable = "gateway/api" }
 dependencies = [
+    { name = "character-sheet" },
     { name = "fastapi" },
+    { name = "game-session" },
+    { name = "gateway-mcp" },
     { name = "httpx" },
     { name = "pydantic" },
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
+    { name = "soundscape" },
     { name = "uvicorn" },
     { name = "voice-agent" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "character-sheet", editable = "services/character_sheet" },
     { name = "fastapi", specifier = ">=0.141.1" },
+    { name = "game-session", editable = "services/game_session" },
+    { name = "gateway-mcp", editable = "gateway/mcp" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
+    { name = "soundscape", editable = "services/soundscape" },
     { name = "uvicorn", specifier = ">=0.54.0" },
     { name = "voice-agent", editable = "services/voice_agent" },
 ]
@@ -2352,6 +2369,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-timeout"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ac/82/4c9ecabab13363e72d880f2fb504c5f750433b2b6f16e99f4ec21ada284c/pytest_timeout-2.4.0.tar.gz", hash = "sha256:7e68e90b01f9eff71332b25001f85c75495fc4e3a836701876183c4bcfd0540a", size = 17973, upload-time = "2025-05-05T19:44:34.99Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/b6/3127540ecdf1464a00e5a01ee60a1b09175f6913f0644ac748494d9c4b21/pytest_timeout-2.4.0-py3-none-any.whl", hash = "sha256:c42667e5cdadb151aeb5b26d114aff6bdf5a907f176a007a30b940d3d865b5c2", size = 14382, upload-time = "2025-05-05T19:44:33.502Z" },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -2775,6 +2804,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "redstring", extra = ["llm", "redis"] },
     { name = "runefoble-auth" },
+    { name = "runefoble-embeddings" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
@@ -2787,6 +2817,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "redstring", extras = ["redis", "llm"], specifier = ">=0.11.0" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
+    { name = "runefoble-embeddings", editable = "libs/runefoble_embeddings" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },
@@ -2814,6 +2845,21 @@ requires-dist = [
 ]
 
 [[package]]
+name = "runefoble-embeddings"
+version = "0.1.0"
+source = { editable = "libs/runefoble_embeddings" }
+dependencies = [
+    { name = "redstring", extra = ["llm"] },
+    { name = "runefoble-platform" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "redstring", extras = ["llm"], specifier = ">=0.11.0" },
+    { name = "runefoble-platform", editable = "libs/runefoble_platform" },
+]
+
+[[package]]
 name = "runefoble-events"
 version = "0.1.0"
 source = { editable = "libs/runefoble_events" }
@@ -2835,6 +2881,7 @@ source = { editable = "libs/runefoble_platform" }
 dependencies = [
     { name = "asyncpg" },
     { name = "eventsource-py" },
+    { name = "httpx" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "opentelemetry-instrumentation-fastapi" },
@@ -2847,6 +2894,7 @@ dependencies = [
 requires-dist = [
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "eventsource-py", specifier = ">=0.14.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "opentelemetry-api", specifier = ">=1.45.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.45.0" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.66b0" },
@@ -2873,6 +2921,7 @@ dependencies = [
     { name = "redstring", extra = ["llm", "redis"] },
     { name = "rules-compendium" },
     { name = "runefoble-auth" },
+    { name = "runefoble-embeddings" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "soundscape" },
@@ -2888,6 +2937,7 @@ dev = [
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
+    { name = "pytest-timeout" },
     { name = "redis" },
     { name = "ruff" },
     { name = "zensical" },
@@ -2908,6 +2958,7 @@ requires-dist = [
     { name = "redstring", extras = ["llm", "redis"], specifier = ">=0.11.0" },
     { name = "rules-compendium", editable = "services/rules_compendium" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
+    { name = "runefoble-embeddings", editable = "libs/runefoble_embeddings" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "soundscape", editable = "services/soundscape" },
@@ -2923,6 +2974,7 @@ dev = [
     { name = "pre-commit", specifier = ">=4.6.2" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-asyncio", specifier = ">=1.4.0" },
+    { name = "pytest-timeout", specifier = ">=2.4.0" },
     { name = "redis", specifier = ">=8.1.0" },
     { name = "ruff", specifier = ">=0.16.9" },
     { name = "zensical", specifier = ">=0.0.65" },
@@ -3154,6 +3206,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
     { name = "uvicorn" },
@@ -3164,6 +3217,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "uvicorn", specifier = ">=0.54.0" },

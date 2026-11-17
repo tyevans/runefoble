@@ -23,9 +23,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 SERVICES_DIR = FRONTEND_DIR / "src" / "services"
 APP_DATA_SERVICE_TS = SERVICES_DIR / "app-data-service.ts"
-FIXTURES_TS = SERVICES_DIR / "app-data-service.fixtures.ts"
-FALLBACK_DATA_TS = SERVICES_DIR / "fallback-data.ts"
-TS_TEST_FILE = FRONTEND_DIR / "test" / "app-data-service-decomposition.test.ts"
+FIXTURES_TS = FRONTEND_DIR / "src" / "fixtures" / "app-data-service.fixtures.ts"
+RETIRED_FALLBACK_DATA_TS = FRONTEND_DIR / "src" / "fixtures" / "fallback-data.ts"
+TS_TEST_FILE = FRONTEND_DIR / "test" / "app-data-service.test.ts"
 
 
 @pytest.fixture
@@ -45,7 +45,6 @@ def test_file_length_limits_and_decomposition():
     files_to_check = [
         (APP_DATA_SERVICE_TS, 220),
         (FIXTURES_TS, 160),
-        (FALLBACK_DATA_TS, 200),
         (Path(__file__), 500),
     ]
 
@@ -57,7 +56,7 @@ def test_file_length_limits_and_decomposition():
 
 
 def test_fixtures_module_exports_and_contract():
-    """Verify app-data-service.fixtures.ts exports all 5 core fallback arrays and helper functions."""
+    """Verify src/fixtures/app-data-service.fixtures.ts keeps its canned arrays for tests and stories."""
     fixtures_content = FIXTURES_TS.read_text(encoding="utf-8")
 
     assert "export const FALLBACK_CAMPAIGNS" in fixtures_content
@@ -65,27 +64,22 @@ def test_fixtures_module_exports_and_contract():
     assert "export const FALLBACK_MEMBERS" in fixtures_content
     assert "export const FALLBACK_PARTICIPANTS" in fixtures_content
     assert "export const FALLBACK_SESSIONS" in fixtures_content
-    assert "export function getFallbackCampaignSessions" in fixtures_content
-    assert "export function getFallbackSession" in fixtures_content
 
 
 def test_app_data_service_modular_imports_and_reexports():
-    """Verify app-data-service.ts imports from app-data-service.fixtures.ts and exposes public constants."""
+    """Verify app-data-service.ts is free of fixture imports and exposes the public class."""
     service_content = APP_DATA_SERVICE_TS.read_text(encoding="utf-8")
 
-    assert "from './app-data-service.fixtures.ts'" in service_content
-    assert "export { FALLBACK_CAMPAIGNS" in service_content
+    assert "FALLBACK_" not in service_content, (
+        "app-data-service.ts must not reference canned fixtures"
+    )
     assert "export class AppDataService" in service_content
     assert "export const appDataService = AppDataService.getInstance()" in service_content
 
 
-def test_fallback_data_backward_compatibility():
-    """Verify fallback-data.ts re-exports from app-data-service.fixtures.ts for backward compatibility."""
-    fallback_content = FALLBACK_DATA_TS.read_text(encoding="utf-8")
-
-    assert "from './app-data-service.fixtures.ts'" in fallback_content
-    assert "export { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS }" in fallback_content
-    assert "export function buildFallbackCharacterDetail" in fallback_content
+def test_fallback_data_module_is_retired():
+    """Verify the fallback-data module and its re-export shim are removed (TASK-0640)."""
+    assert not RETIRED_FALLBACK_DATA_TS.exists(), "fixtures/fallback-data.ts must be deleted"
 
 
 def test_frontend_node_blackbox_suite_execution():
@@ -109,5 +103,5 @@ def test_frontend_node_blackbox_suite_execution():
 
     match = re.search(r"pass (\d+)", result.stdout)
     assert match is not None, f"Could not find pass count in output: {result.stdout}"
-    assert int(match.group(1)) >= 10, f"Expected at least 10 passed tests, got {match.group(1)}"
+    assert int(match.group(1)) >= 20, f"Expected at least 20 passed tests, got {match.group(1)}"
     assert "fail 0" in result.stdout

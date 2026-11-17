@@ -1,7 +1,7 @@
 ---
 id: '0560'
 title: Shared Event Store Factory, Fail-Fast Initialization & Helm Wiring
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -27,7 +27,7 @@ source_audits:
 # TASK-0560: Shared Event Store Factory, Fail-Fast Initialization & Helm Wiring
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Make `runefoble_platform.event_sourcing.get_event_store` the single event-store factory for every bounded context. When the PostgreSQL store is configured, a failed initialization must stop the process instead of falling back to `InMemoryEventStore`. Helm must enable the PostgreSQL store for every service that owns `AggregateRepository` state. The health endpoint must report the store kind that is in use.

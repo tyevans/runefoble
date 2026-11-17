@@ -1,10 +1,12 @@
-"""Voice Agent speech-to-text settings and the transcriber composition step."""
+"""Voice Agent speech settings and the engine composition steps."""
 
 from __future__ import annotations
 
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from voice_agent.espeak_synthesizer import EspeakNgSynthesizer
+from voice_agent.synthesizer import BaseSynthesizer
 from voice_agent.transcriber import BaseTranscriber, FasterWhisperTranscriber
 
 
@@ -22,6 +24,9 @@ class VoiceAgentSettings(BaseSettings):
     stt_device: str = "cpu"
     stt_compute_type: str = "int8"
 
+    tts_engine: Literal["espeak-ng"] = "espeak-ng"
+    tts_binary: str = "espeak-ng"
+
 
 def build_transcriber(settings: VoiceAgentSettings) -> BaseTranscriber:
     """Select the configured speech engine adapter."""
@@ -33,3 +38,11 @@ def build_transcriber(settings: VoiceAgentSettings) -> BaseTranscriber:
                 compute_type=settings.stt_compute_type,
             )
     raise ValueError(f"Unsupported speech engine: {settings.stt_engine}")
+
+
+def build_synthesizer(settings: VoiceAgentSettings) -> BaseSynthesizer:
+    """Select the configured text-to-speech adapter."""
+    match settings.tts_engine:
+        case "espeak-ng":
+            return EspeakNgSynthesizer(binary=settings.tts_binary)
+    raise ValueError(f"Unsupported speech synthesis engine: {settings.tts_engine}")

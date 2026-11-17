@@ -14,6 +14,7 @@ class VoicePersona(BaseModel):
     pitch_modifier: float = 1.0
     speed_modifier: float = 1.0
     accent: str = "neutral"
+    tts_voice: str = "en-us"
 
 
 AVAILABLE_PERSONAS: dict[str, VoicePersona] = {
@@ -22,18 +23,21 @@ AVAILABLE_PERSONAS: dict[str, VoicePersona] = {
         name="The Watcher (Deep Mystical)",
         description="Resonant, deep baritone with subtle cavern reverb for the AI DM.",
         pitch_modifier=0.85,
+        tts_voice="en-us+m3",
     ),
     "kyra_stand_in": VoicePersona(
         id="kyra_stand_in",
         name="Kyra Stand-in (Sun Cleric)",
         description="Warm, assertive feminine voice, adaptable with intoxication slurs.",
         pitch_modifier=1.1,
+        tts_voice="en-us+f3",
     ),
     "valeros_fighter": VoicePersona(
         id="valeros_fighter",
         name="Valeros (Rugged Fighter)",
         description="Gravelly, confident adventurer cadence.",
         pitch_modifier=0.95,
+        tts_voice="en-us+m5",
     ),
 }
 
@@ -52,7 +56,6 @@ class DSPApplyResponse(BaseModel):
     audio_base64: str
     audio_payload: str
     audio_bytes_length: int
-    audio_stream_url: str = ""
     filters_applied: list[str] = Field(default_factory=list)
     latency_ms: float = 0.0
     dsp_metadata: dict[str, Any] = Field(default_factory=dict)
@@ -60,7 +63,7 @@ class DSPApplyResponse(BaseModel):
 
 
 class TTSRequest(BaseModel):
-    text: str
+    text: str = Field(min_length=1)
     persona_id: str = "watcher_dm"
     apply_drunk_filter: bool = False
     filters: list[str] = Field(default_factory=list)
@@ -70,8 +73,13 @@ class TTSRequest(BaseModel):
 
 
 class TTSResponse(BaseModel):
-    audio_stream_url: str
-    duration_ms: int
+    """Synthesised speech. The audio field holds the WAV that duration_ms describes."""
+
+    duration_ms: float
+    sample_rate_hz: int
+    audio_mime_type: str = "audio/wav"
+    content_sha256: str
+    engine: str
     persona_used: str
     original_text: str = ""
     conditioned_text: str = ""

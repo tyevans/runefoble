@@ -1,18 +1,20 @@
-"""Hybrid Retrieval Engine coordinator powered by redstring.
+"""Hybrid Retrieval Engine coordinator for campaign lore, powered by redstring.
 
 Combines graph neighbor traversal, dense vector embeddings, and BM25 lexical keyword scoring.
+The engine receives its ports from the composition root (see retrieval_factory.py).
 """
 
 import logging
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import redstring
 
-from campaign_lore.extraction import WorldbuildingLlmProvider, get_or_create_entity
+from campaign_lore.extraction import get_or_create_entity
 from campaign_lore.models import DocumentMetadata, LoreSearchResultItem
+from campaign_lore.pattern_graph import build_pattern_graph
 from campaign_lore.scoring import (
     bm25_score,
     cosine_similarity,
@@ -23,22 +25,34 @@ from campaign_lore.scoring import (
 logger = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True)
+class IngestSummary:
+    """What one document contributed to the graph and the chunk corpus."""
+
+    entities: list[redstring.Entity]
+    relationships: list[redstring.Relationship]
+    chunks_written: int
+
+
 class LoreRetrievalEngine:
     """Manages knowledge graph construction, alias consolidation, and hybrid search via redstring."""
 
-    def __init__(self) -> None:
-        self.embeddings = redstring.FakeEmbeddingProvider()
-        dim = self.embeddings.dimension
-        self.graph = redstring.InMemoryGraphStore()
-        self.vectors = redstring.InMemoryVectorStore(dimension=dim)
-        self.chunks = redstring.InMemoryChunkStore(dimension=dim)
-        self.consolidator = redstring.Consolidator(store=self.graph)
-        self.llm_provider = WorldbuildingLlmProvider()
-        self.chunk_retriever = redstring.ChunkRetriever(
-            embeddings=self.embeddings, chunks=self.chunks
-        )
+    def __init__(
+        self,
+        *,
+        embeddings: redstring.EmbeddingProvider,
+        graph: redstring.GraphStore,
+        vectors: redstring.VectorStore,
+        chunks: redstring.ChunkStore,
+    ) -> None:
+        self.embeddings = embeddings
+        self.graph = graph
+        self.vectors = vectors
+        self.chunks = chunks
+        self.consolidator = redstring.Consolidator(store=graph)
+        self.chunk_retriever = redstring.ChunkRetriever(embeddings=embeddings, chunks=chunks)
         self.entity_retriever = redstring.Retriever(
-            embeddings=self.embeddings, vectors=self.vectors, graph=self.graph
+            embeddings=embeddings, vectors=vectors, graph=graph
         )
         self._documents: dict[UUID, DocumentMetadata] = {}
 
@@ -68,50 +82,71 @@ class LoreRetrievalEngine:
         title: str,
         content: str,
         is_secret: bool = False,
-        aliases: dict[str, str] | None = None,
-    ) -> dict[str, Any]:
-        """Ingest a worldbuilding document into redstring graph and hybrid vector/BM25 chunks."""
+    ) -> IngestSummary:
+        """Index a worldbuilding document: pattern extraction, graph write, chunks, and vectors."""
         self._documents[document_id] = DocumentMetadata(
             document_id, campaign_id, title, content, is_secret
         )
-        rep = await redstring.build_graph(
-            redstring.SourceDocument(id=str(document_id), title=title, text=content),
-            provider=self.llm_provider,
-            store=self.graph,
+        source_id = str(document_id)
+        records = build_pattern_graph(campaign_id, document_id, content, datetime.now(UTC))
+        entity_list = records.entities
+        relationships = records.relationships
+        await self.graph.upsert_entities(entity_list)
+        await self.graph.upsert_relationships(relationships)
+
+        report = await redstring.index_documents(
+            [redstring.SourceDocument(id=source_id, title=title, text=content)],
+            store=self.chunks,
             tenant_id=campaign_id,
-            embedding_provider=self.embeddings,
-            vector_store=self.vectors,
-            chunks=self.chunks,
+            embeddings=self.embeddings,
         )
-        for a, c in (aliases or {}).items():
-            await self.consolidate_alias(campaign_id, c, a, document_id=document_id)
-        return {
-            "document_id": document_id,
-            "campaign_id": campaign_id,
-            "title": title,
-            "is_secret": is_secret,
-            "entities_count": rep.entities,
-            "relationships_count": rep.relationships,
-            "chunks_count": rep.chunks_written,
-        }
+        await self._link_chunks_to_entities(campaign_id, source_id, entity_list)
+
+        if entity_list:
+            vectors = await self.embeddings.embed([e.name for e in entity_list])
+            for ent, vector in zip(entity_list, vectors, strict=True):
+                await self.vectors.upsert(ent.id, vector, campaign_id)
+
+        return IngestSummary(
+            entities=entity_list,
+            relationships=relationships,
+            chunks_written=report.chunks_written,
+        )
+
+    async def _link_chunks_to_entities(
+        self, campaign_id: UUID, source_id: str, entities: list[redstring.Entity]
+    ) -> None:
+        """Record on each passage the entities whose names occur in it."""
+        passages = await self.chunks.get_by_source(source_id, campaign_id)
+        if not passages:
+            return
+        linked = [
+            p.model_copy(update={"entity_ids": [e.id for e in entities if e.name in p.text]})
+            for p in passages
+        ]
+        await self.chunks.upsert_many(linked)
 
     async def consolidate_alias(
         self,
         campaign_id: UUID,
         canonical_name: str,
         alias_name: str,
-        document_id: UUID | None = None,
+        document_id: UUID,
         reason: str = "alias consolidation",
     ) -> tuple[UUID, UUID]:
-        """Consolidate an alias entity into a canonical entity."""
+        """Consolidate an alias entity into a canonical entity (explicit, user-declared)."""
         prov = redstring.Provenance(
             observed_at=datetime.now(UTC),
-            extraction_method=redstring.ExtractionMethod.LLM,
+            extraction_method=redstring.ExtractionMethod.MANUAL,
             confidence=1.0,
-            source_id=str(document_id or uuid4()),
+            source_id=str(document_id),
         )
-        c_id = await get_or_create_entity(self.graph, campaign_id, canonical_name, prov)
-        a_id = await get_or_create_entity(self.graph, campaign_id, alias_name, prov)
+        c_id = await get_or_create_entity(
+            self.graph, campaign_id, canonical_name, str(document_id), prov
+        )
+        a_id = await get_or_create_entity(
+            self.graph, campaign_id, alias_name, str(document_id), prov
+        )
         await self.consolidator.merge(
             tenant_id=campaign_id,
             canonical_entity_id=c_id,
@@ -190,15 +225,11 @@ class LoreRetrievalEngine:
         return self._documents.get(document_id)
 
 
-# Backward-compatibility alias as defined in architecture records
-HybridLoreEngine = LoreRetrievalEngine
-
 __all__ = [
     "DocumentMetadata",
-    "HybridLoreEngine",
+    "IngestSummary",
     "LoreRetrievalEngine",
     "LoreSearchResultItem",
-    "WorldbuildingLlmProvider",
     "bm25_score",
     "cosine_similarity",
     "reciprocal_rank_fusion",

@@ -3,6 +3,8 @@
 Centralizes configuration settings across bounded contexts.
 """
 
+from typing import Literal
+
 from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -163,4 +165,113 @@ class PlatformSettings(BaseSettings):
         default=True,
         validation_alias=AliasChoices("RUNEFOBLE_MAILPIT_ENABLED", "MAILPIT_ENABLED"),
         description="Whether Mailpit email testing is enabled",
+    )
+
+
+class EmbeddingEndpointSettings(BaseSettings):
+    """Connection settings for an OpenAI-compatible embeddings endpoint.
+
+    Read by the embedding provider factory in `libs/runefoble_embeddings`. Any
+    service that selects a provider reads these values. Fields that a provider
+    needs are checked when the provider is built, so a missing value stops start-up.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="RUNEFOBLE_EMBEDDING_",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    base_url: str | None = Field(
+        default=None,
+        description="Base URL of the embeddings API, including the /v1 path",
+    )
+    model: str | None = Field(
+        default=None,
+        description="Model name sent to the endpoint and recorded as provenance",
+    )
+    dimension: int | None = Field(
+        default=None,
+        description="Vector width the model produces; checked on the first embedding",
+    )
+    api_key: str = Field(
+        default="not-needed",
+        description="Bearer key for the endpoint. Local servers usually ignore it",
+    )
+    document_prefix: str = Field(
+        default="",
+        description="Text prepended to every indexed document (asymmetric models)",
+    )
+    query_prefix: str = Field(
+        default="",
+        description="Text prepended to every search query (asymmetric models)",
+    )
+
+
+class RulesCompendiumSettings(BaseSettings):
+    """Rules Compendium retrieval mode.
+
+    `lexical` ranks rules with BM25 only, and search responses say so. Any other
+    value names a configured embedding provider, and search becomes hybrid.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="RUNEFOBLE_RULES_",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    embedding: Literal["lexical", "openai_compatible"] = Field(
+        default="lexical",
+        description="Retrieval mode: lexical (BM25 only) or a configured embedding provider",
+    )
+
+
+class LoreBackendSettings(BaseSettings):
+    """Campaign Lore retrieval backends, selected per port.
+
+    Every port is rebuilt at start-up from the event store (ADR-0011). Only
+    in-process adapters exist today. Other choices arrive with their adapters.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="RUNEFOBLE_LORE_",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    graph: Literal["projection"] = Field(
+        default="projection",
+        description="Entity graph, rebuilt from LoreDocument events at start-up",
+    )
+    vector: Literal["memory"] = Field(
+        default="memory",
+        description="Entity vector index, rebuilt at start-up (in-process)",
+    )
+    chunk: Literal["memory"] = Field(
+        default="memory",
+        description="Passage corpus for BM25 and dense search, rebuilt at start-up",
+    )
+    embedding: Literal["fake"] = Field(
+        default="fake",
+        description="Deterministic hash embeddings (not semantic); replaced by a provider adapter",
+    )
+
+
+class WardrobeGeneratorSettings(BaseSettings):
+    """Wardrobe image generator for Asset Forge, selected at start-up.
+
+    Only the deterministic placeholder exists today. It draws a flat colour portrait
+    and preserves no face. Other choices arrive with their adapters.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="RUNEFOBLE_WARDROBE_",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    generator: Literal["placeholder"] = Field(
+        default="placeholder",
+        description="Wardrobe generator behind the WardrobeGenerator port",
     )

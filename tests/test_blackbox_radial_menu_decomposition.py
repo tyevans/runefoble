@@ -89,8 +89,10 @@ async def test_frontdoor_radial_actions_execution() -> None:
     session_id = f"radial-sess-{uuid4().hex[:8]}"
 
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        # 1. Initialize board
-        init_res = await client.get(f"/api/v1/boards/{session_id}")
+        # 1. Create board through the public POST frontdoor
+        init_res = await client.post(
+            "/api/v1/boards", json={"session_id": session_id, "cols": 12, "rows": 12}
+        )
         assert init_res.status_code == 200
 
         # 2. Place active combatant token

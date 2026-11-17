@@ -21,6 +21,7 @@ from tests.helpers.audio_synth import (
     generate_pcm_sine,
     generate_wav_sine,
 )
+from tests.helpers.fixture_transcriber import FixtureTranscriber
 
 
 def test_silence_chunk_rejected_without_events(client: TestClient, mock_redis: MockAsyncRedis):
@@ -129,9 +130,12 @@ def test_sub_250ms_silence_triggers_utterance_and_event(
     assert event.transcript == data["transcript"]
 
 
-def test_wav_container_ingestion(client: TestClient, mock_redis: MockAsyncRedis):
+def test_wav_container_ingestion(
+    client: TestClient, mock_redis: MockAsyncRedis, speech_engine: FixtureTranscriber
+):
     """Audio packaged inside a standard 44-byte WAV header is correctly decoded and processed."""
     wav_bytes = generate_wav_sine(duration_ms=200)
+    speech_engine.script("I cast magic missile")
     wav_b64 = base64.b64encode(wav_bytes).decode("ascii")
 
     session_id = str(uuid.uuid4())
@@ -143,7 +147,6 @@ def test_wav_container_ingestion(client: TestClient, mock_redis: MockAsyncRedis)
             "speaker_name": "Ezren",
             "audio_data": wav_b64,
             "is_final": True,
-            "mock_transcript": "I cast magic missile",
         },
     )
     assert resp.status_code == 200, resp.text

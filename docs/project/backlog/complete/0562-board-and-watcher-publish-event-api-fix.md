@@ -1,7 +1,7 @@
 ---
 id: '0562'
 title: Board and Watcher Publish Calls Use the Real Redis Bus API
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -24,7 +24,7 @@ source_audits:
 # TASK-0562: Board and Watcher Publish Calls Use the Real Redis Bus API
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `RedisStreamsEventBus` exposes `publish_event(stream, event)`. It has no `publish`. Several board-state and watcher call sites call `bus.publish(...)` inside `contextlib.suppress(Exception)`, so the `AttributeError` is hidden and the event never reaches Redis. This task replaces each call with `publish_event` on the named stream, deletes the dead `hasattr` branches, and publishes every uncommitted event through one shared helper in `board_state`.

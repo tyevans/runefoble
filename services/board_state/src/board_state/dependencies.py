@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
 from board_state.aggregate import BoardAggregate
+from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import Header
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
@@ -32,11 +32,22 @@ def to_board_uuid(session_id: str) -> UUID:
         return uuid5(NAMESPACE_DNS, session_id)
 
 
+class BoardNotFoundError(LookupError):
+    """Raised when no board exists for a session id. Routers map it to HTTP 404."""
+
+    def __init__(self, session_id: str) -> None:
+        self.session_id = session_id
+        super().__init__(f"Board not found: {session_id}")
+
+
 def get_event_bus() -> RedisStreamsEventBus | None:
+    """Return the Redis Streams bus, creating it on first use.
+
+    Initialization errors propagate. They are never hidden behind a silent None.
+    """
     global _event_bus
     if _event_bus is None and platform_settings.redis_url:
-        with contextlib.suppress(Exception):
-            _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
+        _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
     return _event_bus
 
 
@@ -128,21 +139,14 @@ async def check_user_can_switch_map(
     return await check_user_can_manage_traps(user_id, board_id, campaign_id, spicedb)
 
 
-async def get_or_create_board(session_id: str) -> BoardAggregate:
+async def get_board(session_id: str) -> BoardAggregate:
+    """Load an existing board. Raise BoardNotFoundError when the session has no board.
+
+    Only a missing event stream means "not found". Every other load error propagates.
+    Boards are created only through the POST /api/v1/boards command.
+    """
     board_id = to_board_uuid(session_id)
     try:
         return await repo.load(board_id)
-    except Exception:
-        board = BoardAggregate(board_id)
-        board.initialize_grid(cols=12, rows=12, session_id=session_id)
-        board.place_token(
-            "t1", name="Valeros", token_type="pc", x=2, y=3, is_friendly=True, vision_radius=2
-        )
-        board.place_token(
-            "t2", name="Kyra", token_type="pc", x=3, y=3, is_friendly=True, vision_radius=2
-        )
-        board.place_token(
-            "t3", name="Goblin Scout", token_type="monster", x=8, y=8, is_friendly=False
-        )
-        await repo.save(board)
-        return board
+    except AggregateNotFoundError as exc:
+        raise BoardNotFoundError(session_id) from exc
