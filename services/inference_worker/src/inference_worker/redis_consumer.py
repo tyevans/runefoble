@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 import redis.asyncio as aioredis
+from redis.exceptions import ResponseError
 
 from inference_worker.config import WorkerSettings
 from inference_worker.graphs import build_intent_graph, build_narration_graph, build_stand_in_graph
@@ -38,13 +39,22 @@ class RedisInferenceConsumer:
         self._running = True
         self._redis = aioredis.from_url(self.settings.redis_url, decode_responses=True)
 
-        # Ensure consumer group exists
-        with contextlib.suppress(Exception):
+        # Ensure consumer group exists. Only BUSYGROUP (group already exists) is expected.
+        # Every other error propagates, so a broken stream stops start-up.
+        try:
             await self._redis.xgroup_create(
                 name=self.settings.redis_stream_in,
                 groupname=self.settings.redis_consumer_group,
                 id="0",
                 mkstream=True,
+            )
+        except ResponseError as exc:
+            if "BUSYGROUP" not in str(exc):
+                raise
+            logger.info(
+                "Consumer group '%s' already exists on stream '%s'",
+                self.settings.redis_consumer_group,
+                self.settings.redis_stream_in,
             )
 
         self._task = asyncio.create_task(self._consume_loop())
@@ -89,45 +99,61 @@ class RedisInferenceConsumer:
                 await asyncio.sleep(2.0)
 
     async def _process_message(self, message_id: str, fields: dict[str, Any]) -> None:
-        assert self._redis is not None
+        """Run one task and always publish a result, then acknowledge the message.
+
+        A failed task publishes an error result with the correlation id. A message
+        without a valid task type or payload is treated the same way (dead-letter
+        policy). No message stays pending without a published result.
+        """
+        correlation_id = fields.get("correlation_id", message_id)
+        task_type = str(fields.get("type", "unknown"))
         try:
             # Canonical schema only: both fields are required. Missing fields raise KeyError.
             task_type = fields["type"]
             payload = json.loads(fields["payload"])
-
-            result_data: dict[str, Any]
-            if task_type == "parse_intent":
-                state = await self._intent_graph.ainvoke({"request": payload})
-                result_data = {
-                    "action": state.get("parsed_action", {}),
-                    "source": state["source"],
-                    "degraded": state["degraded"],
-                }
-            elif task_type == "generate_narration":
-                state = await self._narration_graph.ainvoke({"request": payload})
-                result_data = state["final_response"]
-            elif task_type == "stand_in_action":
-                state = await self._stand_in_graph.ainvoke({"request": payload})
-                result_data = state["final_response"]
-            else:
-                raise ValueError(f"unknown inference task type: {task_type!r}")
-
-            # Publish result
-            correlation_id = fields.get("correlation_id", message_id)
-            await self._redis.xadd(
-                self.settings.redis_stream_out,
-                {
-                    "correlation_id": correlation_id,
-                    "task_type": task_type,
-                    "result": json.dumps(result_data),
-                },
+            result_data = await self._run_task(task_type, payload)
+        except Exception as exc:
+            logger.error("Failed processing message %s: %s", message_id, exc)
+            await self._publish_result(
+                correlation_id,
+                task_type,
+                {"status": "error", "error": f"{type(exc).__name__}: {exc}"},
+            )
+        else:
+            await self._publish_result(
+                correlation_id,
+                task_type,
+                {"status": "ok", "result": json.dumps(result_data)},
             )
 
-            # Acknowledge processed message
-            await self._redis.xack(
-                self.settings.redis_stream_in,
-                self.settings.redis_consumer_group,
-                message_id,
-            )
-        except Exception as e:
-            logger.error("Failed processing message %s: %s", message_id, e)
+        assert self._redis is not None
+        await self._redis.xack(
+            self.settings.redis_stream_in,
+            self.settings.redis_consumer_group,
+            message_id,
+        )
+
+    async def _run_task(self, task_type: str, payload: Any) -> dict[str, Any]:
+        if task_type == "parse_intent":
+            state = await self._intent_graph.ainvoke({"request": payload})
+            return {
+                "action": state.get("parsed_action", {}),
+                "source": state["source"],
+                "degraded": state["degraded"],
+            }
+        if task_type == "generate_narration":
+            state = await self._narration_graph.ainvoke({"request": payload})
+            return state["final_response"]
+        if task_type == "stand_in_action":
+            state = await self._stand_in_graph.ainvoke({"request": payload})
+            return state["final_response"]
+        raise ValueError(f"unknown inference task type: {task_type!r}")
+
+    async def _publish_result(
+        self, correlation_id: str, task_type: str, body: dict[str, str]
+    ) -> None:
+        assert self._redis is not None
+        await self._redis.xadd(
+            self.settings.redis_stream_out,
+            {"correlation_id": correlation_id, "task_type": task_type, **body},
+        )
