@@ -5,7 +5,7 @@
  * over real WebSockets per ADR-0004, ADR-0005, ADR-0010, ADR-0014, and Hard Invariant 7.
  */
 
-import { expect, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { Given, When, Then } from '../support/fixtures';
 
 Given(
@@ -33,7 +33,7 @@ Given(
     const sessionId = sessionIdMatch ? sessionIdMatch[0] : world.sessionId || '15';
     const campaignId = world.campaignId || '4';
 
-    const valerosContext = await browser.newContext({ baseURL: 'http://localhost:5173' });
+    const valerosContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
     world.extraContexts.push(valerosContext);
     const valerosPage = await valerosContext.newPage();
     world.setPage('valeros', valerosPage);
@@ -81,7 +81,7 @@ When(
     const sessionId = sessionIdMatch ? sessionIdMatch[0] : world.sessionId || '15';
     const campaignId = world.campaignId || '4';
 
-    const sarahContext = await browser.newContext({ baseURL: 'http://localhost:5173' });
+    const sarahContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
     world.extraContexts.push(sarahContext);
     const sarahPage = await sarahContext.newPage();
     world.setPage('sarah', sarahPage);
