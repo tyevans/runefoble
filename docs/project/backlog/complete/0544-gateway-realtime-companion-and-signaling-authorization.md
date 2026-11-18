@@ -40,7 +40,7 @@ The gateway accepts WebSocket connections with no check. One session's broadcast
 - `gateway/api/src/gateway_api/websocket_validator.py:47-111`: uses `campaign.read`, `campaign.edit`, `edit_character`, `move`, `move_token`, `participate`, `control`, `character.owner`, and the relations `dungeon_master` and `owner`. Line 111 falls back to `check_permission("campaign", id, action)` with the client-supplied action name (`w3-authz-coverage.md` F14).
 - `gateway/api/src/gateway_api/signaling/auth.py:9-60` (removed): identity from query, `x-user-id`, or the raw bearer value. A `guest_user` fallback exists at line 25. The checks use `campaign.owner`, `dungeon_master`, `player`, and `read` (`w3-authz-coverage.md` F14).
 - `gateway/api/src/gateway_api/companion/router.py` (removed) (both POST routes): `x_user_id` defaults to `the_watcher_dm`. Omitting the header acts as that user (`w1-gateway-api.md` F22).
-- `gateway/api/src/gateway_api/routers/tabletop.py:184-194` (`POST /api/v1/watcher/speak-and-act`): no check. The canned body is removed by the fake-implementation task. This task adds the check only.
+- `gateway/api/src/gateway_api/routers/tabletop.py:184-194` (removed) (`POST /api/v1/watcher/speak-and-act`): no check. The canned body is removed by the fake-implementation task. This task adds the check only.
 
 ## Documentation & Architecture Review
 - ADR-0006 (Redis Streams): broadcasts carry domain events. A subscriber gets only the events for the streams it may observe.

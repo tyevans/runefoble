@@ -21,10 +21,10 @@ Complete
 
 ## Problem Statement
 - M-1 (high): lines 102-135 label Milestone 2 "(Current)", Milestone 3 "(Next)", and Milestone 4 "(Future)". `docs/project/backlog/ROADMAP.md` marks Milestones 1 to 9 and 11 Complete, with Milestone 10 Active. `PRIORITY.md:55` marks TASK-0074 Complete, but marketing line 113 leaves the same item unchecked.
-- M-2 (high, lines 60-71, 76-77): spoken commands and Watcher parsing are not supported as live. The speak route is canned (`tabletop.py:183-193`). No UI calls the transcribe or intent routes.
+- M-2 (high, lines 60-71, 76-77): spoken commands and Watcher parsing are not supported as live. The speak route is canned (`tabletop.py:183-193` (removed)). No UI calls the transcribe or intent routes.
 - M-3 (high, lines 77-78): the autonomous DM is not live. The real LLM path is not wired. Domain state is in process memory, not aggregates.
 - M-4 (high, lines 42, 79-80): AI stand-ins are not live. Activation is never persisted or triggered. Only one penalty is applied.
-- M-5 (medium, lines 70-74): the board is partly supported. The gateway serves canned board data (`gateway/api/src/gateway_api/routers/tabletop.py:179-180`), and board state is not durable.
+- M-5 (medium, lines 70-74): the board is partly supported. The gateway serves canned board data (`gateway/api/src/gateway_api/routers/tabletop.py:179-180` (removed)), and board state is not durable.
 - M-6 (high, lines 87-89): "zero-trust" and "enforces" authorization claims are not supported. Role assignment has no authentication. The dev identity bypass is on by default.
 - M-7 (high, line 146): "event sourcing on PostgreSQL" and "time-travel debugging" are not supported as deployed. The game session uses `InMemoryEventStore`.
 - M-8 (high, line 151): FastMCP dice, board, and lore tools are not supported. The static tools return canned data.

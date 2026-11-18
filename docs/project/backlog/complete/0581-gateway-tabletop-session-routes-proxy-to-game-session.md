@@ -24,13 +24,13 @@ target_release: 0.9.0
 Complete
 
 ## Summary
-Replace the canned session handlers in `gateway/api/src/gateway_api/routers/tabletop.py` with proxies to `game_session`. The gateway keeps its public paths. It forwards each call through the shared client from TASK-0580. Two routes have no owner route yet (`dm-override`, `atmosphere`). Add them to `game_session` in this task. The canned code and the magic IDs are deleted.
+Replace the canned session handlers in `gateway/api/src/gateway_api/routers/tabletop.py` (removed) with proxies to `game_session`. The gateway keeps its public paths. It forwards each call through the shared client from TASK-0580. Two routes have no owner route yet (`dm-override`, `atmosphere`). Add them to `game_session` in this task. The canned code and the magic IDs are deleted.
 
 ## Problem Statement
-- `tabletop.py:31-48` returns a fabricated session. It uses hardcoded campaign `"4"` and session IDs `"14"` and `"15"`, and a fixed `current_turn: "c1"`.
-- `tabletop.py:51-62` writes only to the in-memory `campaign_store`.
-- `tabletop.py:122-131` (advance turn) echoes the request. It does not advance a turn.
-- `tabletop.py:134-156` (`dm-override`, `atmosphere`) reports success and changes nothing.
+- `tabletop.py:31-48` (removed) returns a fabricated session. It uses hardcoded campaign `"4"` and session IDs `"14"` and `"15"`, and a fixed `current_turn: "c1"`.
+- `tabletop.py:51-62` (removed) writes only to the in-memory `campaign_store`.
+- `tabletop.py:122-131` (removed) (advance turn) echoes the request. It does not advance a turn.
+- `tabletop.py:134-156` (removed) (`dm-override`, `atmosphere`) reports success and changes nothing.
 - No handler calls `game_session` (`w1-gateway-api.md` F7, F12; `w3-ddd-architecture.md` F3).
 - The owner has real routes. `game_session` exposes `GET /api/v1/sessions/{session_id}`, `POST /api/v1/sessions/{session_id}/start`, `POST .../next-turn`, `POST .../hot-swap` (`services/game_session/src/game_session/routers/session.py`, and the hot-swap router).
 
@@ -59,8 +59,8 @@ Replace the canned session handlers in `gateway/api/src/gateway_api/routers/tabl
 | `POST /api/v1/sessions/{session_id}/atmosphere` | none | add to `game_session` |
 
 2. In `services/game_session`, add the two missing routes. Each route calls one aggregate command. Each command emits a domain event through `BaseRunefobleEvent` and `@register_event`. Add the atmosphere fields to the session aggregate. Keep each new file under 300 lines.
-3. Replace each handler in `tabletop.py` with a call through the shared client. Delete the `campaign_store` writes, the magic IDs and the canned payloads. Keep only the session routes in this file. The token and board routes move to TASK-0582. The speak-and-act route moves to TASK-0583.
-4. Move the session routes to `gateway/api/src/gateway_api/routers/sessions_proxy.py` so that `tabletop.py` can be removed by TASK-0582 and TASK-0583.
+3. Replace each handler in `tabletop.py` (removed) with a call through the shared client. Delete the `campaign_store` writes, the magic IDs and the canned payloads. Keep only the session routes in this file. The token and board routes move to TASK-0582. The speak-and-act route moves to TASK-0583.
+4. Move the session routes to `gateway/api/src/gateway_api/routers/sessions_proxy.py` so that `tabletop.py` (removed) can be removed by TASK-0582 and TASK-0583.
 5. Update `docs/reference/ports-and-endpoints.md` for the two new owner routes.
 
 ## Frontdoor Blackbox Test Plan
@@ -77,7 +77,7 @@ Test file: `tests/test_blackbox_gateway_session_proxy.py`. The gateway and `game
 No test may assert a fixed string such as `"Valeros"` or `"Session 14"`.
 
 ## Definition of Done
-1. `tabletop.py` no longer contains a canned payload. `rg "Valeros|campaign_store" gateway/api/src/gateway_api/routers/` returns no match in session routes.
+1. `tabletop.py` (removed) no longer contains a canned payload. `rg "Valeros|campaign_store" gateway/api/src/gateway_api/routers/` returns no match in session routes.
 2. Both new `game_session` routes exist, are in the OpenAPI schema, and have event tests.
 3. The gateway forwards through `ServiceClient` (TASK-0580). It does not call `game_session` internals.
 4. The blackbox test file above passes. `uv run ruff check .` passes.

@@ -55,7 +55,7 @@ During past refactorings in `gateway/api`, several facade modules were retained 
 2. **Clean Up Aliases and Legacy Re-exports**:
    - In `gateway/api/src/gateway_api/websocket_manager.py`, remove `# Backward-compatible aliases` (`CampaignWebSocketManager`).
    - In `gateway/api/src/gateway_api/campaign_store/__init__.py` (removed), eliminate facade re-exports, standardizing direct imports from submodules.
-   - In `gateway/api/src/gateway_api/routers/tabletop.py` and `routers/auth/profile.py`, remove redundant legacy field aliases where canonical snake_case is expected.
+   - In `gateway/api/src/gateway_api/routers/tabletop.py` (removed) and `routers/auth/profile.py`, remove redundant legacy field aliases where canonical snake_case is expected.
 3. **Migrate Import Sites Across Codebase**:
    - Update `gateway/api/src/gateway_api/main.py`, sub-routers, and tests to import directly from modular sub-packages (`gateway_api.signaling`, `gateway_api.websocket`, `gateway_api.companion`).
 4. **Update Blackbox Test Suites**:
