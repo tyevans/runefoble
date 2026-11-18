@@ -207,6 +207,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.soundscape.leitmotif_configured` | `LeitmotifProfileConfigured` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.leitmotif_triggered` | `LeitmotifTriggered` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.master_volume_changed` | `MasterVolumeChanged` | `runefoble_events.soundscape` |
+| `runefoble.events.soundscape.party_health_recorded` | `SoundscapePartyHealthRecorded` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.stem_profile_overridden` | `StemProfileOverridden` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.tension_updated` | `SoundscapeTensionUpdated` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.track_changed` | `SoundscapeTrackChanged` | `runefoble_events.soundscape` |

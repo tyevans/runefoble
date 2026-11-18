@@ -18,8 +18,13 @@ from runefoble_events.session import (
 )
 from runefoble_events.watcher import DiceRolled, PlayerSpokeEvent
 
+from soundscape.aggregate import SoundscapeAggregate
 from soundscape.leitmotif import LeitmotifEngine
-from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
+from soundscape.scoring import (
+    calculate_encounter_tension,
+    derive_stem_profile,
+    enemy_cr_balance_from_combatants,
+)
 from soundscape.session_state import load_session_aggregate, save_session_aggregate
 
 logger = logging.getLogger("runefoble.soundscape.events")
@@ -42,11 +47,53 @@ SOUNDSCAPE_SUBSCRIBED_EVENTS: list[str] = [
 _handlers_registered: bool = False
 
 
-async def _handle_combat_start(session_id: str) -> None:
-    agg = await load_session_aggregate(session_id)
-    tension = calculate_encounter_tension(combat_active=True, combat_round=1, enemy_cr_balance=2.0)
+def _score_encounter(
+    agg: SoundscapeAggregate, session_id: str, *, combat_round: int, enemy_cr_balance: float
+) -> tuple[int, str]:
+    """Score tension from the encounter inputs and the stored party health, then record it."""
+    party_health = agg.state.lowest_party_health_ratio
+    tension = calculate_encounter_tension(
+        combat_active=True,
+        combat_round=combat_round,
+        enemy_cr_balance=enemy_cr_balance,
+        lowest_party_health_ratio=party_health,
+    )
     profile = derive_stem_profile(tension)
-    agg.record_tension_update(session_id, tension, profile, combat_round=1, enemy_cr_balance=2.0)
+    agg.record_tension_update(
+        session_id,
+        tension,
+        profile,
+        combat_round=combat_round,
+        enemy_cr_balance=enemy_cr_balance,
+        lowest_health_ratio=party_health,
+        combat_active=True,
+    )
+    return tension, profile
+
+
+def _retune_encounter(agg: SoundscapeAggregate, session_id: str, *, combat_round: int) -> None:
+    """Re-score the live encounter with its stored CR. Switch track only on a profile change."""
+    old_profile = agg.state.stem_profile
+    tension, profile = _score_encounter(
+        agg,
+        session_id,
+        combat_round=combat_round,
+        enemy_cr_balance=agg.state.enemy_cr_balance,
+    )
+    if profile != old_profile:
+        agg.record_track_change(
+            session_id, f"track-{profile}-01", profile, tension, 1500, active_stems=[profile]
+        )
+
+
+async def _handle_combat_start(session_id: str, combatants: list[dict[str, Any]]) -> None:
+    agg = await load_session_aggregate(session_id)
+    tension, profile = _score_encounter(
+        agg,
+        session_id,
+        combat_round=1,
+        enemy_cr_balance=enemy_cr_balance_from_combatants(combatants),
+    )
     agg.record_track_change(
         session_id, "track-combat-01", profile, tension, 1500, active_stems=[profile]
     )
@@ -55,16 +102,23 @@ async def _handle_combat_start(session_id: str) -> None:
 
 async def _handle_combat_advance(session_id: str, round_num: int) -> None:
     agg = await load_session_aggregate(session_id)
-    tension = calculate_encounter_tension(
-        combat_active=True, combat_round=round_num, enemy_cr_balance=2.5
-    )
-    profile = derive_stem_profile(tension)
-    old_profile = agg.state.stem_profile
-    agg.record_tension_update(session_id, tension, profile, combat_round=round_num)
-    if profile != old_profile:
-        agg.record_track_change(
-            session_id, f"track-{profile}-01", profile, tension, 1500, active_stems=[profile]
+    _retune_encounter(agg, session_id, combat_round=round_num)
+    await save_session_aggregate(agg)
+
+
+async def _handle_health_changed(event: CharacterHealthChanged, session_id: str) -> None:
+    """Store the character's HP ratio. In combat, re-score tension with the new party minimum."""
+    if event.max_hp <= 0:
+        logger.warning(
+            "Ignoring health change with non-positive max_hp for character %s",
+            event.aggregate_id,
         )
+        return
+    ratio = min(1.0, max(0.0, event.current_hp / event.max_hp))
+    agg = await load_session_aggregate(session_id)
+    agg.record_party_health(session_id, str(event.aggregate_id), ratio)
+    if agg.state.combat_active:
+        _retune_encounter(agg, session_id, combat_round=agg.state.combat_round)
     await save_session_aggregate(agg)
 
 
@@ -107,7 +161,7 @@ async def handle_incoming_domain_event(event: Any) -> None:
     session_id = str(getattr(event, "session_id", "default") or "default")
 
     if isinstance(event, (CombatEncounterStarted,)):
-        await _handle_combat_start(session_id)
+        await _handle_combat_start(session_id, list(event.combatants))
     elif isinstance(event, (CombatRoundAdvanced, InitiativeTurnAdvanced)):
         await _handle_combat_advance(session_id, getattr(event, "round_number", 1))
     elif isinstance(event, PlayerSpokeEvent):
@@ -126,9 +180,14 @@ async def handle_incoming_domain_event(event: Any) -> None:
         await _handle_leitmotif_trigger(
             session_id, char_id, char_name, "triumphant", "critical_hit"
         )
-    elif isinstance(event, (DeathSaveStarted,)) or (
-        isinstance(event, CharacterHealthChanged) and getattr(event, "current_hp", 1) <= 0
-    ):
+    elif isinstance(event, CharacterHealthChanged):
+        # A health event has no session when no session is in play. Such an event feeds no tension.
+        if event.session_id:
+            await _handle_health_changed(event, event.session_id)
+        if event.current_hp <= 0:
+            char_id = str(event.aggregate_id)
+            await _handle_leitmotif_trigger(session_id, char_id, "Hero", "somber", "death_save")
+    elif isinstance(event, (DeathSaveStarted,)):
         char_id = str(getattr(event, "character_id", None) or "char-player")
         char_name = str(getattr(event, "character_name", None) or "Hero")
         await _handle_leitmotif_trigger(session_id, char_id, char_name, "somber", "death_save")

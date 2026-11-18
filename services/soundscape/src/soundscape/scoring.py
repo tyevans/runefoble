@@ -8,6 +8,26 @@ Calculates a real-time encounter tension index (0-100) dynamically derived from:
 
 from __future__ import annotations
 
+from typing import Any
+
+
+def parse_challenge_rating(raw: Any) -> float:
+    """Read a Challenge Rating given as a number or as an SRD fraction such as "1/4".
+
+    Raises ValueError for a value that is neither, so a bad roster entry is not scored as zero.
+    """
+    if isinstance(raw, str) and "/" in raw:
+        numerator, denominator = raw.split("/", 1)
+        return float(numerator) / float(denominator)
+    return float(raw)
+
+
+def enemy_cr_balance_from_combatants(combatants: list[dict[str, Any]]) -> float:
+    """Sum the Challenge Rating of every combatant that carries one. Others add nothing."""
+    return float(
+        sum(parse_challenge_rating(c["cr"]) for c in combatants if c.get("cr") is not None)
+    )
+
 
 def calculate_encounter_tension(
     combat_active: bool,
