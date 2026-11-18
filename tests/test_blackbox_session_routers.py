@@ -179,6 +179,26 @@ def test_game_session_dice_frontdoor(session_client):
     assert roll_res.status_code == 200 and roll_res.json()["total"] >= 5
 
 
+def test_game_session_dice_rejects_bad_notation(session_client):
+    """A roll with bad notation is a validation error (422). It records no roll."""
+    c_res = session_client.post(
+        "/api/v1/sessions/create",
+        json={
+            "campaign_id": _owned_campaign(session_client),
+            "title": "Bad Dice Session",
+            "dm_id": "dm_carol",
+        },
+    )
+    session_id = c_res.json()["session_id"]
+    session_client.post(f"/api/v1/sessions/{session_id}/start")
+
+    roll_res = session_client.post(
+        f"/api/v1/sessions/{session_id}/roll",
+        json={"formula": "1d20abc", "roller_name": "Valeros"},
+    )
+    assert roll_res.status_code == 422, roll_res.text
+
+
 def _owned_campaign(client) -> str:
     """Create a campaign as the calling user, so that the caller can run sessions in it."""
     res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})

@@ -56,7 +56,7 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 
 | Tool Name | Parameters | Description |
 |---|---|---|
-| `roll_dice` | `notation: str`, `reason: str` | Parse standard RPG dice notation (`1d20+3`, `2d6`) and return roll breakdown. |
+| `roll_dice` | `notation: str`, `reason: str` | Roll standard RPG dice notation (`1d20+3`, `2d6`, `2d20kh1+3`) through `runefoble_platform.dice.parse_and_roll`. Returns the roll breakdown (`formula`, `rolls`, `kept_rolls`, `modifier`, `total`, `is_crit`, `is_fumble`) and `reason`. Bad notation, such as `1d20abc`, is a tool error. No default roll is made. |
 | `inspect_tactical_board` | `session_id: str` | Read tokens, positions, HP, and grid dimensions from `board_state` (`GET /api/v1/boards/{session_id}`). Returns an error result when the board does not exist. |
 | `move_board_token` | `session_id: str`, `token_id: str`, `to_x: int`, `to_y: int` | Move a token through `board_state` (`POST /api/v1/boards/{session_id}/tokens/{token_id}/move`). The board rejects out-of-bounds moves. |
 | `get_character_sheet` | `character_id: str` | Read the stored sheet from `character_sheet` (`GET /api/v1/characters/{character_id}`): name, class, level, HP, armor class, ability scores, spell slots, equipment, inventory, conditions, and penalties. An unknown id returns a tool error. |

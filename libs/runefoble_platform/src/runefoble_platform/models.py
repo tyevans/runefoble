@@ -25,12 +25,3 @@ class CampaignScopedEntity(BaseEntity):
 
     campaign_id: str
     tenant_id: str | None = None
-
-
-class UserPrincipal(BaseModel):
-    """Authenticated user context passed across services."""
-
-    user_id: str
-    email: str
-    roles: list[str] = Field(default_factory=list)
-    active_campaign_id: str | None = None

@@ -5,7 +5,9 @@ Their behavior is covered by tests/test_blackbox_mcp_gateway.py and
 tests/test_blackbox_mcp_orchestration_and_resources.py.
 """
 
+import pytest
 from gateway_mcp.server import mcp, roll_dice
+from runefoble_platform.dice import parse_and_roll
 
 
 def test_mcp_registered_tools():
@@ -31,15 +33,18 @@ def test_mcp_registered_tools():
         assert name in tool_names, f"Tool '{name}' not registered in FastMCP"
 
 
-def test_roll_dice():
-    """Test standard dice notation parsing and rolling."""
-    res = roll_dice("2d6+3", "Attack roll")
-    assert res["notation"] == "2d6+3"
-    assert len(res["rolls"]) == 2
-    assert res["modifier"] == 3
-    assert res["total"] == sum(res["rolls"]) + 3
+def test_roll_dice_returns_the_platform_roll_shape():
+    """A fixed roll through the MCP tool returns the same shape as parse_and_roll, plus the reason."""
+    res = roll_dice("2d6+3", "Attack roll", fixed_rolls=[4, 5])
+    expected = parse_and_roll("2d6+3", fixed_rolls=[4, 5])
+    assert res == {**expected, "reason": "Attack roll"}
+    assert res["formula"] == "2d6+3"
+    assert res["kept_rolls"] == [4, 5]
+    assert res["total"] == 12
 
-    # Fallback default
-    fallback = roll_dice("invalid", "Check")
-    assert fallback["notation"] == "1d20"
-    assert 1 <= fallback["total"] <= 20
+
+@pytest.mark.parametrize("notation", ["invalid", "1d20abc", "0d6", "1d0", ""])
+def test_roll_dice_rejects_bad_notation(notation: str):
+    """Bad notation is a tool error. The tool never rolls a default 1d20."""
+    with pytest.raises(ValueError):
+        roll_dice(notation, "Check")

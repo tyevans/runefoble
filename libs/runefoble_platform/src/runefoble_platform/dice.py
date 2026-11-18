@@ -13,7 +13,7 @@ from typing import Any
 # Regex to capture expressions like:
 # '1d20', '2d20kh1+3', '2d20kl1-2', '8d6+4', '4d6kh3', 'd20+5'
 DICE_FORMULA_PATTERN = re.compile(
-    r"^\s*(\d+)?d(\d+)\s*(?:(kh|kl)\s*(\d+))?\s*(?:([+-])\s*(\d+))?\s*$",
+    r"\s*(\d+)?d(\d+)\s*(?:(kh|kl)\s*(\d+))?\s*(?:([+-])\s*(\d+))?\s*",
     re.IGNORECASE,
 )
 
@@ -40,6 +40,29 @@ def evaluate_dice(
     Returns:
         A dictionary containing roll results, kept rolls, total, and crit/fumble flags.
     """
+    _validate_dice_arguments(count, sides, keep_highest, keep_lowest)
+    rolls = _roll_dice(count, sides, fixed_rolls)
+    kept_rolls = _select_kept_rolls(rolls, keep_highest, keep_lowest)
+    is_crit, is_fumble = _critical_flags(kept_rolls, sides)
+
+    return {
+        "count": count,
+        "sides": sides,
+        "modifier": modifier,
+        "keep_highest": keep_highest,
+        "keep_lowest": keep_lowest,
+        "rolls": rolls,
+        "kept_rolls": kept_rolls,
+        "total": sum(kept_rolls) + modifier,
+        "is_crit": is_crit,
+        "is_fumble": is_fumble,
+    }
+
+
+def _validate_dice_arguments(
+    count: int, sides: int, keep_highest: int | None, keep_lowest: int | None
+) -> None:
+    """Raise ValueError when the dice arguments cannot describe a roll."""
     if count < 1:
         raise ValueError(f"Dice count must be at least 1, got {count}")
     if sides < 1:
@@ -51,46 +74,34 @@ def evaluate_dice(
     if keep_lowest is not None and keep_lowest < 0:
         raise ValueError(f"keep_lowest cannot be negative, got {keep_lowest}")
 
-    if fixed_rolls is not None:
-        if len(fixed_rolls) != count:
-            raise ValueError(f"Expected {count} fixed rolls, got {len(fixed_rolls)}")
-        rolls = list(fixed_rolls)
-    else:
-        rolls = [random.randint(1, sides) for _ in range(count)]
 
-    # Determine which rolls to keep
+def _roll_dice(count: int, sides: int, fixed_rolls: list[int] | None) -> list[int]:
+    """Return the roll results, or the preset results for deterministic tests."""
+    if fixed_rolls is None:
+        return [random.randint(1, sides) for _ in range(count)]
+    if len(fixed_rolls) != count:
+        raise ValueError(f"Expected {count} fixed rolls, got {len(fixed_rolls)}")
+    return list(fixed_rolls)
+
+
+def _select_kept_rolls(
+    rolls: list[int], keep_highest: int | None, keep_lowest: int | None
+) -> list[int]:
+    """Return the rolls that count toward the total under the keep rule."""
     if keep_highest is not None:
-        sorted_rolls = sorted(rolls, reverse=True)
-        kept_rolls = sorted_rolls[:keep_highest]
-    elif keep_lowest is not None:
-        sorted_rolls = sorted(rolls)
-        kept_rolls = sorted_rolls[:keep_lowest]
-    else:
-        kept_rolls = list(rolls)
+        return sorted(rolls, reverse=True)[:keep_highest]
+    if keep_lowest is not None:
+        return sorted(rolls)[:keep_lowest]
+    return list(rolls)
 
-    total = sum(kept_rolls) + modifier
 
-    # Critical hit and fumble flags apply specifically to d20 rolls
-    is_crit = False
-    is_fumble = False
-    if sides == 20:
-        if 20 in kept_rolls:
-            is_crit = True
-        elif 1 in kept_rolls:
-            is_fumble = True
-
-    return {
-        "count": count,
-        "sides": sides,
-        "modifier": modifier,
-        "keep_highest": keep_highest,
-        "keep_lowest": keep_lowest,
-        "rolls": rolls,
-        "kept_rolls": kept_rolls,
-        "total": total,
-        "is_crit": is_crit,
-        "is_fumble": is_fumble,
-    }
+def _critical_flags(kept_rolls: list[int], sides: int) -> tuple[bool, bool]:
+    """Return (is_crit, is_fumble). Both flags apply only to d20 rolls."""
+    if sides != 20:
+        return False, False
+    if 20 in kept_rolls:
+        return True, False
+    return False, 1 in kept_rolls
 
 
 def parse_and_roll(formula: str, *, fixed_rolls: list[int] | None = None) -> dict[str, Any]:
@@ -110,7 +121,7 @@ def parse_and_roll(formula: str, *, fixed_rolls: list[int] | None = None) -> dic
     Returns:
         Roll result dictionary with formula and evaluation metrics.
     """
-    match = DICE_FORMULA_PATTERN.match(formula.strip())
+    match = DICE_FORMULA_PATTERN.fullmatch(formula)
     if not match:
         raise ValueError(f"Invalid dice formula: {formula!r}")
 
