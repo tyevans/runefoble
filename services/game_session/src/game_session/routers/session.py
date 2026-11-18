@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 from eventsource.domain.exceptions import AggregateNotFoundError
 from fastapi import APIRouter, Depends, Header, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState
+from game_session.campaign.tuples import link_session
 from game_session.character_client import CharacterSheetUnavailableError, release_stand_in
 from game_session.dependencies import get_spicedb_client, repo
 from game_session.models import (
@@ -54,6 +55,8 @@ async def create_session(req: CreateSessionRequest) -> GameSessionState:
     session = GameSessionAggregate(session_id)
     session.create(campaign_id=req.campaign_id, title=req.title, dm_id=req.dm_id)
     await repo.save(session)
+    # Link after the save (ADR-0001). The gateway's observe and control checks read this link.
+    await link_session(get_spicedb_client(), str(session_id), str(req.campaign_id))
     return session.state
 
 
