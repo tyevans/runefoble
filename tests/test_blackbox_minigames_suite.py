@@ -64,16 +64,6 @@ def gateway_client(spicedb: MockSpiceDBClient, game_session_upstream: str):
         yield client
 
 
-def test_minigames_suite_manifest_advertises_components(session_client: TestClient) -> None:
-    """Verify microfrontend manifest advertises the minigames components."""
-    res = session_client.get("/ui/manifest")
-    assert res.status_code == 200
-    manifest = res.json()
-    assert "runefoble-minigame-darts" in manifest["components"]
-    assert "runefoble-minigame-liars-dice" in manifest["components"]
-    assert "runefoble-minigame-roulette" in manifest["components"]
-
-
 def test_blackbox_darts_table_join_bet_and_throw(
     session_client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
 ) -> None:

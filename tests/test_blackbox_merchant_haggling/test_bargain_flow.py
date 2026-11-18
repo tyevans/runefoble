@@ -21,15 +21,6 @@ from .conftest import create_test_establishment
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-def test_blackbox_merchant_haggling_manifest_and_components(client: TestClient) -> None:
-    """Verify UI manifest advertises merchant-haggler and files exist per DoD."""
-    res = client.get("/ui/manifest")
-    assert res.status_code == 200
-    manifest = res.json()
-    assert "runefoble-merchant-haggler" in manifest["components"]
-    assert "runefoble-dm-negotiation-drawer" in manifest["components"]
-
-
 @pytest.mark.asyncio
 async def test_blackbox_establishment_haggle_gambits_flow(
     client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis

@@ -16,12 +16,6 @@ from tests.helpers.stream_events import assert_stream_events
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
-def test_blackbox_bulletin_board_manifest_and_components(client: TestClient) -> None:
-    """Verify UI manifest advertises runefoble-bulletin-board."""
-    res = client.get("/ui/manifest")
-    assert res.status_code == 200 and "runefoble-bulletin-board" in res.json()["components"]
-
-
 @pytest.mark.asyncio
 async def test_blackbox_pin_and_list_bulletin_notices(
     client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis

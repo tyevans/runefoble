@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import httpx
 from fastapi import FastAPI
@@ -17,6 +18,7 @@ from runefoble_platform.aggregate_loading import register_store_unavailable_hand
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
 from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.ui_manifest import load_ui_manifest
 from voice_agent.companion_routes import router as companion_router
 from voice_agent.companion_socket_routes import router as companion_socket_router
 from voice_agent.dependencies import (
@@ -58,6 +60,11 @@ from voice_agent.routers import (
 )
 from voice_agent.stt import get_streaming_pipeline
 from voice_agent.synthesis_engine import get_speech_synthesizer
+
+# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
+UI_MANIFEST = load_ui_manifest(
+    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
+)
 
 
 @asynccontextmanager
@@ -122,41 +129,7 @@ async def health_check():
 @app.get("/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for voice agent."""
-    return {
-        "service": "voice_agent",
-        "package": "@runefoble/voice-agent-ui",
-        "components": [
-            "runefoble-voice-controls",
-            "runefoble-audio-indicator",
-            "runefoble-mobile-companion",
-            "runefoble-voice-duplex-controls",
-            "audio-stream-controller",
-            "haptic-ping-panel",
-            "connection-status-badge",
-            "runefoble-vocal-modulator",
-            "runefoble-vocal-sliders",
-        ],
-        "tags": [
-            "runefoble-voice-controls",
-            "runefoble-audio-indicator",
-            "runefoble-mobile-companion",
-            "runefoble-voice-duplex-controls",
-            "audio-stream-controller",
-            "haptic-ping-panel",
-            "connection-status-badge",
-            "runefoble-vocal-modulator",
-            "runefoble-vocal-sliders",
-        ],
-        "styles": [
-            "./src/runefoble-voice-controls.styles.ts",
-            "./src/runefoble-mobile-companion.styles.ts",
-            "./src/duplex/styles/index.ts",
-            "./src/mobile_companion/styles/index.ts",
-            "./src/runefoble-vocal-modulator.styles.ts",
-        ],
-        "scripts": ["./src/index.ts"],
-        "version": "0.1.0",
-    }
+    return UI_MANIFEST
 
 
 def main():

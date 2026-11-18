@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from uuid import uuid4
 
 from board_state.aggregate import BoardAggregate, BoardState
@@ -25,6 +26,10 @@ from board_state.models import CreateBoardRequest
 from board_state.projection import project_board
 from eventsource.domain.exceptions import OptimisticLockError
 from fastapi import APIRouter, HTTPException
+from runefoble_platform.ui_manifest import load_ui_manifest
+
+# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
+UI_MANIFEST = load_ui_manifest(Path(__file__).resolve().parents[3] / "ui" / "manifest.json")
 
 logger = logging.getLogger("runefoble.board_state.routers.boards")
 
@@ -37,40 +42,7 @@ ui_manifest_router = APIRouter(tags=["boards"])
 @ui_manifest_router.get("/board_state/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for board state."""
-    return {
-        "service": "board_state",
-        "package": "@runefoble/board-state-ui",
-        "version": "0.1.0",
-        "components": [
-            "runefoble-board",
-            "runefoble-map-uploader",
-            "runefoble-radial-menu",
-            "runefoble-aoe-template",
-            "runefoble-tabletop-3d",
-            "runefoble-dm-trap-controls",
-            "runefoble-map-switcher",
-            "runefoble-dice-tray-3d",
-        ],
-        "tags": [
-            "runefoble-board",
-            "runefoble-map-uploader",
-            "runefoble-radial-menu",
-            "runefoble-aoe-template",
-            "runefoble-tabletop-3d",
-            "runefoble-dm-trap-controls",
-            "runefoble-map-switcher",
-            "runefoble-dice-tray-3d",
-        ],
-        "styles": [
-            "./src/runefoble-board.styles.ts",
-            "./src/runefoble-map-uploader.styles.ts",
-            "./src/runefoble-dm-trap-controls.styles.ts",
-            "./src/runefoble-dice-tray-3d.styles.ts",
-        ],
-        "scripts": [
-            "./src/index.ts",
-        ],
-    }
+    return UI_MANIFEST
 
 
 @router.post("/api/v1/boards", response_model=BoardState)

@@ -5,6 +5,8 @@ Coordinates active sessions, participant presence, turn order, and campaign time
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from game_session.campaign import campaign_router, register_campaign_error_handlers
 from game_session.dependencies import (
@@ -42,6 +44,12 @@ from runefoble_platform.event_publish import (
     install_publish_failure_handler,
 )
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
+from runefoble_platform.ui_manifest import load_ui_manifest
+
+# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
+UI_MANIFEST = load_ui_manifest(
+    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
+)
 
 __all__ = [
     "app",
@@ -103,33 +111,7 @@ async def health_check():
 @app.get("/game_session/ui/manifest")
 def get_ui_manifest():
     """Advertise vendored microfrontend components for game session."""
-    return {
-        "service": "game_session",
-        "package": "@runefoble/game-session-ui",
-        "components": [
-            "runefoble-initiative-tracker",
-            "runefoble-dice-roller",
-            "runefoble-spectator-view",
-            "runefoble-spectator-overlay",
-            "runefoble-campfire-crafting",
-            "runefoble-tavern-parlor",
-            "runefoble-minigame-darts",
-            "runefoble-minigame-liars-dice",
-            "runefoble-minigame-roulette",
-            "runefoble-merchant-haggler",
-            "runefoble-dm-negotiation-drawer",
-            "runefoble-caravan-board",
-            "runefoble-combat-reaction-prompt",
-            "runefoble-ready-action-card",
-            "runefoble-campaign-dashboard",
-            "runefoble-campaign-creator",
-            "runefoble-campaign-members",
-            "runefoble-campaign-header",
-            "runefoble-session-lobby",
-            "runefoble-bulletin-board",
-        ],
-        "version": "0.1.0",
-    }
+    return UI_MANIFEST
 
 
 def main():

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any
 
 from eventsource.application.aggregates.repository import AggregateRepository
@@ -20,6 +21,7 @@ from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import create_aggregate_repository
 from runefoble_platform.stream_consumer import consumer_statuses
+from runefoble_platform.ui_manifest import load_ui_manifest
 from sqlalchemy.exc import SQLAlchemyError
 
 from campaign_analytics.aggregate import CampaignChronicleAggregate
@@ -34,6 +36,11 @@ from campaign_analytics.dependencies import (
 from campaign_analytics.routers import heatmap_router, mvp_router, timeline_router
 from campaign_analytics.storage import CampaignAnalyticsStorage, StorageUnavailableError
 from campaign_analytics.worker import CampaignAnalyticsWorker
+
+# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
+UI_MANIFEST = load_ui_manifest(
+    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
+)
 
 
 @contextlib.asynccontextmanager
@@ -151,17 +158,7 @@ async def get_metrics() -> dict[str, Any]:
 @app.get("/ui/manifest", tags=["Microfrontends"])
 def get_ui_manifest() -> dict[str, Any]:
     """Advertise vendored microfrontend components for campaign telemetry and timeline."""
-    return {
-        "service": "campaign-analytics",
-        "package": "@runefoble/campaign-analytics-ui",
-        "components": [
-            "runefoble-campaign-analytics",
-            "runefoble-combat-heatmap",
-            "runefoble-chronicle-timeline",
-            "runefoble-campaign-telemetry",
-        ],
-        "version": "0.1.0",
-    }
+    return UI_MANIFEST
 
 
 def main() -> None:
