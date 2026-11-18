@@ -81,8 +81,6 @@ Bidirectional voice streams and audio mesh coordination are negotiated via the W
   Dedicated dispatchers handle `webrtc_offer`, `webrtc_answer`, and `webrtc_ice_candidate` routing, `webrtc_mute` state toggles, `webrtc_telemetry` broadcasts, and graceful `webrtc_leave` teardowns.
 - **WebSocket Endpoint (`gateway_api.signaling.endpoint`)**:
   `voice_signaling_websocket_endpoint` coordinates the connection lifecycle, sends initial `connected` and `webrtc_joined` frames, runs the dispatch loop, and handles unexpected disconnects.
-- **Facade (`gateway_api.webrtc_signaling`)** (defect, DoR 9):
-  Re-exports all signaling components for existing imports. Removal: TASK-0488.
 
 ## WebRTC Client Voice Service and Peer Connection Mesh Architecture
 
@@ -104,13 +102,11 @@ Real-time campaign mutations, token movement broadcasts, health modifications, a
 - **Zanzibar Action Validator (`gateway_api.websocket_validator`)**:
   `WebSocketActionValidator` executes fine-grained SpiceDB Zanzibar permission checks (`campaign:view`, `campaign:read`, `board_token:move`, `character:edit`, `dungeon_master`). It enforces DM bypass privileges, movement authorization, and blocks non-DM encounter mutations.
 - **Connection Hub Manager (`gateway_api.websocket_manager`)**:
-  `CampaignConnectionManager` (and the alias `CampaignWebSocketManager`, a defect per DoR 9; removal: TASK-0488) tracks active client connections per campaign and handles JSON broadcast dispatching across connected party members.
+  `CampaignConnectionManager` tracks active client connections per campaign and handles JSON broadcast dispatching across connected party members.
 - **Credential & Handshake Auth (`gateway_api.websocket_auth`)**:
   `admit_gateway_websocket` binds the gateway verifier to the shared `runefoble_auth.websocket.admit_websocket` check. Every gateway socket route calls it before accept. The token comes only from the `runefoble.bearer.<jwt>` subprotocol. Query strings and headers carry no identity.
 - **WebSocket Routing Endpoint (`gateway_api.websocket_endpoint`)**:
   `campaign_websocket_endpoint` manages the WebSocket handshake lifecycle, validates viewer connection permissions, dispatches incoming actions to Redis Streams (`runefoble.events.board`, `runefoble.events.session`, `runefoble.events.watcher`), and coordinates disconnect cleanup.
-- **Facade (`gateway_api.websocket`)** (defect, DoR 9):
-  Re-exports all validator, manager, auth, and endpoint symbols for existing callers and tests. Removal: TASK-0488.
 
 ## Latency Budgets
 - **Audio Capture & Streaming**: < 100ms

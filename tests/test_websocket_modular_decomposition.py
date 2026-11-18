@@ -13,40 +13,11 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app, set_event_bus
-from gateway_api.websocket import (
-    CampaignConnectionManager,
-    CampaignWebSocketManager,
-    WebSocketActionValidator,
-    admit_gateway_websocket,
-    campaign_websocket_endpoint,
-    default_action_validator,
-    ws_campaign_manager,
-)
-from gateway_api.websocket_auth import (
-    admit_gateway_websocket as admit_fn,
-)
-from gateway_api.websocket_endpoint import (
-    campaign_websocket_endpoint as endpoint_fn,
-)
-from gateway_api.websocket_manager import (
-    CampaignConnectionManager as ManagerClass,
-)
-from gateway_api.websocket_manager import (
-    CampaignWebSocketManager as WebSocketManagerClass,
-)
-from gateway_api.websocket_manager import (
-    ws_campaign_manager as manager_instance,
-)
 from gateway_api.websocket_validator import (
     DM_ACTIONS,
     HEALTH_ACTIONS,
     MOVE_ACTIONS,
-)
-from gateway_api.websocket_validator import (
-    WebSocketActionValidator as ValidatorClass,
-)
-from gateway_api.websocket_validator import (
-    default_action_validator as default_validator_instance,
+    WebSocketActionValidator,
 )
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -63,17 +34,6 @@ def reset_gateway_state():
     set_event_bus(None)
     yield
     set_event_bus(None)
-
-
-def test_module_re_export_parity():
-    """Verify facade re-exports match underlying submodules for complete backward compatibility."""
-    assert WebSocketActionValidator is ValidatorClass
-    assert default_action_validator is default_validator_instance
-    assert CampaignConnectionManager is ManagerClass
-    assert CampaignWebSocketManager is WebSocketManagerClass
-    assert ws_campaign_manager is manager_instance
-    assert campaign_websocket_endpoint is endpoint_fn
-    assert admit_gateway_websocket is admit_fn
 
 
 @pytest.mark.asyncio

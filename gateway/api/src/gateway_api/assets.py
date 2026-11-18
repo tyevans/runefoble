@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from gateway_api.auth import CurrentPrincipal
+from gateway_api.dependencies import get_event_bus
 from pydantic import BaseModel
 from runefoble_events.events import AssetDeleted, AssetUploaded
 from runefoble_platform.asset_index import (
@@ -159,8 +160,6 @@ async def upload_asset(
     )
 
     # Dispatched via Redis event bus if gateway has it configured
-    from gateway_api.main import get_event_bus
-
     bus = get_event_bus()
     if bus is not None:
         await publish_best_effort(bus, "runefoble.events.asset", event)
@@ -255,8 +254,6 @@ async def delete_asset(
         object_key=meta["object_key"],
         deleted_by=deleted_by,
     )
-
-    from gateway_api.main import get_event_bus
 
     bus = get_event_bus()
     if bus is not None:

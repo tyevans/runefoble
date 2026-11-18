@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import WebSocket, WebSocketDisconnect
+from gateway_api.dependencies import get_event_bus
 from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_api.websocket_manager import ws_campaign_manager
 from gateway_api.websocket_validator import (
@@ -32,9 +33,7 @@ def _resolve_stream(action: str) -> str:
 async def _publish_event(
     action: str, campaign_id: str, subject_id: str, data: dict[str, Any]
 ) -> None:
-    import gateway_api.main as gw_main
-
-    if bus := gw_main.get_event_bus():
+    if bus := get_event_bus():
         payload = {
             "event_type": f"runefoble.events.{action}",
             "campaign_id": campaign_id,

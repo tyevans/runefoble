@@ -8,14 +8,11 @@ Verifies:
   - Authorized connection handshakes (connected, webrtc_joined)
   - Credential extraction variants (query params, headers, guest fallback)
   - CloudEvent publishing on connect/disconnect
-  - Backward compatibility of gateway_api.webrtc_signaling facade
 """
 
 import asyncio
 import json
 
-import gateway_api.signaling as sig_pkg
-import gateway_api.webrtc_signaling as sig_facade
 import pytest
 import voice_agent.main as va_main
 from fastapi import WebSocketDisconnect
@@ -167,14 +164,3 @@ def test_voice_peer_lifecycle_events_published_to_redis(reset_voice_signaling_en
 
     session_events = redis.streams.get("runefoble.events.session", [])
     assert any("peer_valeros" in str(e[1]) and "left_session" in str(e[1]) for e in session_events)
-
-
-def test_signaling_facade_and_submodule_backward_compatibility():
-    """Verify facade re-exports identical objects as the modular signaling submodules."""
-    assert sig_facade.WebRTCSignalingManager is sig_pkg.WebRTCSignalingManager
-    assert sig_facade.signaling_manager is sig_pkg.signaling_manager
-    assert sig_facade.extract_peer_and_role is sig_pkg.extract_peer_and_role
-    assert sig_facade.validate_voice_connection is sig_pkg.validate_voice_connection
-    assert (
-        sig_facade.voice_signaling_websocket_endpoint is sig_pkg.voice_signaling_websocket_endpoint
-    )
