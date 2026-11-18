@@ -13,7 +13,6 @@ from game_session.settlement.haggling.dm_controls import DMControlsMixin
 from game_session.settlement.haggling.rhetoric import RhetoricMovesMixin
 from game_session.settlement.haggling_models import NegotiationSession, NegotiationSessionState
 from runefoble_events.haggling import (
-    CurrencyCredited,
     CurrencyDeducted,
     NegotiationConcluded,
     NegotiationSessionStarted,
@@ -55,9 +54,6 @@ class NegotiationAggregate(
 
     @handles(CurrencyDeducted)
     def handle_currency_deducted(self, ev: CurrencyDeducted) -> None: ...
-
-    @handles(CurrencyCredited)
-    def handle_currency_credited(self, ev: CurrencyCredited) -> None: ...
 
     def _conclude_negotiation(
         self, character_id: str, status: str, final_price: int, closing_bark: str, reason: str

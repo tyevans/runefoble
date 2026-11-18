@@ -16,6 +16,7 @@ from runefoble_events.events import (
     CharacterSelectedForLobby,
     CombatEncounterEnded,
     CombatEncounterStarted,
+    CombatRoundAdvanced,
     CombatTurnPausedForReactionEvent,
     DiceRolled,
     DMOverrideApplied,
@@ -32,6 +33,7 @@ from runefoble_events.events import (
     SessionStarted,
     StandInActionDecided,
     TurnAdvanced,
+    TurnStarted,
 )
 from runefoble_platform.event_publish import publish_or_fail
 
@@ -55,6 +57,8 @@ SESSION_EVENT_STREAMS: dict[type[DomainEvent], str] = {
     CombatEncounterStarted: STREAM_SESSION,
     InitiativeRolled: STREAM_SESSION,
     InitiativeTurnAdvanced: STREAM_SESSION,
+    CombatRoundAdvanced: STREAM_SESSION,
+    TurnStarted: STREAM_SESSION,
     CombatEncounterEnded: STREAM_SESSION,
     CombatTurnPausedForReactionEvent: STREAM_SESSION,
     ReactionResolvedEvent: STREAM_SESSION,

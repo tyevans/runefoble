@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field
 from runefoble_events.events import (
     AtlasLayerToggled,
     AtlasPinCreated,
-    AtlasPinUpdated,
     AtlasTerritoryUpdated,
 )
 
@@ -145,24 +144,6 @@ class AtlasAggregate(DeclarativeAggregate[AtlasState]):
                 "metadata": event.metadata,
             }
         )
-
-    @handles(AtlasPinUpdated)
-    def _on_pin_updated(self, event: AtlasPinUpdated) -> None:
-        self._ensure_state(event.campaign_id)
-        for pin in self.state.pins:
-            if pin.get("pin_id") == str(event.pin_id):
-                if event.title is not None:
-                    pin["title"] = event.title
-                if event.coordinates is not None:
-                    pin["coordinates"] = event.coordinates
-                if event.description is not None:
-                    pin["description"] = event.description
-                if event.era is not None:
-                    pin["era"] = event.era
-                if event.linked_entity_ids is not None:
-                    pin["linked_entity_ids"] = event.linked_entity_ids
-                if event.metadata is not None:
-                    pin["metadata"] = event.metadata
 
     @handles(AtlasLayerToggled)
     def _on_layer_toggled(self, event: AtlasLayerToggled) -> None:

@@ -36,13 +36,16 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `previous_turn`: Integer
   - `new_turn`: Integer
   - `active_character_id`: Optional[UUID]
-- **`TurnStarted`** (`runefoble.events.session.turn_started`): Emitted when a combatant begins their turn, triggering autonomous camera focus.
+- **`CombatRoundAdvanced`** (`runefoble.events.session.combat_round_advanced`): Emitted when the initiative order wraps to a new round. Emitted by the game session with `InitiativeTurnAdvanced` and `TurnStarted`.
+  - `session_id`: UUID | str
+  - `round_number`: Integer
+  - `active_combatant_id`: String
+- **`TurnStarted`** (`runefoble.events.session.turn_started`): Emitted when a combatant begins their turn, triggering autonomous camera focus. Emitted by the game session when the initiative turn advances. `turn_number` carries the combat round until the event has its own turn counter.
   - `session_id`: UUID | str
   - `turn_number`: Integer
   - `character_id`: UUID | str
   - `character_name`: String
   - `token_id`: Optional[String]
-- **`CameraTargetUpdated`**: Emitted when cinematic director recalculates camera viewport target (`runefoble.events.session.camera_target_updated`).
   - `session_id`: String
   - `target_x`: Float
   - `target_y`: Float
@@ -138,14 +141,12 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 - **`TokenRemoved`** (`runefoble.events.board.token_removed`): Emitted when a token leaves the board.
   - `token_id`: String
   - `reason`: String ("defeated", "retreated", "teleported")
-- **`TokenKnockbackApplied`**: Emitted when a directional knockback impulse is applied to a token (`runefoble.events.board.token_knockback_applied`).
   - `token_id`: String
   - `distance_ft`: Float
   - `direction_x`: Float, `direction_y`: Float
   - `from_x`: Integer, `from_y`: Integer
   - `to_x`: Integer, `to_y`: Integer
   - `mass`: Float (default 1.0)
-- **`ElevationChanged`**: Emitted when a token's elevation changes due to climbing, falling, or terrain stepping (`runefoble.events.board.elevation_changed`).
   - `token_id`: String
   - `previous_elevation`: Integer
   - `new_elevation`: Integer
@@ -156,7 +157,6 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 - **`FogOfWarShrouded`** (alias: `ShroudReset`): Emitted when fog-of-war shrouds previously revealed cells (`runefoble.events.board.fog_of_war_shrouded`).
   - `session_id`: String
   - `shrouded_cells`: List[List[Integer]]
-- **`VisibilityMaskUpdated`**: Emitted when the complete visibility mask or line-of-sight polygon is updated (`runefoble.events.board.visibility_mask_updated`).
   - `session_id`: String
   - `board_id`: String
   - `token_id`: Optional[String]

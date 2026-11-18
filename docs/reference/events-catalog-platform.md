@@ -31,7 +31,6 @@ For schemas of `runefoble.events.tavern.minigame_started`, `runefoble.events.tav
 - **`CaravanAmbushed`**: Emitted when a caravan encounters a wilderness hazard or ambush during transit stages (`runefoble.events.west_marches.caravan_ambushed`). Fields: `contract_id`, `shared_world_id`, `caravan_id`, `stage_index`, `ambush_type`, `danger_level`, `outcome`, `cargo_loss_percentage`, `reported_by_campaign_id`, `notes`.
 - **`CaravanTradeFulfilled`**: Emitted when a caravan successfully reaches destination, delivering cargo, unlocking settlement stock, and paying out rewards (`runefoble.events.west_marches.caravan_trade_fulfilled`). Fields: `contract_id`, `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `cargo_value_delivered`, `reward_gold_paid`, `reputation_awarded`, `contractor_campaign_id`, `fulfilled_at`, `status`.
 - **`CaravanTradeCompleted`**: Emitted when a caravan arrives at its destination outpost, unlocking regional merchant stock. Broadcast on Redis Stream `runefoble.events.west_marches`. Fields: `shared_world_id`, `caravan_id`, `origin_outpost`, `destination_outpost`, `cargo_delivered`, `unlocked_stock`, `completed_at`.
-- **`RegionalMerchantStockUpdated`** (`runefoble.events.west_marches.regional_merchant_stock_updated`): Emitted when outpost merchant inventory adjusts due to trade or expeditions. Fields: `shared_world_id`, `outpost_name`, `inventory_updates`.
 
 ### Campaign Lifecycle, Membership & Invite Events (`aggregate_type: Campaign`, `CampaignMembership`, `CampaignInvite`, `CampaignSessions`)
 

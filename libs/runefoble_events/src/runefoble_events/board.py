@@ -13,7 +13,6 @@ from runefoble_events.board_events import (
     BoardMapImported,
     BoardMoveEvent,
     DiceSettled,
-    ElevationChanged,
     EphemeralDecalsDecayed,
     FogOfWarRevealed,
     FogOfWarShrouded,
@@ -24,13 +23,11 @@ from runefoble_events.board_events import (
     TerrainCellModified,
     TokenActionExecuted,
     TokenHazardTriggered,
-    TokenKnockbackApplied,
     TokenMoved,
     TokenPlaced,
     TokenRemoved,
     UniversalVTTImported,
     VFXAnimationFinished,
-    VisibilityMaskUpdated,
 )
 
 __all__ = list(board_events.__all__)

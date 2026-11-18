@@ -32,18 +32,3 @@ class FogOfWarShrouded(BaseRunefobleEvent):
 
 
 ShroudReset = FogOfWarShrouded
-
-
-@register_event("runefoble.events.board.visibility_mask_updated")
-class VisibilityMaskUpdated(BaseRunefobleEvent):
-    """Emitted when the complete visibility mask or line-of-sight polygon is updated."""
-
-    suppress_event_type_warning: ClassVar[bool] = True
-    aggregate_type: str = "BoardState"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.board.visibility_mask_updated"
-    session_id: str = ""
-    board_id: str = ""
-    token_id: str | None = None
-    revealed_count: int = 0
-    total_cells: int = 0

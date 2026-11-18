@@ -13,12 +13,26 @@ from game_session.rules import (
 from runefoble_events.events import (
     CombatEncounterEnded,
     CombatEncounterStarted,
+    CombatRoundAdvanced,
     InitiativeRolled,
     InitiativeTurnAdvanced,
+    TurnStarted,
 )
 
 if TYPE_CHECKING:
     from game_session.models import GameSessionState
+
+
+def _combatant_name(initiative_order: list[dict[str, Any]], combatant_id: str) -> str:
+    """Return the display name of the combatant with `combatant_id`, or an empty string."""
+    return next(
+        (
+            str(c.get("combatant_name", ""))
+            for c in initiative_order
+            if c["combatant_id"] == combatant_id
+        ),
+        "",
+    )
 
 
 class CombatHandlersMixin:
@@ -66,6 +80,7 @@ class CombatHandlersMixin:
         if not self.state.in_combat:
             raise ValueError("Cannot advance initiative: encounter not in combat")
 
+        previous_round = self.state.combat_round
         next_active_id, next_round = advance_initiative_turn(
             self.state.initiative_order, self.state.combat_active_id, self.state.combat_round
         )
@@ -77,6 +92,20 @@ class CombatHandlersMixin:
             round_number=next_round,
             active_combatant_id=next_active_id,
             turn_seconds_remaining=turn_seconds_remaining,
+        )
+        if next_round != previous_round:
+            self.create_event(
+                CombatRoundAdvanced,
+                session_id=self.aggregate_id,
+                round_number=next_round,
+                active_combatant_id=next_active_id,
+            )
+        self.create_event(
+            TurnStarted,
+            session_id=self.aggregate_id,
+            turn_number=next_round,
+            character_id=next_active_id,
+            character_name=_combatant_name(self.state.initiative_order, next_active_id),
         )
 
     def end_combat(self) -> None:
@@ -113,6 +142,14 @@ class CombatHandlersMixin:
         self._state = self.state.with_initiative_turn_advanced(
             round_number=event.round_number, active_combatant_id=event.active_combatant_id
         )
+
+    @handles(CombatRoundAdvanced)
+    def _on_combat_round_advanced(self, event: CombatRoundAdvanced) -> None:
+        """Announce a new round to consumers. InitiativeTurnAdvanced already holds the round."""
+
+    @handles(TurnStarted)
+    def _on_turn_started(self, event: TurnStarted) -> None:
+        """Announce the active turn to consumers. InitiativeTurnAdvanced already holds the turn."""
 
     @handles(CombatEncounterEnded)
     def _on_combat_ended(self, event: CombatEncounterEnded) -> None:

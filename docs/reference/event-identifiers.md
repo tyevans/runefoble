@@ -45,7 +45,6 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.board.battlemap_switched` | `BattlemapSwitchedEvent` | `runefoble_events.board_traps` |
 | `runefoble.events.board.decals_decayed` | `EphemeralDecalsDecayed` | `runefoble_events.board_events.spells` |
 | `runefoble.events.board.door_toggled` | `BoardDoorToggledEvent` | `runefoble_events.board_events.lighting` |
-| `runefoble.events.board.elevation_changed` | `ElevationChanged` | `runefoble_events.board_events.token` |
 | `runefoble.events.board.fog_of_war_revealed` | `FogOfWarRevealed` | `runefoble_events.board_events.fog` |
 | `runefoble.events.board.fog_of_war_shrouded` | `FogOfWarShrouded` | `runefoble_events.board_events.fog` |
 | `runefoble.events.board.ghost_preview_candidate` | `CandidateGhostPreviewEmitted` | `runefoble_events.watcher_events.combat` |
@@ -54,11 +53,9 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.board.light_source_placed` | `BoardLightSourcePlacedEvent` | `runefoble_events.board_events.lighting` |
 | `runefoble.events.board.map_imported` | `UniversalVTTImported` | `runefoble_events.board_events.terrain` |
 | `runefoble.events.board.physics_collision` | `PhysicsCollisionOccurred` | `runefoble_events.board_events.physics` |
-| `runefoble.events.board.secret_trap_triggered` | `SecretTrapTriggered` | `runefoble_events.watcher_events.combat` |
 | `runefoble.events.board.spell_cast` | `SpellCast` | `runefoble_events.board_events.spells` |
 | `runefoble.events.board.terrain_modified` | `TerrainCellModified` | `runefoble_events.board_events.terrain` |
 | `runefoble.events.board.token_action_executed` | `TokenActionExecuted` | `runefoble_events.board_events.token` |
-| `runefoble.events.board.token_knockback_applied` | `TokenKnockbackApplied` | `runefoble_events.board_events.token` |
 | `runefoble.events.board.token_moved` | `TokenMoved` | `runefoble_events.board_events.token` |
 | `runefoble.events.board.token_placed` | `TokenPlaced` | `runefoble_events.board_events.token` |
 | `runefoble.events.board.token_removed` | `TokenRemoved` | `runefoble_events.board_events.token` |
@@ -66,7 +63,6 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.board.trap_placed` | `TrapPlacedEvent` | `runefoble_events.board_traps` |
 | `runefoble.events.board.trap_sprung` | `TrapSprungEvent` | `runefoble_events.board_traps` |
 | `runefoble.events.board.vfx_animation_finished` | `VFXAnimationFinished` | `runefoble_events.board_events.spells` |
-| `runefoble.events.board.visibility_mask_updated` | `VisibilityMaskUpdated` | `runefoble_events.board_events.fog` |
 | `runefoble.events.character.absence_penalty_applied` | `AbsencePenaltyApplied` | `runefoble_events.character` |
 | `runefoble.events.character.absence_penalty_cleared` | `AbsencePenaltyCleared` | `runefoble_events.character` |
 | `runefoble.events.character.assigned_to_campaign` | `CharacterAssignedToCampaign` | `runefoble_events.character` |
@@ -74,7 +70,6 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.character.condition_removed` | `ConditionRemoved` | `runefoble_events.character` |
 | `runefoble.events.character.created` | `CharacterCreated` | `runefoble_events.character` |
 | `runefoble.events.character.critical_hit_scored` | `CriticalHitScored` | `runefoble_events.character` |
-| `runefoble.events.character.currency_credited` | `CurrencyCredited` | `runefoble_events.haggling` |
 | `runefoble.events.character.currency_deducted` | `CurrencyDeducted` | `runefoble_events.haggling` |
 | `runefoble.events.character.damaged` | `CharacterDamaged` | `runefoble_events.character` |
 | `runefoble.events.character.death_save_started` | `DeathSaveStarted` | `runefoble_events.character` |
@@ -93,8 +88,6 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.character.stand_in_policy_updated` | `StandInPolicyUpdated` | `runefoble_events.character` |
 | `runefoble.events.character.stand_in_released` | `StandInReleased` | `runefoble_events.character` |
 | `runefoble.events.character.stand_in_stabilized` | `StandInStabilized` | `runefoble_events.character` |
-| `runefoble.events.combat.reaction_opportunity_resolved` | `ReactionOpportunityResolved` | `runefoble_events.watcher_events.combat` |
-| `runefoble.events.combat.reaction_prompt_triggered` | `ReactionPromptTriggered` | `runefoble_events.watcher_events.combat` |
 | `runefoble.events.combat.reaction_resolved` | `ReactionResolvedEvent` | `runefoble_events.combat_reactions` |
 | `runefoble.events.combat.ready_action_registered` | `ReadyActionRegisteredEvent` | `runefoble_events.combat_reactions` |
 | `runefoble.events.combat.ready_action_triggered` | `ReadyActionTriggeredEvent` | `runefoble_events.combat_reactions` |
@@ -145,7 +138,6 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.lore.aliases_consolidated` | `AliasesConsolidated` | `runefoble_events.lore` |
 | `runefoble.events.lore.atlas_layer_toggled` | `AtlasLayerToggled` | `runefoble_events.lore` |
 | `runefoble.events.lore.atlas_pin_created` | `AtlasPinCreated` | `runefoble_events.lore` |
-| `runefoble.events.lore.atlas_pin_updated` | `AtlasPinUpdated` | `runefoble_events.lore` |
 | `runefoble.events.lore.atlas_territory_updated` | `AtlasTerritoryUpdated` | `runefoble_events.lore` |
 | `runefoble.events.lore.codex_entry_published` | `CodexEntryPublished` | `runefoble_events.lore` |
 | `runefoble.events.lore.codex_entry_updated` | `CodexEntryUpdated` | `runefoble_events.lore` |
@@ -163,7 +155,6 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.recap.generated` | `AbsenteeRecapGenerated` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.scene.atmosphere_set` | `SceneAtmosphereSet` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.session.atmosphere_updated` | `AtmosphereUpdated` | `runefoble_events.session` |
-| `runefoble.events.session.camera_target_updated` | `CameraTargetUpdated` | `runefoble_events.session` |
 | `runefoble.events.session.character_control_transferred` | `CharacterControlTransferred` | `runefoble_events.session` |
 | `runefoble.events.session.character_selected_for_lobby` | `CharacterSelectedForLobby` | `runefoble_events.session` |
 | `runefoble.events.session.combat_encounter_ended` | `CombatEncounterEnded` | `runefoble_events.session` |
@@ -215,7 +206,6 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.voice.haptic_ping` | `MobileHapticPingDispatched` | `runefoble_events.voice` |
 | `runefoble.events.voice.mobile_connected` | `MobileCompanionConnected` | `runefoble_events.voice` |
 | `runefoble.events.voice.modulator_preset_applied` | `VocalModulatorPresetAppliedEvent` | `runefoble_events.vocal_dsp` |
-| `runefoble.events.voice.modulator_preset_changed` | `VocalModulatorPresetChanged` | `runefoble_events.watcher_events.combat` |
 | `runefoble.events.voice.mute_toggled` | `VoicePeerMuteToggled` | `runefoble_events.voice` |
 | `runefoble.events.voice.peer_joined` | `VoicePeerJoined` | `runefoble_events.voice` |
 | `runefoble.events.voice.peer_left` | `VoicePeerLeft` | `runefoble_events.voice` |
@@ -275,6 +265,5 @@ CloudEvents exports (`to_cloudevent_dict()`) lower-case the identifier.
 | `runefoble.events.west_marches.mercenary_bounty_posted` | `MercenaryBountyPosted` | `runefoble_events.contracts` |
 | `runefoble.events.west_marches.outpost_established` | `OutpostEstablished` | `runefoble_events.west_marches` |
 | `runefoble.events.west_marches.outpost_resources_contributed` | `OutpostResourcesContributed` | `runefoble_events.west_marches` |
-| `runefoble.events.west_marches.regional_merchant_stock_updated` | `RegionalMerchantStockUpdated` | `runefoble_events.west_marches` |
 | `runefoble.events.west_marches.shared_stronghold_upgraded` | `SharedStrongholdUpgraded` | `runefoble_events.west_marches` |
 | `runefoble.events.west_marches.shared_world_created` | `SharedWorldCreated` | `runefoble_events.west_marches` |

@@ -25,7 +25,6 @@ from runefoble_events.west_marches import (
     CaravanDispatched,
     CaravanTradeCompleted,
     CaravanTradeFulfilled,
-    RegionalMerchantStockUpdated,
 )
 
 
@@ -125,11 +124,6 @@ class CaravanLedgerAggregate(
         stock = self._ensure_outpost_stock(event.destination_outpost)
         unlocked = generate_default_refined_stock(event.cargo_delivered)
         apply_delivery_success_to_stock(stock, event.caravan_id, event.cargo_delivered, unlocked)
-
-    @handles(RegionalMerchantStockUpdated)
-    def handle_stock_updated(self, event: RegionalMerchantStockUpdated) -> None:
-        stock = self._ensure_outpost_stock(event.outpost_name)
-        stock["inventory"].update(event.inventory_updates)
 
 
 __all__ = ["CaravanLedgerAggregate"]

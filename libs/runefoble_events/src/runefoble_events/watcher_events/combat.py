@@ -8,12 +8,6 @@ from uuid import UUID, uuid4
 from pydantic import Field
 
 from runefoble_events.base import BaseRunefobleEvent, register_event
-from runefoble_events.board_traps import TrapSprungEvent
-from runefoble_events.combat_reactions import (
-    CombatTurnPausedForReactionEvent,
-    ReactionResolvedEvent,
-)
-from runefoble_events.vocal_dsp import VocalModulatorPresetAppliedEvent
 
 
 @register_event("runefoble.events.dice.rolled")
@@ -87,42 +81,10 @@ class CandidateGhostPreviewEmitted(BaseRunefobleEvent):
     path: list[list[int]] = Field(default_factory=list)
 
 
-@register_event("runefoble.events.combat.reaction_prompt_triggered")
-class ReactionPromptTriggered(CombatTurnPausedForReactionEvent):
-    """Event emitted when a combat reaction prompt is triggered."""
-
-    event_type: str = "runefoble.events.combat.reaction_prompt_triggered"
-
-
-@register_event("runefoble.events.combat.reaction_opportunity_resolved")
-class ReactionOpportunityResolved(ReactionResolvedEvent):
-    """Event emitted when a combat reaction opportunity is resolved."""
-
-    event_type: str = "runefoble.events.combat.reaction_opportunity_resolved"
-
-
-@register_event("runefoble.events.board.secret_trap_triggered")
-class SecretTrapTriggered(TrapSprungEvent):
-    """Event emitted when a secret trap trigger is breached."""
-
-    event_type: str = "runefoble.events.board.secret_trap_triggered"
-
-
-@register_event("runefoble.events.voice.modulator_preset_changed")
-class VocalModulatorPresetChanged(VocalModulatorPresetAppliedEvent):
-    """Event emitted when a vocal modulation preset changes."""
-
-    event_type: str = "runefoble.events.voice.modulator_preset_changed"
-
-
 __all__ = [
     "AutonomousActionResolved",
     "CandidateGhostPreviewEmitted",
     "DiceRollEvent",
     "DiceRolled",
     "EncounterSpawned",
-    "ReactionOpportunityResolved",
-    "ReactionPromptTriggered",
-    "SecretTrapTriggered",
-    "VocalModulatorPresetChanged",
 ]

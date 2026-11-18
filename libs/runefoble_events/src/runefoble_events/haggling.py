@@ -125,33 +125,14 @@ class CurrencyDeducted(BaseRunefobleEvent):
     campaign_id: str = ""
 
 
-@register_event("runefoble.events.character.currency_credited")
-class CurrencyCredited(BaseRunefobleEvent):
-    """Fired when player currency is credited from sales or winnings."""
-
-    suppress_event_type_warning: ClassVar[bool] = True
-    aggregate_type: str = "Negotiation"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.character.currency_credited"
-    character_id: str
-    amount: int
-    currency: str = "gp"
-    reason: str = "merchant_sale"
-    session_id: str = ""
-    campaign_id: str = ""
-
-
 # Aliases
 NegotiationSessionStartedEvent = NegotiationSessionStarted
 GambitExecutedEvent = GambitExecuted
 DMNegotiationOverriddenEvent = DMNegotiationOverridden
 NegotiationConcludedEvent = NegotiationConcluded
 CurrencyDeductedEvent = CurrencyDeducted
-CurrencyCreditedEvent = CurrencyCredited
 
 __all__ = [
-    "CurrencyCredited",
-    "CurrencyCreditedEvent",
     "CurrencyDeducted",
     "CurrencyDeductedEvent",
     "DMNegotiationOverridden",

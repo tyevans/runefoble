@@ -64,38 +64,4 @@ class TokenActionExecuted(BaseRunefobleEvent):
     initiated_by: str = "player"
 
 
-@register_event("runefoble.events.board.token_knockback_applied")
-class TokenKnockbackApplied(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
-    aggregate_type: str = "BoardState"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.board.token_knockback_applied"
-    session_id: str = ""
-    board_id: str = ""
-    token_id: str
-    distance_ft: float = 0.0
-    direction_x: float = 0.0
-    direction_y: float = 0.0
-    from_x: int = 0
-    from_y: int = 0
-    to_x: int = 0
-    to_y: int = 0
-    mass: float = 1.0
-
-
-@register_event("runefoble.events.board.elevation_changed")
-class ElevationChanged(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
-    aggregate_type: str = "BoardState"
-    aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "runefoble.events.board.elevation_changed"
-    session_id: str = ""
-    board_id: str = ""
-    token_id: str = ""
-    previous_elevation: int = 0
-    new_elevation: int = 0
-    x: int = 0
-    y: int = 0
-
-
 BoardMoveEvent = TokenMoved

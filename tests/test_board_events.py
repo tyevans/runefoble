@@ -23,7 +23,6 @@ from runefoble_events.board_events.fog import (
     FogOfWarShrouded,
     FogRevealed,
     ShroudReset,
-    VisibilityMaskUpdated,
 )
 from runefoble_events.board_events.lighting import (
     BoardDoorToggledEvent,
@@ -52,9 +51,7 @@ from runefoble_events.board_events.terrain import (
 )
 from runefoble_events.board_events.token import (
     BoardMoveEvent,
-    ElevationChanged,
     TokenActionExecuted,
-    TokenKnockbackApplied,
     TokenMoved,
     TokenPlaced,
     TokenRemoved,
@@ -73,7 +70,6 @@ def test_board_facade_re_exports() -> None:
         "BoardMapImported",
         "BoardMoveEvent",
         "DiceSettled",
-        "ElevationChanged",
         "EphemeralDecalsDecayed",
         "FogOfWarRevealed",
         "FogOfWarShrouded",
@@ -84,13 +80,11 @@ def test_board_facade_re_exports() -> None:
         "TerrainCellModified",
         "TokenActionExecuted",
         "TokenHazardTriggered",
-        "TokenKnockbackApplied",
         "TokenMoved",
         "TokenPlaced",
         "TokenRemoved",
         "UniversalVTTImported",
         "VFXAnimationFinished",
-        "VisibilityMaskUpdated",
     ]
 
     for symbol in expected_symbols:
@@ -152,37 +146,6 @@ def test_token_events_instantiation_and_cloudevents() -> None:
     )
     assert action_ev.action == "dodge"
 
-    # TokenKnockbackApplied
-    kb_ev = TokenKnockbackApplied(
-        aggregate_id=agg_id,
-        token_id="tok-alpha",
-        distance_ft=15.0,
-        direction_x=1.0,
-        direction_y=0.0,
-        from_x=2,
-        from_y=3,
-        to_x=5,
-        to_y=3,
-        mass=2.0,
-    )
-    assert kb_ev.distance_ft == 15.0
-    assert kb_ev.mass == 2.0
-    ce_kb = kb_ev.to_cloudevent_dict()
-    assert ce_kb["type"] == "runefoble.events.board.token_knockback_applied"
-
-    # ElevationChanged
-    elev_ev = ElevationChanged(
-        aggregate_id=agg_id,
-        token_id="tok-alpha",
-        previous_elevation=0,
-        new_elevation=10,
-        x=5,
-        y=3,
-    )
-    assert elev_ev.new_elevation == 10
-    ce_elev = elev_ev.to_cloudevent_dict()
-    assert ce_elev["type"] == "runefoble.events.board.elevation_changed"
-
 
 def test_fog_events_instantiation() -> None:
     """Verify fog-of-war reveal, shroud reset, and visibility mask domain events."""
@@ -205,19 +168,6 @@ def test_fog_events_instantiation() -> None:
     )
     assert len(shroud_ev.shrouded_cells) == 1
     assert ShroudReset is FogOfWarShrouded
-
-    # VisibilityMaskUpdated
-    mask_ev = VisibilityMaskUpdated(
-        aggregate_id=agg_id,
-        session_id="sess-01",
-        board_id="board-01",
-        token_id="tok-alpha",
-        revealed_count=42,
-        total_cells=100,
-    )
-    assert mask_ev.revealed_count == 42
-    ce_mask = mask_ev.to_cloudevent_dict()
-    assert ce_mask["type"] == "runefoble.events.board.visibility_mask_updated"
 
 
 def test_templates_and_lighting_events_instantiation() -> None:
@@ -368,21 +318,9 @@ def test_terrain_spells_and_physics_events_instantiation() -> None:
 def test_event_registry_resolution() -> None:
     """Verify that domain event types resolve correctly from the global event registry."""
     assert get_event_class_or_none("runefoble.events.board.token_moved") is TokenMoved
-    assert (
-        get_event_class_or_none("runefoble.events.board.token_knockback_applied")
-        is TokenKnockbackApplied
-    )
-    assert get_event_class_or_none("TokenKnockbackApplied") is None
-    assert get_event_class_or_none("runefoble.events.board.elevation_changed") is ElevationChanged
-    assert get_event_class_or_none("ElevationChanged") is None
-    assert (
-        get_event_class_or_none("runefoble.events.board.visibility_mask_updated")
-        is VisibilityMaskUpdated
-    )
-    assert (
-        get_event_class_or_none("runefoble.events.board.visibility_mask_updated")
-        is VisibilityMaskUpdated
-    )
+    assert get_event_class_or_none("runefoble.events.board.token_knockback_applied") is None
+    assert get_event_class_or_none("runefoble.events.board.elevation_changed") is None
+    assert get_event_class_or_none("runefoble.events.board.visibility_mask_updated") is None
     # Retired short names and Python alias names resolve to no event.
     assert get_event_class_or_none("FogRevealed") is None
     assert get_event_class_or_none("ShroudReset") is None
