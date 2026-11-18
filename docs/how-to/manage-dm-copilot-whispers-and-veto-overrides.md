@@ -13,7 +13,7 @@ The Watcher checks only permissions that the schema defines. Each check uses a n
 | Route | Action | Schema check |
 |---|---|---|
 | `GET /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers/generate` | `session.control` on the session | `session:<session_id>#control` (DM, GM, or owner through `campaign->run_session`) |
-| `POST /api/v1/watcher/veto`, `approve`, `modify` | `session.control` on the session, or `campaign.run_session` when no session is known | same as above |
+| `POST /api/v1/watcher/veto`, `approve`, `modify` | `session.control` on the session. `session_id` is required in the body | same as above |
 | `GET /api/v1/watcher/actions/pending` | `session.control` | same as above |
 
 To make a user the DM of a session, the setup must write two schema tuples:
@@ -43,7 +43,15 @@ When The Watcher proposes an AI game action (e.g., monster movement, offensive s
    - **Veto**: The DM halts execution immediately. The action is cancelled, `runefoble.events.watcher.action_vetoed` is published, and board state remains unchanged.
    - **Approve**: The DM bypasses the remaining pause timer to commit the action immediately (`runefoble.events.watcher.action_approved`).
    - **Modify**: The DM edits the description, target, or parameters before committing (`runefoble.events.watcher.action_modified`).
-   - **Timeout Expiry**: If the DM does not veto within the pause window, the action automatically commits and executes.
+   - **Timeout Expiry**: If the DM does not decide within the pause window, the action automatically commits and executes. `runefoble.events.watcher.action_expired` is published with the original action.
+
+Pending actions, whispers, and open disambiguations are event-sourced aggregates (`WatcherPendingActions`, `WatcherWhispers`, `WatcherDisambiguations`). A service restart keeps them. At start-up, the service re-arms the expiry timer of every open action from its stored deadline, so an action whose window elapsed during the outage expires at start-up.
+
+Decision errors:
+- An action id that the session does not hold returns `404`. No placeholder action is created.
+- A veto, approve, or modify on an action that is already vetoed, approved, or executed returns `409`.
+- A `session_id` is required for `veto`, `approve`, `modify`, and `GET /api/v1/watcher/actions/pending`.
+- An in-process execute hook that fails on approve is logged. The failure is returned as `execution_error` in the response.
 
 ---
 
@@ -140,9 +148,11 @@ The `<runefoble-dm-whisper-bar>` Lit component is vendored by `@runefoble/the-wa
 The DM Co-Pilot router is organized into modular sub-routers (`services/the_watcher/src/the_watcher/routers/copilot/`) enforcing Hard Invariant 6 (< 500 lines per file, strictly < 250 lines):
 - `actions.py`: Handles action proposals, pause window lifecycle, immediate approvals, parameter modifications, and veto overrides.
 - `whispers.py`: Handles private narrative suggestions creation, dynamic generation, and paginated listing.
+- `services/the_watcher/src/the_watcher/copilot_state/`: The `PendingActionAggregate`, `WhisperAggregate`, and `DisambiguationAggregate` event-sourced aggregates. `copilot.py` runs their commands and owns only the expiry timers.
 - `__init__.py`: Re-exports a combined `router` for seamless mounting in `the_watcher.main`.
 
 Blackbox TDD coverage is partitioned into focused test suites:
 - `tests/test_blackbox_dm_copilot_actions.py`: Covers action proposals, pause window timeout auto-execution, DM approval/modification/veto frontdoors, and CloudEvent dispatching.
 - `tests/test_blackbox_dm_copilot_whispers.py`: Covers whisper creation, category filtering, pagination, scene cue generation, and SpiceDB Zanzibar DM authorization.
+- `tests/test_blackbox_watcher_copilot_restart.py`: Covers restart durability for pending vetoes, open disambiguations, whispers, and expiry after a restart.
 

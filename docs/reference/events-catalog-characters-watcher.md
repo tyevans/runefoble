@@ -227,6 +227,12 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `description`: String
   - `target`: Optional[String]
   - `parameters`: Dict[String, Any]
+- **`WatcherActionExpired`**: Emitted when an AI-proposed action's pause window elapses with no DM decision, and the action commits automatically (`runefoble.events.watcher.action_expired`).
+  - `action_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `action_type`: String
+  - `original_action`: Dict[String, Any] (status `executed`)
 - **`DMNarrativeWhispered`**: Emitted when a private narrative suggestion, tactical hint, or passive perception cue is generated for the DM (`runefoble.events.watcher.narrative_whispered`).
   - `whisper_id`: String
   - `session_id`: String

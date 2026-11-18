@@ -95,7 +95,10 @@ During this call:
 
 ## 2. Resolving Disambiguation Choices
 
-Once the player speaks or selects their choice (e.g. *"The archer"* or taps the candidate ghost token), submit the selection to resolve the target:
+Once the player speaks or selects their choice (e.g. *"The archer"* or taps the candidate ghost token), submit the selection to resolve the target.
+
+The open request is stored in the `WatcherDisambiguations` aggregate for the session. It survives a service restart. A resolve for a request that is unknown or already resolved returns `404`.
+
 
 ```bash
 curl -X POST http://localhost:8001/api/v1/watcher/intent/resolve \
