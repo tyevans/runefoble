@@ -105,7 +105,7 @@ async def export_print_pdf(
             total_pages=meta["total_pages"],
             page_size=request.page_size,
             grid_scale="1-inch",
-            download_url=upload_meta["url"],
+            download_url=upload_meta["download_url"],
             campaign_id=request.campaign_id,
             session_id=request.session_id,
         ),
@@ -120,14 +120,14 @@ async def export_print_pdf(
             total_pages=meta["total_pages"],
             page_size=request.page_size,
             grid_scale="1-inch",
-            download_url=upload_meta["url"],
+            download_url=upload_meta["download_url"],
         )
     )
 
     if request.format == "json":
         return PrintPdfResponse(
             asset_id=asset_id,
-            download_url=upload_meta["url"],
+            download_url=upload_meta["download_url"],
             total_pages=meta["total_pages"],
             rows=meta["rows"],
             cols=meta["cols"],
@@ -143,7 +143,7 @@ async def export_print_pdf(
             "X-Asset-Id": asset_id,
             "X-Page-Count": str(meta["total_pages"]),
             "X-Grid-Scale": "1-inch",
-            "X-Download-Url": upload_meta["url"],
+            "X-Download-Url": upload_meta["download_url"],
         },
     )
 
@@ -188,7 +188,7 @@ async def export_standees(
             total_pages=meta["pages"],
             page_size=request.page_size,
             grid_scale="standee-sheet",
-            download_url=upload_meta["url"],
+            download_url=upload_meta["download_url"],
             campaign_id=request.campaign_id,
         ),
     )
@@ -201,14 +201,14 @@ async def export_standees(
             total_pages=meta["pages"],
             page_size=request.page_size,
             grid_scale="standee-sheet",
-            download_url=upload_meta["url"],
+            download_url=upload_meta["download_url"],
         )
     )
 
     if request.format == "json":
         return StandeesResponse(
             asset_id=asset_id,
-            download_url=upload_meta["url"],
+            download_url=upload_meta["download_url"],
             standee_count=meta["standee_count"],
             pages=meta["pages"],
             page_size=request.page_size,
@@ -221,7 +221,7 @@ async def export_standees(
             "Content-Disposition": f'attachment; filename="standees-{asset_id}.pdf"',
             "X-Asset-Id": asset_id,
             "X-Standee-Count": str(meta["standee_count"]),
-            "X-Download-Url": upload_meta["url"],
+            "X-Download-Url": upload_meta["download_url"],
         },
     )
 
@@ -269,7 +269,7 @@ async def export_stl_token(
             height_mm=request.height_mm,
             facet_count=meta["facet_count"],
             condition_label=request.condition_label,
-            download_url=upload_meta["url"],
+            download_url=upload_meta["download_url"],
             campaign_id=request.campaign_id,
         ),
     )
@@ -283,14 +283,14 @@ async def export_stl_token(
             height_mm=request.height_mm,
             facet_count=meta["facet_count"],
             condition_label=request.condition_label,
-            download_url=upload_meta["url"],
+            download_url=upload_meta["download_url"],
         )
     )
 
     if request.format == "json":
         return StlTokenResponse(
             asset_id=asset_id,
-            download_url=upload_meta["url"],
+            download_url=upload_meta["download_url"],
             diameter_mm=request.diameter_mm,
             height_mm=request.height_mm,
             facet_count=meta["facet_count"],
@@ -306,6 +306,6 @@ async def export_stl_token(
             "X-Asset-Id": asset_id,
             "X-Facet-Count": str(meta["facet_count"]),
             "X-Is-Watertight": "true",
-            "X-Download-Url": upload_meta["url"],
+            "X-Download-Url": upload_meta["download_url"],
         },
     )

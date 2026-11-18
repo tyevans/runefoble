@@ -55,9 +55,10 @@ export const BattlemapForgedPreview: Story = {
     <runefoble-asset-forge
       campaignId="campaign-alpha"
       activeTab="battlemap"
+      mapPreviewUrl=${sampleBattlemapSvg}
       .lastForgedMap=${{
         asset_id: 'map-forge-demo-01',
-        image_url: sampleBattlemapSvg,
+        image_url: '/api/v1/assets/map-forge-demo-01?stream=true',
         theme: 'dwarven_forge',
         width_cells: 20,
         height_cells: 20,
@@ -73,9 +74,10 @@ export const TokenPortraitForged: Story = {
     <runefoble-asset-forge
       campaignId="campaign-alpha"
       activeTab="token"
+      tokenPreviewUrl=${sampleTokenSvg}
       .lastForgedToken=${{
         asset_id: 'tok-forge-demo-01',
-        image_url: sampleTokenSvg,
+        image_url: '/api/v1/assets/tok-forge-demo-01?stream=true',
         token_name: 'Thorin Ironbreaker',
         token_type: 'pc',
         size_px: 256,
@@ -86,8 +88,8 @@ export const TokenPortraitForged: Story = {
 
 const battlemapResponse = {
   asset_id: 'map-forge-demo-02',
-  image_url: sampleBattlemapSvg,
-  download_url: sampleBattlemapSvg,
+  image_url: '/api/v1/assets/map-forge-demo-02?stream=true',
+  download_url: '/api/v1/assets/map-forge-demo-02?stream=true',
   width_cells: 20,
   height_cells: 20,
   cell_size_px: 64,
@@ -100,7 +102,7 @@ const battlemapResponse = {
 
 const tokenResponse = {
   asset_id: 'tok-forge-demo-02',
-  image_url: sampleTokenSvg,
+  image_url: '/api/v1/assets/tok-forge-demo-02?stream=true',
   token_name: 'Thorin Ironbreaker',
   token_type: 'pc',
   size_px: 256,
@@ -112,7 +114,12 @@ const serviceUnavailable = {
 
 /** Forges a battlemap. The mocked route returns a preview on success. */
 export const ForgeMapSuccess: Story = {
-  decorators: [withMockFetch({ match: '/api/v1/forge/battlemap', status: 200, body: battlemapResponse })],
+  decorators: [
+    withMockFetch(
+      { match: '/api/v1/forge/battlemap', status: 200, body: battlemapResponse },
+      { match: '/api/v1/assets/map-forge-demo-02', status: 200, body: sampleBattlemapSvg, contentType: 'image/svg+xml' }
+    ),
+  ],
   render: () => html`
     <runefoble-asset-forge campaignId="campaign-alpha" activeTab="battlemap"></runefoble-asset-forge>
   `,
@@ -130,7 +137,12 @@ export const ForgeMapServiceUnavailable: Story = {
 
 /** Forges a token portrait. The mocked route returns a portrait on success. */
 export const ForgeTokenSuccess: Story = {
-  decorators: [withMockFetch({ match: '/api/v1/forge/token', status: 200, body: tokenResponse })],
+  decorators: [
+    withMockFetch(
+      { match: '/api/v1/forge/token', status: 200, body: tokenResponse },
+      { match: '/api/v1/assets/tok-forge-demo-02', status: 200, body: sampleTokenSvg, contentType: 'image/svg+xml' }
+    ),
+  ],
   render: () => html`
     <runefoble-asset-forge campaignId="campaign-alpha" activeTab="token"></runefoble-asset-forge>
   `,
@@ -158,6 +170,7 @@ export const PlaceTokenSuccess: Story = {
       campaignId="campaign-alpha"
       sessionId="session-demo-01"
       activeTab="token"
+      tokenPreviewUrl=${sampleTokenSvg}
       .lastForgedToken=${tokenResponse}
     ></runefoble-asset-forge>
   `,
@@ -177,6 +190,7 @@ export const PlaceTokenBoardError: Story = {
       campaignId="campaign-alpha"
       sessionId="session-demo-01"
       activeTab="token"
+      tokenPreviewUrl=${sampleTokenSvg}
       .lastForgedToken=${tokenResponse}
     ></runefoble-asset-forge>
   `,

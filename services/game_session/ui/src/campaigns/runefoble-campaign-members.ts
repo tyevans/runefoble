@@ -1,4 +1,5 @@
-import { LitElement, html } from 'lit';
+import { LitElement, html, type PropertyValues } from 'lit';
+import { AssetImageSet, AuthConsumerController } from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
 import { campaignMembersStyles } from './runefoble-campaign-members.styles.ts';
 import type {
@@ -10,6 +11,18 @@ import type {
 
 @customElement('runefoble-campaign-members')
 export class RunefobleCampaignMembers extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+  /** Member avatars by user id. Protected asset paths load with the bearer (TASK-0785). */
+  private readonly avatars = new AssetImageSet(this, () => this.auth.authHeaders());
+
+  override willUpdate(changed: PropertyValues) {
+    super.willUpdate(changed);
+    for (const member of this.members) {
+      this.avatars.setSource(member.user_id, member.avatar_url ?? '');
+    }
+    this.avatars.retain(this.members.map((member) => member.user_id));
+  }
+
   static styles = campaignMembersStyles;
 
   @property({ type: String, attribute: 'campaign-id' }) campaignId = '';
@@ -107,7 +120,7 @@ export class RunefobleCampaignMembers extends LitElement {
 
   private renderAvatar(member: CampaignMember) {
     if (member.avatar_url) {
-      return html`<div class="avatar"><img src=${member.avatar_url} alt=${member.username} /></div>`;
+      return html`<div class="avatar"><img src=${this.avatars.url(member.user_id)} alt=${member.username} /></div>`;
     }
     const initial = (member.username || member.user_id || '?').charAt(0).toUpperCase();
     return html`<div class="avatar">${initial}</div>`;

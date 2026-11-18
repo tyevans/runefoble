@@ -105,7 +105,7 @@ async def forge_battlemap(
         asset_id=asset_id,
         creator_id=creator_id,
         prompt=request.prompt,
-        image_url=upload_meta["url"],
+        image_url=upload_meta["download_url"],
         width_cells=request.width_cells,
         height_cells=request.height_cells,
         cell_size_px=request.cell_size_px,
@@ -125,7 +125,7 @@ async def forge_battlemap(
         session_id=request.session_id,
         creator_id=creator_id,
         prompt=request.prompt,
-        image_url=upload_meta["url"],
+        image_url=upload_meta["download_url"],
         width_cells=request.width_cells,
         height_cells=request.height_cells,
         cell_size_px=request.cell_size_px,
@@ -138,8 +138,8 @@ async def forge_battlemap(
 
     return BattlemapForgeResponse(
         asset_id=asset_id,
-        image_url=upload_meta["url"],
-        download_url=upload_meta["url"],
+        image_url=upload_meta["download_url"],
+        download_url=upload_meta["download_url"],
         width_cells=request.width_cells,
         height_cells=request.height_cells,
         cell_size_px=request.cell_size_px,

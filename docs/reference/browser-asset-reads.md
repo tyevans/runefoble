@@ -36,10 +36,26 @@ A blob URL exists only in the current document. Do not store it, send it to a se
 |---|---|---|
 | `runefoble-map-dropzone` (`services/board_state/ui`) | `download_url` in the `POST /api/v1/assets/upload` response, `/api/v1/assets/{id}?stream=true` | Fetched with the bearer. The blob URL goes to `upload-success`. |
 | `runefoble-map-uploader` (`services/board_state/ui`) | The blob URL from the dropzone | Revoked on `resetMap`. |
+| `runefoble-wardrobe-gallery` (`services/character_sheet/ui`) | `image_url` of each wardrobe variant, and the active portrait. Both can be `/api/v1/assets/{id}?stream=true` | Loaded by `AssetImageController` (`libs/runefoble_ui`). One controller per thumbnail. A variant removed from the list is revoked. Other URLs pass through unchanged. |
+| `runefoble-character-roster` (`services/character_sheet/ui`) | `portraitUrl` of each character | `AssetImageSet`, keyed by character id. |
+| `runefoble-character-card` (`services/character_sheet/ui`) | `portraitUrl` | `AssetImageController`. |
+| `runefoble-session-lobby` (`services/game_session/ui`) | `avatarUrl` and `portraitUrl` of each participant | `AssetImageSet`, keyed by user id and slot. |
+| `runefoble-campaign-members` (`services/game_session/ui`) | `avatar_url` of each member | `AssetImageSet`, keyed by user id. |
+| `runefoble-user-profile` (`frontend`) | `avatar_url` of the account | `AssetImageController`. |
+| `runefoble-print-forge` (`services/asset_forge/ui`) | `download_url` in the print-pdf, standees and stl-token replies, `/api/v1/assets/{id}?stream=true` | Fetched with the bearer. The blob URL is the download link. Revoked on the next export and on disconnect. |
 
-## URLs that are not asset routes
+## Image elements: `AssetImageController`
 
-Some forge responses return a Silo object URL (`http://<silo>/<bucket>/<key>?expires=3600`). Examples are `download_url` in the print forge, and `image_url` in the battlemap, token, and wardrobe responses. These URLs do not point at `/api/v1/assets`. The helper does not apply to them. A `<img src>` or `<a href>` can use them directly.
+A component that shows a protected asset in `<img>` uses `AssetImageController` for one image, or `AssetImageSet` for a list of rows (`libs/runefoble_ui`). It never calls the helper by hand. Call `setSource(path)` from `willUpdate`, and bind `url` to `src`. `AssetImageSet` takes a row key as its first argument, and `retain(keys)` drops the rows that no longer render. The controller:
+
+- passes any URL that is not `/api/v1/assets/...` through unchanged,
+- revokes the blob URL when the source changes, when a newer load replaces it, and when the host disconnects,
+- discards a slow load that a newer source has replaced,
+- records a refused read in `failure`. It never shows a substitute image.
+
+## No Silo URLs in replies
+
+No reply holds a Silo object URL (TASK-0785). Every forged output, uploaded asset and imported map image is named by `/api/v1/assets/{id}?stream=true`. That path needs the bearer and `forged_asset.view`. A `<img src>` cannot send the bearer. Load the path with `fetchAssetObjectUrl`.
 
 ## Failure
 

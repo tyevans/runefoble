@@ -32,8 +32,8 @@ curl -X POST http://localhost:8000/api/v1/forge/battlemap \
 ```json
 {
   "asset_id": "map-7f89ab12cd34",
-  "image_url": "http://silo:9000/runefoble-assets/battlemaps/map-7f89ab12cd34.png?expires=3600",
-  "download_url": "http://silo:9000/runefoble-assets/battlemaps/map-7f89ab12cd34.png?expires=3600",
+  "image_url": "/api/v1/assets/map-7f89ab12cd34?stream=true",
+  "download_url": "/api/v1/assets/map-7f89ab12cd34?stream=true",
   "width_cells": 20,
   "height_cells": 20,
   "cell_size_px": 64,
@@ -90,8 +90,8 @@ curl -X POST http://localhost:8000/api/v1/forge/token \
 ```json
 {
   "asset_id": "tok-9c8e23f0a12b",
-  "image_url": "http://silo:9000/runefoble-assets/tokens/tok-9c8e23f0a12b.png?expires=3600",
-  "download_url": "http://silo:9000/runefoble-assets/tokens/tok-9c8e23f0a12b.png?expires=3600",
+  "image_url": "/api/v1/assets/tok-9c8e23f0a12b?stream=true",
+  "download_url": "/api/v1/assets/tok-9c8e23f0a12b?stream=true",
   "token_name": "Thorin Ironbreaker",
   "token_type": "pc",
   "crop_style": "circular",
@@ -133,7 +133,7 @@ The payload is layout only. It holds hazard types, wall segments, and doors. It 
 
 1. **Hazard Terrain**: Push each entry in `terrain_mutations` to `POST /api/v1/boards/{session_id}/terrain`.
 2. **Obstacles**: Do not create obstacle tokens from the forge output. `board_state` derives obstacles from the wall segments.
-3. **Map Background**: Load the `download_url` into `<runefoble-board>` or `<runefoble-map-uploader>`.
+3. **Map Background**: Fetch the `download_url` path with the bearer, then load the blob URL into `<runefoble-board>` or `<runefoble-map-uploader>`. See [Browser asset reads](../reference/browser-asset-reads.md). Replies never carry a Silo URL.
 
 ---
 

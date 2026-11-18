@@ -21,6 +21,15 @@ from runefoble_platform.storage import AssetNotFoundError
 _ASSET_NAMESPACE = uuid5(UUID(int=0), "runefoble.asset-index")
 
 
+def asset_read_path(asset_id: str) -> str:
+    """Return the authorized stream path for one asset (TASK-0785).
+
+    Replies name an asset by this path. It needs a verified bearer and `forged_asset.view`.
+    A reply never carries a Silo object URL, because that URL would bypass the check.
+    """
+    return f"/api/v1/assets/{asset_id}?stream=true"
+
+
 def asset_aggregate_id(asset_id: str) -> UUID:
     """Return the deterministic aggregate id that owns the index record for one asset."""
     return uuid5(_ASSET_NAMESPACE, asset_id)
@@ -52,7 +61,6 @@ class AssetIndexAggregate(DeclarativeAggregate[AssetIndexState]):
             content_type=meta["content_type"],
             byte_size=meta["byte_size"],
             owner_id=meta["owner_id"],
-            url=meta["url"],
         )
 
     def record_deleted(self, asset_id: str, bucket: str, object_key: str, deleted_by: str) -> None:
@@ -75,7 +83,6 @@ class AssetIndexAggregate(DeclarativeAggregate[AssetIndexState]):
             "content_type": event.content_type,
             "byte_size": event.byte_size,
             "owner_id": event.owner_id,
-            "url": event.url,
         }
 
     @handles(AssetDeleted)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import HTTPException
-from runefoble_platform.asset_index import record_stored_asset
+from runefoble_platform.asset_index import asset_read_path, record_stored_asset
 from runefoble_platform.storage import AssetStorageError, AssetValidationError, SiloStorageService
 
 
@@ -19,6 +19,8 @@ async def store_forged_asset(
     asset_id: str,
 ) -> dict[str, Any]:
     """Upload forged bytes to the default Silo bucket and record the asset index entry.
+
+    The reply names the authorized read path in `download_url`. It never names a Silo URL.
 
     Maps a rejected payload to HTTP 422 and any Silo failure to HTTP 503. On failure
     no index entry is written, so the caller never receives an asset id that does not
@@ -42,4 +44,4 @@ async def store_forged_asset(
         ) from exc
 
     await record_stored_asset(meta)
-    return meta
+    return {**meta, "download_url": asset_read_path(asset_id)}

@@ -78,8 +78,8 @@ Response (default placeholder):
   "character_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
   "variant_name": "Nadia the Bard - Ballroom Masquerade",
   "attire_type": "ballroom_masquerade",
-  "image_url": "http://silo:9000/runefoble-assets/wardrobe/var-3f9a1c2b7d.png",
-  "download_url": "http://silo:9000/runefoble-assets/wardrobe/var-3f9a1c2b7d.png",
+  "image_url": "/api/v1/assets/var-3f9a1c2b7d?stream=true",
+  "download_url": "/api/v1/assets/var-3f9a1c2b7d?stream=true",
   "prompt": "Ornate royal masquerade ball attire, ... Ornate gold filigree mask and violet velvet gown",
   "generator": "placeholder",
   "preserves_face": false,
@@ -109,7 +109,7 @@ Authorization: Bearer {TOKEN}
   "variant_id": "var-masquerade-01",
   "variant_name": "Royal Masquerade Gown",
   "attire_type": "ballroom_masquerade",
-  "image_url": "http://silo:9000/runefoble-assets/wardrobe/var-masquerade-01.png",
+  "image_url": "/api/v1/assets/var-masquerade-01?stream=true",
   "prompt": "Ornate gold filigree mask and violet velvet gown",
   "set_active": true
 }
@@ -138,7 +138,7 @@ Embed the wardrobe gallery component into the character sheet or tabletop sideba
   characterName="Nadia the Expressive Bard"
   currentHp="18"
   maxHp="40"
-  activePortraitUrl="http://silo:9000/runefoble-assets/wardrobe/var-masquerade-01.png"
+  activePortraitUrl="/api/v1/assets/var-masquerade-01?stream=true"
   activeVariantId="var-masquerade-01"
 ></runefoble-wardrobe-gallery>
 

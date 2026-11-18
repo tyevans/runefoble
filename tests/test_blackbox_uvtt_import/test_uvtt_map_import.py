@@ -10,11 +10,12 @@ import json
 from uuid import uuid4
 
 import pytest
+from asset_forge.main import app as asset_app
 from fastapi.testclient import TestClient
 from runefoble_platform.storage import get_storage_service
 
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
-from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
+from tests.test_blackbox_uvtt_import.conftest import bearer, build_sample_dd2vtt_dict
 
 
 def _create_board(client: TestClient, board_id: str) -> None:
@@ -122,6 +123,36 @@ def test_blackbox_uvtt_invalid_payload_error(board_client: TestClient):
     )
     assert response.status_code == 400
     assert "Invalid Universal VTT format" in response.json()["detail"]
+
+
+def test_blackbox_uvtt_background_is_an_authorized_asset_path(board_client: TestClient):
+    """The imported background names the authorized asset path. No Silo URL reaches the reply.
+
+    The importer and the campaign read it through the asset route. A stranger gets 403.
+    """
+    board_id = f"camp-uvtt-{uuid4().hex[:8]}"
+    _create_board(board_client, board_id)
+    file_bytes = json.dumps(build_sample_dd2vtt_dict(cols=8, rows=8)).encode("utf-8")
+    response = board_client.post(
+        f"/api/v1/board/{board_id}/import/uvtt",
+        files={"file": ("crypt.dd2vtt", file_bytes, "application/json")},
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+
+    asset_id = data["background_asset_id"]
+    path = f"/api/v1/assets/{asset_id}?stream=true"
+    assert data["background_image_url"] == path
+    assert "silo" not in response.text
+    assert "expires=" not in response.text
+
+    importer = TestClient(asset_app, headers=bearer("user-test"))
+    read = importer.get(path)
+    assert read.status_code == 200, read.text
+    assert read.content == PNG_SAMPLE_BYTES
+
+    stranger = TestClient(asset_app, headers=bearer("stranger-mallory"))
+    assert stranger.get(path).status_code == 403
 
 
 BOARD_CAMPAIGN = "camp-board-fixture"

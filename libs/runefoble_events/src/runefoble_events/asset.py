@@ -22,7 +22,6 @@ class AssetUploaded(BaseRunefobleEvent):
     content_type: str
     byte_size: int
     owner_id: str
-    url: str
 
 
 @register_event("runefoble.events.asset.deleted")

@@ -1,5 +1,9 @@
-import { LitElement, html } from 'lit';
-import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
+import { LitElement, html, type PropertyValues } from 'lit';
+import {
+  AssetImageController,
+  AuthConsumerController,
+  PORTRAIT_PLACEHOLDERS,
+} from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
 import { wardrobeGalleryStyles } from './runefoble-wardrobe-gallery.styles.ts';
 
@@ -16,6 +20,12 @@ export interface WardrobeVariantItem {
 export class RunefobleWardrobeGallery extends LitElement {
   static styles = wardrobeGalleryStyles;
 
+  private readonly auth = new AuthConsumerController(this);
+  /** One blob-backed image per variant thumbnail (TASK-0785). Keyed by variant id. */
+  private readonly thumbnails = new Map<string, AssetImageController>();
+  /** The active portrait. Forged portraits are protected asset paths, so they load with the bearer. */
+  private readonly activeImage = new AssetImageController(this, () => this.auth.authHeaders());
+
   @property({ type: String }) characterId = '';
   @property({ type: String }) characterName = 'Nadia the Bard';
   @property({ type: Number }) currentHp = 34;
@@ -28,6 +38,28 @@ export class RunefobleWardrobeGallery extends LitElement {
 
   @state() private selectedAttire = 'ballroom_masquerade';
   @state() private isForging = false;
+
+  override willUpdate(changed: PropertyValues) {
+    super.willUpdate(changed);
+    this.activeImage.setSource(this.activePortraitUrl);
+    const liveIds = new Set(this.variants.map((v) => v.variantId));
+    for (const v of this.variants) this.thumbnailFor(v.variantId).setSource(v.imageUrl);
+    for (const [variantId, image] of this.thumbnails) {
+      if (liveIds.has(variantId)) continue;
+      image.setSource('');
+      this.removeController(image);
+      this.thumbnails.delete(variantId);
+    }
+  }
+
+  private thumbnailFor(variantId: string): AssetImageController {
+    let image = this.thumbnails.get(variantId);
+    if (!image) {
+      image = new AssetImageController(this, () => this.auth.authHeaders());
+      this.thumbnails.set(variantId, image);
+    }
+    return image;
+  }
 
   private getEffectiveBadges(): string[] {
     const list = [...this.conditionBadges];
@@ -93,7 +125,7 @@ export class RunefobleWardrobeGallery extends LitElement {
         class="variant-card ${isActive ? 'active' : ''}"
         @click=${() => this.handleSelectVariant(v)}
       >
-        <img class="variant-thumbnail" src="${v.imageUrl}" alt="${v.variantName}" />
+        <img class="variant-thumbnail" src="${this.thumbnailFor(v.variantId).url}" alt="${v.variantName}" />
         <div class="variant-name" title="${v.variantName}">${v.variantName}</div>
         <button class="btn-equip ${isActive ? 'active-btn' : ''}">
           ${isActive ? 'Active' : 'Equip'}
@@ -119,7 +151,7 @@ export class RunefobleWardrobeGallery extends LitElement {
         <div class="avatar-wrapper">
           <img
             class="avatar-img ${isBloodied ? 'bloodied' : ''} ${isPoisoned ? 'poisoned' : ''}"
-            src="${this.activePortraitUrl}"
+            src="${this.activeImage.url}"
             alt="${this.characterName} Active Portrait"
           />
         </div>

@@ -1,4 +1,5 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, type PropertyValues } from 'lit';
+import { AssetImageController, AuthConsumerController } from '@runefoble/ui-core';
 import { customElement, property } from 'lit/decorators.js';
 
 export interface CharacterCondition {
@@ -11,6 +12,15 @@ export interface CharacterCondition {
 
 @customElement('runefoble-character-card')
 export class RunefobleCharacterCard extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+  /** The portrait image. A protected asset path loads with the bearer (TASK-0785). */
+  private readonly portrait = new AssetImageController(this, () => this.auth.authHeaders());
+
+  override willUpdate(changed: PropertyValues) {
+    super.willUpdate(changed);
+    this.portrait.setSource(this.portraitUrl);
+  }
+
   static styles = css`
     :host {
       display: block;
@@ -162,7 +172,7 @@ export class RunefobleCharacterCard extends LitElement {
       <div class="card-header">
         <div class="header-identity">
           ${this.portraitUrl
-            ? html`<img class="char-portrait" src="${this.portraitUrl}" alt="${this.characterName}" />`
+            ? html`<img class="char-portrait" src="${this.portrait.url}" alt="${this.characterName}" />`
             : html``}
           <div>
             <div class="name-title">${this.characterName}</div>

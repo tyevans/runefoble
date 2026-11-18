@@ -68,7 +68,12 @@ async def import_uvtt_map_endpoint(
     asset_id, image_url = None, None
     if parsed.image_bytes:
         try:
-            asset_id, image_url = await store_uvtt_image(parsed.image_bytes, parsed.image_mime_type)
+            asset_id, image_url = await store_uvtt_image(
+                parsed.image_bytes,
+                parsed.image_mime_type,
+                owner_id=user_id,
+                session_id=id,
+            )
         except AssetStorageError as exc:
             logger.error("Silo rejected UVTT battlemap image: %s", exc)
             raise HTTPException(

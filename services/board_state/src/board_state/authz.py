@@ -75,6 +75,31 @@ async def bind_board_to_campaign(session_id: str, campaign_id: str) -> None:
     )
 
 
+async def record_forged_asset_owner(asset_id: str, creator_id: str, session_id: str) -> None:
+    """Write `forged_asset` creator and, when the board has one, campaign tuples (TASK-0785).
+
+    An imported map image becomes an authorized asset, as a forged asset does. No error is
+    suppressed. A failed write raises AuthzError, and the caller removes the stored object.
+    """
+    spicedb = get_spicedb_client()
+    await spicedb.write_relationship(
+        resource_type="forged_asset",
+        resource_id=asset_id,
+        relation="creator",
+        subject_type="user",
+        subject_id=creator_id,
+    )
+    campaign_id = await board_campaign_id(session_id)
+    if campaign_id:
+        await spicedb.write_relationship(
+            resource_type="forged_asset",
+            resource_id=asset_id,
+            relation="campaign",
+            subject_type="campaign",
+            subject_id=campaign_id,
+        )
+
+
 async def board_campaign_id(session_id: str) -> str | None:
     """Return the campaign that owns the board, or None when the board tuple is missing."""
     found = await get_spicedb_client().read_relationships(
