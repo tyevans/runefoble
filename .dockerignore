@@ -22,7 +22,9 @@ docs
 tests
 tools
 scripts
-**/ui
+# Keep only the vendored UI manifest that services load at start-up (ADR-0013).
+**/ui/*
+!**/ui/manifest.json
 **/dist
 **/*.log
 
