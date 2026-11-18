@@ -33,13 +33,13 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
     """Give the signed-in test member view rights on a campaign.
 
-    campaign_analytics has no public campaign-creation frontdoor, so the view relation is
-    seeded in the authorization double. Tests that assert deny paths do not call this.
+    campaign_analytics has no public campaign-creation frontdoor, so the spectator relation
+    (which grants campaign.view) is seeded in the authorization double. Tests that assert deny paths do not call this.
     """
     await spicedb_client.write_relationship(
         resource_type="campaign",
         resource_id=campaign_id,
-        relation="view",
+        relation="spectator",
         subject_type="user",
         subject_id="user-test",
     )
@@ -159,7 +159,7 @@ async def test_spatial_heatmap_spicedb_zanzibar_authorization(
     await spicedb_client.write_relationship(
         resource_type="campaign",
         resource_id=campaign_id,
-        relation="view",
+        relation="spectator",
         subject_type="user",
         subject_id="authorized-player",
     )

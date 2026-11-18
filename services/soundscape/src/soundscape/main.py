@@ -12,6 +12,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import consumer_statuses
@@ -63,6 +64,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+async def authorization_unavailable(_request: Request, _exc: Exception) -> JSONResponse:
+    """Answer 503 when SpiceDB cannot answer. A failed check is never a denial or an allow."""
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Authorization service is unavailable"},
+    )
+
+
+app.add_exception_handler(AuthzUnavailableError, authorization_unavailable)
 
 app.include_router(cue_router)
 app.include_router(tension_router)

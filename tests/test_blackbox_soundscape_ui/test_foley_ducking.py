@@ -35,11 +35,11 @@ def test_rest_data_binding_foley_cue_trigger(
     assert data["duck_music"] is True
 
 
-def test_rest_data_binding_webaudio_ducking(client: TestClient) -> None:
+def test_rest_data_binding_webaudio_ducking(client: TestClient, soundscape_session_id: str) -> None:
     """Verify POST /api/v1/soundscape/duck toggles -12dB attenuation coordinator."""
     duck_resp = client.post(
         "/api/v1/soundscape/duck",
-        json={"session_id": "sess-ui-01", "is_ducked": True, "reason": "speech"},
+        json={"session_id": soundscape_session_id, "is_ducked": True, "reason": "speech"},
     )
     assert duck_resp.status_code == 200
     data = duck_resp.json()
@@ -49,7 +49,11 @@ def test_rest_data_binding_webaudio_ducking(client: TestClient) -> None:
 
     unduck_resp = client.post(
         "/api/v1/soundscape/duck",
-        json={"session_id": "sess-ui-01", "is_ducked": False, "reason": "speech_ended"},
+        json={
+            "session_id": soundscape_session_id,
+            "is_ducked": False,
+            "reason": "speech_ended",
+        },
     )
     assert unduck_resp.status_code == 200
     unduck_data = unduck_resp.json()

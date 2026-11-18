@@ -7,7 +7,6 @@ tactical foley cue triggers, and SpiceDB Zanzibar authorization.
 
 from __future__ import annotations
 
-from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -153,10 +152,10 @@ def test_trigger_tactical_foley_cue_frontdoor(client: TestClient, tomb_session_i
     assert data["duck_music"] is True
 
 
-def test_tension_calculation_and_status_frontdoors(client: TestClient):
+def test_tension_calculation_and_status_frontdoors(client: TestClient, tomb_session_id: str):
     """Verify GET /tension and POST /tension/calculate adaptively adjust stems."""
     calc_payload = {
-        "session_id": "session-tomb-14",
+        "session_id": tomb_session_id,
         "combat_active": True,
         "combat_round": 2,
         "enemy_cr_balance": 2.5,
@@ -165,14 +164,14 @@ def test_tension_calculation_and_status_frontdoors(client: TestClient):
     calc_resp = client.post("/api/v1/soundscape/tension/calculate", json=calc_payload)
     assert calc_resp.status_code == 200
     data = calc_resp.json()
-    assert data["session_id"] == "session-tomb-14"
+    assert data["session_id"] == tomb_session_id
     assert data["tension_score"] >= 60
     assert data["stem_profile"] in ("combat", "boss")
 
-    get_resp = client.get("/api/v1/soundscape/tension?session_id=session-tomb-14")
+    get_resp = client.get(f"/api/v1/soundscape/tension?session_id={tomb_session_id}")
     assert get_resp.status_code == 200
     status_data = get_resp.json()
-    assert status_data["session_id"] == "session-tomb-14"
+    assert status_data["session_id"] == tomb_session_id
     assert status_data["tension_score"] == data["tension_score"]
     assert status_data["stem_profile"] == data["stem_profile"]
 
@@ -211,23 +210,12 @@ async def test_soundscape_combat_event_bus_reactivity():
 
 
 @pytest.mark.asyncio
-async def test_soundscape_zanzibar_authorization(client: TestClient):
+async def test_soundscape_zanzibar_authorization(client: TestClient, tomb_session_id: str):
     """Verify Zanzibar authorization enforces caller permissions for DM mood override."""
-    from soundscape.dependencies import get_spicedb_client
-
-    async def mock_deny(*args: Any, **kwargs: Any) -> bool:
-        return False
-
-    client.app.dependency_overrides[get_spicedb_client] = lambda: type(
-        "MockSpiceDB", (), {"check_permission": mock_deny}
-    )()
-
     resp = client.post(
         "/api/v1/soundscape/override",
-        json={"session_id": "session-tomb-14", "mood": "boss"},
+        json={"session_id": tomb_session_id, "mood": "boss"},
         headers=auth_headers("unauthorized-intruder"),
     )
     assert resp.status_code == 403
     assert "Forbidden" in resp.json()["detail"]
-
-    client.app.dependency_overrides.clear()
