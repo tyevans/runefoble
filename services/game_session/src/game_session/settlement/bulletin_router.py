@@ -13,7 +13,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from game_session.dependencies import get_event_bus, get_settlement_repository, get_spicedb_client
 from game_session.events import STREAM_WEST_MARCHES
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.bulletin_auth import (
     check_bulletin_board_edit_permission,
     check_bulletin_board_view_permission,
@@ -31,7 +31,7 @@ from game_session.settlement.models import (
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["bulletin-board"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["bulletin-board"])
 
 
 def _to_uuid(val: Any) -> UUID:

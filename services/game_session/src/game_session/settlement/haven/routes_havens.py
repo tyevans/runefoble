@@ -19,7 +19,7 @@ from game_session.settlement.auth import (
     check_campaign_write_permission,
     write_settlement_relationships,
 )
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.haven.loaders import (
     build_settlement_projection,
     load_settlement,
@@ -33,7 +33,7 @@ from game_session.settlement.models import (
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_platform.aggregate_loading import load_if_exists
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)])
+router = APIRouter(dependencies=[Depends(get_principal)])
 
 
 @router.post("/api/v1/campaigns/{campaign_id}/settlements", status_code=201)

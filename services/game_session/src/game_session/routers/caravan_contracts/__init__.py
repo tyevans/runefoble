@@ -25,9 +25,9 @@ from game_session.routers.caravan_contracts.lifecycle import (
 from game_session.routers.caravan_contracts.lifecycle import (
     router as lifecycle_router,
 )
-from game_session.settlement.auth.tokens import get_caller_principal
+from game_session.settlement.auth.tokens import get_principal
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)])
+router = APIRouter(dependencies=[Depends(get_principal)])
 router.include_router(board_router)
 router.include_router(lifecycle_router)
 

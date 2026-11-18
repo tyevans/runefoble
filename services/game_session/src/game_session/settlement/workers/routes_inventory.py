@@ -9,11 +9,11 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_worker_repository
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.worker_models import WorkerInventoryItem
 from game_session.settlement.workers.loaders import load_worker, save_and_publish
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["settlement-npc-inventory"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-inventory"])
 
 
 @router.get("/api/v1/npcs/{npc_id}/inventory")

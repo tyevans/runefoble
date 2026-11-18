@@ -8,7 +8,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from game_session.dependencies import get_event_bus, get_worker_repository
 from game_session.queries import list_workers_for_establishment
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.worker_graph import (
     calculate_service_quality_contribution,
     compute_worker_tension,
@@ -32,7 +32,7 @@ from game_session.settlement.workers.operations import (
 )
 from runefoble_platform.aggregate_loading import load_if_exists
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["settlement-npc-workers"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-workers"])
 
 
 @router.post("/api/v1/establishments/{establishment_id}/workers", status_code=201)

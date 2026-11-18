@@ -15,13 +15,13 @@ from game_session.auth import check_session_participation
 from game_session.dependencies import get_event_bus, get_spicedb_client, repo, stronghold_repo
 from game_session.events import STREAM_SESSION
 from game_session.minigame_rules import to_uuid
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from pydantic import BaseModel, Field
 from runefoble_events.events import CampfireRestCompleted
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["campfire"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["campfire"])
 
 COLLABORATIVE_PROMPTS: list[str] = [
     "The crackling embers cast flickering warmth across tired faces. Tell a tale of the first monster that truly frightened your character.",

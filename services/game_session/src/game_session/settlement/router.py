@@ -6,7 +6,7 @@ Governed by ADR-0001, ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from game_session.settlement.auth.tokens import get_caller_principal
+from game_session.settlement.auth.tokens import get_principal
 from game_session.settlement.bulletin_router import (
     decrypt_cipher_notice,
     list_bulletin_notices,
@@ -18,7 +18,7 @@ from game_session.settlement.haven.routes_establishments import router as establ
 from game_session.settlement.haven.routes_havens import router as havens_router
 from game_session.settlement.haven.routes_upgrades import router as upgrades_router
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["settlement-haven-builder"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-haven-builder"])
 for sub_router in (havens_router, establishments_router, upgrades_router, bulletin_router):
     router.include_router(sub_router)
 

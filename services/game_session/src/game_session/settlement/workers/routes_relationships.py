@@ -9,7 +9,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 from game_session.dependencies import get_event_bus, get_worker_repository
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.worker_models import (
     FormRelationshipRequest,
     NPCWorkerState,
@@ -19,9 +19,7 @@ from game_session.settlement.worker_models import (
 from game_session.settlement.workers.loaders import load_worker, save_and_publish
 from game_session.settlement.workers.operations import sync_establishment_operations
 
-router = APIRouter(
-    dependencies=[Depends(get_caller_principal)], tags=["settlement-npc-relationships"]
-)
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-relationships"])
 
 
 @router.patch("/api/v1/npcs/{npc_id}/mood")

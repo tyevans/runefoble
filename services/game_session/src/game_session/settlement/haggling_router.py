@@ -28,7 +28,7 @@ from game_session.settlement.auth import (
     check_negotiation_read_permission,
     write_negotiation_relationships,
 )
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.settlement.haggling import NegotiationAggregate
 from game_session.settlement.haggling_models import (
     DMOverrideRequest,
@@ -39,7 +39,7 @@ from game_session.settlement.haggling_models import (
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["merchant-haggling"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["merchant-haggling"])
 
 
 def _to_uuid(val: Any) -> UUID:

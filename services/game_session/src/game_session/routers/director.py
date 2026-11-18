@@ -12,9 +12,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import GameSessionAggregate
 from game_session.dependencies import repo
 from game_session.models import AtmosphereUpdateRequest, DMOverrideRequest, GameSessionState
-from game_session.settlement.auth.tokens import get_caller_principal
+from game_session.settlement.auth.tokens import get_principal
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["session"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["session"])
 
 
 async def _load_session(session_id: UUID) -> GameSessionAggregate:

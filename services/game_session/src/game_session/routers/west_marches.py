@@ -13,7 +13,7 @@ from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException, Query
 from game_session.dependencies import get_event_bus, get_shared_world_repository, get_spicedb_client
 from game_session.events import STREAM_WEST_MARCHES
-from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.west_marches_models import (
     CreateSharedWorldRequest,
     EstablishOutpostRequest,
@@ -24,7 +24,7 @@ from game_session.west_marches_models import (
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(
-    dependencies=[Depends(get_caller_principal)],
+    dependencies=[Depends(get_principal)],
     prefix="/api/v1/shared-worlds",
     tags=["west-marches"],
 )
