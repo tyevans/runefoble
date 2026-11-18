@@ -89,8 +89,9 @@ def test_blackbox_publish_failure_is_logged(caplog: pytest.LogCaptureFixture, us
     assert "redis unreachable" in caplog.text
 
 
-def test_blackbox_publish_without_bus_is_logged(caplog: pytest.LogCaptureFixture):
+def test_blackbox_publish_without_bus_is_logged(caplog: pytest.LogCaptureFixture, use_event_bus):
     """An event with no injected bus is logged as dropped, never swallowed."""
+    use_event_bus(None)
     event = DynamicToolUnregisteredEvent(tool_name="probe", unregistered_by=None, campaign_id=None)
 
     with caplog.at_level(logging.ERROR, logger=EVENTS_LOGGER):

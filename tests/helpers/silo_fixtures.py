@@ -12,7 +12,6 @@ from collections.abc import Generator
 
 import httpx
 import pytest
-from gateway_api.main import set_event_bus
 from runefoble_platform.storage import SiloStorageService, get_storage_service, set_storage_service
 
 # Sample 1x1 PNG bytes for testing image uploads
@@ -85,11 +84,3 @@ def silo_double() -> Generator[FakeSilo]:
     )
     yield fake
     set_storage_service(previous)
-
-
-@pytest.fixture
-def clean_storage_and_bus(silo_double: FakeSilo) -> Generator[None]:
-    """Reset the event bus around each blackbox test. Silo state comes from silo_double."""
-    set_event_bus(None)
-    yield
-    set_event_bus(None)

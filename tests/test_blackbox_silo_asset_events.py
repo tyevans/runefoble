@@ -21,13 +21,6 @@ from runefoble_platform.bus import bus as platform_bus
 
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 
-
-@pytest.fixture(autouse=True)
-def _isolate_storage(clean_storage_and_bus):
-    """Ensure clean storage and bus before and after each test."""
-    yield
-
-
 # --- 1. Event Registration & CloudEvents Compliance Tests ---
 
 
@@ -70,12 +63,8 @@ def test_asset_events_registration_and_cloudevents():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_event_emission_on_upload_and_delete(
-    signing_issuer, default_redis_event_bus, mock_bus
-):
+async def test_blackbox_event_emission_on_upload_and_delete(signing_issuer, mock_bus):
     """Verify AssetUploaded and AssetDeleted domain events are emitted to event buses."""
-    mock_bus = default_redis_event_bus
-
     received_in_memory_events: list[Any] = []
 
     async def in_memory_upload_handler(event: Any):

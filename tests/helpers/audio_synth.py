@@ -12,12 +12,8 @@ from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus as watcher_set_event_bus
 from voice_agent.main import (
     app as voice_app,
-)
-from voice_agent.main import (
-    set_event_bus as voice_set_event_bus,
 )
 from voice_agent.main import (
     set_watcher_client,
@@ -131,15 +127,10 @@ def fake_speech_synthesizer() -> Generator[FixtureSynthesizer]:
 
 @pytest.fixture
 def shared_event_bus(
-    mock_redis: MockAsyncRedis, speech_engine: FixtureTranscriber
-) -> Generator[RedisStreamsEventBus]:
+    mock_redis: MockAsyncRedis, speech_engine: FixtureTranscriber, use_redis_client
+) -> RedisStreamsEventBus:
     set_streaming_pipeline(StreamingAudioPipeline(transcriber=speech_engine))
-    bus = RedisStreamsEventBus(client=mock_redis)
-    voice_set_event_bus(bus)
-    watcher_set_event_bus(bus)
-    yield bus
-    voice_set_event_bus(None)
-    watcher_set_event_bus(None)
+    return use_redis_client(mock_redis)
 
 
 @pytest.fixture

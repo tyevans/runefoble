@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import base64
 
-import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 
@@ -22,12 +21,6 @@ from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES, WAV_SAMPLE_BYTES
 def _client_for(issuer, sub: str) -> TestClient:
     """Return a gateway client that sends a verified bearer token for `sub`."""
     return TestClient(gateway_app, headers={"Authorization": f"Bearer {issuer.mint(sub)}"})
-
-
-@pytest.fixture(autouse=True)
-def _isolate_storage(clean_storage_and_bus):
-    """Ensure clean storage and bus before and after each test."""
-    yield
 
 
 # --- 1. Blackbox Upload via Multipart/Form-Data & JSON Payloads ---
