@@ -11,6 +11,7 @@ from game_session.models.combat import (
     RollDiceResponse,
     StartCombatRequest,
 )
+from game_session.models.director import AtmosphereUpdateRequest, DMOverrideRequest
 from game_session.models.reaction_transitions import ReactionTransitionsMixin
 from game_session.models.reactions import (
     DeclareReactionRequest,
@@ -49,6 +50,7 @@ from game_session.models.transitions import GameSessionTransitionsMixin
 ResolveReactionResponse.model_rebuild(_types_namespace={"GameSessionState": GameSessionState})
 
 __all__ = [
+    "AtmosphereUpdateRequest",
     "AutoPilotRequest",
     "AutoPilotResponse",
     "CharterSettlementRequest",
@@ -58,6 +60,7 @@ __all__ = [
     "CreateSessionRequest",
     "DEFAULT_FACILITIES",
     "DeclareReactionRequest",
+    "DMOverrideRequest",
     "DeclareReactionResponse",
     "EvaluateTriggersRequest",
     "EvaluateTriggersResponse",

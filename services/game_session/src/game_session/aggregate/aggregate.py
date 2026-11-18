@@ -8,6 +8,7 @@ from uuid import UUID
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from game_session.aggregate.combat_handlers import CombatHandlersMixin
+from game_session.aggregate.director_handlers import DirectorHandlersMixin
 from game_session.aggregate.reaction_handlers import ReactionHandlersMixin
 from game_session.aggregate.session_handlers import SessionHandlersMixin
 from game_session.models import GameSessionState, ParticipantState
@@ -32,6 +33,7 @@ __all__ = [
 class GameSessionAggregate(
     SessionHandlersMixin,
     CombatHandlersMixin,
+    DirectorHandlersMixin,
     ReactionHandlersMixin,
     DeclarativeAggregate[GameSessionState],
 ):

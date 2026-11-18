@@ -21,6 +21,7 @@ from game_session.routers import (
     caravan_contracts_router,
     caravan_trade_router,
     combat_router,
+    director_router,
     minigames_ws_router,
     reactions_router,
     session_router,
@@ -57,6 +58,7 @@ app.include_router(session_router)
 app.include_router(campaign_router)
 register_campaign_error_handlers(app)
 app.include_router(combat_router)
+app.include_router(director_router)
 app.include_router(reactions_router)
 app.include_router(autopilot_router)
 app.include_router(campfire_router)

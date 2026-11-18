@@ -111,7 +111,7 @@ async def test_game_session_auto_pilot_turn(
         base_url="http://test",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
-        campaign_id, char_id = str(uuid4()), str(uuid4())
+        campaign_id, char_id = await _owned_campaign(client), str(uuid4())
 
         # 1. Create session
         create_res = await client.post(
@@ -247,3 +247,10 @@ async def test_absentee_session_recap_generation():
         assert len(recap_data["highlights"]) == 2
         assert "drunk" in recap_data["penalties_active"]
         assert "foolishness" in recap_data["penalties_active"]
+
+
+async def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = await client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

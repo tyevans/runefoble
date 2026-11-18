@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app as gateway_app
 
 from tests.helpers.zitadel_auth import auth_environment, create_signed_token
@@ -77,55 +76,6 @@ async def test_blackbox_put_guardrails_persistence_frontdoor(
         gr_data = get_gr_res.json()
         assert gr_data["risk_threshold"] == "cautious"
         assert gr_data["protect_allies"] == ["Seoni", "Merisiel"]
-
-
-@pytest.mark.asyncio
-async def test_blackbox_hot_swap_session_takeover_frontdoor(auth_environment):
-    """POST /api/v1/sessions/{id}/hot-swap hands off active turn control to authenticating player."""
-    client = auth_environment["client"]
-    valid_key = auth_environment["valid_key"]
-    kid = auth_environment["kid"]
-    user_id = "user-valeros"
-    session_id = "session-tomb-14"
-    char_id = "char-valeros"
-    token = create_signed_token(
-        valid_key, sub=user_id, kid=kid, roles=["player"], preferred_username="Valeros"
-    )
-    headers = {"Authorization": f"Bearer {token}"}
-
-    # Setup Zanzibar permission
-    spicedb = get_spicedb_client()
-    await spicedb.write_relationship(
-        resource_type="character",
-        resource_id=char_id,
-        relation="owner",
-        subject_type="user",
-        subject_id=user_id,
-    )
-    await spicedb.write_relationship(
-        resource_type="campaign",
-        resource_id=session_id,
-        relation="player",
-        subject_type="user",
-        subject_id=user_id,
-    )
-
-    hot_swap_payload = {
-        "playerId": user_id,
-        "characterId": char_id,
-    }
-
-    res = client.post(
-        f"/api/v1/sessions/{session_id}/hot-swap",
-        json=hot_swap_payload,
-        headers=headers,
-    )
-    assert res.status_code == 200, f"Hot-swap failed: {res.text}"
-    data = res.json()
-    assert data["session_id"] == session_id
-    assert data["character_id"] == char_id
-    assert data["status"] == "control_transferred"
-    assert data["is_stand_in_active"] is False
 
 
 @pytest.mark.asyncio

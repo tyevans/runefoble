@@ -11,8 +11,10 @@ Governing ADRs:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
@@ -67,6 +69,7 @@ def test_gateway_frontdoor_endpoints_for_audited_views(trusted_ws_issuer, client
     )
     assert camp_res.status_code == 201
     campaign_id = camp_res.json()["id"]
+    session_id = _owner_session(campaign_id, headers)
 
     list_res = client.get("/api/v1/campaigns", headers=headers)
     assert list_res.status_code == 200
@@ -109,9 +112,22 @@ def test_gateway_frontdoor_endpoints_for_audited_views(trusted_ws_issuer, client
     assert char_detail_res.json()["name"] == "Valeros Citadel Guard"
 
     # 5. Session Lobby & Active VTT View (#/campaigns/:id/lobby/:id & #/campaigns/:id/sessions/:id)
-    session_res = client.get(f"/api/v1/sessions/{campaign_id}", headers=headers)
+    session_res = client.get(f"/api/v1/sessions/{session_id}", headers=headers)
     assert session_res.status_code == 200
 
     board_res = client.get(f"/api/v1/boards/{campaign_id}", headers=headers)
     assert board_res.status_code == 200
     assert "tokens" in board_res.json()
+
+
+def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
+    """Create a game session in a campaign through the owner's public game_session route."""
+    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/sessions/create",
+        json={"campaign_id": campaign_id, "title": "Crypt"},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
+    return res.json()["session_id"]

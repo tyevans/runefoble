@@ -11,6 +11,9 @@ Verifies:
 5. Reconstituted session metadata is accessible through public gateway endpoints.
 """
 
+import os
+
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
@@ -233,10 +236,10 @@ async def test_owner_and_dm_create_and_list_sessions(trusted_ws_issuer, client):
     assert "Session #2: Quest for the Holy Grail" in session_titles
 
     # 6. Retrieve session details via session proxy
-    res_detail = client.get(f"/api/v1/sessions/{s1_data['id']}", headers=headers_owner)
+    owned_session_id = _owner_session(campaign_id, headers_owner)
+    res_detail = client.get(f"/api/v1/sessions/{owned_session_id}", headers=headers_owner)
     assert res_detail.status_code == 200
-    detail_data = res_detail.json()
-    assert detail_data["id"] == s1_data["id"]
+    assert res_detail.json()["session_id"] == owned_session_id
 
 
 @pytest.mark.asyncio
@@ -292,3 +295,16 @@ async def test_cross_campaign_session_isolation(trusted_ws_issuer, client):
     # Bob tries to access Campaign A sessions -> 403 Forbidden
     res_forbidden = client.get(f"/api/v1/campaigns/{camp_a}/sessions", headers=headers_b)
     assert res_forbidden.status_code == 403
+
+
+def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
+    """Create a game session in a campaign through the owner's public game_session route."""
+    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/sessions/create",
+        json={"campaign_id": campaign_id, "title": "Crypt"},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
+    return res.json()["session_id"]

@@ -66,7 +66,7 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
         created = http.post(
             "/api/v1/sessions/create",
             json={
-                "campaign_id": str(uuid4()),
+                "campaign_id": _owned_campaign(http),
                 "title": "Ambush at Red Larch",
                 "dm_id": "the_watcher",
             },
@@ -181,3 +181,10 @@ async def test_blackbox_query_encounter_state_upstream_unavailable_returns_error
 
     assert result.isError is True
     assert "game_session" in tool_text(result)
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

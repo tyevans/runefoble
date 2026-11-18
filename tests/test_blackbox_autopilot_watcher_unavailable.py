@@ -45,7 +45,11 @@ async def _start_session_with_absent_player(client: AsyncClient) -> str:
     """Create, join, start, and leave a session through public routes. Return its id."""
     create_res = await client.post(
         "/api/v1/sessions/create",
-        json={"campaign_id": str(uuid4()), "title": "Absent Session", "dm_id": "dm_alice"},
+        json={
+            "campaign_id": await _owned_campaign(client),
+            "title": "Absent Session",
+            "dm_id": "dm_alice",
+        },
     )
     assert create_res.status_code == 200
     session_id = create_res.json()["session_id"]
@@ -142,3 +146,10 @@ async def test_auto_pilot_records_the_action_from_the_configured_watcher(
             state = (await client.get(f"/api/v1/sessions/{session_id}")).json()
             assert state["current_turn"] == 2
             assert state["stand_in_actions"][0]["dialogue"] == "Configured Watcher says hello."
+
+
+async def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = await client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

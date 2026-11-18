@@ -12,10 +12,6 @@ class AssignRoleRequest(BaseModel):
     role: Literal["dungeon_master", "game_master", "player", "spectator"]
 
 
-class AdvanceTurnRequest(BaseModel):
-    next_character_id: str
-
-
 class DMOverrideRequest(BaseModel):
     action: str
     reason: str | None = None

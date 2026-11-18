@@ -12,7 +12,7 @@ from tests.helpers.mock_redis import MockAsyncRedis
 
 def _setup_active_combat(client: TestClient) -> tuple[str, str, str]:
     """Helper to initialize an active combat encounter."""
-    campaign_id = str(uuid4())
+    campaign_id = _owned_campaign(client)
     create_res = client.post(
         "/api/v1/sessions/create",
         json={"campaign_id": campaign_id, "title": "Ambush Corridor", "dm_id": "the_watcher"},
@@ -132,3 +132,10 @@ def test_ready_action_registration_and_triggering(client: TestClient, mock_bus: 
     # Verify ready action is consumed
     active_after = client.get(f"/sessions/{session_id}/reactions/active").json()
     assert not any(a["ready_action_id"] == ready_action_id for a in active_after["ready_actions"])
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

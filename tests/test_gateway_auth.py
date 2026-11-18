@@ -4,6 +4,9 @@ Setup runs through public frontdoors only. The owner creates a campaign, and
 members redeem invite tokens. No test writes SpiceDB tuples directly (ADR-0015 a, d).
 """
 
+import os
+
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
@@ -34,9 +37,7 @@ def _create_campaign_with_session(
     assert res.status_code == 201
     campaign_id = res.json()["id"]
 
-    sessions = client.get(f"/api/v1/campaigns/{campaign_id}/sessions", headers=owner_headers)
-    assert sessions.status_code == 200
-    return campaign_id, sessions.json()[0]["id"]
+    return campaign_id, _owner_session(campaign_id, owner_headers)
 
 
 def _join_with_invite(
@@ -82,7 +83,7 @@ async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
     # 3. Player can now view session
     res_player_view = client.get(f"/api/v1/sessions/{session_id}", headers=player)
     assert res_player_view.status_code == 200
-    assert res_player_view.json()["id"] == session_id
+    assert res_player_view.json()["session_id"] == session_id
 
     # 4. Player tries to advance turn (requires 'control' on the session, which is run_session on its campaign) -> 403 Forbidden
     res_player_advance = client.post(
@@ -94,13 +95,14 @@ async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
     assert res_player_advance.json()["detail"]["required_permission"] == "control"
 
     # 5. The owner runs the session as DM and can advance turn successfully
+    assert client.post(f"/api/v1/sessions/{session_id}/start", headers=owner).status_code == 200
     res_dm_advance = client.post(
         f"/api/v1/sessions/{session_id}/turns/advance",
         headers=owner,
         json={"next_character_id": "c2"},
     )
     assert res_dm_advance.status_code == 200
-    assert res_dm_advance.json()["status"] == "turn_advanced"
+    assert client.get(f"/api/v1/sessions/{session_id}", headers=owner).json()["current_turn"] == 2
 
 
 @pytest.mark.asyncio
@@ -116,3 +118,16 @@ async def test_zanzibar_board_view_permission(trusted_ws_issuer, client):
     res = client.get(f"/api/v1/boards/{session_id}", headers=spectator)
     assert res.status_code == 200
     assert "tokens" in res.json()
+
+
+def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
+    """Create a game session in a campaign through the owner's public game_session route."""
+    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/sessions/create",
+        json={"campaign_id": campaign_id, "title": "Crypt"},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
+    return res.json()["session_id"]
