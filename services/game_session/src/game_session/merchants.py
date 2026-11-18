@@ -8,13 +8,13 @@ Part of TASK-0103 / PRD-0014 / US-0047.
 from __future__ import annotations
 
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from game_session.minigame_rules import to_opt_uuid, to_uuid
 from pydantic import BaseModel, Field
-from runefoble_events.tavern import HagglingNegotiated
+from runefoble_events.tavern import HagglingNegotiated, MerchantCreated
 
 MERCHANT_TEMPERAMENTS: dict[str, dict[str, Any]] = {
     "stubborn_greedy": {
@@ -119,6 +119,34 @@ class MerchantAggregate(DeclarativeAggregate[MerchantState]):
         super().__init__(aggregate_id=agg_uuid, **kwargs)
         if self._state is None:
             self._state = MerchantState(merchant_id=str(aggregate_id or agg_uuid))
+
+    @classmethod
+    def create(
+        cls,
+        aggregate_id: UUID,
+        merchant_id: str,
+        temperament: str = "stubborn_greedy",
+    ) -> MerchantAggregate:
+        """Record a new merchant. The name follows the temperament when it is a known one."""
+        aggregate = cls(aggregate_id)
+        name = MerchantState.model_fields["name"].default
+        if temperament in MERCHANT_TEMPERAMENTS:
+            name = MERCHANT_TEMPERAMENTS[temperament]["default_name"]
+        else:
+            temperament = MerchantState.model_fields["temperament"].default
+        aggregate.create_event(
+            MerchantCreated,
+            merchant_id=merchant_id,
+            name=name,
+            temperament=temperament,
+        )
+        return aggregate
+
+    @handles(MerchantCreated)
+    def handle_created(self, event: MerchantCreated) -> None:
+        self.state.merchant_id = event.merchant_id
+        self.state.name = event.name
+        self.state.temperament = event.temperament
 
     @handles(HagglingNegotiated)
     def handle_negotiated(self, event: HagglingNegotiated) -> None:

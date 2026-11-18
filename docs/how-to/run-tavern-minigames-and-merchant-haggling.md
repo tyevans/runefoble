@@ -155,6 +155,8 @@ curl -X POST "http://localhost:8004/api/v1/sessions/session-wyvern-01/merchants/
   }'
 ```
 
+The first haggle with a merchant id records that merchant. The service emits `MerchantCreated`, then `HagglingNegotiated`. `GET /api/v1/merchants/{id}` returns `404` until the first haggle. A store outage returns `503` and writes no events.
+
 ### Response
 ```json
 {
