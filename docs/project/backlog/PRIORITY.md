@@ -331,7 +331,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 325. **TASK-0813 (Complete)**: [`0813-spicedb-outage-maps-to-one-503-in-every-service.md`](complete/0813-spicedb-outage-maps-to-one-503-in-every-service.md) — A SpiceDB Outage Maps to One 503 Answer in Every Service
 326. **TASK-0798 (Refined)**: [`0798-kind-stack-deploys-from-a-clean-cluster-with-one-command.md`](refined/0798-kind-stack-deploys-from-a-clean-cluster-with-one-command.md) — Kind Stack Deploys From a Clean Cluster With One Command
 327. **TASK-0815 (Complete)**: [`0815-events-have-one-import-home-and-no-alias-names.md`](complete/0815-events-have-one-import-home-and-no-alias-names.md) — Each Event Class Has One Import Home and No Alias Names
-328. **TASK-0816 (Refined)**: [`0816-uuid-parsing-uses-one-policy.md`](refined/0816-uuid-parsing-uses-one-policy.md) — UUID Parsing Uses One Policy in Every Service
+328. **TASK-0816 (Complete)**: [`0816-uuid-parsing-uses-one-policy.md`](complete/0816-uuid-parsing-uses-one-policy.md) — UUID Parsing Uses One Policy in Every Service
 329. **TASK-0817 (Refined)**: [`0817-services-use-the-shared-permission-check.md`](refined/0817-services-use-the-shared-permission-check.md) — Services Use One Shared Permission Check Instead of Local Wrappers
 330. **TASK-0818 (Refined)**: [`0818-one-spicedb-client-per-process.md`](refined/0818-one-spicedb-client-per-process.md) — Each Process Uses One SpiceDB Client From the Lib Factory
 331. **TASK-0819 (Refined)**: [`0819-aggregate-load-errors-use-the-lib-helpers.md`](refined/0819-aggregate-load-errors-use-the-lib-helpers.md) — Aggregate Load and Not-Found Handling Use the Lib Helpers
@@ -342,7 +342,7 @@ Order of priority for engineering tasks across the platform. Tasks strictly adhe
 336. **TASK-0824 (Complete)**: [`0824-frontend-removes-shims-and-unreachable-code.md`](complete/0824-frontend-removes-shims-and-unreachable-code.md) — The Frontend Removes Forwarding Shims and Unreachable Code
 337. **TASK-0825 (Refined)**: [`0825-ui-http-auth-and-socket-helpers-live-in-runefoble-ui.md`](refined/0825-ui-http-auth-and-socket-helpers-live-in-runefoble-ui.md) — UI HTTP, Auth and Socket Helpers Live in libs/runefoble_ui
 338. **TASK-0826 (Refined)**: [`0826-app-shell-stops-reaching-into-service-components.md`](refined/0826-app-shell-stops-reaching-into-service-components.md) — The App Shell Stops Reaching Into Service Component Internals
-339. **TASK-0827 (Refined)**: [`0827-test-helpers-for-ports-polling-processes-and-docker.md`](refined/0827-test-helpers-for-ports-polling-processes-and-docker.md) — Shared Test Helpers for Ports, Polling, Processes and Docker
+339. **TASK-0827 (Complete)**: [`0827-test-helpers-for-ports-polling-processes-and-docker.md`](complete/0827-test-helpers-for-ports-polling-processes-and-docker.md) — Shared Test Helpers for Ports, Polling, Processes and Docker
 340. **TASK-0828 (Refined)**: [`0828-tests-remove-structural-checks-and-double-runs.md`](refined/0828-tests-remove-structural-checks-and-double-runs.md) — Tests Remove Structural Checks, Facade Tests and Double-Run Bridges
 341. **TASK-0829 (Refined)**: [`0829-tests-share-bearer-and-campaign-setup-helpers.md`](refined/0829-tests-share-bearer-and-campaign-setup-helpers.md) — Tests Share One Bearer Helper and One Campaign Setup Helper
 342. **TASK-0830 (Refined)**: [`0830-tests-close-backdoors-into-private-state.md`](refined/0830-tests-close-backdoors-into-private-state.md) — Tests Close Backdoors Into Private State

@@ -137,6 +137,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- UUID parsing follows one rule (`runefoble_platform.identifiers`): ids typed as UUID are parsed strictly and bad input is 400 with the field name; opaque session ids map to aggregate ids through one deterministic function. No route substitutes a random id for bad or missing input. (TASK-0816)
+- Tests share helpers for free ports, polling, Node suites and Docker, and every subprocess call in tests has a timeout. (TASK-0827)
 - Every service that checks SpiceDB answers an outage with 503 `{"error": "authorization_unavailable"}`, and a schema defect with 500 and an `error_id`. (TASK-0813)
 - Event classes have one import home, `runefoble_events.events`. (TASK-0815)
 - The Helm chart builds every service Deployment, Service, ConfigMap, service URL and Swagger UI entry from one `services` map in `values.yaml`. (TASK-0832)

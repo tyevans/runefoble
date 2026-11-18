@@ -1,7 +1,7 @@
 ---
 id: '0827'
 title: "Shared Test Helpers for Ports, Polling, Processes and Docker"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0827: Shared Test Helpers for Ports, Polling, Processes and Docker
 
 ## Status
-Refined
+Complete
 
 ## Summary
 15 free-port helpers, 78 subprocess calls without a timeout, 10 raw node-suite runners, 10 polling helpers and three Docker plumbing paths.

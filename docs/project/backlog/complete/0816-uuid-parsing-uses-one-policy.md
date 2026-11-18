@@ -1,7 +1,7 @@
 ---
 id: '0816'
 title: "UUID Parsing Uses One Policy in Every Service"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0816: UUID Parsing Uses One Policy in Every Service
 
 ## Status
-Refined
+Complete
 
 ## Summary
 About 28 UUID helpers use three policies: raise 400, return None, or substitute a random UUID.
@@ -43,3 +43,6 @@ None. Refactor and consolidation chosen by the user on 2026-11-18.
 ## Audit Provenance
 - Severity: refactor
 - Source audits: `.audit/research/services-backend.md` (SVC-04)
+
+## Completion Note
+Orchestrator decisions: a create call without an id gets a new server UUID (creation, not substitution). The asset_forge `campaign_id or uuid4()` sites create a campaign-less, creator-only asset and follow the same rule.
