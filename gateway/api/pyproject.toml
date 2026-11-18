@@ -12,8 +12,5 @@ dependencies = [
     "runefoble-auth",
     "runefoble-platform",
     "runefoble-events",
-    "character-sheet",
-    "soundscape",
-    "rules-compendium",
     "websockets>=16.1.1",
 ]

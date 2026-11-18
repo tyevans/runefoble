@@ -57,6 +57,8 @@ Rules:
 - Do not read `os.environ` for a service URL. The registry holds the URL.
 - Do not add an `except` block that returns local data. The handlers in `upstream_errors.py` map each failure.
 - Do not copy client headers to the upstream request. Only the bearer token, the service credential, and the trace context leave the gateway.
+- Do not import a service package in `gateway_api`. Forward the body instead. Use `forward_raw` when the owner validates the body. `forward_raw` sends the caller's raw body unchanged, so a malformed body returns the owner's `422`. Use `forward_json` only when the gateway builds the JSON itself.
+- The import-contract gate (`make lint`, `uv run lint-imports`) fails when `gateway_api` imports a service package, directly or through a library. The contract is `gateway_api must not import a service package` in the root `pyproject.toml`. Keep the service list in that contract in step with `services/`.
 
 ## 4. Test the route through public frontdoors
 

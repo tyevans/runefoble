@@ -57,19 +57,28 @@ class ServiceClient:
         timeout_s: float,
         json: Any = None,
         params: dict[str, str] | None = None,
+        content: bytes | None = None,
+        content_type: str | None = None,
     ) -> UpstreamReply:
         """Send one request and return the upstream reply.
+
+        `content` forwards a raw body unchanged (the owner parses it). Pass `json` or `content`,
+        not both. `content_type` is the body's media type and is sent only with `content`.
 
         Raises UpstreamUnavailableError on connect failure or timeout.
         Raises UpstreamFailureError on an upstream 5xx status.
         """
+        headers = build_upstream_headers(authorization, self._service_credential)
+        if content_type is not None:
+            headers["Content-Type"] = content_type
         try:
             response = await self._http.request(
                 method,
                 f"{self._base_url}{path}",
                 json=json,
+                content=content,
                 params=params,
-                headers=build_upstream_headers(authorization, self._service_credential),
+                headers=headers,
                 timeout=timeout_s,
             )
         except httpx.TransportError as exc:

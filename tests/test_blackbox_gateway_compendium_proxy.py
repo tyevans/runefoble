@@ -179,3 +179,31 @@ def test_owner_5xx_returns_502_through_the_gateway(
 
     assert res.status_code == 502, res.text
     assert res.json()["upstream"] == "rules_compendium"
+
+
+def test_malformed_encounter_body_returns_owner_422(gateway, trusted_ws_issuer):
+    """The gateway forwards the raw body, so rules_compendium answers the 422 itself."""
+    res = gateway.post(
+        "/api/v1/compendium/encounters/balance",
+        headers={**_auth(trusted_ws_issuer, "player_tamsin"), "Content-Type": "application/json"},
+        content=b"{not json",
+    )
+
+    assert res.status_code == 422, res.text
+    assert res.json()["detail"][0]["type"] == "json_invalid"
+
+
+def test_schema_invalid_homebrew_body_returns_owner_422(gateway, trusted_ws_issuer):
+    """A well-formed body that breaks the owner schema reaches the owner, which answers 422."""
+    owner = _auth(trusted_ws_issuer, "dm_valeros")
+    created = gateway.post("/api/v1/campaigns", json={"title": "Bad Body"}, headers=owner)
+    assert created.status_code == 201, created.text
+
+    res = gateway.post(
+        "/api/v1/compendium/homebrew",
+        headers=owner,
+        json={"campaign_id": created.json()["id"], "rule_type": 7},
+    )
+
+    assert res.status_code == 422, res.text
+    assert res.json()["detail"][0]["loc"][0] == "body"

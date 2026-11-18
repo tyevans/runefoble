@@ -2,7 +2,7 @@
 
 The shared typed HTTP client for calls from a gateway to an owning bounded context. It lives in `libs/runefoble_platform/src/runefoble_platform/service_client/`.
 
-The gateway uses this client for every proxy call. Each proxy call goes through `gateway_api.proxy.forward_json`, which uses the registry in `gateway_api.upstreams`. The MCP gateway uses it through the route helpers in `gateway_mcp.owning_services.OwningServices`. Those helpers map the errors to MCP tool errors. They keep one client for each event loop, service, and base URL.
+The gateway uses this client for every proxy call. Each proxy call goes through `gateway_api.proxy.forward_json`, or `forward_raw` when the owner validates a raw body. Both use the registry in `gateway_api.upstreams`. The MCP gateway uses it through the route helpers in `gateway_mcp.owning_services.OwningServices`. Those helpers map the errors to MCP tool errors. They keep one client for each event loop, service, and base URL.
 
 ## Modules
 
@@ -41,6 +41,8 @@ await client.send(
     timeout_s: float,
     json: Any = None,
     params: dict[str, str] | None = None,
+    content: bytes | None = None,
+    content_type: str | None = None,
 ) -> UpstreamReply
 ```
 
@@ -50,8 +52,10 @@ await client.send(
 | `path` | Path that is appended to `base_url`, for example `/api/v1/soundscape/cue`. Build it with `path(...)` when a segment comes from input. |
 | `authorization` | The verified `Authorization` header value of the caller, or `None`. |
 | `timeout_s` | Timeout for this call, in seconds. It applies to connect, read, write, and pool. |
-| `json` | Optional JSON body. |
+| `json` | Optional JSON body that the gateway built. |
 | `params` | Optional query string values. |
+| `content` | Optional raw body, forwarded unchanged. The owner parses it. Pass `json` or `content`, not both. |
+| `content_type` | Media type of `content`. The client sends it only with `content`. |
 
 The caller sets `timeout_s` for each call. The client sets no default timeout. The client does not retry. The client does not cache.
 

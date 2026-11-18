@@ -22,6 +22,7 @@ from typing import Any
 from fastapi import HTTPException, Request, status
 from gateway_api.dependencies import get_upstreams
 from gateway_api.upstream_errors import UpstreamRejectedError
+from runefoble_platform.service_client import UpstreamReply
 
 logger = logging.getLogger("runefoble.gateway.proxy")
 
@@ -38,7 +39,7 @@ async def forward_json(
     params: Mapping[str, str] | None = None,
     timeout: float = 5.0,
 ) -> Any:
-    """Send one request to an owning service and return its decoded JSON body."""
+    """Send one request with a JSON body that the gateway built and return the decoded reply."""
     client = get_upstreams(request).client(service)
     reply = await client.send(
         method,
@@ -48,7 +49,38 @@ async def forward_json(
         params=dict(params) if params else None,
         timeout_s=timeout,
     )
+    return _decode_reply(service, method, path, reply)
 
+
+async def forward_raw(
+    request: Request,
+    *,
+    service: str,
+    method: str,
+    path: str,
+    params: Mapping[str, str] | None = None,
+    timeout: float = 5.0,
+) -> Any:
+    """Forward the caller's raw body unchanged. The owning service validates it.
+
+    The gateway never parses the body, so a malformed body reaches the owner, and the
+    owner's own 422 passes through.
+    """
+    client = get_upstreams(request).client(service)
+    reply = await client.send(
+        method,
+        path,
+        authorization=request.headers.get("authorization"),
+        content=await request.body(),
+        content_type=request.headers.get("content-type", "application/json"),
+        params=dict(params) if params else None,
+        timeout_s=timeout,
+    )
+    return _decode_reply(service, method, path, reply)
+
+
+def _decode_reply(service: str, method: str, path: str, reply: UpstreamReply) -> Any:
+    """Return the decoded JSON of a 2xx reply, or raise the mapped error."""
     if reply.status_code >= 400:
         raise UpstreamRejectedError(service, reply)
 
