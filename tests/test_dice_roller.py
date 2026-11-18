@@ -174,6 +174,13 @@ def test_standard_d20_crit_and_fumble() -> None:
     assert normal["total"] == 13
 
 
+@pytest.mark.parametrize("formula", ["1d20abc", "1d20+3x", "1d20 extra", "2d20kh1+3!"])
+def test_trailing_text_is_rejected(formula: str) -> None:
+    """A formula with trailing text is invalid. It is not read as its leading dice."""
+    with pytest.raises(ValueError, match="Invalid dice formula"):
+        parse_and_roll(formula)
+
+
 def test_invalid_formula_raises_error() -> None:
     """Invalid formulas must raise ValueError."""
     with pytest.raises(ValueError, match="Invalid dice formula"):

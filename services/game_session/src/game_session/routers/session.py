@@ -283,7 +283,10 @@ async def roll_dice_session(
     """Evaluate a dice roll for the verified caller and record it on the session aggregate."""
     req_data = req or RollDiceRequest()
     session = await _load_session(session_id)
-    result = parse_and_roll(req_data.formula)
+    try:
+        result = parse_and_roll(req_data.formula)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
     session.record_dice_roll(
         roller_id=roller_id,
         roller_name=req_data.roller_name,
