@@ -32,7 +32,7 @@ def mock_stand_in_decision(
         decision = _ally_heal_decision(char_name, ally, penalty_set)
         applied.append(GuardrailName.PROTECT_ALLIES)
     elif policy.avoid_melee and cls in CASTER_CLASSES:
-        decision = _ranged_decision(char_name, cls, target)
+        decision = _ranged_decision(char_name, cls, target, penalty_set)
         applied.append(GuardrailName.AVOID_MELEE)
         if priority_hit:
             applied.append(GuardrailName.CUSTOM_PRIORITIES)
@@ -88,14 +88,28 @@ def _ally_heal_decision(char_name: str, ally: str, penalty_set: list[str]) -> di
     }
 
 
-def _ranged_decision(char_name: str, cls: str, target: str) -> dict[str, Any]:
+def _ranged_decision(
+    char_name: str, cls: str, target: str, penalty_set: list[str]
+) -> dict[str, Any]:
+    """Keep the caster at range. A DM penalty still shapes how the action looks."""
     action_type = "cast_spell" if cls != "ranger" else "ranged_attack"
+    mechanics: dict[str, Any] = {"action": action_type, "target": target}
+    if "drunk" in penalty_set:
+        dialogue = "*Hic* 'Keeping my dishtance from the pointy end, ash planned!'"
+        flavor = (
+            f"{char_name} sways at the back line and flings a wobbly ranged attack at {target} "
+            "per tactical guardrails."
+        )
+        mechanics |= {"condition": "Disadvantage (Intoxicated)", "penalty": "drunk"}
+    else:
+        dialogue = "'Keeping distance from frontline melee as planned!'"
+        flavor = f"{char_name} maintains safe distance, deploying ranged attacks per tactical guardrails."
     return {
         "action_type": action_type,
         "target": target,
-        "dialogue": "'Keeping distance from frontline melee as planned!'",
-        "narrative_flavor": f"{char_name} maintains safe distance, deploying ranged attacks per tactical guardrails.",
-        "mechanics": {"action": action_type, "target": target},
+        "dialogue": dialogue,
+        "narrative_flavor": flavor,
+        "mechanics": mechanics,
     }
 
 
