@@ -104,6 +104,13 @@ The FastMCP Gateway (`gateway/mcp`) provides dynamic runtime tool registration, 
 
 Post a `DynamicToolDefinition` to `/mcp/tools` on the MCP gateway (`http://gateway-mcp:8012` inside the cluster). The API gateway does not serve this route. The request needs a Zitadel bearer token. The gateway records the token subject as the tool's author. The body fields `author_id` and `user_id`, and the `X-User-Id` header, are ignored (TASK-0532).
 
+The MCP gateway has no ingress path. It is reachable only inside the cluster (ADR-0001). To call it
+from a developer machine, forward its port first. The examples below then use `localhost:8012`:
+
+```bash
+kubectl port-forward svc/gateway-mcp 8012:8012
+```
+
 ```python
 import httpx
 
