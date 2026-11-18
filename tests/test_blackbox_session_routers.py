@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 
+from tests.helpers.stand_in_policy import create_character
 from tests.helpers.watcher_double import (
     STAND_IN_ACTION_BODY,
     serve_watcher_double,
@@ -81,7 +82,7 @@ def test_game_session_lifecycle_frontdoor(session_client):
     assert start_res.status_code == 200 and start_res.json()["status"] == "active"
 
 
-def test_game_session_turns_frontdoor(session_client, monkeypatch):
+def test_game_session_turns_frontdoor(session_client, live_character_sheet, monkeypatch):
     """Verify turn advancement, combat initiative rotation, and autopilot frontdoors."""
     c_res = session_client.post(
         "/api/v1/sessions/create",
@@ -91,7 +92,8 @@ def test_game_session_turns_frontdoor(session_client, monkeypatch):
             "dm_id": "dm_alice",
         },
     )
-    session_id, char_id = c_res.json()["session_id"], str(uuid4())
+    session_id = c_res.json()["session_id"]
+    char_id = create_character(live_character_sheet, "test-user", "Valeros")
     p_data = {
         "character_id": char_id,
         "character_name": "Valeros",

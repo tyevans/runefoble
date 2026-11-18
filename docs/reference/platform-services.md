@@ -152,7 +152,7 @@ The chart defines these keys in one block in `deployments/helm/runefoble/templat
 The chart sets `RUNEFOBLE_ENVIRONMENT` on every service from `global.environment`. A deployed environment is `staging` or `production`. In a deployed environment, a missing dependency stops the service at start-up. It never falls back to a substitute.
 
 - **`game_session`** refuses to start when `RUNEFOBLE_ENVIRONMENT` is `staging` or `production` and `RUNEFOBLE_WATCHER_URL` is unset. In `development` and `local`, it starts without the URL.
-- **Auto-pilot** (`POST /api/v1/sessions/{id}/turns/auto-pilot`) returns `503 Service Unavailable` when `RUNEFOBLE_WATCHER_URL` is unset, when The Watcher is unreachable, when The Watcher returns a status other than `200`, or when it returns an invalid body. No action is recorded and the turn does not advance. Auto-pilot never runs a local engine in place of The Watcher.
+- **Auto-pilot** (`POST /api/v1/sessions/{id}/turns/auto-pilot`) reads the absent character's stored stand-in policy from `character_sheet` (`RUNEFOBLE_CHARACTER_SHEET_URL`, service credential). It returns `503 Service Unavailable` when `RUNEFOBLE_WATCHER_URL` is unset, when `character_sheet` cannot supply the stored policy, when The Watcher is unreachable, when The Watcher returns a status other than `200`, or when it returns an invalid body. No action is recorded and the turn does not advance. Auto-pilot never runs a local engine in place of The Watcher.
 - **Microfrontend manifests**: `character_sheet` and `soundscape` stop at start-up when `ui/manifest.json` is missing or is not a JSON object. `make build` runs `make check-ui-manifests`, which checks every `services/*/ui/manifest.json`.
 
 ---

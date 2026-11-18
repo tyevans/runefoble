@@ -14,13 +14,10 @@ from character_sheet.models import (
     HealthChangeRequest,
     PortraitResponse,
     SetActivePortraitRequest,
-    StandInGuardrails,
-    UpdateGuardrailsRequest,
     VitalsTransitionsMixin,
     WardrobeVariant,
 )
 from character_sheet.models.base import AttributeScores as BaseAttributeScores
-from character_sheet.models.base import StandInGuardrails as BaseStandInGuardrails
 from character_sheet.models.base import VitalsTransitionsMixin as BaseVitalsTransitionsMixin
 from character_sheet.models.base import WardrobeVariant as BaseWardrobeVariant
 from character_sheet.models.character import AttributeScores as CharAttributeScores
@@ -37,11 +34,9 @@ def test_core_facade_and_direct_imports() -> None:
     assert CharacterCore is CharCharacterCore
     assert AttributeScores is CharAttributeScores is BaseAttributeScores
     assert WardrobeVariant is BaseWardrobeVariant
-    assert StandInGuardrails is BaseStandInGuardrails
     assert VitalsTransitionsMixin is BaseVitalsTransitionsMixin
     assert CreateCharacterRequest is not None
     assert HealthChangeRequest is not None
-    assert UpdateGuardrailsRequest is not None
     assert AssignCampaignRequest is not None
     assert AddWardrobeVariantRequest is not None
     assert SetActivePortraitRequest is not None

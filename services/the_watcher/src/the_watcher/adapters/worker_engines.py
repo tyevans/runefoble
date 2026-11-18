@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from runefoble_platform.stand_in_action import StandInAction
 from the_watcher.board_client import fetch_visible_tokens
 from the_watcher.models import (
     DMGuidanceRequest,
     DMNarrationResult,
     IntentResult,
     SpeechInputRequest,
-    StandInAction,
     StandInRequest,
 )
 from the_watcher.ports import IntentParser, SceneNarrator, StandInDecider

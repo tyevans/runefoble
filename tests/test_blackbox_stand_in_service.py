@@ -17,6 +17,7 @@ from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.stand_in_policy import create_character
 from tests.helpers.watcher_double import (
     STAND_IN_ACTION_BODY,
     serve_watcher_double,
@@ -98,7 +99,10 @@ async def test_watcher_stand_in_event_emission(mock_redis: MockAsyncRedis, use_r
 
 @pytest.mark.asyncio
 async def test_game_session_auto_pilot_turn(
-    mock_redis: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch, use_redis_client
+    mock_redis: MockAsyncRedis,
+    monkeypatch: pytest.MonkeyPatch,
+    use_redis_client,
+    live_character_sheet: str,
 ):
     """POST /api/v1/sessions/{session_id}/turns/auto-pilot must advance turn and record stand-in action."""
     use_redis_client(mock_redis)
@@ -109,7 +113,8 @@ async def test_game_session_auto_pilot_turn(
         base_url="http://test",
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
-        campaign_id, char_id = await _owned_campaign(client), str(uuid4())
+        campaign_id = await _owned_campaign(client)
+        char_id = create_character(live_character_sheet, "test-user")
 
         # 1. Create session
         create_res = await client.post(

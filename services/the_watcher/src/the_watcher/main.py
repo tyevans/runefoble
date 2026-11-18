@@ -13,6 +13,7 @@ from runefoble_platform.event_publish import (
     install_publish_failure_handler,
 )
 from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.stand_in_action import StandInAction
 from the_watcher.authz_errors import install_authz_error_handlers
 from the_watcher.copilot_state import install_copilot_state_error_handlers
 from the_watcher.dependencies import (
@@ -47,7 +48,6 @@ from the_watcher.models import (
     RecapRequest,
     SceneGenerateRequest,
     SpeechInputRequest,
-    StandInAction,
     StandInRecapRequest,
     StandInRecapResponse,
     StandInRequest,

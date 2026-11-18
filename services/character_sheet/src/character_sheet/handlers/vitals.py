@@ -2,9 +2,10 @@
 
 from typing import Any, Literal
 
-from character_sheet.models import CharacterState, StandInGuardrails
+from character_sheet.models import CharacterState
 from eventsource.domain.decorators import handles
 from runefoble_events import events as ev
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 PenaltyType = Literal["drunk", "foolishness", "cowardice", "greed", "curse"]
 ImposedBy = Literal["human_dm", "the_watcher"]
@@ -68,7 +69,9 @@ class VitalsHandlerMixin:
         new_hp = max(0, min(self.state.max_hp, self.state.current_hp + delta))
         self._emit_hp(delta, new_hp, source, session_id)
 
-    def update_stand_in_guardrails(self, guardrails: StandInGuardrails | dict[str, Any]) -> None:
+    def update_stand_in_guardrails(
+        self, guardrails: StandInGuardrailPolicy | dict[str, Any]
+    ) -> None:
         """Configure tactical constraints for stand-in AI."""
         gr = guardrails.model_dump() if hasattr(guardrails, "model_dump") else dict(guardrails)
         self.create_event(

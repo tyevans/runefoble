@@ -13,7 +13,6 @@ from http.server import ThreadingHTTPServer
 from typing import Any
 
 import pytest
-from character_sheet.models import StandInGuardrails
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api
 from inference_worker.config import WorkerSettings
@@ -183,11 +182,13 @@ async def test_llm_reported_guardrails_are_filtered_to_active_policy(
         ),
     }
     worker_backend(_llm_settings(fake_llm_server))
+    # avoid_melee is off here, so the model's naming of it must be filtered out.
+    payload = _worker_payload(guardrails={"protect_allies": ["Marcus"], "avoid_melee": False})
 
     async with AsyncClient(
         transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
     ) as ac:
-        resp = await ac.post(WORKER_PATH, json=_worker_payload())
+        resp = await ac.post(WORKER_PATH, json=payload)
 
     assert resp.status_code == 200
     body = resp.json()
@@ -196,7 +197,8 @@ async def test_llm_reported_guardrails_are_filtered_to_active_policy(
 
 
 @pytest.mark.asyncio
-async def test_worker_without_guardrails_reports_none(worker_backend):
+async def test_worker_omitted_policy_applies_the_shared_default(worker_backend):
+    """An omitted policy takes the shared default. The default enables avoid_melee."""
     worker_backend(WorkerSettings(backend="mock"))
     payload = _worker_payload(guardrails=None)
 
@@ -206,13 +208,13 @@ async def test_worker_without_guardrails_reports_none(worker_backend):
         resp = await ac.post(WORKER_PATH, json=payload)
 
     assert resp.status_code == 200
-    assert resp.json()["guardrails_applied"] == []
+    assert resp.json()["guardrails_applied"] == ["avoid_melee"]
 
 
 def test_shared_guardrail_policy_declares_every_character_sheet_field():
     """The shared contract must not drop a field that the character sheet stores."""
     shared = set(StandInGuardrailPolicy.model_fields)
-    stored = set(StandInGuardrails.model_fields)
+    stored = set(StandInGuardrailPolicy.model_fields)
 
     assert shared == stored
 
@@ -222,7 +224,7 @@ async def test_worker_mock_reserves_spell_slots_by_casting_a_cantrip(worker_back
     """preserve_spell_slots in mock mode turns a spell into a cantrip. No slot is spent."""
     worker_backend(WorkerSettings(backend="mock"))
     payload = _worker_payload(
-        guardrails={"preserve_spell_slots": {"3": 1}},
+        guardrails={"preserve_spell_slots": {"3": 1}, "avoid_melee": False},
         scene_context="Orcs close in",
         visible_allies=[],
     )
@@ -244,7 +246,9 @@ async def test_worker_mock_reserves_spell_slots_by_casting_a_cantrip(worker_back
 async def test_worker_mock_without_slot_reserve_casts_at_default_level(worker_backend):
     """With no reserve policy, the mock casts without the cantrip rule and reports nothing."""
     worker_backend(WorkerSettings(backend="mock"))
-    payload = _worker_payload(guardrails=None, scene_context="Orcs close in", visible_allies=[])
+    payload = _worker_payload(
+        guardrails={"avoid_melee": False}, scene_context="Orcs close in", visible_allies=[]
+    )
 
     async with AsyncClient(
         transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
@@ -263,7 +267,7 @@ async def test_worker_mock_targets_the_first_prioritized_enemy(worker_backend):
     """custom_priorities orders the targets. The first priority that names a visible enemy wins."""
     worker_backend(WorkerSettings(backend="mock"))
     payload = _worker_payload(
-        guardrails={"custom_priorities": ["Goblin Archer", "orc chieftain"]},
+        guardrails={"custom_priorities": ["Goblin Archer", "orc chieftain"], "avoid_melee": False},
         visible_enemies=["Orc Chieftain", "Goblin Archer"],
         scene_context="Orcs close in",
         visible_allies=[],
@@ -284,7 +288,7 @@ async def test_worker_mock_targets_the_first_prioritized_enemy(worker_backend):
 async def test_worker_mock_ignores_priorities_that_name_no_enemy(worker_backend):
     worker_backend(WorkerSettings(backend="mock"))
     payload = _worker_payload(
-        guardrails={"custom_priorities": ["Dragon"]},
+        guardrails={"custom_priorities": ["Dragon"], "avoid_melee": False},
         visible_enemies=["Orc Chieftain", "Goblin Archer"],
         scene_context="Orcs close in",
         visible_allies=[],

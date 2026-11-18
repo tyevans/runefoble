@@ -7,7 +7,6 @@ from uuid import UUID
 from character_sheet.models.base import (
     DEFAULT_SCORES,
     AttributeScores,
-    StandInGuardrails,
     VitalsTransitionsMixin,
     WardrobeVariant,
 )
@@ -17,6 +16,7 @@ from character_sheet.models.progression import ProgressionTransitionsMixin
 from character_sheet.portrait import compute_condition_badges, resolve_active_portrait_url
 from character_sheet.rules import SPELL_SLOTS_TABLE
 from pydantic import BaseModel, Field
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 
 class CharacterCore(BaseModel):
@@ -36,7 +36,7 @@ class CharacterCore(BaseModel):
     spellbook: list[str] = Field(default_factory=list)
     prepared_spells: list[str] = Field(default_factory=list)
     spell_slots: dict[int, int] = Field(default_factory=lambda: {1: 2})
-    stand_in_guardrails: StandInGuardrails = Field(default_factory=StandInGuardrails)
+    stand_in_guardrails: StandInGuardrailPolicy = Field(default_factory=StandInGuardrailPolicy)
     is_stand_in_active: bool = False
     is_stabilized: bool = False
     base_portrait_url: str = "/assets/portraits/default.svg"

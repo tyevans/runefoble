@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
 
+from tests.helpers.stand_in_policy import create_character
 from tests.helpers.watcher_double import (
     STAND_IN_ACTION_BODY,
     serve_watcher_double,
@@ -59,6 +60,7 @@ def _absent_player_with_stand_in_turn(
     upstream: str,
     issuer,
     monkeypatch: pytest.MonkeyPatch,
+    character_url: str,
 ) -> tuple[dict[str, str], str]:
     """Run a session where a player leaves and an autopilot stand-in turn is recorded."""
     owner = _auth(issuer, "dm-evelyn")
@@ -66,7 +68,7 @@ def _absent_player_with_stand_in_turn(
     joined = httpx.post(
         f"{upstream}/api/v1/sessions/{session_id}/join",
         json={
-            "character_id": str(uuid4()),
+            "character_id": create_character(character_url, "dm-evelyn"),
             "character_name": "Kyra",
             "character_class": "Cleric",
         },
@@ -118,10 +120,10 @@ def test_caller_without_observe_right_is_refused(gateway, trusted_ws_issuer, pat
 
 
 def test_feed_lists_the_stand_in_action_with_its_speaker_and_line(
-    gateway, game_session_upstream, trusted_ws_issuer, monkeypatch
+    gateway, game_session_upstream, trusted_ws_issuer, monkeypatch, live_character_sheet
 ) -> None:
     owner, session_id = _absent_player_with_stand_in_turn(
-        gateway, game_session_upstream, trusted_ws_issuer, monkeypatch
+        gateway, game_session_upstream, trusted_ws_issuer, monkeypatch, live_character_sheet
     )
     res = gateway.get(f"/api/v1/sessions/{session_id}/events", headers=owner)
     assert res.status_code == 200, res.text
@@ -136,10 +138,10 @@ def test_feed_lists_the_stand_in_action_with_its_speaker_and_line(
 
 
 def test_recap_derives_penalties_from_the_recorded_stand_in_turn(
-    gateway, game_session_upstream, trusted_ws_issuer, monkeypatch
+    gateway, game_session_upstream, trusted_ws_issuer, monkeypatch, live_character_sheet
 ) -> None:
     owner, session_id = _absent_player_with_stand_in_turn(
-        gateway, game_session_upstream, trusted_ws_issuer, monkeypatch
+        gateway, game_session_upstream, trusted_ws_issuer, monkeypatch, live_character_sheet
     )
     res = gateway.get(f"/api/v1/sessions/{session_id}/absentee-recap", headers=owner)
     assert res.status_code == 200, res.text

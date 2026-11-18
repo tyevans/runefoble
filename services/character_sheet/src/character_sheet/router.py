@@ -7,9 +7,10 @@ from uuid import UUID, uuid4
 from character_sheet import dependencies as deps
 from character_sheet import roster, schemas
 from character_sheet.authz import write_character_ownership
-from character_sheet.models import CharacterState, StandInGuardrails
+from character_sheet.models import CharacterState
 from character_sheet.roster import CharacterRosterView
 from fastapi import APIRouter, HTTPException, Query
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 router = APIRouter(tags=["character_sheet"])
 
@@ -198,7 +199,7 @@ async def remove_condition(character_id: UUID, condition: str, repo: deps.RepoDe
 )
 async def update_guardrails(
     character_id: UUID,
-    req: schemas.UpdateGuardrailsRequest,
+    req: StandInGuardrailPolicy,
     repo: deps.RepoDep,
 ):
     try:
@@ -209,8 +210,8 @@ async def update_guardrails(
 
 @router.get(
     "/api/v1/characters/{character_id}/guardrails",
-    response_model=StandInGuardrails,
-    dependencies=deps.VIEW_CHARACTER,
+    response_model=StandInGuardrailPolicy,
+    dependencies=deps.VIEW_CHARACTER_OR_SERVICE,
 )
 async def get_guardrails(character_id: UUID, repo: deps.RepoDep):
     return (await deps.load_character(repo, character_id)).state.stand_in_guardrails

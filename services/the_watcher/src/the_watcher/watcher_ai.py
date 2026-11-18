@@ -6,11 +6,12 @@ autonomous Dungeon Mastering, and missing player stand-in emulation with penalti
 
 from typing import Any
 
+from runefoble_platform.stand_in_action import StandInAction
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 from the_watcher.compound_actions import CompoundActionEngine
 from the_watcher.disambiguation import DisambiguationEngine
 from the_watcher.intent.reactions import ReactionIntent, parse_reaction_intent
-from the_watcher.models import IntentResult, StandInAction, StandInRecapResponse
+from the_watcher.models import IntentResult, StandInRecapResponse
 from the_watcher.movement_parser import SpeechIntentParser
 from the_watcher.stand_in_ai import StandInAIEngine
 

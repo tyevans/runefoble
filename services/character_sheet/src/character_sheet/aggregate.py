@@ -12,7 +12,6 @@ from character_sheet.models import (
     CharacterState,
     ConditionState,
     InventoryItem,
-    StandInGuardrails,
     WardrobeVariant,
 )
 from character_sheet.rules import (
@@ -34,7 +33,6 @@ __all__ = [
     "CLASS_HIT_DIE", "KNOWN_SPELL_LEVELS", "SPELL_SLOTS_TABLE", "CharacterAggregate",
     "CharacterSheetState", "CharacterState", "ConditionState", "InventoryHandlerMixin",
     "InventoryItem", "PortraitHandlerMixin", "SpellSlotRestoreHandlerMixin", "SpellsHandlerMixin",
-    "StandInGuardrails",
     "VitalsHandlerMixin", "WardrobeVariant", "get_hit_die_for_class",
     "get_known_spell_level", "get_spell_slots_for_level",
 ]

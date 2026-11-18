@@ -7,12 +7,13 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import ParticipantState
+from game_session.character_client import CharacterSheetUnavailableError, fetch_stand_in_policy
 from game_session.dependencies import get_event_bus, logger, repo, watcher_service_url
 from game_session.events import STREAM_WATCHER
 from game_session.models import AutoPilotRequest, AutoPilotResponse
 from game_session.routers.session_auth import session_permission
 from runefoble_events.events import AbsencePenaltyApplied
-from the_watcher.watcher_ai import StandInAction
+from runefoble_platform.stand_in_action import StandInAction
 
 router = APIRouter(dependencies=[Depends(session_permission("control"))], tags=["autopilot"])
 
@@ -108,6 +109,16 @@ async def auto_pilot_turn(
             status_code=503,
             detail="The Watcher service is not configured (RUNEFOBLE_WATCHER_URL is unset).",
         )
+    # The stored policy of the absent character is the only policy the stand-in obeys.
+    try:
+        policy = await fetch_stand_in_policy(target_participant.character_id)
+    except CharacterSheetUnavailableError as e:
+        logger.error("Auto-pilot refused: stored stand-in policy unavailable: %s", e)
+        raise HTTPException(
+            status_code=503,
+            detail=f"The stored stand-in policy is unavailable. No stand-in action was recorded. {e}",
+        ) from e
+
     stand_in_action = await _request_stand_in_action(
         watcher_url,
         {
@@ -116,11 +127,7 @@ async def auto_pilot_turn(
             "penalties": request_data.penalties,
             "scene_context": request_data.scene_context,
             "personality_traits": request_data.personality_traits,
-            "guardrails": (
-                request_data.guardrails.model_dump(mode="json")
-                if request_data.guardrails is not None
-                else None
-            ),
+            "guardrails": policy.model_dump(mode="json"),
             "session_id": str(session_id),
             "campaign_id": str(session.state.campaign_id),
         },

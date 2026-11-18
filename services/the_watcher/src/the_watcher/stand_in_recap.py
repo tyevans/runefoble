@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from the_watcher.models import StandInAction
+from runefoble_platform.stand_in_action import StandInAction
 
 
 def generate_absentee_recap(
