@@ -11,19 +11,21 @@ The gateway uses this client for every proxy call. Each proxy call goes through 
 | `client.py` | `ServiceClient`, `UpstreamReply` |
 | `errors.py` | `UpstreamError`, `UpstreamUnavailableError`, `UpstreamFailureError` |
 | `headers.py` | `build_upstream_headers` |
+| `paths.py` | `path` |
 
-The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `UpstreamUnavailableError`, and `UpstreamFailureError`.
+The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `UpstreamUnavailableError`, `UpstreamFailureError`, and `path`.
 
 ## `ServiceClient`
 
 ```python
-ServiceClient(service: str, base_url: str, transport: httpx.AsyncBaseTransport | None = None)
+ServiceClient(service: str, base_url: str, service_credential: str, transport: httpx.AsyncBaseTransport | None = None)
 ```
 
 | Argument | Meaning |
 |---|---|
 | `service` | Service name. It appears in errors and in the gateway error body (`upstream`). |
 | `base_url` | Base URL of the owning service. A trailing `/` is removed. |
+| `service_credential` | Service credential (ADR-0015 e). It is sent on every call in the `X-Runefoble-Service-Credential` header. The constructor raises `ValueError` when it is blank. |
 | `transport` | Optional HTTP transport. Tests pass a transport here. Production code omits it. |
 
 Each instance owns one `httpx.AsyncClient`. Call `await aclose()` when the instance is no longer needed.
@@ -45,7 +47,7 @@ await client.send(
 | Argument | Meaning |
 |---|---|
 | `method` | HTTP method, for example `GET` or `POST`. |
-| `path` | Path that is appended to `base_url`, for example `/api/v1/soundscape/cue`. |
+| `path` | Path that is appended to `base_url`, for example `/api/v1/soundscape/cue`. Build it with `path(...)` when a segment comes from input. |
 | `authorization` | The verified `Authorization` header value of the caller, or `None`. |
 | `timeout_s` | Timeout for this call, in seconds. It applies to connect, read, write, and pool. |
 | `json` | Optional JSON body. |
@@ -76,14 +78,24 @@ An upstream 2xx or 4xx answer is never an error at this level. `send` returns it
 
 ## Outgoing headers
 
-`build_upstream_headers(authorization)` builds the headers for one call:
+`build_upstream_headers(authorization, service_credential)` builds the headers for one call:
 
 | Header | Source |
 |---|---|
+| `X-Runefoble-Service-Credential` | The `service_credential` argument. Sent on every call. The name is `runefoble_platform.service_credential.SERVICE_CREDENTIAL_HEADER`. |
 | `Authorization` | The `authorization` argument. Omitted when it is `None` or empty. |
 | `traceparent` (and `tracestate`, when set) | The active OpenTelemetry context, through `runefoble_platform.telemetry.inject_trace_context`. |
 
-No other header leaves the caller. Client headers are never copied. The owning service verifies the bearer token itself (ADR-0015, decision c). The gateway does not send a principal or user header.
+No other header leaves the caller. Client headers are never copied. The owning service verifies the bearer token itself (ADR-0015, decision c). The service credential identifies the calling service. It is not a user token, and it does not replace the bearer token. The gateway does not send a principal or user header.
+
+## Path segments
+
+`path(*segments)` builds the path that `send` takes. It returns an absolute path, for example `path("api", "v1", "pins", "a/b?c")` returns `/api/v1/pins/a%2Fb%3Fc`.
+
+- Each segment is percent-encoded with `urllib.parse.quote(segment, safe="")`. A `/`, `?`, or `#` stays inside one segment.
+- It raises `ValueError` for an empty segment, or for a segment that is `.` or `..`. Such a segment would change the target route.
+
+Use `path` for every segment that comes from user or agent input. Do not join raw strings into a path.
 
 ## Gateway status mapping
 
@@ -107,6 +119,7 @@ The gateway never returns a substitute body for any of these cases.
 - The FastAPI lifespan in `gateway_api/main.py` builds the registry from `PlatformSettings()` at start-up. It stores the registry on `app.state.upstreams`. It closes every client at shutdown.
 - `gateway_api.dependencies.get_upstreams(request)` returns the registry. It is a FastAPI dependency.
 - `registry.client(service)` returns the client. It raises `UpstreamUnavailableError` when no URL is configured for that service.
+- The lifespan also reads `RUNEFOBLE_SERVICE_CREDENTIAL` (through `expected_service_credential`). The gateway refuses to start when it is unset or blank. Helm injects the value from the credentials Secret into `gateway-api`.
 
 Service names and settings fields:
 
