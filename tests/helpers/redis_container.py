@@ -13,6 +13,8 @@ import redis
 from tests.helpers.container_owner import owner_label_args, remove_test_container
 
 REDIS_IMAGE = "redis:7-alpine"
+# Upper bound for one Docker CLI call. The image pull is the slowest call.
+DOCKER_TIMEOUT_SECONDS = 180.0
 
 
 @contextmanager
@@ -22,7 +24,9 @@ def redis_container(port: int) -> Generator[str]:
     if not docker_bin:
         raise RuntimeError("Docker is required for the Redis container helper")
     name = f"runefoble-redis-test-{port}"
-    subprocess.run([docker_bin, "rm", "-f", name], capture_output=True)
+    subprocess.run(
+        [docker_bin, "rm", "-f", name], capture_output=True, timeout=DOCKER_TIMEOUT_SECONDS
+    )
     subprocess.run(
         [
             docker_bin,
@@ -38,6 +42,7 @@ def redis_container(port: int) -> Generator[str]:
         ],
         check=True,
         capture_output=True,
+        timeout=DOCKER_TIMEOUT_SECONDS,
     )
     url = f"redis://127.0.0.1:{port}/0"
     try:

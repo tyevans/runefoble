@@ -14,7 +14,7 @@ import tempfile
 import threading
 import time
 from collections.abc import Iterator, Mapping
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from typing import IO, Literal
 
 import uvicorn
@@ -92,6 +92,21 @@ def serve_subprocess(
             yield f"http://127.0.0.1:{port}"
         finally:
             _stop_process(proc, crash=crash)
+
+
+@contextmanager
+def serve_subprocesses(apps: Mapping[str, str], env: Mapping[str, str]) -> Iterator[dict[str, str]]:
+    """Run several ASGI apps as child processes that share one environment.
+
+    `apps` maps a service name to its import path. The result maps the same names to base URLs.
+    Each child gets its own free port, and each one is stopped when the block exits. An
+    exit stops the children that already started, also when a later child fails to start.
+    """
+    with ExitStack() as stack:
+        urls = {
+            name: stack.enter_context(serve_subprocess(path, env)) for name, path in apps.items()
+        }
+        yield urls
 
 
 def _wait_for_listener(proc: subprocess.Popen[bytes], port: int, log: IO[str]) -> None:
