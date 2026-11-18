@@ -24,8 +24,9 @@ credentials:
     password: runefoble_dev_password              # DEV-ONLY
   grafana:
     adminPassword: admin                          # DEV-ONLY
-  # Service-to-service credential (ADR-0015 e). Shared by the services that accept it. Not
-  # given to gateway-api. In a non-local environment, supply it in the existingSecret.
+  # Service-to-service credential (ADR-0015 e). The chart sets it for gateway-api, the-watcher,
+  # board-state, character-sheet, game-session, rules-compendium, inference-worker, and gateway-mcp.
+  # The other services do not read it. In a non-local environment, supply it in the existingSecret.
   serviceCredential: runefoble-dev-service-credential   # DEV-ONLY
 
 ingress:
