@@ -1,7 +1,7 @@
 ---
 id: '0657'
 title: Tutorial 01 and README Quick Start Produce a Running Local Stack
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0620
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0657: Tutorial 01 and README Quick Start Produce a Running Local Stack
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Tutorial 01 and the README Quick Start cannot produce a running stack as written. Step 3 deploys images that no step builds. Step 4 opens a Grafana URL that has no route. The prerequisites omit `kubectl`. The SpiceDB port-forward is not described. The Vite proxy list is incomplete. Make every step executable, in the order it must run, and name the Make target that builds and loads images (provided by TASK-0620).

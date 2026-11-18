@@ -84,6 +84,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Helm: the Grafana container listens on the chart port (3001), so `kubectl port-forward svc/grafana 3001:3001` reaches it. (TASK-0657)
+- Campaign Analytics refuses to start when PostgreSQL or Redis is unreachable. A PostgreSQL failure raises `CampaignStoreStartupError`. A Redis failure raises `EventBusUnavailableError`. The service serves no requests in either case. (TASK-0688)
+- Tests: the remaining conftests and test modules use the shared service harness. One helper replaces the per-directory event-stream assertions and the `_trust_signing_issuer` copies. `soundscape.dependencies.reset_dependencies` no longer resets the event bus. (TASK-0769)
 - Asset forge routes need a `campaign_id` and the `campaign.play` permission. A request without a campaign returns 400. A caller without the permission returns 403. (TASK-0556)
 - Combining reagents is a typed service. A missing character answers 404. A store failure answers 503 and saves nothing. Crafting history answers 503 on store failure, not an empty state. (TASK-0729)
 - Load errors in Campaign Lore (West Marches, handouts, relics), The Watcher (faction resources, turf war unrest) and the character roster no longer create empty aggregates or answer 404. Only an absent stream creates or 404s. A store outage answers 503. (TASK-0699)

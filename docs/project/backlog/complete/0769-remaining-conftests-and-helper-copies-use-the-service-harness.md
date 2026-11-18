@@ -1,7 +1,7 @@
 ---
 id: '0769'
 title: Remaining Conftests and Helper Copies Use the Service Harness
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0697
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0769: Remaining Conftests and Helper Copies Use the Service Harness
 
 ## Status
-Refined. Second slice of TASK-0697 (see `.audit/work/0697.md`, "Remaining split").
+Complete
 
 ## Summary
 TASK-0697 added the service harness registry and moved the root conftest and 18 group-1 conftests
