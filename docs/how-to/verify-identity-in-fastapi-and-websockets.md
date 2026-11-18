@@ -80,6 +80,7 @@ from runefoble_platform.service_credential import expected_service_credential
 SERVICE_CREDENTIAL = expected_service_credential()  # refuses start-up when unset
 get_caller_or_service = require_user_or_service_credential(get_verifier, SERVICE_CREDENTIAL)
 
+
 @router.get("/api/v1/things/{thing_id}", dependencies=[Depends(get_caller_or_service)])
 async def read_thing(thing_id: UUID): ...
 ```
