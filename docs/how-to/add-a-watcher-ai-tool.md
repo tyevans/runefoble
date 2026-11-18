@@ -46,9 +46,11 @@ Ensure the tool is re-exported in `gateway/mcp/src/gateway_mcp/tools/__init__.py
 MCP clients (such as Claude Desktop, Gemini agents, or Antigravity) use function docstrings and type annotations to generate the tool definition schema. Ensure all parameters have descriptions.
 
 ### 4. Verify Tool Execution
-Run the test suite or test locally:
+The MCP transport needs a verified bearer token on every request. A client that sends none gets `401` before any tool runs (ADR-0015 c, TASK-0532). Send `Authorization: Bearer <token>` with each MCP request. Tools read the caller from that verified request, never from a header or argument. See `docs/reference/fastmcp-gateway.md`.
+
+Run the test suite or test locally. Export the upstream URLs first, because the process refuses to start without them:
 ```bash
-uv run python gateway/mcp/src/gateway_mcp/main.py
+uv run python -m gateway_mcp.main
 ```
 And verify via pytest:
 ```bash
@@ -56,6 +58,9 @@ uv run pytest tests/test_mcp_tools.py tests/test_blackbox_mcp_gateway.py
 ```
 
 Write service-backed tools as blackbox tests. Start the owning service with `tests/helpers/live_services.py` (`serve(app)`), set its URL environment variable, and call the tool through the MCP protocol (`call_tool` in `tests/test_blackbox_mcp_gateway.py`). Add an error case that points the URL at `closed_port_url()` or a `unavailable_app(503)` stand-in.
+
+### 5. Call the Tool with a Bearer Token
+In a blackbox test, mint a token with the shared signing issuer and pass it to the MCP client. `tests/helpers/mcp_http.py` provides `call_tool_over_http(endpoint, name, arguments, bearer=...)`. Do not send an `X-User-Id` header or a caller field in the arguments.
 
 ## Authorize a New Watcher Route
 

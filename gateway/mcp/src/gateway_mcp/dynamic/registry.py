@@ -10,7 +10,11 @@ from typing import TYPE_CHECKING, Any
 from gateway_mcp.dynamic.builder import make_dynamic_tool_callable
 from gateway_mcp.dynamic.events import safe_dispatch_event
 from gateway_mcp.dynamic.handlers import evaluate_handler, validate_handler
-from gateway_mcp.dynamic.models import DynamicToolDefinition, validate_parameter_schema
+from gateway_mcp.dynamic.models import (
+    DynamicToolDefinition,
+    DynamicToolRecord,
+    validate_parameter_schema,
+)
 from runefoble_events.mcp_tools import (
     DynamicToolInvokedEvent,
     DynamicToolRegisteredEvent,
@@ -28,7 +32,7 @@ class DynamicToolRegistry:
 
     def __init__(self, mcp_server: FastMCP | None = None) -> None:
         self.mcp = mcp_server
-        self._tools: dict[str, DynamicToolDefinition] = {}
+        self._tools: dict[str, DynamicToolRecord] = {}
         self._lock = threading.RLock()
 
     def set_mcp_server(self, mcp_server: FastMCP) -> None:
@@ -36,41 +40,43 @@ class DynamicToolRegistry:
             self.mcp = mcp_server
 
     def register_tool(
-        self, definition: DynamicToolDefinition, user_id: str | None = None
-    ) -> DynamicToolDefinition:
+        self, definition: DynamicToolDefinition, author_id: str | None
+    ) -> DynamicToolRecord:
+        """Register a tool whose author is the verified caller (TASK-0532)."""
         validate_parameter_schema(definition.parameters)
         validate_handler(definition.handler, frozenset(definition.parameters.get("properties", {})))
+        record = DynamicToolRecord(**definition.model_dump(), author_id=author_id)
         with self._lock:
-            self._tools[definition.name] = definition
+            self._tools[record.name] = record
             if self.mcp is not None:
-                if self.mcp._tool_manager.get_tool(definition.name):
-                    self.mcp._tool_manager.remove_tool(definition.name)
-                runner = make_dynamic_tool_callable(definition, self)
+                if self.mcp._tool_manager.get_tool(record.name):
+                    self.mcp._tool_manager.remove_tool(record.name)
+                runner = make_dynamic_tool_callable(record, self)
                 self.mcp._tool_manager.add_tool(
-                    runner, name=definition.name, description=definition.description
+                    runner, name=record.name, description=record.description
                 )
         safe_dispatch_event(
             DynamicToolRegisteredEvent(
-                tool_name=definition.name,
-                description=definition.description,
-                parameters=definition.parameters,
-                author_id=definition.author_id or user_id,
-                campaign_id=definition.campaign_id,
-                metadata=definition.metadata,
+                tool_name=record.name,
+                description=record.description,
+                parameters=record.parameters,
+                author_id=author_id,
+                campaign_id=record.campaign_id,
+                metadata=record.metadata,
             )
         )
-        return definition
+        return record
 
-    def update_tool(
-        self, name: str, definition: DynamicToolDefinition, user_id: str | None = None
-    ) -> DynamicToolDefinition:
+    def update_tool(self, name: str, definition: DynamicToolDefinition) -> DynamicToolRecord:
+        """Replace a tool definition. The recorded author does not change on edit."""
         with self._lock:
-            if name not in self._tools:
+            existing = self._tools.get(name)
+            if existing is None:
                 raise KeyError(f"Dynamic tool '{name}' not found")
         definition.name = name
-        return self.register_tool(definition, user_id=user_id)
+        return self.register_tool(definition, author_id=existing.author_id)
 
-    def deregister_tool(self, name: str, user_id: str | None = None) -> bool:
+    def deregister_tool(self, name: str, unregistered_by: str | None = None) -> bool:
         with self._lock:
             if name not in self._tools:
                 return False
@@ -79,16 +85,16 @@ class DynamicToolRegistry:
                 self.mcp._tool_manager.remove_tool(name)
         safe_dispatch_event(
             DynamicToolUnregisteredEvent(
-                tool_name=name, unregistered_by=user_id, campaign_id=tool_def.campaign_id
+                tool_name=name, unregistered_by=unregistered_by, campaign_id=tool_def.campaign_id
             )
         )
         return True
 
-    def get_tool(self, name: str) -> DynamicToolDefinition | None:
+    def get_tool(self, name: str) -> DynamicToolRecord | None:
         with self._lock:
             return self._tools.get(name)
 
-    def list_tools(self) -> list[DynamicToolDefinition]:
+    def list_tools(self) -> list[DynamicToolRecord]:
         with self._lock:
             return list(self._tools.values())
 

@@ -4,8 +4,10 @@ Exposes Runefoble tactical tools, board state, spells, conditions,
 and AI DM controls to MCP-compliant agents and LLMs.
 """
 
+import uvicorn
 from gateway_mcp.dynamic import dynamic_registry
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_event_bus
+from gateway_mcp.identity import BearerTransportAuth
 from gateway_mcp.prompts import (
     dm_narrative_guidance,
     register_prompts,
@@ -54,6 +56,11 @@ register_prompts(mcp)
 dynamic_registry.set_mcp_server(mcp)
 
 
+def build_http_app() -> BearerTransportAuth:
+    """Return the streamable HTTP MCP app. Every request needs a verified bearer (ADR-0015 c)."""
+    return BearerTransportAuth(mcp.streamable_http_app())
+
+
 def configure_dynamic_event_bus(settings: PlatformSettings) -> None:
     """Inject the Redis Streams bus that dynamic tool events publish to.
 
@@ -90,6 +97,7 @@ __all__ = [
     "get_session_state",
     "inspect_inventory",
     "inspect_tactical_board",
+    "build_http_app",
     "main",
     "mcp",
     "modify_character_hp",
@@ -105,14 +113,14 @@ __all__ = [
 def main() -> None:
     """Serve the MCP protocol over streamable HTTP on GATEWAY_MCP_HOST and GATEWAY_MCP_PORT.
 
+    Requests without a verified bearer token are refused before any tool runs.
+
     The upstream URLs are read first, so a missing URL stops the process before it listens.
     """
     load_settings()
     configure_dynamic_event_bus(PlatformSettings())
     listen = load_listen_settings()
-    mcp.settings.host = listen.host
-    mcp.settings.port = listen.port
-    mcp.run(transport="streamable-http")
+    uvicorn.run(build_http_app(), host=listen.host, port=listen.port, log_level="info")
 
 
 if __name__ == "__main__":

@@ -57,11 +57,9 @@ async def check_tool_permission(
 
 
 async def enforce_tool_auth(
-    user_id: str | None, tool_name: str, permission: str = "manage", client: Any = None
+    user_id: str, tool_name: str, permission: str = "manage", client: Any = None
 ) -> None:
     """Enforce authorization, raising HTTP 403 if permission check fails."""
-    if not user_id:
-        return
     allowed = await check_tool_permission(user_id, tool_name, permission, client=client)
     if not allowed:
         logger.warning(

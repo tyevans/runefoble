@@ -34,7 +34,6 @@ class DynamicToolDefinition(BaseModel):
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Metadata tags, author, and version info"
     )
-    author_id: str | None = Field(default=None, description="Author user ID for SpiceDB checks")
     campaign_id: str | None = Field(default=None, description="Campaign ID for scoped permissions")
 
     @field_validator("handler")
@@ -45,11 +44,16 @@ class DynamicToolDefinition(BaseModel):
         return value
 
 
+class DynamicToolRecord(DynamicToolDefinition):
+    """A registered tool. The gateway sets `author_id` from the verified caller (TASK-0532)."""
+
+    author_id: str | None = Field(default=None, description="Verified author user ID")
+
+
 class DynamicToolExecutionRequest(BaseModel):
     """Payload for invoking a dynamic tool directly via administrative frontdoor."""
 
     arguments: dict[str, Any] = Field(default_factory=dict)
-    user_id: str | None = Field(default=None, description="Optional caller user ID")
     session_id: str | None = Field(default=None, description="Optional caller session ID")
 
 

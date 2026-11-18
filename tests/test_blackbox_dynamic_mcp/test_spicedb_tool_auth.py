@@ -6,6 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.test_blackbox_dynamic_mcp.conftest import caller_headers
+
 
 @pytest.mark.asyncio
 async def test_blackbox_spicedb_author_manage_and_unauthorized_rejection(
@@ -21,30 +23,30 @@ async def test_blackbox_spicedb_author_manage_and_unauthorized_rejection(
     }
 
     # 1. Author 'alex' registers the tool
-    res = client.post("/mcp/tools/register", json=payload, headers={"X-User-Id": "alex"})
+    res = client.post("/mcp/tools/register", json=payload, headers=caller_headers("alex"))
     assert res.status_code == 200
 
     # 2. Unauthorized user 'bob' tries to update the tool -> 403 Forbidden
     updated_payload = dict(payload, description="Hacked pulse emitter")
     unauth_update = client.put(
-        f"/mcp/tools/{tool_name}", json=updated_payload, headers={"X-User-Id": "bob"}
+        f"/mcp/tools/{tool_name}", json=updated_payload, headers=caller_headers("bob")
     )
     assert unauth_update.status_code == 403
     assert "Permission denied" in unauth_update.json()["detail"]
 
     # 3. Unauthorized user 'bob' tries to delete the tool -> 403 Forbidden
-    unauth_delete = client.delete(f"/mcp/tools/{tool_name}", headers={"X-User-Id": "bob"})
+    unauth_delete = client.delete(f"/mcp/tools/{tool_name}", headers=caller_headers("bob"))
     assert unauth_delete.status_code == 403
     assert "Permission denied" in unauth_delete.json()["detail"]
 
     # 4. Author 'alex' can update and delete the tool successfully
     auth_update = client.put(
-        f"/mcp/tools/{tool_name}", json=updated_payload, headers={"X-User-Id": "alex"}
+        f"/mcp/tools/{tool_name}", json=updated_payload, headers=caller_headers("alex")
     )
     assert auth_update.status_code == 200
     assert auth_update.json()["status"] == "updated"
 
-    auth_delete = client.delete(f"/mcp/tools/{tool_name}", headers={"X-User-Id": "alex"})
+    auth_delete = client.delete(f"/mcp/tools/{tool_name}", headers=caller_headers("alex"))
     assert auth_delete.status_code == 200
     assert auth_delete.json()["status"] == "deregistered"
 
@@ -71,14 +73,14 @@ async def test_blackbox_spicedb_campaign_scoped_permissions(
     await spicedb.write_relationship("campaign", campaign_id, "spectator", "user", "spectator-sam")
 
     # Author registers tool linked to campaign
-    reg = client.post("/mcp/tools/register", json=payload, headers={"X-User-Id": "author-dev"})
+    reg = client.post("/mcp/tools/register", json=payload, headers=caller_headers("author-dev"))
     assert reg.status_code == 200
 
     # 1. Player can execute tool (granted via campaign->play)
     play_res = client.post(
         f"/mcp/tools/{tool_name}/execute",
         json={"arguments": {"power": 6}},
-        headers={"X-User-Id": "player-valeros"},
+        headers=caller_headers("player-valeros"),
     )
     assert play_res.status_code == 200
     assert play_res.json()["result"]["damage"] == 12
@@ -87,14 +89,14 @@ async def test_blackbox_spicedb_campaign_scoped_permissions(
     spec_exec = client.post(
         f"/mcp/tools/{tool_name}/execute",
         json={"arguments": {"power": 6}},
-        headers={"X-User-Id": "spectator-sam"},
+        headers=caller_headers("spectator-sam"),
     )
     assert spec_exec.status_code == 403
 
     # 3. Player cannot delete tool (players cannot manage)
-    play_del = client.delete(f"/mcp/tools/{tool_name}", headers={"X-User-Id": "player-valeros"})
+    play_del = client.delete(f"/mcp/tools/{tool_name}", headers=caller_headers("player-valeros"))
     assert play_del.status_code == 403
 
     # 4. DM can manage and delete tool (granted via campaign->run_session)
-    dm_del = client.delete(f"/mcp/tools/{tool_name}", headers={"X-User-Id": "dm-evelyn"})
+    dm_del = client.delete(f"/mcp/tools/{tool_name}", headers=caller_headers("dm-evelyn"))
     assert dm_del.status_code == 200

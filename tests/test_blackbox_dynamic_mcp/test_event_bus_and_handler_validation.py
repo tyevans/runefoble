@@ -109,7 +109,7 @@ def test_blackbox_registration_without_event_loop_is_logged(caplog: pytest.LogCa
     definition = DynamicToolDefinition(name="sync_probe", handler={"ok": True})
 
     with caplog.at_level(logging.ERROR, logger=EVENTS_LOGGER):
-        registry.register_tool(definition)
+        registry.register_tool(definition, author_id="sync-author")
 
     assert "DynamicToolRegisteredEvent" in caplog.text
     assert "no running event loop" in caplog.text

@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from gateway_mcp.dynamic.models import TYPE_MAP, DynamicToolDefinition
+from gateway_mcp.identity import current_caller_id
 
 if TYPE_CHECKING:
     from gateway_mcp.dynamic.registry import DynamicToolRegistry
@@ -34,7 +35,9 @@ def make_dynamic_tool_callable(
     async def dynamic_runner(*args: Any, **kwargs: Any) -> Any:
         ba = sig.bind(*args, **kwargs)
         ba.apply_defaults()
-        return registry.execute_tool(definition.name, ba.arguments)
+        return registry.execute_tool(
+            definition.name, ba.arguments, user_id=current_caller_id(registry.mcp)
+        )
 
     dynamic_runner.__signature__ = sig  # type: ignore[attr-defined]
     dynamic_runner.__doc__ = definition.description
