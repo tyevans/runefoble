@@ -23,7 +23,7 @@ To place a secret trap on the board (requires DM permissions in SpiceDB):
 
 ```http
 POST /api/v1/boards/{board_id}/traps?campaign_id={campaign_id}
-X-User-Id: dm_evelyn
+Authorization: Bearer <access token for dm_evelyn>
 Content-Type: application/json
 
 {
@@ -63,8 +63,10 @@ Content-Type: application/json
 
 Players and spectators cannot view secret traps. When querying `/api/v1/boards/{board_id}/traps`:
 
-- **DM View (`X-User-Id: dm_evelyn`)**: Returns all traps, including secret traps.
-- **Player View (`X-User-Id: player_alice`)**: Secret traps (`is_secret: true`) are filtered out; only revealed/public traps are returned.
+- **DM View (`Authorization: Bearer <token for dm_evelyn>`)**: Returns all traps, including secret traps.
+- **Player View (`Authorization: Bearer <token for player_alice>`)**: Secret traps (`is_secret: true`) are filtered out; only revealed/public traps are returned.
+
+board_state takes the caller's identity only from the verified bearer token. It ignores `X-User-Id`. A request with no valid token returns `401`.
 
 ---
 
@@ -95,7 +97,7 @@ To transition the stage to a new battlemap and teleport the party:
 
 ```http
 POST /api/v1/boards/{board_id}/switch-map?campaign_id={campaign_id}
-X-User-Id: dm_evelyn
+Authorization: Bearer <access token for dm_evelyn>
 Content-Type: application/json
 
 {

@@ -1,8 +1,10 @@
 /**
- * Startup configuration for the SpiceDB preshared key (TASK-0625).
+ * Startup configuration for identity and the SpiceDB preshared key (TASK-0533, TASK-0625).
  *
- * The key is an operator secret. It has no default outside test mode.
+ * Neither value has a default. A missing value stops the service at start-up.
  */
+
+import type { ZitadelSettings } from './identity/zitadelVerifier.js';
 
 export const SPICEDB_PRESHARED_KEY_VAR = 'RUNEFOBLE_SPICEDB_PRESHARED_KEY';
 
@@ -23,4 +25,21 @@ export function readSpicedbPresharedKey(env: NodeJS.ProcessEnv): string {
   throw new Error(
     `${SPICEDB_PRESHARED_KEY_VAR} is not set. The SpiceDB preshared key is an operator secret and has no default.`
   );
+}
+
+/**
+ * Read the Zitadel verification settings. The issuer and audience are required.
+ * The JWKS URL is optional. Without it, the service reads it from OIDC discovery.
+ */
+export function readZitadelSettings(env: NodeJS.ProcessEnv): ZitadelSettings {
+  const issuer = env.RUNEFOBLE_ZITADEL_ISSUER;
+  const audience = env.RUNEFOBLE_ZITADEL_AUDIENCE;
+  if (!issuer) {
+    throw new Error('RUNEFOBLE_ZITADEL_ISSUER is not set. The service cannot verify tokens without it.');
+  }
+  if (!audience) {
+    throw new Error('RUNEFOBLE_ZITADEL_AUDIENCE is not set. The service cannot verify tokens without it.');
+  }
+  const jwksUrl = env.RUNEFOBLE_ZITADEL_JWKS_URL || undefined;
+  return { issuer, audience, jwksUrl };
 }

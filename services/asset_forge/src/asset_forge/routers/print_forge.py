@@ -14,9 +14,10 @@ from runefoble_platform.storage import SiloStorageService
 
 from asset_forge.aggregate import AssetForgeAggregate
 from asset_forge.dependencies import (
+    VerifiedUserId,
     check_user_can_forge,
-    get_current_user_id,
     get_forge_repo,
+    get_principal,
     get_spicedb_client,
     get_storage,
     publish_forge_event,
@@ -35,7 +36,7 @@ from asset_forge.silo_upload import store_forged_asset
 from asset_forge.standees import generate_standees_pdf
 from asset_forge.stl_generator import generate_stl_mesh
 
-router = APIRouter(tags=["Print Forge"])
+router = APIRouter(tags=["Print Forge"], dependencies=[Depends(get_principal)])
 
 
 async def _record_aggregate(
@@ -56,13 +57,13 @@ async def _record_aggregate(
 @router.post("/api/v1/forge/print-pdf", response_model=None)
 async def export_print_pdf(
     request: PrintPdfRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: VerifiedUserId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
 ) -> Any:
     """Generate multi-page print-ready PDF sliced to exact 1-inch tabletop grid."""
-    creator_id = user_id or "anonymous_crafter"
+    creator_id = user_id
     if request.campaign_id and not await check_user_can_forge(
         user_id, request.campaign_id, spicedb
     ):
@@ -154,13 +155,13 @@ async def export_print_pdf(
 @router.post("/api/v1/forge/standees", response_model=None)
 async def export_standees(
     request: StandeesRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: VerifiedUserId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
 ) -> Any:
     """Generate folding papercraft miniature standee sheets."""
-    creator_id = user_id or "anonymous_crafter"
+    creator_id = user_id
     if request.campaign_id and not await check_user_can_forge(
         user_id, request.campaign_id, spicedb
     ):
@@ -222,13 +223,13 @@ async def export_standees(
 @router.post("/api/v1/forge/stl-token", response_model=None)
 async def export_stl_token(
     request: StlTokenRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: VerifiedUserId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
 ) -> Any:
     """Generate watertight 3D printable STL miniature base with status condition clips."""
-    creator_id = user_id or "anonymous_crafter"
+    creator_id = user_id
     if request.campaign_id and not await check_user_can_forge(
         user_id, request.campaign_id, spicedb
     ):

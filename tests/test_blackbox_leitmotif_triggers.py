@@ -28,15 +28,29 @@ from soundscape.dependencies import (
 from soundscape.leitmotif import calculate_envelope_gain
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER
 
-from tests.helpers.leitmotif_fixtures import clean_environment, client, setup_leitmotif_profile
+from tests.helpers.leitmotif_fixtures import (
+    clean_environment,
+    client,
+    leitmotif_session_id_fixture,  # noqa: F401 (registers the leitmotif_session_id fixture)
+    setup_leitmotif_profile,
+)
 
 __all__ = ["clean_environment", "client"]
 
 
 @pytest.mark.asyncio
-async def test_clutch_critical_hit_triggers_triumphant_leitmotif(client: TestClient) -> None:
+async def test_clutch_critical_hit_triggers_triumphant_leitmotif(
+    client: TestClient, leitmotif_session_id: str
+) -> None:
     """Scenario 1: Clutch Critical Hit Theme Stinger within 250ms (US-0046)."""
-    setup_leitmotif_profile(client, "session-tomb-14", "char-nadia", "Nadia", "lute", tempo=1.05)
+    setup_leitmotif_profile(
+        client,
+        leitmotif_session_id,
+        "char-nadia",
+        "Nadia",
+        "lute",
+        tempo=1.05,
+    )
     captured_events: list[LeitmotifTriggered] = []
 
     async def on_event(ev: LeitmotifTriggered) -> None:
@@ -45,14 +59,14 @@ async def test_clutch_critical_hit_triggers_triumphant_leitmotif(client: TestCli
     platform_bus.subscribe("runefoble.events.soundscape.leitmotif_triggered", on_event)
 
     crit_event = CriticalHitScored(
-        session_id="session-tomb-14",
+        session_id=leitmotif_session_id,
         character_id="char-nadia",
         character_name="Nadia",
         roll_total=20,
     )
     await handle_incoming_domain_event(crit_event)
 
-    engine = get_or_create_leitmotif_engine("session-tomb-14")
+    engine = get_or_create_leitmotif_engine(leitmotif_session_id)
     playback = engine.get_active_status()
     assert playback is not None and playback.character_id == "char-nadia"
     assert playback.motif_type == "triumphant" and playback.instrument_timbre == "lute"
@@ -65,10 +79,10 @@ async def test_clutch_critical_hit_triggers_triumphant_leitmotif(client: TestCli
 
 
 @pytest.mark.asyncio
-async def test_dice_rolled_crit_triggers_triumphant_stinger() -> None:
+async def test_dice_rolled_crit_triggers_triumphant_stinger(leitmotif_session_id: str) -> None:
     """Verify DiceRolled with is_crit=True reactively triggers leitmotif stinger."""
     dice_event = DiceRolled(
-        session_id="session-tomb-14",
+        session_id=leitmotif_session_id,
         roller_id="char-nadia",
         roller_name="Nadia",
         formula="1d20+5",
@@ -78,7 +92,7 @@ async def test_dice_rolled_crit_triggers_triumphant_stinger() -> None:
     )
     await handle_incoming_domain_event(dice_event)
 
-    engine = get_or_create_leitmotif_engine("session-tomb-14")
+    engine = get_or_create_leitmotif_engine(leitmotif_session_id)
     playback = engine.get_active_status()
     assert (
         playback is not None
@@ -88,15 +102,27 @@ async def test_dice_rolled_crit_triggers_triumphant_stinger() -> None:
 
 
 @pytest.mark.asyncio
-async def test_near_death_triggers_somber_cello_leitmotif(client: TestClient) -> None:
+async def test_near_death_triggers_somber_cello_leitmotif(
+    client: TestClient, leitmotif_session_id: str
+) -> None:
     """Scenario 2: Near-Death Tension & Somber Theme on DeathSaveStarted (US-0046)."""
-    setup_leitmotif_profile(client, "session-tomb-14", "char-kyra", "Kyra", "strings", tempo=0.95)
+    setup_leitmotif_profile(
+        client,
+        leitmotif_session_id,
+        "char-kyra",
+        "Kyra",
+        "strings",
+        tempo=0.95,
+    )
     death_event = DeathSaveStarted(
-        session_id="session-tomb-14", character_id="char-kyra", character_name="Kyra", current_hp=0
+        session_id=leitmotif_session_id,
+        character_id="char-kyra",
+        character_name="Kyra",
+        current_hp=0,
     )
     await handle_incoming_domain_event(death_event)
 
-    engine = get_or_create_leitmotif_engine("session-tomb-14")
+    engine = get_or_create_leitmotif_engine(leitmotif_session_id)
     playback = engine.get_active_status()
     assert playback is not None and playback.character_id == "char-kyra"
     assert playback.motif_type == "somber" and playback.instrument_timbre == "strings"
@@ -105,9 +131,24 @@ async def test_near_death_triggers_somber_cello_leitmotif(client: TestClient) ->
 
 @pytest.mark.asyncio
 async def test_automatic_voice_ducking_attenuates_leitmotif_by_12db(client: TestClient) -> None:
-    """Verify WebAudio sidechain compressor applies -12dB attenuation during voice activity."""
+    """Verify WebAudio sidechain compressor applies -12dB attenuation during voice activity.
+
+    PlayerSpokeEvent carries a UUID session id, and gateway session ids are not UUIDs.
+    This test therefore grants the owner a UUID session directly in the shared SpiceDB mock.
+    That is the only direct tuple write in the soundscape frontdoor suites (see report).
+    """
+    from soundscape.dependencies import get_spicedb_client
+
     session_uuid = uuid4()
     session_id_str = str(session_uuid)
+    campaign_uuid = str(uuid4())
+    spicedb = get_spicedb_client()
+    await spicedb.write_relationship(
+        "session", session_id_str, "campaign", "campaign", campaign_uuid
+    )
+    await spicedb.write_relationship(
+        "campaign", campaign_uuid, "owner", "user", "soundscape-tester"
+    )
     setup_leitmotif_profile(client, session_id_str, "char-nadia", "Nadia", "lute")
     client.post(
         "/api/v1/soundscape/leitmotif/trigger",

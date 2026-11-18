@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from board_state.dependencies import get_board
+from board_state.dependencies import get_board, get_current_user_id
 from board_state.preview import (
     PreviewMoveRequest,
     PreviewMoveResponse,
     compute_kinematic_route_preview,
 )
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-router = APIRouter(tags=["previews"])
+router = APIRouter(tags=["previews"], dependencies=[Depends(get_current_user_id)])
 
 
 @router.post(

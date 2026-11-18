@@ -11,9 +11,15 @@ importers:
       '@playwright/test':
         specifier: ^1.63.0
         version: 1.63.0
+      '@types/node':
+        specifier: ^22.20.4
+        version: 22.20.4
       playwright-bdd:
         specifier: ^9.2.1
         version: 9.2.1(@playwright/test@1.63.0)
+      typescript:
+        specifier: ~7.0.2
+        version: 7.0.2
 
   frontend:
     dependencies:
@@ -100,6 +106,9 @@ importers:
       ioredis:
         specifier: ^5.5.0
         version: 5.11.1
+      jose:
+        specifier: ^6.2.17
+        version: 6.2.17
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -1347,6 +1356,9 @@ packages:
   is-wsl@3.1.1:
     resolution: {integrity: sha512-e6rvdUCiQCAuumZslxRJWR/Doq4VpPR82kqclvcS0efgt430SlGIk05vdCN58+VrzgtIcfNODjozVielycD4Sw==}
     engines: {node: '>=16'}
+
+  jose@6.2.17:
+    resolution: {integrity: sha512-wOuK9V1yujQFH5S0ZWmLcDZN7+IKh9bUCC2ZPCf2HDlol3WWHy+PPyNjEI75FXRLMp3vDKQcupP59xhVU95hcg==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -2796,6 +2808,8 @@ snapshots:
   is-wsl@3.1.1:
     dependencies:
       is-inside-container: 1.0.0
+
+  jose@6.2.17: {}
 
   js-tokens@4.0.0: {}
 

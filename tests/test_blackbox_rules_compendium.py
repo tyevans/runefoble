@@ -2,11 +2,12 @@
 
 Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 All assertions and setup operate strictly through public frontdoors:
-- Public HTTP endpoints via TestClient(app) from rules_compendium.main
-- FastMCP tool invocations via mcp.get_tool(...)
+- Public HTTP endpoints via TestClient(app, headers=bearer("user-test")) from rules_compendium.main
+- FastMCP tool invocations via mcp._tool_manager.get_tool(...)
 - SpiceDB Zanzibar authorization checks for homebrew rules
 """
 
+import json
 import time
 from uuid import uuid4
 
@@ -17,11 +18,23 @@ from rules_compendium.dependencies import get_spicedb_client
 from rules_compendium.main import app
 
 from tests.helpers.live_services import serve
+from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {bearer_token(sub)}"}
+
+
+def bearer_token(sub: str) -> str:
+    """Return a token that the shared test issuer signs for `sub`."""
+    return SIGNING_ISSUER.mint(sub)
 
 
 @pytest.fixture
 def client():
-    with TestClient(app) as client:
+    with TestClient(app, headers=bearer("user-test")) as client:
         yield client
 
 
@@ -198,7 +211,7 @@ async def test_blackbox_spicedb_homebrew_registration_and_isolation(client: Test
     denied_resp = client.post(
         "/api/v1/compendium/homebrew",
         json=homebrew_payload,
-        headers={"x-user-id": unauthorized_user},
+        headers=bearer(unauthorized_user),
     )
     assert denied_resp.status_code == 403
     assert "Forbidden" in denied_resp.json()["detail"]
@@ -207,7 +220,7 @@ async def test_blackbox_spicedb_homebrew_registration_and_isolation(client: Test
     dm_resp = client.post(
         "/api/v1/compendium/homebrew",
         json=homebrew_payload,
-        headers={"x-user-id": dm_user},
+        headers=bearer(dm_user),
     )
     assert dm_resp.status_code == 200, dm_resp.text
     hb_data = dm_resp.json()
@@ -218,7 +231,7 @@ async def test_blackbox_spicedb_homebrew_registration_and_isolation(client: Test
     # 3. Campaign search with authorized user finds homebrew monster
     search_resp = client.get(
         f"/api/v1/compendium/rules/search?query=Shadowstalker&campaign_id={campaign_id}",
-        headers={"x-user-id": player_user},
+        headers=bearer(player_user),
     )
     assert search_resp.status_code == 200
     search_results = search_resp.json()["results"]
@@ -229,7 +242,7 @@ async def test_blackbox_spicedb_homebrew_registration_and_isolation(client: Test
     # 4. Search from external stranger without campaign permission CANNOT view homebrew
     ext_resp = client.get(
         f"/api/v1/compendium/rules/search?query=Shadowstalker&campaign_id={campaign_id}",
-        headers={"x-user-id": unauthorized_user},
+        headers=bearer(unauthorized_user),
     )
     assert ext_resp.status_code == 200
     ext_results = ext_resp.json()["results"]
@@ -238,20 +251,20 @@ async def test_blackbox_spicedb_homebrew_registration_and_isolation(client: Test
 
 @pytest.mark.asyncio
 async def test_blackbox_fastmcp_compendium_tools(monkeypatch: pytest.MonkeyPatch):
-    """Verify the FastMCP monster tool reads the stat block from rules_compendium over HTTP."""
-    with serve(app, lifespan="on") as compendium_url:
+    """Verify the FastMCP monster tool reads the stat block from rules_compendium over HTTP.
+
+    The MCP request carries the caller's signed bearer, which the tool forwards upstream.
+    """
+    with serve(app, lifespan="on") as compendium_url, serve_mcp(mcp) as mcp_url:
         monkeypatch.setenv("RULES_COMPENDIUM_URL", compendium_url)
-        # 1. query_monster_stat_block tool
-        monster_tool = mcp.get_tool("query_monster_stat_block")
-        assert monster_tool is not None, "query_monster_stat_block must be registered in FastMCP"
-
-        m_result = await monster_tool.run({"monster_name": "Bugbear"})
-        # Result may be a dictionary or wrapped in CallToolResult
-        res_data = m_result if isinstance(m_result, dict) else m_result.structured_content
-        if res_data is None and hasattr(m_result, "content"):
-            import json
-
-            res_data = json.loads(m_result.content[0].text)
+        result = await call_tool_over_http(
+            mcp_url,
+            "query_monster_stat_block",
+            {"monster_name": "Bugbear"},
+            bearer_token("user-test"),
+        )
+        assert not result.isError, result.content
+        res_data = result.structuredContent or json.loads(result.content[0].text)
 
         assert res_data["status"] == "success"
         monster = res_data["monster"]

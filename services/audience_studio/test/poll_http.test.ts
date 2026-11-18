@@ -4,13 +4,23 @@
  */
 
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { after, before, test } from 'node:test';
 import { MemoryEventStore } from '../src/eventStore/memoryEventStore.js';
 import { InMemoryStreamPublisher } from '../src/memoryStreams.js';
 import { buildServer } from '../src/server.js';
-import { jsonBody } from './helpers.js';
+import { bearer, jsonBody, TEST_AUDIENCE, TEST_ISSUER, TestIssuer } from './helpers.js';
 
 const POLLS = '/api/v1/audience/polls';
+
+let issuer: TestIssuer;
+
+before(async () => {
+  issuer = await TestIssuer.start();
+});
+
+after(async () => {
+  await issuer.close();
+});
 
 async function start(
   store: MemoryEventStore,
@@ -19,6 +29,7 @@ async function start(
   const ctx = await buildServer({
     spicedbToken: '',
     logger: false,
+    zitadel: { issuer: TEST_ISSUER, audience: TEST_AUDIENCE, jwksUrl: issuer.jwksUrl },
     createAdapters: async () => ({ eventStore: store, streamPublisher: publisher }),
   });
   return ctx;
@@ -33,6 +44,7 @@ test('poll and its votes survive a restart', async () => {
     await first.server.inject({
       method: 'POST',
       url: POLLS,
+      headers: bearer(await issuer.mint('dm-restart')),
       payload: {
         campaign_id: 'camp-restart',
         title: 'Restart Poll',
@@ -46,13 +58,18 @@ test('poll and its votes survive a restart', async () => {
   const vote = await first.server.inject({
     method: 'POST',
     url: `${POLLS}/${created.id}/votes`,
-    payload: { voter_id: 'viewer-1', option_id: 'opt_1' },
+    headers: bearer(await issuer.mint('viewer-1')),
+    payload: { option_id: 'opt_1' },
   });
   assert.equal(vote.statusCode, 200);
   await first.server.close();
 
   const second = await start(store, publisher);
-  const read = await second.server.inject({ method: 'GET', url: `${POLLS}/${created.id}` });
+  const read = await second.server.inject({
+    method: 'GET',
+    url: `${POLLS}/${created.id}`,
+    headers: bearer(await issuer.mint('viewer-1')),
+  });
   assert.equal(read.statusCode, 200);
   const poll = jsonBody(read);
   assert.equal(poll.status, 'active');
@@ -62,7 +79,8 @@ test('poll and its votes survive a restart', async () => {
   const duplicate = await second.server.inject({
     method: 'POST',
     url: `${POLLS}/${created.id}/votes`,
-    payload: { voter_id: 'viewer-1', option_id: 'opt_2' },
+    headers: bearer(await issuer.mint('viewer-1')),
+    payload: { option_id: 'opt_2' },
   });
   assert.equal(duplicate.statusCode, 400);
   assert.match(jsonBody(duplicate).error, /already voted/);
@@ -78,11 +96,14 @@ test('a publish failure rejects the command and stores nothing', async () => {
   const res = await ctx.server.inject({
     method: 'POST',
     url: POLLS,
+    headers: bearer(await issuer.mint('dm-fail')),
     payload: { campaign_id: 'camp-fail', title: 'T', prompt: 'P', options: ['A'] },
   });
   assert.equal(res.statusCode, 503);
 
-  const list = jsonBody(await ctx.server.inject({ method: 'GET', url: POLLS }));
+  const list = jsonBody(
+    await ctx.server.inject({ method: 'GET', url: POLLS, headers: bearer(await issuer.mint('dm-fail')) })
+  );
   assert.equal(list.polls.length, 0);
   await ctx.server.close();
 });
@@ -111,6 +132,7 @@ test('a poll with a short window closes after a restart and publishes completion
     await first.server.inject({
       method: 'POST',
       url: POLLS,
+      headers: bearer(await issuer.mint('dm-window')),
       payload: {
         campaign_id: 'camp-window',
         title: 'Short',
@@ -124,7 +146,8 @@ test('a poll with a short window closes after a restart and publishes completion
   await first.server.inject({
     method: 'POST',
     url: `${POLLS}/${created.id}/votes`,
-    payload: { voter_id: 'v', option_id: 'opt_2' },
+    headers: bearer(await issuer.mint('v')),
+    payload: { option_id: 'opt_2' },
   });
   await first.server.close();
 
@@ -136,7 +159,13 @@ test('a poll with a short window closes after a restart and publishes completion
   assert.equal(completed.length, 1);
   assert.equal(completed[0].data.winning_option_id, 'opt_2');
 
-  const read = jsonBody(await second.server.inject({ method: 'GET', url: `${POLLS}/${created.id}` }));
+  const read = jsonBody(
+    await second.server.inject({
+      method: 'GET',
+      url: `${POLLS}/${created.id}`,
+      headers: bearer(await issuer.mint('dm-window')),
+    })
+  );
   assert.equal(read.status, 'completed');
   await second.server.close();
 });

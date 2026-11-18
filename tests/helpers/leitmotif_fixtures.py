@@ -9,25 +9,52 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
-from soundscape.dependencies import reset_dependencies, set_spicedb_client
+from gateway_api.main import app as gateway_app
+from soundscape.dependencies import reset_dependencies
 from soundscape.main import app
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture(autouse=True)
 def clean_environment():
-    """Ensure clean aggregate, mixer, bus, and authorization state for each test."""
-    mock_db = MockSpiceDBClient()
-    set_spicedb_client(mock_db)
+    """Ensure clean aggregate, mixer, and bus state for each test.
+
+    The SpiceDB mock is the per-test instance that conftest installs for every service,
+    so grants made through the gateway frontdoor are visible here.
+    """
     reset_dependencies()
     yield
     reset_dependencies()
-    mock_db._tuples.clear()
 
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers=auth_headers("soundscape-tester"))
+
+
+@pytest.fixture(name="leitmotif_session_id")
+def leitmotif_session_id_fixture(trusted_ws_issuer) -> str:
+    """Create a campaign and a session through the gateway frontdoor. The default subject owns both."""
+    gateway = TestClient(gateway_app)
+    campaign = gateway.post(
+        "/api/v1/campaigns",
+        json={"title": "Leitmotif Vault", "setting": "Underdark"},
+        headers=auth_headers("soundscape-tester"),
+    )
+    assert campaign.status_code == 201, campaign.text
+    session = gateway.post(
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+        json={"title": "Echoing Depths"},
+        headers=auth_headers("soundscape-tester"),
+    )
+    assert session.status_code == 201, session.text
+    return session.json()["id"]
 
 
 def setup_leitmotif_profile(
@@ -40,7 +67,7 @@ def setup_leitmotif_profile(
     volume: float = 1.0,
 ) -> None:
     """Register character leitmotif audio signature via public REST frontdoor."""
-    client.post(
+    res = client.post(
         "/api/v1/soundscape/leitmotif/profile",
         json={
             "session_id": session_id,
@@ -51,3 +78,4 @@ def setup_leitmotif_profile(
             "volume_gain": volume,
         },
     )
+    assert res.status_code == 200, res.text

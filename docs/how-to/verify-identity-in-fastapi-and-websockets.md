@@ -85,6 +85,14 @@ Negative cases to cover: no token, garbage, HS256 with a known secret, `alg: non
 
 There is no development mode and no environment flag that skips verification.
 
+## TypeScript Services
+
+The TypeScript `audience_studio` service follows the same contract. It has no Python runtime, so it uses `jose` (`services/audience_studio/src/identity/`):
+- `ZitadelVerifier` checks RS256 only, `iss`, `aud`, `exp`, and `sub`. It reads `RUNEFOBLE_ZITADEL_JWKS_URL`, or `jwks_uri` from OIDC discovery when the URL is unset.
+- `registerIdentityHook` runs before every route except `/healthz`, `/readyz`, and `/ui/manifest`. It reads the bearer header for HTTP and the `runefoble.bearer.<jwt>` subprotocol for WebSockets. It refuses a handshake before accept.
+- A rejected token returns `401`. A JWKS fetch failure returns `503`. The service never reads identity from headers or the body.
+- The service refuses to start when `RUNEFOBLE_ZITADEL_ISSUER` or `RUNEFOBLE_ZITADEL_AUDIENCE` is unset.
+
 ## See Also
 - [Authenticate Users with Zitadel OIDC and JWTs](authenticate-with-zitadel-oidc.md)
 - [Define SpiceDB Zanzibar Permissions](define-spicedb-zanzibar-permissions.md)

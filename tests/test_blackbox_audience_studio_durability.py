@@ -19,7 +19,7 @@ import httpx
 import pytest
 import redis
 
-from tests.helpers.audience_server import AudienceStudioProcess, get_free_port
+from tests.helpers.audience_server import AudienceStudioProcess, bearer_for, get_free_port
 from tests.helpers.redis_container import redis_container
 
 STREAM = "runefoble.events.audience"
@@ -36,7 +36,7 @@ def _create_poll(client: httpx.Client, **overrides: object) -> dict:
         "quorum": 1,
     }
     body.update(overrides)
-    res = client.post(POLLS, json=body)
+    res = client.post(POLLS, headers=bearer_for("dm-durable"), json=body)
     assert res.status_code == 201, res.text
     return res.json()
 
@@ -67,7 +67,8 @@ def test_poll_and_votes_survive_a_restart(database_url: str):
             poll = _create_poll(client, title="Survives Restart")
             vote = client.post(
                 f"{POLLS}/{poll['id']}/votes",
-                json={"voter_id": "viewer-restart", "option_id": "opt_1"},
+                headers=bearer_for("viewer-restart"),
+                json={"option_id": "opt_1"},
             )
             assert vote.status_code == 200
     finally:
@@ -77,7 +78,7 @@ def test_poll_and_votes_survive_a_restart(database_url: str):
     base_url = restarted.start()
     try:
         with httpx.Client(base_url=base_url) as client:
-            read = client.get(f"{POLLS}/{poll['id']}")
+            read = client.get(f"{POLLS}/{poll['id']}", headers=bearer_for("dm-durable"))
             assert read.status_code == 200
             body = read.json()
             assert body["status"] == "active"
@@ -99,7 +100,8 @@ def test_short_window_poll_closes_after_restart_and_publishes_completion(databas
                 poll = _create_poll(client, duration_seconds=2, quorum=1, title="Closes Later")
                 vote = client.post(
                     f"{POLLS}/{poll['id']}/votes",
-                    json={"voter_id": "viewer-window", "option_id": "opt_2"},
+                    headers=bearer_for("viewer-window"),
+                    json={"option_id": "opt_2"},
                 )
                 assert vote.status_code == 200
         finally:
@@ -128,7 +130,7 @@ def test_short_window_poll_closes_after_restart_and_publishes_completion(databas
             assert event["data"]["quorum_met"] is True
 
             with httpx.Client(base_url=base_url) as client:
-                read = client.get(f"{POLLS}/{poll['id']}").json()
+                read = client.get(f"{POLLS}/{poll['id']}", headers=bearer_for("dm-durable")).json()
             assert read["status"] == "completed"
         finally:
             restarted.stop()
@@ -147,6 +149,7 @@ def test_publishing_recovers_when_redis_starts_after_the_service(database_url: s
 
             refused = client.post(
                 POLLS,
+                headers=bearer_for("dm-durable"),
                 json={"campaign_id": "camp-recover", "title": "T", "prompt": "P", "options": ["A"]},
             )
             assert refused.status_code == 503
@@ -157,7 +160,8 @@ def test_publishing_recovers_when_redis_starts_after_the_service(database_url: s
                 poll = _create_poll(client, campaign_id="camp-recover", title="After Recovery")
                 vote = client.post(
                     f"{POLLS}/{poll['id']}/votes",
-                    json={"voter_id": "viewer-recover", "option_id": "opt_1"},
+                    headers=bearer_for("viewer-recover"),
+                    json={"option_id": "opt_1"},
                 )
                 assert vote.status_code == 200
 

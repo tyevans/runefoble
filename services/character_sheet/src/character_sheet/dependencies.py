@@ -11,8 +11,10 @@ from character_sheet.aggregate import CharacterAggregate
 from character_sheet.crafting import CraftingAggregate
 from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, HTTPException
+from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_events.events import (
     CharacterAssignedToCampaign,
     CharacterDamaged,
@@ -33,6 +35,7 @@ platform_settings = PlatformSettings()
 
 _event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
+_zitadel_auth_service: ZitadelAuthService | None = None
 
 # Global aggregate repositories
 repo: AggregateRepository[CharacterAggregate] = create_aggregate_repository(CharacterAggregate)
@@ -79,7 +82,35 @@ CraftingRepoDep = Annotated[
     AggregateRepository[CraftingAggregate], Depends(get_crafting_repository)
 ]
 SpiceDep = Annotated[SpiceDBClient | MockSpiceDBClient, Depends(get_spicedb_client)]
-UserHeader = Annotated[str | None, Header(alias="x-user-id")]
+
+
+def get_zitadel_auth_service() -> ZitadelAuthService:
+    """Provide the Zitadel verifier built from platform settings (ADR-0015 (c))."""
+    global _zitadel_auth_service
+    if _zitadel_auth_service is None:
+        _zitadel_auth_service = ZitadelAuthService(
+            issuer=platform_settings.zitadel_issuer,
+            audience=platform_settings.zitadel_audience,
+            jwks_url=platform_settings.zitadel_jwks_url,
+        )
+    return _zitadel_auth_service
+
+
+def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
+    """Override the Zitadel verifier for tests."""
+    global _zitadel_auth_service
+    _zitadel_auth_service = service
+
+
+get_principal = require_principal(get_zitadel_auth_service)
+
+
+def verified_user_id(principal: Annotated[VerifiedPrincipal, Depends(get_principal)]) -> str:
+    """Project the verified token subject. Every route in this service requires it."""
+    return principal.user_id
+
+
+VerifiedUserId = Annotated[str, Depends(verified_user_id)]
 
 
 async def publish_character_event(event: Any) -> None:
@@ -174,11 +205,9 @@ async def modify_character_health(
 
 
 async def authorize_character_edit(
-    spicedb: SpiceDBClient, character_id: UUID, user_id: str | None
+    spicedb: SpiceDBClient, character_id: UUID, user_id: str
 ) -> None:
-    if user_id and not await spicedb.check_permission(
-        "character", str(character_id), "edit", "user", user_id
-    ):
+    if not await spicedb.check_permission("character", str(character_id), "edit", "user", user_id):
         raise HTTPException(
             status_code=403,
             detail=f"User '{user_id}' does not have edit permission on character '{character_id}'",
