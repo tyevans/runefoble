@@ -15,7 +15,7 @@ from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 
 from soundscape.dependencies import (
-    VerifiedUserId,
+    CallerId,
     check_user_can_control_soundscape,
     get_principal,
 )
@@ -89,7 +89,7 @@ async def list_timbre_presets() -> dict[str, Any]:
 )
 async def configure_character_leitmotif(
     request: CharacterLeitmotifProfile,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> CharacterLeitmotifProfile:
     """Persist and activate character leitmotif configuration.
@@ -161,7 +161,7 @@ async def get_character_leitmotif_profile(
 )
 async def trigger_character_leitmotif(
     request: LeitmotifTriggerRequest,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> ActiveLeitmotifPlayback:
     """Trigger dynamic stem stinger or audition character leitmotif.
