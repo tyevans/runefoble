@@ -16,7 +16,8 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from websockets.sync.client import connect
+from websockets.exceptions import ConnectionClosed
+from websockets.sync.client import ClientConnection, connect
 
 from tests.helpers.restart_stack import RestartStack
 from tests.helpers.voice_identity import voice_auth_headers
@@ -77,3 +78,74 @@ def test_joined_peer_is_still_present_after_a_coordinator_restart(
     assert resp.status_code == 200, resp.text
     assert resp.json()["participant_count"] == 1
     assert resp.json()["participants"][0]["peer_id"] == "peer-persisted"
+
+
+GRACEFUL_RESTART_CLOSE_CODE = 1012
+RESTART_PEER_A = "user-restart-a"
+RESTART_PEER_B = "user-restart-b"
+
+
+def _open_joined_peer(
+    base: str, session_id: str, user: str, peer_id: str
+) -> tuple[ClientConnection, dict[str, Any]]:
+    """Open a voice socket. Return it with the `webrtc_joined` frame that lists the room."""
+    ws_base = base.replace("http://", "ws://", 1)
+    socket = connect(
+        f"{ws_base}/ws/voice/{session_id}?peer_id={peer_id}",
+        subprotocols=ws_subprotocols(user),
+    )
+    while True:
+        frame = json.loads(socket.recv(timeout=REQUEST_TIMEOUT_SECONDS))
+        if frame.get("type") == "webrtc_joined":
+            return socket, frame
+
+
+def _close_code_after_drain(socket: ClientConnection) -> int | None:
+    """Read until the socket closes. Return the close code the server sent."""
+    while True:
+        try:
+            socket.recv(timeout=REQUEST_TIMEOUT_SECONDS)
+        except ConnectionClosed as exc:
+            return exc.rcvd.code if exc.rcvd is not None else None
+
+
+def test_joined_peers_keep_their_seats_through_a_graceful_restart(
+    restart_stack: RestartStack,
+) -> None:
+    """SIGTERM closes each peer with 1012 and keeps the room. Peers resume on reconnect."""
+    session_id = f"sess-graceful-{uuid4().hex[:8]}"
+    campaign_id = str(uuid4())
+    restart_stack.grant(
+        [
+            ("campaign", campaign_id, "player", "user", RESTART_PEER_A),
+            ("campaign", campaign_id, "player", "user", RESTART_PEER_B),
+            ("session", session_id, "campaign", "campaign", campaign_id),
+        ]
+    )
+
+    sockets: list[ClientConnection] = []
+    # Leaving the block sends SIGTERM. The child shuts down gracefully with sockets open.
+    with restart_stack.start(VOICE_AGENT_APP) as base:
+        sockets.append(_open_joined_peer(base, session_id, RESTART_PEER_A, "peer-restart-a")[0])
+        sockets.append(_open_joined_peer(base, session_id, RESTART_PEER_B, "peer-restart-b")[0])
+    try:
+        close_codes = [_close_code_after_drain(socket) for socket in sockets]
+    finally:
+        for socket in sockets:
+            socket.close()
+
+    assert close_codes == [GRACEFUL_RESTART_CLOSE_CODE, GRACEFUL_RESTART_CLOSE_CODE]
+
+    with restart_stack.start(VOICE_AGENT_APP) as base:
+        resp = _get(
+            f"{base}/api/v1/voice/rooms/{session_id}", headers=voice_auth_headers(RESTART_PEER_A)
+        )
+        assert resp.status_code == 200, resp.text
+        assert sorted(p["peer_id"] for p in resp.json()["participants"]) == [
+            "peer-restart-a",
+            "peer-restart-b",
+        ]
+
+        resumed, joined = _open_joined_peer(base, session_id, RESTART_PEER_A, "peer-restart-a")
+        resumed.close()
+    assert sorted(p["peer_id"] for p in joined["peers"]) == ["peer-restart-a", "peer-restart-b"]
