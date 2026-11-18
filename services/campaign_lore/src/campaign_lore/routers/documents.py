@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -12,11 +13,11 @@ from campaign_lore.aggregate import LoreDocumentAggregate, LoreDocumentState
 from campaign_lore.dependencies import (
     get_repo,
     get_retrieval_engine,
-    get_spicedb_client,
 )
 from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_read_secrets,
+    check_user_can_run_session,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
 
@@ -61,7 +62,11 @@ async def ingest_document(
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> IngestDocumentResponse:
     """Ingest a new worldbuilding document, extract knowledge graphs, and build hybrid indices."""
-    # If document is marked secret, ensure user has permission or is creating it as DM/author
+    if not await check_user_can_run_session(user_id, req.campaign_id, spicedb):
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Only campaign run_session members can ingest lore documents.",
+        )
     doc_id = uuid4()
     aggregate = LoreDocumentAggregate(doc_id)
     aggregate.ingest(

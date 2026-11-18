@@ -5,18 +5,19 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.dependencies import (
     get_handout_repo,
-    get_spicedb_client,
 )
 from campaign_lore.handouts import HandoutSynthesizer
 from campaign_lore.handouts_aggregate import DiegeticHandoutAggregate
 from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_interact_handout,
+    check_user_can_run_session,
     check_user_can_view_campaign,
 )
 
@@ -69,11 +70,11 @@ async def generate_handout(
     ] = None,
 ) -> dict[str, Any]:
     """Generate a weathered diegetic handout with wax seal and optional UV invisible ink."""
-    can_view = await check_user_can_view_campaign(user_id, payload.campaign_id, spicedb)
-    if not can_view:
+    can_generate = await check_user_can_run_session(user_id, payload.campaign_id, spicedb)
+    if not can_generate:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: User lacks campaign view permission",
+            detail="Forbidden: Only campaign run_session members can generate handouts.",
         )
 
     spec = HandoutSynthesizer.generate_handout_spec(

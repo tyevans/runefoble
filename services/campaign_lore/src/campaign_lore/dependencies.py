@@ -3,7 +3,6 @@
 from uuid import UUID
 
 from fastapi import Request
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_sourcing import AggregateRepository, create_aggregate_repository
@@ -16,12 +15,12 @@ from campaign_lore.handouts_aggregate import DiegeticHandoutAggregate, RelicAggr
 from campaign_lore.retrieval import LoreRetrievalEngine
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 
+# Fail fast at import when a required platform setting (the SpiceDB key) is missing (TASK-0625).
 settings = PlatformSettings()
 
 # Repositories are built per call from the active event store (see set_event_store),
 # so a new application instance on the same store sees the same events.
 _campaign_codex_entries: dict[UUID, list[UUID]] = {}
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _west_marches_repo_override: AggregateRepository[WestMarchesAtlasAggregate] | None = None
 
 
@@ -50,17 +49,6 @@ def get_retrieval_engine(request: Request) -> LoreRetrievalEngine:
     if engine is None:
         raise ServiceUnavailableError("campaign_lore is not started")
     return engine
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    """Provide SpiceDB Zanzibar authorization client."""
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient(
-            endpoint=settings.spicedb_endpoint,
-            token=settings.spicedb_preshared_key,
-        )
-    return _spicedb_client
 
 
 def get_atlas_repo() -> AggregateRepository[AtlasAggregate]:
@@ -95,9 +83,3 @@ def set_west_marches_repo(repo: AggregateRepository[WestMarchesAtlasAggregate] |
     """Override the West Marches repository instance for testing."""
     global _west_marches_repo_override
     _west_marches_repo_override = repo
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    """Override SpiceDB client instance for testing."""
-    global _spicedb_client
-    _spicedb_client = client

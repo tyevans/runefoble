@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 from campaign_lore.codex_aggregate import CodexEntryState
+
+PrivacyLevel = Literal["private", "party_shared", "public"]
 
 
 class PublishCodexEntryRequest(BaseModel):
@@ -14,7 +16,7 @@ class PublishCodexEntryRequest(BaseModel):
 
     title: str = Field(description="Title of journal note or lore chronicle")
     content: str = Field(description="Markdown body of the entry")
-    privacy: str = Field(default="private", description="Visibility: private, party_shared, public")
+    privacy: PrivacyLevel = Field(default="private", description="Visibility of the entry")
     era: str | None = Field(default=None, description="Campaign era or session tag")
     tags: list[str] = Field(default_factory=list, description="Categorization tags")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Arbitrary attributes")
@@ -25,7 +27,7 @@ class UpdateCodexEntryRequest(BaseModel):
 
     title: str | None = None
     content: str | None = None
-    privacy: str | None = None
+    privacy: PrivacyLevel | None = None
     era: str | None = None
     tags: list[str] | None = None
     metadata: dict[str, Any] | None = None

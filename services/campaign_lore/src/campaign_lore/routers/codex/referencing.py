@@ -6,6 +6,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 
 from campaign_lore.codex import CodexCrossReferencer
@@ -16,7 +17,6 @@ from campaign_lore.codex_deps import (
 )
 from campaign_lore.dependencies import (
     get_codex_referencer,
-    get_spicedb_client,
 )
 from campaign_lore.identity import CallerId
 from campaign_lore.routers.codex.schemas import CrossReferenceContentRequest

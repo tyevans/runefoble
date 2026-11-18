@@ -184,6 +184,11 @@ curl -X GET http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4
 
 ## 5. SpiceDB Zanzibar Multi-Tenancy Scoping
 
+Campaign permissions for the West Marches routes:
+
+- Linking a campaign to a shared world needs `manage` (the campaign owner).
+- Recording a discovery, upgrading a stronghold facility, and posting a tavern notice need `play` (players and DMs). A spectator receives `403`.
+
 While world geography, discoveries, and trading posts are shared across participating campaigns, private character sheets, session logs, and DM whisper notes remain strictly isolated:
 
 ```

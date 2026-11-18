@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from campaign_lore.codex import CodexCrossReferencer
 from campaign_lore.codex_aggregate import CodexAggregate
@@ -18,6 +18,7 @@ from campaign_lore.dependencies import (
     get_campaign_codex_index,
     get_codex_referencer,
 )
+from campaign_lore.permissions import check_user_can_play_campaign
 from campaign_lore.routers.codex.referencing import enrich_entry_metadata
 from campaign_lore.routers.codex.schemas import (
     PublishCodexEntryRequest,
@@ -37,14 +38,17 @@ async def publish_entry(
     ref: Annotated[CodexCrossReferencer, Depends(get_codex_referencer)],
     idx: Annotated[dict[UUID, list[UUID]], Depends(get_campaign_codex_index)],
 ) -> dict[str, Any]:
-    """Publish a new journal or secret codex entry with automated redstring hyperlinking."""
-    await require_campaign_view(deps.user_id, campaign_id, deps.spicedb)
-    author_id = deps.user_id or "anonymous_author"
+    """Publish a new journal or secret codex entry. The author is the verified caller."""
+    if not await check_user_can_play_campaign(deps.user_id, campaign_id, deps.spicedb):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: User cannot publish codex entries in this campaign.",
+        )
     meta, entity_ids = await enrich_entry_metadata(
         ref, campaign_id, payload.content, payload.metadata
     )
-    agg = CodexAggregate.create(campaign_id, payload, author_id, meta, entity_ids)
-    await deps.persist_new_entry(agg, campaign_id, author_id, payload.privacy, idx)
+    agg = CodexAggregate.create(campaign_id, payload, deps.user_id, meta, entity_ids)
+    await deps.persist_new_entry(agg, campaign_id, deps.user_id, payload.privacy, idx)
     return {**format_codex_entry(agg.state), "status": "published"}
 
 
@@ -65,7 +69,7 @@ async def list_entries(
             st = (await deps.repo.load(eid)).state
         except Exception:
             continue
-        if await deps.can_view(st, campaign_id) and filter_entry_match(st, era, tag, search):
+        if await deps.can_view(st) and filter_entry_match(st, era, tag, search):
             results.append(format_codex_entry(st))
     return results
 
