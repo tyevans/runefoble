@@ -350,8 +350,9 @@ services:
     image: runefoble/gateway-mcp:0.1.0
     replicas: 1
     port: 8012
-    # Upstream URLs that MCP tools call over HTTP. Rendered as BOARD_STATE_URL,
-    # RUNEFOBLE_CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL, and THE_WATCHER_URL.
+    # Upstream URLs that MCP tools call over HTTP. Rendered as RUNEFOBLE_BOARD_STATE_URL,
+    # RUNEFOBLE_CHARACTER_SHEET_URL, RUNEFOBLE_GAME_SESSION_URL, RUNEFOBLE_RULES_COMPENDIUM_URL,
+    # and RUNEFOBLE_WATCHER_URL.
     boardStateUrl: "http://board-state:8002"
     characterSheetUrl: "http://character-sheet:8003"
     gameSessionUrl: "http://game-session:8004"

@@ -182,23 +182,21 @@ class PlatformSettings(BaseSettings):
         description="Whether Mailpit email testing is enabled",
     )
 
-    # Gateway upstream base URLs. A None value means the gateway has no route to that
-    # service: a proxy call returns 503, and a health probe reports not_configured. game_session
-    # reads the character sheet URL from this same field, so both processes share one variable
-    # name. The names match the variables that the Helm chart renders for gateway-api
-    # (deployments/helm/runefoble/templates/services.yaml).
+    # Service base URLs. Each one is read from RUNEFOBLE_<SERVICE>_URL and has no code default.
+    # A None value means no route to that service: a proxy call returns 503, and a health probe
+    # reports not_configured. The Helm chart renders the same names (services.yaml and
+    # gateway-mcp.yaml). game_session reads the character sheet URL from this same field.
     game_session_url: str | None = Field(
-        default=None, description="Base URL of the game_session service"
+        default=None,
+        description="Base URL of the game_session service (RUNEFOBLE_GAME_SESSION_URL)",
     )
     board_state_url: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("RUNEFOBLE_BOARD_STATE_URL"),
-        description="Base URL of the board_state service",
+        default=None, description="Base URL of the board_state service (RUNEFOBLE_BOARD_STATE_URL)"
     )
     the_watcher_url: str | None = Field(
         default=None,
         validation_alias=AliasChoices("RUNEFOBLE_WATCHER_URL"),
-        description="Base URL of the the_watcher service",
+        description="Base URL of the the_watcher service (RUNEFOBLE_WATCHER_URL)",
     )
     character_sheet_url: str | None = Field(
         default=None,
@@ -206,30 +204,30 @@ class PlatformSettings(BaseSettings):
     )
     campaign_lore_url: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("CAMPAIGN_LORE_URL"),
-        description="Base URL of the campaign_lore service",
+        description="Base URL of the campaign_lore service (RUNEFOBLE_CAMPAIGN_LORE_URL)",
     )
     campaign_analytics_url: str | None = Field(
-        default="http://campaign-analytics:8011",
-        validation_alias=AliasChoices("CAMPAIGN_ANALYTICS_URL"),
-        description="Base URL of the campaign_analytics service",
+        default=None,
+        description=(
+            "Base URL of the campaign_analytics service (RUNEFOBLE_CAMPAIGN_ANALYTICS_URL)"
+        ),
     )
     soundscape_url: str | None = Field(
-        default="http://soundscape:8009",
-        validation_alias=AliasChoices("SOUNDSCAPE_SERVICE_URL"),
-        description="Base URL of the soundscape service",
+        default=None, description="Base URL of the soundscape service (RUNEFOBLE_SOUNDSCAPE_URL)"
     )
     rules_compendium_url: str | None = Field(
-        default=None, description="Base URL of the rules_compendium service"
+        default=None,
+        description="Base URL of the rules_compendium service (RUNEFOBLE_RULES_COMPENDIUM_URL)",
     )
     asset_forge_url: str | None = Field(
-        default=None, description="Base URL of the asset_forge service"
+        default=None, description="Base URL of the asset_forge service (RUNEFOBLE_ASSET_FORGE_URL)"
     )
     voice_agent_url: str | None = Field(
-        default=None, description="Base URL of the voice_agent service"
+        default=None, description="Base URL of the voice_agent service (RUNEFOBLE_VOICE_AGENT_URL)"
     )
     audience_studio_url: str | None = Field(
-        default=None, description="Base URL of the audience_studio service"
+        default=None,
+        description="Base URL of the audience_studio service (RUNEFOBLE_AUDIENCE_STUDIO_URL)",
     )
     # Gateway health probes. Each downstream probe on /healthz waits at most this long.
     gateway_health_probe_timeout_s: float = Field(

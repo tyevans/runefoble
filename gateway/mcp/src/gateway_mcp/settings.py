@@ -14,24 +14,24 @@ class GatewayMcpSettings(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
     board_state_url: str = Field(
-        validation_alias="BOARD_STATE_URL",
-        description="Base URL of the board_state service (BOARD_STATE_URL).",
+        validation_alias="RUNEFOBLE_BOARD_STATE_URL",
+        description="Base URL of the board_state service (RUNEFOBLE_BOARD_STATE_URL).",
     )
     character_sheet_url: str = Field(
         validation_alias="RUNEFOBLE_CHARACTER_SHEET_URL",
         description="Base URL of the character_sheet service (RUNEFOBLE_CHARACTER_SHEET_URL).",
     )
     game_session_url: str = Field(
-        validation_alias="GAME_SESSION_URL",
-        description="Base URL of the game_session service (GAME_SESSION_URL).",
+        validation_alias="RUNEFOBLE_GAME_SESSION_URL",
+        description="Base URL of the game_session service (RUNEFOBLE_GAME_SESSION_URL).",
     )
     rules_compendium_url: str = Field(
-        validation_alias="RULES_COMPENDIUM_URL",
-        description="Base URL of the rules_compendium service (RULES_COMPENDIUM_URL).",
+        validation_alias="RUNEFOBLE_RULES_COMPENDIUM_URL",
+        description="Base URL of the rules_compendium service (RUNEFOBLE_RULES_COMPENDIUM_URL).",
     )
     the_watcher_url: str = Field(
-        validation_alias="THE_WATCHER_URL",
-        description="Base URL of the the_watcher service (THE_WATCHER_URL).",
+        validation_alias="RUNEFOBLE_WATCHER_URL",
+        description="Base URL of the the_watcher service (RUNEFOBLE_WATCHER_URL).",
     )
     service_credential: SecretStr = Field(
         validation_alias="RUNEFOBLE_SERVICE_CREDENTIAL",

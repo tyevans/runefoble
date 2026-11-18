@@ -7,7 +7,6 @@ and Whisper acoustic inference integration for sub-500ms tabletop voice actions.
 from __future__ import annotations
 
 import logging
-import os
 import time
 from typing import Any
 from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
@@ -15,6 +14,7 @@ from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 import httpx
 from pydantic import BaseModel
 from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
+from runefoble_platform.config import PlatformSettings
 from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from voice_agent.auth import caller_headers
@@ -102,12 +102,12 @@ class StreamingAudioPipeline:
         self.energy_threshold = energy_threshold
         self.participants: dict[str, ParticipantAudioState] = {}
         self._watcher_client: httpx.AsyncClient | None = None
-        self._watcher_url: str = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://the-watcher:8001")
+        self._watcher_url: str | None = PlatformSettings().the_watcher_url
 
     def set_watcher_client(self, client: httpx.AsyncClient | None) -> None:
         self._watcher_client = client
 
-    def set_watcher_url(self, url: str) -> None:
+    def set_watcher_url(self, url: str | None) -> None:
         self._watcher_url = url
 
     def get_or_create_participant(
@@ -240,6 +240,8 @@ class StreamingAudioPipeline:
                 if resp.status_code == 200:
                     watcher_intent = resp.json()
             else:
+                if not self._watcher_url:
+                    raise RuntimeError("RUNEFOBLE_WATCHER_URL is not set")
                 async with httpx.AsyncClient(timeout=5.0) as client:
                     resp = await client.post(
                         f"{self._watcher_url}/api/v1/watcher/transcribe-and-act",

@@ -99,11 +99,11 @@ Board, encounter, and character tools hold no board, combat, or character state.
 
 | Setting | Environment Variable | Default | Owning Service |
 |---|---|---|---|
-| `board_state_url` | `BOARD_STATE_URL` | Required | `board_state` |
+| `board_state_url` | `RUNEFOBLE_BOARD_STATE_URL` | Required | `board_state` |
 | `character_sheet_url` | `RUNEFOBLE_CHARACTER_SHEET_URL` | Required | `character_sheet` |
-| `game_session_url` | `GAME_SESSION_URL` | Required | `game_session` |
-| `rules_compendium_url` | `RULES_COMPENDIUM_URL` | Required | `rules_compendium` |
-| `the_watcher_url` | `THE_WATCHER_URL` | Required | `the_watcher` |
+| `game_session_url` | `RUNEFOBLE_GAME_SESSION_URL` | Required | `game_session` |
+| `rules_compendium_url` | `RUNEFOBLE_RULES_COMPENDIUM_URL` | Required | `rules_compendium` |
+| `the_watcher_url` | `RUNEFOBLE_WATCHER_URL` | Required | `the_watcher` |
 
 The Helm chart renders these from `services.gatewayMcp` in `values.yaml`. Local runs must export them. There are no localhost defaults.
 

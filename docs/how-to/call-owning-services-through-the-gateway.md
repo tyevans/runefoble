@@ -73,7 +73,7 @@ from tests.helpers.live_services import serve
 
 def test_atlas_forwards_bearer_token(monkeypatch, signing_issuer):
     with serve(stand_in_lore) as lore_url:
-        monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
+        monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", lore_url)
         with TestClient(gateway_app) as client:
             res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
     assert res.status_code == 200
