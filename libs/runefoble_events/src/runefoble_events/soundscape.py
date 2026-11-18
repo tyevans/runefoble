@@ -53,9 +53,23 @@ class SoundscapeTensionUpdated(BaseRunefobleEvent):
     session_id: str
     tension_score: int
     stem_profile: str
+    combat_active: bool = False
     combat_round: int = 0
     enemy_cr_balance: float = 0.0
     lowest_health_ratio: float = 1.0
+
+
+@register_event("runefoble.events.soundscape.party_health_recorded")
+class SoundscapePartyHealthRecorded(BaseRunefobleEvent):
+    """Emitted when a character's HP ratio changes in a session. Feeds the lowest party health."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "Soundscape"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.soundscape.party_health_recorded"
+    session_id: str
+    character_id: str
+    health_ratio: float = Field(ge=0.0, le=1.0)
 
 
 @register_event("runefoble.events.soundscape.stem_profile_overridden")

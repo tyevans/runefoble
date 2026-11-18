@@ -81,6 +81,7 @@ async def calculate_tension(
         combat_round=request.combat_round,
         enemy_cr_balance=request.enemy_cr_balance,
         lowest_health_ratio=request.lowest_party_health_ratio,
+        combat_active=request.combat_active,
     )
     if not agg.state.manual_override and derived_profile != old_profile:
         agg.record_track_change(

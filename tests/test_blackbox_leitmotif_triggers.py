@@ -73,7 +73,8 @@ async def test_clutch_critical_hit_triggers_triumphant_leitmotif(
     playback = engine.get_active_status()
     assert playback is not None and playback.character_id == "char-nadia"
     assert playback.motif_type == "triumphant" and playback.instrument_timbre == "lute"
-    assert playback.scheduled_latency_ms <= 250 and "lute_triumphant.ogg" in playback.stem_url
+    assert "lute_triumphant.ogg" in playback.stem_url
+    assert not hasattr(playback, "scheduled_latency_ms")
 
     assert len(captured_events) == 1
     assert captured_events[0].character_id == "char-nadia"

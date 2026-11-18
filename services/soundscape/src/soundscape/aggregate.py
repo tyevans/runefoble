@@ -46,6 +46,17 @@ class SoundscapeState(BaseModel):
     character_profiles: dict[str, dict[str, Any]] = Field(default_factory=dict)
     active_leitmotif: dict[str, Any] | None = None
     leitmotif_history: list[dict[str, Any]] = Field(default_factory=list)
+    # Encounter inputs. Set by tension updates, read by round advances and health changes.
+    combat_active: bool = False
+    combat_round: int = 0
+    enemy_cr_balance: float = 0.0
+    # Latest HP ratio per character that reported a health change in this session.
+    party_health_ratios: dict[str, float] = Field(default_factory=dict)
+
+    @property
+    def lowest_party_health_ratio(self) -> float:
+        """Lowest HP ratio across the party. A party with no reports reads as full health."""
+        return min(self.party_health_ratios.values(), default=1.0)
 
     def is_ducked_at(self, now: datetime) -> bool:
         """Return True when a duck is engaged and its stored duration has not elapsed."""

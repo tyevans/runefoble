@@ -19,6 +19,12 @@ Each control route checks one schema permission. The table in section 7 lists th
 
 The Encounter Tension Scoring Engine computes real-time tension (0–100) based on combat round progression, enemy Challenge Rating (CR) threat, and party health ratios. The caller needs `session.control` on `session_id` (DM authority). A player receives `403`.
 
+The event path derives these inputs from game state. No value is fixed:
+
+- **Enemy CR**: On `CombatEncounterStarted`, the engine sums the `cr` field of each roster combatant. A CR can be a number or an SRD fraction such as `"1/4"`. A combatant without `cr` adds nothing. Later rounds reuse this sum.
+- **Round**: `CombatRoundAdvanced` and `InitiativeTurnAdvanced` set the round.
+- **Party health**: Each `CharacterHealthChanged` event with a `session_id` stores that character's HP ratio (current HP / max HP). The engine uses the lowest stored ratio. A character that has not reported counts as full health. During combat, each health change re-scores tension at once.
+
 ```bash
 curl -X POST http://localhost:8009/api/v1/soundscape/tension/calculate \
   -H "Authorization: Bearer $TOKEN" \

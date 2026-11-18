@@ -142,7 +142,11 @@ def test_soundscape_consumer_applies_combat_start_from_redis(
         _publish(
             redis_double,
             SESSION_STREAM,
-            CombatEncounterStarted(aggregate_id=session_id, session_id=session_id),
+            CombatEncounterStarted(
+                aggregate_id=session_id,
+                session_id=session_id,
+                combatants=[{"combatant_id": "orc-1", "name": "Orc", "cr": 2.0}],
+            ),
         )
 
         def tension_applied() -> bool:
