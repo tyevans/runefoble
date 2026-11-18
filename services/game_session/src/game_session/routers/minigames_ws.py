@@ -33,14 +33,14 @@ async def _reject(websocket: WebSocket, code: str, message: str, close_code: int
 async def _may_play(
     websocket: WebSocket, spicedb: object, establishment_id: str, user_id: str
 ) -> bool:
-    """Check `establishment` play access (Zanzibar). Reject the socket with 4003 when missing."""
+    """Check `establishment` play access (Zanzibar). Reject the socket with 4403 when missing."""
     if await check_establishment_play_permission(spicedb, establishment_id, user_id):
         return True
     await _reject(
         websocket,
         "PERMISSION_DENIED",
         f"User '{user_id}' lacks permission to play at establishment '{establishment_id}'",
-        4003,
+        4403,
     )
     return False
 

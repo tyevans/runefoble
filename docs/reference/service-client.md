@@ -55,6 +55,14 @@ await client.send(
 
 The caller sets `timeout_s` for each call. The client sets no default timeout. The client does not retry. The client does not cache.
 
+### `websocket_target`
+
+```python
+client.websocket_target(path: str) -> tuple[str, dict[str, str]]
+```
+
+Returns the `ws://` or `wss://` URL for `path` on the owner, and the handshake headers. The headers carry the service credential only. The caller's bearer goes in the subprotocol list, so the owner verifies the token that the client offered. The gateway uses it through `gateway_api.websocket_relay` (TASK-0592).
+
 ## `UpstreamReply`
 
 A frozen dataclass. It holds an upstream 2xx or 4xx answer without change.

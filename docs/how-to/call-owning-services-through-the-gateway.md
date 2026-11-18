@@ -89,6 +89,36 @@ Cover these cases:
 
 Run the targeted tests with `uv run pytest <file>`.
 
+## Relay a WebSocket to an owner
+
+Use `relay_websocket` from `gateway_api.websocket_relay` when the owner serves a socket. The gateway does not parse the frames. It does this, in order:
+
+1. Checks the bearer subprotocol with the gateway verifier. A missing or invalid token closes with `1008` before accept.
+2. Opens an upstream socket to the owner at the same path, with the same offered subprotocols. The owner gets the bearer. The gateway adds only the service credential and the trace headers.
+3. Accepts the client with the subprotocol that the owner chose, then relays text and binary frames both ways.
+4. Passes a close from either side to the other side with the same code and reason.
+
+```python
+@app.websocket("/ws/minigames/{table_id}")
+async def gateway_standalone_minigame_ws(websocket: WebSocket, table_id: str) -> None:
+    await relay_websocket(
+        websocket, service="game_session", segments=("ws", "minigames", table_id)
+    )
+```
+
+Map the failures this way:
+
+| Case | Client sees |
+|---|---|
+| Gateway token check fails | `1008`, before accept |
+| Owner refuses the handshake with HTTP 401 | `1008` after accept |
+| Owner refuses the handshake with HTTP 403 (authorization) | `4403` after accept |
+| Owner unreachable, or slow to open | `1013` after accept |
+
+A close code cannot be sent before accept, so the gateway accepts first and then closes with the code. The owner verifies the bearer again. The relay adds no permission check of its own.
+
+Test a relayed socket with a stand-in owner from `serve(...)`. Check that the bearer subprotocol arrives, that text and binary frames round-trip, and that an owner close code reaches the client.
+
 ## Checklist
 
 - [ ] Setting field exists, with `default=None` and no `localhost` default.
@@ -96,3 +126,4 @@ Run the targeted tests with `uv run pytest <file>`.
 - [ ] Helm renders the variable for `gateway-api`.
 - [ ] Route calls `forward_json(..., service=..., ...)` with a timeout.
 - [ ] Tests set the variable before they enter `TestClient`, and cover the 5 cases above.
+- [ ] A relayed socket sends the bearer subprotocol upstream, forwards frames both ways, and passes owner close codes.

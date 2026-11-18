@@ -895,7 +895,6 @@ source = { editable = "gateway/api" }
 dependencies = [
     { name = "character-sheet" },
     { name = "fastapi" },
-    { name = "game-session" },
     { name = "httpx" },
     { name = "pydantic" },
     { name = "runefoble-auth" },
@@ -904,13 +903,13 @@ dependencies = [
     { name = "soundscape" },
     { name = "uvicorn" },
     { name = "voice-agent" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "character-sheet", editable = "services/character_sheet" },
     { name = "fastapi", specifier = ">=0.141.1" },
-    { name = "game-session", editable = "services/game_session" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
@@ -919,6 +918,7 @@ requires-dist = [
     { name = "soundscape", editable = "services/soundscape" },
     { name = "uvicorn", specifier = ">=0.54.0" },
     { name = "voice-agent", editable = "services/voice_agent" },
+    { name = "websockets", specifier = ">=16.1.1" },
 ]
 
 [[package]]
