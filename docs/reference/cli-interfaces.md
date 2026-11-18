@@ -7,10 +7,11 @@
 | `make help` | Displays all available developer commands |
 | `make setup` | Installs Python UV workspace dependencies and frontend packages |
 | `make health-check` | Gate. Runs `spec-ops health` (file length <500 lines in `libs/`, `services/`, `gateway/`, `frontend/`, `tests/`, `scripts/`, `e2e/`, `tools/`; numbering; backlog state) and `spec-ops schema check` (frontmatter and Markdown grammar in `docs/project/`) |
+| `make install-spec-ops` | Installs the pinned spec-ops CLI with `uv tool install`. The pin is the `SPEC_OPS_SOURCE` variable in the `Makefile`, the only pin source. CI and AGENTS.md use this target. A command-line override is ignored |
 | `make clean-worktrees` | Cleans up merged and stale git worktrees safely (`ARGS="--dry-run"`) |
-| `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`). Local tool, kept until parity with `spec-ops worker` is verified |
-| `make visualize-project` | Launches dynamic docs/project content visualizer web application on port 8787 |
-| `make visualize-project-build` | Builds standalone HTML bundle (`dist/project-visualizer.html`) |
+| `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`). Local tool, kept. See the parity record below |
+| `make visualize-project` | Launches dynamic docs/project content visualizer web application on port 8787. Local tool, kept. See the parity record below |
+| `make visualize-project-build` | Builds standalone HTML bundle (`dist/project-visualizer.html`). Local tool, kept. See the parity record below |
 | `make docs-build` | Compiles documentation static site via Zensical with integrated project visualizer |
 | `make docs-serve` | Builds the docs with `scripts/build_docs.py`, then serves the site with `zensical serve` on port 8000 (the Zensical default, verified by running the target) |
 | `make cluster-up` | Launches local Kind Kubernetes cluster with port mapping and Traefik |
@@ -43,10 +44,28 @@
 | `make build` | Produces production frontend bundle and static Storybook documentation |
 | `make check-ui-manifests` | Fails when a service UI manifest is missing or invalid (ADR-0013, ADR-0015) |
 | `make voice-model-cache` | Downloads the faster-whisper model set by `VOICE_MODEL_SIZE` (default `tiny.en`) into `.cache/voice-models`, then copies it into the running voice-agent pod |
-| `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks. Local tool, kept until parity with `spec-ops prd audit` is verified (it reports different counts) |
-| `make prd-decompose` | Decomposes PRDs into ADR spikes and vertical slices (`ARGS="--prd PRD-0014"`) |
-| `make prd-create` | Scaffolds a new PRD document with frontmatter and registers it |
-| `make prd-sync` | Synchronizes PRD, User Story, and Backlog Priority registries |
+| `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks. Local tool, kept. See the parity record below |
+| `make prd-decompose` | Decomposes PRDs into ADR spikes and vertical slices (`ARGS="--prd PRD-0014"`). Local tool, kept. See the parity record below |
+| `make prd-create` | Scaffolds a new PRD document with frontmatter and registers it. Local tool, kept. See the parity record below |
+| `make prd-sync` | Synchronizes PRD, User Story, and Backlog Priority registries. Local tool, kept. See the parity record below |
+
+## spec-ops Parity Record (TASK-0700)
+
+A local tool stays only when this record names a reason. A local tool is deleted only after a
+comparison on the same tree shows parity. The comparisons ran on 2026-11-17 with the spec-ops
+pin in `Makefile` (`SPEC_OPS_SOURCE`). Each run used the same checkout.
+
+| Local target | spec-ops command | Comparison run | Result | Decision |
+|---|---|---|---|---|
+| `make prd-audit` | `spec-ops prd audit` | Ran both on one tree. Local: 24 PRDs, 96 ready tasks, PRD-0014 under-decomposed, 200 oversized proposed tasks. spec-ops: 25 PRDs, 1 undecomposed, 96 ready tasks | Differs. spec-ops counts `PRIORITY.md` as a PRD and reports it as undecomposed. spec-ops has no per-task scope check | Keep local |
+| `make prd-decompose` | `spec-ops prd decompose` | Not run. The command writes into `docs/project/` | No result | Keep local. Parity not shown |
+| `make prd-create` | `spec-ops prd create` | Not run. The command writes a new PRD file | No result | Keep local. Parity not shown |
+| `make prd-sync` | None. `spec-ops prd` has no `sync` action | Checked `spec-ops prd --help` | No equivalent | Keep local |
+| `make backlog-worker` | `spec-ops queue next`, `spec-ops queue tree`, `spec-ops worker --auto --dry-run` | Local `list` and spec-ops `queue tree` both show the same READY set. `queue next` returns the first READY task. Local `--dry-run` prints only the header and exits, and it runs `recover_stale_tasks()` before the check. spec-ops `worker --auto --dry-run` wrote `claimed_by` and `branch` into a refined task file, dropped two frontmatter fields, and created a lease directory | Dry-run parity fails. spec-ops dry-run is not read-only. Execution parity not run | Keep local |
+| `make visualize-project` | `spec-ops visualizer --serve` | Not run. Serve output was not compared | No result | Keep local. Parity not shown |
+| `make visualize-project-build` | `spec-ops visualizer --build` | Ran both into `/tmp`. Local: exit 0, 4.77 MB bundle. spec-ops: exit 1, `Exported visualizer bundle size (8083743 bytes) exceeds 5242880 byte (5MB) limit`, and the file was still written | Fails on this tree. The spec-ops bundle is over its own size cap | Keep local |
+
+Tasks 0235, 0291, 0328, 0335 and 0346 stay open. They wait on the visualizer parity check.
 
 ## Automation Runner Scripts
 
