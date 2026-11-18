@@ -39,7 +39,6 @@ class VoiceRoomCoordinator:
         self._event_bus, self._spicedb = event_bus, spicedb_client
         self._repository = create_aggregate_repository(VoiceRoomAggregate)
         self._telemetry: dict[str, dict[str, dict[str, Any]]] = {}
-        self._aggregates: dict[str, VoiceRoomAggregate] = {}
         self._kick_callbacks: list[Callable[[str, str, str], Any]] = []
 
     @property
@@ -57,13 +56,14 @@ class VoiceRoomCoordinator:
     def register_kick_callback(self, cb: Callable[[str, str, str], Any]) -> None:
         self._kick_callbacks.append(cb)
 
-    async def get_or_load_room(self, session_id: str) -> VoiceRoomAggregate:
-        if session_id not in self._aggregates:
-            room_uuid = to_uuid(session_id)
-            self._aggregates[session_id] = await load_or_create(
-                self._repository, room_uuid, VoiceRoomAggregate
-            )
-        return self._aggregates[session_id]
+    async def _load_room(self, session_id: str) -> VoiceRoomAggregate:
+        """Load the room from the event store on every call. No domain state stays in process."""
+        return await load_or_create(self._repository, to_uuid(session_id), VoiceRoomAggregate)
+
+    async def _commit(self, agg: VoiceRoomAggregate, event: Any) -> None:
+        """Save the room before publishing its event. A failed save publishes nothing."""
+        await self._repository.save(agg)
+        await self._publish_event(event)
 
     async def peer_joined(
         self,
@@ -73,42 +73,42 @@ class VoiceRoomCoordinator:
         role: str = "player",
         joined_at: str | None = None,
     ) -> VoicePeerJoined:
-        agg = await self.get_or_load_room(session_id)
+        agg = await self._load_room(session_id)
         event = agg.join_peer(session_id, peer_id, user_id, role, joined_at)
-        await self._publish_event(event)
+        await self._commit(agg, event)
         return event
 
     async def peer_left(
         self, session_id: str, peer_id: str, reason: str = "disconnected"
     ) -> VoicePeerLeft:
-        agg = await self.get_or_load_room(session_id)
+        agg = await self._load_room(session_id)
         event = agg.leave_peer(session_id, peer_id, reason)
-        await self._publish_event(event)
+        await self._commit(agg, event)
         self._telemetry.get(session_id, {}).pop(peer_id, None)
         return event
 
     async def mute_toggled(
         self, session_id: str, peer_id: str, is_muted: bool
     ) -> VoicePeerMuteToggled:
-        agg = await self.get_or_load_room(session_id)
+        agg = await self._load_room(session_id)
         event = agg.toggle_mute(session_id, peer_id, is_muted)
-        await self._publish_event(event)
+        await self._commit(agg, event)
         return event
 
     async def apply_vocal_preset(
         self, session_id: str, peer_id: str, preset_name: str, **kwargs: Any
     ) -> VocalModulatorPresetAppliedEvent:
-        agg = await self.get_or_load_room(session_id)
+        agg = await self._load_room(session_id)
         event = agg.apply_vocal_preset(session_id, peer_id, preset_name, **kwargs)
-        await self._publish_event(event)
+        await self._commit(agg, event)
         return event
 
     async def toggle_voice_filter(
         self, session_id: str, peer_id: str, filter_name: str, **kwargs: Any
     ) -> VoiceFilterToggledEvent:
-        agg = await self.get_or_load_room(session_id)
+        agg = await self._load_room(session_id)
         event = agg.toggle_voice_filter(session_id, peer_id, filter_name, **kwargs)
-        await self._publish_event(event)
+        await self._commit(agg, event)
         return event
 
     def update_telemetry(self, session_id: str, peer_id: str, **metrics: Any) -> None:
@@ -116,7 +116,7 @@ class VoiceRoomCoordinator:
         t.update({k: v for k, v in metrics.items() if v is not None})
 
     async def get_room_summary(self, session_id: str) -> dict[str, Any]:
-        agg = await self.get_or_load_room(session_id)
+        agg = await self._load_room(session_id)
         peers = agg.state.peers if agg.state else {}
         room_t = self._telemetry.get(session_id, {})
         participants = []
