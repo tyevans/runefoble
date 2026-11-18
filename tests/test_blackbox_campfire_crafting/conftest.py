@@ -12,9 +12,7 @@ import pytest
 from character_sheet.dependencies import set_event_bus as set_char_event_bus
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from game_session.dependencies import get_spicedb_client as get_session_spicedb
 from game_session.dependencies import set_event_bus as set_session_event_bus
-from game_session.dependencies import set_spicedb_client as set_session_spicedb
 from game_session.main import app as session_app
 from gateway_api.main import app as gateway_app
 from runefoble_auth.factory import get_spicedb_client
