@@ -5,8 +5,6 @@ Governed by ADR-0003, ADR-0006, ADR-0007, ADR-0011, and Hard Invariant 7.
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 from character_sheet.dependencies import STREAM_CRAFTING
 from fastapi.testclient import TestClient
 
@@ -84,7 +82,7 @@ def _bearer(issuer, sub: str) -> dict[str, str]:
 
 
 def test_blackbox_gateway_zanzibar_authorization(
-    gateway_client: TestClient, spicedb, trusted_ws_issuer
+    character_sheet_upstream, gateway_client: TestClient, spicedb, trusted_ws_issuer
 ):
     """Verify Gateway Zanzibar authorization enforcement for downtime and crafting endpoints.
 
@@ -131,16 +129,22 @@ def test_blackbox_gateway_zanzibar_authorization(
         headers=user_headers,
     )
     assert upg_res.status_code == 200
-    assert upg_res.json()["status"] == "upgraded"
+    assert upg_res.json()["new_tier"] == 1
 
+    char_res = gateway_client.post(
+        "/api/v1/characters",
+        json={"name": "Bram the Tinkerer", "character_class": "Artificer", "max_hp": 24},
+        headers=user_headers,
+    )
+    assert char_res.status_code == 201, char_res.text
     craft_res = gateway_client.post(
         "/api/v1/crafting/recipes/combine",
         json={
-            "character_id": str(uuid4()),
+            "character_id": char_res.json()["id"],
             "reagents": ["Glowmoss Extract", "Volcano Ash"],
+            "catalyst": "purified_water",
         },
         headers=user_headers,
-        params={"campaign_id": camp_id},
     )
-    assert craft_res.status_code == 200
-    assert craft_res.json()["item_name"] == "Radiant Smoke Pellet"
+    assert craft_res.status_code == 200, craft_res.text
+    assert craft_res.json()["reagents_consumed"] == ["Glowmoss Extract", "Volcano Ash"]

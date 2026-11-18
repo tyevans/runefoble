@@ -11,11 +11,14 @@ from uuid import UUID
 
 from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
+from game_session.auth import check_session_participation
 from game_session.dependencies import get_event_bus, get_spicedb_client, repo, stronghold_repo
 from game_session.events import STREAM_SESSION
+from game_session.minigame_rules import to_uuid
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from pydantic import BaseModel, Field
 from runefoble_events.events import CampfireRestCompleted
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["campfire"])
@@ -51,42 +54,44 @@ async def get_storytelling_prompts(session_id: UUID) -> dict[str, Any]:
     return {"session_id": str(session_id), "prompts": COLLABORATIVE_PROMPTS}
 
 
+async def _campaign_for_session(session_id: str) -> UUID | None:
+    """Return the campaign linked to a session in SpiceDB, or None when no link exists.
+
+    Campaign sessions carry a `session#campaign` tuple (campaign/tuples.py). They have no
+    GameSessionAggregate, so the link is the only campaign source for a campaign session.
+    """
+    relations = await get_spicedb_client().read_relationships("session", session_id, "campaign")
+    for relation in relations:
+        return UUID(str(relation.subject_id))
+    return None
+
+
 @router.post("/api/v1/sessions/{session_id}/rest/campfire", response_model=CampfireRestResponse)
 async def campfire_rest(
     caller_id: CallerId,
-    session_id: UUID,
+    session_id: str,
     req: CampfireRestRequest,
 ) -> CampfireRestResponse:
     """Initiate interactive campfire rest sequence, applying rest boons and stronghold bonuses."""
-    try:
-        session = await repo.load(session_id)
-    except AggregateNotFoundError as e:
-        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found") from e
-
-    if not session.state.campaign_id:
+    await check_session_participation(session_id, caller_id)
+    campaign_id = await _campaign_for_session(session_id)
+    if campaign_id is None:
         raise HTTPException(status_code=403, detail="Session has no campaign for campfire rest")
-    camp_id_str = str(session.state.campaign_id)
-    spicedb = get_spicedb_client()
-    if not await spicedb.check_permission("campaign", camp_id_str, "play", "user", caller_id):
-        raise HTTPException(
-            status_code=403, detail="Player or DM permission required for campfire rest"
-        )
 
-    # Select or use storytelling prompt
     prompt = req.storytelling_prompt or random.choice(COLLABORATIVE_PROMPTS)
 
-    # Determine participant names
+    session = await load_if_exists(repo, to_uuid(session_id))
     participants_healed = []
     if req.participating_character_ids:
         participants_healed = [str(cid) for cid in req.participating_character_ids]
-    else:
+    elif session is not None:
         participants_healed = [
             p.character_name or str(p.character_id)
             for p in session.state.participants.values()
             if p.character_id
         ]
-        if not participants_healed:
-            participants_healed = ["Bram the Tinkerer", "Valeros", "Kyra"]
+    if not participants_healed:
+        participants_healed = ["Bram the Tinkerer", "Valeros", "Kyra"]
 
     # Calculate baseline resting boons
     boons: list[str] = ["Campfire Camaraderie (+1 Morale to Initiative)"]
@@ -108,7 +113,7 @@ async def campfire_rest(
 
     # Check and apply persistent stronghold boons
     try:
-        stronghold = await stronghold_repo.load(UUID(camp_id_str))
+        stronghold = await stronghold_repo.load(campaign_id)
     except AggregateNotFoundError:
         stronghold = None
     if stronghold is not None:
@@ -116,13 +121,11 @@ async def campfire_rest(
             if b not in boons:
                 boons.append(b)
 
-    camp_uuid = UUID(camp_id_str)
-
     # Record event on event bus
     rest_event = CampfireRestCompleted(
-        aggregate_id=session_id,
-        session_id=str(session_id),
-        campaign_id=camp_uuid,
+        aggregate_id=to_uuid(session_id),
+        session_id=session_id,
+        campaign_id=campaign_id,
         rest_type=req.rest_type,
         storytelling_prompt=prompt,
         boons_applied=boons,
@@ -134,8 +137,8 @@ async def campfire_rest(
         await publish_or_fail(bus, STREAM_SESSION, rest_event)
 
     return CampfireRestResponse(
-        session_id=str(session_id),
-        campaign_id=camp_id_str,
+        session_id=session_id,
+        campaign_id=str(campaign_id),
         rest_type=req.rest_type,
         storytelling_prompt=prompt,
         boons_applied=boons,

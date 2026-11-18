@@ -105,12 +105,9 @@ def test_stronghold_upgrade_passes_the_owner_400_through(
     assert "Unknown facility" in res.json()["detail"]
 
 
-def test_campfire_rest_passes_the_owner_rejection_through(
-    client: TestClient, trusted_ws_issuer
-) -> None:
-    """game_session takes a UUID session id for campfire rest. Campaign session ids are not UUIDs."""
+def test_campfire_rest_returns_the_owner_boons(client: TestClient, trusted_ws_issuer) -> None:
     headers = _headers(trusted_ws_issuer, "dm_campfire")
-    _, session_id = _campaign_with_session(client, headers)
+    campaign_id, session_id = _campaign_with_session(client, headers)
 
     res = client.post(
         f"/api/v1/sessions/{session_id}/rest/campfire",
@@ -118,22 +115,25 @@ def test_campfire_rest_passes_the_owner_rejection_through(
         headers=headers,
     )
 
-    assert res.status_code == 422
-    assert res.json()["detail"][0]["loc"] == ["path", "session_id"]
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["session_id"] == session_id
+    assert body["campaign_id"] == campaign_id
+    assert "Exhaustion Cleared" in body["boons_applied"]
+    assert body["status"] == "completed"
 
 
-def test_campfire_rest_for_unknown_session_passes_the_owner_404_through(
-    client: TestClient, trusted_ws_issuer
-) -> None:
+def test_campfire_rest_for_unknown_session_is_denied(client: TestClient, trusted_ws_issuer) -> None:
+    """A session with no campaign link gets no participation grant, so the owner answers 403."""
     headers = _headers(trusted_ws_issuer, "dm_campfire_missing")
 
     res = client.post(
-        f"/api/v1/sessions/{uuid4()}/rest/campfire",
+        f"/api/v1/sessions/session-{uuid4().hex}/rest/campfire",
         json={"rest_type": "long"},
         headers=headers,
     )
 
-    assert res.status_code == 404
+    assert res.status_code == 403
 
 
 def test_combine_returns_the_character_sheet_outcome(client: TestClient, trusted_ws_issuer) -> None:
@@ -237,6 +237,15 @@ def test_haggle_forwards_to_the_owner_negotiation(
     body = res.json()
     assert body["negotiation_id"]
     assert body["merchant_id"] == merchant_id
+    assert body["establishment_id"] == establishment_id
+
+    stored = httpx.get(
+        f"{game_session_upstream}/api/v1/haggling/{body['negotiation_id']}",
+        headers=headers,
+        timeout=10.0,
+    )
+    assert stored.status_code == 200, stored.text
+    assert stored.json()["establishment_id"] == establishment_id
 
 
 def test_downtime_routes_answer_503_when_the_owner_is_unreachable(
