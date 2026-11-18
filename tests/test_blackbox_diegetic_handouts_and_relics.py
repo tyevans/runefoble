@@ -9,14 +9,22 @@ from collections.abc import Iterator
 from uuid import UUID, uuid4
 
 import pytest
-from campaign_lore.dependencies import get_handout_repo, get_relic_repo, get_spicedb_client
+from campaign_lore.dependencies import get_handout_repo, get_relic_repo
 from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app
 from fastapi.testclient import TestClient
+from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 VISITOR_SUBJECT = "lore-test-visitor"
+
+
+async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
+    """Make `user_id` the DM of a fresh campaign. Campaign Lore has no membership frontdoor."""
+    await get_spicedb_client().write_relationship(
+        "campaign", campaign_id, "dungeon_master", "user", user_id
+    )
 
 
 def _bearer(user_id: str) -> dict[str, str]:
@@ -206,7 +214,6 @@ async def test_blackbox_relic_forge_and_inspection(client: TestClient):
         f"/api/v1/lore/relics/{relic_id}/translate-rune",
         json={
             "rune_id": "rune-spire-1",
-            "translated_by": "rowan_chronicler",
             "translation": "By Blood Sealed",
         },
     )
@@ -223,14 +230,22 @@ async def test_blackbox_spicedb_authorization_enforcement(client: TestClient):
     spicedb = get_spicedb_client()
     campaign_id = str(uuid4())
     user_id = f"player-{uuid4().hex[:6]}"
+    forger_id = f"dm-{uuid4().hex[:6]}"
 
-    # Configure user with view permission on campaign
+    # Configure a player and a DM who may forge (forging requires campaign run_session)
     await spicedb.write_relationship(
         resource_type="campaign",
         resource_id=campaign_id,
         relation="player",
         subject_type="user",
         subject_id=user_id,
+    )
+    await spicedb.write_relationship(
+        resource_type="campaign",
+        resource_id=campaign_id,
+        relation="dungeon_master",
+        subject_type="user",
+        subject_id=forger_id,
     )
 
     # Forge a secret DM-only relic
@@ -242,7 +257,7 @@ async def test_blackbox_spicedb_authorization_enforcement(client: TestClient):
             "relic_type": "chalice",
             "is_secret": True,
         },
-        headers=_bearer(user_id),
+        headers=_bearer(forger_id),
     )
     assert forge_resp.status_code == 200
     relic_id = forge_resp.json()["relic_id"]

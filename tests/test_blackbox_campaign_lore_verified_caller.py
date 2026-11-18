@@ -12,10 +12,10 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from campaign_lore.dependencies import get_spicedb_client
 from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app
 from fastapi.testclient import TestClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 

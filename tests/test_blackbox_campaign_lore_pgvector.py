@@ -18,6 +18,7 @@ from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import create_app
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.config import LoreBackendSettings
 
 from tests.helpers.live_services import closed_port_url, serve
@@ -34,6 +35,13 @@ from tests.helpers.lore_backends import (
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 VISITOR_SUBJECT = "lore-test-visitor"
+
+
+async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
+    """Make `user_id` the DM of a fresh campaign. Campaign Lore has no membership frontdoor."""
+    await get_spicedb_client().write_relationship(
+        "campaign", campaign_id, "dungeon_master", "user", user_id
+    )
 
 
 def _bearer(user_id: str) -> dict[str, str]:
@@ -80,9 +88,11 @@ def _ranked_titles(client: TestClient, campaign_id: str, query: str) -> list[str
     return [result["document_title"] for result in resp.json()["results"]]
 
 
-def test_query_close_in_meaning_ranks_the_matching_document_first(client: TestClient) -> None:
+@pytest.mark.asyncio
+async def test_query_close_in_meaning_ranks_the_matching_document_first(client: TestClient) -> None:
     """A phrase that shares no word with a document still ranks that document first."""
     campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
     _ingest_two_documents(client, campaign_id)
 
     undead_titles = _ranked_titles(client, campaign_id, UNDEAD_QUERY)

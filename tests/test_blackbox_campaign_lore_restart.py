@@ -19,10 +19,10 @@ from uuid import uuid4
 
 import asyncpg
 import pytest
-from campaign_lore.dependencies import get_spicedb_client
 from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import create_app
 from fastapi.testclient import TestClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import get_event_store, set_event_store
 
@@ -34,6 +34,13 @@ from tests.helpers.lore_backends import (
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 VISITOR_SUBJECT = "lore-test-visitor"
+
+
+async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
+    """Make `user_id` the DM of a fresh campaign. Campaign Lore has no membership frontdoor."""
+    await get_spicedb_client().write_relationship(
+        "campaign", campaign_id, "dungeon_master", "user", user_id
+    )
 
 
 def _bearer(user_id: str) -> dict[str, str]:
@@ -95,6 +102,7 @@ async def test_pgvector_ranking_survives_restart_without_reingest(postgres_servi
 
     dsn = str(postgres_service["dsn"])
     campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
 
     store_before = _use_postgres_event_store(dsn)
     with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as first:
@@ -135,7 +143,8 @@ async def test_lore_projection_survives_restart(postgres_service):
     dm_user = f"dm-{uuid4().hex[:6]}"
     player_user = f"player-{uuid4().hex[:6]}"
     spicedb = get_spicedb_client()
-    await spicedb.write_relationship("campaign", campaign_id, "run_session", "user", dm_user)
+    await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
+    await _seed_dm(campaign_id)
 
     store_before = _use_postgres_event_store(dsn)
     with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as first:
@@ -230,10 +239,12 @@ async def test_lore_projection_survives_restart(postgres_service):
 
 
 @pytest.mark.usefixtures("lore_backends")
-def test_extracted_entities_record_pattern_provenance():
+@pytest.mark.asyncio
+async def test_extracted_entities_record_pattern_provenance():
     """Entities from regex extraction are recorded as pattern extraction, never as LLM output."""
     set_event_store(None)
     campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
     with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as client:
         resp = client.post(
             "/api/v1/lore/documents",
@@ -253,15 +264,18 @@ def test_extracted_entities_record_pattern_provenance():
     assert any(e["name"] == "Sir Gareth" for e in doc["entities"])
 
 
+@pytest.mark.asyncio
 @pytest.mark.usefixtures("lore_backends")
-def test_alias_consolidation_requires_an_existing_document():
+async def test_alias_consolidation_requires_an_existing_document():
     """A consolidation cannot be recorded against a document that does not exist."""
     set_event_store(None)
+    campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
     with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as client:
         resp = client.post(
             "/api/v1/lore/aliases/consolidate",
             json={
-                "campaign_id": str(uuid4()),
+                "campaign_id": campaign_id,
                 "canonical_name": "Sir Gareth",
                 "alias_name": "The Silver Knight",
                 "document_id": str(uuid4()),

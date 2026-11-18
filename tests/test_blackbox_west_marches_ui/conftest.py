@@ -15,10 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from campaign_lore.dependencies import (
-    set_spicedb_client,
-    set_west_marches_repo,
-)
+from campaign_lore.dependencies import set_west_marches_repo
 from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app as lore_app
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
@@ -26,6 +23,7 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
+from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 VISITOR_SUBJECT = "lore-test-visitor"
@@ -48,10 +46,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture
-def spicedb_client() -> MockSpiceDBClient:
+def spicedb_client() -> Iterator[MockSpiceDBClient]:
     mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
-    return mock_spicedb
+    with shared_spicedb_client(mock_spicedb):
+        yield mock_spicedb
 
 
 @pytest.fixture

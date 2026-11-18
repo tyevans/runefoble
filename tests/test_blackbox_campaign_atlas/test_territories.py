@@ -38,7 +38,7 @@ async def test_territory_definition_and_polygon_containment(
 ):
     """Test geopolitical boundary definition and automated point-in-polygon containment."""
     user_id = "rowan_chronicler"
-    await spicedb.write_relationship("campaign", campaign_id, "player", "user", user_id)
+    await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", user_id)
 
     terr_payload = {
         "name": "Silverkeep Garrison",
@@ -92,7 +92,7 @@ async def test_contested_territory_updates_and_layer_toggle(
 ):
     """Test contested territory detection and layer visibility toggle."""
     user_id = "rowan_chronicler"
-    await spicedb.write_relationship("campaign", campaign_id, "player", "user", user_id)
+    await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", user_id)
 
     terr_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/atlas/territories",

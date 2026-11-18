@@ -14,10 +14,18 @@ import pytest
 from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app, create_app
 from fastapi.testclient import TestClient
+from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 VISITOR_SUBJECT = "lore-test-visitor"
+
+
+async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
+    """Make `user_id` the DM of a fresh campaign. Campaign Lore has no membership frontdoor."""
+    await get_spicedb_client().write_relationship(
+        "campaign", campaign_id, "dungeon_master", "user", user_id
+    )
 
 
 def _bearer(user_id: str) -> dict[str, str]:
@@ -48,9 +56,11 @@ def _ingest(client: TestClient, campaign_id: str, title: str, content: str) -> s
     return resp.json()["document_id"]
 
 
-def test_repeated_alias_merge_returns_409_and_records_one_alias(client: TestClient):
+@pytest.mark.asyncio
+async def test_repeated_alias_merge_returns_409_and_records_one_alias(client: TestClient):
     """A second identical merge is a conflict. The document keeps one consolidation."""
     campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
     doc_id = _ingest(
         client,
         campaign_id,
@@ -77,9 +87,11 @@ def test_repeated_alias_merge_returns_409_and_records_one_alias(client: TestClie
     assert len(doc.json()["consolidated_aliases"]) == 1
 
 
-def test_alias_that_is_already_a_canonical_target_conflicts_with_409(client: TestClient):
+@pytest.mark.asyncio
+async def test_alias_that_is_already_a_canonical_target_conflicts_with_409(client: TestClient):
     """Merging into an entity that is itself an alias is a conflict, not a server fault."""
     campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
     doc_id = _ingest(
         client,
         campaign_id,

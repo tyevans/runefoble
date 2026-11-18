@@ -107,9 +107,8 @@ async def test_codex_frontdoor_referencing_and_crud(
     base = f"/api/v1/campaigns/{campaign_id}/codex"
 
     # Set up Zanzibar permissions for campaign
-    await spicedb.write_relationship("campaign", campaign_id, "run_session", "user", dm_user)
-    await spicedb.write_relationship("campaign", campaign_id, "play", "user", player_user)
-    await spicedb.write_relationship("campaign", campaign_id, "view", "user", player_user)
+    await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
+    await spicedb.write_relationship("campaign", campaign_id, "player", "user", player_user)
 
     # Ingest document to populate redstring entity graph
     ingest = client.post(
@@ -119,6 +118,7 @@ async def test_codex_frontdoor_referencing_and_crud(
             "title": "Keep of the Silver Gryphon",
             "content": "The Silver Gryphon is an ancient bastion guarded by Lord Theresa.",
         },
+        headers=dm_h,
     )
     assert ingest.status_code == 200, ingest.text
 

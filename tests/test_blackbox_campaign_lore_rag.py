@@ -10,14 +10,21 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from campaign_lore.dependencies import get_spicedb_client
 from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app
 from fastapi.testclient import TestClient
+from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 VISITOR_SUBJECT = "lore-test-visitor"
+
+
+async def _seed_dm(campaign_id: str, user_id: str = VISITOR_SUBJECT) -> None:
+    """Make `user_id` the DM of a fresh campaign. Campaign Lore has no membership frontdoor."""
+    await get_spicedb_client().write_relationship(
+        "campaign", campaign_id, "dungeon_master", "user", user_id
+    )
 
 
 def _bearer(user_id: str) -> dict[str, str]:
@@ -43,6 +50,7 @@ def client(lore_backends) -> Iterator[TestClient]:
 async def test_blackbox_document_ingestion_and_retrieval(client: TestClient):
     """Test public frontdoor ingestion of worldbuilding lore documents with event sourcing."""
     campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
 
     # 1. Frontdoor document ingestion
     payload = {
@@ -79,6 +87,7 @@ async def test_blackbox_document_ingestion_and_retrieval(client: TestClient):
 async def test_blackbox_alias_consolidation(client: TestClient):
     """Test alias consolidation via redstring merging 'The Silver Knight' to canonical 'Sir Gareth'."""
     campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
 
     # 1. Ingest lore document introducing the character and title
     ingest_payload = {
@@ -128,6 +137,7 @@ async def test_blackbox_alias_consolidation(client: TestClient):
 async def test_blackbox_sub_50ms_hybrid_search(client: TestClient):
     """Test sub-50ms hybrid RAG search combining BM25, dense embeddings, and graph traversal."""
     campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
 
     # Ingest multiple lore documents to populate graph and chunks
     docs = [
@@ -187,6 +197,7 @@ async def test_blackbox_sub_50ms_hybrid_search(client: TestClient):
 async def test_blackbox_spicedb_authorization_secret_filtering(client: TestClient):
     """Verify SpiceDB Zanzibar authorization filters secret DM lore for players."""
     campaign_id = str(uuid4())
+    await _seed_dm(campaign_id)
     dm_user = f"dm-{uuid4().hex[:6]}"
     player_user = f"player-{uuid4().hex[:6]}"
     spicedb = get_spicedb_client()
