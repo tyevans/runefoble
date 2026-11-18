@@ -4,8 +4,8 @@ Categories (each must be zero):
 - dead_links: local markdown links in refined and proposed tasks that do not resolve.
 - stale_prd_links: links from PRDs to backlog tasks that are not in the cited folder.
 - body_status_mismatch: complete records whose `## Status` body differs from frontmatter.
-- unresolved_paths: repository paths cited in complete records that do not exist and are
-  not marked `(removed)`.
+- unresolved_paths: repository paths cited in complete records that do not exist, hold only
+  `__pycache__` folders, and are not marked `(removed)`.
 - missing_governance: complete records without governing_prds, governing_stories,
   governing_adrs, or dependencies.
 
@@ -23,16 +23,36 @@ from backlog_records import (
     BACKLOG_DIR,
     GOVERNANCE_KEYS,
     PRODUCT_DIR,
+    REPO_ROOT,
     active_records,
     complete_records,
     iter_markdown_links,
-    path_exists,
     repo_path_tokens,
     split_record,
     status_section_index,
 )
 
 SAMPLE_SIZE = 5
+CACHE_DIR_NAME = "__pycache__"
+
+
+def cited_path_exists(path: str) -> bool:
+    """Return True when a cited path exists and is not only interpreter cache.
+
+    A folder whose only content is `__pycache__` folders (at any depth) counts as missing.
+    An empty folder with no cache folders still counts as present.
+    """
+    target = REPO_ROOT / path.rstrip("/")
+    if not target.exists():
+        return False
+    if target.is_file():
+        return True
+    for entry in target.rglob("*"):
+        if CACHE_DIR_NAME in entry.relative_to(target).parts:
+            continue
+        if entry.is_file():
+            return True
+    return not any(target.rglob(CACHE_DIR_NAME))
 
 
 def dead_links() -> list[str]:
@@ -77,7 +97,7 @@ def unresolved_paths() -> list[str]:
     for record in complete_records():
         text = record.read_text(encoding="utf-8")
         for _, path, removed in repo_path_tokens(text):
-            if removed or path_exists(path):
+            if removed or cited_path_exists(path):
                 continue
             found.append(f"{record.name}: {path}")
     return found
