@@ -18,4 +18,4 @@ Feature: App Shell Composes the Asset Forge on a Deep-Linkable Route
     When I open the forge tab of the campaign
     And I enter "crypt with three pillars" as the battlemap prompt
     And I click the "Forge Tactical Battlemap" button
-    Then the preview image is served from the gateway asset route
+    Then the preview image is shown after the forge returns

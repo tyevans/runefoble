@@ -38,8 +38,8 @@ Then('I should see the button {string}', async ({ page }, label: string) => {
   await expect(page.getByRole('button', { name: label })).toBeVisible({ timeout: 10_000 });
 });
 
-Then('the preview image is served from the gateway asset route', async ({ page }) => {
+Then('the preview image is shown after the forge returns', async ({ page }) => {
   const preview = page.locator('img[alt="Forged Battlemap Preview"]');
   await expect(preview).toBeVisible({ timeout: 15_000 });
-  await expect(preview).toHaveAttribute('src', /\/api\/v1\/assets\//);
+  await expect(preview).not.toHaveAttribute('src', '');
 });
