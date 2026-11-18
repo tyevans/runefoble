@@ -18,7 +18,7 @@ from game_session.caravan.escrow import (
 )
 from game_session.caravan.models import CaravanLedgerState
 from game_session.caravan.trade_operations import CaravanTradeOperationsMixin
-from runefoble_events.west_marches import (
+from runefoble_events.events import (
     CaravanAmbushed,
     CaravanContractAccepted,
     CaravanContractPosted,

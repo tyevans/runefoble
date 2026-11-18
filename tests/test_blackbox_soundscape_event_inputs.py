@@ -12,8 +12,8 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.character import CharacterHealthChanged
-from runefoble_events.session import (
+from runefoble_events.events import (
+    CharacterHealthChanged,
     CombatEncounterEnded,
     CombatEncounterStarted,
     CombatRoundAdvanced,

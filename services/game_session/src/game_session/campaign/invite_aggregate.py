@@ -16,7 +16,7 @@ from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from game_session.campaign.errors import InviteExhaustedError, InviteExpiredError
 from pydantic import BaseModel
-from runefoble_events.campaign_lifecycle import CampaignInviteCreated, CampaignInviteRedeemed
+from runefoble_events.events import CampaignInviteCreated, CampaignInviteRedeemed
 
 INVITE_TOKEN_BYTES = 16
 

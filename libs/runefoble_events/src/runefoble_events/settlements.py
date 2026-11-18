@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -14,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class SettlementCharteredEvent(BaseRunefobleEvent):
     """Fired when a new frontier outpost, haven, or fortress is chartered."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Settlement"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.settlement_chartered"
@@ -36,7 +35,6 @@ class SettlementCharteredEvent(BaseRunefobleEvent):
 class SettlementUpgradedEvent(BaseRunefobleEvent):
     """Fired when a settlement facility or fortification is upgraded."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Settlement"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.settlement_upgraded"
@@ -56,7 +54,6 @@ class SettlementUpgradedEvent(BaseRunefobleEvent):
 class SettlementResourcesDepositedEvent(BaseRunefobleEvent):
     """Fired when a DM or haven manager adds gold and materials to the haven treasury."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Settlement"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.settlement_resources_deposited"
@@ -71,7 +68,6 @@ class SettlementResourcesDepositedEvent(BaseRunefobleEvent):
 class SettlementRestBoonClaimedEvent(BaseRunefobleEvent):
     """Fired when an adventuring party claims a rest or crafting boon from a haven facility."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Settlement"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.settlement_rest_boon_claimed"
@@ -89,7 +85,6 @@ class SettlementRestBoonClaimedEvent(BaseRunefobleEvent):
 class SettlementFoundedEvent(BaseRunefobleEvent):
     """Fired when a new settlement haven is founded with scale, biome, and layout."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Settlement"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.settlement_founded"
@@ -110,7 +105,6 @@ class SettlementFoundedEvent(BaseRunefobleEvent):
 class SettlementTierUpgradedEvent(BaseRunefobleEvent):
     """Fired when a settlement advances to a higher civic scale tier."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Settlement"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.settlement_tier_upgraded"
@@ -127,7 +121,6 @@ class SettlementTierUpgradedEvent(BaseRunefobleEvent):
 class EstablishmentConstructedEvent(BaseRunefobleEvent):
     """Fired when a new commercial, civic, or hospitality establishment is constructed."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Establishment"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.establishment_constructed"
@@ -149,7 +142,6 @@ class EstablishmentConstructedEvent(BaseRunefobleEvent):
 class EstablishmentUpgradedEvent(BaseRunefobleEvent):
     """Fired when an establishment upgrades its facilities, capacity, or amenities."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Establishment"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.establishment_upgraded"
@@ -166,7 +158,6 @@ class EstablishmentUpgradedEvent(BaseRunefobleEvent):
 class EstablishmentOperationsUpdatedEvent(BaseRunefobleEvent):
     """Fired when establishment staffing, total wages, and projected service quality update."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Establishment"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.establishment_operations_updated"
@@ -183,7 +174,6 @@ class EstablishmentOperationsUpdatedEvent(BaseRunefobleEvent):
 class BulletinNoticePinnedEvent(BaseRunefobleEvent):
     """Fired when a new bulletin notice, bounty, rumor, or job is pinned to a board."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Settlement"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.bulletin_notice_pinned"
@@ -207,7 +197,6 @@ class BulletinNoticePinnedEvent(BaseRunefobleEvent):
 class BulletinNoticeRemovedEvent(BaseRunefobleEvent):
     """Fired when a notice is removed or fulfilled from a bulletin board."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Settlement"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.bulletin_notice_removed"
@@ -222,7 +211,6 @@ class BulletinNoticeRemovedEvent(BaseRunefobleEvent):
 class CipherNoticeDecryptedEvent(BaseRunefobleEvent):
     """Fired when a player successfully decrypts a coded cipher notice."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Settlement"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.game_session.cipher_notice_decrypted"

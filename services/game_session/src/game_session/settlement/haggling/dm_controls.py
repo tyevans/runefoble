@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from eventsource.domain.decorators import handles
-from runefoble_events.haggling import DMNegotiationOverridden
+from runefoble_events.events import DMNegotiationOverridden
 
 if TYPE_CHECKING:
     from game_session.settlement.haggling_models import NegotiationSessionState

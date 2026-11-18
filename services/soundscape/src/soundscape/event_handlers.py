@@ -9,18 +9,17 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from runefoble_events.character import (
+from runefoble_events.events import (
     CharacterHealthChanged,
-    CriticalHitScored,
-    DeathSaveStarted,
-)
-from runefoble_events.session import (
     CombatEncounterEnded,
     CombatEncounterStarted,
     CombatRoundAdvanced,
+    CriticalHitScored,
+    DeathSaveStarted,
+    DiceRolled,
     InitiativeTurnAdvanced,
+    PlayerSpokeEvent,
 )
-from runefoble_events.watcher import DiceRolled, PlayerSpokeEvent
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.leitmotif import LeitmotifEngine

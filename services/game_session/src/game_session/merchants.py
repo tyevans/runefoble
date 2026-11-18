@@ -14,7 +14,7 @@ from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from game_session.minigame_rules import to_opt_uuid, to_uuid
 from pydantic import BaseModel, Field
-from runefoble_events.tavern import HagglingNegotiated, MerchantCreated
+from runefoble_events.events import HagglingNegotiated, MerchantCreated
 
 MERCHANT_TEMPERAMENTS: dict[str, dict[str, Any]] = {
     "stubborn_greedy": {

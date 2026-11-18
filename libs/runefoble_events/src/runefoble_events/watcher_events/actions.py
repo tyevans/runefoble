@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.voice.audio_conditioned")
 class VoiceAudioConditioned(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.audio_conditioned"
@@ -26,7 +25,6 @@ class VoiceAudioConditioned(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.action_proposed")
 class WatcherActionProposed(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.action_proposed"
@@ -43,7 +41,6 @@ class WatcherActionProposed(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.action_vetoed")
 class WatcherActionVetoed(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.action_vetoed"
@@ -57,7 +54,6 @@ class WatcherActionVetoed(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.action_expired")
 class WatcherActionExpired(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.action_expired"
@@ -70,7 +66,6 @@ class WatcherActionExpired(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.action_approved")
 class WatcherActionApproved(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.action_approved"
@@ -84,7 +79,6 @@ class WatcherActionApproved(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.action_modified")
 class WatcherActionModified(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.action_modified"
@@ -99,7 +93,6 @@ class WatcherActionModified(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.disambiguation_requested")
 class IntentDisambiguationRequested(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.disambiguation_requested"
@@ -117,7 +110,6 @@ class IntentDisambiguationRequested(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.compound_action_resolved")
 class CompoundActionResolved(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.compound_action_resolved"

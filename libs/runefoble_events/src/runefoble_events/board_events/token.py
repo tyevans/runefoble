@@ -1,6 +1,6 @@
 """Tactile token kinematics, placement, action, and knockback domain events."""
 
-from typing import Any, ClassVar, Literal
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -10,7 +10,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.board.token_placed")
 class TokenPlaced(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.board.token_placed"
 
     aggregate_type: str = "BoardState"
@@ -25,7 +24,6 @@ class TokenPlaced(BaseRunefobleEvent):
 
 @register_event("runefoble.events.board.token_moved")
 class TokenMoved(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.board.token_moved"
 
     aggregate_type: str = "BoardState"
@@ -40,7 +38,6 @@ class TokenMoved(BaseRunefobleEvent):
 
 @register_event("runefoble.events.board.token_removed")
 class TokenRemoved(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.board.token_removed"
 
     aggregate_type: str = "BoardState"
@@ -50,7 +47,6 @@ class TokenRemoved(BaseRunefobleEvent):
 
 @register_event("runefoble.events.board.token_action_executed")
 class TokenActionExecuted(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.token_action_executed"
@@ -62,6 +58,3 @@ class TokenActionExecuted(BaseRunefobleEvent):
     target_token_ids: list[str] = Field(default_factory=list)
     details: dict[str, Any] = Field(default_factory=dict)
     initiated_by: str = "player"
-
-
-BoardMoveEvent = TokenMoved

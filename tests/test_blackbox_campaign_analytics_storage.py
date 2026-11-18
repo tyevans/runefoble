@@ -11,11 +11,11 @@ from uuid import uuid4
 
 from runefoble_events.events import (
     CharacterHealthChanged,
+    DiceRolled,
     InitiativeTurnAdvanced,
     SessionCreated,
     TokenPlaced,
 )
-from runefoble_events.watcher_events.combat import DiceRolled
 
 from tests.helpers.campaign_analytics_service import (
     BOARD_STREAM,

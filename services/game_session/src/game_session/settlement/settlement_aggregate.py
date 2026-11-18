@@ -22,7 +22,7 @@ from game_session.settlement.models import (
     SettlementState,
 )
 from game_session.settlement.treasury_handlers import TreasuryHandlersMixin
-from runefoble_events.settlements import (
+from runefoble_events.events import (
     SettlementFoundedEvent,
     SettlementTierUpgradedEvent,
 )

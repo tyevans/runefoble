@@ -12,7 +12,7 @@ from uuid import UUID, uuid4
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from game_session.contracts.models import BountyStatus, MercenaryBountyState
-from runefoble_events.contracts import (
+from runefoble_events.events import (
     MercenaryBountyClaimed,
     MercenaryBountyFulfilled,
     MercenaryBountyPosted,

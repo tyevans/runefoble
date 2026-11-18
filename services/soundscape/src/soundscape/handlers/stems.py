@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from eventsource.domain.decorators import handles
-from runefoble_events.soundscape import (
+from runefoble_events.events import (
     ChannelVolumeChanged,
     MasterVolumeChanged,
     SoundscapeTrackChanged,

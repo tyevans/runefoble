@@ -18,7 +18,7 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_events.vocal_dsp import VocalModulatorPresetAppliedEvent
+from runefoble_events.events import VocalModulatorPresetAppliedEvent
 from voice_agent.coordinator import (
     VoiceRoomCoordinator,
     get_voice_room_coordinator,

@@ -15,8 +15,8 @@ from uuid import uuid4
 import pytest
 from asset_forge.dependencies import get_storage as get_asset_storage
 from fastapi.testclient import TestClient
+from runefoble_events.base import BaseRunefobleEvent
 from runefoble_events.events import (
-    BaseRunefobleEvent,
     CharacterDamaged,
     CharacterPortraitUpdated,
     PortraitVariantGenerated,

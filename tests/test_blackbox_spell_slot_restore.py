@@ -8,7 +8,7 @@ POST .../spells/cast, POST .../spells/restore, GET /api/v1/characters/{id}). No 
 from character_sheet.main import app
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
-from runefoble_events.character import SpellSlotsRestored
+from runefoble_events.events import SpellSlotsRestored
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 

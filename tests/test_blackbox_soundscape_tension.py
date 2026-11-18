@@ -16,7 +16,6 @@ from gateway_api.main import app as gateway_app
 from runefoble_events.events import (
     CombatEncounterStarted,
     CombatRoundAdvanced,
-    CombatStarted,
     SoundscapeCueTriggered,
     SoundscapeTensionUpdated,
 )
@@ -66,7 +65,6 @@ def test_soundscape_combat_cloudevents_registration():
     assert tension_cls is not None
     assert tension_cls is SoundscapeTensionUpdated
 
-    assert CombatStarted is CombatEncounterStarted
     assert (
         get_event_class_or_none("runefoble.events.session.combat_round_advanced")
         is CombatRoundAdvanced

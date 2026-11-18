@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 from eventsource.domain.decorators import handles
 from game_session.settlement.haggling_models import GambitEvaluationResult
 from game_session.settlement.haggling_valuation import evaluate_gambit
-from runefoble_events.haggling import GambitExecuted
+from runefoble_events.events import GambitExecuted
 
 if TYPE_CHECKING:
     from game_session.settlement.haggling_models import NegotiationSessionState

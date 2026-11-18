@@ -10,7 +10,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_events.settlements import (
+from runefoble_events.events import (
     EstablishmentConstructedEvent,
     EstablishmentUpgradedEvent,
     SettlementFoundedEvent,

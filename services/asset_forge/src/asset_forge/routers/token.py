@@ -8,7 +8,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_events.asset import TokenAssetForged
+from runefoble_events.events import TokenAssetForged
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.asset_index import get_stored_asset
 from runefoble_platform.event_sourcing import AggregateRepository

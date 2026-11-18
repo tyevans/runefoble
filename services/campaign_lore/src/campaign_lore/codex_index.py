@@ -10,7 +10,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from eventsource.ports.store import FullEventStore
-from runefoble_events.lore import CodexEntryPublished
+from runefoble_events.events import CodexEntryPublished
 
 CODEX_CATEGORY = "Codex"
 

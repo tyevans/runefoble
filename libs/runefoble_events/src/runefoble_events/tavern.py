@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -14,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class MinigameStarted(BaseRunefobleEvent):
     """Fired when an interactive tavern minigame is commenced."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.tavern.minigame_started"
 
     aggregate_type: str = "TavernGame"
@@ -33,7 +32,6 @@ class MinigameStarted(BaseRunefobleEvent):
 class MinigameTurnTaken(BaseRunefobleEvent):
     """Fired when a participant submits a move or wager turn in a tavern minigame."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.tavern.minigame_turn_taken"
 
     aggregate_type: str = "TavernGame"
@@ -52,7 +50,6 @@ class MinigameTurnTaken(BaseRunefobleEvent):
 class MinigameEnded(BaseRunefobleEvent):
     """Fired when a minigame resolves, awarding winnings or penalties."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.tavern.minigame_ended"
 
     aggregate_type: str = "TavernGame"
@@ -71,7 +68,6 @@ class MinigameEnded(BaseRunefobleEvent):
 class IntoxicationLevelChanged(BaseRunefobleEvent):
     """Fired when alcohol intake alters a character's intoxication stage and speech filters."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.tavern.intoxication_level_changed"
 
     aggregate_type: str = "TavernGame"
@@ -89,7 +85,6 @@ class IntoxicationLevelChanged(BaseRunefobleEvent):
 class MerchantCreated(BaseRunefobleEvent):
     """Fired once when a merchant is first recorded, before its first negotiation."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.tavern.merchant_created"
 
     aggregate_type: str = "Merchant"
@@ -103,7 +98,6 @@ class MerchantCreated(BaseRunefobleEvent):
 class HagglingNegotiated(BaseRunefobleEvent):
     """Fired when a social bargaining roll or dialogue offer is evaluated by a merchant."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.tavern.haggling_negotiated"
 
     aggregate_type: str = "Merchant"

@@ -8,7 +8,7 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
-from runefoble_events.watcher_events.copilot_state import WHISPERS_AGGREGATE, WhisperRecorded
+from runefoble_events.events import WHISPERS_AGGREGATE, WhisperRecorded
 from the_watcher.models import WhisperSuggestion
 
 DEFAULT_RECIPIENT_ROLE = "dungeon_master"

@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from runefoble_events.voice_stream_quality import (
+from runefoble_events.events import (
     VoiceStreamCodecAdaptedEvent,
     VoiceStreamQualityDegradedEvent,
 )

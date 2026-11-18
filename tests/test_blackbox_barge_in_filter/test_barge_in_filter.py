@@ -19,7 +19,7 @@ import base64
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.voice_barge_in import (
+from runefoble_events.events import (
     NeuralSpeechBargeInDetectedEvent,
     TTSStreamAttenuatedEvent,
 )

@@ -11,8 +11,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
-from runefoble_events.board import TokenMoved
-from runefoble_events.session import TurnStarted
+from runefoble_events.events import TokenMoved, TurnStarted
 
 DEFAULT_EASING = "cubic-bezier(0.25, 0.1, 0.25, 1.0)"
 DEFAULT_DURATION_MS = 300

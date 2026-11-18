@@ -1,6 +1,6 @@
 """Domain events for TTRPG Rules Compendium and Encounter Builder."""
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class HomebrewRuleRegistered(BaseRunefobleEvent):
     """Emitted when a DM or player registers a campaign homebrew rule or monster."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.compendium.homebrew_rule_registered"
 
     rule_id: UUID = Field(description="Unique homebrew rule aggregate identifier")
@@ -30,7 +29,6 @@ class HomebrewRuleRegistered(BaseRunefobleEvent):
 class EncounterBalanced(BaseRunefobleEvent):
     """Emitted when an encounter balancing calculation is performed and recorded."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     event_type: str = "runefoble.events.compendium.encounter_balanced"
 
     encounter_id: UUID = Field(description="Unique encounter computation identifier")

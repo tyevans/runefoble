@@ -7,7 +7,7 @@ import logging
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from runefoble_events.aec import AECBenchmarkCompletedEvent, EchoSuppressionEngagedEvent
+from runefoble_events.events import AECBenchmarkCompletedEvent, EchoSuppressionEngagedEvent
 from voice_agent.aec.pipeline import AECPipeline
 from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_action

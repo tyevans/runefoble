@@ -25,7 +25,7 @@ from game_session.minigame_rules import (
 from game_session.minigame_tables.models import MinigameTableState
 from game_session.minigame_tables.table_aggregate import TableCommandsMixin
 from pydantic import BaseModel, Field
-from runefoble_events.tavern import (
+from runefoble_events.events import (
     IntoxicationLevelChanged,
     MinigameEnded,
     MinigameStarted,

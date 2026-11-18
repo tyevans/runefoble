@@ -19,7 +19,7 @@ from gateway_mcp.dynamic import (
 )
 from gateway_mcp.dynamic.events import publish_system_event
 from gateway_mcp.server import mcp
-from runefoble_events.mcp_tools import DynamicToolUnregisteredEvent
+from runefoble_events.events import DynamicToolUnregisteredEvent
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 

@@ -14,7 +14,7 @@ from game_session.caravan.escrow import (
     generate_default_refined_stock,
 )
 from game_session.caravan.models import CaravanLedgerState, _to_uuid
-from runefoble_events.west_marches import (
+from runefoble_events.events import (
     CaravanDispatched,
     CaravanTradeCompleted,
 )

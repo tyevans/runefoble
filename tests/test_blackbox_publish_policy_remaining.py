@@ -21,8 +21,11 @@ from fastapi.testclient import TestClient
 from gateway_mcp.dynamic import get_event_bus as get_dynamic_event_bus
 from gateway_mcp.dynamic.events import publish_system_event
 from gateway_mcp.server import configure_dynamic_event_bus, mcp
-from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
-from runefoble_events.mcp_tools import DynamicToolUnregisteredEvent
+from runefoble_events.events import (
+    DynamicToolUnregisteredEvent,
+    PlayerSpokeEvent,
+    VoiceTranscriptionFailed,
+)
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusUnavailableError
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event

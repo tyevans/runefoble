@@ -19,7 +19,7 @@ import math
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_events.aec import AECBenchmarkCompletedEvent, EchoSuppressionEngagedEvent
+from runefoble_events.events import AECBenchmarkCompletedEvent, EchoSuppressionEngagedEvent
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from voice_agent.aec.pipeline import AECPipeline
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter

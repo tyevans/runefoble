@@ -1,6 +1,6 @@
 """Audience Studio and live spectator interactivity events."""
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -10,7 +10,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.audience.poll_started")
 class AudiencePollStarted(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "AudiencePoll"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.audience.poll_started"
@@ -27,7 +26,6 @@ class AudiencePollStarted(BaseRunefobleEvent):
 
 @register_event("runefoble.events.audience.vote_cast")
 class AudienceVoteCast(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "AudiencePoll"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.audience.vote_cast"
@@ -41,7 +39,6 @@ class AudienceVoteCast(BaseRunefobleEvent):
 
 @register_event("runefoble.events.audience.poll_completed")
 class AudiencePollCompleted(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "AudiencePoll"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.audience.poll_completed"
@@ -57,7 +54,6 @@ class AudiencePollCompleted(BaseRunefobleEvent):
 
 @register_event("runefoble.events.audience.modifier_proposed")
 class AudienceModifierProposed(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "AudiencePoll"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.audience.modifier_proposed"
@@ -74,7 +70,6 @@ class AudienceModifierProposed(BaseRunefobleEvent):
 
 @register_event("runefoble.events.audience.modifier_approved")
 class AudienceModifierApproved(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "AudiencePoll"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.audience.modifier_approved"

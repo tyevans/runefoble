@@ -1,6 +1,5 @@
 """Asset domain events for Silo S3 asset storage."""
 
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +11,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class AssetUploaded(BaseRunefobleEvent):
     """Emitted when a media asset (character avatar, battlemap, audio) is uploaded."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Asset"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.asset.uploaded"
@@ -28,7 +26,6 @@ class AssetUploaded(BaseRunefobleEvent):
 class AssetDeleted(BaseRunefobleEvent):
     """Emitted when a media asset is deleted from object storage."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "Asset"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.asset.deleted"
@@ -42,7 +39,6 @@ class AssetDeleted(BaseRunefobleEvent):
 class BattlemapForged(BaseRunefobleEvent):
     """Emitted when a tactical battlemap is procedurally forged and uploaded to Silo."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "AssetForge"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.asset.battlemap_forged"
@@ -65,7 +61,6 @@ class BattlemapForged(BaseRunefobleEvent):
 class TokenAssetForged(BaseRunefobleEvent):
     """Emitted when a character or monster token portrait is procedurally forged."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "AssetForge"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.asset.token_forged"
@@ -84,7 +79,6 @@ class TokenAssetForged(BaseRunefobleEvent):
 class PrintPdfForged(BaseRunefobleEvent):
     """Emitted when a multi-page grid-calibrated PDF or standee sheet is forged."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "AssetForge"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.asset.print_pdf_forged"
@@ -102,7 +96,6 @@ class PrintPdfForged(BaseRunefobleEvent):
 class StlTokenForged(BaseRunefobleEvent):
     """Emitted when a 3D-printable miniature base or condition clip is forged."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "AssetForge"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.asset.stl_token_forged"

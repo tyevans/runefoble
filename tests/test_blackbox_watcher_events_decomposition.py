@@ -12,24 +12,20 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from runefoble_events.watcher_events import (
-    actions as actions_mod,
-)
-from runefoble_events.watcher_events import (
-    combat as combat_mod,
-)
-from runefoble_events.watcher_events import (
-    factions as factions_mod,
-)
-from runefoble_events.watcher_events import (
-    narrative as narrative_mod,
+from runefoble_events.events import (
+    DiceRolled,
+    FactionCreated,
+    PlayerSpokeEvent,
+    WatcherActionProposed,
+    WatcherNarrationGenerated,
+    WorldTickExecuted,
 )
 from runefoble_platform.consumer_group import deserialize_event
 
 
 def test_dice_rolled_properties():
     """Verify DiceRolled exposes its notation and individual rolls."""
-    roll = combat_mod.DiceRolled(
+    roll = DiceRolled(
         session_id=str(uuid4()),
         roller_id="player-1",
         roller_name="Aria",
@@ -47,18 +43,18 @@ def test_event_cloudevent_and_serialization_roundtrip():
     session_id = str(uuid4())
 
     events_to_test = [
-        narrative_mod.PlayerSpokeEvent(
+        PlayerSpokeEvent(
             aggregate_id=uuid4(),
             speaker_id="p-1",
             speaker_name="Aria",
             transcript="I inspect the altar",
         ),
-        narrative_mod.WatcherNarrationGenerated(
+        WatcherNarrationGenerated(
             aggregate_id=uuid4(),
             narrative_text="A cold draft chills the chamber.",
             tone="eerie",
         ),
-        combat_mod.DiceRolled(
+        DiceRolled(
             session_id=session_id,
             roller_id="p-1",
             roller_name="Aria",
@@ -66,19 +62,19 @@ def test_event_cloudevent_and_serialization_roundtrip():
             total=18,
             rolls=[13],
         ),
-        actions_mod.WatcherActionProposed(
+        WatcherActionProposed(
             action_id="act-1",
             session_id=session_id,
             actor_name="The Watcher",
             action_type="spawn_monster",
             description="Spawn shadowy phantom",
         ),
-        factions_mod.FactionCreated(
+        FactionCreated(
             campaign_id="camp-1",
             faction_id="fac-iron-hand",
             name="Iron Hand Guild",
         ),
-        factions_mod.WorldTickExecuted(
+        WorldTickExecuted(
             campaign_id="camp-1",
             tick_number=3,
             intelligence_bulletin="Tensions rise between guilds.",

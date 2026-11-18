@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -16,8 +16,6 @@ class CombatTurnPausedForReactionEvent(BaseRunefobleEvent):
     """Emitted when active combat turn is halted for a spoken reaction interrupt."""
 
     event_type: str = "runefoble.events.combat.turn_paused_for_reaction"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     session_id: UUID | str = ""
@@ -37,8 +35,6 @@ class ReactionResolvedEvent(BaseRunefobleEvent):
     """Emitted when a declared combat reaction interrupt is resolved or dismissed."""
 
     event_type: str = "runefoble.events.combat.reaction_resolved"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     session_id: UUID | str = ""
@@ -54,8 +50,6 @@ class ReadyActionRegisteredEvent(BaseRunefobleEvent):
     """Emitted when a combatant registers a conditional ready-action trigger."""
 
     event_type: str = "runefoble.events.combat.ready_action_registered"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     session_id: UUID | str = ""
@@ -75,8 +69,6 @@ class ReadyActionTriggeredEvent(BaseRunefobleEvent):
     """Emitted when an incoming combat or board event fulfills a ready-action trigger."""
 
     event_type: str = "runefoble.events.combat.ready_action_triggered"
-
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "GameSession"
     aggregate_id: UUID = Field(default_factory=uuid4)
     session_id: UUID | str = ""

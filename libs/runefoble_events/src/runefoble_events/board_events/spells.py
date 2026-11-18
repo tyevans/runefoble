@@ -1,6 +1,5 @@
 """Kinetic spell VFX, area-of-effect bloom, and decal decay domain events."""
 
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +11,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class SpellCast(BaseRunefobleEvent):
     """Emitted when a kinetic spell is cast on the tactical board."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.spell_cast"
@@ -35,7 +33,6 @@ class SpellCast(BaseRunefobleEvent):
 class AreaEffectExploded(BaseRunefobleEvent):
     """Emitted when an area-of-effect spell blooms across grid cells."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.area_effect_exploded"
@@ -55,7 +52,6 @@ class AreaEffectExploded(BaseRunefobleEvent):
 class VFXAnimationFinished(BaseRunefobleEvent):
     """Emitted when a WebGL particle animation completes its playback."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.vfx_animation_finished"
@@ -72,7 +68,6 @@ class VFXAnimationFinished(BaseRunefobleEvent):
 class EphemeralDecalsDecayed(BaseRunefobleEvent):
     """Emitted when ephemeral decals on the board decay across rounds."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.decals_decayed"

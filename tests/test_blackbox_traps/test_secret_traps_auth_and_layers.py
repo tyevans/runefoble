@@ -18,7 +18,7 @@ from board_state.main import app as board_app
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_events.board_traps import (
+from runefoble_events.events import (
     BattlemapSwitchedEvent,
     TrapDisarmedEvent,
     TrapPlacedEvent,

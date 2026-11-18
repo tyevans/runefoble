@@ -7,7 +7,7 @@ import logging
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from runefoble_events.voice_barge_in import (
+from runefoble_events.events import (
     NeuralSpeechBargeInDetectedEvent,
     TTSStreamAttenuatedEvent,
 )

@@ -14,7 +14,7 @@ import re
 import pytest
 import runefoble_events
 from eventsource.domain.event_registry import default_registry, get_event_class_or_none
-from runefoble_events.asset import BattlemapForged
+from runefoble_events.events import BattlemapForged
 from runefoble_platform.event_deserializer import deserialize_event
 
 WIRE_NAME_RULE = re.compile(r"^runefoble\.events\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")

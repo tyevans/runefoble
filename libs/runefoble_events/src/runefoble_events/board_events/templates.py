@@ -1,6 +1,5 @@
 """Geometric AoE spell template positioning and removal domain events."""
 
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +11,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class AoETemplatePlaced(BaseRunefobleEvent):
     """Emitted when a geometric AoE spell template is positioned on the board."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.aoe_template_placed"
@@ -36,7 +34,6 @@ class AoETemplatePlaced(BaseRunefobleEvent):
 class AoETemplateRemoved(BaseRunefobleEvent):
     """Emitted when an active AoE template is removed from the board."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "BoardState"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.board.aoe_template_removed"

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -14,7 +13,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class VoicePlaybackStarted(BaseRunefobleEvent):
     """Emitted when TTS narration playback starts in a voice room."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.playback_started"
@@ -29,7 +27,6 @@ class VoicePlaybackStarted(BaseRunefobleEvent):
 class VoicePlaybackAttenuated(BaseRunefobleEvent):
     """Emitted when player speech starts a soft fade of active TTS playback."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.playback_attenuated"
@@ -46,7 +43,6 @@ class VoicePlaybackAttenuated(BaseRunefobleEvent):
 class VoicePlaybackStopped(BaseRunefobleEvent):
     """Emitted when TTS narration playback ends, by barge-in or by a stop command."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "VoiceRoom"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.voice.playback_stopped"

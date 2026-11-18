@@ -16,7 +16,7 @@ from game_session.caravan.transit import (
     validate_can_dispatch,
     validate_can_fulfill,
 )
-from runefoble_events.west_marches import (
+from runefoble_events.events import (
     CaravanAmbushed,
     CaravanDispatched,
     CaravanTradeFulfilled,

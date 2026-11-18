@@ -12,7 +12,7 @@ from uuid import NAMESPACE_DNS, UUID, uuid5
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel
-from runefoble_events.user_profile import ProfileUpdated
+from runefoble_events.events import ProfileUpdated
 
 EDITABLE_FIELDS = frozenset({"display_name", "avatar_url", "bio", "email"})
 

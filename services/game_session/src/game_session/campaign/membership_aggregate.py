@@ -12,7 +12,7 @@ from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from game_session.campaign.errors import MemberNotFoundError
 from pydantic import BaseModel, Field
-from runefoble_events.campaign_lifecycle import CampaignMemberAdded, CampaignMemberRemoved
+from runefoble_events.events import CampaignMemberAdded, CampaignMemberRemoved
 
 
 class MembershipState(BaseModel):

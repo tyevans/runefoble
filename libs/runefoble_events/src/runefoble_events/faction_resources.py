@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -12,7 +12,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 
 @register_event("runefoble.events.watcher.faction_resource_updated")
 class FactionResourceUpdatedEvent(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "FactionResource"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.faction_resource_updated"
@@ -29,7 +28,6 @@ class FactionResourceUpdatedEvent(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.faction_mercenary_recruited")
 class FactionMercenaryRecruitedEvent(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "FactionResource"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.faction_mercenary_recruited"
@@ -46,7 +44,6 @@ class FactionMercenaryRecruitedEvent(BaseRunefobleEvent):
 
 @register_event("runefoble.events.watcher.faction_bribery_attempted")
 class FactionBriberyAttemptedEvent(BaseRunefobleEvent):
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "FactionResource"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.watcher.faction_bribery_attempted"

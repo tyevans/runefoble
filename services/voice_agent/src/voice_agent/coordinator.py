@@ -13,11 +13,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from runefoble_events.vocal_dsp import (
+from runefoble_events.events import (
     VocalModulatorPresetAppliedEvent,
     VoiceFilterToggledEvent,
+    VoicePeerJoined,
+    VoicePeerLeft,
+    VoicePeerMuteToggled,
 )
-from runefoble_events.voice import VoicePeerJoined, VoicePeerLeft, VoicePeerMuteToggled
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.event_sourcing import create_aggregate_repository

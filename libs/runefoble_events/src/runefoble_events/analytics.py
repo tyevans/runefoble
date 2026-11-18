@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -14,7 +14,6 @@ from runefoble_events.base import BaseRunefobleEvent, register_event
 class ChronicleMilestoneRecorded(BaseRunefobleEvent):
     """Domain event emitted when a campaign milestone is recorded in the chronicle."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CampaignChronicle"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.analytics.milestone_recorded"
@@ -31,7 +30,6 @@ class ChronicleMilestoneRecorded(BaseRunefobleEvent):
 class CombatTelemetrySnapshotCreated(BaseRunefobleEvent):
     """Domain event emitted when a telemetry aggregate snapshot is calculated."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CampaignChronicle"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.analytics.telemetry_snapshot_created"
@@ -46,7 +44,6 @@ class CombatTelemetrySnapshotCreated(BaseRunefobleEvent):
 class EncounterMvpAwarded(BaseRunefobleEvent):
     """Domain event emitted when an encounter or session MVP award is conferred."""
 
-    suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CampaignChronicle"
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.analytics.mvp_awarded"

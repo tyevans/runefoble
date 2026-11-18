@@ -14,7 +14,7 @@ from game_session.settlement.models import (
     EstablishmentCategory,
     EstablishmentState,
 )
-from runefoble_events.settlements import (
+from runefoble_events.events import (
     EstablishmentConstructedEvent,
     EstablishmentOperationsUpdatedEvent,
     EstablishmentUpgradedEvent,

@@ -11,7 +11,7 @@ from uuid import UUID, uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
-from runefoble_events.west_marches import (
+from runefoble_events.events import (
     CampaignRegisteredToSharedWorld,
     CommunalNoticePosted,
     CrossCampaignDiscoveryShared,
