@@ -81,7 +81,7 @@ def test_hot_swap_without_bearer_is_refused():
     client = TestClient(session_app)
     res = client.post(
         f"/api/v1/sessions/{uuid4()}/hot-swap",
-        json={"player_id": "p-1", "character_id": str(uuid4())},
+        json={"character_id": str(uuid4())},
     )
     assert res.status_code == 401
     assert res.headers["www-authenticate"] == "Bearer"
@@ -98,10 +98,10 @@ def test_hot_swap_identity_is_the_token_subject_not_the_header():
     )
     res = client.post(
         f"/api/v1/sessions/{uuid4()}/hot-swap",
-        json={"player_id": "p-1", "character_id": str(uuid4())},
+        json={"character_id": str(uuid4())},
     )
     assert res.status_code == 403
-    assert "User 'intruder' does not have permission" in res.json()["detail"]
+    assert "User 'intruder' lacks 'participate'" in res.json()["detail"]
 
 
 @pytest.mark.parametrize(("method", "path"), _guarded_paths(session_app))

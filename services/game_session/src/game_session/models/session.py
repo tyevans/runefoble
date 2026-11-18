@@ -90,7 +90,6 @@ class AutoPilotResponse(BaseModel):
 
 
 class HotSwapRequest(BaseModel):
-    player_id: str
     character_id: UUID
 
 

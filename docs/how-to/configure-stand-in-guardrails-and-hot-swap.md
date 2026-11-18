@@ -137,9 +137,7 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-crypt-01/hot-swap \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
-    "character_id": "char-sarah-cleric",
-    "player_id": "sarah-user",
-    "target_controller": "player"
+    "character_id": "char-sarah-cleric"
   }'
 ```
 
@@ -159,7 +157,7 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-crypt-01/hot-swap \
 
 ### Key Guarantees
 - **Latency < 100ms**: Control is shifted synchronously in memory and persisted event-sourced.
-- **SpiceDB Zanzibar Authorization**: Validates that the requesting player has `participate` rights on the session or ownership of the character.
+- **SpiceDB Zanzibar Authorization**: Takes the player from the verified bearer token. The body has no player id. The caller needs `session.participate` and `character.edit` on the character. Another player gets `403`.
 - **Round & Turn Continuity**: The combat round and active initiative order are preserved intact without reload.
 - **Domain Event Publication**: Emits `CharacterControlTransferred` (`runefoble.events.session.character_control_transferred`) over Redis Streams.
 - **Stand-In Release**: Before it saves the session, `game_session` calls `POST /api/v1/characters/{character_id}/stand-in` with `"active": false` on `character-sheet`. The call uses `RUNEFOBLE_CHARACTER_SHEET_URL`. If the URL is not set, or `character-sheet` does not confirm the release, the hot-swap returns `502 Bad Gateway`. The session stays unchanged and the stand-in keeps control.

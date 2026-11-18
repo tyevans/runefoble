@@ -206,43 +206,33 @@ async def select_lobby_character(
     return session.state
 
 
-@router.post(
-    "/api/v1/sessions/{session_id}/hot-swap",
-    dependencies=[Depends(get_caller_principal)],
-    response_model=HotSwapResponse,
-)
+@router.post("/api/v1/sessions/{session_id}/hot-swap", response_model=HotSwapResponse)
 async def hot_swap_session(
-    caller_id: CallerId,
+    player_id: SessionParticipant,
     session_id: UUID,
     req: HotSwapRequest,
     authorization: Annotated[str, Header(alias="Authorization")],
 ) -> HotSwapResponse:
-    """Hands off active turn control from AI stand-in to authenticating player mid-session."""
-    spicedb = get_spicedb_client()
-    allowed = await spicedb.check_permission(
+    """Hand active turn control from the AI stand-in to the verified caller mid-session.
+
+    The caller needs `session.participate` and `character.edit` on the character taken over.
+    """
+    allowed = await get_spicedb_client().check_permission(
         resource_type="character",
         resource_id=str(req.character_id),
         permission="edit",
         subject_type="user",
-        subject_id=caller_id,
+        subject_id=player_id,
     )
-    if not allowed:
-        allowed = await spicedb.check_permission(
-            resource_type="game_session",
-            resource_id=str(session_id),
-            permission="participate",
-            subject_type="user",
-            subject_id=caller_id,
-        )
     if not allowed:
         raise HTTPException(
             status_code=403,
-            detail=f"User '{caller_id}' does not have permission to take control of character '{req.character_id}'",
+            detail=f"User '{player_id}' does not have permission to take control of character '{req.character_id}'",
         )
 
     session = await _load_session(session_id)
     try:
-        session.hot_swap_character(player_id=req.player_id, character_id=req.character_id)
+        session.hot_swap_character(player_id=player_id, character_id=req.character_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -255,7 +245,7 @@ async def hot_swap_session(
     return HotSwapResponse(
         session_id=session_id,
         character_id=req.character_id,
-        player_id=req.player_id,
+        player_id=player_id,
         previous_controller="ai_stand_in",
         new_controller="player",
         current_turn=session.state.current_turn,

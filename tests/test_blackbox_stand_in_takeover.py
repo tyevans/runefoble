@@ -125,7 +125,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
         # 4. Sarah reconnects and executes hot-swap takeover
         hot_swap_res = await client.post(
             f"/api/v1/sessions/{session_id}/hot-swap",
-            json={"player_id": player_id, "character_id": char_id},
+            json={"character_id": char_id},
             headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
         )
         assert hot_swap_res.status_code == 200
@@ -162,7 +162,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
 
 @pytest.mark.asyncio
 async def test_hot_swap_unauthorized_user_rejected_by_spicedb(mock_redis: MockAsyncRedis):
-    """Unauthorized user without character/session permissions cannot hot-swap control."""
+    """A player who does not own the character cannot hot-swap into its stand-in."""
     session_bus = RedisStreamsEventBus(client=mock_redis)
     session_set_event_bus(session_bus)
     spicedb = MockSpiceDBClient()
@@ -187,10 +187,11 @@ async def test_hot_swap_unauthorized_user_rejected_by_spicedb(mock_redis: MockAs
         )
         await client.post(f"/api/v1/sessions/{session_id}/start")
 
-        # Rogue user attempts hot-swap without permissions
+        # A second campaign player cannot take over sarah's character.
+        await _add_player(client, campaign_id, "rogue-intruder")
         unauth_res = await client.post(
             f"/api/v1/sessions/{session_id}/hot-swap",
-            json={"player_id": "rogue-intruder", "character_id": char_id},
+            json={"character_id": char_id},
             headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('rogue-intruder')}"},
         )
         assert unauth_res.status_code == 403
@@ -240,7 +241,7 @@ async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
 
         res = await client.post(
             f"/api/v1/sessions/{session_id}/hot-swap",
-            json={"player_id": player_id, "character_id": char_id},
+            json={"character_id": char_id},
             headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
         )
         assert res.status_code == 502, res.text
@@ -257,17 +258,19 @@ async def _owned_campaign(client, player_id: str | None = None) -> str:
     assert res.status_code == 201, res.text
     campaign_id = res.json()["id"]
     if player_id is not None:
-        invite = await client.post(
-            f"/api/v1/campaigns/{campaign_id}/invites", json={"role": "player"}
-        )
-        assert invite.status_code == 201, invite.text
-        joined = await client.post(
-            "/api/v1/campaigns/join",
-            json={"invite_token": invite.json()["token"]},
-            headers=_bearer(player_id),
-        )
-        assert joined.status_code == 200, joined.text
+        await _add_player(client, campaign_id, player_id)
     return campaign_id
+
+
+async def _add_player(client, campaign_id: str, player_id: str) -> None:
+    invite = await client.post(f"/api/v1/campaigns/{campaign_id}/invites", json={"role": "player"})
+    assert invite.status_code == 201, invite.text
+    joined = await client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": invite.json()["token"]},
+        headers=_bearer(player_id),
+    )
+    assert joined.status_code == 200, joined.text
 
 
 def _bearer(sub: str) -> dict[str, str]:
