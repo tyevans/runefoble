@@ -61,6 +61,7 @@ export class RunefobleApp extends LitElement {
   @state() public campaignSessions: CampaignSessionItem[] = [];
   @state() public campaignCodexView: 'atlas' | 'codex' = 'atlas';
   @state() public campaignAtlas: CampaignAtlasView | null = null;
+  @state() public campaignPinError: string | null = null;
   @state() public campaignLoreEntries: LoreEntry[] = [];
   @state() public campaignAnalytics: CampaignAnalyticsView | null = null;
   @state() public characters: CharacterItem[] = [];
