@@ -69,7 +69,7 @@ async def deposit_stronghold_gateway(
     request: Request,
     user: CurrentPrincipal,
 ) -> Any:
-    """Add gold and materials to the campaign stronghold in game_session (owner checks `play`)."""
+    """Add gold and materials to the campaign stronghold in game_session (owner checks `stronghold.manage`)."""
     return await forward_json(
         request,
         service=GAME_SESSION,
@@ -86,7 +86,7 @@ async def campfire_rest_gateway(
     request: Request,
     user: CurrentPrincipal,
 ) -> Any:
-    """Run a campfire rest in game_session and return its boons (owner checks `play`)."""
+    """Run a campfire rest in game_session and return its boons (owner checks `stronghold.manage`)."""
     return await forward_json(
         request,
         service=GAME_SESSION,

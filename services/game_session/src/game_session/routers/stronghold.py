@@ -134,11 +134,14 @@ async def deposit_stronghold_resources(
     campaign_id: str,
     req: DepositStrongholdRequest,
 ) -> StrongholdState:
-    """Add gold and materials to the campsite treasury and material store."""
+    """Add gold and materials to the campsite treasury and material store.
+
+    A deposit creates resources, so only a DM or stronghold manager (`manage`) may make one.
+    """
     spicedb = get_spicedb_client()
-    detail = "Player or DM permission required to fund campsite"
+    detail = "DM permission required to fund campsite"
     stronghold = await _load_or_start_stronghold(spicedb, campaign_id, caller_id, detail)
-    await _require(spicedb, "stronghold", campaign_id, "upgrade", caller_id, detail)
+    await _require(spicedb, "stronghold", campaign_id, "manage", caller_id, detail)
     try:
         stronghold.deposit_resources(gold=req.gold, materials=req.materials)
         events_to_publish = list(stronghold.uncommitted_events)

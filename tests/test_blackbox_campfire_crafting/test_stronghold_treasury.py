@@ -9,6 +9,8 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_STRONGHOLD
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 
 def _owned_campaign(client: TestClient) -> str:
     """Create a campaign through the public route. The caller becomes its owner."""
@@ -151,3 +153,25 @@ def test_negative_material_spend_is_refused_and_records_nothing(
     assert state["stored_materials"]["wood"] == 5
     assert state["treasury_gold"] == 500
     assert _upgraded_event_count(mock_bus) == 0
+
+
+def test_player_cannot_deposit_resources(session_client: TestClient, mock_bus):
+    """A deposit creates gold, so a joined player is refused with 403 and nothing is recorded."""
+    camp_id = _owned_campaign(session_client)
+    invite = session_client.post(f"/api/v1/campaigns/{camp_id}/invites", json={"role": "player"})
+    assert invite.status_code == 201, invite.text
+    player = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-treasury-player')}"}
+    joined = session_client.post(
+        "/api/v1/campaigns/join", json={"invite_token": invite.json()["token"]}, headers=player
+    )
+    assert joined.status_code == 200, joined.text
+
+    res = session_client.post(
+        f"/api/v1/campaigns/{camp_id}/stronghold/deposit",
+        json={"gold": 9999, "materials": {}},
+        headers=player,
+    )
+
+    assert res.status_code == 403, res.text
+    entries = mock_bus.streams.get(STREAM_STRONGHOLD, [])
+    assert not any("StrongholdDeposited" in entry[1].get("event_type", "") for entry in entries)

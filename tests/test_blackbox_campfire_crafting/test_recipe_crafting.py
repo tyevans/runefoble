@@ -126,7 +126,7 @@ def test_blackbox_gateway_zanzibar_authorization(
     funded = gateway_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/deposit",
         json={"gold": 100, "materials": {"wood": 20}},
-        headers=user_headers,
+        headers=owner_headers,
     )
     assert funded.status_code == 200, funded.text
     upg_res = gateway_client.post(

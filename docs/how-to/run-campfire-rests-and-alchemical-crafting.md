@@ -130,7 +130,7 @@ The treasury starts at zero. Fund it before you upgrade.
 
 ### Step 2: Fund the Treasury
 
-Gold and materials enter the stronghold only through this route. A player or DM can deposit.
+Gold and materials enter the stronghold only through this route. Only a DM or stronghold manager can deposit (`stronghold.manage`), because a deposit creates resources. A player gets `403`.
 
 ```bash
 curl -X POST http://localhost:8004/api/v1/campaigns/camp-55/stronghold/deposit \
