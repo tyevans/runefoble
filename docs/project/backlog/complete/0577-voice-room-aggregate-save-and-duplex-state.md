@@ -28,7 +28,7 @@ The voice room coordinator loads `VoiceRoomAggregate` from the repository but ne
 - `grep -rn '\.save(' services/voice_agent` returns nothing. `services/voice_agent/src/voice_agent/coordinator.py:57-64` loads but never saves. Events go only to streams via `_publish_event` (w2-voice-agent F6).
 - `coordinator.py:61-63` catches every load error and returns an empty room (TASK-0561 fixes the catch).
 - `routers/duplex.py:20` (`_active_playbacks`), `routers/stream_diagnostics.py:19-20` (`_qm`, `_abr`), and `coordinator.py:40` (`_telemetry`) are module-level state (w2-voice-agent F12).
-- The gateway builds its own coordinator (`gateway/api/src/gateway_api/signaling/manager.py:10-34`). Its signaling peers are not visible to the service. This divergence is a gateway-theme concern. This task only fixes the service's own state.
+- The gateway builds its own coordinator (`gateway/api/src/gateway_api/signaling/manager.py:10-34` (removed)). Its signaling peers are not visible to the service. This divergence is a gateway-theme concern. This task only fixes the service's own state.
 
 ## Documentation & Architecture Review
 - `docs/how-to/handle-neural-voice-duplex-and-speech-interruption.md` and `docs/how-to/connect-mobile-companion-and-haptic-gateway.md` describe room and duplex behavior. Verify them.

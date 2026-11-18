@@ -72,6 +72,7 @@ A frozen dataclass. It holds an upstream 2xx or 4xx answer without change.
 | `status_code` | `int` | Status code from the owning service. |
 | `content_type` | `str` | `content-type` header from the owning service. Defaults to `application/json`. |
 | `body` | `bytes` | Raw response body. |
+| `www_authenticate` | `str \| None` | `WWW-Authenticate` header from the owning service, if any. |
 
 ## Errors
 
@@ -113,7 +114,7 @@ The gateway registers the handlers in `gateway_api/upstream_errors.py`. Every fa
 |---|---|---|
 | 2xx with JSON body | Same status, decoded JSON | Upstream JSON |
 | 2xx with non-JSON body | `502` | `{"detail": "Upstream service returned an invalid response"}` |
-| 4xx | Same status | Upstream body, unchanged, with its `content-type` |
+| 4xx | Same status | Upstream body, unchanged, with its `content-type` and its `WWW-Authenticate` challenge |
 | 5xx | `502` | `{"detail": "Upstream service is unavailable", "upstream": "<service>"}` |
 | Connect failure or timeout | `503` | `{"detail": "Upstream service is unavailable", "upstream": "<service>"}` |
 | No base URL configured | `503` | `{"detail": "Upstream service is unavailable", "upstream": "<service>"}` |

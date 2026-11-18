@@ -29,7 +29,7 @@ Make the gateway HTTP layer accept identity only from a verified Zitadel bearer 
 - `gateway/api/src/gateway_api/auth.py:95-104` (`get_current_user`) returns a dev admin with roles `player,dm` when no bearer is sent. It takes `X-User-Id` as the subject. Audit w1-gateway-api F3.
 - `auth.py:140-152` (`require_zanzibar_permission._checker`) does the same and falls back to `guest_user`.
 - `gateway/api/src/gateway_api/assets.py:85` (`POST /upload`) has no auth dependency. `assets.py:237` (`DELETE /{asset_id}`) takes the owner from `_resolve_user_id` (lines 78-84), which returns the raw bearer text. Audit w1-gateway-api F5.
-- `gateway/api/src/gateway_api/companion/router.py` takes `x_user_id` with default `"the_watcher_dm"`. Audit w1-gateway-api F22.
+- `gateway/api/src/gateway_api/companion/router.py` (removed) takes `x_user_id` with default `"the_watcher_dm"`. Audit w1-gateway-api F22.
 - `gateway/api/src/gateway_api/main.py:55-70` sets `allow_origins` to include `"*"` and `allow_credentials=True`. Audit w3-authz F19.
 - Audit w3-authz route table rows 1-2, 9-52, and others: every route that uses the dev path or the header identity.
 

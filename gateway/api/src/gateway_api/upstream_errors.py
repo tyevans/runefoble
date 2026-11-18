@@ -2,7 +2,8 @@
 
 - UpstreamUnavailableError -> 503 with `{"detail", "upstream"}`.
 - UpstreamFailureError (upstream 5xx) -> 502 with `{"detail", "upstream"}`.
-- UpstreamRejectedError (upstream 4xx) -> the upstream status and body, unchanged.
+- UpstreamRejectedError (upstream 4xx) -> the upstream status and body, unchanged. A
+  `WWW-Authenticate` challenge from the upstream is passed on too.
 
 Each failure logs at warning level. The gateway never returns a substitute value.
 """
@@ -53,10 +54,12 @@ async def _failure_handler(request: Request, exc: Exception) -> JSONResponse:
 
 async def _rejected_handler(request: Request, exc: Exception) -> Response:
     assert isinstance(exc, UpstreamRejectedError)
+    challenge = exc.reply.www_authenticate
     return Response(
         content=exc.reply.body,
         status_code=exc.reply.status_code,
         media_type=exc.reply.content_type,
+        headers={"WWW-Authenticate": challenge} if challenge else None,
     )
 
 

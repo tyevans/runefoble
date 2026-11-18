@@ -29,7 +29,7 @@ Require a verified principal on every gateway WebSocket and signaling route befo
 - `gateway/api/src/gateway_api/main.py:102-117` (`/ws/session/{session_id}`) has no authentication. Every frame goes to every socket. Audit w3-authz F6, w1-gateway-api F4.
 - `gateway/api/src/gateway_api/routers/overlay.py:87-148` (`/ws/overlay/{id}` and `/overlay/ws/{id}`) and `routers/spectator.py:68-72` have no authentication.
 - `gateway/api/src/gateway_api/websocket_auth.py:59-60` takes `?user_id=` as identity (impersonation). `extract_subject_id` also reads `x-user-id` and the raw bearer text.
-- `gateway/api/src/gateway_api/signaling/auth.py:8-27` takes identity from the query string, `x-user-id`, or the raw bearer value, and falls back to `guest_user` (line 25). Audit w2-voice-agent F3.
+- `gateway/api/src/gateway_api/signaling/auth.py:8-27` (removed) takes identity from the query string, `x-user-id`, or the raw bearer value, and falls back to `guest_user` (line 25). Audit w2-voice-agent F3.
 - `gateway/api/src/gateway_api/websocket_endpoint.py:70-117` (campaign socket) accepts `?user_id=` dev impersonation. Audit w3-authz route table row 9.
 - `main.py:122-146` (voice, mobile companion, establishment table, and minigame sockets) use the same identity sources. `main.py:134,146` hardcode `est-default`.
 

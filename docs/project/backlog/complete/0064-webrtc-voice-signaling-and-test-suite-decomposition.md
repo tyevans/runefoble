@@ -45,11 +45,11 @@ As audio capabilities expand in upcoming milestones (whisper tracks, autonomous 
 - **ADR-0009**: Continuous Backlog Refinement and Technical Debt Management.
 
 ## Proposed Decomposition
-1. **Signaling Connection Manager (`gateway/api/src/gateway_api/signaling/manager.py`)**:
+1. **Signaling Connection Manager (`gateway/api/src/gateway_api/signaling/manager.py` (removed))**:
    - Manages active room WebSockets, peer lookups, kick callbacks, and JSON broadcasts (< 120 lines).
-2. **Signaling Zanzibar Auth (`gateway/api/src/gateway_api/signaling/auth.py`)**:
+2. **Signaling Zanzibar Auth (`gateway/api/src/gateway_api/signaling/auth.py` (removed))**:
    - Query param/header credential extraction and SpiceDB Zanzibar session/campaign permission checks (< 90 lines).
-3. **Signaling Message Handlers (`gateway/api/src/gateway_api/signaling/handlers.py`)**:
+3. **Signaling Message Handlers (`gateway/api/src/gateway_api/signaling/handlers.py` (removed))**:
    - Dispatchers for `webrtc_offer`, `webrtc_answer`, `webrtc_ice_candidate`, `webrtc_mute`, and `webrtc_kick` (< 140 lines).
 4. **Endpoint Facade (`gateway/api/src/gateway_api/webrtc_signaling.py` (removed))**:
    - Re-exports `WebRTCSignalingManager`, `signaling_manager`, and `voice_signaling_websocket_endpoint` for backward compatibility (< 80 lines).

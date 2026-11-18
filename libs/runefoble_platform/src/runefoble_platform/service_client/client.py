@@ -27,6 +27,8 @@ class UpstreamReply:
     status_code: int
     content_type: str
     body: bytes
+    # The upstream authentication challenge. A 401 must carry it (RFC 9110, section 11.6.1).
+    www_authenticate: str | None = None
 
 
 class ServiceClient:
@@ -80,6 +82,7 @@ class ServiceClient:
             status_code=response.status_code,
             content_type=response.headers.get("content-type", DEFAULT_CONTENT_TYPE),
             body=response.content,
+            www_authenticate=response.headers.get("www-authenticate"),
         )
 
     def websocket_target(self, path: str) -> tuple[str, dict[str, str]]:

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- Gateway: a proxied 401 from an owning service now keeps its `WWW-Authenticate: Bearer` challenge. `UpstreamReply` carries the header. (TASK-0593 follow-up)
 - Board State: token place, move, remove, actions, AoE, spell VFX, physics, previews, lights, doors, and map import check a SpiceDB permission. Token placement writes `board_token` tuples. The board WebSocket needs a bearer and `board.view`, checks each message, and no longer rebroadcasts unknown client frames. (TASK-0547)
 - MCP tools that change characters, boards, or encounters check a schema permission for the verified caller. Agent action plan steps and dynamic tool calls over MCP check the same rules (`mcp_tool.execute`). (TASK-0545)
 - Board State: secret traps, secret doors, and secret portals no longer reach callers without `board.view_secret_layer`. Trap disarm, map switch, terrain, and fog routes now enforce SpiceDB `board` permissions. Board creation needs `campaign.run_session` and writes the board tuple. The `is_dm` query parameter is removed. (TASK-0546)

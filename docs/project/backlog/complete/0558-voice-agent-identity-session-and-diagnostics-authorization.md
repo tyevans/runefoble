@@ -39,7 +39,7 @@ The voice agent takes identity from `X-User-Id`, from a raw bearer value, from a
 - No voice route validates a JWT (`w2-voice-agent.md` F3).
 - Routes with no check (`w3-authz-coverage.md` rows 288-301, 304-306): `routers/aec_diagnostics.py:49`, `routers/audio.py:16`, `routers/audio_filters.py:51`, `routers/duplex.py:25` and the duplex WebSocket at `:77`, `routers/stream_diagnostics.py:75`, `routers/synthesis.py:42,88`, `stream_routes.py:49` and the stream WebSocket at `:81`.
 - `room_routes.py` and `vocal_effects.py`: a SpiceDB transport error propagates as `grpc._channel._InactiveRpcError`, returned as an unhandled 500 (`w2-voice-agent.md` F14).
-- Gateway signaling (`gateway/api/src/gateway_api/signaling/auth.py`) uses the same identity order. TASK-0544 changes the gateway side.
+- Gateway signaling (`gateway/api/src/gateway_api/signaling/auth.py` (removed)) uses the same identity order. TASK-0544 changes the gateway side.
 - Not in this task: `mock_transcript` on the public stream schema (`w2-voice-agent.md` F2). That is a test backdoor and belongs to the fake-implementation and test-backdoor work. It is recorded in the index.
 
 ## Documentation & Architecture Review
