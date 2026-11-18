@@ -75,8 +75,8 @@ The speech path has four steps. Each step has its own status.
 |---|---|---|---|
 | Speech to text (`/api/v1/voice/transcribe`) | **In progress** | `tests/test_blackbox_voice_transcribe_input.py`, `tests/test_blackbox_streaming_whisper_e2e.py` | TASK-0509 (no UI caller) |
 | Text to intent (intent routes) | **In progress** | `tests/test_speech_to_intent.py`, `tests/test_blackbox_intent_disambiguation_flow.py` | TASK-0509 (no UI caller) |
-| Gateway speak-and-act (`/api/v1/watcher/speak-and-act`) | **Planned** | Returns a fixed action text (`gateway/api/src/gateway_api/routers/tabletop.py`) | TASK-0583 |
-| Board change from speech | **Planned** | No wired path from the UI to the board | TASK-0583, TASK-0582 |
+| Gateway speak-and-act (`/api/v1/watcher/speak-and-act`) | **Live** | Proxies to The Watcher intent route, which parses the transcript (`gateway/api/src/gateway_api/routers/watcher_speech_proxy.py`, `tests/test_blackbox_gateway_speech_proxy.py`) | TASK-0583 (board apply open) |
+| Board change from speech | **Planned** | The Watcher publishes `token_moved`, but `board_state` does not apply it yet | No backlog task yet |
 
 The speech targets are not measured. The 500 millisecond target has no latency test.
 
