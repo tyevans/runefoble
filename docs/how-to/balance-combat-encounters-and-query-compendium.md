@@ -182,11 +182,11 @@ LLM agents and The Watcher can call compendium tools via FastMCP:
 from gateway_mcp.server import mcp
 
 # Look up monster stat block
-monster_tool = mcp.get_tool("query_monster_stat_block")
+monster_tool = mcp._tool_manager.get_tool("query_monster_stat_block")
 res = await monster_tool.run({"monster_name": "Bugbear"})
 
 # Calculate encounter balance
-encounter_tool = mcp.get_tool("calculate_encounter_balance")
+encounter_tool = mcp._tool_manager.get_tool("calculate_encounter_balance")
 enc = await encounter_tool.run({"party_levels": [4, 4, 4], "target_difficulty": "Hard"})
 ```
 

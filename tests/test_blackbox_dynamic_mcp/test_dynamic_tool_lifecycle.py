@@ -48,7 +48,7 @@ async def test_blackbox_register_dynamic_tool_and_discovery(client: TestClient):
     assert tool_name in tool_names
 
     # 3. Verify FastMCP public protocol discovers new tool without restart
-    fastmcp_tool = mcp.get_tool(tool_name)
+    fastmcp_tool = mcp._tool_manager.get_tool(tool_name)
     assert fastmcp_tool is not None, "Tool must be discovered in FastMCP immediately"
     assert "base_damage" in fastmcp_tool.parameters["properties"]
     assert "distance" in fastmcp_tool.parameters["properties"]
@@ -78,7 +78,7 @@ async def test_blackbox_deregister_dynamic_tool(client: TestClient):
     }
     # Register tool
     client.post("/mcp/tools/register", json=payload)
-    assert mcp.get_tool(tool_name) is not None
+    assert mcp._tool_manager.get_tool(tool_name) is not None
 
     # Deregister tool
     del_res = client.delete(f"/mcp/tools/{tool_name}")
@@ -86,7 +86,7 @@ async def test_blackbox_deregister_dynamic_tool(client: TestClient):
     assert del_res.json()["status"] == "deregistered"
 
     # Verify tool is gone from FastMCP and dynamic list
-    assert mcp.get_tool(tool_name) is None
+    assert mcp._tool_manager.get_tool(tool_name) is None
     list_res = client.get("/mcp/tools/dynamic")
     tool_names = [t["name"] for t in list_res.json()["tools"]]
     assert tool_name not in tool_names
