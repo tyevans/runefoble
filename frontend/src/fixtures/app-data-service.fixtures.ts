@@ -1,7 +1,6 @@
 import type { CampaignItem, CampaignMember, LobbyParticipant, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption } from '@runefoble/game-session-ui';
 import type { CharacterItem, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
-import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type { CampaignSessionItem } from '../components/runefoble-session-list.ts';
 import type { UserClaims } from '../auth/auth-service.ts';
 
@@ -148,10 +147,4 @@ export const FALLBACK_BOARD_TOKENS: BoardToken[] = [
   { id: '2', name: 'Kyra (AI)', x: 3, y: 3, isAiControlled: true, color: 'var(--rf-accent-primary)', hp: 28, maxHp: 32, visionRadius: 2 },
   { id: '3', name: 'Goblin Scout', x: 5, y: 1, isHostile: true, color: 'var(--rf-accent-tertiary)', hp: 7, maxHp: 12 },
   { id: '4', name: 'Red Dragon Wyrmling', x: 6, y: 5, isHostile: true, color: 'var(--rf-border-color)', hp: 52, maxHp: 75 },
-];
-
-export const FALLBACK_SESSION_EVENTS: WatcherFeedEvent[] = [
-  { id: '1', timestamp: '19:45:00', source: 'watcher_dm', speaker: 'The Watcher (AI DM)', text: 'Welcome back, adventurers.', actionType: 'dm_ruling' },
-  { id: '2', timestamp: '19:45:20', source: 'player', speaker: 'Valeros', text: '"I ready my shield and move two steps forward."', actionType: 'speech' },
-  { id: '3', timestamp: '19:45:30', source: 'stand_in', speaker: 'Kyra (AI Stand-in, Drunk)', text: '"Hah! No dragon can outwit Sarenrae finest vintner!"', actionType: 'speech' },
 ];
