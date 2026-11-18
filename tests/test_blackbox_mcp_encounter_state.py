@@ -74,14 +74,13 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
         assert created.status_code == 200, created.text
         session_id = created.json()["session_id"]
 
-        for player_id, character_id, name, character_class in [
-            ("player-1", str(uuid4()), "Valeros", "Fighter"),
-            ("player-2", str(uuid4()), "Kyra", "Cleric"),
+        for character_id, name, character_class in [
+            (str(uuid4()), "Valeros", "Fighter"),
+            (str(uuid4()), "Kyra", "Cleric"),
         ]:
             joined = http.post(
                 f"/api/v1/sessions/{session_id}/join",
                 json={
-                    "player_id": player_id,
                     "character_id": character_id,
                     "character_name": name,
                     "character_class": character_class,

@@ -12,7 +12,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
-from gateway_api.auth import CurrentPrincipal, require_zanzibar_permission
+from gateway_api.auth import require_zanzibar_permission
 from gateway_api.dependencies import ws_manager
 from gateway_api.models import AtmosphereUpdateRequest, DMOverrideRequest
 from gateway_api.proxy import forward_json
@@ -25,7 +25,6 @@ router = APIRouter(tags=["Tabletop & Game Sessions"])
 
 
 class HotSwapRequest(BaseModel):
-    player_id: str | None = Field(default=None, alias="playerId")
     character_id: UUID = Field(alias="characterId")
 
     model_config = ConfigDict(populate_by_name=True)
@@ -65,19 +64,14 @@ async def start_session_proxy(session_id: str, request: Request) -> Any:
     "/api/v1/sessions/{session_id}/hot-swap",
     dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
 )
-async def hot_swap_session_proxy(
-    session_id: str, req: HotSwapRequest, request: Request, user: CurrentPrincipal
-) -> Any:
+async def hot_swap_session_proxy(session_id: str, req: HotSwapRequest, request: Request) -> Any:
     """Hand turn control from an AI stand-in to a player (game_session, which releases the stand-in)."""
     return await forward_json(
         request,
         service=SERVICE,
         method="POST",
         path=f"{SESSIONS}/{session_id}/hot-swap",
-        json_body={
-            "player_id": req.player_id or user.user_id,
-            "character_id": str(req.character_id),
-        },
+        json_body={"character_id": str(req.character_id)},
     )
 
 

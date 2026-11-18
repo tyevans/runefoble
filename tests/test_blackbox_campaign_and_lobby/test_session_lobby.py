@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_SESSION
 
-from tests.helpers.ws_identity import ws_subprotocols
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -19,11 +19,13 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 def test_session_lobby_readiness_and_ai_stand_in(client_sess: TestClient) -> None:
     """Verify players assembling in lobby, readiness presence, and absent stand-in toggle."""
     char_valeros_id, char_kyra_id = uuid4(), uuid4()
+    campaign_id = _owned_campaign(client_sess)
+    _seat_players(client_sess, campaign_id, ["player_marcus", "player_sarah"])
 
     sess_res = client_sess.post(
         "/api/v1/sessions/create",
         json={
-            "campaign_id": _owned_campaign(client_sess),
+            "campaign_id": campaign_id,
             "title": "Session 15",
             "dm_id": "dm_evelyn",
         },
@@ -33,27 +35,31 @@ def test_session_lobby_readiness_and_ai_stand_in(client_sess: TestClient) -> Non
     assert sess_res.json()["status"] == "lobby"
 
     p_m = {
-        "player_id": "player_marcus",
         "character_id": str(char_valeros_id),
         "character_name": "Valeros",
         "character_class": "Fighter",
     }
-    join_m = client_sess.post(f"/api/v1/sessions/{session_id}/join", json=p_m)
+    join_m = client_sess.post(
+        f"/api/v1/sessions/{session_id}/join", json=p_m, headers=_bearer("player_marcus")
+    )
     assert join_m.status_code == 200
     m_part = join_m.json()["participants"]["player_marcus"]
     assert m_part["is_present"] is True and m_part["is_stand_in_active"] is False
 
     p_s = {
-        "player_id": "player_sarah",
         "character_id": str(char_kyra_id),
         "character_name": "Kyra",
         "character_class": "Cleric",
     }
-    assert client_sess.post(f"/api/v1/sessions/{session_id}/join", json=p_s).status_code == 200
+    joined_s = client_sess.post(
+        f"/api/v1/sessions/{session_id}/join", json=p_s, headers=_bearer("player_sarah")
+    )
+    assert joined_s.status_code == 200
 
     leave_s = client_sess.post(
         f"/api/v1/sessions/{session_id}/leave",
-        json={"player_id": "player_sarah", "reason": "absent"},
+        json={"reason": "absent"},
+        headers=_bearer("player_sarah"),
     )
     assert leave_s.status_code == 200
     s_part = leave_s.json()["participants"]["player_sarah"]
@@ -85,18 +91,20 @@ def test_session_lobby_launch_transition_and_events(
     )
     assert create_res.status_code == 200, create_res.text
     session_id = create_res.json()["session_id"]
+    _seat_players(client_sess, camp_id, ["player_marcus"], owner=headers_dm)
 
     unauth = client_gw.post(f"/api/v1/sessions/{session_id}/start", headers=headers_stranger)
     assert unauth.status_code == 403
-    client_sess.post(
+    joined = client_sess.post(
         f"/api/v1/sessions/{session_id}/join",
         json={
-            "player_id": "player_marcus",
             "character_id": str(uuid4()),
             "character_name": "Valeros",
             "character_class": "Fighter",
         },
+        headers=_bearer("player_marcus"),
     )
+    assert joined.status_code == 200, joined.text
 
     with client_gw.websocket_connect(
         f"/ws/session/{session_id}", subprotocols=ws_subprotocols("lobby-tester")
@@ -120,3 +128,24 @@ def _owned_campaign(client) -> str:
     res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
     assert res.status_code == 201, res.text
     return res.json()["id"]
+
+
+def _bearer(sub: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
+def _seat_players(
+    client, campaign_id: str, players: list[str], owner: dict[str, str] | None = None
+) -> None:
+    """Invite each player into the campaign and redeem the invite as that player."""
+    for player in players:
+        invite = client.post(
+            f"/api/v1/campaigns/{campaign_id}/invites", json={"role": "player"}, headers=owner
+        )
+        assert invite.status_code == 201, invite.text
+        redeemed = client.post(
+            "/api/v1/campaigns/join",
+            json={"invite_token": invite.json()["token"]},
+            headers=_bearer(player),
+        )
+        assert redeemed.status_code == 200, redeemed.text

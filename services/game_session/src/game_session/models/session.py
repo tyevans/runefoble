@@ -44,12 +44,10 @@ class GameSessionState(BaseModel, GameSessionTransitionsMixin):
 
 
 class ReadinessRequest(BaseModel):
-    player_id: str
     is_ready: bool = True
 
 
 class SelectLobbyCharacterRequest(BaseModel):
-    player_id: str
     character_id: UUID
 
 
@@ -60,14 +58,12 @@ class CreateSessionRequest(BaseModel):
 
 
 class JoinSessionRequest(BaseModel):
-    player_id: str
     character_id: UUID
     character_name: str
     character_class: str
 
 
 class LeaveSessionRequest(BaseModel):
-    player_id: str
     reason: str = "disconnected"
 
 
@@ -94,7 +90,6 @@ class AutoPilotResponse(BaseModel):
 
 
 class HotSwapRequest(BaseModel):
-    player_id: str
     character_id: UUID
 
 

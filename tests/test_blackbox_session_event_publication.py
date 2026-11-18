@@ -73,7 +73,6 @@ def _create_joined_session(client: TestClient) -> str:
     joined = client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={
-            "player_id": "p-1",
             "character_id": str(uuid4()),
             "character_name": "Valeros",
             "character_class": "Fighter",
@@ -117,13 +116,13 @@ def test_lobby_readiness_toggle_is_returned_by_session_state(
 
     res = session_client.post(
         f"/api/v1/sessions/{session_id}/lobby/readiness",
-        json={"player_id": "p-1", "is_ready": True},
+        json={"is_ready": True},
     )
     assert res.status_code == 200, res.text
 
     state = session_client.get(f"/api/v1/sessions/{session_id}")
     assert state.status_code == 200
-    assert state.json()["lobby_readiness"] == {"p-1": True}
+    assert state.json()["lobby_readiness"] == {"test-user": True}
     types = _published_event_types(stream_redis, session_id)
     assert types.count("ReadinessToggled") == 1
 

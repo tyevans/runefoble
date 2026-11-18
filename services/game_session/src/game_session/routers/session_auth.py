@@ -1,0 +1,41 @@
+"""Session permission dependencies for the lifecycle routes (TASK-0767).
+
+Each dependency checks one permission of the `session` definition in
+libs/runefoble_auth/schema/runefoble.zed for the verified caller and returns the caller id.
+No role name or token claim grants access here (ADR-0001, ADR-0015).
+"""
+
+from __future__ import annotations
+
+from collections.abc import Awaitable, Callable
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import Depends, HTTPException
+from game_session.dependencies import get_spicedb_client
+from game_session.settlement.auth.tokens import CallerId
+
+
+def session_permission(permission: str) -> Callable[..., Awaitable[str]]:
+    """Build a dependency that requires `permission` on the `session_id` path parameter."""
+
+    async def dependency(session_id: UUID, caller_id: CallerId) -> str:
+        allowed = await get_spicedb_client().check_permission(
+            resource_type="session",
+            resource_id=str(session_id),
+            permission=permission,
+            subject_type="user",
+            subject_id=caller_id,
+        )
+        if not allowed:
+            raise HTTPException(
+                status_code=403,
+                detail=f"User '{caller_id}' lacks '{permission}' on session '{session_id}'",
+            )
+        return caller_id
+
+    return dependency
+
+
+SessionController = Annotated[str, Depends(session_permission("control"))]
+SessionParticipant = Annotated[str, Depends(session_permission("participate"))]

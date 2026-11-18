@@ -93,7 +93,6 @@ def test_game_session_turns_frontdoor(session_client, monkeypatch):
     )
     session_id, char_id = c_res.json()["session_id"], str(uuid4())
     p_data = {
-        "player_id": "p-1",
         "character_id": char_id,
         "character_name": "Valeros",
         "character_class": "Fighter",
@@ -125,9 +124,7 @@ def test_game_session_turns_frontdoor(session_client, monkeypatch):
     combat_end = session_client.post(f"/api/v1/sessions/{session_id}/combat/end")
     assert combat_end.status_code == 200 and combat_end.json()["in_combat"] is False
 
-    session_client.post(
-        f"/api/v1/sessions/{session_id}/leave", json={"player_id": "p-1", "reason": "pizza"}
-    )
+    session_client.post(f"/api/v1/sessions/{session_id}/leave", json={"reason": "pizza"})
     payload = {"penalties": ["foolishness"]}
     with serve_watcher_double(
         watcher_stand_in_app(body={**STAND_IN_ACTION_BODY, "character_name": "Valeros"})
@@ -150,11 +147,11 @@ def test_game_session_presence_frontdoor(session_client):
     )
     session_id = c_res.json()["session_id"]
     cid = str(uuid4())
-    p = {"player_id": "p-2", "character_id": cid, "character_name": "S", "character_class": "M"}
+    p = {"character_id": cid, "character_name": "S", "character_class": "M"}
     assert session_client.post(f"/api/v1/sessions/{session_id}/join", json=p).status_code == 200
     assert (
         session_client.post(
-            f"/api/v1/sessions/{session_id}/leave", json={"player_id": "p-2", "reason": "lost"}
+            f"/api/v1/sessions/{session_id}/leave", json={"reason": "lost"}
         ).status_code
         == 200
     )

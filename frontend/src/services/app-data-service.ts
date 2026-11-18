@@ -190,9 +190,8 @@ export class AppDataService {
     return this.request<CampaignItem>(`${this.apiBase}/campaigns/${campaignId}`, { method: 'PATCH', body: JSON.stringify(payload) });
   }
 
-  async requestHotSwap(sessionId: string, characterId: string, playerId?: string): Promise<DataResult<any>> {
-    const pid = playerId || authService.getUser()?.user_id || '';
-    return this.request<any>(`${this.apiBase}/sessions/${sessionId}/hot-swap`, { method: 'POST', body: JSON.stringify({ sessionId, characterId, playerId: pid }) });
+  async requestHotSwap(sessionId: string, characterId: string): Promise<DataResult<any>> {
+    return this.request<any>(`${this.apiBase}/sessions/${sessionId}/hot-swap`, { method: 'POST', body: JSON.stringify({ sessionId, characterId }) });
   }
 
   async updateProfile(payload: UpdateProfilePayload): Promise<DataResult<UserClaims>> {

@@ -134,7 +134,6 @@ def test_game_session_join_refuses_the_service_credential():
     res = client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={
-            "player_id": "someone-else",
             "character_id": str(uuid4()),
             "character_name": "Mallory",
             "character_class": "Rogue",

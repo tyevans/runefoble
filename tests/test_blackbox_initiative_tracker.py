@@ -41,7 +41,6 @@ async def test_blackbox_combat_initiative_encounter_lifecycle_and_turn_cycling(c
     client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={
-            "player_id": "player-1",
             "character_id": valeros_id,
             "character_name": "Valeros",
             "character_class": "Fighter",
@@ -50,7 +49,6 @@ async def test_blackbox_combat_initiative_encounter_lifecycle_and_turn_cycling(c
     client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={
-            "player_id": "player-2",
             "character_id": kyra_id,
             "character_name": "Kyra",
             "character_class": "Cleric",
