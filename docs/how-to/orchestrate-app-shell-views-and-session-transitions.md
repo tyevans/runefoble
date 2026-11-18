@@ -13,11 +13,13 @@ This how-to guide explains how the Runefoble App Shell (`frontend/src/runefoble-
 | `app/route-state.ts` | Copies a matched route into the shell state: params, breadcrumbs, and campaign and session titles. |
 | `app/shell-state.ts` | Applies the stored theme. Syncs the user role to the shell. |
 | `app/shell-template.ts` | Renders the header, the main region, the toast, the modals, and the absentee overlays. |
-| `app/view-templates.ts` | Renders the dashboard, campaign hub, roster, lobby, profile, and fallback views. |
-| `app/session-view-templates.ts` | Renders the live VTT view, the spectator view, the character sheet, and the absentee overlays. |
-| `app/route-data-loader.ts` | Loads the data for each route. A failed read sets `loadError`. |
+| `views/index.ts` | `VIEW_CONTROLLERS`: one controller per view id. A controller renders its view and loads its data. |
+| `views/campaign-dashboard-view.ts`, `campaign-hub-view.ts`, `lobby-view.ts`, `session-view.ts`, `character-view.ts`, `profile-view.ts` | The route view controllers. Each one owns the template and the data read for its route. |
+| `app/absentee-overlays.ts` | Renders the absentee stance drawer. |
+| `app/data-loader.ts` | Runs the campaign switcher read and the view controller read. A failed read sets `loadError`. |
 | `app/session-data-loader.ts` | Loads lobby and active-session data. |
 | `app/session-socket.ts` | Opens, closes, and reconnects the session WebSocket. A failed open or message logs the error and shows a toast. |
+| `app/session-actions.ts` | Handles the launch-session and stand-in toggle events. |
 | `app/session-messages.ts` | Applies live session messages to shell state. |
 | `app/campaign-actions.ts` | Handles campaign, session, membership, and invite events. |
 | `app/character-actions.ts` | Handles roster and lobby character events. |

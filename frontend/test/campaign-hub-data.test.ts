@@ -93,7 +93,7 @@ describe('Campaign hub views read live gateway data', () => {
 });
 
 describe('App Shell hub templates wire live data (TASK-0646)', () => {
-  const viewTemplates = readFileSync(fileURLToPath(new URL('../src/app/view-templates.ts', import.meta.url)), 'utf8');
+  const viewTemplates = readFileSync(fileURLToPath(new URL('../src/views/campaign-hub-view.ts', import.meta.url)), 'utf8');
   const analyticsElement = readFileSync(fileURLToPath(new URL('../../services/campaign_analytics/ui/src/runefoble-campaign-analytics.ts', import.meta.url)), 'utf8');
 
   it('never passes an empty apiBaseUrl to the analytics element', () => {

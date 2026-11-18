@@ -16,48 +16,21 @@ import type {
   CampaignMember,
   LobbyParticipant,
   LobbyCharacterOption,
-  UpdateCampaignPayload,
 } from '@runefoble/game-session-ui';
 import type { LoreEntry } from '@runefoble/campaign-lore-ui';
 import type {
   CharacterItem,
   RosterCampaignOption,
-  CreateCharacterPayload,
-  AssignCampaignEventDetail,
-  DeleteCharacterEventDetail,
-  InspectCharacterEventDetail,
 } from '@runefoble/character-sheet-ui';
 import type { CampaignSessionItem } from './components/runefoble-session-list.ts';
 import type { DataFailure } from './services/data-result.ts';
 import type { CampaignAnalyticsView, CampaignAtlasView } from './services/campaign-hub-client.ts';
-import {
-  handleToggleReadiness,
-  handleToggleStandIn,
-  handleBoardTokenAction,
-  handleBoardAoEPlace,
-  handleBoardSpellVFX,
-  handleBoardConfirmGhost,
-} from './vtt-mesh-handlers.ts';
-import { loadRouteData } from './app/route-data-loader.ts';
+import { loadRouteData } from './app/data-loader.ts';
 import { applyRouteState } from './app/route-state.ts';
 import { renderAppShell } from './app/shell-template.ts';
 import { initTheme, syncAuthState } from './app/shell-state.ts';
 import { SessionSocket } from './app/session-socket.ts';
 import { installTitleResolvers } from './app/title-resolver.ts';
-import {
-  updateCampaignFromEvent,
-  createSessionFromEvent,
-  assignRoleFromEvent,
-  createInviteFromEvent,
-  removeMemberFromEvent,
-} from './app/campaign-actions.ts';
-import {
-  createCharacterFromEvent,
-  assignCharacterFromEvent,
-  deleteCharacterFromEvent,
-  selectCharacterFromEvent,
-  switchDmCharacter,
-} from './app/character-actions.ts';
 import { pickActiveCharacter } from './app/active-character.ts';
 
 @customElement('runefoble-app')
@@ -176,30 +149,6 @@ export class RunefobleApp extends LitElement {
     if (this.currentRoute) void loadRouteData(this, this.currentRoute);
   }
 
-  public handleUpdateCampaign(e: CustomEvent<UpdateCampaignPayload>) { return updateCampaignFromEvent(this, e); }
-  public handleCreateSession(e: CustomEvent) { return createSessionFromEvent(this, e); }
-  public handleAssignRole(e: CustomEvent) { return assignRoleFromEvent(this, e); }
-  public handleCreateInvite(e: CustomEvent) { return createInviteFromEvent(this, e); }
-  public handleRemoveMember(e: CustomEvent) { return removeMemberFromEvent(this, e); }
-  public handleCreateCharacter(e: CustomEvent<CreateCharacterPayload>) { return createCharacterFromEvent(this, e); }
-  public handleAssignCampaign(e: CustomEvent<AssignCampaignEventDetail>) { return assignCharacterFromEvent(this, e); }
-  public handleDeleteCharacter(e: CustomEvent<DeleteCharacterEventDetail>) { return deleteCharacterFromEvent(this, e); }
-  public handleSelectCharacter(e: CustomEvent) { return selectCharacterFromEvent(this, e); }
-  public handleDmSwitchCharacter(cId: string) { return switchDmCharacter(this, cId); }
-  public handleInspectCharacter(e: CustomEvent<InspectCharacterEventDetail>) { router.navigate('#/characters/' + e.detail.characterId); }
-
-  public handleLaunchSession(e: CustomEvent) {
-    const cId = e.detail?.campaignId || this.campaignId;
-    const sId = e.detail?.sessionId || this.sessionId;
-    if (!cId || !sId) {
-      this.showToast('Session not launched. The campaign or session is not known.');
-      return;
-    }
-    const socket = this.sessionSocket.current;
-    if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'session_started', campaignId: cId, sessionId: sId }));
-    router.navigate(`#/campaigns/${cId}/sessions/${sId}`);
-  }
-
   public showToast(message: string, durationMs = 4000) {
     this.toastMessage = message;
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
@@ -227,22 +176,6 @@ export class RunefobleApp extends LitElement {
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${proto}//${window.location.host || 'localhost:8000'}/ws/boards/${this.sessionId}`;
   }
-
-  public handleToggleReadiness(e: CustomEvent) { handleToggleReadiness(this, e, this.sessionSocket.current); }
-
-  public handleToggleStandIn(e: CustomEvent) {
-    handleToggleStandIn(this, e, this.sessionSocket.current);
-    const { isAbsent } = e.detail || {};
-    if (isAbsent) {
-      this.isAbsenteeDirectiveOpen = true;
-      this.showToast('Stand-In Activated: Directives drawer opened');
-    }
-  }
-
-  public handleBoardTokenAction(e: CustomEvent) { handleBoardTokenAction(e, this.sessionSocket.current); }
-  public handleBoardAoEPlace(e: CustomEvent) { handleBoardAoEPlace(e, this.sessionSocket.current); }
-  public handleBoardSpellVFX(e: CustomEvent) { handleBoardSpellVFX(e, this.sessionSocket.current); }
-  public handleBoardConfirmGhost(e: CustomEvent) { handleBoardConfirmGhost(e, this.sessionSocket.current); }
 
   render() {
     return renderAppShell(this);
