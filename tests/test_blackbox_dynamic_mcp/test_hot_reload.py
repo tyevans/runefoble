@@ -1,4 +1,4 @@
-"""Blackbox tests verifying hot-reloading in-flight and AST sandbox rejection security."""
+"""Blackbox tests verifying hot-reloading of dynamic tool logic and schema."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ async def test_blackbox_hot_reload_tool_logic_without_restart(client: TestClient
             "properties": {"dex_mod": {"type": "integer"}},
             "required": ["dex_mod"],
         },
-        "handler_code": "def handle(dex_mod: int) -> dict: return {'total': 10 + dex_mod, 'version': 1}",
+        "handler": {"total": {"$expr": "10 + dex_mod"}, "version": 1},
     }
     res1 = client.post("/mcp/tools/register", json=v1_payload)
     assert res1.status_code == 200
@@ -44,10 +44,7 @@ async def test_blackbox_hot_reload_tool_logic_without_restart(client: TestClient
             },
             "required": ["dex_mod"],
         },
-        "handler_code": (
-            "def handle(dex_mod: int, prof_bonus: int = 2) -> dict:\n"
-            "    return {'total': 10 + dex_mod + prof_bonus, 'version': 2}\n"
-        ),
+        "handler": {"total": {"$expr": "10 + dex_mod + prof_bonus"}, "version": 2},
     }
     res2 = client.put(f"/mcp/tools/{tool_name}", json=v2_payload)
     assert res2.status_code == 200
@@ -61,36 +58,13 @@ async def test_blackbox_hot_reload_tool_logic_without_restart(client: TestClient
     assert out2["version"] == 2
 
 
-def test_blackbox_sandbox_security_rejection(client: TestClient):
-    """Verify security policies reject forbidden imports, calls, and attribute access."""
-    forbidden_payloads = [
-        ("os_import", "import os\ndef handle(): return os.getcwd()"),
-        ("subprocess_import", "import subprocess\ndef handle(): return 1"),
-        ("open_call", "def handle():\n    with open('/etc/passwd') as f: return f.read()"),
-        ("eval_call", "def handle(): return eval('1 + 1')"),
-        ("dunder_globals", "def handle(): return ().__class__.__bases__[0].__subclasses__()"),
-    ]
-
-    for name, code in forbidden_payloads:
-        payload = {
-            "name": name,
-            "description": "Malicious code",
-            "parameters": {"type": "object", "properties": {}},
-            "handler_code": code,
-        }
-        res = client.post("/mcp/tools/register", json=payload)
-        assert res.status_code == 400, f"Expected 400 Bad Request for {name}"
-        assert "Sandbox policy violation" in res.json()["detail"]
-        assert mcp._tool_manager.get_tool(name) is None, f"{name} must not be registered in FastMCP"
-
-
 def test_blackbox_invalid_parameter_schema_rejection(client: TestClient):
     """Verify malformed parameter schemas are rejected cleanly."""
     # Top-level is not object
     bad_schema_1 = {
         "name": "bad_tool_1",
         "parameters": {"type": "array", "items": {"type": "string"}},
-        "handler_code": "def handle(): return {}",
+        "handler": {"ok": True},
     }
     res1 = client.post("/mcp/tools/register", json=bad_schema_1)
     assert res1.status_code == 400
@@ -100,7 +74,7 @@ def test_blackbox_invalid_parameter_schema_rejection(client: TestClient):
     bad_schema_2 = {
         "name": "bad_tool_2",
         "parameters": {"type": "object", "properties": "invalid_not_dict"},
-        "handler_code": "def handle(): return {}",
+        "handler": {"ok": True},
     }
     res2 = client.post("/mcp/tools/register", json=bad_schema_2)
     assert res2.status_code == 400

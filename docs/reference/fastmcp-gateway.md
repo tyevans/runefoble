@@ -117,7 +117,7 @@ The Dynamic Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic/`) enables table
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/mcp/tools/dynamic` (alias: `/mcp/tools`) | List all dynamically registered tools and JSON Schemas |
-| `POST` | `/mcp/tools/register` (alias: `/mcp/tools`) | Register a new dynamic tool with parameter validation and SpiceDB authorization. A non-blank `handler_code` is required; a definition without one returns HTTP 422 and adds no tool |
+| `POST` | `/mcp/tools/register` (alias: `/mcp/tools`) | Register a new dynamic tool with parameter validation and SpiceDB authorization. A non-empty declarative `handler` is required; a definition without one returns HTTP 422 and adds no tool. An invalid handler returns HTTP 400 |
 | `GET` | `/mcp/tools/{name}` | Retrieve schema and configuration for a specific dynamic tool |
 | `PUT` | `/mcp/tools/{name}` | Update an existing dynamic tool definition and hot-reload logic |
 | `DELETE` | `/mcp/tools/{tool_name}` | Deregister a dynamic tool and revoke permissions |
@@ -152,13 +152,20 @@ The gateway API injects the Redis Streams bus when its module loads (`configure_
 
 A failed publish is not silent. The gateway logs an `ERROR` record that names the event type and the cause. It also adds a `dynamic_tool_event_dropped` event to the active OpenTelemetry span. This applies to a missing bus, a Redis error, and a dispatch with no running event loop.
 
-### Security & Sandbox Policies
+### Declarative Handlers (ADR-0020)
 
-Dynamic tool definitions containing custom Python logic (`handler_code`) undergo strict AST static analysis and sandboxed execution:
-- **Forbidden Imports**: `os`, `sys`, `subprocess`, `shutil`, `socket`, `urllib`, `requests`, `httpx`, `pathlib`, `builtins`, `importlib`.
-- **Forbidden Functions**: `open`, `eval`, `exec`, `compile`, `__import__`, `globals`, `locals`, `exit`, `quit`.
-- **Attribute Access Restrictions**: Access to dunder attributes (e.g. `__class__`, `__subclasses__`, `__globals__`, `__code__`) is rejected.
-- **Allowed Modules**: Safe modules such as `math`, `json`, `re`, `random`.
-- **Parameter Validation**: Enforced via JSON Schema Draft-07 specifications with type matching across Python signatures.
+A dynamic tool handler is a JSON result template. The gateway runs no caller code. `exec`, `eval`, and `compile` are never used on caller input.
+
+| Element | Result |
+|---|---|
+| `"${name}"` | The argument `name`, type kept |
+| `"text ${name}"` | A string with argument values inserted |
+| `{"$expr": "..."}` | A number. Allowed: numbers, parameter names, `+ - * / // %`, unary signs, parentheses, `max`, `min`, `abs`, `round`. Limits: 200 characters, 64 elements |
+| `{"$dice": "NdS+M"}` | Total of N S-sided dice plus M. Limits: 100 dice, 1000 sides |
+| object, list | Evaluated member by member. Limit: 8 levels, 200 elements |
+
+Registration returns HTTP 400 for an unknown parameter name, an unknown `$` directive, a malformed expression, or a limit breach. Execution returns HTTP 400 for an arithmetic error. Calls from one tool to another tool are not supported.
+
+Parameters are validated with JSON Schema Draft-07 at registration.
 
 

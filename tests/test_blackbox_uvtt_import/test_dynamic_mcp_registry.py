@@ -1,4 +1,4 @@
-"""Blackbox integration tests for dynamic FastMCP tool registration and sandboxing.
+"""Blackbox integration tests for dynamic FastMCP tool registration and declarative handlers.
 
 Governed by TASK-0193 and ADR-0008.
 """
@@ -28,13 +28,10 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(gateway_clie
             },
             "required": ["base_damage", "distance"],
         },
-        "handler_code": (
-            "def handle(base_damage: int, distance: int) -> dict:\n"
-            "    penalty = max(0, distance * 2)\n"
-            "    effective_damage = max(0, base_damage - penalty)\n"
-            "    return {'effective_damage': effective_damage, 'reduced_by': penalty}\n"
-        ),
-        "sandbox_policy": {"allowed_modules": ["math"]},
+        "handler": {
+            "effective_damage": {"$expr": "max(0, base_damage - max(0, distance * 2))"},
+            "reduced_by": {"$expr": "max(0, distance * 2)"},
+        },
         "metadata": {"author": "Alex (Modder)", "version": "1.0.0"},
     }
 
@@ -71,24 +68,22 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(gateway_clie
     assert tool_name in tool_names
 
 
-def test_blackbox_dynamic_mcp_sandbox_rejection_security(gateway_client: TestClient):
-    """Verify sandbox policies reject dangerous system calls or restricted imports."""
+def test_blackbox_dynamic_mcp_handler_rejection_security(gateway_client: TestClient):
+    """Verify registration refuses handlers that reach for system calls or imports."""
     unsafe_cases = [
-        ("os", "import os\ndef handle(): return os.getcwd()"),
-        ("subprocess", "import subprocess\ndef handle(): return subprocess.run('ls')"),
-        ("open", "def handle():\n    with open('/etc/passwd') as f: return f.read()"),
-        ("dunder", "def handle(): return ().__class__.__bases__[0].__subclasses__()"),
+        ("os", "__import__('os').getcwd()"),
+        ("open", "open('/etc/passwd')"),
+        ("dunder", "().__class__.__bases__[0].__subclasses__()"),
     ]
-    for tag, code in unsafe_cases:
+    for tag, expression in unsafe_cases:
         name = f"malicious_tool_{tag}"
         payload = {
             "name": name,
             "parameters": {"type": "object", "properties": {}},
-            "handler_code": code,
+            "handler": {"out": {"$expr": expression}},
         }
         resp = gateway_client.post("/mcp/tools", json=payload)
         assert resp.status_code == 400, f"Expected rejection for {name}"
-        assert "Sandbox policy violation" in resp.json()["detail"]
         assert mcp._tool_manager.get_tool(name) is None
 
 
@@ -103,7 +98,7 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(gateway_client: TestClient):
             "properties": {"radius": {"type": "integer"}},
             "required": ["radius"],
         },
-        "handler_code": "def handle(radius: int) -> dict: return {'illuminated_radius': radius}",
+        "handler": {"illuminated_radius": "${radius}"},
     }
 
     # Register tool
@@ -120,9 +115,7 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(gateway_client: TestClient):
             "properties": {"radius": {"type": "integer"}, "color": {"type": "string"}},
             "required": ["radius", "color"],
         },
-        "handler_code": (
-            "def handle(radius: int, color: str) -> dict: return {'radius': radius, 'color': color}"
-        ),
+        "handler": {"radius": "${radius}", "color": "${color}"},
     }
     upd = gateway_client.put(f"/mcp/tools/{tool_name}", json=update_payload)
     assert upd.status_code == 200

@@ -99,7 +99,7 @@ async def execute_dynamic_tool(
     req: DynamicToolExecutionRequest,
     x_user_id: str | None = Header(default=None, alias="X-User-Id"),
 ) -> dict[str, Any]:
-    """Execute dynamic tool in sandbox with supplied arguments."""
+    """Evaluate the dynamic tool handler with supplied arguments."""
     caller = req.user_id or x_user_id
     await enforce_tool_auth(caller, name, "execute")
     try:
