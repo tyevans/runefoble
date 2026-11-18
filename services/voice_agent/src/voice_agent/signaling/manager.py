@@ -12,7 +12,7 @@ from voice_agent.room import (
     get_voice_room_coordinator,
 )
 
-logger = logging.getLogger("runefoble.gateway.signaling.manager")
+logger = logging.getLogger("runefoble.voice_agent.signaling.manager")
 
 
 class WebRTCSignalingManager:

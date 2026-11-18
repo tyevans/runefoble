@@ -52,7 +52,9 @@ def open_table(
 
 
 @pytest.fixture
-def gateway(game_session_upstream, character_sheet_upstream) -> Iterator[TestClient]:
+def gateway(
+    game_session_upstream, character_sheet_upstream, voice_agent_upstream
+) -> Iterator[TestClient]:
     """A gateway client wired to live loopback upstreams. Import it into the test module."""
     with TestClient(gateway_app) as client:
         yield client

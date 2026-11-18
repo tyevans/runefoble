@@ -903,7 +903,6 @@ dependencies = [
     { name = "runefoble-platform" },
     { name = "soundscape" },
     { name = "uvicorn" },
-    { name = "voice-agent" },
     { name = "websockets" },
 ]
 
@@ -919,7 +918,6 @@ requires-dist = [
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
     { name = "soundscape", editable = "services/soundscape" },
     { name = "uvicorn", specifier = ">=0.54.0" },
-    { name = "voice-agent", editable = "services/voice_agent" },
     { name = "websockets", specifier = ">=16.1.1" },
 ]
 

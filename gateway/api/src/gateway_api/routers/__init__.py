@@ -13,6 +13,7 @@ from gateway_api.routers.overlay import router as overlay_router
 from gateway_api.routers.sessions_proxy import router as sessions_router
 from gateway_api.routers.soundscape import router as soundscape_router
 from gateway_api.routers.spectator import router as spectator_router
+from gateway_api.routers.voice_proxy import router as voice_proxy_router
 
 __all__ = [
     "auth_router",
@@ -28,4 +29,5 @@ __all__ = [
     "sessions_router",
     "soundscape_router",
     "spectator_router",
+    "voice_proxy_router",
 ]

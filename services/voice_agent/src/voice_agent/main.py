@@ -16,6 +16,8 @@ from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
+from voice_agent.companion_routes import router as companion_router
+from voice_agent.companion_socket_routes import router as companion_socket_router
 from voice_agent.dependencies import (
     STREAM_SESSION,
     STREAM_VOICE,
@@ -85,6 +87,8 @@ app.include_router(duplex_router)
 app.include_router(vocal_effects_router)
 app.include_router(dsp_condition_router)
 app.include_router(stream_diagnostics_router)
+app.include_router(companion_router)
+app.include_router(companion_socket_router)
 app.include_router(audio_filters_router)
 app.include_router(aec_diagnostics_router)
 

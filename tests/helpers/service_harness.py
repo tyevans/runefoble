@@ -327,6 +327,23 @@ def board_state_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
 
 
 @pytest.fixture
+def voice_agent_upstream(monkeypatch, trusted_voice_issuer) -> Iterator[str]:
+    """Serve voice_agent as a live loopback upstream (TASK-0593).
+
+    The gateway proxies voice room routes to it through RUNEFOBLE_VOICE_AGENT_URL. Tokens
+    minted by the voice test issuer are accepted. The URL is set before the gateway lifespan
+    runs, so build the gateway client after this fixture.
+    """
+    from voice_agent.main import app as voice_app
+
+    from tests.helpers.live_services import serve
+
+    with serve(voice_app) as url:
+        monkeypatch.setenv("RUNEFOBLE_VOICE_AGENT_URL", url)
+        yield url
+
+
+@pytest.fixture
 def game_session_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
     """Serve game_session as a live loopback upstream with fresh in-memory campaign state.
 

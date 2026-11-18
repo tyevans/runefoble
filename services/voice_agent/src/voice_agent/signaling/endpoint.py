@@ -5,17 +5,17 @@ from __future__ import annotations
 import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
-from gateway_api.session_access import socket_may
-from gateway_api.signaling.auth import extract_peer_and_role
-from gateway_api.signaling.handlers import (
+from voice_agent.auth import get_voice_verifier
+from voice_agent.signaling.auth import extract_peer_and_role
+from voice_agent.signaling.handlers import (
     SignalingPeerState,
     dispatch_signaling_message,
     handle_peer_disconnect,
 )
-from gateway_api.signaling.manager import WebRTCSignalingManager, signaling_manager
-from gateway_api.websocket_auth import admit_gateway_websocket
+from voice_agent.signaling.manager import WebRTCSignalingManager, signaling_manager
+from voice_agent.socket_access import admit_session_socket
 
-logger = logging.getLogger("runefoble.gateway.signaling.endpoint")
+logger = logging.getLogger("runefoble.voice_agent.signaling.endpoint")
 
 
 async def voice_signaling_websocket_endpoint(
@@ -24,17 +24,15 @@ async def voice_signaling_websocket_endpoint(
     manager: WebRTCSignalingManager | None = None,
 ) -> None:
     """Handle WebRTC voice room signaling WebSocket at /ws/voice/{session_id}."""
-    principal = await admit_gateway_websocket(websocket)
+    principal = await admit_session_socket(
+        websocket, get_voice_verifier(), session_id, "session.observe"
+    )
     if principal is None:
         return
     user_id = principal.user_id
     sig_manager = manager or signaling_manager
     coord = sig_manager.coordinator
     peer_id, role = extract_peer_and_role(websocket, user_id)
-
-    # SpiceDB check on connect: session.observe (Hard Invariant 1)
-    if not await socket_may(websocket, session_id, user_id, "observe"):
-        return
 
     await sig_manager.connect_peer(session_id, peer_id, websocket)
 

@@ -11,12 +11,13 @@ Verifies:
 """
 
 import json
+import time
 
 import pytest
 from fastapi import WebSocketDisconnect
-from gateway_api.signaling import signaling_manager
 from runefoble_auth.factory import get_spicedb_client
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
+from voice_agent.signaling import signaling_manager
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import ws_subprotocols
@@ -136,5 +137,11 @@ def test_voice_peer_lifecycle_events_published_to_redis(
 
         ws.send_json({"type": "webrtc_leave", "peer_id": "peer_valeros", "reason": "left_session"})
 
-    session_events = redis.streams.get("runefoble.events.session", [])
-    assert any("peer_valeros" in str(e[1]) and "left_session" in str(e[1]) for e in session_events)
+    # The owner handles the leave frame on its own loop. Wait for the event it publishes.
+    deadline = time.monotonic() + 5.0
+    while True:
+        session_events = redis.streams.get("runefoble.events.session", [])
+        if any("peer_valeros" in str(e[1]) and "left_session" in str(e[1]) for e in session_events):
+            break
+        assert time.monotonic() < deadline, "peer left event was not published"
+        time.sleep(0.05)

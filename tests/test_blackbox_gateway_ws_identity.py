@@ -55,7 +55,14 @@ ROUTE_GROUPS = [
 ACCEPTING_ROUTES = [
     route
     for route in ROUTE_GROUPS
-    if route.id not in ("session", "establishment-table", "standalone-minigame")
+    if route.id
+    not in (
+        "session",
+        "voice-signaling",
+        "mobile-companion",
+        "establishment-table",
+        "standalone-minigame",
+    )
 ]
 
 

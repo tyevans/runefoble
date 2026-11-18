@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from gateway_api.signaling.auth import (
+from voice_agent.signaling.auth import (
     extract_peer_and_role,
 )
-from gateway_api.signaling.endpoint import (
+from voice_agent.signaling.endpoint import (
     voice_signaling_websocket_endpoint,
 )
-from gateway_api.signaling.handlers import (
+from voice_agent.signaling.handlers import (
     SignalingPeerState,
     dispatch_signaling_message,
     handle_join,
@@ -18,7 +18,7 @@ from gateway_api.signaling.handlers import (
     handle_sdp_and_ice,
     handle_telemetry,
 )
-from gateway_api.signaling.manager import (
+from voice_agent.signaling.manager import (
     WebRTCSignalingManager,
     signaling_manager,
 )

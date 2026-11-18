@@ -8,9 +8,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import WebSocket
-from gateway_api.dependencies import get_event_bus
 from runefoble_events.voice import MobileHapticPingDispatched
 from runefoble_platform.event_publish import publish_best_effort
+from voice_agent.dependencies import get_event_bus
 from voice_agent.mobile import (
     HapticVibrationPattern,
     MobileAudioProfileTier,
@@ -19,7 +19,7 @@ from voice_agent.mobile import (
     create_turn_alert_notification,
 )
 
-logger = logging.getLogger("runefoble.gateway.companion.manager")
+logger = logging.getLogger("runefoble.voice_agent.companion_registry")
 
 
 async def publish_companion_event(stream: str, event: Any) -> None:

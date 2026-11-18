@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.companion import mobile_companion_manager
 from runefoble_auth.factory import get_spicedb_client
+from voice_agent.companion_registry import mobile_companion_manager
 from voice_agent.main import app as voice_app
 
 from tests.helpers.ws_identity import ws_subprotocols
