@@ -47,7 +47,11 @@ async def test_blackbox_gateway_http_spans_emitted():
     )
 
     transport = ASGITransport(app=gateway_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    # ASGITransport does not run the lifespan. The health route needs its upstream registry.
+    async with (
+        gateway_app.router.lifespan_context(gateway_app),
+        AsyncClient(transport=transport, base_url="http://test") as client,
+    ):
         response = await client.get("/healthz")
         assert response.status_code == 200
         assert response.json()["status"] == "healthy"
@@ -84,7 +88,11 @@ async def test_blackbox_w3c_incoming_trace_propagation():
     incoming_traceparent = f"00-{trace_id_hex}-{span_id_hex}-01"
 
     transport = ASGITransport(app=gateway_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    # ASGITransport does not run the lifespan. The health route needs its upstream registry.
+    async with (
+        gateway_app.router.lifespan_context(gateway_app),
+        AsyncClient(transport=transport, base_url="http://test") as client,
+    ):
         response = await client.get(
             "/healthz",
             headers={"traceparent": incoming_traceparent},
@@ -120,7 +128,11 @@ async def test_blackbox_trace_propagation_across_redis_streams(mock_bus):
 
     # Execute request to spectator frontdoor endpoint that dispatches a domain event
     transport = ASGITransport(app=gateway_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    # ASGITransport does not run the lifespan. The health route needs its upstream registry.
+    async with (
+        gateway_app.router.lifespan_context(gateway_app),
+        AsyncClient(transport=transport, base_url="http://test") as client,
+    ):
         res = await client.get("/api/v1/spectate/sess-trace-001")
         assert res.status_code == 200
 

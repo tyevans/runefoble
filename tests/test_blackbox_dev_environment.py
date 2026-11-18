@@ -85,7 +85,11 @@ def test_orchestrator_cli_parsing():
 
 def test_gateway_health_probes_and_cors():
     """Verify Gateway API health endpoints and CORS configuration for localhost:5173."""
-    client = TestClient(gateway_app)
+    with TestClient(gateway_app) as client:
+        _check_health_and_cors(client)
+
+
+def _check_health_and_cors(client: TestClient) -> None:
 
     # Health endpoints
     for route in ["/healthz", "/health", "/api/v1/health"]:
