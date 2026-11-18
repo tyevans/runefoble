@@ -6,6 +6,8 @@ This guide explains how to generate thematic character wardrobe variations (such
 
 Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
 
+Every forge request names a campaign. Send `campaign_id` in the body. Without it the service returns `400`. The caller needs the `campaign.play` permission on that campaign (players and DMs). Spectators get `403`. The service writes the `creator` and `campaign` relations of each new asset before it stores the asset. If SpiceDB cannot write them, the service returns `503` and stores nothing. Reads of a forged asset need `forged_asset.view`: the creator, or a campaign member with view rights.
+
 ---
 
 ## 1. Automatic Dynamic Condition & Injury Overlays
