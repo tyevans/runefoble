@@ -1,7 +1,7 @@
 ---
 id: '0527'
 title: Services Verify Zitadel Tokens (board_state, campaign_analytics, rules_compendium)
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -28,7 +28,7 @@ source_audits:
 # TASK-0527: Services Verify Zitadel Tokens (board_state, campaign_analytics, rules_compendium)
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Three bounded contexts take caller identity from a plain `x-user-id` header. Any client that reaches the service can claim any user. Replace the header identity with the verified principal from TASK-0520 in each service, applied to every router. Remove the `None` branches that let an anonymous caller pass.

@@ -18,6 +18,11 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.watcher_double import (
+    STAND_IN_ACTION_BODY,
+    serve_watcher_double,
+    watcher_stand_in_app,
+)
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -93,7 +98,9 @@ async def test_watcher_stand_in_event_emission(mock_redis: MockAsyncRedis):
 
 
 @pytest.mark.asyncio
-async def test_game_session_auto_pilot_turn(mock_redis: MockAsyncRedis):
+async def test_game_session_auto_pilot_turn(
+    mock_redis: MockAsyncRedis, monkeypatch: pytest.MonkeyPatch
+):
     """POST /api/v1/sessions/{session_id}/turns/auto-pilot must advance turn and record stand-in action."""
     event_bus = RedisStreamsEventBus(client=mock_redis)
     session_set_event_bus(event_bus)
@@ -152,15 +159,24 @@ async def test_game_session_auto_pilot_turn(mock_redis: MockAsyncRedis):
         assert leave_res.status_code == 200
         assert leave_res.json()["participants"]["sarah-cleric"]["is_stand_in_active"] is True
 
-        # 6. Now execute auto-pilot turn
-        auto_pilot_res = await client.post(
-            f"/api/v1/sessions/{session_id}/turns/auto-pilot",
-            json={
-                "penalties": ["drunk"],
-                "scene_context": "Goblins attacking campsite",
-                "personality_traits": ["valiant"],
-            },
+        # 6. Now execute auto-pilot turn. The Watcher runs as a real HTTP test double.
+        watcher_app = watcher_stand_in_app(
+            body={
+                **STAND_IN_ACTION_BODY,
+                "dialogue": '"Hic! Don\'t you worry, my friends!"',
+                "penalties_applied": ["drunk"],
+            }
         )
+        with serve_watcher_double(watcher_app) as watcher_url:
+            monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", watcher_url)
+            auto_pilot_res = await client.post(
+                f"/api/v1/sessions/{session_id}/turns/auto-pilot",
+                json={
+                    "penalties": ["drunk"],
+                    "scene_context": "Goblins attacking campsite",
+                    "personality_traits": ["valiant"],
+                },
+            )
         assert auto_pilot_res.status_code == 200
         turn_data = auto_pilot_res.json()
         assert turn_data["current_turn"] == 2

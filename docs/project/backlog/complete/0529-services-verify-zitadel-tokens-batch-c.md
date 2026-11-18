@@ -1,7 +1,7 @@
 ---
 id: '0529'
 title: Services Verify Zitadel Tokens (game_session, the_watcher, and Inference Worker Service Token)
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -29,7 +29,7 @@ source_audits:
 # TASK-0529: Services Verify Zitadel Tokens (game_session, the_watcher, and Inference Worker Service Token)
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Game session and The Watcher take identity from `x-user-id`. Some checks run only when the header exists. The hot-swap route skips authorization without the header. The Inference Worker accepts any caller on all interfaces. Apply the verified principal to both services, and protect the Inference Worker with a service token from a secret.

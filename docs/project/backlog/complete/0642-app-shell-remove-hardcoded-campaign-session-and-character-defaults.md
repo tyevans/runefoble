@@ -1,7 +1,7 @@
 ---
 id: '0642'
 title: App Shell Derives Campaign, Session, and Character State From Routes and API Data
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0640
@@ -23,7 +23,7 @@ source_audits:
 # TASK-0642: App Shell Derives Campaign, Session, and Character State From Routes and API Data
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `runefoble-app.ts` and two child components contain fixed identifiers, titles, and invented stats. Examples are campaign `'4'`, session `'session-tomb-14'`, the placeholder character "Adventurer", and the stat values `currentHp: 30` and `armorClass: 14`. The campaign switcher shows two fixed campaigns. Remove all of them. The active campaign and session come from the route. The switcher and the character views come from the API. When no data exists, the view shows an empty state.

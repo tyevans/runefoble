@@ -1,7 +1,7 @@
 ---
 id: '0591'
 title: Gateway Campaign Routes Proxy to Game Session and Drop Campaign Store
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -26,7 +26,7 @@ target_release: 0.9.0
 # TASK-0591: Gateway Campaign Routes Proxy to Game Session and Drop Campaign Store
 
 ## Status
-Refined
+Complete
 
 ## Summary
 After TASK-0590, `game_session` owns campaigns. This task replaces `gateway/api/src/gateway_api/routers/campaigns.py` and the `campaign_store` package with proxies. The gateway keeps only its own WebSocket fan-out for campaigns. The gateway no longer writes SpiceDB tuples for campaigns.

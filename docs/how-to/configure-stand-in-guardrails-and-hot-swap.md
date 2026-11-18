@@ -143,6 +143,16 @@ curl -X POST http://localhost:8004/api/v1/sessions/session-crypt-01/hot-swap \
 - **Domain Event Publication**: Emits `CharacterControlTransferred` (`runefoble.events.session.character_control_transferred`) over Redis Streams.
 - **Stand-In Release**: Before it saves the session, `game_session` calls `POST /api/v1/characters/{character_id}/stand-in` with `"active": false` on `character-sheet`. The call uses `RUNEFOBLE_CHARACTER_SHEET_URL`. If the URL is not set, or `character-sheet` does not confirm the release, the hot-swap returns `502 Bad Gateway`. The session stays unchanged and the stand-in keeps control.
 
+### Auto-Pilot Turns Require The Watcher
+
+Auto-pilot turns (`POST /api/v1/sessions/{id}/turns/auto-pilot` or `/autopilot`) ask The Watcher for the stand-in action. `game_session` reads the Watcher URL from `RUNEFOBLE_WATCHER_URL` on each request.
+
+- If the URL is unset, the route returns `503` with a detail that names `RUNEFOBLE_WATCHER_URL`.
+- If The Watcher is unreachable, returns a status other than `200`, or returns an invalid body, the route returns `503`.
+- In each failure case, no stand-in action is recorded and the turn does not advance. `game_session` never runs a local engine instead.
+
+In `staging` and `production`, `game_session` does not start without `RUNEFOBLE_WATCHER_URL`. See [Platform Services](../reference/platform-services.md#deployed-mode-and-start-up-failures-adr-0015-4).
+
 ---
 
 ## 4. Web Component UI Integration

@@ -1,7 +1,7 @@
 ---
 id: '0533'
 title: Audience Studio Verifies Zitadel Tokens and Removes Body and Header Identity
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0526
@@ -23,7 +23,7 @@ source_audits:
 # TASK-0533: Audience Studio Verifies Zitadel Tokens and Removes Body and Header Identity
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The audience studio service (TypeScript) lets any caller write a DM role tuple and then approve a chaos proposal with it. It takes the acting user from the request body or an `x-user-id` header with a `dm-user` fallback. Verify Zitadel tokens in the service, use the token subject as the actor, and remove the public tuple write route.

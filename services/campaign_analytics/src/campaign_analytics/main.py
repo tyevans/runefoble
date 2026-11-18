@@ -11,48 +11,66 @@ import contextlib
 from collections.abc import AsyncIterator
 from typing import Any
 
+from eventsource.application.aggregates.repository import AggregateRepository
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from runefoble_platform.consumer_group import RedisConsumerGroup
+from runefoble_platform.event_sourcing import create_aggregate_repository
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import consumer_statuses
+from sqlalchemy.exc import SQLAlchemyError
 
+from campaign_analytics.aggregate import CampaignChronicleAggregate
 from campaign_analytics.dependencies import (
     get_storage,
     get_worker,
     platform_settings,
-    set_event_bus,
     set_storage,
     set_worker,
 )
 from campaign_analytics.routers import heatmap_router, mvp_router, timeline_router
-from campaign_analytics.storage import CampaignAnalyticsStorage
+from campaign_analytics.storage import CampaignAnalyticsStorage, StorageUnavailableError
 from campaign_analytics.worker import CampaignAnalyticsWorker
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Start storage and the analytics consumer. A failed consumer start stops the service."""
+    """Connect PostgreSQL, resume the analytics consumers, and stop them on shutdown.
+
+    Any failure while starting raises, so the service does not run without its store.
+    """
     storage = await CampaignAnalyticsStorage.create(platform_settings)
-    set_storage(storage)
-
     bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
-    set_event_bus(bus)
-    worker = CampaignAnalyticsWorker(
-        storage=storage,
-        consumer_group=RedisConsumerGroup(client=await bus.get_client()),
-    )
-    set_worker(worker)
-    await worker.start()
-    app.state.consumers = {"analytics": worker.consumers}
+    try:
+        chronicle: AggregateRepository[CampaignChronicleAggregate] = create_aggregate_repository(
+            CampaignChronicleAggregate
+        )
+        worker = CampaignAnalyticsWorker(
+            storage=storage,
+            consumer_group=RedisConsumerGroup(client=await bus.get_client()),
+            chronicle=chronicle,
+        )
+        set_storage(storage)
+        set_worker(worker)
+        await worker.start()
+    except BaseException:
+        set_storage(None)
+        set_worker(None)
+        await bus.close()
+        await storage.dispose()
+        raise
 
+    app.state.consumers = {"analytics": worker.consumers}
     try:
         yield
     finally:
         await worker.stop()
         await bus.close()
+        await storage.dispose()
         app.state.consumers = {}
+        set_storage(None)
+        set_worker(None)
 
 
 app = FastAPI(
@@ -72,6 +90,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+async def store_unavailable(_request: Request, _exc: Exception) -> JSONResponse:
+    """Answer 503 when the read models cannot be reached. Never answer with empty data."""
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Campaign analytics store is unavailable"},
+    )
+
+
+for _store_error in (SQLAlchemyError, OSError, StorageUnavailableError):
+    app.add_exception_handler(_store_error, store_unavailable)
 
 app.include_router(heatmap_router)
 app.include_router(mvp_router)
@@ -95,15 +125,13 @@ def health_check(request: Request) -> JSONResponse:
 
 
 @app.get("/metrics", tags=["Observability"])
-def get_metrics() -> dict[str, Any]:
+async def get_metrics() -> dict[str, Any]:
     """Prometheus-compatible telemetry metrics."""
     storage = get_storage()
     worker = get_worker()
     return {
         "service": "campaign-analytics",
-        "spatial_records_count": len(storage.spatial_records),
-        "combatants_count": len(storage.combatants),
-        "milestones_count": len(storage.milestones),
+        **(await storage.counts()),
         "events_processed": worker.processed_count if worker else 0,
     }
 

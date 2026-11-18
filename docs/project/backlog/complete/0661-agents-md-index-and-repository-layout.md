@@ -1,7 +1,7 @@
 ---
 id: '0661'
 title: AGENTS.md Documentation Index and Repository Layout Match the Repository
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ source_audits:
 # TASK-0661: AGENTS.md Documentation Index and Repository Layout Match the Repository
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The AGENTS.md documentation index omits five how-to and reference files. Several index descriptions promise content the target files do not contain. The repository layout table omits `services/inference_worker/`, `tools/`, `scripts/`, and `tests/`. AGENTS.md is the agent entry point, so each agent reads these lines first. Make every index entry accurate, and add the missing entries.

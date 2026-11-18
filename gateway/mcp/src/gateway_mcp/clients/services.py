@@ -31,6 +31,11 @@ class ServiceUnavailableError(ServiceError):
 class ServiceRejectedError(ServiceError):
     """The service refused the request with a 4xx status."""
 
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        """Keep the refusing HTTP status so callers can tell a missing resource from a bad request."""
+        super().__init__(message)
+        self.status_code = status_code
+
 
 def _error_detail(response: httpx.Response) -> str:
     """Return the service error detail, or the raw body when it is not JSON."""
@@ -91,18 +96,19 @@ class ServiceClient:
         if response.status_code >= 400:
             raise ServiceRejectedError(
                 f"{service} rejected the request ({response.status_code}): "
-                f"{_error_detail(response)}"
+                f"{_error_detail(response)}",
+                status_code=response.status_code,
             )
         return response.json()
 
-    async def create_board(self, *, cols: int, rows: int) -> dict[str, Any]:
-        """Create a board with a service-generated session id."""
+    async def create_board(self, *, session_id: str, cols: int, rows: int) -> dict[str, Any]:
+        """Create the board for a session. The caller checks first that the session has none."""
         result = await self._request(
             "board_state",
             self._settings.board_state_url,
             "POST",
             "/api/v1/boards",
-            {"cols": cols, "rows": rows},
+            {"session_id": session_id, "cols": cols, "rows": rows},
         )
         return dict(result)
 
@@ -123,6 +129,19 @@ class ServiceClient:
             self._settings.game_session_url,
             "GET",
             f"/api/v1/sessions/{quote(session_id, safe='')}",
+        )
+        return dict(result)
+
+    async def start_combat(
+        self, session_id: str, *, combatants: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        """Start a combat encounter in a game session and return its combat state."""
+        result = await self._request(
+            "game_session",
+            self._settings.game_session_url,
+            "POST",
+            f"/api/v1/sessions/{quote(session_id, safe='')}/combat/start",
+            {"combatants": combatants},
         )
         return dict(result)
 

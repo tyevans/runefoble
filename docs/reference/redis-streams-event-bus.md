@@ -44,6 +44,7 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
 
 3. **`StreamConsumer`, `SupervisedStreamConsumers` (`libs/runefoble_platform/src/runefoble_platform/stream_consumer.py`)**:
    - One consumer reads one stream for one group. It acknowledges a message only after its handler returns.
+   - The handler receives `(message_id, payload)`. A consumer may resume its group from a position that the service stored, using `XGROUP SETID`.
    - A handler failure routes the message to `{stream}.dlq`, then acknowledges it.
    - A set of consumers starts as one unit. Start-up raises when a consumer group cannot be created.
    - `status` is `running` while every read loop lives and the last read succeeded. Otherwise it is `failed`.
@@ -118,7 +119,7 @@ Each service starts its consumers in its FastAPI lifespan. A start-up failure st
 
 | Consumer name | Service | Streams | Group | Handler | `/healthz` key |
 |---|---|---|---|---|---|
-| `analytics` | `campaign_analytics` | `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, `runefoble.events.watcher` | `campaign_analytics_worker` | `handle_domain_event` (analytics projections) | `consumers.analytics` |
+| `analytics` | `campaign_analytics` | `runefoble.events.session`, `runefoble.events.board`, `runefoble.events.character`, `runefoble.events.watcher` | `campaign_analytics_worker` | `CampaignAnalyticsWorker.handle_event` (one projection transaction per message, stores the stream position) | `consumers.analytics` |
 | `soundscape` | `soundscape` | `runefoble.events.session`, `runefoble.events.watcher`, `runefoble.events.character` | `soundscape_workers` | `handle_incoming_domain_event` | `consumers.soundscape` |
 
 `/healthz` returns `200` with `"status": "ok"` when every consumer is `running`. It returns `503` with `"status": "degraded"` when any consumer is `failed`.

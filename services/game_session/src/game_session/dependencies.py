@@ -28,9 +28,20 @@ from runefoble_platform.event_sourcing import (
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 logger = logging.getLogger("runefoble.game_session")
-WATCHER_SERVICE_URL = os.environ.get("RUNEFOBLE_WATCHER_URL")
+
+
+def watcher_service_url() -> str | None:
+    """Return the configured Watcher base URL, or None when RUNEFOBLE_WATCHER_URL is unset."""
+    return os.environ.get("RUNEFOBLE_WATCHER_URL", "").strip() or None
+
 
 platform_settings = PlatformSettings()
+if platform_settings.is_deployed and watcher_service_url() is None:
+    # ADR-0015 (4): a deployed session service must not start without its Watcher.
+    raise RuntimeError(
+        "RUNEFOBLE_WATCHER_URL must be set when RUNEFOBLE_ENVIRONMENT is "
+        f"'{platform_settings.environment}'"
+    )
 _event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 

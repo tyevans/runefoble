@@ -1,7 +1,7 @@
 ---
 id: '0663'
 title: Reference Docs List Every Make Target and Real Event Types and State Projection Status Honestly
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -19,7 +19,7 @@ source_audits:
 # TASK-0663: Reference Docs List Every Make Target and Real Event Types and State Projection Status Honestly
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Three reference pages disagree with the code they describe. `cli-interfaces.md` omits twelve Make targets. `events-schema.md` lists 23 dotted `runefoble.events.*` identifiers that the code never emits (it emits class names). `redis-streams-event-bus.md` describes projection workers as active, but the presence and session-read projections are in-memory and never instantiated. Generate the event identifier list from code, add the Make target rows, and state the real projection status.

@@ -39,6 +39,7 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytest_plugins = [
     "tests.helpers.audio_synth",
+    "tests.helpers.campaign_analytics_service",
     "tests.helpers.lore_backends",
     "tests.helpers.postgres",
     "tests.helpers.prd_fixtures",

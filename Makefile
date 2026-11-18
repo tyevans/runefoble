@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build check-ui-manifestsdev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -238,7 +238,10 @@ pre-commit: ## Run all pre-commit hooks across the repository
 	@echo "==> Running pre-commit hooks..."
 	uv run pre-commit run --all-files
 
-build: ## Build frontend assets and static Storybook
+check-ui-manifests: ## Fail when a service UI manifest is missing or invalid (ADR-0013, ADR-0015)
+	@uv run python -m runefoble_platform.ui_manifest $$(find services -path '*/ui/manifest.json' -not -path '*/node_modules/*' | sort)
+
+build: check-ui-manifests ## Build frontend assets and static Storybook
 	@echo "==> Building frontend application..."
 	cd frontend && pnpm run build
 	@echo "==> Building static Storybook site..."
