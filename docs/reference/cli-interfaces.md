@@ -78,3 +78,4 @@ Tasks 0235, 0291, 0328, 0335 and 0346 stay open. They wait on the visualizer par
 | `./scripts/run-backlog-engine.sh` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching |
 | `./scripts/visualize-project.sh` | Starts dynamic project content visualizer web application on port 8787 |
 | `./scripts/decompose-prds.sh` | PRD pipeline runner to audit, scaffold, decompose into vertical slices/spikes, and sync |
+| `./scripts/check_tutorial_strings.sh [tutorial.md ...]` | Fails when a double-quoted sentence in a tutorial matches a literal in `gateway/api/src` or `frontend/src`. Default: `docs/tutorials/02-running-your-first-session.md`. Run it by hand after editing a tutorial. It is not part of `make health-check` |
