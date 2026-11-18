@@ -45,7 +45,7 @@
 | `make build` | Produces production frontend bundle and static Storybook documentation |
 | `make check-ui-manifests` | Fails when a service UI manifest is missing or invalid (ADR-0013, ADR-0015) |
 | `make voice-model-cache` | Downloads the faster-whisper model set by `VOICE_MODEL_SIZE` (default `tiny.en`) into `.cache/voice-models`, then copies it into the running voice-agent pod |
-| `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks. Local tool, kept. See the parity record below |
+| `make prd-audit` | Audits PRD decomposition status, buffer health (6 to 12 refined tasks), and detects epic proposed tasks by the scope rule in the decomposition how-to. Local tool, kept. See the parity record below |
 | `make prd-decompose` | Decomposes PRDs into ADR spikes and vertical slices (`ARGS="--prd PRD-0014"`). Local tool, kept. See the parity record below |
 | `make prd-create` | Scaffolds a new PRD document with frontmatter and registers it. Local tool, kept. See the parity record below |
 | `make prd-sync` | Synchronizes PRD, User Story, and Backlog Priority registries. Local tool, kept. See the parity record below |

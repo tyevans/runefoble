@@ -44,13 +44,22 @@ make prd-audit
 ```
 
 The audit checks:
-- Current ready buffer size (warns if `< 8` tasks).
+- Current ready buffer size. It warns below 6 refined tasks and above 12 (target 10).
 - Undecomposed accepted PRDs.
-- Oversized proposed tasks that should be split into vertical slices.
+- Epic proposed tasks that should be split into vertical slices (see the scope rule below).
 - Stale task links across PRD files.
 
+### Scope Rule for Proposed Epics
+A proposed task is an **epic** when either condition is true:
+1. Its `## Scope of Work` section has more than 8 top-level entries. A top-level entry is an unindented numbered item or bullet. Nested bullets are details of one entry and do not count.
+2. Its `## Scope of Work` section names more than one component root. A component root is `services/<bc>`, `gateway/<name>`, or `frontend`.
+
+The auditor (`tools/prd_pipeline/manager/auditor.py`) applies this rule. `make prd-audit` lists each epic with its entry count and component count.
+
+To fix an epic, split it into one task per component or per vertical slice. Each new task must pass the INVEST check (`Small`, one bounded context where possible). Then run `make prd-audit` again. Epics that remain are a backlog defect.
+
 ### 2. Creating a New PRD
-Scaffold a standardized PRD markdown document in `docs/project/product/accepted/` (or `idea/`, `shaped/`):
+Scaffold a standardized PRD markdown document in `docs/project/product/accepted/`. The `--status` option records the stage (`Idea`, `Shaped`, or `Accepted`).
 
 ```bash
 ./scripts/decompose-prds.sh create \
@@ -72,7 +81,7 @@ Preview the proposed spikes and vertical slices without writing any files:
 ```
 
 #### Executing Decomposition
-Generate the granular proposed tasks and supporting user stories:
+Generate the granular proposed tasks and supporting user stories. Run the dry run first and review the spikes and slices:
 
 ```bash
 ./scripts/decompose-prds.sh decompose --prd PRD-0014

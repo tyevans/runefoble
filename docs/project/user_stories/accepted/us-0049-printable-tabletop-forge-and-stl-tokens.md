@@ -1,7 +1,7 @@
 ---
 id: '0049'
 title: "Printable Tabletop Forge: Grid-Calibrated PDFs, Standees and 3D STL Tokens"
-status: Accepted
+status: Shipped
 created: 2026-09-26
 persona: Rowan (The Chronicler & Worldbuilding Artisan)
 feature: FEAT-MAK-01
