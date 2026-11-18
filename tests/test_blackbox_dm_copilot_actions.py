@@ -15,17 +15,16 @@ from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_events.events import (
     WatcherActionApproved,
+    WatcherActionExpired,
     WatcherActionModified,
     WatcherActionProposed,
     WatcherActionVetoed,
 )
-from the_watcher.dependencies import (
-    get_copilot_engine,
-)
 from the_watcher.main import app
-from the_watcher.models import ProposeActionRequest
 
+from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import bind_session_to_campaign
+from tests.helpers.watcher_copilot_stores import install_fresh_copilot_stores, reset_copilot_stores
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -33,11 +32,10 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 @pytest.fixture(autouse=True)
 def clean_environment():
-    """Clear the CopilotEngine state before and after each test."""
-    engine = get_copilot_engine()
-    engine.clear()
+    """Give each test empty copilot stores."""
+    install_fresh_copilot_stores()
     yield
-    engine.clear()
+    reset_copilot_stores()
 
 
 @pytest.fixture
@@ -83,6 +81,7 @@ def test_copilot_action_cloudevents_registration():
         ("runefoble.events.watcher.action_vetoed", WatcherActionVetoed),
         ("runefoble.events.watcher.action_approved", WatcherActionApproved),
         ("runefoble.events.watcher.action_modified", WatcherActionModified),
+        ("runefoble.events.watcher.action_expired", WatcherActionExpired),
     ]
     for type_name, expected_cls in events:
         assert get_event_class_or_none(type_name) == expected_cls
@@ -172,8 +171,13 @@ async def test_pre_execution_veto_halts_mutation(client: TestClient):
     assert res_veto.status_code == 200
     assert res_veto.json()["status"] == "vetoed"
 
-    pending = get_copilot_engine().get_pending_action(action_id)
-    assert pending is not None and pending.status == "vetoed" and pending.vetoed_by == "dm_evelyn"
+    listed = client.get(
+        f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},
+    )
+    vetoed = [a for a in listed.json() if a["action_id"] == action_id]
+    assert len(vetoed) == 1
+    assert vetoed[0]["status"] == "vetoed" and vetoed[0]["vetoed_by"] == "dm_evelyn"
 
 
 @pytest.mark.asyncio
@@ -189,7 +193,11 @@ async def test_dm_immediate_approve_frontdoor(client: TestClient):
     )
     assert res_appr.status_code == 200
     assert res_appr.json()["status"] == "approved"
-    assert get_copilot_engine().get_pending_action(action_id).status == "approved"
+    listed = client.get(
+        f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},
+    )
+    assert [a["status"] for a in listed.json() if a["action_id"] == action_id] == ["approved"]
 
 
 @pytest.mark.asyncio
@@ -218,24 +226,21 @@ async def test_dm_modify_action_frontdoor(client: TestClient):
 
 
 @pytest.mark.asyncio
-async def test_pause_window_timeout_auto_executes():
-    """Verify that if no veto occurs, the action automatically commits upon pause window expiry."""
-    engine, executed = get_copilot_engine(), False
+async def test_pause_window_timeout_auto_executes(use_redis_client):
+    """Verify that if no veto occurs, the action commits when its pause window expires."""
+    mock_redis = MockAsyncRedis()
+    use_redis_client(mock_redis)
+    camp_id, sess_id = await _setup_dm("dm_evelyn")
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"}
 
-    async def on_execute():
-        nonlocal executed
-        executed = True
-
-    action = engine.propose_action(
-        req=ProposeActionRequest(
-            session_id="sess-auto",
-            actor_name="Goblin Scout",
-            action_type="scout_move",
-            description="Moves 2 squares east",
-            pause_window_ms=50,
-        ),
-        on_execute=on_execute,
-    )
-    assert action.status == "pending" and not executed
-    await asyncio.sleep(0.1)
-    assert action.status == "executed" and executed
+    with TestClient(app, headers=headers) as client:
+        action_id = _propose(client, sess_id, camp_id, pause_window_ms=100)
+        listed_url = f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}"
+        status = None
+        for _ in range(50):
+            await asyncio.sleep(0.05)
+            listed = client.get(listed_url, headers=headers)
+            status = next(a["status"] for a in listed.json() if a["action_id"] == action_id)
+            if status == "executed":
+                break
+        assert status == "executed"

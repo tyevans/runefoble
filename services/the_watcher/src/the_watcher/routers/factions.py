@@ -13,7 +13,6 @@ from the_watcher.dependencies import (
     get_faction_repo,
     get_faction_simulation_engine,
     require_campaign_permission,
-    to_uuid,
 )
 from the_watcher.faction_models import (
     FactionCreateRequest,
@@ -23,6 +22,7 @@ from the_watcher.faction_models import (
 )
 from the_watcher.factions import FactionAggregate
 from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.ids import to_uuid
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["factions"])
 

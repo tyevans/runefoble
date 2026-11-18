@@ -230,12 +230,15 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.voice.transcription_failed` | `VoiceTranscriptionFailed` | `runefoble_events.voice` |
 | `runefoble.events.voice.tts_stream_attenuated` | `TTSStreamAttenuatedEvent` | `runefoble_events.voice_barge_in` |
 | `runefoble.events.watcher.action_approved` | `WatcherActionApproved` | `runefoble_events.watcher_events.actions` |
+| `runefoble.events.watcher.action_expired` | `WatcherActionExpired` | `runefoble_events.watcher_events.actions` |
 | `runefoble.events.watcher.action_modified` | `WatcherActionModified` | `runefoble_events.watcher_events.actions` |
 | `runefoble.events.watcher.action_proposed` | `WatcherActionProposed` | `runefoble_events.watcher_events.actions` |
 | `runefoble.events.watcher.action_vetoed` | `WatcherActionVetoed` | `runefoble_events.watcher_events.actions` |
 | `runefoble.events.watcher.campaign_faction_registered` | `CampaignFactionRegistered` | `runefoble_events.watcher_events.factions` |
 | `runefoble.events.watcher.compound_action_resolved` | `CompoundActionResolved` | `runefoble_events.watcher_events.actions` |
+| `runefoble.events.watcher.disambiguation_opened` | `DisambiguationOpened` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.disambiguation_requested` | `IntentDisambiguationRequested` | `runefoble_events.watcher_events.actions` |
+| `runefoble.events.watcher.disambiguation_resolved` | `DisambiguationResolved` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.faction_agenda_advanced` | `FactionAgendaAdvanced` | `runefoble_events.watcher_events.factions` |
 | `runefoble.events.watcher.faction_agenda_set` | `FactionAgendaSet` | `runefoble_events.watcher_events.factions` |
 | `runefoble.events.watcher.faction_bribery_attempted` | `FactionBriberyAttemptedEvent` | `runefoble_events.faction_resources` |
@@ -246,5 +249,11 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.watcher.faction_territory_captured` | `FactionTerritoryCapturedEvent` | `runefoble_events.turf_war` |
 | `runefoble.events.watcher.geopolitical_shift_occurred` | `GeopoliticalShiftOccurred` | `runefoble_events.watcher_events.factions` |
 | `runefoble.events.watcher.narrative_whispered` | `DMNarrativeWhispered` | `runefoble_events.watcher_events.narrative` |
+| `runefoble.events.watcher.pending_action_approved` | `PendingActionApproved` | `runefoble_events.watcher_events.copilot_state` |
+| `runefoble.events.watcher.pending_action_expired` | `PendingActionExpired` | `runefoble_events.watcher_events.copilot_state` |
+| `runefoble.events.watcher.pending_action_modified` | `PendingActionModified` | `runefoble_events.watcher_events.copilot_state` |
+| `runefoble.events.watcher.pending_action_proposed` | `PendingActionProposed` | `runefoble_events.watcher_events.copilot_state` |
+| `runefoble.events.watcher.pending_action_vetoed` | `PendingActionVetoed` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.regional_unrest_escalated` | `RegionalUnrestEscalatedEvent` | `runefoble_events.turf_war` |
+| `runefoble.events.watcher.whisper_recorded` | `WhisperRecorded` | `runefoble_events.watcher_events.copilot_state` |
 | `runefoble.events.watcher.world_tick_executed` | `WorldTickExecuted` | `runefoble_events.watcher_events.factions` |

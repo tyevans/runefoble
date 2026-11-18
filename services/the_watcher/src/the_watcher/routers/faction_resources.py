@@ -9,7 +9,6 @@ from runefoble_platform.aggregate_loading import load_or_create
 from the_watcher.dependencies import (
     get_faction_resource_repo,
     require_campaign_permission,
-    to_uuid,
 )
 from the_watcher.factions.resources.aggregate import FactionResourceAggregate
 from the_watcher.factions.resources.models import (
@@ -20,6 +19,7 @@ from the_watcher.factions.resources.models import (
     ResourceAdjustRequest,
 )
 from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.ids import to_uuid
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["faction_resources"])
 

@@ -13,6 +13,7 @@ from runefoble_platform.event_publish import (
     install_publish_failure_handler,
 )
 from the_watcher.authz_errors import install_authz_error_handlers
+from the_watcher.copilot_state import install_copilot_state_error_handlers
 from the_watcher.dependencies import (
     STREAM_BOARD,
     STREAM_WATCHER,
@@ -22,11 +23,12 @@ from the_watcher.dependencies import (
     disambiguation_engine,
     engine,
     event_bus_provider,
+    get_copilot_engine,
     get_event_bus,
     set_event_bus,
-    to_uuid,
 )
 from the_watcher.engine_selection import WatcherEngineSettings, load_watcher_ports
+from the_watcher.ids import to_uuid
 from the_watcher.models import (
     CandidateTarget,
     CompoundActionNode,
@@ -67,7 +69,12 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Select the engine ports first. A missing worker URL or a bad setting stops start-up."""
     load_watcher_ports(engine)
     async with event_bus_provider.lifespan(app):
-        yield
+        copilot = get_copilot_engine()
+        await copilot.rearm_open_actions()
+        try:
+            yield
+        finally:
+            copilot.shutdown()
 
 
 app = FastAPI(
@@ -90,6 +97,7 @@ app.include_router(turf_war_router)
 app.include_router(ui_manifest_router)
 install_publish_failure_handler(app)
 install_authz_error_handlers(app)
+install_copilot_state_error_handlers(app)
 
 
 @app.get("/healthz")

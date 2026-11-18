@@ -55,6 +55,19 @@ class WatcherActionVetoed(BaseRunefobleEvent):
     original_action: dict[str, Any] = Field(default_factory=dict)
 
 
+@register_event("runefoble.events.watcher.action_expired")
+class WatcherActionExpired(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "GameSession"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.watcher.action_expired"
+    action_id: str
+    session_id: str
+    campaign_id: str = ""
+    action_type: str = ""
+    original_action: dict[str, Any] = Field(default_factory=dict)
+
+
 @register_event("runefoble.events.watcher.action_approved")
 class WatcherActionApproved(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True
@@ -125,6 +138,7 @@ __all__ = [
     "IntentDisambiguationRequested",
     "VoiceAudioConditioned",
     "WatcherActionApproved",
+    "WatcherActionExpired",
     "WatcherActionModified",
     "WatcherActionProposed",
     "WatcherActionVetoed",

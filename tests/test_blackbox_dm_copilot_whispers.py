@@ -18,12 +18,10 @@ from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.events import DMNarrativeWhispered
-from the_watcher.dependencies import (
-    get_copilot_engine,
-)
 from the_watcher.main import app
 
 from tests.helpers.spicedb_factory import bind_session_to_campaign
+from tests.helpers.watcher_copilot_stores import install_fresh_copilot_stores, reset_copilot_stores
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -31,11 +29,10 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 @pytest.fixture(autouse=True)
 def clean_environment():
-    """Clear the CopilotEngine state before and after each test."""
-    engine = get_copilot_engine()
-    engine.clear()
+    """Give each test an empty whisper log."""
+    install_fresh_copilot_stores()
     yield
-    engine.clear()
+    reset_copilot_stores()
 
 
 @pytest.fixture

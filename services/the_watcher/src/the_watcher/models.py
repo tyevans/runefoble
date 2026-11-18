@@ -172,6 +172,7 @@ class PendingAction(BaseModel):
     veto_reason: str | None = None
     approved_by: str | None = None
     modified_by: str | None = None
+    execution_error: str | None = None
 
 
 class ProposeActionRequest(BaseModel):
@@ -187,20 +188,20 @@ class ProposeActionRequest(BaseModel):
 
 class VetoActionRequest(BaseModel):
     action_id: str
-    session_id: str | None = None
+    session_id: str
     campaign_id: str | None = None
     reason: str = "DM vetoed action"
 
 
 class ApproveActionRequest(BaseModel):
     action_id: str
-    session_id: str | None = None
+    session_id: str
     campaign_id: str | None = None
 
 
 class ModifyActionRequest(BaseModel):
     action_id: str
-    session_id: str | None = None
+    session_id: str
     campaign_id: str | None = None
     description: str | None = None
     target: str | None = None

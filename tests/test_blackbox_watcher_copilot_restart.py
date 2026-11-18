@@ -1,0 +1,282 @@
+"""Blackbox restart tests for DM pending actions, whispers, and disambiguations (TASK-0568).
+
+Governed by:
+- Hard Invariant 2: domain state changes flow through DeclarativeAggregate subclasses
+- Hard Invariant 7: blackbox TDD with frontdoor setup
+
+A restart discards the copilot engine and its timers. The event store survives, as it
+does in a real deployment. Tests touch only public HTTP routes, the watcher stream, and
+the restart seams. They never read or write private aggregate state.
+"""
+
+from __future__ import annotations
+
+import time
+from typing import Any
+from uuid import uuid4
+
+import pytest
+from eventsource.adapters.memory.store import InMemoryEventStore
+from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_platform.event_sourcing import create_aggregate_repository
+from runefoble_platform.redis_bus import deserialize_event
+from the_watcher.copilot_state.disambiguations import DisambiguationAggregate
+from the_watcher.copilot_state.pending_actions import PendingActionAggregate
+from the_watcher.copilot_state.whispers import WhisperAggregate
+from the_watcher.dependencies import (
+    STREAM_WATCHER,
+    build_copilot_engine,
+    get_copilot_engine,
+    set_copilot_engine,
+    set_disambiguation_repo,
+    set_pending_action_repo,
+    set_whisper_repo,
+)
+from the_watcher.main import app
+
+from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import bind_session_to_campaign, make_table_runner
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+VETOED = "runefoble.events.watcher.action_vetoed"
+EXPIRED = "runefoble.events.watcher.action_expired"
+
+
+def _headers(user: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user)}"}
+
+
+@pytest.fixture
+def mock_redis() -> MockAsyncRedis:
+    return MockAsyncRedis()
+
+
+@pytest.fixture(autouse=True)
+def durable_copilot_store(use_redis_client, mock_redis: MockAsyncRedis):
+    """Give each test one event store that survives engine restarts, and a Redis double."""
+    use_redis_client(mock_redis)
+    store = InMemoryEventStore()
+    set_pending_action_repo(create_aggregate_repository(PendingActionAggregate, event_store=store))
+    set_whisper_repo(create_aggregate_repository(WhisperAggregate, event_store=store))
+    set_disambiguation_repo(create_aggregate_repository(DisambiguationAggregate, event_store=store))
+    yield
+    set_pending_action_repo(None)
+    set_whisper_repo(None)
+    set_disambiguation_repo(None)
+
+
+def _restart() -> None:
+    """Stop the running engine (its timers die with the process) and start a fresh one."""
+    get_copilot_engine().shutdown()
+    set_copilot_engine(build_copilot_engine())
+
+
+async def _setup_dm(dm_user: str) -> tuple[str, str]:
+    camp_id, sess_id = str(uuid4()), str(uuid4())
+    await get_spicedb_client().write_relationship(
+        resource_type="campaign",
+        resource_id=camp_id,
+        relation="dungeon_master",
+        subject_type="user",
+        subject_id=dm_user,
+    )
+    await bind_session_to_campaign(sess_id, camp_id)
+    return camp_id, sess_id
+
+
+def _propose(client: TestClient, sess_id: str, camp_id: str, dm: str, **kwargs: Any) -> str:
+    body = {
+        "session_id": sess_id,
+        "campaign_id": camp_id,
+        "actor_name": "Goblin",
+        "action_type": "attack",
+        "description": "Attacks target",
+        **kwargs,
+    }
+    res = client.post("/api/v1/watcher/actions/propose", json=body, headers=_headers(dm))
+    assert res.status_code == 200, res.text
+    return res.json()["action_id"]
+
+
+def _stream_events(mock_redis: MockAsyncRedis, event_type: str) -> list[Any]:
+    events = [deserialize_event(fields) for _, fields in mock_redis.streams.get(STREAM_WATCHER, [])]
+    return [e for e in events if getattr(e, "event_type", None) == event_type]
+
+
+@pytest.mark.asyncio
+async def test_pending_action_survives_restart_and_is_vetoed_by_dm(mock_redis: MockAsyncRedis):
+    """Propose, restart, then veto through HTTP. The veto event carries the proposed action."""
+    dm = f"dm-{uuid4().hex[:6]}"
+    camp_id, sess_id = await _setup_dm(dm)
+    client = TestClient(app)
+    action_id = _propose(client, sess_id, camp_id, dm, pause_window_ms=60000)
+
+    _restart()
+    client = TestClient(app)
+
+    listed = client.get(
+        f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
+        headers=_headers(dm),
+    )
+    assert listed.status_code == 200, listed.text
+    assert [a["status"] for a in listed.json() if a["action_id"] == action_id] == ["pending"]
+
+    veto = client.post(
+        "/api/v1/watcher/veto",
+        json={
+            "action_id": action_id,
+            "session_id": sess_id,
+            "campaign_id": camp_id,
+            "reason": "Restart check",
+        },
+        headers=_headers(dm),
+    )
+    assert veto.status_code == 200, veto.text
+    assert veto.json()["status"] == "vetoed"
+
+    vetoed = _stream_events(mock_redis, VETOED)
+    assert len(vetoed) == 1
+    assert vetoed[0].action_id == action_id
+    assert vetoed[0].original_action["actor_name"] == "Goblin"
+
+
+@pytest.mark.asyncio
+async def test_unknown_action_veto_is_not_found(mock_redis: MockAsyncRedis):
+    """A veto for an action that no session holds returns 404. It never creates a phantom."""
+    dm = f"dm-{uuid4().hex[:6]}"
+    camp_id, sess_id = await _setup_dm(dm)
+    client = TestClient(app)
+
+    res = client.post(
+        "/api/v1/watcher/veto",
+        json={
+            "action_id": f"act-{uuid4().hex[:8]}",
+            "session_id": sess_id,
+            "campaign_id": camp_id,
+            "reason": "No such action",
+        },
+        headers=_headers(dm),
+    )
+    assert res.status_code == 404
+    assert _stream_events(mock_redis, VETOED) == []
+
+
+@pytest.mark.asyncio
+async def test_pending_action_expires_after_restart_without_dm_decision(
+    mock_redis: MockAsyncRedis,
+):
+    """An action with a 1-second window expires after a restart. The stream shows the expiry.
+
+    The lifespan re-arms timers from the stored deadline. The timer that propose started
+    belonged to the previous process, so only the restart can expire this action.
+    """
+    dm = f"dm-{uuid4().hex[:6]}"
+    camp_id, sess_id = await _setup_dm(dm)
+    action_id = _propose(TestClient(app), sess_id, camp_id, dm, pause_window_ms=1000)
+
+    _restart()
+    with TestClient(app, headers=_headers(dm)):
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline and not _stream_events(mock_redis, EXPIRED):
+            time.sleep(0.1)
+
+    expired = [e for e in _stream_events(mock_redis, EXPIRED) if e.action_id == action_id]
+    assert len(expired) == 1
+    assert expired[0].original_action["status"] == "executed"
+
+
+@pytest.mark.asyncio
+async def test_open_disambiguation_survives_restart_and_resolves(
+    mock_redis: MockAsyncRedis,
+):
+    """Open a disambiguation, restart, then resolve it. A second resolve finds nothing."""
+    s_id, c_id = str(uuid4()), str(uuid4())
+    entities = [
+        {
+            "id": "goblin_1",
+            "name": "Goblin",
+            "tag": "archer",
+            "descriptor": "archer by the pillar",
+            "x": 5,
+            "y": 3,
+            "hp": 7,
+            "is_friendly": False,
+        },
+        {
+            "id": "goblin_2",
+            "name": "Goblin",
+            "tag": "shaman",
+            "descriptor": "shaman on the altar",
+            "x": 8,
+            "y": 9,
+            "hp": 12,
+            "is_friendly": False,
+        },
+    ]
+    await make_table_runner("test-user", s_id, c_id)
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test", headers=_headers("test-user")
+    ) as client:
+        parse = await client.post(
+            "/api/v1/watcher/intent/parse",
+            json={
+                "speaker_id": "marcus-1",
+                "speaker_name": "Marcus",
+                "transcript": "I shoot the goblin",
+                "session_id": s_id,
+                "campaign_id": c_id,
+                "entities": entities,
+                "from_x": 1,
+                "from_y": 1,
+            },
+        )
+        assert parse.status_code == 200, parse.text
+        d_id = parse.json()["disambiguation_id"]
+        assert d_id
+
+        _restart()
+
+        resolve_body = {
+            "session_id": s_id,
+            "campaign_id": c_id,
+            "disambiguation_id": d_id,
+            "selected_candidate_id": "goblin_2",
+        }
+        resolved = await client.post("/api/v1/watcher/intent/resolve", json=resolve_body)
+        assert resolved.status_code == 200, resolved.text
+        assert "shaman on the altar" in resolved.json()["resolved_target"]
+
+        again = await client.post("/api/v1/watcher/intent/resolve", json=resolve_body)
+        assert again.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_whispers_survive_restart(mock_redis: MockAsyncRedis):
+    """A whisper the DM wrote before a restart is still listed after it."""
+    dm = f"dm-{uuid4().hex[:6]}"
+    camp_id, sess_id = await _setup_dm(dm)
+    client = TestClient(app)
+    created = client.post(
+        "/api/v1/watcher/whispers",
+        json={
+            "session_id": sess_id,
+            "campaign_id": camp_id,
+            "whisper_type": "custom_note",
+            "content": "The archer hides behind the pillar.",
+        },
+        headers=_headers(dm),
+    )
+    assert created.status_code == 200, created.text
+    whisper_id = created.json()["whisper_id"]
+
+    _restart()
+    listed = TestClient(app).get(
+        f"/api/v1/watcher/whispers?session_id={sess_id}&campaign_id={camp_id}",
+        headers=_headers(dm),
+    )
+    assert listed.status_code == 200, listed.text
+    assert whisper_id in [w["whisper_id"] for w in listed.json()["whispers"]]
