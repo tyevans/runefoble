@@ -20,15 +20,19 @@ from campaign_lore.dependencies import set_west_marches_repo
 from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app as lore_app
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
+from eventsource.adapters.memory.store import InMemoryEventStore
 from fastapi.testclient import TestClient
 from game_session.minigame_tables.ws_manager import MinigameTableManager
 from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.event_sourcing import create_aggregate_repository, get_event_store
+from runefoble_platform.event_sourcing import (
+    create_aggregate_repository,
+    get_event_store,
+    set_event_store,
+)
 from soundscape.main import app as soundscape_app
 from starlette.websockets import WebSocketDisconnect
-from the_watcher.main import app as watcher_app
 
 from tests.helpers.leitmotif_fixtures import (  # noqa: F401 (registers the fixtures)
     clean_environment,
@@ -58,6 +62,18 @@ def _trust_signing_issuer() -> Iterator[None]:
     set_zitadel_auth_service(SIGNING_ISSUER.verifier())
     yield
     set_zitadel_auth_service(None)
+
+
+@pytest.fixture(autouse=True)
+def _pin_process_event_store() -> Iterator[None]:
+    """Pin an in-memory process store for each test, then drop it.
+
+    Campaign Lore tests run inside a PostgreSQL environment (`lore_backends`). A store read in
+    that environment would cache a PostgreSQL store process-wide and leak into later tests.
+    """
+    set_event_store(InMemoryEventStore())
+    yield
+    set_event_store(None)
 
 
 @pytest.fixture
@@ -173,24 +189,6 @@ def test_relic_absent_stream_still_answers_404(lore_client: TestClient) -> None:
     """An unknown relic id is still a documented 404. Only the outage path changed."""
     resp = lore_client.get(f"/api/v1/lore/relics/{uuid4()}")
     assert resp.status_code == 404, resp.text
-
-
-# The Watcher faction resources: a load error is not an empty faction
-
-
-@pytest.mark.usefixtures("trusted_ws_issuer")
-def test_faction_resource_adjust_answers_503_on_store_outage(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """A store outage on the faction resource load answers 503. No empty faction replaces it."""
-    client = TestClient(watcher_app, headers=_bearer("watcher-tester"))
-    with monkeypatch.context() as m:
-        m.setattr(get_event_store(), "read_stream", _connection_refused)
-        resp = client.post(
-            f"/api/v1/factions/fact-{uuid4().hex[:8]}/resources/adjust",
-            json={"treasury_delta": 100, "campaign_id": str(uuid4())},
-        )
-    assert resp.status_code == 503, resp.text
 
 
 # Leitmotif: SpiceDB outage on the character edit check

@@ -8,6 +8,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+from eventsource.adapters.memory.store import InMemoryEventStore
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from runefoble_events.events import (
@@ -15,6 +16,9 @@ from runefoble_events.events import (
     FactionMercenaryRecruitedEvent,
     FactionResourceUpdatedEvent,
 )
+from runefoble_platform.event_sourcing import create_aggregate_repository
+from the_watcher.dependencies import set_faction_resource_repo
+from the_watcher.factions.resources.aggregate import FactionResourceAggregate
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -101,3 +105,29 @@ async def test_frontdoor_resource_adjust_deplete_and_query(client: TestClient):
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert drain.status_code == 200 and drain.json()["treasury"] == 0
+
+
+def test_faction_resource_adjust_answers_503_on_store_outage(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A store outage on the faction resource load answers 503. No empty faction replaces it.
+
+    The faction repository gets its own in-memory store. The test makes that store's reads fail.
+    """
+    store = InMemoryEventStore()
+
+    def _connection_refused(*_args: object, **_kwargs: object) -> None:
+        raise ConnectionError("event store unreachable")
+
+    monkeypatch.setattr(store, "read_stream", _connection_refused)
+    set_faction_resource_repo(
+        create_aggregate_repository(FactionResourceAggregate, event_store=store)
+    )
+    try:
+        resp = client.post(
+            f"/factions/fact-{uuid4().hex[:8]}/resources/adjust",
+            json={"treasury_delta": 100, "campaign_id": str(uuid4())},
+        )
+    finally:
+        set_faction_resource_repo(None)
+    assert resp.status_code == 503, resp.text
