@@ -15,9 +15,8 @@ from uuid import uuid4
 import pytest
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import StandInActionDecided
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus as watcher_set_event_bus
 from the_watcher.stand_in_ai import (
     StandInAIEngine,
     apply_penalty_modifiers,
@@ -101,10 +100,10 @@ async def test_blackbox_stand_in_guardrails_scenarios(
     exp_dlg: str,
     exp_gr: str,
     exp_dice: str,
+    use_redis_client,
 ):
     """POST /api/v1/watcher/stand-in/act evaluates tactical guardrails under varied conditions."""
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    watcher_set_event_bus(event_bus)
+    use_redis_client(mock_redis)
 
     session_id, campaign_id = str(uuid4()), str(uuid4())
     await make_table_runner("test-user", session_id, campaign_id)

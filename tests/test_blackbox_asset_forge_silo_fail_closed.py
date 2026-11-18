@@ -11,11 +11,9 @@ import asyncio
 from uuid import uuid4
 
 import pytest
-from asset_forge.dependencies import set_event_bus
 from asset_forge.main import app as asset_forge_app
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.storage import SiloStorageService, get_storage_service, set_storage_service
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -58,11 +56,8 @@ def forge_client() -> TestClient:
 
 
 @pytest.fixture
-def redis_stream() -> MockAsyncRedis:
-    mock_redis = MockAsyncRedis()
-    set_event_bus(RedisStreamsEventBus(client=mock_redis))
-    yield mock_redis
-    set_event_bus(None)
+def redis_stream(mock_bus) -> MockAsyncRedis:
+    yield mock_bus
 
 
 def test_battlemap_forge_fails_closed_when_silo_unreachable(

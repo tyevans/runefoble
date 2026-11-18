@@ -20,15 +20,12 @@ from runefoble_events.events import (
     SoundscapeCueTriggered,
     SoundscapeTensionUpdated,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from soundscape.dependencies import (
     handle_incoming_domain_event,
-    set_event_bus,
 )
 from soundscape.main import app
 from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
@@ -168,11 +165,8 @@ def test_tension_calculation_and_status_frontdoors(client: TestClient, tomb_sess
 
 
 @pytest.mark.asyncio
-async def test_soundscape_combat_event_bus_reactivity():
+async def test_soundscape_combat_event_bus_reactivity(mock_bus):
     """Verify CombatEncounterStarted and CombatRoundAdvanced publication to Redis Stream."""
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
 
     combat_start_event = CombatEncounterStarted(
         aggregate_id=uuid4(),
@@ -183,8 +177,8 @@ async def test_soundscape_combat_event_bus_reactivity():
     await handle_incoming_domain_event(combat_start_event)
 
     stream_key = "runefoble.events.soundscape"
-    assert stream_key in mock_redis.streams
-    events_in_stream = mock_redis.streams[stream_key]
+    assert stream_key in mock_bus.streams
+    events_in_stream = mock_bus.streams[stream_key]
     assert len(events_in_stream) >= 1
     _, event_data = events_in_stream[-1]
     assert event_data["event_type"] == "runefoble.events.soundscape.track_changed"
@@ -196,7 +190,7 @@ async def test_soundscape_combat_event_bus_reactivity():
         active_combatant_id="comb-123",
     )
     await handle_incoming_domain_event(round_event)
-    events_in_stream = mock_redis.streams[stream_key]
+    events_in_stream = mock_bus.streams[stream_key]
     assert len(events_in_stream) >= 2
 
 

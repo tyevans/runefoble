@@ -13,11 +13,9 @@ from uuid import uuid4
 
 import pytest
 from character_sheet.aggregate import CharacterAggregate
-from character_sheet.dependencies import set_spicedb_client
 from character_sheet.main import app
 from eventsource.domain.event_registry import default_registry
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import CharacterAssignedToCampaign
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
 
@@ -30,14 +28,7 @@ def auth_headers(sub: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def mock_spicedb():
-    client = MockSpiceDBClient()
-    set_spicedb_client(client)
-    return client
-
-
-@pytest.fixture
-def client(mock_spicedb):
+def client(spicedb):
     return TestClient(app, headers=auth_headers("character-owner"))
 
 

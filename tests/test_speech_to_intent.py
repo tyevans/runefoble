@@ -11,12 +11,10 @@ from runefoble_events.events import (
     TokenMoved,
     WatcherNarrationGenerated,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus as watcher_set_event_bus
 from the_watcher.watcher_ai import TheWatcherEngine
 from voice_agent.main import app as voice_app
-from voice_agent.main import set_event_bus as voice_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import (
@@ -176,9 +174,8 @@ def test_sub_200ms_latency_budget(watcher_engine: TheWatcherEngine):
 
 
 @pytest.mark.asyncio
-async def test_watcher_redis_stream_event_emission(mock_redis: MockAsyncRedis):
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    watcher_set_event_bus(event_bus)
+async def test_watcher_redis_stream_event_emission(mock_redis: MockAsyncRedis, use_redis_client):
+    use_redis_client(mock_redis)
 
     session_id = str(uuid.uuid4())
     await make_table_runner("test-user", session_id, str(uuid.uuid4()))
@@ -247,9 +244,10 @@ async def test_watcher_redis_stream_event_emission(mock_redis: MockAsyncRedis):
 
 
 @pytest.mark.asyncio
-async def test_voice_agent_transcription_and_event_emission(mock_redis: MockAsyncRedis):
-    event_bus = RedisStreamsEventBus(client=mock_redis)
-    voice_set_event_bus(event_bus)
+async def test_voice_agent_transcription_and_event_emission(
+    mock_redis: MockAsyncRedis, use_redis_client
+):
+    use_redis_client(mock_redis)
 
     session_id = str(uuid.uuid4())
     await grant_voice_session(session_id, players=["valeros-1", "kyra-1"])

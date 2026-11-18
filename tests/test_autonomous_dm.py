@@ -18,12 +18,9 @@ from runefoble_events.events import (
     EncounterSpawned,
     SceneAtmosphereSet,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.autonomous_dm import AutonomousDMEngine
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -244,9 +241,7 @@ def test_events_registered_in_default_registry():
 
 def test_api_generate_scene(test_client: TestClient):
     """POST /api/v1/watcher/scenes/generate returns SceneAtmosphereSet."""
-    mock_bus = RedisStreamsEventBus(client=MockAsyncRedis())
     asyncio.run(make_table_runner("test-user", "sess-api-1", "camp-api-1"))
-    set_event_bus(mock_bus)
 
     res = test_client.post(
         "/api/v1/watcher/scenes/generate",
@@ -262,9 +257,7 @@ def test_api_generate_scene(test_client: TestClient):
 
 def test_api_spawn_encounter(test_client: TestClient):
     """POST /api/v1/watcher/encounters/spawn returns EncounterSpawned."""
-    mock_bus = RedisStreamsEventBus(client=MockAsyncRedis())
     asyncio.run(make_table_runner("test-user", "sess-api-2", "camp-api-2"))
-    set_event_bus(mock_bus)
 
     res = test_client.post(
         "/api/v1/watcher/encounters/spawn",
@@ -285,9 +278,7 @@ def test_api_spawn_encounter(test_client: TestClient):
 
 def test_api_execute_npc_turn(test_client: TestClient):
     """POST /api/v1/watcher/encounters/npc-turn returns AutonomousActionResolved."""
-    mock_bus = RedisStreamsEventBus(client=MockAsyncRedis())
     asyncio.run(make_table_runner("test-user", "sess-api-3", "camp-api-3"))
-    set_event_bus(mock_bus)
 
     res = test_client.post(
         "/api/v1/watcher/encounters/npc-turn",

@@ -21,7 +21,6 @@ from game_session.campaign.repositories import (
     build_campaign_repositories,
     set_campaign_repositories,
 )
-from game_session.dependencies import set_spicedb_client
 from game_session.main import app as session_app
 from game_session.settlement.auth.tokens import set_zitadel_auth_service
 from runefoble_auth.spicedb import MockSpiceDBClient
@@ -40,14 +39,6 @@ def issuer() -> Iterator[SigningTestIssuer]:
     set_zitadel_auth_service(signing.verifier())
     yield signing
     set_zitadel_auth_service(None)
-
-
-@pytest.fixture
-def spicedb() -> Iterator[MockSpiceDBClient]:
-    db = MockSpiceDBClient()
-    set_spicedb_client(db)
-    yield db
-    set_spicedb_client(MockSpiceDBClient())
 
 
 @pytest.fixture(autouse=True)

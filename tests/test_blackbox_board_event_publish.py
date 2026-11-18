@@ -16,14 +16,11 @@ import json
 from uuid import uuid4
 
 import pytest
-from board_state.dependencies import set_event_bus as set_board_event_bus
 from board_state.dependencies import set_spicedb_client as set_board_spicedb_client
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
-from the_watcher.dependencies import set_event_bus as set_watcher_event_bus
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -51,21 +48,15 @@ def _entries(redis: MockAsyncRedis, stream: str) -> list[dict[str, str]]:
 
 
 @pytest.fixture
-def board_redis():
-    redis = MockAsyncRedis()
+def board_redis(mock_bus):
     set_board_spicedb_client(MockSpiceDBClient())
-    set_board_event_bus(RedisStreamsEventBus(client=redis))
-    yield redis
+    yield mock_bus
     set_board_spicedb_client(SpiceDBClient())
-    set_board_event_bus(None)
 
 
 @pytest.fixture
-def watcher_redis():
-    redis = MockAsyncRedis()
-    set_watcher_event_bus(RedisStreamsEventBus(client=redis))
-    yield redis
-    set_watcher_event_bus(None)
+def watcher_redis(mock_bus):
+    yield mock_bus
 
 
 def _create_board(client: TestClient, board_id: str) -> None:

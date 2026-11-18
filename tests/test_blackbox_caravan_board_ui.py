@@ -17,11 +17,9 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import set_event_bus, set_spicedb_client
 from game_session.events import STREAM_WEST_MARCHES
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -57,23 +55,7 @@ def join_campaign(client: TestClient, campaign_id: str, owner_id: str, member_id
 
 
 @pytest.fixture
-def mock_bus():
-    redis_client = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=redis_client)
-    set_event_bus(bus)
-    yield redis_client
-    set_event_bus(None)
-
-
-@pytest.fixture
-def spicedb_client() -> MockSpiceDBClient:
-    mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
-    return mock_spicedb
-
-
-@pytest.fixture
-def client(spicedb_client: MockSpiceDBClient) -> TestClient:
+def client(spicedb: MockSpiceDBClient) -> TestClient:
     return TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     )
@@ -108,7 +90,7 @@ def test_caravan_board_ui_manifest_frontdoor(client: TestClient) -> None:
 @pytest.mark.asyncio
 async def test_blackbox_caravan_contract_accept_and_stream_events(
     client: TestClient,
-    spicedb_client: MockSpiceDBClient,
+    spicedb: MockSpiceDBClient,
     mock_bus: MockAsyncRedis,
 ) -> None:
     """Verify one-click contract acceptance via public frontdoor REST endpoint and Redis Streams."""

@@ -8,44 +8,18 @@ ADR-0004 (Lit Web Components), ADR-0006 (Redis Streams), and ADR-0008 (Blackbox 
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import (
-    set_event_bus,
-)
-from game_session.dependencies import (
-    set_spicedb_client as set_session_spicedb,
-)
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.minigame_tables import open_minigame_table
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-
-
-@pytest.fixture
-def mock_bus():
-    redis_client = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=redis_client)
-    set_event_bus(bus)
-    yield redis_client
-    set_event_bus(None)
-
-
-@pytest.fixture
-def spicedb():
-    mock_db = MockSpiceDBClient()
-    set_session_spicedb(mock_db)
-    with patch("gateway_api.auth.get_spicedb_client", return_value=mock_db):
-        yield mock_db
-    set_session_spicedb(MockSpiceDBClient())
 
 
 @pytest.fixture(autouse=True)

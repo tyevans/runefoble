@@ -122,10 +122,9 @@ def test_healthz_reports_failed_consumer_after_read_failure(
 
 
 def test_soundscape_consumer_applies_combat_start_from_redis(
-    redis_double: MockAsyncRedis,
+    redis_double: MockAsyncRedis, use_redis_client
 ) -> None:
     """A CombatEncounterStarted on the session stream raises encounter tension."""
-    from soundscape.dependencies import set_event_bus
     from soundscape.main import app
     from soundscape.scoring import calculate_encounter_tension
 
@@ -133,7 +132,7 @@ def test_soundscape_consumer_applies_combat_start_from_redis(
     expected_tension = calculate_encounter_tension(
         combat_active=True, combat_round=1, enemy_cr_balance=2.0
     )
-    set_event_bus(RedisStreamsEventBus(client=redis_double))
+    use_redis_client(redis_double)
 
     with TestClient(app, headers=auth_headers("soundscape-tester")) as client:
         assert client.get("/healthz").json()["consumers"] == {"soundscape": "running"}

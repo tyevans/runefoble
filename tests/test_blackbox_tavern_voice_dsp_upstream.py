@@ -13,9 +13,7 @@ from collections.abc import Iterator
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import set_spicedb_client as set_session_spicedb
 from game_session.main import app as session_app
-from runefoble_auth.spicedb import MockSpiceDBClient
 from voice_agent.main import app as voice_app
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
@@ -32,7 +30,6 @@ VOICE_URL_ENV = "RUNEFOBLE_VOICE_AGENT_URL"
 
 @pytest.fixture
 def session_client() -> Iterator[TestClient]:
-    set_session_spicedb(MockSpiceDBClient())
     with TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     ) as client:

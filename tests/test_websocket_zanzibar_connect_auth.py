@@ -5,7 +5,7 @@ import asyncio
 import pytest
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
-from gateway_api.main import app, set_event_bus
+from gateway_api.main import app
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
@@ -17,9 +17,7 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture(autouse=True)
 def reset_state():
     """Reset SpiceDB client and event bus before and after each test."""
-    set_event_bus(None)
     yield
-    set_event_bus(None)
 
 
 def _grant(resource_type: str, resource_id: str, relation: str, subject_id: str) -> None:

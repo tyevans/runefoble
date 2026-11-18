@@ -10,16 +10,13 @@ Interacts strictly through public frontdoors:
 import asyncio
 
 import pytest
-import voice_agent.main as va_main
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
-from gateway_api.main import app, set_event_bus
+from gateway_api.main import app
 from gateway_api.signaling import signaling_manager
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import ws_subprotocols
@@ -28,25 +25,20 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer", "trusted_voice_issuer"
 
 
 @pytest.fixture(autouse=True)
-def reset_voice_signaling_environment():
+def reset_voice_signaling_environment(default_redis_event_bus, mock_bus):
     """Reset SpiceDB client, Redis event bus, and coordinator before each test."""
     mock_spicedb = get_spicedb_client()
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
-    va_main.set_event_bus(bus)
+    bus = default_redis_event_bus
     coord = VoiceRoomCoordinator(event_bus=bus)
     set_voice_room_coordinator(coord)
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
     signaling_manager._coordinator = coord
     coord.register_kick_callback(signaling_manager.handle_peer_kicked)
-    yield {"spicedb": mock_spicedb, "redis": mock_redis, "bus": bus, "coordinator": coord}
+    yield {"spicedb": mock_spicedb, "redis": mock_bus, "bus": bus, "coordinator": coord}
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
     signaling_manager._coordinator = None
-    va_main.set_event_bus(None)
-    set_event_bus(None)
     set_voice_room_coordinator(None)
 
 

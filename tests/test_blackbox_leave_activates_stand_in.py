@@ -13,11 +13,9 @@ import pytest
 from character_sheet.main import app as character_app
 from game_session.character_client import CHARACTER_SHEET_URL_ENV
 from game_session.main import app as session_app
-from game_session.main import set_event_bus as session_set_event_bus
 from game_session.main import set_spicedb_client as session_set_spicedb
 from httpx import ASGITransport, AsyncClient
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
 from tests.helpers.live_services import serve
@@ -48,8 +46,8 @@ def character_service(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
 
 
 @pytest.fixture
-def session_client(mock_redis: MockAsyncRedis) -> Iterator[None]:
-    session_set_event_bus(RedisStreamsEventBus(client=mock_redis))
+def session_client(mock_redis: MockAsyncRedis, use_redis_client) -> Iterator[None]:
+    use_redis_client(mock_redis)
     session_set_spicedb(MockSpiceDBClient())
     yield
 

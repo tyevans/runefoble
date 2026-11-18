@@ -14,7 +14,7 @@ import struct
 from uuid import uuid4
 
 import pytest
-from asset_forge.dependencies import get_storage, set_event_bus
+from asset_forge.dependencies import get_storage
 from asset_forge.main import app
 from fastapi.testclient import TestClient
 
@@ -27,14 +27,6 @@ def auth_headers(sub: str) -> dict[str, str]:
 
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-
-
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean storage and bus states before and after each test."""
-    set_event_bus(None)
-    yield
-    set_event_bus(None)
 
 
 @pytest.fixture

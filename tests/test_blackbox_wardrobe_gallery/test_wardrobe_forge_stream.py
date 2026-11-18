@@ -10,20 +10,17 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from asset_forge.dependencies import set_event_bus as set_forge_bus
 from fastapi.testclient import TestClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
 
 @pytest.mark.asyncio
 async def test_forged_wardrobe_variant_publishes_to_character_stream(
-    forge_client: TestClient, spicedb
+    forge_client: TestClient, spicedb, mock_bus: MockAsyncRedis
 ):
     """A wardrobe variant forged through the public route lands on runefoble.events.character."""
-    mock_redis = MockAsyncRedis()
-    set_forge_bus(RedisStreamsEventBus(client=mock_redis))
+    mock_redis = mock_bus
     campaign_id = str(uuid4())
     await spicedb.write_relationship(
         resource_type="campaign",

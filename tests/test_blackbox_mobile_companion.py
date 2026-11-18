@@ -18,41 +18,33 @@ import asyncio
 from uuid import uuid4
 
 import pytest
-import voice_agent.main as va_main
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 from gateway_api.companion import mobile_companion_manager
-from gateway_api.main import app, set_event_bus
+from gateway_api.main import app
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_events.voice import (
     MobileAudioProfileAdapted,
     MobileCompanionConnected,
     MobileHapticPingDispatched,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.mobile import HapticVibrationPattern, MobileAudioProfileTier
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import ws_subprotocols
 
 
 @pytest.fixture(autouse=True)
-def clean_companion_environment():
+def clean_companion_environment(default_redis_event_bus, mock_bus):
     """Ensure clean SpiceDB, Redis event bus, and companion connection state."""
     mock_spicedb = get_spicedb_client()
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
-    va_main.set_event_bus(bus)
+    bus = default_redis_event_bus
     mobile_companion_manager.active_companions.clear()
     mobile_companion_manager.peer_sessions.clear()
     mobile_companion_manager.active_profiles.clear()
-    yield {"spicedb": mock_spicedb, "redis": mock_redis, "bus": bus}
+    yield {"spicedb": mock_spicedb, "redis": mock_bus, "bus": bus}
     mobile_companion_manager.active_companions.clear()
     mobile_companion_manager.peer_sessions.clear()
     mobile_companion_manager.active_profiles.clear()
-    va_main.set_event_bus(None)
-    set_event_bus(None)
 
 
 @pytest.fixture

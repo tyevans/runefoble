@@ -12,14 +12,11 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.cinematic_director import clear_cinematic_directors
 from gateway_api.main import app as gateway_app
-from gateway_api.main import set_event_bus
 from gateway_api.spectator import (
     clear_raw_session_state,
     set_raw_session_state,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -30,11 +27,9 @@ def clean_state():
     """Ensure clean spectator state and bus before and after each test."""
     clear_raw_session_state()
     clear_cinematic_directors()
-    set_event_bus(None)
     yield
     clear_raw_session_state()
     clear_cinematic_directors()
-    set_event_bus(None)
 
 
 def test_get_spectator_state_endpoints():
@@ -105,17 +100,15 @@ def test_get_spectator_state_refuses_forged_bearer(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_spectator_connected_event_dispatched_to_redis_bus():
+async def test_spectator_connected_event_dispatched_to_redis_bus(default_redis_event_bus, mock_bus):
     """Verify that accessing spectator endpoint dispatches SpectatorSessionConnected to Redis."""
-    mock_redis = MockAsyncRedis()
-    mock_bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(mock_bus)
+    mock_bus = default_redis_event_bus
 
     client = TestClient(gateway_app)
     res = client.get("/api/v1/spectate/sess-event-stream?token=obs_overlay")
     assert res.status_code == 200
 
-    stream_events = mock_redis.streams.get("runefoble.events.spectator", [])
+    stream_events = mock_bus.streams.get("runefoble.events.spectator", [])
     assert len(stream_events) == 1
 
     _event_id, payload = stream_events[0]

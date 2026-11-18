@@ -18,12 +18,10 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.events import VoiceSpeechInterrupted
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.main import app as voice_app
-from voice_agent.main import set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_sine
-from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_ws_subprotocols
 
@@ -31,12 +29,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 @pytest.fixture
-def clean_voice_bus():
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
-    yield {"redis": mock_redis, "bus": bus}
-    set_event_bus(None)
+def clean_voice_bus(default_redis_event_bus, mock_bus):
+    bus = default_redis_event_bus
+    yield {"redis": mock_bus, "bus": bus}
 
 
 @pytest.fixture

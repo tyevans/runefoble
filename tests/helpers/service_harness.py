@@ -166,6 +166,35 @@ def default_redis_event_bus(mock_bus: MockAsyncRedis) -> Iterator[object]:
         _restore(previous, "set_event_bus")
 
 
+@pytest.fixture
+def use_event_bus(default_redis_event_bus: object) -> Callable[[object], object]:
+    """Return a function that routes every service publish to another event bus.
+
+    Use it for a test that needs a recording bus or a bus on a real Redis. The default
+    fixture restores every bus seam after the test.
+    """
+
+    def use(bus: object) -> object:
+        _swap(_modules("bus"), "get_event_bus", "set_event_bus", lambda: bus)
+        return bus
+
+    return use
+
+
+@pytest.fixture
+def use_redis_client(use_event_bus: Callable[[object], object]) -> Callable[[object], object]:
+    """Return a function that routes every service publish to another Redis double.
+
+    Use it for a test that needs a failing or recording Redis.
+    """
+    from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+    def use(client: object) -> object:
+        return use_event_bus(RedisStreamsEventBus(client=client))
+
+    return use
+
+
 @pytest.fixture(autouse=True)
 def default_spicedb_client(request: pytest.FixtureRequest) -> Iterator[MockSpiceDBClient | None]:
     """Route every SpiceDB call to a fresh strict mock unless a live SpiceDB fixture is requested.

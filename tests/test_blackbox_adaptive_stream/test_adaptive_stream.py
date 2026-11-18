@@ -24,8 +24,7 @@ from runefoble_events.voice_stream_quality import (
     VoiceStreamCodecAdaptedEvent,
     VoiceStreamQualityDegradedEvent,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
-from voice_agent.main import app, set_event_bus
+from voice_agent.main import app
 from voice_agent.routers.stream_diagnostics import reset_diagnostics
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -36,15 +35,12 @@ pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 
 @pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean Redis event bus and stream diagnostics state."""
-    mock_redis = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=mock_redis)
-    set_event_bus(bus)
+def clean_environment(default_redis_event_bus, mock_bus):
+    """Reset the stream diagnostics. The harness supplies the bus."""
+    bus = default_redis_event_bus
     reset_diagnostics()
-    yield {"redis": mock_redis, "bus": bus}
+    yield {"redis": mock_bus, "bus": bus}
     reset_diagnostics()
-    set_event_bus(None)
 
 
 @pytest.fixture

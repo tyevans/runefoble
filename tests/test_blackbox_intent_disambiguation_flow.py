@@ -16,13 +16,12 @@ from runefoble_events.events import (
     CompoundActionResolved,
     IntentDisambiguationRequested,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
+from runefoble_platform.redis_bus import deserialize_event
 from the_watcher.dependencies import (
     STREAM_BOARD,
     STREAM_WATCHER,
 )
 from the_watcher.main import app as watcher_app
-from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import make_table_runner
@@ -50,10 +49,9 @@ def mock_redis() -> MockAsyncRedis:
 
 
 @pytest.fixture(autouse=True)
-def configure_watcher_bus(mock_redis: MockAsyncRedis):
-    watcher_set_event_bus(RedisStreamsEventBus(client=mock_redis))
+def configure_watcher_bus(mock_redis: MockAsyncRedis, use_redis_client):
+    use_redis_client(mock_redis)
     yield
-    watcher_set_event_bus(None)
 
 
 @pytest.fixture

@@ -12,7 +12,6 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
-from soundscape.dependencies import reset_dependencies
 from soundscape.main import app
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -21,18 +20,6 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 def auth_headers(sub: str) -> dict[str, str]:
     """Return Bearer headers for a token that the service verifier accepts."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-@pytest.fixture(autouse=True)
-def clean_environment():
-    """Ensure clean aggregate, mixer, and bus state for each test.
-
-    The SpiceDB mock is the per-test instance that conftest installs for every service,
-    so grants made through the gateway frontdoor are visible here.
-    """
-    reset_dependencies()
-    yield
-    reset_dependencies()
 
 
 @pytest.fixture
