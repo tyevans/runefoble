@@ -66,6 +66,9 @@ Browser journeys through the App Shell only.
 4. Storybook and frontend builds still pass (no change expected).
 5. No file exceeds 500 lines. New step files are split by feature.
 
+## Addendum (2026-11-17, orchestrator)
+`make test-e2e --project=chromium` cannot start. The web server runs only the gateway with `SPICEDB_ENDPOINT=mock`. That mode no longer exists, and `PlatformSettings` refuses to load without `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. Since the thin-gateway work (TASK-0580 to TASK-0595), each proxied route also needs its owning service. So the journeys need the full stack. Run them against the Kind stack from TASK-0526 (`kind-runefoble-local` exists on the development host), through the Traefik ingress, and remove the local `webServer` entries that cannot serve the platform. Log: `.audit/work/e2e-r1.log`.
+
 ## Audit Provenance
 
 - Severity: high
