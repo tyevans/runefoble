@@ -23,6 +23,9 @@ importers:
 
   frontend:
     dependencies:
+      '@lit/context':
+        specifier: ^1.1.6
+        version: 1.1.6
       '@runefoble/audience-studio-ui':
         specifier: workspace:*
         version: link:../services/audience_studio/ui
@@ -50,6 +53,9 @@ importers:
       '@runefoble/the-watcher-ui':
         specifier: workspace:*
         version: link:../services/the_watcher/ui
+      '@runefoble/ui-core':
+        specifier: workspace:*
+        version: link:../libs/runefoble_ui
       '@runefoble/voice-agent-ui':
         specifier: workspace:*
         version: link:../services/voice_agent/ui
@@ -72,6 +78,19 @@ importers:
       vite:
         specifier: ^8.3.1
         version: 8.3.1(@types/node@22.20.4)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
+
+  libs/runefoble_ui:
+    dependencies:
+      '@lit/context':
+        specifier: ^1.1.6
+        version: 1.1.6
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ~7.0.2
+        version: 7.0.2
 
   services/asset_forge/ui:
     dependencies:
@@ -192,6 +211,9 @@ importers:
 
   services/character_sheet/ui:
     dependencies:
+      '@runefoble/ui-core':
+        specifier: workspace:*
+        version: link:../../../libs/runefoble_ui
       lit:
         specifier: ^3.3.3
         version: 3.3.3
@@ -218,6 +240,9 @@ importers:
 
   services/rules_compendium/ui:
     dependencies:
+      '@runefoble/ui-core':
+        specifier: workspace:*
+        version: link:../../../libs/runefoble_ui
       lit:
         specifier: ^3.3.3
         version: 3.3.3
@@ -715,6 +740,9 @@ packages:
 
   '@lit-labs/ssr-dom-shim@1.6.0':
     resolution: {integrity: sha512-VHb0ALPMTlgKjM6yIxxoQNnpKyUKLD04VzeQdsiXkMqkvYlAHxq9glGLmgbb889/1GsohSOAjvQYoiBppXFqrQ==}
+
+  '@lit/context@1.1.6':
+    resolution: {integrity: sha512-M26qDE6UkQbZA2mQ3RjJ3Gzd8TxP+/0obMgE5HfkfLhEEyYE3Bui4A5XHiGPjy0MUGAyxB3QgVuw2ciS0kHn6A==}
 
   '@lit/reactive-element@2.1.2':
     resolution: {integrity: sha512-pbCDiVMnne1lYUIaYNN5wrwQXDtHaYtg7YEFPeW+hws6U47WeFvISGUWekPGKWOP1ygrs0ef0o1VJMk1exos5A==}
@@ -2555,6 +2583,10 @@ snapshots:
   '@js-sdsl/ordered-map@4.4.2': {}
 
   '@lit-labs/ssr-dom-shim@1.6.0': {}
+
+  '@lit/context@1.1.6':
+    dependencies:
+      '@lit/reactive-element': 2.1.2
 
   '@lit/reactive-element@2.1.2':
     dependencies:

@@ -185,25 +185,23 @@ export class AuthFixtures {
 
     // Inject into localStorage for subsequent page loads
     await targetPage.addInitScript(
-      ({ sJson, tok, uJson }) => {
+      ({ sJson, uJson }) => {
         try {
           window.localStorage.setItem('rf_auth_session', sJson);
-          window.localStorage.setItem('runefoble-access-token', tok);
           window.localStorage.setItem('runefoble-user', uJson);
         } catch {
           // Ignore restricted localStorage in sandbox
         }
       },
-      { sJson: sessionJson, tok: token, uJson: userJson }
+      { sJson: sessionJson, uJson: userJson }
     );
 
     // If page is currently navigated to an existing document, update active localStorage
     try {
       await targetPage.evaluate(
-        ({ sJson, tok, uJson, detailState }) => {
+        ({ sJson, uJson, detailState }) => {
           if (typeof window !== 'undefined' && window.localStorage) {
             window.localStorage.setItem('rf_auth_session', sJson);
-            window.localStorage.setItem('runefoble-access-token', tok);
             window.localStorage.setItem('runefoble-user', uJson);
             window.dispatchEvent(
               new CustomEvent('rf-auth-changed', {
@@ -216,7 +214,6 @@ export class AuthFixtures {
         },
         {
           sJson: sessionJson,
-          tok: token,
           uJson: userJson,
           detailState: {
             isAuthenticated: true,
@@ -245,7 +242,6 @@ export class AuthFixtures {
   async clearAuth(): Promise<void> {
     await this.page.evaluate(() => {
       window.localStorage.removeItem('rf_auth_session');
-      window.localStorage.removeItem('runefoble-access-token');
       window.localStorage.removeItem('runefoble-user');
       window.dispatchEvent(
         new CustomEvent('rf-auth-changed', {

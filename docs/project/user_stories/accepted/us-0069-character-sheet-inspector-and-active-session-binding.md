@@ -55,3 +55,19 @@ Then the active tabletop character card displays "Valeros of Korvosa", "Fighter 
 And does not display the hardcoded fallback "Kyra the Sun Maiden"
 And moving Valeros's token on the board links to his real character ID.
 ```
+
+## Scenario 4: Character Sheet Sends the Signed-In Token
+```gherkin
+Given Marcus signed in through Zitadel and opened a campaign with a character
+When Marcus opens the character sheet
+Then the character request carries an "Authorization: Bearer" header
+And the character's HP renders on the sheet.
+```
+
+## Scenario 5: Character Sheet Shows Load Failures
+```gherkin
+Given Marcus signed in through Zitadel and the character service returns 503
+When Marcus opens the character sheet
+Then the sheet shows an error message
+And the sheet shows no demo data.
+```

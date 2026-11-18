@@ -15,6 +15,16 @@ export const characterSheetCoreStyles = css`
     max-width: 860px;
   }
 
+  .load-error {
+    background: #ffccd5;
+    color: #800f2f;
+    border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+    padding: 8px;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
   .sheet-header {
     display: flex;
     justify-content: space-between;

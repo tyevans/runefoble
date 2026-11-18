@@ -98,3 +98,24 @@ Verify that the TypeScript build and test suite pass cleanly:
 make test
 make lint
 ```
+
+## Step 6: Call Authenticated APIs With the Auth Context
+
+Do not read tokens from `localStorage`. Ask the App Shell through the auth context.
+
+1. Add `"@runefoble/ui-core": "workspace:*"` to the UI package dependencies.
+2. Create the controller in the component:
+
+```ts
+import { AuthConsumerController } from '@runefoble/ui-core';
+
+private readonly auth = new AuthConsumerController(this);
+
+const res = await fetch(url, { headers: await this.auth.authHeaders() });
+if (!res.ok) this.error = `Request failed (status ${res.status}).`;
+```
+
+3. Catch failures and set an error state. Render the error. Do not show demo data.
+4. In stories, add one story with `<runefoble-story-auth-provider token="story-token">` and one story with no provider. Use `installTokenCheckingFetch` from `@runefoble/ui-core/story-fetch` to stand in for the gateway.
+
+See `docs/reference/microfrontend-architecture.md` for the contract.

@@ -5,6 +5,7 @@ import { appShellStyles } from './styles/app-shell.styles.ts';
 import './app/component-registry.ts';
 import { registerDefaultPlugins, pluginRegistry } from './components/plugins/plugin_registry.ts';
 import { authService, isAuthCallbackPath } from './auth/auth-service.ts';
+import { AuthContextProviderController } from './auth/auth-context-provider.ts';
 import { completeSignInCallback } from './app/auth-callback.ts';
 import { router, registerAuthGuard, type BreadcrumbItem, type MatchedRoute, type RouteParams } from './router/index.ts';
 import type { BoardToken } from '@runefoble/board-state-ui';
@@ -32,6 +33,7 @@ export class RunefobleApp extends LitElement {
   static styles = [appShellStyles];
 
   public readonly sessionSocket = new SessionSocket(this);
+  public readonly authContextProvider = new AuthContextProviderController(this, authService);
   @state() public viewMode: 'party' | 'spectator' = 'party';
   @state() public isSettingsOpen = false;
   @state() public currentTheme = 'bauhaus';

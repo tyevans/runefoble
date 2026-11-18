@@ -78,8 +78,7 @@ Given('I am logged in as a {string}', async ({ auth, world }, roleOrName: string
 ```
 
 The fixture sets:
-- `rf_auth_session`: JSON session payload containing access and refresh tokens, user profile, and Zanzibar roles.
-- `runefoble-access-token`: Bearer access token for HTTP and WebSocket requests.
+- `rf_auth_session`: JSON session payload containing access and refresh tokens, user profile, and Zanzibar roles. The App Shell reads this key. Microfrontends receive the token through the auth context.
 - `runefoble-user`: Profile metadata.
 
 Supported personas:

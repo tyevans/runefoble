@@ -1,5 +1,6 @@
 packages:
   - 'frontend'
+  - 'libs/runefoble_ui'
   - 'services/*/ui'
   - 'services/audience_studio'
 

@@ -13,6 +13,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@lit/context": "^1.1.6",
     "@runefoble/audience-studio-ui": "workspace:*",
     "@runefoble/board-state-ui": "workspace:*",
     "@runefoble/campaign-analytics-ui": "workspace:*",
@@ -22,6 +23,7 @@
     "@runefoble/rules-compendium-ui": "workspace:*",
     "@runefoble/soundscape-ui": "workspace:*",
     "@runefoble/the-watcher-ui": "workspace:*",
+    "@runefoble/ui-core": "workspace:*",
     "@runefoble/voice-agent-ui": "workspace:*",
     "lit": "^3.3.3"
   },

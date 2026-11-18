@@ -108,6 +108,23 @@ runefoble/
 | `frontend` (App Shell) | `frontend` | `<runefoble-app>`, `<runefoble-settings-modal>`, `<runefoble-theme-switcher>` | `frontend/src/stories/runefoble-settings-modal.stories.ts` |
 
 
+## Auth Context Contract (`runefoble-auth`)
+
+Microfrontends never read the shell's storage keys. The App Shell gives them the access token through the W3C Context Community Protocol (`@lit/context`).
+
+| Item | Value |
+|---|---|
+| Context key | `runefoble-auth` (`AUTH_CONTEXT_KEY` in `@runefoble/ui-core`) |
+| Value | `{ getAccessToken(): Promise<string \| null> }` |
+| Provider | `runefoble-app` (`frontend/src/auth/auth-context-provider.ts`). It re-notifies subscribers on each sign-in change. |
+| Consumer | `AuthConsumerController` from `@runefoble/ui-core`. `authHeaders()` returns `{ Authorization: 'Bearer ...' }`, or `{}` with no token. |
+
+Rules:
+- A consumer dispatches a composed, bubbling `context-request` event. The controller does this for you.
+- With no provider (Storybook alone), no token is sent. The request fails with 401. The component renders the error. It never shows demo data.
+- In Storybook, wrap the component in `<runefoble-story-auth-provider token="...">` (`@runefoble/ui-core/story-auth-provider`).
+- Shared package: `libs/runefoble_ui` (`@runefoble/ui-core`).
+
 ## Pnpm Monorepo Workspace
 
 The monorepo workspace links packages using standard pnpm workspace protocols:
@@ -117,6 +134,7 @@ The monorepo workspace links packages using standard pnpm workspace protocols:
 packages:
   - 'frontend'
   - 'services/*/ui'
+  - 'libs/runefoble_ui'
 
 allowBuilds:
   esbuild: true
