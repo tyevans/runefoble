@@ -344,6 +344,23 @@ def voice_agent_upstream(monkeypatch, trusted_voice_issuer) -> Iterator[str]:
 
 
 @pytest.fixture
+def asset_forge_upstream(monkeypatch) -> Iterator[str]:
+    """Serve asset_forge as a live loopback upstream (TASK-0595).
+
+    The gateway proxies the forge and Silo asset routes to it through RUNEFOBLE_ASSET_FORGE_URL.
+    The asset_forge verifier and SpiceDB mock are already set for each test. The URL is set
+    before the gateway lifespan runs, so build the gateway client after this fixture.
+    """
+    from asset_forge.main import app as forge_app
+
+    from tests.helpers.live_services import serve
+
+    with serve(forge_app) as url:
+        monkeypatch.setenv("RUNEFOBLE_ASSET_FORGE_URL", url)
+        yield url
+
+
+@pytest.fixture
 def game_session_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
     """Serve game_session as a live loopback upstream with fresh in-memory campaign state.
 

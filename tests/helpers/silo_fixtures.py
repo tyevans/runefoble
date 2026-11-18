@@ -8,10 +8,12 @@ Governed by:
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator, Iterator
+from contextlib import ExitStack
 
 import httpx
 import pytest
+from fastapi.testclient import TestClient
 from runefoble_platform.storage import SiloStorageService, get_storage_service, set_storage_service
 
 # Sample 1x1 PNG bytes for testing image uploads
@@ -84,3 +86,21 @@ def silo_double() -> Generator[FakeSilo]:
     )
     yield fake
     set_storage_service(previous)
+
+
+@pytest.fixture
+def gateway_for(asset_forge_upstream: str) -> Iterator[Callable[..., TestClient]]:
+    """Return gateway clients wired to a live asset_forge (TASK-0595).
+
+    Each client enters the gateway lifespan, which builds the upstream clients. Pass an issuer
+    and a subject for a bearer token. Call with no arguments for an anonymous client.
+    """
+    from gateway_api.main import app as gateway_app
+
+    with ExitStack() as stack:
+
+        def make(issuer=None, sub: str | None = None) -> TestClient:
+            headers = {"Authorization": f"Bearer {issuer.mint(sub)}"} if issuer else None
+            return stack.enter_context(TestClient(gateway_app, headers=headers))
+
+        yield make
