@@ -62,8 +62,14 @@ def test_rest_data_binding_webaudio_ducking(client: TestClient, soundscape_sessi
     assert unduck_data["effective_gain"] == 1.0
 
 
-def test_gateway_websocket_soundscape_broadcast(gateway_client: TestClient) -> None:
-    """Verify soundscape acoustic cues fan out through the campaign WebSocket."""
+def test_gateway_websocket_refuses_a_client_defined_soundscape_cue(
+    gateway_client: TestClient,
+) -> None:
+    """The campaign WebSocket refuses a soundscape cue, which is not a server-defined action.
+
+    Foley cues go through the soundscape service routes. The socket relays only the actions that
+    the server defines (TASK-0544), and answers any other action with an UNKNOWN_ACTION error.
+    """
     campaign_id = "camp-soundscape-ws-01"
     dm_user = "dm-evelyn"
 
@@ -96,10 +102,7 @@ def test_gateway_websocket_soundscape_broadcast(gateway_client: TestClient) -> N
             }
         )
 
-        broadcast = ws.receive_json()
-        assert broadcast["type"] == "soundscape_cue"
-        assert broadcast["action"] == "soundscape_cue"
-        assert broadcast["cue_name"] == "thunder"
-        assert broadcast["duck_music"] is True
-        assert broadcast["status"] == "applied"
-        assert broadcast["user_id"] == dm_user
+        error = ws.receive_json()
+        assert error["type"] == "error"
+        assert error["code"] == "UNKNOWN_ACTION"
+        assert error["action"] == "soundscape_cue"

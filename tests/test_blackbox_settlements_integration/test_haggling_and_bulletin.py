@@ -117,14 +117,12 @@ def test_bulletin_board_pin_and_cipher_decrypt(
     ):
         assert ws_dm.receive_json()["type"] == "connected"
         assert ws_player.receive_json()["type"] == "connected"
+        # The socket relays only server-defined actions (TASK-0544). A client-defined bulletin
+        # action gets an UNKNOWN_ACTION error, and nothing reaches the other player.
         ws_dm.send_json(
             {"action": "bulletin_bounty_posted", "settlement_id": sid, "notice_id": nid}
             | {"title": "Meeting", "is_decrypted": True}
         )
-        assert ws_dm.receive_json()["action"] == "bulletin_bounty_posted"
-        f_p = ws_player.receive_json()
-        assert (
-            f_p["action"] == "bulletin_bounty_posted"
-            and f_p["notice_id"] == nid
-            and f_p["is_decrypted"]
-        )
+        error = ws_dm.receive_json()
+        assert error["type"] == "error" and error["code"] == "UNKNOWN_ACTION"
+        assert error["action"] == "bulletin_bounty_posted"
