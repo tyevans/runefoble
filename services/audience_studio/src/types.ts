@@ -67,8 +67,6 @@ export interface CloudEvent<T = Record<string, unknown>> {
 export interface WSClientMessage {
   action: 'subscribe' | 'cast_vote' | 'approve_proposal' | 'veto_proposal' | 'ping';
   campaignId?: string;
-  userId?: string;
-  role?: string;
   pollId?: string;
   optionId?: string;
   proposalId?: string;

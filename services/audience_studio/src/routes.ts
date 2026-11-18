@@ -5,15 +5,14 @@
 
 import type { FastifyInstance, FastifyPluginAsync, FastifyReply } from 'fastify';
 import type { ApprovalQueue } from './approvalQueue.js';
-import type { ZanzibarClient } from './auth.js';
 import { DependencyUnavailableError, DomainError } from './errors.js';
+import { principalOf } from './identity/principal.js';
 import type { PollEngine } from './pollEngine.js';
 import type { ProposalStatus } from './types.js';
 
 interface RouteContext {
   pollEngine: PollEngine;
   approvalQueue: ApprovalQueue;
-  auth: ZanzibarClient;
 }
 
 /** Maps domain and dependency errors to HTTP status codes. Other errors reach Fastify as 500. */
@@ -115,16 +114,15 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
     // 4. Cast a spectator vote
     fastify.post<{
       Params: { pollId: string };
-      Body: { voter_id: string; option_id: string; channel?: string };
+      Body: { option_id: string; channel?: string };
     }>('/polls/:pollId/votes', {
       schema: {
-        description: 'Cast an audience spectator vote',
+        description: 'Cast an audience spectator vote. The voter is the token subject.',
         tags: ['Audience'],
         body: {
           type: 'object',
-          required: ['voter_id', 'option_id'],
+          required: ['option_id'],
           properties: {
-            voter_id: { type: 'string' },
             option_id: { type: 'string' },
             channel: { type: 'string' },
           },
@@ -132,11 +130,11 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
       },
     }, async (request, reply) => {
       const { pollId } = request.params;
-      const { voter_id, option_id, channel } = request.body;
+      const { option_id, channel } = request.body;
       try {
         const poll = await ctx.pollEngine.castVote(
           pollId,
-          voter_id,
+          principalOf(request).userId,
           option_id,
           channel ?? 'web'
         );
@@ -182,23 +180,16 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
     });
 
     // 7. Approve modifier proposal (DM Zanzibar authorized)
-    fastify.post<{
-      Params: { proposalId: string };
-      Body: { dm_user_id?: string };
-    }>('/proposals/:proposalId/approve', {
+    fastify.post<{ Params: { proposalId: string } }>('/proposals/:proposalId/approve', {
       schema: {
-        description: 'Approve chaos modifier proposal (DM authorized)',
+        description: 'Approve chaos modifier proposal. The actor is the token subject, checked against SpiceDB.',
         tags: ['Audience'],
       },
     }, async (request, reply) => {
-      const dmId =
-        request.body?.dm_user_id ||
-        (request.headers['x-user-id'] as string) ||
-        'dm-user';
       try {
         const proposal = await ctx.approvalQueue.approveProposal(
           request.params.proposalId,
-          dmId
+          principalOf(request).userId
         );
         return reply.send({ success: true, proposal });
       } catch (err: unknown) {
@@ -207,55 +198,21 @@ export function createAudienceRoutes(ctx: RouteContext): FastifyPluginAsync {
     });
 
     // 8. Veto modifier proposal (DM Zanzibar authorized)
-    fastify.post<{
-      Params: { proposalId: string };
-      Body: { dm_user_id?: string };
-    }>('/proposals/:proposalId/veto', {
+    fastify.post<{ Params: { proposalId: string } }>('/proposals/:proposalId/veto', {
       schema: {
-        description: 'Veto chaos modifier proposal (DM authorized)',
+        description: 'Veto chaos modifier proposal. The actor is the token subject, checked against SpiceDB.',
         tags: ['Audience'],
       },
     }, async (request, reply) => {
-      const dmId =
-        request.body?.dm_user_id ||
-        (request.headers['x-user-id'] as string) ||
-        'dm-user';
       try {
         const proposal = await ctx.approvalQueue.vetoProposal(
           request.params.proposalId,
-          dmId
+          principalOf(request).userId
         );
         return reply.send({ success: true, proposal });
       } catch (err: unknown) {
         return sendError(reply, err);
       }
-    });
-
-    // 9. Sync Zanzibar relationship tuple (Auth Helper)
-    fastify.post<{
-      Body: {
-        resource_type: string;
-        resource_id: string;
-        relation: string;
-        subject_type: string;
-        subject_id: string;
-      };
-    }>('/auth/tuples', {
-      schema: {
-        description: 'Register Zanzibar relation tuple for SpiceDB auth check',
-        tags: ['Audience'],
-      },
-    }, async (request, reply) => {
-      const { resource_type, resource_id, relation, subject_type, subject_id } =
-        request.body;
-      await ctx.auth.writeRelationship(
-        resource_type,
-        resource_id,
-        relation,
-        subject_type,
-        subject_id
-      );
-      return reply.code(201).send({ success: true });
     });
   };
 }
