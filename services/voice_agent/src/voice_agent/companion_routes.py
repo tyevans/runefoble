@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_action
 from voice_agent.companion_registry import mobile_companion_manager
 from voice_agent.mobile import PROFILES
 
 router = APIRouter(
-    dependencies=[Depends(get_voice_principal)],
+    dependencies=[Depends(get_principal)],
     prefix="/api/v1/mobile/companion",
     tags=["Mobile Companion"],
 )
@@ -49,7 +49,7 @@ async def get_mobile_profiles():
 async def dispatch_whisper_endpoint(
     session_id: str,
     req: WhisperDispatchRequest,
-    principal: VoicePrincipal,
+    principal: CallerPrincipal,
 ):
     """Dispatch a secret DM whisper and trigger mobile haptic ping."""
     await require_action("session.control", session_id, principal.user_id)
@@ -68,7 +68,7 @@ async def dispatch_whisper_endpoint(
 async def dispatch_turn_alert_endpoint(
     session_id: str,
     req: TurnAlertDispatchRequest,
-    principal: VoicePrincipal,
+    principal: CallerPrincipal,
 ):
     """Trigger combat turn initiative haptic alert for mobile companion."""
     await require_action("session.control", session_id, principal.user_id)

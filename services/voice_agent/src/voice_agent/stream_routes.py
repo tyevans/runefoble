@@ -16,7 +16,7 @@ from runefoble_auth.websocket import (
 )
 from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import DomainEventPublishError
-from voice_agent.auth import VoicePrincipal, get_voice_verifier
+from voice_agent.auth import CallerPrincipal, get_voice_verifier
 from voice_agent.authz import require_speaker, speaker_allowed, speaker_authorizer
 from voice_agent.stt import get_streaming_pipeline
 
@@ -56,7 +56,7 @@ class AudioStreamChunkResponse(BaseModel):
 @router.post("/chunk", response_model=AudioStreamChunkResponse)
 async def ingest_audio_chunk(
     req: AudioStreamChunkRequest,
-    principal: VoicePrincipal,
+    principal: CallerPrincipal,
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
 ):
     """Ingest PCM/WAV audio chunk, process VAD boundaries, and trigger streaming transcription."""

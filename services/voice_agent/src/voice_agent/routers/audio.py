@@ -6,17 +6,17 @@ import base64
 import binascii
 
 from fastapi import APIRouter, Depends, HTTPException
-from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_speaker
 from voice_agent.dependencies import _dispatch_voice_audio_conditioned
 from voice_agent.dsp import apply_audio_filters
 from voice_agent.models import DSPApplyRequest, DSPApplyResponse
 
-router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Audio DSP"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["Audio DSP"])
 
 
 @router.post("/api/v1/voice/dsp/apply", response_model=DSPApplyResponse)
-async def apply_dsp(req: DSPApplyRequest, principal: VoicePrincipal):
+async def apply_dsp(req: DSPApplyRequest, principal: CallerPrincipal):
     """Apply dynamic DSP filters to supplied audio. The route never synthesises a carrier."""
     await require_speaker(req.session_id, req.speaker_id, principal.user_id)
     filters = list(req.filters)

@@ -6,13 +6,13 @@ import base64
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.auth import CallerPrincipal, get_principal
 from voice_agent.authz import require_action
 from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.dsp.pipeline import StreamPipelineFilter
 from voice_agent.dsp.presets import NPCVoicePreset, get_preset, list_presets
 
-router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Vocal Modulator"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["Vocal Modulator"])
 
 
 class ModulateVoiceRequest(BaseModel):
@@ -54,7 +54,7 @@ async def get_presets():
 @router.post("/api/v1/voice/modulate", response_model=ModulateVoiceResponse)
 async def modulate_voice(
     req: ModulateVoiceRequest,
-    principal: VoicePrincipal,
+    principal: CallerPrincipal,
 ):
     """Set active preset or fine-tune pitch/formant parameters on an active stream session."""
     user_id = principal.user_id
