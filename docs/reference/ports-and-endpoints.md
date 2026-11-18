@@ -329,7 +329,7 @@ Every `voice-agent` HTTP route except `GET /healthz` and `GET /ui/manifest` requ
 
 Every `voice-agent` WebSocket route (`/api/v1/voice/duplex/ws/...`, `/api/v1/voice/stream/ws/...`) admits the handshake only with a valid `runefoble.bearer.<jwt>` subprotocol. The service accepts with `runefoble.v1`. A refused handshake closes with code `1008` before accept.
 
-`game-session` forwards the caller's `Authorization` header on `POST /api/v1/voice/dsp/condition`. No service credential exists yet (ADR-0015 e). Until one exists, the caller's token is the only credential for that call.
+`game-session` forwards the caller's `Authorization` header on `POST /api/v1/voice/dsp/condition`. `voice-agent` does not accept the service credential yet (ADR-0015 e). Until it does, the caller's token is the only credential for that call.
 
 ## Gateway Proxy Identity and Errors
 

@@ -19,6 +19,7 @@ from httpx import ASGITransport, AsyncClient
 from inference_worker import api as worker_api
 from inference_worker.config import WorkerSettings
 from inference_worker.llm_client import MultiBackendLLMClient
+from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher import dependencies as watcher_dependencies
 from the_watcher.main import app as watcher_app
 from the_watcher.routers import autonomous_dm
@@ -27,7 +28,7 @@ from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
-WORKER_TOKEN = os.environ["RUNEFOBLE_INFERENCE_SERVICE_TOKEN"]
+WORKER_TOKEN = os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]
 PUBLIC_PATHS = {
     "/healthz",
     "/health",
@@ -116,19 +117,18 @@ def test_every_watcher_route_refuses_missing_bearer(method, path):
 
 
 @pytest.mark.asyncio
-async def test_worker_refuses_calls_without_service_token():
+async def test_worker_refuses_calls_without_service_credential():
     async with AsyncClient(
         transport=ASGITransport(app=worker_api.app), base_url="http://test"
     ) as ac:
         for path, payload in WORKER_PAYLOADS.items():
             res = await ac.post(path, json=payload)
             assert res.status_code == 401, path
-            assert res.headers["www-authenticate"] == "Bearer"
 
 
 @pytest.mark.asyncio
-async def test_worker_refuses_wrong_service_token():
-    headers = {"Authorization": "Bearer not-the-service-token"}
+async def test_worker_refuses_wrong_service_credential():
+    headers = {SERVICE_CREDENTIAL_HEADER: "not-the-service-credential"}
     async with AsyncClient(
         transport=ASGITransport(app=worker_api.app), base_url="http://test", headers=headers
     ) as ac:
@@ -148,12 +148,12 @@ async def test_worker_refuses_user_bearer_token():
 
 
 @pytest.mark.asyncio
-async def test_worker_accepts_the_service_token(monkeypatch):
+async def test_worker_accepts_the_service_credential(monkeypatch):
     monkeypatch.setattr(
         worker_api, "llm_client", MultiBackendLLMClient(WorkerSettings(backend="mock"))
     )
     monkeypatch.setattr(worker_api, "intent_graph", None)
-    headers = {"Authorization": f"Bearer {WORKER_TOKEN}"}
+    headers = {SERVICE_CREDENTIAL_HEADER: WORKER_TOKEN}
     async with AsyncClient(
         transport=ASGITransport(app=worker_api.app), base_url="http://test", headers=headers
     ) as ac:
@@ -176,11 +176,7 @@ async def test_worker_sends_no_cors_headers_to_browser_origins():
 
 
 def _run_worker_import(env_overrides: dict[str, str | None]) -> subprocess.CompletedProcess[str]:
-    env = {
-        key: value
-        for key, value in os.environ.items()
-        if key != "RUNEFOBLE_INFERENCE_SERVICE_TOKEN"
-    }
+    env = {key: value for key, value in os.environ.items() if key != "RUNEFOBLE_SERVICE_CREDENTIAL"}
     for key, value in env_overrides.items():
         if value is not None:
             env[key] = value
@@ -194,22 +190,22 @@ def _run_worker_import(env_overrides: dict[str, str | None]) -> subprocess.Compl
     )
 
 
-def test_worker_refuses_to_start_without_service_token():
+def test_worker_refuses_to_start_without_service_credential():
     result = _run_worker_import({})
     assert result.returncode != 0
-    assert "RUNEFOBLE_INFERENCE_SERVICE_TOKEN" in result.stderr
+    assert "RUNEFOBLE_SERVICE_CREDENTIAL" in result.stderr
 
 
-def test_worker_refuses_to_start_with_blank_service_token():
-    result = _run_worker_import({"RUNEFOBLE_INFERENCE_SERVICE_TOKEN": "   "})
+def test_worker_refuses_to_start_with_blank_service_credential():
+    result = _run_worker_import({"RUNEFOBLE_SERVICE_CREDENTIAL": "   "})
     assert result.returncode != 0
 
 
 @pytest.mark.asyncio
-async def test_watcher_refuses_to_call_worker_without_configured_token(monkeypatch):
+async def test_watcher_refuses_to_call_worker_without_configured_credential(monkeypatch):
     """The Watcher does not call the worker without a credential. It reports 503, never a template."""
     monkeypatch.setattr(autonomous_dm, "INFERENCE_URL", "http://worker.invalid:8100")
-    monkeypatch.setattr(watcher_dependencies.platform_settings, "inference_service_token", None)
+    monkeypatch.setattr(watcher_dependencies.platform_settings, "service_credential", None)
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app),
         base_url="http://test",

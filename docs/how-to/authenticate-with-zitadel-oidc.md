@@ -152,58 +152,58 @@ Shared fixtures are in `tests/helpers/zitadel_auth.py`. The `auth_environment` f
 
 ## Service-to-Service Credentials
 
-A service that calls another service presents a service credential, not a user token (ADR-0015 e). The credential is a shared secret. It is stored in a Kubernetes Secret and mounted into the calling pod.
+A service that calls another service presents a service credential, not a user token (ADR-0015 e). The credential is a shared secret. It is stored in the `runefoble-credentials` Kubernetes Secret under key `service-credential` and read as `RUNEFOBLE_SERVICE_CREDENTIAL`.
 
 The Zitadel machine-user client credentials flow is the alternative. This platform does not use it yet.
 
-### Current use: The Watcher to the inference worker
+### Header and setting
 
-| Setting | Read by | Meaning |
-|---|---|---|
-| `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` | `inference_worker`, `the_watcher` | Bearer credential. No default value. |
+| Setting | Header | Read by | Meaning |
+|---|---|---|---|
+| `RUNEFOBLE_SERVICE_CREDENTIAL` | `X-Runefoble-Service-Credential` | `the_watcher`, `gateway_mcp`, `game_session`, `board_state`, `character_sheet`, `rules_compendium`, `inference_worker` | Shared credential. No default value. |
 
-Rules:
-- The inference worker requires `Authorization: Bearer <token>` on every `/inference/v1/*` route. It compares the value with `hmac.compare_digest`. Any other caller gets `401` with `WWW-Authenticate: Bearer`.
-- The inference worker refuses to start when the setting is unset or blank.
+The header never carries a user token. `Authorization` stays the user token.
+
+### Receiver rules
+
+- A receiver accepts a verified user bearer or the service credential, on the routes that another service calls. The dependency is `runefoble_auth.caller.require_user_or_service_credential`.
+- A request with an `Authorization` header must verify as a Zitadel user token. A failed token gives `401`, even when the service credential is also present.
+- A request with no `Authorization` header is a service call when it presents the credential. A service call has no user id. Routes that act for a user keep the user-only dependency, so a service call gets `401` there.
+- The receiver compares the credential with `hmac.compare_digest`. Any other caller gets `401`.
+- A receiver refuses to start when the setting is unset or blank.
+- The MCP gateway sends the credential on every owning-service call. It forwards the MCP caller's bearer when one exists, so the owning service acts for that user.
+- The `game_session` stand-in release forwards the hot-swap player's bearer. It does not send the credential.
+- The API gateway (`gateway-api`) does not receive the credential.
 - The inference worker sends no CORS headers. Browsers cannot call it.
-- The Watcher sends the token on every worker call. When the setting is unset, The Watcher returns `503 backend_unavailable` and makes no call.
+- The Watcher returns `503 backend_unavailable` and makes no worker call when the setting is unset.
 - A Zitadel user token is not a service credential. The inference worker returns `401` for it.
 
 ### Helm
 
-The chart does not create the Secret. It references the Secret in `deployments/helm/runefoble/values.yaml`:
-
-```yaml
-inferenceServiceToken:
-  secretName: runefoble-inference-service
-  key: token
-```
-
-Create the Secret before you install the chart:
+The chart renders the credential into the `runefoble-credentials` Secret for local environments. Other environments supply that Secret through `credentials.existingSecret`. The Secret must hold the key `service-credential`. Add the key to an existing Secret:
 
 ```bash
-kubectl create secret generic runefoble-inference-service \
-  --from-literal=token="$(openssl rand -hex 32)"
+kubectl patch secret runefoble-credentials --type merge \
+  -p "{\"stringData\": {\"service-credential\": \"$(openssl rand -hex 32)\"}}"
 ```
 
-Both the `inference-worker` and `the-watcher` deployments read the key as `RUNEFOBLE_INFERENCE_SERVICE_TOKEN`.
+The `board-state`, `character-sheet`, `game-session`, `rules-compendium`, `the-watcher`, `inference-worker`, and `gateway-mcp` deployments read the key as `RUNEFOBLE_SERVICE_CREDENTIAL`.
 
 ### Test with a service credential
 
-Set the same value in the test process and mint no user token for the worker. The root `tests/conftest.py` sets `RUNEFOBLE_INFERENCE_SERVICE_TOKEN=test-only-inference-token` before any settings load. Send the header from the test client:
+Set the same value in the test process and mint no user token for a service call. The root `tests/conftest.py` sets `RUNEFOBLE_SERVICE_CREDENTIAL=test-only-service-credential` before any settings load. Send the header from the test client:
 
 ```python
+import os
+
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api
+from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
-headers = {"Authorization": "Bearer test-only-inference-token"}
+headers = {SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]}
 async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test", headers=headers) as ac:
-    res = await ac.post("/inference/v1/intent", json=payload)
+    ...
 ```
-
-Tests for the refusal paths are in `tests/test_blackbox_service_identity.py`.
-
----
 
 ## Verification & Blackbox Testing
 

@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from inference_worker.auth import service_token_guard
+from inference_worker.auth import service_credential_guard
 from inference_worker.config import WorkerSettings
 from inference_worker.graphs import build_intent_graph, build_narration_graph, build_stand_in_graph
 from inference_worker.llm_client import InferenceBackendError, MultiBackendLLMClient
@@ -58,7 +58,7 @@ app = FastAPI(
 inference_router = APIRouter(
     prefix="/inference/v1",
     dependencies=[
-        Depends(service_token_guard(settings.inference_service_token.get_secret_value()))
+        Depends(service_credential_guard(settings.service_credential.get_secret_value()))
     ],
 )
 

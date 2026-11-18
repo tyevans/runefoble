@@ -90,12 +90,8 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
             {{- end }}
-            {{- if eq .name "the-watcher" }}
-            - name: RUNEFOBLE_INFERENCE_SERVICE_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $.Values.inferenceServiceToken.secretName | quote }}
-                  key: {{ $.Values.inferenceServiceToken.key | quote }}
+            {{- if has .name (list "the-watcher" "board-state" "character-sheet" "game-session" "rules-compendium") }}
+            {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
             {{- end }}
             {{- with .config.embeddingApiKeySecret }}
             - name: RUNEFOBLE_EMBEDDING_API_KEY

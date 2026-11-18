@@ -19,7 +19,7 @@ for _upstream in (
     os.environ.setdefault(_upstream, "http://127.0.0.1:9")
 # The inference worker refuses to start without its service token (ADR-0015 e). Tests use a
 # throwaway value. Process-level tests remove it from the child environment on purpose.
-os.environ.setdefault("RUNEFOBLE_INFERENCE_SERVICE_TOKEN", "test-only-inference-token")
+os.environ.setdefault("RUNEFOBLE_SERVICE_CREDENTIAL", "test-only-service-credential")
 # ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest
