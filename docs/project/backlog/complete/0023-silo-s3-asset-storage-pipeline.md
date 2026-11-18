@@ -32,7 +32,7 @@ Implemented a media asset storage service (`SiloStorageService`) in `libs/runefo
   - Added strict MIME validation (`image/png`, `image/jpeg`, `image/webp`, `image/svg+xml`, `audio/wav`, `audio/mpeg`) and 10MB maximum file size limit.
 - `libs/runefoble_platform/src/runefoble_platform/__init__.py`:
   - Re-exported `SiloStorageService`, `get_storage_service`, `set_storage_service`, `AssetStorageError`, `AssetValidationError`, `AssetNotFoundError`, `ALLOWED_MIME_TYPES`, `MAX_ASSET_SIZE_BYTES`.
-- `gateway/api/src/gateway_api/assets.py`:
+- `services/asset_forge/src/asset_forge/routers/assets.py`:
   - Implemented `POST /api/v1/assets/upload` supporting both multipart/form-data and JSON base64 payloads, validating payloads and dispatching `AssetUploaded`.
   - Implemented `GET /api/v1/assets/{asset_id}` supporting metadata queries and raw binary streaming (`?stream=true` or `/stream`, `/download`).
   - Implemented `DELETE /api/v1/assets/{asset_id}` removing asset and dispatching `AssetDeleted`.

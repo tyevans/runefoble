@@ -35,7 +35,7 @@ The gateway MCP registry lets anonymous callers register, overwrite, delete, and
 - `gateway/mcp/src/gateway_mcp/routers/tools_registry.py:38-108`: `author_id` is `payload.author_id or x_user_id`, so the body chooses the author. Execute accepts the caller from a body field (`w3-authz-coverage.md` F8).
 - `gateway/mcp/src/gateway_mcp/routers/tools_registry.py` is mounted at root and under `/api/v1` (`gateway/api/src/gateway_api/main.py:88-90`), with no auth dependency (`w1-gateway-mcp.md` F2).
 - `gateway/mcp/src/gateway_mcp/tools/character.py` (`apply_absentee_penalty`, `modify_character_hp`, `cast_spell`, `add_condition`) and `tools/board.py` (removed) (`move_board_token`, `create_encounter`): no caller identity and no SpiceDB check. `gateway/mcp/src/gateway_mcp/tools/orchestration.py:25-130` runs any registered tool with no identity (`w1-gateway-mcp.md` F5).
-- `gateway/api/src/gateway_api/assets.py:85` (`POST /upload`): no auth dependency. `:237` (`DELETE /{asset_id}`): no SpiceDB check. `_resolve_user_id` (lines 71-82) returns the raw bearer value as the user id (`w1-gateway-api.md` F5).
+- `services/asset_forge/src/asset_forge/routers/assets.py:85` (`POST /upload`): no auth dependency. `:237` (`DELETE /{asset_id}`): no SpiceDB check. `_resolve_user_id` (lines 71-82) returns the raw bearer value as the user id (`w1-gateway-api.md` F5).
 
 ## Documentation & Architecture Review
 - ADR-0001: `mcp_tool` and `forged_asset` objects in `runefoble.zed` own these checks. `mcp_tool.manage` covers register, update, and delete. `mcp_tool.execute` covers execute. `forged_asset.manage` covers asset delete.
@@ -60,7 +60,7 @@ The gateway MCP registry lets anonymous callers register, overwrite, delete, and
    - `move_board_token`: `board_token.move`.
    - `create_encounter`: `session.control`.
    - `execute_agent_action_plan`: checks each step's permission. A denied step stops the plan with a per-step error.
-3. Assets (`gateway/api/src/gateway_api/assets.py`). TASK-0521 supplies the principal and removes `_resolve_user_id`. This task adds:
+3. Assets (`services/asset_forge/src/asset_forge/routers/assets.py`). TASK-0521 supplies the principal and removes `_resolve_user_id`. This task adds:
    - `POST /upload` writes the creator and campaign relations for the principal.
    - `DELETE /{asset_id}` requires `forged_asset.manage`.
 4. Remove the `user-default` fallback in asset code.
