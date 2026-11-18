@@ -12,23 +12,14 @@ from __future__ import annotations
 
 import base64
 
-from fastapi.testclient import TestClient
-from gateway_api.main import app as gateway_app
-
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES, WAV_SAMPLE_BYTES
-
-
-def _client_for(issuer, sub: str) -> TestClient:
-    """Return a gateway client that sends a verified bearer token for `sub`."""
-    return TestClient(gateway_app, headers={"Authorization": f"Bearer {issuer.mint(sub)}"})
-
 
 # --- 1. Blackbox Upload via Multipart/Form-Data & JSON Payloads ---
 
 
-def test_blackbox_upload_valid_image_multipart(signing_issuer):
+def test_blackbox_upload_valid_image_multipart(trusted_ws_issuer, gateway_for):
     """Verify uploading an avatar image via multipart/form-data frontdoor."""
-    client = _client_for(signing_issuer, "player-valeros")
+    client = gateway_for(trusted_ws_issuer, "player-valeros")
     response = client.post(
         "/api/v1/assets/upload",
         files={"file": ("valeros_avatar.png", PNG_SAMPLE_BYTES, "image/png")},
@@ -46,9 +37,9 @@ def test_blackbox_upload_valid_image_multipart(signing_issuer):
     assert f"/api/v1/assets/{data['asset_id']}?stream=true" in data["download_url"]
 
 
-def test_blackbox_upload_valid_battlemap_json_base64(signing_issuer):
+def test_blackbox_upload_valid_battlemap_json_base64(trusted_ws_issuer, gateway_for):
     """Verify uploading a tactical battlemap via JSON base64 frontdoor."""
-    client = _client_for(signing_issuer, "dm-alicia")
+    client = gateway_for(trusted_ws_issuer, "dm-alicia")
     b64_encoded = base64.b64encode(PNG_SAMPLE_BYTES).decode("utf-8")
     response = client.post(
         "/api/v1/assets/upload",
@@ -68,9 +59,9 @@ def test_blackbox_upload_valid_battlemap_json_base64(signing_issuer):
     assert "battlemaps/" in data["object_key"]
 
 
-def test_blackbox_upload_audio_asset(signing_issuer):
+def test_blackbox_upload_audio_asset(trusted_ws_issuer, gateway_for):
     """Verify uploading an ambient audio track via multipart form-data."""
-    client = _client_for(signing_issuer, "dm-soundscape")
+    client = gateway_for(trusted_ws_issuer, "dm-soundscape")
     response = client.post(
         "/api/v1/assets/upload",
         files={"file": ("ambient_crypt.wav", WAV_SAMPLE_BYTES, "audio/wav")},
@@ -86,9 +77,9 @@ def test_blackbox_upload_audio_asset(signing_issuer):
 # --- 2. Retrieval, Direct Streaming, and Attachment Download ---
 
 
-def test_blackbox_get_asset_metadata_and_streaming(signing_issuer):
+def test_blackbox_get_asset_metadata_and_streaming(trusted_ws_issuer, gateway_for):
     """Verify frontdoor metadata query, binary streaming, and download headers."""
-    client = _client_for(signing_issuer, "player-kyra")
+    client = gateway_for(trusted_ws_issuer, "player-kyra")
 
     # 1. Frontdoor upload
     upload_res = client.post(
@@ -129,18 +120,18 @@ def test_blackbox_get_asset_metadata_and_streaming(signing_issuer):
 # --- 3. Validation Rejections (MIME Type, Max File Size, Empty Payload) ---
 
 
-def test_blackbox_upload_without_bearer_is_refused():
+def test_blackbox_upload_without_bearer_is_refused(gateway_for):
     """Verify an upload with no verified bearer token is refused before storage."""
-    response = TestClient(gateway_app).post(
+    response = gateway_for().post(
         "/api/v1/assets/upload",
         files={"file": ("anon.png", PNG_SAMPLE_BYTES, "image/png")},
     )
     assert response.status_code == 401
 
 
-def test_blackbox_rejection_invalid_mime_type(signing_issuer):
+def test_blackbox_rejection_invalid_mime_type(trusted_ws_issuer, gateway_for):
     """Verify rejection of non-whitelisted MIME types (e.g. text/plain, html)."""
-    client = _client_for(signing_issuer, "user-tester")
+    client = gateway_for(trusted_ws_issuer, "user-tester")
     response = client.post(
         "/api/v1/assets/upload",
         files={"file": ("script.sh", b"#!/bin/bash\necho hack", "text/plain")},
@@ -149,9 +140,9 @@ def test_blackbox_rejection_invalid_mime_type(signing_issuer):
     assert "Unsupported media MIME type" in response.json()["detail"]
 
 
-def test_blackbox_rejection_oversize_payload(signing_issuer):
+def test_blackbox_rejection_oversize_payload(trusted_ws_issuer, gateway_for):
     """Verify rejection of payloads exceeding 10MB limit."""
-    client = _client_for(signing_issuer, "user-tester")
+    client = gateway_for(trusted_ws_issuer, "user-tester")
     oversize_bytes = b"0" * (10 * 1024 * 1024 + 1024)
     response = client.post(
         "/api/v1/assets/upload",
@@ -161,9 +152,9 @@ def test_blackbox_rejection_oversize_payload(signing_issuer):
     assert "exceeds the maximum allowed limit" in response.json()["detail"]
 
 
-def test_blackbox_rejection_empty_payload(signing_issuer):
+def test_blackbox_rejection_empty_payload(trusted_ws_issuer, gateway_for):
     """Verify rejection of empty asset payloads."""
-    client = _client_for(signing_issuer, "user-tester")
+    client = gateway_for(trusted_ws_issuer, "user-tester")
     response = client.post(
         "/api/v1/assets/upload",
         files={"file": ("empty.png", b"", "image/png")},
@@ -175,9 +166,9 @@ def test_blackbox_rejection_empty_payload(signing_issuer):
 # --- 4. Deletion Lifecycle & Subsequent 404 ---
 
 
-def test_blackbox_delete_asset_and_subsequent_404(signing_issuer):
+def test_blackbox_delete_asset_and_subsequent_404(trusted_ws_issuer, gateway_for):
     """Verify asset deletion lifecycle and proper 404 responses for deleted items."""
-    client = _client_for(signing_issuer, "user-temporary")
+    client = gateway_for(trusted_ws_issuer, "user-temporary")
 
     # 1. Frontdoor upload
     upload_res = client.post(

@@ -246,13 +246,15 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `rules-compendium` | POST | `/api/v1/compendium/homebrew` | Registers campaign homebrew monster or rule guarded by SpiceDB Zanzibar authorization |
 | `rules-compendium` | GET | `/api/v1/compendium/homebrew/{campaign_id}` | Retrieves campaign homebrew rules the caller may view (`homebrew_rule.view`). Each rule has a `shadowed` flag when an SRD entry has its name |
 | `rules-compendium` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-rules-compendium`, `runefoble-rules-lookup`, `runefoble-encounter-builder`, `runefoble-homebrew-creator`) |
-| `asset-forge` | POST | `/api/v1/forge/battlemap` | Procedurally generates battlemap texture, extracts wall & hazard geometry, and uploads to Silo S3 |
-| `asset-forge` | POST | `/api/v1/forge/token` | Synthesizes circular transparent character/monster token portrait and stores in Silo S3 |
-| `asset-forge` | POST | `/api/v1/forge/wardrobe` | Synthesizes a character wardrobe variant with the configured wardrobe generator (default `placeholder`, which preserves no face) and stores it in Silo S3. The response names the `generator` and states `preserves_face` |
-| `asset-forge` | GET | `/api/v1/forge/wardrobe/{id}` | Retrieves status and image URL of character wardrobe synthesis job |
-| `asset-forge` | POST | `/api/v1/forge/print-pdf` | Slices battlemaps into multi-page print-ready PDFs calibrated to 1-inch grid with crosshairs. Requires `campaign_id` and `campaign.play` |
-| `asset-forge` | POST | `/api/v1/forge/standees` | Generates folding papercraft miniature sheets with mirrored artwork, nameplates, and base tabs. Requires `campaign_id` and `campaign.play` |
-| `asset-forge` | POST | `/api/v1/forge/stl-token` | Procedurally generates watertight 3D printable STL miniature bases with condition clips. Requires `campaign_id` and `campaign.play` |
+| `gateway-api` | POST | `/api/v1/forge/battlemap` | Proxies to `asset-forge`. Procedurally generates battlemap texture, extracts wall & hazard geometry, and uploads to Silo S3 |
+| `gateway-api` | GET | `/api/v1/forge/battlemap/{asset_id}` | Proxies to `asset-forge`. Retrieves forged battlemap metadata. Needs a bearer and `forged_asset.view` |
+| `gateway-api` | GET | `/api/v1/forge/token/{asset_id}` | Proxies to `asset-forge`. Retrieves forged token metadata. Needs a bearer and `forged_asset.view` |
+| `gateway-api` | POST | `/api/v1/forge/token` | Proxies to `asset-forge`. Synthesizes circular transparent character/monster token portrait and stores in Silo S3 |
+| `gateway-api` | POST | `/api/v1/forge/wardrobe` | Proxies to `asset-forge`. Synthesizes a character wardrobe variant with the configured wardrobe generator (default `placeholder`, which preserves no face) and stores it in Silo S3. The response names the `generator` and states `preserves_face` |
+| `gateway-api` | GET | `/api/v1/forge/wardrobe/{id}` | Proxies to `asset-forge`. Retrieves status and image URL of character wardrobe synthesis job |
+| `gateway-api` | POST | `/api/v1/forge/print-pdf` | Proxies to `asset-forge`. Slices battlemaps into multi-page print-ready PDFs calibrated to 1-inch grid with crosshairs. Requires `campaign_id` and `campaign.play` |
+| `gateway-api` | POST | `/api/v1/forge/standees` | Proxies to `asset-forge`. Generates folding papercraft miniature sheets with mirrored artwork, nameplates, and base tabs. Requires `campaign_id` and `campaign.play` |
+| `gateway-api` | POST | `/api/v1/forge/stl-token` | Proxies to `asset-forge`. Procedurally generates watertight 3D printable STL miniature bases with condition clips. Requires `campaign_id` and `campaign.play` |
 | `asset-forge` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-asset-forge`, `runefoble-print-forge`) |
 | `soundscape` | POST | `/api/v1/soundscape/cue` | Triggers tactical foley sound effects or acoustic stingers (fireball, sword slash, etc.) |
 | `soundscape` | GET | `/api/v1/soundscape/tension` | Retrieves current session encounter tension score (0-100) and active stem weights |
@@ -345,9 +347,9 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/soundscape/tension/calculate` | Calculates encounter tension and adapts music stems (proxies to soundscape) |
 | `gateway-api` | POST | `/api/v1/soundscape/stems/override` | DM manual mood override forcing stem profile (Zanzibar `run_session`/`manage` required, checked by the owner) |
 | `gateway-api` | GET | `/api/v1/soundscape/leitmotif/{character_id}` | Retrieves character musical leitmotif timbre configuration (proxies to the owner's `/api/v1/soundscape/leitmotif/profile/{character_id}`) |
-| `gateway-api` | POST | `/api/v1/assets/upload` | Uploads binary or base64 assets (battlemap, avatar, audio) to Silo S3. Needs a bearer. The uploader becomes the `forged_asset` creator. An optional `campaign_id` needs `campaign.play` |
-| `gateway-api` | GET | `/api/v1/assets/{asset_id}` | Retrieves or streams stored asset files from Silo S3 storage |
-| `gateway-api` | DELETE | `/api/v1/assets/{asset_id}` | Deletes an asset. Needs bearer and `forged_asset.manage` (creator, campaign owner, or DM). `401` without a token, `403` without the right |
+| `gateway-api` | POST | `/api/v1/assets/upload` | Proxies to `asset-forge`, which stores binary or base64 assets (battlemap, avatar, audio) to Silo S3. Needs a bearer. The uploader becomes the `forged_asset` creator. An optional `campaign_id` needs `campaign.play` |
+| `gateway-api` | GET | `/api/v1/assets/{asset_id}` | Proxies to `asset-forge`. Retrieves or streams stored asset files from Silo S3 storage |
+| `gateway-api` | DELETE | `/api/v1/assets/{asset_id}` | Proxies to `asset-forge`. Deletes an asset. Needs bearer and `forged_asset.manage` (creator, campaign owner, or DM). `401` without a token, `403` without the right |
 | `gateway-api` | GET | `/api/v1/compendium/rules/search` | Proxies to `rules_compendium`: hybrid rule search. The query string reaches the owner unchanged. Needs a bearer token (`401` without one) |
 | `gateway-api` | GET | `/api/v1/compendium/monsters/{name}` | Proxies to `rules_compendium`: monster stat block. A `campaign_id` query value reads homebrew the caller may view |
 | `gateway-api` | GET | `/api/v1/compendium/spells/{name}` | Proxies to `rules_compendium`: spell definition |

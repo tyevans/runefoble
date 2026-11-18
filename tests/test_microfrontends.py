@@ -29,14 +29,9 @@ def test_board_state_ui_manifest_frontdoor(board_client):
     assert "runefoble-board" in manifest["components"]
 
 
-def test_battlemap_uploader_silo_asset_frontdoor_upload(signing_issuer):
+def test_battlemap_uploader_silo_asset_frontdoor_upload(trusted_ws_issuer, gateway_for):
     """Verify Silo S3 asset upload frontdoor endpoint integrates with map uploader contract."""
-    from gateway_api.main import app as gateway_app
-
-    gateway_client = TestClient(
-        gateway_app,
-        headers={"Authorization": f"Bearer {signing_issuer.mint('gm-decomposed')}"},
-    )
+    gateway_client = gateway_for(trusted_ws_issuer, "gm-decomposed")
     sample_png = (
         b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06"
         b"\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01"

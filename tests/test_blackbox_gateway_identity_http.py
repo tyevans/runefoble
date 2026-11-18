@@ -20,7 +20,9 @@ FOREIGN_ORIGIN = "https://attacker.example"
 
 
 @pytest.fixture
-def client(game_session_upstream, voice_agent_upstream) -> Iterator[TestClient]:
+def client(
+    game_session_upstream, voice_agent_upstream, asset_forge_upstream
+) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 

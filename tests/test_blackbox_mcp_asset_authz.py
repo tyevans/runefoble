@@ -45,7 +45,7 @@ def mcp_endpoint() -> Iterator[str]:
 
 
 @pytest.fixture
-def gateway(character_sheet_upstream, game_session_upstream, silo_double):
+def gateway(character_sheet_upstream, game_session_upstream, asset_forge_upstream, silo_double):
     """Enter the gateway lifespan after the upstreams serve."""
     with TestClient(app) as client:
         yield client

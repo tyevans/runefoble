@@ -153,8 +153,8 @@ def _get(path: str) -> Callable[[TestClient, dict[str, str]], Any]:
 
 
 @pytest.fixture
-def gateway_client(game_session_upstream) -> Iterator[TestClient]:
-    """Enter the gateway lifespan after game_session serves, so proxied routes reach it."""
+def gateway_client(game_session_upstream, asset_forge_upstream) -> Iterator[TestClient]:
+    """Enter the gateway lifespan after game_session and asset_forge serve, so proxies reach them."""
     with TestClient(gateway_app) as client:
         yield client
 

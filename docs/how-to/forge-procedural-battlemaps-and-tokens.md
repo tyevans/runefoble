@@ -6,6 +6,8 @@ This guide explains how to generate tactical battlemaps with pre-calculated wall
 
 Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
 
+Browser clients and the examples below call the forge through the API gateway on port `8000` (`/api/v1/forge/...`). The gateway forwards the bearer token to `asset_forge`, which listens on `8008` inside the cluster.
+
 ---
 
 ## 1. Procedural Battlemap Generation
@@ -13,7 +15,7 @@ Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel acces
 To synthesize a tactical grid battlemap from natural language descriptions:
 
 ```bash
-curl -X POST http://localhost:8008/api/v1/forge/battlemap \
+curl -X POST http://localhost:8000/api/v1/forge/battlemap \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
@@ -69,7 +71,7 @@ To get a different layout for the same prompt and size, send a `seed` integer. T
 To synthesize a circular token with transparent background for player characters, NPCs, or monsters:
 
 ```bash
-curl -X POST http://localhost:8008/api/v1/forge/token \
+curl -X POST http://localhost:8000/api/v1/forge/token \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{

@@ -19,6 +19,21 @@ from runefoble_platform.service_client.headers import build_upstream_headers
 
 DEFAULT_CONTENT_TYPE = "application/json"
 
+# Response headers that describe the upstream transport, not the payload. The gateway drops
+# them, because httpx has already decoded the body and the gateway sets its own framing.
+TRANSPORT_HEADERS = frozenset(
+    {
+        "connection",
+        "content-encoding",
+        "content-length",
+        "content-type",
+        "keep-alive",
+        "set-cookie",
+        "transfer-encoding",
+        "www-authenticate",
+    }
+)
+
 
 @dataclass(frozen=True)
 class UpstreamReply:
@@ -29,6 +44,8 @@ class UpstreamReply:
     body: bytes
     # The upstream authentication challenge. A 401 must carry it (RFC 9110, section 11.6.1).
     www_authenticate: str | None = None
+    # Payload headers of a 2xx answer, such as `Content-Disposition`, relayed as sent.
+    relayed_headers: tuple[tuple[str, str], ...] = ()
 
 
 class ServiceClient:
@@ -92,6 +109,11 @@ class ServiceClient:
             content_type=response.headers.get("content-type", DEFAULT_CONTENT_TYPE),
             body=response.content,
             www_authenticate=response.headers.get("www-authenticate"),
+            relayed_headers=tuple(
+                (name, value)
+                for name, value in response.headers.items()
+                if name.lower() not in TRANSPORT_HEADERS
+            ),
         )
 
     def websocket_target(self, path: str) -> tuple[str, dict[str, str]]:

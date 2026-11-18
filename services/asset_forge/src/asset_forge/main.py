@@ -19,6 +19,7 @@ from runefoble_platform.event_publish import event_publish_failures
 
 from asset_forge.dependencies import event_bus_provider, get_wardrobe_generator
 from asset_forge.map_generation_engine import get_map_generator
+from asset_forge.routers.assets import router as assets_router
 from asset_forge.routers.battlemap import router as battlemap_router
 from asset_forge.routers.print_forge import router as print_forge_router
 from asset_forge.routers.token import router as token_router
@@ -64,6 +65,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(assets_router)
 app.include_router(battlemap_router)
 app.include_router(token_router)
 app.include_router(print_forge_router)

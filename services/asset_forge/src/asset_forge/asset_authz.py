@@ -1,14 +1,15 @@
 """SpiceDB checks and ownership writes for stored media assets (ADR-0001).
 
 Every call fails closed. A SpiceDB error becomes a 503 response. It never becomes a
-denial or a success.
+denial or a success. These checks cover the Silo asset routes. The forge routes keep
+their own checks in `dependencies.py`.
 """
 
 from __future__ import annotations
 
 from fastapi import HTTPException
-from gateway_api.auth import get_spicedb_client
 from runefoble_auth.errors import AuthzError
+from runefoble_auth.spicedb import SpiceDBClient
 
 
 def _unavailable(message: str) -> HTTPException:
@@ -17,12 +18,10 @@ def _unavailable(message: str) -> HTTPException:
     )
 
 
-async def require_campaign_play(user_id: str, campaign_id: str) -> None:
+async def require_campaign_play(spicedb: SpiceDBClient, user_id: str, campaign_id: str) -> None:
     """Allow an asset to join a campaign only when the user can play in that campaign."""
     try:
-        allowed = await get_spicedb_client().check_permission(
-            "campaign", campaign_id, "play", "user", user_id
-        )
+        allowed = await spicedb.check_permission("campaign", campaign_id, "play", "user", user_id)
     except AuthzError as exc:
         raise _unavailable("Authorization service is unavailable.") from exc
     if not allowed:
@@ -32,10 +31,10 @@ async def require_campaign_play(user_id: str, campaign_id: str) -> None:
         )
 
 
-async def require_asset_manage(user_id: str, asset_id: str) -> None:
+async def require_asset_manage(spicedb: SpiceDBClient, user_id: str, asset_id: str) -> None:
     """Allow only when the schema grants `forged_asset.manage` on the asset to the user."""
     try:
-        allowed = await get_spicedb_client().check_permission(
+        allowed = await spicedb.check_permission(
             "forged_asset", asset_id, "manage", "user", user_id
         )
     except AuthzError as exc:
@@ -47,28 +46,28 @@ async def require_asset_manage(user_id: str, asset_id: str) -> None:
         )
 
 
-async def write_asset_ownership(asset_id: str, creator_id: str, campaign_id: str | None) -> None:
+async def write_asset_ownership(
+    spicedb: SpiceDBClient, asset_id: str, creator_id: str, campaign_id: str | None
+) -> None:
     """Write the creator tuple and, when given, the campaign tuple for a new asset."""
-    client = get_spicedb_client()
     try:
-        await client.write_relationship("forged_asset", asset_id, "creator", "user", creator_id)
+        await spicedb.write_relationship("forged_asset", asset_id, "creator", "user", creator_id)
         if campaign_id:
-            await client.write_relationship(
+            await spicedb.write_relationship(
                 "forged_asset", asset_id, "campaign", "campaign", campaign_id
             )
     except AuthzError as exc:
         raise _unavailable("Authorization service did not record the asset owner.") from exc
 
 
-async def revoke_asset_ownership(asset_id: str) -> None:
+async def revoke_asset_ownership(spicedb: SpiceDBClient, asset_id: str) -> None:
     """Remove every creator and campaign tuple of a deleted asset."""
-    client = get_spicedb_client()
     try:
         for relation in ("creator", "campaign"):
-            for rel in await client.read_relationships(
+            for rel in await spicedb.read_relationships(
                 resource_type="forged_asset", resource_id=asset_id, relation=relation
             ):
-                await client.delete_relationship(
+                await spicedb.delete_relationship(
                     "forged_asset", asset_id, relation, rel.subject_type, rel.subject_id
                 )
     except AuthzError as exc:
