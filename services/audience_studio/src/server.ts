@@ -8,8 +8,8 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import websocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance } from 'fastify';
+import { AudienceAccess } from './access/audienceAccess.js';
 import { ApprovalQueue } from './approvalQueue.js';
-import { ZanzibarClient } from './auth.js';
 import type { Adapters } from './adapters.js';
 import { principalOf } from './identity/principal.js';
 import { registerIdentityHook } from './identity/identityHook.js';
@@ -21,11 +21,12 @@ import { PollEngine } from './pollEngine.js';
 import { createAudienceRoutes } from './routes.js';
 import type { StreamPublisher } from './streamPublisher.js';
 import type { EventStore } from './eventStore/types.js';
+import type { SpiceDbPort } from './spicedb/spicedbPort.js';
 import { WebSocketManager } from './websocket.js';
 
 export interface ServerOptions {
-  spicedbEndpoint?: string;
-  spicedbToken: string;
+  /** Authorization port. Production passes the SpiceDB gRPC client. Tests pass a fake at this boundary. */
+  spicedb: SpiceDbPort;
   /** Zitadel issuer, audience, and optional JWKS URL. Every route verifies tokens against them. */
   zitadel: ZitadelSettings;
   logger?: boolean;
@@ -37,7 +38,7 @@ export interface AppContext {
   server: FastifyInstance;
   pollEngine: PollEngine;
   approvalQueue: ApprovalQueue;
-  auth: ZanzibarClient;
+  access: AudienceAccess;
   eventStore: EventStore;
   streamPublisher: StreamPublisher;
   wsManager: WebSocketManager;
@@ -57,12 +58,12 @@ export async function buildServer(options: ServerOptions): Promise<AppContext> {
   // Fails start-up when the database is unreachable (ADR-0015 decision f).
   await eventStore.init();
 
-  const auth = new ZanzibarClient(options.spicedbEndpoint, options.spicedbToken);
+  const access = new AudienceAccess(options.spicedb);
   const repo = new AudienceEventRepository(eventStore, streamPublisher, log);
   const mutex = new KeyedMutex();
-  const approvalQueue = new ApprovalQueue(auth, repo, mutex, log);
-  const pollEngine = new PollEngine(repo, mutex, approvalQueue, log);
-  const wsManager = new WebSocketManager(pollEngine, approvalQueue);
+  const approvalQueue = new ApprovalQueue(access, repo, mutex, log);
+  const pollEngine = new PollEngine(repo, mutex, approvalQueue, access, log);
+  const wsManager = new WebSocketManager(pollEngine, approvalQueue, access, log);
 
   server.addHook('onClose', async () => {
     pollEngine.close();
@@ -124,11 +125,19 @@ export async function buildServer(options: ServerOptions): Promise<AppContext> {
     return server.swagger();
   });
 
-  // WebSocket Route for Live DM Approval & Audience Updates
-  server.get('/ws/audience/:campaignId', { websocket: true }, (socket, req) => {
-    const { campaignId } = req.params as { campaignId: string };
-    wsManager.handleConnection(socket, campaignId, principalOf(req));
-  });
+  // WebSocket Route for Live DM Approval & Audience Updates. The handshake needs campaign view (TASK-0554).
+  server.get<{ Params: { campaignId: string } }>(
+    '/ws/audience/:campaignId',
+    {
+      websocket: true,
+      preHandler: async (req) => {
+        await access.requireCampaign(principalOf(req), req.params.campaignId, 'view');
+      },
+    },
+    (socket, req) => {
+      wsManager.handleConnection(socket, req.params.campaignId, principalOf(req));
+    }
+  );
 
   // Register REST API routes
   await server.register(
@@ -139,5 +148,5 @@ export async function buildServer(options: ServerOptions): Promise<AppContext> {
   // Rebuild open polls and their timers from the event store.
   await pollEngine.restore();
 
-  return { server, pollEngine, approvalQueue, auth, eventStore, streamPublisher, wsManager };
+  return { server, pollEngine, approvalQueue, access, eventStore, streamPublisher, wsManager };
 }

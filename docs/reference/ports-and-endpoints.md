@@ -81,7 +81,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `the-watcher` | GET | `/factions/{faction_id}/resources` | Queries current faction treasury, contraband, and mercenaries (alias: `/api/v1/factions/{faction_id}/resources`, Zanzibar enforced) |
 | `the-watcher` | POST | `/the-watcher/factions/skirmish/simulate` | Simulates ad-hoc boundary skirmish, evaluates terrain advantage and casualties, captures territory, and escalates unrest (alias: `/api/v1/factions/skirmish/simulate`, Zanzibar enforced) |
 | `the-watcher` | GET | `/the-watcher/regions/{region_id}/unrest` | Queries regional unrest score, security alert posture, and economic friction modifier (alias: `/api/v1/regions/{region_id}/unrest`, Zanzibar enforced) |
-| `game-session` | POST | `/api/v1/sessions/create` | Initializes a new event-sourced game session |
+| `game-session` | POST | `/api/v1/sessions/create` | Initializes a new event-sourced game session and links it to `campaign_id` in SpiceDB (`session` and `game_session` objects), so campaign members can observe and control it |
 | `game-session` | GET | `/api/v1/sessions/{session_id}` | Loads session state reconstituted from the event stream |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and publishes `SessionStarted` event |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/join` | Enters player participant and bound character into session lobby |
@@ -94,6 +94,9 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `game-session` | POST | `/api/v1/sessions/{session_id}/lobby/character` | Records the character a player brings to the lobby (`lobby` status only). Saved as `CharacterSelectedForLobby` |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/roll` | Evaluates a dice roll and records it as `DiceRolled`. Returns 404 for an unknown session |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Hands off active turn and token control from AI stand-in to authenticating player mid-session without disrupting combat round |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/next-turn` | Advances the session turn counter and saves `TurnAdvanced`. Requires `active` status |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/dm-override` | Records a DM override (`action`, `reason`, `payload`) as `DMOverrideApplied`. The override appears in `dm_overrides` on the session read model. Returns 404 for an unknown session (TASK-0581) |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Sets the session location, lighting, mood, and ambient audio prompt as `AtmosphereUpdated`. The value appears in `atmosphere` on the session read model. Returns 404 for an unknown session (TASK-0581) |
 | `game-session` | POST | `/sessions/{session_id}/reactions/declare` | Halts active combat turn and initiates reaction window within 500ms (alias: `/api/v1/sessions/{session_id}/reactions/declare`) |
 | `game-session` | POST | `/sessions/{session_id}/reactions/ready-action` | Registers conditional ready-action trigger evaluated against combat events (alias: `/api/v1/sessions/{session_id}/reactions/ready-action`) |
 | `game-session` | POST | `/sessions/{session_id}/reactions/{reaction_id}/resolve` | Resolves or dismisses declared reaction interrupt, resuming active turn (alias: `/api/v1/sessions/{session_id}/reactions/{reaction_id}/resolve`) |
@@ -171,8 +174,10 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `board-state` | POST | `/api/v1/boards/{board_id}/traps/{trap_id}/disarm` | Disarms an active trap on the tactical board (alias: `/boards/{board_id}/traps/{trap_id}/disarm`) |
 | `board-state` | WS | `/ws/boards/{session_id}` | Real-time tactical board WebSocket stream for kinematic dragging, radial token actions, live rotatable AoE previews, and spell VFX |
 | `board-state` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-board`, `runefoble-tactical-board`, `runefoble-map-uploader`, `runefoble-radial-menu`, `runefoble-aoe-template`) |
-| `character-sheet` | POST | `/api/v1/characters` | Creates a new character with initial level and spell slots (alias: `/api/v1/characters/create`) |
-| `character-sheet` | GET | `/api/v1/characters/{id}` | Retrieves character sheet details, stats, equipment, and active conditions |
+| `character-sheet` | GET | `/api/v1/characters` | Lists the characters the verified caller may `view`. Optional `campaignId` query filters one campaign's party |
+| `character-sheet` | POST | `/api/v1/characters` | Creates a new character. The verified caller becomes its SpiceDB `owner`. Returns the roster view with `owner_id` (alias: `/api/v1/characters/create`) |
+| `character-sheet` | GET | `/api/v1/characters/{id}` | Retrieves character sheet details, stats, equipment, and active conditions (requires `view`) |
+| `character-sheet` | PATCH | `/api/v1/characters/{id}/campaign` | Assigns or unassigns the campaign and writes or removes the `character#campaign` tuple (requires `edit`) |
 | `character-sheet` | POST | `/api/v1/characters/{id}/level-up` | Levels up character, increasing HP and unlocking class spell slots |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/prepare` | Prepares a spell in the character's active spellbook. With `is_prepared: false`, unprepares it and emits `SpellUnprepared` |
 | `character-sheet` | POST | `/api/v1/characters/{id}/spells/cast` | Expends a spell slot to cast a spell with slot exhaustion validation |
@@ -267,19 +272,24 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/sessions` | Proxies to `game_session`: sessions and staging lobbies of a campaign (requires `view`) |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/sessions` | Proxies to `game_session`: creates a session or staging lobby (requires `run_session`). Returns `201` |
 | `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/roles` | Proxies to `game_session`: grants `dungeon_master`, `game_master`, `player`, or `spectator` (requires `manage`). `owner` returns `422`. A failed SpiceDB write returns `502` through the gateway |
+| `gateway-api` | GET | `/api/v1/sessions/{session_id}` | Proxies to `game_session`: session state (requires `observe`) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/start` | Proxies to `game_session`: moves a lobby to `active` (requires `control`) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Proxies to `game_session`: hands turn control to a player. Body `{playerId?, characterId}`. The owner releases the stand-in in `character_sheet` (requires `observe`) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/turns/advance` | Proxies to `game_session` `next-turn`: advances the turn (requires `control`) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/dm-override` | Proxies to `game_session`: records a DM override (requires `control`) |
+| `gateway-api` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Proxies to `game_session`: sets location, lighting, and mood (requires `control`) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/atlas` | Retrieves world atlas map layers, milestone pins, and geopolitical territories (requires `view`) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/codex` | Retrieves campaign lore codex entries and cross-references (requires `view`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}` | Retrieves campaign chronicle analytics and telemetry summary (requires `view`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/heatmap` | Retrieves combat spatial damage and strike heatmap data (requires `view`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/mvp` | Retrieves turn MVP awards and combatant performance statistics (requires `view`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/timeline` | Retrieves chronological campaign milestones and narrative chronicle events (requires `view`) |
-| `gateway-api` | GET | `/api/v1/characters` | Lists characters where authenticated user has SpiceDB Zanzibar `owner` or `view` relation |
-| `gateway-api` | POST | `/api/v1/characters` | Creates new character, registers ownership in SpiceDB Zanzibar (`character:id#owner@user:id`), returns character details |
-| `gateway-api` | GET | `/api/v1/characters/{character_id}` | Retrieves character details (requires Zanzibar `view`) |
-| `gateway-api` | PATCH | `/api/v1/characters/{character_id}/campaign` | Assigns or unassigns character to/from campaign and updates Zanzibar campaign tuple (requires `edit`) |
+| `gateway-api` | GET | `/api/v1/characters` | Proxies to `character_sheet` (`view` filter, optional `campaignId`). Adds `campaign_title` from `game_session` |
+| `gateway-api` | POST | `/api/v1/characters` | Proxies to `character_sheet`, which writes the owner tuple. Returns 201. Returns 422 for `level`, `currentHp`, `portraitUrl`, `isAiStandIn` or `id` values the owner cannot store |
+| `gateway-api` | GET | `/api/v1/characters/{character_id}` | Proxies to `character_sheet` (requires `view`, checked by the owner) |
+| `gateway-api` | PATCH | `/api/v1/characters/{character_id}/campaign` | Proxies to `character_sheet` (requires `edit`, checked and written by the owner) |
 | `gateway-api` | PUT | `/api/v1/characters/{character_id}/guardrails` | Configures tactical guardrail constraints for character stand-in AI (requires `edit`) |
 | `gateway-api` | GET | `/api/v1/characters/{character_id}/guardrails` | Retrieves active tactical guardrails for character stand-in AI (requires `view`) |
-| `gateway-api` | DELETE | `/api/v1/characters/{character_id}` | Deletes character record and cleans up SpiceDB Zanzibar relationship tuples (requires `owner`) |
 | `gateway-api` | GET | `/api/v1/auth/sync/health` | Reports Zanzibar synchronization service health and SpiceDB connectivity |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and broadcasts launch event over WebSockets (requires `run_session`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Hands off character control from AI stand-in to returning player mid-session (requires `play_as_character`) |
@@ -328,7 +338,7 @@ Every `voice-agent` HTTP route except `GET /healthz` and `GET /ui/manifest` requ
 
 Every `voice-agent` WebSocket route (`/api/v1/voice/duplex/ws/...`, `/api/v1/voice/stream/ws/...`) admits the handshake only with a valid `runefoble.bearer.<jwt>` subprotocol. The service accepts with `runefoble.v1`. A refused handshake closes with code `1008` before accept.
 
-`game-session` forwards the caller's `Authorization` header on `POST /api/v1/voice/dsp/condition`. No service credential exists yet (ADR-0015 e). Until one exists, the caller's token is the only credential for that call.
+`game-session` forwards the caller's `Authorization` header on `POST /api/v1/voice/dsp/condition`. `voice-agent` does not accept the service credential yet (ADR-0015 e). Until it does, the caller's token is the only credential for that call.
 
 ## Gateway Proxy Identity and Errors
 
@@ -366,7 +376,7 @@ Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavai
 
 Public routes: `/healthz`, `/health`, `/ui/manifest`, and `/openapi.json`.
 
-The shared settings are `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, and `RUNEFOBLE_ZITADEL_JWKS_URL`. The Helm chart sets them for each service.
+The shared settings are `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, and `RUNEFOBLE_ZITADEL_INTERNAL_URL`. The Helm chart sets them for each service. The audience comes from the Secret `runefoble-zitadel-client`.
 
 ## Infrastructure Ports
 

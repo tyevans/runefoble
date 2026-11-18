@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build dev dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync check-ui-manifests
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -118,6 +118,10 @@ images: ## Build every service image (Python and Node) and load it into the Kind
 	docker build -f services/audience_studio/Dockerfile -t runefoble/audience-studio:$(IMAGE_VERSION) . || exit 1
 	@echo "==> Loading runefoble/audience-studio:$(IMAGE_VERSION) into Kind cluster $(CLUSTER_NAME)"
 	kind load docker-image runefoble/audience-studio:$(IMAGE_VERSION) --name $(CLUSTER_NAME)
+	@echo "==> Building runefoble/frontend:$(IMAGE_VERSION) (App Shell, nginx port 80)"
+	docker build -f frontend/Dockerfile -t runefoble/frontend:$(IMAGE_VERSION) . || exit 1
+	@echo "==> Loading runefoble/frontend:$(IMAGE_VERSION) into Kind cluster $(CLUSTER_NAME)"
+	kind load docker-image runefoble/frontend:$(IMAGE_VERSION) --name $(CLUSTER_NAME)
 
 voice-model-cache: ## Pre-fetch the faster-whisper model and copy it into the voice-agent pod (Kind)
 	@echo "==> Downloading faster-whisper $(VOICE_MODEL_SIZE) into $(VOICE_MODEL_HOST_DIR)..."
@@ -238,7 +242,10 @@ pre-commit: ## Run all pre-commit hooks across the repository
 	@echo "==> Running pre-commit hooks..."
 	uv run pre-commit run --all-files
 
-build: ## Build frontend assets and static Storybook
+check-ui-manifests: ## Fail when a service UI manifest is missing or invalid (ADR-0013, ADR-0015)
+	@uv run python -m runefoble_platform.ui_manifest $$(find services -path '*/ui/manifest.json' -not -path '*/node_modules/*' | sort)
+
+build: check-ui-manifests ## Build frontend assets and static Storybook
 	@echo "==> Building frontend application..."
 	cd frontend && pnpm run build
 	@echo "==> Building static Storybook site..."

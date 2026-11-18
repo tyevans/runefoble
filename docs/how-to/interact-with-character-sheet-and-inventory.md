@@ -130,7 +130,7 @@ The roster displays a responsive grid of owned adventurers with:
 |---|---|---|---|
 | **"Inspect Sheet"** | `@inspect-character` | `{ characterId, character }` | Navigates to full character sheet view or opens character details. |
 | **"Assign to Campaign"** | `@assign-campaign` | `{ characterId, campaignId, campaignTitle }` | Opens party assignment dialog to link character to an active campaign or unassign. |
-| **"Delete"** | `@delete-character` | `{ characterId }` | Opens confirmation dialog and dispatches deletion event upon approval. |
+| **"Delete"** | `@delete-character` | `{ characterId }` | Opens confirmation dialog. No API route serves deletion yet: the gateway has no delete route and `character_sheet` has no delete operation (TASK-0585). |
 | **"+ Create Character"** | `@create-character` | `CreateCharacterPayload` | Opens builder modal and emits character creation payload upon submission. |
 
 ### Character Builder Modal (`<runefoble-character-builder-modal>`)
@@ -211,7 +211,7 @@ The application shell (`frontend/src/runefoble-app.ts`) routes `#/characters/:ch
 The complete end-to-end lifecycle across the Gateway API, SpiceDB Zanzibar authorization, pre-game lobby synchronization, and active VTT character card binding is verified via dual blackbox test suites:
 
 - **Python Gateway & Zanzibar Suite** (`tests/test_blackbox_character_management_and_vtt_sync.py`):
-  - `test_character_crud_and_zanzibar_ownership`: Frontdoor character creation via `POST /api/v1/characters`, SpiceDB owner tuple verification, and owner-only deletion.
+  - `test_character_crud_and_zanzibar_ownership`: Frontdoor character creation via `POST /api/v1/characters` and SpiceDB owner tuple verification. The gateway proxies the call to `character_sheet` (TASK-0585).
   - `test_character_campaign_assignment`: Verifies `PATCH /api/v1/characters/{id}/campaign` writes campaign relationships, propagates view permissions to campaign members, and revokes access upon unassignment.
   - `test_character_listing_filtered_by_zanzibar_visibility`: Verifies character listing isolation and campaign party visibility.
   - `test_profile_endpoint_claims_and_roles`: Verifies `GET /api/v1/profile` Zitadel OIDC claims and role assertions.

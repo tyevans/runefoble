@@ -1,0 +1,111 @@
+{{- if and .Values.zitadel.enabled .Values.zitadel.bootstrap.enabled -}}
+{{- /*
+Bootstrap Job for Zitadel (TASK-0687). It runs after install and upgrade. It is idempotent:
+it finds or creates the project and the web application, then server-side applies the Secret
+`zitadel.client.secretName` with the generated project ID and client ID.
+The Job runs the gateway-api image, which contains runefoble_auth.
+*/ -}}
+{{- $hook := "pre-install,pre-upgrade" -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: zitadel-bootstrap
+  labels:
+    app: zitadel-bootstrap
+  annotations:
+    "helm.sh/hook": {{ $hook }}
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: zitadel-bootstrap
+  labels:
+    app: zitadel-bootstrap
+  annotations:
+    "helm.sh/hook": {{ $hook }}
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+rules:
+  # Server-side apply creates the Secret on the first run and patches it on later runs.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: [{{ include "runefoble.zitadelClientSecretName" . | quote }}]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: zitadel-bootstrap
+  labels:
+    app: zitadel-bootstrap
+  annotations:
+    "helm.sh/hook": {{ $hook }}
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: zitadel-bootstrap
+subjects:
+  - kind: ServiceAccount
+    name: zitadel-bootstrap
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: zitadel-bootstrap
+  labels:
+    app: zitadel-bootstrap
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        app: zitadel-bootstrap
+    spec:
+      serviceAccountName: zitadel-bootstrap
+      automountServiceAccountToken: true
+      restartPolicy: OnFailure
+      containers:
+        - name: bootstrap
+          image: {{ .Values.services.gatewayApi.image }}
+          command: ["python", "-m", "runefoble_auth.zitadel_bootstrap_job"]
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: KUBERNETES_API_URL
+              value: "https://kubernetes.default.svc"
+            - name: ZITADEL_ADMIN_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.zitadel.bootstrap.adminSecret | quote }}
+                  key: pat
+            - name: RUNEFOBLE_ZITADEL_ISSUER
+              value: {{ include "runefoble.zitadelIssuer" $ | quote }}
+            - name: RUNEFOBLE_ZITADEL_INTERNAL_URL
+              value: {{ include "runefoble.zitadelInternalUrl" $ | quote }}
+            - name: RUNEFOBLE_ZITADEL_CLIENT_SECRET_NAME
+              value: {{ include "runefoble.zitadelClientSecretName" $ | quote }}
+            - name: RUNEFOBLE_ZITADEL_PROJECT_NAME
+              value: {{ .Values.zitadel.bootstrap.projectName | quote }}
+            - name: RUNEFOBLE_ZITADEL_APP_NAME
+              value: {{ .Values.zitadel.bootstrap.appName | quote }}
+            - name: RUNEFOBLE_ZITADEL_REDIRECT_URIS
+              value: {{ join "," .Values.zitadel.bootstrap.redirectUris | quote }}
+            - name: RUNEFOBLE_ZITADEL_POST_LOGOUT_URIS
+              value: {{ join "," .Values.zitadel.bootstrap.postLogoutRedirectUris | quote }}
+            - name: RUNEFOBLE_ZITADEL_DEV_MODE
+              value: {{ .Values.zitadel.bootstrap.devMode | quote }}
+{{- end }}

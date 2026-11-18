@@ -17,9 +17,9 @@ class WorkerSettings(BaseSettings):
     )
 
     # Service credential (ADR-0015 e). No default value. The worker refuses to start when unset.
-    inference_service_token: SecretStr = Field(
-        validation_alias=AliasChoices("RUNEFOBLE_INFERENCE_SERVICE_TOKEN"),
-        description="Bearer credential that callers such as The Watcher must present",
+    service_credential: SecretStr = Field(
+        validation_alias=AliasChoices("RUNEFOBLE_SERVICE_CREDENTIAL"),
+        description="Service credential that callers such as The Watcher must present",
     )
 
     host: str = Field(default="0.0.0.0", description="Bind host")
@@ -60,9 +60,9 @@ class WorkerSettings(BaseSettings):
     max_tokens: int = Field(default=512, ge=1, le=8192)
     timeout_seconds: float = Field(default=30.0, gt=0.0)
 
-    @field_validator("inference_service_token")
+    @field_validator("service_credential")
     @classmethod
-    def _token_is_not_blank(cls, value: SecretStr) -> SecretStr:
+    def _credential_is_not_blank(cls, value: SecretStr) -> SecretStr:
         if not value.get_secret_value().strip():
-            raise ValueError("RUNEFOBLE_INFERENCE_SERVICE_TOKEN must not be blank")
+            raise ValueError("RUNEFOBLE_SERVICE_CREDENTIAL must not be blank")
         return value

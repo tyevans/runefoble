@@ -10,7 +10,7 @@ Governed by:
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Generator, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -18,9 +18,8 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus as set_gw_event_bus
-from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import SpiceDBClient
 from soundscape.dependencies import (
+    get_spicedb_client,
     reset_dependencies,
     set_spicedb_client,
 )
@@ -38,16 +37,20 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(autouse=True)
-def clean_environment() -> Generator[None]:
-    """Ensure clean soundscape and gateway state for each test."""
-    mock_db = get_spicedb_client()
-    set_spicedb_client(mock_db)
+def clean_environment(default_spicedb_client) -> Generator[None]:
+    """Ensure clean soundscape and gateway state for each test.
+
+    Soundscape and the gateway share the conftest SpiceDB mock. The live game_session upstream
+    writes its ownership tuples there, so soundscape must read the same store.
+    """
+    previous_soundscape = get_spicedb_client()
+    set_spicedb_client(default_spicedb_client)
     set_gw_event_bus(None)
     reset_dependencies()
-    set_spicedb_client(mock_db)
+    set_spicedb_client(default_spicedb_client)
     yield
     reset_dependencies()
-    set_spicedb_client(SpiceDBClient())
+    set_spicedb_client(previous_soundscape)
     set_gw_event_bus(None)
 
 
@@ -72,22 +75,25 @@ def sample_stem_volumes() -> dict[str, float]:
 
 
 @pytest.fixture
-def soundscape_session_id(trusted_ws_issuer) -> str:
-    """Create a campaign and a session through the gateway frontdoor. The default subject owns both."""
-    gateway = TestClient(gateway_app)
-    campaign = gateway.post(
-        "/api/v1/campaigns",
-        json={"title": "Soundscape Vault", "setting": "Underdark"},
-        headers=auth_headers("soundscape-tester"),
-    )
-    assert campaign.status_code == 201, campaign.text
-    session = gateway.post(
-        f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
-        json={"title": "Echoing Depths"},
-        headers=auth_headers("soundscape-tester"),
-    )
-    assert session.status_code == 201, session.text
-    return session.json()["id"]
+def soundscape_session_id(trusted_ws_issuer, game_session_upstream) -> Iterator[str]:
+    """Create a campaign and a session through the gateway frontdoor. The default subject owns both.
+
+    The gateway proxies to the live game_session upstream, so the client enters the gateway lifespan.
+    """
+    with TestClient(gateway_app) as gateway:
+        campaign = gateway.post(
+            "/api/v1/campaigns",
+            json={"title": "Soundscape Vault", "setting": "Underdark"},
+            headers=auth_headers("soundscape-tester"),
+        )
+        assert campaign.status_code == 201, campaign.text
+        session = gateway.post(
+            f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+            json={"title": "Echoing Depths"},
+            headers=auth_headers("soundscape-tester"),
+        )
+        assert session.status_code == 201, session.text
+        yield session.json()["id"]
 
 
 @pytest.fixture

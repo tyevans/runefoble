@@ -8,6 +8,9 @@ from typing import Literal
 from pydantic import AliasChoices, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Environments where a missing dependency must stop a service at start-up (ADR-0015 4).
+DEPLOYED_ENVIRONMENTS = frozenset({"staging", "production"})
+
 
 class PlatformSettings(BaseSettings):
     """Platform-wide environment configuration."""
@@ -61,6 +64,11 @@ class PlatformSettings(BaseSettings):
         return self
 
     @property
+    def is_deployed(self) -> bool:
+        """True when the environment is a deployed one (staging or production)."""
+        return self.environment in DEPLOYED_ENVIRONMENTS
+
+    @property
     def postgres_dsn(self) -> str:
         """Alias for database_url for backward compatibility."""
         return self.database_url
@@ -99,18 +107,22 @@ class PlatformSettings(BaseSettings):
         validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_AUDIENCE", "ZITADEL_AUDIENCE"),
         description="Expected 'aud' claim. Empty means use zitadel_client_id.",
     )
-    zitadel_jwks_url: str | None = Field(
+    zitadel_internal_url: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_JWKS_URL", "ZITADEL_JWKS_URL"),
-        description="Zitadel JWKS keys endpoint URL",
+        validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_INTERNAL_URL"),
+        description=(
+            "Origin that serves Zitadel inside the cluster, for example http://zitadel:8080. "
+            "Discovery and JWKS requests go here with Host set to the issuer host. Empty means "
+            "the issuer serves them directly."
+        ),
     )
 
-    # Service-to-service credential (ADR-0015 e). No default value. The Watcher presents it to
-    # the inference worker. The worker refuses to start without the same value.
-    inference_service_token: SecretStr | None = Field(
+    # Service-to-service credential (ADR-0015 e). No default value. The caller presents it in
+    # the X-Runefoble-Service-Credential header. The receiver refuses to start without it.
+    service_credential: SecretStr | None = Field(
         default=None,
-        validation_alias=AliasChoices("RUNEFOBLE_INFERENCE_SERVICE_TOKEN"),
-        description="Bearer credential for calls to the inference worker (Kubernetes Secret)",
+        validation_alias=AliasChoices("RUNEFOBLE_SERVICE_CREDENTIAL"),
+        description="Service credential shared by services and the MCP gateway (Kubernetes Secret)",
     )
 
     # Authorization & Zanzibar (SpiceDB)

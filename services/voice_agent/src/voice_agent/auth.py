@@ -25,7 +25,7 @@ def get_voice_verifier() -> ZitadelAuthService:
         _verifier = ZitadelAuthService(
             issuer=settings.zitadel_issuer,
             audience=settings.zitadel_audience,
-            jwks_url=settings.zitadel_jwks_url,
+            internal_url=settings.zitadel_internal_url,
         )
     return _verifier
 
@@ -46,3 +46,11 @@ __all__ = [
     "get_voice_verifier",
     "set_voice_verifier",
 ]
+
+
+def caller_headers(authorization: str | None) -> dict[str, str]:
+    """Return the headers that forward the speaker's own bearer to a downstream service.
+
+    The downstream service verifies the token itself. No identity is set here.
+    """
+    return {"Authorization": authorization} if authorization else {}

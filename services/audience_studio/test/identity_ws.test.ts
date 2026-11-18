@@ -10,15 +10,18 @@ import { connect, type Socket } from 'node:net';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, test } from 'node:test';
 import type { AppContext } from '../src/server.js';
+import { FakeSpiceDb } from './fakeSpiceDb.js';
 import { mintWithForeignKey, startService, TestIssuer } from './helpers.js';
 
 let issuer: TestIssuer;
 let ctx: AppContext;
 let port: number;
+const spicedb = new FakeSpiceDb();
 
 before(async () => {
   issuer = await TestIssuer.start();
-  ctx = await startService(issuer);
+  spicedb.grant('camp-live', 'spectator', 'viewer-ws');
+  ctx = await startService(issuer, { spicedb });
   await ctx.server.listen({ port: 0, host: '127.0.0.1' });
   port = (ctx.server.server.address() as AddressInfo).port;
 });
@@ -91,6 +94,13 @@ describe('WebSocket handshake identity', () => {
     const forged = await mintWithForeignKey('mallory');
     const outcome = await handshake(PATH, ['runefoble.v1', `runefoble.bearer.${forged}`]);
     assert.equal(outcome.status, 401);
+  });
+
+  test('a verified principal without campaign view is refused with 403 before accept', async () => {
+    const stranger = await issuer.mint('stranger-ws');
+    const outcome = await handshake(PATH, ['runefoble.v1', `runefoble.bearer.${stranger}`]);
+    assert.equal(outcome.status, 403);
+    assert.equal(outcome.headers['sec-websocket-protocol'], undefined);
   });
 
   test('a valid bearer subprotocol is accepted with runefoble.v1 and never echoes the token', async () => {

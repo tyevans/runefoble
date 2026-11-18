@@ -6,9 +6,11 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 
 ### Campaign Analytics & Chronicle Events (`aggregate_type: CampaignChronicle`)
 
-- **`ChronicleMilestoneRecorded`**: Emitted when a campaign or session milestone is committed to the chronicle timeline (`runefoble.events.analytics.milestone_recorded`). Fields: `milestone_id`, `campaign_id`, `session_id`, `title`, `description`, `milestone_type`, `tags`, `timestamp`.
-- **`CombatTelemetrySnapshotCreated`**: Emitted when a combat round telemetry snapshot is finalized (`runefoble.events.analytics.telemetry_snapshot_created`). Fields: `snapshot_id`, `campaign_id`, `session_id`, `encounter_id`, `round_number`, `spatial_points`, `damage_events`, `timestamp`.
-- **`EncounterMvpAwarded`**: Emitted when an MVP award is conferred for encounter performance (`runefoble.events.analytics.mvp_awarded`). Fields: `award_id`, `campaign_id`, `session_id`, `encounter_id`, `combatant_id`, `combatant_name`, `category`, `score`, `rationale`, `timestamp`.
+Aggregate state: `CampaignChronicleAggregate` (`services/campaign_analytics/src/campaign_analytics/aggregate.py`). Its aggregate id is a UUID v5 of the campaign id.
+
+- **`ChronicleMilestoneRecorded`**: Recorded by `campaign_analytics` for each milestone and saved to the event store before its projection row is written (`runefoble.events.analytics.milestone_recorded`). Fields: `campaign_id_str`, `session_id_str`, `milestone_type`, `title`, `description`, `metadata`. The timeline row id is not the event id.
+- **`CombatTelemetrySnapshotCreated`**: Defined, not produced by any service yet (`runefoble.events.analytics.telemetry_snapshot_created`). Fields: `campaign_id_str`, `session_id_str`, `total_damage`, `total_movements`, `active_combatants`.
+- **`EncounterMvpAwarded`**: Defined, not produced by any service yet (`runefoble.events.analytics.mvp_awarded`). Fields: `campaign_id_str`, `session_id_str`, `encounter_id`, `combatant_id`, `combatant_name`, `award_title`, `metric_name`, `score`. MVP awards are computed at query time from `combat_performance_records`.
 
 ### Downtime, Crafting, Tavern Minigames & Merchant Haggling Events
 For full schemas of `CraftingAttempted`, `CraftingSucceeded`, `CraftingMishapOccurred`, `CampfireRestCompleted`, `StrongholdCreated`, and `StrongholdUpgraded`, see [`downtime-and-crafting-events.md`](downtime-and-crafting-events.md).

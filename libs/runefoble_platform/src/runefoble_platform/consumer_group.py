@@ -53,6 +53,11 @@ class RedisConsumerGroup:
                 return False
             raise e
 
+    async def set_group_position(self, stream: str, group_name: str, position: str) -> None:
+        """Move the group's last-delivered id with XGROUP SETID. Messages after it are delivered."""
+        client = await self.get_client()
+        await client.xgroup_setid(stream, group_name, position)
+
     async def read_group(
         self,
         stream: str,

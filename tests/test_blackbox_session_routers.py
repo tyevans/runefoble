@@ -10,6 +10,11 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 
+from tests.helpers.watcher_double import (
+    STAND_IN_ACTION_BODY,
+    serve_watcher_double,
+    watcher_stand_in_app,
+)
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -60,7 +65,11 @@ def test_game_session_lifecycle_frontdoor(session_client):
 
     create_res = session_client.post(
         "/api/v1/sessions/create",
-        json={"campaign_id": str(uuid4()), "title": "Test Session", "dm_id": "dm_alice"},
+        json={
+            "campaign_id": _owned_campaign(session_client),
+            "title": "Test Session",
+            "dm_id": "dm_alice",
+        },
     )
     assert create_res.status_code == 200
     session_id = create_res.json()["session_id"]
@@ -72,11 +81,15 @@ def test_game_session_lifecycle_frontdoor(session_client):
     assert start_res.status_code == 200 and start_res.json()["status"] == "active"
 
 
-def test_game_session_turns_frontdoor(session_client):
+def test_game_session_turns_frontdoor(session_client, monkeypatch):
     """Verify turn advancement, combat initiative rotation, and autopilot frontdoors."""
     c_res = session_client.post(
         "/api/v1/sessions/create",
-        json={"campaign_id": str(uuid4()), "title": "Combat Session", "dm_id": "dm_alice"},
+        json={
+            "campaign_id": _owned_campaign(session_client),
+            "title": "Combat Session",
+            "dm_id": "dm_alice",
+        },
     )
     session_id, char_id = c_res.json()["session_id"], str(uuid4())
     p_data = {
@@ -116,16 +129,24 @@ def test_game_session_turns_frontdoor(session_client):
         f"/api/v1/sessions/{session_id}/leave", json={"player_id": "p-1", "reason": "pizza"}
     )
     payload = {"penalties": ["foolishness"]}
-    for endpoint in ["/turns/auto-pilot", "/autopilot"]:
-        res = session_client.post(f"/api/v1/sessions/{session_id}{endpoint}", json=payload)
-        assert res.status_code == 200 and res.json()["action"]["character_name"] == "Valeros"
+    with serve_watcher_double(
+        watcher_stand_in_app(body={**STAND_IN_ACTION_BODY, "character_name": "Valeros"})
+    ) as watcher_url:
+        monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", watcher_url)
+        for endpoint in ["/turns/auto-pilot", "/autopilot"]:
+            res = session_client.post(f"/api/v1/sessions/{session_id}{endpoint}", json=payload)
+            assert res.status_code == 200 and res.json()["action"]["character_name"] == "Valeros"
 
 
 def test_game_session_presence_frontdoor(session_client):
     """Verify player join and leave presence frontdoors."""
     c_res = session_client.post(
         "/api/v1/sessions/create",
-        json={"campaign_id": str(uuid4()), "title": "Presence Session", "dm_id": "dm_bob"},
+        json={
+            "campaign_id": _owned_campaign(session_client),
+            "title": "Presence Session",
+            "dm_id": "dm_bob",
+        },
     )
     session_id = c_res.json()["session_id"]
     cid = str(uuid4())
@@ -143,7 +164,11 @@ def test_game_session_dice_frontdoor(session_client):
     """Verify session dice rolling frontdoor."""
     c_res = session_client.post(
         "/api/v1/sessions/create",
-        json={"campaign_id": str(uuid4()), "title": "Dice Session", "dm_id": "dm_carol"},
+        json={
+            "campaign_id": _owned_campaign(session_client),
+            "title": "Dice Session",
+            "dm_id": "dm_carol",
+        },
     )
     session_id = c_res.json()["session_id"]
     session_client.post(f"/api/v1/sessions/{session_id}/start")
@@ -153,3 +178,10 @@ def test_game_session_dice_frontdoor(session_client):
         json={"formula": "2d6+3", "roller_name": "Valeros"},
     )
     assert roll_res.status_code == 200 and roll_res.json()["total"] >= 5
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

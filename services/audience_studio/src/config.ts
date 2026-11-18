@@ -1,5 +1,5 @@
 /**
- * Startup configuration for identity and the SpiceDB preshared key (TASK-0533, TASK-0625).
+ * Startup configuration for identity and SpiceDB (TASK-0533, TASK-0554, TASK-0625).
  *
  * Neither value has a default. A missing value stops the service at start-up.
  */
@@ -7,6 +7,19 @@
 import type { ZitadelSettings } from './identity/zitadelVerifier.js';
 
 export const SPICEDB_PRESHARED_KEY_VAR = 'RUNEFOBLE_SPICEDB_PRESHARED_KEY';
+export const SPICEDB_ENDPOINT_VAR = 'RUNEFOBLE_SPICEDB_ENDPOINT';
+
+/**
+ * Read the SpiceDB endpoint. It has no default. Without it, every permission check would fail,
+ * so the service refuses to start (TASK-0554).
+ */
+export function readSpicedbEndpoint(env: NodeJS.ProcessEnv): string {
+  const endpoint = env[SPICEDB_ENDPOINT_VAR];
+  if (!endpoint) {
+    throw new Error(`${SPICEDB_ENDPOINT_VAR} is not set. The service cannot check audience permissions without it.`);
+  }
+  return endpoint;
+}
 
 /**
  * Read the SpiceDB preshared key from the environment.
@@ -29,7 +42,7 @@ export function readSpicedbPresharedKey(env: NodeJS.ProcessEnv): string {
 
 /**
  * Read the Zitadel verification settings. The issuer and audience are required.
- * The JWKS URL is optional. Without it, the service reads it from OIDC discovery.
+ * The internal URL is optional. Set it when the issuer host is not resolvable from the pod.
  */
 export function readZitadelSettings(env: NodeJS.ProcessEnv): ZitadelSettings {
   const issuer = env.RUNEFOBLE_ZITADEL_ISSUER;
@@ -40,6 +53,6 @@ export function readZitadelSettings(env: NodeJS.ProcessEnv): ZitadelSettings {
   if (!audience) {
     throw new Error('RUNEFOBLE_ZITADEL_AUDIENCE is not set. The service cannot verify tokens without it.');
   }
-  const jwksUrl = env.RUNEFOBLE_ZITADEL_JWKS_URL || undefined;
-  return { issuer, audience, jwksUrl };
+  const internalUrl = env.RUNEFOBLE_ZITADEL_INTERNAL_URL || undefined;
+  return { issuer, audience, internalUrl };
 }

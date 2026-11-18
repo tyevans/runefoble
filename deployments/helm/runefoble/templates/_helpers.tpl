@@ -15,11 +15,35 @@ so every service must set RUNEFOBLE_ZITADEL_ISSUER to exactly this value.
 {{- end -}}
 
 {{/*
-In-cluster JWKS endpoint. Services fetch signing keys here, because the browser-facing
-host is not resolvable from a pod.
+In-cluster Zitadel origin. Services and the bootstrap Job send discovery and JWKS requests here.
+Zitadel serves only its external host, so each request also carries Host set to the issuer host.
 */}}
-{{- define "runefoble.zitadelJwksUrl" -}}
-{{- printf "http://zitadel:%d/oauth/v2/keys" (int .Values.zitadel.port) -}}
+{{- define "runefoble.zitadelInternalUrl" -}}
+{{- printf "http://zitadel:%d" (int .Values.zitadel.port) -}}
+{{- end -}}
+
+{{/*
+Name of the Secret that the bootstrap Job writes. It holds the generated project ID and client ID.
+*/}}
+{{- define "runefoble.zitadelClientSecretName" -}}
+{{- .Values.zitadel.client.secretName -}}
+{{- end -}}
+
+{{/*
+Zitadel verification env for a service container. Call with $ and pipe to nindent.
+The audience is the project ID that the bootstrap Job wrote, because the App Shell requests
+the project audience scope.
+*/}}
+{{- define "runefoble.zitadelServiceEnv" -}}
+- name: RUNEFOBLE_ZITADEL_ISSUER
+  value: {{ include "runefoble.zitadelIssuer" . | quote }}
+- name: RUNEFOBLE_ZITADEL_INTERNAL_URL
+  value: {{ include "runefoble.zitadelInternalUrl" . | quote }}
+- name: RUNEFOBLE_ZITADEL_AUDIENCE
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "runefoble.zitadelClientSecretName" . }}
+      key: project-id
 {{- end -}}
 
 {{/*
@@ -40,4 +64,11 @@ Call with (dict "root" $ "name" "ENV_NAME" "key" "secret-key") and pipe to ninde
     secretKeyRef:
       name: {{ include "runefoble.credentialsSecret" .root }}
       key: {{ .key }}
+{{- end -}}
+
+{{/*
+Service-to-service credential (ADR-0015 e), read from the credentials Secret, key service-credential.
+*/}}
+{{- define "runefoble.serviceCredentialEnv" -}}
+{{- include "runefoble.secretEnv" (dict "root" . "name" "RUNEFOBLE_SERVICE_CREDENTIAL" "key" "service-credential") -}}
 {{- end -}}

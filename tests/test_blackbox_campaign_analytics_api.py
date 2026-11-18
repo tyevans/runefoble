@@ -1,204 +1,159 @@
-"""Blackbox TDD frontdoor test suite for Campaign Analytics REST API endpoints.
+"""Blackbox frontdoor tests for Campaign Analytics REST routes and authorization.
 
 Governed by:
 - ADR-0003: UV Monorepo Workspace for Python BCs
-- ADR-0005: Kubernetes-First Infrastructure with Helm and Kind
+- ADR-0015: bearer tokens and SpiceDB object authorization
 - Hard Invariant 1: SpiceDB Zanzibar object authorization
-- Hard Invariant 6: File length limit (< 500 lines, target < 200 lines)
 - Hard Invariant 7: Blackbox TDD with Frontdoor Setup
+
+Setup publishes domain events to the Redis Streams transport. Assertions read public routes.
 """
 
 from __future__ import annotations
 
 from uuid import uuid4
 
-import pytest
-from campaign_analytics.dependencies import set_spicedb_client, set_storage, set_worker
-from campaign_analytics.main import app
-from campaign_analytics.storage import CampaignAnalyticsStorage
-from campaign_analytics.worker import CampaignAnalyticsWorker
 from fastapi.testclient import TestClient
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
-from runefoble_platform.consumer_group import RedisConsumerGroup
+from runefoble_events.events import CharacterHealthChanged, CombatRoundAdvanced, SessionCreated
 
-from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import SIGNING_ISSUER
-
-
-async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
-    """Give the signed-in test member view rights on a campaign.
-
-    campaign_analytics has no public campaign-creation frontdoor, so the view relation is
-    seeded in the authorization double. Tests that assert deny paths do not call this.
-    """
-    await spicedb_client.write_relationship(
-        resource_type="campaign",
-        resource_id=campaign_id,
-        relation="view",
-        subject_type="user",
-        subject_id="user-test",
-    )
+from tests.helpers.campaign_analytics_service import (
+    CHARACTER_STREAM,
+    SESSION_STREAM,
+    AnalyticsService,
+    bearer,
+    wait_until,
+)
 
 
-def bearer(sub: str) -> dict[str, str]:
-    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
-    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+def _timeline_titles(client: TestClient, cid: str) -> list[str]:
+    body = client.get(f"/api/v1/analytics/campaigns/{cid}/timeline").json()
+    return [m["title"] for m in body.get("milestones", [])]
 
 
-@pytest.fixture
-def storage() -> CampaignAnalyticsStorage:
-    return CampaignAnalyticsStorage()
-
-
-@pytest.fixture
-def spicedb_client() -> MockSpiceDBClient:
-    return MockSpiceDBClient()
-
-
-@pytest.fixture
-def client(storage: CampaignAnalyticsStorage, spicedb_client: MockSpiceDBClient) -> TestClient:
-    mock_redis = MockAsyncRedis()
-    cg = RedisConsumerGroup(client=mock_redis)
-    worker = CampaignAnalyticsWorker(storage=storage, consumer_group=cg)
-    set_storage(storage)
-    set_worker(worker)
-    set_spicedb_client(spicedb_client)
-    return TestClient(app, headers=bearer("user-test"))
-
-
-def test_service_healthz_metrics_and_manifest(client: TestClient) -> None:
+def test_service_healthz_metrics_and_manifest(analytics_service: AnalyticsService) -> None:
     """Verify /healthz, /metrics, /openapi.json, and /ui/manifest public frontdoors."""
-    health = client.get("/healthz").json()
-    assert health == {"status": "ok", "service": "campaign-analytics", "consumers": {}}
-    assert "spatial_records_count" in client.get("/metrics").json()
-    paths = client.get("/openapi.json").json()["paths"]
-    assert "/api/v1/analytics/campaigns/{id}/heatmap" in paths
-    assert "/api/v1/analytics/campaigns/{id}/mvp" in paths
-    assert "/api/v1/analytics/campaigns/{id}/timeline" in paths
+    with analytics_service.start() as client:
+        health = client.get("/healthz").json()
+        assert health == {
+            "status": "ok",
+            "service": "campaign-analytics",
+            "consumers": {"analytics": "running"},
+        }
+        metrics = client.get("/metrics").json()
+        assert metrics["spatial_records_count"] == 0
+        assert metrics["milestones_count"] == 0
 
-    manifest = client.get("/ui/manifest").json()
-    assert manifest["service"] == "campaign-analytics"
-    assert "runefoble-combat-heatmap" in manifest["components"]
+        paths = client.get("/openapi.json").json()["paths"]
+        assert "/api/v1/analytics/campaigns/{id}/heatmap" in paths
+        assert "/api/v1/analytics/campaigns/{id}/mvp" in paths
+        assert "/api/v1/analytics/campaigns/{id}/timeline" in paths
+
+        manifest = client.get("/ui/manifest").json()
+        assert manifest["service"] == "campaign-analytics"
+        assert "runefoble-combat-heatmap" in manifest["components"]
 
 
-@pytest.mark.asyncio
-async def test_campaign_analytics_api_heatmap(
-    spicedb_client: MockSpiceDBClient, client: TestClient, storage: CampaignAnalyticsStorage
-) -> None:
-    """Verify spatial heatmap REST endpoint schemas, bucketing, and query parameters."""
+def test_mvp_route_filters_by_encounter(analytics_service: AnalyticsService) -> None:
+    """The MVP route returns only combatants of the requested encounter."""
     cid, sid = str(uuid4()), str(uuid4())
-    await grant_view(spicedb_client, cid)
-    await storage.record_spatial(cid, sid, "tok-1", "Valeros", 12, 18, "movement")
-    await storage.record_spatial(cid, sid, "tok-1", "Valeros", 12, 18, "damage", damage=25)
+    valeros, kyra = str(uuid4()), str(uuid4())
+    analytics_service.grant_view(cid)
 
-    # Default cell_size=5
-    resp = client.get(f"/api/v1/analytics/campaigns/{cid}/heatmap?session_id={sid}")
-    assert resp.status_code == 200, resp.text
-    data = resp.json()
-    assert data["campaign_id"] == cid
-    assert data["session_id"] == sid
-    assert data["total_points"] == 2
-    cell = next(c for c in data["cells"] if c["x"] == 10 and c["y"] == 15)
-    assert cell["movement_count"] == 1
-    assert cell["damage_total"] == 25
-
-    # Filter cell_size=10 and metric=damage
-    resp10 = client.get(
-        f"/api/v1/analytics/campaigns/{cid}/heatmap?cell_size=10&metric=damage&session_id={sid}"
-    )
-    assert resp10.status_code == 200
-    d10 = resp10.json()
-    assert d10["cell_size"] == 10
-    assert d10["total_points"] == 1
-
-
-@pytest.mark.asyncio
-async def test_campaign_analytics_api_mvp(
-    spicedb_client: MockSpiceDBClient, client: TestClient, storage: CampaignAnalyticsStorage
-) -> None:
-    """Verify combat MVP statistics REST endpoint and encounter filtering."""
-    cid, sid, enc_id = str(uuid4()), str(uuid4()), "enc-boss"
-    await grant_view(spicedb_client, cid)
-    valeros_id, kyra_id = str(uuid4()), str(uuid4())
-
-    await storage.record_combatant_stat(
-        cid, sid, enc_id, valeros_id, "Valeros", damage_dealt=65, critical_hits=1, turns_taken=1
-    )
-    await storage.record_combatant_stat(
-        cid, sid, enc_id, kyra_id, "Kyra", healing_provided=35, turns_taken=1
-    )
-
-    resp = client.get(
-        f"/api/v1/analytics/campaigns/{cid}/mvp?session_id={sid}&encounter_id={enc_id}"
-    )
-    assert resp.status_code == 200, resp.text
-    mvp_data = resp.json()
-    assert mvp_data["campaign_id"] == cid
-    assert mvp_data["overall_mvp"]["recipient_id"] == valeros_id
-
-    awards = {a["title"]: a for a in mvp_data["awards"]}
-    assert awards["Most Lethal"]["recipient_name"] == "Valeros"
-    assert awards["Most Lethal"]["score"] == 65
-    assert awards["Guardian Angel"]["recipient_name"] == "Kyra"
-    assert awards["Guardian Angel"]["score"] == 35
-
-
-@pytest.mark.asyncio
-async def test_campaign_analytics_api_timeline(
-    spicedb_client: MockSpiceDBClient, client: TestClient, storage: CampaignAnalyticsStorage
-) -> None:
-    """Verify chronicle milestone timeline REST endpoint and limit parameter filtering."""
-    cid, sid = str(uuid4()), str(uuid4())
-    await grant_view(spicedb_client, cid)
-    await storage.record_milestone(
-        cid, sid, "session_start", "Session Started", "Began", "2026-09-01"
-    )
-    await storage.record_milestone(cid, sid, "recap", "Chronicle Recap", "Summary", "2026-09-02")
-    await storage.record_milestone(cid, sid, "session_end", "Session Ended", "Ended", "2026-09-03")
-
-    resp = client.get(f"/api/v1/analytics/campaigns/{cid}/timeline?limit=2")
-    assert resp.status_code == 200, resp.text
-    t_data = resp.json()
-    assert t_data["campaign_id"] == cid
-    assert t_data["total_milestones"] == 3
-    assert len(t_data["milestones"]) == 2
-    assert t_data["milestones"][0]["type"] == "session_start"
-
-
-@pytest.mark.asyncio
-async def test_blackbox_spicedb_zanzibar_authorization(
-    client: TestClient,
-    storage: CampaignAnalyticsStorage,
-    spicedb_client: MockSpiceDBClient,
-) -> None:
-    """Verify fine-grained SpiceDB Zanzibar permissions across campaign analytics endpoints."""
-    campaign_id = "camp-secure-123"
-    storage.session_to_campaign["sess-1"] = campaign_id
-
-    # 1. Without credentials -> 401. There is no public view (ADR-0015).
-    anonymous = TestClient(app)
-    resp_pub = anonymous.get(f"/api/v1/analytics/campaigns/{campaign_id}/timeline")
-    assert resp_pub.status_code == 401
-
-    # 2. With unauthorized user ID header -> 403 Forbidden across all routers
-    for endpoint in ("timeline", "heatmap", "mvp"):
-        resp_forbidden = client.get(
-            f"/api/v1/analytics/campaigns/{campaign_id}/{endpoint}",
-            headers=bearer("unauthorized-intruder"),
+    with analytics_service.start() as client:
+        analytics_service.publish(
+            SESSION_STREAM,
+            SessionCreated(aggregate_id=sid, session_id=sid, campaign_id=cid, title="Boss"),
         )
-        assert resp_forbidden.status_code == 403
-        assert "Forbidden" in resp_forbidden.json()["detail"]
+        analytics_service.publish(
+            SESSION_STREAM,
+            CombatRoundAdvanced(
+                aggregate_id=sid,
+                session_id=sid,
+                campaign_id=cid,
+                round_number=1,
+                active_combatant_id=valeros,
+            ),
+        )
+        # Session and character streams are consumed by separate loops. Wait for the round,
+        # so the damage is credited to the active combatant.
+        assert wait_until(lambda: "Combat Round 1" in _timeline_titles(client, cid))
+        analytics_service.publish(
+            CHARACTER_STREAM,
+            CharacterHealthChanged(
+                aggregate_id=kyra,
+                session_id=sid,
+                campaign_id=cid,
+                delta=-65,
+                current_hp=10,
+                max_hp=80,
+            ),
+        )
 
-    # 3. Grant 'view' permission in Zanzibar -> 200 OK
-    await spicedb_client.write_relationship(
-        resource_type="campaign",
-        resource_id=campaign_id,
-        relation="view",
-        subject_type="user",
-        subject_id="authorized-player",
-    )
-    resp_ok = client.get(
-        f"/api/v1/analytics/campaigns/{campaign_id}/timeline",
-        headers=bearer("authorized-player"),
-    )
-    assert resp_ok.status_code == 200
+        def valeros_dealt_damage() -> bool:
+            body = client.get(f"/api/v1/analytics/campaigns/{cid}/mvp").json()
+            return any(
+                c["combatant_id"] == valeros and c["damage_dealt"] == 65
+                for c in body.get("combatants", [])
+            )
+
+        assert wait_until(valeros_dealt_damage)
+
+        resp = client.get(
+            f"/api/v1/analytics/campaigns/{cid}/mvp?session_id={sid}&encounter_id=enc-none"
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["combatants"] == []
+        assert resp.json()["overall_mvp"] is None
+
+
+def test_timeline_route_applies_limit(analytics_service: AnalyticsService) -> None:
+    """The timeline route returns the total count and only `limit` milestones."""
+    cid, sid = str(uuid4()), str(uuid4())
+    analytics_service.grant_view(cid)
+
+    with analytics_service.start() as client:
+        analytics_service.publish(
+            SESSION_STREAM,
+            SessionCreated(aggregate_id=sid, session_id=sid, campaign_id=cid, title="One"),
+        )
+        analytics_service.publish(
+            SESSION_STREAM,
+            CombatRoundAdvanced(
+                aggregate_id=sid,
+                session_id=sid,
+                campaign_id=cid,
+                round_number=2,
+                active_combatant_id="",
+            ),
+        )
+        assert wait_until(lambda: len(_timeline_titles(client, cid)) == 2)
+
+        resp = client.get(f"/api/v1/analytics/campaigns/{cid}/timeline?limit=1")
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["total_milestones"] == 2
+        assert len(body["milestones"]) == 1
+
+
+def test_campaign_analytics_routes_require_view_permission(
+    analytics_service: AnalyticsService,
+) -> None:
+    """Anonymous callers get 401. Callers without view rights get 403. Viewers get 200."""
+    cid = str(uuid4())
+    with analytics_service.start(authenticated=False) as anon:
+        assert anon.get(f"/api/v1/analytics/campaigns/{cid}/timeline").status_code == 401
+
+    intruder_headers = bearer("unauthorized-intruder")
+    viewer_headers = bearer("authorized-player")
+    analytics_service.grant_view(cid, user_id="authorized-player")
+
+    with analytics_service.start() as client:
+        for endpoint in ("timeline", "heatmap", "mvp"):
+            resp = client.get(
+                f"/api/v1/analytics/campaigns/{cid}/{endpoint}", headers=intruder_headers
+            )
+            assert resp.status_code == 403
+            assert "Forbidden" in resp.json()["detail"]
+
+        resp_ok = client.get(f"/api/v1/analytics/campaigns/{cid}/timeline", headers=viewer_headers)
+        assert resp_ok.status_code == 200

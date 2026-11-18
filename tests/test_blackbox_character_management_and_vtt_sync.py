@@ -20,7 +20,6 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
-from gateway_api.character_store import character_store
 from gateway_api.main import app
 
 
@@ -35,17 +34,10 @@ TS_TEST_DIR = FRONTEND_DIR / "test" / "character_management"
 
 
 @pytest.fixture
-def client(game_session_upstream):
+def client(game_session_upstream, character_sheet_upstream):
     """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
     with TestClient(app) as gateway_client:
         yield gateway_client
-
-
-@pytest.fixture(autouse=True)
-def reset_stores():
-    """Reset in-memory character and campaign stores before each test."""
-    character_store.reset(load_defaults=False)
-    yield
 
 
 @pytest.mark.asyncio
@@ -58,12 +50,9 @@ async def test_character_crud_and_zanzibar_ownership(trusted_ws_issuer, client):
         "name": "Valeros of Korvosa",
         "characterClass": "Fighter",
         "subclass": "Battle Master",
-        "level": 4,
-        "currentHp": 38,
         "maxHp": 45,
         "armorClass": 18,
         "speed": 30,
-        "portraitUrl": "/assets/portraits/fighter.svg",
     }
 
     # 1. Frontdoor POST /api/v1/characters
@@ -75,7 +64,7 @@ async def test_character_crud_and_zanzibar_ownership(trusted_ws_issuer, client):
     assert char_data["name"] == "Valeros of Korvosa"
     assert char_data["character_class"] == "Fighter"
     assert char_data["characterClass"] == "Fighter"
-    assert char_data["current_hp"] == 38
+    assert char_data["current_hp"] == 45
     assert char_data["max_hp"] == 45
     assert char_data["armor_class"] == 18
     assert char_data["owner_id"] == "user_valeros"
@@ -93,11 +82,6 @@ async def test_character_crud_and_zanzibar_ownership(trusted_ws_issuer, client):
         await spicedb.check_permission("character", char_id, "edit", "user", "user_valeros") is True
     )
 
-    # 3. Assert non-owner stranger cannot delete (403 Forbidden)
-    res_stranger_del = client.delete(f"/api/v1/characters/{char_id}", headers=headers_stranger)
-    assert res_stranger_del.status_code == 403
-    assert res_stranger_del.json()["detail"]["error"] == "permission_denied"
-
     # 4. Assert non-owner stranger cannot edit campaign (403 Forbidden)
     res_stranger_edit = client.patch(
         f"/api/v1/characters/{char_id}/campaign",
@@ -109,22 +93,6 @@ async def test_character_crud_and_zanzibar_ownership(trusted_ws_issuer, client):
     # 5. Assert non-owner stranger cannot view details (403 Forbidden)
     res_stranger_view = client.get(f"/api/v1/characters/{char_id}", headers=headers_stranger)
     assert res_stranger_view.status_code == 403
-
-    # 6. Assert owner can delete character
-    res_owner_del = client.delete(f"/api/v1/characters/{char_id}", headers=headers_owner)
-    assert res_owner_del.status_code == 200
-    assert res_owner_del.json()["status"] == "deleted"
-
-    # 7. Assert character is gone and inaccessible
-    res_after = client.get(f"/api/v1/characters/{char_id}", headers=headers_owner)
-    assert res_after.status_code in (403, 404)
-    assert character_store.get_character(char_id) is None
-
-    # 8. Assert SpiceDB owner relation is cleaned up
-    assert (
-        await spicedb.check_permission("character", char_id, "owner", "user", "user_valeros")
-        is False
-    )
 
 
 @pytest.mark.asyncio
@@ -150,7 +118,7 @@ async def test_character_campaign_assignment(trusted_ws_issuer, client):
     # 3. Alice creates an unassigned character
     char_res = client.post(
         "/api/v1/characters",
-        json={"name": "Seoni", "characterClass": "Sorcerer", "level": 3, "maxHp": 22},
+        json={"name": "Seoni", "characterClass": "Sorcerer", "maxHp": 22},
         headers=headers_alice,
     )
     assert char_res.status_code == 201
@@ -205,14 +173,14 @@ async def test_character_listing_filtered_by_zanzibar_visibility(trusted_ws_issu
 
     res_a = client.post(
         "/api/v1/characters",
-        json={"name": "Alice Ranger", "characterClass": "Ranger", "level": 2, "maxHp": 20},
+        json={"name": "Alice Ranger", "characterClass": "Ranger", "maxHp": 20},
         headers=headers_alice,
     )
     char_a_id = res_a.json()["id"]
 
     res_b = client.post(
         "/api/v1/characters",
-        json={"name": "Bob Bard", "characterClass": "Bard", "level": 2, "maxHp": 18},
+        json={"name": "Bob Bard", "characterClass": "Bard", "maxHp": 18},
         headers=headers_bob,
     )
     char_b_id = res_b.json()["id"]

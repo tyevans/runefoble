@@ -19,6 +19,10 @@ from the_watcher.routers.intent import speech
 
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+WATCHER_CALLER = "test-user"
 
 WORKER_503 = {"error": "backend_unavailable", "backend": "openai_compatible"}
 
@@ -104,7 +108,10 @@ def _fake_board(tokens: dict[str, Any]) -> FastAPI:
 
 
 async def _post(path: str, payload: dict[str, Any]):
-    async with AsyncClient(transport=ASGITransport(app=watcher_app), base_url="http://test") as ac:
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(WATCHER_CALLER)}"}
+    async with AsyncClient(
+        transport=ASGITransport(app=watcher_app), base_url="http://test", headers=headers
+    ) as ac:
         return await ac.post(path, json=payload)
 
 

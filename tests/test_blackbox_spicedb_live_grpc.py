@@ -12,9 +12,11 @@ Membership is created through the public frontdoors (campaign create, invite, jo
 Only the live SpiceDB client test writes or deletes tuples directly.
 """
 
+import os
 from collections.abc import Iterator
 from uuid import uuid4
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
@@ -47,9 +49,7 @@ def _create_campaign_with_session(tc: TestClient, owner_headers: dict[str, str])
     assert res.status_code == 201
     campaign_id = res.json()["id"]
 
-    sessions = tc.get(f"/api/v1/campaigns/{campaign_id}/sessions", headers=owner_headers)
-    assert sessions.status_code == 200
-    return campaign_id, sessions.json()[0]["id"]
+    return campaign_id, _owner_session(campaign_id, owner_headers)
 
 
 def _join_with_invite(
@@ -76,7 +76,7 @@ def _join_with_invite(
 
 @pytest.mark.asyncio
 async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway_tc):
-    """Verify invite-based membership and enforcement using MockSpiceDBClient."""
+    """Verify invite-based membership and enforcement using the strict mock SpiceDB client."""
     tc = gateway_tc
 
     owner = _bearer(trusted_ws_issuer, f"owner-{uuid4().hex[:6]}")
@@ -94,7 +94,7 @@ async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway
     # Player can view session but cannot advance turn
     res_view = tc.get(f"/api/v1/sessions/{session_id}", headers=user_alice)
     assert res_view.status_code == 200
-    assert res_view.json()["id"] == session_id
+    assert res_view.json()["session_id"] == session_id
 
     res_adv = tc.post(
         f"/api/v1/sessions/{session_id}/turns/advance",
@@ -104,13 +104,14 @@ async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway
     assert res_adv.status_code == 403
 
     # The owner runs the session as DM and can advance turn
+    assert tc.post(f"/api/v1/sessions/{session_id}/start", headers=owner).status_code == 200
     res_adv_dm = tc.post(
         f"/api/v1/sessions/{session_id}/turns/advance",
         headers=owner,
         json={"next_character_id": "c1"},
     )
     assert res_adv_dm.status_code == 200
-    assert res_adv_dm.json()["status"] == "turn_advanced"
+    assert tc.get(f"/api/v1/sessions/{session_id}", headers=owner).json()["current_turn"] == 2
 
 
 @pytest.mark.asyncio
@@ -129,46 +130,46 @@ async def test_live_spicedb_frontdoor_role_assignment_and_checks(
     assert "definition campaign" in schema_text
     assert "relation dungeon_master: user" in schema_text
 
-    with shared_spicedb_client(live_client):
-        tc = gateway_tc
-        dm = _bearer(trusted_ws_issuer, "dm_garrick")
-        player = _bearer(trusted_ws_issuer, "player_talia")
-        camp_id, session_id = _create_campaign_with_session(tc, dm)
+    shared_spicedb_client(live_client).start()
 
-        # Before membership -> 403 Forbidden
-        assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 403
+    tc = gateway_tc
+    dm = _bearer(trusted_ws_issuer, "dm_garrick")
+    player = _bearer(trusted_ws_issuer, "player_talia")
+    camp_id, session_id = _create_campaign_with_session(tc, dm)
 
-        # Redeem a player invite through the frontdoor
-        _join_with_invite(tc, camp_id, dm, player, role="player")
+    # Before membership -> 403 Forbidden
+    assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 403
 
-        # Player can view session but cannot advance turn
-        assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 200
-        res_player_adv = tc.post(
-            f"/api/v1/sessions/{session_id}/turns/advance",
-            headers=player,
-            json={"next_character_id": "char_1"},
-        )
-        assert res_player_adv.status_code == 403
+    # Redeem a player invite through the frontdoor
+    _join_with_invite(tc, camp_id, dm, player, role="player")
 
-        # The campaign owner (DM) advances turn
-        res_dm_adv = tc.post(
-            f"/api/v1/sessions/{session_id}/turns/advance",
-            headers=dm,
-            json={"next_character_id": "char_1"},
-        )
-        assert res_dm_adv.status_code == 200
-        assert res_dm_adv.json()["status"] == "turn_advanced"
+    # Player can view session but cannot advance turn
+    assert tc.get(f"/api/v1/sessions/{session_id}", headers=player).status_code == 200
+    res_player_adv = tc.post(
+        f"/api/v1/sessions/{session_id}/turns/advance",
+        headers=player,
+        json={"next_character_id": "char_1"},
+    )
+    assert res_player_adv.status_code == 403
 
-        # Direct permission check via live SpiceDB client
-        assert await live_client.check_permission(
-            "campaign", camp_id, "view", "user", "player_talia"
-        )
-        assert not await live_client.check_permission(
-            "campaign", camp_id, "run_session", "user", "player_talia"
-        )
-        assert await live_client.check_permission(
-            "campaign", camp_id, "run_session", "user", "dm_garrick"
-        )
+    # The campaign owner (DM) starts the session and advances the turn
+    assert tc.post(f"/api/v1/sessions/{session_id}/start", headers=dm).status_code == 200
+    res_dm_adv = tc.post(
+        f"/api/v1/sessions/{session_id}/turns/advance",
+        headers=dm,
+        json={"next_character_id": "char_1"},
+    )
+    assert res_dm_adv.status_code == 200
+    assert tc.get(f"/api/v1/sessions/{session_id}", headers=dm).json()["current_turn"] == 2
+
+    # Direct permission check via live SpiceDB client
+    assert await live_client.check_permission("campaign", camp_id, "view", "user", "player_talia")
+    assert not await live_client.check_permission(
+        "campaign", camp_id, "run_session", "user", "player_talia"
+    )
+    assert await live_client.check_permission(
+        "campaign", camp_id, "run_session", "user", "dm_garrick"
+    )
 
 
 @pytest.mark.asyncio
@@ -184,23 +185,36 @@ async def test_live_spicedb_relationship_deletion_and_revocation(
         token="test_deletion_token",
     )
     await bootstrap_schema(client=live_client)
-    with shared_spicedb_client(live_client):
-        tc = gateway_tc
+    shared_spicedb_client(live_client).start()
+    tc = gateway_tc
 
-        owner = _bearer(trusted_ws_issuer, "owner_revocation")
-        member = _bearer(trusted_ws_issuer, "user_revoked")
-        camp_id, session_id = _create_campaign_with_session(tc, owner)
+    owner = _bearer(trusted_ws_issuer, "owner_revocation")
+    member = _bearer(trusted_ws_issuer, "user_revoked")
+    camp_id, session_id = _create_campaign_with_session(tc, owner)
 
-        # Membership through the invite frontdoor -> 200
-        _join_with_invite(tc, camp_id, owner, member, role="player")
-        assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 200
+    # Membership through the invite frontdoor -> 200
+    _join_with_invite(tc, camp_id, owner, member, role="player")
+    assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 200
 
-        # Delete the relationship in live SpiceDB and verify immediately denied
-        await live_client.delete_relationship(
-            resource_type="campaign",
-            resource_id=camp_id,
-            relation="player",
-            subject_type="user",
-            subject_id="user_revoked",
-        )
-        assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 403
+    # Delete the relationship in live SpiceDB and verify immediately denied
+    await live_client.delete_relationship(
+        resource_type="campaign",
+        resource_id=camp_id,
+        relation="player",
+        subject_type="user",
+        subject_id="user_revoked",
+    )
+    assert tc.get(f"/api/v1/sessions/{session_id}", headers=member).status_code == 403
+
+
+def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
+    """Create a game session in a campaign through the owner's public game_session route."""
+    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/sessions/create",
+        json={"campaign_id": campaign_id, "title": "Crypt"},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
+    return res.json()["session_id"]

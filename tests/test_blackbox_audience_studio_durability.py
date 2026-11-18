@@ -21,6 +21,7 @@ import redis
 
 from tests.helpers.audience_server import AudienceStudioProcess, bearer_for, get_free_port
 from tests.helpers.redis_container import redis_container
+from tests.helpers.spicedb import LiveSpiceDB
 
 STREAM = "runefoble.events.audience"
 POLLS = "/api/v1/audience/polls"
@@ -58,9 +59,21 @@ def database_url(postgres_service) -> Generator[str]:
     yield str(postgres_service["dsn"])
 
 
-def test_poll_and_votes_survive_a_restart(database_url: str):
+@pytest.fixture(scope="module")
+def roles(live_spicedb_with_schema: LiveSpiceDB) -> LiveSpiceDB:
+    """Grants the campaign roles these scenarios use, written into the live SpiceDB container."""
+    spicedb = live_spicedb_with_schema
+    spicedb.grant("camp-durable", "dungeon_master", "dm-durable")
+    spicedb.grant("camp-durable", "spectator", "viewer-restart")
+    spicedb.grant("camp-durable", "spectator", "viewer-window")
+    spicedb.grant("camp-recover", "dungeon_master", "dm-durable")
+    spicedb.grant("camp-recover", "spectator", "viewer-recover")
+    return spicedb
+
+
+def test_poll_and_votes_survive_a_restart(database_url: str, roles: LiveSpiceDB):
     """A poll and its votes are read back after the service restarts."""
-    process = AudienceStudioProcess({"RUNEFOBLE_DATABASE_URL": database_url})
+    process = AudienceStudioProcess({"RUNEFOBLE_DATABASE_URL": database_url, **roles.env})
     base_url = process.start()
     try:
         with httpx.Client(base_url=base_url) as client:
@@ -74,7 +87,7 @@ def test_poll_and_votes_survive_a_restart(database_url: str):
     finally:
         process.stop()
 
-    restarted = AudienceStudioProcess({"RUNEFOBLE_DATABASE_URL": database_url})
+    restarted = AudienceStudioProcess({"RUNEFOBLE_DATABASE_URL": database_url, **roles.env})
     base_url = restarted.start()
     try:
         with httpx.Client(base_url=base_url) as client:
@@ -88,11 +101,13 @@ def test_poll_and_votes_survive_a_restart(database_url: str):
         restarted.stop()
 
 
-def test_short_window_poll_closes_after_restart_and_publishes_completion(database_url: str):
+def test_short_window_poll_closes_after_restart_and_publishes_completion(
+    database_url: str, roles: LiveSpiceDB
+):
     """A poll whose window ends while the service is down closes on restart and emits completion."""
     with redis_container(get_free_port()) as redis_url:
         process = AudienceStudioProcess(
-            {"RUNEFOBLE_DATABASE_URL": database_url, "REDIS_URL": redis_url}
+            {"RUNEFOBLE_DATABASE_URL": database_url, "REDIS_URL": redis_url, **roles.env}
         )
         base_url = process.start()
         try:
@@ -110,7 +125,7 @@ def test_short_window_poll_closes_after_restart_and_publishes_completion(databas
         time.sleep(2.5)
 
         restarted = AudienceStudioProcess(
-            {"RUNEFOBLE_DATABASE_URL": database_url, "REDIS_URL": redis_url}
+            {"RUNEFOBLE_DATABASE_URL": database_url, "REDIS_URL": redis_url, **roles.env}
         )
         base_url = restarted.start()
         try:
@@ -136,11 +151,17 @@ def test_short_window_poll_closes_after_restart_and_publishes_completion(databas
             restarted.stop()
 
 
-def test_publishing_recovers_when_redis_starts_after_the_service(database_url: str):
+def test_publishing_recovers_when_redis_starts_after_the_service(
+    database_url: str, roles: LiveSpiceDB
+):
     """The service starts before Redis, refuses writes with 503, and publishes once Redis is up."""
     port = get_free_port()
     process = AudienceStudioProcess(
-        {"RUNEFOBLE_DATABASE_URL": database_url, "REDIS_URL": f"redis://127.0.0.1:{port}/0"}
+        {
+            "RUNEFOBLE_DATABASE_URL": database_url,
+            "REDIS_URL": f"redis://127.0.0.1:{port}/0",
+            **roles.env,
+        }
     )
     base_url = process.start()
     try:

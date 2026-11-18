@@ -12,7 +12,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from campaign_analytics.worker import CampaignAnalyticsWorker
 from fastapi.testclient import TestClient
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
 from runefoble_events.events import (
@@ -23,6 +22,8 @@ from runefoble_events.events import (
     SessionStarted,
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.campaign_analytics_service import wait_until
 
 
 async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
@@ -56,12 +57,10 @@ async def test_telemetry_dashboard_mvp_turn_metrics(
     spicedb_client: MockSpiceDBClient,
     client: TestClient,
     event_bus: RedisStreamsEventBus,
-    worker: CampaignAnalyticsWorker,
 ) -> None:
     """Verify frontdoor MVP statistics delivery matching dashboard bindings."""
     campaign_id, session_id, char_id = str(uuid4()), str(uuid4()), str(uuid4())
     await grant_view(spicedb_client, campaign_id)
-    await worker.setup_groups()
 
     await event_bus.publish_event(
         "runefoble.events.session",
@@ -105,7 +104,14 @@ async def test_telemetry_dashboard_mvp_turn_metrics(
             source="Ghoul Claws",
         ),
     )
-    await worker.process_once(count=10)
+    assert wait_until(
+        lambda: any(
+            c["damage_taken"] == 13
+            for c in client.get(f"/api/v1/analytics/campaigns/{campaign_id}/mvp").json()[
+                "combatants"
+            ]
+        )
+    )
 
     resp = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/mvp")
     assert resp.status_code == 200

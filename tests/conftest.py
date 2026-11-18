@@ -19,7 +19,7 @@ for _upstream in (
     os.environ.setdefault(_upstream, "http://127.0.0.1:9")
 # The inference worker refuses to start without its service token (ADR-0015 e). Tests use a
 # throwaway value. Process-level tests remove it from the child environment on purpose.
-os.environ.setdefault("RUNEFOBLE_INFERENCE_SERVICE_TOKEN", "test-only-inference-token")
+os.environ.setdefault("RUNEFOBLE_SERVICE_CREDENTIAL", "test-only-service-credential")
 # ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest
@@ -39,6 +39,7 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytest_plugins = [
     "tests.helpers.audio_synth",
+    "tests.helpers.campaign_analytics_service",
     "tests.helpers.lore_backends",
     "tests.helpers.postgres",
     "tests.helpers.prd_fixtures",
@@ -198,6 +199,29 @@ def trusted_ws_issuer() -> Iterator[SigningTestIssuer]:
     set_zitadel_auth_service(previous_gateway)
     set_session_auth(previous_session)
     set_watcher_auth(previous_watcher)
+
+
+@pytest.fixture
+def character_sheet_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
+    """Serve character_sheet as a live loopback upstream with a fresh event store (TASK-0585).
+
+    The gateway reaches it over HTTP through CHARACTER_SHEET_URL. The aggregate repository
+    is replaced for this test, so characters from earlier tests do not leak in. The URL is
+    set before the gateway lifespan runs, so build the gateway client after this fixture.
+    """
+    from character_sheet import dependencies as sheet_deps
+    from character_sheet.aggregate import CharacterAggregate
+    from character_sheet.main import app as sheet_app
+    from eventsource.adapters.memory.store import InMemoryEventStore
+    from runefoble_platform.event_sourcing import create_aggregate_repository
+
+    from tests.helpers.live_services import serve
+
+    fresh_repo = create_aggregate_repository(CharacterAggregate, event_store=InMemoryEventStore())
+    monkeypatch.setattr(sheet_deps, "repo", fresh_repo)
+    with serve(sheet_app) as url:
+        monkeypatch.setenv("CHARACTER_SHEET_URL", url)
+        yield url
 
 
 @pytest.fixture

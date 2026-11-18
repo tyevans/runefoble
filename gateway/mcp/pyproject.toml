@@ -12,8 +12,10 @@ dependencies = [
     "pydantic-settings>=2.15.0",
     "uvicorn>=0.54.0",
     "rules-compendium",
+    "runefoble-platform",
 ]
 
 [tool.uv.sources]
 rules-compendium = { workspace = true }
+runefoble-platform = { workspace = true }
 

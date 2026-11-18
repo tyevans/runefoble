@@ -9,17 +9,19 @@ This guide explains how to configure and orchestrate live audience chaos polls, 
 Audience polls and chaos modifier approvals are guarded by SpiceDB Zanzibar permissions (`libs/runefoble_auth/schema/runefoble.zed`):
 
 - **Identity**: Every route needs `Authorization: Bearer <Zitadel access token>`. The service verifies the RS256 signature, `iss`, `aud`, and `exp` against Zitadel's JWKS. Without a valid token the service returns `401 Unauthorized`. The actor of every command is the token subject (`sub`). Body fields and headers never name the actor.
-- **Spectator / Viewer**: Any user holding the `spectator`, `player`, or `view` relation on `campaign:<campaign_id>` can view active polls and cast votes. The voter is the token subject.
-- **Dungeon Master / Moderation**: Approving or vetoing modifier proposals requires `dungeon_master`, `game_master`, or `owner` relation (`run_session` permission) on `campaign:<campaign_id>`. The service asks SpiceDB for this check. It holds no local role or grant table.
-- Unauthorized approval attempts return HTTP `403 Forbidden`.
-- Grant the DM relation in SpiceDB through its write API (`POST /v1/relationships/write`), not through Audience Studio. Audience Studio has no grant route. `POST /api/v1/audience/auth/tuples` was removed in TASK-0533 and returns `404 Not Found`.
+- **Spectator / Viewer**: A user with the `spectator`, `player`, `game_master`, `dungeon_master`, or `owner` relation on `campaign:<campaign_id>` has the `view` permission. That user can read polls and vote (`audience_poll.vote`). The voter is the token subject.
+- **Dungeon Master / Moderation**: Creating a poll needs `campaign#run_session`. Closing a poll needs `audience_poll#moderate`. Approving or vetoing a proposal needs `audience_poll#approve` or `audience_poll#veto`. These permissions resolve to the `dungeon_master`, `game_master`, or `owner` relation.
+- The service asks SpiceDB for every check. It holds no local role or grant table.
+- An unauthorized caller gets HTTP `403 Forbidden`. A caller with no token gets `401 Unauthorized`. A SpiceDB outage gets `503 Service Unavailable`.
+- Grant campaign relations in SpiceDB through its write API, not through Audience Studio. Audience Studio has no grant route. `POST /api/v1/audience/auth/tuples` was removed in TASK-0533 and returns `404 Not Found`.
+- Proposal parameters appear only for callers with `audience_poll.approve`. Other callers see the title and status.
 
 ---
 
 ## 2. Ingesting Chaos Polls and Votes
 
 ### Create a Poll
-Initialize a new live chaos poll with a vote duration and quorum threshold:
+The caller needs `run_session` on the campaign (a DM, game master, or owner). Initialize a new live chaos poll with a vote duration and quorum threshold:
 
 ```http
 POST /api/v1/audience/polls
@@ -56,7 +58,7 @@ Content-Type: application/json
 }
 ```
 
-The voter is the token subject. Duplicate votes from the same subject are rejected with HTTP `400 Bad Request`. A vote on an unknown poll returns `404 Not Found`. A vote after the poll window ends returns `400 Bad Request`.
+The caller needs `audience_poll.vote`. A caller who cannot view the campaign gets `403 Forbidden`. The voter is the token subject. Duplicate votes from the same subject are rejected with HTTP `400 Bad Request`. A vote on an unknown poll returns `404 Not Found`. A vote after the poll window ends returns `400 Bad Request`.
 
 ---
 
@@ -84,7 +86,7 @@ When a poll duration expires (or is explicitly closed via `POST /api/v1/audience
 
 Clients and DM dashboards connect to `/ws/audience/{campaign_id}` for sub-500ms broadcast updates:
 
-1. **Connection & Handshake**: Offer two subprotocols: `runefoble.v1` and `runefoble.bearer.<access token>`. The service verifies the token before it accepts the socket. A refused handshake returns `401` and never opens. Never put the token in the query string.
+1. **Connection & Handshake**: Offer two subprotocols: `runefoble.v1` and `runefoble.bearer.<access token>`. The service verifies the token before it accepts the socket. The principal also needs `view` on the campaign. A refused handshake returns `401` (no valid token) or `403` (no campaign view) and never opens. Never put the token in the query string.
    ```json
    { "action": "subscribe" }
    ```
@@ -92,7 +94,7 @@ Clients and DM dashboards connect to `/ws/audience/{campaign_id}` for sub-500ms 
    - `poll_started`: New chaos poll opened.
    - `vote_cast`: Real-time percentage update.
    - `poll_completed`: Quorum and winner announced.
-   - `proposal_queued`: Proposal added to DM queue.
+   - `proposal_queued`: Proposal added to DM queue. Only sockets with `audience_poll.approve` receive it.
    - `proposal_approved` / `proposal_vetoed`: Moderation resolution.
 3. **DM WebSocket Approval**:
    ```json

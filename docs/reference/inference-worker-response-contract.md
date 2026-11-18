@@ -12,19 +12,19 @@ This page defines the HTTP response contract of the inference worker (`services/
 
 ## Authentication
 
-Every `/inference/v1/*` route requires a service credential. The caller sends:
+Every `/inference/v1/*` route requires the service credential. The caller sends:
 
 ```http
-Authorization: Bearer <RUNEFOBLE_INFERENCE_SERVICE_TOKEN>
+X-Runefoble-Service-Credential: <RUNEFOBLE_SERVICE_CREDENTIAL>
 ```
 
 | Case | Response |
 |---|---|
-| No header, a non-Bearer scheme, or a wrong token | `401` with body `{"error": "unauthorized", "message": ...}` and `WWW-Authenticate: Bearer` |
-| The Zitadel user token of a player | `401`. A user token is not a service credential. |
-| The configured token | The route runs. |
+| No header, or a wrong value | `401` with body `{"error": "unauthorized", "message": ...}` |
+| The Zitadel user token of a player in `Authorization` | `401`. A user token is not a service credential. |
+| The configured credential | The route runs. |
 
-The worker refuses to start when `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` is unset or blank. The worker sends no CORS headers. The `/healthz` and `/health` routes stay open for probes.
+The worker refuses to start when `RUNEFOBLE_SERVICE_CREDENTIAL` is unset or blank. The worker sends no CORS headers. The `/healthz` and `/health` routes stay open for probes.
 
 ## Provenance Fields
 

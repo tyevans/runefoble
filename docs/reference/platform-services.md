@@ -20,7 +20,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 | **OpenPanel** | `openpanel/openpanel:latest` | `openpanel:3000` | `/analytics` | ADR-0005 | Mock Event Buffer |
 | **Swagger UI** | `swaggerapi/swagger-ui:v5.17.14` | `swagger-ui:8080` | `/docs`, `/swagger-ui` | ADR-0005 | Service `/openapi.json` direct endpoints |
 | **Mailpit (Mock SMTP & UI)** | `axllent/mailpit:v1.21.8` | `mailpit:1025` (SMTP), `8025` (HTTP) | `/mail`, `/mailpit` | ADR-0005 | In-Memory `MailpitClient` Buffer (local and test only) |
-| **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP, Helm `inference-worker` Deployment and Service) | Service token `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` (ADR-0015 e) | ADR-0007 | Chart default `backend: mock` (`RUNEFOBLE_WORKER_BACKEND=mock`, explicit, labelled `source: mock`); no silent fallback |
+| **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP, Helm `inference-worker` Deployment and Service) | Service credential `RUNEFOBLE_SERVICE_CREDENTIAL`, header `X-Runefoble-Service-Credential` (ADR-0015 e) | ADR-0007 | Chart default `backend: mock` (`RUNEFOBLE_WORKER_BACKEND=mock`, explicit, labelled `source: mock`); no silent fallback |
 
 ---
 
@@ -69,10 +69,11 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Database Connection**: Configured with PostgreSQL admin credentials and `ZITADEL_DATABASE_POSTGRES_*_SSL_MODE=disable` for local Kind environments.
 - **Issuer Variables** (set by the chart on every service that verifies tokens):
   - `RUNEFOBLE_ZITADEL_ISSUER`: the browser-facing issuer, `http://auth.localhost` by default. It must equal the token `iss` claim. Zitadel writes this value, built from `zitadel.externalDomain`, `externalPort`, and `externalSecure`.
-  - `RUNEFOBLE_ZITADEL_JWKS_URL`: the in-cluster JWKS endpoint, `http://zitadel:8080/oauth/v2/keys`. Pods cannot resolve the browser-facing host, so the verifier does not read discovery.
-  - `RUNEFOBLE_ZITADEL_AUDIENCE`: the expected `aud` claim. The Python services default it to `RUNEFOBLE_ZITADEL_CLIENT_ID`, which the chart does not set. The Audience Studio chart sets it to `services.audienceStudio.zitadelAudience` (`runefoble-api`). The Node service refuses to start without it.
+  - `RUNEFOBLE_ZITADEL_INTERNAL_URL`: the in-cluster Zitadel origin, `http://zitadel:8080`. Discovery and JWKS requests go here with `Host` set to the issuer host (`auth.localhost`). Zitadel refuses other hosts. The verifier reads `jwks_uri` from discovery and rebases it onto this origin. The `iss` check still uses `RUNEFOBLE_ZITADEL_ISSUER`.
+  - `RUNEFOBLE_ZITADEL_AUDIENCE`: the expected `aud` claim. The chart reads it from the `project-id` key of the Secret `runefoble-zitadel-client`. The bootstrap Job writes that key. The App Shell requests the project audience scope, so `aud` holds the project ID. The Node service refuses to start without it.
 - **Other Variables**: `RUNEFOBLE_ZITADEL_CLIENT_ID`. (`RUNEFOBLE_AUTH_DEV_MODE` was removed in TASK-0520.)
-- **Browser Runtime Config**: the frontend serves `/runtime-config.json` (issuer, client ID, scopes, provider name). The chart renders it from `frontend.runtimeConfig`. It holds no secret.
+- **Browser Runtime Config**: the frontend serves `/runtime-config.json` (issuer, client ID, scopes, provider name). The chart renders the template from `frontend.runtimeConfig`. An init container sets `clientId` and the project audience scope from the Secret `runefoble-zitadel-client`. The file holds no secret.
+- **Zitadel Bootstrap Job**: the Helm hook Job `zitadel-bootstrap` creates the project `runefoble` and the application `runefoble-web`. It writes the Secret `runefoble-zitadel-client` (keys `project-id`, `client-id`). It reads the Zitadel admin PAT from the Secret `zitadel.bootstrap.adminSecret` (key `pat`). See [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md#bootstrap-the-zitadel-project-and-application).
 - **Gateway CORS**: `RUNEFOBLE_CORS_ORIGINS` is a comma-separated list of browser origins allowed to call the gateway with credentials. The default is `http://localhost:5173,http://127.0.0.1:5173`. The value `*` is refused at startup.
 - **How-To Guide**: [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md).
 
@@ -118,6 +119,7 @@ The chart stores every credential in one Kubernetes Secret and reads it with `se
 | `zitadel-masterkey` | `credentials.zitadel.masterKey` | Zitadel |
 | `zitadel-admin-password` | `credentials.zitadel.adminPassword` | Zitadel |
 | `grafana-admin-password` | `credentials.grafana.adminPassword` | Grafana |
+| `service-credential` | `credentials.serviceCredential` | `the-watcher`, `inference-worker`, `gateway-mcp`, `board-state`, `character-sheet`, `game-session`, `rules-compendium` (ADR-0015 e). Not `gateway-api`. |
 
 - **Local (`global.environment: local`)**: The chart renders the Secret from the `credentials` values. Those values are dev-only defaults. They are public in the repository.
 - **Other environments**: Set `credentials.existingSecret` to the name of a Secret that you manage. The chart renders no Secret. It fails `helm template` when `global.environment` is not `local` and `credentials.existingSecret` is empty.
@@ -129,16 +131,24 @@ The chart sets each service-to-service URL. The URL uses the in-cluster service 
 
 | Environment variable | Value in cluster | Rendered on | Read by |
 |---|---|---|---|
-| `RUNEFOBLE_WATCHER_URL` | `http://the-watcher:8001` | `game-session`, `voice-agent` | `game_session` (autopilot), `voice_agent` (default `http://the-watcher:8001`) |
+| `RUNEFOBLE_WATCHER_URL` | `http://the-watcher:8001` | `game-session`, `voice-agent` | `game_session` (autopilot; required in deployed mode), `voice_agent` (default `http://the-watcher:8001`) |
 | `RUNEFOBLE_VOICE_AGENT_URL` | `http://voice-agent:8005` | `game-session` | `game_session` voice client |
 | `RUNEFOBLE_INFERENCE_URL` | `http://inference-worker:8100` | `the-watcher` (only when `services.inferenceWorker` is set) | `the_watcher` |
-| `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` | Secret reference `runefoble-inference-service`, key `token` (`inferenceServiceToken` in values) | `the-watcher`, `inference-worker` | `the_watcher` (sends it), `inference_worker` (checks it, refuses to start without it) |
+| `RUNEFOBLE_SERVICE_CREDENTIAL` | Secret reference `runefoble-credentials`, key `service-credential` (`credentials.serviceCredential` in values) | `the-watcher`, `inference-worker`, `gateway-mcp`, `board-state`, `character-sheet`, `game-session`, `rules-compendium` | The MCP gateway and The Watcher send it. Receivers check it (ADR-0015 e) and refuse to start without it. |
 | `SOUNDSCAPE_SERVICE_URL` | `http://soundscape:8009` | `gateway-api` | Gateway soundscape proxy (default `http://soundscape:8009`) |
 | `CAMPAIGN_LORE_URL` | `http://campaign-lore:8006` | `gateway-api` | Gateway hub views |
 | `CAMPAIGN_ANALYTICS_URL` | `http://campaign-analytics:8011` | `gateway-api` | Gateway hub views |
 | `CHARACTER_SHEET_URL` | `http://character-sheet:8003` | `gateway-api` | Gateway character sub-resources |
 
 The chart defines these keys in one block in `deployments/helm/runefoble/templates/services.yaml`. To add a consumer, add its container name to that key's `consumers` list.
+
+### Deployed Mode and Start-Up Failures (ADR-0015 4)
+
+The chart sets `RUNEFOBLE_ENVIRONMENT` on every service from `global.environment`. A deployed environment is `staging` or `production`. In a deployed environment, a missing dependency stops the service at start-up. It never falls back to a substitute.
+
+- **`game_session`** refuses to start when `RUNEFOBLE_ENVIRONMENT` is `staging` or `production` and `RUNEFOBLE_WATCHER_URL` is unset. In `development` and `local`, it starts without the URL.
+- **Auto-pilot** (`POST /api/v1/sessions/{id}/turns/auto-pilot`) returns `503 Service Unavailable` when `RUNEFOBLE_WATCHER_URL` is unset, when The Watcher is unreachable, when The Watcher returns a status other than `200`, or when it returns an invalid body. No action is recorded and the turn does not advance. Auto-pilot never runs a local engine in place of The Watcher.
+- **Microfrontend manifests**: `character_sheet` and `soundscape` stop at start-up when `ui/manifest.json` is missing or is not a JSON object. `make build` runs `make check-ui-manifests`, which checks every `services/*/ui/manifest.json`.
 
 ---
 

@@ -14,7 +14,6 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
-from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
 
@@ -23,14 +22,8 @@ def _auth(issuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-@pytest.fixture(autouse=True)
-def reset_stores():
-    character_store.reset()
-    yield
-
-
 @pytest.fixture
-def client_gw(game_session_upstream) -> Iterator[TestClient]:
+def client_gw(game_session_upstream, character_sheet_upstream) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 

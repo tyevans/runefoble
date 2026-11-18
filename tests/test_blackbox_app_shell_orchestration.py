@@ -11,9 +11,11 @@ Governing ADRs:
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from pathlib import Path
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
@@ -24,7 +26,7 @@ SRC_DIR = FRONTEND_DIR / "src"
 
 
 @pytest.fixture
-def client(game_session_upstream) -> Iterator[TestClient]:
+def client(game_session_upstream, character_sheet_upstream) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 
@@ -61,6 +63,7 @@ def test_gateway_campaign_and_session_routes(client: TestClient, trusted_ws_issu
     )
     assert camp_res.status_code == 201
     campaign_id = camp_res.json()["id"]
+    session_id = _owner_session(campaign_id, headers)
 
     # 2. Fetch campaign list (for #/campaigns)
     list_res = client.get("/api/v1/campaigns", headers=headers)
@@ -78,11 +81,24 @@ def test_gateway_campaign_and_session_routes(client: TestClient, trusted_ws_issu
     assert len(members_res.json()) >= 1
 
     # 5. Fetch session details (for #/campaigns/:campaignId/lobby/:sessionId)
-    session_res = client.get(f"/api/v1/sessions/{campaign_id}", headers=headers)
+    session_res = client.get(f"/api/v1/sessions/{session_id}", headers=headers)
     assert session_res.status_code == 200
-    assert session_res.json()["id"] == campaign_id
+    assert session_res.json()["session_id"] == session_id
 
     # 6. Fetch board tokens (for #/campaigns/:campaignId/sessions/:sessionId)
     board_res = client.get(f"/api/v1/boards/{campaign_id}", headers=headers)
     assert board_res.status_code == 200
     assert "tokens" in board_res.json()
+
+
+def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
+    """Create a game session in a campaign through the owner's public game_session route."""
+    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/sessions/create",
+        json={"campaign_id": campaign_id, "title": "Crypt"},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
+    return res.json()["session_id"]

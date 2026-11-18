@@ -76,7 +76,7 @@ def durable_environment():
 
 
 @pytest.mark.asyncio
-async def test_tick_count_registry_and_latest_bulletin_survive_restart():
+async def test_tick_count_registry_and_latest_bulletin_survive_restart(trusted_ws_issuer):
     """After a restart the tick resumes at 3, the registry keeps one faction, and no defaults return."""
     store = InMemoryEventStore()
     redis = MockAsyncRedis()
@@ -147,7 +147,7 @@ async def test_tick_count_registry_and_latest_bulletin_survive_restart():
 
 
 @pytest.mark.asyncio
-async def test_each_world_tick_writes_one_stream_entry_in_order():
+async def test_each_world_tick_writes_one_stream_entry_in_order(trusted_ws_issuer):
     """Three ticks, spread across a restart, write three world_tick_executed entries in order."""
     store = InMemoryEventStore()
     redis = MockAsyncRedis()

@@ -13,6 +13,7 @@ from uuid import UUID
 
 import httpx
 from gateway_mcp.settings import GatewayMcpSettings, load_settings
+from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
 DEFAULT_TIMEOUT_SECONDS = 5.0
 
@@ -30,6 +31,11 @@ class ServiceUnavailableError(ServiceError):
 
 class ServiceRejectedError(ServiceError):
     """The service refused the request with a 4xx status."""
+
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        """Keep the refusing HTTP status so callers can tell a missing resource from a bad request."""
+        super().__init__(message)
+        self.status_code = status_code
 
 
 def _error_detail(response: httpx.Response) -> str:
@@ -66,6 +72,7 @@ class ServiceClient:
         """
         self._settings = settings or load_settings()
         self._bearer = bearer
+        self._service_credential = self._settings.service_credential.get_secret_value()
 
     async def _request(
         self,
@@ -75,7 +82,11 @@ class ServiceClient:
         path: str,
         json_body: dict[str, Any] | None = None,
     ) -> Any:
-        headers = {"Authorization": f"Bearer {self._bearer}"} if self._bearer else None
+        # The service credential goes on every call (ADR-0015 e). The user bearer, when the MCP
+        # caller has one, goes on as is, so the owning service acts for that user (ADR-0015 c).
+        headers = {SERVICE_CREDENTIAL_HEADER: self._service_credential}
+        if self._bearer:
+            headers["Authorization"] = f"Bearer {self._bearer}"
         try:
             async with httpx.AsyncClient(
                 base_url=base_url, timeout=DEFAULT_TIMEOUT_SECONDS
@@ -91,18 +102,19 @@ class ServiceClient:
         if response.status_code >= 400:
             raise ServiceRejectedError(
                 f"{service} rejected the request ({response.status_code}): "
-                f"{_error_detail(response)}"
+                f"{_error_detail(response)}",
+                status_code=response.status_code,
             )
         return response.json()
 
-    async def create_board(self, *, cols: int, rows: int) -> dict[str, Any]:
-        """Create a board with a service-generated session id."""
+    async def create_board(self, *, session_id: str, cols: int, rows: int) -> dict[str, Any]:
+        """Create the board for a session. The caller checks first that the session has none."""
         result = await self._request(
             "board_state",
             self._settings.board_state_url,
             "POST",
             "/api/v1/boards",
-            {"cols": cols, "rows": rows},
+            {"session_id": session_id, "cols": cols, "rows": rows},
         )
         return dict(result)
 
@@ -123,6 +135,19 @@ class ServiceClient:
             self._settings.game_session_url,
             "GET",
             f"/api/v1/sessions/{quote(session_id, safe='')}",
+        )
+        return dict(result)
+
+    async def start_combat(
+        self, session_id: str, *, combatants: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        """Start a combat encounter in a game session and return its combat state."""
+        result = await self._request(
+            "game_session",
+            self._settings.game_session_url,
+            "POST",
+            f"/api/v1/sessions/{quote(session_id, safe='')}/combat/start",
+            {"combatants": combatants},
         )
         return dict(result)
 

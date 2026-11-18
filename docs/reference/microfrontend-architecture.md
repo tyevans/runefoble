@@ -155,6 +155,8 @@ Response:
 }
 ```
 
+A service reads its `ui/manifest.json` file at start-up through `runefoble_platform.ui_manifest.load_ui_manifest`. A missing file, an unreadable file, or invalid JSON stops the process with `UIManifestError`. No service serves a hardcoded fallback manifest (ADR-0015 4). Run `make check-ui-manifests` to check every manifest.
+
 ## Storybook Dynamic Aggregation
 
 `frontend/.storybook/main.ts` automatically discovers stories across the monorepo:

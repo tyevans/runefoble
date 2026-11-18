@@ -5,7 +5,13 @@ from __future__ import annotations
 from uuid import uuid4
 
 from board_state.aggregate import PlacedTokenState
-from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
+from board_state.dependencies import (
+    get_board,
+    get_caller_or_service,
+    get_current_user_id,
+    get_event_bus,
+    repo,
+)
 from board_state.events import publish_board_events
 from board_state.models import (
     MoveTokenRequest,
@@ -14,10 +20,14 @@ from board_state.models import (
 )
 from fastapi import APIRouter, Depends, HTTPException
 
-router = APIRouter(tags=["tokens"], dependencies=[Depends(get_current_user_id)])
+router = APIRouter(tags=["tokens"])
 
 
-@router.post("/api/v1/boards/{session_id}/tokens", response_model=PlacedTokenState)
+@router.post(
+    "/api/v1/boards/{session_id}/tokens",
+    dependencies=[Depends(get_caller_or_service)],
+    response_model=PlacedTokenState,
+)
 async def place_token(session_id: str, req: PlaceTokenRequest):
     board = await get_board(session_id)
     token_id = req.token_id or str(uuid4())
@@ -38,7 +48,11 @@ async def place_token(session_id: str, req: PlaceTokenRequest):
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-@router.post("/api/v1/boards/{session_id}/tokens/{token_id}/move", response_model=MoveTokenResponse)
+@router.post(
+    "/api/v1/boards/{session_id}/tokens/{token_id}/move",
+    dependencies=[Depends(get_caller_or_service)],
+    response_model=MoveTokenResponse,
+)
 async def move_token_by_id(session_id: str, token_id: str, req: MoveTokenRequest):
     board = await get_board(session_id)
     try:
@@ -83,14 +97,20 @@ async def move_token_by_id(session_id: str, token_id: str, req: MoveTokenRequest
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/api/v1/boards/{session_id}/move", response_model=MoveTokenResponse)
+@router.post(
+    "/api/v1/boards/{session_id}/move",
+    dependencies=[Depends(get_current_user_id)],
+    response_model=MoveTokenResponse,
+)
 async def move_token(session_id: str, req: MoveTokenRequest):
     if not req.token_id:
         raise HTTPException(status_code=400, detail="token_id is required")
     return await move_token_by_id(session_id, req.token_id, req)
 
 
-@router.delete("/api/v1/boards/{session_id}/tokens/{token_id}")
+@router.delete(
+    "/api/v1/boards/{session_id}/tokens/{token_id}", dependencies=[Depends(get_current_user_id)]
+)
 async def remove_token(session_id: str, token_id: str, reason: str = "defeated"):
     board = await get_board(session_id)
     try:

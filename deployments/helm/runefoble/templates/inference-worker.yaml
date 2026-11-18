@@ -21,6 +21,7 @@ spec:
           ports:
             - containerPort: {{ .port }}
           env:
+            {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
             - name: RUNEFOBLE_WORKER_HOST
               value: "0.0.0.0"
             - name: RUNEFOBLE_WORKER_PORT
@@ -32,11 +33,6 @@ spec:
             # The Redis Streams consumer stays off until a producer exists (ADR-0006).
             - name: RUNEFOBLE_WORKER_REDIS_ENABLED
               value: "false"
-            - name: RUNEFOBLE_INFERENCE_SERVICE_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $.Values.inferenceServiceToken.secretName | quote }}
-                  key: {{ $.Values.inferenceServiceToken.key | quote }}
           readinessProbe:
             httpGet:
               path: /healthz

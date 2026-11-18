@@ -48,7 +48,8 @@ async def condition_speech_text(
     """Ask voice_agent to condition speech text for the given affliction filters.
 
     The caller's `Authorization` value is forwarded unchanged. voice_agent verifies
-    the bearer token itself (ADR-0015 c). No service credential exists yet (ADR-0015 e).
+    the bearer token itself (ADR-0015 c). voice_agent does not accept the service credential
+    yet (ADR-0015 e), so the caller's bearer is the only credential for this call.
     With no caller token, voice_agent refuses the call and this raises.
     """
     url = f"{_base_url()}{CONDITION_PATH}"

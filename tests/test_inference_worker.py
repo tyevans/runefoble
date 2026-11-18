@@ -13,12 +13,13 @@ from inference_worker.graphs import (
     build_stand_in_graph,
 )
 from inference_worker.llm_client import MultiBackendLLMClient
+from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-WORKER_AUTH = {"Authorization": f"Bearer {os.environ['RUNEFOBLE_INFERENCE_SERVICE_TOKEN']}"}
+WORKER_AUTH = {SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]}
 WATCHER_AUTH = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-1')}"}
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 

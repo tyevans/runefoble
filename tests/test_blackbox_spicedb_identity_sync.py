@@ -9,9 +9,11 @@ Verifies:
 6. Transient fault resilience and exponential backoff retry logic.
 """
 
+import os
 from collections.abc import Iterator
 from uuid import uuid4
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
@@ -80,10 +82,11 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
     gm_id = "gm_elena"
     stranger_id = "stranger_pete"
     campaign_id = _create_campaign_as_owner(client, trusted_ws_issuer, owner_id)
+    session_id = _owner_session(campaign_id, _bearer(trusted_ws_issuer, owner_id))
 
     # 1. Before sync: GM and stranger are rejected with 403
     res_before = client.post(
-        f"/api/v1/sessions/{campaign_id}/dm-override",
+        f"/api/v1/sessions/{session_id}/dm-override",
         headers=_bearer(trusted_ws_issuer, gm_id),
         json={"action": "pause_encounter", "reason": "DM bathroom break"},
     )
@@ -103,12 +106,12 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
 
     # 4. Synchronized GM can execute DM override
     res_override = client.post(
-        f"/api/v1/sessions/{campaign_id}/dm-override",
+        f"/api/v1/sessions/{session_id}/dm-override",
         headers=_bearer(trusted_ws_issuer, gm_id),
         json={"action": "pause_encounter", "reason": "DM narrative pause"},
     )
     assert res_override.status_code == 200
-    assert res_override.json()["status"] == "override_executed"
+    assert res_override.json()["dm_overrides"][-1]["action"] == "pause_encounter"
 
     # 5. Synchronized GM can update campaign atmosphere
     atmo_payload = {
@@ -118,24 +121,23 @@ async def test_gm_synchronization_dm_override_and_atmosphere(trusted_ws_issuer, 
         "description": "Green spectral mist creeps through ancient flagstones.",
     }
     res_atmo = client.post(
-        f"/api/v1/sessions/{campaign_id}/atmosphere",
+        f"/api/v1/sessions/{session_id}/atmosphere",
         headers=_bearer(trusted_ws_issuer, gm_id),
         json=atmo_payload,
     )
     assert res_atmo.status_code == 200
-    assert res_atmo.json()["status"] == "atmosphere_updated"
     assert res_atmo.json()["atmosphere"]["location_name"] == "Tomb of the Lich King"
 
     # 6. Unassigned stranger is denied on both endpoints
     res_stranger_override = client.post(
-        f"/api/v1/sessions/{campaign_id}/dm-override",
+        f"/api/v1/sessions/{session_id}/dm-override",
         headers=_bearer(trusted_ws_issuer, stranger_id),
         json={"action": "end_session"},
     )
     assert res_stranger_override.status_code == 403
 
     res_stranger_atmo = client.post(
-        f"/api/v1/sessions/{campaign_id}/atmosphere",
+        f"/api/v1/sessions/{session_id}/atmosphere",
         headers=_bearer(trusted_ws_issuer, stranger_id),
         json={"location_name": "Sunny Meadow"},
     )
@@ -147,6 +149,7 @@ async def test_idempotence_and_instant_revocation(trusted_ws_issuer, client) -> 
     """Re-granting produces no duplicates; removal immediately revokes permissions."""
     owner_id = "owner_idem"
     campaign_id = _create_campaign_as_owner(client, trusted_ws_issuer, owner_id)
+    session_id = _owner_session(campaign_id, _bearer(trusted_ws_issuer, owner_id))
     user_id = "test_player_grant"
     owner_headers = _bearer(trusted_ws_issuer, owner_id)
     grant_payload = {"user_id": user_id, "role": "player"}
@@ -167,7 +170,7 @@ async def test_idempotence_and_instant_revocation(trusted_ws_issuer, client) -> 
     # User can view session
     assert (
         client.get(
-            f"/api/v1/sessions/{campaign_id}", headers=_bearer(trusted_ws_issuer, user_id)
+            f"/api/v1/sessions/{session_id}", headers=_bearer(trusted_ws_issuer, user_id)
         ).status_code
         == 200
     )
@@ -181,7 +184,7 @@ async def test_idempotence_and_instant_revocation(trusted_ws_issuer, client) -> 
     # Immediately after revocation: view attempt must fail with 403 Forbidden
     assert (
         client.get(
-            f"/api/v1/sessions/{campaign_id}", headers=_bearer(trusted_ws_issuer, user_id)
+            f"/api/v1/sessions/{session_id}", headers=_bearer(trusted_ws_issuer, user_id)
         ).status_code
         == 403
     )
@@ -238,3 +241,16 @@ async def test_sync_resilience_and_retry() -> None:
     synced = await service.sync_membership("camp_flaky", "user_1", "player")
     assert call_count == 3
     assert len(synced) > 0
+
+
+def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
+    """Create a game session in a campaign through the owner's public game_session route."""
+    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/sessions/create",
+        json={"campaign_id": campaign_id, "title": "Crypt"},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
+    return res.json()["session_id"]

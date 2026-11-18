@@ -41,7 +41,7 @@ def reset_stores():
 
 
 @pytest.fixture
-def client_gw(game_session_upstream) -> Iterator[TestClient]:
+def client_gw(game_session_upstream, character_sheet_upstream) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 

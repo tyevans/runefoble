@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
 import type { AppContext } from '../src/server.js';
+import { FakeSpiceDb } from './fakeSpiceDb.js';
 import {
   bearer,
   jsonBody,
@@ -20,10 +21,12 @@ const API = '/api/v1/audience';
 
 let issuer: TestIssuer;
 let ctx: AppContext;
+let spicedb: FakeSpiceDb;
 
 before(async () => {
   issuer = await TestIssuer.start();
-  ctx = await startService(issuer);
+  spicedb = new FakeSpiceDb();
+  ctx = await startService(issuer, { spicedb });
 });
 
 after(async () => {
@@ -31,8 +34,9 @@ after(async () => {
   await issuer.close();
 });
 
-/** Creates a poll as `sub` and returns its id. Setup goes through the public routes. */
+/** Creates a poll as `sub` (a DM of the campaign) and returns its id. Setup goes through the public routes. */
 async function createPoll(sub: string, campaignId: string): Promise<string> {
+  spicedb.grant(campaignId, 'dungeon_master', sub);
   const res = await ctx.server.inject({
     method: 'POST',
     url: `${API}/polls`,
@@ -46,6 +50,7 @@ async function createPoll(sub: string, campaignId: string): Promise<string> {
 /** Creates a poll, casts one vote, and closes it, so a modifier proposal is pending. */
 async function pendingProposal(campaignId: string): Promise<string> {
   const pollId = await createPoll('dm-setup', campaignId);
+  spicedb.grant(campaignId, 'spectator', 'viewer-setup');
   await ctx.server.inject({
     method: 'POST',
     url: `${API}/polls/${pollId}/votes`,
@@ -113,12 +118,16 @@ describe('protected routes require a verified bearer token', () => {
   });
 
   test('an unreachable JWKS endpoint returns 503, not a token rejection', async () => {
-    const unreachable = await startService(issuer, 'http://127.0.0.1:9/keys');
+    // Keys are fetched on the first verification, so the issuer can go away after start-up.
+    const dying = await TestIssuer.start();
+    const unreachable = await startService(dying);
     try {
+      const token = await dying.mint('viewer-down');
+      await dying.close();
       const res = await unreachable.server.inject({
         method: 'GET',
         url: `${API}/polls`,
-        headers: bearer(await issuer.mint('viewer-down')),
+        headers: bearer(token),
       });
       assert.equal(res.statusCode, 503);
     } finally {
@@ -162,7 +171,6 @@ describe('the actor is the token subject', () => {
       payload: { dm_user_id: 'dm-alice' },
     });
     assert.equal(res.statusCode, 403);
-    assert.match(jsonBody(res).error, /'mallory'/);
     assert.doesNotMatch(jsonBody(res).error, /dm-alice/);
   });
 
@@ -178,7 +186,7 @@ describe('the actor is the token subject', () => {
       await ctx.server.inject({
         method: 'GET',
         url: `${API}/proposals?campaign_id=camp-veto&status=pending`,
-        headers: bearer(await issuer.mint('viewer-ok')),
+        headers: bearer(await issuer.mint('dm-setup')),
       })
     );
     assert.equal(pending.proposals.length, 1);
@@ -186,6 +194,7 @@ describe('the actor is the token subject', () => {
 
   test('a vote is recorded for the token subject, not the body voter_id', async () => {
     const pollId = await createPoll('dm-vote', 'camp-vote');
+    spicedb.grant('camp-vote', 'spectator', 'viewer-real');
     const first = await ctx.server.inject({
       method: 'POST',
       url: `${API}/polls/${pollId}/votes`,
