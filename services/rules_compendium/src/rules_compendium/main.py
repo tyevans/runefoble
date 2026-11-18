@@ -11,6 +11,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.config import EmbeddingEndpointSettings, RulesCompendiumSettings
+from runefoble_platform.event_publish import event_publish_failures
 
 from rules_compendium.retrieval_factory import build_retrieval_engine
 from rules_compendium.routers.encounters import router as encounters_router
@@ -63,9 +64,13 @@ platform_router = APIRouter()
 
 @platform_router.get("/healthz", tags=["Health"])
 @platform_router.get("/health", tags=["Health"])
-def health_check() -> dict[str, str]:
+def health_check() -> dict[str, Any]:
     """Health check endpoint."""
-    return {"status": "ok", "service": "rules_compendium"}
+    return {
+        "status": "ok",
+        "service": "rules_compendium",
+        "event_publish_failures": event_publish_failures(),
+    }
 
 
 @platform_router.get("/ui/manifest", tags=["Microfrontends"])

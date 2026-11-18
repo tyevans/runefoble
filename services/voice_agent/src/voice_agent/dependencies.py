@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 from runefoble_events.events import VoiceAudioConditioned
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.dsp import VoiceDSPPipeline
 from voice_agent.event_bus import get_event_bus, set_event_bus
@@ -47,21 +48,14 @@ async def _dispatch_voice_audio_conditioned(
     )
     bus = get_event_bus()
     for stream in (STREAM_SESSION, STREAM_VOICE):
-        try:
-            await bus.publish_event(stream, event)
-        except Exception as e:
-            logger.warning("Failed to publish VoiceAudioConditioned to '%s': %s", stream, e)
+        await publish_best_effort(bus, stream, event)
 
 
 async def publish_voice_event(event: Any, bus: RedisStreamsEventBus | None = None) -> None:
-    """Publish a domain event to session and voice Redis Streams."""
+    """Publish a notification event to session and voice Redis Streams (best effort, counted)."""
     active_bus = bus or get_event_bus()
-    if active_bus:
-        for stream in (STREAM_SESSION, STREAM_VOICE):
-            try:
-                await active_bus.publish_event(stream, event)
-            except Exception as e:
-                logger.warning("Failed to publish %s to %s: %s", type(event).__name__, stream, e)
+    for stream in (STREAM_SESSION, STREAM_VOICE):
+        await publish_best_effort(active_bus, stream, event)
 
 
 __all__ = [

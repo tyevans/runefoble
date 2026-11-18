@@ -16,6 +16,7 @@ import httpx
 from pydantic import BaseModel
 from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
 from runefoble_platform.engine_ports import EngineUnavailableError
+from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from voice_agent.auth import caller_headers
 from voice_agent.event_bus import get_event_bus
 from voice_agent.speech_settings import VoiceAgentSettings, build_transcriber
@@ -133,7 +134,7 @@ class StreamingAudioPipeline:
     def reset_all(self) -> None:
         self.participants.clear()
 
-    async def _publish_transcription_failed(
+    async def publish_transcription_failed(
         self,
         session_id: str,
         speaker_id: str,
@@ -147,10 +148,7 @@ class StreamingAudioPipeline:
             engine=self.transcriber.engine_name,
             reason=str(exc),
         )
-        try:
-            await get_event_bus().publish_event(STREAM_VOICE, event)
-        except Exception:
-            logger.exception("Failed to publish VoiceTranscriptionFailed to '%s'", STREAM_VOICE)
+        await publish_best_effort(get_event_bus(), STREAM_VOICE, event)
 
     async def process_chunk(
         self,
@@ -202,7 +200,7 @@ class StreamingAudioPipeline:
         try:
             transcript = await self.transcriber.transcribe(utterance_audio, sample_rate=sr)
         except EngineUnavailableError as exc:
-            await self._publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
+            await self.publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
             raise
 
         session_uuid = to_uuid(session_id)
@@ -218,12 +216,8 @@ class StreamingAudioPipeline:
             target_character_id=target_character_id,
         )
 
-        bus = get_event_bus()
-        event_id = None
-        try:
-            event_id = await bus.publish_event(STREAM_SESSION, event)
-        except Exception as e:
-            logger.warning("Failed to publish PlayerSpokeEvent to '%s': %s", STREAM_SESSION, e)
+        # The spoken words are player state. A failed publish fails the chunk (ADR-0015 f).
+        event_id = await publish_or_fail(get_event_bus(), STREAM_SESSION, event)
 
         watcher_intent = None
         try:

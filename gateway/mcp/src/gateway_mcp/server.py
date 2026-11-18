@@ -5,6 +5,7 @@ and AI DM controls to MCP-compliant agents and LLMs.
 """
 
 from gateway_mcp.dynamic import dynamic_registry
+from gateway_mcp.dynamic import set_event_bus as set_dynamic_event_bus
 from gateway_mcp.prompts import (
     dm_narrative_guidance,
     register_prompts,
@@ -36,6 +37,11 @@ from gateway_mcp.tools import (
     roll_dice,
 )
 from mcp.server.fastmcp import FastMCP
+from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_bus import create_event_bus
+from runefoble_platform.event_publish import event_publish_failures
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 mcp = FastMCP("Runefoble MCP Gateway")
 
@@ -47,11 +53,34 @@ register_prompts(mcp)
 # Wire dynamic tool registry
 dynamic_registry.set_mcp_server(mcp)
 
+
+def configure_dynamic_event_bus(settings: PlatformSettings) -> None:
+    """Inject the Redis Streams bus that dynamic tool events publish to.
+
+    Raises EventBusUnavailableError when no Redis URL is configured, so the gateway never
+    runs dynamic tools with events that cannot reach the system stream.
+    """
+    set_dynamic_event_bus(create_event_bus(settings))
+
+
+@mcp.custom_route("/healthz", methods=["GET"])
+async def healthz(_request: Request) -> JSONResponse:
+    """Report liveness and the count of publish failures seen by this process."""
+    return JSONResponse(
+        {
+            "status": "ok",
+            "service": "gateway_mcp",
+            "event_publish_failures": event_publish_failures(),
+        }
+    )
+
+
 __all__ = [
     "add_condition",
     "apply_absentee_penalty",
     "apply_condition",
     "calculate_encounter_balance",
+    "configure_dynamic_event_bus",
     "cast_spell",
     "create_encounter",
     "dm_narrative_guidance",
@@ -79,6 +108,7 @@ def main() -> None:
     The upstream URLs are read first, so a missing URL stops the process before it listens.
     """
     load_settings()
+    configure_dynamic_event_bus(PlatformSettings())
     listen = load_listen_settings()
     mcp.settings.host = listen.host
     mcp.settings.port = listen.port

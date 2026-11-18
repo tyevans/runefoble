@@ -17,6 +17,7 @@ from runefoble_events.vocal_dsp import (
 )
 from runefoble_events.voice import VoicePeerJoined, VoicePeerLeft, VoicePeerMuteToggled
 from runefoble_platform.aggregate_loading import load_or_create
+from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.event_sourcing import create_aggregate_repository
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.event_bus import get_event_bus
@@ -153,10 +154,7 @@ class VoiceRoomCoordinator:
     async def _publish_event(self, event: Any) -> None:
         bus = self._event_bus or get_event_bus()
         for s in (STREAM_SESSION, STREAM_VOICE):
-            try:
-                await bus.publish_event(s, event)
-            except Exception as e:
-                logger.warning("Failed to publish %s to %s: %s", type(event).__name__, s, e)
+            await publish_best_effort(bus, s, event)
 
 
 _default_coordinator: VoiceRoomCoordinator | None = None

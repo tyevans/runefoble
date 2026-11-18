@@ -11,6 +11,7 @@ from runefoble_events.voice_barge_in import (
     NeuralSpeechBargeInDetectedEvent,
     TTSStreamAttenuatedEvent,
 )
+from runefoble_platform.event_publish import publish_best_effort
 from voice_agent.auth import get_voice_principal
 from voice_agent.dependencies import STREAM_SESSION, STREAM_VOICE, get_event_bus
 from voice_agent.dsp.barge_in_filter import BargeInOnsetFilter
@@ -94,10 +95,7 @@ async def evaluate_barge_in(req: BargeInEvaluationRequest) -> BargeInEvaluationR
     bus = get_event_bus()
     for stream in (STREAM_VOICE, STREAM_SESSION):
         for ev in (b_ev, a_ev):
-            try:
-                await bus.publish_event(stream, ev)
-            except Exception as e:
-                logger.warning("Failed to publish barge-in CloudEvent: %s", e)
+            await publish_best_effort(bus, stream, ev)
 
     return BargeInEvaluationResponse(
         session_id=req.session_id,
