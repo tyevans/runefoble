@@ -1,3 +1,12 @@
+---
+id: 0005
+title: Real-Time WebSocket Board & Chronicle Synchronization
+status: Accepted
+created: 2026-09-25
+target_persona: Marcus, Evelyn
+component: board_state
+---
+
 # PRD-0005: Real-Time WebSocket Board & Chronicle Synchronization
 
 ## Status

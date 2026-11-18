@@ -4,6 +4,7 @@ title: Live Stream Audience Chaos Polls via TypeScript Backend
 status: Shipped
 created: 2026-09-25
 governing_prd: PRD-0011
+persona: Devon (Streamer)
 ---
 
 # US-0031 — Live Stream Audience Chaos Polls via TypeScript Backend

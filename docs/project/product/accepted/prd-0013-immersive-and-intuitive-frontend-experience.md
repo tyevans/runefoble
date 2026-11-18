@@ -3,6 +3,8 @@ id: '0013'
 title: Immersive & Intuitive Frontend Experience with Tactile Board Kinematics
 status: Accepted
 created: 2026-09-25
+target_persona: Marcus, Devon, Evelyn
+component: frontend
 ---
 
 # PRD-0013 — Immersive & Intuitive Frontend Experience with Tactile Board Kinematics

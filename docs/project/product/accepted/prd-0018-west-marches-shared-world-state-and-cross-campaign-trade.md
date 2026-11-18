@@ -3,6 +3,8 @@ id: '0018'
 title: West Marches Multi-Party Persistent Universe, Shared World Atlas & Cross-Campaign Trade
 status: Accepted
 created: 2026-09-26
+target_persona: Rowan, Bram
+component: game_session
 ---
 
 # PRD-0018 — West Marches Multi-Party Persistent Universe, Shared World Atlas & Cross-Campaign Trade

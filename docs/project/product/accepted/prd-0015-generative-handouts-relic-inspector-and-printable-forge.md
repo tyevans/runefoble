@@ -3,6 +3,8 @@ id: '0015'
 title: Generative Diegetic Handouts, 3D Relic Inspector & Printable Tabletop Forge
 status: Accepted
 created: 2026-09-26
+target_persona: Rowan, Evelyn
+component: campaign_lore
 ---
 
 # PRD-0015 — Generative Diegetic Handouts, 3D Relic Inspector & Printable Tabletop Forge

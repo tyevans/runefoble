@@ -4,6 +4,7 @@ title: Automated CR Encounter Balancing & redstring Rules Indexing
 status: Shipped
 created: 2026-09-25
 governing_prd: PRD-0008
+persona: Evelyn (DM)
 ---
 
 # US-0037 — Automated CR Encounter Balancing & redstring Rules Indexing

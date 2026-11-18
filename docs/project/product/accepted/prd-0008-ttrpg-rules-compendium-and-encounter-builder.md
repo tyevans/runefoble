@@ -3,6 +3,8 @@ id: 0008
 title: TTRPG Rules Compendium & Automated Encounter Builder
 status: Shipped
 created: 2026-09-25
+target_persona: Evelyn, Alex
+component: rules_compendium
 ---
 
 # PRD-0008 — TTRPG Rules Compendium & Automated Encounter Builder

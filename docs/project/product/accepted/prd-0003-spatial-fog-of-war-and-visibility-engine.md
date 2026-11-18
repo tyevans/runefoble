@@ -1,3 +1,12 @@
+---
+id: 0003
+title: Spatial Fog-of-War and Line-of-Sight Visibility Engine
+status: Accepted
+created: 2026-09-25
+target_persona: Marcus, Evelyn
+component: board_state
+---
+
 # PRD-0003: Spatial Fog-of-War and Line-of-Sight Visibility Engine
 
 ## Status
