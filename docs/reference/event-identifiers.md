@@ -38,6 +38,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `CharacterCreated` | `CharacterCreated` | `runefoble_events.character` |
 | `CharacterHealthChanged` | `CharacterHealthChanged` | `runefoble_events.character` |
 | `CharacterSelectedForLobby` | `CharacterSelectedForLobby` | `runefoble_events.session` |
+| `ChildLinked` | `ChildLinked` | `runefoble_events.child_index` |
 | `CodexEntryPublished` | `CodexEntryPublished` | `runefoble_events.lore` |
 | `CodexEntryUpdated` | `CodexEntryUpdated` | `runefoble_events.lore` |
 | `CombatEncounterEnded` | `CombatEncounterEnded` | `runefoble_events.session` |
