@@ -6,7 +6,7 @@ routes and return what it stores. They hold no board data of their own.
 
 from typing import TYPE_CHECKING, Any
 
-from gateway_mcp.clients import ServiceClient
+from gateway_mcp.clients import ServiceClient, ServiceRejectedError
 from gateway_mcp.clients.caller import caller_bearer
 from mcp.server.fastmcp import Context
 from pydantic import BaseModel
@@ -35,6 +35,31 @@ def _board_summary(board: dict[str, Any]) -> dict[str, Any]:
         "tokens": list(board["tokens"].values()),
         "active_hazards": board["active_hazards"],
     }
+
+
+def _combat_view(combat: dict[str, Any]) -> dict[str, Any]:
+    """Shape a game_session combat state into the round and turn order view used by agents."""
+    return {
+        "in_combat": combat["in_combat"],
+        "round": combat["combat_round"],
+        "active_combatant_id": combat["combat_active_id"],
+        "turn_order": combat["initiative_order"],
+    }
+
+
+async def _fetch_or_create_board(client: ServiceClient, session_id: str) -> dict[str, Any]:
+    """Return the session board, creating it when board_state has none for the session.
+
+    Only a 404 from board_state means "no board yet". Every other error propagates.
+    """
+    try:
+        return await client.get_board(session_id)
+    except ServiceRejectedError as exc:
+        if exc.status_code != 404:
+            raise
+    return await client.create_board(
+        session_id=session_id, cols=ENCOUNTER_COLS, rows=ENCOUNTER_ROWS
+    )
 
 
 async def inspect_tactical_board(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
@@ -78,29 +103,33 @@ async def query_encounter_state(encounter_id: str, ctx: Context | None = None) -
     client = ServiceClient(bearer=caller_bearer(ctx))
     board = await client.get_board(encounter_id)
     combat = await client.get_combat_state(encounter_id)
-    return {
-        **_board_summary(board),
-        "in_combat": combat["in_combat"],
-        "round": combat["combat_round"],
-        "active_combatant_id": combat["combat_active_id"],
-        "turn_order": combat["initiative_order"],
-    }
+    return {**_board_summary(board), **_combat_view(combat)}
 
 
 async def create_encounter(
-    encounter_name: str,
-    terrain: str = "dungeon",
+    session_id: str,
     enemies: list[EnemyPlacement] | None = None,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Create a tactical combat board and place the enemy tokens on it."""
+    """Start combat in a game session and place the enemy tokens on its board.
+
+    The session id is the encounter id. game_session starts combat first, so an
+    unknown or unavailable session creates no board.
+    """
     client = ServiceClient(bearer=caller_bearer(ctx))
-    board = await client.create_board(cols=ENCOUNTER_COLS, rows=ENCOUNTER_ROWS)
-    encounter_id = board["session_id"]
+    enemy_list = enemies or []
+    combat = await client.start_combat(
+        session_id,
+        combatants=[
+            {"combatant_id": f"enemy-{index}", "name": enemy.name, "hp": enemy.hp, "is_npc": True}
+            for index, enemy in enumerate(enemy_list, start=1)
+        ],
+    )
+    board = await _fetch_or_create_board(client, session_id)
     spawned: list[dict[str, Any]] = []
-    for enemy in enemies or []:
+    for enemy in enemy_list:
         token = await client.place_token(
-            encounter_id,
+            session_id,
             name=enemy.name,
             token_type="monster",
             x=enemy.x,
@@ -111,11 +140,10 @@ async def create_encounter(
         spawned.append(token)
     return {
         "status": "encounter_created",
-        "encounter_id": encounter_id,
-        "name": encounter_name,
-        "terrain": terrain,
+        "encounter_id": session_id,
         "grid": {"cols": board["cols"], "rows": board["rows"]},
         "enemies_spawned": spawned,
+        **_combat_view(combat),
     }
 
 

@@ -16,6 +16,7 @@ import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
 
+from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -44,29 +45,45 @@ def mcp_endpoint() -> Iterator[None]:
 
 @pytest.fixture(scope="module", autouse=True)
 def owning_services() -> Iterator[dict[str, str]]:
-    """Run board_state and rules_compendium as real HTTP services for the gateway."""
+    """Run game_session, board_state, and rules_compendium as real HTTP services for the gateway."""
     from board_state.main import app as board_app
+    from game_session.main import app as session_app
+    from game_session.settlement.auth.tokens import (
+        get_zitadel_auth_service,
+        set_zitadel_auth_service,
+    )
     from rules_compendium.main import app as compendium_app
 
-    with (
-        pytest.MonkeyPatch.context() as env,
-        serve(board_app) as board_url,
-        serve(compendium_app, lifespan="on") as compendium_url,
-    ):
-        env.setenv("BOARD_STATE_URL", board_url)
-        env.setenv("RULES_COMPENDIUM_URL", compendium_url)
-        # Setup through the public board_state HTTP frontdoor: place the active session token.
-        with httpx.Client(base_url=board_url, headers=bearer("user-test")) as http:
-            created = http.post(
-                "/api/v1/boards", json={"session_id": "camp1", "cols": 10, "rows": 10}
-            )
-            assert created.status_code == 200, created.text
-            placed = http.post(
-                "/api/v1/boards/camp1/tokens",
-                json={"token_id": "t1", "name": "Valeros", "x": 1, "y": 1},
-            )
-            assert placed.status_code == 200, placed.text
-        yield {"board": board_url, "compendium": compendium_url}
+    previous_verifier = get_zitadel_auth_service()
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    try:
+        with (
+            pytest.MonkeyPatch.context() as env,
+            serve(board_app) as board_url,
+            serve(session_app) as session_url,
+            serve(compendium_app, lifespan="on") as compendium_url,
+        ):
+            env.setenv("BOARD_STATE_URL", board_url)
+            env.setenv("GAME_SESSION_URL", session_url)
+            env.setenv("RULES_COMPENDIUM_URL", compendium_url)
+            # Setup through the public board_state HTTP frontdoor: place the active session token.
+            with httpx.Client(base_url=board_url, headers=bearer("user-test")) as http:
+                created = http.post(
+                    "/api/v1/boards", json={"session_id": "camp1", "cols": 10, "rows": 10}
+                )
+                assert created.status_code == 200, created.text
+                placed = http.post(
+                    "/api/v1/boards/camp1/tokens",
+                    json={"token_id": "t1", "name": "Valeros", "x": 1, "y": 1},
+                )
+                assert placed.status_code == 200, placed.text
+            yield {
+                "board": board_url,
+                "compendium": compendium_url,
+                "session": session_url,
+            }
+    finally:
+        set_zitadel_auth_service(previous_verifier)
 
 
 async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
@@ -146,14 +163,14 @@ async def test_blackbox_prompt_templates():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_create_encounter_stores_enemy_tokens():
+async def test_blackbox_create_encounter_stores_enemy_tokens(owning_services: dict[str, str]):
     """Verify create_encounter stores enemies on the board that inspect_tactical_board reads back."""
+    session_id = start_session_with_player(owning_services["session"])
     created = tool_payload(
         await call_tool(
             "create_encounter",
             {
-                "encounter_name": "Ambush at Crossroads",
-                "terrain": "forest",
+                "session_id": session_id,
                 "enemies": [{"name": "Bandit", "x": 4, "y": 4, "hp": 11}],
             },
         )
@@ -169,12 +186,18 @@ async def test_blackbox_create_encounter_stores_enemy_tokens():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_move_board_token_then_inspect_reports_new_position():
+async def test_blackbox_move_board_token_then_inspect_reports_new_position(
+    owning_services: dict[str, str],
+):
     """Verify a token moved through MCP is read back at its new position from the board."""
+    combat_session_id = start_session_with_player(owning_services["session"])
     created = tool_payload(
         await call_tool(
             "create_encounter",
-            {"encounter_name": "Skirmish", "enemies": [{"name": "Goblin", "x": 2, "y": 2}]},
+            {
+                "session_id": combat_session_id,
+                "enemies": [{"name": "Goblin", "x": 2, "y": 2}],
+            },
         )
     )
     session_id = created["encounter_id"]
@@ -195,12 +218,18 @@ async def test_blackbox_move_board_token_then_inspect_reports_new_position():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_move_board_token_out_of_bounds_is_error_result():
+async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
+    owning_services: dict[str, str],
+):
     """Verify the board rejects an out-of-bounds move and the MCP result reports an error."""
+    combat_session_id = start_session_with_player(owning_services["session"])
     created = tool_payload(
         await call_tool(
             "create_encounter",
-            {"encounter_name": "Edge", "enemies": [{"name": "Imp", "x": 0, "y": 0}]},
+            {
+                "session_id": combat_session_id,
+                "enemies": [{"name": "Imp", "x": 0, "y": 0}],
+            },
         )
     )
     result = await call_tool(
