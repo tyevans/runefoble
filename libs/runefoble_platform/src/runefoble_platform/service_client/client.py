@@ -82,6 +82,21 @@ class ServiceClient:
             body=response.content,
         )
 
+    def websocket_target(self, path: str) -> tuple[str, dict[str, str]]:
+        """Return the ws:// or wss:// URL and the handshake headers for one upstream socket.
+
+        The caller passes its own subprotocols. The service credential goes on every handshake
+        (ADR-0015 e). The caller's `Authorization` is never sent here: the bearer travels in
+        the subprotocol list, so the owner verifies the same token that the client offered.
+        """
+        if self._base_url.startswith("https://"):
+            url = "wss://" + self._base_url[len("https://") :]
+        elif self._base_url.startswith("http://"):
+            url = "ws://" + self._base_url[len("http://") :]
+        else:
+            raise ValueError(f"Service client {self.service} base URL needs an http(s) scheme")
+        return f"{url}{path}", build_upstream_headers(None, self._service_credential)
+
     async def aclose(self) -> None:
         """Close the underlying HTTP connection pool."""
         await self._http.aclose()

@@ -32,7 +32,7 @@ router.include_router(subresources_router)
 
 
 async def _respond(request: Request, view: dict) -> CharacterResponse:
-    """Attach the campaign title (read from game_session with the caller's token)."""
+    """Attach the campaign title (read through the game_session owner with the caller's token)."""
     campaign_id = view.get("campaign_id")
     title = (await campaign_titles(request, {campaign_id}))[campaign_id] if campaign_id else None
     return to_character_response(view, title)

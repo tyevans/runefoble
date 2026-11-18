@@ -10,9 +10,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from game_session.settlement.router import router as settlement_haven_router
 from gateway_api.assets import router as assets_router
-from gateway_api.auth import get_zitadel_auth_service
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.companion import companion_router, mobile_companion_websocket_endpoint
 from gateway_api.dependencies import (
@@ -34,11 +32,13 @@ from gateway_api.routers import (
     soundscape_router,
     spectator_router,
 )
+from gateway_api.routers.settlements_proxy import router as settlements_router
 from gateway_api.session_websocket import session_websocket_endpoint
 from gateway_api.signaling import voice_signaling_websocket_endpoint
 from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
 from gateway_api.websocket_endpoint import campaign_websocket_endpoint
+from gateway_api.websocket_relay import relay_websocket
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.telemetry import init_telemetry
@@ -89,7 +89,7 @@ app.include_router(hub_views_router)
 app.include_router(lore_views_router)
 app.include_router(characters_router)
 app.include_router(downtime_router)
-app.include_router(settlement_haven_router)
+app.include_router(settlements_router)
 app.include_router(spectator_router)
 app.include_router(overlay_router)
 app.include_router(soundscape_router)
@@ -133,10 +133,12 @@ async def gateway_establishment_table_ws(
     establishment_id: str,
     table_id: str,
 ) -> None:
-    """Establishment-scoped multiplayer minigame table WebSocket channel via gateway."""
-    from game_session.routers.minigames_ws import handle_table_websocket
-
-    await handle_table_websocket(websocket, table_id, establishment_id, get_zitadel_auth_service())
+    """Establishment-scoped minigame table socket. game_session owns it; the gateway relays frames."""
+    await relay_websocket(
+        websocket,
+        service="game_session",
+        segments=("ws", "establishments", establishment_id, "tables", table_id),
+    )
 
 
 @app.websocket("/ws/minigames/{table_id}")
@@ -144,10 +146,8 @@ async def gateway_standalone_minigame_ws(
     websocket: WebSocket,
     table_id: str,
 ) -> None:
-    """Standalone multiplayer minigame table WebSocket channel via gateway."""
-    from game_session.routers.minigames_ws import handle_table_websocket
-
-    await handle_table_websocket(websocket, table_id, None, get_zitadel_auth_service())
+    """Standalone minigame table socket. game_session owns it; the gateway relays frames."""
+    await relay_websocket(websocket, service="game_session", segments=("ws", "minigames", table_id))
 
 
 def main() -> None:

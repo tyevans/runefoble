@@ -31,7 +31,7 @@ class UpdateProfileRequest(BaseModel):
 
 @router.get("/api/v1/profile")
 async def get_profile(request: Request, user: CurrentPrincipal) -> Any:
-    """Read the caller's profile from game_session."""
+    """Read the caller's profile through the game_session owner."""
     return await forward_json(request, service=SERVICE, method="GET", path=PROFILE)
 
 
