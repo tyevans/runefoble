@@ -19,11 +19,30 @@ from campaign_lore.dependencies import (
     set_spicedb_client,
     set_west_marches_repo,
 )
+from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app as lore_app
 from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+VISITOR_SUBJECT = "lore-test-visitor"
+
+
+def _bearer(user_id: str) -> dict[str, str]:
+    """Return headers carrying a signed bearer token for `user_id`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
+
+
+@pytest.fixture(autouse=True)
+def _trust_signing_issuer():
+    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    yield
+    set_zitadel_auth_service(None)
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -39,7 +58,7 @@ def spicedb_client() -> MockSpiceDBClient:
 def client(spicedb_client: MockSpiceDBClient, lore_backends) -> Iterator[TestClient]:
     fresh_repo = create_aggregate_repository(WestMarchesAtlasAggregate)
     set_west_marches_repo(fresh_repo)
-    with TestClient(lore_app) as lore_client:
+    with TestClient(lore_app, headers=_bearer(VISITOR_SUBJECT)) as lore_client:
         yield lore_client
 
 

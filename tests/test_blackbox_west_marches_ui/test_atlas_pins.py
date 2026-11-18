@@ -14,8 +14,26 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from campaign_lore.identity import set_zitadel_auth_service
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+VISITOR_SUBJECT = "lore-test-visitor"
+
+
+def _bearer(user_id: str) -> dict[str, str]:
+    """Return headers carrying a signed bearer token for `user_id`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
+
+
+@pytest.fixture(autouse=True)
+def _trust_signing_issuer():
+    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    yield
+    set_zitadel_auth_service(None)
 
 
 @pytest.mark.asyncio
@@ -31,7 +49,7 @@ async def test_blackbox_west_marches_overview_and_zanzibar_access(
     # 1. Unauthorized outsider is rejected (HTTP 403)
     unauth_resp = client.get(
         f"/api/v1/campaigns/{campaign_id}/west-marches",
-        headers={"x-user-id": outsider_id},
+        headers=_bearer(outsider_id),
     )
     assert unauth_resp.status_code == 403
 
@@ -47,7 +65,7 @@ async def test_blackbox_west_marches_overview_and_zanzibar_access(
     # 3. Authorized player receives communal frontier state
     auth_resp = client.get(
         f"/api/v1/campaigns/{campaign_id}/west-marches",
-        headers={"x-user-id": player_id},
+        headers=_bearer(player_id),
     )
     assert auth_resp.status_code == 200
     data = auth_resp.json()
@@ -78,7 +96,7 @@ async def test_blackbox_discovery_pins_and_popover_data(
     disc_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/west-marches/discoveries",
         json=sample_discovery_payload,
-        headers={"x-user-id": player_id},
+        headers=_bearer(player_id),
     )
     assert disc_resp.status_code == 201
     disc_data = disc_resp.json()["discovery"]
@@ -89,7 +107,7 @@ async def test_blackbox_discovery_pins_and_popover_data(
     # 2. Query overview and verify pin appears in discoveries list
     overview = client.get(
         f"/api/v1/campaigns/{campaign_id}/west-marches",
-        headers={"x-user-id": player_id},
+        headers=_bearer(player_id),
     ).json()
     assert len(overview["discoveries"]) == 1
     assert overview["discoveries"][0]["name"] == "Sunken Crypt of Arnor"
@@ -97,12 +115,12 @@ async def test_blackbox_discovery_pins_and_popover_data(
     # 3. Query filtered by type
     filtered = client.get(
         f"/api/v1/campaigns/{campaign_id}/west-marches?discovery_type=dungeon",
-        headers={"x-user-id": player_id},
+        headers=_bearer(player_id),
     ).json()
     assert len(filtered["discoveries"]) == 1
 
     empty_filter = client.get(
         f"/api/v1/campaigns/{campaign_id}/west-marches?discovery_type=outpost",
-        headers={"x-user-id": player_id},
+        headers=_bearer(player_id),
     ).json()
     assert len(empty_filter["discoveries"]) == 0

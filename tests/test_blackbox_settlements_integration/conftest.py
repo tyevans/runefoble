@@ -22,6 +22,7 @@ from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
 @pytest.fixture
@@ -67,8 +68,14 @@ def ws_subprotocols(headers: dict[str, str]) -> list[str]:
 
 
 @pytest.fixture
-def session_client(spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis) -> TestClient:
-    return TestClient(session_app)
+def session_client(
+    spicedb: MockSpiceDBClient,
+    mock_bus: MockAsyncRedis,
+    trusted_ws_issuer: SigningTestIssuer,
+) -> TestClient:
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 client = session_client
@@ -106,7 +113,10 @@ def setup_campaign_settlement(
     for r, u in [("player", p_id), ("player", dm_id), ("dungeon_master", dm_id)]:
         asyncio.run(db.write_relationship("campaign", cid, r, "user", u))
     if issuer is None:
-        h, p_h = {"x-user-id": dm_id}, {"x-user-id": p_id}
+        h, p_h = (
+            {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"},
+            {"Authorization": f"Bearer {SIGNING_ISSUER.mint(p_id)}"},
+        )
     else:
         h, p_h = bearer_headers(issuer, dm_id), bearer_headers(issuer, p_id)
     b = {"name": "Haven", "scale": "village", **({"districts": dist} if dist else {})}

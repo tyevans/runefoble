@@ -7,11 +7,13 @@ from fastapi.testclient import TestClient
 from game_session.dependencies import set_event_bus, set_spicedb_client
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
 @pytest.fixture
@@ -34,10 +36,18 @@ def spicedb_client() -> MockSpiceDBClient:
 
 
 @pytest.fixture
-def client(mock_bus: MockAsyncRedis, spicedb_client: MockSpiceDBClient) -> TestClient:
-    return TestClient(session_app)
+def client(
+    mock_bus: MockAsyncRedis,
+    spicedb_client: MockSpiceDBClient,
+    trusted_ws_issuer: SigningTestIssuer,
+) -> TestClient:
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 @pytest.fixture
-def watcher_client(mock_bus: MockAsyncRedis) -> TestClient:
-    return TestClient(watcher_app)
+def watcher_client(mock_bus: MockAsyncRedis, trusted_ws_issuer: SigningTestIssuer) -> TestClient:
+    return TestClient(
+        watcher_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )

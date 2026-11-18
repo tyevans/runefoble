@@ -24,6 +24,9 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -44,7 +47,9 @@ def spicedb_client() -> MockSpiceDBClient:
 
 @pytest.fixture
 def client(spicedb_client: MockSpiceDBClient) -> TestClient:
-    return TestClient(session_app)
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +94,7 @@ async def test_blackbox_caravan_contract_accept_and_stream_events(
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Frontier Marches Trading League"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert world_res.status_code == 201
     world_id = world_res.json()["shared_world_id"]
@@ -108,12 +113,12 @@ async def test_blackbox_caravan_contract_accept_and_stream_events(
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": campaign_poster, "party_name": "Guild Overseers"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": campaign_contractor, "party_name": "The Amber Vanguard"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
 
     # 2. Post contract to notice board
@@ -131,7 +136,7 @@ async def test_blackbox_caravan_contract_accept_and_stream_events(
             "reward_reputation": 20,
             "posted_by_campaign_id": campaign_poster,
         },
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert post_res.status_code == 201
     contract = post_res.json()["contract"]
@@ -145,7 +150,7 @@ async def test_blackbox_caravan_contract_accept_and_stream_events(
             "contractor_campaign_id": campaign_contractor,
             "contractor_party_name": "The Amber Vanguard",
         },
-        headers={"x-user-id": contractor_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(contractor_id)}"},
     )
     assert accept_res.status_code == 200
     accepted_data = accept_res.json()["contract"]
@@ -155,7 +160,7 @@ async def test_blackbox_caravan_contract_accept_and_stream_events(
     # 4. Verify public notice board query returns the accepted contract
     board_res = client.get(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts",
-        headers={"x-user-id": contractor_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(contractor_id)}"},
     )
     assert board_res.status_code == 200
     contracts = board_res.json()["contracts"]

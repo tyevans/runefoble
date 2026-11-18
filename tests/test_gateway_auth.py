@@ -9,7 +9,12 @@ from fastapi.testclient import TestClient
 from gateway_api.main import app
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 
-client = TestClient(app)
+
+@pytest.fixture
+def client(game_session_upstream):
+    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
 
 
 def _bearer(issuer: SigningTestIssuer, sub: str) -> dict[str, str]:
@@ -17,7 +22,9 @@ def _bearer(issuer: SigningTestIssuer, sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {issuer.mint(sub)}"}
 
 
-def _create_campaign_with_session(owner_headers: dict[str, str]) -> tuple[str, str]:
+def _create_campaign_with_session(
+    client: TestClient, owner_headers: dict[str, str]
+) -> tuple[str, str]:
     """Create a campaign as the owner and return (campaign_id, first_session_id)."""
     res = client.post(
         "/api/v1/campaigns",
@@ -33,6 +40,7 @@ def _create_campaign_with_session(owner_headers: dict[str, str]) -> tuple[str, s
 
 
 def _join_with_invite(
+    client: TestClient,
     campaign_id: str,
     owner_headers: dict[str, str],
     member_headers: dict[str, str],
@@ -54,36 +62,36 @@ def _join_with_invite(
 
 
 @pytest.mark.asyncio
-async def test_zanzibar_authorization_enforcement(signing_issuer):
+async def test_zanzibar_authorization_enforcement(trusted_ws_issuer, client):
     """Verify that Gateway API enforces SpiceDB Zanzibar permissions without hardcoded role checks."""
-    owner = _bearer(signing_issuer, "owner_dana")
-    player = _bearer(signing_issuer, "player_alice")
-    stranger = _bearer(signing_issuer, "stranger_bob")
-    campaign_id, session_id = _create_campaign_with_session(owner)
+    owner = _bearer(trusted_ws_issuer, "owner_dana")
+    player = _bearer(trusted_ws_issuer, "player_alice")
+    stranger = _bearer(trusted_ws_issuer, "stranger_bob")
+    campaign_id, session_id = _create_campaign_with_session(client, owner)
 
     # 1. Unassigned user tries to view session -> 403 Forbidden
     res_unauth = client.get(f"/api/v1/sessions/{session_id}", headers=stranger)
     assert res_unauth.status_code == 403
     err_data = res_unauth.json()["detail"]
     assert err_data["error"] == "permission_denied"
-    assert err_data["required_permission"] == "view"
+    assert err_data["required_permission"] == "observe"
 
     # 2. Owner invites the player; the player redeems the invite
-    _join_with_invite(campaign_id, owner, player, role="player")
+    _join_with_invite(client, campaign_id, owner, player, role="player")
 
     # 3. Player can now view session
     res_player_view = client.get(f"/api/v1/sessions/{session_id}", headers=player)
     assert res_player_view.status_code == 200
     assert res_player_view.json()["id"] == session_id
 
-    # 4. Player tries to advance turn (requires 'run_session' / DM) -> 403 Forbidden
+    # 4. Player tries to advance turn (requires 'control' on the session, which is run_session on its campaign) -> 403 Forbidden
     res_player_advance = client.post(
         f"/api/v1/sessions/{session_id}/turns/advance",
         headers=player,
         json={"next_character_id": "c2"},
     )
     assert res_player_advance.status_code == 403
-    assert res_player_advance.json()["detail"]["required_permission"] == "run_session"
+    assert res_player_advance.json()["detail"]["required_permission"] == "control"
 
     # 5. The owner runs the session as DM and can advance turn successfully
     res_dm_advance = client.post(
@@ -96,14 +104,14 @@ async def test_zanzibar_authorization_enforcement(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_zanzibar_board_view_permission(signing_issuer):
+async def test_zanzibar_board_view_permission(trusted_ws_issuer, client):
     """Verify board query endpoint requires Zanzibar view permission."""
-    owner = _bearer(signing_issuer, "owner_dana")
-    spectator = _bearer(signing_issuer, "spectator_devon")
-    campaign_id, session_id = _create_campaign_with_session(owner)
+    owner = _bearer(trusted_ws_issuer, "owner_dana")
+    spectator = _bearer(trusted_ws_issuer, "spectator_devon")
+    campaign_id, session_id = _create_campaign_with_session(client, owner)
 
     # Owner invites a spectator; the spectator redeems the invite
-    _join_with_invite(campaign_id, owner, spectator, role="spectator")
+    _join_with_invite(client, campaign_id, owner, spectator, role="spectator")
 
     res = client.get(f"/api/v1/boards/{session_id}", headers=spectator)
     assert res.status_code == 200

@@ -66,9 +66,12 @@ def postgres_service() -> Generator[dict[str, str | int] | None]:
     cmd = [
         docker_bin,
         "run",
+        "--rm",
         "--name",
         container_name,
         "-d",
+        "--tmpfs",
+        "/var/lib/postgresql/data",
         "-p",
         f"{port}:5432",
         "-v",

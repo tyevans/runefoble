@@ -32,6 +32,7 @@ from voice_agent.synthesis_engine import set_speech_synthesizer
 from tests.helpers.fixture_synthesizer import FixtureSynthesizer
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
 
 
 def generate_pcm_sine(
@@ -142,9 +143,9 @@ def shared_event_bus(
 
 
 @pytest.fixture
-def client(shared_event_bus: RedisStreamsEventBus) -> TestClient:
+def client(shared_event_bus: RedisStreamsEventBus, trusted_voice_issuer) -> TestClient:
     get_streaming_pipeline().reset_all()
     # Wire the watcher ASGI transport directly for inter-service communication
     watcher_client = AsyncClient(transport=ASGITransport(app=watcher_app), base_url="http://test")
     set_watcher_client(watcher_client)
-    return TestClient(voice_app)
+    return TestClient(voice_app, headers=voice_auth_headers())

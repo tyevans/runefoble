@@ -108,6 +108,8 @@ Then('I should see the heading {string}', async ({ page }, headingText: string) 
 ### Best Practices for Step Definitions
 - **Use Web-First Assertions**: Always use `await expect(locator).toBeVisible()` or `expect.poll()` so Playwright auto-waits for async rendering and animations.
 - **Query Composed Events**: When testing custom element events, assert observable DOM changes or public hash route updates rather than spying on private component methods.
+- **Read the Base URL From Config**: Never write a host such as `http://localhost:5173` in a step. Read `test.info().project.use.baseURL`, which follows `PLAYWRIGHT_BASE_URL` in `playwright.config.ts`. For example, `browser.newContext({ baseURL: test.info().project.use.baseURL })`.
+- **Fail on Missing Setup**: A setup step that cannot create its data must throw. Do not fall back to a fixed id.
 
 ---
 
@@ -116,7 +118,11 @@ Then('I should see the heading {string}', async ({ page }, headingText: string) 
 The repository provides Makefile targets to execute and debug Playwright BDD suites:
 
 ### Validate Gherkin Syntax and Steps (Dry-Run)
-Ensure all Gherkin steps in `e2e/features/` map to defined step definitions without launching browsers:
+`make test-bdd` runs three gates without launching browsers:
+1. **Typecheck**: `pnpm run e2e:typecheck` runs `tsc -p e2e/tsconfig.json` (strict mode) over `e2e/`. Playwright does not check types, so this gate catches type errors in step files.
+2. **Unused steps**: `uv run python scripts/check_e2e_unused_steps.py` fails when a step definition matches no line in `e2e/features/`. Delete the definition or add the scenario that uses it.
+3. **Gherkin mapping**: `pnpm exec bddgen` generates the test files and fails on a missing or mismatched step.
+
 ```bash
 make test-bdd
 ```

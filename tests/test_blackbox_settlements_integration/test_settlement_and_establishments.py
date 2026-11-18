@@ -5,13 +5,17 @@ from __future__ import annotations
 import asyncio
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_WEST_MARCHES
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_stream_event
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def test_found_settlement_and_upgrade_tier_flow(
@@ -19,7 +23,7 @@ def test_found_settlement_and_upgrade_tier_flow(
 ) -> None:
     """Found settlement, verify district slot caps per scale, and upgrade civic tier."""
     cid, mayor_id = str(uuid4()), "mayor_1"
-    h = {"x-user-id": mayor_id}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(mayor_id)}"}
     asyncio.run(spicedb.write_relationship("campaign", cid, "dungeon_master", "user", mayor_id))
     asyncio.run(spicedb.write_relationship("campaign", cid, "player", "user", mayor_id))
 
@@ -56,7 +60,7 @@ def test_establishment_creation_and_worker_assignment(
 ) -> None:
     """Place weaponsmith establishment, assign NPC armorer, and verify dynamic inventory."""
     cid, dm_id = str(uuid4()), f"dm_{uuid4().hex[:8]}"
-    h = {"x-user-id": dm_id}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"}
     asyncio.run(spicedb.write_relationship("campaign", cid, "dungeon_master", "user", dm_id))
     asyncio.run(spicedb.write_relationship("campaign", cid, "player", "user", dm_id))
 

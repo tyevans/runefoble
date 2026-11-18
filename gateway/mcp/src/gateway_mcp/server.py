@@ -4,25 +4,18 @@ Exposes Runefoble tactical tools, board state, spells, conditions,
 and AI DM controls to MCP-compliant agents and LLMs.
 """
 
-from gateway_mcp.dynamic import (
-    DynamicToolDefinition,
-    DynamicToolRegistry,
-    dynamic_registry,
-)
+from gateway_mcp.dynamic import dynamic_registry
 from gateway_mcp.prompts import (
     dm_narrative_guidance,
     register_prompts,
     tactical_action_adviser,
 )
 from gateway_mcp.resources import (
-    get_active_session_context,
-    get_combat_encounter_state,
+    get_encounter_state,
     get_session_state,
     register_resources,
 )
-from gateway_mcp.routers import (
-    tools_registry_router as dynamic_tool_router,
-)
+from gateway_mcp.settings import load_listen_settings, load_settings
 from gateway_mcp.tools import (
     add_condition,
     apply_absentee_penalty,
@@ -45,7 +38,6 @@ from gateway_mcp.tools import (
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("Runefoble MCP Gateway")
-mcp.get_tool = mcp._tool_manager.get_tool
 
 # Mount tool, resource, and prompt registration hooks
 register_tools(mcp)
@@ -56,10 +48,6 @@ register_prompts(mcp)
 dynamic_registry.set_mcp_server(mcp)
 
 __all__ = [
-    "DynamicToolDefinition",
-    "DynamicToolRegistry",
-    "dynamic_registry",
-    "dynamic_tool_router",
     "add_condition",
     "apply_absentee_penalty",
     "apply_condition",
@@ -68,9 +56,8 @@ __all__ = [
     "create_encounter",
     "dm_narrative_guidance",
     "execute_agent_action_plan",
-    "get_active_session_context",
     "get_character_sheet",
-    "get_combat_encounter_state",
+    "get_encounter_state",
     "get_session_state",
     "inspect_inventory",
     "inspect_tactical_board",
@@ -87,8 +74,15 @@ __all__ = [
 
 
 def main() -> None:
-    """Run FastMCP server."""
-    mcp.run()
+    """Serve the MCP protocol over streamable HTTP on GATEWAY_MCP_HOST and GATEWAY_MCP_PORT.
+
+    The upstream URLs are read first, so a missing URL stops the process before it listens.
+    """
+    load_settings()
+    listen = load_listen_settings()
+    mcp.settings.host = listen.host
+    mcp.settings.port = listen.port
+    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":

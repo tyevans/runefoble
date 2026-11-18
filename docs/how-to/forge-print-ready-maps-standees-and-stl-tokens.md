@@ -9,6 +9,10 @@ Runefoble bridges digital virtual tabletop play with in-person physical gaming s
 2. **Foldable Papercraft Standees**: Generates print-and-cut miniature sheets featuring front portraits, mirrored back artwork, nameplates, HP tracking slots, and foldable base tabs.
 3. **Watertight 3D Printable STL Tokens**: Procedurally generates 2-manifold binary or ASCII STL meshes for 28mm (medium) and 50mm (large) miniature bases with snap-in status condition clips (Poisoned, Stunned, Blessed, Blinded).
 
+## Authentication
+
+Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
+
 ---
 
 ## 1. Exporting Multi-Page 1-Inch Grid Battlemaps

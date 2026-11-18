@@ -102,15 +102,15 @@ The backlog engine is decomposed into specialized, single-responsibility modules
 ## Verifying the Engine Test Suites
 
 The autonomous backlog execution engine is verified via modular frontdoor test suites conforming to Hard Invariant 6 (< 500 lines per file):
-- [`test_blackbox_backlog_engine/`](file:///home/ty/workspace/runefoble/tests/test_blackbox_backlog_engine/): Frontdoor blackbox tests verifying CLI commands (`list`, `status`, `claim`, `complete`) and modular parser/serializer contracts.
-- [`test_backlog_parser.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_parser.py): Validates task markdown syntax, YAML frontmatter schemas, octal safety, title fallback, and Definition of Done parsing.
-- [`test_backlog_queue.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_queue.py): Validates priority ranking, topological dependency resolution, circular dependency detection, and queue transitions.
-- [`test_backlog_execution.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_execution.py): Validates atomic state progression (`claim` -> `review` -> `complete`), preflight quality gate aggregation, self-healing repair loops, and interrupt rollbacks.
-- [`test_backlog_ci_watcher.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_ci_watcher.py): Validates PR mergeability, dirty conflict status checks, immediate conflict abortion, and failed CI log extractions.
-- [`test_backlog_stale_recovery.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_stale_recovery.py): Validates orphaned in-progress/review task recovery, requeuing mechanics, worktree threading locks, and failure retry circuit breakers.
-- [`test_backlog_pr_repair.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_pr_repair.py): Validates pre-push git merge-tree conflict detection, orchestrator PR teardown on CI failure, and automated worktree AI agent PR healing.
-- [`test_backlog_orchestrator.py`](file:///home/ty/workspace/runefoble/tests/test_backlog_orchestrator.py): Validates orchestrator lifecycle coordination, dry-run mode, and threadpool worker concurrency.
-- [`test_pr_conflict_detection.py`](file:///home/ty/workspace/runefoble/tests/test_pr_conflict_detection.py): Validates PR conflict detection across GitHub CLI, branch sync, and CI diagnostic reporting.
+- [`test_blackbox_backlog_engine/`](../../tests/test_blackbox_backlog_engine/): Frontdoor blackbox tests verifying CLI commands (`list`, `status`, `claim`, `complete`) and modular parser/serializer contracts.
+- [`test_backlog_parser.py`](../../tests/test_backlog_parser.py): Validates task markdown syntax, YAML frontmatter schemas, octal safety, title fallback, and Definition of Done parsing.
+- [`test_backlog_queue.py`](../../tests/test_backlog_queue.py): Validates priority ranking, topological dependency resolution, circular dependency detection, and queue transitions.
+- [`test_backlog_execution.py`](../../tests/test_backlog_execution.py): Validates atomic state progression (`claim` -> `review` -> `complete`), preflight quality gate aggregation, self-healing repair loops, and interrupt rollbacks.
+- [`test_backlog_ci_watcher.py`](../../tests/test_backlog_ci_watcher.py): Validates PR mergeability, dirty conflict status checks, immediate conflict abortion, and failed CI log extractions.
+- [`test_backlog_stale_recovery.py`](../../tests/test_backlog_stale_recovery.py): Validates orphaned in-progress/review task recovery, requeuing mechanics, worktree threading locks, and failure retry circuit breakers.
+- [`test_backlog_pr_repair.py`](../../tests/test_backlog_pr_repair.py): Validates pre-push git merge-tree conflict detection, orchestrator PR teardown on CI failure, and automated worktree AI agent PR healing.
+- [`test_backlog_orchestrator.py`](../../tests/test_backlog_orchestrator.py): Validates orchestrator lifecycle coordination, dry-run mode, and threadpool worker concurrency.
+- [`test_pr_conflict_detection.py`](../../tests/test_pr_conflict_detection.py): Validates PR conflict detection across GitHub CLI, branch sync, and CI diagnostic reporting.
 
 Run the test suite via pytest:
 ```bash

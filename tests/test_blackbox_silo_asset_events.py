@@ -17,7 +17,7 @@ from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus
-from runefoble_events import AssetDeleted, AssetUploaded
+from runefoble_events.events import AssetDeleted, AssetUploaded
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 

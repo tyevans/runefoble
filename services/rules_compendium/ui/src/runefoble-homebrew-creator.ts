@@ -60,7 +60,8 @@ export class RunefobleHomebrewCreator extends LitElement {
     try {
       if (this.apiBaseUrl) {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (this.userId) headers['x-user-id'] = this.userId;
+        const token = window?.localStorage?.getItem('runefoble-access-token');
+        if (token) headers.Authorization = `Bearer ${token}`;
 
         const res = await fetch(`${this.apiBaseUrl}/api/v1/compendium/homebrew`, {
           method: 'POST',

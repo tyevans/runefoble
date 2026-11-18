@@ -8,22 +8,11 @@ This guide explains how to configure and orchestrate live audience chaos polls, 
 
 Audience polls and chaos modifier approvals are guarded by SpiceDB Zanzibar permissions (`libs/runefoble_auth/schema/runefoble.zed`):
 
-- **Spectator / Viewer**: Any user holding the `spectator`, `player`, or `view` relation on `campaign:<campaign_id>` can view active polls and cast votes.
-- **Dungeon Master / Moderation**: Approving or vetoing modifier proposals requires `dungeon_master`, `game_master`, or `owner` relation (`run_session` permission) on `campaign:<campaign_id>`.
+- **Identity**: Every route needs `Authorization: Bearer <Zitadel access token>`. The service verifies the RS256 signature, `iss`, `aud`, and `exp` against Zitadel's JWKS. Without a valid token the service returns `401 Unauthorized`. The actor of every command is the token subject (`sub`). Body fields and headers never name the actor.
+- **Spectator / Viewer**: Any user holding the `spectator`, `player`, or `view` relation on `campaign:<campaign_id>` can view active polls and cast votes. The voter is the token subject.
+- **Dungeon Master / Moderation**: Approving or vetoing modifier proposals requires `dungeon_master`, `game_master`, or `owner` relation (`run_session` permission) on `campaign:<campaign_id>`. The service asks SpiceDB for this check. It holds no local role or grant table.
 - Unauthorized approval attempts return HTTP `403 Forbidden`.
-
-```bash
-# Register DM relation via frontdoor tuple helper
-curl -X POST "http://localhost:8010/api/v1/audience/auth/tuples" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "resource_type": "campaign",
-    "resource_id": "camp-alpha",
-    "relation": "dungeon_master",
-    "subject_type": "user",
-    "subject_id": "dm-alice"
-  }'
-```
+- Grant the DM relation in SpiceDB through its write API (`POST /v1/relationships/write`), not through Audience Studio. Audience Studio has no grant route. `POST /api/v1/audience/auth/tuples` was removed in TASK-0533 and returns `404 Not Found`.
 
 ---
 
@@ -58,16 +47,16 @@ High-frequency spectator votes can be submitted from streaming chat bots or the 
 
 ```http
 POST /api/v1/audience/polls/{poll_id}/votes
+Authorization: Bearer <spectator access token>
 Content-Type: application/json
 
 {
-  "voter_id": "twitch_spectator_42",
   "option_id": "opt_1",
   "channel": "twitch"
 }
 ```
 
-Duplicate votes from the same `voter_id` are rejected with HTTP `400 Bad Request`. A vote on an unknown poll returns `404 Not Found`. A vote after the poll window ends returns `400 Bad Request`.
+The voter is the token subject. Duplicate votes from the same subject are rejected with HTTP `400 Bad Request`. A vote on an unknown poll returns `404 Not Found`. A vote after the poll window ends returns `400 Bad Request`.
 
 ---
 
@@ -83,11 +72,7 @@ When a poll duration expires (or is explicitly closed via `POST /api/v1/audience
    - The DM approves the proposal:
      ```http
      POST /api/v1/audience/proposals/{proposal_id}/approve
-     Content-Type: application/json
-
-     {
-       "dm_user_id": "dm-alice"
-     }
+     Authorization: Bearer <DM access token>
      ```
    - Emits `runefoble.events.audience.modifier_approved` with `approved: true`. Gameplay does not apply the chaos effect yet. The subscriber that applies it is tracked in TASK-0441.
    - Alternatively, the DM exercises veto power via `POST /api/v1/audience/proposals/{proposal_id}/veto`. A veto emits the same event type with `approved: false`.
@@ -99,9 +84,9 @@ When a poll duration expires (or is explicitly closed via `POST /api/v1/audience
 
 Clients and DM dashboards connect to `/ws/audience/{campaign_id}` for sub-500ms broadcast updates:
 
-1. **Connection & Handshake**:
+1. **Connection & Handshake**: Offer two subprotocols: `runefoble.v1` and `runefoble.bearer.<access token>`. The service verifies the token before it accepts the socket. A refused handshake returns `401` and never opens. Never put the token in the query string.
    ```json
-   { "action": "subscribe", "userId": "dm-alice", "role": "dungeon_master" }
+   { "action": "subscribe" }
    ```
 2. **Live Feed Messages**:
    - `poll_started`: New chaos poll opened.
@@ -113,8 +98,7 @@ Clients and DM dashboards connect to `/ws/audience/{campaign_id}` for sub-500ms 
    ```json
    {
      "action": "approve_proposal",
-     "proposalId": "prop-uuid-1234",
-     "userId": "dm-alice"
+     "proposalId": "prop-uuid-1234"
    }
    ```
 

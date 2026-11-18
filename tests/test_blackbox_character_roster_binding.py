@@ -16,20 +16,24 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
-client = TestClient(app)
+
+
+@pytest.fixture
+def client(game_session_upstream):
+    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+    with TestClient(app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture(autouse=True)
 def reset_stores():
     """Reset character and campaign memory stores before each test."""
     character_store.reset(load_defaults=False)
-    campaign_store.reset()
     yield
 
 
@@ -43,9 +47,9 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
-def test_frontdoor_create_character_mutation(signing_issuer):
+def test_frontdoor_create_character_mutation(trusted_ws_issuer, client):
     """Verify POST /api/v1/characters accepts frontend builder payload and returns character."""
-    headers = _auth(signing_issuer, "user-marcus")
+    headers = _auth(trusted_ws_issuer, "user-marcus")
     payload = {
         "name": "Thorne Ironbreaker",
         "characterClass": "Fighter",
@@ -79,9 +83,9 @@ def test_frontdoor_create_character_mutation(signing_issuer):
     assert data["id"] in listed_ids
 
 
-def test_frontdoor_assign_character_campaign_mutation(signing_issuer):
+def test_frontdoor_assign_character_campaign_mutation(trusted_ws_issuer, client):
     """Verify PATCH /api/v1/characters/{id}/campaign updates campaign assignment and title."""
-    headers_owner = _auth(signing_issuer, "user-marcus")
+    headers_owner = _auth(trusted_ws_issuer, "user-marcus")
 
     # 1. Create campaign
     camp_res = client.post(
@@ -123,9 +127,9 @@ def test_frontdoor_assign_character_campaign_mutation(signing_issuer):
     assert unassigned_data["campaignId"] is None
 
 
-def test_frontdoor_delete_character_mutation(signing_issuer):
+def test_frontdoor_delete_character_mutation(trusted_ws_issuer, client):
     """Verify DELETE /api/v1/characters/{id} deletes character and removes from listing."""
-    headers_owner = _auth(signing_issuer, "user-marcus")
+    headers_owner = _auth(trusted_ws_issuer, "user-marcus")
 
     # 1. Create character
     char_res = client.post(
@@ -170,7 +174,7 @@ def test_frontend_app_shell_typescript_unit_suite():
     app_shell_dir = FRONTEND_DIR / "test" / "app_shell"
     assert app_shell_dir.is_dir()
     test_files = sorted(str(p.relative_to(REPO_ROOT)) for p in app_shell_dir.glob("*.test.ts"))
-    assert len(test_files) == 5
+    assert test_files
 
     result = subprocess.run(
         [

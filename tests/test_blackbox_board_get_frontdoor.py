@@ -15,12 +15,20 @@ from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
 SEEDED_NAMES = {"Valeros", "Kyra", "Goblin Scout"}
 
 
 @pytest.fixture
 def board_client():
-    return TestClient(board_app)
+    return TestClient(board_app, headers=bearer("user-test"))
 
 
 def _new_session_id() -> str:
@@ -95,7 +103,7 @@ def test_store_load_failure_propagates_as_server_error_and_keeps_board(board_cli
     )
     board_dependencies.repo = outage_repo
     try:
-        client = TestClient(board_app, raise_server_exceptions=False)
+        client = TestClient(board_app, headers=bearer("user-test"), raise_server_exceptions=False)
         res = client.get(f"/api/v1/boards/{session_id}")
     finally:
         board_dependencies.repo = original_repo

@@ -15,9 +15,10 @@ from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 
 from asset_forge.aggregate import AssetForgeAggregate
 from asset_forge.dependencies import (
+    VerifiedUserId,
     check_user_can_forge,
-    get_current_user_id,
     get_forge_repo,
+    get_principal,
     get_spicedb_client,
     get_storage,
     publish_forge_event,
@@ -29,19 +30,21 @@ from asset_forge.models import (
 from asset_forge.raster.token_raster import generate_token_portrait_png
 from asset_forge.silo_upload import store_forged_asset
 
-router = APIRouter(prefix="/api/v1/forge/token", tags=["Token Forge"])
+router = APIRouter(
+    prefix="/api/v1/forge/token", tags=["Token Forge"], dependencies=[Depends(get_principal)]
+)
 
 
 @router.post("", response_model=TokenForgeResponse)
 async def forge_token(
     request: TokenForgeRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: VerifiedUserId,
     storage: Annotated[SiloStorageService, Depends(get_storage)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     repo: Annotated[AggregateRepository[AssetForgeAggregate], Depends(get_forge_repo)],
 ) -> TokenForgeResponse:
     """Synthesize cropped circular token portrait with transparency and store in Silo S3."""
-    creator_id = user_id or "anonymous_creator"
+    creator_id = user_id
 
     # Zanzibar campaign authorization check
     if request.campaign_id:
@@ -111,23 +114,22 @@ async def forge_token(
     await publish_forge_event(event)
 
     # 5. Write Zanzibar relationships to SpiceDB
-    if user_id:
-        with contextlib.suppress(Exception):
+    with contextlib.suppress(Exception):
+        await spicedb.write_relationship(
+            resource_type="forged_asset",
+            resource_id=asset_id,
+            relation="creator",
+            subject_type="user",
+            subject_id=user_id,
+        )
+        if request.campaign_id:
             await spicedb.write_relationship(
                 resource_type="forged_asset",
                 resource_id=asset_id,
-                relation="creator",
-                subject_type="user",
-                subject_id=user_id,
+                relation="campaign",
+                subject_type="campaign",
+                subject_id=str(request.campaign_id),
             )
-            if request.campaign_id:
-                await spicedb.write_relationship(
-                    resource_type="forged_asset",
-                    resource_id=asset_id,
-                    relation="campaign",
-                    subject_type="campaign",
-                    subject_id=str(request.campaign_id),
-                )
 
     return TokenForgeResponse(
         asset_id=asset_id,

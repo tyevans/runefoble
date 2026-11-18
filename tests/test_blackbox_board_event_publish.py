@@ -28,12 +28,22 @@ from the_watcher.dependencies import set_spicedb_client as set_watcher_spicedb_c
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 BOARD_STREAM = "runefoble.events.board"
 WATCHER_STREAM = "runefoble.events.watcher"
 WORLD_TICK_TYPE = "runefoble.events.watcher.world_tick_executed"
 AOE_PLACED_TYPE = "runefoble.events.board.aoe_template_placed"
+
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def _entries(redis: MockAsyncRedis, stream: str) -> list[dict[str, str]]:
@@ -69,7 +79,7 @@ def _create_board(client: TestClient, board_id: str) -> None:
 
 def test_aoe_placement_publishes_template_placed_event(board_redis: MockAsyncRedis):
     """Placing an AoE template writes one AoETemplatePlaced entry to the board stream."""
-    client = TestClient(board_app)
+    client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-aoe-{uuid4().hex[:8]}"
     _create_board(client, board_id)
 
@@ -92,7 +102,7 @@ def test_aoe_placement_publishes_template_placed_event(board_redis: MockAsyncRed
 
 def test_uvtt_import_publishes_every_uncommitted_event_in_order(board_redis: MockAsyncRedis):
     """A UVTT import writes all of its uncommitted events to the board stream, not only the last."""
-    client = TestClient(board_app)
+    client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-uvtt-{uuid4().hex[:8]}"
     _create_board(client, board_id)
     uvtt_data = build_sample_dd2vtt_dict(cols=18, rows=14, pixels_per_grid=100)
@@ -115,7 +125,9 @@ async def test_world_tick_publishes_world_tick_executed_to_watcher_stream(
     watcher_redis: MockAsyncRedis,
 ):
     """Executing a world tick writes a world_tick_executed entry to the watcher stream."""
-    client = TestClient(watcher_app)
+    client = TestClient(
+        watcher_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
     camp_id = f"camp-tick-{uuid4().hex[:8]}"
     dm_user = f"dm-{uuid4().hex[:6]}"
     await get_watcher_spicedb_client().write_relationship(
@@ -129,7 +141,7 @@ async def test_world_tick_publishes_world_tick_executed_to_watcher_stream(
     res = client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",
         json={"regional_stability": 60, "random_seed": 42},
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
     assert res.status_code == 200, res.text
 

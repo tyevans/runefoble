@@ -75,3 +75,9 @@ The test must not assert the strings "Sunken Citadel" or "Star-Eater Relic".
 2. `lore_views.py` forwards the identity and uses `ServiceClient`.
 3. The blackbox test file passes. `uv run ruff check .` passes.
 4. `docs/reference/ports-and-endpoints.md` matches the routes.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- Add gateway proxies for the lore write routes (POST atlas pins and POST codex entries). Use the write permission from runefoble.zed, not the view permission.

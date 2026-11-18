@@ -4,17 +4,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from runefoble_events.voice_stream_quality import (
     VoiceStreamCodecAdaptedEvent,
     VoiceStreamQualityDegradedEvent,
 )
+from voice_agent.auth import get_voice_principal
 from voice_agent.dependencies import publish_voice_event
 from voice_agent.webrtc.adaptive_bitrate import AdaptiveBitrateRegulator
 from voice_agent.webrtc.models import RTCPReportRequest, StreamQualityResponse
 from voice_agent.webrtc.quality_monitor import NetworkQualityMonitor
 
-router = APIRouter(tags=["Voice Stream Diagnostics"])
+router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Voice Stream Diagnostics"])
 _qm = NetworkQualityMonitor()
 _abr = AdaptiveBitrateRegulator()
 

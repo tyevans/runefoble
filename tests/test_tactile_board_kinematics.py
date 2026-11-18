@@ -9,10 +9,17 @@ from uuid import uuid4
 from board_state.main import app
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 def test_tactile_kinematics_route_previews():
     """Verify route preview calculations via HTTP frontdoors."""
-    client = TestClient(app)
+    client = TestClient(app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
     # Create board
@@ -62,7 +69,7 @@ def test_tactile_kinematics_route_previews():
 
 def test_tactile_kinematics_websocket_flow():
     """Verify WebSocket live kinematics stream and ghost preview staging."""
-    client = TestClient(app)
+    client = TestClient(app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
     client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})

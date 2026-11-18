@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_session_stream_events
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -41,7 +44,7 @@ async def test_post_bounty_and_query_board(
             "escrow_items": [{"item_id": "frost_gem", "quantity": 2}],
             "campaign_id": str(uuid4()),
         },
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_post.status_code == 201, res_post.text
     body = res_post.json()
@@ -61,7 +64,7 @@ async def test_post_bounty_and_query_board(
     # 2. Query open notice board
     res_list = client.get(
         f"/sessions/{session_id}/contracts/bounties",
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_list.status_code == 200
     bounties = res_list.json()["bounties"]
@@ -71,14 +74,14 @@ async def test_post_bounty_and_query_board(
     # 3. Test filtering by target_type
     res_filtered = client.get(
         f"/sessions/{session_id}/contracts/bounties?target_type=monster_hunt",
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_filtered.status_code == 200
     assert len(res_filtered.json()["bounties"]) == 1
 
     res_empty_type = client.get(
         f"/sessions/{session_id}/contracts/bounties?target_type=resource_retrieval",
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_empty_type.status_code == 200
     assert len(res_empty_type.json()["bounties"]) == 0
@@ -86,20 +89,20 @@ async def test_post_bounty_and_query_board(
     # 4. Test filtering by min_gold
     res_gold = client.get(
         f"/sessions/{session_id}/contracts/bounties?min_gold=400",
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert len(res_gold.json()["bounties"]) == 1
 
     res_gold_high = client.get(
         f"/sessions/{session_id}/contracts/bounties?min_gold=500",
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert len(res_gold_high.json()["bounties"]) == 0
 
     # 5. Get individual bounty by ID
     res_get = client.get(
         f"/sessions/{session_id}/contracts/bounties/{bounty_id}",
-        headers={"x-user-id": creator_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(creator_id)}"},
     )
     assert res_get.status_code == 200
     assert res_get.json()["bounty"]["bounty_id"] == bounty_id

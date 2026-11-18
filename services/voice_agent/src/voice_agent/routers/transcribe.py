@@ -12,8 +12,9 @@ import logging
 from typing import Literal
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from runefoble_events.events import PlayerSpokeEvent
+from voice_agent.auth import get_voice_principal
 from voice_agent.dependencies import (
     STREAM_SESSION,
     WATCHER_URL,
@@ -24,7 +25,9 @@ from voice_agent.models import TranscribeRequest, TranscribeResponse
 from voice_agent.stt import get_streaming_pipeline, parse_audio_data
 
 logger = logging.getLogger("runefoble.voice_agent.transcribe")
-router = APIRouter(tags=["Speech Synthesis & Transcription"])
+router = APIRouter(
+    dependencies=[Depends(get_voice_principal)], tags=["Speech Synthesis & Transcription"]
+)
 
 TranscriptSource = Literal["audio", "client_text"]
 

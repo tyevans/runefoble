@@ -5,14 +5,15 @@ from __future__ import annotations
 import base64
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from runefoble_events.aec import AECBenchmarkCompletedEvent, EchoSuppressionEngagedEvent
 from voice_agent.aec.pipeline import AECPipeline
+from voice_agent.auth import get_voice_principal
 from voice_agent.dependencies import publish_voice_event
 
 logger = logging.getLogger("runefoble.voice_agent.aec_diagnostics")
-router = APIRouter(tags=["Acoustic Echo Cancellation"])
+router = APIRouter(dependencies=[Depends(get_voice_principal)], tags=["Acoustic Echo Cancellation"])
 
 
 class AECBenchmarkRequest(BaseModel):

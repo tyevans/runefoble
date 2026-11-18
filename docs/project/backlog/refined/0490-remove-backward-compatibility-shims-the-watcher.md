@@ -71,3 +71,9 @@ When The Watcher was decomposed into focused submodules (such as modular copilot
 3. Call sites and tests migrated to modular submodules.
 4. Obsolete backward-compatibility tests removed.
 5. All The Watcher test suites pass cleanly.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- tests/test_blackbox_stand_in_guardrails.py::test_stand_in_facade_and_submodule_backward_compatibility checks facade re-exports. Delete the test with the facade.

@@ -27,6 +27,9 @@ from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.main import app as voice_app
 
 from tests.helpers.audio_synth import generate_synthetic_audio
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 
 @pytest.fixture
@@ -38,7 +41,7 @@ def test_setup():
     mock_bus = AsyncMock()
     coord.set_event_bus(mock_bus)
 
-    client = TestClient(voice_app)
+    client = TestClient(voice_app, headers=voice_auth_headers())
     return {
         "client": client,
         "coord": coord,
@@ -98,7 +101,7 @@ async def test_modulate_voice_with_synthetic_pcm_frames(test_setup):
     resp = client.post(
         "/voice/modulate",
         json=req_payload,
-        headers={"X-User-Id": user_id},
+        headers=voice_auth_headers(user_id),
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -154,7 +157,7 @@ async def test_modulate_all_creature_archetypes(test_setup):
                 "preset_name": name,
                 "audio_base64": input_b64,
             },
-            headers={"X-User-Id": user_id},
+            headers=voice_auth_headers(user_id),
         )
         assert resp.status_code == 200
         d = resp.json()
@@ -190,7 +193,7 @@ async def test_modulate_custom_overrides_and_toggle(test_setup):
             "resonance_hz": 220.0,
             "audio_base64": input_b64,
         },
-        headers={"X-User-Id": user_id},
+        headers=voice_auth_headers(user_id),
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -207,7 +210,7 @@ async def test_modulate_custom_overrides_and_toggle(test_setup):
             "audio_base64": input_b64,
             "enabled": False,
         },
-        headers={"X-User-Id": user_id},
+        headers=voice_auth_headers(user_id),
     )
     assert resp_off.status_code == 200
     events = [call.args[1] for call in bus.publish_event.call_args_list]
@@ -233,7 +236,7 @@ async def test_spicedb_zanzibar_authorization_enforcement(test_setup):
     resp = client.post(
         "/voice/modulate",
         json={"session_id": session_id, "preset_name": "Ancient Dragon"},
-        headers={"X-User-Id": "unauthorized-stranger"},
+        headers=voice_auth_headers("unauthorized-stranger"),
     )
     assert resp.status_code == 403
     assert "Forbidden" in resp.json()["detail"]
@@ -242,7 +245,7 @@ async def test_spicedb_zanzibar_authorization_enforcement(test_setup):
     resp_auth = client.post(
         "/voice/modulate",
         json={"session_id": session_id, "preset_name": "Ancient Dragon"},
-        headers={"X-User-Id": "dm-evelyn"},
+        headers=voice_auth_headers("dm-evelyn"),
     )
     assert resp_auth.status_code == 200
 
@@ -262,7 +265,7 @@ def test_vocal_modulator_error_handling(test_setup):
     resp = client.post(
         "/voice/modulate",
         json={"session_id": session_id, "preset_name": "Nonexistent Gorgon"},
-        headers={"X-User-Id": user_id},
+        headers=voice_auth_headers(user_id),
     )
     assert resp.status_code == 404
 
@@ -274,6 +277,6 @@ def test_vocal_modulator_error_handling(test_setup):
             "preset_name": "Ancient Dragon",
             "audio_base64": "!!!not_valid_base64!!!",
         },
-        headers={"X-User-Id": user_id},
+        headers=voice_auth_headers(user_id),
     )
     assert resp_bad.status_code == 400

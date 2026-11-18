@@ -58,3 +58,9 @@ Homebrew monsters are written into the global SRD monster map with no campaign k
 2. Restart and shadowing tests pass.
 3. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 4. How-to and reference docs corrected. `CHANGELOG.md` entry.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- services/rules_compendium/src/rules_compendium/aggregate.py calls init_state() in lazy-init guards (lines 34, 143, 160, 177, 189). Use the eventsource initial-state hook and remove the guards.

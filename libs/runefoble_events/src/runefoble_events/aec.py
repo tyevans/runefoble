@@ -47,12 +47,8 @@ class AECBenchmarkCompletedEvent(BaseRunefobleEvent):
 
 
 # Backward-compatible aliases
-EchoSuppressionEngaged = EchoSuppressionEngagedEvent
-AECBenchmarkCompleted = AECBenchmarkCompletedEvent
 
 __all__ = [
-    "AECBenchmarkCompleted",
     "AECBenchmarkCompletedEvent",
-    "EchoSuppressionEngaged",
     "EchoSuppressionEngagedEvent",
 ]

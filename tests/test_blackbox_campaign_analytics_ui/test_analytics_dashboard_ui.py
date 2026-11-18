@@ -14,6 +14,7 @@ from uuid import uuid4
 import pytest
 from campaign_analytics.worker import CampaignAnalyticsWorker
 from fastapi.testclient import TestClient
+from runefoble_auth.mock_spicedb import MockSpiceDBClient
 from runefoble_events.events import (
     CharacterHealthChanged,
     CombatEncounterStarted,
@@ -22,6 +23,21 @@ from runefoble_events.events import (
     SessionStarted,
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+
+async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
+    """Give the signed-in test member view rights on a campaign.
+
+    campaign_analytics has no public campaign-creation frontdoor, so the view relation is
+    seeded in the authorization double. Tests that assert deny paths do not call this.
+    """
+    await spicedb_client.write_relationship(
+        resource_type="campaign",
+        resource_id=campaign_id,
+        relation="view",
+        subject_type="user",
+        subject_id="user-test",
+    )
 
 
 def test_campaign_analytics_manifest_endpoint(client: TestClient) -> None:
@@ -37,12 +53,14 @@ def test_campaign_analytics_manifest_endpoint(client: TestClient) -> None:
 
 @pytest.mark.asyncio
 async def test_telemetry_dashboard_mvp_turn_metrics(
+    spicedb_client: MockSpiceDBClient,
     client: TestClient,
     event_bus: RedisStreamsEventBus,
     worker: CampaignAnalyticsWorker,
 ) -> None:
     """Verify frontdoor MVP statistics delivery matching dashboard bindings."""
     campaign_id, session_id, char_id = str(uuid4()), str(uuid4()), str(uuid4())
+    await grant_view(spicedb_client, campaign_id)
     await worker.setup_groups()
 
     await event_bus.publish_event(

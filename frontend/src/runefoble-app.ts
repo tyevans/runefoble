@@ -23,6 +23,7 @@ import { SessionSocket } from './app/session-socket.ts';
 import { installTitleResolvers } from './app/title-resolver.ts';
 import { updateCampaignFromEvent, createSessionFromEvent, assignRoleFromEvent, createInviteFromEvent, removeMemberFromEvent } from './app/campaign-actions.ts';
 import { createCharacterFromEvent, assignCharacterFromEvent, deleteCharacterFromEvent, selectCharacterFromEvent, switchDmCharacter } from './app/character-actions.ts';
+import { pickActiveCharacter } from './app/active-character.ts';
 
 export type AppActiveView = 'login' | 'campaigns' | 'campaign-detail' | 'campaign-characters' | 'campaign-codex' | 'campaign-analytics' | 'characters' | 'character-sheet' | 'session-lobby' | 'session-active' | 'profile';
 
@@ -37,8 +38,8 @@ export class RunefobleApp extends LitElement {
   @state() public currentColorMode: 'light' | 'dark' | 'system' = 'system';
   @state() public isListening = false;
   @state() public socketConnected = false;
-  @state() public campaignId = '4';
-  @state() public sessionId = 'session-tomb-14';
+  @state() public campaignId = '';
+  @state() public sessionId = '';
   @state() public campaignTitle = '';
   @state() public sessionTitle = '';
   @state() public loadError: DataFailure | null = null;
@@ -69,13 +70,11 @@ export class RunefobleApp extends LitElement {
   @state() public activeCharacter: CharacterItem | null = null;
   @state() public boardCols = 10;
   @state() public boardRows = 10;
-  @state() public atmosphere = { location_name: 'Sanctum of Runes' };
+  @state() public atmosphere: { location_name: string } = { location_name: '' };
   @state() public toastMessage: string | null = null;
   @state() public inviteUrl = '';
   @state() public inviteToken = '';
   @state() public isAbsenteeDirectiveOpen = false;
-  @state() public isAbsenteeRecapOpen = false;
-  @state() public absenteeRecapData: any = null;
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
   private unlistenRouter: (() => void) | null = null;
   private unlistenAuth: (() => void) | null = null;
@@ -140,14 +139,10 @@ export class RunefobleApp extends LitElement {
     this.currentRoute = route;
     this.routeParams = route.params;
     this.breadcrumbs = route.breadcrumbs;
-    if (route.params.campaignId) {
-      this.campaignId = route.params.campaignId;
-      this.campaignTitle = router.resolveTitle('campaign', this.campaignId) || `Campaign #${this.campaignId}`;
-    }
-    if (route.params.sessionId) {
-      this.sessionId = route.params.sessionId;
-      this.sessionTitle = router.resolveTitle('session', this.sessionId) || router.resolveTitle('lobby', this.sessionId) || `Session #${this.sessionId}`;
-    }
+    this.campaignId = route.params.campaignId || '';
+    this.campaignTitle = route.params.campaignId ? router.resolveTitle('campaign', route.params.campaignId) || '' : '';
+    this.sessionId = route.params.sessionId || '';
+    this.sessionTitle = route.params.sessionId ? router.resolveTitle('session', route.params.sessionId) || router.resolveTitle('lobby', route.params.sessionId) || '' : '';
     if (route.params.characterId) this.selectedCharacterId = route.params.characterId;
     if (route.pattern === '#/login' || route.pattern === '#/register') {
       this.isAuthModalOpen = true;
@@ -175,6 +170,10 @@ export class RunefobleApp extends LitElement {
   public handleLaunchSession(e: CustomEvent) {
     const cId = e.detail?.campaignId || this.campaignId;
     const sId = e.detail?.sessionId || this.sessionId;
+    if (!cId || !sId) {
+      this.showToast('Session not launched. The campaign or session is not known.');
+      return;
+    }
     const socket = this.sessionSocket.current;
     if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'session_started', campaignId: cId, sessionId: sId }));
     router.navigate(`#/campaigns/${cId}/sessions/${sId}`);
@@ -194,11 +193,11 @@ export class RunefobleApp extends LitElement {
     (this.shadowRoot?.querySelector('runefoble-header')?.shadowRoot?.querySelector('#settings-trigger-btn') as HTMLElement)?.focus();
   }
 
-  public resolveActiveCharacter(campaignId: string): CharacterItem {
+  /** The bound character, or null when the roster is empty. Never a placeholder. */
+  public resolveActiveCharacter(campaignId: string): CharacterItem | null {
     if (this.activeCharacter) return this.activeCharacter;
-    const c = this.characters.find((ch) => ch.campaignId === campaignId) || this.characters[0] || { id: 'char-placeholder', name: 'Adventurer', characterClass: 'Adventurer', level: 1, currentHp: 20, maxHp: 20, armorClass: 10, speed: 30, portraitUrl: '/assets/portraits/fighter.svg' };
-    this.activeCharacter = c;
-    return c;
+    this.activeCharacter = pickActiveCharacter(this.characters, campaignId);
+    return this.activeCharacter;
   }
 
   /** Board stream URL. Moves are sent here as the confirm_move action (TASK-0563). */
@@ -216,8 +215,6 @@ export class RunefobleApp extends LitElement {
     if (isAbsent) {
       this.isAbsenteeDirectiveOpen = true;
       this.showToast('Stand-In Activated: Directives drawer opened');
-    } else {
-      this.triggerAbsenteeRecap(this.activeCharacter?.id || this.selectedCharacterId);
     }
   }
 
@@ -225,20 +222,6 @@ export class RunefobleApp extends LitElement {
   public handleBoardAoEPlace(e: CustomEvent) { handleBoardAoEPlace(e, this.sessionSocket.current); }
   public handleBoardSpellVFX(e: CustomEvent) { handleBoardSpellVFX(e, this.sessionSocket.current); }
   public handleBoardConfirmGhost(e: CustomEvent) { handleBoardConfirmGhost(e, this.sessionSocket.current); }
-
-  public triggerAbsenteeRecap(characterId?: string) {
-    const c = this.characters.find((ch) => ch.id === characterId) || this.activeCharacter || this.selectedCharacter;
-    this.absenteeRecapData = {
-      characterName: c?.name || 'Valeros of Korvosa',
-      persona: 'The Cautious Defender',
-      penalties: ['drunk', 'foolishness'],
-      narrative: 'While you were absent, The Watcher guided your hero with penalties.',
-      highlights: ['Parried a critical strike', 'Tasted dwarven ale'],
-      hpDelta: -4,
-      itemsAcquired: ['Mysterious Relic', '25 Gold Pieces'],
-    };
-    this.isAbsenteeRecapOpen = true;
-  }
 
   render() {
     return renderAppShell(this);

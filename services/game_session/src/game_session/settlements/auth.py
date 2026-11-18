@@ -64,11 +64,9 @@ async def check_settlement_permission(
     spicedb: Any,
     settlement_id: str,
     perm: str,
-    user_id: str | None,
+    user_id: str,
 ) -> None:
     """Enforce Zanzibar permission check on settlement resource."""
-    if not user_id:
-        return
     allowed = await spicedb.check_permission(
         "settlement", str(settlement_id), perm, "user", str(user_id)
     )
@@ -82,11 +80,9 @@ async def check_settlement_permission(
 async def check_world_charter_permission(
     spicedb: Any,
     shared_world_id: str,
-    user_id: str | None,
+    user_id: str,
 ) -> None:
     """Ensure user has discovery or trade permissions on the shared world to charter a haven."""
-    if not user_id:
-        return
     allowed = (
         await spicedb.check_permission(
             "shared_world", str(shared_world_id), "discover", "user", str(user_id)

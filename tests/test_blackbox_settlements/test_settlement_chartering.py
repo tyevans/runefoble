@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_stream_events
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -29,7 +32,7 @@ async def test_blackbox_charter_frontier_settlement(
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Ironwood Reach", "frontier_region": "The Deep Woods"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert world_res.status_code == 201
     world_id = world_res.json()["shared_world_id"]
@@ -49,7 +52,11 @@ async def test_blackbox_charter_frontier_settlement(
         "metadata": {"biome": "ancient_forest", "water_source": "crystal_spring"},
     }
 
-    res = client.post("/settlements", json=charter_payload, headers={"x-user-id": officer_id})
+    res = client.post(
+        "/settlements",
+        json=charter_payload,
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
+    )
     assert res.status_code == 201, res.text
     data = res.json()
     sid = data["settlement_id"]
@@ -64,14 +71,20 @@ async def test_blackbox_charter_frontier_settlement(
     assert_stream_events(mock_bus, "SettlementChartered")
 
     # Frontdoor query endpoint verification
-    query_res = client.get(f"/settlements/{sid}", headers={"x-user-id": officer_id})
+    query_res = client.get(
+        f"/settlements/{sid}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
+    )
     assert query_res.status_code == 200
     q_data = query_res.json()
     assert q_data["settlement_id"] == sid
     assert q_data["name"] == "Haven of the Silver Stag"
 
     # API v1 prefix verification
-    v1_res = client.get(f"/api/v1/settlements/{sid}", headers={"x-user-id": officer_id})
+    v1_res = client.get(
+        f"/api/v1/settlements/{sid}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
+    )
     assert v1_res.status_code == 200
     assert v1_res.json()["settlement_id"] == sid
 
@@ -80,5 +93,8 @@ async def test_blackbox_charter_frontier_settlement(
 async def test_blackbox_query_nonexistent_settlement(client: TestClient):
     """Scenario 2: Querying a non-existent settlement returns 404."""
     random_id = str(uuid4())
-    res = client.get(f"/settlements/{random_id}", headers={"x-user-id": "anyone"})
+    res = client.get(
+        f"/settlements/{random_id}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('anyone')}"},
+    )
     assert res.status_code == 404

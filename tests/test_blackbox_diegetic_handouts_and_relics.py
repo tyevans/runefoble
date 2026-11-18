@@ -2,7 +2,7 @@
 
 Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 All assertions and setup operate strictly through public HTTP endpoints
-using TestClient(app) from campaign_lore.main and verify emitted CloudEvents.
+using TestClient(app, headers=_bearer(VISITOR_SUBJECT)) from campaign_lore.main and verify emitted CloudEvents.
 """
 
 from collections.abc import Iterator
@@ -10,13 +10,31 @@ from uuid import UUID, uuid4
 
 import pytest
 from campaign_lore.dependencies import get_handout_repo, get_relic_repo, get_spicedb_client
+from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app
 from fastapi.testclient import TestClient
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+VISITOR_SUBJECT = "lore-test-visitor"
+
+
+def _bearer(user_id: str) -> dict[str, str]:
+    """Return headers carrying a signed bearer token for `user_id`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
+
+
+@pytest.fixture(autouse=True)
+def _trust_signing_issuer():
+    """Campaign Lore verifies bearer tokens with the test issuer for each test in this module."""
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    yield
+    set_zitadel_auth_service(None)
 
 
 @pytest.fixture
 def client(lore_backends) -> Iterator[TestClient]:
-    with TestClient(app) as client:
+    with TestClient(app, headers=_bearer(VISITOR_SUBJECT)) as client:
         yield client
 
 
@@ -24,6 +42,15 @@ def client(lore_backends) -> Iterator[TestClient]:
 async def test_blackbox_handout_generation_and_seal_cracking(client: TestClient):
     """Test public frontdoor generation of diegetic sealed handouts, breaking seal with audio."""
     campaign_id = str(uuid4())
+    member = f"member-{uuid4().hex[:6]}"
+    await get_spicedb_client().write_relationship(
+        resource_type="campaign",
+        resource_id=campaign_id,
+        relation="dungeon_master",
+        subject_type="user",
+        subject_id=member,
+    )
+    client.headers.update(_bearer(member))
 
     # 1. Frontdoor handout generation
     gen_payload = {
@@ -70,12 +97,12 @@ async def test_blackbox_handout_generation_and_seal_cracking(client: TestClient)
     # 3. Public frontdoor: Crack wax seal
     break_resp = client.post(
         f"/api/v1/lore/handouts/{handout_id}/break-seal",
-        json={"broken_by": "valeros_player", "break_force": 14.0},
+        json={"break_force": 14.0},
     )
     assert break_resp.status_code == 200, break_resp.text
     break_data = break_resp.json()
     assert break_data["seal_state"] == "broken"
-    assert break_data["broken_by"] == "valeros_player"
+    assert break_data["broken_by"] == member
     assert break_data["haptic_audio_effect"] == "wax_crack_crisp_01.wav"
     assert "Citadel guards rotate" in break_data["revealed_content"]
 
@@ -86,14 +113,14 @@ async def test_blackbox_handout_generation_and_seal_cracking(client: TestClient)
     # 4. Attempting to break an already broken seal fails with 409 Conflict
     dup_resp = client.post(
         f"/api/v1/lore/handouts/{handout_id}/break-seal",
-        json={"broken_by": "valeros_player"},
+        json={},
     )
     assert dup_resp.status_code == 409
 
     # 5. Public frontdoor: Reveal invisible ink under UV torchlight
     uv_resp = client.post(
         f"/api/v1/lore/handouts/{handout_id}/reveal-invisible-ink",
-        json={"revealed_by": "rowan_chronicler", "uv_intensity": 1.0},
+        json={"uv_intensity": 1.0},
     )
     assert uv_resp.status_code == 200, uv_resp.text
     uv_data = uv_resp.json()
@@ -106,6 +133,15 @@ async def test_blackbox_handout_generation_and_seal_cracking(client: TestClient)
 async def test_blackbox_relic_forge_and_inspection(client: TestClient):
     """Test public frontdoor 3D relic forging, WebGL mesh generation, inspection and rune deciphering."""
     campaign_id = str(uuid4())
+    member = f"member-{uuid4().hex[:6]}"
+    await get_spicedb_client().write_relationship(
+        resource_type="campaign",
+        resource_id=campaign_id,
+        relation="dungeon_master",
+        subject_type="user",
+        subject_id=member,
+    )
+    client.headers.update(_bearer(member))
 
     # 1. Frontdoor forge 3D relic
     forge_payload = {
@@ -157,7 +193,6 @@ async def test_blackbox_relic_forge_and_inspection(client: TestClient):
     inspect_resp = client.post(
         f"/api/v1/lore/relics/{relic_id}/inspect",
         json={
-            "inspected_by": "rowan_chronicler",
             "notes": "Rotating back casing reveals etched draconic glyphs.",
         },
     )
@@ -207,6 +242,7 @@ async def test_blackbox_spicedb_authorization_enforcement(client: TestClient):
             "relic_type": "chalice",
             "is_secret": True,
         },
+        headers=_bearer(user_id),
     )
     assert forge_resp.status_code == 200
     relic_id = forge_resp.json()["relic_id"]
@@ -214,7 +250,7 @@ async def test_blackbox_spicedb_authorization_enforcement(client: TestClient):
     # Player with only 'player' relation cannot view secret DM lore (requires run_session)
     player_resp = client.get(
         f"/api/v1/lore/relics/{relic_id}",
-        headers={"x-user-id": user_id},
+        headers=_bearer(user_id),
     )
     assert player_resp.status_code == 403
 
@@ -231,7 +267,7 @@ async def test_blackbox_spicedb_authorization_enforcement(client: TestClient):
     # DM can view secret relic
     dm_resp = client.get(
         f"/api/v1/lore/relics/{relic_id}",
-        headers={"x-user-id": dm_user},
+        headers=_bearer(dm_user),
     )
     assert dm_resp.status_code == 200
     assert dm_resp.json()["name"] == "Secret Crown of the Lich King"

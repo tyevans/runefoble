@@ -87,3 +87,9 @@ No test may assert a fixed string such as `"Valeros"` or `"Session 14"`.
 3. The gateway forwards through `ServiceClient` (TASK-0580). It does not call `game_session` internals.
 4. The blackbox test file above passes. `uv run ruff check .` passes.
 5. `docs/reference/ports-and-endpoints.md` matches the routes.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- The hot-swap route in gateway/api/src/gateway_api/routers/tabletop.py (about line 101) clears the gateway store flag and never calls character_sheet. Proxy hot-swap to game_session and character_sheet, and remove the store write.

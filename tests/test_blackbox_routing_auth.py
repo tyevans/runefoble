@@ -12,11 +12,11 @@ Governing ADRs:
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -25,14 +25,9 @@ TESTS_DIR = FRONTEND_DIR / "tests"
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
-
-
-@pytest.fixture(autouse=True)
-def reset_store():
-    campaign_store.reset()
-    yield
+def client(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 # ---------------------------------------------------------------------------

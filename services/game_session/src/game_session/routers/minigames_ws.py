@@ -34,19 +34,18 @@ async def handle_table_websocket(
     user_id = principal.user_id
     spicedb = get_spicedb_client()
 
-    # Zanzibar permission check on connect. The default establishment is a route value only.
-    if establishment_id != "est-default":
-        has_perm = await check_establishment_play_permission(spicedb, establishment_id, user_id)
-        if not has_perm:
-            await websocket.send_json(
-                {
-                    "type": "error",
-                    "code": "PERMISSION_DENIED",
-                    "message": f"User '{user_id}' lacks permission to play at establishment '{establishment_id}'",
-                }
-            )
-            await websocket.close(code=4003, reason="Forbidden")
-            return
+    # Zanzibar permission check on every connect. No establishment id is exempt.
+    has_perm = await check_establishment_play_permission(spicedb, establishment_id, user_id)
+    if not has_perm:
+        await websocket.send_json(
+            {
+                "type": "error",
+                "code": "PERMISSION_DENIED",
+                "message": f"User '{user_id}' lacks permission to play at establishment '{establishment_id}'",
+            }
+        )
+        await websocket.close(code=4003, reason="Forbidden")
+        return
 
     minigame_table_manager.register(table_id, websocket)
     table = minigame_table_manager.get_or_create_table(table_id, establishment_id)

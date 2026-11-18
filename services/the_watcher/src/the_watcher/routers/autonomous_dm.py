@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from runefoble_events.events import (
     AutonomousActionResolved,
     EncounterSpawned,
@@ -16,6 +16,7 @@ from the_watcher.dependencies import (
     get_event_bus,
     logger,
 )
+from the_watcher.identity import get_caller_principal
 from the_watcher.models import (
     DMGuidanceRequest,
     DMNarrationResult,
@@ -25,7 +26,7 @@ from the_watcher.models import (
 )
 from the_watcher.worker_client import call_worker
 
-router = APIRouter(tags=["autonomous_dm"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["autonomous_dm"])
 
 
 @router.post("/api/v1/watcher/scenes/generate", response_model=SceneAtmosphereSet)

@@ -72,3 +72,9 @@ In `libs/runefoble_auth/src/runefoble_auth/zitadel.py`, `verify_token` (line 153
 Source: `.audit/synth/discovered-round1.md`.
 
 - `libs/runefoble_auth/src/runefoble_auth/mock_spicedb.py` is a facade re-export with `__all__`. Delete it and update the callers.
+
+## Orchestrator Addenda (2026-11-17, round 2)
+
+Source: `.audit/synth/discovered-round2.md`.
+
+- tests/test_blackbox_settlements_integration/test_invariants_and_compat.py::test_auth_backwards_compatibility_exports checks re-exports of the auth package. Delete the test with the re-exports it checks.

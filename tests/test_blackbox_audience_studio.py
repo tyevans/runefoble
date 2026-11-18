@@ -11,22 +11,27 @@ from collections.abc import Generator
 
 import httpx
 import pytest
-from runefoble_events import (
+from runefoble_events.events import (
     AudiencePollStarted,
 )
 
-from tests.helpers.audience_server import start_audience_studio_server
+from tests.helpers.audience_server import AudienceStudioProcess, start_audience_studio_server
 
 
 @pytest.fixture(scope="module")
-def audience_url() -> Generator[str]:
+def audience() -> Generator[AudienceStudioProcess]:
     """Launch Audience Studio Fastify server as an isolated subprocess."""
     yield from start_audience_studio_server()
 
 
-def test_healthz_readyz_and_ui_manifest(audience_url: str):
+def _auth(audience: AudienceStudioProcess, sub: str) -> dict[str, str]:
+    """Bearer header for a verified Zitadel-style token. The service rejects every other caller."""
+    return {"Authorization": f"Bearer {audience.token(sub)}"}
+
+
+def test_healthz_readyz_and_ui_manifest(audience: AudienceStudioProcess):
     """Verify health probes and ADR-0013 microfrontend discovery manifest."""
-    with httpx.Client(base_url=audience_url) as client:
+    with httpx.Client(base_url=audience.base_url) as client:
         res_h = client.get("/healthz")
         assert res_h.status_code == 200
         assert res_h.json() == {"status": "ok", "service": "audience_studio"}
@@ -43,10 +48,10 @@ def test_healthz_readyz_and_ui_manifest(audience_url: str):
         assert "runefoble-audience-studio" in man["components"]
 
 
-def test_openapi_spec_exposure(audience_url: str):
+def test_openapi_spec_exposure(audience: AudienceStudioProcess):
     """Verify OpenAPI 3.0 specification is exposed for Swagger UI hub aggregation."""
-    with httpx.Client(base_url=audience_url) as client:
-        res = client.get("/openapi.json")
+    with httpx.Client(base_url=audience.base_url) as client:
+        res = client.get("/openapi.json", headers=_auth(audience, "spec-reader"))
         assert res.status_code == 200
         schema = res.json()
         assert schema["openapi"].startswith("3.")
@@ -56,12 +61,36 @@ def test_openapi_spec_exposure(audience_url: str):
         assert "/api/v1/audience/proposals" in paths
 
 
-def test_poll_lifecycle_spectator_voting_and_quorum(audience_url: str):
+def test_protected_routes_refuse_callers_without_a_verified_token(audience: AudienceStudioProcess):
+    """Verify no bearer token, and the removed tuple route, never reach a handler."""
+    with httpx.Client(base_url=audience.base_url) as client:
+        unauthenticated = client.post(
+            "/api/v1/audience/polls",
+            json={"campaign_id": "camp-anon", "title": "T", "prompt": "P", "options": ["A"]},
+        )
+        assert unauthenticated.status_code == 401
+
+        tuple_route = client.post(
+            "/api/v1/audience/auth/tuples",
+            headers=_auth(audience, "mallory"),
+            json={
+                "resource_type": "campaign",
+                "resource_id": "camp-omega",
+                "relation": "dungeon_master",
+                "subject_type": "user",
+                "subject_id": "mallory",
+            },
+        )
+        assert tuple_route.status_code == 404
+
+
+def test_poll_lifecycle_spectator_voting_and_quorum(audience: AudienceStudioProcess):
     """Verify poll creation, vote casting, deduplication, and quorum aggregation."""
-    with httpx.Client(base_url=audience_url) as client:
+    with httpx.Client(base_url=audience.base_url) as client:
         # 1. Create a live chaos poll with quorum = 3
         res = client.post(
             "/api/v1/audience/polls",
+            headers=_auth(audience, "dm-omega"),
             json={
                 "campaign_id": "camp-omega",
                 "title": "Chaos Surge Element",
@@ -81,33 +110,40 @@ def test_poll_lifecycle_spectator_voting_and_quorum(audience_url: str):
         # 2. Spectator voting via REST frontdoor
         res_v1 = client.post(
             f"/api/v1/audience/polls/{poll_id}/votes",
-            json={"voter_id": "user-twitch-1", "option_id": "opt_1", "channel": "twitch"},
+            headers=_auth(audience, "user-twitch-1"),
+            json={"option_id": "opt_1", "channel": "twitch"},
         )
         assert res_v1.status_code == 200
         assert res_v1.json()["poll"]["totalVotes"] == 1
 
         res_v2 = client.post(
             f"/api/v1/audience/polls/{poll_id}/votes",
-            json={"voter_id": "user-youtube-2", "option_id": "opt_1", "channel": "youtube"},
+            headers=_auth(audience, "user-youtube-2"),
+            json={"option_id": "opt_1", "channel": "youtube"},
         )
         assert res_v2.status_code == 200
 
         res_v3 = client.post(
             f"/api/v1/audience/polls/{poll_id}/votes",
-            json={"voter_id": "user-web-3", "option_id": "opt_2", "channel": "web"},
+            headers=_auth(audience, "user-web-3"),
+            json={"option_id": "opt_2", "channel": "web"},
         )
         assert res_v3.status_code == 200
 
         # Duplicate vote by user-twitch-1 rejected
         res_dup = client.post(
             f"/api/v1/audience/polls/{poll_id}/votes",
-            json={"voter_id": "user-twitch-1", "option_id": "opt_3"},
+            headers=_auth(audience, "user-twitch-1"),
+            json={"option_id": "opt_3"},
         )
         assert res_dup.status_code == 400
         assert "already voted" in res_dup.json()["error"]
 
         # 3. Close poll and verify quorum aggregation
-        res_close = client.post(f"/api/v1/audience/polls/{poll_id}/close")
+        res_close = client.post(
+            f"/api/v1/audience/polls/{poll_id}/close",
+            headers=_auth(audience, "dm-omega"),
+        )
         assert res_close.status_code == 200
         closed = res_close.json()
         assert closed["status"] == "completed"
@@ -118,11 +154,12 @@ def test_poll_lifecycle_spectator_voting_and_quorum(audience_url: str):
         assert closed["proposedModifier"]["status"] == "pending"
 
 
-def test_quorum_not_met_scenario(audience_url: str):
+def test_quorum_not_met_scenario(audience: AudienceStudioProcess):
     """Verify poll where quorum is not reached yields completed status without modifier."""
-    with httpx.Client(base_url=audience_url) as client:
+    with httpx.Client(base_url=audience.base_url) as client:
         res = client.post(
             "/api/v1/audience/polls",
+            headers=_auth(audience, "dm-quorum"),
             json={
                 "campaign_id": "camp-quorum-fail",
                 "title": "High Quorum Poll",
@@ -135,10 +172,14 @@ def test_quorum_not_met_scenario(audience_url: str):
 
         client.post(
             f"/api/v1/audience/polls/{poll_id}/votes",
-            json={"voter_id": "solo-voter", "option_id": "opt_1"},
+            headers=_auth(audience, "solo-voter"),
+            json={"option_id": "opt_1"},
         )
 
-        closed = client.post(f"/api/v1/audience/polls/{poll_id}/close").json()
+        closed = client.post(
+            f"/api/v1/audience/polls/{poll_id}/close",
+            headers=_auth(audience, "dm-quorum"),
+        ).json()
         assert closed["status"] == "completed"
         assert closed["totalVotes"] == 1
         assert closed["quorumMet"] is False

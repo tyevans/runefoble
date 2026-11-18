@@ -2,6 +2,12 @@
 
 This guide explains how to ingest campaign worldbuilding documents, extract knowledge graphs and relationships with `redstring`, consolidate entity aliases, and perform sub-50ms hybrid RAG search protected by SpiceDB Zanzibar authorization.
 
+## Caller Identity
+
+Every Campaign Lore route needs a verified bearer token. The service checks the RS256 signature, issuer, audience, and expiry. Without a valid token it returns `401`. The caller is the token subject (`sub`). Campaign Lore never reads the caller from a body field, a query parameter, or an identity header. The public routes are `/health`, `/healthz`, `/openapi.json`, and `/ui/manifest`.
+
+Set `$DM_TOKEN` and `$PLAYER_TOKEN` to tokens that Zitadel issued for each user. The examples below use them.
+
 ---
 
 ## 1. Document Ingestion
@@ -11,7 +17,7 @@ To ingest a new markdown or text worldbuilding document into the campaign knowle
 ```bash
 curl -X POST http://localhost:8006/api/v1/lore/documents \
   -H "Content-Type: application/json" \
-  -H "x-user-id: user-dm-1" \
+  -H "Authorization: Bearer $DM_TOKEN" \
   -d '{
     "campaign_id": "8a329ef2-5c91-4cf1-83d8-21d4bb67f101",
     "title": "The Knights of the Silver Dawn",
@@ -51,6 +57,7 @@ When NPCs or factions hold multiple titles, aliases, or secret identities, conso
 ```bash
 curl -X POST http://localhost:8006/api/v1/lore/aliases/consolidate \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $DM_TOKEN" \
   -d '{
     "campaign_id": "8a329ef2-5c91-4cf1-83d8-21d4bb67f101",
     "canonical_name": "Sir Gareth",
@@ -72,7 +79,8 @@ Status codes for this route:
 To resolve aliases during dialogue generation or intent extraction:
 
 ```bash
-curl -X GET "http://localhost:8006/api/v1/lore/aliases/resolve?campaign_id=8a329ef2-5c91-4cf1-83d8-21d4bb67f101&name=The+Silver+Knight"
+curl -X GET "http://localhost:8006/api/v1/lore/aliases/resolve?campaign_id=8a329ef2-5c91-4cf1-83d8-21d4bb67f101&name=The+Silver+Knight" \
+  -H "Authorization: Bearer $PLAYER_TOKEN"
 ```
 
 Output:
@@ -94,7 +102,7 @@ Execute hybrid search queries fusing dense vector similarity, BM25 lexical keywo
 ```bash
 curl -X POST http://localhost:8006/api/v1/lore/search \
   -H "Content-Type: application/json" \
-  -H "x-user-id: user-player-2" \
+  -H "Authorization: Bearer $PLAYER_TOKEN" \
   -d '{
     "campaign_id": "8a329ef2-5c91-4cf1-83d8-21d4bb67f101",
     "query": "Where is the Citadel of Light located?",
@@ -102,6 +110,8 @@ curl -X POST http://localhost:8006/api/v1/lore/search \
     "include_graph_walk": true
   }'
 ```
+
+The request body has only `campaign_id`, `query`, `limit`, and `include_graph_walk`. A body with any other field, such as `caller_id`, returns `422`. The caller is the verified token subject, so a client cannot choose another caller.
 
 ### Authorization Filtering (SpiceDB Zanzibar)
 

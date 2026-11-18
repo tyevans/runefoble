@@ -55,7 +55,7 @@ def test_blackbox_register_rejects_tool_without_handler(client: TestClient, over
     res = client.post("/mcp/tools/register", json=_handler_less_payload(name, **overrides))
 
     assert res.status_code == 422
-    assert mcp.get_tool(name) is None
+    assert mcp._tool_manager.get_tool(name) is None
     assert client.get(f"/mcp/tools/{name}").status_code == 404
 
 

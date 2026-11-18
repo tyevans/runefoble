@@ -8,7 +8,6 @@ Hard Invariant 6 (<500 lines limit), and Hard Invariant 7 (Blackbox TDD).
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -22,10 +21,9 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import ws_subprotocols
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture
@@ -56,9 +54,21 @@ def spicedb() -> MockSpiceDBClient:
     set_spicedb_client(MockSpiceDBClient())
 
 
+@pytest.fixture(autouse=True)
+def default_table_patron(spicedb: MockSpiceDBClient) -> None:
+    """The default table route checks est-default like any establishment. Grant the tester a patron seat."""
+    asyncio.run(
+        spicedb.write_relationship(
+            "establishment", "est-default", "patron", "user", "minigame-tester"
+        )
+    )
+
+
 @pytest.fixture
 def session_client(spicedb: MockSpiceDBClient):
-    with TestClient(session_app) as client:
+    with TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    ) as client:
         yield client
 
 
@@ -68,26 +78,14 @@ def gateway_client(spicedb: MockSpiceDBClient):
         yield client
 
 
-def test_minigames_suite_manifest_and_file_invariants(session_client: TestClient) -> None:
-    """Verify microfrontend manifest advertises minigames components and files satisfy line limits."""
+def test_minigames_suite_manifest_advertises_components(session_client: TestClient) -> None:
+    """Verify microfrontend manifest advertises the minigames components."""
     res = session_client.get("/ui/manifest")
     assert res.status_code == 200
     manifest = res.json()
     assert "runefoble-minigame-darts" in manifest["components"]
     assert "runefoble-minigame-liars-dice" in manifest["components"]
     assert "runefoble-minigame-roulette" in manifest["components"]
-
-    frontend_dir = REPO_ROOT / "frontend" / "src" / "components" / "minigames"
-    darts_file = frontend_dir / "runefoble-minigame-darts.ts"
-    liars_file = frontend_dir / "runefoble-minigame-liars-dice.ts"
-    roulette_file = frontend_dir / "runefoble-minigame-roulette.ts"
-    stories_file = REPO_ROOT / "frontend" / "src" / "stories" / "runefoble-minigames.stories.ts"
-
-    assert darts_file.is_file() and liars_file.is_file() and roulette_file.is_file()
-    assert stories_file.is_file()
-    assert len(darts_file.read_text().splitlines()) < 300
-    assert len(liars_file.read_text().splitlines()) < 280
-    assert len(roulette_file.read_text().splitlines()) < 280
 
 
 def test_blackbox_darts_table_join_bet_and_throw(

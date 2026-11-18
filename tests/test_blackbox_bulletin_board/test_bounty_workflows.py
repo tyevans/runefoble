@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_event_emitted
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -27,7 +30,7 @@ async def test_blackbox_bounty_posting_and_fulfillment(
     res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "Fortress Bastion", "scale": "village"},
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     sid = res.json()["settlement_id"]
 
@@ -40,7 +43,9 @@ async def test_blackbox_bounty_posting_and_fulfillment(
         "metadata": {"reward_gp": 250, "escrow": True},
     }
     bounty_res = client.post(
-        f"/api/v1/settlements/{sid}/bulletin", json=payload, headers={"x-user-id": officer}
+        f"/api/v1/settlements/{sid}/bulletin",
+        json=payload,
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     assert bounty_res.status_code == 201
     nid = bounty_res.json()["notice_id"]
@@ -49,14 +54,16 @@ async def test_blackbox_bounty_posting_and_fulfillment(
 
     # Fulfill / remove bounty notice
     del_res = client.delete(
-        f"/api/v1/settlements/{sid}/bulletin/{nid}?reason=fulfilled", headers={"x-user-id": officer}
+        f"/api/v1/settlements/{sid}/bulletin/{nid}?reason=fulfilled",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     assert del_res.status_code == 200 and del_res.json()["status"] == "removed"
     assert_event_emitted(mock_bus, "BulletinNoticeRemoved")
 
     # Active notices should now be empty
     active = client.get(
-        f"/api/v1/settlements/{sid}/bulletin", headers={"x-user-id": officer}
+        f"/api/v1/settlements/{sid}/bulletin",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     ).json()
     assert len(active) == 0
 
@@ -72,7 +79,7 @@ async def test_blackbox_bulletin_notice_expiration_and_removal_lifecycle(
     res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "Timberhold Haven", "scale": "village"},
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     sid = res.json()["settlement_id"]
 
@@ -84,19 +91,40 @@ async def test_blackbox_bulletin_notice_expiration_and_removal_lifecycle(
             "category": "job",
             "content": "Guards.",
         },
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     nid = pin.json()["notice_id"]
     url = f"/api/v1/settlements/{sid}/bulletin/{nid}"
 
     # Unauthorized delete -> 403 Forbidden
-    assert client.delete(url, headers={"x-user-id": intruder}).status_code == 403
+    assert (
+        client.delete(
+            url, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(intruder)}"}
+        ).status_code
+        == 403
+    )
 
     # Remove with expired reason -> 200
-    assert client.delete(f"{url}?reason=expired", headers={"x-user-id": officer}).status_code == 200
+    assert (
+        client.delete(
+            f"{url}?reason=expired",
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
+        ).status_code
+        == 200
+    )
 
     # Duplicate delete -> 400
-    assert client.delete(url, headers={"x-user-id": officer}).status_code == 400
+    assert (
+        client.delete(
+            url, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"}
+        ).status_code
+        == 400
+    )
 
     # Nonexistent notice -> 404
-    assert client.delete(f"{url}_missing", headers={"x-user-id": officer}).status_code == 404
+    assert (
+        client.delete(
+            f"{url}_missing", headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"}
+        ).status_code
+        == 404
+    )
