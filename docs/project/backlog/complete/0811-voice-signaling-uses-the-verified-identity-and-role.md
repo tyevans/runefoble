@@ -1,7 +1,7 @@
 ---
 id: '0811'
 title: "Voice Signaling Uses the Verified Identity and Role, Never Client Values"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0811: Voice Signaling Uses the Verified Identity and Role, Never Client Values
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The voice signaling join handler takes `user_id` and `role` from the client message and stores them, so a peer can claim another user or a DM role in the room.

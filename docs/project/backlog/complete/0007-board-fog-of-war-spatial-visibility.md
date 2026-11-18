@@ -18,7 +18,7 @@ Complete
 Integrated server-side spatial fog-of-war and Chebyshev visibility computation into `BoardAggregate` and the `board_state` service. Added `FogOfWarRevealed` event sourcing for token movements, party-wide visibility union calculations, and token filtering on `/api/v1/boards/{session_id}/visibility` so shrouded hostile tokens remain hidden from players while accessible to the DM.
 
 ## Key Changes
-- `libs/runefoble_events/src/runefoble_events/events.py`:
+- `libs/runefoble_events/src/runefoble_events/events.py` (removed):
   - Added `FogOfWarRevealed` domain event with `revealed_cells` and `revealed_by_token_id`.
 - `services/board_state/src/board_state/aggregate.py`:
   - Added `vision_radius: int` to `PlacedTokenState`.

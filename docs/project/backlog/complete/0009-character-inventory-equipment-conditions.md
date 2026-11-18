@@ -21,7 +21,7 @@ Complete
 Extended `CharacterAggregate` in `services/character_sheet/src/character_sheet/aggregate.py` with full event-sourced tracking for inventory items, equipment slots (`main_hand`, `off_hand`, `armor`), and gameplay status conditions. Added REST endpoints in `services/character_sheet/src/character_sheet/main.py` and unit tests in `tests/test_character_aggregate.py`.
 
 ## Key Changes
-- `libs/runefoble_events/src/runefoble_events/events.py`:
+- `libs/runefoble_events/src/runefoble_events/events.py` (removed):
   - Added `ItemAddedToInventory`, `ItemRemovedFromInventory`, `EquipmentSlotUpdated`, `ConditionApplied`, and `ConditionRemoved` events.
 - `services/character_sheet/src/character_sheet/aggregate.py`:
   - Added `InventoryItem` and `ConditionState` models.

@@ -20,7 +20,7 @@ governing_stories:
 Implemented a high-performance dynamic DSP audio conditioning chain in `voice_agent` (US-0011, PRD-0004) supporting filter presets (`drunk`, `whisper`, `underwater`, `ethereal`) with deterministic transformations, sub-50ms processing latency, and domain event dispatch. Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup), test verification strictly interacts through the public HTTP frontdoors (`POST /api/v1/voice/tts`, `POST /api/v1/voice/dsp/apply`), asserting on audio bytes, frequency modulation metadata, and emitted `VoiceAudioConditioned` events.
 
 ## Implemented Scope & Changes
-1. **Domain Events (`libs/runefoble_events/src/runefoble_events/watcher.py` & `events.py`)**:
+1. **Domain Events (`libs/runefoble_events/src/runefoble_events/watcher.py` (removed) & `events.py`)**:
    - `VoiceAudioConditioned`: `session_id`, `speaker_id`, `speaker_name`, `filters_applied`, `latency_ms`, `audio_bytes_length`. Registered as `@register_event("runefoble.events.voice.audio_conditioned")` and re-exported in `events.py`.
 2. **DSP Filter Chain (`services/voice_agent/src/voice_agent/dsp/`)**:
    - Filter presets (`whisper`, `underwater`, `ethereal`, `drunk`) implemented with pure Python fast math / array buffer operations executing in <15ms.

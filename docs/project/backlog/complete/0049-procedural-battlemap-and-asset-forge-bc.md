@@ -36,7 +36,7 @@ Finding, aligning, sizing, and drawing line-of-sight walls on battlemaps consume
 
 ## Governing Architecture & ADRs
 - **ADR-0003**: UV Monorepo Workspace for Python Bounded Contexts (`services/asset_forge`).
-- **ADR-0005**: Kubernetes-First Infrastructure with Helm and Kind (`deployments/helm/runefoble/templates/asset-forge.yaml`).
+- **ADR-0005**: Kubernetes-First Infrastructure with Helm and Kind (`deployments/helm/runefoble/templates/asset-forge.yaml` (removed)).
 - **ADR-0006**: Redis Streams Event Bus Transport (publishing `AssetGenerated` and `BattlemapCreated` events).
 - **ADR-0010**: OpenTelemetry Distributed Tracing & Metrics instrumentation.
 - **ADR-0011**: eventsource-py Core Event Sourcing (`AssetForgeAggregate` and repositories).

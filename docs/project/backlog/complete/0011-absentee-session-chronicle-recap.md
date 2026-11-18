@@ -29,10 +29,10 @@ Implemented the session chronicle and absentee recap system (US-0005, PRD-0002).
    - Implemented `ChronicleRecapEngine.generate_recap(...)` producing persona-driven humorous narratives and penalty highlights ('drunk', 'foolishness', 'greed', 'cowardice').
    - Exposed `POST /api/v1/watcher/chronicle/recap` accepting `RecapRequest` and publishing `AbsenteeRecapGenerated` events.
    - Kept files under file length limits (Hard Invariant 6).
-3. **Frontend Web Component & Storybook (`frontend/src/components/runefoble-absentee-recap.ts`, `services/character_sheet/ui/src/absentee-recap.stories.ts`)**:
+3. **Frontend Web Component & Storybook (`frontend/src/components/runefoble-absentee-recap.ts` (removed), `services/character_sheet/ui/src/absentee-recap.stories.ts`)**:
    - Created `<runefoble-absentee-recap>` Lit component rendering chronicle details, styled penalty badges, and interactive audio play/pause controls.
    - Storybook stories for `DrunkCleric`, `FoolishRogue`, and `BattleReadyFighter`.
-   - Exported in `frontend/src/index.ts` and imported in `frontend/src/runefoble-app.ts`.
+   - Exported in `frontend/src/index.ts` (removed) and imported in `frontend/src/runefoble-app.ts`.
 4. **Verification & Tests (`tests/test_chronicle_recap.py`)**:
    - Unit tests for penalty mechanics ('drunk', 'foolishness', 'greed', and clean absence).
    - CloudEvents 1.0 and registry validation.

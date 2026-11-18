@@ -24,7 +24,7 @@ pr_url: https://github.com/tyevans/runefoble/pull/285
 Complete
 
 ## Summary
-Extend `CharacterState` and `CharacterAggregate` in `services/character_sheet/src/character_sheet/` to include core 5e character attributes (`subclass: str | None`, `armor_class: int`, `speed_ft: int`, `ability_scores: dict[str, int]`) and campaign assignment (`campaign_id: str | None`). Add the domain event `CharacterAssignedToCampaign` to `libs/runefoble_events/src/runefoble_events/events.py` and register it with `@register_event`.
+Extend `CharacterState` and `CharacterAggregate` in `services/character_sheet/src/character_sheet/` to include core 5e character attributes (`subclass: str | None`, `armor_class: int`, `speed_ft: int`, `ability_scores: dict[str, int]`) and campaign assignment (`campaign_id: str | None`). Add the domain event `CharacterAssignedToCampaign` to `libs/runefoble_events/src/runefoble_events/events.py` (removed) and register it with `@register_event`.
 
 ## Problem Statement
 The event-sourced `CharacterAggregate` and `CharacterState` currently track inventory, equipment, spell slots, and conditions, but lack fields for `campaign_id`, `subclass`, `armor_class`, `speed_ft`, and `ability_scores`. Furthermore, when a player assigns a character to a campaign from the roster, there is no domain event to capture this lifecycle state transition in the event stream, preventing downstream services (like `board_state` or `the_watcher`) from reacting to party roster changes.
@@ -46,7 +46,7 @@ The event-sourced `CharacterAggregate` and `CharacterState` currently track inve
   - [`us-0069-character-sheet-inspector-and-active-session-binding.md`](../../user_stories/accepted/us-0069-character-sheet-inspector-and-active-session-binding.md)
 
 ## Detailed Specification & Implementation Plan
-1. **Domain Event (`libs/runefoble_events/src/runefoble_events/events.py`)**:
+1. **Domain Event (`libs/runefoble_events/src/runefoble_events/events.py` (removed))**:
    - Define `CharacterAssignedToCampaign(BaseRunefobleEvent)`:
      - `campaign_id: str | None`
      - `assigned_by: str`

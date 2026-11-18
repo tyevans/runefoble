@@ -55,7 +55,7 @@ Furthermore, `AppDataService` contains no methods to assign roles, generate invi
    - Implement `assignMemberRole(campaignId: string, userId: string, role: string): Promise<void>`.
    - Implement `createCampaignInvite(campaignId: string, role: string, expiresInHours?: number, maxUses?: number): Promise<InviteResponse>`.
    - Implement `removeCampaignMember(campaignId: string, userId: string): Promise<void>`.
-4. **Campaign-Scoped Fallback Cache (`frontend/src/fixtures/app-data-service.fixtures.ts`)**:
+4. **Campaign-Scoped Fallback Cache (`frontend/src/fixtures/app-data-service.fixtures.ts` (removed))**:
    - Replace static `FALLBACK_MEMBERS` with `getFallbackCampaignMembers(campaignId: string)`.
    - Seed campaign `'4'` with Valeros, Kyra, and Merisiel.
    - Seed new campaigns with the creating user as Owner.

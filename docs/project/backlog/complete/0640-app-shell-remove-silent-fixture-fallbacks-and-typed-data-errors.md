@@ -47,7 +47,7 @@ Complete
 1. Replace `request<T>()` with a result type `{ ok: true, data: T } | { ok: false, status: number, message: string }`. Remove the `|| FALLBACK_*` expressions from every public `fetch*` and `create*` method.
 2. Mutations return the same result type. A failed mutation does not touch local arrays.
 3. Remove the in-place mutation of `FALLBACK_CAMPAIGNS`, `FALLBACK_CHARACTERS`, and `FALLBACK_CAMPAIGN_SESSIONS_MAP` from production code.
-4. Move the fixture modules (`app-data-service.fixtures.ts`, `fallback-data.ts`) under `frontend/src/fixtures/` and make them importable only from `*.stories.ts` and `frontend/test/**`. Add a test that greps production sources for those imports.
+4. Move the fixture modules (`app-data-service.fixtures.ts`, `fallback-data.ts`) under `frontend/src/fixtures/` (removed) and make them importable only from `*.stories.ts` and `frontend/test/**`. Add a test that greps production sources for those imports.
 5. Views (`runefoble-app.ts` and its child components) render an error state with a retry control when a read fails, and an empty state when a read succeeds with no rows. A failed write shows a toast with the server message.
 6. Do not add a new fallback. Keep the per-view error component small (one file under `frontend/src/components/state/`).
 

@@ -20,7 +20,7 @@ target_release: 0.9.0
 Complete
 
 ## Summary
-`services/audience_studio` is a TypeScript HTTP service deployed by Helm (`deployments/helm/runefoble/templates/audience-studio.yaml`, image `runefoble/audience-studio:0.1.0`). It has no Dockerfile and is not in `make images`. Add a Node Dockerfile and include the image in the `make images` target from TASK-0620.
+`services/audience_studio` is a TypeScript HTTP service deployed by Helm (`deployments/helm/runefoble/templates/audience-studio.yaml` (removed), image `runefoble/audience-studio:0.1.0`). It has no Dockerfile and is not in `make images`. Add a Node Dockerfile and include the image in the `make images` target from TASK-0620.
 
 ## Problem Statement
 - The audience-studio image cannot be built from this repository (`.audit/reports/w1-gates-infra.md` F3, Python and TypeScript both missing).

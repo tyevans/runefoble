@@ -23,10 +23,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/104
 Complete
 
 ## Summary
-Decompose `frontend/src/services/webrtc-voice.ts` (348 lines, 69.6% of limit) into modular TypeScript files (`webrtc-types.ts`, `webrtc-peer-mesh.ts`, and `webrtc-voice.ts`) to maintain clean separation of concerns and prevent breaching Hard Invariant 6 (File length limit < 500 lines) as real-time audio features expand.
+Decompose `frontend/src/services/webrtc-voice.ts` (removed) (348 lines, 69.6% of limit) into modular TypeScript files (`webrtc-types.ts` (removed), `webrtc-peer-mesh.ts` (removed), and `webrtc-voice.ts` (removed)) to maintain clean separation of concerns and prevent breaching Hard Invariant 6 (File length limit < 500 lines) as real-time audio features expand.
 
 ## Problem Statement
-`frontend/src/services/webrtc-voice.ts` currently spans 348 lines and bundles multiple distinct responsibilities:
+`frontend/src/services/webrtc-voice.ts` (removed) currently spans 348 lines and bundles multiple distinct responsibilities:
 1. Type declarations and protocol interfaces (`VoicePeer`, `SignalingMessage`, `WebRTCVoiceOptions`).
 2. WebSocket connection management, auto-reconnect timers, credential parameter encoding, and message serialization.
 3. Peer connection mesh management: RTCPeerConnection instantiation, remote media stream tracking, SDP offer/answer exchanges, ICE candidate buffering/forwarding, and cleanup on disconnect.
@@ -42,11 +42,11 @@ As upcoming voice features (spatial audio positioning, DM whisper channels, mult
 - **ADR-0013: Microfrontend Architecture and Service Component Vendoring**: Voice service contract boundaries.
 
 ## Proposed Decomposition
-1. **WebRTC Protocol Types & Interfaces (`frontend/src/services/webrtc-types.ts`)**:
+1. **WebRTC Protocol Types & Interfaces (`frontend/src/services/webrtc-types.ts` (removed))**:
    - `VoicePeer`, `SignalingMessage`, `WebRTCVoiceOptions`, and connection state enums (< 70 lines).
-2. **Peer Connection Mesh Coordinator (`frontend/src/services/webrtc-peer-mesh.ts`)**:
+2. **Peer Connection Mesh Coordinator (`frontend/src/services/webrtc-peer-mesh.ts` (removed))**:
    - `PeerConnectionMesh`: RTCPeerConnection map, remote MediaStreams, SDP creation/answer processing, ICE candidate routing, and remote audio DOM elements (< 160 lines).
-3. **Voice Client Service Facade (`frontend/src/services/webrtc-voice.ts`)**:
+3. **Voice Client Service Facade (`frontend/src/services/webrtc-voice.ts` (removed))**:
    - `WebRTCVoiceService`: WebSocket signaling transport, incoming dispatching, speaking status emission, and `WebAudioPipeline` coordination (< 150 lines).
 
 ## INVEST Criteria Evaluation
@@ -54,7 +54,7 @@ As upcoming voice features (spatial audio positioning, DM whisper channels, mult
 - **Negotiable (N)**: Split boundaries between mesh coordination and DOM audio element management can be tailored.
 - **Valuable (V)**: Prevents Hard Invariant 6 violations (< 500 lines) and improves modularity of real-time client audio systems.
 - **Estimable (E)**: Standard TypeScript class and interface extraction.
-- **Small (S)**: Scope strictly isolated to `frontend/src/services/webrtc-voice.ts`; all resulting files < 170 lines.
+- **Small (S)**: Scope strictly isolated to `frontend/src/services/webrtc-voice.ts` (removed); all resulting files < 170 lines.
 - **Testable (T)**: Verified with `pnpm run build` in `frontend/` and `uv run pytest tests/test_blackbox_webrtc_signaling.py`.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)

@@ -57,7 +57,7 @@ A dedicated TypeScript bounded context microservice (`services/audience_studio`)
 4. **CloudEvents Definitions**:
    - Emits `AudiencePollStarted`, `AudienceVoteCast`, `AudiencePollCompleted`, and `AudienceModifierApproved`.
 5. **Helm & Gateway Integration**:
-   - Service deployment manifest and Traefik ingress route in `deployments/helm/runefoble/templates/audience-studio.yaml`.
+   - Service deployment manifest and Traefik ingress route in `deployments/helm/runefoble/templates/audience-studio.yaml` (removed).
    - OpenAPI spec aggregation in Swagger UI hub.
 
 ## INVEST Criteria Evaluation

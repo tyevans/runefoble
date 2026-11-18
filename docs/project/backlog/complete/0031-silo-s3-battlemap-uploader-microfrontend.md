@@ -27,7 +27,7 @@ Added a battlemap asset uploader component (`<runefoble-map-uploader>`) to `@run
   - Grid alignment sliders for columns, rows, grid opacity, and shroud opacity.
   - Emits `@map-uploaded` CustomEvent with asset ID, download URL, dimensions, and grid/shroud configuration.
 - Created interactive Storybook stories in `services/board_state/ui/src/runefoble-map-uploader.stories.ts` (`EmptyDropzone`, `UploadingProgress`, `AlignedMapPreview`, `FogOfWarMasked`).
-- Exported from `@runefoble/board-state-ui` in `services/board_state/ui/src/index.ts` and created forwarding re-export in `frontend/src/components/runefoble-map-uploader.ts`.
+- Exported from `@runefoble/board-state-ui` in `services/board_state/ui/src/index.ts` and created forwarding re-export in `frontend/src/components/runefoble-map-uploader.ts` (removed).
 - Registered `runefoble-map-uploader` under `/ui/manifest` in `services/board_state/src/board_state/main.py`.
 - Updated frontdoor blackbox test suite in `tests/test_microfrontends.py` to verify `/ui/manifest`, Silo S3 asset upload frontdoor, component contract, and stories.
 - Updated Diataxis reference documentation in `docs/reference/microfrontend-architecture.md`.

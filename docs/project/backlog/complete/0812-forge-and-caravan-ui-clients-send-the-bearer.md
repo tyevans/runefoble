@@ -1,7 +1,7 @@
 ---
 id: '0812'
 title: "Forge and Caravan UI Clients Send the Bearer Token"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0812: Forge and Caravan UI Clients Send the Bearer Token
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The asset forge UI client and the caravan UI client send no `Authorization` header, but the routes they call require one. The caravan client sends an `x-user-id` header that no backend reads.

@@ -35,7 +35,7 @@ Tabletop audio immersion currently suffers because `voice_agent` only handles sp
 
 ## Governing Architecture & ADRs
 - **ADR-0003**: UV Monorepo Workspace for Python Bounded Contexts (`services/soundscape`).
-- **ADR-0005**: Kubernetes-First Infrastructure with Helm and Kind (`deployments/helm/runefoble/templates/soundscape.yaml`).
+- **ADR-0005**: Kubernetes-First Infrastructure with Helm and Kind (`deployments/helm/runefoble/templates/soundscape.yaml` (removed)).
 - **ADR-0006**: Redis Streams Event Bus Transport (`CombatStarted`, `CombatRoundAdvanced`, `SoundscapeTrackChanged`).
 - **ADR-0007**: Real-Time Voice and Board Synchronization (sub-500ms pipeline and WebAudio ducking).
 - **ADR-0010**: OpenTelemetry Distributed Tracing & Metrics instrumentation.

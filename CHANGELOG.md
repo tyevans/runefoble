@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- Voice signaling takes the user id and role only from the verified token and SpiceDB session permissions; a join frame cannot change either, and `/ws/voice` and `/ws/mobile-companion` ignore the `role` query parameter. (TASK-0811)
+- The Asset Forge and caravan UI clients send the shared bearer on every request; the caravan client no longer sends `x-user-id`. (TASK-0812)
 - MCP tools `get_character_sheet` and `inspect_inventory` check `character.view` for the caller before they read. `GET /api/v1/characters/{id}` no longer accepts the service credential without a user. (TASK-0808)
 - Spectator and overlay HTTP routes need a verified bearer and `session.observe`, and read state from the owners. The `?token=` viewer, the anonymous guest viewer and the gateway fixture state are removed. The GET publishes nothing. (TASK-0809)
 - The session WebSocket relays inbound frames only from callers with `session.participate`, and rejects malformed or unknown frames with an error frame. (TASK-0810)
@@ -36,6 +38,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Event facade modules (`events.py`, `board.py`, `watcher.py`, `uvtt_elements.py`, `events/*_events.py`) and 23 event alias names. (TASK-0815)
+- App Shell forwarding modules, the unused frontend barrel, unreachable WebRTC client modules and the `runefoble-tactical-board` alias. (TASK-0824)
+- The Watcher copy of the SpiceDB failure handler. (TASK-0813)
+- `scripts/run-backlog-engine.sh`, `scripts/visualize-project.sh`, `scripts/cleanup-worktrees.sh` and dead `tools/project_visualizer/graph.py`; use the make targets. (TASK-0832)
 - Eleven event classes with no producer and no reader. (TASK-0703)
 - Gateway campaign summary route `GET /api/v1/analytics/campaigns/{campaign_id}` and `gateway_api/routers/hub_views.py`, which returned literal values. (TASK-0588)
 - The canned speak-and-act handler and `gateway_api/routers/tabletop.py`. (TASK-0583)
@@ -63,6 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Gateway routes for shared-world creation and caravan contracts, and the App Shell route `#/caravans/:sharedWorldId` with the caravan board. (TASK-0807)
 - Identity and token contract reference (`docs/reference/identity-and-token-contract.md`). (TASK-0537)
 - Blackbox test that runs game_session and soundscape on one real Redis. Ending combat through game_session returns soundscape tension to ambient. (TASK-0803)
 - `make test` runs a parallel phase (pytest-xdist) and then a serial phase for timing and browser tests.
@@ -130,6 +137,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Every service that checks SpiceDB answers an outage with 503 `{"error": "authorization_unavailable"}`, and a schema defect with 500 and an `error_id`. (TASK-0813)
+- Event classes have one import home, `runefoble_events.events`. (TASK-0815)
+- The Helm chart builds every service Deployment, Service, ConfigMap, service URL and Swagger UI entry from one `services` map in `values.yaml`. (TASK-0832)
+- Reference docs match the code; the AGENTS.md index lists every reference page; the Playwright BDD guides are one how-to and one reference page. (TASK-0831)
 - The App Shell gates campaign views and DM controls on `GET /api/v1/campaigns/{campaign_id}/capabilities`. A gate checks every literal SpiceDB name in production code against `runefoble.zed`. (TASK-0559)
 - Advancing the initiative order publishes `CombatRoundAdvanced` and `TurnStarted`. (TASK-0703)
 - Gateway character subresource routes forward to `character_sheet` through the shared service client. Owner 4xx answers pass through; an unreachable owner returns 503. (TASK-0586)

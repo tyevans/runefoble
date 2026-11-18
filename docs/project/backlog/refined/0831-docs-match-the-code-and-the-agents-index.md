@@ -42,3 +42,6 @@ None. Refactor and consolidation chosen by the user on 2026-11-18.
 ## Audit Provenance
 - Severity: refactor
 - Source audits: `.audit/research/docs.md` (D1, D2, D3, D4, D5, D6, D7, D8)
+
+## Progress (batch 30)
+D1, D2, D4, D5, D6 and D7 are done. D3 has only the battlemap row fixed. D8 is not started. See `.audit/work/0831.md`.

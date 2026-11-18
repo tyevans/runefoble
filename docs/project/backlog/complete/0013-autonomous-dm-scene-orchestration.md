@@ -38,10 +38,10 @@ Implemented the autonomous Game Master orchestration engine within The Watcher (
    - `POST /api/v1/watcher/encounters/npc-turn` accepting `NpcTurnRequest`.
    - Events published over Redis Streams to `STREAM_WATCHER`.
    - Maintained under 465 lines (Hard Invariant 6 <500 lines).
-4. **Frontend Lit Component & Storybook (`frontend/src/components/runefoble-autonomous-dm.ts`, `services/the_watcher/ui/src/autonomous-dm.stories.ts`)**:
+4. **Frontend Lit Component & Storybook (`frontend/src/components/runefoble-autonomous-dm.ts` (removed), `services/the_watcher/ui/src/autonomous-dm.stories.ts`)**:
    - Bauhaus-styled `<runefoble-autonomous-dm>` component with controls, mood indicators, active threat monitors, and action dispatchers.
    - Storybook stories for `CryptAmbush`, `SuspensefulTavern`, and `DragonLair`.
-   - Exported in `frontend/src/index.ts` and registered in `frontend/src/runefoble-app.ts`.
+   - Exported in `frontend/src/index.ts` (removed) and registered in `frontend/src/runefoble-app.ts`.
 5. **Tests (`tests/test_autonomous_dm.py`)**:
    - Unit and integration tests for scene generation, encounter calculation, NPC combat decisions, event publishing, and API endpoints.
 

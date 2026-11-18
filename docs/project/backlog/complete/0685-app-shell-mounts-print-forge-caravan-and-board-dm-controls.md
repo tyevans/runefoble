@@ -33,7 +33,7 @@ Three owned microfrontends are built and tested in Storybook, but the App Shell 
 ## Problem Statement
 - `frontend/src` has no route or view that places `<runefoble-print-forge>` (`services/asset_forge/ui`). TASK-0645 covers only `<runefoble-asset-forge>`.
 - `frontend/src` has no route for the caravan board (`<runefoble-caravan-board>`, `services/game_session/ui`). `e2e/features/caravan_board.feature` assumes `#/caravans`, which does not exist.
-- `<runefoble-map-switcher>` is exported (`frontend/src/index.ts:22`) but no App Shell view places it. The DM board components get no `boardId` or `campaignId`. Board cell selection that sets `targetX` and `targetY` does not exist.
+- `<runefoble-map-switcher>` is exported (`frontend/src/index.ts:22` (removed)) but no App Shell view places it. The DM board components get no `boardId` or `campaignId`. Board cell selection that sets `targetX` and `targetY` does not exist.
 - `e2e/features/asset_forge.feature` and the board features assume `#/forge`. That route does not exist.
 - PROPOSED TASK-0453 also covers caravan integration. Merge 0453 into this task or close it before refinement is pulled.
 

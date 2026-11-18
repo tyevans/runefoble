@@ -23,7 +23,7 @@ Complete
 Implemented tactical cell elevation levels, difficult terrain movement cost multipliers (2x budget cost per cell traversed), and environmental hazard triggers (dispatching `TokenHazardTriggered` events with hazard damage dice) in `board_state` (US-0012, PRD-0003). Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup), test verification was authored first in `tests/test_blackbox_board_terrain.py`, strictly creating boards via `POST /api/v1/boards`, placing tokens via `POST /api/v1/boards/{id}/tokens`, configuring terrain via `POST /api/v1/boards/{id}/terrain`, and issuing moves via `POST /api/v1/boards/{id}/tokens/{token_id}/move`, asserting on Chebyshev distance costs, lava hazards (`2d10`), and board state query projections without backdoor internal state tampering.
 
 ## Key Changes
-- `libs/runefoble_events/src/runefoble_events/events.py` & `__init__.py`:
+- `libs/runefoble_events/src/runefoble_events/events.py` (removed) & `__init__.py`:
   - Added `TerrainCellModified` domain event (`runefoble.events.board.terrain_modified`) capturing cell elevation, terrain type, and hazards.
   - Added `TokenHazardTriggered` domain event (`runefoble.events.board.hazard_triggered`) capturing token ID, hazard type, and damage dice.
 - `services/board_state/src/board_state/aggregate.py`:

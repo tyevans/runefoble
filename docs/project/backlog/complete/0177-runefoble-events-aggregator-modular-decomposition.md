@@ -18,10 +18,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/228
 Complete
 
 ## Summary
-Decompose `libs/runefoble_events/src/runefoble_events/events.py` (474 lines, 94.8% of limit) and `libs/runefoble_events/src/runefoble_events/__init__.py` (442 lines, 88.4% of limit), modularizing domain event re-exports into focused category modules, ensuring all modules remain strictly < 150 lines per Hard Invariant 6.
+Decompose `libs/runefoble_events/src/runefoble_events/events.py` (removed) (474 lines, 94.8% of limit) and `libs/runefoble_events/src/runefoble_events/__init__.py` (442 lines, 88.4% of limit), modularizing domain event re-exports into focused category modules, ensuring all modules remain strictly < 150 lines per Hard Invariant 6.
 
 ## Problem Statement
-`libs/runefoble_events/src/runefoble_events/events.py` has grown to 474 lines and `libs/runefoble_events/src/runefoble_events/__init__.py` has reached 442 lines as domain events from across the platform are imported and re-exported in monolithic `__all__` lists. With new domain events continually being introduced for West Marches, neural voice duplex, and 3D physics, these files will imminently breach the 500-line hard invariant unless decomposed into domain category submodules.
+`libs/runefoble_events/src/runefoble_events/events.py` (removed) has grown to 474 lines and `libs/runefoble_events/src/runefoble_events/__init__.py` has reached 442 lines as domain events from across the platform are imported and re-exported in monolithic `__all__` lists. With new domain events continually being introduced for West Marches, neural voice duplex, and 3D physics, these files will imminently breach the 500-line hard invariant unless decomposed into domain category submodules.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean modular package layout for core platform libraries.

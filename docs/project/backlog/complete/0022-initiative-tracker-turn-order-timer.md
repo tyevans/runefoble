@@ -14,7 +14,7 @@ governing_stories: []
 # TASK-0022 — Live Multi-User Turn Order, Initiative Tracker & Timer Web Component
 
 ## Summary
-Implemented real-time combat encounter initiative tracking, round advancement, and turn timer orchestration across `services/game_session`, `libs/runefoble_events`, and `frontend`. When combat starts, participants roll or submit initiative; the turn order is deterministically sorted (descending score with tiebreakers) and broadcast over WebSockets/REST. A Bauhaus-styled Lit component (`runefoble-initiative-tracker.ts`) visualizes active combatant, round count, countdown turn timer with urgent visual states, and next-in-line preview.
+Implemented real-time combat encounter initiative tracking, round advancement, and turn timer orchestration across `services/game_session`, `libs/runefoble_events`, and `frontend`. When combat starts, participants roll or submit initiative; the turn order is deterministically sorted (descending score with tiebreakers) and broadcast over WebSockets/REST. A Bauhaus-styled Lit component (`runefoble-initiative-tracker.ts` (removed)) visualizes active combatant, round count, countdown turn timer with urgent visual states, and next-in-line preview.
 
 ## Governing Architecture & ADRs
 - **ADR-0004**: Lit Web Components and Storybook UI (Shadow DOM, reactive state).
@@ -34,7 +34,7 @@ Implemented real-time combat encounter initiative tracking, round advancement, a
    - `POST /api/v1/sessions/{session_id}/combat/next-turn`: Advances turn, cycling through sorted order and incrementing round on loop.
    - `POST /api/v1/sessions/{session_id}/combat/end`: Ends encounter.
    - `GET /api/v1/sessions/{session_id}/combat`: Returns current initiative state, round, current turn timer.
-3. **Frontend Component & Storybook (`frontend/src/components/runefoble-initiative-tracker.ts`)**:
+3. **Frontend Component & Storybook (`frontend/src/components/runefoble-initiative-tracker.ts` (removed))**:
    - Interactive Lit component with Bauhaus typography, progress timer bar, active turn indicator, and skip/next turn controls.
    - Storybook story (`services/game_session/ui/src/runefoble-initiative-tracker.stories.ts`).
 4. **Blackbox TDD Suite (`tests/test_blackbox_initiative_tracker.py`)**:

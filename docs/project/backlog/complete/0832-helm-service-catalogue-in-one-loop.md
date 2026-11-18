@@ -1,7 +1,7 @@
 ---
 id: '0832'
 title: "Helm Renders the Service Catalogue From One Values Map"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0832: Helm Renders the Service Catalogue From One Values Map
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Four side templates repeat the services env block, the service catalogue (ports and URLs) is stated in at least five places, Silo buckets are listed but never created, and tooling has dead or overlapping files.

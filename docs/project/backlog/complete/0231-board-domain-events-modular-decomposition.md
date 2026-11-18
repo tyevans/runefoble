@@ -27,10 +27,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/384
 Complete
 
 ## Summary
-Decompose `libs/runefoble_events/src/runefoble_events/board.py` (313 lines, 62.6% of limit) into focused event domain submodules under `libs/runefoble_events/src/runefoble_events/board_events/` (`token.py`, `fog.py`, `templates.py`, `lighting.py`), ensuring all domain event definition modules remain strictly < 120 lines per Hard Invariant 6.
+Decompose `libs/runefoble_events/src/runefoble_events/board.py` (removed) (313 lines, 62.6% of limit) into focused event domain submodules under `libs/runefoble_events/src/runefoble_events/board_events/` (`token.py`, `fog.py`, `templates.py`, `lighting.py`), ensuring all domain event definition modules remain strictly < 120 lines per Hard Invariant 6.
 
 ## Problem Statement
-`libs/runefoble_events/src/runefoble_events/board.py` defines CloudEvents-compliant domain events for tactical token movement, fog-of-war visibility reveals, elevation changes, rotatable AoE templates, and dynamic point lights in a single 313-line file. As new 3D collision impulses and terrain destruction events are added, this file will breach the 500-line limit unless decomposed.
+`libs/runefoble_events/src/runefoble_events/board.py` (removed) defines CloudEvents-compliant domain events for tactical token movement, fog-of-war visibility reveals, elevation changes, rotatable AoE templates, and dynamic point lights in a single 313-line file. As new 3D collision impulses and terrain destruction events are added, this file will breach the 500-line limit unless decomposed.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -56,7 +56,7 @@ Decompose `libs/runefoble_events/src/runefoble_events/board.py` (313 lines, 62.6
    - Extract `FogRevealed`, `ShroudReset`, and `VisibilityMaskUpdated` (< 80 lines).
 3. **Template & Lighting Events (`libs/runefoble_events/src/runefoble_events/board_events/templates.py` & `lighting.py`)**:
    - Extract AoE spell template and dynamic lighting events (< 80 lines each).
-4. **Aggregator Facade (`libs/runefoble_events/src/runefoble_events/board.py`)**:
+4. **Aggregator Facade (`libs/runefoble_events/src/runefoble_events/board.py` (removed))**:
    - Re-export all events maintaining full backwards compatibility (< 40 lines).
 5. **Verification**:
    - Verify all board-related test suites pass cleanly.
@@ -70,7 +70,7 @@ Decompose `libs/runefoble_events/src/runefoble_events/board.py` (313 lines, 62.6
 - **Testable (T)**: Event serialization tests and board blackbox tests verify 100% compatibility.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `libs/runefoble_events/src/runefoble_events/board.py` reduced to strictly < 50 lines.
+1. `libs/runefoble_events/src/runefoble_events/board.py` (removed) reduced to strictly < 50 lines.
 2. Extracted submodules under `board_events/` strictly < 120 lines each.
 3. Passes `uv run pytest tests/test_blackbox_tactile_board.py` and `tests/test_board_events.py`.
 4. Code passes `uv run ruff check .` and `uv run ruff format --check .`.

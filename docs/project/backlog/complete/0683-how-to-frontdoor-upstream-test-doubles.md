@@ -24,7 +24,7 @@ Complete
 - AGENTS.md: generic, reusable patterns need a Diataxis how-to.
 
 ## Documentation & Architecture Review
-- ADR-0014 (frontdoor setup, no backdoors). `docs/how-to/validate-e2e-journeys-with-playwright-bdd.md` covers browser tests only.
+- ADR-0014 (frontdoor setup, no backdoors). `docs/how-to/validate-e2e-journeys-with-playwright-bdd.md` (removed) covers browser tests only.
 
 ## Product & User Story References
 None. Developer documentation.

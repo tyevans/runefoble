@@ -27,7 +27,7 @@ After sign-in works (TASK-0524), every client call must send the Zitadel token. 
 ## Problem Statement
 - `frontend/src/runefoble-app.ts:30` and `:66` use `user-valeros` as the default user. Audit w2-app-shell F4.
 - `frontend/src/runefoble-app.ts:67-68` and `frontend/src/components/plugins/plugin_registry.ts:108` decide DM capabilities from role strings. Audit w2-app-shell F6. Invariant 1 applies.
-- `frontend/src/runefoble-app.ts:106` opens `/ws/session/...` with no token. `services/game_session/ui/src/runefoble-spectator-overlay.ts:73`, `services/voice_agent/ui/src/runefoble-mobile-companion.ts:115`, and `frontend/src/services/webrtc-voice.ts:52` open WebSockets with no token. Audit w3-authz F6 and F20.
+- `frontend/src/runefoble-app.ts:106` opens `/ws/session/...` with no token. `services/game_session/ui/src/runefoble-spectator-overlay.ts:73`, `services/voice_agent/ui/src/runefoble-mobile-companion.ts:115`, and `frontend/src/services/webrtc-voice.ts:52` (removed) open WebSockets with no token. Audit w3-authz F6 and F20.
 - `services/game_session/ui` and `services/rules_compendium/ui` send `x-user-id` in client code (grep count).
 - Storybook fixtures in these packages may carry mock tokens. Check them.
 

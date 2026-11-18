@@ -25,7 +25,7 @@ Complete
 Decompose `tests/test_visualizer_graph/` (376 lines, 75.2% of limit) into modular test submodules under `tests/test_visualizer_graph/` (`test_builder.py`, `test_facade.py`, `test_filters_and_metrics.py`, `test_serialization.py`), ensuring all test modules remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-Following the modular decomposition of `tools/project_visualizer/graph.py` in TASK-0227, additional test coverage for new filtering, metrics, and linking logic expanded `tests/test_visualizer_graph/` to 376 lines. It now tests graph node/edge creation, backward-compatible facades, entity filtering, metric aggregates, and bundle JSON serialization in a single monolithic test file. Approaching the 500-line invariant ceiling (Hard Invariant 6), it must be decomposed into focused, single-responsibility submodules.
+Following the modular decomposition of `tools/project_visualizer/graph.py` (removed) in TASK-0227, additional test coverage for new filtering, metrics, and linking logic expanded `tests/test_visualizer_graph/` to 376 lines. It now tests graph node/edge creation, backward-compatible facades, entity filtering, metric aggregates, and bundle JSON serialization in a single monolithic test file. Approaching the 500-line invariant ceiling (Hard Invariant 6), it must be decomposed into focused, single-responsibility submodules.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:

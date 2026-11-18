@@ -59,12 +59,12 @@ Milestone 2 (Live Collaborative Alpha) requires live bidirectional voice communi
    - Event-sourced `VoiceRoomAggregate` inheriting from `DeclarativeAggregate` with `@handles` methods (Hard Invariant 2).
    - Frontdoor HTTP endpoint `GET /api/v1/voice/rooms/{session_id}` returning active room participants and speaking status.
    - Frontdoor HTTP endpoint `POST /api/v1/voice/rooms/{session_id}/kick` for DM moderation with Zanzibar authorization (Hard Invariant 1).
-4. **WebAudio Browser Adapter (`frontend/src/services/webrtc-voice.ts` & `webaudio-pipeline.ts`)**:
+4. **WebAudio Browser Adapter (`frontend/src/services/webrtc-voice.ts` (removed) & `webaudio-pipeline.ts`)**:
    - Client service managing `RTCPeerConnection`, `navigator.mediaDevices.getUserMedia`, and WebAudio `AudioContext`.
    - Connects audio output to DSP filter graph when character conditions apply.
 5. **Lit Web Component & Storybook Verification**:
    - `services/voice_agent/ui/src/runefoble-audio-indicator.ts` with Bauhaus design tokens.
-   - Stories in `services/voice_agent/ui/src/runefoble-audio-indicator.stories.ts` and `frontend/src/stories/audio-indicator.stories.ts`.
+   - Stories in `services/voice_agent/ui/src/runefoble-audio-indicator.stories.ts` and `frontend/src/stories/audio-indicator.stories.ts` (removed).
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD Frontdoor Setup)
 1. **Frontdoor Blackbox Verification**:

@@ -35,13 +35,13 @@ Implemented the dedicated clean-overlay spectator mode and streaming view for st
      - Includes active scene atmosphere and sensory descriptions while cleansing secret lore.
    - Automatically dispatches `SpectatorSessionConnected` to the Redis bus (`runefoble.events.spectator` stream).
    - Gateway `main.py` kept strictly under 300 lines (Hard Invariant 6 <500 lines).
-3. **Frontend Lit Web Component & Stories (`frontend/src/components/runefoble-spectator-view.ts`, `services/game_session/ui/src/spectator-view.stories.ts`)**:
+3. **Frontend Lit Web Component & Stories (`frontend/src/components/runefoble-spectator-view.ts` (removed), `services/game_session/ui/src/spectator-view.stories.ts`)**:
    - Created Bauhaus-styled `<runefoble-spectator-view>` Lit component tailored for OBS overlays and spectator screens.
    - Read-only tactical board with tokens, conditions, and active-turn glowing indicators; user dragging and interaction disabled.
    - Bottom narrative chronicle ticker and ambient audio visualizer wave animation.
    - Transparent overlay mode support for OBS chroma/keying.
    - Created Storybook stories for `LiveEncounterStream` and `AtmosphericExploration`.
-   - Exported in `frontend/src/index.ts` and registered in `frontend/src/runefoble-app.ts` with party/spectator mode toggle.
+   - Exported in `frontend/src/index.ts` (removed) and registered in `frontend/src/runefoble-app.ts` with party/spectator mode toggle.
 4. **Test Suite (`tests/test_spectator_view.py` (removed))**:
    - Validated event registration, fields, and CloudEvents 1.0 compliance.
    - Validated state sanitization logic (hidden tokens, monster stat blocks, private notes stripped).

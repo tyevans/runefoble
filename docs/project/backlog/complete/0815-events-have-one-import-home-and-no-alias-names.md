@@ -1,7 +1,7 @@
 ---
 id: '0815'
 title: "Each Event Class Has One Import Home and No Alias Names"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0815: Each Event Class Has One Import Home and No Alias Names
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Event classes have up to five import homes (dead `events.py`, facade modules), and 25 Python alias names remain (for example `DiceRollEvent = DiceRolled`).

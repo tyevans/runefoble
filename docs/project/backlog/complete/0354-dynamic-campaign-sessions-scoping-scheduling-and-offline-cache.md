@@ -27,7 +27,7 @@ Complete
 Eradicate hardcoded stub sessions by removing the universal "Session #15: Chamber of Horrors" fixture, scoping sessions strictly by campaign ID in `frontend/src/services/app-data-service.ts`, implementing an in-memory session cache that persists newly created sessions across view reloads in fallback mode, and auto-seeding an initial staging lobby session when a new campaign is created in `gateway_api/campaign_store/store.py`.
 
 ## Problem Statement
-Every campaign opened in the application (including newly created campaigns) currently displays the exact same hardcoded "Session #15: Chamber of Horrors" alongside an active session. This occurs because `getFallbackCampaignSessions(campaignId)` in `app-data-service.fixtures.ts` hardcodes `{ id: 'lobby-${campaignId}-2', title: 'Session #15: Chamber of Horrors' }` for all campaigns. 
+Every campaign opened in the application (including newly created campaigns) currently displays the exact same hardcoded "Session #15: Chamber of Horrors" alongside an active session. This occurs because `getFallbackCampaignSessions(campaignId)` in `app-data-service.fixtures.ts` (removed) hardcodes `{ id: 'lobby-${campaignId}-2', title: 'Session #15: Chamber of Horrors' }` for all campaigns. 
 
 Furthermore, when a user clicks "+ Schedule Session" or creates a staging lobby in fallback/offline mode, `createCampaignSession()` returns an ephemeral object that is never stored. In `runefoble-app.ts:179`, `handleCreateSession` calls `fetchCampaignSessions(this.campaignId)` immediately afterward, which reads the original hardcoded array and wipes the newly created session from state. On the backend, `campaign_store/store.py` does not seed an initial staging lobby or session when a new campaign is created.
 
@@ -41,7 +41,7 @@ Furthermore, when a user clicks "+ Schedule Session" or creates a staging lobby 
   - **ADR-0013: Frontend Microfrontend Architecture**: State synchronization between App Shell and game session components.
 
 ## Scope of Work & Implementation Plan
-1. **Remove Hardcoded Universal Session Fixture (`frontend/src/fixtures/app-data-service.fixtures.ts`)**:
+1. **Remove Hardcoded Universal Session Fixture (`frontend/src/fixtures/app-data-service.fixtures.ts` (removed))**:
    - Remove the static `Session #15: Chamber of Horrors` item from `getFallbackCampaignSessions()`.
    - Implement `FALLBACK_CAMPAIGN_SESSIONS_MAP: Record<string, CampaignSessionItem[]>`:
      - Campaign `'4'` (Tomb of the Star-Eater) has `Session #14: Tomb of the Star-Eater` (active) and `Session #15: Chamber of Horrors` (lobby).

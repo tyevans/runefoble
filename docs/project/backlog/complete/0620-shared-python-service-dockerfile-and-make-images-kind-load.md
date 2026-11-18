@@ -25,7 +25,7 @@ Every Helm Deployment references `runefoble/<service>:0.1.0`, but only `frontend
 - `find . -iname '*dockerfile*'` returns only `./frontend/Dockerfile` (`.audit/reports/w1-gates-infra.md` F3).
 - `deployments/helm/runefoble/values.yaml` lists `image: runefoble/<name>:0.1.0` for gateway-api, the-watcher, board-state, character-sheet, game-session, voice-agent, campaign-lore, rules-compendium, asset-forge, soundscape and campaign-analytics.
 - `Makefile` has no `docker build` or `kind load` target. `helm-deploy` (Makefile, `helm-deploy` target) leaves every pod in ImagePullBackOff.
-- `services/soundscape` Helm container has no `command` (`deployments/helm/runefoble/templates/soundscape.yaml`); the image cannot be built from this repository (`w2-soundscape.md` F14).
+- `services/soundscape` Helm container has no `command` (`deployments/helm/runefoble/templates/soundscape.yaml` (removed)); the image cannot be built from this repository (`w2-soundscape.md` F14).
 
 ## Documentation & Architecture Review
 - `docs/reference/cli-interfaces.md`: Makefile target reference. Add `make images` on completion.

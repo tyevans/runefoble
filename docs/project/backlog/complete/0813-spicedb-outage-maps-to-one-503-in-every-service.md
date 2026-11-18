@@ -1,7 +1,7 @@
 ---
 id: '0813'
 title: "A SpiceDB Outage Maps to One 503 Answer in Every Service"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0813: A SpiceDB Outage Maps to One 503 Answer in Every Service
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Services answer a SpiceDB outage in different ways. game_session has no handler, so an outage gives the framework default. asset_forge maps schema defects to 503. the_watcher keeps a copy of the lib handler. Four response bodies exist.

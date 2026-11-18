@@ -28,10 +28,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/241
 Complete
 
 ## Summary
-Decompose `libs/runefoble_events/src/runefoble_events/watcher.py` (364 lines, 72.8% of limit) by modularizing speech, narration, dice, reaction, and vocal modulation domain events into focused submodules under `libs/runefoble_events/src/runefoble_events/watcher_events/`, keeping all modules strictly < 150 lines per Hard Invariant 6 and ADR-0007.
+Decompose `libs/runefoble_events/src/runefoble_events/watcher.py` (removed) (364 lines, 72.8% of limit) by modularizing speech, narration, dice, reaction, and vocal modulation domain events into focused submodules under `libs/runefoble_events/src/runefoble_events/watcher_events/`, keeping all modules strictly < 150 lines per Hard Invariant 6 and ADR-0007.
 
 ## Problem Statement
-`libs/runefoble_events/src/runefoble_events/watcher.py` has grown to 364 lines as new capabilities (reactions, spoken traps, and vocal modulation presets) added domain events to this file. As Milestone 9 introduces additional speech interruption and barge-in events, this file is rapidly approaching the 400+ warning limit and the 500-line hard ceiling.
+`libs/runefoble_events/src/runefoble_events/watcher.py` (removed) has grown to 364 lines as new capabilities (reactions, spoken traps, and vocal modulation presets) added domain events to this file. As Milestone 9 introduces additional speech interruption and barge-in events, this file is rapidly approaching the 400+ warning limit and the 500-line hard ceiling.
 
 ## Governing Architecture & ADRs
 - **ADR-0003: UV Monorepo Workspace for Python BCs**: Clean package structure across shared core libraries.
@@ -43,7 +43,7 @@ Decompose `libs/runefoble_events/src/runefoble_events/watcher.py` (364 lines, 72
    - Extract `PlayerSpokeEvent`, `SpeechIntentParsed`, `WatcherNarrationGenerated`, and `StandInActionDecided` (< 120 lines).
 2. **Combat & Reaction Events (`libs/runefoble_events/src/runefoble_events/watcher_events/combat.py`)**:
    - Extract `DiceRolled`, `ReactionPromptTriggered`, `ReactionOpportunityResolved`, `SecretTrapTriggered`, and `VocalModulatorPresetChanged` (< 150 lines).
-3. **Watcher Re-export Facade (`libs/runefoble_events/src/runefoble_events/watcher.py`)**:
+3. **Watcher Re-export Facade (`libs/runefoble_events/src/runefoble_events/watcher.py` (removed))**:
    - Preserve backward-compatible imports while reducing `watcher.py` to < 60 lines.
 4. **Verification**:
    - Ensure all event registrations and imports throughout the workspace continue to resolve without breaking changes.

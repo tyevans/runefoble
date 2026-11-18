@@ -20,7 +20,7 @@ Complete
 Extended `<runefoble-board>` with dynamic fog-of-war cell shading, token health indicators, and turn highlight overlays. Added interactive Storybook stories showcasing fog-of-war exploration, active player turn indication with an animated golden glow, and multiplayer token arrays.
 
 ## Key Changes
-- `frontend/src/components/runefoble-board.ts`:
+- `frontend/src/components/runefoble-board.ts` (removed):
   - Added `BoardToken` attributes: `hp`, `maxHp`, `visionRadius`, `isHostile`, `isActiveTurn`.
   - Added board properties: `fogOfWar: boolean`, `activeTurnTokenId: string`.
   - Implemented `isCellRevealed` spatial visibility calculation based on non-hostile token coordinates and vision radii.

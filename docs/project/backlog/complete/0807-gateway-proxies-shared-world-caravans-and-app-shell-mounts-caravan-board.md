@@ -1,7 +1,7 @@
 ---
 id: '0807'
 title: "Gateway Proxies Shared-World Caravan Routes and the App Shell Mounts the Caravan Board"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies:
 - TASK-0685
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0807: Gateway Proxies Shared-World Caravan Routes and the App Shell Mounts the Caravan Board
 
 ## Status
-Refined. Split from TASK-0685 (blocked item 1b), 2026-11-18.
+Complete
 
 ## Summary
 The caravan board cannot mount in the App Shell, because the gateway has no proxy for the shared-world caravan routes that game_session owns.

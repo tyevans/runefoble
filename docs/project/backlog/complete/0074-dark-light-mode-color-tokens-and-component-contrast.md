@@ -25,7 +25,7 @@ Audit, standardize, and implement comprehensive Dark Mode and Light Mode design 
 ## Problem Statement & Context
 Following initial theming in TASK-0012, themes were created as monolithic color sets (e.g. Bauhaus was fixed as a light canvas `#f8f9fa`, Dark Fantasy as dark `#0f172a`). This created several UX and accessibility defects:
 1. **No True Mode Toggle**: A user wanting Bauhaus geometric minimalism in a dark room had no way to toggle dark mode.
-2. **Hardcoded Component Colors**: Multiple components (`runefoble-board.ts`, `runefoble-character-card.ts`, `runefoble-app.ts`, `runefoble-initiative-tracker.ts`) include hardcoded hex colors (e.g., `#121212`, `#ffffff`, `#4b5563`, `#f8f9fa`), resulting in unreadable text, broken borders, or invisible shadows when theme or mode changes.
+2. **Hardcoded Component Colors**: Multiple components (`runefoble-board.ts` (removed), `runefoble-character-card.ts` (removed), `runefoble-app.ts`, `runefoble-initiative-tracker.ts` (removed)) include hardcoded hex colors (e.g., `#121212`, `#ffffff`, `#4b5563`, `#f8f9fa`), resulting in unreadable text, broken borders, or invisible shadows when theme or mode changes.
 3. **Black-on-Black Shadows in Dark Mode**: Hard drop-shadows like `4px 4px 0px #121212` are completely invisible on dark canvas surfaces (`#121212`, `#0f172a`), erasing the tactile neobrutalist depth central to the design system.
 
 ## Governing Architecture & ADRs
@@ -77,13 +77,13 @@ Define explicit token sets for both light and dark variations across all 4 core 
 ### 3. Comprehensive Web Component Audit & Hardcoded Color Removal
 Replace all hardcoded hex literals with CSS tokens across all components:
 - `frontend/src/runefoble-app.ts`: Header borders, background, spectator badge, voice panel styling.
-- `frontend/src/components/runefoble-board.ts`: Tactical grid coordinates, cell borders, fog-of-war shroud opacity and colors, token badges.
-- `frontend/src/components/runefoble-character-card.ts`: HP bars, AC shield badge, condition pills, spell slot circles.
-- `frontend/src/components/runefoble-watcher-feed.ts`: Event card backgrounds, speaker tags, narrative vs speech styling.
-- `frontend/src/components/runefoble-dice-roller.ts`: Tray well background, dice face rendering, result total banner.
-- `frontend/src/components/runefoble-initiative-tracker.ts`: Active combatant highlight, countdown progress bar, next-turn badge.
-- `frontend/src/components/runefoble-spectator-view.ts`: Atmosphere banner, chronicle clean overlay.
-- `frontend/src/components/runefoble-absentee-recap.ts`: Recap entry cards, audio scrub bar, penalty badges.
+- `frontend/src/components/runefoble-board.ts` (removed): Tactical grid coordinates, cell borders, fog-of-war shroud opacity and colors, token badges.
+- `frontend/src/components/runefoble-character-card.ts` (removed): HP bars, AC shield badge, condition pills, spell slot circles.
+- `frontend/src/components/runefoble-watcher-feed.ts` (removed): Event card backgrounds, speaker tags, narrative vs speech styling.
+- `frontend/src/components/runefoble-dice-roller.ts` (removed): Tray well background, dice face rendering, result total banner.
+- `frontend/src/components/runefoble-initiative-tracker.ts` (removed): Active combatant highlight, countdown progress bar, next-turn badge.
+- `frontend/src/components/runefoble-spectator-view.ts` (removed): Atmosphere banner, chronicle clean overlay.
+- `frontend/src/components/runefoble-absentee-recap.ts` (removed): Recap entry cards, audio scrub bar, penalty badges.
 
 ### 4. Verification & Storybook Stories
 - Update `frontend/.storybook/preview.ts` to include interactive Dark / Light mode switching in the Storybook toolbar.

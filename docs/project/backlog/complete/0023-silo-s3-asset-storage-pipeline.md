@@ -24,7 +24,7 @@ Implemented a media asset storage service (`SiloStorageService`) in `libs/runefo
   - Defined `AssetUploaded` domain event (`runefoble.events.asset.uploaded`) with `asset_id`, `bucket`, `object_key`, `content_type`, `byte_size`, `owner_id`, `url`.
   - Defined `AssetDeleted` domain event (`runefoble.events.asset.deleted`) with `asset_id`, `bucket`, `object_key`, `deleted_by`.
   - Registered with both full event type and short class name in `EventRegistry`.
-- `libs/runefoble_events/src/runefoble_events/events.py` & `__init__.py`:
+- `libs/runefoble_events/src/runefoble_events/events.py` (removed) & `__init__.py`:
   - Re-exported `AssetUploaded` and `AssetDeleted`.
 - `libs/runefoble_platform/src/runefoble_platform/storage.py`:
   - Implemented `SiloStorageService` with `upload_asset`, `get_asset`, `get_asset_by_id`, `get_asset_data_by_id`, `delete_asset`, `delete_asset_by_id`, and `generate_presigned_url`.

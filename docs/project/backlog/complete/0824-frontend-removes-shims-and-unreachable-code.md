@@ -1,7 +1,7 @@
 ---
 id: '0824'
 title: "The Frontend Removes Forwarding Shims and Unreachable Code"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0824: The Frontend Removes Forwarding Shims and Unreachable Code
 
 ## Status
-Refined
+Complete
 
 ## Summary
 28 "App Shell backwards compatibility" forwarding shims, a dead barrel, and about 2,000 unreachable lines remain. 20 advertised tags are never rendered.

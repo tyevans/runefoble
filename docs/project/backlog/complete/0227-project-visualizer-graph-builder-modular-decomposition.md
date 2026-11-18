@@ -20,10 +20,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/330
 Complete
 
 ## Summary
-Decompose `tools/project_visualizer/graph.py` (327 lines, 65.4% of limit) into modular Python submodules under `tools/project_visualizer/graph/` (`models.py`, `builder.py`, `filtering.py`), ensuring all modules remain strictly < 130 lines per Hard Invariant 6.
+Decompose `tools/project_visualizer/graph.py` (removed) (327 lines, 65.4% of limit) into modular Python submodules under `tools/project_visualizer/graph/` (`models.py`, `builder.py`, `filtering.py`), ensuring all modules remain strictly < 130 lines per Hard Invariant 6.
 
 ## Problem Statement
-`tools/project_visualizer/graph.py` handles graph node/edge data structures, dependency graph construction from parsed markdown entities, filtering logic, and JSON serialization in a single file of 327 lines. As entity clustering, temporal milestone filters, and Redstring dependency tracing are added, this file will expand towards the 500-line ceiling unless modularized.
+`tools/project_visualizer/graph.py` (removed) handles graph node/edge data structures, dependency graph construction from parsed markdown entities, filtering logic, and JSON serialization in a single file of 327 lines. As entity clustering, temporal milestone filters, and Redstring dependency tracing are added, this file will expand towards the 500-line ceiling unless modularized.
 
 ## Documentation & Architecture Review
 - **Documentation Consulted**:
@@ -45,7 +45,7 @@ Decompose `tools/project_visualizer/graph.py` (327 lines, 65.4% of limit) into m
    - Extract graph node construction from entities and edge synthesis (< 120 lines).
 3. **Graph Filtering (`tools/project_visualizer/graph/filtering.py`)**:
    - Extract tag/type filtering, search subgraphs, and layout positioning hints (< 110 lines).
-4. **Aggregator Facade (`tools/project_visualizer/graph.py` or `graph/__init__.py`)**:
+4. **Aggregator Facade (`tools/project_visualizer/graph.py` (removed) or `graph/__init__.py`)**:
    - Re-export all classes and functions maintaining complete backwards compatibility (< 35 lines).
 5. **Verification**:
    - Verify all tests pass via `uv run pytest tests/test_visualizer_parser.py tests/test_project_visualizer_agy.py`.
@@ -59,7 +59,7 @@ Decompose `tools/project_visualizer/graph.py` (327 lines, 65.4% of limit) into m
 - **Testable (T)**: Existing visualizer test suite verifies graph serialization parity.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
-1. `tools/project_visualizer/graph.py` facade reduced to < 40 lines.
+1. `tools/project_visualizer/graph.py` (removed) facade reduced to < 40 lines.
 2. Modular `graph/` submodules strictly < 130 lines each.
 3. Backwards compatibility preserved.
 4. All visualizer tests pass cleanly via `uv run pytest tests/test_visualizer_parser.py tests/test_project_visualizer_agy.py`.

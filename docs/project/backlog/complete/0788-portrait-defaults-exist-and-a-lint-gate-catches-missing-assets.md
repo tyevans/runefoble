@@ -24,7 +24,7 @@ TASK-0647 fixed the stories, but code and fixtures still default to portrait fil
 ## Problem Statement
 - `services/character_sheet/ui/src/roster/runefoble-character-roster.ts:90`: `/assets/portraits/default.svg`.
 - `services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts:22-23`.
-- `frontend/src/fixtures/app-data-service.fixtures.ts:25-27` and `frontend/test/*.test.ts`.
+- `frontend/src/fixtures/app-data-service.fixtures.ts:25-27` (removed) and `frontend/test/*.test.ts`.
 - `services/character_sheet/src/character_sheet/portrait.py:57,165` and `models/character.py:42-43,92`.
 
 ## Documentation & Architecture Review

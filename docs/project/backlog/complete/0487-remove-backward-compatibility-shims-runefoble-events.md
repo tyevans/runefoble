@@ -42,11 +42,11 @@ When domain events were modularized into `runefoble_events.events.*`, the root o
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Root Alias Files in `libs/runefoble_events`**:
-   - Delete `libs/runefoble_events/src/runefoble_events/events/board_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/events/narrative_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/events/platform_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/events/world_events.py`.
-   - Delete `libs/runefoble_events/src/runefoble_events/events/media_events.py`, `session_events.py`, and `character_events.py` (each is an 8-line facade).
+   - Delete `libs/runefoble_events/src/runefoble_events/events/board_events.py` (removed).
+   - Delete `libs/runefoble_events/src/runefoble_events/events/narrative_events.py` (removed).
+   - Delete `libs/runefoble_events/src/runefoble_events/events/platform_events.py` (removed).
+   - Delete `libs/runefoble_events/src/runefoble_events/events/world_events.py` (removed).
+   - Delete `libs/runefoble_events/src/runefoble_events/events/media_events.py` (removed), `session_events.py`, and `character_events.py` (each is an 8-line facade).
    - Delete the stray facade `libs/runefoble_events/src/runefoble_events/settlement_workers.py` (outside `src/`). Keep `src/runefoble_events/settlement_workers.py`: it is a 100-line module, not an alias.
 2. **Update Package Root `__init__.py`**:
    - Clean up `libs/runefoble_events/src/runefoble_events/__init__.py` to re-export only canonical core base classes (`BaseRunefobleEvent`, `DomainEvent`, `register_event`), removing obsolete re-export facades.

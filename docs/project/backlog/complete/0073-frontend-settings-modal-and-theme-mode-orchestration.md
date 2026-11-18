@@ -61,11 +61,11 @@ Currently, `<runefoble-theme-switcher>` is embedded directly in the main applica
   - Emits `theme-changed` (`{ detail: { theme: string } }`).
   - Emits `settings-closed`.
 
-### 3. Application Integration (`frontend/src/runefoble-app.ts`, `frontend/src/index.ts`)
+### 3. Application Integration (`frontend/src/runefoble-app.ts`, `frontend/src/index.ts` (removed))
 - Embed `<runefoble-settings-modal>` at the top app level.
 - Initialize both color mode and theme on app mount (`connectedCallback`), applying root attributes:
   `data-theme="<theme>"` and `data-color-mode="<mode>"`.
-- Export `<runefoble-settings-modal>` from `frontend/src/index.ts`.
+- Export `<runefoble-settings-modal>` from `frontend/src/index.ts` (removed).
 
 ### 4. Storybook Stories (`frontend/src/stories/runefoble-settings-modal.stories.ts`)
 - Stories demonstrating:

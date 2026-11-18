@@ -44,7 +44,7 @@ While basic UVTT wall boundary import is functional, doors, secret portals, and 
    - Parse door coordinate segments, pivot hinges, open/closed/locked status, and secret detection DCs (< 130 lines).
 2. **Point Light & Radiance Mapper (`services/board_state/src/board_state/uvtt/lights.py`)**:
    - Parse UVTT light sources (color hex, bright radius, dim radius, flicker intensity) into board light models (< 120 lines).
-3. **CloudEvents Registration (`libs/runefoble_events/src/runefoble_events/uvtt_elements.py`)**:
+3. **CloudEvents Registration (`libs/runefoble_events/src/runefoble_events/uvtt_elements.py` (removed))**:
    - Define `BoardDoorToggledEvent` and `BoardLightSourcePlacedEvent` (< 70 lines).
 4. **Board Parser APIRouter (`services/board_state/src/board_state/routers/uvtt_import.py`)**:
    - Extend import endpoint `POST /board/{session_id}/import/uvtt` to populate interactive doors and lights (< 140 lines).

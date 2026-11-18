@@ -26,13 +26,13 @@ Implemented a design token theming architecture across the Runefoble Lit Web Com
    - Defined CSS custom properties on `:root` and `[data-theme="bauhaus"]` for colors, surfaces, borders, radii, and hard drop-shadows.
    - Defined alternate themes for `[data-theme="dark-fantasy"]` (Obsidian canvas `#0f172a`, rune purple `#8b5cf6`, gold `#f59e0b`), `[data-theme="parchment"]` (aged paper `#f4ecd8`, crimson `#9b2226`, brass `#bb8524`), and `[data-theme="cyber-rune"]` (neon dark `#09090b`, cyan `#06b6d4`, pink `#ec4899`).
    - Imported `themes.css` into `frontend/src/index.css` and `frontend/src/runefoble-app.ts`.
-2. **Theme Switcher Component (`frontend/src/components/runefoble-theme-switcher.ts`, `frontend/src/index.ts`)**:
+2. **Theme Switcher Component (`frontend/src/components/runefoble-theme-switcher.ts`, `frontend/src/index.ts` (removed))**:
    - Built `<runefoble-theme-switcher>` with bold Bauhaus buttons, active selection badges, localStorage persistence, and `theme-changed` CustomEvent dispatch.
    - Sets `document.documentElement.setAttribute('data-theme', theme)` on initialization and runtime switching.
-   - Exported from `frontend/src/index.ts`.
+   - Exported from `frontend/src/index.ts` (removed).
 3. **Lit Components Token Inheritance**:
    - Updated `frontend/src/runefoble-app.ts` to embed the theme switcher in the header and adopt `--rf-*` canvas, text, and border tokens.
-   - Updated `frontend/src/components/runefoble-board.ts`, `frontend/src/components/runefoble-character-card.ts`, and `frontend/src/components/runefoble-watcher-feed.ts` to inherit `--rf-*` CSS tokens.
+   - Updated `frontend/src/components/runefoble-board.ts` (removed), `frontend/src/components/runefoble-character-card.ts` (removed), and `frontend/src/components/runefoble-watcher-feed.ts` (removed) to inherit `--rf-*` CSS tokens.
 4. **Storybook Stories (`frontend/src/stories/theme-switcher.stories.ts`, `frontend/.storybook/preview.ts`)**:
    - Created interactive stories for Bauhaus, Dark Fantasy, Parchment, and Cyber Rune contexts.
    - Imported `themes.css` into Storybook preview.
