@@ -5,9 +5,9 @@ Part of TASK-0100 / PRD-0014 / US-0044.
 
 from __future__ import annotations
 
-import contextlib
+from dataclasses import asdict
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from character_sheet.authz import authorize_character
 from character_sheet.crafting import (
@@ -15,9 +15,9 @@ from character_sheet.crafting import (
     KNOWN_RECIPES,
     MISHAP_TABLE,
     REAGENTS_CATALOGUE,
-    CraftingAggregate,
     CraftingState,
 )
+from character_sheet.crafting.service import CharacterNotFoundError, CombineReagentsService
 from character_sheet.dependencies import (
     VIEW_CHARACTER,
     CraftingRepoDep,
@@ -25,10 +25,12 @@ from character_sheet.dependencies import (
     SpiceDep,
     VerifiedUserId,
     get_principal,
+    publish_character_event,
     publish_crafting_event,
 )
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from runefoble_platform.aggregate_loading import load_if_exists
 
 router = APIRouter(
     prefix="/api/v1/crafting",
@@ -98,88 +100,23 @@ async def combine_reagents(
 ) -> CombineReagentsResponse:
     """Combine alchemical reagents, calculate volatile risk, and update character state."""
     await authorize_character(spicedb, req.character_id, "edit", user_id)
-
-    # Load or initialize CraftingAggregate
+    service = CombineReagentsService(
+        char_repo, crafting_repo, publish_character_event, publish_crafting_event
+    )
     try:
-        crafting = await crafting_repo.load(req.character_id)
-    except Exception:
-        crafting = CraftingAggregate(req.character_id)
-
-    # Optional character sheet integration
-    char = None
-    with contextlib.suppress(Exception):
-        char = await char_repo.load(req.character_id)
-
-    # Deduct reagents from character inventory if present
-    if char:
-        for reagent_name in req.reagents:
-            matching_item = next(
-                (
-                    item
-                    for item in char.state.inventory.values()
-                    if item.name.lower() == reagent_name.lower()
-                ),
-                None,
-            )
-            if matching_item:
-                char.remove_inventory_item(matching_item.item_id, quantity=1)
-
-    # Execute crafting domain action
-    res = crafting.combine_reagents(
-        character_id=req.character_id,
-        reagents=req.reagents,
-        catalyst=req.catalyst,
-        campaign_id=req.campaign_id,
-        session_id=req.session_id,
-        player_id=req.player_id,
-        force_mishap=req.force_mishap,
-        risk_threshold=req.risk_threshold,
-    )
-
-    events_to_publish = list(crafting.uncommitted_events)
-    await crafting_repo.save(crafting)
-
-    # Publish events from crafting aggregate uncommitted events
-    for ev in events_to_publish:
-        await publish_crafting_event(ev)
-
-    current_hp = None
-    conditions = []
-
-    if char:
-        if res["outcome"] == "success":
-            char.add_inventory_item(
-                item_id=str(uuid4()),
-                name=res["item_name"],
-                quantity=res["quantity"],
-                weight_lbs=0.5,
-            )
-        elif res["outcome"] == "mishap" and res.get("mishap"):
-            mishap = res["mishap"]
-            if mishap.get("damage", 0) > 0:
-                char.modify_health(-mishap["damage"], source="crafting_mishap")
-            if mishap.get("condition"):
-                char.apply_condition(mishap["condition"], source="crafting_mishap")
-        await char_repo.save(char)
-        current_hp = char.state.current_hp
-        conditions = [
-            c if isinstance(c, str) else getattr(c, "name", str(c)) for c in char.state.conditions
-        ]
-
-    return CombineReagentsResponse(
-        outcome=res["outcome"],
-        item_name=res.get("item_name"),
-        recipe_name=res.get("recipe_name"),
-        quantity=res.get("quantity", 1),
-        tags=res.get("tags", []),
-        properties=res.get("properties", {}),
-        risk_score=res.get("risk_score", 0.0),
-        reagents_consumed=res.get("reagents_consumed", []),
-        catalyst_consumed=res.get("catalyst_consumed"),
-        mishap=res.get("mishap"),
-        character_current_hp=current_hp,
-        character_conditions=conditions,
-    )
+        result = await service.combine(
+            character_id=req.character_id,
+            reagents=req.reagents,
+            catalyst=req.catalyst,
+            campaign_id=req.campaign_id,
+            session_id=req.session_id,
+            player_id=req.player_id,
+            force_mishap=req.force_mishap,
+            risk_threshold=req.risk_threshold,
+        )
+    except CharacterNotFoundError as e:
+        raise HTTPException(status_code=404, detail=f"Character not found: {e}") from e
+    return CombineReagentsResponse(**asdict(result))
 
 
 @router.get(
@@ -191,12 +128,15 @@ async def get_crafting_history(
     character_id: UUID,
     crafting_repo: CraftingRepoDep,
 ) -> CraftingState:
-    """Retrieve crafting aggregate history and discovered recipes."""
-    try:
-        crafting = await crafting_repo.load(character_id)
-        return crafting.state
-    except Exception:
+    """Retrieve crafting aggregate history and discovered recipes.
+
+    An empty state answers only for a character with no crafting stream. A store failure
+    propagates and answers 503.
+    """
+    crafting = await load_if_exists(crafting_repo, character_id)
+    if crafting is None:
         return CraftingState(character_id=character_id)
+    return crafting.state
 
 
 __all__ = ["router"]

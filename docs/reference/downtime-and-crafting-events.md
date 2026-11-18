@@ -43,6 +43,14 @@ All downtime events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compli
   - `condition_inflicted`: Optional[str] — Status condition applied (e.g. `poisoned`, `blinded`).
   - `reagents_lost`: List[str] — Ruined ingredients.
 
+### 3a. Mishap Health Events
+A mishap that deals damage publishes the standard health events on the character stream (`runefoble.events.character`). The events match those of the health route.
+- **`CharacterHealthChanged`**: `delta` is the negative damage. `source` is `crafting_mishap`. `current_hp` and `max_hp` are the saved values. `session_id` is the combine request session, or null.
+- **`CharacterDamaged`** (event type `runefoble.events.character.damaged`): same `delta`, `current_hp`, `max_hp`, and `source`.
+- **`StandInStabilized`**: published only when the damage stabilizes a stand-in at 0 HP.
+
+These events publish after the character and the crafting history are saved. A mishap with no damage publishes no health event.
+
 ### 4. `CampfireRestCompleted`
 - **Topic**: `runefoble.events.session`
 - **Aggregate Type**: `GameSession`
@@ -81,8 +89,8 @@ All downtime events subclass `BaseRunefobleEvent` and are CloudEvents 1.0-compli
 |---|---|---|---|---|
 | `/api/v1/crafting/recipes` | `GET` | `character_sheet` | — | Lists canonical known alchemical recipes. |
 | `/api/v1/crafting/reagents` | `GET` | `character_sheet` | — | Lists available reagents, catalysts, and mishap tables. |
-| `/api/v1/crafting/recipes/combine` | `POST` | `character_sheet` / `gateway` | `character:edit` or `campaign:play` | Transmutes crucible reagents and updates inventory. |
-| `/api/v1/crafting/{char_id}/history` | `GET` | `character_sheet` | `character:view` | Retrieves crafting attempts and discovered recipes. |
+| `/api/v1/crafting/recipes/combine` | `POST` | `character_sheet` / `gateway` | `character:edit` or `campaign:play` | Transmutes crucible reagents and updates inventory. Answers `404` when the character does not exist and `503` when the event store fails. A failed request saves nothing. |
+| `/api/v1/crafting/{char_id}/history` | `GET` | `character_sheet` | `character:view` | Retrieves crafting attempts and discovered recipes. Answers an empty state only when no crafting history exists. Answers `503` when the event store fails. |
 | `/api/v1/sessions/{id}/rest/prompts` | `GET` | `game_session` | — | Retrieves collaborative storytelling prompts. |
 | `/api/v1/sessions/{id}/rest/campfire` | `POST` | `game_session` / `gateway` | `campaign:play` | Executes campfire rest sequence and applies boons. |
 | `/api/v1/campaigns/{id}/stronghold` | `GET` | `game_session` / `gateway` | `campaign:view` | Inspects campsite facility tiers and treasury. |

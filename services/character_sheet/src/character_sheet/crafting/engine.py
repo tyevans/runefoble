@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Literal
 from uuid import UUID
 
 from character_sheet.crafting.mishaps import MishapResolver, calculate_volatile_risk
@@ -17,6 +18,22 @@ def _to_uuid(v: UUID | str) -> UUID | None:
         return UUID(str(v)) if v else None
     except Exception:
         return None
+
+
+@dataclass(frozen=True)
+class CombineOutcome:
+    """Typed result of one reagent combination. A mishap carries its mishap record."""
+
+    outcome: Literal["success", "mishap"]
+    risk_score: float
+    item_name: str | None = None
+    recipe_name: str | None = None
+    quantity: int = 1
+    tags: list[str] = field(default_factory=list)
+    properties: dict[str, Any] = field(default_factory=dict)
+    reagents_consumed: list[str] = field(default_factory=list)
+    catalyst_consumed: str | None = None
+    mishap: dict[str, Any] | None = None
 
 
 class CraftingEngine:
@@ -48,25 +65,45 @@ class CraftingEngine:
         pid: str | None,
         force_mishap: bool,
         thresh: float,
-    ) -> tuple[dict[str, Any], type, dict[str, Any], dict[str, Any]]:
+    ) -> tuple[dict[str, Any], type, dict[str, Any], CombineOutcome]:
         risk = calculate_volatile_risk(reagents, cat)
         att = {"character_id": cid, "player_id": pid, "campaign_id": camp}
         att.update(session_id=sess, reagents=reagents, catalyst=cat, risk_score=risk)
         if MishapResolver.is_mishap(risk, cat, force_mishap, thresh):
             mishap = MishapResolver.select_mishap(risk)
             m_kw = MishapResolver.event_kwargs(cid, mishap, reagents, camp, sess)
-            res = {"outcome": "mishap", "mishap": mishap, "risk_score": risk}
-            res["reagents_lost"] = reagents
-            return att, CraftingMishapOccurred, m_kw, res
+            return (
+                att,
+                CraftingMishapOccurred,
+                m_kw,
+                CombineOutcome(outcome="mishap", risk_score=risk, mishap=mishap),
+            )
 
         item, rec, tags, props = cls.evaluate_recipe(reagents)
-        res = {"outcome": "success", "item_name": item, "recipe_name": rec, "quantity": 1}
-        res |= {"tags": tags, "properties": props, "risk_score": risk}
-        res |= {"reagents_consumed": reagents, "catalyst_consumed": cat}
-
-        s_kw = {k: v for k, v in res.items() if k not in ("outcome", "risk_score")}
-        s_kw.update(character_id=cid, campaign_id=camp, session_id=sess)
-        return att, CraftingSucceeded, s_kw, res
+        s_kw: dict[str, Any] = {
+            "item_name": item,
+            "recipe_name": rec,
+            "quantity": 1,
+            "tags": tags,
+            "properties": props,
+            "reagents_consumed": reagents,
+            "catalyst_consumed": cat,
+            "character_id": cid,
+            "campaign_id": camp,
+            "session_id": sess,
+        }
+        outcome = CombineOutcome(
+            outcome="success",
+            risk_score=risk,
+            item_name=item,
+            recipe_name=rec,
+            quantity=1,
+            tags=tags,
+            properties=props,
+            reagents_consumed=reagents,
+            catalyst_consumed=cat,
+        )
+        return att, CraftingSucceeded, s_kw, outcome
 
 
 class CraftingAggregate(DeclarativeAggregate[CraftingState]):
@@ -115,15 +152,15 @@ class CraftingAggregate(DeclarativeAggregate[CraftingState]):
         player_id: str | None = None,
         force_mishap: bool = False,
         risk_threshold: float = 0.50,
-    ) -> dict[str, Any]:
+    ) -> CombineOutcome:
         """Combine reagents in crucible, evaluate volatile outcome, and record domain events."""
         camp, sess = _to_uuid(campaign_id), _to_uuid(session_id)
-        att, ev_cls, kw, res = CraftingEngine.resolve(
+        att, ev_cls, kw, outcome = CraftingEngine.resolve(
             character_id, reagents, catalyst, camp, sess, player_id, force_mishap, risk_threshold
         )
         self.create_event(CraftingAttempted, **att)
         self.create_event(ev_cls, **kw)
-        return res
+        return outcome
 
 
-__all__ = ["CraftingAggregate", "CraftingEngine", "CraftingState"]
+__all__ = ["CombineOutcome", "CraftingAggregate", "CraftingEngine", "CraftingState"]
