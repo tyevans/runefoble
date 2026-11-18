@@ -25,7 +25,7 @@ Complete
 Services now verify the caller's token themselves (TASK-0527 to TASK-0531). The gateway's proxies must forward the bearer token, not a user header. Today the proxies send no identity, so every proxied call looks anonymous. Also, a proxy error must return the upstream status, not a success with the wrong data. Canned fallback removal belongs to the fake-implementation theme; this task changes identity and error status only.
 
 ## Problem Statement
-- `gateway/api/src/gateway_api/routers/hub_views.py:16-25` (`_proxy_or_fallback`) sends no headers. Audit w2-campaign-lore F14 and w2-campaign-analytics F7.
+- `gateway/api/src/gateway_api/routers/hub_views.py:16-25` (removed) (`_proxy_or_fallback`) sends no headers. Audit w2-campaign-lore F14 and w2-campaign-analytics F7.
 - `gateway/api/src/gateway_api/routers/character_subresources.py:26,36-48` (removed) proxies to `CHARACTER_SHEET_URL`, which is unset in Helm. On any proxy error it uses in-memory state and forwards no identity. Audit w3-authz F20 (ingress and reachability).
 - `gateway/api/src/gateway_api/routers/soundscape.py` falls back to in-process imports when `SOUNDSCAPE_SERVICE_URL` is missing. The in-process path bypasses service verification.
 - The gateway has no single proxy helper. Each router builds its own request.

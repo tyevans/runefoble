@@ -1,7 +1,7 @@
 ---
 id: '0537'
 title: Identity Contract Reference, Auth Docs Consolidation, and Changelog
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -31,7 +31,7 @@ target_release: 0.9.0
 # TASK-0537: Identity Contract Reference, Auth Docs Consolidation, and Changelog
 
 ## Status
-Refined
+Complete
 
 ## Summary
 After the identity tasks land, one reference page must state the full identity contract for every surface. Several docs still describe dev mode, `x-user-id`, mock tokens, and removed routes. Write the reference, correct the stale pages, and record the change in the changelog.

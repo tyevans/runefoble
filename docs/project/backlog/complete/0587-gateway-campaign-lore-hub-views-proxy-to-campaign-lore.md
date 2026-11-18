@@ -23,7 +23,7 @@ target_release: 0.9.0
 Complete
 
 ## Summary
-The atlas and codex routes in `gateway/api/src/gateway_api/routers/hub_views.py` return canned pins and entries when campaign-lore fails. They also drop the caller identity. Move the lore views into a new `lore_views.py` that proxies to `campaign_lore`. Forward the identity. Delete the canned data. The analytics views stay in `hub_views.py` until TASK-0588.
+The atlas and codex routes in `gateway/api/src/gateway_api/routers/hub_views.py` (removed) return canned pins and entries when campaign-lore fails. They also drop the caller identity. Move the lore views into a new `lore_views.py` that proxies to `campaign_lore`. Forward the identity. Delete the canned data. The analytics views stay in `hub_views.py` until TASK-0588.
 
 ## Problem Statement
 - `hub_views.py:16-25` (`_proxy_or_fallback`) catches every exception and returns fallback data. A real campaign with a failed lore service sees "Sunken Citadel" and "Star-Eater Relic" (`w2-campaign-lore.md` F14, `w1-gates-infra.md` F7).

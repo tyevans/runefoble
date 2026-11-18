@@ -1,7 +1,7 @@
 ---
 id: '0667'
 title: Backlog Ready Buffer, Epic Scope Rule, Lifecycle Folders, and Stale Refined Tasks Are Corrected
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0666
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0667: Backlog Ready Buffer, Epic Scope Rule, Lifecycle Folders, and Stale Refined Tasks Are Corrected
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The ready buffer holds 28 refined tasks against a target of about 10. `make prd-audit` flags all 200 proposed tasks as oversized, so the proposed list cannot tell an epic from a task. PRD-0014 is under-decomposed. Three refined tasks are not started or are stale: TASK-0436 is implemented in code, TASK-0437 and TASK-0438 need verification, and TASK-0434 has the wrong line count. The status and folder layout for user stories and PRDs disagrees with AGENTS.md. Fix each of these, in an order that keeps the buffer near target.

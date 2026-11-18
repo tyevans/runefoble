@@ -1,7 +1,7 @@
 ---
 id: '0586'
 title: Gateway Character Subresource Routes Proxy to Character Sheet
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0585
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0586: Gateway Character Subresource Routes Proxy to Character Sheet
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `character_subresources.py` (356 lines) holds health, equipment, inventory, conditions, spells and guardrails. Each handler proxies only when `CHARACTER_SHEET_URL` is set. The env var is set nowhere, so the in-memory path always runs. Replace every handler with a pure proxy. Delete the fallback and the in-memory mutations. This task replaces TASK-0435 (decomposition), because pure proxies need no decomposition.

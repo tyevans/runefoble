@@ -33,6 +33,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Gateway campaign summary route `GET /api/v1/analytics/campaigns/{campaign_id}` and `gateway_api/routers/hub_views.py`, which returned literal values. (TASK-0588)
+- The canned speak-and-act handler and `gateway_api/routers/tabletop.py`. (TASK-0583)
+- Unused gateway `RemoveInventoryItemRequest` model. (TASK-0586)
 - Short-name event lookups and registrations: the deserializer and identity sync router no longer split identifiers, and no event class registers under its class name or a retired name. The overlay no longer accepts the `DiceRolled` action. (TASK-0701)
 - character_sheet alias routes `POST /api/v1/characters/create`, `POST /api/v1/characters/{id}/inventory/add` and `POST /api/v1/characters/{id}/inventory/{item_id}/remove`. Use `POST /api/v1/characters`, `POST /api/v1/characters/{id}/inventory` and `DELETE /api/v1/characters/{id}/inventory/{item_id}`. (TASK-0493)
 - character_sheet `alias="int"` on `AttributeScores.intelligence`, the `.int` attribute shim, and the UI `runefoble-character-sheet.templates.ts` re-export. The wire key `"int"` is unchanged. Import templates from `templates/*.template.ts`. (TASK-0493)
@@ -56,6 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Identity and token contract reference (`docs/reference/identity-and-token-contract.md`). (TASK-0537)
 - Blackbox test that runs game_session and soundscape on one real Redis. Ending combat through game_session returns soundscape tension to ambient. (TASK-0803)
 - `make test` runs a parallel phase (pytest-xdist) and then a serial phase for timing and browser tests.
 - Lit element tests run in headless Chromium through `pnpm test`. The shared harness is Vitest browser mode with Playwright. (TASK-0797)
@@ -122,6 +126,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Gateway character subresource routes forward to `character_sheet` through the shared service client. Owner 4xx answers pass through; an unreachable owner returns 503. (TASK-0586)
+- Campaign analytics gateway views (heatmap, MVP, timeline) forward the owner answer and query values. (TASK-0588)
+- `make health-check` prints curation warnings for the refined buffer band and for refined tasks that wait on incomplete tasks. The warnings do not fail the gate. Epics are flagged by one scope rule. (TASK-0667)
+- Speak-and-act (`POST /api/v1/watcher/speak-and-act`) proxies to The Watcher intent route and returns 503 when The Watcher is down. (TASK-0583)
 - Event wire names follow `runefoble.events.<bc>.<snake_case>`. 108 identifiers change, for example `TokenMoved` becomes `runefoble.events.board.token_moved`. Consumers must match the new identifiers. The full list is in `docs/reference/event-identifiers.md`. (TASK-0701)
 - Service base URLs use one name each, `RUNEFOBLE_<SERVICE>_URL`, with no in-cluster code defaults. The gateway MCP upstream names use the same scheme. (TASK-0794)
 - The haggling DM override request model is renamed `HaggleDmOverrideRequest`. (TASK-0750)

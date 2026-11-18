@@ -41,7 +41,7 @@ Campaign lore has the most authorization defects of any service in the platform.
 - Handouts, relics, West Marches: `permissions.py:34-101` returns `True` when `user_id` is falsy (lines 41, 58, 75, 92, 101). Handout generate, relic forge, West Marches link, discovery, stronghold upgrade, and notices pass for anonymous callers and spectators (`w2-campaign-lore.md` F4).
 - Codex publish (`routers/codex/entries.py:31`): `author_id` falls back to `anonymous_author`. The check is view-only. `privacy` is `str` (`routers/codex/schemas.py`), so any value is accepted (`w2-campaign-lore.md` F13).
 - Codex shared privacy: `codex_deps.py:83-93` writes `party_shared` and `public` relations that TASK-0540 adds to the schema (`w2-campaign-lore.md` F8).
-- Gateway hub views (`gateway/api/src/gateway_api/routers/hub_views.py:16-25`): the proxy sends no identity header, so every gateway call is anonymous (`w2-campaign-lore.md` F14). The fallback data is removed in the fake-implementation task.
+- Gateway hub views (`gateway/api/src/gateway_api/routers/hub_views.py:16-25` (removed)): the proxy sends no identity header, so every gateway call is anonymous (`w2-campaign-lore.md` F14). The fallback data is removed in the fake-implementation task.
 - Documents and aliases: `routers/documents.py:53` (ingest) takes identity from a raw header with no check. `routers/aliases.py:49` (consolidate) has no check (`w3-authz-coverage.md` rows 123, 130).
 - Relic translate-rune (`routers/relics.py:191`) has no check (`w3-authz-coverage.md` row 136).
 - Tests: `tests/test_blackbox_campaign_atlas_and_codex.py` and `tests/test_blackbox_campaign_lore_rag.py` write permission names as tuples (`w2-campaign-lore.md` F21). They are migrated here.

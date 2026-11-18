@@ -26,7 +26,7 @@ Add one typed HTTP client for calls from a gateway to an owning bounded context.
 
 ## Problem Statement
 - Nine hand-rolled `httpx.AsyncClient` calls exist, with timeouts of 1.5, 2.0, 5.0 and 10.0 seconds. There is no shared retry, trace or identity policy (`w3-ddd-architecture.md` F17).
-- Three of these calls use silent fallback wrappers. Examples: `gateway/api/src/gateway_api/routers/hub_views.py:16-24`, `routers/soundscape.py:24-37`, `routers/character_subresources.py:29-48`. Each one has `except Exception: pass` (`w1-gateway-api.md` F13, `w3-ddd-architecture.md` F18).
+- Three of these calls use silent fallback wrappers. Examples: `gateway/api/src/gateway_api/routers/hub_views.py:16-24` (removed), `routers/soundscape.py:24-37`, `routers/character_subresources.py:29-48`. Each one has `except Exception: pass` (`w1-gateway-api.md` F13, `w3-ddd-architecture.md` F18).
 - No proxy forwards the caller identity. `hub_views.py:18` sends no headers, so campaign-lore treats every gateway call as anonymous (`w2-campaign-lore.md` F14).
 - `libs/runefoble_platform` has no service client. Its `httpx` users are storage, analytics and email (`storage.py`, `analytics/client.py`, `email/mailpit.py`). None of them is a service-to-service client.
 

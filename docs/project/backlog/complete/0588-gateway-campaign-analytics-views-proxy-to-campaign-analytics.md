@@ -1,7 +1,7 @@
 ---
 id: '0588'
 title: Gateway Campaign Analytics Views Proxy to Campaign Analytics
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0587
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0588: Gateway Campaign Analytics Views Proxy to Campaign Analytics
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Heatmap, MVP and timeline views in `hub_views.py` return canned combat data on any upstream failure. The summary route has no proxy and returns literal numbers. Replace all four with proxies to `campaign_analytics`. Delete `hub_views.py` after this task, because TASK-0587 removed the lore routes.
