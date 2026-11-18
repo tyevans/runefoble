@@ -33,6 +33,7 @@ from runefoble_events.west_marches import (
     CommunalNoticePosted,
     CrossCampaignDiscoveryShared,
     OutpostEstablished,
+    OutpostResourcesContributed,
     SharedStrongholdUpgraded,
     SharedWorldCreated,
 )
@@ -58,6 +59,7 @@ LORE_EVENT_STREAMS: dict[type[DomainEvent], str] = {
     CampaignRegisteredToSharedWorld: "runefoble.events.lore.campaign_registered_to_shared_world",
     CrossCampaignDiscoveryShared: "runefoble.events.lore.cross_campaign_discovery_shared",
     OutpostEstablished: "runefoble.events.lore.outpost_established",
+    OutpostResourcesContributed: "runefoble.events.lore.outpost_resources_contributed",
     SharedStrongholdUpgraded: "runefoble.events.lore.shared_stronghold_upgraded",
     CommunalNoticePosted: "runefoble.events.lore.communal_notice_posted",
 }

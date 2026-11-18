@@ -16,6 +16,7 @@ from runefoble_events.west_marches import (
     CommunalNoticePosted,
     CrossCampaignDiscoveryShared,
     OutpostEstablished,
+    OutpostResourcesContributed,
     SharedStrongholdUpgraded,
     SharedWorldCreated,
 )
@@ -23,6 +24,7 @@ from runefoble_events.west_marches import (
 from campaign_lore.models import WestMarchesState
 from campaign_lore.west_marches_handlers import (
     apply_discovery,
+    apply_outpost_contributed,
     apply_outpost_established,
     apply_outpost_upgraded,
     build_default_outpost,
@@ -35,6 +37,10 @@ from campaign_lore.west_marches_prices import (
     InsufficientOutpostResources,
     stored_shortfalls,
 )
+
+
+class OutpostNotFoundError(LookupError):
+    """Raised when a command names an outpost that the frontier does not hold. Answers 404."""
 
 
 def _to_uuid(val: Any) -> UUID | None:
@@ -85,6 +91,10 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
     def handle_outpost_upgraded(self, event: SharedStrongholdUpgraded) -> None:
         apply_outpost_upgraded(self._state.outposts, event)
 
+    @handles(OutpostResourcesContributed)
+    def handle_outpost_contributed(self, event: OutpostResourcesContributed) -> None:
+        apply_outpost_contributed(self._state.outposts, event)
+
     @handles(CommunalNoticePosted)
     def handle_notice_posted(self, event: CommunalNoticePosted) -> None:
         self._state.tavern_board.append(build_notice_entry(event))
@@ -106,25 +116,48 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
         )
         return did
 
+    def resolve_outpost_id(self, outpost_id: str) -> str:
+        """Return the outpost that a command names. An empty id names the first outpost.
+
+        Raises OutpostNotFoundError (404) for an unknown id, or when the frontier holds no
+        outpost. A command never falls back to another outpost.
+        """
+        if outpost_id:
+            if outpost_id not in self._state.outposts:
+                raise OutpostNotFoundError(f"Unknown outpost '{outpost_id}'")
+            return outpost_id
+        first = next(iter(self._state.outposts), None)
+        if first is None:
+            raise OutpostNotFoundError("This frontier has no outpost")
+        return first
+
+    def contribute_gold(self, outpost_id: str, contributing_campaign_id: str, gold: int) -> None:
+        """Credit gold to an outpost store. The matching debit is recorded by game_session."""
+        oid = self.resolve_outpost_id(outpost_id)
+        wid = _to_uuid(self._state.shared_world_id) or uuid4()
+        cid = str(contributing_campaign_id)
+        self.create_event(
+            OutpostResourcesContributed,
+            shared_world_id=wid,
+            outpost_id=oid,
+            contributing_campaign_id=_to_uuid(cid) or cid,
+            gold=gold,
+        )
+
     def upgrade_outpost(
         self, outpost_id: str, facility_id: str, contributing_campaign_id: str
     ) -> int:
         """Upgrade an outpost facility. The price table sets the cost, spent from the store.
 
-        Raises InsufficientOutpostResources (409) before any event is created.
+        Raises OutpostNotFoundError (404) for an unknown outpost, and
+        InsufficientOutpostResources (409), both before any event is created.
         """
         if facility_id not in OUTPOST_FACILITY_PRICES:
             raise ValueError(
                 f"Unknown facility '{facility_id}'. Valid: {list(OUTPOST_FACILITY_PRICES)}"
             )
         cid = str(contributing_campaign_id)
-        oid = (
-            outpost_id
-            if outpost_id in self._state.outposts
-            else next(iter(self._state.outposts), "")
-        )
-        if not oid:
-            oid = build_default_outpost(cid)["outpost_id"]
+        oid = self.resolve_outpost_id(outpost_id)
         outpost = self._state.outposts[oid]
         tier = outpost["facilities"].get(facility_id, 0) + 1
         if tier > MAX_FACILITY_TIER:
@@ -160,4 +193,4 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
         return nid
 
 
-__all__ = ["WestMarchesAtlasAggregate"]
+__all__ = ["OutpostNotFoundError", "WestMarchesAtlasAggregate"]
