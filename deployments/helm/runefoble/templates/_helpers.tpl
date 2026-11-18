@@ -41,3 +41,10 @@ Call with (dict "root" $ "name" "ENV_NAME" "key" "secret-key") and pipe to ninde
       name: {{ include "runefoble.credentialsSecret" .root }}
       key: {{ .key }}
 {{- end -}}
+
+{{/*
+Service-to-service credential (ADR-0015 e), read from the credentials Secret, key service-credential.
+*/}}
+{{- define "runefoble.serviceCredentialEnv" -}}
+{{- include "runefoble.secretEnv" (dict "root" . "name" "RUNEFOBLE_SERVICE_CREDENTIAL" "key" "service-credential") -}}
+{{- end -}}

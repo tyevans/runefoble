@@ -62,6 +62,29 @@ async def act(item_id: str, caller_id: CallerId):
 - WebSocket routes do not use `require_principal`. They call `admit_websocket` (below).
 - The Watcher uses the same names from `the_watcher.identity`.
 
+## Routes That Another Service Calls: Accept the Service Credential
+
+Use `require_user_or_service_credential` only on a route that another service calls and that does not act for a user. The MCP gateway calls such routes. The dependency accepts either:
+
+- a verified user bearer in `Authorization`, which gives `CallerIdentity(user_id=<subject>)`; or
+- the service credential in `X-Runefoble-Service-Credential`, which gives `CallerIdentity(user_id=None)`.
+
+```python
+from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
+from runefoble_platform.service_credential import expected_service_credential
+
+SERVICE_CREDENTIAL = expected_service_credential()  # refuses start-up when unset
+get_caller_or_service = require_user_or_service_credential(get_verifier, SERVICE_CREDENTIAL)
+
+@router.get("/api/v1/things/{thing_id}", dependencies=[Depends(get_caller_or_service)])
+async def read_thing(thing_id: UUID): ...
+```
+
+Rules:
+- A route with a user-scoped permission check keeps `require_principal` or a `CallerId`. A service call must never reach it.
+- A route attaches the dependency per route. Do not put it on the router, because the router would then open every route in it to the service credential.
+- A presented `Authorization` header that fails verification gives `401`, even when the service credential is also present.
+
 ## WebSocket: Use `admit_websocket`
 
 Browsers cannot send `Authorization` on a WebSocket. The client offers two subprotocols:
