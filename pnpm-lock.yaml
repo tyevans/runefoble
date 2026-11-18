@@ -230,6 +230,9 @@ importers:
 
   services/game_session/ui:
     dependencies:
+      '@runefoble/ui-core':
+        specifier: workspace:*
+        version: link:../../../libs/runefoble_ui
       lit:
         specifier: ^3.3.3
         version: 3.3.3
@@ -285,6 +288,9 @@ importers:
 
   services/voice_agent/ui:
     dependencies:
+      '@runefoble/ui-core':
+        specifier: workspace:*
+        version: link:../../../libs/runefoble_ui
       lit:
         specifier: ^3.3.3
         version: 3.3.3

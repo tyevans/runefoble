@@ -1,11 +1,11 @@
-import { AuthConsumerController } from '@runefoble/ui-core';
+import { AuthConsumerController, websocketProtocols } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { AoETemplateConfig, BoardToken, DragKinematicsState, GhostPreviewState, RadialActionType, TerrainCell } from './board-types.ts';
 import { renderAoEBanner, renderAoEOverlay, renderBoardHeader, renderGhostBanner, renderRadialMenuOverlay, renderStatusBar } from './board-templates.ts';
 import { cancelAoEPlacement, confirmAoEPlacement, executeRadialAction, handleBoardSocketMessage, requestAoEPreview } from './board-actions.ts';
 import { renderBoardGrid } from './board-grid.ts';
-import { boardSocketProtocols, buildConfirmMoveMessage } from './board-api.ts';
+import { buildConfirmMoveMessage } from './board-api.ts';
 import { GhostPreviewEngine, parseIncomingGhostPreview } from './ghost_preview.ts';
 import { computeDragUpdate, initDragState, isCellVisible, snapToGrid } from './kinematics.ts';
 import { boardStyles } from './runefoble-board.styles.ts';
@@ -127,7 +127,11 @@ export class RunefobleBoard extends LitElement {
   private async connectWebSocket(url: string) {
     const token = await this.auth.getAccessToken();
     if (!this.isConnected) return;
-    this.ws = new WebSocket(url, boardSocketProtocols(token));
+    if (!token) {
+      console.error('The board socket was not opened: no signed-in session.');
+      return;
+    }
+    this.ws = new WebSocket(url, websocketProtocols(token));
     this.ws.onmessage = (event) => { try { this.handleIncomingSocketMessage(JSON.parse(event.data)); } catch {} };
   }
 

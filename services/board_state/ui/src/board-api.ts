@@ -156,8 +156,3 @@ export function buildAoEEvaluateMessage(config: AoETemplateConfig): Record<strin
     grid_type: config.gridType ?? 'square',
   };
 }
-
-/** Subprotocols that carry the bearer token on a board socket. A browser cannot set headers there. */
-export function boardSocketProtocols(token: string | null): string[] {
-  return token ? ['runefoble.v1', `runefoble.bearer.${token}`] : ['runefoble.v1'];
-}

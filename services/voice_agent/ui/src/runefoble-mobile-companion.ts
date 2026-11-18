@@ -1,4 +1,5 @@
 import { LitElement, html } from 'lit';
+import { AuthConsumerController, websocketProtocols } from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
 import './mobile_companion/index.ts';
 import type { WhisperMessage } from './mobile_companion/haptic_ping_panel.ts';
@@ -11,7 +12,6 @@ export class RunefobleMobileCompanion extends LitElement {
   @property({ type: String }) sessionId = 'session_default';
   @property({ type: String }) userId = 'marcus';
   @property({ type: String }) peerId = 'peer_marcus';
-  @property({ type: String }) token = '';
   @property({ type: String }) channelName = 'Party Voice (Cellular Opus)';
   @property({ type: Boolean }) connected = false;
   @property({ type: String }) audioTier = 'mobile_optimized';
@@ -27,10 +27,12 @@ export class RunefobleMobileCompanion extends LitElement {
   @property({ type: String }) turnAlertText = "It's your turn in combat!";
 
   @state() private isTalking = false;
+  @state() private socketError: string | null = null;
   @state() private isVibrating = false;
   @state() public isWhisperBlurred = true;
 
   private ws: WebSocket | null = null;
+  private readonly auth = new AuthConsumerController(this);
   private hapticTimeout: ReturnType<typeof setTimeout> | null = null;
   static styles = mobileCompanionStyles;
 
@@ -112,16 +114,28 @@ export class RunefobleMobileCompanion extends LitElement {
     }
   }
 
-  public connectWebSocket(url?: string): void {
+  /** Opens the companion socket with the shell's bearer token. Without a token it does not open. */
+  public async connectWebSocket(url?: string): Promise<void> {
     const wsUrl = url || (typeof window !== 'undefined' ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/mobile-companion/${this.sessionId}?peer_id=${this.peerId}` : '');
-    if (!wsUrl || typeof WebSocket === 'undefined' || !this.token) return;
+    if (!wsUrl || typeof WebSocket === 'undefined') return;
+    const token = await this.auth.getAccessToken();
+    if (!token) {
+      this.socketError = 'The mobile companion needs a signed-in session.';
+      return;
+    }
     try {
-      this.ws = new WebSocket(wsUrl, ['runefoble.v1', `runefoble.bearer.${this.token}`]);
+      this.ws = new WebSocket(wsUrl, websocketProtocols(token));
       this.ws.onopen = () => { this.connected = true; this.dispatchEvent(new CustomEvent('connection-changed', { detail: { connected: true }, bubbles: true, composed: true })); };
-      this.ws.onclose = () => { this.connected = false; this.dispatchEvent(new CustomEvent('connection-changed', { detail: { connected: false }, bubbles: true, composed: true })); };
+      this.ws.onclose = (event) => {
+        this.connected = false;
+        if (event.code === 1008) this.socketError = 'The mobile companion sign-in was not accepted. Sign in again.';
+        this.dispatchEvent(new CustomEvent('connection-changed', { detail: { connected: false }, bubbles: true, composed: true }));
+      };
       this.ws.onerror = () => { this.connected = false; };
       this.ws.onmessage = (e) => { try { this.handleWebSocketMessage(JSON.parse(e.data)); } catch {} };
-    } catch {}
+    } catch (err) {
+      this.socketError = `The mobile companion could not connect: ${err instanceof Error ? err.message : String(err)}`;
+    }
   }
 
   public disconnectWebSocket(): void {
@@ -159,6 +173,7 @@ export class RunefobleMobileCompanion extends LitElement {
           <div class="title-group"><span class="device-icon">📱</span><span class="title-text">Spatial Companion</span></div>
           <connection-status-badge .connected=${this.connected} .audioTier=${this.audioTier} .isVibrating=${this.isVibrating} @reconnect=${() => this.connectWebSocket()}></connection-status-badge>
         </div>
+        ${this.socketError ? html`<div class="socket-error" role="alert">${this.socketError}</div>` : ''}
         <audio-stream-controller .channelName=${this.channelName} .sampleRate=${this.sampleRate} .bitrateKbps=${this.bitrateKbps} .bufferHealthMs=${this.bufferHealthMs} .packetLoss=${this.packetLoss} .bandwidthKbps=${this.bandwidthKbps} @bitrate-change=${(e: CustomEvent) => { this.bitrateKbps = e.detail.bitrateKbps; }}></audio-stream-controller>
         <haptic-ping-panel .activeWhisper=${this.activeWhisper} .turnAlertActive=${this.turnAlertActive} .turnAlertText=${this.turnAlertText} .privacyBlur=${this.privacyBlur} .acousticCueEnabled=${this.acousticCueEnabled} @whisper-dismissed=${this.dismissWhisper} @turn-alert-dismissed=${this.dismissTurnAlert} @whisper-blur-toggled=${(e: CustomEvent) => { this.isWhisperBlurred = e.detail.blurred; }}></haptic-ping-panel>
         <button class="btn btn-ptt ${this.isTalking ? 'active' : ''}" @mousedown=${this.handlePttStart} @mouseup=${this.handlePttEnd} @touchstart=${this.handlePttStart} @touchend=${this.handlePttEnd} @keydown=${(e: KeyboardEvent) => { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); this.handlePttStart(); } }} @keyup=${(e: KeyboardEvent) => { if (e.code === 'Space') { e.preventDefault(); this.handlePttEnd(); } }} tabindex="0" aria-label="Push to talk button">
