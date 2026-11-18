@@ -18,16 +18,29 @@ class VitalsHandlerMixin:
     create_event: Any
     aggregate_id: Any
 
-    def _emit_hp(self, delta: int, hp: int, src: str) -> None:
+    def _emit_hp(self, delta: int, hp: int, src: str, session_id: str | None) -> None:
         kw = {"delta": delta, "current_hp": hp, "max_hp": self.state.max_hp, "source": src}
         if delta < 0:
             self.create_event(ev.CharacterDamaged, character_id=str(self.aggregate_id), **kw)
-        self.create_event(ev.CharacterHealthChanged, **kw)
+        self.create_event(
+            ev.CharacterHealthChanged,
+            session_id=session_id,
+            campaign_id=self.state.campaign_id or None,
+            **kw,
+        )
 
     def modify_health(
-        self, delta: int, source: str = "damage", is_stand_in: bool | None = None
+        self,
+        delta: int,
+        source: str = "damage",
+        is_stand_in: bool | None = None,
+        session_id: str | None = None,
     ) -> None:
-        """Apply damage or healing with zero-HP permadeath safeguard for stand-ins."""
+        """Apply damage or healing with zero-HP permadeath safeguard for stand-ins.
+
+        session_id names the session the change happens in. None means no session, and the
+        health event then carries an explicit null session id.
+        """
         effective_stand_in = (
             is_stand_in if is_stand_in is not None else self.state.is_stand_in_active
         )
@@ -37,7 +50,7 @@ class VitalsHandlerMixin:
             and effective_stand_in
             and self.state.stand_in_guardrails.permadeath_safeguard
         ):
-            self._emit_hp(delta, 0, source)
+            self._emit_hp(delta, 0, source, session_id)
             self.create_event(
                 ev.StandInStabilized,
                 character_id=str(self.aggregate_id),
@@ -53,7 +66,7 @@ class VitalsHandlerMixin:
             return
 
         new_hp = max(0, min(self.state.max_hp, self.state.current_hp + delta))
-        self._emit_hp(delta, new_hp, source)
+        self._emit_hp(delta, new_hp, source, session_id)
 
     def update_stand_in_guardrails(self, guardrails: StandInGuardrails | dict[str, Any]) -> None:
         """Configure tactical constraints for stand-in AI."""

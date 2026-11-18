@@ -142,7 +142,7 @@ async def set_stand_in_active(
 async def modify_health(character_id: UUID, req: schemas.HealthChangeRequest, repo: deps.RepoDep):
     try:
         return await deps.modify_character_health(
-            repo, character_id, req.delta, req.source, req.is_stand_in
+            repo, character_id, req.delta, req.source, req.is_stand_in, req.session_id
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

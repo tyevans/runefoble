@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from runefoble_events.events import (
     CharacterHealthChanged,
-    CombatRoundAdvanced,
+    InitiativeTurnAdvanced,
     SessionCreated,
     TokenPlaced,
 )
@@ -124,7 +124,7 @@ def test_mvp_scores_damage_crit_and_healing_per_combatant(
         )
         analytics_service.publish(
             SESSION_STREAM,
-            CombatRoundAdvanced(
+            InitiativeTurnAdvanced(
                 aggregate_id=sid,
                 session_id=sid,
                 campaign_id=cid,
@@ -165,7 +165,7 @@ def test_mvp_scores_damage_crit_and_healing_per_combatant(
 
         analytics_service.publish(
             SESSION_STREAM,
-            CombatRoundAdvanced(
+            InitiativeTurnAdvanced(
                 aggregate_id=sid,
                 session_id=sid,
                 campaign_id=cid,

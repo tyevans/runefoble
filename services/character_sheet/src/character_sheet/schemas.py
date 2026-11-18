@@ -37,6 +37,7 @@ class HealthChangeRequest(BaseModel):
     delta: int
     source: str = "damage"
     is_stand_in: bool | None = None
+    session_id: str | None = None
 
 
 class UpdateGuardrailsRequest(BaseModel):
