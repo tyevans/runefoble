@@ -1,7 +1,7 @@
 ---
 id: '0800'
 title: Homebrew Monsters Resolve by Campaign in the Compendium Lookup
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0800: Homebrew Monsters Resolve by Campaign in the Compendium Lookup
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 The compendium monster lookup ignores the campaign, so a homebrew monster cannot be found and its challenge rating cannot be read by the MCP encounter tool.

@@ -1,7 +1,7 @@
 ---
 id: '0799'
 title: Legacy Event Aliases and Structural Facade Tests Are Removed, and Old Shim Tasks Are Reconciled
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,14 +16,14 @@ target_release: 0.9.0
 # TASK-0799: Legacy Event Aliases and Structural Facade Tests Are Removed, and Old Shim Tasks Are Reconciled
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Two legacy event aliases stay registered, some tests check module structure instead of behaviour, and four refined shim tasks may already be done by TASK-0793.
 
 ## Problem Statement
 - `libs/runefoble_events/src/runefoble_events/asset.py:119-129`: aliases `BattlemapCreated` and `AssetGenerated` with extra `register_event` calls.
-- `tests/test_analytics_modular_decomposition.py:36`, `tests/test_game_session_modular_decomposition.py:46` and similar: facade and "backward compatibility" structure checks (TASK-0681 allows only `make health-check` as a structural gate).
+- `tests/test_analytics_modular_decomposition.py` (removed), `tests/test_game_session_modular_decomposition.py:46` and similar: facade and "backward compatibility" structure checks (TASK-0681 allows only `make health-check` as a structural gate).
 - Refined TASK-0485, TASK-0491, TASK-0493 and TASK-0750 overlap with TASK-0793.
 
 ## Documentation & Architecture Review

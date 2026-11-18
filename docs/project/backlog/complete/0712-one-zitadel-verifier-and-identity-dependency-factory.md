@@ -1,7 +1,7 @@
 ---
 id: '0712'
 title: One Zitadel Verifier and Identity Dependency Factory
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0541
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0712: One Zitadel Verifier and Identity Dependency Factory
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 Eleven modules copy the same Zitadel verifier getter and setter, and nine copy the same user-id helper. A library factory with explicit settings replaces all copies. The library default issuer is removed so that a missing setting fails loudly.

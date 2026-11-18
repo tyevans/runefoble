@@ -1,7 +1,7 @@
 ---
 id: '0714'
 title: Test Module State Is Restored and Collection Fails on Import Errors
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0697
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0714: Test Module State Is Restored and Collection Fails on Import Errors
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 Many fixtures restore module globals to a new object or to `None`. After a `None` teardown the SpiceDB getter builds a real client, so a later test without a mock can reach a real endpoint. The root conftest hides import failures with `suppress(Exception)`.

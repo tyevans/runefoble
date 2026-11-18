@@ -1,7 +1,7 @@
 ---
 id: '0711'
 title: Every Service Serves Its Vendored UI Manifest
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0711: Every Service Serves Its Vendored UI Manifest
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 Seven services return a hardcoded component dict from `/ui/manifest`. The dicts differ from the vendored `ui/manifest.json` files. One service has no vendored manifest. All services must load the vendored file with `load_ui_manifest`.

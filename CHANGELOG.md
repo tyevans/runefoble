@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Legacy event names `BattlemapCreated` and `AssetGenerated` are removed. Use `BattlemapForged` and `TokenAssetForged`. Development event stores that hold the old names are not migrated. (TASK-0799)
 - In-process platform event bus (`runefoble_platform.bus`). Every publish now goes to Redis Streams. (TASK-0710)
 - Soundscape alias route `POST /api/v1/soundscape/override`. Use `POST /api/v1/soundscape/stems/override`. (TASK-0793)
 - Gateway API facade modules `webrtc_signaling.py`, `websocket.py` and `mobile_companion.py`. Import from `gateway_api.signaling`, `gateway_api.websocket_endpoint` and `gateway_api.companion` instead. (TASK-0488)
@@ -113,6 +114,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- `roll_dice` (MCP) rolls through the platform dice engine. Its result has the `parse_and_roll` shape plus `reason`. (TASK-0722)
+- Audience listings (`GET /polls`, `GET /proposals`) check SpiceDB permissions in one bulk call (`CheckBulkPermissions`) instead of one call per item. (TASK-0713)
+- Identity dependencies for every service and both gateways come from one factory, `runefoble_auth.wiring`. The per-service Zitadel verifier copies and user-id helpers are removed. (TASK-0712)
+- Test fixtures restore each process seam to its previous value instead of `None` or a new object. A later test no longer reaches a real client or store through a `None` seam. (TASK-0714)
+- Every service serves its vendored `ui/manifest.json` at `GET /ui/manifest`. Hardcoded manifests are removed. A service with a missing manifest does not start. (TASK-0711)
 - The Asset Forge battlemap and token previews show the generated asset id. The `forge-battlemap` and `forge-token` events carry `asset_id` at the top level (TASK-0787).
 - Tutorial 02 now describes only the results that the running platform returns. Each step shows Available or Not yet available with its blocker. (TASK-0658)
 - The gateway `/healthz` route probes `the_watcher`, `game_session`, `board_state`, `character_sheet`, and `voice_agent` on each request. Each reports `operational`, `degraded`, `unreachable`, or `not_configured`. The top-level status stays `healthy`. The probe timeout is `RUNEFOBLE_GATEWAY_HEALTH_PROBE_TIMEOUT_S`. (TASK-0674)
@@ -1173,6 +1179,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- The Kind stack starts Zitadel with `--masterkeyFromEnv`. Zitadel publishes its admin PAT to the `zitadel-admin` Secret with no manual step. The SpiceDB schema Job no longer races the datastore migration. `gateway-mcp` reads the SpiceDB preshared key. Postgres allows 300 connections. (TASK-0798)
+- The MCP `create_encounter` tool reads a missing enemy challenge rating from the campaign's homebrew monsters, not only the SRD. (TASK-0800)
 - The auth sync health probe reports `unhealthy` with the cause only for SpiceDB failures. Other errors are no longer hidden. (TASK-0796)
 - Soundscape leaves combat when a combat encounter ends. Tension re-scores as ambient, so later health changes no longer raise combat tension. (TASK-0792)
 - Voice room: a peer that rejoins with the same peer id keeps its mute state and vocal preset. (TASK-0789)

@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0798: Kind Stack Deploys From a Clean Cluster With One Command
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 `make cluster-up images helm-deploy` does not bring up a working stack. The Helm post-install hook times out. Zitadel panics, the bootstrap Job waits for a secret no step creates, every Runefoble service waits for the client secret that Job writes, and two upstream image tags do not exist. The frontend image build also failed (fixed in commit on main: libs/runefoble_ui added to the build context).

@@ -1,7 +1,7 @@
 ---
 id: '0722'
 title: Dice Share One Roller and the Dead Platform Surface Is Removed
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -14,7 +14,7 @@ target_release: 0.9.0
 # TASK-0722: Dice Share One Roller and the Dead Platform Surface Is Removed
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 The MCP dice tool copies dice logic and silently rolls `1d20` for bad notation. `UserPrincipal` is dead, and the platform `__init__` re-exports about 70 names.

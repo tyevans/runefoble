@@ -1,7 +1,7 @@
 ---
 id: '0713'
 title: Audience Poll Listings Check Permissions in One Bulk Call
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0499
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0713: Audience Poll Listings Check Permissions in One Bulk Call
 
 ## Status
-Refined. Found by the refactor audit round r1 and checked against the code by the orchestrator.
+Complete
 
 ## Summary
 Listing polls and proposals makes one SpiceDB call per item. The two engines also copy their listener registry and notify code, and `PollEngine` mixes timers, fan-out and presentation.
