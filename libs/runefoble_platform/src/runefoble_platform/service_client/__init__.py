@@ -6,6 +6,7 @@ from runefoble_platform.service_client.errors import (
     UpstreamFailureError,
     UpstreamUnavailableError,
 )
+from runefoble_platform.service_client.paths import path
 
 __all__ = [
     "ServiceClient",
@@ -13,4 +14,5 @@ __all__ = [
     "UpstreamFailureError",
     "UpstreamReply",
     "UpstreamUnavailableError",
+    "path",
 ]

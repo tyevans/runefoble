@@ -56,7 +56,7 @@ Rules:
 - Set `timeout` for each route. The default is 5.0 seconds.
 - Do not read `os.environ` for a service URL. The registry holds the URL.
 - Do not add an `except` block that returns local data. The handlers in `upstream_errors.py` map each failure.
-- Do not copy client headers to the upstream request. Only the bearer token leaves the gateway.
+- Do not copy client headers to the upstream request. Only the bearer token, the service credential, and the trace context leave the gateway.
 
 ## 4. Test the route through public frontdoors
 

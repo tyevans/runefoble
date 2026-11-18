@@ -379,7 +379,7 @@ The gateway mounts the voice room and stream diagnostics routers. It registers t
 
 A gateway proxy route forwards the caller's verified bearer token to the owning service. The gateway verifies the token first. The owning service verifies it again.
 
-- The gateway copies the `Authorization` header to the upstream request. It forwards no other header from the client. A client `X-User-Id` header is not forwarded.
+- The gateway copies the `Authorization` header to the upstream request. It sends the `X-Runefoble-Service-Credential` header and the W3C `traceparent` header on every call. It forwards no other header from the client. A client `X-User-Id` header is not forwarded.
 - An upstream `2xx` or `4xx` answer returns to the client with the same status and body.
 - An upstream `5xx` returns `502` with `{"detail": "Upstream service is unavailable", "upstream": "<service>"}`.
 - A connection failure, a timeout, or an unset base URL returns `503` with the same body shape.
