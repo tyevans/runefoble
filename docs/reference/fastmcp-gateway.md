@@ -36,6 +36,8 @@ gateway/mcp/src/gateway_mcp/
 
 The gateway serves the MCP protocol over **streamable HTTP** only. The endpoint is `/mcp`.
 
+Every request to `/mcp` must carry `Authorization: Bearer <token>`. The gateway verifies the token (RS256 signature, issuer, audience, expiry, subject) before the MCP server reads the message. A request without a verified token gets HTTP `401` with `WWW-Authenticate: Bearer`, and no tool runs (ADR-0015 c, TASK-0532). `/healthz` is the only public route.
+
 | Setting | Environment Variable | Default |
 |---|---|---|
 | Bind address | `GATEWAY_MCP_HOST` | `0.0.0.0` |
@@ -46,7 +48,7 @@ The gateway serves the MCP protocol over **streamable HTTP** only. The endpoint 
 - The process stops at start-up when an upstream URL is unset. The error names the variable.
 - The server keeps session state in memory. Run one replica.
 - The stdio transport is removed. No developer tool in this repository uses it.
-- The endpoint has no OpenAPI document and no `/healthz`. The Helm readiness probe checks the TCP port.
+- The endpoint has no OpenAPI document. `/healthz` is public and reports the count of event publish failures. The Helm readiness probe checks the TCP port.
 
 ## Tools Registry
 
@@ -122,6 +124,18 @@ The Dynamic Tool Registry (`gateway/mcp/src/gateway_mcp/dynamic/`) enables table
 | `PUT` | `/mcp/tools/{name}` | Update an existing dynamic tool definition and hot-reload logic |
 | `DELETE` | `/mcp/tools/{tool_name}` | Deregister a dynamic tool and revoke permissions |
 | `POST` | `/mcp/tools/{name}/execute` | Invoke a dynamic tool directly via HTTP frontdoor with auth checks |
+
+Every route above requires a verified bearer token. Without one, the route returns `401` before it reads the tool.
+
+#### Caller rule (TASK-0532)
+
+- The caller is the token subject. The gateway reads no identity from a header, a query string, or a request body.
+- `X-User-Id`, the body fields `author_id` and `user_id`, and any other identity-like field are ignored.
+- A new tool's author is the token subject that registered it. The gateway writes the SpiceDB `author` relation for that subject.
+- `PUT` keeps the recorded author. The caller needs `manage` on the tool.
+- `DELETE` requires `manage` and revokes the recorded author relation.
+- `POST .../execute` requires `execute`. The `DynamicToolInvoked` event records the token subject as `user_id`.
+- A tool called through the MCP protocol records the token subject of that MCP request as `user_id`. The transport check runs first, so a call without a token never reaches the tool.
 
 ### SpiceDB Zanzibar Object-Level Authorization
 
