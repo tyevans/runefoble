@@ -40,10 +40,7 @@ spec:
               value: "postgresql+asyncpg://{{ .Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/{{ .Values.postgres.database }}"
             - name: RUNEFOBLE_USE_POSTGRES_EVENT_STORE
               value: "true"
-            - name: RUNEFOBLE_ZITADEL_ISSUER
-              value: {{ include "runefoble.zitadelIssuer" $ | quote }}
-            - name: RUNEFOBLE_ZITADEL_JWKS_URL
-              value: {{ include "runefoble.zitadelJwksUrl" $ | quote }}
+            {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
             - name: RUNEFOBLE_SPICEDB_ENDPOINT
               value: "spicedb:{{ .Values.spicedb.grpcPort }}"
             - name: REDIS_URL

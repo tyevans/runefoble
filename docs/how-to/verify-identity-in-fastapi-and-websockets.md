@@ -20,7 +20,11 @@ from fastapi import Depends, FastAPI
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.zitadel import ZitadelAuthService
 
-verifier = ZitadelAuthService(issuer="http://zitadel:8080", audience="runefoble-api")
+verifier = ZitadelAuthService(
+    issuer="http://auth.localhost",  # Must equal the token `iss` claim
+    audience="364509876543210987",  # The project ID in a cluster
+    internal_url="http://zitadel:8080",  # In-cluster origin. Requests carry Host: auth.localhost
+)
 get_principal = require_principal(lambda: verifier)
 
 app = FastAPI()
@@ -127,15 +131,15 @@ Negative cases to cover: no token, garbage, HS256 with a known secret, `alg: non
 
 ## Configuration
 - `RUNEFOBLE_ZITADEL_ISSUER` (`zitadel_issuer`): must equal the token `iss`.
-- `RUNEFOBLE_ZITADEL_AUDIENCE` (`zitadel_audience`): must equal the token `aud`. Defaults to `RUNEFOBLE_ZITADEL_CLIENT_ID`.
-- `RUNEFOBLE_ZITADEL_JWKS_URL` (`zitadel_jwks_url`): optional. If empty, the verifier reads `jwks_uri` from OIDC discovery.
+- `RUNEFOBLE_ZITADEL_AUDIENCE` (`zitadel_audience`): must equal the token `aud`. In a cluster it is the project ID from the Secret `runefoble-zitadel-client`.
+- `RUNEFOBLE_ZITADEL_INTERNAL_URL` (`zitadel_internal_url`): optional. If set, discovery and JWKS requests go to this origin with `Host` set to the issuer host. If empty, the verifier reads discovery from the issuer.
 
 There is no development mode and no environment flag that skips verification.
 
 ## TypeScript Services
 
 The TypeScript `audience_studio` service follows the same contract. It has no Python runtime, so it uses `jose` (`services/audience_studio/src/identity/`):
-- `ZitadelVerifier` checks RS256 only, `iss`, `aud`, `exp`, and `sub`. It reads `RUNEFOBLE_ZITADEL_JWKS_URL`, or `jwks_uri` from OIDC discovery when the URL is unset.
+- `ZitadelAuthService` checks RS256 only, `iss`, `aud`, `exp`, and `sub`. It reads `jwks_uri` from OIDC discovery, through `RUNEFOBLE_ZITADEL_INTERNAL_URL` when that setting is set.
 - `registerIdentityHook` runs before every route except `/healthz`, `/readyz`, and `/ui/manifest`. It reads the bearer header for HTTP and the `runefoble.bearer.<jwt>` subprotocol for WebSockets. It refuses a handshake before accept.
 - A rejected token returns `401`. A JWKS fetch failure returns `503`. The service never reads identity from headers or the body.
 - The service refuses to start when `RUNEFOBLE_ZITADEL_ISSUER` or `RUNEFOBLE_ZITADEL_AUDIENCE` is unset.

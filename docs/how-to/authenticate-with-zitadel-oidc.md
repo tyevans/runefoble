@@ -43,9 +43,9 @@ from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.zitadel import ZitadelAuthService
 
 auth_service = ZitadelAuthService(
-    issuer="http://zitadel:8080",  # Must equal the token `iss` claim
-    audience="runefoble-api",  # Must equal the token `aud` claim
-    jwks_url=None,  # None: read jwks_uri from OIDC discovery
+    issuer="http://auth.localhost",  # Must equal the token `iss` claim
+    audience="364509876543210987",  # Must equal the token `aud` claim (the project ID)
+    internal_url=None,  # None: fetch discovery and JWKS from the issuer. Set it in a cluster.
     jwks_cache_ttl=300,  # Seconds
 )
 
@@ -54,8 +54,9 @@ principal: VerifiedPrincipal = auth_service.verify_token(bearer_token)
 
 Rules:
 - `verify_token` accepts only `RS256`.
-- `jwks_url` defaults to the `jwks_uri` in `<issuer>/.well-known/openid-configuration`. Zitadel does not serve keys at `/.well-known/jwks.json`.
-- Settings: `zitadel_issuer`, `zitadel_audience` (defaults to `zitadel_client_id`), and `zitadel_jwks_url` (optional internal URL for key fetch).
+- Discovery and JWKS come from `<issuer>/.well-known/openid-configuration`. Zitadel does not serve keys at `/.well-known/jwks.json`.
+- Settings: `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE` (the project ID in a cluster), and `RUNEFOBLE_ZITADEL_INTERNAL_URL` (optional).
+- `RUNEFOBLE_ZITADEL_INTERNAL_URL` is the in-cluster origin, for example `http://zitadel:8080`. A pod cannot resolve the browser-facing host. When this setting is set, discovery and JWKS requests go to that origin with `Host` set to the issuer host. Zitadel refuses other hosts. The `iss` check still uses the issuer exactly.
 - There is no offline or development bypass. Tests mint real signed tokens (Step 5).
 
 ---
@@ -122,13 +123,72 @@ Every gateway WebSocket route calls `admit_websocket` before accept (TASK-0522).
 
 The App Shell uses the OIDC authorization-code flow with PKCE (ADR-0015 d). The App Shell never reads a password. Its code lives in `frontend/src/auth/`.
 
-1. **Runtime settings.** The App Shell loads `/runtime-config.json`. It holds the issuer, client ID, scopes, and provider name. Helm renders the file. The client ID is empty until the identity bootstrap sets it. Sign-in fails with a clear message until then.
+1. **Runtime settings.** The App Shell loads `/runtime-config.json`. It holds the issuer, client ID, scopes, and provider name. Helm renders the file. An init container fills in the client ID and the project ID from the Secret `runefoble-zitadel-client` when the pod starts. See [Bootstrap the Zitadel Project and Application](#bootstrap-the-zitadel-project-and-application).
+   The scope list includes the project audience scope `urn:zitadel:iam:org:project:id:<projectId>:aud`. Zitadel then puts the project ID in the token `aud` claim.
 2. **Sign-in.** `authService.startSignIn()` creates a `code_verifier`, its S256 `code_challenge`, a `state`, and a `nonce`. It keeps the verifier, state, and nonce in `sessionStorage`. It then sends the browser to the Zitadel authorize endpoint. Discovery at `<issuer>/.well-known/openid-configuration` supplies the endpoints. `Create Account` adds `prompt=create`, which opens the hosted sign-up page.
 3. **Callback.** Zitadel redirects to `/auth/callback?code=...&state=...`. The App Shell checks `state` and the ID token `nonce`, exchanges the code with the verifier, and stores the tokens. It removes the code and state from the URL. Any error clears the session and shows the reason on the sign-in gate. A redirect URI cannot carry a fragment, so this callback is a real path, not a `#/` route.
 4. **Renewal.** The App Shell renews the access token with the `refresh_token` grant. The scope list includes `offline_access`. A rejected refresh clears the session and returns the user to sign-in.
 5. **Logout.** The App Shell clears local tokens and redirects to the Zitadel end-session endpoint with `id_token_hint`.
 
 The App Shell sends the access token as `Authorization: Bearer`. The guard treats a token as present only while its own `exp` is in the future. Roles in the token are display data only. Permissions come from SpiceDB through the gateway (Hard Invariant 1).
+
+---
+
+## Bootstrap the Zitadel Project and Application
+
+Zitadel generates the project ID and the client ID when it runs. The chart cannot know them at render time. The Helm hook Job `zitadel-bootstrap` creates them. It runs after `helm install` and `helm upgrade`. The chart template is `deployments/helm/runefoble/templates/zitadel-bootstrap.yaml`. The Job runs the `gateway-api` image and the module `runefoble_auth.zitadel_bootstrap_job`.
+
+### What the Job does
+
+1. Waits until Zitadel answers `GET /debug/healthz` (up to 5 minutes).
+2. Finds the project `runefoble` or creates it (`zitadel.bootstrap.projectName`).
+3. Finds the OIDC application `runefoble-web` or creates it (`zitadel.bootstrap.appName`). The application uses the authorization-code flow with PKCE, the `NONE` auth method (no client secret), and JWT access tokens. Its redirect URIs and post-logout URIs come from values.
+4. Converges the redirect URIs and post-logout URIs of an existing application to the values. It changes nothing when they already match.
+5. Server-side applies the Secret `runefoble-zitadel-client`. It has two keys: `project-id` and `client-id`.
+
+A second run creates no project and no application. It writes the same Secret data.
+
+### Admin token source
+
+The Job calls the Zitadel management API with a personal access token (PAT). The chart reads the PAT from a Kubernetes Secret that you create. The chart does not read files from the Zitadel container.
+
+- Secret name: `zitadel.bootstrap.adminSecret` (default `zitadel-admin`).
+- Key: `pat`.
+- Owner: the operator. Zitadel generates the token on its first start. The chart cannot set it.
+- Token owner: the machine user `zitadel.bootstrap.machineUsername` (default `runefoble-bootstrap`). Zitadel creates it on the first start with the `IAM_OWNER` role.
+
+### Local Kind install
+
+The first install has a chicken-and-egg step. The Job needs the PAT, and Zitadel makes the PAT on its first start. Install in two steps:
+
+```bash
+# 1. Install without the Job. Zitadel starts and creates the machine user and its PAT.
+helm upgrade --install runefoble deployments/helm/runefoble --set zitadel.bootstrap.enabled=false
+
+# 2. Read the PAT from the Zitadel log. Zitadel prints it on its first start.
+kubectl logs deploy/zitadel | grep -i "pat"
+
+# 3. Store the PAT in the Secret that the Job reads.
+kubectl create secret generic zitadel-admin --from-literal=pat="<token from step 2>"
+
+# 4. Enable the Job. It creates the project and application and writes runefoble-zitadel-client.
+helm upgrade runefoble deployments/helm/runefoble
+kubectl get secret runefoble-zitadel-client -o jsonpath='{.data.client-id}' | base64 -d; echo
+```
+
+Later upgrades run the Job again. It changes nothing when the project and application already match.
+
+Until step 4 finishes, the pods that read the Secret stay in `CreateContainerConfigError`. The services and the frontend start when the Secret exists. The services read `RUNEFOBLE_ZITADEL_AUDIENCE` from `project-id`. The App Shell reads `clientId` and the project audience scope from `client-id` and `project-id`.
+
+### Production values
+
+The values in `values.yaml` are for local Kind only. Before a shared deployment:
+
+- Set `zitadel.externalDomain` to a real domain and `zitadel.externalSecure` to `true`. Set `zitadel.externalPort` to the public port. The issuer follows these values.
+- Set `zitadel.bootstrap.devMode` to `false`. Use `https` redirect URIs and post-logout URIs.
+- Set `zitadel.bootstrap.redirectUris` and `postLogoutRedirectUris` to the public App Shell origin.
+- Set `zitadel.bootstrap.patExpirationDate` to a short date. Rotate the admin PAT.
+- Set `credentials.existingSecret` (TASK-0626). Keep the admin PAT in your secret store.
 
 ---
 

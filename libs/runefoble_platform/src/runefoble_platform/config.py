@@ -107,10 +107,14 @@ class PlatformSettings(BaseSettings):
         validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_AUDIENCE", "ZITADEL_AUDIENCE"),
         description="Expected 'aud' claim. Empty means use zitadel_client_id.",
     )
-    zitadel_jwks_url: str | None = Field(
+    zitadel_internal_url: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_JWKS_URL", "ZITADEL_JWKS_URL"),
-        description="Zitadel JWKS keys endpoint URL",
+        validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_INTERNAL_URL"),
+        description=(
+            "Origin that serves Zitadel inside the cluster, for example http://zitadel:8080. "
+            "Discovery and JWKS requests go here with Host set to the issuer host. Empty means "
+            "the issuer serves them directly."
+        ),
     )
 
     # Service-to-service credential (ADR-0015 e). No default value. The caller presents it in
