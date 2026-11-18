@@ -93,6 +93,11 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
     )
 
 
+async def call_tool_as(sub: str, name: str, arguments: dict[str, Any]) -> CallToolResult:
+    """Call a tool over MCP HTTP as the user `sub`."""
+    return await call_tool_over_http(_MCP["url"], name, arguments, SIGNING_ISSUER.mint(sub))
+
+
 def tool_text(result: CallToolResult) -> str:
     """Return the text of the first content block of a tool result."""
     assert result.content, "Tool result must contain content"
@@ -140,13 +145,45 @@ async def test_get_character_sheet_returns_stored_character_not_fixed_data(sheet
     )
 
 
+STRANGER = "mcp-stranger"
+
+
 @pytest.mark.asyncio
-async def test_get_character_sheet_unknown_id_is_tool_error():
-    """An id with no character returns a tool error from the upstream 404."""
+async def test_get_character_sheet_refuses_caller_without_view_and_returns_no_data(sheet_http):
+    """A caller with no `character.view` gets a tool error and no sheet data (ADR-0001, U-1)."""
+    character_id = create_character(sheet_http, "Kyra", "Cleric", max_hp=30)
+
+    result = await call_tool_as(STRANGER, "get_character_sheet", {"character_id": character_id})
+
+    assert result.isError is True
+    assert "Kyra" not in tool_text(result)
+    assert "Permission denied" in tool_text(result)
+
+
+@pytest.mark.asyncio
+async def test_inspect_inventory_refuses_caller_without_view_and_returns_no_data(sheet_http):
+    """A caller with no `character.view` gets a tool error and no inventory data (ADR-0001, U-1)."""
+    character_id = create_character(sheet_http, "Valeros", "Fighter", max_hp=45)
+    added = sheet_http.post(
+        f"/api/v1/characters/{character_id}/inventory",
+        json={"item_id": "healing-potion", "name": "Healing Potion", "quantity": 2},
+    )
+    assert added.status_code == 200, added.text
+
+    result = await call_tool_as(STRANGER, "inspect_inventory", {"character_id": character_id})
+
+    assert result.isError is True
+    assert "Healing Potion" not in tool_text(result)
+    assert "Valeros" not in tool_text(result)
+
+
+@pytest.mark.asyncio
+async def test_get_character_sheet_unknown_id_is_refused_before_the_read():
+    """An id with no character is refused by the caller check, so it does not reveal that the id is unused."""
     result = await call_tool("get_character_sheet", {"character_id": str(uuid4())})
 
     assert result.isError is True
-    assert "404" in tool_text(result)
+    assert "Permission denied" in tool_text(result)
     assert "Valeros" not in tool_text(result)
 
 

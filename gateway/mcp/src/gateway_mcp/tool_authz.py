@@ -40,6 +40,11 @@ def character_edit(character_id: str) -> Requirement:
     return Requirement("character", character_id, "edit")
 
 
+def character_view(character_id: str) -> Requirement:
+    """Read a character sheet: `character.view`, granted to the owner, the DM, and party members."""
+    return Requirement("character", character_id, "view")
+
+
 def token_move(token_id: str) -> Requirement:
     return Requirement("board_token", token_id, "move")
 
