@@ -72,4 +72,5 @@ export RUNEFOBLE_SPICEDB_PRESHARED_KEY=runefoble_secret_key   # DEV-ONLY: the va
 make dev
 ```
 The key has no default. Services refuse to start without it.
+The gateway also needs Redis for its event bus. It refuses to start when Redis is unreachable (ADR-0015). `make dev` checks `RUNEFOBLE_REDIS_URL` (default `redis://localhost:6379/0`). When nothing answers, it port-forwards `svc/runefoble-redis` from the Kind cluster. When that also fails, it exits with an error. Run `make cluster-up` first, or point `RUNEFOBLE_REDIS_URL` at a running Redis.
 This starts the Runefoble API Gateway on port 8000, checks gateway health, and concurrently launches the Vite dev server on `http://localhost:5173`. Vite automatically proxies API requests (`/api`, `/api/v1`, `/ws`, `/docs`, `/openapi.json`, `/mail`, `/oauth`) to local services without 502 Bad Gateway errors. Press `Ctrl+C` to cleanly stop all background processes.

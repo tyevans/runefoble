@@ -244,9 +244,90 @@ def test_orchestrator_process_termination_group():
     assert proc.poll() is not None
 
 
+def test_orchestrator_exits_when_redis_is_unreachable():
+    """The orchestrator refuses to start when no Redis answers. It does not start a gateway."""
+    env = {**os.environ, "RUNEFOBLE_REDIS_URL": f"redis://127.0.0.1:{get_free_port()}/0"}
+    result = subprocess.run(
+        [
+            "python3",
+            "scripts/dev_server.py",
+            "--gateway-port",
+            str(get_free_port()),
+            "--no-frontend",
+        ],
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 1
+    assert "Redis is not reachable" in result.stdout
+
+
+class _RespServer(threading.Thread):
+    """Minimal Redis protocol server on a loopback port. It answers PING and accepts any command.
+
+    Redis is an external process. The gateway only needs it to answer the start-up ping.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(daemon=True)
+        self._server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server.bind(("127.0.0.1", 0))
+        self._server.listen(8)
+        self.port = self._server.getsockname()[1]
+
+    def run(self) -> None:
+        while True:
+            try:
+                conn, _ = self._server.accept()
+            except OSError:
+                return
+            threading.Thread(target=self._serve, args=(conn,), daemon=True).start()
+
+    @staticmethod
+    def _serve(conn: socket.socket) -> None:
+        """Read RESP array commands from a buffer and send one reply per command."""
+        buffer = b""
+        with conn:
+            while chunk := conn.recv(4096):
+                buffer += chunk
+                while (parsed := _RespServer._take_command(buffer)) is not None:
+                    command, buffer = parsed
+                    name = command[0].upper() if command else b""
+                    conn.sendall(b"+PONG\r\n" if name == b"PING" else b"+OK\r\n")
+
+    @staticmethod
+    def _take_command(buffer: bytes) -> tuple[list[bytes], bytes] | None:
+        """Return one complete command and the remaining bytes, or None when incomplete."""
+        if not buffer.startswith(b"*"):
+            return None
+        head, sep, rest = buffer.partition(b"\r\n")
+        if not sep:
+            return None
+        parts: list[bytes] = []
+        for _ in range(int(head[1:])):
+            size_line, sep, rest = rest.partition(b"\r\n")
+            if not sep:
+                return None
+            size = int(size_line[1:])
+            if len(rest) < size + 2:
+                return None
+            parts.append(rest[:size])
+            rest = rest[size + 2 :]
+        return parts, rest
+
+    def close(self) -> None:
+        self._server.close()
+
+
 def test_orchestrator_live_full_flow():
     """Verify complete make dev workflow: starts Gateway and Vite concurrently and cleanly stops."""
     import signal
+
+    redis_server = _RespServer()
+    redis_server.start()
 
     gw_port = get_free_port()
     vite_port = get_free_port()
@@ -263,6 +344,7 @@ def test_orchestrator_live_full_flow():
             "30",
         ],
         cwd=REPO_ROOT,
+        env={**os.environ, "RUNEFOBLE_REDIS_URL": f"redis://127.0.0.1:{redis_server.port}/0"},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         start_new_session=True,
@@ -300,5 +382,6 @@ def test_orchestrator_live_full_flow():
         except subprocess.TimeoutExpired:
             os.killpg(proc.pid, signal.SIGKILL)
             proc.wait(timeout=2.0)
+        redis_server.close()
 
     assert proc.returncode in (0, -signal.SIGINT)

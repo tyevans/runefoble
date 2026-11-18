@@ -21,7 +21,7 @@
 | `make helm-template` | Renders and inspects Kubernetes manifests |
 | `make helm-check-event-store` | Runs `scripts/check_helm_event_store.py`. Fails when a service that owns aggregates has no PostgreSQL event store in the Helm chart |
 | `make helm-deploy` | Deploys the full Runefoble stack to the active Kubernetes cluster |
-| `make dev` | Runs API Gateway and Vite frontend concurrently with health check gating and clean signal handling |
+| `make dev` | Runs API Gateway and Vite frontend concurrently with health check gating and clean signal handling. Requires a reachable Redis (`RUNEFOBLE_REDIS_URL`, default `redis://localhost:6379/0`). The orchestrator port-forwards `svc/runefoble-redis` from Kind when needed, and exits with code 1 when no Redis answers |
 | `make dev-frontend` | Runs the Vite frontend development server |
 | `make dev-storybook` | Runs the Storybook component studio on port 6006 |
 | `make dev-api` | Runs the API Gateway locally |
@@ -50,7 +50,7 @@
 
 | Script | Purpose |
 |---|---|
-| `./scripts/dev_server.py` | Unified local development orchestrator running gateway, Vite frontend, and optional AI inference worker concurrently |
+| `./scripts/dev_server.py` | Unified local development orchestrator (requires Redis; see `make dev`) running gateway, Vite frontend, and optional AI inference worker concurrently |
 | `./scripts/cleanup-worktrees.sh` | Audits and removes merged git worktrees, cleans up branches, and prunes records |
 | `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |
 | `./scripts/run-backlog-engine.sh` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching |
