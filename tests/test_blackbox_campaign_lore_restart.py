@@ -145,6 +145,7 @@ async def test_lore_projection_survives_restart(postgres_service):
     spicedb = get_spicedb_client()
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
     await _seed_dm(campaign_id)
+    await spicedb.write_relationship("campaign", campaign_id, "player", "user", player_user)
 
     store_before = _use_postgres_event_store(dsn)
     with TestClient(create_app(), headers=_bearer(VISITOR_SUBJECT)) as first:

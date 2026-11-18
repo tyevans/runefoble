@@ -304,3 +304,24 @@ async def test_west_marches_link_requires_campaign_manage(
     assert player.status_code == 403, player.text
     owner = client.post(url, json=payload, headers=_bearer(world["dm_a"]))
     assert owner.status_code == 200, owner.text
+
+
+@pytest.mark.asyncio
+async def test_public_lore_document_requires_campaign_view(
+    client: TestClient, spicedb: SpiceDBClient, world: dict[str, str]
+) -> None:
+    """A non-secret document is readable by campaign members (200) and refused to a stranger (403)."""
+    await _seed_roles(spicedb, world)
+    ingest = client.post(
+        "/api/v1/lore/documents",
+        json={"campaign_id": world["a"], "title": "Open Road", "content": "The road is open."},
+        headers=_bearer(world["dm_a"]),
+    )
+    assert ingest.status_code == 200, ingest.text
+    doc_id = ingest.json()["document_id"]
+
+    member = client.get(f"/api/v1/lore/documents/{doc_id}", headers=_bearer(world["spectator_a"]))
+    assert member.status_code == 200, member.text
+    stranger = f"stranger-{uuid4().hex[:6]}"
+    refused = client.get(f"/api/v1/lore/documents/{doc_id}", headers=_bearer(stranger))
+    assert refused.status_code == 403, refused.text

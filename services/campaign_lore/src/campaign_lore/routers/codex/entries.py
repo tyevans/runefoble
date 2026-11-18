@@ -65,10 +65,7 @@ async def list_entries(
     await require_campaign_view(deps.user_id, campaign_id, deps.spicedb)
     results = []
     for eid in idx.get(campaign_id, []):
-        try:
-            st = (await deps.repo.load(eid)).state
-        except Exception:
-            continue
+        st = (await deps.repo.load(eid)).state
         if await deps.can_view(st) and filter_entry_match(st, era, tag, search):
             results.append(format_codex_entry(st))
     return results
