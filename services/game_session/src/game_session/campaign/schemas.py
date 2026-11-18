@@ -30,6 +30,16 @@ class UpdateCampaignRequest(BaseModel):
     settings: dict[str, Any] | None = None
 
 
+class CampaignPermissionsResponse(BaseModel):
+    """Per-campaign permission flags for the caller. Each flag is a SpiceDB check (TASK-0644)."""
+
+    view: bool
+    manage: bool
+    invite: bool
+    launch_session: bool
+    assign_roles: bool
+
+
 class CampaignSummaryResponse(BaseModel):
     id: str
     title: str
@@ -39,6 +49,7 @@ class CampaignSummaryResponse(BaseModel):
     status: str = "active"
     owner_id: str = ""
     role: str | None = None
+    permissions: CampaignPermissionsResponse
     member_count: int = 1
     cover_image_url: str | None = None
     settings: dict[str, Any] = Field(default_factory=dict)

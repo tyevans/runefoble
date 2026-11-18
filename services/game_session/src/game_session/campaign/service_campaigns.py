@@ -11,12 +11,14 @@ from uuid import UUID, uuid4
 from game_session.campaign.campaign_aggregate import CampaignAggregate, CampaignState
 from game_session.campaign.errors import CampaignNotFoundError
 from game_session.campaign.membership_aggregate import MembershipAggregate
+from game_session.campaign.permission_flags import campaign_permissions
 from game_session.campaign.repositories import (
     CampaignRepositories,
     load_or_none,
     save_aggregate,
 )
 from game_session.campaign.schemas import (
+    CampaignPermissionsResponse,
     CampaignSessionResponse,
     CampaignSummaryResponse,
     CreateCampaignRequest,
@@ -73,7 +75,10 @@ async def role_for(spicedb: SpiceDB, campaign_id: str, user_id: str) -> str | No
 
 
 def summary_from_state(
-    state: CampaignState, role: str | None, member_count: int
+    state: CampaignState,
+    role: str | None,
+    member_count: int,
+    permissions: CampaignPermissionsResponse,
 ) -> CampaignSummaryResponse:
     return CampaignSummaryResponse(
         id=state.campaign_id,
@@ -84,6 +89,7 @@ def summary_from_state(
         status=state.status,
         owner_id=state.owner_id,
         role=role,
+        permissions=permissions,
         member_count=member_count,
         cover_image_url=state.cover_image_url,
         settings=state.settings,
@@ -98,7 +104,8 @@ async def _summarize(
     campaign_id = UUID(campaign.state.campaign_id)
     memberships = await load_memberships(repos, campaign_id)
     role = await role_for(spicedb, campaign.state.campaign_id, user_id)
-    return summary_from_state(campaign.state, role, 1 + len(memberships.state.members))
+    permissions = await campaign_permissions(spicedb, campaign.state.campaign_id, user_id)
+    return summary_from_state(campaign.state, role, 1 + len(memberships.state.members), permissions)
 
 
 async def create_campaign(
@@ -136,7 +143,8 @@ async def create_campaign(
     await grant_owner(spicedb, str(campaign_id), owner_id)
     if seeded_session_id is not None:
         await link_session(spicedb, seeded_session_id, str(campaign_id))
-    return summary_from_state(campaign.state, "owner", 1)
+    permissions = await campaign_permissions(spicedb, str(campaign_id), owner_id)
+    return summary_from_state(campaign.state, "owner", 1, permissions)
 
 
 async def get_campaign(

@@ -79,10 +79,29 @@ curl -X GET "http://localhost:8000/api/v1/campaigns" \
     "system": "5e",
     "status": "active",
     "role": "owner",
+    "permissions": {
+      "view": true,
+      "manage": true,
+      "invite": true,
+      "launch_session": true,
+      "assign_roles": true
+    },
     "member_count": 1
   }
 ]
 ```
+
+Each campaign object carries a `permissions` object. `GET /api/v1/campaigns/{id}` returns the same object for one campaign. `game_session` computes every flag with a SpiceDB `check` for the caller. Each flag names the permission that the matching route checks:
+
+| Flag | SpiceDB permission | Route that the flag gates |
+|---|---|---|
+| `view` | `view` | Read campaign, members, sessions |
+| `manage` | `manage` | Update campaign, remove member, and the Campaign Hub owner controls |
+| `invite` | `run_session` | `POST /api/v1/campaigns/{id}/invites` |
+| `launch_session` | `run_session` | `POST /api/v1/campaigns/{id}/sessions`, lobby launch, and DM-only tools |
+| `assign_roles` | `manage` | `POST /api/v1/campaigns/{id}/roles` |
+
+The App Shell reads these flags and never compares role names. A flag only hides a control. The server checks every mutating route again, so a stale flag cannot grant access.
 
 ---
 
@@ -193,7 +212,7 @@ Assign a role with `POST /api/v1/campaigns/{id}/roles`. `game_session` owns this
 - `owner` is not grantable. Ownership moves only with campaign creation. The route returns `422` for `owner`.
 - A caller without `manage` gets `403` (`permission_denied`). A refused request writes no tuple.
 - If the authorization store cannot write the relation, the owner answers `503`. The gateway returns `502`, because the owner's answer is an upstream 5xx. Retry the request: a repeated grant writes the relation again.
-- To read the caller's flags (`manage`, `run_session`, `play`, `view`), call `GET /api/v1/campaigns/{id}/capabilities`. Non-members receive all flags as `false`.
+- To read the caller's SpiceDB flags (`manage`, `run_session`, `play`, `view`), call `GET /api/v1/campaigns/{id}/capabilities`. Non-members receive all flags as `false`. The `permissions` object on the campaign routes uses the App Shell names (see section 2).
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/roles" \
