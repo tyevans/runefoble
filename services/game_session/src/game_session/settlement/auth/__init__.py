@@ -21,10 +21,13 @@ from game_session.settlement.auth.permissions import (
     check_negotiation_read_permission,
     check_npc_read_permission,
     check_npc_write_permission,
+    check_settlement_permission,
     check_settlement_read_permission,
     check_settlement_write_permission,
+    check_world_charter_permission,
 )
 from game_session.settlement.auth.relationships import (
+    register_campaign_haven_discovery,
     write_establishment_relationships,
     write_negotiation_relationships,
     write_npc_relationships,
@@ -59,6 +62,9 @@ __all__ = [
     "require_haven_builder",
     "require_haven_viewer",
     "set_zitadel_auth_service",
+    "check_settlement_permission",
+    "check_world_charter_permission",
+    "register_campaign_haven_discovery",
     "write_establishment_relationships",
     "write_negotiation_relationships",
     "write_npc_relationships",

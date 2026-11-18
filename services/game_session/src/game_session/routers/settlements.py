@@ -11,16 +11,18 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_settlement_repository, get_spicedb_client
 from game_session.events import STREAM_WEST_MARCHES
+from game_session.settlement.auth import (
+    check_settlement_permission,
+    check_world_charter_permission,
+    register_campaign_haven_discovery,
+    write_settlement_relationships,
+)
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.settlements import (
     CharterSettlementRequest,
     ClaimRestBoonRequest,
     SettlementAggregate,
     UpgradeFacilityRequest,
-    check_settlement_permission,
-    check_world_charter_permission,
-    register_campaign_haven_discovery,
-    write_settlement_relationships,
 )
 from runefoble_platform.event_publish import publish_or_fail
 
@@ -77,7 +79,11 @@ async def charter_settlement(
     )
     await _save_and_publish(repo, bus, agg)
     await write_settlement_relationships(
-        spicedb, str(sid), req.shared_world_id, caller_id, req.founded_by_campaign_id
+        spicedb,
+        str(sid),
+        campaign_id=req.founded_by_campaign_id,
+        founder_id=caller_id,
+        shared_world_id=req.shared_world_id,
     )
     return {"settlement_id": str(sid), **agg.state.model_dump()}
 

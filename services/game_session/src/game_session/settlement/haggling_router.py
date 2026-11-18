@@ -10,7 +10,7 @@ import contextlib
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import (
     get_establishment_negotiations_index,
     get_establishment_repository,
@@ -227,13 +227,9 @@ async def dm_negotiation_override(
     caller_id: CallerId,
     negotiation_id: str,
     req: DMOverrideRequest,
-    x_runefoble_role: str | None = Header(default=None, alias="X-RuneFoble-Role"),
 ) -> NegotiationSessionState:
     """Game Master arbitration control: nudge mood, inject dialogue barks, or override price."""
-    spicedb = get_spicedb_client()
-    # Check SpiceDB Zanzibar permission unless authorized DM role header is set for dev/test
-    if x_runefoble_role not in ("dungeon_master", "game_master", "dm"):
-        await check_negotiation_arbitrate_permission(spicedb, negotiation_id, caller_id)
+    await check_negotiation_arbitrate_permission(get_spicedb_client(), negotiation_id, caller_id)
 
     neg_agg = await _load_negotiation(negotiation_id)
     try:

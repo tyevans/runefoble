@@ -13,12 +13,37 @@ from fastapi import HTTPException
 async def _enforce(
     spicedb: Any, res: str, rid: str, perms: list[str], uid: str | None, verb: str
 ) -> None:
-    if uid:
-        for p in perms:
-            if await spicedb.check_permission(res, str(rid), p, "user", str(uid)):
-                return
-        err = f"Permission denied: subject '{uid}' {verb} {res}:{rid}"
-        raise HTTPException(status_code=403, detail=err)
+    """Allow when any listed permission holds. Refuse with 401 when no principal is present."""
+    if not uid:
+        raise HTTPException(status_code=401, detail="Authentication required.")
+    for p in perms:
+        if await spicedb.check_permission(res, str(rid), p, "user", str(uid)):
+            return
+    err = f"Permission denied: subject '{uid}' {verb} {res}:{rid}"
+    raise HTTPException(status_code=403, detail=err)
+
+
+async def check_settlement_permission(
+    spicedb: Any, settlement_id: str, perm: str, user_id: str | None
+) -> None:
+    """Enforce one schema permission on a settlement. Fail closed without a principal."""
+    await _enforce(
+        spicedb, "settlement", str(settlement_id), [perm], user_id, "lacks permission on"
+    )
+
+
+async def check_world_charter_permission(
+    spicedb: Any, shared_world_id: str, user_id: str | None
+) -> None:
+    """Ensure user may charter a haven: discover, manage, or trade on the shared world."""
+    await _enforce(
+        spicedb,
+        "shared_world",
+        str(shared_world_id),
+        ["discover", "manage", "trade"],
+        user_id,
+        "cannot charter havens in",
+    )
 
 
 async def check_campaign_write_permission(spicedb: Any, campaign_id: str, user_id: str) -> None:

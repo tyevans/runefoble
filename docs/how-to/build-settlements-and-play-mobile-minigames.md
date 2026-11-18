@@ -202,11 +202,12 @@ curl -X POST http://localhost:8000/api/v1/establishments/est-ember-01/haggle \
 
 ### Game Master Real-Time Overrides
 
-Game Masters can adjust the merchant's mood meter or override prices via the DM control panel:
+Game Masters can adjust the merchant's mood meter or override prices via the DM control panel.
+The caller needs the `negotiation.arbitrate` permission on the negotiation. A role header grants nothing. A player who sends `X-RuneFoble-Role: dungeon_master` gets HTTP 403.
 
 ```bash
 curl -X PATCH http://localhost:8000/api/v1/haggling/hgl-8f12a3/dm-override \
-  -H "X-RuneFoble-Role: dungeon_master" \
+  -H "Authorization: Bearer $TOKEN_USER_DM_01" \
   -H "Content-Type: application/json" \
   -d '{
     "action": "force_accept",
@@ -229,7 +230,7 @@ Town squares and tavern common rooms feature an interactive bulletin board for l
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin \
-  -H "X-User-Id: usr_kip" \
+  -H "Authorization: Bearer $TOKEN_USER_KIP" \
   -H "Content-Type: application/json" \
   -d '{
     "board_type": "town_square",
@@ -245,7 +246,7 @@ curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin \
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin \
-  -H "X-User-Id: usr_rogue" \
+  -H "Authorization: Bearer $TOKEN_USER_ROGUE" \
   -H "Content-Type: application/json" \
   -d '{
     "board_type": "tavern",
@@ -266,14 +267,14 @@ curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin \
 ```bash
 # Filter by board location: town_square, tavern, guildhall
 curl -X GET "http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin?board_type=town_square" \
-  -H "X-User-Id: usr_adventurer"
+  -H "Authorization: Bearer $TOKEN_USER_ADVENTURER"
 ```
 
 ### Submitting Cipher Solution
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin/ntc-004/decrypt \
-  -H "X-User-Id: usr_kip" \
+  -H "Authorization: Bearer $TOKEN_USER_KIP" \
   -H "Content-Type: application/json" \
   -d '{
     "solution": "gilded serpent"
@@ -310,7 +311,9 @@ Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authenticat
 - **`permissions.py`**: SpiceDB Zanzibar object permission evaluators for settlement viewing/upgrading, establishment management/patronage, and worker editing.
 - **`relationships.py`**: SpiceDB Zanzibar tuple writers (`write_settlement_relationships`, `write_establishment_relationships`, `write_npc_relationships`, `write_negotiation_relationships`).
 - **`dependencies.py`**: FastAPI route dependency factories (`get_current_settlement_user`, `require_haven_builder`, `require_establishment_manager`, `require_haven_viewer`).
-- **`auth.py` / `__init__.py`**: Defect (DoR 9): aggregator facades (< 40 lines) re-export symbols for existing routers and services. Removal: TASK-0491.
+- **`__init__.py`**: Aggregator facade that re-exports the symbols for existing routers and services.
+- **Fail-closed checks**: `_enforce` refuses a request with no verified principal (HTTP 401). A missing permission returns HTTP 403. No check reads a role header or an `x-user-id` header.
+- **Retired module**: `settlements/auth.py` is removed. Its helpers (`check_settlement_permission`, `check_world_charter_permission`, `register_campaign_haven_discovery`, `write_settlement_relationships`) now live in `settlement/auth/`.
 
 ---
 
