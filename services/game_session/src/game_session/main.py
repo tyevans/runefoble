@@ -15,6 +15,7 @@ from game_session.dependencies import (
     set_event_bus,
     set_spicedb_client,
 )
+from game_session.profile import profile_router
 from game_session.routers import (
     autopilot_router,
     bounties_router,
@@ -81,6 +82,7 @@ app.include_router(settlement_workers_router)
 app.include_router(settlement_haggling_router)
 app.include_router(bounties_router)
 app.include_router(bounties_router, prefix="/api/v1")
+app.include_router(profile_router)
 install_publish_failure_handler(app)
 
 
