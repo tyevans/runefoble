@@ -7,18 +7,18 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from campaign_analytics.dependencies import (
-    CurrentUserId,
+    CallerId,
     SpiceDep,
     StorageDep,
     check_user_can_view_campaign,
-    get_current_user_id,
+    get_principal,
 )
 from campaign_analytics.models import CampaignMvpResponse
 
 router = APIRouter(
     prefix="/api/v1/analytics/campaigns",
     tags=["Combat Performance & MVP"],
-    dependencies=[Depends(get_current_user_id)],
+    dependencies=[Depends(get_principal)],
 )
 
 
@@ -32,7 +32,7 @@ async def get_campaign_mvp(
     id: str,
     storage: StorageDep,
     spicedb: SpiceDep,
-    user_id: CurrentUserId,
+    user_id: CallerId,
     session_id: Annotated[str | None, Query(description="Filter by specific session ID")] = None,
     encounter_id: Annotated[
         str | None, Query(description="Filter by specific encounter ID")
