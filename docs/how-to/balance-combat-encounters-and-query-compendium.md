@@ -6,13 +6,16 @@ This guide explains how to query canonical SRD 5.1 monsters, spells, and conditi
 
 ## 1. Rules Search
 
-To query rules, spells, conditions, or monsters:
+To query rules, spells, conditions, or monsters. Set `TOKEN` to a Zitadel access token. Every compendium route except health and OpenAPI requires a verified bearer token. A request with no token returns `401`.
 
 ```bash
 curl -G http://localhost:8007/api/v1/compendium/rules/search \
+  -H "Authorization: Bearer $TOKEN" \
   --data-urlencode "query=fire damage explosion" \
   --data-urlencode "limit=5"
 ```
+
+To include homebrew from a campaign, add `campaign_id`. The search returns a homebrew rule only when the caller passes `homebrew_rule.view` for that rule. A campaign viewer passes this check. The rule author passes it too. Any other caller gets SRD results only.
 
 ### Response
 ```json
@@ -60,10 +63,19 @@ Retrieve specific canonical stat blocks or condition mechanics by name:
 
 ```bash
 # Retrieve monster stat block
-curl http://localhost:8007/api/v1/compendium/monsters/Goblin
+curl http://localhost:8007/api/v1/compendium/monsters/Goblin \
+  -H "Authorization: Bearer $TOKEN"
 
 # Retrieve condition mechanics
-curl http://localhost:8007/api/v1/compendium/conditions/Paralyzed
+curl http://localhost:8007/api/v1/compendium/conditions/Paralyzed \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+A homebrew monster is read the same way, with the campaign named. The caller must pass `homebrew_rule.view` for it. Otherwise the route returns `404`, the same as for a missing monster. Spell and condition lookups return SRD entries only.
+
+```bash
+curl "http://localhost:8007/api/v1/compendium/monsters/Abyssal%20Shadowstalker?campaign_id=8a329ef2-5c91-4cf1-83d8-21d4bb67f101" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Monster Response
@@ -91,6 +103,7 @@ To calculate XP budgets and recommend a synergistic enemy combat group for a par
 ```bash
 curl -X POST http://localhost:8007/api/v1/compendium/encounters/balance \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "party_levels": [3, 3, 3, 3],
     "target_difficulty": "Medium"
@@ -137,6 +150,8 @@ curl -X POST http://localhost:8007/api/v1/compendium/encounters/balance \
 }
 ```
 
+When the request names a `campaign_id`, the caller needs `campaign.play` on that campaign. Otherwise the route returns `403`. A request with no `campaign_id` needs only a verified token.
+
 The balancing engine:
 1. Calculates aggregate party XP thresholds for Easy, Medium, Hard, and Deadly tiers based on 5e rules.
 2. Applies action economy multipliers scaled for monster count and adjusted for small (<3) or large (>=6) party sizes.
@@ -147,7 +162,7 @@ The balancing engine:
 
 ## 4. Registering Campaign Homebrew Rules
 
-To register custom monsters or rules restricted to a campaign. Set `DM_TOKEN` to a Zitadel access token for the DM. rules_compendium takes the author from that token. It ignores `x-user-id` and any `author_id` in the body. A request with no valid token returns `401`.
+To register custom monsters or rules restricted to a campaign. Set `DM_TOKEN` to a Zitadel access token for the DM. rules_compendium takes the author from the verified token subject and ignores any `author_id` in the body. A request with no valid token returns `401`.
 
 ```bash
 curl -X POST http://localhost:8007/api/v1/compendium/homebrew \
@@ -170,7 +185,9 @@ curl -X POST http://localhost:8007/api/v1/compendium/homebrew \
   }'
 ```
 
-SpiceDB Zanzibar enforces that only authorized DMs or campaign owners (`run_session` or `manage`) can register homebrew rules. Homebrew rules are indexed into campaign-isolated `redstring` storage and searchable by campaign participants.
+SpiceDB Zanzibar enforces that only authorized DMs or campaign owners (`run_session` or `manage`) can register homebrew rules. A caller without that grant gets `403`. The server writes the `homebrew_rule#campaign` and `homebrew_rule#author` relations before it saves the rule. A failed write returns `503`, and the rule is not saved.
+
+Homebrew rules are indexed into campaign-isolated `redstring` storage. The list route `GET /api/v1/compendium/homebrew/{campaign_id}` and the campaign search return a rule only when the caller passes `homebrew_rule.view`. A stranger gets an empty list and SRD results only.
 
 ---
 

@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import Depends, Request
 from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
+from runefoble_auth.factory import get_spicedb_client as get_spicedb_client
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
@@ -27,7 +28,6 @@ _compendium_repo: AggregateRepository[CompendiumAggregate] = create_aggregate_re
 _encounter_repo: AggregateRepository[EncounterAggregate] = create_aggregate_repository(
     EncounterAggregate
 )
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _zitadel_auth_service: ZitadelAuthService | None = None
 
 
@@ -45,23 +45,6 @@ def get_retrieval_engine(request: Request) -> CompendiumRetrievalEngine:
     """Provide the retrieval engine owned by this application instance."""
     engine: CompendiumRetrievalEngine = request.app.state.retrieval_engine
     return engine
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    """Provide SpiceDB Zanzibar client."""
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient(
-            endpoint=settings.spicedb_endpoint or "localhost:50051",
-            token=settings.spicedb_preshared_key,
-        )
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    """Override SpiceDB client for testing."""
-    global _spicedb_client
-    _spicedb_client = client
 
 
 def get_zitadel_auth_service() -> ZitadelAuthService:
@@ -100,15 +83,15 @@ def get_current_user_id(
     return principal.user_id
 
 
-async def check_user_can_view_campaign(
+async def check_user_can_view_homebrew_rule(
     user_id: str,
-    campaign_id: UUID,
+    rule_id: str,
     spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> bool:
-    """Check if user can view campaign resources under Zanzibar schema."""
+    """Check `homebrew_rule.view` (campaign viewers or the author) under the Zanzibar schema."""
     return await spicedb.check_permission(
-        resource_type="campaign",
-        resource_id=str(campaign_id),
+        resource_type="homebrew_rule",
+        resource_id=rule_id,
         permission="view",
         subject_type="user",
         subject_id=user_id,
@@ -120,24 +103,18 @@ async def check_user_can_manage_homebrew(
     campaign_id: UUID,
     spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> bool:
-    """Check if user can manage/register homebrew rules under Zanzibar schema."""
-    # Check if user has manage or run_session on campaign
-    can_run = await spicedb.check_permission(
-        resource_type="campaign",
-        resource_id=str(campaign_id),
-        permission="run_session",
-        subject_type="user",
-        subject_id=user_id,
-    )
-    if can_run:
-        return True
-    return await spicedb.check_permission(
-        resource_type="campaign",
-        resource_id=str(campaign_id),
-        permission="manage",
-        subject_type="user",
-        subject_id=user_id,
-    )
+    """Check `campaign.manage` or `campaign.run_session` before a new homebrew rule is written."""
+    for permission in ("manage", "run_session"):
+        allowed = await spicedb.check_permission(
+            resource_type="campaign",
+            resource_id=str(campaign_id),
+            permission=permission,
+            subject_type="user",
+            subject_id=user_id,
+        )
+        if allowed:
+            return True
+    return False
 
 
 CurrentUserId = Annotated[str, Depends(get_current_user_id)]

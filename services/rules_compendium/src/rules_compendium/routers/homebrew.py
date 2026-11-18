@@ -4,6 +4,7 @@ from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
+from runefoble_auth.errors import AuthzWriteError
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_sourcing import AggregateRepository
@@ -11,12 +12,12 @@ from runefoble_platform.event_sourcing import AggregateRepository
 from rules_compendium.aggregate import CompendiumAggregate
 from rules_compendium.dependencies import (
     check_user_can_manage_homebrew,
-    check_user_can_view_campaign,
     get_compendium_repo,
     get_current_user_id,
     get_retrieval_engine,
     get_spicedb_client,
 )
+from rules_compendium.homebrew_access import visible_homebrew_rule_ids
 from rules_compendium.models import HomebrewCreateRequest, HomebrewResponse
 from rules_compendium.retrieval import CompendiumRetrievalEngine
 
@@ -48,6 +49,25 @@ async def register_homebrew_rule(
 
     rule_id = uuid4()
 
+    # Zanzibar relationships first: a failed write must leave no saved rule behind.
+    try:
+        await spicedb.write_relationship(
+            resource_type="homebrew_rule",
+            resource_id=str(rule_id),
+            relation="campaign",
+            subject_type="campaign",
+            subject_id=str(request.campaign_id),
+        )
+        await spicedb.write_relationship(
+            resource_type="homebrew_rule",
+            resource_id=str(rule_id),
+            relation="author",
+            subject_type="user",
+            subject_id=user_id,
+        )
+    except AuthzWriteError as exc:
+        raise HTTPException(status_code=503, detail="authorization_unavailable") from exc
+
     # Event sourcing via CompendiumAggregate
     compendium = await load_or_create(compendium_repo, request.campaign_id, CompendiumAggregate)
     compendium.register_homebrew(
@@ -59,22 +79,6 @@ async def register_homebrew_rule(
         content=request.content,
     )
     await compendium_repo.save(compendium)
-
-    # Establish Zanzibar relationship in SpiceDB: homebrew_rule bound to campaign and author
-    await spicedb.write_relationship(
-        resource_type="homebrew_rule",
-        resource_id=str(rule_id),
-        relation="campaign",
-        subject_type="campaign",
-        subject_id=str(request.campaign_id),
-    )
-    await spicedb.write_relationship(
-        resource_type="homebrew_rule",
-        resource_id=str(rule_id),
-        relation="author",
-        subject_type="user",
-        subject_id=user_id,
-    )
 
     # Index into redstring retrieval engine
     await engine.index_homebrew_rule(
@@ -104,11 +108,10 @@ async def list_campaign_homebrew(
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
 ) -> list[dict]:
-    """Retrieve all homebrew rules for a campaign under Zanzibar authorization."""
-    can_view = await check_user_can_view_campaign(user_id, campaign_id, spicedb)
-    if not can_view:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Forbidden: User '{user_id}' cannot view homebrew for campaign '{campaign_id}'",
-        )
-    return engine.get_homebrew_by_campaign(campaign_id)
+    """Return the campaign homebrew rules that the caller may view (`homebrew_rule.view`)."""
+    visible_ids = await visible_homebrew_rule_ids(user_id, campaign_id, engine, spicedb)
+    return [
+        rule
+        for rule in engine.get_homebrew_by_campaign(campaign_id)
+        if str(rule["rule_id"]) in visible_ids
+    ]

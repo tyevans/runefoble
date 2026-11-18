@@ -7,13 +7,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from runefoble_auth.spicedb import SpiceDBClient
 
 from rules_compendium.dependencies import (
+    CallerOrService,
     CurrentUserId,
-    check_user_can_view_campaign,
-    get_caller_or_service,
     get_current_user_id,
     get_retrieval_engine,
     get_spicedb_client,
 )
+from rules_compendium.homebrew_access import visible_homebrew_monster, visible_homebrew_rule_ids
 from rules_compendium.models import RuleSearchResponse
 from rules_compendium.retrieval import CompendiumRetrievalEngine
 
@@ -40,15 +40,15 @@ async def search_rules(
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
 ) -> RuleSearchResponse:
     """Sub-50ms hybrid BM25 and vector search across canonical SRD and authorized homebrew rules."""
-    can_view_homebrew = False
+    visible_ids: frozenset[str] = frozenset()
     if campaign_id:
-        can_view_homebrew = await check_user_can_view_campaign(user_id, campaign_id, spicedb)
+        visible_ids = await visible_homebrew_rule_ids(user_id, campaign_id, engine, spicedb)
 
     results, took_ms = await engine.hybrid_search(
         query=query,
         category=category,
         campaign_id=campaign_id,
-        can_view_homebrew=can_view_homebrew,
+        visible_homebrew_ids=visible_ids,
         limit=limit,
     )
 
@@ -61,13 +61,23 @@ async def search_rules(
     )
 
 
-@router.get("/monsters/{name}", dependencies=[Depends(get_caller_or_service)])
+@router.get("/monsters/{name}")
 async def get_monster_by_name(
     name: str,
+    caller: CallerOrService,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    campaign_id: Annotated[
+        UUID | None, Query(description="Campaign whose homebrew monsters may be read")
+    ] = None,
 ) -> dict:
-    """Retrieve full monster stat block by name."""
+    """Retrieve a monster stat block by name. SRD monsters are readable by any verified caller.
+
+    A homebrew monster needs `campaign_id` and `homebrew_rule.view`. Otherwise it returns 404.
+    """
     monster = engine.get_monster(name)
+    if monster is None and campaign_id is not None and caller.user_id is not None:
+        monster = await visible_homebrew_monster(caller.user_id, campaign_id, name, engine, spicedb)
     if not monster:
         raise HTTPException(status_code=404, detail=f"Monster '{name}' not found in compendium")
     return monster
