@@ -223,6 +223,15 @@ if not can_view:
     raise HTTPException(status_code=403, detail="Forbidden")
 ```
 
+### HTTP Failure Mapping
+
+Every service that checks SpiceDB calls `install_authz_error_handlers(app)` from `runefoble_auth.authz_http` once at start-up. Do not add a local handler or a copy of the mapping.
+
+- Any `AuthzError` (SpiceDB unreachable, timed out, or a write not applied) returns `503` with `{"error": "authorization_unavailable"}`. A failed check is never a denial or an allow.
+- An `AuthzSchemaError` (a name missing from `runefoble.zed`) returns `500` with `{"error": "authorization_schema_error", "error_id": "<uuid>"}`. The full error is in the log under that id.
+
+Let the `AuthzError` propagate from the helper. Do not turn it into an `HTTPException` with another body.
+
 ### Listing Resources a Subject Can Access
 To list the resources of one type that a subject can use, call `lookup_resources`. The check runs in SpiceDB, so the result follows the schema. Do not read every tuple and filter in code:
 
