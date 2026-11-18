@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
 from fastapi import HTTPException
 from runefoble_auth.contract import permission_for_action
@@ -18,7 +17,11 @@ from the_watcher.autonomous_dm import AutonomousDMEngine
 from the_watcher.chronicle import ChronicleRecapEngine
 from the_watcher.compound_actions import CompoundActionEngine
 from the_watcher.copilot import CopilotEngine
-from the_watcher.disambiguation import DisambiguationEngine
+from the_watcher.copilot_state.disambiguations import DisambiguationAggregate
+from the_watcher.copilot_state.pending_actions import PendingActionAggregate
+from the_watcher.copilot_state.whispers import WhisperAggregate
+from the_watcher.copilot_whispers import WhisperService
+from the_watcher.disambiguation import DisambiguationEngine, DisambiguationStore
 from the_watcher.factions import FactionAggregate
 from the_watcher.factions.campaign_world import CampaignWorldAggregate
 from the_watcher.factions.resources import FactionResourceAggregate
@@ -35,7 +38,6 @@ STREAM_WORLD = "runefoble.events.world"
 engine = TheWatcherEngine()
 chronicle_engine = ChronicleRecapEngine()
 autonomous_dm_engine = AutonomousDMEngine()
-copilot_engine = CopilotEngine()
 disambiguation_engine = DisambiguationEngine()
 compound_action_engine = CompoundActionEngine()
 
@@ -45,10 +47,6 @@ _faction_repo: AggregateRepository[FactionAggregate] | None = None
 _campaign_world_repo: AggregateRepository[CampaignWorldAggregate] | None = None
 _faction_resource_repo: AggregateRepository[FactionResourceAggregate] | None = None
 _regional_unrest_repo: AggregateRepository[RegionalUnrestAggregate] | None = None
-
-
-def get_copilot_engine() -> CopilotEngine:
-    return copilot_engine
 
 
 _faction_simulation_engine = FactionSimulationEngine()
@@ -210,13 +208,76 @@ get_event_bus = event_bus_provider.get
 set_event_bus = event_bus_provider.set
 
 
-def to_uuid(val: str | UUID | None) -> UUID:
-    """Deterministically convert a string or UUID into a valid UUID."""
-    if val is None:
-        return uuid4()
-    if isinstance(val, UUID):
-        return val
-    try:
-        return UUID(val)
-    except ValueError:
-        return uuid5(NAMESPACE_DNS, str(val))
+_pending_action_repo: AggregateRepository[PendingActionAggregate] | None = None
+_whisper_repo: AggregateRepository[WhisperAggregate] | None = None
+_disambiguation_repo: AggregateRepository[DisambiguationAggregate] | None = None
+
+
+def get_pending_action_repo() -> AggregateRepository[PendingActionAggregate]:
+    global _pending_action_repo
+    if _pending_action_repo is None:
+        _pending_action_repo = create_aggregate_repository(PendingActionAggregate)
+    return _pending_action_repo
+
+
+def set_pending_action_repo(repo: AggregateRepository[PendingActionAggregate] | None) -> None:
+    global _pending_action_repo
+    _pending_action_repo = repo
+
+
+def get_whisper_repo() -> AggregateRepository[WhisperAggregate]:
+    global _whisper_repo
+    if _whisper_repo is None:
+        _whisper_repo = create_aggregate_repository(WhisperAggregate)
+    return _whisper_repo
+
+
+def set_whisper_repo(repo: AggregateRepository[WhisperAggregate] | None) -> None:
+    global _whisper_repo
+    _whisper_repo = repo
+
+
+def get_disambiguation_repo() -> AggregateRepository[DisambiguationAggregate]:
+    global _disambiguation_repo
+    if _disambiguation_repo is None:
+        _disambiguation_repo = create_aggregate_repository(DisambiguationAggregate)
+    return _disambiguation_repo
+
+
+def set_disambiguation_repo(repo: AggregateRepository[DisambiguationAggregate] | None) -> None:
+    global _disambiguation_repo
+    _disambiguation_repo = repo
+
+
+def build_copilot_engine() -> CopilotEngine:
+    """Build a copilot engine over the current repositories and event bus."""
+    return CopilotEngine(
+        bus=get_event_bus,
+        watcher_stream=STREAM_WATCHER,
+        pending_repo=get_pending_action_repo,
+    )
+
+
+copilot_engine = build_copilot_engine()
+whisper_service = WhisperService(
+    bus=get_event_bus, watcher_stream=STREAM_WATCHER, whisper_repo=get_whisper_repo
+)
+disambiguation_store = DisambiguationStore(get_disambiguation_repo, disambiguation_engine)
+
+
+def get_copilot_engine() -> CopilotEngine:
+    return copilot_engine
+
+
+def get_whisper_service() -> WhisperService:
+    return whisper_service
+
+
+def set_copilot_engine(engine: CopilotEngine) -> None:
+    """Replace the copilot engine. A restart installs a fresh engine over the same stores."""
+    global copilot_engine
+    copilot_engine = engine
+
+
+def get_disambiguation_store() -> DisambiguationStore:
+    return disambiguation_store

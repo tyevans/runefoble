@@ -10,10 +10,10 @@ from the_watcher.dependencies import (
     engine,
     get_event_bus,
     require_session_permission,
-    to_uuid,
 )
 from the_watcher.engine_selection import load_watcher_ports
 from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.ids import to_uuid
 from the_watcher.models import (
     StandInAction,
     StandInRecapRequest,

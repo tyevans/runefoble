@@ -1,34 +1,28 @@
-"""Target disambiguation engine for resolving ambiguous speech intents."""
+"""Target disambiguation for ambiguous speech intents.
+
+``DisambiguationEngine`` holds the pure matching rules. ``DisambiguationStore`` keeps the
+open requests in the ``DisambiguationAggregate`` (TASK-0568), so they survive a restart.
+"""
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from collections.abc import Callable
 from uuid import uuid4
 
+from eventsource.application.aggregates.repository import AggregateRepository
+from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
+from the_watcher.copilot_state.disambiguations import (
+    DisambiguationAggregate,
+    DisambiguationNotFoundError,
+    PendingDisambiguation,
+    disambiguation_board_id,
+)
 from the_watcher.models import CandidateTarget, CompoundActionNode, EntityTarget
 
 
-@dataclass
-class PendingDisambiguation:
-    disambiguation_id: str
-    session_id: str
-    campaign_id: str | None
-    speaker_id: str
-    speaker_name: str
-    transcript: str
-    action_type: str
-    ambiguous_target: str
-    candidates: list[CandidateTarget]
-    clarification_prompt: str
-    actions: list[CompoundActionNode] = field(default_factory=list)
-
-
 class DisambiguationEngine:
-    """Detects ambiguous targets from board entities and manages clarification workflows."""
-
-    def __init__(self) -> None:
-        self._pending: dict[str, PendingDisambiguation] = {}
+    """Detects ambiguous targets from board entities and builds clarification prompts."""
 
     def extract_target_words(self, target_phrase: str) -> list[str]:
         """Extract meaningful target keywords excluding articles and common fillers."""
@@ -130,9 +124,68 @@ class DisambiguationEngine:
 
         return f"Which {head_noun}? {options_text}"
 
-    def register_disambiguation(
+    def select_candidate(
         self,
+        pending: PendingDisambiguation,
+        selected_candidate_id: str | None = None,
+        selected_target: str | None = None,
+    ) -> CandidateTarget:
+        """Match the player's choice by candidate id, then by name. Fall back to the first."""
+        if selected_candidate_id:
+            for c in pending.candidates:
+                if c.id == selected_candidate_id:
+                    return c
+
+        if selected_target:
+            target_norm = selected_target.strip().lower()
+            for c in pending.candidates:
+                if (
+                    target_norm in c.id.lower()
+                    or target_norm in c.name.lower()
+                    or target_norm in c.descriptor.lower()
+                    or (c.tag and target_norm in c.tag.lower())
+                ):
+                    return c
+
+        return pending.candidates[0]
+
+    def apply_resolution(
+        self, pending: PendingDisambiguation, chosen: CandidateTarget
+    ) -> PendingDisambiguation:
+        """Return a copy of the request whose ambiguous action nodes name the chosen target."""
+        resolved = pending.model_copy(deep=True)
+        for node in resolved.actions:
+            if node.requires_disambiguation or node.target in (pending.ambiguous_target, None):
+                _bind_node(node, chosen)
+        return resolved
+
+
+def _bind_node(node: CompoundActionNode, chosen: CandidateTarget) -> None:
+    node.target = chosen.descriptor or chosen.name
+    node.parameters["target"] = chosen.descriptor or chosen.name
+    node.parameters["target_id"] = chosen.id
+    node.parameters["target_x"] = chosen.x
+    node.parameters["target_y"] = chosen.y
+    node.requires_disambiguation = False
+    node.candidates = []
+
+
+class DisambiguationStore:
+    """Opens and resolves disambiguation requests through the aggregate repository."""
+
+    def __init__(
+        self,
+        repo: Callable[[], AggregateRepository[DisambiguationAggregate]],
+        engine: DisambiguationEngine,
+    ) -> None:
+        self._repo = repo
+        self._engine = engine
+
+    async def register(
+        self,
+        *,
         session_id: str,
+        campaign_id: str | None,
         speaker_id: str,
         speaker_name: str,
         transcript: str,
@@ -141,12 +194,12 @@ class DisambiguationEngine:
         candidates: list[CandidateTarget],
         clarification_prompt: str,
         actions: list[CompoundActionNode],
-        campaign_id: str | None = None,
     ) -> PendingDisambiguation:
-        """Register a pending disambiguation request in memory."""
-        d_id = f"disambig-{uuid4().hex[:12]}"
+        """Record a new open request for the session and return it."""
+        repo = self._repo()
+        board = await load_or_create(repo, disambiguation_board_id(session_id), _new_board)
         pending = PendingDisambiguation(
-            disambiguation_id=d_id,
+            disambiguation_id=f"disambig-{uuid4().hex[:12]}",
             session_id=session_id,
             campaign_id=campaign_id,
             speaker_id=speaker_id,
@@ -158,62 +211,33 @@ class DisambiguationEngine:
             clarification_prompt=clarification_prompt,
             actions=actions,
         )
-        self._pending[d_id] = pending
+        board.open_request(pending)
+        await repo.save(board)
         return pending
 
-    def get_pending(self, disambiguation_id: str) -> PendingDisambiguation | None:
-        """Retrieve a pending disambiguation by ID."""
-        return self._pending.get(disambiguation_id)
-
-    def resolve(
+    async def resolve(
         self,
+        session_id: str,
         disambiguation_id: str,
         selected_candidate_id: str | None = None,
         selected_target: str | None = None,
     ) -> tuple[PendingDisambiguation, CandidateTarget]:
-        """Resolve a pending disambiguation by matching candidate id or name."""
-        pending = self._pending.get(disambiguation_id)
-        if pending is None:
-            raise KeyError(
+        """Close an open request. Return its resolved copy and the chosen candidate.
+
+        Raise DisambiguationNotFoundError when the request is unknown or already resolved.
+        """
+        repo = self._repo()
+        board = await load_if_exists(repo, disambiguation_board_id(session_id))
+        pending = board.find(disambiguation_id) if board is not None else None
+        if board is None or pending is None:
+            raise DisambiguationNotFoundError(
                 f"Disambiguation ID '{disambiguation_id}' not found or already resolved."
             )
+        chosen = self._engine.select_candidate(pending, selected_candidate_id, selected_target)
+        board.resolve(disambiguation_id, chosen.id)
+        await repo.save(board)
+        return self._engine.apply_resolution(pending, chosen), chosen
 
-        matched_candidate: CandidateTarget | None = None
 
-        if selected_candidate_id:
-            for c in pending.candidates:
-                if c.id == selected_candidate_id:
-                    matched_candidate = c
-                    break
-
-        if matched_candidate is None and selected_target:
-            target_norm = selected_target.strip().lower()
-            for c in pending.candidates:
-                if (
-                    target_norm in c.id.lower()
-                    or target_norm in c.name.lower()
-                    or target_norm in c.descriptor.lower()
-                    or (c.tag and target_norm in c.tag.lower())
-                ):
-                    matched_candidate = c
-                    break
-
-        # Fallback to first candidate if not precisely matched
-        if matched_candidate is None:
-            matched_candidate = pending.candidates[0]
-
-        # Update action nodes
-        for node in pending.actions:
-            if node.requires_disambiguation or node.target in (pending.ambiguous_target, None):
-                node.target = matched_candidate.descriptor or matched_candidate.name
-                node.parameters["target"] = matched_candidate.descriptor or matched_candidate.name
-                node.parameters["target_id"] = matched_candidate.id
-                node.parameters["target_x"] = matched_candidate.x
-                node.parameters["target_y"] = matched_candidate.y
-                node.requires_disambiguation = False
-                node.candidates = []
-
-        # Remove from pending once resolved
-        self._pending.pop(disambiguation_id, None)
-
-        return pending, matched_candidate
+def _new_board(board_id) -> DisambiguationAggregate:
+    return DisambiguationAggregate(aggregate_id=board_id)

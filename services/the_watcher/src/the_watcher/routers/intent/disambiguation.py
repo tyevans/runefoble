@@ -11,16 +11,18 @@ from runefoble_events.events import (
     IntentDisambiguationRequested,
 )
 from runefoble_platform.event_publish import publish_best_effort
+from the_watcher.copilot_state.disambiguations import DisambiguationNotFoundError
 from the_watcher.dependencies import (
     STREAM_BOARD,
     STREAM_WATCHER,
     compound_action_engine,
     disambiguation_engine,
+    disambiguation_store,
     get_event_bus,
     require_session_permission,
-    to_uuid,
 )
 from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.ids import to_uuid
 from the_watcher.models import (
     CandidateTarget,
     CompoundActionNode,
@@ -76,7 +78,7 @@ async def dispatch_disambiguation(
 ) -> IntentParseResponse:
     """Generate clarification prompt, register pending state, and dispatch preview events."""
     prompt = disambiguation_engine.generate_clarification_prompt(ambig_target, ambig_candidates)
-    pending = disambiguation_engine.register_disambiguation(
+    pending = await disambiguation_store.register(
         session_id=req.session_id,
         campaign_id=req.campaign_id,
         speaker_id=req.speaker_id,
@@ -145,12 +147,13 @@ async def resolve_intent_disambiguation(
     await require_session_permission(caller_id, req.session_id, "session.participate")
     t0 = time.perf_counter()
     try:
-        pending, m = disambiguation_engine.resolve(
+        pending, m = await disambiguation_store.resolve(
+            session_id=req.session_id,
             disambiguation_id=req.disambiguation_id,
             selected_candidate_id=req.selected_candidate_id,
             selected_target=req.selected_target,
         )
-    except KeyError:
+    except DisambiguationNotFoundError:
         raise HTTPException(
             status_code=404,
             detail=f"Disambiguation ID '{req.disambiguation_id}' not found or already resolved.",

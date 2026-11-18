@@ -11,8 +11,8 @@ from the_watcher.dependencies import (
     STREAM_WORLD,
     get_event_bus,
     get_regional_unrest_repo,
-    to_uuid,
 )
+from the_watcher.ids import to_uuid
 from the_watcher.turf_war.aggregate import RegionalUnrestAggregate
 from the_watcher.turf_war.models import (
     SkirmishSimulateRequest,
