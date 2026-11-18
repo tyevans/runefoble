@@ -1,7 +1,7 @@
 ---
 id: '0685'
 title: App Shell Mounts Print Forge, Caravan Board, and Board DM Controls
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0645
@@ -25,7 +25,7 @@ target_release: 0.9.0
 # TASK-0685: App Shell Mounts Print Forge, Caravan Board, and Board DM Controls
 
 ## Status
-Refined. Discovered in round 2 audit of implementation reports 0613, 0677 and 0563. TASK-0645 covers the asset forge only.
+Complete
 
 ## Summary
 Three owned microfrontends are built and tested in Storybook, but the App Shell never places them. The e2e features for print forge, caravan board and board DM controls are blocked for this reason. This task composes them into the App Shell, following the pattern TASK-0645 sets for the asset forge.
@@ -68,3 +68,6 @@ Three owned microfrontends are built and tested in Storybook, but the App Shell 
 
 - Severity: high
 - Source audits: `work/0613.md`, `work/0677.md`, `work/0563.md`
+
+## Completion Note
+Caravan board item 1b moved to TASK-0807. The print forge mount was already done. The DM controls mount is done.
