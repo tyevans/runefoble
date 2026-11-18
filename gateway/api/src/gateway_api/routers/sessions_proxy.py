@@ -116,3 +116,25 @@ async def update_atmosphere_proxy(
         path=f"{SESSIONS}/{session_id}/atmosphere",
         json_body=req.model_dump(mode="json"),
     )
+
+
+@router.get(
+    "/api/v1/sessions/{session_id}/events",
+    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
+)
+async def list_session_events_proxy(session_id: str, request: Request) -> Any:
+    """Read the session chronicle feed in commit order (requires 'observe'; game_session)."""
+    return await forward_json(
+        request, service=SERVICE, method="GET", path=f"{SESSIONS}/{session_id}/events"
+    )
+
+
+@router.get(
+    "/api/v1/sessions/{session_id}/absentee-recap",
+    dependencies=[Depends(require_zanzibar_permission("observe", resource_type="session"))],
+)
+async def get_absentee_recap_proxy(session_id: str, request: Request) -> Any:
+    """Read the stand-in turns and penalties of the session (requires 'observe'; game_session)."""
+    return await forward_json(
+        request, service=SERVICE, method="GET", path=f"{SESSIONS}/{session_id}/absentee-recap"
+    )
