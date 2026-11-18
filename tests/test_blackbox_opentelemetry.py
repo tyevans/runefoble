@@ -21,6 +21,7 @@ from runefoble_platform.telemetry import (
 )
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import ws_subprotocols
 
 
 @pytest.fixture(autouse=True)
@@ -111,8 +112,14 @@ async def test_blackbox_w3c_incoming_trace_propagation():
 
 
 @pytest.mark.asyncio
-async def test_blackbox_trace_propagation_across_redis_streams(mock_bus):
-    """Verify trace context injection into Redis Streams and child span extraction."""
+async def test_blackbox_trace_propagation_across_redis_streams(
+    mock_bus, board_gateway, board_table
+):
+    """Verify trace context injection into Redis Streams and child span extraction.
+
+    The gateway publishes the spectator connection event when a spectator socket is admitted.
+    The WebSocket server span carries the socket target in `http.target`.
+    """
     memory_exporter = InMemorySpanExporter()
     settings = PlatformSettings(environment="test")
 
@@ -124,17 +131,12 @@ async def test_blackbox_trace_propagation_across_redis_streams(mock_bus):
         force=True,
     )
 
+    _, session_id = board_table("dm_dora", {"spectator_sol": "spectator"})
     stream_name = "runefoble.events.spectator"
-
-    # Execute request to spectator frontdoor endpoint that dispatches a domain event
-    transport = ASGITransport(app=gateway_app)
-    # ASGITransport does not run the lifespan. The health route needs its upstream registry.
-    async with (
-        gateway_app.router.lifespan_context(gateway_app),
-        AsyncClient(transport=transport, base_url="http://test") as client,
-    ):
-        res = await client.get("/api/v1/spectate/sess-trace-001")
-        assert res.status_code == 200
+    with board_gateway.websocket_connect(
+        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols("spectator_sol")
+    ) as ws:
+        assert ws.receive_json()["type"] == "overlay_connected"
 
     # Verify event was published to mock Redis stream
     assert stream_name in mock_bus.streams
@@ -154,12 +156,14 @@ async def test_blackbox_trace_propagation_across_redis_streams(mock_bus):
 
     spans = memory_exporter.get_finished_spans()
     server_spans = [
-        s for s in spans if s.attributes.get("http.route") == "/api/v1/spectate/{session_id}"
+        s
+        for s in spans
+        if str(s.attributes.get("http.target", "")).startswith(f"/ws/spectator/{session_id}")
     ]
     assert len(server_spans) == 1
 
     root_trace_id = format(server_spans[0].get_span_context().trace_id, "032x")
-    assert child_trace_id == root_trace_id, "Child span must share trace ID with gateway HTTP span"
+    assert child_trace_id == root_trace_id, "Child span must share trace ID with gateway span"
 
 
 @pytest.mark.asyncio

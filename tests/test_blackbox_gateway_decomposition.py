@@ -61,15 +61,9 @@ def test_health_and_readiness_frontdoor(client):
 
 
 def test_spectator_proxy_frontdoor(client):
-    """Verify spectator proxy endpoint sanitizes state without private DM notes."""
+    """Verify the spectator proxy needs a verified bearer token. No anonymous view is served."""
     session_id = f"test-sess-{uuid4().hex[:6]}"
     res = client.get(f"/api/v1/spectate/{session_id}")
-    assert res.status_code == 200
-    data = res.json()
-    assert data["session_id"] == session_id
-    assert "tokens" in data
-    assert "atmosphere" in data
-    assert "chronicle" in data
-    # Ensure private DM notes are redacted
-    assert "dm_notes" not in data
-    assert "monster_stat_blocks" not in data
+    assert res.status_code == 401
+    assert "tokens" not in res.text
+    assert "dm_notes" not in res.text

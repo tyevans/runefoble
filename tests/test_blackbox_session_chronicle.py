@@ -119,6 +119,21 @@ def test_caller_without_observe_right_is_refused(gateway, trusted_ws_issuer, pat
     assert res.json()["detail"]["error"] == "permission_denied"
 
 
+@pytest.mark.parametrize("path", SESSION_READ_ROUTES)
+def test_owner_refuses_a_stranger_on_an_existing_session(
+    gateway, game_session_upstream, trusted_ws_issuer, path: str
+) -> None:
+    """The owner checks `session.observe` itself, so a direct call is refused too (TASK-0809)."""
+    owner = _auth(trusted_ws_issuer, "dm_dora")
+    session_id = _owned_session(gateway, game_session_upstream, owner)
+    url = f"{game_session_upstream}{path.format(sid=session_id)}"
+
+    refused = httpx.get(url, headers=_auth(trusted_ws_issuer, "stranger"), timeout=5.0)
+    assert refused.status_code == 403
+    allowed = httpx.get(url, headers=owner, timeout=5.0)
+    assert allowed.status_code == 200, allowed.text
+
+
 def test_feed_lists_the_stand_in_action_with_its_speaker_and_line(
     gateway, game_session_upstream, trusted_ws_issuer, monkeypatch, live_character_sheet
 ) -> None:
