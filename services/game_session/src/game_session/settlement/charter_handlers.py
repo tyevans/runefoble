@@ -6,7 +6,7 @@ Governed by ADR-0002, ADR-0007, ADR-0011, and Hard Invariant 2.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from eventsource.domain.decorators import handles
 from game_session.settlement.facility_prices import (
@@ -25,16 +25,10 @@ from runefoble_events.events import (
     SettlementRestBoonClaimedEvent,
     SettlementUpgradedEvent,
 )
+from runefoble_platform.identifiers import parse_uuid
 
 if TYPE_CHECKING:
     from game_session.settlement.models import SettlementState
-
-
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception:
-        return uuid4()
 
 
 class CharterHandlersMixin:
@@ -94,7 +88,10 @@ class CharterHandlersMixin:
         p |= {"founded_by_campaign_id": str(kw.get("founded_by_campaign_id", ""))}
         p |= {"chartered_by": kw.get("chartered_by", "")}
         self.create_event(
-            SettlementCharteredEvent, aggregate_id=_to_uuid(sid), settlement_id=sid, **p
+            SettlementCharteredEvent,
+            aggregate_id=parse_uuid(sid, field="settlement_id"),
+            settlement_id=sid,
+            **p,
         )
         return sid
 
@@ -135,7 +132,10 @@ class CharterHandlersMixin:
         p |= {"contributing_campaign_id": str(contributing_campaign_id), "defense_rating": new_def}
         p |= {"materials_spent": spent_mats, "metadata": kw.get("metadata") or {}}
         self.create_event(
-            SettlementUpgradedEvent, aggregate_id=_to_uuid(sid), settlement_id=sid, **p
+            SettlementUpgradedEvent,
+            aggregate_id=parse_uuid(sid, field="settlement_id"),
+            settlement_id=sid,
+            **p,
         )
         return next_tier
 
@@ -156,6 +156,9 @@ class CharterHandlersMixin:
         p |= {"character_id": character_id, "claimed_by": claimed_by, "facility_id": facility_id}
         p |= {"boon": boon, "metadata": kw.get("metadata") or {}}
         self.create_event(
-            SettlementRestBoonClaimedEvent, aggregate_id=_to_uuid(sid), settlement_id=sid, **p
+            SettlementRestBoonClaimedEvent,
+            aggregate_id=parse_uuid(sid, field="settlement_id"),
+            settlement_id=sid,
+            **p,
         )
         return boon

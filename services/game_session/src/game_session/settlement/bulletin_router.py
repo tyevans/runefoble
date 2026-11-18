@@ -8,7 +8,6 @@ ADR-0006 (Redis Streams), and ADR-0012 (Design Tokens).
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from game_session.dependencies import get_event_bus, get_settlement_repository, get_spicedb_client
@@ -30,15 +29,9 @@ from game_session.settlement.models import (
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["bulletin-board"])
-
-
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
 
 
 async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
@@ -53,8 +46,9 @@ async def _load_settlement_for_bulletin(
     settlement_id: str,
 ) -> SettlementAggregate:
     repo = get_settlement_repository()
+    settlement_uuid = parse_uuid(settlement_id, field="settlement_id")
     try:
-        agg = await repo.load(_to_uuid(settlement_id))
+        agg = await repo.load(settlement_uuid)
     except Exception as e:
         raise HTTPException(
             status_code=404, detail=f"Settlement '{settlement_id}' not found"

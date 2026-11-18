@@ -8,8 +8,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from eventsource.domain.decorators import handles
-from game_session.settlement.charter_handlers import _to_uuid
 from runefoble_events.events import SettlementResourcesDepositedEvent
+from runefoble_platform.identifiers import parse_uuid
 
 if TYPE_CHECKING:
     from game_session.settlement.models import SettlementState
@@ -45,7 +45,7 @@ class TreasuryHandlersMixin:
         sid = str(self._state.settlement_id or self.aggregate_id)
         self.create_event(
             SettlementResourcesDepositedEvent,
-            aggregate_id=_to_uuid(sid),
+            aggregate_id=parse_uuid(sid, field="settlement_id"),
             settlement_id=sid,
             shared_world_id=self._state.shared_world_id,
             gold=gold,

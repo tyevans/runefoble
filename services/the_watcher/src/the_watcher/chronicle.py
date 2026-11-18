@@ -1,19 +1,9 @@
 """Absentee session chronicle and recap engine for returning players."""
 
 from typing import Any
-from uuid import UUID, uuid4
 
 from runefoble_events.events import AbsenteeRecapGenerated
-
-
-def _to_uuid(val: Any) -> UUID:
-    """Coerce string or UUID to UUID."""
-    if isinstance(val, UUID):
-        return val
-    try:
-        return UUID(str(val))
-    except (ValueError, AttributeError):
-        return uuid4()
+from the_watcher.ids import to_uuid
 
 
 class ChronicleRecapEngine:
@@ -117,7 +107,7 @@ class ChronicleRecapEngine:
             items_acquired=items_list,
         )
 
-        aggregate_uuid = _to_uuid(session_id)
+        aggregate_uuid = to_uuid(session_id)
 
         return AbsenteeRecapGenerated(
             aggregate_id=aggregate_uuid,

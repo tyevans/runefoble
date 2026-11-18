@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -36,13 +36,7 @@ from runefoble_events.events import (
     NPCWorkerAssigned,
     NPCWorkerRelieved,
 )
-
-
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception:
-        return uuid4()
+from runefoble_platform.identifiers import parse_uuid
 
 
 class NPCWorkerAggregate(DeclarativeAggregate[NPCWorkerState]):
@@ -157,7 +151,7 @@ class NPCWorkerAggregate(DeclarativeAggregate[NPCWorkerState]):
 
         self.create_event(
             NPCWorkerAssigned,
-            aggregate_id=_to_uuid(nid),
+            aggregate_id=parse_uuid(nid, field="npc_id"),
             npc_id=nid,
             establishment_id=str(establishment_id),
             role=role,
@@ -180,7 +174,7 @@ class NPCWorkerAggregate(DeclarativeAggregate[NPCWorkerState]):
         nid = str(self._state.npc_id or self.aggregate_id)
         self.create_event(
             NPCWorkerRelieved,
-            aggregate_id=_to_uuid(nid),
+            aggregate_id=parse_uuid(nid, field="npc_id"),
             npc_id=nid,
             establishment_id=str(establishment_id or self._state.establishment_id),
             reason=reason or "Relieved of duty",
@@ -198,7 +192,7 @@ class NPCWorkerAggregate(DeclarativeAggregate[NPCWorkerState]):
         nid = str(self._state.npc_id or self.aggregate_id)
         self.create_event(
             NPCMoodUpdated,
-            aggregate_id=_to_uuid(nid),
+            aggregate_id=parse_uuid(nid, field="npc_id"),
             npc_id=nid,
             mood=mood,
             temperament=temperament,
@@ -218,7 +212,7 @@ class NPCWorkerAggregate(DeclarativeAggregate[NPCWorkerState]):
         nid = str(self._state.npc_id or self.aggregate_id)
         self.create_event(
             NPCRelationshipFormed,
-            aggregate_id=_to_uuid(nid),
+            aggregate_id=parse_uuid(nid, field="npc_id"),
             source_npc_id=nid,
             target_npc_id=str(target_npc_id),
             relation_type=relation_type,
