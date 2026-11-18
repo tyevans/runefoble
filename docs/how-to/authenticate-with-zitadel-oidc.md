@@ -280,3 +280,4 @@ async with AsyncClient(
 - **WebSocket handshake (gateway)**: `tests/test_blackbox_zitadel_websocket_auth.py`.
 - **Shared Auth Fixtures**: `tests/helpers/zitadel_auth.py`.
 - **game_session, The Watcher, and inference worker identity**: `tests/test_blackbox_service_identity.py`.
+- **Negative credential matrix (every surface)**: `tests/test_blackbox_identity_negative.py` sends each bad credential class to the gateway (HTTP and WebSocket), board_state, campaign_lore, rules_compendium, and voice_agent. Each case expects a refusal. Valid control tokens prove the trust setup is live. The retired sign-in, seed, and body-claim sync routes must be absent. The Gherkin mirror is `e2e/features/identity-negative.feature`.
