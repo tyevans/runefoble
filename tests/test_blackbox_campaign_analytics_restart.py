@@ -16,7 +16,7 @@ import redis.asyncio
 from runefoble_events.events import (
     CharacterHealthChanged,
     CombatEncounterStarted,
-    CombatRoundAdvanced,
+    InitiativeTurnAdvanced,
     SessionCreated,
 )
 from runefoble_platform.config import PlatformSettings
@@ -76,7 +76,7 @@ def test_mvp_and_timeline_survive_restart_without_double_counting(
         )
         analytics_service.publish(
             SESSION_STREAM,
-            CombatRoundAdvanced(
+            InitiativeTurnAdvanced(
                 aggregate_id=sid,
                 session_id=sid,
                 campaign_id=cid,

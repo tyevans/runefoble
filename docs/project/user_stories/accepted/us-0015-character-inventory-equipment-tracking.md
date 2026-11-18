@@ -4,6 +4,7 @@ title: Event-Sourced Character Inventory, Equipment & Condition Tracking
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0006
+persona: Sarah (Absent Player)
 ---
 
 # US-0015: Event-Sourced Character Inventory, Equipment & Condition Tracking

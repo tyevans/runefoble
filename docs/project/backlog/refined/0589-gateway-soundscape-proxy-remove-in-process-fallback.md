@@ -14,11 +14,6 @@ governing_prds:
 governing_stories:
 - US-0039
 - US-0053
-severity: high
-source_audits:
-- w2-soundscape.md
-- w1-gateway-api.md
-- w1-gates-infra.md
 target_release: 0.9.0
 ---
 
@@ -70,3 +65,8 @@ Test file: `tests/test_blackbox_soundscape_gateway.py` (existing file, updated).
 2. The alias routes are removed. Frontend callers are updated.
 3. The blackbox test file passes. `uv run ruff check .` passes.
 4. `docs/reference/ports-and-endpoints.md` shows soundscape on port 8009 and the gateway routes.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-soundscape.md`, `w1-gateway-api.md`, `w1-gates-infra.md`

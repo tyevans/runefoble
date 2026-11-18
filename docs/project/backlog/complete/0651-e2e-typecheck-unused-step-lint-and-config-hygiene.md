@@ -11,9 +11,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w2-e2e-bdd.md
 ---
 
 # TASK-0651: E2E Suite Gets a Typecheck Gate, an Unused-Step Check, and Config-Driven Base URLs
@@ -61,3 +58,8 @@ This task changes tooling, so no user flow changes. Verification is by gate:
 4. The `@serial` tags are either functional or removed, and the decision is recorded.
 5. `make test-e2e` passes in chromium, firefox, and webkit.
 6. `docs/reference/cli-interfaces.md` and the how-to reflect the gates.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w2-e2e-bdd.md`

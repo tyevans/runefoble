@@ -5,6 +5,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
+from runefoble_platform.aggregate_loading import load_if_exists
 from the_watcher.dependencies import (
     check_dm_authorization,
     get_campaign_world_repo,
@@ -151,25 +152,24 @@ async def get_faction(
     """Retrieve detailed aggregate state for a specific campaign faction."""
     await require_campaign_permission(caller_id, campaign_id, "campaign.view")
     repo = get_faction_repo()
-    try:
-        agg = await repo.load(to_uuid(faction_id))
-        return FactionResponse(
-            faction_id=agg.state.faction_id,
-            campaign_id=agg.state.campaign_id,
-            name=agg.state.name,
-            influence=agg.state.influence,
-            resources=agg.state.resources,
-            disposition=agg.state.disposition,
-            active_goal=agg.state.active_goal,
-            goal_progress=agg.state.goal_progress,
-            goal_target=agg.state.goal_target,
-            rival_faction_ids=agg.state.rival_faction_ids,
-            territory=agg.state.territory,
-            shifts=agg.state.shifts,
-            history=agg.state.history,
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=404, detail="Faction not found") from exc
+    agg = await load_if_exists(repo, to_uuid(faction_id))
+    if agg is None:
+        raise HTTPException(status_code=404, detail="Faction not found")
+    return FactionResponse(
+        faction_id=agg.state.faction_id,
+        campaign_id=agg.state.campaign_id,
+        name=agg.state.name,
+        influence=agg.state.influence,
+        resources=agg.state.resources,
+        disposition=agg.state.disposition,
+        active_goal=agg.state.active_goal,
+        goal_progress=agg.state.goal_progress,
+        goal_target=agg.state.goal_target,
+        rival_faction_ids=agg.state.rival_faction_ids,
+        territory=agg.state.territory,
+        shifts=agg.state.shifts,
+        history=agg.state.history,
+    )
 
 
 @router.get(

@@ -12,9 +12,6 @@ governing_prds: []
 governing_stories:
 - US-0004
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-docs-integrity.md
 ---
 
 # TASK-0657: Tutorial 01 and README Quick Start Produce a Running Local Stack
@@ -62,3 +59,8 @@ Tutorial verification is a script, not prose review:
 4. The Vite proxy list matches `frontend/vite.config.ts`.
 5. The verification script exists, and its run result is recorded in the task file.
 6. Files changed stay under 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-docs-integrity.md`

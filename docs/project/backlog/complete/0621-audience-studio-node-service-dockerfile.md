@@ -12,10 +12,6 @@ governing_prds:
 - PRD-0011
 governing_stories: []
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-audience-studio.md
-- w1-gates-infra.md
 ---
 
 # TASK-0621: Audience Studio Node Service Dockerfile and Image Build
@@ -55,3 +51,8 @@ Complete
 3. `make images` includes audience-studio.
 4. `docs/reference/cli-interfaces.md` notes the image.
 5. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-audience-studio.md`, `w1-gates-infra.md`

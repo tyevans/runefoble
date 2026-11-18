@@ -3,6 +3,8 @@ id: 0010
 title: Adaptive Soundscape, Environmental Foley & Combat Scoring
 status: Accepted
 created: 2026-09-25
+target_persona: Marcus, Devon, Evelyn
+component: soundscape
 ---
 
 # PRD-0010 — Adaptive Soundscape, Environmental Foley & Combat Scoring

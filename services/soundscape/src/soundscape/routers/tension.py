@@ -7,6 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
@@ -38,10 +39,7 @@ async def get_tension_status(
     """Retrieve current session tension score, active stems, and effective gain levels."""
     repo = get_soundscape_repo()
     agg_id = get_or_create_aggregate_id(session_id)
-    try:
-        agg = await repo.load(agg_id)
-    except Exception:
-        agg = None
+    agg = await load_if_exists(repo, agg_id)
     mixer = get_or_create_mixer(session_id)
 
     tension_score = agg.state.tension_score if agg else 10
@@ -105,10 +103,7 @@ async def calculate_tension(
 
     repo = get_soundscape_repo()
     agg_id = get_or_create_aggregate_id(request.session_id)
-    try:
-        agg = await repo.load(agg_id)
-    except Exception:
-        agg = SoundscapeAggregate(agg_id)
+    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
 
     agg.record_tension_update(
         session_id=request.session_id,

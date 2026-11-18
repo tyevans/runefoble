@@ -4,6 +4,7 @@ title: Campaign Combat Telemetry and Living Interactive Timeline
 status: Shipped
 created: 2026-09-25
 governing_prd: PRD-0012
+persona: Sarah (Absent Player)
 ---
 
 # US-0040 — Campaign Combat Telemetry and Living Interactive Timeline

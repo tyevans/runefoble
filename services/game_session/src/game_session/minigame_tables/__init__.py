@@ -1,5 +1,6 @@
-"""Multiplayer minigames tables and rules engine."""
+"""Multiplayer minigames tables: rules engine, table state model, and WebSocket plumbing."""
 
+from game_session.minigame_tables.models import MinigameTableState, TablePlayer
 from game_session.minigame_tables.rules_engine import (
     calculate_dart_trajectory,
     evaluate_craps_roll,
@@ -9,13 +10,13 @@ from game_session.minigame_tables.rules_engine import (
 )
 from game_session.minigame_tables.ws_manager import (
     MinigameTableManager,
-    MinigameTableState,
     minigame_table_manager,
 )
 
 __all__ = [
     "MinigameTableManager",
     "MinigameTableState",
+    "TablePlayer",
     "calculate_dart_trajectory",
     "evaluate_craps_roll",
     "evaluate_darts_501_throw",

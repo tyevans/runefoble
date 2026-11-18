@@ -22,7 +22,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    settings = WorkerSettings()
+    settings = WorkerSettings.from_environment()
 
     host = args.host or settings.host
     port = args.port or settings.port

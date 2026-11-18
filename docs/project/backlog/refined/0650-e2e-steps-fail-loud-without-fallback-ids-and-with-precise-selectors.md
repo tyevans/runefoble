@@ -14,9 +14,6 @@ governing_stories:
 - US-0065
 - US-0069
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-e2e-bdd.md
 ---
 
 # TASK-0650: E2E Steps Fail Loudly Without Fallback IDs and Use Precise Selectors and Assertions
@@ -72,3 +69,8 @@ These are regression checks on the existing scenarios, with stricter assertions:
 Source: `.audit/synth/discovered-round1.md`.
 
 - The gateway-unavailable scenario needs a public make target that stops and starts the gateway. Add the target or drop the scenario.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-e2e-bdd.md`

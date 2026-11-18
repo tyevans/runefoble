@@ -15,10 +15,6 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-e2e-bdd.md
-- w2-app-shell.md
 ---
 
 # TASK-0525: Playwright BDD Journeys Authenticate Through Real Zitadel
@@ -69,3 +65,8 @@ Browser journeys through the App Shell only.
 3. The two how-to guides describe the Zitadel fixture.
 4. Storybook and frontend builds still pass (no change expected).
 5. No file exceeds 500 lines. New step files are split by feature.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-e2e-bdd.md`, `w2-app-shell.md`

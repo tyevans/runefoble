@@ -4,6 +4,7 @@ title: Realtime Live Board WebSocket Synchronization
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0005
+persona: Marcus (Adventurer)
 ---
 
 # US-0014: Realtime Live Board WebSocket Synchronization

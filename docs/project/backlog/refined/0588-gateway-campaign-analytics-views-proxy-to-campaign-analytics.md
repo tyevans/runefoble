@@ -13,11 +13,6 @@ governing_prds:
 governing_stories:
 - US-0040
 - US-0054
-severity: high
-source_audits:
-- w2-campaign-analytics.md
-- w1-gateway-api.md
-- w1-gates-infra.md
 target_release: 0.9.0
 ---
 
@@ -78,3 +73,8 @@ The test must not assert "Valeros", "session-tomb-14", "enc-crypt-1" or 42 turns
 3. Each proxy forwards through `ServiceClient`.
 4. The blackbox test file passes. `uv run ruff check .` passes.
 5. `docs/reference/ports-and-endpoints.md` matches the routes.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-analytics.md`, `w1-gateway-api.md`, `w1-gates-infra.md`

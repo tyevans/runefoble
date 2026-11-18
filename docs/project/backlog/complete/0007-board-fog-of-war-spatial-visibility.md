@@ -1,3 +1,10 @@
+---
+id: '0007'
+title: Board Fog-of-War Spatial Visibility and Shroud Synchronization
+status: Complete
+created: 2026-09-25
+target_bc: board_state
+---
 # TASK-0007: Board Fog-of-War Spatial Visibility and Shroud Synchronization
 
 ## Status

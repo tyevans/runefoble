@@ -6,3 +6,4 @@ export * from './runefoble-west-marches-atlas.ts';
 export * from './runefoble-west-marches-atlas.styles.ts';
 export * from './west_marches/index.ts';
 export * from './atlas/index.ts';
+export * from './codex/index.ts';

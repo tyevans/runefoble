@@ -3,6 +3,8 @@ id: '0019'
 title: Spatial Companion Mobile Experience, Low-Bandwidth WebRTC & Haptic Secret Pings
 status: Accepted
 created: 2026-09-26
+target_persona: Marcus, Sarah, Evelyn
+component: voice_agent
 ---
 
 # PRD-0019 — Spatial Companion Mobile Experience, Low-Bandwidth WebRTC & Haptic Secret Pings

@@ -14,11 +14,6 @@ governing_prds:
 governing_stories:
 - US-0038
 - US-0049
-severity: high
-source_audits:
-- w2-asset-forge.md
-- w1-gateway-api.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -74,3 +69,8 @@ Test file: `tests/test_blackbox_gateway_forge_proxy.py`. `asset_forge` runs as a
 2. Every forge route in the list is reachable through the gateway.
 3. The blackbox test file passes. `uv run ruff check .` passes.
 4. The ports reference names the gateway as the browser endpoint for forge routes.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-asset-forge.md`, `w1-gateway-api.md`, `w3-ddd-architecture.md`

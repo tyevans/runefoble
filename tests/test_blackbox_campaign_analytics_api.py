@@ -14,7 +14,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
-from runefoble_events.events import CharacterHealthChanged, CombatRoundAdvanced, SessionCreated
+from runefoble_events.events import CharacterHealthChanged, InitiativeTurnAdvanced, SessionCreated
 
 from tests.helpers.campaign_analytics_service import (
     CHARACTER_STREAM,
@@ -34,6 +34,7 @@ def test_service_healthz_metrics_and_manifest(analytics_service: AnalyticsServic
     """Verify /healthz, /metrics, /openapi.json, and /ui/manifest public frontdoors."""
     with analytics_service.start() as client:
         health = client.get("/healthz").json()
+        assert isinstance(health.pop("event_publish_failures"), int)
         assert health == {
             "status": "ok",
             "service": "campaign-analytics",
@@ -66,7 +67,7 @@ def test_mvp_route_filters_by_encounter(analytics_service: AnalyticsService) -> 
         )
         analytics_service.publish(
             SESSION_STREAM,
-            CombatRoundAdvanced(
+            InitiativeTurnAdvanced(
                 aggregate_id=sid,
                 session_id=sid,
                 campaign_id=cid,
@@ -118,7 +119,7 @@ def test_timeline_route_applies_limit(analytics_service: AnalyticsService) -> No
         )
         analytics_service.publish(
             SESSION_STREAM,
-            CombatRoundAdvanced(
+            InitiativeTurnAdvanced(
                 aggregate_id=sid,
                 session_id=sid,
                 campaign_id=cid,

@@ -4,10 +4,8 @@ import logging
 import socket
 from typing import Any, Literal
 
-from eventsource.adapters.memory.bus import InMemoryEventBus
 from eventsource.adapters.memory.store import InMemoryEventStore
 from eventsource.adapters.postgresql.store import PostgreSQLEventStore
-from eventsource.adapters.redis.bus import RedisEventBus, RedisEventBusConfig
 from eventsource.application.aggregates.repository import AggregateRepository
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -24,7 +22,6 @@ logger = logging.getLogger("runefoble.platform.event_sourcing")
 
 # Singleton instances for process lifecycle
 _global_event_store: FullEventStore | None = None
-_global_event_bus: EventBus | None = None
 
 
 class EventStoreInitializationError(RuntimeError):
@@ -130,32 +127,6 @@ def set_event_store(store: FullEventStore | None) -> None:
     _global_event_store = store
 
 
-def get_event_bus(settings: PlatformSettings | None = None) -> EventBus:
-    """Provide the event bus: RedisEventBus when the Redis flag is set, otherwise InMemoryEventBus.
-
-    Initialization errors on the Redis path propagate. No in-memory substitute is returned.
-    """
-    global _global_event_bus
-    if _global_event_bus is not None and settings is None:
-        return _global_event_bus
-
-    s = settings or PlatformSettings()
-    if getattr(s, "use_redis_event_bus", False):
-        logger.info("Initializing RedisEventBus...")
-        config = RedisEventBusConfig(redis_url=str(s.redis_url))
-        _global_event_bus = RedisEventBus(config=config)
-        return _global_event_bus
-
-    _global_event_bus = InMemoryEventBus()
-    return _global_event_bus
-
-
-def set_event_bus(bus: EventBus | None) -> None:
-    """Explicitly set or reset the global event bus singleton."""
-    global _global_event_bus
-    _global_event_bus = bus
-
-
 def create_aggregate_repository[T: DeclarativeAggregate](
     aggregate_factory: type[T],
     event_store: FullEventStore | None = None,
@@ -178,16 +149,12 @@ __all__ = [
     "InMemoryEventStore",
     "PostgreSQLEventStore",
     "EventBus",
-    "InMemoryEventBus",
-    "RedisEventBus",
     "handles",
     "register_event",
     "EventStoreInitializationError",
     "get_event_store",
     "event_store_kind",
     "set_event_store",
-    "get_event_bus",
-    "set_event_bus",
     "create_aggregate_repository",
     "normalize_async_postgres_url",
     "is_database_reachable",

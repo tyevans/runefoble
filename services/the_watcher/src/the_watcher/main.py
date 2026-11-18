@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
@@ -17,6 +18,7 @@ from the_watcher.dependencies import (
     compound_action_engine,
     disambiguation_engine,
     engine,
+    event_bus_provider,
     get_event_bus,
     set_event_bus,
     to_uuid,
@@ -59,8 +61,10 @@ app = FastAPI(
     title="Runefoble - The Watcher Service",
     version="0.1.0",
     description="AI Gameplay System: Speech-to-Intent, Board Animator, Autonomous DM & Missing Player Stand-in.",
+    lifespan=event_bus_provider.lifespan,
 )
 
+register_store_unavailable_handlers(app)
 app.include_router(intent_router)
 app.include_router(autonomous_dm_router)
 app.include_router(stand_in_router)

@@ -17,10 +17,6 @@ governing_stories:
 - US-0006
 - US-0029
 - US-0030
-severity: medium
-source_audits:
-- w3-ddd-architecture.md
-- w1-gateway-api.md
 target_release: 0.9.0
 ---
 
@@ -76,3 +72,8 @@ Test file: `tests/test_blackbox_spectator_overlay_owner.py`. `game_session` and 
 3. The blackbox test file passes. `uv run ruff check .` passes.
 4. `docs/reference/ports-and-endpoints.md` matches the routes.
 5. TASK-0316 is closed as superseded in the index.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-ddd-architecture.md`, `w1-gateway-api.md`

@@ -8,8 +8,8 @@ from pathlib import Path
 
 from .agent_prompts import build_agent_decomposition_prompt
 from .decomposer import PRDDecomposer
+from .manager import PRDManager
 from .models import PRD
-from .prd_manager import PRDManager
 from .registry_sync import RegistrySynchronizer
 from .writer import PlanWriter
 

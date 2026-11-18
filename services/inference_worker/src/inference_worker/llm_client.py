@@ -45,8 +45,8 @@ def parse_json_object(content: str) -> dict[str, Any]:
 class MultiBackendLLMClient:
     """Manages connection to local GPU model runtimes. The mock backend is explicit only."""
 
-    def __init__(self, settings: WorkerSettings | None = None) -> None:
-        self.settings = settings or WorkerSettings()
+    def __init__(self, settings: WorkerSettings) -> None:
+        self.settings = settings
         self._active_backend: str = self.settings.backend
 
     async def _probe(self, url: str) -> bool:

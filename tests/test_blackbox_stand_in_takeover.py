@@ -42,9 +42,9 @@ def character_service(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
         yield url
 
 
-def _create_stand_in_character(character_url: str) -> str:
-    """Create a character and activate its AI stand-in through the character_sheet frontdoor."""
-    with httpx.Client(base_url=character_url, headers=auth_headers("character-owner")) as http:
+def _create_stand_in_character(character_url: str, owner: str) -> str:
+    """Create the owner's character and activate its AI stand-in through the character_sheet frontdoor."""
+    with httpx.Client(base_url=character_url, headers=auth_headers(owner)) as http:
         created = http.post(
             "/api/v1/characters",
             json={"name": "Kyra", "character_class": "Cleric", "max_hp": 20},
@@ -75,7 +75,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         campaign_id, player_id = await _owned_campaign(client), "sarah-user"
-        char_id = _create_stand_in_character(character_service)
+        char_id = _create_stand_in_character(character_service, player_id)
 
         # 1. Setup session, join player, start session & combat encounter
         create_res = await client.post(

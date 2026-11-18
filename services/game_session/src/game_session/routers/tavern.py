@@ -22,11 +22,19 @@ from game_session.dependencies import (
 )
 from game_session.events import STREAM_TAVERN
 from game_session.merchants import MERCHANT_TEMPERAMENTS, MerchantAggregate
+from game_session.minigame_tables.models import MinigameTableState
+from game_session.minigame_tables.service import (
+    TableAlreadyOpenError,
+    TableNotFoundError,
+    load_table,
+    open_table,
+)
 from game_session.minigames import (
     TavernGameAggregate,
     TavernGameState,
     to_uuid,
 )
+from game_session.settlement.auth import check_establishment_play_permission
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.voice_client import VoiceAgentUnavailableError
 from pydantic import BaseModel
@@ -92,6 +100,45 @@ async def _check_session_auth(session_id: str, user_id: str) -> None:
             )
     if not has_perm:
         raise HTTPException(status_code=403, detail="Player or DM permission required")
+
+
+class OpenTableRequest(BaseModel):
+    table_id: str
+    establishment_id: str = "est-default"
+    game_type: Literal["darts", "liars_dice", "roulette", "craps", "billiards"] = "darts"
+
+
+async def _require_table_play(establishment_id: str, user_id: str) -> None:
+    has_perm = await check_establishment_play_permission(
+        get_spicedb_client(), establishment_id, user_id
+    )
+    if not has_perm:
+        raise HTTPException(
+            status_code=403, detail="Play permission required at this establishment"
+        )
+
+
+@router.post("/api/v1/tavern/tables", response_model=MinigameTableState, status_code=201)
+async def open_minigame_table(caller_id: CallerId, req: OpenTableRequest) -> MinigameTableState:
+    """Open a minigame table. Sockets join only tables opened here (TASK-0566)."""
+    await _require_table_play(req.establishment_id, caller_id)
+    try:
+        return await open_table(req.table_id, req.establishment_id, req.game_type)
+    except TableAlreadyOpenError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/api/v1/tavern/tables/{table_id}", response_model=MinigameTableState)
+async def get_minigame_table(caller_id: CallerId, table_id: str) -> MinigameTableState:
+    """Read the seats, chips, pot, and game state of an open minigame table."""
+    try:
+        table = await load_table(table_id)
+    except TableNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    await _require_table_play(table.establishment_id, caller_id)
+    return table
 
 
 @router.post("/api/v1/sessions/{session_id}/tavern/games", response_model=TavernGameState)

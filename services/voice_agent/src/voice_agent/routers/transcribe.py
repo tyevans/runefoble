@@ -14,6 +14,8 @@ from typing import Annotated, Literal
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException
 from runefoble_events.events import PlayerSpokeEvent
+from runefoble_platform.engine_ports import EngineUnavailableError
+from runefoble_platform.event_publish import publish_or_fail
 from voice_agent.auth import VoicePrincipal, caller_headers, get_voice_principal
 from voice_agent.authz import require_speaker
 from voice_agent.dependencies import (
@@ -37,7 +39,8 @@ async def _transcript_from_request(req: TranscribeRequest) -> tuple[str, Transcr
     """Return the player's words and where they came from. Never invents text.
 
     Audio wins when both audio and typed text are sent. Malformed or empty input returns 422.
-    Engine failures propagate as EngineUnavailableError, which the app maps to 503.
+    Engine failures publish VoiceTranscriptionFailed, then propagate as EngineUnavailableError,
+    which the app maps to 503.
     """
     if req.audio_base64 is not None:
         try:
@@ -47,7 +50,14 @@ async def _transcript_from_request(req: TranscribeRequest) -> tuple[str, Transcr
         pcm, sample_rate = parse_audio_data(audio)
         if not pcm:
             raise HTTPException(status_code=422, detail="audio_base64 holds no audio")
-        spoken = await get_streaming_pipeline().transcriber.transcribe(pcm, sample_rate=sample_rate)
+        pipeline = get_streaming_pipeline()
+        try:
+            spoken = await pipeline.transcriber.transcribe(pcm, sample_rate=sample_rate)
+        except EngineUnavailableError as exc:
+            await pipeline.publish_transcription_failed(
+                req.session_id, req.speaker_id, req.speaker_name, exc
+            )
+            raise
         return spoken.strip(), "audio"
 
     typed = (req.transcript or "").strip()
@@ -93,14 +103,8 @@ async def transcribe_speech(
         is_whisper=req.is_whisper,
         target_character_id=req.target_character_id,
     )
-    bus = get_event_bus()
-    event_entry_id = None
-    try:
-        event_entry_id = await bus.publish_event(STREAM_SESSION, spoke_event)
-    except Exception as e:
-        logger.warning(
-            "Failed to publish PlayerSpokeEvent to Redis stream '%s': %s", STREAM_SESSION, e
-        )
+    # The spoken words are player state. A failed publish returns 503 and forwards nothing.
+    event_entry_id = await publish_or_fail(get_event_bus(), STREAM_SESSION, spoke_event)
 
     # 2. Forward to The Watcher
     watcher_intent = None

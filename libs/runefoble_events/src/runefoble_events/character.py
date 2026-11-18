@@ -35,7 +35,11 @@ class CharacterCreated(BaseRunefobleEvent):
 
 @register_event
 class CharacterHealthChanged(BaseRunefobleEvent):
+    """HP change for one character. session_id is None when no session is in play."""
+
     aggregate_type: str = "CharacterSheet"
+    session_id: str | None = None
+    campaign_id: str | None = None
     delta: int
     current_hp: int
     max_hp: int

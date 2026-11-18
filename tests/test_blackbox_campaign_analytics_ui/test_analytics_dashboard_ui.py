@@ -17,7 +17,7 @@ from runefoble_auth.mock_spicedb import MockSpiceDBClient
 from runefoble_events.events import (
     CharacterHealthChanged,
     CombatEncounterStarted,
-    CombatRoundAdvanced,
+    InitiativeTurnAdvanced,
     SessionCreated,
     SessionStarted,
 )
@@ -84,7 +84,7 @@ async def test_telemetry_dashboard_mvp_turn_metrics(
     )
     await event_bus.publish_event(
         "runefoble.events.session",
-        CombatRoundAdvanced(
+        InitiativeTurnAdvanced(
             aggregate_id=session_id,
             session_id=session_id,
             campaign_id=campaign_id,
@@ -125,3 +125,65 @@ async def test_telemetry_dashboard_mvp_turn_metrics(
     )
     assert filtered.status_code == 200
     assert len(filtered.json()["combatants"]) == 0
+
+
+@pytest.mark.asyncio
+async def test_health_change_without_session_is_not_counted(
+    spicedb_client: MockSpiceDBClient,
+    client: TestClient,
+    event_bus: RedisStreamsEventBus,
+) -> None:
+    """A health change with a null session id is skipped. It never counts as a character key."""
+    campaign_id, session_id, char_id = str(uuid4()), str(uuid4()), str(uuid4())
+    await grant_view(spicedb_client, campaign_id)
+
+    await event_bus.publish_event(
+        "runefoble.events.session",
+        SessionCreated(
+            aggregate_id=session_id, session_id=session_id, campaign_id=campaign_id, title="Vault"
+        ),
+    )
+    await event_bus.publish_event(
+        "runefoble.events.session",
+        InitiativeTurnAdvanced(
+            aggregate_id=session_id,
+            session_id=session_id,
+            round_number=1,
+            active_combatant_id=char_id,
+        ),
+    )
+    await event_bus.publish_event(
+        "runefoble.events.character",
+        CharacterHealthChanged(
+            aggregate_id=char_id,
+            session_id=None,
+            campaign_id=campaign_id,
+            current_hp=21,
+            max_hp=30,
+            delta=-9,
+            source="Stray Hit",
+        ),
+    )
+    await event_bus.publish_event(
+        "runefoble.events.character",
+        CharacterHealthChanged(
+            aggregate_id=char_id,
+            session_id=session_id,
+            campaign_id=campaign_id,
+            current_hp=8,
+            max_hp=30,
+            delta=-13,
+            source="Ghoul Claws",
+        ),
+    )
+    assert wait_until(
+        lambda: any(
+            c["damage_taken"] == 13
+            for c in client.get(f"/api/v1/analytics/campaigns/{campaign_id}/mvp").json()[
+                "combatants"
+            ]
+        )
+    )
+
+    combatants = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/mvp").json()["combatants"]
+    assert sum(c["damage_taken"] for c in combatants) == 13

@@ -10,7 +10,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import get_session_bounties_index, set_event_bus, set_spicedb_client
+from game_session.dependencies import set_event_bus, set_spicedb_client
 from game_session.events import STREAM_SESSION
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
@@ -20,13 +20,6 @@ from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
-
-
-@pytest.fixture(autouse=True)
-def clean_bounties_index() -> Generator[None]:
-    get_session_bounties_index().clear()
-    yield
-    get_session_bounties_index().clear()
 
 
 @pytest.fixture

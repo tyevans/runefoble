@@ -233,7 +233,7 @@ The AGY Launcher client frontend is decomposed into focused submodules under `to
 
 ### 🎯 Product Requirements & Speculative Feature Inventory
 - Browse PRD problem statements and checkable user outcomes.
-- Interactive capability matrix table from `FEATURE_INVENTORY.md` categorized across 6 functional domains with P0 (MVP), P1 (Beta), and P2 (Horizon) badges.
+- Interactive capability matrix table from `speculative-feature-inventory.md` categorized across 6 functional domains with P0 (MVP), P1 (Beta), and P2 (Horizon) badges.
 
 ### 👥 Personas & User Stories Studio
 - Dossiers for all 5 Runefoble personas: **Evelyn** (DM), **Marcus** (Adventurer), **Sarah** (Absent Player), **Devon** (Streamer), and **Alex** (Developer).

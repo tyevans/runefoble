@@ -82,7 +82,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `notification_body`: Optional[String]
   - `diegetic`: Boolean
   - `dispatched_at`: String (ISO-8601 UTC timestamp)
-- **`VoiceSpeechInterrupted`**: Emitted when active TTS narration is interrupted by player speech / barge-in (`voice.speech.interrupted`).
+- **`VoiceSpeechInterrupted`**: Emitted when active TTS narration is interrupted by player speech / barge-in (`runefoble.events.voice.speech_interrupted`).
   - `session_id`: String
   - `speaker_id`: String
   - `speaker_name`: String

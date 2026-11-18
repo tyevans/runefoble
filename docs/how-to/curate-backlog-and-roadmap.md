@@ -8,11 +8,12 @@ Inspect the repository for file length invariant violations (<500 lines) and rev
 ```bash
 make health-check
 ```
-Or run the Python script directly:
+Or run the spec-ops gates directly:
 ```bash
-python3 scripts/health_check.py
+spec-ops health
+spec-ops schema check
 ```
-The command exits with status 1 when a source file exceeds 500 lines. This is the only file length gate. Tests do not check line counts.
+`spec-ops health` exits with status 1 when a source file exceeds 500 lines. This is the only file length gate. Tests do not check line counts.
 
 ## Running the Backlog Curator
 To run the automated triage, refactoring scan, and JIT refinement cycle:

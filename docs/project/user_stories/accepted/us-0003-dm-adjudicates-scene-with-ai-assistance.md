@@ -4,6 +4,7 @@ title: AI-Assisted Narrative Adjudication for Game Masters
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0001
+persona: Evelyn (DM)
 ---
 
 # US-0003 — AI-Assisted Narrative Adjudication for Game Masters

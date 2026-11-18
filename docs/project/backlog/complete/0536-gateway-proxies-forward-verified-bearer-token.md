@@ -14,12 +14,6 @@ governing_prds:
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-campaign-lore.md
-- w2-campaign-analytics.md
-- w1-gateway-api.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0536: Gateway Proxies Forward the Verified Bearer Token to Services and Return Honest Errors
@@ -67,3 +61,8 @@ HTTP tests through the gateway, with a stub upstream that echoes the headers it 
 2. Gateway proxy test passes.
 3. Existing hub and soundscape suites pass or are updated to the 502 contract.
 4. No file exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-lore.md`, `w2-campaign-analytics.md`, `w1-gateway-api.md`, `w3-authz-coverage.md`

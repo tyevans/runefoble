@@ -4,6 +4,7 @@ title: Spectator Dynamic Cinematic Auto-Camera and Safe View Redaction
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0011
+persona: Devon (Streamer)
 ---
 
 # US-0029 — Spectator Dynamic Cinematic Auto-Camera and Safe View Redaction

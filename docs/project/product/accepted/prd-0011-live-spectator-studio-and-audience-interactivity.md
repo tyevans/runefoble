@@ -3,6 +3,8 @@ id: 0011
 title: Live Spectator Studio & Two-Way Audience Interactivity
 status: Accepted
 created: 2026-09-25
+target_persona: Devon
+component: audience_studio
 ---
 
 # PRD-0011 — Live Spectator Studio & Two-Way Audience Interactivity

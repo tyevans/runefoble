@@ -13,9 +13,6 @@ governing_prds:
 governing_stories:
 - US-0055
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-asset-forge.md
 ---
 
 # TASK-0615: Asset Forge Wardrobe Synthesis Behind a Generator Port With Accurate Face Claims
@@ -59,3 +56,8 @@ Source: `.audit/reports/w2-asset-forge.md` F5.
 2. Blackbox tests pass. `uv run pytest services/asset_forge` passes.
 3. Ruff check and format pass.
 4. Reference and how-to docs corrected. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-asset-forge.md`

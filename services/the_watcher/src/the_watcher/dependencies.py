@@ -10,11 +10,11 @@ from fastapi import HTTPException
 from runefoble_auth.contract import permission_for_action
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
 )
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.autonomous_dm import AutonomousDMEngine
 from the_watcher.chronicle import ChronicleRecapEngine
 from the_watcher.compound_actions import CompoundActionEngine
@@ -33,7 +33,7 @@ BOARD_STATE_URL = os.environ.get("RUNEFOBLE_BOARD_STATE_URL")
 
 STREAM_WATCHER = "runefoble.events.watcher"
 STREAM_BOARD = "runefoble.events.board"
-STREAM_WORLD = "runefoble:events:world"
+STREAM_WORLD = "runefoble.events.world"
 
 engine = TheWatcherEngine()
 chronicle_engine = ChronicleRecapEngine()
@@ -44,7 +44,6 @@ compound_action_engine = CompoundActionEngine()
 
 platform_settings = PlatformSettings()
 
-_event_bus: RedisStreamsEventBus | None = None
 _faction_repo: AggregateRepository[FactionAggregate] | None = None
 _campaign_world_repo: AggregateRepository[CampaignWorldAggregate] | None = None
 _faction_resource_repo: AggregateRepository[FactionResourceAggregate] | None = None
@@ -209,16 +208,9 @@ async def check_dm_authorization(
     return False
 
 
-def get_event_bus() -> RedisStreamsEventBus:
-    global _event_bus
-    if _event_bus is None:
-        _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    global _event_bus
-    _event_bus = bus
+event_bus_provider = EventBusProvider(platform_settings)
+get_event_bus = event_bus_provider.get
+set_event_bus = event_bus_provider.set
 
 
 def to_uuid(val: str | UUID | None) -> UUID:

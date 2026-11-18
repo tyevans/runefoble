@@ -14,10 +14,6 @@ governing_stories:
 - US-0038
 - US-0049
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-asset-forge.md
-- w1-libs.md
 ---
 
 # TASK-0612: Asset Forge Silo Upload Fails Closed and Asset Index Is Durable
@@ -65,3 +61,8 @@ Sources: `.audit/reports/w2-asset-forge.md` F1; `.audit/reports/w1-libs.md` F6 (
 3. Blackbox tests pass. `uv run pytest services/asset_forge libs/runefoble_platform` passes.
 4. Ruff check and format pass.
 5. Docs and `CHANGELOG.md` `[Unreleased]` updated.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-asset-forge.md`, `w1-libs.md`

@@ -1,6 +1,8 @@
 """WebSocket router for real-time multiplayer tavern and casino minigames.
 
 Governed by ADR-0004, ADR-0006, and Hard Invariant 1 (SpiceDB authorization).
+Table state lives on the TavernGame aggregate (TASK-0566). This module only
+admits sockets, runs commands, and broadcasts the results.
 """
 
 from __future__ import annotations
@@ -10,6 +12,8 @@ from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from game_session.dependencies import get_spicedb_client
+from game_session.minigame_tables.service import TableNotFoundError, load_table, run_table_command
+from game_session.minigame_tables.ws_commands import table_command_for
 from game_session.minigame_tables.ws_manager import minigame_table_manager
 from game_session.settlement.auth import check_establishment_play_permission
 from game_session.settlement.auth.tokens import get_zitadel_auth_service
@@ -47,8 +51,20 @@ async def handle_table_websocket(
         await websocket.close(code=4003, reason="Forbidden")
         return
 
+    try:
+        table = await load_table(table_id)
+    except TableNotFoundError:
+        await websocket.send_json(
+            {
+                "type": "error",
+                "code": "TABLE_NOT_FOUND",
+                "message": f"Table '{table_id}' is not open",
+            }
+        )
+        await websocket.close(code=4404, reason="Table not found")
+        return
+
     minigame_table_manager.register(table_id, websocket)
-    table = minigame_table_manager.get_or_create_table(table_id, establishment_id)
     await websocket.send_json(
         {
             "type": "connected",
@@ -62,64 +78,31 @@ async def handle_table_websocket(
         while True:
             data: dict[str, Any] = await websocket.receive_json()
             action = data.get("action") or data.get("type") or "unknown"
-
-            if action == "join":
-                await minigame_table_manager.join_player(
-                    table_id=table_id,
-                    player_id=data.get("player_id", user_id),
-                    name=data.get("name", "Adventurer"),
-                    chips=data.get("chips", 100),
-                    establishment_id=establishment_id,
-                    game_type=data.get("game_type", table.game_type),
-                )
-            elif action == "bet":
-                await minigame_table_manager.place_bet(
-                    table_id=table_id,
-                    player_id=data.get("player_id", user_id),
-                    amount=int(data.get("amount", 10)),
-                    bet_type=data.get("bet_type", "straight"),
-                    target=data.get("target"),
-                )
-            elif action == "throw_dart":
-                await minigame_table_manager.throw_dart(
-                    table_id=table_id,
-                    player_id=data.get("player_id", user_id),
-                    vx=float(data.get("vx", 0.0)),
-                    vy=float(data.get("vy", 0.0)),
-                    wind_x=float(data.get("wind_x", 0.0)),
-                    wind_y=float(data.get("wind_y", 0.0)),
-                )
-            elif action == "bid":
-                await minigame_table_manager.submit_bid(
-                    table_id=table_id,
-                    player_id=data.get("player_id", user_id),
-                    quantity=int(data.get("quantity", 1)),
-                    face=int(data.get("face", 1)),
-                )
-            elif action == "challenge":
-                await minigame_table_manager.challenge_bluff(
-                    table_id=table_id,
-                    challenger_id=data.get("challenger_id", user_id),
-                )
-            elif action == "spin_roulette":
-                winning_num = data.get("winning_number")
-                await minigame_table_manager.spin_roulette(
-                    table_id=table_id,
-                    winning_number=int(winning_num) if winning_num is not None else None,
-                )
-            elif action == "roll_craps":
-                dice = data.get("dice")
-                await minigame_table_manager.roll_craps(
-                    table_id=table_id,
-                    dice=dice,
-                )
-            else:
-                # Echo / broadcast generic table action
-                await minigame_table_manager.broadcast(table_id, data)
+            await _handle_action(websocket, table_id, user_id, action, data)
     except WebSocketDisconnect:
         pass
     finally:
         minigame_table_manager.disconnect(table_id, websocket)
+
+
+async def _handle_action(
+    websocket: WebSocket,
+    table_id: str,
+    user_id: str,
+    action: str,
+    data: dict[str, Any],
+) -> None:
+    command = table_command_for(action, data, user_id)
+    if command is None:
+        # Pass-through action (for example billiards strokes): echo to the table.
+        await minigame_table_manager.broadcast(table_id, data)
+        return
+    try:
+        message = await run_table_command(table_id, command)
+    except ValueError as exc:
+        await websocket.send_json({"type": "error", "code": "ACTION_REJECTED", "message": str(exc)})
+        return
+    await minigame_table_manager.broadcast(table_id, message)
 
 
 @router.websocket("/ws/establishments/{establishment_id}/tables/{table_id}")

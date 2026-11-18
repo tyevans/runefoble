@@ -15,11 +15,6 @@ governing_stories:
 - US-0063
 - US-0071
 - US-0009
-severity: critical
-source_audits:
-- w1-gateway-api.md
-- w1-game-session.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -95,3 +90,8 @@ Source: `.audit/synth/discovered-round1.md`.
 Source: `.audit/synth/discovered-round2.md`.
 
 - frontend/src/fixtures/app-data-service.fixtures.ts uses camp- ids. Replace them with the ids that the proxied game_session routes return.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-gateway-api.md`, `w1-game-session.md`, `w3-ddd-architecture.md`

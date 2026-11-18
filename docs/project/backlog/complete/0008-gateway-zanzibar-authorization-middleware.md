@@ -1,3 +1,10 @@
+---
+id: '0008'
+title: Gateway SpiceDB Zanzibar Authorization Middleware
+status: Complete
+created: 2026-09-25
+target_bc: gateway-api
+---
 # TASK-0008: Gateway SpiceDB Zanzibar Authorization Middleware
 
 ## Status

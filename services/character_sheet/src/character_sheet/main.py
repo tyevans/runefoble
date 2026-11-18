@@ -12,6 +12,7 @@ from typing import Any
 from character_sheet.crafting_router import router as crafting_router
 from character_sheet.dependencies import (
     STREAM_CHARACTER,
+    event_bus_provider,
     get_event_bus,
     get_repository,
     get_spicedb_client,
@@ -35,6 +36,7 @@ app = FastAPI(
     title="Runefoble - Character Sheet Service",
     version="0.1.0",
     description="Character Stats, HP Tracking, Inventory, Equipment, and DM Penalties backed by eventsource-py.",
+    lifespan=event_bus_provider.lifespan,
 )
 
 app.include_router(router)

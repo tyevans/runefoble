@@ -16,11 +16,6 @@ governing_prds:
 governing_stories:
 - US-0001
 - US-0024
-severity: critical
-source_audits:
-- w1-gateway-api.md
-- w3-authz-coverage.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -72,3 +67,8 @@ Test file: `tests/test_blackbox_gateway_speech_proxy.py`. The Watcher and `board
 3. The blackbox test file passes.
 4. The PR states whether the Watcher publishes `BoardMoveEvent` for this path. If it does not, a follow-up task exists before this task is marked complete.
 5. `uv run ruff check .` passes.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-gateway-api.md`, `w3-authz-coverage.md`, `w3-ddd-architecture.md`

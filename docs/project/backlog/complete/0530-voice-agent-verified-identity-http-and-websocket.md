@@ -18,10 +18,6 @@ governing_prds:
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w2-voice-agent.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0530: Voice Agent Verifies Identity on HTTP and WebSocket Routes
@@ -69,3 +65,8 @@ HTTP and WebSocket tests against the voice app with signing-issuer tokens.
 3. Helm renders the variables.
 4. `docs/how-to` pages for voice (`handle-neural-voice-duplex-and-speech-interruption.md`, `connect-mobile-companion-and-haptic-gateway.md`) show the bearer and subprotocol contract.
 5. No file exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w2-voice-agent.md`, `w3-authz-coverage.md`

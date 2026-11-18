@@ -143,7 +143,7 @@ definition mcp_tool {
 
 ### Redis Streams Event Notifications
 
-Dynamic tool lifecycle events are published to Redis Streams topic `runefoble:events:system`:
+Dynamic tool lifecycle events are published to Redis Streams topic `runefoble.events.system`:
 - **`DynamicToolRegisteredEvent`**: Emitted when a dynamic tool is registered or hot-reloaded.
 - **`DynamicToolUnregisteredEvent`**: Emitted when a dynamic tool is retired or removed.
 - **`DynamicToolInvokedEvent`**: Emitted upon dynamic tool execution with execution duration and telemetry.

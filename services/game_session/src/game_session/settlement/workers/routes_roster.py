@@ -5,14 +5,9 @@ Governed by ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 
 from __future__ import annotations
 
-import contextlib
-
 from fastapi import APIRouter, Depends
-from game_session.dependencies import (
-    get_establishment_workers_index,
-    get_event_bus,
-    get_worker_repository,
-)
+from game_session.dependencies import get_event_bus, get_worker_repository
+from game_session.queries import list_workers_for_establishment
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.settlement.worker_graph import (
     calculate_service_quality_contribution,
@@ -35,6 +30,7 @@ from game_session.settlement.workers.operations import (
     create_and_assign_worker,
     sync_establishment_operations,
 )
+from runefoble_platform.aggregate_loading import load_if_exists
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["settlement-npc-workers"])
 
@@ -56,15 +52,14 @@ async def list_establishment_workers(
 ) -> list[NPCWorkerState]:
     """Query active staff assigned to an establishment with inventories and ties."""
     est = await load_establishment(establishment_id, "view", caller_id)
-    worker_ids = get_establishment_workers_index().get(establishment_id, [])
+    worker_ids = await list_workers_for_establishment(establishment_id)
     worker_repo = get_worker_repository()
 
     workers: list[NPCWorkerState] = []
     for wid in worker_ids:
-        with contextlib.suppress(Exception):
-            w_agg = await worker_repo.load(to_uuid(wid))
-            if w_agg.state.status == "active":
-                workers.append(w_agg.state)
+        w_agg = await load_if_exists(worker_repo, to_uuid(wid))
+        if w_agg is not None and w_agg.state.status == "active":
+            workers.append(w_agg.state)
 
     for w in workers:
         w.interpersonal_tension = compute_worker_tension(w, workers)

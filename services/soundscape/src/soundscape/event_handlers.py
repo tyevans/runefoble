@@ -16,6 +16,7 @@ from runefoble_events.session import (
     InitiativeTurnAdvanced,
 )
 from runefoble_events.watcher import DiceRolled, PlayerSpokeEvent
+from runefoble_platform.aggregate_loading import load_or_create
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
@@ -47,9 +48,10 @@ async def _get_aggregate(session_id: str) -> SoundscapeAggregate:
     d = _deps()
     agg_id = d.get_or_create_aggregate_id(session_id)
     try:
-        return await d.get_soundscape_repo().load(agg_id)
+        return await load_or_create(d.get_soundscape_repo(), agg_id, SoundscapeAggregate)
     except Exception:
-        return SoundscapeAggregate(agg_id)
+        logger.error("Soundscape aggregate load failed for %s", agg_id, exc_info=True)
+        raise
 
 
 async def _save_and_publish(agg: SoundscapeAggregate) -> None:

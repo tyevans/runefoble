@@ -14,11 +14,11 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+from eventsource.adapters.memory.bus import InMemoryEventBus
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
-    InMemoryEventBus,
     InMemoryEventStore,
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus

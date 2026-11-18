@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.atlas import (
@@ -112,11 +113,8 @@ async def get_campaign_atlas(
             detail="Forbidden: SpiceDB Zanzibar policy denies view access to this campaign atlas.",
         )
 
-    try:
-        aggregate = await repo.load(campaign_id)
-        state = aggregate.state
-    except Exception:
-        state = AtlasState(campaign_id=campaign_id)
+    aggregate = await load_if_exists(repo, campaign_id)
+    state = aggregate.state if aggregate is not None else AtlasState(campaign_id=campaign_id)
 
     # Filter pins and territories by era / session
     filtered_pins = filter_features_by_era(state.pins, target_era=era, session_id=session_id)
@@ -165,10 +163,7 @@ async def create_pin(
             detail="Forbidden: User cannot place pins on this campaign atlas.",
         )
 
-    try:
-        aggregate = await repo.load(campaign_id)
-    except Exception:
-        aggregate = AtlasAggregate(campaign_id)
+    aggregate = await load_or_create(repo, campaign_id, AtlasAggregate)
 
     pin_id = uuid4()
     meta = dict(payload.metadata)
@@ -234,10 +229,9 @@ async def get_pin(
             detail="Forbidden: Cannot view atlas.",
         )
 
-    try:
-        aggregate = await repo.load(campaign_id)
-    except Exception as exc:
-        raise HTTPException(status_code=404, detail="Atlas not found") from exc
+    aggregate = await load_if_exists(repo, campaign_id)
+    if aggregate is None:
+        raise HTTPException(status_code=404, detail="Atlas not found")
 
     for pin in aggregate.state.pins:
         if pin.get("pin_id") == str(pin_id):
@@ -256,10 +250,7 @@ async def toggle_layer(
 ) -> dict[str, Any]:
     """Toggle visibility for a map layer or geopolitical boundary overlay."""
     await _require_atlas_edit(user_id, campaign_id, spicedb)
-    try:
-        aggregate = await repo.load(campaign_id)
-    except Exception:
-        aggregate = AtlasAggregate(campaign_id)
+    aggregate = await load_or_create(repo, campaign_id, AtlasAggregate)
 
     aggregate.toggle_layer(
         layer=payload.layer,
@@ -286,10 +277,7 @@ async def update_territory(
 ) -> dict[str, Any]:
     """Define or update geopolitical boundaries, ownership factions, and contested statuses."""
     await _require_atlas_edit(user_id, campaign_id, spicedb)
-    try:
-        aggregate = await repo.load(campaign_id)
-    except Exception:
-        aggregate = AtlasAggregate(campaign_id)
+    aggregate = await load_or_create(repo, campaign_id, AtlasAggregate)
 
     territory_id = uuid4()
     aggregate.update_territory(

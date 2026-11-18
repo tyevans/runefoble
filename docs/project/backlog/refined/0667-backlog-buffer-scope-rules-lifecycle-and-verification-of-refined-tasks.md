@@ -12,9 +12,6 @@ governing_prds:
 - PRD-0014
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w3-backlog-specops.md
 ---
 
 # TASK-0667: Backlog Ready Buffer, Epic Scope Rule, Lifecycle Folders, and Stale Refined Tasks Are Corrected
@@ -66,3 +63,8 @@ The ready buffer holds 28 refined tasks against a target of about 10. `make prd-
 5. PRD-0014 is decomposed into vertical slices.
 6. The lifecycle folders and the registries agree, and AGENTS.md matches the real layout.
 7. The test passes in `uv run pytest`. The PRIORITY.md changes are applied by the integration orchestrator at merge.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-backlog-specops.md`

@@ -12,12 +12,6 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-ddd-architecture.md
-- w2-app-shell.md
-- w1-gates-infra.md
-- w3-docs-integrity.md
 ---
 
 # TASK-0526: Zitadel OIDC Application, Issuer Consistency, and Runtime Config for Kind and Helm
@@ -76,3 +70,8 @@ Infrastructure checks through public HTTP only (executed by `make health-check` 
 3. Re-running the bootstrap Job makes no changes (idempotent). Show the second run output.
 4. Tutorial and platform reference are updated.
 5. No secret value is committed. The admin password literal is removed in TASK-0626, not here.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-ddd-architecture.md`, `w2-app-shell.md`, `w1-gates-infra.md`, `w3-docs-integrity.md`

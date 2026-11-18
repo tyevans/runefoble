@@ -15,10 +15,10 @@ from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 import httpx
 from pydantic import BaseModel
 from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
-from runefoble_platform.config import PlatformSettings
 from runefoble_platform.engine_ports import EngineUnavailableError
-from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from voice_agent.auth import caller_headers
+from voice_agent.event_bus import get_event_bus
 from voice_agent.speech_settings import VoiceAgentSettings, build_transcriber
 from voice_agent.transcriber import BaseTranscriber
 from voice_agent.vad import (
@@ -101,17 +101,8 @@ class StreamingAudioPipeline:
         self.silence_threshold_ms = silence_threshold_ms
         self.energy_threshold = energy_threshold
         self.participants: dict[str, ParticipantAudioState] = {}
-        self._event_bus: RedisStreamsEventBus | None = None
         self._watcher_client: httpx.AsyncClient | None = None
         self._watcher_url: str = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://the-watcher:8001")
-
-    def set_event_bus(self, bus: RedisStreamsEventBus | None) -> None:
-        self._event_bus = bus
-
-    def get_event_bus(self) -> RedisStreamsEventBus:
-        if self._event_bus is None:
-            self._event_bus = RedisStreamsEventBus(redis_url=PlatformSettings().redis_url)
-        return self._event_bus
 
     def set_watcher_client(self, client: httpx.AsyncClient | None) -> None:
         self._watcher_client = client
@@ -143,7 +134,7 @@ class StreamingAudioPipeline:
     def reset_all(self) -> None:
         self.participants.clear()
 
-    async def _publish_transcription_failed(
+    async def publish_transcription_failed(
         self,
         session_id: str,
         speaker_id: str,
@@ -157,10 +148,7 @@ class StreamingAudioPipeline:
             engine=self.transcriber.engine_name,
             reason=str(exc),
         )
-        try:
-            await self.get_event_bus().publish_event(STREAM_VOICE, event)
-        except Exception:
-            logger.exception("Failed to publish VoiceTranscriptionFailed to '%s'", STREAM_VOICE)
+        await publish_best_effort(get_event_bus(), STREAM_VOICE, event)
 
     async def process_chunk(
         self,
@@ -212,7 +200,7 @@ class StreamingAudioPipeline:
         try:
             transcript = await self.transcriber.transcribe(utterance_audio, sample_rate=sr)
         except EngineUnavailableError as exc:
-            await self._publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
+            await self.publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
             raise
 
         session_uuid = to_uuid(session_id)
@@ -228,12 +216,8 @@ class StreamingAudioPipeline:
             target_character_id=target_character_id,
         )
 
-        bus = self.get_event_bus()
-        event_id = None
-        try:
-            event_id = await bus.publish_event(STREAM_SESSION, event)
-        except Exception as e:
-            logger.warning("Failed to publish PlayerSpokeEvent to '%s': %s", STREAM_SESSION, e)
+        # The spoken words are player state. A failed publish fails the chunk (ADR-0015 f).
+        event_id = await publish_or_fail(get_event_bus(), STREAM_SESSION, event)
 
         watcher_intent = None
         try:

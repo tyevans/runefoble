@@ -71,6 +71,12 @@ class LeaveSessionRequest(BaseModel):
     reason: str = "disconnected"
 
 
+class LeaveSessionResponse(GameSessionState):
+    """Session state after a leave. `stand_in_character_id` is None when no stand-in was activated."""
+
+    stand_in_character_id: UUID | None = None
+
+
 class AutoPilotRequest(BaseModel):
     active_character_id: UUID | None = None
     penalties: list[str] = Field(default_factory=list)

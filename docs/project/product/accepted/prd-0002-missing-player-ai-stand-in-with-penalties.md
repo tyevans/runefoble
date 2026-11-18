@@ -3,6 +3,8 @@ id: 0002
 title: Missing Player AI Stand-In with Mimicry and Absence Costs
 status: Accepted
 created: 2026-09-25
+target_persona: Sarah, Evelyn
+component: the_watcher
 ---
 
 # PRD-0002 — Missing Player AI Stand-In with Mimicry and Absence Costs

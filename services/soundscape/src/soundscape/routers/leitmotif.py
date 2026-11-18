@@ -13,6 +13,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
@@ -112,10 +113,7 @@ async def configure_character_leitmotif(
 
     repo = get_soundscape_repo()
     agg_id = get_or_create_aggregate_id(request.session_id)
-    try:
-        agg = await repo.load(agg_id)
-    except Exception:
-        agg = SoundscapeAggregate(agg_id)
+    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
 
     agg.record_leitmotif_profile(
         session_id=saved_profile.session_id,
@@ -155,14 +153,11 @@ async def get_character_leitmotif_profile(
         # Check aggregate state
         repo = get_soundscape_repo()
         agg_id = get_or_create_aggregate_id(session_id)
-        try:
-            agg = await repo.load(agg_id)
-            if agg and character_id in agg.state.character_profiles:
-                data = agg.state.character_profiles[character_id]
-                profile = CharacterLeitmotifProfile(**data)
-                engine.register_profile(profile)
-        except Exception:
-            pass
+        agg = await load_if_exists(repo, agg_id)
+        if agg and character_id in agg.state.character_profiles:
+            data = agg.state.character_profiles[character_id]
+            profile = CharacterLeitmotifProfile(**data)
+            engine.register_profile(profile)
 
     if not profile:
         raise HTTPException(
@@ -211,10 +206,7 @@ async def trigger_character_leitmotif(
 
     repo = get_soundscape_repo()
     agg_id = get_or_create_aggregate_id(request.session_id)
-    try:
-        agg = await repo.load(agg_id)
-    except Exception:
-        agg = SoundscapeAggregate(agg_id)
+    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
 
     agg.record_leitmotif_trigger(
         session_id=playback.session_id,

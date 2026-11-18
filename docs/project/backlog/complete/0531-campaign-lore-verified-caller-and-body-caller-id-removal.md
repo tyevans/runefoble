@@ -14,10 +14,6 @@ governing_prds:
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w2-campaign-lore.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0531: Campaign Lore Derives the Caller Only from the Verified Principal and Removes Body caller_id
@@ -65,3 +61,8 @@ HTTP tests with `TestClient` and signing-issuer tokens.
 3. Reference docs for lore search show the new request shape.
 4. Helm renders the variables.
 5. No file exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w2-campaign-lore.md`, `w3-authz-coverage.md`

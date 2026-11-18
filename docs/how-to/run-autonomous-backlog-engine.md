@@ -60,7 +60,7 @@ flowchart TD
     A["Ready Task in refined/"] --> B["Dependency Graph Solver"]
     B --> C["Claim Task & Spawn Git Worktree"]
     C --> D["Agent Implementation (agy -p)"]
-    D --> E["Pre-Flight Verification (ruff, pytest, health-check)"]
+    D --> E["Pre-Flight Verification (ruff, pytest, spec-ops health, spec-ops schema check)"]
     E -- "Failures Detected (up to 3 retries)" --> R["Agent Diagnostic & Repair (agy -c -p)"]
     R --> E
     E -- "All Checks Pass" --> F["GitHub PR Creation & Mechanical CI Watcher"]

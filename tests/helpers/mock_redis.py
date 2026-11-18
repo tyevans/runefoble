@@ -128,6 +128,9 @@ class MockAsyncRedis:
         """Helper for unit tests: query currently pending messages."""
         return dict(self.groups.get((stream, group_name), {}).get("pending", {}))
 
+    async def ping(self) -> bool:
+        return True
+
     async def aclose(self) -> None:
         self.closed = True
 

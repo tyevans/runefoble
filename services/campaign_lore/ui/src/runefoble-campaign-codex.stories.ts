@@ -50,3 +50,14 @@ export const DMSecretView: Story = {
     ></runefoble-campaign-codex>
   `,
 };
+
+export const EntryCreateRefused: Story = {
+  render: () => html`
+    <runefoble-campaign-codex
+      campaignId="campaign-demo"
+      .isDM=${true}
+      .entries=${sampleEntries}
+      entryError="Entry not published. Campaign lore is unavailable."
+    ></runefoble-campaign-codex>
+  `,
+};

@@ -1,5 +1,12 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import {
+  buildEntryDetail,
+  EMPTY_ENTRY_DRAFT,
+  renderEntryError,
+  renderEntryForm,
+  type CodexEntryDraft,
+} from './codex/entry-form.template.ts';
 
 export interface LoreEntry {
   id: string;
@@ -111,6 +118,33 @@ export class RunefobleCampaignCodex extends LitElement {
       padding: 1px 6px;
       font-weight: 600;
     }
+    .entry-form {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+      padding: 10px;
+      border: 1px solid var(--rf-border-color, #121212);
+    }
+    .entry-form input,
+    .entry-form textarea,
+    .entry-form select {
+      padding: 6px 10px;
+      border: var(--rf-border-width, 2px) solid var(--rf-border-color, #121212);
+      font-family: inherit;
+      font-size: 0.85rem;
+    }
+    .entry-form textarea {
+      min-height: 64px;
+    }
+    .entry-error {
+      margin-bottom: 12px;
+      padding: 8px;
+      color: #ffffff;
+      background: #d90429;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
     .graph-rel {
       font-size: 0.75rem;
       color: #555;
@@ -128,8 +162,33 @@ export class RunefobleCampaignCodex extends LitElement {
   @property({ type: Array })
   entries: LoreEntry[] = [];
 
+  /** The refusal message of the last entry write. The App Shell sets it. */
+  @property({ type: String })
+  entryError = '';
+
   @state()
   private searchQuery = '';
+
+  @state()
+  private draft: CodexEntryDraft = EMPTY_ENTRY_DRAFT;
+
+  private handleDraftChange(patch: Partial<CodexEntryDraft>) {
+    this.draft = { ...this.draft, ...patch };
+  }
+
+  private handleEntrySubmit(e: SubmitEvent) {
+    e.preventDefault();
+    const entry = buildEntryDetail(this.draft);
+    if (!entry) return;
+    this.draft = EMPTY_ENTRY_DRAFT;
+    this.dispatchEvent(
+      new CustomEvent('codex-entry-create-requested', {
+        detail: { ...entry, campaignId: this.campaignId },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
 
   private handleSearchInput(e: Event) {
     this.searchQuery = (e.target as HTMLInputElement).value;
@@ -173,6 +232,13 @@ export class RunefobleCampaignCodex extends LitElement {
         />
         <button class="search-btn" @click=${this.handleSearch}>Search</button>
       </div>
+
+      ${renderEntryError(this.entryError)}
+      ${renderEntryForm({
+        draft: this.draft,
+        onChange: (patch) => this.handleDraftChange(patch),
+        onSubmit: (e) => this.handleEntrySubmit(e),
+      })}
 
       <div class="entry-list">
         ${filtered.length === 0

@@ -10,6 +10,7 @@ import { router } from '../router/index.ts';
 import type { RunefobleApp, AppActiveView } from '../runefoble-app.ts';
 import type { DataFailure } from '../services/data-result.ts';
 import { createCampaignFromEvent } from './campaign-actions.ts';
+import { createEntryFromEvent, createPinFromEvent } from './lore-actions.ts';
 import { renderCharacterSheet, renderSessionActive } from './session-view-templates.ts';
 
 type CampaignTab = 'overview' | 'characters' | 'codex' | 'analytics';
@@ -80,8 +81,8 @@ function renderCodexTab(app: RunefobleApp) {
       <button class="nav-tab ${view === 'codex' ? 'active' : ''}" role="tab" aria-selected=${view === 'codex'} @click=${() => selectView('codex')}>Lore Codex</button>
     </div>
     ${view === 'atlas'
-      ? html`<runefoble-campaign-atlas .campaignId=${app.campaignId} .pins=${app.campaignAtlas?.pins ?? []} .territories=${app.campaignAtlas?.territories ?? []} .isDM=${app.isDM}></runefoble-campaign-atlas>`
-      : html`<runefoble-campaign-codex .campaignId=${app.campaignId} .entries=${app.campaignLoreEntries} .isDM=${app.isDM}></runefoble-campaign-codex>`}`;
+      ? html`<runefoble-campaign-atlas .campaignId=${app.campaignId} .pins=${app.campaignAtlas?.pins ?? []} .territories=${app.campaignAtlas?.territories ?? []} .isDM=${app.isDM} .pinError=${app.campaignPinError ?? ''} @pin-create-requested=${(e: CustomEvent) => createPinFromEvent(app, e)}></runefoble-campaign-atlas>`
+      : html`<runefoble-campaign-codex .campaignId=${app.campaignId} .entries=${app.campaignLoreEntries} .isDM=${app.isDM} .entryError=${app.campaignEntryError ?? ''} @codex-entry-create-requested=${(e: CustomEvent) => createEntryFromEvent(app, e)}></runefoble-campaign-codex>`}`;
 }
 
 function renderCampaignTabs(app: RunefobleApp, activeTab: CampaignTab) {

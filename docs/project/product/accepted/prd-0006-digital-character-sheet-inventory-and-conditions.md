@@ -1,3 +1,12 @@
+---
+id: 0006
+title: Character Sheet Inventory, Equipment & Condition Aggregation
+status: Accepted
+created: 2026-09-25
+target_persona: Sarah, Marcus
+component: character_sheet
+---
+
 # PRD-0006: Character Sheet Inventory, Equipment & Condition Aggregation
 
 ## Status

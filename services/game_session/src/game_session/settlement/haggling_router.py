@@ -6,21 +6,20 @@ Governed by ADR-0001 (SpiceDB Zanzibar), ADR-0002 (Domain Events), ADR-0006 (Red
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
+from game_session.child_index import ChildIndexKind
 from game_session.dependencies import (
-    get_establishment_negotiations_index,
     get_establishment_repository,
-    get_establishment_workers_index,
     get_event_bus,
     get_negotiation_repository,
     get_spicedb_client,
     get_worker_repository,
 )
 from game_session.events import STREAM_TAVERN, STREAM_WEST_MARCHES
+from game_session.queries import link_child, list_workers_for_establishment
 from game_session.settlement.auth import (
     check_establishment_play_permission,
     check_establishment_read_permission,
@@ -37,6 +36,7 @@ from game_session.settlement.haggling_models import (
     NegotiationSessionState,
     StartNegotiationRequest,
 )
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["merchant-haggling"])
@@ -95,11 +95,10 @@ async def haggle_establishment(
     merchant_id = req.merchant_id or f"merchant-{establishment_id}"
     base_price = req.base_price or 100
 
-    worker_ids = get_establishment_workers_index().get(establishment_id, [])
+    worker_ids = await list_workers_for_establishment(establishment_id)
     if worker_ids:
-        worker_repo = get_worker_repository()
-        with contextlib.suppress(Exception):
-            w_agg = await worker_repo.load(_to_uuid(worker_ids[0]))
+        w_agg = await load_if_exists(get_worker_repository(), _to_uuid(worker_ids[0]))
+        if w_agg is not None:
             merchant_name = w_agg.state.name or merchant_name
             temperament = w_agg.state.temperament or temperament
             merchant_id = w_agg.state.npc_id or merchant_id
@@ -149,7 +148,7 @@ async def haggle_establishment(
         participant_id=caller_id,
     )
 
-    get_establishment_negotiations_index().setdefault(establishment_id, []).append(str(nid))
+    await link_child(ChildIndexKind.ESTABLISHMENT_NEGOTIATIONS, establishment_id, str(nid))
     return neg_agg.state
 
 

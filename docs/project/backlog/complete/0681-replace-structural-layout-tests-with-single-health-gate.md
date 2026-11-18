@@ -10,9 +10,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0640b.md
 ---
 
 # TASK-0681: Replace Per-Test File Layout and Line-Limit Assertions With the Single Health Gate
@@ -49,3 +46,8 @@ None. This is engineering hygiene with no user-facing change.
 ## Definition of Done
 - No test asserts per-file line limits, file existence of source modules, or source text.
 - `make health-check` is the only file-length gate. Tests pass. CHANGELOG line given to the orchestrator.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0640b.md`

@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from typing import Any
 
 from opentelemetry import trace
+from runefoble_platform.event_publish import record_publish_failure
 
-logger = logging.getLogger("runefoble.gateway_mcp.dynamic.events")
-SYSTEM_STREAM = "runefoble:events:system"
+SYSTEM_STREAM = "runefoble.events.system"
 _event_bus: Any = None
 # Strong references keep fire-and-forget publish tasks alive until they finish.
 _pending_publishes: set[asyncio.Task[None]] = set()
@@ -32,8 +31,8 @@ def safe_dispatch_event(event: Any) -> None:
     """Schedule event publication on the running loop without blocking the caller."""
     try:
         loop = asyncio.get_running_loop()
-    except RuntimeError:
-        _record_dropped(event, "no running event loop")
+    except RuntimeError as exc:
+        _record_dropped(event, exc)
         return
     task = loop.create_task(publish_system_event(event))
     _pending_publishes.add(task)
@@ -46,13 +45,14 @@ async def publish_system_event(event: Any) -> None:
         bus = get_event_bus()
         await bus.publish_event(SYSTEM_STREAM, event)
     except Exception as exc:
-        _record_dropped(event, f"{type(exc).__name__}: {exc}")
+        _record_dropped(event, exc)
 
 
-def _record_dropped(event: Any, reason: str) -> None:
-    """Log a dropped event at error level and mark the active trace span."""
+def _record_dropped(event: Any, exc: BaseException) -> None:
+    """Count and log a dropped event, and mark the active trace span (ADR-0015 f)."""
     event_type = type(event).__name__
-    logger.error("Dropped %s for %s: %s", event_type, SYSTEM_STREAM, reason)
+    record_publish_failure(SYSTEM_STREAM, event_type, exc)
     trace.get_current_span().add_event(
-        "dynamic_tool_event_dropped", {"event_type": event_type, "reason": reason}
+        "dynamic_tool_event_dropped",
+        {"event_type": event_type, "reason": f"{type(exc).__name__}: {exc}"},
     )

@@ -17,9 +17,6 @@ governing_stories:
 - US-0017
 - US-0021
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-the-watcher.md
 ---
 
 # TASK-0568: Watcher Pending DM Actions, Whispers and Disambiguations as Aggregates
@@ -69,3 +66,8 @@ The Watcher keeps DM approval windows, pending vetoes, private whispers, and ope
 Source: `.audit/synth/discovered-round2.md`.
 
 - services/the_watcher/src/the_watcher/copilot.py approve callback (about line 244) logs callback failures as warnings after the approval event is published. Record the failure on the action or return it to the caller.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-the-watcher.md`

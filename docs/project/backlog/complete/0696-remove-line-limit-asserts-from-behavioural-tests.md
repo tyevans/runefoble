@@ -10,9 +10,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: low
-source_audits:
-- work/0681.md
 ---
 
 # TASK-0696: Remove Line-Limit Asserts From Four Behavioural Test Modules
@@ -48,3 +45,8 @@ None. Test hygiene.
 ## Definition of Done
 - No line-count or file-existence assert remains in the four functions.
 - `uv run pytest` and `make lint` pass.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `work/0681.md`

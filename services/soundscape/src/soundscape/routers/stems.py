@@ -7,6 +7,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_or_create
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
@@ -134,10 +135,7 @@ async def override_mood(
 
     repo = get_soundscape_repo()
     agg_id = get_or_create_aggregate_id(request.session_id)
-    try:
-        agg = await repo.load(agg_id)
-    except Exception:
-        agg = SoundscapeAggregate(agg_id)
+    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
 
     agg.record_mood_override(
         session_id=request.session_id,
@@ -201,10 +199,7 @@ async def toggle_ducking(
 
     repo = get_soundscape_repo()
     agg_id = get_or_create_aggregate_id(request.session_id)
-    try:
-        agg = await repo.load(agg_id)
-    except Exception:
-        agg = SoundscapeAggregate(agg_id)
+    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
 
     agg.record_ducking_toggle(
         session_id=request.session_id,

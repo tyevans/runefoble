@@ -21,7 +21,9 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `character_id`: String
   - `campaign_id`: Optional[String]
   - `assigned_by`: String
-- **`CharacterHealthChanged`**: Emitted when hit points change from damage or healing.
+- **`CharacterHealthChanged`**: Emitted on the `runefoble.events.character` stream when hit points change from damage or healing. Published by `POST /api/v1/characters/{character_id}/health`.
+  - `session_id`: Optional[String]. The session the change happened in. Null when the request names no session.
+  - `campaign_id`: Optional[String]. The character's campaign. Null when the character has no campaign.
   - `delta`: Integer
   - `current_hp`: Integer, `max_hp`: Integer
   - `source`: String
@@ -95,7 +97,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `current_hp`: Integer
   - `max_hp`: Integer
   - `source`: String
-- **`PortraitVariantGenerated`**: Emitted when a generative wardrobe attire variant is forged or registered (`runefoble.events.character.portrait_variant_generated`).
+- **`PortraitVariantGenerated`**: Emitted when a generative wardrobe attire variant is forged or registered (`runefoble.events.character.portrait_variant_generated`). Asset Forge publishes it to the `runefoble.events.character` stream.
   - `character_id`: UUID | str
   - `variant_id`: String
   - `variant_name`: String

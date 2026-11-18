@@ -18,7 +18,7 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus as set_gw_event_bus
-from soundscape.dependencies import reset_dependencies
+from soundscape.dependencies import reset_dependencies, set_event_bus
 from soundscape.main import app as soundscape_app
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -33,13 +33,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(autouse=True)
-def clean_environment() -> Generator[None]:
+def clean_environment(default_redis_event_bus) -> Generator[None]:
     """Ensure clean soundscape and gateway state for each test.
 
     The shared SpiceDB double comes from the autouse fixture in tests/conftest.py.
     """
-    set_gw_event_bus(None)
+    set_gw_event_bus(default_redis_event_bus)
     reset_dependencies()
+    set_event_bus(default_redis_event_bus)
     yield
     reset_dependencies()
     set_gw_event_bus(None)

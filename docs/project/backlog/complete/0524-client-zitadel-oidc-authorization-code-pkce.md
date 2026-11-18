@@ -15,10 +15,6 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w2-app-shell.md
-- w3-docs-integrity.md
 ---
 
 # TASK-0524: App Shell Sign-In Through Zitadel OIDC Authorization Code with PKCE
@@ -79,3 +75,8 @@ Playwright BDD in TASK-0525 is the frontdoor. Unit tests cover `pkce.ts`.
 Source: `.audit/synth/discovered-round1.md`.
 
 - Delete the `updateUser` fallback that invents user `user-valeros` (`frontend/src/auth/auth-service.ts:86-92`).
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w2-app-shell.md`, `w3-docs-integrity.md`

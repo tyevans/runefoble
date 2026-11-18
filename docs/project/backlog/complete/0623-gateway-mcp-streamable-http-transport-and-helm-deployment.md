@@ -14,10 +14,6 @@ governing_prds:
 governing_stories:
 - US-0008
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w1-gateway-mcp.md
-- w1-gates-infra.md
 ---
 
 # TASK-0623: Gateway MCP Streamable HTTP Transport and Helm Deployment
@@ -68,3 +64,8 @@ Complete
 Source: `.audit/synth/discovered-round2.md`.
 
 - gateway/mcp/src/gateway_mcp/settings.py defaults point at localhost. The gatewayMcp URL keys in values.yaml are not rendered into any template. Render them into the gateway MCP Deployment and remove the localhost defaults for deployed use.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w1-gateway-mcp.md`, `w1-gates-infra.md`

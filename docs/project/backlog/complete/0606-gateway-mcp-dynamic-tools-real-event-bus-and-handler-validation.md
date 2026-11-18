@@ -13,9 +13,6 @@ governing_prds:
 governing_stories:
 - US-0035
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-gateway-mcp.md
 ---
 
 # TASK-0606: Gateway MCP Dynamic Tools Use Real Event Bus and Reject Handler-Less Definitions
@@ -64,3 +61,8 @@ Source: `.audit/reports/w1-gateway-mcp.md` F4 and F12.
 3. Blackbox tests pass. Gateway MCP and dynamic tool suites pass.
 4. Ruff check and format pass.
 5. Reference docs and `CHANGELOG.md` `[Unreleased]` updated.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-gateway-mcp.md`

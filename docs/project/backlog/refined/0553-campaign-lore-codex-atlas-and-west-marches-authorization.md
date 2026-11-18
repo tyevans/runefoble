@@ -24,10 +24,6 @@ governing_stories:
 - US-0045
 - US-0058
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w2-campaign-lore.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0553: Campaign Lore Codex, Search, Atlas, Handout, Relic, and West Marches Authorization
@@ -94,3 +90,8 @@ Setup: two campaigns, a DM and a player in each, a spectator in campaign A, code
 5. The lore how-to docs in the Documentation section are updated.
 6. `uv run pytest services/campaign_lore gateway/api` passes for the changed tests. `uv run ruff check` passes.
 7. No file in the change exceeds 500 lines. `routers/codex/entries.py` and `routers/atlas.py` are split if needed.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w2-campaign-lore.md`, `w3-authz-coverage.md`

@@ -15,11 +15,6 @@ governing_stories:
 - US-0013
 - US-0062
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-gateway-api.md
-- w3-authz-coverage.md
-- w3-ddd-architecture.md
 ---
 
 # TASK-0521: Gateway HTTP Routes Authenticate Through the Verified Principal
@@ -81,3 +76,8 @@ New file `tests/test_blackbox_gateway_identity_http.py`, using `TestClient(app)`
 3. Integrated in one merge with TASK-0520.
 4. `uv run ruff check gateway/api` passes. No file exceeds 500 lines.
 5. `CHANGELOG.md` `[Unreleased]` notes that gateway routes require a bearer token.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-gateway-api.md`, `w3-authz-coverage.md`, `w3-ddd-architecture.md`

@@ -38,6 +38,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `CharacterCreated` | `CharacterCreated` | `runefoble_events.character` |
 | `CharacterHealthChanged` | `CharacterHealthChanged` | `runefoble_events.character` |
 | `CharacterSelectedForLobby` | `CharacterSelectedForLobby` | `runefoble_events.session` |
+| `ChildLinked` | `ChildLinked` | `runefoble_events.child_index` |
 | `CodexEntryPublished` | `CodexEntryPublished` | `runefoble_events.lore` |
 | `CodexEntryUpdated` | `CodexEntryUpdated` | `runefoble_events.lore` |
 | `CombatEncounterEnded` | `CombatEncounterEnded` | `runefoble_events.session` |
@@ -50,7 +51,9 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `CraftingAttempted` | `CraftingAttempted` | `runefoble_events.downtime` |
 | `CraftingMishapOccurred` | `CraftingMishapOccurred` | `runefoble_events.downtime` |
 | `CraftingSucceeded` | `CraftingSucceeded` | `runefoble_events.downtime` |
+| `CrapsRolled` | `CrapsRolled` | `runefoble_events.tavern_tables` |
 | `CrossCampaignDiscoveryShared` | `CrossCampaignDiscoveryShared` | `runefoble_events.west_marches` |
+| `DartThrown` | `DartThrown` | `runefoble_events.tavern_tables` |
 | `DynamicToolInvoked` | `DynamicToolInvokedEvent` | `runefoble_events.mcp_tools` |
 | `DynamicToolRegistered` | `DynamicToolRegisteredEvent` | `runefoble_events.mcp_tools` |
 | `DynamicToolUnregistered` | `DynamicToolUnregisteredEvent` | `runefoble_events.mcp_tools` |
@@ -85,6 +88,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `RelicForged` | `RelicForged` | `runefoble_events.lore` |
 | `RelicInspected` | `RelicInspected` | `runefoble_events.lore` |
 | `RelicRuneTranslated` | `RelicRuneTranslated` | `runefoble_events.lore` |
+| `RouletteSpun` | `RouletteSpun` | `runefoble_events.tavern_tables` |
 | `SessionCreated` | `SessionCreated` | `runefoble_events.session` |
 | `SessionEnded` | `SessionEnded` | `runefoble_events.session` |
 | `SessionStarted` | `SessionStarted` | `runefoble_events.session` |
@@ -95,6 +99,11 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `StandInActionDecided` | `StandInActionDecided` | `runefoble_events.watcher_events.narrative` |
 | `StrongholdCreated` | `StrongholdCreated` | `runefoble_events.downtime` |
 | `StrongholdUpgraded` | `StrongholdUpgraded` | `runefoble_events.downtime` |
+| `TableBetPlaced` | `TableBetPlaced` | `runefoble_events.tavern_tables` |
+| `TableBidPlaced` | `TableBidPlaced` | `runefoble_events.tavern_tables` |
+| `TableChallengeResolved` | `TableChallengeResolved` | `runefoble_events.tavern_tables` |
+| `TableOpened` | `TableOpened` | `runefoble_events.tavern_tables` |
+| `TablePlayerSeated` | `TablePlayerSeated` | `runefoble_events.tavern_tables` |
 | `TokenMoved` | `TokenMoved` | `runefoble_events.board_events.token` |
 | `TokenPlaced` | `TokenPlaced` | `runefoble_events.board_events.token` |
 | `TokenRemoved` | `TokenRemoved` | `runefoble_events.board_events.token` |
@@ -212,6 +221,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.voice.peer_joined` | `VoicePeerJoined` | `runefoble_events.voice` |
 | `runefoble.events.voice.peer_left` | `VoicePeerLeft` | `runefoble_events.voice` |
 | `runefoble.events.voice.profile_adapted` | `MobileAudioProfileAdapted` | `runefoble_events.voice` |
+| `runefoble.events.voice.speech_interrupted` | `VoiceSpeechInterrupted` | `runefoble_events.voice` |
 | `runefoble.events.voice.stream_codec_adapted` | `VoiceStreamCodecAdaptedEvent` | `runefoble_events.voice_stream_quality` |
 | `runefoble.events.voice.stream_quality_degraded` | `VoiceStreamQualityDegradedEvent` | `runefoble_events.voice_stream_quality` |
 | `runefoble.events.voice.transcription_failed` | `VoiceTranscriptionFailed` | `runefoble_events.voice` |
@@ -235,4 +245,3 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.watcher.narrative_whispered` | `DMNarrativeWhispered` | `runefoble_events.watcher_events.narrative` |
 | `runefoble.events.watcher.regional_unrest_escalated` | `RegionalUnrestEscalatedEvent` | `runefoble_events.turf_war` |
 | `runefoble.events.watcher.world_tick_executed` | `WorldTickExecuted` | `runefoble_events.watcher_events.factions` |
-| `voice.speech.interrupted` | `VoiceSpeechInterrupted` | `runefoble_events.voice` |

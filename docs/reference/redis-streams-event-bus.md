@@ -59,6 +59,14 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
 
 ## Publishing Events
 
+### Stream Naming Rule
+
+Every stream uses the dotted form `runefoble.events.<bc>`, where `<bc>` is the owning bounded context (for example `session`, `board`, `watcher`, `world`, `system`, `asset`, `character`). Stream names never use colons. A stream that carries events from one bounded context uses that context's name. Entries that a producer writes to a stream it does not own are a defect.
+
+Migration note: the colon names `runefoble:events:world` and `runefoble:events:system` are removed. Producers write to `runefoble.events.world` and `runefoble.events.system`. Entries in the old streams are not copied. A stream reader must read the dotted name.
+
+Asset Forge publishes `PortraitVariantGenerated` to `runefoble.events.character`, the stream that Character Sheet and its consumers read. It publishes every other forge event to `runefoble.events.asset`.
+
 Call `publish_event(stream, event)` on `RedisStreamsEventBus` for every event. Do not call `publish`. A call to `publish` raises `AttributeError`. A broad exception guard around that call hides the error, so the event never reaches Redis. Do not wrap publish calls in `contextlib.suppress(Exception)`.
 
 ### Aggregate Event Publication
@@ -79,8 +87,7 @@ Board State publishes every uncommitted event through one helper, `publish_board
 events = list(board.uncommitted_events)  # capture before the save clears them
 await repo.save(board)
 bus = get_event_bus()
-if bus is not None:
-    await publish_board_events(bus, events)
+await publish_board_events(bus, events)
 ```
 
 - Events publish in order to the `runefoble.events.board` stream.
@@ -89,7 +96,7 @@ if bus is not None:
 
 ### Watcher Events
 
-The Watcher publishes to `runefoble.events.watcher` and to `runefoble:events:world` (turf war, `STREAM_WORLD`) with `publish_event(STREAM, event)`. Each call goes through the publish failure policy below.
+The Watcher publishes to `runefoble.events.watcher` and to `runefoble.events.world` (turf war, `STREAM_WORLD`) with `publish_event(STREAM, event)`. Each call goes through the publish failure policy below.
 
 ### Publish Failure Policy
 
@@ -106,10 +113,25 @@ Rules for clients and operators:
 
 - A 503 means the audit event was not published. The state change may already be saved. Retry the request. Retried create requests can produce a second record, so check for duplicates.
 - `publish_or_fail` routes call the engine or save the aggregate only after the event is built. Veto, approve, and modify publish the event from a planned copy first. A failed publish leaves the pending action unchanged.
-- Each service exposes `event_publish_failures` (a count) on `/healthz`. Watch this value. A rising count means events are being lost.
+- Each service exposes `event_publish_failures` (a count) on `/healthz`. Watch this value. A rising count means events are being lost. The count covers every failed delivery, so one event sent to two streams can add two.
 - Services that map 503 call `install_publish_failure_handler(app)` in their `main.py`.
 
 Decision routes that return 503 include the Watcher veto, approve, modify, DM whisper, stand-in activation, and autonomous DM routes. Game session routes that return 503 include session start, hot-swap takeover, combat, tavern, bounty, campfire, caravan, stronghold, settlement, and west marches routes. The dice roll route in game session uses `publish_best_effort` until TASK-0565 refactors it.
+
+#### Site Classes in Voice Agent and gateway_mcp
+
+Each publish site in these services belongs to one class.
+
+| Site | Class | Helper | On failure |
+|---|---|---|---|
+| `POST /api/v1/voice/transcribe` player speech (`PlayerSpokeEvent`) | Domain state | `publish_or_fail` | 503. The Watcher is not called. |
+| `POST /api/v1/voice/stream/chunk` and stream WebSocket player speech | Domain state | `publish_or_fail` | HTTP 503. On the WebSocket, a `{"status": "publish_failed"}` frame. The chunk is not kept. |
+| Transcription engine failure (`VoiceTranscriptionFailed`) | Notification | `publish_best_effort` | The route returns the engine 503. A failed publish is counted. |
+| Voice room peer events (`VoicePeerJoined`, `VoicePeerLeft`, mute) | Notification | `publish_best_effort` | Counted. The request succeeds. |
+| Voice audio conditioned, speech interrupted, barge-in CloudEvents, TTS attenuation, AEC and stream diagnostics | Notification | `publish_best_effort` | Counted. The request succeeds. |
+| gateway_mcp dynamic tool events (`runefoble:events:system`) | Notification | `record_publish_failure` | Counted, logged at error level, and marked on the active trace span. The tool call succeeds. |
+
+The `gateway_mcp` `/healthz` route returns `event_publish_failures` with the same count. Standalone `gateway_mcp` injects its Redis Streams bus at start-up. It fails when `RUNEFOBLE_REDIS_URL` is empty.
 
 ---
 
@@ -155,7 +177,24 @@ await consumer_group.create_group(
 
 ### Event Bus Selection at Start-Up
 
-`get_event_bus()` (`libs/runefoble_platform/src/runefoble_platform/event_sourcing.py`) returns `RedisEventBus` when the Redis flag is set. It returns `InMemoryEventBus` only when the flag is off. A failure while it creates the Redis bus raises. No in-memory bus replaces it.
+### How a Service Gets the Bus
+
+`libs/runefoble_platform/src/runefoble_platform/event_bus.py` holds the only bus factory. No service builds `RedisStreamsEventBus` itself. No in-memory bus exists in production code.
+
+- `create_event_bus(settings)` builds the bus lazily. It raises `EventBusUnavailableError` when `RUNEFOBLE_REDIS_URL` is empty.
+- `EventBusProvider(settings)` owns one bus per service process. Its methods are `get()`, `set(bus)`, `connect()`, `close()`, and `lifespan(app)`.
+- `connect()` pings Redis. It raises `EventBusUnavailableError` when Redis is unreachable.
+- `lifespan(app)` is a FastAPI lifespan. It calls `connect()` at start-up and `close()` at shutdown. A service that cannot reach Redis does not start.
+
+Each service `dependencies` module creates one provider and binds its public API:
+
+```python
+event_bus_provider = EventBusProvider(platform_settings)
+get_event_bus = event_bus_provider.get
+set_event_bus = event_bus_provider.set
+```
+
+The service `main.py` passes `lifespan=event_bus_provider.lifespan`. A service with its own lifespan calls `event_bus_provider.lifespan(app)` inside it. Tests call `set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))`. `close()` does not close a bus that a test set.
 
 ### Competing Consumer Reading
 ```python

@@ -22,6 +22,8 @@ from game_session.minigame_rules import (
     to_uuid,
     validate_liars_dice_bid,
 )
+from game_session.minigame_tables.models import MinigameTableState
+from game_session.minigame_tables.table_aggregate import TableCommandsMixin
 from pydantic import BaseModel, Field
 from runefoble_events.tavern import (
     IntoxicationLevelChanged,
@@ -54,10 +56,11 @@ class TavernGameState(BaseModel):
     dsp_filters: dict[str, list[str]] = Field(default_factory=dict)
     last_voice_bark: str | None = None
     history: list[dict[str, Any]] = Field(default_factory=list)
+    table: MinigameTableState | None = None
 
 
-class TavernGameAggregate(DeclarativeAggregate[TavernGameState]):
-    """Event-sourced aggregate managing Liar's Dice, card tournaments, and drinking contests."""
+class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameState]):
+    """Event-sourced aggregate managing Liar's Dice, card tournaments, drinking contests, and tables."""
 
     aggregate_type = "TavernGame"
     requires_creation_event = False

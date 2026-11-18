@@ -3,6 +3,8 @@ id: 0001
 title: The Watcher AI Dungeon Master and Real-Time Board Animator
 status: Accepted
 created: 2026-09-25
+target_persona: Evelyn, Marcus
+component: the_watcher
 ---
 
 # PRD-0001 — The Watcher AI Dungeon Master and Real-Time Board Animator

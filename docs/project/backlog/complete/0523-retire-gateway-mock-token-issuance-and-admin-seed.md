@@ -15,13 +15,6 @@ governing_stories:
 - US-0062
 - US-0070
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-authz-coverage.md
-- w1-gateway-api.md
-- w2-app-shell.md
-- w3-ddd-architecture.md
-- w1-libs.md
 ---
 
 # TASK-0523: Retire Gateway Mock Token Issuance, Admin Seeding, and Username-Derived Roles
@@ -73,3 +66,8 @@ New file `tests/test_blackbox_auth_routes_retired.py`, using `TestClient(app)` a
 3. `docs/how-to/test-email-signups-with-mailpit.md` describes Zitadel sign-up mail through Mailpit.
 4. `docs/reference/ports-and-endpoints.md` no longer lists the removed routes.
 5. `uv run ruff check gateway/api` passes. No file exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-authz-coverage.md`, `w1-gateway-api.md`, `w2-app-shell.md`, `w3-ddd-architecture.md`, `w1-libs.md`

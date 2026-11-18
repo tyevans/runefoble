@@ -11,9 +11,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-backlog-specops.md
 ---
 
 # TASK-0666: Backlog Task Links, Body Status, Complete-Record Paths, and Missing Governance Keys Are Repaired
@@ -62,3 +59,8 @@ Backlog governance. No product record applies.
 5. The check runs in `make health-check` or `spec-ops health`.
 6. The changes are merged and the complete-record and PRIORITY edits are applied by the integration orchestrator.
 7. Each script is under 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-backlog-specops.md`

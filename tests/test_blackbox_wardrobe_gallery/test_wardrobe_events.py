@@ -178,4 +178,4 @@ async def test_blackbox_event_dispatch(char_client: TestClient, forge_client: Te
     assert "runefoble.events.character.damaged" in char_event_types
     assert "runefoble.events.character.portrait_variant_generated" in char_event_types
     assert "runefoble.events.character.portrait_updated" in char_event_types
-    assert "runefoble.events.character.portrait_variant_generated" in asset_event_types
+    assert "runefoble.events.character.portrait_variant_generated" not in asset_event_types

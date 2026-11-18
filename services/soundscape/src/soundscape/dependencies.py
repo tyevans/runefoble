@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from typing import Annotated
 from uuid import UUID, uuid4
@@ -14,9 +13,9 @@ from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
+from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_publish import deliver_best_effort, publish_best_effort
 from runefoble_platform.event_sourcing import AggregateRepository, create_aggregate_repository
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.event_handlers import (
@@ -31,7 +30,6 @@ from soundscape.mixer import AudioStemMixer
 logger = logging.getLogger("runefoble.soundscape")
 settings = PlatformSettings()
 
-_event_bus: RedisStreamsEventBus | None = None
 _soundscape_repo = create_aggregate_repository(SoundscapeAggregate)
 
 _session_to_aggregate: dict[str, UUID] = {}
@@ -45,19 +43,9 @@ def get_soundscape_repo() -> AggregateRepository[SoundscapeAggregate]:
     return _soundscape_repo
 
 
-def get_event_bus() -> RedisStreamsEventBus | None:
-    """Provide RedisStreamsEventBus instance."""
-    global _event_bus
-    if _event_bus is None and settings.redis_url:
-        with contextlib.suppress(Exception):
-            _event_bus = RedisStreamsEventBus(redis_url=settings.redis_url)
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    """Override event bus for testing."""
-    global _event_bus
-    _event_bus = bus
+event_bus_provider = EventBusProvider(settings)
+get_event_bus = event_bus_provider.get
+set_event_bus = event_bus_provider.set
 
 
 def get_or_create_aggregate_id(session_id: str) -> UUID:
@@ -83,11 +71,10 @@ def get_or_create_leitmotif_engine(session_id: str) -> LeitmotifEngine:
 
 def reset_dependencies() -> None:
     """Clear in-memory session registries and reset mocks."""
-    global _event_bus
     _session_to_aggregate.clear()
     _session_mixers.clear()
     _session_leitmotif_engines.clear()
-    _event_bus = None
+    event_bus_provider.set(None)
 
 
 def get_zitadel_auth_service() -> ZitadelAuthService:

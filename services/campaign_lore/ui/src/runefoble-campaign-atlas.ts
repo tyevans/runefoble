@@ -4,7 +4,7 @@ import { atlasStyles } from './runefoble-campaign-atlas.styles.ts';
 import {
   type AtlasPin, type AtlasTerritory, type CodexEntry,
   renderTerritories, renderTerritoryDefs, renderPinsLayer,
-  calculateCanvasCoordinates, renderCodexSidebar,
+  calculateCanvasCoordinates, renderCodexSidebar, PinDraftController,
 } from './atlas/index.ts';
 
 export type { AtlasPin, AtlasTerritory, CodexEntry };
@@ -20,6 +20,7 @@ export class RunefobleCampaignAtlas extends LitElement {
   @property({ type: Array }) territories: AtlasTerritory[] = [];
   @property({ type: Array }) codexEntries: CodexEntry[] = [];
   @property({ type: Boolean }) isDM = false;
+  @property({ type: String }) pinError = '';
 
   @state() private zoomLevel = 1.0;
   @state() private panX = 0;
@@ -27,6 +28,8 @@ export class RunefobleCampaignAtlas extends LitElement {
   @state() private selectedPin: AtlasPin | null = null;
   @state() private selectedEntry: CodexEntry | null = null;
   @state() private showContestedOnly = false;
+
+  private pinDraft = new PinDraftController(this, (draft) => this.emit('pin-create-requested', { ...draft, layer: this.activeLayer, campaignId: this.campaignId }));
 
   private isDragging = false;
   private startX = 0;
@@ -59,9 +62,7 @@ export class RunefobleCampaignAtlas extends LitElement {
     this.emit('pin-selected', { pin, campaignId: this.campaignId });
   }
   private handleCanvasClick(e: MouseEvent) {
-    if (this.isDragging) return;
-    const coordinates = calculateCanvasCoordinates(e, this.panX, this.panY, this.zoomLevel);
-    this.emit('pin-create-requested', { coordinates, layer: this.activeLayer, campaignId: this.campaignId });
+    if (!this.isDragging) this.pinDraft.open(calculateCanvasCoordinates(e, this.panX, this.panY, this.zoomLevel));
   }
 
   render() {
@@ -79,6 +80,7 @@ export class RunefobleCampaignAtlas extends LitElement {
           <button class="btn" @click=${this.resetView}>Reset View</button>
         </div>
       </div>
+      ${this.pinDraft.render(this.pinError)}
       <div class="main-viewport">
         <div class="canvas-container" @mousedown=${this.handleMouseDown} @mousemove=${this.handleMouseMove} @mouseup=${this.handleMouseUp} @mouseleave=${this.handleMouseUp} @click=${this.handleCanvasClick}>
           <svg class="map-svg" viewBox="0 0 1000 1000">

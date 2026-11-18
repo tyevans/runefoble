@@ -4,6 +4,7 @@ title: Generative Procedural Battlemaps and Character Portraits
 status: Shipped
 created: 2026-09-25
 governing_prd: PRD-0009
+persona: Evelyn (DM)
 ---
 
 # US-0038 — Generative Procedural Battlemaps and Character Portraits

@@ -5,8 +5,15 @@ from __future__ import annotations
 from pathlib import Path
 
 from tools.prd_pipeline.decomposer import PRDDecomposer
+from tools.prd_pipeline.manager import PRDManager
 from tools.prd_pipeline.models import SliceType
-from tools.prd_pipeline.prd_manager import PRDManager
+from tools.prd_pipeline.planner import (
+    create_api_slice_draft,
+    create_domain_slice_draft,
+    create_spike_draft,
+    create_ui_slice_draft,
+    create_worker_slice_draft,
+)
 from tools.prd_pipeline.templates import (
     create_user_story_draft,
     format_task_markdown,
@@ -112,8 +119,8 @@ def test_templates_formatting_and_helpers(temp_project: Path):
     assert "## Definition of Done (Hard Invariant 7" in task_md
 
 
-def test_decomposer_task_draft_delegates(temp_project: Path):
-    """Verifies that private draft factory helper delegates remain functional on PRDDecomposer."""
+def test_slice_draft_factories(temp_project: Path):
+    """Verifies the slice draft factories produce the expected slice types."""
     mgr = PRDManager(temp_project)
     prd = mgr.create_prd(
         title="Interactive Canvas",
@@ -122,20 +129,18 @@ def test_decomposer_task_draft_delegates(temp_project: Path):
         summary="Canvas UI component.",
         status="Accepted",
     )
-    decomposer = PRDDecomposer(temp_project)
-
-    spike = decomposer._create_spike_draft("TASK-0999", 999, prd, "board_state")
+    spike = create_spike_draft("TASK-0999", 999, prd, "board_state")
     assert spike.canonical_id == "TASK-0999"
     assert spike.is_spike is True
 
-    domain = decomposer._create_domain_slice_draft("TASK-1000", 1000, prd, "board_state", [], [])
+    domain = create_domain_slice_draft("TASK-1000", 1000, prd, "board_state", [], [])
     assert domain.slice_type == SliceType.DOMAIN_AGGREGATE
 
-    api = decomposer._create_api_slice_draft("TASK-1001", 1001, prd, "board_state", [], [])
+    api = create_api_slice_draft("TASK-1001", 1001, prd, "board_state", [], [])
     assert api.slice_type == SliceType.API_AUTH
 
-    ui = decomposer._create_ui_slice_draft("TASK-1002", 1002, prd, "board_state", [], [])
+    ui = create_ui_slice_draft("TASK-1002", 1002, prd, "board_state", [], [])
     assert ui.slice_type == SliceType.MICROFRONTEND
 
-    worker = decomposer._create_worker_slice_draft("TASK-1003", 1003, prd, "board_state", [], [])
+    worker = create_worker_slice_draft("TASK-1003", 1003, prd, "board_state", [], [])
     assert worker.slice_type == SliceType.WORKER_INTEGRATION

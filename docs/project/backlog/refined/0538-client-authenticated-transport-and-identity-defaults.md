@@ -14,11 +14,6 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-app-shell.md
-- w3-authz-coverage.md
-- w2-voice-agent.md
 ---
 
 # TASK-0538: Client Authenticated Transport for API Calls and WebSockets, and Removal of Fixture Identity
@@ -68,3 +63,8 @@ Playwright BDD through the App Shell (TASK-0525 runner).
 3. Playwright BDD journeys (TASK-0525) pass.
 4. The microfrontend how-to (`authoring-service-microfrontends.md`) describes the shared token helper.
 5. No file exceeds 500 lines. Split `runefoble-app.ts` changes if the file would exceed the limit (it is already a god component, audit w2-app-shell F5).
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-app-shell.md`, `w3-authz-coverage.md`, `w2-voice-agent.md`

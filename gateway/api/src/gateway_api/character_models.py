@@ -122,6 +122,7 @@ class HealthChangeRequest(BaseModel):
     delta: int
     source: str = "damage"
     is_stand_in: bool | None = Field(default=None, alias="isStandIn")
+    session_id: str | None = Field(default=None, alias="sessionId")
 
     model_config = ConfigDict(populate_by_name=True)
 

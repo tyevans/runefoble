@@ -13,8 +13,9 @@ import httpx
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
-from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
 from voice_agent.dependencies import (
     STREAM_SESSION,
     STREAM_VOICE,
@@ -25,14 +26,9 @@ from voice_agent.dependencies import (
     to_uuid,
 )
 from voice_agent.dependencies import (
-    get_event_bus as _dep_get_event_bus,
-)
-from voice_agent.dependencies import (
-    set_event_bus as _dep_set_event_bus,
-)
-from voice_agent.dependencies import (
     set_watcher_client as _dep_set_watcher_client,
 )
+from voice_agent.event_bus import event_bus_provider, get_event_bus, set_event_bus
 from voice_agent.models import (
     AVAILABLE_PERSONAS,
     DSPApplyRequest,
@@ -63,10 +59,11 @@ from voice_agent.synthesis_engine import get_speech_synthesizer
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """Build the configured speech engines at start-up. A bad engine setting stops the service."""
+    """Build the configured speech engines and connect Redis at start-up. A bad engine setting stops the service."""
     get_streaming_pipeline()
     get_speech_synthesizer()
-    yield
+    async with event_bus_provider.lifespan(_app):
+        yield
 
 
 app = FastAPI(
@@ -77,6 +74,8 @@ app = FastAPI(
 )
 app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)
 install_authz_error_handlers(app)
+register_store_unavailable_handlers(app)
+install_publish_failure_handler(app)
 app.include_router(room_router)
 app.include_router(stream_router)
 app.include_router(audio_router)
@@ -88,21 +87,6 @@ app.include_router(dsp_condition_router)
 app.include_router(stream_diagnostics_router)
 app.include_router(audio_filters_router)
 app.include_router(aec_diagnostics_router)
-
-_event_bus: RedisStreamsEventBus | None = None
-
-
-def get_event_bus() -> RedisStreamsEventBus:
-    global _event_bus
-    if _event_bus is None:
-        _event_bus = _dep_get_event_bus()
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    global _event_bus
-    _event_bus = bus
-    _dep_set_event_bus(bus)
 
 
 def set_watcher_client(client: httpx.AsyncClient | None) -> None:
@@ -119,6 +103,7 @@ async def health_check():
         "service": "voice_agent",
         "stt_engine": transcriber.engine_name,
         "tts_engine": synthesizer.engine_name,
+        "event_publish_failures": event_publish_failures(),
     }
     if problems:
         body["problems"] = problems
@@ -189,7 +174,6 @@ __all__ = [
     "VoicePersona",
     "WATCHER_URL",
     "_dispatch_voice_audio_conditioned",
-    "_event_bus",
     "app",
     "dsp_pipeline",
     "get_event_bus",

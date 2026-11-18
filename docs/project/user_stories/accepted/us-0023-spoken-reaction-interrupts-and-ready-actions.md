@@ -4,6 +4,7 @@ title: Spoken Reaction Interrupts and Ready-Action Triggers
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0001
+persona: Marcus (Adventurer)
 ---
 
 # US-0023 — Spoken Reaction Interrupts and Ready-Action Triggers

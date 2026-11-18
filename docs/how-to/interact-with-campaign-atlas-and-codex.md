@@ -4,7 +4,7 @@ This guide explains how to navigate the interactive multi-layered world atlas en
 
 ---
 
-> **Routing.** Clients call the gateway on port `8000`, not `campaign_lore`. The gateway routes `GET` for the atlas and the codex today. It does not yet route the `POST` and `PATCH` calls in sections 2 to 4 (atlas territories, atlas pins, codex entries). Those calls fail through the gateway until the routes are added. Defect: the gateway route gap is not yet tasked.
+> **Routing.** Clients call the gateway on port `8000`, not `campaign_lore`. The gateway routes `GET` for the atlas and the codex, and `POST` for atlas pins and codex entries (`run_session` and `play` permissions). The gateway does not yet route `POST` for atlas territories or `PATCH` for codex entries. Those calls fail through the gateway until the routes are added. Defect: the gateway route gap is not yet tasked.
 
 ## 1. Deep-Zoom Atlas Navigation & Layer Projections
 
@@ -145,7 +145,8 @@ An empty dataset shows the element's empty state. A failed read shows the App Sh
 
 ### Emitted Custom Events
 - `pin-selected`: Triggered when a pin marker is clicked (`detail.pin`).
-- `pin-create-requested`: Triggered when an empty canvas location is clicked (`detail.coordinates`, `detail.layer`).
+- `pin-create-requested`: Triggered when the user submits the pin form after clicking an empty canvas location (`detail.title`, `detail.coordinates`, `detail.layer`, `detail.campaignId`). The App Shell posts the pin to `POST /api/v1/campaigns/{campaign_id}/atlas/pins`, then reloads the atlas. A refused write shows `pinError` on the element and leaves the pin list unchanged.
+- `codex-entry-create-requested` (`<runefoble-campaign-codex>`): Triggered when the user submits the new entry form (`detail.title`, `detail.content`, `detail.privacy`, `detail.campaignId`). The App Shell posts the entry to `POST /api/v1/campaigns/{campaign_id}/codex/entries`, then reads the codex again. A refused write shows `entryError` on the element and leaves the entry list unchanged.
 - `layer-change`: Triggered when the layer zoom mode is toggled (`detail.layer`).
 
 ### Modular Subview Architecture
@@ -153,4 +154,5 @@ Per ADR-0004 and Hard Invariant 6, `<runefoble-campaign-atlas>` decomposes its p
 - **Territory Renderer (`territory-renderer.template.ts`)**: SVG polygon generation for geopolitical borders, contested territory cross-hatching, and faction banner color fills.
 - **Pins Layer (`pins-layer.template.ts`)**: Milestone pins, chronological era timeline filtering, and canvas click coordinate mapping.
 - **Codex Sidebar (`codex-sidebar.template.ts`)**: Slide-out living party codex notes, illuminated typography, and linked entity chips.
+- **Pin Form (`pin-form.template.ts`)** and **Pin Draft Controller (`pin-draft.controller.ts`)**: The new-pin form that opens after a canvas click. The controller holds the draft and emits `pin-create-requested` on submit. The form shows the refusal message from the last write.
 

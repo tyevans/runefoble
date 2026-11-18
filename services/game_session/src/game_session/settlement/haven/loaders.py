@@ -11,11 +11,11 @@ from uuid import UUID
 from fastapi import HTTPException
 from game_session.dependencies import (
     get_establishment_repository,
-    get_settlement_establishments_index,
     get_settlement_repository,
     get_spicedb_client,
 )
 from game_session.events import STREAM_WEST_MARCHES
+from game_session.queries import list_establishments_for_settlement
 from game_session.settlement.auth import (
     check_establishment_read_permission,
     check_establishment_write_permission,
@@ -28,6 +28,7 @@ from game_session.settlement.models import (
     SettlementProjectionResponse,
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_best_effort
 
 
@@ -85,16 +86,13 @@ async def load_establishment(eid: str, perm: str, uid: str | None) -> Establishm
 async def build_settlement_projection(agg: SettlementAggregate) -> SettlementProjectionResponse:
     """Build consolidated read projection including active establishments."""
     sid = str(agg.state.settlement_id or agg.aggregate_id)
-    est_ids = get_settlement_establishments_index().get(sid, [])
+    est_ids = await list_establishments_for_settlement(sid)
     est_repo = get_establishment_repository()
     establishments: list[EstablishmentState] = []
     for eid in est_ids:
-        try:
-            e_agg = await est_repo.load(to_uuid(eid))
-            if e_agg.state.is_constructed:
-                establishments.append(e_agg.state)
-        except Exception:
-            continue
+        e_agg = await load_if_exists(est_repo, to_uuid(eid))
+        if e_agg is not None and e_agg.state.is_constructed:
+            establishments.append(e_agg.state)
 
     return SettlementProjectionResponse(
         settlement_id=sid,

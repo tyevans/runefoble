@@ -10,6 +10,7 @@ import json
 import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from runefoble_platform.event_publish import publish_best_effort
 from voice_agent.auth import VoicePrincipal, get_voice_verifier
 from voice_agent.authz import admit_speaker_websocket, require_action
 from voice_agent.barge_in import BargeInDetector
@@ -51,10 +52,7 @@ async def _handle_interruption(
     ev = res.to_event()
     bus = get_event_bus()
     for s in (STREAM_VOICE, STREAM_SESSION):
-        try:
-            await bus.publish_event(s, ev)
-        except Exception as e:
-            logger.warning("Failed to publish VoiceSpeechInterrupted: %s", e)
+        await publish_best_effort(bus, s, ev)
 
     frames = [
         {

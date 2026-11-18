@@ -8,25 +8,14 @@ from typing import Any
 from fastapi import Request, WebSocket
 from gateway_api.upstreams import UpstreamRegistry
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.event_bus import EventBusProvider
 
 platform_settings = PlatformSettings()
-_event_bus: RedisStreamsEventBus | None = None
 
 
-def get_event_bus() -> RedisStreamsEventBus | None:
-    """Retrieve or lazily initialize the platform RedisStreamsEventBus."""
-    global _event_bus
-    if _event_bus is None and platform_settings.redis_url:
-        with contextlib.suppress(Exception):
-            _event_bus = RedisStreamsEventBus(redis_url=platform_settings.redis_url)
-    return _event_bus
-
-
-def set_event_bus(bus: RedisStreamsEventBus | None) -> None:
-    """Explicitly set or override the event bus instance (e.g. for testing)."""
-    global _event_bus
-    _event_bus = bus
+event_bus_provider = EventBusProvider(platform_settings)
+get_event_bus = event_bus_provider.get
+set_event_bus = event_bus_provider.set
 
 
 class WebSocketConnectionManager:

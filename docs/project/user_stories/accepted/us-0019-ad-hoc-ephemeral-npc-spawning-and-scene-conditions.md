@@ -4,6 +4,7 @@ title: Ad-Hoc Ephemeral NPC Spawning and Scene-Wide Conditions
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0007
+persona: Evelyn (DM)
 ---
 
 # US-0019 — Ad-Hoc Ephemeral NPC Spawning and Scene-Wide Conditions

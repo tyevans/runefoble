@@ -19,6 +19,7 @@ from campaign_analytics.event_helpers import get_event_attr, is_event_type
 from campaign_analytics.projection import (
     ACTIVE_COMBATANT_SCOPE,
     ACTIVE_ENCOUNTER_SCOPE,
+    ACTIVE_ROUND_SCOPE,
     TOKEN_NAME_SCOPE,
     TOKEN_POSITION_SCOPE,
     ProjectionTx,
@@ -219,17 +220,27 @@ class AnalyticsEventDispatcher:
         return True
 
     async def handle_combat(self, event: Any, tx: ProjectionTx, sid: str, cid: str) -> bool:
-        """Handle combat round progression and encounter initialization."""
-        if is_event_type(event, ["CombatRoundAdvanced"]):
+        """Handle initiative turn progression and encounter initialization.
+
+        InitiativeTurnAdvanced is the turn event that game session emits. Each turn counts for
+        its active combatant. A round milestone is recorded when the round number changes.
+        """
+        if is_event_type(event, ["InitiativeTurnAdvanced"]):
             rnd = int(get_event_attr(event, "round_number", 1))
             active_id = str(get_event_attr(event, "active_combatant_id", ""))
             if active_id and sid:
                 await tx.set_state(ACTIVE_COMBATANT_SCOPE, sid, active_id)
                 aname = await tx.get_state(TOKEN_NAME_SCOPE, active_id, active_id)
                 await self._stat(tx, sid, cid, active_id, aname, turns_taken=1)
-            desc = f"Encounter advanced to round {rnd}."
-            meta = {"round_number": rnd, "active_combatant_id": active_id}
-            await self._milestone(tx, sid, cid, "combat_round", f"Combat Round {rnd}", desc, meta)
+            previous_round = await tx.get_state(ACTIVE_ROUND_SCOPE, sid, 0) if sid else 0
+            if rnd != previous_round:
+                if sid:
+                    await tx.set_state(ACTIVE_ROUND_SCOPE, sid, rnd)
+                desc = f"Encounter advanced to round {rnd}."
+                meta = {"round_number": rnd, "active_combatant_id": active_id}
+                await self._milestone(
+                    tx, sid, cid, "combat_round", f"Combat Round {rnd}", desc, meta
+                )
             return True
         types = [
             "CombatEncounterStarted",
@@ -263,7 +274,15 @@ class AnalyticsEventDispatcher:
         return True
 
     async def dispatch(self, event: Any, tx: ProjectionTx) -> None:
-        """Dispatch a single domain event across projection handlers."""
+        """Dispatch a single domain event across projection handlers.
+
+        A health change with no session id is skipped. Its aggregate_id names a character, so it
+        must never stand in for a session.
+        """
+        if is_event_type(event, ["CharacterHealthChanged"]) and not get_event_attr(
+            event, "session_id"
+        ):
+            return
         sid, cid = await self.extract_context(event, tx)
         for h in (
             self.handle_session_lifecycle,

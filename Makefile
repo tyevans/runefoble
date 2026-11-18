@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build check-ui-manifests dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-authz-live test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down lint lint-fix build check-ui-manifests dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -11,32 +11,33 @@ help: ## Show this help message
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
-health-check: ## Inspect codebase file length invariants and backlog ready buffer
-	@python3 scripts/health_check.py
+health-check: ## Run spec-ops health (file length, numbering, backlog) and schema gates
+	@spec-ops health
+	@spec-ops schema check
 
 clean-worktrees: ## Clean up merged and stale git worktrees safely
 	@./scripts/cleanup-worktrees.sh $(ARGS)
 
 prd-audit: ## Audit PRDs, buffer health, and granularity
-	@python3 -m tools.prd_pipeline.cli audit
+	@uv run python -m tools.prd_pipeline.cli audit
 
 prd-decompose: ## Decompose PRDs into ADR spikes and vertical slices (ARGS="--prd PRD-0014")
-	@python3 -m tools.prd_pipeline.cli decompose $(ARGS)
+	@uv run python -m tools.prd_pipeline.cli decompose $(ARGS)
 
 prd-create: ## Scaffold a new PRD document (ARGS="--title '...'")
-	@python3 -m tools.prd_pipeline.cli create $(ARGS)
+	@uv run python -m tools.prd_pipeline.cli create $(ARGS)
 
 prd-sync: ## Synchronize PRD, User Story, and Backlog registries
-	@python3 -m tools.prd_pipeline.cli sync
+	@uv run python -m tools.prd_pipeline.cli sync
 
 backlog-worker: ## Run autonomous backlog execution engine (ARGS="--drain --concurrency 2")
-	@python3 -m tools.backlog_engine.cli $(ARGS)
+	@uv run python -m tools.backlog_engine.cli $(ARGS)
 
 visualize-project: ## Launch dynamic docs/project content visualizer web application
-	@python3 -m tools.project_visualizer.cli serve
+	@uv run python -m tools.project_visualizer.cli serve
 
 visualize-project-build: ## Build standalone HTML bundle for docs/project visualizer
-	@python3 -m tools.project_visualizer.cli build --out dist/project-visualizer.html
+	@uv run python -m tools.project_visualizer.cli build --out dist/project-visualizer.html
 
 docs-build: ## Build static documentation site with Zensical and integrated project visualizer
 	@python3 scripts/build_docs.py
@@ -208,6 +209,12 @@ test-bdd: ## Typecheck e2e steps, reject unused steps, validate Gherkin syntax
 	@uv run python scripts/check_e2e_unused_steps.py
 	@echo "==> Validating Gherkin feature syntax and step definitions..."
 	@pnpm exec bddgen
+
+e2e-lore-up: ## Start campaign_lore for the gateway-down e2e journey (TASK-0695)
+	@uv run python scripts/e2e_lore_fault.py up
+
+e2e-lore-down: ## Stop the campaign_lore started by e2e-lore-up (TASK-0695)
+	@uv run python scripts/e2e_lore_fault.py down
 
 test-e2e: ## Run headless Playwright BDD suite across standard browsers
 	@echo "==> Running Playwright BDD end-to-end tests..."

@@ -6,6 +6,7 @@ from gateway_api.routers.characters_proxy import router as characters_router
 from gateway_api.routers.downtime import router as downtime_router
 from gateway_api.routers.health import router as health_router
 from gateway_api.routers.hub_views import router as hub_views_router
+from gateway_api.routers.lore_views import router as lore_views_router
 from gateway_api.routers.overlay import router as overlay_router
 from gateway_api.routers.sessions_proxy import router as sessions_router
 from gateway_api.routers.soundscape import router as soundscape_router
@@ -18,6 +19,7 @@ __all__ = [
     "downtime_router",
     "health_router",
     "hub_views_router",
+    "lore_views_router",
     "overlay_router",
     "sessions_router",
     "soundscape_router",

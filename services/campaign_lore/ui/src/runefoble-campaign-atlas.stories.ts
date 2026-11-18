@@ -108,3 +108,17 @@ export const ContestedTerritories: Story = {
     ></runefoble-campaign-atlas>
   `,
 };
+
+export const PinCreateRefused: Story = {
+  render: () => html`
+    <runefoble-campaign-atlas
+      campaignId="demo-camp-3"
+      activeLayer="continental"
+      .territories=${sampleTerritories}
+      .pins=${samplePins}
+      .codexEntries=${sampleCodex}
+      .isDM=${true}
+      .pinError=${"Pin not placed. Campaign lore is unavailable."}
+    ></runefoble-campaign-atlas>
+  `,
+};
