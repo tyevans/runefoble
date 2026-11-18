@@ -18,10 +18,10 @@ from the_watcher.factions.resources.models import (
     MercenaryRecruitRequest,
     ResourceAdjustRequest,
 )
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.ids import to_uuid
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["faction_resources"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["faction_resources"])
 
 
 async def _load_or_create(faction_id: str) -> FactionResourceAggregate:

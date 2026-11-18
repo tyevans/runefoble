@@ -21,10 +21,10 @@ from the_watcher.faction_models import (
     WorldTickResponse,
 )
 from the_watcher.factions import FactionAggregate
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.ids import to_uuid
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["factions"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["factions"])
 
 
 @router.post(

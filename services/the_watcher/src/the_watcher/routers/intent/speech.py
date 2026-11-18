@@ -18,14 +18,14 @@ from the_watcher.dependencies import (
     require_speaker,
 )
 from the_watcher.engine_selection import load_watcher_ports
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.ids import to_uuid
 from the_watcher.models import (
     IntentResult,
     SpeechInputRequest,
 )
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["intent"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["intent"])
 
 
 @router.post("/api/v1/watcher/transcribe-and-act", response_model=IntentResult)

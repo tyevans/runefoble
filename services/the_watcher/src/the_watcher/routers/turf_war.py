@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from the_watcher.dependencies import (
     require_campaign_permission,
 )
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.turf_war.models import (
     RegionalUnrestResponse,
     SkirmishSimulateRequest,
@@ -17,7 +17,7 @@ from the_watcher.turf_war.service import (
     load_or_create_unrest,
 )
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["turf_war"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["turf_war"])
 
 
 @router.post(

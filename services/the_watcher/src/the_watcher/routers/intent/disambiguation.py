@@ -21,7 +21,7 @@ from the_watcher.dependencies import (
     get_event_bus,
     require_session_permission,
 )
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.ids import to_uuid
 from the_watcher.models import (
     CandidateTarget,
@@ -32,7 +32,7 @@ from the_watcher.models import (
     IntentResolveResponse,
 )
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["intent"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["intent"])
 
 
 async def _safe_publish(bus, stream: str, event) -> None:

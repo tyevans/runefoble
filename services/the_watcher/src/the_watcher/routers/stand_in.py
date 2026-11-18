@@ -13,11 +13,11 @@ from the_watcher.dependencies import (
     require_session_permission,
 )
 from the_watcher.engine_selection import load_watcher_ports
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.ids import to_uuid
 from the_watcher.models import StandInRecapRequest, StandInRecapResponse, StandInRequest
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["stand_in"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["stand_in"])
 
 
 @router.post("/api/v1/watcher/stand-in/act", response_model=StandInAction)

@@ -11,10 +11,10 @@ from the_watcher.dependencies import (
     get_event_bus,
     require_session_permission,
 )
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import RecapRequest
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["chronicle"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["chronicle"])
 
 
 @router.post("/api/v1/watcher/chronicle/recap", response_model=AbsenteeRecapGenerated)

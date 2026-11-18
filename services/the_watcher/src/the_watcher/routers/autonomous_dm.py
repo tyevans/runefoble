@@ -17,7 +17,7 @@ from the_watcher.dependencies import (
     require_session_permission,
 )
 from the_watcher.engine_selection import load_watcher_ports
-from the_watcher.identity import CallerId, get_caller_principal
+from the_watcher.identity import CallerId, get_principal
 from the_watcher.models import (
     DMGuidanceRequest,
     DMNarrationResult,
@@ -26,7 +26,7 @@ from the_watcher.models import (
     SceneGenerateRequest,
 )
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["autonomous_dm"])
+router = APIRouter(dependencies=[Depends(get_principal)], tags=["autonomous_dm"])
 
 
 @router.post("/api/v1/watcher/scenes/generate", response_model=SceneAtmosphereSet)
