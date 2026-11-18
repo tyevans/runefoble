@@ -38,6 +38,7 @@ from game_session.routers import (
 from game_session.settlement.haggling_router import router as settlement_haggling_router
 from game_session.settlement.router import router as settlement_haven_router
 from game_session.settlement.workers_router import router as settlement_workers_router
+from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import (
     event_publish_failures,
@@ -95,6 +96,7 @@ app.include_router(bounties_router)
 app.include_router(bounties_router, prefix="/api/v1")
 app.include_router(profile_router)
 install_publish_failure_handler(app)
+install_authz_error_handlers(app)
 
 
 @app.get("/healthz")

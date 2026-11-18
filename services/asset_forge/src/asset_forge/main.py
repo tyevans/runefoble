@@ -10,10 +10,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from runefoble_auth.errors import AuthzError
+from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures
@@ -59,13 +58,7 @@ app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)
 register_store_unavailable_handlers(app)
 
 
-@app.exception_handler(AuthzError)
-async def authz_unavailable_handler(_request: Request, _exc: AuthzError) -> JSONResponse:
-    """Fail closed: a SpiceDB call that could not be answered or applied returns 503."""
-    return JSONResponse(
-        status_code=503,
-        content={"detail": "Authorization service unavailable. No asset was stored."},
-    )
+install_authz_error_handlers(app)
 
 
 app.add_middleware(

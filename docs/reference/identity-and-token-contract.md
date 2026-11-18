@@ -129,7 +129,7 @@ Each owning service keeps its own short public list. The lists are in [Ports and
 |---|---|---|---|
 | `401` | No `Authorization` header, a non-Bearer scheme, an empty token, a failed verification, or a service call that fails the credential check | `{"error": "unauthorized", "message": "..."}` and `WWW-Authenticate: Bearer` | `libs/runefoble_auth/src/runefoble_auth/principal.py` (`unauthorized`), `caller.py` |
 | `403` | The token is valid, but the SpiceDB check denies the action | Route-specific body | `gateway/api/src/gateway_api/auth.py` (`require_zanzibar_permission`) |
-| `503` | SpiceDB cannot answer | `{"error": "authorization_unavailable"}` | `libs/runefoble_auth/src/runefoble_auth/authz_http.py` |
+| `503` | SpiceDB cannot answer, or a SpiceDB write was not applied (any `AuthzError`) | `{"error": "authorization_unavailable"}` | `libs/runefoble_auth/src/runefoble_auth/authz_http.py` |
 | `500` | A schema name is missing from `runefoble.zed` | `{"error": "authorization_schema_error", "error_id": "<uuid>"}`. The gRPC detail stays in the log. | `authz_http.py` |
 | `503` | An owning service is unreachable, or the call times out | `{"detail", "upstream"}` | `gateway/api/src/gateway_api/upstream_errors.py` |
 | `502` | An owning service returns a 5xx, or a 2xx reply is not JSON | `{"detail", "upstream"}` | `upstream_errors.py`, `proxy.py` |

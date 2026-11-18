@@ -23,6 +23,7 @@ from character_sheet.dependencies import (
 from character_sheet.router import router
 from character_sheet.wardrobe_router import router as wardrobe_router
 from fastapi import FastAPI
+from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import event_store_kind, get_event_store
@@ -47,6 +48,7 @@ app.include_router(router)
 app.include_router(crafting_router)
 app.include_router(wardrobe_router)
 register_store_unavailable_handlers(app)
+install_authz_error_handlers(app)
 
 
 @app.get("/healthz")

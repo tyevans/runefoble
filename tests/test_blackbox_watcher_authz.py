@@ -14,7 +14,7 @@ Governed by:
 from __future__ import annotations
 
 import asyncio
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -228,7 +228,7 @@ def test_schema_defect_returns_500_with_error_id(client: TestClient):
     assert res.status_code == 500
     body = res.json()
     assert body["error"] == "authorization_schema_error"
-    assert len(body["error_id"]) == 32
+    assert UUID(body["error_id"]).version == 4
 
 
 def test_player_may_speak_for_own_character_only(client: TestClient):
