@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd lint lint-fix build check-ui-manifests dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down lint lint-fix build check-ui-manifests dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -205,6 +205,12 @@ test-bdd: ## Typecheck e2e steps, reject unused steps, validate Gherkin syntax
 	@uv run python scripts/check_e2e_unused_steps.py
 	@echo "==> Validating Gherkin feature syntax and step definitions..."
 	@pnpm exec bddgen
+
+e2e-lore-up: ## Start campaign_lore for the gateway-down e2e journey (TASK-0695)
+	@uv run python scripts/e2e_lore_fault.py up
+
+e2e-lore-down: ## Stop the campaign_lore started by e2e-lore-up (TASK-0695)
+	@uv run python scripts/e2e_lore_fault.py down
 
 test-e2e: ## Run headless Playwright BDD suite across standard browsers
 	@echo "==> Running Playwright BDD end-to-end tests..."

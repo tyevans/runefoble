@@ -20,3 +20,15 @@ Feature: Campaign Atlas Pins and Lore Codex Through the Gateway
     When I open the Codex & Lore tab of the campaign
     And I select the "Lore Codex" view
     Then the lore codex lists the entry "Star-Eater Gate"
+
+  @lore-down
+  Scenario: A pin refused by the gateway shows an error and no pin appears
+    Given I am logged in as a "dm"
+    And campaign "Silverkeep Chronicle" exists
+    When I open the Codex & Lore tab of the campaign
+    And the campaign lore service is stopped
+    And I click an empty spot on the campaign atlas
+    And I enter "Ghost Pin" as the pin title
+    And I click the "Place pin" button
+    Then the atlas shows the error "Pin not placed."
+    And the campaign atlas does not list the pin "Ghost Pin"
