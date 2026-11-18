@@ -22,9 +22,9 @@ def service_credential_matches(presented: str | None, expected: str) -> bool:
     return hmac.compare_digest(presented.encode(), expected.encode())
 
 
-def expected_service_credential() -> str:
+def expected_service_credential(settings: PlatformSettings | None = None) -> str:
     """Return the configured service credential. Raise at start-up when it is unset or blank."""
-    credential = PlatformSettings().service_credential
+    credential = (settings or PlatformSettings()).service_credential
     value = credential.get_secret_value().strip() if credential is not None else ""
     if not value:
         raise RuntimeError(

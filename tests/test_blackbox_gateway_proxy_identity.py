@@ -15,6 +15,7 @@ Governed by:
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
@@ -39,6 +40,8 @@ def _echo_upstream() -> FastAPI:
             "authorization": request.headers.get("authorization"),
             "x_user_id": request.headers.get("x-user-id"),
             "x_forwarded_foo": request.headers.get("x-forwarded-foo"),
+            "service_credential": request.headers.get("x-runefoble-service-credential"),
+            "traceparent": request.headers.get("traceparent"),
         }
 
     return app
@@ -83,6 +86,24 @@ def test_proxy_forwards_bearer_token_and_no_user_header(
     echoed = res.json()
     assert echoed["authorization"] == headers["Authorization"]
     assert echoed["x_user_id"] is None
+
+
+def test_proxy_sends_the_service_credential_and_trace_context(
+    monkeypatch, trusted_ws_issuer, game_session_upstream
+) -> None:
+    """Every proxied call presents the service credential (ADR-0015 e) and a traceparent."""
+    with (
+        serve(_echo_upstream()) as lore_url,
+        gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client,
+    ):
+        campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
+        res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
+
+    assert res.status_code == 200
+    echoed = res.json()
+    assert echoed["service_credential"] == os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]
+    assert echoed["traceparent"] is not None
+    assert echoed["traceparent"].startswith("00-")
 
 
 def test_soundscape_proxy_forwards_bearer_token(monkeypatch, trusted_ws_issuer) -> None:

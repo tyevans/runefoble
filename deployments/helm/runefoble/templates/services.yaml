@@ -85,7 +85,7 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
             {{- end }}
-            {{- if has .name (list "the-watcher" "board-state" "character-sheet" "game-session" "rules-compendium") }}
+            {{- if has .name (list "gateway-api" "the-watcher" "board-state" "character-sheet" "game-session" "rules-compendium") }}
             {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
             {{- end }}
             {{- with .config.embeddingApiKeySecret }}

@@ -36,10 +36,14 @@ class ServiceClient:
         self,
         service: str,
         base_url: str,
+        service_credential: str,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
+        if not service_credential.strip():
+            raise ValueError(f"Service client {service} needs a service credential (ADR-0015 e)")
         self.service = service
         self._base_url = base_url.rstrip("/")
+        self._service_credential = service_credential
         self._http = httpx.AsyncClient(transport=transport)
 
     async def send(
@@ -63,7 +67,7 @@ class ServiceClient:
                 f"{self._base_url}{path}",
                 json=json,
                 params=params,
-                headers=build_upstream_headers(authorization),
+                headers=build_upstream_headers(authorization, self._service_credential),
                 timeout=timeout_s,
             )
         except httpx.TransportError as exc:

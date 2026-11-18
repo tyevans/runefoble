@@ -10,6 +10,7 @@ from collections.abc import Mapping
 
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.service_client import ServiceClient, UpstreamUnavailableError
+from runefoble_platform.service_credential import expected_service_credential
 
 # Service name used in logs and error bodies -> PlatformSettings field with its base URL.
 UPSTREAM_SETTINGS: Mapping[str, str] = {
@@ -36,10 +37,11 @@ class UpstreamRegistry:
     @classmethod
     def from_settings(cls, settings: PlatformSettings) -> UpstreamRegistry:
         clients: dict[str, ServiceClient] = {}
+        credential = expected_service_credential(settings)
         for service, field in UPSTREAM_SETTINGS.items():
             base_url = getattr(settings, field)
             if base_url:
-                clients[service] = ServiceClient(service, base_url)
+                clients[service] = ServiceClient(service, base_url, credential)
         return cls(clients)
 
     def client(self, service: str) -> ServiceClient:
