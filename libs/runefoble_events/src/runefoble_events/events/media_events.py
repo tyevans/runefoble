@@ -2,9 +2,7 @@
 
 from runefoble_events.asset import (
     AssetDeleted,
-    AssetGenerated,
     AssetUploaded,
-    BattlemapCreated,
     BattlemapForged,
     TokenAssetForged,
 )
@@ -56,14 +54,12 @@ from runefoble_events.watcher import (
 
 __all__ = [
     "AssetDeleted",
-    "AssetGenerated",
     "AssetUploaded",
     "AudienceModifierApproved",
     "AudienceModifierProposed",
     "AudiencePollCompleted",
     "AudiencePollStarted",
     "AudienceVoteCast",
-    "BattlemapCreated",
     "BattlemapForged",
     "LeitmotifProfileConfigured",
     "LeitmotifTriggered",

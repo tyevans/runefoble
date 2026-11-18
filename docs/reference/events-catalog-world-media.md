@@ -215,7 +215,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `bucket`: String
   - `object_key`: String
   - `deleted_by`: String
-- **`BattlemapForged`** (alias: `BattlemapCreated`): Emitted when a tactical battlemap is procedurally generated and stored in Silo S3 (`runefoble.events.asset.battlemap_forged`).
+- **`BattlemapForged`**: Emitted when a tactical battlemap is procedurally generated and stored in Silo S3 (`runefoble.events.asset.battlemap_forged`).
   - `asset_id`: String
   - `campaign_id`: Optional[UUID]
   - `session_id`: Optional[String]
@@ -229,7 +229,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `hazard_cells_count`: Integer
   - `doors_count`: Integer
   - `theme`: String
-- **`TokenAssetForged`** (alias: `AssetGenerated`): Emitted when a character or creature token portrait is procedurally synthesized with alpha transparency (`runefoble.events.asset.token_forged`).
+- **`TokenAssetForged`**: Emitted when a character or creature token portrait is procedurally synthesized with alpha transparency (`runefoble.events.asset.token_forged`).
   - `asset_id`: String
   - `campaign_id`: Optional[UUID]
   - `creator_id`: String

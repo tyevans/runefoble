@@ -116,16 +116,10 @@ class StlTokenForged(BaseRunefobleEvent):
     download_url: str
 
 
-# Register under short class names and aliases as well for backward compatibility
+# Register under short class names.
 register_event(AssetUploaded, event_type="AssetUploaded")
 register_event(AssetDeleted, event_type="AssetDeleted")
 register_event(BattlemapForged, event_type="BattlemapForged")
-register_event(BattlemapForged, event_type="BattlemapCreated")
 register_event(TokenAssetForged, event_type="TokenAssetForged")
-register_event(TokenAssetForged, event_type="AssetGenerated")
 register_event(PrintPdfForged, event_type="PrintPdfForged")
 register_event(StlTokenForged, event_type="StlTokenForged")
-
-# Legacy aliases
-BattlemapCreated = BattlemapForged
-AssetGenerated = TokenAssetForged
