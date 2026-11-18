@@ -23,6 +23,7 @@ from gateway_api.dependencies import (
 )
 from gateway_api.routers import (
     auth_router,
+    boards_router,
     campaigns_router,
     characters_router,
     downtime_router,
@@ -84,6 +85,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(campaigns_router)
+app.include_router(boards_router)
 app.include_router(sessions_router)
 app.include_router(hub_views_router)
 app.include_router(lore_views_router)

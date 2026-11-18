@@ -320,6 +320,23 @@ def character_sheet_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
 
 
 @pytest.fixture
+def board_state_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
+    """Serve board_state as a live loopback upstream (TASK-0582).
+
+    The gateway reaches it over HTTP through RUNEFOBLE_BOARD_STATE_URL. Boards are created
+    through its public `POST /api/v1/boards`. The URL is set before the gateway lifespan runs,
+    so build the gateway client after this fixture.
+    """
+    from board_state.main import app as board_app
+
+    from tests.helpers.live_services import serve
+
+    with serve(board_app) as url:
+        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", url)
+        yield url
+
+
+@pytest.fixture
 def game_session_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
     """Serve game_session as a live loopback upstream with fresh in-memory campaign state.
 

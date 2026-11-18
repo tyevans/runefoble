@@ -26,7 +26,9 @@ SRC_DIR = FRONTEND_DIR / "src"
 
 
 @pytest.fixture
-def client(game_session_upstream, character_sheet_upstream) -> Iterator[TestClient]:
+def client(
+    game_session_upstream, character_sheet_upstream, board_state_upstream
+) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 
@@ -86,9 +88,22 @@ def test_gateway_campaign_and_session_routes(client: TestClient, trusted_ws_issu
     assert session_res.json()["session_id"] == session_id
 
     # 6. Fetch board tokens (keyed by session id)
+    _owner_board(campaign_id, session_id, headers)
     board_res = client.get(f"/api/v1/boards/{session_id}", headers=headers)
     assert board_res.status_code == 200
     assert "tokens" in board_res.json()
+
+
+def _owner_board(campaign_id: str, session_id: str, headers: dict[str, str]) -> None:
+    """Create the session board through board_state's public route, as the campaign owner."""
+    url = os.environ["RUNEFOBLE_BOARD_STATE_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/boards",
+        json={"session_id": session_id, "campaign_id": campaign_id},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
 
 
 def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
