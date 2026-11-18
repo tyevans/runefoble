@@ -36,7 +36,6 @@ from game_session.routers.session_auth import SessionController, SessionParticip
 from game_session.settlement.auth.tokens import (
     CallerId,
     get_caller_or_service,
-    get_caller_principal,
 )
 from runefoble_platform.dice import parse_and_roll
 
@@ -258,10 +257,9 @@ async def hot_swap_session(
 
 @router.post(
     "/api/v1/sessions/{session_id}/next-turn",
-    dependencies=[Depends(get_caller_principal)],
     response_model=GameSessionState,
 )
-async def advance_turn(session_id: UUID) -> GameSessionState:
+async def advance_turn(session_id: UUID, _controller: SessionController) -> GameSessionState:
     """Advance to the next turn in the session."""
     session = await _load_session(session_id)
     try:
@@ -274,18 +272,17 @@ async def advance_turn(session_id: UUID) -> GameSessionState:
 
 @router.post(
     "/api/v1/sessions/{session_id}/roll",
-    dependencies=[Depends(get_caller_principal)],
     response_model=RollDiceResponse,
 )
 async def roll_dice_session(
-    session_id: UUID, req: RollDiceRequest | None = None
+    session_id: UUID, roller_id: SessionParticipant, req: RollDiceRequest | None = None
 ) -> RollDiceResponse:
-    """Evaluate a dice roll and record it on the session aggregate."""
+    """Evaluate a dice roll for the verified caller and record it on the session aggregate."""
     req_data = req or RollDiceRequest()
     session = await _load_session(session_id)
     result = parse_and_roll(req_data.formula)
     session.record_dice_roll(
-        roller_id=req_data.roller_id,
+        roller_id=roller_id,
         roller_name=req_data.roller_name,
         formula=req_data.formula,
         roll=result,
@@ -294,7 +291,7 @@ async def roll_dice_session(
 
     return RollDiceResponse(
         session_id=session_id,
-        roller_id=req_data.roller_id,
+        roller_id=roller_id,
         roller_name=req_data.roller_name,
         formula=req_data.formula,
         total=result["total"],

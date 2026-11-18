@@ -39,3 +39,4 @@ def session_permission(permission: str) -> Callable[..., Awaitable[str]]:
 
 SessionController = Annotated[str, Depends(session_permission("control"))]
 SessionParticipant = Annotated[str, Depends(session_permission("participate"))]
+SessionObserver = Annotated[str, Depends(session_permission("observe"))]

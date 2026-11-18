@@ -146,13 +146,13 @@ def test_spoken_reaction_interrupt_pauses_turn(client: TestClient, mock_bus: Moc
 
 def test_reaction_declare_error_handling(client: TestClient):
     """Test validation and error handling on reaction declarations."""
-    # 1. Non-existent session
+    # 1. Non-existent session: the permission check runs first, so the caller is refused
     bad_uuid = str(uuid4())
     res = client.post(
         f"/sessions/{bad_uuid}/reactions/declare",
         json={"reacting_combatant_id": "c-1", "trigger_phrase": "Shield!"},
     )
-    assert res.status_code == 404
+    assert res.status_code == 403
 
     # 2. Declare outside combat
     c_res = client.post(

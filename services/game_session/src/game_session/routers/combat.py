@@ -13,7 +13,8 @@ from game_session.models import (
     NextTurnRequest,
     StartCombatRequest,
 )
-from game_session.settlement.auth.tokens import get_caller_or_service, get_caller_principal
+from game_session.routers.session_auth import session_permission
+from game_session.settlement.auth.tokens import get_caller_or_service
 from runefoble_platform.event_sourcing import AggregateRepository
 
 router = APIRouter(tags=["combat"])
@@ -36,7 +37,7 @@ def _build_combat_response(
 
 @router.post(
     "/api/v1/sessions/{session_id}/combat/start",
-    dependencies=[Depends(get_caller_principal)],
+    dependencies=[Depends(session_permission("control"))],
     response_model=CombatStateResponse,
 )
 async def start_combat_encounter(session_id: UUID, req: StartCombatRequest | None = None):
@@ -58,7 +59,7 @@ async def start_combat_encounter(session_id: UUID, req: StartCombatRequest | Non
 
 @router.post(
     "/api/v1/sessions/{session_id}/combat/initiative",
-    dependencies=[Depends(get_caller_principal)],
+    dependencies=[Depends(session_permission("control"))],
     response_model=CombatStateResponse,
 )
 async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest):
@@ -84,7 +85,7 @@ async def roll_combat_initiative(session_id: UUID, req: InitiativeRollRequest):
 
 @router.post(
     "/api/v1/sessions/{session_id}/combat/next-turn",
-    dependencies=[Depends(get_caller_principal)],
+    dependencies=[Depends(session_permission("control"))],
     response_model=CombatStateResponse,
 )
 async def advance_combat_turn(session_id: UUID, req: NextTurnRequest | None = None):
@@ -106,7 +107,7 @@ async def advance_combat_turn(session_id: UUID, req: NextTurnRequest | None = No
 
 @router.post(
     "/api/v1/sessions/{session_id}/combat/end",
-    dependencies=[Depends(get_caller_principal)],
+    dependencies=[Depends(session_permission("control"))],
     response_model=CombatStateResponse,
 )
 async def end_combat_encounter(session_id: UUID):

@@ -25,10 +25,30 @@ logger = logging.getLogger("runefoble.game_session.minigames_ws")
 router = APIRouter(tags=["minigames_ws"])
 
 
+async def _reject(websocket: WebSocket, code: str, message: str, close_code: int) -> None:
+    await websocket.send_json({"type": "error", "code": code, "message": message})
+    await websocket.close(code=close_code, reason=code)
+
+
+async def _may_play(
+    websocket: WebSocket, spicedb: object, establishment_id: str, user_id: str
+) -> bool:
+    """Check `establishment` play access (Zanzibar). Reject the socket with 4003 when missing."""
+    if await check_establishment_play_permission(spicedb, establishment_id, user_id):
+        return True
+    await _reject(
+        websocket,
+        "PERMISSION_DENIED",
+        f"User '{user_id}' lacks permission to play at establishment '{establishment_id}'",
+        4003,
+    )
+    return False
+
+
 async def handle_table_websocket(
     websocket: WebSocket,
     table_id: str,
-    establishment_id: str,
+    establishment_id: str | None,
     verifier: BearerVerifier | None = None,
 ) -> None:
     """Admit the verified caller, then run the bidirectional minigames table session."""
@@ -38,30 +58,25 @@ async def handle_table_websocket(
     user_id = principal.user_id
     spicedb = get_spicedb_client()
 
-    # Zanzibar permission check on every connect. No establishment id is exempt.
-    has_perm = await check_establishment_play_permission(spicedb, establishment_id, user_id)
-    if not has_perm:
-        await websocket.send_json(
-            {
-                "type": "error",
-                "code": "PERMISSION_DENIED",
-                "message": f"User '{user_id}' lacks permission to play at establishment '{establishment_id}'",
-            }
-        )
-        await websocket.close(code=4003, reason="Forbidden")
+    # The path names an establishment: check it before the table is revealed.
+    if establishment_id is not None and not await _may_play(
+        websocket, spicedb, establishment_id, user_id
+    ):
         return
 
     try:
         table = await load_table(table_id)
     except TableNotFoundError:
-        await websocket.send_json(
-            {
-                "type": "error",
-                "code": "TABLE_NOT_FOUND",
-                "message": f"Table '{table_id}' is not open",
-            }
-        )
-        await websocket.close(code=4404, reason="Table not found")
+        await _reject(websocket, "TABLE_NOT_FOUND", f"Table '{table_id}' is not open", 4404)
+        return
+
+    # The table names its own establishment. A socket path cannot pick a different one.
+    if establishment_id is not None and establishment_id != table.establishment_id:
+        await _reject(websocket, "TABLE_NOT_FOUND", f"Table '{table_id}' is not open", 4404)
+        return
+    if establishment_id is None and not await _may_play(
+        websocket, spicedb, table.establishment_id, user_id
+    ):
         return
 
     minigame_table_manager.register(table_id, websocket)
@@ -69,7 +84,7 @@ async def handle_table_websocket(
         {
             "type": "connected",
             "table_id": table_id,
-            "establishment_id": establishment_id,
+            "establishment_id": table.establishment_id,
             "table_state": table.model_dump(),
         }
     )
@@ -121,7 +136,7 @@ async def standalone_minigame_ws(
     table_id: str,
 ) -> None:
     """Standalone multiplayer minigame table WebSocket channel."""
-    await handle_table_websocket(websocket, table_id, "est-default")
+    await handle_table_websocket(websocket, table_id, None)
 
 
 __all__ = ["handle_table_websocket", "router"]

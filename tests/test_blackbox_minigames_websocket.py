@@ -29,6 +29,8 @@ from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
+RED = {1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36}
+
 
 @pytest.fixture
 def mock_bus():
@@ -223,151 +225,89 @@ def test_darts_and_billiards_multiplayer_turn_sync(
             assert frame2_ws2["spin"] == "draw"
 
 
-def test_casino_craps_and_roulette_betting_and_payouts(
+def _grant_patron(spicedb: MockSpiceDBClient, *user_ids: str) -> None:
+    for user_id in user_ids:
+        asyncio.run(
+            spicedb.write_relationship("establishment", "est-default", "patron", "user", user_id)
+        )
+
+
+def test_craps_roll_is_made_by_the_server_for_the_verified_player(
     spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
 ) -> None:
-    """Wager placement, dice tumble resolution, and character coin purse crediting."""
-    # ---------------- 1. Dragon Craps Wagering, Tumble, and Payouts ----------------
-    craps_table_id = f"table-craps-{uuid4().hex[:6]}"
-    open_minigame_table(craps_table_id, game_type="craps")
+    """The server rolls the dice and credits the principal. A forged player id and dice are ignored."""
+    _grant_patron(spicedb, "gambler_gideon")
+    table_id = f"table-craps-{uuid4().hex[:6]}"
+    open_minigame_table(table_id, game_type="craps")
     with (
-        TestClient(
-            session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
-        ) as client_craps,
-        client_craps.websocket_connect(
-            f"/ws/minigames/{craps_table_id}", subprotocols=ws_subprotocols("minigame-tester")
-        ) as ws_craps,
+        TestClient(session_app) as client,
+        client.websocket_connect(
+            f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("gambler_gideon")
+        ) as ws,
     ):
-        ws_craps.receive_json()
-        # Gideon joins with 200 chips in coin purse
-        ws_craps.send_json(
-            {
-                "action": "join",
-                "player_id": "gambler_gideon",
-                "name": "Gideon",
-                "chips": 200,
-                "game_type": "craps",
-            }
+        ws.receive_json()
+        ws.send_json({"action": "join", "player_id": "forged", "name": "Gideon", "chips": 200})
+        assert ws.receive_json()["player_id"] == "gambler_gideon"
+
+        ws.send_json(
+            {"action": "bet", "player_id": "forged", "amount": 50, "bet_type": "pass_line"}
         )
-        ws_craps.receive_json()
+        assert ws.receive_json()["chips_remaining"] == 150
+        ws.send_json({"action": "bet", "amount": 25, "bet_type": "field"})
+        assert ws.receive_json()["chips_remaining"] == 125
 
-        # Place pass_line (50) and field (25) wagers: purse reduced from 200 to 125
-        ws_craps.send_json(
-            {"action": "bet", "player_id": "gambler_gideon", "amount": 50, "bet_type": "pass_line"}
-        )
-        b1 = ws_craps.receive_json()
-        assert b1["chips_remaining"] == 150
+        # The client asks for 9 + 9. The server rolls its own dice.
+        ws.send_json({"action": "roll_craps", "dice": [9, 9]})
+        roll = ws.receive_json()
+        assert roll["type"] == "craps_rolled"
+        assert all(1 <= die <= 6 for die in roll["dice"])
+        assert roll["total"] == sum(roll["dice"])
+        paid = roll["payouts"].get("gambler_gideon", 0)
+        assert roll["player_balances"] == {"gambler_gideon": 125 + paid}
 
-        ws_craps.send_json(
-            {"action": "bet", "player_id": "gambler_gideon", "amount": 25, "bet_type": "field"}
-        )
-        b2 = ws_craps.receive_json()
-        assert b2["chips_remaining"] == 125
 
-        # Tumble dice: Natural 7 come-out roll -> pass line wins 100 chips, field loses
-        ws_craps.send_json({"action": "roll_craps", "dice": [4, 3]})
-        roll1 = ws_craps.receive_json()
-        assert roll1["type"] == "craps_rolled" and roll1["total"] == 7
-        assert "Natural 7" in roll1["narrative"]
-        assert roll1["payouts"]["gambler_gideon"] == 100
-        # Character coin purse credited: 125 + 100 = 225 chips
-        assert roll1["player_balances"]["gambler_gideon"] == 225
-
-        # Point Phase: Bet 50 pass_line (balance 175). Roll 6 establishes point
-        ws_craps.send_json(
-            {"action": "bet", "player_id": "gambler_gideon", "amount": 50, "bet_type": "pass_line"}
-        )
-        ws_craps.receive_json()
-        ws_craps.send_json({"action": "roll_craps", "dice": [2, 4]})
-        roll2 = ws_craps.receive_json()
-        assert roll2["point"] == 6
-
-        # Bet 25 field (balance 150). Roll 6 hits the point -> pass line pays 100 chips
-        ws_craps.send_json(
-            {"action": "bet", "player_id": "gambler_gideon", "amount": 25, "bet_type": "field"}
-        )
-        ws_craps.receive_json()
-        ws_craps.send_json({"action": "roll_craps", "dice": [3, 3]})
-        roll3 = ws_craps.receive_json()
-        assert "Hit the point 6" in roll3["narrative"]
-        assert roll3["payouts"]["gambler_gideon"] == 100
-        # Character coin purse credited: 150 + 100 = 250 chips
-        assert roll3["player_balances"]["gambler_gideon"] == 250
-
-    # ---------------- 2. Roulette Multi-Patron Wagering and Payouts ----------------
-    roulette_table_id = f"table-roulette-{uuid4().hex[:6]}"
-    open_minigame_table(roulette_table_id, game_type="roulette")
+def test_roulette_spin_is_made_by_the_server_for_the_verified_players(
+    spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis
+) -> None:
+    """The server picks the winning number. Payouts follow it, and balances follow the payouts."""
+    _grant_patron(spicedb, "gambler_gideon", "selene_highroller")
+    table_id = f"table-roulette-{uuid4().hex[:6]}"
+    open_minigame_table(table_id, game_type="roulette")
     with (
-        TestClient(
-            session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
-        ) as client_roulette,
-        client_roulette.websocket_connect(
-            f"/ws/minigames/{roulette_table_id}", subprotocols=ws_subprotocols("minigame-tester")
+        TestClient(session_app) as client,
+        client.websocket_connect(
+            f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("gambler_gideon")
         ) as ws1,
+        client.websocket_connect(
+            f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("selene_highroller")
+        ) as ws2,
     ):
         assert ws1.receive_json()["type"] == "connected"
-        with client_roulette.websocket_connect(
-            f"/ws/minigames/{roulette_table_id}", subprotocols=ws_subprotocols("minigame-tester")
-        ) as ws2:
-            assert ws2.receive_json()["type"] == "connected"
+        assert ws2.receive_json()["type"] == "connected"
 
-            ws1.send_json(
-                {
-                    "action": "join",
-                    "player_id": "gambler_gideon",
-                    "name": "Gideon",
-                    "chips": 200,
-                    "game_type": "roulette",
-                }
-            )
-            ws1.receive_json()
-            ws2.receive_json()
+        ws1.send_json({"action": "join", "name": "Gideon", "chips": 200})
+        ws1.receive_json(), ws2.receive_json()
+        ws2.send_json({"action": "join", "name": "Selene", "chips": 500})
+        ws1.receive_json(), ws2.receive_json()
 
-            ws2.send_json(
-                {
-                    "action": "join",
-                    "player_id": "selene_highroller",
-                    "name": "Selene",
-                    "chips": 500,
-                    "game_type": "roulette",
-                }
-            )
-            ws1.receive_json()
-            ws2.receive_json()
+        ws1.send_json({"action": "bet", "amount": 50, "bet_type": "color", "target": "red"})
+        ws1.receive_json(), ws2.receive_json()
+        ws2.send_json({"action": "bet", "amount": 20, "bet_type": "straight", "target": 14})
+        ws1.receive_json(), ws2.receive_json()
 
-            # Gideon bets 50 on "red" (coin purse 150)
-            ws1.send_json(
-                {
-                    "action": "bet",
-                    "player_id": "gambler_gideon",
-                    "amount": 50,
-                    "bet_type": "color",
-                    "target": "red",
-                }
-            )
-            ws1.receive_json()
-            ws2.receive_json()
-
-            # Selene bets 20 on straight 14 (coin purse 480)
-            ws2.send_json(
-                {
-                    "action": "bet",
-                    "player_id": "selene_highroller",
-                    "amount": 20,
-                    "bet_type": "straight",
-                    "target": 14,
-                }
-            )
-            ws1.receive_json()
-            ws2.receive_json()
-
-            # Spin roulette: 14 is red -> Gideon gets 2x (100 chips), Selene gets 36x (720 chips)
-            ws1.send_json({"action": "spin_roulette", "winning_number": 14})
-            spin_res1, spin_res2 = ws1.receive_json(), ws2.receive_json()
-            assert spin_res1["winning_number"] == 14 and spin_res1["color"] == "red"
-            assert spin_res1["payouts"]["gambler_gideon"] == 100
-            assert spin_res1["payouts"]["selene_highroller"] == 720
-            # Character coin purses credited
-            assert spin_res1["player_balances"]["gambler_gideon"] == 250
-            assert spin_res1["player_balances"]["selene_highroller"] == 1200
-            assert spin_res2["player_balances"] == spin_res1["player_balances"]
+        # 99 is not a wheel number. The server ignores the client number and spins its own.
+        ws1.send_json({"action": "spin_roulette", "winning_number": 99})
+        spin1, spin2 = ws1.receive_json(), ws2.receive_json()
+        assert spin1["type"] == "wheel_spun"
+        number = spin1["winning_number"]
+        assert 0 <= number <= 36
+        assert spin1["color"] == ("green" if number == 0 else "red" if number in RED else "black")
+        assert spin1["payouts"].get("gambler_gideon", 0) == (100 if spin1["color"] == "red" else 0)
+        assert spin1["payouts"].get("selene_highroller", 0) == (720 if number == 14 else 0)
+        assert spin1["player_balances"]["gambler_gideon"] == 150 + spin1["payouts"].get(
+            "gambler_gideon", 0
+        )
+        assert spin1["player_balances"]["selene_highroller"] == 480 + spin1["payouts"].get(
+            "selene_highroller", 0
+        )
+        assert spin2["player_balances"] == spin1["player_balances"]

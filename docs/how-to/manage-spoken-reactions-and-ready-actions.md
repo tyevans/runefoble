@@ -66,6 +66,8 @@ When matched, the registry emits `combat.ready_action.triggered` and executes th
 
 The reaction routes above belong to game-session. The voice barge-in routes belong to voice-agent. Voice-agent checks the speaker that a request names. The speaker must hold `session.participate`. See [Voice Agent Permissions](../reference/ports-and-endpoints.md#voice-agent-permissions-task-0558).
 
+Each game-session reaction route checks the verified caller. Declare, ready-action, and resolve need `session.participate`. Evaluate-triggers needs `session.control`. The active-state read needs `session.observe`. An unknown session returns 403.
+
 ### Declare Reaction Interrupt
 ```http
 POST /sessions/{session_id}/reactions/declare

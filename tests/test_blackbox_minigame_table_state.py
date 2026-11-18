@@ -78,9 +78,9 @@ def test_table_state_survives_socket_layer_restart(
         f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols(PATRON)
     ) as ws:
         assert ws.receive_json()["type"] == "connected"
-        ws.send_json({"action": "join", "player_id": "kip", "name": "Kip", "chips": 100})
+        ws.send_json({"action": "join", "name": "Kip", "chips": 100})
         assert ws.receive_json()["type"] == "player_joined"
-        ws.send_json({"action": "bet", "player_id": "kip", "amount": 10, "bet_type": "dart_wager"})
+        ws.send_json({"action": "bet", "amount": 10, "bet_type": "dart_wager"})
         assert ws.receive_json()["type"] == "bet_placed"
 
     # Drop every live socket and build a fresh app client. Only the event store survives.
@@ -90,7 +90,7 @@ def test_table_state_survives_socket_layer_restart(
     assert res.status_code == 200
     body = res.json()
     assert body["pot"] == 10
-    assert body["players"]["kip"]["chips"] == 90
+    assert body["players"][PATRON]["chips"] == 90
 
 
 def test_dart_throw_publishes_dart_thrown_on_tavern_stream(
@@ -104,9 +104,9 @@ def test_dart_throw_publishes_dart_thrown_on_tavern_stream(
         f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols(PATRON)
     ) as ws:
         ws.receive_json()
-        ws.send_json({"action": "join", "player_id": "kip", "name": "Kip", "chips": 100})
+        ws.send_json({"action": "join", "name": "Kip", "chips": 100})
         ws.receive_json()
-        ws.send_json({"action": "throw_dart", "player_id": "kip", "vx": 0.0, "vy": 0.0})
+        ws.send_json({"action": "throw_dart", "vx": 0.0, "vy": 0.0})
         assert ws.receive_json()["type"] == "dart_thrown"
 
     event_types = [fields.get("event_type", "") for _, fields in mock_bus.streams[STREAM_TAVERN]]
@@ -138,7 +138,7 @@ def test_action_from_unseated_player_is_rejected_without_state_change(
         f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols(PATRON)
     ) as ws:
         ws.receive_json()
-        ws.send_json({"action": "throw_dart", "player_id": "ghost", "vx": 0.0, "vy": 0.0})
+        ws.send_json({"action": "throw_dart", "vx": 0.0, "vy": 0.0})
         msg = ws.receive_json()
         assert msg["type"] == "error" and msg["code"] == "ACTION_REJECTED"
 
