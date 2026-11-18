@@ -8,7 +8,7 @@
     "build": "tsc && vite build",
     "lint": "tsc --noEmit && node --experimental-strip-types scripts/check-asset-paths.ts",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test test/*.test.ts test/*/*.test.ts tests/*.test.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts test/*/*.test.ts tests/*.test.ts && vitest run",
     "storybook": "WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=true storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
