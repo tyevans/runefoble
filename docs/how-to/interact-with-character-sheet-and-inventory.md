@@ -2,9 +2,25 @@
 
 This guide explains how to use the interactive digital character sheet microfrontend (`<runefoble-character-sheet>`) to equip gear, manage inventory encumbrance, inspect active conditions and absence penalties, and track spell slots.
 
-## Authentication
+## Authentication and Permissions
 
-Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
+Every route needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. Without a valid token the route returns 401. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
+
+Each route checks one SpiceDB permission on the character in the path. The schema in `libs/runefoble_auth/schema/runefoble.zed` decides who passes:
+
+| Routes | Permission | Who passes |
+|---|---|---|
+| `GET /api/v1/characters/{id}`, and the `GET` guardrails, portrait, and wardrobe routes | `view` | Owner, campaign DM, and campaign members |
+| All `POST`, `PUT`, `PATCH`, and `DELETE` routes on a character (health, penalties, inventory, equipment, conditions, spells, level-up, stand-in, guardrails, campaign, wardrobe, portrait) | `edit` | Owner and campaign DM. A player who is not the owner gets 403. |
+| `POST /api/v1/crafting/recipes/combine` (character in the body) | `edit` | Owner and campaign DM |
+| `DELETE /api/v1/characters/{id}` on the gateway | `delete` | Owner only. The DM gets 403. |
+
+Response codes:
+- 401: no valid bearer token.
+- 403: the caller lacks the permission. The body names the permission.
+- 503: SpiceDB cannot answer, or it does not apply an ownership write. The service does not allow the request, and it does not report success.
+
+Character creation writes the owner tuple before it stores the character. If the write fails, the response is 503 and no character exists.
 
 ---
 
@@ -240,7 +256,7 @@ Per ADR-0003 and ADR-0007, the domain models for the Character Sheet bounded con
 Per ADR-0002, ADR-0004, ADR-0007, and ADR-0013, sub-resource mutations on `<runefoble-character-sheet>` are wired to backend persistence via Gateway API endpoints and App Shell event bindings:
 
 ### Gateway API Sub-Resource Endpoints
-All sub-resource routes enforce SpiceDB Zanzibar `edit` relation on the target character:
+All sub-resource mutations enforce the SpiceDB Zanzibar `edit` permission on the target character. The `GET` guardrails route enforces `view`. If the Character Sheet service is unreachable, the gateway returns 503:
 - **`POST /api/v1/characters/{id}/health`**: Mutates HP by `delta`, clamps between $[0, \text{maxHp}]$, and triggers stand-in permadeath safeguard stabilization (`is_stabilized = True`, `unconscious_stabilized` condition) when HP $\le 0$.
 - **`POST /api/v1/characters/{id}/equipment`**: Equips item to slot (`main_hand`, `off_hand`, `armor`, `accessory`).
 - **`DELETE /api/v1/characters/{id}/equipment/{slot}`**: Unequips item from slot, returning it to inventory.
