@@ -150,9 +150,33 @@ zitadel:
   externalDomain: auth.localhost
   externalPort: 80
   externalSecure: false
-  # Expected token `aud`. Every verifying service reads it as RUNEFOBLE_ZITADEL_AUDIENCE.
-  audience: runefoble-api
   adminEmail: admin@runefoble.local
+  # Bootstrap Job (zitadel-bootstrap.yaml). It creates the OIDC project and web application and
+  # writes their generated IDs to the Secret named by client.secretName. The Job is a Helm hook.
+  bootstrap:
+    # Set to false for the first install. See docs/how-to/authenticate-with-zitadel-oidc.md.
+    enabled: true
+    # Secret that you create out of band. It holds the Zitadel admin personal access token under
+    # the key `pat`. The chart does not create it, because Zitadel generates the token.
+    adminSecret: zitadel-admin
+    # Machine user that Zitadel creates on first start, with the IAM_OWNER role. Its personal
+    # access token is the admin token for the Job.
+    machineUsername: runefoble-bootstrap
+    # Expiry of that token. Dev default. Set a short date for any shared cluster.
+    patExpirationDate: "2099-01-01T00:00:00Z"
+    projectName: runefoble
+    appName: runefoble-web
+    # The App Shell callback and the page that it opens after sign-out. Must match the origin
+    # that browsers use for the App Shell.
+    redirectUris:
+      - http://localhost/auth/callback
+    postLogoutRedirectUris:
+      - http://localhost/
+    # Allows http redirect URIs. Local Kind only. Set false behind TLS.
+    devMode: true
+  # Kubernetes Secret written by the bootstrap Job. Keys: project-id, client-id.
+  client:
+    secretName: runefoble-zitadel-client
 
 # Zanzibar Authorization (SpiceDB self-hosted)
 spicedb:
@@ -294,7 +318,6 @@ services:
     replicas: 1
     port: 8010
     # Expected token `aud` claim. The service refuses to start without it.
-    zitadelAudience: "runefoble-api"
   campaignAnalytics:
     image: runefoble/campaign-analytics:0.1.0
     replicas: 1
@@ -326,10 +349,9 @@ frontend:
   image: runefoble/frontend:0.1.0
   replicas: 1
   port: 80
-  # Rendered to /runtime-config.json. Holds no secret. Zitadel generates the client ID,
-  # so set clientId after the application is provisioned.
+  # Rendered to /runtime-config.json. Holds no secret. The client ID and the project ID come
+  # from the Secret that the bootstrap Job writes. An init container fills them in at start.
   runtimeConfig:
-    clientId: ""
     scopes:
       - openid
       - profile

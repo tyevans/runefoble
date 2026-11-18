@@ -53,6 +53,14 @@ spec:
                   key: postgres-password
             - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
               value: "disable"
+            # Machine user with IAM_OWNER. Zitadel prints its personal access token to the container
+            # log on first start. The bootstrap Job needs that token (zitadel.bootstrap.adminSecret).
+            - name: ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME
+              value: {{ .Values.zitadel.bootstrap.machineUsername | quote }}
+            - name: ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME
+              value: "Runefoble bootstrap"
+            - name: ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE
+              value: {{ .Values.zitadel.bootstrap.patExpirationDate | quote }}
             - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME
               value: "admin"
             - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_FIRSTNAME

@@ -1,3 +1,7 @@
+{{- /*
+Template for /runtime-config.json. The frontend init container replaces the two placeholders with
+the project ID and client ID from the Secret that the bootstrap Job writes (frontend.yaml).
+*/ -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,7 +12,7 @@ data:
   runtime-config.json: |
     {{- dict
       "issuer" (include "runefoble.zitadelIssuer" .)
-      "clientId" .Values.frontend.runtimeConfig.clientId
-      "scopes" .Values.frontend.runtimeConfig.scopes
+      "clientId" "__RUNEFOBLE_CLIENT_ID__"
+      "scopes" (append .Values.frontend.runtimeConfig.scopes "urn:zitadel:iam:org:project:id:__RUNEFOBLE_PROJECT_ID__:aud")
       "providerName" .Values.frontend.runtimeConfig.providerName
       | toPrettyJson | nindent 4 }}
