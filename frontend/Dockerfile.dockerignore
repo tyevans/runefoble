@@ -1,0 +1,15 @@
+# Build context for frontend/Dockerfile (the App Shell image, built from the repository root).
+# The App Shell composes the microfrontend packages, so the context keeps the pnpm workspace
+# manifests, the lockfile, frontend/ and every services/*/ui package. The root .dockerignore
+# (used by the Python images) excludes both, so this file replaces it for this Dockerfile only.
+**
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!frontend/**
+!services/*/ui/**
+!services/audience_studio/package.json
+
+**/node_modules
+**/dist
+**/*.log

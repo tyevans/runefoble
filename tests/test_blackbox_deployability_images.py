@@ -271,14 +271,19 @@ def test_voice_agent_chart_mounts_model_cache_and_probes_readiness():
     assert voice["securityContext"]["fsGroup"] == 10001
 
 
-def _wait_for_openapi(url: str, container_id: str, timeout_s: float = 90.0) -> dict:
+def _wait_for_openapi(url: str, container_id: str) -> dict:
+    return json.loads(_wait_for_http(url, container_id))
+
+
+def _wait_for_http(url: str, container_id: str, timeout_s: float = 90.0) -> str:
+    """Poll `url` until it returns HTTP 200 and return the body as text."""
     deadline = time.monotonic() + timeout_s
     last_error = "no response"
     while time.monotonic() < deadline:
         try:
             with urllib.request.urlopen(url, timeout=5) as response:
                 assert response.status == 200
-                return json.loads(response.read().decode("utf-8"))
+                return response.read().decode("utf-8")
         except (urllib.error.URLError, ConnectionError, OSError) as exc:
             last_error = str(exc)
         state = subprocess.run(
@@ -366,5 +371,52 @@ def test_built_audience_studio_image_serves_health_and_openapi():
         for path in ("/healthz", "/readyz"):
             with urllib.request.urlopen(f"http://127.0.0.1:{host_port}{path}", timeout=10) as r:
                 assert r.status == 200, path
+    finally:
+        subprocess.run(["docker", "rm", "-f", container_id], capture_output=True, timeout=120)
+
+
+FRONTEND_DOCKERFILE = REPO_ROOT / "frontend" / "Dockerfile"
+FRONTEND_TAG = f"runefoble/frontend:{IMAGE_TAG}"
+
+
+def test_make_images_builds_frontend_from_app_shell_dockerfile():
+    """`make -n images` builds the App Shell image and loads it into Kind."""
+    result = subprocess.run(
+        ["make", "-n", "images"], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60
+    )
+    assert result.returncode == 0, f"`make -n images` failed: {result.stderr}"
+    output = result.stdout
+    assert f"-f {FRONTEND_DOCKERFILE.relative_to(REPO_ROOT)}" in output
+    assert f"-t {FRONTEND_TAG}" in output
+    assert f"kind load docker-image {FRONTEND_TAG} --name runefoble-local" in output
+
+
+@pytest.mark.docker
+@pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
+def test_built_frontend_image_serves_app_shell_index_html():
+    """The App Shell image serves index.html on port 80, including deep links."""
+    build = subprocess.run(
+        ["docker", "build", "-f", str(FRONTEND_DOCKERFILE), "-t", FRONTEND_TAG, str(REPO_ROOT)],
+        capture_output=True,
+        text=True,
+        timeout=1800,
+    )
+    assert build.returncode == 0, f"docker build failed:\n{build.stderr[-4000:]}"
+
+    host_port = free_port()
+    container = subprocess.run(
+        ["docker", "run", "-d", "-p", f"127.0.0.1:{host_port}:80", FRONTEND_TAG],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert container.returncode == 0, f"docker run failed: {container.stderr}"
+    container_id = container.stdout.strip()
+    try:
+        root = _wait_for_http(f"http://127.0.0.1:{host_port}/", container_id)
+        assert "<runefoble-app>" in root
+        assert "<title>Runefoble" in root
+        deep_link = _wait_for_http(f"http://127.0.0.1:{host_port}/campaigns/1", container_id)
+        assert "<runefoble-app>" in deep_link
     finally:
         subprocess.run(["docker", "rm", "-f", container_id], capture_output=True, timeout=120)
