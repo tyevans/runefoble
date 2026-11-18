@@ -13,7 +13,7 @@ from runefoble_events.compendium import (
 
 
 class CompendiumState(BaseModel):
-    """Internal state representation for campaign homebrew rules."""
+    """Internal state representation for campaign homebrew rules, keyed by rule id."""
 
     compendium_id: UUID
     homebrew_rules: dict[str, dict[str, Any]] = Field(default_factory=dict)
@@ -25,7 +25,11 @@ class CompendiumAggregate(DeclarativeAggregate[CompendiumState]):
     aggregate_type = "Compendium"
     requires_creation_event = False
 
-    def init_state(self) -> CompendiumState:
+    def __init__(self, aggregate_id: UUID) -> None:
+        super().__init__(aggregate_id)
+        self._state = self._get_initial_state()
+
+    def _get_initial_state(self) -> CompendiumState:
         return CompendiumState(compendium_id=self.aggregate_id)
 
     def register_homebrew(
@@ -57,10 +61,7 @@ class CompendiumAggregate(DeclarativeAggregate[CompendiumState]):
 
     @handles(HomebrewRuleRegistered)
     def _on_homebrew_registered(self, event: HomebrewRuleRegistered) -> None:
-        if self._state is None:
-            self._state = self.init_state()
-        key = f"{event.campaign_id}:{event.title.lower()}"
-        self.state.homebrew_rules[key] = {
+        self.state.homebrew_rules[str(event.rule_id)] = {
             "rule_id": str(event.rule_id),
             "campaign_id": str(event.campaign_id),
             "author_id": event.author_id,

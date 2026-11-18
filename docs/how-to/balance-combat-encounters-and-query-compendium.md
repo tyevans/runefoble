@@ -187,7 +187,11 @@ curl -X POST http://localhost:8007/api/v1/compendium/homebrew \
 
 SpiceDB Zanzibar enforces that only authorized DMs or campaign owners (`run_session` or `manage`) can register homebrew rules. A caller without that grant gets `403`. The server writes the `homebrew_rule#campaign` and `homebrew_rule#author` relations before it saves the rule. A failed write returns `503`, and the rule is not saved.
 
-Homebrew rules are indexed into campaign-isolated `redstring` storage. The list route `GET /api/v1/compendium/homebrew/{campaign_id}` and the campaign search return a rule only when the caller passes `homebrew_rule.view`. A stranger gets an empty list and SRD results only.
+Homebrew rules are stored in the campaign aggregate. The event store is the source of truth. The service indexes each rule into campaign-isolated `redstring` storage at start-up and on each registration. A restart keeps every registered rule. Homebrew never writes to the SRD entries.
+
+The list route `GET /api/v1/compendium/homebrew/{campaign_id}` and the campaign search return a rule only when the caller passes `homebrew_rule.view`. A stranger gets an empty list and SRD results only.
+
+A homebrew rule whose name matches an SRD entry is `shadowed`. The list route marks it with `"shadowed": true`. Lookup and search return the SRD entry for that name, never the homebrew rule.
 
 ---
 

@@ -55,7 +55,7 @@ class CompendiumRetrievalEngine:
         self._monsters: dict[str, dict[str, Any]] = {}
         self._spells: dict[str, dict[str, Any]] = {}
         self._conditions: dict[str, dict[str, Any]] = {}
-        self._homebrew: dict[UUID, list[dict[str, Any]]] = {}
+        # Derived from HomebrewRuleRegistered events. Rebuilt at start-up (projection.py).
         self._homebrew_monsters: dict[UUID, dict[str, dict[str, Any]]] = {}
 
         self._initialized = False
@@ -135,21 +135,11 @@ class CompendiumRetrievalEngine:
         title: str,
         content: dict[str, Any],
     ) -> None:
-        """Index a custom homebrew monster or rule into campaign-isolated redstring storage."""
-        entry = {
-            "rule_id": str(rule_id),
-            "campaign_id": str(campaign_id),
-            "author_id": author_id,
-            "rule_type": rule_type,
-            "title": title,
-            "content": content,
-            "is_homebrew": True,
-        }
-        if campaign_id not in self._homebrew:
-            self._homebrew[campaign_id] = []
-        self._homebrew[campaign_id].append(entry)
+        """Index a homebrew rule into campaign-isolated redstring storage.
 
-        # If it's a monster, store in monster lookup if tied to campaign
+        The event store holds the rule. This index is a projection of it. It never writes to the
+        SRD maps. A homebrew monster is kept in its campaign's map only.
+        """
         if rule_type.lower() == "monster":
             m_data = {
                 "monster_id": str(rule_id),
@@ -251,6 +241,8 @@ class CompendiumRetrievalEngine:
             if category and item_cat.lower() != category.lower():
                 continue
 
+            if meta.get("is_homebrew") and self.is_shadowed(item_name):
+                continue
             if item_name in seen_names:
                 continue
             seen_names.add(item_name)
@@ -301,9 +293,13 @@ class CompendiumRetrievalEngine:
         """Find a homebrew monster of one campaign by name. SRD monsters are never found here."""
         return self._homebrew_monsters.get(campaign_id, {}).get(name.lower().strip())
 
-    def get_homebrew_by_campaign(self, campaign_id: UUID) -> list[dict[str, Any]]:
-        """Retrieve homebrew rules belonging to a specific campaign."""
-        return self._homebrew.get(campaign_id, [])
+    def is_shadowed(self, title: str) -> bool:
+        """Return True when a canonical SRD entry of any category has this name.
+
+        A shadowed homebrew rule never replaces the SRD entry in lookup or search.
+        """
+        key = title.lower().strip()
+        return key in self._monsters or key in self._spells or key in self._conditions
 
 
 def _srd_metadata(category: str, name: str) -> dict[str, Any]:

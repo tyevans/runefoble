@@ -13,7 +13,9 @@ from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.config import EmbeddingEndpointSettings, RulesCompendiumSettings
 from runefoble_platform.event_publish import event_publish_failures
+from runefoble_platform.event_sourcing import get_event_store
 
+from rules_compendium.projection import rebuild_homebrew_projection
 from rules_compendium.retrieval_factory import build_retrieval_engine
 from rules_compendium.routers.encounters import router as encounters_router
 from rules_compendium.routers.homebrew import router as homebrew_router
@@ -22,12 +24,14 @@ from rules_compendium.routers.rules import router as rules_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Build the retrieval engine from settings and index the SRD dataset before serving.
+    """Build the retrieval engine, index the SRD dataset, and replay homebrew events before serving.
 
-    Start-up fails if the configured embedding provider is missing a setting.
+    Start-up fails if the configured embedding provider is missing a setting, or if the
+    event store cannot be read. The service never serves an empty homebrew index.
     """
     engine = build_retrieval_engine(RulesCompendiumSettings(), EmbeddingEndpointSettings())
     await engine.initialize_srd_data()
+    await rebuild_homebrew_projection(engine, get_event_store())
     app.state.retrieval_engine = engine
     yield
 

@@ -22,23 +22,20 @@ from rules_compendium.retrieval import CompendiumRetrievalEngine
 settings = PlatformSettings()
 
 # Global singletons
-_compendium_repo: AggregateRepository[CompendiumAggregate] = create_aggregate_repository(
-    CompendiumAggregate
-)
-_encounter_repo: AggregateRepository[EncounterAggregate] = create_aggregate_repository(
-    EncounterAggregate
-)
 _zitadel_auth_service: ZitadelAuthService | None = None
 
 
 def get_compendium_repo() -> AggregateRepository[CompendiumAggregate]:
-    """Provide CompendiumAggregate repository."""
-    return _compendium_repo
+    """Provide CompendiumAggregate repository on the process event store.
+
+    The store is resolved per call, as the start-up projection does, so both read the same store.
+    """
+    return create_aggregate_repository(CompendiumAggregate)
 
 
 def get_encounter_repo() -> AggregateRepository[EncounterAggregate]:
     """Provide EncounterAggregate repository."""
-    return _encounter_repo
+    return create_aggregate_repository(EncounterAggregate)
 
 
 def get_retrieval_engine(request: Request) -> CompendiumRetrievalEngine:
