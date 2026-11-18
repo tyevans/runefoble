@@ -1,7 +1,7 @@
 ---
 id: '0705'
 title: Compendium Index Events Are Emitted or Removed
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0579
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0705: Compendium Index Events Are Emitted or Removed
 
 ## Status
-Refined. Slice of TASK-0579 (Follow-ups item 4).
+Complete
 
 ## Summary
 `MonsterIndexed`, `SpellIndexed` and `ConditionIndexed` have no producer in production code.

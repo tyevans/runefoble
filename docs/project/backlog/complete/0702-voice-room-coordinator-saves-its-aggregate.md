@@ -1,7 +1,7 @@
 ---
 id: '0702'
 title: Voice Room Coordinator Saves Its Room Aggregate
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0561
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0702: Voice Room Coordinator Saves Its Room Aggregate
 
 ## Status
-Refined. Found by the TASK-0561 worker and checked by the orchestrator.
+Complete
 
 ## Summary
 `VoiceRoomCoordinator` never calls `repository.save`. Rooms live only in an in-process dict, so a restart or a second replica loses every room. This breaks Hard Invariant 2.

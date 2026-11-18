@@ -1,7 +1,7 @@
 ---
 id: '0700'
 title: Local Project Tools Reach Parity With spec-ops or Are Removed
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0668
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0700: Local Project Tools Reach Parity With spec-ops or Are Removed
 
 ## Status
-Refined. Agreed at the refactor pause on 2026-11-17 (candidate 3). TASK-0668 recorded the missing parity checks.
+Complete
 
 ## Summary
 `tools/` keeps a PRD pipeline, a backlog engine and a project visualizer that spec-ops also provides. Two tools for one job drift apart.

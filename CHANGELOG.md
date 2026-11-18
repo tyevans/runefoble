@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Unused rules compendium events `MonsterIndexed`, `SpellIndexed` and `ConditionIndexed`. No code produced or consumed them. SRD data loads directly into the retrieval engine. (TASK-0705)
 - Removed backward-compatibility event alias modules and `X = XEvent` aliases from `runefoble_events`. The package root exports only `BaseRunefobleEvent`, `DomainEvent` and `register_event`. Import domain events from `runefoble_events.events`. Wire event types are unchanged. (TASK-0487)
 - Removed the `gateway_mcp.dynamic_registry` backward-compatibility re-export module and the FastMCP `get_tool` monkeypatch in the MCP gateway. Import dynamic tool types from `gateway_mcp.dynamic` and look up FastMCP tools through `mcp._tool_manager.get_tool`. (TASK-0489)
 - asset_forge: deleted the `asset_forge.generator` aggregator facade and the `generate_token_png` alias. Import generators from `asset_forge.raster.*`. (TASK-0497)
@@ -71,6 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- `make install-spec-ops` is the single spec-ops pin source. CI and AGENTS.md use it. (TASK-0700)
 - Game session lists for bounties, caravan contracts, settlements, establishments, and NPC workers read from durable index streams. They survive a restart. Lists answer 503 when the event store is unreachable. Child load failures no longer hide as empty results. (TASK-0567)
 - Leaving a session activates the AI stand-in on the player's lobby character in character_sheet. Rejoining releases it. If character_sheet does not confirm, the leave or rejoin returns 503 and the session does not change. (TASK-0690)
 - Event streams use the dotted name form. `runefoble:events:world` is now `runefoble.events.world`. `runefoble:events:system` is now `runefoble.events.system`. Stream readers must read the new names. Old stream entries are not copied. (TASK-0579)
@@ -1085,6 +1087,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- Voice rooms persist their peers. A coordinator restart or a second replica no longer loses the room. Each voice room command saves the room before it publishes its event. (TASK-0702)
 - Chronicle & Stats and Codex & Lore tabs now show live gateway data. The analytics tab no longer skips its load with an empty API base. The codex tab mounts the lore codex with sub-tabs. Gateway hub views forward the verified user id to campaign-lore and campaign-analytics. (TASK-0646)
 - Campaign lore: a repeated or conflicting alias consolidation returns HTTP 409 with the conflict reason, not HTTP 500. A service that has not started returns HTTP 503 with "campaign_lore is not started", not an AttributeError. (TASK-0673)
 - The voice transcribe route no longer invents "I inspect my surroundings." when a request has no input. The route decodes `audio_base64` through the STT port, and returns 422 when no input is present. (TASK-0602)
