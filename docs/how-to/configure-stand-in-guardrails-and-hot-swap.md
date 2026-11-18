@@ -201,7 +201,7 @@ The `<runefoble-stand-in-guardrails>` custom element is vendored in `services/ch
   spellSlotReserveLevel="3"
   allyProtectionTarget="Marcus"
   avoidMelee="true"
-  riskThreshold="low"
+  riskThreshold="cautious"
   isStandInActive="false">
 </runefoble-stand-in-guardrails>
 ```

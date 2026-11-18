@@ -143,7 +143,7 @@ Service names and settings fields:
 | `game_session` | `game_session_url` | `RUNEFOBLE_GAME_SESSION_URL` |
 | `board_state` | `board_state_url` | `RUNEFOBLE_BOARD_STATE_URL` |
 | `the_watcher` | `the_watcher_url` | `RUNEFOBLE_THE_WATCHER_URL` |
-| `character_sheet` | `character_sheet_url` | `CHARACTER_SHEET_URL` |
+| `character_sheet` | `character_sheet_url` | `RUNEFOBLE_CHARACTER_SHEET_URL` |
 | `campaign_lore` | `campaign_lore_url` | `CAMPAIGN_LORE_URL` |
 | `campaign_analytics` | `campaign_analytics_url` | `CAMPAIGN_ANALYTICS_URL` |
 | `soundscape` | `soundscape_url` | `SOUNDSCAPE_SERVICE_URL` |
