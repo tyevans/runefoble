@@ -19,9 +19,14 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_events.vocal_dsp import VocalModulatorPresetAppliedEvent
-from voice_agent.coordinator import get_voice_room_coordinator
+from voice_agent.coordinator import (
+    VoiceRoomCoordinator,
+    get_voice_room_coordinator,
+    set_voice_room_coordinator,
+)
 from voice_agent.main import app as voice_app
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
@@ -34,11 +39,15 @@ def voice_client(trusted_voice_issuer) -> TestClient:
 
 
 @pytest.fixture
-def setup_coordinator():
-    coord = get_voice_room_coordinator()
+def setup_coordinator(seam_restorer: SeamRestorer):
+    """Give the test a process coordinator on a mock bus. The previous coordinator is restored."""
     mock_spicedb = get_spicedb_client()
     mock_bus = AsyncMock()
-    coord.set_event_bus(mock_bus)
+    coord = seam_restorer.replace(
+        get_voice_room_coordinator,
+        set_voice_room_coordinator,
+        VoiceRoomCoordinator(event_bus=mock_bus),
+    )
     return {"coord": coord, "spicedb": mock_spicedb, "bus": mock_bus}
 
 

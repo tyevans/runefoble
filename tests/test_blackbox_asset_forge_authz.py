@@ -15,13 +15,14 @@ import asyncio
 from uuid import uuid4
 
 import pytest
-from asset_forge.dependencies import set_event_bus
+from asset_forge.dependencies import get_event_bus, set_event_bus
 from asset_forge.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.errors import AuthzWriteError
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 DM = "dm-evelyn"
@@ -68,11 +69,12 @@ def _body(kind: str, campaign_id: str | None) -> dict:
 
 
 @pytest.fixture(autouse=True)
-def clean_environment():
-    """Start every test with a Redis Streams bus over a mock and clear it afterwards."""
-    set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
+def clean_environment(seam_restorer: SeamRestorer):
+    """Start every test with a Redis Streams bus over a mock, then restore the previous bus."""
+    seam_restorer.replace(
+        get_event_bus, set_event_bus, RedisStreamsEventBus(client=MockAsyncRedis())
+    )
     yield
-    set_event_bus(None)
 
 
 @pytest.fixture

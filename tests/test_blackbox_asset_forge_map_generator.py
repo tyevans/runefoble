@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import pytest
 from asset_forge.main import app as asset_forge_app
-from asset_forge.map_generation_engine import set_map_generator
+from asset_forge.map_generation_engine import get_map_generator, set_map_generator
 from fastapi.testclient import TestClient
 
 from tests.helpers.fixture_map_generator import (
@@ -21,6 +21,7 @@ from tests.helpers.fixture_map_generator import (
     FixtureMapGenerator,
     UnavailableMapGenerator,
 )
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.silo_fixtures import FakeSilo
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -116,10 +117,10 @@ def test_response_names_the_default_generator(forge_client: TestClient, silo_dou
 
 
 @pytest.fixture
-def injected_generator():
+def injected_generator(seam_restorer: SeamRestorer):
     """Inject a test generator at the composition root and restore the default after."""
+    seam_restorer.keep(get_map_generator, set_map_generator)
     yield set_map_generator
-    set_map_generator(None)
 
 
 def test_injected_generator_supplies_the_layout(

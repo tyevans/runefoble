@@ -5,22 +5,22 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import set_spicedb_client
+from game_session.dependencies import get_spicedb_client, set_spicedb_client
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.minigame_tables import open_minigame_table
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
-def spicedb():
+def spicedb(seam_restorer: SeamRestorer):
     mock_db = MockSpiceDBClient()
-    set_spicedb_client(mock_db)
+    seam_restorer.replace(get_spicedb_client, set_spicedb_client, mock_db)
     yield mock_db
-    set_spicedb_client(MockSpiceDBClient())
 
 
 def _patron(spicedb: MockSpiceDBClient, establishment: str, user: str) -> None:

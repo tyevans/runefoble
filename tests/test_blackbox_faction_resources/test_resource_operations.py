@@ -17,9 +17,10 @@ from runefoble_events.events import (
     FactionResourceUpdatedEvent,
 )
 from runefoble_platform.event_sourcing import create_aggregate_repository
-from the_watcher.dependencies import set_faction_resource_repo
+from the_watcher.dependencies import get_faction_resource_repo, set_faction_resource_repo
 from the_watcher.factions.resources.aggregate import FactionResourceAggregate
 
+from tests.helpers.module_state import restored_seam
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import setup_campaign_roles
@@ -120,14 +121,14 @@ def test_faction_resource_adjust_answers_503_on_store_outage(
         raise ConnectionError("event store unreachable")
 
     monkeypatch.setattr(store, "read_stream", _connection_refused)
-    set_faction_resource_repo(
-        create_aggregate_repository(FactionResourceAggregate, event_store=store)
-    )
-    try:
+    with restored_seam(
+        get_faction_resource_repo,
+        set_faction_resource_repo,
+        create_aggregate_repository(FactionResourceAggregate, event_store=store),
+        replace=True,
+    ):
         resp = client.post(
             f"/factions/fact-{uuid4().hex[:8]}/resources/adjust",
             json={"treasury_delta": 100, "campaign_id": str(uuid4())},
         )
-    finally:
-        set_faction_resource_repo(None)
     assert resp.status_code == 503, resp.text

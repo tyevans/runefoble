@@ -192,6 +192,27 @@ These fixtures read the table. Every test gets the autouse fixtures. Each one se
 
 To add a service seam, add one `ServiceSeams` row. Do not write a setter call in a conftest. A directory conftest only builds a `TestClient` and its own helpers.
 
+The harness imports every module in `SERVICE_SEAMS` when pytest loads it. A misspelled module name stops the run at collection. No seam is skipped.
+
+### Restore a Process Global
+
+A test that sets a process global must put back the value it found. Do not set `None` at teardown. A getter that finds `None` builds a real client or store. A later test can then reach a real endpoint.
+
+Use `tests/helpers/module_state.py` for any seam that is not in `SERVICE_SEAMS`:
+
+| Name | Use |
+|---|---|
+| `seam_restorer` fixture | Request it in a fixture or test. Call `replace(get, set_, value)` to set a value, or `keep(get, set_)` to save the current value. Teardown restores each saved value, newest first. |
+| `restored_seam(get, set_, value, replace=True)` | Context manager. Sets `value` inside the `with` block and restores the previous value on exit. |
+
+```python
+@pytest.fixture
+def voice_coordinator(seam_restorer: SeamRestorer) -> VoiceRoomCoordinator:
+    return seam_restorer.replace(
+        get_voice_room_coordinator, set_voice_room_coordinator, VoiceRoomCoordinator()
+    )
+```
+
 ## What Not To Do
 
 - Do not monkeypatch the HTTP client class, such as `httpx.AsyncClient`.

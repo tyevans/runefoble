@@ -30,6 +30,8 @@ from runefoble_platform.event_sourcing import (
     InMemoryEventStore,
 )
 from the_watcher.dependencies import (
+    get_campaign_world_repo,
+    get_faction_repo,
     set_campaign_world_repo,
     set_faction_repo,
 )
@@ -37,14 +39,15 @@ from the_watcher.factions import FactionAggregate
 from the_watcher.factions.campaign_world import CampaignWorldAggregate
 from the_watcher.main import app
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture(autouse=True)
-def clean_simulation_environment():
-    """Ensure clean SpiceDB, simulation engine, event store, and bus before and after each test."""
+def clean_simulation_environment(seam_restorer: SeamRestorer):
+    """Give each test fresh faction repositories over an empty store, then restore the previous ones."""
     test_store = InMemoryEventStore()
     test_bus = InMemoryEventBus()
     repo = AggregateRepository(
@@ -52,17 +55,17 @@ def clean_simulation_environment():
         aggregate_factory=FactionAggregate,
         event_publisher=test_bus,
     )
-    set_faction_repo(repo)
-    set_campaign_world_repo(
+    seam_restorer.replace(get_faction_repo, set_faction_repo, repo)
+    seam_restorer.replace(
+        get_campaign_world_repo,
+        set_campaign_world_repo,
         AggregateRepository(
             event_store=test_store,
             aggregate_factory=CampaignWorldAggregate,
             event_publisher=test_bus,
-        )
+        ),
     )
     yield
-    set_faction_repo(None)
-    set_campaign_world_repo(None)
 
 
 @pytest.fixture

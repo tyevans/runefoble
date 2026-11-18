@@ -15,17 +15,18 @@ from runefoble_platform.event_sourcing import (
     AggregateRepository,
     InMemoryEventStore,
 )
-from the_watcher.dependencies import set_faction_resource_repo
+from the_watcher.dependencies import get_faction_resource_repo, set_faction_resource_repo
 from the_watcher.factions.resources.aggregate import FactionResourceAggregate
 from the_watcher.main import app
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture(autouse=True)
-def clean_resource_environment():
+def clean_resource_environment(seam_restorer: SeamRestorer):
     """Give each test a fresh faction resource repo. The harness sets the bus and SpiceDB."""
     test_store = InMemoryEventStore()
     test_bus = InMemoryEventBus()
@@ -34,9 +35,8 @@ def clean_resource_environment():
         aggregate_factory=FactionResourceAggregate,
         event_publisher=test_bus,
     )
-    set_faction_resource_repo(repo)
+    seam_restorer.replace(get_faction_resource_repo, set_faction_resource_repo, repo)
     yield
-    set_faction_resource_repo(None)
 
 
 @pytest.fixture

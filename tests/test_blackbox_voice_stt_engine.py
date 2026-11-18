@@ -17,12 +17,13 @@ from fastapi.testclient import TestClient
 from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
 from runefoble_platform.redis_bus import deserialize_event
 from voice_agent.main import app as voice_app
-from voice_agent.stt import set_streaming_pipeline
-from voice_agent.synthesis_engine import set_speech_synthesizer
+from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
+from voice_agent.synthesis_engine import get_speech_synthesizer, set_speech_synthesizer
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.fixture_transcriber import FIXTURE_TRANSCRIPT
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
@@ -55,7 +56,11 @@ def _stream_events(mock_redis: MockAsyncRedis, stream: str) -> list:
 
 @pytest.fixture
 def production_engine_client(
-    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis, tmp_path: Path, use_redis_client
+    monkeypatch: pytest.MonkeyPatch,
+    mock_redis: MockAsyncRedis,
+    tmp_path: Path,
+    use_redis_client,
+    seam_restorer: SeamRestorer,
 ) -> Generator[TestClient]:
     """Voice app wired to the production engine, forced unavailable through settings.
 
@@ -68,12 +73,10 @@ def production_engine_client(
     stub.write_text("#!/bin/sh\necho 'eSpeak NG stub'\nexit 0\n", encoding="utf-8")
     stub.chmod(0o755)
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(stub))
-    set_speech_synthesizer(None)
-    set_streaming_pipeline(None)
+    seam_restorer.replace(get_speech_synthesizer, set_speech_synthesizer, None)
+    seam_restorer.replace(get_streaming_pipeline, set_streaming_pipeline, None)
     use_redis_client(mock_redis)
     yield TestClient(voice_app, headers=voice_auth_headers())
-    set_streaming_pipeline(None)
-    set_speech_synthesizer(None)
 
 
 def test_unavailable_engine_returns_error_and_publishes_no_player_spoke(

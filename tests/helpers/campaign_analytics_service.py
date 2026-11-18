@@ -21,10 +21,11 @@ import redis.asyncio
 from fastapi.testclient import TestClient
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import set_event_store
+from runefoble_platform.event_sourcing import get_event_store, set_event_store
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import restored_seam
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -115,9 +116,8 @@ def analytics_service(
     spicedb = MockSpiceDBClient()
     factory_swap = shared_spicedb_client(spicedb)
     factory_swap.start()
-    set_event_store(None)
     try:
-        yield AnalyticsService(dsn=dsn, redis=double, spicedb=spicedb)
+        with restored_seam(get_event_store, set_event_store, None, replace=True):
+            yield AnalyticsService(dsn=dsn, redis=double, spicedb=spicedb)
     finally:
         factory_swap.stop()
-        set_event_store(None)

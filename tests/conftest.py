@@ -39,6 +39,7 @@ pytest_plugins = [
     "tests.helpers.campaign_analytics_service",
     "tests.helpers.event_store_seam",
     "tests.helpers.lore_backends",
+    "tests.helpers.module_state",
     "tests.helpers.postgres",
     "tests.helpers.prd_fixtures",
     "tests.helpers.restart_stack",

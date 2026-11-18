@@ -27,10 +27,11 @@ from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusUnavailableError
 from runefoble_platform.redis_bus import RedisStreamsEventBus, deserialize_event
 from voice_agent.main import app as voice_app
-from voice_agent.stt import set_streaming_pipeline
+from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
 
 from tests.helpers.audio_synth import generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers, voice_ws_subprotocols
 
@@ -83,16 +84,19 @@ def restore_dynamic_event_bus() -> Generator[None]:
 
 @pytest.fixture
 def production_engine_client(
-    monkeypatch: pytest.MonkeyPatch, mock_redis: MockAsyncRedis, tmp_path: Path, use_redis_client
+    monkeypatch: pytest.MonkeyPatch,
+    mock_redis: MockAsyncRedis,
+    tmp_path: Path,
+    use_redis_client,
+    seam_restorer: SeamRestorer,
 ) -> Generator[TestClient]:
     """Voice app wired to the production engine, forced unavailable through settings."""
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_MODEL_SIZE", "runefoble-missing-model")
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
     monkeypatch.setenv("HF_HOME", str(tmp_path / "hf-cache"))
-    set_streaming_pipeline(None)
+    seam_restorer.replace(get_streaming_pipeline, set_streaming_pipeline, None)
     use_redis_client(mock_redis)
     yield TestClient(voice_app, headers=voice_auth_headers())
-    set_streaming_pipeline(None)
 
 
 def test_transcribe_returns_503_and_records_nothing_when_player_event_unpublished(

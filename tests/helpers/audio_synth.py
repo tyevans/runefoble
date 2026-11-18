@@ -23,11 +23,12 @@ from voice_agent.stt import (
     get_streaming_pipeline,
     set_streaming_pipeline,
 )
-from voice_agent.synthesis_engine import set_speech_synthesizer
+from voice_agent.synthesis_engine import get_speech_synthesizer, set_speech_synthesizer
 
 from tests.helpers.fixture_synthesizer import FixtureSynthesizer
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.voice_identity import voice_auth_headers
 
 
@@ -117,12 +118,11 @@ def speech_engine() -> FixtureTranscriber:
 
 
 @pytest.fixture
-def fake_speech_synthesizer() -> Generator[FixtureSynthesizer]:
+def fake_speech_synthesizer(seam_restorer: SeamRestorer) -> Generator[FixtureSynthesizer]:
     """Inject the fake TTS engine at the test composition root and restore the default after."""
     fake = FixtureSynthesizer()
-    set_speech_synthesizer(fake)
+    seam_restorer.replace(get_speech_synthesizer, set_speech_synthesizer, fake)
     yield fake
-    set_speech_synthesizer(None)
 
 
 @pytest.fixture

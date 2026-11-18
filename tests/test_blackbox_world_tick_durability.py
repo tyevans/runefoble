@@ -14,6 +14,7 @@ and the same Redis double. Tests interact only through public HTTP routes and th
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
@@ -25,6 +26,9 @@ from runefoble_platform.event_sourcing import (
     InMemoryEventStore,
 )
 from the_watcher.dependencies import (
+    get_campaign_world_repo,
+    get_faction_repo,
+    get_faction_simulation_engine,
     set_campaign_world_repo,
     set_faction_repo,
     set_faction_simulation_engine,
@@ -35,6 +39,7 @@ from the_watcher.main import app
 from the_watcher.simulation_engine import FactionSimulationEngine
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 WATCHER_STREAM = "runefoble.events.watcher"
@@ -64,11 +69,11 @@ def _boot(store: InMemoryEventStore) -> None:
 
 
 @pytest.fixture(autouse=True)
-def durable_environment():
+def durable_environment(seam_restorer: SeamRestorer) -> Iterator[None]:
+    seam_restorer.keep(get_faction_repo, set_faction_repo)
+    seam_restorer.keep(get_campaign_world_repo, set_campaign_world_repo)
+    seam_restorer.keep(get_faction_simulation_engine, set_faction_simulation_engine)
     yield
-    set_faction_repo(None)
-    set_campaign_world_repo(None)
-    set_faction_simulation_engine(FactionSimulationEngine())
 
 
 @pytest.mark.asyncio
