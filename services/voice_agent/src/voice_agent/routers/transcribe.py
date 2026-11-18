@@ -20,8 +20,8 @@ from voice_agent.auth import CallerPrincipal, caller_headers, get_principal
 from voice_agent.authz import require_speaker
 from voice_agent.dependencies import (
     STREAM_SESSION,
-    WATCHER_URL,
     get_event_bus,
+    platform_settings,
     to_uuid,
 )
 from voice_agent.models import TranscribeRequest, TranscribeResponse
@@ -123,9 +123,12 @@ async def transcribe_speech(
             if resp.status_code == 200:
                 watcher_intent = resp.json()
         else:
+            watcher_url = platform_settings.the_watcher_url
+            if not watcher_url:
+                raise RuntimeError("RUNEFOBLE_WATCHER_URL is not set")
             async with httpx.AsyncClient(timeout=5.0) as client:
                 resp = await client.post(
-                    f"{WATCHER_URL}/api/v1/watcher/transcribe-and-act",
+                    f"{watcher_url}/api/v1/watcher/transcribe-and-act",
                     headers=caller_headers(authorization),
                     json={
                         "speaker_id": req.speaker_id,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from typing import Any
 
 import httpx
@@ -17,7 +16,6 @@ from voice_agent.room_aggregate import to_uuid
 from voice_agent.stt import get_streaming_pipeline
 
 logger = logging.getLogger("runefoble.voice_agent")
-WATCHER_URL = os.environ.get("RUNEFOBLE_WATCHER_URL", "http://the-watcher:8001")
 STREAM_SESSION = "runefoble.events.session"
 STREAM_VOICE = "runefoble.events.voice"
 
@@ -61,7 +59,6 @@ async def publish_voice_event(event: Any, bus: RedisStreamsEventBus | None = Non
 __all__ = [
     "STREAM_SESSION",
     "STREAM_VOICE",
-    "WATCHER_URL",
     "_dispatch_voice_audio_conditioned",
     "dsp_pipeline",
     "get_event_bus",

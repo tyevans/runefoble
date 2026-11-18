@@ -68,11 +68,11 @@ STATIC_TOOLS = {
 # Upstream URLs that the gateway needs at deploy time. The port is closed on purpose: tool
 # listing never calls an upstream service.
 UPSTREAM_ENV = {
-    "BOARD_STATE_URL": "http://127.0.0.1:9",
+    "RUNEFOBLE_BOARD_STATE_URL": "http://127.0.0.1:9",
     "RUNEFOBLE_CHARACTER_SHEET_URL": "http://127.0.0.1:9",
-    "GAME_SESSION_URL": "http://127.0.0.1:9",
-    "RULES_COMPENDIUM_URL": "http://127.0.0.1:9",
-    "THE_WATCHER_URL": "http://127.0.0.1:9",
+    "RUNEFOBLE_GAME_SESSION_URL": "http://127.0.0.1:9",
+    "RUNEFOBLE_RULES_COMPENDIUM_URL": "http://127.0.0.1:9",
+    "RUNEFOBLE_WATCHER_URL": "http://127.0.0.1:9",
 }
 
 
@@ -263,7 +263,7 @@ def test_entrypoint_refuses_to_start_without_upstream_urls():
         timeout=120,
     )
     assert result.returncode != 0
-    assert "BOARD_STATE_URL" in result.stderr
+    assert "RUNEFOBLE_BOARD_STATE_URL" in result.stderr
 
 
 def _rendered_documents() -> list[dict]:

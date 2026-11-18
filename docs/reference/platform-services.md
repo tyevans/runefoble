@@ -137,14 +137,14 @@ The chart sets each service-to-service URL. The URL uses the in-cluster service 
 
 | Environment variable | Value in cluster | Rendered on | Read by |
 |---|---|---|---|
-| `RUNEFOBLE_WATCHER_URL` | `http://the-watcher:8001` | `game-session`, `voice-agent` | `game_session` (autopilot; required in deployed mode), `voice_agent` (default `http://the-watcher:8001`) |
+| `RUNEFOBLE_WATCHER_URL` | `http://the-watcher:8001` | `game-session`, `voice-agent`, `gateway-api`, `gateway-mcp` | `game_session` (autopilot; required in deployed mode), `voice_agent` (transcript forwarding; no code default) |
 | `RUNEFOBLE_VOICE_AGENT_URL` | `http://voice-agent:8005` | `game-session` | `game_session` voice client |
 | `RUNEFOBLE_INFERENCE_URL` | `http://inference-worker:8100` | `the-watcher` (only when `services.inferenceWorker` is set) | `the_watcher` |
 | `RUNEFOBLE_SERVICE_CREDENTIAL` | Secret reference `runefoble-credentials`, key `service-credential` (`credentials.serviceCredential` in values) | `the-watcher`, `inference-worker`, `gateway-mcp`, `board-state`, `character-sheet`, `game-session`, `rules-compendium`, `campaign-lore` | The MCP gateway, The Watcher, and `campaign_lore` send it. Receivers check it (ADR-0015 e) and refuse to start without it. |
-| `SOUNDSCAPE_SERVICE_URL` | `http://soundscape:8009` | `gateway-api` | Gateway soundscape proxy (default `http://soundscape:8009`) |
+| `RUNEFOBLE_SOUNDSCAPE_URL` | `http://soundscape:8009` | `gateway-api` | Gateway soundscape proxy. No code default. |
 | `RUNEFOBLE_GAME_SESSION_URL` | `http://game-session:8004` | `gateway-api`, `campaign-lore` | Gateway campaign routes. `campaign_lore` outpost funding debits the stronghold treasury (TASK-0795). |
-| `CAMPAIGN_LORE_URL` | `http://campaign-lore:8006` | `gateway-api` | Gateway hub views |
-| `CAMPAIGN_ANALYTICS_URL` | `http://campaign-analytics:8011` | `gateway-api` | Gateway hub views |
+| `RUNEFOBLE_CAMPAIGN_LORE_URL` | `http://campaign-lore:8006` | `gateway-api` | Gateway hub views |
+| `RUNEFOBLE_CAMPAIGN_ANALYTICS_URL` | `http://campaign-analytics:8011` | `gateway-api` | Gateway hub views |
 | `RUNEFOBLE_CHARACTER_SHEET_URL` | `http://character-sheet:8003` | `game-session`, `gateway-api`, `gateway-mcp` | Stand-in calls (`game_session`), gateway character routes, and MCP character tools. One name for all three processes. Unset means the process cannot reach `character_sheet` and fails with 503 or 502. |
 
 The chart defines these keys in one block in `deployments/helm/runefoble/templates/services.yaml`. To add a consumer, add its container name to that key's `consumers` list.

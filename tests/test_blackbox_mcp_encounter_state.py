@@ -59,8 +59,8 @@ def upstreams() -> Iterator[dict[str, str]]:
 @pytest.fixture
 def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str:
     """Start combat through game_session, advance one turn, and place a board token."""
-    monkeypatch.setenv("BOARD_STATE_URL", upstreams["board"])
-    monkeypatch.setenv("GAME_SESSION_URL", upstreams["session"])
+    monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", upstreams["board"])
+    monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", upstreams["session"])
 
     auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-test')}"}
     with httpx.Client(base_url=upstreams["session"], headers=auth) as http:
@@ -176,9 +176,9 @@ async def test_blackbox_query_encounter_state_upstream_unavailable_returns_error
         )
         assert created_board.status_code == 200, created_board.text
 
-    monkeypatch.setenv("BOARD_STATE_URL", upstreams["board"])
+    monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", upstreams["board"])
     with serve(unavailable_app(503)) as down_url:
-        monkeypatch.setenv("GAME_SESSION_URL", down_url)
+        monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", down_url)
         result = await call_query_encounter_state(session_id)
 
     assert result.isError is True

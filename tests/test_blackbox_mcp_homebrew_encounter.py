@@ -73,9 +73,9 @@ def homebrew_upstreams() -> Iterator[dict[str, str]]:
             serve(session_app) as session_url,
             serve(compendium_app, lifespan="on") as compendium_url,
         ):
-            env.setenv("BOARD_STATE_URL", board_url)
-            env.setenv("GAME_SESSION_URL", session_url)
-            env.setenv("RULES_COMPENDIUM_URL", compendium_url)
+            env.setenv("RUNEFOBLE_BOARD_STATE_URL", board_url)
+            env.setenv("RUNEFOBLE_GAME_SESSION_URL", session_url)
+            env.setenv("RUNEFOBLE_RULES_COMPENDIUM_URL", compendium_url)
             yield {"session": session_url, "compendium": compendium_url}
     finally:
         set_zitadel_auth_service(previous_verifier)

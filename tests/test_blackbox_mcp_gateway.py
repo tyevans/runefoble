@@ -69,9 +69,9 @@ def owning_services() -> Iterator[dict[str, str]]:
             serve(session_app) as session_url,
             serve(compendium_app, lifespan="on") as compendium_url,
         ):
-            env.setenv("BOARD_STATE_URL", board_url)
-            env.setenv("GAME_SESSION_URL", session_url)
-            env.setenv("RULES_COMPENDIUM_URL", compendium_url)
+            env.setenv("RUNEFOBLE_BOARD_STATE_URL", board_url)
+            env.setenv("RUNEFOBLE_GAME_SESSION_URL", session_url)
+            env.setenv("RUNEFOBLE_RULES_COMPENDIUM_URL", compendium_url)
             # Setup through the public board_state HTTP frontdoor: place the active session token.
             campaign_roles = MockSpiceDBClient()
             asyncio.run(
@@ -376,7 +376,7 @@ async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
 async def test_blackbox_inspect_board_returns_error_when_board_service_returns_503(monkeypatch):
     """Verify a 503 from board_state becomes an MCP error result, not canned board data."""
     with serve(unavailable_app(503)) as down_url:
-        monkeypatch.setenv("BOARD_STATE_URL", down_url)
+        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", down_url)
         result = await call_tool("inspect_tactical_board", {"session_id": "camp-503"})
 
     assert result.isError is True
@@ -387,7 +387,7 @@ async def test_blackbox_inspect_board_returns_error_when_board_service_returns_5
 @pytest.mark.asyncio
 async def test_blackbox_inspect_board_returns_error_when_board_service_is_unreachable(monkeypatch):
     """Verify an unreachable board_state becomes an MCP error result, not canned board data."""
-    monkeypatch.setenv("BOARD_STATE_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", closed_port_url())
     result = await call_tool("inspect_tactical_board", {"session_id": "camp-down"})
 
     assert result.isError is True

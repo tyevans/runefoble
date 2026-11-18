@@ -33,7 +33,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 def soundscape_service(monkeypatch) -> Iterator[str]:
     """Run the real soundscape service on a loopback port and point the gateway at it."""
     with serve(soundscape_app) as url:
-        monkeypatch.setenv("SOUNDSCAPE_SERVICE_URL", url)
+        monkeypatch.setenv("RUNEFOBLE_SOUNDSCAPE_URL", url)
         yield url
 
 
@@ -333,7 +333,7 @@ def test_proxy_returns_503_when_soundscape_is_unreachable(
 ) -> None:
     """Verify an unreachable soundscape service returns 503, not a local substitute."""
     sid = setup_zanzibar_soundscape["sid"]
-    monkeypatch.setenv("SOUNDSCAPE_SERVICE_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_SOUNDSCAPE_URL", closed_port_url())
 
     with TestClient(gateway_app) as restarted_gateway:
         res = restarted_gateway.post(

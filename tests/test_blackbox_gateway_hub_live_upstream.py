@@ -67,8 +67,8 @@ def upstream_received(monkeypatch, trusted_ws_issuer) -> Iterator[dict[str, list
         serve(_recording_upstream(lore_seen, trusted_ws_issuer.verifier())) as lore_url,
         serve(_recording_upstream(analytics_seen, trusted_ws_issuer.verifier())) as analytics_url,
     ):
-        monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
-        monkeypatch.setenv("CAMPAIGN_ANALYTICS_URL", analytics_url)
+        monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", lore_url)
+        monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_ANALYTICS_URL", analytics_url)
         yield {"lore": lore_seen, "analytics": analytics_seen}
 
 

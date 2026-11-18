@@ -37,7 +37,7 @@ from board_state.main import app as board_app
 @pytest.fixture(scope="module", autouse=True)
 def owning_services() -> Iterator[dict[str, str]]:
     with pytest.MonkeyPatch.context() as env, serve(board_app) as board_url:
-        env.setenv("BOARD_STATE_URL", board_url)
+        env.setenv("RUNEFOBLE_BOARD_STATE_URL", board_url)
         with httpx.Client(base_url=board_url) as http:
             created = http.post(
                 "/api/v1/boards", json={"session_id": "camp1", "cols": 10, "rows": 10}
@@ -61,9 +61,9 @@ The gateway MCP reads its upstream addresses from the environment:
 
 | Environment variable | Owning service |
 |---|---|
-| `BOARD_STATE_URL` | `board_state` |
+| `RUNEFOBLE_BOARD_STATE_URL` | `board_state` |
 | `RUNEFOBLE_CHARACTER_SHEET_URL` | `character_sheet` |
-| `RULES_COMPENDIUM_URL` | `rules_compendium` |
+| `RUNEFOBLE_RULES_COMPENDIUM_URL` | `rules_compendium` |
 
 `OwningServices` reads these settings on each tool call. The shared service client is reused per event loop, service, and base URL. A test can therefore set the variable with `monkeypatch.setenv` inside the test body, and a new base URL starts a new client.
 
@@ -75,7 +75,7 @@ Some settings are read once, at import time, into a module constant. Setting the
 @pytest.mark.asyncio
 async def test_inspect_board_returns_error_when_board_service_returns_503(monkeypatch):
     with serve(unavailable_app(503)) as down_url:
-        monkeypatch.setenv("BOARD_STATE_URL", down_url)
+        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", down_url)
         result = await call_tool("inspect_tactical_board", {"session_id": "camp-503"})
 
     assert result.isError is True
@@ -89,7 +89,7 @@ The caller must return an error. It must not return a success body or a canned v
 ```python
 @pytest.mark.asyncio
 async def test_inspect_board_returns_error_when_board_service_is_unreachable(monkeypatch):
-    monkeypatch.setenv("BOARD_STATE_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", closed_port_url())
     result = await call_tool("inspect_tactical_board", {"session_id": "camp-down"})
 
     assert result.isError is True

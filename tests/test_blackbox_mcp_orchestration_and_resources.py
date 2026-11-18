@@ -89,10 +89,10 @@ def upstreams() -> Iterator[dict[str, str]]:
 @pytest.fixture
 def services(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
     """Point the gateway at the live upstream services for one test."""
-    monkeypatch.setenv("THE_WATCHER_URL", upstreams["watcher"])
-    monkeypatch.setenv("GAME_SESSION_URL", upstreams["session"])
-    monkeypatch.setenv("BOARD_STATE_URL", upstreams["board"])
-    monkeypatch.setenv("RULES_COMPENDIUM_URL", upstreams["compendium"])
+    monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", upstreams["watcher"])
+    monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", upstreams["session"])
+    monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", upstreams["board"])
+    monkeypatch.setenv("RUNEFOBLE_RULES_COMPENDIUM_URL", upstreams["compendium"])
     return upstreams
 
 
@@ -338,7 +338,7 @@ async def test_blackbox_action_plan_watcher_unreachable_is_step_error(
     services: dict[str, str], monkeypatch: pytest.MonkeyPatch
 ):
     """Verify an unreachable The Watcher fails the step with an error. No step reports success."""
-    monkeypatch.setenv("THE_WATCHER_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", closed_port_url())
     plan = [
         {
             "tool": "roll_dice",
@@ -386,7 +386,7 @@ async def test_blackbox_monster_stat_block_compendium_down_is_tool_error(
     services: dict[str, str], monkeypatch: pytest.MonkeyPatch
 ):
     """Verify a down rules_compendium gives an MCP error. The tool does not scan local data."""
-    monkeypatch.setenv("RULES_COMPENDIUM_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_RULES_COMPENDIUM_URL", closed_port_url())
     result = await call_tool("query_monster_stat_block", {"monster_name": "Bugbear"})
     assert result.isError
 
@@ -397,12 +397,13 @@ async def test_blackbox_monster_stat_block_compendium_down_is_tool_error(
 
 
 @pytest.mark.asyncio
-async def test_blackbox_service_client_forwards_bearer_to_upstream():
+async def test_blackbox_service_client_forwards_bearer_to_upstream(monkeypatch):
     """Verify the owning-service calls send the caller bearer and no other credential."""
     from gateway_mcp.settings import GatewayMcpSettings
 
     with serve(_echo_authorization_app()) as board_url:
-        settings = GatewayMcpSettings(board_state_url=board_url)
+        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", board_url)
+        settings = GatewayMcpSettings()
         with_token = await OwningServices(settings, bearer="token-abc").get_board("s-1")
         without_token = await OwningServices(settings).get_board("s-1")
 

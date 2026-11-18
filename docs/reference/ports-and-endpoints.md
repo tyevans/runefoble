@@ -449,7 +449,7 @@ A gateway proxy route forwards the caller's verified bearer token to the owning 
 - A connection failure, a timeout, or an unset base URL returns `503` with the same body shape.
 - A `2xx` answer with a non-JSON body returns `502`.
 
-The gateway reads each owning service base URL once, at start-up. The variables are `CAMPAIGN_LORE_URL`, `CAMPAIGN_ANALYTICS_URL`, `SOUNDSCAPE_SERVICE_URL`, and `RUNEFOBLE_CHARACTER_SHEET_URL`. The gateway builds one shared client for each service. See [Service Client](service-client.md).
+The gateway reads each owning service base URL once, at start-up. The variables are `RUNEFOBLE_CAMPAIGN_LORE_URL`, `RUNEFOBLE_CAMPAIGN_ANALYTICS_URL`, `RUNEFOBLE_SOUNDSCAPE_URL`, and `RUNEFOBLE_CHARACTER_SHEET_URL`. The gateway builds one shared client for each service. See [Service Client](service-client.md).
 
 ### Voice Agent TTS Response (`POST /api/v1/voice/tts`)
 

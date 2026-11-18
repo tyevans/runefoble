@@ -160,15 +160,15 @@ Service names and settings fields:
 | `board_state` | `board_state_url` | `RUNEFOBLE_BOARD_STATE_URL` |
 | `the_watcher` | `the_watcher_url` | `RUNEFOBLE_WATCHER_URL` |
 | `character_sheet` | `character_sheet_url` | `RUNEFOBLE_CHARACTER_SHEET_URL` |
-| `campaign_lore` | `campaign_lore_url` | `CAMPAIGN_LORE_URL` |
-| `campaign_analytics` | `campaign_analytics_url` | `CAMPAIGN_ANALYTICS_URL` |
-| `soundscape` | `soundscape_url` | `SOUNDSCAPE_SERVICE_URL` |
+| `campaign_lore` | `campaign_lore_url` | `RUNEFOBLE_CAMPAIGN_LORE_URL` |
+| `campaign_analytics` | `campaign_analytics_url` | `RUNEFOBLE_CAMPAIGN_ANALYTICS_URL` |
+| `soundscape` | `soundscape_url` | `RUNEFOBLE_SOUNDSCAPE_URL` |
 | `rules_compendium` | `rules_compendium_url` | `RUNEFOBLE_RULES_COMPENDIUM_URL` |
 | `asset_forge` | `asset_forge_url` | `RUNEFOBLE_ASSET_FORGE_URL` |
 | `voice_agent` | `voice_agent_url` | `RUNEFOBLE_VOICE_AGENT_URL` |
 | `audience_studio` | `audience_studio_url` | `RUNEFOBLE_AUDIENCE_STUDIO_URL` |
 
-`campaign_analytics_url` and `soundscape_url` default to their in-cluster addresses. Every other field defaults to `None`. A field left at `None` means no route: a proxy call returns `503`, and a health probe reports `not_configured`. `character_sheet_url` has no default (TASK-0674). The Helm chart renders these variables for `gateway-api` in `templates/services.yaml`: `RUNEFOBLE_GAME_SESSION_URL`, `RUNEFOBLE_WATCHER_URL`, `RUNEFOBLE_BOARD_STATE_URL`, `RUNEFOBLE_CHARACTER_SHEET_URL`, `RUNEFOBLE_VOICE_AGENT_URL`, `CAMPAIGN_LORE_URL`, `CAMPAIGN_ANALYTICS_URL`, `SOUNDSCAPE_SERVICE_URL`, `RUNEFOBLE_RULES_COMPENDIUM_URL`, and `RUNEFOBLE_ASSET_FORGE_URL`.
+Every service URL field defaults to `None`. No field has an in-cluster code default. A field left at `None` means no route: a proxy call returns `503`, and a health probe reports `not_configured`. Each variable is named `RUNEFOBLE_<SERVICE>_URL`, so each service has one name in every process (TASK-0794). The Helm chart renders these variables for `gateway-api` in `templates/services.yaml`: `RUNEFOBLE_GAME_SESSION_URL`, `RUNEFOBLE_WATCHER_URL`, `RUNEFOBLE_BOARD_STATE_URL`, `RUNEFOBLE_CHARACTER_SHEET_URL`, `RUNEFOBLE_VOICE_AGENT_URL`, `RUNEFOBLE_CAMPAIGN_LORE_URL`, `RUNEFOBLE_CAMPAIGN_ANALYTICS_URL`, `RUNEFOBLE_SOUNDSCAPE_URL`, `RUNEFOBLE_RULES_COMPENDIUM_URL`, and `RUNEFOBLE_ASSET_FORGE_URL`.
 
 ## Related
 

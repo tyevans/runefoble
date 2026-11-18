@@ -60,8 +60,8 @@ def upstreams() -> Iterator[dict[str, str]]:
 @pytest.fixture
 def wired(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
     """Point the gateway at the live game_session and board_state services."""
-    monkeypatch.setenv("BOARD_STATE_URL", upstreams["board"])
-    monkeypatch.setenv("GAME_SESSION_URL", upstreams["session"])
+    monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", upstreams["board"])
+    monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", upstreams["session"])
     return upstreams
 
 
@@ -172,7 +172,7 @@ async def test_blackbox_create_encounter_game_session_503_is_error_not_board_id(
     """Verify a game_session 503 yields an MCP error and no encounter id or board is returned."""
     session_id = start_session_with_player(wired["session"])
     with serve(unavailable_app(503)) as down_url:
-        monkeypatch.setenv("GAME_SESSION_URL", down_url)
+        monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", down_url)
         result = await call_create_encounter(
             session_id, [{"name": "Imp", "x": 0, "y": 0, "cr": 1.0}]
         )

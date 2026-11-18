@@ -2,20 +2,34 @@
 
 The tests render the umbrella chart with `helm template` and read only the public
 manifest output. They check which container receives each cross-service URL and
-which value it gets. Code defaults are checked by running the public module import
-in a clean interpreter.
+which value it gets. They also check the settings that read those names, through the
+public `PlatformSettings` model, with no code default.
 """
 
-import os
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 import yaml
+from runefoble_platform.config import PlatformSettings
 
 HELM_CHART = Path("deployments/helm/runefoble")
+
+# Every service URL setting. Each one is read from RUNEFOBLE_<SERVICE>_URL with no default.
+SERVICE_URL_SETTINGS: dict[str, str] = {
+    "game_session_url": "RUNEFOBLE_GAME_SESSION_URL",
+    "board_state_url": "RUNEFOBLE_BOARD_STATE_URL",
+    "the_watcher_url": "RUNEFOBLE_WATCHER_URL",
+    "character_sheet_url": "RUNEFOBLE_CHARACTER_SHEET_URL",
+    "campaign_lore_url": "RUNEFOBLE_CAMPAIGN_LORE_URL",
+    "campaign_analytics_url": "RUNEFOBLE_CAMPAIGN_ANALYTICS_URL",
+    "soundscape_url": "RUNEFOBLE_SOUNDSCAPE_URL",
+    "rules_compendium_url": "RUNEFOBLE_RULES_COMPENDIUM_URL",
+    "asset_forge_url": "RUNEFOBLE_ASSET_FORGE_URL",
+    "voice_agent_url": "RUNEFOBLE_VOICE_AGENT_URL",
+    "audience_studio_url": "RUNEFOBLE_AUDIENCE_STUDIO_URL",
+}
 
 # Expected env var -> {container: expected URL}. Each container listed here must carry the
 # variable. Every other container must not carry it.
@@ -24,6 +38,7 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
         "game-session": "http://the-watcher:8001",
         "voice-agent": "http://the-watcher:8001",
         "gateway-api": "http://the-watcher:8001",
+        "gateway-mcp": "http://the-watcher:8001",
     },
     "RUNEFOBLE_VOICE_AGENT_URL": {
         "game-session": "http://voice-agent:8005",
@@ -31,17 +46,18 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
     },
     "RUNEFOBLE_BOARD_STATE_URL": {
         "gateway-api": "http://board-state:8002",
+        "gateway-mcp": "http://board-state:8002",
     },
     "RUNEFOBLE_INFERENCE_URL": {
         "the-watcher": "http://inference-worker:8100",
     },
-    "SOUNDSCAPE_SERVICE_URL": {
+    "RUNEFOBLE_SOUNDSCAPE_URL": {
         "gateway-api": "http://soundscape:8009",
     },
-    "CAMPAIGN_LORE_URL": {
+    "RUNEFOBLE_CAMPAIGN_LORE_URL": {
         "gateway-api": "http://campaign-lore:8006",
     },
-    "CAMPAIGN_ANALYTICS_URL": {
+    "RUNEFOBLE_CAMPAIGN_ANALYTICS_URL": {
         "gateway-api": "http://campaign-analytics:8011",
     },
     "RUNEFOBLE_CHARACTER_SHEET_URL": {
@@ -51,8 +67,13 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
     },
     "RUNEFOBLE_GAME_SESSION_URL": {
         "gateway-api": "http://game-session:8004",
+        "gateway-mcp": "http://game-session:8004",
         # Outpost funding debits the stronghold treasury in game_session (TASK-0795).
         "campaign-lore": "http://game-session:8004",
+    },
+    "RUNEFOBLE_RULES_COMPENDIUM_URL": {
+        "gateway-api": "http://rules-compendium:8007",
+        "gateway-mcp": "http://rules-compendium:8007",
     },
 }
 
@@ -121,33 +142,34 @@ def test_service_urls_never_point_at_localhost():
             )
 
 
-@pytest.mark.parametrize(
-    ("module", "attribute", "env_name", "expected"),
-    [
-        (
-            "voice_agent.dependencies",
-            "WATCHER_URL",
-            "RUNEFOBLE_WATCHER_URL",
-            "http://the-watcher:8001",
-        ),
-        (
-            "runefoble_platform.config",
-            "PlatformSettings().soundscape_url",
-            "SOUNDSCAPE_SERVICE_URL",
-            "http://soundscape:8009",
-        ),
-    ],
-)
-def test_code_defaults_match_the_chart(module, attribute, env_name, expected):
-    """With the variable unset, the code default matches the in-cluster address."""
-    env = {key: value for key, value in os.environ.items() if key != env_name}
-    script = f"import {module} as m; print(m.{attribute})"
-    proc = subprocess.run(
-        [sys.executable, "-c", script],
-        capture_output=True,
-        text=True,
-        env=env,
-        check=False,
-    )
-    assert proc.returncode == 0, f"import failed:\n{proc.stderr}"
-    assert proc.stdout.strip() == expected
+def test_rendered_service_addresses_use_only_runefoble_prefixed_names():
+    """Every rendered in-cluster service address is named RUNEFOBLE_*_URL, once per name."""
+    env_by_container = _container_env(_render_deployments())
+
+    for container, env in env_by_container.items():
+        for env_name, value in env.items():
+            if not env_name.endswith("_URL") or not value.startswith("http://"):
+                continue
+            assert env_name.startswith("RUNEFOBLE_"), (
+                f"{container} renders {env_name}; service URLs use the RUNEFOBLE_ prefix"
+            )
+
+
+@pytest.mark.parametrize("field", sorted(SERVICE_URL_SETTINGS))
+def test_service_url_setting_has_no_code_default(field, monkeypatch):
+    """With its variable unset, each service URL setting is None. No in-cluster default."""
+    monkeypatch.delenv(SERVICE_URL_SETTINGS[field], raising=False)
+
+    settings = PlatformSettings(_env_file=None)
+
+    assert getattr(settings, field) is None
+
+
+@pytest.mark.parametrize(("field", "env_name"), sorted(SERVICE_URL_SETTINGS.items()))
+def test_service_url_setting_reads_its_runefoble_name(field, env_name, monkeypatch):
+    """Each service URL setting reads its value from RUNEFOBLE_<SERVICE>_URL."""
+    monkeypatch.setenv(env_name, "http://service.example:9000")
+
+    settings = PlatformSettings(_env_file=None)
+
+    assert getattr(settings, field) == "http://service.example:9000"
