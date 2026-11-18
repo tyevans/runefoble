@@ -55,7 +55,7 @@ async def start_session_proxy(session_id: str, request: Request) -> Any:
         request, service=SERVICE, method="POST", path=f"{SESSIONS}/{session_id}/start"
     )
     await ws_manager.broadcast(
-        {"type": "session_started", "sessionId": session_id, "status": state["status"]}
+        session_id, {"type": "session_started", "sessionId": session_id, "status": state["status"]}
     )
     return state
 

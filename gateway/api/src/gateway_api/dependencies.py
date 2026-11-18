@@ -21,26 +21,36 @@ set_event_bus = event_bus_provider.set
 
 
 class WebSocketConnectionManager:
-    """Manages active live session WebSocket connections."""
+    """Tracks live session sockets in one group per session.
+
+    A broadcast reaches only the sockets of the named session.
+    This manager keeps state in one process. With more than one gateway replica,
+    a message reaches only the clients on the replica that handled it.
+    """
 
     def __init__(self) -> None:
-        self.active_connections: list[WebSocket] = []
+        self.session_connections: dict[str, list[WebSocket]] = {}
 
-    def register(self, websocket: WebSocket) -> None:
+    def register(self, session_id: str, websocket: WebSocket) -> None:
         """Track an admitted, accepted socket. The route accepts it first."""
-        self.active_connections.append(websocket)
+        self.session_connections.setdefault(session_id, []).append(websocket)
 
-    def disconnect(self, websocket: WebSocket) -> None:
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
+    def disconnect(self, session_id: str, websocket: WebSocket) -> None:
+        group = self.session_connections.get(session_id)
+        if group is None:
+            return
+        if websocket in group:
+            group.remove(websocket)
+        if not group:
+            del self.session_connections[session_id]
 
-    async def broadcast(self, message: dict[str, Any]) -> None:
-        for connection in list(self.active_connections):
+    async def broadcast(self, session_id: str, message: dict[str, Any]) -> None:
+        for connection in list(self.session_connections.get(session_id, [])):
             try:
                 await connection.send_json(message)
             except Exception:  # noqa: BLE001 - one dead peer must not stop the fan-out
                 logger.warning("dropping session socket after failed send", exc_info=True)
-                self.disconnect(connection)
+                self.disconnect(session_id, connection)
 
 
 ws_manager = WebSocketConnectionManager()
