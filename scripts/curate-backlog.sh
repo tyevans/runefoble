@@ -6,7 +6,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
 echo "==> Running Codebase & Backlog Health Check..."
-python3 scripts/health_check.py
+spec-ops health
 
 # Check git status
 if [ -n "$(git status --porcelain)" ]; then
