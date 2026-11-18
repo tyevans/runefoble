@@ -13,7 +13,6 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
-from eventsource.adapters.memory.store import InMemoryEventStore
 from fastapi.testclient import TestClient
 from game_session.campaign import clock
 from game_session.campaign.repositories import (
@@ -26,7 +25,7 @@ from game_session.settlement.auth.tokens import set_zitadel_auth_service
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import get_event_store, set_event_store
+from runefoble_platform.event_sourcing import build_event_store, get_event_store, set_event_store
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -57,7 +56,7 @@ def reset_process_globals() -> Iterator[None]:
 
 @pytest.fixture
 def repos() -> Iterator[CampaignRepositories]:
-    built = build_campaign_repositories(InMemoryEventStore())
+    built = build_campaign_repositories()
     set_campaign_repositories(built)
     yield built
     set_campaign_repositories(None)
@@ -142,7 +141,7 @@ def test_campaign_and_membership_survive_restart(
     assert join(client, issuer, token, "player-marcus").status_code == 200
 
     # A new process reads the same event store. No state may live only in memory.
-    restarted = build_campaign_repositories(repos.campaigns.event_store)
+    restarted = build_campaign_repositories()
     set_campaign_repositories(restarted)
 
     got = client.get(f"/api/v1/campaigns/{campaign_id}", headers=auth(issuer, "dm-evelyn"))
@@ -390,21 +389,21 @@ async def test_campaign_membership_and_invites_survive_restart_on_postgres(
 
     def bind_process() -> CampaignRepositories:
         settings = PlatformSettings(database_url=dsn, event_store_backend="postgresql")
-        store = get_event_store(settings=settings, force_new=True)
-        repos = build_campaign_repositories(store)
+        set_event_store(build_event_store(settings))
+        repos = build_campaign_repositories()
         set_campaign_repositories(repos)
         return repos
 
-    before = bind_process()
+    bind_process()
     with TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     ) as first:
         campaign_id = create_campaign(first, issuer, owner="dm-pg-evelyn")
         token = create_invite(first, issuer, campaign_id, owner="dm-pg-evelyn")
         assert join(first, issuer, token, "player-pg-marcus").status_code == 200
-    await before.campaigns.event_store.close()
+    await get_event_store().close()
 
-    after = bind_process()
+    bind_process()
     with TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     ) as second:
@@ -419,4 +418,4 @@ async def test_campaign_membership_and_invites_survive_restart_on_postgres(
         }
         rejoin = join(second, issuer, token, "player-pg-marcus")
         assert rejoin.status_code == 200
-    await after.campaigns.event_store.close()
+    await get_event_store().close()

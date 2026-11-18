@@ -23,6 +23,7 @@ from runefoble_platform.event_sourcing import create_aggregate_repository
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.main import app
 
+from tests.helpers.event_store_seam import store_outage
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 TENSION_URL = "/api/v1/soundscape/tension"
@@ -103,7 +104,7 @@ def test_load_if_exists_returns_none_for_unknown_stream() -> None:
 
 
 def test_tension_read_answers_503_when_store_is_unreachable(
-    client: TestClient, owned_session_id: str, monkeypatch: pytest.MonkeyPatch
+    client: TestClient, owned_session_id: str
 ) -> None:
     """GET /tension must not answer with the canned default during a store outage."""
     session_id = owned_session_id
@@ -119,15 +120,14 @@ def test_tension_read_answers_503_when_store_is_unreachable(
     )
     assert seeded.status_code == 200, seeded.text
 
-    with monkeypatch.context() as m:
-        m.setattr(InMemoryEventStore, "read_stream", _connection_refused)
+    with store_outage():
         resp = client.get(f"{TENSION_URL}?session_id={session_id}")
     assert resp.status_code == 503, resp.text
     assert resp.json()["detail"] == "Event store is unavailable"
 
 
 def test_tension_write_answers_503_and_keeps_stored_history(
-    client: TestClient, owned_session_id: str, monkeypatch: pytest.MonkeyPatch
+    client: TestClient, owned_session_id: str
 ) -> None:
     """A failed load on POST /tension/calculate writes nothing and answers 503."""
     session_id = owned_session_id
@@ -144,8 +144,7 @@ def test_tension_write_answers_503_and_keeps_stored_history(
     assert seeded.status_code == 200, seeded.text
     stored_score = seeded.json()["tension_score"]
 
-    with monkeypatch.context() as m:
-        m.setattr(InMemoryEventStore, "read_stream", _connection_refused)
+    with store_outage():
         resp = client.post(
             CALCULATE_URL,
             json={"session_id": session_id, "combat_active": False, "combat_round": 0},

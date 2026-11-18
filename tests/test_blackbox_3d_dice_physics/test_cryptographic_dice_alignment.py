@@ -12,9 +12,9 @@ import asyncio
 from uuid import uuid4
 
 import pytest
-from board_state.dependencies import repo
 from fastapi.testclient import TestClient
 from runefoble_events.events import DiceSettled
+from runefoble_platform.event_sourcing import get_event_store
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
@@ -88,7 +88,7 @@ def test_simulate_throw_cryptographic_alignment_all_polyhedral_types(
     assert 0 <= settled_cell[1] < 10
 
     # 4. Verify domain event DiceSettled emitted to event store
-    store = repo.event_store
+    store = get_event_store()
     matching_events = [
         env.event
         for env in store._events

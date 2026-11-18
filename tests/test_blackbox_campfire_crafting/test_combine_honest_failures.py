@@ -1,8 +1,7 @@
 """Blackbox tests: combining reagents fails loudly and publishes the standard health events.
 
 Governed by ADR-0011, ADR-0015 (f) and Hard Invariant 7 (TASK-0729). Setup goes through the
-public crafting and character routes. Store failures use the store boundary (`read_stream` on
-the in-memory event store class, so every store instance fails), not application code. Assertions read the public responses and the
+public crafting and character routes. Store failures use the provider seam (`store_outage`), not application code. Assertions read the public responses and the
 events on the character and crafting streams.
 """
 
@@ -13,11 +12,11 @@ import json
 from typing import Any
 from uuid import uuid4
 
-import pytest
 from character_sheet.dependencies import STREAM_CHARACTER, STREAM_CRAFTING
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_platform.event_sourcing import InMemoryEventStore
+
+from tests.helpers.event_store_seam import store_outage
 
 OUTAGE_DETAIL = "Event store is unavailable"
 MISHAP_PAYLOAD_REAGENTS = ["Volcano Ash", "Wyrm Blood"]
@@ -39,10 +38,6 @@ def _create_character(char_client: TestClient, max_hp: int = 16) -> str:
     )
     assert res.status_code == 200, res.text
     return res.json()["character_id"]
-
-
-def _store_read_fails(*_args: object, **_kwargs: object) -> None:
-    raise ConnectionError("event store unreachable")
 
 
 def test_mishap_damage_publishes_the_standard_health_events(
@@ -106,13 +101,12 @@ def test_unknown_character_answers_404_and_writes_nothing(
 
 
 def test_character_load_failure_answers_503_and_publishes_nothing(
-    char_client: TestClient, mock_bus: Any, monkeypatch: pytest.MonkeyPatch
+    char_client: TestClient, mock_bus: Any
 ) -> None:
     """A failed character load answers 503. The combine saves and publishes nothing."""
     char_id = _create_character(char_client)
 
-    with monkeypatch.context() as m:
-        m.setattr(InMemoryEventStore, "read_stream", _store_read_fails)
+    with store_outage():
         res = char_client.post(
             "/api/v1/crafting/recipes/combine",
             json={"character_id": char_id, "reagents": MISHAP_PAYLOAD_REAGENTS},
@@ -129,14 +123,11 @@ def test_character_load_failure_answers_503_and_publishes_nothing(
     assert history.json()["total_crafts"] == 0
 
 
-def test_history_store_failure_answers_503_not_an_empty_state(
-    char_client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_history_store_failure_answers_503_not_an_empty_state(char_client: TestClient) -> None:
     """A failed crafting load answers 503. It does not answer an empty history."""
     char_id = _create_character(char_client)
 
-    with monkeypatch.context() as m:
-        m.setattr(InMemoryEventStore, "read_stream", _store_read_fails)
+    with store_outage():
         res = char_client.get(f"/api/v1/crafting/{char_id}/history")
     assert res.status_code == 503, res.text
     assert res.json()["detail"] == OUTAGE_DETAIL

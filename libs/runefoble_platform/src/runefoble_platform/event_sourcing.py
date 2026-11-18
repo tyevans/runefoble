@@ -2,26 +2,27 @@
 
 import logging
 import socket
+from collections.abc import AsyncIterator, Sequence
 from typing import Any, Literal
 
 from eventsource.adapters.memory.store import InMemoryEventStore
 from eventsource.adapters.postgresql.store import PostgreSQLEventStore
 from eventsource.application.aggregates.repository import AggregateRepository
+from eventsource.domain import StreamId
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from eventsource.domain.event import DomainEvent
 from eventsource.domain.event_registry import register_event
 from eventsource.ports.bus import EventBus
-from eventsource.ports.store import FullEventStore
+from eventsource.ports.envelopes import AppendResult, EventEnvelope, StreamReadOptions
+from eventsource.ports.positions import ExpectedVersion
+from eventsource.ports.store import AggregateStore, FullEventStore
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from runefoble_platform.config import PlatformSettings
 
 logger = logging.getLogger("runefoble.platform.event_sourcing")
-
-# Singleton instances for process lifecycle
-_global_event_store: FullEventStore | None = None
 
 
 class EventStoreInitializationError(RuntimeError):
@@ -85,35 +86,60 @@ def _build_postgres_store(
         ) from e
 
 
-def get_event_store(
-    settings: PlatformSettings | None = None,
-    *,
-    probe_connection: bool = True,
-    force_new: bool = False,
+def build_event_store(
+    settings: PlatformSettings, *, probe_connection: bool = True
 ) -> FullEventStore:
-    """Provide the process event store for the configured backend.
+    """Build a new event store for the configured backend. It is not cached.
 
     The backend defaults to PostgreSQL. The memory backend is accepted only outside
     deployed environments and only when it is selected explicitly. A deployed service
     never runs on InMemoryEventStore. There is no fallback: any initialization failure
     raises EventStoreInitializationError.
     """
-    global _global_event_store
-    if _global_event_store is not None and settings is None and not force_new:
-        return _global_event_store
-
-    s = settings or PlatformSettings()
-    if s.event_store_backend == "memory":
-        if s.is_deployed:
+    if settings.event_store_backend == "memory":
+        if settings.is_deployed:
             raise EventStoreInitializationError(
-                f"The memory event store is refused in the '{s.environment}' environment. "
+                f"The memory event store is refused in the '{settings.environment}' environment. "
                 "Set RUNEFOBLE_EVENT_STORE_BACKEND=postgresql."
             )
-        _global_event_store = InMemoryEventStore()
-        return _global_event_store
+        return InMemoryEventStore()
+    return _build_postgres_store(settings, probe_connection=probe_connection)
 
-    _global_event_store = _build_postgres_store(s, probe_connection=probe_connection)
-    return _global_event_store
+
+class EventStoreProvider:
+    """Own the process event store. It is built lazily from settings and replaced by `set`.
+
+    Repositories never hold a store. They resolve it here on every operation (see
+    `ProvidedEventStore`), so a replaced store reaches every route at once (TASK-0773).
+    """
+
+    def __init__(self, settings: PlatformSettings | None = None) -> None:
+        self._settings = settings
+        self._store: FullEventStore | None = None
+
+    def get(self) -> FullEventStore:
+        """Return the store. Build it on first use from settings (default: the environment)."""
+        if self._store is None:
+            settings = self._settings if self._settings is not None else PlatformSettings()
+            self._store = build_event_store(settings)
+        return self._store
+
+    def set(self, store: FullEventStore | None) -> None:
+        """Replace the store. None resets it, so the next `get` builds one again."""
+        self._store = store
+
+
+event_store_provider = EventStoreProvider()
+
+
+def get_event_store() -> FullEventStore:
+    """Return the process event store through the provider."""
+    return event_store_provider.get()
+
+
+def set_event_store(store: FullEventStore | None) -> None:
+    """Replace the process event store through the provider. None resets it."""
+    event_store_provider.set(store)
 
 
 def event_store_kind(store: FullEventStore | None = None) -> Literal["postgresql", "memory"]:
@@ -129,19 +155,40 @@ def event_store_kind(store: FullEventStore | None = None) -> Literal["postgresql
     raise TypeError(f"Unsupported event store type: {type(target).__name__}")
 
 
-def set_event_store(store: FullEventStore | None) -> None:
-    """Explicitly set or reset the global event store singleton."""
-    global _global_event_store
-    _global_event_store = store
+class ProvidedEventStore:
+    """An aggregate store that forwards each call to the provider's current store."""
+
+    def __init__(self, provider: EventStoreProvider) -> None:
+        self._provider = provider
+
+    async def append(
+        self,
+        stream: StreamId,
+        events: Sequence[DomainEvent],
+        expected: ExpectedVersion,
+    ) -> AppendResult:
+        return await self._provider.get().append(stream, events, expected)
+
+    def read_stream(
+        self,
+        stream: StreamId,
+        options: StreamReadOptions | None = None,
+    ) -> AsyncIterator[EventEnvelope]:
+        return self._provider.get().read_stream(stream, options)
+
+    async def get_stream_version(self, stream: StreamId) -> int:
+        return await self._provider.get().get_stream_version(stream)
 
 
 def create_aggregate_repository[T: DeclarativeAggregate](
     aggregate_factory: type[T],
-    event_store: FullEventStore | None = None,
+    event_store: AggregateStore | None = None,
     event_bus: EventBus | None = None,
 ) -> AggregateRepository[T]:
-    """Create an AggregateRepository configured with default or provided event store and bus."""
-    store = event_store or get_event_store()
+    """Create an AggregateRepository. Without `event_store`, it resolves the provider's store."""
+    store: AggregateStore = (
+        event_store if event_store is not None else ProvidedEventStore(event_store_provider)
+    )
     return AggregateRepository(
         event_store=store,
         aggregate_factory=aggregate_factory,
@@ -160,6 +207,10 @@ __all__ = [
     "handles",
     "register_event",
     "EventStoreInitializationError",
+    "build_event_store",
+    "event_store_provider",
+    "EventStoreProvider",
+    "ProvidedEventStore",
     "get_event_store",
     "event_store_kind",
     "set_event_store",

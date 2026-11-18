@@ -14,16 +14,13 @@ import json
 import sys
 
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import get_event_store, set_event_store
+from runefoble_platform.event_sourcing import build_event_store, set_event_store
 
 
 def main() -> None:
     dsn, session_id = sys.argv[1], sys.argv[2]
     set_event_store(
-        get_event_store(
-            settings=PlatformSettings(database_url=dsn, event_store_backend="postgresql"),
-            force_new=True,
-        )
+        build_event_store(PlatformSettings(database_url=dsn, event_store_backend="postgresql"))
     )
 
     from fastapi.testclient import TestClient

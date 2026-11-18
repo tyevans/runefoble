@@ -26,7 +26,7 @@ from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.bus import bus as platform_bus
 from runefoble_platform.config import PlatformSettings
-from runefoble_platform.event_sourcing import get_event_store, set_event_store
+from runefoble_platform.event_sourcing import build_event_store, set_event_store
 from soundscape.main import app
 
 from tests.helpers.ws_identity import SIGNING_ISSUER as ISSUER
@@ -42,7 +42,7 @@ def _bearer(sub: str) -> dict[str, str]:
 
 def _use_postgres_event_store(dsn: str):
     settings = PlatformSettings(database_url=dsn, event_store_backend="postgresql")
-    store = get_event_store(settings=settings, force_new=True)
+    store = build_event_store(settings)
     set_event_store(store)
     return store
 

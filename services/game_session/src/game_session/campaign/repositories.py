@@ -11,7 +11,6 @@ from uuid import UUID
 
 from eventsource.domain.exceptions import AggregateNotFoundError
 from eventsource.domain.exceptions import OptimisticLockError as _OptimisticLockError
-from eventsource.ports.store import FullEventStore
 from game_session.campaign.campaign_aggregate import CampaignAggregate
 from game_session.campaign.errors import ConcurrentUpdateError
 from game_session.campaign.invite_aggregate import InviteAggregate
@@ -20,7 +19,6 @@ from game_session.campaign.session_aggregate import CampaignSessionsAggregate
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
-    get_event_store,
 )
 
 
@@ -32,13 +30,13 @@ class CampaignRepositories:
     sessions: AggregateRepository[CampaignSessionsAggregate]
 
 
-def build_campaign_repositories(store: FullEventStore) -> CampaignRepositories:
-    """Bind every campaign aggregate repository to one event store."""
+def build_campaign_repositories() -> CampaignRepositories:
+    """Build every campaign aggregate repository. Each resolves the event store per operation."""
     return CampaignRepositories(
-        campaigns=create_aggregate_repository(CampaignAggregate, event_store=store),
-        memberships=create_aggregate_repository(MembershipAggregate, event_store=store),
-        invites=create_aggregate_repository(InviteAggregate, event_store=store),
-        sessions=create_aggregate_repository(CampaignSessionsAggregate, event_store=store),
+        campaigns=create_aggregate_repository(CampaignAggregate),
+        memberships=create_aggregate_repository(MembershipAggregate),
+        invites=create_aggregate_repository(InviteAggregate),
+        sessions=create_aggregate_repository(CampaignSessionsAggregate),
     )
 
 
@@ -48,7 +46,7 @@ _repositories: CampaignRepositories | None = None
 def get_campaign_repositories() -> CampaignRepositories:
     global _repositories
     if _repositories is None:
-        _repositories = build_campaign_repositories(get_event_store())
+        _repositories = build_campaign_repositories()
     return _repositories
 
 
