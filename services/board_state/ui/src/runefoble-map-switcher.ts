@@ -1,3 +1,4 @@
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { BoardApiError, postSwitchMap } from './board-api.ts';
@@ -13,6 +14,8 @@ export interface BattlemapItem {
 
 @customElement('runefoble-map-switcher')
 export class RunefobleMapSwitcher extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+
   static styles = css`
     :host { display: block; font-family: var(--rf-font-family, system-ui, sans-serif); }
     .backdrop {
@@ -52,8 +55,6 @@ export class RunefobleMapSwitcher extends LitElement {
   @property({ type: Object }) tokenTeleports: Record<string, [number, number]> = {};
   /** Board (session) id to switch. Required to teleport. */
   @property({ type: String }) boardId = '';
-  /** Campaign id sent as campaign_id so the server can check DM permission. */
-  @property({ type: String }) campaignId = '';
   @state() private errorMessage = '';
   @state() private busy = false;
 
@@ -82,7 +83,7 @@ export class RunefobleMapSwitcher extends LitElement {
         rows: map.rows,
         backgroundImageUrl: map.backgroundImageUrl || '',
         tokenTeleports: teleports,
-      }, { campaignId: this.campaignId || undefined });
+      }, { headers: await this.auth.authHeaders() });
       this.errorMessage = '';
       this.dispatchEvent(new CustomEvent('map-switched', {
         bubbles: true,

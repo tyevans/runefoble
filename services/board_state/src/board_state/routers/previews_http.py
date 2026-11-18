@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
+from board_state.authz import VIEW, require_board_permission
 from board_state.dependencies import get_board, get_current_user_id
 from board_state.preview import (
     PreviewMoveRequest,
@@ -16,9 +19,15 @@ router = APIRouter(tags=["previews"], dependencies=[Depends(get_current_user_id)
 @router.post(
     "/api/v1/boards/{session_id}/tokens/{token_id}/preview", response_model=PreviewMoveResponse
 )
-async def preview_token_move(session_id: str, token_id: str, req: PreviewMoveRequest):
+async def preview_token_move(
+    session_id: str,
+    token_id: str,
+    req: PreviewMoveRequest,
+    user_id: Annotated[str, Depends(get_current_user_id)],
+):
     """Compute waypoint trajectory, 5-ft increments, terrain penalties, and hazard warnings."""
     board = await get_board(session_id)
+    await require_board_permission(user_id, session_id, VIEW)
     try:
         return compute_kinematic_route_preview(
             board_aggregate=board,
@@ -37,10 +46,12 @@ async def preview_token_move(session_id: str, token_id: str, req: PreviewMoveReq
 
 @router.post("/api/v1/boards/{session_id}/preview", response_model=PreviewMoveResponse)
 @router.post("/api/v1/boards/{session_id}/preview-move", response_model=PreviewMoveResponse)
-async def preview_move(session_id: str, req: PreviewMoveRequest):
+async def preview_move(
+    session_id: str, req: PreviewMoveRequest, user_id: Annotated[str, Depends(get_current_user_id)]
+):
     if not req.token_id:
         raise HTTPException(status_code=400, detail="token_id is required")
-    return await preview_token_move(session_id, req.token_id, req)
+    return await preview_token_move(session_id, req.token_id, req, user_id)
 
 
 __all__ = ["preview_move", "preview_token_move", "router"]

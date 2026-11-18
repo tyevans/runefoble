@@ -5,7 +5,15 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from board_state.authz import VIEW_SECRET_LAYER, can_on_board
+from board_state.authz import (
+    MANAGE_TRAPS,
+    PLAY,
+    VIEW,
+    VIEW_SECRET_LAYER,
+    can_on_board,
+    require_board_permission,
+    require_campaign_permission,
+)
 from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
@@ -43,6 +51,7 @@ async def import_uvtt_map_endpoint(
     file: Annotated[UploadFile | None, File()] = None,
 ) -> UVTTImportResponse:
     """Import a Universal VTT map, extracting walls, interactive doors, lights, and texture."""
+    await require_board_permission(user_id, id, MANAGE_TRAPS)
     if file is not None:
         content = await file.read()
     else:
@@ -96,10 +105,14 @@ async def import_uvtt_map_endpoint(
 @router.post("/boards/{id}/doors/{door_id}/toggle")
 @router.post("/api/v1/board/{id}/doors/{door_id}/toggle")
 async def toggle_door_endpoint(
-    id: str, door_id: str, body: ToggleDoorRequest | None = None
+    id: str,
+    door_id: str,
+    user_id: Annotated[str, Depends(get_current_user_id)],
+    body: ToggleDoorRequest | None = None,
 ) -> dict:
     """Toggle state of an interactive door or portal on the board."""
     board = await get_board(id)
+    await require_campaign_permission(user_id, id, PLAY)
     status, is_open = (body.status, body.is_open) if body else (None, None)
     result = board.toggle_door(door_id=door_id, status=status, is_open=is_open)
     events = list(board.uncommitted_events)
@@ -115,6 +128,7 @@ async def get_doors_endpoint(
 ) -> dict:
     """Query the doors and portals. Secret ones need `board.view_secret_layer`."""
     board = await get_board(id)
+    await require_board_permission(user_id, id, VIEW)
     if await can_on_board(user_id, id, VIEW_SECRET_LAYER):
         return {"doors": board.state.doors, "portals": board.state.portals}
     return {
@@ -126,9 +140,12 @@ async def get_doors_endpoint(
 @router.post("/board/{id}/lights")
 @router.post("/boards/{id}/lights")
 @router.post("/api/v1/board/{id}/lights")
-async def place_light_endpoint(id: str, req: PlaceLightRequest) -> dict:
+async def place_light_endpoint(
+    id: str, req: PlaceLightRequest, user_id: Annotated[str, Depends(get_current_user_id)]
+) -> dict:
     """Place or update a dynamic point light source on the tactical board."""
     board = await get_board(id)
+    await require_board_permission(user_id, id, MANAGE_TRAPS)
     lid = board.place_light_source(
         light_id=req.light_id,
         x=req.x,
@@ -149,7 +166,10 @@ async def place_light_endpoint(id: str, req: PlaceLightRequest) -> dict:
 
 @router.get("/board/{id}/lights")
 @router.get("/boards/{id}/lights")
-async def get_lights_endpoint(id: str) -> dict:
+async def get_lights_endpoint(
+    id: str, user_id: Annotated[str, Depends(get_current_user_id)]
+) -> dict:
     """Query active dynamic light sources on the board."""
     board = await get_board(id)
+    await require_board_permission(user_id, id, VIEW)
     return {"lights": board.state.lights}

@@ -67,6 +67,7 @@ async def test_step_trap_breach_pauses_movement(
     place_res = client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "valeros", "name": "Valeros", "x": 2, "y": 3, "is_friendly": True},
+        headers=bearer(dm_user),
     )
     assert place_res.status_code == 200
 
@@ -74,6 +75,7 @@ async def test_step_trap_breach_pauses_movement(
     move_res = client.post(
         f"/api/v1/boards/{board_id}/tokens/valeros/move",
         json={"to_x": 6, "to_y": 3},
+        headers=bearer(dm_user),
     )
     assert move_res.status_code == 200
     data = move_res.json()
@@ -138,6 +140,7 @@ async def test_proximity_trap_breach_pauses_movement(spicedb: MockSpiceDBClient)
     client.post(
         f"/api/v1/boards/{board_id}/tokens",
         json={"token_id": "kyra", "name": "Kyra", "x": 2, "y": 4, "is_friendly": True},
+        headers=bearer(dm_user),
     )
 
     # Move along row 4 towards (8, 4)
@@ -145,6 +148,7 @@ async def test_proximity_trap_breach_pauses_movement(spicedb: MockSpiceDBClient)
     move_res = client.post(
         f"/api/v1/boards/{board_id}/tokens/kyra/move",
         json={"to_x": 8, "to_y": 4},
+        headers=bearer(dm_user),
     )
     assert move_res.status_code == 200
     data = move_res.json()

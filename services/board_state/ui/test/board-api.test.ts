@@ -8,6 +8,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BoardApiError,
+  boardSocketProtocols,
   boardSocketUrl,
   buildAoEEvaluateMessage,
   buildConfirmMoveMessage,
@@ -28,30 +29,22 @@ function stubFetch(status: number, body: unknown): { fetchImpl: FetchLike; calls
 }
 
 describe('postTrap', () => {
-  it('posts the trap draft to the public traps route with campaign_id', async () => {
+  it('posts the trap draft to the public traps route', async () => {
     const { fetchImpl, calls } = stubFetch(201, { trap_id: 'trap-1', name: 'Pit', is_armed: true });
     const trap = await postTrap('board-42', {
       name: 'Spiked Pit', trapType: 'pit_trap', x: 4, y: 5, triggerType: 'step',
       proximityRadius: 1, dcDetection: 16, damageDice: '2d10', isSecret: true,
-    }, { campaignId: 'camp-7', fetchImpl });
+    }, { headers: { Authorization: 'Bearer tok' }, fetchImpl });
 
     assert.equal(calls.length, 1);
-    assert.equal(calls[0].url, '/api/v1/boards/board-42/traps?campaign_id=camp-7');
+    assert.equal(calls[0].url, '/api/v1/boards/board-42/traps');
+    assert.deepEqual(calls[0].init?.headers, { 'Content-Type': 'application/json', Authorization: 'Bearer tok' });
     assert.equal(calls[0].init?.method, 'POST');
     assert.deepEqual(JSON.parse(String(calls[0].init?.body)), {
       name: 'Spiked Pit', trap_type: 'pit_trap', x: 4, y: 5, trigger_type: 'step',
       proximity_radius: 1, dc_detection: 16, damage_dice: '2d10', is_secret: true,
     });
     assert.equal(trap.trap_id, 'trap-1');
-  });
-
-  it('omits campaign_id when no campaign is given', async () => {
-    const { fetchImpl, calls } = stubFetch(201, { trap_id: 'trap-2' });
-    await postTrap('board-42', {
-      name: 'Tripwire', trapType: 'tripwire', x: 1, y: 1, triggerType: 'touch',
-      proximityRadius: 1, dcDetection: 12, damageDice: '1d6', isSecret: true,
-    }, { fetchImpl });
-    assert.equal(calls[0].url, '/api/v1/boards/board-42/traps');
   });
 
   it('throws BoardApiError with the server status on a rejected request', async () => {
@@ -75,9 +68,9 @@ describe('postSwitchMap', () => {
     const resp = await postSwitchMap('board-42', {
       newMapId: 'dungeon_lvl2', cols: 20, rows: 20, backgroundImageUrl: '',
       tokenTeleports: { valeros: [10, 15] },
-    }, { campaignId: 'camp-7', fetchImpl });
+    }, { headers: { Authorization: 'Bearer tok' }, fetchImpl });
 
-    assert.equal(calls[0].url, '/api/v1/boards/board-42/switch-map?campaign_id=camp-7');
+    assert.equal(calls[0].url, '/api/v1/boards/board-42/switch-map');
     assert.equal(calls[0].init?.method, 'POST');
     assert.deepEqual(JSON.parse(String(calls[0].init?.body)), {
       new_map_id: 'dungeon_lvl2', cols: 20, rows: 20, background_image_url: null,
@@ -136,5 +129,15 @@ describe('buildAoEEvaluateMessage', () => {
       caster_token_id: '1',
       grid_type: 'square',
     });
+  });
+});
+
+describe('boardSocketProtocols', () => {
+  it('carries the bearer token in the subprotocol list', () => {
+    assert.deepEqual(boardSocketProtocols('abc'), ['runefoble.v1', 'runefoble.bearer.abc']);
+  });
+
+  it('offers only the Runefoble protocol when nobody is signed in', () => {
+    assert.deepEqual(boardSocketProtocols(null), ['runefoble.v1']);
   });
 });

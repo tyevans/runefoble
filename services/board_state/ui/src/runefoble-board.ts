@@ -1,10 +1,11 @@
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { AoETemplateConfig, BoardToken, DragKinematicsState, GhostPreviewState, RadialActionType, TerrainCell } from './board-types.ts';
 import { renderAoEBanner, renderAoEOverlay, renderBoardHeader, renderGhostBanner, renderRadialMenuOverlay, renderStatusBar } from './board-templates.ts';
 import { cancelAoEPlacement, confirmAoEPlacement, executeRadialAction, handleBoardSocketMessage, requestAoEPreview } from './board-actions.ts';
 import { renderBoardGrid } from './board-grid.ts';
-import { buildConfirmMoveMessage } from './board-api.ts';
+import { boardSocketProtocols, buildConfirmMoveMessage } from './board-api.ts';
 import { GhostPreviewEngine, parseIncomingGhostPreview } from './ghost_preview.ts';
 import { computeDragUpdate, initDragState, isCellVisible, snapToGrid } from './kinematics.ts';
 import { boardStyles } from './runefoble-board.styles.ts';
@@ -53,6 +54,7 @@ export class RunefobleBoard extends LitElement {
   public physicsBridge: PhysicsBridge | null = null;
   private resizeObserver: ResizeObserver | null = null;
   ws: WebSocket | null = null;
+  private readonly auth = new AuthConsumerController(this);
 
   connectedCallback() {
     super.connectedCallback();
@@ -73,7 +75,7 @@ export class RunefobleBoard extends LitElement {
     const canvas3D = this.shadowRoot?.querySelector('.tabletop-3d-canvas') as HTMLCanvasElement | null;
     if (canvas3D) {
       this.visualizer3D = new TabletopPhysicsVisualizer(canvas3D, { cellSizePx: 56, cols: this.cols, rows: this.rows, theme: 'dark' });
-      this.physicsBridge = new PhysicsBridge(this, this.visualizer3D);
+      this.physicsBridge = new PhysicsBridge(this, this.visualizer3D, () => this.auth.authHeaders());
       this.visualizer3D.updateTokens(this.tokens as any);
       this.visualizer3D.updateTerrain(this.terrainCells as any);
       this.resize3DCanvas();
@@ -121,11 +123,12 @@ export class RunefobleBoard extends LitElement {
     }
   }
 
-  private connectWebSocket(url: string) {
-    try {
-      this.ws = new WebSocket(url);
-      this.ws.onmessage = (event) => { try { this.handleIncomingSocketMessage(JSON.parse(event.data)); } catch {} };
-    } catch {}
+  /** Open the board socket with the bearer subprotocol from the shell auth context. */
+  private async connectWebSocket(url: string) {
+    const token = await this.auth.getAccessToken();
+    if (!this.isConnected) return;
+    this.ws = new WebSocket(url, boardSocketProtocols(token));
+    this.ws.onmessage = (event) => { try { this.handleIncomingSocketMessage(JSON.parse(event.data)); } catch {} };
   }
 
   public handleIncomingSocketMessage(data: any) {

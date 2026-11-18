@@ -114,6 +114,7 @@ def test_blackbox_uvtt_json_direct_payload(board_client: TestClient):
 def test_blackbox_uvtt_invalid_payload_error(board_client: TestClient):
     """Verify error handling on malformed UVTT data."""
     board_id = f"board-{uuid4().hex[:8]}"
+    _create_board(board_client, board_id)
     response = board_client.post(
         f"/api/v1/board/{board_id}/import/uvtt",
         content=b"not-valid-json-file-content",

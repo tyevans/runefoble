@@ -1,3 +1,4 @@
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { mapUploaderStyles } from './runefoble-map-uploader.styles.ts';
@@ -13,6 +14,8 @@ export interface DropzoneUploadSuccessDetail {
 
 @customElement('runefoble-map-dropzone')
 export class RunefobleMapDropzone extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+
   static styles = mapUploaderStyles;
 
   @property({ type: String }) uploadEndpoint = '/api/v1/assets/upload';
@@ -57,7 +60,11 @@ export class RunefobleMapDropzone extends LitElement {
     try {
       this.uploadProgress = 50;
       this.emit('upload-progress', { progress: 50 });
-      const response = await fetch(this.uploadEndpoint, { method: 'POST', body: formData });
+      const response = await fetch(this.uploadEndpoint, {
+        method: 'POST',
+        headers: await this.auth.authHeaders(),
+        body: formData,
+      });
       if (!response.ok) throw new Error(`Upload failed with status ${response.status}`);
 
       this.uploadProgress = 100;

@@ -1,3 +1,4 @@
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { dmTrapControlsStyles } from './runefoble-dm-trap-controls.styles.ts';
@@ -21,6 +22,8 @@ const TRAP_PRESETS: TrapTypeOption[] = [
 
 @customElement('runefoble-dm-trap-controls')
 export class RunefobleDmTrapControls extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+
   static styles = dmTrapControlsStyles;
 
   @property({ type: Boolean }) layerVisible = true;
@@ -32,8 +35,6 @@ export class RunefobleDmTrapControls extends LitElement {
   @property({ type: Boolean }) isSecret = true;
   /** Board (session) id that receives the trap. Required to arm. */
   @property({ type: String }) boardId = '';
-  /** Campaign id sent as campaign_id so the server can check DM permission. */
-  @property({ type: String }) campaignId = '';
   /** Target grid cell for the trap. Set by the host after a cell is chosen. */
   @property({ type: Number }) targetX: number | null = null;
   @property({ type: Number }) targetY: number | null = null;
@@ -79,7 +80,7 @@ export class RunefobleDmTrapControls extends LitElement {
         dcDetection: this.dcDetection,
         damageDice: this.damageDice,
         isSecret: this.isSecret,
-      }, { campaignId: this.campaignId || undefined });
+      }, { headers: await this.auth.authHeaders() });
       this.statusMessage = `Armed ${this.selectedTrapType}.`;
       this.dispatchEvent(new CustomEvent('trap-placed', { bubbles: true, composed: true, detail: trap }));
     } catch (err) {

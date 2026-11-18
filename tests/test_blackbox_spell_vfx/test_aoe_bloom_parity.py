@@ -12,6 +12,8 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import ws_subprotocols
+
 BOARD_COLS = 20
 BOARD_ROWS = 20
 
@@ -88,7 +90,9 @@ def test_spell_bloom_and_aoe_sphere_return_the_same_cells(
 
 def test_socket_aoe_evaluate_rejects_fractional_origin(client: TestClient, board_id: str) -> None:
     """A socket aoe_evaluate with a half-cell origin gets an error frame, not a shifted preview."""
-    with client.websocket_connect(f"/ws/boards/{board_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/boards/{board_id}", subprotocols=ws_subprotocols("user-test")
+    ) as ws:
         ws.receive_json()  # connected frame
         ws.send_json(
             {

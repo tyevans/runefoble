@@ -94,3 +94,35 @@ Stories available in `TTRPG/RunefobleBoard`:
 1. **TokenKinematicsAndMeasurement**: Drag tokens across normal and difficult terrain to inspect live 5-ft ruler calculations.
 2. **SpokenGhostPreviewWithConfirmation**: Interactive ghost preview with dashed targeting line and confirmation tap.
 3. **GhostCancellationAndTimeout**: Auto-expiring ghost preview demonstrating timeout rollback.
+
+## 6. Authorization
+
+Every board route needs a verified bearer token. The board service checks one schema permission per action (ADR-0001). It never checks a role name.
+
+| Action | Permission |
+|---|---|
+| Place a character token | `character.edit` on the character and `campaign.play` |
+| Place any other token, import a map, place a light, decay decals | `board.manage_traps` |
+| Move or remove a token, run a token action, knock a token back | `board_token.move` on the token, or `board.manage_traps` |
+| Place or remove an AoE template, cast spell VFX, throw dice, toggle a door | `campaign.play` on the board campaign |
+| Preview a move, evaluate an AoE, list templates, decals, doors, and lights | `board.view` |
+
+### How a token gets its tuples
+
+The token placement route writes the tuples in the same request that saves the token. It writes `board_token:<id>#campaign@campaign:<cid>`. For a character token it also writes `board_token:<id>#character@character:<char_id>`. Removal deletes them. No stream consumer is involved. The `TokenPlaced` identity-sync consumer is not wired in any deployment and the board does not need it.
+
+Token ids are global in SpiceDB. A token id must use only letters, digits, and `_ - = + | /`. The route returns `409` when another campaign already owns the id.
+
+### WebSocket `/ws/boards/{session_id}`
+
+- Offer the subprotocols `runefoble.v1` and `runefoble.bearer.<jwt>`. A missing or invalid token closes the handshake with `1008`. A user without `board.view` closes with `4403`, the code of the gateway session sockets. Both closes happen before accept.
+- `confirm_move`, `token_action`, and `radial_action` need `board_token.move` on `token_id`.
+- `aoe_place`, `cast_spell`, `spell_vfx`, `SpellCast`, and spoken spell intents need `campaign.play`.
+- Every other defined message (previews, `aoe_preview`, `aoe_evaluate`, `cancel_preview`) needs `board.view`.
+- A denied message returns `{"type": "error", "code": "FORBIDDEN", "status": 403}`. The socket stays open.
+- A message type that the board does not define returns `UNKNOWN_ACTION`. The board no longer rebroadcasts client frames.
+- An unexpected server error closes the socket with `1011` and logs the error.
+
+### Client side
+
+`<runefoble-board>` reads the token from the App Shell `runefoble-auth` context (`@runefoble/ui-core`). It opens the socket with `boardSocketProtocols(token)`. `<runefoble-dm-trap-controls>` and `<runefoble-map-switcher>` send `Authorization: Bearer` from the same context. They no longer send a `campaign_id` query.

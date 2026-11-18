@@ -195,7 +195,9 @@ def test_websocket_spoken_ghost_preview_and_instant_confirmation():
         json={"token_id": "kyra", "name": "Kyra", "x": 2, "y": 2, "is_friendly": True},
     )
 
-    with client.websocket_connect(f"/ws/boards/{board_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/boards/{board_id}", subprotocols=ws_subprotocols("user-test")
+    ) as ws:
         connected = ws.receive_json()
         assert connected["type"] == "connected"
 
@@ -267,7 +269,9 @@ def test_websocket_ghost_preview_cancellation_preserves_original_state():
         json={"token_id": "merisiel", "name": "Merisiel", "x": 3, "y": 3, "is_friendly": True},
     )
 
-    with client.websocket_connect(f"/ws/boards/{board_id}") as ws:
+    with client.websocket_connect(
+        f"/ws/boards/{board_id}", subprotocols=ws_subprotocols("user-test")
+    ) as ws:
         ws.receive_json()  # Handshake
 
         # Stage preview

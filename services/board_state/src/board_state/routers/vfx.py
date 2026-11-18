@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
+from board_state.authz import (
+    MANAGE_TRAPS,
+    PLAY,
+    VIEW,
+    require_board_permission,
+    require_campaign_permission,
+)
 from board_state.dependencies import get_board, get_current_user_id, repo
 from board_state.models import (
     BoardDecalState,
@@ -36,9 +45,12 @@ def _determine_audio_stinger(archetype: str, spell_name: str, damage_type: str |
 
 @router.post("/api/v1/boards/{session_id}/spells/cast", response_model=CastSpellResponse)
 @router.post("/api/v1/boards/{session_id}/vfx/spell", response_model=CastSpellResponse)
-async def cast_spell_vfx(session_id: str, req: CastSpellRequest) -> CastSpellResponse:
+async def cast_spell_vfx(
+    session_id: str, req: CastSpellRequest, user_id: Annotated[str, Depends(get_current_user_id)]
+) -> CastSpellResponse:
     """Cast a kinetic spell, calculate WebGL trajectory, radius bloom, decals, and broadcast VFX."""
     board = await get_board(session_id)
+    await require_campaign_permission(user_id, session_id, PLAY)
 
     try:
         anim_id, trajectory, affected_tokens, affected_cells, decal_type = board.cast_spell(
@@ -114,9 +126,12 @@ async def cast_spell_vfx(session_id: str, req: CastSpellRequest) -> CastSpellRes
 
 
 @router.post("/api/v1/boards/{session_id}/vfx/finish", response_model=FinishVFXResponse)
-async def finish_spell_vfx(session_id: str, req: FinishVFXRequest) -> FinishVFXResponse:
+async def finish_spell_vfx(
+    session_id: str, req: FinishVFXRequest, user_id: Annotated[str, Depends(get_current_user_id)]
+) -> FinishVFXResponse:
     """Record completion of WebGL particle animation."""
     board = await get_board(session_id)
+    await require_campaign_permission(user_id, session_id, PLAY)
     board.finish_vfx(
         animation_id=req.animation_id,
         spell_name=req.spell_name,
@@ -141,16 +156,22 @@ async def finish_spell_vfx(session_id: str, req: FinishVFXRequest) -> FinishVFXR
 
 
 @router.get("/api/v1/boards/{session_id}/decals", response_model=list[BoardDecalState])
-async def get_board_decals(session_id: str) -> list[BoardDecalState]:
+async def get_board_decals(
+    session_id: str, user_id: Annotated[str, Depends(get_current_user_id)]
+) -> list[BoardDecalState]:
     """Retrieve all active ephemeral decals on the tactical board."""
     board = await get_board(session_id)
+    await require_board_permission(user_id, session_id, VIEW)
     return board.state.active_decals
 
 
 @router.post("/api/v1/boards/{session_id}/decals/decay", response_model=list[BoardDecalState])
-async def decay_board_decals(session_id: str, req: DecayDecalsRequest) -> list[BoardDecalState]:
+async def decay_board_decals(
+    session_id: str, req: DecayDecalsRequest, user_id: Annotated[str, Depends(get_current_user_id)]
+) -> list[BoardDecalState]:
     """Decay ephemeral scorched earth / frost decals over rounds."""
     board = await get_board(session_id)
+    await require_board_permission(user_id, session_id, MANAGE_TRAPS)
     board.decay_decals(req.rounds)
     await repo.save(board)
     return board.state.active_decals
