@@ -18,6 +18,7 @@ import warnings
 
 OWNER_PID_LABEL = "runefoble.test.owner-pid"
 OWNER_HOST_LABEL = "runefoble.test.owner-host"
+DOCKER_TIMEOUT_SECONDS = 60.0
 
 
 def owner_label_args() -> list[str]:
@@ -66,6 +67,7 @@ def remove_orphaned_test_containers(docker_bin: str | None = None) -> None:
         capture_output=True,
         text=True,
         check=False,
+        timeout=DOCKER_TIMEOUT_SECONDS,
     )
     if listing.returncode != 0:
         warnings.warn(
@@ -85,7 +87,12 @@ def remove_orphaned_test_containers(docker_bin: str | None = None) -> None:
             continue
         if _pid_is_alive(owner_pid):
             continue
-        subprocess.run([docker, "rm", "-f", container_id], capture_output=True, check=False)
+        subprocess.run(
+            [docker, "rm", "-f", container_id],
+            capture_output=True,
+            check=False,
+            timeout=DOCKER_TIMEOUT_SECONDS,
+        )
 
 
 def remove_test_container(docker_bin: str, container_name: str) -> None:
@@ -100,6 +107,7 @@ def remove_test_container(docker_bin: str, container_name: str) -> None:
         capture_output=True,
         text=True,
         check=False,
+        timeout=DOCKER_TIMEOUT_SECONDS,
     )
     if result.returncode == 0 or "No such container" in result.stderr:
         return
