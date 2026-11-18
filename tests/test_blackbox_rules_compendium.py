@@ -3,7 +3,7 @@
 Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 All assertions and setup operate strictly through public frontdoors:
 - Public HTTP endpoints via TestClient(app, headers=bearer("user-test")) from rules_compendium.main
-- FastMCP tool invocations via mcp.get_tool(...)
+- FastMCP tool invocations via mcp._tool_manager.get_tool(...)
 - SpiceDB Zanzibar authorization checks for homebrew rules
 """
 
