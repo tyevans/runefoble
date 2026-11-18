@@ -6,7 +6,6 @@ Governed by ADR-0002, ADR-0007, ADR-0011, and Hard Invariant 2.
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID, uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -26,13 +25,7 @@ from runefoble_events.events import (
     SettlementFoundedEvent,
     SettlementTierUpgradedEvent,
 )
-
-
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except ValueError:
-        return uuid4()
+from runefoble_platform.identifiers import parse_uuid
 
 
 class SettlementAggregate(
@@ -109,13 +102,16 @@ class SettlementAggregate(
             districts if districts is not None else DEFAULT_TIER_DISTRICTS.get(tier, [])
         )[:max_districts]
 
-        sid = str(self.aggregate_id or uuid4())
+        sid = str(parse_uuid(self.aggregate_id, field="settlement_id"))
         p = {"campaign_id": str(campaign_id), "name": name, "scale": scale_key, "tier": tier}
         p |= {"biome": biome, "coordinates": coordinates or {}, "prosperity": prosperity}
         p |= {"unlocked_districts": initial_districts, "founded_by": founded_by}
         p |= {"metadata": metadata or {}}
         self.create_event(
-            SettlementFoundedEvent, aggregate_id=_to_uuid(sid), settlement_id=sid, **p
+            SettlementFoundedEvent,
+            aggregate_id=parse_uuid(sid, field="settlement_id"),
+            settlement_id=sid,
+            **p,
         )
         return sid
 
@@ -158,6 +154,9 @@ class SettlementAggregate(
         p = {"old_tier": self._state.tier, "new_tier": new_tier, "unlocked_districts": unlocked}
         p |= {"scale": TIER_TO_SCALE[new_tier], "prosperity": eff_pros, "metadata": metadata or {}}
         self.create_event(
-            SettlementTierUpgradedEvent, aggregate_id=_to_uuid(sid), settlement_id=sid, **p
+            SettlementTierUpgradedEvent,
+            aggregate_id=parse_uuid(sid, field="settlement_id"),
+            settlement_id=sid,
+            **p,
         )
         return new_tier

@@ -6,7 +6,6 @@ Governed by ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
 
 from fastapi import HTTPException
 from game_session.dependencies import (
@@ -24,14 +23,7 @@ from game_session.settlement.auth import (
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.worker_aggregate import NPCWorkerAggregate
 from runefoble_platform.event_publish import publish_best_effort
-
-
-def to_uuid(val: Any) -> UUID:
-    """Coerce value to UUID or raise 400."""
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
+from runefoble_platform.identifiers import parse_uuid
 
 
 async def save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
@@ -47,7 +39,7 @@ async def load_establishment(eid: str, perm: str, uid: str | None) -> Establishm
     """Load establishment aggregate and enforce Zanzibar read/write permissions."""
     repo = get_establishment_repository()
     try:
-        agg = await repo.load(to_uuid(eid))
+        agg = await repo.load(parse_uuid(eid, field="establishment_id"))
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Establishment '{eid}' not found") from e
     if not agg.state.is_constructed:
@@ -64,7 +56,7 @@ async def load_worker(nid: str, perm: str, uid: str | None) -> NPCWorkerAggregat
     """Load worker aggregate and enforce Zanzibar read/write permissions."""
     repo = get_worker_repository()
     try:
-        agg = await repo.load(to_uuid(nid))
+        agg = await repo.load(parse_uuid(nid, field="worker_id"))
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Worker '{nid}' not found") from e
     if not agg.state.npc_id:

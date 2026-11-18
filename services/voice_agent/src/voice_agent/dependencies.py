@@ -12,7 +12,6 @@ from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.dsp import VoiceDSPPipeline
 from voice_agent.event_bus import get_event_bus, set_event_bus
-from voice_agent.room_aggregate import to_uuid
 from voice_agent.stt import get_streaming_pipeline
 
 logger = logging.getLogger("runefoble.voice_agent")
@@ -67,5 +66,4 @@ __all__ = [
     "publish_voice_event",
     "set_event_bus",
     "set_watcher_client",
-    "to_uuid",
 ]

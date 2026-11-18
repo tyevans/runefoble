@@ -24,13 +24,13 @@ from game_session.settlement.haven.loaders import (
     load_establishment,
     load_settlement,
     save_and_publish,
-    to_uuid,
 )
 from game_session.settlement.models import (
     ConstructEstablishmentRequest,
     EstablishmentState,
 )
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)])
 
@@ -102,7 +102,7 @@ async def list_settlement_establishments(
     est_repo = get_establishment_repository()
     results: list[EstablishmentState] = []
     for eid in est_ids:
-        agg = await load_if_exists(est_repo, to_uuid(eid))
+        agg = await load_if_exists(est_repo, parse_uuid(eid, field="establishment_id"))
         if agg is not None and agg.state.is_constructed:
             results.append(agg.state)
     return results

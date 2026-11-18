@@ -6,7 +6,7 @@ Governed by ADR-0002, ADR-0007, ADR-0011, and Hard Invariant 2.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from eventsource.domain.decorators import handles
 from game_session.settlement.models import BulletinNoticeState
@@ -15,16 +15,10 @@ from runefoble_events.events import (
     BulletinNoticeRemovedEvent,
     CipherNoticeDecryptedEvent,
 )
+from runefoble_platform.identifiers import parse_uuid
 
 if TYPE_CHECKING:
     from game_session.settlement.models import SettlementState
-
-
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception:
-        return uuid4()
 
 
 class BulletinHandlersMixin:
@@ -69,7 +63,7 @@ class BulletinHandlersMixin:
         sid = str(self._state.settlement_id or self.aggregate_id)
         self.create_event(
             BulletinNoticePinnedEvent,
-            aggregate_id=_to_uuid(sid),
+            aggregate_id=parse_uuid(sid, field="settlement_id"),
             notice_id=nid,
             settlement_id=sid,
             board_type=kw.get("board_type", "town_square"),
@@ -101,7 +95,7 @@ class BulletinHandlersMixin:
         sid = str(self._state.settlement_id or self.aggregate_id)
         self.create_event(
             BulletinNoticeRemovedEvent,
-            aggregate_id=_to_uuid(sid),
+            aggregate_id=parse_uuid(sid, field="settlement_id"),
             notice_id=notice_id,
             settlement_id=sid,
             remover_id=str(remover_id),
@@ -128,7 +122,7 @@ class BulletinHandlersMixin:
         sid = str(self._state.settlement_id or self.aggregate_id)
         self.create_event(
             CipherNoticeDecryptedEvent,
-            aggregate_id=_to_uuid(sid),
+            aggregate_id=parse_uuid(sid, field="settlement_id"),
             notice_id=notice_id,
             settlement_id=sid,
             player_id=str(player_id),

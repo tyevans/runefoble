@@ -6,18 +6,8 @@ Part of TASK-0186 / PRD-0007 / US-0058 / ADR-0007.
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
 
 from pydantic import BaseModel, Field
-
-
-def _to_uuid(val: Any) -> UUID | None:
-    if not val:
-        return None
-    try:
-        return UUID(str(val))
-    except Exception:
-        return None
 
 
 class CaravanContractState(BaseModel):
@@ -66,5 +56,4 @@ class CaravanLedgerState(BaseModel):
 __all__ = [
     "CaravanContractState",
     "CaravanLedgerState",
-    "_to_uuid",
 ]

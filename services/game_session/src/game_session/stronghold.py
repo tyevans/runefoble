@@ -18,6 +18,7 @@ from runefoble_events.events import (
     StrongholdTreasuryContributed,
     StrongholdUpgraded,
 )
+from runefoble_platform.identifiers import parse_uuid
 
 FACILITY_TIERS: dict[str, dict[int, dict[str, Any]]] = {
     "watchtower": {
@@ -207,14 +208,8 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
             destination_outpost_id=destination_outpost_id,
         )
 
-    def _campaign_uuid(self) -> UUID | None:
-        target_id = self.state.campaign_id or str(self.aggregate_id)
-        if not target_id:
-            return None
-        try:
-            return UUID(str(target_id))
-        except ValueError:
-            return None
+    def _campaign_uuid(self) -> UUID:
+        return parse_uuid(self.state.campaign_id or self.aggregate_id, field="campaign_id")
 
     def shortfalls(self, gold: int, materials: dict[str, int]) -> list[str]:
         """Describe each gold or material amount that the stores cannot cover."""

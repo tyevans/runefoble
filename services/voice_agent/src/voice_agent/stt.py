@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 import time
 from typing import Any
-from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
 import httpx
 from pydantic import BaseModel
@@ -17,6 +16,7 @@ from runefoble_events.events import PlayerSpokeEvent, VoiceTranscriptionFailed
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
+from runefoble_platform.identifiers import opaque_aggregate_id
 from voice_agent.auth import caller_headers
 from voice_agent.event_bus import get_event_bus
 from voice_agent.speech_settings import VoiceAgentSettings, build_transcriber
@@ -42,18 +42,6 @@ __all__ = [
     "parse_audio_data",
     "set_streaming_pipeline",
 ]
-
-
-def to_uuid(val: str | UUID | None) -> UUID:
-    """Deterministically convert string or UUID into a valid UUID."""
-    if val is None:
-        return uuid4()
-    if isinstance(val, UUID):
-        return val
-    try:
-        return UUID(val)
-    except ValueError:
-        return uuid5(NAMESPACE_DNS, str(val))
 
 
 class ChunkProcessingResult(BaseModel):
@@ -203,8 +191,10 @@ class StreamingAudioPipeline:
             await self.publish_transcription_failed(session_id, speaker_id, speaker_name, exc)
             raise
 
-        session_uuid = to_uuid(session_id)
-        campaign_uuid = to_uuid(campaign_id) if campaign_id else None
+        session_uuid = opaque_aggregate_id(session_id, field="session_id")
+        campaign_uuid = (
+            opaque_aggregate_id(campaign_id, field="campaign_id") if campaign_id else None
+        )
         event = PlayerSpokeEvent(
             aggregate_id=session_uuid,
             session_id=session_uuid,

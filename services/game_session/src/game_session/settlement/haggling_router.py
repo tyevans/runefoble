@@ -7,7 +7,7 @@ Governed by ADR-0001 (SpiceDB Zanzibar), ADR-0002 (Domain Events), ADR-0006 (Red
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.child_index import ChildIndexKind
@@ -38,15 +38,9 @@ from game_session.settlement.haggling_models import (
 )
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["merchant-haggling"])
-
-
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
 
 
 async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
@@ -60,8 +54,9 @@ async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
 
 async def _load_negotiation(nid: str) -> NegotiationAggregate:
     repo = get_negotiation_repository()
+    negotiation_uuid = parse_uuid(nid, field="negotiation_id")
     try:
-        agg = await repo.load(_to_uuid(nid))
+        agg = await repo.load(negotiation_uuid)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Negotiation '{nid}' not found") from e
     if not agg.state.negotiation_id:
@@ -84,11 +79,8 @@ async def haggle_establishment(
 
     # 1. Determine merchant identity and item base price from establishment worker if available
     est_repo = get_establishment_repository()
-    try:
-        est_agg = await est_repo.load(_to_uuid(establishment_id))
-        campaign_id = est_agg.state.campaign_id or req.campaign_id
-    except Exception:
-        campaign_id = req.campaign_id
+    est_agg = await load_if_exists(est_repo, parse_uuid(establishment_id, field="establishment_id"))
+    campaign_id = (est_agg.state.campaign_id if est_agg else None) or req.campaign_id
 
     merchant_name = req.merchant_name or "Merchant"
     temperament = req.temperament or "Stubborn"
@@ -97,7 +89,9 @@ async def haggle_establishment(
 
     worker_ids = await list_workers_for_establishment(establishment_id)
     if worker_ids:
-        w_agg = await load_if_exists(get_worker_repository(), _to_uuid(worker_ids[0]))
+        w_agg = await load_if_exists(
+            get_worker_repository(), parse_uuid(worker_ids[0], field="worker_id")
+        )
         if w_agg is not None:
             merchant_name = w_agg.state.name or merchant_name
             temperament = w_agg.state.temperament or temperament

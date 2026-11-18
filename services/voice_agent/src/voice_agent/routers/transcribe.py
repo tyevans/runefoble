@@ -16,13 +16,13 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from runefoble_events.events import PlayerSpokeEvent
 from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import opaque_aggregate_id
 from voice_agent.auth import CallerPrincipal, caller_headers, get_principal
 from voice_agent.authz import require_speaker
 from voice_agent.dependencies import (
     STREAM_SESSION,
     get_event_bus,
     platform_settings,
-    to_uuid,
 )
 from voice_agent.models import TranscribeRequest, TranscribeResponse
 from voice_agent.stt import get_streaming_pipeline, parse_audio_data
@@ -87,8 +87,8 @@ async def transcribe_speech(
             speaker_id=req.speaker_id,
             speaker_name=req.speaker_name,
         )
-    session_uuid = to_uuid(req.session_id)
-    campaign_uuid = to_uuid(req.campaign_id)
+    session_uuid = opaque_aggregate_id(req.session_id, field="session_id")
+    campaign_uuid = opaque_aggregate_id(req.campaign_id, field="campaign_id")
 
     # 1. Emit PlayerSpokeEvent
     spoke_event = PlayerSpokeEvent(

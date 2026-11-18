@@ -6,8 +6,9 @@ from uuid import uuid4
 
 import pytest
 from board_state.aggregate import BoardAggregate
-from board_state.dependencies import repo, to_board_uuid
+from board_state.dependencies import repo
 from fastapi.testclient import TestClient
+from runefoble_platform.identifiers import opaque_aggregate_id
 
 from tests.helpers.ws_identity import ws_subprotocols
 
@@ -69,7 +70,7 @@ def test_websocket_realtime_speech_spell_trigger_sub_150ms(client: TestClient) -
 async def test_event_sourcing_domain_events_persistence() -> None:
     """Verify SpellCast, AreaEffectExploded, and VFXAnimationFinished events are recorded."""
     sess_id = f"board-{uuid4().hex[:8]}"
-    board_uuid = to_board_uuid(sess_id)
+    board_uuid = opaque_aggregate_id(sess_id, field="session_id")
     board = BoardAggregate(board_uuid)
     board.initialize_grid(cols=10, rows=10, session_id=sess_id)
     board.place_token("valeros", "Valeros", "pc", 2, 2, 40, True)

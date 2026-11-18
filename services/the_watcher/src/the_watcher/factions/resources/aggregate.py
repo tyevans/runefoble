@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -12,6 +12,7 @@ from runefoble_events.events import (
     FactionMercenaryRecruitedEvent,
     FactionResourceUpdatedEvent,
 )
+from runefoble_platform.identifiers import parse_uuid
 from the_watcher.factions.resources.bribery import calculate_bribery_outcome
 from the_watcher.factions.resources.models import FactionResourceState, MercenaryUnit
 
@@ -24,7 +25,9 @@ class FactionResourceAggregate(DeclarativeAggregate[FactionResourceState]):
     def __init__(self, aggregate_id: UUID | None = None, **kwargs: Any) -> None:
         super().__init__(aggregate_id=aggregate_id, **kwargs)
         if self._state is None:
-            self._state = FactionResourceState(faction_id=str(aggregate_id or uuid4()))
+            self._state = FactionResourceState(
+                faction_id=str(parse_uuid(aggregate_id, field="faction_id"))
+            )
 
     def _create(self, event_cls: Any, camp: str = "", **kwargs: Any) -> None:
         self.create_event(

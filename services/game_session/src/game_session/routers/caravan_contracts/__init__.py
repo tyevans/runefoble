@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends
 from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
     _check_perm,
-    _to_uuid,
 )
 from game_session.routers.caravan_contracts.board import (
     get_caravan_contract,
@@ -34,7 +33,6 @@ router.include_router(lifecycle_router)
 __all__ = [
     "_check_high_tier_auth",
     "_check_perm",
-    "_to_uuid",
     "accept_caravan_contract",
     "board_router",
     "dispatch_contract_caravan",

@@ -16,8 +16,8 @@ from eventsource.application.aggregates.repository import AggregateRepository
 from runefoble_events.events import DMNarrativeWhispered
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
+from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.copilot_state.whispers import WhisperAggregate, whisper_log_id
-from the_watcher.ids import to_uuid
 from the_watcher.models import WhisperSuggestion
 
 logger = logging.getLogger("runefoble.the_watcher.whispers")
@@ -156,7 +156,7 @@ class WhisperService:
 
 def _whispered_event(whisper: WhisperSuggestion) -> DMNarrativeWhispered:
     return DMNarrativeWhispered(
-        aggregate_id=to_uuid(whisper.session_id),
+        aggregate_id=opaque_aggregate_id(whisper.session_id, field="session_id"),
         whisper_id=whisper.whisper_id,
         session_id=str(whisper.session_id),
         campaign_id=str(whisper.campaign_id) if whisper.campaign_id else "",

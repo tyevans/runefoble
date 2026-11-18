@@ -27,6 +27,7 @@ from game_session.campaign.schemas import (
 )
 from game_session.campaign.session_aggregate import CampaignSessionsAggregate
 from game_session.campaign.tuples import SpiceDB, grant_owner, link_session
+from runefoble_platform.identifiers import parse_uuid
 
 logger = logging.getLogger("runefoble.game_session.campaign")
 
@@ -41,10 +42,7 @@ ROLE_CHECKS: tuple[tuple[str, str], ...] = (
 
 
 def parse_campaign_id(raw: str) -> UUID:
-    try:
-        return UUID(raw)
-    except ValueError as exc:
-        raise CampaignNotFoundError(f"Campaign {raw} does not exist") from exc
+    return parse_uuid(raw, field="campaign_id")
 
 
 async def load_campaign(repos: CampaignRepositories, campaign_id: UUID) -> CampaignAggregate:

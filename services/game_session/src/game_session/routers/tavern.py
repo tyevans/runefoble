@@ -28,7 +28,6 @@ from game_session.minigame_tables.service import (
 from game_session.minigames import (
     TavernGameAggregate,
     TavernGameState,
-    to_uuid,
 )
 from game_session.settlement.auth import check_establishment_play_permission
 from game_session.settlement.auth.tokens import CallerId, get_principal
@@ -36,6 +35,7 @@ from game_session.voice_client import VoiceAgentUnavailableError
 from pydantic import BaseModel
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import opaque_aggregate_id
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["tavern"])
 
@@ -163,7 +163,7 @@ async def take_minigame_turn(
     await check_session_participation(session_id, caller_id)
     tavern_repo = get_tavern_repository()
 
-    aggregate = await load_if_exists(tavern_repo, to_uuid(game_id))
+    aggregate = await load_if_exists(tavern_repo, opaque_aggregate_id(game_id, field="game_id"))
     if aggregate is None:
         raise HTTPException(status_code=404, detail=f"Minigame '{game_id}' not found")
 
@@ -213,7 +213,9 @@ async def get_minigame(
 ) -> TavernGameState:
     """Get active status and state machine details for a minigame."""
     await check_session_participation(session_id, caller_id)
-    aggregate = await load_if_exists(get_tavern_repository(), to_uuid(game_id))
+    aggregate = await load_if_exists(
+        get_tavern_repository(), opaque_aggregate_id(game_id, field="game_id")
+    )
     if aggregate is None:
         raise HTTPException(status_code=404, detail=f"Minigame '{game_id}' not found")
     return aggregate.state

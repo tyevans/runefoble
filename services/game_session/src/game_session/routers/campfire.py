@@ -14,12 +14,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from game_session.auth import check_session_participation
 from game_session.dependencies import get_event_bus, get_spicedb_client, repo, stronghold_repo
 from game_session.events import STREAM_SESSION
-from game_session.minigame_rules import to_uuid
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from pydantic import BaseModel, Field
 from runefoble_events.events import CampfireRestCompleted
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import opaque_aggregate_id
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["campfire"])
 
@@ -80,7 +80,7 @@ async def campfire_rest(
 
     prompt = req.storytelling_prompt or random.choice(COLLABORATIVE_PROMPTS)
 
-    session = await load_if_exists(repo, to_uuid(session_id))
+    session = await load_if_exists(repo, opaque_aggregate_id(session_id, field="session_id"))
     participants_healed = []
     if req.participating_character_ids:
         participants_healed = [str(cid) for cid in req.participating_character_ids]
@@ -123,7 +123,7 @@ async def campfire_rest(
 
     # Record event on event bus
     rest_event = CampfireRestCompleted(
-        aggregate_id=to_uuid(session_id),
+        aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
         session_id=session_id,
         campaign_id=campaign_id,
         rest_type=req.rest_type,

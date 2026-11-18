@@ -26,9 +26,9 @@ from runefoble_events.events import (
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from runefoble_platform.event_sourcing import FullEventStore
+from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.copilot_state.errors import PendingActionNotFoundError
 from the_watcher.copilot_state.pending_actions import OPEN_STATUSES, PendingActionAggregate
-from the_watcher.ids import to_uuid
 from the_watcher.models import PendingAction, ProposeActionRequest
 
 logger = logging.getLogger("runefoble.the_watcher.copilot")
@@ -110,7 +110,7 @@ class CopilotEngine:
         self._arm_timer(action.session_id, action.action_id, action.expires_at)
 
         event = WatcherActionProposed(
-            aggregate_id=to_uuid(req.session_id),
+            aggregate_id=opaque_aggregate_id(req.session_id, field="session_id"),
             action_id=action.action_id,
             session_id=str(req.session_id),
             campaign_id=str(req.campaign_id) if req.campaign_id else "",
@@ -139,7 +139,7 @@ class CopilotEngine:
         agg.veto(action_id, vetoed_by=vetoed_by, reason=reason)
         action = agg.find(action_id)
         event = WatcherActionVetoed(
-            aggregate_id=to_uuid(session_id),
+            aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
             action_id=action.action_id,
             session_id=str(action.session_id),
             campaign_id=str(action.campaign_id) if action.campaign_id else "",
@@ -162,7 +162,7 @@ class CopilotEngine:
         agg.approve(action_id, approved_by=approved_by)
         action = agg.find(action_id)
         event = WatcherActionApproved(
-            aggregate_id=to_uuid(session_id),
+            aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
             action_id=action.action_id,
             session_id=str(action.session_id),
             campaign_id=str(action.campaign_id) if action.campaign_id else "",
@@ -198,7 +198,7 @@ class CopilotEngine:
         )
         action = agg.find(action_id)
         event = WatcherActionModified(
-            aggregate_id=to_uuid(session_id),
+            aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
             action_id=action.action_id,
             session_id=str(action.session_id),
             campaign_id=str(action.campaign_id) if action.campaign_id else "",
@@ -285,7 +285,7 @@ class CopilotEngine:
         agg.expire(action_id)
         expired = agg.find(action_id)
         event = WatcherActionExpired(
-            aggregate_id=to_uuid(session_id),
+            aggregate_id=opaque_aggregate_id(session_id, field="session_id"),
             action_id=action_id,
             session_id=str(expired.session_id),
             campaign_id=str(expired.campaign_id) if expired.campaign_id else "",

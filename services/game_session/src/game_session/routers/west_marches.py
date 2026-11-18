@@ -7,7 +7,7 @@ Governed by Hard Invariant 1 (SpiceDB Zanzibar) and Hard Invariant 2 (eventsourc
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -22,21 +22,13 @@ from game_session.west_marches_models import (
     RegisterCampaignRequest,
 )
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
     dependencies=[Depends(get_principal)],
     prefix="/api/v1/shared-worlds",
     tags=["west-marches"],
 )
-
-
-def _to_uuid(val: Any) -> UUID:
-    if isinstance(val, UUID):
-        return val
-    try:
-        return UUID(str(val))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
 
 
 async def _check_perm(spicedb, res_type: str, res_id: str, perm: str, user_id: str) -> None:
@@ -86,7 +78,7 @@ async def get_shared_world(
     shared_world_id: str,
 ) -> dict[str, Any]:
     """Retrieve shared frontier world state (discoveries, outposts, tavern notices)."""
-    wid = _to_uuid(shared_world_id)
+    wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
 
@@ -105,7 +97,7 @@ async def register_campaign_to_world(
     req: RegisterCampaignRequest,
 ) -> dict[str, Any]:
     """Register an adventuring campaign/party into the shared persistent frontier."""
-    wid = _to_uuid(shared_world_id)
+    wid = parse_uuid(shared_world_id, field="shared_world_id")
     repo = get_shared_world_repository()
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "shared_world", str(wid), "manage", caller_id)
@@ -142,7 +134,7 @@ async def record_discovery(
     req: RecordDiscoveryRequest,
 ) -> dict[str, Any]:
     """Record a cross-campaign milestone / waypoint discovery and broadcast on Redis Streams."""
-    wid = _to_uuid(shared_world_id)
+    wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "shared_world", str(wid), "discover", caller_id)
 
@@ -178,7 +170,7 @@ async def list_discoveries(
     discovery_type: str | None = Query(default=None),
 ) -> dict[str, Any]:
     """List shared frontier discoveries mapped by participating adventuring parties."""
-    wid = _to_uuid(shared_world_id)
+    wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
 
@@ -197,7 +189,7 @@ async def establish_outpost(
     req: EstablishOutpostRequest,
 ) -> dict[str, Any]:
     """Establish or reinforce a regional trading outpost in the frontier."""
-    wid = _to_uuid(shared_world_id)
+    wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "shared_world", str(wid), "manage", caller_id)
 
@@ -222,7 +214,7 @@ async def post_tavern_notice(
     req: PostNoticeRequest,
 ) -> dict[str, Any]:
     """Post an expedition bounty, request, or rumor to the communal tavern notice board."""
-    wid = _to_uuid(shared_world_id)
+    wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "shared_world", str(wid), "discover", caller_id)
 
@@ -247,7 +239,7 @@ async def list_tavern_notices(
     shared_world_id: str,
 ) -> dict[str, Any]:
     """List communal tavern notice board bounties and rumors across all campaigns."""
-    wid = _to_uuid(shared_world_id)
+    wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
 

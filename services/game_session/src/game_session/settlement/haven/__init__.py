@@ -10,7 +10,6 @@ from game_session.settlement.haven.loaders import (
     load_establishment,
     load_settlement,
     save_and_publish,
-    to_uuid,
 )
 from game_session.settlement.haven.routes_establishments import (
     construct_establishment,
@@ -47,7 +46,6 @@ __all__ = [
     "load_establishment",
     "load_settlement",
     "save_and_publish",
-    "to_uuid",
     "upgrade_establishment",
     "upgrade_settlement_tier",
     "upgrades_router",

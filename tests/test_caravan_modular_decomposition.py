@@ -22,10 +22,7 @@ from game_session.caravan.escrow import (
     generate_default_refined_stock,
 )
 from game_session.caravan.ledger import CaravanLedgerAggregate
-from game_session.caravan.models import (
-    CaravanLedgerState,
-    _to_uuid,
-)
+from game_session.caravan.models import CaravanLedgerState
 from game_session.caravan.transit import (
     calculate_contract_payout,
     calculate_transit_ambush_progress,
@@ -35,6 +32,7 @@ from game_session.caravan.transit import (
     validate_can_fulfill,
     validate_contract_post,
 )
+from runefoble_platform.identifiers import InvalidIdentifierError, parse_uuid
 
 
 def test_caravan_models_and_uuid_helpers():
@@ -48,10 +46,12 @@ def test_caravan_models_and_uuid_helpers():
     assert ledger_state.outpost_stocks == {}
 
     test_uid = uuid4()
-    assert _to_uuid(str(test_uid)) == test_uid
-    assert _to_uuid(test_uid) == test_uid
-    assert _to_uuid("") is None
-    assert _to_uuid("not-a-uuid") is None
+    assert parse_uuid(str(test_uid), field="shared_world_id") == test_uid
+    assert parse_uuid(test_uid, field="shared_world_id") == test_uid
+    with pytest.raises(InvalidIdentifierError):
+        parse_uuid("", field="shared_world_id")
+    with pytest.raises(InvalidIdentifierError):
+        parse_uuid("not-a-uuid", field="shared_world_id")
 
 
 def test_caravan_contract_lifecycle_and_events():

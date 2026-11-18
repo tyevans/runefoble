@@ -6,7 +6,6 @@ Part of TASK-0100 / PRD-0014 / US-0044.
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
 
 from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
@@ -21,16 +20,9 @@ from game_session.stronghold import (
 )
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["stronghold"])
-
-
-def _camp_uuid(campaign_id: str) -> UUID | str:
-    return (
-        UUID(campaign_id)
-        if isinstance(campaign_id, str) and len(campaign_id) == 36
-        else campaign_id
-    )
 
 
 async def _require(spicedb: Any, resource: str, rid: str, perm: str, uid: str, detail: str) -> None:
@@ -92,7 +84,7 @@ async def get_stronghold(caller_id: CallerId, campaign_id: str) -> StrongholdSta
         get_spicedb_client(), "campaign", campaign_id, "view", caller_id, "Campaign view required"
     )
     try:
-        stronghold = await stronghold_repo.load(_camp_uuid(campaign_id))
+        stronghold = await stronghold_repo.load(parse_uuid(campaign_id, field="campaign_id"))
     except AggregateNotFoundError:
         # Return default initialized state if none exists yet
         return StrongholdState(campaign_id=str(campaign_id))
@@ -115,7 +107,7 @@ async def initialize_stronghold(
         caller_id,
         "DM or owner permission required",
     )
-    camp_uuid = _camp_uuid(campaign_id)
+    camp_uuid = parse_uuid(campaign_id, field="campaign_id")
     try:
         stronghold = await stronghold_repo.load(camp_uuid)
     except AggregateNotFoundError:
@@ -131,7 +123,7 @@ async def _load_or_start_stronghold(
     spicedb: Any, campaign_id: str, caller_id: str, detail: str
 ) -> StrongholdAggregate:
     """Load the campsite. A new campsite needs a campaign player, and the link lets it resolve."""
-    camp_uuid = _camp_uuid(campaign_id)
+    camp_uuid = parse_uuid(campaign_id, field="campaign_id")
     try:
         return await stronghold_repo.load(camp_uuid)
     except AggregateNotFoundError:
@@ -218,7 +210,7 @@ async def get_stronghold_boons(caller_id: CallerId, campaign_id: str) -> dict[st
         get_spicedb_client(), "campaign", campaign_id, "view", caller_id, "Campaign view required"
     )
     try:
-        stronghold = await stronghold_repo.load(_camp_uuid(campaign_id))
+        stronghold = await stronghold_repo.load(parse_uuid(campaign_id, field="campaign_id"))
     except AggregateNotFoundError:
         return {"campaign_id": campaign_id, "active_boons": [], "catalog": FACILITY_TIERS}
     boons = stronghold.get_active_boons()
@@ -245,7 +237,7 @@ async def contribute_treasury_gold(
     spicedb = get_spicedb_client()
     detail = "DM or stronghold manager permission required to contribute treasury gold"
     await _require(spicedb, "stronghold", campaign_id, "manage", caller_id, detail)
-    camp_uuid = _camp_uuid(campaign_id)
+    camp_uuid = parse_uuid(campaign_id, field="campaign_id")
     try:
         stronghold = await stronghold_repo.load(camp_uuid)
     except AggregateNotFoundError:

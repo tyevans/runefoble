@@ -6,7 +6,6 @@ Governed by ADR-0002, ADR-0007, ADR-0011, and Hard Invariant 2.
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID, uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -19,13 +18,7 @@ from runefoble_events.events import (
     EstablishmentOperationsUpdatedEvent,
     EstablishmentUpgradedEvent,
 )
-
-
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception:
-        return uuid4()
+from runefoble_platform.identifiers import parse_uuid
 
 
 class EstablishmentAggregate(DeclarativeAggregate[EstablishmentState]):
@@ -110,10 +103,10 @@ class EstablishmentAggregate(DeclarativeAggregate[EstablishmentState]):
         if operating_cost < 0:
             raise ValueError(f"Operating cost cannot be negative, got {operating_cost}")
 
-        eid = str(self.aggregate_id or uuid4())
+        eid = str(parse_uuid(self.aggregate_id, field="establishment_id"))
         self.create_event(
             EstablishmentConstructedEvent,
-            aggregate_id=_to_uuid(eid),
+            aggregate_id=parse_uuid(eid, field="establishment_id"),
             establishment_id=eid,
             settlement_id=str(settlement_id),
             district_id=str(district_id),
@@ -153,7 +146,7 @@ class EstablishmentAggregate(DeclarativeAggregate[EstablishmentState]):
 
         self.create_event(
             EstablishmentUpgradedEvent,
-            aggregate_id=_to_uuid(eid),
+            aggregate_id=parse_uuid(eid, field="establishment_id"),
             establishment_id=eid,
             settlement_id=self._state.settlement_id,
             tier=tier,
@@ -177,7 +170,7 @@ class EstablishmentAggregate(DeclarativeAggregate[EstablishmentState]):
         eid = str(self._state.establishment_id or self.aggregate_id)
         self.create_event(
             EstablishmentOperationsUpdatedEvent,
-            aggregate_id=_to_uuid(eid),
+            aggregate_id=parse_uuid(eid, field="establishment_id"),
             establishment_id=eid,
             staff=list(staff),
             total_wages=total_wages,

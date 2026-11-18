@@ -6,7 +6,7 @@ Part of TASK-0164 / PRD-0018 / US-0058 / ADR-0001 / ADR-0006 / ADR-0011.
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_settlement_repository, get_spicedb_client
@@ -27,17 +27,11 @@ from game_session.settlement.models import (
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
     dependencies=[Depends(get_principal)], prefix="/settlements", tags=["settlements"]
 )
-
-
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
 
 
 async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
@@ -49,8 +43,9 @@ async def _save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
 
 
 async def _load_haven(sid: str, perm: str, uid: str | None) -> SettlementAggregate:
+    settlement_uuid = parse_uuid(sid, field="settlement_id")
     try:
-        agg = await get_settlement_repository().load(_to_uuid(sid))
+        agg = await get_settlement_repository().load(settlement_uuid)
     except Exception as e:
         raise HTTPException(status_code=404, detail="Settlement not found") from e
     await check_settlement_permission(get_spicedb_client(), sid, perm, uid)

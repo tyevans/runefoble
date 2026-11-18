@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -12,6 +12,7 @@ from runefoble_events.events import (
     FactionTerritoryCapturedEvent,
     RegionalUnrestEscalatedEvent,
 )
+from runefoble_platform.identifiers import parse_uuid
 from the_watcher.turf_war.models import RegionalUnrestState
 
 
@@ -23,7 +24,9 @@ class RegionalUnrestAggregate(DeclarativeAggregate[RegionalUnrestState]):
     def __init__(self, aggregate_id: UUID | None = None, **kwargs: Any) -> None:
         super().__init__(aggregate_id=aggregate_id, **kwargs)
         if self._state is None:
-            self._state = RegionalUnrestState(region_id=str(aggregate_id or uuid4()))
+            self._state = RegionalUnrestState(
+                region_id=str(parse_uuid(aggregate_id, field="region_id"))
+            )
 
     def _create(self, event_cls: Any, **kwargs: Any) -> None:
         self.create_event(

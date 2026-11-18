@@ -157,6 +157,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 - [`inference-worker-response-contract.md`](docs/reference/inference-worker-response-contract.md): HTTP response contract of the inference worker: endpoints, provenance fields, and backend failure.
 - [`microfrontend-architecture.md`](docs/reference/microfrontend-architecture.md): Microfrontend layout, service component catalog, `/ui/manifest` discovery, and Storybook aggregation.
 - [`service-client.md`](docs/reference/service-client.md): Typed HTTP client that gateways use to call owning bounded contexts, with errors and gateway status mapping.
+- [`identifiers-and-uuid-policy.md`](docs/reference/identifiers-and-uuid-policy.md): Client id policy: strict UUID versus opaque session key, 400 on bad input, and no random substitute ids (ADR-0015).
 - [`spicedb-zitadel-identity-sync.md`](docs/reference/spicedb-zitadel-identity-sync.md): Zitadel-to-SpiceDB relationship synchronization: tuple mapping, public sync endpoints, and retry policy.
 - [`audience-studio-api.md`](docs/reference/audience-studio-api.md): HTTP and WebSocket API of the `audience_studio` service: live spectator polls and the DM approval queue.
 - [`browser-asset-reads.md`](docs/reference/browser-asset-reads.md): Rule for browser reads of protected media assets, and the `@runefoble/ui-core` helper.

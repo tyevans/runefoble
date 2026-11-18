@@ -9,6 +9,7 @@ from runefoble_events.events import (
     WatcherNarrationGenerated,
 )
 from runefoble_platform.event_publish import publish_best_effort
+from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.dependencies import (
     STREAM_BOARD,
     STREAM_WATCHER,
@@ -19,7 +20,6 @@ from the_watcher.dependencies import (
 )
 from the_watcher.engine_selection import load_watcher_ports
 from the_watcher.identity import CallerId, get_principal
-from the_watcher.ids import to_uuid
 from the_watcher.models import (
     IntentResult,
     SpeechInputRequest,
@@ -37,8 +37,8 @@ async def process_speech_action(caller_id: CallerId, req: SpeechInputRequest) ->
     intent = await load_watcher_ports(engine).intent.parse(req)
 
     bus = get_event_bus()
-    session_uuid = to_uuid(req.session_id)
-    campaign_uuid = to_uuid(req.campaign_id)
+    session_uuid = opaque_aggregate_id(req.session_id, field="session_id")
+    campaign_uuid = opaque_aggregate_id(req.campaign_id, field="campaign_id")
 
     target_val = (
         intent.target or intent.parameters.get("target") or intent.parameters.get("target_token")

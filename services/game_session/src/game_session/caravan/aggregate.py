@@ -12,7 +12,7 @@ from uuid import uuid4
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from game_session.caravan.board_operations import CaravanBoardOperationsMixin
-from game_session.caravan.models import CaravanContractState, _to_uuid
+from game_session.caravan.models import CaravanContractState
 from game_session.caravan.transit import calculate_transit_ambush_progress
 from game_session.caravan.transit_operations import CaravanTransitOperationsMixin
 from runefoble_events.events import (
@@ -22,6 +22,7 @@ from runefoble_events.events import (
     CaravanDispatched,
     CaravanTradeFulfilled,
 )
+from runefoble_platform.identifiers import parse_uuid
 
 
 class CaravanContractAggregate(
@@ -35,7 +36,9 @@ class CaravanContractAggregate(
     requires_creation_event = False
 
     def __init__(self, aggregate_id: Any = None, **kwargs: Any) -> None:
-        agg_uuid = _to_uuid(aggregate_id) or uuid4()
+        agg_uuid = (
+            uuid4() if aggregate_id is None else parse_uuid(aggregate_id, field="aggregate_id")
+        )
         super().__init__(aggregate_id=agg_uuid, **kwargs)
         if self._state is None:
             self._state = CaravanContractState(contract_id=str(agg_uuid))

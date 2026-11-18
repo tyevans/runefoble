@@ -12,9 +12,9 @@ from uuid import UUID, uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
-from game_session.minigame_rules import to_opt_uuid, to_uuid
 from pydantic import BaseModel, Field
 from runefoble_events.events import HagglingNegotiated, MerchantCreated
+from runefoble_platform.identifiers import opaque_aggregate_id, opaque_optional_aggregate_id
 
 MERCHANT_TEMPERAMENTS: dict[str, dict[str, Any]] = {
     "stubborn_greedy": {
@@ -115,7 +115,9 @@ class MerchantAggregate(DeclarativeAggregate[MerchantState]):
     requires_creation_event = False
 
     def __init__(self, aggregate_id: Any = None, **kwargs: Any) -> None:
-        agg_uuid = to_uuid(aggregate_id) if aggregate_id else uuid4()
+        agg_uuid = (
+            opaque_aggregate_id(aggregate_id, field="aggregate_id") if aggregate_id else uuid4()
+        )
         super().__init__(aggregate_id=agg_uuid, **kwargs)
         if self._state is None:
             self._state = MerchantState(merchant_id=str(aggregate_id or agg_uuid))
@@ -194,8 +196,8 @@ class MerchantAggregate(DeclarativeAggregate[MerchantState]):
         self.create_event(
             HagglingNegotiated,
             merchant_id=self.state.merchant_id,
-            session_id=to_opt_uuid(session_id),
-            campaign_id=to_opt_uuid(campaign_id),
+            session_id=opaque_optional_aggregate_id(session_id, field="session_id"),
+            campaign_id=opaque_optional_aggregate_id(campaign_id, field="campaign_id"),
             character_id=character_id,
             item_name=item_name,
             base_price=base_price,
@@ -227,6 +229,4 @@ __all__ = [
     "MerchantAggregate",
     "MerchantState",
     "calculate_haggling_outcome",
-    "to_opt_uuid",
-    "to_uuid",
 ]

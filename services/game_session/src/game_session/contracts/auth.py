@@ -8,20 +8,10 @@ Governed by ADR-0001, ADR-0005, and Hard Invariant 1.
 
 from __future__ import annotations
 
-from typing import Any
-from uuid import UUID
-
 from fastapi import HTTPException
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
 Spicedb = SpiceDBClient | MockSpiceDBClient
-
-
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except (TypeError, ValueError) as e:
-        raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
 
 
 async def check_bounty_view(spicedb: Spicedb, sid: str, bid: str, uid: str) -> None:

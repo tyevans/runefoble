@@ -8,7 +8,6 @@ from __future__ import annotations
 import time
 from datetime import UTC, datetime
 from typing import Any
-from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -27,18 +26,6 @@ from runefoble_events.events import (
 )
 from voice_agent.webrtc.adaptive_bitrate import TIER_PROFILES, OpusCodecParameters
 from voice_agent.webrtc.quality_monitor import QualityMetrics
-
-
-def to_uuid(val: str | UUID | None) -> UUID:
-    """Deterministically convert string or UUID into a valid UUID."""
-    if val is None:
-        return uuid4()
-    if isinstance(val, UUID):
-        return val
-    try:
-        return UUID(val)
-    except ValueError:
-        return uuid5(NAMESPACE_DNS, str(val))
 
 
 class VoicePeerState(BaseModel):

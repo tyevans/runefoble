@@ -19,7 +19,6 @@ from game_session.routers.caravan_contracts.auth import (
     _load_contract,
     _publish,
     _set_contractor,
-    _to_uuid,
     _val_err,
 )
 from game_session.settlement.auth.tokens import CallerId, get_principal
@@ -29,6 +28,7 @@ from game_session.west_marches_models import (
     FulfillContractRequest,
     ReportAmbushRequest,
 )
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
     dependencies=[Depends(get_principal)],
@@ -40,7 +40,7 @@ router = APIRouter(
 async def _init(
     wid_s: str, cid_s: str, perm: str, uid: str
 ) -> tuple[UUID, UUID, CaravanContractAggregate]:
-    wid, cid = _to_uuid(wid_s), _to_uuid(cid_s)
+    wid, cid = parse_uuid(wid_s, field="wid_s"), parse_uuid(cid_s, field="cid_s")
     return wid, cid, await _load_contract(cid, perm, uid)
 
 
