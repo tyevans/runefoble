@@ -51,6 +51,8 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
     },
     "RUNEFOBLE_GAME_SESSION_URL": {
         "gateway-api": "http://game-session:8004",
+        # Outpost funding debits the stronghold treasury in game_session (TASK-0795).
+        "campaign-lore": "http://game-session:8004",
     },
 }
 

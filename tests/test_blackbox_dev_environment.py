@@ -250,8 +250,15 @@ def test_orchestrator_process_termination_group():
 
 
 def test_orchestrator_exits_when_redis_is_unreachable():
-    """The orchestrator refuses to start when no Redis answers. It does not start a gateway."""
-    env = {**os.environ, "RUNEFOBLE_REDIS_URL": f"redis://127.0.0.1:{get_free_port()}/0"}
+    """The orchestrator refuses to start when no Redis answers. It does not start a gateway.
+
+    KUBECONFIG names a missing file, so no Kind cluster can supply Redis through a port-forward.
+    """
+    env = {
+        **os.environ,
+        "RUNEFOBLE_REDIS_URL": f"redis://127.0.0.1:{get_free_port()}/0",
+        "KUBECONFIG": str(REPO_ROOT / ".no-such-kubeconfig"),
+    }
     result = subprocess.run(
         [
             "python3",
