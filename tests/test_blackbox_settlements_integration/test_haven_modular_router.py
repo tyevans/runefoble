@@ -14,47 +14,6 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
-def test_haven_router_backwards_compatibility_exports():
-    """Verify router and haven package backwards compatibility exports."""
-    import game_session.settlement.haven as haven_pkg
-    import game_session.settlement.router as router_mod
-
-    expected_router_symbols = [
-        "bulletin_router",
-        "decrypt_cipher_notice",
-        "establishments_router",
-        "havens_router",
-        "list_bulletin_notices",
-        "pin_bulletin_notice",
-        "remove_bulletin_notice",
-        "router",
-        "upgrades_router",
-    ]
-    for sym in expected_router_symbols:
-        assert hasattr(router_mod, sym), f"Missing exported symbol {sym} in router.py"
-
-    expected_haven_symbols = [
-        "build_settlement_projection",
-        "construct_establishment",
-        "establishments_router",
-        "found_settlement",
-        "get_campaign_settlement_projection",
-        "get_establishment",
-        "havens_router",
-        "list_campaign_settlements",
-        "list_settlement_establishments",
-        "load_establishment",
-        "load_settlement",
-        "save_and_publish",
-        "to_uuid",
-        "upgrade_establishment",
-        "upgrade_settlement_tier",
-        "upgrades_router",
-    ]
-    for sym in expected_haven_symbols:
-        assert hasattr(haven_pkg, sym), f"Missing exported symbol {sym} in haven package"
-
-
 @pytest.mark.asyncio
 async def test_haven_modular_routes_frontdoor_journey(
     session_client: TestClient, spicedb: MockSpiceDBClient

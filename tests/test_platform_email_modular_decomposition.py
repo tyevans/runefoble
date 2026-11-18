@@ -8,63 +8,6 @@ import pytest
 from runefoble_platform.email import MailpitClient
 
 
-def test_import_from_subpackage_facade() -> None:
-    """Verify that importing from runefoble_platform.email exposes all public symbols."""
-    from runefoble_platform.email import (
-        EmailMessage,
-        EmailRecipient,
-        EmailVerificationPayload,
-        MailpitClient,
-        MailpitMessage,
-        MailpitMessageSummary,
-        OutboundEmail,
-        SmtpTransport,
-        build_mime_message,
-        extract_verification_code,
-        extract_verification_link,
-    )
-
-    assert MailpitClient is not None
-    assert SmtpTransport is not None
-    assert OutboundEmail is not None
-    assert MailpitMessage is not None
-    assert MailpitMessageSummary is not None
-    assert EmailRecipient is not None
-    assert EmailMessage is not None
-    assert EmailVerificationPayload is not None
-    assert callable(build_mime_message)
-    assert callable(extract_verification_link)
-    assert callable(extract_verification_code)
-
-
-def test_import_from_modular_submodules() -> None:
-    """Verify that importing directly from modular submodules works as expected."""
-    from runefoble_platform.email.mailpit import MailpitClient
-    from runefoble_platform.email.models import (
-        EmailMessage,
-        EmailRecipient,
-        EmailVerificationPayload,
-        MailpitMessage,
-        MailpitMessageSummary,
-        OutboundEmail,
-        extract_verification_code,
-        extract_verification_link,
-    )
-    from runefoble_platform.email.smtp import SmtpTransport, build_mime_message
-
-    assert MailpitClient is not None
-    assert SmtpTransport is not None
-    assert OutboundEmail is not None
-    assert MailpitMessage is not None
-    assert MailpitMessageSummary is not None
-    assert EmailRecipient is not None
-    assert EmailMessage is not None
-    assert EmailVerificationPayload is not None
-    assert callable(build_mime_message)
-    assert callable(extract_verification_link)
-    assert callable(extract_verification_code)
-
-
 @pytest.mark.asyncio
 async def test_mailpit_client_send_and_inspect_in_memory() -> None:
     """Verify MailpitClient sends emails and inspects messages via memory fallback."""

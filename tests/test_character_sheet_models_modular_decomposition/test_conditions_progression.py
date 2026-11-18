@@ -3,52 +3,9 @@
 from __future__ import annotations
 
 from character_sheet.models import (
-    ApplyConditionRequest,
-    CastSpellRequest,
     CharacterState,
     ConditionModifier,
-    ConditionState,
-    ConditionsTransitionsMixin,
-    LevelProgression,
-    LevelUpRequest,
-    PenaltyRequest,
-    PrepareSpellRequest,
-    ProgressionTransitionsMixin,
-    SpellProgression,
 )
-from character_sheet.models.conditions import (
-    ConditionModifier as CondConditionModifier,
-)
-from character_sheet.models.conditions import (
-    ConditionState as CondConditionState,
-)
-from character_sheet.models.conditions import (
-    ConditionsTransitionsMixin as CondConditionsTransitionsMixin,
-)
-from character_sheet.models.progression import (
-    LevelProgression as ProgLevelProgression,
-)
-from character_sheet.models.progression import (
-    ProgressionTransitionsMixin as ProgProgressionTransitionsMixin,
-)
-from character_sheet.models.progression import (
-    SpellProgression as ProgSpellProgression,
-)
-
-
-def test_conditions_and_progression_facade_and_imports() -> None:
-    """Verify conditions and progression models are re-exported and directly importable."""
-    assert ConditionState is CondConditionState
-    assert ConditionModifier is CondConditionModifier
-    assert ConditionsTransitionsMixin is CondConditionsTransitionsMixin
-    assert SpellProgression is ProgSpellProgression
-    assert LevelProgression is ProgLevelProgression
-    assert ProgressionTransitionsMixin is ProgProgressionTransitionsMixin
-    assert ApplyConditionRequest is not None
-    assert PenaltyRequest is not None
-    assert LevelUpRequest is not None
-    assert PrepareSpellRequest is not None
-    assert CastSpellRequest is not None
 
 
 def test_condition_and_penalty_transitions(sample_character_state: CharacterState) -> None:

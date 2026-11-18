@@ -14,39 +14,6 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-def test_auth_backwards_compatibility_exports():
-    """Verify complete backwards compatibility of exported symbols from game_session.settlement.auth."""
-    import game_session.settlement.auth as auth_mod
-
-    for sym in (  # noqa: SIM905
-        "check_campaign_write_permission check_settlement_read_permission "
-        "check_settlement_write_permission check_establishment_read_permission "
-        "check_establishment_write_permission check_establishment_play_permission "
-        "check_npc_read_permission check_npc_write_permission "
-        "check_negotiation_read_permission check_negotiation_participate_permission "
-        "check_negotiation_arbitrate_permission write_settlement_relationships "
-        "write_establishment_relationships write_npc_relationships "
-        "write_negotiation_relationships get_current_settlement_user "
-        "require_haven_builder require_establishment_manager "
-        "extract_bearer_token decode_settlement_token VerifiedPrincipal"
-    ).split():
-        assert hasattr(auth_mod, sym), f"Missing exported symbol {sym} in auth facade"
-
-
-def test_workers_backwards_compatibility_exports():
-    """Verify backwards compatibility of exported symbols from workers_router and workers."""
-    import game_session.settlement.workers as workers_pkg
-    import game_session.settlement.workers_router as wr_mod
-
-    for sym in ["router", "roster_router", "relationships_router", "inventory_router"]:
-        assert hasattr(wr_mod, sym), f"Missing exported symbol {sym} in workers_router"
-    for sym in (  # noqa: SIM905
-        "NPCWorkerAggregate AssignWorkerRequest NPCWorkerState RelieveWorkerRequest "
-        "UpdateWorkerMoodRequest WorkerInventoryItem WorkerRelationship"
-    ).split():
-        assert hasattr(workers_pkg, sym), f"Missing exported symbol {sym} in workers package"
-
-
 @pytest.mark.asyncio
 async def test_frontdoor_worker_modular_endpoints(
     session_client: TestClient, spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis

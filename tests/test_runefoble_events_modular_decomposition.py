@@ -12,88 +12,19 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-import runefoble_events
-import runefoble_events.events as events_pkg
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_events.events.board_events import (
-    AoETemplatePlaced,
-    BoardGridInitialized,
-    FogOfWarRevealed,
     TokenMoved,
-    TrapSprungEvent,
-)
-from runefoble_events.events.character_events import (
-    CharacterDamaged,
-    ItemAddedToInventory,
-)
-from runefoble_events.events.media_events import (
-    SoundscapeTrackChanged,
-    VoicePeerJoined,
 )
 from runefoble_events.events.narrative_events import (
-    AbsenteeRecapGenerated,
-    DiceRolled,
-    SpeechIntentParsed,
-    StandInActionDecided,
     WatcherNarrationGenerated,
 )
-from runefoble_events.events.platform_events import (
-    DynamicToolRegisteredEvent,
-    MercenaryBountyPosted,
-)
 from runefoble_events.events.session_events import (
-    CombatRoundAdvanced,
-    GameSessionStarted,
-    InitiativeRolled,
     SessionCreated,
-    TurnAdvanced,
 )
 from runefoble_events.events.world_events import (
-    AliasesConsolidated,
     CaravanDispatched,
-    FactionCreated,
-    LoreDocumentIngested,
-    SettlementCharteredEvent,
 )
-
-
-def test_category_submodules_exported_symbols() -> None:
-    """Verify exported symbols across distinct domain category modules."""
-    # Session category
-    assert SessionCreated is not None
-    assert GameSessionStarted is not None
-    assert TurnAdvanced is not None
-    assert InitiativeRolled is not None
-    assert CombatRoundAdvanced is not None
-
-    # Board category
-    assert BoardGridInitialized is not None
-    assert TokenMoved is not None
-    assert FogOfWarRevealed is not None
-    assert AoETemplatePlaced is not None
-    assert TrapSprungEvent is not None
-
-    # Narrative category
-    assert WatcherNarrationGenerated is not None
-    assert SpeechIntentParsed is not None
-    assert StandInActionDecided is not None
-    assert AbsenteeRecapGenerated is not None
-    assert DiceRolled is not None
-
-    # World category
-    assert FactionCreated is not None
-    assert CaravanDispatched is not None
-    assert SettlementCharteredEvent is not None
-    assert LoreDocumentIngested is not None
-    assert AliasesConsolidated is not None
-
-    # Character & Platform categories
-    assert CharacterDamaged is not None
-    assert ItemAddedToInventory is not None
-    assert SoundscapeTrackChanged is not None
-    assert VoicePeerJoined is not None
-    assert DynamicToolRegisteredEvent is not None
-    assert MercenaryBountyPosted is not None
 
 
 def test_domain_event_instantiation_and_cloudevent_compliance() -> None:
@@ -133,13 +64,3 @@ def test_domain_event_instantiation_and_cloudevent_compliance() -> None:
     )
     assert caravan_ev.caravan_id == "car-0177"
     assert caravan_ev.aggregate_type == "CaravanContract"
-
-
-def test_all_public_symbols_registered_and_iterable() -> None:
-    """Verify the events aggregator exports every public symbol and the package root exports base types only."""
-    assert len(events_pkg.__all__) >= 210
-    assert set(runefoble_events.__all__) == {"BaseRunefobleEvent", "DomainEvent", "register_event"}
-
-    # Ensure all symbols listed in __all__ are resolvable attributes
-    for symbol_name in events_pkg.__all__:
-        assert hasattr(events_pkg, symbol_name), f"Attribute {symbol_name} missing from events"

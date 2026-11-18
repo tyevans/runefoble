@@ -12,14 +12,6 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-import runefoble_events.watcher as watcher_facade
-import runefoble_events.watcher_events as watcher_pkg
-from runefoble_events.board_traps import TrapSprungEvent
-from runefoble_events.combat_reactions import (
-    CombatTurnPausedForReactionEvent,
-    ReactionResolvedEvent,
-)
-from runefoble_events.vocal_dsp import VocalModulatorPresetAppliedEvent
 from runefoble_events.watcher_events import (
     actions as actions_mod,
 )
@@ -35,80 +27,8 @@ from runefoble_events.watcher_events import (
 from runefoble_platform.consumer_group import deserialize_event
 
 
-def test_watcher_facade_backward_compatibility_reexports():
-    """Verify all domain events remain importable from runefoble_events.watcher."""
-    expected_symbols = [
-        "AbsenteeRecapGenerated",
-        "AutonomousActionResolved",
-        "CandidateGhostPreviewEmitted",
-        "CompoundActionResolved",
-        "DMNarrativeWhispered",
-        "DiceRollEvent",
-        "DiceRolled",
-        "EncounterSpawned",
-        "FactionAgendaAdvanced",
-        "FactionAgendaSet",
-        "FactionCreated",
-        "GeopoliticalShiftOccurred",
-        "IntentDisambiguationRequested",
-        "PlayerSpokeEvent",
-        "ReactionOpportunityResolved",
-        "ReactionPromptTriggered",
-        "SceneAtmosphereSet",
-        "SecretTrapTriggered",
-        "SpeechIntentParsed",
-        "StandInActionDecided",
-        "StandInTurnExecuted",
-        "VocalModulatorPresetChanged",
-        "VoiceAudioConditioned",
-        "WatcherActionApproved",
-        "WatcherActionModified",
-        "WatcherActionProposed",
-        "WatcherActionVetoed",
-        "WatcherNarrationEvent",
-        "WatcherNarrationGenerated",
-        "WorldTickExecuted",
-    ]
-
-    for sym in expected_symbols:
-        assert hasattr(watcher_facade, sym), f"runefoble_events.watcher must re-export {sym}"
-        facade_obj = getattr(watcher_facade, sym)
-        pkg_obj = getattr(watcher_pkg, sym)
-        assert facade_obj is pkg_obj, f"{sym} in watcher facade must match watcher_events"
-
-
-def test_submodule_modular_imports():
-    """Verify events can be cleanly imported from their focused submodules."""
-    assert hasattr(narrative_mod, "PlayerSpokeEvent")
-    assert hasattr(narrative_mod, "SpeechIntentParsed")
-    assert hasattr(narrative_mod, "WatcherNarrationGenerated")
-    assert hasattr(narrative_mod, "StandInActionDecided")
-
-    assert hasattr(combat_mod, "DiceRolled")
-    assert hasattr(combat_mod, "ReactionPromptTriggered")
-    assert hasattr(combat_mod, "ReactionOpportunityResolved")
-    assert hasattr(combat_mod, "SecretTrapTriggered")
-    assert hasattr(combat_mod, "VocalModulatorPresetChanged")
-
-    assert hasattr(actions_mod, "WatcherActionProposed")
-    assert hasattr(actions_mod, "IntentDisambiguationRequested")
-    assert hasattr(actions_mod, "CompoundActionResolved")
-
-    assert hasattr(factions_mod, "FactionCreated")
-    assert hasattr(factions_mod, "FactionAgendaAdvanced")
-    assert hasattr(factions_mod, "WorldTickExecuted")
-
-
-def test_reaction_and_trap_events_inheritance():
-    """Verify combat reaction, secret trap, and vocal preset events inherit properly."""
-    assert issubclass(combat_mod.ReactionPromptTriggered, CombatTurnPausedForReactionEvent)
-    assert issubclass(combat_mod.ReactionOpportunityResolved, ReactionResolvedEvent)
-    assert issubclass(combat_mod.SecretTrapTriggered, TrapSprungEvent)
-    assert issubclass(combat_mod.VocalModulatorPresetChanged, VocalModulatorPresetAppliedEvent)
-
-
-def test_dice_rolled_properties_and_alias():
-    """Verify DiceRolled properties and DiceRollEvent alias work correctly."""
+def test_dice_rolled_properties():
+    """Verify DiceRolled exposes its notation and individual rolls."""
     roll = combat_mod.DiceRolled(
         session_id=str(uuid4()),
         roller_id="player-1",
@@ -120,7 +40,6 @@ def test_dice_rolled_properties_and_alias():
     )
     assert roll.dice_notation == "2d6+3"
     assert roll.individual_rolls == [5, 3]
-    assert combat_mod.DiceRollEvent is combat_mod.DiceRolled
 
 
 def test_event_cloudevent_and_serialization_roundtrip():

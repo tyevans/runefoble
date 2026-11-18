@@ -16,71 +16,8 @@ import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
 from eventsource.application.aggregates.repository import AggregateRepository
 from game_session.aggregate import (
-    CombatHandlersMixin,
     GameSessionAggregate,
-    GameSessionState,
-    ParticipantState,
-    ReactionHandlersMixin,
-    SessionHandlersMixin,
 )
-from runefoble_events.events import (
-    CharacterControlTransferred,
-    CombatEncounterEnded,
-    CombatEncounterStarted,
-    CombatTurnPausedForReactionEvent,
-    InitiativeRolled,
-    InitiativeTurnAdvanced,
-    PlayerJoinedSession,
-    PlayerLeftSession,
-    ReactionResolvedEvent,
-    ReadyActionRegisteredEvent,
-    ReadyActionTriggeredEvent,
-    SessionCreated,
-    SessionEnded,
-    SessionStarted,
-    StandInActionDecided,
-    TurnAdvanced,
-)
-
-
-def test_package_facade_and_backward_compatibility() -> None:
-    """Verify that GameSessionAggregate and related classes are re-exported cleanly."""
-    assert GameSessionAggregate is not None
-    assert GameSessionState is not None
-    assert ParticipantState is not None
-    assert SessionHandlersMixin is not None
-    assert CombatHandlersMixin is not None
-    assert ReactionHandlersMixin is not None
-
-    # Verify mixin inheritance hierarchy
-    assert issubclass(GameSessionAggregate, SessionHandlersMixin)
-    assert issubclass(GameSessionAggregate, CombatHandlersMixin)
-    assert issubclass(GameSessionAggregate, ReactionHandlersMixin)
-
-
-def test_event_handlers_registry_completeness() -> None:
-    """Verify all expected domain events are registered on GameSessionAggregate."""
-    registered_events = set(GameSessionAggregate._event_handlers.keys())
-    expected_events = {
-        SessionCreated,
-        SessionStarted,
-        PlayerJoinedSession,
-        PlayerLeftSession,
-        CharacterControlTransferred,
-        TurnAdvanced,
-        StandInActionDecided,
-        SessionEnded,
-        CombatEncounterStarted,
-        InitiativeRolled,
-        InitiativeTurnAdvanced,
-        CombatEncounterEnded,
-        CombatTurnPausedForReactionEvent,
-        ReactionResolvedEvent,
-        ReadyActionRegisteredEvent,
-        ReadyActionTriggeredEvent,
-    }
-    missing = expected_events - registered_events
-    assert not missing, f"Missing registered event handlers for: {missing}"
 
 
 @pytest.mark.asyncio

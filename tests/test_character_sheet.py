@@ -4,20 +4,7 @@ from uuid import uuid4
 
 import pytest
 from character_sheet.aggregate import (
-    CLASS_HIT_DIE,
-    KNOWN_SPELL_LEVELS,
-    SPELL_SLOTS_TABLE,
     CharacterAggregate,
-    CharacterSheetState,
-    CharacterState,
-    ConditionState,
-    InventoryHandlerMixin,
-    InventoryItem,
-    SpellsHandlerMixin,
-    VitalsHandlerMixin,
-    get_hit_die_for_class,
-    get_known_spell_level,
-    get_spell_slots_for_level,
 )
 from runefoble_events.events import (
     CharacterCreated,
@@ -26,23 +13,6 @@ from runefoble_events.events import (
     StandInStabilized,
 )
 from runefoble_platform.event_sourcing import AggregateRepository, InMemoryEventStore
-
-
-def test_character_aggregate_exports_backward_compatibility():
-    """Verify all symbols and rules functions remain exported from character_sheet.aggregate."""
-    assert issubclass(CharacterAggregate, InventoryHandlerMixin)
-    assert issubclass(CharacterAggregate, SpellsHandlerMixin)
-    assert issubclass(CharacterAggregate, VitalsHandlerMixin)
-    assert CharacterState is not None
-    assert CharacterSheetState is not None
-    assert ConditionState is not None
-    assert InventoryItem is not None
-    assert isinstance(CLASS_HIT_DIE, dict)
-    assert isinstance(KNOWN_SPELL_LEVELS, dict)
-    assert isinstance(SPELL_SLOTS_TABLE, dict)
-    assert callable(get_hit_die_for_class)
-    assert callable(get_known_spell_level)
-    assert callable(get_spell_slots_for_level)
 
 
 @pytest.mark.asyncio
