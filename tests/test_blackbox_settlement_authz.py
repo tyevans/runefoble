@@ -43,7 +43,7 @@ def haven(tc: TestClient) -> tuple[str, str]:
     campaign_id = created.json()["id"]
     charter = tc.post(
         f"/api/v1/campaigns/{campaign_id}/settlements",
-        json={"name": "Garrison Prime", "scale": "village"},
+        json={"name": "Garrison Prime", "scale": "village", "districts": ["market"]},
         headers=_headers(founder),
     )
     assert charter.status_code == 201
@@ -109,5 +109,91 @@ def test_bulletin_decrypt_by_non_viewer_is_refused(tc: TestClient, haven: tuple[
         f"/api/v1/settlements/{settlement_id}/bulletin/{notice_id}/decrypt",
         json={"solution": "open sesame"},
         headers=stranger,
+    )
+    assert res.status_code == 403
+
+
+@pytest.fixture
+def establishment_with_worker(tc: TestClient, haven: tuple[str, str]) -> tuple[str, str, str]:
+    """Construct an establishment and assign a worker through the frontdoors.
+
+    Returns (establishment_id, npc_id, founder_sub). The founder is the campaign owner.
+    """
+    settlement_id, founder = haven
+    constructed = tc.post(
+        f"/api/v1/settlements/{settlement_id}/establishments",
+        json={"district_id": "market", "category": "commerce", "name": "Forge"},
+        headers=_headers(founder),
+    )
+    assert constructed.status_code == 201, constructed.text
+    establishment_id = constructed.json()["establishment_id"]
+    assigned = tc.post(
+        f"/api/v1/establishments/{establishment_id}/workers",
+        json={"name": "Torvin", "role": "apprentice"},
+        headers=_headers(founder),
+    )
+    assert assigned.status_code == 201, assigned.text
+    return establishment_id, assigned.json()["npc_id"], founder
+
+
+def test_anonymous_worker_mood_change_is_refused(
+    tc: TestClient, establishment_with_worker: tuple[str, str, str]
+):
+    """A worker mood change without a principal gets 401."""
+    _, npc_id, _ = establishment_with_worker
+    res = tc.patch(
+        f"/api/v1/npcs/{npc_id}/mood",
+        json={"mood": "calm", "temperament": "patient"},
+    )
+    assert res.status_code == 401
+
+
+def test_stranger_cannot_change_worker_mood_and_manager_can(
+    tc: TestClient, establishment_with_worker: tuple[str, str, str]
+):
+    """npc.edit_mood is required. A stranger gets 403. The campaign owner gets 200."""
+    _, npc_id, founder = establishment_with_worker
+    body = {"mood": "calm", "temperament": "patient"}
+    denied = tc.patch(
+        f"/api/v1/npcs/{npc_id}/mood",
+        json=body,
+        headers=_headers(f"stranger-{uuid4().hex[:8]}"),
+    )
+    assert denied.status_code == 403
+
+    allowed = tc.patch(f"/api/v1/npcs/{npc_id}/mood", json=body, headers=_headers(founder))
+    assert allowed.status_code == 200, allowed.text
+
+
+def test_stranger_cannot_assign_or_relieve_workers(
+    tc: TestClient, establishment_with_worker: tuple[str, str, str]
+):
+    """establishment.manage guards assignment and relief. A stranger gets 403."""
+    establishment_id, npc_id, _ = establishment_with_worker
+    stranger = _headers(f"stranger-{uuid4().hex[:8]}")
+    assigned = tc.post(
+        f"/api/v1/establishments/{establishment_id}/workers",
+        json={"name": "Mallory", "role": "apprentice"},
+        headers=stranger,
+    )
+    assert assigned.status_code == 403
+
+    relieved = tc.post(
+        f"/api/v1/establishments/{establishment_id}/workers/{npc_id}/relieve",
+        json={"reason": "fired"},
+        headers=stranger,
+    )
+    assert relieved.status_code == 403
+
+
+def test_stranger_cannot_record_worker_relationship(
+    tc: TestClient, establishment_with_worker: tuple[str, str, str]
+):
+    """npc.manage guards relationships. A stranger gets 403."""
+    _, npc_id, _ = establishment_with_worker
+    res = tc.post(
+        f"/api/v1/npcs/{npc_id}/relationships",
+        json={"target_npc": "npc-other", "relation": "rival"},
+        headers=_headers(f"stranger-{uuid4().hex[:8]}"),
     )
     assert res.status_code == 403

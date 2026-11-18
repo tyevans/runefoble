@@ -59,7 +59,7 @@ async def upgrade_establishment(
     req: UpgradeEstablishmentRequest,
 ) -> EstablishmentState:
     """Upgrade establishment tier, amenities, or capacity."""
-    agg = await load_establishment(establishment_id, "manage", caller_id)
+    agg = await load_establishment(establishment_id, "edit", caller_id)
     try:
         agg.upgrade(
             new_tier=req.tier,
