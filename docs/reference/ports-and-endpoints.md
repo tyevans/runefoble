@@ -243,7 +243,7 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `campaign-lore` | POST | `/api/v1/campaigns/{campaign_id}/west-marches/stronghold/contribute` | Moves gold from the stronghold treasury (game_session debit) into an outpost store. Body: `gold` (> 0), `outpost_id` (optional). Answers `403`, `404`, `409`, and `503` with no credit |
 | `campaign-lore` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-campaign-atlas`, `runefoble-campaign-codex`, `runefoble-handout-viewer`, `runefoble-relic-inspector`, `runefoble-west-marches-atlas`) |
 | `rules-compendium` | GET | `/api/v1/compendium/rules/search` | Sub-50ms hybrid BM25 and vector search for SRD monsters, spells, conditions, and homebrew |
-| `rules-compendium` | GET | `/api/v1/compendium/monsters/{name}` | Retrieves full monster stat block by name |
+| `rules-compendium` | GET | `/api/v1/compendium/monsters/{name}` | Retrieves full monster stat block by name. A `campaign_id` query value adds the campaign's homebrew monsters the caller may view |
 | `rules-compendium` | GET | `/api/v1/compendium/spells/{name}` | Retrieves full spell definition by name |
 | `rules-compendium` | GET | `/api/v1/compendium/conditions/{name}` | Retrieves condition mechanics and gameplay effects |
 | `rules-compendium` | POST | `/api/v1/compendium/encounters/balance` | Calculates encounter lethality and generates synergistic monster groups for party roster |
