@@ -239,6 +239,8 @@ lint: ## Check types, Ruff lint, format, and Helm
 	uv run ruff check .
 	@echo "==> Checking Ruff formatting..."
 	uv run ruff format --check .
+	@echo "==> Checking import contracts (gateway imports no service package, ADR-0015 b)..."
+	uv run lint-imports
 	@echo "==> Typechecking inference worker..."
 	uv run mypy services/inference_worker/src
 	@echo "==> Typechecking frontend..."

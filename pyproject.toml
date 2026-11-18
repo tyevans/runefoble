@@ -107,13 +107,21 @@ markers = [
 ]
 
 [tool.importlinter]
-root_packages = ["game_session", "voice_agent"]
+root_packages = ["game_session", "voice_agent", "gateway_api", "the_watcher", "board_state", "character_sheet", "campaign_lore", "inference_worker", "rules_compendium", "asset_forge", "soundscape", "campaign_analytics"]
 
 [[tool.importlinter.contracts]]
 name = "game_session must not import voice_agent in process (ADR-0007, ADR-0015)"
 type = "forbidden"
 source_modules = ["game_session"]
 forbidden_modules = ["voice_agent"]
+
+# The gateway stays thin (ADR-0015 b). It reaches each owner over HTTP through ServiceClient.
+# Asset Forge routes stay in the TASK-0595 exception until that task moves them to forward_json.
+[[tool.importlinter.contracts]]
+name = "gateway_api must not import a service package (ADR-0015 b, TASK-0775)"
+type = "forbidden"
+source_modules = ["gateway_api"]
+forbidden_modules = ["the_watcher", "game_session", "board_state", "character_sheet", "voice_agent", "campaign_lore", "inference_worker", "rules_compendium", "asset_forge", "soundscape", "campaign_analytics"]
 
 [tool.mutmut]
 paths_to_mutate = "libs/runefoble_platform/src/,services/the_watcher/src/"

@@ -893,30 +893,24 @@ name = "gateway-api"
 version = "0.1.0"
 source = { editable = "gateway/api" }
 dependencies = [
-    { name = "character-sheet" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "pydantic" },
-    { name = "rules-compendium" },
     { name = "runefoble-auth" },
     { name = "runefoble-events" },
     { name = "runefoble-platform" },
-    { name = "soundscape" },
     { name = "uvicorn" },
     { name = "websockets" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "character-sheet", editable = "services/character_sheet" },
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pydantic", specifier = ">=2.13.5" },
-    { name = "rules-compendium", editable = "services/rules_compendium" },
     { name = "runefoble-auth", editable = "libs/runefoble_auth" },
     { name = "runefoble-events", editable = "libs/runefoble_events" },
     { name = "runefoble-platform", editable = "libs/runefoble_platform" },
-    { name = "soundscape", editable = "services/soundscape" },
     { name = "uvicorn", specifier = ">=0.54.0" },
     { name = "websockets", specifier = ">=16.1.1" },
 ]
