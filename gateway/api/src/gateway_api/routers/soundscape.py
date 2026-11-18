@@ -64,6 +64,17 @@ async def override_soundscape_mood(user: CurrentPrincipal, request: Request) -> 
     )
 
 
+@router.post("/duck")
+async def toggle_ducking(user: CurrentPrincipal, request: Request) -> Any:
+    """Engage or release WebAudio ducking. The service checks session control."""
+    return await forward_bytes(
+        request,
+        service=SOUNDSCAPE_SERVICE,
+        method="POST",
+        path=path("api", "v1", "soundscape", "duck"),
+    )
+
+
 @router.get("/leitmotif/{character_id}")
 async def get_leitmotif_profile(character_id: str, user: CurrentPrincipal, request: Request) -> Any:
     """Read a character leitmotif profile. The service owns the route under `/leitmotif/profile`."""
