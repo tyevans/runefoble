@@ -94,12 +94,12 @@ Real-time campaign mutations, token movement broadcasts, health modifications, a
 
 - **Zanzibar Action Validator (`gateway_api.websocket_validator`)**:
   `WebSocketActionValidator` executes fine-grained SpiceDB Zanzibar permission checks (`campaign:view`, `campaign:read`, `board_token:move`, `character:edit`, `dungeon_master`). It enforces DM bypass privileges, movement authorization, and blocks non-DM encounter mutations.
-- **Connection Hub Manager (`gateway_api.websocket_manager`)**:
-  `CampaignConnectionManager` tracks active client connections per campaign and handles JSON broadcast dispatching across connected party members.
+- **Connection Hub (`gateway_api.websocket_manager`)**:
+  `ws_campaign_manager`, a `runefoble_platform.ws_groups.WebSocketGroups` keyed by campaign, tracks active client connections per campaign and broadcasts JSON to the connected party members. A socket whose send fails is pruned, and the other members still receive the message.
 - **Credential & Handshake Auth (`gateway_api.websocket_auth`)**:
   `admit_gateway_websocket` binds the gateway verifier to the shared `runefoble_auth.websocket.admit_websocket` check. Every gateway socket route calls it before accept, and no route keeps its own admission code. The token comes only from the `runefoble.bearer.<jwt>` subprotocol. Query strings and headers carry no identity.
 - **WebSocket Routing Endpoint (`gateway_api.websocket_endpoint`)**:
-  `campaign_websocket_endpoint` manages the WebSocket handshake lifecycle, validates viewer connection permissions, dispatches incoming actions to Redis Streams (`runefoble.events.board`, `runefoble.events.session`, `runefoble.events.watcher`), and coordinates disconnect cleanup.
+  `campaign_websocket_endpoint` runs the shared `runefoble_auth.websocket.serve_authorized_socket` loop, validates viewer connection permissions, dispatches incoming actions to Redis Streams (`runefoble.events.board`, `runefoble.events.session`, `runefoble.events.watcher`), and coordinates disconnect cleanup.
 
 ## Latency Budgets
 - **Audio Capture & Streaming**: < 100ms
