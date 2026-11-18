@@ -28,7 +28,7 @@ Any domain event can be converted to an external CloudEvent payload via `.to_clo
 The `libs/runefoble_events` package organizes domain event definitions and re-exports into discrete, single-responsibility category modules governed by Hard Invariant 6 (< 150 lines per submodule, < 80 lines per aggregator facade):
 
 - **Aggregator Facades**:
-  - `runefoble_events`: Package root facade re-exporting all domain events with 100% backward compatibility.
+  - `runefoble_events`: Package root. It exports every domain event class.
   - `runefoble_events.events`: Subpackage aggregator facade providing unified access to domain event models.
 - **Domain Category Submodules (`runefoble_events.events.*` and root aliases `runefoble_events.*_events`)**:
   - `session_events.py`: Game session lifecycle, turn sequencing, initiative rolls, combat rounds, and reaction pause/triggers.
@@ -39,13 +39,13 @@ The `libs/runefoble_events` package organizes domain event definitions and re-ex
   - `media_events.py`: Low-latency voice duplex, audio DSP modulation, dynamic soundscapes, procedural asset forge, and audience polls.
   - `platform_events.py`: Core event base models, privacy-preserving combat analytics, compendium indexing, mercenary contracts, and dynamic MCP tools.
 - **The Watcher Domain Events (`runefoble_events.watcher_events.*` and `runefoble_events.watcher` facade)**:
-  - `watcher.py`: Re-export facade (< 80 lines) maintaining 100% backward-compatible imports for consuming services.
+  - `watcher.py`: Public import module for the Watcher events.
   - `watcher_events/narrative.py`: Speech transcription (`PlayerSpokeEvent`), parsed intent (`SpeechIntentParsed`), narration (`WatcherNarrationGenerated`), absentee recaps, and private DM whispers (< 120 lines).
   - `watcher_events/combat.py`: Dice roll telemetry (`DiceRolled`), autonomous combat encounters, candidate ghost previews, combat reaction interrupts, and trap triggers (< 150 lines).
   - `watcher_events/actions.py`: The Watcher DM copilot proposal, veto, approval, modification, and compound action disambiguation (< 150 lines).
   - `watcher_events/factions.py`: Autonomous NPC faction agendas, progress advances, geopolitical territory shifts, and world ticks (< 150 lines).
 - **Board Domain Events (`runefoble_events.board_events.*` and `runefoble_events.board` facade)**:
-  - `board.py`: Re-export facade (< 40 lines) maintaining 100% backward-compatible imports for consuming services.
+  - `board.py`: Public import module for the board events.
   - `board_events/token.py`: Tactical token placement, movement, actions, knockback impulses (`TokenKnockbackApplied`), and elevation changes (`ElevationChanged`) (< 100 lines).
   - `board_events/fog.py`: Fog-of-war reveal (`FogOfWarRevealed` / `FogRevealed`), shroud reset (`FogOfWarShrouded` / `ShroudReset`), and complete visibility mask updates (`VisibilityMaskUpdated`) (< 80 lines).
   - `board_events/templates.py`: Geometric AoE spell template positioning and removal (`AoETemplatePlaced`, `AoETemplateRemoved`) (< 80 lines).
