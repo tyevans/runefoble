@@ -145,7 +145,7 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
         if campaign_id:
             try:
                 camp_uuid = UUID(str(campaign_id))
-            except Exception:
+            except ValueError:
                 camp_uuid = None
         self.create_event(
             StrongholdCreated,
@@ -181,7 +181,7 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
         if target_id:
             try:
                 camp_uuid = UUID(str(target_id))
-            except Exception:
+            except ValueError:
                 camp_uuid = None
 
         self.create_event(

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.dependencies import (
@@ -118,13 +119,12 @@ async def get_relic(
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
     """Retrieve 3D relic geometry, shader properties, and runes."""
-    try:
-        relic = await repo.load(relic_id)
-    except Exception:
+    relic = await load_if_exists(repo, relic_id)
+    if relic is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Relic {relic_id} not found",
-        ) from None
+        )
 
     can_view = await check_user_can_inspect_relic(user_id, relic.state.campaign_id, spicedb)
     if not can_view:
@@ -164,13 +164,12 @@ async def inspect_relic(
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
     """Record an interactive 3D inspection and discover engraved runes."""
-    try:
-        relic = await repo.load(relic_id)
-    except Exception:
+    relic = await load_if_exists(repo, relic_id)
+    if relic is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Relic {relic_id} not found",
-        ) from None
+        )
 
     can_inspect = await check_user_can_inspect_relic(user_id, relic.state.campaign_id, spicedb)
     if not can_inspect:
@@ -203,13 +202,12 @@ async def translate_rune(
     repo: Annotated[AggregateRepository[RelicAggregate], Depends(get_relic_repo)] = None,
 ) -> dict[str, Any]:
     """Translate an engraved rune inscription on the relic."""
-    try:
-        relic = await repo.load(relic_id)
-    except Exception:
+    relic = await load_if_exists(repo, relic_id)
+    if relic is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Relic {relic_id} not found",
-        ) from None
+        )
 
     can_inspect = await check_user_can_inspect_relic(user_id, relic.state.campaign_id, spicedb)
     if not can_inspect:

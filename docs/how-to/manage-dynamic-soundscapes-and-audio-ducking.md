@@ -9,7 +9,7 @@ Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel acces
 Authorization fails closed:
 - No verified token returns `401`.
 - A verified caller without the schema permission returns `403`.
-- SpiceDB cannot answer. The service returns `503` with `{"detail": "Authorization service is unavailable"}`. A failed check is never a denial or an allow.
+- SpiceDB cannot answer. The service returns `503` with `{"error": "authorization_unavailable"}`. A failed check is never a denial or an allow.
 
 Each control route checks one schema permission. The table in section 7 lists them.
 

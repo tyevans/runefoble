@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
+from runefoble_platform.aggregate_loading import load_or_create
 from the_watcher.dependencies import (
     get_faction_resource_repo,
     require_campaign_permission,
@@ -22,14 +25,16 @@ router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["faction_
 
 
 async def _load_or_create(faction_id: str) -> FactionResourceAggregate:
+    """Load the faction resource aggregate. Create an empty one only when its stream is absent."""
     repo = get_faction_resource_repo()
     agg_uuid = to_uuid(faction_id)
-    try:
-        return await repo.load(agg_uuid)
-    except Exception:
-        agg = FactionResourceAggregate(aggregate_id=agg_uuid)
+
+    def _fresh(aggregate_id: UUID) -> FactionResourceAggregate:
+        agg = FactionResourceAggregate(aggregate_id=aggregate_id)
         agg.state.faction_id = faction_id
         return agg
+
+    return await load_or_create(repo, agg_uuid, _fresh)
 
 
 def _to_response(agg: FactionResourceAggregate) -> FactionResourceResponse:

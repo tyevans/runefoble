@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.dependencies import (
@@ -98,11 +99,7 @@ async def get_west_marches_overview(
             detail="Forbidden: User lacks view permission on campaign.",
         )
 
-    try:
-        aggregate = await repo.load(campaign_id)
-    except Exception:
-        aggregate = WestMarchesAtlasAggregate(campaign_id)
-        await repo.save(aggregate)
+    aggregate = await load_or_create(repo, campaign_id, WestMarchesAtlasAggregate)
 
     state = aggregate.state.model_copy()
     if discovery_type:
@@ -128,10 +125,7 @@ async def link_shared_world(
             detail="Forbidden: User lacks permission to configure campaign world.",
         )
 
-    try:
-        aggregate = await repo.load(campaign_id)
-    except Exception:
-        aggregate = WestMarchesAtlasAggregate(campaign_id)
+    aggregate = await load_or_create(repo, campaign_id, WestMarchesAtlasAggregate)
 
     from runefoble_events.west_marches import (
         CampaignRegisteredToSharedWorld,
@@ -174,10 +168,7 @@ async def record_discovery_pin(
             detail="Forbidden: User lacks discover/play permission on campaign.",
         )
 
-    try:
-        aggregate = await repo.load(campaign_id)
-    except Exception:
-        aggregate = WestMarchesAtlasAggregate(campaign_id)
+    aggregate = await load_or_create(repo, campaign_id, WestMarchesAtlasAggregate)
 
     did = aggregate.record_discovery(
         name=payload.name,
@@ -212,10 +203,7 @@ async def upgrade_stronghold_facility(
             detail="Forbidden: User lacks permission to upgrade stronghold facilities.",
         )
 
-    try:
-        aggregate = await repo.load(campaign_id)
-    except Exception:
-        aggregate = WestMarchesAtlasAggregate(campaign_id)
+    aggregate = await load_or_create(repo, campaign_id, WestMarchesAtlasAggregate)
 
     outpost_id = payload.outpost_id
     if not outpost_id and aggregate.state.outposts:
@@ -257,10 +245,7 @@ async def post_tavern_notice(
             detail="Forbidden: User lacks permission to post tavern notices.",
         )
 
-    try:
-        aggregate = await repo.load(campaign_id)
-    except Exception:
-        aggregate = WestMarchesAtlasAggregate(campaign_id)
+    aggregate = await load_or_create(repo, campaign_id, WestMarchesAtlasAggregate)
 
     nid = aggregate.post_communal_notice(
         campaign_id=campaign_id,

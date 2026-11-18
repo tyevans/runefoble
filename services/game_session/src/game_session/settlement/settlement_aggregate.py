@@ -30,7 +30,7 @@ from runefoble_events.settlements import (
 def _to_uuid(val: Any) -> UUID:
     try:
         return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception:
+    except ValueError:
         return uuid4()
 
 

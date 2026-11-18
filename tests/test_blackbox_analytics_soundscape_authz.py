@@ -224,4 +224,4 @@ def test_soundscape_spicedb_outage_returns_503(
         "/api/v1/soundscape/duck", headers=_bearer(DM), json=_duck_body(campaign["sid"])
     )
     assert res.status_code == 503
-    assert res.json()["detail"] == "Authorization service is unavailable"
+    assert res.json() == {"error": "authorization_unavailable"}
