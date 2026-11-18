@@ -57,7 +57,7 @@ This page is a roadmap. Its release tiers are targets, not the state of the code
 | `FEAT-RUL-02` | **Encounter Turn & Initiative Tracking** | Turn ordering, round advancing, active turn highlighting, and delayed actions. | **P0 (MVP)** | `game_session` |
 | `FEAT-RUL-03` | **Automated Dice Roller & Mechanics** | Standard RPG dice notation parsing (`1d20+5`, `2d6+3`), critical hit/fumble detection, advantage/disadvantage. | **P0 (MVP)** | `game_session`, `gateway_mcp` |
 | `FEAT-RUL-04` | **SRD 5e / OGL Rule Compendium** | Built-in reference data for core classes, spells, monsters, and magical items. | **P1 (Beta)** | `character_sheet` |
-| `FEAT-RUL-05` | **Level Up & Character Builder Wizard** | Interactive step-by-step leveling flow with subclass selection and spell selection. | **P1 (Beta)** | `character_sheet`, `frontend` |
+| `FEAT-RUL-05` | **Level Up & Character Builder Wizard** | Interactive step-by-step leveling flow with subclass selection and spell selection. The level-up rules exist in the backend. The step-by-step UI does not yet exist. | **P1 (Beta)** | `character_sheet`, `frontend` |
 
 ---
 
@@ -79,8 +79,8 @@ This page is a roadmap. Its release tiers are targets, not the state of the code
 |---|---|---|---|---|
 | `FEAT-UI-01` | **Bauhaus Modernist Theming System** | CSS custom property token system with Bauhaus modernist default aesthetic and multi-theme runtime switching. | **P0 (MVP)** | `frontend` |
 | `FEAT-UI-02` | **Global Settings Modal & Mode Switcher** | Centralized settings modal with Dark / Light / System appearance mode toggle, moving theme controls out of the header. | **P1 (Beta)** | `frontend` |
-| `FEAT-UI-03` | **Cross-Component Semantic Dark/Light Invariants** | Unified semantic tokens ensuring high-contrast, WCAG 2.1 AA compliant rendering in all components across dark and light modes. | **P1 (Beta)** | `frontend` |
-| `FEAT-UI-04` | **Tactile Token Kinematics & Momentum** | Drag-and-drop token physics with momentum, spring dampening, step counters, and live waypoint route measurement. | **P1 (Beta)** | `frontend`, `board_state` |
+| `FEAT-UI-03` | **Cross-Component Semantic Dark/Light Invariants** | Unified semantic tokens for dark and light modes, with high-contrast rendering in all components. A contrast matrix story exists. Automated WCAG 2.1 AA checks do not yet exist. | **P1 (Beta)** | `frontend` |
+| `FEAT-UI-04` | **Tactile Token Kinematics & Momentum** | Drag-and-drop token movement with spring interpolation, step counters, and live waypoint route measurement. Momentum is not yet implemented. | **P1 (Beta)** | `frontend`, `board_state` |
 | `FEAT-UI-05` | **Spoken Command Ghost Previews** | Real-time semi-transparent token trajectory and targeting ghost preview before voice mutations commit to the board. | **P1 (Beta)** | `frontend`, `the_watcher` |
 | `FEAT-UI-06` | **Radial Token Action Menu & AoE Templates** | Contextual circular dial for one-tap token actions and rotatable geometric AoE spell templates with live target intersection highlighting. | **P1 (Beta)** | `frontend`, `board_state` |
 | `FEAT-UI-07` | **User Authentication & Zitadel OIDC Modal** | Sign-up, sign-in, token storage/refresh, user menu dropdown, and profile settings. | **P0 (MVP)** | `frontend`, `runefoble_auth` |
@@ -110,7 +110,7 @@ This page is a roadmap. Its release tiers are targets, not the state of the code
 |---|---|---|---|---|
 | `FEAT-DWN-01` | **Interactive Campfire & Long Rest Downtime Engine** | Campfire rest rituals, companion bonding, campfire storytelling prompts, and collaborative party banter generators. | **P1 (Beta)** | `game_session`, `the_watcher` |
 | `FEAT-DWN-02` | **Alchemical Brewing, Enchanting & Recipe Synthesis** | Drag-and-drop reagent laboratory, volatile concoction risk tables, and custom homebrew crafting progression. | **P1 (Beta)** | `character_sheet`, `rules_compendium` |
-| `FEAT-DWN-03` | **Interactive Tavern Minigames & Merchant Haggling** | Playable Liar's Dice, card tournaments, drinking challenges with DSP speech slurring, and personality-driven bartering. | **P1 (Beta)** | `game_session`, `voice_agent` |
+| `FEAT-DWN-03` | **Interactive Tavern Minigames & Merchant Haggling** | Playable Liar's Dice, card duels, drinking challenges with DSP speech slurring, and personality-driven bartering. | **P1 (Beta)** | `game_session`, `voice_agent` |
 | `FEAT-DWN-04` | **Party Stronghold, Camp & Base Customization** | Upgradable campsite and guildhall stronghold customization granting persistent party rest boons and defensive buffers. | **P1 (Beta)** | `game_session`, `board_state` |
 
 ---
