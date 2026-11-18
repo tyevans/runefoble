@@ -21,8 +21,8 @@ from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer
 
+from tests.helpers.campaign_analytics_service import AnalyticsService, wait_until
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import SIGNING_ISSUER
 
 SESSION_STREAM = "runefoble.events.session"
 
@@ -54,31 +54,17 @@ def _publish(double: MockAsyncRedis, stream: str, event: Any) -> None:
 
 
 def test_campaign_analytics_consumer_projects_session_event_from_redis(
-    redis_double: MockAsyncRedis,
+    analytics_service: AnalyticsService,
 ) -> None:
     """A session event on Redis appears in the analytics timeline after the consumer starts."""
-    from campaign_analytics.dependencies import get_spicedb_client
-    from campaign_analytics.main import app
-
     campaign_id = f"camp-{uuid4().hex[:8]}"
     session_id = str(uuid4())
-    # The timeline is a view-protected read. Grant the member view rights on the campaign.
-    asyncio.run(
-        get_spicedb_client().write_relationship(
-            resource_type="campaign",
-            resource_id=campaign_id,
-            relation="view",
-            subject_type="user",
-            subject_id="user-test",
-        )
-    )
-    member_headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-test')}"}
+    analytics_service.grant_view(campaign_id)
 
-    with TestClient(app, headers=member_headers) as client:
+    with analytics_service.start() as client:
         assert client.get("/healthz").json()["consumers"] == {"analytics": "running"}
 
-        _publish(
-            redis_double,
+        analytics_service.publish(
             SESSION_STREAM,
             SessionCreated(
                 aggregate_id=session_id,
@@ -94,11 +80,11 @@ def test_campaign_analytics_consumer_projects_session_event_from_redis(
             body = client.get(timeline_url).json()
             return body.get("total_milestones", 0) >= 1
 
-        assert _wait_until(has_milestone), "analytics consumer did not project the session event"
+        assert wait_until(has_milestone), "analytics consumer did not project the session event"
 
 
 def test_campaign_analytics_refuses_to_start_when_consumer_group_cannot_be_created(
-    monkeypatch: pytest.MonkeyPatch,
+    analytics_service: AnalyticsService, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A Redis failure at start-up stops the service. It does not run without its consumer."""
     from campaign_analytics.main import app
@@ -113,17 +99,17 @@ def test_campaign_analytics_refuses_to_start_when_consumer_group_cannot_be_creat
         pass
 
 
-def test_healthz_reports_failed_consumer_after_read_failure(redis_double: MockAsyncRedis) -> None:
+def test_healthz_reports_failed_consumer_after_read_failure(
+    analytics_service: AnalyticsService,
+) -> None:
     """When the consumer loses Redis, /healthz reports it as failed with HTTP 503."""
-    from campaign_analytics.main import app
-
-    with TestClient(app) as client:
+    with analytics_service.start() as client:
         assert client.get("/healthz").status_code == 200
 
         async def lost_connection(*_args: Any, **_kwargs: Any) -> None:
             raise ConnectionError("redis connection lost")
 
-        redis_double.xreadgroup = lost_connection  # type: ignore[method-assign]
+        analytics_service.redis.xreadgroup = lost_connection  # type: ignore[method-assign]
 
         def is_degraded() -> bool:
             return client.get("/healthz").status_code == 503
@@ -171,7 +157,7 @@ async def test_failed_handler_routes_message_to_dead_letter_and_acknowledges() -
     double = MockAsyncRedis()
     consumer_group = RedisConsumerGroup(client=double)
 
-    async def failing_handler(_event: Any) -> None:
+    async def failing_handler(_message_id: str, _event: Any) -> None:
         raise ValueError("projection write failed")
 
     consumer = StreamConsumer(

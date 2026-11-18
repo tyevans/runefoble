@@ -12,7 +12,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from campaign_analytics.worker import CampaignAnalyticsWorker
 from fastapi.testclient import TestClient
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
 from runefoble_events.events import (
@@ -21,6 +20,8 @@ from runefoble_events.events import (
     SessionEnded,
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+
+from tests.helpers.campaign_analytics_service import wait_until
 
 
 async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
@@ -43,12 +44,10 @@ async def test_chronicle_timeline_frontdoor_and_recap_metadata(
     spicedb_client: MockSpiceDBClient,
     client: TestClient,
     event_bus: RedisStreamsEventBus,
-    worker: CampaignAnalyticsWorker,
 ) -> None:
     """Verify chronicle timeline delivers historical memory recaps and milestone metadata."""
     campaign_id, session_id = str(uuid4()), str(uuid4())
     await grant_view(spicedb_client, campaign_id)
-    await worker.setup_groups()
 
     await event_bus.publish_event(
         "runefoble.events.session",
@@ -80,7 +79,14 @@ async def test_chronicle_timeline_frontdoor_and_recap_metadata(
             summary="Party successfully cleared the Catacombs.",
         ),
     )
-    await worker.process_once(count=10)
+    assert wait_until(
+        lambda: (
+            client.get(f"/api/v1/analytics/campaigns/{campaign_id}/timeline").json()[
+                "total_milestones"
+            ]
+            >= 2
+        )
+    )
 
     resp = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/timeline")
     assert resp.status_code == 200
@@ -103,12 +109,10 @@ async def test_chronicle_timeline_pagination_and_filtering(
     spicedb_client: MockSpiceDBClient,
     client: TestClient,
     event_bus: RedisStreamsEventBus,
-    worker: CampaignAnalyticsWorker,
 ) -> None:
     """Verify chronicle timeline pagination limits and session query filtering."""
     campaign_id, session_1, session_2 = str(uuid4()), str(uuid4()), str(uuid4())
     await grant_view(spicedb_client, campaign_id)
-    await worker.setup_groups()
 
     await event_bus.publish_event(
         "runefoble.events.session",
@@ -128,7 +132,14 @@ async def test_chronicle_timeline_pagination_and_filtering(
             title="Chapter 2: The Sunken City",
         ),
     )
-    await worker.process_once(count=5)
+    assert wait_until(
+        lambda: (
+            client.get(f"/api/v1/analytics/campaigns/{campaign_id}/timeline").json()[
+                "total_milestones"
+            ]
+            >= 2
+        )
+    )
 
     limit_resp = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/timeline?limit=1")
     assert limit_resp.status_code == 200
