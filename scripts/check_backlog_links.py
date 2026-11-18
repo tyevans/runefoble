@@ -9,6 +9,10 @@ Categories (each must be zero):
 - missing_governance: complete records without governing_prds, governing_stories,
   governing_adrs, or dependencies.
 
+Curation warnings (never change the exit status): the refined buffer falls outside the
+6 to 12 band, and a refined task depends on a task that is not complete. The orchestrator
+reads these warnings and demotes tasks by judgement. There is no hard gate for them.
+
 Usage: uv run python scripts/check_backlog_links.py [--json]
 Exit status is 1 when any category is non-zero. The check only reads repository files.
 """
@@ -17,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 
 from backlog_records import (
@@ -30,10 +35,14 @@ from backlog_records import (
     repo_path_tokens,
     split_record,
     status_section_index,
+    task_id_of,
 )
 
 SAMPLE_SIZE = 5
 CACHE_DIR_NAME = "__pycache__"
+BUFFER_MIN = 6
+BUFFER_MAX = 12
+TASK_ID = re.compile(r"(\d{4})")
 
 
 def cited_path_exists(path: str) -> bool:
@@ -113,6 +122,51 @@ def missing_governance() -> list[str]:
     return found
 
 
+def _refined_records() -> list:
+    folder = BACKLOG_DIR / "refined"
+    return sorted(folder.glob("*.md")) if folder.is_dir() else []
+
+
+def _stage_by_task_id() -> dict[str, str]:
+    stages: dict[str, str] = {}
+    for stage in ("complete", "refined", "proposed"):
+        folder = BACKLOG_DIR / stage
+        if folder.is_dir():
+            for path in folder.glob("*.md"):
+                stages[task_id_of(path)] = stage
+    return stages
+
+
+def buffer_warnings() -> list[str]:
+    count = len(_refined_records())
+    if count < BUFFER_MIN:
+        return [f"refined buffer holds {count} tasks; below {BUFFER_MIN}"]
+    if count > BUFFER_MAX:
+        return [f"refined buffer holds {count} tasks; above {BUFFER_MAX}"]
+    return []
+
+
+def dependency_gap_warnings() -> list[str]:
+    stages = _stage_by_task_id()
+    found: list[str] = []
+    for record in _refined_records():
+        front, _ = split_record(record.read_text(encoding="utf-8"))
+        for dep in front.get("dependencies") or []:
+            match = TASK_ID.search(str(dep))
+            dep_id = match.group(1) if match else str(dep)
+            stage = stages.get(dep_id, "missing")
+            if stage != "complete":
+                found.append(f"{record.name}: depends on TASK-{dep_id} ({stage})")
+    return found
+
+
+def curation_warnings() -> dict[str, list[str]]:
+    return {
+        "refined_buffer": buffer_warnings(),
+        "dependency_gap": dependency_gap_warnings(),
+    }
+
+
 def run_checks() -> dict[str, list[str]]:
     return {
         "dead_links": dead_links(),
@@ -137,6 +191,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{name}: {len(items)}")
             for item in items[:SAMPLE_SIZE]:
                 print(f"    {item}")
+        for name, items in curation_warnings().items():
+            for item in items:
+                print(f"warning {name}: {item}")
     return 1 if any(results.values()) else 0
 
 

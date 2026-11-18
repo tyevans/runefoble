@@ -1,14 +1,17 @@
-"""Backlog buffer, dependency, and registry invariants (TASK-0667).
+"""Backlog buffer warnings and registry agreement (TASK-0667).
 
-These tests read the public backlog records: the lifecycle folders, the
-frontmatter of each record, and the registry tables. They fail when the
-ready buffer leaves the 6 to 12 band, when a refined task waits on a task
-that is not complete, or when a registry disagrees with its record.
+The buffer band (6 to 12 refined tasks) and the dependency rule (a refined task waits
+on complete tasks only) are curation warnings. `scripts/check_backlog_links.py` prints
+them and keeps its exit status. The orchestrator demotes tasks by judgement.
+
+These tests run the check as a process against fixture backlogs in `tmp_path`, and
+they check that each registry agrees with the status of its record file.
 """
 
 from __future__ import annotations
 
-import re
+import subprocess
+import sys
 from pathlib import Path
 
 from tools.project_visualizer.parsers.markdown_utils import parse_frontmatter
@@ -17,38 +20,82 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 BACKLOG = REPO_ROOT / "docs" / "project" / "backlog"
 PRODUCT = REPO_ROOT / "docs" / "project" / "product"
 STORIES = REPO_ROOT / "docs" / "project" / "user_stories"
-
-READY_BUFFER_MIN = 6
-READY_BUFFER_MAX = 12
-
-
-def _task_id(path: Path) -> str:
-    match = re.search(r"(\d{4})", path.name)
-    assert match, f"task file has no four-digit id: {path.name}"
-    return match.group(1)
+SCRIPTS = REPO_ROOT / "scripts"
+FIXTURE_SCRIPTS = ("check_backlog_links.py", "backlog_records.py")
 
 
-def _stage_by_task_id() -> dict[str, str]:
-    stages: dict[str, str] = {}
-    for stage in ("complete", "refined", "proposed"):
-        for path in (BACKLOG / stage).glob("*.md"):
-            stages[_task_id(path)] = stage
-    return stages
+def _fixture_repo(
+    root: Path, refined: dict[str, list[str]], complete: tuple[str, ...] = ()
+) -> None:
+    """Write a fixture repository with refined tasks and the complete tasks they may cite.
+
+    `refined` maps a refined task id to the dependency ids it lists.
+    """
+    scripts = root / "scripts"
+    scripts.mkdir(parents=True)
+    for name in FIXTURE_SCRIPTS:
+        (scripts / name).write_text((SCRIPTS / name).read_text(encoding="utf-8"), encoding="utf-8")
+    for stage, ids in (("refined", refined), ("complete", {c: [] for c in complete})):
+        folder = root / "docs" / "project" / "backlog" / stage
+        folder.mkdir(parents=True)
+        for task_id, deps in ids.items():
+            dep_lines = "".join(f"- TASK-{dep}\n" for dep in deps)
+            deps_block = f"dependencies:\n{dep_lines}" if deps else "dependencies: []\n"
+            governance = "governing_adrs: []\ngoverning_prds: []\ngoverning_stories: []\n"
+            (folder / f"{task_id}-fixture-task.md").write_text(
+                f"---\nid: '{task_id}'\ntitle: Fixture {task_id}\nstatus: {stage.title()}\n"
+                f"{governance}{deps_block}---\n\n# TASK-{task_id}: Fixture\n",
+                encoding="utf-8",
+            )
 
 
-def _dependency_ids(text: str) -> list[str]:
-    frontmatter = text.split("---", 2)[1]
-    block = frontmatter.split("dependencies:", 1)
-    if len(block) < 2:
-        return []
-    deps: list[str] = []
-    for line in block[1].splitlines()[1:]:
-        if not line.startswith("- "):
-            break
-        match = re.match(r"- TASK-(\d{4})", line)
-        if match:
-            deps.append(match.group(1))
-    return deps
+def _run_check(root: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(root / "scripts" / "check_backlog_links.py")],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_over_buffered_refined_folder_prints_warning_and_keeps_exit_status(tmp_path: Path):
+    """Thirteen refined tasks print a band warning. The check still exits 0."""
+    refined = {f"{n:04d}": [] for n in range(1, 14)}
+    _fixture_repo(tmp_path, refined)
+
+    result = _run_check(tmp_path)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "warning refined_buffer: refined buffer holds 13 tasks; above 12" in result.stdout
+
+
+def test_dependency_gap_prints_one_warning_per_gap_and_keeps_exit_status(tmp_path: Path):
+    """A refined task that waits on a refined task prints a dependency warning. Exit 0."""
+    refined = {f"{n:04d}": [] for n in range(2, 8)}
+    refined["0002"] = ["0001"]  # 0001 is complete: no warning
+    refined["0003"] = ["0009"]  # 0009 is absent from every folder: warning
+    _fixture_repo(tmp_path, refined, complete=("0001",))
+
+    result = _run_check(tmp_path)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "warning dependency_gap: 0003-fixture-task.md: depends on TASK-0009 (missing)" in (
+        result.stdout
+    )
+    assert "depends on TASK-0001" not in result.stdout
+
+
+def test_buffer_inside_band_with_complete_dependencies_prints_no_warning(tmp_path: Path):
+    """Six refined tasks that wait on complete tasks produce no curation warning."""
+    refined = {f"{n:04d}": [] for n in range(2, 8)}
+    refined["0002"] = ["0001"]
+    _fixture_repo(tmp_path, refined, complete=("0001",))
+
+    result = _run_check(tmp_path)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "warning" not in result.stdout
 
 
 def _registry_statuses(registry: Path, prefix: str, status_column: int) -> dict[str, str]:
@@ -69,27 +116,6 @@ def _file_statuses(folder: Path, prefix: str) -> dict[str, str]:
             continue
         statuses[f"{prefix}-{str(meta['id']).zfill(4)}"] = str(meta.get("status", ""))
     return statuses
-
-
-def test_ready_buffer_holds_six_to_twelve_refined_tasks():
-    """The refined folder holds between 6 and 12 tasks (the make prd-audit band)."""
-    refined = list((BACKLOG / "refined").glob("*.md"))
-    assert READY_BUFFER_MIN <= len(refined) <= READY_BUFFER_MAX, (
-        f"refined buffer holds {len(refined)} tasks; expected {READY_BUFFER_MIN} "
-        f"to {READY_BUFFER_MAX}"
-    )
-
-
-def test_refined_tasks_depend_only_on_complete_tasks():
-    """A refined task waits on complete tasks only. Gaps must be demoted or sequenced."""
-    stages = _stage_by_task_id()
-    gaps: list[str] = []
-    for path in (BACKLOG / "refined").glob("*.md"):
-        for dep in _dependency_ids(path.read_text(encoding="utf-8")):
-            dep_stage = stages.get(dep, "missing")
-            if dep_stage != "complete":
-                gaps.append(f"{_task_id(path)} -> {dep} ({dep_stage})")
-    assert not gaps, "refined tasks depend on incomplete tasks: " + ", ".join(sorted(gaps))
 
 
 def test_user_story_and_prd_registries_agree_with_record_status():

@@ -4,10 +4,13 @@
 Backlog curation in Runefoble uses lean Just-In-Time (JIT) refinement, continuous refactoring scanning, and roadmap dependency alignment. Rather than bulk-refining work far in advance, the team maintains a lean ready buffer in `docs/project/backlog/refined/`. The target is 10 tasks. The buffer must hold 6 to 12 tasks.
 
 ### Ready Buffer Bands and Dependency Rule
-- Fewer than 6 refined tasks: refine more work from `proposed/`. `make prd-audit` warns.
-- More than 12 refined tasks: demote tasks to `proposed/`. `make prd-audit` warns.
-- A refined task depends only on complete tasks. A refined task that depends on a proposed or refined task is demoted until that dependency is complete.
-- To demote a task, change its `status` line to `Proposed`, move the file to `proposed/`, and change its `PRIORITY.md` entry to `(Proposed)`. Record the reason in the commit.
+These two rules are curation warnings. They are not gates.
+- The refined buffer should hold 6 to 12 tasks. The target is 10.
+- A refined task should depend on complete tasks only.
+
+`scripts/check_backlog_links.py` prints a `warning refined_buffer` line when the count is outside the band. It prints a `warning dependency_gap` line for each refined task that waits on a task that is not complete. The warnings never change the exit status of `make health-check`.
+
+The orchestrator reads the warnings and demotes tasks by judgement. A demotion moves the file from `refined/` to `proposed/`, changes its `status` line to `Proposed`, and changes its `PRIORITY.md` entry to `(Proposed)`. Record the reason in the commit.
 
 ## Running the Health Check
 Inspect the repository for file length invariant violations (<500 lines) and review buffer status:
@@ -51,7 +54,7 @@ Or schedule it to run daily at 9:00 AM:
 ## How Curation Operates
 1. **Health & Invariants**: Identifies files approaching or exceeding 500 lines per `AGENTS.md` Rule 6, filing refactoring proposals in `docs/project/backlog/proposed/`.
 2. **Roadmap Alignment**: Reads `docs/project/backlog/ROADMAP.md` (e.g. Milestone 2: Live Collaborative Alpha) to ensure foundational architectural enablers precede dependent feature epics.
-3. **JIT Refinement**: Checks `docs/project/backlog/refined/`. If the ready buffer falls below 6 items, it refines the top proposed enabler/task against the Definition of Ready in `AGENTS.md`—including INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable), bounded context isolation, microfrontend UI slice declaration (`services/<bc>/ui/`) per [ADR-0013](../project/adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md), Storybook isolation planning, frontdoor BDD Gherkin scenario readiness in `docs/project/user_stories/accepted/` with frontdoor-only setup per [ADR-0014](../project/adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md), and a frontdoor blackbox TDD & BDD Definition of Done (requiring passing Playwright browser automation suites) with platform showcase (`docs/marketing.md`) and changelog synchronization.
+3. **JIT Refinement**: Checks `docs/project/backlog/refined/`. If the ready buffer falls below 6 items (see the warning above), it refines the top proposed enabler/task against the Definition of Ready in `AGENTS.md`—including INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable), bounded context isolation, microfrontend UI slice declaration (`services/<bc>/ui/`) per [ADR-0013](../project/adrs/accepted/adr-0013-microfrontend-architecture-and-service-component-vendoring.md), Storybook isolation planning, frontdoor BDD Gherkin scenario readiness in `docs/project/user_stories/accepted/` with frontdoor-only setup per [ADR-0014](../project/adrs/accepted/adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md), and a frontdoor blackbox TDD & BDD Definition of Done (requiring passing Playwright browser automation suites) with platform showcase (`docs/marketing.md`) and changelog synchronization.
 4. **PRIORITY Index Sync**: Reconciles `docs/project/backlog/PRIORITY.md` with filesystem state.
 
 ### Auditing BDD Readiness During Curation

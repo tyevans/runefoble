@@ -44,7 +44,7 @@ make prd-audit
 ```
 
 The audit checks:
-- Current ready buffer size. It warns below 6 refined tasks and above 12 (target 10).
+- Current ready buffer size. It warns below 6 refined tasks and above 12 (target 10). The warning is a curation signal. It does not fail the audit.
 - Undecomposed accepted PRDs.
 - Epic proposed tasks that should be split into vertical slices (see the scope rule below).
 - Stale task links across PRD files.
