@@ -47,7 +47,7 @@ def _bearer(issuer: Any, user_id: str) -> dict[str, str]:
 def live_lore(monkeypatch, lore_backends, game_session_upstream) -> Iterator[str]:
     """Serve the real campaign_lore app with its lifespan and point the gateway at it."""
     with serve(lore_app, lifespan="on") as lore_url:
-        monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
+        monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", lore_url)
         yield lore_url
 
 
@@ -148,7 +148,7 @@ def test_codex_search_parameter_reaches_the_owner(client: TestClient, campaign) 
 def test_owner_down_returns_503_for_atlas_and_codex(
     monkeypatch, trusted_ws_issuer, game_session_upstream
 ) -> None:
-    monkeypatch.setenv("CAMPAIGN_LORE_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", closed_port_url())
     owner = _bearer(trusted_ws_issuer, "dm_lore_down")
     with TestClient(gateway_app) as gateway_client:
         created = gateway_client.post(
@@ -182,7 +182,7 @@ def test_owner_403_passes_through_on_atlas_and_codex(
         campaign_id = created.json()["id"]
 
         with serve(unavailable_app(403)) as refusing_url:
-            monkeypatch.setenv("CAMPAIGN_LORE_URL", refusing_url)
+            monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", refusing_url)
             with TestClient(gateway_app) as refused_client:
                 atlas = refused_client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=owner)
                 codex = refused_client.get(f"/api/v1/campaigns/{campaign_id}/codex", headers=owner)

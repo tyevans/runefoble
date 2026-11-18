@@ -9,14 +9,14 @@ from tests.helpers.container_owner import remove_orphaned_test_containers
 # Test mode: the SpiceDB preshared key has no default outside tests. Tests supply a throwaway
 # value before any settings object is built. Live tests may override it in their environment.
 os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key")
-# The gateway MCP has no localhost defaults. Unless a test sets an upstream itself, its URLs
-# point at a closed loopback port, so no test reaches a real service by accident.
+# Service URLs have no code defaults. Unless a test sets one itself, these point at a closed
+# loopback port, so no test reaches a real service by accident.
 for _upstream in (
-    "BOARD_STATE_URL",
+    "RUNEFOBLE_BOARD_STATE_URL",
     "RUNEFOBLE_CHARACTER_SHEET_URL",
-    "GAME_SESSION_URL",
-    "RULES_COMPENDIUM_URL",
-    "THE_WATCHER_URL",
+    "RUNEFOBLE_GAME_SESSION_URL",
+    "RUNEFOBLE_RULES_COMPENDIUM_URL",
+    "RUNEFOBLE_WATCHER_URL",
 ):
     os.environ.setdefault(_upstream, "http://127.0.0.1:9")
 # The inference worker refuses to start without its service token (ADR-0015 e). Tests use a

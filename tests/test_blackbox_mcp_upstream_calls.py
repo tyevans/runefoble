@@ -62,7 +62,7 @@ def board_upstream(monkeypatch: pytest.MonkeyPatch) -> Iterator[list[dict[str, A
     """Point the gateway at a recording board_state stand-in and yield what it receives."""
     received: list[dict[str, Any]] = []
     with serve(_recording_board_app(received)) as board_url:
-        monkeypatch.setenv("BOARD_STATE_URL", board_url)
+        monkeypatch.setenv("RUNEFOBLE_BOARD_STATE_URL", board_url)
         yield received
 
 

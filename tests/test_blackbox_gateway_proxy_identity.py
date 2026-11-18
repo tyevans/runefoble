@@ -74,7 +74,7 @@ def test_proxy_forwards_bearer_token_and_no_user_header(
     """The upstream receives the same Authorization value and no X-User-Id."""
     with (
         serve(_echo_upstream()) as lore_url,
-        gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client,
+        gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
     ):
         campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(
@@ -94,7 +94,7 @@ def test_proxy_sends_the_service_credential_and_trace_context(
     """Every proxied call presents the service credential (ADR-0015 e) and a traceparent."""
     with (
         serve(_echo_upstream()) as lore_url,
-        gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client,
+        gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
     ):
         campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
@@ -111,7 +111,7 @@ def test_soundscape_proxy_forwards_bearer_token(monkeypatch, trusted_ws_issuer) 
     headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('player_valeros')}"}
     with (
         serve(_echo_upstream()) as soundscape_url,
-        gateway(monkeypatch, SOUNDSCAPE_SERVICE_URL=soundscape_url) as client,
+        gateway(monkeypatch, RUNEFOBLE_SOUNDSCAPE_URL=soundscape_url) as client,
     ):
         res = client.get("/api/v1/soundscape/tension?session_id=session-1", headers=headers)
 
@@ -127,7 +127,7 @@ def test_client_header_is_not_forwarded_to_upstream(monkeypatch, trusted_ws_issu
     headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('player_valeros')}"}
     with (
         serve(_echo_upstream()) as soundscape_url,
-        gateway(monkeypatch, SOUNDSCAPE_SERVICE_URL=soundscape_url) as client,
+        gateway(monkeypatch, RUNEFOBLE_SOUNDSCAPE_URL=soundscape_url) as client,
     ):
         res = client.get(
             "/api/v1/soundscape/tension?session_id=session-1",
@@ -144,7 +144,7 @@ def test_upstream_403_passes_through_unchanged(
     """An upstream 403 reaches the client as 403 with the upstream body."""
     with (
         serve(unavailable_app(403)) as lore_url,
-        gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client,
+        gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
     ):
         campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
@@ -157,7 +157,7 @@ def test_upstream_5xx_returns_502(monkeypatch, trusted_ws_issuer, game_session_u
     """An upstream 503 returns 502 with a fixed message, not a success body."""
     with (
         serve(unavailable_app(503)) as lore_url,
-        gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client,
+        gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
     ):
         campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
@@ -171,7 +171,7 @@ def test_unreachable_upstream_returns_503(
     monkeypatch, trusted_ws_issuer, game_session_upstream
 ) -> None:
     """A connection refused by the upstream returns 503 with no canned payload."""
-    with gateway(monkeypatch, CAMPAIGN_LORE_URL=closed_port_url()) as client:
+    with gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=closed_port_url()) as client:
         campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
@@ -184,7 +184,7 @@ def test_unconfigured_upstream_returns_503(
     monkeypatch, trusted_ws_issuer, game_session_upstream
 ) -> None:
     """An empty upstream URL means no client exists, so the proxy returns 503 with no payload."""
-    with gateway(monkeypatch, CAMPAIGN_LORE_URL="") as client:
+    with gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL="") as client:
         campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 
@@ -202,7 +202,10 @@ def test_non_json_success_body_returns_502(
     def _text(path: str) -> PlainTextResponse:
         return PlainTextResponse("not json", status_code=200)
 
-    with serve(broken) as lore_url, gateway(monkeypatch, CAMPAIGN_LORE_URL=lore_url) as client:
+    with (
+        serve(broken) as lore_url,
+        gateway(monkeypatch, RUNEFOBLE_CAMPAIGN_LORE_URL=lore_url) as client,
+    ):
         campaign_id, headers = _create_campaign(client, trusted_ws_issuer)
         res = client.get(f"/api/v1/campaigns/{campaign_id}/atlas", headers=headers)
 

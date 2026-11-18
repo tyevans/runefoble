@@ -56,8 +56,8 @@ def hub_upstreams(monkeypatch) -> Iterator[None]:
         serve(_echo_upstream("campaign-lore")) as lore_url,
         serve(_echo_upstream("campaign-analytics")) as analytics_url,
     ):
-        monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
-        monkeypatch.setenv("CAMPAIGN_ANALYTICS_URL", analytics_url)
+        monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", lore_url)
+        monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_ANALYTICS_URL", analytics_url)
         yield
 
 

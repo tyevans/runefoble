@@ -256,7 +256,7 @@ async def test_blackbox_fastmcp_compendium_tools(monkeypatch: pytest.MonkeyPatch
     The MCP request carries the caller's signed bearer, which the tool forwards upstream.
     """
     with serve(app, lifespan="on") as compendium_url, serve_mcp(mcp) as mcp_url:
-        monkeypatch.setenv("RULES_COMPENDIUM_URL", compendium_url)
+        monkeypatch.setenv("RUNEFOBLE_RULES_COMPENDIUM_URL", compendium_url)
         result = await call_tool_over_http(
             mcp_url,
             "query_monster_stat_block",

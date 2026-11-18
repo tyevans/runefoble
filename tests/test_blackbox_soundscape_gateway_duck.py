@@ -27,7 +27,7 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 def soundscape_service(monkeypatch) -> Iterator[str]:
     """Run the real soundscape service on a loopback port and point the gateway at it."""
     with serve(soundscape_app) as url:
-        monkeypatch.setenv("SOUNDSCAPE_SERVICE_URL", url)
+        monkeypatch.setenv("RUNEFOBLE_SOUNDSCAPE_URL", url)
         yield url
 
 
@@ -128,7 +128,7 @@ def test_duck_returns_503_when_soundscape_is_unreachable(
     client: TestClient, session_id: str, monkeypatch
 ) -> None:
     """A down owner gives 503. The gateway never answers from its own state."""
-    monkeypatch.setenv("SOUNDSCAPE_SERVICE_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_SOUNDSCAPE_URL", closed_port_url())
     with TestClient(gateway_app) as down_client:
         res = down_client.post(
             "/api/v1/soundscape/duck",

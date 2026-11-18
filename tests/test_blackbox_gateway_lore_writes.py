@@ -71,7 +71,7 @@ def lore_received(monkeypatch, trusted_ws_issuer, lore_reply) -> Iterator[list[d
     """Serve the campaign_lore stand-in and point the gateway at it."""
     received: list[dict[str, Any]] = []
     with serve(_owner_stand_in(received, trusted_ws_issuer.verifier(), lore_reply)) as lore_url:
-        monkeypatch.setenv("CAMPAIGN_LORE_URL", lore_url)
+        monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", lore_url)
         yield received
 
 
@@ -162,7 +162,7 @@ def test_owner_server_error_returns_502_not_a_pin(client: TestClient, owner, lor
 @pytest.fixture
 def lore_down(monkeypatch, game_session_upstream) -> Iterator[TestClient]:
     """Point the gateway at a loopback port where nothing listens."""
-    monkeypatch.setenv("CAMPAIGN_LORE_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", closed_port_url())
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 
@@ -187,7 +187,7 @@ def test_owner_unreachable_returns_503_for_pin_create(lore_down, trusted_ws_issu
 def test_owner_503_returns_502_for_codex_publish(monkeypatch, client, owner) -> None:
     campaign_id, headers = owner
     with serve(unavailable_app(503)) as down_url:
-        monkeypatch.setenv("CAMPAIGN_LORE_URL", down_url)
+        monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", down_url)
         with TestClient(gateway_app) as gateway_client:
             res = gateway_client.post(
                 f"/api/v1/campaigns/{campaign_id}/codex/entries", json=ENTRY_BODY, headers=headers
