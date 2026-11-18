@@ -74,6 +74,17 @@ class IntoxicationLevelChanged(BaseRunefobleEvent):
 
 
 @register_event
+class MerchantCreated(BaseRunefobleEvent):
+    """Fired once when a merchant is first recorded, before its first negotiation."""
+
+    aggregate_type: str = "Merchant"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    merchant_id: str
+    name: str
+    temperament: str = "stubborn_greedy"  # generous, shrewd, hostile, gullible, stubborn_greedy
+
+
+@register_event
 class HagglingNegotiated(BaseRunefobleEvent):
     """Fired when a social bargaining roll or dialogue offer is evaluated by a merchant."""
 
@@ -98,6 +109,7 @@ class HagglingNegotiated(BaseRunefobleEvent):
 __all__ = [
     "HagglingNegotiated",
     "IntoxicationLevelChanged",
+    "MerchantCreated",
     "MinigameEnded",
     "MinigameStarted",
     "MinigameTurnTaken",

@@ -7,21 +7,17 @@ Governed by Hard Invariant 1 (SpiceDB auth) and Hard Invariant 2 (eventsource-py
 from __future__ import annotations
 
 from typing import Any, Literal
-from uuid import UUID, uuid4
+from uuid import uuid4
 
-from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, Header, HTTPException
+from game_session.auth import check_session_participation
 from game_session.dependencies import (
     get_event_bus,
-    get_merchant_repository,
     get_spicedb_client,
     get_tavern_repository,
 )
-from game_session.dependencies import (
-    repo as session_repo,
-)
 from game_session.events import STREAM_TAVERN
-from game_session.merchants import MERCHANT_TEMPERAMENTS, MerchantAggregate
+from game_session.merchants_service import HaggleOffer, haggle, load_merchant_profile
 from game_session.minigame_tables.models import MinigameTableState
 from game_session.minigame_tables.service import (
     TableAlreadyOpenError,
@@ -38,6 +34,7 @@ from game_session.settlement.auth import check_establishment_play_permission
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.voice_client import VoiceAgentUnavailableError
 from pydantic import BaseModel
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["tavern"])
@@ -78,28 +75,6 @@ class HaggleResponse(BaseModel):
     agreed_price: int | None = None
     mood_score: float
     voice_bark: str | None = None
-
-
-async def _check_session_auth(session_id: str, user_id: str) -> None:
-    spicedb = get_spicedb_client()
-    has_perm = await spicedb.check_permission(
-        "session", str(session_id), "participate", "user", user_id
-    )
-    if not has_perm:
-        # Fallback to campaign permission if session not explicitly mapped
-        # A session with no event history has no campaign link, so no campaign grant applies.
-        try:
-            sess = await session_repo.load(
-                UUID(session_id) if len(session_id) == 36 else session_id
-            )
-        except AggregateNotFoundError:
-            sess = None
-        if sess is not None and sess.state.campaign_id:
-            has_perm = await spicedb.check_permission(
-                "campaign", str(sess.state.campaign_id), "play", "user", user_id
-            )
-    if not has_perm:
-        raise HTTPException(status_code=403, detail="Player or DM permission required")
 
 
 class OpenTableRequest(BaseModel):
@@ -148,7 +123,7 @@ async def start_minigame(
     req: StartMinigameRequest,
 ) -> TavernGameState:
     """Start an interactive tavern minigame with wager."""
-    await _check_session_auth(session_id, caller_id)
+    await check_session_participation(session_id, caller_id)
     game_id = f"game-{uuid4().hex[:8]}"
 
     tavern_repo = get_tavern_repository()
@@ -185,13 +160,12 @@ async def take_minigame_turn(
     authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Submit a turn or wager action in an active tavern minigame."""
-    await _check_session_auth(session_id, caller_id)
+    await check_session_participation(session_id, caller_id)
     tavern_repo = get_tavern_repository()
 
-    try:
-        aggregate = await tavern_repo.load(to_uuid(game_id))
-    except (AggregateNotFoundError, ValueError) as e:
-        raise HTTPException(status_code=404, detail=f"Minigame '{game_id}' not found") from e
+    aggregate = await load_if_exists(tavern_repo, to_uuid(game_id))
+    if aggregate is None:
+        raise HTTPException(status_code=404, detail=f"Minigame '{game_id}' not found")
 
     try:
         if req.action_type == "bid":
@@ -238,12 +212,10 @@ async def get_minigame(
     game_id: str,
 ) -> TavernGameState:
     """Get active status and state machine details for a minigame."""
-    await _check_session_auth(session_id, caller_id)
-    tavern_repo = get_tavern_repository()
-    try:
-        aggregate = await tavern_repo.load(to_uuid(game_id))
-    except (AggregateNotFoundError, ValueError) as e:
-        raise HTTPException(status_code=404, detail=f"Minigame '{game_id}' not found") from e
+    await check_session_participation(session_id, caller_id)
+    aggregate = await load_if_exists(get_tavern_repository(), to_uuid(game_id))
+    if aggregate is None:
+        raise HTTPException(status_code=404, detail=f"Minigame '{game_id}' not found")
     return aggregate.state
 
 
@@ -259,66 +231,41 @@ async def haggle_merchant(
     temperament: str = "stubborn_greedy",
 ) -> HaggleResponse:
     """Negotiate with an NPC merchant influenced by dynamic temperament and mood."""
-    await _check_session_auth(session_id, caller_id)
-    merchant_repo = get_merchant_repository()
-
-    try:
-        aggregate = await merchant_repo.load(to_uuid(merchant_id))
-    except (AggregateNotFoundError, ValueError):
-        aggregate = MerchantAggregate(to_uuid(merchant_id))
-        aggregate.state.merchant_id = merchant_id
-        if temperament in MERCHANT_TEMPERAMENTS:
-            aggregate.state.temperament = temperament
-            aggregate.state.name = MERCHANT_TEMPERAMENTS[temperament]["default_name"]
-
-    res = aggregate.negotiate(
-        character_id=req.character_id,
-        item_name=req.item_name,
-        base_price=req.base_price,
-        offered_price=req.offered_price,
-        charisma_modifier=req.charisma_modifier,
-        dialogue=req.dialogue,
+    await check_session_participation(session_id, caller_id)
+    result = await haggle(
+        merchant_id=merchant_id,
         session_id=session_id,
+        temperament=temperament,
+        offer=HaggleOffer(
+            character_id=req.character_id,
+            item_name=req.item_name,
+            base_price=req.base_price,
+            offered_price=req.offered_price,
+            charisma_modifier=req.charisma_modifier,
+            dialogue=req.dialogue,
+        ),
     )
-
-    events_to_publish = list(aggregate.uncommitted_events)
-    await merchant_repo.save(aggregate)
-
-    bus = get_event_bus()
-    if bus:
-        for ev in events_to_publish:
-            await publish_or_fail(bus, STREAM_TAVERN, ev)
 
     return HaggleResponse(
         merchant_id=merchant_id,
-        temperament=res["temperament"],
-        outcome=res["outcome"],
-        base_price=res["base_price"],
-        offered_price=res["offered_price"],
-        counter_price=res["counter_price"],
-        agreed_price=res["agreed_price"],
-        mood_score=res["mood_score"],
-        voice_bark=res["voice_bark"],
+        temperament=result.temperament,
+        outcome=result.outcome,
+        base_price=result.base_price,
+        offered_price=result.offered_price,
+        counter_price=result.counter_price,
+        agreed_price=result.agreed_price,
+        mood_score=result.mood_score,
+        voice_bark=result.voice_bark,
     )
 
 
 @router.get("/api/v1/merchants/{merchant_id}")
 async def get_merchant(merchant_id: str) -> dict[str, Any]:
     """Retrieve merchant temperament, mood score, and bartering history."""
-    merchant_repo = get_merchant_repository()
-    try:
-        aggregate = await merchant_repo.load(to_uuid(merchant_id))
-    except (AggregateNotFoundError, ValueError):
-        return {
-            "merchant_id": merchant_id,
-            "name": "Local Merchant",
-            "temperament": "shrewd",
-            "mood_score": 0.0,
-            "total_negotiations": 0,
-        }
-    data = aggregate.state.model_dump()
-    data["merchant_id"] = merchant_id
-    return data
+    profile = await load_merchant_profile(merchant_id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail=f"Merchant '{merchant_id}' not found")
+    return profile
 
 
 __all__ = ["router"]
