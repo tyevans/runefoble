@@ -151,9 +151,7 @@ def test_cue_trigger_unauthorized_user(
         },
     )
     assert res.status_code == 403
-    detail = res.json()["detail"]
-    assert detail["error"] == "permission_denied"
-    assert detail["required_permission"] == "play"
+    assert "insufficient Zanzibar permissions" in res.json()["detail"]
 
 
 # ---------------------------------------------------------------------------
@@ -251,9 +249,7 @@ def test_mood_override_player_forbidden(
         },
     )
     assert res.status_code == 403
-    detail = res.json()["detail"]
-    assert detail["error"] == "permission_denied"
-    assert detail["required_permission"] == "run_session"
+    assert "lacks Zanzibar permissions" in res.json()["detail"]
 
 
 def test_mood_override_unauthorized_stranger(
@@ -272,9 +268,7 @@ def test_mood_override_unauthorized_stranger(
         },
     )
     assert res.status_code == 403
-    detail = res.json()["detail"]
-    assert detail["error"] == "permission_denied"
-    assert detail["required_permission"] == "run_session"
+    assert "lacks Zanzibar permissions" in res.json()["detail"]
 
 
 # ---------------------------------------------------------------------------
@@ -350,3 +344,69 @@ def test_proxy_returns_503_when_soundscape_is_unreachable(
     assert res.status_code == 503
     assert res.json()["upstream"] == "soundscape"
     assert "cue_id" not in res.text
+
+
+# ---------------------------------------------------------------------------
+# 7. Owner Owns Validation and Routes (TASK-0589, TASK-0775)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/api/v1/soundscape/cue", "/api/v1/soundscape/stems/override"],
+)
+def test_malformed_body_returns_owner_422(
+    client: TestClient, setup_zanzibar_soundscape: dict[str, str], path: str
+) -> None:
+    """The gateway forwards the raw body, so the owning service answers the 422."""
+    res = client.post(
+        path,
+        headers={**_auth("dm_evelyn"), "Content-Type": "application/json"},
+        content=b"{not json",
+    )
+    assert res.status_code == 422
+    assert res.json()["detail"][0]["type"] == "json_invalid"
+
+
+def test_alias_override_route_is_removed(
+    client: TestClient, setup_zanzibar_soundscape: dict[str, str]
+) -> None:
+    """The alias /api/v1/soundscape/override is no longer routed (DoR 9)."""
+    sid = setup_zanzibar_soundscape["sid"]
+    res = client.post(
+        "/api/v1/soundscape/override",
+        headers=_auth("dm_evelyn"),
+        json={"session_id": sid, "mood": "combat"},
+    )
+    assert res.status_code == 404
+
+
+def test_alias_leitmotif_profile_route_is_removed(
+    client: TestClient,
+    setup_zanzibar_soundscape: dict[str, str],
+    soundscape_service: str,
+) -> None:
+    """The alias /api/v1/soundscape/leitmotif/profile/{id} is no longer routed (DoR 9).
+
+    The profile is seeded first, so a 404 can only come from the missing route.
+    """
+    sid = setup_zanzibar_soundscape["sid"]
+    profile = CharacterLeitmotifProfile(
+        session_id=sid,
+        character_id="valeros",
+        character_name="Valeros",
+        instrument_timbre="brass",
+        tempo_multiplier=1.2,
+    )
+    seeded = httpx.post(
+        f"{soundscape_service}/api/v1/soundscape/leitmotif/profile",
+        json=profile.model_dump(mode="json"),
+        headers=_auth("dm_evelyn"),
+    )
+    assert seeded.status_code == 200, seeded.text
+
+    res = client.get(
+        f"/api/v1/soundscape/leitmotif/profile/valeros?session_id={sid}",
+        headers=_auth("player_valeros"),
+    )
+    assert res.status_code == 404

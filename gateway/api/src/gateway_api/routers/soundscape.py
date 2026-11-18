@@ -1,108 +1,76 @@
-"""Soundscape gateway APIRouter proxying to soundscape microservice with Zanzibar authorization."""
+"""Soundscape gateway routes. Each route forwards to the soundscape service (TASK-0589, TASK-0775).
+
+The gateway verifies the bearer token, then forwards the request with that same token. The
+soundscape service validates each body and checks every permission (SpiceDB Zanzibar, ADR-0001).
+The gateway keeps no soundscape state and runs no soundscape code in process.
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Request, status
-from gateway_api.auth import CurrentPrincipal, get_spicedb_client
-from gateway_api.proxy import forward_json
-from soundscape.models import MoodOverrideRequest, SoundscapeCueRequest, TensionCalculationRequest
+from fastapi import APIRouter, Request
+from gateway_api.auth import CurrentPrincipal
+from gateway_api.proxy import forward_json, forward_raw
+from runefoble_platform.service_client import path
+
+SOUNDSCAPE_SERVICE = "soundscape"
 
 router = APIRouter(prefix="/api/v1/soundscape", tags=["Soundscape"])
 
 
-async def _check_soundscape_perm(
-    user_id: str, perm: str, sid: str | None = None, cid: Any = None
-) -> None:
-    c = get_spicedb_client()
-    targets = [t for t in (cid, sid if sid != "default" else None) if t]
-    for t in targets:
-        if await c.check_permission("campaign", str(t), perm, "user", user_id) or (
-            perm == "run_session"
-            and await c.check_permission("campaign", str(t), "manage", "user", user_id)
-        ):
-            return
-    if sid and sid != "default":
-        sp = "participate" if perm == "play" else "control"
-        for rt in ("session", "game_session"):
-            if await c.check_permission(rt, sid, sp, "user", user_id):
-                return
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail={
-            "error": "permission_denied",
-            "message": f"Subject lacks '{perm}'.",
-            "required_permission": perm,
-        },
-    )
-
-
 @router.post("/cue")
-async def trigger_cue(req: SoundscapeCueRequest, user: CurrentPrincipal, request: Request) -> Any:
-    await _check_soundscape_perm(user.user_id, "play", req.session_id, req.campaign_id)
-    return await forward_json(
+async def trigger_cue(user: CurrentPrincipal, request: Request) -> Any:
+    """Trigger a foley cue. The service checks `play` on the session or campaign."""
+    return await forward_raw(
         request,
+        service=SOUNDSCAPE_SERVICE,
         method="POST",
-        service="soundscape",
-        path="/api/v1/soundscape/cue",
-        json_body=req.model_dump(mode="json"),
+        path=path("api", "v1", "soundscape", "cue"),
     )
 
 
 @router.get("/tension")
-async def get_tension(
-    user: CurrentPrincipal, request: Request, session_id: str = Query(default="default")
-) -> Any:
+async def get_tension(user: CurrentPrincipal, request: Request) -> Any:
+    """Read the encounter tension of a session. The query string reaches the owner unchanged."""
     return await forward_json(
         request,
+        service=SOUNDSCAPE_SERVICE,
         method="GET",
-        service="soundscape",
-        path="/api/v1/soundscape/tension",
-        params={"session_id": session_id},
+        path=path("api", "v1", "soundscape", "tension"),
+        params=dict(request.query_params),
     )
 
 
 @router.post("/tension/calculate")
-async def calculate_encounter_tension(
-    req: TensionCalculationRequest, user: CurrentPrincipal, request: Request
-) -> Any:
-    return await forward_json(
+async def calculate_encounter_tension(user: CurrentPrincipal, request: Request) -> Any:
+    """Calculate encounter tension and adapt the stems. The service checks session control."""
+    return await forward_raw(
         request,
+        service=SOUNDSCAPE_SERVICE,
         method="POST",
-        service="soundscape",
-        path="/api/v1/soundscape/tension/calculate",
-        json_body=req.model_dump(mode="json"),
+        path=path("api", "v1", "soundscape", "tension", "calculate"),
     )
 
 
 @router.post("/stems/override")
-@router.post("/override")
-async def override_soundscape_mood(
-    req: MoodOverrideRequest, user: CurrentPrincipal, request: Request
-) -> Any:
-    await _check_soundscape_perm(user.user_id, "run_session", req.session_id, req.campaign_id)
-    return await forward_json(
+async def override_soundscape_mood(user: CurrentPrincipal, request: Request) -> Any:
+    """Force a stem profile. The service checks `run_session` or `manage`."""
+    return await forward_raw(
         request,
+        service=SOUNDSCAPE_SERVICE,
         method="POST",
-        service="soundscape",
-        path="/api/v1/soundscape/override",
-        json_body=req.model_dump(mode="json"),
+        path=path("api", "v1", "soundscape", "stems", "override"),
     )
 
 
 @router.get("/leitmotif/{character_id}")
-@router.get("/leitmotif/profile/{character_id}")
-async def get_leitmotif_profile(
-    character_id: str,
-    user: CurrentPrincipal,
-    request: Request,
-    session_id: str = Query(default="default"),
-) -> Any:
+async def get_leitmotif_profile(character_id: str, user: CurrentPrincipal, request: Request) -> Any:
+    """Read a character leitmotif profile. The service owns the route under `/leitmotif/profile`."""
     return await forward_json(
         request,
+        service=SOUNDSCAPE_SERVICE,
         method="GET",
-        service="soundscape",
-        path=f"/api/v1/soundscape/leitmotif/profile/{character_id}",
-        params={"session_id": session_id},
+        path=path("api", "v1", "soundscape", "leitmotif", "profile", character_id),
+        params=dict(request.query_params),
     )
