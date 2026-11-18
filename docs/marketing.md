@@ -8,8 +8,8 @@ description: Runefoble - The AI-Native Collaborative Tabletop Roleplaying Platfo
 
 <div class="hero-banner" markdown style="padding: 1.5rem; background: linear-gradient(135deg, rgba(79, 70, 229, 0.12) 0%, rgba(147, 51, 234, 0.08) 100%); border-radius: 12px; border: 1px solid rgba(79, 70, 229, 0.25); margin-bottom: 2rem;">
 
-### Next-Generation Collaborative Tabletop Roleplaying
-**Runefoble** unites the boundless creativity of tabletop roleplaying with the speed and immersion of modern AI. By transforming natural human speech into tactile tactical mutations in under 500 milliseconds, Runefoble eliminates the friction of manual bookkeeping while preserving the irreplaceable soul of collaborative storytelling.
+### Collaborative Tabletop Roleplaying, Built on AI
+**Runefoble** combines tabletop roleplaying with AI tools. The goal is to turn spoken commands into board changes in under 500 milliseconds. That speech path is not live yet. See the status tables below for each capability.
 
 [🚀 Explore Project Visualizer](project-visualizer.md){ .md-button .md-button--primary }
 [🎨 Storybook Component Studio](storybook-studio.md){ .md-button }
@@ -19,9 +19,23 @@ description: Runefoble - The AI-Native Collaborative Tabletop Roleplaying Platfo
 
 ---
 
-## 🎲 The Tabletop Dilemma & The Runefoble Solution
+## Status Legend
 
-Every roleplaying group confronts three fundamental barriers to consistent, magical game nights:
+Every capability on this page has one status. Use these terms:
+
+| Status | Meaning |
+|---|---|
+| **Live** | The code is on `main`. A frontdoor test passes. The test is named in the row. |
+| **In progress** | Part of the capability works and has a passing test. The limit is stated. The blocking backlog task is named. |
+| **Planned** | No working code path yet. The backlog task is named, or no task exists yet. |
+
+A frontdoor test calls public HTTP, WebSocket, or event interfaces. Tests live in `tests/`. Paths below are relative to the repository root.
+
+---
+
+## 🎲 The Tabletop Dilemma & The Runefoble Goal
+
+Every roleplaying group faces three barriers to regular game nights:
 
 <div class="grid cards" markdown>
 
@@ -29,133 +43,164 @@ Every roleplaying group confronts three fundamental barriers to consistent, magi
 
     ---
 
-    Game Masters spend 4–8 hours preparing maps, memorizing 400-page rulebooks, and balancing encounter math for every session, leading to inevitable DM burnout.
+    Game Masters spend 4 to 8 hours on maps, rule lookups, and encounter math for each session.
 
-    **The Runefoble Solution**: **The Watcher AI** acts as an autonomous co-pilot or full Game Master—handling scene descriptions, monster tactics, line-of-sight, and rule queries in milliseconds.
+    **The Runefoble Goal**: **The Watcher** helps the DM with scene text, monster tactics, and rule queries. Status: **In progress**. See [The Watcher](#2-the-watcher-dm-co-pilot-and-stand-ins).
 
 -   :material-calendar-remove: **The Missing Player Curse**
 
     ---
 
-    When one player cannot attend, games are frequently postponed for weeks, eroding narrative momentum and causing campaigns to wither and die.
+    When one player cannot attend, games are often postponed for weeks.
 
-    **The Runefoble Solution**: Autonomous **AI Stand-Ins** pilot absent characters with customizable tactical playstyles, flavored with playful session miss penalties (*"Drunk"*, *"Foolishness"*).
+    **The Runefoble Goal**: AI **stand-ins** play absent characters under DM guardrails. Status: **Live** for guardrails and takeover. Session penalties are **In progress**.
 
 -   :material-cursor-default-click: **Clunky VTT Interfaces**
 
     ---
 
-    Modern virtual tabletops feel like dense spreadsheet applications—forcing players to click through nested menus, enter numbers, and fiddle with tokens rather than living in the fiction.
+    Virtual tabletops often need many menus and manual steps.
 
-    **The Runefoble Solution**: **"Speak and the board obeys."** Natural spoken conversation directly mutates the tactical board, triggers animations, and casts spells.
+    **The Runefoble Goal**: **"Speak and the board obeys."** Status: **Planned** for the full speech path. See [Speech Path Status](#speech-path-status).
 
 </div>
 
 ---
 
-## ⚡ What Exists Today: Live Core Capabilities
+## ⚡ Speech Path Status
 
-Runefoble is built as an enterprise-grade, cloud-native gaming engine. The foundational loop is fully operational across our microservices and Lit Web Component frontend:
+The speech path has four steps. Each step has its own status.
 
-```mermaid
-flowchart LR
-    A["🎙️ Spoken Voice\n(WebRTC Stream)"] --> B["⚡ Whisper STT\n(<200ms Ingestion)"]
-    B --> C["🧠 The Watcher AI\n(Intent Parser)"]
-    C --> D["👻 Ghost Preview\n(Kinematic Trajectory)"]
-    D --> E["♟️ Tactical Board\n(Kinetic Mutation)"]
-    C --> F["📜 Event Store\n(eventsource-py)"]
-    F --> G["📡 Redis Streams\n(Cluster Fanout)"]
-```
+| Step | Status | Evidence | Blocking task |
+|---|---|---|---|
+| Speech to text (`/api/v1/voice/transcribe`) | **In progress** | `tests/test_blackbox_voice_transcribe_input.py`, `tests/test_blackbox_streaming_whisper_e2e.py` | TASK-0509 (no UI caller) |
+| Text to intent (intent routes) | **In progress** | `tests/test_speech_to_intent.py`, `tests/test_blackbox_intent_disambiguation_flow.py` | TASK-0509 (no UI caller) |
+| Gateway speak-and-act (`/api/v1/watcher/speak-and-act`) | **Planned** | Returns a fixed action text (`gateway/api/src/gateway_api/routers/tabletop.py`) | TASK-0583 |
+| Board change from speech | **Planned** | No wired path from the UI to the board | TASK-0583, TASK-0582 |
 
-### 1. Tactile Kinetic Board & Spoken Ghost Previews
-- **Instant Spoken Commands**: Speak naturally (*"Valeros rushes 20 feet south behind the crumbling pillar and readies his shield"*); the intent engine parses movement, destination, and combat stances in under 500ms.
-- **Kinematic Ghost Previews**: Real-time semi-transparent token trajectories and spell area-of-effect templates preview the route before mutations commit to the board.
-- **Physical Drag-and-Drop Momentum**: Tokens behave with physical weight, spring damping, velocity, real-time 5-foot waypoint distance measurement, and terrain hazard validation.
-- **Dynamic Fog of War & Silo S3 Maps**: Battlemaps uploaded to Silo (S3 storage) dynamically reveal fog of war based on individual token vision radii and lighting conditions.
-
-### 2. The Watcher: Autonomous DM & Human Co-Pilot
-- **The Assistant, Never the Dictator**: When a human Game Master is running the session, The Watcher operates as an invisible co-pilot—whispering monster strategy suggestions, setting atmospheric mood notes, and tracking initiative. The human DM retains instantaneous override and veto authority.
-- **Autonomous DM Mode**: For groups without a dedicated DM, The Watcher runs complete sessions—pacing scenes, arbitrating rules, describing consequences, and roleplaying NPCs.
-- **Absentee AI Stand-Ins**: Missing players are piloted by AI stand-ins that honor the character's stat sheet, spell inventory, and battle personality.
-- **Flavorful Session Miss Penalties**: DMs can inflict lighthearted status conditions on stand-ins (such as *"Drunk"* with slurred speech and reckless bravado, or *"Foolishness"*), followed by an automated narrative recap reel when the player returns.
-
-### 3. Real-Time Audio DSP & Voice Personas
-- **WebRTC Collaborative Audio Rooms**: High-fidelity bidirectional voice chat connects players and AI agents with live audio visualizer waveforms.
-- **Dynamic Vocal Conditioning**: Status conditions trigger real-time WebAudio DSP filters—inflicting drunken slurs, spectral ghostly echoes, or muffled underwater acoustics.
-- **Persona Synthesis**: Distinct AI voice profiles deliver deep, mystical Game Master narration and memorable NPC voices.
-
-### 4. Zero-Trust Security & Distributed Architecture
-- **Google Zanzibar Object Authorization**: SpiceDB relationship-based access control enforces object permissions across campaigns, character sheets, battlemaps, and spectator views (`runefoble.zed`).
-- **Zitadel OIDC Authentication**: Enterprise-grade identity verification across HTTP REST routes, FastMCP tool gateways, and WebSocket streams.
-- **Decoupled Microfrontends**: UI components are vendored inside their bounded context (`services/<bc>/ui/`) with Shadow DOM encapsulation and discoverable via `/ui/manifest`.
-- **Bauhaus Design System**: High-contrast, WCAG 2.1 AA compliant themes featuring Dark, Light, and System preference modes configured via a centralized modal.
-- **OpenTelemetry & OpenPanel**: End-to-end distributed tracing across all services and privacy-preserving product telemetry.
+The speech targets are not measured. The 500 millisecond target has no latency test.
 
 ---
 
-## 🗺️ Where We're Going: The Multi-Horizon Roadmap
+## 🧭 Capability Status
 
-Guided by our Product Requirement Records (PRDs) and user stories, Runefoble's active roadmap bridges immediate alpha polish with ambitious long-term horizons:
+### 1. Tactile Board
 
-<div class="grid cards" markdown>
+- **Live**: Board state is an event-sourced aggregate. Board changes save through `AggregateRepository` in `services/board_state`. Test: `tests/test_blackbox_board_state.py`.
+- **Live**: Fog of war from token vision radius. Test: `tests/test_blackbox_board_fog_of_war.py`.
+- **Live**: Spoken ghost preview route on the board service. Test: `tests/test_blackbox_ghost_previews.py`. The voice trigger is **Planned** (TASK-0509).
+- **Live**: Battlemap upload to Silo S3. Test: `tests/test_blackbox_silo_asset_lifecycle.py`.
+- **In progress**: Token kinematics and 5-foot waypoint measurement (TASK-0084 is complete). No passing browser test covers this behaviour in this review.
+- **In progress**: Gateway board and token routes. The gateway returns fixed data for some board and token routes (`gateway/api/src/gateway_api/routers/tabletop.py`). The gateway does not yet proxy them to `board_state`. Blocking task: TASK-0582. Token authorization: TASK-0547.
+- **Planned**: Light-based fog of war. No backlog task exists yet.
 
--   ### 📍 Milestone 2: Live Collaborative Alpha *(Current)*
-    ---
-    *Focus: Core Gameplay Loop, Board Kinematics & Platform Resilience*
+### 2. The Watcher: DM Co-Pilot and Stand-Ins
 
-    - [x] Sub-500ms Whisper speech-to-intent pipeline (`TASK-0039`)
-    - [x] Tactile kinetic board kinematics & spoken ghost previews (`TASK-0084`)
-    - [x] Microfrontend component vendoring & `/ui/manifest` discovery (`ADR-0013`)
-    - [x] WebRTC voice streaming & Silo S3 battlemap uploading (`TASK-0030`, `TASK-0031`)
-    - [x] SpiceDB Zanzibar authorization & Zitadel OIDC synchronization (`TASK-0032`, `TASK-0035`)
-    - [x] OpenTelemetry tracing & OpenPanel analytics pipeline (`TASK-0037`, `TASK-0038`)
-    - [x] Centralized settings modal with Dark/Light mode orchestration (`TASK-0073`)
-    - [ ] High-contrast WCAG 2.1 AA semantic color tokens across components (`TASK-0074`)
+- **Live**: DM co-pilot whispers and veto override. A human DM can reject any AI action. Test: `tests/test_blackbox_dm_copilot_whispers.py` (TASK-0053).
+- **Live**: Disambiguation and compound actions through the API. Tests: `tests/test_blackbox_intent_disambiguation_flow.py`, `tests/test_blackbox_intent_compound_combos.py` (TASK-0054).
+- **Planned**: Autonomous DM mode, which runs a full session. The LLM provider path is not wired. Blocking tasks: TASK-0448, TASK-0449.
+- **Planned**: Wake-word activation (US-0024). No backlog task exists yet.
 
--   ### 🚀 Milestone 3: AI DM & Ecosystem Expansion *(Next)*
-    ---
-    *Focus: Deep Worldbuilding, Generative Assets & Dynamic Soundscapes*
+### 3. Missing Player Stand-Ins
 
-    - [ ] **Campaign Lore Vector RAG (`campaign_lore`)**: Ingest custom lorebooks, faction agendas, and NPC webs with `redstring` hybrid retrieval for sub-50ms contextual recall (`PRD-0007`, `US-0036`).
-    - [ ] **Rules Compendium & CR Encounter Builder (`rules_compendium`)**: Sub-50ms canonical SRD rule queries and automated combat difficulty balance calculations (`PRD-0008`, `US-0037`).
-    - [ ] **Procedural Generative Battlemaps**: Synthesize tactical battlemaps and tokens on-the-fly from DM spoken descriptions into Silo S3 (`PRD-0009`, `US-0038`).
-    - [ ] **Adaptive Tension Foley & Dynamic Score**: Generative music and ambient soundscapes that dynamically shift between peaceful campfires and high-stakes boss encounters (`PRD-0010`, `US-0039`).
-    - [ ] **Conversational Disambiguation & Compound Voice Actions**: Multi-turn dialog resolving ambiguous player intents and natural wake-word activation (`US-0021`, `US-0024`).
-    - [ ] **Personalized Voice Cloning & Hot-Swap Takeover**: AI stand-ins speaking in absent players' cloned voices, with instant zero-downtime hot-swap when players rejoin (`US-0026`, `US-0028`).
+- **Live**: Stand-in guardrails, takeover when a player leaves, and hot-swap handoff. Tests: `tests/test_blackbox_leave_activates_stand_in.py`, `tests/test_blackbox_stand_in_takeover.py`, `tests/test_blackbox_standin_guardrails_persistence.py` (TASK-0055, TASK-0357, TASK-0570).
+- **Live**: Absentee recap read API (chronicle feed and stand-in turns). Test: `tests/test_blackbox_session_chronicle.py` (TASK-0641).
+- **In progress**: Session penalties. The Watcher writes "Drunk" and "Foolishness" text (`services/the_watcher/src/the_watcher/stand_in_guardrails.py`). Penalty records are not yet reconciled for the DM. Blocking task: TASK-0462.
+- **Planned**: Catch-up recap reel for returning players. Blocking task: TASK-0463.
+- **Planned**: Voice-cloned stand-in dialogue. Blocking task: TASK-0464.
 
--   ### 🌌 Milestone 4: Broadcast Studio & Community Platform *(Future)*
-    ---
-    *Focus: Live Audience Interactivity, Streaming Tools & Universal VTT*
+### 4. Audio, Voice, and DSP
 
-    - [ ] **Live Spectator Studio & Audience Chaos Polls**: Allow Twitch/YouTube viewers to vote on wild magic surges, tavern brawls, and environmental weather hazards (`PRD-0011`, `US-0031`).
-    - [ ] **Cinematic Auto-Camera & OBS Transparent Overlays**: Automated broadcast director following combat focus with real-time party vitals overlays (`US-0029`, `US-0030`).
-    - [ ] **Campaign Living Chronicle & Combat Telemetry**: Interactive timeline maps, character kill ledgers, and exportable campaign recap books (`PRD-0012`, `US-0040`).
-    - [ ] **Universal VTT Importer & MCP Hot-Reloading**: Seamlessly import campaigns from Foundry VTT, Roll20, and Fantasy Grounds with dynamic MCP plugin reloading (`US-0033`, `US-0035`).
+- **Live**: WebRTC voice room signaling and room persistence. Test: `tests/test_blackbox_voice_room_persistence.py` (TASK-0033).
+- **Live**: Voice duplex state through the API, including speech barge-in state. Test: `tests/test_blackbox_voice_duplex.py` (TASK-0141).
+- **In progress**: Voice DSP conditions. The voice agent returns DSP parameters for a status condition. Test: `tests/test_blackbox_voice_dsp_condition.py`. The browser filter chain is **Planned** (TASK-0482).
+- **In progress**: Text-to-speech with an espeak-ng adapter. Test: `tests/test_blackbox_voice_tts.py` (TASK-0601). Distinct persona voice profiles are not verified.
+- **In progress**: Duplex controls in the App Shell. Blocking tasks: TASK-0508, TASK-0509, TASK-0510.
+- **In progress**: Adaptive soundscape mixing and tension scoring. Tests: `tests/test_blackbox_soundscape_tension.py`, `tests/test_blackbox_soundscape_ui/`. Board event cues are **Planned** (TASK-0438). The App Shell audio sync is **Planned** (TASK-0437).
 
-</div>
+### 5. Identity and Authorization
+
+- **Live**: Zitadel OIDC token checks on HTTP and WebSocket routes. Tests: `tests/test_blackbox_zitadel_http_auth.py`, `tests/test_blackbox_zitadel_websocket_auth.py`, `tests/test_blackbox_identity_negative.py` (TASK-0034, TASK-0522, TASK-0529). The dev identity bypass was removed (TASK-0520).
+- **In progress**: SpiceDB object authorization. The gateway and services check SpiceDB permissions on the routes covered by TASK-0522 to TASK-0555, TASK-0767, and TASK-0770. Tests: `tests/test_blackbox_spicedb_live.py`, `tests/test_blackbox_board_actions_authz.py`, `tests/test_blackbox_voice_authz.py`. This page does not claim that every route has a permission check.
+- **In progress**: Stand-in guardrail contract. Blocking task: TASK-0691.
+
+### 6. Microfrontends and Design System
+
+- **Live**: Each service serves its own microfrontend manifest at `/ui/manifest`. Test: `tests/test_microfrontends.py`. Gateway-level discovery is **Planned**. No backlog task exists yet.
+- **In progress**: Dark, Light, and System modes in the settings modal (TASK-0073 is complete). No frontdoor test in `tests/` covers the modal in this review.
+- **In progress**: WCAG 2.1 AA contrast. `tests/test_theming_contrast.py` checks token ratios (4.5:1 body, 7:1 primary). This is a token check, not a rendered page check. Rendered contrast checks are not yet in place.
+
+### 7. Persistence, Observability, and Analytics
+
+- **Live**: Event sourcing on PostgreSQL for deployed services. PostgreSQL is the default event store. A deployed service refuses the memory store (`libs/runefoble_platform/src/runefoble_platform/event_sourcing.py`). Tests: `tests/test_blackbox_postgres_event_store.py`, `tests/test_blackbox_event_store_fail_fast.py` (TASK-0036).
+- **Live**: Redis Streams event fanout with consumer groups. Test: `tests/test_blackbox_stream_consumers.py` (TASK-0015).
+- **Live**: Campaign chronicle timeline and telemetry API. Tests: `tests/test_blackbox_session_chronicle.py`, `tests/test_blackbox_campaign_analytics_api.py` (TASK-0052, TASK-0110).
+- **In progress**: OpenTelemetry tracing. Test: `tests/test_blackbox_opentelemetry.py` (TASK-0037). Tracing is off by default (`RUNEFOBLE_OTEL_ENABLED=false`). Helm turns it on for some services only.
+- **In progress**: OpenPanel analytics. Test: `tests/test_blackbox_analytics_client.py` (TASK-0038). Export to a live OpenPanel instance is not verified in this review.
+- **Planned**: Time-travel debugging. No code or backlog task exists.
+- **Planned**: Player achievements, badges, and recap books. Blocking tasks: TASK-0458, TASK-0459, TASK-0460.
+
+### 8. Agent Tools (FastMCP)
+
+- **Live**: MCP tools require a verified bearer token (TASK-0532). Tests: `tests/test_blackbox_mcp_gateway.py`, `tests/test_blackbox_mcp_upstream_calls.py`.
+- **Live**: Dice rolls compute results on the server (`gateway/mcp/src/gateway_mcp/tools/dice.py`). Test: `tests/test_blackbox_mcp_orchestration_and_resources.py`.
+- **Live**: Runtime dynamic tools from declarative templates (TASK-0766 removed arbitrary Python). Tests: `tests/test_blackbox_dynamic_mcp/`.
+- **In progress**: Lore and compendium tools. Lore retrieval is tested with `tests/test_blackbox_campaign_lore_rag.py`. Latency is not measured.
+
+### 9. Content and Broadcast Tools
+
+- **Live**: Universal VTT (`.dd2vtt`) import with walls, doors, and lights. Test: `tests/test_blackbox_uvtt_import/` (TASK-0057).
+- **Live**: Procedural battlemap and token generation. This is a deterministic generator, not a diffusion model. Test: `tests/test_blackbox_asset_forge_map_generator.py` (TASK-0049). Spoken prompts are not a supported input.
+- **Live**: Rules compendium search and encounter builder. Test: `tests/test_blackbox_rules_compendium.py` (TASK-0048).
+- **Live**: Campaign lore retrieval over ingested documents. Test: `tests/test_blackbox_campaign_lore_rag.py` (TASK-0047). Sub-50 ms retrieval is not measured.
+- **Live**: Audience polls and votes through the API, with SpiceDB checks. Test: `tests/test_blackbox_audience_studio.py` (TASK-0051, TASK-0554).
+- **Live**: Cinematic camera and overlay routes. Tests: `tests/test_blackbox_cinematic_director/` (TASK-0056).
+- **Planned**: Twitch and YouTube chat ingestion. Blocking task: TASK-0455.
+- **Planned**: OBS WebSocket bridge and Stream Deck actions. Blocking task: TASK-0456.
+- **Planned**: Foundry VTT, Roll20, and Fantasy Grounds import. Only `.dd2vtt` import exists.
+
+---
+
+## 🗺️ Roadmap Status
+
+Milestone status comes from [`project/backlog/ROADMAP.md`](project/backlog/ROADMAP.md). A milestone is complete when its backlog tasks are complete. A complete milestone does not mean that every capability in it is live. Use the status sections above for that.
+
+| Milestone | Status |
+|---|---|
+| M1 Platform Foundation & Core Loop | Complete |
+| M2 Live Collaborative Alpha | Complete |
+| M3 AI DM & Ecosystem Expansion | Complete |
+| M4 Broadcast Studio & Community Platform | Complete |
+| M5 Collaborative Creation, Downtime & Tactile Immersion | Complete |
+| M6 Intelligent Living Worlds & Spatial Multi-Party Universes | Complete |
+| M7 Neural Audio Duplex & Tangible 3D Tabletop | Complete |
+| M8 Reactive Tactical Environments & In-World DM Tools | Complete |
+| M10 Complete Frontend Application Experience, User Identity & Campaign Orchestration | Active |
+
+Open work in Milestone 10 includes the gateway proxies (TASK-0582, TASK-0583, TASK-0596), the audience ingestion (TASK-0455, TASK-0456), and the West Marches and absentee tasks (TASK-0451 to TASK-0465).
 
 ---
 
 ## 🔬 Architectural Transparency & Engineering Rigor
 
-Runefoble is engineered with uncompromising architectural standards designed for reliability, modularity, and rapid development:
-
-| Architectural Pillar | Specification / Implementation | Key Benefit |
+| Architectural Pillar | Specification / Implementation | Status |
 |---|---|---|
-| **Language & Environment** | Python 3.13 + UV Monorepo Workspace | Sub-second dependency resolution, unified workspace lockfile |
-| **Event Sourcing** | `eventsource-py` on PostgreSQL | Pure domain aggregates, complete audit history, time-travel debugging |
-| **Distributed Messaging** | Redis Streams Consumer Groups | Distributed fanout across bounded context microservices |
-| **Object Authorization** | SpiceDB Google Zanzibar (`runefoble.zed`) | Zero-trust object-level permissions, auditable campaign security |
-| **Frontend Architecture** | Lit Web Components + Shadow DOM | Microfrontend vendoring without monolithic framework lock-in |
-| **Design System** | Bauhaus Modernist Tokens (CSS Variables) | High contrast, accessible Dark/Light modes, zero CSS bleed |
-| **Agent Interface** | Model Context Protocol (FastMCP) Gateway | Native LLM tool invocation for dice rolls, board moves, and lore queries |
-| **Cloud Infrastructure** | Kubernetes Kind + Umbrella Helm Chart | Reproducible local clusters and single-command cloud deployments |
+| **Language & Environment** | Python 3.13 + UV Monorepo Workspace | **Live** |
+| **Event Sourcing** | `eventsource-py` aggregates on PostgreSQL | **Live** (deployed services) |
+| **Distributed Messaging** | Redis Streams consumer groups | **Live** |
+| **Object Authorization** | SpiceDB Zanzibar (`runefoble.zed`) on covered routes | **In progress** |
+| **Identity** | Zitadel OIDC on HTTP and WebSocket routes | **Live** |
+| **Frontend Architecture** | Lit Web Components + Shadow DOM, per-service manifests | **Live** |
+| **Design System** | Bauhaus tokens, Dark/Light/System modes, token contrast checks | **In progress** |
+| **Agent Interface** | Model Context Protocol (FastMCP) gateway | **Live** (authenticated tools) |
+| **Local Infrastructure** | Kind cluster, `make images`, umbrella Helm chart | **Live** (local only) |
+| **Cloud Infrastructure** | Single-command cloud deployment | **Planned** (no backlog task) |
 
 ---
 
 ## 🛠️ Interactive Exploration & Documentation Hub
 
-Explore the platform through our built-in interactive tools and comprehensive documentation:
+Explore the platform through our built-in interactive tools and documentation:
 
 <div class="grid cards" markdown>
 
@@ -163,59 +208,62 @@ Explore the platform through our built-in interactive tools and comprehensive do
 
     ---
 
-    Interact with our live 2D force-directed graph, DAG dependency tree, radar view, and Kanban pipeline tracking every ADR, PRD, and backlog task.
+    Interact with our 2D force-directed graph, DAG dependency tree, radar view, and Kanban pipeline tracking every ADR, PRD, and backlog task.
 
 -   :material-palette: **[Storybook UI Studio](storybook-studio.md)**
 
     ---
 
-    Test drive every Lit Web Component in visual isolation across themes, viewport breakpoints, and mock states.
+    Test each Lit Web Component in isolation across themes, viewport sizes, and mock states.
 
 -   :material-history: **[Platform Changelog](changelog.md)**
 
     ---
 
-    Review every platform release, milestone deliverable, and unreleased capability documented according to Keep a Changelog.
+    Review each platform release, milestone deliverable, and unreleased change, following Keep a Changelog.
 
 -   :material-school: **[Local Development Tutorial](tutorials/01-local-development-setup.md)**
 
     ---
 
-    Spin up a local Kind cluster, deploy the full Helm stack, and start developing in less than five minutes.
+    Set up a local Kind cluster and the Helm stack.
 
 -   :material-file-document-multiple: **[Architectural Decision Records](project/adrs/REGISTRY.md)**
 
     ---
 
-    Browse our accepted ADRs governing Zanzibar auth, event sourcing, microfrontends, and speech processing.
+    Read the accepted ADRs for Zanzibar authorization, event sourcing, microfrontends, and speech processing.
 
 -   :material-clipboard-check: **[Agent Operating Manual](operating-manual.md)**
 
     ---
 
-    Read the Definition of Ready (DoR), Definition of Done (DoD), and file length invariants governing code quality.
+    Read the Definition of Ready (DoR), Definition of Done (DoD), and file length rules that govern code quality.
 
 </div>
 
 ---
 
-## 🚀 Get Started
+## 🚀 Get Started (Local Only)
 
-Ready to experience or contribute to Runefoble?
+Use these steps to run the platform on a local Kind cluster:
 
 ```bash
 # Clone and inspect the repository
 git clone https://github.com/tyevans/runefoble.git
 cd runefoble
 
-# Launch local Kind Kubernetes cluster with Traefik ingress
+# Create the local Kind Kubernetes cluster with Traefik ingress
 make cluster-up
 
-# Deploy the complete microservice stack via Helm
+# Build every service image and load it into Kind
+make images
+
+# Deploy the Helm stack
 make helm-deploy
 
 # Launch the hot-reloading frontend
 make dev-frontend
 ```
 
-*Runefoble is open source and designed for storytellers, game masters, players, and developers worldwide.*
+*Runefoble is in active development. The platform does not yet offer a cloud deployment.*
