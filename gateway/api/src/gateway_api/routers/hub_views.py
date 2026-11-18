@@ -1,4 +1,4 @@
-"""Campaign Hub proxy routes for Atlas, Codex, and Analytics telemetry."""
+"""Campaign Hub proxy routes for Analytics telemetry. Lore routes live in lore_views.py."""
 
 from typing import Any
 
@@ -7,38 +7,6 @@ from gateway_api.auth import require_zanzibar_permission
 from gateway_api.proxy import forward_json
 
 router = APIRouter(tags=["Campaign Hub Views"])
-
-
-@router.get(
-    "/api/v1/campaigns/{campaign_id}/atlas",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
-)
-async def get_campaign_atlas(campaign_id: str, request: Request) -> Any:
-    """Retrieve world atlas map layers, milestone pins, and geopolitical territories."""
-    return await forward_json(
-        request,
-        method="GET",
-        service="campaign_lore",
-        path=f"/api/v1/campaigns/{campaign_id}/atlas",
-    )
-
-
-@router.get(
-    "/api/v1/campaigns/{campaign_id}/codex",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
-)
-@router.get(
-    "/api/v1/campaigns/{campaign_id}/codex/entries",
-    dependencies=[Depends(require_zanzibar_permission("view", "campaign", "campaign_id"))],
-)
-async def get_campaign_codex(campaign_id: str, request: Request) -> Any:
-    """Retrieve campaign lore codex entries and cross-references."""
-    return await forward_json(
-        request,
-        method="GET",
-        service="campaign_lore",
-        path=f"/api/v1/campaigns/{campaign_id}/codex/entries",
-    )
 
 
 @router.get(
