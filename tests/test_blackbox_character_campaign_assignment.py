@@ -268,7 +268,7 @@ async def test_blackbox_campaign_assignment_spicedb_authorization(client, mock_s
         headers=auth_headers(unauthorized_user),
     )
     assert unauth_patch.status_code == 403
-    assert "does not have edit permission" in unauth_patch.json()["detail"]
+    assert unauth_patch.json()["detail"]["error"] == "permission_denied"
 
     # Authorized user (owner) can assign campaign -> 200 OK
     auth_patch = client.patch(

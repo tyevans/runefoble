@@ -2,7 +2,7 @@
 
 Verifies:
 1. Domain event stream synchronization (SessionCreated, ParticipantJoined, CharacterCreated).
-2. Character ownership revocation through the character frontdoor.
+2. Character ownership written by the character frontdoor on create.
 3. Removed public sync routes return 404. Error handling for malformed event payloads.
 """
 
@@ -14,8 +14,6 @@ from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 from runefoble_events.events import CharacterCreated, ParticipantJoined, SessionCreated
-
-client = TestClient(app)
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -72,30 +70,28 @@ async def test_domain_events_provision_spicedb_relationships() -> None:
 
 
 @pytest.mark.asyncio
-async def test_character_ownership_revocation_and_removed_sync_routes(signing_issuer) -> None:
-    """Deleting an owned character revokes edit rights. The removed sync routes return 404."""
+async def test_character_create_writes_owner_and_removed_sync_routes_return_404(
+    trusted_ws_issuer, character_sheet_upstream, game_session_upstream
+) -> None:
+    """Creating a character through the gateway writes the owner relation. Removed sync routes 404."""
     spicedb = get_spicedb_client()
     owner_id = f"user-rev-{uuid4().hex[:6]}"
-    owner_headers = _auth(signing_issuer, owner_id)
+    owner_headers = _auth(trusted_ws_issuer, owner_id)
 
-    # Frontdoor: character creation writes the owner relation
-    res = client.post(
-        "/api/v1/characters",
-        json={"name": "Revocable Rogue", "characterClass": "Rogue", "level": 1, "maxHp": 10},
-        headers=owner_headers,
-    )
-    assert res.status_code == 201, res.text
-    char_id = res.json()["id"]
-    assert client.get(f"/api/v1/characters/{char_id}", headers=owner_headers).status_code == 200
+    with TestClient(app) as client:
+        res = client.post(
+            "/api/v1/characters",
+            json={"name": "Revocable Rogue", "characterClass": "Rogue", "maxHp": 10},
+            headers=owner_headers,
+        )
+        assert res.status_code == 201, res.text
+        char_id = res.json()["id"]
+        assert client.get(f"/api/v1/characters/{char_id}", headers=owner_headers).status_code == 200
+        assert await spicedb.check_permission("character", char_id, "owner", "user", owner_id)
 
-    # Frontdoor revocation: the owner deletes the character
-    res_del = client.delete(f"/api/v1/characters/{char_id}", headers=owner_headers)
-    assert res_del.status_code == 200, res_del.text
-    assert not await spicedb.check_permission("character", char_id, "edit", "user", owner_id)
-
-    # The public character-ownership sync route is removed (TASK-0543)
-    res_removed = client.post(
-        "/api/v1/auth/sync/character-ownership",
-        json={"character_id": char_id, "user_id": owner_id},
-    )
-    assert res_removed.status_code == 404
+        # The public character-ownership sync route is removed (TASK-0543)
+        res_removed = client.post(
+            "/api/v1/auth/sync/character-ownership",
+            json={"character_id": char_id, "user_id": owner_id},
+        )
+        assert res_removed.status_code == 404

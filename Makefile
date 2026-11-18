@@ -118,6 +118,10 @@ images: ## Build every service image (Python and Node) and load it into the Kind
 	docker build -f services/audience_studio/Dockerfile -t runefoble/audience-studio:$(IMAGE_VERSION) . || exit 1
 	@echo "==> Loading runefoble/audience-studio:$(IMAGE_VERSION) into Kind cluster $(CLUSTER_NAME)"
 	kind load docker-image runefoble/audience-studio:$(IMAGE_VERSION) --name $(CLUSTER_NAME)
+	@echo "==> Building runefoble/frontend:$(IMAGE_VERSION) (App Shell, nginx port 80)"
+	docker build -f frontend/Dockerfile -t runefoble/frontend:$(IMAGE_VERSION) . || exit 1
+	@echo "==> Loading runefoble/frontend:$(IMAGE_VERSION) into Kind cluster $(CLUSTER_NAME)"
+	kind load docker-image runefoble/frontend:$(IMAGE_VERSION) --name $(CLUSTER_NAME)
 
 voice-model-cache: ## Pre-fetch the faster-whisper model and copy it into the voice-agent pod (Kind)
 	@echo "==> Downloading faster-whisper $(VOICE_MODEL_SIZE) into $(VOICE_MODEL_HOST_DIR)..."

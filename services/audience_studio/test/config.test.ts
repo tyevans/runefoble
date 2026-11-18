@@ -4,7 +4,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readZitadelSettings } from '../src/config.js';
+import { readSpicedbEndpoint, readZitadelSettings } from '../src/config.js';
 
 test('the service refuses to start without an issuer or an audience', () => {
   assert.throws(() => readZitadelSettings({ RUNEFOBLE_ZITADEL_AUDIENCE: 'runefoble-api' }), /RUNEFOBLE_ZITADEL_ISSUER/);
@@ -18,4 +18,9 @@ test('the JWKS URL is optional and an empty value counts as unset', () => {
     RUNEFOBLE_ZITADEL_JWKS_URL: '',
   });
   assert.deepEqual(settings, { issuer: 'http://zitadel:8080', audience: 'runefoble-api', jwksUrl: undefined });
+});
+
+test('the SpiceDB endpoint has no default and the service refuses to start without it', () => {
+  assert.throws(() => readSpicedbEndpoint({}), /RUNEFOBLE_SPICEDB_ENDPOINT/);
+  assert.equal(readSpicedbEndpoint({ RUNEFOBLE_SPICEDB_ENDPOINT: 'spicedb:50051' }), 'spicedb:50051');
 });

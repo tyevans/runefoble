@@ -3,9 +3,9 @@
  */
 
 import type { PollSnapshot } from './domain/pollAggregate.js';
-import type { AudienceModifierProposal, AudiencePoll } from './types.js';
+import type { AudienceModifierProposal, AudiencePollRecord } from './types.js';
 
-export function pollView(snapshot: PollSnapshot, proposal?: AudienceModifierProposal): AudiencePoll {
+export function pollView(snapshot: PollSnapshot, proposal?: AudienceModifierProposal): AudiencePollRecord {
   return {
     id: snapshot.id,
     campaignId: snapshot.campaignId,

@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from uuid import UUID
 
 from fastapi import HTTPException
+from character_sheet.roster import permission_denied
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
@@ -44,10 +45,7 @@ async def authorize_character(
     except AuthzError as exc:
         raise _authorization_unavailable("Authorization service is unavailable.") from exc
     if not allowed:
-        raise HTTPException(
-            status_code=403,
-            detail=f"User '{user_id}' does not have {permission} permission on character '{character_id}'",
-        )
+        raise permission_denied(user_id, permission, str(character_id))
 
 
 async def write_character_ownership(

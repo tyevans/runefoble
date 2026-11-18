@@ -1,12 +1,19 @@
 /**
  * Real-time WebSocket manager for live spectator polls and DM approval queue.
  * Governed by ADR-0001, ADR-0007, and ADR-0013.
+ *
+ * Every action runs as the handshake principal, and the engines check the schema permission
+ * for that action (TASK-0554). Broadcasts go to sockets whose principal may see the event.
+ * `proposal_queued` reaches only sockets with `audience_poll.approve`.
  */
 
 import type { WebSocket } from 'ws';
-import type { ApprovalQueue } from './approvalQueue.js';
+import type { AudienceAccess } from './access/audienceAccess.js';
+import { presentPoll, presentProposal } from './access/presentation.js';
+import type { ApprovalQueue, ProposalAction } from './approvalQueue.js';
+import type { Logger } from './logger.js';
 import type { VerifiedPrincipal } from './identity/zitadelVerifier.js';
-import type { PollEngine } from './pollEngine.js';
+import type { PollEvent, PollEngine } from './pollEngine.js';
 import type { WSClientMessage, WSServerMessage } from './types.js';
 
 interface ClientContext {
@@ -15,34 +22,46 @@ interface ClientContext {
   principal: VerifiedPrincipal;
 }
 
+/** One event for one campaign. `render` builds the payload for a socket that may or may not approve. */
+interface CampaignEvent {
+  type: WSServerMessage['type'];
+  campaignId: string;
+  pollId: string;
+  requiresApprove: boolean;
+  render: (canApprove: boolean) => unknown;
+}
+
+const PROPOSAL_MESSAGE: Record<ProposalAction, WSServerMessage['type']> = {
+  queued: 'proposal_queued',
+  approved: 'proposal_approved',
+  vetoed: 'proposal_vetoed',
+};
+
 export class WebSocketManager {
-  private sockets: Map<WebSocket, ClientContext> = new Map();
+  private readonly sockets = new Map<WebSocket, ClientContext>();
+  /** Broadcasts run one at a time, so every socket sees events in commit order. */
+  private deliveries: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly pollEngine: PollEngine,
-    private readonly approvalQueue: ApprovalQueue
+    private readonly approvalQueue: ApprovalQueue,
+    private readonly access: AudienceAccess,
+    private readonly log: Logger
   ) {
-    // Listen to poll events and broadcast
-    this.pollEngine.onPollEvent((event, data) => {
-      const campaignId = (data as { campaignId?: string; poll?: { campaignId?: string } })
-        ?.campaignId || (data as { poll?: { campaignId?: string } })?.poll?.campaignId;
-      if (campaignId) {
-        this.broadcast(campaignId, { type: event, data });
-      }
-    });
+    this.pollEngine.onPollEvent((event) => this.publish(this.pollEventToCampaignEvent(event)));
 
-    // Listen to approval queue events and broadcast
     this.approvalQueue.onProposalChange((action, proposal) => {
-      const type =
-        action === 'queued'
-          ? 'proposal_queued'
-          : action === 'approved'
-          ? 'proposal_approved'
-          : 'proposal_vetoed';
-      this.broadcast(proposal.campaignId, { type, data: proposal });
+      this.publish({
+        type: PROPOSAL_MESSAGE[action],
+        campaignId: proposal.campaignId,
+        pollId: proposal.pollId,
+        requiresApprove: action === 'queued',
+        render: (canApprove) => presentProposal(proposal, canApprove),
+      });
     });
   }
 
+  /** Registers a socket that the handshake has already authorized for `campaignId`. */
   handleConnection(socket: WebSocket, campaignId: string, principal: VerifiedPrincipal): void {
     this.sockets.set(socket, { campaignId, principal });
 
@@ -70,10 +89,7 @@ export class WebSocketManager {
     });
   }
 
-  private async handleMessage(
-    socket: WebSocket,
-    msg: WSClientMessage
-  ): Promise<void> {
+  private async handleMessage(socket: WebSocket, msg: WSClientMessage): Promise<void> {
     const ctx = this.sockets.get(socket);
     if (!ctx) return;
 
@@ -91,43 +107,58 @@ export class WebSocketManager {
     }
 
     if (msg.action === 'cast_vote' && msg.pollId && msg.optionId) {
-      await this.pollEngine.castVote(
-        msg.pollId,
-        ctx.principal.userId,
-        msg.optionId,
-        msg.channel ?? 'ws'
-      );
+      await this.pollEngine.castVote(msg.pollId, ctx.principal, msg.optionId, msg.channel ?? 'ws');
       return;
     }
 
     if (msg.action === 'approve_proposal' && msg.proposalId) {
-      const approved = await this.approvalQueue.approveProposal(
-        msg.proposalId,
-        ctx.principal.userId
-      );
+      const approved = await this.approvalQueue.approveProposal(msg.proposalId, ctx.principal);
       this.send(socket, { type: 'proposal_approved', data: approved });
       return;
     }
 
     if (msg.action === 'veto_proposal' && msg.proposalId) {
-      const vetoed = await this.approvalQueue.vetoProposal(
-        msg.proposalId,
-        ctx.principal.userId
-      );
+      const vetoed = await this.approvalQueue.vetoProposal(msg.proposalId, ctx.principal);
       this.send(socket, { type: 'proposal_vetoed', data: vetoed });
       return;
     }
   }
 
-  broadcast(campaignId: string, message: WSServerMessage): void {
-    const payload = JSON.stringify(message);
-    for (const [sock, ctx] of this.sockets.entries()) {
-      if (ctx.campaignId === campaignId && sock.readyState === 1) {
-        try {
-          sock.send(payload);
-        } catch {
-          // Ignore socket write errors
-        }
+  private pollEventToCampaignEvent(event: PollEvent): CampaignEvent {
+    const poll = event.poll;
+    const base = { campaignId: poll.campaignId, pollId: poll.id, requiresApprove: false };
+    if (event.type === 'vote_cast') {
+      return {
+        ...base,
+        type: 'vote_cast',
+        render: (canApprove) => ({ vote: event.vote, poll: presentPoll(poll, canApprove) }),
+      };
+    }
+    return {
+      ...base,
+      type: event.type,
+      render: (canApprove) => presentPoll(poll, canApprove),
+    };
+  }
+
+  private publish(event: CampaignEvent): void {
+    this.deliveries = this.deliveries
+      .then(() => this.deliver(event))
+      .catch((err: unknown) => this.log.error({ err, type: event.type }, 'Audience broadcast failed'));
+  }
+
+  private async deliver(event: CampaignEvent): Promise<void> {
+    const targets = [...this.sockets.entries()].filter(
+      ([sock, ctx]) => ctx.campaignId === event.campaignId && sock.readyState === 1
+    );
+    for (const [socket, ctx] of targets) {
+      try {
+        const canApprove = await this.access.pollAllows(ctx.principal, event.pollId, 'approve');
+        if (event.requiresApprove && !canApprove) continue;
+        this.send(socket, { type: event.type, data: event.render(canApprove) });
+      } catch (err: unknown) {
+        // A failed check drops this one delivery. The failure is logged, and other sockets still receive the event.
+        this.log.error({ err, type: event.type, userId: ctx.principal.userId }, 'Audience delivery check failed');
       }
     }
   }

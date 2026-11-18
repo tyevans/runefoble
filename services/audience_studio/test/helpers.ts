@@ -12,6 +12,8 @@ import { MemoryEventStore } from '../src/eventStore/memoryEventStore.js';
 import { InMemoryStreamPublisher } from '../src/memoryStreams.js';
 import type { AppContext } from '../src/server.js';
 import { buildServer } from '../src/server.js';
+import type { SpiceDbPort } from '../src/spicedb/spicedbPort.js';
+import { FakeSpiceDb } from './fakeSpiceDb.js';
 
 export const TEST_ISSUER = 'http://zitadel.test';
 export const TEST_AUDIENCE = 'runefoble-api';
@@ -114,12 +116,18 @@ export function mintAlgNone(sub: string): string {
   return `${encode({ alg: 'none' })}.${encode(payload)}.`;
 }
 
+export interface ServiceOptions {
+  /** Authorization port. Tests share one fake across restarts, as SpiceDB keeps its relations. */
+  spicedb?: SpiceDbPort;
+  jwksUrl?: string;
+}
+
 /** Builds a server that trusts the given issuer. Stores and streams are in memory (tests only). */
-export async function startService(issuer: TestIssuer, jwksUrl = issuer.jwksUrl): Promise<AppContext> {
+export async function startService(issuer: TestIssuer, options: ServiceOptions = {}): Promise<AppContext> {
   return buildServer({
-    spicedbToken: '',
+    spicedb: options.spicedb ?? new FakeSpiceDb(),
     logger: false,
-    zitadel: { issuer: TEST_ISSUER, audience: TEST_AUDIENCE, jwksUrl },
+    zitadel: { issuer: TEST_ISSUER, audience: TEST_AUDIENCE, jwksUrl: options.jwksUrl ?? issuer.jwksUrl },
     createAdapters: async () => ({
       eventStore: new MemoryEventStore(),
       streamPublisher: new InMemoryStreamPublisher(),

@@ -15,7 +15,6 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -25,17 +24,10 @@ AUDIT_TEST_TS = FRONTEND_DIR / "test" / "app-shell-views-wiring-audit.test.ts"
 
 
 @pytest.fixture
-def client(game_session_upstream):
+def client(game_session_upstream, character_sheet_upstream):
     """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
-
-
-@pytest.fixture(autouse=True)
-def reset_stores():
-    """Reset campaign and character stores to guarantee test isolation."""
-    character_store.reset(load_defaults=False)
-    yield
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +89,6 @@ def test_gateway_frontdoor_endpoints_for_audited_views(trusted_ws_issuer, client
         json={
             "name": "Valeros Citadel Guard",
             "characterClass": "Fighter",
-            "level": 3,
             "maxHp": 30,
             "armorClass": 16,
             "speed": 30,

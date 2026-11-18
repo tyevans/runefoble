@@ -3,8 +3,8 @@
 Two fixtures start an in-memory SpiceDB container pinned to the image in the Helm values:
 
 - `live_spicedb_endpoint`: the endpoint only. It yields None when Docker is missing.
-- `live_spicedb_with_schema`: the endpoint and a client, with runefoble.zed loaded through
-  `bootstrap_schema`. A failed schema write fails the fixture.
+- `live_spicedb_with_schema`: the endpoint, a client, and test helpers (`env`, `grant`), with
+  runefoble.zed loaded through `bootstrap_schema`. A failed schema write fails the fixture.
 
 Set `RUNEFOBLE_REQUIRE_LIVE_SPICEDB=1` to make a missing Docker or a failed start raise.
 Without it, the strict fixture skips and the endpoint fixture yields None.
@@ -25,10 +25,12 @@ import shutil
 import socket
 import subprocess
 import time
-from collections.abc import Generator, Iterator
+from collections.abc import Coroutine, Generator, Iterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
@@ -43,10 +45,44 @@ GRPC_PORT = 50051
 
 @dataclass(frozen=True)
 class LiveSpiceDB:
-    """A running SpiceDB container with runefoble.zed loaded."""
+    """A running SpiceDB container with runefoble.zed loaded.
+
+    Tests seed campaign roles through the gRPC write API, as an operator would.
+    The Audience Studio process reads the same container through `env`.
+    """
 
     endpoint: str
     client: SpiceDBClient
+
+    @property
+    def env(self) -> dict[str, str]:
+        """Environment variables that point a service process at this container."""
+        return {
+            "RUNEFOBLE_SPICEDB_ENDPOINT": self.endpoint,
+            "RUNEFOBLE_SPICEDB_PRESHARED_KEY": self.client.token,
+        }
+
+    def grant(self, campaign_id: str, relation: str, user_id: str) -> None:
+        """Write one `campaign` relation for a user (for example `game_master`)."""
+        _run_blocking(
+            _write_campaign_relation(
+                self.endpoint, self.client.token, campaign_id, relation, user_id
+            )
+        )
+
+
+async def _write_campaign_relation(
+    endpoint: str, token: str, campaign_id: str, relation: str, user_id: str
+) -> None:
+    """Open a client on the running loop and write one campaign relation."""
+    client = SpiceDBClient(endpoint=endpoint, token=token, insecure=True)
+    await client.write_relationship("campaign", campaign_id, relation, "user", user_id)
+
+
+def _run_blocking(coro: Coroutine[Any, Any, Any]) -> Any:
+    """Runs a coroutine to completion from sync test code, even inside a running event loop."""
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result()
 
 
 def spicedb_image() -> str:

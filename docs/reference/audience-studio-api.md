@@ -13,8 +13,29 @@ The TypeScript `audience_studio` service (port 8010) runs live spectator polls a
 | Status | Meaning |
 |---|---|
 | `401 Unauthorized` | No token, or the token fails a check. Response has `WWW-Authenticate: Bearer`. |
-| `403 Forbidden` | Token is valid, but SpiceDB denies the `run_session` check on the campaign. |
-| `503 Service Unavailable` | The JWKS endpoint, Redis Streams, or PostgreSQL is unavailable. |
+| `403 Forbidden` | Token is valid, but SpiceDB denies the permission that the route needs. See [Permissions](#permissions). |
+| `404 Not Found` | The poll or proposal does not exist. Checked before the permission. |
+| `503 Service Unavailable` | The JWKS endpoint, SpiceDB, Redis Streams, or PostgreSQL is unavailable. The service fails closed. |
+
+## Permissions
+
+Each action checks one permission on the `audience_poll` object, or on the `campaign` object for poll creation and the WebSocket handshake. The names come from `libs/runefoble_auth/schema/runefoble.zed`. Role names never appear in the service.
+
+| Action | Check (SpiceDB) |
+|---|---|
+| Create a poll | `campaign:<campaign_id>#run_session` |
+| List or read a poll | `audience_poll:<poll_id>#view` |
+| Vote (HTTP or WebSocket `cast_vote`) | `audience_poll:<poll_id>#vote` |
+| Close a poll | `audience_poll:<poll_id>#moderate` |
+| Approve (HTTP or WebSocket) | `audience_poll:<poll_id>#approve` |
+| Veto (HTTP or WebSocket) | `audience_poll:<poll_id>#veto` |
+| Open WebSocket for a campaign | `campaign:<campaign_id>#view` |
+
+A poll links to its campaign through the `campaign` relation. The service writes that relation when the poll is created.
+
+**Proposal parameters.** A proposal in a response carries `parameters`, `description`, and `modifierType` only for a caller with `audience_poll.approve`. Other callers get `id`, `pollId`, `campaignId`, `sessionId`, `title`, `status`, `createdAt`, `reviewedBy`, and `reviewedAt`.
+
+**Broadcasts.** `proposal_queued` reaches only sockets whose principal has `audience_poll.approve`. Other events reach every socket that can view the campaign. Each socket gets the same redaction as the HTTP routes.
 
 ### Public paths
 
@@ -29,13 +50,13 @@ The TypeScript `audience_studio` service (port 8010) runs live spectator polls a
 | Method | Path | Actor | Notes |
 |---|---|---|---|
 | `POST` | `/polls` | Token subject | Creates a poll. Body: `campaign_id`, `title`, `prompt`, `options`, optional `duration_seconds`, `quorum`, `session_id`, `modifier_type`. |
-| `GET` | `/polls` | Token subject | Lists polls. Query: `campaign_id`. |
-| `GET` | `/polls/{pollId}` | Token subject | Returns one poll. |
-| `POST` | `/polls/{pollId}/votes` | Token subject (voter) | Body: `option_id`, optional `channel`. Duplicate votes return `400`. |
-| `POST` | `/polls/{pollId}/close` | Token subject | Closes the poll and queues a proposal when quorum is met. |
-| `GET` | `/proposals` | Token subject | Lists proposals. Query: `campaign_id`, `status`. |
-| `POST` | `/proposals/{proposalId}/approve` | DM (SpiceDB `run_session`) | Approves the proposal. No body. |
-| `POST` | `/proposals/{proposalId}/veto` | DM (SpiceDB `run_session`) | Vetoes the proposal. No body. |
+| `GET` | `/polls` | Token subject | Lists the polls the caller can view. Query: `campaign_id`. |
+| `GET` | `/polls/{pollId}` | Token subject (`view`) | Returns one poll. |
+| `POST` | `/polls/{pollId}/votes` | Token subject (`vote`) | Body: `option_id`, optional `channel`. Duplicate votes return `400`. |
+| `POST` | `/polls/{pollId}/close` | Token subject (`moderate`) | Closes the poll and queues a proposal when quorum is met. |
+| `GET` | `/proposals` | Token subject (`view`) | Lists proposals of polls the caller can view. Query: `campaign_id`, `status`. |
+| `POST` | `/proposals/{proposalId}/approve` | Token subject (`approve`) | Approves the proposal. No body. |
+| `POST` | `/proposals/{proposalId}/veto` | Token subject (`veto`) | Vetoes the proposal. No body. |
 
 Documentation routes `GET /openapi.json` and `GET /docs` also need a token.
 
@@ -43,7 +64,7 @@ Documentation routes `GET /openapi.json` and `GET /docs` also need a token.
 
 | Removed | Replacement |
 |---|---|
-| `POST /api/v1/audience/auth/tuples` | Returns `404`. Grant DM relations through SpiceDB's write API. |
+| `POST /api/v1/audience/auth/tuples` | Returns `404`. Grant campaign relations through SpiceDB's write API. |
 | Body field `dm_user_id` on approve and veto | Ignored. The token subject is the actor. |
 | Body field `voter_id` on votes | Ignored. The token subject is the voter. |
 | Header `x-user-id` | Ignored. |
@@ -52,7 +73,7 @@ Documentation routes `GET /openapi.json` and `GET /docs` also need a token.
 
 ## WebSocket
 
-`GET /ws/audience/{campaignId}` (upgrade). The handshake must carry a verified bearer subprotocol. A refused handshake returns `401` and never opens.
+`GET /ws/audience/{campaignId}` (upgrade). The handshake must carry a verified bearer subprotocol, and the principal needs `campaign:<campaignId>#view`. A refused handshake returns `401` (no token) or `403` (no campaign view) and never opens.
 
 Client actions: `subscribe`, `ping`, `cast_vote` (`pollId`, `optionId`, optional `channel`), `approve_proposal` (`proposalId`), `veto_proposal` (`proposalId`).
 
@@ -65,8 +86,8 @@ Server frames: `connected`, `subscribed`, `poll_started`, `vote_cast`, `poll_com
 | `RUNEFOBLE_ZITADEL_ISSUER` | Yes | Must equal the token `iss`. The service exits at start-up when unset. |
 | `RUNEFOBLE_ZITADEL_AUDIENCE` | Yes | Must equal the token `aud`. The service exits at start-up when unset. |
 | `RUNEFOBLE_ZITADEL_JWKS_URL` | No | When unset, the service reads `jwks_uri` from OIDC discovery at start-up. |
-| `RUNEFOBLE_SPICEDB_ENDPOINT` | Yes in deployment | Base URL of SpiceDB HTTP API. Without it, every DM check is denied. |
-| `RUNEFOBLE_SPICEDB_PRESHARED_KEY` | Yes outside tests | Operator secret. No default. |
+| `RUNEFOBLE_SPICEDB_ENDPOINT` | Yes | SpiceDB gRPC address. Use `host:port` (plaintext gRPC, the in-cluster form), `grpc://host:port` (plaintext), or `https://host:port` (TLS). Any other scheme stops start-up. The service exits at start-up when unset. |
+| `RUNEFOBLE_SPICEDB_PRESHARED_KEY` | Yes outside tests | Operator secret. Sent as the bearer token on every SpiceDB call. No default. |
 | `RUNEFOBLE_DATABASE_URL`, `REDIS_URL` | Yes outside tests | Event store and Redis Streams. |
 
 The Helm chart sets the Zitadel variables from `services.audienceStudio` and the Zitadel values. Governing docs: [How-To: Orchestrate Audience Chaos Polls](../how-to/orchestrate-audience-chaos-polls.md), [How-To: Verify Identity in FastAPI and WebSockets](../how-to/verify-identity-in-fastapi-and-websockets.md).

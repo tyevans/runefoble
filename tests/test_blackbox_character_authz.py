@@ -25,7 +25,6 @@ from character_sheet.main import app as character_sheet_app
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
 from gateway_api.campaign_store import campaign_store
-from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 from runefoble_auth.errors import AuthzUnavailableError
 
@@ -42,10 +41,8 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 
 @pytest.fixture(autouse=True)
 def reset_gateway_stores() -> Iterator[None]:
-    character_store.reset(load_defaults=False)
     campaign_store.reset()
     yield
-    character_store.reset(load_defaults=False)
     campaign_store.reset()
 
 
@@ -217,28 +214,6 @@ def test_gateway_creation_fails_loudly_and_lists_nothing(trusted_ws_issuer, monk
 
     listed = gateway.get("/api/v1/characters", headers=headers).json()
     assert "Ghost Gateway" not in [c["name"] for c in listed]
-
-
-def test_only_owner_may_delete_character(trusted_ws_issuer) -> None:
-    """The DM gets 403 on DELETE. The owner gets 200, and the character is gone."""
-    campaign_id, dm_headers = _create_campaign(trusted_ws_issuer, "dm_valeros")
-    _join_campaign(trusted_ws_issuer, campaign_id, dm_headers, "player_kira")
-    owner_headers = _auth(trusted_ws_issuer, "player_kira")
-    res = gateway.post(
-        "/api/v1/characters",
-        json={"name": "Doomed", "characterClass": "Bard", "maxHp": 10, "campaignId": campaign_id},
-        headers=owner_headers,
-    )
-    assert res.status_code == 201, res.text
-    char_id = res.json()["id"]
-
-    res_dm = gateway.delete(f"/api/v1/characters/{char_id}", headers=dm_headers)
-    assert res_dm.status_code == 403
-    assert res_dm.json()["detail"]["error"] == "permission_denied"
-
-    res_owner = gateway.delete(f"/api/v1/characters/{char_id}", headers=owner_headers)
-    assert res_owner.status_code == 200, res_owner.text
-    assert character_store.get_character(char_id) is None
 
 
 def test_gateway_sub_resource_returns_503_when_owner_is_unreachable(

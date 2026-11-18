@@ -6,17 +6,20 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import type { AudienceAccess, PollPermission } from './access/audienceAccess.js';
+import { presentPoll } from './access/presentation.js';
 import type { ApprovalQueue } from './approvalQueue.js';
 import { PollAggregate, type PollSnapshot } from './domain/pollAggregate.js';
 import { ProposalAggregate } from './domain/proposalAggregate.js';
 import { pollStreamId } from './domain/events.js';
-import { DomainError } from './errors.js';
+import { NotFound } from './errors.js';
 import type { AudienceEventRepository } from './eventSourcing/repository.js';
 import { KeyedMutex } from './eventSourcing/keyedMutex.js';
 import type { EventSourcedAggregate } from './eventSourcing/aggregate.js';
 import type { Logger } from './logger.js';
+import type { VerifiedPrincipal } from './identity/zitadelVerifier.js';
 import { pollView } from './views.js';
-import type { AudienceModifierProposal, AudiencePoll } from './types.js';
+import type { AudienceModifierProposal, AudiencePoll, AudiencePollRecord, AudienceVote } from './types.js';
 
 export interface CreatePollParams {
   campaignId: string;
@@ -29,8 +32,12 @@ export interface CreatePollParams {
   modifierType?: string;
 }
 
-export type PollEventName = 'poll_started' | 'vote_cast' | 'poll_completed';
-type PollListener = (event: PollEventName, data: unknown) => void;
+/** Events published after a poll command commits. Poll records carry full proposals. */
+export type PollEvent =
+  | { type: 'poll_started'; poll: AudiencePollRecord }
+  | { type: 'vote_cast'; poll: AudiencePollRecord; vote: AudienceVote }
+  | { type: 'poll_completed'; poll: AudiencePollRecord };
+type PollListener = (event: PollEvent) => void;
 
 const MAX_TIMER_MS = 2 ** 31 - 1;
 const RETRY_DELAY_MS = 1000;
@@ -43,6 +50,7 @@ export class PollEngine {
     private readonly repo: AudienceEventRepository,
     private readonly mutex: KeyedMutex,
     private readonly approvalQueue: ApprovalQueue,
+    private readonly access: AudienceAccess,
     private readonly log: Logger
   ) {}
 
@@ -74,7 +82,9 @@ export class PollEngine {
     this.timers.clear();
   }
 
-  async createPoll(params: CreatePollParams): Promise<AudiencePoll> {
+  /** Opens a poll. The actor needs `run_session` on the campaign. The poll is bound to the campaign before it is stored. */
+  async createPoll(actor: VerifiedPrincipal, params: CreatePollParams): Promise<AudiencePoll> {
+    await this.access.requireCampaign(actor, params.campaignId, 'run_session');
     const id = uuidv4();
     const durationSeconds = params.durationSeconds ?? 60;
     const poll = new PollAggregate(id);
@@ -88,21 +98,25 @@ export class PollEngine {
       quorum: params.quorum ?? 5,
       now: new Date(),
     });
+    await this.access.bindPollToCampaign(id, params.campaignId);
     await this.mutex.run([pollStreamId(id)], () => this.repo.commit([poll]));
 
     const snap = poll.snapshot();
     this.schedule(id, Date.parse(snap.expiresAt) - Date.now());
     const view = pollView(snap);
-    this.notify('poll_started', view);
-    return view;
+    this.notify({ type: 'poll_started', poll: view });
+    return this.presentFor(actor, view);
   }
 
+  /** Records one ballot for the actor. The actor needs `vote` on the poll. */
   async castVote(
     pollId: string,
-    voterId: string,
+    actor: VerifiedPrincipal,
     optionId: string,
     channel: string = 'web'
   ): Promise<AudiencePoll> {
+    await this.authorize(actor, pollId, 'vote');
+    const voterId = actor.userId;
     const now = new Date();
     const snap = await this.mutex.run([pollStreamId(pollId)], async () => {
       const poll = await this.requirePoll(pollId);
@@ -112,7 +126,8 @@ export class PollEngine {
     });
 
     const view = await this.viewOf(snap);
-    this.notify('vote_cast', {
+    this.notify({
+      type: 'vote_cast',
       poll: view,
       vote: {
         pollId,
@@ -123,11 +138,17 @@ export class PollEngine {
         timestamp: now.toISOString(),
       },
     });
-    return view;
+    return this.presentFor(actor, view);
   }
 
-  /** Completes the poll. Idempotent: a completed poll is returned unchanged. */
-  async closePoll(pollId: string): Promise<AudiencePoll> {
+  /** Completes the poll for a moderator. The actor needs `moderate` on the poll. */
+  async closePoll(pollId: string, actor: VerifiedPrincipal): Promise<AudiencePoll> {
+    await this.authorize(actor, pollId, 'moderate');
+    return this.presentFor(actor, await this.complete(pollId));
+  }
+
+  /** Completes the poll. Idempotent: a completed poll is returned unchanged. Used by the timer as well. */
+  private async complete(pollId: string): Promise<AudiencePollRecord> {
     const outcome = await this.mutex.run([pollStreamId(pollId)], async () => {
       const poll = await this.requirePoll(pollId);
       if (poll.snapshot().status === 'completed') {
@@ -154,32 +175,53 @@ export class PollEngine {
     }
     const view = await this.viewOf(outcome.snap);
     if (outcome.closedNow) {
-      this.notify('poll_completed', view);
+      this.notify({ type: 'poll_completed', poll: view });
     }
     return view;
   }
 
-  async getPoll(pollId: string): Promise<AudiencePoll | undefined> {
-    const poll = await this.repo.loadPoll(pollId);
-    return poll ? this.viewOf(poll.snapshot()) : undefined;
+  /** One poll, if the actor can view it. A missing poll is 404 before any permission check. */
+  async getPoll(pollId: string, actor: VerifiedPrincipal): Promise<AudiencePoll> {
+    await this.authorize(actor, pollId, 'view');
+    return this.presentFor(actor, await this.viewOf((await this.requirePoll(pollId)).snapshot()));
   }
 
-  async listPolls(campaignId?: string): Promise<AudiencePoll[]> {
+  /** Polls the actor can view, optionally limited to one campaign. */
+  async listPolls(actor: VerifiedPrincipal, campaignId?: string): Promise<AudiencePoll[]> {
     const polls = (await this.repo.loadAllPolls()).map((p) => p.snapshot());
     const selected = campaignId ? polls.filter((p) => p.campaignId === campaignId) : polls;
     const proposals = await this.proposalIndex(selected);
-    return selected.map((snap) => pollView(snap, snap.proposalId ? proposals.get(snap.proposalId) : undefined));
+    const views: AudiencePoll[] = [];
+    for (const snap of selected) {
+      if (!(await this.access.pollAllows(actor, snap.id, 'view'))) continue;
+      const view = pollView(snap, snap.proposalId ? proposals.get(snap.proposalId) : undefined);
+      views.push(await this.presentFor(actor, view));
+    }
+    return views;
+  }
+
+  /** Loads the poll (404), then checks the permission (403). */
+  private async authorize(actor: VerifiedPrincipal, pollId: string, permission: PollPermission): Promise<void> {
+    await this.requirePoll(pollId);
+    await this.access.requirePoll(actor, pollId, permission);
+  }
+
+  /** Strips proposal parameters unless the actor holds `approve` on the poll. */
+  private async presentFor(actor: VerifiedPrincipal, view: AudiencePollRecord): Promise<AudiencePoll> {
+    if (!view.proposedModifier) return view;
+    const canApprove = await this.access.pollAllows(actor, view.id, 'approve');
+    return presentPoll(view, canApprove);
   }
 
   private async requirePoll(pollId: string): Promise<PollAggregate> {
     const poll = await this.repo.loadPoll(pollId);
     if (!poll) {
-      throw new DomainError(`Poll '${pollId}' not found`, 404);
+      throw new NotFound(`Poll '${pollId}' not found`);
     }
     return poll;
   }
 
-  private async viewOf(snap: PollSnapshot): Promise<AudiencePoll> {
+  private async viewOf(snap: PollSnapshot): Promise<AudiencePollRecord> {
     let proposal: AudienceModifierProposal | undefined;
     if (snap.proposalId) {
       proposal = (await this.repo.loadProposal(snap.proposalId))?.snapshot();
@@ -227,20 +269,20 @@ export class PollEngine {
         this.schedule(pollId, remaining);
         return;
       }
-      await this.closePoll(pollId);
+      await this.complete(pollId);
     } catch (err) {
       this.log.error({ err, pollId }, 'Poll expiry failed; retrying');
       this.schedule(pollId, RETRY_DELAY_MS);
     }
   }
 
-  private notify(event: PollEventName, data: unknown): void {
+  private notify(event: PollEvent): void {
     for (const listener of this.listeners) {
       try {
-        listener(event, data);
+        listener(event);
       } catch (err) {
         // A broken listener must not block the other listeners or the command. The failure is logged.
-        this.log.error({ err, event }, 'Audience poll listener failed');
+        this.log.error({ err, event: event.type }, 'Audience poll listener failed');
       }
     }
   }

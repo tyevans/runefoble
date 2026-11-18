@@ -5,16 +5,28 @@ from __future__ import annotations
 from uuid import UUID, uuid4
 
 from character_sheet import dependencies as deps
-from character_sheet import schemas
+from character_sheet import roster, schemas
 from character_sheet.authz import write_character_ownership
 from character_sheet.models import CharacterState, StandInGuardrails
-from fastapi import APIRouter, Depends, HTTPException
+from character_sheet.roster import CharacterRosterView
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 router = APIRouter(tags=["character_sheet"], dependencies=[Depends(deps.get_principal)])
 
 
-@router.post("/api/v1/characters", response_model=CharacterState)
-@router.post("/api/v1/characters/create", response_model=CharacterState)
+@router.get("/api/v1/characters", response_model=list[CharacterRosterView])
+async def list_characters(
+    repo: deps.RepoDep,
+    spicedb: deps.SpiceDep,
+    user_id: deps.VerifiedUserId,
+    campaign_id: str | None = Query(None, alias="campaignId"),
+):
+    """List the characters the caller may view, optionally one campaign's party."""
+    return await roster.visible_characters(repo, spicedb, user_id, campaign_id)
+
+
+@router.post("/api/v1/characters", response_model=CharacterRosterView)
+@router.post("/api/v1/characters/create", response_model=CharacterRosterView)
 async def create_character(
     req: schemas.CreateCharacterRequest,
     repo: deps.RepoDep,
@@ -24,7 +36,8 @@ async def create_character(
     """Create a character. The ownership tuples are written first, so a failed write creates nothing."""
     character_id = uuid4()
     await write_character_ownership(spicedb, character_id, user_id, req.campaign_id)
-    return await deps.create_new_character(repo, req, character_id)
+    state = await deps.create_new_character(repo, req, character_id)
+    return await roster.roster_view(spicedb, state, owner_id=user_id)
 
 
 @router.post(
@@ -89,11 +102,13 @@ async def restore_spell_slots(
 
 @router.get(
     "/api/v1/characters/{character_id}",
-    response_model=CharacterState,
+    response_model=CharacterRosterView,
     dependencies=deps.VIEW_CHARACTER,
 )
-async def get_character(character_id: UUID, repo: deps.RepoDep):
-    return (await deps.load_character(repo, character_id)).state
+async def get_character(character_id: UUID, repo: deps.RepoDep, spicedb: deps.SpiceDep):
+    """Read one character. Requires `view`, checked by the route dependency."""
+    state = (await deps.load_character(repo, character_id)).state
+    return await roster.roster_view(spicedb, state)
 
 
 @router.post(
@@ -203,7 +218,7 @@ async def get_guardrails(character_id: UUID, repo: deps.RepoDep):
 
 @router.patch(
     "/api/v1/characters/{character_id}/campaign",
-    response_model=CharacterState,
+    response_model=CharacterRosterView,
     dependencies=deps.EDIT_CHARACTER,
 )
 async def assign_campaign(
@@ -213,6 +228,7 @@ async def assign_campaign(
     spicedb: deps.SpiceDep,
     user_id: deps.VerifiedUserId,
 ):
-    return await deps.assign_character_campaign(
+    state = await deps.assign_character_campaign(
         repo, spicedb, character_id, req.campaign_id, user_id
     )
+    return await roster.roster_view(spicedb, state)
