@@ -1,7 +1,7 @@
 ---
 id: '0803'
 title: "One Test Harness Runs Game Session, Redis and Soundscape Together"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0803: One Test Harness Runs Game Session, Redis and Soundscape Together
 
 ## Status
-Refined. Found during batch 26 to 28 integration, 2026-11-18.
+Complete
 
 ## Summary
 No test runs game_session and soundscape against one Redis, so the combat-end event path (TASK-0792) is tested only in parts.

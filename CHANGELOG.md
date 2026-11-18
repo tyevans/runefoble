@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- Short-name event lookups and registrations: the deserializer and identity sync router no longer split identifiers, and no event class registers under its class name or a retired name. The overlay no longer accepts the `DiceRolled` action. (TASK-0701)
 - character_sheet alias routes `POST /api/v1/characters/create`, `POST /api/v1/characters/{id}/inventory/add` and `POST /api/v1/characters/{id}/inventory/{item_id}/remove`. Use `POST /api/v1/characters`, `POST /api/v1/characters/{id}/inventory` and `DELETE /api/v1/characters/{id}/inventory/{item_id}`. (TASK-0493)
 - character_sheet `alias="int"` on `AttributeScores.intelligence`, the `.int` attribute shim, and the UI `runefoble-character-sheet.templates.ts` re-export. The wire key `"int"` is unchanged. Import templates from `templates/*.template.ts`. (TASK-0493)
 - Old service URL names `CAMPAIGN_LORE_URL`, `CAMPAIGN_ANALYTICS_URL`, `SOUNDSCAPE_SERVICE_URL`, `BOARD_STATE_URL`, `GAME_SESSION_URL`, `RULES_COMPENDIUM_URL` and `THE_WATCHER_URL`. (TASK-0794)
@@ -121,6 +122,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Event wire names follow `runefoble.events.<bc>.<snake_case>`. 108 identifiers change, for example `TokenMoved` becomes `runefoble.events.board.token_moved`. Consumers must match the new identifiers. The full list is in `docs/reference/event-identifiers.md`. (TASK-0701)
 - Service base URLs use one name each, `RUNEFOBLE_<SERVICE>_URL`, with no in-cluster code defaults. The gateway MCP upstream names use the same scheme. (TASK-0794)
 - The haggling DM override request model is renamed `HaggleDmOverrideRequest`. (TASK-0750)
 - `roll_dice` (MCP) rolls through the platform dice engine. Its result has the `parse_and_roll` shape plus `reason`. (TASK-0722)

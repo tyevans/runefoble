@@ -1,7 +1,7 @@
 ---
 id: '0491'
 title: Remove Backward Compatibility Shims & Re-exports in game_session
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0238
@@ -29,23 +29,23 @@ target_release: 0.9.0
 # TASK-0491: Remove Backward Compatibility Shims & Re-exports in game_session
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: the in-memory index dicts (`dependencies.py:122-127`) and the dead projections are owned by TASK-0567 and are not removed here.
 
 ## Summary
-Purge all backward-compatibility facades, router shims, and legacy field aliases from `services/game_session` (`aggregate.py`, `combat_routes.py`, `caravan.py`, `caravan_ledger.py`, `settlements/aggregate.py`, `routers/caravan_contracts.py`, `settlement/auth.py`, `settlement/workers.py`, `settlement/haggling.py`, and `worker_models.py` aliases), migrate callers directly to authoritative submodules, and delete facade parity tests.
+Purge all backward-compatibility facades, router shims, and legacy field aliases from `services/game_session` (`aggregate.py` (removed), `combat_routes.py` (removed), `caravan.py` (removed), `caravan_ledger.py` (removed), `settlements/aggregate.py` (removed), `routers/caravan_contracts.py` (removed), `settlement/auth.py` (removed), `settlement/workers.py` (removed), `settlement/haggling.py` (removed), and `worker_models.py` aliases), migrate callers directly to authoritative submodules, and delete facade parity tests.
 
 ## Problem Statement
 `services/game_session` has undergone extensive domain modularization (extracting settlements, caravan contracts, combat encounters, and haggling). However, at each step, backward-compatibility facade files were retained:
 - `game_session/aggregate.py` (facade re-exporting `GameSessionAggregate`)
 - `game_session/combat_routes.py` (compatibility shim for `routers/combat.py`)
-- `game_session/caravan.py` and `caravan_ledger.py` (compatibility facades)
+- `game_session/caravan.py` (removed) and `caravan_ledger.py` (removed) (compatibility facades)
 - `game_session/settlements/aggregate.py` (facade)
 - `game_session/routers/caravan_contracts.py` (facade)
-- `game_session/settlement/auth.py`, `workers.py`, `haggling.py` (aggregator facades)
+- `game_session/settlement/auth.py` (removed), `workers.py` (removed), `haggling.py` (removed) (aggregator facades)
 - `worker_models.py` field aliases (`alias="stock"`, `alias="price_gp"`)
-- Tests in `tests/test_game_session_modular_decomposition.py` and `tests/test_game_session_projections.py` asserting facade parity.
+- Tests in `tests/test_game_session_modular_decomposition.py` and `tests/test_game_session_projections.py` (removed) asserting facade parity.
 These artifacts contradict the DoR zero backward compatibility mandate and must be removed.
 
 ## Documentation & Architecture Review
@@ -65,22 +65,22 @@ These artifacts contradict the DoR zero backward compatibility mandate and must 
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Facade and Compatibility Shim Files**:
-   - Delete `services/game_session/src/game_session/aggregate.py`.
-   - Delete `services/game_session/src/game_session/combat_routes.py`.
-   - Delete `services/game_session/src/game_session/caravan.py`.
-   - Delete `services/game_session/src/game_session/caravan_ledger.py`.
-   - Delete `services/game_session/src/game_session/settlements/aggregate.py`.
-   - Delete `services/game_session/src/game_session/routers/caravan_contracts.py`.
-   - Delete `services/game_session/src/game_session/settlement/auth.py`.
-   - Delete `services/game_session/src/game_session/settlement/workers.py`.
-   - Delete `services/game_session/src/game_session/settlement/haggling.py`.
+   - Delete `services/game_session/src/game_session/aggregate.py` (removed).
+   - Delete `services/game_session/src/game_session/combat_routes.py` (removed).
+   - Delete `services/game_session/src/game_session/caravan.py` (removed).
+   - Delete `services/game_session/src/game_session/caravan_ledger.py` (removed).
+   - Delete `services/game_session/src/game_session/settlements/aggregate.py` (removed).
+   - Delete `services/game_session/src/game_session/routers/caravan_contracts.py` (removed).
+   - Delete `services/game_session/src/game_session/settlement/auth.py` (removed).
+   - Delete `services/game_session/src/game_session/settlement/workers.py` (removed).
+   - Delete `services/game_session/src/game_session/settlement/haggling.py` (removed).
 2. **Remove Model Field Aliases**:
    - In `services/game_session/src/game_session/settlement/worker_models.py`, remove legacy aliases (`alias="stock"`, `alias="price_gp"`), standardizing on canonical field names.
 3. **Migrate Import Sites Across Workspace**:
    - Update `game_session/main.py`, router mounts, and cross-package consumers to import directly from modular submodules (`game_session.aggregate.*`, `game_session.caravan.*`, `game_session.settlement.*`).
 4. **Update Blackbox Test Suites**:
    - In `tests/test_game_session_modular_decomposition.py`, delete `test_package_facade_and_backward_compatibility()`.
-   - In `tests/test_game_session_projections.py`, remove facade re-export tests.
+   - In `tests/test_game_session_projections.py` (removed), remove facade re-export tests.
    - Ensure all blackbox tests pass against direct modular imports.
 
 ## INVEST Criteria Evaluation
@@ -106,4 +106,4 @@ Source: `.audit/synth/discovered-round2.md`.
 
 ## Orchestrator Addenda (2026-11-17, refactor-r1)
 
-- TASK-0491 (game_session shims): append "Also delete `game_session/models.py` (lines 1-10, shadowed by `models/`), and merge `game_session/settlements/auth.py` into `settlement/auth/permissions.py`. Delete `settlements/aggregate.py` and `settlements/models.py` after TASK-0750 picks one `SettlementState`. Repoint `dependencies.py:19`, `routers/settlements.py:15`, and `models/settlement.py:5` to `game_session.settlement.*`."
+- TASK-0491 (game_session shims): append "Also delete `game_session/models.py` (lines 1-10, shadowed by `models/`), and merge `game_session/settlements/auth.py` into `settlement/auth/permissions.py`. Delete `settlements/aggregate.py` (removed) and `settlements/models.py` after TASK-0750 picks one `SettlementState`. Repoint `dependencies.py:19`, `routers/settlements.py:15`, and `models/settlement.py:5` to `game_session.settlement.*`."

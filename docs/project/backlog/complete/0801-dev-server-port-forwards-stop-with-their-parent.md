@@ -1,7 +1,7 @@
 ---
 id: '0801'
 title: "Dev Server Port-Forwards Stop With Their Parent Process"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0801: Dev Server Port-Forwards Stop With Their Parent Process
 
 ## Status
-Refined. Found during batch 26 to 28 integration, 2026-11-18.
+Complete
 
 ## Summary
 When `scripts/dev_server.py` is killed (a test timeout or SIGKILL), its `kubectl port-forward` children stay alive and hold local ports.

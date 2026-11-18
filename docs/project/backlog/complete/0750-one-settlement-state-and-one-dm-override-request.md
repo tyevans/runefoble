@@ -1,7 +1,7 @@
 ---
 id: '0750'
 title: One SettlementState Model and One DMOverrideRequest Model
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0491
@@ -19,13 +19,13 @@ target_release: 0.9.0
 # TASK-0750: One SettlementState Model and One DMOverrideRequest Model
 
 ## Status
-Refined. Found by the refactor audit round refactor-r1 and checked against the code on 2026-11-17.
+Complete
 
 ## Summary
 Two packages define `SettlementState`, and two modules define `DMOverrideRequest`. Two shapes reach the HTTP API under one name. TASK-0491 removes the shadowed facade files but does not choose between these models.
 
 ## Problem Statement
-- `services/game_session/src/game_session/settlements/models.py:33` and `settlement/models.py:140` both define `SettlementState`. `dependencies.py:19`, `routers/settlements.py:15`, and `models/settlement.py:5` import the old `settlements/` package.
+- `services/game_session/src/game_session/settlements/models.py:33` (removed) and `settlement/models.py:140` both define `SettlementState`. `dependencies.py:19`, `routers/settlements.py:15`, and `models/settlement.py:5` import the old `settlements/` package.
 - `settlements/auth.py` duplicates `settlement/auth/permissions.py`. `settlements/aggregate.py` is a facade of `settlement/settlement_aggregate.py`.
 - `DMOverrideRequest` is defined in `models/director.py:10` and `settlement/haggling_models.py:104`.
 

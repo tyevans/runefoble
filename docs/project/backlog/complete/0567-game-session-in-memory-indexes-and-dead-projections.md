@@ -33,7 +33,7 @@ Game session keeps several index dicts at module level that map a parent id to c
 - `services/game_session/src/game_session/projections/presence.py:21` (removed) and `projections/session.py:29-44` hold in-memory state. Grep finds no construction site (w1-game-session F10).
 
 ## Documentation & Architecture Review
-- `refined/0491-remove-backward-compatibility-shims-game-session.md` removes facades only. It does not cover these indexes.
+- `complete/0491-remove-backward-compatibility-shims-game-session.md` removes facades only. It does not cover these indexes.
 - The durable source is the event store. The list can be built by a query on the aggregate-family event stream, or by a projection table fed by the repository publish path from TASK-0565.
 
 ## Product & User Story References

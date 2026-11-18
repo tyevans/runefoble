@@ -1,7 +1,7 @@
 ---
 id: '0701'
 title: Event Wire Names Follow One Identifier Rule
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0579
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0701: Event Wire Names Follow One Identifier Rule
 
 ## Status
-Refined. Agreed at the refactor pause on 2026-11-17 (candidate 5). Slice 2 of TASK-0579.
+Complete
 
 ## Summary
 About 132 event classes set an `event_type` that does not follow `runefoble.events.<bc>.<snake_case>`. Consumers match on these strings, so this is a planned wire-contract change.

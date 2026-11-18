@@ -1,7 +1,7 @@
 ---
 id: '0493'
 title: Remove Backward Compatibility Shims & Re-exports in character_sheet
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0229
@@ -24,17 +24,17 @@ target_release: 0.9.0
 # TASK-0493: Remove Backward Compatibility Shims & Re-exports in character_sheet
 
 ## Status
-Refined
+Complete
 
 ## Summary
-Purge backward-compatibility aggregator facades (`models.py`, `crafting.py`, `ui/src/runefoble-character-sheet.templates.ts`), field aliases (`alias="int"` in `models/base.py`), and facade re-export parity tests from `services/character_sheet`, standardizing on direct imports and canonical field definitions.
+Purge backward-compatibility aggregator facades (`models.py` (removed), `crafting.py` (removed), `ui/src/runefoble-character-sheet.templates.ts` (removed)), field aliases (`alias="int"` in `models/base.py`), and facade re-export parity tests from `services/character_sheet`, standardizing on direct imports and canonical field definitions.
 
 ## Problem Statement
 In `services/character_sheet`:
-- `character_sheet/models.py` exists as a 10-line aggregator facade re-exporting models from `character_sheet.models.*` for backward compatibility.
-- `character_sheet/crafting.py` exists as a 17-line facade re-exporting crafting module components.
+- `character_sheet/models.py` (removed) exists as a 10-line aggregator facade re-exporting models from `character_sheet.models.*` for backward compatibility.
+- `character_sheet/crafting.py` (removed) exists as a 17-line facade re-exporting crafting module components.
 - `character_sheet/models/base.py` retains legacy `alias="int"` and `model_dump(by_alias=True)`.
-- `ui/src/runefoble-character-sheet.templates.ts` is an aggregator facade for character templates.
+- `ui/src/runefoble-character-sheet.templates.ts` (removed) is an aggregator facade for character templates.
 - Tests in `tests/test_character_sheet.py` verify backward compatibility of aggregate exports.
 All of these artifacts preserve legacy paths for non-existent external consumers and violate DoR rule 9.
 
@@ -54,9 +54,9 @@ All of these artifacts preserve legacy paths for non-existent external consumers
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Facade Modules**:
-   - Delete `services/character_sheet/src/character_sheet/models.py`.
-   - Delete `services/character_sheet/src/character_sheet/crafting.py`.
-   - Delete `services/character_sheet/ui/src/runefoble-character-sheet.templates.ts`.
+   - Delete `services/character_sheet/src/character_sheet/models.py` (removed).
+   - Delete `services/character_sheet/src/character_sheet/crafting.py` (removed).
+   - Delete `services/character_sheet/ui/src/runefoble-character-sheet.templates.ts` (removed).
 2. **Remove Model Field Aliases**:
    - In `services/character_sheet/src/character_sheet/models/base.py`, remove `alias="int"` on the `intelligence` field, standardizing on canonical `intelligence`.
    - Update serialization callers to eliminate `by_alias=True` reliance where not required.
@@ -75,7 +75,7 @@ All of these artifacts preserve legacy paths for non-existent external consumers
 - **Testable (T)**: Verified by `uv run pytest tests/test_character_sheet*` and UI test suites.
 
 ## Definition of Done
-1. `models.py`, `crafting.py`, and `runefoble-character-sheet.templates.ts` deleted.
+1. `models.py` (removed), `crafting.py` (removed), and `runefoble-character-sheet.templates.ts` (removed) deleted.
 2. Field `alias="int"` removed from base models in favor of canonical `intelligence`.
 3. All callers across backend and UI migrated to modular paths.
 4. Obsolete backward-compatibility tests removed.

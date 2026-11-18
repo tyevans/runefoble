@@ -1,7 +1,7 @@
 ---
 id: '0794'
 title: Service URLs Use One RUNEFOBLE Setting Name Each and No In-Cluster Code Defaults
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0794: Service URLs Use One RUNEFOBLE Setting Name Each and No In-Cluster Code Defaults
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Service address settings mix names with and without the `RUNEFOBLE_` prefix, and some keep in-cluster code defaults. A missing setting then points at a wrong host in silence. The dev server sets no gateway upstream URLs.

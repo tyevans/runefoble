@@ -1,7 +1,7 @@
 ---
 id: '0802'
 title: "Backlog Link Check Treats Cache-Only Folders as Missing"
-status: Refined
+status: Complete
 created: 2026-11-18
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0802: Backlog Link Check Treats Cache-Only Folders as Missing
 
 ## Status
-Refined. Found during batch 26 to 28 integration, 2026-11-18.
+Complete
 
 ## Summary
 The backlog link checker accepts a cited folder that holds only `__pycache__`, so a deleted package can hide behind a leftover cache.

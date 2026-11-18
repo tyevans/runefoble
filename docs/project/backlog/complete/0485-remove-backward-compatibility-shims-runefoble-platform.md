@@ -1,7 +1,7 @@
 ---
 id: '0485'
 title: Remove Backward Compatibility Shims & Re-exports in runefoble_platform
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0242
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0485: Remove Backward Compatibility Shims & Re-exports in runefoble_platform
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: also remove the alias `RedisConsumerGroupWorker = RedisConsumerGroup` (`consumer_group.py:162`) and the `MockAsyncRedis` re-export (`consumer_group.py:14,168`; also `__init__.py:12,97` and `redis_bus.py:14,169`). The test double must not be exported from production code.
 
@@ -43,9 +43,9 @@ During past modular refactorings of the platform foundation (such as email clien
 
 ## Detailed Specification & Implementation Plan
 1. **Delete Backward-Compatibility Shims**:
-   - Remove `libs/runefoble_platform/src/runefoble_platform/email_client.py`.
-   - Remove `libs/runefoble_platform/src/runefoble_platform/analytics_client.py`.
-   - Remove `libs/runefoble_platform/src/runefoble_platform/analytics_privacy.py`.
+   - Remove `libs/runefoble_platform/src/runefoble_platform/email_client.py` (removed).
+   - Remove `libs/runefoble_platform/src/runefoble_platform/analytics_client.py` (removed).
+   - Remove `libs/runefoble_platform/src/runefoble_platform/analytics_privacy.py` (removed).
 2. **Remove Configuration Aliases**:
    - In `libs/runefoble_platform/src/runefoble_platform/config.py`, remove the `postgres_dsn` backward-compatibility alias property (`config.py:56-58`); callers must use `database_url` directly.
 3. **Direct Call Site Migration**:
@@ -63,8 +63,8 @@ During past modular refactorings of the platform foundation (such as email clien
 - **Testable (T)**: Verified via `uv run pytest tests/test_platform_email_modular_decomposition.py` and workspace test suite.
 
 ## Definition of Done
-1. `libs/runefoble_platform/src/runefoble_platform/email_client.py` deleted.
-2. `libs/runefoble_platform/src/runefoble_platform/analytics_client.py` and `analytics_privacy.py` deleted.
+1. `libs/runefoble_platform/src/runefoble_platform/email_client.py` (removed) deleted.
+2. `libs/runefoble_platform/src/runefoble_platform/analytics_client.py` (removed) and `analytics_privacy.py` deleted.
 3. `database_url` alias removed from `runefoble_platform.config`.
 4. All workspace call sites migrated to authoritative imports.
 5. All backward-compatibility shim tests removed and updated.
