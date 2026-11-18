@@ -137,7 +137,7 @@ async def test_automatic_voice_ducking_attenuates_leitmotif_by_12db(client: Test
     This test therefore grants the owner a UUID session directly in the shared SpiceDB mock.
     That is the only direct tuple write in the soundscape frontdoor suites (see report).
     """
-    from soundscape.dependencies import get_spicedb_client
+    from runefoble_auth.factory import get_spicedb_client
 
     session_uuid = uuid4()
     session_id_str = str(session_uuid)

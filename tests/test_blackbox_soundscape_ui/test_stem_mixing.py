@@ -40,17 +40,17 @@ def test_rest_data_binding_catalog_and_foley_presets(client: TestClient) -> None
 
 
 def test_rest_data_binding_multi_channel_stem_volume_sliders(
-    client: TestClient, sample_stem_volumes: dict[str, float]
+    client: TestClient, sample_stem_volumes: dict[str, float], soundscape_session_id: str
 ) -> None:
     """Verify POST /api/v1/soundscape/stems/volume updates individual stem channel sliders."""
     payload = {
-        "session_id": "sess-ui-01",
+        "session_id": soundscape_session_id,
         "stem_volumes": sample_stem_volumes,
     }
     resp = client.post("/api/v1/soundscape/stems/volume", json=payload)
     assert resp.status_code == 200
     data = resp.json()
-    assert data["session_id"] == "sess-ui-01"
+    assert data["session_id"] == soundscape_session_id
     for stem_name, vol in sample_stem_volumes.items():
         assert data["stem_channels"][stem_name] == vol
 
@@ -62,7 +62,7 @@ def test_rest_data_binding_tension_calculation(
     resp = client.post("/api/v1/soundscape/tension/calculate", json=sample_tension_payload)
     assert resp.status_code == 200
     data = resp.json()
-    assert data["session_id"] == "sess-ui-01"
+    assert data["session_id"] == sample_tension_payload["session_id"]
     assert data["tension_score"] >= 50
     assert data["stem_profile"] in ("tension", "combat", "boss")
 
