@@ -1,7 +1,7 @@
 ---
 id: '0579'
 title: 'Event Catalogue Alignment: Orphan Producers and Consumers, Wire Types, Board Forge Events'
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0565
@@ -23,7 +23,7 @@ target_release: 0.9.0
 # TASK-0579: Event Catalogue Alignment: Orphan Producers and Consumers, Wire Types, Board Forge Events
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The event catalogue has drifted from the code. Seventeen registered classes have no producer and thirty-eight have no code consumer. About thirty documented topic names do not match any emitted type. Some classes declare a wire type that differs from their class name and print import warnings. Forge events have no consumer, the standee export publishes nothing, and the portrait event goes to the wrong stream. This task decides every orphan event, aligns names with one rule, and wires the forge events that a real flow needs.

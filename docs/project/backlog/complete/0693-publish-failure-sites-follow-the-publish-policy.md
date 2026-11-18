@@ -1,7 +1,7 @@
 ---
 id: '0693'
 title: Remaining Publish Failure Sites Follow the Publish Failure Policy
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0564
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0693: Remaining Publish Failure Sites Follow the Publish Failure Policy
 
 ## Status
-Refined. Discovered in round 2 audit of reports 0564, 0602 and 0624. TASK-0564 set the policy: a domain state change fails the request, and a best-effort notification is counted. It did not reach every site.
+Complete
 
 ## Summary
 Some publish sites in voice_agent and gateway_mcp still log a failure and continue, with no count and no 503. The transcribe route also skips the failure event that the stream path publishes. This task applies the policy to these sites and exposes the counters on `/healthz`.

@@ -1,7 +1,7 @@
 ---
 id: '0574'
 title: Campaign Analytics Combat Telemetry Producers and Character Damage Session Keys
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0578
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0574: Campaign Analytics Combat Telemetry Producers and Character Damage Session Keys
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Combat turns and character damage never reach campaign analytics in production. Analytics handles `CombatRoundAdvanced`, but game session emits `InitiativeTurnAdvanced`, and nothing emits `CombatRoundAdvanced`. Damage events carry no session or campaign id, so their stats are keyed to the character id. This task makes analytics consume the events game session really emits, adds the owning session and campaign to health events, and replaces the synthetic test event with the real one.

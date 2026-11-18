@@ -1,7 +1,7 @@
 ---
 id: '0566'
 title: Minigame Table State Through the Tavern Game Aggregate
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0566: Minigame Table State Through the Tavern Game Aggregate
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Minigame bets, dart throws, Liar's Dice bids, and roulette spins live in a process-memory dict in the WebSocket manager. A separate `TavernGameAggregate` already exists for the same games. This task routes every minigame action through that aggregate, keeps only socket connections in memory, and deletes the table dict.

@@ -1,7 +1,7 @@
 ---
 id: '0695'
 title: Lore Create Actions in the Codex and Atlas, and Hub Journeys Through the Gateway
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0587
@@ -21,7 +21,7 @@ target_release: 0.9.0
 # TASK-0695: Lore Create Actions in the Codex and Atlas, and Hub Journeys Through the Gateway
 
 ## Status
-Refined. Discovered in round 2 audit of report 0646. TASK-0646 is complete. Its remaining items had no owner.
+Complete
 
 ## Summary
 The Codex and Lore tab emits `pin-create-requested`, but the App Shell does not handle it, and the gateway has no POST proxy for atlas pins. The codex and chronicle e2e journeys were never written. This task wires the create action through the gateway and adds the two journeys.

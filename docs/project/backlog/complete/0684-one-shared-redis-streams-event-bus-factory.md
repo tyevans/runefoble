@@ -1,7 +1,7 @@
 ---
 id: '0684'
 title: One Shared Redis Streams Event Bus Factory With Fail-Fast Start-Up
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0672
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0684: One Shared Redis Streams Event Bus Factory With Fail-Fast Start-Up
 
 ## Status
-Refined. Discovered during TASK-0672. Consolidation approved by the user at the round-10 pause (2026-11-17).
+Complete
 
 ## Summary
 Six services each define their own `get_event_bus()` that builds a `RedisStreamsEventBus`. `libs/runefoble_platform` also has a `get_event_bus()` that reads an undefined flag `use_redis_event_bus` and so always returns `InMemoryEventBus`; it has no callers. This task makes one shared factory in `libs/runefoble_platform`, connects it in each service's FastAPI lifespan, fails start-up when Redis is configured and unreachable, and deletes the copies and the dead in-memory path.

@@ -1,7 +1,7 @@
 ---
 id: '0567'
 title: Game Session In-Memory Indexes and Dead Projections Replaced by Durable Queries
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -22,7 +22,7 @@ target_release: 0.9.0
 # TASK-0567: Game Session In-Memory Indexes and Dead Projections Replaced by Durable Queries
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Game session keeps several index dicts at module level that map a parent id to child ids (bounties, world contracts, settlements, establishments, negotiations). After a restart the aggregates survive but the lists are empty. Separately, `SessionReadProjection`, `PresenceProjection`, and `InitiativeProjection` are never constructed. This task replaces the index dicts with durable queries and deletes the dead projections.

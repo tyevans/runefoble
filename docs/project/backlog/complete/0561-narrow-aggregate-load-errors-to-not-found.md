@@ -1,7 +1,7 @@
 ---
 id: '0561'
 title: Narrow Aggregate Load Errors to Not-Found Across Services
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0561: Narrow Aggregate Load Errors to Not-Found Across Services
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Several routers wrap `repo.load(...)` in `except Exception:` and replace the failure with an empty aggregate. A storage outage therefore creates a new empty stream with the same aggregate id. The next `save` then writes conflicting events. This task adds one shared `load_or_create` helper in `runefoble_platform` that catches only the "aggregate not found" case. Every other error reaches the caller as HTTP 503.

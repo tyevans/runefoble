@@ -1,7 +1,7 @@
 ---
 id: '0690'
 title: Leaving a Session Activates the Character Stand-In in Character Sheet
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0548
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0690: Leaving a Session Activates the Character Stand-In in Character Sheet
 
 ## Status
-Refined. Discovered in round 2 audit of report 0570. PRD-0002 requires the stand-in to take over an absent player's character. No production path does this.
+Complete
 
 ## Summary
 `game_session` records a player's absence in its own projection. It never calls the character sheet to set `is_stand_in_active`. The stand-in flag is therefore never set in production. This task wires the leave route to the character sheet stand-in route, with the penalties and guardrails that already exist.

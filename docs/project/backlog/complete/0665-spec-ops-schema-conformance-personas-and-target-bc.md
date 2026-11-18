@@ -1,7 +1,7 @@
 ---
 id: '0665'
 title: Frontmatter Conforms to spec-ops Schema v2.0 for Stories, PRDs, and Backlog Tasks, With Personas Defined
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0664
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0665: Frontmatter Conforms to spec-ops Schema v2.0 for Stories, PRDs, and Backlog Tasks, With Personas Defined
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `spec-ops schema check` exits 1 with 86 errors. 44 PRDs in `product/accepted/` lack `target_persona` or `component`. 33 user stories lack `persona`. 8 complete backlog records have a missing or forbidden frontmatter key. Four personas used by the story registry (Sam, Mayor Theron, Lady Nicole, Kip) are not defined in `PERSONAS.md`. Backlog tasks also have no `target_bc`. Fix the frontmatter and personas so that the schema check exits 0. Decide whether `target_bc` is required, and set it on every refined and proposed task if so.

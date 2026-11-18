@@ -1,7 +1,7 @@
 ---
 id: '0668'
 title: Health and Backlog Gates Move to the spec-ops CLI and Duplicate Local Tooling Is Retired
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0664
@@ -17,7 +17,7 @@ target_release: 0.9.0
 # TASK-0668: Health and Backlog Gates Move to the spec-ops CLI and Duplicate Local Tooling Is Retired
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Runefoble keeps local copies of tools that the spec-ops CLI provides: `scripts/health_check.py` (`make health-check`), `tools/prd_pipeline` (`make prd-*`), `tools/backlog_engine` (`make backlog-worker`), and `tools/project_visualizer` (`make visualizer*`). Two local facades (`tools/prd_pipeline/prd_manager.py:1` and `decomposer.py:70`) keep backward-compatibility layers, which DoR 9 forbids. The health scanner also misses `scripts/`, `e2e/`, and `tools/`. Move the gates to `spec-ops health` and `spec-ops schema check`, keep them in CI, delete the facades, and move the other tools one at a time, each after a parity check against the spec-ops command. Parity is verified before any removal.
