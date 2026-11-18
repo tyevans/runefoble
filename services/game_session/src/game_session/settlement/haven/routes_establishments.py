@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import (
     get_establishment_repository,
     get_event_bus,
@@ -17,6 +17,7 @@ from game_session.dependencies import (
 from game_session.settlement.auth import (
     write_establishment_relationships,
 )
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.haven.loaders import (
     load_establishment,
@@ -29,18 +30,18 @@ from game_session.settlement.models import (
     EstablishmentState,
 )
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_caller_principal)])
 
 
 @router.post("/api/v1/settlements/{settlement_id}/establishments", status_code=201)
 @router.post("/settlements/{settlement_id}/establishments", status_code=201)
 async def construct_establishment(
+    caller_id: CallerId,
     settlement_id: str,
     req: ConstructEstablishmentRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> EstablishmentState:
     """Construct a commercial, civic, or hospitality establishment within a district."""
-    settlement = await load_settlement(settlement_id, "upgrade", x_user_id)
+    settlement = await load_settlement(settlement_id, "upgrade", caller_id)
     if req.district_id not in settlement.state.districts:
         raise HTTPException(
             status_code=400,
@@ -68,7 +69,7 @@ async def construct_establishment(
             capacity=req.capacity,
             operating_cost=req.operating_cost,
             amenities=req.amenities,
-            owner_id=x_user_id or "system",
+            owner_id=caller_id,
             metadata=req.metadata,
         )
     except ValueError as e:
@@ -80,7 +81,7 @@ async def construct_establishment(
         establishment_id=str(eid),
         settlement_id=settlement_id,
         campaign_id=settlement.state.campaign_id,
-        owner_id=x_user_id,
+        owner_id=caller_id,
     )
 
     get_settlement_establishments_index().setdefault(settlement_id, []).append(str(eid))
@@ -90,11 +91,11 @@ async def construct_establishment(
 @router.get("/api/v1/settlements/{settlement_id}/establishments")
 @router.get("/settlements/{settlement_id}/establishments")
 async def list_settlement_establishments(
+    caller_id: CallerId,
     settlement_id: str,
-    x_user_id: str | None = Header(default=None),
 ) -> list[EstablishmentState]:
     """List all establishments located in a settlement."""
-    await load_settlement(settlement_id, "view", x_user_id)
+    await load_settlement(settlement_id, "view", caller_id)
     est_ids = get_settlement_establishments_index().get(settlement_id, [])
     est_repo = get_establishment_repository()
     results: list[EstablishmentState] = []
@@ -111,11 +112,11 @@ async def list_settlement_establishments(
 @router.get("/api/v1/establishments/{establishment_id}")
 @router.get("/establishments/{establishment_id}")
 async def get_establishment(
+    caller_id: CallerId,
     establishment_id: str,
-    x_user_id: str | None = Header(default=None),
 ) -> EstablishmentState:
     """Retrieve establishment details and operational stats."""
-    agg = await load_establishment(establishment_id, "view", x_user_id)
+    agg = await load_establishment(establishment_id, "view", caller_id)
     return agg.state
 
 

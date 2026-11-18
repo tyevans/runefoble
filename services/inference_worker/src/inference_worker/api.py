@@ -3,10 +3,10 @@
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from inference_worker.auth import service_token_guard
 from inference_worker.config import WorkerSettings
 from inference_worker.graphs import build_intent_graph, build_narration_graph, build_stand_in_graph
 from inference_worker.llm_client import InferenceBackendError, MultiBackendLLMClient
@@ -54,13 +54,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+# The worker is server-to-server only. It sends no CORS headers, so browsers cannot call it.
+inference_router = APIRouter(
+    prefix="/inference/v1",
+    dependencies=[
+        Depends(service_token_guard(settings.inference_service_token.get_secret_value()))
+    ],
 )
+
+
+app.include_router(inference_router)
 
 
 @app.exception_handler(InferenceBackendError)
@@ -87,7 +90,7 @@ async def health_check():
     }
 
 
-@app.post("/inference/v1/intent", response_model=IntentParseResponse)
+@inference_router.post("/intent", response_model=IntentParseResponse)
 async def parse_intent(req: IntentParseRequest):
     """Parse natural speech or text into structured tabletop RPG game action."""
     start_time = time.perf_counter()
@@ -110,7 +113,7 @@ async def parse_intent(req: IntentParseRequest):
     )
 
 
-@app.post("/inference/v1/dm-narration", response_model=DMNarrationResponse)
+@inference_router.post("/dm-narration", response_model=DMNarrationResponse)
 async def generate_dm_narration(req: DMNarrationRequest):
     """Generate rich sensory scene description and DM options based on recent game events."""
     ensure_graphs()
@@ -122,7 +125,7 @@ async def generate_dm_narration(req: DMNarrationRequest):
     return DMNarrationResponse(**final_dict)
 
 
-@app.post("/inference/v1/stand-in-action", response_model=StandInActionResponse)
+@inference_router.post("/stand-in-action", response_model=StandInActionResponse)
 async def decide_stand_in_action(req: StandInActionRequest):
     """Simulate tactical action and dialogue for absent player incorporating DM penalties."""
     ensure_graphs()

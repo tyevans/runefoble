@@ -20,6 +20,8 @@ Settlements in Runefoble model geographic realism and Central Place Theory. They
 
 Initialize a new settlement via `POST /api/v1/campaigns/{campaign_id}/settlements`:
 
+Each command sends a Zitadel access token for the named user. The token is held in a shell variable `TOKEN_<USER>`, for example `TOKEN_USER_DM_01`. Identity comes from the token only. An `x-user-id` header has no effect.
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/campaigns/cmp-west-01/settlements \
   -H "Content-Type: application/json" \
@@ -81,7 +83,7 @@ curl -X POST http://localhost:8000/api/v1/establishments/est-ember-01/workers \
 
 ```bash
 curl -X GET http://localhost:8000/api/v1/establishments/est-ember-01/roster \
-  -H "x-user-id: user-dm-01"
+  -H "Authorization: Bearer ${TOKEN_USER_DM_01}"
 ```
 
 Response includes computed service quality score, operational costs, and redstring knowledge graph edges:
@@ -117,7 +119,7 @@ When external world events occur (e.g. flour supply hijacked by river bandits), 
 ```bash
 curl -X PATCH http://localhost:8000/api/v1/npcs/npc-torvin-01/mood \
   -H "Content-Type: application/json" \
-  -H "x-user-id: user-dm-01" \
+  -H "Authorization: Bearer ${TOKEN_USER_DM_01}" \
   -d '{
     "mood": "desperate",
     "temperament": "Anxious and Desperate",

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from runefoble_events.events import AbsenteeRecapGenerated
 from runefoble_platform.event_publish import publish_best_effort
 from the_watcher.dependencies import (
@@ -10,9 +10,10 @@ from the_watcher.dependencies import (
     chronicle_engine,
     get_event_bus,
 )
+from the_watcher.identity import get_caller_principal
 from the_watcher.models import RecapRequest
 
-router = APIRouter(tags=["chronicle"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["chronicle"])
 
 
 @router.post("/api/v1/watcher/chronicle/recap", response_model=AbsenteeRecapGenerated)

@@ -10,9 +10,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from game_session.dependencies import get_event_bus, get_settlement_repository, get_spicedb_client
 from game_session.events import STREAM_WEST_MARCHES
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.settlement.bulletin_auth import (
     check_bulletin_board_edit_permission,
     check_bulletin_board_view_permission,
@@ -30,7 +31,7 @@ from game_session.settlement.models import (
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(tags=["bulletin-board"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["bulletin-board"])
 
 
 def _to_uuid(val: Any) -> UUID:
@@ -106,18 +107,18 @@ def _format_notice_response(
     response_model=BulletinNoticeResponse,
 )
 async def pin_bulletin_notice(
+    caller_id: CallerId,
     settlement_id: str,
     req: PinBulletinNoticeRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> BulletinNoticeResponse:
     """Pin a notice, monster bounty, ordinance, or rumor to the settlement bulletin board."""
     agg = await _load_settlement_for_bulletin(settlement_id)
     spicedb = get_spicedb_client()
 
-    await check_bulletin_board_view_permission(spicedb, settlement_id, x_user_id)
-    await check_bulletin_board_edit_permission(spicedb, settlement_id, x_user_id)
+    await check_bulletin_board_view_permission(spicedb, settlement_id, caller_id)
+    await check_bulletin_board_edit_permission(spicedb, settlement_id, caller_id)
 
-    author = x_user_id or "anonymous"
+    author = caller_id
     try:
         nid = agg.pin_bulletin_notice(
             title=req.title,
@@ -140,13 +141,13 @@ async def pin_bulletin_notice(
         spicedb,
         notice_id=nid,
         settlement_id=settlement_id,
-        author_id=x_user_id,
+        author_id=caller_id,
         campaign_id=agg.state.campaign_id or None,
     )
 
     await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
     notice = agg.state.bulletin_notices[nid]
-    return _format_notice_response(notice, x_user_id)
+    return _format_notice_response(notice, caller_id)
 
 
 @router.get(
@@ -158,15 +159,15 @@ async def pin_bulletin_notice(
     response_model=list[BulletinNoticeResponse],
 )
 async def list_bulletin_notices(
+    caller_id: CallerId,
     settlement_id: str,
     board_type: str | None = None,
     category: str | None = None,
-    x_user_id: str | None = Header(default=None),
 ) -> list[BulletinNoticeResponse]:
     """Retrieve active notices for a settlement bulletin board, filtered by board type and category."""
     agg = await _load_settlement_for_bulletin(settlement_id)
     spicedb = get_spicedb_client()
-    await check_bulletin_board_view_permission(spicedb, settlement_id, x_user_id)
+    await check_bulletin_board_view_permission(spicedb, settlement_id, caller_id)
 
     results: list[BulletinNoticeResponse] = []
     for notice in agg.state.bulletin_notices.values():
@@ -176,7 +177,7 @@ async def list_bulletin_notices(
             continue
         if category and notice.category.lower() != category.lower():
             continue
-        results.append(_format_notice_response(notice, x_user_id))
+        results.append(_format_notice_response(notice, caller_id))
 
     return results
 
@@ -188,10 +189,10 @@ async def list_bulletin_notices(
     "/settlements/{settlement_id}/bulletin/{notice_id}",
 )
 async def remove_bulletin_notice(
+    caller_id: CallerId,
     settlement_id: str,
     notice_id: str,
     reason: str = "removed",
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Remove or fulfill a notice from the bulletin board."""
     agg = await _load_settlement_for_bulletin(settlement_id)
@@ -202,12 +203,12 @@ async def remove_bulletin_notice(
         )
 
     spicedb = get_spicedb_client()
-    await check_bulletin_notice_edit_permission(spicedb, notice_id, settlement_id, x_user_id)
+    await check_bulletin_notice_edit_permission(spicedb, notice_id, settlement_id, caller_id)
 
     try:
         agg.remove_bulletin_notice(
             notice_id=notice_id,
-            remover_id=x_user_id or "",
+            remover_id=caller_id,
             reason=reason,
         )
     except ValueError as e:
@@ -237,10 +238,10 @@ async def remove_bulletin_notice(
     "/settlements/{settlement_id}/bulletin/{notice_id}/decrypt",
 )
 async def decrypt_cipher_notice(
+    caller_id: CallerId,
     settlement_id: str,
     notice_id: str,
     req: DecryptCipherNoticeRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Submit a cipher decryption solution and reveal hidden quest or meeting text."""
     agg = await _load_settlement_for_bulletin(settlement_id)
@@ -251,9 +252,9 @@ async def decrypt_cipher_notice(
         )
 
     spicedb = get_spicedb_client()
-    await check_bulletin_notice_view_permission(spicedb, notice_id, settlement_id, x_user_id)
+    await check_bulletin_notice_view_permission(spicedb, notice_id, settlement_id, caller_id)
 
-    player = x_user_id or "anonymous"
+    player = caller_id
     try:
         secret = agg.decrypt_cipher_notice(
             notice_id=notice_id,

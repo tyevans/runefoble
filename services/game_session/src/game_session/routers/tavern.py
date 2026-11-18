@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from game_session.dependencies import (
     get_event_bus,
     get_merchant_repository,
@@ -26,11 +26,12 @@ from game_session.minigames import (
     TavernGameState,
     to_uuid,
 )
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.voice_client import VoiceAgentUnavailableError
 from pydantic import BaseModel
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(tags=["tavern"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["tavern"])
 
 
 class StartMinigameRequest(BaseModel):
@@ -70,9 +71,7 @@ class HaggleResponse(BaseModel):
     voice_bark: str | None = None
 
 
-async def _check_session_auth(session_id: str, user_id: str | None) -> None:
-    if not user_id:
-        return
+async def _check_session_auth(session_id: str, user_id: str) -> None:
     spicedb = get_spicedb_client()
     has_perm = await spicedb.check_permission(
         "session", str(session_id), "participate", "user", user_id
@@ -95,12 +94,12 @@ async def _check_session_auth(session_id: str, user_id: str | None) -> None:
 
 @router.post("/api/v1/sessions/{session_id}/tavern/games", response_model=TavernGameState)
 async def start_minigame(
+    caller_id: CallerId,
     session_id: str,
     req: StartMinigameRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> TavernGameState:
     """Start an interactive tavern minigame with wager."""
-    await _check_session_auth(session_id, x_user_id)
+    await _check_session_auth(session_id, caller_id)
     game_id = f"game-{uuid4().hex[:8]}"
 
     tavern_repo = get_tavern_repository()
@@ -130,14 +129,14 @@ async def start_minigame(
     response_model=dict[str, Any],
 )
 async def take_minigame_turn(
+    caller_id: CallerId,
     session_id: str,
     game_id: str,
     req: MinigameTurnRequest,
-    x_user_id: str | None = Header(default=None),
     authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Submit a turn or wager action in an active tavern minigame."""
-    await _check_session_auth(session_id, x_user_id)
+    await _check_session_auth(session_id, caller_id)
     tavern_repo = get_tavern_repository()
 
     try:
@@ -185,12 +184,12 @@ async def take_minigame_turn(
 
 @router.get("/api/v1/sessions/{session_id}/tavern/games/{game_id}", response_model=TavernGameState)
 async def get_minigame(
+    caller_id: CallerId,
     session_id: str,
     game_id: str,
-    x_user_id: str | None = Header(default=None),
 ) -> TavernGameState:
     """Get active status and state machine details for a minigame."""
-    await _check_session_auth(session_id, x_user_id)
+    await _check_session_auth(session_id, caller_id)
     tavern_repo = get_tavern_repository()
     try:
         aggregate = await tavern_repo.load(to_uuid(game_id))
@@ -204,14 +203,14 @@ async def get_minigame(
     response_model=HaggleResponse,
 )
 async def haggle_merchant(
+    caller_id: CallerId,
     session_id: str,
     merchant_id: str,
     req: HaggleRequest,
     temperament: str = "stubborn_greedy",
-    x_user_id: str | None = Header(default=None),
 ) -> HaggleResponse:
     """Negotiate with an NPC merchant influenced by dynamic temperament and mood."""
-    await _check_session_auth(session_id, x_user_id)
+    await _check_session_auth(session_id, caller_id)
     merchant_repo = get_merchant_repository()
 
     try:

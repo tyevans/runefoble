@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
-
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from runefoble_events.events import (
     WatcherActionApproved,
     WatcherActionModified,
@@ -20,6 +18,7 @@ from the_watcher.dependencies import (
     get_spicedb_client,
     to_uuid,
 )
+from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.models import (
     ApproveActionRequest,
     ModifyActionRequest,
@@ -28,11 +27,7 @@ from the_watcher.models import (
     VetoActionRequest,
 )
 
-router = APIRouter(tags=["copilot"])
-
-
-def _extract_caller_id(x_user_id: str | None, user_id: str | None) -> str | None:
-    return x_user_id or user_id
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["copilot"])
 
 
 def _planned_action(
@@ -99,12 +94,11 @@ async def propose_action(req: ProposeActionRequest) -> PendingAction:
 
 @router.post("/api/v1/watcher/veto")
 async def veto_action(
+    caller_id: CallerId,
     req: VetoActionRequest,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
 ):
     """Cancel pending action execution and emit WatcherActionVetoed. Requires DM permission."""
-    caller = _extract_caller_id(x_user_id, user_id)
+    caller = caller_id
     engine = get_copilot_engine()
     pending = engine.get_pending_action(req.action_id)
 
@@ -139,12 +133,11 @@ async def veto_action(
 
 @router.post("/api/v1/watcher/approve")
 async def approve_action(
+    caller_id: CallerId,
     req: ApproveActionRequest,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
 ):
     """Commit pending action immediately. Requires DM permission."""
-    caller = _extract_caller_id(x_user_id, user_id)
+    caller = caller_id
     engine = get_copilot_engine()
     pending = engine.get_pending_action(req.action_id)
 
@@ -177,12 +170,11 @@ async def approve_action(
 
 @router.post("/api/v1/watcher/modify")
 async def modify_action(
+    caller_id: CallerId,
     req: ModifyActionRequest,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
 ):
     """Modify parameters or intent of a pending action before execution. Requires DM permission."""
-    caller = _extract_caller_id(x_user_id, user_id)
+    caller = caller_id
     engine = get_copilot_engine()
     pending = engine.get_pending_action(req.action_id)
 
@@ -231,13 +223,12 @@ async def modify_action(
 
 @router.get("/api/v1/watcher/actions/pending", response_model=list[PendingAction])
 async def list_pending_actions(
+    caller_id: CallerId,
     session_id: str | None = None,
     campaign_id: str | None = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
-    user_id: Annotated[str | None, Query(alias="user_id")] = None,
 ) -> list[PendingAction]:
     """Retrieve all pending actions. Requires DM permission."""
-    caller = _extract_caller_id(x_user_id, user_id)
+    caller = caller_id
     await _assert_dm_permission(caller, campaign_id, session_id)
 
     engine = get_copilot_engine()

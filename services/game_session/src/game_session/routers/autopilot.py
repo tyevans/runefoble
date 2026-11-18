@@ -5,15 +5,16 @@ from __future__ import annotations
 from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.aggregate import ParticipantState
 from game_session.dependencies import WATCHER_SERVICE_URL, get_event_bus, logger, repo
 from game_session.events import STREAM_WATCHER
 from game_session.models import AutoPilotRequest, AutoPilotResponse
+from game_session.settlement.auth.tokens import get_caller_principal
 from runefoble_events.events import AbsencePenaltyApplied
 from the_watcher.watcher_ai import StandInAction, TheWatcherEngine
 
-router = APIRouter(tags=["autopilot"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["autopilot"])
 
 
 @router.post(

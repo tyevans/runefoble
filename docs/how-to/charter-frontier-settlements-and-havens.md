@@ -14,10 +14,12 @@ In shared frontier campaigns, adventuring parties liberate ancient ruins or cons
 
 Adventuring parties or guild officers charter a new settlement within a registered shared world:
 
+Each command sends a Zitadel access token for the named user. The token is held in a shell variable `TOKEN_<USER>`, for example `TOKEN_RANGER_LYRA`. Mint the token through the sign-in flow in [Authenticate Users with Zitadel OIDC and JWTs](authenticate-with-zitadel-oidc.md). Identity comes from the token only. An `x-user-id` header has no effect.
+
 ```bash
 curl -X POST http://localhost:8004/settlements \
   -H "Content-Type: application/json" \
-  -H "x-user-id: ranger_lyra" \
+  -H "Authorization: Bearer ${TOKEN_RANGER_LYRA}" \
   -d '{
     "name": "Haven of the Silver Stag",
     "shared_world_id": "b17900f3-6a05-498d-8707-4ffdd810a7ba",
@@ -72,7 +74,7 @@ Visiting parties query the haven's facility tiers, defense rating, and active pe
 
 ```bash
 curl -X GET http://localhost:8004/settlements/8d3e1a90-410a-49bf-9dfb-12d4a2503289 \
-  -H "x-user-id: paladin_gawain"
+  -H "Authorization: Bearer ${TOKEN_PALADIN_GAWAIN}"
 ```
 
 Both direct routes (`/settlements/{id}`) and API v1 aliases (`/api/v1/settlements/{id}`) are supported.
@@ -86,7 +88,7 @@ Other adventuring parties registered in the same shared world can contribute gol
 ```bash
 curl -X POST http://localhost:8004/settlements/8d3e1a90-410a-49bf-9dfb-12d4a2503289/upgrade \
   -H "Content-Type: application/json" \
-  -H "x-user-id: paladin_gawain" \
+  -H "Authorization: Bearer ${TOKEN_PALADIN_GAWAIN}" \
   -d '{
     "facility_id": "workshop",
     "contributing_campaign_id": "d2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
@@ -115,7 +117,7 @@ Adventuring parties sheltering within a haven claim sanctum rest perks before se
 ```bash
 curl -X POST http://localhost:8004/settlements/8d3e1a90-410a-49bf-9dfb-12d4a2503289/claim-boon \
   -H "Content-Type: application/json" \
-  -H "x-user-id: paladin_gawain" \
+  -H "Authorization: Bearer ${TOKEN_PALADIN_GAWAIN}" \
   -d '{
     "campaign_id": "d2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
     "character_id": "char_998877",

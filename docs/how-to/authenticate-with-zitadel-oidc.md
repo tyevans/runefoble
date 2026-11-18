@@ -150,9 +150,65 @@ Shared fixtures are in `tests/helpers/zitadel_auth.py`. The `auth_environment` f
 
 ---
 
+## Service-to-Service Credentials
+
+A service that calls another service presents a service credential, not a user token (ADR-0015 e). The credential is a shared secret. It is stored in a Kubernetes Secret and mounted into the calling pod.
+
+The Zitadel machine-user client credentials flow is the alternative. This platform does not use it yet.
+
+### Current use: The Watcher to the inference worker
+
+| Setting | Read by | Meaning |
+|---|---|---|
+| `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` | `inference_worker`, `the_watcher` | Bearer credential. No default value. |
+
+Rules:
+- The inference worker requires `Authorization: Bearer <token>` on every `/inference/v1/*` route. It compares the value with `hmac.compare_digest`. Any other caller gets `401` with `WWW-Authenticate: Bearer`.
+- The inference worker refuses to start when the setting is unset or blank.
+- The inference worker sends no CORS headers. Browsers cannot call it.
+- The Watcher sends the token on every worker call. When the setting is unset, The Watcher returns `503 backend_unavailable` and makes no call.
+- A Zitadel user token is not a service credential. The inference worker returns `401` for it.
+
+### Helm
+
+The chart does not create the Secret. It references the Secret in `deployments/helm/runefoble/values.yaml`:
+
+```yaml
+inferenceServiceToken:
+  secretName: runefoble-inference-service
+  key: token
+```
+
+Create the Secret before you install the chart:
+
+```bash
+kubectl create secret generic runefoble-inference-service \
+  --from-literal=token="$(openssl rand -hex 32)"
+```
+
+Both the `inference-worker` and `the-watcher` deployments read the key as `RUNEFOBLE_INFERENCE_SERVICE_TOKEN`.
+
+### Test with a service credential
+
+Set the same value in the test process and mint no user token for the worker. The root `tests/conftest.py` sets `RUNEFOBLE_INFERENCE_SERVICE_TOKEN=test-only-inference-token` before any settings load. Send the header from the test client:
+
+```python
+from httpx import ASGITransport, AsyncClient
+from inference_worker import api
+
+headers = {"Authorization": "Bearer test-only-inference-token"}
+async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test", headers=headers) as ac:
+    res = await ac.post("/inference/v1/intent", json=payload)
+```
+
+Tests for the refusal paths are in `tests/test_blackbox_service_identity.py`.
+
+---
+
 ## Verification & Blackbox Testing
 
 - **Principal and HTTP dependency**: `libs/runefoble_auth/tests/test_verified_principal.py` covers accepted tokens and rejected tokens (missing, garbage, HS256, `alg: none`, unsigned, unknown key, expired, wrong `aud`, wrong `iss`, missing or empty `sub`) and the WebSocket handshake.
 - **HTTP Bearer & JWKS (gateway)**: `tests/test_blackbox_zitadel_http_auth.py`.
 - **WebSocket handshake (gateway)**: `tests/test_blackbox_zitadel_websocket_auth.py`.
 - **Shared Auth Fixtures**: `tests/helpers/zitadel_auth.py`.
+- **game_session, The Watcher, and inference worker identity**: `tests/test_blackbox_service_identity.py`.

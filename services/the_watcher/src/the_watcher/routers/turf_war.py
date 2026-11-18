@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Annotated
-
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from the_watcher.dependencies import (
     check_dm_authorization,
     get_spicedb_client,
 )
+from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.turf_war.models import (
     RegionalUnrestResponse,
     SkirmishSimulateRequest,
@@ -19,7 +18,7 @@ from the_watcher.turf_war.service import (
     load_or_create_unrest,
 )
 
-router = APIRouter(tags=["turf_war"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["turf_war"])
 
 
 async def _assert_dm_permission(caller: str | None, campaign_id: str | None) -> None:
@@ -58,11 +57,11 @@ async def _assert_view_permission(caller: str | None, campaign_id: str | None) -
     response_model=SkirmishSimulateResponse,
 )
 async def simulate_skirmish(
+    caller_id: CallerId,
     req: SkirmishSimulateRequest,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> SkirmishSimulateResponse:
     """Simulate an ad-hoc boundary skirmish and escalate regional unrest."""
-    await _assert_dm_permission(x_user_id, req.campaign_id)
+    await _assert_dm_permission(caller_id, req.campaign_id)
     return await execute_skirmish_simulation(req)
 
 
@@ -75,15 +74,15 @@ async def simulate_skirmish(
     response_model=RegionalUnrestResponse,
 )
 async def get_regional_unrest(
+    caller_id: CallerId,
     region_id: str,
     campaign_id: str | None = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> RegionalUnrestResponse:
     """Query regional unrest metrics, security posture, and economic friction."""
     agg = await load_or_create_unrest(region_id, campaign_id or "")
     camp = campaign_id or agg.state.campaign_id
-    if camp and x_user_id:
-        await _assert_view_permission(x_user_id, camp)
+    if camp:
+        await _assert_view_permission(caller_id, camp)
 
     return RegionalUnrestResponse(
         region_id=agg.state.region_id,

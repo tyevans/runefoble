@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import AliasChoices, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +14,12 @@ class WorkerSettings(BaseSettings):
         env_file=".env.worker",
         env_file_encoding="utf-8",
         extra="ignore",
+    )
+
+    # Service credential (ADR-0015 e). No default value. The worker refuses to start when unset.
+    inference_service_token: SecretStr = Field(
+        validation_alias=AliasChoices("RUNEFOBLE_INFERENCE_SERVICE_TOKEN"),
+        description="Bearer credential that callers such as The Watcher must present",
     )
 
     host: str = Field(default="0.0.0.0", description="Bind host")
@@ -53,3 +59,10 @@ class WorkerSettings(BaseSettings):
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=512, ge=1, le=8192)
     timeout_seconds: float = Field(default=30.0, gt=0.0)
+
+    @field_validator("inference_service_token")
+    @classmethod
+    def _token_is_not_blank(cls, value: SecretStr) -> SecretStr:
+        if not value.get_secret_value().strip():
+            raise ValueError("RUNEFOBLE_INFERENCE_SERVICE_TOKEN must not be blank")
+        return value

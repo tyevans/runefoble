@@ -38,6 +38,30 @@ Behavior:
 
 Gateway code uses the same pattern through `gateway_api.auth.get_current_user`.
 
+## Routers: Depend on the Router and Take a `CallerId`
+
+Bounded contexts that serve many routes apply the principal dependency at router level. This protects every route in the router, including routes that do not read identity.
+
+```python
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+
+router = APIRouter(dependencies=[Depends(get_caller_principal)])
+
+
+@router.post("/api/v1/example/{item_id}")
+async def act(item_id: str, caller_id: CallerId):
+    return {"acting_user": caller_id, "item": item_id}
+```
+
+- `CallerId` is the verified token subject as a string. Use it for every permission check.
+- Do not add a query, header, or body field for identity. A forged value never reaches the route.
+- Keep public routes (health, manifests, OpenAPI) on the app, not on a guarded router.
+- WebSocket routes do not use `require_principal`. They call `admit_websocket` (below).
+- The Watcher uses the same names from `the_watcher.identity`.
+
 ## WebSocket: Use `admit_websocket`
 
 Browsers cannot send `Authorization` on a WebSocket. The client offers two subprotocols:

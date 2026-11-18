@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import time
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from the_watcher.dependencies import (
     compound_action_engine,
     engine,
 )
+from the_watcher.identity import get_caller_principal
 from the_watcher.models import (
     IntentExecuteRequest,
     IntentExecuteResponse,
@@ -20,7 +21,7 @@ from the_watcher.routers.intent.disambiguation import (
     evaluate_target_ambiguity,
 )
 
-router = APIRouter(tags=["intent"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["intent"])
 
 
 @router.post("/api/v1/watcher/intent/parse", response_model=IntentParseResponse)

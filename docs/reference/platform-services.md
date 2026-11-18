@@ -20,7 +20,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 | **OpenPanel** | `openpanel/openpanel:latest` | `openpanel:3000` | `/analytics` | ADR-0005 | Mock Event Buffer |
 | **Swagger UI** | `swaggerapi/swagger-ui:v5.17.14` | `swagger-ui:8080` | `/docs`, `/swagger-ui` | ADR-0005 | Service `/openapi.json` direct endpoints |
 | **Mailpit (Mock SMTP & UI)** | `axllent/mailpit:v1.21.8` | `mailpit:1025` (SMTP), `8025` (HTTP) | `/mail`, `/mailpit` | ADR-0005 | In-Memory `MailpitClient` Buffer (local and test only) |
-| **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP, Helm `inference-worker` Deployment and Service) | None (Internal) | ADR-0007 | Chart default `backend: mock` (`RUNEFOBLE_WORKER_BACKEND=mock`, explicit, labelled `source: mock`); no silent fallback |
+| **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP, Helm `inference-worker` Deployment and Service) | Service token `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` (ADR-0015 e) | ADR-0007 | Chart default `backend: mock` (`RUNEFOBLE_WORKER_BACKEND=mock`, explicit, labelled `source: mock`); no silent fallback |
 
 ---
 
@@ -126,6 +126,7 @@ The chart sets each service-to-service URL. The URL uses the in-cluster service 
 | `RUNEFOBLE_WATCHER_URL` | `http://the-watcher:8001` | `game-session`, `voice-agent` | `game_session` (autopilot), `voice_agent` (default `http://the-watcher:8001`) |
 | `RUNEFOBLE_VOICE_AGENT_URL` | `http://voice-agent:8005` | `game-session` | `game_session` voice client |
 | `RUNEFOBLE_INFERENCE_URL` | `http://inference-worker:8100` | `the-watcher` (only when `services.inferenceWorker` is set) | `the_watcher` |
+| `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` | Secret reference `runefoble-inference-service`, key `token` (`inferenceServiceToken` in values) | `the-watcher`, `inference-worker` | `the_watcher` (sends it), `inference_worker` (checks it, refuses to start without it) |
 | `SOUNDSCAPE_SERVICE_URL` | `http://soundscape:8009` | `gateway-api` | Gateway soundscape proxy (default `http://soundscape:8009`) |
 | `CAMPAIGN_LORE_URL` | `http://campaign-lore:8006` | `gateway-api` | Gateway hub views |
 | `CAMPAIGN_ANALYTICS_URL` | `http://campaign-analytics:8011` | `gateway-api` | Gateway hub views |
