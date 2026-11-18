@@ -55,3 +55,16 @@ def test_route_writes_and_reads_the_store_installed_through_the_provider() -> No
         assert read_back.json()["name"] == "Apprentice"
     finally:
         set_event_store(None)
+
+
+def test_watcher_start_up_rearms_through_the_provider_store(caplog) -> None:
+    """The Watcher start-up reads its pending actions by category through the provider store.
+
+    Before the fix the forwarding store had no category read, so start-up logged an error.
+    """
+    from the_watcher.main import app as watcher_app
+
+    with caplog.at_level("ERROR"), TestClient(watcher_app) as client:
+        assert client.get("/healthz").status_code == 200
+
+    assert not [r for r in caplog.records if "read_category" in r.getMessage() or r.exc_info]

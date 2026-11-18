@@ -14,7 +14,12 @@ from eventsource.domain.decorators import handles
 from eventsource.domain.event import DomainEvent
 from eventsource.domain.event_registry import register_event
 from eventsource.ports.bus import EventBus
-from eventsource.ports.envelopes import AppendResult, EventEnvelope, StreamReadOptions
+from eventsource.ports.envelopes import (
+    AppendResult,
+    CategoryReadOptions,
+    EventEnvelope,
+    StreamReadOptions,
+)
 from eventsource.ports.positions import ExpectedVersion
 from eventsource.ports.store import AggregateStore, FullEventStore
 from sqlalchemy.engine.url import URL, make_url
@@ -178,6 +183,14 @@ class ProvidedEventStore:
 
     async def get_stream_version(self, stream: StreamId) -> int:
         return await self._provider.get().get_stream_version(stream)
+
+    def read_category(
+        self,
+        category: str,
+        options: CategoryReadOptions | None = None,
+    ) -> AsyncIterator[EventEnvelope]:
+        """Read one category, for start-up rebuilds that scan every aggregate of a type."""
+        return self._provider.get().read_category(category, options)
 
 
 def create_aggregate_repository[T: DeclarativeAggregate](
