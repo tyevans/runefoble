@@ -13,6 +13,7 @@ import { loadActiveSessionData, loadLobbyData } from '../app/session-data-loader
 import { loadDashboardData, renderDashboard } from './campaign-dashboard-view.ts';
 import { loadCampaignHubData, renderCampaignHub } from './campaign-hub-view.ts';
 import { loadCharacterSheet, loadRoster, renderCharacterSheet, renderRoster } from './character-view.ts';
+import { loadCaravanBoard, renderCaravanBoard } from './caravan-board-view.ts';
 import { renderLobby } from './lobby-view.ts';
 import { renderProfile } from './profile-view.ts';
 import { renderSessionActive } from './session-view.ts';
@@ -40,6 +41,7 @@ export const VIEW_CONTROLLERS: Record<AppActiveView, ViewController> = {
   'session-lobby': { render: renderLobby, load: loadLobbyData, switcher: true },
   'session-active': { render: renderSessionActive, load: loadActiveSessionData, switcher: true },
   'profile': { render: renderProfile, switcher: true },
+  'caravan-board': { render: renderCaravanBoard, load: loadCaravanBoard, switcher: false },
 };
 
 function renderAuthFallback(): TemplateResult {

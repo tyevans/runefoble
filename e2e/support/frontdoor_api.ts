@@ -254,4 +254,71 @@ export class FrontdoorApi {
       throw new Error(`Failed to start session ${sessionId}: ${res.status()} - ${errText}`);
     }
   }
+
+  /** Founds a shared world through the gateway. The caller becomes its guild officer (TASK-0807). */
+  async createSharedWorld(name: string, token?: string): Promise<{ shared_world_id: string }> {
+    const res = await this.request.post(`${this.baseUrl}/api/v1/shared-worlds`, {
+      headers: { 'Content-Type': 'application/json', ...this.authHeaders(token) },
+      data: { name },
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(`Failed to create shared world "${name}": ${res.status()} - ${errText}`);
+    }
+    return res.json();
+  }
+
+  /** Posts a caravan contract to a shared world's notice board through the gateway. */
+  async postCaravanContract(
+    sharedWorldId: string,
+    body: Record<string, unknown>,
+    token?: string
+  ): Promise<{ contract: { contract_id: string } }> {
+    const res = await this.request.post(
+      `${this.baseUrl}/api/v1/shared-worlds/${sharedWorldId}/caravans/contracts`,
+      { headers: { 'Content-Type': 'application/json', ...this.authHeaders(token) }, data: body }
+    );
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(`Failed to post caravan contract: ${res.status()} - ${errText}`);
+    }
+    return res.json();
+  }
+
+  /** Accepts a posted contract for a party through the gateway. */
+  async acceptCaravanContract(
+    sharedWorldId: string,
+    contractId: string,
+    body: Record<string, unknown>,
+    token?: string
+  ): Promise<void> {
+    await this.caravanAction(sharedWorldId, contractId, 'accept', body, token);
+  }
+
+  /** Dispatches an accepted contract's caravan through the gateway. */
+  async dispatchCaravanContract(
+    sharedWorldId: string,
+    contractId: string,
+    body: Record<string, unknown>,
+    token?: string
+  ): Promise<void> {
+    await this.caravanAction(sharedWorldId, contractId, 'dispatch', body, token);
+  }
+
+  private async caravanAction(
+    sharedWorldId: string,
+    contractId: string,
+    action: 'accept' | 'dispatch',
+    body: Record<string, unknown>,
+    token?: string
+  ): Promise<void> {
+    const res = await this.request.post(
+      `${this.baseUrl}/api/v1/shared-worlds/${sharedWorldId}/caravans/contracts/${contractId}/${action}`,
+      { headers: { 'Content-Type': 'application/json', ...this.authHeaders(token) }, data: body }
+    );
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(`Failed to ${action} caravan contract ${contractId}: ${res.status()} - ${errText}`);
+    }
+  }
 }

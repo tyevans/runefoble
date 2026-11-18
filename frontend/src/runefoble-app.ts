@@ -13,6 +13,7 @@ import type { WatcherFeedEvent } from '@runefoble/the-watcher-ui';
 import type {
   CampaignItem,
   CampaignMember,
+  CaravanContractItem,
   LobbyParticipant,
   LobbyCharacterOption,
 } from '@runefoble/game-session-ui';
@@ -57,6 +58,7 @@ export class RunefobleApp extends LitElement {
   @state() public events: WatcherFeedEvent[] = [];
   @state() public breadcrumbs: BreadcrumbItem[] = [];
   @state() public currentRoute: MatchedRoute | null = null;
+  @state() public caravanContracts: CaravanContractItem[] = [];
   @state() public routeParams: RouteParams = {};
   @state() public isAuthModalOpen = false;
   @state() public authError = '';

@@ -470,6 +470,23 @@ A gateway proxy route forwards the caller's bearer token to the owning service. 
 
 The gateway reads each owning service base URL once, at start-up. The variables are `RUNEFOBLE_CAMPAIGN_LORE_URL`, `RUNEFOBLE_CAMPAIGN_ANALYTICS_URL`, `RUNEFOBLE_SOUNDSCAPE_URL`, and `RUNEFOBLE_CHARACTER_SHEET_URL`. The gateway builds one shared client for each service. See [Service Client](service-client.md).
 
+### Shared-World Caravan Routes (TASK-0807)
+
+The gateway forwards these routes to `game_session` with the caller's bearer token. The status and body of the owner answer pass through. The request and response shapes are those of the owner. A stranger gets the owner's `403`.
+
+| Method | Gateway path | Owner |
+|---|---|---|
+| `POST` | `/api/v1/shared-worlds` | `game_session` |
+| `POST` | `/api/v1/shared-worlds/{shared_world_id}/caravans/contracts` | `game_session` |
+| `GET` | `/api/v1/shared-worlds/{shared_world_id}/caravans/contracts` | `game_session` |
+| `GET` | `/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}` | `game_session` |
+| `POST` | `/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/accept` | `game_session` |
+| `POST` | `/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/dispatch` | `game_session` |
+| `POST` | `/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/ambush` | `game_session` |
+| `POST` | `/api/v1/shared-worlds/{shared_world_id}/caravans/contracts/{contract_id}/fulfill` | `game_session` |
+
+The gateway reads `RUNEFOBLE_GAME_SESSION_URL` at start-up. See [Coordinate West Marches and Caravans](../how-to/coordinate-west-marches-shared-world-and-caravans.md).
+
 ### Voice Agent TTS Response (`POST /api/v1/voice/tts`)
 
 The response describes the audio it carries. Filters run on the synthesised clip only.

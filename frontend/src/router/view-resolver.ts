@@ -19,7 +19,8 @@ export type AppActiveView =
   | 'character-sheet'
   | 'session-lobby'
   | 'session-active'
-  | 'profile';
+  | 'profile'
+  | 'caravan-board';
 
 const CAMPAIGN = '#/campaigns/:campaignId';
 
@@ -37,5 +38,6 @@ export function resolveActiveView(route: Pick<MatchedRoute, 'pattern'> | null): 
   if (pat === '#/characters') return 'characters';
   if (pat.startsWith('#/characters/')) return 'character-sheet';
   if (pat === '#/profile') return 'profile';
+  if (pat === '#/caravans/:sharedWorldId') return 'caravan-board';
   return 'campaigns';
 }
