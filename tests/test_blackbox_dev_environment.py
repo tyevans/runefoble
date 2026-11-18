@@ -6,6 +6,7 @@ Part of TASK-0352.
 
 from __future__ import annotations
 
+import contextlib
 import http.server
 import os
 import socket
@@ -319,6 +320,8 @@ class _RespServer(threading.Thread):
         return parts, rest
 
     def close(self) -> None:
+        with contextlib.suppress(OSError):
+            self._server.shutdown(socket.SHUT_RDWR)  # wakes the thread blocked in accept()
         self._server.close()
 
 
