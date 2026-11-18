@@ -113,10 +113,25 @@ Rules for clients and operators:
 
 - A 503 means the audit event was not published. The state change may already be saved. Retry the request. Retried create requests can produce a second record, so check for duplicates.
 - `publish_or_fail` routes call the engine or save the aggregate only after the event is built. Veto, approve, and modify publish the event from a planned copy first. A failed publish leaves the pending action unchanged.
-- Each service exposes `event_publish_failures` (a count) on `/healthz`. Watch this value. A rising count means events are being lost.
+- Each service exposes `event_publish_failures` (a count) on `/healthz`. Watch this value. A rising count means events are being lost. The count covers every failed delivery, so one event sent to two streams can add two.
 - Services that map 503 call `install_publish_failure_handler(app)` in their `main.py`.
 
 Decision routes that return 503 include the Watcher veto, approve, modify, DM whisper, stand-in activation, and autonomous DM routes. Game session routes that return 503 include session start, hot-swap takeover, combat, tavern, bounty, campfire, caravan, stronghold, settlement, and west marches routes. The dice roll route in game session uses `publish_best_effort` until TASK-0565 refactors it.
+
+#### Site Classes in Voice Agent and gateway_mcp
+
+Each publish site in these services belongs to one class.
+
+| Site | Class | Helper | On failure |
+|---|---|---|---|
+| `POST /api/v1/voice/transcribe` player speech (`PlayerSpokeEvent`) | Domain state | `publish_or_fail` | 503. The Watcher is not called. |
+| `POST /api/v1/voice/stream/chunk` and stream WebSocket player speech | Domain state | `publish_or_fail` | HTTP 503. On the WebSocket, a `{"status": "publish_failed"}` frame. The chunk is not kept. |
+| Transcription engine failure (`VoiceTranscriptionFailed`) | Notification | `publish_best_effort` | The route returns the engine 503. A failed publish is counted. |
+| Voice room peer events (`VoicePeerJoined`, `VoicePeerLeft`, mute) | Notification | `publish_best_effort` | Counted. The request succeeds. |
+| Voice audio conditioned, speech interrupted, barge-in CloudEvents, TTS attenuation, AEC and stream diagnostics | Notification | `publish_best_effort` | Counted. The request succeeds. |
+| gateway_mcp dynamic tool events (`runefoble:events:system`) | Notification | `record_publish_failure` | Counted, logged at error level, and marked on the active trace span. The tool call succeeds. |
+
+The `gateway_mcp` `/healthz` route returns `event_publish_failures` with the same count. Standalone `gateway_mcp` injects its Redis Streams bus at start-up. It fails when `RUNEFOBLE_REDIS_URL` is empty.
 
 ---
 

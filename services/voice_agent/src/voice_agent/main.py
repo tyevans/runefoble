@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
+from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
 from voice_agent.dependencies import (
     STREAM_SESSION,
     STREAM_VOICE,
@@ -72,6 +73,7 @@ app = FastAPI(
 )
 app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)
 register_store_unavailable_handlers(app)
+install_publish_failure_handler(app)
 app.include_router(room_router)
 app.include_router(stream_router)
 app.include_router(audio_router)
@@ -99,6 +101,7 @@ async def health_check():
         "service": "voice_agent",
         "stt_engine": transcriber.engine_name,
         "tts_engine": synthesizer.engine_name,
+        "event_publish_failures": event_publish_failures(),
     }
     if problems:
         body["problems"] = problems

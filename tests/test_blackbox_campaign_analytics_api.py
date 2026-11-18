@@ -34,6 +34,7 @@ def test_service_healthz_metrics_and_manifest(analytics_service: AnalyticsServic
     """Verify /healthz, /metrics, /openapi.json, and /ui/manifest public frontdoors."""
     with analytics_service.start() as client:
         health = client.get("/healthz").json()
+        assert isinstance(health.pop("event_publish_failures"), int)
         assert health == {
             "status": "ok",
             "service": "campaign-analytics",

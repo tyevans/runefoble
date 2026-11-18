@@ -44,7 +44,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `audience-studio` | `8010` | `/openapi.json` |
 | `campaign-analytics` | `8011` | `/openapi.json` |
 | `inference-worker` | `8100` | `/openapi.json` |
-| `gateway-mcp` | `8012` | None. MCP over streamable HTTP at `/mcp`. Exempt from the OpenAPI invariant. ClusterIP only, with no ingress path |
+| `gateway-mcp` | `8012` | None. MCP over streamable HTTP at `/mcp`. `/healthz` reports `event_publish_failures`. Exempt from the OpenAPI invariant. ClusterIP only, with no ingress path |
 
 ## Key Microservice Endpoints
 

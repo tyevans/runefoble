@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, WebSocket, WebSoc
 from pydantic import BaseModel
 from runefoble_auth.websocket import admit_websocket, bearer_token_from_subprotocols
 from runefoble_platform.engine_ports import EngineUnavailableError
+from runefoble_platform.event_publish import DomainEventPublishError
 from voice_agent.auth import get_voice_principal, get_voice_verifier
 from voice_agent.stt import get_streaming_pipeline
 
@@ -145,6 +146,12 @@ async def audio_stream_websocket(
                 )
             except EngineUnavailableError as e:
                 await websocket.send_json(e.body())
+                continue
+            except DomainEventPublishError as e:
+                # The chunk is not recorded. Tell the client, then keep the stream open.
+                await websocket.send_json(
+                    {"status": "publish_failed", "event_type": e.event_type, "detail": str(e)}
+                )
                 continue
 
             await websocket.send_json(result.model_dump())

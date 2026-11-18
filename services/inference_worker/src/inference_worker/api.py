@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from runefoble_platform.event_publish import event_publish_failures
 
 from inference_worker.auth import service_credential_guard
 from inference_worker.config import WorkerSettings
@@ -87,6 +88,7 @@ async def health_check():
         "backend": llm_client.active_backend,
         "openai_model": settings.openai_model,
         "ollama_model": settings.ollama_model,
+        "event_publish_failures": event_publish_failures(),
     }
 
 

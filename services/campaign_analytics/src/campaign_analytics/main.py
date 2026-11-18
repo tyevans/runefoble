@@ -16,6 +16,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from runefoble_platform.consumer_group import RedisConsumerGroup
+from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import create_aggregate_repository
 from runefoble_platform.stream_consumer import consumer_statuses
 from sqlalchemy.exc import SQLAlchemyError
@@ -120,6 +121,7 @@ def health_check(request: Request) -> JSONResponse:
             "status": "ok" if healthy else "degraded",
             "service": "campaign-analytics",
             "consumers": statuses,
+            "event_publish_failures": event_publish_failures(),
         },
     )
 

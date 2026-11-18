@@ -20,6 +20,7 @@ from runefoble_platform.config import (
     PlatformSettings,
 )
 from runefoble_platform.errors import ServiceUnavailableError
+from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import PostgreSQLEventStore, get_event_store
 
 from campaign_lore.codex import CodexCrossReferencer
@@ -107,9 +108,13 @@ def _register_routes(app: FastAPI) -> None:
 
     @app.get("/healthz", tags=["Health"])
     @app.get("/health", tags=["Health"])
-    def health_check() -> dict[str, str]:
+    def health_check() -> dict[str, Any]:
         """Health check endpoint."""
-        return {"status": "ok", "service": "campaign_lore"}
+        return {
+            "status": "ok",
+            "service": "campaign_lore",
+            "event_publish_failures": event_publish_failures(),
+        }
 
     @app.get("/ui/manifest", tags=["Microfrontends"])
     def get_ui_manifest() -> dict[str, Any]:
