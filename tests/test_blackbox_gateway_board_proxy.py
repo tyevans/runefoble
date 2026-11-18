@@ -11,7 +11,6 @@ Governed by ADR-0002, ADR-0006, ADR-0007, ADR-0015 and Hard Invariant 7.
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Iterator
 from uuid import uuid4
 
@@ -33,17 +32,27 @@ def bearer(sub: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def client(board_state_upstream) -> Iterator[TestClient]:
+def client(game_session_upstream, board_state_upstream) -> Iterator[TestClient]:
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
 
 
 @pytest.fixture
-def campaign(spicedb) -> str:
-    """Campaign roles are written on the SpiceDB mock. The campaign service is another process."""
-    campaign_id = str(uuid4())
-    for relation, user in (("dungeon_master", DM), ("player", OWNER)):
-        asyncio.run(spicedb.write_relationship("campaign", campaign_id, relation, "user", user))
+def campaign(client: TestClient) -> str:
+    """The DM creates a campaign and invites OWNER as a player. Both steps go through the gateway."""
+    res = client.post("/api/v1/campaigns", json={"title": "Crypt"}, headers=bearer(DM))
+    assert res.status_code == 201, res.text
+    campaign_id = res.json()["id"]
+    invite = client.post(
+        f"/api/v1/campaigns/{campaign_id}/invites", json={"role": "player"}, headers=bearer(DM)
+    )
+    assert invite.status_code == 201, invite.text
+    joined = client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": invite.json()["token"]},
+        headers=bearer(OWNER),
+    )
+    assert joined.status_code == 200, joined.text
     return campaign_id
 
 
@@ -123,6 +132,24 @@ def test_a_caller_without_a_bearer_is_refused_by_the_gateway(client: TestClient,
     res = client.get(f"/api/v1/boards/{board}")
 
     assert res.status_code == 401, res.text
+
+
+def test_a_campaign_member_reads_the_board_through_the_gateway(
+    client: TestClient, board: str, token: str
+):
+    res = client.get(f"/api/v1/boards/{board}", headers=bearer(OWNER))
+
+    assert res.status_code == 200, res.text
+    assert token in res.json()["tokens"]
+
+
+def test_a_stranger_gets_403_for_the_board_read_through_the_gateway(
+    client: TestClient, board: str, token: str
+):
+    res = client.get(f"/api/v1/boards/{board}", headers=bearer(STRANGER))
+
+    assert res.status_code == 403, res.text
+    assert token not in res.text
 
 
 def test_board_state_decides_the_permission_for_a_stranger(

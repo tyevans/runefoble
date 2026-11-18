@@ -421,3 +421,36 @@ def test_an_unknown_socket_message_is_an_error_and_is_not_rebroadcast(
 
     assert error["code"] == "UNKNOWN_ACTION"
     assert watcher_frame["type"] == "preview_cancelled"
+
+
+# --- Board reads need board.view (TASK-0582) ---------------------------------------------------
+
+BOARD_READ_ROUTES = [
+    "/api/v1/boards/{b}",
+    "/api/v1/boards/{b}/visibility",
+    "/api/v1/boards/{b}/traps",
+    "/api/v1/boards/{b}/aoe",
+    "/api/v1/boards/{b}/decals",
+    "/boards/{b}/doors",
+    "/boards/{b}/lights",
+    "/api/v1/boards/{b}/tokens/{t}",
+]
+
+
+@pytest.mark.parametrize("path", BOARD_READ_ROUTES)
+def test_a_stranger_is_refused_by_every_board_read(
+    client: TestClient, board: str, token: str, path: str
+):
+    res = client.get(path.format(b=board, t=token), headers=bearer(STRANGER))
+
+    assert res.status_code == 403, res.text
+    assert token not in res.text
+
+
+@pytest.mark.parametrize("path", BOARD_READ_ROUTES)
+def test_a_campaign_player_reads_every_board_route(
+    client: TestClient, board: str, token: str, path: str
+):
+    res = client.get(path.format(b=board, t=token), headers=bearer(OWNER))
+
+    assert res.status_code == 200, res.text

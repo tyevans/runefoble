@@ -7,6 +7,7 @@ from typing import Annotated
 from board_state.aggregate import PlacedTokenState, TerrainCellState
 from board_state.authz import (
     MANAGE_TRAPS,
+    VIEW,
     VIEW_SECRET_LAYER,
     can_on_board,
     require_board_permission,
@@ -52,6 +53,7 @@ def _visibility(session_id: str, board, is_dm: bool) -> VisibilityResponse:
 async def get_visibility(session_id: str, user_id: Annotated[str, Depends(get_current_user_id)]):
     """Compute visibility. The DM flag comes from `board.view_secret_layer`, never from the caller."""
     board = await get_board(session_id)
+    await require_board_permission(user_id, session_id, VIEW)
     is_dm = await can_on_board(user_id, session_id, VIEW_SECRET_LAYER)
     return _visibility(session_id, board, is_dm)
 

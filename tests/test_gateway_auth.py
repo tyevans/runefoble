@@ -110,6 +110,7 @@ async def test_zanzibar_board_view_permission(trusted_ws_issuer, client):
     """Verify board query endpoint requires Zanzibar view permission."""
     owner = _bearer(trusted_ws_issuer, "owner_dana")
     spectator = _bearer(trusted_ws_issuer, "spectator_devon")
+    stranger = _bearer(trusted_ws_issuer, "stranger_mallory")
     campaign_id, session_id = _create_campaign_with_session(client, owner)
     _owner_board(campaign_id, session_id, owner)
 
@@ -119,6 +120,9 @@ async def test_zanzibar_board_view_permission(trusted_ws_issuer, client):
     res = client.get(f"/api/v1/boards/{session_id}", headers=spectator)
     assert res.status_code == 200
     assert "tokens" in res.json()
+    # board_state decides: a caller with no campaign role gets 403 through the gateway.
+    refused = client.get(f"/api/v1/boards/{session_id}", headers=stranger)
+    assert refused.status_code == 403
 
 
 def _owner_board(campaign_id: str, session_id: str, headers: dict[str, str]) -> None:

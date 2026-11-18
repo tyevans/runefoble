@@ -8,6 +8,7 @@ from typing import Annotated
 from board_state.authz import (
     MANAGE_TRAPS,
     SWITCH_MAP,
+    VIEW,
     VIEW_SECRET_LAYER,
     can_on_board,
     require_board_permission,
@@ -78,6 +79,7 @@ async def list_traps(
 ) -> TrapListResponse:
     """Retrieve traps on the board. Without `board.view_secret_layer` the secret ones are absent."""
     board = await get_board(board_id)
+    await require_board_permission(user_id, board_id, VIEW)
     all_traps = board.state.traps
     if not await can_on_board(user_id, board_id, VIEW_SECRET_LAYER):
         all_traps = public_traps(all_traps)

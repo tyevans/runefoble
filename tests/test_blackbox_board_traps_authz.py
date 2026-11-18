@@ -198,7 +198,7 @@ def test_anonymous_board_read_is_refused(client: TestClient, board: str, secret_
     _assert_no_secret(res.text, secret_trap)
 
 
-@pytest.mark.parametrize("user", [PLAYER, SPECTATOR, STRANGER])
+@pytest.mark.parametrize("user", [PLAYER, SPECTATOR])
 def test_board_read_hides_the_secret_trap_from_non_dm(
     client: TestClient, board: str, secret_trap: str, user: str
 ):
@@ -207,6 +207,16 @@ def test_board_read_hides_the_secret_trap_from_non_dm(
     assert res.status_code == 200, res.text
     _assert_no_secret(res.text, secret_trap)
     assert res.json()["traps"] == {}
+
+
+def test_board_read_refuses_a_stranger_without_returning_board_data(
+    client: TestClient, board: str, secret_trap: str
+):
+    res = client.get(f"/api/v1/boards/{board}", headers=bearer(STRANGER))
+
+    assert res.status_code == 403, res.text
+    _assert_no_secret(res.text, secret_trap)
+    assert "tokens" not in res.json()
 
 
 def test_board_read_shows_the_secret_trap_to_the_dm(
