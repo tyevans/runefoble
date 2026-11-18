@@ -10,11 +10,18 @@ from character_sheet.main import app
 from character_sheet.models import CharacterState
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 @pytest.fixture
 def test_client() -> TestClient:
     """Provide FastAPI test client."""
-    return TestClient(app)
+    return TestClient(app, headers=auth_headers("character-owner"))
 
 
 @pytest.fixture

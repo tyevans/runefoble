@@ -4,14 +4,17 @@ import './runefoble-campaign-nav.ts';
 import './runefoble-breadcrumbs.ts';
 import './runefoble-user-menu.ts';
 import type { BreadcrumbItem } from '../router/router.ts';
+import type { CampaignOption } from './runefoble-campaign-nav.ts';
 
 @customElement('runefoble-header')
 export class RunefobleHeader extends LitElement {
   @property({ type: String }) viewMode: 'party' | 'spectator' = 'party';
   @property({ type: Boolean }) isSettingsOpen = false;
   @property({ type: Boolean }) socketConnected = false;
-  @property({ type: String }) campaignId = '4';
-  @property({ type: String }) sessionId = '14';
+  @property({ type: String }) campaignId = '';
+  @property({ type: String }) campaignTitle = '';
+  @property({ type: String }) sessionTitle = '';
+  @property({ type: Array }) campaigns: CampaignOption[] = [];
   @property({ type: String }) dmName = 'The Watcher';
   @property({ type: String }) userRole = 'Player';
   @property({ type: Array }) breadcrumbs: BreadcrumbItem[] = [];
@@ -91,7 +94,9 @@ export class RunefobleHeader extends LitElement {
           </button>
           <runefoble-campaign-nav
             .campaignId=${this.campaignId}
-            .sessionId=${this.sessionId}
+            .campaignTitle=${this.campaignTitle}
+            .sessionTitle=${this.sessionTitle}
+            .availableCampaigns=${this.campaigns}
             .dmName=${this.dmName}
             .userRole=${this.userRole}
             .socketConnected=${this.socketConnected}

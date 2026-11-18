@@ -4,12 +4,22 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from campaign_analytics.dependencies import SpiceDep, StorageDep, check_user_can_view_campaign
+from campaign_analytics.dependencies import (
+    CurrentUserId,
+    SpiceDep,
+    StorageDep,
+    check_user_can_view_campaign,
+    get_current_user_id,
+)
 from campaign_analytics.models import CampaignMvpResponse
 
-router = APIRouter(prefix="/api/v1/analytics/campaigns", tags=["Combat Performance & MVP"])
+router = APIRouter(
+    prefix="/api/v1/analytics/campaigns",
+    tags=["Combat Performance & MVP"],
+    dependencies=[Depends(get_current_user_id)],
+)
 
 
 @router.get(
@@ -22,14 +32,14 @@ async def get_campaign_mvp(
     id: str,
     storage: StorageDep,
     spicedb: SpiceDep,
+    user_id: CurrentUserId,
     session_id: Annotated[str | None, Query(description="Filter by specific session ID")] = None,
     encounter_id: Annotated[
         str | None, Query(description="Filter by specific encounter ID")
     ] = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-ID")] = None,
 ) -> CampaignMvpResponse:
     """Retrieve combatant MVP rankings and tactical awards."""
-    can_view = await check_user_can_view_campaign(x_user_id, id, spicedb)
+    can_view = await check_user_can_view_campaign(user_id, id, spicedb)
     if not can_view:
         raise HTTPException(
             status_code=403,

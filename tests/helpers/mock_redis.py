@@ -6,6 +6,14 @@ import time
 from typing import Any
 
 
+def _stream_id_key(entry_id: str) -> tuple[int, int]:
+    """Order stream ids numerically, as Redis does, so `1700-10` sorts after `1700-9`."""
+    if entry_id == "0":
+        return (0, 0)
+    millis, _, seq = entry_id.partition("-")
+    return (int(millis), int(seq or 0))
+
+
 class MockAsyncRedis:
     """In-memory mock async Redis client simulating Redis Streams operations and Consumer Groups."""
 
@@ -30,6 +38,23 @@ class MockAsyncRedis:
         if key in self.groups:
             raise Exception("BUSYGROUP Consumer Group name already exists")
         self.groups[key] = {"delivered_idx": 0, "pending": {}}
+        return True
+
+    async def xgroup_setid(
+        self, stream: str, group_name: str, id: str, entries_read: int | None = None
+    ) -> bool:
+        """Set the group's delivery index to the first entry after `id`, as Redis does."""
+        group_data = self.groups.get((stream, group_name))
+        if group_data is None:
+            raise Exception("NOGROUP No such consumer group for key name")
+        entries = self.streams.get(stream, [])
+        if id == "$":
+            group_data["delivered_idx"] = len(entries)
+        else:
+            target = _stream_id_key(id)
+            group_data["delivered_idx"] = sum(
+                1 for entry_id, _ in entries if _stream_id_key(entry_id) <= target
+            )
         return True
 
     async def xreadgroup(

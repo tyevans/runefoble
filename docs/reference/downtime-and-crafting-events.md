@@ -109,9 +109,9 @@ Under TASK-0153 (ADR-0003, ADR-0007, ADR-0011), the crafting domain logic within
 
 | Submodule | Path | Responsibilities |
 |---|---|---|
-| `recipes.py` | `character_sheet/crafting/recipes.py` | Reagents catalogue, catalysts catalogue, known recipes, `Recipe` model, `CraftingState`, and DC calculation (`calculate_crafting_dc`). |
-| `mishaps.py` | `character_sheet/crafting/mishaps.py` | Volatile mishap tables, `calculate_volatile_risk`, and `MishapResolver` consequence generators. |
-| `engine.py` | `character_sheet/crafting/engine.py` | `CraftingEngine` orchestration (proficiency bonuses, recipe evaluation, attempt resolution) and `CraftingAggregate` event-sourced aggregate. |
-| `__init__.py` | `character_sheet/crafting/__init__.py` | Package export of `CraftingEngine`, `Recipe`, `MishapResolver`, and `CraftingAggregate`. |
-| `crafting.py` | `character_sheet/crafting.py` | Backward-compatible facade preserving all public module symbols. |
+| `recipes.py` | `services/character_sheet/src/character_sheet/crafting/recipes.py` | Reagents catalogue, catalysts catalogue, known recipes, `Recipe` model, `CraftingState`, and DC calculation (`calculate_crafting_dc`). |
+| `mishaps.py` | `services/character_sheet/src/character_sheet/crafting/mishaps.py` | Volatile mishap tables, `calculate_volatile_risk`, and `MishapResolver` consequence generators. |
+| `engine.py` | `services/character_sheet/src/character_sheet/crafting/engine.py` | `CraftingEngine` orchestration (proficiency bonuses, recipe evaluation, attempt resolution) and `CraftingAggregate` event-sourced aggregate. |
+| `__init__.py` | `services/character_sheet/src/character_sheet/crafting/__init__.py` | Package export of `CraftingEngine`, `Recipe`, `MishapResolver`, and `CraftingAggregate`. |
+| `crafting.py` | `services/character_sheet/src/character_sheet/crafting.py` | Defect (DoR 9): facade preserving public module symbols. Removal: TASK-0493. |
 

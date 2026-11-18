@@ -14,10 +14,14 @@ import pytest
 from fastapi.testclient import TestClient
 from the_watcher.main import app
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 def test_the_watcher_ui_manifest_advertises_faction_espionage(client: TestClient) -> None:

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-import runefoble_events
 import runefoble_events.board as board_facade
 import runefoble_events.board_events as board_pkg
 import runefoble_events.events as events_facade
@@ -27,9 +26,7 @@ from runefoble_events.board_events.fog import (
     VisibilityMaskUpdated,
 )
 from runefoble_events.board_events.lighting import (
-    BoardDoorToggled,
     BoardDoorToggledEvent,
-    BoardLightSourcePlaced,
     BoardLightSourcePlacedEvent,
 )
 from runefoble_events.board_events.physics import (
@@ -64,16 +61,14 @@ from runefoble_events.board_events.token import (
 )
 
 
-def test_board_facade_backward_compatibility_re_exports() -> None:
-    """Verify 100% backward-compatible symbol parity across board facades."""
+def test_board_facade_re_exports() -> None:
+    """Verify board symbol parity across the board facades."""
     expected_symbols = [
         "AoETemplatePlaced",
         "AoETemplateRemoved",
         "AreaEffectExploded",
-        "BoardDoorToggled",
         "BoardDoorToggledEvent",
         "BoardGridInitialized",
-        "BoardLightSourcePlaced",
         "BoardLightSourcePlacedEvent",
         "BoardMapImported",
         "BoardMoveEvent",
@@ -106,7 +101,6 @@ def test_board_facade_backward_compatibility_re_exports() -> None:
         assert hasattr(events_facade, symbol), (
             f"Symbol {symbol} missing from runefoble_events.events"
         )
-        assert hasattr(runefoble_events, symbol), f"Symbol {symbol} missing from runefoble_events"
 
 
 def test_token_events_instantiation_and_cloudevents() -> None:
@@ -250,8 +244,8 @@ def test_templates_and_lighting_events_instantiation() -> None:
     )
     assert rem_template_ev.template_id == template_ev.template_id
 
-    # BoardLightSourcePlaced
-    light_ev = BoardLightSourcePlaced(
+    # BoardLightSourcePlacedEvent
+    light_ev = BoardLightSourcePlacedEvent(
         aggregate_id=agg_id,
         board_id="board-01",
         light_id="light-torch-1",
@@ -262,10 +256,10 @@ def test_templates_and_lighting_events_instantiation() -> None:
     )
     assert light_ev.light_id == "light-torch-1"
     assert light_ev.bright_radius == 4.0
-    assert BoardLightSourcePlaced is BoardLightSourcePlacedEvent
+    assert BoardLightSourcePlacedEvent is BoardLightSourcePlacedEvent
 
-    # BoardDoorToggled
-    door_ev = BoardDoorToggled(
+    # BoardDoorToggledEvent
+    door_ev = BoardDoorToggledEvent(
         aggregate_id=agg_id,
         board_id="board-01",
         door_id="door-main",
@@ -273,7 +267,7 @@ def test_templates_and_lighting_events_instantiation() -> None:
         is_open=True,
     )
     assert door_ev.is_open is True
-    assert BoardDoorToggled is BoardDoorToggledEvent
+    assert BoardDoorToggledEvent is BoardDoorToggledEvent
 
 
 def test_terrain_spells_and_physics_events_instantiation() -> None:

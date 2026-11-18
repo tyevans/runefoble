@@ -106,3 +106,27 @@ class CampaignSessionResponse(BaseModel):
     participants_count: int = 0
     scheduled_at: str | None = None
     created_at: str
+
+
+class AssignRoleRequest(BaseModel):
+    """Grant a campaign role. Ownership is not grantable; it moves only with campaign creation."""
+
+    user_id: str = Field(..., min_length=1)
+    role: Literal["dungeon_master", "game_master", "player", "spectator"]
+
+
+class RoleAssignedResponse(BaseModel):
+    status: str = "role_assigned"
+    campaign_id: str
+    user_id: str
+    role: str
+    zanzibar_relation: str
+
+
+class CampaignCapabilitiesResponse(BaseModel):
+    """Per-campaign capability flags for the caller, each from a SpiceDB permission check."""
+
+    manage: bool
+    run_session: bool
+    play: bool
+    view: bool

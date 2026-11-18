@@ -13,20 +13,46 @@ from uuid import uuid4
 import httpx
 import pytest
 from gateway_mcp.server import mcp
-from mcp.shared.memory import create_connected_server_and_client_session
 from mcp.types import CallToolResult
 
 from tests.helpers.live_services import serve, unavailable_app
+from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+_MCP: dict[str, str] = {}
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
+
+@pytest.fixture(scope="module", autouse=True)
+def mcp_endpoint() -> Iterator[None]:
+    """Serve the gateway MCP server over HTTP so each call carries the caller bearer."""
+    with serve_mcp(mcp) as endpoint:
+        _MCP["url"] = endpoint
+        yield
+    _MCP.clear()
 
 
 @pytest.fixture(scope="module")
 def upstreams() -> Iterator[dict[str, str]]:
-    """Run game_session and board_state as real HTTP services."""
+    """Run game_session and board_state as real HTTP services. game_session trusts the test issuer."""
     from board_state.main import app as board_app
     from game_session.main import app as session_app
+    from game_session.settlement.auth.tokens import (
+        get_zitadel_auth_service,
+        set_zitadel_auth_service,
+    )
 
-    with serve(board_app) as board_url, serve(session_app) as session_url:
-        yield {"board": board_url, "session": session_url}
+    previous = get_zitadel_auth_service()
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    try:
+        with serve(board_app) as board_url, serve(session_app) as session_url:
+            yield {"board": board_url, "session": session_url}
+    finally:
+        set_zitadel_auth_service(previous)
 
 
 @pytest.fixture
@@ -35,7 +61,8 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
     monkeypatch.setenv("BOARD_STATE_URL", upstreams["board"])
     monkeypatch.setenv("GAME_SESSION_URL", upstreams["session"])
 
-    with httpx.Client(base_url=upstreams["session"]) as http:
+    auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('encounter-dm')}"}
+    with httpx.Client(base_url=upstreams["session"], headers=auth) as http:
         created = http.post(
             "/api/v1/sessions/create",
             json={
@@ -87,7 +114,7 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
         )
         assert advanced.status_code == 200, advanced.text
 
-    with httpx.Client(base_url=upstreams["board"]) as http:
+    with httpx.Client(base_url=upstreams["board"], headers=bearer("user-test")) as http:
         created_board = http.post(
             "/api/v1/boards", json={"session_id": session_id, "cols": 10, "rows": 8}
         )
@@ -102,9 +129,13 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
 
 
 async def call_query_encounter_state(encounter_id: str) -> CallToolResult:
-    """Call query_encounter_state through the MCP protocol with an in-memory client."""
-    async with create_connected_server_and_client_session(mcp) as session:
-        return await session.call_tool("query_encounter_state", {"encounter_id": encounter_id})
+    """Call query_encounter_state over MCP HTTP, with the `user-test` caller bearer."""
+    return await call_tool_over_http(
+        _MCP["url"],
+        "query_encounter_state",
+        {"encounter_id": encounter_id},
+        SIGNING_ISSUER.mint("user-test"),
+    )
 
 
 def tool_text(result: CallToolResult) -> str:
@@ -136,7 +167,7 @@ async def test_blackbox_query_encounter_state_upstream_unavailable_returns_error
     upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch
 ):
     """Verify a game_session 503 yields an MCP error result, not canned round or order data."""
-    with httpx.Client(base_url=upstreams["board"]) as http:
+    with httpx.Client(base_url=upstreams["board"], headers=bearer("user-test")) as http:
         session_id = str(uuid4())
         created_board = http.post(
             "/api/v1/boards", json={"session_id": session_id, "cols": 10, "rows": 8}

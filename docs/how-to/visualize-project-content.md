@@ -110,7 +110,7 @@ python3 -m tools.project_visualizer.cli export-json --out dist/project-data.json
 
 ## 5. Programmatic Parser & Traceability Graph API
 
-The visualizer exposes modular, single-responsibility sub-parsers under `tools.project_visualizer.parsers` alongside backward-compatible entrypoints in `tools.project_visualizer.parser`:
+The visualizer exposes modular, single-responsibility sub-parsers under `tools.project_visualizer.parsers` alongside the `tools.project_visualizer.parser` entrypoint. Defect (DoR 9): that entrypoint keeps existing callers working:
 
 ```python
 from tools.project_visualizer.parser import (
@@ -183,7 +183,7 @@ The AGY Launcher client frontend is decomposed into focused submodules under `to
 - `agy_modal.js`: Modal open/close transitions, keyboard shortcuts, drawer action triggers, and entity badge population (<100 lines).
 - `agy_presets.js`: Preset prompt templates, command builder, copy utilities, and preview synchronization (<110 lines).
 - `agy_runner.js`: Job launch POST handler, status chip styling, polling stream reader, and elapsed timer (<130 lines).
-- `agy_launcher.js`: Backward-compatible aggregation facade exposing all launcher controls on `window.visualizer` (<20 lines). All modules strictly comply with Hard Invariant 6 (<140 lines per client module).
+- `agy_launcher.js`: Defect (DoR 9): aggregation facade exposing all launcher controls on `window.visualizer` (<20 lines). All modules strictly comply with Hard Invariant 6 (<140 lines per client module).
 
 ---
 

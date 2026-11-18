@@ -12,8 +12,8 @@ import { failLoad } from './load-error.ts';
 
 /** Loads lobby participants, available characters, and the roster for a lobby route. */
 export async function loadLobbyData(host: RunefobleApp, route: MatchedRoute): Promise<void> {
-  const cId = route.params.campaignId || host.campaignId;
-  const sId = route.params.sessionId || host.sessionId;
+  const cId = route.params.campaignId ?? '';
+  const sId = route.params.sessionId ?? '';
   const [lobby, chars] = await Promise.all([
     appDataService.fetchLobbyState(cId, sId),
     host.characters.length > 0 ? Promise.resolve(dataOk(host.characters)) : appDataService.fetchCharacters(),
@@ -26,8 +26,8 @@ export async function loadLobbyData(host: RunefobleApp, route: MatchedRoute): Pr
 
 /** Loads the board, session events, and roster for an active session route. */
 export async function loadActiveSessionData(host: RunefobleApp, route: MatchedRoute): Promise<void> {
-  const cId = route.params.campaignId || host.campaignId;
-  const sId = route.params.sessionId || host.sessionId;
+  const cId = route.params.campaignId ?? '';
+  const sId = route.params.sessionId ?? '';
   const [boardData, events, chars] = await Promise.all([
     appDataService.fetchBoardState(sId),
     appDataService.fetchSessionEvents(sId),
@@ -35,12 +35,12 @@ export async function loadActiveSessionData(host: RunefobleApp, route: MatchedRo
   ]);
   if (!boardData.ok || !events.ok || !chars.ok) return failLoad(host, boardData, events, chars);
   host.tokens = boardData.data.tokens.map((bt) => {
-    const existing = host.tokens.find((t) => t.id === bt.id || (bt.id === 't1' && t.id === '1') || (bt.id === '1' && t.id === 't1'));
+    const existing = host.tokens.find((t) => t.id === bt.id);
     return existing ? { ...bt, x: existing.x, y: existing.y } : bt;
   });
   host.boardCols = boardData.data.cols;
   host.boardRows = boardData.data.rows;
-  host.atmosphere = { location_name: host.sessionTitle || 'Sanctum of Runes' };
+  host.atmosphere = { location_name: host.sessionTitle };
   const liveEvents = host.events.filter((e) => !events.data.some((ev) => ev.id === e.id));
   host.events = [...events.data, ...liveEvents];
   host.characters = chars.data;

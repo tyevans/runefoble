@@ -14,8 +14,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from campaign_analytics.storage import CampaignAnalyticsStorage
-from campaign_analytics.worker import CampaignAnalyticsWorker
+from campaign_analytics.main import app
 from fastapi.testclient import TestClient
 from runefoble_auth.mock_spicedb import MockSpiceDBClient
 from runefoble_events.events import (
@@ -27,16 +26,39 @@ from runefoble_events.events import (
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.campaign_analytics_service import wait_until
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
+    """Give the signed-in test member view rights on a campaign.
+
+    campaign_analytics has no public campaign-creation frontdoor, so the view relation is
+    seeded in the authorization double. Tests that assert deny paths do not call this.
+    """
+    await spicedb_client.write_relationship(
+        resource_type="campaign",
+        resource_id=campaign_id,
+        relation="view",
+        subject_type="user",
+        subject_id="user-test",
+    )
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 @pytest.mark.asyncio
 async def test_spatial_heatmap_frontdoor_cells_and_filtering(
+    spicedb_client: MockSpiceDBClient,
     client: TestClient,
     event_bus: RedisStreamsEventBus,
-    worker: CampaignAnalyticsWorker,
 ) -> None:
     """Verify spatial coordinate density aggregation and filter controls."""
     campaign_id, session_id, char_id = str(uuid4()), str(uuid4()), str(uuid4())
-    await worker.setup_groups()
+    await grant_view(spicedb_client, campaign_id)
 
     await event_bus.publish_event(
         "runefoble.events.session",
@@ -91,7 +113,12 @@ async def test_spatial_heatmap_frontdoor_cells_and_filtering(
         ),
     )
 
-    await worker.process_once(count=10)
+    assert wait_until(
+        lambda: (
+            client.get(f"/api/v1/analytics/campaigns/{campaign_id}/heatmap").json()["total_points"]
+            == 3
+        )
+    )
 
     resp = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/heatmap?cell_size=5&metric=all")
     assert resp.status_code == 200
@@ -113,18 +140,18 @@ async def test_spatial_heatmap_frontdoor_cells_and_filtering(
 @pytest.mark.asyncio
 async def test_spatial_heatmap_spicedb_zanzibar_authorization(
     client: TestClient,
-    storage: CampaignAnalyticsStorage,
     spicedb_client: MockSpiceDBClient,
 ) -> None:
     """Verify SpiceDB Zanzibar object authorization protects telemetry endpoints."""
     campaign_id = "camp-secure-999"
 
-    resp_anon = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/heatmap")
-    assert resp_anon.status_code == 200
+    anonymous = TestClient(app)
+    resp_anon = anonymous.get(f"/api/v1/analytics/campaigns/{campaign_id}/heatmap")
+    assert resp_anon.status_code == 401
 
     resp_unauth = client.get(
         f"/api/v1/analytics/campaigns/{campaign_id}/heatmap",
-        headers={"X-User-ID": "lurker-intruder"},
+        headers=bearer("lurker-intruder"),
     )
     assert resp_unauth.status_code == 403
     assert "Forbidden" in resp_unauth.json()["detail"]
@@ -139,6 +166,6 @@ async def test_spatial_heatmap_spicedb_zanzibar_authorization(
 
     resp_auth = client.get(
         f"/api/v1/analytics/campaigns/{campaign_id}/heatmap",
-        headers={"X-User-ID": "authorized-player"},
+        headers=bearer("authorized-player"),
     )
     assert resp_auth.status_code == 200

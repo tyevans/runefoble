@@ -50,12 +50,8 @@ class TTSStreamAttenuatedEvent(BaseRunefobleEvent):
 
 
 # Backward-compatible aliases
-NeuralSpeechBargeInDetected = NeuralSpeechBargeInDetectedEvent
-TTSStreamAttenuated = TTSStreamAttenuatedEvent
 
 __all__ = [
-    "NeuralSpeechBargeInDetected",
     "NeuralSpeechBargeInDetectedEvent",
-    "TTSStreamAttenuated",
     "TTSStreamAttenuatedEvent",
 ]

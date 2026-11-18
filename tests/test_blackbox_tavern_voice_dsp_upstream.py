@@ -19,6 +19,10 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from voice_agent.main import app as voice_app
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
+from tests.helpers.voice_identity import voice_auth_headers
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "trusted_ws_issuer")
 
 SPEECH = "I can drink the whole tavern under the table!"
 CHARACTER = "char_bram"
@@ -29,12 +33,25 @@ VOICE_URL_ENV = "RUNEFOBLE_VOICE_AGENT_URL"
 @pytest.fixture
 def session_client() -> Iterator[TestClient]:
     set_session_spicedb(MockSpiceDBClient())
-    with TestClient(session_app) as client:
+    with TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    ) as client:
         yield client
 
 
+def _owned_session(client: TestClient) -> str:
+    """Create a campaign and one of its sessions through public routes. The caller owns both."""
+    campaign = client.post("/api/v1/campaigns", json={"title": "Drinking Campaign"})
+    assert campaign.status_code == 201, campaign.text
+    session = client.post(
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions", json={"title": "Drinking Night"}
+    )
+    assert session.status_code == 201, session.text
+    return session.json()["id"]
+
+
 def _start_contest(client: TestClient) -> tuple[str, str]:
-    session_id = "sess-tavern-dsp-upstream"
+    session_id = _owned_session(client)
     res = client.post(
         f"/api/v1/sessions/{session_id}/tavern/games",
         json={
@@ -62,7 +79,11 @@ def _drink(
     }
     if speech_text is not None:
         body["speech_text"] = speech_text
-    return client.post(f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn", json=body)
+    return client.post(
+        f"/api/v1/sessions/{session_id}/tavern/games/{game_id}/turn",
+        json=body,
+        headers=voice_auth_headers("test-user"),
+    )
 
 
 def _drink_two_rounds(client: TestClient, session_id: str, game_id: str) -> None:
@@ -93,7 +114,7 @@ def test_drink_roll_returns_voice_dsp_from_live_voice_agent(
         assert result["intoxication_level"] == "drunk"
         assert result["voice_dsp"] is not None
 
-        with httpx.Client(base_url=voice_url) as direct:
+        with httpx.Client(base_url=voice_url, headers=voice_auth_headers()) as direct:
             upstream = direct.post(CONDITION_PATH, json={"text": SPEECH, "filters": ["drunk"]})
         assert upstream.status_code == 200, upstream.text
         assert result["voice_dsp"] == upstream.json()

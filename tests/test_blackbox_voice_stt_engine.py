@@ -23,6 +23,9 @@ from voice_agent.synthesis_engine import set_speech_synthesizer
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.fixture_transcriber import FIXTURE_TRANSCRIPT
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.voice_identity import voice_auth_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 CHUNK_URL = "/api/v1/voice/stream/chunk"
 
@@ -67,7 +70,7 @@ def production_engine_client(
     set_speech_synthesizer(None)
     set_streaming_pipeline(None)
     voice_set_event_bus(RedisStreamsEventBus(client=mock_redis))
-    yield TestClient(voice_app)
+    yield TestClient(voice_app, headers=voice_auth_headers())
     voice_set_event_bus(None)
     set_streaming_pipeline(None)
     set_speech_synthesizer(None)

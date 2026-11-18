@@ -11,11 +11,11 @@ Governing ADRs:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -24,14 +24,9 @@ SRC_DIR = FRONTEND_DIR / "src"
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
-
-
-@pytest.fixture(autouse=True)
-def reset_store():
-    campaign_store.reset()
-    yield
+def client(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 def _auth(issuer, sub: str) -> dict[str, str]:
@@ -54,9 +49,9 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
-def test_gateway_campaign_and_session_routes(client: TestClient, signing_issuer) -> None:
+def test_gateway_campaign_and_session_routes(client: TestClient, trusted_ws_issuer) -> None:
     """Verify Gateway API provides required frontdoor endpoints for route data fetching."""
-    headers = _auth(signing_issuer, "user-valeros")
+    headers = _auth(trusted_ws_issuer, "user-valeros")
 
     # 1. Create a campaign
     camp_res = client.post(

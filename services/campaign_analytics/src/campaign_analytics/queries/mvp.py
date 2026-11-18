@@ -2,12 +2,11 @@
 
 Governed by:
 - ADR-0003: UV Monorepo Workspace for Python BCs
-- Hard Invariant 6: File length limit (< 120 lines)
+- Hard Invariant 6: File length limit (< 500 lines)
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import Any
 
 from campaign_analytics.models import (
@@ -38,24 +37,13 @@ def _award(title: str, c: CombatantPerformance, metric: str, score: int, desc: s
 
 
 def calculate_mvp_rankings(
-    combatants_map: dict[str, dict[str, Any]],
+    combatant_rows: list[dict[str, Any]],
     campaign_id: str,
     session_id: str | None = None,
     encounter_id: str | None = None,
-    matches_fn: Callable[[str, str, str], bool] | None = None,
 ) -> CampaignMvpResponse:
-    """Query combatant MVP rankings and awards."""
-    filtered = [
-        v
-        for v in combatants_map.values()
-        if (
-            matches_fn(v["campaign_id"], v["session_id"], campaign_id)
-            if matches_fn
-            else (v["campaign_id"] == campaign_id or v["session_id"] == campaign_id)
-        )
-        and (not session_id or v["session_id"] == session_id)
-        and (not encounter_id or v.get("encounter_id") == encounter_id)
-    ]
+    """Rank combatant rows by MVP score and confer the encounter awards."""
+    filtered = list(combatant_rows)
 
     def _score(v: dict[str, Any]) -> float:
         return (

@@ -13,11 +13,11 @@ Governed by:
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -31,14 +31,9 @@ TEST_CAMPAIGN_DETAIL_TS = TESTS_DIR / "campaign-detail-view.test.ts"
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(gateway_app)
-
-
-@pytest.fixture(autouse=True)
-def reset_store():
-    campaign_store.reset()
-    yield
+def client(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 # ---------------------------------------------------------------------------
@@ -85,10 +80,10 @@ def test_node_campaign_detail_view_suite_execution() -> None:
 
 
 def test_gateway_campaign_detail_and_patch_update_frontdoor(
-    client: TestClient, signing_issuer
+    client: TestClient, trusted_ws_issuer
 ) -> None:
     """Verify campaign creation, retrieval, and PATCH update through gateway public frontdoor."""
-    owner_headers = {"Authorization": f"Bearer {signing_issuer.mint('dm_alyssa')}"}
+    owner_headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('dm_alyssa')}"}
 
     create_res = client.post(
         "/api/v1/campaigns",

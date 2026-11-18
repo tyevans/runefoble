@@ -5,7 +5,14 @@ Governed by ADR-0005 (Zitadel OIDC Authentication), ADR-0007, ADR-0013, and PRD-
 
 from __future__ import annotations
 
-from runefoble_auth.principal import VerifiedPrincipal, authenticate_authorization
+from typing import Annotated
+
+from fastapi import Depends
+from runefoble_auth.principal import (
+    VerifiedPrincipal,
+    authenticate_authorization,
+    require_principal,
+)
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 
@@ -41,3 +48,16 @@ def extract_bearer_token(authorization: str | None) -> str | None:
 def decode_settlement_token(authorization: str | None = None) -> VerifiedPrincipal:
     """Verify the bearer token. Raise HTTP 401 on any failure. No fallback identity."""
     return authenticate_authorization(get_zitadel_auth_service(), authorization)
+
+
+# Route identity (ADR-0015 c). Every game_session router depends on one of these.
+get_caller_principal = require_principal(get_zitadel_auth_service)
+CallerPrincipal = Annotated[VerifiedPrincipal, Depends(get_caller_principal)]
+
+
+def get_caller_id(principal: CallerPrincipal) -> str:
+    """Return the verified token subject. The only source of caller identity."""
+    return principal.user_id
+
+
+CallerId = Annotated[str, Depends(get_caller_id)]

@@ -1,4 +1,3 @@
-@serial
 Feature: Session Lobby and Tabletop VTT Synchronization
   As a gaming group of Dungeon Master and adventurers
   We want to assemble in the pre-game staging lobby, coordinate readiness and stand-ins, launch the session, and move tokens on the tactical board

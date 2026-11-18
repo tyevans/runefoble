@@ -10,6 +10,10 @@ from gateway_api.cinematic_director import CameraTarget, clear_cinematic_directo
 from gateway_api.main import app as gateway_app
 from gateway_api.spectator import clear_raw_session_state
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture(autouse=True)
 def clean_environment() -> Generator[None]:
@@ -27,7 +31,9 @@ def client() -> TestClient:
 
 @pytest.fixture
 def session_client() -> TestClient:
-    return TestClient(game_session_app)
+    return TestClient(
+        game_session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 @pytest.fixture

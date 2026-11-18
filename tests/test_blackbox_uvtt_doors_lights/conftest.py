@@ -13,10 +13,17 @@ from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 @pytest.fixture
 def board_client() -> TestClient:
-    return TestClient(board_app)
+    return TestClient(board_app, headers=bearer("user-test"))
 
 
 @pytest.fixture

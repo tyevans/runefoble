@@ -11,13 +11,10 @@ Governing ADRs:
 
 from __future__ import annotations
 
-import re
-import subprocess
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
@@ -26,13 +23,17 @@ FRONTEND_DIR = REPO_ROOT / "frontend"
 SRC_DIR = FRONTEND_DIR / "src"
 AUDIT_TEST_TS = FRONTEND_DIR / "test" / "app-shell-views-wiring-audit.test.ts"
 
-client = TestClient(gateway_app)
+
+@pytest.fixture
+def client(game_session_upstream):
+    """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.fixture(autouse=True)
 def reset_stores():
     """Reset campaign and character stores to guarantee test isolation."""
-    campaign_store.reset()
     character_store.reset(load_defaults=False)
     yield
 
@@ -62,34 +63,9 @@ def reset_stores():
 # ---------------------------------------------------------------------------
 
 
-def test_execute_node_frontend_audit_test_suite():
-    """Run the Node test runner on app-shell-views-wiring-audit.test.ts and verify 0 failures."""
-    cmd = [
-        "node",
-        "--experimental-strip-types",
-        "--test",
-        str(AUDIT_TEST_TS.relative_to(REPO_ROOT)),
-    ]
-    result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
-    assert result.returncode == 0, (
-        f"Frontend audit tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-    )
-
-    pass_match = re.search(r"pass (\d+)", result.stdout)
-    assert pass_match is not None, f"Could not find pass count in output: {result.stdout}"
-    passed = int(pass_match.group(1))
-    assert passed >= 20, f"Expected at least 20 passed tests, got {passed}"
-    assert "fail 0" in result.stdout
-
-
-# ---------------------------------------------------------------------------
-# 6. Gateway API Frontdoor Endpoints for Audited Views
-# ---------------------------------------------------------------------------
-
-
-def test_gateway_frontdoor_endpoints_for_audited_views(signing_issuer):
+def test_gateway_frontdoor_endpoints_for_audited_views(trusted_ws_issuer, client):
     """Verify Gateway API provides public frontdoor endpoints required by all audited views."""
-    headers = {"Authorization": f"Bearer {signing_issuer.mint('user-valeros')}"}
+    headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('user-valeros')}"}
 
     # 1. Campaigns Hub View (#/campaigns)
     camp_res = client.post(

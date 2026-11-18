@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from the_watcher.dependencies import (
     check_dm_authorization,
     get_campaign_world_repo,
@@ -22,8 +21,9 @@ from the_watcher.faction_models import (
     WorldTickResponse,
 )
 from the_watcher.factions import FactionAggregate
+from the_watcher.identity import CallerId, get_caller_principal
 
-router = APIRouter(tags=["factions"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["factions"])
 
 
 async def _assert_dm_permission(caller: str | None, campaign_id: str) -> None:
@@ -63,12 +63,12 @@ async def _assert_view_permission(caller: str | None, campaign_id: str) -> None:
     response_model=WorldTickResponse,
 )
 async def advance_world_tick(
+    caller_id: CallerId,
     campaign_id: str,
     req: WorldTickRequest | None = None,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> WorldTickResponse:
     """Execute an autonomous background simulation tick for all campaign factions."""
-    await _assert_dm_permission(x_user_id, campaign_id)
+    await _assert_dm_permission(caller_id, campaign_id)
     engine = get_faction_simulation_engine()
     tick_req = req or WorldTickRequest()
     return await engine.execute_world_tick(
@@ -85,12 +85,12 @@ async def advance_world_tick(
     response_model=FactionResponse,
 )
 async def create_faction(
+    caller_id: CallerId,
     campaign_id: str,
     req: FactionCreateRequest,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> FactionResponse:
     """Register and persist a new autonomous NPC faction within the campaign."""
-    await _assert_dm_permission(x_user_id, campaign_id)
+    await _assert_dm_permission(caller_id, campaign_id)
     faction_id = f"faction-{uuid4().hex[:8]}"
     agg_uuid = to_uuid(faction_id)
     repo = get_faction_repo()
@@ -135,11 +135,11 @@ async def create_faction(
     response_model=list[FactionResponse],
 )
 async def list_factions(
+    caller_id: CallerId,
     campaign_id: str,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> list[FactionResponse]:
     """List all registered and simulated factions for a campaign."""
-    await _assert_view_permission(x_user_id, campaign_id)
+    await _assert_view_permission(caller_id, campaign_id)
     engine = get_faction_simulation_engine()
 
     factions = await engine.ensure_default_factions(
@@ -172,12 +172,12 @@ async def list_factions(
     response_model=FactionResponse,
 )
 async def get_faction(
+    caller_id: CallerId,
     campaign_id: str,
     faction_id: str,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> FactionResponse:
     """Retrieve detailed aggregate state for a specific campaign faction."""
-    await _assert_view_permission(x_user_id, campaign_id)
+    await _assert_view_permission(caller_id, campaign_id)
     repo = get_faction_repo()
     try:
         agg = await repo.load(to_uuid(faction_id))
@@ -205,11 +205,11 @@ async def get_faction(
     response_model=WorldTickResponse,
 )
 async def get_latest_bulletin(
+    caller_id: CallerId,
     campaign_id: str,
-    x_user_id: Annotated[str | None, Header(alias="X-User-Id")] = None,
 ) -> WorldTickResponse:
     """Retrieve the most recent DM intelligence bulletin and world progression state."""
-    await _assert_view_permission(x_user_id, campaign_id)
+    await _assert_view_permission(caller_id, campaign_id)
     engine = get_faction_simulation_engine()
     bulletin = await engine.get_latest_bulletin(
         campaign_id, get_faction_repo(), get_campaign_world_repo()
@@ -219,11 +219,10 @@ async def get_latest_bulletin(
             status_code=404,
             detail="No world tick has been executed for this campaign yet",
         )
-    if x_user_id:
-        client = get_spicedb_client()
-        is_dm = await check_dm_authorization(x_user_id, campaign_id=campaign_id, spicedb=client)
-        if not is_dm:
-            redacted = bulletin.model_copy()
-            redacted.intelligence_bulletin = ""
-            return redacted
+    client = get_spicedb_client()
+    is_dm = await check_dm_authorization(caller_id, campaign_id=campaign_id, spicedb=client)
+    if not is_dm:
+        redacted = bulletin.model_copy()
+        redacted.intelligence_bulletin = ""
+        return redacted
     return bulletin

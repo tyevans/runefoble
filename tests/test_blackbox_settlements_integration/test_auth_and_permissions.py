@@ -14,7 +14,11 @@ from game_session.settlement import auth as sa
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 from .conftest import bearer_headers
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def test_bearer_token_extraction_and_decoding():
@@ -46,7 +50,9 @@ def test_fastapi_route_dependencies(spicedb: MockSpiceDBClient, settlement_issue
         return {"user": u.user_id}
 
     session_app.include_router(r)
-    tc = TestClient(session_app)
+    tc = TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
     asyncio.run(spicedb.write_relationship("settlement", "h1", "upgrade", "user", "builder"))
     asyncio.run(spicedb.write_relationship("establishment", "e1", "manage", "user", "builder"))
 
@@ -69,15 +75,29 @@ def test_frontdoor_settlement_auth_lifecycle(
 
     url = f"/api/v1/campaigns/{cid}/settlements"
     bad = session_client.post(
-        url, json={"name": "Outlaw Camp", "scale": "hamlet"}, headers={"x-user-id": int_id}
+        url,
+        json={"name": "Outlaw Camp", "scale": "hamlet"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(int_id)}"},
     )
     assert bad.status_code == 403
 
     ok = session_client.post(
-        url, json={"name": "Garrison Prime", "scale": "village"}, headers={"x-user-id": gm_id}
+        url,
+        json={"name": "Garrison Prime", "scale": "village"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(gm_id)}"},
     )
     assert ok.status_code == 201
     sid = ok.json()["settlement_id"]
 
-    assert session_client.get(f"{url}/{sid}", headers={"x-user-id": p_id}).status_code == 200
-    assert session_client.get(f"{url}/{sid}", headers={"x-user-id": int_id}).status_code == 403
+    assert (
+        session_client.get(
+            f"{url}/{sid}", headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(p_id)}"}
+        ).status_code
+        == 200
+    )
+    assert (
+        session_client.get(
+            f"{url}/{sid}", headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(int_id)}"}
+        ).status_code
+        == 403
+    )

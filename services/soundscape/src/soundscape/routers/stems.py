@@ -9,10 +9,11 @@ from runefoble_auth.spicedb import SpiceDBClient
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
+    VerifiedUserId,
     check_user_can_control_soundscape,
-    get_current_user_id,
     get_or_create_aggregate_id,
     get_or_create_mixer,
+    get_principal,
     get_soundscape_repo,
     get_spicedb_client,
     publish_soundscape_event,
@@ -25,7 +26,9 @@ from soundscape.models import (
     TensionStatusResponse,
 )
 
-router = APIRouter(prefix="/api/v1/soundscape", tags=["Audio Stems & Mixer"])
+router = APIRouter(
+    prefix="/api/v1/soundscape", tags=["Audio Stems & Mixer"], dependencies=[Depends(get_principal)]
+)
 
 
 @router.get(
@@ -86,7 +89,7 @@ async def update_stem_volumes(
 )
 async def override_mood(
     request: MoodOverrideRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: VerifiedUserId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> TensionStatusResponse:
     """Manually force soundscape mood/stem profile (Exploration, Tension, Combat, Boss).
@@ -126,7 +129,7 @@ async def override_mood(
     agg.record_mood_override(
         session_id=request.session_id,
         mood=request.mood,
-        overridden_by=user_id or "dm",
+        overridden_by=user_id,
     )
     agg.record_track_change(
         session_id=request.session_id,

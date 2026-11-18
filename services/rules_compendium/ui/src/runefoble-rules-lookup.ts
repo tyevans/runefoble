@@ -55,9 +55,8 @@ export class RunefobleRulesLookup extends LitElement {
       const url = `${this.apiBaseUrl}/api/v1/compendium/rules/search?query=${encodeURIComponent(query)}${catParam}${campParam}`;
 
       const headers: Record<string, string> = {};
-      if (this.userId) {
-        headers['x-user-id'] = this.userId;
-      }
+      const token = window?.localStorage?.getItem('runefoble-access-token');
+      if (token) headers.Authorization = `Bearer ${token}`;
 
       const res = await fetch(url, { headers });
       if (res.ok) {

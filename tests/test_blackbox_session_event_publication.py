@@ -22,13 +22,19 @@ from game_session.main import app as session_app
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 SESSION_STREAM = "runefoble.events.session"
 
 
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+
 @pytest.fixture
 def session_client() -> TestClient:
-    return TestClient(session_app)
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 @pytest.fixture

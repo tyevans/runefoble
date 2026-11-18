@@ -25,8 +25,14 @@ from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 _mock_redis: MockAsyncRedis | None = None
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture(autouse=True)
@@ -46,7 +52,7 @@ def setup_auth_and_bus():
 async def test_step_trap_breach_pauses_movement():
     """Verify stepping onto a secret trap pauses token movement at the breach cell."""
     spicedb: MockSpiceDBClient = get_spicedb_client()
-    client = TestClient(board_app)
+    client = TestClient(board_app, headers=bearer("user-test"))
 
     board_id = f"board-{uuid4().hex[:8]}"
     campaign_id = f"camp-{uuid4().hex[:8]}"
@@ -69,7 +75,7 @@ async def test_step_trap_breach_pauses_movement():
             "damage_dice": "1d10",
             "is_secret": True,
         },
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
     assert trap_res.status_code == 201
     trap_id = trap_res.json()["trap_id"]
@@ -98,7 +104,7 @@ async def test_step_trap_breach_pauses_movement():
     # 5. Trap should now be marked as sprung
     traps_res = client.get(
         f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
     traps = traps_res.json()["traps"]
     sprung_trap = next(t for t in traps if t["trap_id"] == trap_id)
@@ -119,7 +125,7 @@ async def test_step_trap_breach_pauses_movement():
 async def test_proximity_trap_breach_pauses_movement():
     """Verify passing near a secret proximity trap pauses movement within the trigger radius."""
     spicedb: MockSpiceDBClient = get_spicedb_client()
-    client = TestClient(board_app)
+    client = TestClient(board_app, headers=bearer("user-test"))
 
     board_id = f"board-{uuid4().hex[:8]}"
     campaign_id = f"camp-{uuid4().hex[:8]}"
@@ -141,7 +147,7 @@ async def test_proximity_trap_breach_pauses_movement():
             "proximity_radius": 1,
             "is_secret": True,
         },
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
 
     # Place player token Kyra at (2, 4)

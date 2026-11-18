@@ -14,7 +14,13 @@ from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus
 from runefoble_auth.factory import get_spicedb_client
 
-from tests.helpers.ws_identity import ws_subprotocols
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -28,7 +34,7 @@ def reset_spicedb_state():
 
 def test_http_preview_endpoint_waypoint_measuring_and_terrain_hazards():
     """Verify HTTP preview endpoint calculates 5-ft increments, terrain penalties, and hazard warnings."""
-    client = TestClient(board_app)
+    client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
     # 1. Create 10x10 tactical board
@@ -99,7 +105,7 @@ def test_http_preview_endpoint_waypoint_measuring_and_terrain_hazards():
 
 def test_websocket_spoken_ghost_preview_and_instant_confirmation():
     """Verify spoken ghost preview stages over WebSocket (<200ms) and commits upon confirmation."""
-    client = TestClient(board_app)
+    client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
     client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
@@ -168,7 +174,7 @@ def test_websocket_spoken_ghost_preview_and_instant_confirmation():
 
 def test_websocket_ghost_preview_cancellation_preserves_original_state():
     """Verify cancelling a ghost preview rolls back staging and leaves token intact."""
-    client = TestClient(board_app)
+    client = TestClient(board_app, headers=bearer("user-test"))
     board_id = f"board-{uuid4().hex[:8]}"
 
     client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})

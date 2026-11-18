@@ -2,6 +2,10 @@
 
 This guide explains how to generate thematic character wardrobe variations (such as ballroom masquerade, arctic tundra, or tavern casual attire) through the configured wardrobe generator, configure real-time condition overlays (bloodied injury vignettes, poisoned auras, and stunned dizzy halos), and synchronize character portraits with board tokens.
 
+## Authentication
+
+Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
+
 ---
 
 ## 1. Automatic Dynamic Condition & Injury Overlays
@@ -50,7 +54,7 @@ Send a POST request to the Asset Forge service:
 ```http
 POST /api/v1/forge/wardrobe
 Content-Type: application/json
-X-User-Id: player-nadia
+Authorization: Bearer {TOKEN}
 
 {
   "character_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
@@ -95,7 +99,7 @@ Register the forged variant on the character's wardrobe gallery:
 ```http
 POST /api/v1/characters/{character_id}/wardrobe
 Content-Type: application/json
-X-User-Id: player-nadia
+Authorization: Bearer {TOKEN}
 
 {
   "variant_id": "var-masquerade-01",
@@ -111,7 +115,7 @@ X-User-Id: player-nadia
 ```http
 POST /api/v1/characters/{character_id}/portrait/active
 Content-Type: application/json
-X-User-Id: player-nadia
+Authorization: Bearer {TOKEN}
 
 {
   "variant_id": "var-masquerade-01"

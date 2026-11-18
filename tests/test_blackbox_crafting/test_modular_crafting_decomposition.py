@@ -41,6 +41,12 @@ from fastapi.testclient import TestClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.fixture
@@ -54,7 +60,7 @@ def mock_bus():
 
 @pytest.fixture
 def char_client():
-    return TestClient(character_app)
+    return TestClient(character_app, headers=auth_headers("character-owner"))
 
 
 def test_crafting_package_and_facade_exports():

@@ -8,21 +8,27 @@ This guide explains how to project combat telemetry, query tactical damage heatm
 
 The Campaign Analytics microservice operates as a CQRS projection engine and chronicle archive:
 
-1. **Redis Streams Ingestion**: Dedicated worker (`campaign_analytics_worker`) listens to event streams:
-   - `runefoble.events.session`: Encounter lifecycle (`CombatRoundAdvanced`, `SessionEnded`).
-   - `runefoble.events.board`: Spatial movements (`TokenMoved`).
+1. **Redis Streams Ingestion**: The `campaign_analytics_worker` runs one consumer per stream:
+   - `runefoble.events.session`: Session lifecycle and encounter progression (`SessionCreated`, `CombatEncounterStarted`, `CombatRoundAdvanced`, `SessionEnded`).
+   - `runefoble.events.board`: Token placement and movement (`TokenPlaced`, `TokenMoved`).
    - `runefoble.events.character`: Damage and healing deltas (`CharacterHealthChanged`).
-   - `runefoble.events.watcher`: Tabletop actions (`DiceRolled`).
-2. **PostgreSQL Analytical Persistence**: Telemetry points, performance records, and chronicle milestones are stored in relational tables (`campaign_spatial_telemetry`, `combat_performance_records`, `campaign_timeline_milestones`) with SQLite/in-memory fallback for local testing.
-3. **Modular Storage & Query Architecture (`ADR-0003`, `TASK-0118`)**:
-   - `storage.py`: Storage facade (`CampaignAnalyticsStorage`) managing database engine lifecycle and connection pooling while delegating to specialized query modules.
-   - `queries/spatial.py`: Spatial coordinate bucketing, grid binning, and heatmap density matrix serialization.
-   - `queries/mvp.py`: Combatant performance scoring, damage/healing metrics, and MVP awards calculation (`Most Lethal`, `Guardian Angel`, `Nat 20 Master`).
-   - `queries/timeline.py`: Chronological session milestones and milestone event filtering.
-4. **Event-Sourced Milestones**: Domain milestones and MVP snapshots are managed by `CampaignChronicleAggregate` (`eventsource-py`) emitting `ChronicleMilestoneRecorded`, `CombatTelemetrySnapshotCreated`, and `EncounterMvpAwarded`.
+   - `runefoble.events.watcher`: Dice rolls (`DiceRolled`) and absentee recaps (`AbsenteeRecapGenerated`).
+2. **PostgreSQL Read Models**: Every query reads these tables. The service does not keep read models in memory.
+   - `campaign_spatial_telemetry`: Heatmap points.
+   - `combat_performance_records`: One row per combatant per session. The MVP route reads it.
+   - `campaign_timeline_milestones`: Chronicle milestones.
+   - `campaign_session_map`: Session to campaign mapping. Events without a campaign id use it.
+   - `analytics_projection_state`: Token positions, names, and the active combatant and encounter. It also holds each stream's last projected message id.
+   - SQLite and in-memory stores are not supported. The service refuses to start on a non-PostgreSQL URL.
+3. **Transactional Projection and Resume**: Each stream message is projected in one database transaction. The transaction also stores that message id as the stream position. A failed write rolls back the whole message. The message goes to `{stream}.dlq` and the consumer continues. On start-up, each stream resumes after its stored position. Replayed rows keep the same ids, so a replay does not create duplicate rows.
+4. **Chronicle Aggregate for Milestones**: Each milestone is recorded on `CampaignChronicleAggregate` (`eventsource-py`) through `AggregateRepository`. The event store saves the `ChronicleMilestoneRecorded` event first. The milestone row is projected from the saved event. The MVP and telemetry snapshot events (`EncounterMvpAwarded`, `CombatTelemetrySnapshotCreated`) are defined but not produced. MVP scores are computed from `combat_performance_records` at query time.
+5. **Start-up and Store Failures**:
+   - Start-up fails when PostgreSQL is unreachable or the tables cannot be created. The service does not serve requests.
+   - A query that cannot reach PostgreSQL returns HTTP `503` with `{"detail": "Campaign analytics store is unavailable"}`. It never returns empty data.
+   - `/healthz` reports each consumer as `running` or `failed`. It returns `503` when a consumer fails.
 
 ```
-Redis Streams ───► CampaignAnalyticsWorker ───► AnalyticsEventDispatcher ───► PostgreSQL Storage
+Redis Streams ───► CampaignAnalyticsWorker ───► AnalyticsEventDispatcher ───► ProjectionTx (one transaction)
                                                                                     │
                                                                                     ▼
 Zanzibar Auth ───► FastAPI APIRouters ◄──────────────────────────────────────── Analytics Queries
@@ -39,7 +45,8 @@ Access to campaign analytics and chronicle records is protected by SpiceDB Zanzi
 
 - **Permission**: Callers must possess the `view` permission on the target campaign (`campaign:<campaign_id>`).
 - **Roles**: Users holding `owner`, `dungeon_master`, `player`, or `spectator` relations automatically inherit `view` permission.
-- Unauthorized callers receive HTTP `403 Forbidden`.
+- Callers without a verified bearer token receive HTTP `401 Unauthorized`. There is no public view.
+- Authenticated callers without the `view` permission receive HTTP `403 Forbidden`.
 
 When querying endpoints, send the Zitadel JWT as a bearer token. The gateway verifies the token and forwards the same `Authorization` header to the analytics service. The gateway ignores any `X-User-Id` header from the client.
 

@@ -10,17 +10,18 @@ from uuid import uuid4
 import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
-from runefoble_events import (
-    FactionSkirmishResolved,
+from runefoble_events.events import (
     FactionSkirmishResolvedEvent,
-    FactionTerritoryCaptured,
     FactionTerritoryCapturedEvent,
-    RegionalUnrestEscalated,
     RegionalUnrestEscalatedEvent,
 )
 from the_watcher.turf_war.unrest_calculator import UnrestCalculator
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 from .conftest import setup_campaign_roles
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def test_cloudevents_registration():
@@ -34,9 +35,9 @@ def test_cloudevents_registration():
     for type_name, expected_cls in events:
         assert get_event_class_or_none(type_name) == expected_cls
 
-    assert FactionSkirmishResolved == FactionSkirmishResolvedEvent
-    assert FactionTerritoryCaptured == FactionTerritoryCapturedEvent
-    assert RegionalUnrestEscalated == RegionalUnrestEscalatedEvent
+    assert FactionSkirmishResolvedEvent == FactionSkirmishResolvedEvent
+    assert FactionTerritoryCapturedEvent == FactionTerritoryCapturedEvent
+    assert RegionalUnrestEscalatedEvent == RegionalUnrestEscalatedEvent
 
     ev = FactionSkirmishResolvedEvent(
         skirmish_id="s1",
@@ -75,12 +76,12 @@ async def test_regional_unrest_progression_and_economic_friction(client: TestCli
                 "defender": {"faction_id": "f_def", "military_strength": d_str},
                 "terrain": "urban",
             },
-            headers={"X-User-Id": dm_user},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
         )
 
     res = client.get(
         f"/the-watcher/regions/{region_id}/unrest?campaign_id={camp_id}",
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res.status_code == 200
     info = res.json()

@@ -142,7 +142,7 @@ During session staging and active virtual tabletop play, the App Shell dynamical
 3. **Session Transition & Character Resolution**: When launching or entering `session-active` (`#/campaigns/:id/sessions/:sessionId`), `resolveActiveCharacter(campaignId)` preserves any character chosen during lobby staging. If no selection was made, it selects:
    - The first character assigned to the specified `campaignId`.
    - The user's first available character in their roster.
-   - Known gap: when the roster is empty, a placeholder character (`char-placeholder`) is used. This remains until a follow-up task removes it (TASK-0640 discovered item).
+   - When the roster is empty, `resolveActiveCharacter` returns `null`. The session view shows an empty state that asks the user to choose a character in the lobby. No placeholder character is created (TASK-0642).
 4. **VTT Character Card Binding**: The `<runefoble-character-card>` dynamically receives `.characterName`, `.characterClass`, `.level`, `.currentHp`, `.maxHp`, `.armorClass`, and `.portraitUrl`.
 5. **DM Party Inspector & Switcher**: When authenticated as DM/Owner, a high-contrast inspection banner and `<select class="dm-character-switcher">` allow the Dungeon Master to inspect and switch active character cards across the entire party.
 

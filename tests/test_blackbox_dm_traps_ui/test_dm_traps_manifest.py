@@ -17,7 +17,14 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 from .conftest import REPO_ROOT
+
+
+def bearer(sub: str) -> dict[str, str]:
+    """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 def test_dm_traps_manifest_endpoint(client: TestClient) -> None:
@@ -84,7 +91,7 @@ async def test_frontdoor_contract_integration(
             "dc_detection": 15,
             "is_secret": True,
         },
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
     assert trap_res.status_code == 201
     trap_data = trap_res.json()
@@ -101,7 +108,7 @@ async def test_frontdoor_contract_integration(
             "background_image_url": "https://assets.runefoble.com/maps/dungeon_lvl2.png",
             "token_teleports": {"valeros": [10, 15]},
         },
-        headers={"X-User-Id": dm_user},
+        headers=bearer(dm_user),
     )
     assert switch_res.status_code == 200
     switch_data = switch_res.json()

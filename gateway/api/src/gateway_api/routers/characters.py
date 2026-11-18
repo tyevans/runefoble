@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from gateway_api.auth import get_current_user, get_spicedb_client, require_zanzibar_permission
+from gateway_api.campaign_titles import campaign_titles
 from gateway_api.character_models import (
     AssignCampaignRequest,
     CharacterResponse,
@@ -17,8 +18,15 @@ router = APIRouter(tags=["Characters"])
 router.include_router(subresources_router)
 
 
+async def _title_of(request: Request, campaign_id: str | None) -> str | None:
+    if not campaign_id:
+        return None
+    return (await campaign_titles(request, {campaign_id}))[campaign_id]
+
+
 @router.get("/api/v1/characters", response_model=list[CharacterResponse])
 async def list_characters(
+    request: Request,
     user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
     campaign_id: str | None = Query(None, alias="campaignId"),
 ) -> list[CharacterResponse]:
@@ -39,7 +47,8 @@ async def list_characters(
         if has_view:
             allowed.append(char)
 
-    return [c.to_response() for c in allowed]
+    titles = await campaign_titles(request, {c.campaign_id for c in allowed if c.campaign_id})
+    return [c.to_response(campaign_title=titles.get(c.campaign_id or "")) for c in allowed]
 
 
 @router.post(
@@ -49,6 +58,7 @@ async def list_characters(
 )
 async def create_character(
     req: CreateCharacterRequest,
+    request: Request,
     user: Annotated[VerifiedPrincipal, Depends(get_current_user)],
 ) -> CharacterResponse:
     """Create a new character and assign ownership to caller in SpiceDB."""
@@ -62,7 +72,7 @@ async def create_character(
             "character", char.id, "campaign", "campaign", char.campaign_id
         )
 
-    return char.to_response()
+    return char.to_response(campaign_title=await _title_of(request, char.campaign_id))
 
 
 @router.get(
@@ -72,12 +82,13 @@ async def create_character(
 )
 async def get_character(
     character_id: str,
+    request: Request,
 ) -> CharacterResponse:
     """Retrieve full character sheet with dual-case serialization (requires 'view')."""
     char = character_store.get_character(character_id)
     if not char:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Character not found")
-    return char.to_response()
+    return char.to_response(campaign_title=await _title_of(request, char.campaign_id))
 
 
 @router.patch(
@@ -88,6 +99,7 @@ async def get_character(
 async def assign_campaign(
     character_id: str,
     req: AssignCampaignRequest,
+    request: Request,
 ) -> CharacterResponse:
     """Assign or unassign character to campaign and synchronize SpiceDB (requires 'edit')."""
     char = character_store.get_character(character_id)
@@ -108,7 +120,8 @@ async def assign_campaign(
         )
 
     updated = character_store.assign_campaign(character_id, req.campaign_id)
-    return (updated or char).to_response()
+    final = updated or char
+    return final.to_response(campaign_title=await _title_of(request, final.campaign_id))
 
 
 @router.delete(

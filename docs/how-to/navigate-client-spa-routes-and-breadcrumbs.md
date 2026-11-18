@@ -107,8 +107,8 @@ Use the `<runefoble-breadcrumbs>` Lit component in your header or navigation chr
 <runefoble-breadcrumbs
   .items=${[
     { label: 'Campaigns', path: '#/campaigns' },
-    { label: 'Tomb of the Star-Eater', path: '#/campaigns/4' },
-    { label: 'Session #14', path: '#/campaigns/4/sessions/14', active: true }
+    { label: campaignTitle, path: `#/campaigns/${campaignId}` },
+    { label: sessionTitle, path: `#/campaigns/${campaignId}/sessions/${sessionId}`, active: true }
   ]}
   separator="›"
   @breadcrumb-click=${(e) => console.log('Navigated to:', e.detail.path)}
@@ -123,17 +123,16 @@ Alternatively, enable `autoRouter` to have the breadcrumbs component automatical
 
 ## 6. Resolving Custom Entity Titles in Breadcrumbs
 
-Provide custom title resolvers to replace numeric IDs with narrative campaign or session names. The router supports both synchronous fallback resolvers and asynchronous resolvers with built-in title caching.
+Provide custom title resolvers to replace numeric IDs with narrative campaign or session names. The router supports both synchronous fallback resolvers and asynchronous resolvers with built-in title caching. Titles come from the API, keyed by the route parameter. Do not hardcode ids or titles.
 
 ### Synchronous Resolvers (`setTitleResolver`)
 
 ```typescript
 import { router } from './router/index.ts';
 
+// Resolves only titles that are already loaded. Unknown ids return undefined.
 router.setTitleResolver((type, id) => {
-  if (type === 'campaign' && id === '4') return 'Tomb of the Star-Eater';
-  if (type === 'campaign' && id === '5') return 'Whispering Depths';
-  if (type === 'session' && id === '14') return 'Session #14 (Crypt Entrance)';
+  if (type === 'campaign') return loadedCampaignTitles.get(id);
   return undefined;
 });
 ```

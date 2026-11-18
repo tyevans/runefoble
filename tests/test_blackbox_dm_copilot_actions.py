@@ -13,7 +13,7 @@ import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
-from runefoble_events import (
+from runefoble_events.events import (
     WatcherActionApproved,
     WatcherActionModified,
     WatcherActionProposed,
@@ -30,6 +30,9 @@ from the_watcher.main import app
 from the_watcher.models import ProposeActionRequest
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture(autouse=True)
@@ -47,7 +50,7 @@ def clean_environment():
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 async def _setup_dm(dm_user: str = "dm_evelyn") -> tuple[str, str]:
@@ -123,13 +126,15 @@ async def test_zanzibar_action_authorization_enforcement(client: TestClient):
         ("/api/v1/watcher/approve", base),
         ("/api/v1/watcher/modify", {**base, "description": "Mod"}),
     ]:
-        res = client.post(ep, json=payload, headers={"X-User-Id": player})
+        res = client.post(
+            ep, json=payload, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player)}"}
+        )
         assert res.status_code == 403
         assert "Forbidden" in res.json()["detail"]
 
     res_list = client.get(
         f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
-        headers={"X-User-Id": player},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player)}"},
     )
     assert res_list.status_code == 403
 
@@ -137,7 +142,7 @@ async def test_zanzibar_action_authorization_enforcement(client: TestClient):
     res_veto = client.post(
         "/api/v1/watcher/veto",
         json={**base, "reason": "DM override"},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res_veto.status_code == 200
     assert res_veto.json()["status"] == "vetoed"
@@ -154,7 +159,7 @@ async def test_pre_execution_veto_halts_mutation(client: TestClient):
 
     res_pending = client.get(
         f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
-        headers={"X-User-Id": "dm_evelyn"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},
     )
     assert any(a["action_id"] == action_id for a in res_pending.json())
 
@@ -166,7 +171,7 @@ async def test_pre_execution_veto_halts_mutation(client: TestClient):
             "campaign_id": camp_id,
             "reason": "Low HP veto",
         },
-        headers={"X-User-Id": "dm_evelyn"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},
     )
     assert res_veto.status_code == 200
     assert res_veto.json()["status"] == "vetoed"
@@ -184,7 +189,7 @@ async def test_dm_immediate_approve_frontdoor(client: TestClient):
     res_appr = client.post(
         "/api/v1/watcher/approve",
         json={"action_id": action_id, "session_id": sess_id, "campaign_id": camp_id},
-        headers={"X-User-Id": "dm_evelyn"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},
     )
     assert res_appr.status_code == 200
     assert res_appr.json()["status"] == "approved"
@@ -208,7 +213,7 @@ async def test_dm_modify_action_frontdoor(client: TestClient):
             "parameters": {"darts": 1},
             "auto_approve": True,
         },
-        headers={"X-User-Id": "dm_evelyn"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},
     )
     assert res_mod.status_code == 200
     assert res_mod.json()["status"] == "approved"

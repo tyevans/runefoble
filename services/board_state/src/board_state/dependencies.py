@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 from uuid import NAMESPACE_DNS, UUID, uuid5
 
 from board_state.aggregate import BoardAggregate
 from eventsource.domain.exceptions import AggregateNotFoundError
-from fastapi import Header
+from fastapi import Depends
+from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -20,6 +23,7 @@ logger = logging.getLogger("runefoble.board_state")
 platform_settings = PlatformSettings()
 _event_bus: RedisStreamsEventBus | None = None
 _spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
+_zitadel_auth_service: ZitadelAuthService | None = None
 
 repo: AggregateRepository[BoardAggregate] = create_aggregate_repository(BoardAggregate)
 
@@ -74,22 +78,41 @@ def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None
     _spicedb_client = client
 
 
+def get_zitadel_auth_service() -> ZitadelAuthService:
+    """Provide the Zitadel verifier that this service trusts, built from platform settings."""
+    global _zitadel_auth_service
+    if _zitadel_auth_service is None:
+        _zitadel_auth_service = ZitadelAuthService(
+            issuer=platform_settings.zitadel_issuer,
+            audience=platform_settings.zitadel_audience,
+            jwks_url=platform_settings.zitadel_jwks_url,
+        )
+    return _zitadel_auth_service
+
+
+def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
+    """Override the Zitadel verifier for tests."""
+    global _zitadel_auth_service
+    _zitadel_auth_service = service
+
+
+get_current_principal = require_principal(get_zitadel_auth_service)
+
+
 def get_current_user_id(
-    x_user_id: str | None = Header(default=None, alias="x-user-id"),
-) -> str | None:
-    """Extract authenticated caller identity from x-user-id header."""
-    return x_user_id
+    principal: Annotated[VerifiedPrincipal, Depends(get_current_principal)],
+) -> str:
+    """Return the subject of the verified bearer token. Raise 401 when no token verifies."""
+    return principal.user_id
 
 
 async def check_user_can_manage_traps(
-    user_id: str | None,
+    user_id: str,
     board_id: str,
     campaign_id: str | None = None,
     spicedb: SpiceDBClient | MockSpiceDBClient | None = None,
 ) -> bool:
     """Evaluate SpiceDB Zanzibar permissions to check whether user can manage traps."""
-    if not user_id:
-        return False
     client = spicedb or get_spicedb_client()
     target = campaign_id or board_id
 
@@ -120,7 +143,7 @@ async def check_user_can_manage_traps(
 
 
 async def check_user_can_view_secret_layer(
-    user_id: str | None,
+    user_id: str,
     board_id: str,
     campaign_id: str | None = None,
     spicedb: SpiceDBClient | None = None,
@@ -130,7 +153,7 @@ async def check_user_can_view_secret_layer(
 
 
 async def check_user_can_switch_map(
-    user_id: str | None,
+    user_id: str,
     board_id: str,
     campaign_id: str | None = None,
     spicedb: SpiceDBClient | None = None,

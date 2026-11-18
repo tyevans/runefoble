@@ -20,20 +20,23 @@ spec:
           image: {{ .Values.spicedb.image }}
           args: ["datastore", "migrate", "head", "--datastore-engine", "postgres"]
           env:
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "POSTGRES_PASSWORD" "key" "postgres-password") | nindent 12 }}
             - name: SPICEDB_DATASTORE_CONN_URI
-              value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/spicedb?sslmode=disable"
+              value: "postgres://{{ .Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/spicedb?sslmode=disable"
       containers:
         - name: spicedb
           image: {{ .Values.spicedb.image }}
-          args: ["serve", "--grpc-preshared-key", {{ .Values.spicedb.presharedKey | quote }}, "--datastore-engine", "postgres"]
+          args: ["serve", "--datastore-engine", "postgres"]
           ports:
             - name: grpc
               containerPort: {{ .Values.spicedb.grpcPort }}
             - name: http
               containerPort: {{ .Values.spicedb.httpPort }}
           env:
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "SPICEDB_GRPC_PRESHARED_KEY" "key" "spicedb-preshared-key") | nindent 12 }}
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "POSTGRES_PASSWORD" "key" "postgres-password") | nindent 12 }}
             - name: SPICEDB_DATASTORE_CONN_URI
-              value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/spicedb?sslmode=disable"
+              value: "postgres://{{ .Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/spicedb?sslmode=disable"
 ---
 apiVersion: v1
 kind: Service

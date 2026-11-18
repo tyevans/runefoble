@@ -7,11 +7,11 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 
 ## Service Directory
 
-| Platform Service | Upstream Image | Internal Host & Port | Ingress Route | Governing ADR | Local / Test Fallback |
+| Platform Service | Upstream Image | Internal Host & Port | Ingress Route | Governing ADR | Test Double or Local Fallback |
 |---|---|---|---|---|---|
-| **PostgreSQL** | `pgvector/pgvector:pg16` | `postgres:5432` | None (Internal) | ADR-0005, ADR-0011 | `InMemoryEventStore` |
-| **Redis Streams** | `redis:7.2-alpine` | `runefoble-redis:6379` | None (Internal) | ADR-0006 | `InMemoryEventBus` |
-| **SpiceDB (Zanzibar)** | `authzed/spicedb:v1.34.0` | `spicedb:50051` (gRPC), `8443` (HTTP) | None (Internal) | ADR-0001 | None in services. Tests inject `MockSpiceDBClient`. |
+| **PostgreSQL** | `pgvector/pgvector:pg16` | `postgres:5432` | None (Internal) | ADR-0005, ADR-0011 | `InMemoryEventStore` (test only; used when `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=false`) |
+| **Redis Streams** | `redis:7.2-alpine` | `runefoble-redis:6379` | None (Internal) | ADR-0006 | `InMemoryEventBus` (test and local only; used when the Redis event bus flag is `false`) |
+| **SpiceDB (Zanzibar)** | `authzed/spicedb:v1.34.0` | `spicedb:50051` (gRPC), `8443` (HTTP) | None (Internal) | ADR-0001 | `MockSpiceDBClient` (test only) |
 | **Zitadel (OIDC/AuthN)** | `ghcr.io/zitadel/zitadel:v2.54.0` | `zitadel:8080` | `auth.localhost` (own host, root path) | ADR-0005 | `ZitadelAuthService` (PyJWKClient RS256 verification of signature, `iss`, `aud`, `exp`, `sub`; no bypass) |
 | **Silo (S3 Storage)** | `minio/minio:RELEASE.2024-01-01...` | `silo:9000` (S3), `9001` (UI) | None (Proxy via Gateway) | ADR-0005 | `FakeSilo` HTTP transport (tests only, no production fallback) |
 | **OpenTelemetry Collector** | `otel/opentelemetry-collector-contrib` | `otel-collector:4317` (gRPC), `4318` (HTTP) | None (Internal) | ADR-0005 | Null Tracer / No-op Span Processor |
@@ -19,8 +19,8 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 | **Grafana** | `grafana/grafana:11.0.0` | `grafana:3001` | None (Port-forward) | ADR-0005 | Local metrics console |
 | **OpenPanel** | `openpanel/openpanel:latest` | `openpanel:3000` | `/analytics` | ADR-0005 | Mock Event Buffer |
 | **Swagger UI** | `swaggerapi/swagger-ui:v5.17.14` | `swagger-ui:8080` | `/docs`, `/swagger-ui` | ADR-0005 | Service `/openapi.json` direct endpoints |
-| **Mailpit (Mock SMTP & UI)** | `axllent/mailpit:v1.21.8` | `mailpit:1025` (SMTP), `8025` (HTTP) | `/mail`, `/mailpit` | ADR-0005 | In-Memory `MailpitClient` Buffer |
-| **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP, Helm `inference-worker` Deployment and Service) | None (Internal) | ADR-0007 | Chart default `backend: mock` (`RUNEFOBLE_WORKER_BACKEND=mock`, explicit, labelled `source: mock`); no silent fallback |
+| **Mailpit (Mock SMTP & UI)** | `axllent/mailpit:v1.21.8` | `mailpit:1025` (SMTP), `8025` (HTTP) | `/mail`, `/mailpit` | ADR-0005 | In-Memory `MailpitClient` Buffer (local and test only) |
+| **Inference Worker (LLM, internal)** | First-party `services/inference_worker` | `inference-worker:8100` (HTTP, Helm `inference-worker` Deployment and Service) | Service token `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` (ADR-0015 e) | ADR-0007 | Chart default `backend: mock` (`RUNEFOBLE_WORKER_BACKEND=mock`, explicit, labelled `source: mock`); no silent fallback |
 
 ---
 
@@ -54,7 +54,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Role**: Object-level access control enforcing who can view, run, mutate, or roll within campaigns, characters, and boards.
 - **Datastore Migrations**: Uses `spicedb datastore migrate head` executed via initContainers in the deployment and Helm schema job before serving or writing schemas.
 - **Schema**: `libs/runefoble_auth/schema/runefoble.zed`.
-- **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. The preshared key is an operator secret with no default outside tests. A process that cannot read it exits at startup and names the variable. Helm supplies it from `spicedb.presharedKey` until TASK-0626 moves it to a Kubernetes Secret.
+- **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. The preshared key is an operator secret with no default outside tests. A process that cannot read it exits at startup and names the variable. Helm reads it from the `runefoble-credentials` Secret, key `spicedb-preshared-key`, and passes it as `SPICEDB_GRPC_PRESHARED_KEY` to the SpiceDB server. See [Chart Credentials](#chart-credentials).
 - **Shared Factory**: `runefoble_auth.factory.get_spicedb_client()` is the only constructor for services and the gateway. It caches one client built from `PlatformSettings`. It raises `ConfigurationError` when the preshared key is missing.
 - **Fail-Closed Errors**: `check_permission` returns `False` only for a definitive `NO_PERMISSION`. Other failures raise a typed error from `runefoble_auth.errors`:
   - `AuthzUnavailableError`: gRPC `UNAVAILABLE` or `DEADLINE_EXCEEDED`, or a socket error. The gateway maps it to `503`.
@@ -70,7 +70,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Issuer Variables** (set by the chart on every service that verifies tokens):
   - `RUNEFOBLE_ZITADEL_ISSUER`: the browser-facing issuer, `http://auth.localhost` by default. It must equal the token `iss` claim. Zitadel writes this value, built from `zitadel.externalDomain`, `externalPort`, and `externalSecure`.
   - `RUNEFOBLE_ZITADEL_JWKS_URL`: the in-cluster JWKS endpoint, `http://zitadel:8080/oauth/v2/keys`. Pods cannot resolve the browser-facing host, so the verifier does not read discovery.
-  - `RUNEFOBLE_ZITADEL_AUDIENCE`: the expected `aud` claim. Not yet set by the chart. It defaults to `RUNEFOBLE_ZITADEL_CLIENT_ID`.
+  - `RUNEFOBLE_ZITADEL_AUDIENCE`: the expected `aud` claim. The Python services default it to `RUNEFOBLE_ZITADEL_CLIENT_ID`, which the chart does not set. The Audience Studio chart sets it to `services.audienceStudio.zitadelAudience` (`runefoble-api`). The Node service refuses to start without it.
 - **Other Variables**: `RUNEFOBLE_ZITADEL_CLIENT_ID`. (`RUNEFOBLE_AUTH_DEV_MODE` was removed in TASK-0520.)
 - **Browser Runtime Config**: the frontend serves `/runtime-config.json` (issuer, client ID, scopes, provider name). The chart renders it from `frontend.runtimeConfig`. It holds no secret.
 - **Gateway CORS**: `RUNEFOBLE_CORS_ORIGINS` is a comma-separated list of browser origins allowed to call the gateway with credentials. The default is `http://localhost:5173,http://127.0.0.1:5173`. The value `*` is refused at startup.
@@ -105,6 +105,24 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 
 ---
 
+## Chart Credentials
+
+The chart stores every credential in one Kubernetes Secret and reads it with `secretKeyRef`. No container manifest holds a credential as a plain value.
+
+| Secret key | Values path | Read by |
+|---|---|---|
+| `postgres-password` | `credentials.postgres.password` | Every service with a database URL, SpiceDB, OpenPanel, Zitadel, Postgres |
+| `silo-access-key` | `credentials.silo.accessKey` | Silo, Soundscape, Asset Forge |
+| `silo-secret-key` | `credentials.silo.secretKey` | Silo, Soundscape, Asset Forge |
+| `spicedb-preshared-key` | `credentials.spicedb.presharedKey` | SpiceDB, schema job, all services that call SpiceDB |
+| `zitadel-masterkey` | `credentials.zitadel.masterKey` | Zitadel |
+| `zitadel-admin-password` | `credentials.zitadel.adminPassword` | Zitadel |
+| `grafana-admin-password` | `credentials.grafana.adminPassword` | Grafana |
+
+- **Local (`global.environment: local`)**: The chart renders the Secret from the `credentials` values. Those values are dev-only defaults. They are public in the repository.
+- **Other environments**: Set `credentials.existingSecret` to the name of a Secret that you manage. The chart renders no Secret. It fails `helm template` when `global.environment` is not `local` and `credentials.existingSecret` is empty.
+- **Database URLs**: The URLs use the Kubernetes `$(POSTGRES_PASSWORD)` expansion. The password does not appear in the URL value.
+
 ## Cross-Service URLs (TASK-0624)
 
 The chart sets each service-to-service URL. The URL uses the in-cluster service name and the port from `services.<name>.port`. The chart renders each key only on the containers listed below. Each service reads its URL from the environment. No code default uses `localhost`.
@@ -114,6 +132,7 @@ The chart sets each service-to-service URL. The URL uses the in-cluster service 
 | `RUNEFOBLE_WATCHER_URL` | `http://the-watcher:8001` | `game-session`, `voice-agent` | `game_session` (autopilot), `voice_agent` (default `http://the-watcher:8001`) |
 | `RUNEFOBLE_VOICE_AGENT_URL` | `http://voice-agent:8005` | `game-session` | `game_session` voice client |
 | `RUNEFOBLE_INFERENCE_URL` | `http://inference-worker:8100` | `the-watcher` (only when `services.inferenceWorker` is set) | `the_watcher` |
+| `RUNEFOBLE_INFERENCE_SERVICE_TOKEN` | Secret reference `runefoble-inference-service`, key `token` (`inferenceServiceToken` in values) | `the-watcher`, `inference-worker` | `the_watcher` (sends it), `inference_worker` (checks it, refuses to start without it) |
 | `SOUNDSCAPE_SERVICE_URL` | `http://soundscape:8009` | `gateway-api` | Gateway soundscape proxy (default `http://soundscape:8009`) |
 | `CAMPAIGN_LORE_URL` | `http://campaign-lore:8006` | `gateway-api` | Gateway hub views |
 | `CAMPAIGN_ANALYTICS_URL` | `http://campaign-analytics:8011` | `gateway-api` | Gateway hub views |

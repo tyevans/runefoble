@@ -14,7 +14,7 @@ from gateway_mcp.server import mcp
 async def test_blackbox_dynamic_mcp_tool_registration_and_execution(gateway_client: TestClient):
     """Verify registering a dynamic tool via administrative frontdoor and invoking it in FastMCP."""
     tool_name = "calculate_spell_falloff"
-    assert mcp.get_tool(tool_name) is None
+    assert mcp._tool_manager.get_tool(tool_name) is None
 
     # Register dynamic tool definition via administrative HTTP frontdoor
     tool_payload = {
@@ -43,7 +43,7 @@ async def test_blackbox_dynamic_mcp_tool_registration_and_execution(gateway_clie
     assert reg_resp.json()["status"] == "registered"
 
     # Assert tool is immediately visible in FastMCP discovery WITHOUT gateway restart
-    registered_tool = mcp.get_tool(tool_name)
+    registered_tool = mcp._tool_manager.get_tool(tool_name)
     assert registered_tool is not None, "Tool must be discovered immediately in FastMCP"
     assert "base_damage" in registered_tool.parameters["properties"]
     assert "distance" in registered_tool.parameters["properties"]
@@ -89,7 +89,7 @@ def test_blackbox_dynamic_mcp_sandbox_rejection_security(gateway_client: TestCli
         resp = gateway_client.post("/mcp/tools", json=payload)
         assert resp.status_code == 400, f"Expected rejection for {name}"
         assert "Sandbox policy violation" in resp.json()["detail"]
-        assert mcp.get_tool(name) is None
+        assert mcp._tool_manager.get_tool(name) is None
 
 
 def test_blackbox_dynamic_mcp_tool_lifecycle(gateway_client: TestClient):
@@ -109,7 +109,7 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(gateway_client: TestClient):
     # Register tool
     reg = gateway_client.post("/mcp/tools", json=initial_payload)
     assert reg.status_code == 200
-    assert mcp.get_tool(tool_name) is not None
+    assert mcp._tool_manager.get_tool(tool_name) is not None
 
     # Update tool with new description and parameters
     update_payload = {
@@ -126,7 +126,7 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(gateway_client: TestClient):
     }
     upd = gateway_client.put(f"/mcp/tools/{tool_name}", json=update_payload)
     assert upd.status_code == 200
-    updated_tool = mcp.get_tool(tool_name)
+    updated_tool = mcp._tool_manager.get_tool(tool_name)
     assert updated_tool is not None
     assert "color" in updated_tool.parameters["properties"]
 
@@ -134,5 +134,5 @@ def test_blackbox_dynamic_mcp_tool_lifecycle(gateway_client: TestClient):
     del_resp = gateway_client.delete(f"/mcp/tools/{tool_name}")
     assert del_resp.status_code == 200
     assert del_resp.json()["status"] == "deregistered"
-    assert mcp.get_tool(tool_name) is None
+    assert mcp._tool_manager.get_tool(tool_name) is None
     assert gateway_client.delete(f"/mcp/tools/{tool_name}").status_code == 404

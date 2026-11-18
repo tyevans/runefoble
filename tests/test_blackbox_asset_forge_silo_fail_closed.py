@@ -17,6 +17,13 @@ from runefoble_platform.storage import SiloStorageService, get_storage_service, 
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES, SILO_TEST_ENDPOINT, FakeSilo
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 BATTLEMAP_BODY = {
     "prompt": "Flooded crypt with sunken altars",
@@ -28,7 +35,7 @@ ASSET_STREAM = "runefoble.events.asset"
 
 @pytest.fixture
 def forge_client() -> TestClient:
-    return TestClient(asset_forge_app)
+    return TestClient(asset_forge_app, headers=auth_headers("forge-tester"))
 
 
 @pytest.fixture
@@ -90,7 +97,7 @@ def test_gateway_upload_fails_closed_when_silo_unreachable(silo_double: FakeSilo
 
 def test_forged_battlemap_is_retrievable_after_service_restart(silo_double: FakeSilo):
     """A battlemap confirmed by Silo stays retrievable by a fresh app and storage client."""
-    first_client = TestClient(asset_forge_app)
+    first_client = TestClient(asset_forge_app, headers=auth_headers("forge-tester"))
     created = first_client.post("/api/v1/forge/battlemap", json=BATTLEMAP_BODY)
     assert created.status_code == 200, created.text
     asset_id = created.json()["asset_id"]
@@ -105,7 +112,7 @@ def test_forged_battlemap_is_retrievable_after_service_restart(silo_double: Fake
     previous = get_storage_service()
     set_storage_service(restarted_silo)
     try:
-        restarted_client = TestClient(asset_forge_app)
+        restarted_client = TestClient(asset_forge_app, headers=auth_headers("forge-tester"))
         fetched = restarted_client.get(f"/api/v1/forge/battlemap/{asset_id}")
     finally:
         set_storage_service(previous)

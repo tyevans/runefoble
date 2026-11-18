@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from board_state.dependencies import get_board, get_event_bus, repo
+from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
     PlaceLightRequest,
@@ -17,11 +17,11 @@ from board_state.parsers.uvtt import (
     parse_uvtt_data,
     store_uvtt_image,
 )
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from runefoble_platform.storage import AssetStorageError
 
 logger = logging.getLogger("runefoble.board_state.routers.uvtt_import")
-router = APIRouter(tags=["uvtt"])
+router = APIRouter(tags=["uvtt"], dependencies=[Depends(get_current_user_id)])
 
 
 async def _publish_board_events(events: list) -> None:

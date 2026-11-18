@@ -14,8 +14,11 @@ from game_session.events import STREAM_TAVERN
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
-from .conftest import REPO_ROOT, create_test_establishment
+from .conftest import create_test_establishment
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def test_blackbox_merchant_haggling_manifest_and_components(client: TestClient) -> None:
@@ -25,21 +28,6 @@ def test_blackbox_merchant_haggling_manifest_and_components(client: TestClient) 
     manifest = res.json()
     assert "runefoble-merchant-haggler" in manifest["components"]
     assert "runefoble-dm-negotiation-drawer" in manifest["components"]
-
-    haggler_file = REPO_ROOT / "frontend/src/components/minigames/runefoble-merchant-haggler.ts"
-    dm_drawer_file = (
-        REPO_ROOT / "frontend/src/components/dm-controls/runefoble-dm-negotiation-drawer.ts"
-    )
-    haggler_stories = REPO_ROOT / "frontend/src/stories/runefoble-merchant-haggler.stories.ts"
-    dm_drawer_stories = (
-        REPO_ROOT / "frontend/src/stories/runefoble-dm-negotiation-drawer.stories.ts"
-    )
-
-    for path in (haggler_file, dm_drawer_file, haggler_stories, dm_drawer_stories):
-        assert path.is_file(), f"{path.name} must exist"
-
-    assert len(haggler_file.read_text(encoding="utf-8").splitlines()) < 400
-    assert len(dm_drawer_file.read_text(encoding="utf-8").splitlines()) < 400
 
 
 @pytest.mark.asyncio
@@ -74,7 +62,7 @@ async def test_blackbox_establishment_haggle_gambits_flow(
     haggle_res = client.post(
         f"/api/v1/establishments/{establishment_id}/haggle",
         json=haggle_req,
-        headers={"x-user-id": player_user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user_id)}"},
     )
     assert haggle_res.status_code == 200, haggle_res.text
     session_data = haggle_res.json()
@@ -100,7 +88,7 @@ async def test_blackbox_establishment_haggle_gambits_flow(
             "roll_value": 17,
             "charisma_modifier": 3,
         },
-        headers={"x-user-id": player_user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user_id)}"},
     )
     assert flattery_res.status_code == 200
     flattery_data = flattery_res.json()

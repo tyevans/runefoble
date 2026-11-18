@@ -1,5 +1,7 @@
 """Unit and integration tests for Runefoble AI Inference Worker and LangGraph workflows."""
 
+import os
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api
@@ -12,6 +14,12 @@ from inference_worker.graphs import (
 )
 from inference_worker.llm_client import MultiBackendLLMClient
 from the_watcher.main import app as watcher_app
+
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+WORKER_AUTH = {"Authorization": f"Bearer {os.environ['RUNEFOBLE_INFERENCE_SERVICE_TOKEN']}"}
+WATCHER_AUTH = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-1')}"}
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -31,7 +39,9 @@ def mock_api(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.mark.asyncio
 async def test_health_endpoint():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.get("/health")
         assert resp.status_code == 200
         data = resp.json()
@@ -94,7 +104,9 @@ async def test_intent_graph_movement_coordinates(mock_client):
 
 @pytest.mark.asyncio
 async def test_intent_api_endpoint(mock_api):
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         payload = {
             "campaign_id": "camp-test",
             "session_id": "sess-test",
@@ -145,7 +157,9 @@ async def test_narration_graph_and_api(mock_client, mock_api):
     assert len(final["suggested_dm_prompts"]) >= 1
 
     # Also test via API
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post(
             "/inference/v1/dm-narration",
             json={
@@ -210,7 +224,9 @@ async def test_stand_in_graph_with_penalties(mock_client):
 @pytest.mark.asyncio
 async def test_watcher_service_fallback():
     # Test that the_watcher still functions cleanly when no inference worker url is set
-    async with AsyncClient(transport=ASGITransport(app=watcher_app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH
+    ) as ac:
         resp = await ac.get("/healthz")
         assert resp.status_code == 200
         assert "inference_worker_url" in resp.json()

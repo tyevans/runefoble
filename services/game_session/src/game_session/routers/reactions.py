@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import repo
 from game_session.models import (
     DeclareReactionRequest,
@@ -18,8 +18,9 @@ from game_session.models import (
 )
 from game_session.reactions.interrupt_coordinator import ReactionInterruptCoordinator
 from game_session.reactions.ready_action_registry import ReadyActionRegistry
+from game_session.settlement.auth.tokens import get_caller_principal
 
-router = APIRouter(tags=["reactions"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["reactions"])
 
 _coordinator = ReactionInterruptCoordinator(repo)
 _registry = ReadyActionRegistry(repo)

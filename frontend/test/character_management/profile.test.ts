@@ -96,6 +96,7 @@ describe('Profile Settings & Campaign Deduplication (US-0070, US-0071, TASK-0288
 
     const appShellContent = readAppShellSource();
     assert.ok(appShellContent.includes('<runefoble-user-profile'));
-    assert.ok(appShellContent.includes('.user=${authService.getUser()}'));
+    // TASK-0642: the profile reads GET /api/v1/profile. The App Shell passes no local user copy.
+    assert.ok(!appShellContent.includes('.user=${authService.getUser()}'));
   });
 });

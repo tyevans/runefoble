@@ -5,6 +5,8 @@ Governed by ADR-0006 (Redis Streams event bus) and ADR-0015 (fail-fast start-up)
 
 from __future__ import annotations
 
+from typing import Any
+
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer, SupervisedStreamConsumers
@@ -21,6 +23,10 @@ SOUNDSCAPE_STREAMS: tuple[str, ...] = (
 )
 
 
+async def _handle_message(_message_id: str, event: Any) -> None:
+    await handle_incoming_domain_event(event)
+
+
 async def start_soundscape_consumers(bus: RedisStreamsEventBus) -> SupervisedStreamConsumers:
     """Create consumer groups and start one read loop per soundscape stream.
 
@@ -35,7 +41,7 @@ async def start_soundscape_consumers(bus: RedisStreamsEventBus) -> SupervisedStr
                 stream=stream,
                 group_name=GROUP_NAME,
                 consumer_name=WORKER_NAME,
-                handler=handle_incoming_domain_event,
+                handler=_handle_message,
             )
             for stream in SOUNDSCAPE_STREAMS
         ],

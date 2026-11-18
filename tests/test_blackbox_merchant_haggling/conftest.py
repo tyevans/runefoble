@@ -16,8 +16,12 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -38,7 +42,7 @@ def spicedb() -> Generator[MockSpiceDBClient]:
 
 @pytest.fixture
 def client(spicedb: MockSpiceDBClient, mock_bus: MockAsyncRedis) -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 def create_test_establishment(client: TestClient, campaign_id: str, dm_id: str) -> str:
@@ -51,7 +55,7 @@ def create_test_establishment(client: TestClient, campaign_id: str, dm_id: str) 
             "biome": "river_valley",
             "districts": ["artisan"],
         },
-        headers={"x-user-id": dm_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"},
     )
     settlement_id = s_res.json()["settlement_id"]
     est = client.post(
@@ -63,6 +67,6 @@ def create_test_establishment(client: TestClient, campaign_id: str, dm_id: str) 
             "tier": 2,
             "operating_cost": 20,
         },
-        headers={"x-user-id": dm_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"},
     )
     return est.json()["establishment_id"]

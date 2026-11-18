@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -14,13 +14,17 @@ from campaign_lore.dependencies import (
 )
 from campaign_lore.handouts import HandoutSynthesizer
 from campaign_lore.handouts_aggregate import DiegeticHandoutAggregate
+from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_interact_handout,
     check_user_can_view_campaign,
-    get_current_user_id,
 )
 
-router = APIRouter(prefix="/api/v1/lore/handouts", tags=["Diegetic Handouts"])
+router = APIRouter(
+    prefix="/api/v1/lore/handouts",
+    tags=["Diegetic Handouts"],
+    dependencies=[Depends(get_campaign_principal)],
+)
 
 
 class GenerateHandoutRequest(BaseModel):
@@ -40,23 +44,25 @@ class GenerateHandoutRequest(BaseModel):
 
 
 class BreakSealRequest(BaseModel):
-    """Payload to crack/break a wax seal on a handout."""
+    """Payload to crack/break a wax seal on a handout. The breaker is the verified caller."""
 
-    broken_by: str = "player"
+    model_config = ConfigDict(extra="forbid")
+
     break_force: float = 12.5
 
 
 class RevealInvisibleInkRequest(BaseModel):
-    """Payload to shine simulated UV torchlight over invisible ink runes."""
+    """Payload to shine simulated UV torchlight over invisible ink runes. The revealer is the verified caller."""
 
-    revealed_by: str = "player"
+    model_config = ConfigDict(extra="forbid")
+
     uv_intensity: float = 1.0
 
 
 @router.post("/generate", response_model=dict[str, Any], status_code=status.HTTP_200_OK)
 async def generate_handout(
     payload: GenerateHandoutRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
@@ -118,7 +124,7 @@ async def generate_handout(
 @router.get("/{handout_id}", response_model=dict[str, Any])
 async def get_handout(
     handout_id: UUID,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
@@ -161,7 +167,7 @@ async def get_handout(
 async def break_seal(
     handout_id: UUID,
     payload: BreakSealRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
@@ -194,7 +200,7 @@ async def break_seal(
     audio = "wax_fracture_heavy.wav" if payload.break_force > 15.0 else "wax_crack_crisp_01.wav"
 
     handout.break_seal(
-        broken_by=payload.broken_by or user_id or "player",
+        broken_by=user_id,
         break_force=payload.break_force,
         audio_cue=audio,
     )
@@ -203,7 +209,7 @@ async def break_seal(
     return {
         "handout_id": str(handout_id),
         "seal_state": "broken",
-        "broken_by": payload.broken_by or user_id or "player",
+        "broken_by": user_id,
         "break_force": payload.break_force,
         "haptic_audio_effect": audio,
         "revealed_content": handout.state.content,
@@ -214,7 +220,7 @@ async def break_seal(
 async def reveal_invisible_ink(
     handout_id: UUID,
     payload: RevealInvisibleInkRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)] = None,
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
     repo: Annotated[
         AggregateRepository[DiegeticHandoutAggregate], Depends(get_handout_repo)
@@ -245,7 +251,7 @@ async def reveal_invisible_ink(
         )
 
     handout.reveal_invisible_ink(
-        revealed_by=payload.revealed_by or user_id or "player",
+        revealed_by=user_id,
         uv_intensity=payload.uv_intensity,
     )
     await repo.save(handout)

@@ -17,7 +17,7 @@ To comply with Hard Invariant 6 (File length limit < 500 lines) and support clea
 
 - `runefoble_platform.analytics.privacy`: PII scrubbing (`sanitize_properties`), salted SHA-256 ID anonymization (`anonymize_profile_id`), and forbidden property keys (`FORBIDDEN_PROPERTY_KEYS`).
 - `runefoble_platform.analytics.client`: Asynchronous OpenPanel HTTP client (`OpenPanelClient`) with event buffering and mock mode.
-- `runefoble_platform.analytics`: Unified re-export facade providing 100% backward compatibility for top-level imports.
+- `runefoble_platform.analytics`: Defect (DoR 9): unified re-export facade for top-level imports. Removal: TASK-0485.
 
 ---
 

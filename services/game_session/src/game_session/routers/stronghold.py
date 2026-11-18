@@ -8,9 +8,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_spicedb_client, stronghold_repo
 from game_session.events import STREAM_STRONGHOLD
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.stronghold import (
     FACILITY_TIERS,
     StrongholdAggregate,
@@ -19,7 +20,7 @@ from game_session.stronghold import (
 from pydantic import BaseModel, Field
 from runefoble_platform.event_publish import publish_or_fail
 
-router = APIRouter(tags=["stronghold"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["stronghold"])
 
 
 class UpgradeStrongholdRequest(BaseModel):
@@ -62,14 +63,14 @@ async def get_stronghold(campaign_id: str) -> StrongholdState:
 
 @router.post("/api/v1/campaigns/{campaign_id}/stronghold", response_model=StrongholdState)
 async def initialize_stronghold(
+    caller_id: CallerId,
     campaign_id: str,
     req: CreateStrongholdRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> StrongholdState:
     """Initialize or rename party stronghold / campsite."""
     spicedb = get_spicedb_client()
-    if x_user_id and not await spicedb.check_permission(
-        "campaign", campaign_id, "run_session", "user", x_user_id
+    if not await spicedb.check_permission(
+        "campaign", campaign_id, "run_session", "user", caller_id
     ):
         raise HTTPException(status_code=403, detail="DM or owner permission required")
 
@@ -92,15 +93,13 @@ async def initialize_stronghold(
     "/api/v1/campaigns/{campaign_id}/stronghold/upgrade", response_model=UpgradeStrongholdResponse
 )
 async def upgrade_stronghold_facility(
+    caller_id: CallerId,
     campaign_id: str,
     req: UpgradeStrongholdRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> UpgradeStrongholdResponse:
     """Upgrade campsite/stronghold facility, consuming gold/materials and granting resting boons."""
     spicedb = get_spicedb_client()
-    if x_user_id and not await spicedb.check_permission(
-        "campaign", campaign_id, "play", "user", x_user_id
-    ):
+    if not await spicedb.check_permission("campaign", campaign_id, "play", "user", caller_id):
         raise HTTPException(
             status_code=403, detail="Player or DM permission required to upgrade campsite"
         )

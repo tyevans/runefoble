@@ -14,10 +14,17 @@ import { loadAnalyticsData, loadCodexData } from './campaign-hub-data-loader.ts'
 
 const CAMPAIGN_HUB_VIEWS: string[] = ['campaign-detail', 'campaign-characters', 'campaign-codex', 'campaign-analytics'];
 
-/** Loads the data for the view that the host reports as active. */
+/** Loads the data for the view that the host reports as active, and the campaign switcher. */
 export async function loadRouteData(host: RunefobleApp, route: MatchedRoute): Promise<void> {
   host.loadError = null;
   const view = host.getActiveView();
+  await Promise.all([
+    view === 'login' || view === 'campaigns' ? undefined : loadCampaignSwitcher(host),
+    loadViewData(host, route, view),
+  ]);
+}
+
+async function loadViewData(host: RunefobleApp, route: MatchedRoute, view: string): Promise<void> {
   if (view === 'campaigns') await loadCampaigns(host);
   else if (CAMPAIGN_HUB_VIEWS.includes(view)) await loadCampaignHub(host, route);
   else if (view === 'characters') await loadRoster(host);
@@ -32,8 +39,15 @@ async function loadCampaigns(host: RunefobleApp): Promise<void> {
   host.campaigns = res.data;
 }
 
+/** Fills the header campaign switcher from the API. A failed read is reported as a toast. */
+async function loadCampaignSwitcher(host: RunefobleApp): Promise<void> {
+  const res = await appDataService.fetchCampaigns();
+  if (res.ok) host.campaigns = res.data;
+  else host.showToast(`Campaign list not loaded. ${res.message}`);
+}
+
 async function loadCampaignHub(host: RunefobleApp, route: MatchedRoute): Promise<void> {
-  const c = route.params.campaignId || host.campaignId;
+  const c = route.params.campaignId ?? '';
   host.inviteUrl = '';
   host.inviteToken = '';
   const [camp, members, sessions, chars, rosterCamps] = await Promise.all([
@@ -66,8 +80,9 @@ async function loadRoster(host: RunefobleApp): Promise<void> {
 }
 
 async function loadCharacterSheet(host: RunefobleApp, route: MatchedRoute): Promise<void> {
-  const charId = route.params.characterId || host.selectedCharacterId;
+  const charId = route.params.characterId ?? '';
   host.selectedCharacterId = charId;
+  host.selectedCharacter = null;
   const res = await appDataService.fetchCharacter(charId);
   if (!res.ok) return failLoad(host, res);
   host.selectedCharacter = res.data;

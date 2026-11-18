@@ -29,6 +29,10 @@ from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import get_event_store, set_event_store
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture
 def issuer() -> Iterator[SigningTestIssuer]:
@@ -70,7 +74,9 @@ def repos() -> Iterator[CampaignRepositories]:
 
 @pytest.fixture
 def client(spicedb: MockSpiceDBClient, repos: CampaignRepositories) -> TestClient:
-    return TestClient(session_app)
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 def auth(issuer: SigningTestIssuer, sub: str) -> dict[str, str]:
@@ -261,7 +267,11 @@ def test_failed_membership_save_writes_no_spicedb_tuple(
     repos: CampaignRepositories,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    client = TestClient(session_app, raise_server_exceptions=False)
+    client = TestClient(
+        session_app,
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+        raise_server_exceptions=False,
+    )
     campaign_id = create_campaign(client, issuer)
     token = create_invite(client, issuer, campaign_id)
 
@@ -395,14 +405,18 @@ async def test_campaign_membership_and_invites_survive_restart_on_postgres(
         return repos
 
     before = bind_process()
-    with TestClient(session_app) as first:
+    with TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    ) as first:
         campaign_id = create_campaign(first, issuer, owner="dm-pg-evelyn")
         token = create_invite(first, issuer, campaign_id, owner="dm-pg-evelyn")
         assert join(first, issuer, token, "player-pg-marcus").status_code == 200
     await before.campaigns.event_store.close()
 
     after = bind_process()
-    with TestClient(session_app) as second:
+    with TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    ) as second:
         got = second.get(f"/api/v1/campaigns/{campaign_id}", headers=auth(issuer, "dm-pg-evelyn"))
         assert got.status_code == 200
         members = second.get(

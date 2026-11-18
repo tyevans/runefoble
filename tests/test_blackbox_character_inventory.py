@@ -8,10 +8,17 @@ import pytest
 from character_sheet.main import app
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
+
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, headers=auth_headers("character-owner"))
 
 
 def test_blackbox_inventory_stacking_and_partial_removal(client):

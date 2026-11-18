@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Depends
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan_ledger import CaravanLedgerAggregate
 from game_session.dependencies import (
@@ -21,6 +21,7 @@ from game_session.routers.caravan_contracts.auth import (
     _to_uuid,
     _val_err,
 )
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.west_marches_models import (
     AcceptCaravanContractRequest,
     DispatchContractCaravanRequest,
@@ -28,7 +29,11 @@ from game_session.west_marches_models import (
     ReportAmbushRequest,
 )
 
-router = APIRouter(prefix="/api/v1/shared-worlds", tags=["caravan-contracts"])
+router = APIRouter(
+    dependencies=[Depends(get_caller_principal)],
+    prefix="/api/v1/shared-worlds",
+    tags=["caravan-contracts"],
+)
 
 
 async def _init(
@@ -65,22 +70,22 @@ async def _sync(
 
 @router.post("/{shared_world_id}/caravans/contracts/{contract_id}/accept")
 async def accept_caravan_contract(
+    caller_id: CallerId,
     shared_world_id: str,
     contract_id: str,
     req: AcceptCaravanContractRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Claim and accept an open contract on behalf of an adventuring party."""
-    wid, cid, contract = await _init(shared_world_id, contract_id, "claim", x_user_id)
+    wid, cid, contract = await _init(shared_world_id, contract_id, "claim", caller_id)
     spicedb = get_spicedb_client()
     await _check_high_tier_auth(
-        spicedb, str(wid), req.contractor_campaign_id, contract.state.route_risk_level, x_user_id
+        spicedb, str(wid), req.contractor_campaign_id, contract.state.route_risk_level, caller_id
     )
     _val_err(
         contract.accept_contract,
         contractor_campaign_id=req.contractor_campaign_id,
         contractor_party_name=req.contractor_party_name,
-        accepted_by_user_id=x_user_id,
+        accepted_by_user_id=caller_id,
     )
     updates = {
         "status": "accepted",
@@ -88,19 +93,19 @@ async def accept_caravan_contract(
         "contractor_party_name": req.contractor_party_name,
     }
     await _sync(contract, wid, cid, updates)
-    await _set_contractor(spicedb, cid, x_user_id)
+    await _set_contractor(spicedb, cid, caller_id)
     return {"shared_world_id": str(wid), "contract": contract.state.model_dump()}
 
 
 @router.post("/{shared_world_id}/caravans/contracts/{contract_id}/dispatch")
 async def dispatch_contract_caravan(
+    caller_id: CallerId,
     shared_world_id: str,
     contract_id: str,
     req: DispatchContractCaravanRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Dispatch caravan into frontier transit stages."""
-    wid, cid, contract = await _init(shared_world_id, contract_id, "claim", x_user_id)
+    wid, cid, contract = await _init(shared_world_id, contract_id, "claim", caller_id)
     cid_out = _val_err(
         contract.dispatch_caravan,
         caravan_id=req.caravan_id,
@@ -113,13 +118,13 @@ async def dispatch_contract_caravan(
 
 @router.post("/{shared_world_id}/caravans/contracts/{contract_id}/ambush")
 async def report_contract_ambush(
+    caller_id: CallerId,
     shared_world_id: str,
     contract_id: str,
     req: ReportAmbushRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Report ambush outcome during transit, updating damage and hazard history."""
-    wid, cid, contract = await _init(shared_world_id, contract_id, "claim", x_user_id)
+    wid, cid, contract = await _init(shared_world_id, contract_id, "claim", caller_id)
     _val_err(
         contract.report_ambush_outcome,
         stage_index=req.stage_index,
@@ -138,13 +143,13 @@ async def report_contract_ambush(
 
 @router.post("/{shared_world_id}/caravans/contracts/{contract_id}/fulfill")
 async def fulfill_caravan_contract(
+    caller_id: CallerId,
     shared_world_id: str,
     contract_id: str,
     req: FulfillContractRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Deliver surviving cargo to outpost settlement, unlocking stock and paying rewards."""
-    wid, cid, contract = await _init(shared_world_id, contract_id, "fulfill", x_user_id)
+    wid, cid, contract = await _init(shared_world_id, contract_id, "fulfill", caller_id)
     payout = _val_err(contract.fulfill_contract)
 
     repo, ledger = await _ledger(wid)

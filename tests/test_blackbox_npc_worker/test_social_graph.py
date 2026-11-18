@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_event_emitted
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -24,7 +27,7 @@ async def test_blackbox_social_graph_edges_and_redstring_serialization(
     campaign_id, dm_id = str(uuid4()), f"dm_{uuid4().hex[:8]}"
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id)
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", dm_id)
-    h = {"x-user-id": dm_id}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"}
 
     s_res = client.post(
         f"/api/v1/campaigns/{campaign_id}/settlements",
@@ -67,7 +70,7 @@ async def test_blackbox_rival_friction_and_friendship_synergy(
     campaign_id, dm_id = str(uuid4()), f"dm_{uuid4().hex[:8]}"
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id)
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", dm_id)
-    h = {"x-user-id": dm_id}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"}
 
     s_res = client.post(
         f"/api/v1/campaigns/{campaign_id}/settlements",

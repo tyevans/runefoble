@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
@@ -14,23 +14,24 @@ from campaign_lore.dependencies import (
     get_retrieval_engine,
     get_spicedb_client,
 )
+from campaign_lore.identity import CallerId, get_campaign_principal
 from campaign_lore.permissions import (
     check_user_can_read_secrets,
-    get_current_user_id,
 )
 from campaign_lore.retrieval import LoreRetrievalEngine
 
-router = APIRouter(tags=["Lore Documents"])
+router = APIRouter(tags=["Lore Documents"], dependencies=[Depends(get_campaign_principal)])
 
 
 class IngestDocumentRequest(BaseModel):
-    """Payload to ingest a worldbuilding document."""
+    """Payload to ingest a worldbuilding document. The author is the verified caller."""
+
+    model_config = ConfigDict(extra="forbid")
 
     campaign_id: UUID = Field(description="Campaign UUID")
     title: str = Field(description="Title of lore document")
     content: str = Field(description="Markdown or text lore content")
     is_secret: bool = Field(default=False, description="Whether lore is restricted to DMs/GMs")
-    author_id: str | None = Field(default=None, description="Author identifier")
     tags: list[str] = Field(default_factory=list, description="Categorization tags")
     aliases: dict[str, str] | None = Field(
         default=None, description="Optional map of alias -> canonical entity name"
@@ -54,7 +55,7 @@ class IngestDocumentResponse(BaseModel):
 @router.post("/api/v1/lore/documents", response_model=IngestDocumentResponse)
 async def ingest_document(
     req: IngestDocumentRequest,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     repo: Annotated[AggregateRepository[LoreDocumentAggregate], Depends(get_repo)],
     retrieval_engine: Annotated[LoreRetrievalEngine, Depends(get_retrieval_engine)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
@@ -68,7 +69,7 @@ async def ingest_document(
         title=req.title,
         content=req.content,
         is_secret=req.is_secret,
-        author_id=req.author_id or user_id,
+        author_id=user_id,
         metadata={"tags": req.tags, **req.metadata},
     )
     await repo.save(aggregate)
@@ -140,7 +141,7 @@ async def ingest_document(
 @router.get("/api/v1/lore/documents/{document_id}", response_model=LoreDocumentState)
 async def get_document(
     document_id: UUID,
-    user_id: Annotated[str | None, Depends(get_current_user_id)],
+    user_id: CallerId,
     repo: Annotated[AggregateRepository[LoreDocumentAggregate], Depends(get_repo)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> LoreDocumentState:

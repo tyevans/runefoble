@@ -18,7 +18,14 @@ from character_sheet.dependencies import (
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 from .conftest import REPO_ROOT
+
+
+def auth_headers(sub: str) -> dict[str, str]:
+    """Return Bearer headers for a token that the service verifier accepts."""
+    return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
 @pytest.mark.asyncio
@@ -48,7 +55,7 @@ async def test_blackbox_spicedb_zanzibar_authorization(char_client: TestClient):
     res_stranger = char_client.post(
         f"/api/v1/characters/{char_id}/portrait/active",
         json={"image_url": "/malicious/avatar.png"},
-        headers={"X-User-Id": stranger_id},
+        headers=auth_headers(stranger_id),
     )
     assert res_stranger.status_code == 403
     assert (
@@ -60,7 +67,7 @@ async def test_blackbox_spicedb_zanzibar_authorization(char_client: TestClient):
     res_owner = char_client.post(
         f"/api/v1/characters/{char_id}/portrait/active",
         json={"image_url": "/sanctioned/avatar.png"},
-        headers={"X-User-Id": owner_id},
+        headers=auth_headers(owner_id),
     )
     assert res_owner.status_code == 200
     assert "/sanctioned/avatar.png" in res_owner.json()["base_portrait_url"]

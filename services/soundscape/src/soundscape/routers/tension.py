@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
     get_or_create_aggregate_id,
     get_or_create_mixer,
+    get_principal,
     get_soundscape_repo,
     publish_soundscape_event,
 )
 from soundscape.models import TensionCalculationRequest, TensionStatusResponse
 from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
 
-router = APIRouter(prefix="/api/v1/soundscape", tags=["Tension"])
+router = APIRouter(
+    prefix="/api/v1/soundscape", tags=["Tension"], dependencies=[Depends(get_principal)]
+)
 
 
 @router.get(

@@ -147,12 +147,12 @@ The balancing engine:
 
 ## 4. Registering Campaign Homebrew Rules
 
-To register custom monsters or rules restricted to a campaign:
+To register custom monsters or rules restricted to a campaign. Set `DM_TOKEN` to a Zitadel access token for the DM. rules_compendium takes the author from that token. It ignores `x-user-id` and any `author_id` in the body. A request with no valid token returns `401`.
 
 ```bash
 curl -X POST http://localhost:8007/api/v1/compendium/homebrew \
   -H "Content-Type: application/json" \
-  -H "x-user-id: dm-evelyn-1" \
+  -H "Authorization: Bearer $DM_TOKEN" \
   -d '{
     "campaign_id": "8a329ef2-5c91-4cf1-83d8-21d4bb67f101",
     "rule_type": "monster",
@@ -182,11 +182,11 @@ LLM agents and The Watcher can call compendium tools via FastMCP:
 from gateway_mcp.server import mcp
 
 # Look up monster stat block
-monster_tool = mcp.get_tool("query_monster_stat_block")
+monster_tool = mcp._tool_manager.get_tool("query_monster_stat_block")
 res = await monster_tool.run({"monster_name": "Bugbear"})
 
 # Calculate encounter balance
-encounter_tool = mcp.get_tool("calculate_encounter_balance")
+encounter_tool = mcp._tool_manager.get_tool("calculate_encounter_balance")
 enc = await encounter_tool.run({"party_levels": [4, 4, 4], "target_difficulty": "Hard"})
 ```
 

@@ -5,12 +5,17 @@ Governed by ADR-0003, ADR-0006, ADR-0007, ADR-0011, and Hard Invariant 7.
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_SESSION, STREAM_STRONGHOLD
 
 from .conftest import REPO_ROOT
+
+
+def _owned_campaign(client: TestClient) -> str:
+    """Create a campaign through the public route. The caller becomes its owner."""
+    created = client.post("/api/v1/campaigns", json={"title": "Campfire Campaign"})
+    assert created.status_code == 201, created.text
+    return created.json()["id"]
 
 
 def test_campfire_crafting_microfrontend_manifest_and_files(session_client: TestClient):
@@ -40,7 +45,7 @@ def test_campfire_crafting_microfrontend_manifest_and_files(session_client: Test
 
 def test_blackbox_stronghold_campsite_progression(session_client: TestClient, mock_bus):
     """Test persistent campsite facility upgrades and team rest boons."""
-    camp_id = str(uuid4())
+    camp_id = _owned_campaign(session_client)
 
     init_res = session_client.get(f"/api/v1/campaigns/{camp_id}/stronghold")
     assert init_res.status_code == 200
@@ -75,7 +80,7 @@ def test_blackbox_stronghold_campsite_progression(session_client: TestClient, mo
 
 def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient, mock_bus):
     """Test campfire rest sequence with collaborative storytelling prompts and resting buffs."""
-    camp_id = uuid4()
+    camp_id = _owned_campaign(session_client)
 
     create_res = session_client.post(
         "/api/v1/sessions/create",
