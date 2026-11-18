@@ -83,15 +83,15 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `the-watcher` | GET | `/the-watcher/regions/{region_id}/unrest` | Queries regional unrest score, security alert posture, and economic friction modifier (alias: `/api/v1/regions/{region_id}/unrest`, Zanzibar enforced) |
 | `game-session` | POST | `/api/v1/sessions/create` | Initializes a new event-sourced game session and links it to `campaign_id` in SpiceDB (`session` and `game_session` objects), so campaign members can observe and control it |
 | `game-session` | GET | `/api/v1/sessions/{session_id}` | Loads session state reconstituted from the event stream |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and publishes `SessionStarted` event |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/join` | Enters player participant and bound character into session lobby |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/leave` | Records player absence, toggling character for AI stand-in takeover |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/start` | Transitions session from lobby to active and publishes `SessionStarted` event. Requires `session.control` |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/join` | Seats the verified caller and their character in the session lobby. Requires `session.participate`. The body has no player id |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/leave` | Records the verified caller's absence, toggling character for AI stand-in takeover. Requires `session.participate`. The body has no player id |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/combat/start` | Starts combat encounter with initiative tracking and turn order |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/combat/initiative` | Submits combatant initiative rolls |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/combat/next-turn` | Advances initiative turn to next active combatant |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/turns/auto-pilot` | Executes automated stand-in turn for absent player, records action, dispatches events, and advances turn (alias: `/api/v1/sessions/{session_id}/autopilot`) |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/lobby/readiness` | Records a player's lobby readiness (`lobby` status only). Saved as `ReadinessToggled`; the session read model returns `lobby_readiness` |
-| `game-session` | POST | `/api/v1/sessions/{session_id}/lobby/character` | Records the character a player brings to the lobby (`lobby` status only). Saved as `CharacterSelectedForLobby` |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/lobby/readiness` | Records the verified caller's lobby readiness (`lobby` status only). Requires `session.participate`. Saved as `ReadinessToggled`; the session read model returns `lobby_readiness` |
+| `game-session` | POST | `/api/v1/sessions/{session_id}/lobby/character` | Records the character the verified caller brings to the lobby (`lobby` status only). Requires `session.participate`. Saved as `CharacterSelectedForLobby` |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/roll` | Evaluates a dice roll and records it as `DiceRolled`. Returns 404 for an unknown session |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/hot-swap` | Hands off active turn and token control from AI stand-in to authenticating player mid-session without disrupting combat round |
 | `game-session` | POST | `/api/v1/sessions/{session_id}/next-turn` | Advances the session turn counter and saves `TurnAdvanced`. Requires `active` status |

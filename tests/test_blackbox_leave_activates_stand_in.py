@@ -76,15 +76,19 @@ def _read_stand_in_flag(character_url: str, char_id: str) -> bool:
         return sheet.json()["is_stand_in_active"]
 
 
-async def _owned_campaign(client) -> str:
-    res = await client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
-    assert res.status_code == 201, res.text
-    return res.json()["id"]
-
-
 async def _lobby_session(client, char_id: str, *, select_character: bool = True) -> str:
-    """Create a campaign and session, join the player, and optionally pick a lobby character."""
-    campaign_id = await _owned_campaign(client)
+    """The DM creates a session. The player redeems an invite, joins, and picks a character."""
+    campaign = await client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert campaign.status_code == 201, campaign.text
+    campaign_id = campaign.json()["id"]
+    invite = await client.post(f"/api/v1/campaigns/{campaign_id}/invites", json={"role": "player"})
+    assert invite.status_code == 201, invite.text
+    redeemed = await client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": invite.json()["token"]},
+        headers=_bearer(PLAYER_ID),
+    )
+    assert redeemed.status_code == 200, redeemed.text
     create_res = await client.post(
         "/api/v1/sessions/create",
         json={"campaign_id": campaign_id, "title": "Tomb", "dm_id": "the_watcher"},
@@ -93,23 +97,18 @@ async def _lobby_session(client, char_id: str, *, select_character: bool = True)
     session_id = create_res.json()["session_id"]
     join = await client.post(
         f"/api/v1/sessions/{session_id}/join",
-        json={
-            "player_id": PLAYER_ID,
-            "character_id": char_id,
-            "character_name": "Kyra",
-            "character_class": "Cleric",
-        },
+        json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},
         headers=_bearer(PLAYER_ID),
     )
     assert join.status_code == 200, join.text
     if select_character:
         pick = await client.post(
             f"/api/v1/sessions/{session_id}/lobby/character",
-            json={"player_id": PLAYER_ID, "character_id": char_id},
+            json={"character_id": char_id},
             headers=_bearer(PLAYER_ID),
         )
         assert pick.status_code == 200, pick.text
-    started = await client.post(f"/api/v1/sessions/{session_id}/start", headers=_bearer(PLAYER_ID))
+    started = await client.post(f"/api/v1/sessions/{session_id}/start")
     assert started.status_code == 200, started.text
     return session_id
 
@@ -132,7 +131,7 @@ async def test_leave_activates_stand_in_on_character_sheet(session_client, chara
         session_id = await _lobby_session(client, char_id)
         leave = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
-            json={"player_id": PLAYER_ID, "reason": "Late arrival"},
+            json={"reason": "Late arrival"},
             headers=_bearer(PLAYER_ID),
         )
         assert leave.status_code == 200, leave.text
@@ -155,7 +154,7 @@ async def test_leave_without_lobby_character_records_absence_only(
         session_id = await _lobby_session(client, char_id, select_character=False)
         leave = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
-            json={"player_id": PLAYER_ID, "reason": "Late arrival"},
+            json={"reason": "Late arrival"},
             headers=_bearer(PLAYER_ID),
         )
         assert leave.status_code == 200, leave.text
@@ -177,7 +176,7 @@ async def test_leave_returns_503_and_keeps_presence_when_character_sheet_unreach
 
         leave = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
-            json={"player_id": PLAYER_ID, "reason": "Late arrival"},
+            json={"reason": "Late arrival"},
             headers=_bearer(PLAYER_ID),
         )
         assert leave.status_code == 503, leave.text
@@ -199,7 +198,7 @@ async def test_rejoin_releases_stand_in_on_character_sheet(session_client, chara
         session_id = await _lobby_session(client, char_id)
         leave = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
-            json={"player_id": PLAYER_ID, "reason": "Late arrival"},
+            json={"reason": "Late arrival"},
             headers=_bearer(PLAYER_ID),
         )
         assert leave.status_code == 200, leave.text
@@ -207,12 +206,7 @@ async def test_rejoin_releases_stand_in_on_character_sheet(session_client, chara
 
         rejoin = await client.post(
             f"/api/v1/sessions/{session_id}/join",
-            json={
-                "player_id": PLAYER_ID,
-                "character_id": char_id,
-                "character_name": "Kyra",
-                "character_class": "Cleric",
-            },
+            json={"character_id": char_id, "character_name": "Kyra", "character_class": "Cleric"},
             headers=_bearer(PLAYER_ID),
         )
         assert rejoin.status_code == 200, rejoin.text

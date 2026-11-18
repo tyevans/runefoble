@@ -131,7 +131,6 @@ async def test_game_session_auto_pilot_turn(
         join_res = await client.post(
             f"/api/v1/sessions/{session_id}/join",
             json={
-                "player_id": "sarah-cleric",
                 "character_id": char_id,
                 "character_name": "Kyra",
                 "character_class": "Cleric",
@@ -156,10 +155,10 @@ async def test_game_session_auto_pilot_turn(
         # 5. Mark player absent / leave session
         leave_res = await client.post(
             f"/api/v1/sessions/{session_id}/leave",
-            json={"player_id": "sarah-cleric", "reason": "Sick with flu"},
+            json={"reason": "Sick with flu"},
         )
         assert leave_res.status_code == 200
-        assert leave_res.json()["participants"]["sarah-cleric"]["is_stand_in_active"] is True
+        assert leave_res.json()["participants"]["test-user"]["is_stand_in_active"] is True
 
         # 6. Now execute auto-pilot turn. The Watcher runs as a real HTTP test double.
         watcher_app = watcher_stand_in_app(

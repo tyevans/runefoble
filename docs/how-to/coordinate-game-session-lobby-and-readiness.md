@@ -81,7 +81,7 @@ interface ToggleReadinessEventDetail {
 }
 ```
 
-The session service stores readiness in the session aggregate. Send it with `POST /api/v1/sessions/{session_id}/lobby/readiness` and body `{"player_id": "...", "is_ready": true}`. The response is the session state, with the stored readiness in `lobby_readiness`. The route accepts changes only while the session status is `lobby`, and only for a joined player. The lobby client does not call this route yet. It still sends readiness only as a WebSocket frame (follow-up for the gateway theme).
+The session service stores readiness in the session aggregate. Send it with `POST /api/v1/sessions/{session_id}/lobby/readiness` and body `{"is_ready": true}`. The player is the verified caller. The body has no player id. The caller needs `session.participate`; a caller without it gets `403`. The response is the session state, with the stored readiness in `lobby_readiness`. The route accepts changes only while the session status is `lobby`, and only for a joined player. The lobby client does not call this route yet. It still sends readiness only as a WebSocket frame (follow-up for the gateway theme).
 
 ### `toggle-stand-in`
 Dispatched when a player or GM toggles absentee AI stand-in takeover:
@@ -106,7 +106,7 @@ interface LaunchSessionEventDetail {
 
 ## 4. Backend Session Launch API Flow
 
-When the GM clicks the launch button, the host application executes `POST /api/v1/sessions/:id/start`:
+When the GM clicks the launch button, the host application executes `POST /api/v1/sessions/:id/start`. The caller needs `session.control` (`campaign#run_session`). A player gets `403`.
 
 ```bash
 curl -X POST "http://localhost:8004/api/v1/sessions/sess-star-eater-15/start" \

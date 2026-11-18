@@ -27,7 +27,6 @@ def start_session_with_player(base_url: str, dm_sub: str = "encounter-dm") -> st
         joined = http.post(
             f"/api/v1/sessions/{session_id}/join",
             json={
-                "player_id": "player-1",
                 "character_id": str(uuid4()),
                 "character_name": "Valeros",
                 "character_class": "Fighter",

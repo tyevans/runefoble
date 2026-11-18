@@ -56,7 +56,6 @@ async def _start_session_with_absent_player(client: AsyncClient) -> str:
     join_res = await client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={
-            "player_id": "sarah-cleric",
             "character_id": str(uuid4()),
             "character_name": "Kyra",
             "character_class": "Cleric",
@@ -66,7 +65,7 @@ async def _start_session_with_absent_player(client: AsyncClient) -> str:
     assert (await client.post(f"/api/v1/sessions/{session_id}/start")).status_code == 200
     leave_res = await client.post(
         f"/api/v1/sessions/{session_id}/leave",
-        json={"player_id": "sarah-cleric", "reason": "Sick with flu"},
+        json={"reason": "Sick with flu"},
     )
     assert leave_res.status_code == 200
     return session_id

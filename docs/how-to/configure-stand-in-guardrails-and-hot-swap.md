@@ -111,7 +111,7 @@ A player who leaves an active session hands the character to the AI stand-in. Ch
 
 ### Leave Path
 
-1. The player calls `POST /api/v1/sessions/{session_id}/leave` with a bearer token and `{"player_id": "...", "reason": "..."}`.
+1. The player calls `POST /api/v1/sessions/{session_id}/leave` with a bearer token and `{"reason": "..."}`. The absent player is the verified caller. The caller needs `session.participate`; otherwise the route returns `403`. The body has no player id. The join, lobby readiness and lobby character routes work the same way.
 2. `game_session` records the absence in memory. It reads the lobby character for that player.
 3. If there is a lobby character, `game_session` calls `POST /api/v1/characters/{character_id}/stand-in` with `"active": true` on `character-sheet`. The call uses `RUNEFOBLE_CHARACTER_SHEET_URL` and forwards the player's bearer.
 4. `character-sheet` sets `is_stand_in_active`. Only then does `game_session` save the leave.

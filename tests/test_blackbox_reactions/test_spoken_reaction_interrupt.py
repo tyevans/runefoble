@@ -24,7 +24,6 @@ def _setup_active_combat(client: TestClient) -> tuple[str, str, str]:
     client.post(
         f"/api/v1/sessions/{session_id}/join",
         json={
-            "player_id": "player_marcus",
             "character_id": marcus_id,
             "character_name": "Marcus",
             "character_class": "Wizard",

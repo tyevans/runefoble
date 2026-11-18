@@ -32,6 +32,7 @@ from game_session.models import (
     RollDiceResponse,
     SelectLobbyCharacterRequest,
 )
+from game_session.routers.session_auth import SessionController, SessionParticipant
 from game_session.settlement.auth.tokens import (
     CallerId,
     get_caller_or_service,
@@ -96,13 +97,9 @@ async def get_session(session_id: UUID) -> GameSessionState:
         raise HTTPException(status_code=404, detail=f"Session not found: {e}") from e
 
 
-@router.post(
-    "/api/v1/sessions/{session_id}/start",
-    dependencies=[Depends(get_caller_principal)],
-    response_model=GameSessionState,
-)
-async def start_session(session_id: UUID) -> GameSessionState:
-    """Transition session from lobby to active."""
+@router.post("/api/v1/sessions/{session_id}/start", response_model=GameSessionState)
+async def start_session(session_id: UUID, _controller: SessionController) -> GameSessionState:
+    """Transition session from lobby to active. The caller needs `session.control`."""
     session = await _load_session(session_id)
     try:
         session.start()
@@ -112,22 +109,19 @@ async def start_session(session_id: UUID) -> GameSessionState:
     return session.state
 
 
-@router.post(
-    "/api/v1/sessions/{session_id}/join",
-    dependencies=[Depends(get_caller_principal)],
-    response_model=GameSessionState,
-)
+@router.post("/api/v1/sessions/{session_id}/join", response_model=GameSessionState)
 async def join_session(
     session_id: UUID,
     req: JoinSessionRequest,
+    player_id: SessionParticipant,
     authorization: Annotated[str, Header(alias="Authorization")],
 ) -> GameSessionState:
-    """Record player entering session. A returning absent player releases the stand-in."""
+    """Seat the verified caller. A returning absent player releases the stand-in."""
     session = await _load_session(session_id)
-    stand_in_character_id = _active_stand_in_character(session.state, req.player_id)
+    stand_in_character_id = _active_stand_in_character(session.state, player_id)
     try:
         session.join_player(
-            player_id=req.player_id,
+            player_id=player_id,
             character_id=req.character_id,
             character_name=req.character_name,
             character_class=req.character_class,
@@ -142,27 +136,24 @@ async def join_session(
     return session.state
 
 
-@router.post(
-    "/api/v1/sessions/{session_id}/leave",
-    dependencies=[Depends(get_caller_principal)],
-    response_model=LeaveSessionResponse,
-)
+@router.post("/api/v1/sessions/{session_id}/leave", response_model=LeaveSessionResponse)
 async def leave_session(
     session_id: UUID,
     req: LeaveSessionRequest,
+    player_id: SessionParticipant,
     authorization: Annotated[str, Header(alias="Authorization")],
 ) -> LeaveSessionResponse:
-    """Record player absence. The lobby character goes to the AI stand-in (TASK-0690).
+    """Record the verified caller's absence. The lobby character goes to the AI stand-in (TASK-0690).
 
     character_sheet owns the stand-in flag. The leave is saved only after it accepts the
     activation. A player with no lobby character records the absence only.
     """
     session = await _load_session(session_id)
     try:
-        session.leave_player(player_id=req.player_id, reason=req.reason)
+        session.leave_player(player_id=player_id, reason=req.reason)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    character_id = session.state.lobby_characters.get(req.player_id)
+    character_id = session.state.lobby_characters.get(player_id)
     if character_id is not None:
         await _call_character_sheet(
             activate_stand_in(character_id, session_id, authorization=authorization)
@@ -187,34 +178,28 @@ async def _call_character_sheet(call: Awaitable[None]) -> None:
         raise HTTPException(status_code=503, detail=str(e)) from e
 
 
-@router.post(
-    "/api/v1/sessions/{session_id}/lobby/readiness",
-    dependencies=[Depends(get_caller_principal)],
-    response_model=GameSessionState,
-)
-async def toggle_lobby_readiness(session_id: UUID, req: ReadinessRequest) -> GameSessionState:
-    """Record a player's readiness in the session lobby."""
+@router.post("/api/v1/sessions/{session_id}/lobby/readiness", response_model=GameSessionState)
+async def toggle_lobby_readiness(
+    session_id: UUID, req: ReadinessRequest, player_id: SessionParticipant
+) -> GameSessionState:
+    """Record the verified caller's readiness in the session lobby."""
     session = await _load_session(session_id)
     try:
-        session.toggle_readiness(player_id=req.player_id, is_ready=req.is_ready)
+        session.toggle_readiness(player_id=player_id, is_ready=req.is_ready)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     await repo.save(session)
     return session.state
 
 
-@router.post(
-    "/api/v1/sessions/{session_id}/lobby/character",
-    dependencies=[Depends(get_caller_principal)],
-    response_model=GameSessionState,
-)
+@router.post("/api/v1/sessions/{session_id}/lobby/character", response_model=GameSessionState)
 async def select_lobby_character(
-    session_id: UUID, req: SelectLobbyCharacterRequest
+    session_id: UUID, req: SelectLobbyCharacterRequest, player_id: SessionParticipant
 ) -> GameSessionState:
-    """Record which character a player brings to the session lobby."""
+    """Record which character the verified caller brings to the session lobby."""
     session = await _load_session(session_id)
     try:
-        session.select_lobby_character(player_id=req.player_id, character_id=req.character_id)
+        session.select_lobby_character(player_id=player_id, character_id=req.character_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     await repo.save(session)

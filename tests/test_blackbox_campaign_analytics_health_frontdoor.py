@@ -81,7 +81,6 @@ def test_health_change_in_combat_reaches_campaign_mvp_through_public_routes(
         joined = game.post(
             f"/api/v1/sessions/{session_id}/join",
             json={
-                "player_id": "player-1",
                 "character_id": char_id,
                 "character_name": "Valeros",
                 "character_class": "Fighter",
