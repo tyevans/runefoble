@@ -5,6 +5,8 @@ This catalog inventories all speculative and visionary capabilities for Runefobl
 - **P1 (Post-MVP Beta)**: High-value enhancements extending immersion, audio fidelity, and campaign persistence.
 - **P2 (Future Horizon)**: Long-term moonshots including 3D spatial engines, generative video, and hardware accessories.
 
+This page is a roadmap. Its release tiers are targets, not the state of the code. For the code as it is, read the reference pages and the source.
+
 ---
 
 ## 1. Tactical Board & Spatial Simulation Domain
@@ -15,7 +17,7 @@ This catalog inventories all speculative and visionary capabilities for Runefobl
 | `FEAT-BRD-02` | **Grid & Token Positioning** | Discrete grid cells (square/hex) supporting token placement, coordinates, collision detection, and drag-and-drop fallback. | **P0 (MVP)** | `board_state`, `frontend` |
 | `FEAT-BRD-03` | **Dynamic Fog-of-War** | Tokens clear fog-of-war based on individual vision radii and lighting conditions; shared party visibility. | **P0 (MVP)** | `board_state`, `frontend` |
 | `FEAT-BRD-04` | **Line-of-Sight & Cover Calculation** | Automatic raycasting to calculate half/three-quarters cover from terrain and wall obstructions. | **P1 (Beta)** | `board_state` |
-| `FEAT-BRD-05` | **Procedural Battlemap Generation** | Generative image models synthesize tactical maps on demand from DM narrative descriptions, saved to Silo S3. | **P1 (Beta)** | `the_watcher`, `silo` |
+| `FEAT-BRD-05` | **Procedural Battlemap Generation** | A deterministic map layout generator (no diffusion model) builds tactical maps on demand from DM narrative descriptions, saved to Silo S3. | **P1 (Beta)** | `the_watcher`, `asset_forge`, `silo` |
 | `FEAT-BRD-06` | **3D Animated Miniature Physics** | Full 3D WebGL miniature tokens with collision ragdolls and physical dice bouncing on terrain. | **P2 (Horizon)** | `frontend` |
 
 ---
