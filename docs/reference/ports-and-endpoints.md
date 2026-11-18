@@ -278,8 +278,11 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/turns/advance` | Proxies to `game_session` `next-turn`: advances the turn (requires `control`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/dm-override` | Proxies to `game_session`: records a DM override (requires `control`) |
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Proxies to `game_session`: sets location, lighting, and mood (requires `control`) |
-| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/atlas` | Retrieves world atlas map layers, milestone pins, and geopolitical territories (requires `view`) |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/atlas` | Retrieves world atlas map layers, milestone pins, and geopolitical territories, forwarding `layer`, `era`, and `session_id` (requires `view`) |
 | `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/codex` | Retrieves campaign lore codex entries and cross-references (requires `view`) |
+| `gateway-api` | GET | `/api/v1/campaigns/{campaign_id}/codex/entries` | Lists codex entries, forwarding `era`, `tag`, and `search` (requires `view`) |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/atlas/pins` | Places a milestone pin on the atlas; forwards the body to campaign-lore (requires `run_session`) |
+| `gateway-api` | POST | `/api/v1/campaigns/{campaign_id}/codex/entries` | Publishes a codex entry; forwards the body to campaign-lore (requires `play`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}` | Retrieves campaign chronicle analytics and telemetry summary (requires `view`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/heatmap` | Retrieves combat spatial damage and strike heatmap data (requires `view`) |
 | `gateway-api` | GET | `/api/v1/analytics/campaigns/{campaign_id}/mvp` | Retrieves turn MVP awards and combatant performance statistics (requires `view`) |

@@ -35,6 +35,7 @@ from gateway_api.routers import (
     downtime_router,
     health_router,
     hub_views_router,
+    lore_views_router,
     overlay_router,
     sessions_router,
     soundscape_router,
@@ -94,6 +95,7 @@ app.include_router(auth_router)
 app.include_router(campaigns_router)
 app.include_router(sessions_router)
 app.include_router(hub_views_router)
+app.include_router(lore_views_router)
 app.include_router(characters_router)
 app.include_router(downtime_router)
 app.include_router(settlement_haven_router)

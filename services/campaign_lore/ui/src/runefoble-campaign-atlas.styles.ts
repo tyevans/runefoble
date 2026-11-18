@@ -283,4 +283,27 @@ export const atlasStyles = css`
     margin-right: 4px;
     font-weight: 600;
   }
+
+  .pin-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 2px solid #121212;
+    background: #fff8e1;
+  }
+
+  .pin-form input {
+    flex: 1;
+    padding: 4px 6px;
+    border: 2px solid #121212;
+  }
+
+  .pin-error {
+    padding: 8px 12px;
+    border-bottom: 2px solid #121212;
+    background: #ffe3e3;
+    color: #8a1c1c;
+    font-weight: 600;
+  }
 `;

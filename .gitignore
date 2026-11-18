@@ -62,3 +62,4 @@ dist/
 playwright-report/
 test-results/
 services/audience_studio/dist-test/
+.e2e/
