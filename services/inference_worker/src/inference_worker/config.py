@@ -60,6 +60,15 @@ class WorkerSettings(BaseSettings):
     max_tokens: int = Field(default=512, ge=1, le=8192)
     timeout_seconds: float = Field(default=30.0, gt=0.0)
 
+    @classmethod
+    def from_environment(cls) -> "WorkerSettings":
+        """Load settings from the environment. Validation refuses a missing or blank credential.
+
+        The credential comes from the environment, not from a constructor argument, so the
+        type checker cannot see it. Validation still raises when it is absent.
+        """
+        return cls()  # type: ignore[call-arg]
+
     @field_validator("service_credential")
     @classmethod
     def _credential_is_not_blank(cls, value: SecretStr) -> SecretStr:

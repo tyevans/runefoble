@@ -21,7 +21,7 @@ from inference_worker.models import (
 )
 
 # Global runtime state
-settings = WorkerSettings()
+settings = WorkerSettings.from_environment()
 llm_client = MultiBackendLLMClient(settings)
 intent_graph = None
 narration_graph = None
