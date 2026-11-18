@@ -57,17 +57,22 @@ async def test_blackbox_upgrade_settlement_facilities(
         json={
             "facility_id": "workshop",
             "contributing_campaign_id": camp_a,
-            "gold_spent": 200,
-            "materials_spent": {"obsidian": 5, "mithril": 2},
         },
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )
     assert up_res.status_code == 200
     up_data = up_res.json()
     assert up_data["facilities"]["workshop"] == 2
-    assert up_data["gold_invested"] == 200
-    assert up_data["materials_treasury"]["obsidian"] == 5
-    assert up_data["materials_treasury"]["mithril"] == 2
+    assert up_data["gold_invested"] == 0
+    assert up_data["materials_treasury"] == {}
+
+    # A client-set cost is refused. The facility does not change.
+    refused = client.post(
+        f"/settlements/{sid}/upgrade",
+        json={"facility_id": "fortifications", "gold_spent": 100},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
+    )
+    assert refused.status_code == 422, refused.text
 
     # Upgrade fortifications -> improves defense
     fort_res = client.post(
@@ -75,7 +80,6 @@ async def test_blackbox_upgrade_settlement_facilities(
         json={
             "facility_id": "fortifications",
             "contributing_campaign_id": camp_a,
-            "gold_spent": 100,
         },
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"},
     )

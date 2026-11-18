@@ -167,8 +167,6 @@ async def test_frontdoor_upgrade_outpost_facility(
     # First upgrade watchtower to tier 2
     upgrade_payload = {
         "facility_id": "watchtower",
-        "gold_spent": 150,
-        "materials_spent": {"timber": 30, "stone": 20},
     }
 
     resp = client.post(
@@ -183,6 +181,28 @@ async def test_frontdoor_upgrade_outpost_facility(
     assert data["new_tier"] == 2
     assert "Scouting Advantage (No Ambush)" in data["active_boons"]
     assert data["defensive_buffer"] >= 25  # tier 2 watchtower (20) + level 1 (5)
+
+
+@pytest.mark.asyncio
+async def test_frontdoor_outpost_upgrade_refuses_a_client_set_cost(
+    client: TestClient, spicedb_client: MockSpiceDBClient
+) -> None:
+    """A client-set outpost cost answers 422 and the facility tier does not change (TASK-0778)."""
+    cid = uuid4()
+    uid = "smith_refused"
+    await spicedb_client.write_relationship("campaign", str(cid), "player", "user", uid)
+
+    resp = client.post(
+        f"/api/v1/campaigns/{cid}/west-marches/stronghold/upgrade",
+        json={"facility_id": "watchtower", "gold_spent": 1},
+        headers=_bearer(uid),
+    )
+    assert resp.status_code == 422, resp.text
+
+    overview = client.get(f"/api/v1/campaigns/{cid}/west-marches", headers=_bearer(uid))
+    assert overview.status_code == 200, overview.text
+    outposts = overview.json()["outposts"]
+    assert all(out["facilities"].get("watchtower", 0) <= 1 for out in outposts.values())
 
 
 @pytest.mark.asyncio

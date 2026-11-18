@@ -97,19 +97,17 @@ class CharterHandlersMixin:
         self,
         facility_id: str,
         contributing_campaign_id: str = "",
-        gold_spent: int = 0,
-        materials_spent: dict[str, int] | None = None,
         **kw: Any,
     ) -> int:
-        """Upgrade haven facilities."""
+        """Upgrade haven facilities. No client-set cost is accepted (TASK-0778)."""
         next_tier = self._state.facilities.get(facility_id, 0) + 1
         tier_name = FACILITY_TIER_NAMES.get(facility_id, {}).get(next_tier, f"Tier {next_tier}")
         new_def = self._state.defense_rating + (5 if facility_id == "fortifications" else 0)
         sid = str(self._state.settlement_id or self.aggregate_id)
         p = {"shared_world_id": self._state.shared_world_id, "facility_id": facility_id}
-        p |= {"new_tier": next_tier, "tier_name": tier_name, "gold_spent": gold_spent}
+        p |= {"new_tier": next_tier, "tier_name": tier_name, "gold_spent": 0}
         p |= {"contributing_campaign_id": str(contributing_campaign_id), "defense_rating": new_def}
-        p |= {"materials_spent": materials_spent or {}, "metadata": kw.get("metadata") or {}}
+        p |= {"materials_spent": {}, "metadata": kw.get("metadata") or {}}
         self.create_event(
             SettlementUpgradedEvent, aggregate_id=_to_uuid(sid), settlement_id=sid, **p
         )

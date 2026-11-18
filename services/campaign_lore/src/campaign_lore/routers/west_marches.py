@@ -10,7 +10,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.aggregate_loading import load_or_create
@@ -51,16 +51,17 @@ class RecordDiscoveryPayload(BaseModel):
 
 
 class UpgradeStrongholdPayload(BaseModel):
-    """Payload to upgrade a communal outpost or stronghold facility."""
+    """Payload to upgrade a communal outpost facility.
+
+    The server sets no cost yet. A client-set cost field answers 422 (TASK-0778).
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     facility_id: str = Field(
         description="Facility identifier (e.g. watchtower, alchemical_workshop)"
     )
     outpost_id: str = Field(default="", description="Target outpost ID")
-    gold_spent: int = Field(default=50, ge=0, description="Gold invested in upgrade")
-    materials_spent: dict[str, int] = Field(
-        default_factory=dict, description="Materials invested in upgrade"
-    )
 
 
 class PostNoticePayload(BaseModel):
@@ -212,9 +213,7 @@ async def upgrade_stronghold_facility(
     new_tier = aggregate.upgrade_outpost(
         outpost_id=outpost_id,
         facility_id=payload.facility_id,
-        contributing_campaign_id=campaign_id,
-        gold_spent=payload.gold_spent,
-        materials_spent=payload.materials_spent,
+        contributing_campaign_id=str(campaign_id),
     )
     await repo.save(aggregate)
 

@@ -106,9 +106,7 @@ async def upgrade_settlement(
 ) -> dict[str, Any]:
     """Upgrade workshop, resting sanctum, or fortifications tier."""
     agg = await _load_haven(settlement_id, "upgrade", caller_id)
-    tier = agg.upgrade_facility(
-        req.facility_id, req.contributing_campaign_id, req.gold_spent, req.materials_spent
-    )
+    tier = agg.upgrade_facility(req.facility_id, req.contributing_campaign_id)
     await _save_and_publish(get_settlement_repository(), get_event_bus(), agg)
     if req.contributing_campaign_id:
         await register_campaign_haven_discovery(

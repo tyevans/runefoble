@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from game_session.models import (
     DEFAULT_FACILITIES,
     FACILITY_REST_BOONS,
@@ -11,6 +12,7 @@ from game_session.models import (
     SettlementState,
     UpgradeFacilityRequest,
 )
+from pydantic import ValidationError
 
 
 def test_settlement_exports_and_imports() -> None:
@@ -56,9 +58,10 @@ def test_settlement_requests_validation() -> None:
     assert charter_req.shared_world_id == "sw-1"
     assert charter_req.settlement_type == "fortress"
 
-    upgrade_req = UpgradeFacilityRequest(facility_id="workshop", gold_spent=100)
+    upgrade_req = UpgradeFacilityRequest(facility_id="workshop")
     assert upgrade_req.facility_id == "workshop"
-    assert upgrade_req.gold_spent == 100
+    with pytest.raises(ValidationError):
+        UpgradeFacilityRequest(facility_id="workshop", gold_spent=100)
 
     claim_req = ClaimRestBoonRequest(
         campaign_id="camp-1", facility_id="sanctum", character_id="char-1"

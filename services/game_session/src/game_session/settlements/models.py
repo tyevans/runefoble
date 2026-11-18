@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 FACILITY_TIER_NAMES: dict[str, dict[int, str]] = {
     "workshop": {1: "Field Forge", 2: "Master Guildhall", 3: "Arcane Crucible"},
@@ -72,12 +72,15 @@ class CharterSettlementRequest(BaseModel):
 
 
 class UpgradeFacilityRequest(BaseModel):
-    """Request payload to upgrade a settlement facility or fortification tier."""
+    """Request payload to upgrade a settlement facility or fortification tier.
+
+    No cost field exists. Extra fields, such as a client-set `gold_spent`, answer 422.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     facility_id: str
     contributing_campaign_id: str = ""
-    gold_spent: int = 0
-    materials_spent: dict[str, int] = Field(default_factory=dict)
 
 
 class ClaimRestBoonRequest(BaseModel):
