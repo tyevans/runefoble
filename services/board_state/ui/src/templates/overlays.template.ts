@@ -68,7 +68,6 @@ export function renderRadialMenuOverlay(
 
 export function renderAoEOverlay(
   activeAoE: AoETemplateConfig | null,
-  tokens: BoardToken[],
   cols: number,
   rows: number,
   onChange: (e: CustomEvent) => void
@@ -85,7 +84,6 @@ export function renderAoEOverlay(
       .widthFt=${activeAoE.widthFt ?? 5}
       .cellSizePx=${56}
       .spellName=${activeAoE.spellName ?? 'Spell Template'}
-      .tokens=${tokens}
       .cols=${cols}
       .rows=${rows}
       @aoe-change=${onChange}

@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import {
   BoardApiError,
   boardSocketUrl,
+  buildAoEEvaluateMessage,
   buildConfirmMoveMessage,
   postSwitchMap,
   postTrap,
@@ -106,6 +107,34 @@ describe('board socket contract', () => {
   it('maps a token move to the confirm_move action with snake_case fields', () => {
     assert.deepEqual(buildConfirmMoveMessage({ tokenId: 'valeros', toX: 3, toY: 4 }), {
       action: 'confirm_move', token_id: 'valeros', to_x: 3, to_y: 4, initiated_by: 'player',
+    });
+  });
+});
+
+describe('buildAoEEvaluateMessage', () => {
+  it('sends whole-cell origin and the server field names, leaving containment to the server', () => {
+    const msg = buildAoEEvaluateMessage({
+      shape: 'sphere',
+      originX: 5,
+      originY: 2,
+      directionDeg: 0,
+      radiusFt: 20,
+      spellName: 'Fireball',
+      casterTokenId: '1',
+    });
+
+    assert.deepEqual(msg, {
+      action: 'aoe_evaluate',
+      shape: 'sphere',
+      origin_x: 5,
+      origin_y: 2,
+      direction_deg: 0,
+      radius_ft: 20,
+      length_ft: undefined,
+      width_ft: undefined,
+      spell_name: 'Fireball',
+      caster_token_id: '1',
+      grid_type: 'square',
     });
   });
 });

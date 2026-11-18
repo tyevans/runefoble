@@ -6,6 +6,8 @@ import type {
 } from './board-types.ts';
 import type { GhostPreviewEngine } from './ghost_preview.ts';
 import { parseIncomingGhostPreview } from './ghost_preview.ts';
+import { buildAoEEvaluateMessage } from './board-api.ts';
+import { snapAngle } from './aoe_geometry.ts';
 
 export interface BoardActionsHost {
   tokens: BoardToken[];
@@ -15,6 +17,13 @@ export interface BoardActionsHost {
   ws: WebSocket | null;
   dispatchEvent(event: Event): boolean;
   requestUpdate(): void;
+}
+
+/** Ask the server to evaluate the active template. The result arrives as aoe_preview. */
+export function requestAoEPreview(host: BoardActionsHost, config: AoETemplateConfig): void {
+  if (host.ws && host.ws.readyState === WebSocket.OPEN) {
+    host.ws.send(JSON.stringify(buildAoEEvaluateMessage(config)));
+  }
 }
 
 export function executeRadialAction(
@@ -36,8 +45,8 @@ export function executeRadialAction(
   if (action === 'cast') {
     host.activeAoE = {
       shape: 'cone',
-      originX: tok ? tok.x + 0.5 : 2.5,
-      originY: tok ? tok.y + 0.5 : 2.5,
+      originX: tok ? tok.x : 2,
+      originY: tok ? tok.y : 2,
       directionDeg: 0,
       radiusFt: 15,
       spellName: 'Burning Hands',
@@ -55,6 +64,7 @@ export function executeRadialAction(
     );
   }
 
+  if (host.activeAoE) requestAoEPreview(host, host.activeAoE);
   host.requestUpdate();
 }
 
@@ -128,6 +138,20 @@ export function handleBoardSocketMessage(
     const targetToken = host.tokens.find((t) => t.id === data.token_id);
     if (targetToken) {
       targetToken.activeAction = data.action;
+      host.requestUpdate();
+    }
+  } else if (action === 'aoe_preview') {
+    const active = host.activeAoE;
+    const preview = data.template;
+    const isCurrent =
+      active !== null &&
+      preview?.origin_x === active.originX &&
+      preview?.origin_y === active.originY &&
+      preview?.direction_deg === snapAngle(active.directionDeg) &&
+      preview?.shape === active.shape;
+    if (isCurrent) {
+      host.aoeAffectedTokenIds = preview.affected_token_ids;
+      host.aoeAffectedCells = preview.affected_cells;
       host.requestUpdate();
     }
   } else if (action === 'aoe_template_placed') {

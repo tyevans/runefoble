@@ -25,8 +25,6 @@ export interface AoERenderPaths {
 
 export interface AoEChangeDetail {
   config: AoETemplateConfig;
-  affectedTokenIds: string[];
-  affectedCells: [number, number][];
 }
 
 export const AOE_COLOR_TOKENS = {

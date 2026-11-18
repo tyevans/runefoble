@@ -2,7 +2,7 @@ import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { AoETemplateConfig, BoardToken, DragKinematicsState, GhostPreviewState, RadialActionType, TerrainCell } from './board-types.ts';
 import { renderAoEBanner, renderAoEOverlay, renderBoardHeader, renderGhostBanner, renderRadialMenuOverlay, renderStatusBar } from './board-templates.ts';
-import { cancelAoEPlacement, confirmAoEPlacement, executeRadialAction, handleBoardSocketMessage } from './board-actions.ts';
+import { cancelAoEPlacement, confirmAoEPlacement, executeRadialAction, handleBoardSocketMessage, requestAoEPreview } from './board-actions.ts';
 import { renderBoardGrid } from './board-grid.ts';
 import { buildConfirmMoveMessage } from './board-api.ts';
 import { GhostPreviewEngine, parseIncomingGhostPreview } from './ghost_preview.ts';
@@ -172,10 +172,9 @@ export class RunefobleBoard extends LitElement {
     this.radialTokenId = null;
     executeRadialAction(this, e.detail.action, e.detail.tokenId);
   }
-  public handleAoEChange(e: CustomEvent) {
+  public handleAoEChange(e: CustomEvent<{ config: AoETemplateConfig }>) {
     this.activeAoE = e.detail.config;
-    this.aoeAffectedTokenIds = e.detail.affectedTokenIds;
-    this.aoeAffectedCells = e.detail.affectedCells;
+    requestAoEPreview(this, e.detail.config);
     this.requestUpdate();
   }
   public confirmAoETemplate() { confirmAoEPlacement(this); }
@@ -240,7 +239,7 @@ export class RunefobleBoard extends LitElement {
         activeTurnTokenId: this.activeTurnTokenId, selectedTokenId: this.selectedTokenId,
         dragState: this.dragState, localGhost: this.localGhost, fogOfWar: this.fogOfWar, enable3D: this.enable3D,
         aoeAffectedTokens: this.aoeAffectedTokenIds, aoeAffectedCells: this.aoeAffectedCells,
-        aoeOverlay: renderAoEOverlay(this.activeAoE, this.tokens, this.cols, this.rows, (e) => this.handleAoEChange(e)),
+        aoeOverlay: renderAoEOverlay(this.activeAoE, this.cols, this.rows, (e) => this.handleAoEChange(e)),
         radialMenu: renderRadialMenuOverlay(radialToken, (e) => this.handleRadialActionSelect(e), () => { this.radialTokenId = null; }),
         isCellRevealed: (x, y) => this.isCellRevealed(x, y), onCellClick: (x, y) => this.handleCellClick(x, y),
         onTokenPointerDown: (e, t) => this.handleTokenPointerDown(e, t), onPointerMove: (e) => this.handlePointerMove(e),

@@ -30,6 +30,10 @@ The particle engine ships with distinct spell archetype shaders and element pale
 
 ---
 
+### 2.1 Radius Blooms Use the AoE Sphere Rule
+
+A spell radius bloom is a sphere placed on the target cell. A cell is hit when its centre lies within `radius_ft` of the target cell centre. This is the same rule as the AoE sphere template (see `interact-with-radial-action-menu-and-aoe-templates.md`, section 2.0). The `affected_cells` in the cast response match the cells of an AoE sphere with the same origin and radius.
+
 ## 3. Voice-to-VFX Pipeline (<150ms SLA)
 
 Per US-0048, spoken spell incantations (e.g., *"I cast Fireball centered at coordinate D7"*) trigger visual effects in under 150ms:

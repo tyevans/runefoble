@@ -1,8 +1,8 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { aoeTemplateStyles, renderAoEHandles, renderAoEShape } from './aoe_canvas.ts';
-import { computeAffectedCells, computeAffectedTokens, snapAngle } from './aoe_geometry.ts';
-import type { AoEShape, AoETemplateConfig, BoardToken } from './aoe_types.ts';
+import { snapAngle } from './aoe_geometry.ts';
+import type { AoEShape, AoETemplateConfig } from './aoe_types.ts';
 
 export * from './aoe_types.ts';
 export * from './aoe_geometry.ts';
@@ -21,7 +21,6 @@ export class RunefobleAoETemplate extends LitElement {
   @property({ type: Number }) widthFt = 5;
   @property({ type: Number }) cellSizePx = 56;
   @property({ type: String }) spellName = 'Burning Hands';
-  @property({ type: Array }) tokens: BoardToken[] = [];
   @property({ type: Number }) cols = 8;
   @property({ type: Number }) rows = 8;
   @property({ type: Boolean }) interactive = true;
@@ -36,9 +35,7 @@ export class RunefobleAoETemplate extends LitElement {
       shape: this.shape, originX: this.originX, originY: this.originY, directionDeg: this.directionDeg,
       radiusFt: this.radiusFt, lengthFt: this.lengthFt, widthFt: this.widthFt, spellName: this.spellName,
     };
-    const affectedTokenIds = computeAffectedTokens(this.tokens, config);
-    const affectedCells = computeAffectedCells(this.cols, this.rows, config);
-    this.dispatchEvent(new CustomEvent('aoe-change', { detail: { config, affectedTokenIds, affectedCells }, bubbles: true, composed: true }));
+    this.dispatchEvent(new CustomEvent('aoe-change', { detail: { config }, bubbles: true, composed: true }));
   }
 
   private handleOriginDown(e: PointerEvent) {
@@ -49,8 +46,8 @@ export class RunefobleAoETemplate extends LitElement {
   private handleOriginMove(e: PointerEvent) {
     if (!this.isDraggingOrigin) return;
     const r = this.getBoundingClientRect();
-    const gx = Math.max(0, Math.min(this.cols, Math.round(((e.clientX - r.left) / this.cellSizePx) * 2) / 2));
-    const gy = Math.max(0, Math.min(this.rows, Math.round(((e.clientY - r.top) / this.cellSizePx) * 2) / 2));
+    const gx = Math.max(0, Math.min(this.cols - 1, Math.floor((e.clientX - r.left) / this.cellSizePx)));
+    const gy = Math.max(0, Math.min(this.rows - 1, Math.floor((e.clientY - r.top) / this.cellSizePx)));
     if (gx !== this.originX || gy !== this.originY) { this.originX = gx; this.originY = gy; this.notifyChange(); }
   }
   private handleOriginUp(e: PointerEvent) {
@@ -67,7 +64,9 @@ export class RunefobleAoETemplate extends LitElement {
   private handleRotationMove(e: PointerEvent) {
     if (!this.isDraggingRotation) return;
     const r = this.getBoundingClientRect();
-    const raw = (Math.atan2(e.clientY - r.top - this.originY * this.cellSizePx, e.clientX - r.left - this.originX * this.cellSizePx) * 180) / Math.PI;
+    const centreX = (this.originX + 0.5) * this.cellSizePx;
+    const centreY = (this.originY + 0.5) * this.cellSizePx;
+    const raw = (Math.atan2(e.clientY - r.top - centreY, e.clientX - r.left - centreX) * 180) / Math.PI;
     const snapped = snapAngle(raw, 15);
     if (snapped !== this.directionDeg) { this.directionDeg = snapped; this.notifyChange(); }
   }
@@ -80,8 +79,8 @@ export class RunefobleAoETemplate extends LitElement {
 
   render() {
     const scalePx = this.cellSizePx / 5.0;
-    const ox = this.originX * this.cellSizePx;
-    const oy = this.originY * this.cellSizePx;
+    const ox = (this.originX + 0.5) * this.cellSizePx;
+    const oy = (this.originY + 0.5) * this.cellSizePx;
     const rad = (this.directionDeg * Math.PI) / 180;
     const { shapeSvg, rotHandleX, rotHandleY } = renderAoEShape(this.shape, ox, oy, rad, scalePx, this);
     const handles = this.interactive ? renderAoEHandles(ox, oy, rotHandleX, rotHandleY, this.directionDeg, {

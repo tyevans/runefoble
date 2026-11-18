@@ -34,3 +34,5 @@ When Marcus drags the template origin to his token and drags the rotational hand
 Then the board dynamically computes square/hex intersection calculations at 60fps
 And highlights all affected monster tokens with glowing red targeting halos before confirming the cast.
 ```
+
+**Origin rule.** The template origin is a whole grid cell. The origin point is that cell's centre. A cell is hit when its centre lies inside the shape. The server computes the result for every preview. A spell bloom with the same origin and radius hits the same cells.

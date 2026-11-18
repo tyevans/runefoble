@@ -208,7 +208,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `template_id`: String
   - `caster_token_id`: Optional[String]
   - `shape`: String ("cone", "sphere", "line", "cube")
-  - `origin_x`: Float, `origin_y`: Float
+  - `origin_x`: Integer, `origin_y`: Integer (whole grid cell index; the origin is that cell's centre)
   - `direction_deg`: Float (0-360, snapped in 15° increments)
   - `radius_ft`: Optional[Float]
   - `length_ft`: Optional[Float]

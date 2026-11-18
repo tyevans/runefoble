@@ -4,6 +4,8 @@
  * Callers render the server response. They never show an optimistic result.
  */
 
+import type { AoETemplateConfig } from './board-types.ts';
+
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
 export class BoardApiError extends Error {
@@ -141,5 +143,22 @@ export function buildConfirmMoveMessage(move: TokenMoveIntent): Record<string, u
     to_x: move.toX,
     to_y: move.toY,
     initiated_by: 'player',
+  };
+}
+
+/** Board socket action aoe_evaluate. The server replies with an aoe_preview broadcast. */
+export function buildAoEEvaluateMessage(config: AoETemplateConfig): Record<string, unknown> {
+  return {
+    action: 'aoe_evaluate',
+    shape: config.shape,
+    origin_x: config.originX,
+    origin_y: config.originY,
+    direction_deg: config.directionDeg,
+    radius_ft: config.radiusFt,
+    length_ft: config.lengthFt,
+    width_ft: config.widthFt,
+    spell_name: config.spellName,
+    caster_token_id: config.casterTokenId,
+    grid_type: config.gridType ?? 'square',
   };
 }
