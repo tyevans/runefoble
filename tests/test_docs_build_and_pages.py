@@ -239,9 +239,12 @@ def test_marketing_showcase_page_and_navigation():
     md_content = marketing_md.read_text(encoding="utf-8")
     assert "Speak and the Board Obeys" in md_content
     assert "The Watcher" in md_content
-    assert "Milestone 2" in md_content
-    assert "Milestone 3" in md_content
-    assert "Milestone 4" in md_content
+    # The roadmap table on the showcase page names every milestone in ROADMAP.md (TASK-0659).
+    roadmap = (DOCS_DIR / "project" / "backlog" / "ROADMAP.md").read_text(encoding="utf-8")
+    milestones = re.findall(r"^## Milestone (\d+): (.+?) \(", roadmap, flags=re.MULTILINE)
+    assert milestones, "ROADMAP.md must list milestones"
+    for number, title in milestones:
+        assert f"M{number} {title}" in md_content, f"marketing.md is missing M{number} {title}"
 
     # Verify marketing and changelog are in zensical.toml
     with open(ZENSICAL_TOML, "rb") as f:

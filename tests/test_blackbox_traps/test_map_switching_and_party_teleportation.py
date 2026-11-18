@@ -89,7 +89,7 @@ async def test_battlemap_switch_and_party_teleportation(spicedb: MockSpiceDBClie
     assert switch_data["teleported_tokens"]["kyra"] == [10, 16]
 
     # 5. Verify board state public query reflects the new map and teleported token coordinates
-    board_res = client.get(f"/api/v1/boards/{board_id}")
+    board_res = client.get(f"/api/v1/boards/{board_id}", headers=bearer(dm_user))
     assert board_res.status_code == 200
     board_state = board_res.json()
     assert board_state["current_map_id"] == "dungeon_level_2"

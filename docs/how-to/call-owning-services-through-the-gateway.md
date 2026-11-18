@@ -101,9 +101,7 @@ Use `relay_websocket` from `gateway_api.websocket_relay` when the owner serves a
 ```python
 @app.websocket("/ws/minigames/{table_id}")
 async def gateway_standalone_minigame_ws(websocket: WebSocket, table_id: str) -> None:
-    await relay_websocket(
-        websocket, service="game_session", segments=("ws", "minigames", table_id)
-    )
+    await relay_websocket(websocket, service="game_session", segments=("ws", "minigames", table_id))
 ```
 
 Map the failures this way:
