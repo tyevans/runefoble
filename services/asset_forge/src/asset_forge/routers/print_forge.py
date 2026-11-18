@@ -6,7 +6,8 @@ from collections.abc import Callable
 from typing import Annotated, Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, Response
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.asset import PrintPdfForged, StlTokenForged
 from runefoble_platform.aggregate_loading import load_or_create
@@ -16,12 +17,12 @@ from runefoble_platform.storage import SiloStorageService
 from asset_forge.aggregate import AssetForgeAggregate
 from asset_forge.dependencies import (
     VerifiedUserId,
-    check_user_can_forge,
     get_forge_repo,
     get_principal,
-    get_spicedb_client,
     get_storage,
     publish_forge_event,
+    record_asset_relations,
+    require_forge_permission,
 )
 from asset_forge.map_generation_engine import get_map_generator
 from asset_forge.models import (
@@ -51,7 +52,6 @@ async def _record_aggregate(
     await repo.save(forge_agg)
 
 
-@router.post("/assets/print-pdf", response_model=None)
 @router.post("/api/v1/forge/print-pdf", response_model=None)
 async def export_print_pdf(
     request: PrintPdfRequest,
@@ -62,10 +62,7 @@ async def export_print_pdf(
 ) -> Any:
     """Generate multi-page print-ready PDF sliced to exact 1-inch tabletop grid."""
     creator_id = user_id
-    if request.campaign_id and not await check_user_can_forge(
-        user_id, request.campaign_id, spicedb
-    ):
-        raise HTTPException(status_code=403, detail="Forbidden: Cannot forge assets for campaign")
+    campaign_id = await require_forge_permission(user_id, request.campaign_id, spicedb)
 
     grid, theme = request.grid, request.theme
     if not grid and request.prompt:
@@ -88,6 +85,8 @@ async def export_print_pdf(
     )
 
     asset_id = f"pdf-{uuid4().hex[:12]}"
+    # Authorization relations first. A failed write raises AuthzError (HTTP 503) before storage.
+    await record_asset_relations(spicedb, asset_id, creator_id, campaign_id)
     upload_meta = await store_forged_asset(
         storage,
         object_key=f"prints/{asset_id}.pdf",
@@ -149,7 +148,6 @@ async def export_print_pdf(
     )
 
 
-@router.post("/assets/standees", response_model=None)
 @router.post("/api/v1/forge/standees", response_model=None)
 async def export_standees(
     request: StandeesRequest,
@@ -160,10 +158,7 @@ async def export_standees(
 ) -> Any:
     """Generate folding papercraft miniature standee sheets."""
     creator_id = user_id
-    if request.campaign_id and not await check_user_can_forge(
-        user_id, request.campaign_id, spicedb
-    ):
-        raise HTTPException(status_code=403, detail="Forbidden: Cannot forge assets for campaign")
+    campaign_id = await require_forge_permission(user_id, request.campaign_id, spicedb)
 
     raw_items = [item.model_dump() for item in request.standees]
     pdf_bytes, meta = generate_standees_pdf(
@@ -173,6 +168,8 @@ async def export_standees(
     )
 
     asset_id = f"std-{uuid4().hex[:12]}"
+    # Authorization relations first. A failed write raises AuthzError (HTTP 503) before storage.
+    await record_asset_relations(spicedb, asset_id, creator_id, campaign_id)
     upload_meta = await store_forged_asset(
         storage,
         object_key=f"standees/{asset_id}.pdf",
@@ -229,7 +226,6 @@ async def export_standees(
     )
 
 
-@router.post("/assets/stl-token", response_model=None)
 @router.post("/api/v1/forge/stl-token", response_model=None)
 async def export_stl_token(
     request: StlTokenRequest,
@@ -240,10 +236,7 @@ async def export_stl_token(
 ) -> Any:
     """Generate watertight 3D printable STL miniature base with status condition clips."""
     creator_id = user_id
-    if request.campaign_id and not await check_user_can_forge(
-        user_id, request.campaign_id, spicedb
-    ):
-        raise HTTPException(status_code=403, detail="Forbidden: Cannot forge assets for campaign")
+    campaign_id = await require_forge_permission(user_id, request.campaign_id, spicedb)
 
     stl_bytes, meta = generate_stl_mesh(
         diameter_mm=request.diameter_mm,
@@ -255,6 +248,8 @@ async def export_stl_token(
     )
 
     asset_id = f"stl-{uuid4().hex[:12]}"
+    # Authorization relations first. A failed write raises AuthzError (HTTP 503) before storage.
+    await record_asset_relations(spicedb, asset_id, creator_id, campaign_id)
     upload_meta = await store_forged_asset(
         storage,
         object_key=f"stls/{asset_id}.stl",

@@ -7,6 +7,8 @@ Redis Streams entries that the route publishes.
 
 from __future__ import annotations
 
+from uuid import uuid4
+
 import pytest
 from asset_forge.dependencies import set_event_bus
 from asset_forge.main import app
@@ -31,15 +33,24 @@ def clean_environment():
 
 
 @pytest.mark.asyncio
-async def test_standee_export_publishes_print_pdf_forged():
+async def test_standee_export_publishes_print_pdf_forged(spicedb):
     """Exporting standees through the public route writes one PrintPdfForged entry."""
     mock_redis = MockAsyncRedis()
     set_event_bus(RedisStreamsEventBus(client=mock_redis))
     client = TestClient(app, headers=auth_headers("crafter-rowan"))
+    campaign_id = str(uuid4())
+    await spicedb.write_relationship(
+        resource_type="campaign",
+        resource_id=campaign_id,
+        relation="player",
+        subject_type="user",
+        subject_id="crafter-rowan",
+    )
 
     response = client.post(
         "/api/v1/forge/standees",
         json={
+            "campaign_id": campaign_id,
             "sheet_title": "Goblin Ambush Pack",
             "standees": [{"name": "Goblin Scout", "type": "monster", "hp": 7, "color": "#e76f51"}],
             "format": "json",

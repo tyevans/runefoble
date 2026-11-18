@@ -10,6 +10,7 @@ All assertions and setup operate strictly through public frontdoors:
 
 from __future__ import annotations
 
+import asyncio
 import struct
 from uuid import uuid4
 
@@ -17,7 +18,6 @@ import pytest
 from asset_forge.dependencies import get_storage, set_event_bus
 from asset_forge.main import app
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import SpiceDBClient
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -44,6 +44,24 @@ def clean_environment():
     set_event_bus(None)
 
 
+CAMPAIGN_ID = str(uuid4())
+
+
+@pytest.fixture(autouse=True)
+def crafter_campaign(spicedb) -> str:
+    """The crafter is a player of the campaign that every forge request names."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=CAMPAIGN_ID,
+            relation="player",
+            subject_type="user",
+            subject_id="crafter-rowan",
+        )
+    )
+    return CAMPAIGN_ID
+
+
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app)
@@ -54,8 +72,9 @@ def test_blackbox_tiled_pdf_battlemap_letter_and_a4(
 ):
     """Verify POST /assets/print-pdf generates multi-page 1-inch grid calibrated PDF."""
     response = client.post(
-        "/assets/print-pdf",
+        "/api/v1/forge/print-pdf",
         json={
+            "campaign_id": CAMPAIGN_ID,
             "prompt": "Dwarven forge with molten rivers",
             "width_cells": 16,
             "height_cells": 16,
@@ -94,11 +113,12 @@ def test_blackbox_tiled_pdf_battlemap_letter_and_a4(
     assert event.grid_scale == "1-inch"
 
 
-def test_blackbox_tiled_pdf_json_format_and_alias(client: TestClient):
+def test_blackbox_tiled_pdf_json_format(client: TestClient):
     """Verify POST /api/v1/forge/print-pdf with format='json' returns metadata response."""
     response = client.post(
         "/api/v1/forge/print-pdf",
         json={
+            "campaign_id": CAMPAIGN_ID,
             "width_cells": 14,
             "height_cells": 18,
             "page_size": "a4",
@@ -119,8 +139,9 @@ def test_blackbox_tiled_pdf_json_format_and_alias(client: TestClient):
 def test_blackbox_papercraft_standees_generation(client: TestClient):
     """Verify POST /assets/standees produces foldable paper miniatures with mirrored artwork."""
     response = client.post(
-        "/assets/standees",
+        "/api/v1/forge/standees",
         json={
+            "campaign_id": CAMPAIGN_ID,
             "sheet_title": "Goblin Ambush Pack",
             "standees": [
                 {"name": "Goblin Scout", "type": "monster", "hp": 7, "color": "#e76f51"},
@@ -146,8 +167,9 @@ def test_blackbox_papercraft_standees_generation(client: TestClient):
 def test_blackbox_stl_token_watertight_mesh(client: TestClient, clean_environment: MockEventBus):
     """Verify POST /assets/stl-token outputs mathematically watertight 3D STL mesh."""
     response = client.post(
-        "/assets/stl-token",
+        "/api/v1/forge/stl-token",
         json={
+            "campaign_id": CAMPAIGN_ID,
             "diameter_mm": 28.0,
             "height_mm": 3.5,
             "num_slots": 4,
@@ -218,6 +240,7 @@ def test_blackbox_stl_token_ascii_format(client: TestClient):
     response = client.post(
         "/api/v1/forge/stl-token",
         json={
+            "campaign_id": CAMPAIGN_ID,
             "diameter_mm": 50.0,
             "height_mm": 4.0,
             "num_slots": 6,
@@ -235,19 +258,11 @@ def test_blackbox_stl_token_ascii_format(client: TestClient):
     assert data["condition_label"] == "Stunned"
 
 
-@pytest.mark.asyncio
-async def test_blackbox_print_forge_spicedb_authorization(client: TestClient, monkeypatch):
-    """Verify campaign Zanzibar permission check blocks unauthorized users."""
-    camp_id = uuid4()
-
-    async def mock_check_permission(*args, **kwargs):
-        return False
-
-    monkeypatch.setattr(SpiceDBClient, "check_permission", mock_check_permission)
-
+def test_blackbox_print_forge_spicedb_authorization(client: TestClient):
+    """A caller with no campaign role is refused. The shared SpiceDB mock holds no grant for them."""
     response = client.post(
-        "/assets/print-pdf",
-        json={"campaign_id": str(camp_id), "width_cells": 10, "height_cells": 10},
+        "/api/v1/forge/print-pdf",
+        json={"campaign_id": str(uuid4()), "width_cells": 10, "height_cells": 10},
         headers=auth_headers("unauthorized-user"),
     )
     assert response.status_code == 403

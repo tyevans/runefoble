@@ -8,6 +8,9 @@ the map generator (the same pattern voice_agent uses for its speech engines).
 
 from __future__ import annotations
 
+import asyncio
+from uuid import uuid4
+
 import pytest
 from asset_forge.main import app as asset_forge_app
 from asset_forge.map_generation_engine import set_map_generator
@@ -29,6 +32,22 @@ def auth_headers(sub: str) -> dict[str, str]:
 
 ROUTE = "/api/v1/forge/battlemap"
 SIZE = {"width_cells": 20, "height_cells": 20, "cell_size_px": 64}
+CAMPAIGN_ID = str(uuid4())
+
+
+@pytest.fixture(autouse=True)
+def forge_campaign(spicedb) -> str:
+    """The forge tester is a player of the campaign that every request names."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=CAMPAIGN_ID,
+            relation="player",
+            subject_type="user",
+            subject_id="forge-tester",
+        )
+    )
+    return CAMPAIGN_ID
 
 
 @pytest.fixture
@@ -37,7 +56,7 @@ def forge_client() -> TestClient:
 
 
 def _forge(client: TestClient, prompt: str, seed: int | None = None) -> dict:
-    body: dict = {"prompt": prompt, **SIZE}
+    body: dict = {"prompt": prompt, "campaign_id": CAMPAIGN_ID, **SIZE}
     if seed is not None:
         body["seed"] = seed
     response = client.post(ROUTE, json=body)
@@ -120,7 +139,9 @@ def test_unavailable_generator_returns_503_and_stores_nothing(
 ):
     """A generator that cannot produce a layout gives 503. No map is stored or indexed."""
     injected_generator(UnavailableMapGenerator())
-    response = forge_client.post(ROUTE, json={"prompt": "Any crypt", **SIZE})
+    response = forge_client.post(
+        ROUTE, json={"prompt": "Any crypt", "campaign_id": CAMPAIGN_ID, **SIZE}
+    )
 
     assert response.status_code == 503, response.text
     detail = response.json()["detail"]

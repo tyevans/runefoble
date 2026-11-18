@@ -6,9 +6,9 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.bus import bus as platform_bus
@@ -31,7 +31,6 @@ settings = PlatformSettings()
 _forge_repo: AggregateRepository[AssetForgeAggregate] = create_aggregate_repository(
     AssetForgeAggregate
 )
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _wardrobe_generator: WardrobeGenerator | None = None
 _zitadel_auth_service: ZitadelAuthService | None = None
 
@@ -57,23 +56,6 @@ def get_wardrobe_generator() -> WardrobeGenerator:
 event_bus_provider = EventBusProvider(settings)
 get_event_bus = event_bus_provider.get
 set_event_bus = event_bus_provider.set
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    """Provide SpiceDB Zanzibar authorization client."""
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient(
-            endpoint=settings.spicedb_endpoint or "localhost:50051",
-            token=settings.spicedb_preshared_key,
-        )
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    """Override SpiceDB client for testing."""
-    global _spicedb_client
-    _spicedb_client = client
 
 
 def get_zitadel_auth_service() -> ZitadelAuthService:
@@ -105,34 +87,79 @@ def verified_user_id(principal: Annotated[VerifiedPrincipal, Depends(get_princip
 VerifiedUserId = Annotated[str, Depends(verified_user_id)]
 
 
-async def check_user_can_forge(
+async def require_forge_permission(
     user_id: str,
     campaign_id: UUID | None,
-    spicedb: SpiceDBClient | MockSpiceDBClient,
-) -> bool:
-    """Check Zanzibar authorization for forging assets in campaign context."""
-    if not campaign_id:
-        # Standalone forge without campaign context is permissible
-        return True
+    spicedb: SpiceDBClient,
+) -> UUID:
+    """Allow a forge action only for a campaign player (`campaign.play`).
 
-    # Check play or run_session or manage on campaign
-    can_play = await spicedb.check_permission(
+    Returns the campaign id, so the caller holds a non-optional value.
+
+    Raises:
+        HTTPException: 400 when no campaign is named, 403 when the caller lacks `play`.
+    """
+    if campaign_id is None:
+        raise HTTPException(status_code=400, detail="A campaign_id is required to forge assets.")
+    allowed = await spicedb.check_permission(
         resource_type="campaign",
         resource_id=str(campaign_id),
         permission="play",
         subject_type="user",
         subject_id=user_id,
     )
-    if can_play:
-        return True
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: User '{user_id}' cannot forge assets for campaign '{campaign_id}'.",
+        )
+    return campaign_id
 
-    return await spicedb.check_permission(
-        resource_type="campaign",
-        resource_id=str(campaign_id),
-        permission="run_session",
+
+async def record_asset_relations(
+    spicedb: SpiceDBClient,
+    asset_id: str,
+    creator_id: str,
+    campaign_id: UUID,
+) -> None:
+    """Write the `creator` and `campaign` relations of one forged asset.
+
+    No error is suppressed. A failed write raises `AuthzError`, and the route stores nothing.
+    """
+    await spicedb.write_relationship(
+        resource_type="forged_asset",
+        resource_id=asset_id,
+        relation="creator",
+        subject_type="user",
+        subject_id=creator_id,
+    )
+    await spicedb.write_relationship(
+        resource_type="forged_asset",
+        resource_id=asset_id,
+        relation="campaign",
+        subject_type="campaign",
+        subject_id=str(campaign_id),
+    )
+
+
+async def require_asset_view(spicedb: SpiceDBClient, asset_id: str, user_id: str) -> None:
+    """Allow a read only when the caller holds `forged_asset.view` on the asset.
+
+    Raises:
+        HTTPException: 403 when the caller lacks the permission.
+    """
+    allowed = await spicedb.check_permission(
+        resource_type="forged_asset",
+        resource_id=asset_id,
+        permission="view",
         subject_type="user",
         subject_id=user_id,
     )
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: User '{user_id}' cannot view forged asset '{asset_id}'.",
+        )
 
 
 STREAM_ASSET = "runefoble.events.asset"
