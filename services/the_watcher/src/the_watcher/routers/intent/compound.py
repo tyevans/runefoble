@@ -8,8 +8,9 @@ from fastapi import APIRouter, Depends
 from the_watcher.dependencies import (
     compound_action_engine,
     engine,
+    require_session_permission,
 )
-from the_watcher.identity import get_caller_principal
+from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.models import (
     IntentExecuteRequest,
     IntentExecuteResponse,
@@ -25,8 +26,11 @@ router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["intent"]
 
 
 @router.post("/api/v1/watcher/intent/parse", response_model=IntentParseResponse)
-async def parse_intent_and_disambiguate(req: IntentParseRequest) -> IntentParseResponse:
+async def parse_intent_and_disambiguate(
+    caller_id: CallerId, req: IntentParseRequest
+) -> IntentParseResponse:
     """Parse player speech, decompose compound actions, and evaluate target disambiguation."""
+    await require_session_permission(caller_id, req.session_id, "session.participate")
     t0 = time.perf_counter()
     entities = req.entities or req.tokens or []
 
@@ -65,8 +69,11 @@ async def parse_intent_and_disambiguate(req: IntentParseRequest) -> IntentParseR
 
 
 @router.post("/api/v1/watcher/intent/execute", response_model=IntentExecuteResponse)
-async def execute_compound_actions(req: IntentExecuteRequest) -> IntentExecuteResponse:
+async def execute_compound_actions(
+    caller_id: CallerId, req: IntentExecuteRequest
+) -> IntentExecuteResponse:
     """Execute compound action combo step-by-step with partial failure and rollback handling."""
+    await require_session_permission(caller_id, req.session_id, "session.participate")
     status, updated_actions, narrative, failed_id = compound_action_engine.execute_plan(
         session_id=req.session_id,
         actions=req.actions,

@@ -7,6 +7,7 @@ from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
 )
+from the_watcher.authz_errors import install_authz_error_handlers
 from the_watcher.dependencies import (
     INFERENCE_URL,
     STREAM_BOARD,
@@ -70,6 +71,7 @@ app.include_router(faction_resources_router)
 app.include_router(turf_war_router)
 app.include_router(ui_manifest_router)
 install_publish_failure_handler(app)
+install_authz_error_handlers(app)
 
 
 @app.get("/healthz")

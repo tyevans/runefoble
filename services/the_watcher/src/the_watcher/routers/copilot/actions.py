@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from runefoble_events.events import (
     WatcherActionApproved,
     WatcherActionModified,
@@ -12,10 +12,10 @@ from runefoble_events.events import (
 from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from the_watcher.dependencies import (
     STREAM_WATCHER,
-    check_dm_authorization,
     get_copilot_engine,
     get_event_bus,
-    get_spicedb_client,
+    require_dm,
+    require_session_permission,
     to_uuid,
 )
 from the_watcher.identity import CallerId, get_caller_principal
@@ -51,26 +51,11 @@ def _planned_action(
     )
 
 
-async def _assert_dm_permission(
-    caller: str | None, campaign_id: str | None, session_id: str | None
-) -> None:
-    is_dm = await check_dm_authorization(
-        caller,
-        campaign_id=campaign_id,
-        session_id=session_id,
-        spicedb=get_spicedb_client(),
-    )
-    if not is_dm:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
-        )
-
-
 @router.post("/api/v1/watcher/actions/propose", response_model=PendingAction)
 @router.post("/api/v1/watcher/propose", response_model=PendingAction)
-async def propose_action(req: ProposeActionRequest) -> PendingAction:
+async def propose_action(caller_id: CallerId, req: ProposeActionRequest) -> PendingAction:
     """Propose an AI game mutation with a pre-execution pause window (default 2000ms)."""
+    await require_session_permission(caller_id, req.session_id, "session.participate")
     engine = get_copilot_engine()
     action = engine.propose_action(req)
 
@@ -104,7 +89,7 @@ async def veto_action(
 
     target_campaign = req.campaign_id or (pending.campaign_id if pending else None)
     target_session = req.session_id or (pending.session_id if pending else None)
-    await _assert_dm_permission(caller, target_campaign, target_session)
+    await require_dm(caller, target_campaign, target_session)
 
     planned = _planned_action(req.action_id, target_session, target_campaign)
     planned.status = "vetoed"
@@ -143,7 +128,7 @@ async def approve_action(
 
     target_campaign = req.campaign_id or (pending.campaign_id if pending else None)
     target_session = req.session_id or (pending.session_id if pending else None)
-    await _assert_dm_permission(caller, target_campaign, target_session)
+    await require_dm(caller, target_campaign, target_session)
 
     planned = _planned_action(req.action_id, target_session, target_campaign)
     planned.status = "approved"
@@ -180,7 +165,7 @@ async def modify_action(
 
     target_campaign = req.campaign_id or (pending.campaign_id if pending else None)
     target_session = req.session_id or (pending.session_id if pending else None)
-    await _assert_dm_permission(caller, target_campaign, target_session)
+    await require_dm(caller, target_campaign, target_session)
 
     planned = _planned_action(req.action_id, target_session, target_campaign)
     if req.description is not None:
@@ -229,7 +214,7 @@ async def list_pending_actions(
 ) -> list[PendingAction]:
     """Retrieve all pending actions. Requires DM permission."""
     caller = caller_id
-    await _assert_dm_permission(caller, campaign_id, session_id)
+    await require_dm(caller, campaign_id, session_id)
 
     engine = get_copilot_engine()
     return engine.list_pending_actions(session_id=session_id, campaign_id=campaign_id)
