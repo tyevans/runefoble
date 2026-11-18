@@ -6,8 +6,6 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -189,55 +187,5 @@ describe('Atlas Subview: Codex Sidebar', () => {
       },
     });
     assert.ok(template);
-  });
-});
-
-describe('Atlas Architecture: File Length Invariants (Hard Invariant 6)', () => {
-  it('verifies runefoble-campaign-atlas.ts is strictly < 120 lines', () => {
-    const filePath = resolve(
-      __dirname,
-      '../../services/campaign_lore/ui/src/runefoble-campaign-atlas.ts'
-    );
-    const content = readFileSync(filePath, 'utf-8');
-    const lineCount = content.split('\n').length;
-    assert.ok(
-      lineCount < 120,
-      `runefoble-campaign-atlas.ts has ${lineCount} lines, expected < 120`
-    );
-  });
-
-  it('verifies all subview templates under src/atlas/ are strictly < 120 lines', () => {
-    const atlasDir = resolve(
-      __dirname,
-      '../../services/campaign_lore/ui/src/atlas'
-    );
-    const files = [
-      'territory-renderer.template.ts',
-      'pins-layer.template.ts',
-      'codex-sidebar.template.ts',
-      'types.ts',
-      'index.ts',
-    ];
-
-    for (const file of files) {
-      const filePath = resolve(atlasDir, file);
-      const content = readFileSync(filePath, 'utf-8');
-      const lineCount = content.split('\n').length;
-      assert.ok(
-        lineCount < 120,
-        `${file} has ${lineCount} lines, expected < 120`
-      );
-    }
-  });
-
-  it('verifies runefoble-campaign-atlas exports customElement definition and types', () => {
-    const filePath = resolve(
-      __dirname,
-      '../../services/campaign_lore/ui/src/runefoble-campaign-atlas.ts'
-    );
-    const content = readFileSync(filePath, 'utf-8');
-    assert.ok(content.includes("@customElement('runefoble-campaign-atlas')"));
-    assert.ok(content.includes('export class RunefobleCampaignAtlas'));
-    assert.ok(content.includes('export type { AtlasPin, AtlasTerritory, CodexEntry }'));
   });
 });

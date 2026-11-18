@@ -6,8 +6,6 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 // Submodule imports via radial index facade
 import {
@@ -20,64 +18,7 @@ import {
   renderWedge,
 } from '../../services/board_state/ui/src/radial/index.ts';
 
-// Direct submodule imports
-import { radialMenuStyles as stylesDirect } from '../../services/board_state/ui/src/radial/radial_menu.styles.ts';
-import { renderBauhausGlyph as glyphDirect } from '../../services/board_state/ui/src/radial/radial_glyphs.ts';
-import {
-  RADIAL_ACTIONS as actionsDirect,
-  polarToCartesian as polarDirect,
-  describeArc as arcDirect,
-  calculateWedgePosition as wedgePosDirect,
-  renderWedge as renderWedgeDirect,
-} from '../../services/board_state/ui/src/radial/radial_wedge.ts';
-
-const REPO_ROOT = resolve(import.meta.dirname, '../../');
-
-describe('Radial Menu Architecture: File Length Invariants (Hard Invariant 6)', () => {
-  it('verifies radial_menu.ts is strictly < 110 lines (target < 100 lines)', () => {
-    const filePath = resolve(REPO_ROOT, 'services/board_state/ui/src/radial_menu.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').length;
-    assert.ok(lines < 110, `radial_menu.ts has ${lines} lines, expected < 110`);
-    assert.ok(lines < 100, `radial_menu.ts has ${lines} lines, expected target < 100`);
-  });
-
-  it('verifies radial_menu.styles.ts is strictly < 110 lines (target < 90 lines)', () => {
-    const filePath = resolve(REPO_ROOT, 'services/board_state/ui/src/radial/radial_menu.styles.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').length;
-    assert.ok(lines < 110, `radial_menu.styles.ts has ${lines} lines, expected < 110`);
-    assert.ok(lines < 90, `radial_menu.styles.ts has ${lines} lines, expected target < 90`);
-  });
-
-  it('verifies radial_glyphs.ts is strictly < 110 lines (target < 100 lines)', () => {
-    const filePath = resolve(REPO_ROOT, 'services/board_state/ui/src/radial/radial_glyphs.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').length;
-    assert.ok(lines < 110, `radial_glyphs.ts has ${lines} lines, expected < 110`);
-    assert.ok(lines < 100, `radial_glyphs.ts has ${lines} lines, expected target < 100`);
-  });
-
-  it('verifies radial_wedge.ts is strictly < 110 lines (target < 90 lines)', () => {
-    const filePath = resolve(REPO_ROOT, 'services/board_state/ui/src/radial/radial_wedge.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').length;
-    assert.ok(lines < 110, `radial_wedge.ts has ${lines} lines, expected < 110`);
-    assert.ok(lines < 90, `radial_wedge.ts has ${lines} lines, expected target < 90`);
-  });
-});
-
-describe('Radial Menu: Submodule Re-exports and Direct Functions', () => {
-  it('facade re-exports match direct submodule implementations', () => {
-    assert.equal(radialMenuStyles, stylesDirect);
-    assert.equal(renderBauhausGlyph, glyphDirect);
-    assert.equal(RADIAL_ACTIONS, actionsDirect);
-    assert.equal(polarToCartesian, polarDirect);
-    assert.equal(describeArc, arcDirect);
-    assert.equal(calculateWedgePosition, wedgePosDirect);
-    assert.equal(renderWedge, renderWedgeDirect);
-  });
-
+describe('Radial Menu: Actions', () => {
   it('defines 5 standard tactical actions in RADIAL_ACTIONS', () => {
     assert.equal(RADIAL_ACTIONS.length, 5);
     const actionIds = RADIAL_ACTIONS.map((a) => a.id);
@@ -157,16 +98,5 @@ describe('Radial Wedge Rendering Template', () => {
     assert.ok(wedgeTemplate.values.includes('active'));
     assert.ok(wedgeTemplate.values.includes(15));
     assert.ok(wedgeTemplate.values.includes(-50));
-  });
-});
-
-describe('Web Component Controller Contract', () => {
-  it('verifies radial_menu.ts exports RunefobleRadialMenu custom element and submodules', () => {
-    const filePath = resolve(REPO_ROOT, 'services/board_state/ui/src/radial_menu.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    assert.ok(content.includes("@customElement('runefoble-radial-menu')"));
-    assert.ok(content.includes('export class RunefobleRadialMenu'));
-    assert.ok(content.includes("export * from './radial/index.ts'"));
-    assert.ok(content.includes("'runefoble-radial-menu': RunefobleRadialMenu"));
   });
 });

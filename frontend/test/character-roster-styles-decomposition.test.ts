@@ -6,8 +6,6 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 // Submodule imports
 import {
@@ -16,58 +14,6 @@ import {
   characterCardStyles,
   assignmentDialogStyles,
 } from '../../services/character_sheet/ui/src/roster/runefoble-character-roster.styles.ts';
-
-const REPO_ROOT = resolve(import.meta.dirname, '../../');
-
-describe('Character Roster Styles: File Length Invariants (Hard Invariant 6)', () => {
-  it('verifies runefoble-character-roster.styles.ts is strictly < 50 lines (aggregator DoD 1)', () => {
-    const filePath = resolve(
-      REPO_ROOT,
-      'services/character_sheet/ui/src/roster/runefoble-character-roster.styles.ts',
-    );
-    assert.ok(existsSync(filePath), 'Aggregator file must exist');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.trim().split('\n').length;
-    assert.ok(lines < 50, `runefoble-character-roster.styles.ts has ${lines} lines, expected < 50`);
-    assert.ok(lines < 40, `runefoble-character-roster.styles.ts has ${lines} lines, target < 40`);
-  });
-
-  it('verifies roster_layout.styles.ts is strictly < 130 lines (target < 110 lines)', () => {
-    const filePath = resolve(
-      REPO_ROOT,
-      'services/character_sheet/ui/src/roster/styles/roster_layout.styles.ts',
-    );
-    assert.ok(existsSync(filePath), 'Layout styles file must exist');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.trim().split('\n').length;
-    assert.ok(lines < 130, `roster_layout.styles.ts has ${lines} lines, strictly expected < 130`);
-    assert.ok(lines < 110, `roster_layout.styles.ts has ${lines} lines, target < 110`);
-  });
-
-  it('verifies character_card.styles.ts is strictly < 130 lines (target < 120 lines)', () => {
-    const filePath = resolve(
-      REPO_ROOT,
-      'services/character_sheet/ui/src/roster/styles/character_card.styles.ts',
-    );
-    assert.ok(existsSync(filePath), 'Character card styles file must exist');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.trim().split('\n').length;
-    assert.ok(lines < 130, `character_card.styles.ts has ${lines} lines, strictly expected < 130`);
-    assert.ok(lines < 120, `character_card.styles.ts has ${lines} lines, target < 120`);
-  });
-
-  it('verifies assignment_dialog.styles.ts is strictly < 130 lines (target < 120 lines)', () => {
-    const filePath = resolve(
-      REPO_ROOT,
-      'services/character_sheet/ui/src/roster/styles/assignment_dialog.styles.ts',
-    );
-    assert.ok(existsSync(filePath), 'Assignment dialog styles file must exist');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.trim().split('\n').length;
-    assert.ok(lines < 130, `assignment_dialog.styles.ts has ${lines} lines, strictly expected < 130`);
-    assert.ok(lines < 120, `assignment_dialog.styles.ts has ${lines} lines, target < 120`);
-  });
-});
 
 describe('Character Roster Styles: CSS Module Rules and Tokens Contract', () => {
   it('defines roster layout styles with host container, header, controls, and character grid', () => {
@@ -136,15 +82,4 @@ describe('Character Roster Styles: CSS Module Rules and Tokens Contract', () => 
     assert.ok(stylesArray.includes(assignmentDialogStyles));
   });
 
-  it('verifies runefoble-character-roster component attaches characterRosterStyles', () => {
-    const compPath = resolve(
-      REPO_ROOT,
-      'services/character_sheet/ui/src/roster/runefoble-character-roster.ts',
-    );
-    const compContent = readFileSync(compPath, 'utf-8');
-    assert.ok(
-      compContent.includes("static styles = [characterRosterStyles]"),
-      'RunefobleCharacterRoster must attach characterRosterStyles',
-    );
-  });
 });

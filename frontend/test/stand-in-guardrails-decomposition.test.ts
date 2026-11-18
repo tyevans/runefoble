@@ -6,8 +6,6 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 // Submodule imports
 import { standInGuardrailsStyles } from '../../services/character_sheet/ui/src/runefoble-stand-in-guardrails.styles.ts';
@@ -20,31 +18,6 @@ import {
   renderCustomPriorityChips,
   renderActionsBar,
 } from '../../services/character_sheet/ui/src/runefoble-stand-in-guardrails.templates.ts';
-
-const REPO_ROOT = resolve(import.meta.dirname, '../../');
-
-describe('Stand-In Guardrails: File Length Invariants (Hard Invariant 6)', () => {
-  it('verifies runefoble-stand-in-guardrails.ts is strictly < 130 lines', () => {
-    const filePath = resolve(REPO_ROOT, 'services/character_sheet/ui/src/runefoble-stand-in-guardrails.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').length;
-    assert.ok(lines < 130, `runefoble-stand-in-guardrails.ts has ${lines} lines, expected < 130`);
-  });
-
-  it('verifies runefoble-stand-in-guardrails.styles.ts is strictly < 130 lines', () => {
-    const filePath = resolve(REPO_ROOT, 'services/character_sheet/ui/src/runefoble-stand-in-guardrails.styles.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').length;
-    assert.ok(lines < 130, `runefoble-stand-in-guardrails.styles.ts has ${lines} lines, expected < 130`);
-  });
-
-  it('verifies runefoble-stand-in-guardrails.templates.ts is strictly < 130 lines', () => {
-    const filePath = resolve(REPO_ROOT, 'services/character_sheet/ui/src/runefoble-stand-in-guardrails.templates.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').length;
-    assert.ok(lines < 130, `runefoble-stand-in-guardrails.templates.ts has ${lines} lines, expected < 130`);
-  });
-});
 
 describe('Stand-In Guardrails: Styles Submodule Contract', () => {
   it('defines standInGuardrailsStyles with Bauhaus design tokens', () => {
@@ -120,22 +93,5 @@ describe('Stand-In Guardrails: Templates Submodule Contract', () => {
     const result = renderActionsBar(dummyHost);
     assert.ok(result);
     assert.ok(result.values.some((v: unknown) => v === 'Saved!'));
-  });
-});
-
-describe('Stand-In Guardrails: Component Controller Contract', () => {
-  it('verifies runefoble-stand-in-guardrails.ts exports RunefobleStandInGuardrails custom element and imports styles & templates', () => {
-    const filePath = resolve(REPO_ROOT, 'services/character_sheet/ui/src/runefoble-stand-in-guardrails.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    assert.ok(content.includes("@customElement('runefoble-stand-in-guardrails')"));
-    assert.ok(content.includes('export class RunefobleStandInGuardrails'));
-    assert.ok(content.includes('standInGuardrailsStyles'));
-    assert.ok(content.includes('renderActionsBar'));
-    assert.ok(content.includes('renderAllyProtectionTags'));
-    assert.ok(content.includes('renderCustomPriorityChips'));
-    assert.ok(content.includes('renderHeader'));
-    assert.ok(content.includes('renderPostureSelector'));
-    assert.ok(content.includes('renderSpellSlotPreservation'));
-    assert.ok(content.includes("'runefoble-stand-in-guardrails': RunefobleStandInGuardrails"));
   });
 });

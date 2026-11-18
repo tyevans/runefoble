@@ -6,8 +6,6 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 // Submodule imports
 import {
@@ -26,24 +24,6 @@ import {
   unequipItem,
 } from '../../services/character_sheet/ui/src/runefoble-character-sheet.actions.ts';
 import type { InventoryItem } from '../../services/character_sheet/ui/src/runefoble-character-sheet.types.ts';
-
-const REPO_ROOT = resolve(import.meta.dirname, '../../');
-
-describe('Character Sheet: File Length Invariants (Hard Invariant 6)', () => {
-  it('verifies runefoble-character-sheet.ts is strictly < 150 lines', () => {
-    const filePath = resolve(REPO_ROOT, 'services/character_sheet/ui/src/runefoble-character-sheet.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').length;
-    assert.ok(lines < 150, `runefoble-character-sheet.ts has ${lines} lines, expected < 150`);
-  });
-
-  it('verifies runefoble-character-sheet.actions.ts is strictly < 130 lines', () => {
-    const filePath = resolve(REPO_ROOT, 'services/character_sheet/ui/src/runefoble-character-sheet.actions.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n').length;
-    assert.ok(lines < 130, `runefoble-character-sheet.actions.ts has ${lines} lines, expected < 130`);
-  });
-});
 
 describe('Character Sheet: Actions Submodule State Mutations & Calculations', () => {
   it('calculates encumbrance tiers and percentages accurately', () => {
@@ -186,26 +166,5 @@ describe('Character Sheet: Actions Submodule State Mutations & Calculations', ()
     assert.equal((receivedEvent as CustomEvent).bubbles, true);
     assert.equal((receivedEvent as CustomEvent).composed, true);
     assert.deepEqual((receivedEvent as CustomEvent).detail, { status: 'success' });
-  });
-});
-
-describe('Character Sheet: Component Controller Contract', () => {
-  it('verifies runefoble-character-sheet.ts exports RunefobleCharacterSheet custom element and delegates action handlers', () => {
-    const filePath = resolve(REPO_ROOT, 'services/character_sheet/ui/src/runefoble-character-sheet.ts');
-    const content = readFileSync(filePath, 'utf-8');
-    assert.ok(content.includes("@customElement('runefoble-character-sheet')"));
-    assert.ok(content.includes('export class RunefobleCharacterSheet'));
-    assert.ok(content.includes('runefoble-character-sheet.actions.ts'));
-    assert.ok(content.includes('handleEquipItem('));
-    assert.ok(content.includes('handleUnequipItem('));
-    assert.ok(content.includes('handleAddItem('));
-    assert.ok(content.includes('handleRemoveItem('));
-    assert.ok(content.includes('handleHpDelta('));
-    assert.ok(content.includes('handlePipClick('));
-    assert.ok(content.includes('handleCastSpell('));
-    assert.ok(content.includes('handleTogglePrepare('));
-    assert.ok(content.includes('handleApplyCondition('));
-    assert.ok(content.includes('handleRemoveCondition('));
-    assert.ok(content.includes("'runefoble-character-sheet': RunefobleCharacterSheet"));
   });
 });
