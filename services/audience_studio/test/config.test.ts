@@ -11,13 +11,22 @@ test('the service refuses to start without an issuer or an audience', () => {
   assert.throws(() => readZitadelSettings({ RUNEFOBLE_ZITADEL_ISSUER: 'http://zitadel:8080' }), /RUNEFOBLE_ZITADEL_AUDIENCE/);
 });
 
-test('the JWKS URL is optional and an empty value counts as unset', () => {
+test('the internal URL is optional and an empty value counts as unset', () => {
   const settings = readZitadelSettings({
     RUNEFOBLE_ZITADEL_ISSUER: 'http://zitadel:8080',
     RUNEFOBLE_ZITADEL_AUDIENCE: 'runefoble-api',
-    RUNEFOBLE_ZITADEL_JWKS_URL: '',
+    RUNEFOBLE_ZITADEL_INTERNAL_URL: '',
   });
-  assert.deepEqual(settings, { issuer: 'http://zitadel:8080', audience: 'runefoble-api', jwksUrl: undefined });
+  assert.deepEqual(settings, { issuer: 'http://zitadel:8080', audience: 'runefoble-api', internalUrl: undefined });
+});
+
+test('the internal URL is read when set', () => {
+  const settings = readZitadelSettings({
+    RUNEFOBLE_ZITADEL_ISSUER: 'http://auth.localhost',
+    RUNEFOBLE_ZITADEL_AUDIENCE: 'project-1',
+    RUNEFOBLE_ZITADEL_INTERNAL_URL: 'http://zitadel:8080',
+  });
+  assert.deepEqual(settings, { issuer: 'http://auth.localhost', audience: 'project-1', internalUrl: 'http://zitadel:8080' });
 });
 
 test('the SpiceDB endpoint has no default and the service refuses to start without it', () => {

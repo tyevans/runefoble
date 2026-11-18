@@ -32,7 +32,7 @@ async function start(
   const ctx = await buildServer({
     spicedb,
     logger: false,
-    zitadel: { issuer: TEST_ISSUER, audience: TEST_AUDIENCE, jwksUrl: issuer.jwksUrl },
+    zitadel: { issuer: TEST_ISSUER, audience: TEST_AUDIENCE, internalUrl: issuer.internalUrl },
     createAdapters: async () => ({ eventStore: store, streamPublisher: publisher }),
   });
   return ctx;
