@@ -8,24 +8,22 @@ Governed by:
 - TASK-0079: Zitadel OIDC Token Verification Blackbox Test Suite Modular Decomposition
 """
 
+import httpx
 import pytest
 
 from tests.helpers.zitadel_auth import create_signed_token
 
 
 @pytest.mark.asyncio
-async def test_http_valid_signed_token_succeeds_and_extracts_subject(auth_environment):
+async def test_http_valid_signed_token_succeeds_and_extracts_subject(
+    auth_environment, game_session_upstream
+):
     """Frontdoor test: Valid RS256 token passes verification, extracts user_id, and checks Zanzibar."""
     client = auth_environment["client"]
     valid_key = auth_environment["valid_key"]
     kid = auth_environment["kid"]
-    spicedb = auth_environment["spicedb"]
 
-    campaign_id = "camp-jwks-valid-01"
     user_id = "user_valeros_fighter"
-
-    # Grant Zanzibar view permission on the campaign to this user
-    await spicedb.write_relationship("campaign", campaign_id, "view", "user", user_id)
 
     token = create_signed_token(
         valid_key,
@@ -34,14 +32,27 @@ async def test_http_valid_signed_token_succeeds_and_extracts_subject(auth_enviro
         roles=["player"],
         preferred_username="Valeros",
     )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Frontdoor setup: the user creates a campaign and a session. The owner holds the relations.
+    campaign = client.post(
+        "/api/v1/campaigns",
+        json={"title": "JWKS Campaign", "setting": "Sword Coast"},
+        headers=headers,
+    )
+    assert campaign.status_code == 201, campaign.text
+    created = httpx.post(
+        game_session_upstream + "/api/v1/sessions/create",
+        json={"campaign_id": campaign.json()["id"], "title": "JWKS", "dm_id": "the_watcher"},
+        headers=headers,
+    )
+    assert created.status_code == 200, created.text
+    session_id = created.json()["session_id"]
 
     # 1. Access protected session proxy
-    res = client.get(
-        f"/api/v1/sessions/{campaign_id}",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert res.status_code == 200
-    assert res.json()["id"] == campaign_id
+    res = client.get(f"/api/v1/sessions/{session_id}", headers=headers)
+    assert res.status_code == 200, res.text
+    assert res.json()["session_id"] == session_id
 
     # 2. Access profile endpoint
     profile_res = client.get(

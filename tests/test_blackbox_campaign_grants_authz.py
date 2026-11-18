@@ -16,7 +16,7 @@ from gateway_api.main import app
 
 
 @pytest.fixture
-def client(game_session_upstream) -> TestClient:
+def client(game_session_upstream, character_sheet_upstream) -> TestClient:
     """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
     with TestClient(app) as gateway_client:
         yield gateway_client
