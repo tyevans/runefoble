@@ -8,7 +8,7 @@ tool is the token subject that registered it.
 from collections.abc import Callable
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from gateway_mcp.dynamic.auth import (
     enforce_tool_auth,
     grant_tool_permissions,
@@ -20,6 +20,8 @@ from gateway_mcp.dynamic.models import (
 )
 from gateway_mcp.dynamic.registry import dynamic_registry
 from runefoble_auth.principal import VerifiedPrincipal
+from starlette.applications import Starlette
+from starlette.routing import Mount
 
 
 def build_tools_registry_router(
@@ -130,3 +132,15 @@ def build_tools_registry_router(
             raise HTTPException(status_code=500, detail=f"Execution error: {exc}") from exc
 
     return router
+
+
+def mount_tools_registry(
+    app: Starlette, principal_dependency: Callable[..., VerifiedPrincipal]
+) -> None:
+    """Serve the tool routes from the MCP ASGI app, so one process owns the registry.
+
+    The routes sit behind every route that `app` already has, so `/mcp` and `/healthz` win.
+    """
+    admin = FastAPI(title="Runefoble MCP Tool Registry", docs_url=None, redoc_url=None)
+    admin.include_router(build_tools_registry_router(principal_dependency))
+    app.router.routes.append(Mount("/", app=admin))

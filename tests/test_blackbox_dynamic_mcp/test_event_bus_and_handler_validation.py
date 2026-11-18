@@ -20,6 +20,7 @@ from gateway_mcp.dynamic import (
 from gateway_mcp.dynamic.events import publish_system_event
 from gateway_mcp.server import mcp
 from runefoble_events.mcp_tools import DynamicToolUnregisteredEvent
+from runefoble_platform.config import PlatformSettings
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 EVENTS_LOGGER = "runefoble.gateway_mcp.dynamic.events"
@@ -58,23 +59,23 @@ def test_blackbox_register_rejects_tool_without_handler(client: TestClient, over
     assert client.get(f"/mcp/tools/{name}").status_code == 404
 
 
-def test_blackbox_gateway_startup_injects_redis_streams_bus():
+def test_blackbox_gateway_mcp_startup_injects_redis_streams_bus():
     """Gateway startup injects the Redis Streams bus that dynamic tool events use."""
-    from gateway_api.main import configure_dynamic_tool_event_bus
+    from gateway_mcp.server import configure_dynamic_event_bus
 
-    bus = configure_dynamic_tool_event_bus("redis://redis.example:6379/3")
+    configure_dynamic_event_bus(PlatformSettings(redis_url="redis://redis.example:6379/3"))
+    bus = get_event_bus()
 
     assert isinstance(get_event_bus(), RedisStreamsEventBus)
-    assert get_event_bus() is bus
     assert bus.redis_url == "redis://redis.example:6379/3"
 
 
-def test_blackbox_gateway_startup_refuses_missing_redis_url():
+def test_blackbox_gateway_mcp_startup_refuses_missing_redis_url():
     """Gateway startup fails when no Redis URL exists, so no tool runs without a bus."""
-    from gateway_api.main import configure_dynamic_tool_event_bus
+    from gateway_mcp.server import configure_dynamic_event_bus
 
     with pytest.raises(RuntimeError, match="REDIS_URL"):
-        configure_dynamic_tool_event_bus("")
+        configure_dynamic_event_bus(PlatformSettings(redis_url=""))
 
 
 def test_blackbox_publish_failure_is_logged(caplog: pytest.LogCaptureFixture, use_redis_client):

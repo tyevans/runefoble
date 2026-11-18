@@ -10,22 +10,18 @@ from __future__ import annotations
 from collections.abc import Iterator
 
 import pytest
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from gateway_mcp.dynamic import (
     dynamic_registry,
 )
-from gateway_mcp.routers import build_tools_registry_router
+from gateway_mcp.identity import BearerTransportAuth
 from gateway_mcp.server import mcp
-from runefoble_auth.principal import require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mcp_http import serve_mcp
+from tests.helpers.mcp_http import mcp_http_app, serve_mcp
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
-
-CALLER_VERIFIER = SIGNING_ISSUER.verifier()
 
 
 def caller_headers(sub: str) -> dict[str, str]:
@@ -45,22 +41,21 @@ def event_bus(mock_redis: MockAsyncRedis, use_redis_client) -> RedisStreamsEvent
 
 
 @pytest.fixture
-def test_app() -> FastAPI:
-    app = FastAPI(title="FastMCP Dynamic Registry Test App")
-    app.include_router(build_tools_registry_router(require_principal(lambda: CALLER_VERIFIER)))
-    return app
+def test_app() -> BearerTransportAuth:
+    """The MCP app as the gateway-mcp process serves it: bearer check, `/mcp`, tool routes."""
+    return mcp_http_app(mcp)
 
 
 @pytest.fixture
 def client(
-    test_app: FastAPI, spicedb: MockSpiceDBClient, event_bus: RedisStreamsEventBus
+    test_app: BearerTransportAuth, spicedb: MockSpiceDBClient, event_bus: RedisStreamsEventBus
 ) -> TestClient:
     return TestClient(test_app, headers=caller_headers("user-test"))
 
 
 @pytest.fixture
 def anonymous_client(
-    test_app: FastAPI, spicedb: MockSpiceDBClient, event_bus: RedisStreamsEventBus
+    test_app: BearerTransportAuth, spicedb: MockSpiceDBClient, event_bus: RedisStreamsEventBus
 ) -> TestClient:
     return TestClient(test_app)
 

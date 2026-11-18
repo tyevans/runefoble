@@ -14,6 +14,7 @@ import base64
 from collections.abc import Iterator
 from typing import Any
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
@@ -47,6 +48,13 @@ def mcp_endpoint() -> Iterator[str]:
 def gateway(character_sheet_upstream, game_session_upstream, silo_double):
     """Enter the gateway lifespan after the upstreams serve."""
     with TestClient(app) as client:
+        yield client
+
+
+@pytest.fixture
+def registry(mcp_endpoint: str) -> Iterator[httpx.Client]:
+    """Call the tool admin routes on the MCP process, where the registry lives."""
+    with httpx.Client(base_url=mcp_endpoint.removesuffix("/mcp")) as client:
         yield client
     if dynamic_registry.get_tool(TOOL_NAME):
         dynamic_registry.deregister_tool(TOOL_NAME)
@@ -99,38 +107,38 @@ def make_character(gateway: TestClient, owner: str, campaign_id: str) -> str:
 # --- Registry routes ---
 
 
-def test_anonymous_register_is_refused(gateway):
-    assert gateway.post("/mcp/tools/register", json=DEFINITION).status_code == 401
+def test_anonymous_register_is_refused(registry):
+    assert registry.post("/mcp/tools/register", json=DEFINITION).status_code == 401
 
 
-def test_only_the_author_may_delete_a_tool(gateway):
-    registered = gateway.post("/mcp/tools/register", json=DEFINITION, headers=auth("alice"))
+def test_only_the_author_may_delete_a_tool(registry):
+    registered = registry.post("/mcp/tools/register", json=DEFINITION, headers=auth("alice"))
     assert registered.status_code == 200, registered.text
-    assert gateway.delete(f"/mcp/tools/{TOOL_NAME}", headers=auth("mallory")).status_code == 403
-    assert gateway.delete(f"/mcp/tools/{TOOL_NAME}", headers=auth("alice")).status_code == 200
+    assert registry.delete(f"/mcp/tools/{TOOL_NAME}", headers=auth("mallory")).status_code == 403
+    assert registry.delete(f"/mcp/tools/{TOOL_NAME}", headers=auth("alice")).status_code == 200
 
 
-def test_body_author_does_not_choose_the_author(gateway):
+def test_body_author_does_not_choose_the_author(registry):
     body = {**DEFINITION, "author_id": "mallory"}
-    assert gateway.post("/mcp/tools/register", json=body, headers=auth("alice")).status_code == 200
-    tool = gateway.get(f"/mcp/tools/{TOOL_NAME}", headers=auth("alice")).json()["tool"]
+    assert registry.post("/mcp/tools/register", json=body, headers=auth("alice")).status_code == 200
+    tool = registry.get(f"/mcp/tools/{TOOL_NAME}", headers=auth("alice")).json()["tool"]
     assert tool["author_id"] == "alice"
 
 
-def test_register_fails_closed_when_authorization_is_down(gateway):
+def test_register_fails_closed_when_authorization_is_down(registry):
     class DownSpiceDB(MockSpiceDBClient):
         async def write_relationship(self, *args, **kwargs):
             raise AuthzError("SpiceDB unreachable")
 
     set_spicedb_client(DownSpiceDB())
-    response = gateway.post("/mcp/tools/register", json=DEFINITION, headers=auth("alice"))
+    response = registry.post("/mcp/tools/register", json=DEFINITION, headers=auth("alice"))
     assert response.status_code == 503, response.text
     assert dynamic_registry.get_tool(TOOL_NAME) is None
 
 
-def test_execute_needs_the_execute_permission_over_http_and_mcp(gateway, mcp_endpoint):
-    gateway.post("/mcp/tools/register", json=DEFINITION, headers=auth("alice"))
-    denied = gateway.post(
+def test_execute_needs_the_execute_permission_over_http_and_mcp(registry, mcp_endpoint):
+    registry.post("/mcp/tools/register", json=DEFINITION, headers=auth("alice"))
+    denied = registry.post(
         f"/mcp/tools/{TOOL_NAME}/execute", json={"arguments": {"n": 2}}, headers=auth("mallory")
     )
     assert denied.status_code == 403

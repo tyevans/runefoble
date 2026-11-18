@@ -14,6 +14,7 @@ from typing import Any
 
 import httpx
 from gateway_mcp.identity import BearerTransportAuth
+from gateway_mcp.routers import mount_tools_registry
 from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.server.fastmcp import FastMCP
@@ -22,11 +23,22 @@ from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.shared.exceptions import McpError
 from mcp.types import CallToolResult
 from pydantic import AnyUrl
+from runefoble_auth.principal import require_principal
 from starlette.applications import Starlette
 from starlette.routing import Route
 
 from tests.helpers.live_services import serve
 from tests.helpers.ws_identity import SIGNING_ISSUER
+
+
+def mcp_http_app(server: FastMCP) -> BearerTransportAuth:
+    """Return the production shape of the MCP app: the bearer check over `/mcp` and the tool routes.
+
+    It trusts the shared test issuer, so each tool and each admin route sees the verified caller.
+    """
+    app = _mcp_http_app(server)
+    mount_tools_registry(app, require_principal(SIGNING_ISSUER.verifier))
+    return BearerTransportAuth(app, verifier=SIGNING_ISSUER.verifier)
 
 
 def _mcp_http_app(server: FastMCP) -> Starlette:
@@ -55,8 +67,7 @@ def serve_mcp(server: FastMCP) -> Iterator[str]:
     The endpoint verifies the bearer like production does (TASK-0532). It trusts the shared
     test issuer, so each tool sees the verified caller of its request.
     """
-    app = BearerTransportAuth(_mcp_http_app(server), verifier=SIGNING_ISSUER.verifier)
-    with serve(app, lifespan="on") as base_url:
+    with serve(mcp_http_app(server), lifespan="on") as base_url:
         yield f"{base_url}/mcp"
 
 

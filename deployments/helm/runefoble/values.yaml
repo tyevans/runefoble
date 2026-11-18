@@ -253,6 +253,8 @@ swaggerUI:
       url: "http://campaign-analytics:8011/openapi.json"
     - name: "Inference Worker Service"
       url: "http://inference-worker:8100/openapi.json"
+    - name: "Gateway MCP Tool Registry"
+      url: "http://gateway-mcp:8012/openapi.json"
 
 # Services
 services:
