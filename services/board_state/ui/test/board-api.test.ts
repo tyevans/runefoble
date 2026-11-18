@@ -8,7 +8,6 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BoardApiError,
-  boardSocketProtocols,
   boardSocketUrl,
   buildAoEEvaluateMessage,
   buildConfirmMoveMessage,
@@ -129,15 +128,5 @@ describe('buildAoEEvaluateMessage', () => {
       caster_token_id: '1',
       grid_type: 'square',
     });
-  });
-});
-
-describe('boardSocketProtocols', () => {
-  it('carries the bearer token in the subprotocol list', () => {
-    assert.deepEqual(boardSocketProtocols('abc'), ['runefoble.v1', 'runefoble.bearer.abc']);
-  });
-
-  it('offers only the Runefoble protocol when nobody is signed in', () => {
-    assert.deepEqual(boardSocketProtocols(null), ['runefoble.v1']);
   });
 });

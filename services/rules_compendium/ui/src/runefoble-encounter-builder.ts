@@ -5,6 +5,7 @@
 
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { compendiumStyles } from './runefoble-rules-compendium.styles.ts';
 import type {
   DifficultyTier,
@@ -39,6 +40,7 @@ const XP_THRESHOLDS_PER_LEVEL: Record<number, [number, number, number, number]> 
 
 @customElement('runefoble-encounter-builder')
 export class RunefobleEncounterBuilder extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
   static styles = [compendiumStyles];
 
   @property({ type: String }) apiBaseUrl = '';
@@ -132,7 +134,7 @@ export class RunefobleEncounterBuilder extends LitElement {
       if (this.apiBaseUrl) {
         const res = await fetch(`${this.apiBaseUrl}/api/v1/compendium/encounters/balance`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(await this.auth.authHeaders()) },
           body: JSON.stringify({
             party_levels: this.partyLevels,
             target_difficulty: this.targetDifficulty,

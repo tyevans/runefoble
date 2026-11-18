@@ -7,11 +7,14 @@
  */
 
 import { authService } from '../auth/auth-service.ts';
+import { wsProtocols } from '../auth/transport.ts';
 import { router, type MatchedRoute } from '../router/index.ts';
 import type { RunefobleApp } from '../runefoble-app.ts';
 import { handleSessionMessage } from './session-messages.ts';
 
 const RECONNECT_DELAY_MS = 4000;
+/** Close code the gateway sends when it refuses the WebSocket handshake (ADR-0015 c). */
+export const HANDSHAKE_REFUSED_CODE = 1008;
 
 /** Builds the session WebSocket URL on the current origin. Call only in a browser. */
 export function sessionSocketUrl(sessionId: string): string {
@@ -50,15 +53,22 @@ export class SessionSocket {
     this.activeSessionId = sessionId;
     try {
       if (typeof window === 'undefined' || typeof WebSocket === 'undefined') return;
-      const token = authService.getAccessToken();
-      if (!token) return;
-      this.socket = new WebSocket(sessionSocketUrl(sessionId), ['runefoble.v1', `runefoble.bearer.${token}`]);
+      const protocols = wsProtocols();
+      if (!protocols) {
+        this.host.showToast('Sign in to open the live session.');
+        return;
+      }
+      this.socket = new WebSocket(sessionSocketUrl(sessionId), protocols);
       this.socket.onopen = () => {
         this.host.socketConnected = true;
       };
       this.socket.onmessage = (e) => this.handleMessage(e.data);
-      this.socket.onclose = () => {
+      this.socket.onclose = (event) => {
         this.host.socketConnected = false;
+        if (event.code === HANDSHAKE_REFUSED_CODE) {
+          this.refuseSession();
+          return;
+        }
         const pattern = router.getCurrentRoute()?.pattern || '';
         if (pattern.includes('/sessions/') || pattern.includes('/lobby/')) {
           this.reconnectTimer = setTimeout(() => this.connectWebSocket(this.host.sessionId), RECONNECT_DELAY_MS);
@@ -69,6 +79,14 @@ export class SessionSocket {
       this.host.socketConnected = false;
       this.host.showToast('The live session connection failed. Reload the page to retry.');
     }
+  }
+
+  /** The gateway refused the handshake. Clear the session and send the user to sign-in. */
+  private refuseSession(): void {
+    this.socket = null;
+    this.activeSessionId = null;
+    authService.discardSession();
+    this.host.showToast('Your sign-in was not accepted. Sign in again.');
   }
 
   disconnectWebSocket(): void {

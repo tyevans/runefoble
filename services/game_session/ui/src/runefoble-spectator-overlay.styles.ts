@@ -240,6 +240,17 @@ export const spectatorOverlayStyles = css`
     border: 2px solid #000;
   }
 
+  /* Socket status line (sign-in or connection failure) */
+  .socket-error {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    font-size: 12px;
+  }
+
   /* Camera Director Viewport HUD */
   .camera-hud-badge {
     position: fixed;

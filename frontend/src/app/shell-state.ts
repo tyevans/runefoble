@@ -1,8 +1,8 @@
 /**
  * App Shell State Sync (TASK-0640b).
  *
- * Applies the stored theme to the document and mirrors the signed-in user's role onto
- * the host. Plugin slots register again when the role changes.
+ * Applies the stored theme to the document and mirrors the signed-in user onto
+ * the host. Plugin slots register again when the user changes.
  */
 
 import type { AuthState } from '../auth/auth-service.ts';
@@ -19,10 +19,13 @@ export function initTheme(host: RunefobleApp): void {
   document?.documentElement?.setAttribute('data-color-mode', host.currentColorMode);
 }
 
-/** Copies the auth state to the host and registers plugins for the user's role. */
+/**
+ * Copies the signed-in user id to the host. Role names never grant DM controls (ADR-0015 d).
+ * DM controls stay hidden until the gateway returns a campaign permission flag (TASK-0644).
+ */
 export function syncAuthState(host: RunefobleApp, s: AuthState): void {
   host.currentUserId = s.user?.user_id || '';
-  host.isDM = Boolean(s.user?.roles.some((r) => ['dm', 'admin', 'owner'].includes(r)));
-  host.userRole = host.isDM ? 'Dungeon Master' : 'Player';
+  host.isDM = false;
+  host.userRole = 'Player';
   registerDefaultPlugins(pluginRegistry, host.isDM);
 }

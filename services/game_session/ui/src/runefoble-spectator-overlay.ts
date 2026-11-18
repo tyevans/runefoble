@@ -1,5 +1,6 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { AuthConsumerController, websocketProtocols } from '@runefoble/ui-core';
 import { spectatorOverlayStyles } from './runefoble-spectator-overlay.styles.ts';
 
 export interface OverlayPartyMember {
@@ -52,11 +53,13 @@ export class RunefobleSpectatorOverlay extends LitElement {
   @property({ type: Boolean, attribute: 'connect-ws' }) connectWs = false;
 
   @state() private ws: WebSocket | null = null;
+  @state() private socketError: string | null = null;
+  private readonly auth = new AuthConsumerController(this);
 
   connectedCallback() {
     super.connectedCallback();
     if (this.connectWs && typeof WebSocket !== 'undefined') {
-      this.initWebSocket();
+      void this.initWebSocket();
     }
   }
 
@@ -68,11 +71,20 @@ export class RunefobleSpectatorOverlay extends LitElement {
     }
   }
 
-  private initWebSocket() {
+  /** Opens the overlay socket with the shell's bearer token. Without a token it does not open. */
+  private async initWebSocket() {
+    const token = await this.auth.getAccessToken();
+    if (!token) {
+      this.socketError = 'The live overlay needs a signed-in session.';
+      return;
+    }
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${proto}//${window.location.host}/ws/overlay/${this.sessionId}`;
     try {
-      this.ws = new WebSocket(wsUrl);
+      this.ws = new WebSocket(wsUrl, websocketProtocols(token));
+      this.ws.onclose = (event) => {
+        if (event.code === 1008) this.socketError = 'The live overlay sign-in was not accepted. Sign in again.';
+      };
       this.ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
@@ -99,8 +111,8 @@ export class RunefobleSpectatorOverlay extends LitElement {
           // ignore malformed payloads
         }
       };
-    } catch {
-      // ignore offline fallback
+    } catch (err) {
+      this.socketError = `The live overlay could not connect: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
@@ -123,6 +135,7 @@ export class RunefobleSpectatorOverlay extends LitElement {
 
   render() {
     return html`
+      ${this.socketError ? html`<div class="socket-error" role="alert">${this.socketError}</div>` : ''}
       <!-- Camera Director Target Indicator -->
       <div class="camera-hud-badge" title="Cinematic Director Camera Active">
         <span class="camera-indicator-dot"></span>

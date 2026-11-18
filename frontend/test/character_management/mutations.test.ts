@@ -107,7 +107,7 @@ describe('Character Sub-Resource Mutations (TASK-0288, TASK-0640)', () => {
     const resGuardrails = await service.updateCharacterGuardrails('char-valeros', { riskThreshold: 'reckless', avoidMelee: false, permadeathSafeguard: true });
     assert.ok(resGuardrails.ok);
     assert.equal(resGuardrails.data.stand_in_guardrails.riskThreshold, 'reckless');
-    const resHotSwap = await service.requestHotSwap('session-tomb-14', 'char-valeros', 'user-valeros');
+    const resHotSwap = await service.requestHotSwap('session-tomb-14', 'char-valeros', 'user-fixture');
     assert.ok(resHotSwap.ok);
     assert.equal(resHotSwap.data.status, 'control_transferred');
   });

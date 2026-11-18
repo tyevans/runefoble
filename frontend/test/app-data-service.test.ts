@@ -187,7 +187,7 @@ describe('AppDataService failure path returns typed errors, never fixture data',
     ['createCampaignSession', () => service.createCampaignSession('4', { title: 'Session #16' })],
     ['createCampaign', () => service.createCampaign({ title: 'Ashen Keep' } as any)],
     ['updateCampaign', () => service.updateCampaign('4', { title: 'Renamed' } as any)],
-    ['requestHotSwap', () => service.requestHotSwap('session-tomb-14', 'char-valeros', 'user-valeros')],
+    ['requestHotSwap', () => service.requestHotSwap('session-tomb-14', 'char-valeros', 'user-fixture')],
     ['fetchRosterCampaignOptions', () => service.fetchRosterCampaignOptions()],
   ];
 

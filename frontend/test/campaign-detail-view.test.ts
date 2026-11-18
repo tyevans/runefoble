@@ -202,7 +202,7 @@ describe('Campaign Members Roster Lifecycle & Scoping (TASK-0353)', () => {
     const campaign4Members = await dataService.fetchCampaignMembers('4');
     assert.ok(campaign4Members.ok);
     assert.equal(campaign4Members.data.length, 3);
-    assert.ok(campaign4Members.data.some((m) => m.user_id === 'user-valeros'));
+    assert.ok(campaign4Members.data.some((m) => m.user_id === 'user-fixture'));
     assert.ok(campaign4Members.data.some((m) => m.user_id === 'user-kyra'));
     assert.ok(campaign4Members.data.some((m) => m.user_id === 'user-merisiel'));
 

@@ -9,11 +9,11 @@ export interface InviteResponse {
 }
 
 export const FALLBACK_PROFILE: UserClaims = {
-  user_id: 'user-valeros', username: 'Valeros', email: 'valeros@runefoble.local', roles: ['player'], is_admin: false,
+  user_id: 'user-fixture', username: 'Valeros', email: 'valeros@runefoble.local', roles: ['player'],
 };
 
 export const FALLBACK_CAMPAIGNS: CampaignItem[] = [
-  { id: '4', title: 'Tomb of the Star-Eater', system: '5e', role: 'owner', owner_id: 'user-valeros', description: 'Ancient celestial horrors slumber beneath the irradiated astral sands.', setting: 'Spelljammer Astral Void', dm_name: 'The Watcher', player_count: 4, has_active_session: true, active_session_id: 'session-tomb-14' },
+  { id: '4', title: 'Tomb of the Star-Eater', system: '5e', role: 'owner', owner_id: 'user-fixture', description: 'Ancient celestial horrors slumber beneath the irradiated astral sands.', setting: 'Spelljammer Astral Void', dm_name: 'The Watcher', player_count: 4, has_active_session: true, active_session_id: 'session-tomb-14' },
   { id: '5', title: 'Whispering Depths', system: '5e', role: 'player', owner_id: 'user-evelyn', description: 'Subterranean aquatic expeditions through forgotten dwarven aqueducts.', setting: 'Underdark Aquatics', dm_name: 'Evelyn Vance', player_count: 5, has_active_session: false },
 ];
 
@@ -24,7 +24,7 @@ export const FALLBACK_CHARACTERS: CharacterItem[] = [
 ];
 
 export const FALLBACK_MEMBERS: CampaignMember[] = [
-  { user_id: 'user-valeros', username: 'Valeros (You)', character_name: 'Valeros of Korvosa', role: 'owner' },
+  { user_id: 'user-fixture', username: 'Valeros (You)', character_name: 'Valeros of Korvosa', role: 'owner' },
   { user_id: 'user-kyra', username: 'Kyra Sunfall', character_name: 'Kyra the Sun Maiden', role: 'player' },
   { user_id: 'user-merisiel', username: 'Merisiel Nightshadow', character_name: 'Merisiel', role: 'player' },
 ];
@@ -34,8 +34,8 @@ const CAMPAIGN_MEMBERS_CACHE: Record<string, CampaignMember[]> = { '4': [...FALL
 export function getFallbackCampaignMembers(campaignId: string): CampaignMember[] {
   if (!CAMPAIGN_MEMBERS_CACHE[campaignId]) {
     const c = FALLBACK_CAMPAIGNS.find((item) => item.id === campaignId);
-    const owner = c?.owner_id || 'user-valeros';
-    const name = owner === 'user-valeros' ? 'Valeros (You)' : (c?.dm_name || owner);
+    const owner = c?.owner_id || 'user-fixture';
+    const name = owner === 'user-fixture' ? 'Valeros (You)' : (c?.dm_name || owner);
     CAMPAIGN_MEMBERS_CACHE[campaignId] = [{ user_id: owner, username: name, role: 'owner' }];
   }
   return CAMPAIGN_MEMBERS_CACHE[campaignId];
@@ -63,7 +63,7 @@ export function createFallbackInvite(campaignId: string, role: string, expiresIn
 }
 
 export const FALLBACK_PARTICIPANTS: LobbyParticipant[] = [
-  { userId: 'user-valeros', username: 'Valeros', role: 'Fighter Lvl 4', characterId: 'char-valeros', characterName: 'Valeros of Korvosa', characterClass: 'Fighter', characterLevel: 4, isReady: false, isAbsent: false, onlineStatus: 'online' },
+  { userId: 'user-fixture', username: 'Valeros', role: 'Fighter Lvl 4', characterId: 'char-valeros', characterName: 'Valeros of Korvosa', characterClass: 'Fighter', characterLevel: 4, isReady: false, isAbsent: false, onlineStatus: 'online' },
   { userId: 'user-sarah', username: 'Sarah', role: 'Rogue Lvl 3', characterId: 'char-sarah', characterName: 'Sarah Shadowstep', characterClass: 'Rogue', characterLevel: 3, isReady: false, isAbsent: false, onlineStatus: 'online' },
   { userId: 'user-kyra', username: 'Kyra', role: 'Cleric Lvl 4', characterId: 'char-kyra', characterName: 'Kyra the Sun Maiden', characterClass: 'Cleric', characterLevel: 4, isReady: false, isAbsent: false, onlineStatus: 'offline' },
 ];
@@ -103,12 +103,12 @@ export function createFallbackCampaign(campaignId: string): CampaignItem {
   return { id: campaignId, title: `Campaign #${campaignId}`, role: 'player', player_count: 3, has_active_session: false };
 }
 
-export function createFallbackCampaignItem(payload: CreateCampaignPayload, ownerId = 'user-valeros'): CampaignItem {
+export function createFallbackCampaignItem(payload: CreateCampaignPayload, ownerId = 'user-fixture'): CampaignItem {
   const id = `camp-${Date.now()}`;
   FALLBACK_CAMPAIGN_SESSIONS_MAP[id] = [
     { id: `lobby-${id}-1`, campaignId: id, title: 'Session #1: Assembly & Briefing', status: 'lobby', round: 1, participantsCount: 1 },
   ];
-  const uname = ownerId === 'user-valeros' ? 'Valeros (You)' : ownerId;
+  const uname = ownerId === 'user-fixture' ? 'Valeros (You)' : ownerId;
   CAMPAIGN_MEMBERS_CACHE[id] = [{ user_id: ownerId, username: uname, role: 'owner' }];
   return { id, title: payload.title, description: payload.description, owner_id: ownerId, setting: payload.setting, system: payload.system || '5e', role: 'owner', player_count: 1, has_active_session: false };
 }

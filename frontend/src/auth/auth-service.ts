@@ -15,7 +15,6 @@ export interface UserClaims {
   username: string;
   email?: string;
   roles: string[];
-  is_admin?: boolean;
   display_name?: string;
   avatar_url?: string;
   bio?: string;
@@ -85,7 +84,6 @@ export function extractClaimsFromPayload(payload: Record<string, unknown>): User
     username: String(payload.preferred_username || payload.username || payload.name || sub),
     email: payload.email ? String(payload.email) : undefined,
     roles,
-    is_admin: roles.includes('admin') || Boolean(payload.is_admin),
     display_name: payload.display_name ? String(payload.display_name) : (payload.name ? String(payload.name) : undefined),
     avatar_url: payload.avatar_url || payload.picture ? String(payload.avatar_url || payload.picture) : undefined,
     bio: payload.bio ? String(payload.bio) : undefined,
@@ -234,6 +232,11 @@ export class AuthService {
       this.clearSession();
       throw err;
     }
+  }
+
+  /** Clears the local session without contacting Zitadel. The auth guard then sends the user to sign-in. */
+  discardSession(): void {
+    this.clearSession();
   }
 
   /** Clears local tokens, then ends the Zitadel session when an ID token is held. */

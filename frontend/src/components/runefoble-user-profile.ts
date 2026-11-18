@@ -191,7 +191,6 @@ export class RunefobleUserProfile extends LitElement {
       return html`<div class="profile-card" data-testid="profile-settings-card">${message}</div>`;
     }
     const roles = user.roles || [];
-    const isAdmin = Boolean(user.is_admin || roles.includes('admin'));
     const displayName = user.display_name || user.username;
 
     return html`
@@ -256,7 +255,7 @@ export class RunefobleUserProfile extends LitElement {
             <div class="claim-item"><span class="claim-label">Display Name</span><span class="claim-value" data-testid="profile-display-name">${displayName}</span></div>
             <div class="claim-item"><span class="claim-label">Adventurer Bio</span><span class="claim-value" data-testid="profile-bio">${user.bio || 'No bio written yet'}</span></div>
             <div class="claim-item"><span class="claim-label">Email Address</span><span class="claim-value" data-testid="profile-email">${user.email || 'Not configured'}</span></div>
-            <div class="claim-item"><span class="claim-label">Identity Roles (display only)</span><div class="roles-list" data-testid="profile-roles">${roles.length > 0 ? roles.map((r) => html`<span class="role-badge ${r.toLowerCase()}">${r}</span>`) : html`<span class="claim-value">None</span>`}${isAdmin ? html`<span class="role-badge admin">Admin</span>` : ''}</div></div>
+            <div class="claim-item"><span class="claim-label">Identity Roles (display only)</span><div class="roles-list" data-testid="profile-roles">${roles.length > 0 ? roles.map((r) => html`<span class="role-badge ${r.toLowerCase()}">${r}</span>`) : html`<span class="claim-value">None</span>`}</div></div>
             <div class="claim-item"><span class="claim-label">Authentication Provider</span><span class="claim-value" data-testid="profile-provider">${this.providerName || 'Loading...'}</span></div>
           </div>
         </section>
