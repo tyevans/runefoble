@@ -12,6 +12,9 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -34,7 +37,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
             "target_name": "Cave Troll",
             "escrow_gold": 100,
         },
-        headers={"x-user-id": unauthorized_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(unauthorized_user)}"},
     )
     assert res_unauth_post.status_code == 403
 
@@ -47,7 +50,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
             "target_name": "Goblin Shaman",
             "escrow_gold": 300,
         },
-        headers={"x-user-id": poster_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(poster_id)}"},
     )
     assert res_post.status_code == 201
     bounty_id = res_post.json()["bounty"]["bounty_id"]
@@ -55,7 +58,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
     # 2. Intruder cannot view without view/observe permissions
     res_unauth_view = client.get(
         f"/sessions/{session_id}/contracts/bounties",
-        headers={"x-user-id": unauthorized_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(unauthorized_user)}"},
     )
     assert res_unauth_view.status_code == 403
 
@@ -63,7 +66,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
     res_unauth_claim = client.post(
         f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={"claimant_party_name": "Rogue Band"},
-        headers={"x-user-id": unauthorized_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(unauthorized_user)}"},
     )
     assert res_unauth_claim.status_code == 403
 
@@ -72,7 +75,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
     res_claim = client.post(
         f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={"claimant_party_name": "Drake's Rangers"},
-        headers={"x-user-id": claimant_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(claimant_id)}"},
     )
     assert res_claim.status_code == 200
 
@@ -80,7 +83,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
     res_unauth_comp = client.post(
         f"/sessions/{session_id}/contracts/bounties/{bounty_id}/complete",
         json={"proof": "Faked Goblin Staff"},
-        headers={"x-user-id": unauthorized_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(unauthorized_user)}"},
     )
     assert res_unauth_comp.status_code == 403
 
@@ -89,7 +92,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
     res_dm_comp = client.post(
         f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/complete",
         json={"proof": "Goblin Shaman's Staff verified by DM"},
-        headers={"x-user-id": dm_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"},
     )
     assert res_dm_comp.status_code == 200
     assert res_dm_comp.json()["status"] == "COMPLETED"

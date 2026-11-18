@@ -11,6 +11,9 @@ from game_session.events import STREAM_WEST_MARCHES
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 async def _setup_world(
@@ -22,7 +25,7 @@ async def _setup_world(
     res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "The Sunken Marches", "frontier_region": "Trade Coast"},
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     wid = res.json()["shared_world_id"]
     for cid, uid, pname in parties:
@@ -30,7 +33,7 @@ async def _setup_world(
         client.post(
             f"/api/v1/shared-worlds/{wid}/campaigns",
             json={"campaign_id": cid, "party_name": pname},
-            headers={"x-user-id": officer},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
         )
     return wid
 
@@ -62,7 +65,7 @@ async def test_blackbox_caravan_trade_and_merchant_stock_unlocks(
             "contributing_campaign_id": c_blue,
             "facilities": {"harbor": 1},
         },
-        headers={"x-user-id": blue_trader},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_trader)}"},
     )
     assert outpost.status_code == 201
 
@@ -76,7 +79,7 @@ async def test_blackbox_caravan_trade_and_merchant_stock_unlocks(
             "dispatched_by_campaign_id": c_blue,
             "transit_turns": 2,
         },
-        headers={"x-user-id": blue_trader},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_trader)}"},
     )
     assert d_res.status_code == 201
     caravan_id = d_res.json()["caravan"]["caravan_id"]
@@ -86,7 +89,7 @@ async def test_blackbox_caravan_trade_and_merchant_stock_unlocks(
     complete_res = client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/{caravan_id}/complete",
         json={"unlocked_stock": {"elixir_of_frost_resistance": elixir}},
-        headers={"x-user-id": blue_trader},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_trader)}"},
     )
     assert complete_res.status_code == 200
     assert complete_res.json()["caravan"]["status"] == "completed"
@@ -96,7 +99,7 @@ async def test_blackbox_caravan_trade_and_merchant_stock_unlocks(
 
     stock = client.get(
         f"/api/v1/shared-worlds/{world_id}/outposts/Highport/merchant-stock",
-        headers={"x-user-id": gold_buyer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(gold_buyer)}"},
     ).json()["stock"]
     assert stock["workshop_reagents"]["alchemical_reagents"] == 10
     assert stock["workshop_reagents"]["silver_bloom"] == 5
@@ -109,13 +112,15 @@ async def test_caravan_completion_not_found(client: TestClient, party_ids: dict[
     """Verify completing a non-existent caravan returns 404."""
     officer_id = party_ids["officer"]
     world_res = client.post(
-        "/api/v1/shared-worlds", json={"name": "Barrow Downs"}, headers={"x-user-id": officer_id}
+        "/api/v1/shared-worlds",
+        json={"name": "Barrow Downs"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     world_id = world_res.json()["shared_world_id"]
 
     res = client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/missing-id/complete",
         json={"unlocked_stock": {}},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert res.status_code == 404

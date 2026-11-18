@@ -18,6 +18,9 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -38,7 +41,11 @@ async def test_watcher_stand_in_event_emission(mock_redis: MockAsyncRedis):
 
     session_id, campaign_id = str(uuid4()), str(uuid4())
     transport = ASGITransport(app=watcher_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+    ) as client:
         resp = await client.post(
             "/api/v1/watcher/stand-in/act",
             json={
@@ -92,7 +99,11 @@ async def test_game_session_auto_pilot_turn(mock_redis: MockAsyncRedis):
     session_set_event_bus(event_bus)
 
     transport = ASGITransport(app=session_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+    ) as client:
         campaign_id, char_id = str(uuid4()), str(uuid4())
 
         # 1. Create session
@@ -186,7 +197,11 @@ async def test_game_session_auto_pilot_turn(mock_redis: MockAsyncRedis):
 async def test_absentee_session_recap_generation():
     """POST /api/v1/watcher/stand-in/recap must generate a humorous chronicle for the returning player."""
     transport = ASGITransport(app=watcher_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+    ) as client:
         recap_res = await client.post(
             "/api/v1/watcher/stand-in/recap",
             json={

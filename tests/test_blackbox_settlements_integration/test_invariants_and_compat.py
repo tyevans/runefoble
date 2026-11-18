@@ -9,6 +9,9 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def test_auth_backwards_compatibility_exports():
@@ -52,7 +55,7 @@ async def test_frontdoor_worker_modular_endpoints(
     cid, gm_id = str(uuid4()), "gm_w"
     await spicedb.write_relationship("campaign", cid, "dungeon_master", "user", gm_id)
     await spicedb.write_relationship("campaign", cid, "player", "user", gm_id)
-    h = {"x-user-id": gm_id}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(gm_id)}"}
 
     s_res = session_client.post(
         f"/api/v1/campaigns/{cid}/settlements", json={"name": "WP", "districts": ["m"]}, headers=h

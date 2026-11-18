@@ -18,7 +18,10 @@ from runefoble_events.settlements import (
 )
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_blackbox_settlement_haven.conftest import assert_event_emitted
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -27,7 +30,7 @@ async def test_settlement_tier_upgrade_and_events(
 ) -> None:
     """Verify settlement tier upgrades, prosperity validation, and domain events."""
     cid, uid = str(uuid4()), f"mayor_{uuid4().hex[:8]}"
-    h = {"x-user-id": uid}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"}
     await spicedb.write_relationship("campaign", cid, "dungeon_master", "user", uid)
 
     b = {"name": "Pine", "scale": "hamlet", "prosperity": 50, "districts": ["commons"]}
@@ -66,7 +69,7 @@ async def test_establishment_upgrade_and_events(
 ) -> None:
     """Verify establishment upgrades, amenity modifications, and domain events."""
     cid, uid = str(uuid4()), f"innkeeper_{uuid4().hex[:8]}"
-    h = {"x-user-id": uid}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"}
     await spicedb.write_relationship("campaign", cid, "player", "user", uid)
 
     s_body = {"name": "River", "scale": "village", "districts": ["commons", "trading_post"]}

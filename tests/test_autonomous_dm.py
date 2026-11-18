@@ -22,6 +22,9 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -31,7 +34,9 @@ def dm_engine() -> AutonomousDMEngine:
 
 @pytest.fixture
 def test_client() -> TestClient:
-    return TestClient(watcher_app)
+    return TestClient(
+        watcher_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 # ---------------------------------------------------------------------------

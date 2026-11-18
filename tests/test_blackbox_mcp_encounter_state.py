@@ -38,12 +38,21 @@ def mcp_endpoint() -> Iterator[None]:
 
 @pytest.fixture(scope="module")
 def upstreams() -> Iterator[dict[str, str]]:
-    """Run game_session and board_state as real HTTP services."""
+    """Run game_session and board_state as real HTTP services. game_session trusts the test issuer."""
     from board_state.main import app as board_app
     from game_session.main import app as session_app
+    from game_session.settlement.auth.tokens import (
+        get_zitadel_auth_service,
+        set_zitadel_auth_service,
+    )
 
-    with serve(board_app) as board_url, serve(session_app) as session_url:
-        yield {"board": board_url, "session": session_url}
+    previous = get_zitadel_auth_service()
+    set_zitadel_auth_service(SIGNING_ISSUER.verifier())
+    try:
+        with serve(board_app) as board_url, serve(session_app) as session_url:
+            yield {"board": board_url, "session": session_url}
+    finally:
+        set_zitadel_auth_service(previous)
 
 
 @pytest.fixture
@@ -52,7 +61,8 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
     monkeypatch.setenv("BOARD_STATE_URL", upstreams["board"])
     monkeypatch.setenv("GAME_SESSION_URL", upstreams["session"])
 
-    with httpx.Client(base_url=upstreams["session"]) as http:
+    auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('encounter-dm')}"}
+    with httpx.Client(base_url=upstreams["session"], headers=auth) as http:
         created = http.post(
             "/api/v1/sessions/create",
             json={

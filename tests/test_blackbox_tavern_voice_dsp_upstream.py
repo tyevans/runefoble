@@ -20,8 +20,9 @@ from voice_agent.main import app as voice_app
 
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.voice_identity import voice_auth_headers
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
-pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "trusted_ws_issuer")
 
 SPEECH = "I can drink the whole tavern under the table!"
 CHARACTER = "char_bram"
@@ -29,15 +30,31 @@ CONDITION_PATH = "/api/v1/voice/dsp/condition"
 VOICE_URL_ENV = "RUNEFOBLE_VOICE_AGENT_URL"
 
 
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+
 @pytest.fixture
 def session_client() -> Iterator[TestClient]:
     set_session_spicedb(MockSpiceDBClient())
-    with TestClient(session_app) as client:
+    with TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    ) as client:
         yield client
 
 
+def _owned_session(client: TestClient) -> str:
+    """Create a campaign and one of its sessions through public routes. The caller owns both."""
+    campaign = client.post("/api/v1/campaigns", json={"title": "Drinking Campaign"})
+    assert campaign.status_code == 201, campaign.text
+    session = client.post(
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions", json={"title": "Drinking Night"}
+    )
+    assert session.status_code == 201, session.text
+    return session.json()["id"]
+
+
 def _start_contest(client: TestClient) -> tuple[str, str]:
-    session_id = "sess-tavern-dsp-upstream"
+    session_id = _owned_session(client)
     res = client.post(
         f"/api/v1/sessions/{session_id}/tavern/games",
         json={

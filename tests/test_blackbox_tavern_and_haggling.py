@@ -4,7 +4,6 @@ Part of TASK-0103 / PRD-0014 / US-0047 / ADR-0003 / ADR-0006 / ADR-0011 / ADR-00
 """
 
 from pathlib import Path
-from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -25,8 +24,23 @@ from voice_agent.main import app as voice_app
 from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.voice_identity import voice_auth_headers
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+
+def _owned_session(client: TestClient) -> str:
+    """Create a campaign and one of its sessions through public routes. The caller owns both."""
+    campaign = client.post("/api/v1/campaigns", json={"title": "Tavern Campaign"})
+    assert campaign.status_code == 201, campaign.text
+    session = client.post(
+        f"/api/v1/campaigns/{campaign.json()['id']}/sessions", json={"title": "Tavern Night"}
+    )
+    assert session.status_code == 201, session.text
+    return session.json()["id"]
 
 
 @pytest.fixture
@@ -42,7 +56,9 @@ def mock_bus():
 def session_client():
     mock_spicedb = MockSpiceDBClient()
     set_session_spicedb(mock_spicedb)
-    return TestClient(session_app)
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 @pytest.fixture
@@ -88,7 +104,7 @@ def test_tavern_parlor_microfrontend_manifest_and_files(session_client):
 
 def test_blackbox_liars_dice_minigame_flow(session_client, mock_bus):
     """Test full Liar's Dice minigame: challenge, turns, bluff call, and victory payout."""
-    session_id = str(uuid4())
+    session_id = _owned_session(session_client)
 
     # 1. Challenge NPC pirate with 10 gold wager
     start_payload = {
@@ -146,7 +162,7 @@ def test_blackbox_liars_dice_minigame_flow(session_client, mock_bus):
 
 def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live_voice_agent):
     """Test drinking contest with progressive intoxication DC and DSP speech conditioning."""
-    session_id = str(uuid4())
+    session_id = _owned_session(session_client)
 
     start_res = session_client.post(
         f"/api/v1/sessions/{session_id}/tavern/games",
@@ -203,7 +219,7 @@ def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live
 
 def test_blackbox_merchant_haggling_stubborn_greedy(session_client, mock_bus):
     """Test US-0047 Scenario 2: Bram haggles 50g quote to 35g against stubborn dwarven blacksmith."""
-    session_id = str(uuid4())
+    session_id = _owned_session(session_client)
     merchant_id = "merchant_thorin_blacksmith"
 
     haggle_payload = {
@@ -242,7 +258,7 @@ def test_blackbox_merchant_haggling_stubborn_greedy(session_client, mock_bus):
 
 def test_blackbox_merchant_insult_lowball(session_client):
     """Test severe lowball offer triggering merchant insult outcome."""
-    session_id = str(uuid4())
+    session_id = _owned_session(session_client)
     merchant_id = "merchant_krag_hostile"
 
     haggle_res = session_client.post(

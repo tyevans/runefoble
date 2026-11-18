@@ -27,6 +27,9 @@ from the_watcher.dependencies import (
 from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture(autouse=True)
@@ -47,7 +50,7 @@ def clean_environment():
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 def test_narrative_whispered_cloudevent_registration():
@@ -97,7 +100,7 @@ async def test_zanzibar_whispers_dm_authorization_enforcement(client: TestClient
     # Unauthorized player attempts to read whispers -> 403 Forbidden
     res_get_unauth = client.get(
         f"/api/v1/watcher/whispers?session_id={session_id}&campaign_id={campaign_id}",
-        headers={"X-User-Id": unauthorized_player},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(unauthorized_player)}"},
     )
     assert res_get_unauth.status_code == 403
     assert "Forbidden" in res_get_unauth.json()["detail"]
@@ -111,14 +114,14 @@ async def test_zanzibar_whispers_dm_authorization_enforcement(client: TestClient
             "whisper_type": "monster_tactics",
             "content": "Secret player plan",
         },
-        headers={"X-User-Id": unauthorized_player},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(unauthorized_player)}"},
     )
     assert res_post_unauth.status_code == 403
 
     # Authorized DM reads whispers -> 200 OK
     res_get_auth = client.get(
         f"/api/v1/watcher/whispers?session_id={session_id}&campaign_id={campaign_id}",
-        headers={"X-User-Id": authorized_dm},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(authorized_dm)}"},
     )
     assert res_get_auth.status_code == 200
     assert "whispers" in res_get_auth.json()
@@ -147,27 +150,27 @@ async def test_dm_whispers_creation_and_pagination(client: TestClient):
                 "whisper_type": w_type,
                 "content": f"Custom whisper content {i} for {w_type}",
             },
-            headers={"X-User-Id": dm_user},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
         )
         assert res.status_code == 200
 
     res_p1 = client.get(
         f"/api/v1/watcher/whispers?session_id={session_id}&campaign_id={campaign_id}&page=1&limit=2",
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res_p1.status_code == 200
     assert len(res_p1.json()["whispers"]) == 2
 
     res_p2 = client.get(
         f"/api/v1/watcher/whispers?session_id={session_id}&campaign_id={campaign_id}&page=2&limit=2",
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res_p2.status_code == 200
     assert len(res_p2.json()["whispers"]) == 1
 
     res_filter = client.get(
         f"/api/v1/watcher/whispers?session_id={session_id}&campaign_id={campaign_id}&whisper_type=monster_tactics",
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res_filter.status_code == 200
     assert res_filter.json()["whispers"][0]["whisper_type"] == "monster_tactics"
@@ -194,7 +197,7 @@ async def test_dm_whispers_generation(client: TestClient):
             "scene_context": "Deep subterranean cave",
             "threat_level": "hard",
         },
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res_gen.status_code == 200
     whispers = res_gen.json()

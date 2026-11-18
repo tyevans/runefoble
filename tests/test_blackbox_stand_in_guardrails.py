@@ -26,6 +26,9 @@ from the_watcher.stand_in_ai import (
 )
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -104,7 +107,9 @@ async def test_blackbox_stand_in_guardrails_scenarios(
 
     session_id, campaign_id = str(uuid4()), str(uuid4())
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         resp = await client.post(
             "/api/v1/watcher/stand-in/act",

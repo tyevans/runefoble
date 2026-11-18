@@ -10,10 +10,16 @@ import pytest
 from fastapi.testclient import TestClient
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture
 def watcher_client():
-    return TestClient(watcher_app)
+    return TestClient(
+        watcher_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 def test_watcher_openapi_routes_completeness(watcher_client):

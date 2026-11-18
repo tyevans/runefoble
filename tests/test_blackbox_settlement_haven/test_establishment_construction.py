@@ -11,6 +11,10 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.mark.asyncio
 async def test_construct_establishments_across_all_categories(
@@ -24,7 +28,7 @@ async def test_construct_establishments_across_all_categories(
     s_res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "HavenPort", "scale": "market_town", "districts": districts},
-        headers={"x-user-id": uid},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"},
     )
     sid = s_res.json()["settlement_id"]
 
@@ -45,7 +49,7 @@ async def test_construct_establishments_across_all_categories(
                 "capacity": 25,
                 "operating_cost": 5,
             },
-            headers={"x-user-id": uid},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"},
         )
         assert res.status_code == 201, res.text
         data = res.json()
@@ -56,7 +60,10 @@ async def test_construct_establishments_across_all_categories(
         )
 
     # Verify all 5 establishments appear in settlement projection
-    proj = client.get(f"/api/v1/campaigns/{cid}/settlements/{sid}", headers={"x-user-id": uid})
+    proj = client.get(
+        f"/api/v1/campaigns/{cid}/settlements/{sid}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"},
+    )
     assert len(proj.json()["establishments"]) == 5
 
 
@@ -72,7 +79,7 @@ async def test_establishment_construction_invariants_and_auth(
     s_res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "Fortress", "scale": "village", "districts": ["commons", "trading_post"]},
-        headers={"x-user-id": uid},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"},
     )
     sid = s_res.json()["settlement_id"]
 
@@ -80,7 +87,7 @@ async def test_establishment_construction_invariants_and_auth(
     unzoned = client.post(
         f"/api/v1/settlements/{sid}/establishments",
         json={"district_id": "forbidden_citadel", "category": "civic", "name": "Citadel"},
-        headers={"x-user-id": uid},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"},
     )
     assert unzoned.status_code == 400 and "not zoned or unlocked" in unzoned.json()["detail"]
 
@@ -88,7 +95,7 @@ async def test_establishment_construction_invariants_and_auth(
     bad_cap = client.post(
         f"/api/v1/settlements/{sid}/establishments",
         json={"district_id": "commons", "category": "commerce", "name": "Shop", "capacity": 0},
-        headers={"x-user-id": uid},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(uid)}"},
     )
     assert bad_cap.status_code == 400
 
@@ -96,6 +103,6 @@ async def test_establishment_construction_invariants_and_auth(
     denied = client.post(
         f"/api/v1/settlements/{sid}/establishments",
         json={"district_id": "commons", "category": "underworld", "name": "Den"},
-        headers={"x-user-id": intruder_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(intruder_id)}"},
     )
     assert denied.status_code == 403

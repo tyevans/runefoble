@@ -7,6 +7,9 @@ from collections.abc import Iterator
 # Test mode: the SpiceDB preshared key has no default outside tests. Tests supply a throwaway
 # value before any settings object is built. Live tests may override it in their environment.
 os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key")
+# The inference worker refuses to start without its service token (ADR-0015 e). Tests use a
+# throwaway value. Process-level tests remove it from the child environment on purpose.
+os.environ.setdefault("RUNEFOBLE_INFERENCE_SERVICE_TOKEN", "test-only-inference-token")
 # ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest
@@ -18,6 +21,8 @@ from gateway_api.auth import get_zitadel_auth_service, set_zitadel_auth_service
 from rules_compendium import dependencies as rules_compendium_dependencies
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
+from the_watcher.identity import get_zitadel_auth_service as get_watcher_auth
+from the_watcher.identity import set_zitadel_auth_service as set_watcher_auth
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -164,11 +169,14 @@ def default_spicedb_client(request):
 
 @pytest.fixture
 def trusted_ws_issuer() -> Iterator[SigningTestIssuer]:
-    """Trust the shared test issuer in the gateway and game_session verifiers."""
+    """Trust the shared test issuer in the gateway, game_session, and the_watcher verifiers."""
     previous_gateway = get_zitadel_auth_service()
     previous_session = get_session_auth()
+    previous_watcher = get_watcher_auth()
     set_zitadel_auth_service(SIGNING_ISSUER.verifier())
     set_session_auth(SIGNING_ISSUER.verifier())
+    set_watcher_auth(SIGNING_ISSUER.verifier())
     yield SIGNING_ISSUER
     set_zitadel_auth_service(previous_gateway)
     set_session_auth(previous_session)
+    set_watcher_auth(previous_watcher)

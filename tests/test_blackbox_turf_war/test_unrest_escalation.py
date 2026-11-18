@@ -17,7 +17,11 @@ from runefoble_events.events import (
 )
 from the_watcher.turf_war.unrest_calculator import UnrestCalculator
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 from .conftest import setup_campaign_roles
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def test_cloudevents_registration():
@@ -72,12 +76,12 @@ async def test_regional_unrest_progression_and_economic_friction(client: TestCli
                 "defender": {"faction_id": "f_def", "military_strength": d_str},
                 "terrain": "urban",
             },
-            headers={"X-User-Id": dm_user},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
         )
 
     res = client.get(
         f"/the-watcher/regions/{region_id}/unrest?campaign_id={camp_id}",
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res.status_code == 200
     info = res.json()

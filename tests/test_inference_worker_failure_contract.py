@@ -5,6 +5,7 @@ fake OpenAI-compatible server, which is a true process boundary. No code under t
 """
 
 import json
+import os
 import threading
 from collections.abc import Iterator
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -20,6 +21,11 @@ from the_watcher.main import app as watcher_app
 from the_watcher.routers.intent import speech
 
 from tests.helpers.live_services import closed_port_url, serve
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+WORKER_AUTH = {"Authorization": f"Bearer {os.environ['RUNEFOBLE_INFERENCE_SERVICE_TOKEN']}"}
+WATCHER_AUTH = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-1')}"}
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 INTENT_PAYLOAD: dict[str, Any] = {
     "campaign_id": "camp-1",
@@ -137,7 +143,9 @@ async def test_unreachable_backend_returns_explicit_503(use_worker_backend, path
     )
     use_worker_backend(unreachable)
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post(path, json=payload)
 
     assert resp.status_code == 503
@@ -149,7 +157,9 @@ async def test_auto_backend_without_server_is_unavailable(use_worker_backend):
     """Auto mode never selects mock by itself. No detected server means 503."""
     use_worker_backend(WorkerSettings(backend="auto", openai_base_url="http://127.0.0.1:9/v1"))
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
 
     assert resp.status_code == 503
@@ -160,7 +170,9 @@ async def test_auto_backend_without_server_is_unavailable(use_worker_backend):
 async def test_explicit_mock_backend_reports_mock_source(use_worker_backend):
     use_worker_backend(WorkerSettings(backend="mock"))
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         intent = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
         narration = await ac.post("/inference/v1/dm-narration", json=NARRATION_PAYLOAD)
         stand_in = await ac.post("/inference/v1/stand-in-action", json=STAND_IN_PAYLOAD)
@@ -180,7 +192,9 @@ async def test_model_output_with_action_reports_llm_source(use_worker_backend, f
     }
     use_worker_backend(_llm_settings(fake_llm))
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
 
     assert resp.status_code == 200
@@ -197,7 +211,9 @@ async def test_unusable_model_output_uses_regex_heuristic_and_is_degraded(
     fake_llm.reply = {"status": 200, "content": "I cannot comply."}  # type: ignore[attr-defined]
     use_worker_backend(_llm_settings(fake_llm))
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
 
     assert resp.status_code == 200
@@ -212,7 +228,9 @@ async def test_unusable_narration_output_is_503_not_canned_text(use_worker_backe
     fake_llm.reply = {"status": 200, "content": "no json here"}  # type: ignore[attr-defined]
     use_worker_backend(_llm_settings(fake_llm))
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post("/inference/v1/dm-narration", json=NARRATION_PAYLOAD)
 
     assert resp.status_code == 503
@@ -224,7 +242,9 @@ async def test_failing_model_server_returns_503(use_worker_backend, fake_llm):
     fake_llm.reply = {"status": 400, "content": ""}  # type: ignore[attr-defined]
     use_worker_backend(_llm_settings(fake_llm))
 
-    async with AsyncClient(transport=ASGITransport(app=api.app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
         resp = await ac.post("/inference/v1/stand-in-action", json=STAND_IN_PAYLOAD)
 
     assert resp.status_code == 503
@@ -248,7 +268,7 @@ async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatc
         monkeypatch.setattr(speech, "INFERENCE_URL", worker_url)
         monkeypatch.setattr(speech, "BOARD_STATE_URL", board_url)
         async with AsyncClient(
-            transport=ASGITransport(app=watcher_app), base_url="http://test"
+            transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH
         ) as ac:
             resp = await ac.post("/api/v1/watcher/intent", json=speech_payload)
 
@@ -271,7 +291,7 @@ async def test_watcher_speech_unreachable_worker_is_503_not_template(monkeypatch
     with serve(_empty_board_app()) as board_url:
         monkeypatch.setattr(speech, "BOARD_STATE_URL", board_url)
         async with AsyncClient(
-            transport=ASGITransport(app=watcher_app), base_url="http://test"
+            transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH
         ) as ac:
             resp = await ac.post("/api/v1/watcher/intent", json=speech_payload)
 

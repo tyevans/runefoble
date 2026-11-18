@@ -10,7 +10,11 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 from .conftest import setup_campaign_roles
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -33,7 +37,7 @@ async def test_skirmish_simulation_attacker_victory(client: TestClient):
     res = client.post(
         "/the-watcher/factions/skirmish/simulate",
         json=payload,
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res.status_code == 200
     data = res.json()
@@ -64,7 +68,7 @@ async def test_skirmish_simulation_defender_hold_terrain_advantage(client: TestC
     res = client.post(
         "/the-watcher/factions/skirmish/simulate",
         json=payload,
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res.status_code == 200
     data = res.json()
@@ -94,7 +98,7 @@ async def test_skirmish_stalemate_resolution(client: TestClient):
     res = client.post(
         "/the-watcher/factions/skirmish/simulate",
         json=payload,
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res.status_code == 200
     data = res.json()

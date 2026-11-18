@@ -47,7 +47,9 @@ def client_gw() -> TestClient:
 
 @pytest.fixture
 def client_sess() -> TestClient:
-    return TestClient(session_app)
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 @pytest.fixture

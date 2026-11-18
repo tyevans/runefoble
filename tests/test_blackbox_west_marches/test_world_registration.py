@@ -10,6 +10,10 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.mark.asyncio
 async def test_establish_persistent_frontier_world(client: TestClient):
@@ -22,7 +26,7 @@ async def test_establish_persistent_frontier_world(client: TestClient):
             "frontier_region": "The Shadowed Fenlands",
             "description": "A vast, dangerous marshland explored by mercenary guilds.",
         },
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert res.status_code == 201, res.text
     data = res.json()
@@ -32,7 +36,7 @@ async def test_establish_persistent_frontier_world(client: TestClient):
 
     query_res = client.get(
         f"/api/v1/shared-worlds/{world_id}",
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert query_res.status_code == 200
     assert query_res.json()["shared_world_id"] == world_id
@@ -45,7 +49,7 @@ async def test_link_campaigns_to_shared_world(client: TestClient, party_ids: dic
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Frontier Basin", "frontier_region": "Sunken Delta"},
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     world_id = world_res.json()["shared_world_id"]
 
@@ -56,7 +60,7 @@ async def test_link_campaigns_to_shared_world(client: TestClient, party_ids: dic
         res = client.post(
             f"/api/v1/shared-worlds/{world_id}/campaigns",
             json={"campaign_id": party_ids[camp_key], "party_name": party_name},
-            headers={"x-user-id": officer},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
         )
         assert res.status_code == 201
         assert res.json()["party_name"] == party_name
@@ -64,7 +68,7 @@ async def test_link_campaigns_to_shared_world(client: TestClient, party_ids: dic
 
     world_data = client.get(
         f"/api/v1/shared-worlds/{world_id}",
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     ).json()
     assert party_ids["campaign_blue"] in world_data["registered_campaigns"]
     assert party_ids["campaign_gold"] in world_data["registered_campaigns"]
@@ -79,24 +83,27 @@ async def test_duplicate_registration_and_validation(client: TestClient):
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Mistveil Reach"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     world_id = world_res.json()["shared_world_id"]
 
     res1 = client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": camp_id, "party_name": "The Rangers"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert res1.status_code == 201
 
     res2 = client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": camp_id, "party_name": "The Veteran Rangers"},
-        headers={"x-user-id": officer_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert res2.status_code == 201
     assert res2.json()["party_name"] == "The Veteran Rangers"
 
-    inv_res = client.get("/api/v1/shared-worlds/invalid-uuid", headers={"x-user-id": officer_id})
+    inv_res = client.get(
+        "/api/v1/shared-worlds/invalid-uuid",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
+    )
     assert inv_res.status_code == 400

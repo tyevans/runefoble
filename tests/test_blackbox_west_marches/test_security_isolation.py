@@ -11,6 +11,10 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 async def _setup_world(
     client: TestClient,
@@ -20,7 +24,9 @@ async def _setup_world(
     name: str = "Frontier",
 ) -> str:
     res = client.post(
-        "/api/v1/shared-worlds", json={"name": name}, headers={"x-user-id": officer}
+        "/api/v1/shared-worlds",
+        json={"name": name},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     ).json()
     wid = res["shared_world_id"]
     for cid, uid, pname in parties:
@@ -28,7 +34,7 @@ async def _setup_world(
         client.post(
             f"/api/v1/shared-worlds/{wid}/campaigns",
             json={"campaign_id": cid, "party_name": pname},
-            headers={"x-user-id": officer},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
         )
     return wid
 
@@ -53,7 +59,7 @@ async def test_blackbox_spicedb_zanzibar_multi_party_isolation(
         await spicedb_client.write_relationship("character", char_blue_id, rel, stype, sid)
 
     # Outsiders are forbidden from reading or mutating the shared world
-    h_out = {"x-user-id": outsider}
+    h_out = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(outsider)}"}
     assert client.get(f"/api/v1/shared-worlds/{world_id}", headers=h_out).status_code == 403
     fake = {
         "name": "Illegal",
@@ -68,7 +74,10 @@ async def test_blackbox_spicedb_zanzibar_multi_party_isolation(
 
     # Legitimate party members can access the shared frontier
     for u in (blue_player, gold_player):
-        r = client.get(f"/api/v1/shared-worlds/{world_id}", headers={"x-user-id": u})
+        r = client.get(
+            f"/api/v1/shared-worlds/{world_id}",
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(u)}"},
+        )
         assert r.status_code == 200
 
     # Cross-party Zanzibar scoping: private character sheets remain isolated
@@ -105,14 +114,14 @@ async def test_blackbox_communal_tavern_board_and_notices(
             "content": "Trolls",
             "bounty_reward": 150,
         },
-        headers={"x-user-id": blue_player},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_player)}"},
     )
     assert n_res.status_code == 201
     nid = n_res.json()["notice"]["notice_id"]
 
     board_res = client.get(
         f"/api/v1/shared-worlds/{world_id}/tavern-board/notices",
-        headers={"x-user-id": gold_player},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(gold_player)}"},
     )
     assert board_res.status_code == 200
     assert any(n["notice_id"] == nid for n in board_res.json()["notices"])
