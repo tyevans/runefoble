@@ -62,7 +62,11 @@ def _published_event_types(mock_redis: MockAsyncRedis, session_id: str) -> list[
 def _create_joined_session(client: TestClient) -> str:
     created = client.post(
         "/api/v1/sessions/create",
-        json={"campaign_id": str(uuid4()), "title": "Publication Session", "dm_id": "dm_alice"},
+        json={
+            "campaign_id": _owned_campaign(client),
+            "title": "Publication Session",
+            "dm_id": "dm_alice",
+        },
     )
     assert created.status_code == 200, created.text
     session_id = created.json()["session_id"]
@@ -122,3 +126,10 @@ def test_lobby_readiness_toggle_is_returned_by_session_state(
     assert state.json()["lobby_readiness"] == {"p-1": True}
     types = _published_event_types(stream_redis, session_id)
     assert types.count("ReadinessToggled") == 1
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

@@ -67,7 +67,10 @@ def sample_stem_volumes() -> dict[str, float]:
 
 @pytest.fixture
 def soundscape_session_id(trusted_ws_issuer, game_session_upstream) -> Iterator[str]:
-    """Create a campaign and a session through the gateway frontdoor. The default subject owns both."""
+    """Create a campaign and a session through the gateway frontdoor. The default subject owns both.
+
+    The gateway proxies to the live game_session upstream, so the client enters the gateway lifespan.
+    """
     with TestClient(gateway_app) as gateway:
         campaign = gateway.post(
             "/api/v1/campaigns",

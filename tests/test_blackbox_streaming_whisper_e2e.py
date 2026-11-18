@@ -28,7 +28,7 @@ from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.voice_grants import grant_voice_session
 from tests.helpers.voice_identity import voice_ws_subprotocols
 
-pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "trusted_ws_issuer")
 
 
 def test_end_to_end_streaming_speech_to_intent_latency_budget(

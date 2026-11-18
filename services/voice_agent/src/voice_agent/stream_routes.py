@@ -5,11 +5,11 @@ from __future__ import annotations
 import base64
 import json
 import logging
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Header, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from runefoble_auth.websocket import WS_POLICY_VIOLATION
+from runefoble_auth.websocket import WS_POLICY_VIOLATION, bearer_token_from_subprotocols
 from runefoble_platform.engine_ports import EngineUnavailableError
 from voice_agent.auth import VoicePrincipal, get_voice_verifier
 from voice_agent.authz import admit_speaker_websocket, require_speaker, speaker_allowed
@@ -49,7 +49,11 @@ class AudioStreamChunkResponse(BaseModel):
 
 
 @router.post("/chunk", response_model=AudioStreamChunkResponse)
-async def ingest_audio_chunk(req: AudioStreamChunkRequest, principal: VoicePrincipal):
+async def ingest_audio_chunk(
+    req: AudioStreamChunkRequest,
+    principal: VoicePrincipal,
+    authorization: Annotated[str | None, Header(alias="Authorization")] = None,
+):
     """Ingest PCM/WAV audio chunk, process VAD boundaries, and trigger streaming transcription."""
     await require_speaker(req.session_id, req.speaker_id, principal.user_id)
     raw_b64 = req.audio_data or req.audio_base64
@@ -74,6 +78,7 @@ async def ingest_audio_chunk(req: AudioStreamChunkRequest, principal: VoicePrinc
         is_whisper=req.is_whisper,
         target_character_id=req.target_character_id,
         is_final=req.is_final,
+        caller_authorization=authorization,
     )
 
     return AudioStreamChunkResponse(**result.model_dump())
@@ -96,6 +101,8 @@ async def audio_stream_websocket(
     if principal is None:
         return
     pipeline = get_streaming_pipeline()
+    token = bearer_token_from_subprotocols(list(websocket.scope.get("subprotocols", [])))
+    caller_authorization = f"Bearer {token}" if token else None
     verified_pairs = {(sess_id, spk_id)}
 
     try:
@@ -144,6 +151,7 @@ async def audio_stream_websocket(
                     audio_bytes=audio_bytes,
                     sample_rate=sample_rate,
                     is_final=is_final,
+                    caller_authorization=caller_authorization,
                 )
             except EngineUnavailableError as e:
                 await websocket.send_json(e.body())

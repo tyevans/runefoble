@@ -3,6 +3,11 @@
 Every token must pass: RS256 signature against the issuer's JWKS, `exp`,
 `sub`, `iss` (exact match), and `aud` (exact match). No mode disables any
 check. No code path decodes a token without verifying it.
+
+Inside a cluster, the browser-facing issuer host is not resolvable from a pod.
+When `internal_url` is set, discovery and JWKS requests go to `internal_url`
+with a `Host` header that names the issuer host. The `iss` check still uses the
+issuer exactly as Zitadel writes it into the token.
 """
 
 from __future__ import annotations
@@ -11,6 +16,7 @@ import json
 import logging
 import urllib.request
 from typing import Any
+from urllib.parse import urlsplit
 
 import jwt
 
@@ -24,15 +30,42 @@ DISCOVERY_PATH = "/.well-known/openid-configuration"
 DISCOVERY_TIMEOUT_SECONDS = 5
 
 
-def discover_jwks_url(issuer: str) -> str:
-    """Read `jwks_uri` from the issuer's OIDC discovery document."""
-    url = f"{issuer.rstrip('/')}{DISCOVERY_PATH}"
-    with urllib.request.urlopen(url, timeout=DISCOVERY_TIMEOUT_SECONDS) as response:
+def _get_json(url: str, headers: dict[str, str]) -> dict[str, Any]:
+    request = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(request, timeout=DISCOVERY_TIMEOUT_SECONDS) as response:
         document: dict[str, Any] = json.loads(response.read().decode("utf-8"))
+    return document
+
+
+def discover_jwks_url(issuer: str, internal_url: str | None = None) -> str:
+    """Read `jwks_uri` from the issuer's OIDC discovery document.
+
+    With `internal_url`, the document is read from that origin with a `Host` header
+    that names the issuer host. The returned `jwks_uri` is rebased onto `internal_url`.
+    """
+    if internal_url is None:
+        url = f"{issuer.rstrip('/')}{DISCOVERY_PATH}"
+        document = _get_json(url, {})
+    else:
+        url = f"{internal_url.rstrip('/')}{DISCOVERY_PATH}"
+        document = _get_json(url, issuer_host_headers(issuer))
     jwks_uri = document.get("jwks_uri")
     if not isinstance(jwks_uri, str) or not jwks_uri:
         raise TokenVerificationError(f"Discovery document at {url} has no jwks_uri")
-    return jwks_uri
+    if internal_url is None:
+        return jwks_uri
+    return _rebase(jwks_uri, internal_url)
+
+
+def issuer_host_headers(issuer: str) -> dict[str, str]:
+    """The `Host` header that Zitadel needs to resolve the instance for `issuer`."""
+    return {"Host": urlsplit(issuer).netloc}
+
+
+def _rebase(url: str, origin: str) -> str:
+    parts = urlsplit(url)
+    rebased = f"{origin.rstrip('/')}{parts.path}"
+    return f"{rebased}?{parts.query}" if parts.query else rebased
 
 
 class ZitadelAuthService:
@@ -42,21 +75,27 @@ class ZitadelAuthService:
         self,
         issuer: str = "http://localhost:8080",
         audience: str = "runefoble-api",
-        jwks_url: str | None = None,
+        internal_url: str | None = None,
         jwks_cache_ttl: float = 300,
         jwk_client: jwt.PyJWKClient | None = None,
     ) -> None:
         self.issuer = issuer.rstrip("/")
         self.audience = audience
+        self.internal_url = internal_url.rstrip("/") if internal_url else None
         self.jwks_cache_ttl = jwks_cache_ttl
-        self._jwks_url = jwks_url
+        self._jwks_url: str | None = None
         self._jwk_client = jwk_client
 
     @property
+    def request_headers(self) -> dict[str, str]:
+        """Headers for discovery and JWKS requests. Empty unless `internal_url` is set."""
+        return issuer_host_headers(self.issuer) if self.internal_url else {}
+
+    @property
     def jwks_url(self) -> str:
-        """Configured JWKS URL, or the `jwks_uri` advertised by OIDC discovery."""
+        """JWKS URL advertised by OIDC discovery, reached through `internal_url` when set."""
         if self._jwks_url is None:
-            self._jwks_url = discover_jwks_url(self.issuer)
+            self._jwks_url = discover_jwks_url(self.issuer, self.internal_url)
         return self._jwks_url
 
     @property
@@ -66,6 +105,7 @@ class ZitadelAuthService:
                 self.jwks_url,
                 cache_jwk_set=True,
                 lifespan=self.jwks_cache_ttl,
+                headers=self.request_headers,
             )
         return self._jwk_client
 

@@ -9,9 +9,9 @@ from character_sheet import roster, schemas
 from character_sheet.authz import write_character_ownership
 from character_sheet.models import CharacterState, StandInGuardrails
 from character_sheet.roster import CharacterRosterView
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 
-router = APIRouter(tags=["character_sheet"], dependencies=[Depends(deps.get_principal)])
+router = APIRouter(tags=["character_sheet"])
 
 
 @router.get("/api/v1/characters", response_model=list[CharacterRosterView])
@@ -76,7 +76,7 @@ async def prepare_spell(character_id: UUID, req: schemas.PrepareSpellRequest, re
 @router.post(
     "/api/v1/characters/{character_id}/spells/cast",
     response_model=CharacterState,
-    dependencies=deps.EDIT_CHARACTER,
+    dependencies=deps.EDIT_CHARACTER_OR_SERVICE,
 )
 async def cast_spell(character_id: UUID, req: schemas.CastSpellRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(
@@ -103,10 +103,10 @@ async def restore_spell_slots(
 @router.get(
     "/api/v1/characters/{character_id}",
     response_model=CharacterRosterView,
-    dependencies=deps.VIEW_CHARACTER,
+    dependencies=deps.VIEW_CHARACTER_OR_SERVICE,
 )
 async def get_character(character_id: UUID, repo: deps.RepoDep, spicedb: deps.SpiceDep):
-    """Read one character. Requires `view`, checked by the route dependency."""
+    """Read one character. A user bearer needs `view`. The service credential reads without a user."""
     state = (await deps.load_character(repo, character_id)).state
     return await roster.roster_view(spicedb, state)
 
@@ -127,7 +127,7 @@ async def set_stand_in_active(
 @router.post(
     "/api/v1/characters/{character_id}/health",
     response_model=CharacterState,
-    dependencies=deps.EDIT_CHARACTER,
+    dependencies=deps.EDIT_CHARACTER_OR_SERVICE,
 )
 async def modify_health(character_id: UUID, req: schemas.HealthChangeRequest, repo: deps.RepoDep):
     try:
@@ -141,7 +141,7 @@ async def modify_health(character_id: UUID, req: schemas.HealthChangeRequest, re
 @router.post(
     "/api/v1/characters/{character_id}/penalties",
     response_model=CharacterState,
-    dependencies=deps.EDIT_CHARACTER,
+    dependencies=deps.EDIT_CHARACTER_OR_SERVICE,
 )
 async def apply_penalty(character_id: UUID, req: schemas.PenaltyRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(
@@ -180,7 +180,7 @@ async def unequip_item(character_id: UUID, slot: str, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.equip_item(slot, None))
 
 
-@router.post("/api/v1/characters/{character_id}/conditions", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
+@router.post("/api/v1/characters/{character_id}/conditions", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER_OR_SERVICE)
 async def apply_condition(character_id: UUID, req: schemas.ApplyConditionRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.apply_condition(req.condition, req.duration_rounds, req.source))
 

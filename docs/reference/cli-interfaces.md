@@ -39,6 +39,7 @@
 | `make pre-commit` | Runs every pre-commit hook on all files with `uv run pre-commit run --all-files` |
 | `make test-bdd` | Typechecks `e2e/` (`pnpm run e2e:typecheck`), fails on unused Playwright BDD step definitions (`uv run python scripts/check_e2e_unused_steps.py`), and runs `bddgen`. Does not launch browsers |
 | `make build` | Produces production frontend bundle and static Storybook documentation |
+| `make check-ui-manifests` | Fails when a service UI manifest is missing or invalid (ADR-0013, ADR-0015) |
 | `make voice-model-cache` | Downloads the faster-whisper model set by `VOICE_MODEL_SIZE` (default `tiny.en`) into `.cache/voice-models`, then copies it into the running voice-agent pod |
 | `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks |
 | `make prd-decompose` | Decomposes PRDs into ADR spikes and vertical slices (`ARGS="--prd PRD-0014"`) |

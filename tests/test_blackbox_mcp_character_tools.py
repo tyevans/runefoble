@@ -21,14 +21,6 @@ from mcp.types import CallToolResult
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-MCP_CREDENTIAL_XFAIL = pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "gateway_mcp has no service credential for character_sheet (TASK-0604, ADR-0015 (e)). "
-        "The tool call returns 401 until that Kubernetes Secret credential exists."
-    ),
-)
-
 
 @pytest.fixture(scope="module", autouse=True)
 def character_service() -> Iterator[str]:
@@ -85,7 +77,6 @@ def tool_payload(result: CallToolResult) -> dict[str, Any]:
 
 
 @pytest.mark.asyncio
-@MCP_CREDENTIAL_XFAIL
 async def test_modify_character_hp_change_is_visible_in_character_sheet_route(sheet_http):
     """HP changed through MCP equals the HP read back through the sheet route."""
     character_id = create_character(sheet_http, "Valeros", "Fighter", max_hp=45)
@@ -103,7 +94,6 @@ async def test_modify_character_hp_change_is_visible_in_character_sheet_route(sh
 
 
 @pytest.mark.asyncio
-@MCP_CREDENTIAL_XFAIL
 async def test_get_character_sheet_returns_stored_character_not_fixed_data(sheet_http):
     """get_character_sheet returns the stored name, class and HP for the id."""
     character_id = create_character(sheet_http, "Kyra", "Cleric", max_hp=30)
@@ -120,7 +110,6 @@ async def test_get_character_sheet_returns_stored_character_not_fixed_data(sheet
 
 
 @pytest.mark.asyncio
-@MCP_CREDENTIAL_XFAIL
 async def test_get_character_sheet_unknown_id_is_tool_error():
     """An id with no character returns a tool error from the upstream 404."""
     result = await call_tool("get_character_sheet", {"character_id": str(uuid4())})
@@ -140,7 +129,6 @@ async def test_get_character_sheet_malformed_id_is_tool_error():
 
 
 @pytest.mark.asyncio
-@MCP_CREDENTIAL_XFAIL
 async def test_apply_condition_is_visible_in_character_sheet_route(sheet_http):
     """A condition applied through MCP appears on the sheet read through the route."""
     character_id = create_character(sheet_http, "Valeros", "Fighter", max_hp=45)
@@ -166,7 +154,6 @@ async def test_apply_condition_is_visible_in_character_sheet_route(sheet_http):
 
 
 @pytest.mark.asyncio
-@MCP_CREDENTIAL_XFAIL
 async def test_add_condition_is_visible_in_character_sheet_route(sheet_http):
     """add_condition persists through the same route as apply_condition."""
     character_id = create_character(sheet_http, "Kyra", "Cleric", max_hp=30)
@@ -179,7 +166,6 @@ async def test_add_condition_is_visible_in_character_sheet_route(sheet_http):
 
 
 @pytest.mark.asyncio
-@MCP_CREDENTIAL_XFAIL
 async def test_apply_absentee_penalty_is_visible_in_character_sheet_route(sheet_http):
     """A session miss penalty applied through MCP appears in the sheet penalties."""
     character_id = create_character(sheet_http, "Valeros", "Fighter", max_hp=45)
@@ -202,7 +188,6 @@ async def test_apply_absentee_penalty_is_visible_in_character_sheet_route(sheet_
 
 
 @pytest.mark.asyncio
-@MCP_CREDENTIAL_XFAIL
 async def test_cast_spell_expends_slot_visible_in_character_sheet_route(sheet_http):
     """Each cast through MCP spends a slot, and an empty slot level is rejected."""
     character_id = create_character(sheet_http, "Kyra", "Cleric", max_hp=30)
@@ -234,7 +219,6 @@ async def test_cast_spell_expends_slot_visible_in_character_sheet_route(sheet_ht
 
 
 @pytest.mark.asyncio
-@MCP_CREDENTIAL_XFAIL
 async def test_inspect_inventory_reads_items_added_through_inventory_routes(sheet_http):
     """Inventory and equipment written through the sheet routes are read back by MCP."""
     character_id = create_character(sheet_http, "Valeros", "Fighter", max_hp=45)

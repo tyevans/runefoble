@@ -16,6 +16,35 @@ spec:
       annotations:
         checksum/runtime-config: {{ include (print $.Template.BasePath "/frontend-runtime-config.yaml") . | sha256sum }}
     spec:
+      # The init container fills in the client ID and project ID from the Secret that the bootstrap
+      # Job writes. The pod waits until that Secret exists.
+      initContainers:
+        - name: render-runtime-config
+          image: {{ .Values.frontend.image }}
+          imagePullPolicy: {{ .Values.frontend.imagePullPolicy | default "IfNotPresent" }}
+          command: ["sh", "-c"]
+          args:
+            - >-
+              sed -e "s|__RUNEFOBLE_CLIENT_ID__|${RUNEFOBLE_CLIENT_ID}|"
+              -e "s|__RUNEFOBLE_PROJECT_ID__|${RUNEFOBLE_PROJECT_ID}|"
+              /template/runtime-config.json > /runtime/runtime-config.json
+          env:
+            - name: RUNEFOBLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "runefoble.zitadelClientSecretName" $ }}
+                  key: client-id
+            - name: RUNEFOBLE_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "runefoble.zitadelClientSecretName" $ }}
+                  key: project-id
+          volumeMounts:
+            - name: runtime-config-template
+              mountPath: /template
+              readOnly: true
+            - name: runtime-config
+              mountPath: /runtime
       containers:
         - name: frontend
           image: {{ .Values.frontend.image }}
@@ -28,9 +57,11 @@ spec:
               subPath: runtime-config.json
               readOnly: true
       volumes:
-        - name: runtime-config
+        - name: runtime-config-template
           configMap:
             name: frontend-runtime-config
+        - name: runtime-config
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

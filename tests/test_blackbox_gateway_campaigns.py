@@ -9,13 +9,16 @@ Verifies:
 5. Zanzibar role assignment, member roster listing, and spectator read-only access.
 """
 
+import os
+
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
 
 
 @pytest.fixture
-def client(game_session_upstream):
+def client(game_session_upstream, character_sheet_upstream):
     """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
     with TestClient(app) as gateway_client:
         yield gateway_client
@@ -217,6 +220,7 @@ async def test_spectator_invite_and_usage_limit(trusted_ws_issuer, client):
         headers=headers_dm,
     )
     camp_id = res_create.json()["id"]
+    session_id = _owner_session(camp_id, headers_dm)
 
     # Create single-use spectator invite
     res_invite = client.post(
@@ -246,12 +250,25 @@ async def test_spectator_invite_and_usage_limit(trusted_ws_issuer, client):
     assert res_join2.json()["detail"]["error"] == "invite_exhausted"
 
     # Viewer 1 has spectator access: can view session, cannot advance turns
-    res_sess = client.get(f"/api/v1/sessions/{camp_id}", headers=headers_viewer1)
+    res_sess = client.get(f"/api/v1/sessions/{session_id}", headers=headers_viewer1)
     assert res_sess.status_code == 200
 
     res_advance = client.post(
-        f"/api/v1/sessions/{camp_id}/turns/advance",
+        f"/api/v1/sessions/{session_id}/turns/advance",
         json={"next_character_id": "c1"},
         headers=headers_viewer1,
     )
     assert res_advance.status_code == 403
+
+
+def _owner_session(campaign_id: str, headers: dict[str, str]) -> str:
+    """Create a game session in a campaign through the owner's public game_session route."""
+    url = os.environ["RUNEFOBLE_GAME_SESSION_URL"]
+    res = httpx.post(
+        f"{url}/api/v1/sessions/create",
+        json={"campaign_id": campaign_id, "title": "Crypt"},
+        headers=headers,
+        timeout=5.0,
+    )
+    assert res.status_code == 200, res.text
+    return res.json()["session_id"]

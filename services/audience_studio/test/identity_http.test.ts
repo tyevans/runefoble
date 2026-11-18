@@ -118,12 +118,16 @@ describe('protected routes require a verified bearer token', () => {
   });
 
   test('an unreachable JWKS endpoint returns 503, not a token rejection', async () => {
-    const unreachable = await startService(issuer, { jwksUrl: 'http://127.0.0.1:9/keys' });
+    // Keys are fetched on the first verification, so the issuer can go away after start-up.
+    const dying = await TestIssuer.start();
+    const unreachable = await startService(dying);
     try {
+      const token = await dying.mint('viewer-down');
+      await dying.close();
       const res = await unreachable.server.inject({
         method: 'GET',
         url: `${API}/polls`,
-        headers: bearer(await issuer.mint('viewer-down')),
+        headers: bearer(token),
       });
       assert.equal(res.statusCode, 503);
     } finally {

@@ -9,14 +9,17 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
 
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 def _setup_active_combat(client: TestClient) -> tuple[str, str, str]:
     """Helper to initialize an active combat encounter with two combatants."""
-    campaign_id = str(uuid4())
+    campaign_id = _owned_campaign(client)
     create_res = client.post(
         "/api/v1/sessions/create",
         json={"campaign_id": campaign_id, "title": "Reaction Arena", "dm_id": "the_watcher"},
@@ -152,3 +155,10 @@ def test_ready_action_card_frontdoor_registration(client: TestClient) -> None:
     eval_data = eval_res.json()
     assert eval_data["triggered_count"] >= 1
     assert eval_data["triggered_actions"][0]["readied_action"] == "Shoot Heavy Crossbow"
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

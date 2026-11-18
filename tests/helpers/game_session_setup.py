@@ -19,7 +19,7 @@ def start_session_with_player(base_url: str, dm_sub: str = "encounter-dm") -> st
     with httpx.Client(base_url=base_url, headers=auth) as http:
         created = http.post(
             "/api/v1/sessions/create",
-            json={"campaign_id": str(uuid4()), "title": "Ambush", "dm_id": "the_watcher"},
+            json={"campaign_id": _owned_campaign(http), "title": "Ambush", "dm_id": "the_watcher"},
         )
         assert created.status_code == 200, created.text
         session_id = created.json()["session_id"]
@@ -37,3 +37,10 @@ def start_session_with_player(base_url: str, dm_sub: str = "encounter-dm") -> st
         started = http.post(f"/api/v1/sessions/{session_id}/start")
         assert started.status_code == 200, started.text
     return str(session_id)
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

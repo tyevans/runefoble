@@ -20,7 +20,11 @@ from fastapi import Depends, FastAPI
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.zitadel import ZitadelAuthService
 
-verifier = ZitadelAuthService(issuer="http://zitadel:8080", audience="runefoble-api")
+verifier = ZitadelAuthService(
+    issuer="http://auth.localhost",  # Must equal the token `iss` claim
+    audience="364509876543210987",  # The project ID in a cluster
+    internal_url="http://zitadel:8080",  # In-cluster origin. Requests carry Host: auth.localhost
+)
 get_principal = require_principal(lambda: verifier)
 
 app = FastAPI()
@@ -61,6 +65,30 @@ async def act(item_id: str, caller_id: CallerId):
 - Keep public routes (health, manifests, OpenAPI) on the app, not on a guarded router.
 - WebSocket routes do not use `require_principal`. They call `admit_websocket` (below).
 - The Watcher uses the same names from `the_watcher.identity`.
+
+## Routes That Another Service Calls: Accept the Service Credential
+
+Use `require_user_or_service_credential` only on a route that another service calls and that does not act for a user. The MCP gateway calls such routes. The dependency accepts either:
+
+- a verified user bearer in `Authorization`, which gives `CallerIdentity(user_id=<subject>)`; or
+- the service credential in `X-Runefoble-Service-Credential`, which gives `CallerIdentity(user_id=None)`.
+
+```python
+from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
+from runefoble_platform.service_credential import expected_service_credential
+
+SERVICE_CREDENTIAL = expected_service_credential()  # refuses start-up when unset
+get_caller_or_service = require_user_or_service_credential(get_verifier, SERVICE_CREDENTIAL)
+
+
+@router.get("/api/v1/things/{thing_id}", dependencies=[Depends(get_caller_or_service)])
+async def read_thing(thing_id: UUID): ...
+```
+
+Rules:
+- A route with a user-scoped permission check keeps `require_principal` or a `CallerId`. A service call must never reach it.
+- A route attaches the dependency per route. Do not put it on the router, because the router would then open every route in it to the service credential.
+- A presented `Authorization` header that fails verification gives `401`, even when the service credential is also present.
 
 ## WebSocket: Use `admit_websocket`
 
@@ -104,15 +132,15 @@ Negative cases to cover: no token, garbage, HS256 with a known secret, `alg: non
 
 ## Configuration
 - `RUNEFOBLE_ZITADEL_ISSUER` (`zitadel_issuer`): must equal the token `iss`.
-- `RUNEFOBLE_ZITADEL_AUDIENCE` (`zitadel_audience`): must equal the token `aud`. Defaults to `RUNEFOBLE_ZITADEL_CLIENT_ID`.
-- `RUNEFOBLE_ZITADEL_JWKS_URL` (`zitadel_jwks_url`): optional. If empty, the verifier reads `jwks_uri` from OIDC discovery.
+- `RUNEFOBLE_ZITADEL_AUDIENCE` (`zitadel_audience`): must equal the token `aud`. In a cluster it is the project ID from the Secret `runefoble-zitadel-client`.
+- `RUNEFOBLE_ZITADEL_INTERNAL_URL` (`zitadel_internal_url`): optional. If set, discovery and JWKS requests go to this origin with `Host` set to the issuer host. If empty, the verifier reads discovery from the issuer.
 
 There is no development mode and no environment flag that skips verification.
 
 ## TypeScript Services
 
 The TypeScript `audience_studio` service follows the same contract. It has no Python runtime, so it uses `jose` (`services/audience_studio/src/identity/`):
-- `ZitadelVerifier` checks RS256 only, `iss`, `aud`, `exp`, and `sub`. It reads `RUNEFOBLE_ZITADEL_JWKS_URL`, or `jwks_uri` from OIDC discovery when the URL is unset.
+- `ZitadelAuthService` checks RS256 only, `iss`, `aud`, `exp`, and `sub`. It reads `jwks_uri` from OIDC discovery, through `RUNEFOBLE_ZITADEL_INTERNAL_URL` when that setting is set.
 - `registerIdentityHook` runs before every route except `/healthz`, `/readyz`, and `/ui/manifest`. It reads the bearer header for HTTP and the `runefoble.bearer.<jwt>` subprotocol for WebSockets. It refuses a handshake before accept.
 - A rejected token returns `401`. A JWKS fetch failure returns `503`. The service never reads identity from headers or the body.
 - The service refuses to start when `RUNEFOBLE_ZITADEL_ISSUER` or `RUNEFOBLE_ZITADEL_AUDIENCE` is unset.

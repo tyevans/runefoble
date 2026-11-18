@@ -7,14 +7,19 @@
  * - The verified `sub` is the principal. Roles and other claims grant nothing.
  */
 
-import { createRemoteJWKSet, errors as joseErrors, jwtVerify, type JWTPayload } from 'jose';
+import { createRemoteJWKSet, customFetch, errors as joseErrors, jwtVerify, type JWTPayload } from 'jose';
 import { DependencyUnavailableError } from '../errors.js';
+import { getWithHost } from './hostHeaderFetch.js';
 
 export interface ZitadelSettings {
   issuer: string;
   audience: string;
-  /** Optional. When unset, the verifier reads `jwks_uri` from OIDC discovery at start-up. */
-  jwksUrl?: string;
+  /**
+   * Optional origin that serves Zitadel inside the cluster, for example http://zitadel:8080.
+   * Discovery and JWKS requests go here with `Host` set to the issuer host. The `iss` check
+   * still uses the issuer exactly as Zitadel writes it into the token.
+   */
+  internalUrl?: string;
 }
 
 /** The identity a verified token proves. */
@@ -48,10 +53,22 @@ const TOKEN_ERRORS = [
   joseErrors.JWKSMultipleMatchingKeys,
 ];
 
-/** Reads `jwks_uri` from the issuer's OIDC discovery document. Throws when discovery fails. */
-export async function discoverJwksUrl(issuer: string): Promise<string> {
-  const url = `${issuer.replace(/\/+$/, '')}/.well-known/openid-configuration`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(DISCOVERY_TIMEOUT_MS) });
+/** The `Host` header that Zitadel needs to resolve the instance for `issuer`. */
+export function issuerHost(issuer: string): string {
+  return new URL(issuer).host;
+}
+
+/**
+ * Reads `jwks_uri` from the issuer's OIDC discovery document. With `internalUrl`, the document
+ * is read from that origin, and the returned `jwks_uri` is rebased onto it. Throws when
+ * discovery fails.
+ */
+export async function discoverJwksUrl(issuer: string, internalUrl?: string): Promise<string> {
+  const origin = (internalUrl ?? issuer).replace(/\/+$/, '');
+  const url = `${origin}/.well-known/openid-configuration`;
+  const res = internalUrl
+    ? await getWithHost(url, issuerHost(issuer), DISCOVERY_TIMEOUT_MS)
+    : await fetch(url, { signal: AbortSignal.timeout(DISCOVERY_TIMEOUT_MS) });
   if (!res.ok) {
     throw new Error(`OIDC discovery at ${url} returned HTTP ${res.status}`);
   }
@@ -59,7 +76,11 @@ export async function discoverJwksUrl(issuer: string): Promise<string> {
   if (typeof document.jwks_uri !== 'string' || document.jwks_uri === '') {
     throw new Error(`OIDC discovery document at ${url} has no jwks_uri`);
   }
-  return document.jwks_uri;
+  if (!internalUrl) {
+    return document.jwks_uri;
+  }
+  const jwks = new URL(document.jwks_uri);
+  return `${internalUrl.replace(/\/+$/, '')}${jwks.pathname}${jwks.search}`;
 }
 
 export class ZitadelVerifier {
@@ -70,8 +91,13 @@ export class ZitadelVerifier {
 
   /** Resolves the JWKS URL (configured or discovered) once, at start-up. */
   static async create(settings: ZitadelSettings): Promise<ZitadelVerifier> {
-    const jwksUrl = settings.jwksUrl ?? (await discoverJwksUrl(settings.issuer));
-    return new ZitadelVerifier(settings, createRemoteJWKSet(new URL(jwksUrl)));
+    const jwksUrl = await discoverJwksUrl(settings.issuer, settings.internalUrl);
+    const keys = settings.internalUrl
+      ? createRemoteJWKSet(new URL(jwksUrl), {
+          [customFetch]: (url) => getWithHost(url, issuerHost(settings.issuer), DISCOVERY_TIMEOUT_MS),
+        })
+      : createRemoteJWKSet(new URL(jwksUrl));
+    return new ZitadelVerifier(settings, keys);
   }
 
   /**

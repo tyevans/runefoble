@@ -16,6 +16,7 @@ from character_sheet.crafting import CraftingAggregate
 from character_sheet.models import CharacterState
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
 from fastapi import Depends, HTTPException
+from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
@@ -32,6 +33,7 @@ from runefoble_platform.event_sourcing import (
     create_aggregate_repository,
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.service_credential import expected_service_credential
 
 STREAM_CHARACTER = "runefoble.events.character"
 STREAM_CRAFTING = "runefoble.events.crafting"
@@ -95,7 +97,7 @@ def get_zitadel_auth_service() -> ZitadelAuthService:
         _zitadel_auth_service = ZitadelAuthService(
             issuer=platform_settings.zitadel_issuer,
             audience=platform_settings.zitadel_audience,
-            jwks_url=platform_settings.zitadel_jwks_url,
+            internal_url=platform_settings.zitadel_internal_url,
         )
     return _zitadel_auth_service
 
@@ -109,6 +111,14 @@ def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
 get_principal = require_principal(get_zitadel_auth_service)
 
 
+# Service credential (ADR-0015 e). Read once at import, so a service without it never starts.
+SERVICE_CREDENTIAL = expected_service_credential()
+get_caller_or_service = require_user_or_service_credential(
+    get_zitadel_auth_service, SERVICE_CREDENTIAL
+)
+CallerOrService = Annotated[CallerIdentity, Depends(get_caller_or_service)]
+
+
 def verified_user_id(principal: Annotated[VerifiedPrincipal, Depends(get_principal)]) -> str:
     """Project the verified token subject. Every route in this service requires it."""
     return principal.user_id
@@ -117,25 +127,38 @@ def verified_user_id(principal: Annotated[VerifiedPrincipal, Depends(get_princip
 VerifiedUserId = Annotated[str, Depends(verified_user_id)]
 
 
-def require_character_permission(permission: str) -> Callable[..., Awaitable[None]]:
+def require_character_permission(
+    permission: str, *, allow_service: bool = False
+) -> Callable[..., Awaitable[None]]:
     """Build a route dependency that checks one schema permission on the path's character.
 
-    The check runs on every call. It needs a verified principal (401 otherwise), and it
-    fails closed when SpiceDB cannot answer (503).
+    The check runs on every call. A user bearer needs the permission (403 otherwise). With
+    `allow_service`, the service credential passes without a user. A missing or bad
+    credential is a 401. The check fails closed when SpiceDB cannot answer (503).
     """
 
-    async def _check(
+    async def _check_user(
         character_id: UUID,
         principal: Annotated[VerifiedPrincipal, Depends(get_principal)],
         spicedb: SpiceDep,
     ) -> None:
         await authorize_character(spicedb, character_id, permission, principal.user_id)
 
-    return _check
+    async def _check_caller(
+        character_id: UUID,
+        caller: CallerOrService,
+        spicedb: SpiceDep,
+    ) -> None:
+        if caller.user_id is not None:
+            await authorize_character(spicedb, character_id, permission, caller.user_id)
+
+    return _check_caller if allow_service else _check_user
 
 
 EDIT_CHARACTER = [Depends(require_character_permission("edit"))]
 VIEW_CHARACTER = [Depends(require_character_permission("view"))]
+EDIT_CHARACTER_OR_SERVICE = [Depends(require_character_permission("edit", allow_service=True))]
+VIEW_CHARACTER_OR_SERVICE = [Depends(require_character_permission("view", allow_service=True))]
 
 
 async def publish_character_event(event: Any) -> None:

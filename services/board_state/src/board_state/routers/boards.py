@@ -6,13 +6,18 @@ import logging
 from uuid import uuid4
 
 from board_state.aggregate import BoardAggregate, BoardState
-from board_state.dependencies import get_board, get_current_user_id, repo, to_board_uuid
+from board_state.dependencies import (
+    get_board,
+    get_caller_or_service,
+    repo,
+    to_board_uuid,
+)
 from board_state.models import CreateBoardRequest
 from fastapi import APIRouter, Depends
 
 logger = logging.getLogger("runefoble.board_state.routers.boards")
 
-router = APIRouter(tags=["boards"], dependencies=[Depends(get_current_user_id)])
+router = APIRouter(tags=["boards"])
 # Microfrontend discovery stays public. It carries no board data.
 ui_manifest_router = APIRouter(tags=["boards"])
 
@@ -57,7 +62,9 @@ def get_ui_manifest():
     }
 
 
-@router.post("/api/v1/boards", response_model=BoardState)
+@router.post(
+    "/api/v1/boards", dependencies=[Depends(get_caller_or_service)], response_model=BoardState
+)
 async def create_board(req: CreateBoardRequest):
     cols = req.cols or req.width or 10
     rows = req.rows or req.height or 10
@@ -69,7 +76,11 @@ async def create_board(req: CreateBoardRequest):
     return board.state
 
 
-@router.get("/api/v1/boards/{session_id}", response_model=BoardState)
+@router.get(
+    "/api/v1/boards/{session_id}",
+    dependencies=[Depends(get_caller_or_service)],
+    response_model=BoardState,
+)
 async def read_board(session_id: str):
     """Return the board for a session. Respond 404 when no board exists. Never creates one."""
     board = await get_board(session_id)
