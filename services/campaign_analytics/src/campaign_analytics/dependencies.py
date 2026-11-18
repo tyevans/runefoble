@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import Depends
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_platform.config import PlatformSettings
 
@@ -17,7 +18,6 @@ platform_settings = PlatformSettings()
 
 _storage: CampaignAnalyticsStorage | None = None
 _worker: CampaignAnalyticsWorker | None = None
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _zitadel_auth_service: ZitadelAuthService | None = None
 
 
@@ -43,20 +43,6 @@ def set_worker(worker: CampaignAnalyticsWorker | None) -> None:
     """Override CampaignAnalyticsWorker instance."""
     global _worker
     _worker = worker
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    """Provide SpiceDB Zanzibar authorization client."""
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient()
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    """Override SpiceDB Zanzibar client."""
-    global _spicedb_client
-    _spicedb_client = client
 
 
 def get_zitadel_auth_service() -> ZitadelAuthService:
@@ -90,9 +76,12 @@ def get_current_user_id(
 async def check_user_can_view_campaign(
     user_id: str,
     campaign_id: str,
-    spicedb: SpiceDBClient | MockSpiceDBClient,
+    spicedb: SpiceDBClient,
 ) -> bool:
-    """Evaluate SpiceDB Zanzibar permissions to check whether user can view campaign analytics."""
+    """Evaluate SpiceDB Zanzibar permissions to check whether user can view campaign analytics.
+
+    A SpiceDB failure raises AuthzUnavailableError. It never returns False.
+    """
     return await spicedb.check_permission(
         resource_type="campaign",
         resource_id=str(campaign_id),
@@ -104,4 +93,4 @@ async def check_user_can_view_campaign(
 
 CurrentUserId = Annotated[str, Depends(get_current_user_id)]
 StorageDep = Annotated[CampaignAnalyticsStorage, Depends(get_storage)]
-SpiceDep = Annotated[SpiceDBClient | MockSpiceDBClient, Depends(get_spicedb_client)]
+SpiceDep = Annotated[SpiceDBClient, Depends(get_spicedb_client)]

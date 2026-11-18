@@ -15,6 +15,7 @@ from eventsource.application.aggregates.repository import AggregateRepository
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.event_sourcing import create_aggregate_repository
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -100,8 +101,17 @@ async def store_unavailable(_request: Request, _exc: Exception) -> JSONResponse:
     )
 
 
+async def authorization_unavailable(_request: Request, _exc: Exception) -> JSONResponse:
+    """Answer 503 when SpiceDB cannot answer. A failed check is never a denial or an allow."""
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Authorization service is unavailable"},
+    )
+
+
 for _store_error in (SQLAlchemyError, OSError, StorageUnavailableError):
     app.add_exception_handler(_store_error, store_unavailable)
+app.add_exception_handler(AuthzUnavailableError, authorization_unavailable)
 
 app.include_router(heatmap_router)
 app.include_router(mvp_router)
