@@ -1,6 +1,22 @@
 import { LitElement, html, css, type PropertyValues } from 'lit';
-import { AssetImageController, AuthConsumerController } from '@runefoble/ui-core';
+import {
+  AssetImageController,
+  AuthConsumerController,
+  PORTRAIT_PLACEHOLDERS,
+} from '@runefoble/ui-core';
 import { customElement, property } from 'lit/decorators.js';
+
+/**
+ * The placeholder for a character with no portrait. The class word picks the preset
+ * ("Fighter 4" shows the fighter preset). A class without a preset shows the neutral
+ * canvas-coloured paladin preset.
+ */
+function placeholderForClass(characterClass: string): string {
+  const word = characterClass.trim().split(/\s+/)[0]?.toLowerCase() ?? '';
+  return Object.hasOwn(PORTRAIT_PLACEHOLDERS, word)
+    ? PORTRAIT_PLACEHOLDERS[word as keyof typeof PORTRAIT_PLACEHOLDERS]
+    : PORTRAIT_PLACEHOLDERS.paladin;
+}
 
 export interface CharacterCondition {
   id: string;
@@ -171,9 +187,11 @@ export class RunefobleCharacterCard extends LitElement {
     return html`
       <div class="card-header">
         <div class="header-identity">
-          ${this.portraitUrl
-            ? html`<img class="char-portrait" src="${this.portrait.url}" alt="${this.characterName}" />`
-            : html``}
+          <img
+            class="char-portrait"
+            src="${this.portraitUrl ? this.portrait.url : placeholderForClass(this.characterClass)}"
+            alt="${this.characterName}"
+          />
           <div>
             <div class="name-title">${this.characterName}</div>
             <div class="class-level">${this.characterClass}</div>
