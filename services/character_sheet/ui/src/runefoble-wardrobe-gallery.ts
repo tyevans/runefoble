@@ -1,4 +1,5 @@
 import { LitElement, html } from 'lit';
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
 import { wardrobeGalleryStyles } from './runefoble-wardrobe-gallery.styles.ts';
 
@@ -19,8 +20,8 @@ export class RunefobleWardrobeGallery extends LitElement {
   @property({ type: String }) characterName = 'Nadia the Bard';
   @property({ type: Number }) currentHp = 34;
   @property({ type: Number }) maxHp = 34;
-  @property({ type: String }) activePortraitUrl = '/assets/portraits/default.svg';
-  @property({ type: String }) basePortraitUrl = '/assets/portraits/default.svg';
+  @property({ type: String }) activePortraitUrl = PORTRAIT_PLACEHOLDERS.fighter;
+  @property({ type: String }) basePortraitUrl = PORTRAIT_PLACEHOLDERS.fighter;
   @property({ type: String }) activeVariantId: string | null = null;
   @property({ type: Array }) conditionBadges: string[] = [];
   @property({ type: Array }) variants: WardrobeVariantItem[] = [];

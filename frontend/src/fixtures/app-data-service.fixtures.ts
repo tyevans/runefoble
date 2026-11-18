@@ -1,3 +1,4 @@
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import type { CampaignItem, CampaignMember, LobbyParticipant, CreateCampaignPayload, UpdateCampaignPayload, LobbyCharacterOption } from '@runefoble/game-session-ui';
 import type { CharacterItem, CreateCharacterPayload } from '@runefoble/character-sheet-ui';
 import type { BoardToken } from '@runefoble/board-state-ui';
@@ -22,9 +23,9 @@ export const FALLBACK_CAMPAIGNS: CampaignItem[] = [
 ];
 
 export const FALLBACK_CHARACTERS: CharacterItem[] = [
-  { id: 'char-valeros', name: 'Valeros of Korvosa', characterClass: 'Fighter', subclass: 'Battle Master', level: 4, currentHp: 38, maxHp: 45, armorClass: 18, speed: 30, campaignId: '4', campaignTitle: 'Tomb of the Star-Eater', portraitUrl: '/assets/portraits/fighter.svg' },
-  { id: 'char-kyra', name: 'Kyra the Sun Maiden', characterClass: 'Cleric', subclass: 'Life Domain', level: 4, currentHp: 28, maxHp: 32, armorClass: 16, speed: 25, campaignId: '4', campaignTitle: 'Tomb of the Star-Eater', portraitUrl: '/assets/portraits/cleric.svg' },
-  { id: 'char-ezren', name: 'Ezren the Gray', characterClass: 'Wizard', subclass: 'Evocation', level: 5, currentHp: 22, maxHp: 26, armorClass: 12, speed: 30, campaignId: null, campaignTitle: null, portraitUrl: '/assets/portraits/wizard.svg' },
+  { id: 'char-valeros', name: 'Valeros of Korvosa', characterClass: 'Fighter', subclass: 'Battle Master', level: 4, currentHp: 38, maxHp: 45, armorClass: 18, speed: 30, campaignId: '4', campaignTitle: 'Tomb of the Star-Eater', portraitUrl: PORTRAIT_PLACEHOLDERS.fighter },
+  { id: 'char-kyra', name: 'Kyra the Sun Maiden', characterClass: 'Cleric', subclass: 'Life Domain', level: 4, currentHp: 28, maxHp: 32, armorClass: 16, speed: 25, campaignId: '4', campaignTitle: 'Tomb of the Star-Eater', portraitUrl: PORTRAIT_PLACEHOLDERS.cleric },
+  { id: 'char-ezren', name: 'Ezren the Gray', characterClass: 'Wizard', subclass: 'Evocation', level: 5, currentHp: 22, maxHp: 26, armorClass: 12, speed: 30, campaignId: null, campaignTitle: null, portraitUrl: PORTRAIT_PLACEHOLDERS.wizard },
 ];
 
 export const FALLBACK_MEMBERS: CampaignMember[] = [

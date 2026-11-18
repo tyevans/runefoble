@@ -1,4 +1,5 @@
 import { LitElement, html } from 'lit';
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
 import { characterRosterStyles } from './runefoble-character-roster.styles.ts';
 import './runefoble-character-builder-modal.ts';
@@ -87,7 +88,7 @@ export class RunefobleCharacterRoster extends LitElement {
     return html`
       <article class="character-card" data-character-id=${char.id}>
         <div class="card-top">
-          <img class="avatar-thumb" src=${char.portraitUrl || '/assets/portraits/default.svg'} alt=${char.name} />
+          <img class="avatar-thumb" src=${char.portraitUrl || PORTRAIT_PLACEHOLDERS.fighter} alt=${char.name} />
           <div class="card-identity">
             <h3 class="card-name" title=${char.name}>${char.name}</h3>
             <div class="card-class">
