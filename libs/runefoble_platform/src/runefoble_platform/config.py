@@ -206,7 +206,7 @@ class PlatformSettings(BaseSettings):
         description="Base URL of the character_sheet service",
     )
     campaign_lore_url: str | None = Field(
-        default="http://campaign-lore:8006",
+        default=None,
         validation_alias=AliasChoices("CAMPAIGN_LORE_URL"),
         description="Base URL of the campaign_lore service",
     )
