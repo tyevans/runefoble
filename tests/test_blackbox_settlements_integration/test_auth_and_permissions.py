@@ -26,7 +26,9 @@ def test_bearer_token_extraction_and_decoding():
     assert sa.extract_bearer_token("Basic 12345") is None
     assert sa.extract_bearer_token("Bearer secret_jwt_token") == "secret_jwt_token"
 
-    service = ZitadelAuthService()
+    service = ZitadelAuthService(
+        issuer="http://zitadel.test", audience="runefoble-api", internal_url=None
+    )
     sa.set_zitadel_auth_service(service)
     try:
         with pytest.raises(HTTPException) as exc:
