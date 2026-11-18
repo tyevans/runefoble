@@ -62,3 +62,9 @@ The tavern router loads, creates, mutates, and saves merchants itself. It writes
 ## Audit Provenance
 - Severity: high
 - Source audits: `game-session.md (F2)`
+
+## Orchestrator Addenda (2026-11-17, ownership)
+- This task owns the tavern load sites that TASK-0561 did not cover:
+  `services/game_session/src/game_session/routers/tavern.py:193-194`, `:246-247`, `:266-275` and
+  `:313-322`. Not found gives 404. A store error gives 503. Delete the canned `Local Merchant`
+  payload. Use the TASK-0561 load helpers. (TASK-0699 left these sites to this task.)
