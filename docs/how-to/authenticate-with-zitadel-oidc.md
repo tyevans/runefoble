@@ -68,17 +68,14 @@ Rules:
 Use the shared dependency. Do not write a new one.
 
 ```python
-from typing import Annotated
-
 from fastapi import APIRouter, Depends
-from gateway_api.auth import get_current_user, require_zanzibar_permission
-from runefoble_auth.principal import VerifiedPrincipal
+from gateway_api.auth import CallerPrincipal, require_zanzibar_permission
 
 router = APIRouter()
 
 
 @router.get("/api/v1/profile")
-async def get_profile(user: Annotated[VerifiedPrincipal, Depends(get_current_user)]):
+async def get_profile(user: CallerPrincipal):
     return {"user_id": user.user_id, "username": user.username, "email": user.email}
 
 
