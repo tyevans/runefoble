@@ -77,8 +77,8 @@ Bidirectional voice streams and audio mesh coordination are negotiated via the W
   `WebRTCSignalingManager` tracks active room WebSockets, peer lookups, disconnect cleanup, and directed or broadcast JSON frame transmission.
 - **Session Socket Gate (`runefoble_auth.websocket`)**:
   `admit_websocket` with `action_authorizer("session.observe", session_id)` verifies the bearer, then checks `session.observe` on the room. A refusal closes the socket with `4403`. The voice routes use this same helper.
-- **Signaling Peer Metadata (`voice_agent.signaling.auth`)**:
-  `extract_peer_and_role` reads the presentation fields `peer_id` and `role` from the query string. Identity comes only from the verified bearer.
+- **Signaling Peer Metadata (`voice_agent.signaling.auth`, `voice_agent.signaling.role`)**:
+  `extract_peer_id` reads the presentation field `peer_id` from the query string. The user comes only from the verified bearer. The role comes only from the session permissions: `session.control` gives `dungeon_master`, `session.participate` gives `player`, and `session.observe` gives `spectator`. The `role` query parameter and the frame fields `user_id` and `role` never set identity or role. A `webrtc_join` frame that asks for another role gets an `error` frame with code `ROLE_MISMATCH`. The `from_peer` of a relayed offer, answer, or ICE candidate is always the sending socket's peer id.
 - **Signaling Message Handlers (`voice_agent.signaling.handlers`)**:
   Dedicated dispatchers handle `webrtc_offer`, `webrtc_answer`, and `webrtc_ice_candidate` routing, `webrtc_mute` state toggles, `webrtc_telemetry` broadcasts, and graceful `webrtc_leave` teardowns.
 - **WebSocket Endpoint (`voice_agent.signaling.endpoint`)**:

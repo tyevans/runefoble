@@ -41,11 +41,9 @@ def reset_voice_signaling_environment(
 
     coord = VoiceRoomCoordinator(event_bus=bus)
     seam_restorer.replace(get_voice_room_coordinator, set_voice_room_coordinator, coord)
-    previous_manager_coordinator = signaling_manager._coordinator
 
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
-    signaling_manager._coordinator = coord
     coord.register_kick_callback(signaling_manager.handle_peer_kicked)
 
     yield {
@@ -57,7 +55,6 @@ def reset_voice_signaling_environment(
 
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
-    signaling_manager._coordinator = previous_manager_coordinator
 
 
 def test_voice_websocket_connect_unauthorized_subject_rejected(gateway, table_for):

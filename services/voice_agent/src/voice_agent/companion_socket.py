@@ -24,7 +24,8 @@ from voice_agent.mobile import (
     adapt_audio_profile,
     create_haptic_payload,
 )
-from voice_agent.signaling.auth import extract_peer_and_role
+from voice_agent.signaling.auth import extract_peer_id
+from voice_agent.signaling.role import admitted_session_role
 
 logger = logging.getLogger("runefoble.voice_agent.companion_socket")
 
@@ -41,8 +42,11 @@ async def mobile_companion_websocket_endpoint(
     if principal is None:
         return
     user_id = principal.user_id
+    role = await admitted_session_role(websocket, session_id, user_id)
+    if role is None:
+        return
     comp_manager = manager or mobile_companion_manager
-    peer_id, role = extract_peer_and_role(websocket, user_id)
+    peer_id = extract_peer_id(websocket, user_id)
 
     await comp_manager.connect(session_id, user_id, peer_id, websocket)
 

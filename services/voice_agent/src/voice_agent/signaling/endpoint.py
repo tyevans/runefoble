@@ -7,13 +7,14 @@ import logging
 from fastapi import WebSocket, WebSocketDisconnect
 from runefoble_auth.websocket import action_authorizer, admit_websocket
 from voice_agent.auth import get_voice_verifier
-from voice_agent.signaling.auth import extract_peer_and_role
+from voice_agent.signaling.auth import extract_peer_id
 from voice_agent.signaling.handlers import (
     SignalingPeerState,
     dispatch_signaling_message,
     handle_peer_disconnect,
 )
 from voice_agent.signaling.manager import WebRTCSignalingManager, signaling_manager
+from voice_agent.signaling.role import admitted_session_role
 
 logger = logging.getLogger("runefoble.voice_agent.signaling.endpoint")
 
@@ -30,9 +31,12 @@ async def voice_signaling_websocket_endpoint(
     if principal is None:
         return
     user_id = principal.user_id
+    role = await admitted_session_role(websocket, session_id, user_id)
+    if role is None:
+        return
     sig_manager = manager or signaling_manager
     coord = sig_manager.coordinator
-    peer_id, role = extract_peer_and_role(websocket, user_id)
+    peer_id = extract_peer_id(websocket, user_id)
 
     await sig_manager.connect_peer(session_id, peer_id, websocket)
 
