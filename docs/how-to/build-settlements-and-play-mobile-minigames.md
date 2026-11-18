@@ -312,7 +312,7 @@ Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authenticat
 - **`tokens.py`**: Zitadel OIDC bearer token extraction, and verification via `ZitadelAuthService`. No development mock identity exists. A missing or invalid token returns HTTP 401.
 - **`permissions.py`**: SpiceDB Zanzibar object permission evaluators for settlement viewing/upgrading, establishment management/patronage, and worker editing.
 - **`relationships.py`**: SpiceDB Zanzibar tuple writers (`write_settlement_relationships`, `write_establishment_relationships`, `write_npc_relationships`, `write_negotiation_relationships`).
-- **`dependencies.py`**: FastAPI route dependency factories (`get_current_settlement_user`, `require_haven_builder`, `require_establishment_manager`, `require_haven_viewer`).
+- **`dependencies.py`**: FastAPI route dependency factories (`require_haven_builder`, `require_establishment_manager`, `require_haven_viewer`).
 - **`__init__.py`**: Aggregator facade that re-exports the symbols for existing routers and services.
 - **Fail-closed checks**: `_enforce` refuses a request with no verified principal (HTTP 401). A missing permission returns HTTP 403. No check reads a role header or an `x-user-id` header.
 - **Retired module**: `settlements/auth.py` is removed. Its helpers (`check_settlement_permission`, `check_world_charter_permission`, `register_campaign_haven_discovery`, `write_settlement_relationships`) now live in `settlement/auth/`.

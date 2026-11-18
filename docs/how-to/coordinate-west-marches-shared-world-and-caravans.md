@@ -465,7 +465,7 @@ uv run pytest tests/test_blackbox_caravan_contracts/
 
 Per **ADR-0001**, **ADR-0003**, and **Hard Invariant 6** (< 500 lines per file), the caravan contracts API router is decomposed into modular sub-routers under `services/game_session/src/game_session/routers/caravan_contracts/`:
 
-- **`auth.py`** (< 90 lines): Dedicated SpiceDB Zanzibar authorization checks (`_check_perm`, `_check_high_tier_auth`), aggregate loader (`_load_contract`), event bus dispatch (`_publish`), and input validation helpers.
+- **`auth.py`** (< 90 lines): SpiceDB Zanzibar authorization checks (`_check_high_tier_auth`; the subject check is `runefoble_auth.permissions.require_subject`), aggregate loader (`_load_contract`), event bus dispatch (`_publish`), and input validation helpers.
 - **`board.py`** (< 140 lines): Caravan contract notice board creation (`POST /{shared_world_id}/caravans/contracts`), contract search and query filtering (`GET /{shared_world_id}/caravans/contracts`), and single contract manifest retrieval (`GET /{shared_world_id}/caravans/contracts/{contract_id}`).
 - **`lifecycle.py`** (< 180 lines): State transition endpoints covering mercenary acceptance (`/accept`), trade caravan dispatch (`/dispatch`), tactical ambush event recording (`/ambush`), and settlement delivery fulfillment (`/fulfill`).
 - **`__init__.py`** (< 50 lines): Re-exports unified `router` combining notice board and lifecycle routes with identical URL paths, tags, and dependencies.
