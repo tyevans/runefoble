@@ -49,6 +49,16 @@ def spicedb():
 
 
 @pytest.fixture(autouse=True)
+def default_table_patron(spicedb: MockSpiceDBClient) -> None:
+    """The default table route checks est-default like any establishment. Grant the tester a patron seat."""
+    asyncio.run(
+        spicedb.write_relationship(
+            "establishment", "est-default", "patron", "user", "minigame-tester"
+        )
+    )
+
+
+@pytest.fixture(autouse=True)
 def clean_minigame_state():
     from game_session.minigame_tables.ws_manager import minigame_table_manager
 

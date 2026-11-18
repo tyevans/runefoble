@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
+from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, Header, HTTPException
 from game_session.dependencies import (
     get_event_bus,
@@ -78,16 +79,17 @@ async def _check_session_auth(session_id: str, user_id: str) -> None:
     )
     if not has_perm:
         # Fallback to campaign permission if session not explicitly mapped
+        # A session with no event history has no campaign link, so no campaign grant applies.
         try:
             sess = await session_repo.load(
                 UUID(session_id) if len(session_id) == 36 else session_id
             )
-            if sess.state.campaign_id:
-                has_perm = await spicedb.check_permission(
-                    "campaign", str(sess.state.campaign_id), "play", "user", user_id
-                )
-        except Exception:
-            pass
+        except AggregateNotFoundError:
+            sess = None
+        if sess is not None and sess.state.campaign_id:
+            has_perm = await spicedb.check_permission(
+                "campaign", str(sess.state.campaign_id), "play", "user", user_id
+            )
     if not has_perm:
         raise HTTPException(status_code=403, detail="Player or DM permission required")
 

@@ -23,7 +23,7 @@ from the_watcher import dependencies as watcher_dependencies
 from the_watcher.main import app as watcher_app
 from the_watcher.routers import autonomous_dm
 
-from tests.helpers.ws_identity import SIGNING_ISSUER
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -227,3 +227,13 @@ async def test_watcher_refuses_to_call_worker_without_configured_token(monkeypat
         )
     assert res.status_code == 503
     assert res.json()["detail"] == {"error": "backend_unavailable", "backend": "inference_worker"}
+
+
+def test_default_table_refuses_user_without_patron_seat():
+    """The default table has no exemption. A caller without a seat on est-default is refused."""
+    client = TestClient(session_app)
+    with client.websocket_connect(
+        f"/ws/minigames/{uuid4()}", subprotocols=ws_subprotocols("stranger-no-seat")
+    ) as ws:
+        message = ws.receive_json()
+    assert message["code"] == "PERMISSION_DENIED"
