@@ -3,14 +3,17 @@
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from runefoble_auth.caller import CallerIdentity
+from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from rules_compendium.aggregate import EncounterAggregate
 from rules_compendium.dependencies import (
-    get_caller_or_service,
+    CallerOrService,
     get_encounter_repo,
     get_retrieval_engine,
+    get_spicedb_client,
 )
 from rules_compendium.encounter_builder import (
     build_balanced_encounter,
@@ -30,15 +33,18 @@ router = APIRouter(
 
 @router.post(
     "/balance",
-    dependencies=[Depends(get_caller_or_service)],
     response_model=EncounterBalanceResponse,
 )
 async def balance_encounter(
     request: EncounterBalanceRequest,
+    caller: CallerOrService,
     encounter_repo: Annotated[AggregateRepository[EncounterAggregate], Depends(get_encounter_repo)],
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
+    spicedb: Annotated[SpiceDBClient | MockSpiceDBClient, Depends(get_spicedb_client)],
 ) -> EncounterBalanceResponse:
     """Calculate encounter lethality and recommend a synergistic monster group for a given party roster."""
+    await _require_play_on_campaign(caller, request, spicedb)
+
     # Ensure SRD data is initialized
     await engine.initialize_srd_data()
 
@@ -92,3 +98,25 @@ async def balance_encounter(
         adjusted_xp=adjusted_xp,
         tactical_summary=tactical_summary,
     )
+
+
+async def _require_play_on_campaign(
+    caller: CallerIdentity,
+    request: EncounterBalanceRequest,
+    spicedb: SpiceDBClient | MockSpiceDBClient,
+) -> None:
+    """A user who names a campaign needs `campaign.play`. A service call acts for no user."""
+    if request.campaign_id is None or caller.user_id is None:
+        return
+    allowed = await spicedb.check_permission(
+        resource_type="campaign",
+        resource_id=str(request.campaign_id),
+        permission="play",
+        subject_type="user",
+        subject_id=caller.user_id,
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: User '{caller.user_id}' cannot play campaign '{request.campaign_id}'",
+        )

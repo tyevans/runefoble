@@ -94,7 +94,6 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
     ServiceSeams("gateway_mcp", spicedb="gateway_mcp.dynamic.auth"),
     ServiceSeams(
         "rules_compendium",
-        spicedb="rules_compendium.dependencies",
         verifier="rules_compendium.dependencies",
         verifier_scope="session",
     ),

@@ -188,6 +188,7 @@ class CompendiumRetrievalEngine:
                 "details": content,
                 "is_homebrew": True,
                 "campaign_id": str(campaign_id),
+                "rule_id": str(rule_id),
             },
             embedding=vector,
         )
@@ -198,12 +199,14 @@ class CompendiumRetrievalEngine:
         query: str,
         category: str | None = None,
         campaign_id: UUID | None = None,
-        can_view_homebrew: bool = False,
+        visible_homebrew_ids: frozenset[str] = frozenset(),
         limit: int = 10,
     ) -> tuple[list[RuleSearchResultItem], float]:
-        """Search canonical SRD rules and authorized homebrew rules, best first.
+        """Search canonical SRD rules and the homebrew rules the caller may view, best first.
 
-        The ranking is BM25 in lexical mode and BM25 fused with vector search in hybrid mode.
+        `visible_homebrew_ids` holds the rule ids that passed `homebrew_rule.view`. An empty set
+        returns SRD results only. The ranking is BM25 in lexical mode and BM25 fused with vector
+        search in hybrid mode.
         """
         if not self._initialized:
             await self.initialize_srd_data()
@@ -220,13 +223,17 @@ class CompendiumRetrievalEngine:
         all_matches = list(srd_res.matches)
 
         # 2. Search campaign homebrew if authorized and campaign_id provided
-        if campaign_id and can_view_homebrew:
+        if campaign_id and visible_homebrew_ids:
             hb_res = await self.chunk_retriever.retrieve_chunks(
                 query,
                 tenant_id=campaign_id,
                 k=limit * 2,
             )
-            all_matches.extend(hb_res.matches)
+            all_matches.extend(
+                m
+                for m in hb_res.matches
+                if str((m.chunk.metadata or {}).get("rule_id")) in visible_homebrew_ids
+            )
 
         # Sort matches by score descending
         all_matches.sort(key=lambda m: float(m.score), reverse=True)
