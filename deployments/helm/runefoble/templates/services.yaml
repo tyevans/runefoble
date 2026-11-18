@@ -14,8 +14,9 @@
   `consumers` lists the containers that receive the key. Keys render in sorted order.
 */ -}}
 {{- $serviceUrls := dict
-  "RUNEFOBLE_WATCHER_URL" (dict "url" (printf "http://the-watcher:%v" .Values.services.theWatcher.port) "consumers" (list "game-session" "voice-agent"))
-  "RUNEFOBLE_VOICE_AGENT_URL" (dict "url" (printf "http://voice-agent:%v" .Values.services.voiceAgent.port) "consumers" (list "game-session"))
+  "RUNEFOBLE_WATCHER_URL" (dict "url" (printf "http://the-watcher:%v" .Values.services.theWatcher.port) "consumers" (list "game-session" "voice-agent" "gateway-api"))
+  "RUNEFOBLE_VOICE_AGENT_URL" (dict "url" (printf "http://voice-agent:%v" .Values.services.voiceAgent.port) "consumers" (list "game-session" "gateway-api"))
+  "RUNEFOBLE_BOARD_STATE_URL" (dict "url" (printf "http://board-state:%v" .Values.services.boardState.port) "consumers" (list "gateway-api"))
   "SOUNDSCAPE_SERVICE_URL" (dict "url" (printf "http://soundscape:%v" .Values.services.soundscape.port) "consumers" (list "gateway-api"))
   "CAMPAIGN_LORE_URL" (dict "url" (printf "http://campaign-lore:%v" .Values.services.campaignLore.port) "consumers" (list "gateway-api"))
   "CAMPAIGN_ANALYTICS_URL" (dict "url" (printf "http://campaign-analytics:%v" .Values.services.campaignAnalytics.port) "consumers" (list "gateway-api"))
