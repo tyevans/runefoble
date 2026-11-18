@@ -58,7 +58,8 @@ def session_client(spicedb: MockSpiceDBClient):
 
 
 @pytest.fixture
-def gateway_client(spicedb: MockSpiceDBClient):
+def gateway_client(spicedb: MockSpiceDBClient, game_session_upstream: str):
+    """The gateway relays minigame sockets to the live game_session upstream (TASK-0592)."""
     with TestClient(gateway_app) as client:
         yield client
 

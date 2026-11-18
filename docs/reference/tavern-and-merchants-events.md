@@ -141,6 +141,22 @@ A table ends with `MinigameEnded` when a darts winner or a Liar's Dice champion 
 
 ---
 
+## Minigame Table Sockets
+
+| Path | Owner | Auth | Description |
+|---|---|---|---|
+| `/ws/minigames/{table_id}` | `game_session` | Bearer subprotocol (`runefoble.bearer.<jwt>`) | Standalone table channel. Reached through the gateway, which relays frames unchanged (TASK-0592) |
+| `/ws/establishments/{establishment_id}/tables/{table_id}` | `game_session` | Bearer subprotocol | Establishment-scoped table channel. The path must name the establishment that the table names |
+
+The owner verifies the bearer and checks `establishment` play access (SpiceDB). Close codes the owner sends:
+- `1008`: no valid bearer subprotocol, closed before accept.
+- `4003`: the caller lacks play access. The owner sends a `PERMISSION_DENIED` error frame first.
+- `4404`: the table is not open, or the path names another establishment. The owner sends a `TABLE_NOT_FOUND` error frame first.
+
+Through the gateway, a refusal before accept reaches the client as `4403`, and an unreachable owner closes the client with `1013`.
+
+---
+
 ## Microfrontend Components
 
 ### `<runefoble-tavern-parlor>`
