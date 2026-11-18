@@ -32,6 +32,7 @@ pytest_plugins = [
     "tests.helpers.lore_backends",
     "tests.helpers.postgres",
     "tests.helpers.prd_fixtures",
+    "tests.helpers.restart_stack",
     "tests.helpers.service_harness",
     "tests.helpers.silo_fixtures",
     "tests.helpers.spicedb",
