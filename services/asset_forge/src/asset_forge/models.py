@@ -35,15 +35,13 @@ class HazardCell(BaseModel):
     x: int
     y: int
     hazard_type: str
-    damage_dice: str
     terrain_type: str = "difficult"
 
 
 class BoardGeometryPayload(BaseModel):
-    """Pre-calculated spatial geometry ready for board_state mutators."""
+    """Layout geometry for board_state. board_state owns the obstacle and damage rules."""
 
     terrain_mutations: list[dict[str, Any]] = Field(default_factory=list)
-    obstacle_tokens: list[dict[str, Any]] = Field(default_factory=list)
     wall_segments: list[dict[str, Any]] = Field(default_factory=list)
     doors: list[dict[str, Any]] = Field(default_factory=list)
 

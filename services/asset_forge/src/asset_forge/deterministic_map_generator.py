@@ -16,28 +16,28 @@ from asset_forge.map_generator import MapGenerator, MapLayout
 from asset_forge.models import DoorSegment, HazardCell, WallSegment
 
 
-def infer_theme_from_prompt(prompt: str) -> tuple[str, str, str]:
-    """Infer theme, primary hazard type, and damage dice from natural language prompt."""
+def infer_theme_from_prompt(prompt: str) -> tuple[str, str]:
+    """Infer theme and primary hazard type from natural language prompt."""
     p = prompt.lower()
 
     if any(
         k in p
         for k in ["forge", "lava", "volcano", "volcanic", "magma", "fire", "dwarf", "dwarven"]
     ):
-        return "dwarven_forge", "lava", "2d10"
+        return "dwarven_forge", "lava"
     if any(
         k in p
         for k in ["crypt", "tomb", "graveyard", "necropolis", "undead", "catacomb", "skeleton"]
     ):
-        return "crypt", "spikes", "1d8"
+        return "crypt", "spikes"
     if any(k in p for k in ["forest", "swamp", "marsh", "bog", "river", "water", "jungle"]):
-        return "swamp", "deep_water", "1d4"
+        return "swamp", "deep_water"
     if any(k in p for k in ["arcane", "void", "astral", "portal", "magic", "sanctuary"]):
-        return "arcane_sanctuary", "arcane_void", "2d6"
+        return "arcane_sanctuary", "arcane_void"
     if any(k in p for k in ["cavern", "cave", "chasm", "mine", "crystal"]):
-        return "cavern", "chasm", "1d10"
+        return "cavern", "chasm"
 
-    return "dungeon", "acid", "1d6"
+    return "dungeon", "acid"
 
 
 def _effective_seed(prompt: str, seed: int | None, width: int, height: int) -> int:
@@ -123,7 +123,6 @@ def _hazards(
     height: int,
     hazard_density: float,
     hazard_type: str,
-    damage_dice: str,
 ) -> list[HazardCell]:
     """Lay a hazard canal in the right quadrant. Its length follows hazard_density."""
     cells: list[HazardCell] = []
@@ -137,7 +136,6 @@ def _hazards(
                     x=canal_x,
                     y=y,
                     hazard_type=hazard_type,
-                    damage_dice=damage_dice,
                     terrain_type="difficult",
                 )
             )
@@ -160,7 +158,7 @@ class DeterministicMapGenerator(MapGenerator):
         hazard_density: float = 0.1,
         theme_override: str | None = None,
     ) -> MapLayout:
-        theme, hazard_type, damage_dice = infer_theme_from_prompt(prompt)
+        theme, hazard_type = infer_theme_from_prompt(prompt)
         if theme_override:
             theme = theme_override
 
@@ -183,7 +181,7 @@ class DeterministicMapGenerator(MapGenerator):
         walls += v_walls + h_walls
         doors = v_doors + h_doors
         walls += _pillars(rng, grid, mid_x, width, height, wall_density)
-        hazards = _hazards(grid, mid_x, width, height, hazard_density, hazard_type, damage_dice)
+        hazards = _hazards(grid, mid_x, width, height, hazard_density, hazard_type)
 
         return MapLayout(
             theme=theme,

@@ -13,12 +13,7 @@ from board_state.handlers import (
     VFXHandlerMixin,
 )
 from board_state.models import BoardState, PlacedTokenState, TerrainCellState, TerrainDict
-from board_state.rules import (
-    DEFAULT_HAZARD_DAMAGE,
-    extract_wall_obstacles,
-    get_hazard_damage_dice,
-    validate_point_within_bounds,
-)
+from board_state.rules.grid import extract_wall_obstacles, validate_point_within_bounds
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from runefoble_events.events import (
@@ -28,7 +23,6 @@ from runefoble_events.events import (
 )
 
 __all__ = [
-    "DEFAULT_HAZARD_DAMAGE",
     "BoardAggregate",
     "BoardState",
     "DoorsLightsHandlerMixin",
@@ -40,7 +34,6 @@ __all__ = [
     "TokensHandlerMixin",
     "TrapsHandlerMixin",
     "VFXHandlerMixin",
-    "get_hazard_damage_dice",
 ]
 
 

@@ -6,13 +6,9 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from board_state.handlers.actions import ActionsHandlerMixin
 from board_state.models import MoveResult, PlacedTokenState
-from board_state.rules import (
-    calc_move_cost,
-    calc_move_path,
-    detect_path_hazards,
-    is_within_bounds,
-    validate_point_within_bounds,
-)
+from board_state.rules.grid import is_within_bounds, validate_point_within_bounds
+from board_state.rules.hazards import walk_path
+from board_state.rules.movement import calculate_movement_path
 from eventsource.domain.decorators import handles
 from runefoble_events import events as ev
 
@@ -66,10 +62,7 @@ class TokensHandlerMixin(ActionsHandlerMixin):
     def calculate_movement_path(
         self, from_x: int, from_y: int, to_x: int, to_y: int
     ) -> list[tuple[int, int]]:
-        return calc_move_path(from_x, from_y, to_x, to_y)
-
-    def calculate_movement_cost(self, path: list[tuple[int, int]]) -> int:
-        return calc_move_cost(path, self.get_terrain)
+        return calculate_movement_path(from_x, from_y, to_x, to_y)
 
     def move_token(
         self,
@@ -101,7 +94,8 @@ class TokensHandlerMixin(ActionsHandlerMixin):
             trap_trig = breach.trap.trap_id
             is_paused = True
 
-        cost = self.calculate_movement_cost(effective_path)
+        walk = walk_path(effective_path, self.get_terrain)
+        cost = walk.cost
         if movement_budget is not None and cost > movement_budget:
             raise ValueError(f"Movement cost {cost} exceeds movement budget {movement_budget}")
 
@@ -129,9 +123,7 @@ class TokensHandlerMixin(ActionsHandlerMixin):
                 movement_paused=True,
             )
 
-        last_h, last_d = None, None
-        for ht, dd in detect_path_hazards(effective_path, self.get_terrain):
-            last_h, last_d = ht, dd
+        for ht, dd in walk.hazards:
             self.create_event(
                 ev.TokenHazardTriggered,
                 session_id=str(self.state.session_id),
@@ -143,6 +135,7 @@ class TokensHandlerMixin(ActionsHandlerMixin):
 
         if cur.is_friendly and self.state.fog_of_war_enabled:
             self._sync_revealed_fog(tid, effective_to_x, effective_to_y, cur.vision_radius)
+        last_h, last_d = walk.last_hazard or (None, None)
         return MoveResult(cost, last_h, last_d, trap_triggered=trap_trig, movement_paused=is_paused)
 
     def remove_token(self, token_id: str, reason: str = "defeated") -> None:

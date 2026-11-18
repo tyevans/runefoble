@@ -93,7 +93,7 @@ const battlemapResponse = {
   cell_size_px: 64,
   theme: 'dwarven_forge',
   wall_segments: [{ x1: 0, y1: 0, x2: 1, y2: 0 }, { x1: 1, y1: 0, x2: 1, y2: 1 }],
-  hazard_cells: [{ x: 3, y: 4, hazard_type: 'lava', damage_dice: '1d6', terrain_type: 'difficult' }],
+  hazard_cells: [{ x: 3, y: 4, hazard_type: 'lava', terrain_type: 'difficult' }],
   doors: [],
   status: 'forged',
 };

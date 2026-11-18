@@ -41,17 +41,14 @@ curl -X POST http://localhost:8008/api/v1/forge/battlemap \
     { "x1": 10, "y1": 1, "x2": 10, "y2": 9, "is_door": false, "wall_type": "stone" }
   ],
   "hazard_cells": [
-    { "x": 15, "y": 4, "hazard_type": "lava", "damage_dice": "2d10", "terrain_type": "difficult" }
+    { "x": 15, "y": 4, "hazard_type": "lava", "terrain_type": "difficult" }
   ],
   "doors": [
     { "x1": 10, "y1": 10, "x2": 11, "y2": 10, "state": "closed" }
   ],
   "board_geometry_payload": {
     "terrain_mutations": [
-      { "x": 15, "y": 4, "elevation": 0, "terrain_type": "difficult", "hazard": "lava", "damage_dice": "2d10" }
-    ],
-    "obstacle_tokens": [
-      { "name": "Obstacle Wall (14,4)", "token_type": "obstacle", "x": 14, "y": 4, "hp": null, "is_friendly": false }
+      { "x": 15, "y": 4, "elevation": 0, "terrain_type": "difficult", "hazard": "lava" }
     ],
     "wall_segments": [...],
     "doors": [...]
@@ -128,8 +125,10 @@ Forged assets are written to Silo before the forge responds. The service never r
 
 The `board_geometry_payload` returned by the battlemap generator maps to `board_state` REST endpoints. Client code must make these calls itself. The Asset Forge component does not make them.
 
+The payload is layout only. It holds hazard types, wall segments, and doors. It has no damage dice and no obstacle tokens. `board_state` owns both rules. Its hazard table gives acid `2d6`, spikes `2d4`, poison `1d4`, lava `2d10`, and fire `1d6`. Any other hazard type uses `1d6`.
+
 1. **Hazard Terrain**: Push each entry in `terrain_mutations` to `POST /api/v1/boards/{session_id}/terrain`.
-2. **Solid Obstacles**: Post each item in `obstacle_tokens` to `POST /api/v1/boards/{session_id}/tokens`.
+2. **Obstacles**: Do not create obstacle tokens from the forge output. `board_state` derives obstacles from the wall segments.
 3. **Map Background**: Load the `download_url` into `<runefoble-board>` or `<runefoble-map-uploader>`.
 
 ---

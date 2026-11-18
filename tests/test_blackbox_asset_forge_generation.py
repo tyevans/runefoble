@@ -70,19 +70,21 @@ def test_blackbox_forge_battlemap_generation_and_storage(client: TestClient):
     assert len(data["doors"]) > 0
     assert len(data["hazard_cells"]) > 0
 
-    # Verify dwarven forge theme produced lava hazards with 2d10 damage
+    # Verify dwarven forge theme produced lava hazards. board_state owns the damage dice.
     first_hazard = data["hazard_cells"][0]
     assert first_hazard["hazard_type"] == "lava"
-    assert first_hazard["damage_dice"] == "2d10"
+    assert "damage_dice" not in first_hazard
     assert first_hazard["terrain_type"] == "difficult"
 
     # 3. Board state pre-calculated payload
     geom = data["board_geometry_payload"]
     assert "terrain_mutations" in geom
-    assert "obstacle_tokens" in geom
     assert "wall_segments" in geom
     assert "doors" in geom
     assert len(geom["terrain_mutations"]) == len(data["hazard_cells"])
+    # Layout only: the forge sends no obstacle tokens and no damage dice to board_state.
+    assert "obstacle_tokens" not in geom
+    assert all("damage_dice" not in m for m in geom["terrain_mutations"])
 
     # 4. Storage verification directly from Silo S3
     storage = get_storage()

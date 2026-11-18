@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from board_state.rules import (
-    calc_chebyshev,
-    calc_party_vis,
+from board_state.rules.grid import (
+    calculate_chebyshev_cells,
+    compute_party_visibility,
     find_uncharted_cells,
     validate_cells_within_bounds,
 )
@@ -27,11 +27,13 @@ class FogHandlerMixin:
 
     def calculate_chebyshev_cells(self, cx: int, cy: int, radius: int) -> list[list[int]]:
         """Calculate all bounded grid coordinates within Chebyshev distance radius."""
-        return calc_chebyshev(cx, cy, radius, self.state.cols, self.state.rows)
+        return calculate_chebyshev_cells(cx, cy, radius, self.state.cols, self.state.rows)
 
     def compute_party_visibility(self) -> list[list[int]]:
         """Compute the union of all cells currently visible by friendly/party tokens."""
-        return calc_party_vis(self.state.tokens.values(), self.state.cols, self.state.rows)
+        return compute_party_visibility(
+            self.state.tokens.values(), self.state.cols, self.state.rows
+        )
 
     def _sync_revealed_fog(self, token_id: str, cx: int, cy: int, radius: int) -> None:
         """Evaluate newly seen cells and emit FogOfWarRevealed event if uncharted cells found."""

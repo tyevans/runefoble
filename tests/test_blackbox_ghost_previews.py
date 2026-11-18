@@ -103,6 +103,77 @@ def test_http_preview_endpoint_waypoint_measuring_and_terrain_hazards():
     assert tok["y"] == 1
 
 
+@pytest.mark.parametrize(
+    ("hazard", "expected_dice"),
+    [
+        ("acid", "2d6"),
+        ("spikes", "2d4"),
+        ("poison", "1d4"),
+        ("lava", "2d10"),
+        ("fire", "1d6"),
+    ],
+)
+def test_preview_and_move_report_the_same_hazard_dice_for_every_hazard_type(
+    hazard: str, expected_dice: str
+):
+    """Verify the preview and the move report the same hazard dice for each hazard type."""
+    client = TestClient(board_app, headers=bearer("user-test"))
+    board_id = f"board-{uuid4().hex[:8]}"
+
+    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        f"/api/v1/boards/{board_id}/tokens",
+        json={"token_id": "hero", "name": "Hero", "x": 1, "y": 1, "is_friendly": True},
+    )
+    client.post(
+        f"/api/v1/boards/{board_id}/terrain",
+        json={"x": 3, "y": 3, "terrain_type": "normal", "hazard": hazard},
+    )
+
+    preview = client.post(
+        f"/api/v1/boards/{board_id}/tokens/hero/preview", json={"to_x": 3, "to_y": 3}
+    )
+    assert preview.status_code == 200, preview.text
+    moved = client.post(
+        f"/api/v1/boards/{board_id}/move", json={"token_id": "hero", "to_x": 3, "to_y": 3}
+    )
+    assert moved.status_code == 200, moved.text
+
+    assert preview.json()["hazard_triggered"] == hazard
+    assert preview.json()["damage_dice"] == expected_dice
+    assert moved.json()["hazard_triggered"] == hazard
+    assert moved.json()["damage_dice"] == expected_dice
+
+
+def test_preview_reports_the_hazard_a_move_crosses_when_the_token_lands_elsewhere():
+    """Verify the preview names the same hazard as the move when the route crosses a hazard."""
+    client = TestClient(board_app, headers=bearer("user-test"))
+    board_id = f"board-{uuid4().hex[:8]}"
+
+    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        f"/api/v1/boards/{board_id}/tokens",
+        json={"token_id": "hero", "name": "Hero", "x": 1, "y": 1, "is_friendly": True},
+    )
+    client.post(
+        f"/api/v1/boards/{board_id}/terrain",
+        json={"x": 2, "y": 2, "terrain_type": "normal", "hazard": "lava"},
+    )
+
+    # The route crosses (2, 2) on lava and lands on (3, 3), which is plain ground.
+    preview = client.post(
+        f"/api/v1/boards/{board_id}/tokens/hero/preview", json={"to_x": 3, "to_y": 3}
+    )
+    moved = client.post(
+        f"/api/v1/boards/{board_id}/move", json={"token_id": "hero", "to_x": 3, "to_y": 3}
+    )
+
+    assert moved.json()["hazard_triggered"] == "lava"
+    assert moved.json()["damage_dice"] == "2d10"
+    assert preview.json()["hazard_triggered"] == "lava"
+    assert preview.json()["damage_dice"] == "2d10"
+
+
 def test_websocket_spoken_ghost_preview_and_instant_confirmation():
     """Verify spoken ghost preview stages over WebSocket (<200ms) and commits upon confirmation."""
     client = TestClient(board_app, headers=bearer("user-test"))

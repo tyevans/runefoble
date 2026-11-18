@@ -1,4 +1,9 @@
-"""Spatial geometry projection: battlemap layout to board_state payloads."""
+"""Spatial geometry projection: battlemap layout to board_state payloads.
+
+The forge returns layout only. Hazard types and wall segments go to board_state. board_state
+owns the hazard damage table and the obstacle rule, so this module sends no damage dice and
+no obstacle tokens.
+"""
 
 from __future__ import annotations
 
@@ -25,27 +30,12 @@ def build_board_geometry_payload(
             "elevation": 0,
             "terrain_type": h.terrain_type,
             "hazard": h.hazard_type,
-            "damage_dice": h.damage_dice,
         }
         for h in hazard_cells
     ]
 
-    obstacle_tokens: list[dict[str, Any]] = [
-        {
-            "name": f"Obstacle Wall ({w.x1},{w.y1})",
-            "token_type": "obstacle",
-            "x": w.x1,
-            "y": w.y1,
-            "hp": None,
-            "is_friendly": False,
-        }
-        for w in wall_segments
-        if w.wall_type == "pillar"
-    ]
-
     return BoardGeometryPayload(
         terrain_mutations=terrain_mutations,
-        obstacle_tokens=obstacle_tokens,
         wall_segments=[w.model_dump() for w in wall_segments],
         doors=[d.model_dump() for d in doors],
     )
