@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
+from board_state.authz import VIEW_SECRET_LAYER, can_on_board
 from board_state.dependencies import get_board, get_current_user_id, get_event_bus, repo
 from board_state.events import publish_board_events
 from board_state.models import (
@@ -17,6 +18,7 @@ from board_state.parsers.uvtt import (
     parse_uvtt_data,
     store_uvtt_image,
 )
+from board_state.projection import public_doors, public_portals
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from runefoble_platform.storage import AssetStorageError
 
@@ -37,6 +39,7 @@ async def _publish_board_events(events: list) -> None:
 async def import_uvtt_map_endpoint(
     id: str,
     request: Request,
+    user_id: Annotated[str, Depends(get_current_user_id)],
     file: Annotated[UploadFile | None, File()] = None,
 ) -> UVTTImportResponse:
     """Import a Universal VTT map, extracting walls, interactive doors, lights, and texture."""
@@ -71,6 +74,7 @@ async def import_uvtt_map_endpoint(
     await _publish_board_events(events)
 
     s = board.state
+    can_view_secret = await can_on_board(user_id, id, VIEW_SECRET_LAYER)
     return UVTTImportResponse(
         board_id=board.aggregate_id,
         session_id=str(s.session_id),
@@ -78,8 +82,8 @@ async def import_uvtt_map_endpoint(
         rows=s.rows,
         pixels_per_grid=s.pixels_per_grid,
         wall_segments=s.wall_segments,
-        portals=s.portals,
-        doors=s.doors,
+        portals=s.portals if can_view_secret else public_portals(s.portals),
+        doors=s.doors if can_view_secret else public_doors(s.doors),
         lights=s.lights,
         background_image_url=s.background_image_url,
         background_asset_id=s.background_asset_id,
@@ -106,10 +110,17 @@ async def toggle_door_endpoint(
 
 @router.get("/board/{id}/doors")
 @router.get("/boards/{id}/doors")
-async def get_doors_endpoint(id: str) -> dict:
-    """Query interactive doors and secret portals on the board."""
+async def get_doors_endpoint(
+    id: str, user_id: Annotated[str, Depends(get_current_user_id)]
+) -> dict:
+    """Query the doors and portals. Secret ones need `board.view_secret_layer`."""
     board = await get_board(id)
-    return {"doors": board.state.doors, "portals": board.state.portals}
+    if await can_on_board(user_id, id, VIEW_SECRET_LAYER):
+        return {"doors": board.state.doors, "portals": board.state.portals}
+    return {
+        "doors": public_doors(board.state.doors),
+        "portals": public_portals(board.state.portals),
+    }
 
 
 @router.post("/board/{id}/lights")

@@ -107,14 +107,19 @@ class ServiceClient:
             )
         return response.json()
 
-    async def create_board(self, *, session_id: str, cols: int, rows: int) -> dict[str, Any]:
-        """Create the board for a session. The caller checks first that the session has none."""
+    async def create_board(
+        self, *, session_id: str, campaign_id: str | None, cols: int, rows: int
+    ) -> dict[str, Any]:
+        """Create the board for a session. The caller checks first that the session has none.
+
+        board_state refuses a request with no campaign and a caller who cannot run the campaign.
+        """
         result = await self._request(
             "board_state",
             self._settings.board_state_url,
             "POST",
             "/api/v1/boards",
-            {"session_id": session_id, "cols": cols, "rows": rows},
+            {"session_id": session_id, "campaign_id": campaign_id, "cols": cols, "rows": rows},
         )
         return dict(result)
 

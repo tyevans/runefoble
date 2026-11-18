@@ -1,5 +1,6 @@
 """Tests for Board State microservice and spatial fog-of-war visibility."""
 
+import asyncio
 from uuid import uuid4
 
 import pytest
@@ -13,7 +14,8 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 async def _create_seeded_party_board(client: AsyncClient, session_id: str) -> None:
     """Create a board and place the party and one hostile through public routes."""
     created = await client.post(
-        "/api/v1/boards", json={"session_id": session_id, "cols": 12, "rows": 12}
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "session_id": session_id, "cols": 12, "rows": 12},
     )
     assert created.status_code == 200, created.text
     tokens = [
@@ -99,7 +101,9 @@ async def test_board_visibility_api_filtering():
     ) as client:
         await _create_seeded_party_board(client, "session-vis-test")
         # Player perspective (is_dm=False): hostile token t3 at (8, 8) is outside initial party vision at (2, 3)/(3, 3)
-        vis_player = await client.get("/api/v1/boards/session-vis-test/visibility?is_dm=false")
+        vis_player = await client.get(
+            "/api/v1/boards/session-vis-test/visibility", headers=bearer("player-viewer")
+        )
         assert vis_player.status_code == 200
         data_player = vis_player.json()
         token_names_player = [t["name"] for t in data_player["tokens"]]
@@ -108,8 +112,34 @@ async def test_board_visibility_api_filtering():
         assert "Goblin Scout" not in token_names_player
 
         # DM perspective (is_dm=true): all tokens including Goblin Scout are visible
-        vis_dm = await client.get("/api/v1/boards/session-vis-test/visibility?is_dm=true")
+        vis_dm = await client.get("/api/v1/boards/session-vis-test/visibility")
         assert vis_dm.status_code == 200
         data_dm = vis_dm.json()
         token_names_dm = [t["name"] for t in data_dm["tokens"]]
         assert "Goblin Scout" in token_names_dm
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="player",
+            subject_type="user",
+            subject_id="player-viewer",
+        )
+    )

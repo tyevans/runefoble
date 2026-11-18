@@ -5,6 +5,7 @@ Tests token placement, movement, hazards, radial actions, fog, and VFX
 through public HTTP frontdoors and event-sourced aggregate reconstitution.
 """
 
+import asyncio
 from uuid import uuid4
 
 import pytest
@@ -110,7 +111,10 @@ def test_blackbox_tactile_board_http_frontdoor_lifecycle():
     board_id = f"board-{uuid4().hex[:8]}"
 
     # Create tactical board
-    res_create = client.post("/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12})
+    res_create = client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "board_id": board_id, "cols": 12, "rows": 12},
+    )
     assert res_create.status_code == 200
 
     # Place PC token
@@ -149,3 +153,20 @@ def test_blackbox_tactile_board_http_frontdoor_lifecycle():
     # Remove token through public route
     res_remove = client.delete(f"/api/v1/boards/{board_id}/tokens/kyra")
     assert res_remove.status_code == 200
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

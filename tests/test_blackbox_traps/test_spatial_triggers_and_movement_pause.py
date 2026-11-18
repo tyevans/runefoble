@@ -14,9 +14,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from board_state.dependencies import (
-    get_spicedb_client,
-)
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
@@ -31,9 +28,10 @@ def bearer(sub: str) -> dict[str, str]:
 
 
 @pytest.mark.asyncio
-async def test_step_trap_breach_pauses_movement(mock_bus: MockAsyncRedis):
+async def test_step_trap_breach_pauses_movement(
+    mock_bus: MockAsyncRedis, spicedb: MockSpiceDBClient
+):
     """Verify stepping onto a secret trap pauses token movement at the breach cell."""
-    spicedb: MockSpiceDBClient = get_spicedb_client()
     client = TestClient(board_app, headers=bearer("user-test"))
 
     board_id = f"board-{uuid4().hex[:8]}"
@@ -41,14 +39,17 @@ async def test_step_trap_breach_pauses_movement(mock_bus: MockAsyncRedis):
     dm_user = f"dm-{uuid4().hex[:6]}"
 
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
-    await spicedb.write_relationship("board", board_id, "campaign", "campaign", campaign_id)
 
     # 1. Initialize board
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12})
+    client.post(
+        "/api/v1/boards",
+        json={"board_id": board_id, "campaign_id": campaign_id, "cols": 12, "rows": 12},
+        headers=bearer(dm_user),
+    )
 
     # 2. Place secret step trap at (4, 3)
     trap_res = client.post(
-        f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/traps",
         json={
             "name": "Secret Pressure Plate",
             "x": 4,
@@ -85,7 +86,7 @@ async def test_step_trap_breach_pauses_movement(mock_bus: MockAsyncRedis):
 
     # 5. Trap should now be marked as sprung
     traps_res = client.get(
-        f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/traps",
         headers=bearer(dm_user),
     )
     traps = traps_res.json()["traps"]
@@ -103,9 +104,8 @@ async def test_step_trap_breach_pauses_movement(mock_bus: MockAsyncRedis):
 
 
 @pytest.mark.asyncio
-async def test_proximity_trap_breach_pauses_movement():
+async def test_proximity_trap_breach_pauses_movement(spicedb: MockSpiceDBClient):
     """Verify passing near a secret proximity trap pauses movement within the trigger radius."""
-    spicedb: MockSpiceDBClient = get_spicedb_client()
     client = TestClient(board_app, headers=bearer("user-test"))
 
     board_id = f"board-{uuid4().hex[:8]}"
@@ -113,13 +113,16 @@ async def test_proximity_trap_breach_pauses_movement():
     dm_user = f"dm-{uuid4().hex[:6]}"
 
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
-    await spicedb.write_relationship("board", board_id, "campaign", "campaign", campaign_id)
 
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 12, "rows": 12})
+    client.post(
+        "/api/v1/boards",
+        json={"board_id": board_id, "campaign_id": campaign_id, "cols": 12, "rows": 12},
+        headers=bearer(dm_user),
+    )
 
     # Proximity ambush trap placed at (5, 5) with proximity_radius=1
     client.post(
-        f"/api/v1/boards/{board_id}/traps?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/traps",
         json={
             "name": "Goblin Ambush Zone",
             "x": 5,

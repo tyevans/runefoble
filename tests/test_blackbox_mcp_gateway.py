@@ -7,6 +7,7 @@ Tests exercise FastMCP public protocol entrypoints exclusively:
 - Error handling for invalid tools and out-of-bounds tactical grid movements
 """
 
+import asyncio
 import json
 from collections.abc import Iterator
 from typing import Any
@@ -15,10 +16,12 @@ import httpx
 import pytest
 from gateway_mcp.server import mcp
 from mcp.types import CallToolResult
+from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.game_session_setup import start_session_with_player
 from tests.helpers.live_services import closed_port_url, serve, unavailable_app
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 _MCP: dict[str, str] = {}
@@ -67,9 +70,28 @@ def owning_services() -> Iterator[dict[str, str]]:
             env.setenv("GAME_SESSION_URL", session_url)
             env.setenv("RULES_COMPENDIUM_URL", compendium_url)
             # Setup through the public board_state HTTP frontdoor: place the active session token.
-            with httpx.Client(base_url=board_url, headers=bearer("user-test")) as http:
+            campaign_roles = MockSpiceDBClient()
+            asyncio.run(
+                campaign_roles.write_relationship(
+                    resource_type="campaign",
+                    resource_id="camp-board-fixture",
+                    relation="dungeon_master",
+                    subject_type="user",
+                    subject_id="user-test",
+                )
+            )
+            with (
+                shared_spicedb_client(campaign_roles),
+                httpx.Client(base_url=board_url, headers=bearer("user-test")) as http,
+            ):
                 created = http.post(
-                    "/api/v1/boards", json={"session_id": "camp1", "cols": 10, "rows": 10}
+                    "/api/v1/boards",
+                    json={
+                        "session_id": "camp1",
+                        "campaign_id": "camp-board-fixture",
+                        "cols": 10,
+                        "rows": 10,
+                    },
                 )
                 assert created.status_code == 200, created.text
                 placed = http.post(
@@ -171,6 +193,7 @@ async def test_blackbox_create_encounter_stores_enemy_tokens(owning_services: di
             "create_encounter",
             {
                 "session_id": session_id,
+                "campaign_id": "camp-board-fixture",
                 "enemies": [{"name": "Bandit", "x": 4, "y": 4, "hp": 11}],
             },
         )
@@ -196,6 +219,7 @@ async def test_blackbox_move_board_token_then_inspect_reports_new_position(
             "create_encounter",
             {
                 "session_id": combat_session_id,
+                "campaign_id": "camp-board-fixture",
                 "enemies": [{"name": "Goblin", "x": 2, "y": 2}],
             },
         )
@@ -228,6 +252,7 @@ async def test_blackbox_move_board_token_out_of_bounds_is_error_result(
             "create_encounter",
             {
                 "session_id": combat_session_id,
+                "campaign_id": "camp-board-fixture",
                 "enemies": [{"name": "Imp", "x": 0, "y": 0}],
             },
         )
@@ -292,3 +317,17 @@ async def test_blackbox_calculate_encounter_balance_rejects_empty_party():
     )
     assert result.isError is True
     assert "rejected the request (422)" in tool_text(result)
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that create_encounter binds new boards to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id="camp-board-fixture",
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

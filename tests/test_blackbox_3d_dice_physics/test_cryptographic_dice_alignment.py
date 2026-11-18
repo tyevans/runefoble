@@ -8,6 +8,7 @@ Governed by:
 
 from __future__ import annotations
 
+import asyncio
 from uuid import uuid4
 
 import pytest
@@ -22,7 +23,12 @@ def _create_board(client: TestClient, cols: int = 10, rows: int = 10) -> str:
     """Helper to create a fresh tactical board via public frontdoor."""
     resp = client.post(
         "/api/v1/boards",
-        json={"cols": cols, "rows": rows, "session_id": f"session-dice-phys-{uuid4()}"},
+        json={
+            "campaign_id": BOARD_CAMPAIGN,
+            "cols": cols,
+            "rows": rows,
+            "session_id": f"session-dice-phys-{uuid4()}",
+        },
     )
     assert resp.status_code == 200, resp.text
     return resp.json()["board_id"]
@@ -159,3 +165,20 @@ def test_simulate_throw_without_target_generates_valid_polyhedral_face(
     assert 1 <= data["face_value"] <= 12
     assert data["status"] == "settled"
     assert data["bounces"] >= 1
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

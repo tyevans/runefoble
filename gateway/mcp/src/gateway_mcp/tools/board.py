@@ -47,7 +47,9 @@ def _combat_view(combat: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-async def _fetch_or_create_board(client: ServiceClient, session_id: str) -> dict[str, Any]:
+async def _fetch_or_create_board(
+    client: ServiceClient, session_id: str, campaign_id: str | None
+) -> dict[str, Any]:
     """Return the session board, creating it when board_state has none for the session.
 
     Only a 404 from board_state means "no board yet". Every other error propagates.
@@ -58,7 +60,7 @@ async def _fetch_or_create_board(client: ServiceClient, session_id: str) -> dict
         if exc.status_code != 404:
             raise
     return await client.create_board(
-        session_id=session_id, cols=ENCOUNTER_COLS, rows=ENCOUNTER_ROWS
+        session_id=session_id, campaign_id=campaign_id, cols=ENCOUNTER_COLS, rows=ENCOUNTER_ROWS
     )
 
 
@@ -108,10 +110,13 @@ async def query_encounter_state(encounter_id: str, ctx: Context | None = None) -
 
 async def create_encounter(
     session_id: str,
+    campaign_id: str | None = None,
     enemies: list[EnemyPlacement] | None = None,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Start combat in a game session and place the enemy tokens on its board.
+
+    A new board needs `campaign_id`. The caller must run that campaign.
 
     The session id is the encounter id. game_session starts combat first, so an
     unknown or unavailable session creates no board.
@@ -125,7 +130,7 @@ async def create_encounter(
             for index, enemy in enumerate(enemy_list, start=1)
         ],
     )
-    board = await _fetch_or_create_board(client, session_id)
+    board = await _fetch_or_create_board(client, session_id, campaign_id)
     spawned: list[dict[str, Any]] = []
     for enemy in enemy_list:
         token = await client.place_token(

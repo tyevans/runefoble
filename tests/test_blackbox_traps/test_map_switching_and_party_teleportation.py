@@ -13,9 +13,6 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from board_state.dependencies import (
-    get_spicedb_client,
-)
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
@@ -29,9 +26,8 @@ def bearer(sub: str) -> dict[str, str]:
 
 
 @pytest.mark.asyncio
-async def test_battlemap_switch_and_party_teleportation():
+async def test_battlemap_switch_and_party_teleportation(spicedb: MockSpiceDBClient):
     """Verify switching active battlemap teleports all party tokens atomically."""
-    spicedb: MockSpiceDBClient = get_spicedb_client()
     client = TestClient(board_app, headers=bearer("user-test"))
 
     board_id = f"board-{uuid4().hex[:8]}"
@@ -41,10 +37,13 @@ async def test_battlemap_switch_and_party_teleportation():
 
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", player_user)
-    await spicedb.write_relationship("board", board_id, "campaign", "campaign", campaign_id)
 
     # 1. Initialize board Level 1 (10x10)
-    client.post("/api/v1/boards", json={"board_id": board_id, "cols": 10, "rows": 10})
+    client.post(
+        "/api/v1/boards",
+        json={"board_id": board_id, "campaign_id": campaign_id, "cols": 10, "rows": 10},
+        headers=bearer(dm_user),
+    )
 
     # 2. Place party tokens on Level 1
     client.post(
@@ -58,7 +57,7 @@ async def test_battlemap_switch_and_party_teleportation():
 
     # 3. Player attempts to switch map -> 403 Forbidden
     unauth_res = client.post(
-        f"/api/v1/boards/{board_id}/switch-map?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/switch-map",
         json={"new_map_id": "dungeon_level_2"},
         headers=bearer(player_user),
     )
@@ -66,7 +65,7 @@ async def test_battlemap_switch_and_party_teleportation():
 
     # 4. DM switches to Level 2 (20x20) and teleports both tokens to the new dungeon entrance
     switch_res = client.post(
-        f"/api/v1/boards/{board_id}/switch-map?campaign_id={campaign_id}",
+        f"/api/v1/boards/{board_id}/switch-map",
         json={
             "new_map_id": "dungeon_level_2",
             "cols": 20,

@@ -12,6 +12,8 @@ from runefoble_auth.factory import get_spicedb_client
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
+BOARD_CAMPAIGN = "camp-board-fixture"
+
 
 def bearer(sub: str) -> dict[str, str]:
     """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
@@ -30,7 +32,10 @@ def gateway_client() -> TestClient:
 
 def create_board(client: TestClient, board_id: str) -> None:
     """Create a board through the POST frontdoor. GET and import never create boards."""
-    res = client.post("/api/v1/boards", json={"session_id": board_id})
+    grant_permission("campaign", BOARD_CAMPAIGN, "dungeon_master", "user-test")
+    res = client.post(
+        "/api/v1/boards", json={"session_id": board_id, "campaign_id": BOARD_CAMPAIGN}
+    )
     assert res.status_code == 200, res.text
 
 

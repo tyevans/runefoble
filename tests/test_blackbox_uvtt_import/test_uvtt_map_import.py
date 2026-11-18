@@ -5,9 +5,11 @@ Governed by TASK-0193, ADR-0007, and ADR-0010.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from runefoble_platform.storage import get_storage_service
 
@@ -17,7 +19,10 @@ from tests.test_blackbox_uvtt_import.conftest import build_sample_dd2vtt_dict
 
 def _create_board(client: TestClient, board_id: str) -> None:
     """Create a board through the public POST frontdoor before importing a map into it."""
-    res = client.post("/api/v1/boards", json={"session_id": board_id, "cols": 4, "rows": 4})
+    res = client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "session_id": board_id, "cols": 4, "rows": 4},
+    )
     assert res.status_code == 200, res.text
 
 
@@ -116,3 +121,20 @@ def test_blackbox_uvtt_invalid_payload_error(board_client: TestClient):
     )
     assert response.status_code == 400
     assert "Invalid Universal VTT format" in response.json()["detail"]
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

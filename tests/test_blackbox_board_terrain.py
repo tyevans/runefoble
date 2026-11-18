@@ -5,6 +5,9 @@ All setup and verification are performed strictly through public HTTP API endpoi
 using TestClient(app, headers=bearer("user-test")) from board_state.main.
 """
 
+import asyncio
+
+import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
 
@@ -23,7 +26,12 @@ def test_board_terrain_elevation_difficult_movement_and_hazard_flow():
     # a) Create a tactical board via POST /api/v1/boards (specifying grid dimensions 10x10)
     create_resp = client.post(
         "/api/v1/boards",
-        json={"cols": 10, "rows": 10, "session_id": "session-terrain-bb-1"},
+        json={
+            "campaign_id": BOARD_CAMPAIGN,
+            "cols": 10,
+            "rows": 10,
+            "session_id": "session-terrain-bb-1",
+        },
     )
     assert create_resp.status_code == 200, create_resp.text
     board_data = create_resp.json()
@@ -161,7 +169,9 @@ def test_board_terrain_multi_cell_path_cost():
     client = TestClient(app, headers=bearer("user-test"))
 
     # Create board
-    res = client.post("/api/v1/boards", json={"cols": 10, "rows": 10})
+    res = client.post(
+        "/api/v1/boards", json={"campaign_id": BOARD_CAMPAIGN, "cols": 10, "rows": 10}
+    )
     board_id = res.json()["board_id"]
 
     # Place token at (1, 1)
@@ -204,7 +214,9 @@ def test_board_token_leaves_hazard_clears_hazard_status():
     """Verify token moving off hazard cell clears active hazard status."""
     client = TestClient(app, headers=bearer("user-test"))
 
-    res = client.post("/api/v1/boards", json={"cols": 10, "rows": 10})
+    res = client.post(
+        "/api/v1/boards", json={"campaign_id": BOARD_CAMPAIGN, "cols": 10, "rows": 10}
+    )
     board_id = res.json()["board_id"]
 
     # Place token at (4, 4) with lava hazard
@@ -234,3 +246,20 @@ def test_board_token_leaves_hazard_clears_hazard_status():
     monk = board_res.json()["tokens"]["monk-1"]
     assert monk["active_hazard"] is None
     assert monk["hazard_status"] is None
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

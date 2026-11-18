@@ -7,6 +7,9 @@ Governed by:
 - Hard Invariant 7: Blackbox TDD with Frontdoor Setup
 """
 
+import asyncio
+
+import pytest
 from board_state.dependencies import repo
 from board_state.main import app
 from fastapi.testclient import TestClient
@@ -40,7 +43,12 @@ def test_3d_tabletop_physical_dice_simulation_and_settlement():
     # 1. Create a board via public HTTP frontdoor
     create_resp = client.post(
         "/api/v1/boards",
-        json={"cols": 10, "rows": 10, "session_id": "session-3d-physics-dice"},
+        json={
+            "campaign_id": BOARD_CAMPAIGN,
+            "cols": 10,
+            "rows": 10,
+            "session_id": "session-3d-physics-dice",
+        },
     )
     assert create_resp.status_code == 200, create_resp.text
     board_id = create_resp.json()["board_id"]
@@ -95,7 +103,12 @@ def test_3d_miniature_knockback_impulse_and_wall_collision():
     # 1. Create tactical board
     board_resp = client.post(
         "/api/v1/boards",
-        json={"cols": 12, "rows": 12, "session_id": "session-3d-mini-knockback"},
+        json={
+            "campaign_id": BOARD_CAMPAIGN,
+            "cols": 12,
+            "rows": 12,
+            "session_id": "session-3d-mini-knockback",
+        },
     )
     assert board_resp.status_code == 200, board_resp.text
     board_id = board_resp.json()["board_id"]
@@ -164,3 +177,20 @@ def test_3d_miniature_knockback_impulse_and_wall_collision():
     assert board["tokens"]["mini-valeros"]["x"] == kb_data["to_x"]
     assert board["last_collision"] is not None
     assert board["last_collision"]["entity_id"] == "mini-valeros"
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

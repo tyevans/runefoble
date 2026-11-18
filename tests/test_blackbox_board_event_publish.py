@@ -12,15 +12,14 @@ The Redis double (MockAsyncRedis) sits behind RedisStreamsEventBus, which expose
 
 from __future__ import annotations
 
+import asyncio
 import json
 from uuid import uuid4
 
 import pytest
-from board_state.dependencies import set_spicedb_client as set_board_spicedb_client
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -49,9 +48,7 @@ def _entries(redis: MockAsyncRedis, stream: str) -> list[dict[str, str]]:
 
 @pytest.fixture
 def board_redis(mock_bus):
-    set_board_spicedb_client(MockSpiceDBClient())
     yield mock_bus
-    set_board_spicedb_client(SpiceDBClient())
 
 
 @pytest.fixture
@@ -61,7 +58,10 @@ def watcher_redis(mock_bus):
 
 def _create_board(client: TestClient, board_id: str) -> None:
     """Create a board through the public POST frontdoor before any board write."""
-    res = client.post("/api/v1/boards", json={"session_id": board_id, "cols": 18, "rows": 14})
+    res = client.post(
+        "/api/v1/boards",
+        json={"campaign_id": BOARD_CAMPAIGN, "session_id": board_id, "cols": 18, "rows": 14},
+    )
     assert res.status_code == 200, res.text
 
 
@@ -137,3 +137,20 @@ async def test_world_tick_publishes_world_tick_executed_to_watcher_stream(
         e for e in _entries(watcher_redis, WATCHER_STREAM) if e["event_type"] == WORLD_TICK_TYPE
     ]
     assert len(ticks) == 1
+
+
+BOARD_CAMPAIGN = "camp-board-fixture"
+
+
+@pytest.fixture(autouse=True)
+def _board_campaign_dm(spicedb):
+    """Make `user-test` the DM of the campaign that every board in this module belongs to."""
+    asyncio.run(
+        spicedb.write_relationship(
+            resource_type="campaign",
+            resource_id=BOARD_CAMPAIGN,
+            relation="dungeon_master",
+            subject_type="user",
+            subject_id="user-test",
+        )
+    )

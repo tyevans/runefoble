@@ -60,7 +60,6 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
     ),
     ServiceSeams(
         "board_state",
-        spicedb="board_state.dependencies",
         bus="board_state.dependencies",
         verifier="board_state.dependencies",
         verifier_scope="session",
