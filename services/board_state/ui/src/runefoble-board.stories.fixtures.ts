@@ -77,8 +77,8 @@ export const expiringGhostPreview: GhostPreviewState = {
 export const sampleAoETemplates: Record<'cone' | 'sphere', AoETemplateConfig> = {
   cone: {
     shape: 'cone',
-    originX: 2.5,
-    originY: 3.5,
+    originX: 2,
+    originY: 3,
     directionDeg: 45,
     radiusFt: 15,
     spellName: 'Burning Hands (15-foot Cone)',
@@ -86,8 +86,8 @@ export const sampleAoETemplates: Record<'cone' | 'sphere', AoETemplateConfig> = 
   },
   sphere: {
     shape: 'sphere',
-    originX: 5.5,
-    originY: 2.5,
+    originX: 5,
+    originY: 2,
     directionDeg: 0,
     radiusFt: 20,
     spellName: 'Fireball (20-foot Radius)',

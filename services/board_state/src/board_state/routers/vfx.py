@@ -11,7 +11,7 @@ from board_state.models import (
     FinishVFXRequest,
     FinishVFXResponse,
 )
-from board_state.preview import board_ws_manager
+from board_state.realtime import board_ws_manager
 from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(tags=["vfx"], dependencies=[Depends(get_current_user_id)])

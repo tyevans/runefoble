@@ -69,14 +69,25 @@ Under ADR-0004, ADR-0012, and ADR-0013, the radial action menu is decomposed int
 
 Selecting the **Cast** action on the radial menu (or triggering spell casting mode) mounts the `<runefoble-aoe-template>` overlay over the tactical grid.
 
+### 2.0 The Containment Rule (Server-Owned)
+
+The server owns every area rule. `services/board_state/src/board_state/geometry/` holds the one implementation.
+
+- **Origin**: The origin is a whole grid cell index (`origin_x`, `origin_y`). The origin point is the **centre** of that cell. Fractional origins are rejected.
+- **Cell membership**: A cell is inside a shape when the **centre** of that cell is inside the shape. Distances use feet (5 ft per cell).
+- **One sphere rule**: The AoE template (`POST /api/v1/boards/{id}/aoe/evaluate`) and the spell bloom (`POST /api/v1/boards/{id}/spells/cast`) use the same sphere test. The same origin cell and radius give the same `affected_cells`.
+- **Client**: The UI never computes affected cells or tokens. It shows the server result.
+
 ### 2.1 Supported Geometric Shapes
 
-| Shape | Standard Sizes | Angular Spread / Width | Calculation |
+| Shape | Standard Sizes | Angular Spread / Width | Calculation (cell centres, feet) |
 |---|---|---|---|
 | **Cone** | 15 ft, 30 ft | 53.13° spread angle | Distance $\le$ radius, angular delta $\le$ 26.565° |
-| **Sphere** | 10 ft, 20 ft radius | Full 360° circle | Euclidean distance $\le$ radius |
+| **Sphere** | 10 ft, 20 ft radius | Full 360° circle | Euclidean distance from origin centre $\le$ radius |
 | **Line** | 5 ft $\times$ 30 ft, 5 ft $\times$ 60 ft | 5 ft width | Projection along vector $\le$ length, perpendicular $\le$ width/2 |
 | **Cube** | 10 ft, 20 ft, 30 ft side | Rotatable square | Projection along oriented axes $\le$ size/2 |
+
+For example, a 5 ft sphere on cell (5, 5) covers the cells (5, 5), (4, 5), (6, 5), (5, 4), and (5, 6). A 20 ft sphere on cell (5, 5) covers 49 cells on a square grid.
 
 ### 2.2 Tactile 15-Degree Angle Snapping
 
@@ -90,20 +101,13 @@ const snappedAngle = snapAngle(rawAngleDegrees, 15);
 
 ### 2.3 Real-Time Token Intersection Highlighting
 
-Tokens enclosed within the template geometry are highlighted at 60fps with glowing targeting halos (`.target-halo`), and affected grid cells receive semi-transparent spell tint (`.aoe-affected-cell`):
-
-```typescript
-import { computeAffectedTokens, computeAffectedCells } from '@runefoble/board-state-ui';
-
-const affectedTokenIds = computeAffectedTokens(tokens, aoeConfig);
-const affectedCells = computeAffectedCells(cols, rows, aoeConfig);
-```
+When the caster moves or rotates the template, the UI sends an `aoe_evaluate` message on the board socket. The server replies with an `aoe_preview` message. Tokens in `affected_token_ids` get glowing targeting halos (`.target-halo`). Cells in `affected_cells` get the semi-transparent spell tint (`.aoe-affected-cell`). The UI applies only the reply that matches the current template.
 
 ### 2.4 Modular Architecture (ADR-0013)
 
 Under ADR-0013 and Hard Invariant 6, the AoE template engine is organized into focused, decoupled TypeScript modules under `services/board_state/ui/src/`:
 - `aoe_types.ts`: Type contracts, shape enums, handle event signatures, and design system color tokens (< 80 lines).
-- `aoe_geometry.ts`: Pure mathematical intersection algorithms for cones, spheres, lines, and cubes (< 150 lines).
+- `aoe_geometry.ts`: Presentation helpers only: `snapAngle` and the cone spread used for drawing. It holds no containment rule.
 - `aoe_canvas.ts`: SVG path builders, dashed outlines, pulse keyframes, and rotational handles (< 150 lines).
 - `aoe_templates.ts`: Coordinator facade and `<runefoble-aoe-template>` Custom Element lifecycle (< 100 lines).
 
@@ -115,20 +119,20 @@ All radial action invocations and live AoE rotations stream over `/ws/boards/{se
 
 ### 3.1 Live AoE Preview Stream
 
-Send an `aoe_preview` payload:
+Send an `aoe_evaluate` payload (`aoe_preview` is also accepted):
 ```json
 {
-  "action": "aoe_preview",
+  "action": "aoe_evaluate",
   "shape": "cone",
-  "origin_x": 2.5,
-  "origin_y": 2.5,
+  "origin_x": 2,
+  "origin_y": 2,
   "direction_deg": 45.0,
   "radius_ft": 15.0,
   "spell_name": "Burning Hands"
 }
 ```
 
-The server broadcasts the evaluated targets to all connected peers:
+The server broadcasts the evaluated targets to all connected peers. A non-integer origin returns `{"type": "error", "status": 422}` to the sender only:
 ```json
 {
   "type": "aoe_preview",

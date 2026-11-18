@@ -5,10 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from board_state.dependencies import BoardNotFoundError, get_board, repo
-from board_state.preview import (
-    board_ws_manager,
-    compute_kinematic_route_preview,
-)
+from board_state.preview import compute_kinematic_route_preview
+from board_state.realtime import board_ws_manager
 from board_state.routers.previews_ws_actions import handle_ws_action
 from board_state.routers.previews_ws_spells import handle_ws_spell
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -136,6 +134,10 @@ async def board_websocket(websocket: WebSocket, session_id: str):
             except BoardNotFoundError as exc:
                 await websocket.send_json(
                     {"type": "error", "status": 404, "session_id": session_id, "message": str(exc)}
+                )
+            except ValueError as exc:
+                await websocket.send_json(
+                    {"type": "error", "status": 422, "session_id": session_id, "message": str(exc)}
                 )
 
     except WebSocketDisconnect:

@@ -6,7 +6,7 @@ from typing import Any
 
 from board_state.aggregate import BoardAggregate
 from board_state.dependencies import repo
-from board_state.preview import board_ws_manager
+from board_state.realtime import board_ws_manager
 
 
 async def handle_ws_spell(

@@ -114,8 +114,8 @@ def test_aoe_rotatable_cone_calculations_and_angle_snapping(client):
         json={
             "caster_token_id": "marcus",
             "shape": "cone",
-            "origin_x": 2.5,
-            "origin_y": 2.5,
+            "origin_x": 2,
+            "origin_y": 2,
             "direction_deg": 7.0,  # Should snap to 0.0
             "radius_ft": 15.0,
             "spell_name": "Burning Hands",
@@ -134,8 +134,8 @@ def test_aoe_rotatable_cone_calculations_and_angle_snapping(client):
         json={
             "caster_token_id": "marcus",
             "shape": "cone",
-            "origin_x": 2.5,
-            "origin_y": 2.5,
+            "origin_x": 2,
+            "origin_y": 2,
             "direction_deg": 86.0,  # Should snap to 90.0
             "radius_ft": 15.0,
             "spell_name": "Burning Hands",
@@ -174,8 +174,8 @@ def test_aoe_sphere_and_line_geometry_evaluations(client):
         f"/api/v1/boards/{board_id}/aoe/evaluate",
         json={
             "shape": "sphere",
-            "origin_x": 5.5,
-            "origin_y": 5.5,
+            "origin_x": 5,
+            "origin_y": 5,
             "radius_ft": 20.0,
             "spell_name": "Fireball",
         },
@@ -191,8 +191,8 @@ def test_aoe_sphere_and_line_geometry_evaluations(client):
         f"/api/v1/boards/{board_id}/aoe/evaluate",
         json={
             "shape": "line",
-            "origin_x": 0.0,
-            "origin_y": 5.5,
+            "origin_x": 0,
+            "origin_y": 5,
             "direction_deg": 0.0,
             "length_ft": 30.0,
             "width_ft": 5.0,
@@ -221,8 +221,8 @@ def test_aoe_template_placement_and_lifecycle(client):
         json={
             "template_id": "aoe-1",
             "shape": "sphere",
-            "origin_x": 3.5,
-            "origin_y": 3.5,
+            "origin_x": 3,
+            "origin_y": 3,
             "radius_ft": 10.0,
             "spell_name": "Faerie Fire",
         },
@@ -281,8 +281,8 @@ def test_websocket_radial_action_and_aoe_streaming(client):
             {
                 "action": "aoe_preview",
                 "shape": "cone",
-                "origin_x": 4.5,
-                "origin_y": 4.5,
+                "origin_x": 4,
+                "origin_y": 4,
                 "direction_deg": 45.0,
                 "radius_ft": 15.0,
                 "spell_name": "Sacred Flame",
@@ -299,8 +299,8 @@ def test_websocket_radial_action_and_aoe_streaming(client):
                 "action": "aoe_place",
                 "template_id": "aoe-ws-1",
                 "shape": "sphere",
-                "origin_x": 4.5,
-                "origin_y": 4.5,
+                "origin_x": 4,
+                "origin_y": 4,
                 "radius_ft": 10.0,
             }
         )
