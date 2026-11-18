@@ -15,18 +15,18 @@ from uuid import uuid4
 import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.events import DMNarrativeWhispered
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     get_copilot_engine,
-    get_spicedb_client,
     set_event_bus,
-    set_spicedb_client,
 )
 from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import bind_session_to_campaign
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -35,8 +35,6 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture(autouse=True)
 def clean_environment():
     """Ensure clean SpiceDB, CopilotEngine, and event bus state before and after each test."""
-    mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
     mock_redis = MockAsyncRedis()
     bus = RedisStreamsEventBus(client=mock_redis)
     set_event_bus(bus)
@@ -44,7 +42,6 @@ def clean_environment():
     engine.clear()
     yield
     engine.clear()
-    set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
 
 
@@ -89,6 +86,7 @@ async def test_zanzibar_whispers_dm_authorization_enforcement(client: TestClient
         subject_type="user",
         subject_id=authorized_dm,
     )
+    await bind_session_to_campaign(session_id, campaign_id)
     await spicedb.write_relationship(
         resource_type="campaign",
         resource_id=campaign_id,
@@ -139,6 +137,7 @@ async def test_dm_whispers_creation_and_pagination(client: TestClient):
         subject_type="user",
         subject_id=dm_user,
     )
+    await bind_session_to_campaign(session_id, campaign_id)
 
     types = ["atmospheric_hint", "monster_tactics", "passive_perception"]
     for i, w_type in enumerate(types):
@@ -188,6 +187,7 @@ async def test_dm_whispers_generation(client: TestClient):
         subject_type="user",
         subject_id=dm_user,
     )
+    await bind_session_to_campaign(session_id, campaign_id)
 
     res_gen = client.post(
         "/api/v1/watcher/whispers/generate",

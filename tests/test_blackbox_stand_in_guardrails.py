@@ -26,6 +26,7 @@ from the_watcher.stand_in_ai import (
 )
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -106,6 +107,7 @@ async def test_blackbox_stand_in_guardrails_scenarios(
     watcher_set_event_bus(event_bus)
 
     session_id, campaign_id = str(uuid4()), str(uuid4())
+    await make_table_runner("test-user", session_id, campaign_id)
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app),
         base_url="http://test",

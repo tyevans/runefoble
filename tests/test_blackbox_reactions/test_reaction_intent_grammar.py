@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
 from the_watcher.intent.reactions import parse_reaction_intent
+
+from tests.helpers.spicedb_factory import make_table_runner
 
 
 def test_reaction_grammar_extraction():
@@ -60,6 +63,7 @@ def test_watcher_transcribe_and_act_recognizes_reaction(watcher_client: TestClie
     """Verify The Watcher public intent endpoint recognizes spoken reactions."""
     session_id = str(uuid4())
     campaign_id = str(uuid4())
+    asyncio.run(make_table_runner("test-user", session_id, campaign_id))
 
     res = watcher_client.post(
         "/api/v1/watcher/transcribe-and-act",

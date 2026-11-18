@@ -18,7 +18,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     InMemoryEventBus,
@@ -26,12 +26,10 @@ from runefoble_platform.event_sourcing import (
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
-    get_spicedb_client,
     set_campaign_world_repo,
     set_event_bus,
     set_faction_repo,
     set_faction_simulation_engine,
-    set_spicedb_client,
 )
 from the_watcher.factions import FactionAggregate
 from the_watcher.factions.campaign_world import CampaignWorldAggregate
@@ -39,9 +37,13 @@ from the_watcher.main import app
 from the_watcher.simulation_engine import FactionSimulationEngine
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 WATCHER_STREAM = "runefoble.events.watcher"
 WORLD_TICK_TYPE = "runefoble.events.watcher.world_tick_executed"
+
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def _boot(store: InMemoryEventStore, redis: MockAsyncRedis) -> None:
@@ -66,9 +68,7 @@ def _boot(store: InMemoryEventStore, redis: MockAsyncRedis) -> None:
 
 @pytest.fixture(autouse=True)
 def durable_environment():
-    set_spicedb_client(MockSpiceDBClient())
     yield
-    set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
     set_faction_repo(None)
     set_campaign_world_repo(None)
@@ -92,7 +92,7 @@ async def test_tick_count_registry_and_latest_bulletin_survive_restart():
         subject_type="user",
         subject_id=dm_user,
     )
-    headers = {"X-User-Id": dm_user}
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"}
 
     created = client.post(
         f"/api/v1/campaigns/{camp_id}/factions",
@@ -163,7 +163,7 @@ async def test_each_world_tick_writes_one_stream_entry_in_order():
         subject_type="user",
         subject_id=dm_user,
     )
-    headers = {"X-User-Id": dm_user}
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"}
 
     client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",

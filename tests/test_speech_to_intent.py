@@ -19,6 +19,7 @@ from voice_agent.main import app as voice_app
 from voice_agent.main import set_event_bus as voice_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -176,6 +177,7 @@ async def test_watcher_redis_stream_event_emission(mock_redis: MockAsyncRedis):
     watcher_set_event_bus(event_bus)
 
     session_id = str(uuid.uuid4())
+    await make_table_runner("test-user", session_id, str(uuid.uuid4()))
     campaign_id = str(uuid.uuid4())
 
     transport = ASGITransport(app=watcher_app)
@@ -245,6 +247,7 @@ async def test_voice_agent_transcription_and_event_emission(mock_redis: MockAsyn
     voice_set_event_bus(event_bus)
 
     session_id = str(uuid.uuid4())
+    await make_table_runner("test-user", session_id, str(uuid.uuid4()))
     campaign_id = str(uuid.uuid4())
 
     transport = ASGITransport(app=voice_app)

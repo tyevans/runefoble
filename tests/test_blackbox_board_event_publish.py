@@ -20,11 +20,10 @@ from board_state.dependencies import set_event_bus as set_board_event_bus
 from board_state.dependencies import set_spicedb_client as set_board_spicedb_client
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
-from the_watcher.dependencies import get_spicedb_client as get_watcher_spicedb_client
 from the_watcher.dependencies import set_event_bus as set_watcher_event_bus
-from the_watcher.dependencies import set_spicedb_client as set_watcher_spicedb_client
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -64,10 +63,8 @@ def board_redis():
 @pytest.fixture
 def watcher_redis():
     redis = MockAsyncRedis()
-    set_watcher_spicedb_client(MockSpiceDBClient())
     set_watcher_event_bus(RedisStreamsEventBus(client=redis))
     yield redis
-    set_watcher_spicedb_client(SpiceDBClient())
     set_watcher_event_bus(None)
 
 
@@ -130,7 +127,7 @@ async def test_world_tick_publishes_world_tick_executed_to_watcher_stream(
     )
     camp_id = f"camp-tick-{uuid4().hex[:8]}"
     dm_user = f"dm-{uuid4().hex[:6]}"
-    await get_watcher_spicedb_client().write_relationship(
+    await get_spicedb_client().write_relationship(
         resource_type="campaign",
         resource_id=camp_id,
         relation="dungeon_master",

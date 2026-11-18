@@ -10,9 +10,17 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+
+async def _bound_session() -> tuple[str, str]:
+    """Bind a fresh session to a fresh campaign whose DM is the test user."""
+    session_id, campaign_id = str(uuid.uuid4()), str(uuid.uuid4())
+    await make_table_runner("test-user", session_id, campaign_id)
+    return session_id, campaign_id
 
 
 @pytest.fixture
@@ -22,6 +30,7 @@ def mock_redis() -> MockAsyncRedis:
 
 @pytest.mark.asyncio
 async def test_blackbox_coordinate_movement_frontdoor(mock_redis: MockAsyncRedis):
+    sid, cid = await _bound_session()
     event_bus = RedisStreamsEventBus(client=mock_redis)
     watcher_set_event_bus(event_bus)
 
@@ -37,8 +46,8 @@ async def test_blackbox_coordinate_movement_frontdoor(mock_redis: MockAsyncRedis
                 "speaker_id": "spk-1",
                 "speaker_name": "Valeros",
                 "transcript": "move to 6, 8",
-                "session_id": str(uuid.uuid4()),
-                "campaign_id": str(uuid.uuid4()),
+                "session_id": sid,
+                "campaign_id": cid,
                 "token_id": "tok-valeros",
                 "from_x": 2,
                 "from_y": 2,
@@ -71,6 +80,7 @@ async def test_blackbox_coordinate_movement_frontdoor(mock_redis: MockAsyncRedis
 
 @pytest.mark.asyncio
 async def test_blackbox_cardinal_movement_with_boundary_clamping(mock_redis: MockAsyncRedis):
+    sid, cid = await _bound_session()
     event_bus = RedisStreamsEventBus(client=mock_redis)
     watcher_set_event_bus(event_bus)
 
@@ -86,8 +96,8 @@ async def test_blackbox_cardinal_movement_with_boundary_clamping(mock_redis: Moc
                 "speaker_id": "spk-2",
                 "speaker_name": "Merisiel",
                 "transcript": "advance 20 squares east",
-                "session_id": str(uuid.uuid4()),
-                "campaign_id": str(uuid.uuid4()),
+                "session_id": sid,
+                "campaign_id": cid,
                 "token_id": "tok-meri",
                 "from_x": 5,
                 "from_y": 5,
@@ -110,6 +120,7 @@ async def test_blackbox_cardinal_movement_with_boundary_clamping(mock_redis: Moc
 
 @pytest.mark.asyncio
 async def test_blackbox_intent_endpoint_attack_and_spell(mock_redis: MockAsyncRedis):
+    sid, cid = await _bound_session()
     event_bus = RedisStreamsEventBus(client=mock_redis)
     watcher_set_event_bus(event_bus)
 
@@ -126,8 +137,8 @@ async def test_blackbox_intent_endpoint_attack_and_spell(mock_redis: MockAsyncRe
                 "speaker_id": "spk-3",
                 "speaker_name": "Valeros",
                 "transcript": "attack skeleton with mace",
-                "session_id": str(uuid.uuid4()),
-                "campaign_id": str(uuid.uuid4()),
+                "session_id": sid,
+                "campaign_id": cid,
             },
         )
         assert resp_attack.status_code == 200
@@ -143,8 +154,8 @@ async def test_blackbox_intent_endpoint_attack_and_spell(mock_redis: MockAsyncRe
                 "speaker_id": "spk-4",
                 "speaker_name": "Ezren",
                 "transcript": "cast magic missile at goblin archer",
-                "session_id": str(uuid.uuid4()),
-                "campaign_id": str(uuid.uuid4()),
+                "session_id": sid,
+                "campaign_id": cid,
             },
         )
         assert resp_spell.status_code == 200
@@ -155,6 +166,7 @@ async def test_blackbox_intent_endpoint_attack_and_spell(mock_redis: MockAsyncRe
 
 @pytest.mark.asyncio
 async def test_blackbox_skill_check_and_dice_roll_frontdoors(mock_redis: MockAsyncRedis):
+    sid, cid = await _bound_session()
     event_bus = RedisStreamsEventBus(client=mock_redis)
     watcher_set_event_bus(event_bus)
 
@@ -171,8 +183,8 @@ async def test_blackbox_skill_check_and_dice_roll_frontdoors(mock_redis: MockAsy
                 "speaker_id": "spk-5",
                 "speaker_name": "Kyra",
                 "transcript": "make a religion check",
-                "session_id": str(uuid.uuid4()),
-                "campaign_id": str(uuid.uuid4()),
+                "session_id": sid,
+                "campaign_id": cid,
             },
         )
         assert resp_skill.status_code == 200
@@ -186,8 +198,8 @@ async def test_blackbox_skill_check_and_dice_roll_frontdoors(mock_redis: MockAsy
                 "speaker_id": "spk-6",
                 "speaker_name": "Ezren",
                 "transcript": "roll 2d6+3",
-                "session_id": str(uuid.uuid4()),
-                "campaign_id": str(uuid.uuid4()),
+                "session_id": sid,
+                "campaign_id": cid,
             },
         )
         assert resp_roll.status_code == 200
