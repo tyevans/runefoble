@@ -6,10 +6,12 @@ This guide explains how to query canonical SRD 5.1 monsters, spells, and conditi
 
 ## 1. Rules Search
 
+Every example calls the gateway at `http://localhost:8000`. The gateway forwards each compendium route to the `rules_compendium` service. Do not call the service port directly. If `rules_compendium` is unreachable, the gateway returns `503`. If it returns a 5xx, the gateway returns `502`.
+
 To query rules, spells, conditions, or monsters. Set `TOKEN` to a Zitadel access token. Every compendium route except health and OpenAPI requires a verified bearer token. A request with no token returns `401`.
 
 ```bash
-curl -G http://localhost:8007/api/v1/compendium/rules/search \
+curl -G http://localhost:8000/api/v1/compendium/rules/search \
   -H "Authorization: Bearer $TOKEN" \
   --data-urlencode "query=fire damage explosion" \
   --data-urlencode "limit=5"
@@ -63,18 +65,18 @@ Retrieve specific canonical stat blocks or condition mechanics by name:
 
 ```bash
 # Retrieve monster stat block
-curl http://localhost:8007/api/v1/compendium/monsters/Goblin \
+curl http://localhost:8000/api/v1/compendium/monsters/Goblin \
   -H "Authorization: Bearer $TOKEN"
 
 # Retrieve condition mechanics
-curl http://localhost:8007/api/v1/compendium/conditions/Paralyzed \
+curl http://localhost:8000/api/v1/compendium/conditions/Paralyzed \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 A homebrew monster is read the same way, with the campaign named. The caller must pass `homebrew_rule.view` for it. Otherwise the route returns `404`, the same as for a missing monster. Spell and condition lookups return SRD entries only.
 
 ```bash
-curl "http://localhost:8007/api/v1/compendium/monsters/Abyssal%20Shadowstalker?campaign_id=8a329ef2-5c91-4cf1-83d8-21d4bb67f101" \
+curl "http://localhost:8000/api/v1/compendium/monsters/Abyssal%20Shadowstalker?campaign_id=8a329ef2-5c91-4cf1-83d8-21d4bb67f101" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -101,7 +103,7 @@ curl "http://localhost:8007/api/v1/compendium/monsters/Abyssal%20Shadowstalker?c
 To calculate XP budgets and recommend a synergistic enemy combat group for a party:
 
 ```bash
-curl -X POST http://localhost:8007/api/v1/compendium/encounters/balance \
+curl -X POST http://localhost:8000/api/v1/compendium/encounters/balance \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
@@ -165,7 +167,7 @@ The balancing engine:
 To register custom monsters or rules restricted to a campaign. Set `DM_TOKEN` to a Zitadel access token for the DM. rules_compendium takes the author from the verified token subject and ignores any `author_id` in the body. A request with no valid token returns `401`.
 
 ```bash
-curl -X POST http://localhost:8007/api/v1/compendium/homebrew \
+curl -X POST http://localhost:8000/api/v1/compendium/homebrew \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $DM_TOKEN" \
   -d '{
@@ -218,9 +220,8 @@ enc = await encounter_tool.run({"party_levels": [4, 4, 4], "target_difficulty": 
 Per ADR-0013, `services/rules_compendium/ui/` vendors Lit Web Components that can be embedded into the App Shell or used standalone:
 
 ### Manifest Discovery
-```bash
-curl http://localhost:8007/ui/manifest
-```
+
+The gateway does not proxy `/ui/manifest`. The `rules_compendium` service serves its manifest on its own port. See the [Ports and Endpoints reference](../reference/ports-and-endpoints.md) for the cluster address.
 
 ```json
 {
@@ -239,7 +240,7 @@ curl http://localhost:8007/ui/manifest
 ### Embedding in HTML / App Shell
 ```html
 <runefoble-rules-compendium
-  apiBaseUrl="http://localhost:8007"
+  apiBaseUrl="http://localhost:8000"
   campaignId="8a329ef2-5c91-4cf1-83d8-21d4bb67f101"
   userId="dm-evelyn-1"
   isDM="true"
@@ -247,7 +248,7 @@ curl http://localhost:8007/ui/manifest
 
 <!-- Or embed modular subviews directly: -->
 <runefoble-homebrew-creator
-  apiBaseUrl="http://localhost:8007"
+  apiBaseUrl="http://localhost:8000"
   campaignId="8a329ef2-5c91-4cf1-83d8-21d4bb67f101"
   userId="dm-evelyn-1"
   isDM="true"

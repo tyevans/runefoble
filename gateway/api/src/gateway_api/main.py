@@ -25,6 +25,7 @@ from gateway_api.routers import (
     auth_router,
     campaigns_router,
     characters_router,
+    compendium_router,
     downtime_router,
     health_router,
     hub_views_router,
@@ -88,6 +89,7 @@ app.include_router(sessions_router)
 app.include_router(hub_views_router)
 app.include_router(lore_views_router)
 app.include_router(characters_router)
+app.include_router(compendium_router)
 app.include_router(downtime_router)
 app.include_router(settlement_haven_router)
 app.include_router(spectator_router)
