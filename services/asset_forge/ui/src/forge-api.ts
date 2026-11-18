@@ -5,10 +5,17 @@
  *
  * Every call posts to a forge route and resolves only with the response body.
  * A non-2xx response rejects with ForgeApiError that carries the server detail.
- * Network failures reject with the fetch error. Nothing resolves on failure.
+ * A 401 or 403 rejects with ForgeAuthError. Network failures reject with the fetch error.
+ * Nothing resolves on failure.
+ *
+ * TASK-0812: every call takes the shared auth source (the same one AssetImageController uses,
+ * `AuthConsumerController.authHeaders`) and sends its headers, so the bearer reaches the gateway.
  */
 
 export type FetchLike = typeof fetch;
+
+/** Resolves the headers that carry the caller's bearer. Empty when nobody is signed in. */
+export type AuthHeaders = () => Promise<Record<string, string>>;
 
 export interface ForgedMapData {
   asset_id: string;
@@ -101,6 +108,19 @@ export class ForgeApiError extends Error {
   }
 }
 
+/** The server refused the caller (401 or 403). The message tells the player what to do. */
+export class ForgeAuthError extends ForgeApiError {
+  constructor(status: 401 | 403) {
+    super(
+      status === 401
+        ? 'Sign in to use the forge. Your session is missing or has expired.'
+        : 'Your account does not have permission for this forge action.',
+      status,
+    );
+    this.name = 'ForgeAuthError';
+  }
+}
+
 interface BattlemapResponse {
   asset_id: string;
   image_url: string;
@@ -152,14 +172,18 @@ async function readErrorMessage(res: Response): Promise<string> {
 
 async function postForge<TResponse>(
   fetchImpl: FetchLike,
+  authHeaders: AuthHeaders,
   url: string,
   body: Record<string, unknown>,
 ): Promise<TResponse> {
   const res = await fetchImpl(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
     body: JSON.stringify(body),
   });
+  if (res.status === 401 || res.status === 403) {
+    throw new ForgeAuthError(res.status);
+  }
   if (!res.ok) {
     throw new ForgeApiError(await readErrorMessage(res), res.status);
   }
@@ -169,10 +193,12 @@ async function postForge<TResponse>(
 export async function forgeBattlemap(
   baseUrl: string,
   input: BattlemapInput,
+  authHeaders: AuthHeaders,
   fetchImpl: FetchLike = fetch,
 ): Promise<ForgedMapData> {
   const res = await postForge<BattlemapResponse>(
     fetchImpl,
+    authHeaders,
     `${baseUrl}/api/v1/forge/battlemap`,
     withCampaign(
       {
@@ -197,10 +223,12 @@ export async function forgeBattlemap(
 export async function forgeToken(
   baseUrl: string,
   input: TokenInput,
+  authHeaders: AuthHeaders,
   fetchImpl: FetchLike = fetch,
 ): Promise<ForgedTokenData> {
   const res = await postForge<TokenResponse>(
     fetchImpl,
+    authHeaders,
     `${baseUrl}/api/v1/forge/token`,
     withCampaign(
       {
@@ -223,10 +251,12 @@ export async function forgeToken(
 export async function exportPrintPdf(
   baseUrl: string,
   input: PrintPdfInput,
+  authHeaders: AuthHeaders,
   fetchImpl: FetchLike = fetch,
 ): Promise<ForgedPrintPdf> {
   return postForge<ForgedPrintPdf>(
     fetchImpl,
+    authHeaders,
     `${baseUrl}/api/v1/forge/print-pdf`,
     withCampaign(
       {
@@ -244,10 +274,12 @@ export async function exportPrintPdf(
 export async function exportStandees(
   baseUrl: string,
   input: StandeesInput,
+  authHeaders: AuthHeaders,
   fetchImpl: FetchLike = fetch,
 ): Promise<ForgedStandees> {
   return postForge<ForgedStandees>(
     fetchImpl,
+    authHeaders,
     `${baseUrl}/api/v1/forge/standees`,
     withCampaign(
       {
@@ -264,10 +296,12 @@ export async function exportStandees(
 export async function exportStlToken(
   baseUrl: string,
   input: StlTokenInput,
+  authHeaders: AuthHeaders,
   fetchImpl: FetchLike = fetch,
 ): Promise<ForgedStlToken> {
   return postForge<ForgedStlToken>(
     fetchImpl,
+    authHeaders,
     `${baseUrl}/api/v1/forge/stl-token`,
     withCampaign(
       {
@@ -301,10 +335,11 @@ export interface PlacedBoardToken {
 export async function placeBoardToken(
   baseUrl: string,
   input: PlaceBoardTokenInput,
+  authHeaders: AuthHeaders,
   fetchImpl: FetchLike = fetch,
 ): Promise<PlacedBoardToken> {
   const url = `${baseUrl}/api/v1/boards/${encodeURIComponent(input.sessionId)}/tokens`;
-  const res = await postForge<PlacedBoardToken>(fetchImpl, url, {
+  const res = await postForge<PlacedBoardToken>(fetchImpl, authHeaders, url, {
     name: input.name,
     token_type: input.tokenType,
     x: input.x,

@@ -98,7 +98,7 @@ export class RunefoblePrintForge extends LitElement {
         heightCells: this.heightCells,
         pageSize: this.pageSize,
         campaignId: this.campaignId || undefined,
-      });
+      }, () => this.auth.authHeaders());
       this.lastExport = await this.downloadable(`Tiled map PDF (${pdf.total_pages} pages)`, pdf);
       this.dispatchEvent(
         new CustomEvent('export-print-pdf', {
@@ -125,7 +125,7 @@ export class RunefoblePrintForge extends LitElement {
         standees: [{ name: this.standeeName, type: 'pc', hp: this.standeeHp, color: '#2a9d8f' }],
         pageSize: this.pageSize,
         campaignId: this.campaignId || undefined,
-      });
+      }, () => this.auth.authHeaders());
       this.lastExport = await this.downloadable(
         `Papercraft standees (${standees.pages} page${standees.pages === 1 ? '' : 's'})`,
         standees
@@ -153,7 +153,7 @@ export class RunefoblePrintForge extends LitElement {
         conditionLabel: this.stlCondition,
         numSlots: 4,
         campaignId: this.campaignId || undefined,
-      });
+      }, () => this.auth.authHeaders());
       this.lastExport = await this.downloadable(`Watertight STL token (${stl.facet_count} facets)`, stl);
       this.dispatchEvent(
         new CustomEvent('export-stl-token', {

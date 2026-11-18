@@ -1,6 +1,7 @@
 /**
  * Unit tests for the Asset Forge HTTP client.
  * TASK-0613: Asset Forge and Print Forge Components Call Forge API and Show Results.
+ * TASK-0812: Every forge call sends the shared bearer and maps 401 and 403 to a typed error.
  *
  * The network boundary (fetch) is replaced with a recording stub. Requests and
  * responses use the public forge route contracts from services/asset_forge.
@@ -11,19 +12,26 @@ import assert from 'node:assert/strict';
 
 import {
   ForgeApiError,
+  ForgeAuthError,
   exportPrintPdf,
   exportStandees,
   exportStlToken,
   forgeBattlemap,
   forgeToken,
   placeBoardToken,
+  type AuthHeaders,
 } from '../src/forge-api.ts';
 
 interface RecordedCall {
   url: string;
   method: string;
+  headers: Record<string, string>;
   body: unknown;
 }
+
+const TEST_TOKEN = 'test-access-token';
+const auth: AuthHeaders = async () => ({ Authorization: `Bearer ${TEST_TOKEN}` });
+const anonymous: AuthHeaders = async () => ({});
 
 function stubFetch(respond: () => Response | Promise<Response>) {
   const calls: RecordedCall[] = [];
@@ -32,6 +40,7 @@ function stubFetch(respond: () => Response | Promise<Response>) {
     calls.push({
       url: String(input),
       method: init?.method ?? 'GET',
+      headers: { ...(init?.headers as Record<string, string>) },
       body: bodyText === undefined ? undefined : JSON.parse(bodyText),
     });
     return respond();
@@ -67,6 +76,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
     const map = await forgeBattlemap(
       '',
       { prompt: 'Lava forge', campaignId: '6f1d7c2e-0000-4000-8000-000000000001', widthCells: 20, heightCells: 20 },
+      auth,
       fetchImpl,
     );
 
@@ -96,6 +106,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
     await forgeBattlemap(
       'https://gateway.example',
       { prompt: 'Crypt', widthCells: 10, heightCells: 10 },
+      auth,
       fetchImpl,
     );
 
@@ -105,7 +116,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
   it('omits campaign_id when no campaign is set', async () => {
     const { calls, fetchImpl } = stubFetch(() => jsonResponse(200, BATTLEMAP_RESPONSE));
 
-    await forgeBattlemap('', { prompt: 'Crypt', campaignId: '', widthCells: 10, heightCells: 10 }, fetchImpl);
+    await forgeBattlemap('', { prompt: 'Crypt', campaignId: '', widthCells: 10, heightCells: 10 }, auth, fetchImpl);
 
     assert.equal('campaign_id' in (calls[0].body as Record<string, unknown>), false);
   });
@@ -115,7 +126,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
     const { fetchImpl } = stubFetch(() => jsonResponse(503, { detail }));
 
     await assert.rejects(
-      forgeBattlemap('', { prompt: 'Crypt', widthCells: 10, heightCells: 10 }, fetchImpl),
+      forgeBattlemap('', { prompt: 'Crypt', widthCells: 10, heightCells: 10 }, auth, fetchImpl),
       (err: unknown) => {
         assert.ok(err instanceof ForgeApiError);
         assert.equal(err.status, 503);
@@ -136,7 +147,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
     );
 
     await assert.rejects(
-      forgeBattlemap('', { prompt: 'x', widthCells: 99, heightCells: 10 }, fetchImpl),
+      forgeBattlemap('', { prompt: 'x', widthCells: 99, heightCells: 10 }, auth, fetchImpl),
       (err: unknown) => {
         assert.ok(err instanceof ForgeApiError);
         assert.equal(err.status, 422);
@@ -153,7 +164,7 @@ describe('forgeBattlemap (TASK-0613)', () => {
     const { fetchImpl } = stubFetch(() => new Response('<html>Bad Gateway</html>', { status: 502 }));
 
     await assert.rejects(
-      forgeBattlemap('', { prompt: 'Crypt', widthCells: 10, heightCells: 10 }, fetchImpl),
+      forgeBattlemap('', { prompt: 'Crypt', widthCells: 10, heightCells: 10 }, auth, fetchImpl),
       (err: unknown) => {
         assert.ok(err instanceof ForgeApiError);
         assert.equal(err.status, 502);
@@ -169,11 +180,104 @@ describe('forgeBattlemap (TASK-0613)', () => {
     });
 
     await assert.rejects(
-      forgeBattlemap('', { prompt: 'Crypt', widthCells: 10, heightCells: 10 }, fetchImpl),
+      forgeBattlemap('', { prompt: 'Crypt', widthCells: 10, heightCells: 10 }, auth, fetchImpl),
       TypeError,
     );
   });
 });
+
+describe('forge bearer and auth errors (TASK-0812)', () => {
+  const forgeCalls: Array<[string, (fetchImpl: typeof fetch, authHeaders: AuthHeaders) => Promise<unknown>]> = [
+    ['forgeBattlemap', (f, a) => forgeBattlemap('', { prompt: 'Crypt', widthCells: 10, heightCells: 10 }, a, f)],
+    [
+      'forgeToken',
+      (f, a) => forgeToken('', { prompt: 'Paladin', tokenName: 'Thorin', tokenType: 'pc' }, a, f),
+    ],
+    [
+      'exportPrintPdf',
+      (f, a) =>
+        exportPrintPdf('', { title: 'Crypt', widthCells: 16, heightCells: 16, pageSize: 'letter' }, a, f),
+    ],
+    [
+      'exportStandees',
+      (f, a) =>
+        exportStandees('', { sheetTitle: 'Standees', standees: [], pageSize: 'a4' }, a, f),
+    ],
+    [
+      'exportStlToken',
+      (f, a) => exportStlToken('', { diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4 }, a, f),
+    ],
+    [
+      'placeBoardToken',
+      (f, a) => placeBoardToken('', { sessionId: 's', name: 'n', tokenType: 'pc', x: 1, y: 1 }, a, f),
+    ],
+  ];
+
+  for (const [name, call] of forgeCalls) {
+    it(`${name} sends the shared bearer as Authorization`, async () => {
+      const { calls, fetchImpl } = stubFetch(() => jsonResponse(200, minimalResponseFor(name)));
+
+      await call(fetchImpl, auth);
+
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0].headers.Authorization, `Bearer ${TEST_TOKEN}`);
+      assert.equal('x-user-id' in calls[0].headers, false);
+    });
+
+    it(`${name} sends no Authorization header when no token exists`, async () => {
+      const { calls, fetchImpl } = stubFetch(() => jsonResponse(200, minimalResponseFor(name)));
+
+      await call(fetchImpl, anonymous);
+
+      assert.equal('Authorization' in calls[0].headers, false);
+    });
+
+    it(`${name} throws ForgeAuthError with a sign-in message on 401`, async () => {
+      const { fetchImpl } = stubFetch(() => jsonResponse(401, { detail: 'Not authenticated' }));
+
+      await assert.rejects(call(fetchImpl, auth), (err: unknown) => {
+        assert.ok(err instanceof ForgeAuthError);
+        assert.equal(err.status, 401);
+        assert.match(err.message, /Sign in/);
+        return true;
+      });
+    });
+
+    it(`${name} throws ForgeAuthError with a permission message on 403`, async () => {
+      const { fetchImpl } = stubFetch(() => jsonResponse(403, { detail: 'Forbidden' }));
+
+      await assert.rejects(call(fetchImpl, auth), (err: unknown) => {
+        assert.ok(err instanceof ForgeAuthError);
+        assert.equal(err.status, 403);
+        assert.match(err.message, /permission/);
+        return true;
+      });
+    });
+  }
+});
+
+function minimalResponseFor(name: string): unknown {
+  switch (name) {
+    case 'forgeBattlemap':
+      return BATTLEMAP_RESPONSE;
+    case 'forgeToken':
+      return {
+        asset_id: 'tok-1',
+        image_url: 'https://silo.example/tokens/tok-1.png',
+        token_name: 'Thorin',
+        token_type: 'pc',
+        size_px: 256,
+      };
+    case 'exportPrintPdf':
+      return { asset_id: 'pdf-1', download_url: 'https://silo.example/pdf-1.pdf', total_pages: 1, page_size: 'letter' };
+    case 'exportStandees':
+      return { asset_id: 'std-1', download_url: 'https://silo.example/std-1.pdf', standee_count: 0, pages: 1 };
+    case 'exportStlToken':
+      return { asset_id: 'stl-1', download_url: 'https://silo.example/stl-1.stl', facet_count: 1, is_watertight: true };
+    default:
+      return { token_id: 't', name: 'n', token_type: 'pc', x: 1, y: 1 };
+  }
+}
 
 describe('forgeToken (TASK-0613)', () => {
   it('posts the token prompt and identity and maps the forged portrait', async () => {
@@ -194,6 +298,7 @@ describe('forgeToken (TASK-0613)', () => {
     const token = await forgeToken(
       '',
       { prompt: 'Dwarven paladin', tokenName: 'Thorin Ironbreaker', tokenType: 'pc', campaignId: '' },
+      auth,
       fetchImpl,
     );
 
@@ -231,6 +336,7 @@ describe('print forge exports (TASK-0613)', () => {
     const result = await exportPrintPdf(
       '',
       { title: 'Crypt', widthCells: 16, heightCells: 16, pageSize: 'letter', campaignId: '' },
+      auth,
       fetchImpl,
     );
 
@@ -266,6 +372,7 @@ describe('print forge exports (TASK-0613)', () => {
         pageSize: 'a4',
         campaignId: '',
       },
+      auth,
       fetchImpl,
     );
 
@@ -296,6 +403,7 @@ describe('print forge exports (TASK-0613)', () => {
     const result = await exportStlToken(
       '',
       { diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4, campaignId: '' },
+      auth,
       fetchImpl,
     );
 
@@ -315,7 +423,7 @@ describe('print forge exports (TASK-0613)', () => {
     );
 
     await assert.rejects(
-      exportStlToken('', { diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4, campaignId: '' }, fetchImpl),
+      exportStlToken('', { diameterMm: 28, conditionLabel: 'Poisoned', numSlots: 4, campaignId: '' }, auth, fetchImpl),
       (err: unknown) => err instanceof ForgeApiError && err.status === 503,
     );
   });
@@ -339,6 +447,7 @@ describe('placeBoardToken', () => {
     const result = await placeBoardToken(
       '',
       { sessionId: 'session-42', name: 'Thorin Ironbreaker', tokenType: 'pc', x: 4, y: 7 },
+      auth,
       fetchImpl,
     );
 
@@ -358,7 +467,7 @@ describe('placeBoardToken', () => {
       jsonResponse(200, { token_id: 't', name: 'n', token_type: 'npc', x: 0, y: 0 }),
     );
 
-    await placeBoardToken('', { sessionId: 'a/b c', name: 'n', tokenType: 'npc', x: 0, y: 0 }, fetchImpl);
+    await placeBoardToken('', { sessionId: 'a/b c', name: 'n', tokenType: 'npc', x: 0, y: 0 }, auth, fetchImpl);
 
     assert.equal(calls[0].url, '/api/v1/boards/a%2Fb%20c/tokens');
   });
@@ -367,7 +476,7 @@ describe('placeBoardToken', () => {
     const { fetchImpl } = stubFetch(() => jsonResponse(400, { detail: 'Cell is occupied by another token.' }));
 
     await assert.rejects(
-      placeBoardToken('', { sessionId: 's', name: 'n', tokenType: 'pc', x: 1, y: 1 }, fetchImpl),
+      placeBoardToken('', { sessionId: 's', name: 'n', tokenType: 'pc', x: 1, y: 1 }, auth, fetchImpl),
       (err: unknown) =>
         err instanceof ForgeApiError && err.status === 400 && err.message === 'Cell is occupied by another token.',
     );
