@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
+from runefoble_auth.websocket import action_authorizer, admit_websocket
 from voice_agent.auth import get_voice_verifier
 from voice_agent.signaling.auth import extract_peer_and_role
 from voice_agent.signaling.handlers import (
@@ -13,7 +14,6 @@ from voice_agent.signaling.handlers import (
     handle_peer_disconnect,
 )
 from voice_agent.signaling.manager import WebRTCSignalingManager, signaling_manager
-from voice_agent.socket_access import admit_session_socket
 
 logger = logging.getLogger("runefoble.voice_agent.signaling.endpoint")
 
@@ -24,8 +24,8 @@ async def voice_signaling_websocket_endpoint(
     manager: WebRTCSignalingManager | None = None,
 ) -> None:
     """Handle WebRTC voice room signaling WebSocket at /ws/voice/{session_id}."""
-    principal = await admit_session_socket(
-        websocket, get_voice_verifier(), session_id, "session.observe"
+    principal = await admit_websocket(
+        websocket, get_voice_verifier(), action_authorizer("session.observe", session_id)
     )
     if principal is None:
         return

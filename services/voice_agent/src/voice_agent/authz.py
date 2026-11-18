@@ -15,15 +15,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import HTTPException, WebSocket
+from fastapi import HTTPException
 from runefoble_auth.contract import permission_for_action
-from runefoble_auth.errors import AuthzError
 from runefoble_auth.factory import get_spicedb_client
-from runefoble_auth.principal import BearerVerifier, VerifiedPrincipal
-from runefoble_auth.websocket import WS_POLICY_VIOLATION, admit_websocket
+from runefoble_auth.websocket import WebSocketAuthorizer
 
 logger = logging.getLogger("runefoble.voice_agent.authz")
-WS_INTERNAL_ERROR = 1011
 
 
 async def action_allowed(action: str, resource_id: str, subject_id: str) -> bool:
@@ -83,32 +80,18 @@ async def require_speaker(session_id: str, speaker_id: str, principal_id: str) -
     raise HTTPException(status_code=403, detail=_denial_detail(action, session_id, subject))
 
 
-async def admit_speaker_websocket(
-    websocket: WebSocket,
-    verifier: BearerVerifier,
-    session_id: str,
-    speaker_id: str,
-) -> VerifiedPrincipal | None:
-    """Verify the handshake, then check the speaker. Close the socket and return None on refusal."""
-    principal = await admit_websocket(websocket, verifier)
-    if principal is None:
-        return None
-    try:
-        allowed = await speaker_allowed(session_id, speaker_id, principal.user_id)
-    except AuthzError as exc:
-        logger.error("Voice WebSocket authorization failed on %s: %s", websocket.url.path, exc)
-        await websocket.close(code=WS_INTERNAL_ERROR)
-        return None
-    if not allowed:
-        logger.warning("Voice WebSocket speaker denied on %s", websocket.url.path)
-        await websocket.close(code=WS_POLICY_VIOLATION)
-        return None
-    return principal
+def speaker_authorizer(session_id: str, speaker_id: str) -> WebSocketAuthorizer:
+    """Build the socket check: the token subject may act as `speaker_id` in the session."""
+
+    async def _check(principal_id: str) -> bool:
+        return await speaker_allowed(session_id, speaker_id, principal_id)
+
+    return _check
 
 
 __all__ = [
     "action_allowed",
-    "admit_speaker_websocket",
+    "speaker_authorizer",
     "require_action",
     "require_speaker",
     "speaker_allowed",

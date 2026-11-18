@@ -6,8 +6,8 @@ import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
 from gateway_api.dependencies import WebSocketConnectionManager, ws_manager
-from gateway_api.session_access import socket_may
 from gateway_api.websocket_auth import admit_gateway_websocket
+from runefoble_auth.websocket import action_authorizer
 
 logger = logging.getLogger("runefoble.gateway.session_websocket")
 
@@ -18,10 +18,10 @@ async def session_websocket_endpoint(
     manager: WebSocketConnectionManager = ws_manager,
 ) -> None:
     """Realtime stream connecting board, voice, and Watcher chronicle for one session."""
-    principal = await admit_gateway_websocket(websocket)
+    principal = await admit_gateway_websocket(
+        websocket, action_authorizer("session.observe", session_id)
+    )
     if principal is None:
-        return
-    if not await socket_may(websocket, session_id, principal.user_id, "observe"):
         return
     manager.register(session_id, websocket)
     try:

@@ -18,16 +18,9 @@ from board_state.routers.previews_ws_actions import handle_ws_action
 from board_state.routers.previews_ws_authz import BoardActionDenied, authorize_message
 from board_state.routers.previews_ws_spells import handle_ws_spell
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from runefoble_auth.websocket import (
-    RUNEFOBLE_SUBPROTOCOL,
-    WS_POLICY_VIOLATION,
-    WebSocketAuthError,
-    authenticate_websocket,
-)
+from runefoble_auth.websocket import WebSocketAuthorizer, admit_websocket, send_socket_error
 
 logger = logging.getLogger("runefoble.board_state.routers.previews_ws")
-
-WS_AUTHORIZATION_REFUSED = 4403
 
 router = APIRouter(tags=["previews"])
 
@@ -131,42 +124,24 @@ async def _dispatch_action(session_id: str, action: str, is_cast: bool, data: di
             raise UnknownBoardAction(action)
 
 
-async def _send_error(
-    websocket: WebSocket, session_id: str, status: int, message: str, code: str
-) -> None:
-    await websocket.send_json(
-        {
-            "type": "error",
-            "code": code,
-            "status": status,
-            "session_id": session_id,
-            "message": message,
-        }
-    )
+def _board_view_authorizer(session_id: str) -> WebSocketAuthorizer:
+    """Check `board.view` on the session's board."""
 
+    async def _may_view(user_id: str) -> bool:
+        return await can_on_board(user_id, session_id, VIEW)
 
-async def _admit(websocket: WebSocket, session_id: str) -> str | None:
-    """Verify the bearer and `board.view`. Close before accept: 1008 for identity, 4403 for authorization."""
-    try:
-        principal = authenticate_websocket(websocket, get_zitadel_auth_service())
-    except WebSocketAuthError as exc:
-        logger.warning("Board socket denied on %s: %s", websocket.url.path, exc)
-        await websocket.close(code=WS_POLICY_VIOLATION)
-        return None
-    if not await can_on_board(principal.user_id, session_id, VIEW):
-        logger.warning("Board socket denied on %s: board.view is required", websocket.url.path)
-        await websocket.close(code=WS_AUTHORIZATION_REFUSED)
-        return None
-    await websocket.accept(subprotocol=RUNEFOBLE_SUBPROTOCOL)
-    return principal.user_id
+    return _may_view
 
 
 @router.websocket("/ws/boards/{session_id}")
 async def board_websocket(websocket: WebSocket, session_id: str):
     """Real-time tactical board WebSocket stream. It needs a bearer and `board.view`."""
-    user_id = await _admit(websocket, session_id)
-    if user_id is None:
+    principal = await admit_websocket(
+        websocket, get_zitadel_auth_service(), _board_view_authorizer(session_id)
+    )
+    if principal is None:
         return
+    user_id = principal.user_id
     board_ws_manager.register(session_id, websocket)
     try:
         await websocket.send_json(
@@ -188,15 +163,25 @@ async def board_websocket(websocket: WebSocket, session_id: str):
                 await authorize_message(user_id, session_id, action, is_cast, data)
                 await _dispatch_action(session_id, action, is_cast, data)
             except BoardActionDenied as exc:
-                await _send_error(websocket, session_id, 403, str(exc), "FORBIDDEN")
+                await send_socket_error(
+                    websocket, "PERMISSION_DENIED", str(exc), status=403, session_id=session_id
+                )
             except BoardNotFoundError as exc:
-                await _send_error(websocket, session_id, 404, str(exc), "NOT_FOUND")
+                await send_socket_error(
+                    websocket, "NOT_FOUND", str(exc), status=404, session_id=session_id
+                )
             except UnknownBoardAction as exc:
-                await _send_error(
-                    websocket, session_id, 422, f"Unknown board action: {exc}", "UNKNOWN_ACTION"
+                await send_socket_error(
+                    websocket,
+                    "UNKNOWN_ACTION",
+                    f"Unknown board action: {exc}",
+                    status=422,
+                    session_id=session_id,
                 )
             except ValueError as exc:
-                await _send_error(websocket, session_id, 422, str(exc), "INVALID")
+                await send_socket_error(
+                    websocket, "INVALID", str(exc), status=422, session_id=session_id
+                )
     except WebSocketDisconnect:
         pass
     except Exception:

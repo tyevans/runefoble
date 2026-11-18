@@ -120,7 +120,7 @@ Token ids are global in SpiceDB. A token id must use only letters, digits, and `
 - `confirm_move`, `token_action`, and `radial_action` need `board_token.move` on `token_id`.
 - `aoe_place`, `cast_spell`, `spell_vfx`, `SpellCast`, and spoken spell intents need `campaign.play`.
 - Every other defined message (previews, `aoe_preview`, `aoe_evaluate`, `cancel_preview`) needs `board.view`.
-- A denied message returns `{"type": "error", "code": "FORBIDDEN", "status": 403}`. The socket stays open.
+- A denied message returns `{"type": "error", "code": "PERMISSION_DENIED", "status": 403, "session_id": "..."}`. The socket stays open.
 - A message type that the board does not define returns `UNKNOWN_ACTION`. The board no longer rebroadcasts client frames.
 - An unexpected server error closes the socket with `1011` and logs the error.
 

@@ -18,7 +18,7 @@ from game_session.minigame_tables.ws_manager import minigame_table_manager
 from game_session.settlement.auth import check_establishment_play_permission
 from game_session.settlement.auth.tokens import get_zitadel_auth_service
 from runefoble_auth.principal import BearerVerifier
-from runefoble_auth.websocket import admit_websocket
+from runefoble_auth.websocket import WebSocketAuthorizer, admit_websocket, send_socket_error
 
 logger = logging.getLogger("runefoble.game_session.minigames_ws")
 
@@ -26,23 +26,26 @@ router = APIRouter(tags=["minigames_ws"])
 
 
 async def _reject(websocket: WebSocket, code: str, message: str, close_code: int) -> None:
-    await websocket.send_json({"type": "error", "code": code, "message": message})
+    await send_socket_error(websocket, code, message)
     await websocket.close(code=close_code, reason=code)
 
 
-async def _may_play(
-    websocket: WebSocket, spicedb: object, establishment_id: str, user_id: str
-) -> bool:
-    """Check `establishment` play access (Zanzibar). Reject the socket with 4403 when missing."""
-    if await check_establishment_play_permission(spicedb, establishment_id, user_id):
-        return True
-    await _reject(
-        websocket,
-        "PERMISSION_DENIED",
-        f"User '{user_id}' lacks permission to play at establishment '{establishment_id}'",
-        4403,
-    )
-    return False
+def _table_play_authorizer(
+    spicedb: object, table_id: str, establishment_id: str | None
+) -> WebSocketAuthorizer:
+    """Check `establishment` play access (Zanzibar) for the table's establishment."""
+
+    async def _may_play(user_id: str) -> bool:
+        target = establishment_id
+        if target is None:
+            try:
+                target = (await load_table(table_id)).establishment_id
+            except TableNotFoundError:
+                # Admit, then report TABLE_NOT_FOUND below. A missing table is not a denial.
+                return True
+        return await check_establishment_play_permission(spicedb, target, user_id)
+
+    return _may_play
 
 
 async def handle_table_websocket(
@@ -51,18 +54,18 @@ async def handle_table_websocket(
     establishment_id: str | None,
     verifier: BearerVerifier | None = None,
 ) -> None:
-    """Admit the verified caller, then run the bidirectional minigames table session."""
-    principal = await admit_websocket(websocket, verifier or get_zitadel_auth_service())
+    """Admit the verified caller with play access, then run the minigames table session."""
+    spicedb = get_spicedb_client()
+    # The check runs before the table is revealed. A refused caller gets a PERMISSION_DENIED frame.
+    principal = await admit_websocket(
+        websocket,
+        verifier or get_zitadel_auth_service(),
+        _table_play_authorizer(spicedb, table_id, establishment_id),
+        denial_message="The caller lacks permission to play at this table",
+    )
     if principal is None:
         return
     user_id = principal.user_id
-    spicedb = get_spicedb_client()
-
-    # The path names an establishment: check it before the table is revealed.
-    if establishment_id is not None and not await _may_play(
-        websocket, spicedb, establishment_id, user_id
-    ):
-        return
 
     try:
         table = await load_table(table_id)
@@ -73,10 +76,6 @@ async def handle_table_websocket(
     # The table names its own establishment. A socket path cannot pick a different one.
     if establishment_id is not None and establishment_id != table.establishment_id:
         await _reject(websocket, "TABLE_NOT_FOUND", f"Table '{table_id}' is not open", 4404)
-        return
-    if establishment_id is None and not await _may_play(
-        websocket, spicedb, table.establishment_id, user_id
-    ):
         return
 
     minigame_table_manager.register(table_id, websocket)

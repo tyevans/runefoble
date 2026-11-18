@@ -108,10 +108,43 @@ async def ws_handler(websocket: WebSocket) -> None:
     # Continue with principal.user_id
 ```
 
-`admit_websocket` verifies the handshake. On success it accepts with `runefoble.v1`. On failure it closes with code 1008 before accept, logs the path and the reason (never the token), and returns `None`.
+`runefoble_auth.websocket` is the only admission path. Every WebSocket route uses it. It has three parts:
+
+| Helper | Use |
+|---|---|
+| `admit_websocket(websocket, verifier, authorize=None, *, denial_message=None)` | Verify the bearer, check the permission, then accept. Returns the principal or `None`. |
+| `action_authorizer(action, resource_id)` | Build the `authorize` check for a schema action, such as `session.observe`, on one object. |
+| `send_socket_error(websocket, code, message, **fields)` | Send a per-message error frame, such as `PERMISSION_DENIED` or `UNKNOWN_ACTION`. |
+
+```python
+from fastapi import WebSocket
+from runefoble_auth.websocket import action_authorizer, admit_websocket
+
+
+async def ws_handler(websocket: WebSocket, session_id: str) -> None:
+    principal = await admit_websocket(
+        websocket, verifier, action_authorizer("session.observe", session_id)
+    )
+    if principal is None:
+        return  # Refused and closed before accept
+    # Continue with principal.user_id
+```
+
+`admit_websocket` closes a refused handshake before accept and returns `None`. It logs the path and the outcome, never the token:
+- No valid bearer: close `1008`.
+- The bearer is valid, but the permission check returns false: close `4403`.
+- SpiceDB cannot answer (`AuthzError`): close `1011`. A failed check is never a denial.
+
+On success it accepts with `runefoble.v1`.
+
+Pass `denial_message` when a client needs a reason before the close. The socket then accepts, sends a `PERMISSION_DENIED` frame with that message, and closes `4403`. The campaign and minigame sockets use this form.
+
+For a check that needs more than one call, pass any async function that takes the user id and returns a bool. The board and speaker checks do this. A route that picks its own subprotocol at accept time calls `verify_websocket` instead. That call closes `1008` on failure and does not accept.
 
 Rules:
 - Call `admit_websocket` first. Do not accept the socket in the route before it.
+- Use `action_authorizer` for a schema permission. Do not write a second permission check in a route.
+- Send every per-message refusal with `send_socket_error`. Use the codes `PERMISSION_DENIED` and `UNKNOWN_ACTION`.
 - Do not accept, then send an error, for an identity failure. The handshake is refused.
 - Never read a token from the URL query string.
 - Accept only `runefoble.v1` as the protocol echo.

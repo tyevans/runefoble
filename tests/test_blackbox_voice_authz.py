@@ -165,7 +165,7 @@ def test_duplex_websocket_refuses_a_speaker_the_principal_may_not_act_for(sessio
     ):
         ws.receive_json()
 
-    assert exc.value.code == 1008
+    assert exc.value.code == 4403
 
 
 def test_duplex_websocket_admits_the_principal_as_speaker(session_id):
@@ -189,7 +189,7 @@ def test_stream_frame_naming_another_speaker_closes_the_socket(session_id):
         with pytest.raises(WebSocketDisconnect) as exc:
             ws.receive_json()
 
-    assert exc.value.code == 1008
+    assert exc.value.code == 4403
 
 
 def test_spicedb_outage_maps_to_503_with_a_stable_body(client, session_id):

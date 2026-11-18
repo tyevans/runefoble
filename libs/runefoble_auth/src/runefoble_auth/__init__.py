@@ -10,7 +10,14 @@ from runefoble_auth.principal import (
 )
 from runefoble_auth.spicedb import MockSpiceDBClient, Relationship, SpiceDBClient
 from runefoble_auth.sync import SyncResult, ZitadelSpiceDBSyncService
-from runefoble_auth.websocket import WebSocketAuthError, admit_websocket, authenticate_websocket
+from runefoble_auth.websocket import (
+    WebSocketAuthError,
+    action_authorizer,
+    admit_websocket,
+    authenticate_websocket,
+    send_socket_error,
+    verify_websocket,
+)
 from runefoble_auth.zitadel import ZitadelAuthService
 
 __all__ = [
@@ -22,8 +29,11 @@ __all__ = [
     "ZitadelAuthService",
     "TokenVerificationError",
     "authenticate_authorization",
+    "action_authorizer",
     "admit_websocket",
     "authenticate_websocket",
+    "send_socket_error",
+    "verify_websocket",
     "require_principal",
     "WebSocketAuthError",
     "ZitadelSpiceDBSyncService",
