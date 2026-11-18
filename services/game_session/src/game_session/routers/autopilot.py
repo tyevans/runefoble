@@ -10,11 +10,11 @@ from game_session.aggregate import ParticipantState
 from game_session.dependencies import get_event_bus, logger, repo, watcher_service_url
 from game_session.events import STREAM_WATCHER
 from game_session.models import AutoPilotRequest, AutoPilotResponse
-from game_session.settlement.auth.tokens import get_caller_principal
+from game_session.routers.session_auth import session_permission
 from runefoble_events.events import AbsencePenaltyApplied
 from the_watcher.watcher_ai import StandInAction
 
-router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["autopilot"])
+router = APIRouter(dependencies=[Depends(session_permission("control"))], tags=["autopilot"])
 
 
 async def _request_stand_in_action(watcher_url: str, payload: dict[str, object]) -> StandInAction:

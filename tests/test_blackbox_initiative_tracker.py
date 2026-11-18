@@ -231,7 +231,7 @@ def test_blackbox_start_combat_with_initial_combatants_and_tiebreaking(client: T
 
 
 def test_blackbox_combat_error_frontdoor_validation(client: TestClient):
-    """Verify proper 400 / 404 HTTP errors on invalid combat actions."""
+    """Verify proper 400 / 403 HTTP errors on invalid combat actions."""
     campaign_id = _owned_campaign(client)
     create_resp = client.post(
         "/api/v1/sessions/create",
@@ -262,10 +262,10 @@ def test_blackbox_combat_error_frontdoor_validation(client: TestClient):
     assert end_err.status_code == 400
     assert "not in combat" in end_err.json()["detail"].lower()
 
-    # 4. Actions on non-existent session -> 404 Not Found
+    # 4. Actions on non-existent session -> 403 Forbidden (the permission check runs first)
     non_existent_id = str(uuid4())
     get_err = client.get(f"/api/v1/sessions/{non_existent_id}/combat")
-    assert get_err.status_code == 404
+    assert get_err.status_code == 403
 
 
 def _owned_campaign(client) -> str:

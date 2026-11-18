@@ -61,7 +61,7 @@ def encounter(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> str
     monkeypatch.setenv("BOARD_STATE_URL", upstreams["board"])
     monkeypatch.setenv("GAME_SESSION_URL", upstreams["session"])
 
-    auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('encounter-dm')}"}
+    auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('user-test')}"}
     with httpx.Client(base_url=upstreams["session"], headers=auth) as http:
         created = http.post(
             "/api/v1/sessions/create",

@@ -168,7 +168,7 @@ async def gateway_standalone_minigame_ws(
     """Standalone multiplayer minigame table WebSocket channel via gateway."""
     from game_session.routers.minigames_ws import handle_table_websocket
 
-    await handle_table_websocket(websocket, table_id, "est-default", get_zitadel_auth_service())
+    await handle_table_websocket(websocket, table_id, None, get_zitadel_auth_service())
 
 
 def main() -> None:
