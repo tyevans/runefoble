@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
+import '@runefoble/ui-core/story-auth-provider';
+import { installAssetUploadFetch } from '@runefoble/ui-core/story-fetch';
 import './runefoble-map-uploader.ts';
+import type { RunefobleMapUploader } from './runefoble-map-uploader.ts';
+import type { RunefobleMapDropzone } from './runefoble-map-dropzone.ts';
 
 const meta: Meta = {
   title: 'TTRPG/RunefobleMapUploader',
@@ -11,9 +15,7 @@ const meta: Meta = {
 export default meta;
 type Story = StoryObj;
 
-const sampleBattlemapSvg =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(`
+const battlemapSvgSource = `
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
   <defs>
     <pattern id="stone" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -31,7 +33,9 @@ const sampleBattlemapSvg =
     Chamber 4 • Altar of Shrouds
   </text>
 </svg>
-`);
+`;
+
+const sampleBattlemapSvg = 'data:image/svg+xml;utf8,' + encodeURIComponent(battlemapSvgSource);
 
 export const EmptyDropzone: Story = {
   render: () => html`
@@ -78,4 +82,36 @@ export const FogOfWarMasked: Story = {
       ownerId="dm-alicia"
     ></runefoble-map-uploader>
   `,
+};
+
+export const UploadedBattlemapThroughBearer: Story = {
+  render: () => {
+    installAssetUploadFetch('story-token', {
+      uploadPath: '/api/v1/assets/upload',
+      uploadBody: {
+        asset_id: 'asset-battlemap-upload-01',
+        download_url: '/api/v1/assets/asset-battlemap-upload-01?stream=true',
+      },
+      readPath: '/api/v1/assets/asset-battlemap-upload-01',
+      assetBody: battlemapSvgSource,
+      contentType: 'image/svg+xml',
+    });
+    return html`
+      <runefoble-story-auth-provider token="story-token">
+        <runefoble-map-uploader uploadEndpoint="/api/v1/assets/upload" ownerId="dm-alicia"></runefoble-map-uploader>
+      </runefoble-story-auth-provider>
+    `;
+  },
+  play: async ({ canvasElement }) => {
+    const uploader = canvasElement.querySelector<RunefobleMapUploader>('runefoble-map-uploader');
+    await uploader?.updateComplete;
+    const dropzone = uploader?.shadowRoot?.querySelector<RunefobleMapDropzone>('runefoble-map-dropzone');
+    await dropzone?.updateComplete;
+    const input = dropzone?.shadowRoot?.querySelector<HTMLInputElement>('#file-input');
+    if (!input) throw new Error('Dropzone file input was not rendered.');
+    const transfer = new DataTransfer();
+    transfer.items.add(new File([battlemapSvgSource], 'dungeon.svg', { type: 'image/svg+xml' }));
+    input.files = transfer.files;
+    input.dispatchEvent(new Event('change'));
+  },
 };
