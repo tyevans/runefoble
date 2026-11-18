@@ -76,11 +76,9 @@ from gateway_api.auth import CallerPrincipal, require_zanzibar_permission
 
 router = APIRouter()
 
-
 @router.get("/api/v1/profile")
 async def get_profile(user: CallerPrincipal):
     return {"user_id": user.user_id, "username": user.username, "email": user.email}
-
 
 @router.get(
     "/api/v1/sessions/{session_id}",
@@ -108,7 +106,6 @@ The server reads the bearer subprotocol, verifies the token, and rejects the han
 ```python
 from fastapi import WebSocket
 from runefoble_auth.websocket import admit_websocket
-
 
 async def campaign_websocket_endpoint(websocket: WebSocket, verifier) -> None:
     principal = await admit_websocket(websocket, verifier)
@@ -271,12 +268,3 @@ async with AsyncClient(
 ) as ac:
     ...
 ```
-
-## Verification & Blackbox Testing
-
-- **Principal and HTTP dependency**: `libs/runefoble_auth/tests/test_verified_principal.py` covers accepted tokens and rejected tokens (missing, garbage, HS256, `alg: none`, unsigned, unknown key, expired, wrong `aud`, wrong `iss`, missing or empty `sub`) and the WebSocket handshake.
-- **HTTP Bearer & JWKS (gateway)**: `tests/test_blackbox_zitadel_http_auth.py`.
-- **WebSocket handshake (gateway)**: `tests/test_blackbox_zitadel_websocket_auth.py`.
-- **Shared Auth Fixtures**: `tests/helpers/zitadel_auth.py`.
-- **game_session, The Watcher, and inference worker identity**: `tests/test_blackbox_service_identity.py`.
-- **Negative credential matrix (every surface)**: `tests/test_blackbox_identity_negative.py` sends each bad credential class to the gateway (HTTP and WebSocket), board_state, campaign_lore, rules_compendium, and voice_agent. Each case expects a refusal. Valid control tokens prove the trust setup is live. The retired sign-in, seed, and body-claim sync routes must be absent. The Gherkin mirror is `e2e/features/identity-negative.feature`.

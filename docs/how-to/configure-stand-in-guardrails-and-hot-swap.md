@@ -210,28 +210,7 @@ The `<runefoble-stand-in-guardrails>` custom element is vendored in `services/ch
 - `@guardrails-updated`: Dispatched when the player saves modified guardrail sliders and checkboxes.
 - `@request-hot-swap`: Dispatched when clicking the "Take Control" button to initiate mid-session hot-swap.
 
-### Modular UI Architecture (TASK-0203)
-Per ADR-0004, ADR-0012, and ADR-0013, the guardrails microfrontend is decomposed into single-responsibility submodules strictly < 130 lines:
-- **`runefoble-stand-in-guardrails.styles.ts`**: Encapsulates Bauhaus design tokens, card layouts, risk toggles, priority list chips, and status badges.
-- **`runefoble-stand-in-guardrails.templates.ts`**: Standalone Lit HTML render helpers (`renderHeader`, `renderSpellSlotPreservation`, `renderAllyProtectionTags`, `renderSliderControls`, `renderPostureSelector`, `renderCustomPriorityChips`, `renderActionsBar`).
-- **`runefoble-stand-in-guardrails.ts`**: Component controller orchestrating reactive property state, event bubbling, and custom element registration.
-
----
-
-## 5. Modular Stand-In Test Organization & Architecture
-
-The AI stand-in and absentee recap test infrastructure is partitioned into modular, focused test suites strictly adhering to Hard Invariant 6 (< 500 lines per file) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
-- `tests/test_stand_in_tactics_unit.py` (TASK-0070): Pure unit tests verifying stand-in penalty mechanics (`drunk`, `foolishness`, `cowardice`, `greed`), dice roll formula adjustments (`1d20-2`), slurred dialogue, defensive positioning, looting behavior, and personality trait flavor integration (`scholarly`, `valiant`, `impulsive`).
-- `tests/test_blackbox_stand_in_service.py` (TASK-0070): Blackbox integration tests verifying The Watcher stand-in action endpoint (`POST /api/v1/watcher/stand-in/act`), Redis Streams event publication (`runefoble.events.watcher.stand_in_action_decided`, `runefoble.events.character.absence_penalty_applied`), Game Session automated turn progression (`POST /api/v1/sessions/{id}/turns/auto-pilot`), and absentee chronicle recap generation (`POST /api/v1/watcher/stand-in/recap`).
-- `tests/test_blackbox_stand_in_policies.py` (TASK-0096): Verifies tactical guardrail configuration via `PUT/GET /api/v1/characters/{id}/guardrails`, SpiceDB Zanzibar permission checks, `StandInPolicyUpdated` and `StandInStabilized` CloudEvent publications, The Watcher stand-in tactical decision graph evaluation under 'drunk' and 'foolishness' penalties, and zero-HP permadeath stabilization invariants.
-- `tests/test_blackbox_stand_in_takeover.py` (TASK-0096): Verifies mid-session hot-swap handoffs via `POST /api/v1/sessions/{id}/hot-swap`, active combat round and initiative continuity, SpiceDB Zanzibar object authorization, and `CharacterControlTransferred` CloudEvent emissions.
-- `tests/test_blackbox_stand_in_guardrails.py` (TASK-0112, TASK-0203): Blackbox TDD test suite validating the modular decomposition of `StandInAIEngine` across backend modules and verifying UI component line length invariants (< 130 lines) and style/template imports.
-- `tests/test_blackbox_stand_in_guardrail_contract.py` (TASK-0608): Blackbox round trip of guardrails from The Watcher route to the inference worker and back. Covers `guardrails_applied`, 422 on unknown names, and the field parity check against the character sheet model.
-- `frontend/test/stand-in-guardrails-decomposition.test.ts` (TASK-0203): Frontend integration tests verifying Lit template renderers, Bauhaus style token isolation, and file length constraints.
-
----
-
-## 6. Stand-In Decision Engine Architecture (TASK-0112)
+## 5. Stand-In Decision Engine Architecture (TASK-0112)
 
 The stand-in decision logic within `services/the_watcher` is decoupled into focused sub-modules to preserve Hard Invariant 6 (< 500 lines limit):
 - `the_watcher.stand_in_guardrails`: Implements `evaluate_tactical_guardrails` for ally protection priority matching, melee distance heuristics, spell slot preservation checks, and emergency triage.
@@ -241,7 +220,7 @@ The stand-in decision logic within `services/the_watcher` is decoupled into focu
 
 ---
 
-## 7. Absentee Mobile Directive & Remote Decision Voting Microfrontend (TASK-0167)
+## 6. Absentee Mobile Directive & Remote Decision Voting Microfrontend (TASK-0167)
 
 When players are away from their primary desktop setup, the `<runefoble-absentee-directive>` mobile Web Component (`services/the_watcher/ui/`) allows them to monitor stand-in status, switch tactical posture directives with one tap, and cast remote votes with tactile haptic feedback:
 
@@ -266,5 +245,4 @@ Active party decisions (e.g. resting in dangerous dungeons, pressing forward, or
 - `@directive-changed`: Dispatched when the player shifts tactical stance.
 - `@vote-cast`: Dispatched when the player records a vote on an active party decision poll.
 - `@haptic-pulse`: Emitted when tactile vibration events fire.
-
 

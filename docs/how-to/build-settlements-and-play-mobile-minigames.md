@@ -132,7 +132,6 @@ This emits `NPCMoodUpdated`, updates individual morale, and dynamically recalcul
 
 ---
 
-
 ## 3. Playing Mobile-First Web Minigames (No App Install)
 
 Players on iOS and Android can open `#/campaigns/:id/town/minigames` in mobile Safari or Chrome. The interface provides single-handed portrait mode interaction, touch velocity gestures, and native haptic feedback (`navigator.vibrate`).
@@ -293,76 +292,3 @@ curl -X POST http://localhost:8000/api/v1/settlements/stl-oak-01/bulletin/ntc-00
   current-user-id="usr_kip"
 ></runefoble-bulletin-board>
 ```
-
-### Modular Style Architecture
-
-Per Hard Invariant 6 and ADR-0004 / ADR-0012, bulletin board styling is decoupled into focused sub-sheets under `frontend/src/styles/`:
-- `bulletin-board-layout.styles.ts`: Corkboard container, textured radial gradient, header action controls, and responsive grid layout.
-- `bulletin-board-card.styles.ts`: Parchment notice cards, push-pin badges, wax seals, cipher rune indicators, and category ribbons.
-- `bulletin-board-dialog.styles.ts`: Notice authoring dialog, cipher puzzle inspection overlays, and modal action buttons.
-
-The aggregator `frontend/src/components/runefoble-bulletin-board.styles.ts` composes these sheets into a cohesive `CSSResultGroup` array.
-
----
-
-## 6. Modular Settlement Auth & Zanzibar Permissions Architecture
-
-Per ADR-0001, ADR-0003, ADR-0005, ADR-0007, and ADR-0013, settlement authentication and object authorization in `services/game_session/src/game_session/settlement/auth/` are decoupled into single-responsibility submodules strictly under 130 lines:
-
-- **`tokens.py`**: Zitadel OIDC bearer token extraction, and verification via `ZitadelAuthService`. No development mock identity exists. A missing or invalid token returns HTTP 401.
-- **`permissions.py`**: SpiceDB Zanzibar object permission evaluators for settlement viewing/upgrading, establishment management/patronage, and worker editing.
-- **`relationships.py`**: SpiceDB Zanzibar tuple writers (`write_settlement_relationships`, `write_establishment_relationships`, `write_npc_relationships`, `write_negotiation_relationships`).
-- **`dependencies.py`**: FastAPI route dependency factories (`get_current_settlement_user`, `require_haven_builder`, `require_establishment_manager`, `require_haven_viewer`).
-- **`__init__.py`**: Aggregator facade that re-exports the symbols for existing routers and services.
-- **Fail-closed checks**: `_enforce` refuses a request with no verified principal (HTTP 401). A missing permission returns HTTP 403. No check reads a role header or an `x-user-id` header.
-- **Retired module**: `settlements/auth.py` is removed. Its helpers (`check_settlement_permission`, `check_world_charter_permission`, `register_campaign_haven_discovery`, `write_settlement_relationships`) now live in `settlement/auth/`.
-
----
-
-## 7. Modular Settlement Workers APIRouter Architecture
-
-Per ADR-0003, ADR-0007, ADR-0013, and PRD-0024, the settlement NPC workers router is decomposed into dedicated submodules under `services/game_session/src/game_session/settlement/workers/` with all route modules remaining strictly under 130 lines:
-
-- **`routes_roster.py`**: Worker assignment (`POST /api/v1/establishments/{id}/workers`), staff listing (`GET /api/v1/establishments/{id}/workers`), roster operations projection (`GET /api/v1/establishments/{id}/roster`), duty relieving (`POST /api/v1/establishments/{id}/workers/{npc_id}/relieve`), and worker profile retrieval (`GET /api/v1/npcs/{npc_id}`).
-- **`routes_relationships.py`**: Interpersonal social ties (`POST /api/v1/npcs/{npc_id}/relationships`), relationship queries (`GET /api/v1/npcs/{npc_id}/relationships`), mood and loyalty updates (`PATCH /api/v1/npcs/{npc_id}/mood`), and workplace rumor discovery (`GET /api/v1/npcs/{npc_id}/rumors`).
-- **`routes_inventory.py`**: Shelf stock listings (`GET /api/v1/npcs/{npc_id}/inventory`), manager backroom vault access (`GET /api/v1/npcs/{npc_id}/inventory/vault`), item pricing lookups (`GET /api/v1/npcs/{npc_id}/inventory/{item_id}`), and merchandise restocking (`POST /api/v1/npcs/{npc_id}/inventory/restock`).
-- **`loaders.py` & `operations.py`**: Aggregate loaders, SpiceDB Zanzibar object-level permission enforcement, and establishment operational metrics synchronization.
-- **`workers_router.py`**: Defect (DoR 9): aggregator router facade (< 35 lines) combines `roster_router`, `relationships_router`, and `inventory_router`. Removal: TASK-0491.
-
----
-
-## 8. Modular Settlement Haggling Engine Architecture
-
-Per ADR-0003, ADR-0006, ADR-0007, and ADR-0013, the merchant negotiation engine in `services/game_session/src/game_session/settlement/haggling/` is decomposed into modular submodules strictly under 110–130 lines:
-
-- **`state.py`**: `NegotiationAggregate` session state machine, managing session initialization, offer ranges, and event persistence.
-- **`rhetoric.py`**: `RhetoricMovesMixin` managing tactical bargaining gambits, roll evaluation, and patience decay.
-- **`dm_controls.py`**: `DMControlsMixin` managing live GM arbitration, price overrides, and veto/accept actions.
-- **`haggling/` / `__init__.py`**: Haggling package. The former `haggling.py` facade is removed (TASK-0793).
-
----
-
-## 9. Blackbox Test Suites & Verification
-
-In accordance with Hard Invariant 7 (Blackbox TDD with frontdoor setup) and ADR-0008, all settlement haven and mobile minigame mechanics are covered by comprehensive end-to-end blackbox suites driving public HTTP endpoints and WebSocket streams:
-
-1. **Settlement Integration Suite (`tests/test_blackbox_settlements_integration/`)**:
-   - Decomposed into modular test submodules strictly under 130 lines per Invariant 6 (`test_invariants_and_compat.py`, `test_auth_and_permissions.py`, `test_settlement_and_establishments.py`, `test_haggling_and_bulletin.py`).
-   - `test_found_settlement_and_upgrade_tier_flow`: Verifies civic scaling caps (hamlet 2 districts, village 4 districts), prosperity gates, and event publishing (`SettlementFounded`, `SettlementTierUpgraded`).
-   - `test_establishment_creation_and_worker_assignment`: Validates storefront construction, assignable NPC workers with role synergy bonuses, and dynamic inventory inspection via `GET /api/v1/establishments/{id}/workers`.
-   - `test_merchant_haggling_gambits_and_dm_override`: Simulates persuasion rolls against merchant temperament, flattery gambits, and real-time DM mood/force-accept arbitration controls.
-   - `test_bulletin_board_pin_and_cipher_decrypt`: Tests wax-sealed bounty proclamations, cipher decryption workflows, and live party broadcast over `/ws/campaigns/{id}`.
-
-2. **Multiplayer WebSocket Synchronization Suite (`tests/test_blackbox_minigames_websocket.py`)**:
-   - `test_darts_and_billiards_multiplayer_turn_sync`: Tests concurrent player connections exchanging touch trajectory vectors (`throw_dart`, `billiards_stroke`), double bullseye scoring, and turn order passing.
-   - `test_casino_craps_and_roulette_betting_and_payouts`: Validates multi-patron wagering, dice tumble evaluation (natural 7 and point phase hits), roulette wheel spins, and automatic character coin purse crediting.
-
-Execute the suites locally via UV:
-
-```bash
-uv run pytest tests/test_blackbox_settlements_integration/ tests/test_blackbox_minigames_websocket.py
-```
-
-
-
-

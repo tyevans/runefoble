@@ -60,7 +60,7 @@ curl -X POST http://localhost:8000/api/v1/forge/battlemap \
 }
 ```
 
-The `generator` field names the layout adapter that made the map. The default is `deterministic` (see section 6).
+The `generator` field names the layout adapter that made the map. The default is `deterministic` (see section 5).
 
 To get a different layout for the same prompt and size, send a `seed` integer. The same prompt, seed, and size always give the same layout. When `seed` is omitted, the service derives a stable seed from the prompt and the size.
 
@@ -144,24 +144,7 @@ Every forge request names a campaign. Send `campaign_id` in the body. Without it
 
 ---
 
-## 5. Modular Raster Synthesis Submodules (`asset_forge.raster`)
-
-In accordance with Hard Invariant 6 and ADR-0003/ADR-0007, raster generation is decoupled into focused submodules under `services/asset_forge/src/asset_forge/raster/`:
-
-| Module | Responsibilities | Key Functions |
-|---|---|---|
-| `png_codec.py` | Low-level PNG chunk encoding (IHDR, IDAT, IEND), scanlines, and hex parsing | `encode_png_rgba`, `parse_hex_color` |
-| `battlemap_raster.py` | Procedural tactical battlemap rendering, theme palettes, and grid overlays | `generate_battlemap_png` |
-| `token_raster.py` | Circular token portrait generator, border rings, and alpha transparency | `generate_token_portrait_png` |
-| `wardrobe_raster.py` | Deterministic placeholder wardrobe raster (flat face colour, flat attire fill). It preserves no face | `generate_wardrobe_portrait_png`, `build_attire_prompt`, `ATTIRE_PROMPTS`, `ATTIRE_PALETTES` |
-| `wardrobe_generator.py` | `WardrobeGenerator` port, `WardrobePortrait`, and generator selection (`RUNEFOBLE_WARDROBE_GENERATOR`) | `WardrobeGenerator`, `build_wardrobe_generator` |
-| `wardrobe_placeholder.py` | Default placeholder generator that wraps `wardrobe_raster.py` | `PlaceholderWardrobeGenerator` |
-
-Callers import generators directly from these submodules. The package has no aggregator facade and no re-exported aliases. The `asset_forge.raster` package root re-exports nothing.
-
----
-
-## 6. Battlemap Layout Generator (`MapGenerator` Port)
+## 5. Battlemap Layout Generator (`MapGenerator` Port)
 
 The battlemap route gets its wall, door, hazard, and grid layout from a `MapGenerator` port (`asset_forge.map_generator`). The port takes a prompt, a width, a height, and a seed. It returns a `MapLayout`.
 

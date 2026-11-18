@@ -173,15 +173,6 @@ To prevent exposing local execution tooling in published public documentation:
 - Task drawers and navigation headers in static documentation render without any launcher buttons or references.
 - Backend execution endpoints (`/api/agy/*`) are only registered on the local dynamic development server.
 
-### Modular Submodule Architecture
-The AGY Launcher client frontend is decomposed into focused submodules under `tools/project_visualizer/static/js/agy/`:
-- `agy_modal.js`: Modal open/close transitions, keyboard shortcuts, drawer action triggers, and entity badge population (<100 lines).
-- `agy_presets.js`: Preset prompt templates, command builder, copy utilities, and preview synchronization (<110 lines).
-- `agy_runner.js`: Job launch POST handler, status chip styling, polling stream reader, and elapsed timer (<130 lines).
-- `agy_launcher.js`: Defect (DoR 9): aggregation facade exposing all launcher controls on `window.visualizer` (<20 lines). All modules strictly comply with Hard Invariant 6 (<140 lines per client module).
-
----
-
 ## 7. Key Interactive Capabilities
 
 ### 🌐 Relationship Graph & Traceability Network
@@ -198,11 +189,6 @@ The AGY Launcher client frontend is decomposed into focused submodules under `to
 - **Glassmorphism Detail Tooltips & Fullscreen Mode**: Rich floating hover preview cards with node status, linked PRs, and quick actions, plus full-canvas immersion mode.
 - **Bidirectional Lineage Traversal**: Clicking any node illuminates its entire upstream and downstream dependency chain while dimming unrelated entities.
 - **Traceability Multi-Column Flow**: Visual column layout displaying end-to-end lineage across documents with live breadcrumb trails.
-- **Modular Submodule Architecture**: Both backend and frontend graph systems and their test suites are strictly decomposed into focused submodules adhering to Hard Invariant 6:
-  - **Python Graph Engine (`tools/project_visualizer/graph/`)**: `models.py` (<90 lines), `builder.py` (<120 lines), `filtering.py` (<110 lines), `linking.py` (<130 lines), and `metrics.py` (<130 lines) orchestrated by lightweight facades in `graph.py` and `graph/__init__.py` (<40 lines).
-  - **Client Graph Renderer (`tools/project_visualizer/static/js/graph/`)**: `simulation.js`, `nodes.js`, `links.js`, and `zoom.js` orchestrated by a lightweight `graph.js` facade (<150 lines per module).
-  - **Graph Test Suite (`tests/test_visualizer_graph/`)**: `test_builder.py` (<110 lines), `test_facade.py` (<90 lines), `test_filters_and_metrics.py` (<100 lines), `test_serialization.py` (<100 lines), and `test_rendering.py` (<130 lines).
-
 
 ### 📊 Roadmap Gantt & Delivery Timeline
 - **Milestone Delivery Horizons**: Chronological timeline tracking phases from Milestone 1 (Foundations) and Milestone 2 (Live Collaborative Alpha) to Milestone 3 (AI DM) and Milestone 4 (Studio).
@@ -242,5 +228,4 @@ The AGY Launcher client frontend is decomposed into focused submodules under `to
 ### 📖 Slide-Over Detail Drawer & Omnibar Search
 - Press `⌘K` or `/` (or click the search button) to open the global Omnibar and search across all tasks, PR numbers, commit hashes, stories, PRDs, and ADRs.
 - Click any card or node anywhere in the interface to slide out the reader drawer, displaying full rendered Markdown, metadata chips, and the exact local file path with one-click copy.
-- **Modular Subviews Architecture**: Inspector drawer presentation is decomposed into single-responsibility subviews under `tools/project_visualizer/static/js/drawer/` (`task_card.js`, `adr_card.js`, `prd_card.js`, `persona_card.js`, `controller.js`) and coordinated by `drawer.js`, enforcing Hard Invariant 6 (<120 lines per submodule).
 - Seamless Dark / Light theme toggle with local storage persistence.

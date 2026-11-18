@@ -55,16 +55,6 @@ Response payload:
 }
 ```
 
-### 1.3 Modular Radial Architecture (ADR-0004, ADR-0012, ADR-0013)
-
-Under ADR-0004, ADR-0012, and ADR-0013, the radial action menu is decomposed into decoupled submodules under `services/board_state/ui/src/radial/`:
-- `radial_menu.styles.ts`: Bauhaus Lit CSS styles for circular radial container, bloom animations, action wedge transitions, and action badges (< 90 lines).
-- `radial_glyphs.ts`: Pure Bauhaus SVG glyph rendering functions for tactical combat actions (< 100 lines).
-- `radial_wedge.ts`: Polar coordinate mathematics (`polarToCartesian`, `describeArc`), circular wedge positioning calculations, and Lit HTML wedge template (< 90 lines).
-- `radial_menu.ts`: Component controller `<runefoble-radial-menu>` coordinating action selection and lifecycle events (< 100 lines).
-
----
-
 ## 2. Positioning and Rotating AoE Spell Templates
 
 Selecting the **Cast** action on the radial menu (or triggering spell casting mode) mounts the `<runefoble-aoe-template>` overlay over the tactical grid.
@@ -102,16 +92,6 @@ const snappedAngle = snapAngle(rawAngleDegrees, 15);
 ### 2.3 Real-Time Token Intersection Highlighting
 
 When the caster moves or rotates the template, the UI sends an `aoe_evaluate` message on the board socket. The server replies with an `aoe_preview` message. Tokens in `affected_token_ids` get glowing targeting halos (`.target-halo`). Cells in `affected_cells` get the semi-transparent spell tint (`.aoe-affected-cell`). The UI applies only the reply that matches the current template.
-
-### 2.4 Modular Architecture (ADR-0013)
-
-Under ADR-0013 and Hard Invariant 6, the AoE template engine is organized into focused, decoupled TypeScript modules under `services/board_state/ui/src/`:
-- `aoe_types.ts`: Type contracts, shape enums, handle event signatures, and design system color tokens (< 80 lines).
-- `aoe_geometry.ts`: Presentation helpers only: `snapAngle` and the cone spread used for drawing. It holds no containment rule.
-- `aoe_canvas.ts`: SVG path builders, dashed outlines, pulse keyframes, and rotational handles (< 150 lines).
-- `aoe_templates.ts`: Coordinator facade and `<runefoble-aoe-template>` Custom Element lifecycle (< 100 lines).
-
----
 
 ## 3. Real-Time Streaming via WebSockets
 

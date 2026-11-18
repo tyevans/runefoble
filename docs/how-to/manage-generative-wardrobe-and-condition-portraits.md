@@ -160,39 +160,3 @@ Embed the wardrobe gallery component into the character sheet or tabletop sideba
   });
 </script>
 ```
-
-### Modular Styles & Sub-Component Architecture
-
-Per **ADR-0004** and **ADR-0013**, the wardrobe gallery is decomposed into modular files under `services/character_sheet/ui/src/` to strictly uphold Hard Invariant 6 (< 500 lines per file, with each module < 250 lines):
-
-- **`runefoble-wardrobe-gallery.styles.ts`**: Dedicated stylesheet module exporting `wardrobeGalleryStyles` with Bauhaus geometric tokens, condition badge pill highlights, avatar border state glows, and outfit selection cards.
-- **`runefoble-wardrobe-gallery.ts`**: Lightweight Lit component orchestrating reactive properties, event dispatching, and isolated sub-renderers (`renderConditionBadge`, `renderConditionBadges`, `renderVariantCard`, `renderActiveSection`, `renderForgePanel`).
-- **Export Packaging**: Re-exported via `services/character_sheet/ui/src/index.ts`, advertised in `package.json` under `./runefoble-wardrobe-gallery.styles`, and declared in `/ui/manifest`.
-
----
-
-
-## 5. Domain Event Catalog
-
-When characters take damage, synthesize wardrobe outfits, or swap active portraits, standard domain events are emitted:
-
-- **`runefoble.events.character.damaged`**: Emitted when hit points are reduced by damage.
-- **`runefoble.events.character.portrait_variant_generated`**: Emitted when an attire variant is forged or registered.
-- **`runefoble.events.character.portrait_updated`**: Emitted when active avatar/portrait is assigned.
-- **`runefoble.events.character.condition_applied`**: Emitted when a status condition (poisoned, stunned) is inflicted.
-
----
-
-## 6. Modular Blackbox Test Organization & Architecture
-
-Per **ADR-0013** and **Hard Invariant 6** (< 500 lines per file), the blackbox test suite for generative character wardrobe, condition overlays, and portrait galleries is partitioned into focused, single-responsibility frontdoor modules under `tests/test_blackbox_wardrobe_gallery/` (with all test files < 200 lines):
-
-- **`tests/test_blackbox_wardrobe_gallery/test_wardrobe_api.py`**: Verifies REST endpoints (`/api/v1/characters/{id}/portrait/active`, `/wardrobe`), object-level SpiceDB Zanzibar authorization (`viewer`/`owner`), and `<runefoble-wardrobe-gallery>` microfrontend manifest advertisement and Storybook coverage.
-- **`tests/test_blackbox_wardrobe_gallery/test_wardrobe_conditions.py`**: Verifies dynamic 50% HP threshold bloodied overlays/vignettes, status affliction auras (poisoned, stunned), and condition badge removals.
-- **`tests/test_blackbox_wardrobe_gallery/test_wardrobe_events.py`**: Verifies generative wardrobe variant synthesis, Silo S3 binary asset persistence, and CloudEvents dispatching (`CharacterDamaged`, `PortraitVariantGenerated`, `CharacterPortraitUpdated`).
-
-Run the test suite:
-```bash
-uv run pytest tests/test_blackbox_wardrobe_gallery/
-```
-

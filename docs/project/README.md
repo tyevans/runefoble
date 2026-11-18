@@ -240,7 +240,7 @@ The Runefoble Project Content Visualizer provides an interactive, real-time web 
 
 ## Operational CLI Cheatsheet
 
-spec-ops (`specops.toml` at the repository root) is the project management tool for these records. Install it with `uv tool install` as shown in [`AGENTS.md`](../../AGENTS.md). Run `spec-ops health` to check file length, numbering, and buffer state. The ADR mapping to spec-ops baseline ADRs is in [`adrs/REGISTRY.md`](adrs/REGISTRY.md).
+spec-ops (`specops.toml` at the repository root) is the project management tool for these records. Install it with `uv tool install` as shown in [`AGENTS.md`](../operating-manual.md). Run `spec-ops health` to check file length, numbering, and buffer state. The ADR mapping to spec-ops baseline ADRs is in [`adrs/REGISTRY.md`](adrs/REGISTRY.md).
 
 | Purpose | Command | Governing Guide |
 |---|---|---|

@@ -228,24 +228,7 @@ The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) verifie
 
 ---
 
-## 8. Modular Blackbox Test Organization & Architecture
-
-The soundscape blackbox verification suite is partitioned into focused test modules strictly adhering to Hard Invariant 6 (< 500 lines per file) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
-- `tests/test_blackbox_soundscape_ui/`: Modular blackbox test suite (`test_manifest.py`, `test_stem_mixing.py`, `test_foley_ducking.py`, `conftest.py`) verifying microfrontend manifest advertising, package metadata integrity, TypeScript element exports, Storybook coverage, multi-channel stem mixing, tension scoring, WebAudio -12dB audio ducking, and Zanzibar authorization.
-- `tests/test_blackbox_soundscape_transitions.py`: Verifies multi-track stem layer mixing, ambient/combat crossfading, WebAudio -12dB voice ducking coordination triggered by `runefoble.events.watcher.player_spoke`, manual mood overrides, and `<runefoble-soundscape-controls>` microfrontend component and token invariants.
-- `tests/test_blackbox_soundscape_tension.py`: Verifies encounter tension scoring heuristics across exploration and combat states, tactical foley cue triggers (`POST /api/v1/soundscape/cue`), autonomous Redis Streams reactivity to `runefoble.events.session.combat_encounter_started` and `runefoble.events.session.combat_round_advanced`, and SpiceDB Zanzibar DM authorization enforcement.
-- `tests/test_blackbox_leitmotif_events.py`: Verifies CloudEvents domain event class mapping (`LeitmotifProfileConfigured`, `LeitmotifTriggered`, `CriticalHitScored`, `DeathSaveStarted`) and payload serialization roundtrips.
-- `tests/test_blackbox_leitmotif_api.py`: Verifies REST API routes (`/api/v1/soundscape/leitmotif/timbres`, `profile`, `trigger`, `active`), SpiceDB Zanzibar character owner authorization enforcement, and `<runefoble-leitmotif-config>` microfrontend manifest and component invariants.
-- `tests/test_blackbox_leitmotif_triggers.py`: Verifies multi-modal combat and reactive triggers (critical hits, near-death cello themes, WebAudio sidechain -12dB voice ducking) and volume envelope stage calculations.
-- `tests/test_blackbox_soundscape_gateway.py`: Verifies API Gateway `/api/v1/soundscape/*` proxy routing, OpenAPI schema exposure, SpiceDB Zanzibar object authorization (`participate`, `control`, `run_session`), and downstream service forwarding (< 500 lines).
-- `tests/test_blackbox_analytics_soundscape_authz.py`: Verifies fail-closed authorization across the gateway analytics reads and soundscape controls. It covers 401 without a token, 403 for a player, 200 for the DM, and 503 on a SpiceDB outage.
-- `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`runefoble.events.session.combat_encounter_started`, `runefoble.events.session.initiative_turn_advanced`, `runefoble.events.watcher.player_spoke`, `CriticalHitScored`, `DeathSaveStarted`) through the Redis Streams consumer path.
-- `tests/test_blackbox_soundscape_event_inputs.py`: Verifies that tension inputs come from events. It covers enemy CR from the roster, the encounter-end reset to ambient tension, and party health from `runefoble.events.character.health_changed`.
-- `tests/test_blackbox_soundscape_state_restart.py`: Verifies that mixer state (master volume), timed ducking, and the aggregate id survive a process restart. The restart runs `tests/helpers/soundscape_restart_child.py` in a new Python process on the same PostgreSQL event store.
-
----
-
-## 9. Event Subscription & Service Architecture
+## 8. Event Subscription & Service Architecture
 
 Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, the service keeps no session state in process memory (TASK-0576):
 - `services/soundscape/src/soundscape/dependencies.py`: Holds the event repository factory, the SpiceDB permission guards, the Zitadel verifier seam, and the event bus seam. It holds no mixer, tension, or leitmotif state.
@@ -259,7 +242,7 @@ Event handlers and routes never catch a broad `Exception`. A failed store read a
 
 ---
 
-## 10. Aggregate & Domain Handler Architecture
+## 9. Aggregate & Domain Handler Architecture
 
 Per ADR-0003, ADR-0007, ADR-0011, and ADR-0013, the event-sourced `SoundscapeAggregate` delegates domain mutations and `@handles` appliers to mixin submodules under `services/soundscape/src/soundscape/handlers/`:
 

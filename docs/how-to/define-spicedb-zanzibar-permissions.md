@@ -254,14 +254,12 @@ from gateway_api.auth import require_zanzibar_permission
 
 router = APIRouter()
 
-
 @router.get(
     "/api/v1/sessions/{session_id}",
     dependencies=[Depends(require_zanzibar_permission("view", resource_type="campaign"))],
 )
 async def get_session(session_id: str):
     return {"status": "active"}
-
 
 @router.get(
     "/api/v1/characters/{character_id}",
@@ -323,24 +321,3 @@ Container lifetime (`tests/helpers/container_owner.py`):
 `tests/test_authz_live_contract.py` runs against this fixture. It checks that a permission name written as a relation is rejected, that `game_master` grants `run_session`, and that an undefined permission check raises `AuthzSchemaError`.
 
 Tests that need the shared client use `tests/helpers/spicedb_factory.py`. The root `tests/conftest.py` autouse fixture swaps the factory client for a fresh strict mock on every test. A test that needs live SpiceDB requests `live_spicedb_with_schema` instead.
-
-### Automated Test Suites & Fixtures
-Automated testing uses the `live_spicedb_endpoint` fixture defined in `tests/helpers/spicedb.py` and registered globally via `tests/conftest.py`:
-- **`tests/test_spicedb_schema_bootstrap.py`**: Fast-running unit suite validating `runefoble.zed` existence, definition syntax, error handling for empty schemas, and graceful offline fallback behavior when endpoints are unreachable.
-- **`tests/test_blackbox_spicedb_live_grpc.py`**: Integration blackbox suite evaluating live Zanzibar graph permissions, frontdoor role assignment (`POST /api/v1/campaigns/{id}/roles`), and immediate permission revocation upon relationship tuple deletion.
-- **`tests/test_websocket_zanzibar_connect_auth.py`**: Verifies handshake authentication, campaign viewer/reader authorization, 4403 rejection for unauthorized subjects, and dynamic permission revocation disconnecting active sessions.
-- **`tests/test_websocket_zanzibar_mutators.py`**: Verifies fine-grained Zanzibar object-level permissions on token movement, DM-only monster spawning/scenes, character sheet mutations, Redis stream publishing, and mid-session relation revocations.
-- **`tests/test_blackbox_spicedb_auth_sync.py`**: Blackbox frontdoor suite testing Zitadel-to-SpiceDB relationship synchronization, claim translations, and domain event dispatch.
-- **`tests/test_blackbox_spicedb_live.py`**: Blackbox frontdoor suite evaluating `SpiceDBClient` operations and fallback handling.
-
----
-
-## 7. Modular Mock SpiceDB Engine Architecture
-
-For lightweight unit and offline testing, `runefoble_auth` provides an in-memory mock engine decomposed into single-responsibility submodules under `runefoble_auth.mock`:
-- **`runefoble_auth.schema_graph`**: Parses Zed schema definitions into `SchemaGraph`, extracting relations, permissions, and target types. It is shared by the name contract and the mock.
-- **`runefoble_auth.mock.evaluator`**: Recursively evaluates schema-defined permissions, union rules, and arrow expressions (`relation->permission`). It holds no role-name grants and no alias table. Caveats are supported.
-- **`runefoble_auth.mock.client`**: Provides `MockSpiceDBClient` tuple storage, relationship CRUD, touch updates, and permission checks. It enforces the name contract. A write to an undefined type, relation, or subject raises `SchemaContractError`. A check of an undefined permission raises it too.
-- **`runefoble_auth.mock_spicedb`**: Defect (DoR 9): facade module re-exporting `MockSpiceDBClient` and `Relationship`. Removal: TASK-0486.
-
-

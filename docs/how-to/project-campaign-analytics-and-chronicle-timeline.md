@@ -233,12 +233,3 @@ Gateway routes read by the App Shell (`frontend/src/services/campaign-hub-client
 - Interactive Storybook stories are co-located in `services/campaign_analytics/ui/src/runefoble-campaign-analytics.stories.ts` (with reusable mock datasets modularized in `services/campaign_analytics/ui/src/fixtures/campaign-analytics.fixtures.ts`) and `services/campaign_analytics/ui/src/runefoble-combat-heatmap.stories.ts` with test states for `DefaultAllWeights`, `DamageFilter`, `StrikesFilter`, `TrafficMovementFilter`, `EmptyState`, `ActiveCombatTelemetry`, `VictoryCelebration`, and `TotalPartyKill`.
 
 ---
-
-## 7. Modular Blackbox Verification Suite
-
-The Campaign Analytics UI test suite is decomposed into focused frontdoor modules under `tests/test_blackbox_campaign_analytics_ui/` maintaining Hard Invariant 6 (< 500 lines per file):
-
-- `tests/test_blackbox_campaign_analytics_ui/test_analytics_dashboard_ui.py`: Verifies microfrontend manifest advertising (`GET /ui/manifest`), component package export and forwarding, Storybook scenario coverage, and REST frontdoor MVP turn metrics delivery.
-- `tests/test_blackbox_campaign_analytics_ui/test_chronicle_timeline_ui.py`: Verifies `<runefoble-chronicle-timeline>` Custom Element decorator integrity, living chronicle milestone frontdoor binding, absentee recap metadata, milestone pagination limits, and session filtering.
-- `tests/test_blackbox_campaign_analytics_ui/test_spatial_heatmaps_ui.py`: Verifies `<runefoble-combat-heatmap>` Custom Element decorator, modular file boundary budgets (< 120 lines controller, < 120 lines canvas-renderer, < 90 lines controls, < 80 lines inspector), 2D canvas damage density matrix calculations, grid coordinate overlays, metric filter parameters, and SpiceDB Zanzibar campaign object authorization.
-
