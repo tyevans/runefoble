@@ -23,7 +23,7 @@ def auth_headers(sub: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
 
 
-__all__ = ["clean_environment", "client"]
+__all__ = ["client"]
 
 
 def test_list_timbre_presets_endpoint(client: TestClient) -> None:

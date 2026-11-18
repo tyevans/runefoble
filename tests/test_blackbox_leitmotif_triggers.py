@@ -34,7 +34,7 @@ from tests.helpers.leitmotif_fixtures import (
     setup_leitmotif_profile,
 )
 
-__all__ = ["clean_environment", "client"]
+__all__ = ["client"]
 
 
 @pytest.mark.asyncio
