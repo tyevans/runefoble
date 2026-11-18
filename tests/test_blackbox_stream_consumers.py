@@ -23,6 +23,7 @@ from runefoble_platform.stream_consumer import StreamConsumer
 
 from tests.helpers.campaign_analytics_service import AnalyticsService, wait_until
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 SESSION_STREAM = "runefoble.events.session"
 
