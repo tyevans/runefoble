@@ -17,10 +17,10 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 
 @pytest.mark.asyncio
 async def test_campaign_creation_ownership_and_access_control(
-    client_gw: TestClient, signing_issuer
+    client_gw: TestClient, trusted_ws_issuer
 ):
     """Verify campaign creation assigns Zanzibar owner relation and guards access."""
-    headers_evelyn = _auth(signing_issuer, "dm_evelyn")
+    headers_evelyn = _auth(trusted_ws_issuer, "dm_evelyn")
     spicedb = get_spicedb_client()
 
     # 1. Evelyn creates campaign via public frontdoor POST /api/v1/campaigns
@@ -48,7 +48,7 @@ async def test_campaign_creation_ownership_and_access_control(
         client_gw.get(f"/api/v1/campaigns/{campaign_id}", headers=headers_evelyn).status_code == 200
     )
     res_stranger = client_gw.get(
-        f"/api/v1/campaigns/{campaign_id}", headers=_auth(signing_issuer, "stranger_bob")
+        f"/api/v1/campaigns/{campaign_id}", headers=_auth(trusted_ws_issuer, "stranger_bob")
     )
     assert res_stranger.status_code == 403
     assert res_stranger.json()["detail"]["error"] == "permission_denied"
@@ -56,11 +56,11 @@ async def test_campaign_creation_ownership_and_access_control(
 
 @pytest.mark.asyncio
 async def test_campaign_invite_redemption_and_role_assignment(
-    client_gw: TestClient, signing_issuer
+    client_gw: TestClient, trusted_ws_issuer
 ):
     """Verify shareable invite token lifecycle, redemption, and Zanzibar role sync."""
-    headers_dm = _auth(signing_issuer, "dm_evelyn")
-    headers_marcus = _auth(signing_issuer, "player_marcus")
+    headers_dm = _auth(trusted_ws_issuer, "dm_evelyn")
+    headers_marcus = _auth(trusted_ws_issuer, "player_marcus")
     spicedb = get_spicedb_client()
 
     # Setup: Create campaign
@@ -73,7 +73,7 @@ async def test_campaign_invite_redemption_and_role_assignment(
     res_unauth = client_gw.post(
         f"/api/v1/campaigns/{camp_id}/invites",
         json={"role": "player"},
-        headers=_auth(signing_issuer, "stranger_bob"),
+        headers=_auth(trusted_ws_issuer, "stranger_bob"),
     )
     assert res_unauth.status_code == 403
 

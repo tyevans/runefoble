@@ -18,10 +18,10 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 
 
 @pytest.mark.asyncio
-async def test_character_creation_and_party_assignment(client_gw: TestClient, signing_issuer):
+async def test_character_creation_and_party_assignment(client_gw: TestClient, trusted_ws_issuer):
     """Verify character creation, SpiceDB ownership, and campaign party binding."""
-    headers_dm = _auth(signing_issuer, "dm_evelyn")
-    headers_marcus = _auth(signing_issuer, "player_marcus")
+    headers_dm = _auth(trusted_ws_issuer, "dm_evelyn")
+    headers_marcus = _auth(trusted_ws_issuer, "player_marcus")
     spicedb = get_spicedb_client()
 
     camp_res = client_gw.post(
@@ -63,9 +63,9 @@ async def test_character_creation_and_party_assignment(client_gw: TestClient, si
 
 
 @pytest.mark.asyncio
-async def test_party_roster_assignment_capacity(client_gw: TestClient, signing_issuer):
+async def test_party_roster_assignment_capacity(client_gw: TestClient, trusted_ws_issuer):
     """Verify multiple characters can be bound to the party roster up to active limits."""
-    headers_dm = _auth(signing_issuer, "dm_evelyn")
+    headers_dm = _auth(trusted_ws_issuer, "dm_evelyn")
     spicedb = get_spicedb_client()
 
     camp_res = client_gw.post(
@@ -76,7 +76,7 @@ async def test_party_roster_assignment_capacity(client_gw: TestClient, signing_i
 
     for idx, name in enumerate(["Valeros", "Kyra", "Merisiel", "Ezren"]):
         player_id = f"p_{idx}"
-        headers_player = _auth(signing_issuer, player_id)
+        headers_player = _auth(trusted_ws_issuer, player_id)
         char_res = client_gw.post(
             "/api/v1/characters",
             json={"name": name, "characterClass": "Hero", "maxHp": 30},

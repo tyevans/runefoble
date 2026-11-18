@@ -182,3 +182,29 @@ def trusted_ws_issuer() -> Iterator[SigningTestIssuer]:
     yield SIGNING_ISSUER
     set_zitadel_auth_service(previous_gateway)
     set_session_auth(previous_session)
+
+
+@pytest.fixture
+def game_session_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
+    """Serve game_session as a live loopback upstream with fresh in-memory campaign state.
+
+    The gateway reaches it over HTTP through RUNEFOBLE_GAME_SESSION_URL (TASK-0591). Tokens
+    minted by `trusted_ws_issuer` are accepted by both services. The URL is set before the
+    gateway lifespan runs, so build the gateway client after this fixture.
+    """
+    from eventsource.adapters.memory.store import InMemoryEventStore
+    from game_session.campaign.repositories import set_campaign_repositories
+    from game_session.main import app as session_app
+    from runefoble_platform.event_sourcing import set_event_store
+
+    from tests.helpers.live_services import serve
+
+    set_event_store(InMemoryEventStore())
+    set_campaign_repositories(None)
+    try:
+        with serve(session_app) as url:
+            monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", url)
+            yield url
+    finally:
+        set_event_store(None)
+        set_campaign_repositories(None)

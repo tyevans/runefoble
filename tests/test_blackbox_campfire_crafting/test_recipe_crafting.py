@@ -84,15 +84,15 @@ def _bearer(issuer, sub: str) -> dict[str, str]:
 
 
 def test_blackbox_gateway_zanzibar_authorization(
-    gateway_client: TestClient, mock_spicedb, signing_issuer
+    gateway_client: TestClient, mock_spicedb, trusted_ws_issuer
 ):
     """Verify Gateway Zanzibar authorization enforcement for downtime and crafting endpoints.
 
     Membership is created through frontdoors only: the owner creates the campaign,
     issues a player invite, and the player redeems it.
     """
-    owner_headers = _bearer(signing_issuer, "user_dm")
-    user_headers = _bearer(signing_issuer, "user_bram")
+    owner_headers = _bearer(trusted_ws_issuer, "user_dm")
+    user_headers = _bearer(trusted_ws_issuer, "user_bram")
 
     create_res = gateway_client.post(
         "/api/v1/campaigns",
@@ -121,7 +121,7 @@ def test_blackbox_gateway_zanzibar_authorization(
 
     denied_res = gateway_client.get(
         f"/api/v1/campaigns/{camp_id}/stronghold",
-        headers=_bearer(signing_issuer, "unauthorized_stranger"),
+        headers=_bearer(trusted_ws_issuer, "unauthorized_stranger"),
     )
     assert denied_res.status_code == 403
 

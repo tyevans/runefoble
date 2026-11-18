@@ -106,6 +106,31 @@ with serve(api.app) as worker_url:
 
 Use `closed_port_url()` for the unreachable-worker case. This case must return HTTP 503, not a template reply.
 
+## Recipe 6: Run game_session as the Upstream for Gateway Campaign Routes
+
+The gateway API reads its upstream URLs once, when its lifespan starts (TASK-0580). Set the variable first, then enter the lifespan with `with TestClient(gateway_app)`. A client that skips the lifespan has no upstream registry, and a client left over from an earlier lifespan holds closed HTTP clients.
+
+The shared fixture `game_session_upstream` in `tests/conftest.py` does the setup:
+
+1. Serves `game_session` on a loopback port with fresh in-memory campaign state.
+2. Sets `RUNEFOBLE_GAME_SESSION_URL` with `monkeypatch`.
+3. Trusts the signing issuer in both services through `trusted_ws_issuer`.
+
+```python
+@pytest.fixture
+def client(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
+
+
+def test_owner_creates_and_lists_a_campaign(client, trusted_ws_issuer) -> None:
+    headers = {"Authorization": f"Bearer {trusted_ws_issuer.mint('dm-evelyn')}"}
+    created = client.post("/api/v1/campaigns", json={"title": "Tomb"}, headers=headers)
+    assert created.status_code == 201
+```
+
+Do not use `signing_issuer` in these tests. It replaces the gateway verifier, so game_session rejects the token.
+
 ## Assertions
 
 - Assert on the public response: status code, error flag, or emitted event.

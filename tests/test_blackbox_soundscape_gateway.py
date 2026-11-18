@@ -19,7 +19,6 @@ from pathlib import Path
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.campaign_store import campaign_store
 from gateway_api.main import app as gateway_app
 from soundscape.dependencies import reset_dependencies
 from soundscape.leitmotif import CharacterLeitmotifProfile
@@ -34,10 +33,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 @pytest.fixture(autouse=True)
 def clean_state():
     reset_dependencies()
-    campaign_store.reset()
     yield
     reset_dependencies()
-    campaign_store.reset()
 
 
 @pytest.fixture(autouse=True)
@@ -53,7 +50,7 @@ def _auth(sub: str) -> dict[str, str]:
 
 
 @pytest.fixture
-def client(trusted_ws_issuer) -> Iterator[TestClient]:
+def client(trusted_ws_issuer, game_session_upstream) -> Iterator[TestClient]:
     """Run the gateway lifespan after the soundscape URL is set, so the client sees it."""
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client

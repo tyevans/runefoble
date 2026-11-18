@@ -9,10 +9,11 @@ Hard Invariants:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
-from gateway_api.campaign_store import campaign_store
 from gateway_api.character_store import character_store
 from gateway_api.main import app as gateway_app
 
@@ -24,24 +25,24 @@ def _auth(issuer, sub: str) -> dict[str, str]:
 
 @pytest.fixture(autouse=True)
 def reset_stores():
-    campaign_store.reset()
     character_store.reset()
     yield
 
 
 @pytest.fixture
-def client_gw() -> TestClient:
-    return TestClient(gateway_app)
+def client_gw(game_session_upstream) -> Iterator[TestClient]:
+    with TestClient(gateway_app) as gateway_client:
+        yield gateway_client
 
 
 @pytest.mark.asyncio
 async def test_campaign_member_removal_endpoint_requires_manage_permission(
-    client_gw: TestClient, signing_issuer
+    client_gw: TestClient, trusted_ws_issuer
 ):
     """Verify DELETE /api/v1/campaigns/{id}/members/{user_id} enforces Zanzibar manage permission."""
-    headers_dm = _auth(signing_issuer, "dm_evelyn")
-    headers_stranger = _auth(signing_issuer, "stranger_bob")
-    headers_player = _auth(signing_issuer, "player_marcus")
+    headers_dm = _auth(trusted_ws_issuer, "dm_evelyn")
+    headers_stranger = _auth(trusted_ws_issuer, "stranger_bob")
+    headers_player = _auth(trusted_ws_issuer, "player_marcus")
     spicedb = get_spicedb_client()
 
     # 1. DM creates campaign
@@ -111,11 +112,11 @@ async def test_campaign_member_removal_endpoint_requires_manage_permission(
 
 @pytest.mark.asyncio
 async def test_campaign_member_enrichment_with_character_and_username(
-    client_gw: TestClient, signing_issuer
+    client_gw: TestClient, trusted_ws_issuer
 ):
     """Verify get_campaign_members populates username and character_name from characters."""
-    headers_dm = _auth(signing_issuer, "dm_evelyn")
-    headers_marcus = _auth(signing_issuer, "player_marcus")
+    headers_dm = _auth(trusted_ws_issuer, "dm_evelyn")
+    headers_marcus = _auth(trusted_ws_issuer, "player_marcus")
 
     # 1. DM creates campaign
     res = client_gw.post(
@@ -168,16 +169,16 @@ async def test_campaign_member_enrichment_with_character_and_username(
     evelyn_member = next((m for m in members if m["user_id"] == "dm_evelyn"), None)
     assert evelyn_member is not None
     assert evelyn_member["role"] == "owner"
-    assert evelyn_member["username"] == "Evelyn Vance"
+    assert evelyn_member["username"] == "Evelyn"
 
 
 @pytest.mark.asyncio
 async def test_campaign_member_role_mutation_and_purge_lifecycle(
-    client_gw: TestClient, signing_issuer
+    client_gw: TestClient, trusted_ws_issuer
 ):
     """Verify changing roles between spectator and dungeon_master and subsequent member removal."""
-    headers_dm = _auth(signing_issuer, "dm_evelyn")
-    headers_cadence = _auth(signing_issuer, "player_cadence")
+    headers_dm = _auth(trusted_ws_issuer, "dm_evelyn")
+    headers_cadence = _auth(trusted_ws_issuer, "player_cadence")
     spicedb = get_spicedb_client()
 
     # 1. Create campaign
