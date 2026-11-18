@@ -20,6 +20,7 @@ from gateway_api.main import app as gateway_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.minigame_tables import open_minigame_table
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
@@ -39,10 +40,8 @@ def mock_bus() -> MockAsyncRedis:
 def clean_minigame_state():
     from game_session.minigame_tables.ws_manager import minigame_table_manager
 
-    minigame_table_manager.tables.clear()
     minigame_table_manager.connections.clear()
     yield
-    minigame_table_manager.tables.clear()
     minigame_table_manager.connections.clear()
 
 
@@ -104,6 +103,10 @@ def test_blackbox_darts_table_join_bet_and_throw(
         spicedb.write_relationship("establishment", establishment_id, "patron", "user", "sam")
     )
 
+    open_minigame_table(
+        table_id, establishment_id=establishment_id, game_type="darts", user_id="kip"
+    )
+
     with session_client.websocket_connect(
         f"/ws/establishments/{establishment_id}/tables/{table_id}",
         subprotocols=ws_subprotocols("kip"),
@@ -160,6 +163,7 @@ def test_blackbox_roulette_multiplayer_bets_and_payouts(
 ) -> None:
     """Roulette table: multiple betting tokens, wheel spin, and 35:1 / 1:1 payouts."""
     table_id = f"table-roulette-{uuid4().hex[:6]}"
+    open_minigame_table(table_id, game_type="roulette")
 
     with session_client.websocket_connect(
         f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
@@ -227,6 +231,7 @@ def test_blackbox_liars_dice_turn_progression_and_challenge(
 ) -> None:
     """Liar's dice table: bid escalation, bluff challenge, and victory payout."""
     table_id = f"table-liars-{uuid4().hex[:6]}"
+    open_minigame_table(table_id, game_type="liars_dice")
 
     with session_client.websocket_connect(
         f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
@@ -279,6 +284,7 @@ def test_blackbox_liars_dice_turn_progression_and_challenge(
 def test_blackbox_dragon_craps_pass_line_and_field_roll(session_client: TestClient) -> None:
     """Dragon Craps: Come-out natural 7 win and field bets."""
     table_id = f"table-craps-{uuid4().hex[:6]}"
+    open_minigame_table(table_id, game_type="craps")
 
     with session_client.websocket_connect(
         f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
@@ -328,6 +334,8 @@ def test_blackbox_zanzibar_establishment_authorization(
         assert err_msg["type"] == "error"
         assert err_msg["code"] == "PERMISSION_DENIED"
 
+    open_minigame_table("tbl-1", establishment_id="est-vip-lounge", user_id="vip_kip")
+
     with session_client.websocket_connect(
         "/ws/establishments/est-vip-lounge/tables/tbl-1", subprotocols=ws_subprotocols("vip_kip")
     ) as ws_auth:
@@ -337,6 +345,7 @@ def test_blackbox_zanzibar_establishment_authorization(
 def test_blackbox_gateway_minigames_websocket_proxy(gateway_client: TestClient) -> None:
     """Gateway API: verify gateway routes minigames WebSocket tables."""
     table_id = f"table-gw-{uuid4().hex[:6]}"
+    open_minigame_table(table_id, game_type="darts")
     with gateway_client.websocket_connect(
         f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("minigame-tester")
     ) as ws:

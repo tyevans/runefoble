@@ -23,6 +23,7 @@ from gateway_api.auth import set_spicedb_client as set_gateway_spicedb
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
+from tests.helpers.minigame_tables import open_minigame_table
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
@@ -62,10 +63,8 @@ def default_table_patron(spicedb: MockSpiceDBClient) -> None:
 def clean_minigame_state():
     from game_session.minigame_tables.ws_manager import minigame_table_manager
 
-    minigame_table_manager.tables.clear()
     minigame_table_manager.connections.clear()
     yield
-    minigame_table_manager.tables.clear()
     minigame_table_manager.connections.clear()
 
 
@@ -82,6 +81,9 @@ def test_darts_and_billiards_multiplayer_turn_sync(
         spicedb.write_relationship("establishment", est_id, "patron", "user", "ranger_lyra")
     )
 
+    open_minigame_table(
+        darts_table_id, establishment_id=est_id, game_type="darts", user_id="archer_kip"
+    )
     with (
         TestClient(
             session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
@@ -150,6 +152,7 @@ def test_darts_and_billiards_multiplayer_turn_sync(
 
     # ---------------- 2. Billiards Touch Trajectory Vector Exchange ----------------
     billiards_table_id = f"table-billiards-{uuid4().hex[:6]}"
+    open_minigame_table(billiards_table_id, game_type="billiards")
     with (
         TestClient(
             session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
@@ -227,6 +230,7 @@ def test_casino_craps_and_roulette_betting_and_payouts(
     """Wager placement, dice tumble resolution, and character coin purse crediting."""
     # ---------------- 1. Dragon Craps Wagering, Tumble, and Payouts ----------------
     craps_table_id = f"table-craps-{uuid4().hex[:6]}"
+    open_minigame_table(craps_table_id, game_type="craps")
     with (
         TestClient(
             session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
@@ -293,6 +297,7 @@ def test_casino_craps_and_roulette_betting_and_payouts(
 
     # ---------------- 2. Roulette Multi-Patron Wagering and Payouts ----------------
     roulette_table_id = f"table-roulette-{uuid4().hex[:6]}"
+    open_minigame_table(roulette_table_id, game_type="roulette")
     with (
         TestClient(
             session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}

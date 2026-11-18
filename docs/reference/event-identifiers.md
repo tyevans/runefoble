@@ -50,7 +50,9 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `CraftingAttempted` | `CraftingAttempted` | `runefoble_events.downtime` |
 | `CraftingMishapOccurred` | `CraftingMishapOccurred` | `runefoble_events.downtime` |
 | `CraftingSucceeded` | `CraftingSucceeded` | `runefoble_events.downtime` |
+| `CrapsRolled` | `CrapsRolled` | `runefoble_events.tavern_tables` |
 | `CrossCampaignDiscoveryShared` | `CrossCampaignDiscoveryShared` | `runefoble_events.west_marches` |
+| `DartThrown` | `DartThrown` | `runefoble_events.tavern_tables` |
 | `DynamicToolInvoked` | `DynamicToolInvokedEvent` | `runefoble_events.mcp_tools` |
 | `DynamicToolRegistered` | `DynamicToolRegisteredEvent` | `runefoble_events.mcp_tools` |
 | `DynamicToolUnregistered` | `DynamicToolUnregisteredEvent` | `runefoble_events.mcp_tools` |
@@ -85,6 +87,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `RelicForged` | `RelicForged` | `runefoble_events.lore` |
 | `RelicInspected` | `RelicInspected` | `runefoble_events.lore` |
 | `RelicRuneTranslated` | `RelicRuneTranslated` | `runefoble_events.lore` |
+| `RouletteSpun` | `RouletteSpun` | `runefoble_events.tavern_tables` |
 | `SessionCreated` | `SessionCreated` | `runefoble_events.session` |
 | `SessionEnded` | `SessionEnded` | `runefoble_events.session` |
 | `SessionStarted` | `SessionStarted` | `runefoble_events.session` |
@@ -95,6 +98,11 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `StandInActionDecided` | `StandInActionDecided` | `runefoble_events.watcher_events.narrative` |
 | `StrongholdCreated` | `StrongholdCreated` | `runefoble_events.downtime` |
 | `StrongholdUpgraded` | `StrongholdUpgraded` | `runefoble_events.downtime` |
+| `TableBetPlaced` | `TableBetPlaced` | `runefoble_events.tavern_tables` |
+| `TableBidPlaced` | `TableBidPlaced` | `runefoble_events.tavern_tables` |
+| `TableChallengeResolved` | `TableChallengeResolved` | `runefoble_events.tavern_tables` |
+| `TableOpened` | `TableOpened` | `runefoble_events.tavern_tables` |
+| `TablePlayerSeated` | `TablePlayerSeated` | `runefoble_events.tavern_tables` |
 | `TokenMoved` | `TokenMoved` | `runefoble_events.board_events.token` |
 | `TokenPlaced` | `TokenPlaced` | `runefoble_events.board_events.token` |
 | `TokenRemoved` | `TokenRemoved` | `runefoble_events.board_events.token` |
