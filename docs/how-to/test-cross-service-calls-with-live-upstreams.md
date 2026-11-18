@@ -151,7 +151,11 @@ These fixtures read the table. Every test gets the autouse fixtures. Each one se
 | `mock_bus` | Returns the Redis double behind that bus. Read published events from `mock_bus.streams`. |
 | `default_service_verifiers`, `shared_issuer_in_session_verifiers` (autouse) | Trust the shared signing issuer in token-verifying services. |
 | `trusted_ws_issuer` | Trusts the shared issuer in the gateway, game_session and the_watcher for one test. |
+| `use_event_bus`, `use_redis_client` | Return a function. Call it with a bus or a Redis double to route every service publish there for one test, for example a failing Redis. The default fixture restores the seams. |
+| `clean_soundscape_registries` (autouse) | Clears the soundscape session registries around each test. |
 | `character_sheet_upstream`, `game_session_upstream` | Serve that service as a live loopback upstream. |
+
+`tests/helpers/stream_events.py` has `assert_stream_events(mock_bus, *names, stream=...)`. It checks that a test published each named event. The default stream is the West Marches stream. Do not write a copy of it in a conftest.
 
 To add a service seam, add one `ServiceSeams` row. Do not write a setter call in a conftest. A directory conftest only builds a `TestClient` and its own helpers.
 
