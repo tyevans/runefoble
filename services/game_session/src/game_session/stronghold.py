@@ -200,13 +200,8 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
                 problems.append(f"{mat}: need {qty}, store holds {held}")
         return problems
 
-    def upgrade_facility(
-        self,
-        facility_id: str,
-        gold_spent: int = 0,
-        materials_spent: dict[str, int] | None = None,
-    ) -> dict[str, Any]:
-        """Upgrade a facility to the next tier and unlock mechanical resting boons."""
+    def upgrade_facility(self, facility_id: str) -> dict[str, Any]:
+        """Upgrade a facility to the next tier. The tier table sets the gold and material cost."""
         if facility_id not in FACILITY_TIERS:
             raise ValueError(
                 f"Unknown facility '{facility_id}'. Valid: {list(FACILITY_TIERS.keys())}"
@@ -218,12 +213,10 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
             raise ValueError(f"Facility '{facility_id}' has already reached maximum tier 3")
 
         tier_info = FACILITY_TIERS[facility_id][next_tier]
-        spent_mats = materials_spent or tier_info["cost_materials"]
-        spent_gold = gold_spent if gold_spent > 0 else tier_info["cost_gold"]
+        spent_mats = dict(tier_info["cost_materials"])
+        spent_gold = tier_info["cost_gold"]
         unlocked_boon = tier_info["boon"]
 
-        if any(qty < 0 for qty in spent_mats.values()):
-            raise ValueError("Materials spent must not be negative")
         problems = self.shortfalls(spent_gold, spent_mats)
         if problems:
             raise InsufficientStrongholdResources(

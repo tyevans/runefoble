@@ -85,8 +85,8 @@ These events publish after the character and the crafting history are saved. A m
   - `campaign_id`: Optional[UUID] — Campaign identifier.
   - `facility_id`: str — Upgraded facility (`watchtower`, `herbal_rack`, `arcane_forge`).
   - `new_tier`: int — Resulting facility tier (1, 2, or 3).
-  - `gold_spent`: int — Gold taken from the treasury.
-  - `materials_spent`: Dict[str, int] — Resource materials taken from the store (wood, stone, flora, iron).
+  - `gold_spent`: int — Gold taken from the treasury. Equals the tier table cost (TASK-0778).
+  - `materials_spent`: Dict[str, int] — Resource materials taken from the store (wood, stone, flora, iron). Equals the tier table cost (TASK-0778).
   - `unlocked_boons`: List[str] — Mechanical resting bonuses unlocked for the adventuring party.
 
 Replay note: The handler subtracts gold and materials. A `StrongholdUpgraded` event stored before TASK-0774 therefore replays with the corrected arithmetic. Dev campsites that were upgraded before the fix can show a negative treasury. Reset dev data to clear them.
@@ -104,8 +104,8 @@ Replay note: The handler subtracts gold and materials. A `StrongholdUpgraded` ev
 | `/api/v1/sessions/{id}/rest/prompts` | `GET` | `game_session` | — | Retrieves collaborative storytelling prompts. |
 | `/api/v1/sessions/{id}/rest/campfire` | `POST` | `game_session` (gateway proxy) | `campaign:play` | Executes campfire rest sequence and applies boons. Accepts a campaign session id (`session-<hex>`). The campaign link is read from SpiceDB. A session with no campaign link answers `403`. |
 | `/api/v1/campaigns/{id}/stronghold` | `GET` | `game_session` (gateway proxy) | `campaign:view` | Inspects campsite facility tiers and treasury. |
-| `/api/v1/campaigns/{id}/stronghold/deposit` | `POST` | `game_session` (gateway proxy) | `stronghold:upgrade` (players and managers) | Adds gold and materials to the treasury and the store. Answers `400` for a negative value or an empty deposit. |
-| `/api/v1/campaigns/{id}/stronghold/upgrade` | `POST` | `game_session` (gateway proxy) | `stronghold:upgrade` (players and managers) | Upgrades campsite facilities. Spends gold and materials from the stores. Answers `409` on any shortfall and records no event. |
+| `/api/v1/campaigns/{id}/stronghold/deposit` | `POST` | `game_session` (gateway proxy) | `stronghold.manage` (DM and managers) | Adds gold and materials to the treasury and the store. Answers `400` for a negative value or an empty deposit. Answers `403` to players. |
+| `/api/v1/campaigns/{id}/stronghold/upgrade` | `POST` | `game_session` (gateway proxy) | `stronghold.upgrade` (players and managers) | Upgrades a facility by one tier. Body: `facility_id` only. The tier table sets the cost. Spends gold and materials from the stores. Answers `409` on any shortfall and `422` when the body names a cost. Records no event on either refusal. |
 | `/api/v1/campaigns/{id}/stronghold/boons` | `GET` | `game_session` | `campaign:view` | Queries currently active team resting boons. |
 
 ---

@@ -46,8 +46,6 @@ async def test_blackbox_communal_stronghold_upgrade_and_boons(
     # 1. Upgrade Alchemical Workshop from Lv 1 to Lv 2
     upgrade_payload = {
         "facility_id": "alchemical_workshop",
-        "gold_spent": 100,
-        "materials_spent": {"timber": 20, "glass": 5},
     }
     upgrade_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/west-marches/stronghold/upgrade",
@@ -64,7 +62,7 @@ async def test_blackbox_communal_stronghold_upgrade_and_boons(
     # 2. Upgrade Watchtower from Lv 1 to Lv 2 and check defensive buffer
     watch_resp = client.post(
         f"/api/v1/campaigns/{campaign_id}/west-marches/stronghold/upgrade",
-        json={"facility_id": "watchtower", "gold_spent": 150},
+        json={"facility_id": "watchtower"},
         headers=_bearer(player_id),
     )
     assert watch_resp.status_code == 200

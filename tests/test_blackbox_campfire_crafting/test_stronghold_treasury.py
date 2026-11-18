@@ -1,4 +1,4 @@
-"""Blackbox tests for stronghold treasury funding, upgrade spending, and shortfall refusal (TASK-0774).
+"""Blackbox tests for stronghold treasury funding, tier-table upgrade cost, and shortfall refusal (TASK-0774, TASK-0778).
 
 Setup and assertions use public HTTP routes only. Governed by ADR-0011 (the command decides,
 the `@handles` method applies the recorded change) and Hard Invariant 7.
@@ -48,38 +48,76 @@ def test_deposit_adds_gold_and_materials_to_the_treasury(session_client: TestCli
     assert any("StrongholdDeposited" in entry[1].get("event_type", "") for entry in entries)
 
 
-def test_upgrade_spends_gold_and_materials_from_the_stores(session_client: TestClient, mock_bus):
-    """An affordable upgrade reduces the treasury and the material store."""
+def test_upgrade_charges_exact_tier_cost_from_the_table(session_client: TestClient, mock_bus):
+    """An upgrade with an empty body charges the tier 1 cost of the facility, and no more."""
     camp_id = _owned_campaign(session_client)
     _deposit(session_client, camp_id, gold=500, materials={"wood": 40})
 
     res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
-        json={"facility_id": "watchtower", "gold_spent": 200, "materials_spent": {"wood": 20}},
+        json={"facility_id": "watchtower"},
     )
 
     assert res.status_code == 200, res.text
+    assert res.json()["gold_spent"] == 100
+    assert res.json()["materials_spent"] == {"wood": 20}
     state = session_client.get(f"/api/v1/campaigns/{camp_id}/stronghold").json()
-    assert state["treasury_gold"] == 300
+    assert state["treasury_gold"] == 400
     assert state["stored_materials"]["wood"] == 20
     assert state["facilities"]["watchtower"] == 1
     assert _upgraded_event_count(mock_bus) == 1
 
 
-def test_upgrade_refused_on_gold_shortfall_records_nothing(session_client: TestClient, mock_bus):
-    """An upgrade that costs more gold than the treasury holds is refused with no event."""
+def test_upgrade_naming_gold_spent_is_refused_with_no_event(session_client: TestClient, mock_bus):
+    """A client-set gold cost answers 422. The treasury and the facility do not change."""
     camp_id = _owned_campaign(session_client)
-    _deposit(session_client, camp_id, gold=100, materials={"wood": 20})
+    _deposit(session_client, camp_id, gold=500, materials={"wood": 40})
 
     res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
-        json={"facility_id": "watchtower", "gold_spent": 200, "materials_spent": {"wood": 20}},
+        json={"facility_id": "watchtower", "gold_spent": 1},
+    )
+
+    assert res.status_code == 422, res.text
+    state = session_client.get(f"/api/v1/campaigns/{camp_id}/stronghold").json()
+    assert state["treasury_gold"] == 500
+    assert state["facilities"]["watchtower"] == 0
+    assert _upgraded_event_count(mock_bus) == 0
+
+
+def test_upgrade_naming_materials_spent_is_refused_with_no_event(
+    session_client: TestClient, mock_bus
+):
+    """A client-set material cost answers 422. The material store does not change."""
+    camp_id = _owned_campaign(session_client)
+    _deposit(session_client, camp_id, gold=500, materials={"wood": 40})
+
+    res = session_client.post(
+        f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
+        json={"facility_id": "watchtower", "materials_spent": {"wood": 0}},
+    )
+
+    assert res.status_code == 422, res.text
+    state = session_client.get(f"/api/v1/campaigns/{camp_id}/stronghold").json()
+    assert state["stored_materials"]["wood"] == 40
+    assert state["facilities"]["watchtower"] == 0
+    assert _upgraded_event_count(mock_bus) == 0
+
+
+def test_upgrade_refused_on_gold_shortfall_records_nothing(session_client: TestClient, mock_bus):
+    """A tier cost that exceeds the treasury is refused with 409 and no event."""
+    camp_id = _owned_campaign(session_client)
+    _deposit(session_client, camp_id, gold=50, materials={"wood": 20})
+
+    res = session_client.post(
+        f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
+        json={"facility_id": "watchtower"},
     )
 
     assert res.status_code == 409, res.text
     assert "gold" in res.json()["detail"].lower()
     state = session_client.get(f"/api/v1/campaigns/{camp_id}/stronghold").json()
-    assert state["treasury_gold"] == 100
+    assert state["treasury_gold"] == 50
     assert state["stored_materials"]["wood"] == 20
     assert state["facilities"]["watchtower"] == 0
     assert _upgraded_event_count(mock_bus) == 0
@@ -88,13 +126,13 @@ def test_upgrade_refused_on_gold_shortfall_records_nothing(session_client: TestC
 def test_upgrade_refused_on_material_shortfall_records_nothing(
     session_client: TestClient, mock_bus
 ):
-    """An upgrade that needs more material than the store holds is refused with no event."""
+    """A tier material cost that exceeds the store is refused with 409 and no event."""
     camp_id = _owned_campaign(session_client)
     _deposit(session_client, camp_id, gold=500, materials={"wood": 5})
 
     res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
-        json={"facility_id": "watchtower", "gold_spent": 100, "materials_spent": {"wood": 20}},
+        json={"facility_id": "watchtower"},
     )
 
     assert res.status_code == 409, res.text
@@ -107,13 +145,13 @@ def test_upgrade_refused_on_material_shortfall_records_nothing(
 
 
 def test_upgrade_refused_when_material_is_missing_entirely(session_client: TestClient, mock_bus):
-    """A material that the store never held counts as a shortfall."""
+    """A tier material that the store never held counts as a shortfall."""
     camp_id = _owned_campaign(session_client)
     _deposit(session_client, camp_id, gold=500, materials={})
 
     res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
-        json={"facility_id": "watchtower", "gold_spent": 100, "materials_spent": {"wood": 20}},
+        json={"facility_id": "watchtower"},
     )
 
     assert res.status_code == 409, res.text
@@ -136,16 +174,14 @@ def test_empty_deposit_is_refused_and_records_nothing(session_client: TestClient
     assert state["treasury_gold"] == 0
 
 
-def test_negative_material_spend_is_refused_and_records_nothing(
-    session_client: TestClient, mock_bus
-):
-    """A negative material amount must not add to the store. The route answers 400, no event."""
+def test_negative_deposit_is_refused_and_records_nothing(session_client: TestClient, mock_bus):
+    """A negative material amount must not reduce the store through a deposit."""
     camp_id = _owned_campaign(session_client)
     _deposit(session_client, camp_id, gold=500, materials={"wood": 5})
 
     res = session_client.post(
-        f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
-        json={"facility_id": "watchtower", "gold_spent": 100, "materials_spent": {"wood": -50}},
+        f"/api/v1/campaigns/{camp_id}/stronghold/deposit",
+        json={"gold": 0, "materials": {"wood": -50}},
     )
 
     assert res.status_code == 400, res.text

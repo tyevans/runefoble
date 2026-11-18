@@ -81,8 +81,6 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
         json={
             "facility_id": "watchtower",
             "contributing_campaign_id": camp_gold,
-            "gold_spent": 120,
-            "materials_spent": {"hardwood": 15},
         },
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(gold_player)}"},
     )
@@ -131,7 +129,7 @@ async def test_blackbox_unauthorized_outsider_isolation(
     # Outsider cannot upgrade the haven
     bad_up = client.post(
         f"/settlements/{sid}/upgrade",
-        json={"facility_id": "workshop", "gold_spent": 50},
+        json={"facility_id": "workshop"},
         headers=h_out,
     )
     assert bad_up.status_code == 403

@@ -83,7 +83,7 @@ Both direct routes (`/settlements/{id}`) and API v1 aliases (`/api/v1/settlement
 
 ## 4. Cross-Campaign Co-Upgrading
 
-Other adventuring parties registered in the same shared world can contribute gold and gathered reagents to upgrade communal facilities:
+Other adventuring parties registered in the same shared world can upgrade communal facilities. The request names the facility and the contributing campaign only:
 
 ```bash
 curl -X POST http://localhost:8004/settlements/8d3e1a90-410a-49bf-9dfb-12d4a2503289/upgrade \
@@ -91,14 +91,11 @@ curl -X POST http://localhost:8004/settlements/8d3e1a90-410a-49bf-9dfb-12d4a2503
   -H "Authorization: Bearer ${TOKEN_PALADIN_GAWAIN}" \
   -d '{
     "facility_id": "workshop",
-    "contributing_campaign_id": "d2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
-    "gold_spent": 200,
-    "materials_spent": {
-      "iron_ingots": 10,
-      "mithril": 2
-    }
+    "contributing_campaign_id": "d2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d"
   }'
 ```
+
+The client cannot set a cost. A request that names `gold_spent` or `materials_spent` answers `422`. Settlement upgrades record a zero cost. No settlement price table exists yet (TASK-0778 follow-up).
 
 Key facility tiers:
 - **`workshop`**: Tier 1 (Field Forge) -> Tier 2 (Master Guildhall) -> Tier 3 (Arcane Crucible).

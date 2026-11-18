@@ -19,7 +19,7 @@ from game_session.stronghold import (
     StrongholdAggregate,
     StrongholdState,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["stronghold"])
@@ -45,9 +45,11 @@ async def _link_stronghold(spicedb: Any, campaign_id: str) -> None:
 
 
 class UpgradeStrongholdRequest(BaseModel):
+    """Names the facility only. The tier table sets the cost, so extra fields answer 422."""
+
+    model_config = ConfigDict(extra="forbid")
+
     facility_id: str
-    gold_spent: int = 0
-    materials_spent: dict[str, int] = Field(default_factory=dict)
 
 
 class UpgradeStrongholdResponse(BaseModel):
@@ -171,11 +173,7 @@ async def upgrade_stronghold_facility(
     await _require(spicedb, "stronghold", campaign_id, "upgrade", caller_id, detail)
 
     try:
-        upgrade_result = stronghold.upgrade_facility(
-            facility_id=req.facility_id,
-            gold_spent=req.gold_spent,
-            materials_spent=req.materials_spent or None,
-        )
+        upgrade_result = stronghold.upgrade_facility(facility_id=req.facility_id)
         events_to_publish = list(stronghold.uncommitted_events)
         await stronghold_repo.save(stronghold)
     except InsufficientStrongholdResources as e:

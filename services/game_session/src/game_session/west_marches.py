@@ -219,32 +219,6 @@ class SharedWorldAggregate(DeclarativeAggregate[SharedWorldState]):
         )
         return oid
 
-    def upgrade_outpost(
-        self,
-        outpost_id: str,
-        facility_id: str,
-        contributing_campaign_id: UUID | str,
-        gold_spent: int = 0,
-        materials_spent: dict[str, int] | None = None,
-    ) -> int:
-        if outpost_id not in self.state.outposts:
-            raise ValueError(f"Outpost '{outpost_id}' does not exist")
-        current_tier = self.state.outposts[outpost_id]["facilities"].get(facility_id, 0)
-        next_tier = current_tier + 1
-        wid = _to_uuid(self.state.shared_world_id or self.aggregate_id)
-        cid = _to_uuid(contributing_campaign_id) or str(contributing_campaign_id)
-        self.create_event(
-            SharedStrongholdUpgraded,
-            shared_world_id=wid,
-            outpost_id=outpost_id,
-            facility_id=facility_id,
-            new_tier=next_tier,
-            contributing_campaign_id=cid,
-            gold_spent=gold_spent,
-            materials_spent=materials_spent or {},
-        )
-        return next_tier
-
     def post_communal_notice(
         self,
         campaign_id: UUID | str,

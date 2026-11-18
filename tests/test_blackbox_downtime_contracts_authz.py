@@ -100,7 +100,7 @@ def test_stronghold_upgrade_by_role(client: TestClient) -> None:
     _join(client, campaign_id, owner, player, "player")
     _join(client, campaign_id, owner, spectator, "spectator")
     url = f"/api/v1/campaigns/{campaign_id}/stronghold/upgrade"
-    body = {"facility_id": "watchtower", "gold_spent": 0}
+    body = {"facility_id": "watchtower"}
     funded = client.post(
         f"/api/v1/campaigns/{campaign_id}/stronghold/deposit",
         json={"gold": 100, "materials": {"wood": 20}},

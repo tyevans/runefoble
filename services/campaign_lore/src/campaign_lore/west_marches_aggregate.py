@@ -100,8 +100,11 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
         )
         return did
 
-    def upgrade_outpost(self, outpost_id: str, facility_id: str, **kwargs: Any) -> int:
-        cid = str(kwargs.get("contributing_campaign_id", ""))
+    def upgrade_outpost(
+        self, outpost_id: str, facility_id: str, contributing_campaign_id: str
+    ) -> int:
+        """Upgrade an outpost facility. No client-set cost is accepted (TASK-0778)."""
+        cid = str(contributing_campaign_id)
         oid = (
             outpost_id
             if outpost_id in self._state.outposts
@@ -111,17 +114,16 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
             oid = build_default_outpost(cid)["outpost_id"]
         tier = self._state.outposts[oid]["facilities"].get(facility_id, 0) + 1
         wid = _to_uuid(self._state.shared_world_id) or uuid4()
-        kw = {
-            **kwargs,
-            "shared_world_id": wid,
-            "outpost_id": oid,
-            "facility_id": facility_id,
-            "new_tier": tier,
-            "contributing_campaign_id": _to_uuid(cid) or cid,
-            "gold_spent": kwargs.get("gold_spent", 0),
-            "materials_spent": kwargs.get("materials_spent") or {},
-        }
-        self.create_event(SharedStrongholdUpgraded, **kw)
+        self.create_event(
+            SharedStrongholdUpgraded,
+            shared_world_id=wid,
+            outpost_id=oid,
+            facility_id=facility_id,
+            new_tier=tier,
+            contributing_campaign_id=_to_uuid(cid) or cid,
+            gold_spent=0,
+            materials_spent={},
+        )
         return tier
 
     def post_communal_notice(self, **kwargs: Any) -> str:
