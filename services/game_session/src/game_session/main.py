@@ -21,6 +21,7 @@ from game_session.routers import (
     campfire_router,
     caravan_contracts_router,
     caravan_trade_router,
+    chronicle_router,
     combat_router,
     director_router,
     minigames_ws_router,
@@ -71,6 +72,7 @@ app.include_router(tavern_router)
 app.include_router(minigames_ws_router)
 app.include_router(west_marches_router)
 app.include_router(caravan_trade_router)
+app.include_router(chronicle_router)
 app.include_router(caravan_contracts_router)
 app.include_router(settlements_router)
 app.include_router(settlements_router, prefix="/api/v1")

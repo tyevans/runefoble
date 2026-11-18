@@ -84,11 +84,33 @@ describe('AppDataService success path through the gateway', () => {
     assert.equal(lobby.data.availableCharacters[0].id, 'char-valeros');
   });
 
-  it('returns an empty session event feed because no read endpoint exists yet', async () => {
-    gateway = installFakeGateway({});
+  it('reads the session chronicle from the gateway and maps each line to a feed row', async () => {
+    gateway = installFakeGateway({
+      'GET /api/v1/sessions/session-tomb-14/events': { body: [
+        { event_id: 'evt-1', kind: 'session_started', occurred_at: '2026-11-17T19:45:00Z', speaker: 'system', text: 'Session started.', penalties: [] },
+        { event_id: 'evt-2', kind: 'stand_in_action', occurred_at: '2026-11-17T19:45:20Z', speaker: 'Kyra', text: 'Hah!', action_type: 'attack', penalties: ['drunk'] },
+        { event_id: 'evt-3', kind: 'dice_roll', occurred_at: '2026-11-17T19:45:30Z', speaker: 'Valeros', text: '1d20 = 14', action_type: 'dice_roll', penalties: [] },
+      ] },
+    });
     const events = await service.fetchSessionEvents('session-tomb-14');
-    assert.deepEqual(events, { ok: true, data: [] });
-    assert.equal(gateway.calls.length, 0);
+    assert.equal(gateway.calls.length, 1);
+    assert.ok(events.ok);
+    assert.deepEqual(events.data.map((e) => [e.id, e.source, e.speaker, e.text, e.actionType]), [
+      ['evt-1', 'system', 'system', 'Session started.', undefined],
+      ['evt-2', 'stand_in', 'Kyra', 'Hah!', 'speech'],
+      ['evt-3', 'player', 'Valeros', '1d20 = 14', 'dice_roll'],
+    ]);
+  });
+
+  it('returns an empty session feed when the session has no chronicle lines', async () => {
+    gateway = installFakeGateway({ 'GET /api/v1/sessions/session-new/events': { body: [] } });
+    assert.deepEqual(await service.fetchSessionEvents('session-new'), { ok: true, data: [] });
+  });
+
+  it('returns a failure, not fixture rows, when the chronicle read fails', async () => {
+    gateway = installFakeGateway({ 'GET /api/v1/sessions/session-tomb-14/events': { status: 503, body: { detail: 'down' } } });
+    const events = await service.fetchSessionEvents('session-tomb-14');
+    assert.equal(events.ok, false);
   });
 
   it('creates, assigns, and deletes a character against the gateway', async () => {
