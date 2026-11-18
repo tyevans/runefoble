@@ -4,6 +4,7 @@
  * ADR-0004, ADR-0012, ADR-0013
  */
 
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -33,7 +34,7 @@ const sampleCharacters: CharacterItem[] = [
     speed: 30,
     campaignId: 'camp-101',
     campaignTitle: 'Tomb of the Star-Eater',
-    portraitUrl: '/assets/portraits/fighter.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.fighter,
   },
   {
     id: 'char-2',
@@ -47,7 +48,7 @@ const sampleCharacters: CharacterItem[] = [
     speed: 25,
     campaignId: 'camp-101',
     campaignTitle: 'Tomb of the Star-Eater',
-    portraitUrl: '/assets/portraits/cleric.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.cleric,
   },
   {
     id: 'char-3',
@@ -61,7 +62,7 @@ const sampleCharacters: CharacterItem[] = [
     speed: 30,
     campaignId: null,
     campaignTitle: null,
-    portraitUrl: '/assets/portraits/wizard.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.wizard,
   },
   {
     id: 'char-4',
@@ -75,7 +76,7 @@ const sampleCharacters: CharacterItem[] = [
     speed: 35,
     campaignId: null,
     campaignTitle: null,
-    portraitUrl: '/assets/portraits/rogue.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.rogue,
   },
 ];
 
@@ -160,7 +161,7 @@ describe('Character Builder Validation & Payload Assembly', () => {
       armorClass: 18,
       speed: 30,
       abilityScores: { str: 16, dex: 14, con: 15, int: 10, wis: 12, cha: 8 },
-      portraitUrl: '/assets/portraits/fighter.svg',
+      portraitUrl: PORTRAIT_PLACEHOLDERS.fighter,
     };
 
     assert.equal(payload.name, 'Valeros');

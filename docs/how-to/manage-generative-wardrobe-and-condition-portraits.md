@@ -41,6 +41,8 @@ Returns:
 }
 ```
 
+A character with no portrait answers `null` for `active_portrait_url` and `base_portrait_url`. The character sheet never returns a path to a file that does not exist. A bloodied, poisoned or stunned character with no base portrait still gets an overlay data URI, drawn on the dark backdrop without a base image.
+
 ---
 
 ## 2. Generative Wardrobe Synthesis via Asset Forge

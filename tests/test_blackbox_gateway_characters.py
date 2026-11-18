@@ -187,3 +187,20 @@ def test_create_refuses_fields_character_sheet_cannot_store(trusted_ws_issuer, c
 
     assert res.status_code == 422
     assert res.json()["detail"]["fields"] == ["level"]
+
+
+def test_character_without_portrait_answers_null_portrait_url(trusted_ws_issuer, client):
+    """A character created with no portrait answers `portrait_url: null`, never a missing file."""
+    headers = _auth(trusted_ws_issuer, "user_portraitless")
+    payload = {"name": "Nameless Face", "characterClass": "Rogue", "maxHp": 18}
+
+    res = client.post("/api/v1/characters", json=payload, headers=headers)
+
+    assert res.status_code == 201, res.text
+    data = res.json()
+    assert data["portrait_url"] is None
+    assert data["portraitUrl"] is None
+
+    read = client.get(f"/api/v1/characters/{data['id']}", headers=headers)
+    assert read.status_code == 200
+    assert read.json()["portrait_url"] is None

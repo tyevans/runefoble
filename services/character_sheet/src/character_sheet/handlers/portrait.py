@@ -54,7 +54,7 @@ class PortraitHandlerMixin:
         custom_url: str | None = None,
     ) -> None:
         """Assign active token portrait either from an unlocked wardrobe variant or custom URL."""
-        target_url = custom_url or ""
+        target_url: str | None = custom_url or None
         if variant_id:
             if variant_id not in self.state.wardrobe_variants:
                 raise ValueError(

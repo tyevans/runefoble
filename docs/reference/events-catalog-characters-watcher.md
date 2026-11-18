@@ -107,7 +107,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `is_active`: Boolean
 - **`CharacterPortraitUpdated`** (alias: `PortraitAssigned`): Emitted when a character's active portrait or board token avatar is assigned (`runefoble.events.character.portrait_updated`).
   - `character_id`: UUID | str
-  - `active_portrait_url`: String
+  - `active_portrait_url`: Optional[String] (null when the character has no portrait)
   - `variant_id`: Optional[String]
 
 ### The Watcher & Gameplay Stream Events

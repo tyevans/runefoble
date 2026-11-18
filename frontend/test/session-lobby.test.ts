@@ -4,6 +4,7 @@
  * Governed by ADR-0004, ADR-0012, ADR-0013, US-0065.
  */
 
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -18,14 +19,14 @@ const sampleCharacters: LobbyCharacterOption[] = [
     name: 'Valeros',
     characterClass: 'Fighter',
     level: 4,
-    portraitUrl: '/assets/portraits/fighter.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.fighter,
   },
   {
     id: 'char-kyra-1',
     name: 'Kyra',
     characterClass: 'Cleric',
     level: 4,
-    portraitUrl: '/assets/portraits/cleric.svg',
+    portraitUrl: PORTRAIT_PLACEHOLDERS.cleric,
   },
 ];
 

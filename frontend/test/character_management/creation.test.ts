@@ -8,6 +8,7 @@
  * Hard Invariants: Hard Invariant 6 (< 130 lines), Hard Invariant 7 (Blackbox TDD)
  */
 
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { AppDataService } from '../../src/services/app-data-service.ts';
@@ -40,7 +41,7 @@ describe('Character Creation & Data Mutations (TASK-0288, PRD-0006)', () => {
       armorClass: 12,
       speed: 30,
       abilityScores: { str: 8, dex: 14, con: 12, int: 12, wis: 10, cha: 16 },
-      portraitUrl: '/assets/portraits/sorcerer.svg',
+      portraitUrl: PORTRAIT_PLACEHOLDERS.wizard,
     };
     const created = await dataService.createCharacter(payload);
     assert.ok(created.ok);

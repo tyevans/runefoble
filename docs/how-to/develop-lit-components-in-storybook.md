@@ -77,3 +77,5 @@ import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 const hero = { name: 'Valeros', portraitUrl: PORTRAIT_PLACEHOLDERS.fighter };
 ```
 The available ids are `fighter`, `wizard`, `cleric`, `rogue` and `paladin`. Each value is an inline SVG data URI. Add a new id in `libs/runefoble_ui/src/portrait-placeholders.ts` when a story needs another class.
+
+The `pnpm run lint` step in `frontend/` runs `frontend/scripts/check-asset-paths.ts`. It fails when any source file under `frontend/`, `services/`, `libs/` or `gateway/` names an `/assets/` path that no package serves from its `public/` directory. Use a placeholder, or add the file to a package `public/` directory.
