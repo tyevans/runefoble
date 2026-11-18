@@ -81,36 +81,56 @@ def test_prd_scanner_and_models(temp_project: Path):
     assert PRDStage.SHAPED.value == "shaped"
 
 
-def test_requirement_auditor_detects_epic_tasks(temp_project: Path):
-    """Verifies auditor flags oversized proposed tasks failing INVEST small criteria."""
-    mgr = PRDManager(temp_project)
-    mgr.create_prd(
-        title="Epic Quest",
-        persona="Hero",
-        target_bc="campaign_lore",
-        summary="A huge journey.",
-        status="Accepted",
-    )
-
+def _write_proposed_task(temp_project: Path, filename: str, scope_body: str) -> None:
     proposed_dir = temp_project / "docs" / "project" / "backlog" / "proposed"
     proposed_dir.mkdir(parents=True, exist_ok=True)
-    epic_task = proposed_dir / "9999-epic-lore-microservice.md"
-    epic_task.write_text(
-        """# TASK-9999: Epic Lore Microservice
-
-## Scope of Work
-- Item 1
-- Item 2
-- Item 3
-- Item 4
-""",
+    (proposed_dir / filename).write_text(
+        f"# TASK-{filename[:4]}: Example\n\n## Scope of Work\n{scope_body}\n\n"
+        "## Definition of Done\n- Done.\n",
         encoding="utf-8",
     )
 
+
+def _epic_ids(temp_project: Path) -> list[str]:
+    mgr = PRDManager(temp_project)
     auditor = RequirementAuditor(temp_project / "docs" / "project" / "backlog")
-    summary = auditor.audit(mgr.load_prds())
-    assert len(summary.epic_proposed_tasks) >= 1
-    assert summary.epic_proposed_tasks[0]["id"] == "TASK-9999"
+    return [e["id"] for e in auditor.audit(mgr.load_prds()).epic_proposed_tasks]
+
+
+def test_scope_rule_flags_task_with_more_than_eight_top_level_items(temp_project: Path):
+    """A task with nine top-level scope entries is an epic, even when each entry is small."""
+    entries = "\n".join(f"{n}. Entry {n}\n   - detail" for n in range(1, 10))
+    _write_proposed_task(temp_project, "9001-many-entries.md", entries)
+    assert _epic_ids(temp_project) == ["TASK-9001"]
+
+
+def test_scope_rule_flags_task_spanning_two_components(temp_project: Path):
+    """A task that names two component roots is an epic, even with few entries."""
+    body = (
+        "1. Route in `services/game_session/src/game_session/routes.py`\n"
+        "2. Proxy in `gateway/api/src/gateway_api/routers/games.py`"
+    )
+    _write_proposed_task(temp_project, "9002-two-components.md", body)
+    assert _epic_ids(temp_project) == ["TASK-9002"]
+
+
+def test_scope_rule_keeps_single_component_task_with_nested_details(temp_project: Path):
+    """Nested bullets are details of one entry. They do not make a task an epic."""
+    body = "\n".join(
+        [
+            "1. Route in `services/soundscape/src/soundscape/routers/cue.py`",
+            "   - detail one",
+            "   - detail two",
+            "   - detail three",
+            "   - detail four",
+            "   - detail five",
+            "   - detail six",
+            "   - detail seven",
+            "2. Test in `tests/test_blackbox_soundscape_cue.py`",
+        ]
+    )
+    _write_proposed_task(temp_project, "9003-nested-details.md", body)
+    assert _epic_ids(temp_project) == []
 
 
 def test_registry_synchronizer_repairs_stale_links_and_indexes(temp_project: Path):

@@ -46,7 +46,7 @@ These rules are structural. Do not violate them for convenience.
 
 Work answers to a user need. Product requirements and user stories live under `docs/project/`:
 - **System Architecture & Operational Guide**: [`docs/project/README.md`](docs/project/README.md) defines the full Project Management as Code architecture, lifecycles, and git traceability.
-- **Product Requirement Records (PRDs)**: `docs/project/product/`. PRDs move through `idea/`, `shaped/`, `accepted/`, and `shipped/`.[^18]
+- **Product Requirement Records (PRDs)**: `docs/project/product/`. PRDs live in `accepted/`. The `status` field and `REGISTRY.md` record the stage (Idea, Shaped, Accepted, Shipped). Shipped PRDs stay in `accepted/` so that backlog links remain valid.[^18]
 - **User Stories**: `docs/project/user_stories/`. User stories define end-to-end value from the persona perspective (Player, DM, Absent Player, Spectator, Developer).[^19]
 
 A product record states a need and checkable outcomes; it never dictates internal code structure. Architectural decisions belong in ADRs.[^3]

@@ -6,7 +6,7 @@
 |---|---|
 | `make help` | Displays all available developer commands |
 | `make setup` | Installs Python UV workspace dependencies and frontend packages |
-| `make health-check` | Gate. Runs `spec-ops health` (file length <500 lines in `libs/`, `services/`, `gateway/`, `frontend/`, `tests/`, `scripts/`, `e2e/`, `tools/`; numbering; backlog state) `spec-ops schema check` (frontmatter and Markdown grammar in `docs/project/`); then `scripts/check_backlog_links.py` (dead links in refined and proposed tasks, stale PRD links, complete-record body status, unresolved cited paths (a folder holding only `__pycache__` counts as missing), missing governance keys; all must be zero) |
+| `make health-check` | Gate. Runs `spec-ops health` (file length <500 lines in `libs/`, `services/`, `gateway/`, `frontend/`, `tests/`, `scripts/`, `e2e/`, `tools/`; numbering; backlog state) `spec-ops schema check` (frontmatter and Markdown grammar in `docs/project/`); then `scripts/check_backlog_links.py` (dead links in refined and proposed tasks, stale PRD links, complete-record body status, unresolved cited paths (a folder holding only `__pycache__` counts as missing), missing governance keys; all must be zero). It also prints curation warnings for the refined buffer band (6 to 12) and for refined tasks that wait on incomplete tasks. Warnings never fail the gate |
 | `make install-spec-ops` | Installs the pinned spec-ops CLI with `uv tool install`. The pin is the `SPEC_OPS_SOURCE` variable in the `Makefile`, the only pin source. CI and AGENTS.md use this target. A command-line override is ignored |
 | `make clean-worktrees` | Cleans up merged and stale git worktrees safely (`ARGS="--dry-run"`) |
 | `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`). Local tool, kept. See the parity record below |
@@ -45,7 +45,7 @@
 | `make build` | Produces production frontend bundle and static Storybook documentation |
 | `make check-ui-manifests` | Fails when a service UI manifest is missing or invalid (ADR-0013, ADR-0015) |
 | `make voice-model-cache` | Downloads the faster-whisper model set by `VOICE_MODEL_SIZE` (default `tiny.en`) into `.cache/voice-models`, then copies it into the running voice-agent pod |
-| `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks. Local tool, kept. See the parity record below |
+| `make prd-audit` | Audits PRD decomposition status, buffer health (6 to 12 refined tasks), and detects epic proposed tasks by the scope rule in the decomposition how-to. Local tool, kept. See the parity record below |
 | `make prd-decompose` | Decomposes PRDs into ADR spikes and vertical slices (`ARGS="--prd PRD-0014"`). Local tool, kept. See the parity record below |
 | `make prd-create` | Scaffolds a new PRD document with frontmatter and registers it. Local tool, kept. See the parity record below |
 | `make prd-sync` | Synchronizes PRD, User Story, and Backlog Priority registries. Local tool, kept. See the parity record below |

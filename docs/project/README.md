@@ -36,7 +36,7 @@ Personas represent the archetypes who interact with Runefoble. They anchor every
 
 ### 2. Product Requirement Records (PRDs) ([`product/`](product/))
 PRDs capture problem statements, scope fences, and checkable outcomes. They never dictate private internal code structures:
-- **Lifecycle Stages**: `idea/` → `shaped/` → `accepted/` → `shipped/`.
+- **Lifecycle Stages**: Idea → Shaped → Accepted → Shipped, recorded in the `status` field and `REGISTRY.md`. Records are stored in `accepted/`; shipped records stay there so backlog links remain valid.
 - **Anatomy**:
   - `Who this is for`: Target personas and use cases.
   - `What the person cannot do today`: Existing friction and shortcomings.

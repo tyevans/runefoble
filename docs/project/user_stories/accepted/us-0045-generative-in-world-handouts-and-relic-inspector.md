@@ -1,7 +1,7 @@
 ---
 id: '0045'
 title: Generative In-World Handouts, Wax Seals and 3D Relic Inspector
-status: Accepted
+status: Shipped
 created: 2026-09-26
 persona: Rowan (The Chronicler & Worldbuilding Artisan)
 feature: FEAT-LRE-02

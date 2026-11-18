@@ -3,7 +3,7 @@
 Product requirement records (PRDs) capture user needs, measurable definitions of success, and scope boundaries.
 Following the project documentation standard:
 - PRDs state **needs and checkable outcomes**, never internal code structures.
-- Records move through four lifecycle directories: `idea/`, `shaped/`, `accepted/`, and `shipped/`.
+- Records move through four lifecycle stages: Idea, Shaped, Accepted, and Shipped. The `status` field and `REGISTRY.md` record the stage. Records are stored in `accepted/`. Shipped records stay in `accepted/` so that backlog links remain valid.
 - A record is considered shaped when it answers the six core questions: who it is for, what they cannot do today, checkable outcomes, non-goals, costs/scale factors, and governing constraints.
 
 ## PRD Pipeline & Decomposition Tooling
