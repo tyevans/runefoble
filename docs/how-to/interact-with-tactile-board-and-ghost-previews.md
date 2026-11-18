@@ -127,3 +127,9 @@ Token ids are global in SpiceDB. A token id must use only letters, digits, and `
 ### Client side
 
 `<runefoble-board>` reads the token from the App Shell `runefoble-auth` context (`@runefoble/ui-core`). It opens the socket with `boardSocketProtocols(token)`. `<runefoble-dm-trap-controls>` and `<runefoble-map-switcher>` send `Authorization: Bearer` from the same context. They no longer send a `campaign_id` query.
+
+### App Shell mount
+
+The App Shell mounts `<runefoble-dm-trap-controls>` and `<runefoble-map-switcher>` in the live tabletop view (`#/campaigns/:campaignId/sessions/:sessionId`). Only a campaign manager (`permissions.manage`) sees them. Both take the session id as `boardId`. A `move-token` dispatch from `<runefoble-board>` sets `targetX` and `targetY` on `<runefoble-dm-trap-controls>` to the destination cell. A `map-switched` event reloads the board from the server.
+
+The App Shell does not load the battlemap list yet. `<runefoble-map-switcher>` therefore shows an empty grid. Loading battlemaps for the switcher is a follow-up.
