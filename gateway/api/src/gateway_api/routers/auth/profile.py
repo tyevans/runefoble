@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Request
-from gateway_api.auth import CurrentPrincipal
+from gateway_api.auth import CallerPrincipal
 from gateway_api.proxy import forward_json
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -30,15 +30,13 @@ class UpdateProfileRequest(BaseModel):
 
 
 @router.get("/api/v1/profile")
-async def get_profile(request: Request, user: CurrentPrincipal) -> Any:
+async def get_profile(request: Request, user: CallerPrincipal) -> Any:
     """Read the caller's profile through the game_session owner."""
     return await forward_json(request, service=SERVICE, method="GET", path=PROFILE)
 
 
 @router.patch("/api/v1/profile")
-async def update_profile(
-    req: UpdateProfileRequest, request: Request, user: CurrentPrincipal
-) -> Any:
+async def update_profile(req: UpdateProfileRequest, request: Request, user: CallerPrincipal) -> Any:
     """Edit the caller's profile in game_session. Only the fields sent are changed."""
     return await forward_json(
         request,

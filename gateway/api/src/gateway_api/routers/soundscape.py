@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Request
-from gateway_api.auth import CurrentPrincipal
+from gateway_api.auth import CallerPrincipal
 from gateway_api.proxy import forward_bytes, forward_json
 from runefoble_platform.service_client import path
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/v1/soundscape", tags=["Soundscape"])
 
 
 @router.post("/cue")
-async def trigger_cue(user: CurrentPrincipal, request: Request) -> Any:
+async def trigger_cue(user: CallerPrincipal, request: Request) -> Any:
     """Trigger a foley cue. The service checks `play` on the session or campaign."""
     return await forward_bytes(
         request,
@@ -31,7 +31,7 @@ async def trigger_cue(user: CurrentPrincipal, request: Request) -> Any:
 
 
 @router.get("/tension")
-async def get_tension(user: CurrentPrincipal, request: Request) -> Any:
+async def get_tension(user: CallerPrincipal, request: Request) -> Any:
     """Read the encounter tension of a session. The query string reaches the owner unchanged."""
     return await forward_json(
         request,
@@ -43,7 +43,7 @@ async def get_tension(user: CurrentPrincipal, request: Request) -> Any:
 
 
 @router.post("/tension/calculate")
-async def calculate_encounter_tension(user: CurrentPrincipal, request: Request) -> Any:
+async def calculate_encounter_tension(user: CallerPrincipal, request: Request) -> Any:
     """Calculate encounter tension and adapt the stems. The service checks session control."""
     return await forward_bytes(
         request,
@@ -54,7 +54,7 @@ async def calculate_encounter_tension(user: CurrentPrincipal, request: Request) 
 
 
 @router.post("/stems/override")
-async def override_soundscape_mood(user: CurrentPrincipal, request: Request) -> Any:
+async def override_soundscape_mood(user: CallerPrincipal, request: Request) -> Any:
     """Force a stem profile. The service checks `run_session` or `manage`."""
     return await forward_bytes(
         request,
@@ -65,7 +65,7 @@ async def override_soundscape_mood(user: CurrentPrincipal, request: Request) -> 
 
 
 @router.post("/duck")
-async def toggle_ducking(user: CurrentPrincipal, request: Request) -> Any:
+async def toggle_ducking(user: CallerPrincipal, request: Request) -> Any:
     """Engage or release WebAudio ducking. The service checks session control."""
     return await forward_bytes(
         request,
@@ -76,7 +76,7 @@ async def toggle_ducking(user: CurrentPrincipal, request: Request) -> Any:
 
 
 @router.get("/leitmotif/{character_id}")
-async def get_leitmotif_profile(character_id: str, user: CurrentPrincipal, request: Request) -> Any:
+async def get_leitmotif_profile(character_id: str, user: CallerPrincipal, request: Request) -> Any:
     """Read a character leitmotif profile. The service owns the route under `/leitmotif/profile`."""
     return await forward_json(
         request,

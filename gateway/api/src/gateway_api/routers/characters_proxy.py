@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Query, Request, status
-from gateway_api.auth import CurrentPrincipal
+from gateway_api.auth import CallerPrincipal
 from gateway_api.campaign_titles import campaign_titles
 from gateway_api.character_models import (
     AssignCampaignRequest,
@@ -41,7 +41,7 @@ async def _respond(request: Request, view: dict) -> CharacterResponse:
 @router.get("/api/v1/characters", response_model=list[CharacterResponse])
 async def list_characters(
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
     campaign_id: Annotated[str | None, Query(alias="campaignId")] = None,
 ) -> list[CharacterResponse]:
     """List the characters the caller may view (character_sheet)."""
@@ -61,7 +61,7 @@ async def list_characters(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_character(
-    req: CreateCharacterRequest, request: Request, user: CurrentPrincipal
+    req: CreateCharacterRequest, request: Request, user: CallerPrincipal
 ) -> CharacterResponse:
     """Create a character. character_sheet records the caller as owner (token subject)."""
     view = await forward_json(
@@ -76,7 +76,7 @@ async def create_character(
 
 @router.get("/api/v1/characters/{character_id}", response_model=CharacterResponse)
 async def get_character(
-    character_id: str, request: Request, user: CurrentPrincipal
+    character_id: str, request: Request, user: CallerPrincipal
 ) -> CharacterResponse:
     """Read one character. character_sheet checks `view`."""
     view = await forward_json(
@@ -90,7 +90,7 @@ async def assign_campaign(
     character_id: str,
     req: AssignCampaignRequest,
     request: Request,
-    user: CurrentPrincipal,
+    user: CallerPrincipal,
 ) -> CharacterResponse:
     """Assign or unassign the campaign. character_sheet checks `edit` and writes the tuple."""
     view = await forward_json(

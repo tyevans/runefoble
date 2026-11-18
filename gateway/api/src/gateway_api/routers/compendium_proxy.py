@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Request
-from gateway_api.auth import CurrentPrincipal
+from gateway_api.auth import CallerPrincipal
 from gateway_api.proxy import forward_bytes, forward_json
 from runefoble_platform.service_client import path
 
@@ -21,7 +21,7 @@ router = APIRouter(tags=["Rules Compendium"])
 
 
 @router.get("/api/v1/compendium/rules/search")
-async def search_rules(request: Request, user: CurrentPrincipal) -> Any:
+async def search_rules(request: Request, user: CallerPrincipal) -> Any:
     """Hybrid rule search. The query string reaches the owner unchanged."""
     return await forward_json(
         request,
@@ -33,7 +33,7 @@ async def search_rules(request: Request, user: CurrentPrincipal) -> Any:
 
 
 @router.get("/api/v1/compendium/monsters/{name}")
-async def get_monster(name: str, request: Request, user: CurrentPrincipal) -> Any:
+async def get_monster(name: str, request: Request, user: CallerPrincipal) -> Any:
     """Monster stat block by name. A `campaign_id` query value reaches the owner unchanged."""
     return await forward_json(
         request,
@@ -45,7 +45,7 @@ async def get_monster(name: str, request: Request, user: CurrentPrincipal) -> An
 
 
 @router.get("/api/v1/compendium/spells/{name}")
-async def get_spell(name: str, request: Request, user: CurrentPrincipal) -> Any:
+async def get_spell(name: str, request: Request, user: CallerPrincipal) -> Any:
     """Spell definition by name."""
     return await forward_json(
         request,
@@ -56,7 +56,7 @@ async def get_spell(name: str, request: Request, user: CurrentPrincipal) -> Any:
 
 
 @router.get("/api/v1/compendium/conditions/{name}")
-async def get_condition(name: str, request: Request, user: CurrentPrincipal) -> Any:
+async def get_condition(name: str, request: Request, user: CallerPrincipal) -> Any:
     """Condition mechanics by name."""
     return await forward_json(
         request,
@@ -67,7 +67,7 @@ async def get_condition(name: str, request: Request, user: CurrentPrincipal) -> 
 
 
 @router.post("/api/v1/compendium/encounters/balance")
-async def balance_encounter(request: Request, user: CurrentPrincipal) -> Any:
+async def balance_encounter(request: Request, user: CallerPrincipal) -> Any:
     """Balance an encounter for a party roster. A campaign-scoped call needs `campaign.play`."""
     return await forward_bytes(
         request,
@@ -78,7 +78,7 @@ async def balance_encounter(request: Request, user: CurrentPrincipal) -> Any:
 
 
 @router.post("/api/v1/compendium/homebrew")
-async def register_homebrew(request: Request, user: CurrentPrincipal) -> Any:
+async def register_homebrew(request: Request, user: CallerPrincipal) -> Any:
     """Register a campaign homebrew rule. The owner checks `manage` or `run_session`."""
     return await forward_bytes(
         request,
@@ -89,7 +89,7 @@ async def register_homebrew(request: Request, user: CurrentPrincipal) -> Any:
 
 
 @router.get("/api/v1/compendium/homebrew/{campaign_id}")
-async def list_homebrew(campaign_id: str, request: Request, user: CurrentPrincipal) -> Any:
+async def list_homebrew(campaign_id: str, request: Request, user: CallerPrincipal) -> Any:
     """List the campaign homebrew rules the caller may view. The owner filters them."""
     return await forward_json(
         request,
