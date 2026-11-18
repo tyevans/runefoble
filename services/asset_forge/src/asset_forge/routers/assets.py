@@ -1,7 +1,8 @@
 """Silo media asset routes: upload, read, stream, download and delete (TASK-0595).
 
-These routes moved from the gateway. The gateway proxies them. Upload and delete need a
-verified bearer token. Reads stay open, as they were before, because the URL carries the id.
+These routes moved from the gateway. The gateway proxies them. Upload, read and delete need a
+verified bearer token. Reads also need `forged_asset.view`. A browser fetches reads with the
+bearer and shows them through a blob URL (TASK-0784).
 Governed by ADR-0001 (SpiceDB object authorization), ADR-0007 and ADR-0015 (c).
 """
 
