@@ -1,7 +1,7 @@
 ---
 id: '0785'
 title: Forged Asset Links Are Signed and Checked Before Reading
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0785: Forged Asset Links Are Signed and Checked Before Reading
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Print forge and forged-image responses return plain Silo object URLs. The `?expires=3600` query is not a signature, so anyone who has a link can read the object with no permission check.

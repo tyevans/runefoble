@@ -1,7 +1,7 @@
 ---
 id: '0674'
 title: Gateway Health Reports Probed Downstream Status
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0674: Gateway Health Reports Probed Downstream Status
 
 ## Status
-Refined. Created from the discovered-defect triage of round 1 (2026-11-17).
+Complete
 
 ## Summary
 The gateway health route lists five downstream services as "operational" with no check. An operator reads a healthy status while a service is down. This task replaces the static strings with probed status.

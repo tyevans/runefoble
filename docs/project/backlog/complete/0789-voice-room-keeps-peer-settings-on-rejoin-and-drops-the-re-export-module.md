@@ -1,7 +1,7 @@
 ---
 id: '0789'
 title: Voice Room Keeps Peer Settings on Rejoin and Drops the Re-Export Module
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,14 +15,14 @@ target_release: 0.9.0
 # TASK-0789: Voice Room Keeps Peer Settings on Rejoin and Drops the Re-Export Module
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 A peer that rejoins with the same peer id loses its mute state and vocal preset. `room.py` says it re-exports names for backward compatibility, which DoR 9 forbids.
 
 ## Problem Statement
 - `services/voice_agent/src/voice_agent/room_aggregate.py` `_on_peer_joined`: resets `is_muted` and the vocal preset fields for an existing peer.
-- `services/voice_agent/src/voice_agent/room.py:1`: re-export module.
+- `services/voice_agent/src/voice_agent/room.py` (removed): re-export module.
 
 ## Documentation & Architecture Review
 - AGENTS.md hard invariants and DoR 9 (no compatibility shims).

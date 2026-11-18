@@ -1,7 +1,7 @@
 ---
 id: '0791'
 title: One Stand-In Policy Model and One Character Sheet URL Setting
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,7 +15,7 @@ target_release: 0.9.0
 # TASK-0791: One Stand-In Policy Model and One Character Sheet URL Setting
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 The gateway keeps a second stand-in policy model with camelCase aliases and an unvalidated `risk_threshold`. game_session and the gateway read the character sheet URL from two different environment names.

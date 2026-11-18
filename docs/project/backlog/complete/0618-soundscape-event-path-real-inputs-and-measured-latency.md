@@ -1,7 +1,7 @@
 ---
 id: '0618'
 title: Soundscape Event Path Derives Tension Inputs From Game State and Measures Leitmotif Latency
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0438
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0618: Soundscape Event Path Derives Tension Inputs From Game State and Measures Leitmotif Latency
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The soundscape event handlers feed tension scoring with constants: `enemy_cr_balance=2.0` and `2.5`, and a party health ratio that is never passed (always 1.0). The leitmotif response reports a fixed `scheduled_latency_ms=45` as if it were measured. This task derives the inputs from encounter and health events and removes the fixed latency claim.

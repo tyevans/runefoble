@@ -1,7 +1,7 @@
 ---
 id: '0786'
 title: Settlement and Outpost Upgrades Have Price Tables and Spend Stored Resources
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0786: Settlement and Outpost Upgrades Have Price Tables and Spend Stored Resources
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 TASK-0778 removed client-set costs. Settlement and West Marches outpost upgrades now record zero cost, because no price table exists. Every upgrade is free.

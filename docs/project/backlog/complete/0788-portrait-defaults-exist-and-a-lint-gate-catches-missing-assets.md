@@ -1,7 +1,7 @@
 ---
 id: '0788'
 title: Portrait Defaults Point at Real Images and a Lint Gate Catches Missing Asset Paths
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -16,7 +16,7 @@ target_release: 0.9.0
 # TASK-0788: Portrait Defaults Point at Real Images and a Lint Gate Catches Missing Asset Paths
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 TASK-0647 fixed the stories, but code and fixtures still default to portrait files that do not exist. No lint step catches a missing `/assets/` path.

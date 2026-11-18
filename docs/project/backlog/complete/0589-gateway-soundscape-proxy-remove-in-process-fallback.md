@@ -1,7 +1,7 @@
 ---
 id: '0589'
 title: Gateway Soundscape Proxy Removes In-Process Fallback and Service Imports
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0436
@@ -20,7 +20,7 @@ target_release: 0.9.0
 # TASK-0589: Gateway Soundscape Proxy Removes In-Process Fallback and Service Imports
 
 ## Status
-Refined
+Complete
 
 ## Summary
 TASK-0436 added the gateway soundscape proxy. The shipped router still runs the `soundscape` package in process when the proxy fails, and it still imports soundscape internals. This task removes both. The gateway forwards to the soundscape service only, through the shared client. The default port is fixed in Helm (TASK-0624), not in code.

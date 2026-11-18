@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- Forged, uploaded and imported map assets no longer return unsigned Silo object URLs. Replies name `/api/v1/assets/{id}?stream=true`, which needs `forged_asset.view` (TASK-0785).
 - Asset reads (`GET /api/v1/assets/{asset_id}`, `/stream`, `/download`) now need a bearer and `forged_asset.view`. Before, any caller could read any asset.
 - A deployed service again refuses to start when its event store is unreachable. The store is built at start-up, not on the first request.
 - Gateway: a proxied 401 from an owning service now keeps its `WWW-Authenticate: Bearer` challenge. `UpstreamReply` carries the header. (TASK-0593 follow-up)
@@ -46,6 +47,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Soundscape party health: `runefoble.events.soundscape.party_health_recorded` records each character's HP ratio in a session. (TASK-0618)
+- Gateway route `POST /api/v1/soundscape/duck` proxies WebAudio ducking to the soundscape service. A down service returns 503. (TASK-0589)
+- `pnpm run lint` in `frontend/` fails when source names an `/assets/` path that no package serves. (TASK-0788)
+- Haven treasury. `POST /settlements/{settlement_id}/deposit` (manager only) adds gold and materials to a settlement. (TASK-0786)
 - Campaign "Asset Forge" tab at `#/campaigns/:campaignId/forge`. The App Shell mounts the battlemap and token forge and the print forge, loaded lazily from `@runefoble/asset-forge-ui`. (TASK-0645)
 - `fetchAssetObjectUrl` and `revokeAssetObjectUrl` in `@runefoble/ui-core` read protected assets with the signed-in bearer. (TASK-0784)
 - `GuardrailName` enumeration in `runefoble_platform`. Stand-in engines report only these names. (TASK-0691)
@@ -104,6 +109,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Tutorial 02 now describes only the results that the running platform returns. Each step shows Available or Not yet available with its blocker. (TASK-0658)
+- The gateway `/healthz` route probes `the_watcher`, `game_session`, `board_state`, `character_sheet`, and `voice_agent` on each request. Each reports `operational`, `degraded`, `unreachable`, or `not_configured`. The top-level status stays `healthy`. The probe timeout is `RUNEFOBLE_GATEWAY_HEALTH_PROBE_TIMEOUT_S`. (TASK-0674)
+- The gateway forwards stand-in guardrail writes raw. character_sheet validates them, so an unknown `risk_threshold` returns 422 from the owner. The gateway's camelCase guardrail model is removed. (TASK-0791)
+- Test helpers wait between Redis readiness probes and report a failed test container removal with the container name. Physics and knockback tests read settled dice, collisions and token positions from the public board state. (TASK-0790)
 - The MCP gateway package now passes mypy. `make lint` runs mypy on `gateway/mcp/src/gateway_mcp`. (TASK-0629)
 - The gateway has one raw-body forwarding path, `forward_bytes`. The removed `forward_raw` no longer exists. (TASK-0783)
 - Test PostgreSQL fixture fails the test on any container start error and skips only when Docker is unavailable. It removes its temp init script on teardown. (TASK-0782)
@@ -1159,6 +1168,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Documentation & Build Navigation**: Featured the Platform Showcase and Changelog in `zensical.toml` and root documentation landing page (`docs/index.md`), and enhanced `scripts/build_docs.py` to synchronize `CHANGELOG.md` to `docs/changelog.md` during documentation compilation.
 
 ### Fixed
+- Voice room: a peer that rejoins with the same peer id keeps its mute state and vocal preset. (TASK-0789)
 - Storybook stories for character roster, character builder modal and session lobby no longer request missing portrait SVGs, which removes the console 404 errors. Portraits are now inline Bauhaus placeholders in `@runefoble/ui-core`. (TASK-0647)
 - Character Sheet write routes answer 503 when the event store is unreachable. Before, they answered 400. No event is published and the character does not change. (TASK-0781)
 - Voice room peers keep their seats through a graceful voice_agent restart. A SIGTERM no longer records `peer_left` for each peer. Peers reconnect with the same `peer_id` and resume. (TASK-0780)

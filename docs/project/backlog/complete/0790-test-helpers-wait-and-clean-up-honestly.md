@@ -1,7 +1,7 @@
 ---
 id: '0790'
 title: Test Helpers Wait Without Spinning, Report Failed Cleanup, and Read Public State
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -15,13 +15,13 @@ target_release: 0.9.0
 # TASK-0790: Test Helpers Wait Without Spinning, Report Failed Cleanup, and Read Public State
 
 ## Status
-Refined. Found during batch 23 integration, 2026-11-17.
+Complete
 
 ## Summary
 Three test hygiene defects: a busy wait, silent cleanup failure, and a physics test that reads private store state.
 
 ## Problem Statement
-- `tests/helpers/redis_container.py:_wait_for_redis`: no sleep when `ping()` returns False.
+- `tests/helpers/redis_container.py` (`_wait_for_redis`): no sleep when `ping()` returns False.
 - `tests/helpers/postgres.py` and `tests/helpers/redis_container.py`: teardown ignores the `docker rm -f` return code.
 - `tests/test_blackbox_tabletop_physics.py:98-148`: reads `store._events` for `DiceSettled` and `PhysicsCollisionOccurred` (Hard Invariant 7).
 
