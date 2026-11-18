@@ -188,17 +188,22 @@ class PlatformSettings(BaseSettings):
     )
 
     # Gateway upstream base URLs. A None value means the gateway has no route to that
-    # service, and a proxy call to it returns 503. game_session reads the character sheet
-    # URL from this same field, so both processes share one variable name. The other names
-    # follow the RUNEFOBLE_<SERVICE>_URL pattern or the names that Helm renders for gateway-api.
+    # service: a proxy call returns 503, and a health probe reports not_configured. game_session
+    # reads the character sheet URL from this same field, so both processes share one variable
+    # name. The names match the variables that the Helm chart renders for gateway-api
+    # (deployments/helm/runefoble/templates/services.yaml).
     game_session_url: str | None = Field(
         default=None, description="Base URL of the game_session service"
     )
     board_state_url: str | None = Field(
-        default=None, description="Base URL of the board_state service"
+        default=None,
+        validation_alias=AliasChoices("RUNEFOBLE_BOARD_STATE_URL"),
+        description="Base URL of the board_state service",
     )
     the_watcher_url: str | None = Field(
-        default=None, description="Base URL of the the_watcher service"
+        default=None,
+        validation_alias=AliasChoices("RUNEFOBLE_WATCHER_URL"),
+        description="Base URL of the the_watcher service",
     )
     character_sheet_url: str | None = Field(
         default=None,
@@ -230,6 +235,12 @@ class PlatformSettings(BaseSettings):
     )
     audience_studio_url: str | None = Field(
         default=None, description="Base URL of the audience_studio service"
+    )
+    # Gateway health probes. Each downstream probe on /healthz waits at most this long.
+    gateway_health_probe_timeout_s: float = Field(
+        default=1.0,
+        gt=0,
+        description="Timeout in seconds for one downstream health probe on the gateway",
     )
 
 
