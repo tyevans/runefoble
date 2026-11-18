@@ -163,9 +163,16 @@ def build_image(row: ImageRow) -> None:
     assert build.returncode == 0, f"docker build failed:\n{build.stderr[-4000:]}"
 
 
+# MCP over streamable HTTP has no OpenAPI document (Hard Invariant 5 exemption, TASK-0623).
+# Its own blackbox suite checks the MCP handshake instead.
+NO_OPENAPI = {"gateway-mcp"}
+
+
 @pytest.mark.docker
 @pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
-@pytest.mark.parametrize("row", read_image_table(), ids=lambda row: row.name)
+@pytest.mark.parametrize(
+    "row", [r for r in read_image_table() if r.name not in NO_OPENAPI], ids=lambda row: row.name
+)
 def test_built_image_serves_openapi_on_helm_port(row: ImageRow):
     """A built image starts and serves `/openapi.json` on its Helm port."""
     build_image(row)

@@ -1,0 +1,56 @@
+{{- /*
+  gateway-mcp: MCP tools over streamable HTTP (TASK-0623). ClusterIP only. The chart adds
+  no ingress rule for it, so the public ingress never reaches the MCP endpoint.
+*/ -}}
+{{- $mcp := .Values.services.gatewayMcp }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-mcp
+  labels:
+    app: gateway-mcp
+spec:
+  replicas: {{ $mcp.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: gateway-mcp
+  template:
+    metadata:
+      labels:
+        app: gateway-mcp
+    spec:
+      containers:
+        - name: gateway-mcp
+          image: {{ $mcp.image }}
+          ports:
+            - containerPort: {{ $mcp.port }}
+          env:
+            - name: BOARD_STATE_URL
+              value: {{ $mcp.boardStateUrl | quote }}
+            - name: CHARACTER_SHEET_URL
+              value: {{ $mcp.characterSheetUrl | quote }}
+            - name: GAME_SESSION_URL
+              value: {{ $mcp.gameSessionUrl | quote }}
+            - name: RULES_COMPENDIUM_URL
+              value: {{ $mcp.rulesCompendiumUrl | quote }}
+            - name: THE_WATCHER_URL
+              value: {{ $mcp.theWatcherUrl | quote }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ $mcp.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-mcp
+  labels:
+    app: gateway-mcp
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ $mcp.port }}
+      targetPort: {{ $mcp.port }}
+  selector:
+    app: gateway-mcp

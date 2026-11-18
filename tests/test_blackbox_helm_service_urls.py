@@ -41,6 +41,7 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
     },
     "CHARACTER_SHEET_URL": {
         "gateway-api": "http://character-sheet:8003",
+        "gateway-mcp": "http://character-sheet:8003",
     },
 }
 

@@ -301,13 +301,18 @@ services:
     # Required when backend is openai_compatible. Empty means no base URL is set.
     openaiCompatibleBaseUrl: ""
   gatewayMcp:
-    # Upstream URLs that MCP tools call over HTTP (BOARD_STATE_URL, CHARACTER_SHEET_URL,
-    # GAME_SESSION_URL, RULES_COMPENDIUM_URL).
-    # No gateway-mcp deployment template exists yet; these values are for that template.
+    # MCP protocol over streamable HTTP at /mcp. ClusterIP only: no ingress path (ADR-0001).
+    # Tools keep their state in memory, so run one replica.
+    image: runefoble/gateway-mcp:0.1.0
+    replicas: 1
+    port: 8012
+    # Upstream URLs that MCP tools call over HTTP. Rendered as BOARD_STATE_URL,
+    # CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL, and THE_WATCHER_URL.
     boardStateUrl: "http://board-state:8002"
     characterSheetUrl: "http://character-sheet:8003"
     gameSessionUrl: "http://game-session:8004"
     rulesCompendiumUrl: "http://rules-compendium:8007"
+    theWatcherUrl: "http://the-watcher:8001"
 
 # Frontend Application
 frontend:

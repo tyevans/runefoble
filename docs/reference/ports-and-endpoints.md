@@ -44,6 +44,7 @@ When running the local development environment via `make dev`, Vite proxies requ
 | `audience-studio` | `8010` | `/openapi.json` |
 | `campaign-analytics` | `8011` | `/openapi.json` |
 | `inference-worker` | `8100` | `/openapi.json` |
+| `gateway-mcp` | `8012` | None. MCP over streamable HTTP at `/mcp`. Exempt from the OpenAPI invariant. ClusterIP only, with no ingress path |
 
 ## Key Microservice Endpoints
 
@@ -303,10 +304,10 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | GET | `/api/v1/soundscape/leitmotif/{character_id}` | Retrieves character musical leitmotif timbre configuration (alias: `/api/v1/soundscape/leitmotif/profile/{character_id}`) |
 | `gateway-api` | POST | `/api/v1/assets/upload` | Uploads binary or base64 assets (battlemap, avatar, audio) to Silo S3 |
 | `gateway-api` | GET | `/api/v1/assets/{asset_id}` | Retrieves or streams stored asset files from Silo S3 storage |
-| `gateway-api` / `gateway-mcp` | GET/POST | `/mcp/tools` | Lists or registers dynamic FastMCP tools with JSON schema and sandboxing (alias: `/api/v1/mcp/tools`) |
-| `gateway-api` / `gateway-mcp` | GET/PUT/DELETE | `/mcp/tools/{name}` | Inspects, updates, or deregisters runtime FastMCP tools without server restarts |
-| `gateway-api` / `gateway-mcp` | POST | `/mcp/tools/{name}/execute` | Executes sandboxed dynamic FastMCP tool directly |
-| `gateway-mcp` | MCP | `Dynamic & Static Tools` | Tabletop tools (`execute_agent_action_plan`, `cast_spell`, `modify_character_hp`, dynamic registry, etc.) and dynamic resource `session://{session_id}/state` |
+| `gateway-api` | GET/POST | `/mcp/tools` | Lists or registers dynamic FastMCP tools with JSON schema and sandboxing (alias: `/api/v1/mcp/tools`) |
+| `gateway-api` | GET/PUT/DELETE | `/mcp/tools/{name}` | Inspects, updates, or deregisters runtime FastMCP tools without server restarts |
+| `gateway-api` | POST | `/mcp/tools/{name}/execute` | Executes sandboxed dynamic FastMCP tool directly |
+| `gateway-mcp` | MCP | `http://gateway-mcp:8012/mcp` (streamable HTTP) | Tabletop tools (`execute_agent_action_plan`, `cast_spell`, `modify_character_hp`, etc.) and resources `session://{session_id}/state` and `encounter://{session_id}/current`. Reached only inside the cluster. The caller sends its bearer on each MCP request |
 | `inference-worker` | GET | `/healthz` | Liveness and readiness check. Reports the active backend and model names. Also served at `/health` |
 | `inference-worker` | POST | `/inference/v1/intent` | Parses a natural speech transcript into a `ParsedAction` list (`IntentParseResponse`) |
 | `inference-worker` | POST | `/inference/v1/dm-narration` | Generates DM narration and rulings (`DMNarrationResponse`) |
