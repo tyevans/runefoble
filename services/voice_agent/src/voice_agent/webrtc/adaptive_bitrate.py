@@ -25,7 +25,11 @@ TIER_PROFILES: dict[str, OpusCodecParameters] = {
 
 
 class AdaptiveBitrateRegulator:
-    """Dynamically steps Opus audio parameters down to 16kHz mono (<50 kbps) under packet loss."""
+    """Dynamically steps Opus audio parameters down to 16kHz mono (<50 kbps) under packet loss.
+
+    The regulator holds thresholds only. The caller passes the current parameters and stores the
+    result in the room aggregate (TASK-0577).
+    """
 
     def __init__(
         self,
@@ -42,21 +46,17 @@ class AdaptiveBitrateRegulator:
         self.rtt_threshold_ms = rtt_threshold_ms
         self.severe_rtt_threshold_ms = severe_rtt_threshold_ms
         self.recovery_rtt_threshold_ms = recovery_rtt_threshold_ms
-        self._states: dict[tuple[str, str], OpusCodecParameters] = {}
-
-    def get_current_params(self, session_id: str, peer_id: str) -> OpusCodecParameters:
-        """Get active Opus encoder parameters for given peer, defaulting to standard."""
-        return self._states.get((session_id, peer_id), TIER_PROFILES["standard"].model_copy())
 
     def regulate(
         self,
-        session_id: str,
-        peer_id: str,
+        current: OpusCodecParameters,
         packet_loss: float,
         rtt_ms: float = 0.0,
     ) -> tuple[OpusCodecParameters, bool, str]:
-        """Evaluate network conditions and adjust Opus codec parameters."""
-        current = self.get_current_params(session_id, peer_id)
+        """Evaluate network conditions against the current parameters.
+
+        Returns the parameters to use, whether they changed, and the reason.
+        """
 
         if packet_loss >= self.severe_loss_threshold or rtt_ms >= self.severe_rtt_threshold_ms:
             target_key = "ultra_low"
@@ -88,20 +88,9 @@ class AdaptiveBitrateRegulator:
             or target.complexity != current.complexity
             or target.codec_mode != current.codec_mode
         )
-        if changed:
-            self._states[(session_id, peer_id)] = target
-        return target, changed, reason
-
-    def reset(self, session_id: str | None = None, peer_id: str | None = None) -> None:
-        """Reset codec state for specific peer or session."""
-        if session_id and peer_id:
-            self._states.pop((session_id, peer_id), None)
-        elif session_id:
-            keys = [k for k in self._states if k[0] == session_id]
-            for k in keys:
-                self._states.pop(k, None)
-        else:
-            self._states.clear()
+        if not changed:
+            return current, False, reason
+        return target, True, reason
 
 
 __all__ = ["TIER_PROFILES", "AdaptiveBitrateRegulator", "OpusCodecParameters"]

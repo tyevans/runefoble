@@ -5,6 +5,7 @@ Event-sourced aggregate managing WebRTC voice room peers and audio states (Hard 
 
 from __future__ import annotations
 
+import time
 from datetime import UTC, datetime
 from typing import Any
 from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
@@ -20,7 +21,19 @@ from runefoble_events.voice import (
     VoicePeerJoined,
     VoicePeerLeft,
     VoicePeerMuteToggled,
+    VoicePeerTelemetryRecorded,
 )
+from runefoble_events.voice_playback import (
+    VoicePlaybackAttenuated,
+    VoicePlaybackStarted,
+    VoicePlaybackStopped,
+)
+from runefoble_events.voice_stream_quality import (
+    VoiceStreamCodecAdaptedEvent,
+    VoiceStreamQualityMeasured,
+)
+from voice_agent.webrtc.adaptive_bitrate import TIER_PROFILES, OpusCodecParameters
+from voice_agent.webrtc.quality_monitor import QualityMetrics
 
 
 def to_uuid(val: str | UUID | None) -> UUID:
@@ -51,10 +64,36 @@ class VoicePeerState(BaseModel):
     dsp_filters: list[str] = Field(default_factory=list)
 
 
+class VoicePlaybackState(BaseModel):
+    """TTS narration that is playing in the room. Cleared by a playback stop event."""
+
+    session_id: str
+    playback_id: str
+    original_text: str
+    duration_ms: float
+    started_at: float
+
+
+class PeerStreamState(BaseModel):
+    """Latest RTCP quality measurement and Opus codec parameters for one peer."""
+
+    packet_loss: float = 0.0
+    rtt_ms: float = 0.0
+    jitter_ms: float = 0.0
+    is_degraded: bool = False
+    severity: str = "nominal"
+    detection_latency_ms: float = 0.0
+    codec: OpusCodecParameters = Field(
+        default_factory=lambda: TIER_PROFILES["standard"].model_copy()
+    )
+
+
 class VoiceRoomState(BaseModel):
     session_id: str
     peers: dict[str, VoicePeerState] = Field(default_factory=dict)
     active: bool = True
+    playback: VoicePlaybackState | None = None
+    streams: dict[str, PeerStreamState] = Field(default_factory=dict)
 
 
 class VoiceRoomAggregate(DeclarativeAggregate[VoiceRoomState]):
@@ -114,6 +153,189 @@ class VoiceRoomAggregate(DeclarativeAggregate[VoiceRoomState]):
             filter_name=filter_name,
             **kwargs,
         )
+
+    def start_playback(
+        self, session_id: str, playback_id: str, original_text: str, duration_ms: float
+    ) -> VoicePlaybackStarted:
+        return self.create_event(
+            VoicePlaybackStarted,
+            session_id=session_id,
+            playback_id=playback_id,
+            original_text=original_text,
+            duration_ms=duration_ms,
+            started_at=time.time(),
+        )
+
+    def attenuate_playback(
+        self,
+        session_id: str,
+        playback_id: str,
+        speaker_id: str,
+        speaker_name: str,
+        cutoff_position_ms: float,
+        remaining_narration_text: str,
+    ) -> VoicePlaybackAttenuated:
+        return self.create_event(
+            VoicePlaybackAttenuated,
+            session_id=session_id,
+            playback_id=playback_id,
+            speaker_id=speaker_id,
+            speaker_name=speaker_name,
+            cutoff_position_ms=cutoff_position_ms,
+            remaining_narration_text=remaining_narration_text,
+        )
+
+    def stop_playback(
+        self, session_id: str, playback_id: str, reason: str = "player_barge_in"
+    ) -> VoicePlaybackStopped:
+        return self.create_event(
+            VoicePlaybackStopped, session_id=session_id, playback_id=playback_id, reason=reason
+        )
+
+    def measure_stream(
+        self, session_id: str, peer_id: str, user_id: str | None, metrics: QualityMetrics
+    ) -> VoiceStreamQualityMeasured:
+        return self.create_event(
+            VoiceStreamQualityMeasured,
+            session_id=session_id,
+            peer_id=peer_id,
+            user_id=user_id,
+            packet_loss=metrics.packet_loss,
+            rtt_ms=metrics.rtt_ms,
+            jitter_ms=metrics.jitter_ms,
+            is_degraded=metrics.is_degraded,
+            severity=metrics.severity,
+            detection_latency_ms=metrics.detection_latency_ms,
+        )
+
+    def adapt_stream_codec(
+        self,
+        session_id: str,
+        peer_id: str,
+        user_id: str | None,
+        previous: OpusCodecParameters,
+        current: OpusCodecParameters,
+        reason: str,
+    ) -> VoiceStreamCodecAdaptedEvent:
+        return self.create_event(
+            VoiceStreamCodecAdaptedEvent,
+            session_id=session_id,
+            peer_id=peer_id,
+            user_id=user_id,
+            previous_bitrate_kbps=previous.bitrate_kbps,
+            new_bitrate_kbps=current.bitrate_kbps,
+            sample_rate=current.sample_rate,
+            channels=current.channels,
+            complexity=current.complexity,
+            fec_enabled=current.fec_enabled,
+            dtx_enabled=current.dtx_enabled,
+            codec_mode=current.codec_mode,
+            reason=reason,
+        )
+
+    def record_telemetry(
+        self,
+        session_id: str,
+        peer_id: str,
+        audio_level: float | None,
+        latency_ms: float | None,
+        is_speaking: bool | None,
+    ) -> VoicePeerTelemetryRecorded:
+        return self.create_event(
+            VoicePeerTelemetryRecorded,
+            session_id=session_id,
+            peer_id=peer_id,
+            audio_level=audio_level,
+            latency_ms=latency_ms,
+            is_speaking=is_speaking,
+        )
+
+    def current_playback(self) -> VoicePlaybackState | None:
+        return self._state.playback if self._state else None
+
+    def stream_states(self) -> dict[str, PeerStreamState]:
+        return self._streams()
+
+    def stream_codec(self, peer_id: str) -> OpusCodecParameters:
+        """Current Opus parameters for a peer. The standard profile applies until it adapts."""
+        stream = self._state.streams.get(peer_id) if self._state else None
+        return stream.codec if stream else TIER_PROFILES["standard"].model_copy()
+
+    def _stream_for(self, peer_id: str) -> PeerStreamState:
+        stream = self._state.streams.get(peer_id) if self._state else None
+        return stream or PeerStreamState()
+
+    def _with_state(self, session_id: str, **updates: Any) -> None:
+        base = self._state or VoiceRoomState(session_id=session_id, peers={})
+        self._state = base.model_copy(update=updates)
+
+    @handles(VoicePlaybackStarted)
+    def _on_playback_started(self, event: VoicePlaybackStarted) -> None:
+        playback = VoicePlaybackState(
+            session_id=event.session_id,
+            playback_id=event.playback_id,
+            original_text=event.original_text,
+            duration_ms=event.duration_ms,
+            started_at=event.started_at,
+        )
+        self._with_state(event.session_id, playback=playback)
+
+    @handles(VoicePlaybackAttenuated)
+    def _on_playback_attenuated(self, event: VoicePlaybackAttenuated) -> None:
+        """Record only. The playback ends with the stop event that follows it."""
+
+    @handles(VoicePlaybackStopped)
+    def _on_playback_stopped(self, event: VoicePlaybackStopped) -> None:
+        playback = self.current_playback()
+        if playback is not None and playback.playback_id == event.playback_id:
+            self._state = self.state.model_copy(update={"playback": None})
+
+    @handles(VoiceStreamQualityMeasured)
+    def _on_stream_measured(self, event: VoiceStreamQualityMeasured) -> None:
+        stream = self._stream_for(event.peer_id).model_copy(
+            update={
+                "packet_loss": event.packet_loss,
+                "rtt_ms": event.rtt_ms,
+                "jitter_ms": event.jitter_ms,
+                "is_degraded": event.is_degraded,
+                "severity": event.severity,
+                "detection_latency_ms": event.detection_latency_ms,
+            }
+        )
+        self._with_state(event.session_id, streams={**self._streams(), event.peer_id: stream})
+
+    @handles(VoiceStreamCodecAdaptedEvent)
+    def _on_codec_adapted(self, event: VoiceStreamCodecAdaptedEvent) -> None:
+        codec = OpusCodecParameters(
+            sample_rate=event.sample_rate,
+            channels=event.channels,
+            bitrate_kbps=event.new_bitrate_kbps,
+            complexity=event.complexity,
+            fec_enabled=event.fec_enabled,
+            dtx_enabled=event.dtx_enabled,
+            codec_mode=event.codec_mode,
+        )
+        stream = self._stream_for(event.peer_id).model_copy(update={"codec": codec})
+        self._with_state(event.session_id, streams={**self._streams(), event.peer_id: stream})
+
+    @handles(VoicePeerTelemetryRecorded)
+    def _on_telemetry_recorded(self, event: VoicePeerTelemetryRecorded) -> None:
+        if self._state and event.peer_id in self.state.peers:
+            updates = {
+                k: v
+                for k, v in {
+                    "audio_level": event.audio_level,
+                    "latency_ms": event.latency_ms,
+                    "is_speaking": event.is_speaking,
+                }.items()
+                if v is not None
+            }
+            peers = dict(self.state.peers)
+            peers[event.peer_id] = peers[event.peer_id].model_copy(update=updates)
+            self._state = self.state.model_copy(update={"peers": peers})
+
+    def _streams(self) -> dict[str, PeerStreamState]:
+        return dict(self._state.streams) if self._state else {}
 
     @handles(VoicePeerJoined)
     def _on_peer_joined(self, event: VoicePeerJoined) -> None:

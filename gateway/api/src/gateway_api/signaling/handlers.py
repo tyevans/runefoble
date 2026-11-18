@@ -112,7 +112,7 @@ async def handle_telemetry(
     manager: WebRTCSignalingManager,
 ) -> None:
     """Update participant audio telemetry and broadcast to peers."""
-    manager.coordinator.update_telemetry(
+    await manager.coordinator.update_telemetry(
         session_id=state.session_id,
         peer_id=state.peer_id,
         audio_level=data.get("audio_level"),
