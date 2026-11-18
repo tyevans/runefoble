@@ -1,6 +1,6 @@
 """Lore domain events for Runefoble worldbuilding and redstring knowledge graph indexing."""
 
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID
 
 from pydantic import Field
@@ -8,11 +8,13 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.lore.document_ingested")
 class LoreDocumentIngested(BaseRunefobleEvent):
     """Emitted when a new campaign lore markdown/text document is ingested into the knowledge base."""
 
-    event_type: str = "LoreDocumentIngested"
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.document_ingested"
+
     document_id: UUID = Field(description="Unique document aggregate identifier")
     campaign_id: UUID = Field(description="Campaign to which the lore belongs")
     title: str = Field(description="Title or heading of the lore document")
@@ -24,11 +26,13 @@ class LoreDocumentIngested(BaseRunefobleEvent):
     )
 
 
-@register_event
+@register_event("runefoble.events.lore.entities_extracted")
 class EntitiesExtracted(BaseRunefobleEvent):
     """Emitted when entities and relationships are extracted from a lore document via redstring."""
 
-    event_type: str = "EntitiesExtracted"
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.entities_extracted"
+
     document_id: UUID = Field(description="Source document aggregate identifier")
     campaign_id: UUID = Field(description="Campaign to which the lore belongs")
     entities: list[dict[str, Any]] = Field(
@@ -39,11 +43,13 @@ class EntitiesExtracted(BaseRunefobleEvent):
     )
 
 
-@register_event
+@register_event("runefoble.events.lore.aliases_consolidated")
 class AliasesConsolidated(BaseRunefobleEvent):
     """Emitted when synonymous entity titles and aliases are consolidated into canonical nodes."""
 
-    event_type: str = "AliasesConsolidated"
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.aliases_consolidated"
+
     campaign_id: UUID = Field(description="Campaign to which the lore belongs")
     canonical_entity_id: UUID = Field(description="Canonical entity UUID")
     canonical_name: str = Field(description="Canonical name of the entity")
@@ -57,9 +63,12 @@ class AliasesConsolidated(BaseRunefobleEvent):
     )
 
 
-@register_event
+@register_event("runefoble.events.lore.handout_generated")
 class HandoutGenerated(BaseRunefobleEvent):
     """Emitted when a diegetic handout (letter, decree, bounty, scroll) is forged."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.handout_generated"
 
     aggregate_type: str = "DiegeticHandout"
     handout_id: UUID = Field(description="Unique handout aggregate identifier")
@@ -89,9 +98,12 @@ class HandoutGenerated(BaseRunefobleEvent):
     )
 
 
-@register_event
+@register_event("runefoble.events.lore.wax_seal_broken")
 class WaxSealBroken(BaseRunefobleEvent):
     """Emitted when a player or DM breaks the wax seal on a diegetic handout."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.wax_seal_broken"
 
     aggregate_type: str = "DiegeticHandout"
     handout_id: UUID = Field(description="Unique handout aggregate identifier")
@@ -105,9 +117,12 @@ class WaxSealBroken(BaseRunefobleEvent):
     revealed_content_preview: str = Field(default="", description="Snippet of revealed text")
 
 
-@register_event
+@register_event("runefoble.events.lore.invisible_ink_revealed")
 class InvisibleInkRevealed(BaseRunefobleEvent):
     """Emitted when hidden runes or text are revealed via UV torchlight cursor."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.invisible_ink_revealed"
 
     aggregate_type: str = "DiegeticHandout"
     handout_id: UUID = Field(description="Unique handout aggregate identifier")
@@ -117,9 +132,12 @@ class InvisibleInkRevealed(BaseRunefobleEvent):
     uv_intensity: float = Field(default=1.0, description="UV intensity ratio")
 
 
-@register_event
+@register_event("runefoble.events.lore.relic_forged")
 class RelicForged(BaseRunefobleEvent):
     """Emitted when a 3D interactive relic is forged or added to the campaign lore."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.relic_forged"
 
     aggregate_type: str = "Relic"
     relic_id: UUID = Field(description="Unique relic aggregate identifier")
@@ -146,9 +164,12 @@ class RelicForged(BaseRunefobleEvent):
     )
 
 
-@register_event
+@register_event("runefoble.events.lore.relic_inspected")
 class RelicInspected(BaseRunefobleEvent):
     """Emitted when a player rotates, examines, and inspects an interactive 3D relic."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.relic_inspected"
 
     aggregate_type: str = "Relic"
     relic_id: UUID = Field(description="Unique relic aggregate identifier")
@@ -165,9 +186,12 @@ class RelicInspected(BaseRunefobleEvent):
     inspection_notes: str | None = Field(default=None, description="Observations or lore recorded")
 
 
-@register_event
+@register_event("runefoble.events.lore.relic_rune_translated")
 class RelicRuneTranslated(BaseRunefobleEvent):
     """Emitted when an ancient rune on a relic is translated or deciphered."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.relic_rune_translated"
 
     aggregate_type: str = "Relic"
     relic_id: UUID = Field(description="Unique relic aggregate identifier")
@@ -178,12 +202,14 @@ class RelicRuneTranslated(BaseRunefobleEvent):
     translation: str = Field(description="Deciphered meaning or spell incantation")
 
 
-@register_event
+@register_event("runefoble.events.lore.atlas_pin_created")
 class AtlasPinCreated(BaseRunefobleEvent):
     """Emitted when a geographical milestone pin is placed on the campaign world atlas."""
 
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.atlas_pin_created"
+
     aggregate_type: str = "Atlas"
-    event_type: str = "AtlasPinCreated"
     pin_id: UUID = Field(description="Unique identifier for the atlas pin")
     campaign_id: UUID = Field(description="Campaign to which the atlas belongs")
     title: str = Field(description="Title or label of the milestone pin")
@@ -203,12 +229,14 @@ class AtlasPinCreated(BaseRunefobleEvent):
     )
 
 
-@register_event
+@register_event("runefoble.events.lore.atlas_pin_updated")
 class AtlasPinUpdated(BaseRunefobleEvent):
     """Emitted when an atlas milestone pin properties are updated."""
 
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.atlas_pin_updated"
+
     aggregate_type: str = "Atlas"
-    event_type: str = "AtlasPinUpdated"
     pin_id: UUID = Field(description="Unique identifier for the atlas pin")
     campaign_id: UUID = Field(description="Campaign to which the atlas belongs")
     title: str | None = None
@@ -219,12 +247,14 @@ class AtlasPinUpdated(BaseRunefobleEvent):
     metadata: dict[str, Any] | None = None
 
 
-@register_event
+@register_event("runefoble.events.lore.atlas_layer_toggled")
 class AtlasLayerToggled(BaseRunefobleEvent):
     """Emitted when an atlas map layer visibility or active level is toggled."""
 
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.atlas_layer_toggled"
+
     aggregate_type: str = "Atlas"
-    event_type: str = "AtlasLayerToggled"
     campaign_id: UUID = Field(description="Campaign to which the atlas belongs")
     layer: str = Field(
         description="Layer toggled (continental, regional, municipal, contested_boundaries)"
@@ -233,12 +263,14 @@ class AtlasLayerToggled(BaseRunefobleEvent):
     toggled_by: str | None = Field(default=None, description="User who toggled the layer")
 
 
-@register_event
+@register_event("runefoble.events.lore.atlas_territory_updated")
 class AtlasTerritoryUpdated(BaseRunefobleEvent):
     """Emitted when a geopolitical territory boundary polygon or ownership is created or updated."""
 
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.atlas_territory_updated"
+
     aggregate_type: str = "Atlas"
-    event_type: str = "AtlasTerritoryUpdated"
     territory_id: UUID = Field(description="Unique territory identifier")
     campaign_id: UUID = Field(description="Campaign to which the territory belongs")
     name: str = Field(description="Territory or realm name")
@@ -256,12 +288,14 @@ class AtlasTerritoryUpdated(BaseRunefobleEvent):
     )
 
 
-@register_event
+@register_event("runefoble.events.lore.codex_entry_published")
 class CodexEntryPublished(BaseRunefobleEvent):
     """Emitted when a collaborative party codex entry is drafted, published, or revised."""
 
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.codex_entry_published"
+
     aggregate_type: str = "Codex"
-    event_type: str = "CodexEntryPublished"
     entry_id: UUID = Field(description="Unique codex entry aggregate identifier")
     campaign_id: UUID = Field(description="Campaign to which the codex entry belongs")
     title: str = Field(description="Codex entry title")
@@ -280,12 +314,14 @@ class CodexEntryPublished(BaseRunefobleEvent):
     )
 
 
-@register_event
+@register_event("runefoble.events.lore.codex_entry_updated")
 class CodexEntryUpdated(BaseRunefobleEvent):
     """Emitted when an existing codex entry content or privacy status is updated."""
 
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.lore.codex_entry_updated"
+
     aggregate_type: str = "Codex"
-    event_type: str = "CodexEntryUpdated"
     entry_id: UUID = Field(description="Unique codex entry aggregate identifier")
     campaign_id: UUID = Field(description="Campaign to which the codex entry belongs")
     title: str | None = None

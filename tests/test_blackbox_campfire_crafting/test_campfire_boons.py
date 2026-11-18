@@ -86,7 +86,10 @@ def test_blackbox_stronghold_campsite_progression(session_client: TestClient, mo
     assert any("Rest Healing" in b for b in active_boons)
 
     entries = mock_bus.streams.get(STREAM_STRONGHOLD, [])
-    assert any("StrongholdUpgraded" in entry[1].get("event_type", "") for entry in entries)
+    assert any(
+        "runefoble.events.downtime.stronghold_upgraded" in entry[1].get("event_type", "")
+        for entry in entries
+    )
 
 
 def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient, mock_bus):
@@ -135,7 +138,10 @@ def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient,
     assert any("Passive Perception" in b for b in boons)
 
     entries = mock_bus.streams.get(STREAM_SESSION, [])
-    assert any("CampfireRestCompleted" in entry[1].get("event_type", "") for entry in entries)
+    assert any(
+        "runefoble.events.downtime.campfire_rest_completed" in entry[1].get("event_type", "")
+        for entry in entries
+    )
 
 
 def _owned_campaign(client) -> str:

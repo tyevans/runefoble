@@ -119,7 +119,7 @@ async def test_handle_domain_event_dispatch() -> None:
     # 4. TokenPlaced CloudEvent
     tok_id = f"tok-{uuid4().hex[:6]}"
     evt_tok = {
-        "type": "TokenPlaced",
+        "type": "runefoble.events.board.token_placed",
         "data": {
             "token_id": tok_id,
             "character_id": str(char_id),
@@ -131,7 +131,7 @@ async def test_handle_domain_event_dispatch() -> None:
 
     # 5. CloudEvent dict payload
     dict_event = {
-        "type": "SessionCreated",
+        "type": "runefoble.events.session.created",
         "data": {
             "campaign_id": f"camp-dict-{uuid4().hex[:6]}",
             "dm_id": "dict_dm",
@@ -143,7 +143,7 @@ async def test_handle_domain_event_dispatch() -> None:
 
     # 6. Unknown event type returns empty list
     assert await service.handle_domain_event({"type": "UnknownEvent"}) == []
-    assert extract_event_type({"type": "org.runefoble.CustomEvent"}) == "CustomEvent"
+    assert extract_event_type({"type": "org.runefoble.CustomEvent"}) == "org.runefoble.CustomEvent"
 
 
 @pytest.mark.asyncio

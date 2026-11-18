@@ -8,8 +8,11 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.character.created")
 class CharacterCreated(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.created"
+
     aggregate_type: str = "CharacterSheet"
     name: str
     character_class: str
@@ -33,9 +36,12 @@ class CharacterCreated(BaseRunefobleEvent):
     )
 
 
-@register_event
+@register_event("runefoble.events.character.health_changed")
 class CharacterHealthChanged(BaseRunefobleEvent):
     """HP change for one character. session_id is None when no session is in play."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.health_changed"
 
     aggregate_type: str = "CharacterSheet"
     session_id: str | None = None
@@ -46,8 +52,11 @@ class CharacterHealthChanged(BaseRunefobleEvent):
     source: str = "damage"
 
 
-@register_event
+@register_event("runefoble.events.character.absence_penalty_applied")
 class AbsencePenaltyApplied(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.absence_penalty_applied"
+
     aggregate_type: str = "CharacterSheet"
     penalty_type: Literal["drunk", "foolishness", "cowardice", "greed", "curse"]
     description: str
@@ -57,14 +66,20 @@ class AbsencePenaltyApplied(BaseRunefobleEvent):
 PlayerAbsenteePenalized = AbsencePenaltyApplied
 
 
-@register_event
+@register_event("runefoble.events.character.absence_penalty_cleared")
 class AbsencePenaltyCleared(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.absence_penalty_cleared"
+
     aggregate_type: str = "CharacterSheet"
     penalty_type: str
 
 
-@register_event
+@register_event("runefoble.events.character.item_added_to_inventory")
 class ItemAddedToInventory(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.item_added_to_inventory"
+
     aggregate_type: str = "CharacterSheet"
     item_id: str
     name: str
@@ -72,30 +87,42 @@ class ItemAddedToInventory(BaseRunefobleEvent):
     weight_lbs: float = 0.0
 
 
-@register_event
+@register_event("runefoble.events.character.item_removed_from_inventory")
 class ItemRemovedFromInventory(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.item_removed_from_inventory"
+
     aggregate_type: str = "CharacterSheet"
     item_id: str
     quantity: int = 1
 
 
-@register_event
+@register_event("runefoble.events.character.equipment_slot_updated")
 class EquipmentSlotUpdated(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.equipment_slot_updated"
+
     aggregate_type: str = "CharacterSheet"
     slot: str
     item_name: str | None = None
 
 
-@register_event
+@register_event("runefoble.events.character.condition_applied")
 class ConditionApplied(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.condition_applied"
+
     aggregate_type: str = "CharacterSheet"
     condition: str
     duration_rounds: int | None = None
     source: str = ""
 
 
-@register_event
+@register_event("runefoble.events.character.condition_removed")
 class ConditionRemoved(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.character.condition_removed"
+
     aggregate_type: str = "CharacterSheet"
     condition: str
 
@@ -281,15 +308,15 @@ class CharacterPortraitUpdated(BaseRunefobleEvent):
 PortraitAssigned = CharacterPortraitUpdated
 
 
-@register_event("runefoble.events.character.assigned_to_campaign")
-@register_event("character.assigned_to_campaign", schema_version=1)
+@register_event("runefoble.events.character.assigned_to_campaign", schema_version=1)
 class CharacterAssignedToCampaign(BaseRunefobleEvent):
     """Emitted when a character is assigned to or unassigned from a campaign."""
+
+    event_type: str = "runefoble.events.character.assigned_to_campaign"
 
     suppress_event_type_warning: ClassVar[bool] = True
     aggregate_type: str = "CharacterSheet"
     aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "character.assigned_to_campaign"
     character_id: str = ""
     campaign_id: str | None = None
     assigned_by: str = ""

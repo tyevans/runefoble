@@ -36,7 +36,10 @@ def test_blackbox_alchemical_crafting_volatile_mishap(char_client: TestClient, m
     assert char_res.json()["current_hp"] == result["character_current_hp"]
 
     entries = mock_bus.streams.get(STREAM_CRAFTING, [])
-    assert any("CraftingMishapOccurred" in entry[1].get("event_type", "") for entry in entries)
+    assert any(
+        "runefoble.events.downtime.crafting_mishap_occurred" in entry[1].get("event_type", "")
+        for entry in entries
+    )
 
 
 def test_blackbox_volatile_mishap_threshold_and_setback(char_client: TestClient, mock_bus):
@@ -69,5 +72,9 @@ def test_blackbox_volatile_mishap_threshold_and_setback(char_client: TestClient,
         assert data["mishap"]["condition"] in char_data["conditions"]
 
     entries = mock_bus.streams.get(STREAM_CRAFTING, [])
-    mishap_events = [e for e in entries if "CraftingMishapOccurred" in e[1].get("event_type", "")]
+    mishap_events = [
+        e
+        for e in entries
+        if "runefoble.events.downtime.crafting_mishap_occurred" in e[1].get("event_type", "")
+    ]
     assert len(mishap_events) >= 1

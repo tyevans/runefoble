@@ -7,7 +7,7 @@ decided by the command, so replaying events yields the same table state.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -15,9 +15,12 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.tavern.table_opened")
 class TableOpened(BaseRunefobleEvent):
     """Fired when a minigame table is opened for an establishment."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.table_opened"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -26,9 +29,12 @@ class TableOpened(BaseRunefobleEvent):
     game_type: str = "darts"
 
 
-@register_event
+@register_event("runefoble.events.tavern.table_player_seated")
 class TablePlayerSeated(BaseRunefobleEvent):
     """Fired when a player takes a seat at an open minigame table."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.table_player_seated"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -40,9 +46,12 @@ class TablePlayerSeated(BaseRunefobleEvent):
     dice: list[int] = Field(default_factory=list)
 
 
-@register_event
+@register_event("runefoble.events.tavern.table_bet_placed")
 class TableBetPlaced(BaseRunefobleEvent):
     """Fired when a seated player places a wager on the table."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.table_bet_placed"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -53,9 +62,12 @@ class TableBetPlaced(BaseRunefobleEvent):
     target: Any = None
 
 
-@register_event
+@register_event("runefoble.events.tavern.dart_thrown")
 class DartThrown(BaseRunefobleEvent):
     """Fired when a seated player throws a dart in a 501 game."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.dart_thrown"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -69,9 +81,12 @@ class DartThrown(BaseRunefobleEvent):
     payout: int = 0
 
 
-@register_event
+@register_event("runefoble.events.tavern.table_bid_placed")
 class TableBidPlaced(BaseRunefobleEvent):
     """Fired when a player raises the Liar's Dice bid at a table."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.table_bid_placed"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -82,9 +97,12 @@ class TableBidPlaced(BaseRunefobleEvent):
     next_turn_index: int = 0
 
 
-@register_event
+@register_event("runefoble.events.tavern.table_challenge_resolved")
 class TableChallengeResolved(BaseRunefobleEvent):
     """Fired when a Liar's Dice bid is challenged and the loser loses a die."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.table_challenge_resolved"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -99,9 +117,12 @@ class TableChallengeResolved(BaseRunefobleEvent):
     payout: int = 0
 
 
-@register_event
+@register_event("runefoble.events.tavern.roulette_spun")
 class RouletteSpun(BaseRunefobleEvent):
     """Fired when the roulette wheel is spun and bets are settled."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.roulette_spun"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -111,9 +132,12 @@ class RouletteSpun(BaseRunefobleEvent):
     payouts: dict[str, int] = Field(default_factory=dict)
 
 
-@register_event
+@register_event("runefoble.events.tavern.craps_rolled")
 class CrapsRolled(BaseRunefobleEvent):
     """Fired when the craps dice are tumbled and the point phase is evaluated."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.craps_rolled"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)

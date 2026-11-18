@@ -88,7 +88,7 @@ def test_next_turn_publishes_turn_advanced_once_to_session_stream(
 
     assert res.status_code == 200, res.text
     types = _published_event_types(stream_redis, session_id)
-    assert types.count("TurnAdvanced") == 1
+    assert types.count("runefoble.events.session.turn_advanced") == 1
 
 
 def test_dice_roll_for_unknown_session_returns_not_found(
@@ -122,7 +122,7 @@ def test_lobby_readiness_toggle_is_returned_by_session_state(
     assert state.status_code == 200
     assert state.json()["lobby_readiness"] == {"test-user": True}
     types = _published_event_types(stream_redis, session_id)
-    assert types.count("ReadinessToggled") == 1
+    assert types.count("runefoble.events.session.readiness_toggled") == 1
 
 
 def _owned_campaign(client) -> str:

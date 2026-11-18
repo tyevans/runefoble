@@ -95,9 +95,11 @@ def test_haggle_on_new_merchant_creates_merchant_before_negotiating(
     assert body["outcome"] == "countered"
 
     types = _event_types(mock_bus)
-    assert "MerchantCreated" in types
-    assert "HagglingNegotiated" in types
-    assert types.index("MerchantCreated") < types.index("HagglingNegotiated")
+    assert "runefoble.events.tavern.merchant_created" in types
+    assert "runefoble.events.tavern.haggling_negotiated" in types
+    assert types.index("runefoble.events.tavern.merchant_created") < types.index(
+        "runefoble.events.tavern.haggling_negotiated"
+    )
 
     profile = client.get(f"/api/v1/merchants/{merchant_id}")
     assert profile.status_code == 200, profile.text
@@ -119,8 +121,8 @@ def test_haggle_on_existing_merchant_does_not_create_it_again(
     assert second.status_code == 200, second.text
 
     types = _event_types(mock_bus)
-    assert types.count("MerchantCreated") == 1
-    assert types.count("HagglingNegotiated") == 2
+    assert types.count("runefoble.events.tavern.merchant_created") == 1
+    assert types.count("runefoble.events.tavern.haggling_negotiated") == 2
 
     profile = client.get(f"/api/v1/merchants/{merchant_id}").json()
     assert profile["total_negotiations"] == 2

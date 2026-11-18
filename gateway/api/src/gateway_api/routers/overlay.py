@@ -136,7 +136,7 @@ async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> N
             action = data.get("action") or data.get("type") or "unknown"
             if not await _may_publish(websocket, session_id, principal.user_id, action):
                 continue
-            if action in ("turn_started", "TurnStarted"):
+            if action in ("turn_started", "runefoble.events.session.turn_started"):
                 cam = director.handle_turn_started(
                     data,
                     tokens=raw.get("tokens"),
@@ -152,7 +152,7 @@ async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> N
                     "camera": cam.model_dump(),
                 }
                 await ws_overlay_manager.broadcast_to_session(session_id, msg)
-            elif action in ("token_moved", "move_token", "TokenMoved"):
+            elif action in ("token_moved", "move_token", "runefoble.events.board.token_moved"):
                 token_id = str(data.get("token_id", ""))
                 tokens = raw.get("tokens", [])
                 if not any(

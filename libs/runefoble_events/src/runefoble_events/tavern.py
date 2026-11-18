@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -10,9 +10,12 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.tavern.minigame_started")
 class MinigameStarted(BaseRunefobleEvent):
     """Fired when an interactive tavern minigame is commenced."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.minigame_started"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -26,9 +29,12 @@ class MinigameStarted(BaseRunefobleEvent):
     state_summary: dict[str, Any] = Field(default_factory=dict)
 
 
-@register_event
+@register_event("runefoble.events.tavern.minigame_turn_taken")
 class MinigameTurnTaken(BaseRunefobleEvent):
     """Fired when a participant submits a move or wager turn in a tavern minigame."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.minigame_turn_taken"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -42,9 +48,12 @@ class MinigameTurnTaken(BaseRunefobleEvent):
     voice_bark: str | None = None
 
 
-@register_event
+@register_event("runefoble.events.tavern.minigame_ended")
 class MinigameEnded(BaseRunefobleEvent):
     """Fired when a minigame resolves, awarding winnings or penalties."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.minigame_ended"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -58,9 +67,12 @@ class MinigameEnded(BaseRunefobleEvent):
     summary: str = ""
 
 
-@register_event
+@register_event("runefoble.events.tavern.intoxication_level_changed")
 class IntoxicationLevelChanged(BaseRunefobleEvent):
     """Fired when alcohol intake alters a character's intoxication stage and speech filters."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.intoxication_level_changed"
 
     aggregate_type: str = "TavernGame"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -73,9 +85,12 @@ class IntoxicationLevelChanged(BaseRunefobleEvent):
     dsp_filters: list[str] = Field(default_factory=list)
 
 
-@register_event
+@register_event("runefoble.events.tavern.merchant_created")
 class MerchantCreated(BaseRunefobleEvent):
     """Fired once when a merchant is first recorded, before its first negotiation."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.merchant_created"
 
     aggregate_type: str = "Merchant"
     aggregate_id: UUID = Field(default_factory=uuid4)
@@ -84,9 +99,12 @@ class MerchantCreated(BaseRunefobleEvent):
     temperament: str = "stubborn_greedy"  # generous, shrewd, hostile, gullible, stubborn_greedy
 
 
-@register_event
+@register_event("runefoble.events.tavern.haggling_negotiated")
 class HagglingNegotiated(BaseRunefobleEvent):
     """Fired when a social bargaining roll or dialogue offer is evaluated by a merchant."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.tavern.haggling_negotiated"
 
     aggregate_type: str = "Merchant"
     aggregate_id: UUID = Field(default_factory=uuid4)

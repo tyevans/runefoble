@@ -135,9 +135,18 @@ def test_blackbox_liars_dice_minigame_flow(session_client, mock_bus):
 
     # 5. Verify domain events published on Redis Streams
     entries = mock_bus.streams.get(STREAM_TAVERN, [])
-    assert any("MinigameStarted" in entry[1].get("event_type", "") for entry in entries)
-    assert any("MinigameTurnTaken" in entry[1].get("event_type", "") for entry in entries)
-    assert any("MinigameEnded" in entry[1].get("event_type", "") for entry in entries)
+    assert any(
+        "runefoble.events.tavern.minigame_started" in entry[1].get("event_type", "")
+        for entry in entries
+    )
+    assert any(
+        "runefoble.events.tavern.minigame_turn_taken" in entry[1].get("event_type", "")
+        for entry in entries
+    )
+    assert any(
+        "runefoble.events.tavern.minigame_ended" in entry[1].get("event_type", "")
+        for entry in entries
+    )
 
 
 def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live_voice_agent):
@@ -194,7 +203,10 @@ def test_blackbox_drinking_contest_and_dsp_speech(session_client, mock_bus, live
 
     # Verify IntoxicationLevelChanged published
     entries = mock_bus.streams.get(STREAM_TAVERN, [])
-    assert any("IntoxicationLevelChanged" in entry[1].get("event_type", "") for entry in entries)
+    assert any(
+        "runefoble.events.tavern.intoxication_level_changed" in entry[1].get("event_type", "")
+        for entry in entries
+    )
 
 
 def test_blackbox_merchant_haggling_stubborn_greedy(session_client, mock_bus):
@@ -228,7 +240,10 @@ def test_blackbox_merchant_haggling_stubborn_greedy(session_client, mock_bus):
 
     # Verify HagglingNegotiated published
     entries = mock_bus.streams.get(STREAM_TAVERN, [])
-    assert any("HagglingNegotiated" in entry[1].get("event_type", "") for entry in entries)
+    assert any(
+        "runefoble.events.tavern.haggling_negotiated" in entry[1].get("event_type", "")
+        for entry in entries
+    )
 
     # Query merchant profile
     m_res = session_client.get(f"/api/v1/merchants/{merchant_id}")

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -10,13 +10,15 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.west_marches.mercenary_bounty_posted")
 class MercenaryBountyPosted(BaseRunefobleEvent):
     """Fired when a new mercenary bounty or retrieval contract is posted."""
 
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.mercenary_bounty_posted"
+
     aggregate_type: str = "MercenaryBounty"
     aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "MercenaryBountyPosted"
     bounty_id: str = ""
     session_id: UUID | str | None = None
     campaign_id: UUID | str | None = None
@@ -31,13 +33,15 @@ class MercenaryBountyPosted(BaseRunefobleEvent):
     created_at: str | None = None
 
 
-@register_event
+@register_event("runefoble.events.west_marches.mercenary_bounty_claimed")
 class MercenaryBountyClaimed(BaseRunefobleEvent):
     """Fired when an adventuring party claims an active mercenary bounty."""
 
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.mercenary_bounty_claimed"
+
     aggregate_type: str = "MercenaryBounty"
     aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "MercenaryBountyClaimed"
     bounty_id: str = ""
     session_id: UUID | str | None = None
     claimant_user_id: str = ""
@@ -46,13 +50,15 @@ class MercenaryBountyClaimed(BaseRunefobleEvent):
     claimed_at: str | None = None
 
 
-@register_event
+@register_event("runefoble.events.west_marches.mercenary_bounty_fulfilled")
 class MercenaryBountyFulfilled(BaseRunefobleEvent):
     """Fired when proof of bounty fulfillment is submitted or completed."""
 
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.mercenary_bounty_fulfilled"
+
     aggregate_type: str = "MercenaryBounty"
     aggregate_id: UUID = Field(default_factory=uuid4)
-    event_type: str = "MercenaryBountyFulfilled"
     bounty_id: str = ""
     session_id: UUID | str | None = None
     proof: str = ""

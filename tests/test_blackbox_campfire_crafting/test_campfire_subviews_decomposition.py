@@ -51,9 +51,15 @@ def test_blackbox_campfire_crafting_frontdoor_integration(
     assert rest_res.status_code == 200 and rest_res.json()["status"] == "completed"
 
     session_entries = mock_bus.streams.get(STREAM_SESSION, [])
-    assert any("CampfireRestCompleted" in e[1].get("event_type", "") for e in session_entries)
+    assert any(
+        "runefoble.events.downtime.campfire_rest_completed" in e[1].get("event_type", "")
+        for e in session_entries
+    )
     stronghold_entries = mock_bus.streams.get(STREAM_STRONGHOLD, [])
-    assert any("StrongholdUpgraded" in e[1].get("event_type", "") for e in stronghold_entries)
+    assert any(
+        "runefoble.events.downtime.stronghold_upgraded" in e[1].get("event_type", "")
+        for e in stronghold_entries
+    )
 
     char_res = char_client.post(
         "/api/v1/characters",

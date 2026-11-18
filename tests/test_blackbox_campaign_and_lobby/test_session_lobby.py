@@ -120,7 +120,7 @@ def test_session_lobby_launch_transition_and_events(
     assert active_state["active_character_id"] is not None
 
     session_events = mock_redis.streams.get(STREAM_SESSION, [])
-    assert any("SessionStarted" in str(evt) for evt in session_events)
+    assert any("runefoble.events.session.started" in str(evt) for evt in session_events)
 
 
 def _owned_campaign(client) -> str:

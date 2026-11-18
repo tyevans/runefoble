@@ -115,8 +115,8 @@ async def test_bounty_lifecycle_claim_and_complete_with_escrow(
     # Verify event stream
     assert_stream_events(
         mock_bus,
-        "MercenaryBountyPosted",
-        "MercenaryBountyClaimed",
-        "MercenaryBountyFulfilled",
+        "runefoble.events.west_marches.mercenary_bounty_posted",
+        "runefoble.events.west_marches.mercenary_bounty_claimed",
+        "runefoble.events.west_marches.mercenary_bounty_fulfilled",
         stream=STREAM_SESSION,
     )

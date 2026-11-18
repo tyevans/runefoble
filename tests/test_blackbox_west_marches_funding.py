@@ -30,8 +30,8 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 DM = "dm_evelyn"
 PLAYER = "smith_mira"
 LORE_OUTPOST_STREAM = "runefoble.events.lore.outpost_resources_contributed"
-TREASURY_EVENT = "StrongholdTreasuryContributed"
-OUTPOST_EVENT = "OutpostResourcesContributed"
+TREASURY_EVENT = "runefoble.events.downtime.stronghold_treasury_contributed"
+OUTPOST_EVENT = "runefoble.events.west_marches.outpost_resources_contributed"
 
 
 def _bearer(user_id: str) -> dict[str, str]:

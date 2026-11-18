@@ -96,7 +96,10 @@ async def test_blackbox_caravan_trade_and_merchant_stock_unlocks(
     assert complete_res.json()["caravan"]["status"] == "completed"
 
     entries = mock_bus.streams.get(STREAM_WEST_MARCHES, [])
-    assert any("CaravanTradeCompleted" in str(entry[1]) for entry in entries)
+    assert any(
+        "runefoble.events.west_marches.caravan_trade_completed" in str(entry[1])
+        for entry in entries
+    )
 
     stock = client.get(
         f"/api/v1/shared-worlds/{world_id}/outposts/Highport/merchant-stock",

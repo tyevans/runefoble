@@ -34,7 +34,7 @@ def extract_event_type(event: Any) -> str:
             or getattr(event, "type", None)
             or event.__class__.__name__
         )
-    return raw_type.split(".")[-1] if "." in raw_type else raw_type
+    return raw_type
 
 
 async def handle_session_created(sync_service: Any, event: Any) -> list[str]:
@@ -116,13 +116,16 @@ async def handle_domain_event(
 ) -> list[str]:
     """Route a domain event or CloudEvent payload to appropriate relationship handlers."""
     event_type = extract_event_type(event)
-    if event_type == "SessionCreated":
+    if event_type == "runefoble.events.session.created":
         return await handle_session_created(sync_service, event)
-    if event_type in ("ParticipantJoined", "PlayerJoinedSession"):
+    if event_type in (
+        "runefoble.events.session.participant_joined",
+        "runefoble.events.session.player_joined_session",
+    ):
         return await handle_participant_joined(sync_service, event)
-    if event_type == "CharacterCreated":
+    if event_type == "runefoble.events.character.created":
         return await handle_character_created(sync_service, event)
-    if event_type in ("TokenPlaced", "TokenPlacedOnBoard"):
+    if event_type == "runefoble.events.board.token_placed":
         return await handle_token_placed(sync_service, event, campaign_id=campaign_id)
 
     logger.debug("No Zanzibar synchronization mapped for event type: %s", event_type)

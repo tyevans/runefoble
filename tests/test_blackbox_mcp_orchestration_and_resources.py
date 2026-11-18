@@ -273,7 +273,11 @@ async def test_blackbox_action_plan_steps_are_proposed_to_the_watcher(services: 
     # board_state publishes TokenPlaced. The identity sync consumer links the token to the campaign.
     await handle_domain_event(
         ZitadelSpiceDBSyncService(spicedb_client=get_spicedb_client()),
-        {"event_type": "TokenPlaced", "token_id": "goblin-1", "campaign_id": campaign_id},
+        {
+            "event_type": "runefoble.events.board.token_placed",
+            "token_id": "goblin-1",
+            "campaign_id": campaign_id,
+        },
     )
     plan = [
         {

@@ -72,8 +72,14 @@ def test_blackbox_alchemical_crafting_success_flow(char_client: TestClient, mock
     assert "Radiant Smoke Pellet" in hist["discovered_recipes"]
 
     entries = mock_bus.streams.get(STREAM_CRAFTING, [])
-    assert any("CraftingAttempted" in entry[1].get("event_type", "") for entry in entries)
-    assert any("CraftingSucceeded" in entry[1].get("event_type", "") for entry in entries)
+    assert any(
+        "runefoble.events.downtime.crafting_attempted" in entry[1].get("event_type", "")
+        for entry in entries
+    )
+    assert any(
+        "runefoble.events.downtime.crafting_succeeded" in entry[1].get("event_type", "")
+        for entry in entries
+    )
 
 
 def _bearer(issuer, sub: str) -> dict[str, str]:

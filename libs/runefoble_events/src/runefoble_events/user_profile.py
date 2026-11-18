@@ -5,16 +5,19 @@ One stream per Zitadel subject. The event carries only the fields that changed.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import Field
 
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.game_session.profile_updated")
 class ProfileUpdated(BaseRunefobleEvent):
     """Fired when a user edits profile attributes. Carries only the changed fields."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.game_session.profile_updated"
 
     aggregate_type: str = "UserProfile"
     subject: str

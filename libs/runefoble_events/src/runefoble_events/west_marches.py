@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID
 
 from pydantic import Field
@@ -10,9 +10,12 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.west_marches.shared_world_created")
 class SharedWorldCreated(BaseRunefobleEvent):
     """Fired when a persistent West Marches shared world frontier is established."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.shared_world_created"
 
     aggregate_type: str = "SharedWorld"
     shared_world_id: UUID | str = ""
@@ -22,9 +25,12 @@ class SharedWorldCreated(BaseRunefobleEvent):
     created_by: str = "system"
 
 
-@register_event
+@register_event("runefoble.events.west_marches.campaign_registered_to_shared_world")
 class CampaignRegisteredToSharedWorld(BaseRunefobleEvent):
     """Fired when an adventuring campaign links into a shared world frontier."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.campaign_registered_to_shared_world"
 
     aggregate_type: str = "SharedWorld"
     shared_world_id: UUID | str = ""
@@ -33,9 +39,12 @@ class CampaignRegisteredToSharedWorld(BaseRunefobleEvent):
     registered_by: str = "guild_officer"
 
 
-@register_event
+@register_event("runefoble.events.west_marches.cross_campaign_discovery_shared")
 class CrossCampaignDiscoveryShared(BaseRunefobleEvent):
     """Fired when an adventuring party maps a point of interest, dungeon, or waypoint."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.cross_campaign_discovery_shared"
 
     aggregate_type: str = "SharedWorld"
     shared_world_id: UUID | str = ""
@@ -50,9 +59,12 @@ class CrossCampaignDiscoveryShared(BaseRunefobleEvent):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-@register_event
+@register_event("runefoble.events.west_marches.outpost_established")
 class OutpostEstablished(BaseRunefobleEvent):
     """Fired when a regional settlement or base camp is established."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.outpost_established"
 
     aggregate_type: str = "SharedWorld"
     shared_world_id: UUID | str = ""
@@ -65,9 +77,12 @@ class OutpostEstablished(BaseRunefobleEvent):
     resources_contributed: dict[str, int] = Field(default_factory=dict)
 
 
-@register_event
+@register_event("runefoble.events.west_marches.shared_stronghold_upgraded")
 class SharedStrongholdUpgraded(BaseRunefobleEvent):
     """Fired when communal outpost facilities are upgraded."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.shared_stronghold_upgraded"
 
     aggregate_type: str = "SharedWorld"
     shared_world_id: UUID | str = ""
@@ -79,13 +94,16 @@ class SharedStrongholdUpgraded(BaseRunefobleEvent):
     materials_spent: dict[str, int] = Field(default_factory=dict)
 
 
-@register_event
+@register_event("runefoble.events.west_marches.outpost_resources_contributed")
 class OutpostResourcesContributed(BaseRunefobleEvent):
     """Fired when a contributing campaign funds an outpost store (TASK-0795).
 
     The gold comes from the campaign stronghold treasury. The debit is a separate event
     in game_session (`StrongholdTreasuryContributed`).
     """
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.outpost_resources_contributed"
 
     aggregate_type: str = "SharedWorld"
     shared_world_id: UUID | str = ""
@@ -95,9 +113,12 @@ class OutpostResourcesContributed(BaseRunefobleEvent):
     materials: dict[str, int] = Field(default_factory=dict)
 
 
-@register_event
+@register_event("runefoble.events.west_marches.communal_notice_posted")
 class CommunalNoticePosted(BaseRunefobleEvent):
     """Fired when a cross-campaign notice or bounty is posted to the tavern board."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.communal_notice_posted"
 
     aggregate_type: str = "SharedWorld"
     shared_world_id: UUID | str = ""
@@ -110,9 +131,12 @@ class CommunalNoticePosted(BaseRunefobleEvent):
     bounty_reward: int | str = 0
 
 
-@register_event
+@register_event("runefoble.events.west_marches.caravan_contract_posted")
 class CaravanContractPosted(BaseRunefobleEvent):
     """Fired when an asynchronous mercenary caravan contract is posted."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.caravan_contract_posted"
 
     aggregate_type: str = "CaravanContract"
     contract_id: str = ""
@@ -133,9 +157,12 @@ class CaravanContractPosted(BaseRunefobleEvent):
     created_at: str | None = None
 
 
-@register_event
+@register_event("runefoble.events.west_marches.caravan_contract_accepted")
 class CaravanContractAccepted(BaseRunefobleEvent):
     """Fired when an adventuring party claims or accepts an escort contract."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.caravan_contract_accepted"
 
     aggregate_type: str = "CaravanContract"
     contract_id: str = ""
@@ -147,9 +174,12 @@ class CaravanContractAccepted(BaseRunefobleEvent):
     accepted_at: str | None = None
 
 
-@register_event
+@register_event("runefoble.events.west_marches.caravan_dispatched")
 class CaravanDispatched(BaseRunefobleEvent):
     """Fired when a resource caravan sets off across the frontier."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.caravan_dispatched"
 
     aggregate_type: str = ""
     contract_id: str | None = None
@@ -163,9 +193,12 @@ class CaravanDispatched(BaseRunefobleEvent):
     status: str = "in_transit"
 
 
-@register_event
+@register_event("runefoble.events.west_marches.caravan_ambushed")
 class CaravanAmbushed(BaseRunefobleEvent):
     """Fired when a caravan encounters a wilderness hazard or ambush during transit."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.caravan_ambushed"
 
     aggregate_type: str = "CaravanContract"
     contract_id: str = ""
@@ -180,9 +213,12 @@ class CaravanAmbushed(BaseRunefobleEvent):
     notes: str = ""
 
 
-@register_event
+@register_event("runefoble.events.west_marches.caravan_trade_fulfilled")
 class CaravanTradeFulfilled(BaseRunefobleEvent):
     """Fired when a caravan reaches destination, delivering cargo and completing the contract."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.caravan_trade_fulfilled"
 
     aggregate_type: str = "CaravanContract"
     contract_id: str = ""
@@ -199,9 +235,12 @@ class CaravanTradeFulfilled(BaseRunefobleEvent):
     status: str = "fulfilled"
 
 
-@register_event
+@register_event("runefoble.events.west_marches.caravan_trade_completed")
 class CaravanTradeCompleted(BaseRunefobleEvent):
     """Fired when a caravan arrives at its destination outpost, delivering cargo."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.caravan_trade_completed"
 
     aggregate_type: str = "CaravanLedger"
     shared_world_id: UUID | str = ""
@@ -213,9 +252,12 @@ class CaravanTradeCompleted(BaseRunefobleEvent):
     completed_at: str | None = None
 
 
-@register_event
+@register_event("runefoble.events.west_marches.regional_merchant_stock_updated")
 class RegionalMerchantStockUpdated(BaseRunefobleEvent):
     """Fired when outpost merchant inventory adjusts due to trade or expeditions."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.west_marches.regional_merchant_stock_updated"
 
     aggregate_type: str = "CaravanLedger"
     shared_world_id: UUID | str = ""

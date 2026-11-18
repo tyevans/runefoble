@@ -16,7 +16,7 @@ async def handle_ws_spell(
     if not (
         action in ("cast_spell", "spell_vfx", "SpellCast")
         or (
-            action == "SpeechIntentParsed"
+            action == "runefoble.events.watcher.speech_intent_parsed"
             and (
                 data.get("action_type") == "cast_spell"
                 or data.get("parameters", {}).get("action") == "cast_spell"

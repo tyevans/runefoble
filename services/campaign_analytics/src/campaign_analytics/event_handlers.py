@@ -124,7 +124,7 @@ class AnalyticsEventDispatcher:
         self, event: Any, tx: ProjectionTx, sid: str, cid: str
     ) -> bool:
         """Handle SessionCreated, SessionStarted, and SessionEnded milestones."""
-        if is_event_type(event, ["SessionCreated", "runefoble.events.session.created"]):
+        if is_event_type(event, ["runefoble.events.session.created"]):
             title = str(get_event_attr(event, "title", "Untitled Session"))
             if (nc := str(get_event_attr(event, "campaign_id", ""))) and sid:
                 await tx.map_session(sid, nc)
@@ -139,11 +139,11 @@ class AnalyticsEventDispatcher:
                 {"title": title},
             )
             return True
-        if is_event_type(event, ["SessionStarted", "GameSessionStarted"]):
+        if is_event_type(event, ["runefoble.events.session.started"]):
             desc = "The party assembled and the session officially commenced."
             await self._milestone(tx, sid, cid, "session_start", "Session Began", desc)
             return True
-        if is_event_type(event, ["SessionEnded", "runefoble.events.session.ended"]):
+        if is_event_type(event, ["runefoble.events.session.ended"]):
             s = str(get_event_attr(event, "summary", "Session concluded"))
             await self._milestone(
                 tx, sid, cid, "session_end", "Session Concluded", s, {"summary": s}
@@ -153,8 +153,8 @@ class AnalyticsEventDispatcher:
 
     async def handle_spatial(self, event: Any, tx: ProjectionTx, sid: str, cid: str) -> bool:
         """Handle token placement and movement events."""
-        is_p = is_event_type(event, ["TokenPlaced"])
-        is_m = is_event_type(event, ["TokenMoved", "BoardMoveEvent"])
+        is_p = is_event_type(event, ["runefoble.events.board.token_placed"])
+        is_m = is_event_type(event, ["runefoble.events.board.token_moved"])
         if not (is_p or is_m):
             return False
         tok, name = (
@@ -175,7 +175,7 @@ class AnalyticsEventDispatcher:
         self, event: Any, tx: ProjectionTx, sid: str, cid: str
     ) -> bool:
         """Handle damage, healing, knockout milestones, and combatant efficacy."""
-        if not is_event_type(event, ["CharacterHealthChanged"]):
+        if not is_event_type(event, ["runefoble.events.character.health_changed"]):
             return False
         char_id = str(get_event_attr(event, "aggregate_id", ""))
         delta = int(get_event_attr(event, "delta", 0))
@@ -211,9 +211,7 @@ class AnalyticsEventDispatcher:
 
     async def handle_dice(self, event: Any, tx: ProjectionTx, sid: str, cid: str) -> bool:
         """Handle dice rolls, critical strikes, and fumbles."""
-        if not is_event_type(
-            event, ["DiceRolled", "DiceRollEvent", "runefoble.events.dice.rolled"]
-        ):
+        if not is_event_type(event, ["runefoble.events.dice.rolled"]):
             return False
         rid = str(get_event_attr(event, "roller_id", "roller"))
         rname = str(get_event_attr(event, "roller_name", rid))
@@ -238,7 +236,7 @@ class AnalyticsEventDispatcher:
         InitiativeTurnAdvanced is the turn event that game session emits. Each turn counts for
         its active combatant. A round milestone is recorded when the round number changes.
         """
-        if is_event_type(event, ["InitiativeTurnAdvanced"]):
+        if is_event_type(event, ["runefoble.events.session.initiative_turn_advanced"]):
             rnd = int(get_event_attr(event, "round_number", 1))
             active_id = str(get_event_attr(event, "active_combatant_id", ""))
             if active_id and sid:
@@ -256,9 +254,7 @@ class AnalyticsEventDispatcher:
                 )
             return True
         types = [
-            "CombatEncounterStarted",
-            "CombatStarted",
-            "EncounterSpawned",
+            "runefoble.events.session.combat_encounter_started",
             "runefoble.events.encounter.spawned",
         ]
         if is_event_type(event, types):
@@ -277,7 +273,7 @@ class AnalyticsEventDispatcher:
 
     async def handle_recap(self, event: Any, tx: ProjectionTx, sid: str, cid: str) -> bool:
         """Handle absentee chronicle recaps."""
-        if not is_event_type(event, ["AbsenteeRecapGenerated", "runefoble.events.recap.generated"]):
+        if not is_event_type(event, ["runefoble.events.recap.generated"]):
             return False
         cname = str(get_event_attr(event, "character_name", "Adventurer"))
         narrative = str(get_event_attr(event, "narrative_summary", ""))
@@ -292,9 +288,9 @@ class AnalyticsEventDispatcher:
         A health change with no session id is skipped. Its aggregate_id names a character, so it
         must never stand in for a session.
         """
-        if is_event_type(event, ["CharacterHealthChanged"]) and not get_event_attr(
-            event, "session_id"
-        ):
+        if is_event_type(
+            event, ["runefoble.events.character.health_changed"]
+        ) and not get_event_attr(event, "session_id"):
             return
         sid, cid = await self.extract_context(event, tx)
         for h in (

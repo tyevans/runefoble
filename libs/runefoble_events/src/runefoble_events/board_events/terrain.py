@@ -8,8 +8,11 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.board.grid_initialized")
 class BoardGridInitialized(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.board.grid_initialized"
+
     aggregate_type: str = "BoardState"
     width: int = 20
     height: int = 20

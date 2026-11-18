@@ -108,7 +108,7 @@ def test_transcribe_returns_503_and_records_nothing_when_player_event_unpublishe
     resp = client.post(TRANSCRIBE_URL, json=_transcribe_body())
 
     assert resp.status_code == 503, resp.text
-    assert resp.json()["event_type"] == "PlayerSpokeEvent"
+    assert resp.json()["event_type"] == "runefoble.events.watcher.player_spoke"
     assert not [
         e for e in _stream_events(mock_redis, SESSION_STREAM) if isinstance(e, PlayerSpokeEvent)
     ]
@@ -185,7 +185,7 @@ def test_stream_chunk_publish_failure_is_reported_on_socket_and_not_recorded(
         frame = ws.receive_json()
 
     assert frame["status"] == "publish_failed"
-    assert frame["event_type"] == "PlayerSpokeEvent"
+    assert frame["event_type"] == "runefoble.events.watcher.player_spoke"
     assert not [
         e for e in _stream_events(mock_redis, SESSION_STREAM) if isinstance(e, PlayerSpokeEvent)
     ]

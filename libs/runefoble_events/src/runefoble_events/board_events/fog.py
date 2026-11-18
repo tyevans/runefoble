@@ -8,8 +8,11 @@ from pydantic import Field
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
 
-@register_event
+@register_event("runefoble.events.board.fog_of_war_revealed")
 class FogOfWarRevealed(BaseRunefobleEvent):
+    suppress_event_type_warning: ClassVar[bool] = True
+    event_type: str = "runefoble.events.board.fog_of_war_revealed"
+
     aggregate_type: str = "BoardState"
     revealed_cells: list[list[int]] = Field(default_factory=list)
     revealed_by_token_id: str | None = None

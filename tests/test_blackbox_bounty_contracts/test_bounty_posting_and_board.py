@@ -62,7 +62,9 @@ async def test_post_bounty_and_query_board(
     assert bounty["poster_user_id"] == creator_id
 
     # Verify event published to Redis Streams
-    assert_stream_events(mock_bus, "MercenaryBountyPosted", stream=STREAM_SESSION)
+    assert_stream_events(
+        mock_bus, "runefoble.events.west_marches.mercenary_bounty_posted", stream=STREAM_SESSION
+    )
 
     # 2. Query open notice board
     res_list = client.get(

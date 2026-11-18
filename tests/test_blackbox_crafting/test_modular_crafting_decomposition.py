@@ -152,8 +152,14 @@ def test_blackbox_crafting_frontdoor_api_success(char_client, mock_bus):
     assert "Elixir of Luminescence" in hist["discovered_recipes"]
 
     entries = mock_bus.streams.get(STREAM_CRAFTING, [])
-    assert any("CraftingAttempted" in e[1].get("event_type", "") for e in entries)
-    assert any("CraftingSucceeded" in e[1].get("event_type", "") for e in entries)
+    assert any(
+        "runefoble.events.downtime.crafting_attempted" in e[1].get("event_type", "")
+        for e in entries
+    )
+    assert any(
+        "runefoble.events.downtime.crafting_succeeded" in e[1].get("event_type", "")
+        for e in entries
+    )
 
 
 def test_blackbox_crafting_frontdoor_api_mishap(char_client, mock_bus):
@@ -182,4 +188,7 @@ def test_blackbox_crafting_frontdoor_api_mishap(char_client, mock_bus):
     assert char_res.json()["current_hp"] == data["character_current_hp"]
 
     entries = mock_bus.streams.get(STREAM_CRAFTING, [])
-    assert any("CraftingMishapOccurred" in e[1].get("event_type", "") for e in entries)
+    assert any(
+        "runefoble.events.downtime.crafting_mishap_occurred" in e[1].get("event_type", "")
+        for e in entries
+    )
