@@ -17,7 +17,7 @@ from uuid import uuid4
 
 import pytest
 from runefoble_platform.event_sourcing import get_event_store
-from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
+from voice_agent.coordinator import VoiceRoomCoordinator, set_voice_room_coordinator
 from voice_agent.signaling import signaling_manager
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")

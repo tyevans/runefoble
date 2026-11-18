@@ -7,7 +7,7 @@ import logging
 from typing import Any
 
 from fastapi import WebSocket
-from voice_agent.room import (
+from voice_agent.coordinator import (
     VoiceRoomCoordinator,
     get_voice_room_coordinator,
 )

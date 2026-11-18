@@ -14,7 +14,7 @@ from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 from gateway_api.main import app
 from runefoble_auth.factory import get_spicedb_client
-from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
+from voice_agent.coordinator import VoiceRoomCoordinator, set_voice_room_coordinator
 from voice_agent.signaling import signaling_manager
 
 from tests.helpers.spicedb_factory import grant_voice_session

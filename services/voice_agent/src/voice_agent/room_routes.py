@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from voice_agent.auth import VoicePrincipal, get_voice_principal
 from voice_agent.authz import require_action
-from voice_agent.room import get_voice_room_coordinator
+from voice_agent.coordinator import get_voice_room_coordinator
 
 logger = logging.getLogger("runefoble.voice_agent.room_routes")
 

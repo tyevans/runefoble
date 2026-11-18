@@ -24,7 +24,7 @@ from voice_agent.phonetics import (
     apply_text_transforms,
     slur_phonemes,
 )
-from voice_agent.room import VoiceRoomAggregate, VoiceRoomState
+from voice_agent.room_aggregate import VoiceRoomAggregate, VoiceRoomState
 
 from tests.helpers.audio_synth import generate_synthetic_audio
 from tests.helpers.spicedb_factory import grant_voice_session
@@ -140,8 +140,8 @@ def test_modular_phonetics_and_filters():
     assert d_meta["filter"] == "drunk"
 
 
-def test_backward_compatible_reexports():
-    """Verify backward-compatible re-exports from voice_agent.dsp and voice_agent.room."""
+def test_dsp_config_and_empty_room_aggregate_defaults():
+    """Verify DSP defaults from voice_agent.dsp and the room aggregate's empty defaults."""
     cfg = DSPFilterConfig()
     assert cfg.speed_factor == 1.0
     res = ProcessedSpeechResult(original_text="hello", conditioned_text="hello", dsp_config=cfg)
