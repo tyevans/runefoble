@@ -37,11 +37,6 @@ def apply_slurred_speech(text: str) -> str:
     return " ".join(slurred_words)
 
 
-def slur_phonemes(text: str) -> str:
-    """Alias for apply_slurred_speech to preserve backward compatibility."""
-    return apply_slurred_speech(text)
-
-
 def apply_text_transforms(text: str, filters: list[str]) -> str:
     """Apply text conditioning according to active affliction filters."""
     result = text

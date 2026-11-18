@@ -13,7 +13,6 @@ from voice_agent.filters import (
 from voice_agent.phonetics import (
     apply_slurred_speech,
     apply_text_transforms,
-    slur_phonemes,
 )
 
 
@@ -42,10 +41,6 @@ class ProcessedSpeechResult(BaseModel):
 
 class VoiceDSPPipeline:
     """Pipeline for transforming speech text and computing DSP filter parameters."""
-
-    def slur_phonemes(self, text: str) -> str:
-        """Inject inebriated slurs, elongated vowels, and hiccups into text."""
-        return slur_phonemes(text)
 
     def apply_text_transforms(self, text: str, filters: list[str]) -> str:
         """Apply text conditioning according to active affliction filters."""
@@ -113,7 +108,6 @@ __all__ = [
     "apply_text_transforms",
     "drunk_filter",
     "ethereal_filter",
-    "slur_phonemes",
     "underwater_filter",
     "whisper_filter",
 ]

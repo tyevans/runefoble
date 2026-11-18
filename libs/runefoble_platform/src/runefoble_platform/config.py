@@ -68,11 +68,6 @@ class PlatformSettings(BaseSettings):
         """True when the environment is a deployed one (staging or production)."""
         return self.environment in DEPLOYED_ENVIRONMENTS
 
-    @property
-    def postgres_dsn(self) -> str:
-        """Alias for database_url for backward compatibility."""
-        return self.database_url
-
     # Cache & Event Streaming (Redis)
     redis_url: str = Field(
         default="redis://localhost:6379/0",

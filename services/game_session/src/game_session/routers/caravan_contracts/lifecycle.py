@@ -8,7 +8,7 @@ from uuid import UUID
 from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends
 from game_session.caravan import CaravanContractAggregate
-from game_session.caravan_ledger import CaravanLedgerAggregate
+from game_session.caravan.ledger import CaravanLedgerAggregate
 from game_session.dependencies import (
     get_caravan_contract_repository,
     get_caravan_ledger_repository,

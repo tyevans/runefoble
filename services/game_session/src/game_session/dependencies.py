@@ -7,7 +7,7 @@ import os
 
 from game_session.aggregate import GameSessionAggregate
 from game_session.caravan import CaravanContractAggregate
-from game_session.caravan_ledger import CaravanLedgerAggregate
+from game_session.caravan.ledger import CaravanLedgerAggregate
 from game_session.child_index import ChildIndexAggregate
 from game_session.contracts.engine import MercenaryBountyAggregate
 from game_session.events import SessionEventPublisher

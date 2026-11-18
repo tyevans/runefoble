@@ -12,7 +12,7 @@ import math
 import time
 from typing import Any
 
-from voice_agent.audio_utils import _to_samples_array
+from voice_agent.audio_utils import to_samples_array
 
 
 def whisper_filter(
@@ -20,7 +20,7 @@ def whisper_filter(
     sample_rate: int = 16000,
 ) -> tuple[array.array, dict[str, Any]]:
     """Whisper filter: reduced dynamic range and high-pass shimmer."""
-    input_arr = _to_samples_array(samples)
+    input_arr = to_samples_array(samples)
     fc = 1800.0
     dt = 1.0 / sample_rate
     rc = 1.0 / (2.0 * math.pi * fc)
@@ -57,7 +57,7 @@ def underwater_filter(
     sample_rate: int = 16000,
 ) -> tuple[array.array, dict[str, Any]]:
     """Underwater filter: muffled low-pass and sub-bass resonance."""
-    input_arr = _to_samples_array(samples)
+    input_arr = to_samples_array(samples)
     fc = 500.0
     dt = 1.0 / sample_rate
     rc = 1.0 / (2.0 * math.pi * fc)
@@ -89,7 +89,7 @@ def ethereal_filter(
     sample_rate: int = 16000,
 ) -> tuple[array.array, dict[str, Any]]:
     """Ethereal filter: ghostly echo modulation and delay tail."""
-    input_arr = _to_samples_array(samples)
+    input_arr = to_samples_array(samples)
     delay_ms = 180
     d_samples = max(1, int(delay_ms * sample_rate / 1000))
     tail_samples = max(1, min(int(50 * sample_rate / 1000), len(input_arr)))
@@ -123,7 +123,7 @@ def drunk_filter(
     sample_rate: int = 16000,
 ) -> tuple[array.array, dict[str, Any]]:
     """Drunk filter: slurred formant modulation and pitch sway."""
-    input_arr = _to_samples_array(samples)
+    input_arr = to_samples_array(samples)
     out = array.array("h")
     n = len(input_arr)
     sway_step = 2.0 * math.pi * 0.8 / sample_rate
@@ -159,7 +159,7 @@ def apply_audio_filters(
     The filters only transform supplied audio. Empty input raises ValueError.
     """
     t0 = time.perf_counter()
-    current_samples = _to_samples_array(audio_data)
+    current_samples = to_samples_array(audio_data)
     if len(current_samples) == 0:
         raise ValueError("audio_data must contain at least one PCM sample")
 

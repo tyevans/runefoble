@@ -13,7 +13,8 @@ from uuid import UUID, uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
-from game_session.caravan_ledger import CaravanLedgerAggregate, CaravanLedgerState
+from game_session.caravan.ledger import CaravanLedgerAggregate
+from game_session.caravan.models import CaravanLedgerState
 from pydantic import BaseModel, Field
 from runefoble_events.west_marches import (
     CampaignRegisteredToSharedWorld,
