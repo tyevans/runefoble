@@ -61,7 +61,7 @@ def test_stronghold_get_returns_the_owner_treasury(client: TestClient, trusted_w
     assert funded.status_code == 200, funded.text
     upgraded = client.post(
         f"/api/v1/campaigns/{campaign_id}/stronghold/upgrade",
-        json={"facility_id": "watchtower", "gold_spent": 100},
+        json={"facility_id": "watchtower"},
         headers=headers,
     )
     assert upgraded.status_code == 200, upgraded.text
@@ -81,14 +81,14 @@ def test_stronghold_upgrade_returns_the_owner_outcome(
     campaign_id, _ = _campaign_with_session(client, headers)
     funded = client.post(
         f"/api/v1/campaigns/{campaign_id}/stronghold/deposit",
-        json={"gold": 40, "materials": {"flora": 15}},
+        json={"gold": 75, "materials": {"flora": 15}},
         headers=headers,
     )
     assert funded.status_code == 200, funded.text
 
     res = client.post(
         f"/api/v1/campaigns/{campaign_id}/stronghold/upgrade",
-        json={"facility_id": "herbal_rack", "gold_spent": 40},
+        json={"facility_id": "herbal_rack"},
         headers=headers,
     )
 
@@ -96,7 +96,7 @@ def test_stronghold_upgrade_returns_the_owner_outcome(
     body = res.json()
     assert body["facility_id"] == "herbal_rack"
     assert body["new_tier"] == 1
-    assert body["gold_spent"] == 40
+    assert body["gold_spent"] == 75
     assert "status" not in body
     assert body["state"]["facilities"]["herbal_rack"] == 1
 
@@ -109,7 +109,7 @@ def test_stronghold_upgrade_passes_the_owner_400_through(
 
     res = client.post(
         f"/api/v1/campaigns/{campaign_id}/stronghold/upgrade",
-        json={"facility_id": "moat", "gold_spent": 10},
+        json={"facility_id": "moat"},
         headers=headers,
     )
 

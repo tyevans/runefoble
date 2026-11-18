@@ -2,7 +2,7 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AssignRoleRequest(BaseModel):
@@ -32,9 +32,11 @@ class TokenMoveRequest(BaseModel):
 
 
 class UpgradeStrongholdGatewayRequest(BaseModel):
+    """Names the facility only. Cost comes from the game_session tier table."""
+
+    model_config = ConfigDict(extra="forbid")
+
     facility_id: str
-    gold_spent: int = 0
-    materials_spent: dict[str, int] = Field(default_factory=dict)
 
 
 class DepositStrongholdGatewayRequest(BaseModel):

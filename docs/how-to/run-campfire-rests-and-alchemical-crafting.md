@@ -148,14 +148,12 @@ The route answers `200` with the new state. It answers `400` when a value is neg
 ```bash
 curl -X POST http://localhost:8004/api/v1/campaigns/camp-55/stronghold/upgrade \
   -H "Content-Type: application/json" \
-  -d '{
-    "facility_id": "watchtower",
-    "gold_spent": 100,
-    "materials_spent": {"wood": 20}
-  }'
+  -d '{"facility_id": "watchtower"}'
 ```
 
-An upgrade subtracts its gold and materials from the treasury and the material store. When the treasury holds too little gold, or the store holds too little of a material, the route answers `409 Conflict`. The `detail` field names each shortfall. A refused upgrade records no event, and the stores do not change.
+The request names the facility only. The tier table sets the gold and materials. A Tier 1 watchtower costs 100 gold and 20 wood. The upgrade subtracts that cost from the treasury and the material store. When the treasury holds too little gold, or the store holds too little of a material, the route answers `409 Conflict`. The `detail` field names each shortfall. A refused upgrade records no event, and the stores do not change.
+
+A request that names a cost, such as `gold_spent` or `materials_spent`, answers `422 Unprocessable Entity`. It records no event.
 
 ### Upgrades Catalog:
 1. **Watchtower**:

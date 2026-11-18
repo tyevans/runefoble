@@ -64,7 +64,7 @@ def test_blackbox_stronghold_campsite_progression(session_client: TestClient, mo
 
     upg1_res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
-        json={"facility_id": "watchtower", "gold_spent": 100, "materials_spent": {"wood": 20}},
+        json={"facility_id": "watchtower"},
     )
     assert upg1_res.status_code == 200
     upg1 = upg1_res.json()
@@ -74,7 +74,7 @@ def test_blackbox_stronghold_campsite_progression(session_client: TestClient, mo
 
     upg2_res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
-        json={"facility_id": "herbal_rack", "gold_spent": 75, "materials_spent": {"flora": 15}},
+        json={"facility_id": "herbal_rack"},
     )
     assert upg2_res.status_code == 200
     assert upg2_res.json()["new_tier"] == 1
@@ -107,7 +107,7 @@ def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient,
     _fund(session_client, camp_id, gold=100, materials={"wood": 20})
     upgrade_res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
-        json={"facility_id": "watchtower", "gold_spent": 100},
+        json={"facility_id": "watchtower"},
     )
     assert upgrade_res.status_code == 200, upgrade_res.text
 
