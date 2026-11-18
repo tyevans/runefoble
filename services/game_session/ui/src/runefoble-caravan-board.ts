@@ -5,6 +5,7 @@ import { apiAcceptContract, apiDispatchCaravan, apiFulfillContract } from './car
 import './caravan/contract_card.ts';
 import './caravan/dispatch_modal.ts';
 import './caravan/board_filters.ts';
+import { AuthConsumerController } from '@runefoble/ui-core';
 import type { AmbushAlert, CaravanContractItem } from './runefoble-caravan-types.ts';
 
 export type { AmbushAlert, CaravanContractItem };
@@ -13,10 +14,11 @@ export type { AmbushAlert, CaravanContractItem };
 export class RunefobleCaravanBoard extends LitElement {
   static styles = [caravanBoardStyles];
 
+  private readonly auth = new AuthConsumerController(this);
+
   @property({ type: String, attribute: 'shared-world-id' }) sharedWorldId = 'frontier-marches-1';
   @property({ type: String, attribute: 'campaign-id' }) campaignId = 'campaign-amber-1';
   @property({ type: String, attribute: 'party-name' }) partyName = 'The Amber Vanguard';
-  @property({ type: String, attribute: 'user-id' }) userId = 'player-1';
   @property({ type: String, attribute: 'user-role' }) userRole: 'guild_officer' | 'player' | 'spectator' = 'player';
   @property({ type: String, attribute: 'api-base' }) apiBase = '/api/v1';
   @property({ type: Array }) contracts: CaravanContractItem[] = [];
@@ -28,7 +30,13 @@ export class RunefobleCaravanBoard extends LitElement {
   @state() private notificationMessage: string | null = null; @state() private notificationType: 'info' | 'success' | 'warning' | 'danger' = 'info';
 
   private get apiCtx() {
-    return { apiBase: this.apiBase, sharedWorldId: this.sharedWorldId, campaignId: this.campaignId, partyName: this.partyName, userId: this.userId };
+    return {
+      apiBase: this.apiBase,
+      sharedWorldId: this.sharedWorldId,
+      campaignId: this.campaignId,
+      partyName: this.partyName,
+      authHeaders: () => this.auth.authHeaders(),
+    };
   }
 
   get filteredContracts(): CaravanContractItem[] {

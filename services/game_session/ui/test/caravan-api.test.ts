@@ -1,13 +1,14 @@
 /**
- * Unit tests for the caravan request client. TASK-0677.
+ * Unit tests for the caravan request client. TASK-0677, TASK-0812.
  *
  * Only the network boundary is replaced (globalThis.fetch). The client code
- * under test runs unchanged.
+ * under test runs unchanged. Every request must carry the shared bearer and
+ * no caller-asserted identity header (TASK-0812).
  */
 
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { apiDispatchCaravan, apiFulfillContract } from '../src/caravan/caravan_api.ts';
+import { apiAcceptContract, apiDispatchCaravan, apiFulfillContract } from '../src/caravan/caravan_api.ts';
 import type { CaravanApiContext } from '../src/caravan/caravan_api.ts';
 import type { CaravanContractItem } from '../src/runefoble-caravan-types.ts';
 
@@ -16,7 +17,7 @@ const ctx: CaravanApiContext = {
   sharedWorldId: 'world-1',
   campaignId: 'camp-1',
   partyName: 'The Amber Vanguard',
-  userId: 'player-1',
+  authHeaders: async () => ({ Authorization: 'Bearer caravan-token' }),
 };
 
 function makeContract(status: CaravanContractItem['status']): CaravanContractItem {
@@ -37,11 +38,15 @@ function makeContract(status: CaravanContractItem['status']): CaravanContractIte
 }
 
 const realFetch = globalThis.fetch;
-let requests: { url: string; method: string }[] = [];
+let requests: { url: string; method: string; headers: Record<string, string> }[] = [];
 
 function stubFetch(handler: () => Response | Promise<Response>): void {
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
-    requests.push({ url: String(input), method: init?.method ?? 'GET' });
+    requests.push({
+      url: String(input),
+      method: init?.method ?? 'GET',
+      headers: { ...(init?.headers as Record<string, string>) },
+    });
     return handler();
   }) as typeof fetch;
 }
@@ -59,6 +64,63 @@ beforeEach(() => {
 
 afterEach(() => {
   globalThis.fetch = realFetch;
+});
+
+describe('caravan requests send the shared bearer (TASK-0812)', () => {
+  it('sends Authorization on dispatch and no x-user-id header', async () => {
+    stubFetch(() => jsonResponse(200, {}));
+
+    await apiDispatchCaravan(ctx, makeContract('accepted'));
+
+    assert.equal(requests[0].headers.Authorization, 'Bearer caravan-token');
+    assert.equal('x-user-id' in requests[0].headers, false);
+  });
+
+  it('sends Authorization on fulfil', async () => {
+    stubFetch(() => jsonResponse(200, {}));
+
+    await apiFulfillContract(ctx, makeContract('in_transit'));
+
+    assert.equal(requests[0].headers.Authorization, 'Bearer caravan-token');
+  });
+
+  it('sends Authorization on accept', async () => {
+    stubFetch(() => jsonResponse(200, { contract: { status: 'accepted', contractor_party_name: 'The Amber Vanguard' } }));
+
+    await apiAcceptContract(ctx, makeContract('open'));
+
+    assert.equal(requests[0].headers.Authorization, 'Bearer caravan-token');
+    assert.equal('x-user-id' in requests[0].headers, false);
+  });
+
+  it('sends no Authorization header when the auth source has no token', async () => {
+    stubFetch(() => jsonResponse(200, {}));
+    const anonymous = { ...ctx, authHeaders: async () => ({}) };
+
+    await apiDispatchCaravan(anonymous, makeContract('accepted'));
+
+    assert.equal('Authorization' in requests[0].headers, false);
+  });
+
+  it('shows a sign-in message on 401 and leaves the contract unchanged', async () => {
+    stubFetch(() => jsonResponse(401, { detail: 'Not authenticated' }));
+    const contract = makeContract('accepted');
+
+    const result = await apiDispatchCaravan(ctx, contract);
+
+    assert.deepEqual(result, { ok: false, message: 'Sign in to continue with this caravan action.' });
+    assert.equal(contract.status, 'accepted');
+  });
+
+  it('shows a permission message on 403 for accept', async () => {
+    stubFetch(() => jsonResponse(403, { detail: 'Forbidden' }));
+
+    await assert.rejects(apiAcceptContract(ctx, makeContract('open')), (err: unknown) => {
+      assert.ok(err instanceof Error);
+      assert.equal(err.message, 'Your account does not have permission for this caravan action.');
+      return true;
+    });
+  });
 });
 
 describe('apiDispatchCaravan', () => {
