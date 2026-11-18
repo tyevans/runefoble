@@ -196,6 +196,18 @@ async def export_standees(
         ),
     )
 
+    await publish_forge_event(
+        PrintPdfForged(
+            asset_id=asset_id,
+            campaign_id=request.campaign_id,
+            creator_id=creator_id,
+            total_pages=meta["pages"],
+            page_size=request.page_size,
+            grid_scale="standee-sheet",
+            download_url=upload_meta["url"],
+        )
+    )
+
     if request.format == "json":
         return StandeesResponse(
             asset_id=asset_id,

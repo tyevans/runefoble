@@ -13,6 +13,7 @@ from runefoble_platform.asset_index import get_stored_asset
 from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
 
 from asset_forge.dependencies import (
+    STREAM_CHARACTER,
     VerifiedUserId,
     check_user_can_forge,
     get_principal,
@@ -91,7 +92,7 @@ async def forge_wardrobe_variant(
         prompt=final_prompt,
         is_active=False,
     )
-    await publish_forge_event(event)
+    await publish_forge_event(event, stream=STREAM_CHARACTER)
 
     # 4. Write Zanzibar relationships to SpiceDB
     with contextlib.suppress(Exception):
