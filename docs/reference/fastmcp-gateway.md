@@ -59,8 +59,8 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 | `roll_dice` | `notation: str`, `reason: str` | Roll standard RPG dice notation (`1d20+3`, `2d6`, `2d20kh1+3`) through `runefoble_platform.dice.parse_and_roll`. Returns the roll breakdown (`formula`, `rolls`, `kept_rolls`, `modifier`, `total`, `is_crit`, `is_fumble`) and `reason`. Bad notation, such as `1d20abc`, is a tool error. No default roll is made. |
 | `inspect_tactical_board` | `session_id: str` | Read tokens, positions, HP, and grid dimensions from `board_state` (`GET /api/v1/boards/{session_id}`). Returns an error result when the board does not exist. |
 | `move_board_token` | `session_id: str`, `token_id: str`, `to_x: int`, `to_y: int` | Move a token through `board_state` (`POST /api/v1/boards/{session_id}/tokens/{token_id}/move`). The board rejects out-of-bounds moves. |
-| `get_character_sheet` | `character_id: str` | Read the stored sheet from `character_sheet` (`GET /api/v1/characters/{character_id}`): name, class, level, HP, armor class, ability scores, spell slots, equipment, inventory, conditions, and penalties. An unknown id returns a tool error. |
-| `inspect_inventory` | `character_id: str` | Read equipped items and carried inventory from `character_sheet`. |
+| `get_character_sheet` | `character_id: str` | Read the stored sheet from `character_sheet` (`GET /api/v1/characters/{character_id}`): name, class, level, HP, armor class, ability scores, spell slots, equipment, inventory, conditions, and penalties. The caller needs `character.view`. A caller without it gets a tool error and no sheet data. |
+| `inspect_inventory` | `character_id: str` | Read equipped items and carried inventory from `character_sheet`. The caller needs `character.view`. A caller without it gets a tool error and no inventory data. |
 | `apply_absentee_penalty` | `character_id: str`, `penalty_type: str`, `explanation: str` | Impose a session miss penalty (`drunk`, `foolishness`, `cowardice`, `greed`, `curse`) through `character_sheet` (`POST /api/v1/characters/{character_id}/penalties`). Returns the active penalties. |
 | `cast_spell` | `character_id: str`, `spell_name: str`, `spell_level: int` | Expend a spell slot through `character_sheet` (`POST /api/v1/characters/{character_id}/spells/cast`). Returns the remaining spell slots. A `spell_level` of 0 asks the sheet to use the standard level of the spell. An empty slot level returns a tool error. The sheet does not store a target. |
 | `modify_character_hp` | `character_id: str`, `delta: int`, `damage_type: str`, `reason: str` | Apply damage (negative `delta`) or healing through `character_sheet` (`POST /api/v1/characters/{character_id}/health`). Returns the stored `current_hp`, `max_hp`, and stabilization state. The `damage_type` and `reason` are recorded in the change source. |
@@ -79,13 +79,23 @@ Each tool that changes state reads the caller from the verified MCP request. It 
 | Tool | Permission checked |
 |---|---|
 | `apply_absentee_penalty`, `modify_character_hp`, `add_condition`, `apply_condition` | `campaign.run_session` on the campaign that the `character` object links to. A character with no campaign link is denied. |
+| `get_character_sheet`, `inspect_inventory` | `character.view` on the `character_id`. The gateway checks it before the read, and `character_sheet` checks the forwarded bearer again. |
 | `cast_spell` | `character.edit` |
 | `move_board_token` | `board_token.move` on the `token_id` |
 | `create_encounter` | `session.control` on the `session_id` |
 | `execute_agent_action_plan` | The permission of each step, checked before that step runs. A denied step stops the plan with a per-step error. |
 | A dynamic tool | `mcp_tool.execute` on the tool name, on the MCP path and on `POST /mcp/tools/{name}/execute` |
 
-Read-only tools take no extra check in the gateway. The owning service still checks the forwarded bearer.
+The other read-only tools take no extra check in the gateway. The gateway forwards the caller bearer, and the owning service checks it:
+
+| Tool or resource | Owner check on the forwarded bearer |
+|---|---|
+| `inspect_tactical_board`, `query_encounter_state`, `encounter://{session_id}/current` | `board.view` in `board_state` (`GET /api/v1/boards/{session_id}`), and the session read in `game_session` |
+| `session://{session_id}/state` | The session read in `game_session` (`GET /api/v1/sessions/{session_id}`) |
+| `query_monster_stat_block`, `calculate_encounter_balance` | `rules_compendium` checks the homebrew rules of the campaign that the caller names |
+| `roll_dice` | None. It reads no owner data. |
+
+A read-only tool that the gateway does not check must forward the caller bearer. A tool that reads owner data without one is a defect.
 
 A plan step that names a dynamic tool needs `mcp_tool.execute` on that tool. A step that names a mutating static tool needs the permission in the table. A step must carry the id that its check needs (`character_id`, `token_id`, or `session_id`). A step without it fails.
 
