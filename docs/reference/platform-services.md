@@ -64,7 +64,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Issuer Variables** (set by the chart on every service that verifies tokens):
   - `RUNEFOBLE_ZITADEL_ISSUER`: the browser-facing issuer, `http://auth.localhost` by default. It must equal the token `iss` claim. Zitadel writes this value, built from `zitadel.externalDomain`, `externalPort`, and `externalSecure`.
   - `RUNEFOBLE_ZITADEL_JWKS_URL`: the in-cluster JWKS endpoint, `http://zitadel:8080/oauth/v2/keys`. Pods cannot resolve the browser-facing host, so the verifier does not read discovery.
-  - `RUNEFOBLE_ZITADEL_AUDIENCE`: the expected `aud` claim. Not yet set by the chart. It defaults to `RUNEFOBLE_ZITADEL_CLIENT_ID`.
+  - `RUNEFOBLE_ZITADEL_AUDIENCE`: the expected `aud` claim. The Python services default it to `RUNEFOBLE_ZITADEL_CLIENT_ID`, which the chart does not set. The Audience Studio chart sets it to `services.audienceStudio.zitadelAudience` (`runefoble-api`). The Node service refuses to start without it.
 - **Other Variables**: `RUNEFOBLE_ZITADEL_CLIENT_ID`. (`RUNEFOBLE_AUTH_DEV_MODE` was removed in TASK-0520.)
 - **Browser Runtime Config**: the frontend serves `/runtime-config.json` (issuer, client ID, scopes, provider name). The chart renders it from `frontend.runtimeConfig`. It holds no secret.
 - **Gateway CORS**: `RUNEFOBLE_CORS_ORIGINS` is a comma-separated list of browser origins allowed to call the gateway with credentials. The default is `http://localhost:5173,http://127.0.0.1:5173`. The value `*` is refused at startup.

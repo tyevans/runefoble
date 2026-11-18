@@ -286,6 +286,8 @@ services:
     image: runefoble/audience-studio:0.1.0
     replicas: 1
     port: 8010
+    # Expected token `aud` claim. The service refuses to start without it.
+    zitadelAudience: "runefoble-api"
   campaignAnalytics:
     image: runefoble/campaign-analytics:0.1.0
     replicas: 1
