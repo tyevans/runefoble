@@ -20,24 +20,6 @@ export function dataFailure(status: number, message: string): DataFailure {
   return { ok: false, status, message };
 }
 
-/** Pulls a human-readable message from a FastAPI-style error body, or falls back to the status code. */
-export function errorMessageFromBody(body: unknown, status: number): string {
-  if (body && typeof body === 'object') {
-    const record = body as Record<string, unknown>;
-    const detail = record.detail;
-    if (typeof detail === 'string' && detail.trim()) return detail;
-    if (Array.isArray(detail)) {
-      const parts = detail
-        .map((item) => (item && typeof item === 'object' && typeof (item as Record<string, unknown>).msg === 'string' ? String((item as Record<string, unknown>).msg) : ''))
-        .filter(Boolean);
-      if (parts.length > 0) return parts.join('; ');
-    }
-    if (typeof record.message === 'string' && record.message.trim()) return record.message;
-    if (typeof record.error === 'string' && record.error.trim()) return record.error;
-  }
-  return status === 404 ? 'The requested item was not found.' : `The request failed with status ${status}.`;
-}
-
 /** Views use this to decide between the not-found and generic error states. */
 export function isNotFound<T>(result: DataResult<T>): boolean {
   return !result.ok && result.status === 404;

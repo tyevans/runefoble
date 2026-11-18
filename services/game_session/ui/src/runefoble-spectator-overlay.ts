@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { AuthConsumerController, websocketProtocols } from '@runefoble/ui-core';
+import { AuthConsumerController, websocketProtocols, wsUrl } from '@runefoble/ui-core';
 import { spectatorOverlayStyles } from './runefoble-spectator-overlay.styles.ts';
 
 export interface OverlayPartyMember {
@@ -78,10 +78,8 @@ export class RunefobleSpectatorOverlay extends LitElement {
       this.socketError = 'The live overlay needs a signed-in session.';
       return;
     }
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${proto}//${window.location.host}/ws/overlay/${this.sessionId}`;
     try {
-      this.ws = new WebSocket(wsUrl, websocketProtocols(token));
+      this.ws = new WebSocket(wsUrl(`/ws/overlay/${this.sessionId}`), websocketProtocols(token));
       this.ws.onclose = (event) => {
         if (event.code === 1008) this.socketError = 'The live overlay sign-in was not accepted. Sign in again.';
       };

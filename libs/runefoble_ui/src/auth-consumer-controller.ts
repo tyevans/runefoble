@@ -1,6 +1,7 @@
 import { ContextConsumer } from '@lit/context';
 import type { ReactiveControllerHost } from 'lit';
 import { authContext, type AuthContextValue } from './auth-context.ts';
+import { bearerHeaders } from './http.ts';
 
 type AuthHost = ReactiveControllerHost & HTMLElement;
 
@@ -25,7 +26,6 @@ export class AuthConsumerController {
 
   /** Returns `{ Authorization: 'Bearer ...' }` when a token exists, else an empty object. */
   async authHeaders(): Promise<Record<string, string>> {
-    const token = await this.getAccessToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    return bearerHeaders(await this.getAccessToken());
   }
 }

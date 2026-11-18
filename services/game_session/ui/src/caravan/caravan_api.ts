@@ -1,3 +1,6 @@
+import {
+  HttpError, postJson, requestFailureMessage, type ActionResult,
+} from '@runefoble/ui-core';
 import type { CaravanContractItem } from '../runefoble-caravan-types.ts';
 
 /** Resolves the headers that carry the caller's bearer. Empty when nobody is signed in. */
@@ -12,9 +15,6 @@ export interface CaravanApiContext {
   authHeaders: AuthHeaders;
 }
 
-/** Outcome of a caravan request. A failed request never changes the contract. */
-export type CaravanActionResult = { ok: true } | { ok: false; message: string };
-
 /** A sign-in or permission message for a refused caravan request. Undefined for other statuses. */
 function authFailureMessage(status: number): string | undefined {
   if (status === 401) return 'Sign in to continue with this caravan action.';
@@ -22,28 +22,37 @@ function authFailureMessage(status: number): string | undefined {
   return undefined;
 }
 
+interface AcceptContractResponse {
+  contract?: { status?: CaravanContractItem['status']; contractor_party_name?: string };
+}
+
+/** The message a player sees for a failed caravan request. Sign-in and permission wording wins. */
+function caravanFailureMessage(err: unknown): string {
+  if (err instanceof HttpError) return authFailureMessage(err.status) ?? err.detail;
+  return requestFailureMessage(err);
+}
+
+function caravanUrl(ctx: CaravanApiContext, path: string): string {
+  return `${ctx.apiBase}/shared-worlds/${ctx.sharedWorldId}${path}`;
+}
+
 export async function apiAcceptContract(
   ctx: CaravanApiContext,
   contract: CaravanContractItem
 ): Promise<void> {
-  const res = await fetch(
-    `${ctx.apiBase}/shared-worlds/${ctx.sharedWorldId}/caravans/contracts/${contract.contract_id}/accept`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await ctx.authHeaders()) },
-      body: JSON.stringify({
+  let data: AcceptContractResponse | undefined;
+  try {
+    data = await postJson<AcceptContractResponse | undefined>(
+      caravanUrl(ctx, `/caravans/contracts/${contract.contract_id}/accept`),
+      {
         contractor_campaign_id: ctx.campaignId,
         contractor_party_name: ctx.partyName,
-      }),
-    }
-  );
-  if (!res.ok) {
-    const refused = authFailureMessage(res.status);
-    if (refused) throw new Error(refused);
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || 'Authorization failed');
+      },
+      { headers: await ctx.authHeaders() }
+    );
+  } catch (err) {
+    throw new Error(caravanFailureMessage(err));
   }
-  const data = await res.json();
   contract.status = data?.contract?.status || 'accepted';
   contract.contractor_party_name = data?.contract?.contractor_party_name || ctx.partyName;
 }
@@ -53,35 +62,18 @@ async function postCaravanAction(
   ctx: CaravanApiContext,
   path: string,
   body: Record<string, unknown>
-): Promise<CaravanActionResult> {
-  let res: Response;
+): Promise<ActionResult> {
   try {
-    res = await fetch(`${ctx.apiBase}/shared-worlds/${ctx.sharedWorldId}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(await ctx.authHeaders()) },
-      body: JSON.stringify(body),
-    });
-  } catch (err: unknown) {
-    const reason = err instanceof Error ? err.message : String(err);
-    return { ok: false, message: `Network error: ${reason}` };
+    await postJson(caravanUrl(ctx, path), body, { headers: await ctx.authHeaders() });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: caravanFailureMessage(err) };
   }
-  if (!res.ok) {
-    const refused = authFailureMessage(res.status);
-    if (refused) return { ok: false, message: refused };
-    const payload = (await res.json().catch(() => undefined)) as { detail?: unknown } | undefined;
-    const detail = typeof payload?.detail === 'string' ? payload.detail : '';
-    return {
-      ok: false,
-      message: detail || `Request failed with status ${res.status}`,
-    };
-  }
-  return { ok: true };
 }
-
 export async function apiDispatchCaravan(
   ctx: CaravanApiContext,
   contract: CaravanContractItem
-): Promise<CaravanActionResult> {
+): Promise<ActionResult> {
   const result = await postCaravanAction(
     ctx,
     `/caravans/contracts/${contract.contract_id}/dispatch`,
@@ -96,7 +88,7 @@ export async function apiDispatchCaravan(
 export async function apiFulfillContract(
   ctx: CaravanApiContext,
   contract: CaravanContractItem
-): Promise<CaravanActionResult> {
+): Promise<ActionResult> {
   const result = await postCaravanAction(
     ctx,
     `/caravans/contracts/${contract.contract_id}/fulfill`,

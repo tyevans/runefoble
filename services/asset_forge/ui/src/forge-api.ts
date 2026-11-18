@@ -10,7 +10,10 @@
  *
  * TASK-0812: every call takes the shared auth source (the same one AssetImageController uses,
  * `AuthConsumerController.authHeaders`) and sends its headers, so the bearer reaches the gateway.
+ * TASK-0825: the request runs through the shared `postJson` helper in `@runefoble/ui-core`.
  */
+
+import { HttpError, postJson } from '@runefoble/ui-core';
 
 export type FetchLike = typeof fetch;
 
@@ -139,35 +142,8 @@ interface TokenResponse {
   size_px: number;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
 function withCampaign(body: Record<string, unknown>, campaignId: string | undefined) {
   return campaignId ? { ...body, campaign_id: campaignId } : body;
-}
-
-async function readErrorMessage(res: Response): Promise<string> {
-  const fallback = `Forge request failed with HTTP ${res.status}.`;
-  let payload: unknown;
-  try {
-    payload = await res.json();
-  } catch {
-    return fallback;
-  }
-  const detail = isRecord(payload) ? payload.detail : undefined;
-  if (typeof detail === 'string' && detail.length > 0) {
-    return detail;
-  }
-  if (Array.isArray(detail)) {
-    const messages = detail
-      .map((item) => (isRecord(item) && typeof item.msg === 'string' ? item.msg : ''))
-      .filter((msg) => msg.length > 0);
-    if (messages.length > 0) {
-      return messages.join('; ');
-    }
-  }
-  return fallback;
 }
 
 async function postForge<TResponse>(
@@ -176,18 +152,15 @@ async function postForge<TResponse>(
   url: string,
   body: Record<string, unknown>,
 ): Promise<TResponse> {
-  const res = await fetchImpl(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-    body: JSON.stringify(body),
-  });
-  if (res.status === 401 || res.status === 403) {
-    throw new ForgeAuthError(res.status);
+  try {
+    return await postJson<TResponse>(url, body, { headers: await authHeaders(), fetchImpl });
+  } catch (err) {
+    if (err instanceof HttpError) {
+      if (err.status === 401 || err.status === 403) throw new ForgeAuthError(err.status);
+      throw new ForgeApiError(err.detail, err.status);
+    }
+    throw err;
   }
-  if (!res.ok) {
-    throw new ForgeApiError(await readErrorMessage(res), res.status);
-  }
-  return (await res.json()) as TResponse;
 }
 
 export async function forgeBattlemap(

@@ -6,14 +6,13 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { HttpError, type FetchLike } from '@runefoble/ui-core';
 import {
-  BoardApiError,
   boardSocketUrl,
   buildAoEEvaluateMessage,
   buildConfirmMoveMessage,
   postSwitchMap,
   postTrap,
-  type FetchLike,
 } from '../src/board-api.ts';
 
 interface Captured { url: string; init: RequestInit | undefined }
@@ -46,14 +45,14 @@ describe('postTrap', () => {
     assert.equal(trap.trap_id, 'trap-1');
   });
 
-  it('throws BoardApiError with the server status on a rejected request', async () => {
+  it('throws HttpError with the server status on a rejected request', async () => {
     const { fetchImpl } = stubFetch(403, { detail: 'Forbidden: DM permissions required to create secret traps' });
     await assert.rejects(
       postTrap('board-42', {
         name: 'Pit', trapType: 'pit_trap', x: 0, y: 0, triggerType: 'step',
         proximityRadius: 1, dcDetection: 15, damageDice: '2d10', isSecret: true,
       }, { fetchImpl }),
-      (err: unknown) => err instanceof BoardApiError && err.status === 403 && err.detail.includes('DM permissions'),
+      (err: unknown) => err instanceof HttpError && err.status === 403 && err.detail.includes('DM permissions'),
     );
   });
 });
@@ -79,13 +78,13 @@ describe('postSwitchMap', () => {
     assert.deepEqual(resp.teleported_tokens, { valeros: [10, 15] });
   });
 
-  it('throws BoardApiError when the server refuses the switch', async () => {
+  it('throws HttpError when the server refuses the switch', async () => {
     const { fetchImpl } = stubFetch(403, { detail: 'Forbidden' });
     await assert.rejects(
       postSwitchMap('board-42', {
         newMapId: 'x', cols: 8, rows: 8, backgroundImageUrl: '', tokenTeleports: {},
       }, { fetchImpl }),
-      (err: unknown) => err instanceof BoardApiError && err.status === 403,
+      (err: unknown) => err instanceof HttpError && err.status === 403,
     );
   });
 });

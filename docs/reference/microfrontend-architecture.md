@@ -144,6 +144,28 @@ Rules:
 - In Storybook, wrap the component in `<runefoble-story-auth-provider token="...">` (`@runefoble/ui-core/story-auth-provider`).
 - Shared package: `libs/runefoble_ui` (`@runefoble/ui-core`).
 
+## Shared HTTP and Socket Helpers (`@runefoble/ui-core`)
+
+Source: `libs/runefoble_ui/src/http.ts` (TASK-0825). Every microfrontend and the App Shell use these helpers. Do not add a local copy.
+
+| Export | Behaviour |
+|---|---|
+| `requestJson<T>(url, init, opts)` | Sends the request and resolves with the parsed JSON. An empty success body resolves with `undefined`. A non-2xx response throws `HttpError`. |
+| `postJson<T>(url, body, opts)` | `requestJson` with `POST` and a JSON body. |
+| `opts.headers` | Extra headers, such as `await auth.authHeaders()`. |
+| `opts.fetchImpl` | Transport override for tests. The default reads the global `fetch` at call time. |
+| `HttpError` | `status` and `detail`. `detail` is the server `detail` (a string, or the joined FastAPI `msg` values), else `Request failed with status <code>`. |
+| `requestFailureMessage(err)` | The user-facing message for a failed call: `detail` for `HttpError`, else `Network error: <reason>`. |
+| `ActionResult` | `{ ok: true } \| { ok: false; message }`. Used by writes that report and never throw. |
+| `bearerHeaders(token)` | `{ Authorization: 'Bearer ...' }` for a token, else `{}`. |
+| `wsUrl(path, loc?)` | `wss:` on an `https:` page, else `ws:`, on `loc.host`. Pass `{ protocol, host }` to build a URL for another origin. |
+| `errorMessageFromBody(body, status)` | The App Shell message for a read error. Used by `AppDataService`. |
+| `isRecord(value)` | Type guard for an object. |
+
+Rules:
+- A failed call throws. It never returns substitute data.
+- Keep route paths and domain function names in the owning bounded context. Only the transport moves to `@runefoble/ui-core`.
+
 ## Pnpm Monorepo Workspace
 
 The monorepo workspace links packages using standard pnpm workspace protocols:

@@ -1,4 +1,5 @@
 import { LitElement } from 'lit';
+import { wsUrl } from '@runefoble/ui-core';
 import { customElement, state } from 'lit/decorators.js';
 import './styles/themes.css';
 import { appShellStyles } from './styles/app-shell.styles.ts';
@@ -177,8 +178,7 @@ export class RunefobleApp extends LitElement {
   /** Board stream URL. Moves are sent here as the confirm_move action (TASK-0563). */
   public getWebSocketUrl(): string {
     if (typeof window === 'undefined') return '';
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${proto}//${window.location.host || 'localhost:8000'}/ws/boards/${this.sessionId}`;
+    return wsUrl(`/ws/boards/${this.sessionId}`);
   }
 
   render() {

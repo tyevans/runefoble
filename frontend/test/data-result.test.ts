@@ -8,9 +8,10 @@
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  dataOk, dataFailure, errorMessageFromBody, isNotFound, NETWORK_FAILURE_MESSAGE,
+  dataOk, dataFailure, isNotFound, NETWORK_FAILURE_MESSAGE,
   UNREADABLE_RESPONSE_MESSAGE, type DataResult,
 } from '../src/services/data-result.ts';
+import { errorMessageFromBody } from '@runefoble/ui-core';
 import { AppDataService } from '../src/services/app-data-service.ts';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 

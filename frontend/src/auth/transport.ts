@@ -6,7 +6,7 @@
  * same contract through `@runefoble/ui-core`.
  */
 
-import { websocketProtocols } from '@runefoble/ui-core';
+import { bearerHeaders, websocketProtocols } from '@runefoble/ui-core';
 import { authService } from './auth-service.ts';
 
 /** The part of the auth service that the transport needs. */
@@ -16,8 +16,7 @@ export interface TokenSource {
 
 /** Returns `{ Authorization: 'Bearer ...' }` for a signed-in user, else an empty object. */
 export function authHeaders(source: TokenSource = authService): Record<string, string> {
-  const token = source.getAccessToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return bearerHeaders(source.getAccessToken());
 }
 
 /** Returns the subprotocols for a socket, or null when nobody is signed in. The caller must not open the socket on null. */

@@ -6,6 +6,7 @@
  * messages to the host. A session_started message navigates through the router.
  */
 
+import { wsUrl } from '@runefoble/ui-core';
 import { authService } from '../auth/auth-service.ts';
 import { wsProtocols } from '../auth/transport.ts';
 import { router, type MatchedRoute } from '../router/index.ts';
@@ -18,8 +19,7 @@ export const HANDSHAKE_REFUSED_CODE = 1008;
 
 /** Builds the session WebSocket URL on the current origin. Call only in a browser. */
 export function sessionSocketUrl(sessionId: string): string {
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${proto}//${window.location.host || 'localhost:8000'}/ws/session/${sessionId}`;
+  return wsUrl(`/ws/session/${sessionId}`);
 }
 
 export class SessionSocket {

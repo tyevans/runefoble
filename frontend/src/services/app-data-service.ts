@@ -10,8 +10,9 @@ import { toWatcherFeedEvent, type SessionChronicleEntry } from './session-chroni
 import { resolveLobbyAvailableCharacters } from './lobby-character-options.ts';
 import type { CampaignCapabilities } from './campaign-capabilities.ts';
 import {
-  dataFailure, dataOk, errorMessageFromBody, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult,
+  dataFailure, dataOk, NETWORK_FAILURE_MESSAGE, UNREADABLE_RESPONSE_MESSAGE, type DataResult,
 } from './data-result.ts';
+import { errorMessageFromBody } from '@runefoble/ui-core';
 import {
   mutateCharacterHealth, mutateCharacterEquip, mutateCharacterUnequip, mutateCharacterAddInventory,
   mutateCharacterRemoveInventory, mutateCharacterApplyCondition, mutateCharacterRemoveCondition,
