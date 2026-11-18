@@ -6,9 +6,9 @@
 |---|---|
 | `make help` | Displays all available developer commands |
 | `make setup` | Installs Python UV workspace dependencies and frontend packages |
-| `make health-check` | Audits codebase line counts (<500 lines) and backlog ready buffer |
+| `make health-check` | Gate. Runs `spec-ops health` (file length <500 lines in `libs/`, `services/`, `gateway/`, `frontend/`, `tests/`, `scripts/`, `e2e/`, `tools/`; numbering; backlog state) and `spec-ops schema check` (frontmatter and Markdown grammar in `docs/project/`) |
 | `make clean-worktrees` | Cleans up merged and stale git worktrees safely (`ARGS="--dry-run"`) |
-| `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`) |
+| `make backlog-worker` | Runs autonomous backlog execution engine (`ARGS="--drain --concurrency 2"`). Local tool, kept until parity with `spec-ops worker` is verified |
 | `make visualize-project` | Launches dynamic docs/project content visualizer web application on port 8787 |
 | `make visualize-project-build` | Builds standalone HTML bundle (`dist/project-visualizer.html`) |
 | `make docs-build` | Compiles documentation static site via Zensical with integrated project visualizer |
@@ -41,7 +41,7 @@
 | `make build` | Produces production frontend bundle and static Storybook documentation |
 | `make check-ui-manifests` | Fails when a service UI manifest is missing or invalid (ADR-0013, ADR-0015) |
 | `make voice-model-cache` | Downloads the faster-whisper model set by `VOICE_MODEL_SIZE` (default `tiny.en`) into `.cache/voice-models`, then copies it into the running voice-agent pod |
-| `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks |
+| `make prd-audit` | Audits PRD decomposition status, buffer health, and detects oversized tasks. Local tool, kept until parity with `spec-ops prd audit` is verified (it reports different counts) |
 | `make prd-decompose` | Decomposes PRDs into ADR spikes and vertical slices (`ARGS="--prd PRD-0014"`) |
 | `make prd-create` | Scaffolds a new PRD document with frontmatter and registers it |
 | `make prd-sync` | Synchronizes PRD, User Story, and Backlog Priority registries |
@@ -50,7 +50,6 @@
 
 | Script | Purpose |
 |---|---|
-| `./scripts/health_check.py` | Standalone Python health inspection auditing line count invariants and buffer drift |
 | `./scripts/dev_server.py` | Unified local development orchestrator running gateway, Vite frontend, and optional AI inference worker concurrently |
 | `./scripts/cleanup-worktrees.sh` | Audits and removes merged git worktrees, cleans up branches, and prunes records |
 | `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |

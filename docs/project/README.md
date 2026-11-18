@@ -114,7 +114,7 @@ Source files over 500 lines are prohibited. The repository enforces proactive mo
 - Monolithic routers decompose into APIRouter submodules (`docs/how-to/decompose-microservice-routers.md`).
 - Large aggregate models decompose into focused domain event and command modules.
 - Test suites decompose into single-responsibility test files (<250 lines each).
-- Verified continuously via `make health-check` (`scripts/health_check.py`).
+- Verified continuously via `make health-check` (`spec-ops health`).
 
 ---
 
