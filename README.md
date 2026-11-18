@@ -16,21 +16,27 @@ Speak and the board obeys: natural speech is parsed into game actions and applie
 ## Quick Start
 
 ```bash
-# 1. Setup Python UV workspace and frontend dependencies
+# 1. Install the Python UV workspace and frontend dependencies
 make setup
 
-# 2. Run Python tests and verify frontend build
+# 2. Optional: run the Python tests and build the frontend
 make test
 
-# 3. Launch local Kind Kubernetes cluster with Traefik ingress
+# 3. Create the local Kind cluster with Traefik ingress
 make cluster-up
 
-# 4. Deploy full platform via Helm
+# 4. Build the service images and load them into the cluster
+make images
+
+# 5. Deploy the platform with Helm
 make helm-deploy
 
-# 5. Run Storybook component studio
+# 6. Run the Storybook component studio
 make dev-storybook
 ```
+
+Run the steps in this order. `make helm-deploy` does not build images, so run `make images` first.
+[Tutorial 01](docs/tutorials/01-local-development-setup.md) lists the expected result of each step, the local URLs, and the `make dev` workflow.
 
 ## Documentation
 - **Operating Manual for AI Agents**: [`AGENTS.md`](AGENTS.md)

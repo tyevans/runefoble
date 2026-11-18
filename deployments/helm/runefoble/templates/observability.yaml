@@ -168,6 +168,9 @@ spec:
           ports:
             - containerPort: {{ .Values.observability.grafana.port }}
           env:
+            # Grafana listens on 3000 by default. The Service targets the chart port, so set it here.
+            - name: GF_SERVER_HTTP_PORT
+              value: {{ .Values.observability.grafana.port | quote }}
             {{- include "runefoble.secretEnv" (dict "root" $ "name" "GF_SECURITY_ADMIN_PASSWORD" "key" "grafana-admin-password") | nindent 12 }}
           volumeMounts:
             - name: grafana-datasources
