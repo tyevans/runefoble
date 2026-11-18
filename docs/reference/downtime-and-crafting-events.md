@@ -70,16 +70,26 @@ These events publish after the character and the crafting history are saved. A m
   - `name`: str — Campsite/stronghold name (default `Party Campsite`).
   - `location`: str — Geographic terrain descriptor (e.g. `Wilderness`, `Highland Woods`).
 
-### 6. `StrongholdUpgraded`
+### 6. `StrongholdDeposited`
+- **Topic**: `runefoble.events.stronghold`
+- **Aggregate Type**: `Stronghold`
+- **Payload Fields**:
+  - `campaign_id`: Optional[UUID] — Campaign identifier.
+  - `gold`: int — Gold added to the treasury.
+  - `materials`: Dict[str, int] — Materials added to the store.
+
+### 7. `StrongholdUpgraded`
 - **Topic**: `runefoble.events.stronghold`
 - **Aggregate Type**: `Stronghold`
 - **Payload Fields**:
   - `campaign_id`: Optional[UUID] — Campaign identifier.
   - `facility_id`: str — Upgraded facility (`watchtower`, `herbal_rack`, `arcane_forge`).
   - `new_tier`: int — Resulting facility tier (1, 2, or 3).
-  - `gold_spent`: int — Gold invested into construction.
-  - `materials_spent`: Dict[str, int] — Resource materials consumed (wood, stone, flora, iron).
+  - `gold_spent`: int — Gold taken from the treasury.
+  - `materials_spent`: Dict[str, int] — Resource materials taken from the store (wood, stone, flora, iron).
   - `unlocked_boons`: List[str] — Mechanical resting bonuses unlocked for the adventuring party.
+
+Replay note: The handler subtracts gold and materials. A `StrongholdUpgraded` event stored before TASK-0774 therefore replays with the corrected arithmetic. Dev campsites that were upgraded before the fix can show a negative treasury. Reset dev data to clear them.
 
 ---
 
@@ -94,7 +104,8 @@ These events publish after the character and the crafting history are saved. A m
 | `/api/v1/sessions/{id}/rest/prompts` | `GET` | `game_session` | — | Retrieves collaborative storytelling prompts. |
 | `/api/v1/sessions/{id}/rest/campfire` | `POST` | `game_session` (gateway proxy) | `campaign:play` | Executes campfire rest sequence and applies boons. Accepts a campaign session id (`session-<hex>`). The campaign link is read from SpiceDB. A session with no campaign link answers `403`. |
 | `/api/v1/campaigns/{id}/stronghold` | `GET` | `game_session` (gateway proxy) | `campaign:view` | Inspects campsite facility tiers and treasury. |
-| `/api/v1/campaigns/{id}/stronghold/upgrade` | `POST` | `game_session` (gateway proxy) | `campaign:play` | Upgrades campsite facilities with gold and materials. |
+| `/api/v1/campaigns/{id}/stronghold/deposit` | `POST` | `game_session` (gateway proxy) | `stronghold:upgrade` (players and managers) | Adds gold and materials to the treasury and the store. Answers `400` for a negative value or an empty deposit. |
+| `/api/v1/campaigns/{id}/stronghold/upgrade` | `POST` | `game_session` (gateway proxy) | `stronghold:upgrade` (players and managers) | Upgrades campsite facilities. Spends gold and materials from the stores. Answers `409` on any shortfall and records no event. |
 | `/api/v1/campaigns/{id}/stronghold/boons` | `GET` | `game_session` | `campaign:view` | Queries currently active team resting boons. |
 
 ---

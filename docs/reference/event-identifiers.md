@@ -97,6 +97,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `SpeechIntentParsed` | `SpeechIntentParsed` | `runefoble_events.watcher_events.narrative` |
 | `StandInActionDecided` | `StandInActionDecided` | `runefoble_events.watcher_events.narrative` |
 | `StrongholdCreated` | `StrongholdCreated` | `runefoble_events.downtime` |
+| `StrongholdDeposited` | `StrongholdDeposited` | `runefoble_events.downtime` |
 | `StrongholdUpgraded` | `StrongholdUpgraded` | `runefoble_events.downtime` |
 | `TableBetPlaced` | `TableBetPlaced` | `runefoble_events.tavern_tables` |
 | `TableBidPlaced` | `TableBidPlaced` | `runefoble_events.tavern_tables` |
