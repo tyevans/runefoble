@@ -300,34 +300,6 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 
 ### Compendium & Encounter Events (`aggregate_type: Compendium`, `Encounter`)
 
-- **`MonsterIndexed`**: Emitted when a monster stat block is indexed into the rules compendium (`MonsterIndexed`).
-  - `monster_id`: UUID
-  - `name`: String
-  - `challenge_rating`: Float
-  - `creature_type`: String
-  - `size`: String
-  - `armor_class`: Integer
-  - `hit_points`: Integer
-  - `xp`: Integer
-  - `role`: String
-  - `metadata`: Dict[str, Any]
-- **`SpellIndexed`**: Emitted when a spell definition is indexed into the rules compendium (`SpellIndexed`).
-  - `spell_id`: UUID
-  - `name`: String
-  - `level`: Integer
-  - `school`: String
-  - `casting_time`: String
-  - `range`: String
-  - `components`: String
-  - `duration`: String
-  - `description`: String
-  - `metadata`: Dict[str, Any]
-- **`ConditionIndexed`**: Emitted when a condition rule is indexed into the rules compendium (`ConditionIndexed`).
-  - `condition_id`: UUID
-  - `name`: String
-  - `description`: String
-  - `effects`: List[String]
-  - `metadata`: Dict[str, Any]
 - **`HomebrewRuleRegistered`**: Emitted when a DM or player registers a campaign homebrew rule or custom monster (`HomebrewRuleRegistered`).
   - `rule_id`: UUID
   - `campaign_id`: UUID
