@@ -33,7 +33,7 @@ None. Refactor and consolidation chosen by the user on 2026-11-18.
 ## Detailed Specification & Implementation Plan
 1. One values map drives services, URLs and Swagger entries. Fold the four side templates into the loop where they only repeat it.
 2. Create the listed Silo buckets (a Helm job or service start-up), or delete the unused list.
-3. Delete dead `tools/project_visualizer/graph.py` and the shell wrappers that only repeat make targets.
+3. Delete dead `tools/project_visualizer/graph.py` (removed) and the shell wrappers that only repeat make targets.
 
 ## Frontdoor Blackbox Test Plan
 - `helm lint`, `helm template` and the Helm tests pass; the rendered env per service is unchanged (diff before and after).

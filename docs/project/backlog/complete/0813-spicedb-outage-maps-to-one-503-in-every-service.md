@@ -23,7 +23,7 @@ Services answer a SpiceDB outage in different ways. game_session has no handler,
 
 ## Problem Statement
 - `.audit/research/services-backend.md` SVC-01; `.audit/research/libs.md` F5.
-- Lib handler: `libs/runefoble_auth/src/runefoble_auth/authz_http.py:47-48`. Copy: `services/the_watcher/src/the_watcher/authz_errors.py`.
+- Lib handler: `libs/runefoble_auth/src/runefoble_auth/authz_http.py:47-48`. Copy: `services/the_watcher/src/the_watcher/authz_errors.py` (removed).
 
 ## Documentation & Architecture Review
 - AGENTS.md Hard Invariant 1 (SpiceDB) and DoR 9.
