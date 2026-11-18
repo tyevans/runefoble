@@ -23,7 +23,6 @@ from uuid import uuid4
 import pytest
 import voice_agent.main as va_main
 from fastapi.testclient import TestClient
-from gateway_api.main import app as gateway_app
 from gateway_api.signaling import signaling_manager
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import get_event_store
@@ -74,17 +73,16 @@ def reset_coordinator() -> Iterator[None]:
 
 
 def test_joined_peer_is_still_present_after_a_coordinator_restart(
-    session_id: str, spicedb: MockSpiceDBClient, default_redis_event_bus
+    gateway, table_for, default_redis_event_bus
 ) -> None:
     """A peer joins through the WebSocket. A new coordinator then reads the room from the store."""
     bus = default_redis_event_bus
     original = VoiceRoomCoordinator(event_bus=bus)
     set_voice_room_coordinator(original)
     signaling_manager._coordinator = original
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", PEER_USER))
+    _, session_id = table_for("dm_dora", {PEER_USER: "player"})
 
-    client = TestClient(gateway_app)
-    with client.websocket_connect(
+    with gateway.websocket_connect(
         f"/ws/voice/{session_id}?peer_id=peer-persisted", subprotocols=ws_subprotocols(PEER_USER)
     ) as ws:
         ws.receive_json()

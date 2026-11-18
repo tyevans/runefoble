@@ -14,14 +14,10 @@ Frontdoor Entrypoints:
 
 from __future__ import annotations
 
-import asyncio
-from uuid import uuid4
-
 import pytest
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 from gateway_api.companion import mobile_companion_manager
-from gateway_api.main import app
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_events.voice import (
     MobileAudioProfileAdapted,
@@ -48,8 +44,8 @@ def clean_companion_environment(default_redis_event_bus, mock_bus):
 
 
 @pytest.fixture
-def client(trusted_ws_issuer) -> TestClient:
-    return TestClient(app)
+def client(gateway) -> TestClient:
+    return gateway
 
 
 def _companion_socket(
@@ -62,26 +58,22 @@ def _companion_socket(
     return client.websocket_connect(path, subprotocols=ws_subprotocols(user_id))
 
 
-def test_zanzibar_unauthorized_connection_rejected(client: TestClient):
-    """Zanzibar authorization denies connection when user lacks session permissions."""
-    session_id = f"sess-{uuid4().hex[:6]}"
-    unauthorized_user = "unauthorized_wanderer"
+def test_zanzibar_unauthorized_connection_rejected(client: TestClient, table_for):
+    """A user without `session.observe` is refused with close code 4403."""
+    _, session_id = table_for("the_watcher_dm")
 
-    with _companion_socket(client, session_id, unauthorized_user) as ws:
-        err_msg = ws.receive_json()
-        assert err_msg["type"] == "error"
-        assert err_msg["code"] == "PERMISSION_DENIED"
-
-        with pytest.raises(WebSocketDisconnect) as exc_info:
-            ws.receive_json()
-        assert exc_info.value.code == 4003
+    with (
+        pytest.raises(WebSocketDisconnect) as exc_info,
+        _companion_socket(client, session_id, "unauthorized_wanderer") as ws,
+    ):
+        ws.receive_json()
+    assert exc_info.value.code == 4403
 
 
-def test_authorized_handshake_and_connected_frame(client: TestClient):
+def test_authorized_handshake_and_connected_frame(client: TestClient, table_for):
     """Authorized mobile user connects and receives initial 16kHz mono Opus audio profile."""
-    spicedb = get_spicedb_client()
-    session_id, user_id = f"sess-{uuid4().hex[:6]}", "marcus"
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
+    user_id = "marcus"
+    _, session_id = table_for("the_watcher_dm", {user_id: "player"})
 
     with _companion_socket(client, session_id, user_id, "peer_marcus") as ws:
         connected_frame = ws.receive_json()
@@ -102,17 +94,12 @@ def test_authorized_handshake_and_connected_frame(client: TestClient):
         assert patterns["turn_alert"] == HapticVibrationPattern.TURN_ALERT
 
 
-def test_secret_dm_whisper_haptic_pulse_and_isolation(client: TestClient, trusted_ws_issuer):
+def test_secret_dm_whisper_haptic_pulse_and_isolation(
+    client: TestClient, trusted_ws_issuer, table_for
+):
     """Marcus receives secret whisper with triple-pulse haptic vibration; other player is isolated."""
-    spicedb = get_spicedb_client()
-    session_id = f"sess-{uuid4().hex[:6]}"
     user_marcus, user_elena, dm_user = "marcus", "elena", "the_watcher_dm"
-
-    for u in (user_marcus, user_elena):
-        asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", u))
-    asyncio.run(
-        spicedb.write_relationship("campaign", session_id, "dungeon_master", "user", dm_user)
-    )
+    _, session_id = table_for(dm_user, {user_marcus: "player", user_elena: "player"})
 
     with _companion_socket(client, session_id, user_marcus, "peer_marcus") as ws_marcus:
         ws_marcus.receive_json()  # Handshake frame
@@ -151,14 +138,10 @@ def test_secret_dm_whisper_haptic_pulse_and_isolation(client: TestClient, truste
             assert pong["type"] == "pong"
 
 
-def test_combat_turn_initiative_haptic_alert(client: TestClient, trusted_ws_issuer):
+def test_combat_turn_initiative_haptic_alert(client: TestClient, trusted_ws_issuer, table_for):
     """Combat turn notification triggers distinct double alert pulse [300, 150, 300]."""
-    spicedb = get_spicedb_client()
-    session_id, user_marcus, dm_user = f"sess-{uuid4().hex[:6]}", "marcus", "the_watcher_dm"
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_marcus))
-    asyncio.run(
-        spicedb.write_relationship("campaign", session_id, "dungeon_master", "user", dm_user)
-    )
+    user_marcus, dm_user = "marcus", "the_watcher_dm"
+    _, session_id = table_for(dm_user, {user_marcus: "player"})
 
     with _companion_socket(client, session_id, user_marcus) as ws:
         ws.receive_json()  # Connected frame
@@ -183,11 +166,10 @@ def test_combat_turn_initiative_haptic_alert(client: TestClient, trusted_ws_issu
         assert turn_msg["notification"]["round"] == 2
 
 
-def test_adaptive_audio_degradation_over_constrained_cellular(client: TestClient):
+def test_adaptive_audio_degradation_over_constrained_cellular(client: TestClient, table_for):
     """Network degradation triggers automatic Opus adaptation from 16kbps to 12kbps and 8kbps."""
-    spicedb = get_spicedb_client()
-    session_id, user_id = f"sess-{uuid4().hex[:6]}", "marcus"
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
+    user_id = "marcus"
+    _, session_id = table_for("the_watcher_dm", {user_id: "player"})
 
     with _companion_socket(client, session_id, user_id) as ws:
         ws.receive_json()  # Connected frame

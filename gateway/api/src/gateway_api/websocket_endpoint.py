@@ -11,6 +11,7 @@ from gateway_api.dependencies import get_event_bus
 from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_api.websocket_manager import ws_campaign_manager
 from gateway_api.websocket_validator import (
+    KNOWN_ACTIONS,
     MOVE_ACTIONS,
     WebSocketActionValidator,
     default_action_validator,
@@ -91,6 +92,17 @@ async def campaign_websocket_endpoint(
         while True:
             data = await websocket.receive_json()
             action = data.get("action") or data.get("type") or "unknown"
+
+            if action not in KNOWN_ACTIONS:
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "code": "UNKNOWN_ACTION",
+                        "message": f"Unknown action '{action}'",
+                        "action": action,
+                    }
+                )
+                continue
 
             # 2. Verify permission for incoming action
             if not await action_validator.validate_action(campaign_id, subject_id, action, data):

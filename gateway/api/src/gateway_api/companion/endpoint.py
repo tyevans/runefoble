@@ -6,13 +6,13 @@ import logging
 from datetime import UTC, datetime
 
 from fastapi import WebSocket, WebSocketDisconnect
-from gateway_api.auth import get_spicedb_client
 from gateway_api.companion.manager import (
     MobileCompanionManager,
     mobile_companion_manager,
     publish_companion_event,
 )
-from gateway_api.signaling.auth import extract_peer_and_role, validate_voice_connection
+from gateway_api.session_access import socket_may
+from gateway_api.signaling.auth import extract_peer_and_role
 from gateway_api.websocket_auth import admit_gateway_websocket
 from runefoble_events.voice import (
     MobileAudioProfileAdapted,
@@ -40,26 +40,10 @@ async def mobile_companion_websocket_endpoint(
         return
     user_id = principal.user_id
     comp_manager = manager or mobile_companion_manager
-    spicedb = get_spicedb_client()
     peer_id, role = extract_peer_and_role(websocket, user_id)
 
-    # 1. SpiceDB Zanzibar permission check on connect (Hard Invariant 1)
-    can_connect = await validate_voice_connection(spicedb, session_id, user_id)
-    if not can_connect:
-        logger.warning(
-            "Mobile companion connect rejected: user '%s' lacks permissions for session '%s'",
-            user_id,
-            session_id,
-        )
-        await websocket.send_json(
-            {
-                "type": "error",
-                "code": "PERMISSION_DENIED",
-                "message": f"Zanzibar authorization denied: insufficient permissions for session '{session_id}'",
-                "action": "connect",
-            }
-        )
-        await websocket.close(code=4003, reason="Forbidden: insufficient permissions")
+    # SpiceDB check on connect: session.observe (Hard Invariant 1)
+    if not await socket_may(websocket, session_id, user_id, "observe"):
         return
 
     await comp_manager.connect(session_id, user_id, peer_id, websocket)

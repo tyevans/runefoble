@@ -56,10 +56,10 @@ export class WebRTCVoiceService {
         };
         this.socket.onerror = (err) => { this.setConnectionState('failed'); this.options.onError?.('Signaling error'); reject(err); };
         this.socket.onclose = (e) => {
-          if (e.code === 4003) this.options.onError?.('Zanzibar permission denied: unable to connect to voice room');
+          if (e.code === 4403) this.options.onError?.('Zanzibar permission denied: unable to connect to voice room');
           const prev = this.connectionState;
           this.cleanup();
-          if (this.options.autoReconnect && prev === 'connected' && e.code !== 1000 && e.code !== 4003) this.scheduleReconnect();
+          if (this.options.autoReconnect && prev === 'connected' && e.code !== 1000 && e.code !== 4403) this.scheduleReconnect();
         };
       } catch (err) { this.setConnectionState('failed'); reject(err); }
     });

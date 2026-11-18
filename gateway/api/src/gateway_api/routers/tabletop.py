@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from gateway_api.auth import CurrentPrincipal, require_zanzibar_permission
 from gateway_api.dependencies import ws_manager
 from gateway_api.models import TokenMoveRequest
+from gateway_api.session_access import require_session_permission
 
 router = APIRouter(tags=["Tabletop & Game Sessions"])
 
@@ -44,6 +45,7 @@ async def speak_and_act(
     session_id: str,
     user: CurrentPrincipal,
 ) -> dict:
+    await require_session_permission(session_id, user.user_id, "participate")
     event = {
         "type": "speech_action",
         "speaker": speaker_name,

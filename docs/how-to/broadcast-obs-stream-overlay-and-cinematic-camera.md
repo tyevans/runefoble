@@ -48,7 +48,7 @@ The cinematic director automatically tracks live gameplay events:
 
 ### WebSockets Integration
 
-Connect to the dedicated spectator WebSocket feed (available at `ws://localhost:8000/ws/overlay/${sessionId}` or alias `ws://localhost:8000/overlay/ws/${sessionId}`). The gateway admits the handshake only with a verified bearer subprotocol. Tokens in the URL are refused:
+Connect to the dedicated spectator WebSocket feed (available at `ws://localhost:8000/ws/overlay/${sessionId}` or alias `ws://localhost:8000/overlay/ws/${sessionId}`). The gateway admits the handshake only with a verified bearer subprotocol. Tokens in the URL are refused. The caller needs `session.observe` on the session. Otherwise the gateway closes the socket with code `4403`. A client that sends frames (`turn_started`, `token_moved`, `dice_rolled`) needs `session.participate`. A spectator who sends a frame receives a `PERMISSION_DENIED` error frame, and the gateway broadcasts nothing:
 
 ```javascript
 const ws = new WebSocket(`ws://localhost:8000/overlay/ws/${sessionId}`, [

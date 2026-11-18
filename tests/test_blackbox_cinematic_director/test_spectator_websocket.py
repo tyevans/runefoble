@@ -8,14 +8,15 @@ from tests.helpers.ws_identity import ws_subprotocols
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-def test_overlay_websocket_connection_and_initial_sanitized_state(client: TestClient) -> None:
+def test_overlay_websocket_connection_and_initial_sanitized_state(gateway, table_for) -> None:
     """Verify connecting to /ws/overlay/{session_id} delivers initial sanitized party state."""
-    with client.websocket_connect(
-        "/ws/overlay/sess-ws-1", subprotocols=ws_subprotocols("overlay-tester")
+    _, session_id = table_for("dm_dora", {"overlay-tester": "spectator"})
+    with gateway.websocket_connect(
+        f"/ws/overlay/{session_id}", subprotocols=ws_subprotocols("overlay-tester")
     ) as ws:
         msg = ws.receive_json()
         assert msg["type"] == "overlay_connected"
-        assert msg["session_id"] == "sess-ws-1"
+        assert msg["session_id"] == session_id
         assert msg["transparent"] is True
 
         party_names = [p["name"] for p in msg["party"]]
@@ -31,10 +32,11 @@ def test_overlay_websocket_connection_and_initial_sanitized_state(client: TestCl
             assert "ac" not in member
 
 
-def test_overlay_websocket_turn_started_and_token_moved_camera_updates(client: TestClient) -> None:
+def test_overlay_websocket_turn_started_and_token_moved_camera_updates(gateway, table_for) -> None:
     """Verify WebSocket updates camera target smoothly when turn starts or token moves."""
-    with client.websocket_connect(
-        "/ws/overlay/sess-ws-events", subprotocols=ws_subprotocols("overlay-tester")
+    _, session_id = table_for("dm_dora")
+    with gateway.websocket_connect(
+        f"/ws/overlay/{session_id}", subprotocols=ws_subprotocols("dm_dora")
     ) as ws:
         _init = ws.receive_json()
 

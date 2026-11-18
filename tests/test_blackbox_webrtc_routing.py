@@ -42,14 +42,12 @@ def reset_voice_signaling_environment(default_redis_event_bus, mock_bus):
     set_voice_room_coordinator(None)
 
 
-def test_multi_peer_signaling_offer_answer_and_ice_candidate_relay():
+def test_multi_peer_signaling_offer_answer_and_ice_candidate_relay(gateway, table_for):
     """Verify end-to-end signaling handshake between multiple simulated peer clients."""
-    spicedb = get_spicedb_client()
-    session_id, user_a, user_b = "sess-signaling-mesh", "user_alice", "user_bob"
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_a))
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_b))
+    user_a, user_b = "user_alice", "user_bob"
+    _, session_id = table_for("dm_dora", {user_a: "player", user_b: "player"})
 
-    client = TestClient(app)
+    client = gateway
     with client.websocket_connect(
         f"/ws/voice/{session_id}?peer_id=peer_a", subprotocols=ws_subprotocols(user_a)
     ) as ws_a:
@@ -105,13 +103,12 @@ def test_multi_peer_signaling_offer_answer_and_ice_candidate_relay():
             assert rx_ice["type"] == "webrtc_ice_candidate" and rx_ice["candidate"] == cand
 
 
-def test_voice_mute_toggle_and_telemetry_reporting():
+def test_voice_mute_toggle_and_telemetry_reporting(gateway, table_for):
     """Verify mute toggles and telemetry updates broadcast to room and reflect in room state."""
-    spicedb = get_spicedb_client()
-    session_id, user_id = "sess-mute-telemetry", "user_cleric"
-    asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", user_id))
+    user_id = "user_cleric"
+    _, session_id = table_for("dm_dora", {user_id: "player"})
 
-    client = TestClient(app)
+    client = gateway
     with client.websocket_connect(
         f"/ws/voice/{session_id}?peer_id=peer_cleric", subprotocols=ws_subprotocols(user_id)
     ) as ws:
