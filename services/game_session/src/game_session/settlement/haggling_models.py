@@ -102,10 +102,9 @@ class ExecuteGambitRequest(BaseModel):
     dialogue: str = ""
 
 
-class DMOverrideRequest(BaseModel):
+class HaggleDmOverrideRequest(BaseModel):
     action: str  # soothe_merchant, enrage_merchant, accept_deal, force_accept, refuse_kick_out, refuse, override_price, inject_bark
     override_price_gp: int | None = None
-    override_price: int | None = None
     narrative_bark: str | None = None
     patience_delta: int = 0
     mood_delta: float = 0.0
