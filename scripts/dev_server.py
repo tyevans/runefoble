@@ -23,6 +23,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Sequence
 from pathlib import Path
+from urllib.parse import urlparse
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -98,6 +99,55 @@ def ensure_spicedb_available(
         flush=True,
     )
     return None
+
+
+DEFAULT_REDIS_URL = "redis://localhost:6379/0"
+
+
+def redis_endpoint(env: dict[str, str] | os._Environ[str]) -> tuple[str, int]:
+    """Return the Redis host and port that services will use, from the same env as the gateway."""
+    url = env.get("RUNEFOBLE_REDIS_URL") or env.get("REDIS_URL") or DEFAULT_REDIS_URL
+    parsed = urlparse(url)
+    return parsed.hostname or "localhost", parsed.port or 6379
+
+
+def ensure_redis_available(host: str, port: int, timeout: float = 5.0) -> subprocess.Popen | None:
+    """Require a reachable Redis. Services refuse to start without it (ADR-0015).
+
+    Return a kubectl port-forward process when the Kind cluster supplies Redis. Return None when
+    Redis already answers. Raise RuntimeError when no Redis can be reached.
+    """
+    if is_port_open(host, port):
+        return None
+    if host in ("localhost", "127.0.0.1") and shutil.which("kubectl"):
+        check = subprocess.run(
+            ["kubectl", "get", "svc", "runefoble-redis"],
+            capture_output=True,
+            text=True,
+            timeout=3.0,
+        )
+        if check.returncode == 0:
+            print(
+                f"{CYAN}[dev-orchestrator]{RESET} Establishing Redis port-forward "
+                f"(svc/runefoble-redis:{port})...",
+                flush=True,
+            )
+            pf_proc = subprocess.Popen(
+                ["kubectl", "port-forward", "svc/runefoble-redis", f"{port}:6379"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline and pf_proc.poll() is None:
+                if is_port_open(host, port):
+                    return pf_proc
+                time.sleep(0.2)
+            terminate_processes([pf_proc])
+    raise RuntimeError(
+        f"Redis is not reachable at {host}:{port}. Start the Kind stack (make cluster-up) or "
+        "set RUNEFOBLE_REDIS_URL to a running Redis."
+    )
 
 
 def check_health(host: str, port: int, timeout: float = 1.0) -> bool:
@@ -285,6 +335,22 @@ def run_orchestrator(args: argparse.Namespace) -> int:
         )
         t_spicedb.start()
         threads.append(t_spicedb)
+
+    # 0b. Require Redis. The gateway fails start-up without it.
+    redis_host, redis_port = redis_endpoint(os.environ)
+    try:
+        redis_proc = ensure_redis_available(redis_host, redis_port)
+    except RuntimeError as exc:
+        print(f"{RED}[dev-orchestrator] {exc}{RESET}", flush=True)
+        terminate_processes(processes)
+        sys.exit(1)
+    if redis_proc is not None:
+        processes.append(redis_proc)
+        t_redis = threading.Thread(
+            target=pipe_output, args=(redis_proc, "redis-pf", YELLOW), daemon=True
+        )
+        t_redis.start()
+        threads.append(t_redis)
 
     print(f"{BOLD}{MAGENTA}======================================================{RESET}")
     print(f"{BOLD}{MAGENTA}       Runefoble Local Development Environment        {RESET}")
