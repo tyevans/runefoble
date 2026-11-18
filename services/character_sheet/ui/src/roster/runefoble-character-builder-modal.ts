@@ -1,4 +1,5 @@
 import { LitElement, html } from 'lit';
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import { customElement, property, state } from 'lit/decorators.js';
 import { characterBuilderModalStyles } from './runefoble-character-builder-modal.styles.ts';
 import {
@@ -10,11 +11,11 @@ import {
 const DEFAULT_ABILITIES: AbilityScores = { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 };
 
 const PORTRAIT_PRESETS = [
-  { id: 'fighter', label: 'Fighter', url: '/assets/portraits/fighter.svg' },
-  { id: 'cleric', label: 'Cleric', url: '/assets/portraits/cleric.svg' },
-  { id: 'wizard', label: 'Wizard', url: '/assets/portraits/wizard.svg' },
-  { id: 'rogue', label: 'Rogue', url: '/assets/portraits/rogue.svg' },
-  { id: 'paladin', label: 'Paladin', url: '/assets/portraits/paladin.svg' },
+  { id: 'fighter', label: 'Fighter', url: PORTRAIT_PLACEHOLDERS.fighter },
+  { id: 'cleric', label: 'Cleric', url: PORTRAIT_PLACEHOLDERS.cleric },
+  { id: 'wizard', label: 'Wizard', url: PORTRAIT_PLACEHOLDERS.wizard },
+  { id: 'rogue', label: 'Rogue', url: PORTRAIT_PLACEHOLDERS.rogue },
+  { id: 'paladin', label: 'Paladin', url: PORTRAIT_PLACEHOLDERS.paladin },
 ];
 
 const STANDARD_CLASSES = [

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
+import { PORTRAIT_PLACEHOLDERS } from '@runefoble/ui-core';
 import './runefoble-character-builder-modal.ts';
 
 const meta: Meta = {
@@ -32,7 +33,7 @@ export const PrepopulatedModal: Story = {
           maxHp: 20,
           armorClass: 13,
           speed: 30,
-          portraitUrl: '/assets/portraits/wizard.svg',
+          portraitUrl: PORTRAIT_PLACEHOLDERS.wizard,
           abilityScores: { str: 8, dex: 14, con: 12, int: 18, wis: 13, cha: 10 },
         }}
       ></runefoble-character-builder-modal>
