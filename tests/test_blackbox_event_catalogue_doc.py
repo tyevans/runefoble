@@ -21,6 +21,10 @@ DOTTED_IDENTIFIER = re.compile(r"[a-z_][a-z0-9_]*(?:\.[a-z0-9_]+)+")
 CATALOGUE_ROW = re.compile(r"^\| `([^`]+)` \| `[^`]+` \| `[^`]+` \|$", re.MULTILINE)
 MAKE_TARGET_ROW = re.compile(r"^\| `make ([a-z][a-z0-9-]*)[` ]", re.MULTILINE)
 MAKE_TARGET_DEF = re.compile(r"^([a-zA-Z][a-zA-Z0-9_-]*):", re.MULTILINE)
+LORE_EVENT_STREAMS_MODULE = (
+    REPO_ROOT / "services" / "campaign_lore" / "src" / "campaign_lore" / "events.py"
+)
+STREAM_TOPIC_LITERAL = re.compile(r'"(runefoble\.events\.[a-z_.]+)"')
 
 
 def _event_reference_pages() -> list[Path]:
@@ -29,8 +33,14 @@ def _event_reference_pages() -> list[Path]:
     return pages
 
 
+def _code_stream_topics() -> set[str]:
+    """Stream topics that the lore repositories publish to. They are topics, not event types."""
+    return set(STREAM_TOPIC_LITERAL.findall(LORE_EVENT_STREAMS_MODULE.read_text(encoding="utf-8")))
+
+
 def _cited_event_identifiers() -> set[str]:
     cited: set[str] = set()
+    stream_topics = _code_stream_topics()
     for page in _event_reference_pages():
         for token in BACKTICKED.findall(page.read_text(encoding="utf-8")):
             if not DOTTED_IDENTIFIER.fullmatch(token):
@@ -38,7 +48,7 @@ def _cited_event_identifiers() -> set[str]:
             if token.endswith(".py") or token.startswith(("runefoble_events.", "eventsource.")):
                 continue
             # Stream names such as runefoble.events.session are not event identifiers.
-            if re.fullmatch(r"runefoble\.events\.[a-z_]+", token):
+            if re.fullmatch(r"runefoble\.events\.[a-z_]+", token) or token in stream_topics:
                 continue
             cited.add(token)
     return cited
