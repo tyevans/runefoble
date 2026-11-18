@@ -54,8 +54,6 @@ def _stream_events(redis_url: str, event_type: str) -> list[dict[str, str]]:
 
 @pytest.fixture
 def database_url(postgres_service) -> Generator[str]:
-    if not postgres_service:
-        pytest.skip("Docker is required for the PostgreSQL event store")
     yield str(postgres_service["dsn"])
 
 

@@ -112,8 +112,6 @@ def restart_stack(postgres_service, live_spicedb_with_schema) -> Iterator[Restar
 
     The PostgreSQL and SpiceDB fixtures skip the module when Docker is unavailable.
     """
-    if not postgres_service:
-        pytest.skip("Docker not available for the PostgreSQL event store restart test")
     with (
         redis_container(get_free_port()) as redis_url,
         serve(_fake_zitadel_app()) as zitadel_url,

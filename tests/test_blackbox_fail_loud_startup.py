@@ -97,8 +97,6 @@ def test_game_session_starts_in_deployed_mode_with_watcher_url(postgres_service)
     A deployed service also needs its PostgreSQL event store (TASK-0707), so the child
     process gets a reachable database.
     """
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL event store test")
 
     result = _import_module(
         "game_session.main",

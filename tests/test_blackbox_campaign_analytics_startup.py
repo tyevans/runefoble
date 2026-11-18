@@ -64,14 +64,11 @@ def test_start_up_fails_when_database_url_is_not_postgresql(
 
 
 def test_start_up_fails_when_redis_is_unreachable(
-    postgres_service: dict[str, Any] | None, monkeypatch: pytest.MonkeyPatch
+    postgres_service: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With PostgreSQL reachable and Redis on a closed port, start-up fails before serving."""
     import campaign_analytics.main as analytics_main
     from fastapi.testclient import TestClient
-
-    if not postgres_service:
-        pytest.skip("Docker not available for the Campaign Analytics PostgreSQL store")
 
     monkeypatch.setenv("RUNEFOBLE_DATABASE_URL", str(postgres_service["async_dsn"]))
     monkeypatch.setenv("RUNEFOBLE_REDIS_URL", f"redis://127.0.0.1:{_closed_port()}/0")

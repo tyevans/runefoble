@@ -167,8 +167,6 @@ def test_offline_postgres_raises_instead_of_falling_back():
 
 def test_deployed_service_with_reachable_postgres_starts_on_postgresql(postgres_service):
     """A production service with a reachable database gets the PostgreSQL store."""
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL event store test")
 
     settings = PlatformSettings(
         environment="production",

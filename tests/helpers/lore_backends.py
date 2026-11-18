@@ -69,17 +69,12 @@ def lore_embedding_app() -> FastAPI:
 
 
 @pytest.fixture(scope="module")
-def lore_backends(postgres_service: dict[str, str | int] | None) -> Iterator[dict[str, str | int]]:
+def lore_backends(postgres_service: dict[str, str | int]) -> Iterator[dict[str, str | int]]:
     """Point Campaign Lore at a running embeddings stand-in and the PostgreSQL fixture.
 
-    Skips when no PostgreSQL container could be started. Campaign Lore has no
-    in-memory vector fallback, so its lifespan cannot start without PostgreSQL.
+    Campaign Lore has no in-memory vector fallback, so its lifespan needs the PostgreSQL
+    fixture. The fixture skips the test when Docker is unavailable.
     """
-    if postgres_service is None:
-        pytest.skip(
-            "Campaign Lore needs PostgreSQL with pgvector; Docker could not start the test "
-            "container (postgres_service is None)"
-        )
     with (
         serve(lore_embedding_app()) as embedding_url,
         pytest.MonkeyPatch.context() as env,

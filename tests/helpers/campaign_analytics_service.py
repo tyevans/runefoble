@@ -99,11 +99,9 @@ class AnalyticsService:
 
 @pytest.fixture
 def analytics_service(
-    postgres_service: dict[str, Any] | None, monkeypatch: pytest.MonkeyPatch
+    postgres_service: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> Iterator[AnalyticsService]:
     """Point the service at the PostgreSQL container and the Redis double for one test."""
-    if not postgres_service:
-        pytest.skip("Docker not available for the Campaign Analytics PostgreSQL store")
 
     import campaign_analytics.main as analytics_main
 

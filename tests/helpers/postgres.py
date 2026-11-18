@@ -7,6 +7,7 @@ Governed by:
 
 from __future__ import annotations
 
+import os
 import shutil
 import socket
 import subprocess
@@ -16,7 +17,7 @@ from collections.abc import Generator
 
 import pytest
 
-from tests.helpers.container_owner import owner_label_args, remove_orphaned_test_containers
+from tests.helpers.container_owner import owner_label_args
 
 
 def get_free_port() -> int:
@@ -27,12 +28,19 @@ def get_free_port() -> int:
 
 
 @pytest.fixture(scope="module")
-def postgres_service() -> Generator[dict[str, str | int] | None]:
-    """Provision a real PostgreSQL container if Docker is available on the host."""
+def postgres_service() -> Generator[dict[str, str | int]]:
+    """Provision a real PostgreSQL container. Skip only when Docker is unavailable.
+
+    Any other failure to start the container raises, so the test fails with the error.
+    """
     docker_bin = shutil.which("docker")
     if not docker_bin:
-        yield None
-        return
+        pytest.skip("Docker is not available: the docker CLI is not on PATH")
+    probe = subprocess.run([docker_bin, "info"], capture_output=True, text=True, check=False)
+    if probe.returncode != 0:
+        pytest.skip(
+            f"Docker is not available: the daemon is not reachable ({probe.stderr.strip()})"
+        )
 
     port = get_free_port()
     container_name = f"runefoble-pg-test-{port}"
@@ -59,14 +67,21 @@ def postgres_service() -> Generator[dict[str, str | int] | None]:
         "done\n"
     )
 
-    with tempfile.NamedTemporaryFile("w", delete=False, suffix=".sh") as tmp:
-        tmp.write(init_script)
-        script_path = tmp.name
+    script_path = ""
+    try:
+        descriptor, script_path = tempfile.mkstemp(suffix=".sh")
+        with os.fdopen(descriptor, "w", encoding="utf-8") as script_file:
+            script_file.write(init_script)
+        os.chmod(script_path, 0o755)
+        yield from _run_postgres_container(docker_bin, container_name, port, script_path)
+    finally:
+        if script_path:
+            os.unlink(script_path)
 
-    subprocess.run(["chmod", "755", script_path], check=True)
 
-    remove_orphaned_test_containers(docker_bin)
-
+def _run_postgres_container(
+    docker_bin: str, container_name: str, port: int, script_path: str
+) -> Generator[dict[str, str | int]]:
     cmd = [
         docker_bin,
         "run",
@@ -92,66 +107,58 @@ def postgres_service() -> Generator[dict[str, str | int] | None]:
         "pgvector/pgvector:pg16",
     ]
 
-    try:
-        subprocess.run(cmd, check=True, capture_output=True)
-    except Exception:
-        yield None
-        return
+    started = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if started.returncode != 0:
+        raise RuntimeError(f"docker run failed for {container_name}: {started.stderr.strip()}")
 
-    # Wait for postgres entrypoint initialization to complete and final server to accept connections
-    deadline = time.time() + 30
-    ready = False
+    try:
+        if not _wait_until_ready(docker_bin, container_name):
+            raise RuntimeError(f"PostgreSQL in {container_name} did not become ready in 30 seconds")
+        yield {
+            "host": "127.0.0.1",
+            "port": port,
+            "user": "runefoble_user",
+            "password": "runefoble_dev_password",
+            "database": "runefoble",
+            "container_name": container_name,
+            "dsn": f"postgresql://runefoble_user:runefoble_dev_password@127.0.0.1:{port}/runefoble",
+            "async_dsn": f"postgresql+asyncpg://runefoble_user:runefoble_dev_password@127.0.0.1:{port}/runefoble",
+        }
+    finally:
+        subprocess.run([docker_bin, "rm", "-f", container_name], capture_output=True)
+
+
+def _wait_until_ready(docker_bin: str, container_name: str, timeout: float = 30.0) -> bool:
+    """Return True when the init script finished and the final server answers a query."""
+    deadline = time.time() + timeout
     while time.time() < deadline:
         time.sleep(0.5)
-        # Check container logs to verify initialization script finished and permanent server started
         logs_res = subprocess.run(
-            [docker_bin, "logs", container_name],
-            capture_output=True,
-            text=True,
+            [docker_bin, "logs", container_name], capture_output=True, text=True
         )
         logs = logs_res.stdout + logs_res.stderr
         init_complete = (
             "PostgreSQL init process complete; ready for start up." in logs
             and logs.count("database system is ready to accept connections") >= 2
         )
-        if init_complete:
-            # Verify psql query execution succeeds on the final server
-            test_res = subprocess.run(
-                [
-                    docker_bin,
-                    "exec",
-                    container_name,
-                    "psql",
-                    "-U",
-                    "runefoble_user",
-                    "-d",
-                    "runefoble",
-                    "-tAc",
-                    "SELECT 1;",
-                ],
-                capture_output=True,
-                text=True,
-            )
-            if test_res.returncode == 0 and test_res.stdout.strip() == "1":
-                ready = True
-                break
-
-    if not ready:
-        subprocess.run([docker_bin, "rm", "-f", container_name], capture_output=True)
-        yield None
-        return
-
-    info = {
-        "host": "127.0.0.1",
-        "port": port,
-        "user": "runefoble_user",
-        "password": "runefoble_dev_password",
-        "database": "runefoble",
-        "container_name": container_name,
-        "dsn": f"postgresql://runefoble_user:runefoble_dev_password@127.0.0.1:{port}/runefoble",
-        "async_dsn": f"postgresql+asyncpg://runefoble_user:runefoble_dev_password@127.0.0.1:{port}/runefoble",
-    }
-    try:
-        yield info
-    finally:
-        subprocess.run([docker_bin, "rm", "-f", container_name], capture_output=True)
+        if not init_complete:
+            continue
+        test_res = subprocess.run(
+            [
+                docker_bin,
+                "exec",
+                container_name,
+                "psql",
+                "-U",
+                "runefoble_user",
+                "-d",
+                "runefoble",
+                "-tAc",
+                "SELECT 1;",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if test_res.returncode == 0 and test_res.stdout.strip() == "1":
+            return True
+    return False
