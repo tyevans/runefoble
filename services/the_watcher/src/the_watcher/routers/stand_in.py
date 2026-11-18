@@ -106,8 +106,9 @@ async def stand_in_act(caller_id: CallerId, req: StandInRequest) -> StandInActio
 
 
 @router.post("/api/v1/watcher/stand-in/recap", response_model=StandInRecapResponse)
-async def stand_in_recap(req: StandInRecapRequest) -> StandInRecapResponse:
+async def stand_in_recap(caller_id: CallerId, req: StandInRecapRequest) -> StandInRecapResponse:
     """Generate a humorous recap of an absent player's stand-in exploits for when they return."""
+    await require_session_permission(caller_id, req.session_id, "session.observe")
     data = engine.generate_stand_in_recap(
         character_name=req.character_name,
         actions=req.actions,

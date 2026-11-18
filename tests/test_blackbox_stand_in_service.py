@@ -214,6 +214,8 @@ async def test_game_session_auto_pilot_turn(
 @pytest.mark.asyncio
 async def test_absentee_session_recap_generation():
     """POST /api/v1/watcher/stand-in/recap must generate a humorous chronicle for the returning player."""
+    session_id = str(uuid4())
+    await make_table_runner("test-user", session_id, str(uuid4()))
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(
         transport=transport,
@@ -223,6 +225,7 @@ async def test_absentee_session_recap_generation():
         recap_res = await client.post(
             "/api/v1/watcher/stand-in/recap",
             json={
+                "session_id": session_id,
                 "character_name": "Kyra",
                 "penalties": ["drunk", "foolishness"],
                 "actions": [

@@ -10,7 +10,7 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -20,6 +20,8 @@ async def _bound_session() -> tuple[str, str]:
     """Bind a fresh session to a fresh campaign whose DM is the test user."""
     session_id, campaign_id = str(uuid.uuid4()), str(uuid.uuid4())
     await make_table_runner("test-user", session_id, campaign_id)
+    for speaker in ("spk-1", "spk-2", "spk-3", "spk-4", "spk-5", "spk-6"):
+        await bind_character_owner("test-user", speaker)
     return session_id, campaign_id
 
 

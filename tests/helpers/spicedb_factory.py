@@ -60,3 +60,20 @@ async def make_table_runner(user_id: str, session_id: str, campaign_id: str) -> 
         subject_id=user_id,
     )
     await bind_session_to_campaign(session_id, campaign_id)
+
+
+async def bind_character_owner(user_id: str, character_id: str) -> None:
+    """Write `character:<character_id>#owner@user:<user_id>` on the shared client.
+
+    `character.edit` grants the owner. A player who speaks for this character passes the
+    speaker check. The tuple uses the schema relation name.
+    """
+    from runefoble_auth.factory import get_spicedb_client
+
+    await get_spicedb_client().write_relationship(
+        resource_type="character",
+        resource_id=str(character_id),
+        relation="owner",
+        subject_type="user",
+        subject_id=user_id,
+    )

@@ -26,7 +26,11 @@ from the_watcher.dependencies import set_event_bus
 from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.spicedb_factory import make_table_runner, shared_spicedb_client
+from tests.helpers.spicedb_factory import (
+    bind_character_owner,
+    make_table_runner,
+    shared_spicedb_client,
+)
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -230,3 +234,82 @@ def test_schema_defect_returns_500_with_error_id(client: TestClient):
     body = res.json()
     assert body["error"] == "authorization_schema_error"
     assert len(body["error_id"]) == 32
+
+
+def test_player_may_speak_for_own_character_only(client: TestClient):
+    """A player gets 200 when speaking for a character they own. Another player's character is 403."""
+    dm, player, other = (f"{p}-{uuid4().hex[:6]}" for p in ("dm", "player", "other"))
+    campaign_id, session_id = asyncio.run(_seed_table(dm, player))
+    own_character, foreign_character = (
+        f"char-own-{uuid4().hex[:6]}",
+        f"char-foreign-{uuid4().hex[:6]}",
+    )
+    asyncio.run(bind_character_owner(player, own_character))
+    asyncio.run(bind_character_owner(other, foreign_character))
+
+    allowed = client.post(
+        "/api/v1/watcher/intent",
+        json=_speech_body(session_id, campaign_id, speaker=own_character),
+        headers=_bearer(player),
+    )
+    assert allowed.status_code == 200, allowed.text
+
+    denied = client.post(
+        "/api/v1/watcher/intent",
+        json=_speech_body(session_id, campaign_id, speaker=foreign_character),
+        headers=_bearer(player),
+    )
+    assert denied.status_code == 403
+
+
+def test_compound_action_on_another_players_character_is_forbidden(client: TestClient):
+    """Each compound node that names a character needs character.edit on that character."""
+    dm, player, other = (f"{p}-{uuid4().hex[:6]}" for p in ("dm", "player", "other"))
+    _, session_id = asyncio.run(_seed_table(dm, player))
+    own_character, foreign_character = (
+        f"char-own-{uuid4().hex[:6]}",
+        f"char-foreign-{uuid4().hex[:6]}",
+    )
+    asyncio.run(bind_character_owner(player, own_character))
+    asyncio.run(bind_character_owner(other, foreign_character))
+
+    def _execute(character_id: str):
+        return client.post(
+            "/api/v1/watcher/intent/execute",
+            json={
+                "session_id": session_id,
+                "actions": [
+                    {
+                        "node_id": "n1",
+                        "order": 1,
+                        "action_type": "narrative",
+                        "parameters": {"character_id": character_id},
+                        "description": "Steps forward",
+                    }
+                ],
+            },
+            headers=_bearer(player),
+        )
+
+    assert _execute(own_character).status_code == 200
+    denied = _execute(foreign_character)
+    assert denied.status_code == 403
+    assert "character" in denied.json()["detail"]
+
+
+def test_stand_in_recap_requires_session_observe(client: TestClient):
+    """The recap names a session. A stranger gets 403. A participant gets 200."""
+    dm, player = f"dm-{uuid4().hex[:6]}", f"player-{uuid4().hex[:6]}"
+    _, session_id = asyncio.run(_seed_table(dm, player))
+    body = {"session_id": session_id, "character_name": "Seoni", "penalties": ["drunk"]}
+
+    stranger = f"stranger-{uuid4().hex[:6]}"
+    assert (
+        client.post(
+            "/api/v1/watcher/stand-in/recap", json=body, headers=_bearer(stranger)
+        ).status_code
+        == 403
+    )
+
+    allowed = client.post("/api/v1/watcher/stand-in/recap", json=body, headers=_bearer(player))
+    assert allowed.status_code == 200, allowed.text

@@ -146,6 +146,24 @@ async def require_campaign_permission(user_id: str, campaign_id: str | None, act
         raise HTTPException(status_code=403, detail=_denied(action, "campaign", campaign_id))
 
 
+async def require_character_permission(user_id: str, character_id: str | None, action: str) -> None:
+    """Raise 403 unless the user holds the character permission behind `action`."""
+    if not character_id or not await check_action_permission(
+        user_id, "character", character_id, action
+    ):
+        raise HTTPException(status_code=403, detail=_denied(action, "character", character_id))
+
+
+async def require_speaker(user_id: str, speaker_id: str) -> None:
+    """Allow a player to speak as themselves, or for a character they can edit.
+
+    A speaker that is neither the caller nor an editable character gets 403.
+    """
+    if speaker_id == user_id:
+        return
+    await require_character_permission(user_id, speaker_id, "character.edit")
+
+
 async def require_session_permission(user_id: str, session_id: str | None, action: str) -> None:
     """Raise 403 unless the user holds the session permission behind `action`."""
     if not session_id or not await check_action_permission(user_id, "session", session_id, action):

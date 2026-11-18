@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from the_watcher.main import app as watcher_app
 
-from tests.helpers.spicedb_factory import make_table_runner
+from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -21,6 +21,7 @@ def _bound_session() -> tuple[str, str]:
     """Bind a fresh session to a fresh campaign whose DM is the test user."""
     session_id, campaign_id = str(uuid4()), str(uuid4())
     asyncio.run(make_table_runner("test-user", session_id, campaign_id))
+    asyncio.run(bind_character_owner("test-user", "p-1"))
     return session_id, campaign_id
 
 
@@ -156,6 +157,7 @@ def test_watcher_stand_in_frontdoor(watcher_client):
     res_stand_in_recap = watcher_client.post(
         "/api/v1/watcher/stand-in/recap",
         json={
+            "session_id": sid,
             "character_name": "Elidor",
             "actions": [{"action_type": "stumble"}],
             "penalties": ["drunk"],

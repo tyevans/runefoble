@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from the_watcher.dependencies import (
     compound_action_engine,
     engine,
+    require_character_permission,
     require_session_permission,
 )
 from the_watcher.identity import CallerId, get_caller_principal
@@ -74,6 +75,11 @@ async def execute_compound_actions(
 ) -> IntentExecuteResponse:
     """Execute compound action combo step-by-step with partial failure and rollback handling."""
     await require_session_permission(caller_id, req.session_id, "session.participate")
+    for node in req.actions:
+        # A node that names its acting character must pass character.edit for that character.
+        character_id = node.parameters.get("character_id")
+        if character_id:
+            await require_character_permission(caller_id, character_id, "character.edit")
     status, updated_actions, narrative, failed_id = compound_action_engine.execute_plan(
         session_id=req.session_id,
         actions=req.actions,
