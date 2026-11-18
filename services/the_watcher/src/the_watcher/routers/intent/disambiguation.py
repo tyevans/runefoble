@@ -172,7 +172,8 @@ async def resolve_intent_disambiguation(
         )
 
     bus, s_uuid = get_event_bus(), opaque_aggregate_id(req.session_id, field="session_id")
-    c_uuid = str(opaque_aggregate_id(req.campaign_id or pending.campaign_id, field="campaign_id"))
+    campaign_id = req.campaign_id or pending.campaign_id
+    c_uuid = str(opaque_aggregate_id(campaign_id, field="campaign_id")) if campaign_id else None
     await _safe_publish(
         bus,
         STREAM_WATCHER,
