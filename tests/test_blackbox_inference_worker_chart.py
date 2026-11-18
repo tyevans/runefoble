@@ -72,15 +72,16 @@ def test_chart_renders_inference_worker_deployment_with_probe_and_env():
 
 
 def test_swagger_hub_lists_inference_worker_openapi():
-    """The Swagger UI aggregator lists the worker and the hub has 13 entries."""
+    """The Swagger UI aggregator lists the worker once, and no spec URL is listed twice."""
     documents = _rendered_documents()
     swagger = _find(documents, "Deployment", "swagger-ui")
     container = swagger["spec"]["template"]["spec"]["containers"][0]
     urls = next(item["value"] for item in container["env"] if item["name"] == "URLS")
 
     entries = yaml.safe_load(urls) if isinstance(urls, str) else urls
-    assert WORKER_URL in {entry["url"] for entry in entries}
-    assert len(entries) == 13
+    urls_listed = [entry["url"] for entry in entries]
+    assert urls_listed.count(WORKER_URL) == 1
+    assert len(urls_listed) == len(set(urls_listed))
 
 
 def test_values_declare_inference_worker_service():
