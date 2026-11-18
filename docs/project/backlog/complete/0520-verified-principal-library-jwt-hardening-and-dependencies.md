@@ -14,13 +14,6 @@ governing_stories:
 - US-0062
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-libs.md
-- w3-authz-coverage.md
-- w3-ddd-architecture.md
-- w3-docs-integrity.md
-- w1-gateway-api.md
 ---
 
 # TASK-0520: Verified Principal Library, Dev Identity Removal, and JWT Hardening
@@ -95,3 +88,8 @@ Library tests use the public dependency through a minimal FastAPI app and `TestC
 3. The how-to `verify-identity-in-fastapi-and-websockets.md` exists. The authenticate how-to no longer describes dev mode.
 4. `uv run ruff check libs` passes. No file exceeds 500 lines.
 5. `CHANGELOG.md` `[Unreleased]` records the removed dev mode and the new principal contract.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-libs.md`, `w3-authz-coverage.md`, `w3-ddd-architecture.md`, `w3-docs-integrity.md`, `w1-gateway-api.md`

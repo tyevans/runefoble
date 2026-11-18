@@ -3,6 +3,8 @@ id: '0024'
 title: Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames
 status: Accepted
 created: 2026-09-27
+target_persona: Mayor Theron, Lady Nicole, Kip, Sam
+component: game_session
 ---
 
 # PRD-0024 — Settlement Haven Builder, Living Urban Ecosystem & Mobile Web Minigames

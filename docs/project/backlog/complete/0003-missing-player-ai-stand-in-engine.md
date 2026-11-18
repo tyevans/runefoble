@@ -1,3 +1,18 @@
+---
+id: '0003'
+title: Missing Player AI Stand-In Engine with Absence Penalties
+status: Complete
+created: 2026-09-25
+target_bc: the_watcher
+governing_adrs:
+- ADR-0002
+- ADR-0007
+governing_prds:
+- PRD-0002
+governing_stories:
+- US-0002
+- US-0005
+---
 # TASK-0003: Missing Player AI Stand-In Engine with Absence Penalties
 
 ## Description

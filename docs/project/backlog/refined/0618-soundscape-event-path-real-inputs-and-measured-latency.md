@@ -14,9 +14,6 @@ governing_stories:
 - US-0039
 - US-0046
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w2-soundscape.md
 ---
 
 # TASK-0618: Soundscape Event Path Derives Tension Inputs From Game State and Measures Leitmotif Latency
@@ -62,3 +59,8 @@ Sources: `.audit/reports/w2-soundscape.md` F2 and F13.
 3. Blackbox tests pass. `uv run pytest services/soundscape` passes.
 4. Ruff check and format pass.
 5. Events schema and soundscape how-to updated. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w2-soundscape.md`

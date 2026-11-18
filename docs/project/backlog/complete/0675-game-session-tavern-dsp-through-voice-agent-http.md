@@ -14,9 +14,6 @@ governing_prds:
 governing_stories:
 - US-0047
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0620.md
 ---
 
 # TASK-0675: Game Session Tavern Voice DSP Calls Voice Agent Over HTTP
@@ -60,3 +57,8 @@ Complete
 - Import-linter contract passes (`uv run lint-imports`).
 - OpenAPI for `voice_agent` lists the new route. `docs/reference/ports-and-endpoints.md` updated.
 - Changed files under 500 lines. `uv run pytest` and `make lint` pass.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0620.md`

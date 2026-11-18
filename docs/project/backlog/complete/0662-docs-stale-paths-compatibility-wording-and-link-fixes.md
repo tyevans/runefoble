@@ -10,9 +10,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w3-docs-integrity.md
 ---
 
 # TASK-0662: Reference and How-To Docs Drop Stale Paths, Compatibility Wording, and Machine-Specific Links
@@ -70,3 +67,8 @@ Documentation accuracy. Not user-facing.
 Source: `.audit/synth/discovered-round1.md`.
 
 - `docs/how-to/define-spicedb-zanzibar-permissions.md:263` says "complete backward compatibility" for `runefoble_auth.mock_spicedb`. `docs/reference/ports-and-endpoints.md:107,114,115` call the voice routes "Backward-compatible" or "alias". Remove the wording after the code aliases are gone (TASK-0494).
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-docs-integrity.md`

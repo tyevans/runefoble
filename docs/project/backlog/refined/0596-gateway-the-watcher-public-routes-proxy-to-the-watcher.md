@@ -17,11 +17,6 @@ governing_stories:
 - US-0002
 - US-0003
 - US-0057
-severity: high
-source_audits:
-- w3-ddd-architecture.md
-- w1-the-watcher.md
-- w1-gates-infra.md
 target_release: 0.9.0
 ---
 
@@ -75,3 +70,8 @@ Test file: `tests/test_blackbox_gateway_watcher_proxy.py`. `the_watcher` runs as
 2. No Watcher logic or Watcher state lives in `gateway/api`.
 3. The blackbox test file passes. `uv run ruff check .` passes.
 4. `docs/reference/ports-and-endpoints.md` shows the gateway as the browser endpoint for the proxied routes.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-ddd-architecture.md`, `w1-the-watcher.md`, `w1-gates-infra.md`

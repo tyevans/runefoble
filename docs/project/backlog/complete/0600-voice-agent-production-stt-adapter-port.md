@@ -16,9 +16,6 @@ governing_stories:
 - US-0001
 - US-0060
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w2-voice-agent.md
 ---
 
 # TASK-0600: Voice Agent Production STT Adapter Port (Replace Canned Transcript Default)
@@ -72,3 +69,8 @@ Source: `.audit/reports/w2-voice-agent.md` F1.
 3. Blackbox tests above pass. `uv run pytest services/voice_agent` passes.
 4. `uv run ruff check .` and `uv run ruff format --check .` pass.
 5. Reference docs and the voice how-to updated. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w2-voice-agent.md`

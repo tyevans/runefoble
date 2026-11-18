@@ -3,6 +3,8 @@ id: '0020'
 title: Zero-Latency Neural Voice Duplex, Barge-In Interruption & Acoustic Echo Cancellation
 status: Accepted
 created: 2026-09-26
+target_persona: Marcus, Nadia, Evelyn
+component: voice_agent
 ---
 
 # PRD-0020 — Zero-Latency Neural Voice Duplex, Barge-In Interruption & Acoustic Echo Cancellation

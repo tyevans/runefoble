@@ -12,11 +12,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0604.md
-- work/0622.md
-- work/0603.md
 ---
 
 # TASK-0689: Gateway MCP Service Calls Carry a Kubernetes Secret Service Credential
@@ -55,3 +50,8 @@ None. Platform security control with no user-facing change.
 - All gateway_mcp service calls carry the credential. Receivers reject calls without it.
 - `uv run pytest` and `make lint` pass. `make helm-template` renders the Secret references.
 - Docs updated.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0604.md`, `work/0622.md`, `work/0603.md`

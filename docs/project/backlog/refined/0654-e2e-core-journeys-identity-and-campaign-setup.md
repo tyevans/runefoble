@@ -16,9 +16,6 @@ governing_stories:
 - US-0062
 - US-0063
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-e2e-bdd.md
 ---
 
 # TASK-0654: Gherkin and Playwright Coverage for Register, Login, Create Campaign, and Invite Join
@@ -72,3 +69,8 @@ The six scenarios above are the test plan. Each one runs in chromium, firefox, a
 Source: `.audit/synth/discovered-round1.md`.
 
 - Empty title: `services/game_session/ui/src/campaigns/runefoble-campaign-creator.ts` marks the title input `required`, so an empty submit never reaches the server. Decide the spec: client validation message or server 422.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-e2e-bdd.md`

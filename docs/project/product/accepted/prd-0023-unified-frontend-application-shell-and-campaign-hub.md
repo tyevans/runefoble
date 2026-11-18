@@ -3,6 +3,8 @@ id: '0023'
 title: Unified Frontend Experience with User Authentication, Campaign Hub, and Session Orchestration
 status: Accepted
 created: 2026-09-27
+target_persona: Evelyn, Marcus, Sarah, Devon, Alex
+component: frontend
 ---
 
 # PRD-0023 — Unified Frontend Experience with User Authentication, Campaign Hub, and Session Orchestration

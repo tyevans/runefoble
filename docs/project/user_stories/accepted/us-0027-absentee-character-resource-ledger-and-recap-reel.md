@@ -4,6 +4,7 @@ title: Absentee Character Resource Audit Ledger and Catch-Up Reel
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0002
+persona: Sarah (Absent Player)
 ---
 
 # US-0027 — Absentee Character Resource Audit Ledger and Catch-Up Reel

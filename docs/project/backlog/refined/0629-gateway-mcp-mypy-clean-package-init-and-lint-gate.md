@@ -12,9 +12,6 @@ governing_prds:
 - PRD-0022
 governing_stories: []
 target_release: 0.9.0
-severity: low
-source_audits:
-- w1-gateway-mcp.md
 ---
 
 # TASK-0629: Make mypy Pass on gateway/mcp and Add It to the Lint Gate
@@ -52,3 +49,8 @@ Refined
 2. Lint gate includes it.
 3. TASK-0489 is complete before this task closes.
 4. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `w1-gateway-mcp.md`

@@ -17,11 +17,6 @@ governing_stories:
 - US-0063
 - US-0071
 - US-0009
-severity: critical
-source_audits:
-- w1-game-session.md
-- w1-gateway-api.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -90,3 +85,8 @@ Test file: `tests/test_blackbox_campaign_lifecycle_owner.py`. `game_session` run
 4. SpiceDB tuples are written only after the aggregate save succeeds. A test covers a failed save.
 5. The blackbox test file passes. `uv run ruff check .` passes.
 6. `docs/how-to/manage-campaign-lifecycle-and-invites.md` and `docs/reference/ports-and-endpoints.md` name `game_session` as the owner.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-game-session.md`, `w1-gateway-api.md`, `w3-ddd-architecture.md`

@@ -22,9 +22,6 @@ governing_stories:
 - US-0058
 - US-0076
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-authz-coverage.md
 ---
 
 # TASK-0550: Game Session Tavern, Bounty, Caravan, West Marches, Campfire, and Stronghold Authorization
@@ -82,3 +79,8 @@ Setup: a campaign, a session, a shared world, a bounty, and a caravan contract a
 4. The four how-to docs in the Documentation section are updated.
 5. `uv run pytest services/game_session` passes. `uv run ruff check services/game_session` passes.
 6. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-authz-coverage.md`

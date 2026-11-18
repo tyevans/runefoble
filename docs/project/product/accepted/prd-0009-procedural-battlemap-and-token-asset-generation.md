@@ -3,6 +3,8 @@ id: 0009
 title: Procedural Battlemap & Token Asset Generation Engine
 status: Shipped
 created: 2026-09-25
+target_persona: Evelyn, Marcus
+component: asset_forge
 ---
 
 # PRD-0009 — Procedural Battlemap & Token Asset Generation Engine

@@ -16,11 +16,6 @@ governing_stories:
 - US-0015
 - US-0051
 - US-0069
-severity: high
-source_audits:
-- w1-gateway-api.md
-- w1-character-sheet.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -80,3 +75,8 @@ Test file: `tests/test_blackbox_gateway_character_subresources.py`. `character_s
 Source: `.audit/synth/discovered-round2.md`.
 
 - gateway/api/src/gateway_api/character_store_mutations.py: delete the functions with no callers (modify_health, equip_item, unequip_item, add_inventory_item, remove_inventory_item, apply_condition, remove_condition, cast_spell, prepare_spell, update_guardrails) and remove the gateway-held stand-in flag (about lines 62 and 244).
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-gateway-api.md`, `w1-character-sheet.md`, `w3-ddd-architecture.md`

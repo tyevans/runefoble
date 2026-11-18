@@ -4,6 +4,7 @@ title: Secret DM Traps, Map Switching, and Stage Triggers
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0007
+persona: Evelyn (DM)
 ---
 
 # US-0018 — Secret DM Traps, Map Switching, and Stage Triggers

@@ -4,6 +4,7 @@ title: Spatial Line-of-Sight and Fog-of-War Server Synchronization
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0003
+persona: Evelyn (DM)
 ---
 
 # US-0012: Spatial Line-of-Sight and Fog-of-War Server Synchronization

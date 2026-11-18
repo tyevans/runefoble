@@ -15,9 +15,6 @@ governing_stories:
 - US-0008
 - US-0015
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-gateway-mcp.md
 ---
 
 # TASK-0604: Gateway MCP Character Tools Call Character Sheet Service Frontdoors
@@ -64,3 +61,8 @@ Source: `.audit/reports/w1-gateway-mcp.md` F1.
 3. Blackbox tests pass. Gateway MCP and character sheet suites pass.
 4. Ruff check and format pass.
 5. Tool inventory docs corrected.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-gateway-mcp.md`

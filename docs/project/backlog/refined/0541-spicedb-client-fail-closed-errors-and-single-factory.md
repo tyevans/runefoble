@@ -14,13 +14,6 @@ governing_prds: []
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-authz-coverage.md
-- w3-ddd-architecture.md
-- w1-libs.md
-- w2-rules-compendium.md
-- w2-voice-agent.md
 ---
 
 # TASK-0541: SpiceDB Client Fail-Closed Errors and Single Factory
@@ -77,3 +70,8 @@ The SpiceDB client in `libs/runefoble_auth` turns errors into silent results. A 
 5. `uv run pytest libs/runefoble_auth` passes.
 6. `docs/reference/platform-services.md` and the Zitadel how-to match the new behaviour.
 7. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-authz-coverage.md`, `w3-ddd-architecture.md`, `w1-libs.md`, `w2-rules-compendium.md`, `w2-voice-agent.md`

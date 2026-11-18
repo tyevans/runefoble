@@ -17,12 +17,6 @@ governing_prds:
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-board-state.md
-- w2-campaign-analytics.md
-- w2-rules-compendium.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0527: Services Verify Zitadel Tokens (board_state, campaign_analytics, rules_compendium)
@@ -72,3 +66,8 @@ HTTP tests with `TestClient`, using tokens from the signing issuer. New file per
 3. Helm renders the new variables (`helm template`).
 4. `docs/how-to/manage-secret-dm-traps-and-map-triggers.md` and the three service how-tos show a bearer token.
 5. `uv run ruff check services/board_state services/campaign_analytics services/rules_compendium` passes. No file exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-board-state.md`, `w2-campaign-analytics.md`, `w2-rules-compendium.md`, `w3-authz-coverage.md`

@@ -14,11 +14,6 @@ governing_prds:
 governing_stories:
 - US-0064
 - US-0015
-severity: critical
-source_audits:
-- w1-character-sheet.md
-- w1-gateway-api.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -73,3 +68,8 @@ Restart test: build the gateway app twice with the same owner ASGI app. The seco
 3. The gateway imports nothing from `character_sheet`.
 4. The blackbox test file passes. `uv run ruff check .` passes.
 5. `docs/reference/ports-and-endpoints.md` matches the routes.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-character-sheet.md`, `w1-gateway-api.md`, `w3-ddd-architecture.md`

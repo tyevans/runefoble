@@ -16,9 +16,6 @@ governing_prds:
 governing_stories:
 - US-0051
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0640.md
 ---
 
 # TASK-0679: Spell Slot Restore Route on Character Sheet and Gateway Proxy
@@ -57,3 +54,8 @@ Characters can prepare and cast spells. No route restores spent spell slots. The
 - Tests above pass. The event is registered and listed in `docs/reference/events-schema.md`.
 - OpenAPI for `character_sheet` and the gateway lists the route.
 - Changed files under 500 lines. `uv run pytest` and `make lint` pass.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0640.md`

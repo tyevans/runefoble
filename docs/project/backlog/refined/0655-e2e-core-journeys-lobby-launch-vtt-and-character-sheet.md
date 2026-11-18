@@ -21,10 +21,6 @@ governing_stories:
 - US-0065
 - US-0069
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-e2e-bdd.md
-- w2-voice-agent.md
 ---
 
 # TASK-0655: Gherkin and Playwright Coverage for Lobby, Launch, Text and Voice Token Moves, and Character Sheet
@@ -80,3 +76,8 @@ The second half of the core journey plan: a DM prepares a session in the lobby a
 4. No step dispatches a synthetic event or writes private state (TASK-0649 grep check).
 5. Each file is under 500 lines.
 6. The text command control, if added, appears in the component's Storybook story with zero console errors.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-e2e-bdd.md`, `w2-voice-agent.md`

@@ -14,9 +14,6 @@ governing_stories:
 - US-0002
 - US-0026
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0570.md
 ---
 
 # TASK-0690: Leaving a Session Activates the Character Stand-In in Character Sheet
@@ -56,3 +53,8 @@ Refined. Discovered in round 2 audit of report 0570. PRD-0002 requires the stand
 ## Definition of Done
 - Leave activates the stand-in in character sheet. The flag is set in production code, not only in tests.
 - `uv run pytest` and `make lint` pass. Docs updated.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0570.md`

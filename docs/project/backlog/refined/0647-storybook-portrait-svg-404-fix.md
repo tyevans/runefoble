@@ -13,9 +13,6 @@ governing_stories:
 - US-0004
 - US-0055
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w2-app-shell.md
 ---
 
 # TASK-0647: Storybook Stories Stop Requesting Missing Portrait SVG Assets
@@ -57,3 +54,8 @@ Eight Storybook stories request `/assets/portraits/{fighter,wizard,cleric,rogue}
 3. The four portrait assets, or the replacement references, are committed and documented in `docs/how-to/develop-lit-components-in-storybook.md`.
 4. `pnpm run build` and `pnpm storybook build` pass.
 5. Each new file is under 500 lines (SVGs are under 4 KB).
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w2-app-shell.md`

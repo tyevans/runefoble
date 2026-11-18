@@ -10,16 +10,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-rules-compendium.md
-- w2-campaign-lore.md
-- w1-libs.md
-- w2-audience-studio.md
-- w2-asset-forge.md
-- w2-campaign-analytics.md
-- w2-soundscape.md
-- w1-board-state.md
 ---
 
 # TASK-0625: Remove Hardcoded SpiceDB Preshared Key Defaults and Fix the Wrong Setting Name
@@ -64,3 +54,8 @@ Several services send a SpiceDB preshared key that is a literal in code, and som
 4. Live SpiceDB blackbox test passes.
 5. `uv run pytest` and `pnpm run build` pass.
 6. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-rules-compendium.md`, `w2-campaign-lore.md`, `w1-libs.md`, `w2-audience-studio.md`, `w2-asset-forge.md`, `w2-campaign-analytics.md`, `w2-soundscape.md`, `w1-board-state.md`

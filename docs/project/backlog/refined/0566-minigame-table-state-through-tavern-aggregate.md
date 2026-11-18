@@ -15,9 +15,6 @@ governing_stories:
 - US-0047
 - US-0074
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-game-session.md
 ---
 
 # TASK-0566: Minigame Table State Through the Tavern Game Aggregate
@@ -58,3 +55,8 @@ Minigame bets, dart throws, Liar's Dice bids, and roulette spins live in a proce
 2. Restart test above passes. Stream test passes.
 3. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 4. `CHANGELOG.md` entry. How-to unchanged unless its statements become false.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-game-session.md`

@@ -24,10 +24,6 @@ governing_stories:
 - US-0023
 - US-0007
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-game-session.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0548: Game Session Lifecycle, Combat, Hot-Swap, and Minigame Socket Authorization
@@ -91,3 +87,8 @@ Setup: the campaign, the session, and characters are created through public rout
 4. `docs/how-to/coordinate-game-session-lobby-and-readiness.md` and `docs/how-to/configure-stand-in-guardrails-and-hot-swap.md` are updated.
 5. `uv run pytest services/game_session` passes. `uv run ruff check services/game_session` passes.
 6. No file in the change exceeds 500 lines. `session.py` is already large; split it if this change pushes it over.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-game-session.md`, `w3-authz-coverage.md`

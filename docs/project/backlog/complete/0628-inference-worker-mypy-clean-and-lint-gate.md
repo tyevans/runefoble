@@ -12,9 +12,6 @@ governing_prds:
 - PRD-0001
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w2-inference-worker.md
 ---
 
 # TASK-0628: Make mypy Pass on the Inference Worker and Add It to the Lint Gate
@@ -54,3 +51,8 @@ Complete
 2. `make lint` includes the check and passes.
 3. Existing worker tests pass.
 4. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w2-inference-worker.md`

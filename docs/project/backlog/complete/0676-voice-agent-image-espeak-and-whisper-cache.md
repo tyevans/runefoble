@@ -14,10 +14,6 @@ governing_prds:
 governing_stories:
 - US-0060
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0600.md
-- work/0601.md
 ---
 
 # TASK-0676: Voice Agent Image Ships espeak-ng and a Speech Model Cache
@@ -57,3 +53,8 @@ The voice agent needs two runtime assets that the image does not provide. The es
 - Tests above pass. `helm lint` and `helm template` pass.
 - `docs/reference/platform-services.md` updated.
 - Changed files under 500 lines. `make lint` passes.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0600.md`, `work/0601.md`

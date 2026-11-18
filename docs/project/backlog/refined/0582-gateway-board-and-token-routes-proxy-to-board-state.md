@@ -16,11 +16,6 @@ governing_prds:
 governing_stories:
 - US-0014
 - US-0043
-severity: critical
-source_audits:
-- w1-board-state.md
-- w1-gateway-api.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -83,3 +78,8 @@ Test file: `tests/test_blackbox_gateway_board_proxy.py`. `board_state` runs as a
 3. The gateway forwards through `ServiceClient`.
 4. The blackbox test file passes. `uv run ruff check .` passes.
 5. `docs/reference/ports-and-endpoints.md` shows the public board routes.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-board-state.md`, `w1-gateway-api.md`, `w3-ddd-architecture.md`

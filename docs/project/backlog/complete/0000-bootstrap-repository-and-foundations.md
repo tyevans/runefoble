@@ -1,3 +1,23 @@
+---
+id: '0000'
+title: Bootstrap Repository and Platform Foundations
+status: Complete
+created: 2026-09-25
+governing_adrs:
+- ADR-0001
+- ADR-0002
+- ADR-0003
+- ADR-0004
+- ADR-0005
+governing_prds:
+- PRD-0001
+- PRD-0002
+governing_stories:
+- US-0001
+- US-0002
+- US-0003
+- US-0004
+---
 # TASK-0000: Bootstrap Repository and Platform Foundations
 
 ## Description

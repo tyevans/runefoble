@@ -15,10 +15,6 @@ governing_prds:
 governing_stories:
 - US-0044
 - US-0047
-severity: high
-source_audits:
-- w1-gateway-api.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -80,3 +76,8 @@ Test file: `tests/test_blackbox_gateway_downtime_proxy.py`. `game_session` and `
 2. Every row in the table forwards through `ServiceClient`.
 3. The blackbox test file passes. `uv run ruff check .` passes.
 4. The two event reference docs name the real owner.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-gateway-api.md`, `w3-ddd-architecture.md`

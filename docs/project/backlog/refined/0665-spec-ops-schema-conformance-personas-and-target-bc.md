@@ -11,9 +11,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w3-backlog-specops.md
 ---
 
 # TASK-0665: Frontmatter Conforms to spec-ops Schema v2.0 for Stories, PRDs, and Backlog Tasks, With Personas Defined
@@ -62,3 +59,8 @@ Traceability of personas and stories. Governing records are the stories and PRDs
 6. The `target_bc` rule is recorded in the backlog README, and applied as the rule requires.
 7. The frontmatter test passes in `uv run pytest`.
 8. This change is made on a feature branch and merged, and the complete-record edits are applied by the integration orchestrator at merge to `main` (backlog records are not edited directly on feature branches, per DoD 9).
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-backlog-specops.md`

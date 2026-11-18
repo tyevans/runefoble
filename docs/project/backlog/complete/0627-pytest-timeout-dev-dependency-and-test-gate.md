@@ -10,9 +10,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: low
-source_audits:
-- w1-gates-python.md
 ---
 
 # TASK-0627: Add pytest-timeout to the Workspace Dev Group and Gate the Timeout Flag
@@ -51,3 +48,8 @@ The gate command `uv run pytest -q --timeout=300` fails with "unrecognized argum
 2. `uv run pytest` full suite passes with the default timeout.
 3. The command documented in `docs/reference/cli-interfaces.md` matches.
 4. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `w1-gates-python.md`

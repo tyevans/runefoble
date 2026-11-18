@@ -4,6 +4,7 @@ title: Campaign Worldbuilding Knowledge Graphs & redstring RAG Retrieval
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0007
+persona: Evelyn (DM)
 ---
 
 # US-0036 — Campaign Worldbuilding Knowledge Graphs & redstring RAG Retrieval

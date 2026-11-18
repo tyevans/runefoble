@@ -11,10 +11,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w1-gateway-api.md
-- w1-gates-infra.md
 ---
 
 # TASK-0626: Move Chart Credentials to a Kubernetes Secret
@@ -55,3 +51,8 @@ Complete
 3. Dev defaults documented as dev-only.
 4. `helm lint` and `helm template` pass.
 5. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w1-gateway-api.md`, `w1-gates-infra.md`

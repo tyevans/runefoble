@@ -3,6 +3,8 @@ id: 0012
 title: Campaign Telemetry, Analytics & Historical Memory Archive
 status: Accepted
 created: 2026-09-25
+target_persona: Sarah, Devon, Evelyn
+component: campaign_analytics
 ---
 
 # PRD-0012 — Campaign Telemetry, Analytics & Historical Memory Archive

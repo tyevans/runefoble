@@ -15,9 +15,6 @@ governing_stories:
 - US-0063
 - US-0065
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-e2e-bdd.md
 ---
 
 # TASK-0649: E2E Steps Remove Injected Component State, Synthetic Events, and Direct DOM Theme Writes
@@ -77,3 +74,8 @@ These scenarios already exist. The change removes their backdoors, so they must 
 Source: `.audit/synth/discovered-round1.md`.
 
 - `e2e/features/asset_forge.feature:17` and `e2e/steps/asset_forge_steps.ts:6` inject a 503 at the network boundary. Decide under ADR-0014 whether this is an allowed fault double. If not, stop the service instead.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-e2e-bdd.md`

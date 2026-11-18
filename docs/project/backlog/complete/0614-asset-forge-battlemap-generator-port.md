@@ -13,9 +13,6 @@ governing_prds:
 governing_stories:
 - US-0038
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w2-asset-forge.md
 ---
 
 # TASK-0614: Asset Forge Battlemap Generator Behind a Configurable Port
@@ -60,3 +57,8 @@ Source: `.audit/reports/w2-asset-forge.md` F6.
 2. Blackbox tests pass. `uv run pytest services/asset_forge` passes.
 3. Ruff check and format pass.
 4. AGENTS.md and forge how-to corrected. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w2-asset-forge.md`

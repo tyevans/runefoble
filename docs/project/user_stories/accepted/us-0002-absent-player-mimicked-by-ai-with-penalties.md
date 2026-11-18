@@ -4,6 +4,7 @@ title: Autonomous Stand-In for Absent Player with DM Penalties
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0002
+persona: Sarah (Absent Player)
 ---
 
 # US-0002 — Autonomous Stand-In for Absent Player with DM Penalties

@@ -15,11 +15,6 @@ governing_prds:
 governing_stories:
 - US-0065
 - US-0014
-severity: critical
-source_audits:
-- w1-gateway-api.md
-- w3-ddd-architecture.md
-- w1-game-session.md
 target_release: 0.9.0
 ---
 
@@ -93,3 +88,8 @@ No test may assert a fixed string such as `"Valeros"` or `"Session 14"`.
 Source: `.audit/synth/discovered-round2.md`.
 
 - The hot-swap route in gateway/api/src/gateway_api/routers/tabletop.py (about line 101) clears the gateway store flag and never calls character_sheet. Proxy hot-swap to game_session and character_sheet, and remove the store write.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-gateway-api.md`, `w3-ddd-architecture.md`, `w1-game-session.md`

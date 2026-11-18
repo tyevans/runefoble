@@ -1,3 +1,18 @@
+---
+id: '0001'
+title: Redis Streams Event Bus Infrastructure and Helm Integration
+status: Complete
+created: 2026-09-25
+governing_adrs:
+- ADR-0002
+- ADR-0006
+- ADR-0007
+- ADR-0010
+governing_prds:
+- PRD-0001
+governing_stories:
+- US-0010
+---
 # TASK-0001: Redis Streams Event Bus Infrastructure and Helm Integration
 
 ## Description

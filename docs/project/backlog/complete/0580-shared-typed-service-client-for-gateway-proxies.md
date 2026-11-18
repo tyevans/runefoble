@@ -13,11 +13,6 @@ governing_prds:
 - PRD-0023
 governing_stories:
 - US-0013
-severity: high
-source_audits:
-- w3-ddd-architecture.md
-- w1-gateway-api.md
-- w1-gates-infra.md
 target_release: 0.9.0
 ---
 
@@ -82,3 +77,8 @@ Before the change the module does not exist, so every case fails. After the chan
 4. Settings expose the upstream URL fields. `rg "os.getenv|os.environ" gateway/api/src` returns no service URL reads.
 5. Docs in `docs/reference/service-client.md` and `docs/how-to/call-owning-services-through-the-gateway.md` exist and match the code.
 6. `uv run pytest tests/test_blackbox_service_client.py` passes. `uv run ruff check .` passes.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-ddd-architecture.md`, `w1-gateway-api.md`, `w1-gates-infra.md`

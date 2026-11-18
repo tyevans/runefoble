@@ -4,6 +4,7 @@ title: Personalized AI Stand-In Tactical Policies and Playstyle Guardrails
 status: Shipped
 created: 2026-09-25
 governing_prd: PRD-0002
+persona: Sarah (Absent Player)
 ---
 
 # US-0025 — Personalized AI Stand-In Tactical Policies and Playstyle Guardrails

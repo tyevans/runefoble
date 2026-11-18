@@ -13,9 +13,6 @@ governing_prds:
 governing_stories:
 - US-0004
 target_release: 0.9.0
-severity: low
-source_audits:
-- work/0613.md
 ---
 
 # TASK-0678: Microfrontend Package Typecheck Includes Storybook Stories
@@ -54,3 +51,8 @@ All 11 UI packages under `services/*/ui/` exclude `src/**/*.stories.ts` from the
 - Tests above pass. No story is excluded in any `services/*/ui/tsconfig.json`.
 - Changed files under 500 lines. `make lint` and `pnpm run build` pass.
 - If more than 3 story files need edits, split the work per package and record it in this file.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `work/0613.md`

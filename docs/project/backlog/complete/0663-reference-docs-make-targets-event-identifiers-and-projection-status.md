@@ -11,9 +11,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w3-docs-integrity.md
 ---
 
 # TASK-0663: Reference Docs List Every Make Target and Real Event Types and State Projection Status Honestly
@@ -65,3 +62,8 @@ Reference documentation. Not user-facing.
 Source: `.audit/synth/discovered-round1.md`.
 
 - `docs/reference/events-schema.md` lists `(alias: ...)` names (for example lines 67, 120, 129, 135). Remove them with the code aliases in TASK-0487.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-docs-integrity.md`

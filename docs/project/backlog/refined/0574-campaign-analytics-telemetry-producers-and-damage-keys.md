@@ -14,9 +14,6 @@ governing_stories:
 - US-0040
 - US-0054
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-campaign-analytics.md
 ---
 
 # TASK-0574: Campaign Analytics Combat Telemetry Producers and Character Damage Session Keys
@@ -59,3 +56,8 @@ Combat turns and character damage never reach campaign analytics in production. 
 3. Two tests above pass. Real-Redis integration test passes in the Kind stack.
 4. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 5. Docs and events-schema corrected. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-analytics.md`

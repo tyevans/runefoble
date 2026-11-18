@@ -1,6 +1,6 @@
 # Runefoble User Personas
 
-Derived from our speculative feature inventory, these five archetypes represent the spectrum of storytellers, players, spectators, and builders who interact with Runefoble.
+Derived from our speculative feature inventory, these twelve archetypes represent the spectrum of storytellers, players, spectators, and builders who interact with Runefoble.
 
 ---
 
@@ -111,3 +111,46 @@ Derived from our speculative feature inventory, these five archetypes represent 
   - Maintain an evolving generative wardrobe and emotional portrait gallery (battle-worn, masked, festive, shadow-infused) reflecting current game state.
 - **Key Features Used**: `FEAT-EXP-01`, `FEAT-EXP-02`, `FEAT-EXP-03`, `FEAT-VOX-05`.
 
+---
+
+## 9. Sam — The Table Spectator & Casual Companion
+- **Role**: Casual companion who watches a session, or who joins a table for a short visit.
+- **Pain Points**:
+  - Has no clear way to follow a tavern scene or town news without asking the players.
+  - Misses bounties, rumors, and hidden flyers that other players find.
+- **Goals with Runefoble**:
+  - Browse a shared town bulletin board and read the rumors and bounties posted there.
+  - Post or accept a party contract request without a long setup.
+
+---
+
+## 10. Mayor Theron — The Civic Architect & Frontier Mayor
+- **Role**: Civic planner who founds, zones, and governs a frontier settlement with the party.
+- **Pain Points**:
+  - Settlement planning feels like a static spreadsheet with no link to the land around it.
+  - Desktop-only town tools do not work when the group is at the table with phones.
+- **Goals with Runefoble**:
+  - Choose a biome, a town scale, and zoning districts, then watch the settlement grow.
+  - Browse and build a haven from a mobile web browser or a desktop screen.
+
+---
+
+## 11. Lady Nicole — The Merchant-Tycoon & Supply-Chain Opportunist
+- **Role**: Mercantile player who negotiates for weapons, potions, and rare goods.
+- **Pain Points**:
+  - Haggling reduces to a fixed price list with no roleplay.
+  - A merchant with no personality takes away the suspense of a shopping scene.
+- **Goals with Runefoble**:
+  - Bargain with a merchant whose temperament and patience respond to clever dialogue.
+  - Trade within regional market margins while the DM keeps narrative control.
+
+---
+
+## 12. Kip — The Mobile Barfly & Social Gambler
+- **Role**: Social player who relaxes at a tavern or gaming hall and plays minigames from a phone.
+- **Pain Points**:
+  - Native apps are a barrier to a quick game at the table.
+  - Social wagering tools feel cold and do not reflect the scene.
+- **Goals with Runefoble**:
+  - Launch tavern and casino minigames from a smartphone web browser with no install.
+  - Wager and compete with friends while the character relaxes in the tavern.

@@ -24,10 +24,6 @@ governing_stories:
 - US-0073
 - US-0064
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-authz-coverage.md
-- w1-game-session.md
 ---
 
 # TASK-0549: Game Session Settlement, Haggling, Workers, and Bulletin Authorization
@@ -91,3 +87,8 @@ Setup: a shared world, a campaign, a settlement, an establishment, and a worker 
 4. The three how-to docs in the Documentation section are updated.
 5. `uv run pytest services/game_session` passes. `uv run ruff check services/game_session` passes.
 6. No file in the change exceeds 500 lines. `haggling_router.py` is already large; split it along the route groups if this change pushes it over.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-authz-coverage.md`, `w1-game-session.md`

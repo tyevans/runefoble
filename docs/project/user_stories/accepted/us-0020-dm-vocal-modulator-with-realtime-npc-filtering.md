@@ -4,6 +4,7 @@ title: DM Vocal Modulator with Real-Time NPC Formant Filtering
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0004
+persona: Evelyn (DM)
 ---
 
 # US-0020 — DM Vocal Modulator with Real-Time NPC Formant Filtering

@@ -4,6 +4,7 @@ title: Isolated Component Development in Storybook
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0013
+persona: Alex (Developer)
 ---
 
 # US-0004 — Isolated Component Development in Storybook

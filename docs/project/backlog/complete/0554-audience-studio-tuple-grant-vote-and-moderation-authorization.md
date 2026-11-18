@@ -18,9 +18,6 @@ governing_stories:
 - US-0029
 - US-0030
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w2-audience-studio.md
 ---
 
 # TASK-0554: Audience Studio Tuple Grant, Vote, and Moderation Authorization
@@ -81,3 +78,8 @@ Setup: campaign and poll are created through the audience routes. Roles are set 
 5. `pnpm --filter` build and tests for `services/audience_studio` pass. Use the package scripts that exist in the package.
 6. The how-to doc is updated for the routes that changed.
 7. No file in the change exceeds 500 lines. Split `routes.ts` by route group if it grows past the limit.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w2-audience-studio.md`

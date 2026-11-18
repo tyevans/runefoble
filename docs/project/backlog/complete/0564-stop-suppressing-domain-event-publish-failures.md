@@ -14,12 +14,6 @@ governing_prds:
 governing_stories:
 - US-0017
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-event-wiring.md
-- w1-the-watcher.md
-- w2-asset-forge.md
-- w1-game-session.md
 ---
 
 # TASK-0564: Stop Suppressing Domain Event Publish Failures and Fail DM Decisions Loudly
@@ -69,3 +63,8 @@ Eighty publish call sites were found. Forty-six wrap the call in `contextlib.sup
 Source: `.audit/synth/discovered-round1.md`.
 
 - WebSocket broadcast suppression: `services/board_state/src/board_state/routers/aoe.py:95,128`, `actions.py:39`, `physics.py:48,87` wrap broadcasts in `contextlib.suppress(Exception)`. `services/the_watcher/src/the_watcher/turf_war/service.py:46-50` logs publish failures as warnings. Apply the same policy.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-event-wiring.md`, `w1-the-watcher.md`, `w2-asset-forge.md`, `w1-game-session.md`

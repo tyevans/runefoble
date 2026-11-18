@@ -18,12 +18,6 @@ governing_stories:
 - US-0049
 - US-0055
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-event-wiring.md
-- w2-asset-forge.md
-- w1-gates-python.md
-- w2-rules-compendium.md
 ---
 
 # TASK-0579: Event Catalogue Alignment: Orphan Producers and Consumers, Wire Types, Board Forge Events
@@ -79,3 +73,8 @@ The event catalogue has drifted from the code. Seventeen registered classes have
 Source: `.audit/synth/discovered-round2.md`.
 
 - libs/runefoble_events/src/runefoble_events/watcher_events/narrative.py:41 types tension_level as str. Use the Literal values of the inference worker TensionLevel type.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-event-wiring.md`, `w2-asset-forge.md`, `w1-gates-python.md`, `w2-rules-compendium.md`

@@ -15,9 +15,6 @@ governing_stories:
 - US-0038
 - US-0049
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-asset-forge.md
 ---
 
 # TASK-0613: Asset Forge and Print Forge Components Call Forge API and Show Results
@@ -67,3 +64,8 @@ Source: `.audit/reports/w2-asset-forge.md` F2.
 3. Playwright BDD scenarios for both actions pass against the running stack.
 4. Frontend builds pass (`pnpm run build`).
 5. Docs corrected. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-asset-forge.md`

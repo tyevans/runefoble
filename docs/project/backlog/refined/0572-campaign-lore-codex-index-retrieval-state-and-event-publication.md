@@ -17,9 +17,6 @@ governing_stories:
 - US-0036
 - US-0050
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-campaign-lore.md
 ---
 
 # TASK-0572: Campaign Lore Codex Index, Retrieval State and Domain Events Made Durable
@@ -67,3 +64,8 @@ Campaign lore aggregates are stored, but three things that users see are not: th
 3. Events-schema lore section and how-to corrected.
 4. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 5. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-lore.md`

@@ -3,6 +3,8 @@ id: 0007
 title: Campaign Worldbuilding Lore & redstring RAG Engine
 status: Accepted
 created: 2026-09-25
+target_persona: Evelyn, Rowan
+component: campaign_lore
 ---
 
 # PRD-0007 — Campaign Worldbuilding Lore & redstring RAG Engine

@@ -4,6 +4,7 @@ title: Runtime MCP Tool Hot-Reloading and Web Component Extension Slots
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0001
+persona: Alex (Developer)
 ---
 
 # US-0035 — Runtime MCP Tool Hot-Reloading and Web Component Extension Slots

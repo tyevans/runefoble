@@ -4,6 +4,7 @@ title: Conversational Intent Disambiguation and Multi-Action Combos
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0001
+persona: Marcus (Adventurer)
 ---
 
 # US-0021 — Conversational Intent Disambiguation and Multi-Action Combos

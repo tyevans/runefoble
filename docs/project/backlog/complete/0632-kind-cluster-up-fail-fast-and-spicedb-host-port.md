@@ -10,9 +10,6 @@ governing_prds: []
 governing_stories:
 - US-0010
 target_release: 0.9.0
-severity: low
-source_audits:
-- w1-gates-infra.md
 ---
 
 # TASK-0632: Fail cluster-up on Ingress Install Errors and Fix the SpiceDB Host Port Mapping
@@ -49,3 +46,8 @@ Complete
 3. Tutorial updated.
 4. Manual verification on a Kind cluster recorded in the PR.
 5. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `w1-gates-infra.md`

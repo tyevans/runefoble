@@ -27,10 +27,6 @@ governing_stories:
 - US-0025
 - US-0057
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-authz-coverage.md
-- w1-the-watcher.md
 ---
 
 # TASK-0552: The Watcher DM, Intent, Stand-In, and Faction Authorization
@@ -87,3 +83,8 @@ Setup: a campaign, a session, and a faction are created through public routes. T
 4. The two how-to docs above are updated.
 5. `uv run pytest services/the_watcher` passes. `uv run ruff check services/the_watcher` passes.
 6. No file in the change exceeds 500 lines. `dependencies.py` is split if it grows past the limit.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-authz-coverage.md`, `w1-the-watcher.md`

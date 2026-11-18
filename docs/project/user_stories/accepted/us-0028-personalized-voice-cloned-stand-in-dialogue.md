@@ -4,6 +4,7 @@ title: Personalized Voice-Cloned Stand-In Dialogue with Affliction Filters
 status: Accepted
 created: 2026-09-25
 governing_prd: PRD-0002
+persona: Sarah (Absent Player)
 ---
 
 # US-0028 — Personalized Voice-Cloned Stand-In Dialogue with Affliction Filters

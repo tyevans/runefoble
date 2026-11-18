@@ -14,9 +14,6 @@ governing_prds:
 governing_stories:
 - US-0036
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-campaign-lore.md
 ---
 
 # TASK-0611: Campaign Lore Configurable Hybrid RAG Backend Replaces Hardwired In-Memory Fakes
@@ -73,3 +70,8 @@ The first worker stopped with valid questions. These decisions narrow and replac
 3. Scope of this task: settings, factory, lifespan, and the event-replayed projection for graph and metadata. Vector storage and the embedding provider move to a separate task (pgvector store and an OpenAI-compatible embedding-provider port). Until that task lands, the current in-process vector index is rebuilt from the replayed documents at start-up, and the docs say so.
 4. Tests: use the existing PostgreSQL test fixture pattern in the repo (search `tests/` and `services/game_session/tests` for the Postgres-backed tests) for the restart test. Restart means: build a new app instance on the same event store, then query through HTTP.
 5. Read `spicedb_token` from settings directly (`dependencies.py:75`), with no `"secret"` default.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-lore.md`
