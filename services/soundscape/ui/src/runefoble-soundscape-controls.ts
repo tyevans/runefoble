@@ -1,11 +1,16 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { soundscapeControlsStyles } from './runefoble-soundscape-controls.styles.ts';
+import { postDuck } from './soundscape-duck-api.ts';
 
 @customElement('runefoble-soundscape-controls')
 export class RunefobleSoundscapeControls extends LitElement {
   static styles = [soundscapeControlsStyles];
 
+  /** Gateway base URL for the ducking proxy. An empty string targets the same origin. */
+  @property({ type: String }) apiBase = '';
+  /** Full Authorization header value for gateway calls, such as `Bearer <token>`. */
+  @property({ type: String }) authorization = '';
   @property({ type: String }) sessionId = 'default';
   @property({ type: Number }) tensionScore = 15;
   @property({ type: String }) stemProfile = 'exploration';
@@ -27,6 +32,7 @@ export class RunefobleSoundscapeControls extends LitElement {
   ];
   @state() private customName = '';
   @state() private customLabel = '';
+  @state() private duckError = '';
   private duckTimer: number | null = null;
   private readonly onVoiceActivity = (e: Event) => {
     const detail = (e as CustomEvent).detail;
@@ -68,6 +74,7 @@ export class RunefobleSoundscapeControls extends LitElement {
   triggerDucking(durationMs = 2000, reason = 'cue') {
     this.isDucked = true;
     this.dispatchCustom('soundscape-duck', { isDucked: true, reason, sessionId: this.sessionId });
+    this.sendDuck({ isDucked: true, reason, durationMs });
     if (this.duckTimer) window.clearTimeout(this.duckTimer);
     if (durationMs > 0) {
       this.duckTimer = window.setTimeout(() => this.clearDucking(), durationMs);
@@ -79,7 +86,17 @@ export class RunefobleSoundscapeControls extends LitElement {
     if (this.isDucked) {
       this.isDucked = false;
       this.dispatchCustom('soundscape-duck', { isDucked: false, sessionId: this.sessionId });
+      this.sendDuck({ isDucked: false, reason: 'release', durationMs: 0 });
     }
+  }
+
+  /** Sends the duck to the gateway. A failure shows in the panel and never reports success. */
+  private async sendDuck(request: { isDucked: boolean; reason: string; durationMs: number }) {
+    const result = await postDuck(
+      { apiBase: this.apiBase, authorization: this.authorization },
+      { sessionId: this.sessionId, ...request },
+    );
+    this.duckError = result.ok ? '' : `Ducking was not applied: ${result.message}`;
   }
 
   private dispatchCustom(name: string, detail: unknown) {
@@ -180,6 +197,7 @@ export class RunefobleSoundscapeControls extends LitElement {
           <span>Tactile Soundboard Grid</span>
           <button class="toggle-btn" @click=${this.handleDuckToggle}>${this.isDucked ? 'Unduck' : 'Test Duck'}</button>
         </div>
+        ${this.duckError ? html`<div class="duck-error" role="alert">${this.duckError}</div>` : ''}
         <div class="foley-grid">
           ${this.foleyList.map((cue) => html`
             <button class="cue-btn" @click=${() => this.handleCueTrigger(cue.id, cue.duck)}>${cue.label}</button>

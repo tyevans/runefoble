@@ -168,6 +168,16 @@ export const soundscapeControlsStyles = css`
   }
   .cue-btn:hover { background: var(--rf-accent-primary, #e63946); }
   .cue-btn:active { transform: translate(1px, 1px); }
+  .duck-error {
+    margin-top: 6px;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--rf-accent-primary, #e63946);
+    color: #ffffff;
+    border: 1px solid var(--rf-border-color, #121212);
+  }
+
   .toggle-btn {
     padding: 2px 6px;
     font-size: 0.65rem;
