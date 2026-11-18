@@ -119,7 +119,8 @@ Forged assets are written to Silo before the forge responds. The service never r
 - **Forge Tactical Battlemap** posts the prompt to `POST /api/v1/forge/battlemap`. The preview appears only after the route returns a successful response.
 - **Forge Token Portrait** posts the name, type, and prompt to `POST /api/v1/forge/token`. The preview appears only after a successful response.
 - If the route returns an error (for example, `503` when Silo is down), the component shows the `detail` text from the response in an error banner. No preview is shown.
-- The `forge-battlemap` and `forge-token` events fire only after a successful response. The event detail includes the `asset` field.
+- After a successful response, the preview card shows the `asset_id` of the forged asset.
+- The `forge-battlemap` and `forge-token` events fire only after a successful response. The event detail includes the `asset_id` and `asset` fields.
 - **Place Token on Tactical Board** posts the forged token to `POST /api/v1/boards/{session_id}/tokens`. Set the `sessionId` property and the column and row first. The component shows an error when no session id is set. The board route stores the token name and type. It does not store the portrait image.
 - The `token-placed` event fires only after the board route accepts the token.
 - The component does not project map geometry to `board_state`. No public route accepts the `board_geometry_payload`. Section 3 is a manual recipe for API clients.
@@ -133,7 +134,7 @@ The payload is layout only. It holds hazard types, wall segments, and doors. It 
 
 1. **Hazard Terrain**: Push each entry in `terrain_mutations` to `POST /api/v1/boards/{session_id}/terrain`.
 2. **Obstacles**: Do not create obstacle tokens from the forge output. `board_state` derives obstacles from the wall segments.
-3. **Map Background**: Fetch the `download_url` path with the bearer, then load the blob URL into `<runefoble-board>` or `<runefoble-map-uploader>`. See [Browser asset reads](../reference/browser-asset-reads.md). Replies never carry a Silo URL.
+3. **Map Background**: Fetch the `download_url` path with the bearer, create a blob URL, and set it as the `previewUrl` property of `<runefoble-map-uploader>`. See [Browser asset reads](../reference/browser-asset-reads.md). Replies never carry a Silo URL.
 
 ---
 

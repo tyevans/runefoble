@@ -5,6 +5,7 @@ Feature: Asset Forge and Print Forge Call the Forge API and Show Results
 
   Background:
     Given I am logged in as a "DM"
+    And campaign "Forge Campaign" exists
     And the asset forge is open
 
   Scenario: Forging a battlemap sends the prompt and shows the forged preview
@@ -12,6 +13,7 @@ Feature: Asset Forge and Print Forge Call the Forge API and Show Results
     And I click the "Forge Tactical Battlemap" button
     Then the forge route "/api/v1/forge/battlemap" receives the prompt "Subterranean dwarven forge"
     And I should see the image "Forged Battlemap Preview"
+    And I should see the asset id returned by the forge
 
   Scenario: Forging a battlemap shows the error when Silo storage is unavailable
     Given the forge route "/api/v1/forge/battlemap" responds with status 503
