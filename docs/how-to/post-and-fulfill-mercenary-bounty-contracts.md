@@ -15,12 +15,16 @@ In shared frontier campaigns, adventuring parties often require specialized mons
 
 ## 2. Posting a Bounty with Escrow
 
+Each command sends a Zitadel access token for the named user. The token is held in a shell variable `TOKEN_<USER>`, for example `TOKEN_RANGER_LYRA`. Mint the token through the sign-in flow in [Authenticate Users with Zitadel OIDC and JWTs](authenticate-with-zitadel-oidc.md). Identity comes from the token only. An `x-user-id` header has no effect.
+
+The poster must hold `session.participate`, which comes from campaign play. The claim and disburse routes check `bounty_contract.claim` and `bounty_contract.disburse`.
+
 An adventuring party leader posts a contract to the session bounty board:
 
 ```bash
 curl -X POST http://localhost:8004/sessions/{session_id}/contracts/bounties \
   -H "Content-Type: application/json" \
-  -H "x-user-id: questgiver_alec" \
+  -H "Authorization: Bearer ${TOKEN_QUESTGIVER_ALEC}" \
   -d '{
     "title": "Cull the Glacial Wyrm",
     "description": "Hunt the frost wyrm in the Northern Pass and recover its horn.",
@@ -61,7 +65,7 @@ Adventuring parties query open bounties with optional query filters:
 
 ```bash
 curl -X GET "http://localhost:8004/sessions/{session_id}/contracts/bounties?status=POSTED&min_gold=300" \
-  -H "x-user-id: mercenary_drake"
+  -H "Authorization: Bearer ${TOKEN_MERCENARY_DRAKE}"
 ```
 
 ---
@@ -73,7 +77,7 @@ A mercenary company claims an open bounty:
 ```bash
 curl -X POST http://localhost:8004/sessions/{session_id}/contracts/bounties/{bounty_id}/claim \
   -H "Content-Type: application/json" \
-  -H "x-user-id: mercenary_drake" \
+  -H "Authorization: Bearer ${TOKEN_MERCENARY_DRAKE}" \
   -d '{
     "claimant_campaign_id": "f1e2d3c4-b5a6-9788-1234-56789abcdef0",
     "claimant_party_name": "Drake'\''s Rangers"
@@ -91,7 +95,7 @@ Upon completing the hunt, the claimant or authorized DM submits proof and resolv
 ```bash
 curl -X POST http://localhost:8004/sessions/{session_id}/contracts/bounties/{bounty_id}/complete \
   -H "Content-Type: application/json" \
-  -H "x-user-id: questgiver_alec" \
+  -H "Authorization: Bearer ${TOKEN_QUESTGIVER_ALEC}" \
   -d '{
     "proof": "Glacial Wyrm horn delivered and verified by Outpost Warden.",
     "notes": "Trophy mounted in Haven Great Hall."

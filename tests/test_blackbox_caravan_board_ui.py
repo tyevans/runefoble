@@ -29,6 +29,33 @@ from tests.helpers.ws_identity import SIGNING_ISSUER
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
+def create_campaign(client: TestClient, owner_id: str) -> str:
+    """Create a campaign as its owner through the public campaign route and return its id."""
+    res = client.post(
+        "/api/v1/campaigns",
+        json={"title": f"Campaign {uuid4().hex[:8]}"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(owner_id)}"},
+    )
+    assert res.status_code == 201, res.text
+    return res.json()["id"]
+
+
+def join_campaign(client: TestClient, campaign_id: str, owner_id: str, member_id: str) -> None:
+    """Owner issues a player invite; the member redeems it through the public join route."""
+    invite = client.post(
+        f"/api/v1/campaigns/{campaign_id}/invites",
+        json={"role": "player"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(owner_id)}"},
+    )
+    assert invite.status_code == 201, invite.text
+    joined = client.post(
+        "/api/v1/campaigns/join",
+        json={"invite_token": invite.json()["token"]},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(member_id)}"},
+    )
+    assert joined.status_code == 200, joined.text
+
+
 @pytest.fixture
 def mock_bus():
     redis_client = MockAsyncRedis()
@@ -87,9 +114,6 @@ async def test_blackbox_caravan_contract_accept_and_stream_events(
     """Verify one-click contract acceptance via public frontdoor REST endpoint and Redis Streams."""
     officer_id = "officer_karina"
     contractor_id = "party_leader_bram"
-    campaign_poster = str(uuid4())
-    campaign_contractor = str(uuid4())
-
     # 1. Establish shared world
     world_res = client.post(
         "/api/v1/shared-worlds",
@@ -99,16 +123,11 @@ async def test_blackbox_caravan_contract_accept_and_stream_events(
     assert world_res.status_code == 201
     world_id = world_res.json()["shared_world_id"]
 
-    # SpiceDB authorization relationships
-    await spicedb_client.write_relationship(
-        "campaign", campaign_poster, "owner", "user", officer_id
-    )
-    await spicedb_client.write_relationship(
-        "campaign", campaign_contractor, "owner", "user", contractor_id
-    )
-    await spicedb_client.write_relationship(
-        "shared_world", world_id, "trade", "user", contractor_id
-    )
+    # Registration needs guild officer and campaign owner, so the officer owns both campaigns.
+    # The contractor plays in the contractor campaign, which grants trade on the world.
+    campaign_poster = create_campaign(client, officer_id)
+    campaign_contractor = create_campaign(client, officer_id)
+    join_campaign(client, campaign_contractor, officer_id, contractor_id)
 
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",

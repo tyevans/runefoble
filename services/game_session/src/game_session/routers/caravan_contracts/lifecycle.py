@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends
 from game_session.caravan import CaravanContractAggregate
 from game_session.caravan_ledger import CaravanLedgerAggregate
@@ -37,7 +38,7 @@ router = APIRouter(
 
 
 async def _init(
-    wid_s: str, cid_s: str, perm: str, uid: str | None
+    wid_s: str, cid_s: str, perm: str, uid: str
 ) -> tuple[UUID, UUID, CaravanContractAggregate]:
     wid, cid = _to_uuid(wid_s), _to_uuid(cid_s)
     return wid, cid, await _load_contract(cid, perm, uid)
@@ -47,7 +48,7 @@ async def _ledger(wid: UUID) -> tuple[Any, CaravanLedgerAggregate]:
     repo = get_caravan_ledger_repository()
     try:
         return repo, await repo.load(wid)
-    except Exception:
+    except AggregateNotFoundError:
         return repo, CaravanLedgerAggregate(wid)
 
 

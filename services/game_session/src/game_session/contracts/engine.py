@@ -73,7 +73,7 @@ class MercenaryBountyAggregate(DeclarativeAggregate[MercenaryBountyState]):
 
     def post_bounty(self, session_id: str, campaign_id: str, **kw: Any) -> str:
         bid = str(self.aggregate_id or uuid4())
-        sid = _to_u(session_id) if session_id else None
+        sid = session_id or None
         cid = _to_u(campaign_id) if campaign_id else None
         self.create_event(
             MercenaryBountyPosted,

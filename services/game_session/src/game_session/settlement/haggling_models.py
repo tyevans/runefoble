@@ -87,6 +87,7 @@ class StartNegotiationRequest(BaseModel):
     dialogue: str = ""
     session_id: str = ""
     campaign_id: str = ""
+    establishment_id: str = ""
     merchant_id: str | None = None
     merchant_name: str = "Merchant"
     temperament: str = "Stubborn"

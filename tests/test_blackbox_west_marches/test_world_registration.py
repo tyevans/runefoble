@@ -5,8 +5,6 @@ Governed by ADR-0001, ADR-0011, and Hard Invariant 7 (Blackbox TDD).
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -78,7 +76,13 @@ async def test_link_campaigns_to_shared_world(client: TestClient, party_ids: dic
 async def test_duplicate_registration_and_validation(client: TestClient):
     """Verify duplicate campaign registration handling and UUID validation."""
     officer_id = "rowan_officer"
-    camp_id = str(uuid4())
+    created = client.post(
+        "/api/v1/campaigns",
+        json={"title": "Mistveil Party"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
+    )
+    assert created.status_code == 201, created.text
+    camp_id = created.json()["id"]
 
     world_res = client.post(
         "/api/v1/shared-worlds",

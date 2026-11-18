@@ -10,6 +10,7 @@ from collections.abc import Callable
 from typing import Any
 from uuid import UUID
 
+from eventsource import AggregateNotFoundError
 from fastapi import HTTPException
 from game_session.caravan import CaravanContractAggregate
 from game_session.dependencies import (
@@ -24,12 +25,13 @@ from runefoble_platform.event_publish import publish_or_fail
 def _to_uuid(val: Any) -> UUID:
     try:
         return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception as e:
+    except (TypeError, ValueError) as e:
         raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
 
 
-async def _check_perm(spicedb, res_type: str, res_id: str, perm: str, user_id: str | None) -> None:
-    if user_id and not await spicedb.check_permission(res_type, str(res_id), perm, "user", user_id):
+async def _check_perm(spicedb, res_type: str, res_id: str, perm: str, user_id: str) -> None:
+    """Deny unless the verified caller holds `perm` on the resource (schema name only)."""
+    if not await spicedb.check_permission(res_type, str(res_id), perm, "user", user_id):
         raise HTTPException(
             status_code=403,
             detail=f"Permission denied: subject '{user_id}' lacks '{perm}' on {res_type}:{res_id}",
@@ -37,33 +39,29 @@ async def _check_perm(spicedb, res_type: str, res_id: str, perm: str, user_id: s
 
 
 async def _check_high_tier_auth(
-    spicedb, shared_world_id: str, campaign_id: str, risk_level: str, user_id: str | None
+    spicedb, shared_world_id: str, campaign_id: str, risk_level: str, user_id: str
 ) -> None:
     """Enforce Zanzibar authorization: high-tier contracts require party leader or guild officer."""
-    if risk_level.lower() in ("high", "deadly") and user_id:
-        chk = spicedb.check_permission
-        if not (
-            await chk("shared_world", shared_world_id, "manage", "user", user_id)
-            or await chk("campaign", campaign_id, "run_session", "user", user_id)
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="High-tier mercenary contracts require guild officer or party leader authorization",
-            )
-
-
-async def _set_contractor(spicedb, cid: UUID, user_id: str | None) -> None:
-    if user_id:
-        await spicedb.write_relationship(
-            "caravan_contract", str(cid), "contractor", "user", user_id
+    is_high_tier = risk_level.lower() in ("high", "deadly")
+    if is_high_tier and not (
+        await spicedb.check_permission("shared_world", shared_world_id, "manage", "user", user_id)
+        or await spicedb.check_permission("campaign", campaign_id, "run_session", "user", user_id)
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="High-tier mercenary contracts require guild officer or party leader authorization",
         )
 
 
-async def _load_contract(cid: UUID, perm: str, user_id: str | None) -> CaravanContractAggregate:
+async def _set_contractor(spicedb, cid: UUID, user_id: str) -> None:
+    await spicedb.write_relationship("caravan_contract", str(cid), "contractor", "user", user_id)
+
+
+async def _load_contract(cid: UUID, perm: str, user_id: str) -> CaravanContractAggregate:
     await _check_perm(get_spicedb_client(), "caravan_contract", str(cid), perm, user_id)
     try:
         return await get_caravan_contract_repository().load(cid)
-    except Exception as e:
+    except AggregateNotFoundError as e:
         raise HTTPException(status_code=404, detail="Contract not found") from e
 
 

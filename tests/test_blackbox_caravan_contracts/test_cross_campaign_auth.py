@@ -8,8 +8,6 @@ Governed by:
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
@@ -17,7 +15,7 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-from .conftest import assert_stream_events
+from .conftest import assert_stream_events, create_campaign, join_campaign
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -30,10 +28,7 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
 ):
     """Test Scenario 2: Cross-campaign contract acceptance and SpiceDB Zanzibar role enforcement."""
     officer_id = "officer_lyra"
-    leader_b = "party_leader_b"
     grunt_user = "recruit_grunt"
-    campaign_a = str(uuid4())
-    campaign_b = str(uuid4())
 
     # Establish shared world
     world_res = client.post(
@@ -43,11 +38,13 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
     )
     world_id = world_res.json()["shared_world_id"]
 
+    # Registering a campaign needs guild officer and campaign owner, so the officer owns both.
+    # grunt_user is a plain player of campaign B and has no run_session grant.
+    campaign_a = create_campaign(client, officer_id)
+    campaign_b = create_campaign(client, officer_id)
+    join_campaign(client, campaign_b, officer_id, grunt_user)
+
     # Register campaign A and B
-    await spicedb.write_relationship("campaign", campaign_a, "owner", "user", officer_id)
-    await spicedb.write_relationship("campaign", campaign_b, "owner", "user", leader_b)
-    await spicedb.write_relationship("campaign", campaign_b, "player", "user", grunt_user)
-    await spicedb.write_relationship("shared_world", world_id, "participant", "user", grunt_user)
 
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
@@ -89,11 +86,11 @@ async def test_blackbox_cross_campaign_acceptance_and_zanzibar_authorization(
     assert unauth_accept.status_code == 403
     assert "High-tier mercenary contracts require" in unauth_accept.text
 
-    # Party leader B accepts deadly contract -> 200 OK!
+    # The guild officer accepts the deadly contract for campaign B -> 200 OK!
     auth_accept = client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts/{deadly_contract_id}/accept",
         json={"contractor_campaign_id": campaign_b, "contractor_party_name": "Iron Claws"},
-        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(leader_b)}"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
     )
     assert auth_accept.status_code == 200
     assert auth_accept.json()["contract"]["status"] == "accepted"

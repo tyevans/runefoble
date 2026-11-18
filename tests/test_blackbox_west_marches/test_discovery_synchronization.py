@@ -29,8 +29,7 @@ async def _setup_world(
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     wid = res.json()["shared_world_id"]
-    for cid, uid, pname in parties:
-        await spicedb.write_relationship("campaign", cid, "player", "user", uid)
+    for cid, _uid, pname in parties:
         client.post(
             f"/api/v1/shared-worlds/{wid}/campaigns",
             json={"campaign_id": cid, "party_name": pname},

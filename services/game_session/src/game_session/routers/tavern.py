@@ -143,7 +143,7 @@ async def take_minigame_turn(
 
     try:
         aggregate = await tavern_repo.load(to_uuid(game_id))
-    except Exception as e:
+    except (AggregateNotFoundError, ValueError) as e:
         raise HTTPException(status_code=404, detail=f"Minigame '{game_id}' not found") from e
 
     try:
@@ -195,9 +195,9 @@ async def get_minigame(
     tavern_repo = get_tavern_repository()
     try:
         aggregate = await tavern_repo.load(to_uuid(game_id))
-        return aggregate.state
-    except Exception as e:
+    except (AggregateNotFoundError, ValueError) as e:
         raise HTTPException(status_code=404, detail=f"Minigame '{game_id}' not found") from e
+    return aggregate.state
 
 
 @router.post(
@@ -217,7 +217,7 @@ async def haggle_merchant(
 
     try:
         aggregate = await merchant_repo.load(to_uuid(merchant_id))
-    except Exception:
+    except (AggregateNotFoundError, ValueError):
         aggregate = MerchantAggregate(to_uuid(merchant_id))
         aggregate.state.merchant_id = merchant_id
         if temperament in MERCHANT_TEMPERAMENTS:
@@ -261,10 +261,7 @@ async def get_merchant(merchant_id: str) -> dict[str, Any]:
     merchant_repo = get_merchant_repository()
     try:
         aggregate = await merchant_repo.load(to_uuid(merchant_id))
-        data = aggregate.state.model_dump()
-        data["merchant_id"] = merchant_id
-        return data
-    except Exception:
+    except (AggregateNotFoundError, ValueError):
         return {
             "merchant_id": merchant_id,
             "name": "Local Merchant",
@@ -272,6 +269,9 @@ async def get_merchant(merchant_id: str) -> dict[str, Any]:
             "mood_score": 0.0,
             "total_negotiations": 0,
         }
+    data = aggregate.state.model_dump()
+    data["merchant_id"] = merchant_id
+    return data
 
 
 __all__ = ["router"]

@@ -65,7 +65,7 @@ def live_voice_agent(monkeypatch, trusted_voice_issuer):
 
 @pytest.fixture
 def gateway_client(game_session_upstream) -> Iterator[TestClient]:
-    """Gateway client with the lifespan entered. The shared SpiceDB double serves every service."""
+    """Gateway client with the lifespan entered after game_session is served."""
     with TestClient(gateway_app) as client:
         yield client
 

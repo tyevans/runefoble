@@ -14,7 +14,10 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-from .conftest import assert_session_stream_events
+from .conftest import (
+    assert_session_stream_events,
+    create_campaign_session,
+)
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -25,11 +28,10 @@ async def test_post_bounty_and_query_board(
     mock_bus: MockAsyncRedis,
     spicedb: MockSpiceDBClient,
 ) -> None:
-    session_id = str(uuid4())
     creator_id = "user_party_leader_alec"
 
-    # Grant session participate permission in SpiceDB
-    await spicedb.write_relationship("session", session_id, "participate", "user", creator_id)
+    # The creator owns the campaign, so campaign play grants session participation.
+    _, session_id = create_campaign_session(client, creator_id)
 
     # 1. Post a new mercenary monster hunt bounty
     res_post = client.post(
