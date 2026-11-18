@@ -113,7 +113,7 @@ curl -X POST http://localhost:8009/api/v1/soundscape/duck \
 
 To end a duck before its duration, call the same route with `is_ducked: false`. The aggregate records `DuckingReleased` and the duck ends at once.
 
-The browser component `<runefoble-soundscape-controls>` still clears its own badge with a local timer. It does not call the backend yet. The gateway does not proxy `/duck` (TASK-0536).
+The browser component `<runefoble-soundscape-controls>` sends each duck and release to the gateway route `POST /api/v1/soundscape/duck` (TASK-0589). It sets the `apiBase` and `authorization` properties for this call. If the owner rejects the duck or cannot be reached, the panel shows the reason in an alert. The local badge and timer still change, so the alert is the only signal of the failure.
 
 ---
 
@@ -178,6 +178,7 @@ Available instrument timbre presets:
 
 The soundscape microfrontends are vendored inside `services/soundscape/ui/` and advertised via `GET /ui/manifest`:
 - `<runefoble-soundscape-controls>`: Real-time tension bar, mood override buttons, stem sliders, and tactical foley trigger grid.
+  Set `apiBase` to the gateway origin (empty for the same origin) and `authorization` to `Bearer <token>`. Ducks post to `/api/v1/soundscape/duck` through the gateway.
 - `<runefoble-leitmotif-config>`: Character instrument signature selector, tempo/volume sliders, and triumphant/somber auditioning buttons with immediate WebAudio earcon feedback.
 
 ```html
@@ -210,13 +211,13 @@ The soundscape service checks these schema permissions on each control route. Th
 | `/api/v1/soundscape/stems/volume` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Sets stem channel volumes |
 | `/api/v1/soundscape/duck` | POST | `session.control` | Engages -12dB ducking for `duration_ms` (0 holds), or releases it with `is_ducked: false` |
 | `/api/v1/soundscape/tension/calculate` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Computes tension score from combat round and CR |
-| `/api/v1/soundscape/override` and `/stems/override` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Forces DM mood override (exploration, combat, etc.) |
+| `/api/v1/soundscape/stems/override` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Forces DM mood override (exploration, combat, etc.) |
 | `/api/v1/soundscape/leitmotif/profile` and `/trigger` | POST | `character.edit` on the character, or `session.control` (or `campaign.run_session` with a `campaign_id`) | Configures or triggers a character leitmotif |
 | `/api/v1/soundscape/tension` and `/stems` | GET | Verified token only | Reads session encounter tension and stem profile |
 
 Known gap: the GET read routes do not check `session.observe` yet. The request models type `campaign_id` as a UUID, but gateway campaign ids are strings. A campaign grant cannot reach these routes until that contract changes.
 
-The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) checks SpiceDB Zanzibar object permissions before it forwards the request to `SOUNDSCAPE_SERVICE_URL` (default `http://soundscape:8009`). The gateway does not proxy `/stems/volume` or `/duck` yet (TASK-0536). The gateway forwards the caller's bearer token. If the soundscape service returns `5xx`, the gateway returns `502`. If the service is unreachable, the gateway returns `503`. It does not run soundscape code in process. See [Gateway Proxy Identity and Errors](../reference/ports-and-endpoints.md#gateway-proxy-identity-and-errors).
+The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) verifies the bearer token and forwards the request to `SOUNDSCAPE_SERVICE_URL` (default `http://soundscape:8009`). The soundscape service checks the SpiceDB Zanzibar permissions in the table. The gateway does not proxy `/stems/volume` yet (TASK-0536). The gateway forwards the caller's bearer token. If the soundscape service returns `5xx`, the gateway returns `502`. If the service is unreachable, the gateway returns `503`. It does not run soundscape code in process. See [Gateway Proxy Identity and Errors](../reference/ports-and-endpoints.md#gateway-proxy-identity-and-errors).
 
 ---
 

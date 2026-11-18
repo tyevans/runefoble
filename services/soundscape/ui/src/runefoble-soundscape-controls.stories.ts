@@ -93,3 +93,28 @@ export const ManualMoodOverride: Story = {
     ></runefoble-soundscape-controls>
   `,
 };
+
+export const DuckThroughGateway: Story = {
+  render: () => html`
+    <runefoble-soundscape-controls
+      sessionId="session-tomb-14"
+      tensionScore="50"
+      stemProfile="tension"
+      masterVolume="85"
+      apiBase=""
+      authorization="Bearer storybook-token"
+    ></runefoble-soundscape-controls>
+  `,
+};
+
+export const DuckOwnerUnreachable: Story = {
+  render: () => html`
+    <runefoble-soundscape-controls
+      sessionId="session-tomb-14"
+      tensionScore="50"
+      stemProfile="tension"
+      masterVolume="85"
+      apiBase="http://127.0.0.1:9"
+    ></runefoble-soundscape-controls>
+  `,
+};
