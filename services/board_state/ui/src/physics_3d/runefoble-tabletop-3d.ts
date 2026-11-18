@@ -2,6 +2,7 @@
  * Standalone Lit Web Component for 3D Miniature Tokens & WebGL Tabletop Physics.
  */
 
+import { AuthConsumerController } from '@runefoble/ui-core';
 import { LitElement, html, css } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import type { Miniature3DToken } from './miniature_mesh.ts';
@@ -10,6 +11,8 @@ import { PhysicsBridge } from './physics_bridge.ts';
 
 @customElement('runefoble-tabletop-3d')
 export class RunefobleTabletop3D extends LitElement {
+  private readonly auth = new AuthConsumerController(this);
+
   static styles = css`
     :host {
       display: block;
@@ -67,7 +70,7 @@ export class RunefobleTabletop3D extends LitElement {
       });
       this.visualizer.updateTokens(this.tokens);
       this.visualizer.updateTerrain(this.terrainCells);
-      this.bridge = new PhysicsBridge(this, this.visualizer);
+      this.bridge = new PhysicsBridge(this, this.visualizer, () => this.auth.authHeaders());
     }
   }
 

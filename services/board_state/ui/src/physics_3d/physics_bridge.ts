@@ -11,13 +11,25 @@ export interface PhysicsBridgeHost {
   requestUpdate?(): void;
 }
 
+/** Returns the `Authorization` header of the signed-in user, or an empty object. */
+export type AuthHeaders = () => Promise<Record<string, string>>;
+
 export class PhysicsBridge {
   private host: PhysicsBridgeHost;
   private visualizer: TabletopPhysicsVisualizer | null = null;
+  private authHeaders: AuthHeaders;
+  private fetchImpl: typeof fetch;
 
-  constructor(host: PhysicsBridgeHost, visualizer?: TabletopPhysicsVisualizer | null) {
+  constructor(
+    host: PhysicsBridgeHost,
+    visualizer?: TabletopPhysicsVisualizer | null,
+    authHeaders: AuthHeaders = async () => ({}),
+    fetchImpl: typeof fetch = (input, init) => globalThis.fetch(input, init),
+  ) {
     this.host = host;
     this.visualizer = visualizer ?? null;
+    this.authHeaders = authHeaders;
+    this.fetchImpl = fetchImpl;
   }
 
   public setVisualizer(v: TabletopPhysicsVisualizer | null): void {
@@ -80,9 +92,9 @@ export class PhysicsBridge {
   }
 
   public async triggerSimulateThrow(boardId: string, options?: { diceType?: string; velocityX?: number; velocityY?: number; seed?: number }): Promise<any> {
-    const res = await fetch(`/api/v1/boards/${boardId}/physics/simulate-throw`, {
+    const res = await this.fetchImpl(`/api/v1/boards/${boardId}/physics/simulate-throw`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await this.authHeaders()) },
       body: JSON.stringify({
         dice_type: options?.diceType ?? 'd20',
         velocity_x: options?.velocityX ?? 4.0,
@@ -97,9 +109,9 @@ export class PhysicsBridge {
   }
 
   public async triggerKnockback(boardId: string, tokenId: string, directionX: number, directionY: number, distanceFt = 10.0, mass = 1.0): Promise<any> {
-    const res = await fetch(`/api/v1/boards/${boardId}/physics/knockback`, {
+    const res = await this.fetchImpl(`/api/v1/boards/${boardId}/physics/knockback`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await this.authHeaders()) },
       body: JSON.stringify({
         token_id: tokenId,
         direction_x: directionX,

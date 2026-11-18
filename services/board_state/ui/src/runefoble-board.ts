@@ -75,7 +75,7 @@ export class RunefobleBoard extends LitElement {
     const canvas3D = this.shadowRoot?.querySelector('.tabletop-3d-canvas') as HTMLCanvasElement | null;
     if (canvas3D) {
       this.visualizer3D = new TabletopPhysicsVisualizer(canvas3D, { cellSizePx: 56, cols: this.cols, rows: this.rows, theme: 'dark' });
-      this.physicsBridge = new PhysicsBridge(this, this.visualizer3D);
+      this.physicsBridge = new PhysicsBridge(this, this.visualizer3D, () => this.auth.authHeaders());
       this.visualizer3D.updateTokens(this.tokens as any);
       this.visualizer3D.updateTerrain(this.terrainCells as any);
       this.resize3DCanvas();
