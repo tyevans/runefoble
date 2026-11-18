@@ -2,6 +2,8 @@
 
 The service verifies Zitadel tokens (TASK-0533). The helper serves a test JWKS over local HTTP,
 so the service fetches its keys from a real URL. Tests mint tokens with the same issuer.
+Permission checks go to a live SpiceDB container (TASK-0554). Tests pass its env through
+`env_overrides`, for example `LiveSpiceDB.env`.
 """
 
 import json
@@ -109,6 +111,8 @@ class AudienceStudioProcess:
         env = os.environ.copy()
         # A developer shell may hold a database URL. Each test opts in explicitly.
         env.pop("RUNEFOBLE_DATABASE_URL", None)
+        env.pop("RUNEFOBLE_SPICEDB_ENDPOINT", None)
+        env.pop("RUNEFOBLE_SPICEDB_PRESHARED_KEY", None)
         env.update(
             {
                 "PORT": str(self.port),
@@ -179,9 +183,11 @@ class AudienceStudioProcess:
             self._jwks = None
 
 
-def start_audience_studio_server() -> Generator[AudienceStudioProcess]:
+def start_audience_studio_server(
+    env_overrides: Mapping[str, str] | None = None,
+) -> Generator[AudienceStudioProcess]:
     """Start Audience Studio Fastify server as subprocess and yield it for the test module."""
-    process = AudienceStudioProcess()
+    process = AudienceStudioProcess(env_overrides)
     process.start()
     try:
         yield process
