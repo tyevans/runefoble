@@ -26,11 +26,10 @@ from gateway_api.overlay_templates import (
     render_obs_overlay_html,
     render_overlay_html,
 )
-from gateway_api.session_access import has_session_permission
+from gateway_api.session_access import may_publish_frame
 from gateway_api.spectator import get_raw_session_state
 from gateway_api.websocket_auth import admit_gateway_websocket
-from runefoble_auth.errors import AuthzUnavailableError
-from runefoble_auth.websocket import action_authorizer, send_socket_error
+from runefoble_auth.websocket import action_authorizer
 
 router = APIRouter(tags=["OBS Overlay"])
 
@@ -86,25 +85,6 @@ async def get_party_vitals_overlay(
     )
 
 
-async def _may_publish(websocket: WebSocket, session_id: str, user_id: str, action: str) -> bool:
-    """Inbound overlay frames change what every viewer sees. They need `session.participate`."""
-    try:
-        allowed = await has_session_permission(session_id, user_id, "participate")
-    except AuthzUnavailableError:
-        await send_socket_error(
-            websocket, "AUTHZ_UNAVAILABLE", "Authorization unavailable", action=action
-        )
-        return False
-    if not allowed:
-        await send_socket_error(
-            websocket,
-            "PERMISSION_DENIED",
-            f"Action '{action}' needs session.participate",
-            action=action,
-        )
-    return allowed
-
-
 @router.websocket("/overlay/ws/{session_id}")
 @router.websocket("/ws/overlay/{session_id}")
 async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> None:
@@ -134,7 +114,7 @@ async def overlay_websocket_endpoint(websocket: WebSocket, session_id: str) -> N
         while True:
             data = await websocket.receive_json()
             action = data.get("action") or data.get("type") or "unknown"
-            if not await _may_publish(websocket, session_id, principal.user_id, action):
+            if not await may_publish_frame(websocket, session_id, principal.user_id, action):
                 continue
             if action in ("turn_started", "runefoble.events.session.turn_started"):
                 cam = director.handle_turn_started(
