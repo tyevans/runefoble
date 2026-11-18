@@ -40,11 +40,28 @@ def stream_redis() -> Generator[MockAsyncRedis]:
 
 
 def _create(client: TestClient) -> str:
+    """Create a campaign as its owner, then a session in it, through public routes."""
+    campaign = client.post("/api/v1/campaigns", json={"title": "Tomb"})
+    assert campaign.status_code == 201, campaign.text
     res = client.post(
-        "/api/v1/sessions/create", json={"campaign_id": str(uuid4()), "title": "Crypt"}
+        "/api/v1/sessions/create",
+        json={"campaign_id": campaign.json()["id"], "title": "Crypt"},
     )
     assert res.status_code == 200, res.text
     return res.json()["session_id"]
+
+
+def test_create_is_refused_for_a_caller_without_run_session(client, stream_redis) -> None:
+    """A stranger cannot create a session in a campaign. No session state is saved."""
+    stranger = {"Authorization": f"Bearer {SIGNING_ISSUER.mint('stranger')}"}
+    campaign = client.post("/api/v1/campaigns", json={"title": "Tomb"})
+    res = client.post(
+        "/api/v1/sessions/create",
+        json={"campaign_id": campaign.json()["id"], "title": "Uninvited"},
+        headers=stranger,
+    )
+    assert res.status_code == 403, res.text
+    assert stream_redis.streams.get(SESSION_STREAM, []) == []
 
 
 def _published_types(mock_redis: MockAsyncRedis, session_id: str) -> list[str]:

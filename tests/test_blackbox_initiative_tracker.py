@@ -24,7 +24,7 @@ def client() -> TestClient:
 @pytest.mark.asyncio
 async def test_blackbox_combat_initiative_encounter_lifecycle_and_turn_cycling(client: TestClient):
     """End-to-end blackbox test: start combat, roll initiatives, cycle turns across rounds, and end combat."""
-    campaign_id = str(uuid4())
+    campaign_id = _owned_campaign(client)
 
     # 1. Frontdoor session setup: Create session
     create_resp = client.post(
@@ -188,7 +188,7 @@ async def test_blackbox_combat_initiative_encounter_lifecycle_and_turn_cycling(c
 
 def test_blackbox_start_combat_with_initial_combatants_and_tiebreaking(client: TestClient):
     """Verify starting combat with pre-defined combatants and PC vs NPC tie-breaking."""
-    campaign_id = str(uuid4())
+    campaign_id = _owned_campaign(client)
     create_resp = client.post(
         "/api/v1/sessions/create",
         json={"campaign_id": campaign_id, "title": "Dragon Lair", "dm_id": "the_watcher"},
@@ -234,7 +234,7 @@ def test_blackbox_start_combat_with_initial_combatants_and_tiebreaking(client: T
 
 def test_blackbox_combat_error_frontdoor_validation(client: TestClient):
     """Verify proper 400 / 404 HTTP errors on invalid combat actions."""
-    campaign_id = str(uuid4())
+    campaign_id = _owned_campaign(client)
     create_resp = client.post(
         "/api/v1/sessions/create",
         json={"campaign_id": campaign_id, "title": "Peaceful Tavern", "dm_id": "the_watcher"},
@@ -268,3 +268,10 @@ def test_blackbox_combat_error_frontdoor_validation(client: TestClient):
     non_existent_id = str(uuid4())
     get_err = client.get(f"/api/v1/sessions/{non_existent_id}/combat")
     assert get_err.status_code == 404
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

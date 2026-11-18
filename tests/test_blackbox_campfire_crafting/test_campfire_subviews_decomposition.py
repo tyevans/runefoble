@@ -24,7 +24,11 @@ def test_blackbox_campfire_crafting_frontdoor_integration(
     camp_id = _owned_campaign(session_client)
     session_res = session_client.post(
         "/api/v1/sessions/create",
-        json={"campaign_id": str(camp_id), "title": "Campfire Haven Session", "dm_id": "dm_bram"},
+        json={
+            "campaign_id": _owned_campaign(session_client),
+            "title": "Campfire Haven Session",
+            "dm_id": "dm_bram",
+        },
     )
     assert session_res.status_code == 200
     session_id = session_res.json()["session_id"]
@@ -64,3 +68,10 @@ def test_blackbox_campfire_crafting_frontdoor_integration(
     assert combine_res.status_code == 200
     data = combine_res.json()
     assert data["outcome"] == "success" and data["item_name"] == "Radiant Smoke Pellet"
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

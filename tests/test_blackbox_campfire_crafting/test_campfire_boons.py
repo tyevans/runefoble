@@ -84,7 +84,11 @@ def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient,
 
     create_res = session_client.post(
         "/api/v1/sessions/create",
-        json={"campaign_id": str(camp_id), "title": "Campfire Rest Chapter", "dm_id": "dm_evelyn"},
+        json={
+            "campaign_id": camp_id,
+            "title": "Campfire Rest Chapter",
+            "dm_id": "dm_evelyn",
+        },
     )
     assert create_res.status_code == 200
     session_id = create_res.json()["session_id"]
@@ -119,3 +123,10 @@ def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient,
 
     entries = mock_bus.streams.get(STREAM_SESSION, [])
     assert any("CampfireRestCompleted" in entry[1].get("event_type", "") for entry in entries)
+
+
+def _owned_campaign(client) -> str:
+    """Create a campaign as the calling user, so that the caller can run sessions in it."""
+    res = client.post("/api/v1/campaigns", json={"title": "Owned Campaign"})
+    assert res.status_code == 201, res.text
+    return res.json()["id"]

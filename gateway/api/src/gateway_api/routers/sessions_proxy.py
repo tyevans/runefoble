@@ -13,6 +13,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 from gateway_api.auth import CurrentPrincipal, require_zanzibar_permission
+from gateway_api.dependencies import ws_manager
 from gateway_api.models import AtmosphereUpdateRequest, DMOverrideRequest
 from gateway_api.proxy import forward_json
 from pydantic import BaseModel, ConfigDict, Field
@@ -46,10 +47,18 @@ async def get_session_proxy(session_id: str, request: Request) -> Any:
     dependencies=[Depends(require_zanzibar_permission("control", resource_type="session"))],
 )
 async def start_session_proxy(session_id: str, request: Request) -> Any:
-    """Move a lobby to active (requires 'control'; game_session)."""
-    return await forward_json(
+    """Move a lobby to active (requires 'control'; game_session).
+
+    The gateway then tells its WebSocket clients that the session started. The owner's reply
+    supplies the status. The gateway keeps no state.
+    """
+    state = await forward_json(
         request, service=SERVICE, method="POST", path=f"{SESSIONS}/{session_id}/start"
     )
+    await ws_manager.broadcast(
+        {"type": "session_started", "sessionId": session_id, "status": state["status"]}
+    )
+    return state
 
 
 @router.post(

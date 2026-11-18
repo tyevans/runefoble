@@ -46,17 +46,33 @@ async def _load_session(session_id: UUID) -> GameSessionAggregate:
 
 @router.post(
     "/api/v1/sessions/create",
-    dependencies=[Depends(get_caller_principal)],
     response_model=GameSessionState,
 )
-async def create_session(req: CreateSessionRequest) -> GameSessionState:
-    """Create a new event-sourced game session."""
+async def create_session(req: CreateSessionRequest, caller_id: CallerId) -> GameSessionState:
+    """Create a new event-sourced game session in a campaign the caller can run.
+
+    The caller needs `run_session` on the campaign. The check runs before the session is saved
+    and before the campaign link is written, so a refused caller leaves no state behind.
+    """
+    spicedb = get_spicedb_client()
+    allowed = await spicedb.check_permission(
+        resource_type="campaign",
+        resource_id=str(req.campaign_id),
+        permission="run_session",
+        subject_type="user",
+        subject_id=caller_id,
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail=f"User '{caller_id}' lacks 'run_session' on campaign '{req.campaign_id}'",
+        )
     session_id = uuid4()
     session = GameSessionAggregate(session_id)
     session.create(campaign_id=req.campaign_id, title=req.title, dm_id=req.dm_id)
     await repo.save(session)
     # Link after the save (ADR-0001). The gateway's observe and control checks read this link.
-    await link_session(get_spicedb_client(), str(session_id), str(req.campaign_id))
+    await link_session(spicedb, str(session_id), str(req.campaign_id))
     return session.state
 
 
