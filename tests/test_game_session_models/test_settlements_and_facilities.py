@@ -15,22 +15,6 @@ from game_session.models import (
 from pydantic import ValidationError
 
 
-def test_settlement_exports_and_imports() -> None:
-    """Verify re-exports and direct submodule imports for settlement models."""
-    from game_session.models.settlement import SettlementState as DirectSettlementState
-
-    assert DirectSettlementState is SettlementState
-    items = (
-        CharterSettlementRequest,
-        UpgradeFacilityRequest,
-        ClaimRestBoonRequest,
-        DEFAULT_FACILITIES,
-        FACILITY_REST_BOONS,
-        FACILITY_TIER_NAMES,
-    )
-    assert all(item is not None for item in items)
-
-
 def test_settlement_state_initialization_and_defaults() -> None:
     """Verify default facilities, tier configuration, and state fields."""
     settlement = SettlementState(

@@ -54,7 +54,6 @@ def test_dm_traps_manifest_endpoint(client: TestClient) -> None:
 def test_manifest_file_matches_advertised_manifest(client: TestClient) -> None:
     """Verify services/board_state/ui/manifest.json matches runtime advertising."""
     manifest_path = REPO_ROOT / "services/board_state/ui/manifest.json"
-    assert manifest_path.is_file(), f"{manifest_path} must exist"
     manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
     endpoint_data = client.get("/ui/manifest").json()
     for field in ("service", "package", "version", "components", "tags", "styles", "scripts"):

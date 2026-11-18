@@ -36,7 +36,6 @@ def test_ui_manifest_frontdoor_contract(client: TestClient) -> None:
 def test_manifest_file_matches_frontdoor_endpoint(client: TestClient) -> None:
     """Verify services/board_state/ui/manifest.json matches runtime endpoint response."""
     manifest_path = REPO_ROOT / "services/board_state/ui/manifest.json"
-    assert manifest_path.is_file(), f"{manifest_path} must exist"
     file_data = json.loads(manifest_path.read_text(encoding="utf-8"))
     api_data = client.get("/ui/manifest").json()
 

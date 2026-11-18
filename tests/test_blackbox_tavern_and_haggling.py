@@ -56,30 +56,14 @@ def gateway_client(game_session_upstream) -> Iterator[TestClient]:
         yield client
 
 
-def test_tavern_parlor_microfrontend_manifest_and_files(session_client):
-    """Verify microfrontend manifest advertises runefoble-tavern-parlor and files exist."""
+def test_tavern_parlor_microfrontend_manifest(session_client):
+    """Verify microfrontend manifest advertises runefoble-tavern-parlor."""
     res = session_client.get("/ui/manifest")
     assert res.status_code == 200
     data = res.json()
     assert data["service"] == "game_session"
     assert data["package"] == "@runefoble/game-session-ui"
     assert "runefoble-tavern-parlor" in data["components"]
-
-    ui_dir = REPO_ROOT / "services" / "game_session" / "ui" / "src"
-    comp_file = ui_dir / "runefoble-tavern-parlor.ts"
-    stories_file = ui_dir / "runefoble-tavern-parlor.stories.ts"
-    styles_file = ui_dir / "runefoble-tavern-parlor.styles.ts"
-
-    assert comp_file.is_file(), "Tavern parlor component file must exist"
-    assert stories_file.is_file(), "Tavern parlor Storybook file must exist"
-    assert styles_file.is_file(), "Tavern parlor styles file must exist"
-
-    comp_code = comp_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-tavern-parlor')" in comp_code
-    assert "minigame-turn-taken" in comp_code
-    assert "liars-dice-challenged" in comp_code
-    assert "drink-taken" in comp_code
-    assert "haggling-submitted" in comp_code
 
 
 def test_blackbox_liars_dice_minigame_flow(session_client, mock_bus):

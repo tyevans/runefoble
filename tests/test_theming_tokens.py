@@ -39,7 +39,6 @@ def resolve_css_imports(file_path: Path) -> str:
 
 def test_themes_css_semantic_token_hierarchy():
     """Verify themes.css defines the full semantic token hierarchy across all themes and color modes."""
-    assert THEMES_CSS.is_file(), "themes.css must exist"
     content = resolve_css_imports(THEMES_CSS)
 
     selectors = [":root", '[data-color-mode="light"]', '[data-color-mode="dark"]']

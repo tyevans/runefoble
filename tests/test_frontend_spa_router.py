@@ -17,7 +17,6 @@ def test_typescript_router_unit_test_suite_execution():
     """Execute the Node-based TypeScript router unit test suite."""
     import re
 
-    assert TEST_ROUTER_TS.is_file()
     result = run_node_tests([TEST_ROUTER_TS], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Router tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"

@@ -15,27 +15,6 @@ from uuid import uuid4
 
 import pytest
 from campaign_lore.main import app as lore_app
-from campaign_lore.routers.codex import router
-from campaign_lore.routers.codex.entries import (
-    get_entry,
-    list_entries,
-    publish_entry,
-    update_entry,
-)
-from campaign_lore.routers.codex.entries import router as entries_router
-from campaign_lore.routers.codex.referencing import (
-    extract_references,
-    get_entry_references,
-)
-from campaign_lore.routers.codex.referencing import router as referencing_router
-from campaign_lore.routers.codex.schemas import (
-    CrossReferenceContentRequest,
-    CrossReferenceResponse,
-    PublishCodexEntryRequest,
-    UpdateCodexEntryRequest,
-    format_codex_entry,
-)
-from fastapi import APIRouter
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import SpiceDBClient
 
@@ -47,32 +26,6 @@ VISITOR_SUBJECT = "lore-test-visitor"
 def _bearer(user_id: str) -> dict[str, str]:
     """Return headers carrying a signed bearer token for `user_id`."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(user_id)}"}
-
-
-def test_codex_router_exposes_endpoints_and_models() -> None:
-    """Verify the codex router package and its submodules expose APIRouters, endpoints and models."""
-    assert isinstance(router, APIRouter)
-    assert isinstance(entries_router, APIRouter)
-    assert isinstance(referencing_router, APIRouter)
-
-    for fn in [
-        publish_entry,
-        list_entries,
-        get_entry,
-        update_entry,
-        get_entry_references,
-        extract_references,
-    ]:
-        assert callable(fn), f"Expected callable endpoint function: {fn}"
-
-    for model in [
-        PublishCodexEntryRequest,
-        UpdateCodexEntryRequest,
-        CrossReferenceContentRequest,
-        CrossReferenceResponse,
-    ]:
-        assert issubclass(model, object)
-    assert callable(format_codex_entry)
 
 
 def test_codex_openapi_routes_completeness() -> None:

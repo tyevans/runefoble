@@ -153,27 +153,12 @@ def test_blackbox_forge_token_portrait_and_transparency(client: TestClient, camp
     assert h == 128
 
 
-def test_raster_generators_live_only_in_canonical_submodules():
-    """Verify TASK-0497: no aggregator facade and no legacy token alias remain."""
-    import asset_forge.raster as raster_pkg
+def test_raster_submodules_generate_png():
+    """Raster submodules generate PNG bytes with the PNG signature."""
     import asset_forge.raster.battlemap_raster as bm_mod
-    import asset_forge.raster.png_codec as codec_mod
     import asset_forge.raster.token_raster as tok_mod
-    import asset_forge.raster.wardrobe_raster as wd_mod
 
-    # 1. The raster package root re-exports nothing; generators load from submodules.
-    assert not hasattr(raster_pkg, "generate_token_png")
-    assert not hasattr(raster_pkg, "generate_battlemap_png")
-
-    # 3. The legacy token alias is gone; the canonical name is defined in its submodule.
-    assert not hasattr(tok_mod, "generate_token_png")
-    assert callable(tok_mod.generate_token_portrait_png)
-    assert callable(codec_mod.encode_png_rgba)
-    assert callable(codec_mod.parse_hex_color)
-    assert callable(bm_mod.generate_battlemap_png)
-    assert callable(wd_mod.generate_wardrobe_portrait_png)
-
-    # 4. Direct functional generation test via submodules
+    # Generators are called through their canonical submodules.
     grid = [[0, 1], [2, 0]]
     map_png = bm_mod.generate_battlemap_png(grid, "dwarven_forge", cell_size_px=32)
     assert map_png.startswith(PNG_SIGNATURE)

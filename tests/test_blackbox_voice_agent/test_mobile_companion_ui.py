@@ -46,7 +46,6 @@ def test_voice_agent_manifest_exposes_decomposed_companion(voice_client: TestCli
 
     # Manifest file matches runtime endpoint
     manifest_path = REPO_ROOT / "services/voice_agent/ui/manifest.json"
-    assert manifest_path.is_file()
     file_data = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert file_data["components"] == data["components"]
     assert file_data["tags"] == data["tags"]

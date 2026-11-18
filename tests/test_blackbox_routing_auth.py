@@ -44,7 +44,6 @@ def client(game_session_upstream) -> Iterator[TestClient]:
 def test_node_blackbox_routing_auth_suite_execution() -> None:
     """Execute the Node-based TypeScript blackbox routing & auth test suite."""
     test_file = TESTS_DIR / "blackbox-routing-auth.test.ts"
-    assert test_file.is_file(), f"{test_file} must exist"
 
     result = run_node_tests([test_file], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (

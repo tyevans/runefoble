@@ -122,11 +122,9 @@ def test_frontend_container_and_ingress_configuration():
     import yaml
 
     dockerfile = Path("frontend/Dockerfile")
-    assert dockerfile.exists(), "frontend/Dockerfile must exist for cluster deployment"
     assert "nginx:alpine" in dockerfile.read_text()
 
     nginx_conf = Path("frontend/nginx.conf")
-    assert nginx_conf.exists(), "frontend/nginx.conf must exist for SPA routing"
     assert "try_files $uri $uri/ /index.html;" in nginx_conf.read_text()
 
     values_path = Path("deployments/helm/runefoble/values.yaml")

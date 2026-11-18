@@ -32,7 +32,6 @@ def client(game_session_upstream) -> Iterator[TestClient]:
 
 def test_frontend_node_blackbox_suite_execution():
     """Execute the Node-based TypeScript blackbox test suite for TASK-0271 and assert 100% pass."""
-    assert TS_TEST_FILE.is_file(), f"Frontend test suite {TS_TEST_FILE} must exist"
 
     result = run_node_tests([TS_TEST_FILE], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (

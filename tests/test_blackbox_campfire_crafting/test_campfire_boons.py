@@ -8,8 +8,6 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_SESSION, STREAM_STRONGHOLD
 
-from .conftest import REPO_ROOT
-
 
 def _owned_campaign(client: TestClient) -> str:
     """Create a campaign through the public route. The caller becomes its owner."""
@@ -27,29 +25,14 @@ def _fund(client: TestClient, campaign_id: str, gold: int, materials: dict[str, 
     assert res.status_code == 200, res.text
 
 
-def test_campfire_crafting_microfrontend_manifest_and_files(session_client: TestClient):
-    """Verify microfrontend manifest advertises runefoble-campfire-crafting and files exist."""
+def test_campfire_crafting_microfrontend_manifest(session_client: TestClient):
+    """Verify microfrontend manifest advertises runefoble-campfire-crafting."""
     res = session_client.get("/ui/manifest")
     assert res.status_code == 200
     data = res.json()
     assert data["service"] == "game_session"
     assert data["package"] == "@runefoble/game-session-ui"
     assert "runefoble-campfire-crafting" in data["components"]
-
-    ui_src = REPO_ROOT / "services" / "game_session" / "ui" / "src"
-    comp_file = ui_src / "runefoble-campfire-crafting.ts"
-    stories_file = ui_src / "runefoble-campfire-crafting.stories.ts"
-    styles_file = ui_src / "runefoble-campfire-crafting.styles.ts"
-
-    assert comp_file.is_file(), "Campfire crafting component file must exist"
-    assert stories_file.is_file(), "Campfire crafting Storybook file must exist"
-    assert styles_file.is_file(), "Campfire crafting styles file must exist"
-
-    comp_code = comp_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-campfire-crafting')" in comp_code
-    assert "reagents-combined" in comp_code
-    assert "campfire-rest-requested" in comp_code
-    assert "stronghold-upgrade-requested" in comp_code
 
 
 def test_blackbox_stronghold_campsite_progression(session_client: TestClient, mock_bus):

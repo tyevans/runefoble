@@ -44,7 +44,6 @@ def test_gateway_profile_rest_endpoint_claims(auth_environment):
 
 def test_typescript_unit_test_suite_execution():
     """Execute the Node-based TypeScript test suite for profile and campaign creation idempotency."""
-    assert TS_TEST_FILE.is_file()
     result = run_node_tests([TS_TEST_FILE], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"TypeScript unit tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"

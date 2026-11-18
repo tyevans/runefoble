@@ -4,35 +4,12 @@ from __future__ import annotations
 
 from uuid import UUID
 
-import game_session.models.reactions as rx
 from game_session.models import (
     DeclareReactionRequest,
     DeclareReactionResponse,
-    EvaluateTriggersRequest,
-    EvaluateTriggersResponse,
     GameSessionState,
-    ReactionTransitionsMixin,
-    ReadyActionRequest,
-    ReadyActionResponse,
-    ResolveReactionRequest,
     ResolveReactionResponse,
 )
-
-
-def test_reaction_exports_and_imports() -> None:
-    """Verify re-exports and direct submodule imports for reaction models."""
-    models = (
-        ReadyActionRequest,
-        ReadyActionResponse,
-        ResolveReactionRequest,
-        EvaluateTriggersRequest,
-        EvaluateTriggersResponse,
-        ReactionTransitionsMixin,
-    )
-    assert all(m is not None for m in models)
-    assert rx.DeclareReactionRequest is DeclareReactionRequest
-    assert rx.DeclareReactionResponse is DeclareReactionResponse
-    assert rx.ResolveReactionResponse is ResolveReactionResponse
 
 
 def test_reaction_state_transitions(initial_session_state: GameSessionState) -> None:

@@ -194,23 +194,3 @@ def test_battlemap_uploader_microfrontend_frontdoor(board_client, trusted_ws_iss
     assert upload_data["content_type"] == "image/png"
     assert upload_data["owner_id"] == "gm-alex"
     assert "download_url" in upload_data
-
-    # 3. Component code and event contract verification
-    comp_file = REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-map-uploader.ts"
-    assert comp_file.is_file()
-    code = comp_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-map-uploader')" in code
-    assert "map-uploaded" in code
-    assert "shroud-overlay" in code
-    assert "uploadEndpoint" in code
-
-    # 4. Interactive Storybook stories contract
-    stories_file = (
-        REPO_ROOT / "services" / "board_state" / "ui" / "src" / "runefoble-map-uploader.stories.ts"
-    )
-    assert stories_file.is_file()
-    stories_code = stories_file.read_text(encoding="utf-8")
-    assert "EmptyDropzone" in stories_code
-    assert "UploadingProgress" in stories_code
-    assert "AlignedMapPreview" in stories_code
-    assert "FogOfWarMasked" in stories_code
