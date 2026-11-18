@@ -62,7 +62,7 @@ class WorkerStandInDecider(StandInDecider):
         self._base_url = base_url
 
     async def decide(self, req: StandInRequest) -> StandInAction:
-        guardrails = req.guardrails.model_dump() if req.guardrails is not None else None
+        guardrails = req.guardrails.model_dump(mode="json") if req.guardrails is not None else None
         data = await call_worker(
             self._base_url,
             "/inference/v1/stand-in-action",

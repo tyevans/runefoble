@@ -3,7 +3,7 @@
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
-from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
+from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
 
 # Provenance of a response: llm (model output), heuristic (regex rules after
 # model output was unusable), or mock (canned output, explicit mock backend only).
@@ -136,7 +136,7 @@ class StandInActionResponse(BaseModel):
     narrative_flavor: str
     penalties_applied: list[str]
     mechanics: dict[str, Any] = Field(default_factory=dict)
-    guardrails_applied: list[str] = Field(
+    guardrails_applied: list[GuardrailName] = Field(
         default_factory=list,
         description="Active guardrail names that the decision enforced",
     )

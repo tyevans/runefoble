@@ -6,6 +6,7 @@ autonomous Dungeon Mastering, and missing player stand-in emulation with penalti
 
 from typing import Any
 
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 from the_watcher.compound_actions import CompoundActionEngine
 from the_watcher.disambiguation import DisambiguationEngine
 from the_watcher.intent.reactions import ReactionIntent, parse_reaction_intent
@@ -76,7 +77,7 @@ class TheWatcherEngine:
         penalties: list[str],
         scene_context: str,
         personality_traits: list[str] | None = None,
-        guardrails: dict[str, Any] | None = None,
+        guardrails: StandInGuardrailPolicy | None = None,
     ) -> StandInAction:
         """Simulate an action and dialogue for an absent player's character."""
         return self._stand_in_ai.generate_stand_in_action(

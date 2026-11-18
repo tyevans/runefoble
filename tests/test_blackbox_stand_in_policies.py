@@ -7,6 +7,7 @@ from httpx import ASGITransport, AsyncClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_events.events import StandInPolicyUpdated, StandInStabilized
 from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
 from the_watcher.watcher_ai import TheWatcherEngine
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -116,7 +117,9 @@ async def test_character_guardrails_configuration_and_events(
 
 def test_stand_in_guardrails_evaluation_and_humorous_adaptation(watcher_engine: TheWatcherEngine):
     """Verify stand-in AI evaluates guardrails while adapting penalties (US-0025)."""
-    gr = {**GUARDRAILS_PAYLOAD, "preserve_spell_slots": {3: 1}}
+    gr = StandInGuardrailPolicy.model_validate(
+        {**GUARDRAILS_PAYLOAD, "preserve_spell_slots": {3: 1}}
+    )
 
     # Scenario A: Protect Marcus when wounded (under 'drunk' penalty)
     action_heal = watcher_engine.generate_stand_in_action(
@@ -129,7 +132,7 @@ def test_stand_in_guardrails_evaluation_and_humorous_adaptation(watcher_engine: 
     )
     assert action_heal.action_type == "cast_spell"
     assert "Marcus" in action_heal.dialogue and "Hic" in action_heal.dialogue
-    assert "Prioritized protection for Marcus" in action_heal.guardrails_applied
+    assert action_heal.guardrails_applied == [GuardrailName.PROTECT_ALLIES]
     assert action_heal.dice_roll_required == "1d20-2"
     assert "healing magic to protect Marcus" in action_heal.action_description
 
@@ -143,7 +146,7 @@ def test_stand_in_guardrails_evaluation_and_humorous_adaptation(watcher_engine: 
         guardrails=gr,
     )
     assert action_spell.action_type == "cast_spell"
-    assert "Preserved Level 3 spell slots" in action_spell.guardrails_applied
+    assert action_spell.guardrails_applied == [GuardrailName.PRESERVE_SPELL_SLOTS]
     assert "Revivify" in action_spell.dialogue or "Level 3" in action_spell.dialogue
     assert "cantrip" in action_spell.action_description.lower()
 
@@ -157,7 +160,7 @@ def test_stand_in_guardrails_evaluation_and_humorous_adaptation(watcher_engine: 
         guardrails=gr,
     )
     assert action_ranged.action_type == "ranged_attack"
-    assert "Avoided frontline melee" in action_ranged.guardrails_applied
+    assert action_ranged.guardrails_applied == [GuardrailName.AVOID_MELEE]
     assert "ranged" in action_ranged.dialogue.lower() or "melee" in action_ranged.dialogue.lower()
 
 

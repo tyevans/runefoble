@@ -42,14 +42,13 @@ class HeuristicStandInDecider(StandInDecider):
         self._engine = engine
 
     async def decide(self, req: StandInRequest) -> StandInAction:
-        guardrails = req.guardrails.model_dump() if req.guardrails is not None else None
         return self._engine.generate_stand_in_action(
             character_name=req.character_name,
             character_class=req.character_class,
             penalties=req.penalties,
             scene_context=req.scene_context,
             personality_traits=req.personality_traits,
-            guardrails=guardrails,
+            guardrails=req.guardrails,
         )
 
 

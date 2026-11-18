@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 from the_watcher.models import StandInAction
 from the_watcher.stand_in_guardrails import evaluate_tactical_guardrails
 from the_watcher.stand_in_persona import apply_penalty_modifiers
@@ -25,7 +26,7 @@ class StandInAIEngine:
         penalties: list[str],
         scene_context: str,
         personality_traits: list[str] | None = None,
-        guardrails: dict[str, Any] | None = None,
+        guardrails: StandInGuardrailPolicy | None = None,
     ) -> StandInAction:
         """Simulate an action and dialogue for an absent player's character.
 
