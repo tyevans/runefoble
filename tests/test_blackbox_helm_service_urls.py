@@ -7,12 +7,13 @@ public `PlatformSettings` model, with no code default.
 """
 
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
 import yaml
 from runefoble_platform.config import PlatformSettings
+
+from tests.helpers.process import run_command
 
 HELM_CHART = Path("deployments/helm/runefoble")
 
@@ -83,11 +84,8 @@ def _render_deployments() -> dict[str, dict]:
     if not shutil.which("helm"):
         pytest.skip("helm CLI not available")
 
-    proc = subprocess.run(
-        ["helm", "template", "runefoble", str(HELM_CHART)],
-        capture_output=True,
-        text=True,
-        check=True,
+    proc = run_command(
+        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=240.0
     )
     docs = [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
     return {doc["metadata"]["name"]: doc for doc in docs if doc.get("kind") == "Deployment"}

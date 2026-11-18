@@ -11,8 +11,7 @@ Governed by ADR-0011, ADR-0015, and Hard Invariant 7 (events in and HTTP reads o
 from __future__ import annotations
 
 import asyncio
-import time
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any
 
@@ -40,16 +39,6 @@ SERVICE_SUBJECT = "user-test"
 def bearer(sub: str) -> dict[str, str]:
     """Return the Authorization header for a token that the shared test issuer signs for `sub`."""
     return {"Authorization": f"Bearer {SIGNING_ISSUER.mint(sub)}"}
-
-
-def wait_until(predicate: Callable[[], bool], timeout_s: float = 10.0) -> bool:
-    """Poll until the predicate holds or the timeout passes."""
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(0.05)
-    return predicate()
 
 
 @dataclass

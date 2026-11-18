@@ -20,6 +20,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers.process import run_command
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOLD_MODULE = "tests/helpers/postgres_hold_child.py"
 CHILD_TIMEOUT_SECONDS = 300.0
@@ -59,12 +61,10 @@ def _run_fixture_child(
         "RUNEFOBLE_HOLD_INFO_FILE": str(tmp_path / "info.json"),
         "RUNEFOBLE_HOLD_MODE": "exit",
     }
-    return subprocess.run(
+    return run_command(
         [sys.executable, "-m", "pytest", "-q", "-rs", "-p", "no:cacheprovider", HOLD_MODULE],
         cwd=REPO_ROOT,
         env=env,
-        capture_output=True,
-        text=True,
         timeout=CHILD_TIMEOUT_SECONDS,
         check=False,
     )

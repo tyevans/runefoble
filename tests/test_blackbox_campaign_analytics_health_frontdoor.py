@@ -14,7 +14,8 @@ from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
 from game_session.main import app as game_app
 
-from tests.helpers.campaign_analytics_service import AnalyticsService, wait_until
+from tests.helpers.campaign_analytics_service import AnalyticsService
+from tests.helpers.polling import wait_until
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -96,4 +97,6 @@ def test_health_change_in_combat_reaches_campaign_mvp_through_public_routes(
         )
         assert hit.status_code == 200, hit.text
 
-        assert wait_until(lambda: _damage_taken(analytics, campaign_id, char_id) == 7)
+        assert wait_until(
+            lambda: _damage_taken(analytics, campaign_id, char_id) == 7, timeout_s=10.0
+        )

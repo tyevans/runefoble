@@ -7,7 +7,6 @@ under test is patched.
 
 from __future__ import annotations
 
-import socket
 import threading
 import time
 from collections.abc import Iterator
@@ -17,17 +16,13 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-
-def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        return int(sock.getsockname()[1])
+from tests.helpers.ports import free_port
 
 
 @contextmanager
 def serve_watcher_double(app: FastAPI) -> Iterator[str]:
     """Serve `app` on 127.0.0.1 and yield its base URL until the block exits."""
-    port = _free_port()
+    port = free_port()
     server = uvicorn.Server(
         uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning", lifespan="off")
     )

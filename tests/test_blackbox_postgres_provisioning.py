@@ -15,8 +15,6 @@ Verifies:
 
 from __future__ import annotations
 
-import subprocess
-
 import pytest
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
@@ -25,7 +23,8 @@ from runefoble_platform.event_sourcing import (
     set_event_store,
 )
 
-from tests.helpers.postgres import get_free_port
+from tests.helpers.ports import free_port
+from tests.helpers.process import run_command
 
 
 @pytest.fixture(autouse=True)
@@ -56,7 +55,7 @@ def test_dsn_normalization_and_platform_settings():
 
     # Reachability checks
     assert is_database_reachable(None, None) is True
-    assert is_database_reachable("127.0.0.1", get_free_port(), timeout=0.1) is False
+    assert is_database_reachable("127.0.0.1", free_port(), timeout=0.1) is False
 
     settings = PlatformSettings(
         database_url="postgresql://db_user:db_pass@db_host:5432/test_db",
@@ -76,7 +75,7 @@ def test_multidb_init_script_provisions_all_databases(postgres_service):
     """Verify that init-multidb creates zitadel, spicedb, and openpanel databases."""
 
     container_name = postgres_service["container_name"]
-    res = subprocess.run(
+    res = run_command(
         [
             "docker",
             "exec",
@@ -91,8 +90,7 @@ def test_multidb_init_script_provisions_all_databases(postgres_service):
             "SELECT datname FROM pg_database WHERE datname IN ('zitadel', 'spicedb', 'openpanel');",
         ],
         check=True,
-        capture_output=True,
-        text=True,
+        timeout=240.0,
     )
     created_dbs = {line.strip() for line in res.stdout.strip().split("\n") if line.strip()}
     assert "zitadel" in created_dbs

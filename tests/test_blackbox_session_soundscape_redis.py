@@ -15,7 +15,6 @@ Governed by:
 
 from __future__ import annotations
 
-import time
 from collections.abc import Callable, Iterator
 from typing import Any
 from uuid import uuid4
@@ -24,6 +23,7 @@ import httpx
 import pytest
 
 from tests.helpers.live_services import serve_subprocesses
+from tests.helpers.polling import wait_until
 from tests.helpers.restart_stack import RestartStack
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -79,14 +79,17 @@ def _wait_until(
     read: Callable[[], dict[str, Any]], done: Callable[[dict[str, Any]], bool]
 ) -> dict[str, Any]:
     """Poll `read` until `done` holds. Fail with the last reading when the deadline passes."""
-    deadline = time.monotonic() + PROPAGATION_DEADLINE_SECONDS
-    while True:
-        state = read()
-        if done(state):
-            return state
-        if time.monotonic() > deadline:
-            raise AssertionError(f"soundscape did not reach the expected state; last read: {state}")
-        time.sleep(POLL_INTERVAL_SECONDS)
+    state: dict[str, Any] = {}
+
+    def reached() -> bool:
+        state.update(read())
+        return done(state)
+
+    if not wait_until(
+        reached, timeout_s=PROPAGATION_DEADLINE_SECONDS, interval_s=POLL_INTERVAL_SECONDS
+    ):
+        raise AssertionError(f"soundscape did not reach the expected state; last read: {state}")
+    return state
 
 
 def test_combat_end_on_game_session_returns_soundscape_tension_to_ambient(

@@ -14,10 +14,12 @@ import signal
 import socket
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 import pytest
+
+from tests.helpers.polling import wait_until
+from tests.helpers.ports import free_port
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -38,21 +40,9 @@ exec sleep 300
 CHILD_MARKERS = ("kubectl-port-forward", "uv")
 
 
-def get_free_port() -> int:
-    """Find a loopback port that nothing listens on right now."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
-
-
 def wait_for(predicate, timeout: float) -> bool:
     """Poll a condition until it holds or the timeout expires."""
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(0.1)
-    return predicate()
+    return wait_until(predicate, timeout_s=timeout, interval_s=0.1)
 
 
 def recorded_pids(markers: Path) -> list[int]:
@@ -127,9 +117,9 @@ def test_dev_server_children_stop_when_dev_server_stops(
                 sys.executable,
                 "scripts/dev_server.py",
                 "--gateway-port",
-                str(get_free_port()),
+                str(free_port()),
                 "--spicedb-port",
-                str(get_free_port()),
+                str(free_port()),
                 "--no-frontend",
             ],
             cwd=REPO_ROOT,

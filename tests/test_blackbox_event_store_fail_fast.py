@@ -40,7 +40,8 @@ from runefoble_platform.event_sourcing import (
 )
 
 from tests.helpers.module_state import SeamRestorer
-from tests.helpers.postgres import get_free_port
+from tests.helpers.ports import free_port
+from tests.helpers.process import run_command
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
@@ -78,7 +79,7 @@ def _clean_env() -> dict[str, str]:
 
 
 def _offline_dsn() -> str:
-    offline_port = get_free_port()
+    offline_port = free_port()
     return f"postgresql+asyncpg://runefoble_user:secret@127.0.0.1:{offline_port}/runefoble"
 
 
@@ -88,11 +89,9 @@ def _import_board_state(extra_env: dict[str, str]) -> subprocess.CompletedProces
     # The service credential check runs first. Set it so the store check decides the outcome.
     env.setdefault("RUNEFOBLE_SERVICE_CREDENTIAL", "test-service-credential")
     env.update(extra_env)
-    return subprocess.run(
+    return run_command(
         [sys.executable, "-c", "import board_state.main"],
         env=env,
-        capture_output=True,
-        text=True,
         timeout=120,
         cwd=str(REPO_ROOT),
         check=False,
@@ -184,13 +183,7 @@ def test_deployed_service_with_reachable_postgres_starts_on_postgresql(postgres_
 def _render_chart() -> list[dict]:
     if shutil.which("helm") is None:
         pytest.skip("helm not available")
-    result = subprocess.run(
-        ["helm", "template", "runefoble", str(CHART_DIR)],
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=120,
-    )
+    result = run_command(["helm", "template", "runefoble", str(CHART_DIR)], check=True, timeout=120)
     return [doc for doc in yaml.safe_load_all(result.stdout) if doc]
 
 

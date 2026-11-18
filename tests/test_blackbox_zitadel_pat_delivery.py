@@ -10,7 +10,6 @@ manifests.
 from __future__ import annotations
 
 import shutil
-import subprocess
 import threading
 import time
 from pathlib import Path
@@ -26,6 +25,8 @@ from runefoble_auth.zitadel_pat_publisher import (
     PublisherConfigError,
     run,
 )
+
+from tests.helpers.process import run_command
 
 HELM_CHART = Path("deployments/helm/runefoble")
 PAT_PATH = "/zitadel/bootstrap/admin.pat"
@@ -145,11 +146,8 @@ def test_missing_setting_is_named_in_the_error(tmp_path, service_account):
 def _render() -> list[dict]:
     if not shutil.which("helm"):
         pytest.skip("helm CLI not available")
-    proc = subprocess.run(
-        ["helm", "template", "runefoble", str(HELM_CHART)],
-        capture_output=True,
-        text=True,
-        check=True,
+    proc = run_command(
+        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=240.0
     )
     return [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
 

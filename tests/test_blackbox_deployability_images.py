@@ -11,7 +11,6 @@ import base64
 import json
 import re
 import shutil
-import socket
 import subprocess
 import time
 import urllib.error
@@ -21,6 +20,9 @@ from pathlib import Path
 
 import pytest
 import yaml
+
+from tests.helpers.ports import free_port
+from tests.helpers.process import run_command
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MAKEFILE = REPO_ROOT / "Makefile"
@@ -71,16 +73,10 @@ def helm_service_ports() -> dict[str, int]:
     return ports
 
 
-def free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        return sock.getsockname()[1]
-
-
 def docker_daemon_available() -> bool:
     if shutil.which("docker") is None:
         return False
-    result = subprocess.run(["docker", "info"], capture_output=True, text=True, timeout=60)
+    result = run_command(["docker", "info"], timeout=60)
     return result.returncode == 0
 
 
@@ -97,9 +93,7 @@ def test_image_table_matches_helm_services():
 
 def test_make_images_dry_run_lists_every_row_and_kind_load():
     """`make -n images` prints each table row, a docker build and a kind load."""
-    result = subprocess.run(
-        ["make", "-n", "images"], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60
-    )
+    result = run_command(["make", "-n", "images"], cwd=REPO_ROOT, timeout=60)
     assert result.returncode == 0, f"`make -n images` failed: {result.stderr}"
     output = result.stdout
     assert "docker build" in output
@@ -112,9 +106,7 @@ def test_make_images_dry_run_lists_every_row_and_kind_load():
 
 def test_make_help_documents_images_target():
     """`make help` lists the images target."""
-    result = subprocess.run(
-        ["make", "help"], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60
-    )
+    result = run_command(["make", "help"], cwd=REPO_ROOT, timeout=60)
     assert result.returncode == 0
     plain = re.sub(r"\x1b\[[0-9;]*m", "", result.stdout)
     assert re.search(r"^\s*images\s+Build .*Kind", plain, re.MULTILINE), (
@@ -124,10 +116,8 @@ def test_make_help_documents_images_target():
 
 def test_helm_template_image_tags_match_built_tags():
     """Image tags in `helm template` equal the tags that `make images` builds."""
-    result = subprocess.run(
+    result = run_command(
         ["helm", "template", "runefoble", str(REPO_ROOT / "deployments/helm/runefoble")],
-        capture_output=True,
-        text=True,
         timeout=120,
     )
     assert result.returncode == 0, f"helm template failed: {result.stderr}"
@@ -138,7 +128,7 @@ def test_helm_template_image_tags_match_built_tags():
 
 def build_image(row: ImageRow) -> None:
     """Build one service image through the shared Dockerfile, as `make images` does."""
-    build = subprocess.run(
+    build = run_command(
         [
             "docker",
             "build",
@@ -156,8 +146,6 @@ def build_image(row: ImageRow) -> None:
             row.tag,
             str(REPO_ROOT),
         ],
-        capture_output=True,
-        text=True,
         timeout=1800,
     )
     assert build.returncode == 0, f"docker build failed:\n{build.stderr[-4000:]}"
@@ -178,11 +166,8 @@ def test_built_image_serves_openapi_on_helm_port(row: ImageRow):
     build_image(row)
 
     host_port = free_port()
-    container = subprocess.run(
-        ["docker", "run", "-d", "-p", f"127.0.0.1:{host_port}:{row.port}", row.tag],
-        capture_output=True,
-        text=True,
-        timeout=120,
+    container = run_command(
+        ["docker", "run", "-d", "-p", f"127.0.0.1:{host_port}:{row.port}", row.tag], timeout=120
     )
     assert container.returncode == 0, f"docker run failed: {container.stderr}"
     container_id = container.stdout.strip()
@@ -207,11 +192,8 @@ def test_voice_agent_image_synthesizes_speech_with_espeak():
     build_image(row)
 
     host_port = free_port()
-    container = subprocess.run(
-        ["docker", "run", "-d", "-p", f"127.0.0.1:{host_port}:{row.port}", row.tag],
-        capture_output=True,
-        text=True,
-        timeout=120,
+    container = run_command(
+        ["docker", "run", "-d", "-p", f"127.0.0.1:{host_port}:{row.port}", row.tag], timeout=120
     )
     assert container.returncode == 0, f"docker run failed: {container.stderr}"
     container_id = container.stdout.strip()
@@ -237,10 +219,8 @@ def test_voice_agent_image_synthesizes_speech_with_espeak():
 
 
 def _rendered_helm_documents() -> list[dict]:
-    result = subprocess.run(
+    result = run_command(
         ["helm", "template", "runefoble", str(REPO_ROOT / "deployments/helm/runefoble")],
-        capture_output=True,
-        text=True,
         timeout=120,
     )
     assert result.returncode == 0, f"helm template failed: {result.stderr}"
@@ -286,16 +266,11 @@ def _wait_for_http(url: str, container_id: str, timeout_s: float = 90.0) -> str:
                 return response.read().decode("utf-8")
         except (urllib.error.URLError, ConnectionError, OSError) as exc:
             last_error = str(exc)
-        state = subprocess.run(
-            ["docker", "inspect", "-f", "{{.State.Running}}", container_id],
-            capture_output=True,
-            text=True,
-            timeout=30,
+        state = run_command(
+            ["docker", "inspect", "-f", "{{.State.Running}}", container_id], timeout=30
         ).stdout.strip()
         if state != "true":
-            logs = subprocess.run(
-                ["docker", "logs", container_id], capture_output=True, text=True, timeout=30
-            )
+            logs = run_command(["docker", "logs", container_id], timeout=30)
             raise AssertionError(f"container exited early:\n{(logs.stdout + logs.stderr)[-4000:]}")
         time.sleep(1.0)
     raise AssertionError(f"{url} not served within {timeout_s}s: {last_error}")
@@ -308,9 +283,7 @@ AUDIENCE_TAG = f"runefoble/audience-studio:{IMAGE_TAG}"
 
 def test_make_images_builds_audience_studio_from_node_dockerfile():
     """`make -n images` builds the Node audience-studio image and loads it into Kind."""
-    result = subprocess.run(
-        ["make", "-n", "images"], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60
-    )
+    result = run_command(["make", "-n", "images"], cwd=REPO_ROOT, timeout=60)
     assert result.returncode == 0, f"`make -n images` failed: {result.stderr}"
     output = result.stdout
     assert f"-f {AUDIENCE_DOCKERFILE.relative_to(REPO_ROOT)}" in output
@@ -331,24 +304,14 @@ def test_audience_studio_dockerfile_runs_non_root_on_helm_port():
 @pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
 def test_built_audience_studio_image_serves_health_and_openapi():
     """The audience-studio image starts, reports healthy and serves `/openapi.json`."""
-    build = subprocess.run(
-        [
-            "docker",
-            "build",
-            "-f",
-            str(AUDIENCE_DOCKERFILE),
-            "-t",
-            AUDIENCE_TAG,
-            str(REPO_ROOT),
-        ],
-        capture_output=True,
-        text=True,
+    build = run_command(
+        ["docker", "build", "-f", str(AUDIENCE_DOCKERFILE), "-t", AUDIENCE_TAG, str(REPO_ROOT)],
         timeout=1800,
     )
     assert build.returncode == 0, f"docker build failed:\n{build.stderr[-4000:]}"
 
     host_port = free_port()
-    container = subprocess.run(
+    container = run_command(
         [
             "docker",
             "run",
@@ -359,8 +322,6 @@ def test_built_audience_studio_image_serves_health_and_openapi():
             f"127.0.0.1:{host_port}:{AUDIENCE_PORT}",
             AUDIENCE_TAG,
         ],
-        capture_output=True,
-        text=True,
         timeout=120,
     )
     assert container.returncode == 0, f"docker run failed: {container.stderr}"
@@ -381,9 +342,7 @@ FRONTEND_TAG = f"runefoble/frontend:{IMAGE_TAG}"
 
 def test_make_images_builds_frontend_from_app_shell_dockerfile():
     """`make -n images` builds the App Shell image and loads it into Kind."""
-    result = subprocess.run(
-        ["make", "-n", "images"], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60
-    )
+    result = run_command(["make", "-n", "images"], cwd=REPO_ROOT, timeout=60)
     assert result.returncode == 0, f"`make -n images` failed: {result.stderr}"
     output = result.stdout
     assert f"-f {FRONTEND_DOCKERFILE.relative_to(REPO_ROOT)}" in output
@@ -395,20 +354,15 @@ def test_make_images_builds_frontend_from_app_shell_dockerfile():
 @pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
 def test_built_frontend_image_serves_app_shell_index_html():
     """The App Shell image serves index.html on port 80, including deep links."""
-    build = subprocess.run(
+    build = run_command(
         ["docker", "build", "-f", str(FRONTEND_DOCKERFILE), "-t", FRONTEND_TAG, str(REPO_ROOT)],
-        capture_output=True,
-        text=True,
         timeout=1800,
     )
     assert build.returncode == 0, f"docker build failed:\n{build.stderr[-4000:]}"
 
     host_port = free_port()
-    container = subprocess.run(
-        ["docker", "run", "-d", "-p", f"127.0.0.1:{host_port}:80", FRONTEND_TAG],
-        capture_output=True,
-        text=True,
-        timeout=120,
+    container = run_command(
+        ["docker", "run", "-d", "-p", f"127.0.0.1:{host_port}:80", FRONTEND_TAG], timeout=120
     )
     assert container.returncode == 0, f"docker run failed: {container.stderr}"
     container_id = container.stdout.strip()

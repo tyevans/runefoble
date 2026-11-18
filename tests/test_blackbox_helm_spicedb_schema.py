@@ -7,10 +7,11 @@ exactly. A stale copy makes every permission check in Kind use an old schema.
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
 import yaml
+
+from tests.helpers.process import run_command
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_SCHEMA = REPO_ROOT / "libs" / "runefoble_auth" / "schema" / "runefoble.zed"
@@ -18,12 +19,8 @@ CHART = REPO_ROOT / "deployments" / "helm" / "runefoble"
 
 
 def test_rendered_schema_job_carries_the_service_schema() -> None:
-    rendered = subprocess.run(
-        ["helm", "template", "runefoble", str(CHART)],
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=120,
+    rendered = run_command(
+        ["helm", "template", "runefoble", str(CHART)], check=True, timeout=120
     ).stdout
     schemas = [
         doc["data"]["runefoble.zed"]

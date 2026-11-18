@@ -15,12 +15,12 @@ Verifies:
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
 import pytest
 
 from tests.helpers.frontend_suite import run_frontend_suite
+from tests.helpers.node_suite import NODE_TEST_TIMEOUT_S, run_node_tests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
@@ -80,13 +80,7 @@ def test_individual_submodule_execution(submodule_name: str, expected_tokens: li
     assert submodule_path.is_file()
 
     rel_path = str(submodule_path.relative_to(REPO_ROOT))
-    result = subprocess.run(
-        ["node", "--experimental-strip-types", "--test", rel_path],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
+    result = run_node_tests([rel_path], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Submodule {submodule_name} failed execution:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )

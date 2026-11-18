@@ -15,8 +15,8 @@ from runefoble_events.events import SessionEnded
 from tests.helpers.campaign_analytics_service import (
     SESSION_STREAM,
     AnalyticsService,
-    wait_until,
 )
+from tests.helpers.polling import wait_until
 
 
 def _session_end_descriptions(client: Any, cid: str) -> list[str]:
@@ -41,12 +41,16 @@ def test_redelivered_session_end_projects_one_milestone(
 
     with analytics_service.start() as client:
         analytics_service.publish(SESSION_STREAM, _session_ended(sid, cid, "first"))
-        assert wait_until(lambda: _session_end_descriptions(client, cid) == ["first"])
+        assert wait_until(
+            lambda: _session_end_descriptions(client, cid) == ["first"], timeout_s=10.0
+        )
 
         analytics_service.redeliver(SESSION_STREAM)
         analytics_service.publish(SESSION_STREAM, _session_ended(sid, cid, "second"))
 
-        assert wait_until(lambda: "second" in _session_end_descriptions(client, cid))
+        assert wait_until(
+            lambda: "second" in _session_end_descriptions(client, cid), timeout_s=10.0
+        )
         assert _session_end_descriptions(client, cid) == ["first", "second"]
 
 
@@ -59,11 +63,15 @@ def test_redelivery_after_restart_projects_one_milestone(
 
     with analytics_service.start() as first:
         analytics_service.publish(SESSION_STREAM, _session_ended(sid, cid, "first"))
-        assert wait_until(lambda: _session_end_descriptions(first, cid) == ["first"])
+        assert wait_until(
+            lambda: _session_end_descriptions(first, cid) == ["first"], timeout_s=10.0
+        )
 
     with analytics_service.start() as second:
         analytics_service.redeliver(SESSION_STREAM)
         analytics_service.publish(SESSION_STREAM, _session_ended(sid, cid, "second"))
 
-        assert wait_until(lambda: "second" in _session_end_descriptions(second, cid))
+        assert wait_until(
+            lambda: "second" in _session_end_descriptions(second, cid), timeout_s=10.0
+        )
         assert _session_end_descriptions(second, cid) == ["first", "second"]

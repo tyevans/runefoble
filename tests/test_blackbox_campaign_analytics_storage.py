@@ -23,8 +23,8 @@ from tests.helpers.campaign_analytics_service import (
     SESSION_STREAM,
     WATCHER_STREAM,
     AnalyticsService,
-    wait_until,
 )
+from tests.helpers.polling import wait_until
 
 
 def _heatmap_points(client: Any, cid: str) -> int:
@@ -62,7 +62,7 @@ def test_heatmap_buckets_movement_damage_and_knockout(analytics_service: Analyti
                 y=18,
             ),
         )
-        assert wait_until(lambda: _heatmap_points(client, cid) == 1)
+        assert wait_until(lambda: _heatmap_points(client, cid) == 1, timeout_s=10.0)
 
         analytics_service.publish(
             CHARACTER_STREAM,
@@ -86,7 +86,7 @@ def test_heatmap_buckets_movement_damage_and_knockout(analytics_service: Analyti
                 max_hp=40,
             ),
         )
-        assert wait_until(lambda: _heatmap_points(client, cid) == 4)
+        assert wait_until(lambda: _heatmap_points(client, cid) == 4, timeout_s=10.0)
 
         heat = client.get(f"/api/v1/analytics/campaigns/{cid}/heatmap?cell_size=5").json()
         assert heat["total_points"] == 4
@@ -132,7 +132,7 @@ def test_mvp_scores_damage_crit_and_healing_per_combatant(
                 active_combatant_id=valeros,
             ),
         )
-        assert wait_until(lambda: _mvp_turns(client, cid, valeros) == 1)
+        assert wait_until(lambda: _mvp_turns(client, cid, valeros) == 1, timeout_s=10.0)
 
         analytics_service.publish(
             CHARACTER_STREAM,
@@ -160,7 +160,8 @@ def test_mvp_scores_damage_crit_and_healing_per_combatant(
             lambda: (
                 _mvp_damage(client, cid, valeros) == 65
                 and _combatant_field(client, cid, valeros, "critical_hits") == 1
-            )
+            ),
+            timeout_s=10.0,
         )
 
         analytics_service.publish(
@@ -173,7 +174,7 @@ def test_mvp_scores_damage_crit_and_healing_per_combatant(
                 active_combatant_id=kyra,
             ),
         )
-        assert wait_until(lambda: _mvp_turns(client, cid, kyra) == 1)
+        assert wait_until(lambda: _mvp_turns(client, cid, kyra) == 1, timeout_s=10.0)
         analytics_service.publish(
             CHARACTER_STREAM,
             CharacterHealthChanged(
@@ -185,7 +186,7 @@ def test_mvp_scores_damage_crit_and_healing_per_combatant(
                 max_hp=80,
             ),
         )
-        assert wait_until(lambda: _mvp_healing(client, cid, kyra) == 45)
+        assert wait_until(lambda: _mvp_healing(client, cid, kyra) == 45, timeout_s=10.0)
 
         mvp = _mvp(client, cid)
         # Valeros: 65 damage + 1 crit * 10 + 1 turn * 2 = 77. Kyra: 45 * 1.5 + 1 turn * 2 = 69.5.
@@ -211,7 +212,7 @@ def test_session_resolves_to_campaign_for_events_without_campaign_id(
             SESSION_STREAM,
             SessionCreated(aggregate_id=sid, session_id=sid, campaign_id=cid, title="Crypt"),
         )
-        assert wait_until(lambda: _milestone_count(client, cid) == 1)
+        assert wait_until(lambda: _milestone_count(client, cid) == 1, timeout_s=10.0)
         analytics_service.publish(
             WATCHER_STREAM,
             DiceRolled(
@@ -223,7 +224,7 @@ def test_session_resolves_to_campaign_for_events_without_campaign_id(
                 is_crit=True,
             ),
         )
-        assert wait_until(lambda: _has_combatant(client, cid, roller))
+        assert wait_until(lambda: _has_combatant(client, cid, roller), timeout_s=10.0)
         mvp = _mvp(client, cid)
         assert [c["combatant_id"] for c in mvp["combatants"]] == [roller]
         assert mvp["combatants"][0]["critical_hits"] == 1

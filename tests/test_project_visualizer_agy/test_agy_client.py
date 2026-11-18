@@ -101,7 +101,9 @@ console.log(JSON.stringify(results));
 """
 
     test_script = template_script.replace("__CLIENT_BUNDLE__", client_bundle)
-    proc = subprocess.run([node_bin], input=test_script, capture_output=True, text=True)
+    proc = subprocess.run(
+        [node_bin], input=test_script, capture_output=True, text=True, timeout=240.0
+    )
     assert proc.returncode == 0, f"Error in frontdoor client test: {proc.stderr}"
     res = json.loads(proc.stdout)
     expected = {

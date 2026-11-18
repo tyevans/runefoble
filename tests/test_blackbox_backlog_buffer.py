@@ -14,6 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tests.helpers.process import run_command
 from tools.project_visualizer.parsers.markdown_utils import parse_frontmatter
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -50,12 +51,11 @@ def _fixture_repo(
 
 
 def _run_check(root: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    return run_command(
         [sys.executable, str(root / "scripts" / "check_backlog_links.py")],
         cwd=root,
-        capture_output=True,
-        text=True,
         check=False,
+        timeout=240.0,
     )
 
 

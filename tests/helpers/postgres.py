@@ -8,23 +8,15 @@ Governed by:
 from __future__ import annotations
 
 import os
-import shutil
-import socket
-import subprocess
 import tempfile
-import time
 from collections.abc import Generator
 
 import pytest
 
 from tests.helpers.container_owner import owner_label_args, remove_test_container
-
-
-def get_free_port() -> int:
-    """Find an available local TCP port."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("", 0))
-        return s.getsockname()[1]
+from tests.helpers.docker import DOCKER_TIMEOUT_SECONDS, docker_bin, run_docker
+from tests.helpers.polling import wait_until
+from tests.helpers.ports import free_port
 
 
 @pytest.fixture(scope="module")
@@ -33,16 +25,16 @@ def postgres_service() -> Generator[dict[str, str | int]]:
 
     Any other failure to start the container raises, so the test fails with the error.
     """
-    docker_bin = shutil.which("docker")
-    if not docker_bin:
+    docker = docker_bin()
+    if not docker:
         pytest.skip("Docker is not available: the docker CLI is not on PATH")
-    probe = subprocess.run([docker_bin, "info"], capture_output=True, text=True, check=False)
+    probe = run_docker(docker, ["info"], timeout=DOCKER_TIMEOUT_SECONDS)
     if probe.returncode != 0:
         pytest.skip(
             f"Docker is not available: the daemon is not reachable ({probe.stderr.strip()})"
         )
 
-    port = get_free_port()
+    port = free_port()
     container_name = f"runefoble-pg-test-{port}"
 
     init_script = (
@@ -73,7 +65,7 @@ def postgres_service() -> Generator[dict[str, str | int]]:
         with os.fdopen(descriptor, "w", encoding="utf-8") as script_file:
             script_file.write(init_script)
         os.chmod(script_path, 0o755)
-        yield from _run_postgres_container(docker_bin, container_name, port, script_path)
+        yield from _run_postgres_container(docker, container_name, port, script_path)
     finally:
         if script_path:
             os.unlink(script_path)
@@ -82,8 +74,7 @@ def postgres_service() -> Generator[dict[str, str | int]]:
 def _run_postgres_container(
     docker_bin: str, container_name: str, port: int, script_path: str
 ) -> Generator[dict[str, str | int]]:
-    cmd = [
-        docker_bin,
+    args = [
         "run",
         "--rm",
         "--name",
@@ -107,7 +98,7 @@ def _run_postgres_container(
         "pgvector/pgvector:pg16",
     ]
 
-    started = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    started = run_docker(docker_bin, args, timeout=DOCKER_TIMEOUT_SECONDS)
     if started.returncode != 0:
         raise RuntimeError(f"docker run failed for {container_name}: {started.stderr.strip()}")
 
@@ -128,37 +119,37 @@ def _run_postgres_container(
         remove_test_container(docker_bin, container_name)
 
 
-def _wait_until_ready(docker_bin: str, container_name: str, timeout: float = 30.0) -> bool:
+def _wait_until_ready(docker: str, container_name: str, timeout: float = 30.0) -> bool:
     """Return True when the init script finished and the final server answers a query."""
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        time.sleep(0.5)
-        logs_res = subprocess.run(
-            [docker_bin, "logs", container_name], capture_output=True, text=True
-        )
-        logs = logs_res.stdout + logs_res.stderr
-        init_complete = (
-            "PostgreSQL init process complete; ready for start up." in logs
-            and logs.count("database system is ready to accept connections") >= 2
-        )
-        if not init_complete:
-            continue
-        test_res = subprocess.run(
-            [
-                docker_bin,
-                "exec",
-                container_name,
-                "psql",
-                "-U",
-                "runefoble_user",
-                "-d",
-                "runefoble",
-                "-tAc",
-                "SELECT 1;",
-            ],
-            capture_output=True,
-            text=True,
-        )
-        if test_res.returncode == 0 and test_res.stdout.strip() == "1":
-            return True
-    return False
+    return wait_until(
+        lambda: _postgres_is_ready(docker, container_name),
+        timeout_s=timeout,
+        interval_s=0.5,
+    )
+
+
+def _postgres_is_ready(docker: str, container_name: str) -> bool:
+    logs_res = run_docker(docker, ["logs", container_name], timeout=DOCKER_TIMEOUT_SECONDS)
+    logs = logs_res.stdout + logs_res.stderr
+    init_complete = (
+        "PostgreSQL init process complete; ready for start up." in logs
+        and logs.count("database system is ready to accept connections") >= 2
+    )
+    if not init_complete:
+        return False
+    test_res = run_docker(
+        docker,
+        [
+            "exec",
+            container_name,
+            "psql",
+            "-U",
+            "runefoble_user",
+            "-d",
+            "runefoble",
+            "-tAc",
+            "SELECT 1;",
+        ],
+        timeout=DOCKER_TIMEOUT_SECONDS,
+    )
+    return test_res.returncode == 0 and test_res.stdout.strip() == "1"

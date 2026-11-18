@@ -23,6 +23,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers.process import run_command
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOLD_MODULE = "tests/helpers/postgres_hold_child.py"
 REDIS_HOLD_MODULE = "tests/helpers/redis_hold_child.py"
@@ -66,17 +68,14 @@ def _wait_for_container_name(process: subprocess.Popen[bytes], info_path: Path) 
 
 def _running_containers(name: str) -> list[str]:
     """Return the ids of running containers with this exact name."""
-    result = subprocess.run(
-        ["docker", "ps", "-q", "--filter", f"name=^{name}$"],
-        capture_output=True,
-        text=True,
-        check=True,
+    result = run_command(
+        ["docker", "ps", "-q", "--filter", f"name=^{name}$"], check=True, timeout=240.0
     )
     return result.stdout.split()
 
 
 def _remove_own_container(name: str) -> None:
-    subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+    subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False, timeout=240.0)
 
 
 def test_orphaned_container_is_removed_on_next_run_and_live_owner_keeps_its_container(tmp_path):

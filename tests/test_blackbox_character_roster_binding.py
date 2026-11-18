@@ -11,12 +11,13 @@ Verifies:
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
+
+from tests.helpers.node_suite import NODE_TEST_TIMEOUT_S, run_node_tests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
@@ -123,17 +124,7 @@ def test_frontend_app_shell_typescript_unit_suite():
     test_files = sorted(str(p.relative_to(REPO_ROOT)) for p in app_shell_dir.glob("*.test.ts"))
     assert test_files
 
-    result = subprocess.run(
-        [
-            "node",
-            "--experimental-strip-types",
-            "--test",
-            *test_files,
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
+    result = run_node_tests(test_files, timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Frontend app-shell tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )

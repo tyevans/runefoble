@@ -21,7 +21,7 @@ from runefoble_events.events import (
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.campaign_analytics_service import wait_until
+from tests.helpers.polling import wait_until
 
 
 async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
@@ -85,7 +85,8 @@ async def test_chronicle_timeline_frontdoor_and_recap_metadata(
                 "total_milestones"
             ]
             >= 2
-        )
+        ),
+        timeout_s=10.0,
     )
 
     resp = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/timeline")
@@ -138,7 +139,8 @@ async def test_chronicle_timeline_pagination_and_filtering(
                 "total_milestones"
             ]
             >= 2
-        )
+        ),
+        timeout_s=10.0,
     )
 
     limit_resp = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/timeline?limit=1")

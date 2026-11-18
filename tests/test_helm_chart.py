@@ -1,11 +1,12 @@
 """Tests for Helm chart manifests, SpiceDB datastore migrations, and Zitadel configurations."""
 
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
 import yaml
+
+from tests.helpers.process import run_command
 
 HELM_CHART = Path("deployments/helm/runefoble")
 
@@ -15,11 +16,8 @@ def _render_helm_templates() -> list[dict]:
     if not shutil.which("helm"):
         pytest.skip("helm CLI not available")
 
-    proc = subprocess.run(
-        ["helm", "template", "runefoble", str(HELM_CHART)],
-        capture_output=True,
-        text=True,
-        check=True,
+    proc = run_command(
+        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=240.0
     )
     docs = [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
     return docs
@@ -30,11 +28,7 @@ def test_helm_lint():
     if not shutil.which("helm"):
         pytest.skip("helm CLI not available")
 
-    proc = subprocess.run(
-        ["helm", "lint", str(HELM_CHART)],
-        capture_output=True,
-        text=True,
-    )
+    proc = run_command(["helm", "lint", str(HELM_CHART)], timeout=240.0)
     assert proc.returncode == 0, f"helm lint failed:\n{proc.stdout}\n{proc.stderr}"
     assert "0 chart(s) failed" in proc.stdout
 

@@ -9,13 +9,14 @@ from __future__ import annotations
 import json
 import os
 import shutil
-import subprocess
 import sys
 from importlib import import_module
 from pathlib import Path
 
 import pytest
 from starlette.testclient import TestClient
+
+from tests.helpers.process import run_command
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -60,12 +61,10 @@ def test_service_refuses_to_start_without_its_ui_manifest(
     staged_src = tmp_path / "src"
     shutil.copytree(package_dir, staged_src / service)
 
-    result = subprocess.run(
+    result = run_command(
         [sys.executable, "-c", f"import {module}"],
         cwd=tmp_path,
         env={**os.environ, "PYTHONPATH": str(staged_src)},
-        capture_output=True,
-        text=True,
         timeout=120,
         check=False,
     )

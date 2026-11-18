@@ -15,6 +15,8 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tests.helpers.process import run_command
+
 HELM_CHART = Path("deployments/helm/runefoble")
 SECRET_NAME = "runefoble-credentials"
 
@@ -29,10 +31,8 @@ def _require_helm() -> None:
 
 def _helm_template(*extra_args: str) -> subprocess.CompletedProcess:
     _require_helm()
-    return subprocess.run(
-        ["helm", "template", "runefoble", str(HELM_CHART), *extra_args],
-        capture_output=True,
-        text=True,
+    return run_command(
+        ["helm", "template", "runefoble", str(HELM_CHART), *extra_args], timeout=240.0
     )
 
 

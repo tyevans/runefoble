@@ -9,11 +9,12 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+from tests.helpers.process import run_command
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,12 +28,10 @@ def _import_module(module: str, pythonpath: Path | None, env_overrides: dict[str
             env[key] = value
     if pythonpath is not None:
         env["PYTHONPATH"] = str(pythonpath)
-    return subprocess.run(
+    return run_command(
         [sys.executable, "-c", f"import {module}"],
         cwd=pythonpath.parent if pythonpath is not None else REPO_ROOT,
         env=env,
-        capture_output=True,
-        text=True,
         timeout=120,
         check=False,
     )

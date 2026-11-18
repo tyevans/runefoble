@@ -21,10 +21,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
-import shutil
-import socket
-import subprocess
-import time
 from collections.abc import Coroutine, Generator, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
@@ -38,6 +34,9 @@ from runefoble_auth.bootstrap_schema import bootstrap_schema
 from runefoble_auth.spicedb import SpiceDBClient, preshared_key_from_env
 
 from tests.helpers.container_owner import owner_label_args, remove_orphaned_test_containers
+from tests.helpers.docker import DOCKER_TIMEOUT_SECONDS, require_docker_bin, run_docker
+from tests.helpers.polling import wait_until
+from tests.helpers.ports import free_port
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HELM_VALUES = REPO_ROOT / "deployments" / "helm" / "runefoble" / "values.yaml"
@@ -93,13 +92,6 @@ def spicedb_image() -> str:
     return str(values["spicedb"]["image"])
 
 
-def find_free_port() -> int:
-    """Find an available local TCP port."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("", 0))
-        return s.getsockname()[1]
-
-
 def require_live_spicedb() -> bool:
     return os.getenv(REQUIRE_LIVE_ENV) == "1"
 
@@ -109,18 +101,20 @@ def _wait_until_ready(endpoint: str, token: str, timeout_seconds: float = 30.0) 
     import grpc
     from authzed.api.v1 import InsecureClient, ReadSchemaRequest
 
-    deadline = time.monotonic() + timeout_seconds
-    last_error = "no response"
-    while time.monotonic() < deadline:
+    last_error = ["no response"]
+
+    def server_answers() -> bool:
         try:
             InsecureClient(endpoint, token).ReadSchema(ReadSchemaRequest())
-            return
+            return True
         except grpc.RpcError as rpc_err:
             if rpc_err.code() == grpc.StatusCode.NOT_FOUND:
-                return
-            last_error = f"{rpc_err.code()}: {rpc_err.details()}"
-        time.sleep(0.2)
-    raise RuntimeError(f"SpiceDB at {endpoint} did not become ready: {last_error}")
+                return True
+            last_error[0] = f"{rpc_err.code()}: {rpc_err.details()}"
+            return False
+
+    if not wait_until(server_answers, timeout_s=timeout_seconds, interval_s=0.2):
+        raise RuntimeError(f"SpiceDB at {endpoint} did not become ready: {last_error[0]}")
 
 
 @contextlib.contextmanager
@@ -132,41 +126,33 @@ def run_spicedb_container(image: str, token: str) -> Iterator[str]:
     Raises:
         RuntimeError: Docker is missing, `docker run` fails, or the server never answers.
     """
-    docker_bin = shutil.which("docker")
-    if not docker_bin:
-        raise RuntimeError("Docker is not installed or not on PATH")
-    remove_orphaned_test_containers(docker_bin)
-    port = find_free_port()
-    try:
-        container_id = (
-            subprocess.run(
-                [
-                    docker_bin,
-                    "run",
-                    "-d",
-                    "--rm",
-                    *owner_label_args(),
-                    "-p",
-                    f"127.0.0.1:{port}:{GRPC_PORT}",
-                    image,
-                    "serve-testing",
-                ],
-                capture_output=True,
-                check=True,
-            )
-            .stdout.decode()
-            .strip()
-        )
-    except subprocess.CalledProcessError as exc:
-        stderr = exc.stderr.decode(errors="replace").strip()
-        raise RuntimeError(f"docker run failed for {image}: {stderr}") from exc
+    docker = require_docker_bin()
+    remove_orphaned_test_containers(docker)
+    port = free_port()
+    started = run_docker(
+        docker,
+        [
+            "run",
+            "-d",
+            "--rm",
+            *owner_label_args(),
+            "-p",
+            f"127.0.0.1:{port}:{GRPC_PORT}",
+            image,
+            "serve-testing",
+        ],
+        timeout=DOCKER_TIMEOUT_SECONDS,
+    )
+    if started.returncode != 0:
+        raise RuntimeError(f"docker run failed for {image}: {started.stderr.strip()}")
+    container_id = started.stdout.strip()
 
     endpoint = f"127.0.0.1:{port}"
     try:
         _wait_until_ready(endpoint, token)
         yield endpoint
     finally:
-        subprocess.run(["docker", "kill", container_id], capture_output=True, check=False)
+        run_docker(docker, ["kill", container_id], timeout=DOCKER_TIMEOUT_SECONDS)
 
 
 @pytest.fixture(scope="module")

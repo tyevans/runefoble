@@ -21,8 +21,8 @@ from tests.helpers.campaign_analytics_service import (
     CHARACTER_STREAM,
     SESSION_STREAM,
     AnalyticsService,
-    wait_until,
 )
+from tests.helpers.polling import wait_until
 
 
 def _hp(char_id: str, sid: str, cid: str, delta: int, current_hp: int) -> Any:
@@ -80,10 +80,10 @@ def test_mvp_and_timeline_survive_restart_without_double_counting(
         )
         # Session and character streams are consumed by separate loops. Wait for the round, so
         # the damage is credited to the active combatant.
-        assert wait_until(lambda: "combat_round" in _timeline_types(first, cid))
+        assert wait_until(lambda: "combat_round" in _timeline_types(first, cid), timeout_s=10.0)
         analytics_service.publish(CHARACTER_STREAM, _hp(kyra, sid, cid, -40, 20))
 
-        assert wait_until(lambda: _mvp_damage(first, cid, sid, valeros) == 40)
+        assert wait_until(lambda: _mvp_damage(first, cid, sid, valeros) == 40, timeout_s=10.0)
         types_before = sorted(_timeline_types(first, cid))
         assert "boss_encounter" in types_before
         assert "combat_round" in types_before
@@ -94,7 +94,7 @@ def test_mvp_and_timeline_survive_restart_without_double_counting(
     analytics_service.publish(CHARACTER_STREAM, _hp(kyra, sid, cid, -10, 10))
 
     with analytics_service.start() as second:
-        assert wait_until(lambda: _mvp_damage(second, cid, sid, valeros) == 50)
+        assert wait_until(lambda: _mvp_damage(second, cid, sid, valeros) == 50, timeout_s=10.0)
         # Replay from the start would count the first 40 damage again. Wait, then confirm.
         assert _mvp_damage(second, cid, sid, valeros) == 50
         assert sorted(_timeline_types(second, cid)) == types_before

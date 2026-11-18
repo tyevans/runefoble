@@ -11,14 +11,13 @@ Containers of a live owner, and containers without these labels, are never touch
 from __future__ import annotations
 
 import os
-import shutil
 import socket
-import subprocess
 import warnings
+
+from tests.helpers.docker import DOCKER_TIMEOUT_SECONDS, docker_bin, run_docker
 
 OWNER_PID_LABEL = "runefoble.test.owner-pid"
 OWNER_HOST_LABEL = "runefoble.test.owner-host"
-DOCKER_TIMEOUT_SECONDS = 60.0
 
 
 def owner_label_args() -> list[str]:
@@ -43,20 +42,20 @@ def _pid_is_alive(pid: int) -> bool:
     return True
 
 
-def remove_orphaned_test_containers(docker_bin: str | None = None) -> None:
+def remove_orphaned_test_containers(docker_bin_path: str | None = None) -> None:
     """Remove labelled test containers whose owner process is dead on this host.
 
     Containers without the owner labels are not listed, so they are never removed. A container
     whose owner is alive is kept. If `docker ps` fails, a warning names the failure and nothing
     is removed.
     """
-    docker = docker_bin or shutil.which("docker")
+    docker = docker_bin_path or docker_bin()
     if not docker:
         return
     host = socket.gethostname()
-    listing = subprocess.run(
+    listing = run_docker(
+        docker,
         [
-            docker,
             "ps",
             "-a",
             "--filter",
@@ -64,9 +63,6 @@ def remove_orphaned_test_containers(docker_bin: str | None = None) -> None:
             "--format",
             '{{.ID}}|{{.Label "' + OWNER_PID_LABEL + '"}}|{{.Label "' + OWNER_HOST_LABEL + '"}}',
         ],
-        capture_output=True,
-        text=True,
-        check=False,
         timeout=DOCKER_TIMEOUT_SECONDS,
     )
     if listing.returncode != 0:
@@ -87,12 +83,7 @@ def remove_orphaned_test_containers(docker_bin: str | None = None) -> None:
             continue
         if _pid_is_alive(owner_pid):
             continue
-        subprocess.run(
-            [docker, "rm", "-f", container_id],
-            capture_output=True,
-            check=False,
-            timeout=DOCKER_TIMEOUT_SECONDS,
-        )
+        run_docker(docker, ["rm", "-f", container_id], timeout=DOCKER_TIMEOUT_SECONDS)
 
 
 def remove_test_container(docker_bin: str, container_name: str) -> None:
@@ -102,13 +93,7 @@ def remove_test_container(docker_bin: str, container_name: str) -> None:
     that exits on its own. Any other removal failure raises with the container name, so the
     teardown error shows in the test output.
     """
-    result = subprocess.run(
-        [docker_bin, "rm", "-f", container_name],
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=DOCKER_TIMEOUT_SECONDS,
-    )
+    result = run_docker(docker_bin, ["rm", "-f", container_name], timeout=DOCKER_TIMEOUT_SECONDS)
     if result.returncode == 0 or "No such container" in result.stderr:
         return
     raise RuntimeError(f"Failed to remove test container {container_name}: {result.stderr.strip()}")

@@ -8,21 +8,18 @@ JSON output and does not inspect source text.
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from pathlib import Path
+
+from tests.helpers.process import run_command
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECK = REPO_ROOT / "scripts" / "check_backlog_links.py"
 
 
 def test_backlog_records_have_no_drift() -> None:
-    result = subprocess.run(
-        [sys.executable, str(CHECK), "--json"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
+    result = run_command(
+        [sys.executable, str(CHECK), "--json"], cwd=REPO_ROOT, check=False, timeout=240.0
     )
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -72,12 +69,11 @@ def _fixture_repo(root: Path, cited_path: str, files: dict[str, str]) -> None:
 
 
 def _run_check_on(root: Path) -> dict:
-    result = subprocess.run(
+    result = run_command(
         [sys.executable, str(root / "scripts" / "check_backlog_links.py"), "--json"],
         cwd=root,
-        capture_output=True,
-        text=True,
         check=False,
+        timeout=240.0,
     )
     assert result.returncode in (0, 1), result.stdout + result.stderr
     return json.loads(result.stdout)

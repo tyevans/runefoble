@@ -9,15 +9,22 @@ import pytest
 @pytest.fixture
 def mock_backlog_repo(tmp_path: Path) -> Path:
     """Initializes a full mock git repository with backlog structure and sample tasks."""
-    subprocess.run(["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
-        ["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True, capture_output=True
+        ["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, timeout=240.0
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        timeout=240.0,
     )
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=240.0,
     )
 
     backlog_dir = tmp_path / "docs" / "project" / "backlog"
@@ -56,12 +63,15 @@ def mock_backlog_repo(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
 
-    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "add", "."], cwd=tmp_path, check=True, capture_output=True, timeout=240.0
+    )
     subprocess.run(
         ["git", "commit", "-m", "Initial mock backlog"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=240.0,
     )
 
     return tmp_path

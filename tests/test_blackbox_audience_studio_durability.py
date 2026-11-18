@@ -19,7 +19,8 @@ import httpx
 import pytest
 import redis
 
-from tests.helpers.audience_server import AudienceStudioProcess, bearer_for, get_free_port
+from tests.helpers.audience_server import AudienceStudioProcess, bearer_for
+from tests.helpers.ports import free_port
 from tests.helpers.redis_container import redis_container
 from tests.helpers.spicedb import LiveSpiceDB
 
@@ -103,7 +104,7 @@ def test_short_window_poll_closes_after_restart_and_publishes_completion(
     database_url: str, roles: LiveSpiceDB
 ):
     """A poll whose window ends while the service is down closes on restart and emits completion."""
-    with redis_container(get_free_port()) as redis_url:
+    with redis_container(free_port()) as redis_url:
         process = AudienceStudioProcess(
             {"RUNEFOBLE_DATABASE_URL": database_url, "REDIS_URL": redis_url, **roles.env}
         )
@@ -153,7 +154,7 @@ def test_publishing_recovers_when_redis_starts_after_the_service(
     database_url: str, roles: LiveSpiceDB
 ):
     """A write made while Redis is down succeeds, and the outbox relay publishes it once Redis is up."""
-    port = get_free_port()
+    port = free_port()
     process = AudienceStudioProcess(
         {
             "RUNEFOBLE_DATABASE_URL": database_url,

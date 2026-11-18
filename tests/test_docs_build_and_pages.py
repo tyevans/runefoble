@@ -69,7 +69,9 @@ def test_docs_site_generation_and_visualizer_integration():
         import subprocess
         import sys
 
-        subprocess.run([sys.executable, "scripts/build_docs.py"], cwd=str(REPO_ROOT), check=True)
+        subprocess.run(
+            [sys.executable, "scripts/build_docs.py"], cwd=str(REPO_ROOT), check=True, timeout=240.0
+        )
 
     assert SITE_DIR.exists(), "site/ directory should exist after build"
 
@@ -256,7 +258,9 @@ def test_marketing_showcase_page_and_navigation():
         import subprocess
         import sys
 
-        subprocess.run([sys.executable, "scripts/build_docs.py"], cwd=str(REPO_ROOT), check=True)
+        subprocess.run(
+            [sys.executable, "scripts/build_docs.py"], cwd=str(REPO_ROOT), check=True, timeout=240.0
+        )
     assert marketing_html.exists()
     html_content = marketing_html.read_text(encoding="utf-8")
     assert "Speak and the Board Obeys" in html_content

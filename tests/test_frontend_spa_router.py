@@ -4,8 +4,9 @@ Governing ADRs: ADR-0004, ADR-0012, ADR-0013.
 Task Reference: TASK-0206.
 """
 
-import subprocess
 from pathlib import Path
+
+from tests.helpers.node_suite import NODE_TEST_TIMEOUT_S, run_node_tests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
@@ -17,17 +18,7 @@ def test_typescript_router_unit_test_suite_execution():
     import re
 
     assert TEST_ROUTER_TS.is_file()
-    result = subprocess.run(
-        [
-            "node",
-            "--experimental-strip-types",
-            "--test",
-            str(TEST_ROUTER_TS.relative_to(REPO_ROOT)),
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
+    result = run_node_tests([TEST_ROUTER_TS], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Router tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )

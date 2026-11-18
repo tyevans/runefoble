@@ -19,7 +19,7 @@ from character_sheet.main import app
 from fastapi.testclient import TestClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.postgres import get_free_port
+from tests.helpers.ports import free_port
 from tests.helpers.redis_container import redis_container
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -30,7 +30,7 @@ CHARACTER_STREAM = "runefoble.events.character"
 
 @pytest.fixture
 def real_redis_url() -> Iterator[str]:
-    with redis_container(get_free_port()) as url:
+    with redis_container(free_port()) as url:
         yield url
 
 

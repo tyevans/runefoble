@@ -23,7 +23,7 @@ from runefoble_events.events import (
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.campaign_analytics_service import wait_until
+from tests.helpers.polling import wait_until
 
 
 async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> None:
@@ -110,7 +110,8 @@ async def test_telemetry_dashboard_mvp_turn_metrics(
             for c in client.get(f"/api/v1/analytics/campaigns/{campaign_id}/mvp").json()[
                 "combatants"
             ]
-        )
+        ),
+        timeout_s=10.0,
     )
 
     resp = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/mvp")
@@ -182,7 +183,8 @@ async def test_health_change_without_session_is_not_counted(
             for c in client.get(f"/api/v1/analytics/campaigns/{campaign_id}/mvp").json()[
                 "combatants"
             ]
-        )
+        ),
+        timeout_s=10.0,
     )
 
     combatants = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/mvp").json()["combatants"]

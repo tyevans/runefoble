@@ -21,8 +21,8 @@ from tests.helpers.campaign_analytics_service import (
     SESSION_STREAM,
     AnalyticsService,
     bearer,
-    wait_until,
 )
+from tests.helpers.polling import wait_until
 
 
 def _timeline_titles(client: TestClient, cid: str) -> list[str]:
@@ -77,7 +77,7 @@ def test_mvp_route_filters_by_encounter(analytics_service: AnalyticsService) -> 
         )
         # Session and character streams are consumed by separate loops. Wait for the round,
         # so the damage is credited to the active combatant.
-        assert wait_until(lambda: "Combat Round 1" in _timeline_titles(client, cid))
+        assert wait_until(lambda: "Combat Round 1" in _timeline_titles(client, cid), timeout_s=10.0)
         analytics_service.publish(
             CHARACTER_STREAM,
             CharacterHealthChanged(
@@ -97,7 +97,7 @@ def test_mvp_route_filters_by_encounter(analytics_service: AnalyticsService) -> 
                 for c in body.get("combatants", [])
             )
 
-        assert wait_until(valeros_dealt_damage)
+        assert wait_until(valeros_dealt_damage, timeout_s=10.0)
 
         resp = client.get(
             f"/api/v1/analytics/campaigns/{cid}/mvp?session_id={sid}&encounter_id=enc-none"
@@ -127,7 +127,7 @@ def test_timeline_route_applies_limit(analytics_service: AnalyticsService) -> No
                 active_combatant_id="",
             ),
         )
-        assert wait_until(lambda: len(_timeline_titles(client, cid)) == 2)
+        assert wait_until(lambda: len(_timeline_titles(client, cid)) == 2, timeout_s=10.0)
 
         resp = client.get(f"/api/v1/analytics/campaigns/{cid}/timeline?limit=1")
         assert resp.status_code == 200, resp.text

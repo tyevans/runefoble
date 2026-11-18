@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tests.helpers.process import run_command
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "check_e2e_unused_steps.py"
 
@@ -18,7 +20,7 @@ def _run(steps: str, features: str, tmp_path: Path) -> subprocess.CompletedProce
     features_dir.mkdir()
     (steps_dir / "steps.ts").write_text(steps, encoding="utf-8")
     (features_dir / "flow.feature").write_text(features, encoding="utf-8")
-    return subprocess.run(
+    return run_command(
         [
             sys.executable,
             str(SCRIPT),
@@ -27,9 +29,8 @@ def _run(steps: str, features: str, tmp_path: Path) -> subprocess.CompletedProce
             "--features-dir",
             str(features_dir),
         ],
-        capture_output=True,
-        text=True,
         check=False,
+        timeout=240.0,
     )
 
 

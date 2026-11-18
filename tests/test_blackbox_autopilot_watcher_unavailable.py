@@ -6,7 +6,6 @@ missing, unreachable, or returns an error, the route returns 503 and records no 
 
 from __future__ import annotations
 
-import socket
 from collections.abc import Iterator
 from uuid import uuid4
 
@@ -14,6 +13,7 @@ import pytest
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.helpers.ports import free_port
 from tests.helpers.stand_in_policy import create_character
 from tests.helpers.watcher_double import serve_watcher_double, watcher_stand_in_app
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -118,9 +118,7 @@ async def test_auto_pilot_returns_503_when_watcher_is_unreachable(
     live_character_sheet: str,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        closed_port = probe.getsockname()[1]
+    closed_port = free_port()
     monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", f"http://127.0.0.1:{closed_port}")
     async with client:
         session_id = await _start_session_with_absent_player(

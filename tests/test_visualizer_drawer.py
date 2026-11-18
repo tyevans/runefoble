@@ -235,7 +235,9 @@ const results = {{
 console.log(JSON.stringify(results));
 """
 
-    proc = subprocess.run([node_bin], input=test_script, capture_output=True, text=True)
+    proc = subprocess.run(
+        [node_bin], input=test_script, capture_output=True, text=True, timeout=240.0
+    )
     assert proc.returncode == 0, f"Error running drawer test script: {proc.stderr}"
     res = json.loads(proc.stdout)
 
