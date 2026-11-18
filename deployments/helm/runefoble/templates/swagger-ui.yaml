@@ -1,4 +1,11 @@
 {{- if .Values.swaggerUI.enabled -}}
+{{- /* One entry per services item that sets swaggerName. Its spec is served at /openapi.json. */}}
+{{- $urls := list }}
+{{- range $key, $svc := .Values.services }}
+{{- if $svc.swaggerName }}
+{{- $urls = append $urls (dict "name" $svc.swaggerName "url" (printf "http://%s:%v/openapi.json" (kebabcase $key) $svc.port)) }}
+{{- end }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,7 +29,7 @@ spec:
             - containerPort: {{ .Values.swaggerUI.port }}
           env:
             - name: URLS
-              value: {{ toJson .Values.swaggerUI.urls | quote }}
+              value: {{ toJson $urls | quote }}
             - name: URLS_PRIMARY_NAME
               value: "Unified API Gateway"
 ---

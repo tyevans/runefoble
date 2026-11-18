@@ -70,7 +70,7 @@ During JIT refinement and task authoring, verify that proposed plans never prese
 
 ## Backlog Isolation and Conflict-Free Concurrent Execution
 
-When multiple tasks are executed concurrently via `./scripts/run-backlog-engine.sh` (`make backlog-worker`):
+When multiple tasks are executed concurrently via `make backlog-worker`:
 1. **Feature Branch Backlog Isolation**: Worker agents running in git worktrees focus strictly on service code, microfrontend components, tests, and Diataxis guides. Feature branches must never modify `docs/project/backlog/` (including `PRIORITY.md`, `refined/`, or `complete/`).
 2. **Merge Conflict Prevention**: Because adjacent items in `PRIORITY.md` are executed in parallel, having feature branches touch `PRIORITY.md` would cause guaranteed git merge conflicts upon PR integration. By enforcing zero diffs in `docs/project/backlog/` on feature branches, parallel PRs merge cleanly.
 3. **Atomic Main Integration**: Backlog state transitions (moving the task from `refined/` to `complete/` and updating `PRIORITY.md` to `(Complete)`) are performed exclusively by the integration orchestrator under `MERGE_LOCK` directly on `main` upon successful PR merge.

@@ -115,7 +115,7 @@ Board, encounter, and character tools hold no board, combat, or character state.
 | `rules_compendium_url` | `RUNEFOBLE_RULES_COMPENDIUM_URL` | Required | `rules_compendium` |
 | `the_watcher_url` | `RUNEFOBLE_WATCHER_URL` | Required | `the_watcher` |
 
-The Helm chart renders these from `services.gatewayMcp` in `values.yaml`. Local runs must export them. There are no localhost defaults.
+The Helm chart renders these from the `urlEnv` and `consumers` keys of the upstream entries under `services` in `values.yaml`. Local runs must export them. There are no localhost defaults.
 
 The client forwards the `Authorization: Bearer` token of the MCP request, when the transport carries one. The gateway never creates a token. Without a token, the client sends no `Authorization` header. The upstream service then decides the result.
 

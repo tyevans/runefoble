@@ -9,32 +9,31 @@ The Autonomous Backlog Execution Engine (`tools/backlog_engine`) automatically c
 To see which tasks are currently unblocked and ready to be processed without executing:
 ```bash
 make backlog-worker ARGS="--dry-run"
-# or: ./scripts/run-backlog-engine.sh --dry-run
 ```
 
 ### 2. Autonomous Queue Draining (Default)
 By default, the engine continuously drains the queue, executing ready unblocked tasks and advancing through the backlog:
 ```bash
-./scripts/run-backlog-engine.sh
+make backlog-worker
 ```
 
 ### 3. Parallel Execution Streams
 Run multiple concurrent worker streams in parallel isolated worktrees (with thread-safe worktree isolation and resilient CI conflict recovery):
 ```bash
-./scripts/run-backlog-engine.sh --concurrency 3
+make backlog-worker ARGS="--concurrency 3"
 ```
 
 ### 4. Single-Batch Execution (`--once`)
 To execute only a single batch of tasks up to concurrency and exit without continuous draining:
 ```bash
-./scripts/run-backlog-engine.sh --once
-# or: ./scripts/run-backlog-engine.sh --concurrency 3 --once
+make backlog-worker ARGS="--once"
+# or: make backlog-worker ARGS="--concurrency 3 --once"
 ```
 
 ### 5. Local Offline Merge Mode
 For local development or environments without remote GitHub push permissions:
 ```bash
-./scripts/run-backlog-engine.sh --local
+make backlog-worker ARGS="--local"
 ```
 
 ### 6. Queue Inspection and Manual Task Commands

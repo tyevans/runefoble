@@ -44,8 +44,8 @@ async def health_check():
 
 ### 5. Register with Swagger UI, Helm, and the Image Table
 In `deployments/helm/runefoble/values.yaml`:
-1. Add an entry under `swaggerUI.urls` to expose its OpenAPI spec.
-2. Add an entry under `services` to deploy its Kubernetes pod.
+1. Set `swaggerName` on its entry under `services` to list its OpenAPI spec in the Swagger UI hub.
+2. Add an entry under `services` to deploy its Kubernetes pod. The chart renders the Deployment, the Service, and the Swagger UI row from that entry.
 
 In `Makefile`, add one row to `PYTHON_IMAGE_ROWS`:
 `'<image-name>|<uv-package>|<module>.main:app|<port>'`.

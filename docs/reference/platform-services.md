@@ -86,6 +86,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Role**: S3-compatible media asset storage for character avatars, map images, audio chronicles, and rule compendiums.
 - **Buckets**: `runefoble-assets`, `runefoble-recordings`.
 - **Environment Variables**: `RUNEFOBLE_SILO_ENDPOINT`, `RUNEFOBLE_SILO_ACCESS_KEY`, `RUNEFOBLE_SILO_SECRET_KEY`, `RUNEFOBLE_SILO_BUCKET_ASSETS`.
+- **Buckets**: The chart creates no buckets. Create `runefoble-assets` and `runefoble-recordings` on the Silo endpoint before the first upload, for example with the MinIO client (`mc mb`). Asset Forge stores its objects in `runefoble-assets`.
 - **Failure Behaviour**: Every write, read, and delete goes to Silo. A transport error or a non-2xx status raises `AssetStorageError`. Forge and gateway routes return `503 Service Unavailable`. No object is stored and no asset id is issued. Nothing is written to process memory.
 - **Asset Index**: The metadata for each stored object is an event-sourced `AssetIndexAggregate` (`runefoble_platform.asset_index`). Its events are `AssetUploaded` and `AssetDeleted`. Its aggregate id is derived from the asset id. The index is written only after Silo confirms a write. It survives restarts and replicas when the event store is PostgreSQL.
 
@@ -148,7 +149,7 @@ The chart sets each service-to-service URL. The URL uses the in-cluster service 
 | `RUNEFOBLE_CAMPAIGN_ANALYTICS_URL` | `http://campaign-analytics:8011` | `gateway-api` | Gateway hub views |
 | `RUNEFOBLE_CHARACTER_SHEET_URL` | `http://character-sheet:8003` | `game-session`, `gateway-api`, `gateway-mcp` | Stand-in calls (`game_session`), gateway character routes, and MCP character tools. One name for all three processes. Unset means the process cannot reach `character_sheet` and fails with 503 or 502. |
 
-The chart defines these keys in one block in `deployments/helm/runefoble/templates/services.yaml`. To add a consumer, add its container name to that key's `consumers` list.
+The chart builds these keys from the `services` map in `deployments/helm/runefoble/values.yaml`. Each target sets `urlEnv` and `consumers`, and the helper `runefoble.serviceUrlEnv` in `templates/_services.tpl` renders them. To add a consumer, add its container name to the target's `consumers` list.
 
 ### Deployed Mode and Start-Up Failures (ADR-0015 4)
 
@@ -202,7 +203,7 @@ The `voice-agent` image needs two runtime assets. The image and the Helm chart p
 | `espeak-ng` binary | Dockerfile build argument `SYSTEM_PACKAGES=espeak-ng` (`PYTHON_IMAGE_ROWS` in the Makefile) | `/usr/bin/espeak-ng` |
 | faster-whisper model cache | PVC `voice-agent-model-cache` (`services.voiceAgent.modelCache.size`, default `1Gi`) | `/var/lib/runefoble/whisper` |
 
-The chart sets `RUNEFOBLE_VOICE_STT_MODEL_SIZE` from `services.voiceAgent.sttModelSize` (default `tiny.en`), `RUNEFOBLE_VOICE_STT_MODEL_DIR` to the mount path, and `RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED=false`. The pod does not download the model.
+The chart sets `RUNEFOBLE_VOICE_STT_MODEL_SIZE` (default `tiny.en`), `RUNEFOBLE_VOICE_STT_MODEL_DIR` (the mount path), and `RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED=false` from `services.voiceAgent.env`. The pod does not download the model.
 
 Pre-fetch the model for Kind with `make voice-model-cache`. The target downloads the model to `.cache/voice-models` on the host and copies it into the running voice-agent pod. Set `VOICE_MODEL_SIZE` to use another model.
 

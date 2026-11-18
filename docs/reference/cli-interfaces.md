@@ -73,8 +73,8 @@ Tasks 0235, 0291, 0328, 0335 and 0346 stay open. They wait on the visualizer par
 | Script | Purpose |
 |---|---|
 | `./scripts/dev_server.py` | Unified local development orchestrator (requires Redis; see `make dev`) running gateway, Vite frontend, and optional AI inference worker concurrently |
-| `./scripts/cleanup-worktrees.sh` | Audits and removes merged git worktrees, cleans up branches, and prunes records |
+| `make clean-worktrees` | Audits and removes merged git worktrees, cleans up branches, and prunes records (`ARGS="--dry-run"`) |
 | `./scripts/curate-backlog.sh` | Invokes the `backlog-curator` skill for JIT backlog triage and roadmap alignment |
-| `./scripts/run-backlog-engine.sh` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching |
-| `./scripts/visualize-project.sh` | Starts dynamic project content visualizer web application on port 8787 |
+| `make backlog-worker` | Orchestrates autonomous end-to-end task execution, worktrees, PRs, and CI watching (`ARGS="--concurrency 3"`) |
+| `make visualize-project` | Starts dynamic project content visualizer web application on port 8787 |
 | `./scripts/decompose-prds.sh` | PRD pipeline runner to audit, scaffold, decompose into vertical slices/spikes, and sync |
