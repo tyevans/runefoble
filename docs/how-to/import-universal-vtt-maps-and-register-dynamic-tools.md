@@ -197,8 +197,6 @@ response = httpx.put(
 Use `DELETE /mcp/tools/{name}` to cleanly remove the tool from FastMCP discovery. The caller needs `manage`. The gateway revokes the author relation:
 
 ```python
-response = httpx.delete(
-    "http://localhost:8000/mcp/tools/calculate_spell_falloff", headers=auth
-)
+response = httpx.delete("http://localhost:8000/mcp/tools/calculate_spell_falloff", headers=auth)
 assert response.status_code == 200
 ```
