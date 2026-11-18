@@ -6,12 +6,16 @@ HTTP, exactly as they do in a deployed cluster. Nothing patches the HTTP client.
 
 from __future__ import annotations
 
+import os
 import socket
+import subprocess
+import sys
+import tempfile
 import threading
 import time
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
-from typing import Literal
+from typing import IO, Literal
 
 import uvicorn
 from fastapi import FastAPI
@@ -46,6 +50,84 @@ def serve(app: FastAPI, *, lifespan: Literal["on", "off"] = "off") -> Iterator[s
     finally:
         server.should_exit = True
         thread.join(timeout=10.0)
+
+
+@contextmanager
+def serve_subprocess(
+    app_path: str, env: Mapping[str, str], *, crash: bool = False
+) -> Iterator[str]:
+    """Run an ASGI app in a child uvicorn process on a loopback port and yield its base URL.
+
+    `app_path` is an import path such as `game_session.main:app`. The child inherits this
+    process environment, and `env` overrides it. The child shares no memory with the test,
+    so a restart test starts a second child over the same stores. The child is stopped when
+    the block exits, also when the block raises. A child that exits before it listens raises
+    RuntimeError with its log output.
+
+    By default the child gets SIGTERM and shuts down gracefully. Graceful shutdown closes open
+    WebSockets, and the service records each close as a disconnect. Pass `crash=True` to send
+    SIGKILL. A crash runs no shutdown code, so only state that was already saved survives.
+    """
+    port = _free_port()
+    with tempfile.TemporaryFile(mode="w+") as log:
+        proc = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                app_path,
+                "--host",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--log-level",
+                "warning",
+            ],
+            env={**os.environ, **env},
+            stdout=log,
+            stderr=subprocess.STDOUT,
+        )
+        try:
+            _wait_for_listener(proc, port, log)
+            yield f"http://127.0.0.1:{port}"
+        finally:
+            _stop_process(proc, crash=crash)
+
+
+def _wait_for_listener(proc: subprocess.Popen[bytes], port: int, log: IO[str]) -> None:
+    deadline = time.monotonic() + 60.0
+    while True:
+        if proc.poll() is not None:
+            raise RuntimeError(f"service exited with {proc.returncode}: {_read_log(log)}")
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.5):
+                return
+        except OSError as exc:
+            if time.monotonic() > deadline:
+                raise RuntimeError(
+                    f"service did not listen on port {port}: {_read_log(log)}"
+                ) from exc
+            time.sleep(0.05)
+
+
+def _read_log(log: IO[str]) -> str:
+    log.seek(0)
+    return log.read()[-4000:]
+
+
+def _stop_process(proc: subprocess.Popen[bytes], *, crash: bool) -> None:
+    if proc.poll() is not None:
+        return
+    if crash:
+        proc.kill()
+        proc.wait(timeout=10.0)
+        return
+    proc.terminate()
+    try:
+        proc.wait(timeout=15.0)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=10.0)
 
 
 def unavailable_app(status_code: int = 503) -> FastAPI:

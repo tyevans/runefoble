@@ -18,6 +18,7 @@ Do not use this pattern for a call to an external network service, such as an LL
 | `serve(app, lifespan="off")` | Run an ASGI app on a free loopback port. It yields the base URL. Pass `lifespan="on"` for a service that builds state at start-up. |
 | `unavailable_app(status_code=503)` | Build a stand-in upstream that answers every route with the given status. |
 | `closed_port_url()` | Return a base URL where nothing listens. Connections are refused. |
+| `serve_subprocess(app_path, env)` | Run an import path such as `game_session.main:app` in a child uvicorn process. The child reads its settings from `env`. It yields the base URL and stops when the block exits, also when the block raises. |
 
 Import the helpers from the test package:
 
@@ -130,6 +131,34 @@ def test_owner_creates_and_lists_a_campaign(client, trusted_ws_issuer) -> None:
 ```
 
 Do not use `signing_issuer` in these tests. It replaces the gateway verifier, so game_session rejects the token.
+
+## Recipe 7: Restart a Service Between Writes and Reads
+
+A restart test proves that state lives in the event store, not in process memory. Do not
+re-import service modules in the test process. Start each process with `serve_subprocess`.
+
+1. Use the `restart_stack` fixture from `tests/helpers/restart_stack.py`. It starts a
+   PostgreSQL event store, a Redis container, a live SpiceDB with `runefoble.zed`, and a fake
+   Zitadel that serves the test JWKS over HTTP.
+2. Seed SpiceDB relations with `restart_stack.grant([...])`.
+3. Write through a public route in the first child. Leave the `with` block to stop it.
+4. Start a second child with `restart_stack.start(app_path)` and read through a public route.
+
+```python
+with restart_stack.start("game_session.main:app") as base:
+    posted = _post(f"{base}/sessions/{session_id}/contracts/bounties", json=body, headers=h)
+    assert posted.status_code == 201
+
+with restart_stack.start("game_session.main:app") as base:
+    listed = _get(f"{base}/sessions/{session_id}/contracts/bounties", headers=h)
+assert listed.status_code == 200
+```
+
+To prove a restart test detects in-process state, start the child with
+`restart_stack.start(app_path, RUNEFOBLE_EVENT_STORE_BACKEND="memory")`. The second read must fail.
+
+The restart tests run the services without a `docker` marker. They skip when Docker is absent,
+as the soundscape and lore restart tests do. The `docker` marker is deselected by default.
 
 ## Assertions
 
