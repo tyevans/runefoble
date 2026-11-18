@@ -2,7 +2,7 @@
 
 from gateway_api.routers.auth import router as auth_router
 from gateway_api.routers.campaigns_proxy import router as campaigns_router
-from gateway_api.routers.characters import router as characters_router
+from gateway_api.routers.characters_proxy import router as characters_router
 from gateway_api.routers.downtime import router as downtime_router
 from gateway_api.routers.health import router as health_router
 from gateway_api.routers.hub_views import router as hub_views_router
