@@ -20,6 +20,7 @@ from gateway_api.auth import CurrentPrincipal
 from gateway_api.models import (
     CampfireRestGatewayRequest,
     CombineReagentsGatewayRequest,
+    DepositStrongholdGatewayRequest,
     HaggleGatewayRequest,
     StartMinigameGatewayRequest,
     UpgradeStrongholdGatewayRequest,
@@ -57,6 +58,23 @@ async def upgrade_stronghold_gateway(
         service=GAME_SESSION,
         method="POST",
         path=path("api", "v1", "campaigns", campaign_id, "stronghold", "upgrade"),
+        json_body=req.model_dump(mode="json"),
+    )
+
+
+@router.post("/api/v1/campaigns/{campaign_id}/stronghold/deposit")
+async def deposit_stronghold_gateway(
+    campaign_id: str,
+    req: DepositStrongholdGatewayRequest,
+    request: Request,
+    user: CurrentPrincipal,
+) -> Any:
+    """Add gold and materials to the campaign stronghold in game_session (owner checks `play`)."""
+    return await forward_json(
+        request,
+        service=GAME_SESSION,
+        method="POST",
+        path=path("api", "v1", "campaigns", campaign_id, "stronghold", "deposit"),
         json_body=req.model_dump(mode="json"),
     )
 

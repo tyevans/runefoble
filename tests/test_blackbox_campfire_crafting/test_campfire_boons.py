@@ -18,6 +18,15 @@ def _owned_campaign(client: TestClient) -> str:
     return created.json()["id"]
 
 
+def _fund(client: TestClient, campaign_id: str, gold: int, materials: dict[str, int]) -> None:
+    """Fund the campsite treasury through the public deposit route."""
+    res = client.post(
+        f"/api/v1/campaigns/{campaign_id}/stronghold/deposit",
+        json={"gold": gold, "materials": materials},
+    )
+    assert res.status_code == 200, res.text
+
+
 def test_campfire_crafting_microfrontend_manifest_and_files(session_client: TestClient):
     """Verify microfrontend manifest advertises runefoble-campfire-crafting and files exist."""
     res = session_client.get("/ui/manifest")
@@ -50,6 +59,8 @@ def test_blackbox_stronghold_campsite_progression(session_client: TestClient, mo
     init_res = session_client.get(f"/api/v1/campaigns/{camp_id}/stronghold")
     assert init_res.status_code == 200
     assert init_res.json()["facilities"]["watchtower"] == 0
+
+    _fund(session_client, camp_id, gold=175, materials={"wood": 20, "flora": 15})
 
     upg1_res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
@@ -93,10 +104,12 @@ def test_blackbox_campfire_rest_interlude_with_boons(session_client: TestClient,
     assert create_res.status_code == 200
     session_id = create_res.json()["session_id"]
 
-    session_client.post(
+    _fund(session_client, camp_id, gold=100, materials={"wood": 20})
+    upgrade_res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
         json={"facility_id": "watchtower", "gold_spent": 100},
     )
+    assert upgrade_res.status_code == 200, upgrade_res.text
 
     prompts_res = session_client.get(f"/api/v1/sessions/{session_id}/rest/prompts")
     assert prompts_res.status_code == 200

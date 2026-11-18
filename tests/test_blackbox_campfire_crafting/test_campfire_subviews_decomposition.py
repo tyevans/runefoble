@@ -33,6 +33,11 @@ def test_blackbox_campfire_crafting_frontdoor_integration(
     assert session_res.status_code == 200
     session_id = session_res.json()["session_id"]
 
+    funded = session_client.post(
+        f"/api/v1/campaigns/{camp_id}/stronghold/deposit",
+        json={"gold": 100, "materials": {"wood": 20}},
+    )
+    assert funded.status_code == 200, funded.text
     upg_res = session_client.post(
         f"/api/v1/campaigns/{camp_id}/stronghold/upgrade",
         json={"facility_id": "watchtower", "gold_spent": 100},

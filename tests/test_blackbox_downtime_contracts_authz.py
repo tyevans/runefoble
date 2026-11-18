@@ -101,6 +101,12 @@ def test_stronghold_upgrade_by_role(client: TestClient) -> None:
     _join(client, campaign_id, owner, spectator, "spectator")
     url = f"/api/v1/campaigns/{campaign_id}/stronghold/upgrade"
     body = {"facility_id": "watchtower", "gold_spent": 0}
+    funded = client.post(
+        f"/api/v1/campaigns/{campaign_id}/stronghold/deposit",
+        json={"gold": 100, "materials": {"wood": 20}},
+        headers=_auth(owner),
+    )
+    assert funded.status_code == 200, funded.text
 
     assert client.post(url, json=body).status_code == 401
     assert client.post(url, json=body, headers=_auth(spectator)).status_code == 403

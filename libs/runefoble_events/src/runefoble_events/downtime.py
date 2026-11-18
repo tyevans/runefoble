@@ -91,11 +91,22 @@ class StrongholdUpgraded(BaseRunefobleEvent):
     unlocked_boons: list[str] = Field(default_factory=list)
 
 
+@register_event
+class StrongholdDeposited(BaseRunefobleEvent):
+    """Fired when gold or materials are added to the stronghold treasury and store."""
+
+    aggregate_type: str = "Stronghold"
+    campaign_id: UUID | None = None
+    gold: int = 0
+    materials: dict[str, int] = Field(default_factory=dict)
+
+
 __all__ = [
     "CampfireRestCompleted",
     "CraftingAttempted",
     "CraftingMishapOccurred",
     "CraftingSucceeded",
     "StrongholdCreated",
+    "StrongholdDeposited",
     "StrongholdUpgraded",
 ]

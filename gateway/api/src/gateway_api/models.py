@@ -37,6 +37,11 @@ class UpgradeStrongholdGatewayRequest(BaseModel):
     materials_spent: dict[str, int] = Field(default_factory=dict)
 
 
+class DepositStrongholdGatewayRequest(BaseModel):
+    gold: int = 0
+    materials: dict[str, int] = Field(default_factory=dict)
+
+
 class CampfireRestGatewayRequest(BaseModel):
     rest_type: Literal["short", "long"] = "long"
     storytelling_prompt: str | None = None
