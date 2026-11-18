@@ -7,7 +7,6 @@ ADR-0007 (Gateway API & DDD), ADR-0013 (Frontend Microfrontends).
 
 from __future__ import annotations
 
-import subprocess
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -15,6 +14,8 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.auth import get_spicedb_client
 from gateway_api.main import app as gateway_app
+
+from tests.helpers.node_suite import NODE_TEST_TIMEOUT_S, run_node_tests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
@@ -160,17 +161,7 @@ async def test_campaign_sessions_isolation_and_offline_scoping(
 def test_frontend_node_unit_suite_execution():
     """Execute Node test runner on frontend/test/campaign-sessions-scoping.test.ts."""
     assert TS_TEST_FILE.is_file()
-    result = subprocess.run(
-        [
-            "node",
-            "--experimental-strip-types",
-            "--test",
-            str(TS_TEST_FILE.relative_to(REPO_ROOT)),
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
+    result = run_node_tests([TS_TEST_FILE], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Frontend sessions scoping tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )

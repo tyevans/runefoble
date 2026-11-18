@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers.process import run_command
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 READY_MESSAGE = "Cluster is ready!"
 
@@ -56,13 +58,7 @@ def _run_cluster_up(env: dict[str, str], fail: str = "", repo_list: str | None =
     run_env["STUB_FAIL"] = fail
     if repo_list is not None:
         Path(run_env["STUB_REPO_LIST"]).write_text(repo_list)
-    proc = subprocess.run(
-        ["make", "-C", str(REPO_ROOT), "cluster-up"],
-        env=run_env,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
+    proc = run_command(["make", "-C", str(REPO_ROOT), "cluster-up"], env=run_env, timeout=120)
     calls = Path(run_env["STUB_LOG"])
     call_log = calls.read_text().splitlines() if calls.exists() else []
     return proc, call_log

@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers.process import run_command
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -25,13 +27,7 @@ def _make_repo(tmp_path: Path) -> Path:
 
 
 def _run_health(root: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["spec-ops", "health"],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    return run_command(["spec-ops", "health"], cwd=root, check=False, timeout=240.0)
 
 
 def _write_lines(path: Path, count: int) -> None:
@@ -64,13 +60,7 @@ def test_health_gate_reports_no_violation_when_files_fit_the_limit(tmp_path: Pat
 
 
 def test_make_health_check_invokes_spec_ops_gates() -> None:
-    result = subprocess.run(
-        ["make", "-n", "health-check"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
+    result = run_command(["make", "-n", "health-check"], cwd=REPO_ROOT, check=True, timeout=240.0)
 
     assert "spec-ops health" in result.stdout
     assert "spec-ops schema check" in result.stdout

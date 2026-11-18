@@ -8,19 +8,15 @@ wire type is declared without that warning.
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
+
+from tests.helpers.process import run_command
 
 
 def test_importing_runefoble_events_emits_no_warnings() -> None:
     env = {**os.environ, "PYTHONWARNINGS": "error"}
-    result = subprocess.run(
-        [sys.executable, "-c", "import runefoble_events"],
-        capture_output=True,
-        text=True,
-        env=env,
-        timeout=120,
-        check=False,
+    result = run_command(
+        [sys.executable, "-c", "import runefoble_events"], env=env, timeout=120, check=False
     )
 
     assert result.returncode == 0, result.stderr

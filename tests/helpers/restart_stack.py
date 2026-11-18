@@ -28,7 +28,7 @@ from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.testing.signing_test_issuer import DEFAULT_ISSUER
 
 from tests.helpers.live_services import serve, serve_subprocess
-from tests.helpers.postgres import get_free_port
+from tests.helpers.ports import free_port
 from tests.helpers.redis_container import redis_container
 from tests.helpers.spicedb import LiveSpiceDB
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -113,7 +113,7 @@ def restart_stack(postgres_service, live_spicedb_with_schema) -> Iterator[Restar
     The PostgreSQL and SpiceDB fixtures skip the module when Docker is unavailable.
     """
     with (
-        redis_container(get_free_port()) as redis_url,
+        redis_container(free_port()) as redis_url,
         serve(_fake_zitadel_app()) as zitadel_url,
     ):
         yield RestartStack(

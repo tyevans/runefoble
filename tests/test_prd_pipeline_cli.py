@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
 import pytest
 
+from tests.helpers.process import run_command
 from tools.prd_pipeline.cli import main
 
 
@@ -87,6 +87,6 @@ def test_shell_script_interface():
     script = repo_root / "scripts" / "decompose-prds.sh"
     assert script.exists()
 
-    result = subprocess.run([str(script), "audit"], capture_output=True, text=True, cwd=repo_root)
+    result = run_command([str(script), "audit"], cwd=repo_root, timeout=240.0)
     assert result.returncode == 0
     assert "Runefoble PRD & Backlog Audit" in result.stdout

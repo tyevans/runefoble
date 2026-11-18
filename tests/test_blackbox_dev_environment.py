@@ -26,26 +26,21 @@ from scripts.dev_server import (
     terminate_processes,
     wait_for_gateway,
 )
+from tests.helpers.ports import free_port
+from tests.helpers.process import run_command
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-
-
-def get_free_port() -> int:
-    """Find an available port on localhost."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
 
 
 def test_makefile_dev_target():
     """Verify that 'make dev' is declared in Makefile and documented in 'make help'."""
     # 1. Verify dry-run
-    res_dry = subprocess.run(["make", "-n", "dev"], cwd=REPO_ROOT, capture_output=True, text=True)
+    res_dry = run_command(["make", "-n", "dev"], cwd=REPO_ROOT, timeout=240.0)
     assert res_dry.returncode == 0, f"'make -n dev' failed: {res_dry.stderr}"
     assert "scripts/dev_server.py" in res_dry.stdout
 
     # 2. Verify make help documentation
-    res_help = subprocess.run(["make", "help"], cwd=REPO_ROOT, capture_output=True, text=True)
+    res_help = run_command(["make", "help"], cwd=REPO_ROOT, timeout=240.0)
     assert res_help.returncode == 0
     assert "dev " in res_help.stdout
     assert "Run API Gateway and Vite frontend concurrently" in res_help.stdout
@@ -79,7 +74,7 @@ def test_orchestrator_cli_parsing():
     assert custom_args.spicedb_host == "10.0.0.1"
 
     # is_port_open returns False on unused port
-    unused_port = get_free_port()
+    unused_port = free_port()
     assert is_port_open("127.0.0.1", unused_port) is False
 
 
@@ -116,12 +111,12 @@ def _check_health_and_cors(client: TestClient) -> None:
 def test_orchestrator_health_waiter_live_and_timeout():
     """Verify dev orchestrator health check polling and timeout behavior."""
     # 1. Test timeout on unreachable port
-    unused_port = get_free_port()
+    unused_port = free_port()
     assert check_health("127.0.0.1", unused_port, timeout=0.1) is False
     assert wait_for_gateway("127.0.0.1", unused_port, timeout=0.4, poll_interval=0.1) is False
 
     # 2. Test success against active server
-    mock_port = get_free_port()
+    mock_port = free_port()
 
     class HealthHandler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
@@ -147,9 +142,9 @@ def test_orchestrator_health_waiter_live_and_timeout():
 
 def test_blackbox_live_vite_proxy_to_gateway():
     """End-to-end blackbox test: Start mock backend and Vite dev server, verifying seamless proxying."""
-    gw_port = get_free_port()
-    mail_port = get_free_port()
-    vite_port = get_free_port()
+    gw_port = free_port()
+    mail_port = free_port()
+    vite_port = free_port()
 
     class GatewayMockHandler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
@@ -256,21 +251,13 @@ def test_orchestrator_exits_when_redis_is_unreachable():
     """
     env = {
         **os.environ,
-        "RUNEFOBLE_REDIS_URL": f"redis://127.0.0.1:{get_free_port()}/0",
+        "RUNEFOBLE_REDIS_URL": f"redis://127.0.0.1:{free_port()}/0",
         "KUBECONFIG": str(REPO_ROOT / ".no-such-kubeconfig"),
     }
-    result = subprocess.run(
-        [
-            "python3",
-            "scripts/dev_server.py",
-            "--gateway-port",
-            str(get_free_port()),
-            "--no-frontend",
-        ],
+    result = run_command(
+        ["python3", "scripts/dev_server.py", "--gateway-port", str(free_port()), "--no-frontend"],
         cwd=REPO_ROOT,
         env=env,
-        capture_output=True,
-        text=True,
         timeout=30,
     )
     assert result.returncode == 1
@@ -343,8 +330,8 @@ def test_orchestrator_live_full_flow():
     redis_server = _RespServer()
     redis_server.start()
 
-    gw_port = get_free_port()
-    vite_port = get_free_port()
+    gw_port = free_port()
+    vite_port = free_port()
 
     proc = subprocess.Popen(
         [

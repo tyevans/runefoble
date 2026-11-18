@@ -11,12 +11,12 @@ import json
 import os
 import time
 
-from tests.helpers.postgres import get_free_port
+from tests.helpers.ports import free_port
 from tests.helpers.redis_container import redis_container
 
 
 def test_hold_redis_container():
-    port = get_free_port()
+    port = free_port()
     with redis_container(port):
         info_path = os.environ["RUNEFOBLE_HOLD_INFO_FILE"]
         temp_path = f"{info_path}.tmp"

@@ -34,6 +34,7 @@ def test_query_route_returns_503_after_store_stops(
             [docker_bin, "stop", str(postgres_service["container_name"])],
             check=True,
             capture_output=True,
+            timeout=240.0,
         )
 
         resp = client.get(url)

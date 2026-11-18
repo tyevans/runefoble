@@ -32,6 +32,8 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 from tests.helpers.live_services import serve
 from tests.helpers.mcp_http import call_tool_over_http, mcp_session
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.polling import wait_until
+from tests.helpers.process import run_command
 from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_blackbox_deployability_images import (
     ImageRow,
@@ -78,17 +80,19 @@ UPSTREAM_ENV = {
 
 def _wait_for_port(port: int, process: subprocess.Popen | None = None) -> None:
     """Block until a TCP connection to 127.0.0.1:port succeeds, or fail after 60 seconds."""
-    deadline = time.monotonic() + 60.0
-    while time.monotonic() < deadline:
+
+    def listening() -> bool:
         if process is not None and process.poll() is not None:
             output = process.stdout.read().decode("utf-8", "replace") if process.stdout else ""
             raise AssertionError(f"gateway-mcp exited early with {process.returncode}:\n{output}")
         try:
             with socket.create_connection(("127.0.0.1", port), timeout=1):
-                return
+                return True
         except OSError:
-            time.sleep(0.2)
-    raise AssertionError(f"nothing listens on 127.0.0.1:{port}")
+            return False
+
+    if not wait_until(listening, timeout_s=60.0, interval_s=0.2):
+        raise AssertionError(f"nothing listens on 127.0.0.1:{port}")
 
 
 INITIALIZE_BODY = {
@@ -254,13 +258,8 @@ def test_entrypoint_refuses_to_start_without_upstream_urls():
     """Start-up names a missing upstream URL and exits, so no deployment serves localhost."""
     env = {key: value for key, value in os.environ.items() if key not in UPSTREAM_ENV}
     env["GATEWAY_MCP_PORT"] = str(free_port())
-    result = subprocess.run(
-        [sys.executable, "-m", "gateway_mcp.main"],
-        cwd=REPO_ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=120,
+    result = run_command(
+        [sys.executable, "-m", "gateway_mcp.main"], cwd=REPO_ROOT, env=env, timeout=120
     )
     assert result.returncode != 0
     assert "RUNEFOBLE_BOARD_STATE_URL" in result.stderr
@@ -269,12 +268,8 @@ def test_entrypoint_refuses_to_start_without_upstream_urls():
 def _rendered_documents() -> list[dict]:
     if not shutil.which("helm"):
         pytest.skip("helm CLI not available")
-    result = subprocess.run(
-        ["helm", "template", "runefoble", str(HELM_CHART)],
-        capture_output=True,
-        text=True,
-        check=True,
-        timeout=120,
+    result = run_command(
+        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=120
     )
     return [doc for doc in yaml.safe_load_all(result.stdout) if doc]
 
@@ -328,10 +323,8 @@ def test_built_gateway_mcp_image_refuses_mcp_requests_without_bearer():
     env_args: list[str] = []
     for key, value in UPSTREAM_ENV.items():
         env_args += ["-e", f"{key}={value}"]
-    container = subprocess.run(
+    container = run_command(
         ["docker", "run", "-d", *env_args, "-p", f"127.0.0.1:{host_port}:{row.port}", row.tag],
-        capture_output=True,
-        text=True,
         timeout=120,
     )
     assert container.returncode == 0, f"docker run failed: {container.stderr}"

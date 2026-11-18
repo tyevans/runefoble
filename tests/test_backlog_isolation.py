@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from tests.helpers.process import run_command
 from tools.backlog_engine.agent_worker import build_worker_prompt
 from tools.backlog_engine.ci_watcher import commit_and_push
 from tools.backlog_engine.models import Task, TaskStatus
@@ -31,15 +32,22 @@ def test_build_worker_prompt_enforces_backlog_isolation():
 def test_enforce_backlog_isolation_reverts_uncommitted_edits(tmp_path: Path):
     """Verifies that enforce_backlog_isolation restores docs/project/backlog/ to main."""
     # Initialize a git repo in tmp_path
-    subprocess.run(["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
-        ["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True, capture_output=True
+        ["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, timeout=240.0
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        timeout=240.0,
     )
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=240.0,
     )
 
     backlog_dir = tmp_path / "docs" / "project" / "backlog"
@@ -47,9 +55,15 @@ def test_enforce_backlog_isolation_reverts_uncommitted_edits(tmp_path: Path):
     priority_file = backlog_dir / "PRIORITY.md"
     priority_file.write_text("Original PRIORITY.md\n", encoding="utf-8")
 
-    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
-        ["git", "commit", "-m", "Initial commit"], cwd=tmp_path, check=True, capture_output=True
+        ["git", "add", "."], cwd=tmp_path, check=True, capture_output=True, timeout=240.0
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        timeout=240.0,
     )
 
     # Simulate an agent modifying PRIORITY.md in working tree
@@ -65,15 +79,22 @@ def test_enforce_backlog_isolation_reverts_uncommitted_edits(tmp_path: Path):
 
 def test_commit_and_push_reverts_backlog_changes_before_staging(tmp_path: Path):
     """Verifies that commit_and_push automatically cleanses docs/project/backlog/ changes."""
-    subprocess.run(["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
-        ["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True, capture_output=True
+        ["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, timeout=240.0
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        timeout=240.0,
     )
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=240.0,
     )
 
     backlog_dir = tmp_path / "docs" / "project" / "backlog"
@@ -84,14 +105,24 @@ def test_commit_and_push_reverts_backlog_changes_before_staging(tmp_path: Path):
     code_file = tmp_path / "service.py"
     code_file.write_text("def run(): pass\n", encoding="utf-8")
 
-    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
-        ["git", "commit", "-m", "Initial commit"], cwd=tmp_path, check=True, capture_output=True
+        ["git", "add", "."], cwd=tmp_path, check=True, capture_output=True, timeout=240.0
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        timeout=240.0,
     )
 
     # Create feature branch
     subprocess.run(
-        ["git", "checkout", "-b", "feat/0045-test"], cwd=tmp_path, check=True, capture_output=True
+        ["git", "checkout", "-b", "feat/0045-test"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        timeout=240.0,
     )
 
     # Rogue edits to backlog and valid edits to service
@@ -117,7 +148,7 @@ def test_commit_and_push_reverts_backlog_changes_before_staging(tmp_path: Path):
                 res = MagicMock()
                 res.returncode = 0
                 return res
-            return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=check)
+            return run_command(cmd, cwd=cwd, check=check, timeout=240.0)
 
         mock_cmd.side_effect = side_effect
         commit_and_push(tmp_path, task, "feat/0045-test")
@@ -187,15 +218,22 @@ def test_orchestrator_parallel_dispatch_does_not_hold_merge_lock_during_ci(tmp_p
 
 def test_enforce_backlog_isolation_preserves_backlog_readme(tmp_path: Path):
     """Verifies that enforce_backlog_isolation preserves docs/project/backlog/README.md."""
-    subprocess.run(["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
-        ["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True, capture_output=True
+        ["git", "init", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, timeout=240.0
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        timeout=240.0,
     )
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=240.0,
     )
 
     backlog_dir = tmp_path / "docs" / "project" / "backlog"
@@ -205,9 +243,15 @@ def test_enforce_backlog_isolation_preserves_backlog_readme(tmp_path: Path):
     readme_file = backlog_dir / "README.md"
     readme_file.write_text("Original Backlog Guide\n", encoding="utf-8")
 
-    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
-        ["git", "commit", "-m", "Initial commit"], cwd=tmp_path, check=True, capture_output=True
+        ["git", "add", "."], cwd=tmp_path, check=True, capture_output=True, timeout=240.0
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        timeout=240.0,
     )
 
     # Simulate modifying both PRIORITY.md and README.md

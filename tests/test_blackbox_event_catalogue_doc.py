@@ -5,9 +5,10 @@ subprocess and do not use the network.
 """
 
 import re
-import subprocess
 import sys
 from pathlib import Path
+
+from tests.helpers.process import run_command
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 GENERATOR = REPO_ROOT / "scripts" / "generate_event_catalogue.py"
@@ -63,12 +64,8 @@ def _makefile_targets() -> set[str]:
 
 
 def test_generated_catalogue_is_current_with_registry():
-    result = subprocess.run(
-        [sys.executable, str(GENERATOR), "--check"],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        check=False,
+    result = run_command(
+        [sys.executable, str(GENERATOR), "--check"], cwd=REPO_ROOT, check=False, timeout=240.0
     )
     assert result.returncode == 0, result.stderr
 

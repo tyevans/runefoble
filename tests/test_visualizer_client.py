@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers.process import run_command
 from tools.project_visualizer.assets_js import get_client_js
 from tools.project_visualizer.generator import ProjectVisualizerGenerator
 
@@ -27,18 +28,20 @@ def test_client_javascript_syntax_validity(repo_root: Path):
     # 1. Test every individual static JS module (recursively including subviews)
     static_js_dir = repo_root / "tools" / "project_visualizer" / "static" / "js"
     for js_file in static_js_dir.rglob("*.js"):
-        proc = subprocess.run([node_bin, "-c", str(js_file)], capture_output=True, text=True)
+        proc = run_command([node_bin, "-c", str(js_file)], timeout=240.0)
         assert proc.returncode == 0, f"Syntax error in {js_file.name}: {proc.stderr}"
 
     # 2. Test live server bundled JS
     live_bundle = get_client_js(is_live_server=True)
-    proc_live = subprocess.run([node_bin, "-c"], input=live_bundle, capture_output=True, text=True)
+    proc_live = subprocess.run(
+        [node_bin, "-c"], input=live_bundle, capture_output=True, text=True, timeout=240.0
+    )
     assert proc_live.returncode == 0, f"Syntax error in live bundle: {proc_live.stderr}"
 
     # 3. Test static distribution bundled JS
     static_bundle = get_client_js(is_live_server=False)
     proc_static = subprocess.run(
-        [node_bin, "-c"], input=static_bundle, capture_output=True, text=True
+        [node_bin, "-c"], input=static_bundle, capture_output=True, text=True, timeout=240.0
     )
     assert proc_static.returncode == 0, f"Syntax error in static bundle: {proc_static.stderr}"
 
@@ -91,7 +94,9 @@ const results = {{
 console.log(JSON.stringify(results));
 """
 
-    proc = subprocess.run([node_bin], input=test_script, capture_output=True, text=True)
+    proc = subprocess.run(
+        [node_bin], input=test_script, capture_output=True, text=True, timeout=240.0
+    )
     assert proc.returncode == 0, f"Error executing markdown test script: {proc.stderr}"
     data = json.loads(proc.stdout)
     assert data["hasOl"] is True
@@ -150,7 +155,9 @@ const results = {{
 console.log(JSON.stringify(results));
 """
 
-    proc = subprocess.run([node_bin], input=test_script, capture_output=True, text=True)
+    proc = subprocess.run(
+        [node_bin], input=test_script, capture_output=True, text=True, timeout=240.0
+    )
     assert proc.returncode == 0, f"Error executing gantt test script: {proc.stderr}"
     res = json.loads(proc.stdout)
     assert res["hasM1"] is True

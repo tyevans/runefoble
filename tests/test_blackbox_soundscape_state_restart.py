@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -29,6 +28,7 @@ from runefoble_platform.event_sourcing import build_event_store, set_event_store
 from runefoble_platform.redis_bus import deserialize_event
 from soundscape.main import app
 
+from tests.helpers.process import run_command
 from tests.helpers.ws_identity import SIGNING_ISSUER as ISSUER
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -59,15 +59,7 @@ def _restart_read(dsn: str, session_id: str, *, with_aggregate_id: bool = False)
     args = [sys.executable, str(CHILD_SCRIPT), dsn, session_id]
     if with_aggregate_id:
         args.append("aggregate")
-    completed = subprocess.run(
-        args,
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
-        env=env,
-        timeout=120,
-        check=False,
-    )
+    completed = run_command(args, cwd=REPO_ROOT, env=env, timeout=120, check=False)
     assert completed.returncode == 0, completed.stderr
     return json.loads(completed.stdout.strip().splitlines()[-1])
 

@@ -26,6 +26,7 @@ from the_watcher.main import app as watcher_app
 
 from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.minigame_tables import open_minigame_table
+from tests.helpers.process import run_command
 from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.watcher_engine import error_fields, select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
@@ -181,13 +182,8 @@ def _run_worker_import(env_overrides: dict[str, str | None]) -> subprocess.Compl
     for key, value in env_overrides.items():
         if value is not None:
             env[key] = value
-    return subprocess.run(
-        [sys.executable, "-c", "import inference_worker.api"],
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
+    return run_command(
+        [sys.executable, "-c", "import inference_worker.api"], env=env, timeout=120, check=False
     )
 
 

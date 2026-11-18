@@ -8,10 +8,11 @@ from __future__ import annotations
 
 import os
 import stat
-import subprocess
 from pathlib import Path
 
 import yaml
+
+from tests.helpers.process import run_command
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
@@ -109,7 +110,7 @@ def test_local_ci_simulation_script() -> None:
     assert bool(file_stat.st_mode & stat.S_IXUSR), "test_ci_e2e.sh is not executable"
 
     # Bash syntax validation
-    res = subprocess.run(["bash", "-n", str(LOCAL_CI_SCRIPT_PATH)], capture_output=True, text=True)
+    res = run_command(["bash", "-n", str(LOCAL_CI_SCRIPT_PATH)], timeout=240.0)
     assert res.returncode == 0, f"Bash syntax check failed: {res.stderr}"
 
     content = LOCAL_CI_SCRIPT_PATH.read_text(encoding="utf-8")

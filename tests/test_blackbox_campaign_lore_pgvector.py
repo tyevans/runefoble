@@ -9,7 +9,6 @@ observed through the lifespan of the public application.
 
 from __future__ import annotations
 
-import socket
 from collections.abc import Iterator
 from uuid import uuid4
 
@@ -31,6 +30,7 @@ from tests.helpers.lore_backends import (
     VAULT_TITLE,
     lore_embedding_app,
 )
+from tests.helpers.ports import free_port
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 VISITOR_SUBJECT = "lore-test-visitor"
@@ -56,9 +56,7 @@ def client(lore_backends: dict[str, str | int]) -> Iterator[TestClient]:
 
 def _closed_port() -> int:
     """Return a loopback port where nothing listens."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        return int(probe.getsockname()[1])
+    return free_port()
 
 
 def _ingest_two_documents(client: TestClient, campaign_id: str) -> None:

@@ -8,7 +8,6 @@ turn with 503.
 
 from __future__ import annotations
 
-import socket
 from collections.abc import Iterator
 from typing import Any
 from uuid import uuid4
@@ -20,6 +19,7 @@ from game_session.character_client import CHARACTER_SHEET_URL_ENV
 from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 
+from tests.helpers.ports import free_port
 from tests.helpers.stand_in_policy import create_character, store_policy
 from tests.helpers.watcher_double import STAND_IN_ACTION_BODY, serve_watcher_double
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -98,9 +98,7 @@ async def _start_session_with_absent_player(client: AsyncClient, character_id: s
 @pytest.fixture
 def unreachable_watcher(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """Point the session at a closed port. A request that reaches The Watcher fails with 503."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        closed_port = probe.getsockname()[1]
+    closed_port = free_port()
     monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", f"http://127.0.0.1:{closed_port}")
     yield
 
@@ -188,9 +186,7 @@ async def test_auto_pilot_refuses_when_the_stored_policy_is_unavailable(
         monkeypatch.setenv("RUNEFOBLE_WATCHER_URL", watcher_url)
         async with client:
             session_id = await _start_session_with_absent_player(client, character_id)
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-                probe.bind(("127.0.0.1", 0))
-                closed_port = probe.getsockname()[1]
+            closed_port = free_port()
             monkeypatch.setenv(CHARACTER_SHEET_URL_ENV, f"http://127.0.0.1:{closed_port}")
 
             res = await client.post(AUTO_PILOT_PATH.format(session_id=session_id))

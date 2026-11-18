@@ -21,11 +21,8 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-
-def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        return int(sock.getsockname()[1])
+from tests.helpers.polling import wait_until
+from tests.helpers.ports import free_port
 
 
 @contextmanager
@@ -34,7 +31,7 @@ def serve(app: FastAPI, *, lifespan: Literal["on", "off"] = "off") -> Iterator[s
 
     Pass `lifespan="on"` for a service that builds its state at start-up.
     """
-    port = _free_port()
+    port = free_port()
     server = uvicorn.Server(
         uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning", lifespan=lifespan)
     )
@@ -68,7 +65,7 @@ def serve_subprocess(
     WebSockets, and the service records each close as a disconnect. Pass `crash=True` to send
     SIGKILL. A crash runs no shutdown code, so only state that was already saved survives.
     """
-    port = _free_port()
+    port = free_port()
     with tempfile.TemporaryFile(mode="w+") as log:
         proc = subprocess.Popen(
             [
@@ -110,19 +107,17 @@ def serve_subprocesses(apps: Mapping[str, str], env: Mapping[str, str]) -> Itera
 
 
 def _wait_for_listener(proc: subprocess.Popen[bytes], port: int, log: IO[str]) -> None:
-    deadline = time.monotonic() + 60.0
-    while True:
+    def listening() -> bool:
         if proc.poll() is not None:
             raise RuntimeError(f"service exited with {proc.returncode}: {_read_log(log)}")
         try:
             with socket.create_connection(("127.0.0.1", port), timeout=0.5):
-                return
-        except OSError as exc:
-            if time.monotonic() > deadline:
-                raise RuntimeError(
-                    f"service did not listen on port {port}: {_read_log(log)}"
-                ) from exc
-            time.sleep(0.05)
+                return True
+        except OSError:
+            return False
+
+    if not wait_until(listening, timeout_s=60.0, interval_s=0.05):
+        raise RuntimeError(f"service did not listen on port {port}: {_read_log(log)}")
 
 
 def _read_log(log: IO[str]) -> str:
@@ -158,4 +153,4 @@ def unavailable_app(status_code: int = 503) -> FastAPI:
 
 def closed_port_url() -> str:
     """Return a base URL where nothing listens, so connections are refused."""
-    return f"http://127.0.0.1:{_free_port()}"
+    return f"http://127.0.0.1:{free_port()}"

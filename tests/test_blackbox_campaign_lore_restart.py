@@ -12,8 +12,6 @@ a new PostgreSQL event store connection, which is what a real process restart do
 from __future__ import annotations
 
 import os
-import socket
-import subprocess
 import sys
 from uuid import uuid4
 
@@ -31,6 +29,8 @@ from tests.helpers.lore_backends import (
     UNDEAD_QUERY,
 )
 from tests.helpers.module_state import SeamRestorer
+from tests.helpers.ports import free_port
+from tests.helpers.process import run_command
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 VISITOR_SUBJECT = "lore-test-visitor"
@@ -274,9 +274,7 @@ async def test_alias_consolidation_requires_an_existing_document():
 
 def test_start_up_fails_when_configured_event_store_is_unreachable():
     """The service exits with an error rather than serving an empty projection."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        closed_port = probe.getsockname()[1]
+    closed_port = free_port()
 
     env = {
         **os.environ,
@@ -289,13 +287,6 @@ def test_start_up_fails_when_configured_event_store_is_unreachable():
         "with TestClient(app):\n"
         "    pass\n"
     )
-    result = subprocess.run(
-        [sys.executable, "-c", code],
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=180,
-        check=False,
-    )
+    result = run_command([sys.executable, "-c", code], env=env, timeout=180, check=False)
     assert result.returncode != 0
     assert "unreachable" in result.stderr

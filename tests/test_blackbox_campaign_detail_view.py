@@ -12,13 +12,14 @@ Governed by:
 
 from __future__ import annotations
 
-import subprocess
 from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
+
+from tests.helpers.node_suite import NODE_TEST_TIMEOUT_S, run_node_tests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
@@ -55,17 +56,7 @@ def test_node_campaign_detail_view_suite_execution() -> None:
     """Execute the Node-based TypeScript campaign detail view test suite."""
     assert TEST_CAMPAIGN_DETAIL_TS.is_file(), f"{TEST_CAMPAIGN_DETAIL_TS} must exist"
 
-    result = subprocess.run(
-        [
-            "node",
-            "--experimental-strip-types",
-            "--test",
-            str(TEST_CAMPAIGN_DETAIL_TS.relative_to(REPO_ROOT)),
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
+    result = run_node_tests([TEST_CAMPAIGN_DETAIL_TS], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Node tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )

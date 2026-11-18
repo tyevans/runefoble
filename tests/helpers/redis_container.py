@@ -2,34 +2,27 @@
 
 from __future__ import annotations
 
-import shutil
-import subprocess
-import time
 from collections.abc import Generator
 from contextlib import contextmanager
 
 import redis
 
 from tests.helpers.container_owner import owner_label_args, remove_test_container
+from tests.helpers.docker import DOCKER_TIMEOUT_SECONDS, require_docker_bin, run_docker
+from tests.helpers.polling import wait_until
 
 REDIS_IMAGE = "redis:7-alpine"
-# Upper bound for one Docker CLI call. The image pull is the slowest call.
-DOCKER_TIMEOUT_SECONDS = 180.0
 
 
 @contextmanager
 def redis_container(port: int) -> Generator[str]:
     """Run Redis on the host port and yield its URL. Remove the container on exit."""
-    docker_bin = shutil.which("docker")
-    if not docker_bin:
-        raise RuntimeError("Docker is required for the Redis container helper")
+    docker_bin = require_docker_bin()
     name = f"runefoble-redis-test-{port}"
-    subprocess.run(
-        [docker_bin, "rm", "-f", name], capture_output=True, timeout=DOCKER_TIMEOUT_SECONDS
-    )
-    subprocess.run(
+    run_docker(docker_bin, ["rm", "-f", name], timeout=DOCKER_TIMEOUT_SECONDS)
+    started = run_docker(
+        docker_bin,
         [
-            docker_bin,
             "run",
             "--rm",
             "--name",
@@ -40,10 +33,10 @@ def redis_container(port: int) -> Generator[str]:
             f"127.0.0.1:{port}:6379",
             REDIS_IMAGE,
         ],
-        check=True,
-        capture_output=True,
         timeout=DOCKER_TIMEOUT_SECONDS,
     )
+    if started.returncode != 0:
+        raise RuntimeError(f"docker run failed for {name}: {started.stderr.strip()}")
     url = f"redis://127.0.0.1:{port}/0"
     try:
         _wait_for_redis(url)
@@ -53,14 +46,16 @@ def redis_container(port: int) -> Generator[str]:
 
 
 def _wait_for_redis(url: str, timeout: float = 30.0) -> None:
-    deadline = time.time() + timeout
-    last_error = "no probe completed"
-    while time.time() < deadline:
+    last_error = ["no probe completed"]
+
+    def answers_ping() -> bool:
         try:
             if redis.Redis.from_url(url, socket_timeout=1).ping():
-                return
-            last_error = "ping returned False"
+                return True
+            last_error[0] = "ping returned False"
         except redis.RedisError as error:
-            last_error = str(error)
-        time.sleep(0.3)
-    raise RuntimeError(f"Redis at {url} did not become ready: {last_error}")
+            last_error[0] = str(error)
+        return False
+
+    if not wait_until(answers_ping, timeout_s=timeout, interval_s=0.3):
+        raise RuntimeError(f"Redis at {url} did not become ready: {last_error[0]}")

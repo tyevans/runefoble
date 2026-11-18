@@ -89,7 +89,9 @@ console.log(JSON.stringify({{
   selected, cleared, searchFocused
 }}));
 """
-    proc = subprocess.run([node_bin], input=test_script, capture_output=True, text=True)
+    proc = subprocess.run(
+        [node_bin], input=test_script, capture_output=True, text=True, timeout=240.0
+    )
     assert proc.returncode == 0, f"Error in node script: {proc.stderr}"
     res = json.loads(proc.stdout)
     assert all(res.values()), f"Failed assertions: {[k for k, v in res.items() if not v]}"

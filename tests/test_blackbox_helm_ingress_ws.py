@@ -5,11 +5,12 @@ They do not reach into service internals.
 """
 
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
 import yaml
+
+from tests.helpers.process import run_command
 
 HELM_CHART = Path("deployments/helm/runefoble")
 # Zitadel has its own host. It is not an application host and has no /ws route.
@@ -21,11 +22,8 @@ def _render_ingress_documents() -> list[dict]:
     if not shutil.which("helm"):
         pytest.skip("helm CLI not available")
 
-    proc = subprocess.run(
-        ["helm", "template", "runefoble", str(HELM_CHART)],
-        capture_output=True,
-        text=True,
-        check=True,
+    proc = run_command(
+        ["helm", "template", "runefoble", str(HELM_CHART)], check=True, timeout=240.0
     )
     docs = [doc for doc in yaml.safe_load_all(proc.stdout) if doc]
     return [doc for doc in docs if doc.get("kind") == "Ingress"]

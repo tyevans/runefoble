@@ -7,7 +7,6 @@ and expects the start-up to raise. No request is served.
 
 from __future__ import annotations
 
-import socket
 from typing import Any
 
 import pytest
@@ -16,12 +15,12 @@ from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider, EventBusUnavailableError
 from runefoble_platform.event_sourcing import set_event_store
 
+from tests.helpers.ports import free_port
+
 
 def _closed_port() -> int:
     """Return a local TCP port with no listener. The socket closes before the test uses it."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind(("127.0.0.1", 0))
-        return int(probe.getsockname()[1])
+    return free_port()
 
 
 def test_start_up_fails_with_clear_error_when_postgresql_is_unreachable(

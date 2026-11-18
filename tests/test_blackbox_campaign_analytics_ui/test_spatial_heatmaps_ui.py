@@ -26,7 +26,7 @@ from runefoble_events.events import (
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.campaign_analytics_service import wait_until
+from tests.helpers.polling import wait_until
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
@@ -117,7 +117,8 @@ async def test_spatial_heatmap_frontdoor_cells_and_filtering(
         lambda: (
             client.get(f"/api/v1/analytics/campaigns/{campaign_id}/heatmap").json()["total_points"]
             == 3
-        )
+        ),
+        timeout_s=10.0,
     )
 
     resp = client.get(f"/api/v1/analytics/campaigns/{campaign_id}/heatmap?cell_size=5&metric=all")

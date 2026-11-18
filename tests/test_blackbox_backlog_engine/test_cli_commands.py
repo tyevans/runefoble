@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tests.helpers.process import run_command
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -12,7 +14,7 @@ def run_cli(*args: str, cwd: Path) -> subprocess.CompletedProcess:
     """Executes backlog CLI via python -m entrypoint in specified directory."""
     cmd = [sys.executable, "-m", "tools.backlog_engine.cli", *args]
     env = {**os.environ, "PYTHONPATH": str(REPO_ROOT)}
-    return subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True)
+    return run_command(cmd, cwd=cwd, env=env, timeout=240.0)
 
 
 def test_cli_list_ready_and_all(mock_backlog_repo: Path):
@@ -95,11 +97,8 @@ def test_cli_complete_lifecycle(mock_backlog_repo: Path):
     assert "TASK-0002 (Complete)" in priority_text
 
     # Verify git commit was created
-    git_log = subprocess.run(
-        ["git", "log", "-n", "1", "--oneline"],
-        cwd=mock_backlog_repo,
-        capture_output=True,
-        text=True,
+    git_log = run_command(
+        ["git", "log", "-n", "1", "--oneline"], cwd=mock_backlog_repo, timeout=240.0
     )
     assert "chore(backlog): complete TASK-0002" in git_log.stdout
 

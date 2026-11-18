@@ -16,7 +16,7 @@ from gateway_api.main import app
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.sync import ZitadelSpiceDBSyncService
 
-from tests.helpers.spicedb import find_free_port
+from tests.helpers.ports import free_port
 from tests.helpers.spicedb_factory import shared_spicedb_client
 
 HEALTH_PATH = "/api/v1/auth/sync/health"
@@ -31,7 +31,7 @@ def gateway(game_session_upstream) -> Iterator[TestClient]:
 
 def test_unreachable_spicedb_reports_unhealthy_with_cause(gateway: TestClient) -> None:
     """With SpiceDB unreachable, the sync health route answers 503 and reports unhealthy."""
-    closed_port = find_free_port()
+    closed_port = free_port()
     unreachable = SpiceDBClient(endpoint=f"127.0.0.1:{closed_port}", token="test-only-key")
 
     with shared_spicedb_client(unreachable):

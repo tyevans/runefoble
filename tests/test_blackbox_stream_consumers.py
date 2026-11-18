@@ -21,8 +21,9 @@ from runefoble_platform.consumer_group import RedisConsumerGroup
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import StreamConsumer
 
-from tests.helpers.campaign_analytics_service import AnalyticsService, wait_until
+from tests.helpers.campaign_analytics_service import AnalyticsService
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.polling import wait_until
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 SESSION_STREAM = "runefoble.events.session"
@@ -42,12 +43,7 @@ def redis_double(monkeypatch: pytest.MonkeyPatch) -> MockAsyncRedis:
 
 
 def _wait_until(predicate: Callable[[], bool], timeout_s: float = 5.0) -> bool:
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(0.02)
-    return predicate()
+    return wait_until(predicate, timeout_s=timeout_s, interval_s=0.02)
 
 
 def _publish(double: MockAsyncRedis, stream: str, event: Any) -> None:
@@ -81,7 +77,9 @@ def test_campaign_analytics_consumer_projects_session_event_from_redis(
             body = client.get(timeline_url).json()
             return body.get("total_milestones", 0) >= 1
 
-        assert wait_until(has_milestone), "analytics consumer did not project the session event"
+        assert wait_until(has_milestone, timeout_s=10.0), (
+            "analytics consumer did not project the session event"
+        )
 
 
 def test_campaign_analytics_refuses_to_start_when_consumer_group_cannot_be_created(

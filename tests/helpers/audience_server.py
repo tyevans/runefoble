@@ -8,10 +8,8 @@ Permission checks go to a live SpiceDB container (TASK-0554). Tests pass its env
 
 import json
 import os
-import socket
 import subprocess
 import threading
-import time
 import urllib.parse
 from collections.abc import Generator, Mapping
 from functools import lru_cache
@@ -24,6 +22,9 @@ from runefoble_auth.testing.signing_test_issuer import (
     DEFAULT_ISSUER,
     SigningTestIssuer,
 )
+
+from tests.helpers.polling import wait_until
+from tests.helpers.ports import free_port
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SERVICE_DIR = REPO_ROOT / "services" / "audience_studio"
@@ -80,13 +81,6 @@ class _JwksServer:
         self._server.server_close()
 
 
-def get_free_port() -> int:
-    """Find an available port on localhost."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
-
-
 def build_audience_studio() -> None:
     """Compile the TypeScript service so the tests run the current code. A build failure fails the test."""
     subprocess.run(
@@ -94,6 +88,7 @@ def build_audience_studio() -> None:
         cwd=str(REPO_ROOT),
         check=True,
         capture_output=True,
+        timeout=240.0,
     )
 
 
@@ -103,7 +98,7 @@ class AudienceStudioProcess:
     def __init__(
         self, env_overrides: Mapping[str, str] | None = None, port: int | None = None
     ) -> None:
-        self.port = port or get_free_port()
+        self.port = port or free_port()
         self.base_url = f"http://127.0.0.1:{self.port}"
         self._env_overrides = dict(env_overrides or {})
         self._proc: subprocess.Popen[bytes] | None = None
@@ -152,17 +147,18 @@ class AudienceStudioProcess:
 
     def wait_for_status(self, path: str, status: int, timeout: float) -> None:
         """Poll a path until it returns the status, or raise with the process logs."""
-        deadline = time.time() + timeout
         with httpx.Client(base_url=self.base_url) as client:
-            while time.time() < deadline:
+
+            def returns_status() -> bool:
                 if self._proc is not None and self._proc.poll() is not None:
                     raise RuntimeError(f"Audience Studio exited early:\n{self._logs()}")
                 try:
-                    if client.get(path, timeout=1.0).status_code == status:
-                        return
+                    return client.get(path, timeout=1.0).status_code == status
                 except httpx.HTTPError:
-                    pass
-                time.sleep(0.1)
+                    return False
+
+            if wait_until(returns_status, timeout_s=timeout, interval_s=0.1):
+                return
         raise RuntimeError(f"{path} did not return {status} within {timeout}s:\n{self._logs()}")
 
     def _logs(self) -> str:

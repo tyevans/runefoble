@@ -10,8 +10,9 @@ Hard Invariants:
 from __future__ import annotations
 
 import re
-import subprocess
 from pathlib import Path
+
+from tests.helpers.node_suite import NODE_TEST_TIMEOUT_S, run_node_tests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
@@ -20,17 +21,7 @@ TEST_ROUTER_TS = FRONTEND_DIR / "test" / "router.test.ts"
 
 def test_node_router_unit_test_suite_execution():
     """Execute the Node-based TypeScript router unit test suite including character sheet route tests."""
-    result = subprocess.run(
-        [
-            "node",
-            "--experimental-strip-types",
-            "--test",
-            str(TEST_ROUTER_TS.relative_to(REPO_ROOT)),
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
+    result = run_node_tests([TEST_ROUTER_TS], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Router tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )

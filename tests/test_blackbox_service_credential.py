@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient
 from game_session.main import app as session_app
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
+from tests.helpers.process import run_command
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -151,13 +152,8 @@ def _run_import(
     for key, value in env_overrides.items():
         if value is not None:
             env[key] = value
-    return subprocess.run(
-        [sys.executable, "-c", f"import {module}"],
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
+    return run_command(
+        [sys.executable, "-c", f"import {module}"], env=env, timeout=120, check=False
     )
 
 

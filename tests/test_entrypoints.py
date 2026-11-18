@@ -1,11 +1,12 @@
 """Comprehensive verification of developer interfaces, CLI entrypoints, and microservices."""
 
 import shutil
-import subprocess
 from contextlib import ExitStack
 
 import pytest
 from fastapi.testclient import TestClient
+
+from tests.helpers.process import run_command
 
 
 def test_required_developer_cli_tools_installed():
@@ -40,11 +41,7 @@ def test_required_developer_cli_tools_installed():
 )
 def test_makefile_targets_dry_run(make_target: str):
     """Verify that core Makefile targets parse correctly without syntax or missing variable errors."""
-    proc = subprocess.run(
-        ["make", "-n", make_target],
-        capture_output=True,
-        text=True,
-    )
+    proc = run_command(["make", "-n", make_target], timeout=240.0)
     assert proc.returncode == 0, f"Makefile target '{make_target}' failed dry-run: {proc.stderr}"
 
 

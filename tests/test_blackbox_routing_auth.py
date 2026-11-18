@@ -11,13 +11,14 @@ Governing ADRs:
 
 from __future__ import annotations
 
-import subprocess
 from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
+
+from tests.helpers.node_suite import NODE_TEST_TIMEOUT_S, run_node_tests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
@@ -45,17 +46,7 @@ def test_node_blackbox_routing_auth_suite_execution() -> None:
     test_file = TESTS_DIR / "blackbox-routing-auth.test.ts"
     assert test_file.is_file(), f"{test_file} must exist"
 
-    result = subprocess.run(
-        [
-            "node",
-            "--experimental-strip-types",
-            "--test",
-            str(test_file.relative_to(REPO_ROOT)),
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
+    result = run_node_tests([test_file], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Blackbox tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )

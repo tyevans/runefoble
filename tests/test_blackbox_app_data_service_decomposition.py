@@ -10,13 +10,14 @@ Hard Invariants:
 from __future__ import annotations
 
 import re
-import subprocess
 from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
+
+from tests.helpers.node_suite import NODE_TEST_TIMEOUT_S, run_node_tests
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
@@ -33,17 +34,7 @@ def test_frontend_node_blackbox_suite_execution():
     """Execute the Node-based TypeScript blackbox test suite for TASK-0271 and assert 100% pass."""
     assert TS_TEST_FILE.is_file(), f"Frontend test suite {TS_TEST_FILE} must exist"
 
-    result = subprocess.run(
-        [
-            "node",
-            "--experimental-strip-types",
-            "--test",
-            str(TS_TEST_FILE.relative_to(REPO_ROOT)),
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
+    result = run_node_tests([TS_TEST_FILE], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Frontend blackbox suite failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )

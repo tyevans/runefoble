@@ -25,8 +25,8 @@ from tests.helpers.campaign_analytics_service import (
     SESSION_STREAM,
     WATCHER_STREAM,
     AnalyticsService,
-    wait_until,
 )
+from tests.helpers.polling import wait_until
 
 
 def _milestone_types(client: Any, cid: str) -> list[str]:
@@ -74,7 +74,7 @@ def test_session_lifecycle_and_recap_become_chronicle_milestones(
             SessionEnded(aggregate_id=sid, session_id=sid, campaign_id=cid, summary="Finished"),
         )
 
-        assert wait_until(lambda: "session_end" in _milestone_types(client, cid))
+        assert wait_until(lambda: "session_end" in _milestone_types(client, cid), timeout_s=10.0)
         assert sorted(_milestone_types(client, cid)) == sorted(
             ["session_start", "session_start", "recap", "session_end"]
         )
@@ -99,7 +99,7 @@ def test_placement_movement_and_knockout_are_projected(analytics_service: Analyt
                 y=5,
             ),
         )
-        assert wait_until(lambda: _heatmap_points(client, cid) == 1)
+        assert wait_until(lambda: _heatmap_points(client, cid) == 1, timeout_s=10.0)
         analytics_service.publish(
             BOARD_STREAM,
             TokenMoved(
@@ -114,7 +114,7 @@ def test_placement_movement_and_knockout_are_projected(analytics_service: Analyt
                 to_y=8,
             ),
         )
-        assert wait_until(lambda: _heatmap_points(client, cid, "movement") == 2)
+        assert wait_until(lambda: _heatmap_points(client, cid, "movement") == 2, timeout_s=10.0)
 
         analytics_service.publish(
             CHARACTER_STREAM,
@@ -127,7 +127,9 @@ def test_placement_movement_and_knockout_are_projected(analytics_service: Analyt
                 max_hp=30,
             ),
         )
-        assert wait_until(lambda: "character_knockout" in _milestone_types(client, cid))
+        assert wait_until(
+            lambda: "character_knockout" in _milestone_types(client, cid), timeout_s=10.0
+        )
         timeline = client.get(f"/api/v1/analytics/campaigns/{cid}/timeline").json()
         knockout = next(m for m in timeline["milestones"] if m["type"] == "character_knockout")
         assert knockout["title"] == "Kyra Knocked Unconscious"

@@ -23,9 +23,9 @@ from tests.helpers.campaign_analytics_service import (
     CHARACTER_STREAM,
     SESSION_STREAM,
     AnalyticsService,
-    wait_until,
 )
 from tests.helpers.live_services import closed_port_url, serve
+from tests.helpers.polling import wait_until
 
 OWNER_FORBIDDEN_DETAIL = "Forbidden: User lacks permission to view campaign analytics"
 
@@ -165,7 +165,8 @@ def test_mvp_returns_owner_award_for_recorded_encounter(
         ),
     )
     assert wait_until(
-        lambda: "Combat Round 1" in _milestone_titles(live_client, live_campaign, headers)
+        lambda: "Combat Round 1" in _milestone_titles(live_client, live_campaign, headers),
+        timeout_s=10.0,
     )
     live_owner.publish(
         CHARACTER_STREAM,
@@ -188,7 +189,7 @@ def test_mvp_returns_owner_award_for_recorded_encounter(
             for c in body.get("combatants", [])
         )
 
-    assert wait_until(striker_dealt_damage)
+    assert wait_until(striker_dealt_damage, timeout_s=10.0)
 
     other = live_client.get(
         f"/api/v1/analytics/campaigns/{live_campaign}/mvp?encounter_id=enc-none", headers=headers
@@ -220,7 +221,9 @@ def test_timeline_forwards_limit_to_owner(
             active_combatant_id="",
         ),
     )
-    assert wait_until(lambda: len(_milestone_titles(live_client, live_campaign, headers)) == 2)
+    assert wait_until(
+        lambda: len(_milestone_titles(live_client, live_campaign, headers)) == 2, timeout_s=10.0
+    )
 
     res = live_client.get(
         f"/api/v1/analytics/campaigns/{live_campaign}/timeline?limit=1", headers=headers

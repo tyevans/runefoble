@@ -4,9 +4,9 @@ Governing ADRs: ADR-0001, ADR-0004, ADR-0007, ADR-0012, ADR-0013.
 Task Reference: TASK-0257.
 """
 
-import subprocess
 from pathlib import Path
 
+from tests.helpers.node_suite import NODE_TEST_TIMEOUT_S, run_node_tests
 from tests.helpers.zitadel_auth import auth_environment, create_signed_token
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -45,17 +45,7 @@ def test_gateway_profile_rest_endpoint_claims(auth_environment):
 def test_typescript_unit_test_suite_execution():
     """Execute the Node-based TypeScript test suite for profile and campaign creation idempotency."""
     assert TS_TEST_FILE.is_file()
-    result = subprocess.run(
-        [
-            "node",
-            "--experimental-strip-types",
-            "--test",
-            str(TS_TEST_FILE.relative_to(REPO_ROOT)),
-        ],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
+    result = run_node_tests([TS_TEST_FILE], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"TypeScript unit tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )

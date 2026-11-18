@@ -21,6 +21,9 @@ from uuid import uuid4
 
 import pytest
 
+from tests.helpers.ports import free_port
+from tests.helpers.process import run_command
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 KEY_VAR = "RUNEFOBLE_SPICEDB_PRESHARED_KEY"
 KEY_VARS = {KEY_VAR, "SPICEDB_TOKEN", "SPICEDB_PRESHARED_KEY"}
@@ -43,15 +46,7 @@ def _env(**extra: str) -> dict[str, str]:
 
 def _run_python(code: str, env: dict[str, str], cwd: Path) -> subprocess.CompletedProcess[str]:
     """Run Python code in a fresh interpreter, outside the repo so no .env file loads."""
-    return subprocess.run(
-        [sys.executable, "-c", code],
-        env=env,
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        timeout=180,
-        check=False,
-    )
+    return run_command([sys.executable, "-c", code], env=env, cwd=cwd, timeout=180, check=False)
 
 
 def test_platform_settings_fail_without_key(tmp_path: Path) -> None:
@@ -106,12 +101,10 @@ def test_audience_studio_config_requires_key(tmp_path: Path) -> None:
     )
     env = _env()
     env.pop("NODE_ENV", None)
-    result = subprocess.run(
+    result = run_command(
         [node, "--experimental-strip-types", "--input-type=module", "-e", script],
         env=env,
         cwd=tmp_path,
-        capture_output=True,
-        text=True,
         timeout=60,
         check=False,
     )
@@ -122,12 +115,9 @@ def test_audience_studio_config_requires_key(tmp_path: Path) -> None:
 @pytest.mark.skipif(shutil.which("docker") is None, reason="needs Docker for a live SpiceDB")
 def test_live_spicedb_enforces_configured_key(tmp_path: Path) -> None:
     """A live SpiceDB that enforces the Helm key accepts the same key from the service factory."""
-    import socket
 
     key = f"live-key-{uuid4().hex[:8]}"
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        port = s.getsockname()[1]
+    port = free_port()
     container = subprocess.check_output(
         [
             "docker",
@@ -142,6 +132,7 @@ def test_live_spicedb_enforces_configured_key(tmp_path: Path) -> None:
             key,
         ],
         text=True,
+        timeout=240.0,
     ).strip()
     try:
         endpoint = f"127.0.0.1:{port}"
@@ -174,4 +165,6 @@ def test_live_spicedb_enforces_configured_key(tmp_path: Path) -> None:
         )
         assert wrong.returncode != 0
     finally:
-        subprocess.run(["docker", "stop", container], capture_output=True, check=False)
+        subprocess.run(
+            ["docker", "stop", container], capture_output=True, check=False, timeout=240.0
+        )

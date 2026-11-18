@@ -7,10 +7,11 @@ They use no private state and no backdoors.
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
 import yaml
+
+from tests.helpers.process import run_command
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHART = REPO_ROOT / "deployments" / "helm" / "runefoble"
@@ -20,12 +21,7 @@ WORKER_URL = f"http://inference-worker:{WORKER_PORT}/openapi.json"
 
 
 def _rendered_documents() -> list[dict]:
-    result = subprocess.run(
-        ["helm", "template", "runefoble", str(CHART)],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
+    result = run_command(["helm", "template", "runefoble", str(CHART)], timeout=120)
     assert result.returncode == 0, f"helm template failed: {result.stderr}"
     return [doc for doc in yaml.safe_load_all(result.stdout) if doc]
 
