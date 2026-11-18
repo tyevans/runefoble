@@ -115,7 +115,7 @@ def test_gateway_frontdoor_endpoints_for_audited_views(trusted_ws_issuer, client
     session_res = client.get(f"/api/v1/sessions/{session_id}", headers=headers)
     assert session_res.status_code == 200
 
-    board_res = client.get(f"/api/v1/boards/{campaign_id}", headers=headers)
+    board_res = client.get(f"/api/v1/boards/{session_id}", headers=headers)
     assert board_res.status_code == 200
     assert "tokens" in board_res.json()
 

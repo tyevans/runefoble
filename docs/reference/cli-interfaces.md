@@ -30,6 +30,7 @@
 | `make deploy-remote-worker` | Syncs the workspace with rsync to the remote GPU host set in the Makefile and runs `uv sync` there |
 | `make dev-audience-studio` | Runs Audience Studio from TypeScript source with reload (`pnpm run dev` in `services/audience_studio`, which runs `tsx watch src/index.ts`). Listens on port 8010 and serves `GET /healthz`. Needs `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`, and either `RUNEFOBLE_DATABASE_URL` plus `REDIS_URL`, or `NODE_ENV=test`. Start-up fails without them. |
 | `make test` | Executes the Python test suite (`uv run pytest`, default per-test timeout of 300 seconds from `[tool.pytest.ini_options]`; a test that exceeds it fails with a timeout error) and builds the frontend |
+| `make test-authz-live` | Runs the live SpiceDB authorization suite (`pytest -m authz_live`) with `RUNEFOBLE_REQUIRE_LIVE_SPICEDB=1`. Needs Docker. The run fails if Docker is missing |
 | `make test-entrypoints` | Runs `tests/test_entrypoints.py`. Covers developer entrypoints, CLI tools, and microservice start-up |
 | `make test-property` | Runs the Hypothesis property tests in `tests/test_properties.py` |
 | `make test-mutation` | Runs `mutmut` on the core domain modules and prints the results. A failed run does not stop the target |

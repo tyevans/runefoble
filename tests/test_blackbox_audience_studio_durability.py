@@ -154,7 +154,7 @@ def test_short_window_poll_closes_after_restart_and_publishes_completion(
 def test_publishing_recovers_when_redis_starts_after_the_service(
     database_url: str, roles: LiveSpiceDB
 ):
-    """The service starts before Redis, refuses writes with 503, and publishes once Redis is up."""
+    """A write made while Redis is down succeeds, and the outbox relay publishes it once Redis is up."""
     port = get_free_port()
     process = AudienceStudioProcess(
         {
@@ -168,15 +168,32 @@ def test_publishing_recovers_when_redis_starts_after_the_service(
         with httpx.Client(base_url=base_url) as client:
             assert client.get("/readyz").status_code == 503
 
-            refused = client.post(
+            accepted = client.post(
                 POLLS,
                 headers=bearer_for("dm-durable"),
-                json={"campaign_id": "camp-recover", "title": "T", "prompt": "P", "options": ["A"]},
+                json={
+                    "campaign_id": "camp-recover",
+                    "title": "While Down",
+                    "prompt": "P",
+                    "options": ["A"],
+                },
             )
-            assert refused.status_code == 503
+            assert accepted.status_code == 201, accepted.text
+            pending_id = accepted.json()["id"]
 
             with redis_container(port) as redis_url:
                 process.wait_for_status("/readyz", 200, timeout=20.0)
+
+                deadline = time.time() + 15
+                created: list[dict[str, str]] = []
+                while time.time() < deadline and not created:
+                    created = [
+                        e
+                        for e in _stream_events(redis_url, "poll_started")
+                        if pending_id in e["payload"]
+                    ]
+                    time.sleep(0.2)
+                assert len(created) == 1
 
                 poll = _create_poll(client, campaign_id="camp-recover", title="After Recovery")
                 vote = client.post(

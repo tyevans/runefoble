@@ -85,8 +85,8 @@ def test_gateway_campaign_and_session_routes(client: TestClient, trusted_ws_issu
     assert session_res.status_code == 200
     assert session_res.json()["session_id"] == session_id
 
-    # 6. Fetch board tokens (for #/campaigns/:campaignId/sessions/:sessionId)
-    board_res = client.get(f"/api/v1/boards/{campaign_id}", headers=headers)
+    # 6. Fetch board tokens (keyed by session id)
+    board_res = client.get(f"/api/v1/boards/{session_id}", headers=headers)
     assert board_res.status_code == 200
     assert "tokens" in board_res.json()
 
