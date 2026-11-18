@@ -59,6 +59,14 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
 
 ## Publishing Events
 
+### Stream Naming Rule
+
+Every stream uses the dotted form `runefoble.events.<bc>`, where `<bc>` is the owning bounded context (for example `session`, `board`, `watcher`, `world`, `system`, `asset`, `character`). Stream names never use colons. A stream that carries events from one bounded context uses that context's name. Entries that a producer writes to a stream it does not own are a defect.
+
+Migration note: the colon names `runefoble:events:world` and `runefoble:events:system` are removed. Producers write to `runefoble.events.world` and `runefoble.events.system`. Entries in the old streams are not copied. A stream reader must read the dotted name.
+
+Asset Forge publishes `PortraitVariantGenerated` to `runefoble.events.character`, the stream that Character Sheet and its consumers read. It publishes every other forge event to `runefoble.events.asset`.
+
 Call `publish_event(stream, event)` on `RedisStreamsEventBus` for every event. Do not call `publish`. A call to `publish` raises `AttributeError`. A broad exception guard around that call hides the error, so the event never reaches Redis. Do not wrap publish calls in `contextlib.suppress(Exception)`.
 
 ### Aggregate Event Publication
@@ -88,7 +96,7 @@ await publish_board_events(bus, events)
 
 ### Watcher Events
 
-The Watcher publishes to `runefoble.events.watcher` and to `runefoble:events:world` (turf war, `STREAM_WORLD`) with `publish_event(STREAM, event)`. Each call goes through the publish failure policy below.
+The Watcher publishes to `runefoble.events.watcher` and to `runefoble.events.world` (turf war, `STREAM_WORLD`) with `publish_event(STREAM, event)`. Each call goes through the publish failure policy below.
 
 ### Publish Failure Policy
 
