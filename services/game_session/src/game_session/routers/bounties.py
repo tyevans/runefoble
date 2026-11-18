@@ -9,6 +9,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from game_session.child_index import ChildIndexKind
 from game_session.contracts.auth import (
     _to_uuid,
     check_bounty_claim,
@@ -27,10 +28,10 @@ from game_session.contracts.models import (
 from game_session.dependencies import (
     get_bounty_contract_repository,
     get_event_bus,
-    get_session_bounties_index,
     get_spicedb_client,
 )
 from game_session.events import STREAM_SESSION
+from game_session.queries import link_child, list_bounties_for_session
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
@@ -74,7 +75,7 @@ async def post_bounty(
     cid = data.pop("campaign_id", req.campaign_id)
     agg.post_bounty(str(sid), cid, **data, poster_user_id=caller_id)
     await _save_pub(agg)
-    get_session_bounties_index().setdefault(str(sid), []).append(str(bid))
+    await link_child(ChildIndexKind.SESSION_BOUNTIES, str(sid), str(bid))
     await write_bounty_relationships(spicedb, str(bid), str(sid), req.campaign_id, caller_id)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
 
@@ -90,7 +91,7 @@ async def list_bounties(
     sid = _to_uuid(session_id)
     await check_bounty_view(get_spicedb_client(), str(sid), "", caller_id)
     repo, results = get_bounty_contract_repository(), []
-    for bid_str in get_session_bounties_index().get(str(sid), []):
+    for bid_str in await list_bounties_for_session(str(sid)):
         agg = await load_if_exists(repo, UUID(bid_str))
         if agg is None:
             continue

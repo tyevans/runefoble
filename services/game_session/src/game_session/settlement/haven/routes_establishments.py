@@ -8,12 +8,13 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
+from game_session.child_index import ChildIndexKind
 from game_session.dependencies import (
     get_establishment_repository,
     get_event_bus,
-    get_settlement_establishments_index,
     get_spicedb_client,
 )
+from game_session.queries import link_child, list_establishments_for_settlement
 from game_session.settlement.auth import (
     write_establishment_relationships,
 )
@@ -29,6 +30,7 @@ from game_session.settlement.models import (
     ConstructEstablishmentRequest,
     EstablishmentState,
 )
+from runefoble_platform.aggregate_loading import load_if_exists
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)])
 
@@ -84,7 +86,7 @@ async def construct_establishment(
         owner_id=caller_id,
     )
 
-    get_settlement_establishments_index().setdefault(settlement_id, []).append(str(eid))
+    await link_child(ChildIndexKind.SETTLEMENT_ESTABLISHMENTS, settlement_id, str(eid))
     return est_agg.state
 
 
@@ -96,16 +98,13 @@ async def list_settlement_establishments(
 ) -> list[EstablishmentState]:
     """List all establishments located in a settlement."""
     await load_settlement(settlement_id, "view", caller_id)
-    est_ids = get_settlement_establishments_index().get(settlement_id, [])
+    est_ids = await list_establishments_for_settlement(settlement_id)
     est_repo = get_establishment_repository()
     results: list[EstablishmentState] = []
     for eid in est_ids:
-        try:
-            agg = await est_repo.load(to_uuid(eid))
-            if agg.state.is_constructed:
-                results.append(agg.state)
-        except Exception:
-            continue
+        agg = await load_if_exists(est_repo, to_uuid(eid))
+        if agg is not None and agg.state.is_constructed:
+            results.append(agg.state)
     return results
 
 

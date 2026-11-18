@@ -5,17 +5,17 @@ Governed by ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import uuid4
 
+from game_session.child_index import ChildIndexKind
 from game_session.dependencies import (
     get_establishment_repository,
-    get_establishment_workers_index,
     get_event_bus,
     get_spicedb_client,
     get_worker_repository,
 )
+from game_session.queries import link_child, list_workers_for_establishment
 from game_session.settlement.auth import write_npc_relationships
 from game_session.settlement.establishment_aggregate import EstablishmentAggregate
 from game_session.settlement.worker_aggregate import NPCWorkerAggregate
@@ -28,6 +28,7 @@ from game_session.settlement.worker_models import (
     WorkerRelationship,
 )
 from game_session.settlement.workers.loaders import save_and_publish, to_uuid
+from runefoble_platform.aggregate_loading import load_if_exists
 
 
 def _dump_items(items: list[Any]) -> list[Any]:
@@ -38,15 +39,14 @@ async def sync_establishment_operations(establishment_id: str) -> EstablishmentO
     """Recalculate establishment operating metrics and save projection."""
     est_repo = get_establishment_repository()
     est = await est_repo.load(to_uuid(establishment_id))
-    worker_ids = get_establishment_workers_index().get(establishment_id, [])
+    worker_ids = await list_workers_for_establishment(establishment_id)
     worker_repo = get_worker_repository()
 
     workers: list[NPCWorkerState] = []
     for wid in worker_ids:
-        with contextlib.suppress(Exception):
-            w_agg = await worker_repo.load(to_uuid(wid))
-            if w_agg.state.status == "active":
-                workers.append(w_agg.state)
+        w_agg = await load_if_exists(worker_repo, to_uuid(wid))
+        if w_agg is not None and w_agg.state.status == "active":
+            workers.append(w_agg.state)
 
     q_score, q_tier, wages, net_cost, tension, morale = calculate_establishment_operations(
         base_cost=est.state.operating_cost, establishment_tier=est.state.tier, workers=workers
@@ -109,9 +109,7 @@ async def create_and_assign_worker(
         agg.form_relationship(r.target_npc_id, r.relation_type, r.intensity, r.notes, r.metadata)
     await save_and_publish(worker_repo, bus, agg)
 
-    w_index = get_establishment_workers_index().setdefault(establishment_id, [])
-    if nid not in w_index:
-        w_index.append(nid)
+    await link_child(ChildIndexKind.ESTABLISHMENT_WORKERS, establishment_id, str(agg.aggregate_id))
 
     await write_npc_relationships(
         spicedb,
