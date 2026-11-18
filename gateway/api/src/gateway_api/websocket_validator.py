@@ -10,6 +10,7 @@ import logging
 from typing import Any
 
 from gateway_api.auth import get_spicedb_client
+from runefoble_auth.contract import ACTION_PERMISSIONS, load_contract
 from runefoble_auth.spicedb import SpiceDBClient
 
 logger = logging.getLogger("runefoble.gateway.websocket_validator")
@@ -43,51 +44,44 @@ class WebSocketActionValidator:
         return self._spicedb or get_spicedb_client()
 
     async def validate_connect(self, campaign_id: str, subject_id: str) -> bool:
-        """Verify viewer/subject has campaign:view or campaign:read permission in SpiceDB."""
-        for p in ("view", "read"):
-            if await self.spicedb.check_permission("campaign", campaign_id, p, "user", subject_id):
-                return True
-        return False
+        """Verify the subject holds campaign.view in SpiceDB."""
+        _, view = ACTION_PERMISSIONS["campaign.view"]
+        return await self.spicedb.check_permission(
+            "campaign", campaign_id, view, "user", subject_id
+        )
 
     async def is_dungeon_master(self, campaign_id: str, subject_id: str) -> bool:
-        """Check if subject holds DM or campaign management permissions."""
-        for p in ("dungeon_master", "run_session", "owner"):
-            if await self.spicedb.check_permission("campaign", campaign_id, p, "user", subject_id):
-                return True
-        return False
+        """Check if subject holds campaign.run_session (DM, GM, or owner) in SpiceDB."""
+        _, run_session = ACTION_PERMISSIONS["campaign.run_session"]
+        return await self.spicedb.check_permission(
+            "campaign", campaign_id, run_session, "user", subject_id
+        )
 
     async def _check_char_perm(self, char_id: str | None, subject_id: str) -> bool:
         if not char_id:
             return False
-        for p in ("edit", "owner"):
-            if await self.spicedb.check_permission(
-                "character", str(char_id), p, "user", subject_id
-            ):
-                return True
-        return False
+        _, edit = ACTION_PERMISSIONS["character.edit"]
+        return await self.spicedb.check_permission(
+            "character", str(char_id), edit, "user", subject_id
+        )
 
     async def _validate_move_action(
         self, campaign_id: str, subject_id: str, data: dict[str, Any]
     ) -> bool:
-        for p in ("move_token", "move"):
-            if await self.spicedb.check_permission("campaign", campaign_id, p, "user", subject_id):
-                return True
         tok = data.get("token_id") or data.get("tokenId")
-        if tok and await self.spicedb.check_permission(
-            "board_token", str(tok), "move", "user", subject_id
-        ):
-            return True
+        if tok:
+            _, move = ACTION_PERMISSIONS["board_token.move"]
+            if await self.spicedb.check_permission(
+                "board_token", str(tok), move, "user", subject_id
+            ):
+                return True
         return await self._check_char_perm(_extract_char_id(data), subject_id)
 
     async def _validate_health_action(
         self, campaign_id: str, subject_id: str, action: str, data: dict[str, Any]
     ) -> bool:
-        if await self._check_char_perm(_extract_char_id(data), subject_id):
-            return True
-        for p in ("edit", "edit_character", action):
-            if await self.spicedb.check_permission("campaign", campaign_id, p, "user", subject_id):
-                return True
-        return False
+        # The DM check already ran in validate_action. Only the character editor remains.
+        return await self._check_char_perm(_extract_char_id(data), subject_id)
 
     async def validate_action(
         self, campaign_id: str, subject_id: str, action: str, data: dict[str, Any]
@@ -100,13 +94,14 @@ class WebSocketActionValidator:
         if action in HEALTH_ACTIONS:
             return await self._validate_health_action(campaign_id, subject_id, action, data)
         if action in DOOR_ACTIONS or action in LIGHT_ACTIONS:
-            for p in ("play", "run_session", "participate", "control", "move"):
-                if await self.spicedb.check_permission(
-                    "campaign", campaign_id, p, "user", subject_id
-                ):
-                    return True
-            return False
+            _, play = ACTION_PERMISSIONS["campaign.play"]
+            return await self.spicedb.check_permission(
+                "campaign", campaign_id, play, "user", subject_id
+            )
         if action in DM_ACTIONS:
+            return False
+        # An action name that the schema does not define grants nothing.
+        if action not in load_contract().definitions["campaign"].permissions:
             return False
         return await self.spicedb.check_permission(
             "campaign", campaign_id, action, "user", subject_id

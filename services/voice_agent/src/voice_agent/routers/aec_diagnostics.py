@@ -9,7 +9,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from runefoble_events.aec import AECBenchmarkCompletedEvent, EchoSuppressionEngagedEvent
 from voice_agent.aec.pipeline import AECPipeline
-from voice_agent.auth import get_voice_principal
+from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.authz import require_action
 from voice_agent.dependencies import publish_voice_event
 
 logger = logging.getLogger("runefoble.voice_agent.aec_diagnostics")
@@ -47,8 +48,11 @@ class AECBenchmarkResponse(BaseModel):
 
 @router.post("/voice/aec/benchmark", response_model=AECBenchmarkResponse)
 @router.post("/api/v1/voice/aec/benchmark", response_model=AECBenchmarkResponse)
-async def run_aec_benchmark(req: AECBenchmarkRequest) -> AECBenchmarkResponse:
+async def run_aec_benchmark(
+    req: AECBenchmarkRequest, principal: VoicePrincipal
+) -> AECBenchmarkResponse:
     """Benchmark paired loudspeaker and microphone PCM streams to validate ERLE > 35dB."""
+    await require_action("session.control", req.session_id, principal.user_id)
     ref_b64 = req.reference_audio_base64 or req.speaker_audio_base64 or ""
     mic_b64 = req.microphone_audio_base64 or req.mic_audio_base64 or ""
 

@@ -17,10 +17,11 @@ from uuid import uuid4
 import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
 from fastapi.testclient import TestClient
+from gateway_api.main import app as gateway_app
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
-from runefoble_platform.event_sourcing import create_aggregate_repository, get_event_store
+from runefoble_platform.event_sourcing import create_aggregate_repository
 from soundscape.aggregate import SoundscapeAggregate
-from soundscape.dependencies import reset_dependencies
+from soundscape.dependencies import reset_dependencies, set_event_bus
 from soundscape.main import app
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -38,8 +39,9 @@ def _connection_refused(*_args: object, **_kwargs: object) -> None:
 
 
 @pytest.fixture(autouse=True)
-def clean_soundscape_environment() -> Iterator[None]:
+def clean_soundscape_environment(default_redis_event_bus) -> Iterator[None]:
     reset_dependencies()
+    set_event_bus(default_redis_event_bus)
     yield
     reset_dependencies()
 
@@ -47,6 +49,26 @@ def clean_soundscape_environment() -> Iterator[None]:
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(app, headers=_auth_headers("soundscape-tester"))
+
+
+@pytest.fixture
+def owned_session_id(trusted_ws_issuer, game_session_upstream) -> str:
+    """Create a campaign and a session through the gateway frontdoor. The test subject owns both."""
+    headers = _auth_headers("soundscape-tester")
+    with TestClient(gateway_app) as gateway:
+        campaign = gateway.post(
+            "/api/v1/campaigns",
+            json={"title": "Outage Vault", "setting": "Underdark"},
+            headers=headers,
+        )
+        assert campaign.status_code == 201, campaign.text
+        session = gateway.post(
+            f"/api/v1/campaigns/{campaign.json()['id']}/sessions",
+            json={"title": "Store Outage"},
+            headers=headers,
+        )
+        assert session.status_code == 201, session.text
+        return session.json()["id"]
 
 
 def test_load_or_create_creates_only_when_stream_is_absent() -> None:
@@ -90,10 +112,10 @@ def test_load_if_exists_returns_none_for_unknown_stream() -> None:
 
 
 def test_tension_read_answers_503_when_store_is_unreachable(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
+    client: TestClient, owned_session_id: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """GET /tension must not answer with the canned default during a store outage."""
-    session_id = "session-outage-read"
+    session_id = owned_session_id
     seeded = client.post(
         CALCULATE_URL,
         json={
@@ -107,17 +129,17 @@ def test_tension_read_answers_503_when_store_is_unreachable(
     assert seeded.status_code == 200, seeded.text
 
     with monkeypatch.context() as m:
-        m.setattr(get_event_store(), "read_stream", _connection_refused)
+        m.setattr(InMemoryEventStore, "read_stream", _connection_refused)
         resp = client.get(f"{TENSION_URL}?session_id={session_id}")
     assert resp.status_code == 503, resp.text
     assert resp.json()["detail"] == "Event store is unavailable"
 
 
 def test_tension_write_answers_503_and_keeps_stored_history(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
+    client: TestClient, owned_session_id: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A failed load on POST /tension/calculate writes nothing and answers 503."""
-    session_id = "session-outage-write"
+    session_id = owned_session_id
     seeded = client.post(
         CALCULATE_URL,
         json={
@@ -132,7 +154,7 @@ def test_tension_write_answers_503_and_keeps_stored_history(
     stored_score = seeded.json()["tension_score"]
 
     with monkeypatch.context() as m:
-        m.setattr(get_event_store(), "read_stream", _connection_refused)
+        m.setattr(InMemoryEventStore, "read_stream", _connection_refused)
         resp = client.post(
             CALCULATE_URL,
             json={"session_id": session_id, "combat_active": False, "combat_round": 0},

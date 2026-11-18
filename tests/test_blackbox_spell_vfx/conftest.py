@@ -6,9 +6,7 @@ from typing import Any
 import pytest
 from board_state.main import app as board_app
 from fastapi.testclient import TestClient
-from gateway_api.auth import set_spicedb_client
 from gateway_api.main import set_event_bus
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -25,11 +23,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 @pytest.fixture(autouse=True)
 def reset_test_state():
-    client = MockSpiceDBClient()
-    set_spicedb_client(client)
     set_event_bus(None)
     yield
-    set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
 
 

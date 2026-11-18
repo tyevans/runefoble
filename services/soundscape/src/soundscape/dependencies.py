@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import contextlib
 import logging
 from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import Depends
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
 from runefoble_events.base import BaseRunefobleEvent
 from runefoble_platform.bus import bus as platform_bus
@@ -32,7 +31,6 @@ logger = logging.getLogger("runefoble.soundscape")
 settings = PlatformSettings()
 
 _soundscape_repo = create_aggregate_repository(SoundscapeAggregate)
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 
 _session_to_aggregate: dict[str, UUID] = {}
 _session_mixers: dict[str, AudioStemMixer] = {}
@@ -43,23 +41,6 @@ _zitadel_auth_service: ZitadelAuthService | None = None
 def get_soundscape_repo() -> AggregateRepository[SoundscapeAggregate]:
     """Provide SoundscapeAggregate repository singleton."""
     return _soundscape_repo
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    """Provide SpiceDB Zanzibar authorization client."""
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient(
-            endpoint=settings.spicedb_endpoint or "localhost:50051",
-            token=settings.spicedb_preshared_key,
-        )
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    """Override SpiceDB client for testing."""
-    global _spicedb_client
-    _spicedb_client = client
 
 
 event_bus_provider = EventBusProvider(settings)
@@ -131,17 +112,38 @@ async def check_user_can_control_soundscape(
     campaign_id: UUID | None,
     spicedb: SpiceDBClient,
 ) -> bool:
-    """Check Zanzibar authorization for managing audio soundscapes."""
-    with contextlib.suppress(Exception):
-        if await spicedb.check_permission("session", session_id, "control", "user", user_id):
-            return True
-    if campaign_id:
-        with contextlib.suppress(Exception):
-            cid = str(campaign_id)
-            for perm in ("run_session", "play"):
-                if await spicedb.check_permission("campaign", cid, perm, "user", user_id):
-                    return True
-    return False
+    """Check the schema permissions that govern soundscape controls (ADR-0001).
+
+    The subject needs `session.control` on the session, or `campaign.run_session` on the
+    campaign when the request names one. A SpiceDB failure raises and is never a denial.
+    """
+    if await spicedb.check_permission("session", session_id, "control", "user", user_id):
+        return True
+    if campaign_id is None:
+        return False
+    return await spicedb.check_permission(
+        "campaign", str(campaign_id), "run_session", "user", user_id
+    )
+
+
+async def check_user_can_trigger_cue(
+    user_id: str,
+    session_id: str,
+    campaign_id: UUID | None,
+    spicedb: SpiceDBClient,
+) -> bool:
+    """Check whether the subject may trigger a foley cue.
+
+    Players who take part in the session may trigger cues (`session.participate`). Controllers
+    and campaign run-session roles may too. A SpiceDB failure raises and is never a denial.
+    """
+    if await check_user_can_control_soundscape(user_id, session_id, campaign_id, spicedb):
+        return True
+    if await spicedb.check_permission("session", session_id, "participate", "user", user_id):
+        return True
+    if campaign_id is None:
+        return False
+    return await spicedb.check_permission("campaign", str(campaign_id), "play", "user", user_id)
 
 
 async def publish_soundscape_event(event: BaseRunefobleEvent) -> None:

@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-import contextlib
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Annotated, Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from character_sheet.aggregate import CharacterAggregate
+from character_sheet.authz import (
+    authorize_character,
+    replace_character_campaign,
+)
 from character_sheet.crafting import CraftingAggregate
 from character_sheet.models import CharacterState
-from character_sheet.roster import permission_denied
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
 from fastapi import Depends, HTTPException
 from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
@@ -116,6 +118,40 @@ def verified_user_id(principal: Annotated[VerifiedPrincipal, Depends(get_princip
 VerifiedUserId = Annotated[str, Depends(verified_user_id)]
 
 
+def require_character_permission(
+    permission: str, *, allow_service: bool = False
+) -> Callable[..., Awaitable[None]]:
+    """Build a route dependency that checks one schema permission on the path's character.
+
+    The check runs on every call. A user bearer needs the permission (403 otherwise). With
+    `allow_service`, the service credential passes without a user. A missing or bad
+    credential is a 401. The check fails closed when SpiceDB cannot answer (503).
+    """
+
+    async def _check_user(
+        character_id: UUID,
+        principal: Annotated[VerifiedPrincipal, Depends(get_principal)],
+        spicedb: SpiceDep,
+    ) -> None:
+        await authorize_character(spicedb, character_id, permission, principal.user_id)
+
+    async def _check_caller(
+        character_id: UUID,
+        caller: CallerOrService,
+        spicedb: SpiceDep,
+    ) -> None:
+        if caller.user_id is not None:
+            await authorize_character(spicedb, character_id, permission, caller.user_id)
+
+    return _check_caller if allow_service else _check_user
+
+
+EDIT_CHARACTER = [Depends(require_character_permission("edit"))]
+VIEW_CHARACTER = [Depends(require_character_permission("view"))]
+EDIT_CHARACTER_OR_SERVICE = [Depends(require_character_permission("edit", allow_service=True))]
+VIEW_CHARACTER_OR_SERVICE = [Depends(require_character_permission("view", allow_service=True))]
+
+
 async def publish_character_event(event: Any) -> None:
     bus = get_event_bus()
     if bus:
@@ -138,9 +174,11 @@ async def load_character(
 
 
 async def create_new_character(
-    repo: AggregateRepository[CharacterAggregate], req: CreateCharacterRequest
+    repo: AggregateRepository[CharacterAggregate],
+    req: CreateCharacterRequest,
+    character_id: UUID,
 ) -> CharacterState:
-    char = CharacterAggregate(uuid4())
+    char = CharacterAggregate(character_id)
     char.create(
         name=req.name,
         character_class=req.character_class,
@@ -221,25 +259,6 @@ async def modify_character_health(
     return char.state
 
 
-async def authorize_character_permission(
-    spicedb: SpiceDBClient | MockSpiceDBClient,
-    character_id: UUID,
-    permission: str,
-    user_id: str,
-) -> None:
-    """Require one SpiceDB character permission for the caller. 403 with the shared body."""
-    if not await spicedb.check_permission(
-        "character", str(character_id), permission, "user", user_id
-    ):
-        raise permission_denied(user_id, permission, str(character_id))
-
-
-async def authorize_character_edit(
-    spicedb: SpiceDBClient | MockSpiceDBClient, character_id: UUID, user_id: str
-) -> None:
-    await authorize_character_permission(spicedb, character_id, "edit", user_id)
-
-
 async def update_character_guardrails(
     repo: AggregateRepository[CharacterAggregate],
     character_id: UUID,
@@ -260,26 +279,22 @@ async def update_character_guardrails(
 
 async def assign_character_campaign(
     repo: AggregateRepository[CharacterAggregate],
-    spicedb: SpiceDBClient,
+    spicedb: SpiceDBClient | MockSpiceDBClient,
     character_id: UUID,
     campaign_id: str | None,
     assigned_by: str,
 ) -> CharacterState:
-    state = await execute_character_mutation(
-        repo, character_id, lambda c: c.assign_campaign(campaign_id, assigned_by)
-    )
-    with contextlib.suppress(Exception):
-        rels = await spicedb.read_relationships(
-            resource_type="character", resource_id=str(character_id), relation="campaign"
-        )
-        for r in rels:
-            await spicedb.delete_relationship(
-                "character", str(character_id), "campaign", r.subject_type, r.subject_id
-            )
-        if campaign_id:
-            await spicedb.write_relationship(
-                "character", str(character_id), "campaign", "campaign", campaign_id
-            )
+    """Validate the assignment, write the campaign tuple, then save the character.
+
+    The tuple write comes before the save. A failed write leaves the character unchanged.
+    """
+    char = await load_character(repo, character_id)
+    try:
+        char.assign_campaign(campaign_id, assigned_by)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    await replace_character_campaign(spicedb, character_id, campaign_id)
+    await repo.save(char)
     await publish_character_event(
         CharacterAssignedToCampaign(
             aggregate_id=character_id,
@@ -288,4 +303,4 @@ async def assign_character_campaign(
             assigned_by=assigned_by,
         )
     )
-    return state
+    return char.state

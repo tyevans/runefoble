@@ -79,7 +79,7 @@ async def load_establishment(eid: str, perm: str, uid: str | None) -> Establishm
     if perm == "view":
         await check_establishment_read_permission(spicedb, eid, uid)
     else:
-        await check_establishment_write_permission(spicedb, eid, uid)
+        await check_establishment_write_permission(spicedb, eid, uid, perm)
     return agg
 
 

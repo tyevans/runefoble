@@ -6,6 +6,7 @@ The tests never patch the transcriber and never read private pipeline state.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import uuid
 from collections.abc import Generator
@@ -23,6 +24,7 @@ from voice_agent.synthesis_engine import set_speech_synthesizer
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.fixture_transcriber import FIXTURE_TRANSCRIPT
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -81,6 +83,7 @@ def test_unavailable_engine_returns_error_and_publishes_no_player_spoke(
 ):
     """A completed utterance fails explicitly when the production engine cannot transcribe it."""
     session_id = str(uuid.uuid4())
+    asyncio.run(grant_voice_session(session_id, players=["spk-stt-1", "spk-forge-1"]))
 
     (resp,) = _post_speech_then_silence(production_engine_client, session_id)
 
@@ -105,6 +108,7 @@ def test_utterance_uses_configured_engine_transcript(
 ):
     """The transcript returned to the caller comes from the configured engine, not a canned phrase."""
     session_id = str(uuid.uuid4())
+    asyncio.run(grant_voice_session(session_id, players=["spk-stt-1", "spk-forge-1"]))
 
     (resp,) = _post_speech_then_silence(client, session_id)
 
@@ -124,6 +128,7 @@ def test_utterance_uses_configured_engine_transcript(
 def test_client_supplied_transcript_is_ignored(client: TestClient, mock_redis: MockAsyncRedis):
     """A caller cannot inject a transcript. The configured engine always decides the text."""
     session_id = str(uuid.uuid4())
+    asyncio.run(grant_voice_session(session_id, players=["spk-stt-1", "spk-forge-1"]))
     forged = "I move 3 squares north"
     speech = {
         "session_id": session_id,

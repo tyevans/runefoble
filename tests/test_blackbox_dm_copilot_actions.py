@@ -12,7 +12,7 @@ from uuid import uuid4
 import pytest
 from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_events.events import (
     WatcherActionApproved,
     WatcherActionModified,
@@ -22,14 +22,13 @@ from runefoble_events.events import (
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
     get_copilot_engine,
-    get_spicedb_client,
     set_event_bus,
-    set_spicedb_client,
 )
 from the_watcher.main import app
 from the_watcher.models import ProposeActionRequest
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import bind_session_to_campaign
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -38,13 +37,11 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture(autouse=True)
 def clean_environment():
     """Ensure clean SpiceDB, CopilotEngine, and event bus state before and after each test."""
-    set_spicedb_client(MockSpiceDBClient())
     set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
     engine = get_copilot_engine()
     engine.clear()
     yield
     engine.clear()
-    set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
 
 
@@ -62,10 +59,13 @@ async def _setup_dm(dm_user: str = "dm_evelyn") -> tuple[str, str]:
         subject_type="user",
         subject_id=dm_user,
     )
+    await bind_session_to_campaign(sess_id, camp_id)
     return camp_id, sess_id
 
 
-def _propose(client: TestClient, sess_id: str, camp_id: str, **kwargs) -> str:
+def _propose(
+    client: TestClient, sess_id: str, camp_id: str, *, proposer: str = "dm_evelyn", **kwargs
+) -> str:
     body = {
         "session_id": sess_id,
         "campaign_id": camp_id,
@@ -75,7 +75,8 @@ def _propose(client: TestClient, sess_id: str, camp_id: str, **kwargs) -> str:
         "pause_window_ms": 3000,
         **kwargs,
     }
-    res = client.post("/api/v1/watcher/actions/propose", json=body)
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(proposer)}"}
+    res = client.post("/api/v1/watcher/actions/propose", json=body, headers=headers)
     assert res.status_code == 200
     return res.json()["action_id"]
 
@@ -117,7 +118,7 @@ async def test_zanzibar_action_authorization_enforcement(client: TestClient):
         subject_type="user",
         subject_id=player,
     )
-    action_id = _propose(client, sess_id, camp_id)
+    action_id = _propose(client, sess_id, camp_id, proposer=dm_user)
 
     # Unauthorized attempts -> 403
     base = {"action_id": action_id, "session_id": sess_id, "campaign_id": camp_id}

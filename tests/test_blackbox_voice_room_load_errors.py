@@ -16,12 +16,12 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository, get_event_store
 from voice_agent.coordinator import VoiceRoomCoordinator, set_voice_room_coordinator
 from voice_agent.main import app as voice_app
 from voice_agent.room_aggregate import VoiceRoomAggregate, to_uuid
 
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -47,15 +47,14 @@ def session_id() -> str:
 
 
 @pytest.fixture
-def fresh_coordinator(session_id: str) -> Iterator[MockSpiceDBClient]:
+def fresh_coordinator(session_id: str) -> Iterator[None]:
     """Replace the process coordinator so its in-memory room cache is empty.
 
-    The DM holds control on the session, as the identity tests seed it.
+    The DM runs the session campaign, so it holds `session.control` (schema relations only).
     """
-    spicedb = MockSpiceDBClient()
-    asyncio.run(spicedb.write_relationship("session", session_id, "control", "user", DM_USER))
-    set_voice_room_coordinator(VoiceRoomCoordinator(spicedb_client=spicedb))
-    yield spicedb
+    asyncio.run(grant_voice_session(session_id, dm=DM_USER))
+    set_voice_room_coordinator(VoiceRoomCoordinator())
+    yield
     set_voice_room_coordinator(None)
 
 
@@ -67,7 +66,7 @@ def client() -> TestClient:
 def test_room_read_answers_503_and_recovers_the_stored_room(
     client: TestClient,
     session_id: str,
-    fresh_coordinator: MockSpiceDBClient,
+    fresh_coordinator: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A failed room load answers 503. After recovery the stored peer is still there."""
@@ -88,7 +87,7 @@ def test_room_read_answers_503_and_recovers_the_stored_room(
 def test_room_kick_answers_503_and_keeps_the_stored_room(
     client: TestClient,
     session_id: str,
-    fresh_coordinator: MockSpiceDBClient,
+    fresh_coordinator: None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A kick on a stored room during a store outage answers 503 and changes nothing."""

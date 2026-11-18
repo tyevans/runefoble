@@ -35,7 +35,7 @@ async def grant_view(spicedb_client: MockSpiceDBClient, campaign_id: str) -> Non
     await spicedb_client.write_relationship(
         resource_type="campaign",
         resource_id=campaign_id,
-        relation="view",
+        relation="spectator",
         subject_type="user",
         subject_id="user-test",
     )

@@ -17,9 +17,11 @@ from the_watcher.dependencies import (
     STREAM_WATCHER,
     engine,
     get_event_bus,
+    require_session_permission,
+    require_speaker,
     to_uuid,
 )
-from the_watcher.identity import get_caller_principal
+from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.models import (
     IntentResult,
     SpeechInputRequest,
@@ -64,8 +66,10 @@ async def _parse_with_worker(req: SpeechInputRequest) -> IntentResult:
 
 @router.post("/api/v1/watcher/transcribe-and-act", response_model=IntentResult)
 @router.post("/api/v1/watcher/intent", response_model=IntentResult)
-async def process_speech_action(req: SpeechInputRequest) -> IntentResult:
+async def process_speech_action(caller_id: CallerId, req: SpeechInputRequest) -> IntentResult:
     """Parse player speech, translate to game action, dispatch events, and trigger board state update."""
+    await require_session_permission(caller_id, req.session_id, "session.participate")
+    await require_speaker(caller_id, req.speaker_id)
     intent: IntentResult | None = None
 
     if INFERENCE_URL:

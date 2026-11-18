@@ -38,6 +38,9 @@ async def test_codex_entity_cross_linking_and_privacy(
     base = f"/api/v1/campaigns/{campaign_id}/codex/entries"
     r_h, b_h = _bearer(rowan), _bearer(bob)
 
+    await spicedb.write_relationship(
+        "campaign", campaign_id, "dungeon_master", "user", VISITOR_SUBJECT
+    )
     ingest = client.post(
         "/api/v1/lore/documents",
         json={

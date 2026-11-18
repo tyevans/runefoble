@@ -10,17 +10,15 @@ from uuid import uuid4
 import pytest
 from eventsource.adapters.memory.bus import InMemoryEventBus
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
     InMemoryEventStore,
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from the_watcher.dependencies import (
-    get_spicedb_client,
     set_event_bus,
     set_faction_resource_repo,
-    set_spicedb_client,
 )
 from the_watcher.factions.resources.aggregate import FactionResourceAggregate
 from the_watcher.main import app
@@ -34,7 +32,6 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 @pytest.fixture(autouse=True)
 def clean_resource_environment():
     """Configure mock SpiceDB, event store, bus, and repo before each test."""
-    set_spicedb_client(MockSpiceDBClient())
     set_event_bus(RedisStreamsEventBus(client=MockAsyncRedis()))
     test_store = InMemoryEventStore()
     test_bus = InMemoryEventBus()
@@ -45,7 +42,6 @@ def clean_resource_environment():
     )
     set_faction_resource_repo(repo)
     yield
-    set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
     set_faction_resource_repo(None)
 

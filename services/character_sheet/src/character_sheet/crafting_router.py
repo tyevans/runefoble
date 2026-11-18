@@ -9,6 +9,7 @@ import contextlib
 from typing import Any
 from uuid import UUID, uuid4
 
+from character_sheet.authz import authorize_character
 from character_sheet.crafting import (
     CATALYSTS_CATALOGUE,
     KNOWN_RECIPES,
@@ -18,11 +19,11 @@ from character_sheet.crafting import (
     CraftingState,
 )
 from character_sheet.dependencies import (
+    VIEW_CHARACTER,
     CraftingRepoDep,
     RepoDep,
     SpiceDep,
     VerifiedUserId,
-    authorize_character_edit,
     get_principal,
     publish_crafting_event,
 )
@@ -96,7 +97,7 @@ async def combine_reagents(
     user_id: VerifiedUserId,
 ) -> CombineReagentsResponse:
     """Combine alchemical reagents, calculate volatile risk, and update character state."""
-    await authorize_character_edit(spicedb, req.character_id, user_id)
+    await authorize_character(spicedb, req.character_id, "edit", user_id)
 
     # Load or initialize CraftingAggregate
     try:
@@ -181,7 +182,11 @@ async def combine_reagents(
     )
 
 
-@router.get("/{character_id}/history", response_model=CraftingState)
+@router.get(
+    "/{character_id}/history",
+    response_model=CraftingState,
+    dependencies=VIEW_CHARACTER,
+)
 async def get_crafting_history(
     character_id: UUID,
     crafting_repo: CraftingRepoDep,

@@ -9,10 +9,10 @@ import base64
 import json
 import logging
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
-from runefoble_auth.websocket import admit_websocket
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from runefoble_platform.event_publish import publish_best_effort
-from voice_agent.auth import get_voice_principal, get_voice_verifier
+from voice_agent.auth import VoicePrincipal, get_voice_verifier
+from voice_agent.authz import admit_speaker_websocket, require_action
 from voice_agent.barge_in import BargeInDetector
 from voice_agent.dependencies import STREAM_SESSION, STREAM_VOICE, get_event_bus
 from voice_agent.echo_canceller import AcousticEchoCanceller
@@ -24,15 +24,17 @@ router = APIRouter(prefix="/api/v1/voice/duplex", tags=["Voice Duplex & Interrup
 _active_playbacks: dict[str, ActivePlayback] = {}
 
 
-@router.post("/playback/start", dependencies=[Depends(get_voice_principal)])
-async def start_playback(req: PlaybackStartRequest):
+@router.post("/playback/start")
+async def start_playback(req: PlaybackStartRequest, principal: VoicePrincipal):
+    await require_action("session.participate", req.session_id, principal.user_id)
     pb = ActivePlayback(req.playback_id, req.session_id, req.text, req.duration_ms)
     _active_playbacks[req.session_id] = pb
     return {"status": "started", "playback_id": req.playback_id, "session_id": req.session_id}
 
 
-@router.get("/status/{session_id}", dependencies=[Depends(get_voice_principal)])
-async def get_playback_status(session_id: str):
+@router.get("/status/{session_id}")
+async def get_playback_status(session_id: str, principal: VoicePrincipal):
+    await require_action("session.observe", session_id, principal.user_id)
     pb = _active_playbacks.get(session_id)
     return {
         "session_id": session_id,
@@ -77,12 +79,12 @@ async def _handle_interruption(
 async def duplex_websocket(
     websocket: WebSocket, session_id: str = "default", speaker_id: str = "default"
 ):
-    if await admit_websocket(websocket, get_voice_verifier()) is None:
-        return
     qp = websocket.query_params
     sess_id = qp.get("session_id") or session_id
     spk_id = qp.get("speaker_id") or speaker_id
     spk_name = qp.get("speaker_name") or "Player"
+    if await admit_speaker_websocket(websocket, get_voice_verifier(), sess_id, spk_id) is None:
+        return
 
     barge_in, aec = BargeInDetector(), AcousticEchoCanceller()
     await websocket.send_json(

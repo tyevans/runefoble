@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from game_session.child_index import ChildIndexKind
 from game_session.dependencies import (
     get_establishment_repository,
@@ -21,6 +21,7 @@ from game_session.dependencies import (
 from game_session.events import STREAM_TAVERN, STREAM_WEST_MARCHES
 from game_session.queries import link_child, list_workers_for_establishment
 from game_session.settlement.auth import (
+    check_establishment_play_permission,
     check_establishment_read_permission,
     check_negotiation_arbitrate_permission,
     check_negotiation_participate_permission,
@@ -157,7 +158,12 @@ async def start_haggling_session(
     caller_id: CallerId,
     req: StartNegotiationRequest,
 ) -> NegotiationSessionState:
-    """Explicitly start an isolated negotiation session."""
+    """Explicitly start an isolated negotiation session in an establishment the caller can play."""
+    if not req.establishment_id:
+        raise HTTPException(status_code=422, detail="establishment_id is required")
+    spicedb = get_spicedb_client()
+    if not await check_establishment_play_permission(spicedb, req.establishment_id, caller_id):
+        raise HTTPException(status_code=403, detail="Establishment play permission required")
     nid = uuid4()
     neg_agg = NegotiationAggregate(nid)
     neg_agg.start_negotiation(
@@ -177,7 +183,6 @@ async def start_haggling_session(
     bus = get_event_bus()
     await _save_and_publish(repo, bus, neg_agg)
 
-    spicedb = get_spicedb_client()
     await write_negotiation_relationships(
         spicedb,
         negotiation_id=str(nid),
@@ -226,13 +231,9 @@ async def dm_negotiation_override(
     caller_id: CallerId,
     negotiation_id: str,
     req: DMOverrideRequest,
-    x_runefoble_role: str | None = Header(default=None, alias="X-RuneFoble-Role"),
 ) -> NegotiationSessionState:
     """Game Master arbitration control: nudge mood, inject dialogue barks, or override price."""
-    spicedb = get_spicedb_client()
-    # Check SpiceDB Zanzibar permission unless authorized DM role header is set for dev/test
-    if x_runefoble_role not in ("dungeon_master", "game_master", "dm"):
-        await check_negotiation_arbitrate_permission(spicedb, negotiation_id, caller_id)
+    await check_negotiation_arbitrate_permission(get_spicedb_client(), negotiation_id, caller_id)
 
     neg_agg = await _load_negotiation(negotiation_id)
     try:

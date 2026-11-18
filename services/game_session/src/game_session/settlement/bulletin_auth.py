@@ -5,7 +5,6 @@ Governed by ADR-0001 (Zanzibar Fine-Grained Authorization) and Hard Invariant 1.
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 
 from fastapi import HTTPException
@@ -136,31 +135,28 @@ async def delete_bulletin_notice_relationships(
     author_id: str | None = None,
     campaign_id: str | None = None,
 ) -> None:
-    """Delete SpiceDB Zanzibar tuples when a bulletin notice is removed."""
+    """Delete SpiceDB Zanzibar tuples when a bulletin notice is removed. Failures propagate."""
     nid = str(notice_id)
-    with contextlib.suppress(Exception):
+    await spicedb.delete_relationship(
+        resource_type="bulletin_notice",
+        resource_id=nid,
+        relation="settlement",
+        subject_type="settlement",
+        subject_id=str(settlement_id),
+    )
+    if campaign_id:
         await spicedb.delete_relationship(
             resource_type="bulletin_notice",
             resource_id=nid,
-            relation="settlement",
-            subject_type="settlement",
-            subject_id=str(settlement_id),
+            relation="campaign",
+            subject_type="campaign",
+            subject_id=str(campaign_id),
         )
-    if campaign_id:
-        with contextlib.suppress(Exception):
-            await spicedb.delete_relationship(
-                resource_type="bulletin_notice",
-                resource_id=nid,
-                relation="campaign",
-                subject_type="campaign",
-                subject_id=str(campaign_id),
-            )
     if author_id:
-        with contextlib.suppress(Exception):
-            await spicedb.delete_relationship(
-                resource_type="bulletin_notice",
-                resource_id=nid,
-                relation="author",
-                subject_type="user",
-                subject_id=str(author_id),
-            )
+        await spicedb.delete_relationship(
+            resource_type="bulletin_notice",
+            resource_id=nid,
+            relation="author",
+            subject_type="user",
+            subject_id=str(author_id),
+        )

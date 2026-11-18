@@ -97,6 +97,7 @@ class StandInRequest(BaseModel):
 
 
 class StandInRecapRequest(BaseModel):
+    session_id: str
     character_name: str
     actions: list[Any] = Field(default_factory=list)
     penalties: list[str] = Field(default_factory=list)

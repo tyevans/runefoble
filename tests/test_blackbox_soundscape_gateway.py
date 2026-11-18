@@ -116,13 +116,6 @@ def test_openapi_schema_exposure(client: TestClient) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Soundscape cue checks session control and campaign play only when campaign_id is sent. "
-        "A session-only player grant is not checked (see report, Discovered)."
-    ),
-)
 def test_cue_trigger_authorized_player(
     client: TestClient, setup_zanzibar_soundscape: dict[str, str]
 ) -> None:
@@ -194,18 +187,26 @@ def test_tension_status_query(
 
 
 def test_tension_calculation(client: TestClient, setup_zanzibar_soundscape: dict[str, str]) -> None:
-    """Verify POST /api/v1/soundscape/tension/calculate adapts music stems."""
+    """Verify POST /api/v1/soundscape/tension/calculate adapts music stems for session control."""
     sid = setup_zanzibar_soundscape["sid"]
-    res = client.post(
+    payload = {
+        "session_id": sid,
+        "combat_active": True,
+        "combat_round": 3,
+        "enemy_cr_balance": 3.0,
+        "lowest_party_health_ratio": 0.25,
+    }
+    player = client.post(
         "/api/v1/soundscape/tension/calculate",
         headers=_auth("player_valeros"),
-        json={
-            "session_id": sid,
-            "combat_active": True,
-            "combat_round": 3,
-            "enemy_cr_balance": 3.0,
-            "lowest_party_health_ratio": 0.25,
-        },
+        json=payload,
+    )
+    assert player.status_code == 403
+
+    res = client.post(
+        "/api/v1/soundscape/tension/calculate",
+        headers=_auth("dm_evelyn"),
+        json=payload,
     )
     assert res.status_code == 200
     data = res.json()

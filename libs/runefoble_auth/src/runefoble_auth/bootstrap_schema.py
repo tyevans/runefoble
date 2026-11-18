@@ -6,6 +6,9 @@ import logging
 import os
 from pathlib import Path
 
+from runefoble_platform.config import PlatformSettings
+from runefoble_platform.errors import ConfigurationError
+
 from runefoble_auth.spicedb import SpiceDBClient
 
 logger = logging.getLogger(__name__)
@@ -37,11 +40,15 @@ async def bootstrap_schema(
     if not schema_text.strip():
         raise ValueError(f"Zanzibar schema at {path} is empty")
 
+    if client is None and not token:
+        raise ConfigurationError(
+            "bootstrap_schema needs an explicit SpiceDB token when no client is given. "
+            "The CLI reads RUNEFOBLE_SPICEDB_PRESHARED_KEY."
+        )
     spicedb = client or SpiceDBClient(
         endpoint=endpoint,
         token=token,
         insecure=insecure,
-        use_mock=False,
     )
     await spicedb.write_schema(schema_text)
     logger.info("Successfully applied Zanzibar schema to SpiceDB at %s from %s", endpoint, path)
@@ -73,6 +80,7 @@ def main() -> None:
     asyncio.run(
         bootstrap_schema(
             endpoint=args.endpoint,
+            token=PlatformSettings().spicedb_preshared_key,
             schema_path=args.schema,
             insecure=args.insecure,
         )

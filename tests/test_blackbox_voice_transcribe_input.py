@@ -7,6 +7,7 @@ unavailable through settings. The route never invents player text.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import uuid
 from collections.abc import Generator
@@ -21,6 +22,7 @@ from voice_agent.stt import set_streaming_pipeline
 
 from tests.helpers.audio_synth import generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -29,13 +31,20 @@ TRANSCRIBE_URL = "/api/v1/voice/transcribe"
 SESSION_STREAM = "runefoble.events.session"
 WATCHER_STREAM = "runefoble.events.watcher"
 FORBIDDEN_PHRASE = "I inspect my surroundings."
+TRANSCRIBE_SESSION = "sess-transcribe-1"
+
+
+@pytest.fixture(autouse=True)
+def _transcribe_session_grant() -> None:
+    """Authorize the speaker of the transcription session through the SpiceDB seam."""
+    asyncio.run(grant_voice_session(TRANSCRIBE_SESSION, players=["spk-transcribe-1"]))
 
 
 def _body(**extra) -> dict:
     return {
         "speaker_id": "spk-transcribe-1",
         "speaker_name": "Valeros",
-        "session_id": str(uuid.uuid4()),
+        "session_id": TRANSCRIBE_SESSION,
         "campaign_id": str(uuid.uuid4()),
         **extra,
     }

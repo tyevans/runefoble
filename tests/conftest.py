@@ -34,6 +34,7 @@ from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from the_watcher.identity import get_zitadel_auth_service as get_watcher_auth
 from the_watcher.identity import set_zitadel_auth_service as set_watcher_auth
 
+from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytest_plugins = [
@@ -51,13 +52,11 @@ collect_ignore = ["test_blackbox_uvtt_import.py"]
 
 
 SPICEDB_SERVICE_MODULES = [
-    "gateway_api.auth",
     "gateway_mcp.dynamic.auth",
     "character_sheet.dependencies",
     "game_session.dependencies",
     "rules_compendium.dependencies",
     "asset_forge.dependencies",
-    "campaign_lore.dependencies",
     "soundscape.dependencies",
     "the_watcher.dependencies",
     "board_state.dependencies",
@@ -156,8 +155,13 @@ def default_service_verifiers() -> Iterator[None]:
 
 @pytest.fixture(autouse=True)
 def default_spicedb_client(request):
-    """Provide MockSpiceDBClient singleton for tests unless live_spicedb_endpoint is requested."""
-    if "live_spicedb_endpoint" in getattr(request, "fixturenames", []):
+    """Route every SpiceDB call to a fresh strict mock unless live_spicedb_endpoint is requested.
+
+    The shared factory client (`runefoble_auth.factory`) is the one seam. Service-local
+    dependency modules that still keep their own client keep their setter swap.
+    """
+    live_fixtures = {"live_spicedb_endpoint", "live_spicedb_with_schema"}
+    if live_fixtures & set(getattr(request, "fixturenames", [])):
         yield None
         return
 
@@ -175,9 +179,12 @@ def default_spicedb_client(request):
                 mod.set_spicedb_client(mock_db)
                 modules_to_restore.append((mod, prev))
 
+    factory_swap = shared_spicedb_client(mock_db)
+    factory_swap.start()
     try:
         yield mock_db
     finally:
+        factory_swap.stop()
         for mod, prev in modules_to_restore:
             with contextlib.suppress(Exception):
                 mod.set_spicedb_client(prev)

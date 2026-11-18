@@ -7,6 +7,8 @@ from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from redstring import DoubleMergeError, MergeIntoAliasError
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.aggregate import LoreDocumentAggregate
@@ -14,7 +16,8 @@ from campaign_lore.dependencies import (
     get_repo,
     get_retrieval_engine,
 )
-from campaign_lore.identity import get_campaign_principal
+from campaign_lore.identity import CallerId, get_campaign_principal
+from campaign_lore.permissions import check_user_can_run_session
 from campaign_lore.retrieval import LoreRetrievalEngine
 
 router = APIRouter(tags=["Entity Aliases"], dependencies=[Depends(get_campaign_principal)])
@@ -64,10 +67,17 @@ _CONSOLIDATE_RESPONSES = {
 )
 async def consolidate_alias(
     req: ConsolidateAliasRequest,
+    user_id: CallerId,
     retrieval_engine: Annotated[LoreRetrievalEngine, Depends(get_retrieval_engine)],
     repo: Annotated[AggregateRepository[LoreDocumentAggregate], Depends(get_repo)],
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> ConsolidateAliasResponse:
     """Merge an alias title into a canonical entity node and record it on the document."""
+    if not await check_user_can_run_session(user_id, req.campaign_id, spicedb):
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Only campaign run_session members can consolidate aliases.",
+        )
     try:
         document = await repo.load(req.document_id)
     except AggregateNotFoundError as exc:

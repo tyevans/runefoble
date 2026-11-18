@@ -6,18 +6,18 @@ from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.aggregate_loading import load_or_create
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
     VerifiedUserId,
-    check_user_can_control_soundscape,
+    check_user_can_trigger_cue,
     get_or_create_aggregate_id,
     get_or_create_mixer,
     get_principal,
     get_soundscape_repo,
-    get_spicedb_client,
     publish_soundscape_event,
 )
 from soundscape.models import SoundscapeCueRequest, SoundscapeCueResponse
@@ -40,9 +40,10 @@ async def trigger_sound_cue(
 ) -> SoundscapeCueResponse:
     """Trigger a tactical foley cue or sound effect (e.g. fireball, sword slash).
 
-    Zanzibar authorized: caller must have play or run_session permissions.
+    Zanzibar authorized: caller needs session participate or control (or campaign play or
+    run_session when the request names a campaign).
     """
-    can_trigger = await check_user_can_control_soundscape(
+    can_trigger = await check_user_can_trigger_cue(
         user_id=user_id,
         session_id=request.session_id,
         campaign_id=request.campaign_id,

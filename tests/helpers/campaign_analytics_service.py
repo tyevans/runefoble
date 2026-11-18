@@ -25,6 +25,7 @@ from runefoble_platform.event_sourcing import set_event_store
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 SESSION_STREAM = "runefoble.events.session"
@@ -70,12 +71,16 @@ class AnalyticsService:
         asyncio.run(self.redis.xgroup_setid(stream, group, "0"))
 
     def grant_view(self, campaign_id: str, user_id: str = SERVICE_SUBJECT) -> None:
-        """Grant a member view rights on a campaign in the authorization double."""
+        """Grant a spectator (the schema relation behind `campaign.view`) on a campaign.
+
+        Campaign Analytics has no membership frontdoor, so the relation is written in the
+        authorization double. Only schema relation names are written.
+        """
         asyncio.run(
             self.spicedb.write_relationship(
                 resource_type="campaign",
                 resource_id=str(campaign_id),
-                relation="view",
+                relation="spectator",
                 subject_type="user",
                 subject_id=user_id,
             )
@@ -101,7 +106,6 @@ def analytics_service(
         pytest.skip("Docker not available for the Campaign Analytics PostgreSQL store")
 
     import campaign_analytics.main as analytics_main
-    from campaign_analytics.dependencies import get_spicedb_client, set_spicedb_client
 
     dsn = str(postgres_service["async_dsn"])
     monkeypatch.setenv("RUNEFOBLE_DATABASE_URL", dsn)
@@ -111,11 +115,11 @@ def analytics_service(
     monkeypatch.setattr(redis.asyncio, "from_url", lambda *_a, **_k: double)
 
     spicedb = MockSpiceDBClient()
-    previous_spicedb = get_spicedb_client()
-    set_spicedb_client(spicedb)
+    factory_swap = shared_spicedb_client(spicedb)
+    factory_swap.start()
     set_event_store(None)
     try:
         yield AnalyticsService(dsn=dsn, redis=double, spicedb=spicedb)
     finally:
-        set_spicedb_client(previous_spicedb)
+        factory_swap.stop()
         set_event_store(None)

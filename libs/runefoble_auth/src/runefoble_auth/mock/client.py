@@ -6,8 +6,10 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
+from runefoble_auth.contract import require_permission, require_relation, require_subject_type
+from runefoble_auth.errors import SchemaContractError
 from runefoble_auth.mock.evaluator import PermissionEvaluator
-from runefoble_auth.mock.schema_parser import SchemaGraph, load_default_schema, parse_zed_schema
+from runefoble_auth.schema_graph import SchemaGraph, load_default_schema, parse_zed_schema
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +35,11 @@ class Relationship:
 
 
 class MockSpiceDBClient:
-    """In-memory mock Zanzibar relationship tuple store for tests and offline runs."""
+    """In-memory Zanzibar tuple store that enforces the schema name contract.
+
+    A write to an undefined type, relation, or subject raises SchemaContractError. A check
+    for an undefined permission raises it too. Live SpiceDB rejects the same calls.
+    """
 
     def __init__(
         self,
@@ -50,6 +56,9 @@ class MockSpiceDBClient:
         self._schema: str = schema_text or ""
         self._evaluator: PermissionEvaluator = PermissionEvaluator(schema=self._schema_graph)
 
+    def _validate_tuple(self, resource_type: str, relation: str, subject_type: str) -> None:
+        require_subject_type(resource_type, relation, subject_type, self._schema_graph)
+
     def _tuple_key(self, res_t: str, res_id: str, rel: str, sub_t: str, sub_id: str) -> str:
         return f"{res_t}:{res_id}#{rel}@{sub_t}:{sub_id}"
 
@@ -65,6 +74,7 @@ class MockSpiceDBClient:
         subject_id: str,
     ) -> None:
         """Create a relationship tuple in Zanzibar."""
+        self._validate_tuple(resource_type, relation, subject_type)
         key = self._tuple_key(resource_type, resource_id, relation, subject_type, subject_id)
         self._tuples.add(key)
         logger.info("SpiceDB tuple written: %s", key)
@@ -91,6 +101,7 @@ class MockSpiceDBClient:
         subject_id: str,
     ) -> None:
         """Remove a relationship tuple."""
+        self._validate_tuple(resource_type, relation, subject_type)
         key = self._tuple_key(resource_type, resource_id, relation, subject_type, subject_id)
         self._tuples.discard(key)
         logger.info("SpiceDB tuple deleted: %s", key)
@@ -102,6 +113,8 @@ class MockSpiceDBClient:
         relation: str | None = None,
     ) -> list[Relationship]:
         """Query stored relationship tuples matching optional filters."""
+        if resource_type and relation:
+            require_relation(resource_type, relation, self._schema_graph)
         results: list[Relationship] = []
         for key in sorted(self._tuples):
             rel = Relationship.from_tuple_key(key)
@@ -124,6 +137,7 @@ class MockSpiceDBClient:
 
         Candidates are the resources that hold at least one direct tuple.
         """
+        require_permission(resource_type, permission, self._schema_graph)
         candidates = sorted(
             {rel.resource_id for rel in await self.read_relationships(resource_type=resource_type)}
         )
@@ -155,6 +169,11 @@ class MockSpiceDBClient:
         context: dict[str, Any] | None = None,
     ) -> bool:
         """Check whether a subject has a specific permission on a resource."""
+        require_permission(resource_type, permission, self._schema_graph)
+        if subject_type not in self._schema_graph.definitions:
+            raise SchemaContractError(
+                f"Subject type '{subject_type}' is not defined in runefoble.zed"
+            )
         return await self._evaluator.evaluate(
             self._tuples, resource_type, resource_id, permission, subject_type, subject_id, context
         )

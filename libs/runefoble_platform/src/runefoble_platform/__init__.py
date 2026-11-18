@@ -24,6 +24,7 @@ from runefoble_platform.email import (
 )
 from runefoble_platform.errors import (
     AuthorizationError,
+    ConfigurationError,
     EntityNotFoundError,
     GameRuleViolationError,
     RunefobleError,
@@ -106,6 +107,7 @@ __all__ = [
     "record_publish_failure",
     "EntityNotFoundError",
     "AuthorizationError",
+    "ConfigurationError",
     "GameRuleViolationError",
     "EventBus",
     "bus",

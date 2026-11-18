@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from typing import Annotated
-from uuid import uuid4
 
 import pytest
 from fastapi import APIRouter, Depends, HTTPException
@@ -53,8 +52,8 @@ def test_fastapi_route_dependencies(spicedb: MockSpiceDBClient, settlement_issue
     tc = TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     )
-    asyncio.run(spicedb.write_relationship("settlement", "h1", "upgrade", "user", "builder"))
-    asyncio.run(spicedb.write_relationship("establishment", "e1", "manage", "user", "builder"))
+    asyncio.run(spicedb.write_relationship("settlement", "h1", "founder", "user", "builder"))
+    asyncio.run(spicedb.write_relationship("establishment", "e1", "manager", "user", "builder"))
 
     builder = bearer_headers(settlement_issuer, "builder")
     intruder = bearer_headers(settlement_issuer, "intruder")
@@ -65,13 +64,24 @@ def test_fastapi_route_dependencies(spicedb: MockSpiceDBClient, settlement_issue
     assert tc.get("/api/v1/test_auth/h/h1").status_code == 401
 
 
-def test_frontdoor_settlement_auth_lifecycle(
-    session_client: TestClient, spicedb: MockSpiceDBClient
-):
+def test_frontdoor_settlement_auth_lifecycle(session_client: TestClient):
     """End-to-end blackbox frontdoor verifying authorization across settlement and establishment endpoints."""
-    cid, gm_id, p_id, int_id = str(uuid4()), "gm_1", "p_1", "int_1"
-    asyncio.run(spicedb.write_relationship("campaign", cid, "manage", "user", gm_id))
-    asyncio.run(spicedb.write_relationship("campaign", cid, "play", "user", p_id))
+    gm_id, p_id, int_id = "gm_1", "p_1", "int_1"
+    gm_h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(gm_id)}"}
+    p_h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(p_id)}"}
+    created = session_client.post(
+        "/api/v1/campaigns", json={"title": "Frontier Watch"}, headers=gm_h
+    )
+    assert created.status_code == 201
+    cid = created.json()["id"]
+    invite = session_client.post(
+        f"/api/v1/campaigns/{cid}/invites", json={"role": "player"}, headers=gm_h
+    )
+    assert invite.status_code == 201
+    joined = session_client.post(
+        "/api/v1/campaigns/join", json={"invite_token": invite.json()["token"]}, headers=p_h
+    )
+    assert joined.status_code == 200
 
     url = f"/api/v1/campaigns/{cid}/settlements"
     bad = session_client.post(

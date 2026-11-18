@@ -11,14 +11,9 @@ from fastapi.testclient import TestClient
 from game_session.dependencies import (
     set_event_bus as set_session_event_bus,
 )
-from game_session.dependencies import (
-    set_spicedb_client as set_session_spicedb,
-)
 from game_session.events import STREAM_TAVERN
 from game_session.main import app as session_app
-from gateway_api.auth import set_spicedb_client as set_gateway_spicedb
 from gateway_api.main import app as gateway_app
-from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.main import app as voice_app
 
@@ -55,8 +50,6 @@ def mock_bus():
 
 @pytest.fixture
 def session_client():
-    mock_spicedb = MockSpiceDBClient()
-    set_session_spicedb(mock_spicedb)
     return TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     )
@@ -72,10 +65,7 @@ def live_voice_agent(monkeypatch, trusted_voice_issuer):
 
 @pytest.fixture
 def gateway_client(game_session_upstream) -> Iterator[TestClient]:
-    """Gateway client with the lifespan entered. game_session shares the same SpiceDB double."""
-    mock_spicedb = MockSpiceDBClient()
-    set_gateway_spicedb(mock_spicedb)
-    set_session_spicedb(mock_spicedb)
+    """Gateway client with the lifespan entered after game_session is served."""
     with TestClient(gateway_app) as client:
         yield client
 

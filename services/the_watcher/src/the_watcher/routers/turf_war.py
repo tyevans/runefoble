@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from the_watcher.dependencies import (
-    check_dm_authorization,
-    get_spicedb_client,
+    require_campaign_permission,
 )
 from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.turf_war.models import (
@@ -21,33 +20,6 @@ from the_watcher.turf_war.service import (
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["turf_war"])
 
 
-async def _assert_dm_permission(caller: str | None, campaign_id: str | None) -> None:
-    """Enforce Zanzibar authorization: only DMs/GMs can trigger turf war skirmishes."""
-    if not caller or not campaign_id:
-        return
-    client = get_spicedb_client()
-    if not await check_dm_authorization(caller, campaign_id=campaign_id, spicedb=client):
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Requires DM or campaign owner permission to simulate skirmishes.",
-        )
-
-
-async def _assert_view_permission(caller: str | None, campaign_id: str | None) -> None:
-    """Enforce Zanzibar authorization: campaign members and spectators can view regional unrest."""
-    if not caller or not campaign_id:
-        return
-    client = get_spicedb_client()
-    can_view = await client.check_permission("campaign", str(campaign_id), "view", "user", caller)
-    if not can_view and not await check_dm_authorization(
-        caller, campaign_id=campaign_id, spicedb=client
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: User lacks campaign view permission for regional unrest.",
-        )
-
-
 @router.post(
     "/the-watcher/factions/skirmish/simulate",
     response_model=SkirmishSimulateResponse,
@@ -61,7 +33,7 @@ async def simulate_skirmish(
     req: SkirmishSimulateRequest,
 ) -> SkirmishSimulateResponse:
     """Simulate an ad-hoc boundary skirmish and escalate regional unrest."""
-    await _assert_dm_permission(caller_id, req.campaign_id)
+    await require_campaign_permission(caller_id, req.campaign_id, "campaign.run_session")
     return await execute_skirmish_simulation(req)
 
 
@@ -81,8 +53,7 @@ async def get_regional_unrest(
     """Query regional unrest metrics, security posture, and economic friction."""
     agg = await load_or_create_unrest(region_id, campaign_id or "")
     camp = campaign_id or agg.state.campaign_id
-    if camp:
-        await _assert_view_permission(caller_id, camp)
+    await require_campaign_permission(caller_id, camp, "campaign.view")
 
     return RegionalUnrestResponse(
         region_id=agg.state.region_id,

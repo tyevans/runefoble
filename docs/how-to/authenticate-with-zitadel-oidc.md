@@ -5,6 +5,8 @@ Runefoble integrates with self-hosted Zitadel (`ghcr.io/zitadel/zitadel`) for OI
 
 The platform has one identity verifier: `ZitadelAuthService` in `libs/runefoble_auth`. No mode disables verification. No header, query parameter, or request body sets identity. Roles and admin flags are not identity. Authorization comes from SpiceDB only (ADR-0001).
 
+SpiceDB relations are written only for a verified principal. The claim sync path that maps role claims to relations still exists. TASK-0534 removes it. Do not add code that writes relations from token claims.
+
 ## Architecture & Verification Flows
 
 1. **User Login**: The frontend signs the user in with Zitadel (PKCE flow).

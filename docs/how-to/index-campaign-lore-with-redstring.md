@@ -8,6 +8,11 @@ Every Campaign Lore route needs a verified bearer token. The service checks the 
 
 Set `$DM_TOKEN` and `$PLAYER_TOKEN` to tokens that Zitadel issued for each user. The examples below use them.
 
+Each route checks one SpiceDB Zanzibar permission on the campaign:
+
+- Document ingest and alias consolidation need `run_session` (DM, GM, or owner). Other callers receive `403`.
+- Search and secret chunks follow the rules in [Authorization Filtering](#authorization-filtering-spicedb-zanzibar).
+
 ---
 
 ## 1. Document Ingestion

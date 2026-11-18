@@ -16,7 +16,7 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from campaign_lore.dependencies import set_spicedb_client, set_west_marches_repo
+from campaign_lore.dependencies import set_west_marches_repo
 from campaign_lore.identity import set_zitadel_auth_service
 from campaign_lore.main import app as lore_app
 from campaign_lore.models import WestMarchesState
@@ -31,6 +31,7 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import create_aggregate_repository
 
+from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 VISITOR_SUBJECT = "lore-test-visitor"
@@ -50,11 +51,10 @@ def _trust_signing_issuer():
 
 
 @pytest.fixture
-def spicedb_client() -> MockSpiceDBClient:
+def spicedb_client() -> Iterator[MockSpiceDBClient]:
     mock_db = MockSpiceDBClient()
-    set_spicedb_client(mock_db)
-    yield mock_db
-    set_spicedb_client(None)
+    with shared_spicedb_client(mock_db):
+        yield mock_db
 
 
 @pytest.fixture

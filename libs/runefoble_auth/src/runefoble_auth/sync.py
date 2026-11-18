@@ -6,6 +6,7 @@ import logging
 from typing import Any, Literal
 from uuid import UUID
 
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import MockSpiceDBClient, Relationship, SpiceDBClient
 from runefoble_auth.sync_events import (
     handle_character_created,
@@ -38,7 +39,7 @@ class ZitadelSpiceDBSyncService:
         max_retries: int = 3,
         retry_delay_seconds: float = 0.05,
     ) -> None:
-        self.spicedb = spicedb_client or SpiceDBClient()
+        self.spicedb = spicedb_client or get_spicedb_client()
         self.zitadel = zitadel_auth or ZitadelAuthService()
         self.max_retries = max_retries
         self.retry_delay_seconds = retry_delay_seconds
@@ -64,7 +65,7 @@ class ZitadelSpiceDBSyncService:
         self,
         campaign_id: str,
         user_id: str,
-        role: Literal["gm", "dungeon_master", "player", "spectator", "owner"] | str,
+        role: Literal["game_master", "player", "spectator", "owner"] | str,
         session_id: str | None = None,
         action: Literal["grant", "revoke"] = "grant",
     ) -> list[str]:

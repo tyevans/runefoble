@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID, uuid4
 
+from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException, Query
 from game_session.caravan import CaravanContractAggregate
 from game_session.child_index import ChildIndexKind
@@ -128,7 +129,7 @@ async def get_caravan_contract(
 
     try:
         contract = await get_caravan_contract_repository().load(cid)
-    except Exception as e:
+    except AggregateNotFoundError as e:
         raise HTTPException(status_code=404, detail="Contract not found") from e
 
     return {"shared_world_id": str(wid), "contract": contract.state.model_dump()}

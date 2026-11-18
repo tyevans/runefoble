@@ -28,8 +28,7 @@ async def _setup_world(
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     wid = res.json()["shared_world_id"]
-    for cid, uid, pname in parties:
-        await spicedb.write_relationship("campaign", cid, "player", "user", uid)
+    for cid, _uid, pname in parties:
         client.post(
             f"/api/v1/shared-worlds/{wid}/campaigns",
             json={"campaign_id": cid, "party_name": pname},
@@ -65,7 +64,9 @@ async def test_blackbox_caravan_trade_and_merchant_stock_unlocks(
             "contributing_campaign_id": c_blue,
             "facilities": {"harbor": 1},
         },
-        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_trader)}"},
+        headers={
+            "Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"
+        },  # outposts need manage
     )
     assert outpost.status_code == 201
 

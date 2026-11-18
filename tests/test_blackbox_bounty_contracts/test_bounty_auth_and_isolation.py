@@ -5,14 +5,14 @@ Governed by ADR-0001, ADR-0005, and Hard Invariant 1.
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
+
+from .conftest import create_campaign_session, join_campaign
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -23,11 +23,15 @@ async def test_spicedb_zanzibar_permission_enforcement(
     mock_bus: MockAsyncRedis,
     spicedb: MockSpiceDBClient,
 ) -> None:
-    session_id = str(uuid4())
     poster_id = "user_authorized_poster"
     unauthorized_user = "user_intruder"
     claimant_id = "user_mercenary_drake"
     dm_id = "user_session_dm"
+
+    # The DM owns the campaign and its session. Poster and claimant join as players.
+    campaign_id, session_id = create_campaign_session(client, dm_id)
+    join_campaign(client, campaign_id, dm_id, poster_id)
+    join_campaign(client, campaign_id, dm_id, claimant_id)
 
     # 1. Intruder cannot post bounty in session without participate permission
     res_unauth_post = client.post(
@@ -41,8 +45,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
     )
     assert res_unauth_post.status_code == 403
 
-    # Grant permission to poster and post bounty
-    await spicedb.write_relationship("session", session_id, "participate", "user", poster_id)
+    # Poster is a player and posts the bounty
     res_post = client.post(
         f"/api/v1/sessions/{session_id}/contracts/bounties",  # Also verifies /api/v1 route alias
         json={
@@ -70,8 +73,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
     )
     assert res_unauth_claim.status_code == 403
 
-    # Grant claimant participate permission and claim
-    await spicedb.write_relationship("session", session_id, "participate", "user", claimant_id)
+    # Claimant is a player and claims the bounty
     res_claim = client.post(
         f"/sessions/{session_id}/contracts/bounties/{bounty_id}/claim",
         json={"claimant_party_name": "Drake's Rangers"},
@@ -87,8 +89,7 @@ async def test_spicedb_zanzibar_permission_enforcement(
     )
     assert res_unauth_comp.status_code == 403
 
-    # 5. DM with session control can complete and disburse
-    await spicedb.write_relationship("session", session_id, "control", "user", dm_id)
+    # 5. DM (campaign owner, session control) can complete and disburse
     res_dm_comp = client.post(
         f"/api/v1/sessions/{session_id}/contracts/bounties/{bounty_id}/complete",
         json={"proof": "Goblin Shaman's Staff verified by DM"},

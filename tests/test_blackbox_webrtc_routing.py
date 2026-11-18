@@ -13,14 +13,14 @@ import pytest
 import voice_agent.main as va_main
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client, set_spicedb_client
 from gateway_api.main import app, set_event_bus
 from gateway_api.signaling import signaling_manager
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import ws_subprotocols
 
@@ -30,13 +30,12 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer", "trusted_voice_issuer"
 @pytest.fixture(autouse=True)
 def reset_voice_signaling_environment():
     """Reset SpiceDB client, Redis event bus, and coordinator before each test."""
-    mock_spicedb = MockSpiceDBClient()
-    set_spicedb_client(mock_spicedb)
+    mock_spicedb = get_spicedb_client()
     mock_redis = MockAsyncRedis()
     bus = RedisStreamsEventBus(client=mock_redis)
     set_event_bus(bus)
     va_main.set_event_bus(bus)
-    coord = VoiceRoomCoordinator(event_bus=bus, spicedb_client=mock_spicedb)
+    coord = VoiceRoomCoordinator(event_bus=bus)
     set_voice_room_coordinator(coord)
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
@@ -47,7 +46,6 @@ def reset_voice_signaling_environment():
     signaling_manager.peer_sessions.clear()
     signaling_manager._coordinator = None
     va_main.set_event_bus(None)
-    set_spicedb_client(SpiceDBClient())
     set_event_bus(None)
     set_voice_room_coordinator(None)
 
@@ -177,6 +175,7 @@ def test_dm_moderation_kick_authorized_succeeds_and_disconnects_peer():
     session_id, dm_user, bad_user = "sess-dm-kick-success", "the_watcher_dm", "troll_user"
     for r, u in (("dungeon_master", dm_user), ("player", bad_user)):
         asyncio.run(spicedb.write_relationship("campaign", session_id, r, "user", u))
+    asyncio.run(grant_voice_session(session_id, dm=dm_user, players=[bad_user]))
 
     client = TestClient(app)
     with client.websocket_connect(

@@ -6,11 +6,18 @@ This guide explains how to use the `soundscape` bounded context (TASK-0050, PRD-
 
 Every route in this service needs a bearer token. Set `TOKEN` to a Zitadel access token for the caller. The service verifies the token itself. It ignores `X-User-Id` and similar headers.
 
+Authorization fails closed:
+- No verified token returns `401`.
+- A verified caller without the schema permission returns `403`.
+- SpiceDB cannot answer. The service returns `503` with `{"detail": "Authorization service is unavailable"}`. A failed check is never a denial or an allow.
+
+Each control route checks one schema permission. The table in section 7 lists them.
+
 ---
 
 ## 1. Calculating Encounter Tension & Stem Transitions
 
-The Encounter Tension Scoring Engine computes real-time tension (0–100) based on combat round progression, enemy Challenge Rating (CR) threat, and party health ratios:
+The Encounter Tension Scoring Engine computes real-time tension (0–100) based on combat round progression, enemy Challenge Rating (CR) threat, and party health ratios. The caller needs `session.control` on `session_id` (DM authority). A player receives `403`.
 
 ```bash
 curl -X POST http://localhost:8009/api/v1/soundscape/tension/calculate \
@@ -114,7 +121,7 @@ curl -X POST http://localhost:8009/api/v1/soundscape/override \
   }'
 ```
 
-This operation checks Zanzibar permissions (`run_session` or `control` on `session:session-tomb-14`).
+This operation checks `session.control` on `session:session-tomb-14`. When the request names a `campaign_id`, `campaign.run_session` on that campaign also grants it. A player receives `403`.
 
 ---
 
@@ -182,15 +189,21 @@ The component dispatches custom DOM events:
 
 When frontend microfrontends such as `<runefoble-soundscape-controls>` or external client SDKs interact with soundscape capabilities, requests are routed through the API Gateway at `http://localhost:8000/api/v1/soundscape/*` (governed by TASK-0436, ADR-0001, ADR-0010, ADR-0013):
 
-| Gateway Endpoint | Method | Required Zanzibar Permission | Downstream Proxy / Action |
-|---|---|---|---|
-| `/api/v1/soundscape/cue` | POST | `play` on campaign or session | Triggers tactical foley cue (`SoundscapeCueRequest`) |
-| `/api/v1/soundscape/tension` | GET | Public / Authenticated | Retrieves session encounter tension & stem profile |
-| `/api/v1/soundscape/tension/calculate` | POST | Public / Authenticated | Computes tension score from combat round and CR |
-| `/api/v1/soundscape/stems/override` | POST | `run_session` or `manage` on campaign | Forces DM mood override (exploration, combat, etc.) |
-| `/api/v1/soundscape/leitmotif/{character_id}` | GET | Public / Authenticated | Queries character leitmotif signature configuration |
+The soundscape service checks these schema permissions on each control route. The gateway checks its own permissions before it forwards the request.
 
-The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) checks SpiceDB Zanzibar object permissions before it forwards the request to `SOUNDSCAPE_SERVICE_URL` (default `http://soundscape:8009`). The gateway forwards the caller's bearer token. If the soundscape service returns `5xx`, the gateway returns `502`. If the service is unreachable, the gateway returns `503`. It does not run soundscape code in process. See [Gateway Proxy Identity and Errors](../reference/ports-and-endpoints.md#gateway-proxy-identity-and-errors).
+| Route | Method | Service Permission (`runefoble.zed`) | Action |
+|---|---|---|---|
+| `/api/v1/soundscape/cue` | POST | `session.participate` or `session.control`. With a `campaign_id`, also `campaign.play` or `campaign.run_session`. | Triggers tactical foley cue (`SoundscapeCueRequest`) |
+| `/api/v1/soundscape/stems/volume` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Sets stem channel volumes |
+| `/api/v1/soundscape/duck` | POST | `session.control` | Toggles -12dB ducking |
+| `/api/v1/soundscape/tension/calculate` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Computes tension score from combat round and CR |
+| `/api/v1/soundscape/override` and `/stems/override` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Forces DM mood override (exploration, combat, etc.) |
+| `/api/v1/soundscape/leitmotif/profile` and `/trigger` | POST | `character.edit` on the character, or `session.control` (or `campaign.run_session` with a `campaign_id`) | Configures or triggers a character leitmotif |
+| `/api/v1/soundscape/tension` and `/stems` | GET | Verified token only | Reads session encounter tension and stem profile |
+
+Known gap: the GET read routes do not check `session.observe` yet. The request models type `campaign_id` as a UUID, but gateway campaign ids are strings. A campaign grant cannot reach these routes until that contract changes.
+
+The gateway router (`gateway/api/src/gateway_api/routers/soundscape.py`) checks SpiceDB Zanzibar object permissions before it forwards the request to `SOUNDSCAPE_SERVICE_URL` (default `http://soundscape:8009`). The gateway does not proxy `/stems/volume` or `/duck` yet (TASK-0536). The gateway forwards the caller's bearer token. If the soundscape service returns `5xx`, the gateway returns `502`. If the service is unreachable, the gateway returns `503`. It does not run soundscape code in process. See [Gateway Proxy Identity and Errors](../reference/ports-and-endpoints.md#gateway-proxy-identity-and-errors).
 
 ---
 
@@ -203,7 +216,8 @@ The soundscape blackbox verification suite is partitioned into focused test modu
 - `tests/test_blackbox_leitmotif_events.py`: Verifies CloudEvents domain event class mapping (`LeitmotifProfileConfigured`, `LeitmotifTriggered`, `CriticalHitScored`, `DeathSaveStarted`) and payload serialization roundtrips.
 - `tests/test_blackbox_leitmotif_api.py`: Verifies REST API routes (`/api/v1/soundscape/leitmotif/timbres`, `profile`, `trigger`, `active`), SpiceDB Zanzibar character owner authorization enforcement, and `<runefoble-leitmotif-config>` microfrontend manifest and component invariants.
 - `tests/test_blackbox_leitmotif_triggers.py`: Verifies multi-modal combat and reactive triggers (critical hits, near-death cello themes, WebAudio sidechain -12dB voice ducking) and volume envelope stage calculations.
-- `tests/test_blackbox_soundscape_gateway.py`: Verifies API Gateway `/api/v1/soundscape/*` proxy routing, OpenAPI schema exposure, SpiceDB Zanzibar object authorization (`play`, `run_session`, `manage`), and downstream service forwarding (< 500 lines).
+- `tests/test_blackbox_soundscape_gateway.py`: Verifies API Gateway `/api/v1/soundscape/*` proxy routing, OpenAPI schema exposure, SpiceDB Zanzibar object authorization (`participate`, `control`, `run_session`), and downstream service forwarding (< 500 lines).
+- `tests/test_blackbox_analytics_soundscape_authz.py`: Verifies fail-closed authorization across the gateway analytics reads and soundscape controls. It covers 401 without a token, 403 for a player, 200 for the DM, and 503 on a SpiceDB outage.
 - `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`CombatEncounterStarted`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DeathSaveStarted`), platform bus subscription wiring, re-exports for existing callers (defect, DoR 9; removal: TASK-0498), and file length limit invariants (< 180 lines).
 
 ---
@@ -211,7 +225,7 @@ The soundscape blackbox verification suite is partitioned into focused test modu
 ## 9. Modular Event Subscription & Service Architecture
 
 Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, domain event handlers and dependency injection are cleanly separated into focused modules strictly maintained under 180 lines:
-- `services/soundscape/src/soundscape/dependencies.py`: Retains repository singleton factories, SpiceDB Zanzibar permission guards, mixer session registries, and re-exports domain event dispatchers (< 150 lines).
+- `services/soundscape/src/soundscape/dependencies.py`: Retains repository singleton factories, SpiceDB Zanzibar permission guards, mixer session registries, and re-exports domain event dispatchers (< 200 lines).
 - `services/soundscape/src/soundscape/event_handlers.py`: Contains domain event subscription callbacks (`CombatEncounterStarted`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, `DeathSaveStarted`), dynamic tension recalculation triggers, and bus listener registration (`register_soundscape_event_handlers()`) (< 180 lines).
 - `services/soundscape/src/soundscape/main.py`: Coordinates service startup and registers event handlers during FastAPI application lifespan.
 

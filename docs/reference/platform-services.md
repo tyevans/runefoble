@@ -11,7 +11,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 |---|---|---|---|---|---|
 | **PostgreSQL** | `pgvector/pgvector:pg16` | `postgres:5432` | None (Internal) | ADR-0005, ADR-0011 | `InMemoryEventStore` (test only; used when `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=false`) |
 | **Redis Streams** | `redis:7.2-alpine` | `runefoble-redis:6379` | None (Internal) | ADR-0006 | None. Services fail start-up when Redis is unreachable. Tests use a Redis test double (`MockAsyncRedis`). |
-| **SpiceDB (Zanzibar)** | `authzed/spicedb:v1.34.0` | `spicedb:50051` (gRPC), `8443` (HTTP) | None (Internal) | ADR-0001 | `MockSpiceDBClient` (test only) |
+| **SpiceDB (Zanzibar)** | `authzed/spicedb:v1.34.0` | `spicedb:50051` (gRPC), `8443` (HTTP) | None (Internal) | ADR-0001 | None in services. Tests swap the factory client for `MockSpiceDBClient`. |
 | **Zitadel (OIDC/AuthN)** | `ghcr.io/zitadel/zitadel:v2.54.0` | `zitadel:8080` | `auth.localhost` (own host, root path) | ADR-0005 | `ZitadelAuthService` (PyJWKClient RS256 verification of signature, `iss`, `aud`, `exp`, `sub`; no bypass) |
 | **Silo (S3 Storage)** | `minio/minio:RELEASE.2024-01-01...` | `silo:9000` (S3), `9001` (UI) | None (Proxy via Gateway) | ADR-0005 | `FakeSilo` HTTP transport (tests only, no production fallback) |
 | **OpenTelemetry Collector** | `otel/opentelemetry-collector-contrib` | `otel-collector:4317` (gRPC), `4318` (HTTP) | None (Internal) | ADR-0005 | Null Tracer / No-op Span Processor |
@@ -54,6 +54,13 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 - **Role**: Object-level access control enforcing who can view, run, mutate, or roll within campaigns, characters, and boards.
 - **Datastore Migrations**: Uses `spicedb datastore migrate head` executed via initContainers in the deployment and Helm schema job before serving or writing schemas.
 - **Schema**: `libs/runefoble_auth/schema/runefoble.zed`.
+- **Shared Factory**: `runefoble_auth.factory.get_spicedb_client()` is the only constructor for services and the gateway. It caches one client built from `PlatformSettings`. It raises `ConfigurationError` when the preshared key is missing.
+- **Fail-Closed Errors**: `check_permission` returns `False` only for a definitive `NO_PERMISSION`. Other failures raise a typed error from `runefoble_auth.errors`:
+  - `AuthzUnavailableError`: gRPC `UNAVAILABLE` or `DEADLINE_EXCEEDED`, or a socket error. The gateway maps it to `503`.
+  - `AuthzSchemaError`: gRPC `INVALID_ARGUMENT` or `FAILED_PRECONDITION`. The name (type, relation, or permission) is not in `runefoble.zed`.
+  - `AuthzWriteError`: any other failed write, delete, or schema write.
+  - `AuthzError`: the base class of all three.
+- **Schema Names Only**: Callers pass names from `runefoble.zed`. The client sends them unchanged. For example, `game_master` is valid and `gm` is not.
 - **Environment Variables**: `RUNEFOBLE_SPICEDB_ENDPOINT`, `RUNEFOBLE_SPICEDB_PRESHARED_KEY`. The preshared key is an operator secret with no default outside tests. A process that cannot read it exits at startup and names the variable. Helm reads it from the `runefoble-credentials` Secret, key `spicedb-preshared-key`, and passes it as `SPICEDB_GRPC_PRESHARED_KEY` to the SpiceDB server. See [Chart Credentials](#chart-credentials).
 - **Direct gRPC Enforcement**: `SpiceDBClient` connects directly over gRPC without silent mock fallbacks; errors fail fast to prevent authorization drift. Offline unit tests explicitly instantiate `MockSpiceDBClient`. Exception: the sync service (`libs/runefoble_auth/src/runefoble_auth/sync.py`) accepts a `MockSpiceDBClient` through its constructor and reports `backend: mock` when it does.
 - **How-To Guide**: [Define and Check SpiceDB Zanzibar Permissions](../how-to/define-spicedb-zanzibar-permissions.md).

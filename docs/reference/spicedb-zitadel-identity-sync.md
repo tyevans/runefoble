@@ -119,7 +119,7 @@ Health probe reporting SpiceDB connectivity and synchronization backend (`mock` 
 
 `SpiceDBEventListener` subscribes to domain events on Redis Streams or the local event bus:
 
-- **`SessionCreated`**: Provisions `campaign:<id>#gm@user:<dm_id>` and `session:<id>#campaign@campaign:<id>`.
+- **`SessionCreated`**: Provisions `campaign:<id>#game_master@user:<dm_id>` and `session:<id>#campaign@campaign:<id>`.
 - **`ParticipantJoined` / `PlayerJoinedSession`**: Provisions `campaign:<id>#<role>@user:<user_id>`. If `character_id` is present, also establishes character ownership.
 - **`CharacterCreated`**: Provisions `character:<id>#owner@user:<player_id>` and `character:<id>#campaign@campaign:<id>`.
 - **`TokenPlaced`**: Provisions `board_token:<id>#character@character:<character_id>` and `board_token:<id>#campaign@campaign:<id>`.

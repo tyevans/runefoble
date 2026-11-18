@@ -13,6 +13,7 @@ Verifies:
 from __future__ import annotations
 
 import array
+import asyncio
 import base64
 import time
 import uuid
@@ -25,6 +26,7 @@ from voice_agent.interruption import apply_soft_crossfade
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -33,6 +35,7 @@ pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 def test_barge_in_cancels_playback_within_100ms(client: TestClient, mock_redis: MockAsyncRedis):
     """Player speech onset triggers immediate barge-in cancellation within 100ms and emits event."""
     session_id, speaker_id = f"sess-{uuid.uuid4().hex[:8]}", "spk-marcus"
+    asyncio.run(grant_voice_session(session_id, players=["spk-marcus", "spk-1"]))
     text = "The shadow dragon exhales necrotic flame across the crumbling bridge!"
 
     with client.websocket_connect(
@@ -77,6 +80,7 @@ def test_acoustic_echo_cancellation_suppresses_false_barge_in(
 ):
     """Loudspeaker playback echoing into microphone is suppressed by AEC and does not trigger barge-in."""
     session_id, speaker_id = f"sess-{uuid.uuid4().hex[:8]}", "spk-marcus"
+    asyncio.run(grant_voice_session(session_id, players=["spk-marcus", "spk-1"]))
 
     with client.websocket_connect(
         f"/api/v1/voice/duplex/ws/{session_id}/{speaker_id}", subprotocols=voice_ws_subprotocols()
@@ -109,6 +113,7 @@ def test_soft_20ms_crossfade_eliminates_audio_clipping():
 def test_silence_input_does_not_trigger_barge_in(client: TestClient, mock_redis: MockAsyncRedis):
     """Pure silence does not interrupt ongoing playback."""
     session_id = f"sess-{uuid.uuid4().hex[:8]}"
+    asyncio.run(grant_voice_session(session_id, players=["spk-marcus", "spk-1"]))
     with client.websocket_connect(
         f"/api/v1/voice/duplex/ws/{session_id}/spk-1", subprotocols=voice_ws_subprotocols()
     ) as ws:

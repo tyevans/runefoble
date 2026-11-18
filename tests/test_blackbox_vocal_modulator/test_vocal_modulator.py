@@ -13,12 +13,13 @@ Governed by:
 
 from __future__ import annotations
 
+import asyncio
 import base64
 from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_events.vocal_dsp import (
     VocalModulatorPresetAppliedEvent,
     VoiceFilterToggledEvent,
@@ -27,6 +28,7 @@ from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.main import app as voice_app
 
 from tests.helpers.audio_synth import generate_synthetic_audio
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -35,8 +37,7 @@ pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 @pytest.fixture
 def test_setup():
     coord = get_voice_room_coordinator()
-    mock_spicedb = MockSpiceDBClient()
-    coord.set_spicedb(mock_spicedb)
+    mock_spicedb = get_spicedb_client()
 
     mock_bus = AsyncMock()
     coord.set_event_bus(mock_bus)
@@ -75,15 +76,13 @@ async def test_get_npc_voice_presets(test_setup):
 async def test_modulate_voice_with_synthetic_pcm_frames(test_setup):
     """Verify POST /voice/modulate applies DSP transformations to PCM audio under 50ms latency."""
     client = test_setup["client"]
-    spicedb = test_setup["spicedb"]
     bus = test_setup["bus"]
 
     session_id = "test-session-dragon-01"
     user_id = "dm-evelyn"
 
-    # Frontdoor Zanzibar authorization setup
-    await spicedb.write_relationship("campaign", "camp-1", "dungeon_master", "user", user_id)
-    await spicedb.write_relationship("session", session_id, "campaign", "campaign", "camp-1")
+    # Schema tuples: the DM is the campaign dungeon_master, and the session belongs to the campaign.
+    await grant_voice_session(session_id, dm=user_id)
 
     # Generate synthetic PCM frame (50ms of audio = 800 samples @ 16kHz)
     input_pcm = generate_synthetic_audio(duration_sec=0.05, sample_rate=16000)
@@ -135,11 +134,10 @@ async def test_modulate_voice_with_synthetic_pcm_frames(test_setup):
 async def test_modulate_all_creature_archetypes(test_setup):
     """Verify DSP transformations for Goblin, Celestial, and Robot archetypes."""
     client = test_setup["client"]
-    spicedb = test_setup["spicedb"]
     session_id = "test-session-archetypes"
     user_id = "dm-evelyn"
 
-    await spicedb.write_relationship("session", session_id, "control", "user", user_id)
+    await grant_voice_session(session_id, dm=user_id)
     input_pcm = generate_synthetic_audio(duration_sec=0.04, sample_rate=16000)
     input_b64 = base64.b64encode(input_pcm).decode("ascii")
 
@@ -174,12 +172,11 @@ async def test_modulate_all_creature_archetypes(test_setup):
 async def test_modulate_custom_overrides_and_toggle(test_setup):
     """Verify fine-tuning pitch/formant parameters and toggling filter off."""
     client = test_setup["client"]
-    spicedb = test_setup["spicedb"]
     bus = test_setup["bus"]
     session_id = "test-session-custom"
     user_id = "dm-evelyn"
 
-    await spicedb.write_relationship("session", session_id, "control", "user", user_id)
+    await grant_voice_session(session_id, dm=user_id)
     input_pcm = generate_synthetic_audio(duration_sec=0.03, sample_rate=16000)
     input_b64 = base64.b64encode(input_pcm).decode("ascii")
 
@@ -223,14 +220,10 @@ async def test_modulate_custom_overrides_and_toggle(test_setup):
 async def test_spicedb_zanzibar_authorization_enforcement(test_setup):
     """Verify object-level permission enforcement rejects unauthorized subjects (Hard Invariant 1)."""
     client = test_setup["client"]
-    spicedb = test_setup["spicedb"]
     session_id = "secure-session-999"
 
     # Only DM Evelyn has permission
-    await spicedb.write_relationship(
-        "campaign", "camp-secure", "dungeon_master", "user", "dm-evelyn"
-    )
-    await spicedb.write_relationship("session", session_id, "campaign", "campaign", "camp-secure")
+    await grant_voice_session(session_id, dm="dm-evelyn")
 
     # Unauthorized intruder attempts to modulate voice
     resp = client.post(
@@ -239,7 +232,8 @@ async def test_spicedb_zanzibar_authorization_enforcement(test_setup):
         headers=voice_auth_headers("unauthorized-stranger"),
     )
     assert resp.status_code == 403
-    assert "Forbidden" in resp.json()["detail"]
+    assert resp.json()["detail"]["error"] == "permission_denied"
+    assert resp.json()["detail"]["required_permission"] == "session.participate"
 
     # Authorized DM succeeds
     resp_auth = client.post(
@@ -253,13 +247,10 @@ async def test_spicedb_zanzibar_authorization_enforcement(test_setup):
 def test_vocal_modulator_error_handling(test_setup):
     """Verify 404 for unknown presets and 400 for malformed audio payloads."""
     client = test_setup["client"]
-    spicedb = test_setup["spicedb"]
     session_id = "test-err-session"
     user_id = "dm-user"
 
-    import asyncio
-
-    asyncio.run(spicedb.write_relationship("session", session_id, "control", "user", user_id))
+    asyncio.run(grant_voice_session(session_id, dm=user_id))
 
     # Unknown preset
     resp = client.post(

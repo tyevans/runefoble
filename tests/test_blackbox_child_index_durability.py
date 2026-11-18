@@ -50,6 +50,13 @@ def spicedb() -> MockSpiceDBClient:
     return MockSpiceDBClient()
 
 
+async def _grant_session_play(spicedb: MockSpiceDBClient, session_id: str, user: str) -> None:
+    """Make the user a campaign player and link the session to that campaign (schema relations)."""
+    campaign_id = str(uuid4())
+    await spicedb.write_relationship("campaign", campaign_id, "player", "user", user)
+    await spicedb.write_relationship("session", session_id, "campaign", "campaign", campaign_id)
+
+
 @pytest.fixture
 def redis_double() -> MockAsyncRedis:
     return MockAsyncRedis()
@@ -76,7 +83,7 @@ async def test_posted_bounty_is_listed_after_restart(
 ) -> None:
     """A bounty posted before a restart still appears in the session bounty list."""
     session_id, poster = str(uuid4()), f"poster_{uuid4().hex[:8]}"
-    await spicedb.write_relationship("session", session_id, "participate", "user", poster)
+    await _grant_session_play(spicedb, session_id, poster)
     client = _boot_session_process(spicedb, redis_double)
     posted = client.post(
         f"/sessions/{session_id}/contracts/bounties",
@@ -175,7 +182,7 @@ async def test_bounty_list_answers_503_when_the_store_is_unreachable(
 ) -> None:
     """A store outage on the list path answers 503. It never returns an empty list."""
     session_id, poster = str(uuid4()), f"poster_{uuid4().hex[:8]}"
-    await spicedb.write_relationship("session", session_id, "participate", "user", poster)
+    await _grant_session_play(spicedb, session_id, poster)
     client = _boot_session_process(spicedb, redis_double)
 
     def _unreachable(*_args: object, **_kwargs: object) -> None:

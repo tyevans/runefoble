@@ -16,16 +16,9 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from gateway_api.auth import get_spicedb_client as get_gw_spicedb_client
-from gateway_api.auth import set_spicedb_client as set_gw_spicedb_client
 from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus as set_gw_event_bus
-from soundscape.dependencies import (
-    get_spicedb_client,
-    reset_dependencies,
-    set_event_bus,
-    set_spicedb_client,
-)
+from soundscape.dependencies import reset_dependencies, set_event_bus
 from soundscape.main import app as soundscape_app
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -40,24 +33,16 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(autouse=True)
-def clean_environment(default_spicedb_client, default_redis_event_bus) -> Generator[None]:
+def clean_environment(default_redis_event_bus) -> Generator[None]:
     """Ensure clean soundscape and gateway state for each test.
 
-    Soundscape and the gateway share the conftest SpiceDB mock. The live game_session upstream
-    writes its ownership tuples there, so soundscape must read the same store.
+    The shared SpiceDB double comes from the autouse fixture in tests/conftest.py.
     """
-    previous_soundscape = get_spicedb_client()
-    previous_gateway = get_gw_spicedb_client()
-    set_spicedb_client(default_spicedb_client)
-    set_gw_spicedb_client(default_spicedb_client)
     set_gw_event_bus(default_redis_event_bus)
     reset_dependencies()
-    set_spicedb_client(default_spicedb_client)
     set_event_bus(default_redis_event_bus)
     yield
     reset_dependencies()
-    set_spicedb_client(previous_soundscape)
-    set_gw_spicedb_client(previous_gateway)
     set_gw_event_bus(None)
 
 
@@ -115,9 +100,9 @@ def sample_foley_cue(soundscape_session_id: str) -> dict[str, Any]:
 
 
 @pytest.fixture
-def sample_tension_payload() -> dict[str, Any]:
+def sample_tension_payload(soundscape_session_id: str) -> dict[str, Any]:
     return {
-        "session_id": "sess-ui-01",
+        "session_id": soundscape_session_id,
         "combat_active": True,
         "combat_round": 2,
         "enemy_cr_balance": 2.5,

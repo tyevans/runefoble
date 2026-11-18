@@ -19,6 +19,7 @@ from the_watcher.routers.intent import speech
 
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import bind_character_owner, make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -108,6 +109,11 @@ def _fake_board(tokens: dict[str, Any]) -> FastAPI:
 
 
 async def _post(path: str, payload: dict[str, Any]):
+    if payload.get("speaker_id"):
+        await bind_character_owner(WATCHER_CALLER, payload["speaker_id"])
+    if payload.get("session_id") and payload.get("campaign_id"):
+        # The caller is the table DM for the session, so both DM and participant routes allow it.
+        await make_table_runner(WATCHER_CALLER, payload["session_id"], payload["campaign_id"])
     headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(WATCHER_CALLER)}"}
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app), base_url="http://test", headers=headers

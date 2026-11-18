@@ -6,7 +6,9 @@ import logging
 import os
 from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
 
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from fastapi import HTTPException
+from runefoble_auth.contract import permission_for_action
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
 from runefoble_platform.event_sourcing import (
@@ -42,26 +44,10 @@ compound_action_engine = CompoundActionEngine()
 
 platform_settings = PlatformSettings()
 
-_spicedb_client: SpiceDBClient | MockSpiceDBClient | None = None
 _faction_repo: AggregateRepository[FactionAggregate] | None = None
 _campaign_world_repo: AggregateRepository[CampaignWorldAggregate] | None = None
 _faction_resource_repo: AggregateRepository[FactionResourceAggregate] | None = None
 _regional_unrest_repo: AggregateRepository[RegionalUnrestAggregate] | None = None
-
-
-def get_spicedb_client() -> SpiceDBClient | MockSpiceDBClient:
-    global _spicedb_client
-    if _spicedb_client is None:
-        _spicedb_client = SpiceDBClient(
-            endpoint=platform_settings.spicedb_endpoint,
-            token=platform_settings.spicedb_preshared_key,
-        )
-    return _spicedb_client
-
-
-def set_spicedb_client(client: SpiceDBClient | MockSpiceDBClient | None) -> None:
-    global _spicedb_client
-    _spicedb_client = client
 
 
 def get_copilot_engine() -> CopilotEngine:
@@ -128,47 +114,97 @@ def set_regional_unrest_repo(repo: AggregateRepository[RegionalUnrestAggregate] 
     _regional_unrest_repo = repo
 
 
+async def check_action_permission(
+    user_id: str,
+    resource_type: str,
+    resource_id: str,
+    action: str,
+) -> bool:
+    """Return True when the user holds the schema permission behind `action`.
+
+    `action` is a key of `ACTION_PERMISSIONS`. The type of the action must match
+    `resource_type`. SpiceDB errors propagate (fail closed): only a definitive denial
+    returns False.
+    """
+    action_type, permission = permission_for_action(action)
+    if action_type != resource_type:
+        raise ValueError(f"Action '{action}' checks '{action_type}', not '{resource_type}'")
+    return await get_spicedb_client().check_permission(
+        resource_type, str(resource_id), permission, "user", user_id
+    )
+
+
+async def require_campaign_permission(user_id: str, campaign_id: str | None, action: str) -> None:
+    """Raise 403 unless the user holds the campaign permission behind `action`.
+
+    A missing campaign id is a denial. The check never passes by default.
+    """
+    if not campaign_id or not await check_action_permission(
+        user_id, "campaign", campaign_id, action
+    ):
+        raise HTTPException(status_code=403, detail=_denied(action, "campaign", campaign_id))
+
+
+async def require_character_permission(user_id: str, character_id: str | None, action: str) -> None:
+    """Raise 403 unless the user holds the character permission behind `action`."""
+    if not character_id or not await check_action_permission(
+        user_id, "character", character_id, action
+    ):
+        raise HTTPException(status_code=403, detail=_denied(action, "character", character_id))
+
+
+async def require_speaker(user_id: str, speaker_id: str) -> None:
+    """Allow a player to speak as themselves, or for a character they can edit.
+
+    A speaker that is neither the caller nor an editable character gets 403.
+    """
+    if speaker_id == user_id:
+        return
+    await require_character_permission(user_id, speaker_id, "character.edit")
+
+
+async def require_session_permission(user_id: str, session_id: str | None, action: str) -> None:
+    """Raise 403 unless the user holds the session permission behind `action`."""
+    if not session_id or not await check_action_permission(user_id, "session", session_id, action):
+        raise HTTPException(status_code=403, detail=_denied(action, "session", session_id))
+
+
+async def require_dm(
+    user_id: str, campaign_id: str | None = None, session_id: str | None = None
+) -> None:
+    """Raise 403 unless `check_dm_authorization` grants the table-run permission for the scope."""
+    if not await check_dm_authorization(user_id, campaign_id=campaign_id, session_id=session_id):
+        action = "session.control" if session_id else "campaign.run_session"
+        resource_type, resource_id = (
+            ("session", session_id) if session_id else ("campaign", campaign_id)
+        )
+        raise HTTPException(status_code=403, detail=_denied(action, resource_type, resource_id))
+
+
+def _denied(action: str, resource_type: str, resource_id: str | None) -> str:
+    return (
+        f"Forbidden: Zanzibar authorization denied. Action '{action}' requires "
+        f"permission on {resource_type} '{resource_id or 'unknown'}'."
+    )
+
+
 async def check_dm_authorization(
-    user_id: str | None,
+    user_id: str,
     campaign_id: str | None = None,
     session_id: str | None = None,
-    spicedb: SpiceDBClient | MockSpiceDBClient | None = None,
 ) -> bool:
-    """Check Zanzibar authorization for DM actions (veto, approve, modify, whispers)."""
-    if not user_id:
-        return False
-    client = spicedb or get_spicedb_client()
+    """Return True when the user may run the table (DM, GM, or owner).
 
-    target_campaign = campaign_id
-    if not target_campaign and session_id:
-        target_campaign = session_id
-
-    if target_campaign:
-        if await client.check_permission(
-            "campaign", str(target_campaign), "dungeon_master", "user", user_id
-        ):
-            return True
-        if await client.check_permission(
-            "campaign", str(target_campaign), "run_session", "user", user_id
-        ):
-            return True
-        if await client.check_permission(
-            "campaign", str(target_campaign), "owner", "user", user_id
-        ):
-            return True
-
+    A session scope is decided by `session.control` only. Mixing a campaign id from one
+    campaign with a session from another must not pass. Without a session the campaign
+    permission `campaign.run_session` decides.
+    """
     if session_id:
-        if await client.check_permission("session", str(session_id), "control", "user", user_id):
-            return True
-        if await client.check_permission(
-            "session", str(session_id), "run_session", "user", user_id
-        ):
-            return True
-        if await client.check_permission(
-            "session", str(session_id), "dungeon_master", "user", user_id
-        ):
-            return True
-
+        return await check_action_permission(user_id, "session", session_id, "session.control")
+    if campaign_id:
+        return await check_action_permission(
+            user_id, "campaign", campaign_id, "campaign.run_session"
+        )
     return False
 
 

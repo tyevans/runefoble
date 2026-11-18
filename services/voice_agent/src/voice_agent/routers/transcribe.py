@@ -16,7 +16,8 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from runefoble_events.events import PlayerSpokeEvent
 from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import publish_or_fail
-from voice_agent.auth import caller_headers, get_voice_principal
+from voice_agent.auth import VoicePrincipal, caller_headers, get_voice_principal
+from voice_agent.authz import require_speaker
 from voice_agent.dependencies import (
     STREAM_SESSION,
     WATCHER_URL,
@@ -71,6 +72,7 @@ async def _transcript_from_request(req: TranscribeRequest) -> tuple[str, Transcr
 @router.post("/api/v1/voice/transcribe", response_model=TranscribeResponse)
 async def transcribe_speech(
     req: TranscribeRequest,
+    principal: VoicePrincipal,
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
 ):
     """Transcribe player speech, emit PlayerSpokeEvent, and forward to The Watcher.
@@ -78,6 +80,7 @@ async def transcribe_speech(
     Audio goes through the STT port. Typed text is used as given. Audio that yields no words
     publishes nothing and forwards nothing.
     """
+    await require_speaker(req.session_id, req.speaker_id, principal.user_id)
     transcript, source = await _transcript_from_request(req)
     if not transcript:
         return TranscribeResponse(

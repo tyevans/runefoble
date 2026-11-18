@@ -15,6 +15,7 @@ from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.inference_worker_port import install_worker_port
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 WORKER_AUTH = {SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]}
@@ -219,6 +220,7 @@ async def test_stand_in_graph_with_penalties(mock_port):
 
 @pytest.mark.asyncio
 async def test_watcher_service_fallback():
+    await make_table_runner("user-1", "sess-1", "camp-1")
     # Test that the_watcher still functions cleanly when no inference worker url is set
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app), base_url="http://test", headers=WATCHER_AUTH

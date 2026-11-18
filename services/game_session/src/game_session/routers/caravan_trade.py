@@ -9,13 +9,16 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
+from game_session.caravan_ledger import CaravanLedgerAggregate
 from game_session.dependencies import (
     get_caravan_ledger_repository,
     get_event_bus,
     get_spicedb_client,
 )
 from game_session.events import STREAM_WEST_MARCHES
+from game_session.routers.caravan_contracts.auth import _check_perm, _to_uuid
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.west_marches_models import (
     CompleteCaravanRequest,
@@ -30,23 +33,13 @@ router = APIRouter(
 )
 
 
-def _to_uuid(val: Any) -> UUID:
-    if isinstance(val, UUID):
-        return val
+async def _load_ledger(wid: UUID) -> tuple[Any, CaravanLedgerAggregate]:
+    """Load the world's caravan ledger, or start an empty one when none exists yet."""
+    repo = get_caravan_ledger_repository()
     try:
-        return UUID(str(val))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
-
-
-async def _check_perm(spicedb, res_id: str, perm: str, user_id: str | None) -> None:
-    if user_id and not await spicedb.check_permission(
-        "shared_world", str(res_id), perm, "user", user_id
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Permission denied: subject '{user_id}' lacks '{perm}' on shared_world:{res_id}",
-        )
+        return repo, await repo.load(wid)
+    except AggregateNotFoundError:
+        return repo, CaravanLedgerAggregate(wid)
 
 
 @router.post("/{shared_world_id}/caravans/dispatch", status_code=201)
@@ -58,15 +51,9 @@ async def dispatch_caravan(
     """Dispatch scheduled caravan delivering crafted goods/reagents between outposts."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "trade", caller_id)
+    await _check_perm(spicedb, "shared_world", str(wid), "trade", caller_id)
 
-    repo = get_caravan_ledger_repository()
-    from game_session.caravan_ledger import CaravanLedgerAggregate
-
-    try:
-        ledger = await repo.load(wid)
-    except Exception:
-        ledger = CaravanLedgerAggregate(wid)
+    repo, ledger = await _load_ledger(wid)
 
     cid = ledger.dispatch_caravan(
         origin_outpost=req.origin_outpost,
@@ -96,15 +83,9 @@ async def complete_caravan_trade(
     """Complete caravan transit, delivering cargo and unlocking regional merchant stock."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "trade", caller_id)
+    await _check_perm(spicedb, "shared_world", str(wid), "trade", caller_id)
 
-    repo = get_caravan_ledger_repository()
-    from game_session.caravan_ledger import CaravanLedgerAggregate
-
-    try:
-        ledger = await repo.load(wid)
-    except Exception:
-        ledger = CaravanLedgerAggregate(wid)
+    repo, ledger = await _load_ledger(wid)
 
     try:
         caravan = ledger.complete_caravan_trade(
@@ -140,15 +121,9 @@ async def get_outpost_merchant_stock(
     """Retrieve merchant stock and rare crafting reagents unlocked at a regional outpost."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, str(wid), "view", caller_id)
+    await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
 
-    repo = get_caravan_ledger_repository()
-    from game_session.caravan_ledger import CaravanLedgerAggregate
-
-    try:
-        ledger = await repo.load(wid)
-    except Exception:
-        ledger = CaravanLedgerAggregate(wid)
+    _, ledger = await _load_ledger(wid)
 
     dest = outpost_name.lower()
     stock = ledger.state.outpost_stocks.get(dest, {"inventory": {}, "workshop_reagents": {}})

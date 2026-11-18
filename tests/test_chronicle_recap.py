@@ -6,6 +6,8 @@ Verifies:
 3. The Watcher REST endpoint POST /api/v1/watcher/chronicle/recap with FastAPI TestClient.
 """
 
+import asyncio
+
 import pytest
 from eventsource.domain.event_registry import default_registry
 from fastapi.testclient import TestClient
@@ -16,6 +18,7 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -205,6 +208,7 @@ def test_recap_registered_in_default_registry():
 
 def test_post_chronicle_recap_endpoint(test_client: TestClient):
     """POST /api/v1/watcher/chronicle/recap must accept RecapRequest and return AbsenteeRecapGenerated."""
+    asyncio.run(make_table_runner("test-user", "sess-test-42", "camp-test-42"))
     mock_bus = RedisStreamsEventBus(client=MockAsyncRedis())
     set_event_bus(mock_bus)
 

@@ -10,9 +10,10 @@ from the_watcher.dependencies import (
     STREAM_WATCHER,
     engine,
     get_event_bus,
+    require_session_permission,
     to_uuid,
 )
-from the_watcher.identity import get_caller_principal
+from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.models import (
     StandInAction,
     StandInRecapRequest,
@@ -25,12 +26,13 @@ router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["stand_in
 
 
 @router.post("/api/v1/watcher/stand-in/act", response_model=StandInAction)
-async def stand_in_act(req: StandInRequest) -> StandInAction:
+async def stand_in_act(caller_id: CallerId, req: StandInRequest) -> StandInAction:
     """Simulate an action for an absent player's character with applied penalties.
 
     With a worker configured, a worker failure is returned as HTTP 503. The Watcher never
     substitutes canned output for a failed worker call.
     """
+    await require_session_permission(caller_id, req.session_id, "session.participate")
     stand_in: StandInAction
     guardrails = req.guardrails.model_dump() if req.guardrails is not None else None
     if INFERENCE_URL:
@@ -104,8 +106,9 @@ async def stand_in_act(req: StandInRequest) -> StandInAction:
 
 
 @router.post("/api/v1/watcher/stand-in/recap", response_model=StandInRecapResponse)
-async def stand_in_recap(req: StandInRecapRequest) -> StandInRecapResponse:
+async def stand_in_recap(caller_id: CallerId, req: StandInRecapRequest) -> StandInRecapResponse:
     """Generate a humorous recap of an absent player's stand-in exploits for when they return."""
+    await require_session_permission(caller_id, req.session_id, "session.observe")
     data = engine.generate_stand_in_recap(
         character_name=req.character_name,
         actions=req.actions,

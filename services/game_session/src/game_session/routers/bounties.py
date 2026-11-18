@@ -67,7 +67,7 @@ def _err(fn, *a, **kw) -> Any:
 async def post_bounty(
     session_id: str, req: PostBountyRequest, caller_id: CallerId
 ) -> dict[str, Any]:
-    sid, spicedb = _to_uuid(session_id), get_spicedb_client()
+    sid, spicedb = session_id, get_spicedb_client()
     await check_bounty_post(spicedb, str(sid), caller_id)
     bid = uuid4()
     agg = MercenaryBountyAggregate(bid)
@@ -88,7 +88,7 @@ async def list_bounties(
     target_type: str | None = Query(default=None),
     min_gold: int | None = Query(default=None),
 ) -> dict[str, Any]:
-    sid = _to_uuid(session_id)
+    sid = session_id
     await check_bounty_view(get_spicedb_client(), str(sid), "", caller_id)
     repo, results = get_bounty_contract_repository(), []
     for bid_str in await list_bounties_for_session(str(sid)):
@@ -108,7 +108,7 @@ async def list_bounties(
 
 @router.get("/{session_id}/contracts/bounties/{bounty_id}")
 async def get_bounty(session_id: str, bounty_id: str, caller_id: CallerId) -> dict[str, Any]:
-    sid, bid = _to_uuid(session_id), _to_uuid(bounty_id)
+    sid, bid = session_id, _to_uuid(bounty_id)
     await check_bounty_view(get_spicedb_client(), str(sid), str(bid), caller_id)
     agg = await _load(bid)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
@@ -121,8 +121,8 @@ async def claim_bounty(
     bounty_id: str,
     req: ClaimBountyRequest,
 ) -> dict[str, Any]:
-    sid, bid, spicedb = _to_uuid(session_id), _to_uuid(bounty_id), get_spicedb_client()
-    await check_bounty_claim(spicedb, str(sid), str(bid), caller_id)
+    sid, bid, spicedb = session_id, _to_uuid(bounty_id), get_spicedb_client()
+    await check_bounty_claim(spicedb, str(bid), caller_id)
     agg = await _load(bid)
     _err(agg.claim_bounty, caller_id, req.claimant_campaign_id, req.claimant_party_name)
     await _save_pub(agg)
@@ -137,8 +137,8 @@ async def complete_bounty(
     bounty_id: str,
     req: CompleteBountyRequest,
 ) -> dict[str, Any]:
-    sid, bid = _to_uuid(session_id), _to_uuid(bounty_id)
-    await check_bounty_disburse(get_spicedb_client(), str(bid), str(sid), caller_id)
+    sid, bid = session_id, _to_uuid(bounty_id)
+    await check_bounty_disburse(get_spicedb_client(), str(bid), caller_id)
     agg = await _load(bid)
     payout = _err(agg.complete_bounty, proof=req.proof, disbursed_by=caller_id)
     await _save_pub(agg)

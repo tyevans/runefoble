@@ -5,8 +5,6 @@ Governed by: ADR-0001, ADR-0006, ADR-0011, Hard Invariant 7.
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
@@ -14,7 +12,7 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-from .conftest import assert_stream_events
+from .conftest import assert_stream_events, create_campaign, join_campaign
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -28,8 +26,6 @@ async def test_blackbox_caravan_lifecycle_ambush_and_settlement_economy_fulfillm
     """Test Scenario 3: Full lifecycle, ambush outcome, reward escrow, and economic price modifier sync."""
     officer_id = "guild_officer_marrow"
     contractor_id = "captain_val"
-    campaign_poster = str(uuid4())
-    campaign_escort = str(uuid4())
 
     # 1. Establish shared world and campaigns
     world_res = client.post(
@@ -39,17 +35,21 @@ async def test_blackbox_caravan_lifecycle_ambush_and_settlement_economy_fulfillm
     )
     world_id = world_res.json()["shared_world_id"]
 
-    for camp, owner, name in [
-        (campaign_poster, officer_id, "Provisions Guild"),
-        (campaign_escort, contractor_id, "Val's Freeblades"),
+    # Registering a campaign needs guild officer and campaign owner. The officer owns both
+    # campaigns. The contractor plays in the escort campaign, which grants trade on the world.
+    campaign_poster = create_campaign(client, officer_id)
+    campaign_escort = create_campaign(client, officer_id)
+    join_campaign(client, campaign_escort, officer_id, contractor_id)
+    for camp, name in [
+        (campaign_poster, "Provisions Guild"),
+        (campaign_escort, "Val's Freeblades"),
     ]:
-        await spicedb.write_relationship("campaign", camp, "owner", "user", owner)
-        client.post(
+        reg = client.post(
             f"/api/v1/shared-worlds/{world_id}/campaigns",
             json={"campaign_id": camp, "party_name": name},
             headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer_id)}"},
         )
-    await spicedb.write_relationship("shared_world", world_id, "trade", "user", contractor_id)
+        assert reg.status_code == 201, reg.text
 
     # 2. Post contract
     post_res = client.post(

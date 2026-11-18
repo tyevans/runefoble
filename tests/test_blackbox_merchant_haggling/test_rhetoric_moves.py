@@ -14,6 +14,8 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
+from .conftest import create_campaign_for, create_test_establishment, invite_player
+
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
@@ -22,9 +24,11 @@ async def test_blackbox_patience_depletion_and_ejection(
     client: TestClient, spicedb: MockSpiceDBClient
 ) -> None:
     """Verify that failing aggressive intimidation depletes patience and terminates the interaction."""
-    campaign_id = str(uuid4())
+    owner_id = f"owner_{uuid4().hex[:8]}"
     player_id = f"player_{uuid4().hex[:8]}"
-    await spicedb.write_relationship("campaign", campaign_id, "player", "user", player_id)
+    campaign_id = create_campaign_for(client, owner_id)
+    invite_player(client, campaign_id, owner_id, player_id)
+    establishment_id = create_test_establishment(client, campaign_id, owner_id)
 
     start_data = {
         "character_id": "char_krag",
@@ -33,6 +37,7 @@ async def test_blackbox_patience_depletion_and_ejection(
         "base_price": 500,
         "initial_offer_gp": 200,
         "campaign_id": campaign_id,
+        "establishment_id": establishment_id,
         "temperament": "Stubborn",
     }
     start_res = client.post(
@@ -81,9 +86,11 @@ async def test_blackbox_walk_away_bluff_and_deal_acceptance(
     client: TestClient, spicedb: MockSpiceDBClient
 ) -> None:
     """Verify walk-away bluff discounts counter-offer and player can accept deal."""
-    campaign_id = str(uuid4())
+    owner_id = f"owner_{uuid4().hex[:8]}"
     player_id = f"player_{uuid4().hex[:8]}"
-    await spicedb.write_relationship("campaign", campaign_id, "player", "user", player_id)
+    campaign_id = create_campaign_for(client, owner_id)
+    invite_player(client, campaign_id, owner_id, player_id)
+    establishment_id = create_test_establishment(client, campaign_id, owner_id)
 
     start_data = {
         "character_id": "char_lyra",
@@ -92,6 +99,7 @@ async def test_blackbox_walk_away_bluff_and_deal_acceptance(
         "base_price": 200,
         "initial_offer_gp": 120,
         "campaign_id": campaign_id,
+        "establishment_id": establishment_id,
         "temperament": "Greedy",
     }
     start_res = client.post(

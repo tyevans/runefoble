@@ -56,7 +56,7 @@ def session_client(mock_redis: MockAsyncRedis) -> Iterator[None]:
 
 def _create_character(character_url: str) -> str:
     """Create an active character through the character_sheet frontdoor. Stand-in stays off."""
-    with httpx.Client(base_url=character_url, headers=_bearer("character-owner")) as http:
+    with httpx.Client(base_url=character_url, headers=_bearer(PLAYER_ID)) as http:
         created = http.post(
             "/api/v1/characters",
             json={"name": "Kyra", "character_class": "Cleric", "max_hp": 20},

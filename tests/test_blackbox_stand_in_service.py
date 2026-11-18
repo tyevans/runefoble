@@ -18,6 +18,7 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.watcher_double import (
     STAND_IN_ACTION_BODY,
     serve_watcher_double,
@@ -45,6 +46,7 @@ async def test_watcher_stand_in_event_emission(mock_redis: MockAsyncRedis):
     watcher_set_event_bus(event_bus)
 
     session_id, campaign_id = str(uuid4()), str(uuid4())
+    await make_table_runner("test-user", session_id, campaign_id)
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(
         transport=transport,
@@ -212,6 +214,8 @@ async def test_game_session_auto_pilot_turn(
 @pytest.mark.asyncio
 async def test_absentee_session_recap_generation():
     """POST /api/v1/watcher/stand-in/recap must generate a humorous chronicle for the returning player."""
+    session_id = str(uuid4())
+    await make_table_runner("test-user", session_id, str(uuid4()))
     transport = ASGITransport(app=watcher_app)
     async with AsyncClient(
         transport=transport,
@@ -221,6 +225,7 @@ async def test_absentee_session_recap_generation():
         recap_res = await client.post(
             "/api/v1/watcher/stand-in/recap",
             json={
+                "session_id": session_id,
                 "character_name": "Kyra",
                 "penalties": ["drunk", "foolishness"],
                 "actions": [

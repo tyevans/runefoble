@@ -2,7 +2,7 @@
 
 from runefoble_auth.mock.client import MockSpiceDBClient, Relationship
 from runefoble_auth.mock.evaluator import PermissionEvaluator
-from runefoble_auth.mock.schema_parser import (
+from runefoble_auth.schema_graph import (
     ObjectDef,
     PermissionDef,
     RelationDef,

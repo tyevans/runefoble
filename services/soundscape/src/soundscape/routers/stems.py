@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.aggregate_loading import load_or_create
 
@@ -16,7 +17,6 @@ from soundscape.dependencies import (
     get_or_create_mixer,
     get_principal,
     get_soundscape_repo,
-    get_spicedb_client,
     publish_soundscape_event,
 )
 from soundscape.mixer import STEM_PROFILE_WEIGHTS, TACTICAL_FOLEY_CATALOG
@@ -63,8 +63,21 @@ async def list_audio_stems(
 )
 async def update_stem_volumes(
     request: StemVolumeUpdateRequest,
+    user_id: VerifiedUserId,
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
-    """Adjust individual volume sliders for multi-channel stem tracks."""
+    """Adjust individual volume sliders for multi-channel stem tracks (session control)."""
+    allowed = await check_user_can_control_soundscape(
+        user_id=user_id,
+        session_id=request.session_id,
+        campaign_id=request.campaign_id,
+        spicedb=spicedb,
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: caller lacks Zanzibar permissions to adjust soundscape stems",
+        )
     mixer = get_or_create_mixer(request.session_id)
     mixer.update_channel_volumes(request.stem_volumes)
     return {
@@ -166,8 +179,21 @@ async def override_mood(
 )
 async def toggle_ducking(
     request: DuckingRequest,
+    user_id: VerifiedUserId,
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
-    """Attenuate or restore background audio stems during speech or foley."""
+    """Attenuate or restore background audio stems during speech or foley (session control)."""
+    allowed = await check_user_can_control_soundscape(
+        user_id=user_id,
+        session_id=request.session_id,
+        campaign_id=None,
+        spicedb=spicedb,
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: caller lacks Zanzibar permissions to duck soundscape audio",
+        )
     mixer = get_or_create_mixer(request.session_id)
     mixer.set_ducking(request.is_ducked, reason=request.reason)
 

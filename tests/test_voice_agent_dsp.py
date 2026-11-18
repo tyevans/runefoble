@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 
 import pytest
@@ -26,7 +27,19 @@ from voice_agent.phonetics import (
 from voice_agent.room import VoiceRoomAggregate, VoiceRoomState
 
 from tests.helpers.audio_synth import generate_synthetic_audio
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
+
+
+@pytest.fixture(autouse=True)
+def _voice_session_grants() -> None:
+    """Make the DM and the speakers of these literal sessions authorized through the SpiceDB seam."""
+    for session_id in (
+        "session_default",
+        "sess-1",
+    ):
+        asyncio.run(grant_voice_session(session_id, players=["speaker_default"]))
+
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "fake_speech_synthesizer")
 

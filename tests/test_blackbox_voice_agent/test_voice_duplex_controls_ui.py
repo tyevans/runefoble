@@ -10,6 +10,7 @@ Verifies:
 
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from uuid import uuid4
@@ -23,6 +24,7 @@ from voice_agent.main import set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_ws_subprotocols
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -66,6 +68,7 @@ def test_duplex_websocket_protocol_frontdoor_integration(
 ) -> None:
     """Verify duplex WebSocket messages trigger barge-in and cancellation signals."""
     session_id, speaker_id = f"sess-{uuid4().hex[:6]}", "spk-marcus"
+    asyncio.run(grant_voice_session(session_id, players=["spk-marcus"]))
     text = "A chilling roar echoes through the subterranean vault!"
 
     with voice_client.websocket_connect(

@@ -43,10 +43,11 @@ Zanzibar Auth ───► FastAPI APIRouters ◄──────────�
 
 Access to campaign analytics and chronicle records is protected by SpiceDB Zanzibar object permissions (`libs/runefoble_auth/schema/runefoble.zed`):
 
-- **Permission**: Callers must possess the `view` permission on the target campaign (`campaign:<campaign_id>`).
-- **Roles**: Users holding `owner`, `dungeon_master`, `player`, or `spectator` relations automatically inherit `view` permission.
+- **Permission**: Every read route checks the schema permission `campaign.view` on the target campaign (`campaign:<campaign_id>`). The service never checks a relation name as a permission.
+- **Relations**: Users holding the `owner`, `dungeon_master`, `game_master`, `player`, or `spectator` relation inherit `view`. Membership comes from the invite frontdoor.
 - Callers without a verified bearer token receive HTTP `401 Unauthorized`. There is no public view.
 - Authenticated callers without the `view` permission receive HTTP `403 Forbidden`.
+- If SpiceDB cannot answer, the service returns HTTP `503` with `{"detail": "Authorization service is unavailable"}`. It never returns data or a denial for a failed check.
 
 When querying endpoints, send the Zitadel JWT as a bearer token. The gateway verifies the token and forwards the same `Authorization` header to the analytics service. The gateway ignores any `X-User-Id` header from the client.
 

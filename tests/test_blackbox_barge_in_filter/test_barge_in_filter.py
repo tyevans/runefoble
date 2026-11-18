@@ -14,6 +14,7 @@ Verifies:
 from __future__ import annotations
 
 import array
+import asyncio
 import base64
 
 import pytest
@@ -27,7 +28,30 @@ from voice_agent.main import app, set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
+
+
+@pytest.fixture(autouse=True)
+def _voice_session_grants() -> None:
+    """Make the DM and the speakers of these literal sessions authorized through the SpiceDB seam."""
+    for session_id in (
+        "sess-diag-1",
+        "sess-barge-001",
+        "sess-event-004",
+        "sess-fade-002",
+        "sess-quiet-003",
+        "sess-fade-10",
+        "sess-fade-15",
+        "sess-fade-25",
+        "sess-fade-30",
+    ):
+        asyncio.run(
+            grant_voice_session(
+                session_id, players=["spk-marcus", "spk-nadia", "spk-quiet", "spk-valeros"]
+            )
+        )
+
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 

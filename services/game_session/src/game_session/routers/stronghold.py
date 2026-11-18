@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_spicedb_client, stronghold_repo
 from game_session.events import STREAM_STRONGHOLD
@@ -21,6 +22,25 @@ from pydantic import BaseModel, Field
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["stronghold"])
+
+
+def _camp_uuid(campaign_id: str) -> UUID | str:
+    return (
+        UUID(campaign_id)
+        if isinstance(campaign_id, str) and len(campaign_id) == 36
+        else campaign_id
+    )
+
+
+async def _require(spicedb: Any, resource: str, rid: str, perm: str, uid: str, detail: str) -> None:
+    """Deny unless the verified caller holds `perm` on the resource (schema name only)."""
+    if not await spicedb.check_permission(resource, rid, perm, "user", uid):
+        raise HTTPException(status_code=403, detail=detail)
+
+
+async def _link_stronghold(spicedb: Any, campaign_id: str) -> None:
+    """Bind the stronghold object to its campaign so `stronghold.upgrade` can resolve."""
+    await spicedb.touch_relationship("stronghold", campaign_id, "campaign", "campaign", campaign_id)
 
 
 class UpgradeStrongholdRequest(BaseModel):
@@ -46,19 +66,17 @@ class CreateStrongholdRequest(BaseModel):
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/stronghold", response_model=StrongholdState)
-async def get_stronghold(campaign_id: str) -> StrongholdState:
+async def get_stronghold(caller_id: CallerId, campaign_id: str) -> StrongholdState:
     """Retrieve party stronghold / campsite status and facility tiers."""
+    await _require(
+        get_spicedb_client(), "campaign", campaign_id, "view", caller_id, "Campaign view required"
+    )
     try:
-        camp_uuid = (
-            UUID(campaign_id)
-            if isinstance(campaign_id, str) and len(campaign_id) == 36
-            else campaign_id
-        )
-        stronghold = await stronghold_repo.load(camp_uuid)
-        return stronghold.state
-    except Exception:
+        stronghold = await stronghold_repo.load(_camp_uuid(campaign_id))
+    except AggregateNotFoundError:
         # Return default initialized state if none exists yet
         return StrongholdState(campaign_id=str(campaign_id))
+    return stronghold.state
 
 
 @router.post("/api/v1/campaigns/{campaign_id}/stronghold", response_model=StrongholdState)
@@ -69,23 +87,23 @@ async def initialize_stronghold(
 ) -> StrongholdState:
     """Initialize or rename party stronghold / campsite."""
     spicedb = get_spicedb_client()
-    if not await spicedb.check_permission(
-        "campaign", campaign_id, "run_session", "user", caller_id
-    ):
-        raise HTTPException(status_code=403, detail="DM or owner permission required")
-
-    camp_uuid = (
-        UUID(campaign_id)
-        if isinstance(campaign_id, str) and len(campaign_id) == 36
-        else campaign_id
+    await _require(
+        spicedb,
+        "campaign",
+        campaign_id,
+        "run_session",
+        caller_id,
+        "DM or owner permission required",
     )
+    camp_uuid = _camp_uuid(campaign_id)
     try:
         stronghold = await stronghold_repo.load(camp_uuid)
-    except Exception:
+    except AggregateNotFoundError:
         stronghold = StrongholdAggregate(camp_uuid)
 
     stronghold.create_stronghold(campaign_id=str(campaign_id), name=req.name, location=req.location)
     await stronghold_repo.save(stronghold)
+    await _link_stronghold(spicedb, str(campaign_id))
     return stronghold.state
 
 
@@ -99,21 +117,17 @@ async def upgrade_stronghold_facility(
 ) -> UpgradeStrongholdResponse:
     """Upgrade campsite/stronghold facility, consuming gold/materials and granting resting boons."""
     spicedb = get_spicedb_client()
-    if not await spicedb.check_permission("campaign", campaign_id, "play", "user", caller_id):
-        raise HTTPException(
-            status_code=403, detail="Player or DM permission required to upgrade campsite"
-        )
-
-    camp_uuid = (
-        UUID(campaign_id)
-        if isinstance(campaign_id, str) and len(campaign_id) == 36
-        else campaign_id
-    )
+    detail = "Player or DM permission required to upgrade campsite"
+    camp_uuid = _camp_uuid(campaign_id)
     try:
         stronghold = await stronghold_repo.load(camp_uuid)
-    except Exception:
+    except AggregateNotFoundError:
+        # A new campsite needs a campaign player. The link lets stronghold.upgrade resolve.
+        await _require(spicedb, "campaign", campaign_id, "play", caller_id, detail)
         stronghold = StrongholdAggregate(camp_uuid)
         stronghold.create_stronghold(campaign_id=str(campaign_id))
+        await _link_stronghold(spicedb, str(campaign_id))
+    await _require(spicedb, "stronghold", campaign_id, "upgrade", caller_id, detail)
 
     try:
         upgrade_result = stronghold.upgrade_facility(
@@ -145,18 +159,16 @@ async def upgrade_stronghold_facility(
 
 
 @router.get("/api/v1/campaigns/{campaign_id}/stronghold/boons")
-async def get_stronghold_boons(campaign_id: str) -> dict[str, Any]:
+async def get_stronghold_boons(caller_id: CallerId, campaign_id: str) -> dict[str, Any]:
     """Retrieve active party rest bonuses granted by camp facilities."""
-    camp_uuid = (
-        UUID(campaign_id)
-        if isinstance(campaign_id, str) and len(campaign_id) == 36
-        else campaign_id
+    await _require(
+        get_spicedb_client(), "campaign", campaign_id, "view", caller_id, "Campaign view required"
     )
     try:
-        stronghold = await stronghold_repo.load(camp_uuid)
-        boons = stronghold.get_active_boons()
-    except Exception:
-        boons = []
+        stronghold = await stronghold_repo.load(_camp_uuid(campaign_id))
+    except AggregateNotFoundError:
+        return {"campaign_id": campaign_id, "active_boons": [], "catalog": FACILITY_TIERS}
+    boons = stronghold.get_active_boons()
     return {"campaign_id": campaign_id, "active_boons": boons, "catalog": FACILITY_TIERS}
 
 

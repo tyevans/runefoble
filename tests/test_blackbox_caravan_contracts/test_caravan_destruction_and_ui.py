@@ -9,14 +9,14 @@ Governed by:
 
 from __future__ import annotations
 
-from uuid import uuid4
-
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
+
+from .conftest import create_campaign, join_campaign
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -30,7 +30,6 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
     """Test Scenario 4: Catastrophic caravan destruction and UI microfrontend registration."""
     officer_id = "officer_dane"
     contractor_id = "ranger_thorn"
-    campaign_id = str(uuid4())
 
     world_res = client.post(
         "/api/v1/shared-worlds",
@@ -39,9 +38,8 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
     )
     world_id = world_res.json()["shared_world_id"]
 
-    await spicedb.write_relationship("campaign", campaign_id, "owner", "user", officer_id)
-    await spicedb.write_relationship("campaign", campaign_id, "owner", "user", contractor_id)
-    await spicedb.write_relationship("shared_world", world_id, "trade", "user", contractor_id)
+    campaign_id = create_campaign(client, officer_id)
+    join_campaign(client, campaign_id, officer_id, contractor_id)
 
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
@@ -57,7 +55,7 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
             "destination_outpost": "Shadowfen",
             "cargo": {"potions": 10},
             "cargo_value": 500,
-            "route_risk_level": "high",
+            "route_risk_level": "medium",
             "transit_stages": 2,
             "reward_gold": 250,
             "posted_by_campaign_id": campaign_id,
@@ -66,16 +64,18 @@ async def test_blackbox_caravan_destroyed_and_ui_manifest(
     )
     cid = post_res.json()["contract"]["contract_id"]
 
-    client.post(
+    accept_res = client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts/{cid}/accept",
         json={"contractor_campaign_id": campaign_id, "contractor_party_name": "Ranger Corps"},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(contractor_id)}"},
     )
-    client.post(
+    assert accept_res.status_code == 200, accept_res.text
+    dispatch_setup = client.post(
         f"/api/v1/shared-worlds/{world_id}/caravans/contracts/{cid}/dispatch",
         json={},
         headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(contractor_id)}"},
     )
+    assert dispatch_setup.status_code == 200, dispatch_setup.text
 
     # Report catastrophic ambush: caravan destroyed
     ambush_res = client.post(

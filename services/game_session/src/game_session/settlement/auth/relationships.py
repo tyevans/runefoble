@@ -74,7 +74,17 @@ async def write_negotiation_relationships(
     await _rel(spicedb, "negotiation", nid, "arbitrator", "user", arbitrator_id)
 
 
+async def register_campaign_haven_discovery(
+    spicedb: Any, settlement_id: str, campaign_id: str
+) -> None:
+    """Register an adventuring campaign as having discovered or unlocked a haven."""
+    await _rel(
+        spicedb, "settlement", str(settlement_id), "discovering_campaign", "campaign", campaign_id
+    )
+
+
 __all__ = [
+    "register_campaign_haven_discovery",
     "write_establishment_relationships",
     "write_negotiation_relationships",
     "write_npc_relationships",

@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from runefoble_events.events import DMNarrativeWhispered
 from runefoble_platform.event_publish import publish_best_effort, publish_or_fail
 from the_watcher.dependencies import (
     STREAM_WATCHER,
-    check_dm_authorization,
     get_copilot_engine,
     get_event_bus,
-    get_spicedb_client,
+    require_dm,
     to_uuid,
 )
 from the_watcher.identity import CallerId, get_caller_principal
@@ -24,22 +23,6 @@ from the_watcher.models import (
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["copilot"])
 
 
-async def _assert_dm_permission(
-    caller: str | None, campaign_id: str | None, session_id: str | None
-) -> None:
-    is_dm = await check_dm_authorization(
-        caller,
-        campaign_id=campaign_id,
-        session_id=session_id,
-        spicedb=get_spicedb_client(),
-    )
-    if not is_dm:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Zanzibar authorization denied. User lacks dungeon_master permission.",
-        )
-
-
 @router.get("/api/v1/watcher/whispers", response_model=WhisperListResponse)
 async def get_whispers(
     caller_id: CallerId,
@@ -51,7 +34,7 @@ async def get_whispers(
 ) -> WhisperListResponse:
     """Return paginated DM private narrative suggestions. Restricted to dungeon_master relation."""
     caller = caller_id
-    await _assert_dm_permission(caller, campaign_id, session_id)
+    await require_dm(caller, campaign_id, session_id)
 
     engine = get_copilot_engine()
     items, total = engine.list_whispers(
@@ -71,7 +54,7 @@ async def create_whisper(
 ) -> WhisperSuggestion:
     """Add a private narrative suggestion to the DM channel. Restricted to dungeon_master."""
     caller = caller_id
-    await _assert_dm_permission(caller, req.campaign_id, req.session_id)
+    await require_dm(caller, req.campaign_id, req.session_id)
 
     engine = get_copilot_engine()
     whisper = WhisperSuggestion(
@@ -107,7 +90,7 @@ async def generate_whispers(
 ) -> list[WhisperSuggestion]:
     """Generate dynamic narrative suggestions, monster tactics, and passive perception cues."""
     caller = caller_id
-    await _assert_dm_permission(caller, req.campaign_id, req.session_id)
+    await require_dm(caller, req.campaign_id, req.session_id)
 
     engine = get_copilot_engine()
     whispers = engine.generate_default_whispers(

@@ -56,3 +56,17 @@ uv run pytest tests/test_mcp_tools.py tests/test_blackbox_mcp_gateway.py
 ```
 
 Write service-backed tools as blackbox tests. Start the owning service with `tests/helpers/live_services.py` (`serve(app)`), set its URL environment variable, and call the tool through the MCP protocol (`call_tool` in `tests/test_blackbox_mcp_gateway.py`). Add an error case that points the URL at `closed_port_url()` or a `unavailable_app(503)` stand-in.
+
+## Authorize a New Watcher Route
+
+A tool that calls a new Watcher HTTP route inherits that route's checks. Every Watcher route must follow these rules:
+
+1. Take the caller from the verified token. Add `caller_id: CallerId` (from `the_watcher.identity`). Never read `X-User-Id`, a query parameter, or a body field for identity.
+2. Pick the permission that the action needs. Use a key of `runefoble_auth.contract.ACTION_PERMISSIONS`. Add the key there if it is missing, and make sure the schema defines the permission.
+3. Call the matching helper first in the handler:
+   - `require_session_permission(caller_id, session_id, "session.control")` for DM actions, or `"session.participate"` for player actions, or `"session.observe"` for read-only views.
+   - `require_campaign_permission(caller_id, campaign_id, "campaign.run_session")` for campaign-wide DM actions, or `"campaign.view"` for campaign reads.
+   - `require_dm(caller_id, campaign_id, session_id)` when a handler accepts either scope.
+4. Do not compare role names or add `if not caller: return` branches. A missing principal gets HTTP 401 from the router dependency. A denied check gets HTTP 403.
+
+Tests for the route set up the caller through schema tuples. Write `campaign:<id>#dungeon_master@user:<id>` and `session:<id>#campaign@campaign:<id>` with `bind_session_to_campaign` or `make_table_runner` from `tests/helpers/spicedb_factory.py`.

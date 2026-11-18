@@ -17,9 +17,10 @@ from the_watcher.dependencies import (
     compound_action_engine,
     disambiguation_engine,
     get_event_bus,
+    require_session_permission,
     to_uuid,
 )
-from the_watcher.identity import get_caller_principal
+from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.models import (
     CandidateTarget,
     CompoundActionNode,
@@ -137,8 +138,11 @@ async def dispatch_disambiguation(
 
 
 @router.post("/api/v1/watcher/intent/resolve", response_model=IntentResolveResponse)
-async def resolve_intent_disambiguation(req: IntentResolveRequest) -> IntentResolveResponse:
+async def resolve_intent_disambiguation(
+    caller_id: CallerId, req: IntentResolveRequest
+) -> IntentResolveResponse:
     """Submit player disambiguation choice and emit resolved compound action graph."""
+    await require_session_permission(caller_id, req.session_id, "session.participate")
     t0 = time.perf_counter()
     try:
         pending, m = disambiguation_engine.resolve(

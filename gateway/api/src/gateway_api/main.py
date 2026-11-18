@@ -48,6 +48,7 @@ from gateway_api.websocket import campaign_websocket_endpoint
 from gateway_api.websocket_auth import admit_gateway_websocket
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_tool_event_bus
 from gateway_mcp.routers import tools_registry_router
+from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import create_event_bus
 from runefoble_platform.redis_bus import RedisStreamsEventBus
@@ -77,6 +78,7 @@ app = FastAPI(
     lifespan=_lifespan,
 )
 register_upstream_error_handlers(app)
+install_authz_error_handlers(app)
 
 _cors_origins = [o.strip() for o in platform_settings.cors_origins.split(",") if o.strip()]
 if "*" in _cors_origins:

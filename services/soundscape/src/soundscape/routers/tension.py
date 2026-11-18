@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from runefoble_auth.factory import get_spicedb_client
+from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 
 from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
+    VerifiedUserId,
+    check_user_can_control_soundscape,
     get_or_create_aggregate_id,
     get_or_create_mixer,
     get_principal,
@@ -69,8 +75,21 @@ async def get_tension_status(
 )
 async def calculate_tension(
     request: TensionCalculationRequest,
+    user_id: VerifiedUserId,
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> TensionStatusResponse:
-    """Compute tension index (0-100) and adaptively update musical stems."""
+    """Compute tension index (0-100) and adaptively update musical stems (session control)."""
+    allowed = await check_user_can_control_soundscape(
+        user_id=user_id,
+        session_id=request.session_id,
+        campaign_id=request.campaign_id,
+        spicedb=spicedb,
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: caller lacks Zanzibar permissions to calculate encounter tension",
+        )
     tension_score = calculate_encounter_tension(
         combat_active=request.combat_active,
         combat_round=request.combat_round,

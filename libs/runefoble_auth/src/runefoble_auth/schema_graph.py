@@ -1,15 +1,12 @@
-"""Zed schema parsing and relationship graph representation."""
+"""Zed schema parsing and relationship graph representation (shared by contract and mock)."""
 
 from __future__ import annotations
 
-import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
-
-DEFAULT_ZED_PATH = Path(__file__).resolve().parent.parent.parent.parent / "schema" / "runefoble.zed"
+DEFAULT_ZED_PATH = Path(__file__).resolve().parents[2] / "schema" / "runefoble.zed"
 
 
 @dataclass
@@ -57,10 +54,12 @@ def parse_zed_schema(schema_text: str) -> SchemaGraph:
         line = raw_line.split("//", 1)[0].strip()
         if not line:
             continue
-        def_match = re.match(r"^definition\s+([a-zA-Z0-9_]+)\s*\{?$", line)
+        def_match = re.match(r"^definition\s+([a-zA-Z0-9_]+)\s*(\{\s*\}|\{)?$", line)
         if def_match:
             current_obj = ObjectDef(name=def_match.group(1))
             graph.definitions[current_obj.name] = current_obj
+            if def_match.group(2) == "{}":
+                current_obj = None
             continue
         if line == "}":
             current_obj = None
@@ -83,10 +82,5 @@ def parse_zed_schema(schema_text: str) -> SchemaGraph:
 
 
 def load_default_schema() -> SchemaGraph:
-    """Load default Zanzibar schema from disk if available."""
-    try:
-        if DEFAULT_ZED_PATH.is_file():
-            return parse_zed_schema(DEFAULT_ZED_PATH.read_text(encoding="utf-8"))
-    except Exception as exc:
-        logger.debug("Could not load default zed schema: %s", exc)
-    return SchemaGraph()
+    """Parse the repository schema. A missing or unreadable schema file raises."""
+    return parse_zed_schema(DEFAULT_ZED_PATH.read_text(encoding="utf-8"))

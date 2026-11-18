@@ -17,11 +17,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.spicedb import MockSpiceDBClient
+from runefoble_auth.factory import get_spicedb_client
 from runefoble_events.vocal_dsp import VocalModulatorPresetAppliedEvent
 from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.main import app as voice_app
 
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -35,8 +36,7 @@ def voice_client(trusted_voice_issuer) -> TestClient:
 @pytest.fixture
 def setup_coordinator():
     coord = get_voice_room_coordinator()
-    mock_spicedb = MockSpiceDBClient()
-    coord.set_spicedb(mock_spicedb)
+    mock_spicedb = get_spicedb_client()
     mock_bus = AsyncMock()
     coord.set_event_bus(mock_bus)
     return {"coord": coord, "spicedb": mock_spicedb, "bus": mock_bus}
@@ -71,10 +71,10 @@ async def test_frontdoor_presets_and_modulate_integration(
     preset_names = {p["name"] for p in presets}
     assert "Ancient Dragon" in preset_names and "Goblin Skulker" in preset_names
 
-    # Authorize session for DM user via SpiceDB
-    spicedb, bus = setup_coordinator["spicedb"], setup_coordinator["bus"]
+    # Schema tuples: the DM is the campaign dungeon_master for this session
+    bus = setup_coordinator["bus"]
     session_id, user_id = "test-session-ui-mod", "dm_speaker"
-    await spicedb.write_relationship("session", session_id, "control", "user", user_id)
+    await grant_voice_session(session_id, dm=user_id)
 
     mod_resp = voice_client.post(
         "/voice/modulate",

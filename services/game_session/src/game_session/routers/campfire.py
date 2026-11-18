@@ -9,6 +9,7 @@ import random
 from typing import Any, Literal
 from uuid import UUID
 
+from eventsource import AggregateNotFoundError
 from fastapi import APIRouter, Depends, HTTPException
 from game_session.dependencies import get_event_bus, get_spicedb_client, repo, stronghold_repo
 from game_session.events import STREAM_SESSION
@@ -59,11 +60,13 @@ async def campfire_rest(
     """Initiate interactive campfire rest sequence, applying rest boons and stronghold bonuses."""
     try:
         session = await repo.load(session_id)
-    except Exception as e:
+    except AggregateNotFoundError as e:
         raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found") from e
 
+    if not session.state.campaign_id:
+        raise HTTPException(status_code=403, detail="Session has no campaign for campfire rest")
+    camp_id_str = str(session.state.campaign_id)
     spicedb = get_spicedb_client()
-    camp_id_str = str(session.state.campaign_id) if session.state.campaign_id else str(session_id)
     if not await spicedb.check_permission("campaign", camp_id_str, "play", "user", caller_id):
         raise HTTPException(
             status_code=403, detail="Player or DM permission required for campfire rest"
@@ -104,22 +107,16 @@ async def campfire_rest(
         )
 
     # Check and apply persistent stronghold boons
-    if session.state.campaign_id:
-        try:
-            stronghold = await stronghold_repo.load(session.state.campaign_id)
-            stronghold_boons = stronghold.get_active_boons()
-            for b in stronghold_boons:
-                if b not in boons:
-                    boons.append(b)
-        except Exception:
-            pass
+    try:
+        stronghold = await stronghold_repo.load(UUID(camp_id_str))
+    except AggregateNotFoundError:
+        stronghold = None
+    if stronghold is not None:
+        for b in stronghold.get_active_boons():
+            if b not in boons:
+                boons.append(b)
 
-    camp_uuid = None
-    if session.state.campaign_id:
-        try:
-            camp_uuid = UUID(str(session.state.campaign_id))
-        except Exception:
-            camp_uuid = None
+    camp_uuid = UUID(camp_id_str)
 
     # Record event on event bus
     rest_event = CampfireRestCompleted(

@@ -33,6 +33,7 @@ from voice_agent.stt import set_streaming_pipeline
 
 from tests.helpers.audio_synth import generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers, voice_ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -58,11 +59,18 @@ def _publish_failures(client: TestClient) -> int:
     return client.get("/healthz").json()["event_publish_failures"]
 
 
+def _granted_session(speaker_id: str, session_id: str | None = None) -> str:
+    """Return a session id whose campaign the test DM runs and where the speaker plays."""
+    session_id = session_id or str(uuid.uuid4())
+    asyncio.run(grant_voice_session(session_id, players=[speaker_id]))
+    return session_id
+
+
 def _transcribe_body(**extra) -> dict:
     return {
         "speaker_id": "spk-policy-1",
         "speaker_name": "Valeros",
-        "session_id": str(uuid.uuid4()),
+        "session_id": _granted_session("spk-policy-1"),
         "campaign_id": str(uuid.uuid4()),
         "transcript": "I move 3 squares north",
         **extra,
@@ -110,7 +118,7 @@ def test_notification_route_succeeds_and_counts_each_failed_delivery(client: Tes
     """Notification: barge-in events succeed when Redis is down. Each failed delivery is counted."""
     speech_pcm = generate_pcm_sine(duration_ms=100, freq=440.0, amplitude=9000)
     payload = {
-        "session_id": "sess-policy-barge",
+        "session_id": _granted_session("spk-marcus", "sess-policy-barge"),
         "speaker_id": "spk-marcus",
         "speaker_name": "Marcus",
         "audio_base64": base64.b64encode(speech_pcm).decode("ascii"),
@@ -160,7 +168,7 @@ def test_stream_chunk_publish_failure_is_reported_on_socket_and_not_recorded(
     """Domain state on the stream path: the client gets a publish_failed frame, nothing is kept."""
     voice_set_event_bus(RedisStreamsEventBus(client=FailingRedis()))
     chunk = {
-        "session_id": str(uuid.uuid4()),
+        "session_id": _granted_session("spk-stream-policy"),
         "speaker_id": "spk-stream-policy",
         "speaker_name": "Valeros",
         "audio_data": base64.b64encode(generate_pcm_sine(duration_ms=300)).decode("ascii"),
