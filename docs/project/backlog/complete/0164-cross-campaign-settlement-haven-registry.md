@@ -58,12 +58,12 @@ Outposts founded or liberated by one adventuring party currently remain invisibl
 - **Negotiable (N)**: Haven upgrade costs and facility tier limits can be balanced.
 - **Valuable (V)**: Enables true shared-world persistent civilization building across multiple gaming groups.
 - **Estimable (E)**: Standard event-sourced aggregate and SpiceDB relation checks.
-- **Small (S)**: Bounded strictly to `services/game_session/src/game_session/settlements/`; all files < 160 lines.
+- **Small (S)**: Bounded strictly to `services/game_session/src/game_session/settlements/` (removed); all files < 160 lines.
 - **Testable (T)**: Frontdoor blackbox tests verify REST endpoints, SpiceDB access rules, and CloudEvents.
 
 ## Definition of Done (Hard Invariant 7: Blackbox TDD with Frontdoor Setup)
 1. **Domain Engine & Handlers**:
-   - `services/game_session/src/game_session/settlements/` created with focused submodules.
+   - `services/game_session/src/game_session/settlements/` (removed) created with focused submodules.
    - All modules strictly < 160 lines per Hard Invariant 6.
 2. **Frontdoor Test Verification**:
    - Blackbox test suite `tests/test_blackbox_settlements/` verifies chartering, facility upgrading, and multi-campaign visibility.
