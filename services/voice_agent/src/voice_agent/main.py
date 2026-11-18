@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 import httpx
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.dependencies import (
@@ -75,6 +76,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)
+register_store_unavailable_handlers(app)
 app.include_router(room_router)
 app.include_router(stream_router)
 app.include_router(audio_router)

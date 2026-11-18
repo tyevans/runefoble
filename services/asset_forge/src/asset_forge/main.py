@@ -11,6 +11,7 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures
 
@@ -40,6 +41,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_exception_handler(EngineUnavailableError, engine_unavailable_handler)
+register_store_unavailable_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,

@@ -9,6 +9,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.asset import TokenAssetForged
+from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.asset_index import get_stored_asset
 from runefoble_platform.event_sourcing import AggregateRepository
 from runefoble_platform.storage import AssetNotFoundError, SiloStorageService
@@ -81,10 +82,7 @@ async def forge_token(
 
     # 3. Record domain event in event-sourced aggregate
     agg_id = request.campaign_id or uuid4()
-    try:
-        forge_agg = await repo.load(agg_id)
-    except Exception:
-        forge_agg = AssetForgeAggregate(agg_id)
+    forge_agg = await load_or_create(repo, agg_id, AssetForgeAggregate)
 
     forge_agg.record_token_forged(
         asset_id=asset_id,

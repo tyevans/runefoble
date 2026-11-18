@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, Response
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.asset import PrintPdfForged, StlTokenForged
+from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_sourcing import AggregateRepository
 from runefoble_platform.storage import SiloStorageService
 
@@ -45,10 +46,7 @@ async def _record_aggregate(
     record_fn: Callable[[AssetForgeAggregate], None],
 ) -> None:
     target_id = agg_id or uuid4()
-    try:
-        forge_agg = await repo.load(target_id)
-    except Exception:
-        forge_agg = AssetForgeAggregate(target_id)
+    forge_agg = await load_or_create(repo, target_id, AssetForgeAggregate)
     record_fn(forge_agg)
     await repo.save(forge_agg)
 

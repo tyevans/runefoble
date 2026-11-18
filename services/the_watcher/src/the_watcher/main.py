@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
@@ -60,6 +61,7 @@ app = FastAPI(
     description="AI Gameplay System: Speech-to-Intent, Board Animator, Autonomous DM & Missing Player Stand-in.",
 )
 
+register_store_unavailable_handlers(app)
 app.include_router(intent_router)
 app.include_router(autonomous_dm_router)
 app.include_router(stand_in_router)

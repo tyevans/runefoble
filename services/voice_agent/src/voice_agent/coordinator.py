@@ -16,6 +16,7 @@ from runefoble_events.vocal_dsp import (
     VoiceFilterToggledEvent,
 )
 from runefoble_events.voice import VoicePeerJoined, VoicePeerLeft, VoicePeerMuteToggled
+from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_sourcing import create_aggregate_repository
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room_aggregate import VoiceRoomAggregate, to_uuid
@@ -57,10 +58,9 @@ class VoiceRoomCoordinator:
     async def get_or_load_room(self, session_id: str) -> VoiceRoomAggregate:
         if session_id not in self._aggregates:
             room_uuid = to_uuid(session_id)
-            try:
-                self._aggregates[session_id] = await self._repository.load(room_uuid)
-            except Exception:
-                self._aggregates[session_id] = VoiceRoomAggregate(room_uuid)
+            self._aggregates[session_id] = await load_or_create(
+                self._repository, room_uuid, VoiceRoomAggregate
+            )
         return self._aggregates[session_id]
 
     async def peer_joined(

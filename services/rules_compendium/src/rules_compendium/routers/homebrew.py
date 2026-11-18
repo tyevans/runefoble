@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from rules_compendium.aggregate import CompendiumAggregate
@@ -48,10 +49,7 @@ async def register_homebrew_rule(
     rule_id = uuid4()
 
     # Event sourcing via CompendiumAggregate
-    try:
-        compendium = await compendium_repo.load(request.campaign_id)
-    except Exception:
-        compendium = CompendiumAggregate(request.campaign_id)
+    compendium = await load_or_create(compendium_repo, request.campaign_id, CompendiumAggregate)
     compendium.register_homebrew(
         rule_id=rule_id,
         campaign_id=request.campaign_id,

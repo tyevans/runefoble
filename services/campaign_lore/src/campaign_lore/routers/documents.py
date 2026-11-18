@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_sourcing import AggregateRepository
 
 from campaign_lore.aggregate import LoreDocumentAggregate, LoreDocumentState
@@ -146,10 +147,9 @@ async def get_document(
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> LoreDocumentState:
     """Retrieve an ingested lore document by UUID, enforcing SpiceDB Zanzibar access control."""
-    try:
-        doc = await repo.load(document_id)
-    except Exception as exc:
-        raise HTTPException(status_code=404, detail="Lore document not found") from exc
+    doc = await load_if_exists(repo, document_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Lore document not found")
 
     # Enforce SpiceDB Zanzibar authorization for secret lore
     if doc.state.is_secret:
