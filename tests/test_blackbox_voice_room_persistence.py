@@ -23,11 +23,10 @@ from uuid import uuid4
 import pytest
 import voice_agent.main as va_main
 from fastapi.testclient import TestClient
-from gateway_api.auth import set_spicedb_client
 from gateway_api.main import app as gateway_app
 from gateway_api.main import set_event_bus
 from gateway_api.signaling import signaling_manager
-from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import get_event_store
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
@@ -63,11 +62,9 @@ def session_id() -> str:
 
 
 @pytest.fixture
-def spicedb() -> Iterator[MockSpiceDBClient]:
-    mock = MockSpiceDBClient()
-    set_spicedb_client(mock)
-    yield mock
-    set_spicedb_client(SpiceDBClient())
+def spicedb(default_spicedb_client: MockSpiceDBClient) -> MockSpiceDBClient:
+    """The strict schema mock that the root conftest installs in every service."""
+    return default_spicedb_client
 
 
 @pytest.fixture(autouse=True)
@@ -86,7 +83,7 @@ def test_joined_peer_is_still_present_after_a_coordinator_restart(
     bus = RedisStreamsEventBus(client=MockAsyncRedis())
     set_event_bus(bus)
     va_main.set_event_bus(bus)
-    original = VoiceRoomCoordinator(event_bus=bus, spicedb_client=spicedb)
+    original = VoiceRoomCoordinator(event_bus=bus)
     set_voice_room_coordinator(original)
     signaling_manager._coordinator = original
     asyncio.run(spicedb.write_relationship("campaign", session_id, "player", "user", PEER_USER))
@@ -98,7 +95,7 @@ def test_joined_peer_is_still_present_after_a_coordinator_restart(
         ws.receive_json()
         ws.receive_json()
 
-        restarted = VoiceRoomCoordinator(event_bus=bus, spicedb_client=spicedb)
+        restarted = VoiceRoomCoordinator(event_bus=bus)
         set_voice_room_coordinator(restarted)
         signaling_manager._coordinator = restarted
 
@@ -116,7 +113,7 @@ def test_join_during_store_outage_raises_and_publishes_no_join_event(
 ) -> None:
     """A failed save stops the command. The join event is not published."""
     bus = RecordingEventBus()
-    coordinator = VoiceRoomCoordinator(event_bus=bus, spicedb_client=MockSpiceDBClient())
+    coordinator = VoiceRoomCoordinator(event_bus=bus)
 
     with monkeypatch.context() as m:
         m.setattr(get_event_store(), "append", _store_unreachable)
