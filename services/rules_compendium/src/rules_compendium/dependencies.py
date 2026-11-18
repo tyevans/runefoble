@@ -1,14 +1,15 @@
 """Dependency injection and shared singletons for the Rules Compendium service."""
 
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, Request
-from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
+from fastapi import Request
 from runefoble_auth.factory import get_spicedb_client as get_spicedb_client
-from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
-from runefoble_auth.zitadel import ZitadelAuthService
+from runefoble_auth.wiring import (
+    build_identity_dependencies,
+    make_verifier_holder,
+    verifier_from_settings,
+)
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
     AggregateRepository,
@@ -22,7 +23,6 @@ from rules_compendium.retrieval import CompendiumRetrievalEngine
 settings = PlatformSettings()
 
 # Global singletons
-_zitadel_auth_service: ZitadelAuthService | None = None
 
 
 def get_compendium_repo() -> AggregateRepository[CompendiumAggregate]:
@@ -44,40 +44,13 @@ def get_retrieval_engine(request: Request) -> CompendiumRetrievalEngine:
     return engine
 
 
-def get_zitadel_auth_service() -> ZitadelAuthService:
-    """Provide the Zitadel verifier that this service trusts, built from platform settings."""
-    global _zitadel_auth_service
-    if _zitadel_auth_service is None:
-        _zitadel_auth_service = ZitadelAuthService(
-            issuer=settings.zitadel_issuer,
-            audience=settings.zitadel_audience,
-            internal_url=settings.zitadel_internal_url,
-        )
-    return _zitadel_auth_service
-
-
-def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
-    """Override the Zitadel verifier for tests."""
-    global _zitadel_auth_service
-    _zitadel_auth_service = service
-
-
-get_current_principal = require_principal(get_zitadel_auth_service)
-
-
-# Service credential (ADR-0015 e). Read once at import, so a service without it never starts.
-SERVICE_CREDENTIAL = expected_service_credential()
-get_caller_or_service = require_user_or_service_credential(
-    get_zitadel_auth_service, SERVICE_CREDENTIAL
+get_zitadel_auth_service, set_zitadel_auth_service = make_verifier_holder(
+    lambda: verifier_from_settings(settings)
 )
-CallerOrService = Annotated[CallerIdentity, Depends(get_caller_or_service)]
-
-
-def get_current_user_id(
-    principal: Annotated[VerifiedPrincipal, Depends(get_current_principal)],
-) -> str:
-    """Return the subject of the verified bearer token. Raise 401 when no token verifies."""
-    return principal.user_id
+SERVICE_CREDENTIAL = expected_service_credential()
+get_principal, CallerPrincipal, CallerId, get_caller_or_service, CallerOrService = (
+    build_identity_dependencies(get_zitadel_auth_service, SERVICE_CREDENTIAL)
+)
 
 
 async def check_user_can_view_homebrew_rule(
@@ -112,6 +85,3 @@ async def check_user_can_manage_homebrew(
         if allowed:
             return True
     return False
-
-
-CurrentUserId = Annotated[str, Depends(get_current_user_id)]

@@ -11,9 +11,10 @@ from runefoble_platform.event_sourcing import AggregateRepository
 
 from rules_compendium.aggregate import CompendiumAggregate
 from rules_compendium.dependencies import (
+    CallerId,
     check_user_can_manage_homebrew,
     get_compendium_repo,
-    get_current_user_id,
+    get_principal,
     get_retrieval_engine,
     get_spicedb_client,
 )
@@ -24,14 +25,14 @@ from rules_compendium.retrieval import CompendiumRetrievalEngine
 router = APIRouter(
     prefix="/api/v1/compendium/homebrew",
     tags=["Homebrew Rules"],
-    dependencies=[Depends(get_current_user_id)],
+    dependencies=[Depends(get_principal)],
 )
 
 
 @router.post("", response_model=HomebrewResponse)
 async def register_homebrew_rule(
     request: HomebrewCreateRequest,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     compendium_repo: Annotated[
         AggregateRepository[CompendiumAggregate], Depends(get_compendium_repo)
@@ -104,7 +105,7 @@ async def register_homebrew_rule(
 @router.get("/{campaign_id}")
 async def list_campaign_homebrew(
     campaign_id: UUID,
-    user_id: Annotated[str, Depends(get_current_user_id)],
+    user_id: CallerId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
     compendium_repo: Annotated[

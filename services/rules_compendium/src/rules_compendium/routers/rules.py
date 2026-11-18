@@ -9,10 +9,10 @@ from runefoble_platform.event_sourcing import AggregateRepository
 
 from rules_compendium.aggregate import CompendiumAggregate
 from rules_compendium.dependencies import (
+    CallerId,
     CallerOrService,
-    CurrentUserId,
     get_compendium_repo,
-    get_current_user_id,
+    get_principal,
     get_retrieval_engine,
     get_spicedb_client,
 )
@@ -31,13 +31,13 @@ router = APIRouter(
 
 
 @router.get(
-    "/rules/search", dependencies=[Depends(get_current_user_id)], response_model=RuleSearchResponse
+    "/rules/search", dependencies=[Depends(get_principal)], response_model=RuleSearchResponse
 )
 async def search_rules(
     query: Annotated[
         str, Query(description="Search term (e.g. 'fire damage', 'paralyzed', 'goblin')")
     ],
-    user_id: CurrentUserId,
+    user_id: CallerId,
     category: Annotated[
         str | None, Query(description="Filter category ('monster', 'spell', 'condition')")
     ] = None,
@@ -94,7 +94,7 @@ async def get_monster_by_name(
     return monster
 
 
-@router.get("/spells/{name}", dependencies=[Depends(get_current_user_id)])
+@router.get("/spells/{name}", dependencies=[Depends(get_principal)])
 async def get_spell_by_name(
     name: str,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
@@ -106,7 +106,7 @@ async def get_spell_by_name(
     return spell
 
 
-@router.get("/conditions/{name}", dependencies=[Depends(get_current_user_id)])
+@router.get("/conditions/{name}", dependencies=[Depends(get_principal)])
 async def get_condition_by_name(
     name: str,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
