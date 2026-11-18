@@ -190,7 +190,7 @@ All system documentation outside project records lives in `docs/` and strictly f
 | `gateway/mcp/` | Model Context Protocol server exposing tools to LLM models |
 | `frontend/` | Lightweight App Shell, global themes/layout, Storybook design system aggregator |
 | `tools/` | Developer tooling packages: backlog engine, PRD pipeline, project visualizer |
-| `scripts/` | Developer scripts run through the Makefile, including `health_check.py` (`make health-check`) |
+| `scripts/` | Developer scripts run through the Makefile, and the `make health-check` gate, which runs `spec-ops health` and `spec-ops schema check` |
 | `tests/` | Python pytest suite: blackbox frontdoor tests and unit tests |
 | `deployments/helm/` | Umbrella Helm chart for Kubernetes deployment |
 | `deployments/kind/` | Kind Kubernetes cluster configuration for local development |

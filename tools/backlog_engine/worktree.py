@@ -113,7 +113,7 @@ def enforce_backlog_isolation(worktree_dir: Path) -> tuple[bool, str]:
 
 
 def run_preflight_checks(worktree_dir: Path) -> tuple[bool, str]:
-    """Runs automated verification suite (ruff lint/format, pytest, health check) in the worktree."""
+    """Runs automated verification suite (ruff lint/format, pytest, spec-ops gates) in the worktree."""
     # Ensure backlog isolation before running verification
     _, isolation_msg = enforce_backlog_isolation(worktree_dir)
 
@@ -121,11 +121,9 @@ def run_preflight_checks(worktree_dir: Path) -> tuple[bool, str]:
         ("Ruff Lint", ["uv", "run", "ruff", "check", "."]),
         ("Ruff Format", ["uv", "run", "ruff", "format", "--check", "."]),
         ("Pytest Suite", ["uv", "run", "pytest"]),
+        ("Health Check", ["spec-ops", "health"]),
+        ("Schema Check", ["spec-ops", "schema", "check"]),
     ]
-
-    health_check_script = worktree_dir / "scripts" / "health_check.py"
-    if health_check_script.exists():
-        checks.append(("Health Check", ["python3", str(health_check_script.resolve())]))
 
     output_log = []
     if isolation_msg:

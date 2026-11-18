@@ -74,7 +74,7 @@ Follow the Runefoble Definition of Done in AGENTS.md:
     } else if (presetKey === 'backlog_curator') {
       promptInput.value = `Activate the 'backlog-curator' skill in .agents/skills/backlog-curator/SKILL.md:\n1. Review files approaching 500 lines and propose refactoring tasks in docs/project/backlog/proposed/ if needed.\n2. Inspect docs/project/backlog/ROADMAP.md Milestone 2 and ensure foundational enablers are prioritized.\n3. Check the ready buffer in docs/project/backlog/refined/. Keep buffer to ~10 items.\n4. Synchronize docs/project/backlog/PRIORITY.md.`;
     } else if (presetKey === 'health_check') {
-      promptInput.value = `Run codebase health check via 'python3 scripts/health_check.py'.\nVerify all files satisfy the <500 lines invariant and inspect any backlog items violating the Definition of Ready.\nDecompose any oversized files into focused modules.`;
+      promptInput.value = `Run codebase health check via 'spec-ops health' and 'spec-ops schema check'.\nVerify all files satisfy the <500 lines invariant and inspect any backlog items violating the Definition of Ready.\nDecompose any oversized files into focused modules.`;
     } else if (presetKey === 'test_suite') {
       promptInput.value = `Execute the complete Runefoble test suite:\n1. 'uv run pytest'\n2. 'make test-entrypoints'\n3. 'make helm-lint'\nDiagnose and repair any failing tests or regressions using blackbox public entrypoints.`;
     }

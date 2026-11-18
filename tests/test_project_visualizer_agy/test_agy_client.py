@@ -91,7 +91,7 @@ const results = {
   hasFacadeExports, modalOpen, targetBadgeText,
   promptHasTaskId: promptVal.includes('TASK-0042'),
   previewHasSkipPerms: previewVal.includes('--dangerously-skip-permissions'),
-  healthPromptHasScript: healthPromptVal.includes('health_check.py'),
+  healthPromptHasScript: healthPromptVal.includes('spec-ops health'),
   contPreviewHasCFlag: contPreviewVal.includes('-c -p'),
   drawerBtnHasLaunch: drawerBtnHtml.includes('Launch AGY'),
   clearedLogs: clearedLogs.includes('Logs cleared'),

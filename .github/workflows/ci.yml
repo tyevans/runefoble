@@ -48,6 +48,14 @@ jobs:
       - name: Run Ruff Format Check
         run: uv run ruff format --check .
 
+      - name: Install spec-ops
+        run: |
+          uv tool install --from git+https://github.com/tyevans/spec-ops@2c8d073180eb558a57aeb500ffcc6210361c8ee7 spec-ops
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run Health and Schema Gates
+        run: make health-check
+
       - name: Run Test Suite
         run: uv run pytest
 
