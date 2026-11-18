@@ -1,10 +1,11 @@
-import { AuthConsumerController } from '@runefoble/ui-core';
+import { AuthConsumerController, fetchAssetObjectUrl } from '@runefoble/ui-core';
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { mapUploaderStyles } from './runefoble-map-uploader.styles.ts';
 
 export interface DropzoneUploadSuccessDetail {
   assetId: string;
+  /** A blob URL for this document only (TASK-0784). It is not a persistable asset URL. */
   downloadUrl: string;
   filename: string;
   byteSize: number;
@@ -69,10 +70,13 @@ export class RunefobleMapDropzone extends LitElement {
 
       this.uploadProgress = 100;
       const data = await response.json();
+      if (!data.download_url) throw new Error('Upload response has no download_url.');
+      // Asset reads need a bearer, so an <img src> cannot load the URL directly (TASK-0784).
+      const downloadUrl = await fetchAssetObjectUrl(data.download_url, () => this.auth.authHeaders());
       const resolution = { width: img.naturalWidth || 1920, height: img.naturalHeight || 1080 };
       this.emit<DropzoneUploadSuccessDetail>('upload-success', {
         assetId: data.asset_id,
-        downloadUrl: data.download_url || localUrl,
+        downloadUrl,
         filename: file.name,
         byteSize: data.byte_size || file.size,
         contentType: data.content_type || file.type,

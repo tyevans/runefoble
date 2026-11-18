@@ -5,6 +5,7 @@ import './runefoble-map-dropzone.ts';
 import './runefoble-map-grid-config.ts';
 import type { DropzoneUploadSuccessDetail } from './runefoble-map-dropzone.ts';
 import type { GridConfigDetail } from './runefoble-map-grid-config.ts';
+import { revokeAssetObjectUrl } from '@runefoble/ui-core';
 
 export interface MapUploadedDetail {
   assetId: string;
@@ -40,6 +41,7 @@ export class RunefobleMapUploader extends LitElement {
   @state() private revealedCells: Set<string> = new Set();
 
   resetMap() {
+    revokeAssetObjectUrl(this.previewUrl);
     this.previewUrl = null;
     this.assetId = null;
     this.revealedCells = new Set();

@@ -40,6 +40,7 @@ nav = [
   { "Technical Reference" = [
     { "Architecture Overview" = "reference/architecture-overview.md" },
     { "Microfrontend Architecture" = "reference/microfrontend-architecture.md" },
+    { "Browser Asset Reads" = "reference/browser-asset-reads.md" },
     { "Platform Services" = "reference/platform-services.md" },
     { "Ports & Endpoints" = "reference/ports-and-endpoints.md" },
     { "Events Schema" = "reference/events-schema.md" },
