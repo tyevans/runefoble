@@ -265,7 +265,7 @@ def test_blackbox_dragon_craps_pass_line_and_field_roll(session_client: TestClie
 def test_blackbox_zanzibar_establishment_authorization(
     session_client: TestClient, spicedb: MockSpiceDBClient
 ) -> None:
-    """SpiceDB Zanzibar: verify unauthorized patrons are rejected with 4003."""
+    """SpiceDB Zanzibar: verify unauthorized patrons are rejected with 4403."""
     asyncio.run(
         spicedb.write_relationship("establishment", "est-vip-lounge", "patron", "user", "vip_kip")
     )

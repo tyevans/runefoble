@@ -54,7 +54,7 @@ def test_connecting_with_valid_campaign_viewer_permissions():
 
 
 def test_connecting_with_unauthorized_subject():
-    """Verify connecting with unauthorized subject is rejected with PERMISSION_DENIED and closed with 4003."""
+    """Verify connecting with unauthorized subject is rejected with PERMISSION_DENIED and closed with 4403."""
     campaign_id = "camp-connect-unauth"
     client = TestClient(app)
 
@@ -68,10 +68,10 @@ def test_connecting_with_unauthorized_subject():
         assert err_msg["action"] == "connect"
         assert "insufficient permissions" in err_msg["message"]
 
-        # Subsequent receive raises WebSocketDisconnect with 4003
+        # Subsequent receive raises WebSocketDisconnect with 4403
         with pytest.raises(WebSocketDisconnect) as exc:
             ws.receive_json()
-        assert exc.value.code == 4003
+        assert exc.value.code == 4403
 
 
 def test_dynamic_permission_revocation_rejects_reconnect():
@@ -91,7 +91,7 @@ def test_dynamic_permission_revocation_rejects_reconnect():
     # 2. Dynamically revoke Zanzibar relationship
     asyncio.run(spicedb.delete_relationship("campaign", campaign_id, "spectator", "user", user_id))
 
-    # 3. Subsequent connection attempt is rejected with PERMISSION_DENIED and code 4003
+    # 3. Subsequent connection attempt is rejected with PERMISSION_DENIED and code 4403
     with client.websocket_connect(
         f"/ws/campaigns/{campaign_id}", subprotocols=ws_subprotocols(user_id)
     ) as ws:
@@ -100,7 +100,7 @@ def test_dynamic_permission_revocation_rejects_reconnect():
         assert err_msg["code"] == "PERMISSION_DENIED"
         with pytest.raises(WebSocketDisconnect) as exc:
             ws.receive_json()
-        assert exc.value.code == 4003
+        assert exc.value.code == 4403
 
 
 def test_spicedb_client_mock_and_grpc_handling():

@@ -74,7 +74,7 @@ async def campaign_websocket_endpoint(
         )
         denied_msg = f"Zanzibar authorization denied: insufficient permissions to view campaign '{campaign_id}'"
         await _send_denied(websocket, "connect", denied_msg)
-        await websocket.close(code=4003, reason="Forbidden: insufficient permissions for campaign")
+        await websocket.close(code=4403, reason="Forbidden: insufficient permissions for campaign")
         return
 
     await ws_campaign_manager.connect(campaign_id, websocket, subject_id)

@@ -8,7 +8,7 @@ Governed by:
 - TASK-0522: Gateway WebSocket routes authenticate before accept
 
 A refused handshake raises WebSocketDisconnect before any frame is delivered.
-An admitted handshake that lacks SpiceDB permission gets a PERMISSION_DENIED frame and close 4003.
+An admitted handshake that lacks SpiceDB permission gets a PERMISSION_DENIED frame and close 4403.
 """
 
 import asyncio
@@ -59,10 +59,10 @@ def test_valid_bearer_subprotocol_connects(client: TestClient, spicedb: MockSpic
         assert msg["user_id"] == user_id
 
 
-def test_valid_token_without_permission_gets_4003(
+def test_valid_token_without_permission_gets_4403(
     client: TestClient, spicedb: MockSpiceDBClient
 ) -> None:
-    """Frontdoor test: a verified stranger is admitted, then refused by SpiceDB with 4003."""
+    """Frontdoor test: a verified stranger is admitted, then refused by SpiceDB with 4403."""
     campaign_id = "camp-ws-unauthorized-01"
 
     with client.websocket_connect(
@@ -75,7 +75,7 @@ def test_valid_token_without_permission_gets_4003(
 
         with pytest.raises(WebSocketDisconnect) as exc_info:
             ws.receive_json()
-        assert exc_info.value.code == 4003
+        assert exc_info.value.code == 4403
 
 
 def test_token_in_query_string_is_refused(client: TestClient, spicedb: MockSpiceDBClient) -> None:
