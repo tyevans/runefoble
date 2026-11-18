@@ -13,8 +13,7 @@ from game_session.models import (
     NextTurnRequest,
     StartCombatRequest,
 )
-from game_session.routers.session_auth import session_permission
-from game_session.settlement.auth.tokens import get_caller_or_service
+from game_session.routers.session_auth import SessionReader, session_permission
 from runefoble_platform.event_sourcing import AggregateRepository
 
 router = APIRouter(tags=["combat"])
@@ -128,7 +127,7 @@ async def end_combat_encounter(session_id: UUID):
 
 @router.get(
     "/api/v1/sessions/{session_id}/combat",
-    dependencies=[Depends(get_caller_or_service)],
+    dependencies=[SessionReader],
     response_model=CombatStateResponse,
 )
 async def get_combat_state(session_id: UUID):

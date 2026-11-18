@@ -13,7 +13,7 @@ import httpx
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
-def start_session_with_player(base_url: str, dm_sub: str = "encounter-dm") -> str:
+def start_session_with_player(base_url: str, dm_sub: str = "user-test") -> str:
     """Create a session, join one player, start it, and return its session id."""
     auth = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_sub)}"}
     with httpx.Client(base_url=base_url, headers=auth) as http:

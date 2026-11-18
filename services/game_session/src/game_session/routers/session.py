@@ -11,7 +11,7 @@ from typing import Annotated
 from uuid import UUID, uuid4
 
 from eventsource.domain.exceptions import AggregateNotFoundError
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from game_session.aggregate import GameSessionAggregate, GameSessionState
 from game_session.campaign.tuples import link_session
 from game_session.character_client import (
@@ -32,10 +32,13 @@ from game_session.models import (
     RollDiceResponse,
     SelectLobbyCharacterRequest,
 )
-from game_session.routers.session_auth import SessionController, SessionParticipant
+from game_session.routers.session_auth import (
+    SessionController,
+    SessionParticipant,
+    SessionReader,
+)
 from game_session.settlement.auth.tokens import (
     CallerId,
-    get_caller_or_service,
 )
 from runefoble_platform.dice import parse_and_roll
 
@@ -84,7 +87,7 @@ async def create_session(req: CreateSessionRequest, caller_id: CallerId) -> Game
 
 @router.get(
     "/api/v1/sessions/{session_id}",
-    dependencies=[Depends(get_caller_or_service)],
+    dependencies=[SessionReader],
     response_model=GameSessionState,
 )
 async def get_session(session_id: UUID) -> GameSessionState:

@@ -120,3 +120,14 @@ async def test_reaction_routes_need_participation_and_observation(client, sessio
     assert res.status_code == 400, res.text
     assert (await client.get(f"{base}/active", headers=_bearer(SPECTATOR))).status_code == 200
     assert (await client.get(f"{base}/active", headers=_bearer(STRANGER))).status_code == 403
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("route", ["", "/combat"])
+async def test_session_reads_need_observe(client, session_id, route):
+    url = f"/api/v1/sessions/{session_id}{route}"
+    assert (await client.get(url)).status_code == 401
+    assert (await client.get(url, headers=_bearer(STRANGER))).status_code == 403
+    for user in (SPECTATOR, PLAYER, DM):
+        res = await client.get(url, headers=_bearer(user))
+        assert res.status_code == 200, f"{route} as {user}: {res.text}"
