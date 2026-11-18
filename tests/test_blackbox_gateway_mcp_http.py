@@ -1,13 +1,16 @@
-"""Blackbox tests for the gateway MCP server over streamable HTTP (TASK-0623).
+"""Blackbox tests for the gateway MCP server over streamable HTTP (TASK-0623, TASK-0532).
 
-Governed by ADR-0001 (no anonymous mutation, endpoint stays off the public ingress) and
-ADR-0005 (Deployment and Service in Helm). Each test starts the public entrypoint, connects
-with an MCP client over HTTP, and reads the protocol result. No private state is touched.
+Governed by ADR-0001 (no anonymous mutation, endpoint stays off the public ingress),
+ADR-0005 (Deployment and Service in Helm) and ADR-0015 (c): every MCP request carries a
+verified bearer token, and a request without one is refused before any tool dispatch.
+Each test starts the public entrypoint or the public ASGI app, connects over HTTP, and reads
+the protocol result. No private state is touched.
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import shutil
 import socket
@@ -17,10 +20,18 @@ import time
 from collections.abc import Iterator
 from pathlib import Path
 
+import httpx
 import pytest
 import yaml
+from gateway_mcp.dynamic import DynamicToolDefinition, dynamic_registry, set_event_bus
+from gateway_mcp.identity import set_verifier
+from gateway_mcp.server import build_http_app
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 
-from tests.helpers.mcp_http import mcp_session
+from tests.helpers.live_services import serve
+from tests.helpers.mcp_http import call_tool_over_http, mcp_session
+from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_blackbox_deployability_images import (
     ImageRow,
     build_image,
@@ -79,24 +90,43 @@ def _wait_for_port(port: int, process: subprocess.Popen | None = None) -> None:
     raise AssertionError(f"nothing listens on 127.0.0.1:{port}")
 
 
-async def _list_tool_names(endpoint: str) -> set[str]:
+INITIALIZE_BODY = {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+        "protocolVersion": "2025-06-18",
+        "capabilities": {},
+        "clientInfo": {"name": "gateway-mcp-test", "version": "0"},
+    },
+}
+MCP_HEADERS = {"Accept": "application/json, text/event-stream"}
+
+
+async def _list_tool_names(endpoint: str, bearer: str | None = None) -> set[str]:
     """Initialize an MCP session over HTTP and return the names of the listed tools."""
-    async with mcp_session(endpoint) as session:
+    async with mcp_session(endpoint, bearer) as session:
         listed = await session.list_tools()
     return {tool.name for tool in listed.tools}
 
 
-def _tool_names_when_ready(endpoint: str) -> set[str]:
-    """Retry the MCP handshake until the server answers, or fail after 60 seconds.
+def _status_without_bearer(endpoint: str) -> int:
+    """Send an MCP initialize with no Authorization header and return the HTTP status."""
+    response = httpx.post(endpoint, json=INITIALIZE_BODY, headers=MCP_HEADERS, timeout=10.0)
+    return response.status_code
+
+
+def _status_when_ready(endpoint: str) -> int:
+    """Retry the unauthenticated request until the server answers, or fail after 60 seconds.
 
     A published container port accepts TCP before the application is ready, so the first
-    handshakes can fail. The loop retries the public protocol call only.
+    requests can fail. The loop retries the public protocol call only.
     """
     deadline = time.monotonic() + 60.0
     while True:
         try:
-            return asyncio.run(_list_tool_names(endpoint))
-        except Exception:
+            return _status_without_bearer(endpoint)
+        except httpx.TransportError:
             if time.monotonic() > deadline:
                 raise
             time.sleep(0.5)
@@ -131,9 +161,91 @@ def gateway_process() -> Iterator[str]:
             process.wait(timeout=15)
 
 
-def test_entrypoint_serves_static_tools_over_streamable_http(gateway_process: str):
-    """An MCP client initializes over HTTP and lists the 16 static tools."""
-    assert _tool_names_when_ready(gateway_process) == STATIC_TOOLS
+def test_entrypoint_refuses_mcp_requests_without_bearer(gateway_process: str):
+    """The running entrypoint answers 401 to an MCP initialize with no bearer token."""
+    assert _status_when_ready(gateway_process) == 401
+
+
+def test_entrypoint_keeps_health_check_public(gateway_process: str):
+    """The liveness route stays open for the cluster probe, with no bearer token."""
+    base_url = gateway_process.removesuffix("/mcp")
+    assert _status_when_ready(gateway_process) == 401
+    assert httpx.get(f"{base_url}/healthz", timeout=10.0).status_code == 200
+
+
+@pytest.fixture(scope="module")
+def authenticated_endpoint() -> Iterator[str]:
+    """Serve the public MCP ASGI app in-process, trusting the shared signing issuer."""
+    set_verifier(SIGNING_ISSUER.verifier())
+    try:
+        with serve(build_http_app(), lifespan="on") as base_url:
+            yield f"{base_url}/mcp"
+    finally:
+        set_verifier(None)
+
+
+def test_bearer_caller_lists_the_static_tools(authenticated_endpoint: str):
+    """An MCP client with a verified bearer lists the 16 static tools."""
+    token = SIGNING_ISSUER.mint("user-test")
+    assert asyncio.run(_list_tool_names(authenticated_endpoint, token)) == STATIC_TOOLS
+
+
+def test_request_with_forged_bearer_is_refused(authenticated_endpoint: str):
+    """A token that the trusted issuer did not sign gets 401 before dispatch."""
+    forged = SIGNING_ISSUER.mint("user-test", issuer="http://attacker.test")
+    response = httpx.post(
+        authenticated_endpoint,
+        json=INITIALIZE_BODY,
+        headers={**MCP_HEADERS, "Authorization": f"Bearer {forged}"},
+        timeout=10.0,
+    )
+    assert response.status_code == 401
+
+
+def test_tool_call_without_bearer_is_refused_before_dispatch(authenticated_endpoint: str):
+    """A tools/call with no bearer is refused by the transport, so no tool runs."""
+    call_body = {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {"name": "roll_dice", "arguments": {"notation": "1d20"}},
+    }
+    response = httpx.post(authenticated_endpoint, json=call_body, headers=MCP_HEADERS, timeout=10.0)
+    assert response.status_code == 401
+
+
+def test_dynamic_tool_call_over_http_records_the_verified_caller(authenticated_endpoint: str):
+    """A dynamic tool called over MCP reports the token subject, not any claimed user."""
+    name = "transport_identity_probe"
+    bus_client = MockAsyncRedis()
+    set_event_bus(RedisStreamsEventBus(client=bus_client))
+    dynamic_registry.register_tool(
+        DynamicToolDefinition(
+            name=name,
+            parameters={"type": "object", "properties": {"charge": {"type": "integer"}}},
+            handler={"pulse": {"$expr": "charge * 2"}},
+        ),
+        author_id="alex",
+    )
+    try:
+        result = asyncio.run(
+            call_tool_over_http(
+                authenticated_endpoint,
+                name,
+                {"charge": 4},
+                SIGNING_ISSUER.mint("mallory"),
+            )
+        )
+        assert not result.isError
+        invoked = [
+            json.loads(fields["payload"])
+            for _, fields in bus_client.streams.get("runefoble.events.system", [])
+            if fields.get("event_type") == "DynamicToolInvoked"
+        ]
+        assert invoked and invoked[-1]["user_id"] == "mallory"
+    finally:
+        dynamic_registry.deregister_tool(name)
+        set_event_bus(None)
 
 
 def test_entrypoint_refuses_to_start_without_upstream_urls():
@@ -205,8 +317,8 @@ def _gateway_mcp_row() -> ImageRow:
 
 @pytest.mark.docker
 @pytest.mark.skipif(not docker_daemon_available(), reason="Docker daemon is not reachable")
-def test_built_gateway_mcp_image_serves_static_tools_over_streamable_http():
-    """The built image starts and an MCP client lists the 16 static tools on port 8012."""
+def test_built_gateway_mcp_image_refuses_mcp_requests_without_bearer():
+    """The built image starts, refuses an unauthenticated MCP request, and serves health."""
     row = _gateway_mcp_row()
     build_image(row)
 
@@ -223,7 +335,6 @@ def test_built_gateway_mcp_image_serves_static_tools_over_streamable_http():
     assert container.returncode == 0, f"docker run failed: {container.stderr}"
     container_id = container.stdout.strip()
     try:
-        names = _tool_names_when_ready(f"http://127.0.0.1:{host_port}/mcp")
-        assert names == STATIC_TOOLS
+        assert _status_when_ready(f"http://127.0.0.1:{host_port}/mcp") == 401
     finally:
         subprocess.run(["docker", "rm", "-f", container_id], capture_output=True, timeout=120)

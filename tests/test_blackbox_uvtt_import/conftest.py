@@ -25,8 +25,9 @@ def board_client() -> TestClient:
 
 
 @pytest.fixture
-def gateway_client() -> TestClient:
-    return TestClient(gateway_app)
+def gateway_client(trusted_ws_issuer) -> TestClient:
+    """Gateway client that sends a signed token for `user-test` on every request."""
+    return TestClient(gateway_app, headers=bearer("user-test"))
 
 
 @pytest.fixture(autouse=True)

@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from gateway_mcp.server import mcp
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.test_blackbox_dynamic_mcp.conftest import caller_headers
 
 
 @pytest.mark.asyncio
@@ -109,17 +110,17 @@ async def test_blackbox_tool_lifecycle_cloudevents(client: TestClient, mock_redi
     }
 
     # Register
-    client.post("/mcp/tools/register", json=payload, headers={"X-User-Id": "gm-evelyn"})
+    client.post("/mcp/tools/register", json=payload, headers=caller_headers("gm-evelyn"))
 
     # Execute
     client.post(
         f"/mcp/tools/{tool_name}/execute",
         json={"arguments": {"potency": 4}},
-        headers={"X-User-Id": "gm-evelyn"},
+        headers=caller_headers("gm-evelyn"),
     )
 
     # Deregister
-    client.delete(f"/mcp/tools/{tool_name}", headers={"X-User-Id": "gm-evelyn"})
+    client.delete(f"/mcp/tools/{tool_name}", headers=caller_headers("gm-evelyn"))
 
     # Inspect messages published to Redis Stream
     stream_messages = mock_redis.streams.get(stream_name, [])
