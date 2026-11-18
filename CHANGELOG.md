@@ -33,6 +33,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- character_sheet alias routes `POST /api/v1/characters/create`, `POST /api/v1/characters/{id}/inventory/add` and `POST /api/v1/characters/{id}/inventory/{item_id}/remove`. Use `POST /api/v1/characters`, `POST /api/v1/characters/{id}/inventory` and `DELETE /api/v1/characters/{id}/inventory/{item_id}`. (TASK-0493)
+- character_sheet `alias="int"` on `AttributeScores.intelligence`, the `.int` attribute shim, and the UI `runefoble-character-sheet.templates.ts` re-export. The wire key `"int"` is unchanged. Import templates from `templates/*.template.ts`. (TASK-0493)
+- Old service URL names `CAMPAIGN_LORE_URL`, `CAMPAIGN_ANALYTICS_URL`, `SOUNDSCAPE_SERVICE_URL`, `BOARD_STATE_URL`, `GAME_SESSION_URL`, `RULES_COMPENDIUM_URL` and `THE_WATCHER_URL`. (TASK-0794)
+- Worker inventory and NPC relationship requests no longer accept `stock`, `price_gp`, `target_npc` and `relation`. Use `quantity`, `unit_price`, `target_npc_id` and `relation_type`. The haggling `override_price` field is removed. Use `override_price_gp`. (TASK-0491, TASK-0750)
 - `runefoble_platform` shim modules `analytics_client.py` and `analytics_privacy.py`, and the `RedisConsumerGroupWorker` alias. Import `runefoble_platform.analytics` and `RedisConsumerGroup` instead. (TASK-0485)
 - Legacy event names `BattlemapCreated` and `AssetGenerated` are removed. Use `BattlemapForged` and `TokenAssetForged`. Development event stores that hold the old names are not migrated. (TASK-0799)
 - In-process platform event bus (`runefoble_platform.bus`). Every publish now goes to Redis Streams. (TASK-0710)
@@ -51,6 +55,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Blackbox test that runs game_session and soundscape on one real Redis. Ending combat through game_session returns soundscape tension to ambient. (TASK-0803)
+- `make test` runs a parallel phase (pytest-xdist) and then a serial phase for timing and browser tests.
 - Lit element tests run in headless Chromium through `pnpm test`. The shared harness is Vitest browser mode with Playwright. (TASK-0797)
 - West Marches outposts can be funded. `POST /api/v1/campaigns/{campaign_id}/west-marches/stronghold/contribute` moves gold from the stronghold treasury into an outpost store. The debit needs `stronghold.manage` in game_session. A shortfall answers 409 and records no event. (TASK-0795)
 - Soundscape party health: `runefoble.events.soundscape.party_health_recorded` records each character's HP ratio in a session. (TASK-0618)
@@ -115,6 +121,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- Service base URLs use one name each, `RUNEFOBLE_<SERVICE>_URL`, with no in-cluster code defaults. The gateway MCP upstream names use the same scheme. (TASK-0794)
+- The haggling DM override request model is renamed `HaggleDmOverrideRequest`. (TASK-0750)
 - `roll_dice` (MCP) rolls through the platform dice engine. Its result has the `parse_and_roll` shape plus `reason`. (TASK-0722)
 - Audience listings (`GET /polls`, `GET /proposals`) check SpiceDB permissions in one bulk call (`CheckBulkPermissions`) instead of one call per item. (TASK-0713)
 - Identity dependencies for every service and both gateways come from one factory, `runefoble_auth.wiring`. The per-service Zitadel verifier copies and user-id helpers are removed. (TASK-0712)

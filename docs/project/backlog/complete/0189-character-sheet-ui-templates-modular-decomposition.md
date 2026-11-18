@@ -23,10 +23,10 @@ pr_url: https://github.com/tyevans/runefoble/pull/249
 Complete
 
 ## Summary
-Decompose `services/character_sheet/ui/src/runefoble-character-sheet.templates.ts` (343 lines, 68.6% of limit) into modular template modules under `services/character_sheet/ui/src/templates/` (`stats.template.ts`, `inventory.template.ts`, `conditions.template.ts`, `spells.template.ts`), keeping each template file strictly < 120 lines per Hard Invariant 6 and ADR-0013.
+Decompose `services/character_sheet/ui/src/runefoble-character-sheet.templates.ts` (removed) (343 lines, 68.6% of limit) into modular template modules under `services/character_sheet/ui/src/templates/` (`stats.template.ts`, `inventory.template.ts`, `conditions.template.ts`, `spells.template.ts`), keeping each template file strictly < 120 lines per Hard Invariant 6 and ADR-0013.
 
 ## Problem Statement
-`services/character_sheet/ui/src/runefoble-character-sheet.templates.ts` contains 343 lines of Lit HTML render templates for ability scores, health indicators, equipment slots, encumbrance meters, condition badges, and spell slots. As Milestone 9 introduces mobile responsive layout variants and absentee directive overrides, this file will soon exceed 400 lines unless modularized into dedicated sub-templates.
+`services/character_sheet/ui/src/runefoble-character-sheet.templates.ts` (removed) contains 343 lines of Lit HTML render templates for ability scores, health indicators, equipment slots, encumbrance meters, condition badges, and spell slots. As Milestone 9 introduces mobile responsive layout variants and absentee directive overrides, this file will soon exceed 400 lines unless modularized into dedicated sub-templates.
 
 ## Governing Architecture & ADRs
 - **ADR-0004: Lit Web Components and Storybook UI**: Clean separation of Lit templates and component logic.
@@ -42,7 +42,7 @@ Decompose `services/character_sheet/ui/src/runefoble-character-sheet.templates.t
    - Status badges, active debuffs, and tooltips (< 80 lines).
 4. **Spells Template (`services/character_sheet/ui/src/templates/spells.template.ts`)**:
    - Spell slot counters and prepared spell badges (< 80 lines).
-5. **Aggregator Facade (`services/character_sheet/ui/src/runefoble-character-sheet.templates.ts`)**:
+5. **Aggregator Facade (`services/character_sheet/ui/src/runefoble-character-sheet.templates.ts` (removed))**:
    - Re-export modular template renderers to preserve the existing component API (< 50 lines).
 6. **Verification**:
    - Verify Storybook builds and character sheet stories render without error.
