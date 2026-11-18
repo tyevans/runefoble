@@ -3,7 +3,9 @@
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
+from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
 
+from inference_worker.graphs.stand_in_mock_rules import mock_stand_in_decision
 from inference_worker.model_output import parse_json_object
 from inference_worker.models import ResponseSource, StandInActionResponse
 from inference_worker.ports import LLMPort, backend_unavailable
@@ -15,7 +17,7 @@ class StandInGraphState(TypedDict, total=False):
     action_decision: dict[str, Any]
     source: ResponseSource
     degraded: bool
-    guardrails_applied: list[str]
+    guardrails_applied: list[GuardrailName]
     final_response: dict[str, Any]
 
 
@@ -42,6 +44,24 @@ def evaluate_penalties_node(state: StandInGraphState) -> StandInGraphState:
     return {"penalty_effects": effects}
 
 
+def _prompt_guardrail_notes(policy: StandInGuardrailPolicy) -> dict[GuardrailName, str]:
+    """One prompt note per active guardrail, keyed by the guardrail name."""
+    notes: dict[GuardrailName, str] = {}
+    if policy.preserve_spell_slots:
+        notes[GuardrailName.PRESERVE_SPELL_SLOTS] = (
+            f"Preserve spell slots: {policy.preserve_spell_slots}"
+        )
+    if policy.protect_allies:
+        notes[GuardrailName.PROTECT_ALLIES] = f"Protect allies: {', '.join(policy.protect_allies)}"
+    if policy.avoid_melee:
+        notes[GuardrailName.AVOID_MELEE] = "Avoid frontline melee engagement"
+    if policy.custom_priorities:
+        notes[GuardrailName.CUSTOM_PRIORITIES] = (
+            f"Custom priorities: {'; '.join(policy.custom_priorities)}"
+        )
+    return notes
+
+
 async def generate_stand_in_decision_node(
     state: StandInGraphState,
     llm_port: LLMPort,
@@ -54,24 +74,8 @@ async def generate_stand_in_decision_node(
     penalty_effects = state.get("penalty_effects", [])
     scene_context = req.get("scene_context", "In combat")
     enemies = req.get("visible_enemies", [])
-    guardrails = req.get("guardrails") or {}
-
-    # Each active guardrail adds one note to the prompt. Its name is the key of the note.
-    guardrail_notes: dict[str, str] = {}
-    if guardrails.get("preserve_spell_slots"):
-        guardrail_notes["preserve_spell_slots"] = (
-            f"Preserve spell slots: {guardrails['preserve_spell_slots']}"
-        )
-    if guardrails.get("protect_allies"):
-        guardrail_notes["protect_allies"] = (
-            f"Protect allies: {', '.join(guardrails['protect_allies'])}"
-        )
-    if guardrails.get("avoid_melee"):
-        guardrail_notes["avoid_melee"] = "Avoid frontline melee engagement"
-    if guardrails.get("custom_priorities"):
-        guardrail_notes["custom_priorities"] = (
-            f"Custom priorities: {'; '.join(guardrails['custom_priorities'])}"
-        )
+    policy = StandInGuardrailPolicy.model_validate(req.get("guardrails") or {})
+    guardrail_notes = _prompt_guardrail_notes(policy)
 
     system_prompt = (
         "You are Runefoble's Absent Player Stand-in AI. "
@@ -96,7 +100,7 @@ async def generate_stand_in_decision_node(
     # Raises EngineUnavailableError when a real engine fails. No silent fallback.
     completion = await llm_port.complete(system_prompt, user_prompt)
     decision: dict[str, Any] = {}
-    applied: list[str] = []
+    applied: list[GuardrailName] = []
     if completion.source == "llm":
         decision = parse_json_object(completion.content)
         if not decision.get("action_type"):
@@ -108,85 +112,14 @@ async def generate_stand_in_decision_node(
 
     # Canned rules run only for the explicit mock backend
     if completion.source == "mock":
-        target = enemies[0] if enemies else "nearest foe"
-        protect_allies = guardrails.get("protect_allies", [])
-        avoid_melee = guardrails.get("avoid_melee", False)
-
-        if protect_allies and (
-            any(a.lower() in scene_context.lower() for a in protect_allies)
-            or "heal" in scene_context.lower()
-        ):
-            target_ally = protect_allies[0]
-            action_type = "cast_spell"
-            if "drunk" in [p.lower() for p in penalties]:
-                dialogue = f"*Hic* 'Hold on {target_ally}! Healing light incoming!' *burp*"
-                flavor = f"{char_name} sways wildly while channeling healing magic on {target_ally} per guardrails."
-                mechanics = {
-                    "action": "heal",
-                    "target": target_ally,
-                    "penalty": "drunk",
-                    "guardrail": "protect_allies",
-                }
-            else:
-                dialogue = f"'Protecting {target_ally}! Stand fast!'"
-                flavor = f"{char_name} casts protective healing on {target_ally} obeying tactical guardrails."
-                mechanics = {"action": "heal", "target": target_ally, "guardrail": "protect_allies"}
-            applied = ["protect_allies"]
-        elif avoid_melee and char_class.lower() in [
-            "cleric",
-            "wizard",
-            "sorcerer",
-            "ranger",
-            "druid",
-        ]:
-            action_type = "cast_spell" if char_class.lower() != "ranger" else "ranged_attack"
-            dialogue = "'Keeping distance from frontline melee as planned!'"
-            flavor = f"{char_name} maintains safe distance, deploying ranged attacks per tactical guardrails."
-            mechanics = {"action": action_type, "target": target, "guardrail": "avoid_melee"}
-            applied = ["avoid_melee"]
-        elif "drunk" in [p.lower() for p in penalties]:
-            action_type = "attack"
-            dialogue = (
-                "*Hic* 'Stand shtill, ya six-eyed fiend! I got two blades and one of 'em'sh real!'"
-            )
-            flavor = (
-                f"{char_name} sways dangerously on one boot, attempting a wide overhand strike at {target} "
-                "before stumbling into a nearby barrel."
-            )
-            mechanics = {
-                "roll": "1d20-2",
-                "condition": "Disadvantage (Intoxicated)",
-                "penalty": "drunk",
-            }
-        elif "foolishness" in [p.lower() for p in penalties]:
-            action_type = "foolish_act"
-            dialogue = "'Observe my masterstroke! Never flank when you can charge directly through their spears!'"
-            flavor = (
-                f"{char_name} boldly announces their tactical plan at the top of their lungs, "
-                f"waving arms wildly to draw all enemy attention."
-            )
-            mechanics = {
-                "action": "distraction",
-                "penalty": "foolishness",
-                "hostile_advantage_granted": True,
-            }
-        else:
-            action_type = (
-                "attack"
-                if char_class.lower() in ["fighter", "barbarian", "rogue", "paladin"]
-                else "cast_spell"
-            )
-            dialogue = "'For the realm! Stand firm!'"
-            flavor = f"{char_name} executes a textbook {char_class} maneuver against {target}."
-            mechanics = {"action": action_type, "target": target}
-
-        decision = {
-            "action_type": action_type,
-            "target": target,
-            "dialogue": dialogue,
-            "narrative_flavor": flavor,
-            "mechanics": mechanics,
-        }
+        decision, applied = mock_stand_in_decision(
+            char_name=char_name,
+            char_class=char_class,
+            penalties=penalties,
+            enemies=enemies,
+            scene_context=scene_context,
+            policy=policy,
+        )
 
     return {
         "action_decision": decision,

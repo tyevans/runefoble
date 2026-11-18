@@ -6,11 +6,25 @@ same model, so an unknown or misspelled guardrail name fails with a 422 at each 
 Every field defaults to "off". A field that the request omits has no effect.
 The field names must match the character sheet's stored policy. The contract test in
 `tests/test_blackbox_stand_in_guardrail_contract.py` checks this.
+
+`GuardrailName` is the only set of names that an engine may report in `guardrails_applied`.
+It lists the guardrails that the engines enforce. Policy fields outside this set are stored
+but not enforced by a stand-in engine yet.
 """
 
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class GuardrailName(StrEnum):
+    """A guardrail that a stand-in engine enforces and reports by name."""
+
+    PRESERVE_SPELL_SLOTS = "preserve_spell_slots"
+    PROTECT_ALLIES = "protect_allies"
+    AVOID_MELEE = "avoid_melee"
+    CUSTOM_PRIORITIES = "custom_priorities"
 
 
 class StandInGuardrailPolicy(BaseModel):

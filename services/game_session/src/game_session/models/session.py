@@ -7,6 +7,7 @@ from uuid import UUID
 
 from game_session.models.transitions import GameSessionTransitionsMixin
 from pydantic import BaseModel, Field
+from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 from the_watcher.watcher_ai import StandInAction
 
 
@@ -78,7 +79,7 @@ class AutoPilotRequest(BaseModel):
     penalties: list[str] = Field(default_factory=list)
     scene_context: str = "In active encounter"
     personality_traits: list[str] = Field(default_factory=list)
-    guardrails: dict[str, Any] | None = None
+    guardrails: StandInGuardrailPolicy | None = None
 
 
 class AutoPilotResponse(BaseModel):

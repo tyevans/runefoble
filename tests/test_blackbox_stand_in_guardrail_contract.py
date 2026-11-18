@@ -215,3 +215,87 @@ def test_shared_guardrail_policy_declares_every_character_sheet_field():
     stored = set(StandInGuardrails.model_fields)
 
     assert shared == stored
+
+
+@pytest.mark.asyncio
+async def test_worker_mock_reserves_spell_slots_by_casting_a_cantrip(worker_backend):
+    """preserve_spell_slots in mock mode turns a spell into a cantrip. No slot is spent."""
+    worker_backend(WorkerSettings(backend="mock"))
+    payload = _worker_payload(
+        guardrails={"preserve_spell_slots": {"3": 1}},
+        scene_context="Orcs close in",
+        visible_allies=[],
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
+        resp = await ac.post(WORKER_PATH, json=payload)
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["source"] == "mock"
+    assert body["action_type"] == "cast_spell"
+    assert body["mechanics"]["spell_level"] == 0
+    assert body["guardrails_applied"] == ["preserve_spell_slots"]
+
+
+@pytest.mark.asyncio
+async def test_worker_mock_without_slot_reserve_casts_at_default_level(worker_backend):
+    """With no reserve policy, the mock casts without the cantrip rule and reports nothing."""
+    worker_backend(WorkerSettings(backend="mock"))
+    payload = _worker_payload(guardrails=None, scene_context="Orcs close in", visible_allies=[])
+
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
+        resp = await ac.post(WORKER_PATH, json=payload)
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["action_type"] == "cast_spell"
+    assert "spell_level" not in body["mechanics"]
+    assert body["guardrails_applied"] == []
+
+
+@pytest.mark.asyncio
+async def test_worker_mock_targets_the_first_prioritized_enemy(worker_backend):
+    """custom_priorities orders the targets. The first priority that names a visible enemy wins."""
+    worker_backend(WorkerSettings(backend="mock"))
+    payload = _worker_payload(
+        guardrails={"custom_priorities": ["Goblin Archer", "orc chieftain"]},
+        visible_enemies=["Orc Chieftain", "Goblin Archer"],
+        scene_context="Orcs close in",
+        visible_allies=[],
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
+        resp = await ac.post(WORKER_PATH, json=payload)
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["target"] == "Goblin Archer"
+    assert body["guardrails_applied"] == ["custom_priorities"]
+
+
+@pytest.mark.asyncio
+async def test_worker_mock_ignores_priorities_that_name_no_enemy(worker_backend):
+    worker_backend(WorkerSettings(backend="mock"))
+    payload = _worker_payload(
+        guardrails={"custom_priorities": ["Dragon"]},
+        visible_enemies=["Orc Chieftain", "Goblin Archer"],
+        scene_context="Orcs close in",
+        visible_allies=[],
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
+    ) as ac:
+        resp = await ac.post(WORKER_PATH, json=payload)
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["target"] == "Orc Chieftain"
+    assert body["guardrails_applied"] == []

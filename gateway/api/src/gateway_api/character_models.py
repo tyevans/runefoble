@@ -115,7 +115,7 @@ class StandInGuardrailsRequest(BaseModel):
     permadeath_safeguard: bool = Field(default=True, alias="permadeathSafeguard")
     custom_priorities: list[str] = Field(default_factory=list, alias="customPriorities")
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
 
 class HealthChangeRequest(BaseModel):

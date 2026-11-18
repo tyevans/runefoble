@@ -16,6 +16,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from runefoble_events.events import StandInActionDecided
 from runefoble_platform.redis_bus import deserialize_event
+from runefoble_platform.stand_in_guardrails import GuardrailName, StandInGuardrailPolicy
 from the_watcher.main import app as watcher_app
 from the_watcher.stand_in_ai import (
     StandInAIEngine,
@@ -59,7 +60,7 @@ def stand_in_engine() -> StandInAIEngine:
             {"protect_allies": ["Marcus"], "avoid_melee": False, "preserve_spell_slots": {}},
             "cast_spell",
             "Marcus",
-            "Prioritized protection for Marcus",
+            GuardrailName.PROTECT_ALLIES,
             "1d20-2",
         ),
         (
@@ -71,7 +72,7 @@ def stand_in_engine() -> StandInAIEngine:
             {"preserve_spell_slots": {"3": 1}, "protect_allies": [], "avoid_melee": False},
             "cast_spell",
             "Level 3",
-            "Preserved Level 3 spell slots",
+            GuardrailName.PRESERVE_SPELL_SLOTS,
             "1d20",
         ),
         (
@@ -83,7 +84,7 @@ def stand_in_engine() -> StandInAIEngine:
             {"avoid_melee": True, "protect_allies": []},
             "ranged_attack",
             "tactical distance",
-            "Avoided frontline melee",
+            GuardrailName.AVOID_MELEE,
             "1d20+2",
         ),
     ],
@@ -156,10 +157,10 @@ def test_stand_in_facade_and_submodule_backward_compatibility(
         penalties=["drunk"],
         scene_context="Protect Marcus at all costs!",
         personality_traits=["valiant"],
-        guardrails={"protect_allies": ["Marcus"]},
+        guardrails=StandInGuardrailPolicy(protect_allies=["Marcus"]),
     )
     assert gr_action is not None
-    assert "Prioritized protection for Marcus" in gr_action.guardrails_applied
+    assert gr_action.guardrails_applied == [GuardrailName.PROTECT_ALLIES]
     assert gr_action.action_type == "cast_spell"
     assert (
         evaluate_tactical_guardrails("Valeros", "Fighter", [], "Walking peacefully", None, None)
@@ -195,7 +196,7 @@ def test_stand_in_facade_and_submodule_backward_compatibility(
         penalties=["drunk"],
         scene_context="Protect Marcus at all costs!",
         personality_traits=["valiant"],
-        guardrails={"protect_allies": ["Marcus"]},
+        guardrails=StandInGuardrailPolicy(protect_allies=["Marcus"]),
     )
     assert facade_action.action_type == gr_action.action_type
     assert facade_action.dialogue == gr_action.dialogue
