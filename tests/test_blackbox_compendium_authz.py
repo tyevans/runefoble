@@ -299,3 +299,88 @@ def test_srd_monster_is_readable_by_every_token_holder(gateway, compendium, trus
         assert res.json().get("is_homebrew", False) is False
 
     assert _monster(compendium, "Goblin", {}).status_code == 401
+
+
+def _register_goblin(compendium, campaign_id: str, headers: dict[str, str]):
+    """Register a homebrew monster named like the SRD Goblin, with CR 99."""
+    return compendium.post(
+        "/api/v1/compendium/homebrew",
+        json={
+            "campaign_id": campaign_id,
+            "rule_type": "monster",
+            "title": "Goblin",
+            "content": {"challenge_rating": 99.0, "hit_points": 900},
+        },
+        headers=headers,
+    )
+
+
+def test_srd_goblin_wins_over_homebrew_goblin_by_name(gateway, compendium, trusted_ws_issuer):
+    """A campaign homebrew Goblin never replaces the SRD Goblin, for the DM or anyone else."""
+    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    dm = _auth(trusted_ws_issuer, "dm_sable")
+    assert _register_goblin(compendium, campaign_id, dm).status_code == 200
+
+    for params in (None, {"campaign_id": campaign_id}):
+        res = compendium.get("/api/v1/compendium/monsters/Goblin", params=params, headers=dm)
+        assert res.status_code == 200, res.text
+        assert res.json()["challenge_rating"] == 0.25
+
+
+def test_shadowed_homebrew_is_listed_with_shadowed_flag(gateway, compendium, trusted_ws_issuer):
+    """The list keeps the homebrew Goblin and marks it `shadowed` because an SRD entry has its name."""
+    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    dm = _auth(trusted_ws_issuer, "dm_sable")
+    assert _register_goblin(compendium, campaign_id, dm).status_code == 200
+    assert _register(compendium, campaign_id, dm).status_code == 200
+
+    listed = {rule["title"]: rule for rule in _list(compendium, campaign_id, dm)}
+    assert listed["Goblin"]["shadowed"] is True
+    assert listed["Goblin"]["content"]["challenge_rating"] == 99.0
+    assert listed["Abyssal Shadowstalker"]["shadowed"] is False
+
+
+def test_search_returns_srd_goblin_not_shadowed_homebrew(gateway, compendium, trusted_ws_issuer):
+    """A campaign search for Goblin returns only the SRD entry under that name."""
+    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    dm = _auth(trusted_ws_issuer, "dm_sable")
+    assert _register_goblin(compendium, campaign_id, dm).status_code == 200
+
+    res = compendium.get(
+        "/api/v1/compendium/rules/search",
+        params={"query": "Goblin", "campaign_id": campaign_id},
+        headers=dm,
+    )
+    assert res.status_code == 200, res.text
+    goblins = [r for r in res.json()["results"] if r["name"] == "Goblin"]
+    assert goblins, res.text
+    assert all(r["is_homebrew"] is False for r in goblins)
+
+
+def test_campaign_homebrew_is_rebuilt_from_events_after_restart(gateway, trusted_ws_issuer):
+    """A restarted compendium lists the campaign homebrew again. The events are the source of truth."""
+    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    dm = _auth(trusted_ws_issuer, "dm_sable")
+    with TestClient(compendium_app) as before_restart:
+        assert _register(before_restart, campaign_id, dm).status_code == 200
+
+    with TestClient(compendium_app) as after_restart:
+        listed = _list(after_restart, campaign_id, dm)
+        assert [rule["title"] for rule in listed] == ["Abyssal Shadowstalker"]
+        assert listed[0]["shadowed"] is False
+
+
+def test_restarted_compendium_reads_and_searches_rebuilt_homebrew(gateway, trusted_ws_issuer):
+    """After a restart, the homebrew monster is readable by a member and found by search."""
+    campaign_id, _ = _campaign_with_cast(gateway, trusted_ws_issuer)
+    dm = _auth(trusted_ws_issuer, "dm_sable")
+    with TestClient(compendium_app) as before_restart:
+        assert _register(before_restart, campaign_id, dm).status_code == 200
+
+    with TestClient(compendium_app) as after_restart:
+        res = _monster(after_restart, "Abyssal%20Shadowstalker", dm, campaign_id)
+        assert res.status_code == 200, res.text
+        assert res.json()["name"] == "Abyssal Shadowstalker"
+
+        found = _search(after_restart, campaign_id, dm)
+        assert any(r["name"] == "Abyssal Shadowstalker" for r in found)

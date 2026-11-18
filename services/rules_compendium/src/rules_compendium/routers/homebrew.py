@@ -17,7 +17,7 @@ from rules_compendium.dependencies import (
     get_retrieval_engine,
     get_spicedb_client,
 )
-from rules_compendium.homebrew_access import visible_homebrew_rule_ids
+from rules_compendium.homebrew_access import campaign_homebrew_rules, visible_homebrew_rule_ids
 from rules_compendium.models import HomebrewCreateRequest, HomebrewResponse
 from rules_compendium.retrieval import CompendiumRetrievalEngine
 
@@ -107,11 +107,19 @@ async def list_campaign_homebrew(
     user_id: Annotated[str, Depends(get_current_user_id)],
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)],
+    compendium_repo: Annotated[
+        AggregateRepository[CompendiumAggregate], Depends(get_compendium_repo)
+    ],
 ) -> list[dict]:
-    """Return the campaign homebrew rules that the caller may view (`homebrew_rule.view`)."""
-    visible_ids = await visible_homebrew_rule_ids(user_id, campaign_id, engine, spicedb)
+    """Return the campaign homebrew rules that the caller may view (`homebrew_rule.view`).
+
+    Rules come from the campaign aggregate. A rule whose name an SRD entry already has is
+    listed with `shadowed: true`. The SRD entry still wins in lookup and search.
+    """
+    rules = await campaign_homebrew_rules(campaign_id, compendium_repo)
+    visible_ids = await visible_homebrew_rule_ids(user_id, rules, spicedb)
     return [
-        rule
-        for rule in engine.get_homebrew_by_campaign(campaign_id)
+        {**rule, "shadowed": engine.is_shadowed(rule["title"])}
+        for rule in rules
         if str(rule["rule_id"]) in visible_ids
     ]

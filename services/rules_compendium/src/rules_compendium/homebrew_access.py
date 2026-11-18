@@ -6,23 +6,36 @@ from typing import Any
 from uuid import UUID
 
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.event_sourcing import AggregateRepository
 
+from rules_compendium.aggregate import CompendiumAggregate
 from rules_compendium.dependencies import check_user_can_view_homebrew_rule
 from rules_compendium.retrieval import CompendiumRetrievalEngine
 
 
+async def campaign_homebrew_rules(
+    campaign_id: UUID,
+    compendium_repo: AggregateRepository[CompendiumAggregate],
+) -> list[dict[str, Any]]:
+    """Return the homebrew rules of one campaign from its aggregate. Empty when none exist."""
+    compendium = await load_if_exists(compendium_repo, campaign_id)
+    if compendium is None:
+        return []
+    return list(compendium.state.homebrew_rules.values())
+
+
 async def visible_homebrew_rule_ids(
     user_id: str,
-    campaign_id: UUID,
-    engine: CompendiumRetrievalEngine,
+    rules: list[dict[str, Any]],
     spicedb: SpiceDBClient | MockSpiceDBClient,
 ) -> frozenset[str]:
-    """Return the ids of campaign homebrew rules whose `homebrew_rule.view` check passes for the user.
+    """Return the ids of the given homebrew rules whose `homebrew_rule.view` check passes for the user.
 
     A rule the user cannot view is left out. A SpiceDB error propagates. It is never read as a denial.
     """
     visible: set[str] = set()
-    for rule in engine.get_homebrew_by_campaign(campaign_id):
+    for rule in rules:
         rule_id = str(rule["rule_id"])
         if await check_user_can_view_homebrew_rule(user_id, rule_id, spicedb):
             visible.add(rule_id)

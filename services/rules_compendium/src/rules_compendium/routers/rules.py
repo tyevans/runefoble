@@ -5,15 +5,22 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from runefoble_auth.spicedb import SpiceDBClient
+from runefoble_platform.event_sourcing import AggregateRepository
 
+from rules_compendium.aggregate import CompendiumAggregate
 from rules_compendium.dependencies import (
     CallerOrService,
     CurrentUserId,
+    get_compendium_repo,
     get_current_user_id,
     get_retrieval_engine,
     get_spicedb_client,
 )
-from rules_compendium.homebrew_access import visible_homebrew_monster, visible_homebrew_rule_ids
+from rules_compendium.homebrew_access import (
+    campaign_homebrew_rules,
+    visible_homebrew_monster,
+    visible_homebrew_rule_ids,
+)
 from rules_compendium.models import RuleSearchResponse
 from rules_compendium.retrieval import CompendiumRetrievalEngine
 
@@ -38,11 +45,15 @@ async def search_rules(
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
     engine: Annotated[CompendiumRetrievalEngine, Depends(get_retrieval_engine)] = None,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)] = None,
+    compendium_repo: Annotated[
+        AggregateRepository[CompendiumAggregate], Depends(get_compendium_repo)
+    ] = None,
 ) -> RuleSearchResponse:
     """Sub-50ms hybrid BM25 and vector search across canonical SRD and authorized homebrew rules."""
     visible_ids: frozenset[str] = frozenset()
     if campaign_id:
-        visible_ids = await visible_homebrew_rule_ids(user_id, campaign_id, engine, spicedb)
+        rules = await campaign_homebrew_rules(campaign_id, compendium_repo)
+        visible_ids = await visible_homebrew_rule_ids(user_id, rules, spicedb)
 
     results, took_ms = await engine.hybrid_search(
         query=query,
