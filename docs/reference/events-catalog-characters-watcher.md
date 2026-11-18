@@ -1,0 +1,329 @@
+# Reference: Events Catalog: Characters and The Watcher
+
+Part of the [Events Schema](events-schema.md). Each event identifier in this page is listed in [Event Identifiers](event-identifiers.md).
+
+## Domain Event Catalog
+
+### CharacterSheet Events (`aggregate_type: CharacterSheet`)
+
+- **`CharacterCreated`**: Emitted when a new character is forged.
+  - `name`: String
+  - `character_class`: String
+  - `max_hp`: Integer, `current_hp`: Integer
+  - `player_id`: Optional[String]
+  - `personality_traits`: List[String]
+  - `campaign_id`: Optional[String]
+  - `subclass`: Optional[String]
+  - `armor_class`: Integer (default 10)
+  - `speed_ft`: Integer (default 30)
+  - `ability_scores`: Dict[String, Integer]
+- **`CharacterAssignedToCampaign`**: Emitted when a character is assigned to or unassigned from a campaign party (`character.assigned_to_campaign`).
+  - `character_id`: String
+  - `campaign_id`: Optional[String]
+  - `assigned_by`: String
+- **`CharacterHealthChanged`**: Emitted when hit points change from damage or healing.
+  - `delta`: Integer
+  - `current_hp`: Integer, `max_hp`: Integer
+  - `source`: String
+- **`AbsencePenaltyApplied`** (alias: `PlayerAbsenteePenalized`): Emitted when an absent player's character is inflicted with a session miss penalty.
+  - `penalty_type`: "drunk" | "foolishness" | "cowardice" | "greed" | "curse"
+  - `description`: String
+  - `imposed_by`: "human_dm" | "the_watcher"
+- **`AbsencePenaltyCleared`**: Emitted when an absence penalty is redeemed.
+  - `penalty_type`: String
+- **`CharacterLeveledUp`**: Emitted when a character advances in level, gaining hit points and spell slots (`runefoble.events.character.leveled_up`).
+  - `session_id`: String
+  - `character_id`: String
+  - `new_level`: Integer
+  - `max_hp_increase`: Integer
+  - `spell_slots`: Mapping[Integer, Integer]
+- **`SpellPrepared`**: Emitted when a character prepares a spell into active memory (`runefoble.events.character.spell_prepared`).
+  - `session_id`: String
+  - `character_id`: String
+  - `spell_name`: String
+  - `spell_level`: Integer
+- **`SpellSlotExpended`**: Emitted when a spell is cast and a spell slot is consumed (`runefoble.events.character.spell_slot_expended`).
+  - `session_id`: String
+  - `character_id`: String
+  - `spell_name`: String
+  - `slot_level_used`: Integer
+  - `remaining_slots`: Integer
+- **`SpellSlotsRestored`**: Emitted when spent spell slots return to their maximum, for all levels or for one level (`runefoble.events.character.spell_slots_restored`).
+  - `session_id`: String
+  - `character_id`: String
+  - `slot_level`: Optional[Integer] (absent means every level was restored)
+  - `spell_slots`: Mapping[Integer, Integer] (full resulting slot map)
+- **`SpellUnprepared`**: Emitted when a prepared spell is removed from a character's active spellbook. Unpreparing a spell that is not prepared emits no event (`runefoble.events.character.spell_unprepared`).
+  - `session_id`: String
+  - `character_id`: String
+  - `spell_name`: String
+- **`StandInActivated`**: Emitted when the AI stand-in takes control of a character (`runefoble.events.character.stand_in_activated`). Activation and release are idempotent. A request that does not change the flag emits no event.
+  - `session_id`: String
+  - `character_id`: UUID | str
+- **`StandInReleased`**: Emitted when a player takes control back from the AI stand-in (`runefoble.events.character.stand_in_released`).
+  - `session_id`: String
+  - `character_id`: UUID | str
+- **`StandInPolicyUpdated`**: Emitted when tactical guardrail constraints and preferences are configured for a character's AI stand-in (`runefoble.events.character.stand_in_policy_updated`).
+  - `session_id`: Optional[UUID | str]
+  - `character_id`: UUID | str
+  - `spell_slot_reserve_level`: Optional[Integer]
+  - `ally_protection_target`: Optional[String]
+  - `avoid_melee`: Boolean
+  - `risk_threshold`: String
+  - `custom_priorities`: List[String]
+- **`StandInStabilized`**: Emitted when zero-HP permadeath safeguard stabilizes a stand-in character at 0 HP without death save failures (`runefoble.events.character.stand_in_stabilized`).
+  - `session_id`: Optional[UUID | str]
+  - `character_id`: UUID | str
+  - `character_name`: String
+  - `current_hp`: Integer (0)
+  - `stabilized_by`: String (default "permadeath_safeguard")
+- **`CriticalHitScored`** (alias: `CriticalHitRolled`): Emitted when a character rolls a natural 20 or scores a clutch critical hit (`runefoble.events.character.critical_hit_scored`).
+  - `session_id`: String
+  - `character_id`: String
+  - `character_name`: String
+  - `target_id`: Optional[String]
+  - `target_name`: Optional[String]
+  - `roll_total`: Integer (20)
+- **`DeathSaveStarted`**: Emitted when a character drops to 0 HP and begins life-or-death death saving throws (`runefoble.events.character.death_save_started`).
+  - `session_id`: String
+  - `character_id`: String
+  - `character_name`: String
+  - `current_hp`: Integer (0)
+- **`CharacterDamaged`**: Emitted when a character takes damage, reducing hit points (`runefoble.events.character.damaged`).
+  - `character_id`: UUID | str
+  - `delta`: Integer (negative delta)
+  - `current_hp`: Integer
+  - `max_hp`: Integer
+  - `source`: String
+- **`PortraitVariantGenerated`**: Emitted when a generative wardrobe attire variant is forged or registered (`runefoble.events.character.portrait_variant_generated`).
+  - `character_id`: UUID | str
+  - `variant_id`: String
+  - `variant_name`: String
+  - `attire_type`: String (e.g. "ballroom_masquerade", "arctic_tundra", "tavern_casual")
+  - `image_url`: String
+  - `prompt`: String
+  - `is_active`: Boolean
+- **`CharacterPortraitUpdated`** (alias: `PortraitAssigned`): Emitted when a character's active portrait or board token avatar is assigned (`runefoble.events.character.portrait_updated`).
+  - `character_id`: UUID | str
+  - `active_portrait_url`: String
+  - `variant_id`: Optional[String]
+
+### The Watcher & Gameplay Stream Events
+
+- **`PlayerSpokeEvent`**: Emitted when natural player speech is captured and transcribed. The transcript comes from the speaker's audio (STT port) or from text the client typed. The service never publishes a substitute transcript. No event is published for empty audio or for a request with no input (TASK-0602).
+  - `speaker_id`: String
+  - `speaker_name`: String
+  - `transcript`: String
+  - `is_whisper`: Boolean
+- **`SpeechIntentParsed`**: Emitted by The Watcher speech parsing pipeline.
+  - `speaker_name`: String
+  - `action_type`: String ("attack", "cast_spell", "move", "dialogue")
+  - `target`: Optional[String]
+  - `confidence`: Optional[Float] (null when the inference worker reports no confidence)
+  - `flavor_text`: String
+- **`IntentDisambiguationRequested`**: Emitted when a spoken intent contains ambiguous entity references requiring player clarification (`runefoble.events.watcher.disambiguation_requested`).
+  - `session_id`: String
+  - `campaign_id`: Optional[String]
+  - `speaker_id`: String, `speaker_name`: String
+  - `original_transcript`: String
+  - `disambiguation_id`: String
+  - `action_type`: String
+  - `ambiguous_target`: String
+  - `candidates`: List[Dict[String, Any]]
+  - `clarification_prompt`: String
+- **`CompoundActionResolved`**: Emitted when a multi-part tactical combo or disambiguated action graph is resolved for execution (`runefoble.events.watcher.compound_action_resolved`).
+  - `session_id`: String
+  - `campaign_id`: Optional[String]
+  - `speaker_id`: String, `speaker_name`: String
+  - `original_transcript`: String
+  - `disambiguation_id`: Optional[String]
+  - `resolved_target`: Optional[String]
+  - `actions`: List[Dict[String, Any]]
+  - `status`: String ("ready", "executing", "completed", "partial_failure", "rolled_back")
+  - `narrative_summary`: String
+- **`WatcherNarrationGenerated`**: Emitted when The Watcher provides scene description.
+  - `narrative_text`: String
+  - `tone`: String
+  - `sensory_details`: List[String]
+  - `suggested_prompts`: List[String]
+- **`StandInActionDecided`** (alias: `StandInTurnExecuted`): Emitted when the AI stand-in acts on behalf of an absent player.
+  - `character_name`: String
+  - `action_type`: String
+  - `dialogue`: String
+  - `penalties_applied`: List[String]
+- **`DiceRolled`**: Emitted when dice are rolled through `POST /api/v1/sessions/{session_id}/roll`. The session aggregate records the roll, so the session must exist (404 otherwise). The session repository publishes it to `runefoble.events.session` (`runefoble.events.dice.rolled`).
+  - `session_id`: String
+  - `roller_id`: String
+  - `roller_name`: String
+  - `formula`: String
+  - `total`: Integer
+  - `rolls`: List[Integer]
+  - `is_crit`: Boolean (default False)
+  - `is_fumble`: Boolean (default False)
+- **`AbsenteeRecapGenerated`**: Emitted when The Watcher generates a session chronicle and audio-ready recap for a returning absent player (`runefoble.events.recap.generated`).
+  - `session_id`: String
+  - `character_id`: String
+  - `character_name`: String
+  - `stand_in_persona`: String
+  - `penalties`: List[String]
+  - `narrative_summary`: String
+  - `highlights`: List[String]
+  - `audio_url`: Optional[String]
+  - `hp_delta`: Integer
+  - `items_acquired`: List[String]
+- **`SceneAtmosphereSet`**: Emitted when The Watcher autonomously establishes scene lighting, sensory atmosphere, and background audio prompts (`runefoble.events.scene.atmosphere_set`).
+  - `session_id`: String
+  - `scene_id`: String
+  - `location_name`: String
+  - `lighting`: String
+  - `mood`: String
+  - `description`: String
+  - `ambient_audio_prompt`: String
+- **`EncounterSpawned`**: Emitted when The Watcher calculates CR balance and spawns an encounter with monster tokens (`runefoble.events.encounter.spawned`).
+  - `session_id`: String
+  - `encounter_id`: String
+  - `encounter_name`: String
+  - `threat_level`: String ("easy", "medium", "hard", "deadly")
+  - `monsters`: List[Dict[String, Any]]
+  - `tactical_objective`: String
+- **`AutonomousActionResolved`**: Emitted when an autonomous monster or NPC resolves tactical combat decisions and impacts target HP (`runefoble.events.encounter.action_resolved`).
+  - `session_id`: String
+  - `actor_name`: String
+  - `action_type`: String ("cast_spell", "charge_attack", "melee_strike", "execute_strike", "search")
+  - `target_name`: String
+  - `narrative`: String
+  - `hp_impact`: Integer
+- **`WatcherActionProposed`**: Emitted when The Watcher proposes an AI game action intercepted by the pre-execution pause window (`runefoble.events.watcher.action_proposed`).
+  - `action_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `actor_name`: String
+  - `action_type`: String ("move", "attack", "cast_spell", "spawn_monster", "narrate")
+  - `description`: String
+  - `target`: Optional[String]
+  - `parameters`: Dict[String, Any]
+  - `pause_window_ms`: Integer (default 2000)
+- **`WatcherActionVetoed`**: Emitted when a human Dungeon Master vetoes an AI-proposed game action (`runefoble.events.watcher.action_vetoed`).
+  - `action_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `vetoed_by`: String (DM user ID)
+  - `reason`: String
+  - `original_action`: Dict[String, Any]
+- **`WatcherActionApproved`**: Emitted when a Dungeon Master immediately commits an AI-proposed game action (`runefoble.events.watcher.action_approved`).
+  - `action_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `approved_by`: String (DM user ID)
+  - `action_type`: String
+  - `parameters`: Dict[String, Any]
+- **`WatcherActionModified`**: Emitted when a Dungeon Master edits the intent or parameters of an AI-proposed action before committing (`runefoble.events.watcher.action_modified`).
+  - `action_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `modified_by`: String (DM user ID)
+  - `description`: String
+  - `target`: Optional[String]
+  - `parameters`: Dict[String, Any]
+- **`DMNarrativeWhispered`**: Emitted when a private narrative suggestion, tactical hint, or passive perception cue is generated for the DM (`runefoble.events.watcher.narrative_whispered`).
+  - `whisper_id`: String
+  - `session_id`: String
+  - `campaign_id`: String
+  - `whisper_type`: String ("atmospheric_hint", "monster_tactics", "passive_perception", "narrative_secret")
+  - `content`: String
+  - `recipient_role`: String ("dungeon_master")
+  - `metadata`: Dict[String, Any]
+- **`SpectatorSessionConnected`**: Emitted when a live stream spectator or OBS overlay source connects to a campaign session (`runefoble.events.spectator.connected`).
+  - `session_id`: String
+  - `viewer_id`: String
+  - `viewer_name`: String
+  - `connected_at`: String (ISO-8601 UTC timestamp)
+- **`VoiceAudioConditioned`**: Emitted when real-time dynamic DSP audio conditioning or filter presets are applied to speech (`runefoble.events.voice.audio_conditioned`).
+  - `session_id`: String
+  - `speaker_id`: String
+  - `speaker_name`: String
+  - `filters_applied`: List[String]
+  - `latency_ms`: Float
+  - `audio_bytes_length`: Integer
+- **`CampaignFactionRegistered`**: Emitted when a faction joins a campaign's simulation registry (`runefoble.events.watcher.campaign_faction_registered`). The event belongs to the `CampaignWorld` aggregate stream (`aggregate_type`: `CampaignWorld`).
+  - `campaign_id`: String
+  - `faction_id`: String
+- **`FactionCreated`**: Emitted when a new autonomous NPC faction aggregate is registered (`runefoble.events.watcher.faction_created`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `name`: String
+  - `influence`: Integer (1-100)
+  - `resources`: Integer
+  - `disposition`: String ("hostile", "unfriendly", "neutral", "friendly", "allied")
+  - `active_goal`: String
+  - `rival_faction_ids`: List[String]
+  - `territory`: String
+  - `metadata`: Dict[String, Any]
+- **`FactionAgendaSet`**: Emitted when a faction updates or shifts their active agenda goal (`runefoble.events.watcher.faction_agenda_set`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `active_goal`: String
+  - `target_progress`: Integer (default 100)
+  - `current_progress`: Integer
+  - `target_faction_or_location`: Optional[String]
+- **`FactionAgendaAdvanced`**: Emitted when a background simulation check resolves and mutates faction goal progress (`runefoble.events.watcher.faction_agenda_advanced`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `faction_name`: String
+  - `agenda_name`: String
+  - `roll`: Integer (1-20)
+  - `modifier`: Integer
+  - `dc`: Integer
+  - `outcome`: String ("success", "partial_success", "countered", "failure")
+  - `progress_delta`: Integer
+  - `current_progress`: Integer
+  - `target_progress`: Integer
+  - `narrative`: String
+- **`GeopoliticalShiftOccurred`**: Emitted when faction agenda completion alters territorial control, creates shortages, or sparks conflicts (`runefoble.events.watcher.geopolitical_shift_occurred`).
+  - `campaign_id`: String
+  - `faction_id`: String
+  - `territory`: String
+  - `shift_type`: String ("trade_shortage", "territory_captured", "martial_law", "open_conflict")
+  - `description`: String
+  - `severity`: String ("minor", "moderate", "critical")
+  - `ripple_effects`: List[String]
+- **`WorldTickExecuted`**: Emitted when a downtime world progression tick completes across all campaign factions (`runefoble.events.watcher.world_tick_executed`). The event belongs to the `CampaignWorld` aggregate stream (`aggregate_type`: `CampaignWorld`).
+  - `campaign_id`: String
+  - `tick_number`: Integer
+  - `intelligence_bulletin`: String (Markdown formatted DM briefing)
+  - `factions_simulated`: List[String] (faction IDs)
+  - `shifts`: List[Dict[String, Any]]
+  - `rumors`: List[String]
+- **`FactionResourceUpdatedEvent`** (alias: `FactionResourceUpdated`): Emitted when faction treasury or contraband assets mutate (`runefoble.events.watcher.faction_resource_updated`).
+  - `faction_id`: String
+  - `campaign_id`: String
+  - `treasury`: Integer
+  - `contraband`: Integer
+  - `mercenaries_count`: Integer
+  - `delta_treasury`: Integer
+  - `delta_contraband`: Integer
+  - `reason`: String
+  - `metadata`: Dict[String, Any]
+- **`FactionMercenaryRecruitedEvent`** (alias: `FactionMercenaryRecruited`): Emitted when a faction hires a mercenary detachment (`runefoble.events.watcher.faction_mercenary_recruited`).
+  - `faction_id`: String
+  - `campaign_id`: String
+  - `unit_name`: String
+  - `count`: Integer
+  - `cost`: Integer
+  - `unit_type`: String
+  - `total_mercenaries`: Integer
+  - `upkeep_per_tick`: Integer
+- **`FactionBriberyAttemptedEvent`** (alias: `FactionBriberyAttempted`): Emitted when a bribery check is executed against an NPC (`runefoble.events.watcher.faction_bribery_attempted`).
+  - `faction_id`: String
+  - `campaign_id`: String
+  - `target_name`: String
+  - `bribe_amount`: Integer
+  - `dc`: Integer
+  - `roll`: Integer
+  - `modifier`: Integer
+  - `counter_bribe`: Integer
+  - `success`: Boolean
+  - `outcome`: String ("success", "critical_success", "countered", "failure", "critical_failure")
+  - `narrative`: String
+  - `remaining_treasury`: Integer
+
