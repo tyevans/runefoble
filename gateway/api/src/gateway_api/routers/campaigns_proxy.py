@@ -22,13 +22,11 @@ from gateway_api.models import (
     UpdateCampaignRequest,
 )
 from gateway_api.proxy import forward_json
-from gateway_api.routers.tabletop import router as tabletop_router
 
 SERVICE = "game_session"
 CAMPAIGNS = "/api/v1/campaigns"
 
 router = APIRouter(tags=["Campaigns & Sessions"])
-router.include_router(tabletop_router)
 
 
 @router.get("/api/v1/campaigns")
