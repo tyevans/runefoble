@@ -74,6 +74,7 @@ test('the dev script starts the service and serves GET /healthz', async () => {
       RUNEFOBLE_ZITADEL_ISSUER: 'http://zitadel.test',
       RUNEFOBLE_ZITADEL_AUDIENCE: 'runefoble-api',
       RUNEFOBLE_ZITADEL_JWKS_URL: `http://127.0.0.1:${jwksPort}/keys`,
+      RUNEFOBLE_SPICEDB_ENDPOINT: '127.0.0.1:50051',
       RUNEFOBLE_SPICEDB_PRESHARED_KEY: 'test-only',
     },
   });

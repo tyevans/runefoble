@@ -1,5 +1,5 @@
 /**
- * Startup configuration for identity and the SpiceDB preshared key (TASK-0533, TASK-0625).
+ * Startup configuration for identity and SpiceDB (TASK-0533, TASK-0554, TASK-0625).
  *
  * Neither value has a default. A missing value stops the service at start-up.
  */
@@ -7,6 +7,19 @@
 import type { ZitadelSettings } from './identity/zitadelVerifier.js';
 
 export const SPICEDB_PRESHARED_KEY_VAR = 'RUNEFOBLE_SPICEDB_PRESHARED_KEY';
+export const SPICEDB_ENDPOINT_VAR = 'RUNEFOBLE_SPICEDB_ENDPOINT';
+
+/**
+ * Read the SpiceDB endpoint. It has no default. Without it, every permission check would fail,
+ * so the service refuses to start (TASK-0554).
+ */
+export function readSpicedbEndpoint(env: NodeJS.ProcessEnv): string {
+  const endpoint = env[SPICEDB_ENDPOINT_VAR];
+  if (!endpoint) {
+    throw new Error(`${SPICEDB_ENDPOINT_VAR} is not set. The service cannot check audience permissions without it.`);
+  }
+  return endpoint;
+}
 
 /**
  * Read the SpiceDB preshared key from the environment.

@@ -8,11 +8,14 @@ import { after, before, test } from 'node:test';
 import { MemoryEventStore } from '../src/eventStore/memoryEventStore.js';
 import { InMemoryStreamPublisher } from '../src/memoryStreams.js';
 import { buildServer } from '../src/server.js';
+import { FakeSpiceDb } from './fakeSpiceDb.js';
 import { bearer, jsonBody, TEST_AUDIENCE, TEST_ISSUER, TestIssuer } from './helpers.js';
 
 const POLLS = '/api/v1/audience/polls';
 
 let issuer: TestIssuer;
+/** One authorization store for every process in this file. A restart does not reset SpiceDB. */
+const spicedb = new FakeSpiceDb();
 
 before(async () => {
   issuer = await TestIssuer.start();
@@ -27,7 +30,7 @@ async function start(
   publisher: InMemoryStreamPublisher
 ) {
   const ctx = await buildServer({
-    spicedbToken: '',
+    spicedb,
     logger: false,
     zitadel: { issuer: TEST_ISSUER, audience: TEST_AUDIENCE, jwksUrl: issuer.jwksUrl },
     createAdapters: async () => ({ eventStore: store, streamPublisher: publisher }),
@@ -38,6 +41,8 @@ async function start(
 test('poll and its votes survive a restart', async () => {
   const store = new MemoryEventStore();
   const publisher = new InMemoryStreamPublisher();
+  spicedb.grant('camp-restart', 'dungeon_master', 'dm-restart');
+  spicedb.grant('camp-restart', 'spectator', 'viewer-1');
 
   const first = await start(store, publisher);
   const created = jsonBody(
@@ -91,6 +96,7 @@ test('a publish failure rejects the command and stores nothing', async () => {
   const store = new MemoryEventStore();
   const publisher = new InMemoryStreamPublisher();
   const ctx = await start(store, publisher);
+  spicedb.grant('camp-fail', 'dungeon_master', 'dm-fail');
   publisher.failNextPublishes(1);
 
   const res = await ctx.server.inject({
@@ -127,6 +133,8 @@ test('a poll with a short window closes after a restart and publishes completion
   const store = new MemoryEventStore();
   const publisher = new InMemoryStreamPublisher();
 
+  spicedb.grant('camp-window', 'dungeon_master', 'dm-window');
+  spicedb.grant('camp-window', 'spectator', 'v');
   const first = await start(store, publisher);
   const created = jsonBody(
     await first.server.inject({
