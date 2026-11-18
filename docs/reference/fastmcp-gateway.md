@@ -4,7 +4,7 @@ The FastMCP Gateway (`gateway/mcp`) exposes Runefoble tabletop actions, spatial 
 
 ## Architecture
 
-The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 80 lines) delegating domain capabilities to modular sub-packages:
+The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 100 lines) delegating domain capabilities to modular sub-packages:
 
 gateway/mcp/src/gateway_mcp/
 ├── clients/               # HTTP clients for owning services (board_state, character_sheet, game_session, rules_compendium)
@@ -17,9 +17,10 @@ gateway/mcp/src/gateway_mcp/
 │   └── registry.py        # Thread-safe tool registry with event notifications
 ├── routers/               # FastMCP REST routers (< 130 lines)
 │   └── tools_registry.py  # REST endpoints for dynamic tool registration & lifecycle
+├── asgi.py                # ASGI app (`gateway_mcp.asgi:app`) for the streamable HTTP endpoint
 ├── main.py                # CLI execution wrapper
-├── server.py              # FastMCP orchestration shell and module mounting
-├── settings.py            # Upstream service URLs (BOARD_STATE_URL, CHARACTER_SHEET_URL, GAME_SESSION_URL, RULES_COMPENDIUM_URL, THE_WATCHER_URL)
+├── server.py              # FastMCP orchestration shell, module mounting, and `main()`
+├── settings.py            # Required upstream service URLs and the GATEWAY_MCP_HOST/PORT listen address
 ├── tools/                 # MCP tool implementations (< 180 lines each)
 │   ├── dice.py            # Dice notation parsing and rolling (roll_dice)
 │   ├── board.py           # Tactical board and encounter tools (HTTP-backed by board_state)
@@ -30,6 +31,22 @@ gateway/mcp/src/gateway_mcp/
 └── prompts/               # FastMCP prompt templates (< 120 lines each)
     └── narrative.py       # Narrative DM guidance and tactical action adviser
 ```
+
+## Transport
+
+The gateway serves the MCP protocol over **streamable HTTP** only. The endpoint is `/mcp`.
+
+| Setting | Environment Variable | Default |
+|---|---|---|
+| Bind address | `GATEWAY_MCP_HOST` | `0.0.0.0` |
+| Bind port | `GATEWAY_MCP_PORT` | `8012` |
+
+- Run locally: `uv run python -m gateway_mcp.main` (or `gateway_mcp.main` after `uv sync`). Set the five upstream URLs first.
+- Container: `gateway_mcp.asgi:app` under uvicorn, port `8012`. The Helm Deployment `gateway-mcp` and ClusterIP Service `gateway-mcp` expose it inside the cluster only. No ingress rule routes to it.
+- The process stops at start-up when an upstream URL is unset. The error names the variable.
+- The server keeps session state in memory. Run one replica.
+- The stdio transport is removed. No developer tool in this repository uses it.
+- The endpoint has no OpenAPI document and no `/healthz`. The Helm readiness probe checks the TCP port.
 
 ## Tools Registry
 
@@ -59,11 +76,13 @@ Board, encounter, and character tools hold no board, combat, or character state.
 
 | Setting | Environment Variable | Default | Owning Service |
 |---|---|---|---|
-| `board_state_url` | `BOARD_STATE_URL` | `http://localhost:8002` | `board_state` |
-| `character_sheet_url` | `CHARACTER_SHEET_URL` | `http://localhost:8003` | `character_sheet` |
-| `game_session_url` | `GAME_SESSION_URL` | `http://localhost:8004` | `game_session` |
-| `rules_compendium_url` | `RULES_COMPENDIUM_URL` | `http://localhost:8007` | `rules_compendium` |
-| `the_watcher_url` | `THE_WATCHER_URL` | `http://localhost:8001` | `the_watcher` |
+| `board_state_url` | `BOARD_STATE_URL` | Required | `board_state` |
+| `character_sheet_url` | `CHARACTER_SHEET_URL` | Required | `character_sheet` |
+| `game_session_url` | `GAME_SESSION_URL` | Required | `game_session` |
+| `rules_compendium_url` | `RULES_COMPENDIUM_URL` | Required | `rules_compendium` |
+| `the_watcher_url` | `THE_WATCHER_URL` | Required | `the_watcher` |
+
+The Helm chart renders these from `services.gatewayMcp` in `values.yaml`. Local runs must export them. There are no localhost defaults.
 
 The client forwards the `Authorization: Bearer` token of the MCP request, when the transport carries one. The gateway never creates a token. Without a token, the client sends no `Authorization` header. The upstream service then decides the result.
 

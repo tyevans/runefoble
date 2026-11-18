@@ -15,6 +15,7 @@ from gateway_mcp.resources import (
     get_session_state,
     register_resources,
 )
+from gateway_mcp.settings import load_listen_settings, load_settings
 from gateway_mcp.tools import (
     add_condition,
     apply_absentee_penalty,
@@ -73,8 +74,15 @@ __all__ = [
 
 
 def main() -> None:
-    """Run FastMCP server."""
-    mcp.run()
+    """Serve the MCP protocol over streamable HTTP on GATEWAY_MCP_HOST and GATEWAY_MCP_PORT.
+
+    The upstream URLs are read first, so a missing URL stops the process before it listens.
+    """
+    load_settings()
+    listen = load_listen_settings()
+    mcp.settings.host = listen.host
+    mcp.settings.port = listen.port
+    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":

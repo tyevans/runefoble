@@ -7,6 +7,16 @@ from collections.abc import Iterator
 # Test mode: the SpiceDB preshared key has no default outside tests. Tests supply a throwaway
 # value before any settings object is built. Live tests may override it in their environment.
 os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key")
+# The gateway MCP has no localhost defaults. Unless a test sets an upstream itself, its URLs
+# point at a closed loopback port, so no test reaches a real service by accident.
+for _upstream in (
+    "BOARD_STATE_URL",
+    "CHARACTER_SHEET_URL",
+    "GAME_SESSION_URL",
+    "RULES_COMPENDIUM_URL",
+    "THE_WATCHER_URL",
+):
+    os.environ.setdefault(_upstream, "http://127.0.0.1:9")
 # ruff: noqa: E402  (imports below construct settings, so the key must be set first)
 
 import pytest
