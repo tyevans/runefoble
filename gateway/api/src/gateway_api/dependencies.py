@@ -5,10 +5,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import Request, WebSocket
+from fastapi import WebSocket
 from gateway_api.upstreams import UpstreamRegistry
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_bus import EventBusProvider
+from starlette.requests import HTTPConnection
 
 logger = logging.getLogger("runefoble.gateway.dependencies")
 
@@ -56,6 +57,6 @@ class WebSocketConnectionManager:
 ws_manager = WebSocketConnectionManager()
 
 
-def get_upstreams(request: Request) -> UpstreamRegistry:
-    """FastAPI dependency: the service clients built in the gateway lifespan."""
-    return request.app.state.upstreams
+def get_upstreams(connection: HTTPConnection) -> UpstreamRegistry:
+    """FastAPI dependency: the service clients built in the gateway lifespan. Works for HTTP and WebSocket."""
+    return connection.app.state.upstreams

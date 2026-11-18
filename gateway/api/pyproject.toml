@@ -13,8 +13,8 @@ dependencies = [
     "runefoble-platform",
     "runefoble-events",
     "voice-agent",
-    "game-session",
     "character-sheet",
     "soundscape",
     "rules-compendium",
+    "websockets>=16.1.1",
 ]
