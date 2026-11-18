@@ -10,6 +10,7 @@ import type { RunefobleApp } from '../runefoble-app.ts';
 import { appDataService } from '../services/app-data-service.ts';
 import type { CreateCampaignPayload, UpdateCampaignPayload } from '@runefoble/game-session-ui';
 import { failLoad } from './load-error.ts';
+import { setCurrentCampaign } from './shell-state.ts';
 import { loadRouteData } from './data-loader.ts';
 
 export async function updateCampaignFromEvent(host: RunefobleApp, e: CustomEvent<UpdateCampaignPayload>): Promise<void> {
@@ -20,7 +21,7 @@ export async function updateCampaignFromEvent(host: RunefobleApp, e: CustomEvent
     host.showToast(`Not saved. ${updated.message}`);
     return;
   }
-  host.currentCampaign = updated.data;
+  setCurrentCampaign(host, updated.data);
   host.campaignTitle = updated.data.title;
   router.setRouteTitle('campaign:' + updated.data.id, updated.data.title);
   await loadRouteData(host, host.currentRoute || router.getCurrentRoute()!);

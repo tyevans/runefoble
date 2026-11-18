@@ -5,9 +5,19 @@
 
 export type CampaignRole = 'owner' | 'dungeon_master' | 'dm' | 'player' | 'spectator';
 
+/** Per-campaign permission flags from the gateway. SpiceDB computes each flag (TASK-0644). */
+export interface CampaignPermissions {
+  view: boolean;
+  manage: boolean;
+  invite: boolean;
+  launch_session: boolean;
+  assign_roles: boolean;
+}
+
 export interface CampaignItem {
   id: string;
   title: string;
+  permissions: CampaignPermissions;
   description?: string;
   setting?: string;
   system?: string;

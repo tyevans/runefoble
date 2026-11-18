@@ -21,6 +21,7 @@ const sampleCampaignFull: CampaignItem = {
   owner_id: 'usr-evelyn',
   dm_name: 'Evelyn',
   role: 'owner',
+  permissions: { view: true, manage: true, invite: true, launch_session: true, assign_roles: true },
   player_count: 4,
   has_active_session: true,
   active_session_id: 'sess-drakken-04',
@@ -38,6 +39,7 @@ const sampleCampaignPf2e: CampaignItem = {
   owner_id: 'usr-garrick',
   dm_name: 'Garrick Bronzearm',
   role: 'player',
+  permissions: { view: true, manage: false, invite: false, launch_session: false, assign_roles: false },
   player_count: 5,
   has_active_session: false,
   cover_image_url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80',
@@ -50,6 +52,7 @@ const sampleCampaignMinimal: CampaignItem = {
   title: 'Echoes of the Void',
   system: 'call_of_cthulhu',
   owner_id: 'usr-unknown',
+  permissions: { view: false, manage: false, invite: false, launch_session: false, assign_roles: false },
 };
 
 export const GameMasterView: Story = {

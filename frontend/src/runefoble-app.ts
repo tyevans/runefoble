@@ -3,7 +3,6 @@ import { customElement, state } from 'lit/decorators.js';
 import './styles/themes.css';
 import { appShellStyles } from './styles/app-shell.styles.ts';
 import { loadViewBundles } from './app/component-registry.ts';
-import { registerDefaultPlugins, pluginRegistry } from './components/plugins/plugin_registry.ts';
 import { authService, isAuthCallbackPath } from './auth/auth-service.ts';
 import { AuthContextProviderController } from './auth/auth-context-provider.ts';
 import { completeSignInCallback } from './app/auth-callback.ts';
@@ -61,7 +60,6 @@ export class RunefobleApp extends LitElement {
   @state() public authError = '';
   @state() public currentUserId = '';
   @state() public userRole = 'Player';
-  @state() public isDM = false;
   @state() public campaigns: CampaignItem[] = [];
   @state() public currentCampaign: CampaignItem | null = null;
   @state() public campaignMembers: CampaignMember[] = [];
@@ -94,7 +92,6 @@ export class RunefobleApp extends LitElement {
     super.connectedCallback();
     initTheme(this);
     syncAuthState(this, authService.getState());
-    registerDefaultPlugins(pluginRegistry, this.isDM);
     this.unlistenAuth = authService.onAuthChanged((s) => syncAuthState(this, s));
     // The router starts after the Zitadel code exchange so the guard sees the result.
     if (isAuthCallbackPath(window.location.pathname)) {

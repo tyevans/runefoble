@@ -91,7 +91,7 @@ export class PluginRegistry {
 
 export const pluginRegistry = new PluginRegistry();
 
-export function registerDefaultPlugins(reg: PluginRegistry = pluginRegistry, isDm = false): void {
+export function registerDefaultPlugins(reg: PluginRegistry = pluginRegistry, canManage = false): void {
   const base: PluginDefinition[] = [
     { id: 'default-initiative-tracker', name: 'Initiative Tracker', slot: 'hud-widget', tag: 'runefoble-initiative-tracker', order: 10 },
     { id: 'default-soundscape-controls', name: 'Soundscape Controls', slot: 'hud-widget', tag: 'runefoble-soundscape-controls', order: 20 },
@@ -105,7 +105,7 @@ export function registerDefaultPlugins(reg: PluginRegistry = pluginRegistry, isD
     { id: 'default-dm-trap-controls', name: 'DM Trap Controls', slot: 'sidebar-tool', tag: 'runefoble-dm-trap-controls', order: 30 },
   ];
   for (const p of dm) {
-    if (isDm) { if (!reg.getPlugin(p.id)) reg.register(p); }
+    if (canManage) { if (!reg.getPlugin(p.id)) reg.register(p); }
     else if (reg.getPlugin(p.id)) reg.unregister(p.id);
   }
 }

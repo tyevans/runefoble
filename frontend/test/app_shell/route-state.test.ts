@@ -16,8 +16,8 @@ import { pickActiveCharacter } from '../../src/app/active-character.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
 import type { RunefobleApp } from '../../src/runefoble-app.ts';
 
-const HARBOUR = { id: 'harbour-watch', title: 'Harbour Watch', role: 'owner' };
-const GLASS = { id: 'glass-crypt', title: 'Glass Crypt', role: 'owner' };
+const HARBOUR = { id: 'harbour-watch', title: 'Harbour Watch', role: 'owner', permissions: { view: true, manage: true, invite: true, launch_session: true, assign_roles: true } };
+const GLASS = { id: 'glass-crypt', title: 'Glass Crypt', role: 'owner', permissions: { view: true, manage: true, invite: true, launch_session: true, assign_roles: true } };
 
 function routeFor(path: string): MatchedRoute {
   const route = new Router().match(path);
