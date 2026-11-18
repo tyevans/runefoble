@@ -8,6 +8,9 @@ from typing import Literal
 from pydantic import AliasChoices, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Environments where a missing dependency must stop a service at start-up (ADR-0015 4).
+DEPLOYED_ENVIRONMENTS = frozenset({"staging", "production"})
+
 
 class PlatformSettings(BaseSettings):
     """Platform-wide environment configuration."""
@@ -59,6 +62,11 @@ class PlatformSettings(BaseSettings):
         if not self.zitadel_audience:
             self.zitadel_audience = self.zitadel_client_id
         return self
+
+    @property
+    def is_deployed(self) -> bool:
+        """True when the environment is a deployed one (staging or production)."""
+        return self.environment in DEPLOYED_ENVIRONMENTS
 
     @property
     def postgres_dsn(self) -> str:

@@ -58,6 +58,8 @@ spec:
               value: "postgresql+asyncpg://{{ $.Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/{{ $.Values.postgres.database }}"
             - name: RUNEFOBLE_USE_POSTGRES_EVENT_STORE
               value: "true"
+            - name: RUNEFOBLE_ENVIRONMENT
+              value: {{ $.Values.global.environment | quote }}
             - name: RUNEFOBLE_SILO_ENDPOINT
               value: "silo:{{ $.Values.silo.port }}"
             - name: RUNEFOBLE_ZITADEL_ISSUER
