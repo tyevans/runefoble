@@ -104,7 +104,8 @@ Configuration:
 
 | Variable | Use |
 |---|---|
-| `RUNEFOBLE_INFERENCE_URL` | Base URL of the inference worker. When unset, speech and stand-in use the local rule engine. Narration returns 503. |
+| `RUNEFOBLE_INFERENCE_URL` | Base URL of the inference worker. Required while `RUNEFOBLE_WATCHER_ENGINE` is `inference_worker`, the default. The Watcher fails at start-up when it is unset. |
+| `RUNEFOBLE_WATCHER_ENGINE` | `inference_worker` (default) or `heuristic`. `heuristic` runs the local rule engine for speech and stand-in only. Narration returns 503 under `heuristic`. |
 | `RUNEFOBLE_BOARD_STATE_URL` | Base URL of the board state service. Speech reads the session board to send `visible_tokens`. |
 
 | Watcher route | Worker call | Result fields |
@@ -115,6 +116,8 @@ Configuration:
 
 Speech sends the session's tokens as `visible_tokens`. A session with no board sends an empty list.
 
+Each 503 `detail` also carries a `message` string. The stable fields are `error` and `backend`. Clients must not parse `message`.
+
 Error responses from The Watcher:
 
 | Condition | Watcher response |
@@ -124,7 +127,7 @@ Error responses from The Watcher:
 | Worker unreachable | HTTP 503 with `detail: {"error": "backend_unavailable", "backend": "inference_worker"}`. |
 | Other worker status | HTTP 502 with `detail: {"error": "inference_worker_error", "status": <code>}`. |
 | Board state unreadable, or `RUNEFOBLE_BOARD_STATE_URL` unset on the speech path | HTTP 503 with `detail: {"error": "backend_unavailable", "backend": "board_state"}`. |
-| `RUNEFOBLE_INFERENCE_URL` unset on the narrate route | HTTP 503 with `detail: {"error": "backend_unavailable", "backend": "inference_worker"}`. |
+| `RUNEFOBLE_INFERENCE_URL` unset while the engine is `inference_worker` | The Watcher does not start. Start-up fails with a message that names the variable. |
 
 Required request fields. A missing field returns HTTP 422:
 
