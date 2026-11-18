@@ -113,12 +113,12 @@ class PlatformSettings(BaseSettings):
         description="Zitadel JWKS keys endpoint URL",
     )
 
-    # Service-to-service credential (ADR-0015 e). No default value. The Watcher presents it to
-    # the inference worker. The worker refuses to start without the same value.
-    inference_service_token: SecretStr | None = Field(
+    # Service-to-service credential (ADR-0015 e). No default value. The caller presents it in
+    # the X-Runefoble-Service-Credential header. The receiver refuses to start without it.
+    service_credential: SecretStr | None = Field(
         default=None,
-        validation_alias=AliasChoices("RUNEFOBLE_INFERENCE_SERVICE_TOKEN"),
-        description="Bearer credential for calls to the inference worker (Kubernetes Secret)",
+        validation_alias=AliasChoices("RUNEFOBLE_SERVICE_CREDENTIAL"),
+        description="Service credential shared by services and the MCP gateway (Kubernetes Secret)",
     )
 
     # Authorization & Zanzibar (SpiceDB)

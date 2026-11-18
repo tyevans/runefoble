@@ -29,6 +29,8 @@ from tests.helpers.mcp_http import call_tool_over_http, read_resource_over_http,
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 def _fake_worker() -> FastAPI:
     """Fake inference worker. Narrates from the request it receives, so output follows input."""
@@ -97,7 +99,7 @@ def services(upstreams: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> dict
 
 def _create_session(session_url: str, title: str) -> str:
     """Create a game session through the game_session public route and return its id."""
-    with httpx.Client(base_url=session_url) as http:
+    with httpx.Client(base_url=session_url, headers=bearer("user-test")) as http:
         created = http.post(
             "/api/v1/sessions/create",
             json={"campaign_id": str(uuid4()), "title": title, "dm_id": "the_watcher"},

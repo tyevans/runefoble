@@ -13,6 +13,7 @@ from character_sheet.models import CharacterState
 from character_sheet.roster import permission_denied
 from character_sheet.schemas import CreateCharacterRequest, UpdateGuardrailsRequest
 from fastapi import Depends, HTTPException
+from runefoble_auth.caller import CallerIdentity, require_user_or_service_credential
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 from runefoble_auth.zitadel import ZitadelAuthService
@@ -29,6 +30,7 @@ from runefoble_platform.event_sourcing import (
     create_aggregate_repository,
 )
 from runefoble_platform.redis_bus import RedisStreamsEventBus
+from runefoble_platform.service_credential import expected_service_credential
 
 STREAM_CHARACTER = "runefoble.events.character"
 STREAM_CRAFTING = "runefoble.events.crafting"
@@ -104,6 +106,14 @@ def set_zitadel_auth_service(service: ZitadelAuthService | None) -> None:
 
 
 get_principal = require_principal(get_zitadel_auth_service)
+
+
+# Service credential (ADR-0015 e). Read once at import, so a service without it never starts.
+SERVICE_CREDENTIAL = expected_service_credential()
+get_caller_or_service = require_user_or_service_credential(
+    get_zitadel_auth_service, SERVICE_CREDENTIAL
+)
+CallerOrService = Annotated[CallerIdentity, Depends(get_caller_or_service)]
 
 
 def verified_user_id(principal: Annotated[VerifiedPrincipal, Depends(get_principal)]) -> str:

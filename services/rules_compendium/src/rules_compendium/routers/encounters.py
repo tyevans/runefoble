@@ -8,7 +8,7 @@ from runefoble_platform.event_sourcing import AggregateRepository
 
 from rules_compendium.aggregate import EncounterAggregate
 from rules_compendium.dependencies import (
-    get_current_user_id,
+    get_caller_or_service,
     get_encounter_repo,
     get_retrieval_engine,
 )
@@ -25,11 +25,14 @@ from rules_compendium.retrieval import CompendiumRetrievalEngine
 router = APIRouter(
     prefix="/api/v1/compendium/encounters",
     tags=["Encounter Builder"],
-    dependencies=[Depends(get_current_user_id)],
 )
 
 
-@router.post("/balance", response_model=EncounterBalanceResponse)
+@router.post(
+    "/balance",
+    dependencies=[Depends(get_caller_or_service)],
+    response_model=EncounterBalanceResponse,
+)
 async def balance_encounter(
     request: EncounterBalanceRequest,
     encounter_repo: Annotated[AggregateRepository[EncounterAggregate], Depends(get_encounter_repo)],

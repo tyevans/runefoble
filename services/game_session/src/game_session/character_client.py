@@ -1,8 +1,10 @@
 """HTTP client for character_sheet stand-in release (TASK-0570, ADR-0015 (a) and (b)).
 
 game_session never imports the character_sheet package. It calls the public route
-POST /api/v1/characters/{character_id}/stand-in. Upstream failures raise
-CharacterSheetUnavailableError. Callers must surface the error. They must not substitute a value.
+POST /api/v1/characters/{character_id}/stand-in. The release acts for the player who
+takes control, so the call carries that player's verified bearer (ADR-0015 c). Upstream
+failures raise CharacterSheetUnavailableError. Callers must surface the error. They must
+not substitute a value.
 """
 
 from __future__ import annotations
@@ -28,12 +30,16 @@ def _base_url() -> str:
     return url.rstrip("/")
 
 
-async def release_stand_in(character_id: UUID, session_id: UUID) -> None:
+async def release_stand_in(character_id: UUID, session_id: UUID, *, authorization: str) -> None:
     """Release the AI stand-in on a character so the returning player takes control."""
     url = f"{_base_url()}{STAND_IN_PATH.format(character_id=character_id)}"
     try:
         async with httpx.AsyncClient(timeout=CHARACTER_SHEET_TIMEOUT_SECONDS) as client:
-            response = await client.post(url, json={"active": False, "session_id": str(session_id)})
+            response = await client.post(
+                url,
+                json={"active": False, "session_id": str(session_id)},
+                headers={"Authorization": authorization},
+            )
     except httpx.HTTPError as exc:
         raise CharacterSheetUnavailableError(f"character_sheet is unreachable: {exc}") from exc
 

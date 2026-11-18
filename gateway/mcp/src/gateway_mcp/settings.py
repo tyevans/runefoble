@@ -1,6 +1,6 @@
 """Upstream service addresses and listen address for the MCP gateway."""
 
-from pydantic import Field
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +33,17 @@ class GatewayMcpSettings(BaseSettings):
         validation_alias="THE_WATCHER_URL",
         description="Base URL of the the_watcher service (THE_WATCHER_URL).",
     )
+    service_credential: SecretStr = Field(
+        validation_alias="RUNEFOBLE_SERVICE_CREDENTIAL",
+        description="Service credential presented to every owning service (ADR-0015 e).",
+    )
+
+    @field_validator("service_credential")
+    @classmethod
+    def _credential_is_not_blank(cls, value: SecretStr) -> SecretStr:
+        if not value.get_secret_value().strip():
+            raise ValueError("RUNEFOBLE_SERVICE_CREDENTIAL must not be blank")
+        return value
 
 
 class GatewayMcpListenSettings(BaseSettings):

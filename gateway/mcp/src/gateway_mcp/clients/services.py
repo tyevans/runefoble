@@ -13,6 +13,7 @@ from uuid import UUID
 
 import httpx
 from gateway_mcp.settings import GatewayMcpSettings, load_settings
+from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 
 DEFAULT_TIMEOUT_SECONDS = 5.0
 
@@ -71,6 +72,7 @@ class ServiceClient:
         """
         self._settings = settings or load_settings()
         self._bearer = bearer
+        self._service_credential = self._settings.service_credential.get_secret_value()
 
     async def _request(
         self,
@@ -80,7 +82,11 @@ class ServiceClient:
         path: str,
         json_body: dict[str, Any] | None = None,
     ) -> Any:
-        headers = {"Authorization": f"Bearer {self._bearer}"} if self._bearer else None
+        # The service credential goes on every call (ADR-0015 e). The user bearer, when the MCP
+        # caller has one, goes on as is, so the owning service acts for that user (ADR-0015 c).
+        headers = {SERVICE_CREDENTIAL_HEADER: self._service_credential}
+        if self._bearer:
+            headers["Authorization"] = f"Bearer {self._bearer}"
         try:
             async with httpx.AsyncClient(
                 base_url=base_url, timeout=DEFAULT_TIMEOUT_SECONDS
