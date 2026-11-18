@@ -18,7 +18,10 @@ Each route checks one SpiceDB permission on the character in the path. The schem
 Response codes:
 - 401: no valid bearer token.
 - 403: the caller lacks the permission. The body names the permission.
+- 400: the request is valid, but the domain rejects it. For example, a penalty or condition is not active. Nothing is saved.
+- 422: the body is malformed.
 - 503: SpiceDB cannot answer, or it does not apply an ownership write. The service does not allow the request, and it does not report success.
+- 503: the event store is unreachable. The write is not saved, no event is published, and the character does not change. Retry when the store is back.
 
 Character creation writes the owner tuple before it stores the character. If the write fails, the response is 503 and no character exists.
 
