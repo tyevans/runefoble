@@ -105,6 +105,27 @@ curl -X POST http://localhost:8003/api/v1/characters/char-sarah-cleric/health \
 
 ---
 
+## 2a. Leaving a Session Activates the Stand-In
+
+A player who leaves an active session hands the character to the AI stand-in. Choose the character in the lobby first, with `POST /api/v1/sessions/{session_id}/lobby/character`.
+
+### Leave Path
+
+1. The player calls `POST /api/v1/sessions/{session_id}/leave` with a bearer token and `{"player_id": "...", "reason": "..."}`.
+2. `game_session` records the absence in memory. It reads the lobby character for that player.
+3. If there is a lobby character, `game_session` calls `POST /api/v1/characters/{character_id}/stand-in` with `"active": true` on `character-sheet`. The call uses `RUNEFOBLE_CHARACTER_SHEET_URL` and forwards the player's bearer.
+4. `character-sheet` sets `is_stand_in_active`. Only then does `game_session` save the leave.
+5. If the URL is not set, or `character-sheet` does not confirm, the leave returns `503 Service Unavailable`. The session does not change.
+6. If the player has no lobby character, the leave records the absence only. The response has `"stand_in_character_id": null`.
+
+The leave response is the session state, plus `stand_in_character_id` (the character that holds the stand-in, or `null`).
+
+### Rejoin Path
+
+When an absent player calls `POST /api/v1/sessions/{session_id}/join` again, `game_session` releases the stand-in first. It calls the same stand-in route with `"active": false`. If `character-sheet` does not confirm, the join returns `503` and the player stays absent. A hot-swap takeover (section 3) releases the stand-in the same way.
+
+---
+
 ## 3. Mid-Session Hot-Swap Takeover
 
 When a late-arriving player connects to an active combat encounter, they can instantly take over their character from the AI stand-in without interrupting the initiative order or round progression.
