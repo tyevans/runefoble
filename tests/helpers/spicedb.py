@@ -37,6 +37,8 @@ import yaml
 from runefoble_auth.bootstrap_schema import bootstrap_schema
 from runefoble_auth.spicedb import SpiceDBClient, preshared_key_from_env
 
+from tests.helpers.container_owner import owner_label_args, remove_orphaned_test_containers
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HELM_VALUES = REPO_ROOT / "deployments" / "helm" / "runefoble" / "values.yaml"
 REQUIRE_LIVE_ENV = "RUNEFOBLE_REQUIRE_LIVE_SPICEDB"
@@ -130,17 +132,20 @@ def run_spicedb_container(image: str, token: str) -> Iterator[str]:
     Raises:
         RuntimeError: Docker is missing, `docker run` fails, or the server never answers.
     """
-    if not shutil.which("docker"):
+    docker_bin = shutil.which("docker")
+    if not docker_bin:
         raise RuntimeError("Docker is not installed or not on PATH")
+    remove_orphaned_test_containers(docker_bin)
     port = find_free_port()
     try:
         container_id = (
             subprocess.run(
                 [
-                    "docker",
+                    docker_bin,
                     "run",
                     "-d",
                     "--rm",
+                    *owner_label_args(),
                     "-p",
                     f"127.0.0.1:{port}:{GRPC_PORT}",
                     image,
