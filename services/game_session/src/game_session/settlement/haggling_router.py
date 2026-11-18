@@ -172,6 +172,7 @@ async def start_haggling_session(
         item_name=req.item_name or req.item_id,
         original_price=req.base_price or 100,
         initial_offer_gp=req.initial_offer_gp or req.offered_price,
+        establishment_id=req.establishment_id,
         merchant_id=req.merchant_id or f"npc-merchant-{nid.hex[:6]}",
         merchant_name=req.merchant_name or "Merchant",
         campaign_id=req.campaign_id,

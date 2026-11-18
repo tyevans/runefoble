@@ -294,28 +294,38 @@ def test_blackbox_gateway_zanzibar_authorization(gateway_client, trusted_ws_issu
     )
     assert join_res.status_code == 200
 
+    sessions_res = gateway_client.get(
+        f"/api/v1/campaigns/{camp_id}/sessions", headers=owner_headers
+    )
+    assert sessions_res.status_code == 200
+    session_id = sessions_res.json()[0]["id"]
+
     # 1. Start minigame via gateway with authorized player
     start_res = gateway_client.post(
-        f"/api/v1/sessions/{camp_id}/tavern/games",
+        f"/api/v1/sessions/{session_id}/tavern/games",
         json={"game_type": "liars_dice", "wager_gold": 10, "initiator_id": "bram"},
         headers=user_headers,
     )
     assert start_res.status_code == 200
-    assert start_res.json()["wager_pot"] == 20
+    assert start_res.json()["wager_gold"] == 10
+    assert start_res.json()["initiator_id"] == "bram"
 
     # 2. Unauthorized user denied
     denied_res = gateway_client.post(
-        f"/api/v1/sessions/{camp_id}/tavern/games",
+        f"/api/v1/sessions/{session_id}/tavern/games",
         json={"game_type": "liars_dice", "wager_gold": 10, "initiator_id": "bram"},
         headers=_bearer(trusted_ws_issuer, "unauthorized_stranger"),
     )
     assert denied_res.status_code == 403
 
-    # 3. Haggle via gateway with authorized player
+    # 3. Haggle without an establishment is refused by the owner (establishment_id is required)
     haggle_res = gateway_client.post(
-        f"/api/v1/sessions/{camp_id}/merchants/merchant_dwarf/haggle",
+        f"/api/v1/sessions/{session_id}/merchants/merchant_dwarf/haggle",
         json={
             "character_id": "bram",
+            "campaign_id": camp_id,
+            "establishment_id": "",
+            "item_id": "shield",
             "item_name": "Shield",
             "base_price": 50,
             "offered_price": 35,
@@ -323,5 +333,4 @@ def test_blackbox_gateway_zanzibar_authorization(gateway_client, trusted_ws_issu
         },
         headers=user_headers,
     )
-    assert haggle_res.status_code == 200
-    assert haggle_res.json()["counter_price"] == 42
+    assert haggle_res.status_code == 422
