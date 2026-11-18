@@ -9,6 +9,7 @@
  */
 
 import type { RunefobleApp } from '../runefoble-app.ts';
+import type { CampaignCapabilities } from '../services/campaign-capabilities.ts';
 
 export interface BoardTarget {
   targetX: number;
@@ -17,9 +18,9 @@ export interface BoardTarget {
 
 export type BoardDmAccess = 'allowed' | 'denied';
 
-/** Returns `allowed` only when the campaign reports `permissions.manage`. A missing flag denies access. */
-export function resolveBoardDmAccess(permissions: { manage?: boolean } | null | undefined): BoardDmAccess {
-  return permissions?.manage === true ? 'allowed' : 'denied';
+/** Returns `allowed` only when the caller holds the `run_session` capability (TASK-0559). A missing flag denies access. */
+export function resolveBoardDmAccess(capabilities: Partial<Pick<CampaignCapabilities, 'run_session'>> | null | undefined): BoardDmAccess {
+  return capabilities?.run_session === true ? 'allowed' : 'denied';
 }
 
 /**

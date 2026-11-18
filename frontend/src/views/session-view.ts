@@ -10,10 +10,10 @@ import { recordBoardMoveTarget, resolveBoardDmAccess } from '../app/board-dm-con
 
 /**
  * The DM trap controls and the map switcher for the board. The session id is the board id.
- * Only a campaign manager sees them. A map switch reloads the board from the server.
+ * Only a caller with the `run_session` capability sees them. A map switch reloads the board from the server.
  */
 function renderBoardDmControls(app: RunefobleApp) {
-  if (resolveBoardDmAccess(app.currentCampaign?.permissions) !== 'allowed') return '';
+  if (resolveBoardDmAccess(app.campaignCapabilities) !== 'allowed') return '';
   return html`<div class="dm-board-controls" role="region" aria-label="DM Board Controls">
     <runefoble-dm-trap-controls .boardId=${app.sessionId} .targetX=${app.boardTarget?.targetX ?? null} .targetY=${app.boardTarget?.targetY ?? null} @open-map-switcher=${() => { app.isMapSwitcherOpen = true; }}></runefoble-dm-trap-controls>
     <runefoble-map-switcher .boardId=${app.sessionId} .open=${app.isMapSwitcherOpen} @switcher-closed=${() => { app.isMapSwitcherOpen = false; }} @map-switched=${() => { app.isMapSwitcherOpen = false; app.reloadRouteData(); }}></runefoble-map-switcher>
