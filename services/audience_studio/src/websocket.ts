@@ -50,7 +50,7 @@ export class WebSocketManager {
   ) {
     this.pollEngine.onPollEvent((event) => this.publish(this.pollEventToCampaignEvent(event)));
 
-    this.approvalQueue.onProposalChange((action, proposal) => {
+    this.approvalQueue.onProposalChange(({ action, proposal }) => {
       this.publish({
         type: PROPOSAL_MESSAGE[action],
         campaignId: proposal.campaignId,

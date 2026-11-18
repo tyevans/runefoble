@@ -6,6 +6,7 @@
 
 import type { AudienceAccess } from './access/audienceAccess.js';
 import { presentProposal } from './access/presentation.js';
+import { EventListeners } from './eventListeners.js';
 import { proposalStreamId } from './domain/events.js';
 import { NotFound } from './errors.js';
 import type { AudienceEventRepository } from './eventSourcing/repository.js';
@@ -15,32 +16,34 @@ import type { VerifiedPrincipal } from './identity/zitadelVerifier.js';
 import type { AudienceModifierProposal, ProposalStatus, ProposalSummary } from './types.js';
 
 export type ProposalAction = 'queued' | 'approved' | 'vetoed';
-type ProposalListener = (action: ProposalAction, proposal: AudienceModifierProposal) => void;
+
+export interface ProposalChange {
+  action: ProposalAction;
+  proposal: AudienceModifierProposal;
+}
 
 export class ApprovalQueue {
-  private readonly listeners: ProposalListener[] = [];
+  private readonly events: EventListeners<ProposalChange>;
 
   constructor(
     private readonly access: AudienceAccess,
     private readonly repo: AudienceEventRepository,
     private readonly mutex: KeyedMutex,
-    private readonly log: Logger
-  ) {}
+    log: Logger
+  ) {
+    this.events = new EventListeners<ProposalChange>(log, 'Proposal listener failed', (change) => ({ action: change.action }));
+  }
 
-  onProposalChange(callback: ProposalListener): () => void {
-    this.listeners.push(callback);
-    return () => {
-      const idx = this.listeners.indexOf(callback);
-      if (idx !== -1) this.listeners.splice(idx, 1);
-    };
+  onProposalChange(callback: (change: ProposalChange) => void): () => void {
+    return this.events.subscribe(callback);
   }
 
   /** Called by the poll service after a proposal is committed. */
   announceQueued(proposal: AudienceModifierProposal): void {
-    this.notify('queued', proposal);
+    this.events.emit({ action: 'queued', proposal });
   }
 
-  /** Proposals of polls the actor can view. Parameters appear only for approvers. */
+  /** Proposals of polls the actor can view. Parameters appear only for approvers. One bulk permission call. */
   async getProposals(
     actor: VerifiedPrincipal,
     campaignId?: string,
@@ -55,11 +58,12 @@ export class ApprovalQueue {
     if (status) {
       list = list.filter((p) => p.status === status);
     }
+    const granted = await this.access.grantedPollPermissions(actor, list.map((p) => p.pollId), ['view', 'approve']);
     const visible: Array<AudienceModifierProposal | ProposalSummary> = [];
     for (const proposal of list) {
-      if (!(await this.access.pollAllows(actor, proposal.pollId, 'view'))) continue;
-      const canApprove = await this.access.pollAllows(actor, proposal.pollId, 'approve');
-      visible.push(presentProposal(proposal, canApprove));
+      const held = granted.get(proposal.pollId);
+      if (!held?.has('view')) continue;
+      visible.push(presentProposal(proposal, held.has('approve')));
     }
     return visible;
   }
@@ -95,18 +99,7 @@ export class ApprovalQueue {
       return proposal.snapshot()!;
     });
 
-    this.notify(action, decided);
+    this.events.emit({ action, proposal: decided });
     return decided;
-  }
-
-  private notify(action: ProposalAction, proposal: AudienceModifierProposal): void {
-    for (const listener of this.listeners) {
-      try {
-        listener(action, proposal);
-      } catch (err) {
-        // A broken listener must not block the other listeners or the command. The failure is logged.
-        this.log.error({ err, action }, 'Proposal listener failed');
-      }
-    }
   }
 }

@@ -41,6 +41,34 @@ export class AudienceAccess {
     });
   }
 
+  /**
+   * Permissions the actor holds on each poll. One SpiceDB call answers every pair. A poll id that
+   * is missing from the result holds none of the listed permissions.
+   */
+  async grantedPollPermissions(
+    actor: VerifiedPrincipal | undefined,
+    pollIds: string[],
+    permissions: PollPermission[]
+  ): Promise<Map<string, Set<PollPermission>>> {
+    const uniqueIds = [...new Set(pollIds)];
+    const checks = uniqueIds.flatMap((pollId) => permissions.map((permission) => ({ pollId, permission })));
+    const answers = await this.spicedb.checkPermissions(
+      checks.map(({ pollId, permission }) => ({
+        resource: { objectType: 'audience_poll', objectId: pollId },
+        permission,
+        subject: subjectOf(actor),
+      }))
+    );
+    const granted = new Map<string, Set<PollPermission>>();
+    checks.forEach(({ pollId, permission }, i) => {
+      if (!answers[i]) return;
+      const held = granted.get(pollId) ?? new Set<PollPermission>();
+      held.add(permission);
+      granted.set(pollId, held);
+    });
+    return granted;
+  }
+
   async requireCampaign(actor: VerifiedPrincipal | undefined, campaignId: string, permission: CampaignPermission): Promise<void> {
     if (!(await this.campaignAllows(actor, campaignId, permission))) {
       throw new Forbidden(`Permission '${permission}' is required on the campaign`);

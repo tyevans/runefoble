@@ -1,14 +1,15 @@
 /**
  * Audience poll service for live spectator voting. Governed by ADR-0006 and ADR-0007.
  *
- * State lives in PollAggregate and ProposalAggregate event streams. The only in-process
- * state is the timer handles that close each open poll at its deadline.
+ * State lives in PollAggregate and ProposalAggregate event streams. Timers close the polls
+ * (PollCloseScheduler). Views and permission-based presentation live in PollPresenter.
  */
 
 import { v4 as uuidv4 } from 'uuid';
 import type { AudienceAccess, PollPermission } from './access/audienceAccess.js';
 import { presentPoll } from './access/presentation.js';
 import type { ApprovalQueue } from './approvalQueue.js';
+import { EventListeners } from './eventListeners.js';
 import { PollAggregate, type PollSnapshot } from './domain/pollAggregate.js';
 import { ProposalAggregate } from './domain/proposalAggregate.js';
 import { pollStreamId } from './domain/events.js';
@@ -18,8 +19,10 @@ import { KeyedMutex } from './eventSourcing/keyedMutex.js';
 import type { EventSourcedAggregate } from './eventSourcing/aggregate.js';
 import type { Logger } from './logger.js';
 import type { VerifiedPrincipal } from './identity/zitadelVerifier.js';
+import { PollCloseScheduler } from './pollCloseScheduler.js';
+import { PollPresenter } from './pollPresenter.js';
 import { pollView } from './views.js';
-import type { AudienceModifierProposal, AudiencePoll, AudiencePollRecord, AudienceVote } from './types.js';
+import type { AudiencePoll, AudiencePollRecord, AudienceVote } from './types.js';
 
 export interface CreatePollParams {
   campaignId: string;
@@ -37,14 +40,13 @@ export type PollEvent =
   | { type: 'poll_started'; poll: AudiencePollRecord }
   | { type: 'vote_cast'; poll: AudiencePollRecord; vote: AudienceVote }
   | { type: 'poll_completed'; poll: AudiencePollRecord };
-type PollListener = (event: PollEvent) => void;
 
-const MAX_TIMER_MS = 2 ** 31 - 1;
-const RETRY_DELAY_MS = 1000;
+const RESTORED_LOG = 'Restored open audience polls';
 
 export class PollEngine {
-  private readonly timers = new Map<string, NodeJS.Timeout>();
-  private readonly listeners: PollListener[] = [];
+  private readonly events: EventListeners<PollEvent>;
+  private readonly scheduler: PollCloseScheduler;
+  private readonly presenter: PollPresenter;
 
   constructor(
     private readonly repo: AudienceEventRepository,
@@ -52,14 +54,14 @@ export class PollEngine {
     private readonly approvalQueue: ApprovalQueue,
     private readonly access: AudienceAccess,
     private readonly log: Logger
-  ) {}
+  ) {
+    this.events = new EventListeners<PollEvent>(log, 'Audience poll listener failed', (event) => ({ event: event.type }));
+    this.scheduler = new PollCloseScheduler((pollId) => this.checkDue(pollId), log);
+    this.presenter = new PollPresenter(repo, access);
+  }
 
-  onPollEvent(callback: PollListener): () => void {
-    this.listeners.push(callback);
-    return () => {
-      const idx = this.listeners.indexOf(callback);
-      if (idx !== -1) this.listeners.splice(idx, 1);
-    };
+  onPollEvent(callback: (event: PollEvent) => void): () => void {
+    return this.events.subscribe(callback);
   }
 
   /** Re-arms the close timer of every open poll from its stored deadline. Call once at start-up. */
@@ -70,16 +72,15 @@ export class PollEngine {
       const snap = poll.snapshot();
       if (snap.status === 'active') {
         open += 1;
-        this.schedule(snap.id, Date.parse(snap.expiresAt) - Date.now());
+        this.scheduler.arm(snap.id, Date.parse(snap.expiresAt) - Date.now());
       }
     }
-    this.log.info({ openPolls: open }, 'Restored open audience polls');
+    this.log.info({ openPolls: open }, RESTORED_LOG);
   }
 
   /** Clears every timer. Call on shutdown. */
   close(): void {
-    for (const handle of this.timers.values()) clearTimeout(handle);
-    this.timers.clear();
+    this.scheduler.close();
   }
 
   /** Opens a poll. The actor needs `run_session` on the campaign. The poll is bound to the campaign before it is stored. */
@@ -102,10 +103,10 @@ export class PollEngine {
     await this.mutex.run([pollStreamId(id)], () => this.repo.commit([poll]));
 
     const snap = poll.snapshot();
-    this.schedule(id, Date.parse(snap.expiresAt) - Date.now());
+    this.scheduler.arm(id, Date.parse(snap.expiresAt) - Date.now());
     const view = pollView(snap);
-    this.notify({ type: 'poll_started', poll: view });
-    return this.presentFor(actor, view);
+    this.events.emit({ type: 'poll_started', poll: view });
+    return this.presenter.presentFor(actor, view);
   }
 
   /** Records one ballot for the actor. The actor needs `vote` on the poll. */
@@ -125,8 +126,8 @@ export class PollEngine {
       return poll.snapshot();
     });
 
-    const view = await this.viewOf(snap);
-    this.notify({
+    const view = await this.presenter.viewOf(snap);
+    this.events.emit({
       type: 'vote_cast',
       poll: view,
       vote: {
@@ -138,13 +139,13 @@ export class PollEngine {
         timestamp: now.toISOString(),
       },
     });
-    return this.presentFor(actor, view);
+    return this.presenter.presentFor(actor, view);
   }
 
   /** Completes the poll for a moderator. The actor needs `moderate` on the poll. */
   async closePoll(pollId: string, actor: VerifiedPrincipal): Promise<AudiencePoll> {
     await this.authorize(actor, pollId, 'moderate');
-    return this.presentFor(actor, await this.complete(pollId));
+    return this.presenter.presentFor(actor, await this.complete(pollId));
   }
 
   /** Completes the poll. Idempotent: a completed poll is returned unchanged. Used by the timer as well. */
@@ -169,13 +170,13 @@ export class PollEngine {
       return { snap: poll.snapshot(), proposal, closedNow: true };
     });
 
-    this.clearTimer(pollId);
+    this.scheduler.disarm(pollId);
     if (outcome.proposal) {
       this.approvalQueue.announceQueued(outcome.proposal);
     }
-    const view = await this.viewOf(outcome.snap);
+    const view = await this.presenter.viewOf(outcome.snap);
     if (outcome.closedNow) {
-      this.notify({ type: 'poll_completed', poll: view });
+      this.events.emit({ type: 'poll_completed', poll: view });
     }
     return view;
   }
@@ -183,19 +184,21 @@ export class PollEngine {
   /** One poll, if the actor can view it. A missing poll is 404 before any permission check. */
   async getPoll(pollId: string, actor: VerifiedPrincipal): Promise<AudiencePoll> {
     await this.authorize(actor, pollId, 'view');
-    return this.presentFor(actor, await this.viewOf((await this.requirePoll(pollId)).snapshot()));
+    return this.presenter.presentFor(actor, await this.presenter.viewOf((await this.requirePoll(pollId)).snapshot()));
   }
 
-  /** Polls the actor can view, optionally limited to one campaign. */
+  /** Polls the actor can view, optionally limited to one campaign. Permissions are checked in one bulk call. */
   async listPolls(actor: VerifiedPrincipal, campaignId?: string): Promise<AudiencePoll[]> {
     const polls = (await this.repo.loadAllPolls()).map((p) => p.snapshot());
     const selected = campaignId ? polls.filter((p) => p.campaignId === campaignId) : polls;
-    const proposals = await this.proposalIndex(selected);
+    const proposals = await this.presenter.proposalIndex(selected);
+    const granted = await this.access.grantedPollPermissions(actor, selected.map((p) => p.id), ['view', 'approve']);
     const views: AudiencePoll[] = [];
     for (const snap of selected) {
-      if (!(await this.access.pollAllows(actor, snap.id, 'view'))) continue;
+      const held = granted.get(snap.id);
+      if (!held?.has('view')) continue;
       const view = pollView(snap, snap.proposalId ? proposals.get(snap.proposalId) : undefined);
-      views.push(await this.presentFor(actor, view));
+      views.push(presentPoll(view, held.has('approve')));
     }
     return views;
   }
@@ -206,13 +209,6 @@ export class PollEngine {
     await this.access.requirePoll(actor, pollId, permission);
   }
 
-  /** Strips proposal parameters unless the actor holds `approve` on the poll. */
-  private async presentFor(actor: VerifiedPrincipal, view: AudiencePollRecord): Promise<AudiencePoll> {
-    if (!view.proposedModifier) return view;
-    const canApprove = await this.access.pollAllows(actor, view.id, 'approve');
-    return presentPoll(view, canApprove);
-  }
-
   private async requirePoll(pollId: string): Promise<PollAggregate> {
     const poll = await this.repo.loadPoll(pollId);
     if (!poll) {
@@ -221,70 +217,13 @@ export class PollEngine {
     return poll;
   }
 
-  private async viewOf(snap: PollSnapshot): Promise<AudiencePollRecord> {
-    let proposal: AudienceModifierProposal | undefined;
-    if (snap.proposalId) {
-      proposal = (await this.repo.loadProposal(snap.proposalId))?.snapshot();
-    }
-    return pollView(snap, proposal);
-  }
-
-  private async proposalIndex(polls: PollSnapshot[]): Promise<Map<string, AudienceModifierProposal>> {
-    if (!polls.some((p) => p.proposalId)) return new Map();
-    const index = new Map<string, AudienceModifierProposal>();
-    for (const proposal of await this.repo.loadAllProposals()) {
-      const snap = proposal.snapshot();
-      if (snap) index.set(snap.id, snap);
-    }
-    return index;
-  }
-
-  /** Arms the close timer. The callback re-checks state, so a late or retried fire is harmless. */
-  private schedule(pollId: string, delayMs: number): void {
-    this.clearTimer(pollId);
-    const handle = setTimeout(
-      () => {
-        this.timers.delete(pollId);
-        void this.expire(pollId);
-      },
-      Math.min(Math.max(delayMs, 0), MAX_TIMER_MS)
-    );
-    this.timers.set(pollId, handle);
-  }
-
-  private clearTimer(pollId: string): void {
-    const handle = this.timers.get(pollId);
-    if (handle) {
-      clearTimeout(handle);
-      this.timers.delete(pollId);
-    }
-  }
-
-  private async expire(pollId: string): Promise<void> {
-    try {
-      const poll = await this.repo.loadPoll(pollId);
-      if (!poll || poll.snapshot().status !== 'active') return;
-      const remaining = Date.parse(poll.snapshot().expiresAt) - Date.now();
-      if (remaining > 0) {
-        this.schedule(pollId, remaining);
-        return;
-      }
-      await this.complete(pollId);
-    } catch (err) {
-      this.log.error({ err, pollId }, 'Poll expiry failed; retrying');
-      this.schedule(pollId, RETRY_DELAY_MS);
-    }
-  }
-
-  private notify(event: PollEvent): void {
-    for (const listener of this.listeners) {
-      try {
-        listener(event);
-      } catch (err) {
-        // A broken listener must not block the other listeners or the command. The failure is logged.
-        this.log.error({ err, event: event.type }, 'Audience poll listener failed');
-      }
-    }
+  /** Closes the poll when it is due. Returns the wait until the deadline when it is still open. */
+  private async checkDue(pollId: string): Promise<number | null> {
+    const poll = await this.repo.loadPoll(pollId);
+    if (!poll || poll.snapshot().status !== 'active') return null;
+    const remaining = Date.parse(poll.snapshot().expiresAt) - Date.now();
+    if (remaining > 0) return remaining;
+    await this.complete(pollId);
+    return null;
   }
 }
-
