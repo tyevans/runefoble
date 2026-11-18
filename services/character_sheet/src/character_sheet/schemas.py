@@ -113,8 +113,8 @@ class SetActivePortraitRequest(BaseModel):
 
 class PortraitResponse(BaseModel):
     character_id: str
-    active_portrait_url: str
-    base_portrait_url: str
+    active_portrait_url: str | None = None
+    base_portrait_url: str | None = None
     active_variant_id: str | None = None
     condition_badges: list[str] = Field(default_factory=list)
     svg_overlay: str = ""

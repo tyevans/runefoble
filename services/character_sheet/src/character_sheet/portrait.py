@@ -40,7 +40,7 @@ def compute_condition_badges(
 
 
 def compose_portrait_svg(
-    base_url: str,
+    base_url: str | None,
     current_hp: int,
     max_hp: int,
     conditions: dict[str, Any] | list[str] | None = None,
@@ -53,8 +53,8 @@ def compose_portrait_svg(
     is_poisoned = "poisoned" in badges
     is_stunned = "stunned" in badges
 
-    # Clean XML attributes
-    safe_base_url = (base_url or "/assets/portraits/default.svg").replace('"', "&quot;")
+    # Clean XML attributes. A character with no portrait keeps the dark backdrop only.
+    safe_base_url = (base_url or "").replace('"', "&quot;")
 
     svg_parts: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
@@ -83,9 +83,12 @@ def compose_portrait_svg(
         "  </defs>",
         '  <g clip-path="url(#rf-portrait-clip)">',
         f'    <rect width="{width}" height="{height}" fill="#1e1e24" />',
-        f'    <image href="{safe_base_url}" width="{width}" height="{height}" '
-        'preserveAspectRatio="xMidYMid slice" />',
     ]
+    if safe_base_url:
+        svg_parts.append(
+            f'    <image href="{safe_base_url}" width="{width}" height="{height}" '
+            'preserveAspectRatio="xMidYMid slice" />'
+        )
 
     # Bloodied Vignette and Red Scratch Decals
     if is_bloodied:
@@ -152,17 +155,20 @@ def svg_to_data_url(svg_content: str) -> str:
 
 
 def resolve_active_portrait_url(
-    base_url: str,
+    base_url: str | None,
     current_hp: int,
     max_hp: int,
     conditions: dict[str, Any] | list[str] | None = None,
-) -> str:
-    """Resolve active portrait URL, applying SVG condition overlays when injured or afflicted."""
+) -> str | None:
+    """Resolve active portrait URL, applying SVG condition overlays when injured or afflicted.
+
+    Answers None when the character has no base portrait and no overlay applies.
+    """
     badges = compute_condition_badges(current_hp, max_hp, conditions)
 
-    # If healthy with no active visual overlays, preserve pure base URL
+    # If healthy with no active visual overlays, preserve pure base URL (or None)
     if not any(b in badges for b in ("bloodied", "downed", "poisoned", "stunned")):
-        return base_url or "/assets/portraits/default.svg"
+        return base_url or None
 
     # Otherwise synthesize composited SVG data URL
     svg = compose_portrait_svg(base_url, current_hp, max_hp, conditions)

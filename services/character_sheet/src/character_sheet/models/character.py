@@ -39,8 +39,8 @@ class CharacterCore(BaseModel):
     stand_in_guardrails: StandInGuardrailPolicy = Field(default_factory=StandInGuardrailPolicy)
     is_stand_in_active: bool = False
     is_stabilized: bool = False
-    base_portrait_url: str = "/assets/portraits/default.svg"
-    active_portrait_url: str = "/assets/portraits/default.svg"
+    base_portrait_url: str | None = None
+    active_portrait_url: str | None = None
     active_variant_id: str | None = None
     wardrobe_variants: dict[str, WardrobeVariant] = Field(default_factory=dict)
     condition_badges: list[str] = Field(default_factory=list)
@@ -88,9 +88,7 @@ class CharacterState(
             speed_ft=speed_ft,
             ability_scores=ability_scores if ability_scores is not None else dict(DEFAULT_SCORES),
             spell_slots=dict(SPELL_SLOTS_TABLE.get(1, {1: 2})),
-            active_portrait_url=resolve_active_portrait_url(
-                "/assets/portraits/default.svg", current_hp, max_hp, {}
-            ),
+            active_portrait_url=resolve_active_portrait_url(None, current_hp, max_hp, {}),
             condition_badges=compute_condition_badges(current_hp, max_hp, {}),
         )
 

@@ -273,7 +273,7 @@ class CharacterPortraitUpdated(BaseRunefobleEvent):
     aggregate_id: UUID = Field(default_factory=uuid4)
     event_type: str = "runefoble.events.character.portrait_updated"
     character_id: UUID | str
-    active_portrait_url: str
+    active_portrait_url: str | None
     variant_id: str | None = None
 
 
