@@ -55,9 +55,7 @@ def session_id() -> str:
 @pytest.fixture(autouse=True)
 def reset_coordinator(seam_restorer: SeamRestorer) -> Iterator[None]:
     seam_restorer.keep(get_voice_room_coordinator, set_voice_room_coordinator)
-    previous_manager_coordinator = signaling_manager._coordinator
     yield
-    signaling_manager._coordinator = previous_manager_coordinator
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
 

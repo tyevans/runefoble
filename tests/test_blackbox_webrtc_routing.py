@@ -45,15 +45,12 @@ def reset_voice_signaling_environment(
     bus = default_redis_event_bus
     coord = VoiceRoomCoordinator(event_bus=bus)
     seam_restorer.replace(get_voice_room_coordinator, set_voice_room_coordinator, coord)
-    previous_manager_coordinator = signaling_manager._coordinator
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
-    signaling_manager._coordinator = coord
     coord.register_kick_callback(signaling_manager.handle_peer_kicked)
     yield {"spicedb": mock_spicedb, "redis": mock_bus, "bus": bus, "coordinator": coord}
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
-    signaling_manager._coordinator = previous_manager_coordinator
 
 
 def test_multi_peer_signaling_offer_answer_and_ice_candidate_relay(gateway, table_for):

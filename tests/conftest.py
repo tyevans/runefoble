@@ -93,6 +93,7 @@ pytest_plugins = [
     "tests.helpers.spicedb",
     "tests.helpers.stand_in_policy",
     "tests.helpers.voice_identity",
+    "tests.helpers.voice_signaling",
     "tests.helpers.zitadel_auth",
 ]
 collect_ignore = ["test_blackbox_uvtt_import.py"]

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from fastapi import WebSocket
+from runefoble_auth.websocket import send_socket_error
 
 if TYPE_CHECKING:
     from voice_agent.signaling.manager import WebRTCSignalingManager
@@ -29,25 +30,38 @@ async def handle_join(
     data: dict[str, Any],
     manager: WebRTCSignalingManager,
 ) -> None:
-    """Handle explicit join re-confirmation or credential refresh."""
+    """Handle explicit join re-confirmation or peer id change.
+
+    The user and the role come from the admitted socket. A frame may repeat the role, but it
+    may not ask for another one. The frame `user_id` is ignored.
+    """
+    requested_role = data.get("role")
+    if requested_role is not None and requested_role != state.role:
+        await send_socket_error(
+            websocket,
+            "ROLE_MISMATCH",
+            "The role comes from the session permissions. A join frame cannot change it.",
+            action="webrtc_join",
+        )
+        return
+
     req_peer = data.get("peer_id", state.peer_id)
-    req_user = data.get("user_id", state.user_id)
-    req_role = data.get("role", state.role)
     if req_peer != state.peer_id:
         manager.disconnect_peer(websocket)
         state.peer_id = req_peer
         await manager.connect_peer(state.session_id, state.peer_id, websocket)
-        await manager.coordinator.peer_joined(state.session_id, state.peer_id, req_user, req_role)
+        await manager.coordinator.peer_joined(
+            state.session_id, state.peer_id, state.user_id, state.role
+        )
 
-    state.user_id, state.role = req_user, req_role
     summary = await manager.coordinator.get_room_summary(state.session_id)
     await websocket.send_json(
         {
             "type": "webrtc_joined",
             "session_id": state.session_id,
             "peer_id": state.peer_id,
-            "user_id": req_user,
-            "role": req_role,
+            "user_id": state.user_id,
+            "role": state.role,
             "peers": summary["participants"],
         }
     )
@@ -57,8 +71,8 @@ async def handle_join(
             "type": "webrtc_peer_joined",
             "session_id": state.session_id,
             "peer_id": state.peer_id,
-            "user_id": req_user,
-            "role": req_role,
+            "user_id": state.user_id,
+            "role": state.role,
         },
         exclude_peer=state.peer_id,
     )
@@ -70,12 +84,14 @@ async def handle_sdp_and_ice(
     msg_type: str,
     manager: WebRTCSignalingManager,
 ) -> None:
-    """Relay SDP offer, SDP answer, or trickle ICE candidate to target peer or room."""
+    """Relay SDP offer, SDP answer, or trickle ICE candidate to target peer or room.
+
+    The source is always the admitted socket's peer id. A frame cannot name another source.
+    """
     target_peer = data.get("to_peer") or data.get("target_peer")
-    from_p = data.get("from_peer") or state.peer_id
     payload = {
         "type": msg_type,
-        "from_peer": from_p,
+        "from_peer": state.peer_id,
         "to_peer": target_peer,
         **{
             k: v
@@ -86,7 +102,7 @@ async def handle_sdp_and_ice(
     if target_peer:
         await manager.send_to_peer(state.session_id, target_peer, payload)
     else:
-        await manager.broadcast_to_room(state.session_id, payload, exclude_peer=from_p)
+        await manager.broadcast_to_room(state.session_id, payload, exclude_peer=state.peer_id)
 
 
 async def handle_mute(

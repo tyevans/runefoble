@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from voice_agent.signaling.auth import (
-    extract_peer_and_role,
+    extract_peer_id,
 )
 from voice_agent.signaling.endpoint import (
     voice_signaling_websocket_endpoint,
@@ -27,7 +27,7 @@ __all__ = [
     "SignalingPeerState",
     "WebRTCSignalingManager",
     "dispatch_signaling_message",
-    "extract_peer_and_role",
+    "extract_peer_id",
     "handle_join",
     "handle_leave",
     "handle_mute",
