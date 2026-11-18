@@ -12,7 +12,7 @@ def test_inventory_addition_and_removal(client: TestClient, created_character_id
     """Verify item addition, removal, and weight tracking via frontdoor REST."""
     char_id = created_character_id
     add_resp = client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"item_id": "item-potion", "name": "Healing Potion", "quantity": 3, "weight_lbs": 1.5},
     )
     assert add_resp.status_code == 200
@@ -20,8 +20,9 @@ def test_inventory_addition_and_removal(client: TestClient, created_character_id
     assert "item-potion" in sheet["inventory"]
     assert sheet["inventory"]["item-potion"]["quantity"] == 3
 
-    rem_resp = client.post(
-        f"/api/v1/characters/{char_id}/inventory/item-potion/remove",
+    rem_resp = client.request(
+        "DELETE",
+        f"/api/v1/characters/{char_id}/inventory/item-potion",
         json={"quantity": 3},
     )
     assert rem_resp.status_code == 200
@@ -36,7 +37,7 @@ def test_equipment_paper_doll_slots(client: TestClient, created_character_id: st
         {"item_id": "shield-1", "name": "Steel Shield", "quantity": 1, "weight_lbs": 6.0},
         {"item_id": "armor-1", "name": "Chain Mail", "quantity": 1, "weight_lbs": 55.0},
     ):
-        client.post(f"/api/v1/characters/{char_id}/inventory/add", json=item)
+        client.post(f"/api/v1/characters/{char_id}/inventory", json=item)
 
     slots = [
         ("main_hand", "Longsword +1"),

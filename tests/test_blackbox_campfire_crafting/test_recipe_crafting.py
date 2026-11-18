@@ -36,11 +36,11 @@ def test_blackbox_alchemical_crafting_success_flow(char_client: TestClient, mock
     char_id = create_res.json()["character_id"]
 
     char_client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"name": "Glowmoss Extract", "quantity": 1, "weight_lbs": 0.2},
     )
     char_client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"name": "Volcano Ash", "quantity": 1, "weight_lbs": 0.5},
     )
 

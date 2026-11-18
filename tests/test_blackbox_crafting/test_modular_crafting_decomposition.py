@@ -124,11 +124,11 @@ def test_blackbox_crafting_frontdoor_api_success(char_client, mock_bus):
     char_id = create_res.json()["character_id"]
 
     char_client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"name": "Glowmoss Extract", "quantity": 1, "weight_lbs": 0.2},
     )
     char_client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"name": "Star Lily", "quantity": 1, "weight_lbs": 0.1},
     )
 

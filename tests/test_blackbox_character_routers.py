@@ -30,7 +30,6 @@ def test_character_sheet_openapi_routes_completeness(char_client):
         "/healthz",
         "/ui/manifest",
         "/api/v1/characters",
-        "/api/v1/characters/create",
         "/api/v1/characters/{character_id}",
         "/api/v1/characters/{character_id}/level-up",
         "/api/v1/characters/{character_id}/spells/prepare",
@@ -38,8 +37,8 @@ def test_character_sheet_openapi_routes_completeness(char_client):
         "/api/v1/characters/{character_id}/health",
         "/api/v1/characters/{character_id}/penalties",
         "/api/v1/characters/{character_id}/penalties/{penalty_type}",
-        "/api/v1/characters/{character_id}/inventory/add",
-        "/api/v1/characters/{character_id}/inventory/{item_id}/remove",
+        "/api/v1/characters/{character_id}/inventory",
+        "/api/v1/characters/{character_id}/inventory/{item_id}",
         "/api/v1/characters/{character_id}/equipment",
         "/api/v1/characters/{character_id}/conditions",
         "/api/v1/characters/{character_id}/conditions/{condition}",
@@ -49,6 +48,32 @@ def test_character_sheet_openapi_routes_completeness(char_client):
 
     for route in expected_routes:
         assert route in paths, f"Route '{route}' missing from Character Sheet OpenAPI schema"
+
+
+def test_retired_alias_routes_are_not_served(char_client):
+    """Verify the retired alias paths no longer create, add, or remove anything."""
+    create_res = char_client.post(
+        "/api/v1/characters/create",
+        json={"name": "Alias Probe", "character_class": "Rogue", "max_hp": 12},
+    )
+    assert create_res.status_code in (404, 405)
+
+    char_id = char_client.post(
+        "/api/v1/characters",
+        json={"name": "Alias Probe", "character_class": "Rogue", "max_hp": 12},
+    ).json()["character_id"]
+
+    add_res = char_client.post(
+        f"/api/v1/characters/{char_id}/inventory/add",
+        json={"item_id": "dagger-1", "name": "Dagger", "quantity": 1, "weight_lbs": 1.0},
+    )
+    assert add_res.status_code in (404, 405)
+
+    remove_res = char_client.post(
+        f"/api/v1/characters/{char_id}/inventory/dagger-1/remove",
+        json={"quantity": 1},
+    )
+    assert remove_res.status_code in (404, 405)
 
 
 def test_character_sheet_lifecycle_and_spells_frontdoors(char_client):
@@ -97,7 +122,7 @@ def test_character_sheet_lifecycle_and_spells_frontdoors(char_client):
 def test_character_sheet_inventory_and_conditions_frontdoors(char_client):
     """Verify inventory, equipment, and condition lifecycle endpoints via public frontdoors."""
     create_res = char_client.post(
-        "/api/v1/characters/create",
+        "/api/v1/characters",
         json={"name": "Shadowheart", "character_class": "Cleric", "max_hp": 24},
     )
     assert create_res.status_code == 200
@@ -105,7 +130,7 @@ def test_character_sheet_inventory_and_conditions_frontdoors(char_client):
 
     # Add inventory item
     inv_res = char_client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"item_id": "mace-1", "name": "Mace of Disruption", "quantity": 1, "weight_lbs": 4.0},
     )
     assert inv_res.status_code == 200
@@ -120,8 +145,9 @@ def test_character_sheet_inventory_and_conditions_frontdoors(char_client):
     assert eq_res.json()["equipment"]["main_hand"] == "Mace of Disruption"
 
     # Remove inventory item
-    rem_inv_res = char_client.post(
-        f"/api/v1/characters/{char_id}/inventory/mace-1/remove",
+    rem_inv_res = char_client.request(
+        "DELETE",
+        f"/api/v1/characters/{char_id}/inventory/mace-1",
         json={"quantity": 1},
     )
     assert rem_inv_res.status_code == 200

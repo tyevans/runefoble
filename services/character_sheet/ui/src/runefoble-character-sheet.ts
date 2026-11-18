@@ -2,10 +2,10 @@ import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { AuthConsumerController } from '@runefoble/ui-core';
 import { characterSheetStyles } from './runefoble-character-sheet.styles.ts';
-import {
-  renderConditionsPanel, renderEquipmentAndInventory,
-  renderSheetHeader, renderSpellbookPanel, renderVitalsGrid,
-} from './runefoble-character-sheet.templates.ts';
+import { renderConditionsPanel } from './templates/conditions.template.ts';
+import { renderEquipmentAndInventory } from './templates/inventory.template.ts';
+import { renderSheetHeader, renderVitalsGrid } from './templates/stats.template.ts';
+import { renderSpellbookPanel } from './templates/spells.template.ts';
 import type { CharacterSheetCondition, EncumbranceInfo, EquipmentSlots, InventoryItem } from './runefoble-character-sheet.types.ts';
 import { DEFAULT_EQUIPMENT, DEFAULT_INVENTORY } from './runefoble-character-sheet.types.ts';
 import {

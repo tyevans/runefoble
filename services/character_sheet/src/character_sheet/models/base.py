@@ -5,28 +5,31 @@ from __future__ import annotations
 from typing import Any
 
 from character_sheet.portrait import compute_condition_badges, resolve_active_portrait_url
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 
 DEFAULT_SCORES: dict[str, int] = dict.fromkeys(["str", "dex", "con", "int", "wis", "cha"], 10)
 
 
 class AttributeScores(BaseModel):
-    model_config = {"populate_by_name": True}
+    """Six ability scores. ``to_dict`` emits the wire keys used by ``ability_scores``."""
+
     str: int = 10
     dex: int = 10
     con: int = 10
-    intelligence: int = Field(default=10, alias="int")
+    intelligence: int = 10
     wis: int = 10
     cha: int = 10
 
-    def __getattr__(self, name: str) -> Any:
-        if name == "int":
-            return self.intelligence
-        raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
-
     def to_dict(self) -> dict[str, int]:
-        return self.model_dump(by_alias=True)
+        return {
+            "str": self.str,
+            "dex": self.dex,
+            "con": self.con,
+            "int": self.intelligence,
+            "wis": self.wis,
+            "cha": self.cha,
+        }
 
 
 class WardrobeVariant(BaseModel):

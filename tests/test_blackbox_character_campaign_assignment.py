@@ -176,7 +176,7 @@ def test_blackbox_character_campaign_assignment_patch(client):
     """Verify PATCH /api/v1/characters/{character_id}/campaign lifecycle."""
     # 1. Create character without campaign
     create_res = client.post(
-        "/api/v1/characters/create",
+        "/api/v1/characters",
         json={"name": "Shadowheart", "character_class": "Cleric", "max_hp": 32},
     )
     assert create_res.status_code == 200

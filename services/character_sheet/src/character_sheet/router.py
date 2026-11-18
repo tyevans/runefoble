@@ -27,7 +27,6 @@ async def list_characters(
 
 
 @router.post("/api/v1/characters", response_model=CharacterRosterView)
-@router.post("/api/v1/characters/create", response_model=CharacterRosterView)
 async def create_character(
     req: schemas.CreateCharacterRequest,
     repo: deps.RepoDep,
@@ -159,13 +158,11 @@ async def clear_penalty(character_id: UUID, penalty_type: str, repo: deps.RepoDe
 
 
 @router.post("/api/v1/characters/{character_id}/inventory", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
-@router.post("/api/v1/characters/{character_id}/inventory/add", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def add_inventory_item(character_id: UUID, req: schemas.AddInventoryItemRequest, repo: deps.RepoDep):
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.add_inventory_item(req.item_id, req.name, req.quantity, req.weight_lbs))
 
 
 @router.delete("/api/v1/characters/{character_id}/inventory/{item_id}", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
-@router.post("/api/v1/characters/{character_id}/inventory/{item_id}/remove", response_model=CharacterState, dependencies=deps.EDIT_CHARACTER)
 async def remove_inventory_item(character_id: UUID, item_id: str, repo: deps.RepoDep, req: schemas.RemoveInventoryItemRequest | None = None, quantity: int = 1):
     qty = req.quantity if req else quantity
     return await deps.execute_character_mutation(repo, character_id, lambda c: c.remove_inventory_item(item_id, qty))
