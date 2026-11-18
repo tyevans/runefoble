@@ -2,6 +2,7 @@
 
 import shutil
 import subprocess
+from contextlib import ExitStack
 
 import pytest
 from fastapi.testclient import TestClient
@@ -78,8 +79,13 @@ def test_microservice_entrypoint_initialization(monkeypatch, tmp_path):
     ]
 
     for name, app in apps:
-        client = TestClient(app)
-        res = client.get("/healthz")
+        with ExitStack() as stack:
+            # The gateway builds its upstream clients in its lifespan, and /healthz probes them.
+            if name == "gateway-api":
+                client = stack.enter_context(TestClient(app))
+            else:
+                client = TestClient(app)
+            res = client.get("/healthz")
         assert res.status_code == 200, f"Service '{name}' health check failed: {res.text}"
 
         openapi_schema = app.openapi()

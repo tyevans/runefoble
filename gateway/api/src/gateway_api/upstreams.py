@@ -31,8 +31,10 @@ UPSTREAM_SETTINGS: Mapping[str, str] = {
 class UpstreamRegistry:
     """Hold one ServiceClient per service whose base URL is configured."""
 
-    def __init__(self, clients: Mapping[str, ServiceClient]) -> None:
+    def __init__(self, clients: Mapping[str, ServiceClient], health_probe_timeout_s: float) -> None:
         self._clients = dict(clients)
+        # Seconds that each downstream health probe on /healthz may wait (TASK-0674).
+        self.health_probe_timeout_s = health_probe_timeout_s
 
     @classmethod
     def from_settings(cls, settings: PlatformSettings) -> UpstreamRegistry:
@@ -42,11 +44,15 @@ class UpstreamRegistry:
             base_url = getattr(settings, field)
             if base_url:
                 clients[service] = ServiceClient(service, base_url, credential)
-        return cls(clients)
+        return cls(clients, settings.gateway_health_probe_timeout_s)
+
+    def find(self, service: str) -> ServiceClient | None:
+        """Return the client for a service, or None when no base URL is set."""
+        return self._clients.get(service)
 
     def client(self, service: str) -> ServiceClient:
         """Return the client for a service. Raise UpstreamUnavailableError when no URL is set."""
-        client = self._clients.get(service)
+        client = self.find(service)
         if client is None:
             raise UpstreamUnavailableError(service, "no base URL is configured")
         return client

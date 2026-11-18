@@ -23,9 +23,14 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
     "RUNEFOBLE_WATCHER_URL": {
         "game-session": "http://the-watcher:8001",
         "voice-agent": "http://the-watcher:8001",
+        "gateway-api": "http://the-watcher:8001",
     },
     "RUNEFOBLE_VOICE_AGENT_URL": {
         "game-session": "http://voice-agent:8005",
+        "gateway-api": "http://voice-agent:8005",
+    },
+    "RUNEFOBLE_BOARD_STATE_URL": {
+        "gateway-api": "http://board-state:8002",
     },
     "RUNEFOBLE_INFERENCE_URL": {
         "the-watcher": "http://inference-worker:8100",

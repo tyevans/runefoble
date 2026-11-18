@@ -63,6 +63,6 @@ async def get_sync_health() -> SyncHealthResponse:
     return SyncHealthResponse(
         status=health.get("status", "healthy"),
         spicedb_connected=bool(health.get("spicedb_connected", True)),
-        sync_service=str(health.get("sync_service", "operational")),
+        sync_service=str(health["sync_service"]),
         backend=str(health.get("backend", "mock")),
     )
