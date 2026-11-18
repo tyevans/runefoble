@@ -13,6 +13,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.config import (
     EmbeddingEndpointSettings,
     LoreBackendSettings,
@@ -92,6 +93,7 @@ def create_app() -> FastAPI:
     app.include_router(codex_router)
     app.include_router(west_marches_router)
     app.add_exception_handler(ServiceUnavailableError, _service_unavailable_handler)
+    register_store_unavailable_handlers(app)
     _register_routes(app)
     return app
 

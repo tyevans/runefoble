@@ -33,6 +33,7 @@ from game_session.routers import (
 from game_session.settlement.haggling_router import router as settlement_haggling_router
 from game_session.settlement.router import router as settlement_haven_router
 from game_session.settlement.workers_router import router as settlement_workers_router
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
@@ -54,6 +55,7 @@ app = FastAPI(
     description="Session Lifecycle, Turn / Initiative Order, and Live Participation backed by eventsource-py.",
 )
 
+register_store_unavailable_handlers(app)
 app.include_router(session_router)
 app.include_router(campaign_router)
 register_campaign_error_handlers(app)

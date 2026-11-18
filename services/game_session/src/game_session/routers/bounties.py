@@ -5,7 +5,6 @@ Governed by ADR-0001, ADR-0006, ADR-0007, and Hard Invariant 6 (< 150 lines).
 
 from __future__ import annotations
 
-import contextlib
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -33,6 +32,7 @@ from game_session.dependencies import (
 )
 from game_session.events import STREAM_SESSION
 from game_session.settlement.auth.tokens import CallerId, get_caller_principal
+from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
 
 router = APIRouter(
@@ -49,10 +49,10 @@ async def _save_pub(agg: MercenaryBountyAggregate) -> None:
 
 
 async def _load(bid: UUID) -> MercenaryBountyAggregate:
-    try:
-        return await get_bounty_contract_repository().load(bid)
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Bounty not found") from e
+    agg = await load_if_exists(get_bounty_contract_repository(), bid)
+    if agg is None:
+        raise HTTPException(status_code=404, detail="Bounty not found")
+    return agg
 
 
 def _err(fn, *a, **kw) -> Any:
@@ -91,15 +91,17 @@ async def list_bounties(
     await check_bounty_view(get_spicedb_client(), str(sid), "", caller_id)
     repo, results = get_bounty_contract_repository(), []
     for bid_str in get_session_bounties_index().get(str(sid), []):
-        with contextlib.suppress(Exception):
-            st = (await repo.load(UUID(bid_str))).state
-            if (
-                (status and st.status != status)
-                or (target_type and st.target_type != target_type)
-                or (min_gold is not None and st.escrow_gold < min_gold)
-            ):
-                continue
-            results.append(st.model_dump())
+        agg = await load_if_exists(repo, UUID(bid_str))
+        if agg is None:
+            continue
+        st = agg.state
+        if (
+            (status and st.status != status)
+            or (target_type and st.target_type != target_type)
+            or (min_gold is not None and st.escrow_gold < min_gold)
+        ):
+            continue
+        results.append(st.model_dump())
     return {"session_id": str(sid), "bounties": results}
 
 

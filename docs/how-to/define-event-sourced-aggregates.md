@@ -88,6 +88,28 @@ reloaded = await repo.load(char_id)
 assert reloaded.state.items["potion-heal"] == 2
 ```
 
+### Load without losing history
+
+Use the helpers in `runefoble_platform.aggregate_loading`. Do not wrap `repo.load` in
+`except Exception`.
+
+- `load_or_create(repo, aggregate_id, factory)` returns the stored aggregate. It creates a new
+  aggregate only when the stream does not exist (`AggregateNotFoundError`).
+- `load_if_exists(repo, aggregate_id)` returns the stored aggregate, or `None` when the stream
+  does not exist. Use it on read routes that answer 404.
+- Every other error reaches the caller. A store outage must never create an empty aggregate.
+  A new empty stream with an existing id causes conflicting events on the next save.
+
+Each service registers `register_store_unavailable_handlers(app)` in its `main.py`. The
+handler maps `SQLAlchemyError` and `OSError` to HTTP 503 with no substitute data.
+
+```python
+from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
+
+agg = await load_or_create(repo, char_id, CharacterInventoryAggregate)  # write path
+found = await load_if_exists(repo, char_id)  # read path: None means not found
+```
+
 ## 5. Testing with InMemoryEventStore
 
 In pytest test fixtures, use `InMemoryEventStore()` for instant, zero-dependency unit tests:

@@ -12,6 +12,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from runefoble_platform.stream_consumer import consumer_statuses
@@ -64,6 +65,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+register_store_unavailable_handlers(app)
 app.include_router(cue_router)
 app.include_router(tension_router)
 app.include_router(stems_router)

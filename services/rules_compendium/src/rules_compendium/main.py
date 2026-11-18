@@ -9,6 +9,7 @@ from typing import Any
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.config import EmbeddingEndpointSettings, RulesCompendiumSettings
 
 from rules_compendium.retrieval_factory import build_retrieval_engine
@@ -49,6 +50,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    register_store_unavailable_handlers(app)
     app.include_router(rules_router)
     app.include_router(encounters_router)
     app.include_router(homebrew_router)
