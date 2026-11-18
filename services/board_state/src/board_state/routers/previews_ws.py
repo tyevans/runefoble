@@ -27,6 +27,8 @@ from runefoble_auth.websocket import (
 
 logger = logging.getLogger("runefoble.board_state.routers.previews_ws")
 
+WS_AUTHORIZATION_REFUSED = 4403
+
 router = APIRouter(tags=["previews"])
 
 GHOST_ACTIONS = ("preview_move", "ghost_preview", "speech_intent", "SpeechIntentParsed")
@@ -144,7 +146,7 @@ async def _send_error(
 
 
 async def _admit(websocket: WebSocket, session_id: str) -> str | None:
-    """Verify the bearer and `board.view`. Close with 1008 before accept on a refusal."""
+    """Verify the bearer and `board.view`. Close before accept: 1008 for identity, 4403 for authorization."""
     try:
         principal = authenticate_websocket(websocket, get_zitadel_auth_service())
     except WebSocketAuthError as exc:
@@ -153,7 +155,7 @@ async def _admit(websocket: WebSocket, session_id: str) -> str | None:
         return None
     if not await can_on_board(principal.user_id, session_id, VIEW):
         logger.warning("Board socket denied on %s: board.view is required", websocket.url.path)
-        await websocket.close(code=WS_POLICY_VIOLATION)
+        await websocket.close(code=WS_AUTHORIZATION_REFUSED)
         return None
     await websocket.accept(subprotocol=RUNEFOBLE_SUBPROTOCOL)
     return principal.user_id

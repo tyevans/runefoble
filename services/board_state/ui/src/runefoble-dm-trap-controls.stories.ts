@@ -1,3 +1,4 @@
+import '@runefoble/ui-core/story-auth-provider';
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
 import './runefoble-dm-trap-controls.ts';
@@ -78,13 +79,14 @@ export const MultiMapSwitcherModal: Story = {
 export const TeleportPostsSwitchMapRoute: Story = {
   render: () => html`
     <div style="max-width: 600px; padding: 20px; position: relative; min-height: 400px;">
-      <runefoble-map-switcher
-        .open=${true}
-        .currentMapId=${'dungeon_lvl1'}
-        .maps=${sampleMaps}
-        .boardId=${'board-42'}
-        .campaignId=${'camp-7'}
-      ></runefoble-map-switcher>
+      <runefoble-story-auth-provider token="story-token">
+        <runefoble-map-switcher
+          .open=${true}
+          .currentMapId=${'dungeon_lvl1'}
+          .maps=${sampleMaps}
+          .boardId=${'board-42'}
+        ></runefoble-map-switcher>
+      </runefoble-story-auth-provider>
     </div>
   `,
   play: async ({ canvasElement }) => {
@@ -99,7 +101,8 @@ export const TeleportPostsSwitchMapRoute: Story = {
       await waitForCall(stub.calls);
       const call = stub.calls[0];
       if (!call) throw new Error('No request sent to the switch-map route');
-      if (call.url !== '/api/v1/boards/board-42/switch-map?campaign_id=camp-7') throw new Error(`Wrong URL: ${call.url}`);
+      if (call.url !== '/api/v1/boards/board-42/switch-map') throw new Error(`Wrong URL: ${call.url}`);
+      if (call.auth !== 'Bearer story-token') throw new Error(`Missing bearer: ${call.auth}`);
       const body = call.body as Record<string, unknown>;
       if (body.new_map_id !== 'dungeon_lvl2' || body.cols !== 20) throw new Error('Wrong switch-map body');
     } finally {
@@ -110,10 +113,15 @@ export const TeleportPostsSwitchMapRoute: Story = {
 
 /** Replaces window.fetch for one story. Records each call and returns a fixed response. */
 function stubFetchForStory(status: number, body: unknown) {
-  const calls: { url: string; method: string | undefined; body: unknown }[] = [];
+  const calls: { url: string; method: string | undefined; body: unknown; auth: string | null }[] = [];
   const original = window.fetch;
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-    calls.push({ url: String(input), method: init?.method, body: JSON.parse(String(init?.body)) });
+    calls.push({
+      url: String(input),
+      method: init?.method,
+      body: JSON.parse(String(init?.body)),
+      auth: new Headers(init?.headers).get('Authorization'),
+    });
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
   };
   return { calls, restore: () => { window.fetch = original; } };
@@ -128,12 +136,13 @@ async function waitForCall(calls: unknown[]): Promise<void> {
 export const ArmTrapPostsToTrapsRoute: Story = {
   render: () => html`
     <div style="max-width: 420px; padding: 20px; background: #f4f4f4;">
-      <runefoble-dm-trap-controls
-        .boardId=${'board-42'}
-        .campaignId=${'camp-7'}
-        .targetX=${4}
-        .targetY=${5}
-      ></runefoble-dm-trap-controls>
+      <runefoble-story-auth-provider token="story-token">
+        <runefoble-dm-trap-controls
+          .boardId=${'board-42'}
+          .targetX=${4}
+          .targetY=${5}
+        ></runefoble-dm-trap-controls>
+      </runefoble-story-auth-provider>
     </div>
   `,
   play: async ({ canvasElement }) => {
@@ -144,8 +153,9 @@ export const ArmTrapPostsToTrapsRoute: Story = {
       await waitForCall(stub.calls);
       const call = stub.calls[0];
       if (!call) throw new Error('No request sent to the traps route');
-      if (call.url !== '/api/v1/boards/board-42/traps?campaign_id=camp-7') throw new Error(`Wrong URL: ${call.url}`);
+      if (call.url !== '/api/v1/boards/board-42/traps') throw new Error(`Wrong URL: ${call.url}`);
       if (call.method !== 'POST') throw new Error(`Wrong method: ${call.method}`);
+      if (call.auth !== 'Bearer story-token') throw new Error(`Missing bearer: ${call.auth}`);
       const body = call.body as Record<string, unknown>;
       if (body.x !== 4 || body.y !== 5 || body.trap_type !== 'pit_trap') throw new Error('Wrong trap body');
     } finally {

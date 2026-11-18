@@ -21,7 +21,6 @@ export class BoardApiError extends Error {
 }
 
 export interface BoardApiOptions {
-  campaignId?: string;
   headers?: Record<string, string>;
   fetchImpl?: FetchLike;
 }
@@ -64,11 +63,6 @@ export interface SwitchMapResponse {
   status: string;
 }
 
-function withCampaign(path: string, campaignId?: string): string {
-  if (!campaignId) return path;
-  return `${path}?campaign_id=${encodeURIComponent(campaignId)}`;
-}
-
 async function readFailureDetail(res: Response): Promise<string> {
   const text = await res.text().catch(() => '');
   try {
@@ -107,13 +101,13 @@ export function buildCreateTrapBody(draft: TrapDraft): Record<string, unknown> {
 
 /** POST /api/v1/boards/{boardId}/traps (DM only). */
 export function postTrap(boardId: string, draft: TrapDraft, opts: BoardApiOptions = {}): Promise<SecretTrapResponse> {
-  const url = withCampaign(`/api/v1/boards/${encodeURIComponent(boardId)}/traps`, opts.campaignId);
+  const url = `/api/v1/boards/${encodeURIComponent(boardId)}/traps`;
   return postJson<SecretTrapResponse>(url, buildCreateTrapBody(draft), opts);
 }
 
 /** POST /api/v1/boards/{boardId}/switch-map (DM only). */
 export function postSwitchMap(boardId: string, draft: SwitchMapDraft, opts: BoardApiOptions = {}): Promise<SwitchMapResponse> {
-  const url = withCampaign(`/api/v1/boards/${encodeURIComponent(boardId)}/switch-map`, opts.campaignId);
+  const url = `/api/v1/boards/${encodeURIComponent(boardId)}/switch-map`;
   return postJson<SwitchMapResponse>(url, {
     new_map_id: draft.newMapId,
     cols: draft.cols,
@@ -161,4 +155,9 @@ export function buildAoEEvaluateMessage(config: AoETemplateConfig): Record<strin
     caster_token_id: config.casterTokenId,
     grid_type: config.gridType ?? 'square',
   };
+}
+
+/** Subprotocols that carry the bearer token on a board socket. A browser cannot set headers there. */
+export function boardSocketProtocols(token: string | null): string[] {
+  return token ? ['runefoble.v1', `runefoble.bearer.${token}`] : ['runefoble.v1'];
 }

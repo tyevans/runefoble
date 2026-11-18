@@ -339,11 +339,11 @@ def test_a_socket_without_a_bearer_is_closed_with_1008(client: TestClient, board
     assert closed.value.code == 1008
 
 
-def test_a_socket_of_a_user_without_board_view_is_closed_with_1008(client: TestClient, board: str):
+def test_a_socket_of_a_user_without_board_view_is_closed_with_4403(client: TestClient, board: str):
     with pytest.raises(WebSocketDisconnect) as closed, _connect(client, board, STRANGER):
         pass
 
-    assert closed.value.code == 1008
+    assert closed.value.code == 4403
 
 
 def test_a_socket_message_for_another_players_token_gets_an_error_and_the_token_stays(

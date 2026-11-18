@@ -115,10 +115,14 @@ Token ids are global in SpiceDB. A token id must use only letters, digits, and `
 
 ### WebSocket `/ws/boards/{session_id}`
 
-- Offer the subprotocols `runefoble.v1` and `runefoble.bearer.<jwt>`. A missing or invalid token closes the handshake with `1008`. A user without `board.view` gets the same close.
+- Offer the subprotocols `runefoble.v1` and `runefoble.bearer.<jwt>`. A missing or invalid token closes the handshake with `1008`. A user without `board.view` closes with `4403`, the code of the gateway session sockets. Both closes happen before accept.
 - `confirm_move`, `token_action`, and `radial_action` need `board_token.move` on `token_id`.
 - `aoe_place`, `cast_spell`, `spell_vfx`, `SpellCast`, and spoken spell intents need `campaign.play`.
 - Every other defined message (previews, `aoe_preview`, `aoe_evaluate`, `cancel_preview`) needs `board.view`.
 - A denied message returns `{"type": "error", "code": "FORBIDDEN", "status": 403}`. The socket stays open.
 - A message type that the board does not define returns `UNKNOWN_ACTION`. The board no longer rebroadcasts client frames.
 - An unexpected server error closes the socket with `1011` and logs the error.
+
+### Client side
+
+`<runefoble-board>` reads the token from the App Shell `runefoble-auth` context (`@runefoble/ui-core`). It opens the socket with `boardSocketProtocols(token)`. `<runefoble-dm-trap-controls>` and `<runefoble-map-switcher>` send `Authorization: Bearer` from the same context. They no longer send a `campaign_id` query.
