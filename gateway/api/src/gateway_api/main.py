@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from gateway_api.auth_sync import router as auth_sync_router
 from gateway_api.dependencies import event_bus_provider, platform_settings
 from gateway_api.routers import (
+    analytics_views_router,
     auth_router,
     boards_router,
     campaigns_router,
@@ -20,7 +21,6 @@ from gateway_api.routers import (
     compendium_router,
     downtime_router,
     health_router,
-    hub_views_router,
     lore_views_router,
     overlay_router,
     sessions_router,
@@ -81,7 +81,7 @@ app.include_router(auth_router)
 app.include_router(campaigns_router)
 app.include_router(boards_router)
 app.include_router(sessions_router)
-app.include_router(hub_views_router)
+app.include_router(analytics_views_router)
 app.include_router(lore_views_router)
 app.include_router(characters_router)
 app.include_router(compendium_router)
