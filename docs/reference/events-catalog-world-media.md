@@ -327,6 +327,37 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
 - **`CodexEntryUpdated`**: Emitted when codex content, tags, or privacy status are updated (`CodexEntryUpdated`).
 
 
+### Campaign Lore Stream Topics
+
+The Campaign Lore service publishes every event that its aggregates commit. The repository publishes each event to the stream named below, before the save returns. A failed publish returns HTTP 503, and the client retries. The mapping lives in `services/campaign_lore/src/campaign_lore/events.py`. An event with no mapping fails the save.
+
+| Event | Stream |
+|---|---|
+| `LoreDocumentIngested` | `runefoble.events.lore.document_ingested` |
+| `EntitiesExtracted` | `runefoble.events.lore.entities_extracted` |
+| `AliasesConsolidated` | `runefoble.events.lore.aliases_consolidated` |
+| `HandoutGenerated` | `runefoble.events.lore.handout_generated` |
+| `WaxSealBroken` | `runefoble.events.lore.wax_seal_broken` |
+| `InvisibleInkRevealed` | `runefoble.events.lore.invisible_ink_revealed` |
+| `RelicForged` | `runefoble.events.lore.relic_forged` |
+| `RelicInspected` | `runefoble.events.lore.relic_inspected` |
+| `RelicRuneTranslated` | `runefoble.events.lore.relic_rune_translated` |
+| `AtlasPinCreated` | `runefoble.events.lore.atlas_pin_created` |
+| `AtlasPinUpdated` | `runefoble.events.lore.atlas_pin_updated` |
+| `AtlasLayerToggled` | `runefoble.events.lore.atlas_layer_toggled` |
+| `AtlasTerritoryUpdated` | `runefoble.events.lore.atlas_territory_updated` |
+| `CodexEntryPublished` | `runefoble.events.lore.codex_entry_published` |
+| `CodexEntryUpdated` | `runefoble.events.lore.codex_entry_updated` |
+| `SharedWorldCreated` | `runefoble.events.lore.shared_world_created` |
+| `CampaignRegisteredToSharedWorld` | `runefoble.events.lore.campaign_registered_to_shared_world` |
+| `CrossCampaignDiscoveryShared` | `runefoble.events.lore.cross_campaign_discovery_shared` |
+| `OutpostEstablished` | `runefoble.events.lore.outpost_established` |
+| `SharedStrongholdUpgraded` | `runefoble.events.lore.shared_stronghold_upgraded` |
+| `CommunalNoticePosted` | `runefoble.events.lore.communal_notice_posted` |
+
+Each stream entry carries the event type in the `event_type` field and the event JSON in the `payload` field.
+
+
 ### Compendium & Encounter Events (`aggregate_type: Compendium`, `Encounter`)
 
 - **`HomebrewRuleRegistered`**: Emitted when a DM or player registers a campaign homebrew rule or custom monster (`HomebrewRuleRegistered`).

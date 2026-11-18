@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 from uuid import UUID
 
+from eventsource.ports.store import FullEventStore
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from campaign_lore.codex import CodexCrossReferencer
@@ -14,10 +15,8 @@ from campaign_lore.codex_deps import (
     load_codex_entry,
     require_campaign_view,
 )
-from campaign_lore.dependencies import (
-    get_campaign_codex_index,
-    get_codex_referencer,
-)
+from campaign_lore.codex_index import campaign_codex_entry_ids
+from campaign_lore.dependencies import get_codex_referencer, get_lore_event_store
 from campaign_lore.permissions import check_user_can_play_campaign
 from campaign_lore.routers.codex.referencing import enrich_entry_metadata
 from campaign_lore.routers.codex.schemas import (
@@ -36,7 +35,6 @@ async def publish_entry(
     payload: PublishCodexEntryRequest,
     deps: Annotated[CodexSessionDeps, Depends()],
     ref: Annotated[CodexCrossReferencer, Depends(get_codex_referencer)],
-    idx: Annotated[dict[UUID, list[UUID]], Depends(get_campaign_codex_index)],
 ) -> dict[str, Any]:
     """Publish a new journal or secret codex entry. The author is the verified caller."""
     if not await check_user_can_play_campaign(deps.user_id, campaign_id, deps.spicedb):
@@ -48,7 +46,7 @@ async def publish_entry(
         ref, campaign_id, payload.content, payload.metadata
     )
     agg = CodexAggregate.create(campaign_id, payload, deps.user_id, meta, entity_ids)
-    await deps.persist_new_entry(agg, campaign_id, deps.user_id, payload.privacy, idx)
+    await deps.persist_new_entry(agg, campaign_id, deps.user_id, payload.privacy)
     return {**format_codex_entry(agg.state), "status": "published"}
 
 
@@ -56,7 +54,7 @@ async def publish_entry(
 async def list_entries(
     campaign_id: UUID,
     deps: Annotated[CodexSessionDeps, Depends()],
-    idx: Annotated[dict[UUID, list[UUID]], Depends(get_campaign_codex_index)],
+    store: Annotated[FullEventStore, Depends(get_lore_event_store)],
     era: str | None = Query(default=None),
     tag: str | None = Query(default=None),
     search: str | None = Query(default=None),
@@ -64,7 +62,7 @@ async def list_entries(
     """List codex entries visible to authenticated user under SpiceDB Zanzibar privacy checks."""
     await require_campaign_view(deps.user_id, campaign_id, deps.spicedb)
     results = []
-    for eid in idx.get(campaign_id, []):
+    for eid in await campaign_codex_entry_ids(store, campaign_id):
         st = (await deps.repo.load(eid)).state
         if await deps.can_view(st) and filter_entry_match(st, era, tag, search):
             results.append(format_codex_entry(st))

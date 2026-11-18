@@ -47,7 +47,7 @@ curl -X POST http://localhost:8006/api/v1/lore/documents \
 ```
 
 This endpoint:
-1. Creates an event-sourced `LoreDocumentAggregate` and emits `LoreDocumentIngested`.
+1. Creates an event-sourced `LoreDocumentAggregate` and emits `LoreDocumentIngested`. The repository publishes it to the stream `runefoble.events.lore.document_ingested` before the save returns.
 2. Extracts entities, aliases, and relationships with regex patterns. No model is called. Each entity records `extraction_method: "pattern"`.
 3. Indexes the graph, the BM25 and dense chunk corpus, and the entity vectors in the service process.
 4. Records extracted entities on the aggregate stream via `EntitiesExtracted`.
@@ -164,10 +164,13 @@ The service stops with an error when one of these checks fails. It does not serv
 - The embedding endpoint does not answer the start-up probe, or it returns a different width. The error contains `embedding endpoint is unreachable`.
 - PostgreSQL does not accept the pgvector connection. The error contains `vector store (PostgreSQL) is unreachable`.
 - `RUNEFOBLE_EVENT_STORE_BACKEND=postgresql` (the default) and PostgreSQL cannot be reached. The service does not serve an empty projection.
+- Redis Streams is unreachable, or `RUNEFOBLE_REDIS_URL` is empty. The service cannot publish lore events, so it does not start.
 
 ### Restarts
 
 - Document titles, secrecy, aliases, and search results survive a restart, because they come from the replayed events.
+- Codex entries survive a restart. `GET /api/v1/campaigns/{campaign_id}/codex/entries` reads the `CodexEntryPublished` events from the event store on each request. No process keeps a codex index.
+- Every committed lore event is published to its `runefoble.events.lore.<name>` stream. The table is in [Campaign Lore Stream Topics](../reference/events-catalog-world-media.md#campaign-lore-stream-topics). A publish failure returns `503`, and the client retries.
 - Entity identifiers are derived from the campaign, document, name, and type. A restart writes the same pgvector rows again. It adds no duplicate rows.
 - Replay time grows with the number of stored documents. Each start re-indexes them.
 - The passage corpus stays in process. Each start rebuilds it from the events.
