@@ -7,6 +7,7 @@ dependencies:
 - TASK-0524
 - TASK-0526
 - TASK-0538
+- TASK-0798
 governing_adrs:
 - ADR-0014
 - ADR-0013
