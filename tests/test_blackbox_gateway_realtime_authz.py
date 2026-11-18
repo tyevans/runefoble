@@ -19,8 +19,9 @@ from starlette.websockets import WebSocketDisconnect
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.live_services import serve
+from tests.helpers.spectator_table import open_board_table
 from tests.helpers.ws_identity import ws_subprotocols
-from tests.realtime_session import bearer, open_table
+from tests.realtime_session import bearer
 
 FORBIDDEN = 4403
 SILENCE_SECONDS = 1.0
@@ -38,6 +39,7 @@ def watcher_url(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
 def gateway(
     watcher_url: str,
     game_session_upstream: str,
+    board_state_upstream: str,
     character_sheet_upstream: str,
     voice_agent_upstream: str,
 ) -> Iterator[TestClient]:
@@ -47,11 +49,14 @@ def gateway(
 
 
 @pytest.fixture
-def table(gateway: TestClient, game_session_upstream: str) -> tuple[str, str]:
+def table(
+    gateway: TestClient, game_session_upstream: str, board_state_upstream: str
+) -> tuple[str, str]:
     """A campaign (campaign id, session id) with a DM, a player and a spectator."""
-    return open_table(
+    return open_board_table(
         gateway,
         game_session_upstream,
+        board_state_upstream,
         "dm_dora",
         {"player_pip": "player", "spectator_sol": "spectator"},
     )

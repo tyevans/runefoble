@@ -14,7 +14,6 @@ from starlette.websockets import WebSocketDisconnect
 
 from tests.helpers.spicedb_factory import shared_spicedb_client
 from tests.helpers.ws_identity import ws_subprotocols
-from tests.realtime_session import open_table
 
 POLICY_VIOLATION = 1008
 FORBIDDEN = 4403
@@ -33,11 +32,14 @@ STRANGER = "stranger_eve"
 
 
 @pytest.fixture
-def table(gateway: TestClient, game_session_upstream: str) -> tuple[str, str]:
+def gateway(board_gateway: TestClient) -> TestClient:
+    return board_gateway
+
+
+@pytest.fixture
+def table(board_table) -> tuple[str, str]:
     """A campaign (campaign id, session id) with a player and a spectator. Stranger is not a member."""
-    return open_table(
-        gateway,
-        game_session_upstream,
+    return board_table(
         "dm_dora",
         {"player_pip": "player", "spectator_sol": "spectator"},
     )

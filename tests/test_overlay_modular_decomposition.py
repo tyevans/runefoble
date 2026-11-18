@@ -1,43 +1,45 @@
-"""Frontdoor blackbox tests for TASK-0117: Stream Overlay Router and HUD Templates Decomposition.
+"""Frontdoor blackbox tests for TASK-0117: Stream Overlay Router and HUD Templates (TASK-0809).
 
-Verifies:
-1. Strict line length invariants (< 200 lines for overlay.py, overlay_models.py, overlay_templates.py).
-2. GET /overlay/party-vitals/{session_id} frontdoor protocol returning valid HTML and CSS styles.
-3. WebSocket /overlay/ws/{session_id} frontdoor protocol delivering sanitized state and broadcasts.
-4. Template rendering via render_overlay_html with transparent mode and Bauhaus theme tags.
-5. Pydantic models integrity and public symbol re-exports.
+Verifies, through public routes and live loopback owners:
+1. GET /overlay/party-vitals/{session_id} returns HTML with the transparent template markers.
+2. The same route with `format=json` returns the sanitized projection.
+3. The overlay needs a bearer token and `session.observe`. A stranger gets 403.
+4. WebSocket /overlay/ws/{session_id} delivers sanitized state and broadcasts.
 """
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.cinematic_director import clear_cinematic_directors
-from gateway_api.main import app as gateway_app
-from gateway_api.overlay_templates import (
-    render_overlay_html,
-)
-from gateway_api.spectator import clear_raw_session_state, set_raw_session_state
 
 from tests.helpers.ws_identity import ws_subprotocols
+from tests.realtime_session import bearer
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
+OBSERVER = "spectator_sol"
 
-def setup_function():
-    """Reset spectator and director state before each test."""
-    clear_raw_session_state()
+
+@pytest.fixture(autouse=True)
+def clean_directors():
+    clear_cinematic_directors()
+    yield
     clear_cinematic_directors()
 
 
-def teardown_function():
-    """Reset spectator and director state after each test."""
-    clear_raw_session_state()
-    clear_cinematic_directors()
+@pytest.fixture
+def table(board_table):
+    """A live session with a board, a party token, a monster, and one spectator."""
+    return board_table("dm_dora", {OBSERVER: "spectator"}, start=True)
 
 
-def test_frontdoor_get_party_vitals_html():
-    """Verify GET /overlay/party-vitals/{session_id} returns valid HTML with embedded CSS."""
-    client = TestClient(gateway_app)
-    res = client.get("/overlay/party-vitals/sess-decomp-1")
+@pytest.fixture
+def gateway(board_gateway: TestClient) -> TestClient:
+    return board_gateway
+
+
+def test_frontdoor_get_party_vitals_html(gateway, table):
+    _, session_id = table
+    res = gateway.get(f"/overlay/party-vitals/{session_id}", headers=bearer(OBSERVER))
 
     assert res.status_code == 200
     assert "text/html" in res.headers["content-type"]
@@ -47,24 +49,31 @@ def test_frontdoor_get_party_vitals_html():
     assert "background: transparent" in body
     assert "runefoble-spectator-overlay" in body
     assert "window.__RUM_DATA__" in body
+    assert "Valeros" in body
+    assert "Goblin Stalker" not in body
 
 
-def test_frontdoor_get_party_vitals_json():
-    """Verify GET /overlay/party-vitals/{session_id}?format=json returns sanitized Pydantic model dict."""
-    client = TestClient(gateway_app)
-    res = client.get("/overlay/party-vitals/sess-decomp-2?format=json")
+def test_frontdoor_get_party_vitals_json(gateway, table):
+    _, session_id = table
+    res = gateway.get(f"/overlay/party-vitals/{session_id}?format=json", headers=bearer(OBSERVER))
 
     assert res.status_code == 200
     data = res.json()
-    assert data["session_id"] == "sess-decomp-2"
-    assert "party" in data
+    assert data["session_id"] == session_id
+    assert [m["name"] for m in data["party"]] == ["Valeros"]
     assert "camera" in data
     assert data["transparent"] is True
 
 
-def test_frontdoor_websocket_overlay_ws_endpoint(gateway, table_for):
+def test_frontdoor_get_party_vitals_refuses_a_stranger(gateway, table):
+    _, session_id = table
+    res = gateway.get(f"/overlay/party-vitals/{session_id}", headers=bearer("stranger_eve"))
+    assert res.status_code == 403
+
+
+def test_frontdoor_websocket_overlay_ws_endpoint(gateway, table):
     """Verify WebSocket /overlay/ws/{session_id} connects and delivers sanitized real-time feeds."""
-    _, session_id = table_for("dm_dora")
+    _, session_id = table
     with gateway.websocket_connect(
         f"/overlay/ws/{session_id}", subprotocols=ws_subprotocols("dm_dora")
     ) as ws:
@@ -101,21 +110,3 @@ def test_frontdoor_websocket_overlay_ws_endpoint(gateway, table_for):
         assert roll_msg["type"] == "roll_animation"
         assert roll_msg["roller_name"] == "Wizard"
         assert roll_msg["result"] == 11
-
-
-def test_render_overlay_html_template_with_session_and_theme():
-    """Verify render_overlay_html works directly with session_id string, transparency, and theme."""
-    custom_state = {
-        "session_id": "sess-direct-render",
-        "tokens": [
-            {"id": "t-fighter", "name": "Boran", "hp": 30, "max_hp": 30, "is_ai_controlled": True},
-        ],
-    }
-    set_raw_session_state("sess-direct-render", custom_state)
-
-    html_out = render_overlay_html("sess-direct-render", transparent=True, theme="bauhaus-dark")
-    assert "sess-direct-render" in html_out
-    assert 'data-theme="bauhaus-dark"' in html_out
-    assert "Boran" in html_out
-    assert "AI STAND-IN" in html_out
-    assert "transparent-mode" in html_out

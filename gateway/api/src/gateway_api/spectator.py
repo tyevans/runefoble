@@ -1,7 +1,8 @@
 """Spectator Stream Overlay models and state sanitization for Runefoble Gateway API.
 
-Filters out private DM tools, hidden tokens, monster stat blocks, and secret notes
-to deliver a clean, audience-safe spectator view for live streams and OBS sources.
+The state comes from the owning services (see `spectator_source`). This module only
+projects it to an audience-safe view: hidden tokens, monster stat blocks, and secret notes
+are dropped. Every output field is copied from an allowlist.
 """
 
 from typing import Any
@@ -60,124 +61,6 @@ class SpectatorStateResponse(BaseModel):
     atmosphere: SpectatorSceneAtmosphere | None = None
     chronicle: list[SpectatorChronicleMessage] = Field(default_factory=list)
     viewer: SpectatorViewerInfo | None = None
-
-
-# Session registry for dynamic test fixtures and live state overrides
-_RAW_SESSION_STORE: dict[str, dict[str, Any]] = {}
-
-
-def set_raw_session_state(session_id: str, state: dict[str, Any]) -> None:
-    """Register or override raw session state for testing or live caching."""
-    _RAW_SESSION_STORE[session_id] = state
-
-
-def clear_raw_session_state(session_id: str | None = None) -> None:
-    """Clear session registry."""
-    if session_id:
-        _RAW_SESSION_STORE.pop(session_id, None)
-    else:
-        _RAW_SESSION_STORE.clear()
-
-
-def get_default_raw_state(session_id: str) -> dict[str, Any]:
-    """Default raw session state containing both public elements and secret GM data."""
-    return {
-        "session_id": session_id,
-        "status": "active",
-        "round": 3,
-        "cols": 8,
-        "rows": 8,
-        "tokens": [
-            {
-                "id": "t1",
-                "name": "Valeros",
-                "x": 2,
-                "y": 3,
-                "color": "#2563eb",
-                "conditions": ["blessed"],
-                "hp": 45,
-                "max_hp": 45,
-                "ac": 18,
-                "dm_notes": "Carrying secret potion of speed.",
-            },
-            {
-                "id": "t2",
-                "name": "Kyra",
-                "x": 3,
-                "y": 3,
-                "color": "#db2777",
-                "conditions": ["drunk (missed session)"],
-                "is_ai_controlled": True,
-                "hp": 28,
-                "max_hp": 32,
-                "ac": 16,
-            },
-            {
-                "id": "t_hidden_1",
-                "name": "Goblin Stalker",
-                "x": 6,
-                "y": 2,
-                "hidden": True,
-                "hp": 12,
-                "max_hp": 12,
-                "stat_block": {"cr": "1/2", "ac": 13, "stealth": "+6"},
-                "dm_notes": "Lurking in shadows ready to ambush frontline.",
-            },
-            {
-                "id": "t_secret_1",
-                "name": "Mimic Chest",
-                "x": 5,
-                "y": 5,
-                "is_secret": True,
-                "hp": 58,
-                "max_hp": 58,
-                "dm_notes": "Adhesive pseudopod ready.",
-            },
-        ],
-        "dm_notes": "Secret GM encounter notes: Trap at (4,4), DC 15 Dex save or 3d6 poison.",
-        "monster_stat_blocks": {
-            "goblin_stalker": {"cr": "1/2", "hp": 12, "ac": 13},
-            "mimic": {"cr": "2", "hp": 58, "ac": 12},
-        },
-        "atmosphere": {
-            "location_name": "Tomb of the Star-Eater - Crypt Antechamber",
-            "lighting": "Dim cold luminescence from weeping wall runes",
-            "mood": "Suspenseful",
-            "description": "Ancient stone sarcophagi line the chamber walls. A bone-chilling draft stirs dry shrouds.",
-            "ambient_audio_prompt": "hollow stone reverberations, distant faint whispers, cold draft",
-            "private_dm_lore": "The crypt actually belonged to Queen Sorshen's vizier.",
-        },
-        "chronicle": [
-            {
-                "id": "c1",
-                "speaker": "Valeros",
-                "text": "I shield my eyes and peer into the shadowed corridor.",
-                "timestamp": "2026-09-25T20:15:00Z",
-                "action_type": "speech",
-            },
-            {
-                "id": "c2",
-                "speaker": "The Watcher",
-                "text": "The shadows stretch unnaturally as you step toward the rune-carved archway.",
-                "timestamp": "2026-09-25T20:15:10Z",
-                "action_type": "dm_ruling",
-            },
-            {
-                "id": "c_secret",
-                "speaker": "The Watcher (Private Note)",
-                "text": "DC 15 trap triggered check failed secretly.",
-                "timestamp": "2026-09-25T20:15:12Z",
-                "is_private": True,
-            },
-        ],
-    }
-
-
-def get_raw_session_state(session_id: str) -> dict[str, Any]:
-    """Retrieve raw session state from registry or generate default."""
-    if session_id in _RAW_SESSION_STORE:
-        return _RAW_SESSION_STORE[session_id]
-    return get_default_raw_state(session_id)
 
 
 def sanitize_spectator_state(

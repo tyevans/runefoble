@@ -241,7 +241,7 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `content`: String
   - `recipient_role`: String ("dungeon_master")
   - `metadata`: Dict[String, Any]
-- **`SpectatorSessionConnected`**: Emitted when a live stream spectator or OBS overlay source connects to a campaign session (`runefoble.events.spectator.connected`).
+- **`SpectatorSessionConnected`**: Emitted by the gateway when a spectator WebSocket is admitted to a session (`runefoble.events.spectator.connected`). The spectator HTTP view publishes no event.
   - `session_id`: String
   - `viewer_id`: String
   - `viewer_name`: String

@@ -1,4 +1,4 @@
-"""Spectator WebSocket and microfrontend manifest blackbox tests (TASK-0190)."""
+"""Spectator WebSocket and microfrontend manifest blackbox tests (TASK-0190, TASK-0809)."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,9 +8,14 @@ from tests.helpers.ws_identity import ws_subprotocols
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
-def test_overlay_websocket_connection_and_initial_sanitized_state(gateway, table_for) -> None:
-    """Verify connecting to /ws/overlay/{session_id} delivers initial sanitized party state."""
-    _, session_id = table_for("dm_dora", {"overlay-tester": "spectator"})
+@pytest.fixture
+def gateway(board_gateway: TestClient) -> TestClient:
+    return board_gateway
+
+
+def test_overlay_websocket_connection_and_initial_sanitized_state(gateway, board_table) -> None:
+    """Verify connecting to /ws/overlay/{session_id} delivers the owner party without monsters."""
+    _, session_id = board_table("dm_dora", {"overlay-tester": "spectator"})
     with gateway.websocket_connect(
         f"/ws/overlay/{session_id}", subprotocols=ws_subprotocols("overlay-tester")
     ) as ws:
@@ -19,35 +24,27 @@ def test_overlay_websocket_connection_and_initial_sanitized_state(gateway, table
         assert msg["session_id"] == session_id
         assert msg["transparent"] is True
 
-        party_names = [p["name"] for p in msg["party"]]
-        assert "Valeros" in party_names
-        assert "Kyra" in party_names
-        assert "Goblin Stalker" not in party_names
-        assert "Mimic Chest" not in party_names
+        assert [p["name"] for p in msg["party"]] == ["Valeros"]
+        assert "Goblin Stalker" not in [p["name"] for p in msg["party"]]
 
-        # Zero unrevealed monster HP numbers or DM notes in initial payload
         for member in msg["party"]:
             assert "stat_block" not in member
             assert "dm_notes" not in member
             assert "ac" not in member
 
 
-def test_overlay_websocket_turn_started_and_token_moved_camera_updates(gateway, table_for) -> None:
+def test_overlay_websocket_turn_started_and_token_moved_camera_updates(
+    gateway, board_table
+) -> None:
     """Verify WebSocket updates camera target smoothly when turn starts or token moves."""
-    _, session_id = table_for("dm_dora")
+    _, session_id = board_table("dm_dora")
     with gateway.websocket_connect(
         f"/ws/overlay/{session_id}", subprotocols=ws_subprotocols("dm_dora")
     ) as ws:
         _init = ws.receive_json()
 
         # 1. Turn Started -> broadcast camera centering
-        ws.send_json(
-            {
-                "action": "turn_started",
-                "character_id": "c-valeros",
-                "token_id": "t1",
-            }
-        )
+        ws.send_json({"action": "turn_started", "character_id": "c-valeros", "token_id": "t1"})
         turn_msg = ws.receive_json()
         assert turn_msg["type"] == "camera_target_updated"
         assert turn_msg["action"] == "turn_started"

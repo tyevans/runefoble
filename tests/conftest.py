@@ -89,6 +89,7 @@ pytest_plugins = [
     "tests.helpers.restart_stack",
     "tests.helpers.service_harness",
     "tests.helpers.silo_fixtures",
+    "tests.helpers.spectator_table",
     "tests.helpers.spicedb",
     "tests.helpers.stand_in_policy",
     "tests.helpers.voice_identity",

@@ -1,192 +1,176 @@
-"""Spectator Stream Overlay and Real-Time Broadcast Blackbox Suite.
+"""Spectator Stream Overlay and Real-Time Broadcast Blackbox Suite (TASK-0809).
 
-Validates:
-1. Public HTTP endpoints: GET /api/v1/spectate/{id} and /api/v1/spectator/sessions/{id}.
-2. Viewer identification via token query parameters and authentication headers.
-3. Event bus dispatch of SpectatorSessionConnected.
-4. Dynamic session state injection and spectator state sanitization.
-5. Live WebSocket /ws/spectator/{id} connect handshake and real-time broadcast updates.
+Validates, through public frontdoors and live loopback owners:
+1. GET /api/v1/spectate/{id} and /api/v1/spectator/sessions/{id} need a verified bearer token
+   and `session.observe`. Other viewers get 403. No token gets 401.
+2. The state comes from game_session and board_state. An owner 404 passes on. No fixture data.
+3. The viewer is the verified token subject. No query token or header identifies a viewer.
+4. The spectator connection event is published when the WebSocket is admitted, not by the GET.
+5. The live WebSocket /ws/spectator/{id} sends the owner party and camera updates.
 """
+
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from gateway_api.cinematic_director import clear_cinematic_directors
-from gateway_api.main import app as gateway_app
-from gateway_api.spectator import (
-    clear_raw_session_state,
-    set_raw_session_state,
-)
+from starlette.websockets import WebSocketDisconnect
 
 from tests.helpers.ws_identity import ws_subprotocols
+from tests.realtime_session import bearer, open_table
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
+SPECTATOR = "spectator_sol"
+STRANGER = "stranger_eve"
+SPECTATE_PATHS = ("/api/v1/spectate/{sid}", "/api/v1/spectator/sessions/{sid}")
+SPECTATOR_EVENT_STREAM = "runefoble.events.spectator"
+
 
 @pytest.fixture(autouse=True)
-def clean_state():
-    """Ensure clean spectator state and bus before and after each test."""
-    clear_raw_session_state()
+def clean_directors():
     clear_cinematic_directors()
     yield
-    clear_raw_session_state()
     clear_cinematic_directors()
 
 
-def test_get_spectator_state_endpoints():
-    """Verify GET /api/v1/spectate/{id} and /api/v1/spectator/sessions/{id} return sanitized state."""
-    client = TestClient(gateway_app)
+@pytest.fixture
+def table(board_table):
+    """A live session with a board, a party token, a monster, and one spectator."""
+    return board_table("dm_dora", {SPECTATOR: "spectator"}, start=True)
 
-    for path in ("/api/v1/spectate/sess-default-1", "/api/v1/spectator/sessions/sess-default-1"):
-        res = client.get(path)
-        assert res.status_code == 200
+
+@pytest.fixture
+def gateway(board_gateway: TestClient) -> TestClient:
+    return board_gateway
+
+
+def test_spectate_returns_owner_state_to_an_observer(gateway, table):
+    _, session_id = table
+    for template in SPECTATE_PATHS:
+        res = gateway.get(template.format(sid=session_id), headers=bearer(SPECTATOR))
+        assert res.status_code == 200, res.text
         data = res.json()
-        assert data["session_id"] == "sess-default-1"
+
+        assert data["session_id"] == session_id
         assert data["status"] == "active"
-        assert data["round"] == 3
-
-        names = [t["name"] for t in data["tokens"]]
-        assert "Valeros" in names
-        assert "Kyra" in names
-        assert "Goblin Stalker" not in names
-        assert "Mimic Chest" not in names
-
-        for tok in data["tokens"]:
-            assert "hp" not in tok
-            assert "stat_block" not in tok
-            assert "dm_notes" not in tok
-
-        assert data["atmosphere"]["location_name"] == "Tomb of the Star-Eater - Crypt Antechamber"
-        assert len(data["chronicle"]) == 2
-        assert data["viewer"]["viewer_id"] == "spectator_guest"
+        assert data["round"] == 1
+        assert (data["cols"], data["rows"]) == (8, 8)
+        assert [t["name"] for t in data["tokens"]] == ["Valeros"]
+        assert data["chronicle"], "the session start is in the owner chronicle"
+        assert data["viewer"]["viewer_id"] == SPECTATOR
 
 
-def test_get_spectator_state_with_token_query():
-    """Verify spectator authentication and viewer tagging via ?token= query parameter."""
-    client = TestClient(gateway_app)
-    res = client.get("/api/v1/spectate/sess-obs-1?token=devon_stream")
-    assert res.status_code == 200
-    data = res.json()
-    assert data["viewer"]["viewer_id"] == "spectator_devon_stream"
-    assert data["viewer"]["viewer_name"] == "Spectator (devon_stream)"
+def test_spectate_omits_private_owner_fields(gateway, table):
+    _, session_id = table
+    data = gateway.get(SPECTATE_PATHS[0].format(sid=session_id), headers=bearer(SPECTATOR)).json()
 
-
-def test_get_spectator_state_resolves_viewer_from_verified_token(signing_issuer):
-    """Verify a signed-in viewer is identified by a verified token, never by X-User-Id."""
-    client = TestClient(gateway_app)
-
-    res_header_only = client.get(
-        "/api/v1/spectate/sess-header-1", headers={"X-User-Id": "spectator_sam"}
-    )
-    assert res_header_only.status_code == 200
-    assert res_header_only.json()["viewer"]["viewer_id"] == "spectator_guest"
-
-    token = signing_issuer.mint("spectator_sam")
-    res_bearer = client.get(
-        "/api/v1/spectate/sess-header-2",
-        headers={"Authorization": f"Bearer {token}", "X-User-Id": "someone_else"},
-    )
-    assert res_bearer.status_code == 200
-    assert res_bearer.json()["viewer"]["viewer_id"] == "spectator_sam"
-
-
-def test_get_spectator_state_refuses_forged_bearer(signing_issuer):
-    """Verify a Bearer value that is not a verified token gets 401, not a viewer identity."""
-    client = TestClient(gateway_app)
-
-    res = client.get(
-        "/api/v1/spectate/sess-header-3", headers={"Authorization": "Bearer twitch_streamer_7"}
-    )
-    assert res.status_code == 401
-
-
-@pytest.mark.asyncio
-async def test_spectator_connected_event_dispatched_to_redis_bus(mock_bus):
-    """Verify that accessing spectator endpoint dispatches SpectatorSessionConnected to Redis."""
-    client = TestClient(gateway_app)
-    res = client.get("/api/v1/spectate/sess-event-stream?token=obs_overlay")
-    assert res.status_code == 200
-
-    stream_events = mock_bus.streams.get("runefoble.events.spectator", [])
-    assert len(stream_events) == 1
-
-    _event_id, payload = stream_events[0]
-    assert payload["event_type"] == "runefoble.events.spectator.connected"
-    assert "sess-event-stream" in payload["payload"]
-    assert "spectator_obs_overlay" in payload["payload"]
-
-
-def test_custom_session_state_overrides_and_sanitization():
-    """Verify custom session state can be dynamically provided and is properly sanitized."""
-    custom_raw = {
-        "session_id": "custom-dungeon-5",
-        "status": "in_combat",
-        "round": 6,
-        "cols": 12,
-        "rows": 12,
-        "tokens": [
-            {"id": "c-hero", "name": "Hero", "x": 1, "y": 1, "hp": 100, "ac": 20},
-            {"id": "c-stealth", "name": "Stalker", "x": 4, "y": 4, "secret": True, "hp": 40},
-        ],
-        "dm_notes": "Trap triggered if hero moves east.",
-        "chronicle": [
-            {"id": "ch-1", "speaker": "Hero", "text": "For the realm!", "timestamp": "12:00:00"},
-        ],
-    }
-    set_raw_session_state("custom-dungeon-5", custom_raw)
-
-    client = TestClient(gateway_app)
-    res = client.get("/api/v1/spectate/custom-dungeon-5")
-    assert res.status_code == 200
-    data = res.json()
-
-    assert data["session_id"] == "custom-dungeon-5"
-    assert data["round"] == 6
-    assert data["cols"] == 12
-    assert len(data["tokens"]) == 1
-    assert data["tokens"][0]["id"] == "c-hero"
-    assert "hp" not in data["tokens"][0]
+    assert "Goblin Stalker" not in [t["name"] for t in data["tokens"]]
+    for tok in data["tokens"]:
+        assert set(tok) <= {"id", "name", "x", "y", "conditions", "color", "is_ai_controlled"}
     assert "dm_notes" not in data
+    assert "monster_stat_blocks" not in data
 
 
-def test_spectator_websocket_connection_and_initial_stream_state(gateway, table_for):
-    """Verify live WebSocket /ws/spectator/{id} connects and delivers sanitized party state."""
-    _, session_id = table_for("dm_dora", {"spectator-tester": "spectator"})
+def test_spectate_refuses_a_viewer_without_observe(gateway, table):
+    _, session_id = table
+    for template in SPECTATE_PATHS:
+        res = gateway.get(template.format(sid=session_id), headers=bearer(STRANGER))
+        assert res.status_code == 403
+
+
+def test_spectate_needs_a_bearer_token_and_ignores_a_query_token(gateway, table):
+    _, session_id = table
+    for template in SPECTATE_PATHS:
+        url = template.format(sid=session_id)
+        assert gateway.get(url).status_code == 401
+        assert gateway.get(f"{url}?token=obs_overlay").status_code == 401
+
+
+def test_spectate_refuses_a_session_the_caller_cannot_observe(gateway):
+    res = gateway.get(SPECTATE_PATHS[0].format(sid=uuid4()), headers=bearer("dm_dora"))
+    assert res.status_code == 403
+
+
+def test_spectate_passes_the_owner_404_when_the_session_has_no_board(
+    gateway, game_session_upstream
+):
+    _, session_id = open_table(gateway, game_session_upstream, "dm_dora", {SPECTATOR: "spectator"})
+    res = gateway.get(SPECTATE_PATHS[0].format(sid=session_id), headers=bearer(SPECTATOR))
+    assert res.status_code == 404
+    assert "Valeros" not in res.text
+
+
+def test_spectate_publishes_no_event_on_get(gateway, table, mock_bus):
+    _, session_id = table
+    assert gateway.get(SPECTATE_PATHS[0].format(sid=session_id), headers=bearer(SPECTATOR))
+    assert mock_bus.streams.get(SPECTATOR_EVENT_STREAM, []) == []
+
+
+def test_spectator_connection_event_is_published_when_the_socket_is_admitted(
+    gateway, table, mock_bus
+):
+    _, session_id = table
     with gateway.websocket_connect(
-        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols("spectator-tester")
+        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols(SPECTATOR)
+    ) as ws:
+        assert ws.receive_json()["type"] == "overlay_connected"
+
+    events = mock_bus.streams.get(SPECTATOR_EVENT_STREAM, [])
+    assert len(events) == 1
+    _event_id, payload = events[0]
+    assert payload["event_type"] == "runefoble.events.spectator.connected"
+    assert session_id in payload["payload"]
+    assert SPECTATOR in payload["payload"]
+
+
+def test_spectator_websocket_sends_the_owner_party_without_monsters(gateway, table):
+    _, session_id = table
+    with gateway.websocket_connect(
+        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols(SPECTATOR)
     ) as ws:
         msg = ws.receive_json()
         assert msg["type"] == "overlay_connected"
         assert msg["session_id"] == session_id
         assert msg["transparent"] is True
 
-        party_names = [p["name"] for p in msg["party"]]
-        assert "Valeros" in party_names
-        assert "Kyra" in party_names
-        assert "Goblin Stalker" not in party_names
-        assert "Mimic Chest" not in party_names
-
+        assert [p["name"] for p in msg["party"]] == ["Valeros"]
+        assert msg["party"][0]["hp"] == 45
         for member in msg["party"]:
             assert "stat_block" not in member
             assert "dm_notes" not in member
             assert "ac" not in member
 
 
-def test_spectator_websocket_realtime_broadcast_updates(gateway, table_for):
-    """Verify live WebSocket receives camera updates upon turn start and token move events."""
-    _, session_id = table_for("dm_dora")
+def test_spectator_websocket_without_an_owner_board_closes_with_an_error(
+    gateway, game_session_upstream
+):
+    _, session_id = open_table(gateway, game_session_upstream, "dm_dora", {SPECTATOR: "spectator"})
+    with gateway.websocket_connect(
+        f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols(SPECTATOR)
+    ) as ws:
+        frame = ws.receive_json()
+        assert frame["type"] == "error"
+        assert frame["code"] == "UPSTREAM_UNAVAILABLE"
+        with pytest.raises(WebSocketDisconnect) as closed:
+            ws.receive_json()
+    assert closed.value.code == 1011
+
+
+def test_spectator_websocket_realtime_broadcast_updates(gateway, table):
+    """Turn start and token move broadcast a camera target to the spectator socket."""
+    _, session_id = table
     with gateway.websocket_connect(
         f"/ws/spectator/{session_id}", subprotocols=ws_subprotocols("dm_dora")
     ) as ws:
         _init = ws.receive_json()
 
-        # 1. Turn Started -> broadcast camera centering
         ws.send_json({"action": "turn_started", "character_id": "c-valeros", "token_id": "t1"})
         turn_msg = ws.receive_json()
         assert turn_msg["type"] == "camera_target_updated"
         assert turn_msg["action"] == "turn_started"
         assert turn_msg["camera"]["duration_ms"] == 300
 
-        # 2. Token Moved -> broadcast camera centering
         ws.send_json(
             {
                 "action": "token_moved",
