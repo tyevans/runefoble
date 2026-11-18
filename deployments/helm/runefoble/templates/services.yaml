@@ -51,8 +51,10 @@ spec:
           ports:
             - containerPort: {{ .config.port }}
           env:
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "POSTGRES_PASSWORD" "key" "postgres-password") | nindent 12 }}
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SPICEDB_PRESHARED_KEY" "key" "spicedb-preshared-key") | nindent 12 }}
             - name: RUNEFOBLE_DATABASE_URL
-              value: "postgresql+asyncpg://{{ $.Values.postgres.username }}:{{ $.Values.postgres.password }}@postgres:5432/{{ $.Values.postgres.database }}"
+              value: "postgresql+asyncpg://{{ $.Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/{{ $.Values.postgres.database }}"
             - name: RUNEFOBLE_USE_POSTGRES_EVENT_STORE
               value: "true"
             - name: RUNEFOBLE_SILO_ENDPOINT
@@ -65,8 +67,6 @@ spec:
               value: {{ $.Values.zitadel.audience | quote }}
             - name: RUNEFOBLE_SPICEDB_ENDPOINT
               value: "spicedb:{{ $.Values.spicedb.grpcPort }}"
-            - name: RUNEFOBLE_SPICEDB_PRESHARED_KEY
-              value: {{ $.Values.spicedb.presharedKey | quote }}
             - name: REDIS_URL
               value: "redis://runefoble-redis:{{ $.Values.redis.port }}/0"
             - name: RUNEFOBLE_REDIS_URL

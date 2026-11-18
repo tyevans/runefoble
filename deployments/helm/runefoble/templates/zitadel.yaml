@@ -18,10 +18,11 @@ spec:
       containers:
         - name: zitadel
           image: {{ .Values.zitadel.image }}
-          args: ["start-from-init", "--masterkey", {{ .Values.zitadel.masterKey | quote }}, "--tlsMode", "disabled"]
+          args: ["start-from-init", "--tlsMode", "disabled"]
           ports:
             - containerPort: {{ .Values.zitadel.port }}
           env:
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "ZITADEL_MASTERKEY" "key" "zitadel-masterkey") | nindent 12 }}
             - name: ZITADEL_EXTERNALDOMAIN
               value: {{ .Values.zitadel.externalDomain | quote }}
             - name: ZITADEL_EXTERNALPORT
@@ -37,13 +38,19 @@ spec:
             - name: ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME
               value: {{ .Values.postgres.username | quote }}
             - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
-              value: {{ .Values.postgres.password | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "runefoble.credentialsSecret" $ }}
+                  key: postgres-password
             - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
               value: "disable"
             - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
               value: {{ .Values.postgres.username | quote }}
             - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
-              value: {{ .Values.postgres.password | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "runefoble.credentialsSecret" $ }}
+                  key: postgres-password
             - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
               value: "disable"
             - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME
@@ -55,7 +62,10 @@ spec:
             - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL
               value: {{ .Values.zitadel.adminEmail | quote }}
             - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD
-              value: {{ .Values.zitadel.adminPassword | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "runefoble.credentialsSecret" $ }}
+                  key: zitadel-admin-password
             {{- if .Values.mailpit.enabled }}
             - name: ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST
               value: "mailpit:{{ .Values.mailpit.smtpPort | default 1025 }}"

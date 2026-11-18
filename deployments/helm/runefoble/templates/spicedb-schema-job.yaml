@@ -36,8 +36,9 @@ spec:
           image: {{ .Values.spicedb.image }}
           args: ["datastore", "migrate", "head", "--datastore-engine", "postgres"]
           env:
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "POSTGRES_PASSWORD" "key" "postgres-password") | nindent 12 }}
             - name: SPICEDB_DATASTORE_CONN_URI
-              value: "postgres://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres:5432/spicedb?sslmode=disable"
+              value: "postgres://{{ .Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/spicedb?sslmode=disable"
       containers:
         - name: schema-writer
           image: {{ .Values.spicedb.schemaJob.image | quote }}
@@ -48,9 +49,9 @@ spec:
             - /etc/spicedb/schema/runefoble.zed
             - --endpoint
             - "spicedb:{{ .Values.spicedb.grpcPort }}"
-            - --token
-            - {{ .Values.spicedb.presharedKey | quote }}
             - --insecure
+          env:
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "ZED_TOKEN" "key" "spicedb-preshared-key") | nindent 12 }}
           volumeMounts:
             - name: schema-volume
               mountPath: /etc/spicedb/schema
