@@ -1,7 +1,7 @@
 ---
 id: '0662'
 title: Reference and How-To Docs Drop Stale Paths, Compatibility Wording, and Machine-Specific Links
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies: []
 governing_adrs:
@@ -18,7 +18,7 @@ source_audits:
 # TASK-0662: Reference and How-To Docs Drop Stale Paths, Compatibility Wording, and Machine-Specific Links
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Several reference and how-to pages cite module paths that do not exist, describe backward-compatibility layers (forbidden by DoR 9), state line counts that are wrong, and link to absolute paths on one developer's machine. Correct each one to the real path, delete the compatibility wording, and make the links repository-relative. Where the code still has the shim, the wording names it as a defect and points to the shim-removal task instead of calling it intended behaviour.

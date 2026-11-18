@@ -1,7 +1,7 @@
 ---
 id: '0489'
 title: Remove Backward Compatibility Shims & Re-exports in gateway_mcp
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0005
@@ -19,7 +19,7 @@ target_release: 0.9.0
 # TASK-0489: Remove Backward Compatibility Shims & Re-exports in gateway_mcp
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: scope widened to the `get_tool` monkeypatch (`server.py:48`). The `apply_condition` alias named in the audit was not found; `apply_condition` is a plain tool function (`tools/character.py:161`). TASK-0629 depends on this task.
 

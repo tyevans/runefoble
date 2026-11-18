@@ -1,7 +1,7 @@
 ---
 id: '0692'
 title: Node Service Dev Script Resolves Its Imports and the Image Pins pnpm
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0621
@@ -19,7 +19,7 @@ source_audits:
 # TASK-0692: Node Service Dev Script Resolves Its Imports and the Image Pins pnpm
 
 ## Status
-Refined. Discovered in round 2 audit of reports 0621 and 0575.
+Complete
 
 ## Summary
 The audience studio `dev` script runs TypeScript with a flag that cannot resolve the `.js` import paths. The root package has no `packageManager` field, so the image build installs whatever pnpm major `corepack` picks up.

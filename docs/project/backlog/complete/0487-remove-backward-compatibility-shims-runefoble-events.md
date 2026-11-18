@@ -1,7 +1,7 @@
 ---
 id: '0487'
 title: Remove Backward Compatibility Shims & Re-exports in runefoble_events
-status: Refined
+status: Complete
 created: 2026-09-29
 dependencies:
 - TASK-0231
@@ -18,7 +18,7 @@ target_release: 0.9.0
 # TASK-0487: Remove Backward Compatibility Shims & Re-exports in runefoble_events
 
 ## Status
-Refined
+Complete
 
 Audit 2026-11-17: file list corrected. `soundscape_events.py` does not exist. Also remove the alias `TrapPlaced = TrapPlacedEvent` (`board_traps.py:93`). `events.py`, `board.py`, and the `board_events/` and `watcher_events/` directories are decided by TASK-0579 and are not deleted here.
 

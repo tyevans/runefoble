@@ -1,7 +1,7 @@
 ---
 id: '0626'
 title: Move Chart Credentials to a Kubernetes Secret
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0625
@@ -20,7 +20,7 @@ source_audits:
 # TASK-0626: Move Chart Credentials to a Kubernetes Secret
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `deployments/helm/runefoble/values.yaml` commits credentials in plain text, and the templates render them as literal container `env.value` entries. Generate one Kubernetes Secret from values, reference it with `secretKeyRef` in every container, and keep the local development values only in the tutorial, clearly labelled as dev-only.

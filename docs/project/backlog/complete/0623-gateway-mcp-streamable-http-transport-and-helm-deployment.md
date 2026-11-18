@@ -1,7 +1,7 @@
 ---
 id: '0623'
 title: Gateway MCP Streamable HTTP Transport and Helm Deployment
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0620
@@ -23,7 +23,7 @@ source_audits:
 # TASK-0623: Gateway MCP Streamable HTTP Transport and Helm Deployment
 
 ## Status
-Refined
+Complete
 
 ## Summary
 `gateway/mcp` runs only as a stdio process (`server.py:89-91`, `mcp.run()` with the default transport). No Helm Deployment, Service, image, or Swagger/MCP route exists, and `docs/reference/ports-and-endpoints.md:299` claims the service serves MCP. Serve the MCP protocol over streamable HTTP, build its image, and deploy it through Helm. Dynamic tool registry sharing across processes is out of scope (see TASK-0489 and the `w1-gateway-mcp` F3 follow-up).

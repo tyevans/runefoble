@@ -1,7 +1,7 @@
 ---
 id: '0528'
 title: Services Verify Zitadel Tokens (asset_forge, soundscape, character_sheet)
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -28,7 +28,7 @@ source_audits:
 # TASK-0528: Services Verify Zitadel Tokens (asset_forge, soundscape, character_sheet)
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Three more contexts trust a header for identity. Asset forge writes assets as `anonymous_creator` when no identity exists. Soundscape and character sheet skip checks when the header is missing. Apply the verified principal to each router and remove the anonymous fallbacks.
