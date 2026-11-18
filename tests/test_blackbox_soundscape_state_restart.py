@@ -82,8 +82,6 @@ def reset_event_store_singleton():
 @pytest.mark.asyncio
 async def test_master_volume_survives_process_restart(postgres_service):
     """A master volume set through the override route is served after a restart."""
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL event store test")
     dsn = str(postgres_service["dsn"])
     session_id = f"session-{uuid4().hex[:8]}"
     campaign_id = str(uuid4())
@@ -112,8 +110,6 @@ async def test_master_volume_survives_process_restart(postgres_service):
 @pytest.mark.asyncio
 async def test_speech_ducking_releases_after_its_stored_duration(postgres_service):
     """A ducking engagement ends when its stored duration elapses. The tension route agrees."""
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL event store test")
     dsn = str(postgres_service["dsn"])
     session_id = f"session-{uuid4().hex[:8]}"
     campaign_id = str(uuid4())
@@ -145,8 +141,6 @@ async def test_speech_ducking_releases_after_its_stored_duration(postgres_servic
 @pytest.mark.asyncio
 async def test_explicit_duck_release_clears_ducking_before_its_duration(postgres_service):
     """An explicit release ends an engagement that has no duration (hold until released)."""
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL event store test")
     dsn = str(postgres_service["dsn"])
     session_id = f"session-{uuid4().hex[:8]}"
     campaign_id = str(uuid4())
@@ -171,8 +165,6 @@ async def test_explicit_duck_release_clears_ducking_before_its_duration(postgres
 @pytest.mark.asyncio
 async def test_aggregate_id_is_stable_across_process_starts(postgres_service):
     """The soundscape aggregate id for a session is the same in two processes."""
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL event store test")
     dsn = str(postgres_service["dsn"])
     session_id = f"session-{uuid4().hex[:8]}"
     campaign_id = str(uuid4())

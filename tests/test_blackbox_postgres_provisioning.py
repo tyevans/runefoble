@@ -75,8 +75,6 @@ def test_dsn_normalization_and_platform_settings():
 
 def test_multidb_init_script_provisions_all_databases(postgres_service):
     """Verify that init-multidb creates zitadel, spicedb, and openpanel databases."""
-    if not postgres_service:
-        pytest.skip("Docker not available for multi-database test")
 
     container_name = postgres_service["container_name"]
     res = subprocess.run(

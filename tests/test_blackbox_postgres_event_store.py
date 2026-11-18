@@ -43,8 +43,6 @@ def reset_event_store_singleton():
 @pytest.mark.asyncio
 async def test_postgres_event_store_durable_aggregate_roundtrip(postgres_service):
     """Verify end-to-end durable event sourcing and reconstitution against PostgreSQL."""
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL event store test")
 
     settings = PlatformSettings(
         database_url=str(postgres_service["dsn"]),
@@ -121,8 +119,6 @@ async def test_postgres_event_store_durable_aggregate_roundtrip(postgres_service
 @pytest.mark.asyncio
 async def test_postgres_event_store_optimistic_concurrency(postgres_service):
     """Verify optimistic concurrency conflict detection in PostgreSQL event store."""
-    if not postgres_service:
-        pytest.skip("Docker not available for concurrency test")
 
     settings = PlatformSettings(
         database_url=str(postgres_service["dsn"]),
@@ -155,8 +151,6 @@ async def test_postgres_event_store_optimistic_concurrency(postgres_service):
 @pytest.mark.asyncio
 async def test_postgres_raw_event_stream_verification(postgres_service):
     """Verify raw stream event envelop reading directly through PostgreSQL store."""
-    if not postgres_service:
-        pytest.skip("Docker not available for stream verification test")
 
     settings = PlatformSettings(
         database_url=str(postgres_service["dsn"]),

@@ -377,13 +377,11 @@ def test_campaign_routes_are_in_openapi_schema(client: TestClient) -> None:
 
 @pytest.mark.asyncio
 async def test_campaign_membership_and_invites_survive_restart_on_postgres(
-    postgres_service: dict[str, Any] | None,
+    postgres_service: dict[str, Any],
     issuer: SigningTestIssuer,
     spicedb: MockSpiceDBClient,
 ) -> None:
     """A new process on the same PostgreSQL event store reads the same campaign state."""
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL event store test")
 
     dsn = str(postgres_service["dsn"])
 

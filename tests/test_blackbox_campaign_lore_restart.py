@@ -88,8 +88,6 @@ def reset_event_store_singleton():
 @pytest.mark.usefixtures("lore_backends")
 async def test_pgvector_ranking_survives_restart_without_reingest(postgres_service):
     """A restart on the same PostgreSQL fixture keeps the ranking and one row per entity."""
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL pgvector test")
 
     dsn = str(postgres_service["dsn"])
     campaign_id = str(uuid4())
@@ -126,8 +124,6 @@ async def test_pgvector_ranking_survives_restart_without_reingest(postgres_servi
 @pytest.mark.usefixtures("lore_backends")
 async def test_lore_projection_survives_restart(postgres_service):
     """Documents, aliases, and secrecy rules hold after a restart on the same event store."""
-    if not postgres_service:
-        pytest.skip("Docker not available for PostgreSQL event store test")
 
     dsn = str(postgres_service["dsn"])
     campaign_id = str(uuid4())

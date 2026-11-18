@@ -15,8 +15,6 @@ import time
 
 
 def test_hold_postgres_container(postgres_service):
-    if postgres_service is None:
-        raise RuntimeError("postgres_service yielded None: the container did not start")
     info_path = os.environ["RUNEFOBLE_HOLD_INFO_FILE"]
     temp_path = f"{info_path}.tmp"
     with open(temp_path, "w", encoding="utf-8") as handle:

@@ -10,6 +10,8 @@ from contextlib import contextmanager
 
 import redis
 
+from tests.helpers.container_owner import owner_label_args
+
 REDIS_IMAGE = "redis:7-alpine"
 
 
@@ -28,6 +30,7 @@ def redis_container(port: int) -> Generator[str]:
             "--rm",
             "--name",
             name,
+            *owner_label_args(),
             "-d",
             "-p",
             f"127.0.0.1:{port}:6379",
