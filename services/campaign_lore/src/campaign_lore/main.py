@@ -46,7 +46,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     is not available. The service never serves from an empty projection or a fallback.
     """
     store = get_event_store()
-    if PlatformSettings().use_postgres_event_store and not isinstance(store, PostgreSQLEventStore):
+    if PlatformSettings().event_store_backend == "postgresql" and not isinstance(
+        store, PostgreSQLEventStore
+    ):
         raise RuntimeError(
             "PostgreSQL event store is configured but unreachable; refusing to start "
             "Campaign Lore with an empty projection."

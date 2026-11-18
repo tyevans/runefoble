@@ -34,12 +34,12 @@ class PlatformSettings(BaseSettings):
         validation_alias=AliasChoices("RUNEFOBLE_DATABASE_URL", "DATABASE_URL"),
         description="Postgres async connection string",
     )
-    use_postgres_event_store: bool = Field(
-        default=False,
-        validation_alias=AliasChoices(
-            "RUNEFOBLE_USE_POSTGRES_EVENT_STORE", "USE_POSTGRES_EVENT_STORE"
+    event_store_backend: Literal["postgresql", "memory"] = Field(
+        default="postgresql",
+        description=(
+            "Event store backend. postgresql is the default. memory is for tests and explicit "
+            "injection only, and deployed environments refuse it (ADR-0015 4)."
         ),
-        description="Enable persistent PostgreSQL event store",
     )
     postgres_pool_size: int = Field(
         default=5,

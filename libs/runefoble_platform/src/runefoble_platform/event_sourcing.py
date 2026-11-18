@@ -13,7 +13,7 @@ from eventsource.domain.event import DomainEvent
 from eventsource.domain.event_registry import register_event
 from eventsource.ports.bus import EventBus
 from eventsource.ports.store import FullEventStore
-from sqlalchemy.engine.url import make_url
+from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from runefoble_platform.config import PlatformSettings
@@ -51,60 +51,68 @@ def is_database_reachable(host: str | None, port: int | None, timeout: float = 0
         return False
 
 
+def _require_reachable(parsed: URL) -> None:
+    """Raise ConnectionRefusedError when the database host and port do not accept TCP."""
+    if not parsed.host:
+        return
+    port = parsed.port or 5432
+    if not is_database_reachable(parsed.host, port):
+        raise ConnectionRefusedError(f"Database host {parsed.host}:{port} is unreachable.")
+
+
+def _build_postgres_store(
+    settings: PlatformSettings, *, probe_connection: bool
+) -> PostgreSQLEventStore:
+    """Build a PostgreSQL event store. Any failure raises EventStoreInitializationError."""
+    try:
+        dsn = normalize_async_postgres_url(str(settings.database_url))
+        parsed = make_url(dsn)
+        if probe_connection:
+            _require_reachable(parsed)
+        logger.info(
+            "Initializing PostgreSQLEventStore with DSN: %s",
+            parsed.render_as_string(hide_password=True),
+        )
+        engine_kwargs: dict[str, Any] = {}
+        if "postgresql" in parsed.drivername:
+            engine_kwargs["pool_size"] = settings.postgres_pool_size
+            engine_kwargs["max_overflow"] = settings.postgres_max_overflow
+        engine = create_async_engine(dsn, **engine_kwargs)
+        return PostgreSQLEventStore(engine=engine, create_schema=True, owns_engine=True)
+    except Exception as e:
+        raise EventStoreInitializationError(
+            f"Failed to initialize PostgreSQLEventStore: {e}"
+        ) from e
+
+
 def get_event_store(
     settings: PlatformSettings | None = None,
     *,
     probe_connection: bool = True,
     force_new: bool = False,
 ) -> FullEventStore:
-    """Provide the event store: PostgreSQL when the flag is set, otherwise InMemoryEventStore.
+    """Provide the process event store for the configured backend.
 
-    Raises EventStoreInitializationError when the PostgreSQL flag is set and the store
-    cannot be initialized. No fallback to InMemoryEventStore occurs in that case.
+    The backend defaults to PostgreSQL. The memory backend is accepted only outside
+    deployed environments and only when it is selected explicitly. A deployed service
+    never runs on InMemoryEventStore. There is no fallback: any initialization failure
+    raises EventStoreInitializationError.
     """
     global _global_event_store
     if _global_event_store is not None and settings is None and not force_new:
         return _global_event_store
 
     s = settings or PlatformSettings()
-    # In local testing or when postgres is not explicitly activated, use InMemoryEventStore
-    if getattr(s, "use_postgres_event_store", False):
-        try:
-            raw_url = str(s.database_url)
-            dsn = normalize_async_postgres_url(raw_url)
-            parsed = make_url(dsn)
-
-            # Probe TCP reachability if requested and host is present
-            if probe_connection and parsed.host:
-                port = parsed.port or 5432
-                if not is_database_reachable(parsed.host, port):
-                    raise ConnectionRefusedError(
-                        f"Database host {parsed.host}:{port} is unreachable."
-                    )
-
-            logger.info(
-                "Initializing PostgreSQLEventStore with DSN: %s",
-                parsed.render_as_string(hide_password=True),
-            )
-            engine_kwargs: dict[str, Any] = {}
-            if "postgresql" in parsed.drivername:
-                engine_kwargs["pool_size"] = getattr(s, "postgres_pool_size", 5)
-                engine_kwargs["max_overflow"] = getattr(s, "postgres_max_overflow", 10)
-
-            engine = create_async_engine(dsn, **engine_kwargs)
-            store = PostgreSQLEventStore(
-                engine=engine,
-                create_schema=True,
-                owns_engine=True,
-            )
-            _global_event_store = store
-            return _global_event_store
-        except Exception as e:
+    if s.event_store_backend == "memory":
+        if s.is_deployed:
             raise EventStoreInitializationError(
-                f"Failed to initialize PostgreSQLEventStore: {e}"
-            ) from e
+                f"The memory event store is refused in the '{s.environment}' environment. "
+                "Set RUNEFOBLE_EVENT_STORE_BACKEND=postgresql."
+            )
+        _global_event_store = InMemoryEventStore()
+        return _global_event_store
 
-    _global_event_store = InMemoryEventStore()
+    _global_event_store = _build_postgres_store(s, probe_connection=probe_connection)
     return _global_event_store
 
 

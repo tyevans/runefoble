@@ -2,8 +2,8 @@
 
 Owners are found in source: a service owns state when its non-test code calls
 create_aggregate_repository or constructs AggregateRepository. Each owner must
-render as a Kubernetes Deployment with RUNEFOBLE_USE_POSTGRES_EVENT_STORE set
-to "true" and a RUNEFOBLE_DATABASE_URL.
+render as a Kubernetes Deployment with RUNEFOBLE_EVENT_STORE_BACKEND set
+to "postgresql" and a RUNEFOBLE_DATABASE_URL.
 
 Usage: python3 scripts/check_helm_event_store.py [CHART_DIR]
 """
@@ -68,8 +68,8 @@ def main(argv: list[str]) -> int:
             failures.append(f"{name}: owns aggregate state but has no Deployment in the chart")
             continue
         env = deployments[name]
-        if env.get("RUNEFOBLE_USE_POSTGRES_EVENT_STORE") != "true":
-            failures.append(f'{name}: RUNEFOBLE_USE_POSTGRES_EVENT_STORE is not "true"')
+        if env.get("RUNEFOBLE_EVENT_STORE_BACKEND") != "postgresql":
+            failures.append(f'{name}: RUNEFOBLE_EVENT_STORE_BACKEND is not "postgresql"')
         if not env.get("RUNEFOBLE_DATABASE_URL"):
             failures.append(f"{name}: RUNEFOBLE_DATABASE_URL is missing")
 

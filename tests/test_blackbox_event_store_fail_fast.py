@@ -7,10 +7,12 @@ Governed by:
 - Hard Invariant 7: Blackbox TDD with Frontdoor Setup
 
 Verifies:
-1. A service process with the PostgreSQL event store enabled and an unreachable
+1. A deployed service (production) with no store setting and an unreachable
    database exits non-zero at start-up. It does not fall back to memory.
-2. /healthz reports the store kind in use ("memory" when the flag is unset).
-3. Helm renders the PostgreSQL event store flag and database URL for every
+2. A deployed service refuses the memory backend.
+3. The default backend is PostgreSQL. Memory is never selected silently.
+4. /healthz reports the store kind in use under the test backend (memory).
+5. Helm renders the PostgreSQL event store backend and database URL for every
    service that owns AggregateRepository state.
 """
 
@@ -25,6 +27,8 @@ from pathlib import Path
 import pytest
 import yaml
 from board_state.main import app as board_state_app
+from eventsource.adapters.memory.store import InMemoryEventStore
+from eventsource.adapters.postgresql.store import PostgreSQLEventStore
 from fastapi.testclient import TestClient
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import (
@@ -72,17 +76,16 @@ def _clean_env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if not k.startswith("RUNEFOBLE_")}
 
 
-def test_service_process_exits_when_postgres_event_store_is_unreachable():
-    """Importing a service with the PostgreSQL flag and an offline database must fail."""
+def _offline_dsn() -> str:
     offline_port = get_free_port()
-    env = _clean_env()
-    env["RUNEFOBLE_USE_POSTGRES_EVENT_STORE"] = "true"
-    env.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-preshared-key")
-    env["RUNEFOBLE_DATABASE_URL"] = (
-        f"postgresql+asyncpg://runefoble_user:secret@127.0.0.1:{offline_port}/runefoble"
-    )
+    return f"postgresql+asyncpg://runefoble_user:secret@127.0.0.1:{offline_port}/runefoble"
 
-    result = subprocess.run(
+
+def _import_board_state(extra_env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+    env = _clean_env()
+    env.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-preshared-key")
+    env.update(extra_env)
+    return subprocess.run(
         [sys.executable, "-c", "import board_state.main"],
         env=env,
         capture_output=True,
@@ -92,12 +95,29 @@ def test_service_process_exits_when_postgres_event_store_is_unreachable():
         check=False,
     )
 
+
+def test_deployed_service_without_store_setting_refuses_to_start():
+    """A production process with no store setting and an offline database must fail."""
+    result = _import_board_state(
+        {"RUNEFOBLE_ENVIRONMENT": "production", "RUNEFOBLE_DATABASE_URL": _offline_dsn()}
+    )
+
     assert result.returncode != 0
     assert "EventStoreInitializationError" in result.stderr
 
 
-def test_healthz_reports_memory_store_when_flag_is_unset():
-    """/healthz reports the store kind in use, not the Python class name."""
+def test_postgres_event_store_backend_refuses_to_start_when_unreachable():
+    """Importing a service with the PostgreSQL backend and an offline database must fail."""
+    result = _import_board_state(
+        {"RUNEFOBLE_EVENT_STORE_BACKEND": "postgresql", "RUNEFOBLE_DATABASE_URL": _offline_dsn()}
+    )
+
+    assert result.returncode != 0
+    assert "EventStoreInitializationError" in result.stderr
+
+
+def test_healthz_reports_memory_store_under_test_settings():
+    """Tests select the memory backend at the root, and /healthz reports 'memory'."""
     client = TestClient(board_state_app, headers=bearer("user-test"))
 
     response = client.get("/healthz")
@@ -106,23 +126,58 @@ def test_healthz_reports_memory_store_when_flag_is_unset():
     assert response.json()["event_store"] == "memory"
 
 
-def test_event_store_kind_reports_memory_for_in_memory_store():
-    """event_store_kind returns 'memory' for the default in-memory store."""
-    store = get_event_store(settings=PlatformSettings(use_postgres_event_store=False))
+def test_event_store_kind_reports_memory_for_explicit_memory_backend():
+    """An explicit memory backend yields the in-memory store in development."""
+    store = get_event_store(settings=PlatformSettings(event_store_backend="memory"))
 
+    assert isinstance(store, InMemoryEventStore)
     assert event_store_kind(store) == "memory"
 
 
+def test_deployed_environment_refuses_memory_backend():
+    """A deployed environment raises when the memory backend is selected."""
+    settings = PlatformSettings(environment="production", event_store_backend="memory")
+
+    with pytest.raises(EventStoreInitializationError):
+        get_event_store(settings=settings, force_new=True)
+
+
+def test_unset_backend_defaults_to_postgresql_and_never_falls_back_to_memory(monkeypatch):
+    """With no backend set, an unreachable database raises instead of using memory."""
+    monkeypatch.delenv("RUNEFOBLE_EVENT_STORE_BACKEND", raising=False)
+    settings = PlatformSettings(database_url=_offline_dsn())
+
+    assert settings.event_store_backend == "postgresql"
+    with pytest.raises(EventStoreInitializationError):
+        get_event_store(settings=settings, force_new=True)
+
+
 def test_offline_postgres_raises_instead_of_falling_back():
-    """With the flag enabled, an unreachable database raises and returns no in-memory store."""
-    offline_port = get_free_port()
+    """With the PostgreSQL backend, an unreachable database raises and returns no store."""
     settings = PlatformSettings(
-        database_url=f"postgresql://runefoble_user:secret@127.0.0.1:{offline_port}/runefoble",
-        use_postgres_event_store=True,
+        database_url=_offline_dsn(),
+        event_store_backend="postgresql",
     )
 
     with pytest.raises(EventStoreInitializationError):
         get_event_store(settings=settings, force_new=True)
+
+
+def test_deployed_service_with_reachable_postgres_starts_on_postgresql(postgres_service):
+    """A production service with a reachable database gets the PostgreSQL store."""
+    if not postgres_service:
+        pytest.skip("Docker not available for PostgreSQL event store test")
+
+    settings = PlatformSettings(
+        environment="production",
+        database_url=str(postgres_service["dsn"]),
+        event_store_backend="postgresql",
+    )
+
+    store = get_event_store(settings=settings, force_new=True)
+
+    assert isinstance(store, PostgreSQLEventStore)
+    assert event_store_kind(store) == "postgresql"
 
 
 def _render_chart() -> list[dict]:
@@ -153,5 +208,5 @@ def test_helm_enables_postgres_event_store_for_aggregate_owners(deployment):
 
     assert len(matches) == 1, f"deployment {deployment} not rendered exactly once"
     env = _deployment_env(matches[0])
-    assert env.get("RUNEFOBLE_USE_POSTGRES_EVENT_STORE") == "true"
+    assert env.get("RUNEFOBLE_EVENT_STORE_BACKEND") == "postgresql"
     assert env.get("RUNEFOBLE_DATABASE_URL", "").startswith("postgresql+asyncpg://")

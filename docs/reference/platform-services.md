@@ -9,7 +9,7 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
 
 | Platform Service | Upstream Image | Internal Host & Port | Ingress Route | Governing ADR | Test Double or Local Fallback |
 |---|---|---|---|---|---|
-| **PostgreSQL** | `pgvector/pgvector:pg16` | `postgres:5432` | None (Internal) | ADR-0005, ADR-0011 | `InMemoryEventStore` (test only; used when `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=false`) |
+| **PostgreSQL** | `pgvector/pgvector:pg16` | `postgres:5432` | None (Internal) | ADR-0005, ADR-0011 | `InMemoryEventStore` (test only; selected by `RUNEFOBLE_EVENT_STORE_BACKEND=memory`; refused in `staging` and `production`) |
 | **Redis Streams** | `redis:7.2-alpine` | `runefoble-redis:6379` | None (Internal) | ADR-0006 | None. Services fail start-up when Redis is unreachable. Tests use a Redis test double (`MockAsyncRedis`). |
 | **SpiceDB (Zanzibar)** | `authzed/spicedb:v1.34.0` | `spicedb:50051` (gRPC), `8443` (HTTP) | None (Internal) | ADR-0001 | None in services. Tests swap the factory client for `MockSpiceDBClient`. |
 | **Zitadel (OIDC/AuthN)** | `ghcr.io/zitadel/zitadel:v2.54.0` | `zitadel:8080` | `auth.localhost` (own host, root path) | ADR-0005 | `ZitadelAuthService` (PyJWKClient RS256 verification of signature, `iss`, `aud`, `exp`, `sub`; no bypass) |
@@ -36,11 +36,12 @@ Runefoble is designed around a Kubernetes-first microservices topology deployed 
   - `openpanel`: Telemetry event tables.
 - **Environment Variables**:
   - `RUNEFOBLE_DATABASE_URL`: Connection string (`postgresql+asyncpg://...` or standard `postgresql://...` auto-normalized to asyncpg).
-  - `RUNEFOBLE_USE_POSTGRES_EVENT_STORE`: Boolean flag (`true` to enable persistent `PostgreSQLEventStore`, default `false`). The Helm chart sets `true` for every service that owns aggregate state.
+  - `RUNEFOBLE_EVENT_STORE_BACKEND`: `postgresql` (default) or `memory`. `postgresql` selects the persistent `PostgreSQLEventStore`. `memory` selects `InMemoryEventStore` for tests and explicit injection only. The Helm chart sets `postgresql` for every service that owns aggregate state. A service in `staging` or `production` refuses `memory`.
   - `RUNEFOBLE_POSTGRES_POOL_SIZE`: Async connection pool size (default `5`).
   - `RUNEFOBLE_POSTGRES_MAX_OVERFLOW`: Async connection pool max overflow (default `10`).
   - `RUNEFOBLE_EVENT_STORE_TABLE_NAME`: Event store table name (default `runefoble_events`).
-- **Fail-Fast Initialization**: If `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` and the database host is unreachable, `get_event_store()` raises `EventStoreInitializationError`. The service process exits at start-up. It never runs on `InMemoryEventStore` in this case. `InMemoryEventStore` is used only when the flag is `false` (for example, in tests).
+- **Fail-Fast Initialization**: With the `postgresql` backend (the default) and an unreachable database host, `get_event_store()` raises `EventStoreInitializationError`. The service process exits at start-up. It never runs on `InMemoryEventStore` in this case.
+- **Memory Backend**: `InMemoryEventStore` is used only when `RUNEFOBLE_EVENT_STORE_BACKEND=memory` is set explicitly. The root test configuration sets it. A deployed environment (`staging` or `production`) that selects `memory` raises `EventStoreInitializationError` at start-up. No setting falls back to memory.
 - **Store Kind Reporting**: Service `/healthz` endpoints report `event_store` as `postgresql` or `memory`, from `event_store_kind()`.
 - **Consumer Status Reporting**: Services that run Redis Stream consumers (`campaign-analytics`, `soundscape`) report `consumers` on `/healthz`, one entry per consumer set, with `running` or `failed`. The endpoint returns `503` when any consumer is `failed`. See [Run Supervised Redis Stream Consumers](../how-to/run-supervised-redis-stream-consumers.md).
 
@@ -163,7 +164,7 @@ The chart sets `RUNEFOBLE_ENVIRONMENT` on every service from `global.environment
 - **`RUNEFOBLE_LORE_EMBEDDING`**: `openai_compatible` (default, the only choice). The `fake` value is rejected. Requires the endpoint settings below.
 - **`RUNEFOBLE_EMBEDDING_BASE_URL`**, **`RUNEFOBLE_EMBEDDING_MODEL`**, **`RUNEFOBLE_EMBEDDING_DIMENSION`**: Required. Start-up fails if one is missing or the endpoint does not answer.
 - **`RUNEFOBLE_EMBEDDING_API_KEY`**, **`RUNEFOBLE_EMBEDDING_DOCUMENT_PREFIX`**, **`RUNEFOBLE_EMBEDDING_QUERY_PREFIX`**: Optional.
-- **Event store**: The replay reads `RUNEFOBLE_USE_POSTGRES_EVENT_STORE` and `RUNEFOBLE_DATABASE_URL`. Start-up fails if PostgreSQL is configured and unreachable.
+- **Event store**: The replay reads `RUNEFOBLE_EVENT_STORE_BACKEND` and `RUNEFOBLE_DATABASE_URL`. Start-up fails if PostgreSQL is the backend and unreachable.
 - **Details**: [Embedding Providers](embedding-providers.md).
 
 ---

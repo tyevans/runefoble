@@ -112,7 +112,7 @@ found = await load_if_exists(repo, char_id)  # read path: None means not found
 
 ## 5. Testing with InMemoryEventStore
 
-In pytest test fixtures, use `InMemoryEventStore()` for instant, zero-dependency unit tests:
+In pytest test fixtures, use `InMemoryEventStore()` for instant, zero-dependency unit tests. The root test configuration selects the memory backend with `RUNEFOBLE_EVENT_STORE_BACKEND=memory`. A deployed environment refuses that backend, so production code never selects it by default:
 
 ```python
 import pytest
@@ -129,7 +129,7 @@ async def test_inventory_aggregate():
 
 ## 6. Persistent Event Store (PostgreSQL)
 
-In staging and production deployments, Helm sets `RUNEFOBLE_USE_POSTGRES_EVENT_STORE=true` for every service that owns aggregate state. The flag maps to `PlatformSettings.use_postgres_event_store`. Durable persistence uses `PostgreSQLEventStore`:
+The event store backend defaults to `postgresql`. In staging and production deployments, Helm sets `RUNEFOBLE_EVENT_STORE_BACKEND=postgresql` for every service that owns aggregate state. The setting maps to `PlatformSettings.event_store_backend`. Durable persistence uses `PostgreSQLEventStore`:
 
 ```python
 from runefoble_platform.config import PlatformSettings
@@ -137,7 +137,7 @@ from runefoble_platform.event_sourcing import get_event_store, create_aggregate_
 
 settings = PlatformSettings(
     database_url="postgresql+asyncpg://runefoble_user:secret@postgres:5432/runefoble",
-    use_postgres_event_store=True,
+    event_store_backend="postgresql",
     postgres_pool_size=10,
     postgres_max_overflow=20,
 )
@@ -148,7 +148,7 @@ store = get_event_store(settings=settings)
 repo = create_aggregate_repository(CharacterInventoryAggregate, event_store=store)
 ```
 
-If the flag is `true` and the PostgreSQL host is offline or unreachable during startup, `get_event_store` raises `EventStoreInitializationError`. The service process exits instead of running on `InMemoryEventStore`. Keep the flag unset only for in-memory test runs. Use `event_store_kind()` to report the store kind (`postgresql` or `memory`) in health endpoints.
+If the backend is `postgresql` and the PostgreSQL host is offline or unreachable during startup, `get_event_store` raises `EventStoreInitializationError`. The service process exits instead of running on `InMemoryEventStore`. Select `memory` only for in-memory test runs. A deployed environment raises `EventStoreInitializationError` for `memory`. Use `event_store_kind()` to report the store kind (`postgresql` or `memory`) in health endpoints.
 
 ## 7. Modular Aggregate Decomposition
 
