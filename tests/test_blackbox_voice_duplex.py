@@ -26,7 +26,7 @@ from voice_agent.interruption import apply_soft_crossfade
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.voice_grants import grant_voice_session
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")

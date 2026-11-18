@@ -20,7 +20,7 @@ from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.voice_grants import grant_voice_session
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import ws_subprotocols
 

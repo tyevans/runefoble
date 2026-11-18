@@ -22,6 +22,7 @@ from the_watcher.main import app as watcher_app
 from the_watcher.routers.intent import speech
 
 from tests.helpers.live_services import closed_port_url, serve
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 WORKER_AUTH = {SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]}
@@ -255,6 +256,7 @@ async def test_failing_model_server_returns_503(use_worker_backend, fake_llm):
 @pytest.mark.asyncio
 async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatch, fake_llm):
     """The Watcher returns its own 503 when the worker reports backend_unavailable."""
+    await make_table_runner("user-1", "sess-1", "camp-1")
     fake_llm.reply = {"status": 400, "content": ""}  # type: ignore[attr-defined]
     use_worker_backend(_llm_settings(fake_llm))
     speech_payload = {
@@ -280,6 +282,7 @@ async def test_watcher_speech_surfaces_worker_503(use_worker_backend, monkeypatc
 @pytest.mark.asyncio
 async def test_watcher_speech_unreachable_worker_is_503_not_template(monkeypatch):
     """With the worker unreachable, The Watcher does not return a template reply."""
+    await make_table_runner("user-1", "sess-1", "camp-1")
     monkeypatch.setattr(speech, "INFERENCE_URL", closed_port_url())
     speech_payload = {
         "speaker_id": "user-1",

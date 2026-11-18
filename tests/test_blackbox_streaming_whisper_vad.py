@@ -22,7 +22,7 @@ from tests.helpers.audio_synth import (
 )
 from tests.helpers.fixture_transcriber import FixtureTranscriber
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.voice_grants import grant_voice_session
+from tests.helpers.spicedb_factory import grant_voice_session
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 

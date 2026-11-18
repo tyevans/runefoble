@@ -6,17 +6,30 @@ This guide explains how human Dungeon Masters (DMs) receive private narrative wh
 
 ## 1. SpiceDB Zanzibar Authorization
 
-DM Co-Pilot whispers and action vetoes are strictly gated by SpiceDB Zanzibar object authorization (`libs/runefoble_auth/schema/runefoble.zed`).
+DM Co-Pilot whispers and action vetoes are gated by SpiceDB Zanzibar object authorization (`libs/runefoble_auth/schema/runefoble.zed`). The caller identity comes only from a verified Zitadel bearer token. Headers such as `X-User-Id` and body fields never set it.
 
-To access the private DM stream and veto actions:
-- The user must hold the `dungeon_master` relation or `run_session` permission on the owning `campaign` resource:
-  `campaign:<campaign_id>#dungeon_master@user:<user_id>`.
-- Any user without this relation (e.g. standard players or spectators) is denied with HTTP `403 Forbidden`.
+The Watcher checks only permissions that the schema defines. Each check uses a name from `runefoble_auth.contract.ACTION_PERMISSIONS`:
+
+| Route | Action | Schema check |
+|---|---|---|
+| `GET /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers`, `POST /api/v1/watcher/whispers/generate` | `session.control` on the session | `session:<session_id>#control` (DM, GM, or owner through `campaign->run_session`) |
+| `POST /api/v1/watcher/veto`, `approve`, `modify` | `session.control` on the session, or `campaign.run_session` when no session is known | same as above |
+| `GET /api/v1/watcher/actions/pending` | `session.control` | same as above |
+
+To make a user the DM of a session, the setup must write two schema tuples:
+- `campaign:<campaign_id>#dungeon_master@user:<user_id>`: the DM relation. `run_session` includes it.
+- `session:<session_id>#campaign@campaign:<campaign_id>`: links the session to the campaign. `session.control` walks this link.
+
+A user without the DM role gets HTTP `403 Forbidden`. A missing or invalid bearer token gets HTTP `401`. The Watcher does not return `200` for an unknown principal.
+
+If SpiceDB is unreachable, the route returns HTTP `503` with `error: authorization_unavailable`. It never treats the failure as a denial or as an allow. If a check names a type, relation, or permission that the schema does not define, the route returns HTTP `500` with an `error_id`. The full error is in the service log under that id.
 
 ```bash
-# Example Zanzibar check via header
-curl -X GET "http://localhost:8001/api/v1/watcher/whispers?session_id=sess-101&campaign_id=camp-202" \
-  -H "X-User-Id: dm_evelyn"
+# Veto a pending action as the DM. The token subject must hold the DM role.
+curl -X POST "http://localhost:8001/api/v1/watcher/veto" \
+  -H "Authorization: Bearer $DM_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"action_id": "act-1", "session_id": "sess-101", "campaign_id": "camp-202", "reason": "Too harsh"}'
 ```
 
 ---
@@ -56,7 +69,7 @@ Content-Type: application/json
 ### Veto Action
 ```http
 POST /api/v1/watcher/veto
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn access token>
 Content-Type: application/json
 
 {
@@ -70,7 +83,7 @@ Content-Type: application/json
 ### Approve Action
 ```http
 POST /api/v1/watcher/approve
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn access token>
 Content-Type: application/json
 
 {
@@ -83,7 +96,7 @@ Content-Type: application/json
 ### Modify Action
 ```http
 POST /api/v1/watcher/modify
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn access token>
 Content-Type: application/json
 
 {
@@ -99,7 +112,7 @@ Content-Type: application/json
 ### Get Paginated Whispers
 ```http
 GET /api/v1/watcher/whispers?session_id=sess-101&campaign_id=camp-202&page=1&limit=20&whisper_type=monster_tactics
-X-User-Id: dm_evelyn
+Authorization: Bearer <dm_evelyn access token>
 ```
 
 ---

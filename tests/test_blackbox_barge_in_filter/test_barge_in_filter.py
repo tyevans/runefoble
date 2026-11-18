@@ -28,7 +28,7 @@ from voice_agent.main import app, set_event_bus
 
 from tests.helpers.audio_synth import generate_pcm_silence, generate_pcm_sine
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.voice_grants import grant_voice_session
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 

@@ -22,7 +22,7 @@ from runefoble_events.vocal_dsp import VocalModulatorPresetAppliedEvent
 from voice_agent.coordinator import get_voice_room_coordinator
 from voice_agent.main import app as voice_app
 
-from tests.helpers.voice_grants import grant_voice_session
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent

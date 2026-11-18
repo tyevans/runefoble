@@ -24,6 +24,7 @@ from the_watcher import dependencies as watcher_dependencies
 from the_watcher.main import app as watcher_app
 from the_watcher.routers import autonomous_dm
 
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -206,6 +207,7 @@ async def test_watcher_refuses_to_call_worker_without_configured_credential(monk
     """The Watcher does not call the worker without a credential. It reports 503, never a template."""
     monkeypatch.setattr(autonomous_dm, "INFERENCE_URL", "http://worker.invalid:8100")
     monkeypatch.setattr(watcher_dependencies.platform_settings, "service_credential", None)
+    await make_table_runner("dm-1", "sess-1", "camp-1")
     async with AsyncClient(
         transport=ASGITransport(app=watcher_app),
         base_url="http://test",

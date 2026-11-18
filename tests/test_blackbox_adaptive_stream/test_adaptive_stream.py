@@ -29,7 +29,7 @@ from voice_agent.main import app, set_event_bus
 from voice_agent.routers.stream_diagnostics import reset_diagnostics
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.voice_grants import grant_voice_session
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")

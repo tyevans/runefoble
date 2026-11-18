@@ -9,16 +9,20 @@ from the_watcher.dependencies import (
     STREAM_WATCHER,
     chronicle_engine,
     get_event_bus,
+    require_session_permission,
 )
-from the_watcher.identity import get_caller_principal
+from the_watcher.identity import CallerId, get_caller_principal
 from the_watcher.models import RecapRequest
 
 router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["chronicle"])
 
 
 @router.post("/api/v1/watcher/chronicle/recap", response_model=AbsenteeRecapGenerated)
-async def generate_chronicle_recap(req: RecapRequest) -> AbsenteeRecapGenerated:
+async def generate_chronicle_recap(
+    caller_id: CallerId, req: RecapRequest
+) -> AbsenteeRecapGenerated:
     """Generate a humorous absentee session chronicle and recap event for a returning player."""
+    await require_session_permission(caller_id, req.session_id, "session.observe")
     recap_event = chronicle_engine.generate_recap(
         session_id=req.session_id,
         character_id=req.character_id,

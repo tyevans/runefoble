@@ -24,6 +24,7 @@ from the_watcher.main import app as watcher_app
 from the_watcher.routers import stand_in as stand_in_router
 
 from tests.helpers.live_services import serve
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_inference_worker_failure_contract import _FakeLLMHandler, _llm_settings
 
@@ -97,6 +98,7 @@ def fake_llm_server() -> Iterator[ThreadingHTTPServer]:
 @pytest.mark.asyncio
 async def test_watcher_returns_guardrails_the_worker_applied(worker_backend, monkeypatch):
     """The worker enforces protect_allies, so The Watcher reports it as applied."""
+    await make_table_runner("test-user", "sess-1", "camp-1")
     worker_backend(WorkerSettings(backend="mock"))
 
     with serve(api.app) as worker_url:
@@ -115,6 +117,7 @@ async def test_watcher_returns_guardrails_the_worker_applied(worker_backend, mon
 @pytest.mark.asyncio
 async def test_watcher_reports_no_guardrail_when_none_was_enforced(worker_backend, monkeypatch):
     """A fighter with avoid_melee and no wounded ally enforces nothing. The list stays empty."""
+    await make_table_runner("test-user", "sess-1", "camp-1")
     worker_backend(WorkerSettings(backend="mock"))
     payload = _watcher_act_payload(
         character_class="Fighter",

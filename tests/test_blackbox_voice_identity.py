@@ -18,7 +18,7 @@ from starlette.websockets import WebSocketDisconnect
 from voice_agent.main import app as voice_app
 
 from tests.helpers.audio_synth import generate_synthetic_audio
-from tests.helpers.voice_grants import grant_voice_session
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import VOICE_SIGNING_ISSUER, voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")

@@ -90,7 +90,7 @@ def _join_with_invite(
 
 @pytest.mark.asyncio
 async def test_mock_spicedb_frontdoor_role_assignment(trusted_ws_issuer, gateway_tc):
-    """Verify invite-based membership and enforcement using MockSpiceDBClient."""
+    """Verify invite-based membership and enforcement using the strict mock SpiceDB client."""
     tc = gateway_tc
 
     owner = _bearer(trusted_ws_issuer, f"owner-{uuid4().hex[:6]}")

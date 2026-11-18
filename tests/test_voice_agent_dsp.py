@@ -27,7 +27,7 @@ from voice_agent.phonetics import (
 from voice_agent.room import VoiceRoomAggregate, VoiceRoomState
 
 from tests.helpers.audio_synth import generate_synthetic_audio
-from tests.helpers.voice_grants import grant_voice_session
+from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
 

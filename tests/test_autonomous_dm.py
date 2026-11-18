@@ -8,6 +8,8 @@ Verifies:
 5. FastAPI TestClient endpoints for scenes/generate, encounters/spawn, and encounters/npc-turn.
 """
 
+import asyncio
+
 import pytest
 from eventsource.domain.event_registry import default_registry
 from fastapi.testclient import TestClient
@@ -22,6 +24,7 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -242,6 +245,7 @@ def test_events_registered_in_default_registry():
 def test_api_generate_scene(test_client: TestClient):
     """POST /api/v1/watcher/scenes/generate returns SceneAtmosphereSet."""
     mock_bus = RedisStreamsEventBus(client=MockAsyncRedis())
+    asyncio.run(make_table_runner("test-user", "sess-api-1", "camp-api-1"))
     set_event_bus(mock_bus)
 
     res = test_client.post(
@@ -259,6 +263,7 @@ def test_api_generate_scene(test_client: TestClient):
 def test_api_spawn_encounter(test_client: TestClient):
     """POST /api/v1/watcher/encounters/spawn returns EncounterSpawned."""
     mock_bus = RedisStreamsEventBus(client=MockAsyncRedis())
+    asyncio.run(make_table_runner("test-user", "sess-api-2", "camp-api-2"))
     set_event_bus(mock_bus)
 
     res = test_client.post(
@@ -281,6 +286,7 @@ def test_api_spawn_encounter(test_client: TestClient):
 def test_api_execute_npc_turn(test_client: TestClient):
     """POST /api/v1/watcher/encounters/npc-turn returns AutonomousActionResolved."""
     mock_bus = RedisStreamsEventBus(client=MockAsyncRedis())
+    asyncio.run(make_table_runner("test-user", "sess-api-3", "camp-api-3"))
     set_event_bus(mock_bus)
 
     res = test_client.post(

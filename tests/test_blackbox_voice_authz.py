@@ -22,8 +22,7 @@ from starlette.websockets import WebSocketDisconnect
 from voice_agent.main import app as voice_app
 
 from tests.helpers.audio_synth import generate_pcm_sine
-from tests.helpers.spicedb_factory import shared_spicedb_client
-from tests.helpers.voice_grants import grant_voice_session
+from tests.helpers.spicedb_factory import grant_voice_session, shared_spicedb_client
 from tests.helpers.voice_identity import (
     VOICE_SIGNING_ISSUER,
     voice_auth_headers,
