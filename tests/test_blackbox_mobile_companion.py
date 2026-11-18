@@ -17,13 +17,13 @@ from __future__ import annotations
 import pytest
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
-from gateway_api.companion import mobile_companion_manager
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_events.voice import (
     MobileAudioProfileAdapted,
     MobileCompanionConnected,
     MobileHapticPingDispatched,
 )
+from voice_agent.companion_registry import mobile_companion_manager
 from voice_agent.mobile import HapticVibrationPattern, MobileAudioProfileTier
 
 from tests.helpers.ws_identity import ws_subprotocols

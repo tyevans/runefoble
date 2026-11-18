@@ -12,7 +12,6 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from gateway_api.assets import router as assets_router
 from gateway_api.auth_sync import router as auth_sync_router
-from gateway_api.companion import companion_router, mobile_companion_websocket_endpoint
 from gateway_api.dependencies import (
     event_bus_provider,
     get_event_bus,
@@ -35,7 +34,6 @@ from gateway_api.routers import (
 )
 from gateway_api.routers.settlements_proxy import router as settlements_router
 from gateway_api.session_websocket import session_websocket_endpoint
-from gateway_api.signaling import voice_signaling_websocket_endpoint
 from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
 from gateway_api.websocket_endpoint import campaign_websocket_endpoint
@@ -95,7 +93,6 @@ app.include_router(soundscape_router)
 app.include_router(assets_router, prefix="/api/v1/assets", tags=["Assets"])
 app.include_router(auth_sync_router, prefix="/api/v1/auth/sync", tags=["Auth Sync"])
 app.include_router(voice_proxy_router)
-app.include_router(companion_router)
 
 
 init_telemetry("gateway-api", settings=platform_settings, app=app)
@@ -115,14 +112,16 @@ async def session_websocket(websocket: WebSocket, session_id: str) -> None:
 
 @app.websocket("/ws/voice/{session_id}")
 async def voice_websocket(websocket: WebSocket, session_id: str) -> None:
-    """Zanzibar-protected WebRTC live voice room signaling stream."""
-    await voice_signaling_websocket_endpoint(websocket, session_id)
+    """WebRTC live voice room signaling. Relayed to voice_agent, which checks session.observe."""
+    await relay_websocket(websocket, service="voice_agent", segments=("ws", "voice", session_id))
 
 
 @app.websocket("/ws/mobile-companion/{session_id}")
 async def mobile_companion_websocket(websocket: WebSocket, session_id: str) -> None:
-    """Zanzibar-protected low-bandwidth mobile WebRTC companion and haptic gateway."""
-    await mobile_companion_websocket_endpoint(websocket, session_id)
+    """Mobile companion and haptic channel. Relayed to voice_agent, which checks session.observe."""
+    await relay_websocket(
+        websocket, service="voice_agent", segments=("ws", "mobile-companion", session_id)
+    )
 
 
 @app.websocket("/ws/establishments/{establishment_id}/tables/{table_id}")

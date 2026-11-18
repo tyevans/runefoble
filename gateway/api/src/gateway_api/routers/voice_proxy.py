@@ -20,7 +20,7 @@ VOICE_SERVICE = "voice_agent"
 
 @router.get("/api/v1/voice/rooms/{session_id}")
 async def get_voice_room(session_id: str, request: Request) -> Any:
-    """Retrieve room participants, roles, mute states, and audio telemetry from voice_agent."""
+    """Retrieve room participants, roles, mute states, and audio telemetry from the voice service."""
     return await forward_json(
         request,
         service=VOICE_SERVICE,
@@ -66,6 +66,43 @@ async def submit_rtcp_report(
         service=VOICE_SERVICE,
         method="POST",
         path=_stream_path(request, session_id),
+        json_body=body,
+    )
+
+
+@router.get("/api/v1/mobile/companion/profiles")
+async def get_mobile_profiles(request: Request) -> Any:
+    """Forward the companion audio profile list. voice_agent owns the profiles."""
+    return await forward_json(
+        request,
+        service=VOICE_SERVICE,
+        method="GET",
+        path=path("api", "v1", "mobile", "companion", "profiles"),
+    )
+
+
+@router.post("/api/v1/mobile/companion/{session_id}/whisper")
+async def dispatch_whisper(session_id: str, request: Request, body: Annotated[Any, Body()]) -> Any:
+    """Forward a secret DM whisper. voice_agent checks session.control."""
+    return await forward_json(
+        request,
+        service=VOICE_SERVICE,
+        method="POST",
+        path=path("api", "v1", "mobile", "companion", session_id, "whisper"),
+        json_body=body,
+    )
+
+
+@router.post("/api/v1/mobile/companion/{session_id}/turn-alert")
+async def dispatch_turn_alert(
+    session_id: str, request: Request, body: Annotated[Any, Body()]
+) -> Any:
+    """Forward a combat turn alert. voice_agent checks session.control."""
+    return await forward_json(
+        request,
+        service=VOICE_SERVICE,
+        method="POST",
+        path=path("api", "v1", "mobile", "companion", session_id, "turn-alert"),
         json_body=body,
     )
 

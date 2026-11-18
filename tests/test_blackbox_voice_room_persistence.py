@@ -23,10 +23,10 @@ from uuid import uuid4
 import pytest
 import voice_agent.main as va_main
 from fastapi.testclient import TestClient
-from gateway_api.signaling import signaling_manager
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import get_event_store
 from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
+from voice_agent.signaling import signaling_manager
 
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import ws_subprotocols

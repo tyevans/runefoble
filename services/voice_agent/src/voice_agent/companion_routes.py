@@ -1,15 +1,23 @@
-"""Mobile companion HTTP REST API routes."""
+"""Mobile companion HTTP routes, served by voice_agent (TASK-0593).
+
+Whisper and turn-alert dispatch need `session.control` (TASK-0544). The check runs here,
+on the owner, through the same schema permission that the gateway used before.
+"""
 
 from __future__ import annotations
 
-from fastapi import APIRouter
-from gateway_api.auth import CurrentPrincipal
-from gateway_api.companion.manager import mobile_companion_manager
-from gateway_api.session_access import require_session_permission
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from voice_agent.auth import VoicePrincipal, get_voice_principal
+from voice_agent.authz import require_action
+from voice_agent.companion_registry import mobile_companion_manager
 from voice_agent.mobile import PROFILES
 
-router = APIRouter(prefix="/api/v1/mobile/companion", tags=["Mobile Companion"])
+router = APIRouter(
+    dependencies=[Depends(get_voice_principal)],
+    prefix="/api/v1/mobile/companion",
+    tags=["Mobile Companion"],
+)
 
 
 class WhisperDispatchRequest(BaseModel):
@@ -41,10 +49,10 @@ async def get_mobile_profiles():
 async def dispatch_whisper_endpoint(
     session_id: str,
     req: WhisperDispatchRequest,
-    principal: CurrentPrincipal,
+    principal: VoicePrincipal,
 ):
     """Dispatch a secret DM whisper and trigger mobile haptic ping."""
-    await require_session_permission(session_id, principal.user_id, "control")
+    await require_action("session.control", session_id, principal.user_id)
 
     frame = await mobile_companion_manager.dispatch_whisper(
         session_id=session_id,
@@ -60,10 +68,10 @@ async def dispatch_whisper_endpoint(
 async def dispatch_turn_alert_endpoint(
     session_id: str,
     req: TurnAlertDispatchRequest,
-    principal: CurrentPrincipal,
+    principal: VoicePrincipal,
 ):
     """Trigger combat turn initiative haptic alert for mobile companion."""
-    await require_session_permission(session_id, principal.user_id, "control")
+    await require_action("session.control", session_id, principal.user_id)
 
     frame = await mobile_companion_manager.dispatch_turn_alert(
         session_id=session_id,

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import WebSocket
 
 if TYPE_CHECKING:
-    from gateway_api.signaling.manager import WebRTCSignalingManager
+    from voice_agent.signaling.manager import WebRTCSignalingManager
 
 
 @dataclass

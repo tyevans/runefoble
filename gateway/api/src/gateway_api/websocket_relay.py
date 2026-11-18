@@ -3,7 +3,8 @@
 The gateway checks the bearer token before it relays (ADR-0015 b, c). It then opens an
 upstream socket to the owning service with the same path and the same offered subprotocols,
 so the bearer subprotocol reaches the owner. The owner verifies the token again and checks
-object permissions. The relay does not parse frames and adds no permission check.
+object permissions. The relay does not parse frames and adds no permission check. The query string passes to the
+owner unchanged, so presentation fields such as `peer_id` reach it.
 
 Close codes the client sees:
 - Gateway token check fails: 1008, closed before accept (as `admit_websocket` does).
@@ -29,6 +30,7 @@ from websockets.exceptions import ConnectionClosed, InvalidHandshake, InvalidSta
 logger = logging.getLogger("runefoble.gateway.websocket_relay")
 
 OPEN_TIMEOUT_S = 5.0
+CLIENT_CLOSE_GRACE_S = 1.0
 MAX_FRAME_BYTES = 8 * 1024 * 1024
 CLOSE_FORBIDDEN_CODE = 4403
 CLOSE_TRY_AGAIN_LATER = 1013
@@ -59,6 +61,8 @@ async def relay_websocket(websocket: WebSocket, *, service: str, segments: tuple
     offered = list(websocket.scope.get("subprotocols", []))
     try:
         target, headers = get_upstreams(websocket).client(service).websocket_target(owner_path)
+        if websocket.url.query:
+            target = f"{target}?{websocket.url.query}"
         upstream = await connect(
             target,
             subprotocols=offered or None,
@@ -105,6 +109,12 @@ async def _relay_frames(websocket: WebSocket, upstream: ClientConnection) -> Non
     try:
         done, _ = await asyncio.wait({client_task, owner_task}, return_when=asyncio.FIRST_COMPLETED)
         ended_by, code, reason = next(iter(done)).result()
+        if ended_by == "owner":
+            await websocket.close(code=code, reason=reason)
+            # Let the pending client receive end on the client's close, instead of cancelling it.
+            await asyncio.wait({client_task}, timeout=CLIENT_CLOSE_GRACE_S)
+        else:
+            await upstream.close(code=code, reason=reason)
     except BaseException:
         await upstream.close()
         raise
@@ -112,11 +122,6 @@ async def _relay_frames(websocket: WebSocket, upstream: ClientConnection) -> Non
         for task in (client_task, owner_task):
             task.cancel()
         await asyncio.gather(client_task, owner_task, return_exceptions=True)
-
-    if ended_by == "owner":
-        await websocket.close(code=code, reason=reason)
-    else:
-        await upstream.close(code=code, reason=reason)
 
 
 async def _client_to_owner(

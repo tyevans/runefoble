@@ -6,17 +6,15 @@ import logging
 from datetime import UTC, datetime
 
 from fastapi import WebSocket, WebSocketDisconnect
-from gateway_api.companion.manager import (
-    MobileCompanionManager,
-    mobile_companion_manager,
-    publish_companion_event,
-)
-from gateway_api.session_access import socket_may
-from gateway_api.signaling.auth import extract_peer_and_role
-from gateway_api.websocket_auth import admit_gateway_websocket
 from runefoble_events.voice import (
     MobileAudioProfileAdapted,
     MobileCompanionConnected,
+)
+from voice_agent.auth import get_voice_verifier
+from voice_agent.companion_registry import (
+    MobileCompanionManager,
+    mobile_companion_manager,
+    publish_companion_event,
 )
 from voice_agent.mobile import (
     PROFILES,
@@ -25,8 +23,10 @@ from voice_agent.mobile import (
     adapt_audio_profile,
     create_haptic_payload,
 )
+from voice_agent.signaling.auth import extract_peer_and_role
+from voice_agent.socket_access import admit_session_socket
 
-logger = logging.getLogger("runefoble.gateway.companion.endpoint")
+logger = logging.getLogger("runefoble.voice_agent.companion_socket")
 
 
 async def mobile_companion_websocket_endpoint(
@@ -35,16 +35,14 @@ async def mobile_companion_websocket_endpoint(
     manager: MobileCompanionManager | None = None,
 ) -> None:
     """Handle low-bandwidth mobile companion WebSockets at /ws/mobile-companion/{session_id}."""
-    principal = await admit_gateway_websocket(websocket)
+    principal = await admit_session_socket(
+        websocket, get_voice_verifier(), session_id, "session.observe"
+    )
     if principal is None:
         return
     user_id = principal.user_id
     comp_manager = manager or mobile_companion_manager
     peer_id, role = extract_peer_and_role(websocket, user_id)
-
-    # SpiceDB check on connect: session.observe (Hard Invariant 1)
-    if not await socket_may(websocket, session_id, user_id, "observe"):
-        return
 
     await comp_manager.connect(session_id, user_id, peer_id, websocket)
 

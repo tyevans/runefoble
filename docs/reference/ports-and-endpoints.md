@@ -157,6 +157,11 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `voice-agent` | GET | `/healthz` | Readiness check. Reports the active speech engines as `stt_engine` (default `faster-whisper`) and `tts_engine` (default `espeak-ng`). Returns `503` with `status: not_ready` and `problems` when a speech engine is not ready |
 | `voice-agent` | POST | `/api/v1/voice/dsp/apply` | Applies DSP filters to supplied base64 PCM or WAV audio. Returns `422` when `audio_base64` is missing or invalid. The route never synthesises a carrier tone |
 | `voice-agent` | POST | `/api/v1/voice/dsp/condition` | Conditions speech text for affliction filters (for example `drunk`). Input: `text`, `filters`. Returns `original_text`, `conditioned_text`, `active_filters`, and `dsp_config`. Returns no audio. Called by `game-session` over HTTP at `RUNEFOBLE_VOICE_AGENT_URL` (`http://voice-agent:8005` in Helm) for drink rolls with `speech_text` |
+| `voice-agent` | WS | `/ws/voice/{session_id}` | WebRTC voice room signaling. Verifies the bearer, then checks `session.observe` (close `4403` on refusal, `1011` when SpiceDB is unavailable). Owns the room state |
+| `voice-agent` | WS | `/ws/mobile-companion/{session_id}` | Mobile companion and haptic channel with the same `session.observe` check. Owns the companion connection state |
+| `voice-agent` | POST | `/api/v1/mobile/companion/{session_id}/whisper` | Dispatches a secret DM whisper with a haptic ping. Checks `session.control` |
+| `voice-agent` | POST | `/api/v1/mobile/companion/{session_id}/turn-alert` | Dispatches a combat turn alert with a haptic ping. Checks `session.control` |
+| `voice-agent` | GET | `/api/v1/mobile/companion/profiles` | Lists the adaptive Opus mobile audio profiles |
 | `voice-agent` | GET | `/ui/manifest` | Discovers vendored microfrontends (`runefoble-voice-controls`, `runefoble-audio-indicator`, `runefoble-mobile-companion` [subviews: `audio-stream-controller`, `haptic-ping-panel`, `connection-status-badge`], `runefoble-voice-duplex-controls`) |
 | `board-state` | POST | `/api/v1/boards` | Creates the tactical grid aggregate. This is the only route that creates a board. Needs a verified user token and `campaign_id` in the body (`400` when absent). The caller needs `campaign.run_session` (`403` otherwise). A second create for the same session returns `409`. The route then writes `board:<id>#campaign@campaign:<cid>`. |
 | `board-state` | GET | `/api/v1/boards/{session_id}` | Retrieves tactical grid dimensions and placed token states. Returns `404` when no board exists. Never creates a board or adds tokens. Secret traps, secret doors, and secret portals are absent unless the caller holds `board.view_secret_layer`. |
@@ -319,15 +324,15 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/sessions/{session_id}/atmosphere` | Updates campaign sensory atmosphere, lighting, and ambient audio (requires `run_session`) |
 | `gateway-api` | POST | `/api/v1/board/tokens/{token_id}/move` | Moves a tactical token on the board (requires `move` on `board_token`) |
 | `gateway-api` | GET | `/api/v1/board/tokens/{token_id}` | Inspects tactical token state (requires `inspect` on `board_token`) |
-| `gateway-api` | WS | `/ws/voice/{session_id}` | Live bidirectional WebRTC voice signaling stream. Needs `session.observe` |
-| `gateway-api` | WS | `/ws/mobile-companion/{session_id}` | Zanzibar-protected low-bandwidth mobile WebRTC companion and haptic gateway |
+| `gateway-api` | WS | `/ws/voice/{session_id}` | Live bidirectional WebRTC voice signaling. Relayed to `voice-agent`, which checks `session.observe` (close `4403` on refusal) |
+| `gateway-api` | WS | `/ws/mobile-companion/{session_id}` | Low-bandwidth mobile companion and haptic channel. Relayed to `voice-agent`, which checks `session.observe` (close `4403` on refusal) |
 | `gateway-api` | WS | `/ws/campaigns/{campaign_id}` | Real-time Zanzibar-protected campaign WebSocket stream for party state synchronization |
 | `gateway-api` | GET | `/api/v1/voice/rooms/{session_id}` | Proxies to `voice-agent`. Retrieves active WebRTC voice room participants, roles, and audio telemetry. Returns `503` when `voice-agent` is unreachable and `502` on an upstream `5xx`. The owner checks the bearer token and `session.observe` |
 | `gateway-api` | POST | `/api/v1/voice/rooms/{session_id}/kick` | Proxies to `voice-agent`. The owner checks `session.control` |
 | `gateway-api` | GET, POST | `/voice/streams/{session_id}/quality`, `/voice/streams/{session_id}/report`, and the `/api/v1/` forms | Proxies stream diagnostics to `voice-agent`. The owner checks `session.control` |
-| `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/whisper` | Dispatches secret DM whisper with triple-pulse haptic alert to mobile companion |
-| `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/turn-alert` | Triggers combat turn initiative double-pulse haptic alert for mobile companion |
-| `gateway-api` | GET | `/api/v1/mobile/companion/profiles` | Lists available adaptive Opus mobile audio streaming profiles |
+| `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/whisper` | Proxies to `voice-agent`, which dispatches the secret DM whisper with a triple-pulse haptic alert. The owner checks `session.control` |
+| `gateway-api` | POST | `/api/v1/mobile/companion/{session_id}/turn-alert` | Proxies to `voice-agent`, which triggers the combat turn initiative double-pulse haptic alert. The owner checks `session.control` |
+| `gateway-api` | GET | `/api/v1/mobile/companion/profiles` | Proxies to `voice-agent`, which lists the adaptive Opus mobile audio streaming profiles |
 | `gateway-api` | GET | `/api/v1/spectate/{session_id}` | Audience-safe spectator state overlay redacting secret DM notes and monster stats (alias: `/api/v1/spectator/sessions/{session_id}`) |
 | `gateway-api` | GET | `/overlay/party-vitals/{session_id}` | OBS transparent party vitals overlay (alpha-transparent rgba(0,0,0,0) canvas, zero DM secrets) |
 | `gateway-api` | WS | `/ws/overlay/{session_id}` | Real-time spectator WebSocket feed streaming sanitized party vitals and cinematic camera updates (aliases: `/overlay/ws/{session_id}`, `/ws/spectator/{session_id}`) |
