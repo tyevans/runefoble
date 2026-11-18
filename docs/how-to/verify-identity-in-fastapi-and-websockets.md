@@ -20,7 +20,11 @@ from fastapi import Depends, FastAPI
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
 from runefoble_auth.zitadel import ZitadelAuthService
 
-verifier = ZitadelAuthService(issuer="http://zitadel:8080", audience="runefoble-api")
+verifier = ZitadelAuthService(
+    issuer="http://auth.localhost",  # Must equal the token `iss` claim
+    audience="364509876543210987",  # The project ID in a cluster
+    internal_url="http://zitadel:8080",  # In-cluster origin. Requests carry Host: auth.localhost
+)
 get_principal = require_principal(lambda: verifier)
 
 app = FastAPI()
