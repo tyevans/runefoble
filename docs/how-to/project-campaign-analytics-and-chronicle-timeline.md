@@ -64,7 +64,7 @@ Authorization: Bearer <zitadel-jwt>
 The heatmap endpoint aggregates token coordinates, hit frequencies, and damage densities across combat rounds:
 
 ```http
-GET /api/v1/analytics/campaigns/{campaign_id}/heatmap?cell_size=5&encounter_id={optional_encounter_id}
+GET /api/v1/analytics/campaigns/{campaign_id}/heatmap?cell_size=5&metric=all&session_id={optional_session_id}
 ```
 
 ### Example Response

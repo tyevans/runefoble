@@ -1,5 +1,7 @@
 """Blackbox TDD frontdoor test suite for Campaign Hub Views and Gateway Alignment.
 
+Campaign Analytics views are covered in tests/test_blackbox_gateway_analytics_views.py (TASK-0588).
+
 Governed by:
 - TASK-0355: Campaign Hub Client Routing and View Orchestration for Codex, Atlas, and Telemetry
 - ADR-0004: Lit Web Components and Storybook UI
@@ -51,13 +53,9 @@ def _echo_upstream(service: str) -> FastAPI:
 
 @pytest.fixture(autouse=True)
 def hub_upstreams(monkeypatch) -> Iterator[None]:
-    """Run campaign_lore and campaign_analytics stand-ins on loopback ports."""
-    with (
-        serve(_echo_upstream("campaign-lore")) as lore_url,
-        serve(_echo_upstream("campaign-analytics")) as analytics_url,
-    ):
+    """Run a campaign_lore stand-in on a loopback port."""
+    with serve(_echo_upstream("campaign-lore")) as lore_url:
         monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_LORE_URL", lore_url)
-        monkeypatch.setenv("RUNEFOBLE_CAMPAIGN_ANALYTICS_URL", analytics_url)
         yield
 
 
@@ -91,7 +89,7 @@ def created_campaign_id(client: TestClient, trusted_ws_issuer) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 2. Gateway Hub Views: Atlas, Codex, and Analytics Frontdoors
+# 2. Gateway Hub Views: Atlas and Codex Frontdoors
 # ---------------------------------------------------------------------------
 
 
@@ -132,41 +130,6 @@ def test_gateway_campaign_codex_frontdoors(
     # Unauthorized access check (Hard Invariant 1)
     unauthorized_res = client.get(
         f"/api/v1/campaigns/{created_campaign_id}/codex",
-        headers=_auth(trusted_ws_issuer, "stranger_bob"),
-    )
-    assert unauthorized_res.status_code == 403
-
-
-def test_gateway_campaign_analytics_frontdoors(
-    client: TestClient, created_campaign_id: str, trusted_ws_issuer
-) -> None:
-    """Verify analytics routes forward the bearer token and query parameters to campaign_analytics."""
-    headers = _auth(trusted_ws_issuer, "dm_valeros")
-
-    # Summary is served by the gateway itself.
-    summary_res = client.get(f"/api/v1/analytics/campaigns/{created_campaign_id}", headers=headers)
-    assert summary_res.status_code == 200
-    assert summary_res.json()["campaign_id"] == created_campaign_id
-
-    # Heatmap, MVP, and timeline are proxied with their query parameters.
-    cases = [
-        ("heatmap?session_id=session-tomb-14", "session_id", "session-tomb-14"),
-        ("mvp?encounter_id=enc-crypt-1", "encounter_id", "enc-crypt-1"),
-        ("timeline?session_id=session-tomb-14", "session_id", "session-tomb-14"),
-    ]
-    for route, key, value in cases:
-        res = client.get(
-            f"/api/v1/analytics/campaigns/{created_campaign_id}/{route}", headers=headers
-        )
-        assert res.status_code == 200
-        data = res.json()
-        assert data["service"] == "campaign-analytics"
-        assert data["authorization"] == headers["Authorization"]
-        assert data["query"] == {key: value}
-
-    # Unauthorized access check (Hard Invariant 1)
-    unauthorized_res = client.get(
-        f"/api/v1/analytics/campaigns/{created_campaign_id}/heatmap",
         headers=_auth(trusted_ws_issuer, "stranger_bob"),
     )
     assert unauthorized_res.status_code == 403

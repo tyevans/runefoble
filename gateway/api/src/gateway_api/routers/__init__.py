@@ -1,5 +1,6 @@
 """Modular APIRouter packages for Gateway API."""
 
+from gateway_api.routers.analytics_views import router as analytics_views_router
 from gateway_api.routers.auth import router as auth_router
 from gateway_api.routers.boards_proxy import router as boards_router
 from gateway_api.routers.campaigns_proxy import router as campaigns_router
@@ -7,7 +8,6 @@ from gateway_api.routers.characters_proxy import router as characters_router
 from gateway_api.routers.compendium_proxy import router as compendium_router
 from gateway_api.routers.downtime_proxy import router as downtime_router
 from gateway_api.routers.health import router as health_router
-from gateway_api.routers.hub_views import router as hub_views_router
 from gateway_api.routers.lore_views import router as lore_views_router
 from gateway_api.routers.overlay import router as overlay_router
 from gateway_api.routers.sessions_proxy import router as sessions_router
@@ -16,6 +16,7 @@ from gateway_api.routers.spectator import router as spectator_router
 from gateway_api.routers.voice_proxy import router as voice_proxy_router
 
 __all__ = [
+    "analytics_views_router",
     "auth_router",
     "boards_router",
     "campaigns_router",
@@ -23,7 +24,6 @@ __all__ = [
     "characters_router",
     "downtime_router",
     "health_router",
-    "hub_views_router",
     "lore_views_router",
     "overlay_router",
     "sessions_router",
