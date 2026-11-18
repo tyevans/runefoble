@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Gateway WebSocket routes admit a connection only with a verified `runefoble.bearer.<jwt>` subprotocol, checked before accept. Refused handshakes close with 1008. Removed the `?user_id=`, `?token=`, `x-user-id`, and `guest_user` identity paths on WebSocket and voice/companion signaling routes. (TASK-0522)
 
 ### Removed
+- `runefoble_platform` shim modules `analytics_client.py` and `analytics_privacy.py`, and the `RedisConsumerGroupWorker` alias. Import `runefoble_platform.analytics` and `RedisConsumerGroup` instead. (TASK-0485)
 - Legacy event names `BattlemapCreated` and `AssetGenerated` are removed. Use `BattlemapForged` and `TokenAssetForged`. Development event stores that hold the old names are not migrated. (TASK-0799)
 - In-process platform event bus (`runefoble_platform.bus`). Every publish now goes to Redis Streams. (TASK-0710)
 - Soundscape alias route `POST /api/v1/soundscape/override`. Use `POST /api/v1/soundscape/stems/override`. (TASK-0793)

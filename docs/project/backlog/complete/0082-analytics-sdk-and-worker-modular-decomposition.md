@@ -46,9 +46,9 @@ Any addition of new domain event mappings or telemetry destinations risks pushin
 - **ADR-0009**: Code Quality and Linting with Ruff (strict file length limit <500 lines).
 
 ## Proposed Decomposition
-1. **Privacy & Anonymization Engine (`libs/runefoble_platform/src/runefoble_platform/analytics_privacy.py` or `analytics/privacy.py`)**:
+1. **Privacy & Anonymization Engine (`libs/runefoble_platform/src/runefoble_platform/analytics_privacy.py` (removed) or `analytics/privacy.py`)**:
    - `anonymize_profile_id`, `sanitize_properties`, and `FORBIDDEN_PROPERTY_KEYS` (~80 lines).
-2. **OpenPanel Client (`libs/runefoble_platform/src/runefoble_platform/analytics_client.py` or `analytics/client.py`)**:
+2. **OpenPanel Client (`libs/runefoble_platform/src/runefoble_platform/analytics_client.py` (removed) or `analytics/client.py`)**:
    - `OpenPanelClient` with `track`, `identify`, `clear`, and `close` (~110 lines).
 3. **Analytics Event Worker (`libs/runefoble_platform/src/runefoble_platform/analytics/` or `analytics/worker.py`)**:
    - `AnalyticsEventWorker` with consumer group setup, event mapping, polling loop, and DLQ handling (~210 lines).
