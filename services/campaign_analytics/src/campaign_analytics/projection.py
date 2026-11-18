@@ -32,6 +32,7 @@ TOKEN_POSITION_SCOPE = "token_position"
 TOKEN_NAME_SCOPE = "token_name"
 ACTIVE_COMBATANT_SCOPE = "active_combatant"
 ACTIVE_ENCOUNTER_SCOPE = "active_encounter"
+ACTIVE_ROUND_SCOPE = "active_round"
 
 
 def _now() -> str:
