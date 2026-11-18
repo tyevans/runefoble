@@ -4,12 +4,9 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from inference_worker.llm_client import (
-    InferenceBackendError,
-    MultiBackendLLMClient,
-    parse_json_object,
-)
+from inference_worker.model_output import parse_json_object
 from inference_worker.models import DMNarrationResponse, ResponseSource, TensionLevel
+from inference_worker.ports import LLMPort, backend_unavailable
 
 
 class NarrationGraphState(TypedDict, total=False):
@@ -71,7 +68,7 @@ def _canned_narration(env: str, prompt: str) -> NarrationGraphState:
 
 async def generate_narration_node(
     state: NarrationGraphState,
-    llm_client: MultiBackendLLMClient,
+    llm_port: LLMPort,
 ) -> NarrationGraphState:
     req = state["request"]
     env = req.get("scene_environment", "Ancient vault")
@@ -93,16 +90,16 @@ async def generate_narration_node(
         "Generate evocative scene narration."
     )
 
-    # Raises InferenceBackendError when a real backend fails. No silent fallback.
-    resp = await llm_client.generate_completion(system_prompt, user_prompt)
+    # Raises EngineUnavailableError when a real engine fails. No silent fallback.
+    completion = await llm_port.complete(system_prompt, user_prompt)
 
-    if resp["source"] == "mock":
+    if completion.source == "mock":
         return {**_canned_narration(env, prompt), "source": "mock", "degraded": False}
 
-    data = parse_json_object(resp["content"])
+    data = parse_json_object(completion.content)
     narration = data.get("narration", "")
     if not narration:
-        raise InferenceBackendError(resp["backend"], "model output had no narration")
+        raise backend_unavailable(completion.backend, "model output had no narration")
 
     return {
         "narration_text": narration,
@@ -127,13 +124,13 @@ def compile_narration_node(state: NarrationGraphState) -> NarrationGraphState:
     return {"final_response": resp.model_dump()}
 
 
-def build_narration_graph(llm_client: MultiBackendLLMClient):
+def build_narration_graph(llm_port: LLMPort):
     workflow = StateGraph(NarrationGraphState)
 
     workflow.add_node("analyze_context", analyze_context_node)
 
     async def gen_node(state: NarrationGraphState):
-        return await generate_narration_node(state, llm_client)
+        return await generate_narration_node(state, llm_port)
 
     workflow.add_node("generate_narration", gen_node)
     workflow.add_node("compile", compile_narration_node)

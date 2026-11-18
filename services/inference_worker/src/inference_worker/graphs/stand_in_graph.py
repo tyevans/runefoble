@@ -4,12 +4,9 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from inference_worker.llm_client import (
-    InferenceBackendError,
-    MultiBackendLLMClient,
-    parse_json_object,
-)
+from inference_worker.model_output import parse_json_object
 from inference_worker.models import ResponseSource, StandInActionResponse
+from inference_worker.ports import LLMPort, backend_unavailable
 
 
 class StandInGraphState(TypedDict, total=False):
@@ -47,7 +44,7 @@ def evaluate_penalties_node(state: StandInGraphState) -> StandInGraphState:
 
 async def generate_stand_in_decision_node(
     state: StandInGraphState,
-    llm_client: MultiBackendLLMClient,
+    llm_port: LLMPort,
 ) -> StandInGraphState:
     req = state["request"]
     char_name = req.get("character_name", "Hero")
@@ -96,21 +93,21 @@ async def generate_stand_in_decision_node(
         "Generate their turn action and in-character spoken dialogue."
     )
 
-    # Raises InferenceBackendError when a real backend fails. No silent fallback.
-    resp = await llm_client.generate_completion(system_prompt, user_prompt)
+    # Raises EngineUnavailableError when a real engine fails. No silent fallback.
+    completion = await llm_port.complete(system_prompt, user_prompt)
     decision: dict[str, Any] = {}
     applied: list[str] = []
-    if resp["source"] == "llm":
-        decision = parse_json_object(resp["content"])
+    if completion.source == "llm":
+        decision = parse_json_object(completion.content)
         if not decision.get("action_type"):
-            raise InferenceBackendError(resp["backend"], "model output had no action_type")
+            raise backend_unavailable(completion.backend, "model output had no action_type")
         # The model declares what it followed. Only active guardrail names are reported.
         declared = decision.get("guardrails_applied")
         if isinstance(declared, list):
             applied = [g for g in declared if g in guardrail_notes]
 
     # Canned rules run only for the explicit mock backend
-    if resp["source"] == "mock":
+    if completion.source == "mock":
         target = enemies[0] if enemies else "nearest foe"
         protect_allies = guardrails.get("protect_allies", [])
         avoid_melee = guardrails.get("avoid_melee", False)
@@ -193,7 +190,7 @@ async def generate_stand_in_decision_node(
 
     return {
         "action_decision": decision,
-        "source": resp["source"],
+        "source": completion.source,
         "degraded": False,
         "guardrails_applied": applied,
     }
@@ -223,13 +220,13 @@ def compile_stand_in_response_node(state: StandInGraphState) -> StandInGraphStat
     return {"final_response": resp.model_dump()}
 
 
-def build_stand_in_graph(llm_client: MultiBackendLLMClient):
+def build_stand_in_graph(llm_port: LLMPort):
     workflow = StateGraph(StandInGraphState)
 
     workflow.add_node("evaluate_penalties", evaluate_penalties_node)
 
     async def dec_node(state: StandInGraphState):
-        return await generate_stand_in_decision_node(state, llm_client)
+        return await generate_stand_in_decision_node(state, llm_port)
 
     workflow.add_node("generate_decision", dec_node)
     workflow.add_node("compile", compile_stand_in_response_node)

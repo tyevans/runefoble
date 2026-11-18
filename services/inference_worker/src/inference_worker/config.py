@@ -5,6 +5,8 @@ from typing import Literal
 from pydantic import AliasChoices, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BackendName = Literal["openai_compatible", "ollama", "mock"]
+
 
 class WorkerSettings(BaseSettings):
     """Runtime configuration for inference worker."""
@@ -26,9 +28,9 @@ class WorkerSettings(BaseSettings):
     port: int = Field(default=8100, description="Listen port")
     log_level: str = Field(default="INFO", description="Log level")
 
-    backend: Literal["auto", "openai_compatible", "ollama", "mock"] = Field(
-        default="auto",
-        description="Inference backend engine: auto (detects available server), openai_compatible, ollama, or mock",
+    backend: BackendName = Field(
+        default="openai_compatible",
+        description="Inference engine, selected once at start-up: openai_compatible, ollama, or mock",
     )
 
     # OpenAI-compatible backend (llama-swap, vLLM, llama.cpp, etc.)

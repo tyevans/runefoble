@@ -17,12 +17,13 @@ from character_sheet.models import StandInGuardrails
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api
 from inference_worker.config import WorkerSettings
-from inference_worker.llm_client import MultiBackendLLMClient
+from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
 from the_watcher.main import app as watcher_app
 from the_watcher.routers import stand_in as stand_in_router
 
+from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.live_services import serve
 from tests.helpers.ws_identity import SIGNING_ISSUER
 from tests.test_inference_worker_failure_contract import _FakeLLMHandler, _llm_settings
@@ -73,10 +74,7 @@ def worker_backend(monkeypatch: pytest.MonkeyPatch):
     """Point the worker app at a backend. Graphs are rebuilt for that client."""
 
     def _use(settings: WorkerSettings) -> None:
-        monkeypatch.setattr(api, "llm_client", MultiBackendLLMClient(settings))
-        monkeypatch.setattr(api, "intent_graph", None)
-        monkeypatch.setattr(api, "narration_graph", None)
-        monkeypatch.setattr(api, "stand_in_graph", None)
+        install_worker_port(monkeypatch, build_llm_port(settings))
 
     return _use
 

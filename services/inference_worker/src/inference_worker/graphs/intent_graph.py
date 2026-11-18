@@ -7,8 +7,9 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from inference_worker.llm_client import MultiBackendLLMClient, parse_json_object
+from inference_worker.model_output import parse_json_object
 from inference_worker.models import ParsedAction, ResponseSource
+from inference_worker.ports import LLMPort
 
 logger = logging.getLogger("runefoble.inference.intent_graph")
 
@@ -79,7 +80,7 @@ def _heuristic_intent(transcript: str, speaker_name: str) -> dict[str, Any]:
 
 async def extract_candidate_action_node(
     state: IntentGraphState,
-    llm_client: MultiBackendLLMClient,
+    llm_port: LLMPort,
 ) -> IntentGraphState:
     transcript = state.get("normalized_transcript", "")
     speaker_name = state["request"].get("speaker_name", "Player")
@@ -98,17 +99,17 @@ async def extract_candidate_action_node(
         "Return valid JSON only."
     )
 
-    # Raises InferenceBackendError when a real backend fails. No silent fallback.
-    resp = await llm_client.generate_completion(system_prompt, user_prompt)
+    # Raises EngineUnavailableError when a real engine fails. No silent fallback.
+    completion = await llm_port.complete(system_prompt, user_prompt)
 
-    if resp["source"] == "mock":
+    if completion.source == "mock":
         return {
             "raw_intent": _heuristic_intent(transcript, speaker_name),
             "source": "mock",
             "degraded": False,
         }
 
-    extracted = parse_json_object(resp["content"])
+    extracted = parse_json_object(completion.content)
     if extracted.get("action_type"):
         return {"raw_intent": extracted, "source": "llm", "degraded": False}
 
@@ -179,13 +180,13 @@ def resolve_spatial_and_targets_node(state: IntentGraphState) -> IntentGraphStat
     return {"parsed_action": parsed.model_dump()}
 
 
-def build_intent_graph(llm_client: MultiBackendLLMClient):
+def build_intent_graph(llm_port: LLMPort):
     workflow = StateGraph(IntentGraphState)
 
     workflow.add_node("normalize", normalize_transcript_node)
 
     async def candidate_node(state: IntentGraphState):
-        return await extract_candidate_action_node(state, llm_client)
+        return await extract_candidate_action_node(state, llm_port)
 
     workflow.add_node("extract_candidate", candidate_node)
     workflow.add_node("resolve_spatial", resolve_spatial_and_targets_node)

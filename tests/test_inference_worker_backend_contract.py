@@ -14,12 +14,13 @@ from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from inference_worker import api
 from inference_worker.api import app
 from inference_worker.config import WorkerSettings
-from inference_worker.llm_client import MultiBackendLLMClient
+from inference_worker.llm_factory import build_llm_port
 from pydantic import SecretStr
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
+
+from tests.helpers.inference_worker_port import install_worker_port
 
 INTENT_CONTENT = json.dumps(
     {
@@ -96,8 +97,7 @@ async def test_intent_route_calls_openai_backend_with_configured_secret(
         openai_model="contract-model",
         max_tokens=256,
     )
-    monkeypatch.setattr(api, "llm_client", MultiBackendLLMClient(settings))
-    monkeypatch.setattr(api, "intent_graph", None)
+    install_worker_port(monkeypatch, build_llm_port(settings))
 
     payload = {
         "campaign_id": "camp-test",

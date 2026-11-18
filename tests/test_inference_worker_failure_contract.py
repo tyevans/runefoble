@@ -16,11 +16,12 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api
 from inference_worker.config import WorkerSettings
-from inference_worker.llm_client import MultiBackendLLMClient
+from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher.main import app as watcher_app
 from the_watcher.routers.intent import speech
 
+from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.live_services import closed_port_url, serve
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -59,13 +60,10 @@ ENDPOINTS = [
 
 @pytest.fixture
 def use_worker_backend(monkeypatch: pytest.MonkeyPatch):
-    """Point the worker app at a backend. Graphs are rebuilt for that client."""
+    """Point the worker app at a backend. Graphs are rebuilt for that port."""
 
     def _use(settings: WorkerSettings) -> None:
-        monkeypatch.setattr(api, "llm_client", MultiBackendLLMClient(settings))
-        monkeypatch.setattr(api, "intent_graph", None)
-        monkeypatch.setattr(api, "narration_graph", None)
-        monkeypatch.setattr(api, "stand_in_graph", None)
+        install_worker_port(monkeypatch, build_llm_port(settings))
 
     return _use
 
@@ -151,20 +149,6 @@ async def test_unreachable_backend_returns_explicit_503(use_worker_backend, path
 
     assert resp.status_code == 503
     assert resp.json() == {"error": "backend_unavailable", "backend": "openai_compatible"}
-
-
-@pytest.mark.asyncio
-async def test_auto_backend_without_server_is_unavailable(use_worker_backend):
-    """Auto mode never selects mock by itself. No detected server means 503."""
-    use_worker_backend(WorkerSettings(backend="auto", openai_base_url="http://127.0.0.1:9/v1"))
-
-    async with AsyncClient(
-        transport=ASGITransport(app=api.app), base_url="http://test", headers=WORKER_AUTH
-    ) as ac:
-        resp = await ac.post("/inference/v1/intent", json=INTENT_PAYLOAD)
-
-    assert resp.status_code == 503
-    assert resp.json()["error"] == "backend_unavailable"
 
 
 @pytest.mark.asyncio

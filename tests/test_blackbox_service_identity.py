@@ -18,12 +18,13 @@ from game_session.main import app as session_app
 from httpx import ASGITransport, AsyncClient
 from inference_worker import api as worker_api
 from inference_worker.config import WorkerSettings
-from inference_worker.llm_client import MultiBackendLLMClient
+from inference_worker.llm_factory import build_llm_port
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher import dependencies as watcher_dependencies
 from the_watcher.main import app as watcher_app
 from the_watcher.routers import autonomous_dm
 
+from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -149,10 +150,7 @@ async def test_worker_refuses_user_bearer_token():
 
 @pytest.mark.asyncio
 async def test_worker_accepts_the_service_credential(monkeypatch):
-    monkeypatch.setattr(
-        worker_api, "llm_client", MultiBackendLLMClient(WorkerSettings(backend="mock"))
-    )
-    monkeypatch.setattr(worker_api, "intent_graph", None)
+    install_worker_port(monkeypatch, build_llm_port(WorkerSettings(backend="mock")))
     headers = {SERVICE_CREDENTIAL_HEADER: WORKER_TOKEN}
     async with AsyncClient(
         transport=ASGITransport(app=worker_api.app), base_url="http://test", headers=headers

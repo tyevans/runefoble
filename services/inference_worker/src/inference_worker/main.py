@@ -3,19 +3,18 @@
 import argparse
 import logging
 import sys
+from typing import get_args
 
 import uvicorn
 
-from inference_worker.config import WorkerSettings
+from inference_worker.config import BackendName, WorkerSettings
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Runefoble Distributed AI Inference Worker")
     parser.add_argument("--host", type=str, default=None, help="Host to bind on")
     parser.add_argument("--port", type=int, default=None, help="Port to listen on")
-    parser.add_argument(
-        "--backend", type=str, choices=["auto", "openai_compatible", "ollama", "mock"], default=None
-    )
+    parser.add_argument("--backend", type=str, choices=get_args(BackendName), default=None)
     parser.add_argument("--config", type=str, default=None, help="Path to .env configuration file")
     return parser.parse_args()
 
