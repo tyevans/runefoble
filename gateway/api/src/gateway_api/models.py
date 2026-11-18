@@ -59,6 +59,9 @@ class StartMinigameGatewayRequest(BaseModel):
 
 class HaggleGatewayRequest(BaseModel):
     character_id: str
+    campaign_id: str
+    establishment_id: str
+    item_id: str
     item_name: str
     base_price: int
     offered_price: int
