@@ -2,6 +2,8 @@
 
 import os
 
+import pytest
+
 from tests.helpers.container_owner import remove_orphaned_test_containers
 
 # Test mode: the SpiceDB preshared key has no default outside tests. Tests supply a throwaway
@@ -31,6 +33,48 @@ os.environ.setdefault("RUNEFOBLE_WATCHER_ENGINE", "heuristic")
 def pytest_sessionstart(session):
     """Remove test containers whose owner process died in an earlier run. Live owners are kept."""
     remove_orphaned_test_containers()
+
+
+# These modules check wall-clock time or start a browser. Under heavy parallel load they fail
+# for reasons that are not defects. They carry the `serial` marker, and the gate runs them
+# after the parallel run, one at a time: see `make test`.
+SERIAL_MODULES = frozenset(
+    {
+        "tests/test_blackbox_adaptive_stream/test_adaptive_stream.py",
+        "tests/test_blackbox_app_shell_test_modular_decomposition.py",
+        "tests/test_blackbox_barge_in_filter/test_barge_in_filter.py",
+        "tests/test_blackbox_campaign_lore_rag.py",
+        "tests/test_blackbox_ghost_previews.py",
+        "tests/test_blackbox_intent_disambiguation_flow.py",
+        "tests/test_blackbox_leitmotif_api.py",
+        "tests/test_blackbox_leitmotif_triggers.py",
+        "tests/test_blackbox_mobile_companion.py",
+        "tests/test_blackbox_mobile_companion_ui.py",
+        "tests/test_blackbox_plugin_slots/test_plugin_slots.py",
+        "tests/test_blackbox_rules_compendium.py",
+        "tests/test_blackbox_rules_compendium_ui/test_srd_search.py",
+        "tests/test_blackbox_spell_vfx/test_speech_vfx_triggers.py",
+        "tests/test_blackbox_spell_vfx/test_spell_adjudication.py",
+        "tests/test_blackbox_streaming_whisper_e2e.py",
+        "tests/test_blackbox_streaming_whisper_vad.py",
+        "tests/test_blackbox_vocal_modulator/test_vocal_modulator.py",
+        "tests/test_blackbox_voice_agent/test_voice_duplex_controls_ui.py",
+        "tests/test_blackbox_voice_dsp.py",
+        "tests/test_blackbox_voice_duplex.py",
+        "tests/test_blackbox_voice_telemetry.py",
+        "tests/test_blackbox_webrtc_routing.py",
+        "tests/test_speech_to_intent.py",
+        "tests/test_voice_agent_dsp.py",
+    }
+)
+
+
+def pytest_collection_modifyitems(config, items):
+    """Mark every test in SERIAL_MODULES as `serial`."""
+    root = config.rootpath
+    for item in items:
+        if item.path.relative_to(root).as_posix() in SERIAL_MODULES:
+            item.add_marker(pytest.mark.serial)
 
 
 pytest_plugins = [

@@ -43,12 +43,17 @@ def test_agy_launch_and_status_endpoints(test_server: tuple[ThreadingHTTPServer,
     assert job_id.startswith("agy-")
 
     # 2. GET /api/agy/status
-    time.sleep(0.15)
-    with urllib.request.urlopen(f"{base}/api/agy/status?job_id={job_id}") as resp:
-        assert resp.status == 200
-        res = json.loads(resp.read().decode("utf-8"))
-        assert res["job"]["status"] == "completed"
-        assert "Mock AGY executed" in res["job"]["output"]
+    # The job runs on a thread. Poll with a time limit instead of a fixed sleep.
+    deadline = time.monotonic() + 10.0
+    while True:
+        with urllib.request.urlopen(f"{base}/api/agy/status?job_id={job_id}") as resp:
+            assert resp.status == 200
+            res = json.loads(resp.read().decode("utf-8"))
+        if res["job"]["status"] != "running" or time.monotonic() > deadline:
+            break
+        time.sleep(0.05)
+    assert res["job"]["status"] == "completed"
+    assert "Mock AGY executed" in res["job"]["output"]
 
     # 3. GET /api/agy/jobs
     with urllib.request.urlopen(f"{base}/api/agy/jobs") as resp:

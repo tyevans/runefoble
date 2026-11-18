@@ -13,6 +13,7 @@ Governed by Hard Invariant 7, ADR-0001 and ADR-0014.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
@@ -58,8 +59,11 @@ def _character(spicedb, campaign_id: str, owner: str) -> str:
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
+def client() -> Iterator[TestClient]:
+    # Enter the client, so every socket of a test shares one event loop. Without it each
+    # socket gets its own loop, and a broadcast between two sockets can stall under load.
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 @pytest.fixture

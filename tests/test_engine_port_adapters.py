@@ -99,8 +99,9 @@ def test_voice_agent_rejects_unknown_stt_engine_at_start_up(
     from voice_agent.main import app
     from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
 
-    monkeypatch.setenv("RUNEFOBLE_VOICE_STT_ENGINE", "not-an-engine")
+    # Replace the seam first: the restorer reads the current pipeline, and that read builds it.
     seam_restorer.replace(get_streaming_pipeline, set_streaming_pipeline, None)
+    monkeypatch.setenv("RUNEFOBLE_VOICE_STT_ENGINE", "not-an-engine")
 
     with pytest.raises(ValidationError, match="faster-whisper"), TestClient(app):
         pass

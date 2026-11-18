@@ -187,9 +187,13 @@ deploy-remote-worker: ## Sync and set up inference worker on remote GPU host
 	ssh debian@192.168.1.14 "cd ~/runefoble && ~/.local/bin/uv sync"
 	@echo "==> Remote worker synced. To run: ssh debian@192.168.1.14 'cd ~/runefoble && ~/.local/bin/uv run runefoble-inference-worker'"
 
+PYTEST_WORKERS ?= 8
+
 test: ## Run complete test suite (unit, entrypoints, properties, frontend build)
-	@echo "==> Running Python test suite..."
-	uv run pytest
+	@echo "==> Running Python test suite in parallel (all but serial tests)..."
+	uv run pytest -n $(PYTEST_WORKERS) -m "not docker and not serial"
+	@echo "==> Running serial tests (timing checks and browser suites), one at a time..."
+	uv run pytest -m "serial and not docker"
 	@echo "==> Verifying frontend build..."
 	cd frontend && pnpm run build
 
