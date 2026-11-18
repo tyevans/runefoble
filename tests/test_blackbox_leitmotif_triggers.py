@@ -29,7 +29,6 @@ from soundscape.leitmotif import calculate_envelope_gain
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER
 
 from tests.helpers.leitmotif_fixtures import (
-    clean_environment,
     client,
     leitmotif_session_id_fixture,  # noqa: F401 (registers the leitmotif_session_id fixture)
     setup_leitmotif_profile,

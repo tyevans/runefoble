@@ -34,7 +34,6 @@ from soundscape.main import app as soundscape_app
 from starlette.websockets import WebSocketDisconnect
 
 from tests.helpers.leitmotif_fixtures import (  # noqa: F401 (registers the fixtures)
-    clean_environment,
     leitmotif_session_id_fixture,
 )
 from tests.helpers.spicedb_factory import shared_spicedb_client

@@ -11,7 +11,6 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from tests.helpers.leitmotif_fixtures import (
-    clean_environment,
     client,
     leitmotif_session_id_fixture,  # noqa: F401 (registers the leitmotif_session_id fixture)
     setup_leitmotif_profile,

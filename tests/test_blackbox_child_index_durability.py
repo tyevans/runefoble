@@ -19,6 +19,7 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -61,9 +62,7 @@ def redis_double() -> MockAsyncRedis:
     return MockAsyncRedis()
 
 
-def _boot_session_process(
-    spicedb: MockSpiceDBClient, redis: MockAsyncRedis, use_redis_client
-) -> TestClient:
+def _boot_session_process(spicedb: MockSpiceDBClient, redis: MockAsyncRedis) -> TestClient:
     """Start a new game session process over the shared event store and Redis double."""
     for name in [n for n in sys.modules if _is_game_session(n)]:
         del sys.modules[name]
@@ -72,7 +71,7 @@ def _boot_session_process(
     tokens = importlib.import_module("game_session.settlement.auth.tokens")
     tokens.set_zitadel_auth_service(SIGNING_ISSUER.verifier())
     deps.set_spicedb_client(spicedb)
-    use_redis_client(redis)
+    deps.set_event_bus(RedisStreamsEventBus(client=redis))
     return TestClient(main.app)
 
 
