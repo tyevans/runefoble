@@ -42,6 +42,9 @@ from the_watcher.factions.campaign_world import CampaignWorldAggregate
 from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture(autouse=True)
@@ -73,7 +76,7 @@ def clean_simulation_environment():
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 async def _setup_campaign_roles(
@@ -136,7 +139,7 @@ async def test_zanzibar_world_tick_authorization(client: TestClient):
     res_player = client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",
         json={"regional_stability": 50},
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res_player.status_code == 403
     assert "Forbidden" in res_player.json()["detail"]
@@ -145,14 +148,14 @@ async def test_zanzibar_world_tick_authorization(client: TestClient):
     res_create_player = client.post(
         f"/api/v1/campaigns/{camp_id}/factions",
         json={"name": "Rogue Band", "influence": 30},
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res_create_player.status_code == 403
 
     # Player CAN view factions (Zanzibar campaign->view permission)
     res_view_player = client.get(
         f"/api/v1/campaigns/{camp_id}/factions",
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert res_view_player.status_code == 200
 
@@ -160,7 +163,7 @@ async def test_zanzibar_world_tick_authorization(client: TestClient):
     res_dm = client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",
         json={"regional_stability": 50},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res_dm.status_code == 200
     assert res_dm.json()["tick_number"] == 1
@@ -183,7 +186,7 @@ async def test_frontdoor_faction_creation_and_query(client: TestClient):
     create_res = client.post(
         f"/api/v1/campaigns/{camp_id}/factions",
         json=payload,
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert create_res.status_code == 200
     faction_data = create_res.json()
@@ -195,7 +198,7 @@ async def test_frontdoor_faction_creation_and_query(client: TestClient):
     # Get single faction frontdoor
     get_res = client.get(
         f"/api/v1/campaigns/{camp_id}/factions/{faction_id}",
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert get_res.status_code == 200
     assert get_res.json()["faction_id"] == faction_id
@@ -204,7 +207,7 @@ async def test_frontdoor_faction_creation_and_query(client: TestClient):
     # List factions frontdoor
     list_res = client.get(
         f"/api/v1/campaigns/{camp_id}/factions",
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert list_res.status_code == 200
     assert any(f["faction_id"] == faction_id for f in list_res.json())
@@ -224,7 +227,7 @@ async def test_downtime_world_tick_advances_agendas_and_rumors(client: TestClien
     res = client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",
         json=tick_payload,
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert res.status_code == 200
     data = res.json()
@@ -245,7 +248,7 @@ async def test_downtime_world_tick_advances_agendas_and_rumors(client: TestClien
     alias_res = client.post(
         f"/api/v1/campaigns/{camp_id}/factions/tick",
         json={"regional_stability": 50, "random_seed": 77},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert alias_res.status_code == 200
     assert alias_res.json()["tick_number"] == 2
@@ -268,7 +271,7 @@ async def test_agenda_completion_triggers_geopolitical_shift(client: TestClient)
     create_res = client.post(
         f"/api/v1/campaigns/{camp_id}/factions",
         json=payload,
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     faction_id = create_res.json()["faction_id"]
     assert faction_id.startswith("faction-")
@@ -279,7 +282,7 @@ async def test_agenda_completion_triggers_geopolitical_shift(client: TestClient)
         res = client.post(
             f"/api/v1/campaigns/{camp_id}/world-tick",
             json={"regional_stability": 50, "random_seed": seed},
-            headers={"X-User-Id": dm_user},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
         )
         assert res.status_code == 200
         shifts = res.json()["shifts"]
@@ -296,7 +299,7 @@ async def test_agenda_completion_triggers_geopolitical_shift(client: TestClient)
     # Verify latest bulletin query
     latest_res = client.get(
         f"/api/v1/campaigns/{camp_id}/world-ticks/latest",
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert latest_res.status_code == 200
     assert latest_res.json()["tick_number"] >= 1

@@ -25,6 +25,9 @@ from the_watcher.dependencies import (
 from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 class FailingRedis(MockAsyncRedis):
@@ -47,7 +50,7 @@ def clean_environment():
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 async def _setup_dm(dm_user: str = "dm_evelyn") -> tuple[str, str]:
@@ -81,7 +84,7 @@ def _propose(client: TestClient, sess_id: str, camp_id: str) -> str:
 def _pending_status(client: TestClient, sess_id: str, camp_id: str, action_id: str) -> str:
     res = client.get(
         f"/api/v1/watcher/actions/pending?session_id={sess_id}&campaign_id={camp_id}",
-        headers={"X-User-Id": "dm_evelyn"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},
     )
     assert res.status_code == 200
     return next(a["status"] for a in res.json() if a["action_id"] == action_id)
@@ -103,7 +106,7 @@ async def test_veto_returns_503_and_action_stays_pending_when_event_unpublished(
     res = client.post(
         "/api/v1/watcher/veto",
         json={"action_id": action_id, "session_id": sess_id, "campaign_id": camp_id},
-        headers={"X-User-Id": "dm_evelyn"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},
     )
 
     assert res.status_code == 503
@@ -122,7 +125,7 @@ async def test_approve_returns_503_and_action_stays_pending_when_event_unpublish
     res = client.post(
         "/api/v1/watcher/approve",
         json={"action_id": action_id, "session_id": sess_id, "campaign_id": camp_id},
-        headers={"X-User-Id": "dm_evelyn"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('dm_evelyn')}"},
     )
 
     assert res.status_code == 503

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from runefoble_events.events import (
     SpeechIntentParsed,
     TokenMoved,
@@ -19,13 +19,14 @@ from the_watcher.dependencies import (
     get_event_bus,
     to_uuid,
 )
+from the_watcher.identity import get_caller_principal
 from the_watcher.models import (
     IntentResult,
     SpeechInputRequest,
 )
 from the_watcher.worker_client import call_worker
 
-router = APIRouter(tags=["intent"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["intent"])
 
 
 async def _parse_with_worker(req: SpeechInputRequest) -> IntentResult:

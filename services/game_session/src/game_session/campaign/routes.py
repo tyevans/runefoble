@@ -37,8 +37,13 @@ from game_session.campaign.schemas import (
 )
 from game_session.campaign.tuples import SpiceDB
 from game_session.dependencies import get_spicedb_client
+from game_session.settlement.auth.tokens import get_caller_principal
 
-router = APIRouter(prefix="/api/v1/campaigns", tags=["Campaigns & Sessions"])
+router = APIRouter(
+    dependencies=[Depends(get_caller_principal)],
+    prefix="/api/v1/campaigns",
+    tags=["Campaigns & Sessions"],
+)
 
 Repos = Annotated[CampaignRepositories, Depends(get_campaign_repositories)]
 Spicedb = Annotated[SpiceDB, Depends(get_spicedb_client)]

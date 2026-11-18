@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from game_session.caravan import CaravanContractAggregate
 from game_session.dependencies import (
     get_caravan_contract_repository,
@@ -21,23 +21,28 @@ from game_session.routers.caravan_contracts.auth import (
     _publish,
     _to_uuid,
 )
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.west_marches_models import PostCaravanContractRequest
 
-router = APIRouter(prefix="/api/v1/shared-worlds", tags=["caravan-contracts"])
+router = APIRouter(
+    dependencies=[Depends(get_caller_principal)],
+    prefix="/api/v1/shared-worlds",
+    tags=["caravan-contracts"],
+)
 
 
 @router.post("/{shared_world_id}/caravans/contracts", status_code=201)
 async def post_caravan_contract(
+    caller_id: CallerId,
     shared_world_id: str,
     req: PostCaravanContractRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Post an asynchronous mercenary escort contract to the shared world notice board."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "trade", x_user_id)
+    await _check_perm(spicedb, "shared_world", str(wid), "trade", caller_id)
     await _check_high_tier_auth(
-        spicedb, str(wid), req.posted_by_campaign_id, req.route_risk_level, x_user_id
+        spicedb, str(wid), req.posted_by_campaign_id, req.route_risk_level, caller_id
     )
 
     contract_id = uuid4()
@@ -56,7 +61,7 @@ async def post_caravan_contract(
         escort_collateral=req.escort_collateral,
         reward_gold=req.reward_gold,
         reward_reputation=req.reward_reputation,
-        poster_user_id=x_user_id,
+        poster_user_id=caller_id,
         expires_in_turns=req.expires_in_turns,
     )
     events = list(contract.uncommitted_events)
@@ -67,8 +72,7 @@ async def post_caravan_contract(
     await spicedb.write_relationship(
         "caravan_contract", cid, "shared_world", "shared_world", str(wid)
     )
-    if x_user_id:
-        await spicedb.write_relationship("caravan_contract", cid, "poster", "user", x_user_id)
+    await spicedb.write_relationship("caravan_contract", cid, "poster", "user", caller_id)
 
     await _publish(events)
     return {"shared_world_id": str(wid), "contract": contract.state.model_dump()}
@@ -76,17 +80,17 @@ async def post_caravan_contract(
 
 @router.get("/{shared_world_id}/caravans/contracts")
 async def list_caravan_contracts(
+    caller_id: CallerId,
     shared_world_id: str,
     status: str | None = Query(default=None),
     risk_level: str | None = Query(default=None),
     destination: str | None = Query(default=None),
     min_reward: int | None = Query(default=None),
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Query available notice board contracts applying optional frontier filters."""
     wid = _to_uuid(shared_world_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "shared_world", str(wid), "view", x_user_id)
+    await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
 
     contract_repo = get_caravan_contract_repository()
     cids = get_world_contracts_index().get(str(wid), [])
@@ -112,14 +116,14 @@ async def list_caravan_contracts(
 
 @router.get("/{shared_world_id}/caravans/contracts/{contract_id}")
 async def get_caravan_contract(
+    caller_id: CallerId,
     shared_world_id: str,
     contract_id: str,
-    x_user_id: str | None = Header(default=None),
 ) -> dict[str, Any]:
     """Retrieve details and manifest for a specific caravan escort contract."""
     wid, cid = _to_uuid(shared_world_id), _to_uuid(contract_id)
     spicedb = get_spicedb_client()
-    await _check_perm(spicedb, "caravan_contract", str(cid), "view", x_user_id)
+    await _check_perm(spicedb, "caravan_contract", str(cid), "view", caller_id)
 
     try:
         contract = await get_caravan_contract_repository().load(cid)

@@ -21,7 +21,7 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import ws_subprotocols
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -56,9 +56,21 @@ def spicedb() -> MockSpiceDBClient:
     set_gateway_spicedb(MockSpiceDBClient())
 
 
+@pytest.fixture(autouse=True)
+def default_table_patron(spicedb: MockSpiceDBClient) -> None:
+    """The default table route checks est-default like any establishment. Grant the tester a patron seat."""
+    asyncio.run(
+        spicedb.write_relationship(
+            "establishment", "est-default", "patron", "user", "minigame-tester"
+        )
+    )
+
+
 @pytest.fixture
 def session_client(spicedb: MockSpiceDBClient):
-    with TestClient(session_app) as client:
+    with TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    ) as client:
         yield client
 
 

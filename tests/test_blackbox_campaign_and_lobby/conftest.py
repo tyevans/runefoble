@@ -48,7 +48,9 @@ def client_gw(game_session_upstream) -> Iterator[TestClient]:
 
 @pytest.fixture
 def client_sess(game_session_upstream) -> Iterator[TestClient]:
-    with TestClient(session_app) as session_client:
+    with TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    ) as session_client:
         yield session_client
 
 

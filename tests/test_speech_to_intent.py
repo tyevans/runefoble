@@ -20,8 +20,9 @@ from voice_agent.main import set_event_bus as voice_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.voice_identity import voice_auth_headers
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
-pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
+pytestmark = pytest.mark.usefixtures("trusted_voice_issuer", "trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -178,7 +179,11 @@ async def test_watcher_redis_stream_event_emission(mock_redis: MockAsyncRedis):
     campaign_id = str(uuid.uuid4())
 
     transport = ASGITransport(app=watcher_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+    ) as client:
         resp = await client.post(
             "/api/v1/watcher/transcribe-and-act",
             json={

@@ -19,6 +19,7 @@ from game_session.main import app as session_app
 from gateway_api.auth import set_spicedb_client as set_gateway_spicedb
 from gateway_api.main import app as gateway_app
 from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
+from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
@@ -62,8 +63,10 @@ def char_client() -> TestClient:
 
 
 @pytest.fixture
-def session_client() -> TestClient:
-    return TestClient(session_app)
+def session_client(trusted_ws_issuer: SigningTestIssuer) -> TestClient:
+    return TestClient(
+        session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
 
 
 @pytest.fixture

@@ -34,6 +34,9 @@ from the_watcher.factions.campaign_world import CampaignWorldAggregate
 from the_watcher.main import app
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture(autouse=True)
@@ -65,7 +68,7 @@ def clean_simulation_environment():
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 async def _setup_campaign_roles(
@@ -123,7 +126,7 @@ async def test_rest_frontdoor_zanzibar_redaction_and_data_binding(client: TestCl
     tick_res = client.post(
         f"/api/v1/campaigns/{camp_id}/world-tick",
         json={"regional_stability": 55, "random_seed": 42},
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert tick_res.status_code == 200
     tick_data = tick_res.json()
@@ -135,7 +138,7 @@ async def test_rest_frontdoor_zanzibar_redaction_and_data_binding(client: TestCl
     # 2. DM fetches latest bulletin -> receives full unredacted intelligence briefing
     dm_bulletin_res = client.get(
         f"/api/v1/campaigns/{camp_id}/world-ticks/latest",
-        headers={"X-User-Id": dm_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_user)}"},
     )
     assert dm_bulletin_res.status_code == 200
     dm_bulletin = dm_bulletin_res.json()
@@ -147,7 +150,7 @@ async def test_rest_frontdoor_zanzibar_redaction_and_data_binding(client: TestCl
     # 3. Player fetches latest bulletin -> intelligence_bulletin is REDACTED per ADR-0001
     player_bulletin_res = client.get(
         f"/api/v1/campaigns/{camp_id}/world-ticks/latest",
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert player_bulletin_res.status_code == 200
     player_bulletin = player_bulletin_res.json()
@@ -161,14 +164,14 @@ async def test_rest_frontdoor_zanzibar_redaction_and_data_binding(client: TestCl
     # 4. Unauthorized outsider gets 403 Forbidden
     outsider_res = client.get(
         f"/api/v1/campaigns/{camp_id}/world-ticks/latest",
-        headers={"X-User-Id": "unauthorized_stranger"},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('unauthorized_stranger')}"},
     )
     assert outsider_res.status_code == 403
 
     # 5. Player queries public faction list for radar data binding
     factions_res = client.get(
         f"/api/v1/campaigns/{camp_id}/factions",
-        headers={"X-User-Id": player_user},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user)}"},
     )
     assert factions_res.status_code == 200
     factions = factions_res.json()

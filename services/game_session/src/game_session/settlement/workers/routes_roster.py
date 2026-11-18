@@ -7,12 +7,13 @@ from __future__ import annotations
 
 import contextlib
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Depends
 from game_session.dependencies import (
     get_establishment_workers_index,
     get_event_bus,
     get_worker_repository,
 )
+from game_session.settlement.auth.tokens import CallerId, get_caller_principal
 from game_session.settlement.worker_graph import (
     calculate_service_quality_contribution,
     compute_worker_tension,
@@ -35,26 +36,26 @@ from game_session.settlement.workers.operations import (
     sync_establishment_operations,
 )
 
-router = APIRouter(tags=["settlement-npc-workers"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["settlement-npc-workers"])
 
 
 @router.post("/api/v1/establishments/{establishment_id}/workers", status_code=201)
 @router.post("/establishments/{establishment_id}/workers", status_code=201)
 async def assign_worker(
-    establishment_id: str, req: AssignWorkerRequest, x_user_id: str | None = Header(default=None)
+    establishment_id: str, req: AssignWorkerRequest, caller_id: CallerId
 ) -> NPCWorkerState:
     """Assign an NPC worker to a role in an establishment storefront."""
-    est = await load_establishment(establishment_id, "manage", x_user_id)
-    return await create_and_assign_worker(establishment_id, est, req, x_user_id)
+    est = await load_establishment(establishment_id, "manage", caller_id)
+    return await create_and_assign_worker(establishment_id, est, req, caller_id)
 
 
 @router.get("/api/v1/establishments/{establishment_id}/workers")
 @router.get("/establishments/{establishment_id}/workers")
 async def list_establishment_workers(
-    establishment_id: str, x_user_id: str | None = Header(default=None)
+    establishment_id: str, caller_id: CallerId
 ) -> list[NPCWorkerState]:
     """Query active staff assigned to an establishment with inventories and ties."""
-    est = await load_establishment(establishment_id, "view", x_user_id)
+    est = await load_establishment(establishment_id, "view", caller_id)
     worker_ids = get_establishment_workers_index().get(establishment_id, [])
     worker_repo = get_worker_repository()
 
@@ -75,10 +76,10 @@ async def list_establishment_workers(
 @router.get("/api/v1/establishments/{establishment_id}/roster")
 @router.get("/establishments/{establishment_id}/roster")
 async def get_establishment_roster(
-    establishment_id: str, x_user_id: str | None = Header(default=None)
+    establishment_id: str, caller_id: CallerId
 ) -> EstablishmentRosterResponse:
     """Query comprehensive establishment roster with operations projection and graph edges."""
-    workers = await list_establishment_workers(establishment_id, x_user_id)
+    workers = await list_establishment_workers(establishment_id, caller_id)
     ops = await sync_establishment_operations(establishment_id)
     return EstablishmentRosterResponse(
         establishment_id=establishment_id,
@@ -93,14 +94,14 @@ async def get_establishment_roster(
 @router.post("/api/v1/establishments/{establishment_id}/workers/{npc_id}/relieve")
 @router.post("/establishments/{establishment_id}/workers/{npc_id}/relieve")
 async def relieve_worker(
+    caller_id: CallerId,
     establishment_id: str,
     npc_id: str,
     req: RelieveWorkerRequest,
-    x_user_id: str | None = Header(default=None),
 ) -> NPCWorkerState:
     """Relieve an NPC worker from an establishment duty."""
-    await load_establishment(establishment_id, "manage", x_user_id)
-    agg = await load_worker(npc_id, "manage", x_user_id)
+    await load_establishment(establishment_id, "manage", caller_id)
+    agg = await load_worker(npc_id, "manage", caller_id)
     agg.relieve(establishment_id=establishment_id, reason=req.reason)
     await save_and_publish(get_worker_repository(), get_event_bus(), agg)
     await sync_establishment_operations(establishment_id)
@@ -109,8 +110,8 @@ async def relieve_worker(
 
 @router.get("/api/v1/npcs/{npc_id}")
 @router.get("/npcs/{npc_id}")
-async def get_worker(npc_id: str, x_user_id: str | None = Header(default=None)) -> NPCWorkerState:
+async def get_worker(npc_id: str, caller_id: CallerId) -> NPCWorkerState:
     """Retrieve an NPC worker profile, traits, inventories, and social ties."""
-    agg = await load_worker(npc_id, "view", x_user_id)
+    agg = await load_worker(npc_id, "view", caller_id)
     agg.refresh_computed_fields()
     return agg.state

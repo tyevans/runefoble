@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from the_watcher.identity import get_caller_principal
 from the_watcher.routers.intent.compound import (
     execute_compound_actions,
     parse_intent_and_disambiguate,
@@ -23,7 +24,7 @@ from the_watcher.routers.intent.speech import (
     router as speech_router,
 )
 
-router = APIRouter(tags=["intent"])
+router = APIRouter(dependencies=[Depends(get_caller_principal)], tags=["intent"])
 router.include_router(speech_router)
 router.include_router(disambiguation_router)
 router.include_router(compound_router)

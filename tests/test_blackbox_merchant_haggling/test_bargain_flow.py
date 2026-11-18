@@ -14,8 +14,11 @@ from game_session.events import STREAM_TAVERN
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import create_test_establishment
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def test_blackbox_merchant_haggling_manifest_and_components(client: TestClient) -> None:
@@ -59,7 +62,7 @@ async def test_blackbox_establishment_haggle_gambits_flow(
     haggle_res = client.post(
         f"/api/v1/establishments/{establishment_id}/haggle",
         json=haggle_req,
-        headers={"x-user-id": player_user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user_id)}"},
     )
     assert haggle_res.status_code == 200, haggle_res.text
     session_data = haggle_res.json()
@@ -85,7 +88,7 @@ async def test_blackbox_establishment_haggle_gambits_flow(
             "roll_value": 17,
             "charisma_modifier": 3,
         },
-        headers={"x-user-id": player_user_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_user_id)}"},
     )
     assert flattery_res.status_code == 200
     flattery_data = flattery_res.json()

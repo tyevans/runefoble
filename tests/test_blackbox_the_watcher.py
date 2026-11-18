@@ -10,6 +10,9 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
@@ -23,7 +26,11 @@ async def test_blackbox_coordinate_movement_frontdoor(mock_redis: MockAsyncRedis
     watcher_set_event_bus(event_bus)
 
     transport = ASGITransport(app=watcher_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+    ) as client:
         resp = await client.post(
             "/api/v1/watcher/transcribe-and-act",
             json={
@@ -68,7 +75,11 @@ async def test_blackbox_cardinal_movement_with_boundary_clamping(mock_redis: Moc
     watcher_set_event_bus(event_bus)
 
     transport = ASGITransport(app=watcher_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+    ) as client:
         resp = await client.post(
             "/api/v1/watcher/transcribe-and-act",
             json={
@@ -103,7 +114,11 @@ async def test_blackbox_intent_endpoint_attack_and_spell(mock_redis: MockAsyncRe
     watcher_set_event_bus(event_bus)
 
     transport = ASGITransport(app=watcher_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+    ) as client:
         # Attack
         resp_attack = await client.post(
             "/api/v1/watcher/intent",
@@ -144,7 +159,11 @@ async def test_blackbox_skill_check_and_dice_roll_frontdoors(mock_redis: MockAsy
     watcher_set_event_bus(event_bus)
 
     transport = ASGITransport(app=watcher_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
+    ) as client:
         # Skill check
         resp_skill = await client.post(
             "/api/v1/watcher/transcribe-and-act",

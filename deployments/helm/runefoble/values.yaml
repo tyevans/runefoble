@@ -227,6 +227,13 @@ swaggerUI:
       url: "http://inference-worker:8100/openapi.json"
 
 # Services
+# Service-to-service credential (ADR-0015 e). The Watcher presents it to the inference worker,
+# and the worker refuses calls that do not carry it. The chart references this Secret. It does
+# not create it. Create the Secret out of band, with the key below, before install.
+inferenceServiceToken:
+  secretName: runefoble-inference-service
+  key: token
+
 services:
   gatewayApi:
     image: runefoble/gateway-api:0.1.0

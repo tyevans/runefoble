@@ -12,10 +12,12 @@ A West Marches campaign structure allows multiple adventuring parties to explore
 
 Guild officers establish the shared frontier world via `POST /api/v1/shared-worlds`:
 
+Each command sends a Zitadel access token for the named user. The token is held in a shell variable `TOKEN_<USER>`, for example `TOKEN_RANGER_LYRA`. Mint the token through the sign-in flow in [Authenticate Users with Zitadel OIDC and JWTs](authenticate-with-zitadel-oidc.md). Identity comes from the token only. An `x-user-id` header has no effect.
+
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_officer" \
+  -H "Authorization: Bearer ${TOKEN_ROWAN_OFFICER}" \
   -d '{
     "name": "The Sunken Marches",
     "frontier_region": "The Shadowed Fenlands",
@@ -43,7 +45,7 @@ Register individual campaigns (e.g. Party Blue and Party Gold) into the shared w
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/campaigns \
   -H "Content-Type: application/json" \
-  -H "x-user-id: rowan_officer" \
+  -H "Authorization: Bearer ${TOKEN_ROWAN_OFFICER}" \
   -d '{
     "campaign_id": "c1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
     "party_name": "Party Blue"
@@ -61,7 +63,7 @@ When an adventuring party maps a point of interest or dungeon, they record the m
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/discoveries \
   -H "Content-Type: application/json" \
-  -H "x-user-id: blue_explorer" \
+  -H "Authorization: Bearer ${TOKEN_BLUE_EXPLORER}" \
   -d '{
     "name": "Sunken Crypt of Arnor",
     "discovery_type": "dungeon",
@@ -82,7 +84,7 @@ Other adventuring parties (e.g. Party Gold) query the shared discovery log:
 
 ```bash
 curl -X GET http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/discoveries \
-  -H "x-user-id: gold_scout"
+  -H "Authorization: Bearer ${TOKEN_GOLD_SCOUT}"
 ```
 
 The response returns all discovered locations with discovery attribution metadata (`"discovered_by_party_name": "Party Blue"`).
@@ -98,7 +100,7 @@ Caravans carry gathered materials and crafted reagents between outposts, expandi
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/outposts \
   -H "Content-Type: application/json" \
-  -H "x-user-id: blue_trader" \
+  -H "Authorization: Bearer ${TOKEN_BLUE_TRADER}" \
   -d '{
     "name": "Highport",
     "region": "Eastern Coast",
@@ -112,7 +114,7 @@ curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/dispatch \
   -H "Content-Type: application/json" \
-  -H "x-user-id: blue_trader" \
+  -H "Authorization: Bearer ${TOKEN_BLUE_TRADER}" \
   -d '{
     "origin_outpost": "Fort Rowan",
     "destination_outpost": "Highport",
@@ -129,7 +131,7 @@ When the caravan reaches its destination, complete the trade:
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/caravan_1234abcd/complete \
   -H "Content-Type: application/json" \
-  -H "x-user-id: blue_trader" \
+  -H "Authorization: Bearer ${TOKEN_BLUE_TRADER}" \
   -d '{
     "unlocked_stock": {
       "elixir_of_frost_resistance": {
@@ -150,7 +152,7 @@ Visiting parties (e.g. Party Gold visiting Highport) inspect merchant inventory:
 
 ```bash
 curl -X GET http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/outposts/Highport/merchant-stock \
-  -H "x-user-id: gold_buyer"
+  -H "Authorization: Bearer ${TOKEN_GOLD_BUYER}"
 ```
 
 ---
@@ -162,7 +164,7 @@ Parties post bounties, warnings, and mercenary contracts to the shared tavern bo
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/tavern-board/notices \
   -H "Content-Type: application/json" \
-  -H "x-user-id: blue_ranger" \
+  -H "Authorization: Bearer ${TOKEN_BLUE_RANGER}" \
   -d '{
     "campaign_id": "c1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c",
     "author_name": "Ranger Laura",
@@ -177,7 +179,7 @@ Retrieve notices:
 
 ```bash
 curl -X GET http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/tavern-board/notices \
-  -H "x-user-id: gold_paladin"
+  -H "Authorization: Bearer ${TOKEN_GOLD_PALADIN}"
 ```
 
 ---
@@ -271,7 +273,7 @@ Party A posts a caravan contract pledging cargo value and bounty rewards:
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts \
   -H "Content-Type: application/json" \
-  -H "x-user-id: blue_quartermaster" \
+  -H "Authorization: Bearer ${TOKEN_BLUE_QUARTERMASTER}" \
   -d '{
     "origin_outpost": "Bastion Cross",
     "destination_outpost": "Ironford",
@@ -294,7 +296,7 @@ Adventuring parties query the multi-party notice board with filters for risk, de
 
 ```bash
 curl -X GET "http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts?destination=Ironford&risk_level=medium" \
-  -H "x-user-id: gold_leader"
+  -H "Authorization: Bearer ${TOKEN_GOLD_LEADER}"
 ```
 
 ### Step 3: Claim and Dispatch Caravan
@@ -304,7 +306,7 @@ Party B claims the contract during their live session:
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts/{contract_id}/accept \
   -H "Content-Type: application/json" \
-  -H "x-user-id: gold_leader" \
+  -H "Authorization: Bearer ${TOKEN_GOLD_LEADER}" \
   -d '{
     "contractor_campaign_id": "d2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d",
     "contractor_party_name": "Party Gold"
@@ -316,7 +318,7 @@ Once accepted, the caravan is dispatched into wilderness transit:
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts/{contract_id}/dispatch \
   -H "Content-Type: application/json" \
-  -H "x-user-id: gold_leader" \
+  -H "Authorization: Bearer ${TOKEN_GOLD_LEADER}" \
   -d '{"dispatched_by_campaign_id": "d2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d"}'
 ```
 
@@ -327,7 +329,7 @@ If an ambush occurs during transit stages, the tactical outcome is reported:
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts/{contract_id}/ambush \
   -H "Content-Type: application/json" \
-  -H "x-user-id: gold_leader" \
+  -H "Authorization: Bearer ${TOKEN_GOLD_LEADER}" \
   -d '{
     "stage_index": 1,
     "ambush_type": "bandit_raid",
@@ -342,7 +344,7 @@ Upon arriving at the destination outpost, the escort party fulfills the contract
 ```bash
 curl -X POST http://localhost:8004/api/v1/shared-worlds/b17900f3-6a05-498d-8707-4ffdd810a7ba/caravans/contracts/{contract_id}/fulfill \
   -H "Content-Type: application/json" \
-  -H "x-user-id: gold_leader" \
+  -H "Authorization: Bearer ${TOKEN_GOLD_LEADER}" \
   -d '{}'
 ```
 

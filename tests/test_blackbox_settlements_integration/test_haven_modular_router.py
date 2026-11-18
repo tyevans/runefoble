@@ -11,6 +11,8 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
 
 def test_haven_router_backwards_compatibility_exports():
     """Verify router and haven package backwards compatibility exports."""
@@ -61,7 +63,7 @@ async def test_haven_modular_routes_frontdoor_journey(
     cid, dm_id = str(uuid4()), f"dm_{uuid4().hex[:6]}"
     await spicedb.write_relationship("campaign", cid, "dungeon_master", "user", dm_id)
     await spicedb.write_relationship("campaign", cid, "player", "user", dm_id)
-    headers = {"x-user-id": dm_id}
+    headers = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"}
 
     # 1. Haven creation via havens_router
     found_res = session_client.post(

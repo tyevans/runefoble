@@ -19,6 +19,8 @@ from tests.helpers.live_services import serve
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 def auth_headers(sub: str) -> dict[str, str]:
     """Return Bearer headers for a token that the service verifier accepts."""
@@ -73,7 +75,9 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
     session_set_spicedb(spicedb)
 
     async with AsyncClient(
-        transport=ASGITransport(app=session_app), base_url="http://test"
+        transport=ASGITransport(app=session_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         campaign_id, player_id = str(uuid4()), "sarah-user"
         char_id = _create_stand_in_character(character_service)
@@ -129,7 +133,7 @@ async def test_mid_session_hot_swap_takeover_and_turn_continuity(
         hot_swap_res = await client.post(
             f"/api/v1/sessions/{session_id}/hot-swap",
             json={"player_id": player_id, "character_id": char_id},
-            headers={"x-user-id": player_id},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
         )
         assert hot_swap_res.status_code == 200
         data = hot_swap_res.json()
@@ -169,7 +173,9 @@ async def test_hot_swap_unauthorized_user_rejected_by_spicedb(mock_redis: MockAs
     session_set_spicedb(spicedb)
 
     async with AsyncClient(
-        transport=ASGITransport(app=session_app), base_url="http://test"
+        transport=ASGITransport(app=session_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         campaign_id, char_id, player_id = str(uuid4()), str(uuid4()), "sarah-user"
         create_res = await client.post(
@@ -187,7 +193,7 @@ async def test_hot_swap_unauthorized_user_rejected_by_spicedb(mock_redis: MockAs
         unauth_res = await client.post(
             f"/api/v1/sessions/{session_id}/hot-swap",
             json={"player_id": "rogue-intruder", "character_id": char_id},
-            headers={"x-user-id": "rogue-intruder"},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('rogue-intruder')}"},
         )
         assert unauth_res.status_code == 403
         assert "does not have permission" in unauth_res.json()["detail"]
@@ -204,7 +210,9 @@ async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
     session_set_spicedb(spicedb)
 
     async with AsyncClient(
-        transport=ASGITransport(app=session_app), base_url="http://test"
+        transport=ASGITransport(app=session_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         campaign_id, char_id, player_id = str(uuid4()), str(uuid4()), "sarah-user"
         create_res = await client.post(
@@ -237,7 +245,7 @@ async def test_hot_swap_returns_502_when_character_sheet_is_not_configured(
         res = await client.post(
             f"/api/v1/sessions/{session_id}/hot-swap",
             json={"player_id": player_id, "character_id": char_id},
-            headers={"x-user-id": player_id},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
         )
         assert res.status_code == 502, res.text
         assert CHARACTER_SHEET_URL_ENV in res.json()["detail"]

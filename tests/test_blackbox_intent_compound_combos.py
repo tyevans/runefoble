@@ -15,6 +15,9 @@ from the_watcher.main import app as watcher_app
 from the_watcher.main import set_event_bus as watcher_set_event_bus
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 def _entity(id_: str, name: str, tag: str, desc: str, x: int, y: int) -> dict:
@@ -54,7 +57,9 @@ async def test_compound_action_combo_ordering():
     """Verify multi-clause compound action parses into ordered capability checks."""
     session_id = str(uuid4())
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         resp = await client.post(
             "/api/v1/watcher/intent/parse",
@@ -100,7 +105,9 @@ async def test_compound_action_with_intermediate_disambiguation(sample_board_ent
     """Verify compound combo flags disambiguation only on ambiguous node and resolves cleanly."""
     session_id = str(uuid4())
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         resp = await client.post(
             "/api/v1/watcher/intent/parse",
@@ -141,7 +148,9 @@ async def test_compound_action_partial_failure_and_rollback_coordination():
     """Verify intermediate failure aborts downstream actions and triggers rollback."""
     session_id = str(uuid4())
     async with AsyncClient(
-        transport=ASGITransport(app=watcher_app), base_url="http://test"
+        transport=ASGITransport(app=watcher_app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"},
     ) as client:
         parse_resp = await client.post(
             "/api/v1/watcher/intent/parse",

@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_event_emitted
 
@@ -34,7 +35,7 @@ async def test_blackbox_pin_and_list_bulletin_notices(
     res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "Oakhaven Haven", "scale": "village"},
-        headers={"x-user-id": mayor},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(mayor)}"},
     )
     sid = res.json()["settlement_id"]
     base_url = f"/api/v1/settlements/{sid}/bulletin"
@@ -47,19 +48,31 @@ async def test_blackbox_pin_and_list_bulletin_notices(
         "category": "ordinance",
         "content": "Lock.",
     }
-    client.post(base_url, json=rumor, headers={"x-user-id": adv})
-    ord_res = client.post(base_url, json=ordinance, headers={"x-user-id": mayor})
+    client.post(
+        base_url, json=rumor, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(adv)}"}
+    )
+    ord_res = client.post(
+        base_url, json=ordinance, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(mayor)}"}
+    )
     assert ord_res.status_code == 201
     assert_event_emitted(mock_bus, "BulletinNoticePinned")
 
     # List all and filter by board_type and category
-    all_notices = client.get(base_url, headers={"x-user-id": adv}).json()
+    all_notices = client.get(
+        base_url, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(adv)}"}
+    ).json()
     assert len(all_notices) == 2
 
-    square = client.get(f"{base_url}?board_type=town_square", headers={"x-user-id": adv}).json()
+    square = client.get(
+        f"{base_url}?board_type=town_square",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(adv)}"},
+    ).json()
     assert len(square) == 1 and square[0]["category"] == "ordinance"
 
-    rumors = client.get(f"{base_url}?category=rumor", headers={"x-user-id": adv}).json()
+    rumors = client.get(
+        f"{base_url}?category=rumor",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(adv)}"},
+    ).json()
     assert len(rumors) == 1 and rumors[0]["title"] == "Ghost"
 
 
@@ -74,7 +87,7 @@ async def test_blackbox_bulletin_posting_zanzibar_authorization(
     res = client.post(
         f"/api/v1/campaigns/{cid}/settlements",
         json={"name": "Sanctuary Keep", "scale": "village"},
-        headers={"x-user-id": gm},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(gm)}"},
     )
     sid = res.json()["settlement_id"]
 
@@ -85,7 +98,9 @@ async def test_blackbox_bulletin_posting_zanzibar_authorization(
         "content": "Theft.",
     }
     unauth = client.post(
-        f"/api/v1/settlements/{sid}/bulletin", json=fake, headers={"x-user-id": intruder}
+        f"/api/v1/settlements/{sid}/bulletin",
+        json=fake,
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(intruder)}"},
     )
     assert unauth.status_code == 403
     assert "Permission denied" in unauth.json()["detail"]

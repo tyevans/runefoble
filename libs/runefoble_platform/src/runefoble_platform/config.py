@@ -5,7 +5,7 @@ Centralizes configuration settings across bounded contexts.
 
 from typing import Literal
 
-from pydantic import AliasChoices, Field, model_validator
+from pydantic import AliasChoices, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -103,6 +103,14 @@ class PlatformSettings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("RUNEFOBLE_ZITADEL_JWKS_URL", "ZITADEL_JWKS_URL"),
         description="Zitadel JWKS keys endpoint URL",
+    )
+
+    # Service-to-service credential (ADR-0015 e). No default value. The Watcher presents it to
+    # the inference worker. The worker refuses to start without the same value.
+    inference_service_token: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("RUNEFOBLE_INFERENCE_SERVICE_TOKEN"),
+        description="Bearer credential for calls to the inference worker (Kubernetes Secret)",
     )
 
     # Authorization & Zanzibar (SpiceDB)

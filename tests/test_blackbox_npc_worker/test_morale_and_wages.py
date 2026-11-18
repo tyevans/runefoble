@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mock_redis import MockAsyncRedis
+from tests.helpers.ws_identity import SIGNING_ISSUER
 
 from .conftest import assert_event_emitted
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.mark.asyncio
@@ -24,7 +27,7 @@ async def test_blackbox_worker_wages_and_operating_cost(
     campaign_id, dm_id = str(uuid4()), f"dm_{uuid4().hex[:8]}"
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id)
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", dm_id)
-    h = {"x-user-id": dm_id}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"}
 
     s_res = client.post(
         f"/api/v1/campaigns/{campaign_id}/settlements",
@@ -60,7 +63,7 @@ async def test_blackbox_morale_swings_and_grievance_escalation(
     campaign_id, dm_id, intruder_id = str(uuid4()), "dm_morale", "intruder_morale"
     await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_id)
     await spicedb.write_relationship("campaign", campaign_id, "player", "user", dm_id)
-    h = {"x-user-id": dm_id}
+    h = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(dm_id)}"}
 
     s_res = client.post(
         f"/api/v1/campaigns/{campaign_id}/settlements",
@@ -89,7 +92,9 @@ async def test_blackbox_morale_swings_and_grievance_escalation(
     # Unauthorized user cannot modify worker mood
     bad_mood = {"mood": "hostile", "temperament": "Furious"}
     unauth = client.patch(
-        f"/api/v1/npcs/{npc_id}/mood", json=bad_mood, headers={"x-user-id": intruder_id}
+        f"/api/v1/npcs/{npc_id}/mood",
+        json=bad_mood,
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(intruder_id)}"},
     )
     assert unauth.status_code == 403
 

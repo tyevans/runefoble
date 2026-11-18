@@ -24,7 +24,7 @@ from runefoble_auth.spicedb import MockSpiceDBClient
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
-from tests.helpers.ws_identity import ws_subprotocols
+from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
@@ -46,6 +46,16 @@ def spicedb():
     yield mock_db
     set_session_spicedb(MockSpiceDBClient())
     set_gateway_spicedb(MockSpiceDBClient())
+
+
+@pytest.fixture(autouse=True)
+def default_table_patron(spicedb: MockSpiceDBClient) -> None:
+    """The default table route checks est-default like any establishment. Grant the tester a patron seat."""
+    asyncio.run(
+        spicedb.write_relationship(
+            "establishment", "est-default", "patron", "user", "minigame-tester"
+        )
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -73,7 +83,9 @@ def test_darts_and_billiards_multiplayer_turn_sync(
     )
 
     with (
-        TestClient(session_app) as client_darts,
+        TestClient(
+            session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+        ) as client_darts,
         client_darts.websocket_connect(
             f"/ws/establishments/{est_id}/tables/{darts_table_id}",
             subprotocols=ws_subprotocols("archer_kip"),
@@ -139,7 +151,9 @@ def test_darts_and_billiards_multiplayer_turn_sync(
     # ---------------- 2. Billiards Touch Trajectory Vector Exchange ----------------
     billiards_table_id = f"table-billiards-{uuid4().hex[:6]}"
     with (
-        TestClient(session_app) as client_billiards,
+        TestClient(
+            session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+        ) as client_billiards,
         client_billiards.websocket_connect(
             f"/ws/minigames/{billiards_table_id}", subprotocols=ws_subprotocols("minigame-tester")
         ) as ws1,
@@ -214,7 +228,9 @@ def test_casino_craps_and_roulette_betting_and_payouts(
     # ---------------- 1. Dragon Craps Wagering, Tumble, and Payouts ----------------
     craps_table_id = f"table-craps-{uuid4().hex[:6]}"
     with (
-        TestClient(session_app) as client_craps,
+        TestClient(
+            session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+        ) as client_craps,
         client_craps.websocket_connect(
             f"/ws/minigames/{craps_table_id}", subprotocols=ws_subprotocols("minigame-tester")
         ) as ws_craps,
@@ -278,7 +294,9 @@ def test_casino_craps_and_roulette_betting_and_payouts(
     # ---------------- 2. Roulette Multi-Patron Wagering and Payouts ----------------
     roulette_table_id = f"table-roulette-{uuid4().hex[:6]}"
     with (
-        TestClient(session_app) as client_roulette,
+        TestClient(
+            session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+        ) as client_roulette,
         client_roulette.websocket_connect(
             f"/ws/minigames/{roulette_table_id}", subprotocols=ws_subprotocols("minigame-tester")
         ) as ws1,

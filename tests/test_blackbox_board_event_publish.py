@@ -43,6 +43,9 @@ WORLD_TICK_TYPE = "runefoble.events.watcher.world_tick_executed"
 AOE_PLACED_TYPE = "runefoble.events.board.aoe_template_placed"
 
 
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
+
 def _entries(redis: MockAsyncRedis, stream: str) -> list[dict[str, str]]:
     """Return stream entries as the bus wrote them, with their Redis entry id."""
     return [{"id": entry_id, **fields} for entry_id, fields in redis.streams.get(stream, [])]
@@ -122,7 +125,9 @@ async def test_world_tick_publishes_world_tick_executed_to_watcher_stream(
     watcher_redis: MockAsyncRedis,
 ):
     """Executing a world tick writes a world_tick_executed entry to the watcher stream."""
-    client = TestClient(watcher_app)
+    client = TestClient(
+        watcher_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
+    )
     camp_id = f"camp-tick-{uuid4().hex[:8]}"
     dm_user = f"dm-{uuid4().hex[:6]}"
     await get_watcher_spicedb_client().write_relationship(

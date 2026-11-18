@@ -11,6 +11,10 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.mark.asyncio
 async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
@@ -28,7 +32,7 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "The Sunken Marches", "frontier_region": "Shadowed Fenlands"},
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     world_id = world_res.json()["shared_world_id"]
 
@@ -41,12 +45,12 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": camp_blue, "party_name": "Party Blue"},
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     client.post(
         f"/api/v1/shared-worlds/{world_id}/campaigns",
         json={"campaign_id": camp_gold, "party_name": "Party Gold"},
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
 
     # Party Blue charters an outpost
@@ -58,13 +62,16 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
             "settlement_type": "haven",
             "founded_by_campaign_id": camp_blue,
         },
-        headers={"x-user-id": blue_player},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_player)}"},
     )
     assert charter_res.status_code == 201
     sid = charter_res.json()["settlement_id"]
 
     # Party Gold queries and views Azure Redoubt through the shared world link
-    gold_view = client.get(f"/settlements/{sid}", headers={"x-user-id": gold_player})
+    gold_view = client.get(
+        f"/settlements/{sid}",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(gold_player)}"},
+    )
     assert gold_view.status_code == 200
     assert gold_view.json()["name"] == "Azure Redoubt"
 
@@ -77,7 +84,7 @@ async def test_blackbox_cross_campaign_haven_sharing_and_co_upgrading(
             "gold_spent": 120,
             "materials_spent": {"hardwood": 15},
         },
-        headers={"x-user-id": gold_player},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(gold_player)}"},
     )
     assert gold_upgrade.status_code == 200
     up_data = gold_upgrade.json()
@@ -100,7 +107,7 @@ async def test_blackbox_unauthorized_outsider_isolation(
     world_res = client.post(
         "/api/v1/shared-worlds",
         json={"name": "Frontier Outskirts"},
-        headers={"x-user-id": officer},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(officer)}"},
     )
     world_id = world_res.json()["shared_world_id"]
     await spicedb.write_relationship("shared_world", world_id, "participant", "user", blue_player)
@@ -113,12 +120,12 @@ async def test_blackbox_unauthorized_outsider_isolation(
             "shared_world_id": world_id,
             "founded_by_campaign_id": camp_blue,
         },
-        headers={"x-user-id": blue_player},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(blue_player)}"},
     )
     sid = charter_res.json()["settlement_id"]
 
     # Outsider cannot view the haven
-    h_out = {"x-user-id": outsider}
+    h_out = {"Authorization": f"Bearer {SIGNING_ISSUER.mint(outsider)}"}
     assert client.get(f"/settlements/{sid}", headers=h_out).status_code == 403
 
     # Outsider cannot upgrade the haven

@@ -2,7 +2,7 @@
 
 Governed by Hard Invariant 7 (Blackbox TDD with Frontdoor Setup).
 All setup and verification are performed strictly through public HTTP API endpoints
-using TestClient(app) from game_session.main.
+using TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}) from game_session.main.
 """
 
 from uuid import uuid4
@@ -11,10 +11,14 @@ import pytest
 from fastapi.testclient import TestClient
 from game_session.main import app
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"})
 
 
 @pytest.mark.asyncio

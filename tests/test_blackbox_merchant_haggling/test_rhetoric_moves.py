@@ -12,6 +12,10 @@ import pytest
 from fastapi.testclient import TestClient
 from runefoble_auth.spicedb import MockSpiceDBClient
 
+from tests.helpers.ws_identity import SIGNING_ISSUER
+
+pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
+
 
 @pytest.mark.asyncio
 async def test_blackbox_patience_depletion_and_ejection(
@@ -32,7 +36,9 @@ async def test_blackbox_patience_depletion_and_ejection(
         "temperament": "Stubborn",
     }
     start_res = client.post(
-        "/api/v1/haggling/start", json=start_data, headers={"x-user-id": player_id}
+        "/api/v1/haggling/start",
+        json=start_data,
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )
     assert start_res.status_code == 200
     negotiation_id = start_res.json()["negotiation_id"]
@@ -43,7 +49,7 @@ async def test_blackbox_patience_depletion_and_ejection(
         res = client.post(
             f"/api/v1/haggling/{negotiation_id}/gambit",
             json={"character_id": "char_krag", "gambit": "hard_intimidation", "roll_value": roll},
-            headers={"x-user-id": player_id},
+            headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
         )
         assert res.status_code == 200
         assert res.json()["status"] == "active"
@@ -52,7 +58,7 @@ async def test_blackbox_patience_depletion_and_ejection(
     res3 = client.post(
         f"/api/v1/haggling/{negotiation_id}/gambit",
         json={"character_id": "char_krag", "gambit": "point_out_flaw", "roll_value": 4},
-        headers={"x-user-id": player_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )
     assert res3.status_code == 200
     data3 = res3.json()
@@ -65,7 +71,7 @@ async def test_blackbox_patience_depletion_and_ejection(
     subsequent_res = client.post(
         f"/api/v1/haggling/{negotiation_id}/gambit",
         json={"character_id": "char_krag", "gambit": "flattery", "roll_value": 20},
-        headers={"x-user-id": player_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )
     assert subsequent_res.status_code == 400
 
@@ -89,7 +95,9 @@ async def test_blackbox_walk_away_bluff_and_deal_acceptance(
         "temperament": "Greedy",
     }
     start_res = client.post(
-        "/api/v1/haggling/start", json=start_data, headers={"x-user-id": player_id}
+        "/api/v1/haggling/start",
+        json=start_data,
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )
     assert start_res.status_code == 200
     neg_id = start_res.json()["negotiation_id"]
@@ -97,12 +105,15 @@ async def test_blackbox_walk_away_bluff_and_deal_acceptance(
     bluff_res = client.post(
         f"/api/v1/haggling/{neg_id}/gambit",
         json={"character_id": "char_lyra", "gambit": "walk_away_bluff", "roll_value": 18},
-        headers={"x-user-id": player_id},
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
     )
     assert bluff_res.status_code == 200
     bluff_data = bluff_res.json()
     assert bluff_data["counter_price"] < 200
 
-    accept_res = client.post(f"/api/v1/haggling/{neg_id}/accept", headers={"x-user-id": player_id})
+    accept_res = client.post(
+        f"/api/v1/haggling/{neg_id}/accept",
+        headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint(player_id)}"},
+    )
     assert accept_res.status_code == 200
     assert accept_res.json()["status"] == "completed"
