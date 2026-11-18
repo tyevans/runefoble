@@ -1,14 +1,10 @@
 # TASK-0677: Caravan board shows failed dispatch and fulfilment as errors.
+# TASK-0807: The gateway proxies the caravan routes and the App Shell mounts the board.
 # Governing ADRs: ADR-0004, ADR-0013, ADR-0014, ADR-0015. PRD: PRD-0018. User story: US-0058.
 #
-# Status: tagged @blocked. Three prerequisites are open:
-# - The App Shell does not mount <runefoble-caravan-board> and has no caravan route.
-#   The "the caravan board is open" step assumes the route "#/caravans".
-# - The frontdoor API has no caravan helpers. The "accepted caravan contract" step
-#   must create the contract through public shared-world routes. It is not implemented yet.
-# - Playwright tests that do not need these prerequisites run with: pnpm exec playwright test --grep-invert @blocked
+# The board opens at #/caravans/:sharedWorldId?campaign=:campaignId. Contracts are seeded through
+# the public gateway routes (ADR-0014). The 503 scenarios answer the action route at the network boundary.
 
-@blocked
 Feature: Caravan Board Reports Failed Dispatch and Fulfilment
   As a mercenary player escorting a caravan
   I want the board to show when the server rejects dispatch or fulfilment

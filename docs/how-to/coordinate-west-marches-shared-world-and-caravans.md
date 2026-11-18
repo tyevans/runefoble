@@ -401,6 +401,23 @@ curl http://localhost:8004/ui/manifest
 ></runefoble-caravan-board>
 ```
 
+#### Gateway Routes and the App Shell Mount (TASK-0807)
+
+The gateway forwards the caravan routes to `game_session`. It holds no contract state. Reads use the gateway's `forward_json` path. Writes relay the request body unchanged, so `game_session` validates each body.
+
+| Gateway route | Owner route |
+|---|---|
+| `POST /api/v1/shared-worlds` | Found a shared world (the caller becomes guild officer) |
+| `POST /api/v1/shared-worlds/{wid}/caravans/contracts` | Post a contract |
+| `GET /api/v1/shared-worlds/{wid}/caravans/contracts` | List contracts (query filters pass through) |
+| `GET /api/v1/shared-worlds/{wid}/caravans/contracts/{cid}` | Read one contract |
+| `POST /api/v1/shared-worlds/{wid}/caravans/contracts/{cid}/accept` | Accept for a party |
+| `POST /api/v1/shared-worlds/{wid}/caravans/contracts/{cid}/dispatch` | Dispatch the caravan |
+| `POST /api/v1/shared-worlds/{wid}/caravans/contracts/{cid}/ambush` | Report an ambush |
+| `POST /api/v1/shared-worlds/{wid}/caravans/contracts/{cid}/fulfill` | Deliver cargo |
+
+The App Shell route `#/caravans/:sharedWorldId` mounts `<runefoble-caravan-board>` for that world. It reads the list of contracts through the gateway first. A failed read shows the load error. The query values `campaign` and `party` name the party that accepts and dispatches contracts, for example `#/caravans/world-fenlands-01?campaign=camp-amber-vanguard&party=The%20Amber%20Vanguard`. The board sends no action for a party that is not named.
+
 #### Key Capabilities
 
 1. **One-Click Contract Acceptance**: Click **Accept Escort Contract** to claim open jobs via `POST /api/v1/shared-worlds/{wid}/caravans/contracts/{cid}/accept` with SpiceDB Zanzibar role enforcement.
