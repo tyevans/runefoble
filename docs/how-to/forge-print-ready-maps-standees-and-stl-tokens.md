@@ -135,6 +135,8 @@ Each export button sends one request to its forge route. The request sets `forma
 
 The route URL is prefixed with the `apiBaseUrl` property. The default is an empty string, so the page origin is used.
 
+Every export request sends the shared bearer (`Authorization: Bearer <token>`) from the App Shell auth context. The component does not send a caller identity header. If the server returns `401`, the banner asks the player to sign in. If it returns `403`, the banner says the account lacks permission for the action.
+
 The component shows one of two results:
 - **Success.** A download link appears. The component fetches the `download_url` path with the bearer and links the resulting blob. The server refuses the read with `403` for a caller without `forged_asset.view`.
 - **Failure.** The component shows the `detail` text from the response in an error banner. A `503` means Silo did not store the file. No link appears.

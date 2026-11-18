@@ -93,7 +93,7 @@ export class RunefobleAssetForge extends LitElement {
         campaignId: this.campaignId || undefined,
         widthCells: 20,
         heightCells: 20,
-      });
+      }, () => this.auth.authHeaders());
       const preview = await fetchAssetObjectUrl(map.image_url, () => this.auth.authHeaders());
       revokeAssetObjectUrl(this.mapPreviewUrl);
       this.mapPreviewUrl = preview;
@@ -122,7 +122,7 @@ export class RunefobleAssetForge extends LitElement {
         tokenName: this.tokenName,
         tokenType: this.tokenType,
         campaignId: this.campaignId || undefined,
-      });
+      }, () => this.auth.authHeaders());
       const preview = await fetchAssetObjectUrl(token.image_url, () => this.auth.authHeaders());
       revokeAssetObjectUrl(this.tokenPreviewUrl);
       this.tokenPreviewUrl = preview;
@@ -159,7 +159,7 @@ export class RunefobleAssetForge extends LitElement {
         tokenType: forged.token_type,
         x: this.tokenX,
         y: this.tokenY,
-      });
+      }, () => this.auth.authHeaders());
       this.dispatchEvent(
         new CustomEvent('token-placed', {
           detail: {
