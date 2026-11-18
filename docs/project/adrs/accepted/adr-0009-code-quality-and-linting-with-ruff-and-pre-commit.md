@@ -25,7 +25,8 @@ We adopt **Ruff** as our unified Python linter and formatter, backed by **pre-co
 3. **Zero-Warning Tolerance**:
    - CI runs `ruff check .` with exit-on-error.
 4. **Static Type Checks**:
-   - `make lint` runs `mypy` on `services/inference_worker/src` (TASK-0628). Type errors fail the gate. Do not add `# type: ignore` to pass it.
+   - `make lint` runs `mypy` on `services/inference_worker/src` (TASK-0628) and on `gateway/mcp/src/gateway_mcp` (TASK-0629). Type errors fail the gate. Do not add `# type: ignore` to pass it.
+   - The root `pyproject.toml` enables the `pydantic.mypy` plugin for these checks.
    - Other packages do not yet run mypy in the gate.
 
 ## Consequences

@@ -38,7 +38,7 @@
 | `make test-e2e-ui` | Runs `bddgen`, then opens the Playwright UI mode for live debugging. Passes `ARGS` to `playwright test` |
 | `make e2e-lore-up` | Starts campaign_lore for the gateway-down e2e journey. Records its process group in `.e2e/campaign_lore.pid` |
 | `make e2e-lore-down` | Stops only the campaign_lore process group that `make e2e-lore-up` started |
-| `make lint` | Runs Ruff lint and format checks, mypy on the inference worker, frontend and e2e typechecks, and `helm lint` |
+| `make lint` | Runs Ruff lint and format checks, mypy on the inference worker and the MCP gateway, frontend and e2e typechecks, and `helm lint` |
 | `make lint-fix` | Runs `ruff check --fix` and `ruff format` on the repository |
 | `make pre-commit` | Runs every pre-commit hook on all files with `uv run pre-commit run --all-files` |
 | `make test-bdd` | Typechecks `e2e/` (`pnpm run e2e:typecheck`), fails on unused Playwright BDD step definitions (`uv run python scripts/check_e2e_unused_steps.py`), and runs `bddgen`. Does not launch browsers |
