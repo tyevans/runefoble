@@ -160,7 +160,6 @@ async def test_campaign_sessions_isolation_and_offline_scoping(
 
 def test_frontend_node_unit_suite_execution():
     """Execute Node test runner on frontend/test/campaign-sessions-scoping.test.ts."""
-    assert TS_TEST_FILE.is_file()
     result = run_node_tests([TS_TEST_FILE], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (
         f"Frontend sessions scoping tests failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"

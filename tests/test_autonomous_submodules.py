@@ -14,9 +14,6 @@ from runefoble_events.events import (
 )
 from the_watcher.autonomous_dm import (
     AutonomousDMEngine,
-    adjudicate_npc_turn,
-    build_encounter,
-    build_scene_atmosphere,
 )
 from the_watcher.encounters import build_encounter as direct_build_encounter
 from the_watcher.presets import SCENE_PRESETS
@@ -95,13 +92,8 @@ def test_tactics_submodule_melee_and_finishing_heuristics():
     assert action_finish.hp_impact == -10
 
 
-def test_facade_re_exports_and_class_attributes():
-    """autonomous_dm facade correctly re-exports submodules and maintains class compatibility."""
-    assert AutonomousDMEngine.SCENE_PRESETS is SCENE_PRESETS
-    assert build_scene_atmosphere is direct_build_scene
-    assert build_encounter is direct_build_encounter
-    assert adjudicate_npc_turn is direct_adjudicate_turn
-
+def test_autonomous_dm_engine_scene_encounter_and_npc_turn():
+    """AutonomousDMEngine sets a scene, spawns an encounter and resolves an NPC turn."""
     engine = AutonomousDMEngine()
     scene = engine.set_scene("sess-facade", location_type="forest", mood="eerie")
     assert scene.location_name == "Whispering Pines of Eldermoor"

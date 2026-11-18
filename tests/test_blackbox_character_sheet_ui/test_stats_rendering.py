@@ -24,7 +24,6 @@ def test_character_sheet_manifest_and_forwarding(client: TestClient) -> None:
         assert comp in data["components"]
 
     manifest_path = REPO_ROOT / "services/character_sheet/ui/manifest.json"
-    assert manifest_path.is_file()
     assert json.loads(manifest_path.read_text(encoding="utf-8")) == data
 
 

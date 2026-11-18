@@ -65,13 +65,10 @@ def test_grammar_patterns_direct_matching():
     assert DICE_PATTERN.search("roll 3d6+2") is not None
 
 
-def test_parser_backward_compatible_methods(parser: SpeechIntentParser):
+def test_parser_direction_distance_and_bounds(parser: SpeechIntentParser):
     assert parser.compute_directional_deltas("north", 2) == (0, -2)
     assert parser.calculate_steps(20, "feet") == 4
     assert parser.calculate_bounded_destination(2, 2, 3, 3, 10, 10) == (5, 5)
-    assert hasattr(parser, "_coord_pattern")
-    assert hasattr(parser, "_cardinal_pattern_dist_first")
-    assert hasattr(parser, "_flank_pattern")
 
 
 def test_parser_intent_extraction_actions(parser: SpeechIntentParser):

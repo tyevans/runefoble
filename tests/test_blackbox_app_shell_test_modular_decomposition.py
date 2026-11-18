@@ -3,11 +3,11 @@
 Governing ADRs: ADR-0004 (Lit Web Components), ADR-0012 (Bauhaus Modernism), ADR-0013 (Microfrontends).
 Verifies:
 1. Monolithic frontend/test/app-shell.test.ts is safely removed.
-2. All modular test submodules exist under frontend/test/app_shell/:
-   - routing.test.ts (< 110 lines, < 130 lines limit)
-   - session-transitions.test.ts (< 110 lines, < 130 lines limit)
-   - websocket-lifecycle.test.ts (< 100 lines, < 130 lines limit)
-   - state-breadcrumbs.test.ts (< 100 lines, < 130 lines limit)
+2. The modular test submodules run under frontend/test/app_shell/:
+   - routing.test.ts
+   - session-transitions.test.ts
+   - websocket-lifecycle.test.ts
+   - state-breadcrumbs.test.ts
 3. Each modular submodule executes cleanly via Node test runner with 0 failures.
 4. Entire frontend test runner (npm test) executes and passes cleanly with 0 failures.
 5. frontend/package.json test script properly covers test subdirectories.
@@ -77,7 +77,6 @@ APP_SHELL_TEST_DIR = FRONTEND_DIR / "test" / "app_shell"
 def test_individual_submodule_execution(submodule_name: str, expected_tokens: list[str]):
     """Execute each modular test submodule independently and verify 0 failures."""
     submodule_path = APP_SHELL_TEST_DIR / submodule_name
-    assert submodule_path.is_file()
 
     rel_path = str(submodule_path.relative_to(REPO_ROOT))
     result = run_node_tests([rel_path], timeout=NODE_TEST_TIMEOUT_S)

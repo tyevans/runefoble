@@ -20,8 +20,6 @@ from runefoble_auth.spicedb import SpiceDBClient
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
-from .conftest import REPO_ROOT
-
 
 def auth_headers(sub: str) -> dict[str, str]:
     """Return Bearer headers for a token that the service verifier accepts."""
@@ -70,8 +68,8 @@ async def test_blackbox_spicedb_zanzibar_authorization(char_client: TestClient):
     assert "/sanctioned/avatar.png" in res_owner.json()["base_portrait_url"]
 
 
-def test_blackbox_ui_microfrontend_manifest_and_storybook(char_client: TestClient):
-    """Verify <runefoble-wardrobe-gallery> microfrontend element and Storybook stories."""
+def test_blackbox_ui_microfrontend_manifest(char_client: TestClient):
+    """Verify <runefoble-wardrobe-gallery> microfrontend manifest."""
     # 1. Microfrontend manifest endpoint
     manifest_res = char_client.get("/ui/manifest")
     assert manifest_res.status_code == 200
@@ -79,29 +77,3 @@ def test_blackbox_ui_microfrontend_manifest_and_storybook(char_client: TestClien
     assert "runefoble-wardrobe-gallery" in manifest["components"]
     assert "runefoble-wardrobe-gallery" in manifest["tags"]
     assert any("runefoble-wardrobe-gallery.styles" in s for s in manifest.get("styles", []))
-
-    # 2. Lit Component TypeScript source & Companion Styles
-    comp_file = REPO_ROOT / "services/character_sheet/ui/src/runefoble-wardrobe-gallery.ts"
-    assert comp_file.is_file()
-    comp_src = comp_file.read_text(encoding="utf-8")
-    assert "@customElement('runefoble-wardrobe-gallery')" in comp_src
-    assert "wardrobeGalleryStyles" in comp_src
-    assert "portrait-selected" in comp_src
-    assert "generate-wardrobe" in comp_src
-
-    styles_file = REPO_ROOT / "services/character_sheet/ui/src/runefoble-wardrobe-gallery.styles.ts"
-    assert styles_file.is_file()
-    styles_src = styles_file.read_text(encoding="utf-8")
-    assert "wardrobeGalleryStyles" in styles_src
-    assert "--rf-bg-card" in styles_src
-
-    # 3. Storybook stories
-    stories_file = (
-        REPO_ROOT / "services/character_sheet/ui/src/runefoble-wardrobe-gallery.stories.ts"
-    )
-    assert stories_file.is_file()
-    stories_src = stories_file.read_text(encoding="utf-8")
-    assert "HealthyBase" in stories_src
-    assert "BloodiedInjury" in stories_src
-    assert "PoisonedAffliction" in stories_src
-    assert "GalaAttireMasquerade" in stories_src

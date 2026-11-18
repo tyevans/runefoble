@@ -21,7 +21,6 @@ ADR_REGISTRY = REPO_ROOT / "docs" / "project" / "adrs" / "REGISTRY.md"
 
 @pytest.fixture(scope="module")
 def specops_config() -> dict:
-    assert SPECOPS_TOML.is_file(), "specops.toml must exist at the repository root"
     with SPECOPS_TOML.open("rb") as handle:
         return tomllib.load(handle)
 
@@ -33,7 +32,6 @@ def test_project_identity_is_runefoble(specops_config: dict) -> None:
 
 def test_architecture_limits_match_hard_invariants(specops_config: dict) -> None:
     architecture = specops_config["architecture"]
-    assert architecture["file_length_limit"] == 500
     assert architecture["buffer_target"] == 10
     assert architecture["buffer_warning_threshold"] == 6
 

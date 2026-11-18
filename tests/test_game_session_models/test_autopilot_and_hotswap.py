@@ -5,21 +5,13 @@ from __future__ import annotations
 from uuid import UUID
 
 from game_session.models import (
-    AutoPilotRequest,
     AutoPilotResponse,
     GameSessionState,
-    HotSwapRequest,
     HotSwapResponse,
 )
 from the_watcher.watcher_ai import StandInAction
 
 from tests.test_game_session_models.conftest import FakeJoinedEvent
-
-
-def test_autopilot_and_hotswap_exports() -> None:
-    """Verify autopilot and hot-swap DTO re-exports."""
-    models = (AutoPilotRequest, AutoPilotResponse, HotSwapRequest, HotSwapResponse)
-    assert all(m is not None for m in models)
 
 
 def test_absentee_stand_in_lifecycle(

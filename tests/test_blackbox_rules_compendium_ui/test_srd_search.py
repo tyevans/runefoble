@@ -29,7 +29,6 @@ def test_compendium_manifest_and_exports(client: TestClient) -> None:
         assert comp in data["components"]
 
     manifest_path = REPO_ROOT / "services/rules_compendium/ui/manifest.json"
-    assert manifest_path.is_file()
     assert json.loads(manifest_path.read_text(encoding="utf-8")) == data
 
 

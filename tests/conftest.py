@@ -97,4 +97,3 @@ pytest_plugins = [
     "tests.helpers.voice_signaling",
     "tests.helpers.zitadel_auth",
 ]
-collect_ignore = ["test_blackbox_uvtt_import.py"]

@@ -16,7 +16,6 @@ from runefoble_auth.spicedb import MockSpiceDBClient, SpiceDBClient
 
 def test_schema_file_exists_and_syntax_structure() -> None:
     """Verify runefoble.zed exists, is non-empty, and contains core Zanzibar definitions."""
-    assert DEFAULT_SCHEMA_PATH.is_file(), f"Schema file missing at {DEFAULT_SCHEMA_PATH}"
     schema_text = DEFAULT_SCHEMA_PATH.read_text(encoding="utf-8")
     assert schema_text.strip(), "Schema file cannot be empty"
 

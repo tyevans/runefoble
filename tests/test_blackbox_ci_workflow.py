@@ -21,7 +21,6 @@ LOCAL_CI_SCRIPT_PATH = REPO_ROOT / "scripts" / "test_ci_e2e.sh"
 
 def test_ci_workflow_valid_yaml() -> None:
     """Verify .github/workflows/ci.yml exists and is valid YAML."""
-    assert CI_WORKFLOW_PATH.is_file(), f"Missing {CI_WORKFLOW_PATH}"
     content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
     parsed = yaml.safe_load(content)
     assert isinstance(parsed, dict)
@@ -103,7 +102,6 @@ def test_e2e_playwright_job_structure() -> None:
 
 def test_local_ci_simulation_script() -> None:
     """Verify local CI simulation script exists, is executable, and passes bash syntax check."""
-    assert LOCAL_CI_SCRIPT_PATH.is_file(), f"Missing {LOCAL_CI_SCRIPT_PATH}"
 
     # Executable permissions check
     file_stat = os.stat(LOCAL_CI_SCRIPT_PATH)

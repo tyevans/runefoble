@@ -54,7 +54,6 @@ def client(game_session_upstream) -> Iterator[TestClient]:
 
 def test_node_campaign_detail_view_suite_execution() -> None:
     """Execute the Node-based TypeScript campaign detail view test suite."""
-    assert TEST_CAMPAIGN_DETAIL_TS.is_file(), f"{TEST_CAMPAIGN_DETAIL_TS} must exist"
 
     result = run_node_tests([TEST_CAMPAIGN_DETAIL_TS], timeout=NODE_TEST_TIMEOUT_S)
     assert result.returncode == 0, (

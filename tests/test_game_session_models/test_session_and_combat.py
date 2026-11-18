@@ -5,30 +5,10 @@ from __future__ import annotations
 from uuid import UUID
 
 import game_session.models as models
-import game_session.models.combat as combat_mod
-import game_session.models.initiative as init_mod
-import game_session.models.session as session_mod
-import game_session.models.transitions as trans_mod
-import game_session.models.turn_order as turn_mod
 import pytest
 from pydantic import ValidationError
 
 from tests.test_game_session_models.conftest import FakeJoinedEvent
-
-
-def test_session_and_combat_exports_and_imports() -> None:
-    """Verify package re-exports and direct submodule imports for session and combat."""
-    for req in ("CreateSessionRequest", "JoinSessionRequest", "LeaveSessionRequest"):
-        assert getattr(models, req) is not None
-    assert models.RollDiceRequest is not None and models.RollDiceResponse is not None
-    assert issubclass(session_mod.GameSessionState, trans_mod.GameSessionTransitionsMixin)
-    assert session_mod.GameSessionState is models.GameSessionState
-    assert session_mod.ParticipantState is models.ParticipantState
-    assert combat_mod.StartCombatRequest is models.StartCombatRequest
-    assert turn_mod.NextTurnRequest is models.NextTurnRequest
-    assert init_mod.InitiativeRollRequest is models.InitiativeRollRequest
-    assert combat_mod.CombatStateResponse is models.CombatStateResponse
-    assert models.CombatTransitionsMixin is not None
 
 
 def test_session_lifecycle_and_validation(

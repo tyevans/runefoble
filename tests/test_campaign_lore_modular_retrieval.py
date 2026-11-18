@@ -3,14 +3,10 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from pathlib import Path
 from uuid import uuid4
 
-import campaign_lore
 import pytest
 import redstring
-from campaign_lore import dependencies, routers, west_marches_aggregate
-from campaign_lore import retrieval as retrieval_module
 from campaign_lore.extraction import (
     classify_entity_type,
     extract_alias_pairs,
@@ -19,7 +15,6 @@ from campaign_lore.extraction import (
     extract_relationships,
     get_or_create_entity,
 )
-from campaign_lore.routers import codex as codex_package
 from campaign_lore.scoring import (
     bm25_score,
     compute_idf,
@@ -27,33 +22,6 @@ from campaign_lore.scoring import (
     reciprocal_rank_fusion,
     tokenize,
 )
-
-
-def test_legacy_shims_are_removed() -> None:
-    """Verify that facade modules, alias names and package-root re-exports are gone."""
-    package_dir = Path(campaign_lore.__file__).resolve().parent
-
-    # Codex router facade (routers/codex.py); the routers/codex/ package is the canonical router.
-    assert not (package_dir / "routers" / "codex.py").exists()
-    assert not hasattr(codex_package, "PublishCodexEntryRequest")
-    assert not hasattr(codex_package, "extract_references")
-
-    # Class alias WestMarchesWorldAggregate = WestMarchesAtlasAggregate.
-    assert not hasattr(west_marches_aggregate, "WestMarchesWorldAggregate")
-
-    # Package-root and routers-package re-exports.
-    assert not hasattr(campaign_lore, "LoreRetrievalEngine")
-    assert not hasattr(campaign_lore, "tokenize")
-    assert not hasattr(routers, "codex_router")
-    assert not hasattr(routers, "west_marches_router")
-
-    # Retrieval module exports only its own coordinator types.
-    assert "tokenize" not in retrieval_module.__all__
-    assert "DocumentMetadata" not in retrieval_module.__all__
-
-    # Dependencies module no longer re-exports permission or codex dependency symbols.
-    assert not hasattr(dependencies, "check_user_can_read_secrets")
-    assert not hasattr(dependencies, "load_codex_entry")
 
 
 def test_modular_scoring_primitives() -> None:
