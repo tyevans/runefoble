@@ -11,7 +11,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from gateway_api.auth import CurrentPrincipal
-from gateway_api.proxy import forward_json, forward_raw
+from gateway_api.proxy import forward_bytes, forward_json
 from runefoble_platform.service_client import path
 
 SOUNDSCAPE_SERVICE = "soundscape"
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/v1/soundscape", tags=["Soundscape"])
 @router.post("/cue")
 async def trigger_cue(user: CurrentPrincipal, request: Request) -> Any:
     """Trigger a foley cue. The service checks `play` on the session or campaign."""
-    return await forward_raw(
+    return await forward_bytes(
         request,
         service=SOUNDSCAPE_SERVICE,
         method="POST",
@@ -45,7 +45,7 @@ async def get_tension(user: CurrentPrincipal, request: Request) -> Any:
 @router.post("/tension/calculate")
 async def calculate_encounter_tension(user: CurrentPrincipal, request: Request) -> Any:
     """Calculate encounter tension and adapt the stems. The service checks session control."""
-    return await forward_raw(
+    return await forward_bytes(
         request,
         service=SOUNDSCAPE_SERVICE,
         method="POST",
@@ -56,7 +56,7 @@ async def calculate_encounter_tension(user: CurrentPrincipal, request: Request) 
 @router.post("/stems/override")
 async def override_soundscape_mood(user: CurrentPrincipal, request: Request) -> Any:
     """Force a stem profile. The service checks `run_session` or `manage`."""
-    return await forward_raw(
+    return await forward_bytes(
         request,
         service=SOUNDSCAPE_SERVICE,
         method="POST",
