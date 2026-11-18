@@ -20,10 +20,10 @@ from character_sheet.crafting import (
 from character_sheet.crafting.service import CharacterNotFoundError, CombineReagentsService
 from character_sheet.dependencies import (
     VIEW_CHARACTER,
+    CallerId,
     CraftingRepoDep,
     RepoDep,
     SpiceDep,
-    VerifiedUserId,
     get_principal,
     publish_character_event,
     publish_crafting_event,
@@ -96,7 +96,7 @@ async def combine_reagents(
     crafting_repo: CraftingRepoDep,
     char_repo: RepoDep,
     spicedb: SpiceDep,
-    user_id: VerifiedUserId,
+    user_id: CallerId,
 ) -> CombineReagentsResponse:
     """Combine alchemical reagents, calculate volatile risk, and update character state."""
     await authorize_character(spicedb, req.character_id, "edit", user_id)
