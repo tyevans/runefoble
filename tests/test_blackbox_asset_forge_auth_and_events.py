@@ -11,7 +11,6 @@ All assertions and setup operate strictly through public frontdoors:
 from __future__ import annotations
 
 import asyncio
-from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -22,7 +21,7 @@ from fastapi.testclient import TestClient
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.events import BattlemapForged, TokenAssetForged
-from runefoble_platform.bus import bus as platform_bus
+from runefoble_platform.redis_bus import deserialize_event
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -74,14 +73,6 @@ async def test_blackbox_event_publication_to_redis_streams_and_event_sourcing(
 ):
     """Verify BattlemapForged & TokenAssetForged published over Redis Streams & recorded in aggregate."""
 
-    mem_events: list[Any] = []
-
-    async def on_mem_event(event: Any):
-        mem_events.append(event)
-
-    platform_bus.subscribe("runefoble.events.asset.battlemap_forged", on_mem_event)
-    platform_bus.subscribe("runefoble.events.asset.token_forged", on_mem_event)
-
     campaign_id = uuid4()
     cid = str(campaign_id)
     spicedb = get_spicedb_client()
@@ -127,9 +118,8 @@ async def test_blackbox_event_publication_to_redis_streams_and_event_sourcing(
     assert tok_asset_id in tok_evt["payload"]
     assert "Lich" in tok_evt["payload"]
 
-    assert len(mem_events) == 2
-    assert isinstance(mem_events[0], BattlemapForged)
-    assert isinstance(mem_events[1], TokenAssetForged)
+    assert isinstance(deserialize_event(map_evt), BattlemapForged)
+    assert isinstance(deserialize_event(tok_evt), TokenAssetForged)
 
     repo = get_forge_repo()
     loaded_agg = await repo.load(campaign_id)

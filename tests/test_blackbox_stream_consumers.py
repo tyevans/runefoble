@@ -155,6 +155,38 @@ def test_soundscape_consumer_applies_combat_start_from_redis(
         assert _wait_until(tension_applied), "soundscape consumer did not apply the combat start"
 
 
+def test_soundscape_consumer_settles_after_one_redis_delivery(
+    redis_double: MockAsyncRedis, use_redis_client
+) -> None:
+    """One session event on Redis yields soundscape output once. The output count then stays fixed."""
+    from soundscape.main import app
+
+    session_id = str(uuid4())
+    use_redis_client(redis_double)
+    output_stream = "runefoble.events.soundscape"
+
+    with TestClient(app, headers=auth_headers("soundscape-tester")) as client:
+        _publish(
+            redis_double,
+            SESSION_STREAM,
+            CombatEncounterStarted(
+                aggregate_id=session_id,
+                session_id=session_id,
+                combatants=[{"combatant_id": "orc-1", "name": "Orc", "cr": 2.0}],
+            ),
+        )
+
+        def output_written() -> bool:
+            return len(redis_double.streams.get(output_stream, [])) > 0
+
+        assert _wait_until(output_written), "soundscape consumer wrote no output"
+        time.sleep(0.5)
+        settled = len(redis_double.streams.get(output_stream, []))
+        time.sleep(0.5)
+        assert len(redis_double.streams.get(output_stream, [])) == settled
+        assert client.get("/healthz").json()["consumers"] == {"soundscape": "running"}
+
+
 @pytest.mark.asyncio
 async def test_failed_handler_routes_message_to_dead_letter_and_acknowledges() -> None:
     """A handler failure dead-letters the message and acknowledges it. It is not left pending."""

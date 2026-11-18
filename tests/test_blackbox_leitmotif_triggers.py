@@ -20,7 +20,7 @@ from runefoble_events.events import (
     LeitmotifTriggered,
     PlayerSpokeEvent,
 )
-from runefoble_platform.bus import bus as platform_bus
+from runefoble_platform.redis_bus import deserialize_event
 from soundscape.event_handlers import handle_incoming_domain_event
 from soundscape.leitmotif import LeitmotifEngine, calculate_envelope_gain
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER
@@ -43,7 +43,7 @@ __all__ = ["client"]
 
 @pytest.mark.asyncio
 async def test_clutch_critical_hit_triggers_triumphant_leitmotif(
-    client: TestClient, leitmotif_session_id: str
+    client: TestClient, leitmotif_session_id: str, mock_bus
 ) -> None:
     """Scenario 1: Clutch Critical Hit Theme Stinger within 250ms (US-0046)."""
     setup_leitmotif_profile(
@@ -54,13 +54,6 @@ async def test_clutch_critical_hit_triggers_triumphant_leitmotif(
         "lute",
         tempo=1.05,
     )
-    captured_events: list[LeitmotifTriggered] = []
-
-    async def on_event(ev: LeitmotifTriggered) -> None:
-        captured_events.append(ev)
-
-    platform_bus.subscribe("runefoble.events.soundscape.leitmotif_triggered", on_event)
-
     crit_event = CriticalHitScored(
         session_id=leitmotif_session_id,
         character_id="char-nadia",
@@ -76,10 +69,15 @@ async def test_clutch_critical_hit_triggers_triumphant_leitmotif(
     assert "lute_triumphant.ogg" in playback.stem_url
     assert not hasattr(playback, "scheduled_latency_ms")
 
-    assert len(captured_events) == 1
-    assert captured_events[0].character_id == "char-nadia"
-    assert captured_events[0].motif_type == "triumphant"
-    assert captured_events[0].trigger_reason == "critical_hit"
+    triggered = [
+        ev
+        for _, fields in mock_bus.streams.get("runefoble.events.soundscape", [])
+        if isinstance(ev := deserialize_event(fields), LeitmotifTriggered)
+    ]
+    assert len(triggered) == 1
+    assert triggered[0].character_id == "char-nadia"
+    assert triggered[0].motif_type == "triumphant"
+    assert triggered[0].trigger_reason == "critical_hit"
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,7 @@
-"""Domain event subscribers and tension recalculation triggers for Soundscape."""
+"""Domain event handlers and tension recalculation triggers for Soundscape.
+
+The Redis Streams consumer in `soundscape.consumer` is the only caller. No in-process bus exists.
+"""
 
 from __future__ import annotations
 
@@ -31,20 +34,6 @@ logger = logging.getLogger("runefoble.soundscape.events")
 
 # Speech ducking holds for the same window the browser uses (UI default 2500 ms).
 SPEECH_DUCK_MS = 2500
-
-SOUNDSCAPE_SUBSCRIBED_EVENTS: list[str] = [
-    "CombatEncounterStarted",
-    "CombatStarted",
-    "CombatRoundAdvanced",
-    "InitiativeTurnAdvanced",
-    "PlayerSpokeEvent",
-    "CriticalHitScored",
-    "DiceRolled",
-    "DeathSaveStarted",
-    "CharacterHealthChanged",
-]
-
-_handlers_registered: bool = False
 
 
 def _score_encounter(
@@ -191,15 +180,3 @@ async def handle_incoming_domain_event(event: Any) -> None:
         char_id = str(getattr(event, "character_id", None) or "char-player")
         char_name = str(getattr(event, "character_name", None) or "Hero")
         await _handle_leitmotif_trigger(session_id, char_id, char_name, "somber", "death_save")
-
-
-def register_soundscape_event_handlers() -> None:
-    """Register soundscape domain event handlers to the platform in-memory event bus."""
-    global _handlers_registered
-    if _handlers_registered:
-        return
-    from runefoble_platform.bus import bus as platform_bus
-
-    for topic in SOUNDSCAPE_SUBSCRIBED_EVENTS:
-        platform_bus.subscribe(topic, handle_incoming_domain_event)
-    _handlers_registered = True

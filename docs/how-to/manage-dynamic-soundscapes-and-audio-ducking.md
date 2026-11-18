@@ -249,8 +249,9 @@ Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, the service keeps no ses
 - `services/soundscape/src/soundscape/dependencies.py`: Holds the event repository factory, the SpiceDB permission guards, the Zitadel verifier seam, and the event bus seam. It holds no mixer, tension, or leitmotif state.
 - `services/soundscape/src/soundscape/session_state.py`: Reads and writes one session's state through the aggregate. It projects the public tension and mixer view from the stored state.
 - `services/soundscape/src/soundscape/ids.py`: Derives the aggregate id from the session id with UUID v5. Every process resolves the same event stream for one session.
-- `services/soundscape/src/soundscape/event_handlers.py`: Contains the domain event subscription callbacks (`CombatEncounterStarted`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, `DeathSaveStarted`) and the bus listener registration (`register_soundscape_event_handlers()`).
-- `services/soundscape/src/soundscape/main.py`: Coordinates service startup and registers event handlers during the FastAPI lifespan.
+- `services/soundscape/src/soundscape/event_handlers.py`: Contains the domain event handler `handle_incoming_domain_event`. It handles `CombatEncounterStarted`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, and `DeathSaveStarted`.
+- `services/soundscape/src/soundscape/consumer.py`: Runs the only caller of the handler. One Redis Streams consumer reads the `runefoble.events.session`, `runefoble.events.watcher`, and `runefoble.events.character` streams (TASK-0710). No in-process bus delivers events to the handler.
+- `services/soundscape/src/soundscape/main.py`: Coordinates service startup. The FastAPI lifespan connects the Redis Streams bus and starts the consumer.
 
 Event handlers and routes never catch a broad `Exception`. A failed store read answers `503`.
 

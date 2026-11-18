@@ -11,12 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from gateway_api.auth_sync import router as auth_sync_router
-from gateway_api.dependencies import (
-    event_bus_provider,
-    get_event_bus,
-    platform_settings,
-    set_event_bus,
-)
+from gateway_api.dependencies import event_bus_provider, platform_settings
 from gateway_api.routers import (
     auth_router,
     boards_router,
@@ -168,7 +163,5 @@ if __name__ == "__main__":
 
 __all__ = [
     "app",
-    "get_event_bus",
     "platform_settings",
-    "set_event_bus",
 ]

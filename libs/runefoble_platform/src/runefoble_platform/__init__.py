@@ -5,7 +5,6 @@ from runefoble_platform.analytics import (
     anonymize_profile_id,
     sanitize_properties,
 )
-from runefoble_platform.bus import EventBus, bus
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.consumer_group import (
     RedisConsumerGroup,
@@ -109,8 +108,6 @@ __all__ = [
     "AuthorizationError",
     "ConfigurationError",
     "GameRuleViolationError",
-    "EventBus",
-    "bus",
     "RedisStreamsEventBus",
     "RedisConsumerGroup",
     "RedisConsumerGroupWorker",

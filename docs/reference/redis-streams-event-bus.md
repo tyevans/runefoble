@@ -108,7 +108,7 @@ Every publish call uses one of two helpers from `runefoble_platform.event_publis
 | `publish_or_fail(bus, stream, event)` | Routes that change state, and DM decisions | Logs at error level, counts the failure, raises `DomainEventPublishError`. The app returns HTTP 503. |
 | `publish_best_effort(bus, stream, event)` | Read-model updates, projections, recaps, and suggestions | Logs at error level and counts the failure. Returns `False`. The request still succeeds. |
 
-`deliver_best_effort(destination, event_type, awaitable)` applies the best-effort policy to WebSocket broadcasts and the in-memory platform bus.
+`deliver_best_effort(destination, event_type, awaitable)` applies the best-effort policy to any delivery that is not a bus publish, such as a WebSocket broadcast or a board fan-out. No in-process event bus exists.
 
 Rules for clients and operators:
 
@@ -156,6 +156,7 @@ These consumers had no running process. TASK-0578 removed them or started them. 
 | `SpiceDBEventListener` | Removed. | No service called `register_bus_handlers`. The listener used the in-process `EventBus`, not Redis Streams. Tuple sync runs through `ZitadelSpiceDBSyncService` on the gateway sync routes (`/api/v1/auth/sync/*`). |
 | `RedisInferenceConsumer` (`services/inference_worker`) | Removed. Config keys `RUNEFOBLE_WORKER_REDIS_*` removed. | No producer writes `runefoble.inference.requests`. TASK-0448 may add a producer and a dead-letter path later. |
 | `AnalyticsEventWorker` | Removed. | No service started it. OpenPanel forwarding is not deployed. Domain services call `OpenPanelClient` directly if they need it. |
+| In-process `runefoble_platform.bus` (`EventBus`) | Deleted (TASK-0710). Every publish goes to Redis Streams. Soundscape handlers run only from the Redis consumer. | Forge and soundscape publishes reached no in-process subscriber. The one subscriber also read the same events from Redis. |
 | Gateway MCP dynamic tool bus | Kept. No mock fallback. | `configure_dynamic_event_bus` in `gateway_mcp.server` injects the Redis bus when the MCP process starts. It raises when `REDIS_URL` is empty. Dropped events log at `ERROR`. |
 
 ---
