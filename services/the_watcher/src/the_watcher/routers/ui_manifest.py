@@ -2,35 +2,18 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
+from runefoble_platform.ui_manifest import load_ui_manifest
 
 router = APIRouter(tags=["Microfrontends"])
 
-UI_MANIFEST: dict[str, Any] = {
-    "service": "the_watcher",
-    "package": "@runefoble/the-watcher-ui",
-    "version": "0.1.0",
-    "components": [
-        "runefoble-watcher-feed",
-        "runefoble-autonomous-dm",
-        "runefoble-dm-whisper-bar",
-        "runefoble-faction-radar",
-        "runefoble-faction-espionage",
-        "runefoble-absentee-directive",
-        "runefoble-absentee-vote-card",
-    ],
-    "tags": [
-        "runefoble-watcher-feed",
-        "runefoble-autonomous-dm",
-        "runefoble-dm-whisper-bar",
-        "runefoble-faction-radar",
-        "runefoble-faction-espionage",
-        "runefoble-absentee-directive",
-        "runefoble-absentee-vote-card",
-    ],
-}
+# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
+UI_MANIFEST: dict[str, Any] = load_ui_manifest(
+    Path(__file__).resolve().parents[3] / "ui" / "manifest.json"
+)
 
 
 @router.get("/ui/manifest")

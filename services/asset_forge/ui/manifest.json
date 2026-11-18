@@ -1,0 +1,9 @@
+{
+  "service": "asset_forge",
+  "package": "@runefoble/asset-forge-ui",
+  "version": "0.1.0",
+  "components": [
+    "runefoble-asset-forge",
+    "runefoble-print-forge"
+  ]
+}

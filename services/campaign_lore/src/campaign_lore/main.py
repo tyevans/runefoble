@@ -8,6 +8,7 @@ and provides sub-50ms hybrid RAG retrieval under SpiceDB Zanzibar authorization.
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -22,6 +23,7 @@ from runefoble_platform.config import (
 from runefoble_platform.errors import ServiceUnavailableError
 from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
 from runefoble_platform.event_sourcing import PostgreSQLEventStore, get_event_store
+from runefoble_platform.ui_manifest import load_ui_manifest
 
 from campaign_lore.codex import CodexCrossReferencer
 from campaign_lore.dependencies import event_bus_provider
@@ -35,6 +37,11 @@ from campaign_lore.routers.handouts import router as handouts_router
 from campaign_lore.routers.relics import router as relics_router
 from campaign_lore.routers.search import router as search_router
 from campaign_lore.routers.west_marches import router as west_marches_router
+
+# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
+UI_MANIFEST = load_ui_manifest(
+    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
+)
 
 logger = logging.getLogger(__name__)
 
@@ -124,18 +131,7 @@ def _register_routes(app: FastAPI) -> None:
     @app.get("/ui/manifest", tags=["Microfrontends"])
     def get_ui_manifest() -> dict[str, Any]:
         """Advertise vendored microfrontend components for campaign lore and codex."""
-        return {
-            "service": "campaign_lore",
-            "package": "@runefoble/campaign-lore-ui",
-            "components": [
-                "runefoble-campaign-atlas",
-                "runefoble-campaign-codex",
-                "runefoble-handout-viewer",
-                "runefoble-relic-inspector",
-                "runefoble-west-marches-atlas",
-            ],
-            "version": "0.1.0",
-        }
+        return UI_MANIFEST
 
 
 # Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).

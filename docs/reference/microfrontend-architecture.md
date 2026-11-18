@@ -104,6 +104,7 @@ runefoble/
 | `character_sheet` | `@runefoble/character-sheet-ui` | `<runefoble-character-card>`, `<runefoble-character-sheet>`, `<runefoble-absentee-recap>`, `<runefoble-stand-in-guardrails>` | `services/character_sheet/ui/src/*.stories.ts` |
 | `game_session` | `@runefoble/game-session-ui` | `<runefoble-initiative-tracker>`, `<runefoble-dice-roller>`, `<runefoble-spectator-view>`, `<runefoble-combat-reaction-prompt>`, `<runefoble-ready-action-card>` | `services/game_session/ui/src/*.stories.ts` |
 | `the_watcher` | `@runefoble/the-watcher-ui` | `<runefoble-watcher-feed>`, `<runefoble-autonomous-dm>`, `<runefoble-dm-whisper-bar>`, `<runefoble-faction-radar>`, `<runefoble-faction-espionage>` | `services/the_watcher/ui/src/*.stories.ts` |
+| `asset_forge` | `@runefoble/asset-forge-ui` | `<runefoble-asset-forge>`, `<runefoble-print-forge>` | `services/asset_forge/ui/src/*.stories.ts` |
 | `voice_agent` | `@runefoble/voice-agent-ui` | `<runefoble-voice-controls>`, `<runefoble-audio-indicator>`, `<runefoble-mobile-companion>` (subviews: `<audio-stream-controller>`, `<haptic-ping-panel>`, `<connection-status-badge>`), `<runefoble-voice-duplex-controls>` | `services/voice_agent/ui/src/*.stories.ts` |
 | `frontend` (App Shell) | `frontend` | `<runefoble-app>`, `<runefoble-settings-modal>`, `<runefoble-theme-switcher>` | `frontend/src/stories/runefoble-settings-modal.stories.ts` |
 
@@ -173,7 +174,13 @@ Response:
 }
 ```
 
-A service reads its `ui/manifest.json` file at start-up through `runefoble_platform.ui_manifest.load_ui_manifest`. A missing file, an unreadable file, or invalid JSON stops the process with `UIManifestError`. No service serves a hardcoded fallback manifest (ADR-0015 4). Run `make check-ui-manifests` to check every manifest.
+Every service reads its `ui/manifest.json` file at start-up through `runefoble_platform.ui_manifest.load_ui_manifest`, and `GET /ui/manifest` returns that parsed file unchanged. A missing file, an unreadable file, or invalid JSON stops the process with `UIManifestError`. No service serves a hardcoded fallback manifest (ADR-0015 4). Run `make check-ui-manifests` to check every manifest.
+
+Container images:
+- `deployments/docker/python-service.Dockerfile` installs the service in editable mode. The module files stay under `/app/services/<bc>/src`, so `ui/manifest.json` beside `src/` resolves inside the image.
+- The root `.dockerignore` excludes `services/*/ui/*` and re-includes only `services/*/ui/manifest.json`.
+
+Components that the App Shell renders from `frontend/src` (for example `runefoble-bulletin-board`, `runefoble-merchant-haggler`, `runefoble-minigame-darts`) have no tag in any service `ui/src`. They do not appear in any manifest (ADR-0013).
 
 ## Storybook Dynamic Aggregation
 

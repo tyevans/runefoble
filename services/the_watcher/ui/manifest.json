@@ -10,5 +10,14 @@
     "runefoble-faction-espionage",
     "runefoble-absentee-directive",
     "runefoble-absentee-vote-card"
+  ],
+  "tags": [
+    "runefoble-watcher-feed",
+    "runefoble-autonomous-dm",
+    "runefoble-dm-whisper-bar",
+    "runefoble-faction-radar",
+    "runefoble-faction-espionage",
+    "runefoble-absentee-directive",
+    "runefoble-absentee-vote-card"
   ]
 }

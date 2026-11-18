@@ -7,6 +7,7 @@ crops transparent circular token portraits, and pushes spatial geometry to board
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -17,6 +18,7 @@ from runefoble_platform.aggregate_loading import register_store_unavailable_hand
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures
 from runefoble_platform.event_sourcing import get_event_store
+from runefoble_platform.ui_manifest import load_ui_manifest
 
 from asset_forge.dependencies import event_bus_provider, get_wardrobe_generator
 from asset_forge.map_generation_engine import get_map_generator
@@ -25,6 +27,11 @@ from asset_forge.routers.battlemap import router as battlemap_router
 from asset_forge.routers.print_forge import router as print_forge_router
 from asset_forge.routers.token import router as token_router
 from asset_forge.routers.wardrobe import router as wardrobe_router
+
+# Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
+UI_MANIFEST = load_ui_manifest(
+    Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
+)
 
 
 @asynccontextmanager
@@ -90,12 +97,7 @@ def health_check() -> dict[str, Any]:
 @app.get("/ui/manifest", tags=["Microfrontends"])
 def get_ui_manifest() -> dict[str, Any]:
     """Advertise vendored microfrontend components for procedural asset forge."""
-    return {
-        "service": "asset_forge",
-        "package": "@runefoble/asset-forge-ui",
-        "components": ["runefoble-asset-forge", "runefoble-print-forge"],
-        "version": "0.1.0",
-    }
+    return UI_MANIFEST
 
 
 def main() -> None:

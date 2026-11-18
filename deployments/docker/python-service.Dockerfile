@@ -46,6 +46,8 @@ RUN if [ -n "${SYSTEM_PACKAGES}" ]; then \
 # (for example services/<bc>/ui/manifest.json, which the service loads relative to its module).
 COPY . .
 
+# The service installs in editable mode. Its module files stay at /app/services/<bc>/src,
+# so `load_ui_manifest` finds the vendored ui/manifest.json beside them (ADR-0013).
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --package "${SERVICE}" --no-dev
 
