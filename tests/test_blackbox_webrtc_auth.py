@@ -16,7 +16,7 @@ import time
 import pytest
 from fastapi import WebSocketDisconnect
 from runefoble_auth.factory import get_spicedb_client
-from voice_agent.room import VoiceRoomCoordinator, set_voice_room_coordinator
+from voice_agent.coordinator import VoiceRoomCoordinator, set_voice_room_coordinator
 from voice_agent.signaling import signaling_manager
 
 from tests.helpers.mock_redis import MockAsyncRedis

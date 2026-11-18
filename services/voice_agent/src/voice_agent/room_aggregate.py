@@ -305,12 +305,24 @@ class VoiceRoomAggregate(DeclarativeAggregate[VoiceRoomState]):
         if self._state is None:
             self._state = VoiceRoomState(session_id=event.session_id, peers={})
         peers = dict(self.state.peers)
-        peers[event.peer_id] = VoicePeerState(
-            peer_id=event.peer_id,
-            user_id=event.user_id,
-            role=event.role,
-            joined_at=event.joined_at,
-            is_muted=False,
+        existing = peers.get(event.peer_id)
+        # A rejoin keeps the seat's settings (mute, vocal preset, filters) and refreshes identity.
+        peers[event.peer_id] = (
+            existing.model_copy(
+                update={
+                    "user_id": event.user_id,
+                    "role": event.role,
+                    "joined_at": event.joined_at,
+                }
+            )
+            if existing
+            else VoicePeerState(
+                peer_id=event.peer_id,
+                user_id=event.user_id,
+                role=event.role,
+                joined_at=event.joined_at,
+                is_muted=False,
+            )
         )
         self._state = self.state.model_copy(update={"peers": peers})
 

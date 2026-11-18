@@ -149,3 +149,59 @@ def test_joined_peers_keep_their_seats_through_a_graceful_restart(
         resumed, joined = _open_joined_peer(base, session_id, RESTART_PEER_A, "peer-restart-a")
         resumed.close()
     assert sorted(p["peer_id"] for p in joined["peers"]) == ["peer-restart-a", "peer-restart-b"]
+
+
+RESTART_REJOIN_PEER = "user-restart-rejoin"
+REJOIN_PRESET_ID = "goblin-skulker"
+
+
+def _receive_until(socket: ClientConnection, msg_type: str) -> dict[str, Any]:
+    """Read frames until one has `msg_type`. Return that frame."""
+    while True:
+        frame = json.loads(socket.recv(timeout=REQUEST_TIMEOUT_SECONDS))
+        if frame.get("type") == msg_type:
+            return frame
+
+
+def test_rejoining_peer_keeps_its_mute_and_preset_after_a_graceful_restart(
+    restart_stack: RestartStack,
+) -> None:
+    """A peer that rejoins with its peer id after a restart keeps its mute and vocal preset."""
+    session_id = f"sess-rejoin-{uuid4().hex[:8]}"
+    campaign_id = str(uuid4())
+    restart_stack.grant(
+        [
+            ("campaign", campaign_id, "player", "user", RESTART_REJOIN_PEER),
+            ("session", session_id, "campaign", "campaign", campaign_id),
+        ]
+    )
+
+    # The peer mutes and applies a preset. Leaving the block sends SIGTERM with the socket open.
+    with restart_stack.start(VOICE_AGENT_APP) as base:
+        socket, _ = _open_joined_peer(base, session_id, RESTART_REJOIN_PEER, "peer-rejoin")
+        socket.send(json.dumps({"type": "webrtc_mute", "is_muted": True}))
+        _receive_until(socket, "webrtc_peer_muted")
+        preset_resp = httpx.post(
+            f"{base}/api/v1/voice/modulate",
+            json={
+                "session_id": session_id,
+                "peer_id": "peer-rejoin",
+                "preset_name": REJOIN_PRESET_ID,
+            },
+            headers=voice_auth_headers(RESTART_REJOIN_PEER),
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+        assert preset_resp.status_code == 200, preset_resp.text
+
+    try:
+        assert _close_code_after_drain(socket) == GRACEFUL_RESTART_CLOSE_CODE
+    finally:
+        socket.close()
+
+    with restart_stack.start(VOICE_AGENT_APP) as base:
+        resumed, joined = _open_joined_peer(base, session_id, RESTART_REJOIN_PEER, "peer-rejoin")
+        resumed.close()
+
+    peer = next(p for p in joined["peers"] if p["peer_id"] == "peer-rejoin")
+    assert peer["is_muted"] is True
+    assert peer["active_preset"] == "Goblin Skulker"
