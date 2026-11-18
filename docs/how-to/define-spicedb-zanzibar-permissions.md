@@ -282,6 +282,6 @@ For lightweight unit and offline testing, `runefoble_auth` provides an in-memory
 - **`runefoble_auth.mock.schema_parser`**: Parses Zed schema definitions into `SchemaGraph`, extracting relations, permissions, and target types.
 - **`runefoble_auth.mock.evaluator`**: Recursively evaluates Zanzibar graph reachability, schema arrow expressions (`relation->permission`), domain entity relations, and caveats.
 - **`runefoble_auth.mock.client`**: Provides `MockSpiceDBClient` tuple storage, relationship CRUD, touch updates, and permission checks.
-- **`runefoble_auth.mock_spicedb`**: Facade module re-exporting `MockSpiceDBClient` and `Relationship` for complete backward compatibility.
+- **`runefoble_auth.mock_spicedb`**: Defect (DoR 9): facade module re-exporting `MockSpiceDBClient` and `Relationship`. Removal: TASK-0486.
 
 

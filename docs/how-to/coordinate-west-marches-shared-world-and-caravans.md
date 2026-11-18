@@ -445,7 +445,7 @@ Per **ADR-0001**, **ADR-0003**, and **Hard Invariant 6** (< 500 lines per file),
 - **`board.py`** (< 140 lines): Caravan contract notice board creation (`POST /{shared_world_id}/caravans/contracts`), contract search and query filtering (`GET /{shared_world_id}/caravans/contracts`), and single contract manifest retrieval (`GET /{shared_world_id}/caravans/contracts/{contract_id}`).
 - **`lifecycle.py`** (< 180 lines): State transition endpoints covering mercenary acceptance (`/accept`), trade caravan dispatch (`/dispatch`), tactical ambush event recording (`/ambush`), and settlement delivery fulfillment (`/fulfill`).
 - **`__init__.py`** (< 50 lines): Re-exports unified `router` combining notice board and lifecycle routes with identical URL paths, tags, and dependencies.
-- **`caravan_contracts.py`** (< 15 lines): Backward-compatibility facade re-exporting `router` from the package.
+- **`caravan_contracts.py`** (< 15 lines): Defect (DoR 9): facade re-exporting `router` from the package. Removal: TASK-0491.
 
 ## 9. Modular Caravan Board Microfrontend Architecture
 
@@ -470,7 +470,7 @@ Per **ADR-0003**, **ADR-0007**, **ADR-0011**, and **Hard Invariant 6** (< 500 li
 - **`aggregate.py`** (< 120 lines): `CaravanContractAggregate` DeclarativeAggregate lifecycle and event handlers.
 - **`trade_operations.py`** (< 140 lines): Mixin handling resource caravan dispatch and trade completion.
 - **`ledger.py`** (< 140 lines): `CaravanLedgerAggregate` DeclarativeAggregate managing regional stock.
-- **`caravan.py` & `caravan_ledger.py`** (< 30 lines each): Backward-compatible facades re-exporting aggregates.
+- **`caravan.py` & `caravan_ledger.py`** (< 30 lines each): Defect (DoR 9): facades re-exporting aggregates. Removal: TASK-0491.
 
 ## 11. Modular West Marches Shared World Aggregate & Handlers Architecture
 

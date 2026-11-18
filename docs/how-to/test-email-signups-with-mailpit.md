@@ -95,7 +95,7 @@ When no Mailpit container runs, `MailpitClient` uses an in-memory buffer (`fallb
 
 ## Step 4: Local Admin
 
-The gateway no longer seeds administrators. The `make seed-admin` and `make invite-admin` targets and `scripts/invite_admin.py` are removed. Local admin bootstrap is planned in TASK-0526.
+The gateway no longer seeds administrators. The `make seed-admin` and `make invite-admin` targets and the invite admin script are removed. Local admin bootstrap is planned in TASK-0526.
 
 ---
 

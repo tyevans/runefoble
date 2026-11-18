@@ -55,7 +55,7 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 
 ### Upstream Service Calls
 
-Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway_mcp/clients/services.py`:
+Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway/mcp/src/gateway_mcp/clients/services.py`:
 
 | Setting | Environment Variable | Default | Owning Service |
 |---|---|---|---|

@@ -153,7 +153,7 @@ In accordance with Hard Invariant 6 and ADR-0003/ADR-0007, raster generation is 
 | `wardrobe_generator.py` | `WardrobeGenerator` port, `WardrobePortrait`, and generator selection (`RUNEFOBLE_WARDROBE_GENERATOR`) | `WardrobeGenerator`, `build_wardrobe_generator` |
 | `wardrobe_placeholder.py` | Default placeholder generator that wraps `wardrobe_raster.py` | `PlaceholderWardrobeGenerator` |
 
-Callers import generators directly from these submodules. The package has no aggregator facade and no legacy aliases. The `asset_forge.raster` package root re-exports nothing.
+Callers import generators directly from these submodules. The package has no aggregator facade and no re-exported aliases. The `asset_forge.raster` package root re-exports nothing.
 
 ---
 
