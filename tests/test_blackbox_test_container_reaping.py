@@ -25,13 +25,16 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOLD_MODULE = "tests/helpers/postgres_hold_child.py"
+REDIS_HOLD_MODULE = "tests/helpers/redis_hold_child.py"
 START_TIMEOUT_SECONDS = 180.0
 
 pytestmark = pytest.mark.skipif(shutil.which("docker") is None, reason="Docker is not available")
 
 
-def _start_child(tmp_path: Path, name: str, mode: str) -> tuple[subprocess.Popen[bytes], Path]:
-    """Run the hold module in a child pytest process. Return the process and its info file."""
+def _start_child(
+    tmp_path: Path, name: str, mode: str, module: str = HOLD_MODULE
+) -> tuple[subprocess.Popen[bytes], Path]:
+    """Run a hold module in a child pytest process. Return the process and its info file."""
     info_path = tmp_path / f"{name}.json"
     log = (tmp_path / f"{name}.log").open("wb")
     env = {
@@ -40,7 +43,7 @@ def _start_child(tmp_path: Path, name: str, mode: str) -> tuple[subprocess.Popen
         "RUNEFOBLE_HOLD_MODE": mode,
     }
     process = subprocess.Popen(
-        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", HOLD_MODULE],
+        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", module],
         cwd=REPO_ROOT,
         env=env,
         stdout=log,
@@ -89,7 +92,7 @@ def test_orphaned_container_is_removed_on_next_run_and_live_owner_keeps_its_cont
         orphan_child.wait(timeout=30)
         assert _running_containers(orphan_name), "precondition: the orphan must be running"
 
-        # Next run: its fixture starts a container and must reap the orphan first.
+        # Next run: the session start reaps the orphan before any container starts.
         next_child, next_info = _start_child(tmp_path, "next", "exit")
         assert next_child.wait(timeout=START_TIMEOUT_SECONDS) == 0, (
             tmp_path / "next.log"
@@ -106,3 +109,28 @@ def test_orphaned_container_is_removed_on_next_run_and_live_owner_keeps_its_cont
         for name in (orphan_name, live_name):
             if name:
                 _remove_own_container(name)
+
+
+def test_orphaned_redis_container_is_removed_at_next_session_start(tmp_path):
+    orphan_child, orphan_info = _start_child(tmp_path, "redis-orphan", "hold", REDIS_HOLD_MODULE)
+    orphan_name = ""
+    try:
+        orphan_name = _wait_for_container_name(orphan_child, orphan_info)
+
+        orphan_child.kill()
+        orphan_child.wait(timeout=30)
+        assert _running_containers(orphan_name), "precondition: the orphaned Redis must be running"
+
+        next_child, next_info = _start_child(tmp_path, "next-redis", "exit", HOLD_MODULE)
+        assert next_child.wait(timeout=START_TIMEOUT_SECONDS) == 0, (
+            tmp_path / "next-redis.log"
+        ).read_text(encoding="utf-8", errors="replace")
+        assert next_info.exists()
+
+        assert _running_containers(orphan_name) == [], "the orphaned Redis must be removed"
+    finally:
+        if orphan_child.poll() is None:
+            orphan_child.send_signal(signal.SIGKILL)
+            orphan_child.wait(timeout=30)
+        if orphan_name:
+            _remove_own_container(orphan_name)

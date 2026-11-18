@@ -2,6 +2,8 @@
 
 import os
 
+from tests.helpers.container_owner import remove_orphaned_test_containers
+
 # Test mode: the SpiceDB preshared key has no default outside tests. Tests supply a throwaway
 # value before any settings object is built. Live tests may override it in their environment.
 os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key")
@@ -24,6 +26,12 @@ os.environ["RUNEFOBLE_EVENT_STORE_BACKEND"] = "memory"
 # The Watcher defaults to its inference worker (TASK-0741). Tests that need the local rule engine
 # select it here. Tests that need the worker set the worker URL themselves with monkeypatch.
 os.environ.setdefault("RUNEFOBLE_WATCHER_ENGINE", "heuristic")
+
+
+def pytest_sessionstart(session):
+    """Remove test containers whose owner process died in an earlier run. Live owners are kept."""
+    remove_orphaned_test_containers()
+
 
 pytest_plugins = [
     "tests.realtime_session",
