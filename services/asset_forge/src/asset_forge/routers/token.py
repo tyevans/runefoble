@@ -85,7 +85,7 @@ async def forge_token(
         prompt=request.prompt,
         token_name=request.token_name,
         token_type=request.token_type,
-        image_url=upload_meta["url"],
+        image_url=upload_meta["download_url"],
         crop_style=request.crop_style,
         transparent_background=request.transparent_background,
         campaign_id=request.campaign_id,
@@ -100,7 +100,7 @@ async def forge_token(
         prompt=request.prompt,
         token_name=request.token_name,
         token_type=request.token_type,
-        image_url=upload_meta["url"],
+        image_url=upload_meta["download_url"],
         crop_style=request.crop_style,
         transparent_background=request.transparent_background,
     )
@@ -108,8 +108,8 @@ async def forge_token(
 
     return TokenForgeResponse(
         asset_id=asset_id,
-        image_url=upload_meta["url"],
-        download_url=upload_meta["url"],
+        image_url=upload_meta["download_url"],
+        download_url=upload_meta["download_url"],
         token_name=request.token_name,
         token_type=request.token_type,
         crop_style=request.crop_style,

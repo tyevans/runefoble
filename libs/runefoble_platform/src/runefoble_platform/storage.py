@@ -57,7 +57,8 @@ class AssetNotFoundError(EntityNotFoundError):
 class SiloStorageService:
     """S3-compatible object storage client for Silo (MinIO fork).
 
-    Provides media asset uploads, retrieval, deletion, and presigned URL generation.
+    Provides media asset uploads, retrieval, and deletion. It never returns a Silo object
+    URL to a caller. Reads go through the authorized asset routes (ADR-0001, ADR-0015).
     The optional ``transport`` argument injects an httpx transport. Tests use it to
     stand in for the Silo HTTP boundary. Production code never sets it.
     """
@@ -101,10 +102,6 @@ class SiloStorageService:
                 f"Asset size ({len(data)} bytes) exceeds the maximum allowed "
                 f"limit of {MAX_ASSET_SIZE_BYTES} bytes (10MB)."
             )
-
-    def generate_presigned_url(self, bucket: str, object_key: str, expires_in: int = 3600) -> str:
-        """Generate a public or presigned access URL for an object."""
-        return f"{self.base_url}/{bucket}/{object_key}?expires={expires_in}"
 
     def _object_url(self, bucket: str, object_key: str) -> str:
         return f"{self.base_url}/{bucket}/{object_key}"
@@ -154,7 +151,6 @@ class SiloStorageService:
             "content_type": content_type,
             "byte_size": len(data),
             "owner_id": owner_id,
-            "url": self.generate_presigned_url(bucket=bucket, object_key=object_key),
             "created_at": datetime.now(UTC).isoformat(),
         }
 

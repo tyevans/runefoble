@@ -17,10 +17,12 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
+from board_state.authz import record_forged_asset_owner
 from board_state.uvtt.doors import extract_doors_from_uvtt
 from board_state.uvtt.lights import extract_lights_from_uvtt
-from runefoble_platform.asset_index import record_stored_asset
-from runefoble_platform.storage import SiloStorageService, get_storage_service
+from runefoble_auth.errors import AuthzError
+from runefoble_platform.asset_index import asset_read_path, record_stored_asset
+from runefoble_platform.storage import AssetStorageError, SiloStorageService, get_storage_service
 
 if TYPE_CHECKING:
     from board_state.aggregate import BoardAggregate
@@ -164,13 +166,16 @@ def parse_uvtt_data(raw_data: str | bytes | dict[str, Any]) -> UVTTParseResult:
 async def store_uvtt_image(
     image_bytes: bytes,
     mime_type: str = "image/png",
+    *,
+    owner_id: str,
+    session_id: str,
     storage: SiloStorageService | None = None,
-    owner_id: str = "uvtt_importer",
 ) -> tuple[str, str]:
-    """Store decoded battlemap image into Silo S3 and return (asset_id, url).
+    """Store decoded battlemap image into Silo S3 and return (asset_id, read path).
 
-    Raises AssetStorageError when Silo does not confirm the write. The index entry is
-    recorded only after that confirmation.
+    The read path is the authorized asset route. It never names a Silo object URL.
+    Raises AssetStorageError when Silo does not confirm the write. The owner tuples
+    and the index entry follow that confirmation. A failed owner write removes the object.
     """
     s = storage or get_storage_service()
     asset_id = f"map-{uuid4().hex[:12]}"
@@ -185,8 +190,18 @@ async def store_uvtt_image(
         owner_id=owner_id,
         asset_id=asset_id,
     )
+    try:
+        await record_forged_asset_owner(asset_id, owner_id, session_id)
+    except AuthzError:
+        try:
+            s.delete_asset(metadata["bucket"], metadata["object_key"])
+        except AssetStorageError:
+            logger.exception(
+                "Map image '%s' could not be removed after a failed owner write", asset_id
+            )
+        raise
     await record_stored_asset(metadata)
-    return asset_id, metadata["url"]
+    return asset_id, asset_read_path(asset_id)
 
 
 def apply_uvtt_to_board(

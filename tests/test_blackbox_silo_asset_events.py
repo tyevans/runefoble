@@ -47,7 +47,6 @@ def test_asset_events_registration_and_cloudevents():
         content_type="image/png",
         byte_size=len(PNG_SAMPLE_BYTES),
         owner_id="user-42",
-        url="http://silo:9000/runefoble-assets/avatars/hero.png",
     )
     ce_dict = upload_event.to_cloudevent_dict()
     assert ce_dict["specversion"] == "1.0"

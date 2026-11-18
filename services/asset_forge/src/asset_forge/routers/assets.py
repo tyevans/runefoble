@@ -20,6 +20,7 @@ from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.spicedb import SpiceDBClient
 from runefoble_events.events import AssetDeleted, AssetUploaded
 from runefoble_platform.asset_index import (
+    asset_read_path,
     get_stored_asset,
     record_stored_asset,
     remove_stored_asset,
@@ -60,7 +61,6 @@ class AssetMetadataResponse(BaseModel):
     content_type: str
     byte_size: int
     owner_id: str
-    url: str
     download_url: str
     created_at: str
 
@@ -134,13 +134,12 @@ async def upload_asset(
             content_type=meta["content_type"],
             byte_size=meta["byte_size"],
             owner_id=meta["owner_id"],
-            url=meta["url"],
         ),
         stream=STREAM_ASSET,
     )
 
     meta_copy = dict(meta)
-    meta_copy["download_url"] = f"/api/v1/assets/{meta['asset_id']}?stream=true"
+    meta_copy["download_url"] = asset_read_path(meta["asset_id"])
     return meta_copy
 
 
@@ -163,7 +162,7 @@ async def get_asset(
         return _binary_response(storage, asset_id, meta, download=download)
 
     resp = dict(meta)
-    resp["download_url"] = f"/api/v1/assets/{asset_id}?stream=true"
+    resp["download_url"] = asset_read_path(asset_id)
     return resp
 
 

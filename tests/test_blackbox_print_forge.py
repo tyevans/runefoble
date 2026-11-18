@@ -130,7 +130,7 @@ def test_blackbox_tiled_pdf_json_format(client: TestClient):
     assert data["grid_calibration"] == "1-inch (72pt)"
     assert data["page_size"] == "a4"
     assert data["total_pages"] >= 4
-    assert data["download_url"].startswith("http")
+    assert data["download_url"] == f"/api/v1/assets/{data['asset_id']}?stream=true"
 
 
 def test_blackbox_papercraft_standees_generation(client: TestClient):
