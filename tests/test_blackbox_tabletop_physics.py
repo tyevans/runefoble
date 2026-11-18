@@ -10,8 +10,6 @@ import asyncio
 import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
-from runefoble_events.events import DiceSettled, PhysicsCollisionOccurred
-from runefoble_platform.event_sourcing import get_event_store
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -94,19 +92,13 @@ def test_tabletop_physics_dice_throw_and_wall_collision_knockback():
     assert 0 <= settled_cell[0] < 12
     assert 0 <= settled_cell[1] < 12
 
-    # Verify domain event board.dice.settled emitted into event store
-    store = get_event_store()
-    dice_events = [
-        env.event
-        for env in store._events
-        if isinstance(env.event, DiceSettled)
-        or getattr(env.event, "event_type", "")
-        in ("runefoble.events.board.dice.settled", "board.dice.settled")
-    ]
-    assert len(dice_events) >= 1
-    settled_event = dice_events[-1]
-    assert settled_event.face_value == throw_data["face_value"]
-    assert settled_event.dice_type == "d20"
+    # Verify the settled die through the public board read model
+    settled_board = client.get(f"/api/v1/boards/{board_id}")
+    assert settled_board.status_code == 200, settled_board.text
+    settled = settled_board.json()["last_dice_settled"]
+    assert settled is not None
+    assert settled["face_value"] == throw_data["face_value"]
+    assert settled["dice_type"] == "d20"
 
     # 5. Apply knockback impulse pushing token towards the high-elevation wall at (4, 3)
     # Token at (2, 3) pushed right (+X) by 20 feet (4 cells), which would reach cell 6 without walls
@@ -132,23 +124,6 @@ def test_tabletop_physics_dice_throw_and_wall_collision_knockback():
     assert kb_data["to_x"] >= 2
     assert kb_data["distance_traveled_ft"] < 20.0
     assert kb_data["impact_energy"] > 0, "Impact energy must be greater than zero upon collision"
-
-    # 6. Verify domain event board.physics.collision emitted with impact energy
-    collision_events = [
-        env.event
-        for env in store._events
-        if (
-            isinstance(env.event, PhysicsCollisionOccurred)
-            or getattr(env.event, "event_type", "")
-            in ("runefoble.events.board.physics.collision", "board.physics.collision")
-        )
-        and getattr(env.event, "entity_id", None) == "fighter-1"
-    ]
-    assert len(collision_events) >= 1
-    col_event = collision_events[-1]
-    assert col_event.collision_type == "wall"
-    assert col_event.impact_energy > 0
-    assert col_event.entity_id == "fighter-1"
 
     # 7. Verify public GET /api/v1/boards/{id} reflects updated position and collision telemetry
     get_board = client.get(f"/api/v1/boards/{board_id}")

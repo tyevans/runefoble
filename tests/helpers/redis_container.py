@@ -10,7 +10,7 @@ from contextlib import contextmanager
 
 import redis
 
-from tests.helpers.container_owner import owner_label_args
+from tests.helpers.container_owner import owner_label_args, remove_test_container
 
 REDIS_IMAGE = "redis:7-alpine"
 
@@ -44,15 +44,18 @@ def redis_container(port: int) -> Generator[str]:
         _wait_for_redis(url)
         yield url
     finally:
-        subprocess.run([docker_bin, "rm", "-f", name], capture_output=True)
+        remove_test_container(docker_bin, name)
 
 
 def _wait_for_redis(url: str, timeout: float = 30.0) -> None:
     deadline = time.time() + timeout
+    last_error = "no probe completed"
     while time.time() < deadline:
         try:
             if redis.Redis.from_url(url, socket_timeout=1).ping():
                 return
-        except redis.RedisError:
-            time.sleep(0.3)
-    raise RuntimeError(f"Redis at {url} did not become ready")
+            last_error = "ping returned False"
+        except redis.RedisError as error:
+            last_error = str(error)
+        time.sleep(0.3)
+    raise RuntimeError(f"Redis at {url} did not become ready: {last_error}")

@@ -12,8 +12,6 @@ import asyncio
 import pytest
 from board_state.main import app
 from fastapi.testclient import TestClient
-from runefoble_events.events import DiceSettled, PhysicsCollisionOccurred
-from runefoble_platform.event_sourcing import get_event_store
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -83,17 +81,12 @@ def test_3d_tabletop_physical_dice_simulation_and_settlement():
     assert throw_data["bounces"] >= 1
     assert len(throw_data["trajectory"]) > 0
 
-    # Verify emitted CloudEvent DiceSettled
-    store = get_event_store()
-    dice_events = [
-        env.event
-        for env in store._events
-        if isinstance(env.event, DiceSettled)
-        or getattr(env.event, "event_type", "")
-        in ("runefoble.events.board.dice.settled", "board.dice.settled")
-    ]
-    assert len(dice_events) >= 1
-    assert dice_events[-1].face_value == throw_data["face_value"]
+    # Verify the settled die through the public board read model
+    settled_board = client.get(f"/api/v1/boards/{board_id}")
+    assert settled_board.status_code == 200, settled_board.text
+    settled = settled_board.json()["last_dice_settled"]
+    assert settled is not None
+    assert settled["face_value"] == throw_data["face_value"]
 
 
 def test_3d_miniature_knockback_impulse_and_wall_collision():
@@ -154,21 +147,6 @@ def test_3d_miniature_knockback_impulse_and_wall_collision():
     assert kb_data["to_x"] < 5
     assert kb_data["to_x"] >= 2
     assert kb_data["impact_energy"] > 0
-
-    # Verify domain event PhysicsCollisionOccurred
-    store = get_event_store()
-    col_events = [
-        env.event
-        for env in store._events
-        if (
-            isinstance(env.event, PhysicsCollisionOccurred)
-            or getattr(env.event, "event_type", "")
-            in ("runefoble.events.board.physics.collision", "board.physics.collision")
-        )
-        and getattr(env.event, "entity_id", None) == "mini-valeros"
-    ]
-    assert len(col_events) >= 1
-    assert col_events[-1].collision_type == "wall"
 
     # 5. Verify board projection endpoint reflects updated token position and collision telemetry
     get_resp = client.get(f"/api/v1/boards/{board_id}")
