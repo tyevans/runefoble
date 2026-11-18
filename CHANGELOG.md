@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Security
+- The MCP gateway and the owning services now authenticate service-to-service calls with a shared service credential, read from the `runefoble-credentials` Secret (`service-credential`). The credential grants only the routes the MCP gateway calls. It never acts for a user. (TASK-0689)
+- Audience Studio checks SpiceDB `audience_poll` and `campaign` permissions for every poll, vote, proposal, and WebSocket action. Proposal parameters reach approvers only. A SpiceDB outage returns 503. (TASK-0554)
 - game_session and The Watcher take caller identity only from a verified Zitadel bearer token. The `x-user-id` header and the `user_id` query parameter no longer grant identity. Every route requires a token. (TASK-0529)
 - The gateway no longer issues or accepts self-signed tokens. Zitadel is the only token issuer (TASK-0523).
 - Campaign role grants now require the `manage` permission. `owner` cannot be granted through the API (422). A failed authorization write returns 503 and grants nothing. Non-members and players can no longer grant roles. (TASK-0543)
@@ -26,6 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Campaign analytics worker `process_event` alias, tracking property wrappers, and package root re-exports. Callers use `handle_event`. (TASK-0500)
 
 ### Added
+- Game session records DM overrides (`POST /api/v1/sessions/{id}/dm-override`) and atmosphere changes (`POST /api/v1/sessions/{id}/atmosphere`). The session read model shows both. (0581) (TASK-0581)
+- Bootstrap Job `zitadel-bootstrap` creates the Zitadel project `runefoble` and the PKCE web application `runefoble-web`, then writes Secret `runefoble-zitadel-client` (TASK-0687).
+- `character_sheet` serves `GET /api/v1/characters` (lists characters the caller may view, optional `campaignId`). (0585) (TASK-0585)
+- `make check-ui-manifests` checks every service UI manifest. `make build` runs it first. (TASK-0694)
 - Gateway MCP serves the Model Context Protocol over streamable HTTP at `/mcp` on port 8012, with a Helm Deployment and ClusterIP Service `gateway-mcp` and a `make images` row (TASK-0623).
 - `game_session` serves `POST /api/v1/campaigns/{id}/roles` (manage) and `GET /api/v1/campaigns/{id}/capabilities`. (0591) (TASK-0591)
 - `scripts/check_doc_paths.py` checks the Diataxis docs for missing repository paths, absolute `file:///` links, and compatibility wording that does not name a removal task. (TASK-0662)
@@ -62,6 +68,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - Authored Diataxis How-To guide `docs/how-to/test-email-signups-with-mailpit.md` and updated `docs/reference/platform-services.md`, `docs/reference/ports-and-endpoints.md`, `docs/tutorials/01-local-development-setup.md`, and `AGENTS.md`.
 
 ### Changed
+- MCP `create_encounter` starts combat through game_session. Its encounter id is the game session id. It returns `encounter_id`, `grid`, `enemies_spawned`, and the combat state. An unknown or unavailable session returns a tool error and creates no board. (TASK-0686)
+- Campaign Analytics reads from PostgreSQL read models. Each stream message projects in one transaction with its stream position. A restart resumes after the last projected message. The service refuses to start without PostgreSQL. Queries return 503 when the store is down. (TASK-0573)
 - Audience Studio `dev` script runs TypeScript source with `tsx watch`, so `.js` imports resolve. Added `make dev-audience-studio`. (TASK-0692)
 - The App Shell takes the campaign and session from the route and the campaign switcher from the API. Fixed campaign, session, and character fixtures are removed. An empty state replaces the placeholder character. (TASK-0642)
 - Agent index in `AGENTS.md` lists every how-to, reference, and explanation guide. Index descriptions match their files. The repository layout lists `libs/runefoble_embeddings`, `services/inference_worker`, `tools`, `scripts`, and `tests`. (TASK-0661)

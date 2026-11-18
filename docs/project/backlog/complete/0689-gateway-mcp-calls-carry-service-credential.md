@@ -1,7 +1,7 @@
 ---
 id: '0689'
 title: Gateway MCP Service Calls Carry a Kubernetes Secret Service Credential
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0529
@@ -22,7 +22,7 @@ source_audits:
 # TASK-0689: Gateway MCP Service Calls Carry a Kubernetes Secret Service Credential
 
 ## Status
-Refined. Discovered in round 2 audit of reports 0604, 0622 and 0603. ADR-0015 (e) requires a service credential for service-to-service calls. TASK-0529 covers only the inference worker.
+Complete
 
 ## Summary
 `gateway_mcp` calls board_state, character_sheet, game_session and rules_compendium over HTTP. It sends no credential, and the receiving services accept any caller on the cluster network. This task adds a service credential, read from a Kubernetes Secret, to the shared service client. The receiving routes reject calls without it.

@@ -1,7 +1,7 @@
 ---
 id: '0573'
 title: Campaign Analytics Read Models Served From Durable Storage and Chronicle Aggregate Used
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0560
@@ -24,7 +24,7 @@ source_audits:
 # TASK-0573: Campaign Analytics Read Models Served From Durable Storage and Chronicle Aggregate Used
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Campaign analytics writes rows to PostgreSQL but every query reads Python lists and dicts. A restart loses all projections. The `CampaignChronicleAggregate` exists but the service never calls it. This task serves queries from durable storage, rebuilds the read models from the stream at start-up, and routes milestone and MVP writes through the chronicle aggregate, as Hard Invariant 2 requires.

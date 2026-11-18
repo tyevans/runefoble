@@ -1,7 +1,7 @@
 ---
 id: '0554'
 title: Audience Studio Tuple Grant, Vote, and Moderation Authorization
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0520
@@ -26,7 +26,7 @@ source_audits:
 # TASK-0554: Audience Studio Tuple Grant, Vote, and Moderation Authorization
 
 ## Status
-Refined
+Complete
 
 ## Summary
 The audience studio is a TypeScript service. Any caller can write a `dungeon_master` tuple for itself through a public route, then approve chaos modifiers. Votes, reads, and WebSocket actions have no check. The acting user comes from the request body or a header, with a `dm-user` fallback. The service keeps its own copy of the role hierarchy and never calls SpiceDB in deployment. This task removes the public tuple write, binds each action to the `audience_poll` permissions in the schema, and uses one real SpiceDB client.

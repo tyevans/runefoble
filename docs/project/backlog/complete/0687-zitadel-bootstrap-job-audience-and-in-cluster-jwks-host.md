@@ -1,7 +1,7 @@
 ---
 id: '0687'
 title: Zitadel Bootstrap Job, Token Audience, Generated Client ID, and In-Cluster JWKS Host
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0526
@@ -25,7 +25,7 @@ source_audits:
 # TASK-0687: Zitadel Bootstrap Job, Token Audience, Generated Client ID, and In-Cluster JWKS Host
 
 ## Status
-Refined. Discovered in round 2 audit of reports 0526, 0523 and 0524. TASK-0526 is complete, but its live Kind checks and the bootstrap were not built. Blocks sign-in and token verification in the cluster.
+Complete
 
 ## Summary
 The chart runs Zitadel, but nothing provisions the OIDC project and application. Zitadel generates the project ID and the client ID at run time, so the chart cannot set them. Services also fetch JWKS from the in-cluster host, while Zitadel accepts only its configured host. This task adds a bootstrap Job, sets the token audience, passes the generated client ID to the App Shell and the services, and adds a verifier setting for the in-cluster JWKS Host header.

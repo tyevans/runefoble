@@ -1,7 +1,7 @@
 ---
 id: '0585'
 title: Gateway Character Core Routes Proxy to Character Sheet
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -25,7 +25,7 @@ target_release: 0.9.0
 # TASK-0585: Gateway Character Core Routes Proxy to Character Sheet
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Character create, list, read and campaign assignment are served from the gateway's in-memory `CharacterStore`. Move them to `character_sheet`. The gateway forwards each call. The store and the mutation sync code are deleted. `character_sheet` gets a roster list route, which it lacks today.

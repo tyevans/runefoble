@@ -1,7 +1,7 @@
 ---
 id: '0581'
 title: Gateway Tabletop Session Routes Proxy to Game Session
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0580
@@ -26,7 +26,7 @@ target_release: 0.9.0
 # TASK-0581: Gateway Tabletop Session Routes Proxy to Game Session
 
 ## Status
-Refined
+Complete
 
 ## Summary
 Replace the canned session handlers in `gateway/api/src/gateway_api/routers/tabletop.py` with proxies to `game_session`. The gateway keeps its public paths. It forwards each call through the shared client from TASK-0580. Two routes have no owner route yet (`dm-override`, `atmosphere`). Add them to `game_session` in this task. The canned code and the magic IDs are deleted.

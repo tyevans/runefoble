@@ -1,7 +1,7 @@
 ---
 id: '0686'
 title: MCP create_encounter Starts Combat Through Game Session
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0671
@@ -23,7 +23,7 @@ source_audits:
 # TASK-0686: MCP create_encounter Starts Combat Through Game Session
 
 ## Status
-Refined. Discovered in round 2 audit of report 0671. Decision by the orchestrator: the encounter key is the game session id. Board-only encounter ids are removed.
+Complete
 
 ## Summary
 The MCP tool `create_encounter` creates a board_state board and returns the board id as `encounter_id`. The companion tool `query_encounter_state` reads round and turn order from game_session using the same id. Round trip from create to query fails with a game_session 404. This task makes game_session own the combat lifecycle and makes the session id the encounter id.

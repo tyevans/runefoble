@@ -1,7 +1,7 @@
 ---
 id: '0694'
 title: UI Manifest and Service URL Fallbacks Fail Loudly
-status: Refined
+status: Complete
 created: 2026-11-17
 dependencies:
 - TASK-0578
@@ -21,7 +21,7 @@ source_audits:
 # TASK-0694: UI Manifest and Service URL Fallbacks Fail Loudly
 
 ## Status
-Refined. Discovered in round 2 audit of reports 0604, 0578 and 0624.
+Complete
 
 ## Summary
 Three start-up and read paths hide a broken setup. A broken manifest file falls back to a hardcoded manifest. The soundscape manifest does the same in a bare `except`. An unset Watcher URL makes autopilot skip The Watcher with no log. ADR-0015 says fallbacks hide failures. This task removes these fallbacks.
