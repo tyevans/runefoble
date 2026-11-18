@@ -154,6 +154,10 @@ dev-storybook: ## Run Storybook component studio with watcher protection
 	@echo "==> Starting Storybook on port 6006..."
 	cd frontend && WATCHPACK_POLLING=true CHOKIDAR_USEPOLLING=true pnpm run storybook
 
+dev-audience-studio: ## Run Audience Studio from TypeScript source with reload (needs the RUNEFOBLE_* settings)
+	@echo "==> Starting Audience Studio dev server (port 8010)..."
+	cd services/audience_studio && pnpm run dev
+
 dev-api: ## Run API Gateway locally
 	@echo "==> Starting Runefoble API Gateway..."
 	uv run python gateway/api/src/gateway_api/main.py
