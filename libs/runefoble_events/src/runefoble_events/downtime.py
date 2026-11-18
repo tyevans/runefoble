@@ -101,6 +101,16 @@ class StrongholdDeposited(BaseRunefobleEvent):
     materials: dict[str, int] = Field(default_factory=dict)
 
 
+@register_event
+class StrongholdTreasuryContributed(BaseRunefobleEvent):
+    """Fired when gold leaves the stronghold treasury to fund a frontier outpost (TASK-0795)."""
+
+    aggregate_type: str = "Stronghold"
+    campaign_id: UUID | None = None
+    gold: int = 0
+    destination_outpost_id: str = ""
+
+
 __all__ = [
     "CampfireRestCompleted",
     "CraftingAttempted",
@@ -108,5 +118,6 @@ __all__ = [
     "CraftingSucceeded",
     "StrongholdCreated",
     "StrongholdDeposited",
+    "StrongholdTreasuryContributed",
     "StrongholdUpgraded",
 ]

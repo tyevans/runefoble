@@ -68,6 +68,18 @@ class DepositStrongholdRequest(BaseModel):
     materials: dict[str, int] = Field(default_factory=dict)
 
 
+class ContributeTreasuryRequest(BaseModel):
+    """Gold that leaves the treasury to fund a frontier outpost (TASK-0795).
+
+    The destination id is recorded for the audit trail. This service does not read it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    gold: int = Field(gt=0)
+    destination_outpost_id: str = ""
+
+
 class CreateStrongholdRequest(BaseModel):
     name: str = "Party Campsite"
     location: str = "Wilderness"
@@ -214,3 +226,44 @@ async def get_stronghold_boons(caller_id: CallerId, campaign_id: str) -> dict[st
 
 
 __all__ = ["router"]
+
+
+@router.post(
+    "/api/v1/campaigns/{campaign_id}/stronghold/treasury/contribute",
+    response_model=StrongholdState,
+)
+async def contribute_treasury_gold(
+    caller_id: CallerId,
+    campaign_id: str,
+    req: ContributeTreasuryRequest,
+) -> StrongholdState:
+    """Debit gold from the treasury for a frontier outpost. `stronghold.manage` is required.
+
+    A shortfall answers 409 and records no event. A campaign with no campsite has an empty
+    treasury, so any positive amount is a shortfall.
+    """
+    spicedb = get_spicedb_client()
+    detail = "DM or stronghold manager permission required to contribute treasury gold"
+    await _require(spicedb, "stronghold", campaign_id, "manage", caller_id, detail)
+    camp_uuid = _camp_uuid(campaign_id)
+    try:
+        stronghold = await stronghold_repo.load(camp_uuid)
+    except AggregateNotFoundError:
+        stronghold = StrongholdAggregate(camp_uuid)
+
+    try:
+        stronghold.contribute_treasury_gold(
+            gold=req.gold, destination_outpost_id=req.destination_outpost_id
+        )
+        events_to_publish = list(stronghold.uncommitted_events)
+        await stronghold_repo.save(stronghold)
+    except InsufficientStrongholdResources as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    bus = get_event_bus()
+    if bus:
+        for ev in events_to_publish:
+            await publish_or_fail(bus, STREAM_STRONGHOLD, ev)
+    return stronghold.state

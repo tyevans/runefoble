@@ -12,7 +12,12 @@ from uuid import UUID
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from pydantic import BaseModel, Field
-from runefoble_events.events import StrongholdCreated, StrongholdDeposited, StrongholdUpgraded
+from runefoble_events.events import (
+    StrongholdCreated,
+    StrongholdDeposited,
+    StrongholdTreasuryContributed,
+    StrongholdUpgraded,
+)
 
 FACILITY_TIERS: dict[str, dict[int, dict[str, Any]]] = {
     "watchtower": {
@@ -124,6 +129,12 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
         for mat, qty in event.materials.items():
             self.state.stored_materials[mat] = self.state.stored_materials.get(mat, 0) + qty
 
+    @handles(StrongholdTreasuryContributed)
+    def handle_treasury_contributed(self, event: StrongholdTreasuryContributed) -> None:
+        if self._state is None:
+            self._state = StrongholdState(campaign_id=str(event.campaign_id or ""))
+        self.state.treasury_gold -= event.gold
+
     @handles(StrongholdUpgraded)
     def handle_upgraded(self, event: StrongholdUpgraded) -> None:
         if self._state is None:
@@ -178,6 +189,22 @@ class StrongholdAggregate(DeclarativeAggregate[StrongholdState]):
             campaign_id=self._campaign_uuid(),
             gold=gold,
             materials=mats,
+        )
+
+    def contribute_treasury_gold(self, gold: int, destination_outpost_id: str) -> None:
+        """Debit gold from the treasury for a frontier outpost. A shortfall records no event."""
+        if gold <= 0:
+            raise ValueError("Contributed gold must be positive")
+        problems = self.shortfalls(gold, {})
+        if problems:
+            raise InsufficientStrongholdResources(
+                "Insufficient stronghold resources: " + "; ".join(problems)
+            )
+        self.create_event(
+            StrongholdTreasuryContributed,
+            campaign_id=self._campaign_uuid(),
+            gold=gold,
+            destination_outpost_id=destination_outpost_id,
         )
 
     def _campaign_uuid(self) -> UUID | None:
