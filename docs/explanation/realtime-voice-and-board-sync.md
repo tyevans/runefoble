@@ -86,16 +86,7 @@ Bidirectional voice streams and audio mesh coordination are negotiated via the W
 
 ## WebRTC Client Voice Service and Peer Connection Mesh Architecture
 
-On the browser client, real-time voice streaming and peer mesh topology are managed by modular TypeScript services in `frontend/src/services/` (TASK-0068, ADR-0002, ADR-0004, ADR-0009, ADR-0013):
-
-- **WebRTC Protocol Types & Interfaces (`frontend/src/services/webrtc-types.ts`)**:
-  Defines strongly typed wire signaling contracts (`SignalingMessage`), active voice participant snapshots (`VoicePeer`), client configuration options (`WebRTCVoiceOptions`, `PeerMeshOptions`), and connection state enums (`WebRTCConnectionState`, `WebRTCConnectionStates`).
-- **Peer Connection Mesh Coordinator (`frontend/src/services/webrtc-peer-mesh.ts`)**:
-  `PeerConnectionMesh` manages the lifecycle of `RTCPeerConnection` instances across party peers. It implements early ICE candidate queuing prior to remote description resolution, tracks remote audio MediaStreams, bridges local audio tracks, and attaches remote streams to managed DOM `<audio>` elements with per-peer volume and mute controls.
-- **Voice Client Service Facade (`frontend/src/services/webrtc-voice.ts`)**:
-  `WebRTCVoiceService` provides the public client interface. It establishes Zanzibar-authorized WebSocket signaling sessions with `gateway-api`, orchestrates auto-reconnect timers, coordinates the local `WebAudioPipeline` (hardware microphone capture, DSP vocal conditioning filters, and VAD audio levels), and periodically broadcasts speaking telemetry.
-- **Re-export Facade** (defect, DoR 9):
-  `webrtc-voice.ts` re-exports all protocol types and `PeerConnectionMesh`, for existing frontend components, Storybook stories, and microfrontend consumers. Removal: TASK-0502.
+The browser voice controls live in the owning bounded context, `services/voice_agent/ui/src/` (`runefoble-voice-controls.ts`, `runefoble-voice-duplex-controls.ts`). The App Shell does not carry a separate WebRTC client. The former `frontend/src/services/webrtc-*.ts` and `webaudio-pipeline.ts` modules were unreachable from the App Shell and were removed in TASK-0824. The server side of the signaling path is described above.
 
 ## Campaign WebSocket Hub and Action Validator Gateway Architecture
 

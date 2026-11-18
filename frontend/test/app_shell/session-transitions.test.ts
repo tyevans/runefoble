@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { Router } from '../../src/router/router.ts';
 import { AppDataService } from '../../src/services/app-data-service.ts';
 import { installFakeGateway, type FakeGateway } from '../support/fake-gateway.ts';
-import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS, FALLBACK_BOARD_TOKENS } from '../../src/fixtures/app-data-service.fixtures.ts';
+import { FALLBACK_CHARACTERS, FALLBACK_PARTICIPANTS, FALLBACK_BOARD_TOKENS } from '../support/app-data-service.fixtures.ts';
 
 /** A stateful roster behind the gateway: create, assign, and delete change what later reads return. */
 function installRosterGateway(): { gateway: FakeGateway; roster: any[] } {

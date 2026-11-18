@@ -9,7 +9,7 @@ import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { AppDataService } from '../src/services/app-data-service.ts';
-import { FALLBACK_CAMPAIGN_SESSIONS_MAP } from '../src/fixtures/app-data-service.fixtures.ts';
+import { FALLBACK_CAMPAIGN_SESSIONS_MAP } from './support/app-data-service.fixtures.ts';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
 
 /** A gateway whose session rosters are stored per campaign. Creates append to the roster. */

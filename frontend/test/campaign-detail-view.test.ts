@@ -11,7 +11,7 @@ import { AppDataService } from '../src/services/app-data-service.ts';
 import { resolveActiveView, type AppActiveView } from '../src/router/view-resolver.ts';
 import type { UpdateCampaignPayload } from '@runefoble/game-session-ui';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
-import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS } from '../src/fixtures/app-data-service.fixtures.ts';
+import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_MEMBERS } from './support/app-data-service.fixtures.ts';
 
 describe('Campaign Detail Sub-View Disambiguation (TASK-0250)', () => {
   let router: Router;

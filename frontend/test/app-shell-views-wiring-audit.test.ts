@@ -12,7 +12,7 @@ import { Router, type MatchedRoute } from '../src/router/router.ts';
 import { AppDataService } from '../src/services/app-data-service.ts';
 import { resolveActiveView, type AppActiveView } from '../src/router/view-resolver.ts';
 import { installFakeGateway, type FakeGateway } from './support/fake-gateway.ts';
-import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_CAMPAIGN_SESSIONS_MAP } from '../src/fixtures/app-data-service.fixtures.ts';
+import { FALLBACK_CAMPAIGNS, FALLBACK_CHARACTERS, FALLBACK_CAMPAIGN_SESSIONS_MAP } from './support/app-data-service.fixtures.ts';
 
 // Route-bound WebSocket requirement rule
 function isSessionWebSocketRequired(route: MatchedRoute | null): boolean {

@@ -200,7 +200,7 @@ uv run pytest tests/test_blackbox_app_shell_views_audit.py tests/test_blackbox_a
 
 - A failed read shows `<runefoble-data-error>`. HTTP 404 shows "Not found". Any other failure shows "Could not load this view" with a Retry control.
 - A failed write shows a toast that starts with "Not saved." (or the matching action label). The local view state does not change.
-- Fixture arrays live in `frontend/src/fixtures/app-data-service.fixtures.ts`. Only unit tests under `frontend/test/` and Storybook stories may import them. The test `frontend/test/fixture-isolation.test.ts` enforces this.
+- Fixture arrays live in `frontend/test/support/app-data-service.fixtures.ts`. Only unit tests under `frontend/test/` may import them. The test `frontend/test/fixture-isolation.test.ts` enforces that no App Shell source imports them.
 
 Unit tests fake the gateway at the `fetch` boundary with `frontend/test/support/fake-gateway.ts`.
 

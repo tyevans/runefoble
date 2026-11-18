@@ -22,13 +22,13 @@ import {
   FALLBACK_MEMBERS,
   FALLBACK_PARTICIPANTS,
   FALLBACK_SESSIONS,
-} from '../src/fixtures/app-data-service.fixtures.ts';
+} from './support/app-data-service.fixtures.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const SRC_DIR = resolve(__dirname, '../src');
 const DATA_SERVICE_FILE = resolve(SRC_DIR, 'services/app-data-service.ts');
-const FIXTURES_FILE = resolve(SRC_DIR, 'fixtures/app-data-service.fixtures.ts');
+const FIXTURES_FILE = resolve(__dirname, 'support/app-data-service.fixtures.ts');
 const RETIRED_FALLBACK_FILE = resolve(SRC_DIR, 'fixtures/fallback-data.ts');
 const RETIRED_SERVICE_FIXTURES = resolve(SRC_DIR, 'services/app-data-service.fixtures.ts');
 
@@ -49,7 +49,7 @@ describe('TASK-0271: File Length Invariants (Hard Invariant 6)', () => {
 });
 
 describe('TASK-0640: Fixture Relocation', () => {
-  it('keeps the fixture module under src/fixtures/ with its canned arrays for tests and stories', () => {
+  it('keeps the fixture module under test/support/ with its canned arrays for tests and stories', () => {
     assert.ok(Array.isArray(FALLBACK_CAMPAIGNS) && FALLBACK_CAMPAIGNS.length >= 2);
     assert.ok(Array.isArray(FALLBACK_CHARACTERS) && FALLBACK_CHARACTERS.length >= 3);
     assert.ok(Array.isArray(FALLBACK_MEMBERS) && FALLBACK_MEMBERS.length >= 3);
