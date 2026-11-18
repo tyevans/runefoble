@@ -61,14 +61,14 @@ def _create_session(client: TestClient) -> str:
     return str(created.json()["session_id"])
 
 
-def test_character_read_accepts_the_service_credential_without_a_user():
+def test_character_read_refuses_the_service_credential_without_a_user():
+    """A sheet read needs a user who holds `character.view` (ADR-0001, ADR-0015 e)."""
     client = TestClient(character_app)
     character_id = _create_character(client)
 
     res = client.get(f"/api/v1/characters/{character_id}", headers=SERVICE_ONLY)
 
-    assert res.status_code == 200
-    assert res.json()["name"] == "Kyra"
+    assert res.status_code == 401
 
 
 def test_character_read_refuses_a_call_with_no_credential_and_no_bearer():

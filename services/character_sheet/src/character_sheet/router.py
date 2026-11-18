@@ -103,10 +103,10 @@ async def restore_spell_slots(
 @router.get(
     "/api/v1/characters/{character_id}",
     response_model=CharacterRosterView,
-    dependencies=deps.VIEW_CHARACTER_OR_SERVICE,
+    dependencies=deps.VIEW_CHARACTER,
 )
 async def get_character(character_id: UUID, repo: deps.RepoDep, spicedb: deps.SpiceDep):
-    """Read one character. A user bearer needs `view`. The service credential reads without a user."""
+    """Read one character. The caller's user bearer needs `view`. The service credential alone is refused."""
     state = (await deps.load_character(repo, character_id)).state
     return await roster.roster_view(spicedb, state)
 
