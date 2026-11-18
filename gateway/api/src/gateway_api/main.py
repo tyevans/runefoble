@@ -14,6 +14,7 @@ from game_session.settlement.router import router as settlement_haven_router
 from gateway_api.assets import router as assets_router
 from gateway_api.auth import get_zitadel_auth_service
 from gateway_api.auth_sync import router as auth_sync_router
+from gateway_api.companion import companion_router, mobile_companion_websocket_endpoint
 from gateway_api.dependencies import (
     WebSocketConnectionManager,
     event_bus_provider,
@@ -21,12 +22,6 @@ from gateway_api.dependencies import (
     platform_settings,
     set_event_bus,
     ws_manager,
-)
-from gateway_api.mobile_companion import (
-    mobile_companion_websocket_endpoint,
-)
-from gateway_api.mobile_companion import (
-    router as companion_router,
 )
 from gateway_api.routers import (
     auth_router,
@@ -41,11 +36,11 @@ from gateway_api.routers import (
     soundscape_router,
     spectator_router,
 )
+from gateway_api.signaling import voice_signaling_websocket_endpoint
 from gateway_api.upstream_errors import register_upstream_error_handlers
 from gateway_api.upstreams import UpstreamRegistry
-from gateway_api.webrtc_signaling import voice_signaling_websocket_endpoint
-from gateway_api.websocket import campaign_websocket_endpoint
 from gateway_api.websocket_auth import admit_gateway_websocket
+from gateway_api.websocket_endpoint import campaign_websocket_endpoint
 from gateway_mcp.dynamic import set_event_bus as set_dynamic_tool_event_bus
 from gateway_mcp.routers import tools_registry_router
 from runefoble_auth.authz_http import install_authz_error_handlers

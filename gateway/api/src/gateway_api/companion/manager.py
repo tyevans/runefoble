@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import WebSocket
+from gateway_api.dependencies import get_event_bus
 from runefoble_events.voice import MobileHapticPingDispatched
 from runefoble_platform.event_publish import publish_best_effort
 from voice_agent.mobile import (
@@ -22,9 +23,7 @@ logger = logging.getLogger("runefoble.gateway.companion.manager")
 
 
 async def publish_companion_event(stream: str, event: Any) -> None:
-    import gateway_api.main as gw_main
-
-    if bus := gw_main.get_event_bus():
+    if bus := get_event_bus():
         await publish_best_effort(bus, stream, event)
 
 

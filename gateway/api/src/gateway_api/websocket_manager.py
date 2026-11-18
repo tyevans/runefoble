@@ -39,13 +39,10 @@ class CampaignConnectionManager:
                 await ws.send_json(message)
 
 
-# Backward-compatible aliases
-CampaignWebSocketManager = CampaignConnectionManager
 ws_campaign_manager = CampaignConnectionManager()
 
 __all__ = [
     "CampaignConnectionManager",
-    "CampaignWebSocketManager",
     "logger",
     "ws_campaign_manager",
 ]
