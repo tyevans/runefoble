@@ -367,7 +367,7 @@ Engine failure returns `503` with `{"detail": {"error": "speech_synthesis_unavai
 
 Public routes: `/healthz`, `/health`, `/ui/manifest`, and `/openapi.json`.
 
-The shared settings are `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, and `RUNEFOBLE_ZITADEL_JWKS_URL`. The Helm chart sets them for each service.
+The shared settings are `RUNEFOBLE_ZITADEL_ISSUER`, `RUNEFOBLE_ZITADEL_AUDIENCE`, and `RUNEFOBLE_ZITADEL_INTERNAL_URL`. The Helm chart sets them for each service. The audience comes from the Secret `runefoble-zitadel-client`.
 
 ## Infrastructure Ports
 

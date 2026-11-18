@@ -85,7 +85,7 @@ Server frames: `connected`, `subscribed`, `poll_started`, `vote_cast`, `poll_com
 |---|---|---|
 | `RUNEFOBLE_ZITADEL_ISSUER` | Yes | Must equal the token `iss`. The service exits at start-up when unset. |
 | `RUNEFOBLE_ZITADEL_AUDIENCE` | Yes | Must equal the token `aud`. The service exits at start-up when unset. |
-| `RUNEFOBLE_ZITADEL_JWKS_URL` | No | When unset, the service reads `jwks_uri` from OIDC discovery at start-up. |
+| `RUNEFOBLE_ZITADEL_INTERNAL_URL` | No | In-cluster Zitadel origin. Discovery and JWKS requests go here with `Host` set to the issuer host. When unset, the service reads discovery from the issuer at start-up. |
 | `RUNEFOBLE_SPICEDB_ENDPOINT` | Yes | SpiceDB gRPC address. Use `host:port` (plaintext gRPC, the in-cluster form), `grpc://host:port` (plaintext), or `https://host:port` (TLS). Any other scheme stops start-up. The service exits at start-up when unset. |
 | `RUNEFOBLE_SPICEDB_PRESHARED_KEY` | Yes outside tests | Operator secret. Sent as the bearer token on every SpiceDB call. No default. |
 | `RUNEFOBLE_DATABASE_URL`, `REDIS_URL` | Yes outside tests | Event store and Redis Streams. |
