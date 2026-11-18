@@ -51,11 +51,23 @@ export class RunefobleDiceTray3D extends LitElement {
     if (changed.has('muted')) this.audio.setMuted(this.muted);
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    globalThis.addEventListener('runefoble:dice-rolled', this.onSessionDiceRolled);
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
+    globalThis.removeEventListener('runefoble:dice-rolled', this.onSessionDiceRolled);
     if (this.animId) cancelAnimationFrame(this.animId);
     this.audio.close();
   }
+
+  /** Session `dice_rolled` message (window event `runefoble:dice-rolled`): roll the tray. */
+  private readonly onSessionDiceRolled = (e: Event): void => {
+    const msg = (e as CustomEvent<{ diceType?: DiceType; total?: number; result?: number; targetFaceValue?: number; opts?: Partial<DiceTossParams> }>).detail;
+    this.roll(msg.diceType || 'd20', msg.targetFaceValue ?? msg.total ?? msg.result, msg.opts);
+  };
 
   public roll(diceType: DiceType = 'd20', targetFace?: number, opts?: Partial<DiceTossParams>): SolvedDiceToss {
     const sides = DICE_CONFIGS[diceType]?.sides ?? 20;

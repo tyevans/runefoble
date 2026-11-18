@@ -78,9 +78,6 @@ describe('Route-Bound WebSocket Lifecycle Management', () => {
     assert.ok(appSrc.includes('@token-action=') && appSrc.includes('@aoe-place='));
     assert.ok(appSrc.includes('@spell-vfx-triggered=') && appSrc.includes('@confirm-ghost='));
     assert.ok(appSrc.includes('.cols=${app.boardCols}') && appSrc.includes('.rows=${app.boardRows}'));
-
-    for (const msgType of ["'dice_rolled'", "'turn_advanced'", "'aoe_placed'", "'spell_vfx'", "'dm_whisper'"]) {
-      assert.ok(appSrc.includes(msgType), `Missing message handler for ${msgType}`);
-    }
+    // Incoming session messages are checked behaviourally in frontend/test-dom/session-mesh-events.test.ts (TASK-0826).
   });
 });

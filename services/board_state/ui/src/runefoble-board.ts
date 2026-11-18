@@ -64,6 +64,7 @@ export class RunefobleBoard extends LitElement {
     );
     if (this.activeGhost) this.ghostEngine.stage(this.activeGhost);
     if (this.websocketUrl) this.connectWebSocket(this.websocketUrl);
+    for (const [name, listener] of this.sessionListeners) globalThis.addEventListener(name, listener);
   }
 
   firstUpdated() {
@@ -87,8 +88,35 @@ export class RunefobleBoard extends LitElement {
     }
   }
 
+  /** Window events from the session socket (docs/reference/microfrontend-architecture.md, "Session Mesh Events"). */
+  private readonly sessionListeners: ReadonlyArray<[string, (e: Event) => void]> = this.createSessionListeners();
+
+  private createSessionListeners(): Array<[string, (e: Event) => void]> {
+    const detailOf = (e: Event) => (e as CustomEvent<Record<string, any>>).detail;
+    return [
+      ['runefoble:dice-rolled', (e) => {
+        const msg = detailOf(e);
+        this.roll3DDice(msg.dice || { diceType: msg.diceType || 'd20', face: msg.targetFaceValue ?? msg.total });
+      }],
+      ['runefoble:turn-advanced', (e) => {
+        const msg = detailOf(e);
+        if (msg.activeCombatantId) this.activeTurnTokenId = msg.activeCombatantId;
+      }],
+      ['runefoble:aoe-placed', (e) => {
+        const msg = detailOf(e);
+        this.activeAoE = msg.template || msg.config || msg.aoe || null;
+        this.handleIncomingSocketMessage({ action: 'aoe_placed', ...msg });
+      }],
+      ['runefoble:spell-vfx', (e) => {
+        const msg = detailOf(e);
+        this.triggerSpellVFX(msg.vfx || msg.params || msg);
+      }],
+    ];
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
+    for (const [name, listener] of this.sessionListeners) globalThis.removeEventListener(name, listener);
     this.ghostEngine?.dispose(); this.particleEngine?.dispose();
     this.visualizer3D?.dispose(); this.resizeObserver?.disconnect();
     if (this.ws) { this.ws.close(); this.ws = null; }

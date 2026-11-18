@@ -79,7 +79,19 @@ export class RunefobleDiceRoller extends LitElement {
     super.connectedCallback();
     if (this.formula) this.formulaInput = this.formula;
     if (this.forcedResult) this.lastResult = this.forcedResult;
+    globalThis.addEventListener('runefoble:dice-rolled', this.onSessionDiceRolled);
   }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    globalThis.removeEventListener('runefoble:dice-rolled', this.onSessionDiceRolled);
+  }
+
+  /** Session `dice_rolled` message (window event `runefoble:dice-rolled`): show the forced result. */
+  private readonly onSessionDiceRolled = (e: Event): void => {
+    const result = (e as CustomEvent<{ result?: DiceRollResult }>).detail.result;
+    if (result) this.forcedResult = result;
+  };
 
   willUpdate(changedProps: Map<string, unknown>) {
     if (changedProps.has('forcedResult') && this.forcedResult) this.lastResult = this.forcedResult;
