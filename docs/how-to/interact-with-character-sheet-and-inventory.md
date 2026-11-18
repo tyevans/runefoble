@@ -101,38 +101,7 @@ Spellcasters can manage their magical reserves without manual pen-and-paper trac
 
 ---
 
-## 6. Modular CSS Architecture & Theming
-
-The character sheet's visual styling is modularized into discrete CSS blocks adhering to Bauhaus geometric tokens (`ADR-0004`, `ADR-0012`):
-- **Core Styles** (`runefoble-character-sheet.core.styles.ts`): Host layout, typography, character identity banner, and vitals grid.
-- **Inventory Styles** (`runefoble-character-sheet.inventory.styles.ts`): Equipment paper doll slots, slot rarity borders, action buttons, and dynamic encumbrance capacity gauge.
-- **Conditions Styles** (`runefoble-character-sheet.conditions.styles.ts`): Tactical condition badges, absence penalty tags, interactive tooltips, spell slot pips, and responsive mobile breakpoints.
-- **Aggregator** (`runefoble-character-sheet.styles.ts`): Re-exports modular style blocks as a combined `CSSResultGroup` for Lit element consumption.
-
----
-
-## 7. Modular Lit HTML Templates Architecture
-
-Per ADR-0004, ADR-0012, and ADR-0013, the character sheet template rendering logic is split into focused, single-responsibility sub-templates under `templates/`, keeping files strictly within the line length limit:
-- **Stats Template** (`templates/stats.template.ts`): Renders character identity header (`renderSheetHeader`) and vitals grid with HP gauge (`renderVitalsGrid`).
-- **Inventory Template** (`templates/inventory.template.ts`): Renders interactive paper doll equipment slots, dynamic encumbrance capacity gauge, inventory table, and add-item inputs (`renderEquipmentAndInventory`).
-- **Conditions Template** (`templates/conditions.template.ts`): Renders tactical condition badges, absence penalties, popover tooltips, and condition selector (`renderConditionsPanel`).
-- **Spells Template** (`templates/spells.template.ts`): Renders tiered spell slot tracking pips, prepared spells list, and known spellbook management (`renderSpellbookPanel`).
-
----
-
-## 8. Modular Action Handlers & State Mutations Architecture
-
-Per ADR-0004, ADR-0007, and ADR-0013, the character sheet controller delegates interactive state mutations and custom event dispatching to a dedicated actions submodule (`runefoble-character-sheet.actions.ts`), maintaining clean separation of concerns and keeping the main component file strictly under 150 lines:
-- **Encumbrance & HP Calculators**: `calculateEncumbrance(inventory, strength)` determines load weight, capacity, and encumbrance tiers; `calculateHpDelta(currentHp, maxHp, delta)` safely clamps vitals within $[0, \text{maxHp}]$.
-- **Equipment & Inventory Mutators**: `equipItem(equipment, inventory, slot, item)`, `unequipItem(equipment, inventory, slot)`, `addItem(inventory, name, weight)`, and `removeItem(equipment, inventory, item)` operate as pure functions returning updated equipment and carried items without mutating inputs.
-- **Spell Slots & Spellbook**: `toggleSpellSlotPip(slots, maxSlots, tier, pipIndex)` handles expenditure and recovery of spell slot pips; `castSpellSlot(slots, tier)` consumes available slots; `togglePreparedSpell(preparedSpells, spellName)` updates daily spell preparation.
-- **Conditions & Absence Penalties**: `applyConditionToState(conditions, name)` and `removeConditionFromState(conditions, penalties, conditionId, name)` update active condition badges and clear absence penalty effects.
-- **Standardized Event Dispatching**: `dispatchActionEvent(target, type, detail)` dispatches unified composed and bubbling `CustomEvent`s for parent application shell composition.
-
----
-
-## 9. Character Roster & Campaign Party Assignment
+## 6. Character Roster & Campaign Party Assignment
 
 The Character Roster microfrontend (`<runefoble-character-roster>`) and builder modal (`<runefoble-character-builder-modal>`) allow players to maintain a persistent library of adventurers across campaigns.
 
@@ -173,7 +142,7 @@ Provides a validated form for creating new adventurers:
 
 ---
 
-## 10. Backend Aggregate & Campaign Assignment REST API
+## 7. Backend Aggregate & Campaign Assignment REST API
 
 The event-sourced `CharacterAggregate` and `CharacterState` persist core 5e character attributes and campaign party assignment:
 
@@ -212,7 +181,7 @@ To unassign an adventurer back to free agent status in the player roster:
 
 ---
 
-## 11. App Shell Inspector Subview & Deep Route Orchestration
+## 8. App Shell Inspector Subview & Deep Route Orchestration
 
 The application shell (`frontend/src/runefoble-app.ts`) routes `#/characters/:characterId` directly into the dedicated `'character-sheet'` inspector subview (`TASK-0255`).
 
@@ -224,36 +193,7 @@ The application shell (`frontend/src/runefoble-app.ts`) routes `#/characters/:ch
 
 ---
 
-## 12. Character Management and Tabletop Sync Blackbox Test Suite (TASK-0258)
-
-The complete end-to-end lifecycle across the Gateway API, SpiceDB Zanzibar authorization, pre-game lobby synchronization, and active VTT character card binding is verified via dual blackbox test suites:
-
-- **Python Gateway & Zanzibar Suite** (`tests/test_blackbox_character_management_and_vtt_sync.py`):
-  - `test_character_crud_and_zanzibar_ownership`: Frontdoor character creation via `POST /api/v1/characters` and SpiceDB owner tuple verification. The gateway proxies the call to `character_sheet` (TASK-0585).
-  - `test_character_campaign_assignment`: Verifies `PATCH /api/v1/characters/{id}/campaign` writes campaign relationships, propagates view permissions to campaign members, and revokes access upon unassignment.
-  - `test_character_listing_filtered_by_zanzibar_visibility`: Verifies character listing isolation and campaign party visibility.
-  - `test_profile_endpoint_claims_and_roles`: Verifies `GET /api/v1/profile` Zitadel OIDC claims and role assertions.
-- **Frontend Blackbox Integration Suite** (`frontend/test/character_management/`):
-  - `navigation.test.ts`: Verifies character roster route matching, active view resolution, dynamic title resolution, deep route navigation (`#/characters/:id`), and lobby character selection sync.
-  - `creation.test.ts`: Verifies character creation payload validation, unassigned roster state, campaign fallback filtering, health/permadeath stabilization, and subresource mutations.
-  - `profile.test.ts`: Verifies user profile view rendering, auth session claims, campaign creation single-event bubbling, and duplicate submission prevention.
-  - `invariants.test.ts`: Verifies source file line count limits (<500 lines for components, <130 lines for test modules), Bauhaus tokens, and custom element encapsulation.
-
----
-
-## 13. Modular Domain Models Architecture (TASK-0229)
-
-Per ADR-0003 and ADR-0007, the domain models for the Character Sheet bounded context are modularized under `services/character_sheet/src/character_sheet/models/`, ensuring every domain submodule remains strictly within the file length budget (< 120 lines):
-- **Base Traits & Guardrails** (`models/base.py`): Encapsulates `AttributeScores` (with 5e standard scores and `.to_dict()`), `WardrobeVariant`, `StandInGuardrails`, and `VitalsTransitionsMixin`.
-- **Core Character Aggregate** (`models/character.py`): Defines `CharacterCore`, the composite `CharacterState` (inheriting from domain transition mixins), and the `initial(...)` factory constructor.
-- **Inventory & Encumbrance** (`models/inventory.py`): Defines `InventoryItem`, `EquipmentSlot`, `Encumbrance` (with `.calculate(...)` determining load tier thresholds per Strength score), and `InventoryTransitionsMixin`.
-- **Conditions & Absence Modifiers** (`models/conditions.py`): Defines `ConditionState`, `ConditionModifier`, and `ConditionsTransitionsMixin` managing tactical conditions and DM absence penalties.
-- **Progression & Spells** (`models/progression.py`): Encapsulates `SpellProgression`, `LevelProgression`, and `ProgressionTransitionsMixin` managing level ups and spell slot expending.
-- **`models/`**: The former `models.py` facade is removed (TASK-0793). Import from `character_sheet.models.<submodule>`.
-
----
-
-## 14. Sub-Resource Mutations & Event-Sourced Persistence (TASK-0356)
+## 9. Sub-Resource Mutations & Event-Sourced Persistence (TASK-0356)
 
 Per ADR-0002, ADR-0004, ADR-0007, and ADR-0013, sub-resource mutations on `<runefoble-character-sheet>` are wired to backend persistence via Gateway API endpoints and App Shell event bindings:
 

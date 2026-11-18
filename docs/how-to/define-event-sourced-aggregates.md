@@ -13,7 +13,6 @@ from typing import ClassVar
 
 from runefoble_events.base import BaseRunefobleEvent, register_event
 
-
 @register_event("runefoble.events.character.loot_item_acquired")
 class LootItemAcquired(BaseRunefobleEvent):
     suppress_event_type_warning: ClassVar[bool] = True
@@ -35,7 +34,6 @@ The aggregate state is an immutable Pydantic model representing reconstituted ag
 from uuid import UUID
 from pydantic import BaseModel, Field
 
-
 class CharacterInventoryState(BaseModel):
     character_id: UUID
     items: dict[str, int] = Field(default_factory=dict)
@@ -48,7 +46,6 @@ Subclass `DeclarativeAggregate[StateModel]` and annotate state mutation methods 
 ```python
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
-
 
 class CharacterInventoryAggregate(DeclarativeAggregate[CharacterInventoryState]):
     aggregate_type = "CharacterSheet"
@@ -124,7 +121,6 @@ import pytest
 from eventsource.adapters.memory.store import InMemoryEventStore
 from eventsource.application.aggregates.repository import AggregateRepository
 
-
 @pytest.mark.asyncio
 async def test_inventory_aggregate():
     store = InMemoryEventStore()
@@ -170,13 +166,3 @@ repo = create_aggregate_repository(CharacterInventoryAggregate)
 The process store is owned by `EventStoreProvider`. `get_event_store()` builds it from the environment on first use. `set_event_store()` replaces it. `build_event_store(settings)` builds a store without installing it.
 
 If the backend is `postgresql` and the PostgreSQL host is offline or unreachable during startup, `build_event_store` (and `get_event_store` on first use) raises `EventStoreInitializationError`. The service process exits instead of running on `InMemoryEventStore`. Select `memory` only for in-memory test runs. A deployed environment raises `EventStoreInitializationError` for `memory`. Use `event_store_kind()` to report the store kind (`postgresql` or `memory`) in health endpoints.
-
-## 7. Modular Aggregate Decomposition
-
-To satisfy Hard Invariant 6 (< 500 lines per file) and separate concerns as domain rules grow, event-sourced bounded contexts are decomposed into three focused submodules:
-
-1. **`rules.py`**: Static game balance rules, progression tables (e.g., `SPELL_SLOTS_TABLE`, `CLASS_HIT_DIE`), hazard damage formulas, and pure calculation functions (e.g., initiative tie-breaking, movement path costs).
-2. **`models/` & `models.py`**: Immutable Pydantic aggregate state schemas (`CharacterState`, `BoardState`, `GameSessionState`) equipped with transition helper mixins (e.g., `BoardTransitionsMixin`, `GameSessionTransitionsMixin`), alongside request/response DTOs modularized into domain submodules (e.g., `terrain.py`, `tokens.py`, `vfx.py` in board_state; `session.py`, `combat.py`, `reactions.py`, `settlement.py` in game_session) with facade re-exports in `models.py` and `models/__init__.py`.
-3. **`handlers/` & `aggregate/`**: Specialized command mutation handlers and `@handles` event state applier mixins (e.g., `CharacterAggregate`'s `InventoryHandlerMixin`, `SpellsHandlerMixin`, `VitalsHandlerMixin`; `BoardAggregate`'s `TokensHandlerMixin`, `FogHandlerMixin`, `VFXHandlerMixin`, `ActionsHandlerMixin`; `GameSessionAggregate`'s `SessionHandlersMixin`, `CombatHandlersMixin`, `ReactionHandlersMixin`; and `SettlementAggregate`'s `BulletinHandlersMixin`, `CharterHandlersMixin`) partitioning domain operations into focused, single-responsibility modules strictly under 160 lines.
-4. **`aggregate.py`**: The `DeclarativeAggregate` implementation composing domain mixins, encapsulating aggregate initialization, creation events, and delegating state updates (< 160 lines).
-

@@ -129,28 +129,3 @@ The PRD pipeline completes the three-tier autonomous engineering loop:
 ```
 
 ---
-
-## Architecture & Modular Decomposition
-
-The decomposition engine in `tools/prd_pipeline/` is structured to adhere to Hard Invariant 6 (< 500 lines per file):
-
-- **Manager & Scanner Modules (`tools/prd_pipeline/manager/`)**:
-  - `PRDManager` orchestrates stage directory scanning via `PRDScanner` (`scanner.py`), INVEST criteria auditing via `RequirementAuditor` (`auditor.py`), and document creation/link updates via `PRDLifecycle` (`lifecycle.py`), operating on `PRDRecord`, `PRDStage`, and `AuditSummary` models (`models.py`).
-- **Orchestrator (`tools/prd_pipeline/decomposer.py`)**:
-  - `PRDDecomposer` provides the public API for counting tasks/stories (`get_max_task_number`, `get_max_story_number`), generating plans (`plan_decomposition`), and persisting tasks (`execute_decomposition`).
-- **Planning & Dependency Engine (`tools/prd_pipeline/planner.py`)**:
-  - `DecompositionPlanner` and heuristics (`requires_architectural_spike`, `requires_ui_component`, `requires_worker_slice`) sequence vertical slices and build dependency graphs.
-- **Templating & Metadata Serialization (`tools/prd_pipeline/templates.py` & `slice_templates.json`)**:
-  - `format_task_markdown` and `format_user_story_markdown` render YAML frontmatter, INVEST criteria, and acceptance criteria.
-- **Disk Persistence (`tools/prd_pipeline/writer.py`)**:
-  - `PlanWriter` creates directories and writes task files to `docs/project/backlog/proposed/` and user story files to `docs/project/user_stories/accepted/`.
-
-### Modular Test Suite
-
-The test suite is decomposed into single-responsibility modules adhering to the file length limit (< 250 lines per module):
-
-- **Manager & Registry Suite (`tests/test_prd_pipeline_manager.py`)**: Tests for `PRDManager`, auto-increment canonical ID generation, directory initialization, buffer health audits, and registry reconciliation.
-- **Planner & Slice Analysis Suite (`tests/test_prd_pipeline_planner.py`)**: Tests for `DecompositionPlanner`, keyword-based architectural spike detection, UI component detection, worker slice heuristics, and slice dependency graphs.
-- **Decomposer & Task Writer Suite (`tests/test_prd_pipeline_decomposer.py`)**: Tests for `PRDDecomposer` execution facade, counter resolution, `PlanWriter` disk serialization, and task markdown formatting.
-- **CLI & Smoke Suite (`tests/test_prd_pipeline_cli.py`)**: Tests for CLI subcommands (`audit`, `create`, `decompose`, `prompt`, `sync`), error exit codes on missing records, and shell script wrappers (`scripts/decompose-prds.sh`).
-

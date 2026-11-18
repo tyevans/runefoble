@@ -111,15 +111,7 @@ assert latency_ms < 50.0  # Guarantees sub-50ms processing
 
 ---
 
-## 5. Domain CloudEvents Emitted
-
-When vocal modulation presets are applied or toggled, the following CloudEvents are published to Redis Streams:
-- `runefoble.voice.modulator.preset_applied.v1`: Contains `session_id`, `speaker_id`, `preset_id`, `pitch_scale`, `formant_shift`, `resonance`, and `fx_chain`.
-- `runefoble.voice.modulator.filter_toggled.v1`: Emitted when bypass or toggle is changed with `enabled: bool`.
-
----
-
-## 6. Using the `<runefoble-vocal-modulator>` Microfrontend
+## 5. Using the `<runefoble-vocal-modulator>` Microfrontend
 
 For one-touch control during live sessions, `services/voice_agent/ui` vendors `<runefoble-vocal-modulator>`:
 

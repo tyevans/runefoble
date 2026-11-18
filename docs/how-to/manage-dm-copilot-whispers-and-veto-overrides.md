@@ -142,17 +142,3 @@ The `<runefoble-dm-whisper-bar>` Lit component is vendored by `@runefoble/the-wa
 ```
 
 ---
-
-## 5. Modular Router Architecture & Blackbox Test Organization
-
-The DM Co-Pilot router is organized into modular sub-routers (`services/the_watcher/src/the_watcher/routers/copilot/`) enforcing Hard Invariant 6 (< 500 lines per file, strictly < 250 lines):
-- `actions.py`: Handles action proposals, pause window lifecycle, immediate approvals, parameter modifications, and veto overrides.
-- `whispers.py`: Handles private narrative suggestions creation, dynamic generation, and paginated listing.
-- `services/the_watcher/src/the_watcher/copilot_state/`: The `PendingActionAggregate`, `WhisperAggregate`, and `DisambiguationAggregate` event-sourced aggregates. `copilot.py` runs their commands and owns only the expiry timers.
-- `__init__.py`: Re-exports a combined `router` for seamless mounting in `the_watcher.main`.
-
-Blackbox TDD coverage is partitioned into focused test suites:
-- `tests/test_blackbox_dm_copilot_actions.py`: Covers action proposals, pause window timeout auto-execution, DM approval/modification/veto frontdoors, and CloudEvent dispatching.
-- `tests/test_blackbox_dm_copilot_whispers.py`: Covers whisper creation, category filtering, pagination, scene cue generation, and SpiceDB Zanzibar DM authorization.
-- `tests/test_blackbox_watcher_copilot_restart.py`: Covers restart durability for pending vetoes, open disambiguations, whispers, and expiry after a restart.
-

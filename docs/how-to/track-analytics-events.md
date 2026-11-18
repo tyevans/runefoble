@@ -11,16 +11,6 @@ Runefoble integrates with self-hosted OpenPanel (`openpanel/openpanel`) to recor
 
 ---
 
-## Modular Subpackage Architecture
-
-To comply with Hard Invariant 6 (File length limit < 500 lines) and support clean separation of concerns, the analytics package is structured into single-responsibility submodules:
-
-- `runefoble_platform.analytics.privacy`: PII scrubbing (`sanitize_properties`), salted SHA-256 ID anonymization (`anonymize_profile_id`), and forbidden property keys (`FORBIDDEN_PROPERTY_KEYS`).
-- `runefoble_platform.analytics.client`: Asynchronous OpenPanel HTTP client (`OpenPanelClient`) with event buffering and mock mode.
-- `runefoble_platform.analytics`: Defect (DoR 9): unified re-export facade for top-level imports. Removal: TASK-0485.
-
----
-
 ## Step 1: Use `OpenPanelClient` in Platform Code
 
 The platform client provides non-blocking event recording and automated PII sanitization:
@@ -103,10 +93,3 @@ export async function trackEvent(name: string, props: Record<string, unknown> = 
 In local Kind development, navigate to `http://runefoble.local/analytics` (or port-forward `kubectl port-forward svc/openpanel 3000:3000`) to inspect real-time events, funnels, and retention charts.
 
 ---
-
-## 5. Modular Blackbox Test Organization & Architecture
-
-The OpenPanel analytics test suite is partitioned into two focused blackbox test modules strictly adhering to Hard Invariant 6 (< 500 lines per file, strictly < 180 lines) and Hard Invariant 7 (Blackbox TDD with frontdoor setup):
-- `tests/test_blackbox_analytics_client.py`: Verifies salted SHA-256 profile anonymization, recursive PII property scrubbing (audio bytes, speech transcripts, secret credentials), HTTP transport dispatch via `OpenPanelClient`, and fast failure modes.
-- `tests/test_blackbox_stream_consumers.py`: Verifies the supervised stream consumers of Campaign Analytics and Soundscape. The OpenPanel forwarder has no test because it does not exist.
-

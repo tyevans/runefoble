@@ -230,7 +230,6 @@ Campaign owners and managers (holding `manage` permission) can remove members fr
 - The owner cannot be removed. The route returns `409` with `owner_not_removable`.
 - The route is idempotent. Removing a user who is not a member returns `200`, and any leftover tuples are revoked.
 
-
 ```bash
 curl -X DELETE "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8c9d0e1f2a3b/members/player-marcus" \
   -H "Authorization: Bearer <DM_JWT>"
@@ -246,7 +245,6 @@ curl -X DELETE "http://localhost:8000/api/v1/campaigns/6f1c2b8e-3a4d-4e5f-9a7b-8
 ```
 
 ---
-
 
 ## 7. Creating and Listing Campaign Sessions
 
@@ -386,7 +384,6 @@ Key features of `<runefoble-campaign-members>`:
 - **Safe Removal with Confirmation**: Provides a confirmation modal before revoking campaign membership and Zanzibar permissions.
 - **Interactive Invite Generator**: Modal generator with role pre-assignment, shareable link preview, and one-click clipboard copying.
 - **View-Only Mode**: Regular players (`canManage=false`) see clean read-only role badges without destructive controls.
-- **Modular Styles Architecture**: Scoped styles are decomposed into focused submodules under `services/game_session/ui/src/campaigns/styles/` (`base.styles.ts`, `roster.styles.ts`, `modal.styles.ts`, `badge.styles.ts`), composed via `campaignMembersStyles` in `runefoble-campaign-members.styles.ts` (keeping all style modules strictly < 150 lines per Hard Invariant 6).
 
 ---
 
@@ -400,7 +397,6 @@ The gateway holds no campaign, invite, membership, or session state. Each campai
 - An unknown campaign ID returns `404` with `campaign_not_found`. The owner checks existence before permission, so a caller cannot read a fixture campaign for an unknown ID.
 
 ## 11. Campaign Detail Hero Header & Metadata Component
-
 
 The `<runefoble-campaign-header>` component presents the hero banner, campaign title, setting badge, ruleset system pill (`5e`, `PF2e`, `Call of Cthulhu`), active status indicator, DM profile badge, and narrative description:
 
@@ -430,6 +426,4 @@ Key features of `<runefoble-campaign-header>`:
 - **Narrative Lore Block**: Presents the campaign introduction and synopsis with readable line-height and Bauhaus typography tokens.
 - **SpiceDB Zanzibar Guarded Editing**: Renders the "Edit Campaign" button strictly when `canManage=true` (granted to users holding `manage` permission in SpiceDB Zanzibar schema).
 - **Edit Campaign Modal**: Provides a form to update title, setting, system ruleset, cover art URL, and narrative description, dispatching standard `@update-campaign` custom events with `UpdateCampaignPayload`.
-- **Modular Styles Architecture**: Scoped styles are decomposed into focused submodules under `services/game_session/ui/src/campaigns/styles/` (`header_hero.styles.ts`, `header_meta.styles.ts`, `header_actions.styles.ts`), composed via `campaignHeaderStyles` in `runefoble-campaign-header.styles.ts` (keeping all style modules strictly < 150 lines per Hard Invariant 6).
-
 
