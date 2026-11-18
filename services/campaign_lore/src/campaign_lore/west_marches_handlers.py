@@ -1,7 +1,7 @@
 """Domain handlers and calculation helpers for West Marches aggregate state.
 
 Part of TASK-0205 / ADR-0003 / ADR-0007 / ADR-0011.
-Governed by Hard Invariant 6 (File length strictly < 130 lines).
+Governed by Hard Invariant 6 (file length under 500 lines).
 """
 
 from __future__ import annotations
@@ -97,6 +97,18 @@ def apply_outpost_established(outposts: dict[str, dict[str, Any]], event: Any) -
             "stored_resources": dict(event.resources_contributed or {}),
         }
     )
+
+
+def apply_outpost_contributed(outposts: dict[str, dict[str, Any]], event: Any) -> None:
+    """Add contributed gold and materials to the outpost store and record the contributor."""
+    out = outposts[event.outpost_id]
+    store = out["stored_resources"]
+    store["gold"] = store.get("gold", 0) + event.gold
+    for m, q in event.materials.items():
+        store[m] = store.get(m, 0) + q
+    cid = str(event.contributing_campaign_id)
+    if cid and cid not in out["contributing_campaigns"]:
+        out["contributing_campaigns"].append(cid)
 
 
 def apply_outpost_upgraded(outposts: dict[str, dict[str, Any]], event: Any) -> None:

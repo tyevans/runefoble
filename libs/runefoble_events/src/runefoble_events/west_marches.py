@@ -80,6 +80,22 @@ class SharedStrongholdUpgraded(BaseRunefobleEvent):
 
 
 @register_event
+class OutpostResourcesContributed(BaseRunefobleEvent):
+    """Fired when a contributing campaign funds an outpost store (TASK-0795).
+
+    The gold comes from the campaign stronghold treasury. The debit is a separate event
+    in game_session (`StrongholdTreasuryContributed`).
+    """
+
+    aggregate_type: str = "SharedWorld"
+    shared_world_id: UUID | str = ""
+    outpost_id: str = ""
+    contributing_campaign_id: UUID | str = ""
+    gold: int = 0
+    materials: dict[str, int] = Field(default_factory=dict)
+
+
+@register_event
 class CommunalNoticePosted(BaseRunefobleEvent):
     """Fired when a cross-campaign notice or bounty is posted to the tavern board."""
 
@@ -218,6 +234,7 @@ __all__ = [
     "CommunalNoticePosted",
     "CrossCampaignDiscoveryShared",
     "OutpostEstablished",
+    "OutpostResourcesContributed",
     "RegionalMerchantStockUpdated",
     "SharedStrongholdUpgraded",
     "SharedWorldCreated",

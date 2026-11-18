@@ -128,7 +128,7 @@ The prices live in `services/game_session/src/game_session/settlement/facility_p
 
 ### West Marches Outpost Prices
 
-A West Marches outpost upgrade uses `POST /api/v1/campaigns/{campaign_id}/west-marches/stronghold/upgrade`. It spends from the outpost stored resources. The `gold` key holds the stored gold. A new outpost starts with 100 gold, 20 timber, and 15 stone. The outpost has no deposit route yet. The stored resources fund the first upgrades.
+A West Marches outpost upgrade uses `POST /api/v1/campaigns/{campaign_id}/west-marches/stronghold/upgrade`. It spends from the outpost stored resources. The `gold` key holds the stored gold. A new outpost starts with 100 gold, 20 timber, and 15 stone. An upgrade that names an unknown `outpost_id` answers `404` and changes nothing. An empty `outpost_id` names the first outpost.
 
 | Facility | Tier 1 | Tier 2 | Tier 3 |
 |---|---|---|---|
@@ -139,6 +139,18 @@ A West Marches outpost upgrade uses `POST /api/v1/campaigns/{campaign_id}/west-m
 | `herbal_rack` | 20 gold, 3 timber | 40 gold, 8 timber | 100 gold, 15 timber, 8 stone |
 
 The prices live in `services/campaign_lore/src/campaign_lore/west_marches_prices.py`. A new outpost can afford two tier-2 upgrades. A shortfall answers `409` and changes nothing.
+
+### Fund an Outpost from a Stronghold Treasury
+
+A contributing campaign moves gold from its stronghold treasury into an outpost store. The command is `POST /api/v1/campaigns/{campaign_id}/west-marches/stronghold/contribute` with the body `{"gold": 120, "outpost_id": ""}`. Send the body fields only. The server sets no other cost.
+
+The contribution has two steps:
+
+1. `campaign_lore` checks that the caller can play the frontier. It resolves the outpost. An unknown `outpost_id` answers `404` before any debit.
+2. `campaign_lore` calls `game_session` at `POST /api/v1/campaigns/{campaign_id}/stronghold/treasury/contribute`. It sends the caller's bearer and the service credential. `game_session` checks `stronghold.manage` and debits the treasury. It emits `StrongholdTreasuryContributed`.
+3. `campaign_lore` credits the outpost gold and emits `OutpostResourcesContributed`.
+
+A missing `stronghold.manage` permission answers `403`. A treasury that cannot pay answers `409`. Both refusals change no store and emit no event. An unreachable `game_session` answers `503` and credits nothing.
 
 Key facility tiers:
 - **`workshop`**: Tier 1 (Field Forge) -> Tier 2 (Master Guildhall) -> Tier 3 (Arcane Crucible).

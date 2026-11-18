@@ -132,6 +132,10 @@ def test_owner_creates_and_lists_a_campaign(client, trusted_ws_issuer) -> None:
 
 Do not use `signing_issuer` in these tests. It replaces the gateway verifier, so game_session rejects the token.
 
+## Recipe 6b: campaign_lore Debits game_session with the Caller's Bearer
+
+`campaign_lore` moves stronghold gold through `game_session` (TASK-0795). The call forwards the caller's verified `Authorization` header and the service credential. `game_session` checks `stronghold.manage` for that user. Use the `game_session_upstream` fixture and the `lore_client` fixture in `tests/test_blackbox_west_marches_funding.py`. A refused connection is tested by setting `RUNEFOBLE_GAME_SESSION_URL` to `closed_port_url()` with `monkeypatch`. The expected answer is `503`, and the outpost store does not change.
+
 ## Recipe 7: Restart a Service Between Writes and Reads
 
 A restart test proves that state lives in the event store, not in process memory. Do not

@@ -38,6 +38,7 @@ from runefoble_events.downtime import (
     CraftingSucceeded,
     StrongholdCreated,
     StrongholdDeposited,
+    StrongholdTreasuryContributed,
     StrongholdUpgraded,
 )
 from runefoble_events.haggling import (
@@ -103,5 +104,6 @@ __all__ = [
     "StandInStabilized",
     "StrongholdCreated",
     "StrongholdDeposited",
+    "StrongholdTreasuryContributed",
     "StrongholdUpgraded",
 ]

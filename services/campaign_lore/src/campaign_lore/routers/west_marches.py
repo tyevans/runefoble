@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
@@ -26,7 +26,8 @@ from campaign_lore.permissions import (
     check_user_can_play_campaign,
     check_user_can_view_campaign,
 )
-from campaign_lore.west_marches_aggregate import WestMarchesAtlasAggregate
+from campaign_lore.stronghold_client import debit_treasury_for_outpost, upstream_detail
+from campaign_lore.west_marches_aggregate import OutpostNotFoundError, WestMarchesAtlasAggregate
 from campaign_lore.west_marches_prices import InsufficientOutpostResources
 
 router = APIRouter(
@@ -63,6 +64,18 @@ class UpgradeStrongholdPayload(BaseModel):
         description="Facility identifier (e.g. watchtower, alchemical_workshop)"
     )
     outpost_id: str = Field(default="", description="Target outpost ID")
+
+
+class ContributeGoldPayload(BaseModel):
+    """Gold to move from the campaign stronghold treasury into an outpost store (TASK-0795).
+
+    The server sets no price. The debit is the amount named here. Extra fields answer 422.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    gold: int = Field(gt=0, description="Gold to move from the stronghold treasury")
+    outpost_id: str = Field(default="", description="Target outpost ID. Empty names the first")
 
 
 class PostNoticePayload(BaseModel):
@@ -207,23 +220,22 @@ async def upgrade_stronghold_facility(
 
     aggregate = await load_or_create(repo, campaign_id, WestMarchesAtlasAggregate)
 
-    outpost_id = payload.outpost_id
-    if not outpost_id and aggregate.state.outposts:
-        outpost_id = next(iter(aggregate.state.outposts.keys()))
-
     try:
+        outpost_id = aggregate.resolve_outpost_id(payload.outpost_id)
         new_tier = aggregate.upgrade_outpost(
             outpost_id=outpost_id,
             facility_id=payload.facility_id,
             contributing_campaign_id=str(campaign_id),
         )
+    except OutpostNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except InsufficientOutpostResources as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     await repo.save(aggregate)
 
-    outpost = aggregate.state.outposts.get(outpost_id, {})
+    outpost = aggregate.state.outposts[outpost_id]
     return {
         "status": "upgraded",
         "facility_id": payload.facility_id,
@@ -231,6 +243,60 @@ async def upgrade_stronghold_facility(
         "outpost": outpost,
         "active_boons": outpost.get("boons", []),
         "defensive_buffer": outpost.get("defensive_buffer", 0),
+    }
+
+
+@router.post("/stronghold/contribute", status_code=status.HTTP_200_OK)
+async def contribute_gold_to_outpost(
+    campaign_id: UUID,
+    payload: ContributeGoldPayload,
+    request: Request,
+    user_id: CallerId,
+    spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
+    repo: Annotated[AggregateRepository[WestMarchesAtlasAggregate], Depends(get_west_marches_repo)],
+) -> dict[str, Any]:
+    """Move gold from the campaign stronghold treasury into an outpost store.
+
+    The caller needs play on the frontier here, and `stronghold.manage` on the treasury in
+    game_session. The debit runs first, with the caller's bearer. A refused debit (403, 409)
+    is relayed, and this service records nothing. The credit is this service's event.
+    """
+    can_play = await check_user_can_play_campaign(user_id, campaign_id, spicedb)
+    if not can_play:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: User lacks play permission on the frontier.",
+        )
+
+    aggregate = await load_or_create(repo, campaign_id, WestMarchesAtlasAggregate)
+    try:
+        outpost_id = aggregate.resolve_outpost_id(payload.outpost_id)
+    except OutpostNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    authorization = request.headers.get("Authorization")
+    if not authorization:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bearer required")
+    reply = await debit_treasury_for_outpost(
+        str(campaign_id),
+        gold=payload.gold,
+        destination_outpost_id=outpost_id,
+        authorization=authorization,
+    )
+    if not 200 <= reply.status_code < 300:
+        raise HTTPException(status_code=reply.status_code, detail=upstream_detail(reply.body))
+
+    aggregate.contribute_gold(
+        outpost_id=outpost_id,
+        contributing_campaign_id=str(campaign_id),
+        gold=payload.gold,
+    )
+    await repo.save(aggregate)
+    return {
+        "status": "contributed",
+        "outpost_id": outpost_id,
+        "gold": payload.gold,
+        "outpost": aggregate.state.outposts[outpost_id],
     }
 
 

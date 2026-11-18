@@ -78,6 +78,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `MinigameStarted` | `MinigameStarted` | `runefoble_events.tavern` |
 | `MinigameTurnTaken` | `MinigameTurnTaken` | `runefoble_events.tavern` |
 | `OutpostEstablished` | `OutpostEstablished` | `runefoble_events.west_marches` |
+| `OutpostResourcesContributed` | `OutpostResourcesContributed` | `runefoble_events.west_marches` |
 | `ParticipantJoined` | `ParticipantJoined` | `runefoble_events.session` |
 | `PlayerJoinedSession` | `PlayerJoinedSession` | `runefoble_events.session` |
 | `PlayerLeftSession` | `PlayerLeftSession` | `runefoble_events.session` |
@@ -98,6 +99,7 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `StandInActionDecided` | `StandInActionDecided` | `runefoble_events.watcher_events.narrative` |
 | `StrongholdCreated` | `StrongholdCreated` | `runefoble_events.downtime` |
 | `StrongholdDeposited` | `StrongholdDeposited` | `runefoble_events.downtime` |
+| `StrongholdTreasuryContributed` | `StrongholdTreasuryContributed` | `runefoble_events.downtime` |
 | `StrongholdUpgraded` | `StrongholdUpgraded` | `runefoble_events.downtime` |
 | `TableBetPlaced` | `TableBetPlaced` | `runefoble_events.tavern_tables` |
 | `TableBidPlaced` | `TableBidPlaced` | `runefoble_events.tavern_tables` |
