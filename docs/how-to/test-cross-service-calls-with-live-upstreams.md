@@ -236,6 +236,6 @@ These tests still stub an upstream with `monkeypatch` or `patch`. Each gap needs
 Tests in `tests/test_blackbox_mcp_*.py`, `tests/test_blackbox_gateway_*.py`, and settlement tests contain no stub of this kind. Their `monkeypatch` use is limited to environment variables.
 
 ## Related
-- [`validate-e2e-journeys-with-playwright-bdd.md`](validate-e2e-journeys-with-playwright-bdd.md): browser journeys.
+- [`test-user-flows-with-playwright-bdd.md`](test-user-flows-with-playwright-bdd.md): browser journeys.
 - [`add-a-watcher-ai-tool.md`](add-a-watcher-ai-tool.md): adding a gateway tool that calls a service over HTTP.
 - ADR-0014: BDD and frontdoor setup. ADR-0015: audit remediation decisions (no substitute values on upstream failure).

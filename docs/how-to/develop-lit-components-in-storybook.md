@@ -11,52 +11,20 @@ make dev-storybook
 ```
 Storybook will open at `http://localhost:6006`.
 
-### 2. Create the Lit Element
-In the owning bounded context, `services/<bc>/ui/src/<component-name>.ts` (ADR-0013). Do not add components under `frontend/src/`.
-```typescript
-import { LitElement, html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+### 2. Create the Lit Element in the Service Bounded Context
+Put each element in the owning service UI package, `services/<bc>/ui/src/`. Do not put components in `frontend/`. Hard Invariant 3 requires this.
 
-@customElement('runefoble-dice-tray')
-export class RunefobleDiceTray extends LitElement {
-  static styles = css`
-    :host { display: block; padding: 12px; background: #1e293b; border-radius: 8px; }
-  `;
+Export the element from `services/<bc>/ui/src/index.ts`.
 
-  @property({ type: Number }) result = 20;
+For the full flow, follow [Authoring Service Microfrontends](authoring-service-microfrontends.md).
 
-  render() {
-    return html`<div>Die Result: ${this.result}</div>`;
-  }
-}
-```
+### 3. Create the Story Beside the Element
+Put the story in the same folder as the element, for example `services/<bc>/ui/src/<component-name>.stories.ts`. Storybook loads every `services/*/ui/src/**/*.stories.ts` file.
 
-### 3. Create the Story
-In `frontend/src/stories/<component-name>.stories.ts`:
-```typescript
-import type { Meta, StoryObj } from '@storybook/web-components';
-import { html } from 'lit';
-import '../components/runefoble-dice-tray.ts';
+The story imports the element from the same folder. The authoring guide shows a complete example.
 
-const meta: Meta = {
-  title: 'TTRPG/RunefobleDiceTray',
-  component: 'runefoble-dice-tray',
-};
-
-export default meta;
-type Story = StoryObj;
-
-export const CriticalHit: Story = {
-  render: () => html`<runefoble-dice-tray .result=${20}></runefoble-dice-tray>`,
-};
-```
-
-### 4. Build and Verify
-Run:
-```bash
-make test
-```
-This builds TypeScript and verifies the static Storybook bundle without errors.
+### 4. Verify the Story in Storybook
+Open the story in Storybook at `http://localhost:6006`. Check the browser console. A story must show zero console errors.
 
 ### 5. Type-Check Stories
 Stories are part of the component contract. Storybook builds with esbuild and does not type-check, so each UI package type-checks its stories through its own `tsconfig.json`. The `src` directory is in `include` and no story file is excluded.

@@ -15,6 +15,11 @@ SITE_DIR = REPO_ROOT / "site"
 WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "deploy-pages.yml"
 CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 ZENSICAL_TOML = REPO_ROOT / "zensical.toml"
+# Nav pages that scripts/build_docs.py copies into docs/ before the site build.
+GENERATED_NAV_SOURCES = {
+    "changelog.md": REPO_ROOT / "CHANGELOG.md",
+    "operating-manual.md": REPO_ROOT / "AGENTS.md",
+}
 
 
 def test_zensical_configuration():
@@ -38,6 +43,10 @@ def test_zensical_configuration():
             if isinstance(item, dict):
                 for _label, target in item.items():
                     if isinstance(target, str):
+                        source = GENERATED_NAV_SOURCES.get(target)
+                        if source is not None:
+                            assert source.exists(), f"Generated nav source {source} is missing"
+                            continue
                         target_file = DOCS_DIR / target
                         assert target_file.exists(), (
                             f"Nav target {target} does not exist at {target_file}"
@@ -203,33 +212,21 @@ def test_changelog_conforms_to_keep_a_changelog():
 
 
 def test_definition_of_done_includes_changelog_maintenance():
-    """Verify Definition of Done in AGENTS.md and operating-manual.md includes changelog maintenance."""
+    """Verify Definition of Done in AGENTS.md includes changelog maintenance."""
     agents_md = REPO_ROOT / "AGENTS.md"
     assert agents_md.exists()
     content = agents_md.read_text(encoding="utf-8")
     assert "Changelog Maintenance" in content
     assert "CHANGELOG.md" in content
 
-    op_manual = DOCS_DIR / "operating-manual.md"
-    if op_manual.exists():
-        op_content = op_manual.read_text(encoding="utf-8")
-        assert "Changelog Maintenance" in op_content
-        assert "CHANGELOG.md" in op_content
-
 
 def test_definition_of_done_includes_marketing_page_maintenance():
-    """Verify Definition of Done in AGENTS.md and operating-manual.md includes marketing showcase maintenance."""
+    """Verify Definition of Done in AGENTS.md includes marketing showcase maintenance."""
     agents_md = REPO_ROOT / "AGENTS.md"
     assert agents_md.exists()
     content = agents_md.read_text(encoding="utf-8")
     assert "Platform Showcase Maintenance" in content
     assert "docs/marketing.md" in content
-
-    op_manual = DOCS_DIR / "operating-manual.md"
-    if op_manual.exists():
-        op_content = op_manual.read_text(encoding="utf-8")
-        assert "Platform Showcase Maintenance" in op_content
-        assert "docs/marketing.md" in op_content
 
 
 def test_marketing_showcase_page_and_navigation():

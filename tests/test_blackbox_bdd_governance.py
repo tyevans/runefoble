@@ -12,7 +12,6 @@ def test_hard_invariant_7_updated_across_governance_records():
     """Verifies Hard Invariant 7 mandates Blackbox TDD & BDD and Playwright browser automation."""
     governance_files = [
         REPO_ROOT / "AGENTS.md",
-        REPO_ROOT / "docs" / "operating-manual.md",
     ]
 
     for file_path in governance_files:
@@ -30,7 +29,6 @@ def test_definition_of_ready_contains_bdd_requirement():
     """Verifies DoR mandates frontdoor BDD Gherkin scenario readiness across documents."""
     targets = [
         REPO_ROOT / "AGENTS.md",
-        REPO_ROOT / "docs" / "operating-manual.md",
     ]
 
     for file_path in targets:
@@ -52,7 +50,6 @@ def test_definition_of_done_contains_playwright_e2e_requirement():
     """Verifies DoD mandates passing Playwright BDD browser test suites across documents."""
     targets = [
         REPO_ROOT / "AGENTS.md",
-        REPO_ROOT / "docs" / "operating-manual.md",
     ]
 
     for file_path in targets:

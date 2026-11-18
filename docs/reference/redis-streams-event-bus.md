@@ -50,11 +50,10 @@ Runefoble uses Redis Streams as a high-throughput, distributed event bus for cro
    - `status` is `running` while every read loop lives and the last read succeeded. Otherwise it is `failed`.
    - How-to: [Run Supervised Redis Stream Consumers](../how-to/run-supervised-redis-stream-consumers.md).
 
-4. **Projection status**: Three kinds of projection exist. Only the first two run in production.
-   - **Running, Redis Streams**: the `analytics` consumer in `campaign_analytics` (`handle_domain_event`) updates the analytics read models. See [Production Consumers](#production-consumers).
+4. **Projection status**: Three kinds of projection exist. All three run in production.
+   - **Running, Redis Streams**: the `analytics` consumer in `campaign_analytics` (`CampaignAnalyticsWorker.handle_event`) updates the analytics read models. See [Production Consumers](#production-consumers).
    - **Running, rebuilt at start-up**: the Campaign Lore retrieval projection (`services/campaign_lore/src/campaign_lore/projection.py`). `rebuild_lore_projection` replays `LoreDocument` events from the PostgreSQL event store in the service lifespan. The retrieval engine is held in process memory and is rebuilt on each start.
    - **Running, rebuilt at start-up**: the Rules Compendium homebrew index (`services/rules_compendium/src/rules_compendium/projection.py`). `rebuild_homebrew_projection` replays `runefoble.events.compendium.homebrew_rule_registered` events from the event store in the service lifespan. The index serves search and monster lookup. The list route reads the campaign aggregate.
-   - **In memory, never started**: `SessionReadProjection` (`services/game_session/src/game_session/projections/session.py`) and the projections it composes, `InitiativeProjection` (`projections/initiative.py`) and `PresenceProjection` (`projections/presence.py`). `apply_session_event` (`projections/appliers.py`) applies session events to those views. No service starts them, and no `/healthz` reports them. Their state is lost on restart. See [In-Memory Session Projections](#in-memory-session-projections). Tracked in TASK-0567.
 
 ---
 
@@ -258,53 +257,12 @@ dlq_id = await consumer_group.route_to_dead_letter(
 
 ---
 
-## In-Memory Session Projections
-
-`SessionReadProjection` maintains denormalized views of tactical boards and active encounters. No service starts it. The views exist only in process memory, and no `/healthz` reports them:
-
-```python
-from game_session.projections import SessionReadProjection
-from runefoble_platform.consumer_group import RedisConsumerGroup
-
-consumer_group = RedisConsumerGroup(redis_url="redis://localhost:6379/0")
-projection = SessionReadProjection(
-    consumer_group=consumer_group,
-    stream="runefoble.events.session",
-    group_name="session_projection_workers",
-    consumer_name="worker_1",
-)
-
-# Start background async loop
-await projection.start()
-
-# Query denormalized state
-session_view = projection.get_session("session-uuid")
-tokens = projection.get_tokens("session-uuid")
-atmosphere = projection.get_atmosphere("session-uuid")
-encounters = projection.get_encounters("session-uuid")
-
-# Gracefully terminate
-await projection.stop()
-```
-
-### Projected Events
-- `runefoble.events.board.token_placed`, `runefoble.events.board.token_moved`, `runefoble.events.board.token_removed`: Spatial grid token coordinates and status.
-- `SceneAtmosphereSet`: Scene lighting, mood, audio ambience prompts.
-- `EncounterSpawned`: Active encounters, monster rosters, tactical objectives.
-- `AutonomousActionResolved`: Append-only combat action log.
-- `runefoble.events.session.turn_advanced`: Active turn index.
-- `runefoble.events.session.started`, `runefoble.events.session.ended`: Session lifecycle status (`lobby`, `active`, `ended`).
-
----
-
 ## Testing & Verification
 
-The Redis Streams event bus, consumer groups, and read projections are verified by dedicated integration test suites:
+The Redis Streams event bus and consumer groups are verified by dedicated integration test suites:
 
 - **`tests/test_redis_consumer_groups.py`**: Low-level distributed consumer group mechanics, competing consumers, PEL acknowledgements, `XAUTOCLAIM` recovery, and DLQ dispatching.
-- **`tests/test_session_projections.py`**: High-level `SessionReadProjection` worker event processing, read model state transitions, and poison pill DLQ isolation.
 - **`tests/test_blackbox_publish_failure_policy.py`**: Verifies that decision routes return 503 with the pending action unchanged, and that side-effect publish failures are counted on `/healthz`.
 - **`tests/test_blackbox_board_event_publish.py`**: Verifies board and watcher events reach the Redis stream through `publish_event`.
 - **`tests/test_blackbox_stream_consumers.py`**: Verifies production consumers through service lifespans: projection from a published event, fail-fast start-up, `/healthz` failure reporting, soundscape reaction, and dead-letter routing.
-- **`tests/test_game_session_projections.py`**: Modular projection lifecycle tests covering `InitiativeProjection`, `PresenceProjection`, tie-breaking rules, and participant presence tracking.
 
