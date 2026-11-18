@@ -194,6 +194,29 @@ def trusted_ws_issuer() -> Iterator[SigningTestIssuer]:
 
 
 @pytest.fixture
+def character_sheet_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
+    """Serve character_sheet as a live loopback upstream with a fresh event store (TASK-0585).
+
+    The gateway reaches it over HTTP through CHARACTER_SHEET_URL. The aggregate repository
+    is replaced for this test, so characters from earlier tests do not leak in. The URL is
+    set before the gateway lifespan runs, so build the gateway client after this fixture.
+    """
+    from character_sheet import dependencies as sheet_deps
+    from character_sheet.aggregate import CharacterAggregate
+    from character_sheet.main import app as sheet_app
+    from eventsource.adapters.memory.store import InMemoryEventStore
+    from runefoble_platform.event_sourcing import create_aggregate_repository
+
+    from tests.helpers.live_services import serve
+
+    fresh_repo = create_aggregate_repository(CharacterAggregate, event_store=InMemoryEventStore())
+    monkeypatch.setattr(sheet_deps, "repo", fresh_repo)
+    with serve(sheet_app) as url:
+        monkeypatch.setenv("CHARACTER_SHEET_URL", url)
+        yield url
+
+
+@pytest.fixture
 def game_session_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
     """Serve game_session as a live loopback upstream with fresh in-memory campaign state.
 

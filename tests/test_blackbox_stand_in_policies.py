@@ -101,7 +101,7 @@ async def test_character_guardrails_configuration_and_events(mock_redis: MockAsy
             headers=auth_headers("malicious-intruder"),
         )
         assert unauth_res.status_code == 403
-        assert "does not have edit permission" in unauth_res.json()["detail"]
+        assert unauth_res.json()["detail"]["error"] == "permission_denied"
 
     # 5. Verify StandInPolicyUpdated CloudEvent published to Redis Streams
     assert "runefoble.events.character" in mock_redis.streams

@@ -25,7 +25,7 @@ AUDIT_TEST_TS = FRONTEND_DIR / "test" / "app-shell-views-wiring-audit.test.ts"
 
 
 @pytest.fixture
-def client(game_session_upstream):
+def client(game_session_upstream, character_sheet_upstream):
     """Enter the gateway lifespan after game_session is served, so the proxy reaches it."""
     with TestClient(gateway_app) as gateway_client:
         yield gateway_client
@@ -97,7 +97,6 @@ def test_gateway_frontdoor_endpoints_for_audited_views(trusted_ws_issuer, client
         json={
             "name": "Valeros Citadel Guard",
             "characterClass": "Fighter",
-            "level": 3,
             "maxHp": 30,
             "armorClass": 16,
             "speed": 30,
