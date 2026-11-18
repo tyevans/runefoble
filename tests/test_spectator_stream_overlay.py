@@ -100,10 +100,8 @@ def test_get_spectator_state_refuses_forged_bearer(signing_issuer):
 
 
 @pytest.mark.asyncio
-async def test_spectator_connected_event_dispatched_to_redis_bus(default_redis_event_bus, mock_bus):
+async def test_spectator_connected_event_dispatched_to_redis_bus(mock_bus):
     """Verify that accessing spectator endpoint dispatches SpectatorSessionConnected to Redis."""
-    mock_bus = default_redis_event_bus
-
     client = TestClient(gateway_app)
     res = client.get("/api/v1/spectate/sess-event-stream?token=obs_overlay")
     assert res.status_code == 200
