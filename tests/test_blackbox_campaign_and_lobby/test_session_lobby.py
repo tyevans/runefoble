@@ -115,7 +115,7 @@ def test_session_lobby_launch_transition_and_events(
         msg = ws.receive_json()
         assert msg["type"] == "session_started" and msg["status"] == "active"
 
-    active_state = client_sess.get(f"/api/v1/sessions/{session_id}").json()
+    active_state = client_sess.get(f"/api/v1/sessions/{session_id}", headers=headers_dm).json()
     assert active_state["status"] == "active" and active_state["current_turn"] == 1
     assert active_state["active_character_id"] is not None
 

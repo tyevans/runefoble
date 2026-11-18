@@ -88,7 +88,7 @@ Two read routes project the session event stream. Neither writes state.
 - `GET /api/v1/sessions/{session_id}/events` reads the session stream and returns the chronicle feed lines for `StandInActionDecided`, `DiceRolled`, `SessionStarted`, and `SessionEnded`. Other event kinds are skipped.
 - `GET /api/v1/sessions/{session_id}/absentee-recap` summarises the stand-in actions that the session aggregate recorded from `StandInActionDecided`. Each penalty comes from that event's `penalties_applied` list.
 
-Both routes are proxied by the gateway, which checks `session.observe` first. Both return an empty result when the session has no matching events. See [Ports and Endpoints](ports-and-endpoints.md).
+Both routes are proxied by the gateway, which checks the `observe` permission on the session first. Both return an empty result when the session has no matching events. See [Ports and Endpoints](ports-and-endpoints.md).
 
 ## Known Drift
 

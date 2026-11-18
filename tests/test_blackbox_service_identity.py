@@ -7,6 +7,7 @@ Identity comes from a signed bearer token. Headers such as x-user-id must not gr
 
 from __future__ import annotations
 
+import asyncio
 import os
 import subprocess
 import sys
@@ -24,6 +25,7 @@ from the_watcher import dependencies as watcher_dependencies
 from the_watcher.main import app as watcher_app
 
 from tests.helpers.inference_worker_port import install_worker_port
+from tests.helpers.minigame_tables import open_minigame_table
 from tests.helpers.spicedb_factory import make_table_runner
 from tests.helpers.watcher_engine import error_fields, select_worker_engine
 from tests.helpers.ws_identity import SIGNING_ISSUER, ws_subprotocols
@@ -228,11 +230,18 @@ async def test_watcher_refuses_to_call_worker_without_configured_credential(monk
     }
 
 
-def test_default_table_refuses_user_without_patron_seat():
+def test_default_table_refuses_user_without_patron_seat(spicedb):
     """The default table has no exemption. A caller without a seat on est-default is refused."""
+    asyncio.run(
+        spicedb.write_relationship(
+            "establishment", "est-default", "patron", "user", "minigame-tester"
+        )
+    )
+    table_id = f"table-{uuid4()}"
+    open_minigame_table(table_id)
     client = TestClient(session_app)
     with client.websocket_connect(
-        f"/ws/minigames/{uuid4()}", subprotocols=ws_subprotocols("stranger-no-seat")
+        f"/ws/minigames/{table_id}", subprotocols=ws_subprotocols("stranger-no-seat")
     ) as ws:
         message = ws.receive_json()
     assert message["code"] == "PERMISSION_DENIED"
