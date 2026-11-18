@@ -4,18 +4,17 @@ import os
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from inference_worker import api
 from inference_worker.api import app
-from inference_worker.config import WorkerSettings
 from inference_worker.graphs import (
     build_intent_graph,
     build_narration_graph,
     build_stand_in_graph,
 )
-from inference_worker.llm_client import MultiBackendLLMClient
+from inference_worker.mock import MockLLM
 from runefoble_platform.service_credential import SERVICE_CREDENTIAL_HEADER
 from the_watcher.main import app as watcher_app
 
+from tests.helpers.inference_worker_port import install_worker_port
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 WORKER_AUTH = {SERVICE_CREDENTIAL_HEADER: os.environ["RUNEFOBLE_SERVICE_CREDENTIAL"]}
@@ -24,18 +23,14 @@ pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
 
 
 @pytest.fixture
-def mock_client():
-    settings = WorkerSettings(backend="mock")
-    return MultiBackendLLMClient(settings)
+def mock_port():
+    return MockLLM()
 
 
 @pytest.fixture
 def mock_api(monkeypatch: pytest.MonkeyPatch):
-    """Select the explicit mock backend for the worker app. Graphs rebuild for that client."""
-    monkeypatch.setattr(api, "llm_client", MultiBackendLLMClient(WorkerSettings(backend="mock")))
-    monkeypatch.setattr(api, "intent_graph", None)
-    monkeypatch.setattr(api, "narration_graph", None)
-    monkeypatch.setattr(api, "stand_in_graph", None)
+    """Select the explicit mock backend for the worker app. Graphs rebuild for that port."""
+    install_worker_port(monkeypatch, MockLLM())
 
 
 @pytest.mark.asyncio
@@ -51,8 +46,8 @@ async def test_health_endpoint():
 
 
 @pytest.mark.asyncio
-async def test_intent_graph_spell_casting(mock_client):
-    graph = build_intent_graph(mock_client)
+async def test_intent_graph_spell_casting(mock_port):
+    graph = build_intent_graph(mock_port)
     state = await graph.ainvoke(
         {
             "request": {
@@ -83,8 +78,8 @@ async def test_intent_graph_spell_casting(mock_client):
 
 
 @pytest.mark.asyncio
-async def test_intent_graph_movement_coordinates(mock_client):
-    graph = build_intent_graph(mock_client)
+async def test_intent_graph_movement_coordinates(mock_port):
+    graph = build_intent_graph(mock_port)
     state = await graph.ainvoke(
         {
             "request": {
@@ -136,8 +131,8 @@ async def test_intent_api_endpoint(mock_api):
 
 
 @pytest.mark.asyncio
-async def test_narration_graph_and_api(mock_client, mock_api):
-    graph = build_narration_graph(mock_client)
+async def test_narration_graph_and_api(mock_port, mock_api):
+    graph = build_narration_graph(mock_port)
     state = await graph.ainvoke(
         {
             "request": {
@@ -178,8 +173,8 @@ async def test_narration_graph_and_api(mock_client, mock_api):
 
 
 @pytest.mark.asyncio
-async def test_stand_in_graph_with_penalties(mock_client):
-    graph = build_stand_in_graph(mock_client)
+async def test_stand_in_graph_with_penalties(mock_port):
+    graph = build_stand_in_graph(mock_port)
 
     # Test "drunk" penalty
     state_drunk = await graph.ainvoke(

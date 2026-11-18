@@ -49,23 +49,21 @@ The worker never returns substitute text for a failed backend. A failure returns
 {"error": "backend_unavailable", "backend": "openai_compatible"}
 ```
 
-The `backend` value is the active backend name:
-
-- `openai_compatible` or `ollama`: The selected server failed or returned no usable output.
-- `unavailable`: `auto` mode found no live server. Start a server, or set the backend to `mock` for tests.
+The `backend` value is the name of the selected backend, `openai_compatible` or `ollama`. The selected server failed or returned no usable output.
 
 A narration or stand-in response also returns 503 when the model output has no usable JSON. An intent response does not. For intent, the worker uses the regex heuristic and sets `source` to `heuristic`.
 
 ## Backend Selection
 
-Set the backend with `RUNEFOBLE_WORKER_BACKEND`:
+Set the backend with `RUNEFOBLE_WORKER_BACKEND`. The worker reads the value once, in the app lifespan, and builds one engine port from it (`docs/how-to/add-an-engine-port-adapter.md`):
 
 | Value | Behaviour |
 |---|---|
-| `auto` | Probes `openai_compatible`, then `ollama`. Returns 503 when neither answers. Never selects `mock`. |
-| `openai_compatible` | Calls the configured OpenAI-compatible endpoint. |
+| `openai_compatible` | Calls the configured OpenAI-compatible endpoint. The default. |
 | `ollama` | Calls the local Ollama endpoint. |
 | `mock` | Returns canned output. Use only for tests and offline checks. |
+
+At start-up the worker calls the selected server once. `openai_compatible` calls `GET {base_url}/models`. `ollama` calls `GET {base_url}/api/tags`. When the server does not answer with HTTP 200, the worker refuses to start. A value outside the table also stops start-up, and the error names the allowed values. No request path probes a backend.
 
 ## Redis Streams Results
 

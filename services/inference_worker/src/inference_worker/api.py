@@ -1,16 +1,18 @@
 """FastAPI application for Runefoble AI Inference Worker."""
 
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from runefoble_platform.engine_ports import EngineUnavailableError
 from runefoble_platform.event_publish import event_publish_failures
 
 from inference_worker.auth import service_credential_guard
 from inference_worker.config import WorkerSettings
 from inference_worker.graphs import build_intent_graph, build_narration_graph, build_stand_in_graph
-from inference_worker.llm_client import InferenceBackendError, MultiBackendLLMClient
+from inference_worker.llm_factory import build_llm_port
 from inference_worker.models import (
     DMNarrationRequest,
     DMNarrationResponse,
@@ -20,31 +22,31 @@ from inference_worker.models import (
     StandInActionRequest,
     StandInActionResponse,
 )
+from inference_worker.ports import LLMPort
 
-# Global runtime state
+# Global runtime state. The lifespan selects the LLM port once and builds the graphs for it.
 settings = WorkerSettings.from_environment()
-llm_client = MultiBackendLLMClient(settings)
+llm_port: LLMPort | None = None
 intent_graph = None
 narration_graph = None
 stand_in_graph = None
 
 
-def ensure_graphs():
-    global intent_graph, narration_graph, stand_in_graph
-    if intent_graph is None:
-        intent_graph = build_intent_graph(llm_client)
-    if narration_graph is None:
-        narration_graph = build_narration_graph(llm_client)
-    if stand_in_graph is None:
-        stand_in_graph = build_stand_in_graph(llm_client)
+def set_llm_port(port: LLMPort) -> None:
+    """Make `port` the engine for every graph. The lifespan calls this once at start-up."""
+    global llm_port, intent_graph, narration_graph, stand_in_graph
+    llm_port = port
+    intent_graph = build_intent_graph(port)
+    narration_graph = build_narration_graph(port)
+    stand_in_graph = build_stand_in_graph(port)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Detect backend and compile LangGraph pipelines
-    await llm_client.detect_available_backend()
-    ensure_graphs()
-
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Build the engine and refuse to start when it does not answer (ADR-0015 decision 4)."""
+    port = build_llm_port(settings)
+    await port.check_ready()
+    set_llm_port(port)
     yield
 
 
@@ -67,14 +69,17 @@ inference_router = APIRouter(
 app.include_router(inference_router)
 
 
-@app.exception_handler(InferenceBackendError)
+@app.exception_handler(EngineUnavailableError)
 async def backend_unavailable_handler(
-    _request: Request, exc: InferenceBackendError
+    _request: Request, exc: EngineUnavailableError
 ) -> JSONResponse:
-    """Report a failed model backend as an explicit 503. Never return substitute output."""
+    """Report a failed model engine as an explicit 503. Never return substitute output.
+
+    The worker keeps its published flat body. See the response contract reference.
+    """
     return JSONResponse(
         status_code=503,
-        content={"error": "backend_unavailable", "backend": exc.backend},
+        content={"error": exc.error_code, "backend": exc.engine},
     )
 
 
@@ -85,7 +90,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "inference_worker",
-        "backend": llm_client.active_backend,
+        "backend": settings.backend,
         "openai_model": settings.openai_model,
         "ollama_model": settings.ollama_model,
         "event_publish_failures": event_publish_failures(),
@@ -96,7 +101,6 @@ async def health_check():
 async def parse_intent(req: IntentParseRequest):
     """Parse natural speech or text into structured tabletop RPG game action."""
     start_time = time.perf_counter()
-    ensure_graphs()
     if intent_graph is None:
         raise HTTPException(status_code=503, detail="Intent graph not initialized")
 
@@ -118,7 +122,6 @@ async def parse_intent(req: IntentParseRequest):
 @inference_router.post("/dm-narration", response_model=DMNarrationResponse)
 async def generate_dm_narration(req: DMNarrationRequest):
     """Generate rich sensory scene description and DM options based on recent game events."""
-    ensure_graphs()
     if narration_graph is None:
         raise HTTPException(status_code=503, detail="Narration graph not initialized")
 
@@ -130,7 +133,6 @@ async def generate_dm_narration(req: DMNarrationRequest):
 @inference_router.post("/stand-in-action", response_model=StandInActionResponse)
 async def decide_stand_in_action(req: StandInActionRequest):
     """Simulate tactical action and dialogue for absent player incorporating DM penalties."""
-    ensure_graphs()
     if stand_in_graph is None:
         raise HTTPException(status_code=503, detail="Stand-in graph not initialized")
 

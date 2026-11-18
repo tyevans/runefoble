@@ -319,7 +319,8 @@ services:
     replicas: 1
     port: 8011
   inferenceWorker:
-    # Explicit inference backend: mock (canned output, labelled source "mock"), openai_compatible, ollama, or auto.
+    # Explicit inference backend: mock (canned output, labelled source "mock"), openai_compatible, or ollama.
+    # The worker checks the selected engine at start-up and refuses to start when it does not answer.
     image: runefoble/inference-worker:0.1.0
     replicas: 1
     port: 8100

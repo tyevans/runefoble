@@ -27,6 +27,7 @@ Current engine ports:
 | `asset_forge` | `RUNEFOBLE_ASSET_FORGE_MAP_GENERATOR` | `MapGenerator` | `deterministic` | `map_generation_unavailable` | `generator` |
 | `asset_forge` | `RUNEFOBLE_WARDROBE_GENERATOR` | `WardrobeGenerator` | `placeholder` | none (no failure path) | none |
 | `rules_compendium` | `RUNEFOBLE_RULES_EMBEDDING` | `redstring.EmbeddingProvider` | `lexical`, `openai_compatible` | none (see Known Gaps) | none |
+| `inference_worker` | `RUNEFOBLE_WORKER_BACKEND` | `LLMPort` | `openai_compatible`, `ollama`, `mock` | `backend_unavailable` | `backend` (flat body, see Known Gaps) |
 
 ## Steps
 
@@ -149,4 +150,5 @@ uv run pytest -q -p no:randomly tests/test_engine_port_adapters.py tests/test_bl
 
 - The rules compendium embedding provider does not map its errors to `503` yet. A provider failure returns `500`. Map it when the embedding port gets its own error contract.
 - The wardrobe generator has no failure path. It has no `503`. Add the mapping when a generator can fail.
+- The inference worker keeps its published flat body, `{"error": "backend_unavailable", "backend": "<name>"}`, with no `detail` wrapper and no `message` key. It registers its own handler in `api.py`. Its contract is `docs/reference/inference-worker-response-contract.md`. The worker also checks its engine once in the lifespan (`LLMPort.check_ready`). A port that fails that check stops start-up.
 - `campaign_lore` builds its ports with a `match` and `assert_never`. It is not yet on `build_adapter`.
