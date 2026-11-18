@@ -371,6 +371,27 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 
 
 
+## Gateway Health Route (`GET /healthz`)
+
+`gateway-api` serves `GET /healthz`, `GET /health`, and `GET /api/v1/health`. The route is public. Each request probes five downstream services in parallel (TASK-0674). Nothing is cached.
+
+| Field | Value |
+|---|---|
+| `status` | `healthy` while the gateway process runs. A downstream failure does not change it. |
+| `downstream_services` | One key for each of `the_watcher`, `game_session`, `board_state`, `character_sheet`, and `voice_agent`. Each value is `operational`, `degraded`, `unreachable`, or `not_configured` |
+| `event_publish_failures` | Count of failed event publishes in this process |
+| `event_bus` | `connected` or `disconnected` |
+| `authorization_engine` | `SpiceDB Zanzibar` |
+
+Each probe sends `GET /healthz` to the service with the service credential (ADR-0015 e). A probe result is:
+
+- `operational`: HTTP 200.
+- `degraded`: any other HTTP status.
+- `unreachable`: a connect failure, or no answer within `RUNEFOBLE_GATEWAY_HEALTH_PROBE_TIMEOUT_S` (default `1.0` seconds).
+- `not_configured`: the matching `RUNEFOBLE_*_URL` variable is unset.
+
+The gateway reads one variable for each probed service. The Helm chart renders them for `gateway-api`: `RUNEFOBLE_WATCHER_URL` (`the_watcher`), `RUNEFOBLE_GAME_SESSION_URL` (`game_session`), `RUNEFOBLE_BOARD_STATE_URL` (`board_state`), `RUNEFOBLE_CHARACTER_SHEET_URL` (`character_sheet`), and `RUNEFOBLE_VOICE_AGENT_URL` (`voice_agent`). See [Service Client](service-client.md#health-probes).
+
 ## Gateway WebSocket Authentication
 
 Close codes on every WebSocket route: `1008` means a missing or invalid token. `4403` means an authorization refusal (the token is valid but lacks the object permission). Every gateway WebSocket route (`/ws/*` and `/overlay/ws/*`) takes the caller's identity only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The gateway accepts the handshake with `runefoble.v1`. A handshake without a verified token closes with code `1008` before accept. Identity in the query string (`user_id`, `token`) or in headers (`X-User-Id`, `Authorization`) is refused. A token that is valid but lacks the object permission is refused. `/ws/campaigns/{id}` admits it, sends a `PERMISSION_DENIED` frame, and closes with `4403`. The session sockets (`/ws/session`, `/ws/voice`, `/ws/mobile-companion`, `/ws/overlay`, `/ws/spectator`) need `session.observe` and close with `4403` before accept. They close with `1011` when SpiceDB is unavailable. Overlay and spectator clients that send frames need `session.participate`. `POST /api/v1/mobile/companion/{id}/whisper` and `/turn-alert` need `session.control`. `POST /api/v1/watcher/speak-and-act` needs `session.participate`. All of these return `403` when refused.

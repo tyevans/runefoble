@@ -11,9 +11,10 @@ The gateway uses this client for every proxy call. Each proxy call goes through 
 | `client.py` | `ServiceClient`, `UpstreamReply` |
 | `errors.py` | `UpstreamError`, `UpstreamUnavailableError`, `UpstreamFailureError` |
 | `headers.py` | `build_upstream_headers` |
+| `health.py` | `ProbeStatus`, `probe_health` |
 | `paths.py` | `path` |
 
-The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `UpstreamUnavailableError`, `UpstreamFailureError`, and `path`.
+The package exports `ServiceClient`, `UpstreamReply`, `UpstreamError`, `UpstreamUnavailableError`, `UpstreamFailureError`, `ProbeStatus`, `probe_health`, and `path`.
 
 ## `ServiceClient`
 
@@ -127,6 +128,19 @@ The gateway registers the handlers in `gateway_api/upstream_errors.py`. Every fa
 
 The gateway never returns a substitute body for any of these cases.
 
+## Health probes
+
+`probe_health(client, *, timeout_s)` sends `GET /healthz` through a `ServiceClient` and returns a `ProbeStatus`. It caches nothing. The gateway calls it for each downstream service on every `GET /healthz`.
+
+| Probe result | `ProbeStatus` value |
+|---|---|
+| `client` is `None` (no base URL is configured) | `not_configured` |
+| HTTP 200 | `operational` |
+| Any other HTTP status, including 4xx and 5xx | `degraded` |
+| Timeout or connection error (`UpstreamUnavailableError`) | `unreachable` |
+
+The probe sends no `Authorization` header. It sends the service credential and the trace context, like every call.
+
 ## Gateway registry
 
 `gateway_api.upstreams.UpstreamRegistry` holds one `ServiceClient` for each service whose base URL is set.
@@ -134,6 +148,8 @@ The gateway never returns a substitute body for any of these cases.
 - The FastAPI lifespan in `gateway_api/main.py` builds the registry from `PlatformSettings()` at start-up. It stores the registry on `app.state.upstreams`. It closes every client at shutdown.
 - `gateway_api.dependencies.get_upstreams(request)` returns the registry. It is a FastAPI dependency.
 - `registry.client(service)` returns the client. It raises `UpstreamUnavailableError` when no URL is configured for that service.
+- `registry.find(service)` returns the client, or `None` when no URL is configured. Use it when a missing URL is a normal result, as in the health probes.
+- `registry.health_probe_timeout_s` is the timeout for each health probe. It comes from `RUNEFOBLE_GATEWAY_HEALTH_PROBE_TIMEOUT_S` (default `1.0`).
 - The lifespan also reads `RUNEFOBLE_SERVICE_CREDENTIAL` (through `expected_service_credential`). The gateway refuses to start when it is unset or blank. Helm injects the value from the credentials Secret into `gateway-api`.
 
 Service names and settings fields:
@@ -142,7 +158,7 @@ Service names and settings fields:
 |---|---|---|
 | `game_session` | `game_session_url` | `RUNEFOBLE_GAME_SESSION_URL` |
 | `board_state` | `board_state_url` | `RUNEFOBLE_BOARD_STATE_URL` |
-| `the_watcher` | `the_watcher_url` | `RUNEFOBLE_THE_WATCHER_URL` |
+| `the_watcher` | `the_watcher_url` | `RUNEFOBLE_WATCHER_URL` |
 | `character_sheet` | `character_sheet_url` | `RUNEFOBLE_CHARACTER_SHEET_URL` |
 | `campaign_lore` | `campaign_lore_url` | `CAMPAIGN_LORE_URL` |
 | `campaign_analytics` | `campaign_analytics_url` | `CAMPAIGN_ANALYTICS_URL` |
@@ -152,7 +168,7 @@ Service names and settings fields:
 | `voice_agent` | `voice_agent_url` | `RUNEFOBLE_VOICE_AGENT_URL` |
 | `audience_studio` | `audience_studio_url` | `RUNEFOBLE_AUDIENCE_STUDIO_URL` |
 
-The `character_sheet_url`, `campaign_lore_url`, `campaign_analytics_url`, and `soundscape_url` fields default to the in-cluster addresses in the Helm chart (`services.yaml`). The other seven default to `None`. Helm renders only the four defaulted fields for `gateway-api` today.
+`campaign_analytics_url` and `soundscape_url` default to their in-cluster addresses. Every other field defaults to `None`. A field left at `None` means no route: a proxy call returns `503`, and a health probe reports `not_configured`. `character_sheet_url` has no default (TASK-0674). The Helm chart renders these variables for `gateway-api` in `templates/services.yaml`: `RUNEFOBLE_GAME_SESSION_URL`, `RUNEFOBLE_WATCHER_URL`, `RUNEFOBLE_BOARD_STATE_URL`, `RUNEFOBLE_CHARACTER_SHEET_URL`, `RUNEFOBLE_VOICE_AGENT_URL`, `CAMPAIGN_LORE_URL`, `CAMPAIGN_ANALYTICS_URL`, `SOUNDSCAPE_SERVICE_URL`, `RUNEFOBLE_RULES_COMPENDIUM_URL`, and `RUNEFOBLE_ASSET_FORGE_URL`.
 
 ## Related
 
