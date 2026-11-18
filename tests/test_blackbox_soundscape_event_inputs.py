@@ -13,7 +13,11 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_events.character import CharacterHealthChanged
-from runefoble_events.session import CombatEncounterStarted, CombatRoundAdvanced
+from runefoble_events.session import (
+    CombatEncounterEnded,
+    CombatEncounterStarted,
+    CombatRoundAdvanced,
+)
 from soundscape.event_handlers import handle_incoming_domain_event
 from soundscape.main import app
 
@@ -118,3 +122,24 @@ async def test_round_advance_reuses_encounter_cr_from_combat_start():
     tension = _read_tension(session_id)
     assert tension["tension_score"] == 65
     assert tension["stem_profile"] == "combat"
+
+
+@pytest.mark.asyncio
+async def test_encounter_end_leaves_combat_so_later_health_change_scores_ambient():
+    """Ending the encounter clears combat. A later health change no longer raises combat tension."""
+    session_id = f"session-{uuid4().hex[:8]}"
+    await handle_incoming_domain_event(
+        _combat_start(session_id, [{"combatant_id": "orc-1", "name": "Orc", "cr": 2.0}])
+    )
+    # 40 base + 5 round + 10 CR threat, with full health.
+    assert _read_tension(session_id)["tension_score"] == 55
+
+    await handle_incoming_domain_event(
+        CombatEncounterEnded(aggregate_id=uuid4(), session_id=session_id, total_rounds=1)
+    )
+    ended = _read_tension(session_id)
+    assert ended["tension_score"] == 10
+    assert ended["stem_profile"] == "exploration"
+
+    await handle_incoming_domain_event(_health(session_id, EZREN, current_hp=1))
+    assert _read_tension(session_id)["tension_score"] == 10

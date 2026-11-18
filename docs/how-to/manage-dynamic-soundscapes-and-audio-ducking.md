@@ -22,6 +22,7 @@ The Encounter Tension Scoring Engine computes real-time tension (0–100) based 
 The event path derives these inputs from game state. No value is fixed:
 
 - **Enemy CR**: On `CombatEncounterStarted`, the engine sums the `cr` field of each roster combatant. A CR can be a number or an SRD fraction such as `"1/4"`. A combatant without `cr` adds nothing. Later rounds reuse this sum.
+- **Encounter end**: On `CombatEncounterEnded`, the engine clears the enemy CR and round inputs, and re-scores tension once with combat inactive. Later health changes do not raise combat tension until the next `CombatEncounterStarted`.
 - **Round**: `CombatRoundAdvanced` and `InitiativeTurnAdvanced` set the round.
 - **Party health**: Each `CharacterHealthChanged` event with a `session_id` stores that character's HP ratio (current HP / max HP). The engine uses the lowest stored ratio. A character that has not reported counts as full health. During combat, each health change re-scores tension at once.
 
@@ -238,7 +239,8 @@ The soundscape blackbox verification suite is partitioned into focused test modu
 - `tests/test_blackbox_leitmotif_triggers.py`: Verifies multi-modal combat and reactive triggers (critical hits, near-death cello themes, WebAudio sidechain -12dB voice ducking) and volume envelope stage calculations.
 - `tests/test_blackbox_soundscape_gateway.py`: Verifies API Gateway `/api/v1/soundscape/*` proxy routing, OpenAPI schema exposure, SpiceDB Zanzibar object authorization (`participate`, `control`, `run_session`), and downstream service forwarding (< 500 lines).
 - `tests/test_blackbox_analytics_soundscape_authz.py`: Verifies fail-closed authorization across the gateway analytics reads and soundscape controls. It covers 401 without a token, 403 for a player, 200 for the DM, and 503 on a SpiceDB outage.
-- `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`CombatEncounterStarted`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DeathSaveStarted`) and platform bus subscription wiring.
+- `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`CombatEncounterStarted`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DeathSaveStarted`) through the Redis Streams consumer path.
+- `tests/test_blackbox_soundscape_event_inputs.py`: Verifies that tension inputs come from events. It covers enemy CR from the roster, the encounter-end reset to ambient tension, and party health from `CharacterHealthChanged`.
 - `tests/test_blackbox_soundscape_state_restart.py`: Verifies that mixer state (master volume), timed ducking, and the aggregate id survive a process restart. The restart runs `tests/helpers/soundscape_restart_child.py` in a new Python process on the same PostgreSQL event store.
 
 ---
@@ -249,7 +251,7 @@ Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, the service keeps no ses
 - `services/soundscape/src/soundscape/dependencies.py`: Holds the event repository factory, the SpiceDB permission guards, the Zitadel verifier seam, and the event bus seam. It holds no mixer, tension, or leitmotif state.
 - `services/soundscape/src/soundscape/session_state.py`: Reads and writes one session's state through the aggregate. It projects the public tension and mixer view from the stored state.
 - `services/soundscape/src/soundscape/ids.py`: Derives the aggregate id from the session id with UUID v5. Every process resolves the same event stream for one session.
-- `services/soundscape/src/soundscape/event_handlers.py`: Contains the domain event handler `handle_incoming_domain_event`. It handles `CombatEncounterStarted`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, and `DeathSaveStarted`.
+- `services/soundscape/src/soundscape/event_handlers.py`: Contains the domain event handler `handle_incoming_domain_event`. It handles `CombatEncounterStarted`, `CombatEncounterEnded`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, and `DeathSaveStarted`.
 - `services/soundscape/src/soundscape/consumer.py`: Runs the only caller of the handler. One Redis Streams consumer reads the `runefoble.events.session`, `runefoble.events.watcher`, and `runefoble.events.character` streams (TASK-0710). No in-process bus delivers events to the handler.
 - `services/soundscape/src/soundscape/main.py`: Coordinates service startup. The FastAPI lifespan connects the Redis Streams bus and starts the consumer.
 
