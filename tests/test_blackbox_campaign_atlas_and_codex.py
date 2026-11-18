@@ -39,7 +39,6 @@ def test_dependencies_expose_core_getters() -> None:
         "get_atlas_repo",
         "get_codex_repo",
         "get_codex_referencer",
-        "get_campaign_codex_index",
         "get_west_marches_repo",
         "set_west_marches_repo",
     ]

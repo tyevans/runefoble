@@ -71,6 +71,7 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
     ),
     ServiceSeams(
         "campaign_lore",
+        bus="campaign_lore.dependencies",
         verifier="campaign_lore.identity",
         verifier_scope="test",
     ),

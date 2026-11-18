@@ -20,10 +20,11 @@ from runefoble_platform.config import (
     PlatformSettings,
 )
 from runefoble_platform.errors import ServiceUnavailableError
-from runefoble_platform.event_publish import event_publish_failures
+from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
 from runefoble_platform.event_sourcing import PostgreSQLEventStore, get_event_store
 
 from campaign_lore.codex import CodexCrossReferencer
+from campaign_lore.dependencies import event_bus_provider
 from campaign_lore.projection import rebuild_lore_projection
 from campaign_lore.retrieval_factory import build_retrieval_engine
 from campaign_lore.routers.aliases import router as aliases_router
@@ -53,18 +54,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             "PostgreSQL event store is configured but unreachable; refusing to start "
             "Campaign Lore with an empty projection."
         )
-    engine = await build_retrieval_engine(
-        LoreBackendSettings(),
-        EmbeddingEndpointSettings(),
-        PlatformSettings().database_url,
-    )
-    try:
-        await rebuild_lore_projection(engine, store)
-        app.state.retrieval_engine = engine
-        app.state.codex_referencer = CodexCrossReferencer(engine)
-        yield
-    finally:
-        await engine.close()
+    async with event_bus_provider.lifespan(app):
+        engine = await build_retrieval_engine(
+            LoreBackendSettings(),
+            EmbeddingEndpointSettings(),
+            PlatformSettings().database_url,
+        )
+        try:
+            await rebuild_lore_projection(engine, store)
+            app.state.retrieval_engine = engine
+            app.state.codex_referencer = CodexCrossReferencer(engine)
+            yield
+        finally:
+            await engine.close()
 
 
 def create_app() -> FastAPI:
@@ -97,6 +99,7 @@ def create_app() -> FastAPI:
     app.include_router(west_marches_router)
     app.add_exception_handler(ServiceUnavailableError, _service_unavailable_handler)
     register_store_unavailable_handlers(app)
+    install_publish_failure_handler(app)
     _register_routes(app)
     return app
 

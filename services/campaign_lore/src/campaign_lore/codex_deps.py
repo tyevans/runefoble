@@ -123,7 +123,7 @@ class CodexSessionDeps:
         return await check_user_can_view_codex_entry(self.user_id, st, self.spicedb)
 
     async def persist_new_entry(
-        self, agg: CodexAggregate, cid: UUID, author: str, priv: str, idx: dict[UUID, list[UUID]]
+        self, agg: CodexAggregate, cid: UUID, author: str, priv: str
     ) -> None:
         """Write the authorization tuples, then save the aggregate.
 
@@ -138,7 +138,6 @@ class CodexSessionDeps:
                 "Codex authorization is unavailable. The entry was not saved."
             ) from exc
         await self.repo.save(agg)
-        idx.setdefault(cid, []).append(agg.aggregate_id)
 
     async def persist_updated_entry(
         self, agg: CodexAggregate, cid: UUID, eid: UUID, old_p: str, new_p: str | None
