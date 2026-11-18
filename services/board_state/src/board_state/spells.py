@@ -5,11 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from board_state.rules import (
-    calc_move_path,
-    compute_spell_vfx_impact,
-    validate_point_within_bounds,
-)
+from board_state.rules.grid import validate_point_within_bounds
+from board_state.rules.movement import calculate_movement_path
+from board_state.rules.spell_impact import compute_spell_vfx_impact
 from runefoble_events.events import (
     AreaEffectExploded,
     EphemeralDecalsDecayed,
@@ -72,7 +70,7 @@ class BoardSpellsMixin:
             theme_palette=theme_palette,
         )
 
-        path = calc_move_path(ox, oy, target_x, target_y)
+        path = calculate_movement_path(ox, oy, target_x, target_y)
         trajectory = [[float(ox), float(oy)]] + [[float(p[0]), float(p[1])] for p in path]
 
         affected_cells, affected_token_ids, decal_type = compute_spell_vfx_impact(

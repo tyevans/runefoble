@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
+from board_state.rules.grid import validate_point_within_bounds
+from board_state.rules.hazards import walk_path
+from board_state.rules.movement import calculate_movement_path
 from pydantic import BaseModel, Field
 
 
@@ -63,7 +66,11 @@ def compute_kinematic_route_preview(
     from_y: int | None = None,
     movement_budget: int | None = None,
 ) -> PreviewMoveResponse:
-    """Calculate trajectory waypoints, 5-ft distance measurements, terrain penalties, and hazards."""
+    """Calculate trajectory waypoints, 5-ft distance measurements, terrain penalties, and hazards.
+
+    The cost and hazard results come from the same walk that the move applies, so the
+    preview and the move report the same hazard dice.
+    """
     state = board_aggregate.state
     token = state.tokens.get(token_id)
     token_name = token.name if token else token_id
@@ -71,54 +78,41 @@ def compute_kinematic_route_preview(
     start_x = from_x if from_x is not None else (token.x if token else 0)
     start_y = from_y if from_y is not None else (token.y if token else 0)
 
-    # Check bounds
-    if not (0 <= to_x < state.cols and 0 <= to_y < state.rows):
-        raise ValueError(f"Target coordinates ({to_x}, {to_y}) out of grid bounds")
+    validate_point_within_bounds(to_x, to_y, state.cols, state.rows, "Target")
 
-    path = board_aggregate.calculate_movement_path(start_x, start_y, to_x, to_y)
+    path = calculate_movement_path(start_x, start_y, to_x, to_y)
+    walk = walk_path(path, board_aggregate.get_terrain)
 
     waypoints: list[WaypointInfo] = []
     difficult_cells: list[list[int]] = []
     hazard_cells: list[list[int]] = []
     cumulative_distance_ft = 0
-    total_cost = 0
-    base_distance_ft = len(path) * 5
     terrain_penalty_ft = 0
 
-    hazard_triggered: str | None = None
-    damage_dice: str | None = None
-
-    for idx, (cx, cy) in enumerate(path, start=1):
-        cell_terrain = board_aggregate.get_terrain(cx, cy)
-        is_difficult = cell_terrain.terrain_type == "difficult"
-        cell_hazard = cell_terrain.hazard
-
+    for idx, step in enumerate(walk.steps, start=1):
         # Normal = 5ft (cost 1). Difficult = +5ft penalty (total 10ft, cost 2)
-        step_ft = 10 if is_difficult else 5
-        cumulative_distance_ft += step_ft
-        total_cost += 2 if is_difficult else 1
+        cumulative_distance_ft += 10 if step.is_difficult else 5
 
-        if is_difficult:
-            difficult_cells.append([cx, cy])
+        if step.is_difficult:
+            difficult_cells.append([step.x, step.y])
             terrain_penalty_ft += 5
 
-        if cell_hazard:
-            hazard_cells.append([cx, cy])
-            if idx == len(path):  # Landing on hazard
-                hazard_triggered = cell_hazard
-                damage_dice = "2d10" if cell_hazard == "lava" else "1d6"
+        if step.hazard:
+            hazard_cells.append([step.x, step.y])
 
         waypoints.append(
             WaypointInfo(
-                x=cx,
-                y=cy,
+                x=step.x,
+                y=step.y,
                 step=idx,
                 distance_ft=cumulative_distance_ft,
-                is_difficult=is_difficult,
-                hazard=cell_hazard,
+                is_difficult=step.is_difficult,
+                hazard=step.hazard,
             )
         )
 
+    hazard_triggered, damage_dice = walk.last_hazard or (None, None)
+    total_cost = walk.cost
     budget_exceeded = movement_budget is not None and total_cost > movement_budget
 
     return PreviewMoveResponse(
@@ -129,7 +123,7 @@ def compute_kinematic_route_preview(
         to_x=to_x,
         to_y=to_y,
         total_distance_ft=cumulative_distance_ft,
-        base_distance_ft=base_distance_ft,
+        base_distance_ft=len(path) * 5,
         terrain_penalty_ft=terrain_penalty_ft,
         movement_cost=total_cost,
         budget_exceeded=budget_exceeded,
