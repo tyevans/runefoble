@@ -327,6 +327,13 @@ Campaign Lore routes require a verified bearer token, except `/health`, `/health
 | `gateway-api` | POST | `/api/v1/assets/upload` | Uploads binary or base64 assets (battlemap, avatar, audio) to Silo S3. Needs a bearer. The uploader becomes the `forged_asset` creator. An optional `campaign_id` needs `campaign.play` |
 | `gateway-api` | GET | `/api/v1/assets/{asset_id}` | Retrieves or streams stored asset files from Silo S3 storage |
 | `gateway-api` | DELETE | `/api/v1/assets/{asset_id}` | Deletes an asset. Needs bearer and `forged_asset.manage` (creator, campaign owner, or DM). `401` without a token, `403` without the right |
+| `gateway-api` | GET | `/api/v1/compendium/rules/search` | Proxies to `rules_compendium`: hybrid rule search. The query string reaches the owner unchanged. Needs a bearer token (`401` without one) |
+| `gateway-api` | GET | `/api/v1/compendium/monsters/{name}` | Proxies to `rules_compendium`: monster stat block. A `campaign_id` query value reads homebrew the caller may view |
+| `gateway-api` | GET | `/api/v1/compendium/spells/{name}` | Proxies to `rules_compendium`: spell definition |
+| `gateway-api` | GET | `/api/v1/compendium/conditions/{name}` | Proxies to `rules_compendium`: condition mechanics |
+| `gateway-api` | POST | `/api/v1/compendium/encounters/balance` | Proxies to `rules_compendium`: encounter balance. A campaign-scoped call needs `campaign.play` (owner check) |
+| `gateway-api` | POST | `/api/v1/compendium/homebrew` | Proxies to `rules_compendium`: registers a campaign homebrew rule. The owner checks `manage` or `run_session` and returns `403` otherwise |
+| `gateway-api` | GET | `/api/v1/compendium/homebrew/{campaign_id}` | Proxies to `rules_compendium`: campaign homebrew rules the caller may view (`homebrew_rule.view`) |
 | `gateway-mcp` | GET/POST | `/mcp/tools` | Lists or registers dynamic FastMCP tools with JSON schema and a declarative handler (ADR-0020). Requires a bearer token (`401` without one). The author is the token subject. Body `author_id` is ignored. The route runs in the MCP process, because that process owns the registry. `gateway-api` returns `404` for it (TASK-0727) |
 | `gateway-mcp` | GET/PUT/DELETE | `/mcp/tools/{name}` | Inspects, updates, or deregisters runtime FastMCP tools without server restarts |
 | `gateway-mcp` | POST | `/mcp/tools/{name}/execute` | Evaluates a dynamic tool's declarative handler as the verified caller. Requires a bearer token. Body `user_id` is ignored |
