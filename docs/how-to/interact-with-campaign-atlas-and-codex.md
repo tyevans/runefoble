@@ -142,6 +142,7 @@ An empty dataset shows the element's empty state. A failed read shows the App Sh
 ### Emitted Custom Events
 - `pin-selected`: Triggered when a pin marker is clicked (`detail.pin`).
 - `pin-create-requested`: Triggered when the user submits the pin form after clicking an empty canvas location (`detail.title`, `detail.coordinates`, `detail.layer`, `detail.campaignId`). The App Shell posts the pin to `POST /api/v1/campaigns/{campaign_id}/atlas/pins`, then reloads the atlas. A refused write shows `pinError` on the element and leaves the pin list unchanged.
+- `codex-entry-create-requested` (`<runefoble-campaign-codex>`): Triggered when the user submits the new entry form (`detail.title`, `detail.content`, `detail.privacy`, `detail.campaignId`). The App Shell posts the entry to `POST /api/v1/campaigns/{campaign_id}/codex/entries`, then reads the codex again. A refused write shows `entryError` on the element and leaves the entry list unchanged.
 - `layer-change`: Triggered when the layer zoom mode is toggled (`detail.layer`).
 
 ### Modular Subview Architecture

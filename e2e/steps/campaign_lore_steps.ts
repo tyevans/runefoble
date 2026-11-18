@@ -70,6 +70,19 @@ When('I enter {string} as the pin title', async ({ page }, title: string) => {
   await page.locator('runefoble-campaign-atlas input[name="title"]').fill(title);
 });
 
+When('I enter {string} as the codex entry title', async ({ page }, title: string) => {
+  await page.locator('runefoble-campaign-codex input[name="title"]').fill(title);
+});
+
+When('I enter {string} as the codex entry text', async ({ page }, text: string) => {
+  await page.locator('runefoble-campaign-codex textarea[name="content"]').fill(text);
+});
+
+Then('the gateway codex route lists the entry {string}', async ({ frontdoorApi, world }, title: string) => {
+  const entries = await frontdoorApi.getCodex(requireCampaignId(world.campaignId), requireToken(world.currentUser?.token));
+  expect(entries.map((entry) => entry.title)).toContain(title);
+});
+
 Then('the campaign atlas lists the pin {string}', async ({ page }, title: string) => {
   await expect(
     page.locator('runefoble-campaign-atlas text.pin-label', { hasText: title })

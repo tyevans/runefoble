@@ -21,6 +21,15 @@ Feature: Campaign Atlas Pins and Lore Codex Through the Gateway
     And I select the "Lore Codex" view
     Then the lore codex lists the entry "Star-Eater Gate"
 
+  Scenario: A codex entry created in the Lore Codex form appears in the codex
+    When I open the Codex & Lore tab of the campaign
+    And I select the "Lore Codex" view
+    And I enter "Star-Eater Gate" as the codex entry title
+    And I enter "A gate of black glass." as the codex entry text
+    And I click the "Publish entry" button
+    Then the lore codex lists the entry "Star-Eater Gate"
+    And the gateway codex route lists the entry "Star-Eater Gate"
+
   @lore-down
   Scenario: A pin refused by the gateway shows an error and no pin appears
     Given I am logged in as a "dm"

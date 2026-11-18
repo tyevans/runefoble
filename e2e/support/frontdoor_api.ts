@@ -215,4 +215,16 @@ export class FrontdoorApi {
     }
     return res.json();
   }
+
+  /** Reads the codex through the gateway. The entries are the ones the caller may view. */
+  async getCodex(campaignId: string, token?: string): Promise<Array<{ entry_id: string; title: string }>> {
+    const res = await this.request.get(`${this.baseUrl}/api/v1/campaigns/${campaignId}/codex`, {
+      headers: this.authHeaders(token),
+    });
+    if (!res.ok()) {
+      const errText = await res.text();
+      throw new Error(`Failed to read codex: ${res.status()} ${res.statusText()} - ${errText}`);
+    }
+    return res.json();
+  }
 }
