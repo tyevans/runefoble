@@ -41,17 +41,17 @@ For local development or environments without remote GitHub push permissions:
 The CLI supports targeted management commands:
 ```bash
 # List ready unblocked tasks (or --all for entire backlog)
-python3 -m tools.backlog_engine.cli list
-python3 -m tools.backlog_engine.cli list --all
+uv run python -m tools.backlog_engine.cli list
+uv run python -m tools.backlog_engine.cli list --all
 
 # View aggregated status counts across lifecycle states
-python3 -m tools.backlog_engine.cli status
+uv run python -m tools.backlog_engine.cli status
 
 # Manually claim a task for a worker stream
-python3 -m tools.backlog_engine.cli claim TASK-0002 --worker-id manual-worker --branch feat/task-0002
+uv run python -m tools.backlog_engine.cli claim TASK-0002 --worker-id manual-worker --branch feat/task-0002
 
 # Complete a task, moving it to complete/ and updating PRIORITY.md
-python3 -m tools.backlog_engine.cli complete TASK-0002
+uv run python -m tools.backlog_engine.cli complete TASK-0002
 ```
 
 ## How the Pipeline Operates

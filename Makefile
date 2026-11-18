@@ -1,4 +1,4 @@
-.PHONY: help setup install-tools cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down lint lint-fix build check-ui-manifests dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
+.PHONY: help setup install-tools install-spec-ops cluster-up cluster-down images voice-model-cache helm-lint helm-template helm-check-event-store helm-deploy test test-entrypoints test-property test-mutation test-e2e test-e2e-ui test-bdd e2e-lore-up e2e-lore-down lint lint-fix build check-ui-manifests dev-frontend dev-storybook dev-api dev-worker deploy-remote-worker pre-commit health-check clean-worktrees backlog-worker docs-build docs-serve prd-audit prd-decompose prd-create prd-sync
 
 
 CLUSTER_NAME ?= runefoble-local
@@ -10,6 +10,13 @@ help: ## Show this help message
 	@echo "Runefoble Developer Interface"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
+
+# Single source of the spec-ops pin (TASK-0700). CI, AGENTS.md and docs/reference/cli-interfaces.md
+# reference this target. Change the commit here only. `override` blocks command-line overrides.
+override SPEC_OPS_SOURCE := git+https://github.com/tyevans/spec-ops@2c8d073180eb558a57aeb500ffcc6210361c8ee7
+
+install-spec-ops: ## Install the pinned spec-ops CLI with uv (pin: SPEC_OPS_SOURCE)
+	uv tool install --from $(SPEC_OPS_SOURCE) spec-ops
 
 health-check: ## Run spec-ops health (file length, numbering, backlog) and schema gates
 	@spec-ops health

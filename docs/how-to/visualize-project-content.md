@@ -85,7 +85,7 @@ On every merge to `main`, `.github/workflows/deploy-pages.yml` executes `make do
 To inspect high-level coverage, health invariants, and graph edge counts directly from the command line:
 
 ```bash
-python3 -m tools.project_visualizer.cli stats
+uv run python -m tools.project_visualizer.cli stats
 ```
 
 Example output:
@@ -103,7 +103,7 @@ Ready Buffer Health: OVER_BUFFERED (7 items)
 
 To export the raw structured relational graph as JSON:
 ```bash
-python3 -m tools.project_visualizer.cli export-json --out dist/project-data.json
+uv run python -m tools.project_visualizer.cli export-json --out dist/project-data.json
 ```
 
 ---
