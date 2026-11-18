@@ -11,6 +11,7 @@ from runefoble_events.events import (
     IntentDisambiguationRequested,
 )
 from runefoble_platform.event_publish import publish_best_effort
+from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.copilot_state.disambiguations import DisambiguationNotFoundError
 from the_watcher.dependencies import (
     STREAM_BOARD,
@@ -22,7 +23,6 @@ from the_watcher.dependencies import (
     require_session_permission,
 )
 from the_watcher.identity import CallerId, get_principal
-from the_watcher.ids import to_uuid
 from the_watcher.models import (
     CandidateTarget,
     CompoundActionNode,
@@ -90,8 +90,10 @@ async def dispatch_disambiguation(
         clarification_prompt=prompt,
         actions=nodes,
     )
-    bus, s_uuid = get_event_bus(), to_uuid(req.session_id)
-    c_uuid = str(to_uuid(req.campaign_id)) if req.campaign_id else None
+    bus, s_uuid = get_event_bus(), opaque_aggregate_id(req.session_id, field="session_id")
+    c_uuid = (
+        str(opaque_aggregate_id(req.campaign_id, field="campaign_id")) if req.campaign_id else None
+    )
     await _safe_publish(
         bus,
         STREAM_WATCHER,
@@ -169,8 +171,8 @@ async def resolve_intent_disambiguation(
             step_results=req.step_results,
         )
 
-    bus, s_uuid = get_event_bus(), to_uuid(req.session_id)
-    c_uuid = str(to_uuid(req.campaign_id or pending.campaign_id))
+    bus, s_uuid = get_event_bus(), opaque_aggregate_id(req.session_id, field="session_id")
+    c_uuid = str(opaque_aggregate_id(req.campaign_id or pending.campaign_id, field="campaign_id"))
     await _safe_publish(
         bus,
         STREAM_WATCHER,

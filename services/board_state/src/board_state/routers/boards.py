@@ -20,12 +20,12 @@ from board_state.dependencies import (
     CallerOrService,
     get_board,
     repo,
-    to_board_uuid,
 )
 from board_state.models import CreateBoardRequest
 from board_state.projection import project_board
 from eventsource.domain.exceptions import OptimisticLockError
 from fastapi import APIRouter, HTTPException
+from runefoble_platform.identifiers import opaque_aggregate_id
 from runefoble_platform.ui_manifest import load_ui_manifest
 
 # Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
@@ -58,7 +58,7 @@ async def create_board(req: CreateBoardRequest, user_id: CallerId):
     cols = req.cols or req.width or 10
     rows = req.rows or req.height or 10
     sess_id = req.session_id or req.board_id or str(uuid4())
-    board_id = to_board_uuid(sess_id)
+    board_id = opaque_aggregate_id(sess_id, field="sess_id")
     board = BoardAggregate(board_id)
     board.initialize_grid(cols=cols, rows=rows, session_id=sess_id)
     try:

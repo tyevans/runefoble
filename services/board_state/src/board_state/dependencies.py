@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from uuid import NAMESPACE_DNS, UUID, uuid5
 
 from board_state.aggregate import BoardAggregate
 from eventsource.domain.exceptions import AggregateNotFoundError
@@ -18,20 +17,13 @@ from runefoble_platform.event_sourcing import (
     AggregateRepository,
     create_aggregate_repository,
 )
+from runefoble_platform.identifiers import opaque_aggregate_id
 from runefoble_platform.service_credential import expected_service_credential
 
 logger = logging.getLogger("runefoble.board_state")
 platform_settings = PlatformSettings()
 
 repo: AggregateRepository[BoardAggregate] = create_aggregate_repository(BoardAggregate)
-
-
-def to_board_uuid(session_id: str) -> UUID:
-    """Deterministically convert session_id string or UUID into UUID."""
-    try:
-        return UUID(session_id)
-    except ValueError:
-        return uuid5(NAMESPACE_DNS, session_id)
 
 
 class BoardNotFoundError(LookupError):
@@ -62,7 +54,7 @@ async def get_board(session_id: str) -> BoardAggregate:
     Only a missing event stream means "not found". Every other load error propagates.
     Boards are created only through the POST /api/v1/boards command.
     """
-    board_id = to_board_uuid(session_id)
+    board_id = opaque_aggregate_id(session_id, field="session_id")
     try:
         return await repo.load(board_id)
     except AggregateNotFoundError as exc:

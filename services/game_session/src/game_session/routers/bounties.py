@@ -11,7 +11,6 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, Query
 from game_session.child_index import ChildIndexKind
 from game_session.contracts.auth import (
-    _to_uuid,
     check_bounty_claim,
     check_bounty_disburse,
     check_bounty_post,
@@ -35,6 +34,7 @@ from game_session.queries import link_child, list_bounties_for_session
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], prefix="/sessions", tags=["bounties"])
 
@@ -106,7 +106,7 @@ async def list_bounties(
 
 @router.get("/{session_id}/contracts/bounties/{bounty_id}")
 async def get_bounty(session_id: str, bounty_id: str, caller_id: CallerId) -> dict[str, Any]:
-    sid, bid = session_id, _to_uuid(bounty_id)
+    sid, bid = session_id, parse_uuid(bounty_id, field="bounty_id")
     await check_bounty_view(get_spicedb_client(), str(sid), str(bid), caller_id)
     agg = await _load(bid)
     return {"session_id": str(sid), "bounty": agg.state.model_dump()}
@@ -119,7 +119,7 @@ async def claim_bounty(
     bounty_id: str,
     req: ClaimBountyRequest,
 ) -> dict[str, Any]:
-    sid, bid, spicedb = session_id, _to_uuid(bounty_id), get_spicedb_client()
+    sid, bid, spicedb = session_id, parse_uuid(bounty_id, field="bounty_id"), get_spicedb_client()
     await check_bounty_claim(spicedb, str(bid), caller_id)
     agg = await _load(bid)
     _err(agg.claim_bounty, caller_id, req.claimant_campaign_id, req.claimant_party_name)
@@ -135,7 +135,7 @@ async def complete_bounty(
     bounty_id: str,
     req: CompleteBountyRequest,
 ) -> dict[str, Any]:
-    sid, bid = session_id, _to_uuid(bounty_id)
+    sid, bid = session_id, parse_uuid(bounty_id, field="bounty_id")
     await check_bounty_disburse(get_spicedb_client(), str(bid), caller_id)
     agg = await _load(bid)
     payout = _err(agg.complete_bounty, proof=req.proof, disbursed_by=caller_id)

@@ -27,8 +27,9 @@ from game_session.settlement.worker_models import (
     WorkerInventoryItem,
     WorkerRelationship,
 )
-from game_session.settlement.workers.loaders import save_and_publish, to_uuid
+from game_session.settlement.workers.loaders import save_and_publish
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.identifiers import parse_uuid
 
 
 def _dump_items(items: list[Any]) -> list[Any]:
@@ -38,13 +39,13 @@ def _dump_items(items: list[Any]) -> list[Any]:
 async def sync_establishment_operations(establishment_id: str) -> EstablishmentOperationsSummary:
     """Recalculate establishment operating metrics and save projection."""
     est_repo = get_establishment_repository()
-    est = await est_repo.load(to_uuid(establishment_id))
+    est = await est_repo.load(parse_uuid(establishment_id, field="establishment_id"))
     worker_ids = await list_workers_for_establishment(establishment_id)
     worker_repo = get_worker_repository()
 
     workers: list[NPCWorkerState] = []
     for wid in worker_ids:
-        w_agg = await load_if_exists(worker_repo, to_uuid(wid))
+        w_agg = await load_if_exists(worker_repo, parse_uuid(wid, field="worker_id"))
         if w_agg is not None and w_agg.state.status == "active":
             workers.append(w_agg.state)
 
@@ -79,7 +80,7 @@ async def create_and_assign_worker(
     spicedb, worker_repo, bus = get_spicedb_client(), get_worker_repository(), get_event_bus()
     wage = req.wage_gold if req.wage_gold is not None else req.wage
     nid = req.npc_id or str(uuid4())
-    agg = NPCWorkerAggregate(to_uuid(nid))
+    agg = NPCWorkerAggregate(parse_uuid(nid, field="worker_id"))
 
     vault_src = req.vault_inventory if req.vault_inventory is not None else req.backroom_inventory
     meta = {

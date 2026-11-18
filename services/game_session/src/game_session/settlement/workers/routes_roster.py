@@ -24,13 +24,13 @@ from game_session.settlement.workers.loaders import (
     load_establishment,
     load_worker,
     save_and_publish,
-    to_uuid,
 )
 from game_session.settlement.workers.operations import (
     create_and_assign_worker,
     sync_establishment_operations,
 )
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["settlement-npc-workers"])
 
@@ -57,7 +57,7 @@ async def list_establishment_workers(
 
     workers: list[NPCWorkerState] = []
     for wid in worker_ids:
-        w_agg = await load_if_exists(worker_repo, to_uuid(wid))
+        w_agg = await load_if_exists(worker_repo, parse_uuid(wid, field="worker_id"))
         if w_agg is not None and w_agg.state.status == "active":
             workers.append(w_agg.state)
 

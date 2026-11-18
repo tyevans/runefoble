@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import random
 from typing import Any
-from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
+from uuid import uuid4
 
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.bulletin import build_intelligence_bulletin, generate_geopolitical_shift
 from the_watcher.faction_models import (
     FactionResponse,
@@ -56,17 +57,6 @@ DEFAULT_FACTIONS: list[dict[str, Any]] = [
 ]
 
 
-def to_uuid(val: str | UUID | None) -> UUID:
-    if val is None:
-        return uuid4()
-    if isinstance(val, UUID):
-        return val
-    try:
-        return UUID(val)
-    except ValueError:
-        return uuid5(NAMESPACE_DNS, str(val))
-
-
 def summarize_faction(faction: FactionAggregate) -> FactionResponse:
     """Build the public response model for a faction's current aggregate state."""
     state = faction.state
@@ -97,7 +87,9 @@ class FactionSimulationEngine:
 
     async def register_faction(self, campaign_id: str, faction_id: str, world_repo: Any) -> None:
         """Add a faction to the campaign registry."""
-        world = await world_repo.load_or_create(to_uuid(campaign_id))
+        world = await world_repo.load_or_create(
+            opaque_aggregate_id(campaign_id, field="campaign_id")
+        )
         world.register_faction(campaign_id, faction_id)
         await world_repo.save(world)
 
@@ -111,10 +103,15 @@ class FactionSimulationEngine:
     async def _load_campaign(
         self, campaign_id: str, faction_repo: Any, world_repo: Any
     ) -> tuple[CampaignWorldAggregate, list[FactionAggregate]]:
-        world = await world_repo.load_or_create(to_uuid(campaign_id))
+        world = await world_repo.load_or_create(
+            opaque_aggregate_id(campaign_id, field="campaign_id")
+        )
         if not world.state.faction_ids:
             await self._seed_default_factions(campaign_id, world, faction_repo, world_repo)
-        factions = [await faction_repo.load(to_uuid(fid)) for fid in world.state.faction_ids]
+        factions = [
+            await faction_repo.load(opaque_aggregate_id(fid, field="fid"))
+            for fid in world.state.faction_ids
+        ]
         return world, factions
 
     async def _seed_default_factions(
@@ -126,7 +123,7 @@ class FactionSimulationEngine:
     ) -> None:
         for d in DEFAULT_FACTIONS:
             fid = f"faction-{uuid4().hex[:8]}"
-            agg = FactionAggregate(aggregate_id=to_uuid(fid))
+            agg = FactionAggregate(aggregate_id=opaque_aggregate_id(fid, field="fid"))
             agg.initialize(
                 campaign_id=campaign_id,
                 faction_id=fid,
@@ -298,12 +295,14 @@ class FactionSimulationEngine:
         self, campaign_id: str, faction_repo: Any, world_repo: Any
     ) -> WorldTickResponse | None:
         """Rebuild the latest world tick response from the campaign world and faction aggregates."""
-        world = await world_repo.load_or_create(to_uuid(campaign_id))
+        world = await world_repo.load_or_create(
+            opaque_aggregate_id(campaign_id, field="campaign_id")
+        )
         latest = world.state.latest_tick
         if latest is None:
             return None
         faction_summaries = [
-            summarize_faction(await faction_repo.load(to_uuid(fid)))
+            summarize_faction(await faction_repo.load(opaque_aggregate_id(fid, field="fid")))
             for fid in latest.factions_simulated
         ]
         return WorldTickResponse(

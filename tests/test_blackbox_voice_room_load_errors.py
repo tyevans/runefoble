@@ -17,13 +17,14 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import create_aggregate_repository, get_event_store
+from runefoble_platform.identifiers import opaque_aggregate_id
 from voice_agent.coordinator import (
     VoiceRoomCoordinator,
     get_voice_room_coordinator,
     set_voice_room_coordinator,
 )
 from voice_agent.main import app as voice_app
-from voice_agent.room_aggregate import VoiceRoomAggregate, to_uuid
+from voice_agent.room_aggregate import VoiceRoomAggregate
 
 from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
@@ -40,7 +41,7 @@ def _connection_refused(*_args: object, **_kwargs: object) -> None:
 
 async def _seed_room_with_one_peer(session_id: str) -> None:
     repo = create_aggregate_repository(VoiceRoomAggregate)
-    agg = VoiceRoomAggregate(to_uuid(session_id))
+    agg = VoiceRoomAggregate(opaque_aggregate_id(session_id, field="session_id"))
     agg.join_peer(session_id, "peer-stored", DM_USER, "dm", None)
     await repo.save(agg)
 

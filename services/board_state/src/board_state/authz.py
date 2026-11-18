@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import re
 
-from board_state.dependencies import to_board_uuid
 from fastapi import HTTPException, status
 from runefoble_auth.factory import get_spicedb_client
+from runefoble_platform.identifiers import opaque_aggregate_id
 
 MANAGE_TRAPS = "manage_traps"
 VIEW_SECRET_LAYER = "view_secret_layer"
@@ -23,7 +23,7 @@ TOKEN_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_\-=+|/]{1,128}$")
 
 def board_resource_id(session_id: str) -> str:
     """Return the SpiceDB object id of the board for a session id."""
-    return str(to_board_uuid(session_id))
+    return str(opaque_aggregate_id(session_id, field="session_id"))
 
 
 async def can_on_board(user_id: str | None, session_id: str, permission: str) -> bool:

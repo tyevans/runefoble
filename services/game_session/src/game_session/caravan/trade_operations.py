@@ -13,11 +13,12 @@ from game_session.caravan.escrow import (
     filter_contracts,
     generate_default_refined_stock,
 )
-from game_session.caravan.models import CaravanLedgerState, _to_uuid
+from game_session.caravan.models import CaravanLedgerState
 from runefoble_events.events import (
     CaravanDispatched,
     CaravanTradeCompleted,
 )
+from runefoble_platform.identifiers import parse_uuid
 
 
 class CaravanTradeOperationsMixin:
@@ -40,8 +41,8 @@ class CaravanTradeOperationsMixin:
     ) -> str:
         """Dispatch a resource caravan between frontier settlement outposts."""
         cid = caravan_id or f"caravan_{uuid4().hex[:8]}"
-        wid = _to_uuid(self.state.shared_world_id or self.aggregate_id)
-        camp_id = _to_uuid(dispatched_by_campaign_id) or str(dispatched_by_campaign_id)
+        wid = parse_uuid(self.state.shared_world_id or self.aggregate_id, field="shared_world_id")
+        camp_id = parse_uuid(dispatched_by_campaign_id, field="campaign_id")
 
         self.create_event(
             CaravanDispatched,
@@ -69,7 +70,7 @@ class CaravanTradeOperationsMixin:
         if caravan["status"] == "completed":
             return caravan
 
-        wid = _to_uuid(self.state.shared_world_id or self.aggregate_id)
+        wid = parse_uuid(self.state.shared_world_id or self.aggregate_id, field="shared_world_id")
         delivered_cargo = dict(caravan["cargo"])
         effective_unlocked = (
             unlocked_stock
@@ -98,7 +99,7 @@ class CaravanTradeOperationsMixin:
         unlocked_stock: dict[str, Any] | None = None,
     ) -> None:
         """Deliver cargo from a completed mercenary caravan contract and update regional stock."""
-        wid = _to_uuid(self.state.shared_world_id or self.aggregate_id)
+        wid = parse_uuid(self.state.shared_world_id or self.aggregate_id, field="shared_world_id")
         effective_unlocked = (
             unlocked_stock
             if unlocked_stock is not None

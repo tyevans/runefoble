@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID, uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -17,12 +16,9 @@ from runefoble_events.events import (
     MercenaryBountyFulfilled,
     MercenaryBountyPosted,
 )
+from runefoble_platform.identifiers import parse_optional_uuid, parse_uuid
 
 _COMPLETABLE = (BountyStatus.ACCEPTED, BountyStatus.FULFILLED, BountyStatus.DISPUTED)
-
-
-def _to_u(val: Any) -> UUID:
-    return val if isinstance(val, UUID) else UUID(str(val))
 
 
 def _now() -> str:
@@ -72,12 +68,12 @@ class MercenaryBountyAggregate(DeclarativeAggregate[MercenaryBountyState]):
             self.state.payout = {"gold": ev.payout_gold, "items": list(ev.payout_items)}
 
     def post_bounty(self, session_id: str, campaign_id: str, **kw: Any) -> str:
-        bid = str(self.aggregate_id or uuid4())
+        bid = str(parse_uuid(self.aggregate_id, field="bounty_id"))
         sid = session_id or None
-        cid = _to_u(campaign_id) if campaign_id else None
+        cid = parse_optional_uuid(campaign_id, field="campaign_id")
         self.create_event(
             MercenaryBountyPosted,
-            aggregate_id=_to_u(bid),
+            aggregate_id=parse_uuid(bid, field="bounty_id"),
             bounty_id=bid,
             session_id=sid,
             campaign_id=cid,
@@ -93,7 +89,7 @@ class MercenaryBountyAggregate(DeclarativeAggregate[MercenaryBountyState]):
             raise ValueError("Creator cannot claim their own bounty")
         self.create_event(
             MercenaryBountyClaimed,
-            aggregate_id=_to_u(self.state.bounty_id or self.aggregate_id),
+            aggregate_id=parse_uuid(self.state.bounty_id or self.aggregate_id, field="bounty_id"),
             bounty_id=self.state.bounty_id,
             session_id=self.state.session_id or None,
             claimant_user_id=uid,
@@ -107,7 +103,7 @@ class MercenaryBountyAggregate(DeclarativeAggregate[MercenaryBountyState]):
     ) -> None:
         self.create_event(
             MercenaryBountyFulfilled,
-            aggregate_id=_to_u(self.state.bounty_id or self.aggregate_id),
+            aggregate_id=parse_uuid(self.state.bounty_id or self.aggregate_id, field="bounty_id"),
             bounty_id=self.state.bounty_id,
             session_id=self.state.session_id or None,
             proof=proof,

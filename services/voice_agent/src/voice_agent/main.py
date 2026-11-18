@@ -27,7 +27,6 @@ from voice_agent.dependencies import (
     _dispatch_voice_audio_conditioned,
     dsp_pipeline,
     platform_settings,
-    to_uuid,
 )
 from voice_agent.dependencies import (
     set_watcher_client as _dep_set_watcher_client,
@@ -159,5 +158,4 @@ __all__ = [
     "platform_settings",
     "set_event_bus",
     "set_watcher_client",
-    "to_uuid",
 ]

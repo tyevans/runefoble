@@ -5,8 +5,8 @@ from __future__ import annotations
 from fastapi import HTTPException
 from game_session.dependencies import get_spicedb_client
 from game_session.dependencies import repo as session_repo
-from game_session.minigame_rules import to_uuid
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.identifiers import opaque_aggregate_id
 
 
 async def check_session_participation(session_id: str, user_id: str) -> None:
@@ -20,7 +20,9 @@ async def check_session_participation(session_id: str, user_id: str) -> None:
         "session", str(session_id), "participate", "user", user_id
     )
     if not has_perm:
-        sess = await load_if_exists(session_repo, to_uuid(session_id))
+        sess = await load_if_exists(
+            session_repo, opaque_aggregate_id(session_id, field="session_id")
+        )
         if sess is not None and sess.state.campaign_id:
             has_perm = await spicedb.check_permission(
                 "campaign", str(sess.state.campaign_id), "play", "user", user_id

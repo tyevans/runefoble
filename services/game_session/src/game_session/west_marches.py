@@ -24,15 +24,7 @@ from runefoble_events.events import (
     SharedStrongholdUpgraded,
     SharedWorldCreated,
 )
-
-
-def _to_uuid(val: Any) -> UUID | None:
-    if not val:
-        return None
-    try:
-        return UUID(str(val))
-    except ValueError:
-        return None
+from runefoble_platform.identifiers import parse_uuid
 
 
 class SharedWorldState(BaseModel):
@@ -139,7 +131,7 @@ class SharedWorldAggregate(DeclarativeAggregate[SharedWorldState]):
         description: str = "",
         created_by: str = "system",
     ) -> None:
-        wid = _to_uuid(self.aggregate_id) or uuid4()
+        wid = parse_uuid(self.aggregate_id, field="aggregate_id")
         self.create_event(
             SharedWorldCreated,
             shared_world_id=wid,
@@ -155,8 +147,8 @@ class SharedWorldAggregate(DeclarativeAggregate[SharedWorldState]):
         party_name: str,
         registered_by: str = "guild_officer",
     ) -> None:
-        wid = _to_uuid(self.state.shared_world_id or self.aggregate_id)
-        cid = _to_uuid(campaign_id) or str(campaign_id)
+        wid = parse_uuid(self.state.shared_world_id or self.aggregate_id, field="shared_world_id")
+        cid = parse_uuid(campaign_id, field="campaign_id")
         self.create_event(
             CampaignRegisteredToSharedWorld,
             shared_world_id=wid,
@@ -178,8 +170,8 @@ class SharedWorldAggregate(DeclarativeAggregate[SharedWorldState]):
         metadata: dict[str, Any] | None = None,
     ) -> str:
         did = discovery_id or f"disc_{uuid4().hex[:10]}"
-        wid = _to_uuid(self.state.shared_world_id or self.aggregate_id)
-        cid = _to_uuid(discovered_by_campaign_id) or str(discovered_by_campaign_id)
+        wid = parse_uuid(self.state.shared_world_id or self.aggregate_id, field="shared_world_id")
+        cid = parse_uuid(discovered_by_campaign_id, field="campaign_id")
         self.create_event(
             CrossCampaignDiscoveryShared,
             shared_world_id=wid,
@@ -205,8 +197,8 @@ class SharedWorldAggregate(DeclarativeAggregate[SharedWorldState]):
         resources_contributed: dict[str, int] | None = None,
     ) -> str:
         oid = outpost_id or f"outpost_{uuid4().hex[:8]}"
-        wid = _to_uuid(self.state.shared_world_id or self.aggregate_id)
-        cid = _to_uuid(contributing_campaign_id) or str(contributing_campaign_id)
+        wid = parse_uuid(self.state.shared_world_id or self.aggregate_id, field="shared_world_id")
+        cid = parse_uuid(contributing_campaign_id, field="campaign_id")
         self.create_event(
             OutpostEstablished,
             shared_world_id=wid,
@@ -231,8 +223,8 @@ class SharedWorldAggregate(DeclarativeAggregate[SharedWorldState]):
         notice_id: str | None = None,
     ) -> str:
         nid = notice_id or f"notice_{uuid4().hex[:8]}"
-        wid = _to_uuid(self.state.shared_world_id or self.aggregate_id)
-        cid = _to_uuid(campaign_id) or str(campaign_id)
+        wid = parse_uuid(self.state.shared_world_id or self.aggregate_id, field="shared_world_id")
+        cid = parse_uuid(campaign_id, field="campaign_id")
         self.create_event(
             CommunalNoticePosted,
             shared_world_id=wid,

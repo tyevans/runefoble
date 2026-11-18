@@ -7,7 +7,7 @@ Governed by Hard Invariant 2 (eventsource-py) and Hard Invariant 6 (< 500 lines)
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -20,6 +20,7 @@ from runefoble_events.events import (
     SharedStrongholdUpgraded,
     SharedWorldCreated,
 )
+from runefoble_platform.identifiers import opaque_aggregate_id
 
 from campaign_lore.models import WestMarchesState
 from campaign_lore.west_marches_handlers import (
@@ -41,13 +42,6 @@ from campaign_lore.west_marches_prices import (
 
 class OutpostNotFoundError(LookupError):
     """Raised when a command names an outpost that the frontier does not hold. Answers 404."""
-
-
-def _to_uuid(val: Any) -> UUID | None:
-    try:
-        return UUID(str(val)) if val else None
-    except Exception:
-        return None
 
 
 class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
@@ -101,10 +95,8 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
 
     def record_discovery(self, **kwargs: Any) -> str:
         did = kwargs.get("discovery_id") or f"disc_{uuid4().hex[:10]}"
-        wid = _to_uuid(self._state.shared_world_id) or uuid4()
-        cid = _to_uuid(kwargs.get("discovered_by_campaign_id")) or str(
-            kwargs.get("discovered_by_campaign_id", "")
-        )
+        wid = opaque_aggregate_id(self._state.shared_world_id, field="shared_world_id")
+        cid = opaque_aggregate_id(kwargs.get("discovered_by_campaign_id"), field="campaign_id")
         self.create_event(
             CrossCampaignDiscoveryShared,
             **{
@@ -134,13 +126,13 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
     def contribute_gold(self, outpost_id: str, contributing_campaign_id: str, gold: int) -> None:
         """Credit gold to an outpost store. The matching debit is recorded by game_session."""
         oid = self.resolve_outpost_id(outpost_id)
-        wid = _to_uuid(self._state.shared_world_id) or uuid4()
+        wid = opaque_aggregate_id(self._state.shared_world_id, field="shared_world_id")
         cid = str(contributing_campaign_id)
         self.create_event(
             OutpostResourcesContributed,
             shared_world_id=wid,
             outpost_id=oid,
-            contributing_campaign_id=_to_uuid(cid) or cid,
+            contributing_campaign_id=opaque_aggregate_id(cid, field="contributing_campaign_id"),
             gold=gold,
         )
 
@@ -169,14 +161,14 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
             raise InsufficientOutpostResources(
                 "Insufficient outpost resources: " + "; ".join(problems)
             )
-        wid = _to_uuid(self._state.shared_world_id) or uuid4()
+        wid = opaque_aggregate_id(self._state.shared_world_id, field="shared_world_id")
         self.create_event(
             SharedStrongholdUpgraded,
             shared_world_id=wid,
             outpost_id=oid,
             facility_id=facility_id,
             new_tier=tier,
-            contributing_campaign_id=_to_uuid(cid) or cid,
+            contributing_campaign_id=opaque_aggregate_id(cid, field="contributing_campaign_id"),
             gold_spent=spent_gold,
             materials_spent=spent_mats,
         )
@@ -184,8 +176,8 @@ class WestMarchesAtlasAggregate(DeclarativeAggregate[WestMarchesState]):
 
     def post_communal_notice(self, **kwargs: Any) -> str:
         nid = kwargs.get("notice_id") or f"notice_{uuid4().hex[:8]}"
-        wid = _to_uuid(self._state.shared_world_id) or uuid4()
-        cid = _to_uuid(kwargs.get("campaign_id")) or str(kwargs.get("campaign_id", ""))
+        wid = opaque_aggregate_id(self._state.shared_world_id, field="shared_world_id")
+        cid = opaque_aggregate_id(kwargs.get("campaign_id"), field="campaign_id")
         self.create_event(
             CommunalNoticePosted,
             **{**kwargs, "notice_id": nid, "shared_world_id": wid, "campaign_id": cid},

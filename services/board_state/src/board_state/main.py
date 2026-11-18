@@ -12,7 +12,6 @@ from board_state.dependencies import (
     get_event_bus,
     repo,
     set_event_bus,
-    to_board_uuid,
 )
 from board_state.models import (
     ConfigureTerrainRequest,
@@ -113,5 +112,4 @@ __all__ = [
     "main",
     "repo",
     "set_event_bus",
-    "to_board_uuid",
 ]

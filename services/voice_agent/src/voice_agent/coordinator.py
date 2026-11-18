@@ -23,10 +23,11 @@ from runefoble_events.events import (
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_publish import publish_best_effort
 from runefoble_platform.event_sourcing import create_aggregate_repository
+from runefoble_platform.identifiers import opaque_aggregate_id
 from runefoble_platform.redis_bus import RedisStreamsEventBus
 from voice_agent.event_bus import get_event_bus
 from voice_agent.interruption import InterruptionResult, build_interruption
-from voice_agent.room_aggregate import PeerStreamState, VoiceRoomAggregate, to_uuid
+from voice_agent.room_aggregate import PeerStreamState, VoiceRoomAggregate
 from voice_agent.telemetry_view import PeerTelemetrySample, PeerTelemetryView
 from voice_agent.webrtc.adaptive_bitrate import AdaptiveBitrateRegulator, OpusCodecParameters
 from voice_agent.webrtc.models import RTCPReportRequest
@@ -70,7 +71,11 @@ class VoiceRoomCoordinator:
 
     async def _load_room(self, session_id: str) -> VoiceRoomAggregate:
         """Load the room from the event store on every call. No domain state stays in process."""
-        return await load_or_create(self._repository, to_uuid(session_id), VoiceRoomAggregate)
+        return await load_or_create(
+            self._repository,
+            opaque_aggregate_id(session_id, field="session_id"),
+            VoiceRoomAggregate,
+        )
 
     async def _commit(self, agg: VoiceRoomAggregate, event: Any) -> None:
         """Save the room before publishing its event. A failed save publishes nothing."""

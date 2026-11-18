@@ -7,12 +7,12 @@ from uuid import UUID
 
 from runefoble_platform.aggregate_loading import load_or_create
 from runefoble_platform.event_publish import publish_best_effort
+from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.dependencies import (
     STREAM_WORLD,
     get_event_bus,
     get_regional_unrest_repo,
 )
-from the_watcher.ids import to_uuid
 from the_watcher.turf_war.aggregate import RegionalUnrestAggregate
 from the_watcher.turf_war.models import (
     SkirmishSimulateRequest,
@@ -28,7 +28,7 @@ async def load_or_create_unrest(region_id: str, campaign_id: str = "") -> Region
     A store error propagates to the caller (TASK-0699).
     """
     repo = get_regional_unrest_repo()
-    agg_uuid = to_uuid(region_id)
+    agg_uuid = opaque_aggregate_id(region_id, field="region_id")
 
     def _fresh(aggregate_id: UUID) -> RegionalUnrestAggregate:
         agg = RegionalUnrestAggregate(aggregate_id=aggregate_id)

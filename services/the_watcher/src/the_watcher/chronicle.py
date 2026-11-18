@@ -3,7 +3,7 @@
 from typing import Any
 
 from runefoble_events.events import AbsenteeRecapGenerated
-from the_watcher.ids import to_uuid
+from runefoble_platform.identifiers import opaque_aggregate_id
 
 
 class ChronicleRecapEngine:
@@ -107,7 +107,7 @@ class ChronicleRecapEngine:
             items_acquired=items_list,
         )
 
-        aggregate_uuid = to_uuid(session_id)
+        aggregate_uuid = opaque_aggregate_id(session_id, field="session_id")
 
         return AbsenteeRecapGenerated(
             aggregate_id=aggregate_uuid,

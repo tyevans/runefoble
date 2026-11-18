@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from game_session.caravan.models import CaravanContractState, _to_uuid
+from game_session.caravan.models import CaravanContractState
 from game_session.caravan.transit import (
     calculate_contract_payout,
     validate_ambush_outcome,
@@ -21,6 +21,7 @@ from runefoble_events.events import (
     CaravanDispatched,
     CaravanTradeFulfilled,
 )
+from runefoble_platform.identifiers import parse_optional_uuid, parse_uuid
 
 
 class CaravanTransitOperationsMixin:
@@ -40,11 +41,13 @@ class CaravanTransitOperationsMixin:
         validate_can_dispatch(self.state.status)
         cid = self.state.contract_id or str(self.aggregate_id)
         caravan_cid = caravan_id or f"caravan_{uuid4().hex[:8]}"
-        wid = _to_uuid(self.state.shared_world_id) or str(self.state.shared_world_id)
+        wid = parse_uuid(self.state.shared_world_id, field="shared_world_id")
         camp_id = (
-            _to_uuid(dispatched_by_campaign_id)
-            or self.state.contractor_campaign_id
-            or self.state.posted_by_campaign_id
+            parse_optional_uuid(dispatched_by_campaign_id, field="campaign_id")
+            or parse_optional_uuid(
+                self.state.contractor_campaign_id, field="contractor_campaign_id"
+            )
+            or parse_optional_uuid(self.state.posted_by_campaign_id, field="posted_by_campaign_id")
         )
 
         self.create_event(
@@ -55,7 +58,7 @@ class CaravanTransitOperationsMixin:
             origin_outpost=self.state.origin_outpost,
             destination_outpost=self.state.destination_outpost,
             cargo=self.state.cargo,
-            dispatched_by_campaign_id=_to_uuid(camp_id) or str(camp_id),
+            dispatched_by_campaign_id=camp_id,
             transit_turns=self.state.transit_stages,
             status="in_transit",
         )
@@ -74,8 +77,8 @@ class CaravanTransitOperationsMixin:
         """Record the tactical combat outcome of a wilderness ambush or hazard."""
         validate_ambush_outcome(self.state.status, outcome)
         cid = self.state.contract_id or str(self.aggregate_id)
-        wid = _to_uuid(self.state.shared_world_id) or str(self.state.shared_world_id)
-        camp_id = _to_uuid(reported_by_campaign_id) or str(reported_by_campaign_id)
+        wid = parse_uuid(self.state.shared_world_id, field="shared_world_id")
+        camp_id = parse_optional_uuid(reported_by_campaign_id, field="campaign_id") or ""
 
         self.create_event(
             CaravanAmbushed,
@@ -95,7 +98,7 @@ class CaravanTransitOperationsMixin:
         """Deliver arriving caravan cargo, pay reward escrow, and fulfill mercenary contract."""
         validate_can_fulfill(self.state.status)
         cid = self.state.contract_id or str(self.aggregate_id)
-        wid = _to_uuid(self.state.shared_world_id) or str(self.state.shared_world_id)
+        wid = parse_uuid(self.state.shared_world_id, field="shared_world_id")
         payout = calculate_contract_payout(
             self.state.cargo,
             self.state.cargo_value,
@@ -116,8 +119,9 @@ class CaravanTransitOperationsMixin:
             cargo_value_delivered=payout["cargo_value_delivered"],
             reward_gold_paid=payout["reward_gold_paid"],
             reputation_awarded=payout["reputation_awarded"],
-            contractor_campaign_id=_to_uuid(self.state.contractor_campaign_id)
-            or str(self.state.contractor_campaign_id or ""),
+            contractor_campaign_id=parse_uuid(
+                self.state.contractor_campaign_id, field="campaign_id"
+            ),
             fulfilled_at=datetime.now(UTC).isoformat(),
             status="fulfilled",
         )

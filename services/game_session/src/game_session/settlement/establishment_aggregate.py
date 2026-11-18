@@ -6,7 +6,6 @@ Governed by ADR-0002, ADR-0007, ADR-0011, and Hard Invariant 2.
 from __future__ import annotations
 
 from typing import Any
-from uuid import uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -104,7 +103,7 @@ class EstablishmentAggregate(DeclarativeAggregate[EstablishmentState]):
         if operating_cost < 0:
             raise ValueError(f"Operating cost cannot be negative, got {operating_cost}")
 
-        eid = str(self.aggregate_id or uuid4())
+        eid = str(parse_uuid(self.aggregate_id, field="establishment_id"))
         self.create_event(
             EstablishmentConstructedEvent,
             aggregate_id=parse_uuid(eid, field="establishment_id"),

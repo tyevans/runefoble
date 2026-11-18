@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
-from uuid import uuid4
 
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
@@ -136,7 +135,7 @@ class NPCWorkerAggregate(DeclarativeAggregate[NPCWorkerState]):
         metadata: dict[str, Any] | None = None,
     ) -> str:
         """Assign worker to an establishment role and configure inventory."""
-        nid = str(self._state.npc_id or self.aggregate_id or uuid4())
+        nid = str(self._state.npc_id or parse_uuid(self.aggregate_id, field="npc_id"))
         raw_traits = (
             traits.model_dump() if isinstance(traits, BigFivePersonality) else (traits or {})
         )

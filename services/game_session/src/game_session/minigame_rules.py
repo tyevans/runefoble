@@ -7,27 +7,8 @@ from __future__ import annotations
 
 import random
 from typing import Any
-from uuid import NAMESPACE_DNS, UUID, uuid5
 
 from game_session.voice_client import condition_speech_text
-
-
-def to_uuid(val: Any) -> UUID:
-    """Coerce string/UUID to valid UUID."""
-    if isinstance(val, UUID):
-        return val
-    try:
-        return UUID(str(val))
-    except Exception:
-        return uuid5(NAMESPACE_DNS, str(val))
-
-
-def to_opt_uuid(val: Any) -> UUID | None:
-    """Coerce optional string/UUID to valid UUID."""
-    if not val:
-        return None
-    return to_uuid(val)
-
 
 INTOXICATION_STAGES: list[str] = ["sober", "tipsy", "drunk", "smashed", "blackout"]
 
@@ -154,7 +135,5 @@ __all__ = [
     "count_matching_dice",
     "resolve_liars_dice_challenge",
     "roll_dice_hand",
-    "to_opt_uuid",
-    "to_uuid",
     "validate_liars_dice_bid",
 ]

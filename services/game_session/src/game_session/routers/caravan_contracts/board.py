@@ -21,11 +21,11 @@ from game_session.routers.caravan_contracts.auth import (
     _check_high_tier_auth,
     _check_perm,
     _publish,
-    _to_uuid,
 )
 from game_session.settlement.auth.tokens import CallerId, get_principal
 from game_session.west_marches_models import PostCaravanContractRequest
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(
     dependencies=[Depends(get_principal)],
@@ -41,7 +41,7 @@ async def post_caravan_contract(
     req: PostCaravanContractRequest,
 ) -> dict[str, Any]:
     """Post an asynchronous mercenary escort contract to the shared world notice board."""
-    wid = _to_uuid(shared_world_id)
+    wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "shared_world", str(wid), "trade", caller_id)
     await _check_high_tier_auth(
@@ -91,7 +91,7 @@ async def list_caravan_contracts(
     min_reward: int | None = Query(default=None),
 ) -> dict[str, Any]:
     """Query available notice board contracts applying optional frontier filters."""
-    wid = _to_uuid(shared_world_id)
+    wid = parse_uuid(shared_world_id, field="shared_world_id")
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "shared_world", str(wid), "view", caller_id)
 
@@ -123,7 +123,10 @@ async def get_caravan_contract(
     contract_id: str,
 ) -> dict[str, Any]:
     """Retrieve details and manifest for a specific caravan escort contract."""
-    wid, cid = _to_uuid(shared_world_id), _to_uuid(contract_id)
+    wid, cid = (
+        parse_uuid(shared_world_id, field="shared_world_id"),
+        parse_uuid(contract_id, field="contract_id"),
+    )
     spicedb = get_spicedb_client()
     await _check_perm(spicedb, "caravan_contract", str(cid), "view", caller_id)
 

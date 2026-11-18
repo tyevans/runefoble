@@ -24,7 +24,6 @@ from game_session.settlement.haven.loaders import (
     build_settlement_projection,
     load_settlement,
     save_and_publish,
-    to_uuid,
 )
 from game_session.settlement.models import (
     FoundSettlementRequest,
@@ -32,6 +31,7 @@ from game_session.settlement.models import (
 )
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.identifiers import parse_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)])
 
@@ -103,7 +103,7 @@ async def list_campaign_settlements(
     results: list[SettlementProjectionResponse] = []
     repo = get_settlement_repository()
     for sid in sids:
-        agg = await load_if_exists(repo, to_uuid(sid))
+        agg = await load_if_exists(repo, parse_uuid(sid, field="settlement_id"))
         if agg is not None and agg.state.is_founded:
             results.append(await build_settlement_projection(agg))
     return results

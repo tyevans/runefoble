@@ -63,3 +63,4 @@ We adopt the following decisions. They apply to all new and existing refined tas
 - [`adr-0001-spicedb-zanzibar-object-authorization.md`](adr-0001-spicedb-zanzibar-object-authorization.md)
 - [`adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md`](adr-0014-bdd-gherkin-user-stories-and-playwright-e2e.md)
 - AGENTS.md, Hard Invariants 1, 2, and 7, and Definition of Ready rule 9.
+- [`docs/reference/identifiers-and-uuid-policy.md`](../../reference/identifiers-and-uuid-policy.md): UUID policy for client ids (TASK-0816).

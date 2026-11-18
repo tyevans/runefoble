@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from game_session.caravan.models import CaravanContractState, _to_uuid
+from game_session.caravan.models import CaravanContractState
 from game_session.caravan.transit import (
     validate_can_accept,
     validate_contract_post,
@@ -18,6 +18,7 @@ from runefoble_events.events import (
     CaravanContractAccepted,
     CaravanContractPosted,
 )
+from runefoble_platform.identifiers import parse_uuid
 
 
 class CaravanBoardOperationsMixin:
@@ -47,8 +48,8 @@ class CaravanBoardOperationsMixin:
         """Post a new asynchronous mercenary escort contract to the shared world notice board."""
         validate_contract_post(origin_outpost, destination_outpost, cargo, cargo_value)
         cid = str(self.aggregate_id)
-        wid = _to_uuid(shared_world_id) or str(shared_world_id)
-        camp_id = _to_uuid(posted_by_campaign_id) or str(posted_by_campaign_id)
+        wid = parse_uuid(shared_world_id, field="shared_world_id")
+        camp_id = parse_uuid(posted_by_campaign_id, field="campaign_id")
 
         self.create_event(
             CaravanContractPosted,
@@ -79,9 +80,9 @@ class CaravanBoardOperationsMixin:
     ) -> None:
         """Claim and accept an open caravan escort contract on behalf of an adventuring party."""
         validate_can_accept(self.state.status)
-        wid = _to_uuid(self.state.shared_world_id) or str(self.state.shared_world_id)
+        wid = parse_uuid(self.state.shared_world_id, field="shared_world_id")
         cid = self.state.contract_id or str(self.aggregate_id)
-        camp_id = _to_uuid(contractor_campaign_id) or str(contractor_campaign_id)
+        camp_id = parse_uuid(contractor_campaign_id, field="campaign_id")
 
         self.create_event(
             CaravanContractAccepted,

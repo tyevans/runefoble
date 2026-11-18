@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from runefoble_events.events import AbsencePenaltyApplied, StandInActionDecided
 from runefoble_platform.event_publish import publish_or_fail
+from runefoble_platform.identifiers import opaque_aggregate_id
 from runefoble_platform.stand_in_action import StandInAction
 from the_watcher.dependencies import (
     STREAM_WATCHER,
@@ -14,7 +15,6 @@ from the_watcher.dependencies import (
 )
 from the_watcher.engine_selection import load_watcher_ports
 from the_watcher.identity import CallerId, get_principal
-from the_watcher.ids import to_uuid
 from the_watcher.models import StandInRecapRequest, StandInRecapResponse, StandInRequest
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["stand_in"])
@@ -31,8 +31,8 @@ async def stand_in_act(caller_id: CallerId, req: StandInRequest) -> StandInActio
 
     # Publish events to Redis Streams
     bus = get_event_bus()
-    session_uuid = to_uuid(req.session_id)
-    campaign_uuid = to_uuid(req.campaign_id)
+    session_uuid = opaque_aggregate_id(req.session_id, field="session_id")
+    campaign_uuid = opaque_aggregate_id(req.campaign_id, field="campaign_id")
 
     action_event = StandInActionDecided(
         aggregate_id=session_uuid,

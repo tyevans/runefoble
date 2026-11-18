@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from runefoble_platform.aggregate_loading import load_if_exists
+from runefoble_platform.identifiers import opaque_aggregate_id
 from the_watcher.dependencies import (
     check_dm_authorization,
     get_campaign_world_repo,
@@ -22,7 +23,6 @@ from the_watcher.faction_models import (
 )
 from the_watcher.factions import FactionAggregate
 from the_watcher.identity import CallerId, get_principal
-from the_watcher.ids import to_uuid
 
 router = APIRouter(dependencies=[Depends(get_principal)], tags=["factions"])
 
@@ -65,7 +65,7 @@ async def create_faction(
     """Register and persist a new autonomous NPC faction within the campaign."""
     await require_campaign_permission(caller_id, campaign_id, "campaign.run_session")
     faction_id = f"faction-{uuid4().hex[:8]}"
-    agg_uuid = to_uuid(faction_id)
+    agg_uuid = opaque_aggregate_id(faction_id, field="faction_id")
     repo = get_faction_repo()
 
     agg = FactionAggregate(aggregate_id=agg_uuid)
@@ -152,7 +152,7 @@ async def get_faction(
     """Retrieve detailed aggregate state for a specific campaign faction."""
     await require_campaign_permission(caller_id, campaign_id, "campaign.view")
     repo = get_faction_repo()
-    agg = await load_if_exists(repo, to_uuid(faction_id))
+    agg = await load_if_exists(repo, opaque_aggregate_id(faction_id, field="faction_id"))
     if agg is None:
         raise HTTPException(status_code=404, detail="Faction not found")
     return FactionResponse(

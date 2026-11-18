@@ -6,7 +6,6 @@ Governed by ADR-0001, ADR-0003, ADR-0007, ADR-0013, and PRD-0024.
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
 
 from fastapi import HTTPException
 from game_session.dependencies import (
@@ -30,14 +29,7 @@ from game_session.settlement.models import (
 from game_session.settlement.settlement_aggregate import SettlementAggregate
 from runefoble_platform.aggregate_loading import load_if_exists
 from runefoble_platform.event_publish import publish_best_effort
-
-
-def to_uuid(val: Any) -> UUID:
-    """Convert value to UUID or raise 400 Bad Request."""
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
+from runefoble_platform.identifiers import parse_uuid
 
 
 async def save_and_publish(repo: Any, bus: Any, agg: Any) -> None:
@@ -53,7 +45,7 @@ async def load_settlement(sid: str, perm: str, uid: str | None) -> SettlementAgg
     """Load settlement aggregate and verify SpiceDB Zanzibar permissions."""
     repo = get_settlement_repository()
     try:
-        agg = await repo.load(to_uuid(sid))
+        agg = await repo.load(parse_uuid(sid, field="settlement_id"))
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Settlement '{sid}' not found") from e
     if not agg.state.is_founded:
@@ -70,7 +62,7 @@ async def load_establishment(eid: str, perm: str, uid: str | None) -> Establishm
     """Load establishment aggregate and verify SpiceDB Zanzibar permissions."""
     repo = get_establishment_repository()
     try:
-        agg = await repo.load(to_uuid(eid))
+        agg = await repo.load(parse_uuid(eid, field="establishment_id"))
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Establishment '{eid}' not found") from e
     if not agg.state.is_constructed:
@@ -90,7 +82,7 @@ async def build_settlement_projection(agg: SettlementAggregate) -> SettlementPro
     est_repo = get_establishment_repository()
     establishments: list[EstablishmentState] = []
     for eid in est_ids:
-        e_agg = await load_if_exists(est_repo, to_uuid(eid))
+        e_agg = await load_if_exists(est_repo, parse_uuid(eid, field="establishment_id"))
         if e_agg is not None and e_agg.state.is_constructed:
             establishments.append(e_agg.state)
 
@@ -118,5 +110,4 @@ __all__ = [
     "load_establishment",
     "load_settlement",
     "save_and_publish",
-    "to_uuid",
 ]

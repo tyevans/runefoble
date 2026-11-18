@@ -11,13 +11,7 @@ from character_sheet.crafting.recipes import CraftingState, find_matching_recipe
 from eventsource.domain.aggregate import DeclarativeAggregate
 from eventsource.domain.decorators import handles
 from runefoble_events.events import CraftingAttempted, CraftingMishapOccurred, CraftingSucceeded
-
-
-def _to_uuid(v: UUID | str) -> UUID | None:
-    try:
-        return UUID(str(v)) if v else None
-    except Exception:
-        return None
+from runefoble_platform.identifiers import opaque_optional_aggregate_id
 
 
 @dataclass(frozen=True)
@@ -154,7 +148,10 @@ class CraftingAggregate(DeclarativeAggregate[CraftingState]):
         risk_threshold: float = 0.50,
     ) -> CombineOutcome:
         """Combine reagents in crucible, evaluate volatile outcome, and record domain events."""
-        camp, sess = _to_uuid(campaign_id), _to_uuid(session_id)
+        camp, sess = (
+            opaque_optional_aggregate_id(campaign_id, field="campaign_id"),
+            opaque_optional_aggregate_id(session_id, field="session_id"),
+        )
         att, ev_cls, kw, outcome = CraftingEngine.resolve(
             character_id, reagents, catalyst, camp, sess, player_id, force_mishap, risk_threshold
         )

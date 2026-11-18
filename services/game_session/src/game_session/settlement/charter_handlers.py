@@ -6,7 +6,6 @@ Governed by ADR-0002, ADR-0007, ADR-0011, and Hard Invariant 2.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
-from uuid import uuid4
 
 from eventsource.domain.decorators import handles
 from game_session.settlement.facility_prices import (
@@ -77,7 +76,7 @@ class CharterHandlersMixin:
 
     def charter(self, name: str, shared_world_id: str, **kw: Any) -> str:
         """Legacy charter for frontier havens."""
-        sid = str(self.aggregate_id or uuid4())
+        sid = str(parse_uuid(self.aggregate_id, field="settlement_id"))
         p = {"shared_world_id": str(shared_world_id), "name": name, "level": 1}
         p |= {"defense_rating": kw.get("defense_rating", 10)}
         p |= {"coordinates": kw.get("coordinates") or {}}

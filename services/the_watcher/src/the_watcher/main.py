@@ -30,7 +30,6 @@ from the_watcher.dependencies import (
     set_event_bus,
 )
 from the_watcher.engine_selection import WatcherEngineSettings, load_watcher_ports
-from the_watcher.ids import to_uuid
 from the_watcher.models import (
     CandidateTarget,
     CompoundActionNode,
@@ -155,5 +154,4 @@ __all__ = [
     "get_event_bus",
     "main",
     "set_event_bus",
-    "to_uuid",
 ]

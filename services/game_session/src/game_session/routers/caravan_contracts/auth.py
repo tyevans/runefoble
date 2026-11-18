@@ -22,13 +22,6 @@ from game_session.events import STREAM_WEST_MARCHES
 from runefoble_platform.event_publish import publish_or_fail
 
 
-def _to_uuid(val: Any) -> UUID:
-    try:
-        return val if isinstance(val, UUID) else UUID(str(val))
-    except (TypeError, ValueError) as e:
-        raise HTTPException(status_code=400, detail=f"Invalid UUID: {val}") from e
-
-
 async def _check_perm(spicedb, res_type: str, res_id: str, perm: str, user_id: str) -> None:
     """Deny unless the verified caller holds `perm` on the resource (schema name only)."""
     if not await spicedb.check_permission(res_type, str(res_id), perm, "user", user_id):
@@ -84,6 +77,5 @@ __all__ = [
     "_load_contract",
     "_publish",
     "_set_contractor",
-    "_to_uuid",
     "_val_err",
 ]

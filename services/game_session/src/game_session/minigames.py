@@ -18,8 +18,6 @@ from game_session.minigame_rules import (
     compute_intoxication_progression,
     resolve_liars_dice_challenge,
     roll_dice_hand,
-    to_opt_uuid,
-    to_uuid,
     validate_liars_dice_bid,
 )
 from game_session.minigame_tables.models import MinigameTableState
@@ -31,6 +29,7 @@ from runefoble_events.events import (
     MinigameStarted,
     MinigameTurnTaken,
 )
+from runefoble_platform.identifiers import opaque_aggregate_id, opaque_optional_aggregate_id
 
 
 class TavernGameState(BaseModel):
@@ -66,7 +65,9 @@ class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameSta
     requires_creation_event = False
 
     def __init__(self, aggregate_id: Any = None, **kwargs: Any) -> None:
-        agg_uuid = to_uuid(aggregate_id) if aggregate_id else uuid4()
+        agg_uuid = (
+            opaque_aggregate_id(aggregate_id, field="aggregate_id") if aggregate_id else uuid4()
+        )
         super().__init__(aggregate_id=agg_uuid, **kwargs)
         if self._state is None:
             self._state = TavernGameState(game_id=str(aggregate_id or agg_uuid))
@@ -152,9 +153,9 @@ class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameSta
 
         self.create_event(
             MinigameStarted,
-            game_id=to_uuid(game_id),
-            session_id=to_opt_uuid(session_id),
-            campaign_id=to_opt_uuid(campaign_id),
+            game_id=opaque_aggregate_id(game_id, field="game_id"),
+            session_id=opaque_optional_aggregate_id(session_id, field="session_id"),
+            campaign_id=opaque_optional_aggregate_id(campaign_id, field="campaign_id"),
             game_type=game_type,
             wager_gold=wager_gold,
             initiator_id=initiator_id,
@@ -178,8 +179,8 @@ class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameSta
         payload = {"quantity": quantity, "face": face, "bidder": actor_id}
         self.create_event(
             MinigameTurnTaken,
-            game_id=to_uuid(self.state.game_id),
-            session_id=to_opt_uuid(self.state.session_id),
+            game_id=opaque_aggregate_id(self.state.game_id, field="game_id"),
+            session_id=opaque_optional_aggregate_id(self.state.session_id, field="session_id"),
             turn_number=self.state.turn_number,
             actor_id=actor_id,
             action_type="bid",
@@ -203,8 +204,8 @@ class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameSta
 
         self.create_event(
             MinigameTurnTaken,
-            game_id=to_uuid(self.state.game_id),
-            session_id=to_opt_uuid(self.state.session_id),
+            game_id=opaque_aggregate_id(self.state.game_id, field="game_id"),
+            session_id=opaque_optional_aggregate_id(self.state.session_id, field="session_id"),
             turn_number=self.state.turn_number,
             actor_id=challenger_id,
             action_type="challenge",
@@ -214,8 +215,8 @@ class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameSta
         )
         self.create_event(
             MinigameEnded,
-            game_id=to_uuid(self.state.game_id),
-            session_id=to_opt_uuid(self.state.session_id),
+            game_id=opaque_aggregate_id(self.state.game_id, field="game_id"),
+            session_id=opaque_optional_aggregate_id(self.state.session_id, field="session_id"),
             winner_id=resolution["winner_id"],
             loser_id=resolution["loser_id"],
             wager_gold=self.state.wager_gold,
@@ -253,8 +254,8 @@ class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameSta
 
         self.create_event(
             IntoxicationLevelChanged,
-            game_id=to_uuid(self.state.game_id),
-            session_id=to_opt_uuid(self.state.session_id),
+            game_id=opaque_aggregate_id(self.state.game_id, field="game_id"),
+            session_id=opaque_optional_aggregate_id(self.state.session_id, field="session_id"),
             character_id=character_id,
             intoxication_level=new_stage,
             constitution_dc=con_dc,
@@ -280,8 +281,8 @@ class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameSta
             )
             self.create_event(
                 MinigameEnded,
-                game_id=to_uuid(self.state.game_id),
-                session_id=to_opt_uuid(self.state.session_id),
+                game_id=opaque_aggregate_id(self.state.game_id, field="game_id"),
+                session_id=opaque_optional_aggregate_id(self.state.session_id, field="session_id"),
                 winner_id=opponent,
                 loser_id=character_id,
                 wager_gold=self.state.wager_gold,
@@ -295,4 +296,4 @@ class TavernGameAggregate(TableCommandsMixin, DeclarativeAggregate[TavernGameSta
         return res
 
 
-__all__ = ["TavernGameAggregate", "TavernGameState", "to_opt_uuid", "to_uuid"]
+__all__ = ["TavernGameAggregate", "TavernGameState"]
