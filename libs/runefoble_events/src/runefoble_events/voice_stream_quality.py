@@ -29,6 +29,26 @@ class VoiceStreamQualityDegradedEvent(BaseRunefobleEvent):
     detected_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
+@register_event("runefoble.events.voice.stream_quality_measured")
+class VoiceStreamQualityMeasured(BaseRunefobleEvent):
+    """Emitted for every RTCP receiver report. It records the measured stream quality."""
+
+    suppress_event_type_warning: ClassVar[bool] = True
+    aggregate_type: str = "VoiceRoom"
+    aggregate_id: UUID = Field(default_factory=uuid4)
+    event_type: str = "runefoble.events.voice.stream_quality_measured"
+    session_id: str
+    peer_id: str
+    user_id: str | None = None
+    packet_loss: float = 0.0
+    rtt_ms: float = 0.0
+    jitter_ms: float = 0.0
+    is_degraded: bool = False
+    severity: str = "nominal"
+    detection_latency_ms: float = 0.0
+    measured_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+
+
 @register_event("runefoble.events.voice.stream_codec_adapted")
 class VoiceStreamCodecAdaptedEvent(BaseRunefobleEvent):
     """Emitted when stream bitrate or Opus codec parameters are dynamically adjusted."""
@@ -55,4 +75,5 @@ class VoiceStreamCodecAdaptedEvent(BaseRunefobleEvent):
 __all__ = [
     "VoiceStreamCodecAdaptedEvent",
     "VoiceStreamQualityDegradedEvent",
+    "VoiceStreamQualityMeasured",
 ]

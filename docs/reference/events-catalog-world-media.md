@@ -136,6 +136,35 @@ Part of the [Events Schema](events-schema.md). Each event identifier in this pag
   - `codec_mode`: String ("standard", "mobile_optimized", "cellular_constrained", "ultra_low")
   - `reason`: String
   - `adapted_at`: String (ISO-8601 UTC timestamp)
+- **`VoiceStreamQualityMeasured`**: Saved in the room aggregate for every RTCP receiver report. It is not published (`runefoble.events.voice.stream_quality_measured`).
+  - `session_id`: String
+  - `peer_id`: String
+  - `user_id`: Optional[String]
+  - `packet_loss`: Float (0.0 to 1.0)
+  - `rtt_ms`: Float
+  - `jitter_ms`: Float
+  - `is_degraded`: Boolean
+  - `severity`: String ("nominal", "degraded", "severe")
+  - `detection_latency_ms`: Float
+  - `measured_at`: String (ISO-8601 UTC timestamp)
+- **`VoicePlaybackStarted`**: Saved in the room aggregate when TTS narration starts. It is not published (`runefoble.events.voice.playback_started`).
+  - `session_id`: String
+  - `playback_id`: String
+  - `original_text`: String
+  - `duration_ms`: Float
+  - `started_at`: Float (epoch timestamp)
+- **`VoicePlaybackAttenuated`**: Saved in the room aggregate when player speech starts a 20 ms soft fade of active TTS narration. It is not published (`runefoble.events.voice.playback_attenuated`).
+  - `session_id`: String
+  - `playback_id`: String
+  - `speaker_id`: String
+  - `speaker_name`: String
+  - `cutoff_position_ms`: Float
+  - `remaining_narration_text`: String
+  - `fade_ms`: Float (20.0)
+- **`VoicePlaybackStopped`**: Saved in the room aggregate when TTS narration ends. It is not published (`runefoble.events.voice.playback_stopped`).
+  - `session_id`: String
+  - `playback_id`: String
+  - `reason`: String ("player_barge_in")
 - **`NeuralSpeechBargeInDetectedEvent`**: Emitted when high-precision neural VAD detects vocalization onset during active TTS playback (`runefoble.events.voice.barge_in_detected`).
   - `session_id`: String
   - `speaker_id`: String

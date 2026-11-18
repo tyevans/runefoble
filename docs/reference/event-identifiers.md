@@ -219,10 +219,14 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.voice.mute_toggled` | `VoicePeerMuteToggled` | `runefoble_events.voice` |
 | `runefoble.events.voice.peer_joined` | `VoicePeerJoined` | `runefoble_events.voice` |
 | `runefoble.events.voice.peer_left` | `VoicePeerLeft` | `runefoble_events.voice` |
+| `runefoble.events.voice.playback_attenuated` | `VoicePlaybackAttenuated` | `runefoble_events.voice_playback` |
+| `runefoble.events.voice.playback_started` | `VoicePlaybackStarted` | `runefoble_events.voice_playback` |
+| `runefoble.events.voice.playback_stopped` | `VoicePlaybackStopped` | `runefoble_events.voice_playback` |
 | `runefoble.events.voice.profile_adapted` | `MobileAudioProfileAdapted` | `runefoble_events.voice` |
 | `runefoble.events.voice.speech_interrupted` | `VoiceSpeechInterrupted` | `runefoble_events.voice` |
 | `runefoble.events.voice.stream_codec_adapted` | `VoiceStreamCodecAdaptedEvent` | `runefoble_events.voice_stream_quality` |
 | `runefoble.events.voice.stream_quality_degraded` | `VoiceStreamQualityDegradedEvent` | `runefoble_events.voice_stream_quality` |
+| `runefoble.events.voice.stream_quality_measured` | `VoiceStreamQualityMeasured` | `runefoble_events.voice_stream_quality` |
 | `runefoble.events.voice.transcription_failed` | `VoiceTranscriptionFailed` | `runefoble_events.voice` |
 | `runefoble.events.voice.tts_stream_attenuated` | `TTSStreamAttenuatedEvent` | `runefoble_events.voice_barge_in` |
 | `runefoble.events.watcher.action_approved` | `WatcherActionApproved` | `runefoble_events.watcher_events.actions` |

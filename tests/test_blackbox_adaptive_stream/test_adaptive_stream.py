@@ -25,7 +25,6 @@ from runefoble_events.voice_stream_quality import (
     VoiceStreamQualityDegradedEvent,
 )
 from voice_agent.main import app
-from voice_agent.routers.stream_diagnostics import reset_diagnostics
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.spicedb_factory import grant_voice_session
@@ -36,11 +35,9 @@ pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
 @pytest.fixture(autouse=True)
 def clean_environment(default_redis_event_bus, mock_bus):
-    """Reset the stream diagnostics. The harness supplies the bus."""
+    """Supply the bus. Stream state lives in each session's room aggregate, so sessions stay apart."""
     bus = default_redis_event_bus
-    reset_diagnostics()
     yield {"redis": mock_bus, "bus": bus}
-    reset_diagnostics()
 
 
 @pytest.fixture

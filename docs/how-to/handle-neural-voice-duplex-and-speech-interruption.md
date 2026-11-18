@@ -359,3 +359,27 @@ When the engine cannot start, exits with an error, times out, or returns no audi
 ### Test Setup
 
 Blackbox tests inject a deterministic fake (`tests/helpers/fixture_synthesizer.py`) through the `fake_speech_synthesizer` fixture. The fake renders 40 ms of tone per character, so audio length follows the text. Failure tests set `RUNEFOBLE_VOICE_TTS_BINARY` to a missing path or to a script that exits with an error. See `tests/test_blackbox_voice_tts.py`.
+
+## 11. Playback and Room State Ownership (TASK-0577)
+
+The voice service owns the state of each voice room. The state includes the peers, the active TTS playback, and the stream quality of each peer. The state is stored in the room aggregate in the event store. No replica keeps this state in memory. A replica reads the state through the public frontdoor.
+
+### Playback Lifecycle
+
+1. `POST /api/v1/voice/duplex/playback/start` or the WebSocket frame `playback_start` starts a playback. The service saves `VoicePlaybackStarted`.
+2. `GET /api/v1/voice/duplex/status/{session_id}` returns `playback_active`. It reads the saved state.
+3. Player speech that the barge-in detector confirms stops the playback. The service saves `VoicePlaybackAttenuated` and `VoicePlaybackStopped`. Then it publishes `voice.speech.interrupted`.
+
+The playback events are saved only. They are not published. Use `voice.speech.interrupted` to react to a barge-in.
+
+### Failure Behaviour
+
+If the event store cannot load or save the room, the route answers `503`. The service does not publish an event for a command that failed to save.
+
+### Test Setup
+
+Blackbox tests start a playback through the HTTP route, build a new coordinator to model a restart, and then read the status through the same route. See `tests/test_blackbox_voice_duplex_state.py`.
+
+### Peer Telemetry Is Not Stored
+
+Peer audio telemetry (`webrtc_telemetry`) is not domain state. The service does not save it to the event store. The service keeps the latest sample for each peer in a bounded, in-process view. A restart clears the view, and each replica sees only the samples that reach it. Each sample also feeds OpenTelemetry instruments (`voice.telemetry.updates`, `voice.telemetry.latency`). The platform does not yet configure a meter provider, so these instruments record nothing until one is set up.

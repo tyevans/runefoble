@@ -13,7 +13,11 @@ from voice_agent.webrtc.models import QualityMetrics, RTCPReceiverReport
 
 
 class NetworkQualityMonitor:
-    """Detects packet loss (>5%) and RTT spikes from RTCP receiver reports within 100ms."""
+    """Detects packet loss (>5%) and RTT spikes from RTCP receiver reports within 100ms.
+
+    The monitor holds thresholds only. Each report is evaluated on its own. The room aggregate
+    stores the result (TASK-0577).
+    """
 
     def __init__(
         self,
@@ -26,11 +30,9 @@ class NetworkQualityMonitor:
         self.severe_loss_threshold = severe_loss_threshold
         self.rtt_threshold_ms = rtt_threshold_ms
         self.severe_rtt_threshold_ms = severe_rtt_threshold_ms
-        self._states: dict[tuple[str, str], QualityMetrics] = {}
 
     def analyze_report(
         self,
-        session_id: str,
         peer_id: str,
         report: RTCPReceiverReport | dict[str, Any],
     ) -> QualityMetrics:
@@ -66,27 +68,7 @@ class NetworkQualityMonitor:
             detection_latency_ms=round(duration_ms, 3),
             analyzed_at=time.time(),
         )
-        self._states[(session_id, peer_id)] = metrics
         return metrics
-
-    def get_peer_quality(self, session_id: str, peer_id: str) -> QualityMetrics | None:
-        """Retrieve latest quality metrics for a given peer in a session."""
-        return self._states.get((session_id, peer_id))
-
-    def get_session_qualities(self, session_id: str) -> dict[str, QualityMetrics]:
-        """Retrieve latest quality metrics for all peers in a session."""
-        return {pid: m for (sid, pid), m in self._states.items() if sid == session_id}
-
-    def reset(self, session_id: str | None = None, peer_id: str | None = None) -> None:
-        """Clear cached metrics for specific peer, session, or all."""
-        if session_id and peer_id:
-            self._states.pop((session_id, peer_id), None)
-        elif session_id:
-            keys = [k for k in self._states if k[0] == session_id]
-            for k in keys:
-                self._states.pop(k, None)
-        else:
-            self._states.clear()
 
 
 __all__ = ["NetworkQualityMonitor", "QualityMetrics", "RTCPReceiverReport"]
