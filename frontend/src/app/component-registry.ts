@@ -25,6 +25,7 @@ const BUNDLES = {
   soundscape: () => import('@runefoble/soundscape-ui'),
   campaignLore: () => import('@runefoble/campaign-lore-ui'),
   campaignAnalytics: () => import('@runefoble/campaign-analytics-ui'),
+  assetForge: () => import('@runefoble/asset-forge-ui'),
 } satisfies Record<string, BundleLoader>;
 
 type BundleName = keyof typeof BUNDLES;
@@ -39,6 +40,7 @@ export const VIEW_BUNDLES: Record<AppActiveView, BundleName[]> = {
   'campaign-characters': ['gameSession', 'characterSheet'],
   'campaign-codex': ['gameSession', 'campaignLore'],
   'campaign-analytics': ['gameSession', 'campaignAnalytics'],
+  'campaign-forge': ['gameSession', 'assetForge'],
   'characters': ['characterSheet'],
   'character-sheet': ['characterSheet'],
   'session-lobby': SESSION_BUNDLES,

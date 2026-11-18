@@ -34,6 +34,7 @@ export const VIEW_CONTROLLERS: Record<AppActiveView, ViewController> = {
   'campaign-characters': hub,
   'campaign-codex': hub,
   'campaign-analytics': hub,
+  'campaign-forge': hub,
   'characters': { render: renderRoster, load: loadRoster, switcher: true },
   'character-sheet': { render: renderCharacterSheet, load: loadCharacterSheet, switcher: true },
   'session-lobby': { render: renderLobby, load: loadLobbyData, switcher: true },

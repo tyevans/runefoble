@@ -28,7 +28,7 @@ interface RouteDefinition {
 export const STANDARD_ROUTES = [
   '#/login', '#/register', '#/campaigns', '#/campaigns/:campaignId',
   '#/campaigns/:campaignId/characters', '#/campaigns/:campaignId/codex',
-  '#/campaigns/:campaignId/analytics', '#/campaigns/:campaignId/lobby/:sessionId',
+  '#/campaigns/:campaignId/analytics', '#/campaigns/:campaignId/forge', '#/campaigns/:campaignId/lobby/:sessionId',
   '#/campaigns/:campaignId/sessions/:sessionId', '#/characters', '#/characters/:characterId', '#/profile',
 ] as const;
 
@@ -145,6 +145,7 @@ export class Router {
     if (pattern === '#/campaigns/:campaignId/characters') return [{ label: 'Campaigns', path: '#/campaigns' }, { label: cTitle(), path: `#/campaigns/${params.campaignId}` }, { label: 'Party', path, active: true }];
     if (pattern === '#/campaigns/:campaignId/codex') return [{ label: 'Campaigns', path: '#/campaigns' }, { label: cTitle(), path: `#/campaigns/${params.campaignId}` }, { label: 'Codex & Atlas', path, active: true }];
     if (pattern === '#/campaigns/:campaignId/analytics') return [{ label: 'Campaigns', path: '#/campaigns' }, { label: cTitle(), path: `#/campaigns/${params.campaignId}` }, { label: 'Chronicle & Stats', path, active: true }];
+    if (pattern === '#/campaigns/:campaignId/forge') return [{ label: 'Campaigns', path: '#/campaigns' }, { label: cTitle(), path: `#/campaigns/${params.campaignId}` }, { label: 'Asset Forge', path, active: true }];
     if (pattern === '#/campaigns/:campaignId/lobby/:sessionId') {
       const lTitle = this.resolveTitle('lobby', params.sessionId) || this.resolveTitle('session', params.sessionId) || `Lobby ${params.sessionId}`;
       return [{ label: 'Campaigns', path: '#/campaigns' }, { label: cTitle(), path: `#/campaigns/${params.campaignId}` }, { label: lTitle, path, active: true }];

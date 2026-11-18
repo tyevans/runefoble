@@ -14,6 +14,7 @@ export type AppActiveView =
   | 'campaign-characters'
   | 'campaign-codex'
   | 'campaign-analytics'
+  | 'campaign-forge'
   | 'characters'
   | 'character-sheet'
   | 'session-lobby'
@@ -31,6 +32,7 @@ export function resolveActiveView(route: Pick<MatchedRoute, 'pattern'> | null): 
   if (pat === `${CAMPAIGN}/characters`) return 'campaign-characters';
   if (pat === `${CAMPAIGN}/codex`) return 'campaign-codex';
   if (pat === `${CAMPAIGN}/analytics`) return 'campaign-analytics';
+  if (pat === `${CAMPAIGN}/forge`) return 'campaign-forge';
   if (pat.startsWith(CAMPAIGN)) return 'campaign-detail';
   if (pat === '#/characters') return 'characters';
   if (pat.startsWith('#/characters/')) return 'character-sheet';
