@@ -135,6 +135,8 @@ All tokens are relocated atomically, and `BattlemapSwitchedEvent` is emitted.
 
 Vendored in `@runefoble/board-state-ui` per **ADR-0004** and **ADR-0013**:
 
+The App Shell mounts both elements in the live tabletop view for campaign managers. See the App Shell mount section in [`interact-with-tactile-board-and-ghost-previews.md`](interact-with-tactile-board-and-ghost-previews.md).
+
 ### `<runefoble-dm-trap-controls>`
 Provides DM-exclusive HUD controls to toggle the hidden grid layer, select trap presets (Spike Pit, Glyph of Warding, Tripwire), adjust trigger radiuses, and arm cells:
 - **Properties**:

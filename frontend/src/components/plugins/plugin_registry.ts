@@ -102,7 +102,6 @@ export function registerDefaultPlugins(reg: PluginRegistry = pluginRegistry, can
   for (const p of base) if (!reg.getPlugin(p.id)) reg.register(p);
   const dm: PluginDefinition[] = [
     { id: 'default-dm-whisper-bar', name: 'DM Whisper Bar', slot: 'sidebar-tool', tag: 'runefoble-dm-whisper-bar', order: 20 },
-    { id: 'default-dm-trap-controls', name: 'DM Trap Controls', slot: 'sidebar-tool', tag: 'runefoble-dm-trap-controls', order: 30 },
   ];
   for (const p of dm) {
     if (canManage) { if (!reg.getPlugin(p.id)) reg.register(p); }
