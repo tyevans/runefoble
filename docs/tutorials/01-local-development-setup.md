@@ -42,6 +42,11 @@ This command builds each service from `deployments/docker/python-service.Dockerf
 and tags it `runefoble/<service>:0.1.0`. It then runs `kind load docker-image` for each tag.
 Helm references these tags, so run this step before `make helm-deploy`.
 
+
+> **Event store.** Services use PostgreSQL by default (`RUNEFOBLE_EVENT_STORE_BACKEND=postgresql`).
+> To run a service outside the cluster with no PostgreSQL, set `RUNEFOBLE_EVENT_STORE_BACKEND=memory`
+> by name. The service then keeps events only in its own process. Staging and production refuse `memory`.
+
 ## Step 4: Validate and Deploy the Helm Chart
 Lint and preview the rendered Kubernetes manifests:
 ```bash

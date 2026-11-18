@@ -39,3 +39,12 @@ We adopt `eventsource-py` as the foundational event sourcing framework across al
 - **Positive**: High resilience against concurrency conflicts via optimistic locking.
 - **Positive**: Unified developer experience across all bounded contexts using a cohesive ubiquitous language.
 - **Negative**: Developers must maintain strict event immutability and schema versioning when updating event definitions.
+
+## Amendment (2026-11-17, TASK-0707)
+Decision point 4 changes. ADR-0015 forbids silent fallbacks, so the event store is no longer chosen
+by environment type:
+- `RUNEFOBLE_EVENT_STORE_BACKEND` selects the store. The default is `postgresql`.
+- `memory` selects `InMemoryEventStore`. Only the test configuration and a developer who sets it by
+  name use it.
+- A service in a `staging` or `production` environment refuses `memory` at start-up with
+  `EventStoreInitializationError`.
