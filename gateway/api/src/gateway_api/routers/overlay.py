@@ -43,7 +43,6 @@ from gateway_api.session_access import may_publish_frame
 from gateway_api.spectator_source import party_tokens, read_session_source
 from gateway_api.upstream_errors import UpstreamRejectedError
 from gateway_api.websocket_auth import admit_gateway_websocket
-from runefoble_auth.errors import AuthzUnavailableError
 from runefoble_auth.principal import VerifiedPrincipal
 from runefoble_auth.websocket import (
     action_authorizer,
