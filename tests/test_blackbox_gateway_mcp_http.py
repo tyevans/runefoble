@@ -69,7 +69,7 @@ STATIC_TOOLS = {
 # listing never calls an upstream service.
 UPSTREAM_ENV = {
     "BOARD_STATE_URL": "http://127.0.0.1:9",
-    "CHARACTER_SHEET_URL": "http://127.0.0.1:9",
+    "RUNEFOBLE_CHARACTER_SHEET_URL": "http://127.0.0.1:9",
     "GAME_SESSION_URL": "http://127.0.0.1:9",
     "RULES_COMPENDIUM_URL": "http://127.0.0.1:9",
     "THE_WATCHER_URL": "http://127.0.0.1:9",

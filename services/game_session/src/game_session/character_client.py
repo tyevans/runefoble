@@ -11,10 +11,10 @@ error. They must not substitute a value (ADR-0015 b).
 
 from __future__ import annotations
 
-import os
 from uuid import UUID
 
 import httpx
+from runefoble_platform.config import PlatformSettings
 from runefoble_platform.service_client import ServiceClient, UpstreamError
 from runefoble_platform.service_credential import expected_service_credential
 from runefoble_platform.stand_in_guardrails import StandInGuardrailPolicy
@@ -30,7 +30,7 @@ class CharacterSheetUnavailableError(Exception):
 
 
 def _base_url() -> str:
-    url = os.environ.get(CHARACTER_SHEET_URL_ENV, "").strip()
+    url = (PlatformSettings().character_sheet_url or "").strip()
     if not url:
         raise CharacterSheetUnavailableError(f"{CHARACTER_SHEET_URL_ENV} is not configured")
     return url.rstrip("/")

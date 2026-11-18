@@ -92,7 +92,7 @@ def test_campaign_filter_is_applied_by_character_sheet(
 
 def test_owner_down_returns_503_on_create(trusted_ws_issuer, monkeypatch):
     """With character_sheet unreachable, create fails with 503. It never answers from memory."""
-    monkeypatch.setenv("CHARACTER_SHEET_URL", "http://127.0.0.1:9")
+    monkeypatch.setenv("RUNEFOBLE_CHARACTER_SHEET_URL", "http://127.0.0.1:9")
     headers = _auth(trusted_ws_issuer, "user_down")
 
     with TestClient(app) as client:

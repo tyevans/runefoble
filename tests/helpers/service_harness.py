@@ -290,7 +290,7 @@ def trusted_ws_issuer() -> Iterator[SigningTestIssuer]:
 def character_sheet_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
     """Serve character_sheet as a live loopback upstream with a fresh event store (TASK-0585).
 
-    The gateway reaches it over HTTP through CHARACTER_SHEET_URL. The aggregate repository
+    The gateway reaches it over HTTP through RUNEFOBLE_CHARACTER_SHEET_URL. The aggregate repository
     is replaced for this test, so characters from earlier tests do not leak in. The URL is
     set before the gateway lifespan runs, so build the gateway client after this fixture.
     """
@@ -305,7 +305,7 @@ def character_sheet_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
     fresh_repo = create_aggregate_repository(CharacterAggregate, event_store=InMemoryEventStore())
     monkeypatch.setattr(sheet_deps, "repo", fresh_repo)
     with serve(sheet_app) as url:
-        monkeypatch.setenv("CHARACTER_SHEET_URL", url)
+        monkeypatch.setenv("RUNEFOBLE_CHARACTER_SHEET_URL", url)
         yield url
 
 

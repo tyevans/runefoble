@@ -29,7 +29,7 @@ _CAMPAIGN: dict[str, str] = {}
 def character_service() -> Iterator[str]:
     """Run character_sheet as a real HTTP service for the gateway tools."""
     with pytest.MonkeyPatch.context() as env, serve(character_app) as url:
-        env.setenv("CHARACTER_SHEET_URL", url)
+        env.setenv("RUNEFOBLE_CHARACTER_SHEET_URL", url)
         yield url
 
 
@@ -297,7 +297,7 @@ async def test_character_tools_return_error_when_character_service_returns_503(
     character_id = create_character(sheet_http, "Valeros", "Fighter", max_hp=45)
     arguments = {**arguments, "character_id": character_id}
     with serve(unavailable_app(503)) as down_url:
-        monkeypatch.setenv("CHARACTER_SHEET_URL", down_url)
+        monkeypatch.setenv("RUNEFOBLE_CHARACTER_SHEET_URL", down_url)
         result = await call_tool(tool, arguments)
 
     assert result.isError is True
@@ -310,7 +310,7 @@ async def test_modify_character_hp_returns_error_when_character_service_is_unrea
 ):
     """An unreachable character_sheet is a tool error, not a substitute HP value."""
     character_id = create_character(sheet_http, "Valeros", "Fighter", max_hp=45)
-    monkeypatch.setenv("CHARACTER_SHEET_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_CHARACTER_SHEET_URL", closed_port_url())
     result = await call_tool("modify_character_hp", {"character_id": character_id, "delta": -5})
 
     assert result.isError is True

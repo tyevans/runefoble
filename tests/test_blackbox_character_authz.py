@@ -233,7 +233,7 @@ def test_gateway_sub_resource_returns_503_when_owner_is_unreachable(
     """With the Character Sheet URL pointing at nothing, the gateway returns 503, not a memory copy."""
     headers = _auth(trusted_ws_issuer, "player_owner")
     char_id = _create_sheet_character(sheet, trusted_ws_issuer, "player_owner")
-    monkeypatch.setenv("CHARACTER_SHEET_URL", closed_port_url())
+    monkeypatch.setenv("RUNEFOBLE_CHARACTER_SHEET_URL", closed_port_url())
 
     with TestClient(gateway_app) as client:
         res_health = client.post(

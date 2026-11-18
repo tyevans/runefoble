@@ -39,7 +39,8 @@ EXPECTED_SERVICE_URLS: dict[str, dict[str, str]] = {
     "CAMPAIGN_ANALYTICS_URL": {
         "gateway-api": "http://campaign-analytics:8011",
     },
-    "CHARACTER_SHEET_URL": {
+    "RUNEFOBLE_CHARACTER_SHEET_URL": {
+        "game-session": "http://character-sheet:8003",
         "gateway-api": "http://character-sheet:8003",
         "gateway-mcp": "http://character-sheet:8003",
     },

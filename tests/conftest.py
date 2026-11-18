@@ -11,7 +11,7 @@ os.environ.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-only-spicedb-key"
 # point at a closed loopback port, so no test reaches a real service by accident.
 for _upstream in (
     "BOARD_STATE_URL",
-    "CHARACTER_SHEET_URL",
+    "RUNEFOBLE_CHARACTER_SHEET_URL",
     "GAME_SESSION_URL",
     "RULES_COMPENDIUM_URL",
     "THE_WATCHER_URL",
