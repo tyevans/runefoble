@@ -6,7 +6,7 @@
 |---|---|---|
 | `/` | `frontend:80` | Lit + Vite web application |
 | `/api` | `gateway-api:8000` | REST API gateway (`/api/v1/...`) |
-| `/ws` | `gateway-api:8000` | WebSocket gateway (`/ws/session/{id}`, `/ws/voice/{id}`, `/ws/campaigns/{id}`, `/ws/minigames/{id}`, and other `/ws/...` routes). Traefik forwards the HTTP upgrade without extra annotations. `/ws/session/{id}` needs `session.observe` (close code 4403 otherwise) and relays only inside its own session. The minigame table sockets (`/ws/minigames/{id}` and `/ws/establishments/{id}/tables/{table_id}`) are relayed to `game_session`, which verifies the bearer subprotocol and owns the table (TASK-0592). Clients authenticate as described in [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md) |
+| `/ws` | `gateway-api:8000` | WebSocket gateway (`/ws/session/{id}`, `/ws/voice/{id}`, `/ws/campaigns/{id}`, `/ws/minigames/{id}`, and other `/ws/...` routes). Traefik forwards the HTTP upgrade without extra annotations. `/ws/session/{id}` needs `session.observe` (close code 4403 otherwise), relays only inside its own session, and relays inbound frames only from callers with `session.participate` (see [Session WebSocket inbound frames](#session-websocket-inbound-frames)). The minigame table sockets (`/ws/minigames/{id}` and `/ws/establishments/{id}/tables/{table_id}`) are relayed to `game_session`, which verifies the bearer subprotocol and owns the table (TASK-0592). Clients authenticate as described in [Authenticate with Zitadel OIDC](../how-to/authenticate-with-zitadel-oidc.md) |
 | `/healthz` | `gateway-api:8000` | Gateway health report. It probes each downstream service and reports its status. |
 | `/docs`, `/swagger-ui` | `swagger-ui:8080` | Unified Swagger UI aggregating all OpenAPI specs |
 | Host `auth.localhost`, path `/` | `zitadel:8080` | Self-hosted Zitadel identity provider. Zitadel has its own host because it serves only its root path |
@@ -407,6 +407,16 @@ The gateway reads one variable for each probed service. The Helm chart renders t
 ## Gateway WebSocket Authentication
 
 Close codes on every WebSocket route: `1008` means a missing or invalid token. `4403` means an authorization refusal (the token is valid but lacks the object permission). Every gateway WebSocket route (`/ws/*` and `/overlay/ws/*`) takes the caller's identity only from the `runefoble.bearer.<jwt>` subprotocol. The client offers `runefoble.v1` and `runefoble.bearer.<jwt>`. The gateway accepts the handshake with `runefoble.v1`. A handshake without a verified token closes with code `1008` before accept. Identity in the query string (`user_id`, `token`) or in headers (`X-User-Id`, `Authorization`) is refused. A token that is valid but lacks the object permission is refused. `/ws/campaigns/{id}` admits it, sends a `PERMISSION_DENIED` frame, and closes with `4403`. The session sockets (`/ws/session`, `/ws/voice`, `/ws/mobile-companion`, `/ws/overlay`, `/ws/spectator`) need `session.observe` and close with `4403` before accept. They close with `1011` when SpiceDB is unavailable. Overlay and spectator clients that send frames need `session.participate`. `POST /api/v1/mobile/companion/{id}/whisper` and `/turn-alert` need `session.control`. `POST /api/v1/watcher/speak-and-act` needs `session.participate`. All of these return `403` when refused.
+
+### Session WebSocket inbound frames (TASK-0810)
+
+`/ws/session/{id}` admits every `session.observe` caller. Observers receive frames only. Each inbound frame is checked in this order:
+
+1. The text must be a JSON object with a kind. The kind is `type`, or `action` when there is no `type`. Otherwise the gateway sends `INVALID_FRAME` and keeps the socket open.
+2. The kind must be one of: `session_started`, `player_readiness`, `player_stand_in`, `token_action`, `aoe_placed`, `spell_vfx`, `confirm_ghost`, `token_moved`, `dice_rolled`, `turn_advanced`, `dm_whisper`. Otherwise the gateway sends `UNKNOWN_FRAME` and does not relay the frame.
+3. The caller must hold `session.participate` on the session. Otherwise the gateway sends `PERMISSION_DENIED` (with the `action` field set to the kind) and does not relay the frame. A SpiceDB outage sends `AUTHZ_UNAVAILABLE` and does not relay the frame.
+
+A frame that passes all three checks goes to every socket of the session, sender included. The overlay socket (`/ws/overlay/{id}`) uses the same participate check (`may_publish_frame` in `gateway_api/session_access.py`).
 
 ## Voice Agent Identity (TASK-0530)
 

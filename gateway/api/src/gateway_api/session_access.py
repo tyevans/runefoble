@@ -7,9 +7,10 @@ Socket admission uses `runefoble_auth.websocket.admit_websocket` with `action_au
 
 from __future__ import annotations
 
-from fastapi import HTTPException
+from fastapi import HTTPException, WebSocket
 from gateway_api.auth import get_spicedb_client
 from runefoble_auth.errors import AuthzUnavailableError
+from runefoble_auth.websocket import send_socket_error
 
 
 async def has_session_permission(session_id: str, user_id: str, permission: str) -> bool:
@@ -33,4 +34,31 @@ async def require_session_permission(session_id: str, user_id: str, permission: 
         raise HTTPException(status_code=403, detail={"error": "permission_denied"})
 
 
-__all__ = ["has_session_permission", "require_session_permission"]
+async def may_publish_frame(
+    websocket: WebSocket, session_id: str, user_id: str, action: str
+) -> bool:
+    """Return whether an inbound socket frame may reach the room (TASK-0810).
+
+    Frames that change what other viewers see need `session.participate`. A refused caller gets
+    a `PERMISSION_DENIED` frame, and the frame is not relayed. A SpiceDB outage gets
+    `AUTHZ_UNAVAILABLE`, and the frame is not relayed either. Both the session and the overlay
+    sockets call this check.
+    """
+    try:
+        allowed = await has_session_permission(session_id, user_id, "participate")
+    except AuthzUnavailableError:
+        await send_socket_error(
+            websocket, "AUTHZ_UNAVAILABLE", "Authorization unavailable", action=action
+        )
+        return False
+    if not allowed:
+        await send_socket_error(
+            websocket,
+            "PERMISSION_DENIED",
+            f"Action '{action}' needs session.participate",
+            action=action,
+        )
+    return allowed
+
+
+__all__ = ["has_session_permission", "may_publish_frame", "require_session_permission"]
