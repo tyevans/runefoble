@@ -6,8 +6,8 @@ routes and return what it stores. They hold no board data of their own.
 
 from typing import TYPE_CHECKING, Any
 
-from gateway_mcp.clients import ServiceClient, ServiceRejectedError
-from gateway_mcp.clients.caller import caller_bearer
+from gateway_mcp.caller import caller_bearer
+from gateway_mcp.owning_services import OwningServices, ServiceRejectedError
 from mcp.server.fastmcp import Context
 from pydantic import BaseModel
 
@@ -47,7 +47,7 @@ def _combat_view(combat: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-async def _fetch_or_create_board(client: ServiceClient, session_id: str) -> dict[str, Any]:
+async def _fetch_or_create_board(client: OwningServices, session_id: str) -> dict[str, Any]:
     """Return the session board, creating it when board_state has none for the session.
 
     Only a 404 from board_state means "no board yet". Every other error propagates.
@@ -64,7 +64,7 @@ async def _fetch_or_create_board(client: ServiceClient, session_id: str) -> dict
 
 async def inspect_tactical_board(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
     """Retrieve all tokens, coordinates, and grid dimensions for the active session."""
-    board = await ServiceClient(bearer=caller_bearer(ctx)).get_board(session_id)
+    board = await OwningServices(bearer=caller_bearer(ctx)).get_board(session_id)
     return _board_summary(board)
 
 
@@ -76,7 +76,7 @@ async def move_board_token(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Move a token to target coordinates (x, y) on the tactical map."""
-    result = await ServiceClient(bearer=caller_bearer(ctx)).move_token(
+    result = await OwningServices(bearer=caller_bearer(ctx)).move_token(
         session_id,
         token_id,
         to_x=to_x,
@@ -100,7 +100,7 @@ async def query_encounter_state(encounter_id: str, ctx: Context | None = None) -
     Round and turn order come from game_session. Tokens, grid, and hazards come from
     board_state. The encounter id is the game session id.
     """
-    client = ServiceClient(bearer=caller_bearer(ctx))
+    client = OwningServices(bearer=caller_bearer(ctx))
     board = await client.get_board(encounter_id)
     combat = await client.get_combat_state(encounter_id)
     return {**_board_summary(board), **_combat_view(combat)}
@@ -116,7 +116,7 @@ async def create_encounter(
     The session id is the encounter id. game_session starts combat first, so an
     unknown or unavailable session creates no board.
     """
-    client = ServiceClient(bearer=caller_bearer(ctx))
+    client = OwningServices(bearer=caller_bearer(ctx))
     enemy_list = enemies or []
     combat = await client.start_combat(
         session_id,

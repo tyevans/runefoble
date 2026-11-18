@@ -14,8 +14,8 @@ from uuid import uuid4
 import httpx
 import pytest
 from fastapi import FastAPI, Request
-from gateway_mcp.clients import ServiceClient
-from gateway_mcp.clients.caller import caller_bearer
+from gateway_mcp.caller import caller_bearer
+from gateway_mcp.owning_services import OwningServices
 from gateway_mcp.server import mcp
 from mcp.shared.exceptions import McpError
 from mcp.types import CallToolResult
@@ -387,13 +387,13 @@ async def test_blackbox_monster_stat_block_compendium_down_is_tool_error(
 
 @pytest.mark.asyncio
 async def test_blackbox_service_client_forwards_bearer_to_upstream():
-    """Verify the shared client sends the caller bearer and no other credential."""
+    """Verify the owning-service calls send the caller bearer and no other credential."""
     from gateway_mcp.settings import GatewayMcpSettings
 
     with serve(_echo_authorization_app()) as board_url:
         settings = GatewayMcpSettings(board_state_url=board_url)
-        with_token = await ServiceClient(settings, bearer="token-abc").get_board("s-1")
-        without_token = await ServiceClient(settings).get_board("s-1")
+        with_token = await OwningServices(settings, bearer="token-abc").get_board("s-1")
+        without_token = await OwningServices(settings).get_board("s-1")
 
     assert with_token["authorization"] == "Bearer token-abc"
     assert without_token["authorization"] is None

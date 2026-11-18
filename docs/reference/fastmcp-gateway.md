@@ -7,8 +7,8 @@ The FastMCP Gateway (`gateway/mcp`) exposes Runefoble tabletop actions, spatial 
 The gateway server entrypoint (`gateway/mcp/src/gateway_mcp/server.py`) operates as a lightweight orchestration shell (< 100 lines) delegating domain capabilities to modular sub-packages:
 
 gateway/mcp/src/gateway_mcp/
-├── clients/               # HTTP clients for owning services (board_state, character_sheet, game_session, rules_compendium)
-│   └── services.py        # Typed async client and ServiceError types
+├── caller.py              # Reads the MCP caller's bearer token from the request
+├── owning_services.py     # Route helpers for owning services (board_state, character_sheet, game_session, rules_compendium, the_watcher) over the shared service client
 ├── dynamic/               # Dynamic tool registry package (< 140 lines per module)
 │   ├── auth.py            # SpiceDB Zanzibar authorization guard & relationship sync
 │   ├── builder.py         # Signature builder and callable adapter
@@ -74,7 +74,7 @@ All tools are registered onto FastMCP and callable by agents or action orchestra
 
 ### Upstream Service Calls
 
-Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway/mcp/src/gateway_mcp/clients/services.py`:
+Board, encounter, and character tools hold no board, combat, or character state. They call the owning services over HTTP through `gateway/mcp/src/gateway_mcp/owning_services.py`. That module calls the shared `ServiceClient` from `runefoble_platform.service_client`, so each call sends the service credential and the W3C trace context (see [Service Client](service-client.md)). Each call runs in a client span. Agent-supplied path segments are built with `path(...)`:
 
 | Setting | Environment Variable | Default | Owning Service |
 |---|---|---|---|

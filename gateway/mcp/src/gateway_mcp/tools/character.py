@@ -7,7 +7,7 @@ own and return no substitute values when the service fails.
 
 from typing import TYPE_CHECKING, Any
 
-from gateway_mcp.clients import ServiceClient
+from gateway_mcp.owning_services import OwningServices
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 async def inspect_inventory(character_id: str) -> dict[str, Any]:
     """Inspect a character's equipped items and carried inventory."""
-    sheet = await ServiceClient().get_character(character_id)
+    sheet = await OwningServices().get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "equipped": sheet["equipment"],
@@ -25,7 +25,7 @@ async def inspect_inventory(character_id: str) -> dict[str, Any]:
 
 async def get_character_sheet(character_id: str) -> dict[str, Any]:
     """Retrieve complete character sheet details including stats, hit points, equipment, and conditions."""
-    sheet = await ServiceClient().get_character(character_id)
+    sheet = await OwningServices().get_character(character_id)
     return {
         "character_id": sheet["character_id"],
         "name": sheet["name"],
@@ -48,7 +48,7 @@ async def apply_absentee_penalty(
     character_id: str, penalty_type: str, explanation: str
 ) -> dict[str, Any]:
     """Impose a session miss penalty (e.g. 'drunk', 'foolishness', 'cowardice') on an absent player's PC."""
-    sheet = await ServiceClient().apply_penalty(
+    sheet = await OwningServices().apply_penalty(
         character_id, penalty_type=penalty_type, description=explanation
     )
     return {
@@ -66,7 +66,7 @@ async def cast_spell(
     spell_level: int = 1,
 ) -> dict[str, Any]:
     """Cast a spell from a spell slot. Use spell_level 0 for a cantrip. The character sheet tracks slot expenditure."""
-    sheet = await ServiceClient().cast_spell(
+    sheet = await OwningServices().cast_spell(
         character_id, spell_name=spell_name, slot_level=spell_level
     )
     return {
@@ -85,7 +85,7 @@ async def modify_character_hp(
     reason: str = "combat action",
 ) -> dict[str, Any]:
     """Modify a character or token's hit points (negative for damage, positive for healing)."""
-    sheet = await ServiceClient().change_health(
+    sheet = await OwningServices().change_health(
         character_id, delta=delta, source=f"{reason} [{damage_type}]"
     )
     return {
@@ -129,7 +129,7 @@ async def _impose_condition(
 ) -> dict[str, Any]:
     """Send a condition to character_sheet and return the conditions it now stores."""
     name = condition.lower().strip()
-    sheet = await ServiceClient().apply_condition(
+    sheet = await OwningServices().apply_condition(
         character_id, condition=name, duration_rounds=duration_rounds, source=source
     )
     return {
