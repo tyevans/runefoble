@@ -1,69 +1,73 @@
-{{- $services := list
-  (dict "name" "gateway-api" "config" .Values.services.gatewayApi)
-  (dict "name" "the-watcher" "config" .Values.services.theWatcher)
-  (dict "name" "board-state" "config" .Values.services.boardState)
-  (dict "name" "character-sheet" "config" .Values.services.characterSheet)
-  (dict "name" "game-session" "config" .Values.services.gameSession)
-  (dict "name" "voice-agent" "config" .Values.services.voiceAgent)
-  (dict "name" "campaign-lore" "config" .Values.services.campaignLore)
-  (dict "name" "rules-compendium" "config" .Values.services.rulesCompendium)
--}}
-
 {{- /*
-  Cross-service URLs. Each key is an env var. Its URL uses the target's service port.
-  `consumers` lists the containers that receive the key. Keys render in sorted order.
+  One ConfigMap (when configMap is set), Deployment and Service for every entry in .Values.services
+  that does not set ownTemplate. The entry key in kebab-case is the Kubernetes name. Per-service
+  differences are keys of the entry (see the services map in values.yaml).
 */ -}}
-{{- $serviceUrls := dict
-  "RUNEFOBLE_WATCHER_URL" (dict "url" (printf "http://the-watcher:%v" .Values.services.theWatcher.port) "consumers" (list "game-session" "voice-agent" "gateway-api"))
-  "RUNEFOBLE_VOICE_AGENT_URL" (dict "url" (printf "http://voice-agent:%v" .Values.services.voiceAgent.port) "consumers" (list "game-session" "gateway-api"))
-  "RUNEFOBLE_BOARD_STATE_URL" (dict "url" (printf "http://board-state:%v" .Values.services.boardState.port) "consumers" (list "gateway-api"))
-  "RUNEFOBLE_SOUNDSCAPE_URL" (dict "url" (printf "http://soundscape:%v" .Values.services.soundscape.port) "consumers" (list "gateway-api"))
-  "RUNEFOBLE_CAMPAIGN_LORE_URL" (dict "url" (printf "http://campaign-lore:%v" .Values.services.campaignLore.port) "consumers" (list "gateway-api"))
-  "RUNEFOBLE_CAMPAIGN_ANALYTICS_URL" (dict "url" (printf "http://campaign-analytics:%v" .Values.services.campaignAnalytics.port) "consumers" (list "gateway-api"))
-  "RUNEFOBLE_CHARACTER_SHEET_URL" (dict "url" (printf "http://character-sheet:%v" .Values.services.characterSheet.port) "consumers" (list "game-session" "gateway-api"))
-  "RUNEFOBLE_GAME_SESSION_URL" (dict "url" (printf "http://game-session:%v" .Values.services.gameSession.port) "consumers" (list "gateway-api" "campaign-lore"))
-  "RUNEFOBLE_RULES_COMPENDIUM_URL" (dict "url" (printf "http://rules-compendium:%v" .Values.services.rulesCompendium.port) "consumers" (list "gateway-api"))
-  "RUNEFOBLE_ASSET_FORGE_URL" (dict "url" (printf "http://asset-forge:%v" .Values.services.assetForge.port) "consumers" (list "gateway-api"))
--}}
-{{- with .Values.services.inferenceWorker }}
-{{- $_ := set $serviceUrls "RUNEFOBLE_INFERENCE_URL" (dict "url" (printf "http://inference-worker:%v" .port) "consumers" (list "the-watcher")) }}
+{{- range $key, $svc := .Values.services }}
+{{- if not $svc.ownTemplate }}
+{{- $name := kebabcase $key }}
+{{- if $svc.configMap }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-config
+  labels:
+    app: {{ $name }}
+data:
+  {{- toYaml $svc.configMap | nindent 2 }}
 {{- end }}
-
-{{- range $services }}
-{{- $svcName := .name }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .name }}
+  name: {{ $name }}
   labels:
-    app: {{ .name }}
+    app: {{ $name }}
 spec:
-  replicas: {{ .config.replicas | default 1 }}
+  replicas: {{ $svc.replicas | default 1 }}
   selector:
     matchLabels:
-      app: {{ .name }}
+      app: {{ $name }}
   template:
     metadata:
       labels:
-        app: {{ .name }}
+        app: {{ $name }}
     spec:
       containers:
-        - name: {{ .name }}
-          image: {{ .config.image }}
+        - name: {{ $name }}
+          image: {{ $svc.image }}
           ports:
-            - containerPort: {{ .config.port }}
+            - containerPort: {{ $svc.port }}
+          {{- with $svc.configMap }}
+          envFrom:
+            - configMapRef:
+                name: {{ $name }}-config
+          {{- end }}
           env:
             {{- include "runefoble.secretEnv" (dict "root" $ "name" "POSTGRES_PASSWORD" "key" "postgres-password") | nindent 12 }}
             {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SPICEDB_PRESHARED_KEY" "key" "spicedb-preshared-key") | nindent 12 }}
+            {{- if $svc.siloCredentials }}
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SILO_ACCESS_KEY" "key" "silo-access-key") | nindent 12 }}
+            {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SILO_SECRET_KEY" "key" "silo-secret-key") | nindent 12 }}
+            {{- end }}
+            {{- if $svc.serviceCredential }}
+            {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
+            {{- end }}
             - name: RUNEFOBLE_DATABASE_URL
-              value: "postgresql+asyncpg://{{ $.Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/{{ $.Values.postgres.database }}"
+              value: "{{ $svc.databaseDriver | default "postgresql+asyncpg" }}://{{ $.Values.postgres.username }}:$(POSTGRES_PASSWORD)@postgres:5432/{{ $.Values.postgres.database }}"
+            {{- if or (not (hasKey $svc "eventStore")) $svc.eventStore }}
             - name: RUNEFOBLE_EVENT_STORE_BACKEND
               value: "postgresql"
+            {{- end }}
+            {{- if or (not (hasKey $svc "environment")) $svc.environment }}
             - name: RUNEFOBLE_ENVIRONMENT
               value: {{ $.Values.global.environment | quote }}
+            {{- end }}
+            {{- if or (not (hasKey $svc "siloEndpoint")) $svc.siloEndpoint }}
             - name: RUNEFOBLE_SILO_ENDPOINT
               value: "silo:{{ $.Values.silo.port }}"
+            {{- end }}
             {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
             - name: RUNEFOBLE_SPICEDB_ENDPOINT
               value: "spicedb:{{ $.Values.spicedb.grpcPort }}"
@@ -75,66 +79,64 @@ spec:
               value: "{{ $.Values.observability.enabled }}"
             - name: RUNEFOBLE_OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://otel-collector:{{ $.Values.observability.otelCollector.grpcPort }}"
-            {{- range $envName, $entry := $serviceUrls }}
-            {{- if has $svcName $entry.consumers }}
-            - name: {{ $envName }}
-              value: {{ $entry.url | quote }}
-            {{- end }}
-            {{- end }}
-            {{- range $name, $value := .config.env }}
+            {{- include "runefoble.serviceUrlEnv" (dict "root" $ "consumer" $name) | trim | nindent 12 }}
+            {{- range $envName, $value := $svc.env }}
             {{- if $value }}
-            - name: {{ $name }}
+            - name: {{ $envName }}
               value: {{ $value | quote }}
             {{- end }}
             {{- end }}
-            {{- if has .name (list "gateway-api" "the-watcher" "board-state" "character-sheet" "game-session" "rules-compendium" "campaign-lore") }}
-            {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
-            {{- end }}
-            {{- with .config.embeddingApiKeySecret }}
+            {{- with $svc.embeddingApiKeySecret }}
             - name: RUNEFOBLE_EMBEDDING_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ . }}
                   key: api-key
             {{- end }}
-          {{- if eq .name "voice-agent" }}
-            - name: RUNEFOBLE_VOICE_STT_MODEL_SIZE
-              value: {{ .config.sttModelSize | quote }}
-            - name: RUNEFOBLE_VOICE_STT_MODEL_DIR
-              value: {{ .config.modelCache.mountPath | quote }}
-            - name: RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED
-              value: "false"
+          {{- with $svc.readinessPath }}
           readinessProbe:
             httpGet:
-              path: /healthz
-              port: {{ .config.port }}
+              path: {{ . }}
+              port: {{ $svc.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
+          {{- end }}
+          {{- with $svc.livenessPath }}
+          livenessProbe:
+            httpGet:
+              path: {{ . }}
+              port: {{ $svc.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- end }}
+          {{- with $svc.modelCache }}
           volumeMounts:
             - name: model-cache
-              mountPath: {{ .config.modelCache.mountPath | quote }}
+              mountPath: {{ .mountPath | quote }}
           {{- end }}
-      {{- if eq .name "voice-agent" }}
+      {{- with $svc.podSecurityContext }}
       securityContext:
-        fsGroup: 10001
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $svc.modelCache }}
       volumes:
         - name: model-cache
           persistentVolumeClaim:
-            claimName: voice-agent-model-cache
+            claimName: {{ $name }}-model-cache
       {{- end }}
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .name }}
+  name: {{ $name }}
   labels:
-    app: {{ .name }}
+    app: {{ $name }}
 spec:
   type: ClusterIP
   ports:
-    - port: {{ .config.port }}
-      targetPort: {{ .config.port }}
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
   selector:
-    app: {{ .name }}
+    app: {{ $name }}
+{{- end }}
 {{- end }}

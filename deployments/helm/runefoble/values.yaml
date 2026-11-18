@@ -149,9 +149,8 @@ silo:
   image: cgr.dev/chainguard/minio@sha256:7618b82bba99aadd77fcf59eb6cfd89b4b8b8e01ac796c474d57a1c1abf17e79
   port: 9000
   consolePort: 9001
-  buckets:
-    - runefoble-assets
-    - runefoble-recordings
+  # The chart creates no buckets. Create runefoble-assets and runefoble-recordings after Silo starts
+  # (docs/reference/platform-services.md).
 
 # Identity & Authentication (Zitadel self-hosted)
 zitadel:
@@ -236,75 +235,96 @@ swaggerUI:
   enabled: true
   image: swaggerapi/swagger-ui:v5.17.14
   port: 8080
-  urls:
-    - name: "Unified API Gateway"
-      url: "http://gateway-api:8000/openapi.json"
-    - name: "The Watcher AI Engine"
-      url: "http://the-watcher:8001/openapi.json"
-    - name: "Board State Engine"
-      url: "http://board-state:8002/openapi.json"
-    - name: "Character Sheet Service"
-      url: "http://character-sheet:8003/openapi.json"
-    - name: "Game Session Service"
-      url: "http://game-session:8004/openapi.json"
-    - name: "Voice Agent Service"
-      url: "http://voice-agent:8005/openapi.json"
-    - name: "Campaign Lore Service"
-      url: "http://campaign-lore:8006/openapi.json"
-    - name: "Rules Compendium Service"
-      url: "http://rules-compendium:8007/openapi.json"
-    - name: "Asset Forge Service"
-      url: "http://asset-forge:8008/openapi.json"
-    - name: "Soundscape Service"
-      url: "http://soundscape:8009/openapi.json"
-    - name: "Audience Studio Service"
-      url: "http://audience-studio:8010/openapi.json"
-    - name: "Campaign Analytics Service"
-      url: "http://campaign-analytics:8011/openapi.json"
-    - name: "Inference Worker Service"
-      url: "http://inference-worker:8100/openapi.json"
-    - name: "Gateway MCP Tool Registry"
-      url: "http://gateway-mcp:8012/openapi.json"
+  # Entries come from the services map: every service with swaggerName is listed.
 
-# Services
+# Services. This map is the single service catalogue. The chart renders every entry (except the
+# two that set ownTemplate) into a Deployment and a Service named after the key in kebab-case.
+# The same entry gives the port, the Swagger UI row (swaggerName), and the cross-service URL
+# (urlEnv on the target, consumers lists the containers that receive it).
+#
+# Per-service keys:
+#   image, replicas, port        Container image, replica count, container and Service port.
+#   swaggerName                  Title in the Swagger UI hub. Omit to leave the service out.
+#   urlEnv, consumers            Env var that holds http://<name>:<port> on each consumer.
+#   env                          Plain env vars. Empty values are not rendered.
+#   serviceCredential            true: the service reads RUNEFOBLE_SERVICE_CREDENTIAL (ADR-0015 e).
+#   siloCredentials              true: the service reads the Silo access and secret keys.
+#   siloEndpoint, eventStore,    Default true. Set false when the service never had the variable.
+#   environment
+#   databaseDriver               SQLAlchemy URL driver. Default postgresql+asyncpg.
+#   configMap                    Keys of the <name>-config ConfigMap that is loaded with envFrom.
+#   readinessPath, livenessPath  HTTP probe paths on the service port.
+#   modelCache, podSecurityContext  Volume for model files, and the pod security context.
 services:
   gatewayApi:
+    swaggerName: "Unified API Gateway"
     image: runefoble/gateway-api:0.1.0
     replicas: 1
     port: 8000
+    serviceCredential: true
   theWatcher:
+    swaggerName: "The Watcher AI Engine"
     image: runefoble/the-watcher:0.1.0
     replicas: 1
     port: 8001
+    urlEnv: RUNEFOBLE_WATCHER_URL
+    consumers: [game-session, voice-agent, gateway-api, gateway-mcp]
+    serviceCredential: true
     env:
       # Selects the engine adapter for every Watcher port (ADR-0015 decision 4). The worker
       # URL comes from services.inferenceWorker. Start-up fails when that URL is missing.
       RUNEFOBLE_WATCHER_ENGINE: inference_worker
   boardState:
+    swaggerName: "Board State Engine"
     image: runefoble/board-state:0.1.0
     replicas: 1
     port: 8002
+    urlEnv: RUNEFOBLE_BOARD_STATE_URL
+    consumers: [gateway-api, gateway-mcp]
+    serviceCredential: true
   characterSheet:
+    swaggerName: "Character Sheet Service"
     image: runefoble/character-sheet:0.1.0
     replicas: 1
     port: 8003
+    urlEnv: RUNEFOBLE_CHARACTER_SHEET_URL
+    consumers: [game-session, gateway-api, gateway-mcp]
+    serviceCredential: true
   gameSession:
+    swaggerName: "Game Session Service"
     image: runefoble/game-session:0.1.0
     replicas: 1
     port: 8004
+    urlEnv: RUNEFOBLE_GAME_SESSION_URL
+    consumers: [gateway-api, campaign-lore, gateway-mcp]
+    serviceCredential: true
   voiceAgent:
+    swaggerName: "Voice Agent Service"
     image: runefoble/voice-agent:0.1.0
     replicas: 1
     port: 8005
-    # faster-whisper model name. The model is pre-fetched into modelCache (make voice-model-cache).
-    sttModelSize: tiny.en
+    urlEnv: RUNEFOBLE_VOICE_AGENT_URL
+    consumers: [game-session, gateway-api]
+    readinessPath: /healthz
+    # faster-whisper model. Pre-fetched into modelCache by make voice-model-cache.
+    # RUNEFOBLE_VOICE_STT_MODEL_DIR must equal modelCache.mountPath.
+    env:
+      RUNEFOBLE_VOICE_STT_MODEL_SIZE: tiny.en
+      RUNEFOBLE_VOICE_STT_MODEL_DIR: /var/lib/runefoble/whisper
+      RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED: "false"
     modelCache:
       size: 1Gi
       mountPath: /var/lib/runefoble/whisper
+    podSecurityContext:
+      fsGroup: 10001
   campaignLore:
+    swaggerName: "Campaign Lore Service"
     image: runefoble/campaign-lore:0.1.0
     replicas: 1
     port: 8006
+    urlEnv: RUNEFOBLE_CAMPAIGN_LORE_URL
+    consumers: [gateway-api]
+    serviceCredential: true
     # Embedding endpoint for entity and passage search (ADR-0015). Entries with an empty
     # value are not rendered, so start-up names each missing setting and stops.
     env:
@@ -315,27 +335,75 @@ services:
     # only when global.environment is local (an empty placeholder). Other environments create it.
     embeddingApiKeySecret: campaign-lore-embedding
   rulesCompendium:
+    swaggerName: "Rules Compendium Service"
     image: runefoble/rules-compendium:0.1.0
     replicas: 1
     port: 8007
+    urlEnv: RUNEFOBLE_RULES_COMPENDIUM_URL
+    consumers: [gateway-api, gateway-mcp]
+    serviceCredential: true
   assetForge:
+    swaggerName: "Asset Forge Service"
     image: runefoble/asset-forge:0.1.0
     replicas: 1
     port: 8008
+    urlEnv: RUNEFOBLE_ASSET_FORGE_URL
+    consumers: [gateway-api]
+    siloCredentials: true
+    environment: false
+    configMap:
+      FORGE_DEFAULT_THEME: "dungeon"
+      FORGE_MAX_GRID_DIMENSION: "50"
+      FORGE_MIN_GRID_DIMENSION: "5"
+      FORGE_DEFAULT_STORAGE_BUCKET: "runefoble-assets"
   soundscape:
+    swaggerName: "Soundscape Service"
     image: runefoble/soundscape:0.1.0
     replicas: 1
     port: 8009
+    urlEnv: RUNEFOBLE_SOUNDSCAPE_URL
+    consumers: [gateway-api]
+    siloCredentials: true
+    environment: false
+    configMap:
+      SOUNDSCAPE_DEFAULT_MOOD: "exploration"
+      SOUNDSCAPE_DEFAULT_VOLUME: "1.0"
+      SOUNDSCAPE_CROSSFADE_MS: "1500"
   audienceStudio:
+    # Node service. It keeps a plain postgresql:// URL for its driver. It has no event store.
+    swaggerName: "Audience Studio Service"
     image: runefoble/audience-studio:0.1.0
     replicas: 1
     port: 8010
     # Expected token `aud` claim. The service refuses to start without it.
+    databaseDriver: postgresql
+    eventStore: false
+    siloEndpoint: false
+    environment: false
+    readinessPath: /readyz
+    livenessPath: /healthz
+    configMap:
+      PORT: "8010"          # Must equal port.
+      HOST: "0.0.0.0"
+      NODE_ENV: "production"
   campaignAnalytics:
+    swaggerName: "Campaign Analytics Service"
     image: runefoble/campaign-analytics:0.1.0
     replicas: 1
     port: 8011
+    urlEnv: RUNEFOBLE_CAMPAIGN_ANALYTICS_URL
+    consumers: [gateway-api]
+    siloEndpoint: false
+    environment: false
+    configMap:
+      CAMPAIGN_ANALYTICS_HEATMAP_CELL_SIZE: "5"
+      CAMPAIGN_ANALYTICS_DEFAULT_LIMIT: "50"
   inferenceWorker:
+    # Rendered by templates/inference-worker.yaml (ownTemplate).
+    swaggerName: "Inference Worker Service"
+    ownTemplate: true
+    urlEnv: RUNEFOBLE_INFERENCE_URL
+    consumers: [the-watcher]
     # Explicit inference backend: mock (canned output, labelled source "mock"), openai_compatible, or ollama.
     # The worker checks the selected engine at start-up and refuses to start when it does not answer.
     image: runefoble/inference-worker:0.1.0
@@ -346,18 +414,13 @@ services:
     openaiCompatibleBaseUrl: ""
   gatewayMcp:
     # MCP protocol over streamable HTTP at /mcp. ClusterIP only: no ingress path (ADR-0001).
-    # Tools keep their state in memory, so run one replica.
+    # Tools keep their state in memory, so run one replica. Rendered by templates/gateway-mcp.yaml
+    # (ownTemplate). Its upstream URLs come from the urlEnv and consumers of each target service.
+    swaggerName: "Gateway MCP Tool Registry"
+    ownTemplate: true
     image: runefoble/gateway-mcp:0.1.0
     replicas: 1
     port: 8012
-    # Upstream URLs that MCP tools call over HTTP. Rendered as RUNEFOBLE_BOARD_STATE_URL,
-    # RUNEFOBLE_CHARACTER_SHEET_URL, RUNEFOBLE_GAME_SESSION_URL, RUNEFOBLE_RULES_COMPENDIUM_URL,
-    # and RUNEFOBLE_WATCHER_URL.
-    boardStateUrl: "http://board-state:8002"
-    characterSheetUrl: "http://character-sheet:8003"
-    gameSessionUrl: "http://game-session:8004"
-    rulesCompendiumUrl: "http://rules-compendium:8007"
-    theWatcherUrl: "http://the-watcher:8001"
 
 # Frontend Application
 frontend:

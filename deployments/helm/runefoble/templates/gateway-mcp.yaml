@@ -28,16 +28,7 @@ spec:
             {{- include "runefoble.serviceCredentialEnv" $ | nindent 12 }}
             {{- include "runefoble.secretEnv" (dict "root" $ "name" "RUNEFOBLE_SPICEDB_PRESHARED_KEY" "key" "spicedb-preshared-key") | nindent 12 }}
             {{- include "runefoble.zitadelServiceEnv" $ | nindent 12 }}
-            - name: RUNEFOBLE_BOARD_STATE_URL
-              value: {{ $mcp.boardStateUrl | quote }}
-            - name: RUNEFOBLE_CHARACTER_SHEET_URL
-              value: {{ $mcp.characterSheetUrl | quote }}
-            - name: RUNEFOBLE_GAME_SESSION_URL
-              value: {{ $mcp.gameSessionUrl | quote }}
-            - name: RUNEFOBLE_RULES_COMPENDIUM_URL
-              value: {{ $mcp.rulesCompendiumUrl | quote }}
-            - name: RUNEFOBLE_WATCHER_URL
-              value: {{ $mcp.theWatcherUrl | quote }}
+            {{- include "runefoble.serviceUrlEnv" (dict "root" $ "consumer" "gateway-mcp") | trim | nindent 12 }}
           readinessProbe:
             tcpSocket:
               port: {{ $mcp.port }}
