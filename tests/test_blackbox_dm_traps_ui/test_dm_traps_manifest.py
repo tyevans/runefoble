@@ -62,17 +62,15 @@ def test_manifest_file_matches_advertised_manifest(client: TestClient) -> None:
 
 @pytest.mark.asyncio
 async def test_frontdoor_contract_integration(
-    client: TestClient, spicedb_client: MockSpiceDBClient
+    client: TestClient, spicedb: MockSpiceDBClient
 ) -> None:
     """Verify UI action payloads conform with backend board API frontdoors."""
     board_id = f"board-{uuid4().hex[:8]}"
     campaign_id = f"camp-{uuid4().hex[:8]}"
     dm_user = f"dm-{uuid4().hex[:6]}"
 
-    await spicedb_client.write_relationship(
-        "campaign", campaign_id, "dungeon_master", "user", dm_user
-    )
-    await spicedb_client.write_relationship("board", board_id, "campaign", "campaign", campaign_id)
+    await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", dm_user)
+    await spicedb.write_relationship("board", board_id, "campaign", "campaign", campaign_id)
 
     # 1. Initialize board
     init_res = client.post("/api/v1/boards", json={"board_id": board_id, "cols": 15, "rows": 15})

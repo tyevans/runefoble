@@ -84,7 +84,7 @@ def _bearer(issuer, sub: str) -> dict[str, str]:
 
 
 def test_blackbox_gateway_zanzibar_authorization(
-    gateway_client: TestClient, mock_spicedb, trusted_ws_issuer
+    gateway_client: TestClient, spicedb, trusted_ws_issuer
 ):
     """Verify Gateway Zanzibar authorization enforcement for downtime and crafting endpoints.
 

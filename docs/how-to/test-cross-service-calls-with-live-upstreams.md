@@ -137,6 +137,24 @@ Do not use `signing_issuer` in these tests. It replaces the gateway verifier, so
 - Assert that the fake success value does not appear in the response.
 - Do not assert on internal call counts of a client.
 
+## Use the Shared Service Harness
+
+`tests/helpers/service_harness.py` is the one place that sets service seams in tests. Its table `SERVICE_SEAMS` lists, for each service, the module that holds the SpiceDB client, the event bus and the bearer verifier.
+
+These fixtures read the table. Every test gets the autouse fixtures. Each one sets a seam and restores the previous value.
+
+| Fixture | Effect |
+|---|---|
+| `default_spicedb_client` (autouse) | Sets one strict `MockSpiceDBClient` in every service and in the shared factory. It does nothing for live SpiceDB tests. |
+| `spicedb` | Returns that mock. Write tuples to it only to test SpiceDB itself. |
+| `default_redis_event_bus` (autouse) | Sets one in-memory event bus in every service. |
+| `mock_bus` | Returns the Redis double behind that bus. Read published events from `mock_bus.streams`. |
+| `default_service_verifiers`, `shared_issuer_in_session_verifiers` (autouse) | Trust the shared signing issuer in token-verifying services. |
+| `trusted_ws_issuer` | Trusts the shared issuer in the gateway, game_session and the_watcher for one test. |
+| `character_sheet_upstream`, `game_session_upstream` | Serve that service as a live loopback upstream. |
+
+To add a service seam, add one `ServiceSeams` row. Do not write a setter call in a conftest. A directory conftest only builds a `TestClient` and its own helpers.
+
 ## What Not To Do
 
 - Do not monkeypatch the HTTP client class, such as `httpx.AsyncClient`.

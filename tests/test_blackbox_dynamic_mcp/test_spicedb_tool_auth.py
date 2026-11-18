@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from runefoble_auth.mock_spicedb import MockSpiceDBClient
+from runefoble_auth.spicedb import MockSpiceDBClient
 
 
 @pytest.mark.asyncio
 async def test_blackbox_spicedb_author_manage_and_unauthorized_rejection(
-    client: TestClient, mock_spicedb: MockSpiceDBClient
+    client: TestClient, spicedb: MockSpiceDBClient
 ):
     """Verify that only authorized authors can modify or deregister a dynamic tool."""
     tool_name = "secret_arcane_pulse"
@@ -51,7 +51,7 @@ async def test_blackbox_spicedb_author_manage_and_unauthorized_rejection(
 
 @pytest.mark.asyncio
 async def test_blackbox_spicedb_campaign_scoped_permissions(
-    client: TestClient, mock_spicedb: MockSpiceDBClient
+    client: TestClient, spicedb: MockSpiceDBClient
 ):
     """Verify campaign DM and player permissions granted via Zanzibar schema traversal."""
     campaign_id = "camp-valeros"
@@ -66,15 +66,9 @@ async def test_blackbox_spicedb_campaign_scoped_permissions(
     }
 
     # Setup campaign relationships in SpiceDB
-    await mock_spicedb.write_relationship(
-        "campaign", campaign_id, "dungeon_master", "user", "dm-evelyn"
-    )
-    await mock_spicedb.write_relationship(
-        "campaign", campaign_id, "player", "user", "player-valeros"
-    )
-    await mock_spicedb.write_relationship(
-        "campaign", campaign_id, "spectator", "user", "spectator-sam"
-    )
+    await spicedb.write_relationship("campaign", campaign_id, "dungeon_master", "user", "dm-evelyn")
+    await spicedb.write_relationship("campaign", campaign_id, "player", "user", "player-valeros")
+    await spicedb.write_relationship("campaign", campaign_id, "spectator", "user", "spectator-sam")
 
     # Author registers tool linked to campaign
     reg = client.post("/mcp/tools/register", json=payload, headers={"X-User-Id": "author-dev"})

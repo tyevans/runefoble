@@ -14,10 +14,8 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from game_session.dependencies import set_event_bus, set_spicedb_client
 from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
-from runefoble_platform.redis_bus import RedisStreamsEventBus
 
 from tests.helpers.mock_redis import MockAsyncRedis
 from tests.helpers.ws_identity import SIGNING_ISSUER
@@ -26,26 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture
-def mock_bus() -> MockAsyncRedis:
-    bus_client = MockAsyncRedis()
-    bus = RedisStreamsEventBus(client=bus_client)
-    set_event_bus(bus)
-    yield bus_client
-    set_event_bus(None)
-
-
-@pytest.fixture
-def spicedb_client() -> MockSpiceDBClient:
-    db = MockSpiceDBClient()
-    set_spicedb_client(db)
-    yield db
-    set_spicedb_client(None)
-
-
-@pytest.fixture
-def client(
-    mock_bus: MockAsyncRedis, spicedb_client: MockSpiceDBClient, trusted_ws_issuer
-) -> TestClient:
+def client(mock_bus: MockAsyncRedis, spicedb: MockSpiceDBClient, trusted_ws_issuer) -> TestClient:
     return TestClient(
         session_app, headers={"Authorization": f"Bearer {SIGNING_ISSUER.mint('test-user')}"}
     )
