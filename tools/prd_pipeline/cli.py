@@ -37,9 +37,11 @@ def cmd_audit(args: argparse.Namespace, repo_root: Path) -> int:
     print()
 
     if audit["buffer"]["ready_buffer_low"]:
-        print("⚠️ WARNING: Ready buffer is low (< 8 items). Refinement needed.")
+        print("⚠️ WARNING: Ready buffer is low (< 6 items). Refinement needed.")
+    elif audit["buffer"]["ready_buffer_high"]:
+        print("⚠️ WARNING: Ready buffer is high (> 12 items). Demote tasks to proposed/.")
     else:
-        print("✅ Ready buffer is healthy.")
+        print("✅ Ready buffer is healthy (6 to 12 items).")
 
     print()
     if audit["undecomposed_prds"]:

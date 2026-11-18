@@ -6,9 +6,27 @@ import re
 from pathlib import Path
 from typing import Any
 
-from tools.project_visualizer.markdown_utils import extract_list_items, extract_section
+from tools.project_visualizer.markdown_utils import extract_section
 
 from .models import AuditSummary, PRDRecord
+
+# Scope rule for proposed tasks (docs/how-to/decompose-prds-into-vertical-slices.md).
+# A proposed task is an epic when its Scope of Work has more than EPIC_SCOPE_ITEM_LIMIT
+# top-level entries, or names more than EPIC_COMPONENT_LIMIT component roots
+# (services/<bc>, gateway/<x>, frontend).
+EPIC_SCOPE_ITEM_LIMIT = 8
+EPIC_COMPONENT_LIMIT = 1
+_COMPONENT_PATTERN = re.compile(r"\b(services/[a-z_]+|gateway/[a-z_]+|frontend)\b")
+_TOP_LEVEL_ITEM = re.compile(r"^(?:\d+\.|[-*])\s")
+
+# Ready buffer bands (specops.toml buffer_target 10, buffer_warning_threshold 6).
+BUFFER_LOW_THRESHOLD = 6
+BUFFER_HIGH_THRESHOLD = 12
+
+
+def _top_level_items(section: str) -> list[str]:
+    """Counts unindented scope entries. Nested bullets are details of one entry."""
+    return [line for line in section.splitlines() if _TOP_LEVEL_ITEM.match(line)]
 
 
 class RequirementAuditor:
@@ -26,8 +44,9 @@ class RequirementAuditor:
         for tp in proposed_tasks:
             content = tp.read_text(encoding="utf-8")
             scope = extract_section(content, "Scope of Work")
-            scope_items = extract_list_items(scope)
-            if len(scope_items) >= 4 or "Microservice" in tp.stem or "Engine" in tp.stem:
+            scope_items = _top_level_items(scope)
+            components = set(_COMPONENT_PATTERN.findall(scope))
+            if len(scope_items) > EPIC_SCOPE_ITEM_LIMIT or len(components) > EPIC_COMPONENT_LIMIT:
                 m = re.search(r"(\d{4})", tp.stem)
                 tid = f"TASK-{m.group(1)}" if m else tp.stem
                 epics.append(
@@ -36,6 +55,7 @@ class RequirementAuditor:
                         "file": tp.name,
                         "title": tp.stem,
                         "scope_count": len(scope_items),
+                        "component_count": len(components),
                     }
                 )
         return epics
@@ -97,6 +117,7 @@ class RequirementAuditor:
                 "complete": len(complete_tasks),
                 "refined": len(refined_tasks),
                 "proposed": len(proposed_tasks),
-                "ready_buffer_low": len(refined_tasks) < 8,
+                "ready_buffer_low": len(refined_tasks) < BUFFER_LOW_THRESHOLD,
+                "ready_buffer_high": len(refined_tasks) > BUFFER_HIGH_THRESHOLD,
             },
         )
