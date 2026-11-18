@@ -25,7 +25,7 @@ def test_blackbox_inventory_stacking_and_partial_removal(client):
     """Verify adding stackable items and partial vs complete consumption via public HTTP endpoints."""
     # 1. Frontdoor create character
     create_resp = client.post(
-        "/api/v1/characters/create",
+        "/api/v1/characters",
         json={"name": "Krag", "character_class": "Barbarian", "max_hp": 55},
     )
     assert create_resp.status_code == 200
@@ -33,7 +33,7 @@ def test_blackbox_inventory_stacking_and_partial_removal(client):
 
     # 2. Add rations (stack of 10)
     add_rations = client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"item_id": "ration-001", "name": "Trail Rations", "quantity": 10, "weight_lbs": 10.0},
     )
     assert add_rations.status_code == 200
@@ -43,7 +43,7 @@ def test_blackbox_inventory_stacking_and_partial_removal(client):
 
     # 3. Add second item: Greatsword
     add_sword = client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"item_id": "sword-001", "name": "Iron Greatsword", "quantity": 1, "weight_lbs": 6.0},
     )
     assert add_sword.status_code == 200
@@ -51,24 +51,27 @@ def test_blackbox_inventory_stacking_and_partial_removal(client):
     assert len(add_sword.json()["inventory"]) == 2
 
     # 4. Consume partial rations (consume 4)
-    consume_resp = client.post(
-        f"/api/v1/characters/{char_id}/inventory/ration-001/remove",
+    consume_resp = client.request(
+        "DELETE",
+        f"/api/v1/characters/{char_id}/inventory/ration-001",
         json={"quantity": 4},
     )
     assert consume_resp.status_code == 200
     assert consume_resp.json()["inventory"]["ration-001"]["quantity"] == 6
 
     # 5. Consume remaining rations (consume 6) -> removes entry completely
-    consume_all = client.post(
-        f"/api/v1/characters/{char_id}/inventory/ration-001/remove",
+    consume_all = client.request(
+        "DELETE",
+        f"/api/v1/characters/{char_id}/inventory/ration-001",
         json={"quantity": 6},
     )
     assert consume_all.status_code == 200
     assert "ration-001" not in consume_all.json()["inventory"]
 
     # 6. Removing non-existent item returns 404 or 400
-    err_resp = client.post(
-        f"/api/v1/characters/{char_id}/inventory/nonexistent/remove",
+    err_resp = client.request(
+        "DELETE",
+        f"/api/v1/characters/{char_id}/inventory/nonexistent",
         json={"quantity": 1},
     )
     assert err_resp.status_code in (400, 404)
@@ -77,7 +80,7 @@ def test_blackbox_inventory_stacking_and_partial_removal(client):
 def test_blackbox_equipment_slots_workflow(client):
     """Verify equipping across main_hand, off_hand, and armor slots, plus un-equipping."""
     create_resp = client.post(
-        "/api/v1/characters/create",
+        "/api/v1/characters",
         json={"name": "Alanna", "character_class": "Paladin", "max_hp": 48},
     )
     assert create_resp.status_code == 200
@@ -85,11 +88,11 @@ def test_blackbox_equipment_slots_workflow(client):
 
     # Add items to inventory first
     client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"item_id": "sword-paladin", "name": "Sun Blade", "quantity": 1, "weight_lbs": 3.0},
     )
     client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"item_id": "shield-paladin", "name": "Kite Shield", "quantity": 1, "weight_lbs": 6.0},
     )
 
@@ -121,7 +124,7 @@ def test_blackbox_equipment_slots_workflow(client):
 def test_blackbox_conditions_lifecycle(client):
     """Verify applying, querying, and removing conditions via frontdoor HTTP endpoints."""
     create_resp = client.post(
-        "/api/v1/characters/create",
+        "/api/v1/characters",
         json={"name": "Merisiel", "character_class": "Rogue", "max_hp": 30},
     )
     assert create_resp.status_code == 200

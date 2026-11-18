@@ -69,7 +69,7 @@ def _outage_writes(char_id: str) -> list[tuple[str, Callable[[TestClient], objec
         ),
         (
             "inventory",
-            lambda c: c.post(f"{base}/inventory/add", json={"item_id": "rope-1", "name": "Rope"}),
+            lambda c: c.post(f"{base}/inventory", json={"item_id": "rope-1", "name": "Rope"}),
         ),
         (
             "equipment",

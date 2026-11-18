@@ -69,7 +69,7 @@ def test_character_endpoints():
     """Verify REST endpoints for character inventory, equipment, and conditions."""
     # 1. Create character
     res = client.post(
-        "/api/v1/characters/create",
+        "/api/v1/characters",
         json={"name": "Ezren", "character_class": "Wizard", "max_hp": 22},
     )
     assert res.status_code == 200
@@ -77,7 +77,7 @@ def test_character_endpoints():
 
     # 2. Add inventory item
     res_inv = client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"item_id": "spellbook", "name": "Arcane Spellbook", "quantity": 1, "weight_lbs": 3.0},
     )
     assert res_inv.status_code == 200

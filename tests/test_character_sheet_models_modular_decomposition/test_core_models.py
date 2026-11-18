@@ -11,9 +11,8 @@ from character_sheet.models import (
 def test_attribute_scores_and_serialization() -> None:
     """Verify AttributeScores property access and serialization."""
     scores = AttributeScores(str=16, dex=14, con=15, intelligence=12, wis=10, cha=8)
-    assert scores.str == 16 and scores.int == 12
-    dict_scores = scores.to_dict()
-    assert dict_scores["str"] == 16 and dict_scores["int"] == 12
+    assert scores.str == 16 and scores.intelligence == 12
+    assert scores.to_dict() == {"str": 16, "dex": 14, "con": 15, "int": 12, "wis": 10, "cha": 8}
 
 
 def test_vitals_health_transitions_and_guardrails(sample_character_state: CharacterState) -> None:

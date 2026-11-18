@@ -59,7 +59,7 @@ async def test_character_guardrails_configuration_and_events(
     ) as client:
         # 1. Create Sarah's Cleric & configure Zanzibar ownership
         create_res = await client.post(
-            "/api/v1/characters/create",
+            "/api/v1/characters",
             json={
                 "name": "Kyra",
                 "character_class": "Cleric",
@@ -178,7 +178,7 @@ async def test_zero_hp_permadeath_safeguard_invariant(mock_redis: MockAsyncRedis
         headers=auth_headers("character-owner"),
     ) as client:
         res = await client.post(
-            "/api/v1/characters/create",
+            "/api/v1/characters",
             json={"name": "Kyra", "character_class": "Cleric", "max_hp": 25},
         )
         assert res.status_code == 200

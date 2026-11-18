@@ -32,7 +32,7 @@ def test_character_inventory_and_equipment_routes(
     char_id = create_res.json()["character_id"]
 
     add_item_res = test_client.post(
-        f"/api/v1/characters/{char_id}/inventory/add",
+        f"/api/v1/characters/{char_id}/inventory",
         json={"item_id": "it-wand-1", "name": "Wand of Sparks", "quantity": 1, "weight_lbs": 1.0},
     )
     assert add_item_res.status_code == 200
