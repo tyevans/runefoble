@@ -200,15 +200,13 @@ async def execute_character_mutation(
     character_id: UUID,
     mutation_fn: Callable[[CharacterAggregate], Any],
 ) -> CharacterState:
+    char = await load_character(repo, character_id)
     try:
-        char = await repo.load(character_id)
         mutation_fn(char)
-        await repo.save(char)
-        return char.state
-    except HTTPException:
-        raise
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    await repo.save(char)
+    return char.state
 
 
 async def modify_character_health(
@@ -219,7 +217,7 @@ async def modify_character_health(
     is_stand_in: bool | None,
     session_id: str | None = None,
 ) -> CharacterState:
-    char = await repo.load(character_id)
+    char = await load_character(repo, character_id)
     was_stabilized = char.state.is_stabilized
     char.modify_health(
         delta=delta, source=source, is_stand_in=is_stand_in, session_id=session_id or None
@@ -242,7 +240,7 @@ async def update_character_guardrails(
     character_id: UUID,
     req: UpdateGuardrailsRequest,
 ) -> CharacterState:
-    char = await repo.load(character_id)
+    char = await load_character(repo, character_id)
     char.update_stand_in_guardrails(req)
     await repo.save(char)
     await publish_character_event(
@@ -269,7 +267,7 @@ async def assign_character_campaign(
     char = await load_character(repo, character_id)
     try:
         char.assign_campaign(campaign_id, assigned_by)
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     await replace_character_campaign(spicedb, character_id, campaign_id)
     await repo.save(char)

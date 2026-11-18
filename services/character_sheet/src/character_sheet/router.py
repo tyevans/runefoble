@@ -134,7 +134,7 @@ async def modify_health(character_id: UUID, req: schemas.HealthChangeRequest, re
         return await deps.modify_character_health(
             repo, character_id, req.delta, req.source, req.is_stand_in, req.session_id
         )
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
@@ -203,7 +203,7 @@ async def update_guardrails(
 ):
     try:
         return await deps.update_character_guardrails(repo, character_id, req)
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
