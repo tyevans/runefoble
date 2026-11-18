@@ -295,6 +295,12 @@ The `live_spicedb_with_schema` fixture (module scope, in `tests/helpers/spicedb.
 - Loads `runefoble.zed` through `bootstrap_schema`. A failed write fails the fixture.
 - Yields the endpoint and a `SpiceDBClient`.
 
+Container lifetime (`tests/helpers/container_owner.py`):
+- Each test container carries the pid and host name of the pytest process that started it (`runefoble.test.owner-pid`, `runefoble.test.owner-host`).
+- Before a fixture starts a container, it removes the labelled containers whose owner process is dead on this host. A killed run skips teardown, so its container is removed by the next run.
+- Containers of a live owner, and containers without these labels, are never removed.
+- The PostgreSQL test fixture (`postgres_service` in `tests/helpers/postgres.py`) follows the same rule.
+
 `tests/test_authz_live_contract.py` runs against this fixture. It checks that a permission name written as a relation is rejected, that `game_master` grants `run_session`, and that an undefined permission check raises `AuthzSchemaError`.
 
 Tests that need the shared client use `tests/helpers/spicedb_factory.py`. The root `tests/conftest.py` autouse fixture swaps the factory client for a fresh strict mock on every test. A test that needs live SpiceDB requests `live_spicedb_with_schema` instead.

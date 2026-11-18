@@ -16,6 +16,8 @@ from collections.abc import Generator
 
 import pytest
 
+from tests.helpers.container_owner import owner_label_args, remove_orphaned_test_containers
+
 
 def get_free_port() -> int:
     """Find an available local TCP port."""
@@ -63,12 +65,15 @@ def postgres_service() -> Generator[dict[str, str | int] | None]:
 
     subprocess.run(["chmod", "755", script_path], check=True)
 
+    remove_orphaned_test_containers(docker_bin)
+
     cmd = [
         docker_bin,
         "run",
         "--rm",
         "--name",
         container_name,
+        *owner_label_args(),
         "-d",
         "--tmpfs",
         "/var/lib/postgresql/data",
