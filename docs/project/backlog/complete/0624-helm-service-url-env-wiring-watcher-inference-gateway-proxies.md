@@ -13,14 +13,6 @@ governing_prds:
 governing_stories:
 - US-0007
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-gates-infra.md
-- w1-gateway-api.md
-- w1-the-watcher.md
-- w2-voice-agent.md
-- w2-campaign-analytics.md
-- w2-soundscape.md
 ---
 
 # TASK-0624: Helm Wiring for Service URL Environment Variables and Remove Localhost Defaults
@@ -65,3 +57,8 @@ Cross-service URLs are read from environment variables that the Helm chart never
 3. Helm lint and template pass.
 4. `docs/reference/platform-services.md` lists each key.
 5. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-gates-infra.md`, `w1-gateway-api.md`, `w1-the-watcher.md`, `w2-voice-agent.md`, `w2-campaign-analytics.md`, `w2-soundscape.md`

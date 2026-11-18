@@ -15,11 +15,6 @@ governing_prds:
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-authz-coverage.md
-- w1-gateway-api.md
-- w2-voice-agent.md
 ---
 
 # TASK-0522: Gateway WebSocket and Signaling Connections Authenticate Before Accept
@@ -76,3 +71,8 @@ New file `tests/test_blackbox_gateway_ws_identity.py`, using the WebSocket test 
 3. `uv run pytest tests/test_blackbox_gateway_ws_identity.py` passes. Existing WebSocket suites pass with the signing issuer.
 4. `uv run ruff check gateway/api` passes. No file exceeds 500 lines.
 5. Integrated after TASK-0520. TASK-0538 updates the clients in the same release.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-authz-coverage.md`, `w1-gateway-api.md`, `w2-voice-agent.md`

@@ -14,9 +14,6 @@ governing_stories:
 - US-0002
 - US-0025
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-inference-worker.md
 ---
 
 # TASK-0608: Inference Worker Stand-In Guardrails Contract Matches The Watcher
@@ -63,3 +60,8 @@ Source: `.audit/reports/w2-inference-worker.md` F1.
 3. Blackbox tests pass. Pytest for both services passes.
 4. Ruff check and format pass.
 5. How-to updated with the response field.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-inference-worker.md`

@@ -16,9 +16,6 @@ governing_stories:
 - US-0040
 - US-0054
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-campaign-analytics.md
 ---
 
 # TASK-0573: Campaign Analytics Read Models Served From Durable Storage and Chronicle Aggregate Used
@@ -64,3 +61,8 @@ Campaign analytics writes rows to PostgreSQL but every query reads Python lists 
 3. How-to corrected. Events-schema analytics section matches the code.
 4. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 5. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-analytics.md`

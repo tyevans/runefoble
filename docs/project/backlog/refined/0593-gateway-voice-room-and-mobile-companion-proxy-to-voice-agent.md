@@ -14,11 +14,6 @@ governing_prds:
 - PRD-0020
 governing_stories:
 - US-0011
-severity: high
-source_audits:
-- w2-voice-agent.md
-- w1-gateway-api.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -72,3 +67,8 @@ Test file: `tests/test_blackbox_gateway_voice_proxy.py`. `voice_agent` runs as a
 3. The `the_watcher_dm` default is gone.
 4. The blackbox test file passes. `uv run ruff check .` passes.
 5. Duplex (TASK-0508) and DSP (TASK-0480) tasks are not changed by this PR.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-voice-agent.md`, `w1-gateway-api.md`, `w3-ddd-architecture.md`

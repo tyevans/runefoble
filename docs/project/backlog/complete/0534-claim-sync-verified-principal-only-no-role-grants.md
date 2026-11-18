@@ -15,10 +15,6 @@ governing_stories:
 - US-0062
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-authz-coverage.md
-- w1-libs.md
 ---
 
 # TASK-0534: Claim Sync Accepts Only Verified Principals and Grants No Roles From Token Claims
@@ -72,3 +68,8 @@ HTTP tests through the gateway `TestClient`.
 Source: `.audit/synth/discovered-round1.md`.
 
 - Tokenless claim sync returns HTTP 401, not 500. `gateway/api/src/gateway_api/auth_sync.py:138` maps every exception to 500 today.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-authz-coverage.md`, `w1-libs.md`

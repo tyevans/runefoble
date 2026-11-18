@@ -14,11 +14,6 @@ governing_stories:
 - US-0014
 - US-0010
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-event-wiring.md
-- w1-board-state.md
-- w1-the-watcher.md
 ---
 
 # TASK-0562: Board and Watcher Publish Calls Use the Real Redis Bus API
@@ -67,3 +62,8 @@ Files expected: five board_state routers, `events.py`, `simulation_engine.py`, `
 3. `uv run pytest` and `make health-check` pass. Changed files under 500 lines.
 4. `docs/reference/redis-streams-event-bus.md` updated to name `publish_event` as the only publish API.
 5. `CHANGELOG.md` `[Unreleased]` entry.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-event-wiring.md`, `w1-board-state.md`, `w1-the-watcher.md`

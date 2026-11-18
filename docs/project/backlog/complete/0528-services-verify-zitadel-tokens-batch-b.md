@@ -17,12 +17,6 @@ governing_prds:
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w2-asset-forge.md
-- w2-soundscape.md
-- w1-character-sheet.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0528: Services Verify Zitadel Tokens (asset_forge, soundscape, character_sheet)
@@ -70,3 +64,8 @@ HTTP tests through `TestClient` with signing-issuer tokens.
 3. Helm renders the new variables.
 4. The three service how-tos show a bearer token.
 5. `uv run ruff check` passes for the three services. No file exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w2-asset-forge.md`, `w2-soundscape.md`, `w1-character-sheet.md`, `w3-authz-coverage.md`

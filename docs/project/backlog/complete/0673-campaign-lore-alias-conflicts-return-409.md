@@ -14,9 +14,6 @@ governing_prds:
 governing_stories:
 - US-0036
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0611.md
 ---
 
 # TASK-0673: Campaign Lore Alias Conflicts Return 409 and Retrieval Wiring Fails Clearly
@@ -55,3 +52,8 @@ Two defects in the campaign lore HTTP layer. A repeated alias merge raises a red
 - OpenAPI shows 409 and 503 for the consolidate route.
 - `docs/how-to/index-campaign-lore-with-redstring.md` updated.
 - `uv run pytest services/campaign_lore` and `make lint` pass.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0611.md`

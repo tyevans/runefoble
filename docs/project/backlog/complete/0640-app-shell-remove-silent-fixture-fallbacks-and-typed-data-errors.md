@@ -14,9 +14,6 @@ governing_stories:
 - US-0066
 - US-0068
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-app-shell.md
 ---
 
 # TASK-0640: App Shell Removes Silent Fixture Fallbacks and Reports Typed Data Errors
@@ -78,3 +75,8 @@ Playwright BDD scenarios in `e2e/features/app_shell_data_errors.feature` (new fi
 5. Storybook stories still build with their own fixtures and show zero console errors.
 6. Every changed file is under 500 lines.
 7. `docs/how-to/orchestrate-app-shell-views-and-session-transitions.md` no longer describes fallback data.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-app-shell.md`

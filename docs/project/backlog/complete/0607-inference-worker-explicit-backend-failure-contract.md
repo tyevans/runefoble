@@ -15,10 +15,6 @@ governing_stories:
 - US-0001
 - US-0032
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-inference-worker.md
-- w1-the-watcher.md
 ---
 
 # TASK-0607: Inference Worker Explicit Backend Failure Contract and Response Provenance
@@ -67,3 +63,8 @@ Sources: `.audit/reports/w2-inference-worker.md` F2; `.audit/reports/w1-the-watc
 3. Blackbox tests pass. `uv run pytest services/inference_worker services/the_watcher` passes.
 4. Ruff check and format pass.
 5. Worker response schema documented under `docs/reference/`. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-inference-worker.md`, `w1-the-watcher.md`

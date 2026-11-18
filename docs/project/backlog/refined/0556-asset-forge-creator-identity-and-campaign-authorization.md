@@ -21,10 +21,6 @@ governing_stories:
 - US-0049
 - US-0055
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-asset-forge.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0556: Asset Forge Creator Identity and Campaign Authorization
@@ -76,3 +72,8 @@ Setup: a campaign with a player, a spectator, and the DM. Assets are created thr
 4. The three how-to docs above are updated.
 5. `uv run pytest services/asset_forge` passes. `uv run ruff check services/asset_forge` passes.
 6. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-asset-forge.md`, `w3-authz-coverage.md`

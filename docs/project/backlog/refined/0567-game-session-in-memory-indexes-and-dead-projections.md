@@ -17,9 +17,6 @@ governing_stories:
 - US-0058
 - US-0073
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-game-session.md
 ---
 
 # TASK-0567: Game Session In-Memory Indexes and Dead Projections Replaced by Durable Queries
@@ -61,3 +58,8 @@ Game session keeps several index dicts at module level that map a parent id to c
 3. Dead projection modules deleted. `grep -rn SessionReadProjection services` returns none.
 4. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 5. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-game-session.md`

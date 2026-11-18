@@ -14,9 +14,6 @@ governing_stories:
 - US-0063
 - US-0065
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-e2e-bdd.md
 ---
 
 # TASK-0652: E2E Scenarios Create Their Campaign and Session Through Public Frontdoors
@@ -61,3 +58,8 @@ The lobby and VTT feature depends on a seeded campaign "4" and session "15" that
 3. The lobby, VTT, and smoke scenarios pass in all three browsers.
 4. `frontdoor_api.ts` has no direct database or private-state access (verified by review).
 5. Each file is under 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-e2e-bdd.md`

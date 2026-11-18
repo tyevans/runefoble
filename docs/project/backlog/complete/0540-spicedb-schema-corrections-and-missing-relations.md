@@ -15,12 +15,6 @@ governing_stories:
 - US-0013
 - US-0050
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-authz-coverage.md
-- w2-campaign-lore.md
-- w1-libs.md
-- w1-gateway-api.md
 ---
 
 # TASK-0540: SpiceDB Schema Corrections and Missing Relations
@@ -74,3 +68,8 @@ Complete
 4. No Python or TypeScript call site is changed in this task.
 5. `uv run ruff check libs/runefoble_auth` passes.
 6. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-authz-coverage.md`, `w2-campaign-lore.md`, `w1-libs.md`, `w1-gateway-api.md`

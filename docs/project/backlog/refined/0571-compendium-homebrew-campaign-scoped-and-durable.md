@@ -15,9 +15,6 @@ governing_stories:
 - US-0052
 - US-0034
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-rules-compendium.md
 ---
 
 # TASK-0571: Compendium Homebrew Campaign-Scoped and Rebuilt From the Aggregate
@@ -64,3 +61,8 @@ Homebrew monsters are written into the global SRD monster map with no campaign k
 Source: `.audit/synth/discovered-round2.md`.
 
 - services/rules_compendium/src/rules_compendium/aggregate.py calls init_state() in lazy-init guards (lines 34, 143, 160, 177, 189). Use the eventsource initial-state hook and remove the guards.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-rules-compendium.md`

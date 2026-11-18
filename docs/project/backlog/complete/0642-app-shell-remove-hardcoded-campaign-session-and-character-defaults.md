@@ -15,9 +15,6 @@ governing_stories:
 - US-0066
 - US-0069
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w2-app-shell.md
 ---
 
 # TASK-0642: App Shell Derives Campaign, Session, and Character State From Routes and API Data
@@ -77,3 +74,8 @@ Unit tests in `frontend/test/route-state.test.ts` cover the route parser.
 4. `pnpm run lint`, `pnpm test`, and `pnpm run build` pass.
 5. Storybook stories for the nav and profile components still build with explicit story props.
 6. Each changed file is under 500 lines.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w2-app-shell.md`

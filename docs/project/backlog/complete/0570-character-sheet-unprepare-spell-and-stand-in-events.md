@@ -16,9 +16,6 @@ governing_stories:
 - US-0026
 - US-0051
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-character-sheet.md
 ---
 
 # TASK-0570: Character Sheet Unprepare Spell and Stand-In Activation as Persisted Events
@@ -61,3 +58,8 @@ Two character mutations change state without an event. `unprepare_spell` removes
 2. Restart tests pass. New events registered and documented.
 3. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 4. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-character-sheet.md`

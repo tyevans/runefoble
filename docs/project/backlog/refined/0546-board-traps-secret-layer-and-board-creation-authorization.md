@@ -20,10 +20,6 @@ governing_stories:
 - US-0018
 - US-0012
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-board-state.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0546: Board Traps, Secret Layer, and Board Creation Authorization
@@ -88,3 +84,8 @@ Setup: the campaign is created through its public route. The DM joins with the D
 4. `docs/how-to/manage-secret-dm-traps-and-map-triggers.md` and `docs/reference/ports-and-endpoints.md` match the code.
 5. `uv run pytest services/board_state` passes. `uv run ruff check services/board_state` passes.
 6. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-board-state.md`, `w3-authz-coverage.md`

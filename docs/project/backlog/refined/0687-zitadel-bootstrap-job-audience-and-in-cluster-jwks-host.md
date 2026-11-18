@@ -15,11 +15,6 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0526.md
-- work/0523.md
-- work/0524.md
 ---
 
 # TASK-0687: Zitadel Bootstrap Job, Token Audience, Generated Client ID, and In-Cluster JWKS Host
@@ -63,3 +58,8 @@ The chart runs Zitadel, but nothing provisions the OIDC project and application.
 - Bootstrap Job, Secret, audience and Host setting exist in the chart and in the verifier.
 - `helm lint` and `helm template` pass. `make health-check` passes.
 - Docs updated: `platform-services.md`, `authenticate-with-zitadel-oidc.md`.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0526.md`, `work/0523.md`, `work/0524.md`

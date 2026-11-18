@@ -13,12 +13,6 @@ governing_prds:
 governing_stories:
 - US-0007
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-inference-worker.md
-- w1-gates-infra.md
-- w1-the-watcher.md
-- w3-event-wiring.md
 ---
 
 # TASK-0622: Helm Deployment, Service, and Swagger Entry for the Inference Worker
@@ -63,3 +57,8 @@ Complete
 3. Docs list port 8100 and the routes.
 4. The image builds through `make images`.
 5. No file above 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-inference-worker.md`, `w1-gates-infra.md`, `w1-the-watcher.md`, `w3-event-wiring.md`

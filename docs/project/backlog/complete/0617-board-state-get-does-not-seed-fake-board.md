@@ -13,9 +13,6 @@ governing_prds:
 governing_stories:
 - US-0014
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-board-state.md
 ---
 
 # TASK-0617: Board State Get Returns 404 for Unknown Boards and Never Seeds Fake Tokens
@@ -63,3 +60,8 @@ Source: `.audit/reports/w1-board-state.md` F5.
 3. Blackbox tests pass. `uv run pytest services/board_state` passes.
 4. Ruff check and format pass.
 5. Board routes reference and how-to updated. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-board-state.md`

@@ -12,9 +12,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0672.md
 ---
 
 # TASK-0684: One Shared Redis Streams Event Bus Factory With Fail-Fast Start-Up
@@ -57,3 +54,8 @@ None. Platform wiring with no user-facing change, except that events now reliabl
 Source: `.audit/synth/discovered-round2.md`.
 
 - gateway/api/src/gateway_api/dependencies.py:21 and services/soundscape/src/soundscape/dependencies.py:67,124,128 wrap bus creation in contextlib.suppress(Exception). Use the shared factory and let start-up fail when Redis is configured and unreachable.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0672.md`

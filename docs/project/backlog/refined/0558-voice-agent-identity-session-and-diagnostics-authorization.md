@@ -23,10 +23,6 @@ governing_stories:
 - US-0020
 - US-0001
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w2-voice-agent.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0558: Voice Agent Verified Identity, Session Checks, and Diagnostics Authorization
@@ -83,3 +79,8 @@ Setup: a campaign, a session, a DM, and a player. Rooms and sessions are created
 4. The voice how-to docs listed above are updated.
 5. `uv run pytest services/voice_agent` passes. `uv run ruff check services/voice_agent` passes.
 6. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w2-voice-agent.md`, `w3-authz-coverage.md`

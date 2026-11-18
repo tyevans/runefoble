@@ -26,11 +26,6 @@ governing_prds:
 governing_stories:
 - US-0062
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w3-docs-integrity.md
-- w1-libs.md
-- w1-gateway-api.md
 ---
 
 # TASK-0537: Identity Contract Reference, Auth Docs Consolidation, and Changelog
@@ -89,3 +84,8 @@ Documentation checks.
 Source: `.audit/synth/discovered-round2.md`.
 
 - docs/how-to/verify-identity-in-fastapi-and-websockets.md:23 uses issuer http://zitadel:8080. Use the browser-facing issuer from the chart, as the authentication guide does.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-docs-integrity.md`, `w1-libs.md`, `w1-gateway-api.md`

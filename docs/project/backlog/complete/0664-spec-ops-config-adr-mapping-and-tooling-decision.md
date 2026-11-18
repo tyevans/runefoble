@@ -11,9 +11,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w3-backlog-specops.md
 ---
 
 # TASK-0664: Adopt spec-ops Through specops.toml, ADR Mapping, and a Recorded Install and Security Decision
@@ -60,3 +57,8 @@ Project management tooling. No product PRD or user story applies.
 4. The install path and the security-profile decision are recorded in AGENTS.md and REGISTRY.md.
 5. `make health-check` still passes.
 6. Files stay under 500 lines.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w3-backlog-specops.md`

@@ -10,13 +10,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0600.md
-- work/0601.md
-- work/0614.md
-- work/0615.md
-- work/0616.md
 ---
 
 # TASK-0682: Shared Settings-Selected Adapter Factory for Engine Ports
@@ -51,3 +44,8 @@ None. Internal refactor with no change to public behaviour.
 ## Definition of Done
 - One shared factory and error handler. No duplicate selector code in the services.
 - All touched services' tests pass. How-to written. CHANGELOG line given to the orchestrator.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0600.md`, `work/0601.md`, `work/0614.md`, `work/0615.md`, `work/0616.md`

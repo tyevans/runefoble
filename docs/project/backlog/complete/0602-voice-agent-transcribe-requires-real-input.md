@@ -14,9 +14,6 @@ governing_stories:
 - US-0001
 - US-0060
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-voice-agent.md
 ---
 
 # TASK-0602: Voice Agent Transcribe Route Requires Real Audio or Transcript
@@ -62,3 +59,8 @@ Source: `.audit/reports/w2-voice-agent.md` F5.
 3. Blackbox tests pass. Pytest for `services/voice_agent` passes.
 4. Ruff check and format pass.
 5. Events schema and voice how-to updated where they describe this route.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-voice-agent.md`

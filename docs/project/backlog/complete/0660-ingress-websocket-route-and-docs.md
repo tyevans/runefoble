@@ -13,11 +13,6 @@ governing_prds:
 governing_stories:
 - US-0014
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-docs-integrity.md
-- w2-soundscape.md
-- w2-asset-forge.md
 ---
 
 # TASK-0660: Helm Ingress Routes WebSocket Paths to the Gateway and Docs Name Them
@@ -68,3 +63,8 @@ The gateway serves WebSocket routes at `/ws/...` (for example `/ws/session/{id}`
 4. The Vite dev proxy forwards `/ws` with upgrade support (verified by a dev run or a config test).
 5. Blank lines are removed from the four affected tables in `ports-and-endpoints.md`, and the `/healthz` row is added.
 6. Files stay under 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-docs-integrity.md`, `w2-soundscape.md`, `w2-asset-forge.md`

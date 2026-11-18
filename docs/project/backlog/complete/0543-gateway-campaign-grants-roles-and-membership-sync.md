@@ -21,11 +21,6 @@ governing_stories:
 - US-0063
 - US-0062
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w3-authz-coverage.md
-- w1-gateway-api.md
-- w1-libs.md
 ---
 
 # TASK-0543: Gateway Campaign Grants, Role Assignment, and Membership Sync Authorization
@@ -84,3 +79,8 @@ Setup uses public frontdoors and the live harness (`live_spicedb_with_schema`). 
 5. `uv run pytest` passes for the changed files. `uv run ruff check gateway/api` passes.
 6. Docs in `docs/how-to/manage-campaign-lifecycle-and-invites.md` and `docs/reference/ports-and-endpoints.md` match the code.
 7. No file in the change exceeds 500 lines. Split `auth_sync.py` if it does.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w3-authz-coverage.md`, `w1-gateway-api.md`, `w1-libs.md`

@@ -14,11 +14,6 @@ governing_prds:
 governing_stories:
 - US-0074
 - US-0076
-severity: high
-source_audits:
-- w1-gateway-api.md
-- w1-game-session.md
-- w3-ddd-architecture.md
 target_release: 0.9.0
 ---
 
@@ -69,3 +64,8 @@ Test file: `tests/test_blackbox_gateway_settlement_proxy.py`. `game_session` run
 2. Settlement REST and both minigame sockets go to the owner.
 3. The relay module is under 200 lines.
 4. The blackbox test file passes. `uv run ruff check .` passes.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-gateway-api.md`, `w1-game-session.md`, `w3-ddd-architecture.md`

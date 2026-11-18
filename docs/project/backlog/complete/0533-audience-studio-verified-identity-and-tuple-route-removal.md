@@ -14,10 +14,6 @@ governing_prds:
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w2-audience-studio.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0533: Audience Studio Verifies Zitadel Tokens and Removes Body and Header Identity
@@ -65,3 +61,8 @@ HTTP tests with the service test runner, using tokens signed by a test key serve
 3. Helm renders the variables.
 4. `docs/reference` for audience studio lists the bearer requirement and the removed route.
 5. No file exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w2-audience-studio.md`, `w3-authz-coverage.md`

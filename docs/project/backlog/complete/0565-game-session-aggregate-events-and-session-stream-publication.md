@@ -16,11 +16,6 @@ governing_stories:
 - US-0010
 - US-0065
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-game-session.md
-- w3-event-wiring.md
-- w1-gates-python.md
 ---
 
 # TASK-0565: Game Session Events Persisted Through Aggregates and Published to the Session Stream
@@ -64,3 +59,8 @@ Game session state is event-sourced, but several session actions bypass the aggr
 2. Three blackbox tests above pass. Events-schema reference updated.
 3. `uv run pytest` and `make health-check` pass. Changed files under 500 lines.
 4. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-game-session.md`, `w3-event-wiring.md`, `w1-gates-python.md`

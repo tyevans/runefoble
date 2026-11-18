@@ -15,9 +15,6 @@ governing_stories:
 - US-0039
 - US-0053
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-soundscape.md
 ---
 
 # TASK-0576: Soundscape Mixer and Session State Held in the Aggregate, With Ducking Released
@@ -60,3 +57,8 @@ Soundscape changes the mixer and master volume without recording an event, keeps
 2. Three tests above pass. Events registered and documented.
 3. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 4. How-to and reference docs corrected. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-soundscape.md`

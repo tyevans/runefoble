@@ -24,11 +24,6 @@ governing_stories:
 - US-0039
 - US-0053
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-campaign-analytics.md
-- w2-soundscape.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0557: Campaign Analytics and Soundscape Service Fail-Closed Authorization
@@ -84,3 +79,8 @@ Setup: a campaign, a session, a player, and a DM. Telemetry is produced by the p
 4. The two how-to docs above are updated.
 5. `uv run pytest services/soundscape services/campaign_analytics` passes. `uv run ruff check` passes for both.
 6. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-analytics.md`, `w2-soundscape.md`, `w3-authz-coverage.md`

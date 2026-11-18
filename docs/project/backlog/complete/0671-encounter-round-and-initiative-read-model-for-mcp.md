@@ -15,9 +15,6 @@ governing_stories:
 - US-0008
 - US-0035
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w1-gateway-mcp.md
 ---
 
 # TASK-0671: Encounter Round and Initiative Read Route for MCP query_encounter_state
@@ -51,3 +48,8 @@ After TASK-0603, the MCP tool `query_encounter_state` reads board tokens from bo
 
 ## Definition of Done
 - Tests above pass. Docs updated. CHANGELOG line given to the orchestrator.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w1-gateway-mcp.md`

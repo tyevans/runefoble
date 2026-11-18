@@ -16,10 +16,6 @@ governing_prds:
 governing_stories:
 - US-0013
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-gateway-mcp.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0532: MCP Gateway Dynamic Tools Take Caller Identity from the Verified Principal
@@ -67,3 +63,8 @@ HTTP tests against the MCP gateway app, plus the MCP client once TASK-0623 lands
 3. The MCP how-to (`docs/how-to/add-a-watcher-ai-tool.md` and the dynamic tools how-to) shows the bearer requirement.
 4. `docs/reference/fastmcp-gateway.md` documents the caller rule.
 5. No file exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-gateway-mcp.md`, `w3-authz-coverage.md`

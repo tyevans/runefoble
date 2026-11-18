@@ -12,11 +12,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: medium
-source_audits:
-- work/0564.md
-- work/0602.md
-- work/0624.md
 ---
 
 # TASK-0693: Remaining Publish Failure Sites Follow the Publish Failure Policy
@@ -59,3 +54,8 @@ None. Reliability and observability.
 - No warn-only publish site remains in the listed files.
 - `/healthz` reports the counter in all eight services.
 - `uv run pytest` and `make lint` pass.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `work/0564.md`, `work/0602.md`, `work/0624.md`

@@ -12,10 +12,6 @@ governing_prds:
 governing_stories:
 - US-0033
 target_release: 0.9.0
-severity: low
-source_audits:
-- work/0627.md
-- work/0562.md
 ---
 
 # TASK-0680: Remove the UVTT Blackbox Test Suite Re-export Shim
@@ -51,3 +47,8 @@ Complete
 ## Definition of Done
 - The shim file is deleted. `grep -rn "backward compatibility" tests/test_blackbox_uvtt_import_suite.py` finds nothing because the file is gone.
 - Test counts match. `make lint` passes.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `work/0627.md`, `work/0562.md`

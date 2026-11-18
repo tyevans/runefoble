@@ -10,10 +10,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: low
-source_audits:
-- work/0621.md
-- work/0575.md
 ---
 
 # TASK-0692: Node Service Dev Script Resolves Its Imports and the Image Pins pnpm
@@ -47,3 +43,8 @@ None. Developer tooling.
 ## Definition of Done
 - Dev script starts. Root `packageManager` set. Image build pins pnpm.
 - `pnpm run build` and `make images` pass for audience studio.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `work/0621.md`, `work/0575.md`

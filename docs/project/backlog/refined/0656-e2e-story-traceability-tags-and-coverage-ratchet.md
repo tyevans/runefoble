@@ -12,9 +12,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-e2e-bdd.md
 ---
 
 # TASK-0656: User Story Traceability Tags on Gherkin Scenarios and a Coverage Ratchet Gate
@@ -59,3 +56,8 @@ This is a tooling gate. Verification:
 3. `scripts/check_story_coverage.py` passes in `make test-bdd` and in CI.
 4. `docs/how-to/test-user-flows-with-playwright-bdd.md` explains the tag rule and the baseline rule.
 5. The script and the baseline are each under 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-e2e-bdd.md`

@@ -13,9 +13,6 @@ governing_stories:
 - US-0008
 - US-0035
 target_release: 0.9.0
-severity: critical
-source_audits:
-- w1-gateway-mcp.md
 ---
 
 # TASK-0603: Gateway MCP Board and Encounter Tools Call Owning Service Frontdoors
@@ -66,3 +63,8 @@ Source: `.audit/reports/w1-gateway-mcp.md` F1. Existing task TASK-0005 (complete
 3. Blackbox tests pass. `uv run pytest gateway/mcp tests/test_blackbox_mcp_gateway.py` passes.
 4. Ruff check and format pass.
 5. `docs/reference/fastmcp-gateway.md` and the add-a-tool how-to corrected. `CHANGELOG.md` `[Unreleased]` entry added.
+
+## Audit Provenance
+
+- Severity: critical
+- Source audits: `w1-gateway-mcp.md`

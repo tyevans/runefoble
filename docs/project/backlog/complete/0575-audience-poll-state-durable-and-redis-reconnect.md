@@ -14,9 +14,6 @@ governing_prds:
 governing_stories:
 - US-0031
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-audience-studio.md
 ---
 
 # TASK-0575: Audience Studio Poll and Proposal State Durable, With Redis Publish Recovery
@@ -61,3 +58,8 @@ Audience Studio keeps polls, votes, open timers, and pending proposals in TypeSc
 2. Three tests above pass. `pnpm run build` and the TypeScript tests pass.
 3. How-to corrected. Events-schema audience section matches the code.
 4. `CHANGELOG.md` entry. Files under 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-audience-studio.md`

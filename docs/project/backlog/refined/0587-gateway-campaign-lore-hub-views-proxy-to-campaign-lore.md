@@ -14,11 +14,6 @@ governing_prds:
 governing_stories:
 - US-0050
 - US-0036
-severity: high
-source_audits:
-- w2-campaign-lore.md
-- w1-gateway-api.md
-- w1-gates-infra.md
 target_release: 0.9.0
 ---
 
@@ -81,3 +76,8 @@ The test must not assert the strings "Sunken Citadel" or "Star-Eater Relic".
 Source: `.audit/synth/discovered-round2.md`.
 
 - Add gateway proxies for the lore write routes (POST atlas pins and POST codex entries). Use the write permission from runefoble.zed, not the view permission.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-campaign-lore.md`, `w1-gateway-api.md`, `w1-gates-infra.md`

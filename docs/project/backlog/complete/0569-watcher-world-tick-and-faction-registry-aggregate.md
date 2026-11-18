@@ -14,10 +14,6 @@ governing_prds:
 governing_stories:
 - US-0057
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-the-watcher.md
-- w3-event-wiring.md
 ---
 
 # TASK-0569: Watcher World Tick Counter and Faction Registry as Durable Aggregate State
@@ -58,3 +54,8 @@ The world simulation keeps its tick counter, faction registry, tick history, and
 3. Reference docs for `WorldTickExecuted` match the emitted type.
 4. `uv run pytest` and `make health-check` pass. Files under 500 lines.
 5. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-the-watcher.md`, `w3-event-wiring.md`

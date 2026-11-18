@@ -19,10 +19,6 @@ governing_stories:
 - US-0049
 - US-0055
 target_release: 0.9.0
-severity: medium
-source_audits:
-- w1-gates-frontend.md
-- w2-asset-forge.md
 ---
 
 # TASK-0645: App Shell Composes the Asset Forge Microfrontend on a Deep-Linkable Route
@@ -79,3 +75,8 @@ Playwright BDD (`e2e/features/asset_forge_composition.feature`):
 4. Docs in `docs/how-to/forge-procedural-battlemaps-and-tokens.md` and `docs/how-to/forge-print-ready-maps-standees-and-stl-tokens.md` name the route.
 5. `pnpm run build` and `make build` pass. Changelog entry under `[Unreleased]`.
 6. Files changed stay under 500 lines.
+
+## Audit Provenance
+
+- Severity: medium
+- Source audits: `w1-gates-frontend.md`, `w2-asset-forge.md`

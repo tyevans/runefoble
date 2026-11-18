@@ -15,9 +15,6 @@ governing_stories:
 - US-0018
 - US-0014
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-board-state.md
 ---
 
 # TASK-0563: Board UI Trap, Map Switch and Move Events Reach the Backend
@@ -62,3 +59,8 @@ Several board microfrontend events are dispatched but no listener calls the back
 2. Three Playwright BDD scenarios above pass.
 3. `pnpm run build` and `make build` pass. Changed files under 500 lines.
 4. How-to updated with the event-to-route table. `CHANGELOG.md` entry.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-board-state.md`

@@ -9,9 +9,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: high
-source_audits:
-- w3-docs-integrity.md
 ---
 
 # TASK-0659: Platform Showcase Marketing Page Labels Only Verified Capabilities as Live
@@ -63,3 +60,8 @@ Marketing and platform communication. The governing PRDs are the ones the claims
 2. The milestone status matches `ROADMAP.md`.
 3. The status check script runs in `make health-check` or in `spec-ops health` (TASK-0668 decides the target).
 4. No claim in the page cites a canned, fixture, or in-memory path as live.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w3-docs-integrity.md`

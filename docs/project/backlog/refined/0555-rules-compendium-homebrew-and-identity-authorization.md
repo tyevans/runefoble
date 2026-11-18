@@ -20,10 +20,6 @@ governing_stories:
 - US-0052
 - US-0037
 target_release: 0.9.0
-severity: high
-source_audits:
-- w2-rules-compendium.md
-- w3-authz-coverage.md
 ---
 
 # TASK-0555: Rules Compendium Homebrew Read, Write, and Identity Authorization
@@ -76,3 +72,8 @@ Setup: a campaign with a DM and a player. The DM creates a homebrew rule through
 3. The compendium how-to is updated.
 4. `uv run pytest services/rules_compendium` passes. `uv run ruff check services/rules_compendium` passes.
 5. No file in the change exceeds 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w2-rules-compendium.md`, `w3-authz-coverage.md`

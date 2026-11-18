@@ -14,12 +14,6 @@ governing_prds:
 governing_stories:
 - US-0010
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0560.md
-- work/0611.md
-- work/0612.md
-- work/0607.md
 ---
 
 # TASK-0672: Infrastructure Start-Up Failures Fail Fast Without In-Memory Fallback or Suppression
@@ -68,3 +62,8 @@ Source: `.audit/synth/discovered-round1.md`.
 
 - `services/inference_worker/src/inference_worker/redis_consumer.py:130-131`: when `_process_message` raises, the error is logged, no result is published, and the message is not acked. Publish an error result with the correlation id, then ack. Callers wait today with no reply.
 - `services/inference_worker/src/inference_worker/redis_consumer.py` (TASK-0501): messages with unknown task types or missing fields are rejected without publish or ack. They stay pending and are redelivered. Publish an error result, then ack (dead-letter policy).
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0560.md`, `work/0611.md`, `work/0612.md`, `work/0607.md`

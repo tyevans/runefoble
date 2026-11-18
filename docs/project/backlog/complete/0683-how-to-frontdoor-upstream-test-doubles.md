@@ -9,10 +9,6 @@ governing_adrs:
 governing_prds: []
 governing_stories: []
 target_release: 0.9.0
-severity: low
-source_audits:
-- work/0603.md
-- work/0606.md
 ---
 
 # TASK-0683: How-To Guide for Frontdoor Upstream Test Services
@@ -43,3 +39,8 @@ None. Developer documentation.
 
 ## Definition of Done
 - Guide written and indexed. CHANGELOG line given to the orchestrator.
+
+## Audit Provenance
+
+- Severity: low
+- Source audits: `work/0603.md`, `work/0606.md`

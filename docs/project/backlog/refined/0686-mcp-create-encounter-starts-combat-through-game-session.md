@@ -15,9 +15,6 @@ governing_prds:
 governing_stories:
 - US-0001
 target_release: 0.9.0
-severity: high
-source_audits:
-- work/0671.md
 ---
 
 # TASK-0686: MCP create_encounter Starts Combat Through Game Session
@@ -61,3 +58,8 @@ The MCP tool `create_encounter` creates a board_state board and returns the boar
 - The round trip from `create_encounter` to `query_encounter_state` passes.
 - No board-only encounter id remains in code or docs.
 - `uv run pytest` and `make lint` pass. Reference doc updated.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `work/0671.md`

@@ -11,12 +11,6 @@ governing_prds: []
 governing_stories:
 - US-0010
 target_release: 0.9.0
-severity: high
-source_audits:
-- w1-gates-infra.md
-- w2-soundscape.md
-- w2-inference-worker.md
-- w1-gateway-mcp.md
 ---
 
 # TASK-0620: Shared Python Service Dockerfile and make images Kind Load Target
@@ -68,3 +62,8 @@ Out of scope: audience-studio (TypeScript, TASK-0621), inference-worker (TASK-06
 3. `make cluster-up images helm-deploy` on a clean Kind cluster reaches Ready for all Python Deployments (manual gate, recorded in the PR).
 4. `docs/reference/cli-interfaces.md` and the tutorial list the new target.
 5. `make lint` and `uv run ruff check .` pass. No source file above 500 lines.
+
+## Audit Provenance
+
+- Severity: high
+- Source audits: `w1-gates-infra.md`, `w2-soundscape.md`, `w2-inference-worker.md`, `w1-gateway-mcp.md`
