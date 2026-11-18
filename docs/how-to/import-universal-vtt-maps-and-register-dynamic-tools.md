@@ -118,12 +118,10 @@ tool_spec = {
         },
         "required": ["base_damage", "distance"],
     },
-    "handler_code": (
-        "def handle(base_damage: int, distance: int) -> dict:\n"
-        "    drop = max(0, distance * 2)\n"
-        "    return {'effective_damage': max(0, base_damage - drop), 'drop': drop}\n"
-    ),
-    "sandbox_policy": {"allowed_modules": ["math"]},
+    "handler": {
+        "effective_damage": {"$expr": "max(0, base_damage - max(0, distance * 2))"},
+        "drop": {"$expr": "max(0, distance * 2)"},
+    },
     "metadata": {"author": "Alex", "version": "1.0.0"},
 }
 
@@ -148,15 +146,16 @@ result = await tool.run({"base_damage": 30, "distance": 5})
 print(result)  # {"effective_damage": 20, "drop": 10}
 ```
 
-### Sandbox Security Constraints
+### Declarative Handlers
 
-Custom `handler_code` is validated through Python AST static analysis before registration:
-- Disallowed modules: `os`, `sys`, `subprocess`, `socket`, `httpx`, `shutil`, `urllib`.
-- Disallowed functions: `open`, `eval`, `exec`, `compile`, `globals`, `locals`.
-- Disallowed attributes: Access to dunder attributes like `__class__` or `__globals__`.
-- Safe builtins: Math functions, standard collection types, `json`, and `re`.
+A tool handler is data. The gateway never compiles or runs caller code (ADR-0020). The `handler` field is a non-empty JSON object. The tool returns this object after evaluation:
 
-Attempting to register code violating sandbox policies returns HTTP 400 Bad Request.
+- `"${name}"` gives the argument `name` with its type kept. `"${who} hits for ${base}"` gives a string with the values inserted.
+- `{"$expr": "max(0, base - dist * 2)"}` gives a number. Use numbers, parameter names, `+ - * / // %`, parentheses, and `max`, `min`, `abs`, `round`.
+- `{"$dice": "2d6+3"}` gives the total of the dice plus the modifier. The limits are 100 dice and 1000 sides.
+- An object or a list holds more of these values. Nesting is limited to 8 levels.
+
+Registration refuses a handler with an unknown parameter name, an unknown `$` directive, a bad expression, or a limit breach. The response is HTTP 400 and no tool is added. A definition with no `handler`, or with the removed `handler_code` field only, returns HTTP 422. A runtime arithmetic error, such as division by zero, returns HTTP 400 at execution.
 
 ---
 
@@ -181,12 +180,11 @@ response = httpx.put(
             },
             "required": ["base_damage", "distance"],
         },
-        "handler_code": (
-            "def handle(base_damage: int, distance: int, resistance: float = 0.0) -> dict:\n"
-            "    drop = max(0, distance * 2)\n"
-            "    net = max(0, base_damage - drop)\n"
-            "    return {'effective_damage': net * (1.0 - resistance)}\n"
-        ),
+        "handler": {
+            "effective_damage": {
+                "$expr": "max(0, base_damage - max(0, distance * 2)) * (1.0 - resistance)"
+            },
+        },
     },
 )
 ```

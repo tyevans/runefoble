@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 from gateway_mcp.dynamic.builder import make_dynamic_tool_callable
 from gateway_mcp.dynamic.events import safe_dispatch_event
+from gateway_mcp.dynamic.handlers import evaluate_handler, validate_handler
 from gateway_mcp.dynamic.models import DynamicToolDefinition, validate_parameter_schema
-from gateway_mcp.sandbox import execute_sandboxed_handler, validate_sandbox_code
 from runefoble_events.mcp_tools import (
     DynamicToolInvokedEvent,
     DynamicToolRegisteredEvent,
@@ -39,7 +39,7 @@ class DynamicToolRegistry:
         self, definition: DynamicToolDefinition, user_id: str | None = None
     ) -> DynamicToolDefinition:
         validate_parameter_schema(definition.parameters)
-        validate_sandbox_code(definition.handler_code)
+        validate_handler(definition.handler, frozenset(definition.parameters.get("properties", {})))
         with self._lock:
             self._tools[definition.name] = definition
             if self.mcp is not None:
@@ -104,7 +104,7 @@ class DynamicToolRegistry:
             raise ValueError(f"Dynamic tool '{name}' not found")
         t0, success, err_msg = time.perf_counter(), True, None
         try:
-            return execute_sandboxed_handler(tool_def.handler_code, arguments)
+            return evaluate_handler(tool_def.handler, arguments)
         except Exception as exc:
             success, err_msg = False, str(exc)
             raise

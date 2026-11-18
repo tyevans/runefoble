@@ -45,7 +45,7 @@ def _handler_less_payload(name: str, **overrides: object) -> dict[str, object]:
 
 @pytest.mark.parametrize(
     "overrides",
-    [{"handler_code": None}, {"handler_code": ""}, {"handler_code": "   \n"}, {}],
+    [{"handler": None}, {"handler": {}}, {"handler": "   "}, {}],
     ids=["null", "empty", "blank", "missing"],
 )
 def test_blackbox_register_rejects_tool_without_handler(client: TestClient, overrides):
@@ -106,9 +106,7 @@ def test_blackbox_registration_without_event_loop_is_logged(caplog: pytest.LogCa
     """A registration outside a running loop logs the event it could not dispatch."""
     set_event_bus(None)
     registry = DynamicToolRegistry()
-    definition = DynamicToolDefinition(
-        name="sync_probe", handler_code="def handle():\n    return {'ok': True}\n"
-    )
+    definition = DynamicToolDefinition(name="sync_probe", handler={"ok": True})
 
     with caplog.at_level(logging.ERROR, logger=EVENTS_LOGGER):
         registry.register_tool(definition)

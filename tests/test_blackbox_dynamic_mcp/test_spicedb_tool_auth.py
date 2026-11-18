@@ -17,7 +17,7 @@ async def test_blackbox_spicedb_author_manage_and_unauthorized_rejection(
         "name": tool_name,
         "description": "Arcane pulse emitter",
         "parameters": {"type": "object", "properties": {"charge": {"type": "integer"}}},
-        "handler_code": "def handle(charge: int = 1): return {'pulse_strength': charge * 10}",
+        "handler": {"pulse_strength": {"$expr": "charge * 10"}},
     }
 
     # 1. Author 'alex' registers the tool
@@ -62,7 +62,7 @@ async def test_blackbox_spicedb_campaign_scoped_permissions(
         "campaign_id": campaign_id,
         "author_id": "author-dev",
         "parameters": {"type": "object", "properties": {"power": {"type": "integer"}}},
-        "handler_code": "def handle(power: int = 5): return {'damage': power * 2}",
+        "handler": {"damage": {"$expr": "power * 2"}},
     }
 
     # Setup campaign relationships in SpiceDB

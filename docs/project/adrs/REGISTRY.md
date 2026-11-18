@@ -23,6 +23,7 @@ This registry records every architectural decision in Runefoble. Numbers are all
 | ADR-0017 | File Length Limit of 500 Lines | Accepted | 2026-11-17 | [`adr-0017-file-length-invariant.md`](accepted/adr-0017-file-length-invariant.md) |
 | ADR-0018 | Worktree Isolation for Backlog Work | Accepted | 2026-11-17 | [`adr-0018-worktree-and-backlog-isolation.md`](accepted/adr-0018-worktree-and-backlog-isolation.md) |
 | ADR-0019 | Agent Constitution and Diataxis Documentation | Accepted | 2026-11-17 | [`adr-0019-agent-constitution-and-diataxis-documentation.md`](accepted/adr-0019-agent-constitution-and-diataxis-documentation.md) |
+| ADR-0020 | Declarative Dynamic Tool Handlers | Accepted | 2026-11-17 | [`adr-0020-declarative-dynamic-tool-handlers.md`](accepted/adr-0020-declarative-dynamic-tool-handlers.md) |
 
 ## spec-ops Baseline Mapping
 

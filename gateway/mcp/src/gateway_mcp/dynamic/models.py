@@ -27,11 +27,9 @@ class DynamicToolDefinition(BaseModel):
         default_factory=lambda: {"type": "object", "properties": {}},
         description="JSON Schema for input parameters",
     )
-    handler_code: str = Field(
-        ..., description="Sandboxed Python handler implementation (required, non-blank)"
-    )
-    sandbox_policy: dict[str, Any] = Field(
-        default_factory=dict, description="Custom sandbox execution constraints"
+    handler: dict[str, Any] = Field(
+        ...,
+        description="Declarative result template (ADR-0020): ${name} placeholders, $expr, $dice",
     )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Metadata tags, author, and version info"
@@ -39,11 +37,11 @@ class DynamicToolDefinition(BaseModel):
     author_id: str | None = Field(default=None, description="Author user ID for SpiceDB checks")
     campaign_id: str | None = Field(default=None, description="Campaign ID for scoped permissions")
 
-    @field_validator("handler_code")
+    @field_validator("handler")
     @classmethod
-    def _require_handler(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("handler_code must contain a sandboxed handler implementation")
+    def _require_handler(cls, value: dict[str, Any]) -> dict[str, Any]:
+        if not value:
+            raise ValueError("handler must be a non-empty declarative result template")
         return value
 
 

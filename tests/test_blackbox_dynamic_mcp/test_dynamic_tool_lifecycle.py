@@ -26,11 +26,10 @@ async def test_blackbox_register_dynamic_tool_and_discovery(client: TestClient):
             },
             "required": ["base_damage", "distance"],
         },
-        "handler_code": (
-            "def handle(base_damage: int, distance: int) -> dict:\n"
-            "    reduced = max(0, base_damage - (distance * 2))\n"
-            "    return {'effective_damage': reduced, 'distance': distance}\n"
-        ),
+        "handler": {
+            "effective_damage": {"$expr": "max(0, base_damage - (distance * 2))"},
+            "distance": "${distance}",
+        },
         "metadata": {"version": "1.0.0", "author": "modder-1"},
     }
 
@@ -74,7 +73,7 @@ async def test_blackbox_deregister_dynamic_tool(client: TestClient):
         "name": tool_name,
         "description": "Temporary buff",
         "parameters": {"type": "object", "properties": {"bonus": {"type": "integer"}}},
-        "handler_code": "def handle(bonus: int = 1): return {'bonus': bonus}",
+        "handler": {"bonus": "${bonus}"},
     }
     # Register tool
     client.post("/mcp/tools/register", json=payload)
@@ -105,7 +104,7 @@ async def test_blackbox_tool_lifecycle_cloudevents(client: TestClient, mock_redi
         "name": tool_name,
         "description": "Brew elixir",
         "parameters": {"type": "object", "properties": {"potency": {"type": "integer"}}},
-        "handler_code": "def handle(potency: int = 2): return {'healed': potency * 5}",
+        "handler": {"healed": {"$expr": "potency * 5"}},
         "metadata": {"category": "alchemy"},
     }
 
