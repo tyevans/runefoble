@@ -131,7 +131,7 @@ The mobile companion component is vendored in `@runefoble/voice-agent-ui` and ad
 - **Tactile Push-to-Talk**: Large thumb-friendly button triggering `ptt-start` and `ptt-end` events with light 15ms haptic confirmation.
 - **Diegetic Secret Whisper Overlay**: Subtle parchment modal with privacy blur (`filter: blur(...)`) to prevent shoulder surfing, acoustic chime via WebAudio `AudioContext`, and instant reveal/conceal toggle.
 - **Audio Buffer Monitor**: Displays real-time audio buffer health (target 45ms) and cellular stream tier indicators (`mobile_optimized`, `cellular_constrained`, `ultra_low`).
-- **WebSocket Protocol Dispatcher**: Direct client-side connection support via `.connectWebSocket(url)` and message handler for `haptic_vibration`, `haptic_ping`, and `audio_profile_adapted` frames.
+- **WebSocket Protocol Dispatcher**: Direct client-side connection support via `.connectWebSocket(url)` and message handler for `haptic_vibration`, `haptic_ping`, and `audio_profile_adapted` frames. The token comes from the App Shell auth context (`runefoble-auth`). The component does not open the socket without a signed-in session, and it shows a status line instead.
 - **Custom Event Contracts**: Dispatches `haptic-pulse`, `whisper-received`, `whisper-dismissed`, `whisper-blur-toggled`, and `connection-changed`.
 
 ---

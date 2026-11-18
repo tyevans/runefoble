@@ -82,3 +82,5 @@ The `<runefoble-spectator-overlay>` element is vendored by `services/game_sessio
   connect-ws
 ></runefoble-spectator-overlay>
 ```
+
+The overlay reads the bearer token from the App Shell auth context. Without a signed-in session it does not open the socket. It shows a status line instead.

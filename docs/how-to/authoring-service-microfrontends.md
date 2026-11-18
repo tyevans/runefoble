@@ -118,4 +118,34 @@ if (!res.ok) this.error = `Request failed (status ${res.status}).`;
 3. Catch failures and set an error state. Render the error. Do not show demo data.
 4. In stories, add one story with `<runefoble-story-auth-provider token="story-token">` and one story with no provider. Use `installTokenCheckingFetch` from `@runefoble/ui-core/story-fetch` to stand in for the gateway.
 
+### WebSockets
+
+Open a socket only with a token. Use the shared subprotocol helper. Never put the token in the URL.
+
+```ts
+import { AuthConsumerController, websocketProtocols } from '@runefoble/ui-core';
+
+private readonly auth = new AuthConsumerController(this);
+
+const token = await this.auth.getAccessToken();
+if (!token) {
+  this.socketError = 'Sign in to open the live connection.';
+  return;
+}
+this.ws = new WebSocket(url, websocketProtocols(token));
+```
+
+`websocketProtocols` returns `['runefoble.v1', 'runefoble.bearer.<token>']`. The gateway closes a refused handshake with code 1008. Set an error state on code 1008 and render it. The App Shell clears the session and sends the user to sign-in.
+
+### Shared token helper
+
+Each package sends its own calls. The token comes from one place only:
+
+| Where | Helper | Use |
+|---|---|---|
+| Microfrontend (`services/<bc>/ui`) | `AuthConsumerController` (`authHeaders()`, `getAccessToken()`) and `websocketProtocols(token)` from `@runefoble/ui-core` | Calls and sockets |
+| App Shell (`frontend/src`) | `authHeaders()` and `wsProtocols()` in `frontend/src/auth/transport.ts` | Shell calls and sockets |
+
+Do not copy token logic into a package. Do not read `localStorage` for a token. Do not send an identity header such as `X-User-Id`. The server reads identity from the verified token only.
+
 See `docs/reference/microfrontend-architecture.md` for the contract.
