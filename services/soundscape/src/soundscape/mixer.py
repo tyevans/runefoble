@@ -106,29 +106,41 @@ TACTICAL_FOLEY_CATALOG: dict[str, dict[str, Any]] = {
 }
 
 
+DEFAULT_CHANNEL_VOLUMES: dict[str, float] = {
+    "melody": 0.8,
+    "percussion": 0.7,
+    "drone": 0.6,
+    "ambient": 0.9,
+}
+
+
+def merged_channel_volumes(
+    current: dict[str, float], updates: dict[str, float]
+) -> dict[str, float]:
+    """Return the channel map after applying slider updates. Values clamp to 0.0 through 1.0."""
+    merged = dict(current)
+    for channel, volume in updates.items():
+        merged[channel] = round(max(0.0, min(1.0, float(volume))), 4)
+    return merged
+
+
 class AudioStemMixer:
-    """Manages audio stem gains, ducking attenuation, and foley presets."""
+    """Pure view of stem gains and ducking for one session. It holds no state of its own.
+
+    The soundscape aggregate builds this view from its event-sourced state for each request.
+    """
 
     def __init__(
         self,
         stem_profile: str = "exploration",
         master_volume: float = 1.0,
+        is_ducked: bool = False,
+        channel_volumes: dict[str, float] | None = None,
     ) -> None:
         self.stem_profile = stem_profile
         self.master_volume = master_volume
-        self.is_ducked = False
-        self.ducking_reason: str = "none"
-        self.channel_volumes: dict[str, float] = {
-            "melody": 0.8,
-            "percussion": 0.7,
-            "drone": 0.6,
-            "ambient": 0.9,
-        }
-
-    def update_channel_volumes(self, updates: dict[str, float]) -> None:
-        """Update multi-channel stem volume sliders (melody, percussion, drone, ambient)."""
-        for ch, vol in updates.items():
-            self.channel_volumes[ch] = round(max(0.0, min(1.0, float(vol))), 4)
+        self.is_ducked = is_ducked
+        self.channel_volumes: dict[str, float] = dict(channel_volumes or DEFAULT_CHANNEL_VOLUMES)
 
     def get_stem_weights(self, profile: str | None = None) -> dict[str, float]:
         """Return raw stem weight matrix for given or current profile."""
@@ -147,11 +159,6 @@ class AudioStemMixer:
         weights = self.get_stem_weights()
         effective_gain = self.get_effective_gain()
         return {stem: round(weight * effective_gain, 4) for stem, weight in weights.items()}
-
-    def set_ducking(self, ducked: bool, reason: str = "speech") -> None:
-        """Toggle ducking state (-12dB attenuation on active voice)."""
-        self.is_ducked = ducked
-        self.ducking_reason = reason if ducked else "none"
 
     def resolve_foley_cue(
         self,

@@ -7,29 +7,36 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_platform.aggregate_loading import load_or_create
 
-from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
     VerifiedUserId,
     check_user_can_control_soundscape,
-    get_or_create_aggregate_id,
-    get_or_create_mixer,
     get_principal,
-    get_soundscape_repo,
-    publish_soundscape_event,
 )
-from soundscape.mixer import STEM_PROFILE_WEIGHTS, TACTICAL_FOLEY_CATALOG
+from soundscape.mixer import (
+    STEM_PROFILE_WEIGHTS,
+    TACTICAL_FOLEY_CATALOG,
+    merged_channel_volumes,
+)
 from soundscape.models import (
     DuckingRequest,
     MoodOverrideRequest,
     StemVolumeUpdateRequest,
     TensionStatusResponse,
 )
+from soundscape.session_state import (
+    load_session_aggregate,
+    read_session_state,
+    save_session_aggregate,
+    tension_status,
+    utc_now,
+)
 
 router = APIRouter(
     prefix="/api/v1/soundscape", tags=["Audio Stems & Mixer"], dependencies=[Depends(get_principal)]
 )
+
+DUCKING_ATTENUATION_DB = -12.0
 
 
 @router.get(
@@ -41,7 +48,8 @@ async def list_audio_stems(
     session_id: str = Query(default="default", description="Game session ID"),
 ) -> dict[str, Any]:
     """Retrieve catalog of stems, presets, and active mixer configuration."""
-    mixer = get_or_create_mixer(session_id)
+    state = await read_session_state(session_id)
+    mixer = state.mixer_at(utc_now())
     return {
         "session_id": session_id,
         "available_profiles": list(STEM_PROFILE_WEIGHTS.keys()),
@@ -51,7 +59,7 @@ async def list_audio_stems(
         "current_stem_gains": mixer.calculate_active_stem_gains(),
         "stem_channels": mixer.channel_volumes,
         "is_ducked": mixer.is_ducked,
-        "ducking_attenuation_db": -12.0 if mixer.is_ducked else 0.0,
+        "ducking_attenuation_db": DUCKING_ATTENUATION_DB if mixer.is_ducked else 0.0,
         "foley_presets": list(TACTICAL_FOLEY_CATALOG.keys()),
     }
 
@@ -78,8 +86,13 @@ async def update_stem_volumes(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Forbidden: caller lacks Zanzibar permissions to adjust soundscape stems",
         )
-    mixer = get_or_create_mixer(request.session_id)
-    mixer.update_channel_volumes(request.stem_volumes)
+    agg = await load_session_aggregate(request.session_id)
+    agg.record_channel_volumes(
+        request.session_id,
+        merged_channel_volumes(agg.state.channel_volumes, request.stem_volumes),
+    )
+    await save_session_aggregate(agg)
+    mixer = agg.state.mixer_at(utc_now())
     return {
         "session_id": request.session_id,
         "stem_channels": mixer.channel_volumes,
@@ -128,16 +141,8 @@ async def override_mood(
             detail=f"Invalid mood profile '{request.mood}'. Valid: {list(STEM_PROFILE_WEIGHTS.keys())}",
         )
 
-    mixer = get_or_create_mixer(request.session_id)
-    mixer.stem_profile = request.mood
-    if request.master_volume is not None:
-        mixer.master_volume = request.master_volume
-
-    repo = get_soundscape_repo()
-    agg_id = get_or_create_aggregate_id(request.session_id)
-    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
-
-    agg.record_mood_override(
+    agg = await load_session_aggregate(request.session_id)
+    agg.record_stem_profile_overridden(
         session_id=request.session_id,
         mood=request.mood,
         overridden_by=user_id,
@@ -150,39 +155,27 @@ async def override_mood(
         crossfade_duration_ms=1000,
         active_stems=[request.mood],
     )
-
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    for event in events:
-        await publish_soundscape_event(event)
-
-    return TensionStatusResponse(
-        session_id=request.session_id,
-        tension_score=agg.state.tension_score,
-        stem_profile=request.mood,
-        active_stems=agg.state.active_stems,
-        stem_volumes=mixer.calculate_active_stem_gains(),
-        master_volume=mixer.master_volume,
-        is_ducked=mixer.is_ducked,
-        ducking_attenuation_db=-12.0 if mixer.is_ducked else 0.0,
-        effective_gain=mixer.get_effective_gain(),
-        manual_override=True,
-        override_mood=request.mood,
-        recent_cues=agg.state.cues_history,
-    )
+    if request.master_volume is not None:
+        agg.record_master_volume(request.session_id, request.master_volume)
+    await save_session_aggregate(agg)
+    return tension_status(request.session_id, agg.state)
 
 
 @router.post(
     "/duck",
     status_code=status.HTTP_200_OK,
-    summary="Toggle WebAudio background music ducking (-12dB)",
+    summary="Engage or release WebAudio background music ducking (-12dB)",
 )
 async def toggle_ducking(
     request: DuckingRequest,
     user_id: VerifiedUserId,
     spicedb: Annotated[SpiceDBClient, Depends(get_spicedb_client)],
 ) -> dict[str, Any]:
-    """Attenuate or restore background audio stems during speech or foley (session control)."""
+    """Attenuate background stems for a stored duration, or release a duck (session control).
+
+    `is_ducked: true` records DuckingEngaged with `duration_ms`. `is_ducked: false` records
+    DuckingReleased and ends any engagement at once.
+    """
     allowed = await check_user_can_control_soundscape(
         user_id=user_id,
         session_id=request.session_id,
@@ -194,28 +187,23 @@ async def toggle_ducking(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Forbidden: caller lacks Zanzibar permissions to duck soundscape audio",
         )
-    mixer = get_or_create_mixer(request.session_id)
-    mixer.set_ducking(request.is_ducked, reason=request.reason)
+    agg = await load_session_aggregate(request.session_id)
+    if request.is_ducked:
+        agg.record_ducking_engaged(
+            session_id=request.session_id,
+            reason=request.reason,
+            duration_ms=request.duration_ms,
+            attenuation_db=DUCKING_ATTENUATION_DB,
+        )
+    else:
+        agg.record_ducking_released(session_id=request.session_id, reason=request.reason)
+    await save_session_aggregate(agg)
 
-    repo = get_soundscape_repo()
-    agg_id = get_or_create_aggregate_id(request.session_id)
-    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
-
-    agg.record_ducking_toggle(
-        session_id=request.session_id,
-        is_ducked=request.is_ducked,
-        attenuation_db=-12.0 if request.is_ducked else 0.0,
-        reason=request.reason,
-    )
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    for event in events:
-        await publish_soundscape_event(event)
-
+    mixer = agg.state.mixer_at(utc_now())
     return {
         "session_id": request.session_id,
         "is_ducked": mixer.is_ducked,
-        "attenuation_db": -12.0 if mixer.is_ducked else 0.0,
+        "attenuation_db": DUCKING_ATTENUATION_DB if mixer.is_ducked else 0.0,
         "effective_gain": mixer.get_effective_gain(),
         "reason": request.reason,
     }

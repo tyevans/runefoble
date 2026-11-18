@@ -85,6 +85,12 @@ class DuckingRequest(BaseModel):
         ..., description="True to attenuate background music by -12dB; False to restore"
     )
     reason: str = Field(default="speech", description="Triggering source (speech, cue, vad)")
+    duration_ms: int = Field(
+        default=0,
+        ge=0,
+        le=60000,
+        description="Engaged duck lasts this long, then ends by itself. 0 holds until released.",
+    )
 
 
 class StemVolumeUpdateRequest(BaseModel):

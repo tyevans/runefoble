@@ -1,11 +1,12 @@
-"""Tactical foley triggers, acoustic positioning, and audio ducking handler mixin."""
+"""Tactical foley triggers and timed audio ducking handler mixin."""
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
 from eventsource.domain.decorators import handles
-from runefoble_events.soundscape import SoundscapeCueTriggered, SoundscapeDuckingToggled
+from runefoble_events.soundscape import DuckingEngaged, DuckingReleased, SoundscapeCueTriggered
 
 if TYPE_CHECKING:
     from soundscape.aggregate import SoundscapeState
@@ -41,20 +42,29 @@ class FoleyHandlersMixin:
             duck_music=duck_music,
         )
 
-    def record_ducking_toggle(
+    def record_ducking_engaged(
         self,
         session_id: str,
-        is_ducked: bool,
-        attenuation_db: float = -12.0,
         reason: str = "speech",
+        duration_ms: int = 0,
+        attenuation_db: float = -12.0,
     ) -> None:
-        """Record domain state event for WebAudio ducking toggle."""
+        """Record that ducking engages. A positive duration ends the duck when it elapses."""
         self.create_event(
-            SoundscapeDuckingToggled,
+            DuckingEngaged,
             aggregate_id=self.aggregate_id,
             session_id=session_id,
-            is_ducked=is_ducked,
             attenuation_db=attenuation_db,
+            reason=reason,
+            duration_ms=duration_ms,
+        )
+
+    def record_ducking_released(self, session_id: str, reason: str = "manual") -> None:
+        """Record that ducking releases before its stored duration ends."""
+        self.create_event(
+            DuckingReleased,
+            aggregate_id=self.aggregate_id,
+            session_id=session_id,
             reason=reason,
         )
 
@@ -74,9 +84,23 @@ class FoleyHandlersMixin:
         if len(self.state.cues_history) > 20:
             self.state.cues_history = self.state.cues_history[-20:]
 
-    @handles(SoundscapeDuckingToggled)
-    def _on_ducking_toggled(self, event: SoundscapeDuckingToggled) -> None:
+    @handles(DuckingEngaged)
+    def _on_ducking_engaged(self, event: DuckingEngaged) -> None:
         if self._state is None:
             self._state = self.init_state()
-        self.state.is_ducked = event.is_ducked
+        self.state.is_ducked = True
+        self.state.ducking_reason = event.reason
         self.state.ducking_attenuation_db = event.attenuation_db
+        if event.duration_ms > 0:
+            self.state.ducking_until = event.occurred_at + timedelta(milliseconds=event.duration_ms)
+        else:
+            self.state.ducking_until = None
+
+    @handles(DuckingReleased)
+    def _on_ducking_released(self, event: DuckingReleased) -> None:
+        if self._state is None:
+            self._state = self.init_state()
+        self.state.is_ducked = False
+        self.state.ducking_reason = "none"
+        self.state.ducking_attenuation_db = 0.0
+        self.state.ducking_until = None

@@ -13,23 +13,24 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 
-from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
     VerifiedUserId,
     check_user_can_control_soundscape,
-    get_or_create_aggregate_id,
-    get_or_create_leitmotif_engine,
     get_principal,
-    get_soundscape_repo,
-    publish_soundscape_event,
 )
 from soundscape.leitmotif import (
     TIMBRE_PRESETS,
     ActiveLeitmotifPlayback,
     CharacterLeitmotifProfile,
+    LeitmotifEngine,
     LeitmotifTriggerRequest,
+)
+from soundscape.session_state import (
+    load_session_aggregate,
+    read_session_state,
+    save_session_aggregate,
+    utc_now,
 )
 
 router = APIRouter(
@@ -108,13 +109,9 @@ async def configure_character_leitmotif(
             detail="Forbidden: insufficient Zanzibar permissions to configure character leitmotif",
         )
 
-    engine = get_or_create_leitmotif_engine(request.session_id)
-    saved_profile = engine.register_profile(request)
+    saved_profile = LeitmotifEngine(session_id=request.session_id).register_profile(request)
 
-    repo = get_soundscape_repo()
-    agg_id = get_or_create_aggregate_id(request.session_id)
-    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
-
+    agg = await load_session_aggregate(request.session_id)
     agg.record_leitmotif_profile(
         session_id=saved_profile.session_id,
         character_id=saved_profile.character_id,
@@ -128,10 +125,7 @@ async def configure_character_leitmotif(
         release_ms=saved_profile.release_ms,
         duration_ms=saved_profile.duration_ms,
     )
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    for ev in events:
-        await publish_soundscape_event(ev)
+    await save_session_aggregate(agg)
 
     return saved_profile
 
@@ -147,17 +141,9 @@ async def get_character_leitmotif_profile(
     session_id: str = Query(default="default", description="Associated session ID"),
 ) -> CharacterLeitmotifProfile:
     """Retrieve active or persisted configuration for character."""
-    engine = get_or_create_leitmotif_engine(session_id)
-    profile = engine.get_profile(character_id)
-    if not profile:
-        # Check aggregate state
-        repo = get_soundscape_repo()
-        agg_id = get_or_create_aggregate_id(session_id)
-        agg = await load_if_exists(repo, agg_id)
-        if agg and character_id in agg.state.character_profiles:
-            data = agg.state.character_profiles[character_id]
-            profile = CharacterLeitmotifProfile(**data)
-            engine.register_profile(profile)
+    state = await read_session_state(session_id)
+    data = state.character_profiles.get(character_id)
+    profile = CharacterLeitmotifProfile(**data) if data else None
 
     if not profile:
         raise HTTPException(
@@ -195,7 +181,8 @@ async def trigger_character_leitmotif(
             detail="Forbidden: insufficient Zanzibar permissions to trigger character leitmotif",
         )
 
-    engine = get_or_create_leitmotif_engine(request.session_id)
+    agg = await load_session_aggregate(request.session_id)
+    engine = LeitmotifEngine.from_state(request.session_id, agg.state, utc_now())
     playback = engine.trigger_leitmotif(
         character_id=request.character_id,
         motif_type=request.motif_type,
@@ -203,10 +190,6 @@ async def trigger_character_leitmotif(
         character_name=request.character_name,
         volume_gain=request.volume_gain,
     )
-
-    repo = get_soundscape_repo()
-    agg_id = get_or_create_aggregate_id(request.session_id)
-    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
 
     agg.record_leitmotif_trigger(
         session_id=playback.session_id,
@@ -222,11 +205,10 @@ async def trigger_character_leitmotif(
         duration_ms=playback.duration_ms,
         duck_music=False,
         trigger_reason=playback.trigger_reason,
+        playback_id=playback.playback_id,
+        triggered_at=playback.triggered_at,
     )
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    for ev in events:
-        await publish_soundscape_event(ev)
+    await save_session_aggregate(agg)
 
     return playback
 
@@ -240,7 +222,8 @@ async def get_active_leitmotif(
     session_id: str = Query(default="default", description="Game session ID"),
 ) -> dict[str, Any]:
     """Inspect active leitmotif playback, envelope stage, and voice ducking attenuation."""
-    engine = get_or_create_leitmotif_engine(session_id)
+    state = await read_session_state(session_id)
+    engine = LeitmotifEngine.from_state(session_id, state, utc_now())
     playback = engine.get_active_status()
     return {
         "session_id": session_id,

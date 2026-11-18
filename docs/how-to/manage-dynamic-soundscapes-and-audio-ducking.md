@@ -91,7 +91,13 @@ Available presets include:
 
 ## 3. WebAudio Background Ducking (-12dB)
 
-Whenever a player speaks (via `PlayerSpokeEvent` or WebRTC audio frames), the ducking coordinator immediately attenuates music layers by -12 dB (~0.2512 linear multiplier):
+The soundscape aggregate owns the duck. A speech duck and a cue duck each record a `DuckingEngaged` event with a stored `duration_ms`:
+- Speech (`PlayerSpokeEvent`) ducks for 2500 ms.
+- A cue with `duck_music: true` ducks for 2000 ms.
+
+After the stored duration passes, `GET /tension` and the other read routes report `is_ducked: false`. No client call is needed. No speech-end domain event exists in the platform, so the stored duration ends a speech duck.
+
+To duck by hand, call the duck route with `is_ducked: true` and a `duration_ms`. A `duration_ms` of `0` holds the duck until a release:
 
 ```bash
 curl -X POST http://localhost:8009/api/v1/soundscape/duck \
@@ -100,9 +106,14 @@ curl -X POST http://localhost:8009/api/v1/soundscape/duck \
   -d '{
     "session_id": "session-tomb-14",
     "is_ducked": true,
-    "reason": "speech"
+    "reason": "speech",
+    "duration_ms": 2500
   }'
 ```
+
+To end a duck before its duration, call the same route with `is_ducked: false`. The aggregate records `DuckingReleased` and the duck ends at once.
+
+The browser component `<runefoble-soundscape-controls>` still clears its own badge with a local timer. It does not call the backend yet. The gateway does not proxy `/duck` (TASK-0536).
 
 ---
 
@@ -120,6 +131,8 @@ curl -X POST http://localhost:8009/api/v1/soundscape/override \
     "master_volume": 0.85
   }'
 ```
+
+The override records `StemProfileOverridden` and, when `master_volume` is set, `MasterVolumeChanged`. A restart keeps both values because they live in the event store.
 
 This operation checks `session.control` on `session:session-tomb-14`. When the request names a `campaign_id`, `campaign.run_session` on that campaign also grants it. A player receives `403`.
 
@@ -195,7 +208,7 @@ The soundscape service checks these schema permissions on each control route. Th
 |---|---|---|---|
 | `/api/v1/soundscape/cue` | POST | `session.participate` or `session.control`. With a `campaign_id`, also `campaign.play` or `campaign.run_session`. | Triggers tactical foley cue (`SoundscapeCueRequest`) |
 | `/api/v1/soundscape/stems/volume` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Sets stem channel volumes |
-| `/api/v1/soundscape/duck` | POST | `session.control` | Toggles -12dB ducking |
+| `/api/v1/soundscape/duck` | POST | `session.control` | Engages -12dB ducking for `duration_ms` (0 holds), or releases it with `is_ducked: false` |
 | `/api/v1/soundscape/tension/calculate` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Computes tension score from combat round and CR |
 | `/api/v1/soundscape/override` and `/stems/override` | POST | `session.control` (or `campaign.run_session` with a `campaign_id`) | Forces DM mood override (exploration, combat, etc.) |
 | `/api/v1/soundscape/leitmotif/profile` and `/trigger` | POST | `character.edit` on the character, or `session.control` (or `campaign.run_session` with a `campaign_id`) | Configures or triggers a character leitmotif |
@@ -218,27 +231,32 @@ The soundscape blackbox verification suite is partitioned into focused test modu
 - `tests/test_blackbox_leitmotif_triggers.py`: Verifies multi-modal combat and reactive triggers (critical hits, near-death cello themes, WebAudio sidechain -12dB voice ducking) and volume envelope stage calculations.
 - `tests/test_blackbox_soundscape_gateway.py`: Verifies API Gateway `/api/v1/soundscape/*` proxy routing, OpenAPI schema exposure, SpiceDB Zanzibar object authorization (`participate`, `control`, `run_session`), and downstream service forwarding (< 500 lines).
 - `tests/test_blackbox_analytics_soundscape_authz.py`: Verifies fail-closed authorization across the gateway analytics reads and soundscape controls. It covers 401 without a token, 403 for a player, 200 for the DM, and 503 on a SpiceDB outage.
-- `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`CombatEncounterStarted`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DeathSaveStarted`), platform bus subscription wiring, re-exports for existing callers (defect, DoR 9; removal: TASK-0498), and file length limit invariants (< 180 lines).
+- `tests/test_blackbox_soundscape_event_handlers.py`: Verifies domain event subscription handlers (`CombatEncounterStarted`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DeathSaveStarted`) and platform bus subscription wiring.
+- `tests/test_blackbox_soundscape_state_restart.py`: Verifies that mixer state (master volume), timed ducking, and the aggregate id survive a process restart. The restart runs `tests/helpers/soundscape_restart_child.py` in a new Python process on the same PostgreSQL event store.
 
 ---
 
-## 9. Modular Event Subscription & Service Architecture
+## 9. Event Subscription & Service Architecture
 
-Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, domain event handlers and dependency injection are cleanly separated into focused modules strictly maintained under 180 lines:
-- `services/soundscape/src/soundscape/dependencies.py`: Retains repository singleton factories, SpiceDB Zanzibar permission guards, mixer session registries, and re-exports domain event dispatchers (< 200 lines).
-- `services/soundscape/src/soundscape/event_handlers.py`: Contains domain event subscription callbacks (`CombatEncounterStarted`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, `DeathSaveStarted`), dynamic tension recalculation triggers, and bus listener registration (`register_soundscape_event_handlers()`) (< 180 lines).
-- `services/soundscape/src/soundscape/main.py`: Coordinates service startup and registers event handlers during FastAPI application lifespan.
+Per ADR-0003, ADR-0006, ADR-0007, and Hard Invariant 6, the service keeps no session state in process memory (TASK-0576):
+- `services/soundscape/src/soundscape/dependencies.py`: Holds the event repository factory, the SpiceDB permission guards, the Zitadel verifier seam, and the event bus seam. It holds no mixer, tension, or leitmotif state.
+- `services/soundscape/src/soundscape/session_state.py`: Reads and writes one session's state through the aggregate. It projects the public tension and mixer view from the stored state.
+- `services/soundscape/src/soundscape/ids.py`: Derives the aggregate id from the session id with UUID v5. Every process resolves the same event stream for one session.
+- `services/soundscape/src/soundscape/event_handlers.py`: Contains the domain event subscription callbacks (`CombatEncounterStarted`, `CombatRoundAdvanced`, `InitiativeTurnAdvanced`, `PlayerSpokeEvent`, `CriticalHitScored`, `DiceRolled`, `DeathSaveStarted`) and the bus listener registration (`register_soundscape_event_handlers()`).
+- `services/soundscape/src/soundscape/main.py`: Coordinates service startup and registers event handlers during the FastAPI lifespan.
+
+Event handlers and routes never catch a broad `Exception`. A failed store read answers `503`.
 
 ---
 
-## 10. Modular Aggregate & Domain Handler Architecture
+## 10. Aggregate & Domain Handler Architecture
 
-Per ADR-0003, ADR-0007, ADR-0011, and ADR-0013, the event-sourced `SoundscapeAggregate` is cleanly decoupled from monolithic state transitions by delegating domain mutations and `@handles` appliers to dedicated mixin submodules under `services/soundscape/src/soundscape/handlers/`, with each file strictly constrained under 150 lines:
+Per ADR-0003, ADR-0007, ADR-0011, and ADR-0013, the event-sourced `SoundscapeAggregate` delegates domain mutations and `@handles` appliers to mixin submodules under `services/soundscape/src/soundscape/handlers/`:
 
-- `services/soundscape/src/soundscape/aggregate.py`: Defines `SoundscapeState` and the core `SoundscapeAggregate` inheriting from all domain mixins (< 80 lines).
-- `services/soundscape/src/soundscape/handlers/stems.py`: `StemHandlersMixin` managing background music stems, crossfade durations, and multi-track channel levels (< 60 lines).
-- `services/soundscape/src/soundscape/handlers/foley.py`: `FoleyHandlersMixin` managing tactical sound cue triggers, recent history rings, and WebAudio ducking toggles (< 85 lines).
-- `services/soundscape/src/soundscape/handlers/tension.py`: `TensionHandlersMixin` managing encounter tension score updates and DM manual mood overrides (< 85 lines).
-- `services/soundscape/src/soundscape/handlers/leitmotif.py`: `LeitmotifHandlersMixin` managing character musical signatures, timbre configuration, and reactive trigger event sourcing (< 135 lines).
-- `services/soundscape/src/soundscape/handlers/__init__.py`: Re-exports domain mixins for consumption by `SoundscapeAggregate`.
-
+- `services/soundscape/src/soundscape/aggregate.py`: Defines `SoundscapeState` and `SoundscapeAggregate`. The state holds the master volume, channel volumes, stem profile, ducking flag, ducking expiry (`ducking_until`), and the leitmotif profiles. `is_ducked_at(now)` and `mixer_at(now)` derive the read view.
+- `services/soundscape/src/soundscape/handlers/stems.py`: `StemHandlersMixin` records `TrackChanged`, `ChannelVolumeChanged`, and `MasterVolumeChanged`.
+- `services/soundscape/src/soundscape/handlers/foley.py`: `FoleyHandlersMixin` records cue triggers, `DuckingEngaged`, and `DuckingReleased`.
+- `services/soundscape/src/soundscape/handlers/tension.py`: `TensionHandlersMixin` records tension updates and `StemProfileOverridden`.
+- `services/soundscape/src/soundscape/handlers/leitmotif.py`: `LeitmotifHandlersMixin` records leitmotif profiles and triggers.
+- `services/soundscape/src/soundscape/mixer.py`: `AudioStemMixer` is a pure view of gains and ducking. It holds no session state.
+- `services/soundscape/src/soundscape/leitmotif.py`: `LeitmotifEngine.from_state()` rebuilds the leitmotif view from the stored state for each request.

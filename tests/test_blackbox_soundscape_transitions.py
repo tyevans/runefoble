@@ -15,16 +15,15 @@ from eventsource.domain.event_registry import get_event_class_or_none
 from fastapi.testclient import TestClient
 from gateway_api.main import app as gateway_app
 from runefoble_events.events import (
+    DuckingEngaged,
+    DuckingReleased,
     PlayerSpokeEvent,
-    SoundscapeDuckingToggled,
     SoundscapeTrackChanged,
 )
-from soundscape.dependencies import (
-    get_or_create_mixer,
-    handle_incoming_domain_event,
-)
+from soundscape.event_handlers import handle_incoming_domain_event
 from soundscape.main import app
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER, AudioStemMixer
+from soundscape.session_state import read_session_state, utc_now
 
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -64,9 +63,10 @@ def test_soundscape_transition_cloudevents_registration():
     assert track_cls is not None
     assert track_cls is SoundscapeTrackChanged
 
-    duck_cls = get_event_class_or_none("runefoble.events.soundscape.ducking_toggled")
-    assert duck_cls is not None
-    assert duck_cls is SoundscapeDuckingToggled
+    engaged_cls = get_event_class_or_none("runefoble.events.soundscape.ducking_engaged")
+    assert engaged_cls is DuckingEngaged
+    released_cls = get_event_class_or_none("runefoble.events.soundscape.ducking_released")
+    assert released_cls is DuckingReleased
 
     event = SoundscapeTrackChanged(
         session_id="session-tomb-14",
@@ -95,14 +95,11 @@ def test_stem_mixer_attenuation_and_ducking():
     assert DUCKING_ATTENUATION_DB == -12.0
     assert math.isclose(DUCKING_LINEAR_MULTIPLIER, 0.251188, rel_tol=1e-3)
 
-    mixer.set_ducking(True, reason="speech")
-    assert mixer.is_ducked is True
-    assert math.isclose(mixer.get_effective_gain(), 0.2512, rel_tol=1e-3)
+    ducked = AudioStemMixer(stem_profile="combat", master_volume=1.0, is_ducked=True)
+    assert ducked.is_ducked is True
+    assert math.isclose(ducked.get_effective_gain(), 0.2512, rel_tol=1e-3)
+    assert math.isclose(ducked.calculate_active_stem_gains()["combat"], 0.2512, rel_tol=1e-3)
 
-    ducked_gains = mixer.calculate_active_stem_gains()
-    assert math.isclose(ducked_gains["combat"], 0.2512, rel_tol=1e-3)
-
-    mixer.set_ducking(False)
     assert mixer.is_ducked is False
     assert mixer.get_effective_gain() == 1.0
 
@@ -173,6 +170,7 @@ async def test_voice_ducking_reactive_subscription():
     )
     await handle_incoming_domain_event(spoke_event)
 
-    mixer = get_or_create_mixer(session_id_str)
+    state = await read_session_state(session_id_str)
+    mixer = state.mixer_at(utc_now())
     assert mixer.is_ducked is True
     assert mixer.get_effective_gain() < 0.5

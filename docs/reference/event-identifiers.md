@@ -199,11 +199,14 @@ add the `runefoble.` prefix when the identifier lacks it.
 | `runefoble.events.session.camera_target_updated` | `CameraTargetUpdated` | `runefoble_events.session` |
 | `runefoble.events.session.character_control_transferred` | `CharacterControlTransferred` | `runefoble_events.session` |
 | `runefoble.events.session.dm_override_applied` | `DMOverrideApplied` | `runefoble_events.session` |
+| `runefoble.events.soundscape.channel_volume_changed` | `ChannelVolumeChanged` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.cue_triggered` | `SoundscapeCueTriggered` | `runefoble_events.soundscape` |
-| `runefoble.events.soundscape.ducking_toggled` | `SoundscapeDuckingToggled` | `runefoble_events.soundscape` |
+| `runefoble.events.soundscape.ducking_engaged` | `DuckingEngaged` | `runefoble_events.soundscape` |
+| `runefoble.events.soundscape.ducking_released` | `DuckingReleased` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.leitmotif_configured` | `LeitmotifProfileConfigured` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.leitmotif_triggered` | `LeitmotifTriggered` | `runefoble_events.soundscape` |
-| `runefoble.events.soundscape.mood_overridden` | `SoundscapeMoodOverridden` | `runefoble_events.soundscape` |
+| `runefoble.events.soundscape.master_volume_changed` | `MasterVolumeChanged` | `runefoble_events.soundscape` |
+| `runefoble.events.soundscape.stem_profile_overridden` | `StemProfileOverridden` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.tension_updated` | `SoundscapeTensionUpdated` | `runefoble_events.soundscape` |
 | `runefoble.events.soundscape.track_changed` | `SoundscapeTrackChanged` | `runefoble_events.soundscape` |
 | `runefoble.events.spectator.connected` | `SpectatorSessionConnected` | `runefoble_events.session` |

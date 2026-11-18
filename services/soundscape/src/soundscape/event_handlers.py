@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 from typing import Any
 
 from runefoble_events.character import (
@@ -16,12 +17,15 @@ from runefoble_events.session import (
     InitiativeTurnAdvanced,
 )
 from runefoble_events.watcher import DiceRolled, PlayerSpokeEvent
-from runefoble_platform.aggregate_loading import load_or_create
 
-from soundscape.aggregate import SoundscapeAggregate
+from soundscape.leitmotif import LeitmotifEngine
 from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
+from soundscape.session_state import load_session_aggregate, save_session_aggregate
 
 logger = logging.getLogger("runefoble.soundscape.events")
+
+# Speech ducking holds for the same window the browser uses (UI default 2500 ms).
+SPEECH_DUCK_MS = 2500
 
 SOUNDSCAPE_SUBSCRIBED_EVENTS: list[str] = [
     "CombatEncounterStarted",
@@ -38,75 +42,46 @@ SOUNDSCAPE_SUBSCRIBED_EVENTS: list[str] = [
 _handlers_registered: bool = False
 
 
-def _deps() -> Any:
-    import soundscape.dependencies as deps
-
-    return deps
-
-
-async def _get_aggregate(session_id: str) -> SoundscapeAggregate:
-    d = _deps()
-    agg_id = d.get_or_create_aggregate_id(session_id)
-    try:
-        return await load_or_create(d.get_soundscape_repo(), agg_id, SoundscapeAggregate)
-    except Exception:
-        logger.error("Soundscape aggregate load failed for %s", agg_id, exc_info=True)
-        raise
-
-
-async def _save_and_publish(agg: SoundscapeAggregate) -> None:
-    d = _deps()
-    events = list(agg.uncommitted_events)
-    await d.get_soundscape_repo().save(agg)
-    for ev in events:
-        await d.publish_soundscape_event(ev)
-
-
 async def _handle_combat_start(session_id: str) -> None:
-    agg = await _get_aggregate(session_id)
+    agg = await load_session_aggregate(session_id)
     tension = calculate_encounter_tension(combat_active=True, combat_round=1, enemy_cr_balance=2.0)
     profile = derive_stem_profile(tension)
-    _deps().get_or_create_mixer(session_id).stem_profile = profile
     agg.record_tension_update(session_id, tension, profile, combat_round=1, enemy_cr_balance=2.0)
     agg.record_track_change(
         session_id, "track-combat-01", profile, tension, 1500, active_stems=[profile]
     )
-    await _save_and_publish(agg)
+    await save_session_aggregate(agg)
 
 
 async def _handle_combat_advance(session_id: str, round_num: int) -> None:
-    agg = await _get_aggregate(session_id)
+    agg = await load_session_aggregate(session_id)
     tension = calculate_encounter_tension(
         combat_active=True, combat_round=round_num, enemy_cr_balance=2.5
     )
     profile = derive_stem_profile(tension)
-    mixer = _deps().get_or_create_mixer(session_id)
-    old_profile = mixer.stem_profile
-    mixer.stem_profile = profile
+    old_profile = agg.state.stem_profile
     agg.record_tension_update(session_id, tension, profile, combat_round=round_num)
     if profile != old_profile:
         agg.record_track_change(
             session_id, f"track-{profile}-01", profile, tension, 1500, active_stems=[profile]
         )
-    await _save_and_publish(agg)
+    await save_session_aggregate(agg)
 
 
 async def _handle_player_speech(session_id: str) -> None:
-    _deps().get_or_create_mixer(session_id).set_ducking(True, reason="speech")
-    _deps().get_or_create_leitmotif_engine(session_id).set_ducking(True)
-    agg = await _get_aggregate(session_id)
-    agg.record_ducking_toggle(session_id, is_ducked=True, attenuation_db=-12.0, reason="speech")
-    await _save_and_publish(agg)
+    agg = await load_session_aggregate(session_id)
+    agg.record_ducking_engaged(session_id, reason="speech", duration_ms=SPEECH_DUCK_MS)
+    await save_session_aggregate(agg)
 
 
 async def _handle_leitmotif_trigger(
     session_id: str, char_id: str, char_name: str, motif: str, reason: str
 ) -> None:
-    engine = _deps().get_or_create_leitmotif_engine(session_id)
+    agg = await load_session_aggregate(session_id)
+    engine = LeitmotifEngine.from_state(session_id, agg.state, datetime.now(UTC))
     pb = engine.trigger_leitmotif(
         character_id=char_id, motif_type=motif, trigger_reason=reason, character_name=char_name
     )
-    agg = await _get_aggregate(session_id)
     agg.record_leitmotif_trigger(
         session_id=session_id,
         character_id=char_id,
@@ -121,8 +96,10 @@ async def _handle_leitmotif_trigger(
         duration_ms=pb.duration_ms,
         duck_music=False,
         trigger_reason=reason,
+        playback_id=pb.playback_id,
+        triggered_at=pb.triggered_at,
     )
-    await _save_and_publish(agg)
+    await save_session_aggregate(agg)
 
 
 async def handle_incoming_domain_event(event: Any) -> None:

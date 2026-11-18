@@ -7,20 +7,20 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_platform.aggregate_loading import load_if_exists, load_or_create
 
-from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
     VerifiedUserId,
     check_user_can_control_soundscape,
-    get_or_create_aggregate_id,
-    get_or_create_mixer,
     get_principal,
-    get_soundscape_repo,
-    publish_soundscape_event,
 )
 from soundscape.models import TensionCalculationRequest, TensionStatusResponse
 from soundscape.scoring import calculate_encounter_tension, derive_stem_profile
+from soundscape.session_state import (
+    load_session_aggregate,
+    read_session_state,
+    save_session_aggregate,
+    tension_status,
+)
 
 router = APIRouter(
     prefix="/api/v1/soundscape", tags=["Tension"], dependencies=[Depends(get_principal)]
@@ -37,34 +37,8 @@ async def get_tension_status(
     session_id: str = Query(default="default", description="Game session ID"),
 ) -> TensionStatusResponse:
     """Retrieve current session tension score, active stems, and effective gain levels."""
-    repo = get_soundscape_repo()
-    agg_id = get_or_create_aggregate_id(session_id)
-    agg = await load_if_exists(repo, agg_id)
-    mixer = get_or_create_mixer(session_id)
-
-    tension_score = agg.state.tension_score if agg else 10
-    stem_profile = agg.state.stem_profile if agg else mixer.stem_profile
-    active_stems = agg.state.active_stems if agg else [stem_profile]
-    stem_volumes = mixer.calculate_active_stem_gains()
-    effective_gain = mixer.get_effective_gain()
-    manual_override = agg.state.manual_override if agg else False
-    override_mood = agg.state.override_mood if agg else None
-    cues_history = agg.state.cues_history if agg else []
-
-    return TensionStatusResponse(
-        session_id=session_id,
-        tension_score=tension_score,
-        stem_profile=stem_profile,
-        active_stems=active_stems,
-        stem_volumes=stem_volumes,
-        master_volume=mixer.master_volume,
-        is_ducked=mixer.is_ducked,
-        ducking_attenuation_db=-12.0 if mixer.is_ducked else 0.0,
-        effective_gain=effective_gain,
-        manual_override=manual_override,
-        override_mood=override_mood,
-        recent_cues=cues_history,
-    )
+    state = await read_session_state(session_id)
+    return tension_status(session_id, state)
 
 
 @router.post(
@@ -98,13 +72,8 @@ async def calculate_tension(
     )
     derived_profile = derive_stem_profile(tension_score)
 
-    mixer = get_or_create_mixer(request.session_id)
-    old_profile = mixer.stem_profile
-
-    repo = get_soundscape_repo()
-    agg_id = get_or_create_aggregate_id(request.session_id)
-    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
-
+    agg = await load_session_aggregate(request.session_id)
+    old_profile = agg.state.stem_profile
     agg.record_tension_update(
         session_id=request.session_id,
         tension_score=tension_score,
@@ -113,36 +82,14 @@ async def calculate_tension(
         enemy_cr_balance=request.enemy_cr_balance,
         lowest_health_ratio=request.lowest_party_health_ratio,
     )
-
-    if not agg.state.manual_override:
-        mixer.stem_profile = derived_profile
-        if derived_profile != old_profile:
-            agg.record_track_change(
-                session_id=request.session_id,
-                track_id=f"track-{derived_profile}-01",
-                stem_profile=derived_profile,
-                tension_score=tension_score,
-                crossfade_duration_ms=1500,
-                active_stems=[derived_profile],
-            )
-
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    for event in events:
-        await publish_soundscape_event(event)
-
-    effective_profile = agg.state.stem_profile
-    return TensionStatusResponse(
-        session_id=request.session_id,
-        tension_score=tension_score,
-        stem_profile=effective_profile,
-        active_stems=agg.state.active_stems,
-        stem_volumes=mixer.calculate_active_stem_gains(),
-        master_volume=mixer.master_volume,
-        is_ducked=mixer.is_ducked,
-        ducking_attenuation_db=-12.0 if mixer.is_ducked else 0.0,
-        effective_gain=mixer.get_effective_gain(),
-        manual_override=agg.state.manual_override,
-        override_mood=agg.state.override_mood,
-        recent_cues=agg.state.cues_history,
-    )
+    if not agg.state.manual_override and derived_profile != old_profile:
+        agg.record_track_change(
+            session_id=request.session_id,
+            track_id=f"track-{derived_profile}-01",
+            stem_profile=derived_profile,
+            tension_score=tension_score,
+            crossfade_duration_ms=1500,
+            active_stems=[derived_profile],
+        )
+    await save_session_aggregate(agg)
+    return tension_status(request.session_id, agg.state)

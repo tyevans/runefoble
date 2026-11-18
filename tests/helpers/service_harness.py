@@ -232,16 +232,6 @@ def default_spicedb_client(request: pytest.FixtureRequest) -> Iterator[MockSpice
         _restore(previous, "set_spicedb_client")
 
 
-@pytest.fixture(autouse=True)
-def clean_soundscape_registries() -> Iterator[None]:
-    """Clear the soundscape session registries (mixers, aggregates, engines) around each test."""
-    from soundscape.dependencies import reset_dependencies
-
-    reset_dependencies()
-    yield
-    reset_dependencies()
-
-
 @pytest.fixture
 def spicedb(default_spicedb_client: MockSpiceDBClient | None) -> MockSpiceDBClient:
     """The strict SpiceDB mock that every service of this test already uses."""

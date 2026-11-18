@@ -22,24 +22,22 @@ from runefoble_events.events import (
     PlayerSpokeEvent,
 )
 from runefoble_platform.bus import bus as platform_bus
-from soundscape.dependencies import (
-    get_or_create_aggregate_id,
-    get_or_create_leitmotif_engine,
-    get_or_create_mixer,
-    get_soundscape_repo,
-)
-from soundscape.dependencies import (
-    handle_incoming_domain_event as deps_handle_event,
-)
 from soundscape.event_handlers import (
     handle_incoming_domain_event,
     register_soundscape_event_handlers,
 )
+from soundscape.leitmotif import LeitmotifEngine
+from soundscape.session_state import read_session_state, utc_now
 
 
-def test_handler_backward_compatibility_reexport():
-    """Verify dependencies re-exports handle_incoming_domain_event for compatibility."""
-    assert deps_handle_event is handle_incoming_domain_event
+async def _state(session_id: str):
+    """Read the stored soundscape state for a session. The aggregate is the only source."""
+    return await read_session_state(session_id)
+
+
+async def _engine(session_id: str) -> LeitmotifEngine:
+    """Rebuild the leitmotif view from the stored state, as the routes do."""
+    return LeitmotifEngine.from_state(session_id, await _state(session_id), utc_now())
 
 
 @pytest.mark.asyncio
@@ -54,14 +52,9 @@ async def test_combat_started_event_updates_tension_and_stems():
     )
     await handle_incoming_domain_event(event)
 
-    mixer = get_or_create_mixer(session_id)
-    assert mixer.stem_profile in ("tension", "combat")
-
-    repo = get_soundscape_repo()
-    agg_id = get_or_create_aggregate_id(session_id)
-    agg = await repo.load(agg_id)
-    assert agg is not None
-    assert agg.state.tension_score == 55
+    state = await _state(session_id)
+    assert state.stem_profile in ("tension", "combat")
+    assert state.tension_score == 55
 
 
 @pytest.mark.asyncio
@@ -76,13 +69,13 @@ async def test_initiative_advanced_recalculates_tension():
     )
     await handle_incoming_domain_event(event)
 
-    mixer = get_or_create_mixer(session_id)
-    assert mixer.stem_profile in ("tension", "combat")
+    state = await _state(session_id)
+    assert state.stem_profile in ("tension", "combat")
 
 
 @pytest.mark.asyncio
 async def test_player_spoke_triggers_voice_ducking():
-    """Verify PlayerSpokeEvent engages WebAudio -12dB ducking on mixer and leitmotif."""
+    """Verify PlayerSpokeEvent engages WebAudio -12dB ducking in the aggregate state."""
     session_uuid = uuid4()
     session_id = str(session_uuid)
     event = PlayerSpokeEvent(
@@ -94,9 +87,10 @@ async def test_player_spoke_triggers_voice_ducking():
     )
     await handle_incoming_domain_event(event)
 
-    mixer = get_or_create_mixer(session_id)
-    assert mixer.is_ducked is True
-    engine = get_or_create_leitmotif_engine(session_id)
+    state = await _state(session_id)
+    assert state.is_ducked_at(utc_now()) is True
+    assert state.ducking_attenuation_db == -12.0
+    engine = await _engine(session_id)
     assert engine.is_ducked is True
 
 
@@ -112,7 +106,7 @@ async def test_critical_hit_triggers_triumphant_leitmotif():
     )
     await handle_incoming_domain_event(event)
 
-    engine = get_or_create_leitmotif_engine(session_id)
+    engine = await _engine(session_id)
     active = engine.get_active_status()
     assert active is not None
     assert active.motif_type == "triumphant"
@@ -131,7 +125,7 @@ async def test_death_save_triggers_somber_leitmotif():
     )
     await handle_incoming_domain_event(event)
 
-    engine = get_or_create_leitmotif_engine(session_id)
+    engine = await _engine(session_id)
     active = engine.get_active_status()
     assert active is not None
     assert active.motif_type == "somber"
@@ -155,7 +149,7 @@ async def test_register_soundscape_event_handlers_subscribes_to_platform_bus():
     )
     await platform_bus.publish("DiceRolled", dice_event)
 
-    engine = get_or_create_leitmotif_engine(session_id)
+    engine = await _engine(session_id)
     active = engine.get_active_status()
     assert active is not None
     assert active.motif_type == "triumphant"

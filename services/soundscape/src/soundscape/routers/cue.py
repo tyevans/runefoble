@@ -8,23 +8,22 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from runefoble_auth.factory import get_spicedb_client
 from runefoble_auth.spicedb import SpiceDBClient
-from runefoble_platform.aggregate_loading import load_or_create
 
-from soundscape.aggregate import SoundscapeAggregate
 from soundscape.dependencies import (
     VerifiedUserId,
     check_user_can_trigger_cue,
-    get_or_create_aggregate_id,
-    get_or_create_mixer,
     get_principal,
-    get_soundscape_repo,
-    publish_soundscape_event,
 )
+from soundscape.mixer import AudioStemMixer
 from soundscape.models import SoundscapeCueRequest, SoundscapeCueResponse
+from soundscape.session_state import load_session_aggregate, save_session_aggregate
 
 router = APIRouter(
     prefix="/api/v1/soundscape", tags=["Foley & Cues"], dependencies=[Depends(get_principal)]
 )
+
+# A cue that ducks the music holds the duck for the browser's cue window (2000 ms).
+CUE_DUCK_MS = 2000
 
 
 @router.post(
@@ -55,22 +54,16 @@ async def trigger_sound_cue(
             detail="Forbidden: insufficient Zanzibar permissions to trigger sound cues",
         )
 
-    mixer = get_or_create_mixer(request.session_id)
-    resolved = mixer.resolve_foley_cue(
+    resolved = AudioStemMixer().resolve_foley_cue(
         cue_name=request.cue_name,
         sound_url=request.sound_url,
         cue_type=request.cue_type,
         volume_gain=request.volume_gain,
         duck_music=request.duck_music,
     )
-
     cue_id = f"cue-{uuid4().hex[:8]}"
 
-    # Event sourcing aggregate
-    repo = get_soundscape_repo()
-    agg_id = get_or_create_aggregate_id(request.session_id)
-    agg = await load_or_create(repo, agg_id, SoundscapeAggregate)
-
+    agg = await load_session_aggregate(request.session_id)
     agg.record_cue(
         session_id=request.session_id,
         cue_id=cue_id,
@@ -79,20 +72,13 @@ async def trigger_sound_cue(
         volume_gain=resolved["volume_gain"],
         duck_music=resolved["duck_music"],
     )
-
     if resolved["duck_music"]:
-        mixer.set_ducking(True, reason="cue")
-        agg.record_ducking_toggle(
+        agg.record_ducking_engaged(
             session_id=request.session_id,
-            is_ducked=True,
-            attenuation_db=-12.0,
             reason="cue",
+            duration_ms=CUE_DUCK_MS,
         )
-
-    events = list(agg.uncommitted_events)
-    await repo.save(agg)
-    for event in events:
-        await publish_soundscape_event(event)
+    await save_session_aggregate(agg)
 
     return SoundscapeCueResponse(
         cue_id=cue_id,

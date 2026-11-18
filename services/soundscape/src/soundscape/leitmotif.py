@@ -7,12 +7,16 @@ sub-250ms stinger triggering on critical hits and death saves, and -12dB voice d
 from __future__ import annotations
 
 import time
-from typing import Any
+from datetime import datetime
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
 from soundscape.mixer import DUCKING_ATTENUATION_DB, DUCKING_LINEAR_MULTIPLIER
+
+if TYPE_CHECKING:
+    from soundscape.aggregate import SoundscapeState
 
 # Catalog of instrument timbre presets and curated audio stem URLs
 TIMBRE_PRESETS: dict[str, dict[str, Any]] = {
@@ -188,6 +192,41 @@ class LeitmotifEngine:
         self.active_playback: ActiveLeitmotifPlayback | None = None
         self.is_ducked: bool = False
 
+    @classmethod
+    def from_state(cls, session_id: str, state: SoundscapeState, now: datetime) -> LeitmotifEngine:
+        """Rebuild the engine view from aggregate state. Nothing is cached between requests."""
+        engine = cls(session_id=session_id)
+        engine.profiles = {
+            character_id: CharacterLeitmotifProfile(**data)
+            for character_id, data in state.character_profiles.items()
+        }
+        engine.is_ducked = state.is_ducked_at(now)
+        active = state.active_leitmotif
+        if active:
+            gain = float(active["volume_gain"])
+            engine.active_playback = ActiveLeitmotifPlayback(
+                playback_id=str(active.get("playback_id", "")),
+                session_id=str(active["session_id"]),
+                character_id=str(active["character_id"]),
+                character_name=str(active["character_name"]),
+                motif_type=str(active["motif_type"]),
+                instrument_timbre=str(active["instrument_timbre"]),
+                stem_url=str(active["stem_url"]),
+                tempo_multiplier=float(active["tempo_multiplier"]),
+                volume_gain=gain,
+                effective_gain=round(gain * DUCKING_LINEAR_MULTIPLIER, 4)
+                if engine.is_ducked
+                else round(gain, 4),
+                is_ducked=engine.is_ducked,
+                ducking_attenuation_db=DUCKING_ATTENUATION_DB if engine.is_ducked else 0.0,
+                attack_ms=int(active["attack_ms"]),
+                release_ms=int(active["release_ms"]),
+                duration_ms=int(active["duration_ms"]),
+                triggered_at=float(active.get("triggered_at", 0.0)),
+                trigger_reason=str(active["trigger_reason"]),
+            )
+        return engine
+
     def register_profile(self, profile: CharacterLeitmotifProfile) -> CharacterLeitmotifProfile:
         """Register or update a character's leitmotif configuration, populating preset defaults."""
         preset = TIMBRE_PRESETS.get(profile.instrument_timbre, TIMBRE_PRESETS["lute"])
@@ -280,19 +319,6 @@ class LeitmotifEngine:
         )
         self.active_playback = playback
         return playback
-
-    def set_ducking(self, is_ducked: bool) -> None:
-        """Enforce WebAudio -12dB sidechain attenuation during human voice activity."""
-        self.is_ducked = is_ducked
-        if self.active_playback:
-            self.active_playback.is_ducked = is_ducked
-            self.active_playback.ducking_attenuation_db = (
-                DUCKING_ATTENUATION_DB if is_ducked else 0.0
-            )
-            base = self.active_playback.volume_gain
-            self.active_playback.effective_gain = (
-                round(base * DUCKING_LINEAR_MULTIPLIER, 4) if is_ducked else round(base, 4)
-            )
 
     def get_active_status(self) -> ActiveLeitmotifPlayback | None:
         """Inspect and return current playback state, updating envelope calculations."""

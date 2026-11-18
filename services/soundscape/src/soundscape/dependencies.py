@@ -1,10 +1,14 @@
-"""Shared dependency injection, repositories, mixer, and event bus for Soundscape."""
+"""Shared dependency injection, event repository, and bus seams for Soundscape.
+
+Process-local state is limited to seams (the Zitadel verifier and the event bus). Session
+state lives only in the event-sourced soundscape aggregate.
+"""
 
 from __future__ import annotations
 
 import logging
 from typing import Annotated
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import Depends
 from runefoble_auth.principal import VerifiedPrincipal, require_principal
@@ -18,62 +22,21 @@ from runefoble_platform.event_publish import deliver_best_effort, publish_best_e
 from runefoble_platform.event_sourcing import AggregateRepository, create_aggregate_repository
 
 from soundscape.aggregate import SoundscapeAggregate
-from soundscape.event_handlers import (
-    handle_incoming_domain_event,
-    register_soundscape_event_handlers,
-)
-
-__all__ = ["handle_incoming_domain_event", "register_soundscape_event_handlers"]
-from soundscape.leitmotif import LeitmotifEngine
-from soundscape.mixer import AudioStemMixer
 
 logger = logging.getLogger("runefoble.soundscape")
 settings = PlatformSettings()
 
-_soundscape_repo = create_aggregate_repository(SoundscapeAggregate)
-
-_session_to_aggregate: dict[str, UUID] = {}
-_session_mixers: dict[str, AudioStemMixer] = {}
-_session_leitmotif_engines: dict[str, LeitmotifEngine] = {}
 _zitadel_auth_service: ZitadelAuthService | None = None
 
 
 def get_soundscape_repo() -> AggregateRepository[SoundscapeAggregate]:
-    """Provide SoundscapeAggregate repository singleton."""
-    return _soundscape_repo
+    """Return a repository on the process event store. No aggregate is cached in memory."""
+    return create_aggregate_repository(SoundscapeAggregate)
 
 
 event_bus_provider = EventBusProvider(settings)
 get_event_bus = event_bus_provider.get
 set_event_bus = event_bus_provider.set
-
-
-def get_or_create_aggregate_id(session_id: str) -> UUID:
-    """Resolve or generate UUID for a session's soundscape aggregate."""
-    if session_id not in _session_to_aggregate:
-        _session_to_aggregate[session_id] = uuid4()
-    return _session_to_aggregate[session_id]
-
-
-def get_or_create_mixer(session_id: str) -> AudioStemMixer:
-    """Resolve or instantiate AudioStemMixer for a session."""
-    if session_id not in _session_mixers:
-        _session_mixers[session_id] = AudioStemMixer(stem_profile="exploration", master_volume=1.0)
-    return _session_mixers[session_id]
-
-
-def get_or_create_leitmotif_engine(session_id: str) -> LeitmotifEngine:
-    """Resolve or instantiate LeitmotifEngine for a session."""
-    if session_id not in _session_leitmotif_engines:
-        _session_leitmotif_engines[session_id] = LeitmotifEngine(session_id=session_id)
-    return _session_leitmotif_engines[session_id]
-
-
-def reset_dependencies() -> None:
-    """Clear the in-memory session registries. The event bus seam is not touched."""
-    _session_to_aggregate.clear()
-    _session_mixers.clear()
-    _session_leitmotif_engines.clear()
 
 
 def get_zitadel_auth_service() -> ZitadelAuthService:
