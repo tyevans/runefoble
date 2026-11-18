@@ -119,6 +119,25 @@ SERVICE_SEAMS: tuple[ServiceSeams, ...] = (
 )
 
 
+def _check_seam_modules_at_collection() -> None:
+    """Import every seam module named in `SERVICE_SEAMS` when the harness loads.
+
+    The harness is a pytest plugin, so a misspelled module name or a missing setter fails the
+    whole run at collection. No seam is skipped silently.
+    """
+    for row in SERVICE_SEAMS:
+        for name, setter in ((row.spicedb, "set_spicedb_client"), (row.bus, "set_event_bus")):
+            if name is None:
+                continue
+            module = importlib.import_module(name)
+            assert callable(getattr(module, setter, None)), f"{name} has no {setter}"
+        if row.verifier is not None:
+            importlib.import_module(row.verifier)
+
+
+_check_seam_modules_at_collection()
+
+
 def _modules(attr: str, scope: VerifierScope | None = None) -> list[ModuleType]:
     """Import the distinct modules that a registry column names, in registry order."""
     names: list[str] = []
@@ -369,18 +388,20 @@ def game_session_upstream(monkeypatch, trusted_ws_issuer) -> Iterator[str]:
     gateway lifespan runs, so build the gateway client after this fixture.
     """
     from eventsource.adapters.memory.store import InMemoryEventStore
-    from game_session.campaign.repositories import set_campaign_repositories
+    from game_session.campaign.repositories import (
+        get_campaign_repositories,
+        set_campaign_repositories,
+    )
     from game_session.main import app as session_app
-    from runefoble_platform.event_sourcing import set_event_store
+    from runefoble_platform.event_sourcing import get_event_store, set_event_store
 
     from tests.helpers.live_services import serve
+    from tests.helpers.module_state import restored_seam
 
-    set_event_store(InMemoryEventStore())
-    set_campaign_repositories(None)
-    try:
-        with serve(session_app) as url:
-            monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", url)
-            yield url
-    finally:
-        set_event_store(None)
-        set_campaign_repositories(None)
+    with (
+        restored_seam(get_event_store, set_event_store, InMemoryEventStore(), replace=True),
+        restored_seam(get_campaign_repositories, set_campaign_repositories, None, replace=True),
+        serve(session_app) as url,
+    ):
+        monkeypatch.setenv("RUNEFOBLE_GAME_SESSION_URL", url)
+        yield url

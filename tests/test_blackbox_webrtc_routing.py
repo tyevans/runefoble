@@ -14,9 +14,14 @@ from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 from gateway_api.main import app
 from runefoble_auth.factory import get_spicedb_client
-from voice_agent.coordinator import VoiceRoomCoordinator, set_voice_room_coordinator
+from voice_agent.coordinator import (
+    VoiceRoomCoordinator,
+    get_voice_room_coordinator,
+    set_voice_room_coordinator,
+)
 from voice_agent.signaling import signaling_manager
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 from tests.helpers.ws_identity import ws_subprotocols
@@ -32,12 +37,15 @@ def client(voice_agent_upstream):
 
 
 @pytest.fixture(autouse=True)
-def reset_voice_signaling_environment(default_redis_event_bus, mock_bus):
+def reset_voice_signaling_environment(
+    default_redis_event_bus, mock_bus, seam_restorer: SeamRestorer
+):
     """Reset SpiceDB client, Redis event bus, and coordinator before each test."""
     mock_spicedb = get_spicedb_client()
     bus = default_redis_event_bus
     coord = VoiceRoomCoordinator(event_bus=bus)
-    set_voice_room_coordinator(coord)
+    seam_restorer.replace(get_voice_room_coordinator, set_voice_room_coordinator, coord)
+    previous_manager_coordinator = signaling_manager._coordinator
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
     signaling_manager._coordinator = coord
@@ -45,8 +53,7 @@ def reset_voice_signaling_environment(default_redis_event_bus, mock_bus):
     yield {"spicedb": mock_spicedb, "redis": mock_bus, "bus": bus, "coordinator": coord}
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
-    signaling_manager._coordinator = None
-    set_voice_room_coordinator(None)
+    signaling_manager._coordinator = previous_manager_coordinator
 
 
 def test_multi_peer_signaling_offer_answer_and_ice_candidate_relay(gateway, table_for):

@@ -16,7 +16,7 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
-from campaign_lore.dependencies import set_west_marches_repo
+from campaign_lore.dependencies import get_west_marches_repo, set_west_marches_repo
 from campaign_lore.main import app as lore_app
 from fastapi.testclient import TestClient
 from game_session.events import STREAM_STRONGHOLD
@@ -24,6 +24,7 @@ from game_session.main import app as session_app
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.live_services import closed_port_url
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 DM = "dm_evelyn"
@@ -39,20 +40,20 @@ def _bearer(user_id: str) -> dict[str, str]:
 
 @pytest.fixture
 def lore_client(
-    lore_backends, spicedb: MockSpiceDBClient, game_session_upstream: str
+    lore_backends,
+    spicedb: MockSpiceDBClient,
+    game_session_upstream: str,
+    seam_restorer: SeamRestorer,
 ) -> Iterator[TestClient]:
     """Campaign Lore with its production repositories. game_session is its live upstream.
 
-    Other West Marches tests replace the repository and do not restore it. This fixture
-    clears that override, so the events reach the bus through the production publisher.
+    This fixture clears any repository override for the test, so the events reach the bus
+    through the production publisher. The previous repository is restored afterwards.
     Each test uses fresh campaign ids, so the shared event store does not leak state.
     """
-    set_west_marches_repo(None)
-    try:
-        with TestClient(lore_app) as client:
-            yield client
-    finally:
-        set_west_marches_repo(None)
+    seam_restorer.replace(get_west_marches_repo, set_west_marches_repo, None)
+    with TestClient(lore_app) as client:
+        yield client
 
 
 @pytest.fixture

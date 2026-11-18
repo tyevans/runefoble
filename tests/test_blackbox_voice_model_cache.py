@@ -14,9 +14,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from voice_agent.main import app
-from voice_agent.stt import set_streaming_pipeline
-from voice_agent.synthesis_engine import set_speech_synthesizer
+from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
+from voice_agent.synthesis_engine import get_speech_synthesizer, set_speech_synthesizer
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.voice_identity import voice_auth_headers
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
@@ -52,18 +53,19 @@ def model_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def speech_env(
-    monkeypatch: pytest.MonkeyPatch, espeak_stub: Path, model_dir: Path
+    monkeypatch: pytest.MonkeyPatch,
+    espeak_stub: Path,
+    model_dir: Path,
+    seam_restorer: SeamRestorer,
 ) -> Generator[None]:
     """Configure the voice agent with the stub binary and a model cache, download disabled."""
     monkeypatch.setenv("RUNEFOBLE_VOICE_TTS_BINARY", str(espeak_stub))
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_MODEL_SIZE", MODEL_SIZE)
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_MODEL_DIR", str(model_dir))
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_DOWNLOAD_ENABLED", "false")
-    set_streaming_pipeline(None)
-    set_speech_synthesizer(None)
+    seam_restorer.replace(get_streaming_pipeline, set_streaming_pipeline, None)
+    seam_restorer.replace(get_speech_synthesizer, set_speech_synthesizer, None)
     yield
-    set_streaming_pipeline(None)
-    set_speech_synthesizer(None)
 
 
 def test_health_is_ready_with_speech_binary_and_cached_model(speech_env: None, model_dir: Path):

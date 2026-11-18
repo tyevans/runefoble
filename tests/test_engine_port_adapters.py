@@ -17,6 +17,8 @@ from runefoble_platform.engine_ports import (
     engine_unavailable_handler,
 )
 
+from tests.helpers.module_state import SeamRestorer
+
 
 class _Adapter:
     def __init__(self, label: str = "default") -> None:
@@ -91,14 +93,14 @@ def test_engine_unavailable_error_keeps_its_fields() -> None:
 
 
 def test_voice_agent_rejects_unknown_stt_engine_at_start_up(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, seam_restorer: SeamRestorer
 ) -> None:
     """An unknown speech engine stops the voice agent at start-up and names the allowed value."""
     from voice_agent.main import app
-    from voice_agent.stt import set_streaming_pipeline
+    from voice_agent.stt import get_streaming_pipeline, set_streaming_pipeline
 
     monkeypatch.setenv("RUNEFOBLE_VOICE_STT_ENGINE", "not-an-engine")
-    set_streaming_pipeline(None)
+    seam_restorer.replace(get_streaming_pipeline, set_streaming_pipeline, None)
 
     with pytest.raises(ValidationError, match="faster-whisper"), TestClient(app):
         pass

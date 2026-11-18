@@ -17,8 +17,14 @@ from uuid import uuid4
 
 import pytest
 from runefoble_platform.event_sourcing import get_event_store
-from voice_agent.coordinator import VoiceRoomCoordinator, set_voice_room_coordinator
+from voice_agent.coordinator import (
+    VoiceRoomCoordinator,
+    get_voice_room_coordinator,
+    set_voice_room_coordinator,
+)
 from voice_agent.signaling import signaling_manager
+
+from tests.helpers.module_state import SeamRestorer
 
 pytestmark = pytest.mark.usefixtures("trusted_voice_issuer")
 
@@ -47,10 +53,11 @@ def session_id() -> str:
 
 
 @pytest.fixture(autouse=True)
-def reset_coordinator() -> Iterator[None]:
+def reset_coordinator(seam_restorer: SeamRestorer) -> Iterator[None]:
+    seam_restorer.keep(get_voice_room_coordinator, set_voice_room_coordinator)
+    previous_manager_coordinator = signaling_manager._coordinator
     yield
-    set_voice_room_coordinator(None)
-    signaling_manager._coordinator = None
+    signaling_manager._coordinator = previous_manager_coordinator
     signaling_manager.active_rooms.clear()
     signaling_manager.peer_sessions.clear()
 

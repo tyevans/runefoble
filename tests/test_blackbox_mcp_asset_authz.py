@@ -19,12 +19,13 @@ import pytest
 from fastapi.testclient import TestClient
 from gateway_api.main import app
 from gateway_mcp.dynamic import dynamic_registry
-from gateway_mcp.dynamic.auth import set_spicedb_client
+from gateway_mcp.dynamic.auth import get_spicedb_client, set_spicedb_client
 from gateway_mcp.server import mcp
 from runefoble_auth.errors import AuthzError
 from runefoble_auth.spicedb import MockSpiceDBClient
 
 from tests.helpers.mcp_http import call_tool_over_http, serve_mcp
+from tests.helpers.module_state import restored_seam
 from tests.helpers.silo_fixtures import PNG_SAMPLE_BYTES
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -130,8 +131,8 @@ def test_register_fails_closed_when_authorization_is_down(registry):
         async def write_relationship(self, *args, **kwargs):
             raise AuthzError("SpiceDB unreachable")
 
-    set_spicedb_client(DownSpiceDB())
-    response = registry.post("/mcp/tools/register", json=DEFINITION, headers=auth("alice"))
+    with restored_seam(get_spicedb_client, set_spicedb_client, DownSpiceDB(), replace=True):
+        response = registry.post("/mcp/tools/register", json=DEFINITION, headers=auth("alice"))
     assert response.status_code == 503, response.text
     assert dynamic_registry.get_tool(TOOL_NAME) is None
 

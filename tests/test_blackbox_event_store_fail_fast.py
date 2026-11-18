@@ -35,9 +35,11 @@ from runefoble_platform.event_sourcing import (
     EventStoreInitializationError,
     build_event_store,
     event_store_kind,
+    get_event_store,
     set_event_store,
 )
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.postgres import get_free_port
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
@@ -64,11 +66,10 @@ AGGREGATE_OWNING_DEPLOYMENTS = [
 
 
 @pytest.fixture(autouse=True)
-def reset_event_store_singleton():
-    """Reset global event store singleton between tests."""
-    set_event_store(None)
+def reset_event_store_singleton(seam_restorer: SeamRestorer):
+    """Reset the event store to its settings default for a test, then restore the previous store."""
+    seam_restorer.replace(get_event_store, set_event_store, None)
     yield
-    set_event_store(None)
 
 
 def _clean_env() -> dict[str, str]:

@@ -22,9 +22,14 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import get_event_store
-from voice_agent.coordinator import VoiceRoomCoordinator, set_voice_room_coordinator
+from voice_agent.coordinator import (
+    VoiceRoomCoordinator,
+    get_voice_room_coordinator,
+    set_voice_room_coordinator,
+)
 from voice_agent.main import app as voice_app
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
@@ -45,9 +50,9 @@ def session_id() -> str:
 
 
 @pytest.fixture(autouse=True)
-def reset_coordinator() -> Iterator[None]:
+def reset_coordinator(seam_restorer: SeamRestorer) -> Iterator[None]:
+    seam_restorer.keep(get_voice_room_coordinator, set_voice_room_coordinator)
     yield
-    set_voice_room_coordinator(None)
 
 
 @pytest.fixture

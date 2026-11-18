@@ -9,9 +9,10 @@ from __future__ import annotations
 
 from character_sheet.main import app as character_app
 from fastapi.testclient import TestClient
-from runefoble_platform.event_sourcing import InMemoryEventStore, set_event_store
+from runefoble_platform.event_sourcing import InMemoryEventStore, get_event_store, set_event_store
 
 from tests.helpers.event_store_seam import store_outage
+from tests.helpers.module_state import restored_seam
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 
@@ -47,14 +48,11 @@ def test_route_writes_and_reads_the_store_installed_through_the_provider() -> No
     """Characters written to a newly installed store are read back from that same store."""
     client = _client()
     installed = InMemoryEventStore()
-    set_event_store(installed)
-    try:
+    with restored_seam(get_event_store, set_event_store, installed, replace=True):
         char_id = _create_character(client)
         read_back = client.get(f"/api/v1/characters/{char_id}")
         assert read_back.status_code == 200, read_back.text
         assert read_back.json()["name"] == "Apprentice"
-    finally:
-        set_event_store(None)
 
 
 def test_watcher_start_up_rearms_through_the_provider_store(caplog) -> None:

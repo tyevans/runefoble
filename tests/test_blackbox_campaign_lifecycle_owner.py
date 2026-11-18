@@ -18,6 +18,7 @@ from game_session.campaign import clock
 from game_session.campaign.repositories import (
     CampaignRepositories,
     build_campaign_repositories,
+    get_campaign_repositories,
     set_campaign_repositories,
 )
 from game_session.main import app as session_app
@@ -27,6 +28,7 @@ from runefoble_auth.testing.signing_test_issuer import SigningTestIssuer
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import build_event_store, get_event_store, set_event_store
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.ws_identity import SIGNING_ISSUER
 
 pytestmark = pytest.mark.usefixtures("trusted_ws_issuer")
@@ -41,25 +43,22 @@ def issuer() -> Iterator[SigningTestIssuer]:
 
 
 @pytest.fixture(autouse=True)
-def reset_process_globals() -> Iterator[None]:
+def reset_process_globals(seam_restorer: SeamRestorer) -> Iterator[None]:
     """Clear the event store and campaign repository singletons around every test.
 
     The PostgreSQL restart test binds both to a container that its module fixture stops.
     Without this reset, later modules inherit a store that points at a closed port.
     """
-    set_event_store(None)
-    set_campaign_repositories(None)
+    seam_restorer.replace(get_event_store, set_event_store, None)
+    seam_restorer.replace(get_campaign_repositories, set_campaign_repositories, None)
     yield
-    set_event_store(None)
-    set_campaign_repositories(None)
 
 
 @pytest.fixture
-def repos() -> Iterator[CampaignRepositories]:
+def repos(seam_restorer: SeamRestorer) -> Iterator[CampaignRepositories]:
     built = build_campaign_repositories()
-    set_campaign_repositories(built)
+    seam_restorer.replace(get_campaign_repositories, set_campaign_repositories, built)
     yield built
-    set_campaign_repositories(None)
 
 
 @pytest.fixture

@@ -17,10 +17,15 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from runefoble_platform.event_sourcing import create_aggregate_repository, get_event_store
-from voice_agent.coordinator import VoiceRoomCoordinator, set_voice_room_coordinator
+from voice_agent.coordinator import (
+    VoiceRoomCoordinator,
+    get_voice_room_coordinator,
+    set_voice_room_coordinator,
+)
 from voice_agent.main import app as voice_app
 from voice_agent.room_aggregate import VoiceRoomAggregate, to_uuid
 
+from tests.helpers.module_state import SeamRestorer
 from tests.helpers.spicedb_factory import grant_voice_session
 from tests.helpers.voice_identity import voice_auth_headers
 
@@ -47,15 +52,16 @@ def session_id() -> str:
 
 
 @pytest.fixture
-def fresh_coordinator(session_id: str) -> Iterator[None]:
+def fresh_coordinator(session_id: str, seam_restorer: SeamRestorer) -> Iterator[None]:
     """Replace the process coordinator so its in-memory room cache is empty.
 
     The DM runs the session campaign, so it holds `session.control` (schema relations only).
     """
     asyncio.run(grant_voice_session(session_id, dm=DM_USER))
-    set_voice_room_coordinator(VoiceRoomCoordinator())
+    seam_restorer.replace(
+        get_voice_room_coordinator, set_voice_room_coordinator, VoiceRoomCoordinator()
+    )
     yield
-    set_voice_room_coordinator(None)
 
 
 @pytest.fixture
