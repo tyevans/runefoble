@@ -31,6 +31,7 @@ import { initTheme, syncAuthState } from './app/shell-state.ts';
 import { SessionSocket } from './app/session-socket.ts';
 import { installTitleResolvers } from './app/title-resolver.ts';
 import { pickActiveCharacter } from './app/active-character.ts';
+import type { BoardTarget } from './app/board-dm-controls.ts';
 
 @customElement('runefoble-app')
 export class RunefobleApp extends LitElement {
@@ -82,6 +83,8 @@ export class RunefobleApp extends LitElement {
   @state() public inviteUrl = '';
   @state() public inviteToken = '';
   @state() public isAbsenteeDirectiveOpen = false;
+  @state() public boardTarget: BoardTarget | null = null;
+  @state() public isMapSwitcherOpen = false;
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
   private unlistenRouter: (() => void) | null = null;
   private unlistenAuth: (() => void) | null = null;
