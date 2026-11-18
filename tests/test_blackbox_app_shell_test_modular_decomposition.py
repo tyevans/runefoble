@@ -20,6 +20,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers.frontend_suite import run_frontend_suite
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 APP_SHELL_TEST_DIR = FRONTEND_DIR / "test" / "app_shell"
@@ -83,6 +85,7 @@ def test_individual_submodule_execution(submodule_name: str, expected_tokens: li
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
+        timeout=120,
     )
     assert result.returncode == 0, (
         f"Submodule {submodule_name} failed execution:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
@@ -95,15 +98,11 @@ def test_individual_submodule_execution(submodule_name: str, expected_tokens: li
         )
 
 
+@pytest.mark.timeout(600)
 def test_frontend_npm_test_full_suite():
-    """Verify npm test in frontend/ executes all suites with 100% pass rate."""
-    result = subprocess.run(
-        ["npm", "test"],
-        cwd=FRONTEND_DIR,
-        capture_output=True,
-        text=True,
-    )
+    """Verify the frontend test script runs all suites with 100% pass rate."""
+    result = run_frontend_suite()
     assert result.returncode == 0, (
-        f"npm test in frontend failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+        f"frontend test suite failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )
     assert "fail 0" in result.stdout

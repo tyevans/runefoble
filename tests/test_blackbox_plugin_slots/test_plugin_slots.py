@@ -12,21 +12,15 @@ Governed by:
 
 from __future__ import annotations
 
-import subprocess
-from pathlib import Path
+import pytest
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+from tests.helpers.frontend_suite import run_frontend_suite
 
 
+@pytest.mark.timeout(600)
 def test_frontend_node_unit_and_integration_test_suite_passes() -> None:
     """Execute frontend test runner verifying plugin lifecycle, event isolation, and token bridge."""
-    result = subprocess.run(
-        ["pnpm", "--prefix", "frontend", "test"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = run_frontend_suite()
     assert result.returncode == 0, (
         f"Frontend test runner failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
     )
