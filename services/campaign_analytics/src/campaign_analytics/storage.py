@@ -17,6 +17,7 @@ from typing import Any
 from runefoble_platform.config import PlatformSettings
 from runefoble_platform.event_sourcing import normalize_async_postgres_url
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from campaign_analytics.models import (
@@ -42,6 +43,10 @@ from campaign_analytics.schema import (
 
 class StorageConfigurationError(RuntimeError):
     """Raised when the configured database cannot hold campaign analytics read models."""
+
+
+class CampaignStoreStartupError(RuntimeError):
+    """Raised at start-up when PostgreSQL cannot be reached or its read-model tables cannot be created."""
 
 
 class StorageUnavailableError(RuntimeError):
@@ -96,6 +101,12 @@ class CampaignAnalyticsStorage:
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(metadata.create_all)
+        except (OSError, SQLAlchemyError) as exc:
+            await engine.dispose()
+            raise CampaignStoreStartupError(
+                "Campaign analytics PostgreSQL store is unreachable at start-up: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
         except BaseException:
             await engine.dispose()
             raise

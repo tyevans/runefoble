@@ -23,7 +23,8 @@ The Campaign Analytics microservice operates as a CQRS projection engine and chr
 3. **Transactional Projection and Resume**: Each stream message is projected in one database transaction. The transaction also stores that message id as the stream position. A failed write rolls back the whole message. The message goes to `{stream}.dlq` and the consumer continues. On start-up, each stream resumes after its stored position. Replayed rows keep the same ids, so a replay does not create duplicate rows. A replayed milestone reuses its saved chronicle event, so the timeline holds one row per milestone.
 4. **Chronicle Aggregate for Milestones**: Each milestone is recorded on `CampaignChronicleAggregate` (`eventsource-py`) through `AggregateRepository`. The event store saves the `ChronicleMilestoneRecorded` event first. The milestone row is projected from the saved event. The row id is the saved event's id. A milestone that a replay finds already saved is reused, not recorded again. The MVP and telemetry snapshot events (`EncounterMvpAwarded`, `CombatTelemetrySnapshotCreated`) are defined but not produced. MVP scores are computed from `combat_performance_records` at query time.
 5. **Start-up and Store Failures**:
-   - Start-up fails when PostgreSQL is unreachable or the tables cannot be created. The service does not serve requests.
+   - Start-up fails when PostgreSQL is unreachable or the tables cannot be created. The service raises `CampaignStoreStartupError` and does not serve requests. No in-memory store is used.
+   - Start-up fails when Redis is unreachable. The service raises `EventBusUnavailableError` and does not serve requests.
    - A query that cannot reach PostgreSQL returns HTTP `503` with `{"detail": "Campaign analytics store is unavailable"}`. It never returns empty data.
    - `/healthz` reports each consumer as `running` or `failed`. It returns `503` when a consumer fails.
 
