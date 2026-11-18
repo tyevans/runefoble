@@ -167,14 +167,31 @@ def test_asset_upload_then_read_through_the_gateway_returns_the_same_bytes(
     asset_id = uploaded.json()["asset_id"]
     assert uploaded.json()["owner_id"] == PLAYER
 
-    streamed = gateway.get(f"/api/v1/assets/{asset_id}/stream")
+    streamed = gateway.get(f"/api/v1/assets/{asset_id}/stream", headers=bearer(PLAYER))
     assert streamed.status_code == 200, streamed.text
     assert streamed.content == PNG_SAMPLE_BYTES
     assert streamed.headers["content-type"] == "image/png"
 
-    downloaded = gateway.get(f"/api/v1/assets/{asset_id}/download")
+    downloaded = gateway.get(f"/api/v1/assets/{asset_id}/download", headers=bearer(PLAYER))
     assert downloaded.content == PNG_SAMPLE_BYTES
     assert downloaded.headers["content-disposition"].startswith("attachment")
+
+
+@pytest.mark.parametrize("suffix", ["", "/stream", "/download"])
+def test_asset_read_by_a_stranger_is_refused(gateway: TestClient, suffix: str) -> None:
+    """A user with no `forged_asset.view` on the asset gets 403 and no bytes."""
+    uploaded = gateway.post(
+        "/api/v1/assets/upload",
+        files={"file": ("valeros_avatar.png", PNG_SAMPLE_BYTES, "image/png")},
+        data={"asset_type": "avatar"},
+        headers=bearer(PLAYER),
+    )
+    asset_id = uploaded.json()["asset_id"]
+
+    res = gateway.get(f"/api/v1/assets/{asset_id}{suffix}", headers=bearer(STRANGER))
+
+    assert res.status_code == 403, res.text
+    assert PNG_SAMPLE_BYTES not in res.content
 
 
 def test_asset_upload_to_a_campaign_the_caller_does_not_play_is_refused(
@@ -204,7 +221,7 @@ def test_asset_delete_without_identity_returns_401_with_challenge(
 
     assert res.status_code == 401, res.text
     assert res.headers["www-authenticate"] == "Bearer"
-    assert gateway.get(f"/api/v1/assets/{asset_id}").status_code == 200
+    assert gateway.get(f"/api/v1/assets/{asset_id}", headers=bearer(PLAYER)).status_code == 200
 
 
 def test_asset_delete_by_the_owner_removes_the_asset(gateway: TestClient) -> None:
@@ -219,7 +236,7 @@ def test_asset_delete_by_the_owner_removes_the_asset(gateway: TestClient) -> Non
 
     assert res.status_code == 200, res.text
     assert res.json()["deleted"] is True
-    assert gateway.get(f"/api/v1/assets/{asset_id}").status_code == 404
+    assert gateway.get(f"/api/v1/assets/{asset_id}", headers=bearer(PLAYER)).status_code == 404
 
 
 def test_asset_owner_unreachable_returns_503(monkeypatch) -> None:

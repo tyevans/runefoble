@@ -51,6 +51,8 @@ ROUTE_GROUPS = [
 # The session route also needs `session.observe`. Its accepted path is covered in
 # tests/test_blackbox_campaign_and_lobby/test_session_ws_scope.py with a real session.
 # The two minigame routes are relayed to game_session, so their accept path needs a live owner.
+# The overlay and spectator routes need `session.observe`. Their accepted path is covered in
+# tests/test_blackbox_gateway_realtime_authz.py with a real campaign session.
 # tests/test_blackbox_gateway_settlement_proxy.py covers them with one.
 ACCEPTING_ROUTES = [
     route
@@ -62,6 +64,9 @@ ACCEPTING_ROUTES = [
         "mobile-companion",
         "establishment-table",
         "standalone-minigame",
+        "overlay-alias",
+        "overlay",
+        "spectator",
     )
 ]
 

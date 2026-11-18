@@ -16,6 +16,7 @@ from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures, install_publish_failure_handler
+from runefoble_platform.event_sourcing import get_event_store
 from voice_agent.companion_routes import router as companion_router
 from voice_agent.companion_socket_routes import router as companion_socket_router
 from voice_agent.dependencies import (
@@ -67,6 +68,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     async with event_bus_provider.lifespan(_app):
         yield
 
+
+# Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
+get_event_store()
 
 app = FastAPI(
     title="Runefoble - Voice Agent Service",

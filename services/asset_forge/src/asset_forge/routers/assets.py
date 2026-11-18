@@ -32,7 +32,7 @@ from runefoble_platform.storage import (
 )
 
 from asset_forge.asset_authz import (
-    require_asset_manage,
+    require_asset_permission,
     require_campaign_play,
     revoke_asset_ownership,
     write_asset_ownership,
@@ -146,15 +146,17 @@ async def upload_asset(
 @router.get("/{asset_id}")
 async def get_asset(
     asset_id: str,
+    principal: Principal,
     storage: Storage,
+    spicedb: Spicedb,
     stream: bool = Query(False, description="Stream raw media content directly"),
     download: bool = Query(False, description="Force download attachment"),
 ) -> Any:
-    """Return asset metadata, or the raw bytes when `stream` or `download` is set."""
-    try:
-        meta = await get_stored_asset(asset_id)
-    except AssetNotFoundError as exc:
-        raise _not_found(asset_id) from exc
+    """Return asset metadata, or the raw bytes when `stream` or `download` is set.
+
+    Needs `forged_asset.view`.
+    """
+    meta = await _viewable_asset(asset_id, principal, spicedb)
 
     if stream or download:
         return _binary_response(storage, asset_id, meta, download=download)
@@ -165,25 +167,33 @@ async def get_asset(
 
 
 @router.get("/{asset_id}/stream")
-async def stream_asset(asset_id: str, storage: Storage) -> Response:
-    """Stream the raw bytes of an asset inline."""
-    return await _stream_or_download(asset_id, storage, download=False)
+async def stream_asset(
+    asset_id: str, principal: Principal, storage: Storage, spicedb: Spicedb
+) -> Response:
+    """Stream the raw bytes of an asset inline. Needs `forged_asset.view`."""
+    meta = await _viewable_asset(asset_id, principal, spicedb)
+    return _binary_response(storage, asset_id, meta, download=False)
 
 
 @router.get("/{asset_id}/download")
-async def download_asset(asset_id: str, storage: Storage) -> Response:
-    """Download the raw bytes of an asset as an attachment."""
-    return await _stream_or_download(asset_id, storage, download=True)
-
-
-async def _stream_or_download(
-    asset_id: str, storage: SiloStorageService, *, download: bool
+async def download_asset(
+    asset_id: str, principal: Principal, storage: Storage, spicedb: Spicedb
 ) -> Response:
+    """Download the raw bytes of an asset as an attachment. Needs `forged_asset.view`."""
+    meta = await _viewable_asset(asset_id, principal, spicedb)
+    return _binary_response(storage, asset_id, meta, download=True)
+
+
+async def _viewable_asset(
+    asset_id: str, principal: VerifiedPrincipal, spicedb: SpiceDBClient
+) -> dict[str, Any]:
+    """Return the stored asset metadata when the principal can view the asset."""
     try:
         meta = await get_stored_asset(asset_id)
     except AssetNotFoundError as exc:
         raise _not_found(asset_id) from exc
-    return _binary_response(storage, asset_id, meta, download=download)
+    await require_asset_permission(spicedb, principal.user_id, asset_id, "view")
+    return meta
 
 
 def _binary_response(
@@ -217,7 +227,7 @@ async def delete_asset(
         meta = await get_stored_asset(asset_id)
     except AssetNotFoundError as exc:
         raise _not_found(asset_id) from exc
-    await require_asset_manage(spicedb, deleted_by, asset_id)
+    await require_asset_permission(spicedb, deleted_by, asset_id, "manage")
 
     try:
         storage.delete_asset(meta["bucket"], meta["object_key"])

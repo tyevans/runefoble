@@ -25,13 +25,16 @@ from character_sheet.wardrobe_router import router as wardrobe_router
 from fastapi import FastAPI
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import event_publish_failures
-from runefoble_platform.event_sourcing import event_store_kind
+from runefoble_platform.event_sourcing import event_store_kind, get_event_store
 from runefoble_platform.ui_manifest import load_ui_manifest
 
 # Start-up fails when the manifest is missing or invalid. No fallback manifest exists (ADR-0015 4).
 UI_MANIFEST = load_ui_manifest(
     Path(__file__).resolve().parent.parent.parent / "ui" / "manifest.json"
 )
+
+# Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
+get_event_store()
 
 app = FastAPI(
     title="Runefoble - Character Sheet Service",

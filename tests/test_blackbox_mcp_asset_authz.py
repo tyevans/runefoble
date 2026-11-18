@@ -247,7 +247,7 @@ def test_anonymous_asset_delete_is_refused(gateway):
 def test_only_the_creator_may_delete_an_asset(gateway):
     asset_id = upload(gateway, "alice").json()["asset_id"]
     assert gateway.delete(f"/api/v1/assets/{asset_id}", headers=auth("mallory")).status_code == 403
-    assert gateway.get(f"/api/v1/assets/{asset_id}").status_code == 200
+    assert gateway.get(f"/api/v1/assets/{asset_id}", headers=auth("alice")).status_code == 200
     assert gateway.delete(f"/api/v1/assets/{asset_id}", headers=auth("alice")).status_code == 200
 
 

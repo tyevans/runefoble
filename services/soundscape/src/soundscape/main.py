@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from runefoble_auth.authz_http import install_authz_error_handlers
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.event_publish import event_publish_failures
+from runefoble_platform.event_sourcing import get_event_store
 from runefoble_platform.stream_consumer import consumer_statuses
 from runefoble_platform.ui_manifest import load_ui_manifest
 
@@ -46,6 +47,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await event_bus_provider.close()
         app.state.consumers = {}
 
+
+# Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
+get_event_store()
 
 app = FastAPI(
     title="Runefoble - Dynamic Soundscape & Adaptive Audio Service",

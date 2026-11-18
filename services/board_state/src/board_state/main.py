@@ -46,7 +46,10 @@ from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
 )
-from runefoble_platform.event_sourcing import event_store_kind
+from runefoble_platform.event_sourcing import event_store_kind, get_event_store
+
+# Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
+get_event_store()
 
 app = FastAPI(
     title="Runefoble - Board State Service",

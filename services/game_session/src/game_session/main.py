@@ -41,7 +41,7 @@ from runefoble_platform.event_publish import (
     event_publish_failures,
     install_publish_failure_handler,
 )
-from runefoble_platform.event_sourcing import event_store_kind
+from runefoble_platform.event_sourcing import event_store_kind, get_event_store
 
 __all__ = [
     "app",
@@ -51,6 +51,9 @@ __all__ = [
     "set_event_bus",
     "set_spicedb_client",
 ]
+
+# Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
+get_event_store()
 
 app = FastAPI(
     title="Runefoble - Game Session Service",

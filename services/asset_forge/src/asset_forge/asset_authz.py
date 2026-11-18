@@ -31,18 +31,20 @@ async def require_campaign_play(spicedb: SpiceDBClient, user_id: str, campaign_i
         )
 
 
-async def require_asset_manage(spicedb: SpiceDBClient, user_id: str, asset_id: str) -> None:
-    """Allow only when the schema grants `forged_asset.manage` on the asset to the user."""
+async def require_asset_permission(
+    spicedb: SpiceDBClient, user_id: str, asset_id: str, permission: str
+) -> None:
+    """Allow only when the schema grants `forged_asset.<permission>` on the asset to the user."""
     try:
         allowed = await spicedb.check_permission(
-            "forged_asset", asset_id, "manage", "user", user_id
+            "forged_asset", asset_id, permission, "user", user_id
         )
     except AuthzError as exc:
         raise _unavailable("Authorization service is unavailable.") from exc
     if not allowed:
         raise HTTPException(
             status_code=403,
-            detail=f"Permission denied: user '{user_id}' lacks 'manage' on asset '{asset_id}'",
+            detail=f"Permission denied: user '{user_id}' lacks '{permission}' on asset '{asset_id}'",
         )
 
 

@@ -84,6 +84,8 @@ def _offline_dsn() -> str:
 def _import_board_state(extra_env: dict[str, str]) -> subprocess.CompletedProcess[str]:
     env = _clean_env()
     env.setdefault("RUNEFOBLE_SPICEDB_PRESHARED_KEY", "test-preshared-key")
+    # The service credential check runs first. Set it so the store check decides the outcome.
+    env.setdefault("RUNEFOBLE_SERVICE_CREDENTIAL", "test-service-credential")
     env.update(extra_env)
     return subprocess.run(
         [sys.executable, "-c", "import board_state.main"],

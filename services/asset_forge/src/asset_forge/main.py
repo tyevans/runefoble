@@ -16,6 +16,7 @@ from runefoble_auth.errors import AuthzError
 from runefoble_platform.aggregate_loading import register_store_unavailable_handlers
 from runefoble_platform.engine_ports import EngineUnavailableError, engine_unavailable_handler
 from runefoble_platform.event_publish import event_publish_failures
+from runefoble_platform.event_sourcing import get_event_store
 
 from asset_forge.dependencies import event_bus_provider, get_wardrobe_generator
 from asset_forge.map_generation_engine import get_map_generator
@@ -34,6 +35,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     async with event_bus_provider.lifespan(app):
         yield
 
+
+# Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
+get_event_store()
 
 app = FastAPI(
     title="Runefoble - Procedural Battlemap & Token Asset Forge Service",

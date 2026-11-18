@@ -95,6 +95,9 @@ def get_ui_manifest() -> dict[str, Any]:
     }
 
 
+# Build the event store now. A deployed service without a reachable store refuses to start (TASK-0707).
+get_event_store()
+
 app = create_app()
 
 
