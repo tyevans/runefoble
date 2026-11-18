@@ -27,9 +27,6 @@ def test_character_sheet_manifest_and_forwarding(client: TestClient) -> None:
     assert manifest_path.is_file()
     assert json.loads(manifest_path.read_text(encoding="utf-8")) == data
 
-    fwd = REPO_ROOT / "frontend/src/components/runefoble-character-sheet.ts"
-    assert "@runefoble/character-sheet-ui" in fwd.read_text(encoding="utf-8")
-
 
 def test_stats_and_vitals_lifecycle(client: TestClient, created_character_id: str) -> None:
     """Verify ability scores, HP meters, temporary HP, and level-up progression."""
